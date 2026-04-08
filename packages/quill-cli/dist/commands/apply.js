@@ -87,6 +87,36 @@ async function runApply(file, opts) {
                 continue; // Don't apply if backup failed
             }
         }
+        // diff-guard: block apply unless --override
+        if ((0, fs_1.existsSync)(targetPath)) {
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const { runDiffGuard } = require('@eh/quill-engine/pipeline/diff-guard');
+                const original = (0, fs_1.readFileSync)(targetPath, 'utf-8');
+                const decision = runDiffGuard({
+                    original,
+                    modified: content,
+                    fileName: f,
+                    policy: { mode: 'soft' },
+                    language: f.endsWith('.tsx') ? 'tsx' : f.endsWith('.ts') ? 'typescript' : f.endsWith('.jsx') ? 'jsx' : 'javascript',
+                });
+                if (decision.status === 'fail' && !opts.override) {
+                    console.log(`  ⛔ ${f} — diff-guard 차단 (Override 필요)`);
+                    for (const fd of decision.findings.slice(0, 6)) {
+                        console.log(`     - [${fd.rule}] ${fd.message}${fd.line ? ` (L${fd.line})` : ''}`);
+                    }
+                    console.log(`     hint: cs apply ${f} --override`);
+                    failed++;
+                    continue;
+                }
+                if (decision.status === 'fail' && opts.override) {
+                    console.log(`  ⚠️  ${f} — diff-guard 위반이지만 --override로 강제 적용`);
+                }
+            }
+            catch (err) {
+                console.log(`  ⚠️  ${f} — diff-guard 실행 실패(무시): ${err.message}`);
+            }
+        }
         // Atomic write: write to temp file first, then rename
         try {
             (0, fs_1.mkdirSync)((0, path_1.join)(process.cwd(), 'src'), { recursive: true });

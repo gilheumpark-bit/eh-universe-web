@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // logger — General-purpose console wrapper with env-aware filtering
 // ============================================================

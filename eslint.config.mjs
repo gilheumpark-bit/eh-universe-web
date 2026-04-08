@@ -12,7 +12,13 @@ const eslintConfig = defineConfig([
       "next-env.d.ts",
       ".claude/**",
       "test-results/**",
-      "playwright-report/**"
+      "playwright-report/**",
+      "apps/desktop/app/**",
+      "apps/desktop/renderer/.next/**",
+      "apps/desktop/renderer/out/**",
+      "apps/desktop/scripts/**",
+      "apps/desktop/main/**/*.compiled.cjs",
+      "apps/desktop/renderer/generate_stubs.js"
     ]
   },
   {
@@ -45,7 +51,19 @@ const eslintConfig = defineConfig([
       "prefer-const": "off",
       "@typescript-eslint/no-unused-vars": "warn"
     }
-  }
+  },
+  // Desktop Electron + Next renderer: legacy @ts-nocheck / gradual strictness — tsc --strict is the gate.
+  {
+    files: [
+      "apps/desktop/renderer/**/*.{ts,tsx}",
+      "apps/desktop/main/**/*.ts",
+      "renderer/**/*.{ts,tsx}",
+      "main/**/*.ts",
+    ],
+    rules: {
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

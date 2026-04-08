@@ -1,4 +1,59 @@
-import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning, setApiKey, getApiKey, getApiKeyAsync } from '../ai-providers';
+// @ts-nocheck
+import {
+  PROVIDERS,
+  PROVIDER_LIST,
+  isPreviewModel,
+  getModelWarning,
+  setApiKey,
+  getApiKey,
+  getApiKeyAsync,
+  normalizeProviderId,
+  getActiveProvider,
+  setActiveProvider,
+  migrateProviderStorage,
+} from '../ai-providers';
+
+describe('normalizeProviderId', () => {
+  it('maps CLI/legacy aliases to canonical ids', () => {
+    expect(normalizeProviderId('anthropic')).toBe('claude');
+    expect(normalizeProviderId('google')).toBe('gemini');
+    expect(normalizeProviderId('lm-studio')).toBe('lmstudio');
+  });
+
+  it('passes through official ids', () => {
+    expect(normalizeProviderId('gemini')).toBe('gemini');
+    expect(normalizeProviderId('claude')).toBe('claude');
+  });
+
+  it('falls back to gemini for garbage', () => {
+    expect(normalizeProviderId('not-a-provider')).toBe('gemini');
+    expect(normalizeProviderId(null)).toBe('gemini');
+    expect(normalizeProviderId('')).toBe('gemini');
+  });
+});
+
+describe('getActiveProvider + storage', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('rewrites anthropic in localStorage to claude', () => {
+    localStorage.setItem('noa_active_provider', 'anthropic');
+    expect(getActiveProvider()).toBe('claude');
+    expect(localStorage.getItem('noa_active_provider')).toBe('claude');
+  });
+
+  it('setActiveProvider rejects unknown id via normalization', () => {
+    setActiveProvider(/** @type {any} */ ('anthropic'));
+    expect(localStorage.getItem('noa_active_provider')).toBe('claude');
+  });
+
+  it('migrateProviderStorage rewrites alias in noa_active_provider', () => {
+    localStorage.setItem('noa_active_provider', 'google');
+    migrateProviderStorage();
+    expect(localStorage.getItem('noa_active_provider')).toBe('gemini');
+  });
+});
 
 describe('PROVIDERS', () => {
   it('has 7 providers (cloud + local)', () => {

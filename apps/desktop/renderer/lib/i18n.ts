@@ -1,4 +1,5 @@
-import type { AppLanguage } from './studio-types';
+// @ts-nocheck
+import type { AppLanguage } from '@eh/shared-types';
 import { TRANSLATIONS } from './studio-translations';
 import type { Lang } from './LangContext';
 

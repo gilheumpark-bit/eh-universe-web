@@ -71,6 +71,53 @@ function debug() {
     expect(genStage!.findings.length).toBeGreaterThan(0);
   });
 
+  it('PART blocks missing IDENTITY_SEAL are flagged in Generation stage', () => {
+    const code = `
+// ============================================================
+// PART 1 — Imports
+// ============================================================
+import x from "y";
+
+export function hello() { return "hi"; }
+`;
+    const result = runStaticPipeline(code, 'typescript');
+    const genStage = result.stages.find(s => s.name === 'Generation');
+    expect(genStage).toBeDefined();
+    expect(genStage!.findings.join('\\n')).toMatch(/Missing IDENTITY_SEAL/i);
+  });
+
+  it('SCOPE markers must be paired', () => {
+    const code = `
+// ============================================================
+// PART 1 — Demo
+// ============================================================
+[SCOPE_START: demo]
+export function x() { return 1; }
+// IDENTITY_SEAL: PART-1 | role=demo | inputs=none | outputs=x
+`;
+    const result = runStaticPipeline(code, 'typescript');
+    const genStage = result.stages.find(s => s.name === 'Generation');
+    expect(genStage).toBeDefined();
+    expect(genStage!.findings.join('\\n')).toMatch(/SCOPE marker mismatch/i);
+  });
+
+  it('@block ids must be unique', () => {
+    const code = `
+// ============================================================
+// PART 1 — Demo
+// ============================================================
+// @block { "id": 1, "type": "logic" }
+export function a() { return 1; }
+// @block { "id": 1, "type": "logic" }
+export function b() { return 2; }
+// IDENTITY_SEAL: PART-1 | role=demo | inputs=none | outputs=a,b
+`;
+    const result = runStaticPipeline(code, 'typescript');
+    const genStage = result.stages.find(s => s.name === 'Generation');
+    expect(genStage).toBeDefined();
+    expect(genStage!.findings.join('\\n')).toMatch(/Duplicate @block id=1/i);
+  });
+
   it('nested loops cause complexity deduction', () => {
     const code = `
 function matrix(arr) {

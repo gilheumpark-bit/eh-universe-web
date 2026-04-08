@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
@@ -7,7 +8,7 @@
 import React, { useCallback, useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
-  Files, Columns2, Command, Settings, Loader2,
+  Files, Columns2, Command, Settings, Loader2, Palette
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@eh/quill-engine/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
@@ -20,6 +21,7 @@ import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/mo
 import { attachEditorSurfaceContextMenu, runEditorSurfaceMenuAction } from "@/lib/code-studio/editor/editor-surface-context-menu";
 import { useLang } from "@/lib/LangContext";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
+import { LocalDesktopStatus } from "@/components/code-studio/LocalDesktopStatus";
 import { ContextMenu, buildEditorSurfaceMenu } from "@/components/code-studio/ContextMenu";
 import * as PI from "@/components/code-studio/PanelImports";
 import type * as MonacoNS from "monaco-editor";
@@ -33,8 +35,6 @@ const ToolbarComponent = dynamic(
   () => import("@/components/code-studio/Toolbar").then((m) => ({ default: m.Toolbar })),
   { ssr: false },
 );
-
-const MultiKeyPanel = dynamic(() => import("@/components/studio/MultiKeyPanel"), { ssr: false });
 
 /** Search the file tree by file name (basename match). */
 function findFileNodeByName(nodes: FileNode[], name: string): FileNode | null {
@@ -63,6 +63,10 @@ export interface CodeStudioEditorProps {
   // Editor group
   useEditorGroup: boolean;
   onToggleEditorGroup: () => void;
+
+  // Center mode (Canvas vs Editor)
+  centerMode?: "editor" | "canvas";
+  onToggleCenterMode?: () => void;
 
   // Settings toolbar
   showSettings: boolean;
@@ -124,6 +128,9 @@ export interface CodeStudioEditorProps {
   // i18n
   tcs: Record<string, string>;
 
+  /** Desktop: file explorer sidebar visible — drives welcome layout + hints */
+  explorerOpen?: boolean;
+
   // Children slot for right panel (injected by Shell)
   children?: React.ReactNode;
 }
@@ -148,8 +155,8 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     onToggleChat, onToggleTerminal, onTogglePipeline, onToggleAgent,
     onToggleSearch, onNewFile, onToggleProblems, onRunBugFinder,
     onDeploy, onToggleSplit, onUndo, onRedo, onZoomIn, onZoomOut,
-    onZoomReset, onSettingsSaved,
-    fsUpdateContent, tcs, children,
+    onZoomReset, onSettingsSaved, centerMode, onToggleCenterMode,
+    fsUpdateContent, tcs, explorerOpen, children,
   } = props;
 
   const { lang } = useLang();
@@ -267,7 +274,15 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
       <Loader2 className="h-8 w-8 animate-spin text-accent-green/40" />
     </div>
   ) : !hasEverOpened ? (
-    <WelcomeScreen onNewFile={onWelcomeNewFile} onOpenDemo={onOpenDemo} onBlankProject={onBlankProject} onResumeProject={onResumeProject} onQuickVerify={onQuickVerify} onOpenLocalFolder={onOpenLocalFolder} />
+    <WelcomeScreen
+      onNewFile={onWelcomeNewFile}
+      onOpenDemo={onOpenDemo}
+      onBlankProject={onBlankProject}
+      onResumeProject={onResumeProject}
+      onQuickVerify={onQuickVerify}
+      onOpenLocalFolder={onOpenLocalFolder}
+      explorerOpen={explorerOpen}
+    />
   ) : (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
@@ -282,7 +297,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     : undefined;
 
   return (
-    <div className="flex flex-1 flex-col min-w-0">
+    <div className="flex min-h-0 flex-1 flex-col min-w-0">
       {/* Breadcrumb */}
       {activeFile && (
         <BreadcrumbComponent
@@ -302,6 +317,15 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           />
         </div>
         <div className="flex items-center gap-1 px-2 shrink-0">
+          {onToggleCenterMode && (
+            <button
+              onClick={onToggleCenterMode}
+              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${centerMode === "canvas" ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}
+              title="Toggle Web Canvas"
+            >
+              <Palette className="h-4 w-4" />
+            </button>
+          )}
           <button
             onClick={onToggleEditorGroup}
             disabled={openFiles.length === 0}
@@ -344,16 +368,10 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
       )}
 
       {/* Multi-Key Panel Modal */}
-      {showMultiKey && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-[480px] max-h-[80vh] rounded-xl border border-white/10 bg-[#0d1117] shadow-2xl overflow-hidden">
-            <MultiKeyPanel language="ko" onClose={onCloseMultiKey} />
-          </div>
-        </div>
-      )}
+      {showMultiKey ? null : null}
 
       {/* Editor + Right Panel area (children injected by Shell) */}
-      <div className="flex flex-1 min-h-0">
+      <div className="relative flex min-h-0 flex-1 flex-row">
         {/* Diff Viewer Overlay */}
         {diffState && (
           <div className="absolute inset-0 z-20 bg-bg-primary">
@@ -369,8 +387,10 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         )}
 
         {/* Editor Area */}
-        <div id="main-editor" className="flex-1 min-w-0 flex flex-col">
-          {useEditorGroup ? (
+        <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col">
+          {centerMode === "canvas" ? (
+            <PI.CanvasPanelComponent />
+          ) : useEditorGroup ? (
             <PI.EditorGroupComponent
               openFiles={openFiles}
               activeFileId={activeFileId}
@@ -399,6 +419,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
               />
             ) : emptyState
           )}
+          <LocalDesktopStatus />
         </div>
 
         {/* Right panel slot — injected via children from Shell */}

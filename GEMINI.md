@@ -365,6 +365,78 @@ Potential Risks:
 * 순환 참조 금지
 * 하나의 PART는 하나의 핵심 역할만 담당
 
+### [생성 규칙] PART 내부 구조 (코드 생성 시 강제)
+
+목표: PART가 “섹션”에 그치지 않고, 실제로 **변경 범위·의존성·IO 경계**를 좁히도록 한다.
+
+#### 0) Scope/Contract/Block 메타 (LLM 컨텍스트 누수 방지)
+
+아래 메타는 “사람을 위한 주석”이 아니라, 생성 엔진/린트가 읽는 **강제 신호**로 취급한다.
+
+**(A) 공간적 샌드박스**
+
+```text
+[SCOPE_START: <name>]
+... (이 범위 내부는 외부 맥락을 끌어오지 말 것 / 밖으로 누수 금지)
+[SCOPE_END]
+```
+
+규칙:
+
+* `SCOPE_START`가 있으면 같은 파일 내에 `SCOPE_END`가 반드시 있어야 한다(짝 불일치 금지).
+* 스코프 내부 수정 시 스코프 밖 코드를 “근거”로 끌어와 섞지 않는다(컨텍스트 누수 금지).
+
+**(B) 인터페이스 계약**
+
+```text
+[CONTRACT: PART-01]
+- Inputs: ...
+- Outputs: ...
+- MUST_NOT_CHANGE: (public API, props, hook return shape, exported names)
+```
+
+규칙:
+
+* Contract가 있으면, 해당 PART의 외부 인터페이스(Exports/Props/Hook 반환 형태)는 변경하지 않는다.
+* 내부 구현(helpers, 성능, 가독성)만 변경 가능.
+
+**(C) 파서 모드 강제 블록**
+
+```ts
+// @block { "id": 1, "type": "logic" }
+```
+
+규칙:
+
+* `@block {...}` 라인은 **한 글자도 변경/삭제 금지**(preserve).
+* 블록 id는 파일 내에서 유일해야 한다(중복 금지).
+
+#### 1) PART 경계 기본 원칙
+
+* PART는 **하나의 책임**만 가진다. (UI 렌더 + 네트워크 호출 같은 혼합 금지)
+* PART 내부에서 상위 PART의 상태/함수를 **직접 참조하지 않는다.** (필요하면 상위에서 주입)
+* PART 내부에서 side-effect(저장, 네트워크, 파일 IO)는 **한 곳에 모아** 경계를 만든다.
+
+#### 2) PART 내부 순서 템플릿
+
+PART 내 코드는 아래 순서를 지킨다(해당 없으면 생략 가능).
+
+1. **Types/Contracts**: 타입, 인터페이스, 입력/출력 스키마
+2. **Pure helpers**: 순수 함수(검증/변환/매핑). IO 금지.
+3. **Effect boundary**: IO/상태 변경(네트워크·파일·스토리지·IPC·DOM side-effect)
+4. **Public surface**: export 되는 함수/컴포넌트/핸들러(외부에서 쓰는 진입점)
+
+#### 3) Import/Dependency 규칙
+
+* “Pure helpers” 레벨은 Node/Electron 전용 API(예: `fs`, `path`, `electron`) import 금지
+* 런타임 경계가 다른 API는 **Effect boundary**에서만 사용한다  
+  (예: Renderer에서 Node API 금지, Main에서 DOM API 금지)
+
+#### 4) 출력 형식 강제(생성물에 포함)
+
+각 PART 끝에 이미 정의된 `IDENTITY_SEAL`을 반드시 포함하고,
+`inputs/outputs`는 “상태/데이터/부작용” 관점으로 적는다.
+
 ### 금지
 
 * 100줄+ 플랫 블록

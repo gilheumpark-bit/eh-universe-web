@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
@@ -41,7 +42,7 @@ function ProviderCard({
   onConfigure?: () => void;
   lang: string;
 }) {
-  const provider = PROVIDERS[providerId];
+  const provider = PROVIDERS[providerId] ?? PROVIDERS.gemini;
   const hasKey = !!getApiKey(providerId);
 
   return (

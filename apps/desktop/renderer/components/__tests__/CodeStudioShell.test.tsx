@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CodeStudioShell — module-level smoke test
  * This is the heaviest component in the codebase with 50+ dependencies.

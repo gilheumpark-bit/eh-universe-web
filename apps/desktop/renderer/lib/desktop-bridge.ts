@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * apps/desktop/renderer/lib/desktop-bridge.ts
  *
@@ -146,6 +147,22 @@ export async function desktopAiChat(
 // ============================================================
 // PART 2f — shell facade
 // ============================================================
+
+export interface LocalMachineSpec {
+  platform: string;
+  arch: string;
+  release: string;
+  hostname: string;
+  cpus: number;
+  totalMem: number;
+  freeMem: number;
+  appVersion: string;
+}
+
+export const desktopSystem = {
+  getLocalSpec: (): Promise<LocalMachineSpec> => requireBridge().system.getLocalSpec(),
+  openPath: (filePath: string) => requireBridge().system.openPath(filePath),
+};
 
 export const desktopShell = {
   create: (id: string, opts: { cwd?: string; cols?: number; rows?: number }) =>

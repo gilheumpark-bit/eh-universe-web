@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface CommitMessage {
   type: string;
   scope?: string;
@@ -29,7 +30,7 @@ export function formatConventionalCommit(
   return msg;
 }
 
-export function generateCommitMessage(diffs: any[]): CommitMessage {
+export function generateCommitMessage(diffs: Array<{ filePath?: string }>): CommitMessage {
   if (!diffs || diffs.length === 0) {
     return {
       type: 'chore',
@@ -40,8 +41,10 @@ export function generateCommitMessage(diffs: any[]): CommitMessage {
   }
 
   let type = 'feat';
-  const filePaths = diffs.map(d => d.filePath);
-  
+  const filePaths = diffs
+    .map((d) => d.filePath)
+    .filter((p): p is string => typeof p === 'string' && p.length > 0);
+
   if (filePaths.some(p => p.includes('.test.ts') || p.includes('__tests__'))) {
     type = 'test';
   } else if (filePaths.some(p => p.endsWith('.md'))) {

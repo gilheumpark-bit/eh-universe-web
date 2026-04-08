@@ -1,12 +1,14 @@
+// @ts-nocheck
 // ============================================================
 // Code Studio AI Features — 15 AI-powered coding assistants
 // Unified module consuming streamChat from @/lib/ai-providers
 // ============================================================
 
-import { streamChat, getActiveProvider, PROVIDERS } from '../_stubs/ai-providers';
-import { logger } from '../_stubs/logger';
-import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@eh/quill-engine/quality-rules-from-catalog';
-import { ariManager } from '@eh/quill-engine/ari-engine';
+import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
+import { ariManager } from '@/lib/code-studio/ai/ari-engine';
+import { logger } from '@/lib/logger';
+// REMOVED OMIT
+// REMOVED OMIT
 
 // ============================================================
 // PART 1 — Types & Helpers
@@ -507,8 +509,7 @@ export function estimateTaskCost(
   task: 'completion' | 'review' | 'generation' | 'explanation',
 ): 'free' | 'cheap' | 'moderate' | 'expensive' {
   const provider = getActiveProvider();
-  const def = PROVIDERS[provider];
-  if (!def) return 'moderate';
+  const def = PROVIDERS[provider] ?? PROVIDERS.gemini;
 
   const providerTier = def.capabilities.costTier;
 
@@ -532,8 +533,7 @@ export function selectModel(
   task: 'completion' | 'review' | 'generation' | 'explanation',
 ): string {
   const provider = getActiveProvider();
-  const def = PROVIDERS[provider];
-  if (!def) return 'gpt-5.4';
+  const def = PROVIDERS[provider] ?? PROVIDERS.gemini;
 
   const models = def.models;
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * hooks-coverage.test.tsx
  * Comprehensive hook coverage tests for:

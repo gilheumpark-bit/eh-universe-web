@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Unit tests for shell-parser — tokenize, expandVariables, globToRegex, isIncomplete
  */

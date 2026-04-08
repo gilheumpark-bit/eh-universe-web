@@ -138,21 +138,31 @@ main[class~="pt-14"] {
 /* Tailwind CSS 4: @theme 블록은 @layer theme { :root { ... } }로 컴파일됨.
    테마 전환 오버라이드는 @layer 밖(unlayered)에서 선언해야 @layer theme보다 우선함.
    data-theme 미설정 시 @theme 기본값(다크 아카이브 톤)이 적용됨. */
+/* 낮 모드: 따뜻한 페이퍼 캔버스 + 카드는 밝게(secondary=표면), 보더로만 구분 */
 [data-theme="light"] {
-  --color-bg-primary: #aca99d;
-  --color-bg-secondary: #9f9b8e;
-  --color-bg-tertiary: #928d7f;
-  --color-text-primary: #111111;
-  --color-text-secondary: #222222;
-  --color-text-tertiary: #444444;
-  --color-border: #9e9b8d;
-  --color-accent-purple: #5b4b93;
-  --color-accent-amber: #8a6a20;
-  --color-surface-strong: rgba(172, 169, 157, 0.97);
-  --color-surface-soft: rgba(159, 155, 142, 0.88);
-  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  --gradient-page: none;
+  --color-bg-primary: #f5f4f0;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #e8e6e0;
+  --color-text-primary: #141312;
+  --color-text-secondary: #45423c;
+  --color-text-tertiary: #6c6860;
+  --color-border: #cfc9be;
+  --color-accent-purple: #5c4d7a;
+  --color-accent-red: #b54a41;
+  --color-accent-green: #1a6b4f;
+  --color-accent-amber: #8a6618;
+  --color-accent-blue: #355c7d;
+  --color-surface-strong: rgba(255, 255, 255, 0.96);
+  --color-surface-soft: rgba(245, 244, 240, 0.92);
+  --shadow-luxury:
+    0 10px 32px rgba(20, 19, 17, 0.07),
+    0 2px 10px rgba(20, 19, 17, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-panel:
+    0 4px 18px rgba(20, 19, 17, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --shadow-manuscript: 0 10px 36px rgba(20, 19, 17, 0.06), 0 0 0 1px rgba(138, 102, 24, 0.08);
+  --gradient-page: linear-gradient(180deg, #faf9f6 0%, #f3f1ec 50%, #ebe8e1 100%);
 }
 [data-theme="dark"] {
   --color-bg-primary: #1c1a17;
@@ -199,11 +209,13 @@ body[data-theme="dark"] {
 }
 html[data-theme="light"],
 body[data-theme="light"] {
-  background: #aca99d;
+  background: var(--gradient-page);
+  background-attachment: fixed;
   color: var(--color-text-primary);
 }
 [data-theme="light"] .eh-page-canvas {
-  background: #aca99d;
+  background: var(--gradient-page);
+  background-attachment: fixed;
 }
 [data-theme="light"] .bg-black\/40,
 [data-theme="light"] .bg-black\/30,
@@ -235,7 +247,7 @@ body[data-theme="light"] {
 }
 [data-theme="light"] .text-white,
 [data-theme="light"] .text-text-primary {
-  color: #1a1a1a;
+  color: var(--color-text-primary);
 }
 [data-theme="light"] .bg-white\/\[0\.02\],
 [data-theme="light"] .bg-white\/\[0\.03\],

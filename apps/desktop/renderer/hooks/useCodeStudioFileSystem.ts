@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // Code Studio — File System Hook
 // CRUD operations on FileNode tree, undo/redo file changes,

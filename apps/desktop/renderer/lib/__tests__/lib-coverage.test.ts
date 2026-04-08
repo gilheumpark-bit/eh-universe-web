@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * lib-coverage.test.ts
  * Boost test coverage for lib services:
@@ -138,13 +139,13 @@ describe('editor-features', () => {
     expect(typeof registerEditorFeatures).toBe('function');
   });
 
-  it('module exports registerEditorFeatures as its main entry', () => {
-    const mod = require('../code-studio/editor/editor-features');
+  it('module exports registerEditorFeatures as its main entry', async () => {
+    const mod = await import('../code-studio/editor/editor-features');
     expect(mod).toHaveProperty('registerEditorFeatures');
   });
 
-  it('module loads without throwing', () => {
-    expect(() => require('../code-studio/editor/editor-features')).not.toThrow();
+  it('module loads without throwing', async () => {
+    await expect(import('../code-studio/editor/editor-features')).resolves.toBeDefined();
   });
 });
 

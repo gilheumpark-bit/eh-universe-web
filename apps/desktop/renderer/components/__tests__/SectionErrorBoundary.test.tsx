@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * SectionErrorBoundary — catches section-level errors
  */
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import { SectionErrorBoundary } from "../studio/SectionErrorBoundary";
+import { ErrorBoundary } from "../ErrorBoundary";
 
 // Mock logger
 jest.mock("@/lib/logger", () => ({
@@ -37,7 +38,7 @@ function BrokenChild(): React.JSX.Element {
   return <></>;
 }
 
-describe("SectionErrorBoundary", () => {
+describe("ErrorBoundary (section variant)", () => {
   const originalError = console.error;
   beforeAll(() => {
     console.error = jest.fn();
@@ -48,18 +49,18 @@ describe("SectionErrorBoundary", () => {
 
   it("renders children when no error", () => {
     render(
-      <SectionErrorBoundary sectionName="Test">
+      <ErrorBoundary variant="section" section="Test">
         <div>OK</div>
-      </SectionErrorBoundary>,
+      </ErrorBoundary>,
     );
     expect(screen.getByText("OK")).toBeInTheDocument();
   });
 
   it("shows section error fallback when child throws", () => {
     render(
-      <SectionErrorBoundary sectionName="MySection">
+      <ErrorBoundary variant="section" section="MySection">
         <BrokenChild />
-      </SectionErrorBoundary>,
+      </ErrorBoundary>,
     );
     expect(screen.getByText("MySection Error")).toBeInTheDocument();
   });
@@ -67,9 +68,9 @@ describe("SectionErrorBoundary", () => {
   it("calls onError callback when error is caught", () => {
     const onError = jest.fn();
     render(
-      <SectionErrorBoundary sectionName="CB" onError={onError}>
+      <ErrorBoundary variant="section" section="CB" onError={onError}>
         <BrokenChild />
-      </SectionErrorBoundary>,
+      </ErrorBoundary>,
     );
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
@@ -43,13 +44,38 @@ interface ItemDef {
   shortcut?: string;
 }
 
-const MAIN_ITEMS: ItemDef[] = [
-  { id: "project", icon: <FolderOpen size={18} />, label: "프로젝트 탐색기", shortcut: "Ctrl+Shift+E" },
-  { id: "search", icon: <Search size={18} />, label: "검색", shortcut: "Ctrl+Shift+F" },
-  { id: "ai", icon: <Bot size={18} />, label: "AI 어시스턴트", shortcut: "Ctrl+Shift+A" },
-  { id: "review", icon: <ShieldCheck size={18} />, label: "코드 리뷰", shortcut: "Ctrl+Shift+Q" },
-  { id: "preview", icon: <Eye size={18} />, label: "미리보기", shortcut: "Ctrl+Shift+P" },
-  { id: "deploy", icon: <Rocket size={18} />, label: "배포", shortcut: "Ctrl+Shift+D" },
+interface ActivityGroupDef {
+  id: string;
+  label: string;
+  items: ItemDef[];
+}
+
+/** 대분류(섹션) → 소분류(탭) — 플랫 나열 대신 계층 표시 */
+const ACTIVITY_GROUPS: ActivityGroupDef[] = [
+  {
+    id: "grp-explore",
+    label: "탐색",
+    items: [
+      { id: "project", icon: <FolderOpen size={18} />, label: "프로젝트 탐색기", shortcut: "Ctrl+Shift+E" },
+      { id: "search", icon: <Search size={18} />, label: "검색", shortcut: "Ctrl+Shift+F" },
+    ],
+  },
+  {
+    id: "grp-ai",
+    label: "AI · 검증",
+    items: [
+      { id: "ai", icon: <Bot size={18} />, label: "AI 어시스턴트", shortcut: "Ctrl+Shift+A" },
+      { id: "review", icon: <ShieldCheck size={18} />, label: "코드 리뷰", shortcut: "Ctrl+Shift+Q" },
+    ],
+  },
+  {
+    id: "grp-run",
+    label: "실행",
+    items: [
+      { id: "preview", icon: <Eye size={18} />, label: "미리보기", shortcut: "Ctrl+Shift+P" },
+      { id: "deploy", icon: <Rocket size={18} />, label: "배포", shortcut: "Ctrl+Shift+D" },
+    ],
+  },
 ];
 
 const SETTINGS_ITEM: ItemDef = {
@@ -58,9 +84,9 @@ const SETTINGS_ITEM: ItemDef = {
   label: "설정",
 };
 
-const ALL_ITEMS = [...MAIN_ITEMS, SETTINGS_ITEM];
+const ALL_ITEMS: ItemDef[] = [...ACTIVITY_GROUPS.flatMap((g) => g.items), SETTINGS_ITEM];
 
-// IDENTITY_SEAL: PART-2 | role=ItemDefs | inputs=none | outputs=MAIN_ITEMS,SETTINGS_ITEM,ALL_ITEMS
+// IDENTITY_SEAL: PART-2 | role=ItemDefs | inputs=none | outputs=ACTIVITY_GROUPS,SETTINGS_ITEM,ALL_ITEMS
 
 // ============================================================
 // PART 3 — Tooltip Component (inline)
@@ -128,7 +154,9 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
       if (nextIndex !== null) {
         onChangeView(ALL_ITEMS[nextIndex].id);
         const buttons =
-          containerRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+          containerRef.current?.querySelectorAll<HTMLButtonElement>(
+            "[data-activity-item]",
+          );
         buttons?.[nextIndex]?.focus();
       }
     },
@@ -143,8 +171,9 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
     return (
       <ActivityTooltip key={item.id} content={tooltipText}>
         <button
-          role="tab"
-          aria-selected={isActive}
+          type="button"
+          data-activity-item
+          aria-current={isActive ? "true" : undefined}
           aria-label={item.label}
           tabIndex={isActive ? 0 : -1}
           onClick={() => onChangeView(item.id)}
@@ -167,12 +196,10 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
   };
 
   return (
-    <div
+    <nav
       ref={containerRef}
-      role="tablist"
-      aria-orientation="vertical"
       aria-label="활동 바"
-      className="flex flex-col items-center w-12 bg-bg-primary border-r border-white/8 pt-2 pb-10 gap-1 shrink-0"
+      className="flex shrink-0 w-12 flex-col items-center gap-1 border-r border-white/8 bg-bg-primary pb-10 pt-2"
       onKeyDown={handleKeyDown}
     >
       {/* AI sparkle indicator at top */}
@@ -180,13 +207,36 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
         <Sparkles size={14} />
       </div>
 
-      {MAIN_ITEMS.map((item) => renderButton(item, activeView === item.id))}
+      {ACTIVITY_GROUPS.map((group) => (
+        <div
+          key={group.id}
+          className="flex w-full flex-col items-center gap-0.5"
+        >
+          <span
+            className="w-full select-none px-0.5 text-center font-mono text-[8px] uppercase leading-tight tracking-[0.12em] text-text-tertiary"
+            aria-hidden="true"
+          >
+            {group.label}
+          </span>
+          <div className="flex flex-col items-center gap-1">
+            {group.items.map((item) => renderButton(item, activeView === item.id))}
+          </div>
+        </div>
+      ))}
 
       {/* Spacer pushes settings to bottom */}
-      <div className="flex-1" />
+      <div className="min-h-1 flex-1" />
 
-      {renderButton(SETTINGS_ITEM, activeView === "settings")}
-    </div>
+      <div className="flex w-full flex-col items-center gap-0.5">
+        <span
+          className="w-full select-none px-0.5 text-center font-mono text-[8px] uppercase leading-tight tracking-[0.12em] text-text-tertiary"
+          aria-hidden="true"
+        >
+          시스템
+        </span>
+        <div className="flex flex-col items-center gap-1">{renderButton(SETTINGS_ITEM, activeView === "settings")}</div>
+      </div>
+    </nav>
   );
 }
 

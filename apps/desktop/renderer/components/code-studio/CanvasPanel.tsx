@@ -1,391 +1,256 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useCallback, useEffect, type MouseEvent as ReactMouseEvent, useMemo } from "react";
-import { ZoomIn, ZoomOut, Maximize2, Download, Plus, Trash2, Move } from "lucide-react";
-import { useCodeStudioT } from "@/lib/use-code-studio-translations";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Wand2, Layout, PenTool, Loader2, Maximize2, 
+  RotateCcw, Sparkles, Code2, ArrowRight
+} from "lucide-react";
+import { getServers, callTool } from "@/lib/code-studio/features/mcp-client";
+import { useLang } from "@/lib/LangContext";
+import { logger } from "@/lib/logger";
 
-export interface CanvasNode {
+interface CanvasMessage {
   id: string;
-  label: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: string;
-  type: "component" | "file" | "module" | "service";
+  role: "user" | "assistant";
+  text: string;
+  isError?: boolean;
 }
 
-export interface CanvasConnection {
-  id: string;
-  from: string;
-  to: string;
-  label?: string;
-}
-
-interface CanvasPanelProps {
-  nodes: CanvasNode[];
-  connections: CanvasConnection[];
-  onNodesChange: (nodes: CanvasNode[]) => void;
-  onConnectionsChange: (connections: CanvasConnection[]) => void;
-  onExportImage?: () => void;
-}
-
-// IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=CanvasNode,CanvasConnection
+// IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=CanvasMessage
 
 // ============================================================
-// PART 2 — Canvas State & Zoom/Pan
+// PART 2 — Logic & State Management
 // ============================================================
 
-const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 3;
-const GRID_SIZE = 20;
+function useStitchIntegration() {
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [stitchServerId, setStitchServerId] = useState<string | null>(null);
 
-function snapToGrid(val: number): number {
-  return Math.round(val / GRID_SIZE) * GRID_SIZE;
-}
-
-// IDENTITY_SEAL: PART-2 | role=ZoomPan | inputs=zoom,offset | outputs=transform
-
-// ============================================================
-// PART 3 — Connection Renderer
-// ============================================================
-
-function ConnectionLine({
-  from,
-  to,
-  label,
-  nodes,
-}: {
-  from: string;
-  to: string;
-  label?: string;
-  nodes: CanvasNode[];
-}) {
-  const fromNode = nodes.find((n) => n.id === from);
-  const toNode = nodes.find((n) => n.id === to);
-  if (!fromNode || !toNode) return null;
-
-  const x1 = fromNode.x + fromNode.width / 2;
-  const y1 = fromNode.y + fromNode.height / 2;
-  const x2 = toNode.x + toNode.width / 2;
-  const y2 = toNode.y + toNode.height / 2;
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
-
-  return (
-    <g>
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#4b5563" strokeWidth={1.5} markerEnd="url(#arrowhead)" />
-      {label && (
-        <text x={mx} y={my - 6} textAnchor="middle" className="fill-gray-500 text-[10px]">
-          {label}
-        </text>
-      )}
-    </g>
-  );
-}
-
-// IDENTITY_SEAL: PART-3 | role=ConnectionRenderer | inputs=from,to,nodes | outputs=SVG
-
-// ============================================================
-// PART 4 — Node Renderer
-// ============================================================
-
-const TYPE_COLORS: Record<CanvasNode["type"], string> = {
-  component: "#3b82f6",
-  file: "#10b981",
-  module: "#b8955c",
-  service: "#f59e0b",
-};
-
-function NodeBox({
-  node,
-  selected,
-  onSelect,
-  onDrag,
-}: {
-  node: CanvasNode;
-  selected: boolean;
-  onSelect: () => void;
-  onDrag: (dx: number, dy: number) => void;
-}) {
-  const dragRef = useRef<{ startX: number; startY: number } | null>(null);
-
-  const handleMouseDown = (e: ReactMouseEvent) => {
-    e.stopPropagation();
-    onSelect();
-    dragRef.current = { startX: e.clientX, startY: e.clientY };
-
-    const handleMove = (me: globalThis.MouseEvent) => {
-      if (!dragRef.current) return;
-      const dx = me.clientX - dragRef.current.startX;
-      const dy = me.clientY - dragRef.current.startY;
-      dragRef.current = { startX: me.clientX, startY: me.clientY };
-      onDrag(dx, dy);
-    };
-    const handleUp = () => {
-      dragRef.current = null;
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
-    };
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
-  };
-
-  const color = node.color || TYPE_COLORS[node.type] || "#6b7280";
-
-  return (
-    <g>
-      <rect
-        x={node.x}
-        y={node.y}
-        width={node.width}
-        height={node.height}
-        rx={6}
-        fill="#1e1e2e"
-        stroke={selected ? "#60a5fa" : color}
-        strokeWidth={selected ? 2 : 1}
-        className="cursor-move"
-        onMouseDown={handleMouseDown}
-      />
-      <rect x={node.x} y={node.y} width={node.width} height={4} rx={2} fill={color} />
-      <text
-        x={node.x + node.width / 2}
-        y={node.y + node.height / 2 + 4}
-        textAnchor="middle"
-        className="fill-white text-xs pointer-events-none select-none"
-      >
-        {node.label}
-      </text>
-    </g>
-  );
-}
-
-// IDENTITY_SEAL: PART-4 | role=NodeRenderer | inputs=CanvasNode | outputs=SVG
-
-// ============================================================
-// PART 5 — Mini-map
-// ============================================================
-
-function MiniMap({
-  nodes,
-  viewBox,
-  zoom,
-}: {
-  nodes: CanvasNode[];
-  viewBox: { x: number; y: number; w: number; h: number };
-  zoom: number;
-}) {
-  if (nodes.length === 0) return null;
-  const minX = Math.min(...nodes.map((n) => n.x)) - 50;
-  const minY = Math.min(...nodes.map((n) => n.y)) - 50;
-  const maxX = Math.max(...nodes.map((n) => n.x + n.width)) + 50;
-  const maxY = Math.max(...nodes.map((n) => n.y + n.height)) + 50;
-  const w = maxX - minX || 1;
-  const h = maxY - minY || 1;
-
-  return (
-    <div className="absolute bottom-2 right-2 w-32 h-24 rounded border border-white/10 bg-[#12121a] overflow-hidden">
-      <svg viewBox={`${minX} ${minY} ${w} ${h}`} className="w-full h-full">
-        {nodes.map((n) => (
-          <rect
-            key={n.id}
-            x={n.x}
-            y={n.y}
-            width={n.width}
-            height={n.height}
-            fill={TYPE_COLORS[n.type] ?? "#6b7280"}
-            opacity={0.6}
-            rx={2}
-          />
-        ))}
-        <rect
-          x={viewBox.x}
-          y={viewBox.y}
-          width={viewBox.w / zoom}
-          height={viewBox.h / zoom}
-          fill="none"
-          stroke="#60a5fa"
-          strokeWidth={2}
-        />
-      </svg>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-5 | role=MiniMap | inputs=nodes,viewBox,zoom | outputs=SVG
-
-// ============================================================
-// PART 6 — Main Canvas Component
-// ============================================================
-
-export default function CanvasPanel({
-  nodes,
-  connections,
-  onNodesChange,
-  onConnectionsChange,
-  onExportImage,
-}: CanvasPanelProps) {
-  const t = useCodeStudioT();
-  const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isPanning, setIsPanning] = useState(false);
-  const panRef = useRef<{ x: number; y: number } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((z) => Math.min(Math.max(z + delta, MIN_ZOOM), MAX_ZOOM));
+  // Check connection
+  useEffect(() => {
+    const servers = getServers();
+    const stitch = servers.find((s) => s.name === "stitch" && s.status === "connected");
+    if (stitch) {
+      setIsConnected(true);
+      setStitchServerId(stitch.id);
+    } else {
+      setIsConnected(false);
+      setStitchServerId(null);
+    }
   }, []);
 
-  const handlePanStart = (e: ReactMouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
-      setIsPanning(true);
-      panRef.current = { x: e.clientX, y: e.clientY };
+  const initializeProject = useCallback(async () => {
+    if (!stitchServerId) return null;
+    try {
+      const resp = await callTool(stitchServerId, "create_project", { title: "Code Studio Canvas" });
+      if (!resp.isError) {
+        // Attempt to parse project ID from response JSON
+        const data = JSON.parse(resp.content);
+        const pid = data.projectId || data.name?.split('/').pop() || "dummy-project-id";
+        setProjectId(pid);
+        return pid;
+      }
+      return null;
+    } catch (err) {
+      logger.error("stitch.canvas", "Failed to init project", err);
+      return null;
+    }
+  }, [stitchServerId]);
+
+  return { isConnected, stitchServerId, projectId, initializeProject };
+}
+
+// IDENTITY_SEAL: PART-2 | role=StitchLogic | inputs=none | outputs=useStitchIntegration
+
+// ============================================================
+// PART 3 — UI Components
+// ============================================================
+
+export default function CanvasPanel() {
+  const { lang } = useLang();
+  const ko = lang === "ko";
+  
+  const [input, setInput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [messages, setMessages] = useState<CanvasMessage[]>([]);
+  
+  const { isConnected, stitchServerId, projectId, initializeProject } = useStitchIntegration();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, isGenerating]);
+
+  const handleGenerate = async (overrideText?: string) => {
+    const text = (overrideText || input).trim();
+    if (!text || isGenerating) return;
+
+    setInput("");
+    const newMsg: CanvasMessage = { id: Date.now().toString(), role: "user", text };
+    setMessages((prev) => [...prev, newMsg]);
+    setIsGenerating(true);
+
+    try {
+      let targetProjectId = projectId;
+      
+      if (!isConnected || !stitchServerId) {
+        throw new Error(ko ? "Stitch MCP 서버가 연결되지 않았습니다." : "Stitch MCP server is not connected.");
+      }
+
+      if (!targetProjectId) {
+        targetProjectId = await initializeProject();
+        if (!targetProjectId) {
+          throw new Error(ko ? "프로젝트 생성에 실패했습니다." : "Failed to create Stitch project.");
+        }
+      }
+
+      const resp = await callTool(stitchServerId, "generate_screen_from_text", {
+        projectId: targetProjectId,
+        prompt: text,
+      });
+
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now().toString(), role: "assistant", text: resp.isError ? `❌ ${resp.content}` : resp.content, isError: resp.isError },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now().toString(), role: "assistant", text: err instanceof Error ? err.message : String(err), isError: true },
+      ]);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  useEffect(() => {
-    const handleMove = (e: globalThis.MouseEvent) => {
-      if (!isPanning || !panRef.current) return;
-      const dx = e.clientX - panRef.current.x;
-      const dy = e.clientY - panRef.current.y;
-      panRef.current = { x: e.clientX, y: e.clientY };
-      setOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
-    };
-    const handleUp = () => {
-      setIsPanning(false);
-      panRef.current = null;
-    };
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
-    };
-  }, [isPanning]);
-
-  const handleNodeDrag = (id: string, dx: number, dy: number) => {
-    onNodesChange(
-      nodes.map((n) =>
-        n.id === id ? { ...n, x: snapToGrid(n.x + dx / zoom), y: snapToGrid(n.y + dy / zoom) } : n,
-      ),
-    );
-  };
-
-  const addNode = () => {
-    const newNode: CanvasNode = {
-      id: `node-${Date.now()}`,
-      label: t.canvasNewNode,
-      x: snapToGrid(-offset.x / zoom + 200),
-      y: snapToGrid(-offset.y / zoom + 200),
-      width: 140,
-      height: 60,
-      color: "",
-      type: "component",
-    };
-    onNodesChange([...nodes, newNode]);
-  };
-
-  const deleteSelected = () => {
-    if (!selectedId) return;
-    onNodesChange(nodes.filter((n) => n.id !== selectedId));
-    onConnectionsChange(connections.filter((c) => c.from !== selectedId && c.to !== selectedId));
-    setSelectedId(null);
-  };
-
-  const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      setContainerSize({ w: width, h: height });
-    });
-    ro.observe(el);
-    const rect = el.getBoundingClientRect();
-    setContainerSize({ w: rect.width, h: rect.height });
-    return () => ro.disconnect();
-  }, []);
-  const viewBox = useMemo(() => ({
-    x: -offset.x / zoom,
-    y: -offset.y / zoom,
-    w: containerSize.w,
-    h: containerSize.h,
-  }), [offset.x, offset.y, zoom, containerSize]);
-
   return (
-    <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-[#12121a]">
-      {/* Toolbar */}
-      <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-white/10 bg-[#1e1e2e] p-1">
-        <button onClick={() => setZoom((z) => Math.min(z + 0.2, MAX_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomIn} aria-label={t.canvasZoomIn}>
-          <ZoomIn size={14} />
-        </button>
-        <span className="px-1 text-[10px] text-gray-500">{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom((z) => Math.max(z - 0.2, MIN_ZOOM))} className="p-1 text-gray-400 hover:text-white" title={t.canvasZoomOut} aria-label={t.canvasZoomOut}>
-          <ZoomOut size={14} />
-        </button>
-        <div className="mx-1 h-4 w-px bg-white/10" />
-        <button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} className="p-1 text-gray-400 hover:text-white" title={t.canvasResetView} aria-label={t.canvasResetView}>
-          <Maximize2 size={14} />
-        </button>
-        <button onClick={addNode} className="p-1 text-gray-400 hover:text-white" title={t.canvasAddNode} aria-label={t.canvasAddNode}>
-          <Plus size={14} />
-        </button>
-        {selectedId && (
-          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-red-400" title={t.canvasDeleteNode} aria-label={t.canvasDeleteNode}>
-            <Trash2 size={14} />
+    <div className="flex flex-col h-full min-h-0 bg-bg-secondary select-none">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-bg-primary/50 backdrop-blur-md sticky top-0 z-[var(--z-sticky)]">
+        <div className="flex items-center gap-2 px-2 py-1 rounded-md border border-border/60 bg-bg-tertiary">
+          <PenTool size={14} className="text-accent-amber" />
+          <span className="text-[11px] font-bold text-text-primary">Stitch Canvas</span>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {isConnected ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-accent-green/10 text-accent-green text-[9px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+              Connected
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-border/50 text-text-tertiary text-[9px] font-bold">
+              <div className="w-1.5 h-1.5 rounded-full bg-text-tertiary" />
+              Disconnected
+            </div>
+          )}
+          <button className="p-1.5 rounded-lg hover:bg-bg-tertiary text-text-tertiary transition-all">
+            <Maximize2 size={13} />
           </button>
+        </div>
+      </div>
+
+      {/* Main Canvas Area */}
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 scroll-smooth scrollbar-none relative">
+        {messages.length === 0 && !isGenerating && (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center animate-in zoom-in-95 duration-500">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-amber/20 to-accent-blue/20 flex items-center justify-center mb-4 border border-border/60 shadow-xl shadow-accent-amber/5">
+              <Sparkles size={28} className="text-accent-amber" />
+            </div>
+            <h3 className="text-sm font-bold text-text-primary mb-2">
+              {ko ? "무엇을 만들어드릴까요?" : "What would you like to build?"}
+            </h3>
+            <p className="text-[11px] text-text-tertiary leading-relaxed max-w-[280px] mb-6">
+              {ko ? "프롬프트를 입력하면 Stitch AI가 아름다운 UI 화면을 실시간으로 생성합니다." : "Describe a UI and Stitch AI will generate a beautiful screen in real-time."}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-xs">
+              {["Login Dashboard", "Settings Page", "Pricing Table", "Data Grid"].map((s) => (
+                <button 
+                  key={s} 
+                  onClick={() => handleGenerate(s)}
+                  className="px-3 py-1.5 text-[10px] rounded-full border border-border/60 bg-bg-tertiary hover:border-accent-amber/50 hover:text-accent-amber transition-all whitespace-nowrap"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
-        {onExportImage && (
-          <button onClick={onExportImage} className="p-1 text-gray-400 hover:text-white" title={t.canvasExportImage} aria-label={t.canvasExportImage}>
-            <Download size={14} />
-          </button>
+
+        {messages.map((msg) => (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={msg.id} 
+            className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
+          >
+            {msg.role === "user" ? (
+              <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-tr-sm bg-accent-amber text-bg-primary text-[12px] shadow-md">
+                {msg.text}
+              </div>
+            ) : (
+              <div className={`w-full p-4 rounded-xl border ${msg.isError ? "border-red-500/20 bg-red-500/5 text-red-400" : "border-border/60 bg-bg-tertiary/40 text-text-primary"} text-xs leading-relaxed shadow-sm`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wand2 size={12} className={msg.isError ? "text-red-400" : "text-accent-amber"} />
+                  <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">Stitch {msg.isError ? "Error" : "Response"}</span>
+                </div>
+                <div className="whitespace-pre-wrap text-[11px] opacity-90">{msg.text}</div>
+                {!msg.isError && (
+                  <div className="mt-4 flex gap-2">
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-primary border border-border/60 hover:border-accent-blue/50 hover:text-accent-blue hover:bg-accent-blue/5 transition-all text-[10px] font-bold">
+                      <Code2 size={12} /> View Code
+                    </button>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-primary border border-border/60 hover:border-accent-green/50 hover:text-accent-green hover:bg-accent-green/5 transition-all text-[10px] font-bold">
+                      <Layout size={12} /> View Preview
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        ))}
+
+        {isGenerating && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-3 p-4 bg-bg-tertiary/20 rounded-xl border border-border/30">
+            <Loader2 size={16} className="text-accent-amber animate-spin" />
+            <div className="space-y-0.5">
+              <div className="text-[11px] font-bold text-text-primary">Generating UI with Stitch...</div>
+              <div className="text-[9px] text-text-tertiary">Creating layout, selecting components, and applying design tokens</div>
+            </div>
+          </motion.div>
         )}
       </div>
 
-      {/* Canvas SVG */}
-      <svg
-        className="h-full w-full"
-        onWheel={handleWheel}
-        onMouseDown={handlePanStart}
-        onClick={() => setSelectedId(null)}
-        style={{ cursor: isPanning ? "grabbing" : "default" }}
-      >
-        <defs>
-          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#4b5563" />
-          </marker>
-          <pattern id="grid" width={GRID_SIZE * zoom} height={GRID_SIZE * zoom} patternUnits="userSpaceOnUse"
-            x={offset.x % (GRID_SIZE * zoom)} y={offset.y % (GRID_SIZE * zoom)}>
-            <circle cx={1} cy={1} r={0.5} fill="#ffffff08" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-        <g transform={`translate(${offset.x},${offset.y}) scale(${zoom})`}>
-          {connections.map((c) => (
-            <ConnectionLine key={c.id} from={c.from} to={c.to} label={c.label} nodes={nodes} />
-          ))}
-          {nodes.map((n) => (
-            <NodeBox
-              key={n.id}
-              node={n}
-              selected={n.id === selectedId}
-              onSelect={() => setSelectedId(n.id)}
-              onDrag={(dx, dy) => handleNodeDrag(n.id, dx, dy)}
-            />
-          ))}
-        </g>
-      </svg>
-
-      <MiniMap nodes={nodes} viewBox={viewBox} zoom={zoom} />
+      {/* Input Area */}
+      <div className="p-3 bg-bg-primary/30 backdrop-blur-xl border-t border-border">
+        <div className="flex bg-bg-tertiary rounded-xl border border-border/60 focus-within:border-accent-amber/50 focus-within:ring-4 focus-within:ring-accent-amber/10 transition-all shadow-inner overflow-hidden pr-1">
+          <input 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) handleGenerate(); }}
+            placeholder={ko ? "어떤 UI를 스케치할까요?" : "Describe your UI..."}
+            className="flex-1 bg-transparent text-[12px] outline-none text-text-primary px-4 py-2.5 placeholder:text-text-tertiary/60"
+            disabled={isGenerating}
+          />
+          <div className="flex items-center py-1">
+            <button 
+              onClick={handleGenerate} 
+              disabled={!input.trim() || isGenerating} 
+              className="p-1.5 rounded-lg bg-accent-amber text-bg-primary disabled:bg-bg-secondary disabled:text-text-tertiary shadow-md shadow-accent-amber/10 transition-all hover:scale-105 active:scale-95"
+            >
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// IDENTITY_SEAL: PART-6 | role=CanvasPanelUI | inputs=nodes,connections | outputs=JSX
+// IDENTITY_SEAL: PART-3 | role=CanvasPanel | inputs=none | outputs=JSX

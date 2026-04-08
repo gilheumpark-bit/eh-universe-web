@@ -166,7 +166,7 @@ export async function simulateFailure(
         content: `File: ${fileName}\nFailure: ${sim.label} — ${sim.description}\nInjection point: ${sim.injectionPoint}\n\n${metricsBlock}\n\nCode:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
       },
     ],
-    onChunk: (t) => { raw += t; },
+    onChunk: (t: string) => { raw += t; },
     signal,
   });
 

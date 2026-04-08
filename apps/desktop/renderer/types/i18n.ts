@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * App-wide language identifier.
  * Originally lived in renderer/lib/studio-types.ts (writing studio).

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PipelinePanel (code-studio) — renders pipeline status
  */

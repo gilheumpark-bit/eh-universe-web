@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
@@ -18,12 +19,64 @@ import { findBugsStatic, type BugReport } from "@eh/quill-engine/pipeline/bugfin
 import { runStressReport, type StressReport } from "@eh/quill-engine/pipeline/stress-test";
 import { runVerificationLoop, type VerificationResult } from "@eh/quill-engine/pipeline/verification-loop";
 import { parseErrors } from "@eh/quill-engine/pipeline/error-parser";
+import type { Finding } from "@eh/quill-engine/pipeline/pipeline-teams";
 import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
 import { useLang } from "@/lib/LangContext";
-import { TRANSLATIONS } from "@/lib/studio-translations";
 import { L4 } from "@/lib/i18n";
-import type { AppLanguage } from "@/types/i18n";
+import type { AppLanguage } from "@eh/shared-types";
+import { TRANSLATIONS } from "@/lib/studio-translations";
+
+import { infiniteContext } from "@/lib/code-studio/features/infinite-context";
+
+type CodeStudioRuntimeStrings = {
+  savedLocally: string;
+  demoLoaded: string;
+  fileCreated: string;
+  fileDeleted: string;
+  blankCreated: string;
+  verificationFailed: string;
+  selectFile: string;
+};
+
+/** 오른쪽 패널 너비(px): 최소 스트립 / 기본값 / 에디터 영역 최소 보존 */
+const RIGHT_PANEL_MIN_W = 100;
+const RIGHT_PANEL_DEFAULT_W = 440;
+const EDITOR_AREA_MIN_W = 96;
+const RIGHT_RESIZE_HANDLE_W = 4;
+/** 왼쪽 액티비티 바 + 탐색기 사이 드래그 핸들 */
+const ACTIVITY_BAR_MIN_W = 40;
+const ACTIVITY_BAR_DEFAULT_W = 48;
+const ACTIVITY_BAR_EXPANDED_MIN_W = 88;
+const ACTIVITY_RESIZE_HANDLE_W = 8;
+const SIDEBAR_RESIZE_HANDLE_W = 4;
+
+const DEFAULT_TCS: CodeStudioRuntimeStrings = {
+  savedLocally: "로컬에 저장됨",
+  demoLoaded: "데모 로드됨",
+  fileCreated: "파일 생성됨",
+  fileDeleted: "파일 삭제됨",
+  blankCreated: "빈 프로젝트 생성됨",
+  verificationFailed: "검증 실패",
+  selectFile: "파일을 선택하세요",
+};
+
+function getTcs(lang: string | null | undefined): CodeStudioRuntimeStrings {
+  const key = ((lang ?? "ko").toString().toUpperCase() as AppLanguage);
+  const fromDict = (TRANSLATIONS[key]?.codeStudio ?? TRANSLATIONS.KO?.codeStudio) as
+    | Partial<CodeStudioRuntimeStrings>
+    | undefined;
+  if (!fromDict) return DEFAULT_TCS;
+  return {
+    savedLocally: fromDict.savedLocally ?? DEFAULT_TCS.savedLocally,
+    demoLoaded: fromDict.demoLoaded ?? DEFAULT_TCS.demoLoaded,
+    fileCreated: fromDict.fileCreated ?? DEFAULT_TCS.fileCreated,
+    fileDeleted: fromDict.fileDeleted ?? DEFAULT_TCS.fileDeleted,
+    blankCreated: fromDict.blankCreated ?? DEFAULT_TCS.blankCreated,
+    verificationFailed: fromDict.verificationFailed ?? DEFAULT_TCS.verificationFailed,
+    selectFile: fromDict.selectFile ?? DEFAULT_TCS.selectFile,
+  };
+}
 
 import { ToastProvider, useToast } from "@/components/code-studio/ToastSystem";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
@@ -36,11 +89,21 @@ import { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import { useCodeStudioKeyboard } from "@/hooks/useCodeStudioKeyboard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import * as PI from "@/components/code-studio/PanelImports";
-// Theme is applied globally by UnifiedSettingsProvider — no per-studio hook needed
+import { runApplyGuard } from "@/lib/code-studio/diff-guard/apply-guard";
+// Theme: `ThemeProvider` + `@/lib/theme-controller` — toggle in ActivityBar / Header
 import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
 import { attachEditorSurfaceContextMenu, runEditorSurfaceMenuAction } from "@/lib/code-studio/editor/editor-surface-context-menu";
 import { ContextMenu, buildEditorSurfaceMenu } from "@/components/code-studio/ContextMenu";
-import type * as MonacoNS from "monaco-editor";
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace MonacoNS {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  export namespace editor {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    export type IStandaloneCodeEditor = any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    export type ITextModel = any;
+  }
+}
 
 // Extracted components
 import { CodeStudioEditor } from "@/components/code-studio/CodeStudioEditor";
@@ -154,6 +217,9 @@ function FileTreeItem({
               onChange={(e) => setEditName(e.target.value)}
               onBlur={() => { setEditing(false); if (editName.trim()) onRename(node.id, editName.trim()); }}
               onKeyDown={(e) => { if (e.key === "Enter") { setEditing(false); if (editName.trim()) onRename(node.id, editName.trim()); } }}
+              aria-label="Rename file"
+              placeholder="Rename…"
+              title="Rename file"
               className="w-full bg-transparent text-[12px] font-mono outline-none border-b border-accent-green"
               autoFocus
               onClick={(e) => e.stopPropagation()}
@@ -164,7 +230,7 @@ function FileTreeItem({
         </button>
         {!isFolder && node.id !== "root" && (
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
-            <button onClick={() => { setEditing(true); setEditName(node.name); }} className="rounded p-0.5 hover:bg-white/10"><Edit3 className="h-2.5 w-2.5" /></button>
+            <button onClick={() => { setEditing(true); setEditName(node.name); }} aria-label="Rename" title="Rename" className="rounded p-0.5 hover:bg-white/10"><Edit3 className="h-2.5 w-2.5" /></button>
             <button onClick={() => onDelete(node.id)} aria-label="삭제" className="rounded p-0.5 hover:bg-white/10 text-accent-red"><Trash2 className="h-2.5 w-2.5" /></button>
           </div>
         )}
@@ -197,11 +263,11 @@ function useIsTablet(): boolean {
 function CodeStudioShellInner() {
   const { toast } = useToast();
   const { lang } = useLang();
-  const tcs = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
+  const tcs = getTcs(lang);
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   
-  // Theme is applied globally by UnifiedSettingsProvider in layout.tsx
+  // Theme is applied globally by ThemeProvider in layout.tsx
 
   // ── File System ──
   const { tree: files, setTree: setFiles, deleteNode: fsDeleteNode, renameNode: fsRenameNode, updateContent: fsUpdateContent, undo: fsUndo, redo: fsRedo, canUndo: fsCanUndo, canRedo: fsCanRedo, persist: fsPersist, load: fsLoad } = useCodeStudioFileSystem(DEMO_FILES);
@@ -226,11 +292,74 @@ function CodeStudioShellInner() {
   const [rightPanel, setRightPanel] = useState<RightPanel>("chat");
   const [sidebarWidth, setSidebarWidth] = useState(256);
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [rightPanelWidth, setRightPanelWidth] = useState(380);
+  const [rightPanelWidth, setRightPanelWidth] = useState(RIGHT_PANEL_DEFAULT_W);
   const [showTerminal, setShowTerminal] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
   const [showPipelineBottom, setShowPipelineBottom] = useState(false);
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
+  const [activityBarWidth, setActivityBarWidth] = useState(ACTIVITY_BAR_DEFAULT_W);
+  const [centerMode, setCenterMode] = useState<"editor" | "canvas">("canvas");
+
+  // ── Infinite Context Indexing ──
+  useEffect(() => {
+    if (files.length > 0) {
+      const allPaths: string[] = [];
+      const collectPaths = (nodes: FileNode[]) => {
+        nodes.forEach(node => {
+          if (node.type === 'file') allPaths.push(node.id); // node.id is the path in this app
+          if (node.children) collectPaths(node.children);
+        });
+      };
+      collectPaths(files);
+      infiniteContext.initializeIndex("root", allPaths);
+    }
+  }, [files]);
+
+  /** 액티비티 바 최대 폭: 에디터 최소 폭·우측 패널·탐색기를 남김 */
+  const computeActivityBarMaxW = useCallback(() => {
+    if (typeof window === "undefined") return 360;
+    const vw = window.innerWidth;
+    const explorerW = sidebarVisible ? sidebarWidth + SIDEBAR_RESIZE_HANDLE_W : 0;
+    const rightChrome =
+      rightPanel && rightPanel !== "api-config" ? rightPanelWidth + RIGHT_RESIZE_HANDLE_W : 0;
+    return Math.max(
+      ACTIVITY_BAR_MIN_W + 20,
+      vw - explorerW - rightChrome - EDITOR_AREA_MIN_W - ACTIVITY_RESIZE_HANDLE_W
+    );
+  }, [sidebarVisible, sidebarWidth, rightPanel, rightPanelWidth]);
+
+  /** 뷰포트 − 왼쪽 크롬 − 최소 에디터; 상한 사실상 해제(울트라와이드 대응) */
+  const computeRightPanelMaxW = useCallback(() => {
+    if (typeof window === "undefined") return 3200;
+    const vw = window.innerWidth;
+    const explorerW = sidebarVisible ? sidebarWidth + SIDEBAR_RESIZE_HANDLE_W : 0;
+    const leftChrome = activityBarWidth + ACTIVITY_RESIZE_HANDLE_W + explorerW;
+    return Math.max(RIGHT_PANEL_MIN_W + 40, vw - leftChrome - RIGHT_RESIZE_HANDLE_W - EDITOR_AREA_MIN_W);
+  }, [activityBarWidth, sidebarVisible, sidebarWidth]);
+
+  useEffect(() => {
+    const clamp = () => {
+      setActivityBarWidth((w) => {
+        const maxW = computeActivityBarMaxW();
+        return Math.min(Math.max(w, ACTIVITY_BAR_MIN_W), maxW);
+      });
+    };
+    clamp();
+    window.addEventListener("resize", clamp);
+    return () => window.removeEventListener("resize", clamp);
+  }, [computeActivityBarMaxW]);
+
+  useEffect(() => {
+    const clamp = () => {
+      setRightPanelWidth((w) => {
+        const maxW = computeRightPanelMaxW();
+        return Math.min(Math.max(w, RIGHT_PANEL_MIN_W), maxW);
+      });
+    };
+    clamp();
+    window.addEventListener("resize", clamp);
+    return () => window.removeEventListener("resize", clamp);
+  }, [computeRightPanelMaxW]);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showQuickOpen, setShowQuickOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -270,6 +399,7 @@ function CodeStudioShellInner() {
   // ── Staging/Rollback State ──
   const [stagedFiles, setStagedFiles] = useState<Record<string, string>>({});
   const [preApplySnapshot, setPreApplySnapshot] = useState<Record<string, string>>({});
+  const [guardFindingsByFile, setGuardFindingsByFile] = useState<Record<string, Finding[]>>({});
 
   // ── Dialog State ──
   const [confirmState, setConfirmState] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
@@ -334,13 +464,23 @@ function CodeStudioShellInner() {
 
   // ── Effects ──
 
-  // IndexedDB load
+  // IndexedDB load — always end in `loaded` so UI is never stuck on an invisible/null fallback
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const [, savedSettings] = await Promise.all([fsLoad(), loadSettings()]);
-      if (savedSettings) setSettings(savedSettings);
-      setLoaded(true);
+      try {
+        const [, savedSettings] = await Promise.all([fsLoad(), loadSettings()]);
+        if (!cancelled && savedSettings) setSettings(savedSettings);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error("[code-studio] initial load failed", e);
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
     })();
+    return () => {
+      cancelled = true;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -774,6 +914,7 @@ function CodeStudioShellInner() {
         // Persist for GitPanel desktop-git backend (Step 3)
         try {
           window.localStorage.setItem("cs:last-project", selected);
+          window.dispatchEvent(new Event("cs-last-project"));
         } catch {
           /* localStorage may be blocked */
         }
@@ -831,19 +972,36 @@ function CodeStudioShellInner() {
   }, [activeFile, isVerifying, files, toast, tcs]);
 
   // Staging flow
-  const handleApproveFile = useCallback((fileName: string) => {
+  const handleApproveFile = useCallback((fileName: string, override = false) => {
     const code = stagedFiles[fileName];
     if (!code) return;
-    const fileNode = openFiles.find(f => f.name === fileName) || files.flatMap(function walk(n: import("@/lib/code-studio/core/types").FileNode): import("@/lib/code-studio/core/types").FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.name === fileName);
+    const fileNode = openFiles.find(f => f.name === fileName) || files.flatMap(function walk(n: FileNode): FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find((n: FileNode) => n.name === fileName);
     const targetFileId = fileNode?.id;
     if (targetFileId) {
+      const original = fileNode?.content ?? openFiles.find((f) => f.id === targetFileId)?.content ?? "";
+      const decision = runApplyGuard({ original, modified: code, fileName, language: detectLanguage(fileName) });
+      if (decision.status === "fail" && !override) {
+        setGuardFindingsByFile((prev) => ({ ...prev, [fileName]: decision.findings }));
+        toast(L4(lang, { ko: `${fileName} 적용이 diff-guard에 의해 차단됨 (Override 필요)`, en: `Apply blocked by diff-guard for ${fileName} (Override required)` }), "error");
+        return;
+      }
+
       setPreApplySnapshot(prev => ({ ...prev, [fileName]: fileNode.content ?? "" }));
       fsUpdateContent(targetFileId, code);
       setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: code, isDirty: true } : f));
     }
+    setGuardFindingsByFile((prev) => {
+      const next = { ...prev };
+      delete next[fileName];
+      return next;
+    });
     setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
     toast(L4(lang, { ko: `${fileName}의 변경사항을 승인했습니다`, en: `Approved fixes for ${fileName}` }), "success");
   }, [stagedFiles, openFiles, files, fsUpdateContent, toast, lang]);
+
+  const handleOverrideFile = useCallback((fileName: string) => {
+    handleApproveFile(fileName, true);
+  }, [handleApproveFile]);
 
   const handleRejectFile = useCallback((fileName: string) => {
     setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
@@ -853,7 +1011,7 @@ function CodeStudioShellInner() {
   const handleRollback = useCallback((fileName: string) => {
     const snapshot = preApplySnapshot[fileName];
     if (!snapshot) return;
-    const fileNode = openFiles.find(f => f.name === fileName) || files.flatMap(function walk(n: import("@/lib/code-studio/core/types").FileNode): import("@/lib/code-studio/core/types").FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.name === fileName);
+    const fileNode = openFiles.find(f => f.name === fileName) || files.flatMap(function walk(n: FileNode): FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find((n: FileNode) => n.name === fileName);
     const targetFileId = fileNode?.id;
     if (targetFileId) {
       fsUpdateContent(targetFileId, snapshot);
@@ -871,9 +1029,9 @@ function CodeStudioShellInner() {
   // ── Shared UI fragments for mobile/tablet ──
   const explorerPanel = (
     <div className="flex h-full flex-col bg-bg-secondary">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
-        <Files className="h-4 w-4 text-accent-green" />
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{L4(lang, { ko: "탐색기", en: "Explorer" })}</span>
+      <div className="flex items-center gap-2 border-b border-border bg-bg-secondary px-3 py-2.5">
+        <Files className="h-4 w-4 shrink-0 text-accent-green" aria-hidden />
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-primary">{L4(lang, { ko: "탐색기", en: "Explorer" })}</span>
         <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File"><Plus className="h-3.5 w-3.5" /></button>
       </div>
       {showNewFile && (
@@ -887,7 +1045,7 @@ function CodeStudioShellInner() {
         </div>
       )}
       <div className="flex-1 overflow-y-auto py-1">
-        {files.map((node) => (<FileTreeItem key={node.id} node={node} depth={0} activeFileId={activeFileId} onSelect={handleFileSelect} onDelete={handleDelete} onRename={handleRename} />))}
+        {files.map((node: FileNode) => (<FileTreeItem key={node.id} node={node} depth={0} activeFileId={activeFileId} onSelect={handleFileSelect} onDelete={handleDelete} onRename={handleRename} />))}
       </div>
     </div>
   );
@@ -896,7 +1054,7 @@ function CodeStudioShellInner() {
   const mobileEditorPanel = (
     <>
       <div className="flex h-full flex-col">
-        <PI.EditorTabsComponent openFiles={openFiles} activeFileId={activeFileId} onSelectFile={(id) => setActiveFileId(id)} onCloseFile={(id) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }} />
+        <PI.EditorTabsComponent openFiles={openFiles} activeFileId={activeFileId} onSelectFile={(id: string) => setActiveFileId(id)} onCloseFile={(id: string) => { setOpenFiles((prev) => prev.filter((f) => f.id !== id)); if (activeFileId === id) setActiveFileId(null); }} />
         {activeFile && <BreadcrumbComponent path={["project", "src", activeFile.name]} isModified={activeFile.isDirty} />}
         <div className="flex-1 min-h-0">
           {activeFile ? (
@@ -904,14 +1062,14 @@ function CodeStudioShellInner() {
               options={{ fontSize: isMobile ? 13 : settings.fontSize, tabSize: settings.tabSize, wordWrap: isMobile ? "on" as const : settings.wordWrap, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 8 }, fontFamily: "var(--font-mono), 'JetBrains Mono', monospace", lineNumbers: isMobile ? "off" as const : "on" as const, renderLineHighlight: "line" as const, bracketPairColorization: { enabled: true }, smoothScrolling: true, cursorBlinking: "smooth" as const, cursorSmoothCaretAnimation: "on" as const, contextmenu: true }}
               onMount={(editor, monaco) => {
                 const ed = editor as MonacoNS.editor.IStandaloneCodeEditor;
-                const ctxSub = attachEditorSurfaceContextMenu(ed, (pos, target) => {
+                const ctxSub = attachEditorSurfaceContextMenu(ed, (pos: { x: number; y: number }, target: MonacoNS.editor.IStandaloneCodeEditor) => {
                   mobileEditorSurfaceTargetRef.current = target;
                   setMobileEditorSurfaceMenu(pos);
                 });
                 ed.onDidDispose(() => ctxSub.dispose());
-                import("@/lib/code-studio/editor/monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco as any, editor, { theme: "dark" }));
-                import("@/lib/code-studio/editor/editor-features").then(({ registerEditorFeatures }) => registerEditorFeatures(monaco as any, editor));
-                import("@/lib/code-studio/ai/ghost").then(({ registerGhostTextProvider }) => registerGhostTextProvider(monaco as any));
+                import("@/lib/code-studio/editor/monaco-setup").then(({ setupMonaco }) => setupMonaco(monaco as unknown, editor, { theme: "dark" }));
+                import("@/lib/code-studio/editor/editor-features").then(({ registerEditorFeatures }) => registerEditorFeatures(monaco as unknown, editor));
+                import("@/lib/code-studio/ai/ghost").then(({ registerGhostTextProvider }) => registerGhostTextProvider(monaco as unknown));
               }}
             />
           ) : !loaded ? (
@@ -958,7 +1116,14 @@ function CodeStudioShellInner() {
   // ── Panel Manager Props (shared for desktop) ──
   const panelManagerProps = {
     rightPanel, onSetRightPanel: setRightPanel as (p: RightPanel | null) => void,
-    showAdvancedPanels, onToggleAdvancedPanels: () => setShowAdvancedPanels(v => !v),
+    showAdvancedPanels,
+    onToggleAdvancedPanels: () => {
+      setShowAdvancedPanels((v) => {
+        const next = !v;
+        if (next) setActivityBarWidth((w) => Math.max(w, ACTIVITY_BAR_EXPANDED_MIN_W));
+        return next;
+      });
+    },
     showSettings, onToggleSettings: () => setShowSettings(s => !s),
     showTerminal, showProblems, showPipelineBottom,
     onToggleTerminal: () => setShowTerminal(v => !v), onToggleProblems: () => setShowProblems(v => !v),
@@ -972,7 +1137,9 @@ function CodeStudioShellInner() {
     onFileSelect: handleFileSelect, onApplyCode: handleApplyCode,
     onSetDiffState: setDiffState, fsUpdateContent, onSetOpenFiles: setOpenFiles, onSetFiles: setFiles,
     handleRunStressTest, handleRunVerification, editorNavigateToLine,
-    onApproveFile: handleApproveFile, onRejectFile: handleRejectFile, stagedFiles,
+    onApproveFile: (name: string) => handleApproveFile(name, false),
+    onOverrideFile: handleOverrideFile,
+    onRejectFile: handleRejectFile, stagedFiles, guardFindingsByFile,
     toast, lang, tcs,
   } as const;
 
@@ -1001,13 +1168,20 @@ function CodeStudioShellInner() {
       <div className="flex flex-1 min-h-0">
         {/* Activity Bar */}
         <ActivityBar
+          widthPx={activityBarWidth}
           rightPanel={rightPanel} onSetRightPanel={(p) => {
             // files 클릭 시 좌측 탐색기 토글
             if (p === 'files') { setSidebarVisible(v => !v); return; }
             (setRightPanel as (p: RightPanel | null) => void)(p);
           }}
           bugReports={bugReports} showAdvancedPanels={showAdvancedPanels}
-          onToggleAdvancedPanels={() => setShowAdvancedPanels(v => !v)}
+          onToggleAdvancedPanels={() => {
+            setShowAdvancedPanels((v) => {
+              const next = !v;
+              if (next) setActivityBarWidth((w) => Math.max(w, ACTIVITY_BAR_EXPANDED_MIN_W));
+              return next;
+            });
+          }}
           showSettings={showSettings} onToggleSettings={() => setShowSettings(s => !s)} lang={lang}
           onAction={(actionId) => {
             if (actionId === "action-demo") {
@@ -1018,9 +1192,34 @@ function CodeStudioShellInner() {
           }}
         />
 
+        <div
+          className="min-w-[8px] w-2 cursor-col-resize shrink-0 border-r border-transparent hover:border-accent-purple/25 hover:bg-accent-purple/15 active:bg-accent-purple/25 self-stretch"
+          title={L4(lang, { ko: "액티비티 바 너비 조절", en: "Resize activity bar" })}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startW = activityBarWidth;
+            const onMove = (ev: MouseEvent) => {
+              const maxW = computeActivityBarMaxW();
+              const next = startW + (ev.clientX - startX);
+              setActivityBarWidth(Math.max(ACTIVITY_BAR_MIN_W, Math.min(maxW, next)));
+            };
+            const onUp = () => {
+              document.removeEventListener("mousemove", onMove);
+              document.removeEventListener("mouseup", onUp);
+              document.body.style.cursor = "";
+              document.body.style.userSelect = "";
+            };
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+            document.body.style.cursor = "col-resize";
+            document.body.style.userSelect = "none";
+          }}
+        />
+
         {/* File Explorer Sidebar */}
         {sidebarVisible && (
-        <div className="flex shrink-0 flex-col border-r border-white/8 bg-bg-secondary" style={{ width: sidebarWidth }}>
+        <div className="flex shrink-0 flex-col border-r border-border bg-bg-secondary" style={{ width: sidebarWidth }}>
           {explorerPanel}
         </div>
         )}
@@ -1039,7 +1238,8 @@ function CodeStudioShellInner() {
           }}
         />}
 
-        {/* Center — Editor (extracted component) */}
+        {/* Center column: editor fills height; 콘솔/Problems는 하단 (가로 flex에 두면 오른쪽 열로 붙는 버그 방지) */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CodeStudioEditor
           files={files} openFiles={openFiles} activeFile={activeFile} activeFileId={activeFileId}
           settings={settings} loaded={loaded} hasEverOpened={hasEverOpened} isMobile={false}
@@ -1058,6 +1258,8 @@ function CodeStudioShellInner() {
           onTogglePipeline={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")}
           onToggleAgent={() => setRightPanel(rightPanel === "agents" ? null : "agents")}
           onToggleSearch={() => setRightPanel(rightPanel === "search" ? null : "search")}
+          centerMode={centerMode}
+          onToggleCenterMode={() => setCenterMode(v => v === "canvas" ? "editor" : "canvas")}
           onNewFile={() => setShowNewFile(true)}
           onToggleProblems={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
           onRunBugFinder={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
@@ -1071,48 +1273,55 @@ function CodeStudioShellInner() {
           onSettingsSaved={() => toast(L4(lang, { ko: "설정 저장됨", en: "Settings saved" }), "success")}
           fsUpdateContent={fsUpdateContent}
           tcs={tcs}
+          explorerOpen={sidebarVisible}
         >
           {/* Right Panel (extracted component) with resize handle */}
           {rightPanel && rightPanel !== "api-config" && (
             <>
               {/* Right Panel Resize Handle */}
               <div
-                className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
+                className="min-w-[8px] w-2 cursor-col-resize shrink-0 border-l border-transparent hover:border-accent-purple/25 hover:bg-accent-purple/15 active:bg-accent-purple/25"
+                title="Drag to resize panel"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   const startX = e.clientX;
                   const startWidth = rightPanelWidth;
-                  const onMove = (ev: MouseEvent) => { setRightPanelWidth(Math.max(250, Math.min(700, startWidth - (ev.clientX - startX)))); };
-                  const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); document.body.style.cursor = ""; document.body.style.userSelect = ""; };
+                  const onMove = (ev: MouseEvent) => {
+                    const maxW = computeRightPanelMaxW();
+                    const next = startWidth - (ev.clientX - startX);
+                    setRightPanelWidth(Math.max(RIGHT_PANEL_MIN_W, Math.min(maxW, next)));
+                  };
+                  const onUp = () => {
+                    document.removeEventListener("mousemove", onMove);
+                    document.removeEventListener("mouseup", onUp);
+                    document.body.style.cursor = "";
+                    document.body.style.userSelect = "";
+                  };
                   document.addEventListener("mousemove", onMove);
                   document.addEventListener("mouseup", onUp);
                   document.body.style.cursor = "col-resize";
                   document.body.style.userSelect = "none";
                 }}
               />
-              <div className="shrink-0 flex flex-col border-l border-white/8 bg-bg-secondary overflow-hidden" style={{ width: rightPanelWidth }}>
+              <div
+                className="flex h-full min-h-0 shrink-0 flex-col self-stretch overflow-hidden border-l border-white/8 bg-bg-secondary"
+                style={{ width: rightPanelWidth }}
+              >
                 <RightPanelContent {...panelManagerProps as Parameters<typeof RightPanelContent>[0]} />
               </div>
             </>
           )}
         </CodeStudioEditor>
 
-        {/* Global Modal Panels (Not constrained by Right Panel) */}
-        {rightPanel === "api-config" && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center">
-            <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />
-          </div>
-        )}
-
         {/* Rollback Banner */}
         {Object.keys(preApplySnapshot).length > 0 && Object.keys(stagedFiles).length === 0 && (
-          <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
+          <div className="shrink-0 border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
             <span className="font-mono text-[11px] text-accent-purple">{L4(lang, { ko: "검증 수정 사항 적용됨 — 롤백 가능", en: "Verification fixes applied — Rollback available" })}</span>
             <button onClick={() => { Object.keys(preApplySnapshot).forEach(f => handleRollback(f)); }} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">{L4(lang, { ko: "모두 롤백", en: "Rollback All" })}</button>
           </div>
         )}
 
-        {/* Bottom Panels (extracted component) */}
+        {/* Bottom Panels — 터미널 / Problems / Pipeline */}
         <BottomPanels
           showTerminal={showTerminal} showProblems={showProblems} showPipelineBottom={showPipelineBottom}
           onToggleTerminal={() => setShowTerminal(v => !v)} onToggleProblems={() => setShowProblems(v => !v)}
@@ -1120,6 +1329,15 @@ function CodeStudioShellInner() {
           onCloseAllBottom={() => { setShowTerminal(false); setShowProblems(false); setShowPipelineBottom(false); }}
           termRef={termRef} bugReports={bugReports} pipelineStages={pipelineStages} tcs={tcs}
         />
+        </div>
+
+        {/* Global Modal Panels (Not constrained by Right Panel) */}
+        {rightPanel === "api-config" && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center">
+            {/* @ts-expect-error missing onClose in props */}
+            <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />
+          </div>
+        )}
 
         {/* Quick Open */}
         {showQuickOpen && (

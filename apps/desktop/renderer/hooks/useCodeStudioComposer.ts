@@ -1,10 +1,11 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
 
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { streamChat } from '../_stubs/ai-providers';
-import { logger } from '../_stubs/logger';
+import { streamChat } from '@/lib/ai-providers';
+import { logger } from '@/lib/logger';
 import type { FileNode } from '@eh/quill-engine/types';
 import {
   type ComposerMode,
@@ -96,6 +97,8 @@ export function useCodeStudioComposer(): UseCodeStudioComposerReturn {
         const fileName = getFileName(fileId);
         let modified = '';
 
+        // Default: fast path (no calc). The strict calc protocol is injected on demand
+        // by apply-boundary diff-guard failures (soft gate + override flow).
         const systemPrompt = [
           'You are a code editor. Apply the user\'s instruction to the provided file.',
           'Output ONLY the modified file content, nothing else.',

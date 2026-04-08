@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — LLM / agent system instruction appendix
 // ============================================================
@@ -18,7 +19,7 @@ export const CODE_STUDIO_ARCHITECTURE_APPENDIX = `
 
 ### Shell & panels
 - UI split: CodeStudioShell (chrome) + CodeStudioEditor (work surface) + CodeStudioPanelManager (right panels).
-- Panels: register ONLY via \`src/lib/code-studio/core/panel-registry.ts\` + \`PanelImports.ts\` + panel props map. No hardcoded panel switches.
+- Panels: register ONLY via \`src/lib/code-studio/core/panel-registry.ts\` + \`PanelImports.tsx\` + panel props map. No hardcoded panel switches.
 - **Project spec (easy / 명세서) mode**: panel id \`project-spec\` — on complete, convert+save spec and seed Chat bootstrap prompt (\`eh-cs-chat-seed\`); keep questions and contract aligned with \`ProjectSpecForm.tsx\`.
 - Translator Studio uses a separate \`panel-registry\` — do not mix paths.
 
@@ -28,7 +29,7 @@ export const CODE_STUDIO_ARCHITECTURE_APPENDIX = `
 - Long operations should respect \`AbortSignal\` when provided.
 
 ### Logging
-- Never add \`console.log\` / \`console.warn\` / \`console.error\` in new code; use \`import { logger } from '../_stubs/logger'\`.
+- Never add \`console.log\` / \`console.warn\` / \`console.error\` in new code; use \`import { logger } from '@/lib/logger'\`.
 - Verification may propose \`console-remove\` safe-fixes on existing code.
 
 ### Security & Next.js

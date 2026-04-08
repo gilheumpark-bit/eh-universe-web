@@ -4,7 +4,7 @@
 
 // Note: logger is imported by design-lint. In test env it may not exist,
 // so we mock it to prevent import errors.
-jest.mock('@/lib/logger', () => ({
+jest.mock('../../_stubs/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
 

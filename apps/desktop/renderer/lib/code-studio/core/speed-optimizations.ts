@@ -1,10 +1,10 @@
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
+export function debounce<Args extends unknown[], R>(
+  func: (...args: Args) => R,
   wait: number
-): ((...args: Parameters<T>) => void) & { cancel: () => void } {
+): ((...args: Args) => void) & { cancel: () => void } {
   let timeoutId: NodeJS.Timeout | null = null;
   
-  const debounced = (...args: Parameters<T>) => {
+  const debounced = (...args: Args) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -24,12 +24,12 @@ export function debounce<T extends (...args: any[]) => any>(
   return debounced;
 }
 
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
+export function throttle<Args extends unknown[], R>(
+  func: (...args: Args) => R,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let inThrottle: boolean = false;
-  return (...args: Parameters<T>) => {
+  return (...args: Args) => {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
@@ -38,16 +38,16 @@ export function throttle<T extends (...args: any[]) => any>(
   };
 }
 
-export function memoize<T extends (...args: any[]) => any>(
-  func: T,
+export function memoize<Args extends unknown[], R>(
+  func: (...args: Args) => R,
   maxSize: number = 100
-): (...args: Parameters<T>) => ReturnType<T> {
-  const cache = new Map<string, ReturnType<T>>();
-  
-  return (...args: Parameters<T>): ReturnType<T> => {
+): (...args: Args) => R {
+  const cache = new Map<string, R>();
+
+  return (...args: Args): R => {
     const key = JSON.stringify(args);
     if (cache.has(key)) {
-      return cache.get(key) as ReturnType<T>;
+      return cache.get(key) as R;
     }
     
     if (cache.size >= maxSize) {

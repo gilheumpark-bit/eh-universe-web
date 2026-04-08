@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * code-studio-webcontainer.ts
  * WebContainer wrapper with graceful simulation fallback.

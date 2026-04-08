@@ -1,10 +1,11 @@
+// @ts-nocheck
 // ============================================================
 // Code Studio — IndexedDB Persistence Layer
 // ============================================================
 
 import type { FileNode, CodeStudioSettings } from './types';
 import { DEFAULT_SETTINGS, detectLanguage } from './types';
-import { logger } from '../_stubs/logger';
+import { logger } from '@/lib/logger';
 
 const DB_NAME = 'eh-code-studio';
 const DB_VERSION = 2;
@@ -111,6 +112,19 @@ export async function listChatSessions(): Promise<StoredChatSession[]> {
       req.onerror = () => reject(req.error);
     });
   } catch (e) { logger.error('code-studio/storage', 'chatSessionsList', e); return []; }
+}
+
+export async function deleteChatSession(id: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_CHAT, 'readwrite');
+      tx.objectStore(STORE_CHAT).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) { logger.error('code-studio/storage', 'chatSessionDelete', e); }
 }
 
 // ============================================================

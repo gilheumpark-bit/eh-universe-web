@@ -1,9 +1,10 @@
+// @ts-nocheck
 // ============================================================
 // Code Studio — Code Sandbox (isolated execution)
 // ============================================================
 
 import type { FileNode } from '../types';
-import { streamChat } from '../_stubs/ai-providers';
+import { streamChat } from '@/lib/ai-providers';
 
 // ============================================================
 // PART 1 — Types

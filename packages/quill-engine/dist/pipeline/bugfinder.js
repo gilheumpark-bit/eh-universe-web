@@ -98,6 +98,8 @@ export async function findBugs(code, language, fileName, signal) {
     if (!code.trim())
         return [];
     const provider = getActiveProvider();
+    if (!provider)
+        return [];
     const apiKey = getApiKey(provider);
     if (!apiKey)
         return [];

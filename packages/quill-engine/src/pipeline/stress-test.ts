@@ -191,7 +191,7 @@ export async function analyzeStress(
         content: `File: ${fileName}\nScenario: ${scenario.name} — ${scenario.description}\nVirtual Users: ${scenario.virtualUsers}, Duration: ${scenario.durationSec}s, Ramp-up: ${scenario.rampUpSec}s\n\n${metricsBlock}\n\nCode:\n\`\`\`\n${code.slice(0, 4000)}\n\`\`\``,
       },
     ],
-    onChunk: (t) => { raw += t; },
+    onChunk: (t: string) => { raw += t; },
     signal,
   });
 

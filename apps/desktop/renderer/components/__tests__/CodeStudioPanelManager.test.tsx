@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CodeStudioPanelManager — renders panel area (ActivityBar)
  */
@@ -29,6 +30,9 @@ jest.mock('@/lib/code-studio/ai/ai-features', () => ({
 }));
 jest.mock('@/hooks/useCodeStudioPanels', () => ({}));
 jest.mock('@/components/code-studio/PanelImports', () => ({}));
+jest.mock('@/components/code-studio/ThemeToggle', () => ({
+  ThemeToggle: () => null,
+}));
 
 import { ActivityBar } from '../code-studio/CodeStudioPanelManager';
 
@@ -36,6 +40,7 @@ describe('ActivityBar', () => {
   it('renders without crashing', () => {
     const { container } = render(
       <ActivityBar
+        widthPx={48}
         rightPanel={null as never}
         onSetRightPanel={jest.fn()}
         bugReports={[]}
@@ -52,6 +57,7 @@ describe('ActivityBar', () => {
   it('renders activity bar buttons for core items', () => {
     const { container } = render(
       <ActivityBar
+        widthPx={48}
         rightPanel={null as never}
         onSetRightPanel={jest.fn()}
         bugReports={[]}

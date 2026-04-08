@@ -70,7 +70,6 @@ dmg:
       path: /Applications
 
 win:
-  publisherName: EH Universe
   target:
     - target: nsis
       arch: [x64, arm64]
@@ -84,6 +83,7 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
+  runAfterFinish: false
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: EH Code Studio
@@ -91,9 +91,10 @@ nsis:
 linux:
   category: Development
   desktop:
-    Name: EH Code Studio
-    Comment: Verified Coding Studio
-    Categories: Development;IDE;
+    entry:
+      Name: EH Code Studio
+      Comment: Verified Coding Studio
+      Categories: Development;IDE;
   target:
     - target: AppImage
       arch: [x64, arm64]
@@ -121,3 +122,4 @@ forceCodeSigning: false
 removePackageScripts: true
 buildDependenciesFromSource: false
 nodeGypRebuild: false
+npmRebuild: false

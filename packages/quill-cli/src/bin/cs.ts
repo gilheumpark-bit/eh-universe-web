@@ -240,6 +240,7 @@ program
   .command('apply [file]')
   .description('수정본 → 원본 적용')
   .option('--all', '전체 적용')
+  .option('--override', 'diff-guard 위반 무시하고 강제 적용')
   .action(async (file, opts) => {
     const { runApply } = require('../commands/apply');
     await runApply(file, opts);

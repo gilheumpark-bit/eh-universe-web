@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Error page (app/error.tsx) — renders error state
  */

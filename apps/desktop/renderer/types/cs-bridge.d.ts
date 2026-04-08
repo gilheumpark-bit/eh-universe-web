@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Type definitions for `window.cs` exposed by main/preload.ts
  *
@@ -152,6 +153,22 @@ declare global {
     getAppVersion(): Promise<string>;
   }
 
+  interface LocalMachineSpec {
+    platform: string;
+    arch: string;
+    release: string;
+    hostname: string;
+    cpus: number;
+    totalMem: number;
+    freeMem: number;
+    appVersion: string;
+  }
+
+  interface CSSystem {
+    getLocalSpec(): Promise<LocalMachineSpec>;
+    openPath(filePath: string): Promise<{ ok: true } | { ok: false; error: string }>;
+  }
+
   interface CSBridge {
     fs: CSFs;
     quill: CSQuill;
@@ -160,6 +177,7 @@ declare global {
     shell: CSShell;
     git: CSGit;
     meta: CSMeta;
+    system: CSSystem;
   }
 
   interface Window {

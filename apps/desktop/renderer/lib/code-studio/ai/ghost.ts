@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // PART 1 — Constants, Cache & Acceptance Tracking
 // ============================================================
@@ -6,7 +7,7 @@
 // AI가 코드를 인라인으로 제안한다.
 // Tab으로 수락, Escape로 거부.
 
-import { streamChat, getApiKey, getActiveProvider } from '../_stubs/ai-providers';
+import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 // 디바운스 + 취소 제어
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;

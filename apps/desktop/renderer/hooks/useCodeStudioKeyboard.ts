@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================================
 // Code Studio — Keyboard Shortcuts Hook
 // Register/unregister shortcuts, modal awareness

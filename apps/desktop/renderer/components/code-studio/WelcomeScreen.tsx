@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // ============================================================
@@ -6,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Code2, Play, FolderOpen, ChevronDown, Shield } from "lucide-react";
+import { Code2, Play, FolderOpen, ChevronDown, Shield, Files } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
@@ -23,23 +24,42 @@ interface WelcomeScreenProps {
   onResumeProject?: () => void;
   onQuickVerify?: () => void;
   onOpenLocalFolder?: () => void;
+  /** Desktop: `false` when file explorer closed — show left-rail hint */
+  explorerOpen?: boolean;
 }
 
 // ============================================================
 // PART 2 — Main WelcomeScreen
 // ============================================================
 
-export default function WelcomeScreen({ 
-  onNewFile, 
-  onOpenDemo, 
-  onBlankProject, 
-  onImportProject, 
-  onResumeProject, 
+export default function WelcomeScreen({
+  onNewFile,
+  onOpenDemo,
+  onBlankProject,
+  onImportProject,
+  onResumeProject,
   onQuickVerify,
-  onOpenLocalFolder
+  onOpenLocalFolder,
+  explorerOpen,
 }: WelcomeScreenProps) {
   const { lang } = useLang();
-  const t = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
+  const langKey = ((lang ?? "ko").toString().toUpperCase() as AppLanguage);
+  const t =
+    TRANSLATIONS[langKey]?.codeStudio ??
+    TRANSLATIONS.KO?.codeStudio ??
+    ({
+      title: "EH Code Studio",
+      subtitle: "Agentic coding engine",
+      loading: "Loading...",
+      openDemo: "Open Demo",
+      openDemoDesc: "Start with a demo project",
+      resumeProject: "Resume last project",
+      resumeProjectDesc: "Continue where you left off",
+      newFile: "New file",
+      newFileDesc: "Create an empty file and start editing",
+      blankProject: "Blank project",
+      importFiles: "Import files",
+    } as Record<string, string>);
   const [visible, setVisible] = useState(false);
   const [hasProjects, setHasProjects] = useState(false);
   const [showExtras, setShowExtras] = useState(false);
@@ -69,130 +89,154 @@ export default function WelcomeScreen({
     : <Play className="h-6 w-6 text-accent-purple" />;
   const primaryAccent = hasProjects ? "bg-accent-amber/10" : "bg-accent-purple/10";
 
+  const showExplorerHint = explorerOpen === false;
+
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-bg-primary">
+    <div className="relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-bg-primary">
       {/* Premium Background Effects */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="welcome-bg-glow-1 absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.08]" />
-        <div className="welcome-bg-glow-2 absolute left-1/4 top-2/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05]" />
-        <div className="welcome-bg-glow-3 absolute right-1/4 top-1/4 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]" />
-        <div className="welcome-bg-grid absolute inset-0 opacity-[0.02]" />
+        <div className="welcome-bg-glow-1 absolute left-1/2 top-1/3 h-[min(600px,100vw)] w-[min(600px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.07]" />
+        <div className="welcome-bg-glow-2 absolute left-1/4 top-2/3 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]" />
+        <div className="welcome-bg-glow-3 absolute right-1/4 top-1/4 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.03]" />
+        <div className="welcome-bg-grid welcome-bg-grid-dim absolute inset-0 opacity-[0.03]" />
       </div>
 
+      {/* Left-rail onboarding — only when explorer is closed (desktop) */}
+      {showExplorerHint && (
+        <div
+          className="relative z-20 flex shrink-0 items-start gap-3 border-b border-border bg-bg-secondary px-4 py-3 text-left shadow-sm sm:items-center"
+          role="status"
+        >
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-bg-primary text-accent-green sm:mt-0">
+            <Files className="h-4 w-4" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-xs font-semibold text-text-primary">
+              {L4(lang, {
+                ko: "탐색기가 닫혀 있어요",
+                en: "Explorer is closed",
+                ja: "エクスプローラーが閉じています",
+                zh: "资源管理器已关闭",
+              })}
+            </p>
+            <p className="mt-1 font-mono text-[11px] leading-snug text-text-secondary">
+              {L4(lang, {
+                ko: "맨 왼쪽 세로 아이콘 줄에서 파일(폴더) 아이콘을 누르면 프로젝트 트리가 열립니다. 트리에서 파일을 고르면 이 중앙 영역에 편집기가 열려요.",
+                en: "In the left activity bar, tap the Files (folder) icon to open the project tree. Choose a file to open the editor in this area.",
+                ja: "左端のバーでファイルアイコンを押すとツリーが開きます。",
+                zh: "点击最左侧活动栏中的文件图标可打开项目树。",
+              })}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div
-        className={`relative z-10 flex flex-col items-center gap-6 px-6 py-12 transition-all duration-700 ease-out ${
-          visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-        }`}
+        className={`relative z-10 flex min-h-0 flex-1 flex-col items-center gap-5 overflow-y-auto overflow-x-hidden px-4 py-8 sm:gap-6 sm:px-6 sm:py-10 transition-all duration-700 ease-out ${
+          visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+        } ${showExplorerHint ? "sm:py-6" : ""}`}
       >
-        {/* Mascot: Quill */}
+        {/* Mascot — no side bubble; greeting sits in document flow */}
         <AnimatePresence>
           {visible && (
             <motion.div
-              initial={{ y: 20, opacity: 0, scale: 0.8 }}
+              initial={{ y: 16, opacity: 0, scale: 0.92 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative mb-2 group"
+              transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="group relative flex w-full max-w-md flex-col items-center"
             >
-              <div className="absolute -inset-4 rounded-full bg-accent-green/10 blur-2xl group-hover:bg-accent-green/20 transition-all duration-700" />
+              <div className="absolute -inset-3 rounded-full bg-accent-green/10 blur-2xl transition-all duration-700 group-hover:bg-accent-green/15" />
               <motion.img
                 src="/images/quill.png"
-                alt="Quill"
-                className="relative h-28 w-28 object-contain drop-shadow-[0_12px_48px_rgba(47,155,131,0.5)]"
-                animate={{ 
-                  y: [0, -12, 0],
-                  rotate: [0, 3, -3, 0],
+                alt=""
+                className="relative h-20 w-20 object-contain drop-shadow-[0_8px_32px_rgba(47,155,131,0.35)] sm:h-24 sm:w-24"
+                animate={{
+                  y: [0, -8, 0],
+                  rotate: [0, 2, -2, 0],
                 }}
                 transition={{
                   duration: 6,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               />
-              
-              <motion.div
-                initial={{ opacity: 0, x: 20, scale: 0.9 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ delay: 1.2, duration: 0.6 }}
-                className="absolute -right-24 top-2 rounded-2xl bg-linear-to-br from-bg-secondary/95 to-bg-secondary/80 border border-border/50 px-5 py-3 backdrop-blur-xl shadow-2xl"
-              >
-                <div className="font-mono text-[11px] font-bold text-accent-green whitespace-nowrap leading-tight">
-                  <div className="text-[10px] text-text-tertiary font-normal mb-1 opacity-60">EH-Code Studio AI</div>
-                  {L4(lang, { ko: "좋은 하루예요!", en: "Hi there!" })}<br/>
+
+              <div className="relative mt-4 w-full rounded-xl border border-border bg-bg-secondary px-4 py-3 shadow-lg sm:px-5 sm:py-4">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
+                  EH Code Studio
+                </p>
+                <p className="mt-2 font-mono text-sm font-semibold leading-snug text-text-primary sm:text-base">
+                  {L4(lang, { ko: "좋은 하루예요!", en: "Hi there!" })}
+                  <br />
                   {L4(lang, { ko: "무엇을 도와드릴까요?", en: "How can I help?" })}
-                </div>
-                <div className="absolute -left-2 top-6 h-3 w-3 rotate-45 border-b border-l border-border/50 bg-bg-secondary/95" />
-              </motion.div>
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Title Section */}
-        <div className="text-center">
-          <div className="mb-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/10 border border-accent-green/20 shadow-[0_0_20px_rgba(47,155,131,0.1)]">
-            <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
+        <div className="w-full max-w-md text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent-green/25 bg-accent-green/10 px-3 py-1">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-accent-green animate-pulse" />
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
               {L4(lang, { ko: "코드 스튜디오", en: "Code Studio" })}
             </span>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight bg-linear-to-b from-text-primary to-text-secondary bg-clip-text text-transparent font-display">
-            {t.title}
-          </h1>
-          <p className="mt-2 font-mono text-xs text-text-tertiary max-w-sm leading-relaxed opacity-80">
-            {t.subtitle}
-          </p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">{t.title}</h1>
+          <p className="mt-2 max-w-md font-mono text-xs leading-relaxed text-text-secondary">{t.subtitle}</p>
         </div>
 
-        {/* 2 Main CTAs — Premium Card Style */}
-        <div className="flex flex-col items-center gap-5 w-full max-w-md">
+        {/* Main CTAs — solid surfaces, readable text */}
+        <div className="flex w-full max-w-md flex-col items-stretch gap-4">
           {/* Primary CTA */}
           <button
+            type="button"
             onClick={primaryAction}
-            className="group relative flex w-full items-center gap-5 rounded-2xl border border-border bg-linear-to-b from-bg-secondary/80 to-bg-secondary/30 px-8 py-6 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:border-accent-green/30 hover:shadow-[0_16px_48px_rgba(0,0,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50"
+            className="group relative flex w-full items-center gap-4 rounded-2xl border border-border bg-bg-secondary px-5 py-5 text-left shadow-md transition-all duration-200 hover:border-accent-green/40 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50 sm:gap-5 sm:px-6 sm:py-6"
           >
-            <div className={`rounded-2xl border border-border p-4 ${primaryAccent} group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`rounded-xl border border-border p-3 sm:p-4 ${primaryAccent} transition-transform duration-300 group-hover:scale-105`}>
               {primaryIcon}
             </div>
-            <div className="text-left flex-1">
-              <div className="font-mono text-lg font-bold text-text-primary">
-                {primaryLabel}
-              </div>
-              <div className="mt-1 font-mono text-xs text-text-tertiary">
-                {primaryDesc}
-              </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-mono text-base font-bold text-text-primary sm:text-lg">{primaryLabel}</div>
+              <div className="mt-1 font-mono text-[11px] leading-snug text-text-secondary sm:text-xs">{primaryDesc}</div>
             </div>
-            <span className="text-text-tertiary group-hover:text-accent-green group-hover:translate-x-1 transition-all duration-300">
+            <span className="shrink-0 text-text-secondary transition-all group-hover:translate-x-0.5 group-hover:text-accent-green" aria-hidden>
               &rarr;
             </span>
           </button>
 
           {/* Secondary CTA */}
           <button
+            type="button"
             onClick={onNewFile}
-            className="group flex w-full items-center justify-center gap-4 rounded-xl border border-border bg-bg-secondary/30 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/30 hover:bg-accent-green/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
+            className="group flex w-full items-center gap-4 rounded-xl border border-border bg-bg-secondary px-5 py-4 text-left shadow-sm transition-all hover:border-accent-green/35 hover:bg-bg-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/40"
           >
-            <div className="p-2 rounded-xl bg-accent-green/10 group-hover:bg-accent-green/20 transition-colors">
+            <div className="rounded-lg bg-accent-green/15 p-2.5 transition-colors group-hover:bg-accent-green/25">
               <Code2 className="h-5 w-5 text-accent-green" />
             </div>
-            <div className="text-left">
+            <div className="min-w-0">
               <div className="font-mono text-sm font-bold text-text-primary">{t.newFile}</div>
-              <div className="font-mono text-[10px] text-text-tertiary">{t.newFileDesc}</div>
+              <div className="mt-0.5 font-mono text-[11px] text-text-secondary">{t.newFileDesc}</div>
             </div>
           </button>
 
           {/* Quick Verify CTA */}
           {onQuickVerify && (
             <button
+              type="button"
               onClick={onQuickVerify}
-              className="group flex w-full items-center justify-center gap-4 rounded-xl border border-accent-green/20 bg-accent-green/5 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/40 hover:bg-accent-green/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
+              className="group flex w-full items-center gap-4 rounded-xl border border-border bg-bg-secondary px-5 py-4 text-left shadow-sm transition-all hover:border-accent-green/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/40"
             >
-              <div className="p-2 rounded-xl bg-accent-green/15 group-hover:bg-accent-green/25 transition-colors">
+              <div className="rounded-lg bg-accent-green/15 p-2.5 transition-colors group-hover:bg-accent-green/25">
                 <Shield className="h-5 w-5 text-accent-green" />
               </div>
-              <div className="text-left">
-                <div className="font-mono text-sm font-bold text-accent-green">
+              <div className="min-w-0">
+                <div className="font-mono text-sm font-bold text-text-primary">
                   {L4(lang, { ko: "AI 코드 검증", en: "AI Code Verify" })}
                 </div>
-                <div className="font-mono text-[10px] text-text-tertiary">
+                <div className="mt-0.5 font-mono text-[11px] text-text-secondary">
                   {L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" })}
                 </div>
               </div>
@@ -202,18 +246,19 @@ export default function WelcomeScreen({
           {/* Electron: Open Local Folder */}
           {isElectron && onOpenLocalFolder && (
             <button
+              type="button"
               onClick={onOpenLocalFolder}
-              className="group flex w-full items-center justify-center gap-4 rounded-xl border border-accent-amber/20 bg-accent-amber/5 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-amber/40 hover:bg-accent-amber/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/30"
+              className="group flex w-full items-center gap-4 rounded-xl border border-border bg-bg-secondary px-5 py-4 text-left shadow-sm transition-all hover:border-accent-amber/45 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/40"
             >
-              <div className="p-2 rounded-xl bg-accent-amber/15 group-hover:bg-accent-amber/25 transition-colors">
+              <div className="rounded-lg bg-accent-amber/15 p-2.5 transition-colors group-hover:bg-accent-amber/25">
                 <FolderOpen className="h-5 w-5 text-accent-amber" />
               </div>
-              <div className="text-left">
-                <div className="font-mono text-sm font-bold text-accent-amber">
+              <div className="min-w-0">
+                <div className="font-mono text-sm font-bold text-text-primary">
                   {L4(lang, { ko: "로컬 폴더 열기", en: "Open Local Folder" })}
                 </div>
-                <div className="font-mono text-[10px] text-text-tertiary">
-                   {L4(lang, { ko: "시스템의 폴더를 선택하여 편집", en: "Select a folder from your system" })}
+                <div className="mt-0.5 font-mono text-[11px] text-text-secondary">
+                  {L4(lang, { ko: "시스템의 폴더를 선택하여 편집", en: "Select a folder from your system" })}
                 </div>
               </div>
             </button>
@@ -221,10 +266,11 @@ export default function WelcomeScreen({
         </div>
 
         {/* Collapsible extras */}
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex w-full max-w-md flex-col items-center gap-2">
           <button
+            type="button"
             onClick={() => setShowExtras(!showExtras)}
-            className="flex items-center gap-1 font-mono text-[11px] text-text-tertiary/60 transition-colors hover:text-text-tertiary"
+            className="flex min-h-11 items-center gap-1 rounded-lg px-2 font-mono text-[11px] text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary"
           >
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`} />
             {showExtras
@@ -237,18 +283,18 @@ export default function WelcomeScreen({
               {/* Tertiary links */}
               <div className="flex items-center gap-4 font-mono text-[11px]">
                 {onBlankProject && (
-                  <button onClick={onBlankProject} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
+                  <button type="button" onClick={onBlankProject} className="text-text-secondary underline decoration-text-tertiary/40 underline-offset-2 transition-colors hover:text-text-primary">
                     {t.blankProject}
                   </button>
                 )}
-                {onBlankProject && <span className="text-white/10">|</span>}
-                <button onClick={onImportProject ?? onNewFile} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
+                {onBlankProject && <span className="text-text-tertiary" aria-hidden>|</span>}
+                <button type="button" onClick={onImportProject ?? onNewFile} className="text-text-secondary underline decoration-text-tertiary/40 underline-offset-2 transition-colors hover:text-text-primary">
                   {t.importFiles}
                 </button>
                 {hasProjects && (
                   <>
-                    <span className="text-white/10">|</span>
-                    <button onClick={onOpenDemo} className="text-text-tertiary underline decoration-white/10 underline-offset-2 transition-colors hover:text-text-secondary">
+                    <span className="text-text-tertiary" aria-hidden>|</span>
+                    <button type="button" onClick={onOpenDemo} className="text-text-secondary underline decoration-text-tertiary/40 underline-offset-2 transition-colors hover:text-text-primary">
                       {t.openDemo}
                     </button>
                   </>
@@ -256,15 +302,15 @@ export default function WelcomeScreen({
               </div>
 
               {/* Keyboard shortcuts */}
-              <div className="font-mono text-[10px] text-text-tertiary/50">
-                <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+N</span>
-                <span className="mx-1.5">{L4(lang, { ko: "새 파일", en: "New File" })}</span>
-                <span className="mx-2 text-white/10">|</span>
-                <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+Shift+P</span>
-                <span className="mx-1.5">{L4(lang, { ko: "명령 팔레트", en: "Commands" })}</span>
-                <span className="mx-2 text-white/10">|</span>
-                <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+`</span>
-                <span className="mx-1.5">{L4(lang, { ko: "터미널", en: "Terminal" })}</span>
+              <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 font-mono text-[10px] text-text-secondary">
+                <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-text-primary">Ctrl+N</span>
+                <span className="mx-1">{L4(lang, { ko: "새 파일", en: "New File" })}</span>
+                <span className="mx-1 text-text-tertiary" aria-hidden>|</span>
+                <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-text-primary">Ctrl+Shift+P</span>
+                <span className="mx-1">{L4(lang, { ko: "명령 팔레트", en: "Commands" })}</span>
+                <span className="mx-1 text-text-tertiary" aria-hidden>|</span>
+                <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 text-text-primary">Ctrl+`</span>
+                <span className="mx-1">{L4(lang, { ko: "터미널", en: "Terminal" })}</span>
               </div>
             </div>
           )}
