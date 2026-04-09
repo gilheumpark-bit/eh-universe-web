@@ -70,6 +70,7 @@ import {
 } from "@/lib/code-studio/features/terminal-emulator";
 import { streamChat, getApiKey, getActiveProvider } from "@/lib/ai-providers";
 import type { FileNode } from "@eh/quill-engine/types";
+import { NativeTerminal } from "./NativeTerminal";
 
 export interface TerminalPanelProps {
   files?: FileNode[];
@@ -179,7 +180,15 @@ async function analyzeErrorWithAI(
 // PART 4 — Component
 // ============================================================
 
-export function TerminalPanel({
+export function TerminalPanel(props: TerminalPanelProps) {
+  const [isDesktopShell] = useState(() => typeof window !== "undefined" && !!window.cs?.shell);
+  if (isDesktopShell) {
+    return <NativeTerminal />;
+  }
+  return <TerminalPanelEmulated {...props} />;
+}
+
+function TerminalPanelEmulated({
   files = [],
   onRunPipeline,
   onAskAI,

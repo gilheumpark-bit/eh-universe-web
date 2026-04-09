@@ -4,6 +4,7 @@
 
 export interface ICoreRequest {
   type: 'INDEX_FILE' | 'SEARCH_CONTEXT' | 'CLEAR_INDEX';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
   reqId?: number;
 }
