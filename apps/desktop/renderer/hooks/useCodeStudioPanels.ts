@@ -345,7 +345,7 @@ function executeLocalQuery(query: string): QueryResult {
 // ============================================================
 
 /** Aggregate state hook for Code Studio auxiliary panels: recent files, symbols, canvas, AI hub/workspace, DB, merge conflicts */
-export function useCodeStudioPanels({ files, activeFileContent, activeFileName, activeFileLanguage }: UseCodeStudioPanelsOptions) {
+export function useCodeStudioPanels({ files, activeFileContent, activeFileName, activeFileLanguage: _activeFileLanguage }: UseCodeStudioPanelsOptions) {
   // ── Recent Files ──────────────────────────────────────────
   const [recentFiles, setRecentFiles] = useState<RecentFileEntry[]>([]);
 

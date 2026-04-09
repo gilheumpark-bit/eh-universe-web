@@ -2,21 +2,28 @@
  * 액티비티 바 핵심 아이콘 순서 — localStorage 영속화 및 마이그레이션
  */
 
-const STORAGE_KEY = "eh-code-studio-activity-bar-order-v2";
+const STORAGE_KEY = "eh-code-studio-activity-bar-order-v3";
 
 export const ACTIVITY_BAR_DEFAULT_ORDER = [
+  // 1. Core IDE (코드 내비게이션 / 버전관리)
   "files",
-  "chat",
-  "action-demo",
-  "action-new-file",
-  "project-spec",
-  "pipeline",
   "search",
   "git",
-  "review",
+
+  // 2. AI Studio (코드 생성 / 수정 / 시각적 캔버스)
+  "chat",
   "composer",
   "canvas",
+  
+  // 3. Validation & Result (파이프라인 검증 / 라이브 뷰)
+  "pipeline",
+  "review",
   "preview",
+
+  // 4. Misc & Actions (기타 설정 및 퀵 액션)
+  "project-spec",
+  "action-new-file",
+  "action-demo",
 ] as const;
 
 export type ActivityBarItemId = (typeof ACTIVITY_BAR_DEFAULT_ORDER)[number];

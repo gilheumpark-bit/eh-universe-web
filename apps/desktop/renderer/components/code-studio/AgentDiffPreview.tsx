@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 // ============================================================
@@ -85,12 +84,12 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
 
   return (
     <div
-      className="fixed inset-0 z-300 flex bg-black/60"
+      className="fixed inset-0 z-[300] flex bg-bg-primary/30 backdrop-blur-sm"
       onKeyDown={handleKeyDown} tabIndex={0}
-      style={{ animation: "fadeIn 0.15s ease-out" }}
+      style={{ animation: "fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)" }}
     >
-      <div className="flex flex-col w-full max-w-[1200px] mx-auto my-4 bg-bg-primary rounded-xl shadow-2xl overflow-hidden border border-border"
-        style={{ animation: "slideIn 0.2s ease-out" }}>
+      <div className="flex flex-col w-full max-w-[1200px] mx-auto my-6 bg-bg-primary/90 backdrop-blur-3xl rounded-2xl shadow-2xl overflow-hidden border border-border/40"
+        style={{ animation: "slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary">
           <div className="flex items-center gap-3">
@@ -125,19 +124,19 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
           </span>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden min-h-[400px]">
           {/* File list sidebar */}
-          <div className="w-56 border-r border-border overflow-y-auto bg-bg-secondary">
+          <div className="w-64 border-r border-border/40 overflow-y-auto bg-bg-secondary/10 p-2 space-y-0.5">
             {changes.map((change, idx) => {
               const decision = decisions.get(change.filePath) ?? "pending";
               const isSelected = idx === selectedIndex;
               return (
                 <button key={change.filePath} onClick={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-bg-tertiary/50 transition-colors ${
-                    isSelected ? "bg-bg-tertiary/50 border-l-2 border-accent-amber" : ""
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left rounded-lg transition-all duration-200 ${
+                    isSelected ? "bg-bg-tertiary/70 shadow-sm" : "hover:bg-bg-tertiary/40"
                   }`}>
                   <StatusIcon status={change.status} />
-                  <span className="flex-1 truncate">{change.filePath}</span>
+                  <span className={`flex-1 truncate ${isSelected ? "font-medium" : "text-text-secondary"}`}>{change.filePath}</span>
                   <DecisionBadge decision={decision} />
                 </button>
               );
@@ -178,17 +177,17 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
                   )}
                 </div>
 
-                <div className="flex items-center justify-between px-4 py-2 border-t border-border">
+                <div className="flex items-center justify-between px-5 py-3 border-t border-border/40 bg-bg-secondary/40">
                   <button onClick={handlePrev} disabled={selectedIndex === 0}
-                    className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors">
-                    <ChevronLeft size={12} /> {L4(lang, { ko: "이전", en: "Previous" })}
+                    className="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all font-medium py-1">
+                    <ChevronLeft size={14} /> {L4(lang, { ko: "이전 파일", en: "Previous" })}
                   </button>
-                  <span className="text-[10px] text-text-tertiary">
+                  <span className="text-[10px] text-text-tertiary font-mono tracking-tight bg-bg-tertiary/30 px-3 py-1 rounded-full">
                     {L4(lang, { ko: `${selectedIndex + 1} / ${changes.length} (Tab: 다음, Enter: 수락, Esc: 닫기)`, en: `${selectedIndex + 1} / ${changes.length} (Tab: next, Enter: accept, Esc: close)` })}
                   </span>
                   <button onClick={handleNext} disabled={selectedIndex === changes.length - 1}
-                    className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors">
-                    {L4(lang, { ko: "다음", en: "Next" })} <ChevronRight size={12} />
+                    className="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all font-medium py-1">
+                    {L4(lang, { ko: "다음 파일", en: "Next" })} <ChevronRight size={14} />
                   </button>
                 </div>
               </>
@@ -199,13 +198,13 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-border bg-bg-secondary">
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border/40 bg-bg-secondary/60 backdrop-blur-xl">
           <button onClick={handleRejectAll}
-            className="px-4 py-2 text-xs rounded-lg border border-border hover:bg-bg-tertiary/50 transition-colors">
-            {L4(lang, { ko: "취소", en: "Cancel" })}
+            className="px-5 py-2 text-[11px] font-medium rounded-lg border border-border/60 text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-all shadow-sm">
+            {L4(lang, { ko: "전체 취소", en: "Cancel" })}
           </button>
           <button onClick={handleApplyDecisions}
-            className="px-4 py-2 text-xs bg-accent-amber text-stone-100 rounded-lg hover:bg-accent-amber/80 transition-colors">
+            className="px-6 py-2 text-[11px] font-semibold bg-accent-amber text-stone-950 rounded-lg hover:bg-accent-amber/90 transition-all shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
             {L4(lang, { ko: `선택 적용 (${acceptedCount} 수락됨)`, en: `Apply Selection (${acceptedCount} accepted)` })}
           </button>
         </div>
@@ -273,18 +272,24 @@ function InlineDiffView({ original, modified }: { original: string; modified: st
   }
 
   return (
-    <div>
+    <div className="rounded-xl border border-border/30 overflow-hidden bg-bg-primary/20">
       {rows.map((row, i) => (
-        <div key={i} className={`flex leading-5 ${
-          row.type === "add" ? "bg-green-900/15" : row.type === "remove" ? "bg-red-900/15" : ""
+        <div key={i} className={`flex transition-colors ${
+          row.type === "add" ? "bg-green-500/10 hover:bg-green-500/20" : 
+          row.type === "remove" ? "bg-red-500/10 hover:bg-red-500/20" : 
+          "hover:bg-bg-tertiary/30"
         }`}>
-          <span className="w-4 text-center shrink-0 text-text-tertiary select-none">
-            {row.type === "add" ? "+" : row.type === "remove" ? "-" : " "}
-          </span>
-          <span className="w-10 text-right pr-2 shrink-0 text-text-tertiary select-none opacity-50">{row.num}</span>
-          <span className={
-            row.type === "add" ? "text-green-400" : row.type === "remove" ? "text-red-400" : "text-text-primary"
-          }>{row.line}</span>
+          <div className={`w-6 text-center shrink-0 border-r border-border/10 flex items-center justify-center font-bold text-[10px] ${
+            row.type === "add" ? "text-green-500" : row.type === "remove" ? "text-red-500" : "text-text-tertiary/30"
+          }`}>
+            {row.type === "add" ? "+" : row.type === "remove" ? "-" : ""}
+          </div>
+          <div className="w-10 text-right pr-3 shrink-0 text-text-tertiary/50 bg-bg-secondary/20 flex items-center justify-end border-r border-border/10 select-none">
+            {row.num}
+          </div>
+          <div className={`pl-3 py-[2px] ${
+            row.type === "add" ? "text-green-400" : row.type === "remove" ? "text-red-400" : "text-text-primary/90"
+          }`}>{row.line || " "}</div>
         </div>
       ))}
     </div>

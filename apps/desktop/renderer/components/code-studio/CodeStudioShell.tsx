@@ -440,7 +440,7 @@ function CodeStudioShellInner() {
       }, description: "Save File" },
       { keys: "ctrl+shift+f", handler: () => setRightPanel(v => v === "search" ? null : "search"), description: "Search in Files" },
       { keys: "ctrl+`", handler: () => setShowTerminal(v => !v), description: "Toggle Terminal" },
-      { keys: "ctrl+n", handler: () => setShowNewFile(true), description: "New File" },
+      { keys: "alt+n", handler: () => setShowNewFile(true), description: "New File" },
       { keys: "ctrl+=", handler: () => setSettings(s => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })), description: "Zoom In" },
       { keys: "ctrl+-", handler: () => setSettings(s => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })), description: "Zoom Out" },
     ],
@@ -540,9 +540,9 @@ function CodeStudioShellInner() {
       if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })); }
       if (mod && e.key === "-") { e.preventDefault(); setSettings((s) => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })); }
       if (mod && e.key === "`") { e.preventDefault(); setShowTerminal((v) => !v); }
-      if (mod && e.key === "n" && !e.shiftKey) { e.preventDefault(); setShowNewFile(true); }
+      if (e.altKey && e.key === "n" && !e.shiftKey) { e.preventDefault(); setShowNewFile(true); }
       if (e.key === "?" && !mod && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) { setShowShortcuts((v) => !v); }
-      if (mod && e.key === "w") {
+      if (e.altKey && e.key === "w") {
         e.preventDefault();
         if (activeFileId) {
           const af = openFiles.find((f) => f.id === activeFileId);
@@ -1331,7 +1331,12 @@ function CodeStudioShellInner() {
 
         {/* Global Modal Panels (Not constrained by Right Panel) */}
         {rightPanel === "api-config" && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center">
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={(e) => { if (e.target === e.currentTarget) setRightPanel(null); }}
+            role="dialog"
+            aria-modal="true"
+          >
             {/* @ts-expect-error missing onClose in props */}
             <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />
           </div>
@@ -1339,7 +1344,12 @@ function CodeStudioShellInner() {
 
         {/* Settings Modal */}
         {showSettings && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowSettings(false); }}
+            role="dialog"
+            aria-modal="true"
+          >
             <PI.SettingsPanelComponent
               settings={settings}
               onChange={setSettings}

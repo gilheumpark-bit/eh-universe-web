@@ -126,7 +126,7 @@ describe('useCodeStudioComposer', () => {
     });
 
     const { get, cleanup } = createHarness();
-    const getContent = (id: string) => 'original content';
+    const getContent = (_id: string) => 'original content';
     const getFileName = (id: string) => `${id}.ts`;
 
     await act(async () => {

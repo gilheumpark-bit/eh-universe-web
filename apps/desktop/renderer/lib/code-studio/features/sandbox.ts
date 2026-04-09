@@ -158,9 +158,9 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
       document.body.removeChild(iframe);
       // RESIDUAL CLEANUP (잔향 소거): 강제 GC 지시 - 외주 AI의 메모리 누수나 무한참조 파괴
       if (typeof global !== 'undefined' && (global as unknown).gc) {
-        try { (global as unknown).gc(); } catch (e) { /* ignore */ }
+        try { (global as unknown).gc(); } catch (_e) { /* ignore */ }
       } else if (typeof window !== 'undefined' && (window as unknown).gc) {
-        try { (window as unknown).gc(); } catch (e) { /* ignore */ }
+        try { (window as unknown).gc(); } catch (_e) { /* ignore */ }
       }
     }
 

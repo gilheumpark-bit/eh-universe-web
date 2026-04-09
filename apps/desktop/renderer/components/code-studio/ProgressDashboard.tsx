@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   X, Activity, FileText, Brain, TrendingUp,
   Clock, BarChart3, Zap, Trophy, AlertTriangle,
-  Loader2, Gauge,
+  Loader2, Gauge, CheckCircle, XCircle
 } from "lucide-react";
 import type { StressReport } from "@eh/quill-engine/pipeline/stress-test";
 import type { VerificationResult } from "@eh/quill-engine/pipeline/verification-loop";
@@ -97,14 +97,15 @@ function TeamProgressBar({ team }: { team: TeamProgress }) {
     "#8b949e";
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-20 text-[10px] text-text-tertiary truncate">{team.name}</span>
-      <div className="flex-1 h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-300" style={{
+    <div className="flex items-center gap-3">
+      <span className="w-24 text-[10px] font-medium text-text-secondary truncate">{team.name}</span>
+      <div className="flex-1 h-2 rounded-full bg-bg-tertiary/50 overflow-hidden shadow-inner">
+        <div className="h-full rounded-full transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]" style={{
           width: `${Math.max(team.progress, 2)}%`, backgroundColor: barColor,
+          boxShadow: team.status === "running" ? "0 0 8px rgba(88,166,255,0.5)" : "none"
         }} />
       </div>
-      <span className="w-10 text-right text-[10px] text-text-tertiary">
+      <span className="w-12 text-right text-[10px] font-mono text-text-tertiary/80">
         {team.status === "done" && team.score != null ? `${team.score}` : team.status === "running" ? `${team.progress}%` : "-"}
       </span>
     </div>
@@ -113,20 +114,20 @@ function TeamProgressBar({ team }: { team: TeamProgress }) {
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center p-2 rounded-lg bg-bg-tertiary">
-      <span className="text-text-tertiary mb-1">{icon}</span>
-      <span className="text-sm font-bold text-text-primary">{value}</span>
-      <span className="text-[10px] text-text-tertiary">{label}</span>
+    <div className="flex flex-col items-center p-3 rounded-xl bg-bg-tertiary/30 border border-border/20 shadow-sm hover:shadow-md transition-shadow hover:bg-bg-tertiary/50">
+      <span className="text-text-tertiary mb-1.5">{icon}</span>
+      <span className="text-base font-bold text-text-primary tracking-tight">{value}</span>
+      <span className="text-[10px] font-medium text-text-tertiary/70 uppercase tracking-widest mt-0.5">{label}</span>
     </div>
   );
 }
 
 function ActionIcon({ type }: { type: RecentAction["type"] }) {
   switch (type) {
-    case "ai": return <Brain size={10} className="text-amber-400 shrink-0" />;
-    case "edit": return <FileText size={10} className="text-blue-400 shrink-0" />;
-    case "pipeline": return <Zap size={10} className="text-accent-amber shrink-0" />;
-    default: return <Activity size={10} className="text-text-tertiary shrink-0" />;
+    case "ai": return <Brain size={12} className="text-amber-500 shrink-0" />;
+    case "edit": return <FileText size={12} className="text-blue-500 shrink-0" />;
+    case "pipeline": return <Zap size={12} className="text-accent-amber shrink-0" />;
+    default: return <Activity size={12} className="text-text-tertiary shrink-0" />;
   }
 }
 
@@ -143,7 +144,7 @@ const GRADE_COLOR: Record<string, string> = {
 function GradeBadge({ grade }: { grade: string }) {
   return (
     <span
-      className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold"
+      className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[11px] font-bold shadow-sm border border-black/10 dark:border-white/10"
       style={{ backgroundColor: `${GRADE_COLOR[grade] ?? "#8b949e"}22`, color: GRADE_COLOR[grade] ?? "#8b949e" }}
     >
       {grade}
@@ -153,9 +154,9 @@ function GradeBadge({ grade }: { grade: string }) {
 
 function ScoreBar({ score, grade }: { score: number; grade: string }) {
   return (
-    <div className="flex-1 h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
+    <div className="flex-1 h-2 rounded-full bg-bg-tertiary/50 overflow-hidden shadow-inner">
       <div
-        className="h-full rounded-full transition-all duration-500"
+        className="h-full rounded-full transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
         style={{ width: `${Math.max(score, 2)}%`, backgroundColor: GRADE_COLOR[grade] ?? "#8b949e" }}
       />
     </div>
@@ -196,41 +197,44 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
   const etaMs = runningTeams > 0 ? Math.round(avgEstMs / runningTeams * (1 - overallProgress / 100)) : 0;
 
   return (
-    <div className="h-full flex flex-col bg-bg-secondary border-l border-border overflow-hidden" style={{ minWidth: 320 }}>
+    <div className="h-full flex flex-col bg-bg-secondary/40 backdrop-blur-xl border-l border-border/40 overflow-hidden shadow-inner" style={{ minWidth: 320 }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-        <span className="flex items-center gap-2 text-xs font-semibold text-text-primary">
-          <Activity size={14} className="text-blue-400" /> Progress Dashboard
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-bg-primary/30">
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-text-primary tracking-tight">
+          <div className="p-1.5 rounded-md bg-blue-500/10 border border-blue-500/20">
+            <Activity size={14} className="text-blue-500" />
+          </div>
+          Progress Dashboard
         </span>
         {onClose && (
-          <button onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Close" aria-label="닫기"><X size={14} /></button>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-bg-tertiary/60 text-text-tertiary hover:text-text-primary transition-colors" title="Close" aria-label="닫기"><X size={14} /></button>
         )}
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs custom-scrollbar">
 
         {/* Overall Progress */}
         {teams && teams.length > 0 && (
-          <section>
-            <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-              <BarChart3 size={12} className="text-amber-400" /> Pipeline Progress
+          <section className="space-y-3">
+            <h3 className="flex items-center gap-2 font-semibold text-text-primary">
+              <BarChart3 size={14} className="text-amber-500" /> Pipeline Progress
             </h3>
-            <div className="space-y-1 mb-2">
-              <div className="flex items-center justify-between text-[10px] text-text-tertiary">
-                <span>{completedTeams}/{totalTeams} teams complete</span>
-                <span>{overallProgress}%</span>
+            <div className="space-y-1.5 mb-3 bg-bg-primary/40 rounded-xl p-3 border border-border/30 shadow-sm">
+              <div className="flex items-center justify-between text-[11px] font-medium text-text-secondary">
+                <span>{completedTeams} / {totalTeams} teams</span>
+                <span className="font-mono">{overallProgress}%</span>
               </div>
-              <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500 bg-amber-800" style={{ width: `${overallProgress}%` }} />
+              <div className="h-2 bg-bg-tertiary/50 rounded-full overflow-hidden shadow-inner">
+                <div className="h-full rounded-full transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" style={{ width: `${overallProgress}%` }} />
               </div>
               {etaMs > 0 && (
-                <div className="flex items-center gap-1 text-[9px] text-text-tertiary">
-                  <Clock size={9} /> Est. remaining: {Math.round(etaMs / 1000)}s
+                <div className="flex items-center gap-1.5 text-[10px] text-text-tertiary font-mono pt-1">
+                  <Clock size={10} /> Est: {Math.round(etaMs / 1000)}s
                 </div>
               )}
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2 px-1">
               {teams.map((team) => <TeamProgressBar key={team.name} team={team} />)}
             </div>
           </section>
@@ -238,26 +242,28 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
 
         {/* Pipeline Score */}
         {pipelineScore != null && (
-          <section>
-            <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-              <TrendingUp size={12} className="text-green-400" /> Code Quality
+          <section className="space-y-3">
+            <h3 className="flex items-center gap-2 font-semibold text-text-primary">
+              <TrendingUp size={14} className="text-green-500" /> Code Quality
             </h3>
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-bg-tertiary">
-              <div className="text-center">
-                <div className="text-lg font-bold" style={{
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-bg-primary/40 border border-border/30 shadow-sm">
+              <div className="text-center shrink-0">
+                <div className="text-2xl font-bold font-mono tracking-tighter" style={{
                   color: pipelineScore >= 80 ? "#3fb950" : pipelineScore >= 60 ? "#d29922" : "#f85149",
                 }}>{pipelineScore}</div>
-                <div className="text-[10px] text-text-tertiary">Score</div>
+                <div className="text-[10px] font-medium tracking-widest uppercase text-text-tertiary/70 mt-0.5">Score</div>
               </div>
-              <div className="flex-1">
-                <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{
+              <div className="flex-1 mt-1">
+                <div className="h-2.5 bg-bg-tertiary/50 rounded-full overflow-hidden shadow-inner">
+                  <div className="h-full rounded-full transition-all duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)]" style={{
                     width: `${pipelineScore}%`,
                     backgroundColor: pipelineScore >= 80 ? "#3fb950" : pipelineScore >= 60 ? "#d29922" : "#f85149",
                   }} />
                 </div>
                 {pipelineStatus && (
-                  <div className="text-[10px] text-text-tertiary mt-1">Status: {pipelineStatus.toUpperCase()}</div>
+                  <div className="text-[10px] uppercase font-bold tracking-widest mt-2 flex items-center justify-end" style={{
+                    color: pipelineScore >= 80 ? "#3fb950" : pipelineScore >= 60 ? "#d29922" : "#f85149",
+                  }}>STATUS: {pipelineStatus}</div>
                 )}
               </div>
             </div>
@@ -265,31 +271,33 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
         )}
 
         {/* Session Stats */}
-        <section>
-          <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-            <Zap size={12} className="text-accent-amber" /> Session Stats
+        <section className="space-y-3">
+          <h3 className="flex items-center gap-2 font-semibold text-text-primary">
+            <Zap size={14} className="text-accent-amber" /> Session Stats
           </h3>
-          <div className="grid grid-cols-3 gap-2">
-            <StatCard label="File Edits" value={`${sessionStats.fileEdits}`} icon={<FileText size={12} />} />
-            <StatCard label="AI Calls" value={`${sessionStats.aiCalls}`} icon={<Brain size={12} />} />
-            <StatCard label="Tokens" value={formatTokens(sessionStats.tokens)} icon={<Trophy size={12} />} />
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard label="File Edits" value={`${sessionStats.fileEdits}`} icon={<FileText size={14} className="text-blue-500" />} />
+            <StatCard label="AI Calls" value={`${sessionStats.aiCalls}`} icon={<Brain size={14} className="text-purple-500" />} />
+            <StatCard label="Tokens" value={formatTokens(sessionStats.tokens)} icon={<Trophy size={14} className="text-amber-500" />} />
           </div>
         </section>
 
         {/* Recent Activity */}
-        <section>
-          <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-            <Clock size={12} className="text-text-tertiary" /> Recent Activity
+        <section className="space-y-3">
+          <h3 className="flex items-center gap-2 font-semibold text-text-primary">
+            <Clock size={14} className="text-text-tertiary" /> Recent Activity
           </h3>
-          <div className="space-y-1">
+          <div className="space-y-1.5 p-1">
             {recentActions.length === 0 ? (
-              <div className="text-text-tertiary text-center py-3">No recent activity</div>
+              <div className="text-text-tertiary/70 text-center py-6 bg-bg-primary/20 rounded-xl border border-border/20">No recent activity</div>
             ) : (
               recentActions.map((action, i) => (
-                <div key={i} className="flex items-center gap-2 py-1 px-2 rounded hover:bg-bg-tertiary">
-                  <ActionIcon type={action.type} />
-                  <span className="flex-1 truncate text-text-primary">{action.label}</span>
-                  <span className="text-[10px] text-text-tertiary whitespace-nowrap">{timeAgo(action.time)}</span>
+                <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-bg-tertiary/40 transition-colors">
+                  <div className="w-6 h-6 rounded-full bg-bg-primary/50 flex items-center justify-center shadow-sm">
+                    <ActionIcon type={action.type} />
+                  </div>
+                  <span className="flex-1 truncate text-text-secondary">{action.label}</span>
+                  <span className="text-[10px] text-text-tertiary/60 whitespace-nowrap font-medium">{timeAgo(action.time)}</span>
                 </div>
               ))
             )}
@@ -297,138 +305,154 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
         </section>
 
         {/* AI-Predicted Performance Analysis */}
-        <section>
-          <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-            <Gauge size={12} className="text-orange-400" /> AI-Predicted Performance
+        <section className="space-y-3">
+          <h3 className="flex items-center gap-2 font-semibold text-text-primary">
+            <Gauge size={14} className="text-orange-500" /> AI-Predicted Performance
           </h3>
 
           {onRunStress && (
             <button
               onClick={onRunStress}
               disabled={isStressTesting}
-              className="w-full mb-3 flex items-center justify-center gap-2 py-1.5 px-3 rounded-md text-[11px] font-medium transition-colors bg-bg-tertiary hover:bg-border text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold transition-all bg-bg-tertiary/50 border border-border/30 hover:bg-bg-tertiary hover:border-text-tertiary/30 text-text-primary disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.98]"
             >
               {isStressTesting ? (
-                <><Loader2 size={12} className="animate-spin" /> Running Stress Test...</>
+                <><Loader2 size={14} className="animate-spin" /> Running Stress Test...</>
               ) : (
-                <><Zap size={12} /> Run Stress Test</>
+                <><Zap size={14} className="text-orange-500" /> Run Stress Test</>
               )}
             </button>
           )}
 
           {stressReport ? (
-            <div className="space-y-2">
+            <div className="space-y-3 bg-bg-primary/30 p-3.5 rounded-2xl border border-border/30 shadow-inner mt-3">
               {/* Overall score */}
-              <div className="flex items-center gap-3 p-2 rounded-lg bg-bg-tertiary">
-                <div className="text-center">
-                  <div className="text-lg font-bold" style={{ color: GRADE_COLOR[stressReport.grade] }}>
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-bg-tertiary/20 shadow-sm border border-border/10">
+                <div className="text-center shrink-0">
+                  <div className="text-2xl font-bold font-mono" style={{ color: GRADE_COLOR[stressReport.grade] }}>
                     {stressReport.grade}
                   </div>
-                  <div className="text-[10px] text-text-tertiary">Grade</div>
+                  <div className="text-[10px] font-medium tracking-widest uppercase text-text-tertiary/70 mt-0.5">Grade</div>
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between text-[10px] text-text-tertiary mb-1">
-                    <span>Overall</span>
-                    <span>{stressReport.overallScore}/100</span>
+                  <div className="flex items-center justify-between text-[11px] font-medium text-text-secondary mb-2">
+                    <span>Overall Score</span>
+                    <span className="font-mono">{stressReport.overallScore}/100</span>
                   </div>
                   <ScoreBar score={stressReport.overallScore} grade={stressReport.grade} />
                 </div>
               </div>
 
               {/* Per-scenario breakdown */}
-              <div className="space-y-1.5">
+              <div className="space-y-2.5 px-1 py-1">
                 {stressReport.scenarios.map((r) => {
                   const score = r.grade === "A" ? 100 : r.grade === "B" ? 80 : r.grade === "C" ? 60 : r.grade === "D" ? 40 : 20;
                   return (
-                    <div key={r.scenario.id} className="flex items-center gap-2">
-                      <span className="w-24 text-[10px] text-text-tertiary truncate" title={`${r.scenario.name} (${r.scenario.virtualUsers}u)`}>
-                        {r.scenario.name} ({r.scenario.virtualUsers}u)
+                    <div key={r.scenario.id} className="flex items-center gap-3">
+                      <span className="w-28 text-[11px] font-medium text-text-secondary truncate" title={`${r.scenario.name} (${r.scenario.virtualUsers}u)`}>
+                        {r.scenario.name} <span className="text-[9px] text-text-tertiary ml-1">({r.scenario.virtualUsers}u)</span>
                       </span>
                       <ScoreBar score={score} grade={r.grade} />
                       <GradeBadge grade={r.grade} />
-                      <span className="w-8 text-right text-[10px] text-text-tertiary">{score}</span>
                     </div>
                   );
                 })}
               </div>
 
               {/* Disclaimer */}
-              <div className="flex items-start gap-1.5 pt-1 text-[9px] text-text-tertiary">
-                <AlertTriangle size={10} className="shrink-0 mt-px text-accent-amber" />
-                <span>AI-Predicted — not real load test results</span>
+              <div className="flex items-start gap-2 pt-2 pb-1 text-[10px] text-text-tertiary/80 border-t border-border/20">
+                <AlertTriangle size={12} className="shrink-0 mt-px text-accent-amber" />
+                <span className="leading-relaxed">AI-Predicted heuristic estimates — not based on real load test results.</span>
               </div>
             </div>
           ) : !isStressTesting ? (
-            <div className="text-text-tertiary text-center py-3 text-[11px]">
+            <div className="text-text-tertiary/60 text-center py-6 bg-bg-primary/10 rounded-xl border border-dashed border-border/30 text-[11px] mt-3">
               Run a stress test to see predicted performance
             </div>
           ) : null}
         </section>
 
         {/* Full Verification */}
-        <section className="rounded-lg border border-white/8 bg-white/[0.02] p-3 space-y-2">
+        <section className="rounded-2xl border border-accent-purple/20 bg-accent-purple/[0.03] p-4 space-y-4 shadow-sm relative overflow-hidden backdrop-blur-md">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-purple/10 via-accent-purple/30 to-accent-purple/10"></div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Trophy size={13} className="text-accent-purple" />
-              <h3 className="text-[11px] font-semibold text-text-primary">Full Verification</h3>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-accent-purple/20 text-accent-purple shadow-sm">
+                <Trophy size={16} />
+              </div>
+              <h3 className="text-[13px] font-semibold text-text-primary tracking-tight">Full Verification</h3>
             </div>
             <button
               onClick={onRunVerification}
               disabled={isVerifying}
-              className="flex items-center gap-1 rounded border border-accent-purple/30 bg-accent-purple/10 px-2 py-0.5 text-[10px] text-accent-purple hover:bg-accent-purple/20 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-xl border border-accent-purple/40 bg-accent-purple/15 px-3 py-1.5 text-xs font-medium text-accent-purple hover:bg-accent-purple/30 active:scale-95 transition-all shadow-sm disabled:opacity-40"
             >
-              {isVerifying ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
-              {isVerifying ? "Verifying..." : "Run All"}
+              {isVerifying ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+              {isVerifying ? "Verifying..." : "Run All Checks"}
             </button>
           </div>
 
           {verificationScore != null && (
-            <div className="space-y-1.5">
+            <div className="space-y-3 bg-bg-secondary/40 p-3 rounded-xl border border-border/20">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-text-tertiary">Pipeline + Bugs + Stress</span>
-                <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-text-tertiary tracking-tight">Pipeline + Bugs + Stress</span>
+                <div className="flex items-center gap-2">
                   <GradeBadge grade={verificationScore >= 77 ? "A" : verificationScore >= 60 ? "B" : verificationScore >= 40 ? "C" : "F"} />
-                  <span className="text-sm font-bold text-text-primary">{verificationScore}/100</span>
+                  <span className="text-lg font-bold font-mono tracking-tighter" style={{ color: verificationScore >= 77 ? "#3fb950" : verificationScore >= 60 ? "#d29922" : "#f85149" }}>{verificationScore}</span>
                 </div>
               </div>
               <ScoreBar score={verificationScore} grade={verificationScore >= 77 ? "A" : verificationScore >= 60 ? "C" : "F"} />
-              <div className="text-[9px] text-text-tertiary">
-                {verificationScore >= 77 ? "✅ PASS — Safe to deploy" : verificationScore >= 60 ? "⚠️ WARN — Review before deploy" : "❌ FAIL — Critical issues found"}
+              <div className="flex items-center gap-1.5 text-[10px] font-medium pt-1">
+                {verificationScore >= 77 ? (
+                  <><CheckCircle size={12} className="text-green-500" /> <span className="text-green-500">PASS — Safe to deploy</span></>
+                ) : verificationScore >= 60 ? (
+                  <><AlertTriangle size={12} className="text-amber-500" /> <span className="text-amber-500">WARN — Review before deploy</span></>
+                ) : (
+                  <><XCircle size={12} className="text-red-500" /> <span className="text-red-500">FAIL — Critical issues found</span></>
+                )}
               </div>
             </div>
           )}
 
           {/* Verification Loop Details */}
           {isVerifying && currentVerifyRound != null && currentVerifyRound > 0 && (
-            <div className="flex items-center gap-2 py-1">
-              <Loader2 size={10} className="animate-spin text-accent-purple" />
-              <span className="text-[10px] text-text-tertiary">Round {currentVerifyRound}/3 — auto-fixing...</span>
+            <div className="flex items-center justify-center gap-2 py-2 px-3 bg-accent-purple/5 rounded-lg border border-accent-purple/10">
+              <Loader2 size={14} className="animate-spin text-accent-purple" />
+              <span className="text-[11px] font-medium text-text-secondary">Round {currentVerifyRound}/3 — Auto-fixing bugs...</span>
             </div>
           )}
 
           {verificationResult && (
-            <div className="space-y-1 mt-1">
-              <div className="flex items-center justify-between text-[10px] text-text-tertiary">
-                <span>Rounds: {verificationResult.iterations.length}</span>
-                <span>Fixes: {verificationResult.totalFixesApplied}</span>
-                <span>Stop: {verificationResult.stopReason}</span>
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="flex flex-col items-center bg-bg-primary/40 rounded-lg p-2 border border-border/20 shadow-sm">
+                <span className="text-[15px] font-bold text-text-primary mb-0.5">{verificationResult.iterations.length}</span>
+                <span className="text-[9px] text-text-tertiary uppercase tracking-wider">Rounds</span>
               </div>
-              {verificationResult.scoreDelta !== 0 && (
-                <div className="text-[9px] text-text-tertiary">
-                  Score delta: {verificationResult.scoreDelta > 0 ? "+" : ""}{verificationResult.scoreDelta}
-                </div>
-              )}
-              {verificationResult.hardGateFailures.length > 0 && (
-                <div className="flex items-center gap-1 text-[9px] text-red-400">
-                  <AlertTriangle size={9} /> Hard gate: {verificationResult.hardGateFailures.join(", ")}
-                </div>
-              )}
+              <div className="flex flex-col items-center bg-bg-primary/40 rounded-lg p-2 border border-border/20 shadow-sm">
+                <span className="text-[15px] font-bold text-text-primary mb-0.5">{verificationResult.totalFixesApplied}</span>
+                <span className="text-[9px] text-text-tertiary uppercase tracking-wider">Fixes</span>
+              </div>
+              <div className="flex flex-col items-center justify-center bg-bg-primary/40 rounded-lg p-2 border border-border/20 shadow-sm">
+                <span className="text-[10px] font-semibold text-text-secondary text-center px-1 leading-snug break-words">
+                  {verificationResult.scoreDelta > 0 && <span className="text-green-500 mr-1">+{verificationResult.scoreDelta}</span>}
+                  {verificationResult.stopReason.replace("completed", "Done")}
+                </span>
+              </div>
+            </div>
+          )}
+          {verificationResult && verificationResult.hardGateFailures.length > 0 && (
+            <div className="flex items-start gap-2 p-2.5 mt-2 bg-red-500/10 rounded-lg border border-red-500/20 shadow-sm">
+              <AlertTriangle size={14} className="text-red-500 shrink-0 mt-0.5" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-red-500 mb-0.5">HARD GATE FAILED</span>
+                <span className="text-[10px] text-red-400/90 leading-tight">{verificationResult.hardGateFailures.join(", ")}</span>
+              </div>
             </div>
           )}
 
-          {verificationScore == null && !isVerifying && (
-            <div className="text-text-tertiary text-center py-2 text-[11px]">
-              Pipeline + Bug Scan + Stress Test combined verification
+          {verificationScore == null && !isVerifying && !verificationResult && (
+            <div className="text-text-tertiary/60 text-center py-5 bg-bg-primary/20 rounded-xl border border-dashed border-border/20 text-[11px] font-medium mt-2">
+              Combined verification across pipeline,<br/>bug scan, and stress tests
             </div>
           )}
         </section>

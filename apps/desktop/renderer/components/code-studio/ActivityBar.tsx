@@ -106,24 +106,24 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
         id: "grp-explore",
         label: L4(lang, { ko: "탐색", en: "EXPLORE", ja: "探索", zh: "探索" }),
         items: [
-          { id: "project", icon: <FolderOpen size={18} />, label: L4(lang, { ko: "프로젝트 탐색기", en: "Project Explorer", ja: "プロジェクトエクスプローラー", zh: "项目资源管理器" }), shortcut: "Ctrl+Shift+E" },
-          { id: "search", icon: <Search size={18} />, label: L4(lang, { ko: "검색", en: "Search", ja: "検索", zh: "搜索" }), shortcut: "Ctrl+Shift+F" },
+          { id: "project", icon: <FolderOpen size={18} />, label: L4(lang, { ko: "프로젝트 탐색기", en: "Project Explorer", ja: "プロジェクトエクスプローラー", zh: "项目资源管理器" }), shortcut: "Alt+Shift+E" },
+          { id: "search", icon: <Search size={18} />, label: L4(lang, { ko: "검색", en: "Search", ja: "検索", zh: "搜索" }), shortcut: "Alt+Shift+F" },
         ],
       },
       {
         id: "grp-ai",
         label: L4(lang, { ko: "AI · 검증", en: "AI · VERIFY", ja: "AI · 検証", zh: "AI · 验证" }),
         items: [
-          { id: "ai", icon: <Bot size={18} />, label: L4(lang, { ko: "AI 어시스턴트", en: "AI Assistant", ja: "AI アシスタント", zh: "AI 助手" }), shortcut: "Ctrl+Shift+A" },
-          { id: "review", icon: <ShieldCheck size={18} />, label: L4(lang, { ko: "코드 리뷰", en: "Code Review", ja: "コードレビュー", zh: "代码审查" }), shortcut: "Ctrl+Shift+Q" },
+          { id: "ai", icon: <Bot size={18} />, label: L4(lang, { ko: "AI 어시스턴트", en: "AI Assistant", ja: "AI アシスタント", zh: "AI 助手" }), shortcut: "Alt+Shift+A" },
+          { id: "review", icon: <ShieldCheck size={18} />, label: L4(lang, { ko: "코드 리뷰", en: "Code Review", ja: "コードレビュー", zh: "代码审查" }), shortcut: "Alt+Shift+Q" },
         ],
       },
       {
         id: "grp-run",
         label: L4(lang, { ko: "실행", en: "RUN", ja: "実行", zh: "运行" }),
         items: [
-          { id: "preview", icon: <Eye size={18} />, label: L4(lang, { ko: "미리보기", en: "Preview", ja: "プレビュー", zh: "预览" }), shortcut: "Ctrl+Shift+P" },
-          { id: "deploy", icon: <Rocket size={18} />, label: L4(lang, { ko: "배포", en: "Deploy", ja: "デプロイ", zh: "部署" }), shortcut: "Ctrl+Shift+D" },
+          { id: "preview", icon: <Eye size={18} />, label: L4(lang, { ko: "미리보기", en: "Preview", ja: "プレビュー", zh: "预览" }), shortcut: "Alt+Shift+P" },
+          { id: "deploy", icon: <Rocket size={18} />, label: L4(lang, { ko: "배포", en: "Deploy", ja: "デプロイ", zh: "部署" }), shortcut: "Alt+Shift+D" },
         ],
       },
     ];

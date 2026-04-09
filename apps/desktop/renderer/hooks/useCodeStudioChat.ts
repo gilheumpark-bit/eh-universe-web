@@ -227,7 +227,7 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
     const session: StoredChatSession = {
       id: activeSessionId,
       title: msgList[0].content.slice(0, 50),
-      messages: msgList.map(({ id, ...rest }) => rest),
+      messages: msgList.map(({ id: _id, ...rest }) => rest),
       createdAt: msgList[0].timestamp,
       updatedAt: Date.now(),
     };

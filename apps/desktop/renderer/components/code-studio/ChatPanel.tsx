@@ -8,12 +8,13 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   Send, Sparkles, Square, AtSign, History, Plus, Check, Zap, Stethoscope,
-  FileJson, FileCode, FileText, Type
+  FileJson, FileCode, FileText, Type, Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { NOD_SYSTEM_PROMPT, NOD_SYSTEM_PROMPT_EN } from "@/lib/code-studio/ai/nod";
 import { useCodeStudioChat } from "@/hooks/useCodeStudioChat";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { getServers } from "@/lib/code-studio/features/mcp-client";
 import { logger } from "@/lib/logger";
 import { CODE_STUDIO_SPEC_CHAT_SEED_KEY } from "@/lib/code-studio/core/project-spec-bridge";
@@ -85,26 +86,26 @@ function extractCodeBlocks(content: string): Array<{ code: string; language: str
 
 // IDENTITY_SEAL: PART-3 | role=CodeExtract | inputs=content | outputs=codeBlocks
 
-function MessageActionCard({ action, params, onClick }: { action: string, params: unknown, onClick: () => void }) {
+function MessageActionCard({ action, params, onClick, lang }: { action: string, params: any, onClick: () => void, lang: string }) {
   const isApply = action === 'APPLY_CODE' || action === 'FIX';
   return (
     <motion.div 
       initial={{ opacity: 0, x: -10 }} 
       animate={{ opacity: 1, x: 0 }}
-      className="ml-7 mt-2 p-2 rounded-lg border border-border/40 bg-bg-tertiary/50 flex items-center gap-3 group hover:border-blue-500/50 transition-colors"
+      className="ml-7 mt-2 p-3 rounded-2xl border border-border/30 bg-bg-tertiary/40 backdrop-blur-md flex items-center gap-3.5 group hover:border-blue-500/40 hover:bg-bg-tertiary/60 transition-all shadow-sm"
     >
-      <div className={`p-1.5 rounded-md ${isApply ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
-        {isApply ? <Check size={14} /> : <Zap size={14} />}
+      <div className={`p-2 rounded-xl shadow-inner ${isApply ? 'bg-green-500/15 text-green-500' : 'bg-blue-500/15 text-blue-500'}`}>
+        {isApply ? <Check size={16} /> : <Zap size={16} />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold text-text-primary capitalize">{action.replace('_', ' ')}</p>
-        <p className="text-[10px] text-text-tertiary truncate">{params.fileName || params.description || 'Suggested action'}</p>
+        <p className="text-[12px] font-bold text-text-primary capitalize tracking-tight">{action.replace('_', ' ')}</p>
+        <p className="text-[11px] text-text-secondary truncate mt-0.5">{params.fileName || params.description || L4(lang, { ko: '제안된 액션', en: 'Suggested action' })}</p>
       </div>
       <button 
         onClick={onClick}
-        className="px-3 py-1 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold hover:bg-blue-500 hover:text-white transition-all"
+        className="px-4 py-1.5 rounded-xl bg-blue-500/10 text-blue-500 text-[11px] font-bold hover:bg-blue-500 hover:text-white transition-all shadow-sm active:scale-95"
       >
-        Run Action
+        {L4(lang, { ko: '액션 실행', en: 'Run Action' })}
       </button>
     </motion.div>
   );
@@ -129,18 +130,18 @@ function MascotQuill({ state }: { state: 'idle' | 'thinking' | 'greeting' }) {
         rotate: { duration: 0.4, repeat: Infinity, ease: "linear" },
         opacity: { duration: 0.3 }
       }}
-      className="relative w-16 h-16 mx-auto mb-2"
+      className="relative w-20 h-20 mx-auto mb-3"
     >
       <img 
         src="/images/quill.png" 
         alt="Quill Mascot" 
-        className={`w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(251,191,36,0.4)] ${state === 'thinking' ? 'animate-pulse' : ''}`}
+        className={`w-full h-full object-contain filter drop-shadow-[0_4px_12px_rgba(251,191,36,0.5)] ${state === 'thinking' ? 'animate-pulse' : ''}`}
       />
       {state === 'thinking' && (
         <motion.div 
-          className="absolute inset-0 rounded-full border-2 border-amber-400/30"
-          animate={{ scale: [1, 1.3], opacity: [0.5, 0] }}
-          transition={{ duration: 1, repeat: Infinity }}
+          className="absolute inset-0 rounded-full border border-amber-400/40"
+          animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
+          transition={{ duration: 1.2, repeat: Infinity }}
         />
       )}
     </motion.div>
@@ -253,52 +254,52 @@ ${mcpToolsDoc}`;
   }, [input, chat, activeRole]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-bg-secondary select-none">
+    <div className="flex flex-col h-full min-h-0 bg-bg-secondary/20 shadow-inner select-none">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-bg-primary/50 backdrop-blur-md sticky top-0 z-[var(--z-sticky)]">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-bg-primary/40 backdrop-blur-xl sticky top-0 z-[var(--z-sticky)]">
         <div className="relative">
           <button 
             onClick={() => setShowRoleSelector(!showRoleSelector)}
-            className="flex items-center gap-2 px-2 py-1 rounded-md border border-border/60 bg-bg-tertiary hover:bg-bg-secondary transition-all active:scale-95 group"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-border/40 bg-bg-tertiary/40 hover:bg-bg-tertiary/80 transition-all active:scale-95 group shadow-sm"
           >
             {activeRole === 'nod' ? (
-              <Sparkles size={14} className="text-amber-400 group-hover:rotate-12 transition-transform" />
+              <Sparkles size={16} className="text-amber-500 group-hover:rotate-12 transition-transform" />
             ) : (
-              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold ${CATEGORY_THEMES[AGENT_REGISTRY[activeRole]?.category]?.bg} ${CATEGORY_THEMES[AGENT_REGISTRY[activeRole]?.category]?.color}`}>
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${CATEGORY_THEMES[AGENT_REGISTRY[activeRole]?.category]?.bg} ${CATEGORY_THEMES[AGENT_REGISTRY[activeRole]?.category]?.color} shadow-sm`}>
                 {AGENT_REGISTRY[activeRole]?.code}
               </div>
             )}
-            <span className="text-[11px] font-bold text-text-primary capitalize">
+            <span className="text-xs font-bold text-text-primary capitalize tracking-tight">
               {activeRole === 'nod' ? 'NOD Assistant' : AGENT_REGISTRY[activeRole]?.name}
             </span>
           </button>
 
           {showRoleSelector && (
-            <div className="absolute top-full left-0 mt-2 w-64 bg-bg-secondary/95 backdrop-blur-2xl border border-border/80 rounded-xl shadow-2xl z-[var(--z-dropdown)] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute top-full left-0 mt-2.5 w-64 bg-bg-secondary/80 backdrop-blur-3xl border border-border/40 rounded-2xl shadow-2xl z-[var(--z-dropdown)] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="grid grid-cols-1 gap-1">
                 <button 
                   onClick={() => { setActiveRole('nod'); setShowRoleSelector(false); }}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${activeRole === 'nod' ? 'bg-amber-500/10 text-amber-400' : 'hover:bg-bg-tertiary text-text-tertiary'}`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${activeRole === 'nod' ? 'bg-amber-500/15 text-amber-500 shadow-inner' : 'hover:bg-bg-tertiary/50 text-text-secondary'}`}
                 >
-                  <Sparkles size={14} />
+                  <Sparkles size={16} />
                   <div className="flex-1">
-                    <p className="text-[11px] font-bold">NOD Assistant</p>
-                    <p className="text-[9px] opacity-70">General purpose & Simple explanation</p>
+                    <p className="text-[12px] font-bold">NOD Assistant</p>
+                    <p className="text-[9px] text-text-tertiary uppercase tracking-widest mt-0.5">General & Simple</p>
                   </div>
                 </button>
-                <div className="h-px bg-border/50 my-1" />
-                <div className="px-3 py-1 text-[9px] font-bold text-text-tertiary uppercase tracking-widest opacity-50">Expert Agents</div>
+                <div className="h-px bg-border/30 my-1.5 mx-2" />
+                <div className="px-3 py-1.5 text-[9px] font-bold text-text-tertiary uppercase tracking-widest opacity-60">Expert Agents</div>
                 {ALL_AGENT_ROLES.slice(0, 10).map(role => (
                   <button 
                     key={role}
                     onClick={() => { setActiveRole(role); setShowRoleSelector(false); }}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${activeRole === role ? 'bg-blue-500/10 text-blue-400' : 'hover:bg-bg-tertiary text-text-tertiary'}`}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${activeRole === role ? 'bg-blue-500/15 text-blue-500 shadow-inner' : 'hover:bg-bg-tertiary/50 text-text-secondary'}`}
                   >
-                    <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-bold ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].bg} ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].color} border ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].border}`}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].bg} ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].color} border ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].border} shadow-sm`}>
                       {AGENT_REGISTRY[role].code}
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold">{AGENT_REGISTRY[role].name}</p>
+                      <p className="text-[12px] font-bold">{AGENT_REGISTRY[role].name}</p>
                     </div>
                   </button>
                 ))}
@@ -307,32 +308,32 @@ ${mcpToolsDoc}`;
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-1.5">
-          <button onClick={() => setShowHistory(!showHistory)} className={`p-1.5 rounded-lg hover:bg-bg-tertiary transition-all ${showHistory ? 'text-accent-blue bg-accent-blue/5' : 'text-text-tertiary'}`}>
-            <History size={15} />
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => setShowHistory(!showHistory)} className={`p-2 rounded-full hover:bg-bg-tertiary/60 transition-all ${showHistory ? 'text-accent-blue bg-accent-blue/10 shadow-inner' : 'text-text-tertiary hover:text-text-primary'}`}>
+            <History size={16} />
           </button>
-          <div className="w-px h-4 bg-border/60 mx-1" />
-          <button onClick={() => chat.createNewSession()} className="p-1.5 rounded-lg hover:bg-bg-tertiary text-text-tertiary transition-all">
-            <Plus size={15} />
+          <div className="w-px h-5 bg-border/40 mx-1" />
+          <button onClick={() => chat.createNewSession()} className="p-2 rounded-full hover:bg-bg-tertiary/60 text-text-tertiary hover:text-text-primary transition-all">
+            <Plus size={16} />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 scroll-smooth scrollbar-none">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-5 space-y-8 scroll-smooth custom-scrollbar pb-10">
         {chat.messages.length === 0 && !chat.isStreaming && (
-          <div className="flex flex-col items-center justify-center py-20 px-8 text-center animate-in zoom-in-95 duration-500">
+          <div className="flex flex-col items-center justify-center py-24 px-8 text-center animate-in zoom-in-95 duration-700 ease-out">
             <MascotQuill state="greeting" />
-            <h3 className="text-sm font-bold text-text-primary mb-2">How can I help you today?</h3>
-            <p className="text-xs text-text-tertiary leading-relaxed max-w-[280px] mb-6">
+            <h3 className="text-base font-extrabold text-text-primary tracking-tight mb-2.5">How can I help you today?</h3>
+            <p className="text-[13px] font-medium text-text-tertiary leading-relaxed max-w-[320px] mb-8">
               I&apos;m EH Studio&apos;s expert brain. Ask me to architect, code, review or test your features.
             </p>
-            <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+            <div className="grid grid-cols-2 gap-3 w-full max-w-md">
               {["Create a login page", "Find security flaws", "Refactor this logic", "Write unit tests"].map((s, i) => (
                 <button key={i} onClick={() => setInput(s)}
-                  className="p-3 text-[10px] text-left rounded-xl border border-border/60 bg-bg-primary hover:border-accent-amber/50 hover:bg-accent-amber/5 transition-all group">
-                  <span className="block text-text-primary font-bold group-hover:text-accent-amber transition-colors mb-1">{s}</span>
-                  <span className="text-text-tertiary opacity-60">Automated workflow</span>
+                  className="p-4 text-[12px] text-left rounded-2xl border border-border/30 bg-bg-primary/40 hover:border-accent-amber/40 hover:bg-accent-amber/5 transition-all group shadow-sm hover:shadow-md backdrop-blur-sm">
+                  <span className="block text-text-primary font-bold tracking-tight group-hover:text-amber-500 transition-colors mb-1.5">{s}</span>
+                  <span className="text-text-tertiary text-[10px] uppercase font-bold tracking-widest opacity-50">Automated workflow</span>
                 </button>
               ))}
             </div>
@@ -342,39 +343,40 @@ ${mcpToolsDoc}`;
         {chat.messages.map((msg) => {
           const codeBlocks = msg.role === "assistant" ? extractCodeBlocks(msg.content) : [];
           const agentMeta = msg.agentRole ? AGENT_REGISTRY[msg.agentRole as AgentRole] : null;
-          const theme = agentMeta ? CATEGORY_THEMES[agentMeta.category] : { color: 'text-amber-400', bg: 'bg-amber-400/10' };
+          const theme = agentMeta ? CATEGORY_THEMES[agentMeta.category] : { color: 'text-amber-500', bg: 'bg-amber-500/15' };
 
           return (
             <motion.div 
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ ease: [0.2, 0.8, 0.2, 1], duration: 0.5 }}
               key={msg.id} 
-              className="group"
+              className="group flex flex-col mx-auto"
             >
-              <div className="flex items-center gap-3 mb-2 px-1">
+              <div className="flex items-center gap-3 mb-2 px-2">
                 {msg.role === "user" ? (
                   <>
-                    <div className="w-6 h-6 rounded-lg bg-accent-blue/20 flex items-center justify-center text-accent-blue">
+                    <div className="w-7 h-7 rounded-full bg-accent-blue/15 shadow-inner flex items-center justify-center text-accent-blue border border-accent-blue/20">
                       <AtSign size={14} />
                     </div>
-                    <span className="text-[11px] font-bold text-text-secondary">{ko ? "당신" : "You"}</span>
+                    <span className="text-[12px] font-bold text-text-primary tracking-tight">{ko ? "당신" : "You"}</span>
                   </>
                 ) : (
                   <>
-                    <div className={`w-6 h-6 rounded-lg ${theme.bg} flex items-center justify-center ${theme.color} border border-border/40 font-bold text-[9px]`}>
+                    <div className={`w-7 h-7 rounded-full ${theme.bg} shadow-inner flex items-center justify-center ${theme.color} border border-border/30 font-bold text-[10px]`}>
                       {agentMeta?.code || 'Q'}
                     </div>
-                    <span className={`text-[11px] font-bold ${theme.color}`}>
+                    <span className={`text-[12px] font-bold tracking-tight ${theme.color}`}>
                       {agentMeta?.name || 'Quill Assistant'}
                     </span>
                     {msg.confidence && (
-                      <div className="flex items-center gap-1.5 ml-auto opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[9px] font-mono">{(msg.confidence * 100).toFixed(0)}% trust</span>
-                        <div className="w-12 h-1 bg-border rounded-full overflow-hidden">
+                      <div className="flex items-center gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-mono text-text-tertiary/80">{(msg.confidence * 100).toFixed(0)}% trust</span>
+                        <div className="w-16 h-1.5 bg-bg-tertiary/80 shadow-inner rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
                             animate={{ width: `${msg.confidence * 100}%` }}
-                            className={`h-full ${msg.confidence > 0.8 ? 'bg-accent-green' : 'bg-accent-amber'}`}
+                            className={`h-full ${msg.confidence > 0.8 ? 'bg-green-500' : 'bg-amber-500'}`}
                           />
                         </div>
                       </div>
@@ -383,32 +385,32 @@ ${mcpToolsDoc}`;
                 )}
               </div>
 
-              <div className="pl-9 pr-2">
-                <div className={`text-xs text-text-primary leading-relaxed whitespace-pre-wrap ${msg.isError ? 'text-red-400 bg-red-500/5 p-3 rounded-lg border border-red-500/20' : ''}`}>
+              <div className={`pl-11 pr-3 pt-1 pb-3 ${msg.role === 'user' ? 'bg-bg-tertiary/20 rounded-2xl ml-4' : ''}`}>
+                <div className={`text-[13px] text-text-secondary leading-relaxed whitespace-pre-wrap ${msg.isError ? 'text-red-400 bg-red-500/10 p-4 rounded-2xl border border-red-500/30' : ''}`}>
                   {msg.content}
                 </div>
 
                 {codeBlocks.length > 0 && (
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-5 space-y-4">
                     {codeBlocks.map((block, idx) => {
                       const lint = runDesignLint(block.code);
                       return (
-                        <div key={idx} className="rounded-xl border border-border/60 bg-bg-tertiary/40 overflow-hidden">
-                          <div className="px-3 py-2 border-b border-border/40 bg-bg-primary/50 flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-text-tertiary flex items-center gap-2">
+                         <div key={idx} className="rounded-2xl border border-border/40 bg-bg-primary/60 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                          <div className="px-4 py-2.5 border-b border-border/30 bg-bg-secondary/80 backdrop-blur-sm flex items-center justify-between">
+                            <span className="text-[11px] font-semibold text-text-secondary flex items-center gap-2 tracking-tight">
                               {getFileIcon(block.fileName || 'file.ts')} {block.fileName || 'Suggested code'}
                             </span>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-3">
                               {lint.score < 100 && (
-                                <span className="text-[9px] text-accent-red flex items-center gap-1">
-                                  <Stethoscope size={10} /> Design Issues
+                                <span className="text-[10px] uppercase tracking-widest font-bold text-accent-red flex items-center gap-1.5">
+                                  <Stethoscope size={12} /> {L4(lang, { ko: '디자인 이슈', en: 'Design Issues' })}
                                 </span>
                               )}
                               <button 
                                 onClick={() => onApplyCode?.(block.code, block.fileName)}
-                                className="px-2 py-1 rounded bg-accent-blue/10 text-accent-blue text-[10px] font-bold hover:bg-accent-blue hover:text-white transition-all"
+                                className="px-3 py-1.5 rounded-lg bg-accent-blue text-white text-[10px] font-bold hover:scale-105 active:scale-95 transition-all shadow-sm shadow-accent-blue/20"
                               >
-                                Apply Changes
+                                {L4(lang, { ko: '변경 사항 적용', en: 'Apply Changes' })}
                               </button>
                             </div>
                           </div>
@@ -423,86 +425,79 @@ ${mcpToolsDoc}`;
         })}
 
         {chat.isStreaming && (
-          <div className="flex items-center gap-4 pl-1">
+          <div className="flex items-center gap-4 pl-3 mt-4 animate-in fade-in duration-500">
             <MascotQuill state="thinking" />
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-tertiary animate-pulse uppercase tracking-widest">
-                  {activeRole === 'nod' ? 'NOD is processing' : `${AGENT_REGISTRY[activeRole as AgentRole]?.name} Analyzing`}
+                <span className="text-[11px] font-extrabold text-text-primary uppercase tracking-widest">
+                  {activeRole === 'nod' ? L4(lang, { ko: 'NOD 모델 처리 중', en: 'NOD is processing' }) : `${AGENT_REGISTRY[activeRole as AgentRole]?.name} ${L4(lang, { ko: '분석 중', en: 'Analyzing' })}`}
                 </span>
-                <div className="flex gap-0.5">
-                  {[0, 1, 2].map(i => (
-                    <motion.div 
-                      key={i}
-                      animate={{ opacity: [0, 1, 0] }}
-                      transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                      className="w-1 h-1 rounded-full bg-accent-amber"
-                    />
-                  ))}
+                <div className="flex gap-1 ml-1 text-amber-500">
+                   <Loader2 size={12} className="animate-spin" />
                 </div>
               </div>
-              <p className="text-[9px] text-text-tertiary opacity-50">Checking architecture & design constraints...</p>
+              <p className="text-[10px] font-medium text-text-tertiary">{L4(lang, { ko: '컨텍스트를 디코딩하고 합성하는 중...', en: 'Decoding context and synthesizing...' })}</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Input */}
-      <div className="p-4 pt-2 bg-bg-primary/30 backdrop-blur-xl border-t border-border">
+      <div className={`p-4 bg-bg-primary/50 backdrop-blur-2xl border-t border-border/30`}>
         {showMentions && filteredFiles.length > 0 && (
-          <div className="absolute bottom-full left-4 right-4 mb-4 bg-bg-secondary/95 backdrop-blur-2xl border border-border/80 rounded-2xl shadow-2xl max-h-64 overflow-y-auto p-2 z-[var(--z-overlay)] animate-in slide-in-from-bottom-2 duration-200">
-            <div className="px-3 py-2 text-[10px] font-bold text-text-tertiary uppercase tracking-wider border-b border-border/40 mb-1">
-              File Context
+          <div className="absolute bottom-[calc(100%+12px)] left-4 right-4 bg-bg-secondary/90 backdrop-blur-2xl border border-border/60 rounded-3xl shadow-2xl max-h-64 overflow-y-auto p-2 z-[var(--z-overlay)] animate-in slide-in-from-bottom-4 duration-300">
+            <div className="px-4 py-2 sticky top-0 bg-bg-secondary/90 backdrop-blur-md text-[10px] font-bold text-text-tertiary uppercase tracking-widest border-b border-border/30 mb-1">
+              {L4(lang, { ko: '파일 컨텍스트', en: 'File Context' })}
             </div>
             {filteredFiles.map((f) => (
               <button 
                 key={f} 
                 onClick={() => handleMentionSelect(`@${f}`)}
-                className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-xs text-text-primary hover:bg-accent-blue/10 rounded-xl transition-all group"
+                className="flex items-center gap-3 w-full text-left px-4 py-3 text-xs text-text-secondary font-medium hover:bg-accent-blue/10 hover:text-text-primary rounded-2xl transition-all group focus:bg-accent-blue/10"
               >
                 {getFileIcon(f)}
-                <span className="truncate flex-1 font-medium">{f}</span>
-                <span className="text-[9px] px-1.5 py-0.5 bg-bg-tertiary rounded opacity-0 group-hover:opacity-100 transition-opacity">Add</span>
+                <span className="truncate flex-1">{f}</span>
+                <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 bg-accent-blue/20 text-accent-blue rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">{L4(lang, { ko: '추가', en: 'Add' })}</span>
               </button>
             ))}
           </div>
         )}
 
-        <div className="flex flex-col bg-bg-tertiary rounded-2xl border border-border/60 focus-within:border-accent-blue/50 focus-within:ring-4 focus-within:ring-accent-blue/5 transition-all shadow-inner overflow-hidden">
-          <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border/40 bg-bg-primary/20">
-             <AtSign size={13} className="text-text-tertiary" />
-             <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest">Context Bridge</span>
-             <div className="ml-auto flex items-center gap-2">
+        <div className="flex flex-col bg-bg-secondary/40 backdrop-blur-md rounded-[24px] border border-border/50 focus-within:border-accent-blue/60 focus-within:ring-4 focus-within:ring-accent-blue/10 transition-all shadow-inner overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border/20 bg-bg-tertiary/30">
+             <AtSign size={14} className="text-text-tertiary/70" />
+             <span className="text-[10px] font-extrabold text-text-tertiary/80 uppercase tracking-widest">{L4(lang, { ko: '컨텍스트 브리지', en: 'Context Bridge' })}</span>
+             <div className="ml-auto flex items-center gap-3">
                {chat.storageUsage > 70 && (
-                 <div className="w-12 h-1 bg-border rounded-full overflow-hidden" title="Storage usage">
+                 <div className="w-16 h-1.5 bg-border/50 shadow-inner rounded-full overflow-hidden" title="Storage usage">
                    <div className="h-full bg-accent-red" style={{ width: `${chat.storageUsage}%` }} />
                  </div>
                )}
-               <span className="text-[9px] text-text-tertiary opacity-60">Markdown Enabled</span>
+               <span className="text-[9px] font-bold uppercase tracking-widest text-text-tertiary/60">{L4(lang, { ko: '마크다운 활성화', en: 'Markdown Enabled' })}</span>
              </div>
           </div>
           
-          <div className="flex items-center gap-2 px-4 py-3">
+          <div className="flex items-center gap-3 px-5 py-3">
             <input 
               ref={inputRef} 
               value={input} 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !showMentions) handleSend(); }}
-              placeholder={ko ? "무엇이든 물어보세요 (@를 눌러 파일 참조)" : "Type your query... (use @ for context)"}
-              className="flex-1 bg-transparent text-[13px] outline-none text-text-primary placeholder:text-text-tertiary/60"
+              placeholder={ko ? "명령을 입력하세요... (@를 눌러 컨텍스트 멘션)" : "Type your query... (use @ for context)"}
+              className="flex-1 bg-transparent text-[14px] outline-none text-text-primary font-medium placeholder:text-text-tertiary/50 placeholder:font-normal"
             />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {chat.isStreaming ? (
-                <button onClick={() => chat.abort()} className="p-2 rounded-xl bg-accent-red/10 text-accent-red hover:bg-accent-red hover:text-white transition-all animate-pulse">
-                  <Square size={16} fill="currentColor" />
+                <button onClick={() => chat.abort()} className="p-3 rounded-2xl bg-accent-red/15 text-accent-red hover:bg-accent-red hover:text-white transition-all shadow-sm shadow-accent-red/10 active:scale-95">
+                  <Square size={18} fill="currentColor" />
                 </button>
               ) : (
                 <button 
-                  onClick={handleSend} 
-                  disabled={!input.trim()} 
-                  className="p-2.5 rounded-xl bg-accent-blue text-white disabled:bg-bg-secondary disabled:text-text-tertiary shadow-lg shadow-accent-blue/20 transition-all hover:scale-105 active:scale-95"
+                   onClick={handleSend} 
+                   disabled={!input.trim()} 
+                   className="p-3 rounded-2xl bg-accent-blue text-white disabled:bg-bg-tertiary/50 disabled:text-text-tertiary shadow-lg shadow-accent-blue/20 transition-all hover:scale-105 active:scale-95 hover:shadow-accent-blue/40 disabled:shadow-none"
                 >
-                  <Send size={18} />
+                  <Send size={18} className="translate-x-[1px] translate-y-[1px]" />
                 </button>
               )}
             </div>

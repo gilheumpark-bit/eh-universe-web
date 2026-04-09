@@ -12,7 +12,6 @@
 import { test, expect, _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
 import path from 'node:path';
 import os from 'node:os';
-import fs from 'node:fs/promises';
 
 let app: ElectronApplication;
 let page: Page;

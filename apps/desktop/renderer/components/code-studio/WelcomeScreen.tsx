@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Code2, Play, FolderOpen, ChevronDown, Shield, Files } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import { listProjects } from "@/lib/code-studio/core/store";
 import type { AppLanguage } from "@/types/i18n";
@@ -44,33 +45,32 @@ export default function WelcomeScreen({
   const { lang } = useLang();
   const langKey = ((lang ?? "ko").toString().toUpperCase() as AppLanguage);
   const t =
-    TRANSLATIONS[langKey]?.codeStudio ??
-    TRANSLATIONS.KO?.codeStudio ??
+    (TRANSLATIONS[langKey]?.codeStudio as Record<string, string>) ??
     ({
       title: "EH Code Studio",
-      subtitle: "Agentic coding engine",
-      loading: "Loading...",
-      openDemo: "Open Demo",
-      openDemoDesc: "Start with a demo project",
-      resumeProject: "Resume last project",
-      resumeProjectDesc: "Continue where you left off",
-      newFile: "New file",
-      newFileDesc: "Create an empty file and start editing",
-      blankProject: "Blank project",
-      importFiles: "Import files",
-      explorerClosedTitle: "Explorer is closed",
-      explorerClosedDesc: "In the left activity bar, tap the Files (folder) icon to open the project tree. Choose a file to open the editor in this area.",
-      greetingTitle: "Hi there!",
-      greetingDesc: "How can I help?",
-      quickVerifyTitle: "AI Code Verify",
-      quickVerifyDesc: "Paste → Verify / Generate → Verify",
-      openLocalFolder: "Open Local Folder",
-      openLocalFolderDesc: "Select a folder from your system",
-      lessOptions: "Less",
-      moreOptions: "More options",
-      commandPalette: "Commands",
-      terminal: "Terminal",
-    } as Record<string, string>);
+      subtitle: L4(lang, { ko: "에이전틱 코딩 엔진", en: "Agentic coding engine" }),
+      loading: L4(lang, { ko: "로딩 중...", en: "Loading..." }),
+      openDemo: L4(lang, { ko: "데모 열기", en: "Open Demo" }),
+      openDemoDesc: L4(lang, { ko: "데모 프로젝트로 시작하기", en: "Start with a demo project" }),
+      resumeProject: L4(lang, { ko: "마지막 프로젝트 재개", en: "Resume last project" }),
+      resumeProjectDesc: L4(lang, { ko: "이전에 작업하던 곳부터 계속하기", en: "Continue where you left off" }),
+      newFile: L4(lang, { ko: "새 파일", en: "New file" }),
+      newFileDesc: L4(lang, { ko: "빈 파일을 생성하고 편집하기", en: "Create an empty file and start editing" }),
+      blankProject: L4(lang, { ko: "빈 프로젝트", en: "Blank project" }),
+      importFiles: L4(lang, { ko: "파일 가져오기", en: "Import files" }),
+      explorerClosedTitle: L4(lang, { ko: "탐색기가 닫혀 있습니다", en: "Explorer is closed" }),
+      explorerClosedDesc: L4(lang, { ko: "좌측 바에서 파일(폴더) 아이콘을 클릭하여 트리를 엽니다. 파일을 선택하면 여기서 편집기가 열립니다.", en: "In the left activity bar, tap the Files (folder) icon to open the project tree. Choose a file to open the editor in this area." }),
+      greetingTitle: L4(lang, { ko: "안녕하세요!", en: "Hi there!" }),
+      greetingDesc: L4(lang, { ko: "무엇을 도와드릴까요?", en: "How can I help?" }),
+      quickVerifyTitle: L4(lang, { ko: "AI 코드 검증", en: "AI Code Verify" }),
+      quickVerifyDesc: L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" }),
+      openLocalFolder: L4(lang, { ko: "로컬 폴더 열기", en: "Open Local Folder" }),
+      openLocalFolderDesc: L4(lang, { ko: "시스템에서 폴더를 선택하세요", en: "Select a folder from your system" }),
+      lessOptions: L4(lang, { ko: "간단히 보기", en: "Less" }),
+      moreOptions: L4(lang, { ko: "더 많은 옵션", en: "More options" }),
+      commandPalette: L4(lang, { ko: "명령어 목록", en: "Commands" }),
+      terminal: L4(lang, { ko: "터미널", en: "Terminal" }),
+    });
   const [visible, setVisible] = useState(false);
   const [hasProjects, setHasProjects] = useState(false);
   const [showExtras, setShowExtras] = useState(false);

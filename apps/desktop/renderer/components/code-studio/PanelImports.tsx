@@ -231,7 +231,10 @@ export const QuickVerifyComponent = dynamic(
 );
 
 // ── api-config (unified) ──────────────────────────────────────
-export const APIKeyConfigComponent = () => null;
+export const APIKeyConfigComponent = dynamic(
+  () => import("@/components/code-studio/APIKeyConfigPanel").then((m) => ({ default: m.APIKeyConfigPanel })),
+  { ssr: false }
+);
 
 // ── network-inspector (default) ───────────────────────────────
 export const PreviewNetworkTabComponent = dynamic(

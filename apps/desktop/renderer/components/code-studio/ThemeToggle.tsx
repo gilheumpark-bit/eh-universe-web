@@ -136,6 +136,7 @@ export function ThemeToggle({ variant = 'icon-only', className }: ThemeTogglePro
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: variant === 'with-label' ? 'var(--sp-sm)' : 0,
         minWidth: variant === 'icon-only' ? 'var(--touch-min)' : undefined,
         minHeight: 'var(--touch-min)',

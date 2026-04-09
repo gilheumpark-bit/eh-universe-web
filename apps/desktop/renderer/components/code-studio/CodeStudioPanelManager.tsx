@@ -20,6 +20,7 @@ import {
   GitCompare,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
+import { useLang } from "@/lib/LangContext";
 import type { FileNode, OpenFile } from "@eh/quill-engine/types";
 import type { RightPanel } from "@/lib/code-studio/core/panel-registry";
 import { getVisiblePanels } from "@/lib/code-studio/core/panel-registry";
@@ -31,7 +32,7 @@ import type { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import * as PI from "@/components/code-studio/PanelImports";
 import { renderRightPanelBranch } from "@/components/code-studio/right-panel-branch";
 import { ThemeToggle } from "@/components/code-studio/ThemeToggle";
-import { loadActivityBarOrder, saveActivityBarOrder } from "@/lib/code-studio/activity-bar-order";
+import { loadActivityBarOrder, saveActivityBarOrder, ACTIVITY_BAR_DEFAULT_ORDER } from "@/lib/code-studio/activity-bar-order";
 
 /** Map registry icon names → lucide-react components for the activity bar */
 const LUCIDE_MAP: Record<string, LucideIcon> = {
@@ -191,15 +192,21 @@ function ActivityBar({
     canvas: { id: "canvas", icon: PenTool, label: "Canvas", labelKo: "캔버스" },
   };
 
-  const [itemOrder, setItemOrder] = useState<string[]>(() => loadActivityBarOrder());
+  const [mounted, setMounted] = useState(false);
+  const [itemOrder, setItemOrder] = useState<string[]>([...ACTIVITY_BAR_DEFAULT_ORDER]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   /** dragOver 시점에 getData가 비는 브라우저 대비 */
   const draggedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    saveActivityBarOrder(itemOrder);
-  }, [itemOrder]);
+    setMounted(true);
+    setItemOrder(loadActivityBarOrder());
+  }, []);
+
+  useEffect(() => {
+    if (mounted) saveActivityBarOrder(itemOrder);
+  }, [itemOrder, mounted]);
 
   const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
     draggedIdRef.current = id;
@@ -326,16 +333,18 @@ function ActivityBar({
 
       {/* System Category */}
       <div className="flex flex-wrap justify-center gap-1 w-full px-1 shrink-0 pb-1">
-        <ThemeToggle
-          variant="icon-only"
-          className="!min-h-10 !min-w-10 shrink-0 rounded-lg text-text-tertiary hover:bg-white/6 hover:text-text-secondary"
-        />
+        <div className="w-10 h-10 flex shrink-0 items-center justify-center rounded-lg hover:bg-white/6">
+          <ThemeToggle
+            variant="icon-only"
+            className="text-text-tertiary hover:text-text-secondary w-full h-full rounded-lg"
+          />
+        </div>
         <button onClick={onToggleAdvancedPanels}
           className="w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all hover:bg-white/6"
           title={showAdvancedPanels ? L4(lang, { ko: "확장 패널 숨기기", en: "Hide advanced panels" }) : L4(lang, { ko: "모든 패널 보기", en: "Show all panels" })}>
           <ChevronRight className={`h-[18px] w-[18px] text-text-tertiary transition-transform ${showAdvancedPanels ? "rotate-180" : ""}`} />
         </button>
-        <button onClick={onToggleSettings} className="w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all hover:bg-white/6" title="Settings">
+        <button onClick={onToggleSettings} className="w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all hover:bg-white/6" title={L4(lang, { ko: "설정", en: "Settings" })}>
           <Settings className={`h-[18px] w-[18px] ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} />
         </button>
       </div>
@@ -391,6 +400,7 @@ function BottomPanels({
   pipelineStages: PipelineStage[];
   tcs: Record<string, string>;
 }) {
+  const { lang } = useLang();
   const problemFindings = useMemo(
     () => mapBugReportsToProblemFindings(bugReports),
     [bugReports],
@@ -401,10 +411,10 @@ function BottomPanels({
   return (
     <div className="shrink-0 border-t border-border flex max-h-[min(520px,55vh)] min-h-0 w-full flex-col overflow-hidden bg-bg-primary">
       <div className="flex shrink-0 items-center gap-1 border-b border-white/8 bg-bg-secondary px-2 py-1">
-        <button onClick={onToggleTerminal} title={tcs.consoleTooltip} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console}</button>
-        <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>Problems {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
-        <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>Pipeline</button>
-        <button onClick={onCloseAllBottom} aria-label="하단 패널 닫기" className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
+        <button onClick={onToggleTerminal} title={tcs.consoleTooltip || L4(lang, { ko: "터미널 목록", en: "Terminal List" })} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console || L4(lang, { ko: "터미널", en: "Terminal" })}</button>
+        <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>{L4(lang, { ko: "문제", en: "Problems" })} {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
+        <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>{L4(lang, { ko: "파이프라인", en: "Pipeline" })}</button>
+        <button onClick={onCloseAllBottom} aria-label={L4(lang, { ko: "하단 패널 닫기", en: "Close bottom panel" })} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
       </div>
       {showTerminal && (
         <div className="min-h-[min(320px,42vh)] h-[min(400px,48vh)] w-full bg-bg-primary dark:bg-[#0d0d0d]">
