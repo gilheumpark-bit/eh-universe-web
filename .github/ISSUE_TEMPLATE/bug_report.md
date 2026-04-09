@@ -1,29 +1,31 @@
 ---
-name: Bug Report
-about: Report a bug to help us improve
-title: "[Bug] "
+name: Bug report
+about: Create a report to help us improve NOA Code Studio
+title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
-## Description
-A clear description of the bug.
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-## Steps to Reproduce
+**To Reproduce**
+Steps to reproduce the behavior:
 1. Go to '...'
-2. Click on '...'
-3. See error
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
-## Expected Behavior
-What should happen.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## Actual Behavior
-What actually happens.
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-## Environment
-- Browser: (e.g., Chrome 120)
-- OS: (e.g., Windows 11, macOS 15)
-- Page: (e.g., /studio, /network)
+**Environment (please complete the following information):**
+ - OS: [e.g. Windows, Mac, Linux]
+ - Install Form: [e.g. Desktop App, Web CLI, WebContainer]
+ - Version [e.g. 0.1.0-alpha]
 
-## Screenshots / Console Errors
-If applicable, paste screenshots or console output.
+**Additional context**
+Add any other context about the problem here.
