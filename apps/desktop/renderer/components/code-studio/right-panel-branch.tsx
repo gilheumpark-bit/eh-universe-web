@@ -90,6 +90,7 @@ export function renderRightPanelBranch(
         activeFileLanguage={activeFile?.language}
         allFileNames={openFiles.map(f => f.name)}
         onApplyCode={onApplyCode}
+        onOpenSettings={() => onSetRightPanel("api-config" as RightPanel)}
       />
     );
     case "pipeline":

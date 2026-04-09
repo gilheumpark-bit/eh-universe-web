@@ -36,6 +36,7 @@ interface Props {
   onInsertCode?: (code: string) => void;
   onTerminalCommand?: (command: string, terminalId?: number | null) => void;
   onFileAction?: (action: string, params: Record<string, string>) => void;
+  onOpenSettings?: () => void;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=ChatMessage,Props
@@ -167,6 +168,7 @@ export function ChatPanel({
   onApplyCode,
   onTerminalCommand,
   onFileAction,
+  onOpenSettings,
 }: Props) {
   const { lang } = useLang();
   const ko = lang === "ko";
@@ -197,6 +199,7 @@ Rules:
 1. Always use fenced code blocks with language tags
 2. Explain your reasoning before showing code
 3. If generating UI, follow Design System v8.0 and use semantic tokens.
+4. ${ko ? "ALWAYS output your explanations and text in pure Korean. You must use Korean." : "Reply in English."}
 
 ${DESIGN_SYSTEM_SPEC}
 ${DESIGN_LINTER_SPEC}
@@ -303,6 +306,19 @@ ${mcpToolsDoc}`;
                     </div>
                   </button>
                 ))}
+                
+                <div className="h-px bg-border/30 my-1.5 mx-2" />
+                <button 
+                  onClick={() => { setShowRoleSelector(false); onOpenSettings?.(); }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-bg-tertiary/50 text-text-secondary transition-colors"
+                >
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-accent-purple bg-accent-purple/10 border border-accent-purple/30 shadow-sm">
+                    <Settings size={12} />
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold">{L4(lang, { ko: 'AI 설정 (API 키)', en: 'AI Settings (API Keys)' })}</p>
+                  </div>
+                </button>
               </div>
             </div>
           )}
