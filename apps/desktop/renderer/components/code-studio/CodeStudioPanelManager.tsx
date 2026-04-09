@@ -243,9 +243,6 @@ function ActivityBar({
   }, []);
 
   const orderedCoreItems = itemOrder.map((id) => coreItemCatalog[id]).filter(Boolean);
-  const majorIds = new Set(["files", "search", "chat", "composer", "canvas", "preview"]);
-  const majorItems = orderedCoreItems.filter(item => majorIds.has(item.id));
-  const minorItems = orderedCoreItems.filter(item => !majorIds.has(item.id));
 
   const renderIconBtn = (item: typeof coreItemCatalog[string]) => {
     const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
@@ -293,24 +290,13 @@ function ActivityBar({
       className="shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-3 gap-2 overflow-y-auto [&::-webkit-scrollbar]:hidden min-w-0"
     >
 
-      {/* Major Icons Container */}
+      {/* All Icons Container */}
       <div
         className="flex flex-wrap justify-center gap-1 w-full px-1"
         role="toolbar"
-        aria-label={L4(lang, { ko: "주요 도구", en: "Primary Tools" })}
+        aria-label={L4(lang, { ko: "주요 도구", en: "Tools" })}
       >
-        {majorItems.map(renderIconBtn)}
-      </div>
-
-      <div className="w-6 h-[1px] bg-white/10 shrink-0 my-1 rounded-full" />
-
-      {/* Minor & Advanced Icons Container */}
-      <div
-        className="flex flex-wrap justify-center gap-1 w-full px-1"
-        role="toolbar"
-        aria-label={L4(lang, { ko: "보조 도구", en: "Secondary Tools" })}
-      >
-        {minorItems.map(renderIconBtn)}
+        {orderedCoreItems.map(renderIconBtn)}
 
         {/* Advanced panels */}
         {showAdvancedPanels && visiblePanels
