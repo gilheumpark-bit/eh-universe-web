@@ -42,6 +42,7 @@ export function APIKeyConfigPanel({ onClose }: Props) {
       PROVIDER_LIST_UI.map(async (p) => {
         try {
           await setApiKeyAsync(p.id, keys[p.id] || "");
+        // eslint-disable-next-line unused-imports/no-unused-vars
         } catch (e) {
           failed++;
         }

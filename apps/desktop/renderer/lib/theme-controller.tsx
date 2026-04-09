@@ -83,7 +83,7 @@ type MonacoLike = {
 
 let monacoRef: MonacoLike | null = null;
 
-/** Called once by CodeStudioShell after Monaco loads. */
+/** Called once by ScopeShell after Monaco loads. */
 export function registerMonaco(monaco: MonacoLike): void {
   monacoRef = monaco;
   const resolved = resolveTheme(loadStoredMode());

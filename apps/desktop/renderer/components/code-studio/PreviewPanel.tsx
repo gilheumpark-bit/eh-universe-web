@@ -99,6 +99,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<WebContainerInstance | null>(null);
   const serverReadyRef = useRef(false);
+  const lastFilesMapRef = useRef<Record<string, string>>({});
 
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("responsive");
   const [showConsole, setShowConsole] = useState(false);
@@ -151,7 +152,13 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
       setState("installing");
 
       // Write all project files to the container concurrently.
-      await Promise.all(projectFiles.map((file) => wc.writeFile(file.path, file.content)));
+      const initialMap: Record<string, string> = {};
+      const writes = projectFiles.map((file) => {
+        initialMap[file.path] = file.content;
+        return wc.writeFile(file.path, file.content);
+      });
+      await Promise.all(writes);
+      lastFilesMapRef.current = initialMap;
 
       if (wc.isAvailable) {
         await wc.installDependencies();
@@ -169,7 +176,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
     }
   }, [projectFiles]);
 
-  // ── Auto-refresh on file changes ──
+   // ── Auto-refresh on file changes ──
   useEffect(() => {
     if (!visible || !serverReadyRef.current || !containerRef.current) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -177,14 +184,26 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
       try {
         const wc = containerRef.current;
         if (!wc) return;
-        await Promise.all(projectFiles.map((file) => wc.writeFile(file.path, file.content)));
-        if (iframeRef.current && previewUrl) {
-          iframeRef.current.src = previewUrl;
+        
+        // 정밀 진단 Action-1: Diff 기반 Virtual FS 동기화
+        const writes: Promise<void>[] = [];
+        const currentMap: Record<string, string> = {};
+        for (const file of projectFiles) {
+          currentMap[file.path] = file.content;
+          if (lastFilesMapRef.current[file.path] !== file.content) {
+            writes.push(wc.writeFile(file.path, file.content));
+          }
+        }
+        lastFilesMapRef.current = currentMap;
+        
+        if (writes.length > 0) {
+          await Promise.all(writes);
+          // Action-2: iframe.src 강제 초기화 제거 (HMR Bridge가 처리하도록 위임)
         }
       } catch { /* silent */ }
     }, 1000);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [projectFiles, visible, previewUrl]);
+  }, [projectFiles, visible]);
 
   // ── Initialize HMR Bridge when iframe is ready ──
   useEffect(() => {

@@ -56,6 +56,7 @@ interface Props {
 // PART 2 — Component
 // ============================================================
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 export function InlineEditWidget({ selectedText, fullCode, language, onApply, onCancel, onUndo, canUndo }: Props) {
   const [prompt, setPrompt] = useState("");
   const [preview, setPreview] = useState("");

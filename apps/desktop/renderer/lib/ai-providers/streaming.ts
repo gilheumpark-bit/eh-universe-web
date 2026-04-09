@@ -263,6 +263,98 @@ async function streamViaProxy(
 // IDENTITY_SEAL: PART-2 | role=proxy-stream | inputs=ProviderId,model,apiKey,StreamOptions | outputs=string
 
 // ============================================================
+// PART 2.5 — Provider-Specific Payload Optimizations
+// ============================================================
+
+/**
+ * 빅테크 API(특히 Anthropic) 및 타 프로바이더에 대한 프로덕션 레벨 최적화를 수행합니다.
+ * - Claude: 프롬프트 캐싱을 위해 시스템 메시지 및 User 메시지의 마지막 부분 (또는 긴 부분)에 `cache_control` 속성을 주입.
+ * - Gemini/OpenAI: 기본적으로는 Pass-through 하지만 향후 Structured System Instructions 포맷으로 컨버팅 가능.
+ */
+// 로컬 모델 스니핑 헬퍼
+function getLocalModelFamily(modelName: string): 'llama' | 'qwen' | 'mistral' | 'deepseek' | 'gemma' | 'unknown' {
+  const norm = modelName.toLowerCase();
+  if (norm.includes('llama')) return 'llama';
+  if (norm.includes('qwen')) return 'qwen';
+  if (norm.includes('mistral') || norm.includes('mixtral')) return 'mistral';
+  if (norm.includes('deepseek')) return 'deepseek';
+  if (norm.includes('gemma')) return 'gemma';
+  return 'unknown';
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyProviderOptimizations(provider: ProviderId, messages: ChatMsg[], systemInst?: string, modelName?: string): any[] {
+  // 0. 로컬 모델 동적 Heuristics 최적화 (Ollama, LMStudio)
+  if ((provider === 'ollama' || provider === 'lmstudio') && modelName) {
+    const family = getLocalModelFamily(modelName);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const optimized: any[] = [];
+    
+    // DeepSeek이나 특수 로컬 모델들은 System Role을 잘 인식 못하거나 빈 환각(Hallucination)을 내뿜는 이슈 방어 -> User의 최상단으로 편입
+    const combinedSystem = systemInst || '';
+    
+    if (family === 'deepseek' || family === 'gemma') {
+      // System을 첫번째 User 메시지에 병합하여 발송
+      messages.forEach((m, idx) => {
+        if (idx === 0 && m.role === 'user' && combinedSystem) {
+          optimized.push({ role: 'user', content: "[SYSTEM INSTRUCTION]\n" + combinedSystem + "\n\n[USER REQUEST]\n" + m.content });
+        } else {
+          optimized.push({ role: m.role, content: m.content });
+        }
+      });
+      // 첫번째에 user가 없다면 강제로 시스템을 user로 변환해 삽입
+      if (messages.length === 0 && combinedSystem) optimized.push({ role: 'user', content: combinedSystem });
+      return optimized;
+    }
+    
+    // Llama 계열, Qwen 등은 system 롤 권장 지켜서 반환
+    if (systemInst) optimized.push({ role: 'system', content: systemInst });
+    optimized.push(...messages);
+    return optimized;
+  }
+
+  // 1. Claude 최적화 (Prompt Caching 지원)
+  if (provider === 'claude') {
+    const optimized = [];
+    if (systemInst) {
+      optimized.push({
+        role: 'system',
+        content: [
+          { type: 'text', text: systemInst, cache_control: { type: 'ephemeral' } }
+        ]
+      });
+    }
+    // 일반 메시지 변환
+    messages.forEach((m, idx) => {
+      // 가장 최근 User 메시지(컨텍스트가 집중되는 곳)에 캐시 포인트를 설정
+      const isLastUser = (m.role === 'user' && idx === messages.length - 1) || (m.role === 'user' && idx === messages.length - 2);
+      
+      if (isLastUser && typeof m.content === 'string') {
+        optimized.push({
+          role: m.role,
+          content: [
+            { type: 'text', text: m.content, cache_control: { type: 'ephemeral' } }
+          ]
+        });
+      } else {
+        // Claude standard format requirements
+        optimized.push({
+          role: m.role,
+          content: m.content
+        });
+      }
+    });
+    return optimized;
+  }
+  
+  // 2. 다른 프로바이더 기본 변환 (systemInstruction 명시적 분리 처리용 객체가 필요할 수 있으나 기본 pass-through)
+  const baseMessages = [...messages];
+  return baseMessages;
+}
+
+// IDENTITY_SEAL: PART-2.5 | role=provider-optimizations | inputs=ProviderId,ChatMsg[],systemInst | outputs=OptimizedMessages
+
+// ============================================================
 // PART 3 — Unified Stream API (retry + ARI fallback)
 // ============================================================
 
@@ -325,8 +417,11 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     // token-guard 로그는 프로덕션에서 노출하지 않음
   }
 
+  // 액션: 빅테크 프로바이더별 프롬프트 최적화/구조화 (Prompt Caching 등) 적용
+  const providerOptimizedMessages = applyProviderOptimizations(provider, trimmedMessages, opts.systemInstruction, model);
+  
   const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);
-  const safeOpts = { ...opts, messages: trimmedMessages, maxTokens };
+  const safeOpts = { ...opts, messages: providerOptimizedMessages, maxTokens, systemInstruction: provider === 'claude' ? undefined : opts.systemInstruction };
 
   const MAX_RETRIES = 2;
   let lastError: Error | null = null;

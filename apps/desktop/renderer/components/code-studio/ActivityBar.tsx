@@ -138,7 +138,7 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
     const API_CONFIG_ITEM: ItemDef = {
       id: "api-config",
       icon: <Sparkles size={18} />,
-      label: L4(lang, { ko: "AI 제공자 설정", en: "AI Provider Config", ja: "AIプロバイダー設定", zh: "AI 提供商设置" }),
+      label: L4(lang, { ko: "LLM 코어 설정", en: "LLM Core Config", ja: "AIプロバイダー設定", zh: "AI 提供商设置" }),
     };
 
     const ALL_ITEMS: ItemDef[] = [...ACTIVITY_GROUPS.flatMap((g) => g.items), API_CONFIG_ITEM, SETTINGS_ITEM];

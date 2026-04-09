@@ -20,6 +20,7 @@ import {
   getStorageUsage 
 } from '@/lib/code-studio/core/store';
 import { DESIGN_SYSTEM_MINIMAL } from '@/lib/code-studio/core/design-system-spec';
+import { extractPhysicalConstraints, buildConstraintInjection, type IntentConstraints } from '@/lib/code-studio/ai/intent-parser';
 import { logger } from '@/lib/logger';
 import type { FileNode } from '@eh/quill-engine/types';
 
@@ -33,6 +34,7 @@ export interface ChatMessage {
   mentions?: string[]; 
   isError?: boolean;
   confidence?: number; // 0-1
+  auditInvoice?: IntentConstraints;
 }
 
 export interface SessionMetadata {
@@ -253,12 +255,16 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
 
+    const physicalConstraints = extractPhysicalConstraints(content);
+    const constraintInjection = buildConstraintInjection(physicalConstraints.systemOverride);
+
     const assistantMsg: ChatMessage = {
       id: generateId(),
       role: 'assistant',
       agentRole: msgOptions.agentRole || 'coder',
       content: '',
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      auditInvoice: physicalConstraints
     };
     setMessages(prev => [...prev, assistantMsg]);
 
@@ -275,7 +281,7 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
         }));
 
       await streamChat({
-        systemInstruction,
+        systemInstruction: `${systemInstruction}\n\n${constraintInjection}`,
         messages: history,
         signal: controller.signal,
         isChatMode: true,

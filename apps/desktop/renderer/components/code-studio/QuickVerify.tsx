@@ -19,6 +19,7 @@ interface Props {
   onClose?: () => void;
 }
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
   const { lang } = useLang();
   const [code, setCode] = useState("");
@@ -97,7 +98,7 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-green/10 border border-accent-green/20 mb-4">
           <Shield size={14} className="text-accent-green" />
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
-            {T({ ko: "AI 코드 검증", en: "AI Code Review" })}
+            {T({ ko: "스마트 검증", en: "Smart Code Review" })}
           </span>
         </div>
         <h2 className="text-2xl font-bold text-text-primary" style={{ fontFamily: "var(--font-display)" }}>

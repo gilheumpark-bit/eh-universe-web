@@ -133,7 +133,7 @@ export function Toolbar({
       { label: L4(lang, { ko: "분할 보기", en: "Split View", ja: "分割表示", zh: "分屏视图" }), action: onToggleSplit },
     ],
     ai: [
-      { label: L4(lang, { ko: "AI 채팅", en: "AI Chat", ja: "AIチャット", zh: "AI 聊天" }), shortcut: "Ctrl+L", action: onToggleChat },
+      { label: L4(lang, { ko: "EH 챗", en: "EH Chat", ja: "AIチャット", zh: "AI 聊天" }), shortcut: "Ctrl+L", action: onToggleChat },
       { label: L4(lang, { ko: "에이전트", en: "Agent", ja: "エージェント", zh: "智能体" }), shortcut: "Ctrl+I", action: onToggleAgent },
       { divider: true, label: "" },
       { label: L4(lang, { ko: "파이프라인", en: "Pipeline", ja: "パイプライン", zh: "流水线" }), shortcut: "Ctrl+Shift+Enter", action: onTogglePipeline },
@@ -165,8 +165,8 @@ export function Toolbar({
           { label: L4(lang, { ko: "터미널 토글", en: "Toggle Terminal", ja: "ターミナル切替", zh: "切换终端" }), shortcut: "Ctrl+`", action: onToggleTerminal },
           { label: L4(lang, { ko: "분할 보기", en: "Split View", ja: "分割表示", zh: "分屏视图" }), action: onToggleSplit },
         ]} />
-        <ToolbarMenu label={L4(lang, { ko: "AI", en: "AI", ja: "AI", zh: "AI" })} items={[
-          { label: L4(lang, { ko: "AI 채팅", en: "AI Chat", ja: "AIチャット", zh: "AI 聊天" }), shortcut: "Ctrl+L", action: onToggleChat },
+        <ToolbarMenu label={L4(lang, { ko: "EH 엔진", en: "EH 엔진", ja: "EH 엔진", zh: "EH 엔진" })} items={[
+          { label: L4(lang, { ko: "EH 챗", en: "EH Chat", ja: "AIチャット", zh: "AI 聊天" }), shortcut: "Ctrl+L", action: onToggleChat },
           { label: L4(lang, { ko: "에이전트", en: "Agent", ja: "エージェント", zh: "智能体" }), shortcut: "Ctrl+I", action: onToggleAgent },
           { divider: true, label: "" },
           { label: L4(lang, { ko: "파이프라인", en: "Pipeline", ja: "パイプライン", zh: "流水线" }), shortcut: "Ctrl+Shift+Enter", action: onTogglePipeline },

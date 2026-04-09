@@ -24,7 +24,7 @@ export const CODE_STUDIO_ARCHITECTURE_APPENDIX = `
 - **Responsibility**: If you touch a file, you complete it. You connect the components, handle the edge cases, and verify the physical limits (memory, IO). You take absolute ownership of your technical output.
 
 ### Shell & panels
-- UI split: CodeStudioShell (chrome) + CodeStudioEditor (work surface) + CodeStudioPanelManager (right panels).
+- UI split: ScopeShell (chrome) + ScopeEditor (work surface) + ScopePanelManager (right panels).
 - Panels: register ONLY via \`src/lib/code-studio/core/panel-registry.ts\` + \`PanelImports.tsx\` + panel props map. No hardcoded panel switches.
 - **Project spec (easy / 명세서) mode**: panel id \`project-spec\` — on complete, convert+save spec and seed Chat bootstrap prompt (\`eh-cs-chat-seed\`); keep questions and contract aligned with \`ProjectSpecForm.tsx\`.
 - Translator Studio uses a separate \`panel-registry\` — do not mix paths.

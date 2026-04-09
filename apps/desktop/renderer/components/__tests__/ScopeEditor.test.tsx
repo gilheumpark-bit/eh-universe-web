@@ -1,13 +1,13 @@
 // @ts-nocheck
 /**
- * CodeStudioEditor — export verification + WelcomeScreen render test
+ * ScopeEditor — export verification + WelcomeScreen render test
  * The component requires many props from parent hooks; we verify exports
  * and test the WelcomeScreen path by mocking the module.
  */
 import React from 'react';
 import '@testing-library/jest-dom';
 
-// Mock the entire CodeStudioEditor module at a higher level
+// Mock the entire ScopeEditor module at a higher level
 // to test that it renders the WelcomeScreen when no file is active
 jest.mock('@monaco-editor/react', () => ({
   __esModule: true,
@@ -45,6 +45,10 @@ jest.mock('@/lib/code-studio/core/cross-file', () => ({
   registerCrossFileProviders: jest.fn(),
 }));
 
+jest.mock('@/lib/code-studio/ai/i-core-client', () => ({
+  iCoreClient: {}
+}));
+
 jest.mock('@/components/code-studio/WelcomeScreen', () => ({
   __esModule: true,
   default: () => <div data-testid="welcome-screen">Welcome</div>,
@@ -52,17 +56,17 @@ jest.mock('@/components/code-studio/WelcomeScreen', () => ({
 
 jest.mock('@/components/code-studio/PanelImports', () => ({}));
 
-describe('CodeStudioEditor', () => {
-  it('exports a named CodeStudioEditor component', async () => {
-    const mod = await import('../code-studio/CodeStudioEditor');
-    expect(mod.CodeStudioEditor).toBeDefined();
-    expect(typeof mod.CodeStudioEditor).toBe('function');
+describe('ScopeEditor', () => {
+  it('exports a named ScopeEditor component', async () => {
+    const mod = await import('../code-studio/ScopeEditor');
+    expect(mod.ScopeEditor).toBeDefined();
+    expect(typeof mod.ScopeEditor).toBe('function');
   });
 
-  it('CodeStudioEditor accepts a props interface with required fields', async () => {
-    const mod = await import('../code-studio/CodeStudioEditor');
+  it('ScopeEditor accepts a props interface with required fields', async () => {
+    const mod = await import('../code-studio/ScopeEditor');
     // Verify it's a React component (function with length for props)
-    expect(mod.CodeStudioEditor).toBeDefined();
-    expect(mod.CodeStudioEditor.name).toBeTruthy();
+    expect(mod.ScopeEditor).toBeDefined();
+    expect(mod.ScopeEditor.name).toBeTruthy();
   });
 });

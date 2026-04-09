@@ -20,7 +20,7 @@
  *   - ANSI color parsing for terminal output rendering
  *   - Command history with arrow-key navigation (persistent per session)
  *   - Tab auto-completion with smart suggestions (files, commands, env vars)
- *   - AI-powered error analysis (streams failed command stderr to LLM for diagnosis)
+ *   - Engine-powered error analysis (streams failed command stderr to LLM for diagnosis)
  *   - Command aliases (ni, nr, gs, ga, gc, etc.)
  *   - Shell environment variables (export/unset)
  *   - Scroll lock toggle and clipboard copy of output
@@ -403,8 +403,8 @@ export function TerminalPanel({
           if (analysis) {
             setLines((prev) => [
               ...prev,
-              { text: `[AI] ${analysis.summary}`, color: "blue" },
-              { text: `[AI] ${t('terminalPanel.suggestion')}: ${analysis.suggestion}`, color: "blue" },
+              { text: `[System] ${analysis.summary}`, color: "blue" },
+              { text: `[System] ${t('terminalPanel.suggestion')}: ${analysis.suggestion}`, color: "blue" },
               ...(analysis.fixCommand ? [{
                 text: `💡 [${t('terminalPanel.clickToFix')}] ${analysis.fixCommand}`,
                 color: "green",
@@ -507,7 +507,7 @@ export function TerminalPanel({
         : (prompt) => {
             setLines((prev) => [
               ...prev,
-              { text: `[AI] ${prompt}`, color: "blue" },
+              { text: `[System] ${prompt}`, color: "blue" },
             ]);
           },
     };

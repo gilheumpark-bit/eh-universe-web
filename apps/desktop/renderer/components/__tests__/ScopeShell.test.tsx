@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * CodeStudioShell — module-level smoke test
+ * ScopeShell — module-level smoke test
  * This is the heaviest component in the codebase with 50+ dependencies.
  * We verify the module exports correctly and that it can be imported.
  */
@@ -136,6 +136,7 @@ jest.mock("@/hooks/useCodeStudioPanels", () => ({
 }));
 jest.mock("@/hooks/useCodeStudioKeyboard", () => ({
   useCodeStudioKeyboard: jest.fn(),
+
 }));
 jest.mock("@/components/ErrorBoundary", () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => (
@@ -156,30 +157,30 @@ jest.mock("@/components/code-studio/WelcomeScreen", () => ({
 jest.mock("@/components/code-studio/MobileLayout", () => ({
   useIsMobile: () => false,
 }));
-jest.mock("@/components/code-studio/CodeStudioEditor", () => ({
-  CodeStudioEditor: () => <div data-testid="cs-editor">Editor</div>,
+jest.mock("@/components/code-studio/ScopeEditor", () => ({
+  ScopeEditor: () => <div data-testid="cs-editor">Editor</div>,
 }));
-jest.mock("@/components/code-studio/CodeStudioPanelManager", () => ({
+jest.mock("@/components/code-studio/ScopePanelManager", () => ({
   ActivityBar: () => <div>ActivityBar</div>,
   RightPanelContent: () => <div>RightPanel</div>,
   BottomPanels: () => <div>BottomPanels</div>,
 }));
 
-describe("CodeStudioShell", () => {
+describe("ScopeShell", () => {
   it("module exports a default component", async () => {
-    const mod = await import("../code-studio/CodeStudioShell");
+    const mod = await import("../code-studio/ScopeShell");
     expect(mod.default).toBeDefined();
     expect(typeof mod.default).toBe("function");
   });
 
   it("component name is defined", async () => {
-    const mod = await import("../code-studio/CodeStudioShell");
+    const mod = await import("../code-studio/ScopeShell");
     // Verify the component is a valid function component
     expect(mod.default).toBeDefined();
     expect(
       mod.default.name ||
         (mod.default as unknown as { displayName?: string }).displayName ||
-        "CodeStudioShell",
+        "ScopeShell",
     ).toBeTruthy();
   });
 });

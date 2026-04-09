@@ -56,11 +56,11 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     ],
   },
   {
-    category: "AI",
+    category: "EH 엔진",
     shortcuts: [
-      { keys: "Ctrl+I", description: "AI inline suggestion" },
-      { keys: "Ctrl+L", description: "Open AI chat" },
-      { keys: "Ctrl+K", description: "AI command" },
+      { keys: "Ctrl+I", description: "Smart inline suggestion" },
+      { keys: "Ctrl+L", description: "Open EH chat" },
+      { keys: "Ctrl+K", description: "Smart command" },
       { keys: "@", description: "Mention file / agent / symbol" },
       { keys: "Ctrl+?", description: "Show shortcuts (this panel)" },
     ],

@@ -6,8 +6,8 @@ import {
 
 describe("editor-surface-context-menu", () => {
   it("exports a stable id list aligned with ContextMenu buildEditorSurfaceMenu", () => {
-    expect(EDITOR_SURFACE_MENU_ACTION_IDS).toHaveLength(10);
-    expect(new Set(EDITOR_SURFACE_MENU_ACTION_IDS).size).toBe(10);
+    expect(EDITOR_SURFACE_MENU_ACTION_IDS).toHaveLength(11);
+    expect(new Set(EDITOR_SURFACE_MENU_ACTION_IDS).size).toBe(11);
   });
 
   it("runs Monaco actions or app callback for every known menu id", () => {

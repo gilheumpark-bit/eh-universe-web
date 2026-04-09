@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * CodeStudioPanelManager — renders panel area (ActivityBar)
+ * ScopePanelManager — renders panel area (ActivityBar)
  */
 import React from 'react';
 import { render } from '@testing-library/react';
@@ -34,7 +34,7 @@ jest.mock('@/components/code-studio/ThemeToggle', () => ({
   ThemeToggle: () => null,
 }));
 
-import { ActivityBar } from '../code-studio/CodeStudioPanelManager';
+import { ActivityBar } from '../code-studio/ScopePanelManager';
 
 describe('ActivityBar', () => {
   it('renders without crashing', () => {

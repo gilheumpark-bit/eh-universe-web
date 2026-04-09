@@ -10,6 +10,7 @@ const sharedMapper: Record<string, string> = {
   '^@/(.*)$': '<rootDir>/renderer/$1',
   '^@vercel/analytics$': '<rootDir>/renderer/test-utils/vercel-analytics.ts',
   '^@vercel/analytics/next$': '<rootDir>/renderer/test-utils/vercel-analytics.ts',
+  '^@/lib/code-studio/ai/worker-loader$': '<rootDir>/renderer/test-utils/mocks/worker-loader.js',
   '\\.(css|less|sass|scss)$': '<rootDir>/renderer/test-utils/css-mock.js',
 };
 

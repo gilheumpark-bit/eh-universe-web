@@ -62,7 +62,7 @@ export default function WelcomeScreen({
       explorerClosedDesc: L4(lang, { ko: "좌측 바에서 파일(폴더) 아이콘을 클릭하여 트리를 엽니다. 파일을 선택하면 여기서 편집기가 열립니다.", en: "In the left activity bar, tap the Files (folder) icon to open the project tree. Choose a file to open the editor in this area." }),
       greetingTitle: L4(lang, { ko: "안녕하세요!", en: "Hi there!" }),
       greetingDesc: L4(lang, { ko: "무엇을 도와드릴까요?", en: "How can I help?" }),
-      quickVerifyTitle: L4(lang, { ko: "AI 코드 검증", en: "AI Code Verify" }),
+      quickVerifyTitle: L4(lang, { ko: "스마트 검증", en: "Smart Verify" }),
       quickVerifyDesc: L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" }),
       openLocalFolder: L4(lang, { ko: "로컬 폴더 열기", en: "Open Local Folder" }),
       openLocalFolderDesc: L4(lang, { ko: "시스템에서 폴더를 선택하세요", en: "Select a folder from your system" }),

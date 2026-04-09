@@ -8,6 +8,7 @@
 // Tab으로 수락, Escape로 거부.
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { createWebGpuWorker } from '@/lib/code-studio/ai/worker-loader';
 
 // 디바운스 + 취소 제어
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -307,6 +308,34 @@ export function cancelGhostText(): void {
   if (abortController) { abortController.abort(); abortController = null; }
 }
 
+let vWorker: Worker | null = null;
+let vCount = 0;
+const vReqs = new Map<number, (res: string | null) => void>();
+
+function initVWorker() {
+  if (typeof window === 'undefined' || vWorker) return;
+  try {
+    vWorker = createWebGpuWorker();
+    vWorker.postMessage({ type: 'INIT' });
+    vWorker.onmessage = (e) => {
+      const { type, reqId, completion, error } = e.data;
+      if (type === 'FIM_SUCCESS' && vReqs.has(reqId)) {
+        vReqs.get(reqId)!(completion);
+        vReqs.delete(reqId);
+      } else if (type === 'FIM_FALLBACK' && vReqs.has(reqId)) {
+        vReqs.get(reqId)!(null);
+        vReqs.delete(reqId);
+      } else if (type === 'FIM_ERROR' && vReqs.has(reqId)) {
+        console.error('V-Core Error:', error);
+        vReqs.get(reqId)!(null);
+        vReqs.delete(reqId);
+      }
+    };
+  } catch (e) {
+    console.warn('V-Core Worker init err:', e);
+  }
+}
+
 /** Ghost Text 완성 요청 */
 export async function requestGhostCompletion(
   codeBefore: string,
@@ -331,18 +360,41 @@ export async function requestGhostCompletion(
   const cached = completionCache.get(contextKey);
   if (cached) { trackSuggested(); return cached; }
 
-  // Multi-line detection
-  const blockType = detectIncompleteBlock(before);
-  const multiLineHint = blockType
-    ? `\nThe cursor is at the end of an incomplete ${blockType} block. Provide a multi-line completion (up to 10 lines) to complete the block.`
-    : '';
+  initVWorker();
+  let result = '';
+  let vCoreSuccess = false;
+  
+  if (vWorker) {
+    const reqId = ++vCount;
+    const localResult = await new Promise<string | null>((resolve) => {
+      vReqs.set(reqId, resolve);
+      vWorker!.postMessage({ type: 'FIM_REQUEST', payload: { codeBefore: before, codeAfter: after, language, reqId } });
+      // 안전 장치: 1.5초 초과 시 클라우드로 우회
+      setTimeout(() => {
+        if (vReqs.has(reqId)) {
+          console.warn('[V-Core] Timeout, switching to Cloud API');
+          vReqs.delete(reqId);
+          resolve(null);
+        }
+      }, 1500);
+    });
 
-  // Style hints
-  const styleHint = buildStyleHint();
+    if (localResult !== null) {
+      result = localResult;
+      vCoreSuccess = true;
+    }
+  }
 
-  const maxTokens = getAdaptiveMaxTokens();
+  if (!vCoreSuccess) {
+    const blockType = detectIncompleteBlock(before);
+    const multiLineHint = blockType
+      ? `\nThe cursor is at the end of an incomplete ${blockType} block. Provide a multi-line completion (up to 10 lines) to complete the block.`
+      : '';
 
-  const prompt = `Language: ${language}${styleHint}
+    const styleHint = buildStyleHint();
+    const maxTokens = getAdaptiveMaxTokens();
+
+    const prompt = `Language: ${language}${styleHint}
 Code before cursor:
 \`\`\`
 ${before}
@@ -355,18 +407,18 @@ ${after}
 ${multiLineHint}
 Complete the code at the cursor position:`;
 
-  let result = '';
-  try {
-    await streamChat({
-      systemInstruction: GHOST_SYSTEM,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.1,
-      maxTokens,
-      signal,
-      onChunk: (text: string) => { result += text; },
-    });
-  } catch {
-    return '';
+    try {
+      await streamChat({
+        systemInstruction: GHOST_SYSTEM,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        maxTokens,
+        signal,
+        onChunk: (text: string) => { result += text; },
+      });
+    } catch {
+      return '';
+    }
   }
 
   // 클린업: 백틱/마크다운 제거

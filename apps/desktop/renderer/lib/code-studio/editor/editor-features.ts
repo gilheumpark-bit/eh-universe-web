@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // @ts-nocheck
 /**
  * code-studio-editor-features.ts
  * Monaco editor advanced feature registration module.
- * Called from CodeStudioShell's Monaco onMount handler.
+ * Called from ScopeShell's Monaco onMount handler.
  */
 
 import type * as Monaco from "monaco-editor";
+import { streamChat } from "@/lib/ai-providers";
 
 // ============================================================
 // PART 1 — Public Entry Point
@@ -24,7 +26,19 @@ export function registerEditorFeatures(
   registerPrettierFormat(monaco, editor);
   registerCrossFileRename(monaco);
   registerGoToLine(editor);
-  registerCodeActions(monaco);
+  registerCodeActions(monaco, editor);
+  
+  if (typeof (window as any).registerHoverExplainer === 'function') {
+      (window as any).registerHoverExplainer(monaco, editor);
+  } else if (typeof registerHoverExplainer === 'function') {
+      registerHoverExplainer(monaco, editor);
+  }
+  
+  if (typeof (window as any).registerSecurityLinter === 'function') {
+      (window as any).registerSecurityLinter(monaco, editor);
+  } else if (typeof registerSecurityLinter === 'function') {
+      registerSecurityLinter(monaco, editor);
+  }
 }
 
 // IDENTITY_SEAL: PART-1 | role=public API | inputs=monaco,editor | outputs=void
@@ -363,7 +377,7 @@ function addMissingSemicolon(line: string): string {
   // Skip JSX: lines ending with > or /> or opening tags
   if (/[>]$/.test(trimmed)) return line;
   // Skip template literals
-  if (trimmed.endsWith("`")) return line;
+  if (trimmed.endsWith("\`")) return line;
 
   // Candidate: ends with ), identifier, string literal, number, or ]
   if (/[)\]'"\d\w]$/.test(trimmed)) {
@@ -377,37 +391,87 @@ function addMissingSemicolon(line: string): string {
 // IDENTITY_SEAL: PART-4 | role=document formatting + real formatter | inputs=monaco,editor | outputs=format provider + shortcut
 
 // ============================================================
-// PART 5 — Cross-File Rename (Stub)
+// PART 5 — Smart AST-based Project Rename (Worker-based)
 // ============================================================
 
 function registerCrossFileRename(monaco: typeof Monaco): void {
   const renameProvider: Monaco.languages.RenameProvider = {
-    provideRenameEdits(model, position, newName) {
+    async provideRenameEdits(model, position, newName, _token) {
       const wordAtPos = model.getWordAtPosition(position);
       if (!wordAtPos) return { edits: [] };
 
       const oldName = wordAtPos.word;
       const edits: Monaco.languages.IWorkspaceTextEdit[] = [];
-      const text = model.getValue();
-      const regex = new RegExp(`\\b${escapeRegex(oldName)}\\b`, "g");
-      let match: RegExpExecArray | null;
+      const langId = model.getLanguageId();
+      let useRegexFallback = false;
 
-      while ((match = regex.exec(text)) !== null) {
-        const startPos = model.getPositionAt(match.index);
-        const endPos = model.getPositionAt(match.index + oldName.length);
-        edits.push({
-          resource: model.uri,
-          textEdit: {
-            range: {
-              startLineNumber: startPos.lineNumber,
-              startColumn: startPos.column,
-              endLineNumber: endPos.lineNumber,
-              endColumn: endPos.column,
-            },
-            text: newName,
-          },
-          versionId: undefined,
-        });
+      if (langId === 'typescript' || langId === 'javascript' || langId === 'typescriptreact' || langId === 'javascriptreact') {
+        try {
+          const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+          const worker = await getWorker(model.uri);
+          
+          const renameLocations = await worker.findRenameLocations(
+            model.uri.toString(),
+            model.getOffsetAt(position),
+            false,
+            false
+          );
+          
+          if (renameLocations && renameLocations.length > 0) {
+            for (const loc of renameLocations) {
+              const locUri = monaco.Uri.parse(loc.fileName);
+              const locModel = monaco.editor.getModel(locUri);
+              if (locModel) {
+                const sPos = locModel.getPositionAt(loc.textSpan.start);
+                const ePos = locModel.getPositionAt(loc.textSpan.start + loc.textSpan.length);
+                edits.push({
+                  resource: locModel.uri,
+                  textEdit: {
+                    range: {
+                      startLineNumber: sPos.lineNumber,
+                      startColumn: sPos.column,
+                      endLineNumber: ePos.lineNumber,
+                      endColumn: ePos.column,
+                    },
+                    text: newName,
+                  },
+                  versionId: undefined,
+                });
+              }
+            }
+          } else {
+             useRegexFallback = true;
+          }
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        } catch (_e) {
+            useRegexFallback = true;
+        }
+      } else {
+          useRegexFallback = true;
+      }
+      
+      if (useRegexFallback) {
+          const text = model.getValue();
+          const regex = new RegExp("\\\\b" + escapeRegex(oldName) + "\\\\b", "g");
+          let match: RegExpExecArray | null;
+
+          while ((match = regex.exec(text)) !== null) {
+            const startPos = model.getPositionAt(match.index);
+            const endPos = model.getPositionAt(match.index + oldName.length);
+            edits.push({
+              resource: model.uri,
+              textEdit: {
+                range: {
+                  startLineNumber: startPos.lineNumber,
+                  startColumn: startPos.column,
+                  endLineNumber: endPos.lineNumber,
+                  endColumn: endPos.column,
+                },
+                text: newName,
+              },
+              versionId: undefined,
+            });
+          }
       }
 
       return { edits };
@@ -435,6 +499,8 @@ function registerCrossFileRename(monaco: typeof Monaco): void {
 
   monaco.languages.registerRenameProvider("typescript", renameProvider);
   monaco.languages.registerRenameProvider("javascript", renameProvider);
+  monaco.languages.registerRenameProvider("typescriptreact", renameProvider);
+  monaco.languages.registerRenameProvider("javascriptreact", renameProvider);
 }
 
 function escapeRegex(str: string): string {
@@ -473,16 +539,112 @@ function registerGoToLine(editor: Monaco.editor.IStandaloneCodeEditor): void {
 // IDENTITY_SEAL: PART-6 | role=go-to-line shortcut | inputs=editor | outputs=keyboard action
 
 // ============================================================
-// PART 7 — Code Actions (Expanded Quick Fixes)
+// PART 7 — Code Actions (Expanded Quick Fixes & AI Magic)
 // ============================================================
 
-function registerCodeActions(monaco: typeof Monaco): void {
+function registerCodeActions(monaco: typeof Monaco, editor?: Monaco.editor.IStandaloneCodeEditor): void {
+  // Command registry for AI Generation actions
+  if (editor && !(window as any).__aiGenCommandsRegistered) {
+    (window as any).__aiGenCommandsRegistered = true;
+    
+    // Command for JSDoc Gen
+    editor.addAction({
+      id: "code-studio.aiGenDoc",
+      label: "Magic JSDoc Gen (AI)",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KeyD],
+      run: async (ed) => {
+        const selection = ed.getSelection();
+        const model = ed.getModel();
+        if (!selection || !model) return;
+        const selectedText = model.getValueInRange(selection);
+        if (!selectedText.trim()) return;
+
+        let docResult = "";
+        const prompt = "Generate a concise JSDoc comment for the following code snippet. Return ONLY the JSDoc comment starting with /** and ending with */. Do not surround with markdown.\\n\\nCode:\\n" + selectedText;
+        
+        try {
+          await streamChat([{ role: "user", content: prompt }], {
+            onChunk: (text) => { docResult += text; },
+            onComplete: () => {}
+          });
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        } catch(_e) {}
+
+        if (docResult) {
+          ed.executeEdits("aiGenDoc", [{
+            range: new monaco.Range(selection.startLineNumber, 1, selection.startLineNumber, 1),
+            text: docResult + "\\n"
+          }]);
+        }
+      }
+    });
+
+    // Command for Unit Test Gen
+    editor.addAction({
+      id: "code-studio.aiGenTest",
+      label: "Magic Test Gen (AI)",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KeyT],
+      run: async (ed) => {
+        const selection = ed.getSelection();
+        const model = ed.getModel();
+        if (!selection || !model) return;
+        const selectedText = model.getValueInRange(selection);
+        if (!selectedText.trim()) return;
+
+        let testResult = "";
+        const prompt = "Generate a Jest unit test case for the following code snippet. Return ONLY the javascript/typescript test code without markdown blocks.\\n\\nCode:\\n" + selectedText;
+        
+        try {
+          await streamChat([{ role: "user", content: prompt }], {
+            onChunk: (text) => { testResult += text; },
+            onComplete: () => {}
+          });
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        } catch(_e) {}
+
+        if (testResult) {
+          const endLine = selection.endLineNumber;
+          ed.executeEdits("aiGenTest", [{
+            range: new monaco.Range(endLine + 1, 1, endLine + 1, 1),
+            text: "\\n" + testResult + "\\n"
+          }]);
+        }
+      }
+    });
+  }
+
   const codeActionProvider: Monaco.languages.CodeActionProvider = {
     provideCodeActions(model, range) {
       const actions: Monaco.languages.CodeAction[] = [];
       const lineContent = model.getLineContent(range.startLineNumber);
       const trimmed = lineContent.trim();
       const fullText = model.getValue();
+
+      // Feature 8: Magic Test/Doc Gen
+      const selectedText = model.getValueInRange(range).trim();
+      if (selectedText.length > 5) {
+        actions.push({
+          title: "🤖 ✨ Generate JSDoc via Local AI",
+          kind: "refactor.rewrite",
+          command: {
+            id: "code-studio.aiGenDoc",
+            title: "Gen Doc",
+            arguments: []
+          },
+          isPreferred: false,
+        });
+
+        actions.push({
+          title: "🤖 🧪 Generate Unit Test via Local AI",
+          kind: "refactor.rewrite",
+          command: {
+            id: "code-studio.aiGenTest",
+            title: "Gen Test",
+            arguments: []
+          },
+          isPreferred: false,
+        });
+      }
 
       // ---- Missing semicolon ----
       if (
@@ -631,14 +793,13 @@ function registerCodeActions(monaco: typeof Monaco): void {
       }
 
       // ---- Extract variable: detect repeated expressions ----
-      const selectedText = model.getValueInRange(range).trim();
       if (selectedText.length > 3 && !selectedText.includes("\n")) {
         const escapedSel = escapeRegex(selectedText);
         const re = new RegExp(escapedSel, "g");
         const matches = fullText.match(re);
         if (matches && matches.length >= 2) {
           actions.push({
-            title: `Extract "${selectedText.slice(0, 30)}..." to variable`,
+            title: 'Extract "' + selectedText.slice(0, 30) + '..." to variable',
             kind: "refactor.extract",
             edit: {
               edits: [
@@ -651,7 +812,7 @@ function registerCodeActions(monaco: typeof Monaco): void {
                       endLineNumber: range.startLineNumber,
                       endColumn: 1,
                     },
-                    text: `const extracted = ${selectedText};\n`,
+                    text: "const extracted = " + selectedText + ";\\n",
                   },
                   versionId: undefined,
                 },
@@ -667,7 +828,7 @@ function registerCodeActions(monaco: typeof Monaco): void {
       if (cannotFindMatch) {
         const missingName = cannotFindMatch[1];
         actions.push({
-          title: `Add import for '${missingName}'`,
+          title: "Add import for '" + missingName + "'",
           kind: "quickfix",
           edit: {
             edits: [
@@ -680,7 +841,7 @@ function registerCodeActions(monaco: typeof Monaco): void {
                     endLineNumber: 1,
                     endColumn: 1,
                   },
-                  text: `import { ${missingName} } from './${missingName}';\n`,
+                  text: "import { " + missingName + " } from './" + missingName + "';\\n",
                 },
                 versionId: undefined,
               },
@@ -709,11 +870,11 @@ function registerCodeActions(monaco: typeof Monaco): void {
                     endColumn: model.getLineContent(range.endLineNumber).length + 1,
                   },
                   text:
-                    `${leadingWs}try {\n` +
-                    `${innerIndent}${trimmed}\n` +
-                    `${leadingWs}} catch (err) {\n` +
-                    `${innerIndent}console.error(err);\n` +
-                    `${leadingWs}}`,
+                      leadingWs + "try {\\n" +
+                      innerIndent + trimmed + "\\n" +
+                      leadingWs + "} catch (err) {\\n" +
+                      innerIndent + "console.error(err);\\n" +
+                      leadingWs + "}",
                 },
                 versionId: undefined,
               },
@@ -734,3 +895,156 @@ function registerCodeActions(monaco: typeof Monaco): void {
 }
 
 // IDENTITY_SEAL: PART-7 | role=code action quick fixes (expanded) | inputs=monaco | outputs=code action provider
+
+// ============================================================
+// PART 8 — Local AI Lint Error Explainer (Hover Provider)
+// ============================================================
+
+const explanationCache = new Map<string, string>();
+
+export function registerHoverExplainer(
+  monaco: typeof Monaco,
+  _editor: Monaco.editor.IStandaloneCodeEditor
+): void {
+  monaco.languages.registerHoverProvider(["typescript", "javascript", "typescriptreact", "javascriptreact"], {
+    async provideHover(model, position) {
+      const markers = monaco.editor.getModelMarkers({ resource: model.uri });
+      const hoverMarker = markers.find(
+        (m) =>
+          position.lineNumber >= m.startLineNumber &&
+          position.lineNumber <= m.endLineNumber &&
+          position.column >= m.startColumn &&
+          position.column <= m.endColumn
+      );
+
+      // Only explain errors, not warnings/hints, to save resources
+      if (!hoverMarker || hoverMarker.severity !== monaco.MarkerSeverity.Error) {
+        return null;
+      }
+
+      const cacheKey = hoverMarker.message + "-" + hoverMarker.startLineNumber;
+      if (explanationCache.has(cacheKey)) {
+        return {
+          range: new monaco.Range(
+            hoverMarker.startLineNumber,
+            hoverMarker.startColumn,
+            hoverMarker.endLineNumber,
+            hoverMarker.endColumn
+          ),
+          contents: [
+            { value: "### 🤖 Local AI Explainer" },
+            { value: explanationCache.get(cacheKey)! },
+          ],
+        };
+      }
+
+      // Provide small context around the error
+      const startLine = Math.max(1, hoverMarker.startLineNumber - 5);
+      const endLine = Math.min(model.getLineCount(), hoverMarker.endLineNumber + 5);
+      const snippet = model.getValueInRange({
+        startLineNumber: startLine,
+        startColumn: 1,
+        endLineNumber: endLine,
+        endColumn: model.getLineMaxColumn(endLine),
+      });
+
+      const prompt = 'Explain this code error briefly and give a direct "Quick Fix" snippet if applicable. Do not be overly chatty, focus to the point.\\n\\n' +
+      '[Error]\\n' +
+      hoverMarker.message + '\\n\\n' +
+      '[Code Snippet context]\\n' +
+      '```\\n' +
+      snippet + '\\n' +
+      '```';
+
+      try {
+        let aiResult = "";
+        const messages = [{ role: "user", content: prompt }];
+        
+        await streamChat(messages, {
+          onChunk: (text) => { aiResult += text; },
+          onComplete: () => {}
+        });
+
+        if (!aiResult) {
+          aiResult = "⚠️ *Failed to generate local AI explanation. Check VRAM/Cloud availability.*";
+        }
+
+        explanationCache.set(cacheKey, aiResult);
+
+        return {
+          range: new monaco.Range(
+            hoverMarker.startLineNumber,
+            hoverMarker.startColumn,
+            hoverMarker.endLineNumber,
+            hoverMarker.endColumn
+          ),
+          contents: [
+            { value: "### 🤖 Local AI Explainer" },
+            { value: aiResult },
+          ],
+        };
+      // eslint-disable-next-line unused-imports/no-unused-vars
+      } catch (_err) {
+        return null;
+      }
+    },
+  });
+}
+
+// IDENTITY_SEAL: PART-8 | role=ai error hover explainer | inputs=monaco,editor | outputs=hover provider
+
+// ============================================================
+// PART 9 — Auto-Security / Leak P0 Linter
+// ============================================================
+
+export function registerSecurityLinter(monaco: typeof Monaco, editor: Monaco.editor.IStandaloneCodeEditor): void {
+  // Check for dangerous patterns live
+  if (!(window as any).__securityLinterRegistered) {
+    (window as any).__securityLinterRegistered = true;
+    
+    // Using a debounced model change listener.
+    let debounceTimer: any;
+    
+    editor.onDidChangeModelContent(() => {
+      const model = editor.getModel();
+      if (!model) return;
+      
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const contents = model.getValue();
+        const lines = contents.split("\n");
+        const markers: Monaco.editor.IMarkerData[] = [];
+        
+        // simple rule definition
+        const DANGEROUS_PATTERNS = [
+          { regex: /\bexec\s*\(/g, message: "Security Warning: Usage of 'exec()' can lead to RCE vulnerabilities." },
+          { regex: /\beval\s*\(/g, message: "Security Warning: 'eval()' executed. Strong risk of code injection." },
+          { regex: /os\.system\s*\(/g, message: "Security Warning: Shell injection risk via 'os.system'." },
+          { regex: /child_process\.exec/g, message: "Security Warning: Prefer execFile over exec to avoid shell injection." }
+        ];
+
+        lines.forEach((line, i) => {
+          if (line.trim().startsWith("//") || line.trim().startsWith("/*")) return; // Skip comments generally
+          DANGEROUS_PATTERNS.forEach(pattern => {
+            let match;
+            while ((match = pattern.regex.exec(line)) !== null) {
+               markers.push({
+                 severity: monaco.MarkerSeverity.Error,
+                 message: "🚨 [P0 LEAK / SECURITY] " + pattern.message,
+                 startLineNumber: i + 1,
+                 startColumn: match.index + 1,
+                 endLineNumber: i + 1,
+                 endColumn: match.index + 1 + match[0].length,
+               });
+            }
+          });
+        });
+        
+        // Since we are adding our own markers, we should assign an owner string.
+        monaco.editor.setModelMarkers(model, "security-linter", markers);
+      }, 500); // 500ms debounce
+    });
+  }
+}
+
+// IDENTITY_SEAL: PART-9 | role=security live linter | inputs=monaco,editor | outputs=model markers

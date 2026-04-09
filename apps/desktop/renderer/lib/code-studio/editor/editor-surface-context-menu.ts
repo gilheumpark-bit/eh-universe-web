@@ -62,6 +62,7 @@ export const EDITOR_SURFACE_MENU_ACTION_IDS = [
   "editor-ai-picker",
   "editor-ai-lint",
   "editor-snapshot",
+  "editor-scope-lock",
 ] as const;
 
 /** Menu item ids from {@link buildEditorSurfaceMenu} in ContextMenu.tsx */
@@ -73,6 +74,7 @@ export function runEditorSurfaceMenuAction(
     onAIPicker?: () => void;
     onAILint?: () => void;
     onAISnapshot?: () => void;
+    onScopeLock?: () => void;
   }
 ): void {
   if (!editor) return;
@@ -109,6 +111,9 @@ export function runEditorSurfaceMenuAction(
       break;
     case "editor-snapshot":
       callbacks?.onAISnapshot?.();
+      break;
+    case "editor-scope-lock":
+      callbacks?.onScopeLock?.();
       break;
     default:
       break;

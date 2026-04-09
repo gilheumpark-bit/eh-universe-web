@@ -277,7 +277,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
           </h3>
           <div className="grid grid-cols-3 gap-3">
             <StatCard label="File Edits" value={`${sessionStats.fileEdits}`} icon={<FileText size={14} className="text-blue-500" />} />
-            <StatCard label="AI Calls" value={`${sessionStats.aiCalls}`} icon={<Brain size={14} className="text-purple-500" />} />
+            <StatCard label="LLM Calls" value={`${sessionStats.aiCalls}`} icon={<Brain size={14} className="text-purple-500" />} />
             <StatCard label="Tokens" value={formatTokens(sessionStats.tokens)} icon={<Trophy size={14} className="text-amber-500" />} />
           </div>
         </section>
@@ -304,10 +304,10 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
           </div>
         </section>
 
-        {/* AI-Predicted Performance Analysis */}
+        {/* Engine-Predicted Performance Analysis */}
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 font-semibold text-text-primary">
-            <Gauge size={14} className="text-orange-500" /> AI-Predicted Performance
+            <Gauge size={14} className="text-orange-500" /> Engine-Predicted Performance
           </h3>
 
           {onRunStress && (
@@ -362,7 +362,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
               {/* Disclaimer */}
               <div className="flex items-start gap-2 pt-2 pb-1 text-[10px] text-text-tertiary/80 border-t border-border/20">
                 <AlertTriangle size={12} className="shrink-0 mt-px text-accent-amber" />
-                <span className="leading-relaxed">AI-Predicted heuristic estimates — not based on real load test results.</span>
+                <span className="leading-relaxed">Engine-Predicted heuristic estimates — not based on real load test results.</span>
               </div>
             </div>
           ) : !isStressTesting ? (

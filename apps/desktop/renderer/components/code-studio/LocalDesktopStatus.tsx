@@ -108,9 +108,17 @@ export function LocalDesktopStatus() {
       </span>
       <span
         title={L4(lang, { ko: "여유 / 전체 메모리", en: "Free / total RAM" })}
-        className={`shrink-0 ${memFreeRatio < 0.08 ? "text-accent-red/90" : ""}`}
+        className={`shrink-0 flex items-center gap-1 ${memFreeRatio < 0.15 ? "text-accent-red/90" : ""}`}
       >
         RAM {memLabel}
+        {memFreeRatio < 0.15 && (
+          <span
+            className="flex items-center gap-1 px-1.5 rounded bg-accent-red/20 text-[9px] font-bold border border-accent-red/30 ml-2 animate-pulse"
+            title={L4(lang, { ko: "리소스 부족으로 인하여 V-Core 오프라인 모델을 절전하고 클라우드 API로 우회합니다.", en: "Low resources. V-Core offline model is asleep. Cloud fallback active." })}
+          >
+            ⚠️ {L4(lang, { ko: "V-Core 슬립", en: "V-Core Sleep" })}
+          </span>
+        )}
       </span>
       {projectPath ? (
         <button

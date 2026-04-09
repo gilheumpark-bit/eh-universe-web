@@ -15,11 +15,13 @@ import type { FileNode, OpenFile, CodeStudioSettings } from "@eh/quill-engine/ty
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
 // import { detectLanguage } from "@eh/quill-engine/types";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio/ai/ghost";
+import { processStealthClipboard } from "@/lib/code-studio/ai/stealth-clipboard";
 import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features";
 import { setupMonaco } from "@/lib/code-studio/editor/monaco-setup";
 import { registerCrossFileProviders } from "@/lib/code-studio/core/cross-file";
 import { findFilePathById, toMonacoModelPath } from "@/lib/code-studio/editor/model-path";
 import { attachEditorSurfaceContextMenu, runEditorSurfaceMenuAction } from "@/lib/code-studio/editor/editor-surface-context-menu";
+import { iCoreClient } from "@/lib/code-studio/ai/i-core-client";
 import { useLang } from "@/lib/LangContext";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { LocalDesktopStatus } from "@/components/code-studio/LocalDesktopStatus";
@@ -51,7 +53,7 @@ function findFileNodeByName(nodes: FileNode[], name: string): FileNode | null {
   return null;
 }
 
-export interface CodeStudioEditorProps {
+export interface ScopeEditorProps {
   // Core data
   files: FileNode[];
   openFiles: OpenFile[];
@@ -133,13 +135,13 @@ export interface CodeStudioEditorProps {
   children?: React.ReactNode;
 }
 
-// IDENTITY_SEAL: PART-1 | role=Imports+Types | inputs=none | outputs=imports,CodeStudioEditorProps
+// IDENTITY_SEAL: PART-1 | role=Imports+Types | inputs=none | outputs=imports,ScopeEditorProps
 
 // ============================================================
 // PART 2 — Editor Component
 // ============================================================
 
-export function CodeStudioEditor(props: CodeStudioEditorProps) {
+export function ScopeEditor(props: ScopeEditorProps) {
   const {
     files, openFiles, activeFile, activeFileId, settings, loaded,
     hasEverOpened, useEditorGroup, onToggleEditorGroup,
@@ -162,6 +164,14 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
   const crossFileDisposableRef = useRef<{ dispose(): void } | null>(null);
   const editorSurfaceTargetRef = useRef<MonacoNS.editor.IStandaloneCodeEditor | null>(null);
   const [editorSurfaceMenu, setEditorSurfaceMenu] = useState<{ x: number; y: number } | null>(null);
+  const indexingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const handleIndexFile = useCallback((fileId: string, content: string, filePath: string) => {
+    if (indexingTimerRef.current) clearTimeout(indexingTimerRef.current);
+    indexingTimerRef.current = setTimeout(() => {
+      iCoreClient.indexFile(filePath, content).catch(err => console.warn("I-Core index error:", err));
+    }, 2000); // 2s debounce
+  }, []);
   
   // AI Inline Edit State
   const [inlineEditState, setInlineEditState] = useState<{
@@ -220,6 +230,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           if (value === undefined) return;
           onOpenFiles((prev) => prev.map((f) => f.id === paneFile.id ? { ...f, content: value, isDirty: true } : f));
           fsUpdateContent(paneFile.id, value);
+          handleIndexFile(paneFile.id, value, panePath);
         }}
         theme="vs-dark"
         options={{
@@ -243,6 +254,10 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           
           ed.addCommand((mon as unknown).KeyMod.CtrlCmd | (mon as unknown).KeyCode.KeyI, () => {
              triggerInlineEdit(ed);
+          });
+
+          ed.onDidPaste((e) => {
+             processStealthClipboard(mon as Parameters<typeof processStealthClipboard>[0], ed, e.range, paneFile.language);
           });
 
           if (!isFocused) return;
@@ -287,6 +302,17 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     ed.addCommand((monaco as unknown).KeyMod.CtrlCmd | (monaco as unknown).KeyCode.KeyI, () => {
       triggerInlineEdit(ed);
     });
+
+    // Register Stealth Clipboard Profiler
+    ed.onDidPaste((e) => {
+       const currFile = files.find(f => f.id === activeFileId);
+       if (currFile) {
+          processStealthClipboard(monaco as Parameters<typeof processStealthClipboard>[0], ed, e.range, currFile.language);
+       } else {
+          processStealthClipboard(monaco as Parameters<typeof processStealthClipboard>[0], ed, e.range, "typescript");
+       }
+    });
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files, onFileSelect, onCursorChange]);
 
@@ -305,6 +331,21 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         onAIPicker: () => {
           const ed = editorSurfaceTargetRef.current;
           if (ed) triggerInlineEdit(ed);
+        },
+        onScopeLock: () => {
+          // Send active selection to GraphRAG explicitly or lock the context to it
+          const ed = editorSurfaceTargetRef.current;
+          if (ed) {
+             const selection = ed.getSelection();
+             const model = ed.getModel();
+             if (selection && model && !selection.isEmpty()) {
+                const text = model.getValueInRange(selection);
+                const panePath = model.uri.toString();
+                iCoreClient.indexFile(panePath, text, { locked: true }).then(() => {
+                  if (onSaveToast) onSaveToast(); // reuse save toast for visual feedback
+                });
+             }
+          }
         }
       });
     },
@@ -435,14 +476,18 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col relative overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
-              key={useEditorGroup ? "group" : activeFileId ? "editor" : "empty"}
+              key={rightPanel === "canvas" ? "canvas" : useEditorGroup ? "group" : activeFileId ? "editor" : "empty"}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute inset-0 flex flex-col"
+              className="absolute inset-0 flex flex-col bg-bg-primary"
             >
-              {useEditorGroup ? (
+              {rightPanel === "canvas" ? (
+                <div className="flex-1 w-full h-full overflow-hidden">
+                  <PI.CanvasPanelComponent />
+                </div>
+              ) : useEditorGroup ? (
                 <PI.EditorGroupComponent
                   openFiles={openFiles}
                   activeFileId={activeFileId}
@@ -454,7 +499,12 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
                 activeFile ? (
                   <MonacoEditor
                     height="100%" language={activeFile.language} path={activeFilePath} value={activeFile.content}
-                    onChange={onEditorChange} theme="vs-dark"
+                    onChange={(val) => {
+                       onEditorChange(val);
+                       if (val !== undefined && activeFilePath) {
+                          handleIndexFile(activeFile.id, val, activeFilePath);
+                       }
+                    }} theme="vs-dark"
                     options={{
                       fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
                       minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
@@ -487,7 +537,11 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
                 onApply={(newText) => {
                   const ed = editorRef.current as MonacoNS.editor.IStandaloneCodeEditor | null;
                   if (ed && inlineEditState.selection) {
-                    ed.executeEdits("ai-inline", [{ range: inlineEditState.selection, text: newText }]);
+                    ed.pushEditOperations(
+                      ed.getSelections() || [],
+                      [{ range: inlineEditState.selection, text: newText }],
+                      () => null // Computes end cursor state automatically
+                    );
                   }
                   setInlineEditState(null);
                 }}

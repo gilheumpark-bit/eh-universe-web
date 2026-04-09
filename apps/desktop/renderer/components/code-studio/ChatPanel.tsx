@@ -22,6 +22,7 @@ import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
 import { runDesignLint } from "@eh/quill-engine/pipeline/design-lint";
 import { TIER_REGISTRY, resolveTierConfig, type AITier } from "@/lib/code-studio/ai/tier-registry";
+import { AuditInvoice } from "@/components/code-studio/AuditInvoice";
 import { Settings } from "lucide-react";
 import type { FileNode } from "@eh/quill-engine/types";
 
@@ -44,6 +45,7 @@ interface Props {
 // PART 2 — Chat History Helpers
 // ============================================================
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 function formatRelativeTime(ts: number | undefined): string {
   if (!ts) return "unknown";
   const diff = Date.now() - ts;
@@ -86,6 +88,7 @@ function extractCodeBlocks(content: string): Array<{ code: string; language: str
 
 // IDENTITY_SEAL: PART-3 | role=CodeExtract | inputs=content | outputs=codeBlocks
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 function MessageActionCard({ action, params, onClick, lang }: { action: string, params: { fileName?: string; description?: string; [key: string]: unknown }, onClick: () => void, lang: string }) {
   const isApply = action === 'APPLY_CODE' || action === 'FIX';
   return (
@@ -132,6 +135,7 @@ function MascotQuill({ state }: { state: 'idle' | 'thinking' | 'greeting' }) {
       }}
       className="relative w-20 h-20 mx-auto mb-3"
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img 
         src="/images/quill.png" 
         alt="Quill Mascot" 
@@ -152,6 +156,7 @@ function MascotQuill({ state }: { state: 'idle' | 'thinking' | 'greeting' }) {
 // PART 4 — Main Component
 // ============================================================
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 const CATEGORY_THEMES = {
   leadership: { color: 'text-accent-blue', bg: 'bg-accent-blue/10', border: 'border-accent-blue/40' },
   generation: { color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/40' },
@@ -160,13 +165,13 @@ const CATEGORY_THEMES = {
 };
 
 export function ChatPanel({
-  activeFileContent,
+  _activeFileContent,
   activeFileName,
-  allFileNames,
+  _allFileNames,
   tree,
   onApplyCode,
-  onTerminalCommand,
-  onFileAction,
+  _onTerminalCommand,
+  _onFileAction,
   onOpenSettings,
 }: Props) {
   const { lang } = useLang();
@@ -430,6 +435,10 @@ ${mcpToolsDoc}`;
                       );
                     })}
                   </div>
+                )}
+                
+                {msg.auditInvoice && !chat.isStreaming && msg.auditInvoice.matrixLog.length > 0 && (
+                   <AuditInvoice invoice={msg.auditInvoice} />
                 )}
               </div>
             </motion.div>

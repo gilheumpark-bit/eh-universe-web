@@ -270,6 +270,7 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
 
 export default function DatabasePanel({
   connections,
+  // eslint-disable-next-line unused-imports/no-unused-vars
   onConnect,
   onExecuteQuery,
   tables = [],

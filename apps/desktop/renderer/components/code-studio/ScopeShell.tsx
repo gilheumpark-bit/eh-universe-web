@@ -107,8 +107,8 @@ export namespace MonacoNS {
 }
 
 // Extracted components
-import { CodeStudioEditor } from "@/components/code-studio/CodeStudioEditor";
-import { ActivityBar, RightPanelContent, BottomPanels, type PipelineStage } from "@/components/code-studio/CodeStudioPanelManager";
+import { ScopeEditor } from "@/components/code-studio/ScopeEditor";
+import { ActivityBar, RightPanelContent, BottomPanels, type PipelineStage } from "@/components/code-studio/ScopePanelManager";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
@@ -246,7 +246,7 @@ function FileTreeItem({
 // IDENTITY_SEAL: PART-2 | role=DemoFiles+FileTree | inputs=none | outputs=DEMO_FILES,FileTreeItem
 
 // ============================================================
-// PART 3 — Orchestrator (CodeStudioShellInner)
+// PART 3 — Orchestrator (ScopeShellInner)
 // ============================================================
 
 function useIsTablet(): boolean {
@@ -261,7 +261,7 @@ function useIsTablet(): boolean {
   return isTablet;
 }
 
-function CodeStudioShellInner() {
+function ScopeShellInner() {
   const { toast } = useToast();
   const { lang } = useLang();
   const tcs = getTcs(lang);
@@ -1270,7 +1270,7 @@ function CodeStudioShellInner() {
 
         {/* Center column: editor fills height; 콘솔/Problems는 하단 (가로 flex에 두면 오른쪽 열로 붙는 버그 방지) */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <CodeStudioEditor
+        <ScopeEditor
           files={files} openFiles={openFiles} activeFile={activeFile} activeFileId={activeFileId}
           settings={settings} loaded={loaded} hasEverOpened={hasEverOpened} isMobile={false}
           useEditorGroup={useEditorGroup} onToggleEditorGroup={() => setUseEditorGroup(v => !v)}
@@ -1305,7 +1305,7 @@ function CodeStudioShellInner() {
         >
           {/* Right Panel (extracted component) with resize handle */}
           <AnimatePresence initial={false}>
-            {rightPanel && rightPanel !== "api-config" && (
+            {rightPanel && rightPanel !== "api-config" && rightPanel !== "canvas" && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1347,7 +1347,7 @@ function CodeStudioShellInner() {
               </motion.div>
             )}
           </AnimatePresence>
-        </CodeStudioEditor>
+        </ScopeEditor>
 
         {/* Rollback Banner */}
         {Object.keys(preApplySnapshot).length > 0 && Object.keys(stagedFiles).length === 0 && (
@@ -1431,7 +1431,7 @@ function CodeStudioShellInner() {
               ),
               { id: "quick-open", label: L4(lang, { ko: "빠른 파일 열기", en: "Quick Open File" }), shortcut: "Ctrl+P", category: "File" },
               { id: "toggle-settings", label: L4(lang, { ko: "인라인 설정 토글", en: "Toggle Inline Settings" }), category: "View" },
-              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (AI-Predicted)" }), category: "Tools" },
+              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (Engine-Predicted)" }), category: "Tools" },
               { id: "run-verification", label: L4(lang, { ko: "통합 검증 실행", en: "Run Full Verification (Pipeline + Bugs + Stress)" }), category: "Tools" },
             ]}
           />
@@ -1457,11 +1457,11 @@ function CodeStudioShellInner() {
 // PART 4 — Export Wrapper (ToastProvider)
 // ============================================================
 
-export default function CodeStudioShell() {
+export default function ScopeShell() {
   return (
     <ErrorBoundary variant="panel" fallbackMessage="Code Studio encountered an error">
       <ToastProvider>
-        <CodeStudioShellInner />
+        <ScopeShellInner />
       </ToastProvider>
     </ErrorBoundary>
   );

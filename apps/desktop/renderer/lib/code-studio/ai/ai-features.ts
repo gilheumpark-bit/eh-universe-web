@@ -71,6 +71,7 @@ function extractJSON(text: string): string {
 
 /** Safe JSON parse with fallback (kept for backward compat in non-safeAICall paths) */
  
+// eslint-disable-next-line unused-imports/no-unused-vars
 function safeParseJSON<T>(text: string, fallback: T): T {
   try {
     return JSON.parse(extractJSON(text)) as T;

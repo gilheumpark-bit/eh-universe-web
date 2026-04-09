@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   FilePlus, FolderPlus, Pencil, Trash2, Copy, Clipboard,
   Columns2, ChevronRight, Scissors, ClipboardPaste, Sparkles,
-  TextSelect, Command, Shield,
+  TextSelect, Command, Shield, Lock,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 
@@ -282,6 +282,11 @@ export function buildEditorSurfaceMenu(lang: string): ContextMenuItem[] {
       id: "editor-snapshot",
       label: L4(lang, { ko: "히스토리 스냅샷 생성", en: "Create History Snapshot" }),
       icon: <Clipboard size={12} className="text-green-400" />,
+    },
+    {
+      id: "editor-scope-lock",
+      label: L4(lang, { ko: "스코프 고정", en: "Lock AI Scope" }),
+      icon: <Lock size={12} className="text-purple-400" />,
     },
   ];
 }

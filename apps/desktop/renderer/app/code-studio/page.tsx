@@ -6,7 +6,7 @@ import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import type { AppLanguage } from "@/types/i18n";
 import { CodeStudioSkeleton } from "@/components/SkeletonLoader";
-import CodeStudioShell from "@/components/code-studio/CodeStudioShell";
+import ScopeShell from "@/components/code-studio/ScopeShell";
 
 function CodeStudioLoading() {
   const { lang } = useLang();
@@ -35,7 +35,7 @@ export default function CodeStudioPage() {
     <Suspense fallback={<CodeStudioSkeleton />}>
       <div className="h-screen w-screen overflow-hidden bg-bg-primary">
         <Suspense fallback={<CodeStudioLoading />}>
-          <CodeStudioShell />
+          <ScopeShell />
         </Suspense>
       </div>
     </Suspense>

@@ -19,6 +19,7 @@
     "cs": "pnpm --filter @eh/quill-cli exec cs"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "turbo": "^2.5.0",
     "typescript": "^5"

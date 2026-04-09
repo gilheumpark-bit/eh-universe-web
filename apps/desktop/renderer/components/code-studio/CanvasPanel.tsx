@@ -74,13 +74,20 @@ function useStitchIntegration() {
 // PART 3 — UI Components
 // ============================================================
 
-export default function CanvasPanel() {
+export interface CanvasPanelProps {
+  onApplyCode?: (code: string, fileName: string) => void;
+  onOpenPreview?: (code: string) => void;
+}
+
+export default function CanvasPanel({ onApplyCode, onOpenPreview }: CanvasPanelProps) {
   const { lang } = useLang();
   const ko = lang === "ko";
   
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [messages, setMessages] = useState<CanvasMessage[]>([]);
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  const [previewData, setPreviewData] = useState<{ type: "code" | "preview"; content: string } | null>(null);
   
   const { isConnected, stitchServerId, projectId, initializeProject } = useStitchIntegration();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -102,13 +109,13 @@ export default function CanvasPanel() {
       let targetProjectId = projectId;
       
       if (!isConnected || !stitchServerId) {
-        throw new Error(ko ? "Stitch MCP 서버가 연결되지 않았습니다." : "Stitch MCP server is not connected.");
+        throw new Error(ko ? "EH Canvas 엔진(MCP)이 연결되지 않았습니다." : "EH Canvas engine is not connected.");
       }
 
       if (!targetProjectId) {
         targetProjectId = await initializeProject();
         if (!targetProjectId) {
-          throw new Error(ko ? "프로젝트 생성에 실패했습니다." : "Failed to create Stitch project.");
+          throw new Error(ko ? "프로젝트 생성에 실패했습니다." : "Failed to create EH Canvas project.");
         }
       }
 
@@ -117,9 +124,24 @@ export default function CanvasPanel() {
         prompt: text,
       });
 
+      let responseText = resp.content;
+      if (!resp.isError) {
+        try {
+          const parsed = JSON.parse(resp.content);
+          if (parsed.output_components) {
+            responseText = typeof parsed.output_components === "string" ? parsed.output_components : JSON.stringify(parsed.output_components, null, 2);
+          } else if (parsed.content) {
+            responseText = typeof parsed.content === "string" ? parsed.content : JSON.stringify(parsed.content, null, 2);
+          }
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        } catch (e) {
+          // ignore parse error and use raw content
+        }
+      }
+
       setMessages((prev) => [
         ...prev,
-        { id: Date.now().toString(), role: "assistant", text: resp.isError ? `❌ ${resp.content}` : resp.content, isError: resp.isError },
+        { id: Date.now().toString(), role: "assistant", text: resp.isError ? `❌ ${resp.content}` : responseText, isError: resp.isError },
       ]);
     } catch (err) {
       setMessages((prev) => [
@@ -168,7 +190,7 @@ export default function CanvasPanel() {
               {ko ? "무엇을 만들어드릴까요?" : "What would you like to build?"}
             </h3>
             <p className="text-[11px] text-text-tertiary leading-relaxed max-w-[280px] mb-6">
-              {ko ? "프롬프트를 입력하면 AI가 아름다운 UI 화면을 실시간으로 생성합니다." : "Describe a UI and AI will generate a beautiful screen in real-time."}
+              {ko ? "프롬프트를 입력하면 EH 엔진이 아름다운 UI 화면을 실시간으로 생성합니다." : "Describe a UI and AI will generate a beautiful screen in real-time."}
             </p>
             <div className="flex flex-wrap justify-center gap-2 max-w-xs">
               {["Login Dashboard", "Settings Page", "Pricing Table", "Data Grid"].map((s) => (
@@ -204,10 +226,16 @@ export default function CanvasPanel() {
                 <div className="whitespace-pre-wrap text-[11px] opacity-90">{msg.text}</div>
                 {!msg.isError && (
                   <div className="mt-4 flex gap-2">
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-primary border border-border/60 hover:border-accent-blue/50 hover:text-accent-blue hover:bg-accent-blue/5 transition-all text-[10px] font-bold">
+                    <button onClick={() => {
+                        setPreviewData({ type: "code", content: msg.text });
+                        if (onApplyCode) onApplyCode(msg.text, "EHCanvasPreview.tsx");
+                      }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-primary border border-border/60 hover:border-accent-blue/50 hover:text-accent-blue hover:bg-accent-blue/5 transition-all text-[10px] font-bold">
                       <Code2 size={12} /> View Code
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-primary border border-border/60 hover:border-accent-green/50 hover:text-accent-green hover:bg-accent-green/5 transition-all text-[10px] font-bold">
+                    <button onClick={() => {
+                        setPreviewData({ type: "preview", content: msg.text });
+                        if (onOpenPreview) onOpenPreview(msg.text);
+                      }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-bg-primary border border-border/60 hover:border-accent-green/50 hover:text-accent-green hover:bg-accent-green/5 transition-all text-[10px] font-bold">
                       <Layout size={12} /> View Preview
                     </button>
                   </div>

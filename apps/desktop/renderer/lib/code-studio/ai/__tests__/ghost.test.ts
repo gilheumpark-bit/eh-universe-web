@@ -3,6 +3,12 @@
 /**
  * Unit tests for ghost module
  */
+
+jest.mock('@/lib/code-studio/ai/worker-loader', () => ({
+  createWebGpuWorker: jest.fn(),
+  createICoreWorker: jest.fn()
+}));
+
 describe('ghost', () => {
   it('module loads without error', () => {
     expect(() => require('../ghost')).not.toThrow();

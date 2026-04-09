@@ -199,7 +199,7 @@ const _registeredPaths = new Set<string>();
  * - 진단(diagnostics)
  * - React / Next.js / 글로벌 타입 정의
  *
- * CodeStudioEditor의 onMount 콜백에서 1회 호출.
+ * ScopeEditor의 onMount 콜백에서 1회 호출.
  */
 export function setupTypeScriptIntelliSense(monaco: typeof Monaco): void {
   configureCompilerOptions(monaco);

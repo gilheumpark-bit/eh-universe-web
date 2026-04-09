@@ -21,14 +21,14 @@ const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { id: "comment", label: "주석 토글", shortcut: "Ctrl+/", category: "편집" },
   { id: "duplicate", label: "줄 복제", shortcut: "Shift+Alt+↓", category: "편집" },
   { id: "format", label: "문서 포맷", shortcut: "Shift+Alt+F", category: "편집" },
-  { id: "inline-edit", label: "인라인 편집", shortcut: "Ctrl+K", category: "AI" },
+  { id: "inline-edit", label: "인라인 편집", shortcut: "Ctrl+K", category: "EH 엔진" },
   { id: "command-palette", label: "커맨드 팔레트", shortcut: "Ctrl+Shift+P", category: "보기" },
   { id: "toggle-sidebar", label: "사이드바 토글", shortcut: "Ctrl+B", category: "보기" },
   { id: "toggle-terminal", label: "터미널 토글", shortcut: "Ctrl+`", category: "보기" },
   { id: "global-search", label: "전역 검색", shortcut: "Ctrl+Shift+F", category: "보기" },
-  { id: "chat", label: "AI 채팅", shortcut: "Ctrl+L", category: "AI" },
-  { id: "agent", label: "AI 에이전트", shortcut: "Ctrl+I", category: "AI" },
-  { id: "pipeline", label: "파이프라인", shortcut: "Ctrl+Shift+Enter", category: "AI" },
+  { id: "chat", label: "EH 챗", shortcut: "Ctrl+L", category: "EH 엔진" },
+  { id: "agent", label: "에이전트", shortcut: "Ctrl+I", category: "EH 엔진" },
+  { id: "pipeline", label: "파이프라인", shortcut: "Ctrl+Shift+Enter", category: "EH 엔진" },
 ];
 
 // IDENTITY_SEAL: PART-1 | role=Data | inputs=none | outputs=Keybinding[]

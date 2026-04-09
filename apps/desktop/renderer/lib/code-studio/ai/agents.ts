@@ -11,6 +11,7 @@ import { DESIGN_SYSTEM_SPEC } from '@/lib/code-studio/core/design-system-spec';
 import { DESIGN_LINTER_SPEC } from '@/lib/code-studio/core/design-linter';
 import { buildIdiomDirective, detectFramework, type FrameworkId } from '@/lib/code-studio/ai/idiom-presets';
 import { buildCalcProtocolPrompt } from '@/lib/code-studio/ai/calc-protocol';
+import { extractPhysicalConstraints, buildConstraintInjection, type IntentConstraints } from '@/lib/code-studio/ai/intent-parser';
 
 // Re-export for consumers that need provider info alongside agent sessions.
 export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -91,6 +92,7 @@ export interface AgentSession {
   finalOutput?: string;
   conflicts: ConflictEntry[];
   summary?: SessionSummary;
+  auditInvoice?: IntentConstraints; // Added for the Calculation Receipt
 }
 
 // IDENTITY_SEAL: PART-1 | role=TypeDefinitions | inputs=none | outputs=AgentRole,AgentMessage,ConflictEntry,SessionSummary,AgentSession
@@ -524,6 +526,7 @@ async function runSingleAgent(
   userInput: string,
   onMessage: (msg: AgentMessage) => void,
   signal?: AbortSignal,
+  systemOverrideInjection?: string,
 ): Promise<AgentMessage> {
   let accumulated = '';
   const agentMsg: AgentMessage = {
@@ -549,8 +552,17 @@ async function runSingleAgent(
     ? `\n\n${buildCalcProtocolPrompt({ instruction: 'Follow the task. Do not violate SCOPE/CONTRACT/@block.', fileName: 'target file', strict: true, maxLines: 10 })}`
     : '';
 
+  const finalSystemInstruction: string = [
+    AGENT_PROMPTS[role],
+    CODE_STUDIO_ARCHITECTURE_APPENDIX,
+    designAppendix,
+    idiomAppendix,
+    calcAppendix,
+    systemOverrideInjection || ''
+  ].filter(Boolean).join('\n\n');
+
   const streamOpts = {
-    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}${idiomAppendix}${calcAppendix}`,
+    systemInstruction: finalSystemInstruction,
     messages: [{ role: 'user' as const, content: userInput }],
     temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
     signal,
@@ -598,6 +610,8 @@ async function rerunAgentWithFeedback(
     feedback,
   ].join('\n');
 
+  // We don't need strict constraints on repair agent's system prompt usually, 
+  // but keeping signature identical:
   return runSingleAgent(targetRole, enhancedInput, onMessage, signal);
 }
 
@@ -620,6 +634,11 @@ export async function runAgentPipeline(
   const session = createAgentSession(task, roles);
   session.status = 'running';
   const startTime = Date.now();
+
+  // Shadow Parsing: Extract physical boundaries
+  const physicalConstraints = extractPhysicalConstraints(task);
+  session.auditInvoice = physicalConstraints;
+  const constraintInjection = buildConstraintInjection(physicalConstraints.systemOverride);
 
   // Detect framework from code context for idiom injection
   if (codeContext.trim()) {
@@ -662,7 +681,7 @@ export async function runAgentPipeline(
       }
 
       const userInput = buildAgentInput(task, codeContext, session.messages);
-      const agentMsg = await runSingleAgent(role, userInput, onMessage, signal);
+      const agentMsg = await runSingleAgent(role, userInput, onMessage, signal, constraintInjection);
       session.messages.push(agentMsg);
 
       // --- Feedback loop: verification -> repair ---

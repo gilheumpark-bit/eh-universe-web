@@ -146,7 +146,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
 
   const tabs: { id: SettingsTab; label: string }[] = [
     { id: "editor", label: L4(lang, { ko: "에디터", en: "Editor" }) },
-    { id: "ai", label: "AI" },
+    { id: "ai", label: "EH 기능" },
     { id: "pipeline", label: L4(lang, { ko: "파이프라인", en: "Pipeline" }) },
   ];
 
@@ -247,7 +247,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                     <div className="flex-1 space-y-2">
                       <p className="text-[10px] font-bold text-accent-red">Pro 모드 경고</p>
                       <p className="text-[9px] text-text-secondary leading-relaxed">
-                        활성화 시 AI가 <span className="text-accent-red font-semibold">승인 없이</span> 터미널 명령어, 파일 덮어쓰기, 패키지 설치 등을 즉시 실행합니다. 예기치 않은 시스템 변경이 발생할 수 있습니다.
+                        활성화 시 EH 엔진이 <span className="text-accent-red font-semibold">승인 없이</span> 터미널 명령어, 파일 덮어쓰기, 패키지 설치 등을 즉시 실행합니다. 예기치 않은 시스템 변경이 발생할 수 있습니다.
                       </p>
                       <div className="flex gap-1.5 pt-1">
                         <button

@@ -44,7 +44,7 @@ export default function WelcomeTab({
   const tips = useMemo(
     () => [
       L4(lang, { ko: "(팁) Ctrl+Shift+P를 눌러 명령어 팔레트를 엽니다.", en: "(Tip) Press Ctrl+Shift+P to open the command palette." }),
-      L4(lang, { ko: "(팁) 채팅 패널에서 AI에게 코드 설명을 요청할 수 있습니다.", en: "(Tip) Ask AI to explain the code in the Chat panel." }),
+      L4(lang, { ko: "(팁) 채팅 패널에서 EH 챗에게 코드 설명을 요청할 수 있습니다.", en: "(Tip) Ask AI to explain the code in the Chat panel." }),
       L4(lang, { ko: "(팁) 멀티파일 작성기에서 여러 파일을 한 번에 수정할 수 있습니다.", en: "(Tip) Edit multiple files at once in the Composer panel." }),
       L4(lang, { ko: "(팁) 우측 하단의 파이프라인 패널을 통해 버그를 자동 진단할 수 있습니다.", en: "(Tip) Auto-diagnose bugs via Pipeline panel at the bottom right." }),
       L4(lang, { ko: "(팁) 우측 사이드바 설정을 통해 단축키를 확인할 수 있습니다.", en: "(Tip) Check shortcuts in the advanced panels or settings." }),
