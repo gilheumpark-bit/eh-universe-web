@@ -48,17 +48,14 @@ jobs:
 
       - name: Typecheck (turbo)
         run: pnpm turbo run typecheck
-        continue-on-error: true   # gradual TS strict alignment
 
       - name: Lint (turbo)
         run: pnpm turbo run lint
-        continue-on-error: true   # gradual ESLint config alignment
 
-      - name: Test (turbo)
-        run: pnpm turbo run test
+      - name: Test + Coverage (turbo)
+        run: pnpm run test:coverage
         env:
           CI: true
-        continue-on-error: true   # legacy tests still being migrated
 
       - name: Upload coverage (if generated)
         if: always()

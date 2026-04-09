@@ -7,6 +7,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Files, Plus, FileText, FolderOpen, Folder,
   Edit3, Trash2, Loader2,
@@ -440,7 +441,8 @@ function CodeStudioShellInner() {
       }, description: "Save File" },
       { keys: "ctrl+shift+f", handler: () => setRightPanel(v => v === "search" ? null : "search"), description: "Search in Files" },
       { keys: "ctrl+`", handler: () => setShowTerminal(v => !v), description: "Toggle Terminal" },
-      { keys: "alt+n", handler: () => setShowNewFile(true), description: "New File" },
+      { keys: "ctrl+n", handler: () => setShowNewFile(true), description: "New File" },
+      { keys: "alt+n", handler: () => setShowNewFile(true), description: "New File (Alt)" },
       { keys: "ctrl+=", handler: () => setSettings(s => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) })), description: "Zoom In" },
       { keys: "ctrl+-", handler: () => setSettings(s => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) })), description: "Zoom Out" },
     ],
@@ -872,19 +874,29 @@ function CodeStudioShellInner() {
 
       // Recursive scan with depth + ignore guards
       const IGNORED = new Set([".git", "node_modules", ".next", "dist", "coverage", "out", ".turbo"]);
+      const MAX_FILES = 10000;
+      let fileCount = 0;
+      const visitedPaths = new Set<string>();
+
       const scan = async (absPath: string, depth: number): Promise<FileNode | null> => {
         if (depth > 8) return null;
+        if (fileCount >= MAX_FILES) return null;
+        if (visitedPaths.has(absPath)) return null; // Avoid cyclic symlinks
+        visitedPaths.add(absPath);
+
         try {
           const entries = await window.cs!.fs.readDir(absPath);
           const segments = absPath.split(/[\\/]/).filter(Boolean);
           const name = segments[segments.length - 1] ?? absPath;
           const children: FileNode[] = [];
           for (const entry of entries) {
+            if (fileCount >= MAX_FILES) break;
             if (IGNORED.has(entry.name) || entry.name.startsWith(".DS_Store")) continue;
             if (entry.isDirectory) {
               const child = await scan(entry.path, depth + 1);
               if (child) children.push(child);
             } else {
+              fileCount++;
               children.push({
                 id: `local-${entry.path}`,
                 name: entry.name,
@@ -1110,7 +1122,7 @@ function CodeStudioShellInner() {
   })();
 
   const statusBarEl = (
-    <PI.StatusBarComponent activeFile={activeFile} pipelineScore={pipelineScore} cursorLine={cursorPos.line} cursorColumn={cursorPos.col} fontSize={settings.fontSize} isDirty={openFiles.some((f) => f.isDirty)} verificationScore={pipelineScore} isGenerating={composer.mode === "generating"} lang={lang} />
+    <PI.StatusBarComponent activeFile={activeFile} pipelineScore={pipelineScore} cursorLine={cursorPos.line} cursorColumn={cursorPos.col} fontSize={settings.fontSize} isDirty={openFiles.some((f) => f.isDirty)} verificationScore={pipelineScore} isGenerating={composer.mode === "generating"} lang={lang} onSwitchProvider={() => setRightPanel("api-config" as RightPanel)} />
   );
 
   // ── Panel Manager Props (shared for desktop) ──
@@ -1218,25 +1230,43 @@ function CodeStudioShellInner() {
         />
 
         {/* File Explorer Sidebar */}
-        {sidebarVisible && (
-        <div className="flex shrink-0 flex-col border-r border-border bg-bg-secondary" style={{ width: sidebarWidth }}>
-          {explorerPanel}
-        </div>
-        )}
+        <AnimatePresence initial={false}>
+          {sidebarVisible && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: sidebarWidth, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="flex shrink-0 flex-col border-r border-border bg-bg-secondary overflow-hidden"
+            >
+              <div style={{ width: sidebarWidth }} className="h-full">
+                {explorerPanel}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Sidebar Resize Handle */}
-        {sidebarVisible && <div
-          className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            const startX = e.clientX;
-            const startWidth = sidebarWidth;
-            const onMove = (ev: MouseEvent) => { setSidebarWidth(Math.max(150, Math.min(500, startWidth + ev.clientX - startX))); };
-            const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-          }}
-        />}
+        <AnimatePresence initial={false}>
+          {sidebarVisible && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
+              onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startWidth = sidebarWidth;
+                const onMove = (ev: MouseEvent) => { setSidebarWidth(Math.max(150, Math.min(500, startWidth + ev.clientX - startX))); };
+                const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+                document.addEventListener("mousemove", onMove);
+                document.addEventListener("mouseup", onUp);
+              }}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Center column: editor fills height; 콘솔/Problems는 하단 (가로 flex에 두면 오른쪽 열로 붙는 버그 방지) */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -1274,41 +1304,49 @@ function CodeStudioShellInner() {
           explorerOpen={sidebarVisible}
         >
           {/* Right Panel (extracted component) with resize handle */}
-          {rightPanel && rightPanel !== "api-config" && (
-            <>
-              {/* Right Panel Resize Handle */}
-              <div
-                className="min-w-[8px] w-2 cursor-col-resize shrink-0 border-l border-transparent hover:border-accent-purple/25 hover:bg-accent-purple/15 active:bg-accent-purple/25"
-                title="Drag to resize panel"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  const startX = e.clientX;
-                  const startWidth = rightPanelWidth;
-                  const onMove = (ev: MouseEvent) => {
-                    const maxW = computeRightPanelMaxW();
-                    const next = startWidth - (ev.clientX - startX);
-                    setRightPanelWidth(Math.max(RIGHT_PANEL_MIN_W, Math.min(maxW, next)));
-                  };
-                  const onUp = () => {
-                    document.removeEventListener("mousemove", onMove);
-                    document.removeEventListener("mouseup", onUp);
-                    document.body.style.cursor = "";
-                    document.body.style.userSelect = "";
-                  };
-                  document.addEventListener("mousemove", onMove);
-                  document.addEventListener("mouseup", onUp);
-                  document.body.style.cursor = "col-resize";
-                  document.body.style.userSelect = "none";
-                }}
-              />
-              <div
-                className="flex h-full min-h-0 shrink-0 flex-col self-stretch overflow-hidden border-l border-white/8 bg-bg-secondary"
-                style={{ width: rightPanelWidth }}
+          <AnimatePresence initial={false}>
+            {rightPanel && rightPanel !== "api-config" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="flex shrink-0 overflow-hidden h-full z-10"
               >
-                <RightPanelContent {...panelManagerProps as Parameters<typeof RightPanelContent>[0]} />
-              </div>
-            </>
-          )}
+                {/* Right Panel Resize Handle */}
+                <div
+                  className="min-w-[8px] w-2 cursor-col-resize shrink-0 border-l border-transparent hover:border-accent-purple/25 hover:bg-accent-purple/15 active:bg-accent-purple/25"
+                  title="Drag to resize panel"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const startX = e.clientX;
+                    const startWidth = rightPanelWidth;
+                    const onMove = (ev: MouseEvent) => {
+                      const maxW = computeRightPanelMaxW();
+                      const next = startWidth - (ev.clientX - startX);
+                      setRightPanelWidth(Math.max(RIGHT_PANEL_MIN_W, Math.min(maxW, next)));
+                    };
+                    const onUp = () => {
+                      document.removeEventListener("mousemove", onMove);
+                      document.removeEventListener("mouseup", onUp);
+                      document.body.style.cursor = "";
+                      document.body.style.userSelect = "";
+                    };
+                    document.addEventListener("mousemove", onMove);
+                    document.addEventListener("mouseup", onUp);
+                    document.body.style.cursor = "col-resize";
+                    document.body.style.userSelect = "none";
+                  }}
+                />
+                <div
+                  className="flex h-full min-h-0 shrink-0 flex-col self-stretch overflow-hidden border-l border-white/8 bg-bg-secondary"
+                  style={{ width: rightPanelWidth }}
+                >
+                  <RightPanelContent {...panelManagerProps as Parameters<typeof RightPanelContent>[0]} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CodeStudioEditor>
 
         {/* Rollback Banner */}

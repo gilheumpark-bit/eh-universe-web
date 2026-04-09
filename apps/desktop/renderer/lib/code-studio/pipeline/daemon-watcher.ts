@@ -41,7 +41,7 @@ export class PipelineDaemon {
         }
       );
 
-      this.watchUnsubscribe = unwatch;
+      this.watchUnsubscribe = unwatch || null;
       this.isRunning = true;
       logger.info(`[DAEMON] 감시 데몬 기동 완료. (로컬 I/O 100% 매핑)`);
     } catch (error) {
@@ -50,6 +50,10 @@ export class PipelineDaemon {
   }
 
   static stopWatching() {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
     if (this.watchUnsubscribe) {
       this.watchUnsubscribe();
       this.watchUnsubscribe = null;

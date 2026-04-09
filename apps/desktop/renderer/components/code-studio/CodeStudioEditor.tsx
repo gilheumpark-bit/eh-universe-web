@@ -7,6 +7,7 @@
 
 import React, { useCallback, useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Files, Columns2, Command, Settings, Loader2
 } from "lucide-react";
@@ -431,36 +432,47 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           </div>
         )}
 
-        <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col relative">
-          {useEditorGroup ? (
-            <PI.EditorGroupComponent
-              openFiles={openFiles}
-              activeFileId={activeFileId}
-              onSelectFile={(id: string) => onSetActiveFileId(id)}
-              onCloseFile={onCloseTab}
-              renderEditor={renderEditorPane}
-            />
-          ) : (
-            activeFile ? (
-              <MonacoEditor
-                height="100%" language={activeFile.language} path={activeFilePath} value={activeFile.content}
-                onChange={onEditorChange} theme="vs-dark"
-                options={{
-                  fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
-                  minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
-                  fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
-                  lineNumbers: "on", renderLineHighlight: "line",
-                  bracketPairColorization: { enabled: true },
-                  guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
-                  smoothScrolling: true,
-                  cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
-                  stickyScroll: { enabled: true },
-                  contextmenu: true,
-                }}
-                onMount={handleMountDesktopEditor}
-              />
-            ) : emptyState
-          )}
+        <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={useEditorGroup ? "group" : activeFileId ? "editor" : "empty"}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute inset-0 flex flex-col"
+            >
+              {useEditorGroup ? (
+                <PI.EditorGroupComponent
+                  openFiles={openFiles}
+                  activeFileId={activeFileId}
+                  onSelectFile={(id: string) => onSetActiveFileId(id)}
+                  onCloseFile={onCloseTab}
+                  renderEditor={renderEditorPane}
+                />
+              ) : (
+                activeFile ? (
+                  <MonacoEditor
+                    height="100%" language={activeFile.language} path={activeFilePath} value={activeFile.content}
+                    onChange={onEditorChange} theme="vs-dark"
+                    options={{
+                      fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap,
+                      minimap: { enabled: settings.minimap }, scrollBeyondLastLine: false, padding: { top: 12 },
+                      fontFamily: "var(--font-mono), 'JetBrains Mono', monospace",
+                      lineNumbers: "on", renderLineHighlight: "line",
+                      bracketPairColorization: { enabled: true },
+                      guides: { indentation: true, bracketPairs: true, highlightActiveIndentation: true },
+                      smoothScrolling: true,
+                      cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+                      stickyScroll: { enabled: true },
+                      contextmenu: true,
+                    }}
+                    onMount={handleMountDesktopEditor}
+                  />
+                ) : emptyState
+              )}
+            </motion.div>
+          </AnimatePresence>
           
           {inlineEditState?.visible && (
             <div 

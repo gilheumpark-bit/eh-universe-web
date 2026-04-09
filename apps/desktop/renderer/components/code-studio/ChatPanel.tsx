@@ -7,11 +7,10 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
-  Send, Sparkles, Square, AtSign, History, Plus, Check, Zap, Stethoscope,
+  Send, Square, AtSign, History, Plus, Check, Zap, Stethoscope,
   FileJson, FileCode, FileText, Type, Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { NOD_SYSTEM_PROMPT, NOD_SYSTEM_PROMPT_EN } from "@/lib/code-studio/ai/nod";
 import { useCodeStudioChat } from "@/hooks/useCodeStudioChat";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
@@ -22,8 +21,8 @@ import { DESIGN_SYSTEM_SPEC } from "@/lib/code-studio/core/design-system-spec";
 import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
 import { runDesignLint } from "@eh/quill-engine/pipeline/design-lint";
-import { AGENT_REGISTRY, type AgentRole, ALL_AGENT_ROLES } from "@/types/code-studio-agent";
-import { AGENT_PROMPTS } from "@/lib/code-studio/ai/agents";
+import { TIER_REGISTRY, resolveTierConfig, type AITier } from "@/lib/code-studio/ai/tier-registry";
+import { Settings } from "lucide-react";
 import type { FileNode } from "@eh/quill-engine/types";
 
 interface Props {
@@ -87,7 +86,7 @@ function extractCodeBlocks(content: string): Array<{ code: string; language: str
 
 // IDENTITY_SEAL: PART-3 | role=CodeExtract | inputs=content | outputs=codeBlocks
 
-function MessageActionCard({ action, params, onClick, lang }: { action: string, params: any, onClick: () => void, lang: string }) {
+function MessageActionCard({ action, params, onClick, lang }: { action: string, params: { fileName?: string; description?: string; [key: string]: unknown }, onClick: () => void, lang: string }) {
   const isApply = action === 'APPLY_CODE' || action === 'FIX';
   return (
     <motion.div 
@@ -173,8 +172,10 @@ export function ChatPanel({
   const { lang } = useLang();
   const ko = lang === "ko";
   const [isMounted, setIsMounted] = useState(false);
-  const [activeRole, setActiveRole] = useState<AgentRole | 'nod'>('nod');
+  const [activeTier, setActiveTier] = useState<AITier>('t2-composer');
   const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [stressLevel, setStressLevel] = useState<number>(0);
+  const keystrokeCount = useRef(0);
   
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -189,9 +190,8 @@ export function ChatPanel({
   })() : "";
 
   const systemInstruction = useMemo(() => {
-    if (activeRole === 'nod') return (ko ? NOD_SYSTEM_PROMPT : NOD_SYSTEM_PROMPT_EN) + (activeFileName ? `\n\n현재 파일: ${activeFileName}` : '');
-    
-    const basePrompt = AGENT_PROMPTS[activeRole] || "You are a professional software assistant.";
+    const config = resolveTierConfig(activeTier, stressLevel);
+    const basePrompt = config.systemPrompt;
     return `${basePrompt}
 Context: Active file is "${activeFileName ?? 'the current file'}".
 
@@ -204,7 +204,7 @@ Rules:
 ${DESIGN_SYSTEM_SPEC}
 ${DESIGN_LINTER_SPEC}
 ${mcpToolsDoc}`;
-  }, [activeRole, activeFileName, ko, mcpToolsDoc]);
+  }, [activeTier, stressLevel, activeFileName, ko, mcpToolsDoc]);
 
   const chat = useCodeStudioChat({
     tree,
@@ -252,9 +252,9 @@ ${mcpToolsDoc}`;
       : '';
 
     await chat.sendMessage(presetHint ? `${text}${presetHint}` : text, {
-      agentRole: activeRole !== 'nod' ? activeRole : undefined
+      agentRole: activeTier
     });
-  }, [input, chat, activeRole]);
+  }, [input, chat, activeTier]);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-bg-secondary/20 shadow-inner select-none">
@@ -265,47 +265,42 @@ ${mcpToolsDoc}`;
             onClick={() => setShowRoleSelector(!showRoleSelector)}
             className="flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-border/40 bg-bg-tertiary/40 hover:bg-bg-tertiary/80 transition-all active:scale-95 group shadow-sm"
           >
-            {activeRole === 'nod' ? (
-              <Sparkles size={16} className="text-amber-500 group-hover:rotate-12 transition-transform" />
-            ) : (
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${CATEGORY_THEMES[AGENT_REGISTRY[activeRole]?.category]?.bg} ${CATEGORY_THEMES[AGENT_REGISTRY[activeRole]?.category]?.color} shadow-sm`}>
-                {AGENT_REGISTRY[activeRole]?.code}
-              </div>
-            )}
-            <span className="text-xs font-bold text-text-primary capitalize tracking-tight">
-              {activeRole === 'nod' ? 'NOD Assistant' : AGENT_REGISTRY[activeRole]?.name}
+            <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold bg-accent-blue/10 text-accent-blue shadow-sm border border-accent-blue/30`}>
+              {activeTier.split('-')[0].toUpperCase()}
+            </div>
+            <span className="text-xs font-bold text-text-primary capitalize tracking-tight flex items-center gap-2">
+              {TIER_REGISTRY[activeTier].role.replace('_', ' ')}
+              {stressLevel > 0.6 && <Zap size={10} className="text-accent-red animate-pulse" title="High Stress Tuned" />}
             </span>
           </button>
 
           {showRoleSelector && (
             <div className="absolute top-full left-0 mt-2.5 w-64 bg-bg-secondary/80 backdrop-blur-3xl border border-border/40 rounded-2xl shadow-2xl z-[var(--z-dropdown)] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="grid grid-cols-1 gap-1">
-                <button 
-                  onClick={() => { setActiveRole('nod'); setShowRoleSelector(false); }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${activeRole === 'nod' ? 'bg-amber-500/15 text-amber-500 shadow-inner' : 'hover:bg-bg-tertiary/50 text-text-secondary'}`}
-                >
-                  <Sparkles size={16} />
-                  <div className="flex-1">
-                    <p className="text-[12px] font-bold">NOD Assistant</p>
-                    <p className="text-[9px] text-text-tertiary uppercase tracking-widest mt-0.5">General & Simple</p>
-                  </div>
-                </button>
-                <div className="h-px bg-border/30 my-1.5 mx-2" />
-                <div className="px-3 py-1.5 text-[9px] font-bold text-text-tertiary uppercase tracking-widest opacity-60">Expert Agents</div>
-                {ALL_AGENT_ROLES.slice(0, 10).map(role => (
-                  <button 
-                    key={role}
-                    onClick={() => { setActiveRole(role); setShowRoleSelector(false); }}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${activeRole === role ? 'bg-blue-500/15 text-blue-500 shadow-inner' : 'hover:bg-bg-tertiary/50 text-text-secondary'}`}
-                  >
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].bg} ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].color} border ${CATEGORY_THEMES[AGENT_REGISTRY[role].category].border} shadow-sm`}>
-                      {AGENT_REGISTRY[role].code}
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-bold">{AGENT_REGISTRY[role].name}</p>
-                    </div>
-                  </button>
-                ))}
+                <div className="px-3 py-1.5 text-[9px] font-bold text-text-tertiary uppercase tracking-widest opacity-60">AI Engine Tiers</div>
+                {(Object.keys(TIER_REGISTRY) as AITier[]).map(tier => {
+                  const names = {
+                    't1-auditor': 'Auditor (AST/Schema)',
+                    't2-composer': 'Composer (Architecture)',
+                    't3-patcher': 'Patcher (Buffer Mutator)',
+                    't4-predictor': 'Predictor (FIM Node)'
+                  };
+                  return (
+                    <button 
+                      key={tier}
+                      onClick={() => { setActiveTier(tier); setShowRoleSelector(false); }}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${activeTier === tier ? 'bg-blue-500/15 text-blue-500 shadow-inner' : 'hover:bg-bg-tertiary/50 text-text-secondary'}`}
+                    >
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold border shadow-sm ${activeTier === tier ? 'bg-blue-500/20 border-blue-500/40 text-blue-500' : 'bg-bg-primary border-border/40 text-text-tertiary'}`}>
+                        {tier.split('-')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-[12px] font-bold">{names[tier as keyof typeof names]}</p>
+                        <p className="text-[9px] text-text-tertiary opacity-80 mt-0.5">{TIER_REGISTRY[tier].role}</p>
+                      </div>
+                    </button>
+                  );
+                })}
                 
                 <div className="h-px bg-border/30 my-1.5 mx-2" />
                 <button 
@@ -313,7 +308,7 @@ ${mcpToolsDoc}`;
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-bg-tertiary/50 text-text-secondary transition-colors"
                 >
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center text-accent-purple bg-accent-purple/10 border border-accent-purple/30 shadow-sm">
-                    <Settings size={12} />
+                     <Settings size={12} />
                   </div>
                   <div>
                     <p className="text-[12px] font-bold">{L4(lang, { ko: 'AI 설정 (API 키)', en: 'AI Settings (API Keys)' })}</p>
@@ -358,8 +353,9 @@ ${mcpToolsDoc}`;
 
         {chat.messages.map((msg) => {
           const codeBlocks = msg.role === "assistant" ? extractCodeBlocks(msg.content) : [];
-          const agentMeta = msg.agentRole ? AGENT_REGISTRY[msg.agentRole as AgentRole] : null;
-          const theme = agentMeta ? CATEGORY_THEMES[agentMeta.category] : { color: 'text-amber-500', bg: 'bg-amber-500/15' };
+          const tierKey = msg.agentRole as AITier | undefined;
+          const tierMeta = tierKey ? TIER_REGISTRY[tierKey] : null;
+          const theme = { color: 'text-blue-500', bg: 'bg-blue-500/15' };
 
           return (
             <motion.div 
@@ -380,10 +376,10 @@ ${mcpToolsDoc}`;
                 ) : (
                   <>
                     <div className={`w-7 h-7 rounded-full ${theme.bg} shadow-inner flex items-center justify-center ${theme.color} border border-border/30 font-bold text-[10px]`}>
-                      {agentMeta?.code || 'Q'}
+                      {tierKey ? tierKey.split('-')[0].toUpperCase() : 'T2'}
                     </div>
                     <span className={`text-[12px] font-bold tracking-tight ${theme.color}`}>
-                      {agentMeta?.name || 'Quill Assistant'}
+                      {tierMeta?.role.replace('_', ' ') || 'AI COMPOSER'}
                     </span>
                     {msg.confidence && (
                       <div className="flex items-center gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
@@ -446,7 +442,7 @@ ${mcpToolsDoc}`;
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-extrabold text-text-primary uppercase tracking-widest">
-                  {activeRole === 'nod' ? L4(lang, { ko: 'NOD 모델 처리 중', en: 'NOD is processing' }) : `${AGENT_REGISTRY[activeRole as AgentRole]?.name} ${L4(lang, { ko: '분석 중', en: 'Analyzing' })}`}
+                  {`${TIER_REGISTRY[activeTier].role.replace('_', ' ')} ${L4(lang, { ko: '처리 중', en: 'Processing' })}`}
                 </span>
                 <div className="flex gap-1 ml-1 text-amber-500">
                    <Loader2 size={12} className="animate-spin" />
@@ -497,8 +493,23 @@ ${mcpToolsDoc}`;
             <input 
               ref={inputRef} 
               value={input} 
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !showMentions) handleSend(); }}
+              onChange={(e) => {
+                setInput(e.target.value);
+                keystrokeCount.current += 1;
+                if (keystrokeCount.current > 20) {
+                  setStressLevel(prev => Math.min(1.0, prev + 0.15));
+                  keystrokeCount.current = 0;
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace") {
+                  setStressLevel(prev => Math.min(1.0, prev + 0.05));
+                }
+                if (e.key === "Enter" && !e.shiftKey && !showMentions) {
+                   handleSend();
+                   setStressLevel(0);
+                } 
+              }}
               placeholder={ko ? "명령을 입력하세요... (@를 눌러 컨텍스트 멘션)" : "Type your query... (use @ for context)"}
               className="flex-1 bg-transparent text-[14px] outline-none text-text-primary font-medium placeholder:text-text-tertiary/50 placeholder:font-normal"
             />

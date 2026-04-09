@@ -5,7 +5,8 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Files, Search, GitBranch, MessageSquare, Activity,
   Edit3, AlertTriangle, Eye, ChevronRight, Settings, X,
@@ -147,7 +148,7 @@ function reorderActivityBarIds(ids: string[], fromId: string, toId: string): str
 // PART 2 — Activity Bar
 // ============================================================
 
-function ActivityBar({
+const ActivityBar = memo(function ActivityBar({
   rightPanel, onSetRightPanel, bugReports, showAdvancedPanels,
   onToggleAdvancedPanels, showSettings, onToggleSettings, lang,
   onAction,
@@ -200,6 +201,7 @@ function ActivityBar({
   const draggedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     setItemOrder(loadActivityBarOrder());
   }, []);
@@ -271,14 +273,14 @@ function ActivityBar({
         } ${isDrop ? "ring-2 ring-accent-purple/60 ring-offset-1 ring-offset-bg-primary rounded-lg" : ""}`}
         title={`${titleBase} — ${reorderHint}`}
       >
-        <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
+        <span className={`pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
           rightPanel === item.id ? "h-5 opacity-100" : "h-0 opacity-0"
         }`} />
-        <item.icon className={`h-[18px] w-[18px] transition-colors ${
+        <item.icon className={`pointer-events-none h-[18px] w-[18px] transition-colors ${
           rightPanel === item.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"
         }`} />
         {item.id === "pipeline" && bugReports.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
+          <span className="pointer-events-none absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
         )}
       </button>
     );
@@ -308,8 +310,8 @@ function ActivityBar({
               <button key={p.id} onClick={() => onSetRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
                 className="relative w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
                 title={lbl}>
-                <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${rightPanel === p.id ? "h-5 opacity-100" : "h-0 opacity-0"}`} />
-                {Icon ? <Icon className={`h-[18px] w-[18px] transition-colors ${rightPanel === p.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"}`} /> : <span className="text-[10px] text-text-tertiary">{p.label.substring(0,2)}</span>}
+                <span className={`pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${rightPanel === p.id ? "h-5 opacity-100" : "h-0 opacity-0"}`} />
+                {Icon ? <Icon className={`pointer-events-none h-[18px] w-[18px] transition-colors ${rightPanel === p.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"}`} /> : <span className="pointer-events-none text-[10px] text-text-tertiary">{p.label.substring(0,2)}</span>}
               </button>
             );
           })}
@@ -336,7 +338,7 @@ function ActivityBar({
       </div>
     </div>
   );
-}
+});
 
 // IDENTITY_SEAL: PART-2 | role=ActivityBar | inputs=panelState | outputs=ActivityBarUI
 
@@ -344,7 +346,7 @@ function ActivityBar({
 // PART 3 — Right Panel Renderer
 // ============================================================
 
-function RightPanelContent(props: CodeStudioPanelManagerProps) {
+const RightPanelContent = memo(function RightPanelContent(props: CodeStudioPanelManagerProps) {
   const problemFindings = useMemo(
     () => mapBugReportsToProblemFindings(props.bugReports),
     [props.bugReports],
@@ -357,11 +359,20 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
 
   // Parent (Shell) sets width; fill height so flex children (e.g. ChatPanel h-full) work.
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-bg-secondary cs-panel-enter">
-      {body}
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={props.rightPanel}
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -10 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+        className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-bg-secondary"
+      >
+        {body}
+      </motion.div>
+    </AnimatePresence>
   );
-}
+});
 
 // IDENTITY_SEAL: PART-3 | role=RightPanelRenderer | inputs=panelPropsMap | outputs=panelUI
 
@@ -369,7 +380,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
 // PART 4 — Bottom Panels
 // ============================================================
 
-function BottomPanels({
+const BottomPanels = memo(function BottomPanels({
   showTerminal, showProblems, showPipelineBottom,
   onToggleTerminal, onToggleProblems, onTogglePipelineBottom,
   onCloseAllBottom, termRef, bugReports, pipelineStages, tcs,
@@ -395,37 +406,45 @@ function BottomPanels({
   if (!showTerminal && !showProblems && !showPipelineBottom) return null;
 
   return (
-    <div className="shrink-0 border-t border-border flex max-h-[min(520px,55vh)] min-h-0 w-full flex-col overflow-hidden bg-bg-primary">
-      <div className="flex shrink-0 items-center gap-1 border-b border-white/8 bg-bg-secondary px-2 py-1">
-        <button onClick={onToggleTerminal} title={tcs.consoleTooltip || L4(lang, { ko: "터미널 목록", en: "Terminal List" })} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console || L4(lang, { ko: "터미널", en: "Terminal" })}</button>
-        <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>{L4(lang, { ko: "문제", en: "Problems" })} {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
-        <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>{L4(lang, { ko: "파이프라인", en: "Pipeline" })}</button>
-        <button onClick={onCloseAllBottom} aria-label={L4(lang, { ko: "하단 패널 닫기", en: "Close bottom panel" })} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
-      </div>
-      {showTerminal && (
-        <div className="min-h-[min(320px,42vh)] h-[min(400px,48vh)] w-full bg-bg-primary dark:bg-[#0d0d0d]">
-          <div ref={termRef} className="h-full min-h-[inherit] w-full" />
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.2 }}
+        className="shrink-0 border-t border-border flex max-h-[min(520px,55vh)] min-h-0 w-full flex-col overflow-hidden bg-bg-primary"
+      >
+        <div className="flex shrink-0 items-center gap-1 border-b border-white/8 bg-bg-secondary px-2 py-1">
+          <button onClick={onToggleTerminal} title={tcs.consoleTooltip || L4(lang, { ko: "터미널 목록", en: "Terminal List" })} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showTerminal ? "text-accent-green bg-accent-green/10" : "text-text-tertiary hover:text-text-secondary"}`}>{tcs.console || L4(lang, { ko: "터미널", en: "Terminal" })}</button>
+          <button onClick={onToggleProblems} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showProblems ? "text-accent-red bg-accent-red/10" : "text-text-tertiary hover:text-text-secondary"}`}>{L4(lang, { ko: "문제", en: "Problems" })} {bugReports.length > 0 ? `(${bugReports.length})` : ""}</button>
+          <button onClick={onTogglePipelineBottom} className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors duration-150 ${showPipelineBottom ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}>{L4(lang, { ko: "파이프라인", en: "Pipeline" })}</button>
+          <button onClick={onCloseAllBottom} aria-label={L4(lang, { ko: "하단 패널 닫기", en: "Close bottom panel" })} className="ml-auto rounded p-0.5 text-text-tertiary hover:text-text-primary transition-colors duration-150"><X className="h-3 w-3" /></button>
         </div>
-      )}
-      {showProblems && (
-        <div className="min-h-[min(240px,35vh)] max-h-[min(360px,45vh)] w-full overflow-auto">
-          <PI.ProblemsPanelComponent findings={problemFindings} />
-        </div>
-      )}
-      {showPipelineBottom && pipelineStages.length > 0 && (
-        <div className="min-h-[min(200px,30vh)] max-h-[min(320px,40vh)] w-full overflow-auto p-2">
-          {pipelineStages.map((s) => (
-            <div key={s.name} className="flex items-center gap-2 py-1 text-[11px] font-mono">
-              <span className={`w-2 h-2 rounded-full ${s.status === "pass" ? "bg-accent-green" : s.status === "warn" ? "bg-accent-amber" : s.status === "fail" ? "bg-accent-red" : "bg-white/20"}`} />
-              <span className="text-text-secondary flex-1">{s.name}</span>
-              <span className="text-text-tertiary">{s.score ?? "-"}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+        {showTerminal && (
+          <div className="min-h-[min(320px,42vh)] h-[min(400px,48vh)] w-full bg-bg-primary dark:bg-[#0d0d0d]">
+            <div ref={termRef} className="h-full min-h-[inherit] w-full" />
+          </div>
+        )}
+        {showProblems && (
+          <div className="min-h-[min(240px,35vh)] max-h-[min(360px,45vh)] w-full overflow-auto">
+            <PI.ProblemsPanelComponent findings={problemFindings} />
+          </div>
+        )}
+        {showPipelineBottom && pipelineStages.length > 0 && (
+          <div className="min-h-[min(200px,30vh)] max-h-[min(320px,40vh)] w-full overflow-auto p-2">
+            {pipelineStages.map((s) => (
+              <div key={s.name} className="flex items-center gap-2 py-1 text-[11px] font-mono">
+                <span className={`w-2 h-2 rounded-full ${s.status === "pass" ? "bg-accent-green" : s.status === "warn" ? "bg-accent-amber" : s.status === "fail" ? "bg-accent-red" : "bg-white/20"}`} />
+                <span className="text-text-secondary flex-1">{s.name}</span>
+                <span className="text-text-tertiary">{s.score ?? "-"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        </motion.div>
+    </AnimatePresence>
   );
-}
+});
 
 // IDENTITY_SEAL: PART-4 | role=BottomPanels | inputs=panelToggles | outputs=BottomPanelUI
 
@@ -437,3 +456,4 @@ export { ActivityBar, RightPanelContent, BottomPanels };
 export type { PipelineStage };
 
 // IDENTITY_SEAL: PART-5 | role=Exports | inputs=none | outputs=ActivityBar,RightPanelContent,BottomPanels
+

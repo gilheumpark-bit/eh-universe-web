@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useLang, type Lang } from "@/lib/LangContext";
+import { useLang } from "@/lib/LangContext";
 import { Globe } from "lucide-react";
 
 interface Props {
@@ -19,9 +19,10 @@ export function LanguageSwitch({ compact = false }: Props) {
 
   if (compact) {
     return (
-      <button onClick={toggle} className="hover:bg-white/20 rounded px-1 py-0.5 text-[11px] text-white/60 transition-colors"
+      <button onClick={toggle} className="hover:bg-white/20 rounded px-1.5 py-0.5 text-[11px] text-white/60 transition-colors cursor-pointer flex items-center gap-1"
         title={lang === "ko" ? "Switch to English" : "한국어로 전환"}>
-        {lang === "ko" ? "KO" : "EN"}
+        <Globe size={10} />
+        {lang === "ko" ? "KO" : lang === "en" ? "EN" : lang.toUpperCase()}
       </button>
     );
   }

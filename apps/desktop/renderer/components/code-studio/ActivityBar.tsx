@@ -26,6 +26,7 @@ export type ActivityCategory =
   | "review"
   | "preview"
   | "deploy"
+  | "api-config"
   | "settings";
 
 interface ActivityBarProps {
@@ -134,9 +135,15 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
       label: L4(lang, { ko: "설정", en: "Settings", ja: "設定", zh: "设置" }),
     };
 
-    const ALL_ITEMS: ItemDef[] = [...ACTIVITY_GROUPS.flatMap((g) => g.items), SETTINGS_ITEM];
+    const API_CONFIG_ITEM: ItemDef = {
+      id: "api-config",
+      icon: <Sparkles size={18} />,
+      label: L4(lang, { ko: "AI 제공자 설정", en: "AI Provider Config", ja: "AIプロバイダー設定", zh: "AI 提供商设置" }),
+    };
 
-    return { groups: ACTIVITY_GROUPS, settingsItem: SETTINGS_ITEM, allItems: ALL_ITEMS };
+    const ALL_ITEMS: ItemDef[] = [...ACTIVITY_GROUPS.flatMap((g) => g.items), API_CONFIG_ITEM, SETTINGS_ITEM];
+
+    return { groups: ACTIVITY_GROUPS, apiConfigItem: API_CONFIG_ITEM, settingsItem: SETTINGS_ITEM, allItems: ALL_ITEMS };
   }, [lang]);
 
   const handleKeyDown = useCallback(
@@ -184,7 +191,7 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
           aria-label={item.label}
           tabIndex={isActive ? 0 : -1}
           onClick={() => onChangeView(item.id)}
-          className={`relative w-10 h-10 flex items-center justify-center rounded transition-all duration-150 ${
+          className={`relative w-10 h-10 flex items-center justify-center rounded transition-all duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95 active:translate-y-0 ${
             isActive
               ? "text-text-primary bg-accent-purple/10"
               : "text-text-secondary hover:text-text-primary hover:bg-white/5"
@@ -206,13 +213,9 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
     <nav
       ref={containerRef}
       aria-label="활동 바"
-      className="flex shrink-0 w-12 flex-col items-center gap-1 border-r border-white/8 bg-bg-primary pb-10 pt-2"
+      className="flex shrink-0 w-12 flex-col items-center gap-1 border-r border-white/8 bg-bg-primary pb-10 pt-4"
       onKeyDown={handleKeyDown}
     >
-      {/* AI sparkle indicator at top */}
-      <div className="mb-1 text-accent-purple/60">
-        <Sparkles size={14} />
-      </div>
 
       {groups.map((group) => (
         <div
@@ -241,7 +244,10 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
         >
           {L4(lang, { ko: "시스템", en: "SYSTEM", ja: "システム", zh: "系统" })}
         </span>
-        <div className="flex flex-col items-center gap-1">{renderButton(settingsItem, activeView === "settings")}</div>
+        <div className="flex flex-col items-center gap-1">
+          {renderButton(apiConfigItem, activeView === "api-config")}
+          {renderButton(settingsItem, activeView === "settings")}
+        </div>
       </div>
     </nav>
   );

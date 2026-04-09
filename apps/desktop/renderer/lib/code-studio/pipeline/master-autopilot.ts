@@ -89,7 +89,7 @@ export class PanopticonValidator {
       return validData;
     } catch (e: unknown) {
       if (e instanceof z.ZodError) {
-        logger.error(`[PANOPTICON] Zod 스키마 붕괴 감지: ${e.errors.map((err: z.ZodIssue) => err.message).join(', ')}`);
+        logger.error(`[PANOPTICON] Zod 스키마 붕괴 감지: ${(e as z.ZodError).issues.map((err: z.ZodIssue) => err.message).join(', ')}`);
       }
       return null;
     }
