@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Code2, Play, FolderOpen, ChevronDown, Shield, Files } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
-import { L4 } from "@/lib/i18n";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import { listProjects } from "@/lib/code-studio/core/store";
 import type { AppLanguage } from "@/types/i18n";

@@ -63,6 +63,7 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
 
   const container = await api.WebContainer.boot();
   let disposed = false;
+  const sharedDecoder = new TextDecoder();
 
   return {
     isAvailable: true,
@@ -81,7 +82,7 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
         const stderr = "";
 
         const stdoutReader = process.output.getReader();
-        const decoder = new TextDecoder();
+
 
         // Read stdout stream
         let done = false;
@@ -90,7 +91,7 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
           if (result.value) {
             stdout += typeof result.value === "string"
               ? result.value
-              : decoder.decode(result.value);
+              : sharedDecoder.decode(result.value);
           }
           done = result.done;
         }
@@ -111,7 +112,7 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
     async readFile(path: string) {
       if (disposed) return "";
       const buf = await container.fs.readFile(path);
-      return typeof buf === "string" ? buf : new TextDecoder().decode(buf);
+      return typeof buf === "string" ? buf : sharedDecoder.decode(buf);
     },
 
     async installDependencies() {
@@ -126,11 +127,13 @@ async function bootRealContainer(): Promise<WebContainerInstance | null> {
 
       // Wait for the server-ready event
       return new Promise<string>((resolve) => {
+        const timeout = setTimeout(() => resolve(`http://localhost:${port}`), 15_000);
         container.on("server-ready", (_p: number, url: string) => {
+          clearTimeout(timeout);
           resolve(url);
         });
         // Timeout fallback
-        setTimeout(() => resolve(`http://localhost:${port}`), 15_000);
+        // Timeout fallback handled above
       });
     },
 
@@ -270,7 +273,7 @@ function simulateCommand(
       const dir = args[0] ?? "/";
       const prefix = normalizePath(dir);
       const entries = new Set<string>();
-      for (const key of Array.from(fs.keys())) {
+      for (const key of fs.keys()) {
         if (key.startsWith(prefix)) {
           const rest = key.slice(prefix.length).replace(/^\//, "");
           const topEntry = rest.split("/")[0];
@@ -407,12 +410,17 @@ function err(stderr: string, exitCode: number): SimProcess {
 }
 
 function normalizePath(p: string): string {
-  let normalized = p.startsWith("/") ? p : "/" + p;
-  normalized = normalized.replace(/\/+/g, "/");
-  if (normalized.length > 1 && normalized.endsWith("/")) {
-    normalized = normalized.slice(0, -1);
+  const parts = p.split('/');
+  const stack: string[] = [];
+  for (const part of parts) {
+    if (part === '' || part === '.') continue;
+    if (part === '..') {
+      if (stack.length > 0) stack.pop();
+    } else {
+      stack.push(part);
+    }
   }
-  return normalized;
+  return '/' + stack.join('/');
 }
 
 function delay(ms: number): Promise<void> {

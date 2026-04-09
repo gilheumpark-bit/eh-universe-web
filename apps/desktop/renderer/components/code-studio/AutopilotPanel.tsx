@@ -176,7 +176,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
   const [expandedFiles, setExpandedFiles] = useState(false);
   const [mode, setMode] = useState<AutopilotMode>("autopilot");
   const [gvfResult, setGvfResult] = useState<GenVerifyFixResult | null>(null);
-  const [gvfIterations, setGvfIterations] = useState<GenVerifyFixIteration[]>([]);
+  const [_gvfIterations, setGvfIterations] = useState<GenVerifyFixIteration[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -375,17 +375,17 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                 </button>
               </div>
               {mode === "autopilot" ? (
-                <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-800 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
+                <button onClick={handleStart} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-amber-600 to-amber-800 text-stone-100 hover:opacity-90 active:scale-95 disabled:opacity-40 transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] border border-amber-500/20">
                   <Play size={12} /> {L4(lang, { ko: "오토파일럿 시작", en: "Start Autopilot" })}
                 </button>
               ) : (
-                <button onClick={handleStartGVF} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-700 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
+                <button onClick={handleStartGVF} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-blue-800 text-stone-100 hover:opacity-90 active:scale-95 disabled:opacity-40 transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] border border-blue-500/20">
                   <RefreshCw size={12} /> {L4(lang, { ko: "생성+검증+수정 시작", en: "Start GVF Loop" })}
                 </button>
               )}
             </div>
             {showConfig && (
-              <div className="grid grid-cols-2 gap-2 p-2 bg-[#010409] rounded-lg border border-[#30363d]">
+              <div className="grid grid-cols-2 gap-2 p-3 bg-[#010409]/60 backdrop-blur-md rounded-xl border border-white/10 shadow-inner transition-all duration-200">
                 <ConfigToggle label={L4(lang, { ko: "합의 리뷰", en: "Consensus Review" })} checked={config.enableReview} onChange={(v) => setConfig({ ...config, enableReview: v })} />
                 <ConfigToggle label={L4(lang, { ko: "스트레스 테스트", en: "Stress Test" })} checked={config.enableStressTest} onChange={(v) => setConfig({ ...config, enableStressTest: v })} />
                 <ConfigToggle label={L4(lang, { ko: "카오스 분석", en: "Chaos Analysis" })} checked={config.enableChaos} onChange={(v) => setConfig({ ...config, enableChaos: v })} />
@@ -428,7 +428,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
               </div>
               <span className="text-[9px] text-[#8b949e] font-mono w-8 text-right">{progress.overallProgress}%</span>
             </div>
-            <div ref={logRef} className="h-32 overflow-y-auto bg-[#010409] rounded-lg border border-[#30363d] p-2 font-mono text-[10px] space-y-0.5">
+            <div ref={logRef} className="h-32 overflow-y-auto bg-[#010409]/60 backdrop-blur-sm rounded-xl border border-white/5 p-2 font-mono text-[10px] space-y-0.5 shadow-inner">
               {progress.logs.map((log, i) => (
                 <div key={i} className="flex items-start gap-1.5" style={{ color: logLevelColor(log.level) }}>
                   <span className="mt-0.5 shrink-0">{logLevelIcon(log.level)}</span>
@@ -502,9 +502,12 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                 <pre className="text-[10px] text-[#e6edf3] whitespace-pre-wrap font-mono">{result.documentation}</pre>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <button onClick={() => onComplete(result)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-500 text-white hover:opacity-90">
-                <CheckCircle size={12} /> {L4(lang, { ko: "적용", en: "Apply" })}
+            <div className="flex items-center gap-2 mt-4">
+              <button 
+                onClick={() => onComplete(result)} 
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-green-500 to-green-700 text-white hover:opacity-90 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)] border border-green-500/20"
+              >
+                <CheckCircle size={14} /> {L4(lang, { ko: "자동 승인 (일괄 적용)", en: "Auto-Approve (Apply All)" })}
               </button>
               {result.documentation && (
                 <button onClick={() => setShowReport(!showReport)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[#30363d] text-[#e6edf3] hover:bg-[#21262d]">

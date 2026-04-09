@@ -16,11 +16,9 @@
 // ============================================================
 
 import {
-  PROVIDERS,
   PROVIDER_LIST,
   getCapabilities,
   supportsStructuredOutput,
-  isPreviewModel,
   getModelWarning,
 } from '../ai-providers';
 

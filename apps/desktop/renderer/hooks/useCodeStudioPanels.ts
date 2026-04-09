@@ -20,7 +20,6 @@ import type { AIFeature } from "@/components/code-studio/AIHub";
 import type { WorkspaceThread, WorkspaceMessage } from "@/components/code-studio/AIWorkspace";
 import type { DBConnection, QueryResult } from "@/components/code-studio/DatabasePanel";
 import type { ConflictBlock } from "@/components/code-studio/MergeConflictEditor";
-import { estimateTaskCost, explainCode, lintCode, generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
 
 /** Recent file entry for the RecentFiles panel */
 export interface RecentFileEntry {
@@ -59,7 +58,7 @@ function extractSymbols(content: string, fileName: string): SymbolEntry[] {
   if (!content) return [];
   const symbols: SymbolEntry[] = [];
   const seen = new Set<string>();
-  const lines = content.split("\n");
+  const _lines = content.split("\n");
 
   for (const { re, kind } of SYMBOL_PATTERNS) {
     const regex = new RegExp(re.source, re.flags);
@@ -86,7 +85,7 @@ function extractSymbols(content: string, fileName: string): SymbolEntry[] {
 function generateCanvasNodes(fileTree: FileNode[], parentX = 0, parentY = 0): { nodes: CanvasNode[]; connections: CanvasConnection[] } {
   const nodes: CanvasNode[] = [];
   const connections: CanvasConnection[] = [];
-  const x = parentX;
+  const _x = parentX;
   let y = parentY;
 
   function traverse(items: FileNode[], depth: number, parentId?: string) {
@@ -402,7 +401,7 @@ export function useCodeStudioPanels({ files, activeFileContent, activeFileName, 
 
   // ── AI Workspace ──────────────────────────────────────────
   const [wsThreads, setWsThreads] = useState<WorkspaceThread[]>([]);
-  const [wsSharedMemory, setWsSharedMemory] = useState<Array<{ key: string; value: string; source: AgentRole; timestamp: number }>>([]);
+  const [wsSharedMemory, _setWsSharedMemory] = useState<Array<{ key: string; value: string; source: AgentRole; timestamp: number }>>([]);
   const wsAbortRef = useRef<AbortController | null>(null);
 
   const createWsThread = useCallback((persona: AgentRole) => {
@@ -429,7 +428,7 @@ export function useCodeStudioPanels({ files, activeFileContent, activeFileName, 
 
     try {
       wsAbortRef.current = new AbortController();
-      let accumulated = '';
+      const _accumulated = '';
       const response = await streamChat({
         systemInstruction: systemPrompt,
         messages: [

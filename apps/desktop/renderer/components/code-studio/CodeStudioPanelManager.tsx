@@ -188,7 +188,7 @@ function ActivityBar({
     review: { id: "review", icon: AlertTriangle, label: "Review", labelKo: "리뷰 센터" },
     composer: { id: "composer", icon: Edit3, label: "Composer", labelKo: "멀티파일 작성기" },
     preview: { id: "preview", icon: Eye, label: "Preview", labelKo: "실시간 프리뷰" },
-    canvas: { id: "canvas", icon: PenTool, label: "Stitch Canvas", labelKo: "Stitch 캔버스" },
+    canvas: { id: "canvas", icon: PenTool, label: "Canvas", labelKo: "캔버스" },
   };
 
   const [itemOrder, setItemOrder] = useState<string[]>(() => loadActivityBarOrder());
@@ -236,58 +236,74 @@ function ActivityBar({
   }, []);
 
   const orderedCoreItems = itemOrder.map((id) => coreItemCatalog[id]).filter(Boolean);
+  const majorIds = new Set(["files", "search", "chat", "composer", "canvas", "preview"]);
+  const majorItems = orderedCoreItems.filter(item => majorIds.has(item.id));
+  const minorItems = orderedCoreItems.filter(item => !majorIds.has(item.id));
+
+  const renderIconBtn = (item: typeof coreItemCatalog[string]) => {
+    const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
+    const reorderHint = L4(lang, { ko: "드래그하여 순서 변경", en: "Drag to reorder" });
+    const titleBase = `${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`;
+    const isDrop = dropTargetId === item.id && draggedId && draggedId !== item.id;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        draggable
+        data-dragging={draggedId === item.id ? "true" : undefined}
+        onDragStart={(e) => handleDragStart(e, item.id)}
+        onDragOver={(e) => handleDragOver(e, item.id)}
+        onDrop={(e) => handleDrop(e, item.id)}
+        onDragEnd={handleDragEnd}
+        onClick={() => {
+          if (item.isAction) {
+            onAction?.(item.id);
+          } else {
+            onSetRightPanel(rightPanel === item.id ? null : (item.id as RightPanel));
+          }
+        }}
+        className={`relative w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group cursor-grab active:cursor-grabbing ${
+          draggedId === item.id ? "opacity-50" : ""
+        } ${isDrop ? "ring-2 ring-accent-purple/60 ring-offset-1 ring-offset-bg-primary rounded-lg" : ""}`}
+        title={`${titleBase} — ${reorderHint}`}
+      >
+        <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
+          rightPanel === item.id ? "h-5 opacity-100" : "h-0 opacity-0"
+        }`} />
+        <item.icon className={`h-[18px] w-[18px] transition-colors ${
+          rightPanel === item.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"
+        }`} />
+        {item.id === "pipeline" && bugReports.length > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
+        )}
+      </button>
+    );
+  };
 
   return (
     <div
       style={{ width: widthPx }}
-      className="shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-2 gap-1 overflow-y-auto [&::-webkit-scrollbar]:hidden min-w-0"
+      className="shrink-0 border-r border-white/8 bg-bg-primary flex flex-col items-center py-3 gap-2 overflow-y-auto [&::-webkit-scrollbar]:hidden min-w-0"
     >
 
-      {/* Icons Container — flex-wrap; 드래그로 순서 영속 저장 */}
+      {/* Major Icons Container */}
       <div
         className="flex flex-wrap justify-center gap-1 w-full px-1"
         role="toolbar"
-        aria-label={L4(lang, { ko: "액티비티 바", en: "Activity bar" })}
+        aria-label={L4(lang, { ko: "주요 도구", en: "Primary Tools" })}
       >
-        {orderedCoreItems.map((item) => {
-          const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
-          const reorderHint = L4(lang, { ko: "드래그하여 순서 변경", en: "Drag to reorder" });
-          const titleBase = `${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`;
-          const isDrop = dropTargetId === item.id && draggedId && draggedId !== item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              draggable
-              data-dragging={draggedId === item.id ? "true" : undefined}
-              onDragStart={(e) => handleDragStart(e, item.id)}
-              onDragOver={(e) => handleDragOver(e, item.id)}
-              onDrop={(e) => handleDrop(e, item.id)}
-              onDragEnd={handleDragEnd}
-              onClick={() => {
-                if (item.isAction) {
-                  onAction?.(item.id);
-                } else {
-                  onSetRightPanel(rightPanel === item.id ? null : (item.id as RightPanel));
-                }
-              }}
-              className={`relative w-10 h-10 flex shrink-0 items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group cursor-grab active:cursor-grabbing ${
-                draggedId === item.id ? "opacity-50" : ""
-              } ${isDrop ? "ring-2 ring-accent-purple/60 ring-offset-1 ring-offset-bg-primary rounded-lg" : ""}`}
-              title={`${titleBase} — ${reorderHint}`}
-            >
-              <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
-                rightPanel === item.id ? "h-5 opacity-100" : "h-0 opacity-0"
-              }`} />
-              <item.icon className={`h-[18px] w-[18px] transition-colors ${
-                rightPanel === item.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"
-              }`} />
-              {item.id === "pipeline" && bugReports.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-accent-red text-[8px] text-white flex items-center justify-center">{bugReports.length}</span>
-              )}
-            </button>
-          );
-        })}
+        {majorItems.map(renderIconBtn)}
+      </div>
+
+      <div className="w-6 h-[1px] bg-white/10 shrink-0 my-1 rounded-full" />
+
+      {/* Minor & Advanced Icons Container */}
+      <div
+        className="flex flex-wrap justify-center gap-1 w-full px-1"
+        role="toolbar"
+        aria-label={L4(lang, { ko: "보조 도구", en: "Secondary Tools" })}
+      >
+        {minorItems.map(renderIconBtn)}
 
         {/* Advanced panels */}
         {showAdvancedPanels && visiblePanels
@@ -306,9 +322,10 @@ function ActivityBar({
           })}
       </div>
 
-      <div className="flex-1 min-h-[8px]" />
+      <div className="w-6 h-[1px] bg-white/10 shrink-0 my-1 rounded-full" />
 
-      <div className="flex flex-wrap justify-center gap-1 w-full px-1 mt-auto shrink-0 pb-1">
+      {/* System Category */}
+      <div className="flex flex-wrap justify-center gap-1 w-full px-1 shrink-0 pb-1">
         <ThemeToggle
           variant="icon-only"
           className="!min-h-10 !min-w-10 shrink-0 rounded-lg text-text-tertiary hover:bg-white/6 hover:text-text-secondary"

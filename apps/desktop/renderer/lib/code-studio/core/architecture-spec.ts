@@ -131,6 +131,12 @@ UI 생성 시 아래 카테고리별 설계 철학을 학습 데이터 기반으
 - SaaS: Linear, Figma의 TopNav+Sidebar+Main 구조·즉각 피드백·실시간 폼 검증 패턴.
 참조 허용: 레이아웃 구조, 여백 밀도, 타이포그래피 위계, 컴포넌트 배치 패턴.
 참조 금지: 색상 값 직접 복사 (색상은 반드시 프로젝트 시맨틱 토큰에서만), 독점적 아이덴티티 요소.
+
+### Phase 5: Director QA Feedback Loop (Zero-Tolerance)
+- 팩토리 파이프라인(Phase 1~4)을 통과한 코드는 최종적으로 **Director(사용자/마스터 에이전트)**의 시각적 QA를 거친다.
+- QA의 유일한 합격 기준은 **"Vercel, Linear, Stripe 등 모던 톱티어 SaaS와 동급의 심미성과 밀도를 가졌는가"** 이다. 기능만 돌아가는 수준은 실패로 간주한다.
+- 메인 AI는 \`[QA_REJECT]\` 시그널 또는 "디자인이 촌스럽다", "밀도가 떨어진다"는 휴먼 피드백을 수신할 경우, 즉각 메인루프와 소통 채널(Direct Pathway)을 개방한다.
+- **절대 준수 사항**: "이 부분은 시스템의 한계로...", "이렇게 하는 게 더 나을 수도..." 같은 **방어적 변명은 전면 금지**된다. 피드백 수신 즉시 (1) 시각적 위계, (2) 호버 애니메이션 리듬감, (3) 여백 밀도를 상향 조정하여 코드를 100% Re-bootstrap 해야 한다.
 `.trim();
 
 // IDENTITY_SEAL: PART-1 | role=architecture-spec | inputs=PIPELINE_TEAM_STAGES | outputs=CODE_STUDIO_ARCHITECTURE_APPENDIX

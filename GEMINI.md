@@ -677,26 +677,20 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 
 ---
 
-# EH Universe Web — Project Rules
+# NOA Code Studio — Project Rules
 
-## 3앱 구조
+## 단일 구조
 
-- Universe (아카이브 + 네트워크 + 코덱스)
-- Studio (소설 스튜디오)
-- Code Studio (검증형 코드 스튜디오)
-
-초기 화면 스플래시 → 3분기 선택
+- 본 리포지토리는 오직 **NOA Code Studio (AI 검증형 IDE)** 단일 앱만을 위한 프로젝트입니다.
+- 불필요한 번역 스튜디오, 소설 집필 스튜디오 등의 잔재 및 의존성은 허용하지 않습니다.
 
 ## 코드 스튜디오 아키텍처
 
 - **Shell 3파일 분리**: CodeStudioShell (레이아웃) + CodeStudioEditor (에디터) + CodeStudioPanelManager (패널 렌더)
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
-- **Panel Registry**: 37개 패널을 `core/panel-registry.ts` + `PanelImports.ts`로 관리 (코드 스튜디오 전용)
-- 번역 스튜디오 패널은 `src/components/translator/core/panel-registry.ts` — 경로 혼동 금지
+- **Panel Registry**: 패널을 `core/panel-registry.ts` + `PanelImports.ts`로 관리
 - 새 패널 추가 = 레지스트리 1줄 + PanelImports 1줄 + panelPropsMap 1항목
 - 하드코딩 패널 금지 — 반드시 레지스트리 경유
-- **이지모드(명세서)**: 패널 id `project-spec` — `ProjectSpecForm.tsx` + `PanelImports` 동적 로드; 완료 시 명세 저장 + Chat 부트스트랩 프롬프트(`eh-cs-chat-seed`) 주입 계약을 유지할 것
-- **텍스트 편집 우클릭 메뉴 롤아웃**: 소설/번역 스튜디오는 `useTextAreaContextMenu`를 핵심 원고 편집면부터 점진 적용하고, 전 textarea 일괄 변경은 성능/리스크 검토 후 확장
 
 ## 코드 스튜디오 정적 파이프라인 (8팀 실행 모델)
 
@@ -712,6 +706,7 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 
 - 코드 생성·수정 전 이 저장소의 **Next.js 메이저**는 `AGENTS.md` 및 `node_modules/next/dist/docs/`를 우선 확인
 - Code Studio: 브라우저 UI, 서버 라우트, WebContainer/샌드박스 경계를 구분 — 클라이언트 번들에 Node 전용 API 금지
+- **Static Export 강제화**: `apps/desktop` 빌드 옵션은 `output: "export"`입니다. 따라서 `app/api/*` 위치에 Node 런타임용 API 라우트 생성을 절대 금지합니다. 모든 외부 API 및 AI 통신은 메인 프로세스의 IPC 또는 인증된 외부 엔드포인트를 사용해야 합니다.
 
 ## 로깅 정책
 
@@ -725,10 +720,10 @@ NOA-EXEC는 작업 수행 시 적용되는 실행 규칙이며, Preflight Plan·
 - variant prop: `'full-page'` | `'section'` | `'panel'`
 - 기존 개별 ErrorBoundary (studio/, code-studio/) 는 래퍼로 유지
 
-## CSP / 보안 헤더 (Next.js 16)
+## CSP / 보안 헤더 (Next.js 16 및 Electron)
 
-- `src/proxy.ts`가 CSP 및 보안 헤더(X-Frame-Options, HSTS 등)를 **통합** 관리한다. 이 프로젝트의 Next.js 16 구성에서는 미들웨어 진입이 `proxy.ts`이며, **`src/middleware.ts`를 추가로 두면 빌드가 실패**할 수 있으니 중복 생성하지 않는다.
-- 보안 헤더를 라우트/API별로 흩뿌리지 않는다. 상세는 `next.config.ts` 주석 참고.
+- `src/proxy.ts`가 웹 개발(dev) 환경의 CSP 및 보안 헤더를 통합 관리합니다. 미들웨어 진입이 `proxy.ts`이므로, **`src/middleware.ts`를 중복 추가하면 빌드가 실패**합니다.
+- **데스크톱 프로덕션 예외:** `next export` 환경에는 Next.js 미들웨어가 무효화됩니다. WebContainer 로딩에 필수적인 `Cross-Origin-Embedder-Policy: require-corp` 및 `Cross-Origin-Opener-Policy: same-origin` 헤더는 반드시 `main.ts`의 `webRequest.onHeadersReceived` 인터셉터에서 주입해야 합니다.
 
 ## SkeletonLoader
 
@@ -772,12 +767,7 @@ error → idle | generating
 
 - 새 컴포넌트/lib 생성 시 반드시 Shell 또는 소비자와 연결
 - "나중에 연결" 금지 — 생성과 연결은 같은 커밋에서
-- 미연결 스캔: import되지 않는 export가 있으면 이유를 명시
-
-## 번역 정책
-
-- 4개국어: KO, EN, JP, CN
-- 중앙 사전: studio-translations.ts (leaf count 동일해야 함)
+- 미연결 스캔: import되지 않는 export가 있으면 이유를 명시동일해야 함)
 - 인라인 콘텐츠: { ko, en, jp?, cn? } — jp/cn optional
 - fallback 체인: jp/cn → en → ko
 - CN "연출" = 演出 (导演 아님)
@@ -793,6 +783,12 @@ error → idle | generating
 ## MCP Self-Healing 파이프라인
 
 - MCP 스킬(`mcp-client.ts`) 실행 실패 시 plain text 에러 대신 구조화 JSON 반환: `{ status: "error", errorType, message, suggestion, timestamp }`
-- `inferSelfHealingSuggestion`: 에러 메시지 패턴 매칭으로 자동 복구 힌트 생성 (module not found → npm install, permission denied → 권한 확인, ECONNREFUSED → 서버 URL 확인, syntax error → 인자 구조 검증)
+- `inferSelfHealingSuggestion`: 에러 메시지 패턴 매칭으로 자동 복구 힌트 생성 (module 전파누락 -> npm install, ECONNREFUSED -> 서버인증서 등)
 - Pro 모드 AI가 이 JSON을 파싱하여 후속 액션(패키지 설치, 재시도, 사용자 질의)을 자율 결정
 - Halt Mechanism(`approval-mode.ts`): 연속 5회 자동 실행 또는 3회 연속 에러 시 강제 정지 → 사용자 개입 대기
+
+## WebContainer 및 시뮬레이터 보안
+
+- **Path Traversal 방어:** `../` 또는 다중 슬래시 등 상대 경로의 상위 이탈을 스택 기반으로 원천 차단하는 `normalizePath` 규칙 준수.
+- **메모리 보호:** dev server 등 이벤트를 구독하며 `setTimeout` 등 폴백을 지정한 경우, 성공 혹은 취소 시점에 반드시 자원을 클리어(`clearTimeout`)하여 메모리 누수를 막습니다.
+- **런타임 샌드박싱 코드 주입 차단:** `new Function()` 및 eval류 코드는 철저히 금지하며, `transpiler` 단계의 Forbidden Pattern 필터망에 등록하여 런타임 공격 벡터를 차단합니다.

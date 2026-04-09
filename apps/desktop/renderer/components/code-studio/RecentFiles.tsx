@@ -1,8 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useState } from "react";
-import { FileText, Trash2, Clock, X } from "lucide-react";
+import { FileText, Trash2, Clock } from "lucide-react";
 import { fileIconColor } from "@eh/quill-engine/types";
 
 interface RecentFileEntry {

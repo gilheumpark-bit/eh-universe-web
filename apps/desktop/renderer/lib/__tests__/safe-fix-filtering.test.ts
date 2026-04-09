@@ -7,7 +7,7 @@
 
 import type { FixSuggestion } from '@eh/quill-engine/pipeline/pipeline-utils';
 import type { PipelineResult } from '@eh/quill-engine/pipeline/pipeline';
-import { runVerificationLoop, type SafeFixCategory } from '@eh/quill-engine/pipeline/verification-loop';
+import { runVerificationLoop } from '@eh/quill-engine/pipeline/verification-loop';
 
 // ============================================================
 // PART 1 — Mocks

@@ -1,7 +1,5 @@
 import { logger } from '@/lib/logger';
 import { transpileVendorCode } from './design-transpiler';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 
 // ============================================================
 // PART 1 — Precision Diagnostic Scanner (진단 단계)
@@ -34,8 +32,10 @@ export class PrecisionScanner {
 // [CONTRACT: PART-02]
 // - Inputs: targetFiles (string[])
 // - Outputs: DLQ 및 성공 Output 객체
+export type TranspileResult = { passed: boolean; findings?: unknown };
+
 export class BatchOrchestrator {
-  static async dispatch(files: string[], transpiler: Function) {
+  static async dispatch(files: string[], transpiler: (rawCode: string) => TranspileResult) {
     logger.info(`[FACTORY] 외주망 렌더링 결과물 수집 완료. 멱등성 병렬 세탁(Sanitization) 작업 개시.`);
     const dlq = [];
     const output = [];
@@ -70,7 +70,7 @@ export class BatchOrchestrator {
 // [SCOPE_START: RedTeamer]
 // [CONTRACT: PART-03]
 export class RedTeamAttacker {
-  static async penetrate(outputData: any[]) {
+  static async penetrate(outputData: { file: string, result: TranspileResult }[]) {
     logger.info(`[RED-TEAM] 정제 산출물 타격 테스트 개시. 프로덕션에서 무너질 코드는 내 손으로 먼저 부순다.`);
     let success = true;
     for (const item of outputData) {

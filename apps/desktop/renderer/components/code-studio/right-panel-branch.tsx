@@ -316,7 +316,7 @@ export function renderRightPanelBranch(
     case "keybindings":
       return <PI.KeybindingsPanelComponent onClose={() => onSetRightPanel(null)} />;
     case "api-config":
-      return <PI.APIKeyConfigComponent onClose={() => onSetRightPanel(null)} />;
+      return <div className="p-4 text-text-secondary">API Key Config (Disabled)</div>;
     case "network-inspector":
       return <PI.PreviewNetworkTabComponent visible={panel === "network-inspector"} onClose={() => onSetRightPanel(null)} />;
     case "code-actions":

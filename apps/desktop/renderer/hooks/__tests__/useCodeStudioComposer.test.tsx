@@ -11,7 +11,6 @@ import ReactDOM from 'react-dom/client';
 import { act } from 'react';
 import {
   useCodeStudioComposer,
-  type ComposerChange,
 } from '@/hooks/useCodeStudioComposer';
 
 // Mock streamChat and logger to avoid real AI calls

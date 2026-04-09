@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import type { TeamResult, Finding } from "@eh/quill-engine/pipeline/pipeline-teams";
 import { useLang } from "@/lib/LangContext";
-import { L4, createT } from "@/lib/i18n";
+import { createT } from "@/lib/i18n";
 import type { AppLanguage } from "@eh/shared-types";
 import { generateReport } from "@eh/quill-engine/pipeline/pipeline-utils";
 
@@ -325,6 +325,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
       governance:     t('pipelinePanel.teamGovernance'),
     };
     return labels[key] ?? TEAM_CONFIG[key]?.label ?? key;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
   /** Format elapsed time as seconds with 1 decimal */

@@ -320,6 +320,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
     } finally {
       browser.releaseWakeLock().catch(() => {});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input, agent, fileName, language, code, lang]);
 
   const handleRerunWithCalc = useCallback(async () => {
@@ -484,6 +485,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
         }
       } catch { /* harness is best-effort, don't block */ }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applyCandidate, onApplyCode, onOpenPreview, agent, lang]);
 
   const handleRollback = useCallback(() => {

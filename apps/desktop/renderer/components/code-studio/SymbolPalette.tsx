@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from "react";
-import { Hash, FileText, X, Search } from "lucide-react";
+import { FileText, X, Search } from "lucide-react";
 import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 export interface SymbolEntry {

@@ -231,10 +231,7 @@ export const QuickVerifyComponent = dynamic(
 );
 
 // ── api-config (unified) ──────────────────────────────────────
-export const APIKeyConfigComponent = dynamic(
-  () => import("@/components/home/APIKeySlotManager").then((m) => ({ default: m.APIKeySlotManager })),
-  { ssr: false },
-);
+export const APIKeyConfigComponent = () => null;
 
 // ── network-inspector (default) ───────────────────────────────
 export const PreviewNetworkTabComponent = dynamic(

@@ -15,6 +15,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { AIProvider, AIChatRequest, ARIState } from '@eh/shared-types';
 import { getKey } from './keystore';
+import { handleAiChatRequest, type ChatRequest } from '../services/ai-service';
 
 // ============================================================
 // PART 1 — Provider registry
@@ -278,6 +279,10 @@ export function registerAiIpc(): void {
     // Fire and forget — chunks are sent via webContents.send
     void callProvider(event.sender, requestId, req);
     return { requestId };
+  });
+
+  ipcMain.handle('ai:chat-request', async (event, request: ChatRequest) => {
+    return handleAiChatRequest(event.sender, request);
   });
 
   ipcMain.handle('ai:ari-state', () => {

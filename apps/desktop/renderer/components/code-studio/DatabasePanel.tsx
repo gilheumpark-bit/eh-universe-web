@@ -28,7 +28,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Database, Play, Clock, Table2, Settings, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
+import { Database, Play, Clock, Table2, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
 
 export interface DBConnection {
   id: string;

@@ -5,7 +5,6 @@
 // Handles API key storage, encryption, decryption, and provider selection.
 // Supports 4 encryption layers: v1 (Base64), v2 (XOR), v3 (Salt+XOR), v4 (AES-GCM).
 
-import { logger } from '@/lib/logger';
 import { PROVIDERS, normalizeProviderId, type ProviderId, supportsStructuredOutput } from './types';
 
 // Re-export for downstream consumers that import key helpers

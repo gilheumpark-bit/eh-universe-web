@@ -3,7 +3,6 @@
 // Code Studio — Code Sandbox (isolated execution)
 // ============================================================
 
-import type { FileNode } from '../types';
 import { streamChat } from '@/lib/ai-providers';
 
 // ============================================================
@@ -158,10 +157,10 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
       window.removeEventListener('message', handler);
       document.body.removeChild(iframe);
       // RESIDUAL CLEANUP (잔향 소거): 강제 GC 지시 - 외주 AI의 메모리 누수나 무한참조 파괴
-      if (typeof global !== 'undefined' && (global as any).gc) {
-        try { (global as any).gc(); } catch (e) { /* ignore */ }
-      } else if (typeof window !== 'undefined' && (window as any).gc) {
-        try { (window as any).gc(); } catch (e) { /* ignore */ }
+      if (typeof global !== 'undefined' && (global as unknown).gc) {
+        try { (global as unknown).gc(); } catch (e) { /* ignore */ }
+      } else if (typeof window !== 'undefined' && (window as unknown).gc) {
+        try { (window as unknown).gc(); } catch (e) { /* ignore */ }
       }
     }
 

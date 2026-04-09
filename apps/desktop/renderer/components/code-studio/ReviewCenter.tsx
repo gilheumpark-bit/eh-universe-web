@@ -8,7 +8,7 @@
 import { useState, useCallback, useMemo } from "react";
 import {
   AlertTriangle, GitBranch, BarChart3, Bug, Loader2,
-  CheckCircle, XCircle, ChevronDown, ChevronRight,
+  CheckCircle, ChevronDown, ChevronRight,
   Filter, ThumbsUp, ThumbsDown, MessageSquare,
 } from "lucide-react";
 import type { TeamResult, Finding, Severity } from "@eh/quill-engine/pipeline/pipeline-teams";

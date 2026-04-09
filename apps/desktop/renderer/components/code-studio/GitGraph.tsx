@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useState, useMemo } from "react";
-import { GitCommit, GitBranch, GitMerge, ExternalLink } from "lucide-react";
+import { GitCommit, GitBranch, GitMerge } from "lucide-react";
 
 export interface GitCommitNode {
   hash: string;

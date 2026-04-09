@@ -298,7 +298,6 @@ function CodeStudioShellInner() {
   const [showPipelineBottom, setShowPipelineBottom] = useState(false);
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
   const [activityBarWidth, setActivityBarWidth] = useState(ACTIVITY_BAR_DEFAULT_W);
-  const [centerMode, setCenterMode] = useState<"editor" | "canvas">("canvas");
 
   // ── Infinite Context Indexing ──
   useEffect(() => {
@@ -472,7 +471,7 @@ function CodeStudioShellInner() {
         const [, savedSettings] = await Promise.all([fsLoad(), loadSettings()]);
         if (!cancelled && savedSettings) setSettings(savedSettings);
       } catch (e) {
-        // eslint-disable-next-line no-console
+         
         console.error("[code-studio] initial load failed", e);
       } finally {
         if (!cancelled) setLoaded(true);
@@ -525,6 +524,7 @@ function CodeStudioShellInner() {
     const handler = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.shiftKey && e.key === "P") { e.preventDefault(); setShowCommandPalette((v) => !v); }
+      if (mod && !e.shiftKey && e.key === "k") { e.preventDefault(); setShowCommandPalette((v) => !v); }
       if (mod && !e.shiftKey && e.key === "p") { e.preventDefault(); setShowQuickOpen((v) => !v); }
       if (mod && e.key === "z" && !e.shiftKey && fsCanUndo) { e.preventDefault(); fsUndo(); }
       if (mod && (e.key === "y" || (e.shiftKey && e.key === "z")) && fsCanRedo) { e.preventDefault(); fsRedo(); }
@@ -1258,8 +1258,6 @@ function CodeStudioShellInner() {
           onTogglePipeline={() => setRightPanel(rightPanel === "pipeline" ? null : "pipeline")}
           onToggleAgent={() => setRightPanel(rightPanel === "agents" ? null : "agents")}
           onToggleSearch={() => setRightPanel(rightPanel === "search" ? null : "search")}
-          centerMode={centerMode}
-          onToggleCenterMode={() => setCenterMode(v => v === "canvas" ? "editor" : "canvas")}
           onNewFile={() => setShowNewFile(true)}
           onToggleProblems={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
           onRunBugFinder={() => setRightPanel(rightPanel === "bugs" ? null : "bugs")}
@@ -1336,6 +1334,17 @@ function CodeStudioShellInner() {
           <div className="fixed inset-0 z-60 flex items-center justify-center">
             {/* @ts-expect-error missing onClose in props */}
             <PI.APIKeyConfigComponent onClose={() => setRightPanel(null)} />
+          </div>
+        )}
+
+        {/* Settings Modal */}
+        {showSettings && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <PI.SettingsPanelComponent
+              settings={settings}
+              onChange={setSettings}
+              onClose={() => setShowSettings(false)}
+            />
           </div>
         )}
 

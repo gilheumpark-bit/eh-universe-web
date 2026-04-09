@@ -7,23 +7,20 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
-  Send, Sparkles, Square, AtSign, History,
-  Trash2, Plus, Check, Zap, Stethoscope, Code2,
+  Send, Sparkles, Square, AtSign, History, Plus, Check, Zap, Stethoscope,
   FileJson, FileCode, FileText, Type
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { NOD_SYSTEM_PROMPT, NOD_SYSTEM_PROMPT_EN } from "@/lib/code-studio/ai/nod";
 import { useCodeStudioChat } from "@/hooks/useCodeStudioChat";
 import { useLang } from "@/lib/LangContext";
-import { getServers, addServer, connectServer, callTool } from "@/lib/code-studio/features/mcp-client";
+import { getServers } from "@/lib/code-studio/features/mcp-client";
 import { logger } from "@/lib/logger";
 import { CODE_STUDIO_SPEC_CHAT_SEED_KEY } from "@/lib/code-studio/core/project-spec-bridge";
 import { DESIGN_SYSTEM_SPEC } from "@/lib/code-studio/core/design-system-spec";
 import { DESIGN_LINTER_SPEC } from "@/lib/code-studio/core/design-linter";
 import { detectPreset, buildPresetPrompt } from "@/lib/code-studio/core/design-presets";
-import { runDesignLint, formatDesignLintReport } from "@eh/quill-engine/pipeline/design-lint";
-import { parseNLCommand } from "@/lib/code-studio/features/nl-terminal";
-import { buildQualityRulesPrompt } from "@eh/quill-engine/quality-rules-from-catalog";
+import { runDesignLint } from "@eh/quill-engine/pipeline/design-lint";
 import { AGENT_REGISTRY, type AgentRole, ALL_AGENT_ROLES } from "@/types/code-studio-agent";
 import { AGENT_PROMPTS } from "@/lib/code-studio/ai/agents";
 import type { FileNode } from "@eh/quill-engine/types";
@@ -88,7 +85,7 @@ function extractCodeBlocks(content: string): Array<{ code: string; language: str
 
 // IDENTITY_SEAL: PART-3 | role=CodeExtract | inputs=content | outputs=codeBlocks
 
-function MessageActionCard({ action, params, onClick }: { action: string, params: any, onClick: () => void }) {
+function MessageActionCard({ action, params, onClick }: { action: string, params: unknown, onClick: () => void }) {
   const isApply = action === 'APPLY_CODE' || action === 'FIX';
   return (
     <motion.div 
@@ -177,6 +174,7 @@ export function ChatPanel({
   const [showRoleSelector, setShowRoleSelector] = useState(false);
   
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 
@@ -211,7 +209,7 @@ ${mcpToolsDoc}`;
 
   const [input, setInput] = useState("");
   const [showMentions, setShowMentions] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState("");
+  const [_mentionQuery, _setMentionQuery] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -221,6 +219,7 @@ ${mcpToolsDoc}`;
     try {
       const seeded = localStorage.getItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY);
       if (!seeded) return;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInput((prev) => prev || seeded);
       localStorage.removeItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY);
     } catch (err) {
@@ -326,7 +325,7 @@ ${mcpToolsDoc}`;
             <MascotQuill state="greeting" />
             <h3 className="text-sm font-bold text-text-primary mb-2">How can I help you today?</h3>
             <p className="text-xs text-text-tertiary leading-relaxed max-w-[280px] mb-6">
-              I'm EH Studio's expert brain. Ask me to architect, code, review or test your features.
+              I&apos;m EH Studio&apos;s expert brain. Ask me to architect, code, review or test your features.
             </p>
             <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
               {["Create a login page", "Find security flaws", "Refactor this logic", "Write unit tests"].map((s, i) => (

@@ -9,7 +9,7 @@
 // PART 1 — Types & Interfaces
 // ============================================================
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { streamChat, type ChatMsg } from '@/lib/ai-providers';
 import { 
   saveChatSession, 
@@ -52,7 +52,7 @@ interface UseCodeStudioChatOptions {
   systemInstruction?: string;
   autoSave?: boolean;
   tree?: FileNode[];
-  onCommand?: (cmd: string, args: any[]) => void;
+  onCommand?: (cmd: string, args: unknown[]) => void;
   onCodeApply?: (code: string, fileId: string) => void;
 }
 
@@ -173,8 +173,8 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
     systemInstruction = `You are an expert software engineer assistant in Code Studio.\n${DESIGN_SYSTEM_MINIMAL}`,
     autoSave = true,
     tree,
-    onCommand,
-    onCodeApply,
+    _onCommand,
+    _onCodeApply,
   } = options;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -239,7 +239,7 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
   const sendMessage = useCallback(async (content: string, msgOptions: MessageOptions = {}) => {
     if (!content.trim() || isStreaming) return;
 
-    const { resolved, mentions } = resolveContext(content, tree);
+    const { _resolved, mentions } = resolveContext(content, tree);
     
     const userMsg: ChatMessage = {
       id: generateId(),

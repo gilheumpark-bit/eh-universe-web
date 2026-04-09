@@ -231,8 +231,8 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
         </div>
       ))}
 
-      {/* Spacer pushes settings to bottom */}
-      <div className="min-h-1 flex-1" />
+      {/* Spacer before Settings instead of pushing to extreme bottom */}
+      <div className="h-4 shrink-0" />
 
       <div className="flex w-full flex-col items-center gap-0.5">
         <span

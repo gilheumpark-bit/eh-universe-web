@@ -494,7 +494,7 @@ export async function executeToolCall(
  * Cost tier definitions per task type.
  * Maps task type to desired costTier priority.
  */
-const TASK_COST_MAP: Record<string, ('free' | 'cheap' | 'moderate' | 'expensive')[]> = {
+const _TASK_COST_MAP: Record<string, ('free' | 'cheap' | 'moderate' | 'expensive')[]> = {
   completion: ['free', 'cheap', 'moderate', 'expensive'],
   explanation: ['cheap', 'moderate', 'free', 'expensive'],
   review: ['expensive', 'moderate', 'cheap', 'free'],

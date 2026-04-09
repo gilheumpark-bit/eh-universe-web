@@ -9,11 +9,10 @@
 import path from 'path';
 import fs from 'fs';
 import http from 'http';
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
+import { app, BrowserWindow, Menu, shell } from 'electron';
 import serve from 'electron-serve';
 
-import { handleAiChatRequest } from './services/ai-service';
-import type { ChatRequest } from './services/ai-service';
+
 import { registerFsIpc, disposeAllWatchers } from './ipc/fs';
 import { registerQuillIpc } from './ipc/quill';
 import { registerKeystoreIpc } from './ipc/keystore';
@@ -70,28 +69,28 @@ async function createWindow(): Promise<void> {
   });
 
   mainWindow.on('closed', () => {
-    // eslint-disable-next-line no-console
+     
     console.log('[desktop] mainWindow closed');
   });
 
   mainWindow.on('unresponsive', () => {
-    // eslint-disable-next-line no-console
+     
     console.warn('[desktop] mainWindow unresponsive');
   });
 
   // Forward renderer console + crashes to main logs (debug blank screen)
   mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
-    // eslint-disable-next-line no-console
+     
     console.log('[renderer][console][%s] %s (%s:%s)', level, message, sourceId, line);
   });
 
   mainWindow.webContents.on('render-process-gone', (_event, details) => {
-    // eslint-disable-next-line no-console
+     
     console.error('[renderer] render-process-gone', details);
   });
 
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
-    // eslint-disable-next-line no-console
+     
     console.error('[renderer] did-fail-load', { errorCode, errorDescription, validatedURL });
   });
 
@@ -132,7 +131,7 @@ async function createWindow(): Promise<void> {
           : 'app://-/code-studio';
       await mainWindow.loadURL(targetUrl);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[desktop] loadApp failed', err);
       throw err;
     }
@@ -140,12 +139,12 @@ async function createWindow(): Promise<void> {
     const resolvedPort = await resolveDevRendererPort();
     const url = `http://localhost:${resolvedPort}/code-studio`;
     try {
-      // eslint-disable-next-line no-console
+       
       console.log('[desktop] loadURL', url);
       await mainWindow.loadURL(url);
       mainWindow.webContents.openDevTools();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[desktop] loadURL failed', err);
       throw err;
     }
@@ -226,12 +225,7 @@ function registerIpc(): void {
   registerCliInstallerIpc();
   registerSystemIpc();
 
-  // Legacy / inline handlers (will be migrated to ipc/* modules in C-2..C-4)
-  ipcMain.handle('get-app-version', () => app.getVersion());
 
-  ipcMain.handle('ai:chat-request', async (event, request: ChatRequest) => {
-    return handleAiChatRequest(event.sender, request);
-  });
 }
 
 // ============================================================
@@ -330,12 +324,12 @@ function buildMenu(): void {
 }
 
 app.whenReady().then(() => {
-  // eslint-disable-next-line no-console
+   
   console.log('[desktop] app ready (isProd=%s, nodeEnv=%s)', isProd, process.env.NODE_ENV);
   registerIpc();
   buildMenu();
   void createWindow().catch((err) => {
-    // eslint-disable-next-line no-console
+     
     console.error('[desktop] createWindow failed', err);
     // Keep process alive for debugging rather than silent exit.
   });

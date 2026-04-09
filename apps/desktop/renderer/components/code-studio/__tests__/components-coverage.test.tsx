@@ -26,6 +26,7 @@ jest.mock("@/lib/LangContext", () => ({
 jest.mock("@/lib/i18n", () => ({
   L4: (_lang: string, t: { ko: string; en: string }) =>
     typeof t === "string" ? t : t?.en ?? "",
+  createT: () => (key: string) => key,
 }));
 
 jest.mock("@/hooks/useCodeStudioChat", () => ({

@@ -59,6 +59,9 @@ export const EDITOR_SURFACE_MENU_ACTION_IDS = [
   "editor-select-all",
   "editor-monaco-commands",
   "editor-app-commands",
+  "editor-ai-picker",
+  "editor-ai-lint",
+  "editor-snapshot",
 ] as const;
 
 /** Menu item ids from {@link buildEditorSurfaceMenu} in ContextMenu.tsx */
@@ -66,6 +69,11 @@ export function runEditorSurfaceMenuAction(
   editor: Monaco.editor.IStandaloneCodeEditor | null | undefined,
   id: string,
   onAppCommandPalette?: () => void,
+  callbacks?: {
+    onAIPicker?: () => void;
+    onAILint?: () => void;
+    onAISnapshot?: () => void;
+  }
 ): void {
   if (!editor) return;
   const run = (actionId: string) => {
@@ -92,6 +100,15 @@ export function runEditorSurfaceMenuAction(
       break;
     case "editor-app-commands":
       onAppCommandPalette?.();
+      break;
+    case "editor-ai-picker":
+      callbacks?.onAIPicker?.();
+      break;
+    case "editor-ai-lint":
+      callbacks?.onAILint?.();
+      break;
+    case "editor-snapshot":
+      callbacks?.onAISnapshot?.();
       break;
     default:
       break;

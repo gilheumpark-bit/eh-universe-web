@@ -5,7 +5,6 @@
  * and test the WelcomeScreen path by mocking the module.
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock the entire CodeStudioEditor module at a higher level

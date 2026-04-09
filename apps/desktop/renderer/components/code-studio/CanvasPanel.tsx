@@ -6,10 +6,9 @@
 // ============================================================
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
-  Wand2, Layout, PenTool, Loader2, Maximize2, 
-  RotateCcw, Sparkles, Code2, ArrowRight
+  Wand2, Layout, PenTool, Loader2, Maximize2, Sparkles, Code2, ArrowRight
 } from "lucide-react";
 import { getServers, callTool } from "@/lib/code-studio/features/mcp-client";
 import { useLang } from "@/lib/LangContext";
@@ -38,9 +37,11 @@ function useStitchIntegration() {
     const servers = getServers();
     const stitch = servers.find((s) => s.name === "stitch" && s.status === "connected");
     if (stitch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsConnected(true);
       setStitchServerId(stitch.id);
     } else {
+       
       setIsConnected(false);
       setStitchServerId(null);
     }
@@ -136,7 +137,7 @@ export default function CanvasPanel() {
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-bg-primary/50 backdrop-blur-md sticky top-0 z-[var(--z-sticky)]">
         <div className="flex items-center gap-2 px-2 py-1 rounded-md border border-border/60 bg-bg-tertiary">
           <PenTool size={14} className="text-accent-amber" />
-          <span className="text-[11px] font-bold text-text-primary">Stitch Canvas</span>
+          <span className="text-[11px] font-bold text-text-primary">Canvas</span>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {isConnected ? (
@@ -167,7 +168,7 @@ export default function CanvasPanel() {
               {ko ? "무엇을 만들어드릴까요?" : "What would you like to build?"}
             </h3>
             <p className="text-[11px] text-text-tertiary leading-relaxed max-w-[280px] mb-6">
-              {ko ? "프롬프트를 입력하면 Stitch AI가 아름다운 UI 화면을 실시간으로 생성합니다." : "Describe a UI and Stitch AI will generate a beautiful screen in real-time."}
+              {ko ? "프롬프트를 입력하면 AI가 아름다운 UI 화면을 실시간으로 생성합니다." : "Describe a UI and AI will generate a beautiful screen in real-time."}
             </p>
             <div className="flex flex-wrap justify-center gap-2 max-w-xs">
               {["Login Dashboard", "Settings Page", "Pricing Table", "Data Grid"].map((s) => (
@@ -198,7 +199,7 @@ export default function CanvasPanel() {
               <div className={`w-full p-4 rounded-xl border ${msg.isError ? "border-red-500/20 bg-red-500/5 text-red-400" : "border-border/60 bg-bg-tertiary/40 text-text-primary"} text-xs leading-relaxed shadow-sm`}>
                 <div className="flex items-center gap-2 mb-2">
                   <Wand2 size={12} className={msg.isError ? "text-red-400" : "text-accent-amber"} />
-                  <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">Stitch {msg.isError ? "Error" : "Response"}</span>
+                  <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">Canvas {msg.isError ? "Error" : "Response"}</span>
                 </div>
                 <div className="whitespace-pre-wrap text-[11px] opacity-90">{msg.text}</div>
                 {!msg.isError && (
@@ -220,7 +221,7 @@ export default function CanvasPanel() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-3 p-4 bg-bg-tertiary/20 rounded-xl border border-border/30">
             <Loader2 size={16} className="text-accent-amber animate-spin" />
             <div className="space-y-0.5">
-              <div className="text-[11px] font-bold text-text-primary">Generating UI with Stitch...</div>
+              <div className="text-[11px] font-bold text-text-primary">Generating UI Canvas...</div>
               <div className="text-[9px] text-text-tertiary">Creating layout, selecting components, and applying design tokens</div>
             </div>
           </motion.div>

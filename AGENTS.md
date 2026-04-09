@@ -13,28 +13,14 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-## EH Universe — Agent Instructions (human + AI)
+## NOA Code Studio — Agent Instructions
 
-- **NOA Rules v1.2 + 프로젝트 규칙(전체)**: 저장소 루트의 `GEMINI.md`
-- **에이전트 요약 스킬**: `.agents/skills/eh-universe-guideline/SKILL.md`
-- **보안 헤더 (데스크톱 Next)**: `apps/desktop/renderer/proxy.ts`만 요청 훅으로 사용 — Next.js 16에서는 **`middleware.ts`와 동시에 두면 빌드가 실패**한다. dev에서 CSP·보안 헤더 적용. `output: 'export'` 정적 빌드·Electron 패키징 시에는 런타임 프록시가 없거나 일부 헤더가 메인 프로세스(`main/main.ts`)에서 보강된다.
-- **Code Studio 시스템 지시문**: `src/lib/code-studio/core/architecture-spec.ts`의 `CODE_STUDIO_ARCHITECTURE_APPENDIX`
-- **Design System v8.0**: `src/lib/code-studio/core/design-system-spec.ts` (FULL/COMPACT/MINIMAL 3-Tier)
-- **Design Linter**: `src/lib/code-studio/core/design-linter.ts` + `pipeline/design-lint.ts` (16룰 런타임)
-- **Design Presets**: `src/lib/code-studio/core/design-presets.ts` (5 프리셋 + 자동 감지)
+- **NOA Rules v1.2 + 프로젝트 규칙**: 저장소 루트의 `GEMINI.md`
+- **보안 헤더**: `apps/desktop/renderer/proxy.ts`만 요청 훅으로 사용. Dev에서 CSP·보안 헤더 적용.
 
-## 3앱 구조
+## 아키텍처 개요
 
-| 앱 | 경로 | 역할 |
-|----|------|------|
-| Universe | `/`, `/archive`, `/codex`, `/reference`, `/rulebook`, `/tools/*` | 아카이브 + 코덱스 + 도구 |
-| Studio | `/studio` | 소설 집필 스튜디오 (NOA Writing Engine) |
-| Code Studio | `/code-studio` | 검증형 코드 생성 스튜디오 |
-| Network | `/network` | 행성 커뮤니티 + 보고서 + 정착지 |
-| Translation Studio | `/translation-studio` | 번역 스튜디오 |
-
-## 코드 스튜디오 아키텍처
-
+- **단일 앱 구조**: 이 프로젝트는 오직 NOA Code Studio (검증형 코드 생성 스튜디오) 기능만을 담당합니다.
 - **Shell 3파일 분리**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
 - **Panel Registry**: `core/panel-registry.ts` + `PanelImports.ts` — 하드코딩 금지
@@ -56,11 +42,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 보안 주의 (전수 진단 결과)
 
-P0 보안 이슈 (2026-04-06 수정 완료):
-1. ~~보안 헤더 미연결~~ — 데스크톱: `apps/desktop/renderer/proxy.ts`에서 CSP 등 적용(Next 16: 전용 `middleware.ts` 없음·`proxy`와 병행 금지). 웹 앱 루트는 각 앱 `next.config`의 headers 등으로 별도 관리.
-2. ~~`chat/route.ts:352` — PRO_LOCKED 하드코딩 인증 우회~~ — Firebase custom claims(stripeRole)로 tier 판별
-3. ~~`sandbox.ts:170` — 사용자 코드 script 직접 삽입~~ — nonce 검증 + iframe sandbox 유지
-4. ~~`webcontainer.ts:54` — new Function() eval 동등~~ — 이미 dynamic import로 교체됨, 코멘트 정리
+P0 보안 이슈 (2026-04-09 수정 완료):
+1. ~~보안 헤더 미연결~~ — 웹 앱 렌더러는 `proxy.ts`에서 CSP 등 적용. **데스크톱 프로덕션**에서는 `proxy.ts` 제어가 무효화되므로 `main.ts`의 `webRequest.onHeadersReceived` 세션 인터셉터에서 구동 시 COOP/COEP 주입 완료.
+2. ~~Static Export 호환성 위반~~ — Node API 호스팅용 구 루트 `/api/chat` 제거 완료 (데스크톱 데드코드 축출). 통신은 IPC 및 외부 Proxy로 이관.
+3. ~~WebContainer Path Traversal & 런타임 누수~~ — `../` 악용 경로 스택 해석 방식으로 원천차단 (`normalizePath`). Dev Server 구동 폴백 로직 등에서 `clearTimeout` 적용하여 클로저 메모리 누수 해소 완료.
+4. ~~런타임 샌드박싱 뚫림 위험~~ — `design-transpiler.ts`에서 `new Function`의 생성 패턴을 FORBIDDEN_PATTERN 추가로 전면 차단 완료.
 
 ## AI 모델 현황 (2026-04)
 

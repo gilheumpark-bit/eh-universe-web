@@ -198,7 +198,7 @@ describe('CollaborationManager', () => {
     const mgr = new CollaborationManager('room-1', 'Bob');
     mgr.join();
 
-    const peer = MockBroadcastChannel.instances.find(ch => ch !== MockBroadcastChannel.instances[0]);
+    const _peer = MockBroadcastChannel.instances.find(ch => ch !== MockBroadcastChannel.instances[0]);
     const messages: unknown[] = [];
 
     // Create a second channel to listen
@@ -305,7 +305,7 @@ describe('executeInIframe', () => {
     const result = await executeInIframe('console.log("hello")', 200);
 
     expect(result.exitCode).toBe(1);
-    expect(result.error).toBe('Execution timeout');
+    expect(result.error).toBe('Execution timeout (Zone 1 isolated)');
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 
@@ -321,7 +321,7 @@ describe('executeInIframe', () => {
     const result = await executeInIframe('while(true){}', 150);
     const elapsed = Date.now() - start;
 
-    expect(result.error).toBe('Execution timeout');
+    expect(result.error).toBe('Execution timeout (Zone 1 isolated)');
     expect(result.exitCode).toBe(1);
     expect(elapsed).toBeGreaterThanOrEqual(100);
   });

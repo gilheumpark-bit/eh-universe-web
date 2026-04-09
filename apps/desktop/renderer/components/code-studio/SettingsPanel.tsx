@@ -8,7 +8,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { X, RotateCcw, ShieldCheck, Shield, ShieldOff, AlertTriangle, Briefcase, Code2, Landmark } from "lucide-react";
-import { setCodingMode, getCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
+import { setCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
+import { useLang, type Lang } from "@/lib/LangContext";
+import { L4 } from "@/lib/i18n";
 
 export interface IDESettings {
   fontSize: number;
@@ -117,6 +119,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, onClose, onOpenAPIConfig }: Props) {
   const [internalSettings, setInternalSettings] = useState<IDESettings>(() => settingsProp ?? loadIDESettings());
   const settings = settingsProp ?? internalSettings;
+  const { lang, setLangDirect } = useLang();
   const defaultOnChange = useCallback((next: IDESettings) => {
     setInternalSettings(next);
     saveIDESettings(next);
@@ -142,9 +145,9 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
   }, [onChange]);
 
   const tabs: { id: SettingsTab; label: string }[] = [
-    { id: "editor", label: "Editor" },
+    { id: "editor", label: L4(lang, { ko: "에디터", en: "Editor" }) },
     { id: "ai", label: "AI" },
-    { id: "pipeline", label: "Pipeline" },
+    { id: "pipeline", label: L4(lang, { ko: "파이프라인", en: "Pipeline" }) },
   ];
 
   return (
@@ -170,6 +173,21 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
       <div className="flex-1 overflow-y-auto p-4 space-y-1">
         {tab === "editor" && (
           <>
+            <Row label="Language">
+              <SelectInput
+                value={lang}
+                onChange={(v) => {
+                  setLangDirect(v as Lang);
+                  localStorage.setItem("eh-lang", v);
+                }}
+                options={[
+                  { value: "ko", label: "한국어" },
+                  { value: "en", label: "English" },
+                  { value: "ja", label: "日本語" },
+                  { value: "zh", label: "中文" }
+                ]}
+              />
+            </Row>
             <Row label="Font Size"><NumberInput value={settings.fontSize} onChange={(v) => update("fontSize", v)} min={10} max={24} /></Row>
             <Row label="Tab Size"><NumberInput value={settings.tabSize} onChange={(v) => update("tabSize", v)} min={1} max={8} /></Row>
             <Row label="Word Wrap"><Toggle checked={settings.wordWrap} onChange={(v) => update("wordWrap", v)} /></Row>

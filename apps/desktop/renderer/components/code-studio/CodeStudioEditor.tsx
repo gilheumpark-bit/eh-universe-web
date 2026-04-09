@@ -8,7 +8,7 @@
 import React, { useCallback, useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
-  Files, Columns2, Command, Settings, Loader2, Palette
+  Files, Columns2, Command, Settings, Loader2
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@eh/quill-engine/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
@@ -23,6 +23,7 @@ import { useLang } from "@/lib/LangContext";
 import WelcomeScreen from "@/components/code-studio/WelcomeScreen";
 import { LocalDesktopStatus } from "@/components/code-studio/LocalDesktopStatus";
 import { ContextMenu, buildEditorSurfaceMenu } from "@/components/code-studio/ContextMenu";
+import { InlineEditWidget } from "@/components/code-studio/InlineEditWidget";
 import * as PI from "@/components/code-studio/PanelImports";
 import type * as MonacoNS from "monaco-editor";
 
@@ -63,10 +64,6 @@ export interface CodeStudioEditorProps {
   // Editor group
   useEditorGroup: boolean;
   onToggleEditorGroup: () => void;
-
-  // Center mode (Canvas vs Editor)
-  centerMode?: "editor" | "canvas";
-  onToggleCenterMode?: () => void;
 
   // Settings toolbar
   showSettings: boolean;
@@ -145,7 +142,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
   const {
     files, openFiles, activeFile, activeFileId, settings, loaded,
     hasEverOpened, useEditorGroup, onToggleEditorGroup,
-    showSettings, onToggleSettings, showMultiKey, onCloseMultiKey,
+    showSettings, onToggleSettings, showMultiKey, _onCloseMultiKey,
     onCursorChange, diffState, onDiffReject,
     onFileSelect, onCloseTab, onEditorChange, onApplyCode,
     onSetActiveFileId, onOpenFiles,
@@ -155,7 +152,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     onToggleChat, onToggleTerminal, onTogglePipeline, onToggleAgent,
     onToggleSearch, onNewFile, onToggleProblems, onRunBugFinder,
     onDeploy, onToggleSplit, onUndo, onRedo, onZoomIn, onZoomOut,
-    onZoomReset, onSettingsSaved, centerMode, onToggleCenterMode,
+    onZoomReset, onSettingsSaved, onSaveToast, _centerMode, _onToggleCenterMode,
     fsUpdateContent, tcs, explorerOpen, children,
   } = props;
 
@@ -164,6 +161,16 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
   const crossFileDisposableRef = useRef<{ dispose(): void } | null>(null);
   const editorSurfaceTargetRef = useRef<MonacoNS.editor.IStandaloneCodeEditor | null>(null);
   const [editorSurfaceMenu, setEditorSurfaceMenu] = useState<{ x: number; y: number } | null>(null);
+  
+  // AI Inline Edit State
+  const [inlineEditState, setInlineEditState] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    text: string;
+    lang: string;
+    selection?: MonacoNS.Selection;
+  } | null>(null);
 
   // Cleanup cross-file disposable on unmount
   useEffect(() => {
@@ -172,6 +179,27 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
       crossFileDisposableRef.current = null;
     };
   }, []);
+
+  const triggerInlineEdit = useCallback((ed: MonacoNS.editor.IStandaloneCodeEditor) => {
+     const selection = ed.getSelection();
+     const model = ed.getModel();
+     if (selection && model && !selection.isEmpty()) {
+        const selectedText = model.getValueInRange(selection);
+        const pos = ed.getScrolledVisiblePosition(selection.getStartPosition());
+        if (pos && selectedText) {
+           setInlineEditState({
+              visible: true,
+              x: pos.left,
+              y: Math.max(0, pos.top - 40),
+              text: selectedText,
+              lang: activeFile?.language || "plaintext",
+              selection
+           });
+        }
+     } else {
+        ed.trigger('keyboard', 'type', { text: "bg-bg-primary text-text-primary border-border focus-visible:ring-2 active:scale-95 transition-all duration-150" });
+     }
+  }, [activeFile?.language]);
 
   // EditorGroup per-pane editor renderer (isFocused is read at Monaco mount only; focus changes do not remount.)
   const renderEditorPane = useCallback((pane: EditorPane, isFocused: boolean) => {
@@ -211,6 +239,11 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
             setEditorSurfaceMenu(pos);
           });
           ed.onDidDispose(() => ctxSub.dispose());
+          
+          ed.addCommand((mon as unknown).KeyMod.CtrlCmd | (mon as unknown).KeyCode.KeyI, () => {
+             triggerInlineEdit(ed);
+          });
+
           if (!isFocused) return;
           editorRef.current = editor;
           setupMonaco(mon, ed, { theme: "dark" });
@@ -219,6 +252,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
         }}
       />
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files, settings.fontSize, settings.tabSize, settings.wordWrap, settings.minimap, fsUpdateContent, onOpenFiles, tcs.selectFile]);
 
   const handleMountDesktopEditor = useCallback((editor: unknown, monaco: unknown) => {
@@ -247,13 +281,33 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     (editor as { onDidChangeCursorPosition: (cb: (e: { position: { lineNumber: number; column: number } }) => void) => void }).onDidChangeCursorPosition((e) => {
       onCursorChange(e.position.lineNumber, e.position.column);
     });
+    
+    // Register Cmd+I
+    ed.addCommand((monaco as unknown).KeyMod.CtrlCmd | (monaco as unknown).KeyCode.KeyI, () => {
+      triggerInlineEdit(ed);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files, onFileSelect, onCursorChange]);
+
 
   const handleEditorSurfaceMenuSelect = useCallback(
     (id: string) => {
-      runEditorSurfaceMenuAction(editorSurfaceTargetRef.current, id, onShowCommandPalette);
+      runEditorSurfaceMenuAction(editorSurfaceTargetRef.current, id, onShowCommandPalette, {
+        onAILint: () => {
+          // Run bug finder as manual QA audit
+          onRunBugFinder?.();
+        },
+        onAISnapshot: () => {
+          // Trigger a save toast / snapshot creation
+          onSaveToast?.();
+        },
+        onAIPicker: () => {
+          const ed = editorSurfaceTargetRef.current;
+          if (ed) triggerInlineEdit(ed);
+        }
+      });
     },
-    [onShowCommandPalette],
+    [onShowCommandPalette, onRunBugFinder, onSaveToast, triggerInlineEdit],
   );
 
   const closeEditorSurfaceMenu = useCallback(() => {
@@ -317,15 +371,6 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           />
         </div>
         <div className="flex items-center gap-1 px-2 shrink-0">
-          {onToggleCenterMode && (
-            <button
-              onClick={onToggleCenterMode}
-              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${centerMode === "canvas" ? "text-accent-blue bg-accent-blue/10" : "text-text-tertiary hover:text-text-secondary"}`}
-              title="Toggle Web Canvas"
-            >
-              <Palette className="h-4 w-4" />
-            </button>
-          )}
           <button
             onClick={onToggleEditorGroup}
             disabled={openFiles.length === 0}
@@ -386,11 +431,8 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           </div>
         )}
 
-        {/* Editor Area */}
-        <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col">
-          {centerMode === "canvas" ? (
-            <PI.CanvasPanelComponent />
-          ) : useEditorGroup ? (
+        <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col relative">
+          {useEditorGroup ? (
             <PI.EditorGroupComponent
               openFiles={openFiles}
               activeFileId={activeFileId}
@@ -419,6 +461,28 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
               />
             ) : emptyState
           )}
+          
+          {inlineEditState?.visible && (
+            <div 
+              className="absolute z-40 transition-all duration-200" 
+              style={{ top: inlineEditState.y + 40, left: Math.max(50, inlineEditState.x) }}
+            >
+              <InlineEditWidget 
+                selectedText={inlineEditState.text}
+                fullCode={activeFile?.content || ""}
+                language={inlineEditState.lang}
+                onCancel={() => setInlineEditState(null)}
+                onApply={(newText) => {
+                  const ed = editorRef.current as MonacoNS.editor.IStandaloneCodeEditor | null;
+                  if (ed && inlineEditState.selection) {
+                    ed.executeEdits("ai-inline", [{ range: inlineEditState.selection, text: newText }]);
+                  }
+                  setInlineEditState(null);
+                }}
+              />
+            </div>
+          )}
+
           <LocalDesktopStatus />
         </div>
 

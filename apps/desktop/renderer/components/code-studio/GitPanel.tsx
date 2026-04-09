@@ -28,7 +28,6 @@ import {
   gitCheckout,
   gitCreateBranch,
   setGitRunner,
-  type GitStatus,
 } from "@/lib/code-studio/features/git";
 import {
   createWebContainer,

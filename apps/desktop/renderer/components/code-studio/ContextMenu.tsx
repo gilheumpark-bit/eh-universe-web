@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   FilePlus, FolderPlus, Pencil, Trash2, Copy, Clipboard,
   Columns2, ChevronRight, Scissors, ClipboardPaste, Sparkles,
-  TextSelect, Command,
+  TextSelect, Command, Shield,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 
@@ -57,12 +57,12 @@ function Submenu({
 
   return (
     <div
-      className="absolute left-full top-0 ml-0.5 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[160px]"
+      className="absolute left-full top-0 ml-1 bg-[#0a0e17]/80 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] py-1.5 min-w-[200px]"
       style={{ zIndex: "var(--z-popover)" }}
     >
       {items.map((item) =>
         item.separator ? (
-          <div key={item.id} className="mx-2 my-1 border-t border-white/8" />
+          <div key={item.id} className="mx-2 my-1.5 border-t border-white/10" />
         ) : (
           <div
             key={item.id}
@@ -80,8 +80,8 @@ function Submenu({
                   onClose();
                 }
               }}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
-                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/5"}
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-all duration-150 ease-out focus-visible:outline-none
+                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/10 active:scale-[0.98] focus-visible:bg-white/10"}
                 ${item.danger ? "text-red-400" : "text-text-primary"}`}
             >
               {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
@@ -160,13 +160,13 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
       ref={ref}
       role="menu"
       aria-activedescendant={focusIdx >= 0 && visibleItems[focusIdx] ? `ctx-item-${visibleItems[focusIdx].id}` : undefined}
-      className="fixed bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[180px]"
+      className="fixed bg-[#0a0e17]/80 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] py-1.5 min-w-[200px]"
       style={{ ...style, zIndex: "var(--z-dropdown)" }}
       onClick={(e) => e.stopPropagation()}
     >
       {items.map((item) =>
         item.separator ? (
-          <div key={item.id} className="mx-2 my-1 border-t border-white/8" />
+          <div key={item.id} className="mx-2 my-1.5 border-t border-white/10" />
         ) : (
           <div
             key={item.id}
@@ -185,10 +185,10 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
                   onClose();
                 }
               }}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
-                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/5"}
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-all duration-150 ease-out focus-visible:outline-none
+                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/10 active:scale-[0.98] focus-visible:bg-white/10"}
                 ${item.danger ? "text-red-400" : "text-text-primary"}
-                ${focusIdx === visibleItems.indexOf(item) ? "bg-white/5" : ""}`}
+                ${focusIdx === visibleItems.indexOf(item) ? "bg-white/10" : ""}`}
             >
               {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
               <span className="flex-1 text-left">{item.label}</span>
@@ -265,6 +265,23 @@ export function buildEditorSurfaceMenu(lang: string): ContextMenuItem[] {
       label: L4(lang, { ko: "스튜디오 명령 팔레트", en: "Studio Command Palette" }),
       icon: <Command size={12} />,
       shortcut: "Ctrl+Shift+P",
+    },
+    { id: "editor-sep-3", label: "", separator: true },
+    {
+      id: "editor-ai-picker",
+      label: L4(lang, { ko: "디자인 토큰 삽입 (AI)", en: "Insert Design Token (AI)" }),
+      icon: <Sparkles size={12} className="text-amber-400" />,
+      shortcut: "Ctrl+Shift+T",
+    },
+    {
+      id: "editor-ai-lint",
+      label: L4(lang, { ko: "수동 코드/디자인 진단", en: "Manual Lint/Audit" }),
+      icon: <Shield size={12} className="text-blue-400" />,
+    },
+    {
+      id: "editor-snapshot",
+      label: L4(lang, { ko: "히스토리 스냅샷 생성", en: "Create History Snapshot" }),
+      icon: <Clipboard size={12} className="text-green-400" />,
     },
   ];
 }

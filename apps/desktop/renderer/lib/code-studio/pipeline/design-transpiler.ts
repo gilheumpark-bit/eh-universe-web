@@ -15,7 +15,7 @@ export interface SanitizeResult {
   findings: string[];
 }
 
-const FORBIDDEN_PATTERN = ['dangerouslySetInnerHTML', 'eval\(', 'window.location', 'unpkg.com'];
+const FORBIDDEN_PATTERN = ['dangerouslySetInnerHTML', 'eval\(', 'new Function', 'window.location', 'unpkg.com'];
 
 export function transpileVendorCode(rawCode: string): SanitizeResult {
   const findings: string[] = [];

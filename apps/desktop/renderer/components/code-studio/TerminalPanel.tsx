@@ -56,7 +56,7 @@ import {
 } from "@/lib/code-studio/features/webcontainer";
 import { parseAnsi } from "@/lib/code-studio/core/ansi";
 import { useLang } from "@/lib/LangContext";
-import { L4, createT } from "@/lib/i18n";
+import { createT } from "@/lib/i18n";
 import type { AppLanguage } from "@eh/shared-types";
 import {
   HistoryManager,
@@ -208,6 +208,7 @@ export function TerminalPanel({
         { text: t('terminalPanel.copiedToClipboard'), color: "blue" },
       ]);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines, lang]);
 
   // Boot WebContainer on mount
@@ -519,6 +520,7 @@ export function TerminalPanel({
       { text: `Done (${elapsed}ms)`, color: "green" },
       { text: "" },
     ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input, files, wcInstance, onRunPipeline, onAskAI, resetInput, lang]);
 
   // IDENTITY_SEAL: PART-5 | role=command handler | inputs=input,files,wcInstance | outputs=terminal lines

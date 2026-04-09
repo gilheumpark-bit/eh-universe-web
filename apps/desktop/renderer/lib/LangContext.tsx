@@ -87,17 +87,19 @@ export function useLang() {
 }
 
 /** Safe lookup for i18n objects — ja/zh fall back to ko if missing, then en */
-export function L2(obj: { ko: string; en: string; ja?: string; zh?: string }, lang: Lang): string {
-  if (lang === "ko") return obj.ko;
-  if (lang === "ja") return obj.ja || obj.ko || obj.en;
-  if (lang === "zh") return obj.zh || obj.ko || obj.en;
+export function L2(obj: { ko: string; en: string; ja?: string; zh?: string }, lang: Lang | string): string {
+  const l = String(lang).toLowerCase();
+  if (l.startsWith("ko")) return obj.ko;
+  if (l.startsWith("ja") || l.startsWith("jp")) return obj.ja || obj.ko || obj.en;
+  if (l.startsWith("zh") || l.startsWith("cn")) return obj.zh || obj.ko || obj.en;
   return obj.en;
 }
 
 /** Generic safe lookup for i18n objects with any value type — ja/zh fall back to ko then en */
-export function L2A<T>(obj: { ko: T; en: T; ja?: T; zh?: T }, lang: Lang): T {
-  if (lang === "ko") return obj.ko;
-  if (lang === "ja") return obj.ja || obj.ko || obj.en;
-  if (lang === "zh") return obj.zh || obj.ko || obj.en;
+export function L2A<T>(obj: { ko: T; en: T; ja?: T; zh?: T }, lang: Lang | string): T {
+  const l = String(lang).toLowerCase();
+  if (l.startsWith("ko")) return obj.ko;
+  if (l.startsWith("ja") || l.startsWith("jp")) return obj.ja || obj.ko || obj.en;
+  if (l.startsWith("zh") || l.startsWith("cn")) return obj.zh || obj.ko || obj.en;
   return obj.en;
 }

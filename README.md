@@ -1,15 +1,16 @@
 <div align="center">
 
-# EH Code Studio
+<img src="public/images/logo-badge.svg" alt="NOA Code Studio" width="320" />
 
-### Verified Coding Studio for Desktop
+# NOA Code Studio
 
-A standalone Electron IDE built around the **CS-Quill** verification engine.
-Local files, real terminals, real git, BYOK AI — all in your `~/.local/bin/cs`
-and a clean dark/light UI.
+### Validation-First Code Generation IDE
+
+A standalone AI IDE built around the **CS-Quill** verification engine.
+Local files, real terminals, real git, BYOK AI — all in your workspace with 
+a transparent, glassmorphism-inspired UI.
 
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
-![Electron](https://img.shields.io/badge/Electron-41-47848F?style=flat-square&logo=electron&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Status](https://img.shields.io/badge/status-alpha-orange?style=flat-square)
@@ -22,14 +23,8 @@ and a clean dark/light UI.
 
 ## What this is
 
-EH Code Studio used to be one route in a larger web app. As of v0.1.0
-it's a **desktop-only Electron IDE** with a single mission: verified
-code generation backed by 300+ Quill detectors.
-
-The previous web modules (Studio for writing, Network for community,
-Translation Studio, Universe archive) were removed to focus the project.
-Original web app code is preserved in `snapshot: gemini nextron migration WIP`
-commit (`b9a434e`) on the migration branch.
+NOA Code Studio is a standalone IDE with a single mission: **verified code generation** backed by an autonomous Gen-Verify-Fix pipeline. 
+It differs from simple LLM wrappers by natively supporting code verification, executing design linters, and autonomously escalating fixes within the browser environment.
 
 ## Why desktop
 

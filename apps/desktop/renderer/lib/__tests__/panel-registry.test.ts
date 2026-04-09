@@ -12,7 +12,6 @@ import {
   GROUP_LABELS,
   type PanelDef,
   type PanelGroup,
-  type RightPanel,
 } from '../code-studio/core/panel-registry';
 
 // ============================================================

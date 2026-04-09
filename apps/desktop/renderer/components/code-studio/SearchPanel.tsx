@@ -107,7 +107,7 @@ function escapeRegex(str: string): string {
 
 function FileGroup({
   filePath, results, onOpenFile, showReplace, onReplace, t
-}: FileGroupProps & { t: any }) {
+}: FileGroupProps & { t: unknown }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
