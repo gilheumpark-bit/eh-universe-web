@@ -52,14 +52,21 @@ export default function SplashScreen({
               zh: "今天也来写作了。",
             })}
           </h1>
-          <p className="mt-4 text-base text-text-secondary leading-relaxed max-w-sm mx-auto">
+          <p className="mt-3 text-sm text-text-tertiary font-mono uppercase tracking-widest">
             {L4(lang, {
-              ko: "NOA와 함께 이 세계관 위에 이야기를 씁니다.",
-              en: "Write your story with NOA, inside this universe.",
-              ja: "NOAと共に、この世界観の上に物語を書きます。",
-              zh: "与NOA一起，在这个世界观中创作故事。",
+              ko: "웹소설 집필 스튜디오",
+              en: "Web Novel Writing Studio",
+              ja: "ウェブ小説執筆スタジオ",
+              zh: "网络小说写作工作室",
             })}
           </p>
+          {/* Primary CTA — above the fold, instant action */}
+          <button
+            onClick={onStudio}
+            className="mt-6 px-8 py-3 rounded-xl bg-accent-amber text-[#1a1a1a] font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-all shadow-lg"
+          >
+            {L4(lang, { ko: "바로 시작하기 →", en: "Start Now →", ja: "今すぐ始める →", zh: "立即开始 →" })}
+          </button>
         </div>
 
         {/* Settings Bar */}
