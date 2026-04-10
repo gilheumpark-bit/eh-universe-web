@@ -358,18 +358,8 @@ export default function WritingTabInline(props: Props) {
                 <InlineActionPopup
                   textareaRef={editDraftRef}
                   language={language}
-                  onAction={(action, text) => {
-                    // Send as chat command for NOA to process
-                    const prompts: Record<string, string> = {
-                      rewrite: isKO ? `다음 문장을 리라이트해줘:\n\n${text}` : `Rewrite this:\n\n${text}`,
-                      expand: isKO ? `다음 문장을 더 풍부하게 확장해줘:\n\n${text}` : `Expand this:\n\n${text}`,
-                      compress: isKO ? `다음 문장을 간결하게 축소해줘:\n\n${text}` : `Compress this:\n\n${text}`,
-                      tone: isKO ? `다음 문장의 톤을 바꿔줘 (더 문학적으로):\n\n${text}` : `Change the tone (more literary):\n\n${text}`,
-                    };
-                    if (prompts[action]) {
-                      props.setRightPanelOpen(true);
-                      props.handleSend(prompts[action]);
-                    }
+                  onReplace={(oldText, newText) => {
+                    setEditDraft(editDraft.replace(oldText, newText));
                   }}
                 />
               </div>
