@@ -51,11 +51,6 @@ const nextConfig: NextConfig = {
       "@monaco-editor/react",
       "react-markdown",
       "rehype-sanitize",
-      "firebase/app",
-      "firebase/auth",
-      "firebase/firestore",
-      "@sentry/nextjs",
-      "isomorphic-git",
     ],
   },
   async redirects() {
