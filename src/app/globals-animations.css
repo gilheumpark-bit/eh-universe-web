@@ -594,3 +594,65 @@ html[data-theme-changing]::after {
 .animate-text-swap-in {
   animation: text-fade-in 0.2s ease-out forwards;
 }
+
+/* ============================================================
+   12-Point Design System — Micro-interactions & Polish
+   ============================================================ */
+
+/* Button press feedback */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-out;
+}
+
+/* Smooth focus ring for all interactive elements */
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--color-accent-purple);
+  outline-offset: 2px;
+  transition: outline-offset 0.15s ease-out;
+}
+
+/* Tab switching skeleton shimmer */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-bg-tertiary) 50%, var(--color-bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Hover lift for cards */
+.hover-lift {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* Tooltip fade */
+[title]:hover::after {
+  transition: opacity 0.15s ease-out 0.3s;
+}
+
+/* Smooth scrollbar for all custom-scrollbar elements */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
+
+/* Tablet-optimized dock spacing */
+@media (min-width: 768px) and (max-width: 1024px) {
+  [data-zen-hide][class*="fixed"][class*="z-[9999]"][class*="bottom"] {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    gap: 4px !important;
+  }
+}

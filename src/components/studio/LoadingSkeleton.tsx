@@ -27,7 +27,7 @@ export default function LoadingSkeleton({
         {Array.from({ length: lines }).map((_, i) => (
           <div
             key={i}
-            className={`animate-pulse bg-bg-secondary ${rounded} h-4`}
+            className={`skeleton-shimmer ${rounded} h-4`}
             style={{ width: `${Math.max(40, 100 - i * 15)}%` }}
           />
         ))}
@@ -37,7 +37,7 @@ export default function LoadingSkeleton({
 
   return (
     <div
-      className={`animate-pulse bg-bg-secondary ${rounded} mx-4 my-4 ${className}`}
+      className={`skeleton-shimmer ${rounded} mx-4 my-4 ${className}`}
       style={{ height: `${height}px` }}
     />
   );

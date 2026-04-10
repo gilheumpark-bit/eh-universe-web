@@ -81,7 +81,7 @@ export default function SplashScreen({
               w-full group relative overflow-hidden rounded-2xl
               border bg-bg-secondary/95 backdrop-blur-xl
               px-7 py-8 text-left
-              transition-all duration-200 ease-out
+              hover-lift
               ${hovered ? 'border-accent-amber/40 shadow-[0_0_32px_rgba(202,161,92,0.12)]' : 'border-border/50'}
               active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/50
             `}

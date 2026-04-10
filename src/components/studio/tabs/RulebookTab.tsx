@@ -194,7 +194,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
               <button
                 key={card.id}
                 onClick={() => setViewMode(`editor-${card.id}` as ViewMode)}
-                className={`group text-left p-6 rounded-2xl border border-border/50 bg-bg-secondary/50 hover:border-${card.color}/40 hover:bg-bg-secondary transition-all duration-200 active:scale-[0.98]`}
+                className={`group text-left p-6 rounded-2xl border border-border/50 bg-bg-secondary/50 hover:border-${card.color}/40 hover:bg-bg-secondary hover-lift active:scale-[0.98]`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`w-10 h-10 rounded-xl bg-${card.color}/10 border border-${card.color}/20 flex items-center justify-center text-${card.color}`}>
