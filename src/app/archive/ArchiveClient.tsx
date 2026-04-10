@@ -8,9 +8,26 @@ import { useLang, L2 } from "@/lib/LangContext";
 import { createT, L4 } from "@/lib/i18n";
 import { ArchiveReportsTabs } from "@/app/reports/ReportsClient";
 
+const CATEGORY_THEMES: Record<string, { icon: string; color: string; bgColor: string; borderColor: string }> = {
+  core:       { icon: '🔬', color: 'text-accent-purple', bgColor: 'bg-accent-purple/10', borderColor: 'border-accent-purple/30' },
+  timeline:   { icon: '🕰️', color: 'text-accent-amber',  bgColor: 'bg-accent-amber/10',  borderColor: 'border-accent-amber/30' },
+  factions:   { icon: '⚔️', color: 'text-accent-red',    bgColor: 'bg-accent-red/10',    borderColor: 'border-accent-red/30' },
+  technology: { icon: '⚡', color: 'text-accent-blue',   bgColor: 'bg-accent-blue/10',   borderColor: 'border-accent-blue/30' },
+  geography:  { icon: '🌍', color: 'text-accent-green',  bgColor: 'bg-accent-green/10',  borderColor: 'border-accent-green/30' },
+  military:   { icon: '🛡️', color: 'text-accent-red',    bgColor: 'bg-accent-red/10',    borderColor: 'border-accent-red/30' },
+  classified: { icon: '🔒', color: 'text-accent-amber',  bgColor: 'bg-accent-amber/10',  borderColor: 'border-accent-amber/30' },
+  reports:    { icon: '📋', color: 'text-accent-blue',   bgColor: 'bg-accent-blue/10',   borderColor: 'border-accent-blue/30' },
+};
+
+const LEVEL_STYLES: Record<string, { dot: string; text: string; border: string }> = {
+  PUBLIC:     { dot: 'bg-accent-green',  text: 'text-accent-green',  border: 'border-l-accent-green' },
+  RESTRICTED: { dot: 'bg-accent-amber', text: 'text-accent-amber', border: 'border-l-accent-amber' },
+  CLASSIFIED: { dot: 'bg-accent-red',   text: 'text-accent-red',   border: 'border-l-accent-red' },
+};
+
 const categories = [
   {
-    id: "core", icon: "📁", label: "CORE", sublabel: { ko: "핵심", en: "Core", ja: "核心", zh: "核心" },
+    id: "core", icon: "🔬", label: "CORE", sublabel: { ko: "핵심", en: "Core", ja: "核心", zh: "核心" },
     articles: [
       { slug: "eh-definition", title: { ko: "EH 정의", en: "EH Definition" }, level: "PUBLIC" },
       { slug: "non-intervention", title: { ko: "비개입 원칙", en: "Non-Intervention Principle" }, level: "RESTRICTED" },
@@ -29,7 +46,7 @@ const categories = [
     ],
   },
   {
-    id: "timeline", icon: "📁", label: "TIMELINE", sublabel: { ko: "연표", en: "Timeline", ja: "年表", zh: "年表" },
+    id: "timeline", icon: "🕰️", label: "TIMELINE", sublabel: { ko: "연표", en: "Timeline", ja: "年表", zh: "年表" },
     articles: [
       { slug: "era-origin", title: { ko: "기원기 (1945~2025)", en: "Origin Era (1945~2025)" }, level: "PUBLIC" },
       { slug: "era-war", title: { ko: "전쟁기 (2025~2092)", en: "War Era (2025~2092)" }, level: "RESTRICTED" },
@@ -41,7 +58,7 @@ const categories = [
     ],
   },
   {
-    id: "factions", icon: "📁", label: "FACTIONS", sublabel: { ko: "세력", en: "Factions", ja: "勢力", zh: "势力" },
+    id: "factions", icon: "⚔️", label: "FACTIONS", sublabel: { ko: "세력", en: "Factions", ja: "勢力", zh: "势力" },
     articles: [
       { slug: "council", title: { ko: "협의회", en: "The Council" }, level: "PUBLIC" },
       { slug: "neka-empire", title: { ko: "네카 제국", en: "Neka Empire" }, level: "RESTRICTED" },
@@ -58,7 +75,7 @@ const categories = [
     ],
   },
   {
-    id: "technology", icon: "📁", label: "TECHNOLOGY", sublabel: { ko: "기술", en: "Tech", ja: "技術", zh: "技术" },
+    id: "technology", icon: "⚡", label: "TECHNOLOGY", sublabel: { ko: "기술", en: "Tech", ja: "技術", zh: "技术" },
     articles: [
       { slug: "hctg-gate", title: { ko: "HCTG / Gate 체계", en: "HCTG / Gate System" }, level: "RESTRICTED" },
       { slug: "eh-chamber", title: { ko: "EH 챔버", en: "EH Chamber" }, level: "RESTRICTED" },
@@ -82,7 +99,7 @@ const categories = [
     ],
   },
   {
-    id: "geography", icon: "📁", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography", ja: "地理", zh: "地理" },
+    id: "geography", icon: "🌍", label: "GEOGRAPHY", sublabel: { ko: "지리", en: "Geography", ja: "地理", zh: "地理" },
     articles: [
       { slug: "galaxy-zones", title: { ko: "은하 구역 분류", en: "Galactic Zone Classification" }, level: "PUBLIC" },
       { slug: "galaxy-profiles", title: { ko: "양쪽 은하 프로필", en: "Galaxy Profiles — Human vs Neka" }, level: "RESTRICTED" },
@@ -98,7 +115,7 @@ const categories = [
     ],
   },
   {
-    id: "military", icon: "📁", label: "MILITARY", sublabel: { ko: "군사", en: "Military", ja: "軍事", zh: "军事" },
+    id: "military", icon: "🛡️", label: "MILITARY", sublabel: { ko: "군사", en: "Military", ja: "軍事", zh: "军事" },
     articles: [
       { slug: "ship-classes", title: { ko: "함급 체계", en: "Ship Class System" }, level: "RESTRICTED" },
       { slug: "visual-vessel-classification", title: { ko: "함선 분류 도해", en: "Vessel Classification Visual" }, level: "CLASSIFIED" },
@@ -112,7 +129,7 @@ const categories = [
     ],
   },
   {
-    id: "classified", icon: "📁", label: "CLASSIFIED", sublabel: { ko: "기밀", en: "Classified", ja: "機密", zh: "机密" },
+    id: "classified", icon: "🔒", label: "CLASSIFIED", sublabel: { ko: "기밀", en: "Classified", ja: "機密", zh: "机密" },
     articles: [
       { slug: "bia-manual", title: { ko: "비밀조사국 매뉴얼", en: "Bureau of Investigation Manual" }, level: "CLASSIFIED" },
       { slug: "pilot-daily", title: { ko: "탑승자 일상", en: "Pilot's Daily Life" }, level: "RESTRICTED" },
@@ -130,7 +147,7 @@ const categories = [
     ],
   },
   {
-    id: "reports", icon: "📁", label: "REPORTS", sublabel: { ko: "보고서", en: "Reports", ja: "報告書", zh: "报告书" },
+    id: "reports", icon: "📋", label: "REPORTS", sublabel: { ko: "보고서", en: "Reports", ja: "報告書", zh: "报告书" },
     articles: [
       { slug: "rpt-eschaton-incident", title: { ko: "Eschaton 함선침몰 사건보고서", en: "Eschaton Incident Report" }, level: "CLASSIFIED" },
       { slug: "rpt-noa10005-interrogation", title: { ko: "NOA #10005 심문 기록", en: "NOA #10005 Interrogation Log" }, level: "CLASSIFIED" },
@@ -160,8 +177,13 @@ const categories = [
 ];
 
 function BadgeLevel({ level }: { level: string }) {
-  const cls = level === "CLASSIFIED" ? "badge-classified" : level === "RESTRICTED" ? "badge-amber" : "badge-allow";
-  return <span className={`badge ${cls}`}>{level}</span>;
+  const style = LEVEL_STYLES[level] || LEVEL_STYLES.PUBLIC;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] font-bold font-mono uppercase tracking-wider ${style.text} bg-current/5`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+      {level}
+    </span>
+  );
 }
 
 export default function ArchiveClient() {
@@ -216,117 +238,211 @@ export default function ArchiveClient() {
     ).map(a => ({ ...a, categoryId: cat.id, categoryLabel: cat.label })));
   }, [searchQuery]);
 
+  // 통계 계산
+  const totalArticles = categories.reduce((sum, c) => sum + c.articles.length, 0);
+  const classifiedCount = categories.reduce((sum, c) => sum + c.articles.filter(a => a.level === 'CLASSIFIED').length, 0);
+  const theme = CATEGORY_THEMES[activeCategory] || CATEGORY_THEMES.core;
+
   return (
     <>
       <Header />
-      <main className="flex min-h-screen pt-24">
-        <button className="fixed bottom-4 right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 p-3 text-accent-amber shadow-lg backdrop-blur" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
+      <main className="min-h-screen pt-20 eh-page-canvas">
+        {/* 모바일 사이드바 토글 */}
+        <button className="fixed bottom-4 right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 p-3 text-accent-amber shadow-lg backdrop-blur-xl active:scale-95 transition-all" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 5H17M3 10H12M3 15H17" /></svg>
         </button>
 
-        <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-3xl border bg-bg-secondary/95 p-4 shadow-2xl backdrop-blur transition-transform md:left-6 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">{t('archivePage.archiveLabel', 'Archive')}</h2>
-          <input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder={L4(lang, { ko: "🔍 문서 검색...", en: "🔍 Search...", ja: "🔍 文書検索...", zh: "🔍 搜索文档..." })}
-            className="w-full mb-3 px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-xs text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple transition-colors font-mono"
-          />
-          <nav className="space-y-1" role="navigation" aria-label="Archive categories">
-            {categories.map((cat) => (
-              <button key={cat.id} onClick={() => changeCategory(cat.id)}
-                aria-label={`${L2(cat.sublabel, lang)}`}
-                aria-current={activeCategory === cat.id ? "true" : undefined}
-                className={`w-full text-left flex items-center gap-2 py-2 px-3 rounded text-sm transition-colors ${activeCategory === cat.id ? "bg-bg-tertiary text-accent-purple" : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"}`}>
-                <span aria-hidden="true">{cat.icon}</span>
-                <span className="font-mono text-xs font-medium tracking-wider">{L2(cat.sublabel, lang)}</span>
-              </button>
-            ))}
-          </nav>
-
-          <div className="mt-6 pt-4 border-t border-border">
-            <h2 className="font-mono text-xs font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
-              {t('archivePage.tools')}
-            </h2>
-            <Link href="/tools/neka-sound"
-              className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
-              <span>🔧</span>
-              <span className="font-mono text-xs font-medium tracking-wider group-hover:text-accent-purple">
-                {t('archivePage.nekaSoundInterface')}
-              </span>
-            </Link>
-            <Link href="/tools/soundtrack"
-              className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
-              <span>🎵</span>
-              <span className="font-mono text-xs font-medium tracking-wider group-hover:text-accent-purple">
-                {t('archivePage.soundtrack')}
-              </span>
-            </Link>
-            <Link href="/tools/galaxy-map"
-              className="flex items-center gap-2 py-2 px-3 rounded text-sm text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary transition-colors group">
-              <span>🌌</span>
-              <span className="font-mono text-xs font-medium tracking-wider group-hover:text-accent-purple">
-                {t('archivePage.galaxyZoneGateMap')}
-              </span>
-            </Link>
-          </div>
-        </aside>
-
-        <div className="flex-1 p-6 md:p-10 md:pl-76">
-          <div className="mx-auto max-w-4xl">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+          {/* ── 히어로 헤더 ── */}
+          <div className="mb-8">
             <ArchiveReportsTabs active="archive" />
-            <div className="doc-header rounded-t-3xl mb-0">
-              <span className="badge badge-blue mr-2">ARCHIVE</span>
-              {t('archivePage.category', 'Category')}: {L2(currentCategory.sublabel, lang)}
+            <div className="relative rounded-2xl border border-border/40 bg-bg-secondary/60 backdrop-blur-xl overflow-hidden p-8 md:p-10">
+              {/* 배경 장식 */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent-amber/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent-purple/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent-amber/30 bg-accent-amber/10 mb-4">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-amber/20 font-mono text-[7px] font-bold text-accent-amber">EH</span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent-amber font-bold">Universe Archive</span>
+                </div>
+                <h1 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-3">
+                  {L4(lang, { ko: "EH 유니버스 아카이브", en: "EH Universe Archive", ja: "EH ユニバースアーカイブ", zh: "EH 宇宙档案馆" })}
+                </h1>
+                <p className="text-sm text-text-secondary max-w-xl leading-relaxed">
+                  {L4(lang, {
+                    ko: "인류의 기원부터 은하 문명까지 — 세계관의 모든 기록이 이곳에 있습니다.",
+                    en: "From the origin of humanity to galactic civilization — all records of the universe are here.",
+                    ja: "人類の起源から銀河文明まで — 世界観のすべての記録がここにあります。",
+                    zh: "从人类起源到银河文明 — 宇宙的所有记录都在这里。",
+                  })}
+                </p>
+
+                {/* 통계 바 */}
+                <div className="flex flex-wrap items-center gap-4 mt-5 text-[10px] font-mono uppercase tracking-wider text-text-tertiary">
+                  <span>{totalArticles} {L4(lang, { ko: '문서', en: 'Documents', ja: '文書', zh: '文档' })}</span>
+                  <span className="w-px h-3 bg-border" />
+                  <span>{categories.length} {L4(lang, { ko: '분류', en: 'Categories', ja: '分類', zh: '分类' })}</span>
+                  <span className="w-px h-3 bg-border" />
+                  <span className="text-accent-red">{classifiedCount} {L4(lang, { ko: '기밀', en: 'Classified', ja: '機密', zh: '机密' })}</span>
+                </div>
+
+                {/* 검색 */}
+                <div className="mt-5 max-w-md">
+                  <input
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder={L4(lang, { ko: "문서 검색...", en: "Search documents...", ja: "文書検索...", zh: "搜索文档..." })}
+                    className="w-full px-4 py-2.5 bg-bg-primary/80 border border-border/50 rounded-xl text-sm text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple/50 focus:shadow-[0_0_16px_rgba(141,123,195,0.1)] transition-all font-mono"
+                  />
+                </div>
+              </div>
             </div>
+          </div>
 
-            <div className="premium-panel rounded-b-3xl rounded-t-none border-t-0 p-6 sm:p-8">
-              <h1 className="site-title text-2xl font-bold tracking-tight mb-6">
-                {currentCategory.icon} {L2(currentCategory.sublabel, lang)}
-              </h1>
+          <div className="flex gap-6">
+            {/* ── 사이드바 ── */}
+            <aside className={`fixed md:sticky top-24 left-3 z-30 h-[calc(100vh-7rem)] w-72 shrink-0 overflow-y-auto rounded-2xl border border-border/40 bg-bg-secondary/80 backdrop-blur-xl p-5 shadow-2xl transition-transform md:left-0 md:translate-x-0 custom-scrollbar ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+              <h2 className="font-mono text-[10px] font-bold text-text-tertiary tracking-[0.2em] uppercase mb-4">
+                {L4(lang, { ko: '카테고리', en: 'Categories', ja: 'カテゴリ', zh: '分类' })}
+              </h2>
+              <nav className="space-y-1" role="navigation" aria-label="Archive categories">
+                {categories.map((cat) => {
+                  const ct = CATEGORY_THEMES[cat.id] || CATEGORY_THEMES.core;
+                  const isActive = activeCategory === cat.id;
+                  return (
+                    <button key={cat.id} onClick={() => changeCategory(cat.id)}
+                      aria-current={isActive ? "true" : undefined}
+                      className={`w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm transition-all active:scale-[0.98] ${
+                        isActive
+                          ? `${ct.bgColor} border ${ct.borderColor} shadow-sm`
+                          : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/50'
+                      }`}>
+                      <span className="text-base" aria-hidden="true">{cat.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className={`block text-xs font-bold ${isActive ? ct.color : ''}`}>
+                          {L2(cat.sublabel, lang)}
+                        </span>
+                        <span className="block text-[9px] font-mono text-text-tertiary mt-0.5">
+                          {cat.articles.length} {L4(lang, { ko: '문서', en: 'docs', ja: '文書', zh: '文档' })}
+                        </span>
+                      </div>
+                      {isActive && <span className={`w-1.5 h-1.5 rounded-full ${ct.color.replace('text-', 'bg-')}`} />}
+                    </button>
+                  );
+                })}
+              </nav>
 
-              <div className="space-y-3">
-                {searchResults ? (
-                  <>
-                    <p className="text-[10px] text-text-tertiary font-mono uppercase mb-2">
-                      🔍 {searchResults.length} {L4(lang, { ko: "건 검색됨", en: "results", ja: "件の結果", zh: "条结果" })} — &quot;{searchQuery}&quot;
-                    </p>
-                    {searchResults.map((article) => (
+              {/* 도구 링크 */}
+              <div className="mt-6 pt-4 border-t border-border/40">
+                <h2 className="font-mono text-[10px] font-bold text-text-tertiary tracking-[0.2em] uppercase mb-3">
+                  {t('archivePage.tools')}
+                </h2>
+                {[
+                  { href: '/tools/neka-sound', icon: '🔊', label: t('archivePage.nekaSoundInterface') },
+                  { href: '/tools/soundtrack', icon: '🎵', label: t('archivePage.soundtrack') },
+                  { href: '/tools/galaxy-map', icon: '🌌', label: t('archivePage.galaxyZoneGateMap') },
+                ].map(tool => (
+                  <Link key={tool.href} href={tool.href}
+                    className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-xs text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary/50 transition-all group">
+                    <span>{tool.icon}</span>
+                    <span className="font-mono text-[11px] tracking-wide group-hover:text-accent-purple">{tool.label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* 스튜디오 복귀 */}
+              <div className="mt-4 pt-4 border-t border-border/40">
+                <Link href="/studio"
+                  className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-xs font-bold text-accent-amber bg-accent-amber/10 border border-accent-amber/20 hover:bg-accent-amber/20 transition-all">
+                  <span>{'<-'}</span>
+                  <span className="font-mono uppercase tracking-wider">
+                    {L4(lang, { ko: '스튜디오로 돌아가기', en: 'Back to Studio', ja: 'スタジオに戻る', zh: '返回工作室' })}
+                  </span>
+                </Link>
+              </div>
+            </aside>
+
+            {/* ── 메인 콘텐츠 ── */}
+            <div className="flex-1 min-w-0">
+              {/* 카테고리 헤더 */}
+              <div className={`flex items-center gap-3 mb-5 px-1`}>
+                <div className={`w-10 h-10 rounded-xl ${theme.bgColor} border ${theme.borderColor} flex items-center justify-center text-lg`}>
+                  {currentCategory.icon}
+                </div>
+                <div>
+                  <h2 className={`font-serif text-xl font-bold ${theme.color}`}>
+                    {L2(currentCategory.sublabel, lang)}
+                  </h2>
+                  <p className="text-[10px] font-mono text-text-tertiary uppercase tracking-wider">
+                    {currentCategory.articles.length} {L4(lang, { ko: '문서', en: 'documents', ja: '文書', zh: '文档' })}
+                    {' · '}
+                    {currentCategory.articles.filter(a => a.level === 'CLASSIFIED').length} {L4(lang, { ko: '기밀', en: 'classified', ja: '機密', zh: '机密' })}
+                  </p>
+                </div>
+              </div>
+
+              {/* 검색 결과 */}
+              {searchResults ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] text-text-tertiary font-mono uppercase px-1 mb-3">
+                    {searchResults.length} {L4(lang, { ko: "건 검색됨", en: "results", ja: "件の結果", zh: "条结果" })} — &quot;{searchQuery}&quot;
+                  </p>
+                  {searchResults.map((article) => {
+                    const ls = LEVEL_STYLES[article.level] || LEVEL_STYLES.PUBLIC;
+                    return (
                       <Link key={article.slug} href={`/archive/${article.slug}`}
-                        className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-[9px] text-text-tertiary">{article.categoryLabel}</span>
-                          <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{L2(article.title, lang)}</span>
+                        className={`group flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-bg-secondary/50 hover:bg-bg-secondary hover:border-border/60 transition-all hover-lift border-l-[3px] ${ls.border}`}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] font-mono uppercase tracking-wider text-text-tertiary">{article.categoryLabel}</span>
+                          <p className="text-sm font-medium text-text-primary group-hover:text-accent-purple transition-colors truncate mt-0.5">
+                            {L2(article.title, lang)}
+                          </p>
                         </div>
                         <BadgeLevel level={article.level} />
                       </Link>
-                    ))}
-                    {searchResults.length === 0 && (
-                      <p className="text-center text-text-tertiary text-sm py-8">{L4(lang, { ko: "검색 결과가 없습니다.", en: "No results found.", ja: "検索結果がありません。", zh: "未找到搜索结果。" })}</p>
-                    )}
-                  </>
-                ) : null}
-                {!searchResults && currentCategory.articles.map((article) => {
-                  const href = `/archive/${article.slug}`;
-                  return (
-                    <Link key={article.slug} href={href}
-                      aria-label={`${L2(article.title, lang)} — ${article.level}`}
-                      className="premium-link-card card-glow group flex items-center justify-between gap-4 p-4">
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-xs text-text-tertiary">▸</span>
-                        <span className="text-sm text-text-primary group-hover:text-accent-purple transition-colors">{L2(article.title, lang)}</span>
-                      </div>
-                      <BadgeLevel level={article.level} />
-                    </Link>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                  {searchResults.length === 0 && (
+                    <div className="text-center py-16">
+                      <p className="text-text-tertiary text-sm">{L4(lang, { ko: "검색 결과가 없습니다.", en: "No results found.", ja: "検索結果がありません。", zh: "未找到搜索结果。" })}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* 기사 목록 — 그리드 + 리스트 하이브리드 */
+                <div className="space-y-2">
+                  {currentCategory.articles.map((article, idx) => {
+                    const href = `/archive/${article.slug}`;
+                    const ls = LEVEL_STYLES[article.level] || LEVEL_STYLES.PUBLIC;
+                    return (
+                      <Link key={article.slug} href={href}
+                        aria-label={`${L2(article.title, lang)} — ${article.level}`}
+                        className={`group flex items-center gap-4 p-4 rounded-xl border border-border/30 bg-bg-secondary/40 hover:bg-bg-secondary/80 hover:border-border/60 transition-all hover-lift border-l-[3px] ${ls.border}`}
+                        style={{ animationDelay: `${idx * 30}ms` }}
+                      >
+                        {/* 번호 */}
+                        <span className="w-6 text-center text-[10px] font-mono font-bold text-text-quaternary shrink-0">
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
 
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-8 eh-log">
-                  [ARCHIVE_STATUS: PHASE 1 — MVP]<br />
-                  [LOADED: {currentCategory.articles.length} articles]<br />
-                  [NOTE: {t('archivePage.phase2Note')}]
+                        {/* 제목 */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary group-hover:text-accent-purple transition-colors truncate">
+                            {L2(article.title, lang)}
+                          </p>
+                        </div>
+
+                        {/* 등급 배지 */}
+                        <BadgeLevel level={article.level} />
+
+                        {/* 화살표 */}
+                        <span className="text-text-quaternary group-hover:text-text-secondary group-hover:translate-x-0.5 transition-all text-xs shrink-0">
+                          {'->'}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
