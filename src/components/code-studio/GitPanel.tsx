@@ -131,7 +131,10 @@ function loadIsomorphicGit(): Promise<IsomorphicGitEngine | null> {
   _isoGitPromise = (async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const git = (await import("isomorphic-git" as any)) as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let git: any;
+      try { git = await import("isomorphic-git"); } catch { git = null; }
+      if (!git) { setError("isomorphic-git not available"); setLoading(false); return; }
       // LightningFS packages unavailable on npm — use in-memory stub
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const LightningFS = class { constructor(_name: string) {} promises = { readdir: async () => [] as string[], readFile: async () => '', writeFile: async () => {}, mkdir: async () => {}, unlink: async () => {}, stat: async () => ({ type: 'file', size: 0 }), rmdir: async () => {} }; };
