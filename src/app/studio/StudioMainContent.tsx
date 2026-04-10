@@ -6,7 +6,7 @@
 import { type RefObject } from 'react';
 import { useState } from 'react';
 import {
-  Menu, X, Save,
+  Menu, X, Save, Download,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
   Key, Sparkles,
 } from 'lucide-react';
@@ -275,6 +275,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
             <button onClick={triggerSave} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${saveFlash ? 'text-accent-green' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={isKO ? '저장 (Ctrl+S)' : 'Save (Ctrl+S)'} aria-label="Save"><Save className="w-4 h-4" /></button>
+            <button onClick={handlePrint} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '내보내기 (Ctrl+E)' : 'Export (Ctrl+E)'} aria-label="Export"><Download className="w-4 h-4" /></button>
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
             <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
             <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>

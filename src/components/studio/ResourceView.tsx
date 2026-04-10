@@ -190,13 +190,14 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 />
               </div>
 
-              <button 
+              <button
                 onClick={addCharacter}
                 className="w-full py-4 bg-accent-amber rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-accent-amber/80 transition-all shadow-xl active:scale-95"
                 style={{ color: '#1a1a1a' }}
               >
                 {t.register}
               </button>
+              {/* Quick presets already available via 초안 생성 + 프리셋 in CharacterTab header */}
             </div>
           </div>
         </div>
