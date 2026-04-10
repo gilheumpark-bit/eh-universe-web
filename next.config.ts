@@ -91,27 +91,6 @@ const nextConfig: NextConfig = {
     ];
     return [
       {
-        // Static assets — aggressive caching
-        source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        // Font files — long cache
-        source: '/_next/static/media/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        // Pages — CDN cache with stale-while-revalidate
-        source: '/((?!api|_next).*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' },
-        ],
-      },
-      {
         source: '/((?!code-studio).*)',
         headers: [
           { key: 'Content-Security-Policy', value: cspBase },
