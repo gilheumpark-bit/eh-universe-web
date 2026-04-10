@@ -133,10 +133,13 @@ function loadIsomorphicGit(): Promise<IsomorphicGitEngine | null> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const git = (await import("isomorphic-git" as any)) as any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let LightningFS: any;
-      try { LightningFS = ((await import(/* webpackIgnore: true */ "@nicolo-ribaudo/isomorphic-git-lightning-fs" as any)) as any).default; } catch { /* fallback */ }
-      if (!LightningFS) { try { LightningFS = ((await import(/* webpackIgnore: true */ "lightning-fs" as any)) as any).default; } catch { /* fallback */ } }
+      // Use variable to prevent Turbopack static analysis from resolving missing modules
+      const lfsModules = ["@nicolo-ribaudo/isomorphic-git-lightning-fs", "lightning-fs"];
+      for (const mod of lfsModules) {
+        if (LightningFS) break;
+        try { LightningFS = ((await import(mod)) as any).default; } catch { /* try next */ }
+      }
       if (!LightningFS) throw new Error("No LightningFS available");
 
       const fs = new LightningFS("eh-git-fs");
