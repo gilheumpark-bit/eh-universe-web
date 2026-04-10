@@ -7,10 +7,7 @@ import AuthorDashboard from '@/components/studio/AuthorDashboard';
 import EmotionArcChart from '@/components/studio/EmotionArcChart';
 import FatigueDetector from '@/components/studio/FatigueDetector';
 import ShareToNetwork from '@/components/studio/ShareToNetwork';
-const TranslationPanel = dynamic(() => import('@/components/studio/TranslationPanel'), {
-  ssr: false,
-  loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading Translation...</div>,
-});
+import TranslationPanel from '@/components/studio/TranslationPanel';
 import { parseManuscript, generateVoiceMappings } from '@/engine/scene-parser';
 import type { ParsedScene } from '@/engine/scene-parser';
 
