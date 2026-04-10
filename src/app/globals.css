@@ -52,11 +52,11 @@
   --bl-lg: 28px;
   --gradient-page: linear-gradient(180deg, #141311 0%, #11100e 45%, #0f0e0c 100%);
   --font-sans:
-    var(--font-ibm-plex-sans), var(--font-noto-sans-kr), "Noto Sans JP",
+    var(--font-noto-sans-kr), "Noto Sans JP",
     "Noto Sans SC", "Hiragino Kaku Gothic ProN", "Microsoft YaHei", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "Fira Code", monospace;
-  --font-display: var(--font-cormorant-garamond), var(--font-noto-serif-kr), serif;
-  --font-document: var(--font-noto-serif-kr), var(--font-ibm-plex-mono), serif;
+  --font-display: var(--font-noto-serif-kr), serif;
+  --font-document: var(--font-noto-serif-kr), var(--font-jetbrains-mono), serif;
 }
 
 /* ============================================================
