@@ -51,6 +51,7 @@
     "epub2": "^3.0.2",
     "firebase": "^12.11.0",
     "google-auth-library": "^10.6.2",
+    "isomorphic-git": "^1.37.5",
     "jose": "^6.2.2",
     "lucide-react": "^0.577.0",
     "mammoth": "^1.12.0",
