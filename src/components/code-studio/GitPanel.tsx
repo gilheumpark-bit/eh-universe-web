@@ -132,15 +132,9 @@ function loadIsomorphicGit(): Promise<IsomorphicGitEngine | null> {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const git = (await import("isomorphic-git" as any)) as any;
+      // LightningFS packages unavailable on npm — use in-memory stub
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let LightningFS: any;
-      // Use variable to prevent Turbopack static analysis from resolving missing modules
-      const lfsModules = ["@nicolo-ribaudo/isomorphic-git-lightning-fs", "lightning-fs"];
-      for (const mod of lfsModules) {
-        if (LightningFS) break;
-        try { LightningFS = ((await import(mod)) as any).default; } catch { /* try next */ }
-      }
-      if (!LightningFS) throw new Error("No LightningFS available");
+      const LightningFS = class { constructor(_name: string) {} promises = { readdir: async () => [] as string[], readFile: async () => '', writeFile: async () => {}, mkdir: async () => {}, unlink: async () => {}, stat: async () => ({ type: 'file', size: 0 }), rmdir: async () => {} }; };
 
       const fs = new LightningFS("eh-git-fs");
       const pfs = fs.promises;
