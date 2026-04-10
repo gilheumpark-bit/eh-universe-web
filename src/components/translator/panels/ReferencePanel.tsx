@@ -29,7 +29,7 @@ export function ReferencePanel() {
         </div>
         
         <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-[13px] text-text-secondary leading-relaxed min-h-[100px] whitespace-pre-wrap">
-          {storyNote || <span className="opacity-50 italic">No notes available for this chapter. Extract details from content to populate world notes.</span>}
+          {storyNote || <span className="opacity-50 italic">참고자료를 추가하면 번역 중 참조할 수 있습니다. Add references to use during translation.</span>}
         </div>
 
         <div className="mt-6 flex items-center gap-2 text-text-secondary mb-2">

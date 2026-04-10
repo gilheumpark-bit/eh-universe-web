@@ -283,7 +283,7 @@ export class HSMSigner {
   async sign(payload: OrbitPayload, sessionId: string): Promise<SignedEnvelope> {
     const serialized = this.serialize(payload);
     const payloadHash = await sha256(serialized);
-    // [확인 필요] 프로덕션에서는 WebAuthn 또는 서버 HSM으로 교체
+    // NOTE: 프로덕션에서는 WebAuthn 또는 서버 HSM으로 교체
     const signature = await hmacSign(serialized, 'noa-hsm-dev-key');
 
     return {

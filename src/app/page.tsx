@@ -108,7 +108,7 @@ function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const flags = useFeatureFlags();
-  const stellarWhite = flags.HOME_STELLAR_WHITE || searchParams.get("skin") === "white";
+  const stellarWhite = searchParams.get("skin") === "white";
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");

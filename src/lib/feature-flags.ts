@@ -16,8 +16,6 @@ export interface FeatureFlags {
   CODE_STUDIO: boolean;
   /** 에피소드 간 비교 분석 */
   EPISODE_COMPARE: boolean;
-  /** 홈 에디토리얼 “Stellar White” 스킨 (크림 배경·다크 글래스 헤더). `/?skin=white`로도 동일 */
-  HOME_STELLAR_WHITE: boolean;
 }
 
 // ============================================================
@@ -31,7 +29,6 @@ const FLAGS: FeatureFlags = {
   OFFLINE_CACHE: true,
   CODE_STUDIO: true,
   EPISODE_COMPARE: true,
-  HOME_STELLAR_WHITE: false,
 };
 
 /**

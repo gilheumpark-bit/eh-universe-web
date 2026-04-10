@@ -104,7 +104,6 @@ const MAX_HISTORY = 50;
 // PART 1.5 — isomorphic-git Engine (Real Git in Browser)
 // ============================================================
 
-// [확인 필요] isomorphic-git + lightning-fs may not be installed — dynamic import with fallback
 
 interface IsomorphicGitEngine {
   fs: unknown;

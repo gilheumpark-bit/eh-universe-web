@@ -65,7 +65,6 @@ interface DatabasePanelProps {
 // PART 1.5 — sql.js Engine (WebAssembly SQLite)
 // ============================================================
 
-// [확인 필요] sql.js may not be installed — dynamic import with fallback
 type SqlJsDatabase = {
   run: (sql: string) => void;
   exec: (sql: string) => Array<{ columns: string[]; values: unknown[][] }>;

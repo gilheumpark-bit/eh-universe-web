@@ -52,7 +52,7 @@ export default function ArticleClient({ slug }: { slug: string }) {
       script.textContent = JSON.stringify(jsonLd);
       document.head.appendChild(script);
       return () => { script.remove(); };
-    }).catch(() => {});
+    }).catch((err) => { console.warn('[ArticleClient] silent error:', err); });
   }, [slug, lang, article, getArticleTitle]);
 
   // Loading state while articles chunk loads
