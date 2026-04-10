@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2 } from 'lucide-react';
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { streamChat, getApiKey } from '@/lib/ai-providers';
 
 // ============================================================
 // PART 1 — 타입
@@ -122,12 +122,14 @@ export function InlineActionPopup({ textareaRef, language, onReplace }: InlineAc
 
     try {
       let accumulated = '';
-      const provider = getActiveProvider();
-      await streamChat(
-        [{ role: 'user', content: prompt }],
-        (chunk) => { accumulated += chunk; setResult(accumulated); },
-        { provider: provider || undefined, signal: ctrl.signal }
-      );
+      await streamChat({
+        systemInstruction: isKO
+          ? '당신은 소설 편집자입니다. 요청된 작업만 수행하고 결과만 출력하세요. 설명이나 메타 텍스트는 금지입니다.'
+          : 'You are a novel editor. Perform only the requested task and output only the result. No explanations or meta-text.',
+        messages: [{ role: 'user', content: prompt }],
+        onChunk: (chunk) => { accumulated += chunk; setResult(accumulated); },
+        signal: ctrl.signal,
+      });
       setResult(accumulated.trim());
     } catch {
       if (!ctrl.signal.aborted) setResult(isKO ? '(생성 실패)' : '(Generation failed)');
