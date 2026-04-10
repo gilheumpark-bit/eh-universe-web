@@ -4,9 +4,9 @@
 // WritingTabInline — 집필 탭 레이아웃 (본문 7 : AI 채팅 3)
 // ============================================================
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles, Send, Key } from 'lucide-react';
+import { Sparkles, Send, Key, Columns2, BookOpen } from 'lucide-react';
 import type { AppLanguage, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import { createT } from '@/lib/i18n';
@@ -18,6 +18,7 @@ import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { InlineActionPopup } from '@/components/studio/InlineActionPopup';
 import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
+import { ReferenceSplitPane } from '@/components/studio/ReferenceSplitPane';
 
 const DynSkeleton = () => <div className="h-8 rounded-lg bg-bg-secondary/50 animate-pulse" />;
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
@@ -113,6 +114,7 @@ export default function WritingTabInline(props: Props) {
   });
 
   const t = createT(language);
+  const [splitView, setSplitView] = useState<'chat' | 'reference' | null>(null);
   const isKO = language === 'KO';
   const textMenu = useTextAreaContextMenu(language);
   const { handleSVIKeyDown } = useSVIRecorder();
@@ -234,6 +236,33 @@ export default function WritingTabInline(props: Props) {
             >
               {t('writingMode.advanced')}
             </button>
+            {/* Split view toggles */}
+            <div className="hidden lg:flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
+              <button
+                type="button"
+                onClick={() => setSplitView(splitView === 'reference' ? null : 'reference')}
+                className={`p-2 rounded-xl border transition-colors ${
+                  splitView === 'reference'
+                    ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
+                    : 'border-transparent text-text-tertiary hover:text-text-secondary'
+                }`}
+                title={isKO ? '참조 패널' : 'Reference Pane'}
+              >
+                <BookOpen className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitView(splitView === 'chat' ? null : 'chat')}
+                className={`p-2 rounded-xl border transition-colors ${
+                  splitView === 'chat'
+                    ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
+                    : 'border-transparent text-text-tertiary hover:text-text-secondary'
+                }`}
+                title={isKO ? 'NOA 채팅' : 'NOA Chat'}
+              >
+                <Columns2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
         <div 
@@ -432,8 +461,8 @@ export default function WritingTabInline(props: Props) {
         )}
       </div>
 
-      {/* 3: NOA 어시스턴트 패널 — rightPanelOpen 일 때만 표시 */}
-      {props.rightPanelOpen && (
+      {/* 3: 우측 패널 — 채팅 또는 참조 분할 뷰 */}
+      {splitView === 'chat' && (
         <RightChatPanel
           language={language}
           currentSession={currentSession}
@@ -451,6 +480,15 @@ export default function WritingTabInline(props: Props) {
           setActiveTab={setActiveTab}
           hostedProviders={props.hostedProviders}
         />
+      )}
+      {splitView === 'reference' && (
+        <div className="hidden lg:flex w-[35%] min-w-[280px] max-w-[500px] shrink-0">
+          <ReferenceSplitPane
+            config={currentSession.config}
+            language={language}
+            onClose={() => setSplitView(null)}
+          />
+        </div>
       )}
       {textMenu.menuState && (
         <ContextMenu

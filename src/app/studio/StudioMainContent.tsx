@@ -29,6 +29,8 @@ import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
 import { ShortcutsModal } from '@/components/studio/StudioModals';
 import StudioTabRouter from '@/components/studio/StudioTabRouter';
+import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
+import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
@@ -244,13 +246,18 @@ export default function StudioMainContent(props: StudioMainContentProps) {
   const t = createT(language);
 
   return (
-    <main className={`flex-1 flex flex-col relative bg-bg-primary overflow-hidden${focusMode ? '' : ' pt-10'}`}>
+    <main className={`flex-1 flex flex-col relative bg-bg-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
       {focusMode && (
         <button onClick={() => setFocusMode(false)}
           className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-30 hover:opacity-100"
           title="F11">
           <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
         </button>
+      )}
+
+      {/* Window Frame */}
+      {!focusMode && (
+        <WindowTitleBar activeTab={activeTab} language={language} focusMode={focusMode} onToggleFocus={() => setFocusMode(prev => !prev)} />
       )}
 
       {/* Header */}
@@ -407,7 +414,18 @@ export default function StudioMainContent(props: StudioMainContentProps) {
         {children}
       </div>
 
-      {/* Writing Input dock - Removed (Moved into WritingTabInline for split layout) */}
+      {/* Status Bar */}
+      {!focusMode && (
+        <StudioStatusBar
+          editDraft={editDraft}
+          writingMode={writingMode}
+          activeTab={activeTab}
+          saveFlash={saveFlash}
+          isGenerating={isGenerating}
+          language={language}
+          currentSession={currentSession}
+        />
+      )}
     </main>
   );
 }
