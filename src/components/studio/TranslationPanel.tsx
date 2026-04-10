@@ -749,7 +749,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           </div>
           
           {/* Terminal Output */}
-          <div className="flex-1 overflow-y-auto p-5 font-mono text-[11px] relative z-20 custom-scrollbar-archive">
+          <div className="flex-1 overflow-y-auto p-5 font-mono text-[11px] relative z-20 custom-scrollbar">
             <div className="space-y-3">
               {logs.map(log => (
                 <div key={log.id} className="flex gap-4 items-start group">
@@ -786,12 +786,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             </div>
             <div ref={logsEndRef} className="h-4" />
           </div>
-          <style jsx>{`
-            .custom-scrollbar-archive::-webkit-scrollbar { width: 6px; }
-            .custom-scrollbar-archive::-webkit-scrollbar-track { background: transparent; }
-            .custom-scrollbar-archive::-webkit-scrollbar-thumb { background: rgba(184,149,92,0.2); border-radius: 10px; }
-            .custom-scrollbar-archive::-webkit-scrollbar-thumb:hover { background: rgba(184,149,92,0.4); }
-          `}</style>
+          {/* styled-jsx removed — uses global custom-scrollbar class instead */}
         </div>
       )}
 
