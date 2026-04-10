@@ -40,7 +40,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
     const manuscripts = config.manuscripts ?? [];
     const latestMs = manuscripts[manuscripts.length - 1];
     if (!latestMs?.content) {
-      alert(language === 'KO' ? '원고를 먼저 작성해주세요. 집필 탭에서 에피소드를 생성하세요.' : 'Please write a manuscript first. Create an episode in the Writing tab.');
+      setSceneMode('off');
       return;
     }
 
@@ -109,6 +109,19 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
       )}
       {showTranslation && (
         <TranslationPanel language={language} config={config} setConfig={setConfig} />
+      )}
+      {sceneMode !== 'off' && !showTranslation && parsedScenes.length === 0 && (
+        <div className="max-w-2xl mx-auto text-center py-16 px-4">
+          <p className="text-text-tertiary text-sm mb-4">
+            {language === 'KO' ? '원고를 먼저 작성해주세요.' : 'Please write a manuscript first.'}
+          </p>
+          <p className="text-text-tertiary text-xs">
+            {language === 'KO' ? '집필 탭에서 에피소드를 생성하면 편집 · 라디오 · 비주얼 노벨 기능을 사용할 수 있습니다.' : 'Create an episode in the Writing tab to use edit, radio, and visual novel features.'}
+          </p>
+          <button onClick={() => setSceneMode('off')} className="mt-6 px-4 py-2 rounded-lg bg-bg-secondary border border-border text-text-secondary text-xs hover:text-text-primary transition-colors">
+            {language === 'KO' ? '돌아가기' : 'Go back'}
+          </button>
+        </div>
       )}
       {sceneMode === 'radio' && parsedScenes.length > 0 && (
         <div className="fixed inset-0 z-50 bg-black">

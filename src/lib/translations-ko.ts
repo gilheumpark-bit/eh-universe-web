@@ -221,7 +221,7 @@ const translations = {
     "noApiKeyGuide": "💡 API 키 없이도 세계관·캐릭터·연출 설계와 수동 편집이 가능합니다",
     "saveSetting": "설정 저장",
     "characters": "캐릭터",
-    "itemStudio": "아이템 스튜디오",
+    "itemStudio": "소품 · 설정물",
     "apiKeyRequired": "API 키 필요",
     "storageFull": "저장 공간이 부족합니다. 오래된 세션을 내보내고 삭제해 주세요.",
     "close": "닫기",
@@ -597,7 +597,7 @@ const translations = {
     "intensityExtreme": "극한"
   },
   "itemStudio": {
-    "title": "아이템 스튜디오",
+    "title": "소품 · 설정물",
     "subtitle": "아이템 · 스킬 · 마법체계를 설계하고 밸런스를 분석합니다",
     "ehPresets": "EH 프리셋",
     "loadAll": "전체 로드 (마법+스킬+아이템)",

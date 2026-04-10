@@ -90,7 +90,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
                   : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
               }`}
             >
-              <span className={`text-lg transition-transform duration-200 ${charSubTab === 'items' ? 'scale-110' : 'group-hover:scale-105'}`}>⚔️</span>
+              <span className={`text-lg transition-transform duration-200 ${charSubTab === 'items' ? 'scale-110' : 'group-hover:scale-105'}`}>📦</span>
               <span className="uppercase tracking-wider">{t('ui.itemStudio')}</span>
             </button>
           </div>

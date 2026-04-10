@@ -221,7 +221,7 @@ const translations = {
     "noApiKeyGuide": "💡 World/character/direction design and manual editing work without API key",
     "saveSetting": "Save",
     "characters": "Characters",
-    "itemStudio": "Item Studio",
+    "itemStudio": "Props · Objects",
     "apiKeyRequired": "API key required",
     "storageFull": "Storage is full. Please export and delete old sessions.",
     "close": "Close",
@@ -597,7 +597,7 @@ const translations = {
     "intensityExtreme": "Extreme"
   },
   "itemStudio": {
-    "title": "Item Studio",
+    "title": "Props · Objects",
     "subtitle": "Design items, skills, magic systems and analyze balance",
     "ehPresets": "EH Presets",
     "loadAll": "Load All (Magic+Skills+Items)",
