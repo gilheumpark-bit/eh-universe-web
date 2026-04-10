@@ -271,10 +271,6 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[rgba(184,149,92,0.7)]">
                 Nexus Bridge
               </span>
-              <span className="flex h-1.5 w-1.5 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-[rgba(184,149,92,0.4)]"></span>
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[rgba(184,149,92,0.9)]"></span>
-              </span>
             </div>
             <h2 className="font-display text-2xl font-bold tracking-tight text-white/95">
               {isKO ? "자율 현지화 엔진" : "Autonomous Localization Engine"}
