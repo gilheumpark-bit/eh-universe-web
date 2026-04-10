@@ -55,11 +55,11 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     ],
   },
   {
-    category: "AI",
+    category: "NOA",
     shortcuts: [
-      { keys: "Ctrl+I", description: "AI inline suggestion" },
-      { keys: "Ctrl+L", description: "Open AI chat" },
-      { keys: "Ctrl+K", description: "AI command" },
+      { keys: "Ctrl+I", description: "NOA inline suggestion" },
+      { keys: "Ctrl+L", description: "Open NOA chat" },
+      { keys: "Ctrl+K", description: "NOA command" },
       { keys: "@", description: "Mention file / agent / symbol" },
       { keys: "Ctrl+?", description: "Show shortcuts (this panel)" },
     ],

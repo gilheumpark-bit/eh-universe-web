@@ -108,7 +108,7 @@ export function NetworkAgentSearchClient() {
           <div className="border-b border-white/10 pb-4 mb-4">
             <div className="site-kicker text-accent-amber">Vertex AI Agent Builder</div>
             <h1 className="site-title mt-2 text-2xl font-semibold">
-              {L4(lang, { ko: "네트워크 기록물 AI 검색", en: "Network Archives AI Search" })}
+              {L4(lang, { ko: "네트워크 기록물 NOA 검색", en: "Network Archives NOA Search" })}
             </h1>
             <p className="mt-2 text-sm text-text-tertiary">
               {L4(lang, { ko: "내 행성, 게시글, 그리고 공개된 세계관 정보를 의미 기반으로 통합 검색합니다.", en: "Search your planets, posts, and public universe data using semantic matching." })}
@@ -128,7 +128,7 @@ export function NetworkAgentSearchClient() {
             {messages.map((msg) => (
               <div key={msg.id} className={`flex gap-4 ${msg.role === "agent" ? "flex-row" : "flex-row-reverse"}`}>
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono text-[10px] ${msg.role === "agent" ? "bg-accent-amber/20 text-accent-amber" : "bg-white/10 text-white"}`}>
-                  {msg.role === "agent" ? "AI" : "YOU"}
+                  {msg.role === "agent" ? "NOA" : "YOU"}
                 </div>
                 <div className={`max-w-[85%] rounded-2xl p-4 ${msg.role === "agent" ? (msg.isError ? "bg-red-500/10 border border-red-500/20" : "bg-white/[0.03] border border-white/5") : "bg-accent-amber/10 border border-accent-amber/20"}`}>
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">

@@ -155,7 +155,7 @@ const sectionsEn = [
   { id: "getting-started", title: "1. Getting Started", content:
 `Access: https://ehuniverse.com
 BYOK (Bring Your Own Key): Gemini, OpenAI, Claude, Groq, Mistral supported
-Project creation: Enter a title and AI suggests initial settings.
+Project creation: Enter a title and NOA suggests initial settings.
 
 Onboarding Guide Tour (5 steps)
 A 5-step guided tour starts automatically on first visit.
@@ -176,7 +176,7 @@ Plan up to 300 episodes for long-running series.
 Munpia / Novelpia / KakaoPage / Naver Series
 Auto-configures word count and episode structure per platform.
 
-NOL AI Chat: AI assistant dedicated to world design` },
+NOL NOA Chat: NOA assistant dedicated to world design` },
 
   { id: "world-simulator", title: "3. World Simulator", content:
 `Genre-based completeness check: auto-detect setting inconsistencies
@@ -197,9 +197,9 @@ Guides you to the optimal engine rate for your genre.` },
   Skeleton: name, age, gender, role
   Mechanics: motivation, conflict, growth arc
   Detail: habits, speech patterns, trauma
-AI character generation: enter minimal info for full profile auto-generation
+NOA character generation: enter minimal info for full profile auto-generation
 
-NOC AI Chat: AI assistant dedicated to character design` },
+NOC NOA Chat: NOA assistant dedicated to character design` },
 
   { id: "direction-studio", title: "5. Direction Studio", content:
 `13 Tabs:
@@ -214,7 +214,7 @@ Manage plot flow at the scene level with fine granularity.` },
 
   { id: "writing-studio", title: "6. Writing Studio", content:
 `4 Writing Modes:
-  Draft generation: AI writes the full first draft
+  Draft generation: NOA writes the full first draft
   Direct edit: user writes manually
   3-Step writing: outline > expand > polish
   AUTO 30%: 30% auto-generated + 70% user editing
@@ -234,7 +234,7 @@ Real-time feedback while writing.
 Hallucination Detection
 Auto-detect content that contradicts world settings.
 
-NOW AI Chat: AI assistant dedicated to writing` },
+NOW NOA Chat: NOA assistant dedicated to writing` },
 
   { id: "style-studio", title: "7. Style Studio", content:
 `Access: Novel Studio /studio → Style tab (?tab=style). No standalone /tools/style-studio product page (legacy URL redirects to the studio).
@@ -250,7 +250,7 @@ NOW AI Chat: AI assistant dedicated to writing` },
 Style Lab:
 Enter sample text, adjust sliders, and see real-time transformations.
 
-NOE AI Chat: AI assistant dedicated to style design` },
+NOE NOA Chat: NOA assistant dedicated to style design` },
 
   { id: "manuscript", title: "8. Manuscript", content:
 `Per-episode manuscript saving: auto-save + manual save
@@ -359,7 +359,7 @@ export default function DocsPage() {
                   NOA STUDIO MANUAL
                 </h1>
                 <p className="text-text-tertiary text-sm font-serif mb-12">
-                  {T({ ko: "AI 기반 소설 집필 플랫폼 — 전체 기능 가이드", en: "AI-Powered Novel Writing Platform \u2014 Complete Feature Guide" })}
+                  {T({ ko: "NOA 소설 집필 플랫폼 — 전체 기능 가이드", en: "NOA Novel Writing Platform \u2014 Complete Feature Guide" })}
                 </p>
 
                 {secs.map((s) => (
@@ -375,7 +375,7 @@ export default function DocsPage() {
 
                 <div className="mt-16 border-t border-border pt-6">
                   <p className="font-serif text-xs text-text-tertiary italic text-center">
-                    {T({ ko: "NOA Studio는 오픈소스 AI 소설 집필 플랫폼입니다. GitHub에서 기여를 환영합니다.", en: "NOA Studio is an open-source AI novel writing platform. Contributions welcome on GitHub." })}
+                    {T({ ko: "NOA Studio는 오픈소스 소설 집필 플랫폼입니다. GitHub에서 기여를 환영합니다.", en: "NOA Studio is an open-source novel writing platform. Contributions welcome on GitHub." })}
                   </p>
                 </div>
               </div>

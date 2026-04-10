@@ -244,7 +244,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
   const t = createT(language);
 
   return (
-    <main className="flex-1 flex flex-col relative bg-bg-primary overflow-hidden">
+    <main className={`flex-1 flex flex-col relative bg-bg-primary overflow-hidden${focusMode ? '' : ' pt-10'}`}>
       {focusMode && (
         <button onClick={() => setFocusMode(false)}
           className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-30 hover:opacity-100"
@@ -256,9 +256,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
       {/* Header */}
       <header className={`h-14 flex items-center justify-between px-3 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
         <div className="flex items-center gap-1.5 md:gap-4 min-w-0 flex-1 mr-2">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 md:p-2 hover:bg-bg-secondary rounded-lg transition-colors shrink-0" aria-label="Toggle sidebar" title={isKO ? '\uC0AC\uC774\uB4DC\uBC14 \uD1A0\uAE00' : 'Toggle sidebar'}>
-            <Menu className="w-5 h-5 text-text-secondary" />
-          </button>
+          {/* Sidebar toggle removed — OSDesktop handles navigation */}
           <div className="text-xs md:text-sm font-bold tracking-tight uppercase flex items-center gap-1.5 md:gap-2 min-w-0 font-(family-name:--font-mono)">
             <span className="text-text-secondary hidden md:inline">{t('sidebar.activeProject')}:</span>
             <span className="text-text-primary truncate max-w-[120px] md:max-w-none">{currentSession?.title || t('engine.noStory')}</span>
@@ -266,23 +264,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          {currentSession && (
-            <div className="flex gap-2 md:gap-4">
-              <div className="px-3 py-1 bg-bg-secondary rounded-full text-[10px] font-bold text-text-tertiary border border-border hidden sm:block font-(family-name:--font-mono)">
-                {currentSession.config.genre}
-              </div>
-              <button
-                onClick={() => setShowDashboard(!showDashboard)}
-                className={`px-3 py-1 rounded-full text-[10px] font-black border transition-all font-(family-name:--font-mono) ${
-                  showDashboard
-                    ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/30'
-                    : 'bg-accent-purple/10 text-accent-purple border-accent-purple/20 hover:bg-accent-purple/20'
-                }`}
-              >
-                ANS {ENGINE_VERSION}
-              </button>
-            </div>
-          )}
+          {/* Genre badge + ANS engine badge removed for cleaner header */}
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>

@@ -133,14 +133,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId!}
           hostedProviders={hostedProviders}
         />
-        <div className="hidden lg:block fixed bottom-6 right-6 z-40 w-80">
-          <NetworkFeedWidget 
-            language={language} 
-            worldTags={config.subGenres || [config.genre]} 
-            projectTitle={config.title} 
-            compact 
-          />
-        </div>
+        {/* NetworkFeedWidget removed — distracting from writing focus */}
         </SectionErrorBoundary>
       )}
       {activeTab === 'characters' && currentSession && config && (

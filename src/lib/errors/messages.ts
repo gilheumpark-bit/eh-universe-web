@@ -13,10 +13,10 @@ interface ErrorMessage {
 
 const MESSAGES: Record<StudioErrorCode, Record<AppLanguage, ErrorMessage>> = {
   [StudioErrorCode.KEY_MISSING]: {
-    KO: { title: 'API 키 필요', message: 'AI 기능을 사용하려면 API 키를 설정하세요.', action: '설정하기' },
-    EN: { title: 'API Key Required', message: 'Set up an API key to use AI features.', action: 'Set Up' },
-    JP: { title: 'APIキーが必要', message: 'AI機能を使用するにはAPIキーを設定してください。', action: '設定する' },
-    CN: { title: '需要API密钥', message: '请设置API密钥以使用AI功能。', action: '设置' },
+    KO: { title: 'API 키 필요', message: 'NOA 기능을 사용하려면 API 키를 설정하세요.', action: '설정하기' },
+    EN: { title: 'API Key Required', message: 'Set up an API key to use NOA features.', action: 'Set Up' },
+    JP: { title: 'APIキーが必要', message: 'NOA機能を使用するにはAPIキーを設定してください。', action: '設定する' },
+    CN: { title: '需要API密钥', message: '请设置API密钥以使用NOA功能。', action: '设置' },
   },
   [StudioErrorCode.KEY_INVALID]: {
     KO: { title: 'API 키 오류', message: '키가 유효하지 않습니다. 확인 후 다시 입력하세요.' },
@@ -37,16 +37,16 @@ const MESSAGES: Record<StudioErrorCode, Record<AppLanguage, ErrorMessage>> = {
     CN: { title: '模型不可用', message: '所选模型不可用。' },
   },
   [StudioErrorCode.PROVIDER_ERROR]: {
-    KO: { title: 'AI 서비스 오류', message: '제공자 서버에 문제가 발생했습니다. 잠시 후 다시 시도하세요.', action: '다시 시도' },
-    EN: { title: 'AI Service Error', message: 'Provider server error. Please try again shortly.', action: 'Retry' },
-    JP: { title: 'AIサービスエラー', message: 'プロバイダーサーバーにエラーが発生しました。', action: '再試行' },
-    CN: { title: 'AI服务错误', message: '提供商服务器出错，请稍后重试。', action: '重试' },
+    KO: { title: 'NOA 서비스 오류', message: '제공자 서버에 문제가 발생했습니다. 잠시 후 다시 시도하세요.', action: '다시 시도' },
+    EN: { title: 'NOA Service Error', message: 'Provider server error. Please try again shortly.', action: 'Retry' },
+    JP: { title: 'NOAサービスエラー', message: 'プロバイダーサーバーにエラーが発生しました。', action: '再試行' },
+    CN: { title: 'NOA服务错误', message: '提供商服务器出错，请稍后重试。', action: '重试' },
   },
   [StudioErrorCode.PROVIDER_FALLBACK]: {
-    KO: { title: '제공자 전환', message: 'AI 제공자가 자동으로 전환되었습니다.' },
-    EN: { title: 'Provider Switched', message: 'AI provider was automatically switched.' },
-    JP: { title: 'プロバイダー切替', message: 'AIプロバイダーが自動的に切り替えられました。' },
-    CN: { title: '提供商已切换', message: 'AI提供商已自动切换。' },
+    KO: { title: '제공자 전환', message: 'NOA 제공자가 자동으로 전환되었습니다.' },
+    EN: { title: 'Provider Switched', message: 'NOA provider was automatically switched.' },
+    JP: { title: 'プロバイダー切替', message: 'NOAプロバイダーが自動的に切り替えられました。' },
+    CN: { title: '提供商已切换', message: 'NOA提供商已自动切换。' },
   },
   [StudioErrorCode.RATE_LIMIT]: {
     KO: { title: '요청 제한', message: '너무 많은 요청을 보냈습니다. 잠시 후 다시 시도하세요.', action: '대기' },

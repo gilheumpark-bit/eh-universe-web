@@ -145,7 +145,7 @@ function ActivityBar({
   const visiblePanels = getVisiblePanels(showAdvancedPanels);
   const coreItems = [
     { id: "files" as const, icon: Files, label: "Explorer", labelKo: "탐색기", shortcut: "Ctrl+Shift+E" },
-    { id: "chat" as const, icon: MessageSquare, label: "AI Chat", labelKo: "AI 채팅", shortcut: undefined },
+    { id: "chat" as const, icon: MessageSquare, label: "NOA Chat", labelKo: "NOA 채팅", shortcut: undefined },
     { id: "action-demo", icon: Play, label: "Open Demo", labelKo: "데모 열기", shortcut: undefined, isAction: true },
     { id: "action-new-file", icon: Plus, label: "New File", labelKo: "새 파일", shortcut: undefined, isAction: true },
     { id: "project-spec" as const, icon: Wand2, label: "Project Spec", labelKo: "이지모드 진입", shortcut: undefined },

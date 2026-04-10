@@ -192,7 +192,8 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
               <button 
                 onClick={addCharacter}
-                className="w-full py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95"
+                className="w-full py-4 bg-accent-amber rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-accent-amber/80 transition-all shadow-xl active:scale-95"
+                style={{ color: '#1a1a1a' }}
               >
                 {t.register}
               </button>

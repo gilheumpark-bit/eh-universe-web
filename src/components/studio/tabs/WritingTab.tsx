@@ -368,44 +368,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
           <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
         )}
 
-        {writingMode === 'ai' && !showDashboard && (
-          <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-80' : 'w-10'}`}>
-            <button onClick={() => setRightPanelOpen(!rightPanelOpen)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary border-b border-border">{rightPanelOpen ? '▶' : '◀'}</button>
-            {rightPanelOpen && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <DirectorPanel report={directorReport} language={language} />
-                <details className="group" open>
-                  <summary className="text-xs font-bold text-text-tertiary cursor-pointer hover:text-text-secondary">👤 {t('panel.chars')} ({currentSession.config.characters.length})</summary>
-                  <div className="mt-2 space-y-1.5">
-                    {currentSession.config.characters.map(c => <div key={c.id} className="text-[10px] text-text-secondary font-bold break-words">{c.name} ({c.role})</div>)}
-                  </div>
-                </details>
-                <details className="group">
-                  <summary className="text-xs font-bold text-text-tertiary cursor-pointer hover:text-text-secondary">📋 {t('panel.episodeScenes')}</summary>
-                  <div className="mt-2 pl-2">
-                    <EpisodeScenePanel
-                      lang={language}
-                      currentEpisode={currentSession.config.episode}
-                      episodeSceneSheets={currentSession.config.episodeSceneSheets ?? []}
-                      onSave={(sheet) => {
-                        const existing = currentSession.config.episodeSceneSheets ?? [];
-                        const filtered = existing.filter(s => s.episode !== sheet.episode);
-                        setConfig({ ...currentSession.config, episodeSceneSheets: [...filtered, sheet].sort((a, b) => a.episode - b.episode) });
-                      }}
-                      onUpdate={(sheet) => {
-                        const existing = currentSession.config.episodeSceneSheets ?? [];
-                        const filtered = existing.filter(s => s.episode !== sheet.episode);
-                        setConfig({ ...currentSession.config, episodeSceneSheets: [...filtered, sheet].sort((a, b) => a.episode - b.episode) });
-                      }}
-                      onDelete={(ep) => {
-                        setConfig({ ...currentSession.config, episodeSceneSheets: (currentSession.config.episodeSceneSheets ?? []).filter(s => s.episode !== ep) });
-                      }}
-                    />
-                  </div>
-                </details>
-              </div>
-            )}
-          </aside>
+        {/* Right aside panel removed — director/scenes accessible via tabs */}
         )}
       </div>
 

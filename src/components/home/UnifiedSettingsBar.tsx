@@ -32,82 +32,71 @@ export default function UnifiedSettingsBar() {
 
   return (
     <>
-      <div className="flex items-center gap-2 flex-wrap justify-center">
-        {/* Auth */}
+      <div className="flex items-center gap-1.5 justify-center">
+        {/* Auth — icon only */}
         {user ? (
           <button
             onClick={signOut}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-border hover:text-text-primary transition-all"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-all"
+            title={user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out" })}
           >
             {user.photoURL && /^https:\/\//.test(user.photoURL) ? (
               <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
             ) : (
-              <User className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" />
             )}
-            <span className="max-w-[100px] truncate">{user.displayName || user.email}</span>
-            <LogOut className="w-3 h-3 opacity-50" />
           </button>
         ) : (
           <button
             onClick={signInWithGoogle}
             disabled={authLoading}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-accent-amber/40 hover:text-accent-amber transition-all"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-all"
+            title={T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" })}
           >
-            <User className="w-3.5 h-3.5" />
-            {T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" })}
+            <User className="w-4 h-4" />
           </button>
         )}
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-border/30" />
-
-        {/* API Keys */}
+        {/* API Keys — icon only */}
         <button
           onClick={() => setShowApiKeys(true)}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-accent-amber/40 hover:text-accent-amber transition-all"
+          className="relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-all"
+          title={`API ${enabledSlots.length > 0 ? `(${enabledSlots.length})` : ''}`}
         >
-          <Key className="w-3.5 h-3.5" />
-          <span>API</span>
+          <Key className="w-4 h-4" />
           {enabledSlots.length > 0 && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-accent-green/20 text-accent-green text-[9px] font-bold">
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-accent-green text-[8px] font-bold text-white flex items-center justify-center">
               {enabledSlots.length}
             </span>
           )}
         </button>
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-border/30" />
-
-        {/* Theme Toggle */}
+        {/* Theme — icon only */}
         <button
           onClick={toggleTheme}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-border hover:text-text-primary transition-all"
+          className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-all"
           title={theme === "dark" ? T({ ko: "밤", en: "Night" }) : T({ ko: "낮", en: "Day" })}
         >
-          {theme === "dark" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+          {theme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </button>
 
-        {/* Language Toggle */}
+        {/* Language — icon only */}
         <button
           onClick={toggleLang}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary text-xs hover:border-border hover:text-text-primary transition-all"
+          className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-all"
+          title={LANG_LABELS[lang]}
         >
-          <Globe className="w-3.5 h-3.5" />
-          <span>{LANG_LABELS[lang]}</span>
+          <Globe className="w-4 h-4" />
         </button>
 
-        {/* Storage Usage */}
+        {/* Storage — compact */}
         {storageInfo && (
-          <>
-            <div className="w-px h-5 bg-border/30" />
-            <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary text-xs" title={`${storageInfo.used} / ${storageInfo.total} (${storageInfo.percent}%)`}>
-              <HardDrive className="w-3.5 h-3.5" />
-              <span>{storageInfo.used}</span>
-              <div className="w-12 h-1.5 rounded-full bg-border/30 overflow-hidden">
-                <div className={`h-full rounded-full transition-all ${storageInfo.percent > 80 ? 'bg-accent-red' : storageInfo.percent > 50 ? 'bg-accent-amber' : 'bg-accent-green'}`} style={{ width: `${Math.min(100, storageInfo.percent)}%` }} />
-              </div>
-            </div>
-          </>
+          <div
+            className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary transition-all"
+            title={`${storageInfo.used} / ${storageInfo.total} (${storageInfo.percent}%)`}
+          >
+            <HardDrive className="w-4 h-4" />
+          </div>
         )}
       </div>
 

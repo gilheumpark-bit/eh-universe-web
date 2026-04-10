@@ -40,7 +40,7 @@ export function ApiKeyModal({ onSave, onSkip }: Props) {
           <Code2 size={28} className="text-amber-400" />
           <div>
             <h2 className="text-lg font-bold text-white">EH Code Studio</h2>
-            <p className="text-xs text-white/50">AI 기반 코드 에디터에 오신 것을 환영합니다</p>
+            <p className="text-xs text-white/50">NOA 기반 코드 에디터에 오신 것을 환영합니다</p>
           </div>
         </div>
 

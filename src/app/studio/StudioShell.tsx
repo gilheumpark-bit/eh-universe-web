@@ -31,10 +31,10 @@ import { setDriveEncryptionKey } from '@/services/driveService';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
 import dynamic from 'next/dynamic';
-import { StudioSaveSlotPanel } from './StudioRightPanel';
+// StudioSaveSlotPanel removed
 import { useStudioShellController } from './useStudioShellController';
 
-const StudioSidebar = dynamic(() => import('@/components/studio/StudioSidebar'), { ssr: false });
+const OSDesktop = dynamic(() => import('@/components/studio/OSDesktop'), { ssr: false });
 const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: false });
 const StudioOverlayManager = dynamic(() => import('@/components/studio/StudioOverlayManager'), { ssr: false });
 
@@ -117,7 +117,7 @@ export default function StudioShell() {
     const initialCheck = setTimeout(bump, 500);
     return () => { window.removeEventListener('noa-keys-changed', bump); clearTimeout(initialCheck); };
   }, []);
-  const [bannerDismissed, setBannerDismissed] = useState(() => typeof window !== 'undefined' && localStorage.getItem('noa_api_banner_dismissed') === '1');
+  const [bannerDismissed, setBannerDismissed] = useState(true);
   const [showDashboard, setShowDashboard] = useState(false);
   const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
   const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
@@ -138,8 +138,8 @@ export default function StudioShell() {
   const showQuickStartLock = aiCapabilitiesLoaded && !hasQuickStartAccess;
   const apiBannerMessage = hasHostedAiAccess
     ? (isKO
-      ? '\uAE30\uBCF8 AI\uAC00 \uC900\uBE44\uB418\uC5B4 \uC788\uC5B4\uC694. \uBC14\uB85C \uC368\uBCF4\uACE0, \uC6D0\uD558\uBA74 \uAC1C\uC778 \uD0A4\uB97C \uCD94\uAC00\uD558\uC138\uC694.'
-      : 'Base AI is ready. Start now, and add your own key anytime.')
+      ? 'NOA가 준비되어 있어요. 바로 써보고, 원하면 개인 키를 추가하세요.'
+      : 'NOA is ready. Start now, and add your own key anytime.')
     : t('ui.apiKeyBanner');
   const apiSetupLabel = hasHostedAiAccess
     ? (isKO ? '\uAC1C\uC778 \uD0A4 \uCD94\uAC00' : 'Add Key')
@@ -173,7 +173,7 @@ export default function StudioShell() {
     archiveFilter: 'ALL',
     archiveScope: 'project',
     moveModal: null,
-    rightPanelOpen: true,
+    rightPanelOpen: false,
     mobileDrawerOpen: false,
     saveSlotModalOpen: false,
     saveSlotName: '',
@@ -498,8 +498,8 @@ export default function StudioShell() {
     : 'max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12';
   const writingInputDockOffset = activeTab === 'writing' && !showDashboard
     ? (writingMode === 'ai'
-        ? (rightPanelOpen ? 'lg:pr-80' : 'lg:pr-10')
-        : 'lg:pr-64')
+        ? ''
+        : '')
     : '';
 
   const studioConfigValue = {
@@ -562,7 +562,7 @@ export default function StudioShell() {
         </button>
       )}
 
-      <StudioSidebar
+      <OSDesktop
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         focusMode={focusMode}
@@ -675,22 +675,7 @@ export default function StudioShell() {
         setSuggestions={setSuggestions}
         pipelineResult={pipelineResult}
       >
-        {/* Right panels injected as children */}
-        {currentSession && (
-          <StudioSaveSlotPanel
-            currentSession={currentSession}
-            activeTab={activeTab}
-            language={language}
-            rightPanelOpen={rightPanelOpen}
-            setRightPanelOpen={setRightPanelOpen}
-            writingMode={writingMode}
-            showDashboard={showDashboard}
-            updateCurrentSession={updateCurrentSession}
-            triggerSave={triggerSave}
-            setSaveSlotModalOpen={setSaveSlotModalOpen}
-            setSaveSlotName={setSaveSlotName}
-          />
-        )}
+        {/* StudioSaveSlotPanel removed — save slots accessible via modal */}
         {/* StudioWritingAssistantPanel removed - now integrated into WritingTabInline via RightChatPanel */}
       </StudioMainContent>
 

@@ -46,7 +46,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
               onChange={e => onTogglePrompt(e.target.checked)}
               className="w-3.5 h-3.5 rounded accent-blue-600"
             />
-            <span className="text-[10px] text-text-tertiary">{isKO ? 'AI 프롬프트에 반영' : 'Apply to AI prompt'}</span>
+            <span className="text-[10px] text-text-tertiary">{isKO ? 'NOA 프롬프트에 반영' : 'Apply to NOA prompt'}</span>
           </label>
         )}
       </div>
@@ -59,7 +59,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
           </span>
         ))}
         {subGenres.length === 0 && (
-          <span className="text-[11px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 설계에 반영됩니다' : 'Tags will be injected into AI prompts'}</span>
+          <span className="text-[11px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 설계에 반영됩니다' : 'Tags will be injected into NOA prompts'}</span>
         )}
       </div>
       {/* Input */}

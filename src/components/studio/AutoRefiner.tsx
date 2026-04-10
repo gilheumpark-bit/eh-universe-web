@@ -48,7 +48,7 @@ function buildAnalysisPrompt(text: string, language: AppLanguage, context?: stri
 3. 긴장감 부족 → "긴장감 올리기" (액션/위기 장면인데 느슨)
 4. 대사 부자연 → "대사 다듬기" (캐릭터 말투 안 살아남)
 5. 전환 부족 → "뒤에 삽입" (장면 전환이 갑작스러움)
-6. 문장 어색 → "다시 쓰기" (AI 톤이 남아있거나 어색)
+6. 문장 어색 → "다시 쓰기" (NOA 톤이 남아있거나 어색)
 
 출력 형식 (JSON 배열만, 다른 텍스트 없이):
 [{"p":문단번호,"issue":"문제 한줄 설명","action":"액션명"}]
@@ -68,7 +68,7 @@ Criteria (priority):
 3. Low tension → "tension" (action/crisis scene feels slack)
 4. Unnatural dialogue → "dialogue" (character voice not distinct)
 5. Missing transition → "insert_after" (abrupt scene change)
-6. Awkward prose → "rewrite" (AI tone or clumsy phrasing)
+6. Awkward prose → "rewrite" (NOA tone or clumsy phrasing)
 
 Output format (JSON array only, no other text):
 [{"p":paragraphNumber,"issue":"one-line issue","action":"actionName"}]
@@ -88,7 +88,7 @@ ${numbered}`,
 3. 緊張感不足 → "tension"（アクション/危機シーンが緩い）
 4. 不自然な台詞 → "dialogue"（キャラクターの声が区別できない）
 5. 転換不足 → "insert_after"（場面転換が唐突）
-6. ぎこちない文章 → "rewrite"（AIトーンまたは不自然な表現）
+6. ぎこちない文章 → "rewrite"（NOAトーンまたは不自然な表現）
 
 出力形式（JSON配列のみ、他のテキストなし）:
 [{"p":段落番号,"issue":"問題の一行説明","action":"アクション名"}]
@@ -108,7 +108,7 @@ ${numbered}`,
 3. 紧张感不足 → "tension"（动作/危机场景松弛）
 4. 对话不自然 → "dialogue"（角色声音不鲜明）
 5. 缺少转场 → "insert_after"（场景切换突兀）
-6. 文笔生硬 → "rewrite"（AI腔调或表达笨拙）
+6. 文笔生硬 → "rewrite"（NOA腔调或表达笨拙）
 
 输出格式（仅JSON数组，无其他文本）:
 [{"p":段落号,"issue":"问题一行描述","action":"动作名"}]
@@ -128,10 +128,10 @@ ${numbered}`,
 function buildFixPrompt(original: string, action: string, before: string, after: string, language: AppLanguage): string {
   const instructions: Record<string, Record<AppLanguage, string>> = {
     rewrite: {
-      KO: '같은 의미이지만 더 자연스럽고 매끄러운 문장으로 다시 써줘. AI 톤 제거.',
-      EN: 'Rewrite with more natural, polished prose. Remove AI tone.',
-      JP: '同じ意味でより自然で滑らかな文章に書き直してください。AIトーンを除去。',
-      CN: '用相同含义但更自然流畅的句子重写。去除AI腔调。',
+      KO: '같은 의미이지만 더 자연스럽고 매끄러운 문장으로 다시 써줘. NOA 톤 제거.',
+      EN: 'Rewrite with more natural, polished prose. Remove NOA tone.',
+      JP: '同じ意味でより自然で滑らかな文章に書き直してください。NOAトーンを除去。',
+      CN: '用相同含义但更自然流畅的句子重写。去除NOA腔调。',
     },
     expand: {
       KO: '감각 묘사, 내면 독백, 환경 묘사를 추가해서 2배로 늘려줘. 원래 사건과 대사는 유지.',

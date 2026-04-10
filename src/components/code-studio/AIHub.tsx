@@ -134,7 +134,7 @@ export default function AIHub({ features, onToggleFeature, onConfigureProvider }
       <div className="border-b border-white/5 px-4 py-3">
         <div className="flex items-center gap-2 text-white">
           <Cpu size={18} />
-          <h2 className="text-lg font-semibold">{L4(lang, { ko: "AI 허브", en: "AI Hub" })}</h2>
+          <h2 className="text-lg font-semibold">{L4(lang, { ko: "NOA 허브", en: "NOA Hub" })}</h2>
         </div>
         <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
           <span>{totalEnabled}/{features.length} {L4(lang, { ko: "개 기능 활성화됨", en: "features enabled" })}</span>

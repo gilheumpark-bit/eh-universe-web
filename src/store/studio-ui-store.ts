@@ -79,7 +79,7 @@ export const useStudioUIStore = create<StudioUIState>((set) => ({
   showDashboard: false,
   setShowDashboard: (val) => set((state) => ({ showDashboard: typeof val === 'function' ? val(state.showDashboard) : val })),
 
-  rightPanelOpen: true,
+  rightPanelOpen: false,
   setRightPanelOpen: (val) => set((state) => ({ rightPanelOpen: typeof val === 'function' ? val(state.rightPanelOpen) : val })),
 
   mobileDrawerOpen: false,

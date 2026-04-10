@@ -271,7 +271,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
           </h3>
           <div className="grid grid-cols-3 gap-2">
             <StatCard label="File Edits" value={`${sessionStats.fileEdits}`} icon={<FileText size={12} />} />
-            <StatCard label="AI Calls" value={`${sessionStats.aiCalls}`} icon={<Brain size={12} />} />
+            <StatCard label="NOA Calls" value={`${sessionStats.aiCalls}`} icon={<Brain size={12} />} />
             <StatCard label="Tokens" value={formatTokens(sessionStats.tokens)} icon={<Trophy size={12} />} />
           </div>
         </section>

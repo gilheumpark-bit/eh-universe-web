@@ -1069,7 +1069,7 @@ function CodeStudioShellInner() {
               ),
               { id: "quick-open", label: L4(lang, { ko: "빠른 파일 열기", en: "Quick Open File" }), shortcut: "Ctrl+P", category: "File" },
               { id: "toggle-settings", label: L4(lang, { ko: "인라인 설정 토글", en: "Toggle Inline Settings" }), category: "View" },
-              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (AI-Predicted)" }), category: "Tools" },
+              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (NOA-Predicted)" }), category: "Tools" },
               { id: "run-verification", label: L4(lang, { ko: "통합 검증 실행", en: "Run Full Verification (Pipeline + Bugs + Stress)" }), category: "Tools" },
             ]}
           />

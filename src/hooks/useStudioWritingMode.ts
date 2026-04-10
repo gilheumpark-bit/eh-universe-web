@@ -21,7 +21,7 @@ const DEFAULT_ADVANCED: AdvancedWritingSettings = {
  * @param hydrated - Whether localStorage has been loaded (prevents SSR flash)
  */
 export function useStudioWritingMode(currentSessionId: string | null, hydrated: boolean) {
-  const [writingMode, setWritingMode] = useState<WritingMode>('ai');
+  const [writingMode, setWritingMode] = useState<WritingMode>('edit');
   const [editDraft, setEditDraft] = useState('');
   const editDraftRef = useRef<HTMLTextAreaElement>(null);
   const [advancedSettings, setAdvancedSettings] = useState<AdvancedWritingSettings>(DEFAULT_ADVANCED);

@@ -16,6 +16,8 @@ import type { ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-type
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
+import { InlineActionPopup } from '@/components/studio/InlineActionPopup';
+import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
 
 const DynSkeleton = () => <div className="h-8 rounded-lg bg-bg-secondary/50 animate-pulse" />;
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
@@ -141,10 +143,14 @@ export default function WritingTabInline(props: Props) {
 
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-bg-primary">
+      {/* 참조 패널 — edit 모드에서만 */}
+      {writingMode === 'edit' && (
+        <WritingContextPanel config={currentSession.config} language={language} />
+      )}
       {/* 7: 소설 본문 영역 */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full border-b lg:border-b-0 lg:border-r border-border/40">
         {/* Split 레이아웃에서도 집필 모드 전환 — 메인 스크롤 영역에서도 상단에 고정 (sticky) */}
-        <div className="sticky top-0 z-30 shrink-0 px-3 py-2.5 border-b border-border/60 bg-bg-primary/95 backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
+        <div data-zen-hide-bar className="sticky top-0 z-30 shrink-0 px-3 py-2.5 border-b border-border/60 bg-bg-primary/95 backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
           <p className="text-center text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary mb-2">
             {t('writingMode.modePickerCaption')}
           </p>
@@ -307,16 +313,35 @@ export default function WritingTabInline(props: Props) {
             )}
 
             {writingMode === 'edit' && (
-              <div className="flex-1 space-y-4">
-                <WritingToolbar textareaRef={editDraftRef} value={editDraft} onChange={setEditDraft} language={language} />
+              <div className="flex-1 space-y-3">
+                <WritingToolbar textareaRef={editDraftRef} value={editDraft} onChange={setEditDraft} language={language} targetMin={currentSession.config.charMin} targetMax={currentSession.config.charMax} />
                 <textarea
                   ref={editDraftRef}
+                  data-zen-editor
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
                   onKeyDown={handleSVIKeyDown}
                   onContextMenu={textMenu.openMenu}
-                  className="w-full min-h-[60vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-purple outline-none transition-all resize-none shadow-inner"
-                  placeholder={t('writingMode.typeManuscript')}
+                  autoFocus
+                  className="w-full min-h-[70vh] bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl px-8 py-8 md:px-12 md:py-10 text-base md:text-lg font-serif leading-[2] tracking-wide focus:border-accent-amber/40 focus:shadow-[0_0_24px_rgba(202,161,92,0.08)] outline-none transition-all resize-none"
+                  placeholder={isKO ? '여기에 이야기를 써 내려가세요...' : 'Start writing your story here...'}
+                />
+                <InlineActionPopup
+                  textareaRef={editDraftRef}
+                  language={language}
+                  onAction={(action, text) => {
+                    // Send as chat command for NOA to process
+                    const prompts: Record<string, string> = {
+                      rewrite: isKO ? `다음 문장을 리라이트해줘:\n\n${text}` : `Rewrite this:\n\n${text}`,
+                      expand: isKO ? `다음 문장을 더 풍부하게 확장해줘:\n\n${text}` : `Expand this:\n\n${text}`,
+                      compress: isKO ? `다음 문장을 간결하게 축소해줘:\n\n${text}` : `Compress this:\n\n${text}`,
+                      tone: isKO ? `다음 문장의 톤을 바꿔줘 (더 문학적으로):\n\n${text}` : `Change the tone (more literary):\n\n${text}`,
+                    };
+                    if (prompts[action]) {
+                      props.setRightPanelOpen(true);
+                      props.handleSend(prompts[action]);
+                    }
+                  }}
                 />
               </div>
             )}
@@ -381,19 +406,14 @@ export default function WritingTabInline(props: Props) {
         {/* 소설 전용 하단 입력창 (Sticky) — AI 모드일 때 표시 */}
         {writingMode === 'ai' && currentSessionId && (
           <div className="p-4 md:p-6 bg-linear-to-t from-bg-primary via-bg-primary/95 to-transparent sticky bottom-0 z-20">
-            {showAiLock && (
-              <div className="mb-3 flex items-center gap-2 rounded-xl border border-accent-amber/30 bg-accent-amber/10 px-4 py-2.5 text-xs text-accent-amber">
-                <Key className="w-3.5 h-3.5 shrink-0" />
-                <span>{isKO ? '스플래시 화면에서 API 키를 등록하면 AI 생성을 사용할 수 있습니다.' : 'Register an API key from the splash screen to use AI generation.'}</span>
-              </div>
-            )}
+            {/* API lock banner removed — settings accessible via splash screen */}
             <div className="relative group bg-bg-secondary border border-border rounded-2xl shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 flex items-end">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { handleSVIKeyDown(e); if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!showAiLock) handleSend(); } }}
-                placeholder={showAiLock ? (isKO ? 'API 키를 등록해주세요' : 'Please register an API key') : t('writing.inputPlaceholder')}
-                className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-text-primary placeholder-text-tertiary resize-none max-h-32 leading-relaxed"
+                placeholder={t('writing.inputPlaceholder')}
+                className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-text-primary placeholder-text-secondary resize-none max-h-32 leading-relaxed"
                 rows={1}
                 disabled={isGenerating || showAiLock}
               />
@@ -412,24 +432,26 @@ export default function WritingTabInline(props: Props) {
         )}
       </div>
 
-      {/* 3: 고도화 통합 AI 어시스턴트 패널 */}
-      <RightChatPanel 
-        language={language} 
-        currentSession={currentSession}
-        messages={chatMessages} 
-        loading={chatLoading}
-        onSend={handleChatSend}
-        onAbort={abortChat}
-        onClear={clearChat}
-        directorReport={props.directorReport}
-        hfcpState={props.hfcpState}
-        suggestions={suggestions}
-        setSuggestions={setSuggestions}
-        pipelineResult={pipelineResult}
-        setConfig={setConfig}
-        setActiveTab={setActiveTab}
-        hostedProviders={props.hostedProviders}
-      />
+      {/* 3: NOA 어시스턴트 패널 — rightPanelOpen 일 때만 표시 */}
+      {props.rightPanelOpen && (
+        <RightChatPanel
+          language={language}
+          currentSession={currentSession}
+          messages={chatMessages}
+          loading={chatLoading}
+          onSend={handleChatSend}
+          onAbort={abortChat}
+          onClear={clearChat}
+          directorReport={props.directorReport}
+          hfcpState={props.hfcpState}
+          suggestions={suggestions}
+          setSuggestions={setSuggestions}
+          pipelineResult={pipelineResult}
+          setConfig={setConfig}
+          setActiveTab={setActiveTab}
+          hostedProviders={props.hostedProviders}
+        />
+      )}
       {textMenu.menuState && (
         <ContextMenu
           x={textMenu.menuState.x}

@@ -305,6 +305,7 @@ interface SceneSheetProps {
   onSimRefUpdate?: (ref: { worldConsistency: boolean; civRelations: boolean; timeline: boolean; territoryMap: boolean; languageSystem: boolean; genreLevel: boolean }) => void;
   initialDirection?: Partial<FullDirectionData>;
   onSaveEpisodeSheet?: () => void;
+  initialTab?: string;
 }
 
 // Scene direction presets (10 genres) — static, defined at module scope to avoid stale-closure deps
@@ -358,7 +359,7 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
     cliffs: [{ id: `cl-${ts}-1`, cliffType: "crisis-cut", desc: k ? "뒤에 누군가 서 있다" : "Someone standing behind", episode: 1 }],
   }) },
   { key: "sf", ko: "SF/우주", en: "Sci-Fi/Space", gen: (ts, k) => ({
-    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "AI 판단 오류" : "AI judgment error", episode: 1 }],
+    gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "NOA 판단 오류" : "NOA judgment error", episode: 1 }],
     hooks: [{ id: `h-${ts}-1`, position: "opening", hookType: "mystery", desc: k ? "미지 신호 수신" : "Unknown signal received" }],
     emotions: [{ id: `e-${ts}-1`, position: 25, emotion: k ? "경외" : "Awe", intensity: 70 }],
     dialogue: [{ id: `d-${ts}-1`, character: k ? "함장" : "Captain", tone: k ? "군사적 간결체" : "Military concise", notes: "" }],
@@ -391,10 +392,10 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
   }) },
 ];
 
-export default function SceneSheet({ lang: langProp, language: languageProp, synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet }: SceneSheetProps) {
+export default function SceneSheet({ lang: langProp, language: languageProp, synopsis, characterNames, tierContext, onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet, initialTab }: SceneSheetProps) {
   const lang: Lang = langProp ?? ((languageProp === 'KO' || languageProp === 'JP') ? 'ko' : 'en');
   const tl = createT(languageProp ?? (lang === 'ko' ? 'KO' : 'EN'));
-  const [activeTab, setActiveTab] = useState<SheetTab>("goguma");
+  const [activeTab, setActiveTab] = useState<SheetTab>((initialTab as SheetTab) || "goguma");
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>('KR');
   const [showGrammarPanel, setShowGrammarPanel] = useState(false);
@@ -1197,7 +1198,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
         </div>
 
         {/* ============================================================ */}
-        {/* Direction Assembly — 설정 조립 요약 카드 + AI 프롬프트 미리보기 */}
+        {/* Direction Assembly — 설정 조립 요약 카드 + NOA 프롬프트 미리보기 */}
         {/* ============================================================ */}
         <div className="border-t border-border pt-4 space-y-3">
           <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary">
@@ -1240,11 +1241,11 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
             ))}
           </div>
 
-          {/* AI Prompt Preview toggle */}
+          {/* NOA Prompt Preview toggle */}
           <div>
             <button onClick={() => setShowPromptPreview(p => !p)}
               className="text-[9px] font-bold font-mono uppercase tracking-wider text-text-tertiary hover:text-accent-purple transition-colors">
-              {showPromptPreview ? "▼" : "▶"} {L4(lang, { ko: "AI 지시문 미리보기", en: "AI Prompt Preview" })}
+              {showPromptPreview ? "▼" : "▶"} {L4(lang, { ko: "NOA 지시문 미리보기", en: "NOA Prompt Preview" })}
             </button>
 
             {showPromptPreview && (() => {

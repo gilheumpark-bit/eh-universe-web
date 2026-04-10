@@ -99,14 +99,14 @@ export function StatusBar({
         <button
           onClick={onSwitchProvider}
           className={`flex items-center gap-1 ${CLICKABLE}`}
-          title={L4(lang || "ko", { ko: "AI 모델 변경", en: "Change AI Model", ja: "AIモデルを変更", zh: "更改 AI 模型" })}
-          aria-label={L4(lang || "ko", { ko: "AI 모델 변경", en: "Change AI Model", ja: "AIモデルを変更", zh: "更改 AI 模型" })}
+          title={L4(lang || "ko", { ko: "NOA 모델 변경", en: "Change NOA Model", ja: "NOAモデルを変更", zh: "更改 NOA 模型" })}
+          aria-label={L4(lang || "ko", { ko: "NOA 모델 변경", en: "Change NOA Model", ja: "NOAモデルを変更", zh: "更改 NOA 模型" })}
         >
           <Cpu size={10} />
           <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />
           <span className="truncate max-w-[120px]">
             <Sparkles size={9} className="inline mr-0.5" />
-            {L4(lang || "ko", { ko: "AI 제공자", en: "AI Provider", ja: "AIプロバイダー", zh: "AI 提供方" })}
+            {L4(lang || "ko", { ko: "NOA 제공자", en: "NOA Provider", ja: "NOAプロバイダー", zh: "NOA 提供方" })}
           </span>
         </button>
 
@@ -154,7 +154,7 @@ export function StatusBar({
             {SEPARATOR}
             <div className="flex items-center gap-1 text-[10px] text-amber-300">
               <Loader2 className="w-3 h-3 animate-spin" />
-              <span>AI</span>
+              <span>NOA</span>
             </div>
           </>
         )}

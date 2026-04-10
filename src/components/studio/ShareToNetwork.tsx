@@ -163,8 +163,8 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           logger.warn('ShareToNetwork', 'network-agent ingest failed after publish; post kept');
           setIngestWarning(
             isKO
-              ? '게시는 완료되었으나 AI 검색 인덱싱에 실패했습니다. 네트워크 설정을 확인하세요.'
-              : 'Published, but AI search indexing failed. Check Network Agent configuration.',
+              ? '게시는 완료되었으나 NOA 검색 인덱싱에 실패했습니다. 네트워크 설정을 확인하세요.'
+              : 'Published, but NOA search indexing failed. Check Network Agent configuration.',
           );
         }
       });

@@ -93,9 +93,9 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
         onChunk: (text) => { result = text; setPreview(text); },
         signal: AbortSignal.timeout(30000),
       });
-      if (!result) setError("AI returned empty response");
+      if (!result) setError("NOA returned empty response");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "AI generation failed";
+      const msg = err instanceof Error ? err.message : "NOA generation failed";
       setError(msg);
       setPreview("");
     } finally {

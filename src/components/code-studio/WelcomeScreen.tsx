@@ -137,7 +137,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
               </div>
               <div className="text-left">
                 <div className="font-mono text-sm font-bold text-accent-green">
-                  {L4(lang, { ko: "AI 코드 검증", en: "AI Code Verify" })}
+                  {L4(lang, { ko: "NOA 코드 검증", en: "NOA Code Verify" })}
                 </div>
                 <div className="font-mono text-[10px] text-text-tertiary">
                   {L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" })}

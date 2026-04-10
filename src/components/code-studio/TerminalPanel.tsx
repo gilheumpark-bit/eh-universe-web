@@ -382,7 +382,7 @@ export function TerminalPanel({
           setLines((prev) => [...prev, ...newLines]);
           setLines((prev) => [
             ...prev,
-            { text: L4(lang, { ko: "[AI 분석 중\u2026]", en: "[AI analysis in progress\u2026]" }), color: "blue" },
+            { text: L4(lang, { ko: "[NOA 분석 중\u2026]", en: "[NOA analysis in progress\u2026]" }), color: "blue" },
           ]);
           const analysis = await analyzeErrorWithAI(
             cmd,

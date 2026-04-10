@@ -776,16 +776,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                 <select
                   value={benchmarkAuthor}
                   onChange={(e) => setBenchmarkAuthor(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: 6,
-                    border: "1px solid rgba(107,114,142,0.25)",
-                    background: "rgba(107,114,142,0.06)",
-                    color: "inherit",
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary text-sm cursor-pointer outline-none focus:border-accent-purple/50"
                 >
                   <option value="">{en ? "— None —" : "— 선택 안 함 —"}</option>
                   {Object.entries(AUTHOR_PROFILES).map(([key, prof]) => (
@@ -887,8 +878,8 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
             <div className="ss-section-title">Step 04 — {en ? "Sentence Transform Lab" : "문장 변환 실험실"}</div>
             <p className="ss-hint">
               {en
-                ? "Enter your original text and select style directions. AI will rewrite the same content in a different style."
-                : "원문을 입력하고 변환하고 싶은 문체 요소를 선택하면, AI가 같은 내용을 다른 스타일로 재작성합니다."}
+                ? "Enter your original text and select style directions. NOA will rewrite the same content in a different style."
+                : "원문을 입력하고 변환하고 싶은 문체 요소를 선택하면, NOA가 같은 내용을 다른 스타일로 재작성합니다."}
             </p>
 
             <div className="ss-section-title" style={{ marginBottom: 12 }}>
@@ -975,13 +966,13 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
               {en ? "Style Tips — Common Pitfalls" : "문체 팁 — 자주 나오는 함정"}
             </div>
             <div className="ss-tip warning">
-              <h4>{en ? "AI Style Symptom 1: Transition Overload" : "AI 문체 증상 1: 과잉 전환어"}</h4>
+              <h4>{en ? "NOA Style Symptom 1: Transition Overload" : "NOA 문체 증상 1: 과잉 전환어"}</h4>
               <p>{en
                 ? "However / Nevertheless / Despite — consecutive use makes prose sound like an essay. Replace with action."
                 : "하지만 / 그러나 / 그럼에도 불구하고 — 연속 사용 시 글이 설명문처럼 들린다. 행동으로 대체하라."}</p>
             </div>
             <div className="ss-tip warning">
-              <h4>{en ? "AI Style Symptom 2: Stating Emotions Directly" : "AI 문체 증상 2: 감정 직접 명시"}</h4>
+              <h4>{en ? "NOA Style Symptom 2: Stating Emotions Directly" : "NOA 문체 증상 2: 감정 직접 명시"}</h4>
               <p>{en
                 ? "Instead of 'Fear washed over him,' use physical reactions: His fingertips scraped the edge of the monitor. 0.3 seconds. Again."
                 : "\"두려움이 몰려왔다\" 대신 신체 반응으로: 손끝이 모니터 엣지를 긁었다. 0.3초. 다시 긁었다."}</p>

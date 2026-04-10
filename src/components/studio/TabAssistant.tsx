@@ -313,7 +313,7 @@ const TAB_PRESETS: Record<string, { ko: string; en: string }[]> = {
   ],
   style: [
     { ko: "내 문장의 리듬을 분석해줘", en: "Analyze the rhythm of my sentences" },
-    { ko: "AI 문체 증상이 있는지 체크해줘", en: "Check for AI-style writing symptoms" },
+    { ko: "NOA 문체 증상이 있는지 체크해줘", en: "Check for NOA-style writing symptoms" },
     { ko: "이 단락을 더 감각적으로 바꿔줘", en: "Rewrite this paragraph with more sensory detail" },
     { ko: "반복되는 단어/표현을 찾아줘", en: "Find repeated words or expressions" },
     { ko: "대화문의 캐릭터별 차별화를 평가해줘", en: "Evaluate dialogue differentiation per character" },
@@ -482,7 +482,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
   });
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 

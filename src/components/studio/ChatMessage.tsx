@@ -161,7 +161,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               {showDetail && (
                 <div className="mt-2 p-3 bg-bg-secondary/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-mono animate-in fade-in duration-300">
                   <div className="flex justify-between text-text-tertiary">
-                    <span>AI {language === 'KO' ? '톤' : 'Tone'}</span>
+                    <span>NOA {language === 'KO' ? '톤' : 'Tone'}</span>
                     <span className={report.aiTonePercent > 30 ? 'text-amber-400' : 'text-green-400'}>{report.aiTonePercent}%</span>
                   </div>
                   <div className="flex justify-between text-text-tertiary">
@@ -266,10 +266,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
             <ActionBar
               content={message.content}
-              title={`AI Message`}
+              title={`NOA Message`}
               actions={['copy', 'share', 'feedback']}
               shareType="novel"
-              onFeedback={(positive) => { logger.info('feedback', `AI message ${message.id}: ${positive ? 'positive' : 'negative'}`); }}
+              onFeedback={(positive) => { logger.info('feedback', `NOA message ${message.id}: ${positive ? 'positive' : 'negative'}`); }}
             />
             {onRegenerate && (
               <button

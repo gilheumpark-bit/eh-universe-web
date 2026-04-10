@@ -185,9 +185,9 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                 );
               })()}
 
-              {/* AI Tone */}
+              {/* NOA Tone */}
               <div className="flex justify-between items-center">
-                <span className="text-text-tertiary text-[9px]">AI Tone</span>
+                <span className="text-text-tertiary text-[9px]">NOA Tone</span>
                 <span className={`text-[9px] font-black ${report.aiTonePercent <= 10 ? 'text-green-500' : report.aiTonePercent <= 30 ? 'text-amber-500' : 'text-red-500'}`}>
                   {report.aiTonePercent}%
                 </span>

@@ -101,7 +101,7 @@ export default function CollabPanel({ onClose }: Props) {
   const [chatMessages, setChatMessages] = useState<ChatEntry[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [copied, setCopied] = useState(false);
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [showUsers, setShowUsers] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const managerRef = useRef<CollaborationManager | null>(null);

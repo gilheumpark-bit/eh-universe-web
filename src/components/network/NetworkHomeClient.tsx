@@ -365,7 +365,7 @@ export function NetworkHomeClient() {
                 {netT('latestLogs', lang)}
               </a>
               <Link href="/network/agent" className="premium-button secondary border-accent-blue/30 text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20">
-                {L4(lang, { ko: "AI 검색 어시스턴트", en: "AI Search Assistant" })}
+                {L4(lang, { ko: "NOA 검색 어시스턴트", en: "NOA Search Assistant" })}
               </Link>
               {!user ? (
                 <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">

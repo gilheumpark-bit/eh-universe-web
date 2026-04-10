@@ -53,10 +53,48 @@ button:focus-visible {
 /* ============================================================
    Low-Contrast Text Fix — WCAG AA 4.5:1 minimum
    ============================================================ */
-.text-text-tertiary,
-[class*="text-zinc-600"],
-[class*="text-zinc-700"] {
-  color: #9e9a93 !important; /* boosted from #7e7a73 to pass AA */
+/* Dark mode: boost tertiary for AA on dark backgrounds */
+[data-theme="dark"] .text-text-tertiary,
+[data-theme="dark"] [class*="text-zinc-600"],
+[data-theme="dark"] [class*="text-zinc-700"] {
+  color: #9e9a93 !important;
+}
+/* Light mode: use design-system variable (already AA-compliant on light bg) */
+[data-theme="light"] .text-text-tertiary,
+[data-theme="light"] [class*="text-zinc-600"],
+[data-theme="light"] [class*="text-zinc-700"] {
+  color: var(--color-text-tertiary) !important;
+}
+/* ============================================================
+   Zen Writing Mode — auto-hide dock & menubar on textarea focus
+   ============================================================ */
+body:has(textarea[data-zen-editor]:focus) [data-zen-hide] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.4s ease-out !important;
+}
+body:has(textarea[data-zen-editor]:focus) header {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.4s ease-out !important;
+}
+body:has(textarea[data-zen-editor]:focus) [data-zen-hide-bar] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.4s ease-out !important;
+}
+/* Restore on hover near edges */
+body:has(textarea[data-zen-editor]:focus) [data-zen-hide]:hover,
+body:has(textarea[data-zen-editor]:focus) header:hover,
+body:has(textarea[data-zen-editor]:focus) [data-zen-hide-bar]:hover {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Dark mode: boost placeholder for AA on dark backgrounds */
+[data-theme="dark"] ::placeholder {
+  color: var(--color-text-secondary) !important;
+  opacity: 0.7;
 }
 
 /* Mobile text wrapping optimization */

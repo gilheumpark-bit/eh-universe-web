@@ -133,8 +133,8 @@ export function Toolbar({
           { label: "터미널 토글", shortcut: "Ctrl+`", action: onToggleTerminal },
           { label: "분할 보기", action: onToggleSplit },
         ]} />
-        <ToolbarMenu label="AI" items={[
-          { label: "AI 채팅", shortcut: "Ctrl+L", action: onToggleChat },
+        <ToolbarMenu label="NOA" items={[
+          { label: "NOA 채팅", shortcut: "Ctrl+L", action: onToggleChat },
           { label: "에이전트", shortcut: "Ctrl+I", action: onToggleAgent },
           { divider: true, label: "" },
           { label: "파이프라인", shortcut: "Ctrl+Shift+Enter", action: onTogglePipeline },

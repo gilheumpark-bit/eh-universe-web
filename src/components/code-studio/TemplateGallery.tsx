@@ -70,7 +70,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
     await new Promise((r) => setTimeout(r, 1500));
     const generated: AppTemplate = {
       id: `ai-${Date.now()}`, name: `AI: ${aiPrompt.slice(0, 30)}`, framework: "React",
-      description: aiPrompt, files: [{ name: "src/App.tsx", content: `// AI Generated: ${aiPrompt}\nexport default function App() { return <div>Generated</div>; }` }],
+      description: aiPrompt, files: [{ name: "src/App.tsx", content: `// NOA Generated: ${aiPrompt}\nexport default function App() { return <div>Generated</div>; }` }],
     };
     onSelectTemplate(generated); onClose();
     setIsGenerating(false);

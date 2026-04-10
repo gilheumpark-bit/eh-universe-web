@@ -46,7 +46,7 @@ interface ItemDef {
 const MAIN_ITEMS: ItemDef[] = [
   { id: "project", icon: <FolderOpen size={18} />, label: "프로젝트 탐색기", shortcut: "Ctrl+Shift+E" },
   { id: "search", icon: <Search size={18} />, label: "검색", shortcut: "Ctrl+Shift+F" },
-  { id: "ai", icon: <Bot size={18} />, label: "AI 어시스턴트", shortcut: "Ctrl+Shift+A" },
+  { id: "ai", icon: <Bot size={18} />, label: "NOA 어시스턴트", shortcut: "Ctrl+Shift+A" },
   { id: "review", icon: <ShieldCheck size={18} />, label: "코드 리뷰", shortcut: "Ctrl+Shift+Q" },
   { id: "preview", icon: <Eye size={18} />, label: "미리보기", shortcut: "Ctrl+Shift+P" },
   { id: "deploy", icon: <Rocket size={18} />, label: "배포", shortcut: "Ctrl+Shift+D" },

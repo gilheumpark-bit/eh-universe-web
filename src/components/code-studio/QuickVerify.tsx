@@ -96,7 +96,7 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-green/10 border border-accent-green/20 mb-4">
           <Shield size={14} className="text-accent-green" />
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
-            {T({ ko: "AI 코드 검증", en: "AI Code Review" })}
+            {T({ ko: "NOA 코드 검증", en: "NOA Code Review" })}
           </span>
         </div>
         <h2 className="text-2xl font-bold text-text-primary" style={{ fontFamily: "var(--font-display)" }}>
@@ -143,7 +143,7 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
               {T({ ko: "생성 → 검증 (이지모드)", en: "Generate → Verify (Easy Mode)" })}
             </div>
             <div className="mt-0.5 text-[11px] text-text-tertiary">
-              {T({ ko: "명세서 작성 → AI 생성 → 자동 검증", en: "Write spec → AI generates → Auto-verify" })}
+              {T({ ko: "명세서 작성 → NOA 생성 → 자동 검증", en: "Write spec → NOA generates → Auto-verify" })}
             </div>
           </div>
           <ArrowRight size={16} className="text-text-tertiary group-hover:text-accent-purple transition-colors" />

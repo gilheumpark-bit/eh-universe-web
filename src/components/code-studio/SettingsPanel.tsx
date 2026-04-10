@@ -142,7 +142,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
 
   const tabs: { id: SettingsTab; label: string }[] = [
     { id: "editor", label: "Editor" },
-    { id: "ai", label: "AI" },
+    { id: "ai", label: "NOA" },
     { id: "pipeline", label: "Pipeline" },
   ];
 

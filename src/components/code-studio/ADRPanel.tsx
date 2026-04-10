@@ -126,7 +126,7 @@ export function ADRPanel({ files = [] }: Props) {
             onClick={handleCopyContext}
             className="px-1.5 py-0.5 rounded text-xs bg-bg-tertiary hover:bg-bg-primary border border-border transition-colors focus-visible:ring-2 ring-accent-blue"
           >
-            {copied ? 'Copied!' : 'Copy AI Context'}
+            {copied ? 'Copied!' : 'Copy NOA Context'}
           </button>
           <button
             onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(!showForm); setActiveTab('list'); }}
