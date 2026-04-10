@@ -473,23 +473,23 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           <div className="relative">
             <button
               onClick={() => setShowPresetMenu(prev => !prev)}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] text-xs font-bold hover:bg-emerald-500/40 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-accent-green/15 text-accent-green border border-accent-green/40 rounded-xl text-xs font-bold hover:bg-accent-green/25 transition-all"
             >
               <ScrollText className="w-4 h-4" />
               {t('itemStudio.ehPresets')}
             </button>
             {showPresetMenu && (
               <div className="absolute right-0 top-full mt-2 z-50 bg-bg-secondary border border-border rounded-xl shadow-2xl p-2 min-w-[200px]">
-                <button onClick={() => loadPreset('all')} className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold hover:bg-cyan-500/20 transition-colors">
+                <button onClick={() => loadPreset('all')} className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold hover:bg-bg-tertiary transition-colors">
                   🌐 {t('itemStudio.loadAll')}
                 </button>
-                <button onClick={() => loadPreset('magic')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-cyan-500/20 transition-colors">
+                <button onClick={() => loadPreset('magic')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-bg-tertiary transition-colors">
                   🔮 {`${t('itemStudio.magicSystemsCount')} (${getPresetSummary().magic})`}
                 </button>
-                <button onClick={() => loadPreset('skills')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-cyan-500/20 transition-colors">
+                <button onClick={() => loadPreset('skills')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-bg-tertiary transition-colors">
                   ⚡ {`${t('itemStudio.skillsCount')} (${getPresetSummary().skills})`}
                 </button>
-                <button onClick={() => loadPreset('items')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-cyan-500/20 transition-colors">
+                <button onClick={() => loadPreset('items')} className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-bg-tertiary transition-colors">
                   ⚔️ {`${t('itemStudio.itemsCount')} (${getPresetSummary().items})`}
                 </button>
                 <div className="border-t border-border mt-1 pt-1">
@@ -505,7 +505,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           <button
             onClick={handleAIGenerate}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] text-xs font-bold hover:bg-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl text-xs font-bold hover:bg-accent-blue/25 transition-all disabled:opacity-50"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {t('itemStudio.aiGenerate')}
@@ -519,10 +519,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           <button
             key={key}
             onClick={() => setSubTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] ${
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all rounded-xl ${
               subTab === key
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                : 'bg-emerald-950/20 border border-emerald-500/20 text-emerald-100/50 hover:text-emerald-300 hover:border-emerald-500/50'
+                ? 'bg-accent-blue/15 text-accent-blue border border-accent-blue/40'
+                : 'bg-bg-secondary/50 border border-border/50 text-text-secondary hover:text-text-primary hover:border-border'
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
@@ -535,13 +535,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
         <div className="space-y-4">
           {/* Category Filter */}
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-1.5 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] text-[10px] font-bold border ${itemFilter === 'all' ? 'bg-cyan-500/30 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-emerald-900/20 border-emerald-500/20 text-emerald-100/50 hover:text-cyan-200 hover:border-cyan-500/50'}`}>
+            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border ${itemFilter === 'all' ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
               {t('itemStudio.filterAll')} ({items.length})
             </button>
             {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => {
               const count = items.filter(i => i.category === cat).length;
               return (
-                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-1.5 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] text-[10px] font-bold border ${itemFilter === cat ? 'bg-cyan-500/30 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-emerald-900/20 border-emerald-500/20 text-emerald-100/50 hover:text-cyan-200 hover:border-cyan-500/50'}`}>
+                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border ${itemFilter === cat ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
                   {t(CATEGORY_CONFIG[cat].tKey)} ({count})
                 </button>
               );
@@ -555,7 +555,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               const cCfg = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.misc;
               const CatIcon = cCfg.icon;
               return (
-                <div key={item.id} className={`${rCfg.bg} border border-emerald-500/30 backdrop-blur-md p-4 space-y-2 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] transition-all hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]`}>
+                <div key={item.id} className={`${rCfg.bg} border border-border/50 backdrop-blur-md rounded-xl p-4 space-y-2 rounded-xl transition-all hover:shadow-md hover:border-border`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CatIcon className="w-4 h-4" style={{ color: rCfg.color }} />
@@ -577,18 +577,18 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     </div>
                   </div>
                   {item.description && <p className="text-xs text-text-secondary">{item.description}</p>}
-                  {item.effect && <p className="text-[10px] text-cyan-400 font-bold tracking-wider relative z-10">✦ {item.effect}</p>}
+                  {item.effect && <p className="text-[10px] text-accent-blue font-bold tracking-wider relative z-10">✦ {item.effect}</p>}
                   {item.obtainedFrom && <p className="text-[10px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
                   {/* 1단계 뼈대 필드 */}
                   <div className="space-y-1.5 pt-2 border-t border-border/50">
                     <input value={item.purpose ?? ''} onChange={e => updateItemField(item.id, 'purpose', e.target.value)}
-                      placeholder={t('itemStudio.purposePlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] px-2.5 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] outline-none py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                      placeholder={t('itemStudio.purposePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-1.5 text-[10px]" />
                     <input value={item.activationCond ?? ''} onChange={e => updateItemField(item.id, 'activationCond', e.target.value)}
-                      placeholder={t('itemStudio.activationCondPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] px-2.5 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] outline-none py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                      placeholder={t('itemStudio.activationCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-1.5 text-[10px]" />
                     <input value={item.costWeakness ?? ''} onChange={e => updateItemField(item.id, 'costWeakness', e.target.value)}
-                      placeholder={t('itemStudio.costWeaknessPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] px-2.5 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] outline-none py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                      placeholder={t('itemStudio.costWeaknessPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-1.5 text-[10px]" />
                     <input value={item.storyFunction ?? ''} onChange={e => updateItemField(item.id, 'storyFunction', e.target.value)}
-                      placeholder={t('itemStudio.storyFunctionPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] px-2.5 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] outline-none py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                      placeholder={t('itemStudio.storyFunctionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-1.5 text-[10px]" />
                   </div>
                   {/* 2단계 — 작동 */}
                   <div className="pt-1">
@@ -603,19 +603,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     {tierExpanded[item.id]?.t2 && (
                       <div className="space-y-1.5 pt-1.5">
                         <input value={item.worldConnection ?? ''} onChange={e => updateItemField(item.id, 'worldConnection', e.target.value)}
-                          placeholder={t('itemStudio.worldConnectionPlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.worldConnectionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.misuse ?? ''} onChange={e => updateItemField(item.id, 'misuse', e.target.value)}
-                          placeholder={t('itemStudio.misusePlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.misusePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.lore ?? ''} onChange={e => updateItemField(item.id, 'lore', e.target.value)}
-                          placeholder={t('itemStudio.lorePlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.lorePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.material ?? ''} onChange={e => updateItemField(item.id, 'material', e.target.value)}
-                          placeholder={t('itemStudio.materialPlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.materialPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.craftMethod ?? ''} onChange={e => updateItemField(item.id, 'craftMethod', e.target.value)}
-                          placeholder={t('itemStudio.craftMethodPlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.craftMethodPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.valueRarity ?? ''} onChange={e => updateItemField(item.id, 'valueRarity', e.target.value)}
-                          placeholder={t('itemStudio.valueRarityPlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.valueRarityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.whoTargets ?? ''} onChange={e => updateItemField(item.id, 'whoTargets', e.target.value)}
-                          placeholder={t('itemStudio.whoTargetsPlaceholder')} className="w-full bg-emerald-950/40 border border-cyan-500/20 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-cyan-50 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.whoTargetsPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                       </div>
                     )}
                   </div>
@@ -632,19 +632,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     {tierExpanded[item.id]?.t3 && (
                       <div className="space-y-1.5 pt-1.5">
                         <input value={item.itemAppearance ?? ''} onChange={e => updateItemField(item.id, 'itemAppearance', e.target.value)}
-                          placeholder={t('itemStudio.appearancePlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.appearancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.symbolism ?? ''} onChange={e => updateItemField(item.id, 'symbolism', e.target.value)}
-                          placeholder={t('itemStudio.symbolismPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.symbolismPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.currentLocation ?? ''} onChange={e => updateItemField(item.id, 'currentLocation', e.target.value)}
-                          placeholder={t('itemStudio.currentLocationPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.currentLocationPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.ownershipCond ?? ''} onChange={e => updateItemField(item.id, 'ownershipCond', e.target.value)}
-                          placeholder={t('itemStudio.ownershipCondPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.ownershipCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.durability ?? ''} onChange={e => updateItemField(item.id, 'durability', e.target.value)}
-                          placeholder={t('itemStudio.durabilityPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.durabilityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.evolution ?? ''} onChange={e => updateItemField(item.id, 'evolution', e.target.value)}
-                          placeholder={t('itemStudio.evolutionPlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.evolutionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                         <input value={item.maintenance ?? ''} onChange={e => updateItemField(item.id, 'maintenance', e.target.value)}
-                          placeholder={t('itemStudio.maintenancePlaceholder')} className="w-full bg-emerald-950/40 border border-emerald-500/30 [clip-path:polygon(4px_0,100%_0,100%_calc(100%-4px),calc(100%-4px)_100%,0_100%,0_4px)] text-emerald-100 focus:border-cyan-400 focus:bg-cyan-900/20 px-2.5 py-1.5 text-[10px] outline-none focus:border-cyan-400" />
+                          placeholder={t('itemStudio.maintenancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none" />
                       </div>
                     )}
                   </div>
@@ -668,26 +668,26 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           </div>
 
           {/* Add Item Form */}
-          <div className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-3 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+          <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
             <h4 className="text-xs font-bold">{t('itemStudio.addNewItem')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.namePlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs">
+              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.namePlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs">
                 {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => (
                   <option key={cat} value={cat}>{t(CATEGORY_CONFIG[cat].tKey)}</option>
                 ))}
               </select>
-              <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs">
+              <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs">
                 {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => (
                   <option key={r} value={r}>{t(RARITY_CONFIG[r].tKey)}</option>
                 ))}
               </select>
-              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={t('itemStudio.effectPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
+              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={t('itemStudio.effectPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-all">
                 <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
             </div>
@@ -701,10 +701,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           {/* Skill Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {skills.map(skill => (
-              <div key={skill.id} className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-2 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)] transition-all hover:bg-emerald-950/20 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+              <div key={skill.id} className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-2 rounded-xl shadow-sm transition-all hover:bg-bg-secondary hover:shadow-md hover:border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-cyan-400' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
+                    <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-accent-blue' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
                     <span className="font-bold text-sm">{skill.name}</span>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-primary text-text-tertiary">
                       {(() => { const st = SKILL_TYPES.find(s => s.value === skill.type); return st ? t(st.tKey) : skill.type; })()}
@@ -732,20 +732,20 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           </div>
 
           {/* Add Skill Form */}
-          <div className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-3 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+          <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
             <h4 className="text-xs font-bold">{t('itemStudio.addNewSkill')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.skillNamePlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <select value={newSkill.type} onChange={e => setNewSkill(p => ({ ...p, type: e.target.value as Skill['type'] }))} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs">
+              <input value={newSkill.name ?? ''} onChange={e => setNewSkill(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.skillNamePlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <select value={newSkill.type} onChange={e => setNewSkill(p => ({ ...p, type: e.target.value as Skill['type'] }))} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs">
                 {SKILL_TYPES.map(st => <option key={st.value} value={st.value}>{t(st.tKey)}</option>)}
               </select>
-              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={t('itemStudio.ownerPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={t('itemStudio.rankPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
+              <input value={newSkill.owner ?? ''} onChange={e => setNewSkill(p => ({ ...p, owner: e.target.value }))} placeholder={t('itemStudio.ownerPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <input value={newSkill.rank ?? ''} onChange={e => setNewSkill(p => ({ ...p, rank: e.target.value }))} placeholder={t('itemStudio.rankPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs col-span-2" />
-              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={t('itemStudio.costPlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+              <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs col-span-2" />
+              <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={t('itemStudio.costPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-all">
                 <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
             </div>
@@ -772,17 +772,17 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           ))}
 
           {/* Add Magic System Form */}
-          <div className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-3 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+          <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
             <h4 className="text-xs font-bold">{t('itemStudio.addMagicSystem')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.magicNamePlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
-              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={t('itemStudio.magicSourcePlaceholder')} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs" />
+              <input value={newMagic.name ?? ''} onChange={e => setNewMagic(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.magicNamePlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
+              <input value={newMagic.source ?? ''} onChange={e => setNewMagic(p => ({ ...p, source: e.target.value }))} placeholder={t('itemStudio.magicSourcePlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={t('itemStudio.rulesPlaceholder')} rows={2} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs resize-none" />
-              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={t('itemStudio.limitationsPlaceholder')} rows={2} className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-2 text-xs resize-none" />
+              <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={t('itemStudio.rulesPlaceholder')} rows={2} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs resize-none" />
+              <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={t('itemStudio.limitationsPlaceholder')} rows={2} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-2 text-xs resize-none" />
             </div>
-            <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+            <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-all">
               <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
             </button>
           </div>
@@ -800,14 +800,14 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             <>
               {/* Warnings */}
               {balance.warnings.length > 0 && (
-                <div className="bg-cyan-950/30 border border-cyan-800/40 [clip-path:polygon(8px_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%,0_8px)] p-4 space-y-2">
-                  <h4 className="text-xs font-bold text-cyan-400">{t('itemStudio.balanceWarnings')}</h4>
-                  {balance.warnings.map((w, i) => <p key={i} className="text-xs text-cyan-300">{w}</p>)}
+                <div className="bg-bg-secondary border border-border/40 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-bold text-accent-blue">{t('itemStudio.balanceWarnings')}</h4>
+                  {balance.warnings.map((w, i) => <p key={i} className="text-xs text-accent-blue">{w}</p>)}
                 </div>
               )}
 
               {/* Rarity Distribution */}
-              <div className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-3 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+              <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
                 <h4 className="text-xs font-bold">{t('itemStudio.rarityDistribution')}</h4>
                 <div className="space-y-2">
                   {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => {
@@ -828,7 +828,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
               {/* Skill Type Distribution */}
               {skills.length > 0 && (
-                <div className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-3 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)]">
+                <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
                   <h4 className="text-xs font-bold">{t('itemStudio.skillTypeDistribution')}</h4>
                   <div className="flex gap-4">
                     {SKILL_TYPES.map(st => {
@@ -882,10 +882,10 @@ const MagicSystemCard: React.FC<{
   const [rankInput, setRankInput] = useState('');
 
   return (
-    <div className="relative overflow-hidden bg-[#040f14]/80 backdrop-blur-md border border-emerald-500/30 p-4 space-y-3 [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)] shadow-[0_0_15px_rgba(16,185,129,0.05)] transition-all hover:bg-emerald-950/20 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+    <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm transition-all hover:bg-bg-secondary hover:shadow-md hover:border-border">
       <div className="flex items-center justify-between">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-cyan-400" />
+          <Wand2 className="w-4 h-4 text-accent-blue" />
           <span className="font-bold text-sm">{magic.name}</span>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />}
         </button>
@@ -923,7 +923,7 @@ const MagicSystemCard: React.FC<{
                 onChange={e => setRankInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && rankInput.trim()) { onAddRank(rankInput.trim()); setRankInput(''); } }}
                 placeholder={t('itemStudio.addRankPlaceholder')}
-                className="bg-black/40 border border-emerald-500/30 [clip-path:polygon(6px_0,100%_0,100%_calc(100%-6px),calc(100%-6px)_100%,0_100%,0_6px)] px-3 text-cyan-100 focus:border-cyan-400 focus:bg-cyan-900/20 focus:shadow-[0_0_10px_rgba(6,182,212,0.2)] py-1.5 text-[10px] flex-1"
+                className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none py-1.5 text-[10px] flex-1"
               />
             </div>
           </div>
