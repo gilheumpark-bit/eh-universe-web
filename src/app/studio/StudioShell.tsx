@@ -132,8 +132,9 @@ export default function StudioShell() {
   const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && (!!getApiKey(activeProviderId) || hasStoredApiKey('lmstudio') || hasStoredApiKey('ollama'));
   const hasHostedAiAccess = hydrated && Boolean(user) && Boolean(hostedProviders[activeProviderId]);
   const hasHostedQuickStartAccess = hydrated && Boolean(user) && Boolean(hostedProviders.gemini);
-  const hasAiAccess = hydrated && (hasLocalApiKey || hasHostedAiAccess);
-  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || hasHostedQuickStartAccess);
+  const hasDgxService = !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+  const hasAiAccess = hydrated && (hasLocalApiKey || hasHostedAiAccess || hasDgxService);
+  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || hasHostedQuickStartAccess || hasDgxService);
   const showAiLock = aiCapabilitiesLoaded && !hasAiAccess;
   const showQuickStartLock = aiCapabilitiesLoaded && !hasQuickStartAccess;
   const apiBannerMessage = hasHostedAiAccess

@@ -74,9 +74,13 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
   }
 
-  // LM Studio/Ollama → structured-generate (OpenAI 호환 JSON mode)
+  // DGX 서비스 모드: SPARK_SERVER_URL 설정 시 키 없어도 structured-generate 사용
+  const hasDgxService = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+  const useStructured = isLocal || (hasDgxService && !apiKey);
+
+  // LM Studio/Ollama/DGX → structured-generate (OpenAI 호환 JSON mode)
   // Gemini → gemini-structured (네이티브 JSON)
-  const endpoint = isLocal ? '/api/structured-generate' : '/api/gemini-structured';
+  const endpoint = useStructured ? '/api/structured-generate' : '/api/gemini-structured';
 
   let response;
   try {

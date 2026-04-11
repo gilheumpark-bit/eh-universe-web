@@ -12,6 +12,7 @@ import { apiLog, createRequestTimer } from '@/lib/api-logger';
 import { getTierLimits } from '@/lib/tier-gate';
 import { isGeminiAllocationExhaustedError, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { dispatchStream } from '@/services/aiProviders';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { runNoa } from '@/lib/noa';
 import type { DomainType } from '@/lib/noa/types';
@@ -164,8 +165,11 @@ function resolveAuth(
   const userApiKey = normalizeUserApiKey(clientKey);
   const isByok = userApiKey.length > 0;
 
-  // 비로그인은 수동 모드(BYOK)만 허용
-  if (userTier === 'none' && !isByok) {
+  // DGX Spark 서버가 설정되어 있으면 키 없어도 허용 (서비스 제공 모드)
+  const hasDgxServer = !!SPARK_SERVER_URL;
+
+  // 비로그인 + 키 없음 + DGX 없음 → 차단
+  if (userTier === 'none' && !isByok && !hasDgxServer) {
     return {
       ok: false,
       response: NextResponse.json(
@@ -410,6 +414,11 @@ export async function POST(req: NextRequest) {
     ) {
       auth = { apiKey: auth.userApiKey, isByok: true, userApiKey: auth.userApiKey, canFallbackToUserKey: false };
       dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    }
+    // DGX Spark 폴백: 모든 프로바이더 실패 시 DGX 서버로 재시도
+    if (!dispatched.ok && SPARK_SERVER_URL) {
+      apiLog({ level: 'info', event: 'dgx_fallback', route: '/api/chat', ip, requestId, meta: { originalError: dispatched.error } });
+      dispatched = await dispatchStream('spark', '', model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
     }
     if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 
