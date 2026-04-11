@@ -150,7 +150,13 @@ async def chat_completions(req: ChatRequest, request: Request):
                 return StreamingResponse(
                     stream_generator(),
                     media_type="text/event-stream",
-                    headers={"X-DGX-Usage": f"{count}/{DAILY_LIMIT}"},
+                    headers={
+                        "X-DGX-Usage": f"{count}/{DAILY_LIMIT}",
+                        "Cache-Control": "no-cache, no-transform",
+                        "X-Accel-Buffering": "no",
+                        "Connection": "keep-alive",
+                        "Transfer-Encoding": "chunked",
+                    },
                 )
             else:
                 resp = await client.post(
