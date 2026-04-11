@@ -133,3 +133,12 @@ test.out
 test2.out
 test3.out
 tmp/
+
+# CS Quill local receipts
+.cs/
+
+# Playwright results
+playwright-results.json
+
+# Obsolete work orders
+plans/
