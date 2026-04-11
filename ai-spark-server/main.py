@@ -34,6 +34,16 @@ API_KEY = os.getenv("DGX_API_KEY", "")
 
 app = FastAPI(title="EH Universe DGX Spark Server", version="1.0.0")
 
+# ============================================================
+# PART 1.5 — 동시 사용자 제한 (세마포어)
+# ============================================================
+
+import asyncio
+
+MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "4"))
+_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+_waiting = 0  # 대기 중인 요청 수
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -88,6 +98,11 @@ def verify_api_key(request: Request):
 # PART 3 — LM Studio 프록시 (OpenAI 호환)
 # ============================================================
 
+MIN_OUTPUT_CHARS = int(os.getenv("MIN_OUTPUT_CHARS", "5500"))
+MAX_OUTPUT_CHARS = int(os.getenv("MAX_OUTPUT_CHARS", "8000"))
+# max_tokens 추정: 한글 1자 ≈ 1.5토큰, 8000자 ≈ 12000토큰
+MAX_OUTPUT_TOKENS = int(MAX_OUTPUT_CHARS * 1.5)
+
 class ChatRequest(BaseModel):
     model: str = "gemma-4-26b-it"
     messages: list[dict]
@@ -102,6 +117,10 @@ def health_check():
         "server": "EH Universe DGX Spark",
         "lm_studio": LM_STUDIO_URL,
         "daily_limit": DAILY_LIMIT,
+        "guest_limit": GUEST_LIMIT,
+        "max_concurrent": MAX_CONCURRENT,
+        "current_waiting": _waiting,
+        "output_chars": {"min": MIN_OUTPUT_CHARS, "max": MAX_OUTPUT_CHARS},
     }
 
 @app.get("/v1/models")
@@ -116,62 +135,87 @@ async def list_models():
 
 @app.post("/v1/chat/completions")
 async def chat_completions(req: ChatRequest, request: Request):
-    """OpenAI 호환 챗봇 — LM Studio로 프록시"""
+    """OpenAI 호환 챗봇 — LM Studio로 프록시 (동시 4명 제한)"""
+    global _waiting
+
     verify_api_key(request)
     user_id = get_user_id(request)
     user_tier = request.headers.get("x-user-tier", "none")
     count = check_rate_limit(user_id, user_tier)
 
-    logger.info(f"[{user_id}] 호출 {count}/{DAILY_LIMIT} — model={req.model}")
+    # 동시 사용자 제한: 5명부터 대기 메시지
+    if _semaphore.locked():
+        _waiting += 1
+        queue_pos = _waiting
+        if queue_pos > 10:
+            _waiting -= 1
+            raise HTTPException(
+                status_code=503,
+                detail=f"현재 서버가 매우 혼잡합니다. 잠시 후 다시 시도해주세요. (대기열: {queue_pos}명)",
+            )
+        logger.info(f"[{user_id}] 대기열 {queue_pos}번째 — 현재 {MAX_CONCURRENT}명 처리 중")
 
-    payload = {
-        "model": req.model,
-        "messages": req.messages,
-        "temperature": req.temperature,
-        "stream": req.stream,
-    }
-    if req.max_tokens:
-        payload["max_tokens"] = req.max_tokens
+    try:
+        async with _semaphore:
+            if _waiting > 0:
+                _waiting -= 1
 
-    async with httpx.AsyncClient(timeout=180) as client:
-        try:
-            if req.stream:
-                # SSE 스트리밍 프록시
-                async def stream_generator():
-                    async with client.stream(
-                        "POST",
-                        f"{LM_STUDIO_URL}/v1/chat/completions",
-                        json=payload,
-                        timeout=180,
-                    ) as resp:
-                        async for chunk in resp.aiter_bytes():
-                            yield chunk
+            logger.info(f"[{user_id}] 호출 {count}/{DAILY_LIMIT} — model={req.model}")
 
-                return StreamingResponse(
-                    stream_generator(),
-                    media_type="text/event-stream",
-                    headers={
-                        "X-DGX-Usage": f"{count}/{DAILY_LIMIT}",
-                        "Cache-Control": "no-cache, no-transform",
-                        "X-Accel-Buffering": "no",
-                        "Connection": "keep-alive",
-                        "Transfer-Encoding": "chunked",
-                    },
-                )
-            else:
-                resp = await client.post(
-                    f"{LM_STUDIO_URL}/v1/chat/completions",
-                    json=payload,
-                    timeout=180,
-                )
-                data = resp.json()
-                data["usage_info"] = {"daily_count": count, "daily_limit": DAILY_LIMIT}
-                return data
+            # max_tokens 강제: 8000자 ≈ 12000토큰 상한
+            effective_max_tokens = min(req.max_tokens or MAX_OUTPUT_TOKENS, MAX_OUTPUT_TOKENS)
 
-        except httpx.ConnectError:
-            raise HTTPException(status_code=503, detail="LM Studio 서버에 연결할 수 없습니다. 서버 실행 상태를 확인하세요.")
-        except Exception as e:
-            return JSONResponse(status_code=500, content={"error": str(e)})
+            payload = {
+                "model": req.model,
+                "messages": req.messages,
+                "temperature": req.temperature,
+                "stream": req.stream,
+                "max_tokens": effective_max_tokens,
+            }
+
+            async with httpx.AsyncClient(timeout=180) as client:
+                try:
+                    if req.stream:
+                        async def stream_generator():
+                            async with client.stream(
+                                "POST",
+                                f"{LM_STUDIO_URL}/v1/chat/completions",
+                                json=payload,
+                                timeout=180,
+                            ) as resp:
+                                async for chunk in resp.aiter_bytes():
+                                    yield chunk
+
+                        return StreamingResponse(
+                            stream_generator(),
+                            media_type="text/event-stream",
+                            headers={
+                                "X-DGX-Usage": f"{count}/{DAILY_LIMIT}",
+                                "X-DGX-Queue": "0",
+                                "Cache-Control": "no-cache, no-transform",
+                                "X-Accel-Buffering": "no",
+                                "Connection": "keep-alive",
+                                "Transfer-Encoding": "chunked",
+                            },
+                        )
+                    else:
+                        resp = await client.post(
+                            f"{LM_STUDIO_URL}/v1/chat/completions",
+                            json=payload,
+                            timeout=180,
+                        )
+                        data = resp.json()
+                        data["usage_info"] = {"daily_count": count, "daily_limit": DAILY_LIMIT}
+                        return data
+
+                except httpx.ConnectError:
+                    raise HTTPException(status_code=503, detail="LM Studio 서버에 연결할 수 없습니다.")
+                except Exception as e:
+                    return JSONResponse(status_code=500, content={"error": str(e)})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 # ============================================================
 # PART 4 — 사용량 조회
