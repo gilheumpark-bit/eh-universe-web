@@ -11,38 +11,56 @@ export type SceneTierContext = { charProfiles?: { name: string; desire?: string;
 const LANGUAGE_NAMES: Record<AppLanguage, string> = { KO: 'Korean', EN: 'English', JP: 'Japanese', CN: 'Chinese' };
 const STRUCTURED_GENERATION_TIMEOUT_MS = 60_000;
 
-/** DGX Spark를 통한 JSON 생성 폴백 */
+/** DGX Spark를 통한 JSON 생성 폴백 (자동 재시도 포함) */
 async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> {
-  const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'google/gemma-4-26b-a4b',
-      messages: [
-        { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.8,
-      max_tokens: 4096,
-      stream: false,
-    }),
-    signal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS),
+  const RETRYABLE = new Set([502, 503, 520, 521, 522, 523, 524]);
+  const MAX_RETRIES = 2;
+  const DELAYS = [1500, 3000];
+  const body = JSON.stringify({
+    model: 'google/gemma-4-26b-a4b',
+    messages: [
+      { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.8,
+    max_tokens: 4096,
+    stream: false,
   });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    const isHtml = errText.trimStart().startsWith('<!') || errText.trimStart().startsWith('<html');
-    throw new Error(isHtml
-      ? `DGX 서버 연결 오류 (${res.status}). 잠시 후 다시 시도해주세요.`
-      : `DGX Spark error ${res.status}: ${errText.slice(0, 150)}`);
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, DELAYS[attempt - 1]));
+
+    try {
+      const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS),
+      });
+
+      if (RETRYABLE.has(res.status) && attempt < MAX_RETRIES) continue;
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        const isHtml = errText.trimStart().startsWith('<!') || errText.trimStart().startsWith('<html');
+        throw new Error(isHtml
+          ? `DGX 서버 연결 오류 (${res.status}). ${MAX_RETRIES + 1}회 시도 실패.`
+          : `DGX Spark error ${res.status}: ${errText.slice(0, 150)}`);
+      }
+
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content || '';
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
+      if (jsonMatch) {
+        try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }
+      }
+      try { return JSON.parse(text) as T; } catch { return fallback; }
+    } catch (err) {
+      if (err instanceof TypeError && attempt < MAX_RETRIES) continue; // 네트워크 에러 재시도
+      throw err;
+    }
   }
-  const data = await res.json();
-  const text = data.choices?.[0]?.message?.content || '';
-  // JSON 블록 추출 (```json ... ``` 또는 bare JSON)
-  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
-  if (jsonMatch) {
-    try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }
-  }
-  try { return JSON.parse(text) as T; } catch { return fallback; }
+  return fallback;
 }
 
 export async function generateJson<T>(apiKey: string, model: string, prompt: string, responseSchema: object, fallback: T): Promise<T> {
