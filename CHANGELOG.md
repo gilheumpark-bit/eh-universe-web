@@ -3,6 +3,60 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.0] - 2026-04-11
+
+### Added — 집필 스튜디오 OS 변환
+- OSDesktop: macOS 스타일 독 + 상단 메뉴바 (`OSDesktop.tsx`)
+- WindowTitleBar: 트래픽 라이트 + 탭 이름 표시 + 포커스 모드
+- StudioStatusBar: 글자수/단어수/모드/에피소드/저장 상태
+- Zen 모드: `body:has(textarea[data-zen-editor]:focus)` CSS 자동 숨김
+- ReferenceSplitPane: 세계관/인물/설정집 3탭 참조 패널
+- WritingContextPanel: 편집 모드 좌측 슬라이드 참조
+
+### Added — 품질 분석 엔진
+- `useQualityAnalysis`: 문단별 show/tell, 반복, 다양성, 밀도, 대사 비율 (5지표, 0~100점)
+- `QualityGutter`: 미니 바 차트 + 약한 문단 클릭→점프
+- `useContinuityCheck`: 캐릭터 이름 편집거리 1, 특성 모순, 시간대/장르 모순
+- `ContinuityWarnings`: 인라인 경고 패널 (dismiss 가능)
+
+### Added — AI 워크플로우 강화
+- 재시도: 3회 + 지터 백오프 + Retry-After 헤더 연동
+- 토큰 버짓 감사: 시스템 프롬프트 30% 초과 경고 이벤트
+- 캐릭터 절삭 경고: 20명 초과 시 `noa:character-truncated` 이벤트
+- `QualityGateAttemptRecord`: 시도별 등급/감독점수/태그/실패사유 이력
+- 인라인 리라이트: 문맥 인식 (장르+캐릭터+주변 ±200자 주입)
+- `useUndoStack`: 인라인 리라이트 50단계 Undo/Redo
+- Ctrl+Shift+R: 인라인 리라이트 단축키
+- VersionDiff 통합: 300자+ 변경 시 자동 스냅샷 + diff 뷰
+- Firestore 클라우드 동기화: `CLOUD_SYNC` feature-flag, 3초 디바운스, onSnapshot
+- `useStudioUX`: `noa:token-budget-warning` + `noa:character-truncated` 리스너
+
+### Added — 코드 스튜디오 데스크탑 동기화
+- `diff-guard.ts`: SCOPE/CONTRACT/@block 편집 경계 보호 (450줄)
+- `apply-guard.ts`: diff-guard 래퍼, 코드 적용 시 자동 검증
+- `intent-parser.ts`: 결정론적 의도→AST 제약 변환 (LLM 불필요)
+- `design-transpiler.ts`: 외부 AI 코드 보안 필터 + 시맨틱 토큰 변환
+- `calc-protocol.ts`: SCAN→VALIDATE→ROUTE→PLAN 4단계 프로토콜
+- `tier-registry.ts`: Ultra/ProPlus/Standard/Lite 4-Tier 오케스트레이션
+- `AuditInvoice.tsx`: NOA-AGI 실행 명세서 UI
+- `deploy-logic.ts` + `git-logic.ts`: 패널별 로직 분리
+
+### Fixed
+- 아이템 스튜디오: SF 하드코딩 색상(emerald/cyan) → 시맨틱 토큰 전수 교체
+- 캐릭터 데이터베이스: 연보라 rgba(141,123,195) 28개소 → 시맨틱 토큰
+- clip-path polygon SF 장식 → rounded-xl 일반 라운드
+- InlineActionPopup: streamChat 호출 시그니처 수정 (StreamOptions 객체)
+- useProjectManager: uid 파라미터 기본값 null 명시
+
+### Changed
+- 유니버스 아카이브: 히어로 헤더 + 카테고리별 테마 아이콘 + 등급 색상(PUBLIC/RESTRICTED/CLASSIFIED)
+- 스플래시 화면: 단일 STUDIO CTA + "웹소설 집필 스튜디오" 정체성
+- 설정집(Rulebook): 카드 대시보드 4그룹 리디자인
+- NOA 브랜딩: AI→NOA 4개 언어 ~150건 치환
+- 12점 디자인: skeleton-shimmer + hover-lift + button:active 마이크로 인터랙션
+- 집필 모드 기본값: ai → edit (수동 집필 우선)
+- feature-flags: `CLOUD_SYNC` 추가 (기본 비활성)
+
 ## [1.3.0] - 2026-04-06
 ### Added
 - 436-rule dual catalog (224 bad + 212 good patterns) wired to generation + verification

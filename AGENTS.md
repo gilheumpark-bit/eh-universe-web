@@ -16,27 +16,46 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - **NOA Rules v1.2 + 프로젝트 규칙(전체)**: 저장소 루트의 `GEMINI.md`
 - **에이전트 요약 스킬**: `.agents/skills/eh-universe-guideline/SKILL.md`
-- **보안 헤더**: `src/proxy.ts`에서 통합 — **현재 middleware.ts 미연결 상태 (P0)**, 보안 헤더 실제 미적용
+- **보안 헤더**: `next.config.ts` headers()로 적용 완료 (proxy.ts는 참조용)
 - **Code Studio 시스템 지시문**: `src/lib/code-studio/core/architecture-spec.ts`의 `CODE_STUDIO_ARCHITECTURE_APPENDIX`
 - **Design System v8.0**: `src/lib/code-studio/core/design-system-spec.ts` (FULL/COMPACT/MINIMAL 3-Tier)
 - **Design Linter**: `src/lib/code-studio/core/design-linter.ts` + `pipeline/design-lint.ts` (16룰 런타임)
 - **Design Presets**: `src/lib/code-studio/core/design-presets.ts` (5 프리셋 + 자동 감지)
 
-## 3앱 구조
+## 5앱 구조
 
 | 앱 | 경로 | 역할 |
 |----|------|------|
 | Universe | `/`, `/archive`, `/codex`, `/reference`, `/rulebook`, `/tools/*` | 아카이브 + 코덱스 + 도구 |
-| Studio | `/studio` | 소설 집필 스튜디오 (NOA Writing Engine) |
+| Studio | `/studio` | 소설 집필 스튜디오 (NOA Writing Engine + 집필 OS) |
 | Code Studio | `/code-studio` | 검증형 코드 생성 스튜디오 |
 | Network | `/network` | 행성 커뮤니티 + 보고서 + 정착지 |
-| Translation Studio | `/translation-studio` | 번역 스튜디오 |
+| Translation Studio | `/translation-studio` | 소설 전용 번역 스튜디오 (6축 채점) |
+
+## 소설 스튜디오 아키텍처 (2026-04-11 최신)
+
+- **집필 OS UI**: OSDesktop(독) + WindowTitleBar + StudioStatusBar + Zen 모드
+- **5가지 집필 모드**: AI생성 / 수동편집 / 3단계캔버스 / 자동30%리파인 / 고급
+- **실시간 품질 분석**: `useQualityAnalysis` — show/tell, 반복어, 문장 다양성, 밀도, 대사 비율
+- **연속성 검사**: `useContinuityCheck` — 캐릭터 이름 오타, 특성 모순, 설정 충돌
+- **인라인 리라이트**: `InlineActionPopup` — 문맥 인식(장르/캐릭터/주변 ±200자) + Undo 스택
+- **품질 게이트**: `QualityGateAttemptRecord` — 시도별 등급/감독점수/태그 이력 추적
+- **버전 히스토리**: 300자+ 변경 시 자동 스냅샷 + VersionDiff
+- **내보내기**: EPUB 3.0 + DOCX + TXT/MD/JSON/HTML/CSV
 
 ## 코드 스튜디오 아키텍처
 
 - **Shell 3파일 분리**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
 - **Panel Registry**: `core/panel-registry.ts` + `PanelImports.ts` — 하드코딩 금지
+- **파이프라인 모듈** (2026-04-11 동기화):
+  - `pipeline/diff-guard.ts` — SCOPE/CONTRACT/@block 편집 경계 보호 (450줄)
+  - `pipeline/apply-guard.ts` — diff-guard 래퍼, 코드 적용 시 자동 검증
+  - `pipeline/design-transpiler.ts` — 외부 AI 코드 보안 필터 + 시맨틱 토큰 변환
+  - `ai/intent-parser.ts` — 결정론적 의도→AST 제약 변환 (LLM 불필요)
+  - `ai/calc-protocol.ts` — SCAN→VALIDATE→ROUTE→PLAN 4단계 프롬프트 프로토콜
+  - `ai/tier-registry.ts` — Ultra/ProPlus/Standard/Lite 4-Tier 오케스트레이션
+- **AuditInvoice.tsx** — NOA-AGI 실행 명세서 UI
 - **Design v8.0 3-Tier 토큰 효율**:
   - FULL (~3K) → css-layout, interaction-motion, ChatPanel
   - COMPACT (~800) → app-generator, autopilot UI step
@@ -61,6 +80,15 @@ P0 보안 이슈 (2026-04-06 수정 완료):
 3. ~~`sandbox.ts:170` — 사용자 코드 script 직접 삽입~~ — nonce 검증 + iframe sandbox 유지
 4. ~~`webcontainer.ts:54` — new Function() eval 동등~~ — 이미 dynamic import로 교체됨, 코멘트 정리
 
+## AI 워크플로우 (2026-04-11 최신)
+
+- **재시도**: 3회 + 지터 백오프 + Retry-After 헤더 연동 (`ai-providers.ts`)
+- **토큰 버짓 감사**: 시스템 프롬프트 30% 초과 시 `noa:token-budget-warning` 이벤트
+- **캐릭터 절삭 경고**: 20명 초과 시 `noa:character-truncated` 이벤트
+- **품질 게이트 이력**: `QualityGateAttemptRecord[]` — 시도별 등급/감독점수/실패사유 기록
+- **인라인 리라이트 문맥**: 장르+캐릭터+주변 ±200자 자동 주입
+- **Firestore 클라우드 동기화**: feature-flag `CLOUD_SYNC` (기본 비활성), 3초 디바운스, onSnapshot 실시간
+
 ## AI 모델 현황 (2026-04)
 
 | Provider | 기본 모델 | 사용 가능 |
@@ -69,3 +97,4 @@ P0 보안 이슈 (2026-04-06 수정 완료):
 | OpenAI | gpt-5.4 | 5.4-mini, 5.4-nano, 5.3-instant, 4.1, 4.1-mini, 4.1-nano |
 | Claude | claude-sonnet-4-6 | opus-4-6, haiku-4-5, opus-4-5, sonnet-4-5 |
 | Groq | llama-3.3-70b | llama-3.1-8b-instant, qwen-qwq-32b |
+| Ollama/LM Studio | local-model | DGX Spark 로컬: Gemma 4 26B/4B, EXAONE 32B |
