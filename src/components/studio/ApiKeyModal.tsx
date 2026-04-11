@@ -182,6 +182,29 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
           })}
         </div>
 
+        {/* 프로바이더 안내 + 가입 링크 */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-secondary/50 border border-border/30 text-[10px]">
+          <span className="text-text-secondary">
+            {activeId === 'gemini' && (language === 'KO' ? 'Google AI — 무료 티어 제공 (추천)' : 'Google AI — Free tier available (Recommended)')}
+            {activeId === 'openai' && (language === 'KO' ? 'OpenAI — 종량제 과금' : 'OpenAI — Pay-as-you-go pricing')}
+            {activeId === 'claude' && (language === 'KO' ? 'Anthropic Claude — 종량제 과금' : 'Anthropic Claude — Pay-as-you-go')}
+            {activeId === 'groq' && (language === 'KO' ? 'Groq — 무료 티어 제공 (빠름)' : 'Groq — Free tier (Fast)')}
+            {activeId === 'mistral' && (language === 'KO' ? 'Mistral — 유럽 AI' : 'Mistral — European AI')}
+            {activeId === 'ollama' && (language === 'KO' ? '로컬 서버 — 무료, 인터넷 불필요' : 'Local server — Free, no internet needed')}
+            {activeId === 'lmstudio' && (language === 'KO' ? '로컬 서버 — 무료, 인터넷 불필요' : 'Local server — Free, no internet needed')}
+          </span>
+          {!currentProvider.isUrlBased && (
+            <a
+              href={activeId === 'gemini' ? 'https://aistudio.google.com/apikey' : activeId === 'openai' ? 'https://platform.openai.com/api-keys' : activeId === 'claude' ? 'https://console.anthropic.com/settings/keys' : activeId === 'groq' ? 'https://console.groq.com/keys' : activeId === 'mistral' ? 'https://console.mistral.ai/api-keys' : '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 px-2 py-0.5 rounded bg-accent-purple/10 text-accent-purple font-bold hover:bg-accent-purple/20 transition-colors"
+            >
+              {language === 'KO' ? '키 발급 →' : 'Get Key →'}
+            </a>
+          )}
+        </div>
+
         {/* Key / URL input */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono">

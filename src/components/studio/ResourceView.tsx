@@ -177,12 +177,40 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 </div>
               </div>
 
+              {/* 3-Tier 서사 프레임워크 — 핵심 */}
+              <div className="space-y-2 pt-2 border-t border-border/30">
+                <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest ml-2">
+                  {L4(language, { ko: '서사 뼈대 (선택)', en: 'Story Framework (Optional)', ja: '物語骨格', zh: '叙事框架' })}
+                </span>
+                <input
+                  className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-purple outline-none transition-colors placeholder:text-text-tertiary"
+                  placeholder={L4(language, { ko: '욕망 — 이 캐릭터가 원하는 것', en: 'Desire — What this character wants', ja: '欲望', zh: '欲望' })}
+                  maxLength={200}
+                  value={newChar.desire ?? ''}
+                  onChange={e => setNewChar({...newChar, desire: e.target.value})}
+                />
+                <input
+                  className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-amber outline-none transition-colors placeholder:text-text-tertiary"
+                  placeholder={L4(language, { ko: '결핍 — 부족하거나 잃은 것', en: 'Deficiency — What they lack or lost', ja: '欠乏', zh: '缺陷' })}
+                  maxLength={200}
+                  value={newChar.deficiency ?? ''}
+                  onChange={e => setNewChar({...newChar, deficiency: e.target.value})}
+                />
+                <input
+                  className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-red outline-none transition-colors placeholder:text-text-tertiary"
+                  placeholder={L4(language, { ko: '갈등 — 이야기 속 충돌', en: 'Conflict — The core struggle', ja: '葛藤', zh: '冲突' })}
+                  maxLength={200}
+                  value={newChar.conflict ?? ''}
+                  onChange={e => setNewChar({...newChar, conflict: e.target.value})}
+                />
+              </div>
+
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
                   <span>{L4(language, { ko: '서사 잠재력', en: 'Narrative Potential' })}</span>
-                  <span className="text-blue-500">{newChar.dna} pts</span>
+                  <span className="text-accent-blue">{newChar.dna} pts</span>
                 </div>
-                <input 
+                <input
                   type="range" min="0" max="100"
                   className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                   value={newChar.dna}

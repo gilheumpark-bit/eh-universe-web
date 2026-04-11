@@ -57,6 +57,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
 }) => {
   const t = createT(language);
   const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const allSessions: (ChatSession & { _projectName?: string; _projectId?: string })[] = archiveScope === 'all'
     ? projects.flatMap(p => p.sessions.map(s => ({ ...s, _projectName: p.name, _projectId: p.id })))
@@ -72,6 +73,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
   ];
 
   const filtered = allSessions.filter(s => {
+    // 검색 필터
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const title = (s.title || s.config.genre || '').toLowerCase();
+      if (!title.includes(q)) return false;
+    }
     if (archiveFilter === 'ALL') return true;
     if (archiveFilter === 'WORLD') return (s.config.worldSimData?.civs?.length ?? 0) > 0;
     return s.config.genre === archiveFilter;
@@ -91,6 +98,14 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
             </button>
           </div>
         )}
+        {/* 검색 */}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder={language === 'KO' ? '제목 검색...' : 'Search by title...'}
+          className="w-full max-w-xs px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent-purple transition-colors font-mono"
+        />
         <div className="flex gap-1.5 flex-wrap">
           {categories.map(cat => (
             <button key={cat.key} onClick={() => setArchiveFilter(cat.key)} className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${archiveFilter === cat.key ? 'bg-blue-600/15 border-blue-500/30 text-blue-400' : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'}`}>
