@@ -55,10 +55,10 @@ function Submenu({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div className="absolute left-full top-0 ml-0.5 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[160px] z-101">
+    <div className="absolute left-full top-0 ml-0.5 bg-bg-primary border border-border/50 rounded-lg shadow-2xl py-1 min-w-[160px] z-101">
       {items.map((item) =>
         item.separator ? (
-          <div key={item.id} className="mx-2 my-1 border-t border-white/8" />
+          <div key={item.id} className="mx-2 my-1 border-t border-border/30" />
         ) : (
           <div
             key={item.id}
@@ -76,7 +76,7 @@ function Submenu({
                 }
               }}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
-                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/5"}
+                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-bg-secondary"}
                 ${item.danger ? "text-red-400" : "text-text-primary"}`}
             >
               {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
@@ -154,12 +154,12 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
       ref={ref}
       role="menu"
       aria-activedescendant={focusIdx >= 0 && visibleItems[focusIdx] ? `ctx-item-${visibleItems[focusIdx].id}` : undefined}
-      className="fixed z-100 bg-[#0a0e17] border border-white/8 rounded-lg shadow-2xl py-1 min-w-[180px]"
+      className="fixed z-100 bg-bg-primary border border-border/50 rounded-lg shadow-2xl py-1 min-w-[180px]"
       style={style}
     >
       {items.map((item) =>
         item.separator ? (
-          <div key={item.id} className="mx-2 my-1 border-t border-white/8" />
+          <div key={item.id} className="mx-2 my-1 border-t border-border/30" />
         ) : (
           <div
             key={item.id}
@@ -178,9 +178,9 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
                 }
               }}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
-                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/5"}
+                ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-bg-secondary"}
                 ${item.danger ? "text-red-400" : "text-text-primary"}
-                ${focusIdx === visibleItems.indexOf(item) ? "bg-white/5" : ""}`}
+                ${focusIdx === visibleItems.indexOf(item) ? "bg-bg-secondary" : ""}`}
             >
               {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
               <span className="flex-1 text-left">{item.label}</span>
