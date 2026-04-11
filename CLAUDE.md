@@ -157,3 +157,17 @@
 안전성 [C] > 성능 [G] > 간결성 [K]
 
 코드 검사 실패 코드는 절대 출력하지 않음.
+
+---
+
+## [인프라 연동] DGX Spark & Gemma 4 로컬 서버 (2026-04-11 업데이트)
+
+현재 이 프로젝트는 외부 API뿐만 아니라, 사장님의 극강 하드웨어인 **NVIDIA DGX 서버(128GB VRAM)**를 프라이빗 엔진으로 적극 활용합니다. 코드 수정 시 다음 인프라 구조를 반드시 인지하세요.
+
+- **통합 백엔드:** `ai-spark-server/main.py` (FastAPI + PySpark 기반)
+- **프론트엔드 프록시:** `src/services/sparkService.ts` 및 `aiProviders.ts`의 `spark` 라우터
+- **로컬 메인 모델:** LM Studio를 통한 Gemma 4 시리즈 (`gemma-4-26B/31B-it`, `gemma-4-E4B-it` 등) 멀티 라우팅
+- **외부 터널링:** `start_tunnel.sh` 스크립트를 통한 Cloudflare Tunnel 연동 (`포트 1234/8000` 포워딩 유지)
+- **분리형 샌드박스:** `/api/sandbox/execute` 엔드포인트를 통해 Code Studio용 격리된 코드 검증 루프 작동
+
+향후 AI API 호출 구조나 백엔드 로직을 수정할 때, 이 로컬 DGX 기반 프라이빗망 아키텍처를 훼손하지 않도록 주의해야 합니다. Vercel 배포 시에는 `SPARK_SERVER_URL` 환경 변수 통신을 우선합니다.
