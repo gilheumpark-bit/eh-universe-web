@@ -79,9 +79,19 @@ export async function streamSparkAI(
     throw new Error('LM Studio 서버 미실행. DGX에서 LM Studio를 시작하세요.');
   }
 
+  // Cloudflare 터널 에러 (520/521/522/523/524)
+  if (res.status >= 520 && res.status <= 524) {
+    throw new Error('DGX 서버 연결 불안정. 잠시 후 다시 시도해주세요. (Cloudflare 터널 오류)');
+  }
+
   if (!res.ok) {
     const err = await res.text().catch(() => '');
-    throw new Error(`Spark API ${res.status}: ${err.slice(0, 200)}`);
+    // HTML 응답 필터 — Cloudflare 에러 페이지 등
+    const isHtml = err.trimStart().startsWith('<!') || err.trimStart().startsWith('<html');
+    const cleanErr = isHtml
+      ? `서버 연결 오류 (${res.status}). 잠시 후 다시 시도해주세요.`
+      : err.slice(0, 200);
+    throw new Error(`Spark API ${res.status}: ${cleanErr}`);
   }
 
   if (!res.body) throw new Error('Empty response body from Spark Server');

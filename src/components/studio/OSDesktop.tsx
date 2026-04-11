@@ -391,7 +391,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 <tab.icon className={`w-6 h-6 ${tab.color} ${isActive || isHovered ? 'opacity-100 drop-shadow-[0_0_8px_rgba(180,120,40,0.6)]' : 'opacity-50'} transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
               </div>
               <span className={`text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide transition-colors ${
-                isActive ? 'text-amber-200' : 'text-amber-700/60 group-hover:text-amber-300'
+                isActive ? 'text-accent-amber' : 'text-text-secondary group-hover:text-text-primary'
               }`}>
                 {tab.label}
               </span>
@@ -403,7 +403,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         })}
 
         {/* 구분선 */}
-        <div className="w-px h-10 bg-amber-800/20 mx-1" />
+        <div className="w-px h-10 bg-border/30 mx-1" />
 
         {/* 앱 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) */}
         {appLinks.map(link => (
@@ -424,43 +424,43 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         ))}
 
         {/* 구분선 */}
-        <div className="w-px h-10 bg-amber-800/20 mx-1" />
+        <div className="w-px h-10 bg-border/30 mx-1" />
 
         {/* Settings */}
         <div className="relative">
           <button
             onClick={() => setIsSystemMenuOpen(!isSystemMenuOpen)}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-amber-900/10 hover:bg-amber-900/20 text-amber-700/50 hover:text-amber-400 transition-colors border border-transparent hover:border-amber-800/20"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 text-text-secondary hover:text-text-primary transition-colors border border-transparent hover:border-border/30"
           >
             <Settings className="w-6 h-6" />
           </button>
 
           {isSystemMenuOpen && (
-            <div className="absolute bottom-16 right-0 w-64 bg-[#16100a]/97 backdrop-blur-xl border border-amber-800/20 rounded-2xl p-2 shadow-[0_8px_32px_rgba(101,67,33,0.3)] flex flex-col gap-1 z-[110]">
-              <button onClick={() => { setIsSystemMenuOpen(false); handleTabChange('settings'); }} className="text-left px-3 py-2 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors">
+            <div className="absolute bottom-16 right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[110]">
+              <button onClick={() => { setIsSystemMenuOpen(false); handleTabChange('settings'); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Settings className="w-4 h-4" /> {t('sidebar.settings')}
               </button>
               <button
                 onClick={() => { setIsSystemMenuOpen(false); handleDockReset(); }}
-                className="text-left px-3 py-2 text-xs text-amber-400/70 hover:text-amber-300 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors"
+                className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors"
               >
                 <Move className="w-4 h-4" /> {language === 'KO' ? '독 위치 초기화' : 'Reset Dock Position'}
               </button>
-              <div className="h-px bg-amber-800/20 my-1" />
-              <button onClick={exportTXT} className="text-left px-3 py-2 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors">
+              <div className="h-px bg-border/30 my-1" />
+              <button onClick={exportTXT} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Download className="w-4 h-4" /> TXT {language === 'KO' ? '원고 내보내기' : 'Export'}
               </button>
-              <button onClick={exportJSON} className="text-left px-3 py-2 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors">
+              <button onClick={exportJSON} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Download className="w-4 h-4" /> JSON {language === 'KO' ? '내보내기' : 'Export'}
               </button>
-              <button onClick={exportAllJSON} className="text-left px-3 py-2 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors">
+              <button onClick={exportAllJSON} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Download className="w-4 h-4" /> {language === 'KO' ? '전체 백업' : 'Full Backup'} (JSON)
               </button>
-              <div className="h-px bg-amber-800/20 my-1" />
-              <button onClick={() => fileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors">
+              <div className="h-px bg-border/30 my-1" />
+              <button onClick={() => fileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Upload className="w-4 h-4" /> JSON {language === 'KO' ? '가져오기' : 'Import'}
               </button>
-              <button onClick={() => textFileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-900/20 rounded-xl flex items-center gap-2 font-serif transition-colors">
+              <button onClick={() => textFileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Upload className="w-4 h-4" /> {language === 'KO' ? '원고 텍스트 가져오기' : 'Import TXT novel'}
               </button>
               <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />

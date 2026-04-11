@@ -28,7 +28,13 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
     }),
     signal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS),
   });
-  if (!res.ok) throw new Error(`DGX Spark error: ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    const isHtml = errText.trimStart().startsWith('<!') || errText.trimStart().startsWith('<html');
+    throw new Error(isHtml
+      ? `DGX 서버 연결 오류 (${res.status}). 잠시 후 다시 시도해주세요.`
+      : `DGX Spark error ${res.status}: ${errText.slice(0, 150)}`);
+  }
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content || '';
   // JSON 블록 추출 (```json ... ``` 또는 bare JSON)
