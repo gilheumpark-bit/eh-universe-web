@@ -457,7 +457,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // PART 6 — RENDER
   // ============================================================
   return (
-    <div className="relative max-w-[1400px] mx-auto px-4 py-6 space-y-6 min-h-full rounded-[24px] bg-[#030a0d] bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-size-[40px_40px] shadow-[inset_0_0_0_1px_rgba(6,182,212,0.15)] relative before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.05)_0%,transparent_70%)] before:pointer-events-none box-border">
+    <div className="relative max-w-[1400px] mx-auto px-4 py-6 space-y-6 min-h-full rounded-2xl bg-bg-primary border border-border/30">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
