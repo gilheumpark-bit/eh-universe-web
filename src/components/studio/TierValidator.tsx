@@ -137,7 +137,7 @@ export const WarningBadge: React.FC<WarningBadgeProps> = ({ warnings, language, 
             <span className="text-[9px] font-black text-amber-400 uppercase tracking-wider">
               {t('tierValidator.mechanicsGaps')}
             </span>
-            <p className="text-[9px] text-amber-300/70 mt-0.5">
+            <p className="text-[9px] text-accent-amber mt-0.5">
               {tier2.map(w => w.label).join(', ')}
             </p>
           </div>

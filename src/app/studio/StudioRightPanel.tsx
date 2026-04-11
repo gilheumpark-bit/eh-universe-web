@@ -225,7 +225,7 @@ export function StudioWritingAssistantPanel({
               <summary className={`flex items-center gap-1.5 cursor-pointer text-xs font-bold transition-colors ${
                 currentSession.config.sceneDirection
                   ? 'text-text-tertiary hover:text-text-secondary'
-                  : 'text-amber-400 hover:text-amber-300'
+                  : 'text-accent-amber hover:text-accent-amber/80'
               }`}>{'\uD83C\uDFAC'} {t('panel.scene')} {!currentSession.config.sceneDirection && <span className="text-[11px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{t('panel.notSet')}</span>}</summary>
               <div className="mt-1.5 pl-4 space-y-1 min-w-0">
                 {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400 break-words">{'\uD83E\uDE9D'} {h.desc}</div>)}
@@ -233,7 +233,7 @@ export function StudioWritingAssistantPanel({
                 {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400 break-words">{'\uD83D\uDD1A'} {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
                 {!currentSession.config.sceneDirection && (
                   <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
-                    <p className="text-[10px] text-amber-300">{t('panel.sceneWarning')}</p>
+                    <p className="text-[10px] text-accent-amber">{t('panel.sceneWarning')}</p>
                     <button onClick={() => setActiveTab('rulebook')} className="text-[10px] text-accent-purple hover:underline font-bold">
                       {'\u2192'} {t('panel.setupDirection')}
                     </button>

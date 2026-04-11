@@ -1191,7 +1191,7 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
                 ⚠ {L4(lang, { ko: "서사 연동 경고", en: "Narrative Link Warning" })}
               </span>
               {tierWarnings.map((w, i) => (
-                <p key={i} className="text-[9px] text-amber-300/70">{w}</p>
+                <p key={i} className="text-[9px] text-accent-amber">{w}</p>
               ))}
             </div>
           )}

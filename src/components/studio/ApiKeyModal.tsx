@@ -229,7 +229,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ language, hostedProviders, on
                   : '💡 Local server must be running. Ollama: ollama serve / LM Studio: Start server'}
               </p>
               <details className="text-[9px] text-text-tertiary font-mono">
-                <summary className="cursor-pointer text-amber-400 hover:text-amber-300">
+                <summary className="cursor-pointer text-accent-amber hover:text-accent-amber/80">
                   {language === 'KO' ? '📖 로컬 LLM 설정 가이드' : '📖 Local LLM Setup Guide'}
                 </summary>
                 <div className="mt-2 space-y-1.5 bg-black/30 rounded-lg p-3 text-[8px] leading-relaxed">

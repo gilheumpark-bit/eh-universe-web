@@ -344,13 +344,13 @@ export default function StudioMainContent(props: StudioMainContentProps) {
         <div className="flex-1 overflow-y-auto pb-20 md:pb-0 min-h-0">
           {/* API key banner */}
           {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !bannerDismissed && (
-            <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/40 rounded-xl text-amber-300 text-xs">
+            <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-accent-amber/10 border border-accent-amber/30 rounded-xl text-accent-amber text-xs">
               <Key className="w-4 h-4 shrink-0" />
               <span className="flex-1">{apiBannerMessage}</span>
-              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded-lg text-[10px] font-bold uppercase transition-colors">
+              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-accent-amber/20 hover:bg-accent-amber/30 rounded-lg text-[10px] font-bold uppercase transition-colors">
                 {apiSetupLabel}
               </button>
-              <button onClick={() => { setBannerDismissed(true); localStorage.setItem('noa_api_banner_dismissed', '1'); }} className="shrink-0 text-amber-500/60 hover:text-amber-300 transition-colors text-sm leading-none" aria-label="Dismiss">
+              <button onClick={() => { setBannerDismissed(true); localStorage.setItem('noa_api_banner_dismissed', '1'); }} className="shrink-0 text-text-tertiary hover:text-text-primary transition-colors text-sm leading-none" aria-label="Dismiss">
                 {'\u2715'}
               </button>
             </div>

@@ -40,7 +40,7 @@ const SEVERITY_STYLE: Record<string, { bg: string; text: string; border: string 
 };
 
 const GRADE_COLOR: Record<string, string> = {
-  S: 'text-amber-300', A: 'text-emerald-400', B: 'text-blue-400', C: 'text-amber-500', D: 'text-red-400',
+  S: 'text-accent-amber', A: 'text-accent-green', B: 'text-accent-blue', C: 'text-accent-amber', D: 'text-accent-red',
 };
 
 // ============================================================
