@@ -54,8 +54,11 @@ def get_user_id(request: Request) -> str:
     uid = request.headers.get("x-user-id") or request.headers.get("x-forwarded-for") or request.client.host
     return uid.strip()
 
-def check_rate_limit(user_id: str):
-    """일일 100회 제한 확인"""
+GUEST_LIMIT = int(os.getenv("GUEST_LIMIT", "20"))
+
+def check_rate_limit(user_id: str, user_tier: str = "free"):
+    """티어별 일일 제한: 비로그인 20회, 로그인 100회, BYOK 무제한"""
+    limit = GUEST_LIMIT if user_tier == "none" else DAILY_LIMIT
     today = time.strftime("%Y-%m-%d")
     entry = rate_limits[user_id]
 
@@ -63,10 +66,10 @@ def check_rate_limit(user_id: str):
         entry["date"] = today
         entry["count"] = 0
 
-    if entry["count"] >= DAILY_LIMIT:
+    if entry["count"] >= limit:
         raise HTTPException(
             status_code=429,
-            detail=f"일일 호출 한도 {DAILY_LIMIT}회 초과. 내일 초기화됩니다.",
+            detail=f"일일 호출 한도 {limit}회 초과. {'로그인하면 {DAILY_LIMIT}회로 늘어납니다.' if user_tier == 'none' else '내일 초기화됩니다.'}",
             headers={"Retry-After": "86400"},
         )
 
@@ -116,7 +119,8 @@ async def chat_completions(req: ChatRequest, request: Request):
     """OpenAI 호환 챗봇 — LM Studio로 프록시"""
     verify_api_key(request)
     user_id = get_user_id(request)
-    count = check_rate_limit(user_id)
+    user_tier = request.headers.get("x-user-tier", "none")
+    count = check_rate_limit(user_id, user_tier)
 
     logger.info(f"[{user_id}] 호출 {count}/{DAILY_LIMIT} — model={req.model}")
 
@@ -171,16 +175,19 @@ async def chat_completions(req: ChatRequest, request: Request):
 async def get_usage(request: Request):
     """현재 사용자의 일일 사용량 조회"""
     user_id = get_user_id(request)
+    user_tier = request.headers.get("x-user-tier", "none")
+    limit = GUEST_LIMIT if user_tier == "none" else DAILY_LIMIT
     today = time.strftime("%Y-%m-%d")
     entry = rate_limits.get(user_id, {"date": today, "count": 0})
     if entry["date"] != today:
-        return {"user_id": user_id, "date": today, "count": 0, "limit": DAILY_LIMIT, "remaining": DAILY_LIMIT}
+        return {"user_id": user_id, "date": today, "count": 0, "limit": limit, "remaining": limit, "tier": user_tier}
     return {
         "user_id": user_id,
         "date": today,
         "count": entry["count"],
-        "limit": DAILY_LIMIT,
-        "remaining": max(0, DAILY_LIMIT - entry["count"]),
+        "limit": limit,
+        "remaining": max(0, limit - entry["count"]),
+        "tier": user_tier,
     }
 
 # ============================================================

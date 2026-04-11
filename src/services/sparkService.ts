@@ -45,12 +45,13 @@ export async function streamSparkAI(
   system: string,
   messages: { role: string; content: string }[],
   temperature: number,
-  opts?: { userId?: string; apiKey?: string; signal?: AbortSignal },
+  opts?: { userId?: string; apiKey?: string; signal?: AbortSignal; userTier?: string },
 ): Promise<ReadableStream> {
   if (!SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (opts?.userId) headers['x-user-id'] = opts.userId;
+  if (opts?.userTier) headers['x-user-tier'] = opts.userTier;
   if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
 
   const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
