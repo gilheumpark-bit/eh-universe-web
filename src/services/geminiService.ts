@@ -11,7 +11,7 @@ import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message 
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
-import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, ChatMsg } from "../lib/ai-providers";
+import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasStoredApiKey, ChatMsg } from "../lib/ai-providers";
 
 /** 동기 getApiKey가 빈 문자열이면 비동기로 재시도 */
 async function getApiKeyFallback(providerId: 'gemini'): Promise<string> {
@@ -50,12 +50,20 @@ const CACHE_TTL = 5 * 60 * 1000;
 const STRUCTURED_FETCH_TIMEOUT_MS = 65_000;
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
+  // 프로바이더 자동 감지: LM Studio/Ollama가 등록되어 있으면 해당 프로바이더로 라우팅
+  const activeProvider = getActiveProvider();
+  const isLocal = activeProvider === 'lmstudio' || activeProvider === 'ollama';
+  const provider = isLocal ? activeProvider : 'gemini';
+  const model = isLocal ? 'local-model' : getStructuredModel();
+  const apiKey = isLocal
+    ? (getApiKey(activeProvider) || undefined)
+    : (getApiKey('gemini') || await getApiKeyFallback('gemini') || undefined);
+
   const payload = JSON.stringify({
     ...body,
-    provider: 'gemini',
-    model: getStructuredModel(),
-    // 동기 getApiKey가 빈 문자열이면 비동기로 재시도 (v4 AES-GCM 복호화 대기)
-    apiKey: getApiKey('gemini') || await getApiKeyFallback('gemini') || undefined,
+    provider,
+    model,
+    apiKey,
   });
 
   // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
@@ -66,9 +74,13 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
   }
 
+  // LM Studio/Ollama → structured-generate (OpenAI 호환 JSON mode)
+  // Gemini → gemini-structured (네이티브 JSON)
+  const endpoint = isLocal ? '/api/structured-generate' : '/api/gemini-structured';
+
   let response;
   try {
-    response = await fetch('/api/gemini-structured', {
+    response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(STRUCTURED_FETCH_TIMEOUT_MS),
