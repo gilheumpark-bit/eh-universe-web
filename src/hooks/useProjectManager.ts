@@ -45,7 +45,7 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
  * Central project/session CRUD hook. Handles localStorage hydration, project creation,
  * session switching, IndexedDB backup/restore, and storage quota management.
  */
-export function useProjectManager(language: AppLanguage, uid?: string | null) {
+export function useProjectManager(language: AppLanguage, uid: string | null = null) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
