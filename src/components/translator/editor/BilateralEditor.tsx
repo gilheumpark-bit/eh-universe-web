@@ -27,27 +27,19 @@ export function BilateralEditor() {
     const res = resultRef.current;
     if (!src || !res) return;
 
-    let isSyncingLeft = false;
-    let isSyncingRight = false;
+    let isSyncing = false;
 
-    const syncScroll = (source: HTMLTextAreaElement, target: HTMLTextAreaElement, setSyncFlag: (v: boolean) => void, clearSyncFlag: () => void) => {
-      if (clearSyncFlag === (() => isSyncingRight = false) && isSyncingLeft) return;
-      if (clearSyncFlag === (() => isSyncingLeft = false) && isSyncingRight) return;
-
-      setSyncFlag(true);
-      const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
-      target.scrollTop = percentage * (target.scrollHeight - target.clientHeight);
-
-      setTimeout(() => clearSyncFlag(), 50);
+    const syncFrom = (from: HTMLTextAreaElement, to: HTMLTextAreaElement) => {
+      if (isSyncing) return;
+      isSyncing = true;
+      const maxScroll = from.scrollHeight - from.clientHeight;
+      const pct = maxScroll > 0 ? from.scrollTop / maxScroll : 0;
+      to.scrollTop = pct * (to.scrollHeight - to.clientHeight);
+      requestAnimationFrame(() => { isSyncing = false; });
     };
 
-    const handleSrcScroll = () => {
-      syncScroll(src, res, () => isSyncingLeft = true, () => isSyncingLeft = false);
-    };
-
-    const handleResScroll = () => {
-      syncScroll(res, src, () => isSyncingRight = true, () => isSyncingRight = false);
-    };
+    const handleSrcScroll = () => syncFrom(src, res);
+    const handleResScroll = () => syncFrom(res, src);
 
     src.addEventListener('scroll', handleSrcScroll);
     res.addEventListener('scroll', handleResScroll);

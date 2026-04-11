@@ -419,7 +419,6 @@ export default function ArchiveClient() {
                       <Link key={article.slug} href={href}
                         aria-label={`${L2(article.title, lang)} — ${article.level}`}
                         className={`group flex items-center gap-4 p-4 rounded-xl border border-border/30 bg-bg-secondary/40 hover:bg-bg-secondary/80 hover:border-border/60 transition-all hover-lift border-l-[3px] ${ls.border}`}
-                        style={{ animationDelay: `${idx * 30}ms` }}
                       >
                         {/* 번호 */}
                         <span className="w-6 text-center text-[10px] font-mono font-bold text-text-quaternary shrink-0">

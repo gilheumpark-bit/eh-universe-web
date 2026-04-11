@@ -76,6 +76,41 @@ function buildAuditIssues(
     });
   }
 
+  // 엔진 검증: 길이 비율 체크 (KO→EN 1.10~1.60 기대)
+  if (s.length > 100 && r.length > 0) {
+    const ratio = r.length / s.length;
+    if (ratio < 0.5) {
+      issues.push({ id: 'length-too-short', type: 'warning', text: `번역문이 원문 대비 ${Math.round(ratio * 100)}% — 심각한 누락 가능`, severity: 'high' });
+    } else if (ratio > 2.5) {
+      issues.push({ id: 'length-too-long', type: 'warning', text: `번역문이 원문 대비 ${Math.round(ratio * 100)}% — 과잉 번역 가능`, severity: 'medium' });
+    }
+  }
+
+  // 엔진 검증: 용어집 locked 항목 누락 체크
+  if (r.length > 0 && glossary) {
+    for (const [src, target] of Object.entries(glossary)) {
+      if (s.includes(src) && !r.includes(target)) {
+        issues.push({
+          id: `glossary-miss-${src}`,
+          type: 'warning',
+          text: `용어 "${src}" → "${target}" 이(가) 번역문에 없습니다.`,
+          severity: 'medium',
+        });
+      }
+    }
+  }
+
+  // 엔진 검증: 번역투 패턴 감지 (EN)
+  if (r.length > 50) {
+    const translationese = ['것으로 보인다', '하는 것이 가능하다', '에 대하여', '측면에서'];
+    for (const pat of translationese) {
+      if (r.includes(pat)) {
+        issues.push({ id: `translationese-${pat}`, type: 'style', text: `번역투 패턴: "${pat}"`, severity: 'low' });
+        break;
+      }
+    }
+  }
+
   return issues;
 }
 
@@ -94,7 +129,7 @@ export function AuditPanel() {
       else if (issue.severity === 'medium') penalty += 10;
       else penalty += 4;
     }
-    return Math.max(55, Math.min(100, 100 - penalty));
+    return Math.max(0, Math.min(100, 100 - penalty));
   }, [issues]);
 
   return (

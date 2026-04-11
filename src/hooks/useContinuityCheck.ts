@@ -82,24 +82,24 @@ function checkTraitConflicts(text: string, characters: Character[]): ContinuityW
       const traits = char.traits.toLowerCase();
       const lowerText = text.toLowerCase();
 
+      // 특성 모순 검출 — severity: info (캐릭터 성장 장면에서 false positive 방지)
       const conflictPairs: [string, string, string, string][] = [
-        // [trait keyword, conflicting text pattern, ko msg, en msg]
-        ['조용', '소리를 질렀다', '조용한 성격인데 소리를 지르는 장면', 'Quiet character shouting'],
-        ['내성적', '파티를 즐기', '내성적 캐릭터가 파티를 즐기는 장면', 'Introverted character enjoying party'],
-        ['겁쟁이', '두려움 없이', '겁쟁이 캐릭터가 두려움 없는 장면', 'Cowardly character showing no fear'],
-        ['shy', 'shouted', 'Shy character shouting', 'Shy character shouting'],
-        ['introverted', 'party', 'Introverted character at party', 'Introverted character at party'],
+        ['조용', '소리를 질렀다', '조용한 성격 — 소리 지르는 장면 (의도적 변화?)', 'Quiet character shouting (intentional growth?)'],
+        ['내성적', '파티를 즐기', '내성적 캐릭터 — 파티 장면 (의도적 변화?)', 'Introverted at party (intentional growth?)'],
+        ['겁쟁이', '두려움 없이', '겁쟁이 캐릭터 — 두려움 없는 장면 (의도적 변화?)', 'Coward showing no fear (intentional growth?)'],
+        ['shy', 'shouted', 'Shy character shouting (intentional growth?)', 'Shy character shouting (intentional growth?)'],
+        ['introverted', 'party', 'Introverted at party (intentional growth?)', 'Introverted at party (intentional growth?)'],
       ];
 
       for (const [trait, conflict, ko, en] of conflictPairs) {
         if (traits.includes(trait) && lowerText.includes(conflict)) {
-          // 해당 캐릭터 이름 근처에서만 체크
           const nameIdx = text.indexOf(char.name);
-          const nearbyText = text.slice(Math.max(0, nameIdx - 200), nameIdx + 200).toLowerCase();
+          // 캐릭터 이름 ±300자 범위에서만 검출 (문맥 확대)
+          const nearbyText = text.slice(Math.max(0, nameIdx - 300), nameIdx + 300).toLowerCase();
           if (nearbyText.includes(conflict)) {
             warnings.push({
               type: 'trait-conflict',
-              severity: 'warning',
+              severity: 'info', // warning→info: 캐릭터 성장 장면 오감지 방지
               messageKO: `${char.name}: ${ko}`,
               messageEN: `${char.name}: ${en}`,
               position: nameIdx,
