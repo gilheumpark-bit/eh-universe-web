@@ -474,7 +474,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   key={ep}
                   onClick={() => generateFromAnalysis(ep)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-black/40 border border-border hover:border-blue-600/40 text-text-secondary hover:text-blue-300 transition-all"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-bg-secondary border border-border hover:border-blue-600/40 text-text-secondary hover:text-accent-blue transition-all"
                 >
                   <span>EP.{ep}</span>
                   <span className="text-[9px] text-text-tertiary">
@@ -506,7 +506,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                   className={`w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all ${
                     selectedCardId === c.id && activeView === 'editor'
                       ? 'bg-blue-600/15 border border-blue-500/30 text-blue-300'
-                      : 'bg-black/30 border border-transparent text-text-tertiary hover:border-border hover:text-text-secondary'
+                      : 'bg-bg-secondary/50 border border-transparent text-text-tertiary hover:border-border hover:text-text-secondary'
                   }`}
                 >
                   <div className="font-semibold truncate flex items-center gap-1.5">
@@ -523,7 +523,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
         </div>
 
         {/* Batch Generation */}
-        {imageGenEnabled && imgApiKey && cards.length > 0 && (
+        {imageGenEnabled && (imgApiKey || hasDgxService) && cards.length > 0 && (
           <div className="ds-card space-y-2">
             <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
               {isKO ? '일괄 생성' : 'Batch Generation'}
@@ -536,7 +536,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                     {batch.progress.current}/{batch.progress.total} — {batch.progress.currentCardTitle}
                   </span>
                 </div>
-                <div className="w-full bg-black/50 rounded-full h-1.5">
+                <div className="w-full bg-bg-tertiary rounded-full h-1.5">
                   <div
                     className="bg-blue-500 h-1.5 rounded-full transition-all"
                     style={{ width: `${(batch.progress.current / Math.max(batch.progress.total, 1)) * 100}%` }}

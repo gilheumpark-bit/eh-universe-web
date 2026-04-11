@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { hasServerProviderCredentials, resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import type { AppLanguage } from '@/lib/studio-types';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -75,10 +76,14 @@ type ValidatedInput = {
 
 /** Validate and extract all required fields from the raw body */
 function validateInput(body: Record<string, unknown>): { ok: true; input: ValidatedInput } | { ok: false; response: NextResponse } {
-  const provider = typeof body.provider === 'string' ? body.provider : 'gemini';
-  if (!isServerProviderId(provider)) {
+  const rawProvider = typeof body.provider === 'string' ? body.provider : 'gemini';
+  if (!isServerProviderId(rawProvider)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
   }
+  // DGX 서버 있으면 로컬 프로바이더를 spark 경유로 전환
+  const provider = (rawProvider === 'lmstudio' || rawProvider === 'ollama') && SPARK_SERVER_URL
+    ? 'gemini' as const
+    : rawProvider;
 
   const clientApiKey = normalizeUserApiKey(body.apiKey);
   const apiKey = provider === 'gemini'
@@ -86,10 +91,13 @@ function validateInput(body: Record<string, unknown>): { ok: true; input: Valida
     : (resolveServerProviderKey(provider, body.apiKey) || '');
 
   if (!(provider === 'gemini' ? clientApiKey : apiKey) && !hasServerProviderCredentials(provider)) {
-    const error = provider === 'gemini'
-      ? 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.'
-      : `API key not configured for ${provider}.`;
-    return { ok: false, response: NextResponse.json({ error }, { status: 401 }) };
+    // DGX Spark 폴백 가능하면 허용
+    if (!SPARK_SERVER_URL) {
+      const error = provider === 'gemini'
+        ? 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.'
+        : `API key not configured for ${provider}.`;
+      return { ok: false, response: NextResponse.json({ error }, { status: 401 }) };
+    }
   }
 
   const prompt = typeof body.prompt === 'string' ? body.prompt : '';
