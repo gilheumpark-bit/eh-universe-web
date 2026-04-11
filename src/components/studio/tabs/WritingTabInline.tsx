@@ -502,8 +502,15 @@ export default function WritingTabInline(props: Props) {
                 <InlineActionPopup
                   textareaRef={editDraftRef}
                   language={language}
+                  storyConfig={{
+                    genre: currentSession.config.genre || undefined,
+                    tone: currentSession.config.styleDna?.prose || undefined,
+                    narrativeIntensity: currentSession.config.styleDna?.tone || undefined,
+                    characters: currentSession.config.characters?.slice(0, 5).map(c => ({
+                      name: c.name, role: c.role, speechStyle: c.speechStyle,
+                    })),
+                  }}
                   onReplace={(oldText, newText) => {
-                    // P2: Undo 스택에 저장 후 교체
                     undoStack.push(editDraft, isKO ? '리라이트' : 'Rewrite');
                     setEditDraft(editDraft.replace(oldText, newText));
                   }}

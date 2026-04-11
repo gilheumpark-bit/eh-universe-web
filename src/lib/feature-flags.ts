@@ -16,6 +16,8 @@ export interface FeatureFlags {
   CODE_STUDIO: boolean;
   /** 에피소드 간 비교 분석 */
   EPISODE_COMPARE: boolean;
+  /** Firestore 클라우드 동기화 */
+  CLOUD_SYNC: boolean;
 }
 
 // ============================================================
@@ -29,6 +31,8 @@ const FLAGS: FeatureFlags = {
   OFFLINE_CACHE: true,
   CODE_STUDIO: true,
   EPISODE_COMPARE: true,
+  /** Firestore 세션 클라우드 동기화 — 기본 비활성, localStorage ff_CLOUD_SYNC=true로 활성 */
+  CLOUD_SYNC: false,
 };
 
 /**

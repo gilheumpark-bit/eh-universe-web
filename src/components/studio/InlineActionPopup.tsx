@@ -7,10 +7,18 @@ import { streamChat, getApiKey } from '@/lib/ai-providers';
 // ============================================================
 // PART 1 — 타입
 // ============================================================
+interface StoryContext {
+  genre?: string;
+  characters?: Array<{ name: string; role: string; speechStyle?: string }>;
+  tone?: string;
+  narrativeIntensity?: string;
+}
+
 interface InlineActionPopupProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   language: string;
   onReplace: (oldText: string, newText: string) => void;
+  storyConfig?: StoryContext;
 }
 
 interface PopupState {
@@ -25,7 +33,7 @@ interface PopupState {
 // ============================================================
 // PART 2 — 컴포넌트
 // ============================================================
-export function InlineActionPopup({ textareaRef, language, onReplace }: InlineActionPopupProps) {
+export function InlineActionPopup({ textareaRef, language, onReplace, storyConfig }: InlineActionPopupProps) {
   const isKO = language === 'KO';
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selectedText: '', selStart: 0, selEnd: 0 });
   const [result, setResult] = useState<string | null>(null);
@@ -91,24 +99,57 @@ export function InlineActionPopup({ textareaRef, language, onReplace }: InlineAc
   const handleAction = useCallback(async (action: string) => {
     const key = getApiKey();
     if (!key) {
-      // No API key — fallback to copy
       navigator.clipboard.writeText(popup.selectedText);
       return;
     }
 
+    // 주변 문맥 추출 (±200자)
+    const fullText = textareaRef.current?.value ?? '';
+    const CONTEXT_RADIUS = 200;
+    const beforeText = fullText.slice(Math.max(0, popup.selStart - CONTEXT_RADIUS), popup.selStart).trim();
+    const afterText = fullText.slice(popup.selEnd, popup.selEnd + CONTEXT_RADIUS).trim();
+
+    // 스토리 컨텍스트 블록 구성
+    const ctxParts: string[] = [];
+    if (storyConfig?.genre) ctxParts.push(isKO ? `장르: ${storyConfig.genre}` : `Genre: ${storyConfig.genre}`);
+    if (storyConfig?.tone) ctxParts.push(isKO ? `톤: ${storyConfig.tone}` : `Tone: ${storyConfig.tone}`);
+    if (storyConfig?.narrativeIntensity) ctxParts.push(isKO ? `강도: ${storyConfig.narrativeIntensity}` : `Intensity: ${storyConfig.narrativeIntensity}`);
+    if (storyConfig?.characters?.length) {
+      const charList = storyConfig.characters.slice(0, 5).map(c => {
+        const parts = [c.name, c.role];
+        if (c.speechStyle) parts.push(c.speechStyle);
+        return parts.join('/');
+      }).join(', ');
+      ctxParts.push(isKO ? `등장인물: ${charList}` : `Characters: ${charList}`);
+    }
+    const contextBlock = ctxParts.length > 0
+      ? (isKO ? `[작품 설정] ${ctxParts.join(' | ')}\n\n` : `[Story Context] ${ctxParts.join(' | ')}\n\n`)
+      : '';
+
+    // 주변 문맥 블록
+    const surroundingBlock = (beforeText || afterText)
+      ? (isKO
+          ? `[주변 문맥]\n...${beforeText}<<<선택된 텍스트>>>${afterText}...\n\n`
+          : `[Surrounding]\n...${beforeText}<<<SELECTED>>>${afterText}...\n\n`)
+      : '';
+
+    const ctxAware = isKO
+      ? '장르의 분위기와 캐릭터 말투를 유지하면서 '
+      : 'While maintaining genre atmosphere and character voice, ';
+
     const prompts: Record<string, string> = {
       rewrite: isKO
-        ? `다음 문장을 리라이트해줘. 결과만 출력해. 설명 금지:\n\n${popup.selectedText}`
-        : `Rewrite this text. Output only the result, no explanation:\n\n${popup.selectedText}`,
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장을 리라이트해줘. 결과만 출력해. 설명 금지:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}rewrite this text. Output only the result, no explanation:\n\n${popup.selectedText}`,
       expand: isKO
-        ? `다음 문장을 더 풍부하게 확장해줘. 결과만 출력해:\n\n${popup.selectedText}`
-        : `Expand this text with more detail. Output only the result:\n\n${popup.selectedText}`,
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장을 감각적 묘사로 확장해줘. 결과만 출력해:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}expand this text with sensory detail. Output only the result:\n\n${popup.selectedText}`,
       compress: isKO
-        ? `다음 문장을 간결하게 축소해줘. 결과만 출력해:\n\n${popup.selectedText}`
-        : `Compress this text to be more concise. Output only the result:\n\n${popup.selectedText}`,
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장을 간결하게 축소해줘. 결과만 출력해:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}compress this text to be more concise. Output only the result:\n\n${popup.selectedText}`,
       tone: isKO
-        ? `다음 문장의 톤을 더 문학적으로 바꿔줘. 결과만 출력해:\n\n${popup.selectedText}`
-        : `Change the tone to be more literary. Output only the result:\n\n${popup.selectedText}`,
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장의 톤을 더 문학적으로 바꿔줘. 결과만 출력해:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}change the tone to be more literary. Output only the result:\n\n${popup.selectedText}`,
     };
 
     const prompt = prompts[action];
@@ -120,12 +161,17 @@ export function InlineActionPopup({ textareaRef, language, onReplace }: InlineAc
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
+    // 시스템 지시문에도 스토리 컨텍스트 포함
+    const sysCtx = storyConfig?.genre
+      ? (isKO ? ` 현재 장르: ${storyConfig.genre}.` : ` Current genre: ${storyConfig.genre}.`)
+      : '';
+
     try {
       let accumulated = '';
       await streamChat({
         systemInstruction: isKO
-          ? '당신은 소설 편집자입니다. 요청된 작업만 수행하고 결과만 출력하세요. 설명이나 메타 텍스트는 금지입니다.'
-          : 'You are a novel editor. Perform only the requested task and output only the result. No explanations or meta-text.',
+          ? `당신은 소설 편집자입니다.${sysCtx} 요청된 작업만 수행하고 결과만 출력하세요. 설명이나 메타 텍스트는 금지입니다. 원문의 문체와 분위기를 유지하세요.`
+          : `You are a novel editor.${sysCtx} Perform only the requested task and output only the result. No explanations or meta-text. Preserve the original style and atmosphere.`,
         messages: [{ role: 'user', content: prompt }],
         onChunk: (chunk) => { accumulated += chunk; setResult(accumulated); },
         signal: ctrl.signal,

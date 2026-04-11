@@ -77,6 +77,30 @@ export function useStudioUX() {
     setTimeout(() => setSaveFlash(false), 1500);
   }, []);
 
+  // Token budget warning
+  const [tokenBudgetWarning, setTokenBudgetWarning] = useState<{ estimatedTokens: number; ratio: number } | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { estimatedTokens: number; ratio: number };
+      setTokenBudgetWarning(detail);
+      setTimeout(() => setTokenBudgetWarning(null), 8000);
+    };
+    window.addEventListener('noa:token-budget-warning', handler);
+    return () => window.removeEventListener('noa:token-budget-warning', handler);
+  }, []);
+
+  // Character truncation warning
+  const [charTruncation, setCharTruncation] = useState<{ total: number; dropped: number } | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { total: number; dropped: number };
+      setCharTruncation(detail);
+      setTimeout(() => setCharTruncation(null), 10000);
+    };
+    window.addEventListener('noa:character-truncated', handler);
+    return () => window.removeEventListener('noa:character-truncated', handler);
+  }, []);
+
   // Confirm modal
   const [confirmState, setConfirmState] = useState<ConfirmState>({
     open: false, title: '', message: '', onConfirm: () => {},
@@ -99,6 +123,9 @@ export function useStudioUX() {
     lastSaveTime, saveFlash, triggerSave,
     // Fallback
     fallbackNotice, setFallbackNotice,
+    // Token/Character warnings
+    tokenBudgetWarning, setTokenBudgetWarning,
+    charTruncation, setCharTruncation,
     // Confirm
     confirmState, showConfirm, closeConfirm,
   };

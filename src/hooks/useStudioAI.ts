@@ -18,6 +18,16 @@ import { stripEngineArtifacts } from '@/engine/pipeline';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
+
+/** 품질 게이트 시도별 기록 */
+export interface QualityGateAttemptRecord {
+  attempt: number;
+  grade: string;
+  directorScore: number;
+  qualityTag: string;
+  failReasons: string[];
+  passed: boolean;
+}
 import { getNarrativeDepth } from '@/lib/noa/lora-swap';
 import { executePipeline, getDefaultPipelineConfig, type PipelineExecution } from '@/engine/auto-pipeline';
 import type { ProactiveSuggestion } from '@/lib/studio-types';
@@ -42,7 +52,7 @@ interface UseStudioAIParams {
   advancedSettings?: any;
   // 3.8 자율 시스템 콜백
   onSuggestionsUpdate?: (suggestions: ProactiveSuggestion[]) => void;
-  onQualityGateRetry?: (attempt: number, maxRetries: number) => void;
+  onQualityGateRetry?: (attempt: number, maxRetries: number, history: QualityGateAttemptRecord[]) => void;
   onPipelineUpdate?: (result: PipelineExecution) => void;
 }
 
@@ -219,6 +229,7 @@ export function useStudioAI({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let ipCheck: any;
       let currentRetryHint = '';
+      const gateHistory: QualityGateAttemptRecord[] = [];
 
       while (attempt <= maxAttempts) {
         fullContent = '';
@@ -254,10 +265,21 @@ export function useStudioAI({
         qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
 
         gateResult = evaluateQuality(finalContent, capturedConfig, gateConfig.thresholds, language, attempt);
+
+        // 시도별 이력 기록
+        gateHistory.push({
+          attempt,
+          grade: gateResult.grade || '?',
+          directorScore: dReport?.score ?? 0,
+          qualityTag: qTag || '⚪',
+          failReasons: [...(gateResult.failReasons || [])],
+          passed: gateResult.passed,
+        });
+
         if (gateResult.passed) break;
 
         currentRetryHint = buildRetryHint(gateResult, attempt, language === 'KO');
-        onQualityGateRetry?.(attempt, maxAttempts);
+        onQualityGateRetry?.(attempt, maxAttempts, gateHistory);
         if (attempt < maxAttempts) {
           attempt++;
         } else {
@@ -270,7 +292,7 @@ export function useStudioAI({
       setDirectorReport(dReport);
 
       const retryHint = !gateResult.passed ? currentRetryHint : '';
-      const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons, qualityGateRetryHint: retryHint };
+      const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons, qualityGateRetryHint: retryHint, qualityGateHistory: gateHistory };
 
       // ============================================================
       // 3.8 — 세계관 스튜디오 양방향 동기화 (World Data Sync)

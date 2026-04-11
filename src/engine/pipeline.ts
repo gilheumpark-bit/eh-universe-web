@@ -260,6 +260,14 @@ export function buildSystemInstruction(
   const injectedCharacters = config.characters.length > MAX_CHARACTERS
     ? config.characters.slice(0, MAX_CHARACTERS)
     : config.characters;
+
+  // P0: 캐릭터 절삭 경고 이벤트 발행
+  if (config.characters.length > MAX_CHARACTERS && typeof window !== 'undefined') {
+    const dropped = config.characters.length - MAX_CHARACTERS;
+    window.dispatchEvent(new CustomEvent('noa:character-truncated', {
+      detail: { total: config.characters.length, included: MAX_CHARACTERS, dropped },
+    }));
+  }
   // 캐릭터 라벨 다국어 매핑
   const CHAR_LABELS: Record<string, Record<AppLanguage, string>> = {
     personality: { KO: '성격', EN: 'Personality', JP: '性格', CN: '性格' },
@@ -517,7 +525,7 @@ export function buildSystemInstruction(
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, isKO);
 
-  return `당신은 "NOA 소설 스튜디오"의 핵심 엔진 [ANS 10.0]입니다.
+  const systemPromptText = `당신은 "NOA 소설 스튜디오"의 핵심 엔진 [ANS 10.0]입니다.
 당신은 'Project EH'의 세계관 물리 법칙을 준수하며 작가와 협업하여 소설을 집필합니다.
 
 [ENGINE VERSION: ANS 10.0 — Nexus Controller Pipeline]
@@ -600,6 +608,25 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
   "critique": "해당 언어로 작성된 상세 비평"
 }
 \`\`\``;
+
+  // P0: 토큰 버짓 감사 — 시스템 프롬프트가 컨텍스트 30% 초과 시 경고
+  if (typeof window !== 'undefined') {
+    const sysLen = systemPromptText.length;
+    // CJK 텍스트: ~1.5 토큰/글자, 영문: ~0.75 토큰/단어. 보수적으로 글자수 * 0.7 추정
+    const estimatedTokens = Math.round(sysLen * 0.7);
+    const CONTEXT_LIMITS: Record<string, number> = {
+      'gemini': 1_000_000, 'claude': 200_000, 'openai': 128_000, 'groq': 128_000, 'default': 128_000,
+    };
+    const contextLimit = CONTEXT_LIMITS.default;
+    const ratio = estimatedTokens / contextLimit;
+    if (ratio > 0.30) {
+      window.dispatchEvent(new CustomEvent('noa:token-budget-warning', {
+        detail: { estimatedTokens, contextLimit, ratio: Math.round(ratio * 100) },
+      }));
+    }
+  }
+
+  return systemPromptText;
 }
 
 // ============================================================

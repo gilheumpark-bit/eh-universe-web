@@ -715,6 +715,11 @@ async function streamViaProxy(
         errMsg = retryAfter
           ? `⏳ 요청 한도 초과 — ${retryAfter}초 후 다시 시도해주세요 (Rate Limited)`
           : '⏳ 요청 한도 초과 — 잠시 후 다시 시도해주세요 (Rate Limited)';
+        // Attach server-provided delay for retry logic
+        const rateLimitErr = new Error(errMsg);
+        (rateLimitErr as Error & { _retryAfterMs?: number })._retryAfterMs =
+          retryAfter ? Math.min(parseInt(retryAfter, 10) * 1000, 30_000) : 0;
+        throw rateLimitErr;
       } else if (errData.error) {
         errMsg = errData.error;
       }
@@ -842,13 +847,19 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);
   const safeOpts = { ...opts, messages: trimmedMessages, maxTokens };
 
-  // Retry wrapper: up to 2 retries on transient errors (429, 500, 503, network)
-  const MAX_RETRIES = 2;
+  // Retry wrapper: up to 3 retries with jittered exponential backoff
+  const MAX_RETRIES = 3;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (attempt > 0) {
-      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      // Honor server Retry-After header if available, else jittered exponential backoff
+      const serverDelay = (lastError as Error & { _retryAfterMs?: number })?._retryAfterMs;
+      const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+      const jitter = Math.random() * 0.3 * baseDelay;
+      const backoff = (serverDelay && serverDelay > 0)
+        ? serverDelay
+        : Math.round(baseDelay + jitter);
       await new Promise(r => setTimeout(r, backoff));
     }
 

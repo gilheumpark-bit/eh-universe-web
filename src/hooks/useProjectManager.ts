@@ -9,6 +9,7 @@ import { PlatformType } from '@/engine/types';
 import { trackStudioSessionStart } from '@/lib/analytics';
 import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
 import { isFeatureEnabled } from '@/lib/feature-flags';
+import { debouncedSyncToFirestore, loadProjectsFromFirestore, subscribeToProjectChanges } from '@/lib/firestore-project-sync';
 
 // ============================================================
 // PART 1 — Initial config & types
@@ -44,7 +45,7 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
  * Central project/session CRUD hook. Handles localStorage hydration, project creation,
  * session switching, IndexedDB backup/restore, and storage quota management.
  */
-export function useProjectManager(language: AppLanguage) {
+export function useProjectManager(language: AppLanguage, uid?: string | null) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -119,9 +120,13 @@ export function useProjectManager(language: AppLanguage) {
         backupToIndexedDB(projects).catch(err => logger.warn('IndexedDB', 'Backup failed:', err));
       }
       if (ok) window.dispatchEvent(new CustomEvent('noa:auto-saved'));
+      // Firestore 클라우드 동기화 (feature-gated)
+      if (uid && isFeatureEnabled('CLOUD_SYNC')) {
+        debouncedSyncToFirestore(uid, projects);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [projects, hydrated]);
+  }, [projects, hydrated, uid]);
 
   // Fix #4: beforeunload — flush save synchronously to prevent data loss
   useEffect(() => {
@@ -171,6 +176,52 @@ export function useProjectManager(language: AppLanguage) {
     }, BACKUP_INTERVAL);
     return () => clearInterval(interval);
   }, [hydrated, projects.length]);
+
+  // ============================================================
+  // PART 3.6 — Firestore 클라우드 동기화 (CLOUD_SYNC flag)
+  // ============================================================
+
+  // 초기 로드: Firestore에서 더 최신 데이터가 있으면 병합
+  useEffect(() => {
+    if (!hydrated || !uid || !isFeatureEnabled('CLOUD_SYNC')) return;
+    loadProjectsFromFirestore(uid).then(remoteProjects => {
+      if (!remoteProjects || remoteProjects.length === 0) return;
+      setProjects(prev => {
+        const localMap = new Map(prev.map(p => [p.id, p]));
+        let merged = false;
+        for (const rp of remoteProjects) {
+          const local = localMap.get(rp.id);
+          if (!local || (rp.lastUpdate && rp.lastUpdate > (local.lastUpdate || 0))) {
+            localMap.set(rp.id, rp);
+            merged = true;
+          }
+        }
+        if (!merged) return prev;
+        return Array.from(localMap.values()).sort((a, b) => (b.lastUpdate || 0) - (a.lastUpdate || 0));
+      });
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, uid]);
+
+  // 실시간 구독: 다른 디바이스에서 변경 시 자동 반영
+  useEffect(() => {
+    if (!hydrated || !uid || !isFeatureEnabled('CLOUD_SYNC')) return;
+    let unsub: (() => void) | null = null;
+    subscribeToProjectChanges(uid, (remoteProjects) => {
+      setProjects(prev => {
+        const localMap = new Map(prev.map(p => [p.id, p]));
+        for (const rp of remoteProjects) {
+          const local = localMap.get(rp.id);
+          if (!local || (rp.lastUpdate && rp.lastUpdate > (local.lastUpdate || 0))) {
+            localMap.set(rp.id, rp);
+          }
+        }
+        return Array.from(localMap.values()).sort((a, b) => (b.lastUpdate || 0) - (a.lastUpdate || 0));
+      });
+    }).then(fn => { unsub = fn; });
+    return () => { unsub?.(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, uid]);
 
   const doRestoreVersionedBackup = useCallback(async (timestamp: number) => {
     const restored = await restoreVersionedBackup(timestamp);
