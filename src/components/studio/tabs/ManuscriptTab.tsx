@@ -37,10 +37,15 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
 
   // 현재 선택된 에피소드 원고에서 장면 파싱
   const handleSceneMode = useCallback((mode: 'radio' | 'visual' | 'edit') => {
+    // 같은 모드 재클릭 시 토글
+    if (sceneMode === mode) { setSceneMode('off'); setParsedScenes([]); return; }
+
     const manuscripts = config.manuscripts ?? [];
     const latestMs = manuscripts[manuscripts.length - 1];
     if (!latestMs?.content) {
-      setSceneMode('off');
+      // 원고 없어도 모드는 세팅 → 빈 상태 안내 UI 표시
+      setParsedScenes([]);
+      setSceneMode(mode);
       return;
     }
 
