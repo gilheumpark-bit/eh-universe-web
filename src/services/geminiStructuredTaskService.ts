@@ -1,6 +1,7 @@
 import { Type } from '@google/genai';
-import { createServerGeminiClient } from '@/lib/google-genai-server';
+import { createServerGeminiClient, hasGeminiServerCredentials } from '@/lib/google-genai-server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string; };
@@ -10,7 +11,40 @@ export type SceneTierContext = { charProfiles?: { name: string; desire?: string;
 const LANGUAGE_NAMES: Record<AppLanguage, string> = { KO: 'Korean', EN: 'English', JP: 'Japanese', CN: 'Chinese' };
 const STRUCTURED_GENERATION_TIMEOUT_MS = 60_000;
 
+/** DGX Spark를 통한 JSON 생성 폴백 */
+async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> {
+  const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'google/gemma-4-26b-a4b',
+      messages: [
+        { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.8,
+      max_tokens: 4096,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`DGX Spark error: ${res.status}`);
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  // JSON 블록 추출 (```json ... ``` 또는 bare JSON)
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
+  if (jsonMatch) {
+    try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }
+  }
+  try { return JSON.parse(text) as T; } catch { return fallback; }
+}
+
 export async function generateJson<T>(apiKey: string, model: string, prompt: string, responseSchema: object, fallback: T): Promise<T> {
+  // Gemini 키도 없고 서버 자격증명도 없으면 DGX Spark 직행
+  if (!apiKey && !hasGeminiServerCredentials() && SPARK_SERVER_URL) {
+    return generateJsonViaSpark(prompt, fallback);
+  }
+
   const ai = createServerGeminiClient(apiKey);
   const MAX_RETRIES = 2;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -24,7 +58,11 @@ export async function generateJson<T>(apiKey: string, model: string, prompt: str
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       const isRetryable = /500|502|503|504|INTERNAL|resource.*exhausted|deadline|overloaded/i.test(msg);
-      if (!isRetryable || attempt === MAX_RETRIES) throw err;
+      if (!isRetryable || attempt === MAX_RETRIES) {
+        // Gemini 실패 + DGX 있으면 폴백
+        if (SPARK_SERVER_URL) return generateJsonViaSpark(prompt, fallback);
+        throw err;
+      }
       await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
     }
   }

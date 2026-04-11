@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import {
   handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems, handleSkills, handleMagicSystems,
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
     if (forbidden) return forbidden;
 
     const userApiKey = normalizeUserApiKey(body.apiKey);
-    if (!userApiKey && !hasServerProviderCredentials('gemini')) {
+    if (!userApiKey && !hasServerProviderCredentials('gemini') && !SPARK_SERVER_URL) {
       return NextResponse.json(
         { error: 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.' },
         { status: 401 },

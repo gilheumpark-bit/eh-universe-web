@@ -75,6 +75,11 @@ export async function executeGeminiHostedFirst<T>(
   const hostedEnabled = hasGeminiServerCredentials();
 
   if (!hostedEnabled && !userApiKey) {
+    // DGX Spark 폴백: SPARK_SERVER_URL 있으면 빈 키로 진행 (dispatchTask에서 DGX 경유)
+    const hasDgx = !!process.env.SPARK_SERVER_URL || !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+    if (hasDgx) {
+      return { result: await operation('', 'hosted'), mode: 'hosted' };
+    }
     throw new Error('Gemini server credentials are not configured');
   }
 
