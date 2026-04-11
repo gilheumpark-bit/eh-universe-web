@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const maxDuration = 60;
+
 import { logger } from '@/lib/logger';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';

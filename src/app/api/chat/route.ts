@@ -7,6 +7,8 @@
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
+export const maxDuration = 60; // Vercel API 대기 시간 60초 (DGX non-stream 대응)
+
 import { hasServerProviderCredentials, isServerProviderId, resolveServerProviderKey, type ServerProviderId } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
 import { getTierLimits } from '@/lib/tier-gate';

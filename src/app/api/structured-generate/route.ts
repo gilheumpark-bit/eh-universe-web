@@ -7,6 +7,8 @@
 // Falls back to /api/gemini-structured for Gemini-specific tasks
 
 import { NextRequest, NextResponse } from 'next/server';
+export const maxDuration = 60;
+
 import { logger } from '@/lib/logger';
 import { hasServerProviderCredentials, resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
 import { SPARK_SERVER_URL } from '@/services/sparkService';

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const maxDuration = 60;
+
 import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { generateJsonGemini } from '@/services/aiProvidersStructured';
