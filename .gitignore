@@ -142,3 +142,10 @@ playwright-results.json
 
 # Obsolete work orders
 plans/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
