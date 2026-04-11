@@ -662,10 +662,16 @@ async function streamLocalDirect(
 async function streamViaProxy(
   provider: ProviderId, model: string, apiKey: string, opts: StreamOptions
 ): Promise<string> {
-  // 로컬 프로바이더는 브라우저 직접 호출 (서버 프록시 우회)
+  // 로컬 프로바이더: 프로덕션이면 /api/chat (DGX 폴백), 개발이면 /api/local-proxy
   if (PROVIDERS[provider]?.capabilities.isLocal) {
-    if (!apiKey.trim()) throw new Error('Local LLM URL is not configured. Set the server URL in BYOK settings.');
-    return streamLocalDirect(apiKey, model, opts);
+    const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+    if (isProduction) {
+      // 프로덕션: /api/chat → DGX Spark 폴백 경로로 전환
+      provider = provider; // keep provider for logging, but route through /api/chat below
+    } else {
+      if (!apiKey.trim()) throw new Error('Local LLM URL is not configured. Set the server URL in BYOK settings.');
+      return streamLocalDirect(apiKey, model, opts);
+    }
   }
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };

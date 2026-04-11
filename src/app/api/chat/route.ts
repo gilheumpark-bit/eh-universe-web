@@ -233,6 +233,10 @@ function resolveAuth(
   }
 
   if (!isByok && !hasServerProviderCredentials(provider)) {
+    // DGX Spark 서버가 있으면 폴백 가능 → 허용 (dispatchStream에서 spark로 전환)
+    if (hasDgxServer) {
+      return { ok: true, auth: { apiKey: '', isByok: false, userApiKey: '', canFallbackToUserKey: false } };
+    }
     return {
       ok: false,
       response: NextResponse.json(

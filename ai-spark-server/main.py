@@ -9,7 +9,7 @@ import logging
 from collections import defaultdict
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 import httpx
 
@@ -116,6 +116,7 @@ def health_check():
         "status": "ok",
         "server": "EH Universe DGX Spark",
         "lm_studio": LM_STUDIO_URL,
+        "comfyui": COMFYUI_URL,
         "daily_limit": DAILY_LIMIT,
         "guest_limit": GUEST_LIMIT,
         "max_concurrent": MAX_CONCURRENT,
@@ -241,7 +242,157 @@ async def get_usage(request: Request):
     }
 
 # ============================================================
-# PART 5 — 코드 샌드박스 (Code Studio 연동)
+# PART 5 — 이미지 생성 (ComfyUI 프록시)
+# ============================================================
+
+import base64
+import json
+import uuid
+
+COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+
+# SDXL 기본 워크플로우 템플릿
+def _build_sdxl_workflow(prompt: str, negative: str, width: int, height: int, seed: int) -> dict:
+    """ComfyUI API 형식의 SDXL 워크플로우 생성"""
+    return {
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "seed": seed,
+                "steps": 25,
+                "cfg": 7.0,
+                "sampler_name": "euler_ancestral",
+                "scheduler": "normal",
+                "denoise": 1.0,
+                "model": ["4", 0],
+                "positive": ["6", 0],
+                "negative": ["7", 0],
+                "latent_image": ["5", 0],
+            },
+        },
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"},
+        },
+        "5": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {"width": width, "height": height, "batch_size": 1},
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"text": prompt, "clip": ["4", 1]},
+        },
+        "7": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"text": negative or "", "clip": ["4", 1]},
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {"samples": ["3", 0], "vae": ["4", 2]},
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {"filename_prefix": "ehgen", "images": ["8", 0]},
+        },
+    }
+
+class ImageRequest(BaseModel):
+    prompt: str
+    width: int = 1024
+    height: int = 1024
+    seed: int | None = None
+    negative_prompt: str = ""
+
+@app.post("/api/image/generate")
+async def generate_image(req: ImageRequest, request: Request):
+    """ComfyUI를 통한 이미지 생성 — SDXL/FLUX"""
+    user_id = get_user_id(request)
+    user_tier = request.headers.get("x-user-tier", "none")
+    check_rate_limit(user_id, user_tier)
+
+    # 크기 제한: 512~1536, 64배수
+    width = max(512, min(1536, (req.width // 64) * 64))
+    height = max(512, min(1536, (req.height // 64) * 64))
+    seed = req.seed if req.seed is not None else int(uuid.uuid4().int % 2147483647)
+
+    # 네거티브 프롬프트 분리
+    negative = req.negative_prompt
+    if not negative and "\n\nNegative:" in req.prompt:
+        parts = req.prompt.split("\n\nNegative:", 1)
+        prompt_text = parts[0].strip()
+        negative = parts[1].strip() if len(parts) > 1 else ""
+    else:
+        prompt_text = req.prompt
+
+    workflow = _build_sdxl_workflow(prompt_text, negative, width, height, seed)
+
+    async with httpx.AsyncClient(timeout=120) as client:
+        try:
+            # 1) ComfyUI에 워크플로우 제출
+            queue_resp = await client.post(
+                f"{COMFYUI_URL}/prompt",
+                json={"prompt": workflow},
+                timeout=10,
+            )
+            if queue_resp.status_code != 200:
+                return JSONResponse(
+                    status_code=502,
+                    content={"error": f"ComfyUI queue failed: {queue_resp.text[:200]}"},
+                )
+            prompt_id = queue_resp.json().get("prompt_id")
+            if not prompt_id:
+                return JSONResponse(status_code=502, content={"error": "No prompt_id from ComfyUI"})
+
+            logger.info(f"[{user_id}] 이미지 생성 시작 — prompt_id={prompt_id}, seed={seed}")
+
+            # 2) 완료 대기 (폴링, 최대 90초)
+            images = []
+            for _ in range(90):
+                await asyncio.sleep(1)
+                hist_resp = await client.get(f"{COMFYUI_URL}/history/{prompt_id}", timeout=10)
+                if hist_resp.status_code != 200:
+                    continue
+                history = hist_resp.json()
+                if prompt_id not in history:
+                    continue
+
+                outputs = history[prompt_id].get("outputs", {})
+                for node_id, node_output in outputs.items():
+                    for img_info in node_output.get("images", []):
+                        filename = img_info.get("filename")
+                        subfolder = img_info.get("subfolder", "")
+                        img_type = img_info.get("type", "output")
+                        # 3) 이미지 다운로드 → base64
+                        img_resp = await client.get(
+                            f"{COMFYUI_URL}/view",
+                            params={"filename": filename, "subfolder": subfolder, "type": img_type},
+                            timeout=30,
+                        )
+                        if img_resp.status_code == 200:
+                            b64 = base64.b64encode(img_resp.content).decode("utf-8")
+                            images.append(f"data:image/png;base64,{b64}")
+                break
+
+            if not images:
+                return JSONResponse(
+                    status_code=504,
+                    content={"error": "이미지 생성 시간 초과 (90초). ComfyUI 상태를 확인하세요."},
+                )
+
+            logger.info(f"[{user_id}] 이미지 생성 완료 — {len(images)}장, seed={seed}")
+            return {"images": images, "seed": seed}
+
+        except httpx.ConnectError:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "ComfyUI 서버에 연결할 수 없습니다. ComfyUI를 시작하세요."},
+            )
+        except Exception as e:
+            logger.error(f"이미지 생성 오류: {e}")
+            return JSONResponse(status_code=500, content={"error": str(e)})
+
+# ============================================================
+# PART 6 — 코드 샌드박스 (Code Studio 연동)
 # ============================================================
 
 @app.post("/api/sandbox/execute")
@@ -271,7 +422,7 @@ async def execute_code(request: Request):
     }
 
 # ============================================================
-# PART 6 — 서버 시작
+# PART 7 — 서버 시작
 # ============================================================
 
 if __name__ == "__main__":

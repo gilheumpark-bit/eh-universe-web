@@ -18,6 +18,7 @@ import {
   normalizeUserApiKey,
 } from '@/lib/google-genai-server';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+import { SPARK_SERVER_URL, streamSparkAI } from '@/services/sparkService';
 import { logger } from '@/lib/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -218,6 +219,41 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // DGX Spark 폴백: Gemini 서버 키도 없고 BYOK도 없을 때
+      if (SPARK_SERVER_URL) {
+        try {
+          const sparkStream = await streamSparkAI(
+            'gemma-4-26b-it', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
+          );
+          const reader = sparkStream.getReader();
+          const decoder = new TextDecoder();
+          let fullText = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            // SSE 파싱
+            for (const line of chunk.split('\n')) {
+              if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+              try {
+                const j = JSON.parse(line.slice(6));
+                const delta = j.choices?.[0]?.delta?.content;
+                if (delta) fullText += delta;
+              } catch { /* skip */ }
+            }
+          }
+          return NextResponse.json(
+            { result: fullText, stage, approxPromptTokens: promptTokens },
+            { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
+          );
+        } catch (e) {
+          return NextResponse.json(
+            { error: `DGX Spark 번역 실패: ${e instanceof Error ? e.message : e}` },
+            { status: 502 },
+          );
+        }
+      }
+
       return NextResponse.json(
         { error: '선택한 번역 엔진의 API 키가 설정되지 않았습니다.' },
         { status: 400 },
@@ -234,6 +270,36 @@ export async function POST(req: NextRequest) {
     }
 
     if (!finalApiKey) {
+      // DGX Spark 폴백
+      if (SPARK_SERVER_URL) {
+        try {
+          const sparkStream = await streamSparkAI(
+            'gemma-4-26b-it', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
+          );
+          const reader = sparkStream.getReader();
+          const decoder = new TextDecoder();
+          let fullText = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            for (const line of chunk.split('\n')) {
+              if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+              try {
+                const j = JSON.parse(line.slice(6));
+                const delta = j.choices?.[0]?.delta?.content;
+                if (delta) fullText += delta;
+              } catch { /* skip */ }
+            }
+          }
+          return NextResponse.json(
+            { result: fullText, stage, approxPromptTokens: promptTokens },
+            { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
+          );
+        } catch (e) {
+          return NextResponse.json({ error: `DGX Spark 번역 실패: ${e instanceof Error ? e.message : e}` }, { status: 502 });
+        }
+      }
       return NextResponse.json(
         { error: '선택한 번역 엔진의 API 키가 설정되지 않았습니다.' },
         { status: 400 },

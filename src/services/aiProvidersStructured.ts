@@ -1,9 +1,11 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
+import { SPARK_SERVER_URL } from './sparkService';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai: 'https://api.openai.com/v1/chat/completions',
   groq: 'https://api.groq.com/openai/v1/chat/completions',
   mistral: 'https://api.mistral.ai/v1/chat/completions',
+  spark: `${SPARK_SERVER_URL}/v1/chat/completions`,
 };
 const STRUCTURED_PROVIDER_TIMEOUT_MS = 60_000;
 
@@ -155,6 +157,11 @@ export async function dispatchStructuredGeneration(
 ): Promise<{ ok: true; result: unknown } | { ok: false; error: string }> {
   try {
     if (provider === 'ollama' || provider === 'lmstudio') {
+      // DGX Spark 서버가 있으면 OpenAI 호환 경로로 폴백
+      if (SPARK_SERVER_URL) {
+        const schemaHint = schema ? `\n\nRespond with JSON matching this schema:\n${JSON.stringify(schema, null, 2)}` : '';
+        return { ok: true, result: await generateJsonOpenAICompat('spark', '', model, prompt + schemaHint, fallback) };
+      }
       return { ok: false, error: 'Local providers must use /api/local-proxy' };
     }
     if (provider === 'gemini' && schema) {

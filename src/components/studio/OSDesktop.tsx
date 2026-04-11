@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   BookOpen, Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
-  Code2, Languages, Globe, Zap,
+  Code2, Languages, Globe, Zap, ImageIcon,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
@@ -191,6 +191,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
     { id: 'rulebook' as AppTab, icon: BookOpen, label: language === 'KO' ? '설정집' : 'Rulebook', color: 'text-amber-400' },
     { id: 'writing' as AppTab, icon: Feather, label: language === 'KO' ? '집필' : 'Writing', color: 'text-amber-200' },
     { id: 'manuscript' as AppTab, icon: Library, label: language === 'KO' ? '원고' : 'Manuscript', color: 'text-amber-300' },
+    { id: 'visual' as AppTab, icon: ImageIcon, label: language === 'KO' ? '이미지' : 'Image', color: 'text-violet-300' },
     { id: 'style' as AppTab, icon: Type, label: language === 'KO' ? '문체' : 'Style', color: 'text-orange-200' },
     { id: 'history' as AppTab, icon: Clock, label: language === 'KO' ? '기록' : 'History', color: 'text-stone-300' },
     { id: 'docs' as AppTab, icon: BookMarked, label: language === 'KO' ? '가이드' : 'Docs', color: 'text-amber-300' },

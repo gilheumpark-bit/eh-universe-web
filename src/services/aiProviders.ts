@@ -1,5 +1,5 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
-import { streamSparkAI } from './sparkService';
+import { streamSparkAI, SPARK_SERVER_URL } from './sparkService';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai:  'https://api.openai.com/v1/chat/completions',
@@ -134,6 +134,10 @@ export async function dispatchStream(
         return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature) };
       case 'ollama':
       case 'lmstudio':
+        // 프로덕션: DGX Spark 서버로 폴백
+        if (SPARK_SERVER_URL) {
+          return { ok: true, stream: await streamSparkAI(model, system, messages, temperature) };
+        }
         return { ok: false, error: 'Local providers must use /api/local-proxy' };
       case 'claude':
         return { ok: true, stream: await streamClaude(apiKey, model, system, messages, temperature, maxTokens) };
