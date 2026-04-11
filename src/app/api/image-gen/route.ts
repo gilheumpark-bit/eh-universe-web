@@ -132,6 +132,45 @@ const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, refere
       return NextResponse.json({ images });
     }
 
+    // ============================================================
+    // DGX Spark Local (ComfyUI Proxy)
+    // ============================================================
+    if (provider === 'local-spark') {
+      const sparkUrl = process.env.SPARK_SERVER_URL;
+      if (!sparkUrl) {
+        return NextResponse.json({ error: 'DGX Spark server not configured' }, { status: 503 });
+      }
+
+      const res = await fetch(`${sparkUrl}/api/image/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: negativePrompt ? `${prompt}\n\nNegative: ${negativePrompt}` : prompt,
+          width: clampSize(width || 1024, 512, 1536),
+          height: clampSize(height || 1024, 512, 1536),
+          seed: seed ?? Math.floor(Math.random() * 2147483647),
+        }),
+        signal: AbortSignal.timeout(55_000),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        return NextResponse.json({ error: err.error || `DGX Spark error: ${res.status}` }, { status: res.status });
+      }
+
+      const data = await res.json();
+      // ComfyUI 프록시는 base64 이미지 반환
+      const images = Array.isArray(data.images)
+        ? data.images.map((img: string | { base64?: string; url?: string }) =>
+            typeof img === 'string'
+              ? { url: img.startsWith('data:') ? img : `data:image/png;base64,${img}` }
+              : { url: img.url || (img.base64 ? `data:image/png;base64,${img.base64}` : '') }
+          )
+        : [];
+
+      return NextResponse.json({ images });
+    }
+
     return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });
   } catch (e) {
     logger.error('API:image-gen', e instanceof Error ? e.message : e);

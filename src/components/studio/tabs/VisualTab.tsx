@@ -341,12 +341,13 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const totalEpisodes = config.totalEpisodes ?? 1;
 
   // Image generation API key + provider (persisted in localStorage, lazy init)
+  const hasDgxService = !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
   const [imgProvider, setImgProvider] = useState<ImageGenProvider>(() => {
     try {
       const saved = localStorage.getItem('noa-img-provider');
-      if (saved === 'openai' || saved === 'stability') return saved;
+      if (saved === 'openai' || saved === 'stability' || saved === 'local-spark') return saved as ImageGenProvider;
     } catch { /* SSR safe */ }
-    return 'openai';
+    return hasDgxService ? 'local-spark' : 'openai';
   });
   const [imgApiKey, setImgApiKey] = useState(() => {
     try {
@@ -591,25 +592,71 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             </p>
           )}
           {showImgSettings && (
-            <div className="mt-3 space-y-2">
-              <select value={imgProvider} onChange={e => setImgProvider(e.target.value as ImageGenProvider)}
-                className="w-full bg-black/50 border border-border rounded-lg px-3 py-2 text-[11px] outline-none">
-                <option value="openai">OpenAI DALL-E 3</option>
-                <option value="stability">Stability AI (SDXL)</option>
-              </select>
-              <input
-                type="password"
-                value={imgApiKey}
-                onChange={e => setImgApiKey(e.target.value)}
-                placeholder={isKO ? 'API 키 입력...' : 'API Key...'}
-                className="w-full bg-black/50 border border-border rounded-lg px-3 py-2 text-[11px] outline-none"
-              />
+            <div className="mt-3 space-y-3">
+              {/* Provider 선택 — DGX Spark 강조 */}
+              <div className="space-y-1.5">
+                {[
+                  { id: 'local-spark' as ImageGenProvider, name: 'DGX Spark', badge: '128GB · Free', free: true },
+                  { id: 'openai' as ImageGenProvider, name: 'OpenAI DALL-E 3', badge: 'BYOK', free: false },
+                  { id: 'stability' as ImageGenProvider, name: 'Stability AI', badge: 'BYOK', free: false },
+                ].map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setImgProvider(p.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all ${
+                      imgProvider === p.id
+                        ? p.free
+                          ? 'bg-accent-purple/15 border-accent-purple/50 shadow-[0_0_12px_rgba(141,123,195,0.15)]'
+                          : 'bg-accent-blue/10 border-accent-blue/40'
+                        : 'border-border/40 hover:border-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${imgProvider === p.id ? (p.free ? 'text-accent-purple' : 'text-accent-blue') : 'text-text-secondary'}`}>
+                        {p.free && '⚡ '}{p.name}
+                      </span>
+                    </div>
+                    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
+                      p.free ? 'bg-accent-green/10 text-accent-green' : 'bg-bg-tertiary text-text-tertiary'
+                    }`}>
+                      {p.badge}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* FLUX 모델 안내 — local-spark 선택 시 */}
+              {imgProvider === 'local-spark' && (
+                <div className="px-3 py-2 rounded-lg bg-accent-purple/5 border border-accent-purple/20 text-[10px] text-accent-purple leading-relaxed">
+                  {isKO
+                    ? '💡 프롬프트에 "flux"를 포함하면 FLUX.1 Schnell (FP8) 모델이 자동 가동됩니다. 미포함 시 SDXL 1.0으로 생성합니다.'
+                    : '💡 Include "flux" in your prompt to activate FLUX.1 Schnell (FP8). Otherwise SDXL 1.0 is used.'}
+                </div>
+              )}
+
+              {/* API 키 — BYOK 프로바이더만 */}
+              {imgProvider !== 'local-spark' && (
+                <input
+                  type="password"
+                  value={imgApiKey}
+                  onChange={e => setImgApiKey(e.target.value)}
+                  placeholder={isKO ? 'API 키 입력...' : 'API Key...'}
+                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[11px] outline-none focus:border-accent-blue"
+                />
+              )}
+
               <button onClick={saveImgSettings}
-                className="w-full py-2 bg-blue-600/20 border border-blue-500/30 rounded-lg text-[10px] font-bold text-blue-300 hover:bg-blue-600/30 transition-all">
+                className="w-full py-2 bg-accent-purple/15 border border-accent-purple/30 rounded-lg text-[10px] font-bold text-accent-purple hover:bg-accent-purple/25 transition-all">
                 {isKO ? '저장' : 'Save'}
               </button>
-              {imgApiKey && (
-                <p className="text-[9px] text-green-400">
+
+              {imgProvider === 'local-spark' && (
+                <p className="text-[9px] text-accent-green">
+                  {isKO ? '⚡ DGX Spark 무료 — API 키 없이 바로 사용 가능' : '⚡ DGX Spark Free — No API key needed'}
+                </p>
+              )}
+              {imgProvider !== 'local-spark' && imgApiKey && (
+                <p className="text-[9px] text-accent-green">
                   {isKO ? '키 설정됨 — 카드 편집기에서 "이미지 생성" 버튼 사용 가능' : 'Key set — "Generate" button available in card editor'}
                 </p>
               )}

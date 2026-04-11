@@ -22,7 +22,7 @@ export interface ImageGenError {
   code?: string;
 }
 
-export type ImageGenProvider = 'openai' | 'stability';
+export type ImageGenProvider = 'openai' | 'stability' | 'local-spark';
 
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=ImageGenProvider,ImageGenResult
 
@@ -53,7 +53,7 @@ export async function generateImage(
         provider,
         prompt,
         negativePrompt,
-        apiKey,
+        apiKey: provider === 'local-spark' ? 'dgx-server' : apiKey,
         width: options.width || 1024,
         height: options.height || 1024,
         n: options.n || 1,
@@ -89,7 +89,17 @@ export const IMAGE_PROVIDERS: {
   name: string;
   models: string[];
   maxSize: number;
+  free?: boolean;
+  badge?: string;
 }[] = [
+  {
+    id: 'local-spark',
+    name: 'DGX Spark',
+    models: ['sdxl-1.0', 'flux-schnell-fp8'],
+    maxSize: 1536,
+    free: true,
+    badge: '128GB VRAM · Free',
+  },
   {
     id: 'openai',
     name: 'OpenAI DALL-E 3',
