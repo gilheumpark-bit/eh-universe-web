@@ -238,7 +238,7 @@ function SceneLane({
   return (
     <div className={`border rounded-xl ${hasWarnings ? "border-accent-amber/30" : "border-border/20"} bg-bg-secondary/30`}>
       {/* 장면 헤더 */}
-      <button type="button" className="w-full flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/[0.02] transition-colors text-left" onClick={onToggle}>
+      <div role="button" tabIndex={0} className="w-full flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/[0.02] transition-colors text-left" onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}>
         {collapsed ? <ChevronRight className="h-3.5 w-3.5 text-text-tertiary" /> : <ChevronDown className="h-3.5 w-3.5 text-text-tertiary" />}
 
         <span className="text-xs font-mono text-text-primary font-medium">{scene.title}</span>
@@ -266,7 +266,7 @@ function SceneLane({
             <Play className="h-3 w-3 text-accent-purple" />
           </button>
         )}
-      </button>
+      </div>
 
       {/* 비트 목록 */}
       {!collapsed && (
