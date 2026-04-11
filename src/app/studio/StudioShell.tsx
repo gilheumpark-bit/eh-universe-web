@@ -29,7 +29,7 @@ import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
-import { getApiKey, getActiveProvider, type ProviderId } from '@/lib/ai-providers';
+import { getApiKey, getActiveProvider, hasStoredApiKey, type ProviderId } from '@/lib/ai-providers';
 import dynamic from 'next/dynamic';
 // StudioSaveSlotPanel removed
 import { useStudioShellController } from './useStudioShellController';
@@ -129,7 +129,7 @@ export default function StudioShell() {
   const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
 
   const activeProviderId = getActiveProvider();
-  const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && !!getApiKey(activeProviderId);
+  const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && (!!getApiKey(activeProviderId) || hasStoredApiKey('lmstudio') || hasStoredApiKey('ollama'));
   const hasHostedAiAccess = hydrated && Boolean(user) && Boolean(hostedProviders[activeProviderId]);
   const hasHostedQuickStartAccess = hydrated && Boolean(user) && Boolean(hostedProviders.gemini);
   const hasAiAccess = hydrated && (hasLocalApiKey || hasHostedAiAccess);
