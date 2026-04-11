@@ -94,7 +94,11 @@
       "Bash(grep -r \"validateAITone\\\\|validateText\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/ --include=*.ts --include=*.tsx)",
       "Bash(grep -r \"genre-review\\\\|genreReview\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/ --include=*.ts --include=*.tsx)",
       "Bash(grep -r \"import.*GenreReviewChat\\\\|executeAutoPipeline\\\\|executePipeline\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/ --include=*.ts --include=*.tsx)",
-      "Bash(grep -r \"SuggestionPanel\\\\|EpisodeScenePanel\\\\|PipelineProgress\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/ --include=*.tsx)"
+      "Bash(grep -r \"SuggestionPanel\\\\|EpisodeScenePanel\\\\|PipelineProgress\" /c/Users/sung4/OneDrive/바탕 화면/AI 소설/설정집/최종 정리본/EH프로젝트/eh-universe-web/src/ --include=*.tsx)",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\sung4\\\\OneDrive\\\\바탕 화면\\\\EH\\\\웹페이지 개선\\\\새 폴더\\\\eh-universe-web\\\\src\\\\components\\\\home\\\\' | Select-Object Name\")",
+      "Bash(python3 -c ':*)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist /fi \"PID eq 28040\")"
     ]
   }
 }

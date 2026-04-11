@@ -241,7 +241,7 @@ export default function WritingTabInline(props: Props) {
                   ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
                   : 'border-border text-text-secondary hover:border-accent-amber/40'
               }`}
-              title={isKO ? '직접 타이핑으로 집필합니다' : 'Write by typing directly'}
+              title={isKO ? '✍️ 직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.' : '✍️ Write your novel by typing directly. Real-time quality analysis, inline rewrite.'}
             >
               <PenLine className="w-3.5 h-3.5" />
               {isKO ? '집필' : 'Write'}
@@ -257,7 +257,7 @@ export default function WritingTabInline(props: Props) {
                   ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
                   : 'border-border text-text-secondary hover:border-accent-purple/40'
               }`}
-              title={isKO ? 'NOA가 장면을 생성합니다' : 'NOA generates scenes for you'}
+              title={isKO ? '✨ 장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.' : '✨ Describe a scene and NOA writes the novel text. Press Enter to send.'}
             >
               <Sparkles className="w-3.5 h-3.5" />
               {isKO ? 'NOA 생성' : 'Generate'}
@@ -275,7 +275,7 @@ export default function WritingTabInline(props: Props) {
                       ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
                       : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
                   }`}
-                  title={isKO ? '구조→초안→다듬기 3단계로 완성' : 'Structure → Draft → Polish in 3 steps'}
+                  title={isKO ? '📐 뼈대를 쓰면 AI가 초안→다듬기까지 3단계로 완성합니다' : '📐 Write skeleton → AI expands to draft → polish in 3 steps'}
                 >
                   <Layers className="w-3.5 h-3.5" />
                   {isKO ? '3단계' : '3-Step'}
@@ -288,7 +288,7 @@ export default function WritingTabInline(props: Props) {
                       ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue'
                       : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
                   }`}
-                  title={isKO ? '약한 문단을 AI가 자동으로 개선합니다' : 'AI automatically improves weak paragraphs'}
+                  title={isKO ? '🪄 원고를 붙여넣으면 약한 문단을 AI가 자동 개선 (점수 50 미만 감지)' : '🪄 Paste manuscript, AI auto-improves paragraphs scoring below 50'}
                 >
                   <Wand2 className="w-3.5 h-3.5" />
                   {isKO ? '다듬기' : 'Refine'}
@@ -301,7 +301,7 @@ export default function WritingTabInline(props: Props) {
                       ? 'bg-accent-red/20 border-accent-red/50 text-accent-red'
                       : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
                   }`}
-                  title={isKO ? '엔진 파라미터를 직접 제어합니다' : 'Directly control engine parameters'}
+                  title={isKO ? '⚙️ 고급: temperature/top-p/장르 프리셋 직접 제어 (경험자용)' : '⚙️ Advanced: Direct control of temperature/top-p/genre presets'}
                 >
                   <Settings2 className="w-3.5 h-3.5" />
                   {isKO ? '엔진' : 'Engine'}
@@ -531,7 +531,8 @@ export default function WritingTabInline(props: Props) {
               <div className="flex-1 space-y-4">
                 <div className="bg-accent-green/5 border border-accent-green/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-green mb-2">{isKO ? '3단계 캔버스 모드' : 'Three-Step Canvas'}</h3>
-                  <p className="text-xs text-text-secondary mb-4">{isKO ? '구조 → 초안 → 다듬기 3단계로 글을 완성합니다.' : 'Complete your writing in 3 steps: Structure → Draft → Polish.'}</p>
+                  <p className="text-xs text-text-secondary mb-2">{isKO ? '구조 → 초안 → 다듬기 3단계로 글을 완성합니다.' : 'Complete your writing in 3 steps: Structure → Draft → Polish.'}</p>
+                  <p className="text-[11px] text-text-tertiary mb-4">{isKO ? '💡 1단계: 아래 캔버스에 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요. AI가 초안으로 확장합니다.' : '💡 Step 1: Write the scene skeleton (characters, events, mood) below. AI will expand it into a draft.'}</p>
                   <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     <span className={`px-2 py-1 rounded ${canvasPass >= 1 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '1. 구조' : '1. Structure'}</span>
                     <span className="text-text-quaternary">→</span>
@@ -553,7 +554,8 @@ export default function WritingTabInline(props: Props) {
               <div className="flex-1 space-y-4">
                 <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-blue mb-2 flex items-center gap-2"><Wand2 className="w-4 h-4" /> {isKO ? '다듬기' : 'Refine'}</h3>
-                  <p className="text-xs text-text-secondary mb-3">{isKO ? 'NOA가 현재 원고를 분석하고 약한 문단(점수 50 미만)을 자동으로 개선합니다.' : 'NOA analyzes your manuscript and automatically improves weak paragraphs (score <50).'}</p>
+                  <p className="text-xs text-text-secondary mb-1">{isKO ? 'NOA가 현재 원고를 분석하고 약한 문단(점수 50 미만)을 자동으로 개선합니다.' : 'NOA analyzes your manuscript and automatically improves weak paragraphs (score <50).'}</p>
+                  <p className="text-[11px] text-text-tertiary mb-3">{isKO ? '💡 아래에 원고를 붙여넣으면 문단별 품질 점수가 표시됩니다. 점수가 낮은 문단을 선택하여 자동 개선할 수 있습니다.' : '💡 Paste your manuscript below to see paragraph quality scores. Select low-scoring paragraphs for automatic improvement.'}</p>
                   {promptDirective && <p className="text-xs text-accent-blue font-mono bg-accent-blue/5 rounded px-3 py-2">{isKO ? '지시:' : 'Directive:'} {promptDirective}</p>}
 
                   {/* 약한 문단 감지 결과 */}
@@ -607,7 +609,8 @@ export default function WritingTabInline(props: Props) {
               <div className="flex-1 space-y-4">
                 <div className="bg-accent-red/5 border border-accent-red/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-red mb-2 flex items-center gap-2"><Settings2 className="w-4 h-4" /> {isKO ? '엔진 설정' : 'Engine Settings'}</h3>
-                  <p className="text-xs text-text-secondary">{isKO ? '엔진 파라미터, 장르 프리셋, HFCP 설정을 직접 제어합니다.' : 'Direct control over engine parameters, genre presets, and HFCP settings.'}</p>
+                  <p className="text-xs text-text-secondary mb-1">{isKO ? '엔진 파라미터, 장르 프리셋, HFCP 설정을 직접 제어합니다.' : 'Direct control over engine parameters, genre presets, and HFCP settings.'}</p>
+                  <p className="text-[11px] text-text-tertiary">{isKO ? '💡 경험 있는 사용자용: temperature, top-p, 장르 프리셋, 프롬프트 지시문을 직접 조정할 수 있습니다.' : '💡 For experienced users: Adjust temperature, top-p, genre presets, and prompt directives.'}</p>
                 </div>
                 <textarea
                   ref={editDraftRef}

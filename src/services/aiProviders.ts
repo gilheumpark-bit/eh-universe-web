@@ -134,9 +134,9 @@ export async function dispatchStream(
         return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature) };
       case 'ollama':
       case 'lmstudio':
-        // 프로덕션: DGX Spark 서버로 폴백
+        // 프로덕션: DGX Spark 서버로 폴백 (모델명을 DGX 기본 모델로 교체)
         if (SPARK_SERVER_URL) {
-          return { ok: true, stream: await streamSparkAI(model, system, messages, temperature) };
+          return { ok: true, stream: await streamSparkAI('google/gemma-4-26b-a4b', system, messages, temperature) };
         }
         return { ok: false, error: 'Local providers must use /api/local-proxy' };
       case 'claude':
