@@ -160,8 +160,8 @@ async def chat_completions(req: ChatRequest, request: Request):
 
         except httpx.ConnectError:
             raise HTTPException(status_code=503, detail="LM Studio 서버에 연결할 수 없습니다. 서버 실행 상태를 확인하세요.")
-        except httpx.ReadTimeout:
-            raise HTTPException(status_code=504, detail="LM Studio 응답 시간 초과 (180초)")
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"error": str(e)})
 
 # ============================================================
 # PART 4 — 사용량 조회
