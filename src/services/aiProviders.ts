@@ -1,4 +1,5 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
+import { streamSparkAI } from './sparkService';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai:  'https://api.openai.com/v1/chat/completions',
@@ -123,6 +124,8 @@ export async function dispatchStream(
 ): Promise<{ ok: true; stream: ReadableStream } | { ok: false; error: string }> {
   try {
     switch (provider) {
+      case 'spark':
+        return { ok: true, stream: await streamSparkAI(model, system, messages, temperature) };
       case 'gemini':
         return { ok: true, stream: await streamGemini(apiKey, model, system, messages, temperature) };
       case 'openai':
