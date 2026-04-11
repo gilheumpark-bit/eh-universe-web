@@ -24,16 +24,16 @@ export function WritingContextPanel({ config, language }: Props) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 w-8 h-20 bg-bg-secondary/80 backdrop-blur-sm border border-l-0 border-border rounded-r-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-all group"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 w-8 h-20 bg-bg-secondary/80 backdrop-blur-sm border border-l-0 border-border rounded-r-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-all group"
           title={isKO ? '참조 패널' : 'Reference Panel'}
         >
           <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
       )}
 
-      {/* Slide-over panel */}
+      {/* Slide-over panel — top-10 for OSDesktop top bar clearance */}
       {open && (
-        <div className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-bg-primary/95 backdrop-blur-xl border-r border-border shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
+        <div className="fixed left-0 top-10 bottom-0 z-30 w-72 bg-bg-primary/95 backdrop-blur-xl border-r border-border shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <div className="flex gap-1">
