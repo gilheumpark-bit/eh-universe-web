@@ -6,7 +6,7 @@
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles, Send, Columns2, BookOpen, Undo2, Redo2 } from 'lucide-react';
+import { Sparkles, Send, Columns2, BookOpen, Undo2, Redo2, PenLine, Layers, Wand2, Settings2, ChevronDown } from 'lucide-react';
 import type { AppLanguage, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import { createT } from '@/lib/i18n';
@@ -222,27 +222,8 @@ export default function WritingTabInline(props: Props) {
       <div className="flex-1 flex flex-col min-w-0 relative h-full border-b lg:border-b-0 lg:border-r border-border/40">
         {/* Split 레이아웃에서도 집필 모드 전환 — 메인 스크롤 영역에서도 상단에 고정 (sticky) */}
         <div data-zen-hide-bar className="sticky top-0 z-30 shrink-0 px-3 py-2.5 border-b border-border/60 bg-bg-primary/95 backdrop-blur-md shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
-          <p className="text-center text-[10px] font-bold font-mono uppercase tracking-wider text-text-tertiary mb-2">
-            {t('writingMode.modePickerCaption')}
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center max-w-4xl mx-auto">
-            <button
-              type="button"
-              onClick={() => {
-                if (!hasApiKey) {
-                  setShowApiKeyModal(true);
-                  return;
-                }
-                setWritingMode('ai');
-              }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
-                writingMode === 'ai'
-                  ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple shadow-[0_0_0_1px_rgba(168,85,247,0.25)]'
-                  : 'border-border text-text-secondary hover:border-accent-purple/40'
-              }`}
-            >
-              {t('writingMode.draftGen')}
-            </button>
+          <div className="flex flex-wrap gap-2 justify-center max-w-4xl mx-auto items-center">
+            {/* 기본 2개: 항상 노출 */}
             <button
               type="button"
               onClick={() => {
@@ -255,56 +236,78 @@ export default function WritingTabInline(props: Props) {
                   setEditDraft(allText);
                 }
               }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                 writingMode === 'edit'
-                  ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber shadow-[0_0_0_1px_rgba(245,158,11,0.25)]'
+                  ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
                   : 'border-border text-text-secondary hover:border-accent-amber/40'
               }`}
+              title={isKO ? '직접 타이핑으로 집필합니다' : 'Write by typing directly'}
             >
-              {t('writingMode.manualEdit')}
+              <PenLine className="w-3.5 h-3.5" />
+              {isKO ? '집필' : 'Write'}
             </button>
             <button
               type="button"
               onClick={() => {
                 if (!hasApiKey) { setShowApiKeyModal(true); return; }
-                setWritingMode('canvas');
+                setWritingMode('ai');
               }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
-                writingMode === 'canvas'
-                  ? 'bg-accent-green/20 border-accent-green/50 text-accent-green shadow-[0_0_0_1px_rgba(74,143,120,0.25)]'
-                  : 'border-border text-text-secondary hover:border-accent-green/40'
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                writingMode === 'ai'
+                  ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
+                  : 'border-border text-text-secondary hover:border-accent-purple/40'
               }`}
+              title={isKO ? 'NOA가 장면을 생성합니다' : 'NOA generates scenes for you'}
             >
-              {t('writingMode.threeStep')}
+              <Sparkles className="w-3.5 h-3.5" />
+              {isKO ? 'NOA 생성' : 'Generate'}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!hasApiKey) { setShowApiKeyModal(true); return; }
-                setWritingMode('refine');
-              }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
-                writingMode === 'refine'
-                  ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue shadow-[0_0_0_1px_rgba(109,125,143,0.25)]'
-                  : 'border-border text-text-secondary hover:border-accent-blue/40'
-              }`}
-            >
-              {t('writingMode.auto30')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!hasApiKey) { setShowApiKeyModal(true); return; }
-                setWritingMode('advanced');
-              }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-colors ${
-                writingMode === 'advanced'
-                  ? 'bg-accent-red/20 border-accent-red/50 text-accent-red shadow-[0_0_0_1px_rgba(168,92,82,0.25)]'
-                  : 'border-border text-text-secondary hover:border-accent-red/40'
-              }`}
-            >
-              {t('writingMode.advanced')}
-            </button>
+
+            {/* 더보기: API 키 있을 때만 노출 */}
+            {hasApiKey && (
+              <>
+                <div className="w-px h-5 bg-border/50 mx-1" />
+                <button
+                  type="button"
+                  onClick={() => setWritingMode('canvas')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
+                    writingMode === 'canvas'
+                      ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
+                      : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  }`}
+                  title={isKO ? '구조→초안→다듬기 3단계로 완성' : 'Structure → Draft → Polish in 3 steps'}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  {isKO ? '3단계' : '3-Step'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWritingMode('refine')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
+                    writingMode === 'refine'
+                      ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue'
+                      : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  }`}
+                  title={isKO ? '약한 문단을 AI가 자동으로 개선합니다' : 'AI automatically improves weak paragraphs'}
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  {isKO ? '다듬기' : 'Refine'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWritingMode('advanced')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
+                    writingMode === 'advanced'
+                      ? 'bg-accent-red/20 border-accent-red/50 text-accent-red'
+                      : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  }`}
+                  title={isKO ? '엔진 파라미터를 직접 제어합니다' : 'Directly control engine parameters'}
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                  {isKO ? '엔진' : 'Engine'}
+                </button>
+              </>
+            )}
             {/* Split view toggles */}
             <div className="hidden lg:flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
               <button
@@ -412,6 +415,13 @@ export default function WritingTabInline(props: Props) {
 
             {writingMode === 'edit' && (
               <div className="flex-1 space-y-3">
+                {/* 모드 설명 배너 — 첫 진입 가이드 */}
+                {editDraft.length === 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-amber/5 border border-accent-amber/20 text-[11px] text-accent-amber">
+                    <PenLine className="w-4 h-4 shrink-0" />
+                    <span>{isKO ? '직접 타이핑으로 집필합니다. 텍스트 선택 후 Ctrl+Shift+R로 NOA 리라이트를 사용할 수 있습니다.' : 'Write by typing. Select text and press Ctrl+Shift+R for NOA inline rewrite.'}</span>
+                  </div>
+                )}
                 <WritingToolbar textareaRef={editDraftRef} value={editDraft} onChange={setEditDraft} language={language} targetMin={currentSession.config.guardrails?.min} targetMax={currentSession.config.guardrails?.max} />
 
                 {/* P1: 연속성 경고 */}
@@ -542,7 +552,7 @@ export default function WritingTabInline(props: Props) {
             {writingMode === 'refine' && (
               <div className="flex-1 space-y-4">
                 <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-6">
-                  <h3 className="text-sm font-bold text-accent-blue mb-2">{isKO ? '자동 30% 다듬기' : 'Auto 30% Refine'}</h3>
+                  <h3 className="text-sm font-bold text-accent-blue mb-2 flex items-center gap-2"><Wand2 className="w-4 h-4" /> {isKO ? '다듬기' : 'Refine'}</h3>
                   <p className="text-xs text-text-secondary mb-3">{isKO ? 'NOA가 현재 원고를 분석하고 약한 문단(점수 50 미만)을 자동으로 개선합니다.' : 'NOA analyzes your manuscript and automatically improves weak paragraphs (score <50).'}</p>
                   {promptDirective && <p className="text-xs text-accent-blue font-mono bg-accent-blue/5 rounded px-3 py-2">{isKO ? '지시:' : 'Directive:'} {promptDirective}</p>}
 
@@ -596,7 +606,7 @@ export default function WritingTabInline(props: Props) {
             {writingMode === 'advanced' && (
               <div className="flex-1 space-y-4">
                 <div className="bg-accent-red/5 border border-accent-red/20 rounded-xl p-6">
-                  <h3 className="text-sm font-bold text-accent-red mb-2">{isKO ? '고급 모드' : 'Advanced Mode'}</h3>
+                  <h3 className="text-sm font-bold text-accent-red mb-2 flex items-center gap-2"><Settings2 className="w-4 h-4" /> {isKO ? '엔진 설정' : 'Engine Settings'}</h3>
                   <p className="text-xs text-text-secondary">{isKO ? '엔진 파라미터, 장르 프리셋, HFCP 설정을 직접 제어합니다.' : 'Direct control over engine parameters, genre presets, and HFCP settings.'}</p>
                 </div>
                 <textarea
