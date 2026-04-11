@@ -41,7 +41,7 @@
     "@google/genai": "^1.47.0",
     "@monaco-editor/react": "^4.7.0",
     "@sentry/nextjs": "^10.46.0",
-    "@stripe/stripe-js": "^9.0.1",
+    "@stripe/stripe-js": "^9.1.0",
     "@supabase/supabase-js": "^2.101.1",
     "@vercel/analytics": "^2.0.1",
     "@webcontainer/api": "^1.6.1",
