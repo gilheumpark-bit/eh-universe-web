@@ -198,7 +198,7 @@ function BeatBlock({
   }
 
   return (
-    <div className="relative group/beat">
+    <div className="relative group">
       <div
         draggable
         onDragStart={onDragStart}
