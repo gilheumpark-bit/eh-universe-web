@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { generateJsonGemini } from '@/services/aiProvidersStructured';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     const clientApiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
     const serverApiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY?.trim() || '' : '';
     const apiKey = clientApiKey || serverApiKey;
-    if (!apiKey && !hasServerProviderCredentials('gemini')) {
+    if (!apiKey && !hasServerProviderCredentials('gemini') && !SPARK_SERVER_URL) {
       return NextResponse.json({ error: 'Gemini API key required. Add your key in Settings or configure server credentials.' }, { status: 400 });
     }
 
