@@ -609,8 +609,14 @@ export default function ScenePlayer({
   const bgUrl = backgroundUrls?.get(currentScene.id);
   const bgGradient = getMoodGradient(currentScene.mood, currentScene.timeOfDay);
 
+  // 장면 전환 페이드 효과
+  const [fadeKey, setFadeKey] = useState(0);
+  useEffect(() => { setFadeKey(k => k + 1); }, [state.sceneIndex]);
+
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden select-none" style={{ background: bgGradient }}>
+      {/* 장면 전환 페이드 오버레이 */}
+      <div key={fadeKey} className="absolute inset-0 bg-black pointer-events-none z-50 animate-[fadeOut_0.6s_ease-out_forwards]" />
       {/* ── 라디오 모드: 어둠 + 최소 비주얼 ── */}
       {isRadio && (
         <>
@@ -698,8 +704,23 @@ export default function ScenePlayer({
         </div>
       </div>
 
-      {/* 재생 컨트롤 (하단 중앙) */}
-      <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+      {/* 재생 컨트롤 (하단 중앙) — 속도 + 장면/비트 정보 */}
+      <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
+        {/* 속도 선택 */}
+        <div className="flex items-center gap-0.5 bg-bg-primary/30 backdrop-blur-sm rounded-full px-1 py-0.5">
+          {[0.5, 1, 1.5, 2].map(s => (
+            <button
+              key={s}
+              onClick={() => setState(p => ({ ...p, speed: s }))}
+              className={`px-2 py-1 rounded-full text-[9px] font-mono transition-colors ${
+                state.speed === s ? 'bg-accent-purple/40 text-accent-purple' : 'text-text-tertiary hover:text-text-secondary'
+              }`}
+            >
+              {s}x
+            </button>
+          ))}
+        </div>
+
         <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-bg-primary/30 backdrop-blur-sm hover:bg-white/10 disabled:opacity-40 transition-colors" aria-label="이전 비트">
           <SkipBack className="h-4 w-4 text-text-secondary" />
         </button>
@@ -709,6 +730,11 @@ export default function ScenePlayer({
         <button onClick={goNext} className="p-2 rounded-full bg-bg-primary/30 backdrop-blur-sm hover:bg-white/10 transition-colors" aria-label="다음 비트">
           <SkipForward className="h-4 w-4 text-text-secondary" />
         </button>
+
+        {/* 장면/비트 카운터 */}
+        <span className="text-[9px] font-mono text-text-tertiary bg-bg-primary/30 backdrop-blur-sm rounded-full px-2.5 py-1">
+          {state.sceneIndex + 1}/{scenes.length} · {state.beatIndex + 1}/{currentScene.beats.length}
+        </span>
       </div>
 
       {/* 캐릭터 표시 (비주얼 모드만) */}

@@ -134,6 +134,8 @@ function BeatBlock({
   warning,
   onSelect,
   onDelete,
+  onEdit,
+  onInsertAfter,
   onDragStart,
   onDragOver,
   onDrop,
@@ -145,23 +147,71 @@ function BeatBlock({
   warning?: TimelineWarning;
   onSelect: () => void;
   onDelete: () => void;
+  onEdit?: (text: string, type: BeatType) => void;
+  onInsertAfter?: () => void;
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(beat.text);
+  const [editType, setEditType] = useState<BeatType>(beat.type);
+
+  const handleDoubleClick = () => {
+    setEditText(beat.text);
+    setEditType(beat.type);
+    setEditing(true);
+  };
+
+  const handleSave = () => {
+    if (editText.trim() && onEdit) {
+      onEdit(editText.trim(), editType);
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className={`relative px-2 py-2 rounded-lg border ${BEAT_COLORS[beat.type]} space-y-1.5`}>
+        <select
+          value={editType}
+          onChange={(e) => setEditType(e.target.value as BeatType)}
+          className="w-full bg-bg-secondary border border-border/50 rounded px-2 py-1 text-[10px] font-mono outline-none"
+        >
+          {(Object.keys(BEAT_LABELS) as BeatType[]).map(t => (
+            <option key={t} value={t}>{BEAT_ICONS[t]} {BEAT_LABELS[t]}</option>
+          ))}
+        </select>
+        <textarea
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          autoFocus
+          className="w-full bg-bg-secondary border border-border/50 rounded px-2 py-1.5 text-[11px] min-h-[60px] resize-none outline-none focus:border-accent-purple text-text-primary"
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); } if (e.key === 'Escape') setEditing(false); }}
+        />
+        <div className="flex gap-1 justify-end">
+          <button onClick={() => setEditing(false)} className="px-2 py-0.5 text-[9px] text-text-tertiary hover:text-text-primary rounded">ESC</button>
+          <button onClick={handleSave} className="px-2 py-0.5 text-[9px] bg-accent-purple/15 text-accent-purple rounded font-bold">Enter 저장</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={(e) => { e.preventDefault(); onDragOver(e); }}
-      onDrop={onDrop}
-      onClick={onSelect}
-      className={`group relative flex items-start gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-all
-        ${BEAT_COLORS[beat.type]}
-        ${isSelected ? "ring-1 ring-accent-purple" : ""}
-        ${warning ? "ring-1 ring-accent-amber/50" : ""}
-        hover:brightness-110`}
-    >
+    <div className="relative group/beat">
+      <div
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={(e) => { e.preventDefault(); onDragOver(e); }}
+        onDrop={onDrop}
+        onClick={onSelect}
+        onDoubleClick={handleDoubleClick}
+        className={`flex items-start gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-all
+          ${BEAT_COLORS[beat.type]}
+          ${isSelected ? "ring-1 ring-accent-purple" : ""}
+          ${warning ? "ring-1 ring-accent-amber/50" : ""}
+          hover:brightness-110`}
+      >
       {/* 드래그 핸들 */}
       <div className="opacity-0 group-hover:opacity-50 cursor-grab active:cursor-grabbing pt-0.5">
         <GripVertical className="h-3 w-3 text-text-tertiary" />
@@ -194,6 +244,19 @@ function BeatBlock({
       >
         <Trash2 className="h-3 w-3 text-accent-red" />
       </button>
+      </div>
+      {/* 비트 삽입 버튼 (호버 시) */}
+      {onInsertAfter && (
+        <div className="h-0 relative opacity-0 group-hover/beat:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => { e.stopPropagation(); onInsertAfter(); }}
+            className="absolute left-1/2 -translate-x-1/2 -top-1 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-accent-purple/20 border border-accent-purple/40 text-accent-purple text-[10px] hover:bg-accent-purple/30 transition-colors"
+            title="비트 삽입"
+          >
+            +
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -213,6 +276,8 @@ function SceneLane({
   sceneWarnings,
   onSelectBeat,
   onDeleteBeat,
+  onEditBeat,
+  onInsertBeat,
   onPlayFrom,
   onDragStart,
   onDragOver,
@@ -226,6 +291,8 @@ function SceneLane({
   sceneWarnings: TimelineWarning[];
   onSelectBeat: (si: number, bi: number) => void;
   onDeleteBeat: (si: number, bi: number) => void;
+  onEditBeat?: (si: number, bi: number, text: string, type: BeatType) => void;
+  onInsertBeat?: (si: number, bi: number) => void;
   onPlayFrom?: (si: number, bi: number) => void;
   onDragStart: (si: number, bi: number) => void;
   onDragOver: (si: number, bi: number, e: React.DragEvent) => void;
@@ -283,6 +350,8 @@ function SceneLane({
                 warning={beatWarning}
                 onSelect={() => onSelectBeat(sceneIndex, bi)}
                 onDelete={() => onDeleteBeat(sceneIndex, bi)}
+                onEdit={(text, type) => onEditBeat?.(sceneIndex, bi, text, type)}
+                onInsertAfter={() => onInsertBeat?.(sceneIndex, bi)}
                 onDragStart={() => onDragStart(sceneIndex, bi)}
                 onDragOver={(e) => onDragOver(sceneIndex, bi, e)}
                 onDrop={() => onDrop(sceneIndex, bi)}
@@ -407,6 +476,57 @@ export default function SceneTimeline({
     setDragSource(null);
   }, [pushUndo, onScenesChange]);
 
+  // 비트 편집
+  const editBeat = useCallback((si: number, bi: number, text: string, type: BeatType) => {
+    pushUndo();
+    setScenes((prev) => {
+      const next = prev.map((s, i) => i === si ? { ...s, beats: s.beats.map((b, j) => j === bi ? { ...b, text, type } : b) } : s);
+      onScenesChange(next);
+      return next;
+    });
+  }, [pushUndo, onScenesChange]);
+
+  // 비트 삽입
+  const insertBeat = useCallback((si: number, afterBi: number) => {
+    pushUndo();
+    const newBeat: SceneBeat = {
+      id: `beat-${Date.now()}`,
+      type: 'narration',
+      text: '',
+      tempo: 'normal' as const,
+      camera: 'medium' as const,
+      lineStart: 0,
+      lineEnd: 0,
+    };
+    setScenes((prev) => {
+      const next = prev.map((s, i) => {
+        if (i !== si) return s;
+        const beats = [...s.beats];
+        beats.splice(afterBi + 1, 0, newBeat);
+        return { ...s, beats };
+      });
+      onScenesChange(next);
+      return next;
+    });
+  }, [pushUndo, onScenesChange]);
+
+  // 장면 추가
+  const addScene = useCallback(() => {
+    pushUndo();
+    const newScene: ParsedScene = {
+      id: `scene-${Date.now()}`,
+      index: scenes.length,
+      title: `장면 ${scenes.length + 1}`,
+      beats: [{ id: `beat-${Date.now()}`, type: 'narration', text: '', tempo: 'normal' as const, camera: 'medium' as const, lineStart: 0, lineEnd: 0 }],
+      tension: 50,
+    };
+    setScenes((prev) => {
+      const next = [...prev, newScene];
+      onScenesChange(next);
+      return next;
+    });
+  }, [pushUndo, scenes.length, onScenesChange]);
+
   // 원고 내보내기
   const handleExport = useCallback(() => {
     const text = scenesToText(scenes);
@@ -487,12 +607,22 @@ export default function SceneTimeline({
             sceneWarnings={timelineWarnings.filter((w) => w.sceneIndex === si)}
             onSelectBeat={(si2, bi) => setSelectedBeat({ sceneIndex: si2, beatIndex: bi })}
             onDeleteBeat={deleteBeat}
+            onEditBeat={(si2, bi, text, type) => editBeat(si2, bi, text, type)}
+            onInsertBeat={(si2, bi) => insertBeat(si2, bi)}
             onPlayFrom={onPlayFrom}
             onDragStart={(si2, bi) => setDragSource({ sceneIndex: si2, beatIndex: bi })}
             onDragOver={(si2, bi, e) => e.preventDefault()}
             onDrop={(si2, bi) => handleDrop(si2, bi)}
           />
         ))}
+
+        {/* 새 장면 추가 버튼 */}
+        <button
+          onClick={addScene}
+          className="w-full py-3 border-2 border-dashed border-border/40 rounded-xl text-xs font-mono text-text-tertiary hover:text-text-primary hover:border-accent-purple/40 transition-colors"
+        >
+          + {isKO ? '새 장면 추가' : 'Add Scene'}
+        </button>
       </div>
     </div>
   );

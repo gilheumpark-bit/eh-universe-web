@@ -7,6 +7,12 @@
 /* ============================================================
    Page Transition System — Fast, smooth fade+slide on every route
    ============================================================ */
+/* Scene transition fade */
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @keyframes page-enter {
   from {
     opacity: 0;
