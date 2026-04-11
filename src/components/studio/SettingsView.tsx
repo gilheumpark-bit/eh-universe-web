@@ -111,19 +111,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <Cpu className="w-4 h-4 text-blue-500" /> Narrative Engine
           </h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border">
+            <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.engineVersion')}</span>
               <span className="text-xs font-black text-blue-400">ANS {ENGINE_VERSION}</span>
             </div>
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border">
+            <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.aiModel')}</span>
-              <span className="text-xs font-black text-white">{providerName} — {activeModel}</span>
+              <span className="text-xs font-black text-text-primary">{providerName} — {activeModel}</span>
             </div>
-            <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border">
+            <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.latency')}</span>
               <span className="text-xs font-black text-green-500">OPTIMAL</span>
             </div>
-            <div className="bg-black/40 p-4 rounded-xl border border-border space-y-2">
+            <div className="bg-bg-secondary p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
                 {storageEstimate && storageEstimate.quota > 0 ? (() => {
@@ -283,7 +283,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             ) : (
               <div className="space-y-2">
                 {versionedBackups.map((b) => (
-                  <div key={b.timestamp} className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-border">
+                  <div key={b.timestamp} className="flex items-center justify-between p-4 bg-bg-secondary rounded-xl border border-border">
                     <div>
                       <div className="text-xs font-bold text-text-primary">{new Date(b.timestamp).toLocaleString()}</div>
                       <div className="text-[10px] text-text-tertiary font-mono">
@@ -333,7 +333,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <button
                     key={p}
                     onClick={() => { setDefaultPlatform(p); localStorage.setItem('noa_default_platform', p); }}
-                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-white' : 'bg-bg-secondary text-text-tertiary hover:text-white'}`}
+                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-text-primary' : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
@@ -356,7 +356,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 max={200}
                 value={defaultEpisodes}
                 onChange={e => { const v = parseInt(e.target.value) || 25; setDefaultEpisodes(v); localStorage.setItem('noa_default_episodes', String(v)); }}
-                className="w-16 md:w-20 bg-black/50 border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none shrink-0"
+                className="w-16 md:w-20 bg-bg-secondary border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none shrink-0"
               />
             </div>
 
@@ -443,7 +443,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
             {user.photoURL ? (
               <Image src={user.photoURL} alt="" width={64} height={64} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-white text-xl font-black">{user.displayName?.[0] || '?'}</span>
+              <span className="text-text-primary text-xl font-black">{user.displayName?.[0] || '?'}</span>
             )}
           </div>
           <div>
