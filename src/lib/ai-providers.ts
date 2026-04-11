@@ -648,7 +648,8 @@ async function streamLocalDirect(
         if (data === '[DONE]') continue;
         try {
           const json = JSON.parse(data);
-          const text = json.choices?.[0]?.delta?.content;
+          const delta = json.choices?.[0]?.delta;
+          const text = delta?.content || delta?.reasoning_content;
           if (text) { full += text; opts.onChunk(text); }
         } catch { /* skip non-JSON */ }
       }
@@ -764,7 +765,8 @@ async function streamViaProxy(
         try {
           const json = JSON.parse(data);
           // Handle different provider formats
-          const text = json.choices?.[0]?.delta?.content // OpenAI/Groq/Mistral
+          const delta = json.choices?.[0]?.delta;
+          const text = delta?.content || delta?.reasoning_content // OpenAI/Groq/Mistral + Gemma reasoning
             || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
             || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
           if (text) {

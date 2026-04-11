@@ -23,7 +23,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
       { role: 'user', content: prompt },
     ],
     temperature: 0.8,
-    max_tokens: 4096,
+    max_tokens: 8192,
     stream: false,
   });
 
@@ -49,7 +49,8 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
       }
 
       const data = await res.json();
-      const text = data.choices?.[0]?.message?.content || '';
+      const msg = data.choices?.[0]?.message;
+      const text = msg?.content || msg?.reasoning_content || '';
       const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
       if (jsonMatch) {
         try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }

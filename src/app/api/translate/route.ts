@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
               if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
               try {
                 const j = JSON.parse(line.slice(6));
-                const delta = j.choices?.[0]?.delta?.content;
+                const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.delta?.reasoning_content;
                 if (delta) fullText += delta;
               } catch { /* skip */ }
             }
@@ -287,7 +287,7 @@ export async function POST(req: NextRequest) {
               if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
               try {
                 const j = JSON.parse(line.slice(6));
-                const delta = j.choices?.[0]?.delta?.content;
+                const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.delta?.reasoning_content;
                 if (delta) fullText += delta;
               } catch { /* skip */ }
             }
