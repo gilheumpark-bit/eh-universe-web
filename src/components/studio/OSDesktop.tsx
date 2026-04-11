@@ -268,7 +268,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <div className="flex items-center gap-4">
           <Link href="/studio" className="flex items-center gap-2 text-amber-200/90 hover:text-amber-100 transition-colors">
             <Feather className="h-4 w-4 text-amber-400" />
-            <span className="font-serif font-semibold tracking-wider">NOA 스튜디오</span>
+            <span className="font-serif font-semibold tracking-wider">{language === 'KO' ? 'NOA 스튜디오' : language === 'JP' ? 'NOA スタジオ' : language === 'CN' ? 'NOA 工作室' : 'NOA Studio'}</span>
           </Link>
 
           <div className="flex items-center gap-2">

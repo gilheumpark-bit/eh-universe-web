@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronLeft, ChevronRight, Sparkles, Key, MessageSquare, Layers, ShieldCheck, Rocket, FileCode } from "lucide-react";
 
 interface Props {
@@ -43,7 +43,10 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
     catch { return true; }
   });
 
-  useEffect(() => { if (!visible) onComplete(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // mount 시 이미 완료 상태면 부모에 알림 (onComplete는 stable 참조 가정)
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  useEffect(() => { if (!visible) onCompleteRef.current(); }, [visible]);
 
   const markDone = useCallback(() => {
     try { localStorage.setItem(STORAGE_KEY, "true"); } catch { /* noop */ }

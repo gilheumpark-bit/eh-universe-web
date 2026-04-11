@@ -249,7 +249,7 @@ export function TerminalPanel({
     return () => {
       cancelled = true;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount-only: WebContainer 1회 초기화
 
   // Auto-scroll
   useEffect(() => {

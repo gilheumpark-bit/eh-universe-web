@@ -1323,10 +1323,9 @@ export function verifyLength(
   };
 }
 
-/** 간이 문장 수 카운트 (마침표/느낌표/물음표 기반) */
+/** 문장 수 카운트 — splitSentences와 동일 알고리즘 (따옴표/줄임표 보호 통일) */
 function countSentences(text: string): number {
-  const matches = text.match(/[.!?。！？]+[\s\n]|[.!?。！？]+$/g);
-  return matches ? matches.length : 1;
+  return splitSentences(text).length || 1;
 }
 
 // ============================================================

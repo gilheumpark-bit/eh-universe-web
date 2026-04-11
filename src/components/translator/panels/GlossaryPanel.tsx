@@ -38,6 +38,8 @@ export function GlossaryPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newOriginal, setNewOriginal] = useState('');
   const [newTranslation, setNewTranslation] = useState('');
+  const [newContext, setNewContext] = useState('');
+  const [newLocked, setNewLocked] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editOriginal, setEditOriginal] = useState('');
   const [editTranslation, setEditTranslation] = useState('');
@@ -196,25 +198,35 @@ export function GlossaryPanel() {
         </div>
       </div>
 
-      <div className="p-3 shrink-0 border-t border-white/5 pointer-events-auto space-y-2">
+      <div className="p-3 shrink-0 border-t border-border/30 pointer-events-auto space-y-2">
         <div className="grid grid-cols-1 gap-2">
           <input
             value={newOriginal}
             onChange={(e) => setNewOriginal(e.target.value)}
             placeholder="원문 용어"
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/40"
+            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-blue/40"
           />
           <input
             value={newTranslation}
             onChange={(e) => setNewTranslation(e.target.value)}
             placeholder="번역 용어"
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/40"
+            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-blue/40"
           />
+          <input
+            value={newContext}
+            onChange={(e) => setNewContext(e.target.value)}
+            placeholder="맥락 (예: 주인공 이름, 세계관 고유 용어)"
+            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[11px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-blue/40"
+          />
+          <label className="flex items-center gap-2 text-[11px] text-text-secondary cursor-pointer px-1">
+            <input type="checkbox" checked={newLocked} onChange={(e) => setNewLocked(e.target.checked)} className="rounded" />
+            <span>잠금 (번역 시 반드시 이 용어 사용)</span>
+          </label>
         </div>
         <button
           type="button"
-          onClick={handleAddTerm}
-          className="w-full flex items-center justify-center gap-2 py-1.5 bg-accent-cyan/10 hover:bg-accent-cyan/20 border border-accent-cyan/20 rounded-md text-[12px] font-medium transition-colors text-accent-cyan"
+          onClick={() => { handleAddTerm(); setNewContext(''); setNewLocked(false); }}
+          className="w-full flex items-center justify-center gap-2 py-1.5 bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 rounded-md text-[12px] font-medium transition-colors text-accent-blue"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>용어 추가</span>

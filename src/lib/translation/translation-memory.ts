@@ -28,9 +28,42 @@ export interface TMMatch {
   type: 'exact' | 'fuzzy';
 }
 
-// ── Storage ──
+// ── Storage + Trigram 캐시 ──
 
-export function loadTM(): TMEntry[] {
+let _tmCache: TMEntry[] | null = null;
+let _trigramIndex: Map<string, number[]> | null = null;
+let _cacheVersion = 0;
+
+function toTrigrams(s: string): Set<string> {
+  const norm = s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const tgs = new Set<string>();
+  for (let i = 0; i <= norm.length - 3; i++) tgs.add(norm.slice(i, i + 3));
+  return tgs;
+}
+
+function buildTrigramIndex(entries: TMEntry[]): Map<string, number[]> {
+  const idx = new Map<string, number[]>();
+  for (let i = 0; i < entries.length; i++) {
+    for (const tg of toTrigrams(entries[i].source)) {
+      const arr = idx.get(tg);
+      if (arr) arr.push(i); else idx.set(tg, [i]);
+    }
+  }
+  return idx;
+}
+
+function getCachedTM(): { entries: TMEntry[]; index: Map<string, number[]> } {
+  if (!_tmCache) {
+    _tmCache = loadTMRaw();
+    _trigramIndex = buildTrigramIndex(_tmCache);
+  }
+  return { entries: _tmCache, index: _trigramIndex! };
+}
+
+/** 캐시 무효화 (addToTM/saveTM 후 호출) */
+function invalidateCache() { _tmCache = null; _trigramIndex = null; _cacheVersion++; }
+
+function loadTMRaw(): TMEntry[] {
   try {
     const raw = localStorage.getItem(TM_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -39,12 +72,16 @@ export function loadTM(): TMEntry[] {
   }
 }
 
+export function loadTM(): TMEntry[] {
+  return getCachedTM().entries;
+}
+
 export function saveTM(entries: TMEntry[]): void {
-  // 크기 제한: 오래된 것부터 제거
   const trimmed = entries
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, MAX_TM_ENTRIES);
   localStorage.setItem(TM_STORAGE_KEY, JSON.stringify(trimmed));
+  invalidateCache();
 }
 
 /** TM에 번역 결과 추가 */
@@ -87,17 +124,30 @@ export function addBatchToTM(
   saveTM(entries);
 }
 
-/** 소스 문장에 대한 TM 매치 검색 */
+/** 소스 문장에 대한 TM 매치 검색 (trigram 프리필터 → Jaro-Winkler 정밀 비교) */
 export function searchTM(source: string, targetLang: string, threshold: number = 0.7): TMMatch[] {
-  const entries = loadTM().filter(e => e.targetLang === targetLang);
+  const { entries, index } = getCachedTM();
   const matches: TMMatch[] = [];
 
-  for (const entry of entries) {
+  // 1단계: trigram 프리필터 — 후보 O(trigram수) 로 축소
+  const sourceTrigrams = toTrigrams(source);
+  const candidateSet = new Set<number>();
+  for (const tg of sourceTrigrams) {
+    const idxs = index.get(tg);
+    if (idxs) for (const i of idxs) candidateSet.add(i);
+  }
+
+  // 2단계: 후보만 Jaro-Winkler 정밀 비교
+  const normSource = normalize(source);
+  for (const i of candidateSet) {
+    const entry = entries[i];
+    if (entry.targetLang !== targetLang) continue;
+
     if (entry.source === source) {
       matches.push({ entry, similarity: 1.0, type: 'exact' });
       continue;
     }
-    const sim = jaroWinkler(normalize(source), normalize(entry.source));
+    const sim = jaroWinkler(normSource, normalize(entry.source));
     if (sim >= threshold) {
       matches.push({ entry, similarity: sim, type: 'fuzzy' });
     }
