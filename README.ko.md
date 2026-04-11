@@ -4,142 +4,179 @@
 
 ### 어디로 향할까요?
 
-20만 행성계 세계관 포털 — AI 소설 스튜디오와 검증형 코드 IDE를 갖춘 창작 플랫폼.
+20만 행성계 세계관 포털 — AI 집필 OS와 검증형 코드 IDE를 갖춘 창작 플랫폼.
 
 [![English](https://img.shields.io/badge/lang-English-blue?style=flat-square)](README.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
-![Audit](https://img.shields.io/badge/audit-94%2F100-22c55e?style=flat-square)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
+
+[라이브](https://ehsu.app) · [문서](#문서) · [기여 가이드](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색하는 **세계관 포털**이자, AI 기반 집필 스튜디오와 검증형 코드 IDE를 갖춘 창작 플랫폼.
+## 개요
 
-## 핵심 구성
+EH Universe는 단일 Next.js 16.2 앱 위에 5개 앱이 통합된 창작 플랫폼입니다.
 
-| 영역 | 설명 | 상태 |
-|------|------|------|
-| **EH Universe 포털** | 설정집 아카이브(109문서) + 기밀 보고서(80건) + 코덱스 + 룰북 + 레퍼런스 | Production |
-| **NOA Studio** | AI 소설 집필 엔진 — 세계관/캐릭터/연출/문체/원고 관리 | Production |
-| **Code Studio** | 검증형 코드 IDE — Verification Loop + Composer State Machine | Beta |
-| **Translation Studio (EH Translator)** | 장편 번역 워크스페이스 — Translate/Chapters/Context/Network | Production |
-| **EH Network** | 작가 네트워크 — 행성 시스템, 로그, 정산 | Beta |
-| **Tools** | 은하 지도, 함선 제원, 워프 게이트, 사운드트랙 등 7종 | Production |
+- **BYOK (Bring Your Own Key)** — Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio 지원. 무료.
+- **API 키 없이도 80%+ 기능 사용 가능** — 아카이브, 수동 집필, 내보내기는 AI 없이 작동.
 
-## Tech Stack
+---
+
+## 5개 앱
+
+| 앱 | 경로 | 설명 |
+|----|------|------|
+| **유니버스 포털** | `/archive` | 140+ 문서, 8개 카테고리, 등급별 색상 배지 (PUBLIC/RESTRICTED/CLASSIFIED) |
+| **NOA 스튜디오** | `/studio` | 집필 OS — macOS 독, 5가지 집필 모드, 실시간 품질 분석, 연속성 검사, 인라인 리라이트, EPUB/DOCX 내보내기 |
+| **코드 스튜디오** | `/code-studio` | 검증형 IDE — 51패널, 8팀 파이프라인, diff-guard, 4-Tier 오케스트레이션, 436룰 카탈로그 |
+| **번역 스튜디오** | `/translation-studio` | 소설 전용 AI 번역 — 6축 채점, 41밴드, 자동 재창조 루프, 용어집, XLIFF/TMX |
+| **EH 네트워크** | `/network` | 작가 커뮤니티 — 행성, 포스트, 보고서, 정착지 |
+
+---
+
+## 기술 스택
 
 | 영역 | 기술 |
 |------|------|
-| Framework | Next.js 16.2 (App Router, 28 routes) |
-| Language | TypeScript 5, React 19 |
-| UI | Tailwind CSS 4, Lucide Icons |
-| AI | Gemini, OpenAI, Claude, Groq, Mistral, LM Studio (BYOK) |
-| Editor | Monaco Editor, xterm.js, WebContainer API |
-| DB/Auth | Firebase Firestore + Auth (EH Network) |
-| Engine | ANS 10.0 (서사 엔진), Verification Loop (코드 검증) |
-| Export | EPUB / DOCX / TXT (순수 JS, 외부 의존성 없음) |
-| Test | Jest 30 (~1,600 tests, 161 suites) + Integration tests (50 cases) |
-| Audit | 16-area Project Audit Engine — 94/100 (S) |
-| Deploy | Vercel |
+| 프레임워크 | Next.js 16.2, React 19, TypeScript 5 |
+| UI | Tailwind CSS 4, Design System v8.0 (3-Tier), Lucide Icons |
+| AI | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio (BYOK) |
+| 집필 엔진 | ANS 10.0 — 품질 게이트, 텐션 곡선, 장르 프리셋, HFCP |
+| 코드 엔진 | 8팀 파이프라인, diff-guard, apply-guard, intent-parser, 4-Tier |
+| 번역 엔진 | 6축 채점, 41밴드, 자동 재창조, CAT 표준 (XLIFF/TMX/TBX) |
+| 에디터 | Monaco Editor, xterm.js, WebContainer API |
+| 저장소 | localStorage + IndexedDB + Firestore (CLOUD_SYNC) + Google Drive |
+| 인증 | Firebase Auth + Stripe 구독 |
+| 내보내기 | EPUB 3.0 / DOCX / TXT / XLIFF / TMX — 순수 JS |
+| 테스트 | Jest (~1,600 tests), Playwright E2E |
+| 배포 | Vercel (ehsu.app) |
 
-## Quick Start
+---
+
+## 시작하기
 
 ```bash
+git clone https://github.com/gilheumpark-bit/eh-universe-web.git
+cd eh-universe-web
 npm install
-npm run dev          # localhost:3000
-npm run build        # production build
-npm run lint         # ESLint
-npm test             # Jest unit tests
-npm run test:integration  # Integration tests
+npm run dev
 ```
 
-서버 API·라우트 명세는 [`docs/API.md`](docs/API.md)를 본문으로 둡니다.
+[localhost:3000](http://localhost:3000) 접속. 아카이브, 수동 편집, 내보내기는 API 키 없이 사용 가능.
 
-## EH Universe 포털
+---
 
-세계관 탐색 포털 — 홈에서 스플래시 후 허브로 진입.
+## NOA 스튜디오 — 집필 OS
 
-- **설정집 아카이브**: 6개 카테고리(핵심/연표/세력/군사/지리/기술), 109개 문서
-- **기밀 보고서**: 80건, 7종 서브카테고리, 등급 필터(CLASSIFIED/RESTRICTED/PUBLIC)
-- **코덱스**: 세계관 핵심 법칙, 용어, 구조 참조
-- **룰북 v1.0**: 서사 엔진의 구조와 원리
-- **레퍼런스**: 프로젝트 4페이지 요약본
-- **Tools**: 은하 지도, 함선 제원, 워프 게이트, 사운드트랙, 네카 사운드, 노아 타워 등 (`/tools/*`). 문체 기능은 소설 스튜디오 `/studio` 안 문체 탭만 사용(레거시 `/tools/style-studio`는 스튜디오로 리다이렉트).
+| 기능 | 설명 |
+|------|------|
+| **5가지 집필 모드** | AI 생성 / 수동 편집 / 3단계 캔버스 / 자동 30% 리파인 / 고급 |
+| **실시간 품질 분석** | 문단별 점수: show/tell, 반복어, 문장 다양성, 밀도, 대사 비율 (NOD 게이지) |
+| **연속성 검사** | 캐릭터 이름 오타(편집거리 1), 특성 모순, 시간대/장르 모순 |
+| **인라인 리라이트** | 텍스트 선택 → Ctrl+Shift+R → 문맥 인식 AI 리라이트 + Undo 스택 |
+| **품질 게이트** | 6차원 평가(등급/감독/EOS/텐션/AI톤/레드태그) + 시도별 이력 |
+| **버전 히스토리** | 300자+ 변경 시 자동 스냅샷, LCS 기반 diff 뷰 |
+| **내보내기** | EPUB 3.0, DOCX, TXT, MD, JSON, HTML, CSV |
+| **집필 OS UI** | macOS 독, 윈도우 타이틀바, 상태표시줄, 젠 모드 |
 
-## NOA Studio (소설 스튜디오)
+### AI 워크플로우
 
-| 탭 | 기능 |
-|----|------|
-| 세계관 (`world`) | 3-tier 설계, 문명 시뮬레이터, 분석, 타임라인, 지도 (서브탭 5) |
-| 캐릭터 (`characters`) | 캐릭터/아이템 스튜디오 (서브탭 2), 관계/리소스 관리 |
-| 룰북 (`rulebook`) | **SceneSheet(연출 기능 포함)**, 복선/텐션/전환 설계 데이터 |
-| 집필 (`writing`) | AI 생성/편집/캔버스/리파인/고급 (모드 5) |
-| 문체 (`style`) | DNA/슬라이더 기반 문체 프로파일링 (`/studio?tab=style`) |
-| 원고 (`manuscript`) | 원고/에피소드 관리 |
-| 비주얼 (`visual`) | NOI 프롬프트 카드, 일관성 태그 |
-| 아카이브 (`history`) | 세션/프로젝트 아카이브 |
-| 문서 (`docs`) | User Guide |
+| 기능 | 상세 |
+|------|------|
+| 재시도 | 3회 + 지터 백오프 + Retry-After 헤더 연동 |
+| 토큰 버짓 | 시스템 프롬프트 30% 초과 시 경고 |
+| 캐릭터 절삭 | 20명 초과 시 이벤트 알림 |
+| ARI 회로 차단기 | EMA 감점, 건강한 프로바이더로 자동 전환 |
+| Firestore 동기화 | 3초 디바운스 + onSnapshot 실시간 (CLOUD_SYNC 플래그) |
 
-## Code Studio (검증형 IDE)
+---
 
-- **Panel Registry**: 40개 패널 (필수 기본 노출 + Advanced 토글, `audit` 포함)
-- **Design Linter**: Step 1.6 in verification-loop, 16 runtime rules
-- **Shell Architecture**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager 3파일 분리 (1,721줄 → 3파일)
-- **lib/code-studio/**: 6-directory 구조 — `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
-- **useAIProvider Hook**: 18개 컴포넌트의 ai-providers 레이어 위반 → 훅 브릿지 경유
-- **Verification Loop**: Pipeline(50%) + Bug Scan(20%) + Stress Test(30%) 3회 검증
-- **Composer State Machine**: idle → generating → verifying → review → staged → applied
-- **Staging/Rollback**: 사람 승인 후 반영, 되돌리기 가능
-- **Session Restore**: IndexedDB 기반 마지막 세션 자동 복원
-- **ActivityBar**: Explorer / Editor / Chat / Terminal / Pipeline
+## 코드 스튜디오
+
+| 기능 | 설명 |
+|------|------|
+| 51 패널 레지스트리 | 동적 import, 하드코딩 금지 |
+| 8팀 파이프라인 | PM→Architect→Frontend→Backend→QA→Security→DevOps→Tech Lead |
+| diff-guard | SCOPE/CONTRACT/@block 편집 경계 보호 |
+| intent-parser | 결정론적 의도→AST 제약 변환 (LLM 불필요) |
+| 4-Tier 오케스트레이션 | Ultra / ProPlus / Standard / Lite |
+| 436룰 카탈로그 | 224 bad + 212 good 패턴 |
+| 디자인 린터 | 16룰 런타임 검사 |
+
+---
+
+## 번역 스튜디오
+
+| 기능 | 설명 |
+|------|------|
+| 2-모드 x 41-밴드 | Fidelity(4축) / Experience(6축) 직교 설계 |
+| 6축 채점 | translationese, fidelity, naturalness, consistency, groundedness, voiceInvisibility |
+| 자동 재창조 | 점수 < 0.70 → temperature 상승 + 재생성 (최대 2회) |
+| 용어집 매니저 | 반응형 싱글톤, 배치 중 실시간 용어 추가 |
+| 캐릭터 레지스터 | stranger/formal/colleague/friend/intimate/hostile 6단계 |
+| CAT 표준 | XLIFF 1.2 + TMX 1.4 + TBX |
+| 언어별 현지화 | JP(나로계 단문, 俺/僕/私), CN(网文, 성어 치환) |
+
+---
+
+## Design System v8.0
+
+| 티어 | 토큰 | 사용처 |
+|------|------|--------|
+| FULL | ~3,000 | CSS 레이아웃, ChatPanel |
+| COMPACT | ~800 | App Generator, Autopilot |
+| MINIMAL | ~100 | 채팅 폴백 |
+
+- 시맨틱 토큰 필수 (`bg-bg-primary`, raw Tailwind 금지)
+- z-index 변수 (`--z-dropdown` ~ `--z-tooltip`)
+- 4px 간격 그리드, 44px 터치 타겟
+- 16룰 런타임 린터, 5 프리셋
+
+---
 
 ## i18n
 
 한국어(KO), 영어(EN), 일본어(JP), 중국어(CN) — 실시간 전환.
-중앙 사전: `studio-translations.ts` (leaf count 동일).
 Fallback: JP/CN → EN → KO.
 
-## Resilience
+---
 
-- **ErrorBoundary**: 통합 컴포넌트, variant prop (`full-page` | `section` | `panel`)
-- **SkeletonLoader**: 5 variants (`text` | `card` | `panel` | `editor` | `sidebar`) — shimmer 기반
-- **CSP / Security headers**: `next.config.ts headers()` — CSP 및 보안 헤더 통합 관리
-- **Design System v8.0**: 3-Tier token efficiency, 16-rule runtime linter, 5 design presets
-- **Logger**: `@/lib/logger` — `console.*` 대신 logger.info/warn/error 사용
-- **Streaming**: fetch 120s + AI 180s + 구조화 60s + 동시실행 lock
-- **Storage**: localStorage try/catch + IndexedDB 백업 + 용량 감지
-- **Input Validation**: maxLength 45건 + 엔진 50K 하드 리밋
+## 보안
 
-## Test Architecture
+- CSP + HSTS + X-Frame-Options (`next.config.ts headers()`)
+- API 키 암호화 (AES-GCM v4)
+- Firebase Auth + 관리자 역할 게이트
+- 입력 검증 (maxLength 45건 + 엔진 50K 하드 리밋)
 
-```
-Layer 1: Static — TypeScript + ESLint + Next.js Build (28 routes)
-Layer 2: Unit   — Jest 161 suites (~1,600 tests), 22 component + 19 hooks + 137 lib suites
-Layer 3: Integration — 3 suites, 50 test cases (navigation, studio, code-studio)
-Layer 4: Audit  — 16-area Project Audit Engine, 4,400+ checks, 94/100 (S)
-Layer 5: Runtime Guards — ErrorBoundary (3 variants), AbortController, generationLockRef
-```
+---
 
-Coverage thresholds: branches 50%, functions/lines/statements 60%.
+## 문서
 
-## Project Audit (94/100 S)
+| 문서 | 설명 |
+|------|------|
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v1.4.0) |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |
+| [SECURITY.md](SECURITY.md) | 보안 정책 |
+| [RUNBOOK.md](RUNBOOK.md) | 운영 런북 |
 
-16개 영역, 4개 카테고리 자동 감사:
+---
 
-| 카테고리 | 점수 | 영역 |
-|----------|------|------|
-| Code Health | A | operations, complexity, architecture, dependencies |
-| Quality | S | testing, error-handling, feature-completeness, documentation |
-| User Experience | S | design-system, accessibility, ux-quality, i18n |
-| Infra & Security | S | security, performance, api-health, env-config |
+## 라이선스
 
-## NOA Rules
+[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 비상업적 용도 무료.
 
-이 프로젝트는 `CLAUDE.md`의 NOA Rules v1.2를 따른다.
+<div align="center">
 
-- **NOA-CORE**: 응답 운영 (언어 동기화, 톤 매칭, 반복 방지, 확신도 게이트)
-- **NOA-EXEC**: 실행 규칙 (Preflight Plan, 3-Persona 검사, PART 구조, Terminal 검증)
+---
+
+*"어디로 향할까요?"*
+
+Next.js 16.2, TypeScript, 7개 AI 프로바이더, CS Quill로 구축.
+
+</div>

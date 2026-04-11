@@ -4,16 +4,15 @@
 
 ### Where are you headed?
 
-A worldbuilding portal for 200,000 star systems — with an AI writing studio and a verified code IDE.
+A worldbuilding portal for 200,000 star systems — with an AI writing OS and a verified code IDE.
 
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
-![Audit](https://img.shields.io/badge/audit-94%2F100-22c55e?style=flat-square)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 
-[Live Demo](https://ehuniverse.com) · [Docs](#documentation) · [Contributing](CONTRIBUTING.md)
+[Live](https://ehsu.app) · [Docs](#documentation) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -21,9 +20,15 @@ A worldbuilding portal for 200,000 star systems — with an AI writing studio an
 
 ## Overview
 
-EH Universe is a full-stack creative platform built on a single Next.js application. It combines a worldbuilding archive, an AI-powered novel writing studio, a verified code IDE, a translation workspace, and a writer community — all sharing a unified design system and authentication layer.
+EH Universe is a full-stack creative platform built on a single Next.js 16.2 application. Five apps share a unified design system and authentication layer:
 
-**82% of features work without an API key.** The platform functions as a standalone writing tool, code editor, and lore archive even with AI completely disabled.
+1. **Universe Portal** — 140+ lore documents across 8 categories
+2. **NOA Studio** — AI writing OS with real-time quality analysis
+3. **Code Studio** — Verified code IDE with 8-team pipeline
+4. **Translation Studio** — Novel-specific AI translation with 6-axis scoring
+5. **EH Network** — Writer community with planet systems
+
+**BYOK (Bring Your Own Key)** — works with Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio. Free to use.
 
 ---
 
@@ -33,14 +38,14 @@ EH Universe is a full-stack creative platform built on a single Next.js applicat
 <tr>
 <td width="50%">
 
-**Universe Portal** `/`
-Lore archive with 109 documents, 80 classified reports, codex, rulebook, and 7 interactive tools including galaxy map, vessel specs, and warp gate calculator.
+**Universe Portal** `/archive`
+140+ documents across 8 categories (Core, Timeline, Factions, Technology, Geography, Military, Classified, Reports). Color-coded security levels (PUBLIC / RESTRICTED / CLASSIFIED).
 
 </td>
 <td width="50%">
 
 **NOA Studio** `/studio`
-AI novel writing engine with worldbuilding, character design, scene direction, style profiling, manuscript management, and EPUB/DOCX/TXT export.
+Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine / Advanced), real-time paragraph quality analysis (show/tell, repetition, variety, density, dialogue), continuity checking (name typos, trait conflicts, setting contradictions), inline rewrite with Ctrl+Shift+R, EPUB/DOCX/TXT export, and version diff.
 
 </td>
 </tr>
@@ -48,13 +53,13 @@ AI novel writing engine with worldbuilding, character design, scene direction, s
 <td>
 
 **Code Studio** `/code-studio`
-Browser-based IDE with Monaco editor, multi-terminal, WebContainer preview, TypeScript IntelliSense, Git engine, natural language commands, and AI verification pipeline.
+Browser IDE with Monaco editor, 51-panel registry, 8-team verification pipeline, diff-guard (SCOPE/CONTRACT/@block protection), 4-Tier orchestration (Ultra/ProPlus/Standard/Lite), 436-rule dual catalog, design linter (16 rules), and WebContainer preview.
 
 </td>
 <td>
 
 **Translation Studio** `/translation-studio`
-Long-form translation workspace with bilateral editor, chapter management, glossary, and 5-stage AI translation pipeline.
+Novel-specific AI translation with 2-mode x 41-band scoring (Fidelity 4-axis / Experience 6-axis), auto-recreation loop (score < 0.70), glossary manager, character register (6 relation levels), XLIFF/TMX/TBX export, and language-specific presets (JP narou-kei, CN wangwen).
 
 </td>
 </tr>
@@ -62,13 +67,13 @@ Long-form translation workspace with bilateral editor, chapter management, gloss
 <td>
 
 **EH Network** `/network`
-Writer community with planet systems, posts, comments, logs, settlements, and moderation tools.
+Writer community with planet systems, posts, comments, logs, settlements, and moderation.
 
 </td>
 <td>
 
 **Tools** `/tools/*`
-Galaxy map, vessel specs, warp gate, soundtrack player, Neka sound generator, NOA tower, and style studio.
+Galaxy map, vessel specs, warp gate calculator, soundtrack player, Neka sound generator, NOA tower, style studio.
 
 </td>
 </tr>
@@ -81,14 +86,17 @@ Galaxy map, vessel specs, warp gate, soundtrack player, Neka sound generator, NO
 | Layer | Technology |
 |-------|-----------|
 | Framework | Next.js 16.2, React 19, TypeScript 5 |
-| UI | Tailwind CSS 4, Design System v8.0, Lucide Icons |
-| AI | Gemini 3.1, OpenAI GPT-5.4, Claude 4.6, Groq, Mistral (BYOK) |
+| UI | Tailwind CSS 4, Design System v8.0 (3-Tier), Lucide Icons |
+| AI | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio (BYOK) |
+| Writing Engine | ANS 10.0 — quality gate, tension curves, genre presets, HFCP |
+| Code Engine | 8-team pipeline, diff-guard, apply-guard, intent-parser, 4-Tier |
+| Translation Engine | 6-axis scoring, 41-band, auto-recreation, glossary, CAT standard |
 | Editor | Monaco Editor, xterm.js, WebContainer API |
-| Database | Firebase Firestore + Auth |
-| Engine | ANS 10.0 (Narrative), Verification Loop (Code) |
-| Export | EPUB / DOCX / TXT — pure JS, zero dependencies |
-| Testing | Jest (~1,600 tests), Integration (50 cases) |
-| Deploy | Vercel |
+| Storage | localStorage + IndexedDB + Firestore (CLOUD_SYNC) + Google Drive |
+| Auth | Firebase Auth + Stripe tiers |
+| Export | EPUB 3.0 / DOCX / TXT / XLIFF / TMX — pure JS |
+| Testing | Jest (~1,600 tests), Playwright E2E |
+| Deploy | Vercel (ehsu.app) |
 
 ---
 
@@ -101,11 +109,11 @@ npm install
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). No API key required for basic features.
+Open [localhost:3000](http://localhost:3000). No API key required for archive, editing, and export.
 
 ```bash
 npm run build        # Production build
-npm run lint         # ESLint (0 errors)
+npm run lint         # ESLint
 npm test             # Unit tests
 ```
 
@@ -115,31 +123,61 @@ npm test             # Unit tests
 
 ```
 src/
-├── app/                    # Next.js App Router (28 routes)
-│   ├── studio/             # NOA Writing Studio
+├── app/                    # Next.js App Router
+│   ├── studio/             # NOA Writing OS
 │   ├── code-studio/        # Verified Code IDE
 │   ├── translation-studio/ # Translation Workspace
 │   ├── network/            # Writer Community
-│   └── tools/              # Interactive Tools (7)
-├── components/             # React Components (~200)
-├── engine/                 # ANS 10.0 Narrative Engine
-├── lib/                    # Shared Libraries
-│   └── code-studio/        # IDE Core (6 directories)
-│       ├── core/           # Panel Registry, Design System v8.0
-│       ├── ai/             # Agent Teams, Ghost Text
-│       ├── pipeline/       # Verification Loop, Design Linter
-│       ├── editor/         # Monaco Setup, IntelliSense
-│       ├── features/       # Terminal, Git, Debugger, Sandbox
-│       └── audit/          # Quality Engine
-├── hooks/                  # Custom React Hooks
-└── services/               # AI Provider Services
+│   ├── archive/            # Universe Archive (140+ docs)
+│   └── api/                # 22 API routes
+├── components/
+│   ├── studio/             # Writing OS (OSDesktop, WindowTitleBar, StatusBar, Zen)
+│   ├── code-studio/        # IDE panels (87 files)
+│   └── translator/         # Translation editor + panels
+├── engine/                 # ANS 10.0 — pipeline, quality-gate, director, genre-presets
+├── hooks/                  # useQualityAnalysis, useContinuityCheck, useUndoStack, etc.
+└── lib/
+    ├── code-studio/        # IDE core (6 directories)
+    │   ├── core/           # Panel registry, design system, scope policy
+    │   ├── ai/             # Intent parser, calc protocol, tier registry
+    │   ├── pipeline/       # Diff guard, apply guard, design transpiler, verification loop
+    │   ├── editor/         # Monaco, IntelliSense
+    │   ├── features/       # Terminal, Git, sandbox
+    │   └── audit/          # Quality engine
+    └── firestore-project-sync.ts  # Cloud sync (feature-flagged)
 ```
 
 ---
 
-## Design System v8.0
+## NOA Studio — Writing OS
 
-Three-tier token efficiency for AI-generated UI:
+| Feature | Description |
+|---------|-------------|
+| **5 Writing Modes** | AI Draft / Manual Edit / 3-Step Canvas / Auto 30% Refine / Advanced |
+| **Real-time Quality** | Paragraph scoring: show/tell, repetition, sentence variety, density, dialogue ratio |
+| **Continuity Check** | Character name typos (edit distance 1), trait conflicts, time/genre contradictions |
+| **Inline Rewrite** | Select text → Ctrl+Shift+R → context-aware AI rewrite with undo stack |
+| **Quality Gate** | 6-dimension evaluation with per-attempt history tracking |
+| **Version Diff** | Auto-snapshot at 300+ char changes, LCS-based diff view |
+| **Export** | EPUB 3.0, DOCX (Office XML), TXT, MD, JSON, HTML, CSV |
+| **Writing OS UI** | macOS dock, window title bar, status bar, zen mode |
+
+---
+
+## AI Workflow
+
+| Feature | Detail |
+|---------|--------|
+| Retry | 3 attempts + jittered exponential backoff + Retry-After header |
+| Token Budget | System prompt audit — warns at 30% context usage |
+| Character Limit | Warns when >20 characters truncated from prompt |
+| ARI Circuit Breaker | EMA scoring, auto-failover to healthy provider |
+| Quality Gate History | Per-attempt grade/director-score/tag/fail-reasons tracking |
+| Firestore Sync | Debounced 3s writes + onSnapshot real-time (CLOUD_SYNC flag) |
+
+---
+
+## Design System v8.0
 
 | Tier | Tokens | Usage |
 |------|--------|-------|
@@ -147,7 +185,7 @@ Three-tier token efficiency for AI-generated UI:
 | COMPACT | ~800 | App generator, Autopilot |
 | MINIMAL | ~100 | Chat fallback |
 
-- Semantic color tokens (`bg-bg-primary`, not raw Tailwind)
+- Semantic tokens required (`bg-bg-primary`, not raw Tailwind)
 - Z-index variables (`--z-dropdown` through `--z-tooltip`)
 - 4px spacing grid, 44px touch targets
 - 16-rule runtime design linter
@@ -155,33 +193,23 @@ Three-tier token efficiency for AI-generated UI:
 
 ---
 
-## Testing
+## CS Quill — Code Quality CLI
 
 ```
-Layer 1  Static       TypeScript + ESLint + Build
-Layer 2  Unit         161 suites, ~1,600 tests
-Layer 3  Integration  3 suites, 50 cases
-Layer 4  Audit        16 areas, 94/100 (S grade)
-Layer 5  Runtime      ErrorBoundary, AbortController
+    /\_/\
+   ( o.o )  CS Quill — Code Quality Guardian
+    > ^ <   56 engines | 274 tests | SBOM | Offline
+  /||||||\\
 ```
 
----
+```bash
+npm run cs -- init
+npm run cs -- generate "REST API with auth"
+npm run cs -- verify ./src
+npm run cs -- audit
+```
 
-## i18n
-
-Korean, English, Japanese, Chinese — real-time switching.
-
-Central dictionary with identical leaf counts across all languages. Fallback: JP/CN → EN → KO.
-
----
-
-## Security
-
-- CSP + HSTS + X-Frame-Options via `next.config.ts headers()`
-- API key encryption (AES-GCM v4)
-- Firebase Auth with admin role gates
-- SHA-256 password hashing for shared content
-- Input validation (45 maxLength + 50K engine limit)
+28 commands, 56 engines, 3-tier architecture (Web + CLI + VS Code Extension).
 
 ---
 
@@ -190,104 +218,17 @@ Central dictionary with identical leaf counts across all languages. Fallback: JP
 | Document | Description |
 |----------|------------|
 | [README.ko.md](README.ko.md) | Korean documentation |
-| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [CHANGELOG.md](CHANGELOG.md) | Version history (v1.4.0) |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |
 | [SECURITY.md](SECURITY.md) | Security policy |
 | [RUNBOOK.md](RUNBOOK.md) | Operations runbook |
-| [docs/feature-inventory.md](docs/feature-inventory.md) | 168 features inventory |
-
----
-
----
-
-## CS Quill 🦔 — Integrated Code Quality CLI
-
-EH Universe Web includes **CS Quill**, a 56-engine autonomous AI coding agent with multi-key auto-fallback, built into `src/cli/`.
-
-```
-    /\_/\
-   ( o.o )  CS Quill — Code Quality Guardian
-    > ^ <   85 files | 20,500 lines | 56 engines | 274 tests
-  /||||||\\
-```
-
-**Verified:** 274/274 tests PASS | 1000-req load test 252 RPS | Multi-key fallback | SBOM | Offline mode
-
-### 📥 Install VS Code Extension
-
-<a href="https://github.com/gilheumpark-bit/eh-universe-vscode/releases/latest/download/eh-universe-vscode-1.0.0.vsix">
-  <img src="https://img.shields.io/badge/Download-VS%20Code%20Extension%20(.vsix)-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white" alt="Download VSIX" />
-</a>
-
-```bash
-# Option 1: CLI install
-code --install-extension eh-universe-vscode-1.0.0.vsix
-
-# Option 2: VS Code UI
-# Ctrl+Shift+P → "Extensions: Install from VSIX..." → select file
-```
-
-> **Requires daemon:** `cs daemon --port 8443` must be running for real-time diagnostics.
-
-### Quick Start
-
-```bash
-# Use via npm script
-npm run cs -- init
-npm run cs -- generate "REST API with auth"
-npm run cs -- verify ./src
-npm run cs -- daemon --port 8443
-```
-
-### 3-Tier Architecture
-
-```
-eh-universe-web  ←── REST ───→  CS Quill CLI (Daemon)
-                                ↕ WebSocket
-eh-universe-vscode ←── WS ──→  CS Quill CLI (Daemon)
-```
-
-| Component | Repository | Purpose |
-|-----------|-----------|---------|
-| **Web App** | [eh-universe-web](https://github.com/gilheumpark-bit/eh-universe-web) | Next.js app with Code Studio (this repo) |
-| **CLI** | [cs-quill-cli](https://github.com/gilheumpark-bit/cs-quill-cli) | Standalone 56-engine CLI + WebSocket daemon |
-| **VS Code** | [eh-universe-vscode](https://github.com/gilheumpark-bit/eh-universe-vscode) | Extension with diagnostics + quick-fix |
-
-### Commands (28)
-
-| Command | Description |
-|---------|-------------|
-| `cs init` | Project initialization & onboarding |
-| `cs generate <prompt>` | SEAL contract parallel code generation |
-| `cs verify [path]` | 8-team parallel verification |
-| `cs audit` | 16-area project health audit |
-| `cs daemon --port 8443` | WebSocket daemon server |
-| `cs stress --url <endpoint>` | HTTP load testing (autocannon) |
-| `cs bench [path]` | Function benchmarking (tinybench) |
-| `cs compliance --sbom cyclonedx` | SBOM generation |
-| `cs doctor` | Environment diagnostics |
-| `cs vibe <prompt>` | Natural language mode |
-| ...and 18 more | `cs --help` for full list |
-
-### Verification Pipeline
-
-```
-8 Teams: Regex → AST → Hollow → Dead-Code → Design → Cognitive → Bug → Security
-Receipt: HMAC-SHA256 hash chain (tamper-proof audit trail)
-Offline: 10 self-healing rules (no AI required)
-```
-
-### 56 Engines
-
-AST(6) + Lint(6) + Security(6) + Performance(5) + Testing(3) + TUI(10) + IP(3) + Formal(1) + Data(3) + Extended(13) = **56 open-source packages**
-
-Full engine list: [cs-quill-cli README](https://github.com/gilheumpark-bit/cs-quill-cli#56-integrated-engines)
 
 ---
 
 ## License
 
-[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — Free to use for non-commercial purposes.
+[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — Free for non-commercial use.
 
 <div align="center">
 
@@ -295,6 +236,6 @@ Full engine list: [cs-quill-cli README](https://github.com/gilheumpark-bit/cs-qu
 
 *"Where are you headed?"*
 
-Built with Next.js, TypeScript, seven AI providers, and CS Quill 🦔.
+Built with Next.js 16.2, TypeScript, seven AI providers, and CS Quill.
 
 </div>
