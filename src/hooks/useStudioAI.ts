@@ -281,6 +281,9 @@ export function useStudioAI({
         currentRetryHint = buildRetryHint(gateResult, attempt, language === 'KO');
         onQualityGateRetry?.(attempt, maxAttempts, gateHistory);
         if (attempt < maxAttempts) {
+          // 지수 백오프 딜레이: 2초, 4초, 8초... (API 부하 방지)
+          const retryDelay = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
+          await new Promise(r => setTimeout(r, retryDelay));
           attempt++;
         } else {
           break;

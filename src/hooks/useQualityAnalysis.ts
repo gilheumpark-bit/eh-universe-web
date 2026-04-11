@@ -177,16 +177,27 @@ export function useQualityAnalysis(text: string) {
   return useMemo(() => {
     if (!text || text.trim().length < 20) return { paragraphs: [], averageScore: 0, weakCount: 0 };
 
-    const rawParagraphs = text.split(/\n\s*\n/);
-    let offset = 0;
-    const paragraphs: ParagraphScore[] = [];
+    // 정규식 매치로 실제 구분자 길이를 추적하여 정확한 offset 계산
+    const PARA_SEP = /\n\s*\n/g;
+    const rawParagraphs: { text: string; offset: number }[] = [];
+    let lastEnd = 0;
+    let match: RegExpExecArray | null;
 
+    while ((match = PARA_SEP.exec(text)) !== null) {
+      rawParagraphs.push({ text: text.slice(lastEnd, match.index), offset: lastEnd });
+      lastEnd = match.index + match[0].length;
+    }
+    // 마지막 문단 (구분자 뒤 나머지)
+    if (lastEnd < text.length) {
+      rawParagraphs.push({ text: text.slice(lastEnd), offset: lastEnd });
+    }
+
+    const paragraphs: ParagraphScore[] = [];
     for (let i = 0; i < rawParagraphs.length; i++) {
       const p = rawParagraphs[i];
-      if (p.trim().length >= 10) {
-        paragraphs.push(scoreParagraph(p, i, offset));
+      if (p.text.trim().length >= 10) {
+        paragraphs.push(scoreParagraph(p.text, i, p.offset));
       }
-      offset += p.length + 2; // +2 for \n\n
     }
 
     const totalScore = paragraphs.reduce((sum, p) => sum + p.score, 0);

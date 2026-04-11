@@ -25,9 +25,7 @@ const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "tr
 
 const nextConfig: NextConfig = {
   typescript: {
-    // GitPanel/DatabasePanel use optional deps (isomorphic-git, sql.js)
-    // that cause type errors in strict mode — skip for production builds
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   poweredByHeader: false,
   compress: true,

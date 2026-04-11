@@ -5,7 +5,7 @@
 // project detection, and deploy history persistence.
 // Zero React/UI dependencies.
 
-import type { FileNode } from "@eh/quill-engine/types";
+import type { FileNode } from "@/lib/code-studio/core/types";
 
 // ============================================================
 // PART 1 — Types & Constants

@@ -369,7 +369,6 @@ const WritingTab: React.FC<WritingTabProps> = ({
         )}
 
         {/* Right aside panel removed — director/scenes accessible via tabs */}
-        )}
       </div>
 
       {/* Bottom Input Area */}

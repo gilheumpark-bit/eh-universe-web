@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2 } from 'lucide-react';
-import { streamChat, getApiKey } from '@/lib/ai-providers';
+import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 // ============================================================
 // PART 1 — 타입
@@ -39,8 +39,16 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
-  const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimeout.current) clearTimeout(hideTimeout.current);
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const checkSelection = useCallback(() => {
     const ta = textareaRef.current;
@@ -57,29 +65,35 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
       return;
     }
 
+    // 정확한 Y 좌표: textarea의 뷰포트 위치 + 선택 라인 위치 - 내부 스크롤
     const taRect = ta.getBoundingClientRect();
-    const lines = ta.value.slice(0, start).split('\n');
-    const lineNum = lines.length - 1;
-    const lineHeight = parseInt(getComputedStyle(ta).lineHeight) || 28;
-    const scrollTop = ta.scrollTop;
-    const y = taRect.top + (lineNum * lineHeight) - scrollTop - 48;
+    const linesBefore = ta.value.slice(0, start).split('\n').length - 1;
+    const computedLH = getComputedStyle(ta).lineHeight;
+    const lineHeight = computedLH === 'normal' ? 28 : parseInt(computedLH) || 28;
+    const paddingTop = parseInt(getComputedStyle(ta).paddingTop) || 0;
+    const y = taRect.top + paddingTop + (linesBefore * lineHeight) - ta.scrollTop - 48;
     const x = taRect.left + Math.min(taRect.width / 2, 200);
 
-    clearTimeout(hideTimeout.current);
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
     setPopup({ visible: true, x: Math.max(80, x), y: Math.max(40, y), selectedText: text, selStart: start, selEnd: end });
     setResult(null);
   }, [textareaRef]);
 
+  // selectionchange 이벤트 (mouseup/keyup보다 안정적)
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
-    const onMouseUp = () => setTimeout(checkSelection, 50);
-    const onKeyUp = (e: KeyboardEvent) => { if (e.shiftKey) setTimeout(checkSelection, 50); };
+    const onMouseUp = () => requestAnimationFrame(checkSelection);
+    const onKeyUp = (e: KeyboardEvent) => { if (e.shiftKey || e.key === 'Shift') requestAnimationFrame(checkSelection); };
     ta.addEventListener('mouseup', onMouseUp);
     ta.addEventListener('keyup', onKeyUp);
-    return () => { ta.removeEventListener('mouseup', onMouseUp); ta.removeEventListener('keyup', onKeyUp); };
+    return () => {
+      ta.removeEventListener('mouseup', onMouseUp);
+      ta.removeEventListener('keyup', onKeyUp);
+    };
   }, [textareaRef, checkSelection]);
 
+  // 외부 클릭 시 닫기 (cleanup 보장)
   useEffect(() => {
     if (!popup.visible) return;
     const onClick = (e: MouseEvent) => {
@@ -97,7 +111,8 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
   // PART 3 — AI 호출 + 자동 교체
   // ============================================================
   const handleAction = useCallback(async (action: string) => {
-    const key = getApiKey();
+    const provider = getActiveProvider();
+    const key = getApiKey(provider);
     if (!key) {
       navigator.clipboard.writeText(popup.selectedText);
       return;

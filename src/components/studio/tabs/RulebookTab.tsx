@@ -127,14 +127,15 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       writerNotes: config.sceneDirection.writerNotes,
       plotStructure: config.sceneDirection.plotStructure,
     } : undefined,
-    onDirectionUpdate: (data: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onDirectionUpdate: (data: any) => {
       if (!currentSessionId) return;
       const d = data as { goguma: { type: string; intensity: string; desc: string; episode: number }[]; hooks: { position: string; hookType: string; desc: string }[]; emotions: { emotion: string; intensity: number; position: number }[]; dialogueRules: { character: string; tone: string; notes: string }[]; dopamines: { scale: string; device: string; desc: string; resolved: boolean }[]; cliffs: { cliffType: string; desc: string; episode: number }[]; foreshadows: { planted: string; payoff: string; episode: number; resolved: boolean }[]; pacings: { section: string; percent: number; desc: string }[]; tensionPoints: { position: number; level: number; label: string }[]; canons: { character: string; rule: string }[]; transitions: { fromScene: string; toScene: string; method: string }[]; writerNotes?: string; plotStructure?: string };
       updateCurrentSession({
         config: {
           ...(config || INITIAL_CONFIG),
           sceneDirection: {
-            goguma: d.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc, episode: g.episode })),
+            goguma: d.goguma.map(g => ({ type: g.type as 'goguma' | 'cider', intensity: g.intensity, desc: g.desc, episode: g.episode })),
             hooks: d.hooks.map(h => ({ position: h.position, hookType: h.hookType, desc: h.desc })),
             emotionTargets: d.emotions.map(e => ({ emotion: e.emotion, intensity: e.intensity, position: e.position })),
             dialogueTones: d.dialogueRules.map(dr => ({ character: dr.character, tone: dr.tone, notes: dr.notes })),

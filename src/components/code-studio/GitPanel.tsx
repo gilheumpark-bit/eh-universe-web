@@ -136,7 +136,7 @@ function loadIsomorphicGit(): Promise<IsomorphicGitEngine | null> {
       if (!git) return null;
       // LightningFS packages unavailable on npm — use in-memory stub
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const LightningFS = class { constructor(_name: string) {} promises = { readdir: async () => [] as string[], readFile: async () => '', writeFile: async () => {}, mkdir: async () => {}, unlink: async () => {}, stat: async () => ({ type: 'file', size: 0 }), rmdir: async () => {} }; };
+      const LightningFS = class { constructor(_name: string) {} promises = { readdir: async () => [] as string[], readFile: async () => '', writeFile: async (_p: string, _d: string, _e?: string) => {}, mkdir: async (_p?: string) => {}, unlink: async (_p?: string) => {}, stat: async (_p?: string) => ({ type: 'file' as const, size: 0 }), rmdir: async (_p?: string) => {} }; };
 
       const fs = new LightningFS("eh-git-fs");
       const pfs = fs.promises;

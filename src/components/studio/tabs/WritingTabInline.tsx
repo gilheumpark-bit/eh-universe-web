@@ -412,7 +412,7 @@ export default function WritingTabInline(props: Props) {
 
             {writingMode === 'edit' && (
               <div className="flex-1 space-y-3">
-                <WritingToolbar textareaRef={editDraftRef} value={editDraft} onChange={setEditDraft} language={language} targetMin={currentSession.config.charMin} targetMax={currentSession.config.charMax} />
+                <WritingToolbar textareaRef={editDraftRef} value={editDraft} onChange={setEditDraft} language={language} targetMin={currentSession.config.guardrails?.min} targetMax={currentSession.config.guardrails?.max} />
 
                 {/* P1: 연속성 경고 */}
                 {continuityWarnings.length > 0 && (
@@ -504,8 +504,7 @@ export default function WritingTabInline(props: Props) {
                   language={language}
                   storyConfig={{
                     genre: currentSession.config.genre || undefined,
-                    tone: currentSession.config.styleDna?.prose || undefined,
-                    narrativeIntensity: currentSession.config.styleDna?.tone || undefined,
+                    tone: currentSession.config.narrativeIntensity || undefined,
                     characters: currentSession.config.characters?.slice(0, 5).map(c => ({
                       name: c.name, role: c.role, speechStyle: c.speechStyle,
                     })),
