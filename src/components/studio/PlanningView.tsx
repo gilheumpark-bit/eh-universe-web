@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType } from '@/lib/studio-types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
 import { createT } from '@/lib/i18n';
-import { Sparkles, Monitor, Smartphone, Shuffle, Bot, Loader2, Share2, Check, Globe } from 'lucide-react';
+import { Sparkles, Monitor, Smartphone, Shuffle, Bot, Loader2, Share2, Check, Globe, RotateCcw } from 'lucide-react';
 import AdvancedPlanningSection from './planning/AdvancedPlanningSection';
 import { useRouter } from 'next/navigation';
 import { generateTensionCurveData } from '@/engine/models';
@@ -127,6 +127,19 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   });
   const router = useRouter();
 
+  const handleReset = () => {
+    if (!confirm(isKO ? '세계관 설정을 모두 초기화하시겠습니까?' : 'Reset all world settings?')) return;
+    setConfig((prev: StoryConfig) => ({
+      ...prev,
+      title: '', povCharacter: '', setting: '', primaryEmotion: '', synopsis: '',
+      corePremise: '', powerStructure: '', currentConflict: '',
+      worldHistory: '', socialSystem: '', economy: '', magicTechSystem: '',
+      factionRelations: '', survivalEnvironment: '',
+      culture: '', religion: '', education: '', lawOrder: '',
+      taboo: '', dailyLife: '', travelComm: '', truthVsBeliefs: '',
+    }));
+  };
+
   const handleAIGenerate = async () => {
     // hosted provider가 있으면 로컬 키 없이도 사용 가능
     // Gemini 키 또는 활성 프로바이더 키 또는 호스팅 중 하나만 있으면 OK
@@ -143,6 +156,10 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         setting: config.setting || undefined,
         primaryEmotion: config.primaryEmotion || undefined,
         synopsis: config.synopsis || undefined,
+        subGenreTags: config.subGenres?.length ? config.subGenres : undefined,
+        narrativeIntensity: config.narrativeIntensity || undefined,
+        totalEpisodes: config.totalEpisodes || undefined,
+        platform: config.platform || undefined,
       };
       const result = await generateWorldDesign(autoGenGenre, language, hints);
       setConfig((prev: StoryConfig) => ({
@@ -256,6 +273,12 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             className="flex items-center gap-2 px-4 py-2 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-accent-amber/60 shadow-[0_5px_15px_rgba(255,200,50,0.2)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-50">
             {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
             {aiGenerating ? tl('planningExtra.aiGenerating') : tl('planningExtra.aiGenerate')}
+          </button>
+          <button onClick={handleReset} disabled={aiGenerating}
+            className="flex items-center gap-1.5 px-3 py-2 bg-bg-secondary border border-border rounded-xl text-[10px] font-bold text-text-tertiary hover:text-accent-red hover:border-accent-red/40 transition-all active:scale-95 disabled:opacity-50"
+            title={isKO ? '세계관 초기화' : 'Reset World'}
+          >
+            <RotateCcw className="w-3 h-3" />
           </button>
         </div>
       </div>

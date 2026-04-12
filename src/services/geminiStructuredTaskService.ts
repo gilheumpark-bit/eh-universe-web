@@ -4,7 +4,10 @@ import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
-export type StoryHints = { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string; };
+export type StoryHints = {
+  title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string;
+  subGenreTags?: string[]; narrativeIntensity?: string; totalEpisodes?: number; platform?: string;
+};
 export type WorldContext = { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string; };
 export type SceneTierContext = { charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[]; corePremise?: string; powerStructure?: string; currentConflict?: string; };
 
@@ -207,6 +210,10 @@ export async function handleWorldDesign(apiKey: string, model: string, genre: st
   if (hints?.setting) hintParts.push(`Setting: "${hints.setting}"`);
   if (hints?.primaryEmotion) hintParts.push(`Core emotion: "${hints.primaryEmotion}"`);
   if (hints?.synopsis) hintParts.push(`Story synopsis: "${hints.synopsis}"`);
+  if (hints?.subGenreTags?.length) hintParts.push(`Sub-genre tags: ${hints.subGenreTags.join(', ')}`);
+  if (hints?.narrativeIntensity) hintParts.push(`Narrative intensity: ${hints.narrativeIntensity}`);
+  if (hints?.totalEpisodes) hintParts.push(`Total episodes: ${hints.totalEpisodes}`);
+  if (hints?.platform) hintParts.push(`Target platform: ${hints.platform}`);
   const hintBlock = hintParts.length > 0 ? `\n\nUSER-PROVIDED HINTS (incorporate these into your generation):\n${hintParts.join('\n')}` : '';
 
   return generateJson<Record<string, string>>(apiKey, model, `Generate a unique ${genre} story concept in ${LANGUAGE_NAMES[language]}. Be creative, original, and DETAILED.

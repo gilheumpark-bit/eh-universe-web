@@ -277,7 +277,7 @@ export const generateCharacters = async (
 export const generateWorldDesign = async (
   genre: string,
   language: AppLanguage = 'KO',
-  hints?: { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string }
+  hints?: { title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string; subGenreTags?: string[]; narrativeIntensity?: string; totalEpisodes?: number; platform?: string }
 ): Promise<{
   title: string;
   povCharacter: string;
