@@ -17,6 +17,8 @@ import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/e
 import { stripEngineArtifacts } from '@/engine/pipeline';
 import { getGenreTemperature } from '@/engine/genre-presets';
 import { buildStoryBible } from '@/engine/context-builder';
+import { getModelForRole } from '@/lib/dgx-models';
+import { hasDgxService } from '@/lib/ai-providers';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
@@ -267,7 +269,7 @@ export function useStudioAI({
               return s;
             }));
           },
-          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
         );
 
         // Trademark/IP filter
@@ -277,7 +279,7 @@ export function useStudioAI({
 
         finalContent = stripEngineArtifacts(fullContent) || result.content;
         
-        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform); } catch { /* manuscript analysis advisory — non-blocking */ }
+        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform, capturedConfig.genre); } catch { /* manuscript analysis advisory — non-blocking */ }
         qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
 
         gateResult = evaluateQuality(finalContent, capturedConfig, gateConfig.thresholds, language, attempt);
@@ -485,7 +487,7 @@ export function useStudioAI({
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig2.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig2.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
       );
 
       // Trademark/IP filter

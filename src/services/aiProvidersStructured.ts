@@ -14,11 +14,9 @@ export async function generateJsonOpenAICompat(
   apiKey: string,
   model: string,
   prompt: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fallback: any,
+  fallback: unknown,
   baseUrl?: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+): Promise<unknown> {
   const isLocal = provider === 'ollama' || provider === 'lmstudio';
   const url = baseUrl
     ? `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`
@@ -73,10 +71,8 @@ export async function generateJsonClaude(
   model: string,
   prompt: string,
   schema: object | undefined,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fallback: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+  fallback: unknown,
+): Promise<unknown> {
   const tool = {
     name: 'structured_output',
     description: 'Return structured JSON data matching the requested format.',
@@ -116,10 +112,8 @@ export async function generateJsonGemini(
   model: string,
   prompt: string,
   responseSchema: object,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fallback: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+  fallback: unknown,
+): Promise<unknown> {
   const ai = createServerGeminiClient(apiKey);
 
   const MAX_RETRIES = 2;

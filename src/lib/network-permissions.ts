@@ -8,6 +8,24 @@ export function isAdmin(userRecord: UserRecord | null) {
   return userRecord?.role === "admin";
 }
 
+export function isModerator(userRecord: UserRecord | null) {
+  return userRecord?.role === "moderator" || userRecord?.role === "admin";
+}
+
+export function isEditor(userRecord: UserRecord | null) {
+  return userRecord?.role === "editor" || userRecord?.role === "admin";
+}
+
+/** 콘텐츠 관리 가능 (editor + moderator + admin) */
+export function canManageContent(userRecord: UserRecord | null) {
+  return isEditor(userRecord) || isModerator(userRecord);
+}
+
+/** 신고 리뷰 가능 (moderator + admin) */
+export function canReviewReports(userRecord: UserRecord | null) {
+  return isModerator(userRecord);
+}
+
 export function isPlanetOwner(userId: string | null | undefined, planet: PlanetRecord | null) {
   return Boolean(userId && planet && planet.ownerId === userId);
 }
@@ -21,7 +39,7 @@ export function canWritePlanetLog(userId: string | null | undefined, userRecord:
 }
 
 export function canCreateSettlement(userRecord: UserRecord | null) {
-  return isAdmin(userRecord);
+  return isModerator(userRecord);
 }
 
 export function canViewVisibility(

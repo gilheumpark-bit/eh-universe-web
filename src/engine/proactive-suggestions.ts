@@ -192,3 +192,48 @@ export function dismissSuggestion(
 }
 
 // IDENTITY_SEAL: PART-4 | role=dismiss handler | inputs=suggestions,id | outputs=updated suggestions
+
+// ============================================================
+// PART 5 — Suggestion Analytics
+// ============================================================
+
+export interface SuggestionAnalytics {
+  totalGenerated: number;
+  totalAccepted: number;
+  totalDismissed: number;
+  acceptanceRate: number;
+  /** 카테고리별 채택률 */
+  categoryRates: Record<string, { generated: number; dismissed: number; rate: number }>;
+}
+
+/** 제안 이력에서 채택/거부 통계 집계 */
+export function aggregateSuggestionAnalytics(
+  allSuggestions: ProactiveSuggestion[],
+): SuggestionAnalytics {
+  const totalGenerated = allSuggestions.length;
+  const totalDismissed = allSuggestions.filter(s => s.dismissed).length;
+  const totalAccepted = totalGenerated - totalDismissed;
+  const acceptanceRate = totalGenerated > 0 ? totalAccepted / totalGenerated : 0;
+
+  const categories: Record<string, { generated: number; dismissed: number }> = {};
+  for (const s of allSuggestions) {
+    const cat = s.category;
+    if (!categories[cat]) categories[cat] = { generated: 0, dismissed: 0 };
+    categories[cat].generated++;
+    if (s.dismissed) categories[cat].dismissed++;
+  }
+
+  const categoryRates: SuggestionAnalytics['categoryRates'] = {};
+  for (const [cat, data] of Object.entries(categories)) {
+    const accepted = data.generated - data.dismissed;
+    categoryRates[cat] = {
+      generated: data.generated,
+      dismissed: data.dismissed,
+      rate: data.generated > 0 ? accepted / data.generated : 0,
+    };
+  }
+
+  return { totalGenerated, totalAccepted, totalDismissed, acceptanceRate, categoryRates };
+}
+
+// IDENTITY_SEAL: PART-5 | role=analytics | inputs=suggestions[] | outputs=SuggestionAnalytics

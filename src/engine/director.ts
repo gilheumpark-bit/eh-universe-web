@@ -415,7 +415,39 @@ export function checkPrismModeViolation(
 // PART 6 — Main Analyzer
 // ============================================================
 
-export function analyzeManuscript(text: string, publishPlatform?: PublishPlatform): DirectorReport {
+/** 장르별 분석 가중치 — 해당 장르에서 덜 중요한 이슈의 severity를 감소 */
+const GENRE_WEIGHT_OVERRIDES: Record<string, Record<string, number>> = {
+  // 액션/판타지: 페이싱·긴장감 중시, blur 엄격 / ai_tone 완화
+  '액션': { blur: 1.3, ai_tone: 0.6, similar_context: 0.8 },
+  '판타지': { blur: 1.2, ai_tone: 0.7, similar_context: 0.8 },
+  '헌터물': { blur: 1.3, ai_tone: 0.6 },
+  // 로맨스: 감정·대사 중시, blur 완화 / gain_vs_cost 완화
+  '로맨스': { blur: 0.7, gain_vs_cost: 0.5, ai_tone: 1.2 },
+  '현대물': { blur: 0.8, gain_vs_cost: 0.6 },
+  // 호러/스릴러: 긴장감 최고, ending_mono 완화 (반복이 효과일 수 있음)
+  '호러': { ending_mono: 0.5, blur: 1.4, ai_tone: 0.7 },
+  '스릴러': { ending_mono: 0.5, blur: 1.3 },
+  // 라이트노벨: ai_tone 완화 (경쾌한 문체 허용), blur 완화
+  '라이트노벨': { blur: 0.6, ai_tone: 0.5, similar_context: 0.7 },
+};
+
+function applyGenreWeight(findings: DirectorFinding[], genre?: string): DirectorFinding[] {
+  if (!genre) return findings;
+  const weights = GENRE_WEIGHT_OVERRIDES[genre];
+  if (!weights) return findings;
+  return findings.map(f => {
+    const w = weights[f.kind];
+    if (w !== undefined && w < 1) {
+      return { ...f, severity: Math.max(1, Math.round(f.severity * w)) };
+    }
+    if (w !== undefined && w > 1) {
+      return { ...f, severity: Math.min(5, Math.round(f.severity * w)) };
+    }
+    return f;
+  });
+}
+
+export function analyzeManuscript(text: string, publishPlatform?: PublishPlatform, genre?: string): DirectorReport {
   if (!text || text.trim().length < 50) {
     return { findings: [], stats: {}, score: 100 };
   }
@@ -451,11 +483,12 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
   const platformFindings = checkPlatformRules(text, publishPlatform);
   allFindings.push(...platformFindings);
 
-  // Sort by severity descending
-  allFindings.sort((a, b) => b.severity - a.severity);
+  // 장르별 가중치 적용 후 정렬
+  const weighted = applyGenreWeight(allFindings, genre);
+  weighted.sort((a, b) => b.severity - a.severity);
 
   // Calculate score: start at 100, deduct per finding
-  const deductions = allFindings.reduce((sum, f) => {
+  const deductions = weighted.reduce((sum, f) => {
     if (f.severity >= 4) return sum + 8;
     if (f.severity === 3) return sum + 4;
     return sum + 2;
@@ -475,7 +508,7 @@ export function analyzeManuscript(text: string, publishPlatform?: PublishPlatfor
     nuance: hallucination.nuanceCount,
   };
 
-  return { findings: allFindings, stats, score };
+  return { findings: weighted, stats, score };
 }
 
 export function gradeFromScore(score: number): string {

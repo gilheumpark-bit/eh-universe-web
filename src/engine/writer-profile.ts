@@ -163,10 +163,60 @@ export function loadProfile(id: string = 'default'): WriterProfile {
 // PART 7 — Prompt Injection Builder
 // ============================================================
 
+/**
+ * 작가 고유 "목소리" 핑거프린트 생성
+ * 문장 길이 + 대화 비율 + 감정 밀도 + 페이싱으로 작가 스타일 설명
+ */
+export function buildVoiceFingerprint(profile: WriterProfile, isKO: boolean): string {
+  const traits: string[] = [];
+
+  // 문장 길이 선호
+  if (profile.avgSentenceLength > 60) {
+    traits.push(isKO ? '긴 문장(서술적)' : 'long sentences (descriptive)');
+  } else if (profile.avgSentenceLength < 25) {
+    traits.push(isKO ? '짧은 문장(간결)' : 'short sentences (concise)');
+  } else {
+    traits.push(isKO ? '중간 길이 문장' : 'medium-length sentences');
+  }
+
+  // 대화 비율
+  if (profile.dialogueRatio > 0.5) traits.push(isKO ? '대화 중심' : 'dialogue-heavy');
+  else if (profile.dialogueRatio < 0.2) traits.push(isKO ? '서술 중심' : 'narration-heavy');
+
+  // 감정 밀도
+  if (profile.emotionDensity > 0.7) traits.push(isKO ? '감정 풍부' : 'emotionally rich');
+  else if (profile.emotionDensity < 0.3) traits.push(isKO ? '절제된 감정' : 'restrained emotion');
+
+  // 페이싱
+  if (profile.pacingPreference > 70) traits.push(isKO ? '빠른 전개' : 'fast-paced');
+  else if (profile.pacingPreference < 30) traits.push(isKO ? '느린 전개' : 'slow-paced');
+
+  return traits.join(', ');
+}
+
 export function buildProfileHint(profile: WriterProfile, isKO: boolean): string {
-  if (profile.episodeCount < 5) return ''; // 5화 미만 — 학습 데이터 부족
+  if (profile.episodeCount < 3) return ''; // 3화 미만 — 학습 데이터 부족 (기존 5→3으로 하향)
 
   const hints: string[] = [];
+
+  // 작가 목소리 핑거프린트 (가장 중요)
+  const voice = buildVoiceFingerprint(profile, isKO);
+  if (voice) {
+    hints.push(isKO
+      ? `[작가 스타일] ${voice}. 이 스타일에 맞춰 작성하세요.`
+      : `[Writer Style] ${voice}. Match this writing style.`);
+  }
+
+  // 스킬레벨별 차별화된 지시
+  if (profile.skillLevel === 'beginner' && profile.levelConfidence > 0.3) {
+    hints.push(isKO
+      ? '[가이드] 초보 작가입니다. 문장을 읽기 쉽게, 전개를 명확하게 작성하세요. 복잡한 수사보다 스토리 전달에 집중.'
+      : '[Guide] Beginner writer. Keep sentences readable, plot progression clear. Focus on storytelling over complex rhetoric.');
+  } else if (profile.skillLevel === 'advanced' && profile.levelConfidence > 0.5) {
+    hints.push(isKO
+      ? '[가이드] 숙련 작가입니다. 문학적 표현, 복선 배치, 감정 레이어링 등 고급 기법을 적극 활용하세요.'
+      : '[Guide] Advanced writer. Actively use literary devices, foreshadowing, and emotional layering.');
+  }
 
   // 상위 3개 자주 발생 이슈
   const topIssues = Object.entries(profile.commonIssues)
@@ -176,16 +226,16 @@ export function buildProfileHint(profile: WriterProfile, isKO: boolean): string 
 
   if (topIssues.length > 0) {
     hints.push(isKO
-      ? `[작가 패턴 보정] 이 작가에게 자주 나타나는 문제: ${topIssues.join(', ')}. 이 패턴을 의식적으로 피하세요.`
-      : `[Writer Pattern Correction] Common issues: ${topIssues.join(', ')}. Consciously avoid these patterns.`
+      ? `[패턴 보정] 자주 발생하는 문제: ${topIssues.join(', ')}. 반드시 피하세요.`
+      : `[Pattern Correction] Recurring issues: ${topIssues.join(', ')}. Avoid these.`
     );
   }
 
-  // 대화 비율 힌트
-  if (profile.dialogueRatio > 0.6) {
-    hints.push(isKO ? '이 작가는 대화를 선호합니다. 대화 중심으로 작성하되, 묘사도 균형있게 넣으세요.' : 'This writer prefers dialogue. Write dialogue-heavy but balance with description.');
-  } else if (profile.dialogueRatio < 0.2) {
-    hints.push(isKO ? '이 작가는 서술을 선호합니다. 내면 묘사와 장면 서술에 집중하세요.' : 'This writer prefers narration. Focus on inner thoughts and scene description.');
+  // 재생성률이 높으면 품질 주의
+  if (profile.regenerateRate > 0.4 && profile.episodeCount >= 10) {
+    hints.push(isKO
+      ? '[품질 주의] 이 작가는 재생성 비율이 높습니다(40%+). 첫 시도부터 높은 품질로 작성하세요.'
+      : '[Quality Alert] High regeneration rate (40%+). Deliver high quality on first attempt.');
   }
 
   return hints.join('\n');

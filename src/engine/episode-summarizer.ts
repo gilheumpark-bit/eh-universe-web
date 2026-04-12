@@ -5,6 +5,7 @@
 
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { streamChat, getApiKey, getActiveProvider, hasDgxService } from '@/lib/ai-providers';
+import { getModelForRole } from '@/lib/dgx-models';
 import { logger } from '@/lib/logger';
 
 const SUMMARY_PROMPT_KO = `당신은 웹소설 편집자입니다. 아래 에피소드 원문을 읽고, 핵심 사건과 감정 변화를 2~3문장(150자 이내)으로 요약하세요. 캐릭터 이름과 장소를 반드시 포함하세요. 다른 설명 없이 요약만 출력하세요.`;
@@ -31,6 +32,7 @@ export async function generateEpisodeSummary(
       messages: [{ role: 'user', content: truncated }],
       temperature: 0.3, // 요약은 낮은 온도로 정확하게
       onChunk: (chunk) => { summary += chunk; },
+      model: hasDgxService() ? getModelForRole('general') : undefined,
     });
 
     // 150자 제한 + 정리

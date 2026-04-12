@@ -19,7 +19,7 @@ export default function ReportsAdminPage() {
   const router = useRouter();
   const { user, signInWithGoogle } = useAuth();
   const [reports, setReports] = useState<ReportRecord[]>([]);
-  const [filter, setFilter] = useState<"all" | "pending" | "reviewed">("pending");
+  const [filter, setFilter] = useState<"all" | "pending" | "under_review" | "resolved" | "dismissed">("pending");
   const [loading, setLoading] = useState(true);
   const [userRecord, setUserRecord] = useState<UserRecord | null>(null);
   const [adminChecked, setAdminChecked] = useState(false);
@@ -50,10 +50,10 @@ export default function ReportsAdminPage() {
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
 
-  const handleStatusChange = async (reportId: string, status: "pending" | "reviewed" | "dismissed") => {
+  const handleStatusChange = async (reportId: string, status: ReportRecord['status']) => {
     if (!user || !isAdmin(userRecord)) return;
     await updateReportStatus(reportId, status, user.uid);
-    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r));
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status, reviewedBy: user.uid, reviewedAt: new Date().toISOString() } : r));
   };
 
   if (!user) {
@@ -118,12 +118,12 @@ export default function ReportsAdminPage() {
 
         {/* Filter tabs */}
         <div className="flex gap-2 mb-6">
-          {(["pending", "reviewed", "all"] as const).map(f => (
+          {(["pending", "under_review", "resolved", "dismissed", "all"] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider border transition-all ${
                 filter === f ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-secondary text-text-tertiary border-border hover:text-text-primary"
               }`}>
-              {f === "pending" ? "대기 중" : f === "reviewed" ? "처리됨" : "전체"} {filter === f && `(${reports.length})`}
+              {f === "pending" ? "대기" : f === "under_review" ? "검토중" : f === "resolved" ? "해결" : f === "dismissed" ? "기각" : "전체"} {filter === f && `(${reports.length})`}
             </button>
           ))}
         </div>
@@ -154,10 +154,16 @@ export default function ReportsAdminPage() {
                   </div>
                   <div className="flex gap-1 shrink-0">
                     {r.status === "pending" && (
+                      <button onClick={() => handleStatusChange(r.id, "under_review")}
+                        className="px-2 py-1 bg-accent-blue/20 text-accent-blue border border-accent-blue/30 rounded text-[10px] font-bold hover:bg-accent-blue/30">
+                        검토 시작
+                      </button>
+                    )}
+                    {r.status === "under_review" && (
                       <>
-                        <button onClick={() => handleStatusChange(r.id, "reviewed")}
+                        <button onClick={() => handleStatusChange(r.id, "resolved")}
                           className="px-2 py-1 bg-green-600/20 text-green-400 border border-green-600/30 rounded text-[10px] font-bold hover:bg-green-600/30">
-                          처리
+                          해결
                         </button>
                         <button onClick={() => handleStatusChange(r.id, "dismissed")}
                           className="px-2 py-1 bg-text-tertiary/20 text-zinc-400 border border-zinc-600/30 rounded text-[10px] font-bold hover:bg-text-tertiary/30">

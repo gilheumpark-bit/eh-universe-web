@@ -52,6 +52,8 @@ export interface StreamOptions {
   onChunk: (text: string) => void;
   prismMode?: string;
   isChatMode?: boolean;
+  /** DGX 멀티에이전트: 특정 모델 강제 지정 (예: 'abliterated', 'r1', 'eva') */
+  model?: string;
 }
 
 // ============================================================
@@ -878,14 +880,14 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
 
   // v4 AES-GCM 키 비동기 복호화 대기 — 동기 getApiKey 빈 문자열이면 async 폴백
   const apiKey = getApiKey(provider) || await getApiKeyAsync(provider);
-  const model = getActiveModel();
+  const model = opts.model || getActiveModel();
 
   // Truncate messages to fit context window
   const { messages: trimmedMessages, truncated, systemTokens, messageTokens } =
     truncateMessages(opts.systemInstruction, opts.messages, model);
 
-  if (truncated) {
-    // token-guard 로그는 프로덕션에서 노출하지 않음
+  if (truncated && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('noa:token-truncated'));
   }
 
   const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);

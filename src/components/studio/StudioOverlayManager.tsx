@@ -6,7 +6,7 @@ import { ConfirmModal } from '@/components/studio/UXHelpers';
 import { MoveSessionModal, SaveSlotModal } from '@/components/studio/StudioModals';
 import StudioToasts from '@/components/studio/StudioToasts';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
-import type { ChatSession, AppTab, AppLanguage } from '@/lib/studio-types';
+import type { ChatSession, AppTab, AppLanguage, Genre, Project } from '@/lib/studio-types';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
@@ -16,23 +16,17 @@ interface StudioOverlayManagerProps {
   isKO: boolean;
   showQuickStartModal: boolean;
   setShowQuickStartModal: (v: boolean) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handleQuickStart: any;
+  handleQuickStart: (genre: Genre, userPrompt: string) => Promise<void>;
   isQuickGenerating: boolean;
   showApiKeyModal: boolean;
   setShowApiKeyModal: (v: boolean) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  hostedProviders: any;
+  hostedProviders: Partial<Record<string, boolean>>;
   setApiKeyVersion: React.Dispatch<React.SetStateAction<number>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  confirmState: any;
+  confirmState: { open: boolean; title: string; message: string; confirmLabel?: string; cancelLabel?: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void };
   closeConfirm: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  moveModal: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setMoveModal: (v: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  moveSessionToProject: any;
+  moveModal: { sessionId: string; others: Project[] } | null;
+  setMoveModal: (v: { sessionId: string; others: Project[] } | null) => void;
+  moveSessionToProject: (sessionId: string, targetProjectId: string) => void;
   saveSlotModalOpen: boolean;
   setSaveSlotModalOpen: (v: boolean) => void;
   activeTab: AppTab;
@@ -41,8 +35,7 @@ interface StudioOverlayManagerProps {
   triggerSave: () => void;
   showSyncReminder: boolean;
   setShowSyncReminder: (v: boolean) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user: any;
+  user: { uid: string; email?: string | null; displayName: string | null } | null;
   lastSyncTime: number | null;
   handleSync: () => void;
   signInWithGoogle: () => void;
@@ -55,10 +48,8 @@ interface StudioOverlayManagerProps {
   setExportDoneFormat: (v: string | null) => void;
   worldImportBanner: boolean;
   setWorldImportBanner: React.Dispatch<React.SetStateAction<boolean>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  uxError: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setUxError: (v: any) => void;
+  uxError: { error: unknown; retry?: () => void } | null;
+  setUxError: (v: { error: unknown; retry?: () => void } | null) => void;
   alertToast: { message: string; variant: string } | null;
   setAlertToast: (v: { message: string; variant: string } | null) => void;
 }

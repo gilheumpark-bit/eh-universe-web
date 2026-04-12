@@ -40,6 +40,8 @@ export interface ContinuityWarning {
   message: { ko: string; en: string };
   severity: 'info' | 'warn' | 'danger';
   episode: number;
+  /** 자동 수정 제안 (있으면 사용자에게 표시) */
+  suggestion?: { ko: string; en: string };
 }
 
 export interface ContinuityReport {
@@ -202,6 +204,10 @@ function analyzeEpisodePair(
           ko: `${cc.name}: ${episode - 1}화에서 부상 상태였으나 ${episode}화에서 언급 없음`,
           en: `${cc.name}: injured in ep.${episode - 1} but no mention in ep.${episode}`,
         },
+        suggestion: {
+          ko: `"${cc.name}은(는) 아직 상처가 아물지 않아..." 등의 상태 묘사를 초반에 추가하세요.`,
+          en: `Add a status description like "${cc.name}'s wound hadn't fully healed..." early in the episode.`,
+        },
         severity: 'warn',
         episode,
       });
@@ -218,6 +224,10 @@ function analyzeEpisodePair(
           ko: `장소 변경(${prev.location} → ${curr.location}) 이동 묘사 없음`,
           en: `Location change (${prev.location} → ${curr.location}) without transition`,
         },
+        suggestion: {
+          ko: `"${prev.location}을(를) 떠나 ${curr.location}(으)로 향했다" 등 이동 장면을 삽입하세요.`,
+          en: `Insert a transition scene: "They left ${prev.location} and headed to ${curr.location}."`,
+        },
         severity: 'info',
         episode,
       });
@@ -226,11 +236,16 @@ function analyzeEpisodePair(
 
   // 장기 미해결 복선 체크
   if (prev.openThreads.length > 5) {
+    const oldest = prev.openThreads.slice(0, 2).join(', ');
     warnings.push({
       type: 'thread_forgotten',
       message: {
         ko: `미해결 떡밥 ${prev.openThreads.length}개 누적 — 회수 필요`,
         en: `${prev.openThreads.length} unresolved threads accumulated`,
+      },
+      suggestion: {
+        ko: `오래된 복선부터 회수하세요: ${oldest}`,
+        en: `Resolve oldest threads first: ${oldest}`,
       },
       severity: prev.openThreads.length > 8 ? 'danger' : 'warn',
       episode,

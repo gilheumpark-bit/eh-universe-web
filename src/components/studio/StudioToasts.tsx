@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Globe, Cloud, AlertTriangle, CheckCircle, Info, X, RefreshCw, Download } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Globe, Cloud, AlertTriangle, CheckCircle, Info, X, RefreshCw, Download, Scissors } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { ErrorToast } from './UXHelpers';
@@ -148,6 +148,32 @@ function AutoDismissToast({
   );
 }
 
+/** 토큰 절삭 알림 — noa:token-truncated 이벤트 수신 */
+function TokenTruncationToast({ isKO }: { isKO: boolean }) {
+  const [show, setShow] = useState(false);
+  const dismiss = useCallback(() => setShow(false), []);
+
+  useEffect(() => {
+    const handler = () => setShow(true);
+    window.addEventListener('noa:token-truncated', handler);
+    window.addEventListener('noa:token-budget-warning', handler);
+    return () => {
+      window.removeEventListener('noa:token-truncated', handler);
+      window.removeEventListener('noa:token-budget-warning', handler);
+    };
+  }, []);
+
+  if (!show) return null;
+  return (
+    <AutoDismissToast variant="warning" duration={5000} onDismiss={dismiss}>
+      <Scissors className="w-5 h-5 text-accent-amber shrink-0" />
+      <p className="flex-1 text-sm font-medium text-text-primary">
+        {isKO ? '컨텍스트가 길어 일부 메시지가 생략되었습니다' : 'Some messages were trimmed to fit context window'}
+      </p>
+    </AutoDismissToast>
+  );
+}
+
 export default function StudioToasts({
   language, isKO,
   showSyncReminder, setShowSyncReminder, user, lastSyncTime, handleSync, signInWithGoogle,
@@ -226,6 +252,9 @@ export default function StudioToasts({
           </p>
         </AutoDismissToast>
       )}
+
+      {/* Token Truncation Alert */}
+      <TokenTruncationToast isKO={isKO} />
 
       {/* Error Toast */}
       {uxError && (

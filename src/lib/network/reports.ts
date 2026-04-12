@@ -80,7 +80,7 @@ export async function submitReport(input: {
 
 /** 신고 목록 조회 (관리자용) */
 export async function listReports(
-  statusFilter: "pending" | "reviewed" | "all" = "all",
+  statusFilter: "pending" | "under_review" | "resolved" | "dismissed" | "all" = "all",
   limitCount = 50,
   targetType?: "planet" | "post" | "comment",
 ): Promise<ReportRecord[]> {
@@ -96,7 +96,7 @@ export async function listReports(
 /** 신고 상태 변경 (관리자용) — includes audit trail */
 export async function updateReportStatus(
   reportId: string,
-  status: "pending" | "reviewed" | "dismissed",
+  status: "pending" | "under_review" | "resolved" | "dismissed",
   reviewerId: string,
 ) {
   const database = requireDb();

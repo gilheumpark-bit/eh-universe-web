@@ -23,8 +23,7 @@ export function useStudioSessionActions({
   setSessions: React.Dispatch<React.SetStateAction<ChatSession[]>>;
   doDeleteSession: (id: string) => void;
   doClearAllSessions: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  showConfirm: (state: any) => void;
+  showConfirm: (state: { title: string; message: string; confirmLabel?: string; cancelLabel?: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void }) => void;
   closeConfirm: () => void;
   setActiveTab: (tab: AppTab) => void;
   setRenamingSessionId: (id: string | null) => void;

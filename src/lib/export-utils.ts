@@ -137,8 +137,9 @@ ${textToXhtmlParagraphs(content)}
 </html>`;
 }
 
-/** Generate and download a valid EPUB 3.0 file from a chat session's manuscript content */
-export function exportEPUB(session: ChatSession): void {
+/** Generate and download a valid EPUB 3.0 file from a chat session's manuscript content
+ * @param coverImageDataUrl 표지 이미지 (data:image/jpeg;base64,... 또는 data:image/png;base64,...) */
+export function exportEPUB(session: ChatSession, coverImageDataUrl?: string): void {
   const encoder = new TextEncoder();
   const title = session.config.title || session.title || 'NOA Story';
   const safeTitle = escapeXml(title);
@@ -180,6 +181,17 @@ export function exportEPUB(session: ChatSession): void {
   </rootfiles>
 </container>`);
 
+  // 표지 이미지 처리
+  const hasCover = !!coverImageDataUrl;
+  const coverMimeType = coverImageDataUrl?.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+  const coverExt = coverMimeType === 'image/png' ? 'png' : 'jpg';
+
+  const coverManifest = hasCover ? [
+    `    <item id="cover-image" href="cover.${coverExt}" media-type="${coverMimeType}" properties="cover-image"/>`,
+    `    <item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>`,
+  ].join('\n') + '\n' : '';
+  const coverSpine = hasCover ? `    <itemref idref="cover"/>\n` : '';
+
   const manifestItems = chapters.map(ch => `    <item id="${ch.id}" href="${ch.id}.xhtml" media-type="application/xhtml+xml"/>`).join('\n');
   const spineItems = chapters.map(ch => `    <itemref idref="${ch.id}"/>`).join('\n');
   const descParts = [genre, platform].filter(Boolean);
@@ -195,12 +207,12 @@ export function exportEPUB(session: ChatSession): void {
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z/, 'Z')}</meta>
   </metadata>
   <manifest>
-${manifestItems}
+${coverManifest}${manifestItems}
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="style" href="style.css" media-type="text/css"/>
   </manifest>
   <spine>
-${spineItems}
+${coverSpine}${spineItems}
   </spine>
 </package>`);
 
@@ -229,12 +241,35 @@ h2 { font-size: 1.2em; margin-top: 1.5em; margin-bottom: 0.5em; }`);
     data: encoder.encode(buildChapterXhtml(ch.title, ch.content, 'style.css')),
   }));
 
+  // 표지 파일 생성
+  const coverFiles: { name: string; data: Uint8Array; store?: boolean }[] = [];
+  if (hasCover && coverImageDataUrl) {
+    // data URL → binary
+    const base64 = coverImageDataUrl.split(',')[1];
+    if (base64) {
+      const binaryStr = atob(base64);
+      const coverBytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) coverBytes[i] = binaryStr.charCodeAt(i);
+      coverFiles.push({ name: `OEBPS/cover.${coverExt}`, data: coverBytes, store: true });
+    }
+    const coverXhtml = encoder.encode(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>Cover</title></head>
+<body style="margin:0;padding:0;text-align:center">
+  <img src="cover.${coverExt}" alt="Cover" style="max-width:100%;max-height:100vh"/>
+</body>
+</html>`);
+    coverFiles.push({ name: 'OEBPS/cover.xhtml', data: coverXhtml });
+  }
+
   const zipData = buildZip([
     { name: 'mimetype', data: mimetype, store: true },
     { name: 'META-INF/container.xml', data: container },
     { name: 'OEBPS/content.opf', data: contentOpf },
     { name: 'OEBPS/nav.xhtml', data: nav },
     { name: 'OEBPS/style.css', data: style },
+    ...coverFiles,
     ...chapterFiles,
   ]);
 

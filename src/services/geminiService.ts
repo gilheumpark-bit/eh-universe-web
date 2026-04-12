@@ -7,12 +7,12 @@
 // ============================================================
 
 import { logger } from '@/lib/logger';
-import { MODEL_PLANNER } from '@/lib/dgx-models';
+import { MODEL_PLANNER, MODEL_ACTOR, MODEL_GENERAL } from '@/lib/dgx-models';
 import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
-import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasStoredApiKey, ChatMsg } from "../lib/ai-providers";
+import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasStoredApiKey, hasDgxService, ChatMsg } from "../lib/ai-providers";
 
 /** 동기 getApiKey가 빈 문자열이면 비동기로 재시도 */
 async function getApiKeyFallback(providerId: 'gemini'): Promise<string> {
@@ -31,6 +31,8 @@ export interface GenerateOptions {
   temperature?: number;
   /** Story Bible — 망각 방지 동적 컨텍스트 (시스템 프롬프트에 append) */
   storyBible?: string;
+  /** DGX 멀티에이전트: 특정 모델 강제 지정 (예: 'abliterated') */
+  model?: string;
 }
 
 export interface GenerateResult {
@@ -52,6 +54,19 @@ const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 const STRUCTURED_FETCH_TIMEOUT_MS = 120_000; // 프론트→Vercel: 넉넉히 120초 (Vercel maxDuration=60이 실제 제한)
 
+/** Phase 3A: task별 DGX 멀티에이전트 모델 라우팅 */
+function getDgxModelForTask(task: string): string {
+  switch (task) {
+    case 'characters': return MODEL_ACTOR;               // eva — 캐릭터 빙의/대사
+    case 'items':
+    case 'skills':
+    case 'worldDesign':
+    case 'worldSim':
+    case 'sceneDirection': return MODEL_PLANNER;          // r1 — 기획/논리
+    default: return MODEL_GENERAL;                        // qwen — 범용
+  }
+}
+
 /** 프론트엔드에서 DGX 직접 호출 — Vercel 60초 제한 우회 */
 async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable: boolean, cacheKey: string): Promise<T> {
   const sparkUrl = process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
@@ -69,11 +84,12 @@ async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable
   if (!promptFn) throw new Error(`Unknown task: ${taskKey}`);
   const prompt = promptFn(body);
 
+  const dgxModel = getDgxModelForTask(taskKey);
   const res = await fetch(`${sparkUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: MODEL_PLANNER,
+      model: dgxModel,
       messages: [
         { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
         { role: 'user', content: prompt },
@@ -103,6 +119,18 @@ async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable
 }
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
+  // Phase 3A: DGX 멀티에이전트 라우팅 — task별 전문 모델로 직접 호출
+  if (hasDgxService()) {
+    const taskKey = (body.task as string) || '';
+    const cacheable = taskKey === 'worldDesign' || taskKey === 'worldSim' || taskKey === 'sceneDirection';
+    const cacheKey = cacheable ? JSON.stringify(body) : '';
+    if (cacheable) {
+      const cached = structuredCache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
+    }
+    return fetchStructuredViaDgx<T>(body, cacheable, cacheKey);
+  }
+
   // 프로바이더 자동 감지: LM Studio/Ollama가 등록되어 있으면 해당 프로바이더로 라우팅
   const activeProvider = getActiveProvider();
   const isLocal = activeProvider === 'lmstudio' || activeProvider === 'ollama';
@@ -220,6 +248,7 @@ export const generateStoryStream = async (
       temperature,
       signal: options.signal,
       onChunk,
+      model: options.model,
     });
 
     const { content, report } = postProcessResponse(fullContent, config, language, platform);

@@ -40,8 +40,41 @@ const LEVEL_THRESHOLDS: Record<SkillLevel, QualityThresholds> = {
   },
 };
 
+const STORAGE_KEY = 'eh-quality-gate-overrides';
+
+/** Load user overrides from localStorage. Returns null if none or SSR. */
+export function loadQualityGateOverrides(): Partial<QualityThresholds> | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    return parsed as Partial<QualityThresholds>;
+  } catch {
+    return null;
+  }
+}
+
+/** Persist user overrides to localStorage. Pass empty object to clear overrides. */
+export function saveQualityGateOverrides(overrides: Partial<QualityThresholds>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (Object.keys(overrides).length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+    }
+  } catch {
+    // Storage full or blocked — silently ignore
+  }
+}
+
 export function getDefaultThresholds(level: SkillLevel): QualityThresholds {
-  return { ...LEVEL_THRESHOLDS[level] };
+  const base = { ...LEVEL_THRESHOLDS[level] };
+  const overrides = loadQualityGateOverrides();
+  if (!overrides) return base;
+  return { ...base, ...overrides };
 }
 
 export function getDefaultGateConfig(level: SkillLevel, tierMaxRetries?: number): QualityGateConfig {

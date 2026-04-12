@@ -52,6 +52,8 @@ export function useStudioTheme() {
       if (localStorage.getItem('noa_light_theme') === '1') return 1;
       // 범위 밖 숫자 → 기본값
       if (stored !== null) return 1;
+      // 시스템 설정 자동 감지 (저장값 없을 때만)
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 0;
     }
     return 1; // 기본: 낮(라이트)
   });
@@ -88,6 +90,19 @@ export function useStudioTheme() {
     // Update document attribute for CSS
     document.documentElement.setAttribute('data-color-theme', theme);
   };
+
+  // 시스템 테마 변경 실시간 추적 (사용자가 수동 설정 안 했을 때만)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      const hasManual = localStorage.getItem('noa_theme_level') !== null;
+      if (!hasManual) {
+        setThemeLevel(e.matches ? 0 : 1);
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   // Apply theme level to document — 2단계: 'dark' | 'light'
   // Tailwind CSS 4 inlines oklch colors, ignoring CSS variable overrides.

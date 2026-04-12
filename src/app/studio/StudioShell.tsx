@@ -29,6 +29,7 @@ import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
+import { generateEpisodeSummary } from '@/engine/episode-summarizer';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, hasStoredApiKey, hasDgxService as hasDgxServiceFn, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import dynamic from 'next/dynamic';
@@ -524,6 +525,24 @@ export default function StudioShell() {
         else msList.push(manuscript);
         return { ...prev, manuscripts: msList, episode: nextEp };
       });
+      // 백그라운드 요약 생성 (비동기, 실패해도 무시)
+      if (draftContent.length >= 100) {
+        const lang = language;
+        const ep = currentEp;
+        setTimeout(async () => {
+          try {
+            const summary = await generateEpisodeSummary(draftContent, lang);
+            if (summary) {
+              setConfig(prev => {
+                const ms2 = [...(prev.manuscripts || [])];
+                const target = ms2.find(m => m.episode === ep);
+                if (target) target.summary = summary;
+                return { ...prev, manuscripts: ms2 };
+              });
+            }
+          } catch { /* background — non-critical */ }
+        }, 0);
+      }
     } else {
       setConfig({ ...currentSession.config, episode: nextEp });
     }

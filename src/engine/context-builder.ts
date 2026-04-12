@@ -5,6 +5,7 @@
 
 import type { Character, StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
 import { buildContinuityReport, type ContinuityReport } from './continuity-tracker';
+import { loadProfile, buildProfileHint } from './writer-profile';
 
 // ============================================================
 // PART 2 — 데이터 추출 헬퍼
@@ -163,6 +164,15 @@ export function buildStoryBible(input: StoryBibleInput): string {
   if (writerStyleHint) {
     sections.push(writerStyleHint);
   }
+
+  // 작가 프로필 힌트 (누적 학습 데이터 기반)
+  try {
+    const profile = loadProfile();
+    const profileHint = buildProfileHint(profile, isKO);
+    if (profileHint) {
+      sections.push((isKO ? '\n\n🎯 작가 프로필 힌트:\n' : '\n\n🎯 Writer Profile Hints:\n') + profileHint);
+    }
+  } catch { /* profile load failure — non-critical */ }
 
   return sections.join('\n');
 }

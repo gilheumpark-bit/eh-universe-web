@@ -64,15 +64,63 @@ html {
   .site-shell { padding-inline: 24px; }
 }
 
-/* ── Print Styles ── */
+/* ── Focus Management (WCAG 2.1 AA) ── */
+/* 모든 인터랙티브 요소에 일관된 focus-visible 링 */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-accent-blue, #4a6a8f);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* outline-none 단독 사용 방지 — focus-visible과 함께만 허용 */
+[data-focus-guard] { outline: none; }
+
+/* 모달 포커스 트랩 지원 */
+[role="dialog"]:focus-visible,
+[role="alertdialog"]:focus-visible {
+  outline: 2px solid var(--color-accent-blue, #4a6a8f);
+  outline-offset: -2px;
+}
+
+/* ── Print Styles (프로덕션급) ── */
 @media print {
-  body { background: white !important; color: black !important; font-size: 12pt; line-height: 1.6; }
-  nav, footer, .no-print, button, .premium-button, [data-testid="studio-content"] > :first-child { display: none !important; }
+  body {
+    background: white !important;
+    color: black !important;
+    font-family: 'Noto Serif KR', 'Georgia', serif !important;
+    font-size: 11pt;
+    line-height: 1.8;
+  }
+  /* 불필요 요소 완전 숨김 */
+  nav, footer, header, aside,
+  .no-print, button, .premium-button,
+  [data-testid="studio-content"] > :first-child,
+  [data-testid="studio-sidebar"],
+  [data-testid="chat-panel"],
+  [role="toolbar"], [role="tablist"],
+  .fixed, .sticky { display: none !important; }
+  /* 패널 정리 */
   .premium-panel { box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid; }
+  /* 링크 */
   a { color: black !important; text-decoration: underline; }
   a::after { content: " (" attr(href) ")"; font-size: 9pt; color: #666; }
-  img { max-width: 100% !important; }
-  @page { margin: 2cm; }
+  /* 이미지 */
+  img { max-width: 100% !important; break-inside: avoid; }
+  /* 챕터/에피소드 단위 페이지 구분 */
+  h1, h2, .episode-break { break-before: page; }
+  h3, h4 { break-after: avoid; }
+  p { orphans: 3; widows: 3; }
+  /* 페이지 설정 */
+  @page { margin: 2.5cm 2cm; }
+  @page :first { margin-top: 4cm; }
 }
 
 /* ── Landscape Orientation ── */

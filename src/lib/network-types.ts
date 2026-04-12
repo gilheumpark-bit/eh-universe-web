@@ -2,7 +2,7 @@
 // PART 1 - CORE ENUMS AND LABEL MAPS
 // ============================================================
 
-export const USER_ROLES = ["member", "admin"] as const;
+export const USER_ROLES = ["member", "moderator", "editor", "admin"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const BOARD_TYPES = [
@@ -158,6 +158,7 @@ export interface CommentRecord {
   authorName: string;
   authorPhoto?: string;
   content: string;
+  parentId?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -198,7 +199,13 @@ export interface ReportRecord {
   reason: ReportReason;
   detail: string;
   createdAt: string;
-  status: "pending" | "reviewed" | "dismissed";
+  status: "pending" | "under_review" | "resolved" | "dismissed";
+  /** 관리자 리뷰 메모 */
+  reviewNote?: string;
+  /** 리뷰한 관리자 ID */
+  reviewedBy?: string;
+  /** 리뷰 완료 시각 */
+  reviewedAt?: string;
 }
 
 // IDENTITY_SEAL: PART-2 | role=firestore record contracts | inputs=entity payloads | outputs=typed records

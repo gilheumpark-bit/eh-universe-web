@@ -6,9 +6,12 @@
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles, Send, Columns2, BookOpen, Undo2, Redo2, PenLine, Layers, Wand2, Settings2, ChevronDown } from 'lucide-react';
-import type { AppLanguage, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
+import { Sparkles, Send, Columns2, BookOpen, Undo2, Redo2, PenLine, Layers, Wand2, Settings2, ChevronDown, X } from 'lucide-react';
+import type { AppLanguage, StoryConfig, ChatSession, Message, AppTab } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
+import type { DirectorReport } from '@/engine/director';
+import type { HFCPState } from '@/engine/hfcp';
+import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import { createT } from '@/lib/i18n';
 import { RightChatPanel } from '@/components/studio/tabs/RightChatPanel';
 import { useWritingChat } from '@/hooks/useWritingChat';
@@ -61,21 +64,16 @@ interface Props {
   filteredMessages: Message[];
   hasApiKey: boolean;
   setShowApiKeyModal: (show: boolean) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setActiveTab: (tab: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  advancedSettings: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setAdvancedSettings: (s: any) => void;
+  setActiveTab: (tab: AppTab) => void;
+  advancedSettings: AdvancedWritingSettings;
+  setAdvancedSettings: (s: AdvancedWritingSettings) => void;
   advancedOutputMode?: string;
   setAdvancedOutputMode?: (m: string) => void;
   showDashboard: boolean;
   rightPanelOpen: boolean;
   setRightPanelOpen: (v: boolean | ((p: boolean) => boolean)) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  directorReport: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  hfcpState: any;
+  directorReport: DirectorReport | null;
+  hfcpState: HFCPState;
   handleNextEpisode: () => void;
   showAiLock: boolean;
   hostedProviders: Partial<Record<string, boolean>>;
@@ -596,21 +594,80 @@ export default function WritingTabInline(props: Props) {
               <div className="flex-1 space-y-4">
                 <div className="bg-accent-green/5 border border-accent-green/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-green mb-2">{isKO ? '3단계 캔버스 모드' : 'Three-Step Canvas'}</h3>
-                  <p className="text-xs text-text-secondary mb-2">{isKO ? '구조 → 초안 → 다듬기 3단계로 글을 완성합니다.' : 'Complete your writing in 3 steps: Structure → Draft → Polish.'}</p>
-                  <p className="text-[11px] text-text-tertiary mb-4">{isKO ? '💡 1단계: 아래 캔버스에 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요. 초안으로 확장됩니다.' : '💡 Step 1: Write the scene skeleton (characters, events, mood) below. It will be expanded into a draft.'}</p>
-                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                    <span className={`px-2 py-1 rounded ${canvasPass >= 1 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '1. 구조' : '1. Structure'}</span>
-                    <span className="text-text-quaternary">→</span>
-                    <span className={`px-2 py-1 rounded ${canvasPass >= 2 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '2. 초안' : '2. Draft'}</span>
-                    <span className="text-text-quaternary">→</span>
-                    <span className={`px-2 py-1 rounded ${canvasPass >= 3 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '3. 다듬기' : '3. Polish'}</span>
+                  <p className="text-xs text-text-secondary mb-2">
+                    {canvasPass === 0
+                      ? (isKO ? '1단계: 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요.' : 'Step 1: Write the scene skeleton (characters, events, mood).')
+                      : canvasPass === 1
+                      ? (isKO ? '2단계: AI가 구조를 초안으로 확장했습니다. 수정 후 다듬기로 넘어가세요.' : 'Step 2: AI expanded your structure into a draft. Edit and proceed to polish.')
+                      : canvasPass === 2
+                      ? (isKO ? '3단계: AI가 초안을 다듬었습니다. 최종 확인 후 본문에 반영하세요.' : 'Step 3: AI polished your draft. Review and apply to manuscript.')
+                      : (isKO ? '완료! 아래 버튼으로 본문에 반영하세요.' : 'Done! Apply to manuscript below.')}
+                  </p>
+                  {/* 단계 인디케이터 */}
+                  <div className="flex items-center gap-2 text-xs text-text-tertiary mb-4">
+                    {[
+                      { label: isKO ? '1. 구조' : '1. Structure', pass: 0 },
+                      { label: isKO ? '2. 초안' : '2. Draft', pass: 1 },
+                      { label: isKO ? '3. 다듬기' : '3. Polish', pass: 2 },
+                    ].map((step, i) => (
+                      <React.Fragment key={step.pass}>
+                        {i > 0 && <span className="text-text-quaternary">→</span>}
+                        <span className={`px-2 py-1 rounded font-medium transition-colors ${
+                          canvasPass > step.pass ? 'bg-accent-green/20 text-accent-green' :
+                          canvasPass === step.pass ? 'bg-accent-green/30 text-accent-green ring-1 ring-accent-green/40' :
+                          'bg-bg-secondary text-text-tertiary'
+                        }`}>{step.label}</span>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  {/* 액션 버튼 */}
+                  <div className="flex gap-2">
+                    {canvasPass > 0 && (
+                      <button
+                        onClick={() => setCanvasPass(p => Math.max(0, (typeof p === 'number' ? p : 0) - 1))}
+                        className="px-3 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-bg-secondary transition-colors text-text-secondary"
+                      >
+                        {isKO ? '← 이전 단계' : '← Previous'}
+                      </button>
+                    )}
+                    {canvasPass < 2 && canvasContent.trim().length > 10 && (
+                      <button
+                        onClick={() => {
+                          // 다음 단계로 전환 → AI 호출은 useStudioAI의 canvasPass 감지로 자동
+                          setCanvasPass(p => (typeof p === 'number' ? p : 0) + 1);
+                          // 현재 캔버스를 프롬프트로 전송
+                          if (handleSend) handleSend(canvasPass === 0
+                            ? (isKO ? `[캔버스 구조 → 초안 확장]\n\n${canvasContent}` : `[Canvas Structure → Draft Expansion]\n\n${canvasContent}`)
+                            : (isKO ? `[캔버스 초안 → 다듬기]\n\n${canvasContent}` : `[Canvas Draft → Polish]\n\n${canvasContent}`)
+                          );
+                        }}
+                        className="px-4 py-1.5 text-xs font-bold bg-accent-green/20 hover:bg-accent-green/30 border border-accent-green/30 text-accent-green rounded-lg transition-colors"
+                      >
+                        {canvasPass === 0 ? (isKO ? '초안으로 확장 →' : 'Expand to Draft →') : (isKO ? '다듬기 시작 →' : 'Start Polish →')}
+                      </button>
+                    )}
+                    {canvasPass >= 2 && canvasContent.trim() && (
+                      <button
+                        onClick={() => {
+                          undoStack.push(editDraft, isKO ? '캔버스 반영' : 'Canvas Apply');
+                          setEditDraft(canvasContent);
+                          setWritingMode('edit');
+                          setCanvasPass(0);
+                        }}
+                        className="px-4 py-1.5 text-xs font-bold bg-accent-green hover:bg-accent-green/90 text-white rounded-lg transition-colors"
+                      >
+                        {isKO ? '본문에 반영' : 'Apply to Manuscript'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <textarea
                   value={canvasContent}
                   onChange={e => setCanvasContent(e.target.value)}
                   className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none transition-all resize-none"
-                  placeholder={isKO ? '캔버스에 구조를 작성하세요...' : 'Write your structure on the canvas...'}
+                  placeholder={canvasPass === 0
+                    ? (isKO ? '장면의 뼈대를 작성하세요... (등장인물, 핵심 사건, 분위기)' : 'Write scene skeleton... (characters, events, mood)')
+                    : (isKO ? 'AI가 작성 중...' : 'AI is writing...')}
                 />
               </div>
             )}
@@ -719,25 +776,34 @@ export default function WritingTabInline(props: Props) {
         )}
       </div>
 
-      {/* 3: 우측 패널 — 채팅 또는 참조 분할 뷰 */}
+      {/* 3: 우측 패널 — 채팅 또는 참조 분할 뷰 (모바일: 오버레이, 데스크톱: 사이드) */}
       {splitView === 'chat' && (
-        <RightChatPanel
-          language={language}
-          currentSession={currentSession}
-          messages={chatMessages}
-          loading={chatLoading}
-          onSend={handleChatSend}
-          onAbort={abortChat}
-          onClear={clearChat}
-          directorReport={props.directorReport}
-          hfcpState={props.hfcpState}
-          suggestions={suggestions}
-          setSuggestions={setSuggestions}
-          pipelineResult={pipelineResult}
-          setConfig={setConfig}
-          setActiveTab={setActiveTab}
-          hostedProviders={props.hostedProviders}
-        />
+        <div className="fixed inset-0 z-40 bg-bg-primary/95 backdrop-blur-sm lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:backdrop-blur-none lg:w-[35%] lg:min-w-[280px] lg:max-w-[500px] lg:shrink-0">
+          {/* 모바일 닫기 헤더 */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border lg:hidden">
+            <span className="text-sm font-bold text-text-primary">{isKO ? '채팅' : 'Chat'}</span>
+            <button onClick={() => setSplitView(null)} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <RightChatPanel
+            language={language}
+            currentSession={currentSession}
+            messages={chatMessages}
+            loading={chatLoading}
+            onSend={handleChatSend}
+            onAbort={abortChat}
+            onClear={clearChat}
+            directorReport={props.directorReport}
+            hfcpState={props.hfcpState}
+            suggestions={suggestions}
+            setSuggestions={setSuggestions}
+            pipelineResult={pipelineResult}
+            setConfig={setConfig}
+            setActiveTab={setActiveTab}
+            hostedProviders={props.hostedProviders}
+          />
+        </div>
       )}
       {splitView === 'reference' && (
         <div className="hidden lg:flex w-[35%] min-w-[280px] max-w-[500px] shrink-0">

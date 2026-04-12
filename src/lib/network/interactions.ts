@@ -41,6 +41,7 @@ export async function addComment(input: {
   authorName: string;
   authorPhoto?: string;
   content: string;
+  parentId?: string;
 }) {
   assertCurrentUser(input.authorId);
 
@@ -57,6 +58,7 @@ export async function addComment(input: {
     authorName: normalizeText(input.authorName),
     authorPhoto: input.authorPhoto,
     content: normalizeText(input.content),
+    ...(input.parentId ? { parentId: input.parentId } : {}),
     createdAt: timestamp,
     updatedAt: timestamp,
   };
