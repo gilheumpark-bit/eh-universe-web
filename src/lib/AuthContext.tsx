@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import type { User, Auth } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { app, lazyFirebaseAuth } from './firebase';
 import { logger } from '@/lib/logger';
 

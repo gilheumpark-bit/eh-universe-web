@@ -74,10 +74,10 @@ function undoReducer(state: UndoState, action: UndoAction): UndoState {
 // ============================================================
 
 export function useUndoStack(initialText?: string): UndoStack {
-  const [state, dispatch] = useReducer(undoReducer, {
-    stack: initialText ? [{ text: initialText, timestamp: Date.now() }] : [],
-    pointer: initialText ? 0 : -1,
-  });
+  const [state, dispatch] = useReducer(undoReducer, initialText, (init): UndoState => ({
+    stack: init ? [{ text: init, timestamp: Date.now() }] : [],
+    pointer: init ? 0 : -1,
+  }));
 
   const lastPush = useRef(0);
 

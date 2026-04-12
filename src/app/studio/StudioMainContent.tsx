@@ -3,7 +3,6 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import { useState } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   X, Save, Download,
