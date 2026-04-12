@@ -173,9 +173,12 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
   return (
     <div className="bg-bg-secondary/50 border border-border rounded-xl overflow-hidden">
       {/* Header row: score + graph + window control */}
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(p => !p)}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-bg-secondary/80 transition-colors"
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(p => !p); } }}
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-bg-secondary/80 transition-colors cursor-pointer"
       >
         {/* Overall score badge */}
         <div className="flex-shrink-0 flex flex-col items-center">
@@ -211,7 +214,7 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
           </div>
           {expanded ? <ChevronUp className="w-3 h-3 text-text-tertiary" /> : <ChevronDown className="w-3 h-3 text-text-tertiary" />}
         </div>
-      </button>
+      </div>
 
       {/* Expanded detail panel */}
       {expanded && (

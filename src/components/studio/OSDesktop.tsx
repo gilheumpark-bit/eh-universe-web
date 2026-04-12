@@ -280,7 +280,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             >
               <option value="" disabled>{t('sidebar.activeProject')}</option>
               {projects.map(p => (
-                <option key={p.id} value={p.id} className="bg-[#1c1208]">{p.name}</option>
+                <option key={p.id} value={p.id} className="bg-bg-primary">{p.name}</option>
               ))}
             </select>
             <button onClick={createNewProject} className="text-text-tertiary hover:text-accent-amber transition-colors" title={t('project.newProject')}>
@@ -288,7 +288,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             </button>
           </div>
 
-          <div className="h-4 w-px bg-amber-900/30 mx-1" />
+          <div className="h-4 w-px bg-border mx-1" />
 
           <div className="flex items-center gap-2">
             <select
@@ -298,7 +298,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             >
               <option value="" disabled>{language === 'KO' ? '챕터 선택' : 'Select Chapter'}</option>
               {sessions.map(s => (
-                <option key={s.id} value={s.id} className="bg-[#1c1208]">{s.title}</option>
+                <option key={s.id} value={s.id} className="bg-bg-primary">{s.title}</option>
               ))}
             </select>
             <button onClick={createNewSession} className="text-text-tertiary hover:text-accent-amber transition-colors" title="New Chapter">
@@ -314,7 +314,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               <span className="text-[10px]">{syncStatus}</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 bg-amber-900/20 rounded-full px-2 py-0.5 border border-amber-800/20">
+          <div className="flex items-center gap-1.5 bg-bg-tertiary/50 rounded-full px-2 py-0.5 border border-border">
             {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
               <button
                 key={l}
@@ -346,7 +346,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <div
           onMouseDown={handleDockMoveStart}
           onDoubleClick={handleDockReset}
-          className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-amber-800/20 bg-amber-900/10 hover:bg-amber-900/20 active:bg-amber-900/30 transition-all mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-[0_0_16px_rgba(180,120,40,0.3)]' : ''}`}
+          className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-all mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
           title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
         >
           <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
@@ -378,15 +378,15 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               style={{ width: '56px', height: '56px' }}
             >
               {isDragOver && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0.5 h-8 bg-accent-amber rounded-full shadow-[0_0_8px_rgba(202,161,92,0.8)]" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0.5 h-8 bg-accent-amber rounded-full" />
               )}
               <div className={`absolute -top-1 left-1/2 -translate-x-1/2 transition-opacity duration-200 ${isHovered && !isDragging ? 'opacity-50' : 'opacity-0'}`}>
                 <GripVertical className="w-3 h-3 text-text-tertiary rotate-90" />
               </div>
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
                 isActive
-                  ? 'bg-amber-900/30 border border-amber-700/40 shadow-[0_0_12px_rgba(180,120,40,0.25)]'
-                  : 'bg-transparent border border-transparent hover:bg-amber-900/15'
+                  ? 'bg-accent-amber/10 border border-accent-amber/30'
+                  : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
               }`}>
                 <tab.icon className={`w-6 h-6 ${isActive ? 'text-accent-amber' : tab.color} ${isActive || isHovered ? 'opacity-100' : 'opacity-70'} transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
               </div>
@@ -396,7 +396,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 {tab.label}
               </span>
               {isActive && (
-                <div className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-amber-400/80 shadow-[0_0_6px_rgba(180,120,40,0.8)]" />
+                <div className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-accent-amber" />
               )}
             </button>
           );
@@ -414,7 +414,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             style={{ width: '56px', height: '56px' }}
             title={link.label}
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center bg-transparent border border-transparent hover:bg-amber-900/15 transition-all duration-200">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center bg-transparent border border-transparent hover:bg-bg-tertiary/50 transition-all duration-200">
               <link.icon className={`w-6 h-6 ${link.color} opacity-70 group-hover:opacity-100 transition-opacity`} strokeWidth={1.8} />
             </div>
             <span className="text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide text-text-tertiary group-hover:text-text-primary transition-colors">

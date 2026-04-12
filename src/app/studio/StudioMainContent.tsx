@@ -3,27 +3,17 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import { type RefObject } from 'react';
 import { useState } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
-  Menu, X, Save, Download, Undo2, Redo2,
+  X, Save, Download,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
   Key, Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { StatusBadge } from '@/components/ui/StatusIndicator';
-import type {
-  ChatSession, StoryConfig, AppTab, AppLanguage, Message,
-  Project, ProactiveSuggestion, PipelineStageResult,
-} from '@/lib/studio-types';
-import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
-import type { EngineReport } from '@/engine/types';
-import type { DirectorReport } from '@/engine/director';
-import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
-import type { VersionedBackup } from '@/lib/indexeddb-backup';
-import { ENGINE_VERSION } from '@/lib/studio-constants';
+import type { AppTab } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
@@ -32,183 +22,21 @@ import { ShortcutsModal } from '@/components/studio/StudioModals';
 import StudioTabRouter from '@/components/studio/StudioTabRouter';
 import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
+import { useStudio } from './StudioContext';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
 
-
-type HostedAiAvailability = Record<string, boolean>;
-
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
 
 // ============================================================
-// PART 2 — Props Interface
+// PART 2 — Main Content Component (header + tabs + writing input)
 // ============================================================
-export interface StudioMainContentProps {
-  // Layout state
-  focusMode: boolean;
-  setFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-
-  // Theme
-  themeLevel: number;
-  toggleTheme: () => void;
-
-  // Search
-  showSearch: boolean;
-  setShowSearch: React.Dispatch<React.SetStateAction<boolean>>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  showShortcuts: boolean;
-  setShowShortcuts: React.Dispatch<React.SetStateAction<boolean>>;
-
-  // Global search
-  showGlobalSearch: boolean;
-  setShowGlobalSearch: React.Dispatch<React.SetStateAction<boolean>>;
-  globalSearchQuery: string;
-  setGlobalSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-
-  // Tab
-  activeTab: AppTab;
-  handleTabChange: (tab: AppTab) => void;
-  setActiveTab: (tab: AppTab) => void;
-
-  // Session/Project
-  currentSession: ChatSession | null;
-  currentSessionId: string | null;
-  currentProjectId: string | null;
-  currentProject: Project | null;
-  sessions: ChatSession[];
-  projects: Project[];
-  setCurrentSessionId: (id: string | null) => void;
-  setCurrentProjectId: (id: string | null) => void;
-  hydrated: boolean;
-
-  // Config
-  setConfig: (config: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
-  updateCurrentSession: (patch: Partial<ChatSession>) => void;
-
-  // Writing
-  writingMode: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setWritingMode: React.Dispatch<React.SetStateAction<any>>;
-  editDraft: string;
-  setEditDraft: React.Dispatch<React.SetStateAction<string>>;
-  editDraftRef: RefObject<HTMLTextAreaElement | null>;
-  canvasContent: string;
-  setCanvasContent: React.Dispatch<React.SetStateAction<string>>;
-  canvasPass: number;
-  setCanvasPass: React.Dispatch<React.SetStateAction<number>>;
-  promptDirective: string;
-  setPromptDirective: React.Dispatch<React.SetStateAction<string>>;
-  advancedSettings: AdvancedWritingSettings;
-  setAdvancedSettings: React.Dispatch<React.SetStateAction<AdvancedWritingSettings>>;
-
-  // AI
-  isGenerating: boolean;
-  lastReport: EngineReport | null;
-  directorReport: DirectorReport | null;
-  handleSend: (customPrompt?: string) => void;
-  doHandleSend: (customPrompt?: string, inputValue?: string, clearInput?: () => void) => void;
-  handleCancel: () => void;
-  handleRegenerate: (assistantMsgId: string) => Promise<void>;
-  handleVersionSwitch: (messageId: string, versionIndex: number) => void;
-  handleTypoFix: (messageId: string, index: number, original: string, suggestion: string) => void;
-  hfcpState: HFCPStateType;
-
-  // Input
-  input: string;
-  setInput: React.Dispatch<React.SetStateAction<string>>;
-
-  // Display state
-  showDashboard: boolean;
-  setShowDashboard: React.Dispatch<React.SetStateAction<boolean>>;
-  rightPanelOpen: boolean;
-  setRightPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  showAiLock: boolean;
-  hasAiAccess: boolean;
-  aiCapabilitiesLoaded: boolean;
-  bannerDismissed: boolean;
-  setBannerDismissed: React.Dispatch<React.SetStateAction<boolean>>;
-  showApiKeyModal: boolean;
-  setShowApiKeyModal: React.Dispatch<React.SetStateAction<boolean>>;
-  showQuickStartLock: boolean;
-  hostedProviders: HostedAiAvailability;
-
-  // Save
-  saveFlash: boolean;
-  lastSaveTime: number | null;
-  triggerSave: () => void;
-
-  // UX
-  setUxError: (err: { error: unknown } | null) => void;
-  messagesEndRef: RefObject<HTMLDivElement | null>;
-  filteredMessages: Message[];
-  searchMatchesEditDraft: string | boolean | null;
-  writingColumnShell: string;
-  writingInputDockOffset: string;
-  apiBannerMessage: string;
-  apiSetupLabel: string;
-
-  // Language
-  language: AppLanguage;
-  isKO: boolean;
-
-  // Immersion
-  sessionStartChars?: number;
-  editorFontSize?: number;
-
-  // History tab
-  archiveScope: 'project' | 'all';
-  setArchiveScope: React.Dispatch<React.SetStateAction<'project' | 'all'>>;
-  archiveFilter: string;
-  setArchiveFilter: React.Dispatch<React.SetStateAction<string>>;
-  charSubTab: 'characters' | 'items';
-  setCharSubTab: React.Dispatch<React.SetStateAction<'characters' | 'items'>>;
-
-  // Session management
-  createNewSession: (tab?: AppTab) => void;
-  createDemoSession: () => void;
-  openQuickStart: () => void;
-  startRename: (sessionId: string, currentTitle: string) => void;
-  renamingSessionId: string | null;
-  setRenamingSessionId: (id: string | null) => void;
-  renameValue: string;
-  setRenameValue: (val: string) => void;
-  confirmRename: () => void;
-  moveSessionToProject: (sessionId: string, targetProjectId: string) => void;
-  deleteSession: (sessionId: string) => void;
-  handleNextEpisode: () => void;
-  handlePrint: () => void;
-
-  // External control props for sidebar integration
-  suggestions: ProactiveSuggestion[];
-  setSuggestions: React.Dispatch<React.SetStateAction<ProactiveSuggestion[]>>;
-  pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
-
-  // Versioned backups (OFFLINE_CACHE 꺼지면 undefined)
-  versionedBackups?: VersionedBackup[];
-  doRestoreVersionedBackup?: (timestamp: number) => Promise<boolean>;
-  refreshBackupList?: () => void;
-
-  // Modals/actions
-  clearAllSessions: () => void;
-
-  // Children: right panel slots
-  children?: React.ReactNode;
-}
-
-// IDENTITY_SEAL: PART-2 | role=type-definitions | inputs=none | outputs=StudioMainContentProps
-
-// ============================================================
-// PART 3 — Main Content Component (header + tabs + writing input)
-// ============================================================
-export default function StudioMainContent(props: StudioMainContentProps) {
+export default function StudioMainContent({ children }: { children?: React.ReactNode }) {
   const {
-  focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
-  themeLevel, toggleTheme,
-  showSearch, setShowSearch, searchQuery, setSearchQuery,
+    focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
+    themeLevel, toggleTheme,
+    showSearch, setShowSearch, searchQuery, setSearchQuery,
     showShortcuts, setShowShortcuts,
     showGlobalSearch, setShowGlobalSearch, globalSearchQuery, setGlobalSearchQuery,
     activeTab, handleTabChange, setActiveTab,
@@ -246,8 +74,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
     versionedBackups, doRestoreVersionedBackup, refreshBackupList,
     clearAllSessions,
     suggestions, setSuggestions, pipelineResult,
-    children,
-  } = props;
+  } = useStudio();
 
   const t = createT(language);
   const isOnline = useOnlineStatus();
@@ -448,4 +275,4 @@ export default function StudioMainContent(props: StudioMainContentProps) {
   );
 }
 
-// IDENTITY_SEAL: PART-3 | role=main-content-area | inputs=all-studio-state | outputs=JSX(header+tabs+input)
+// IDENTITY_SEAL: PART-2 | role=main-content-area | inputs=StudioContext | outputs=JSX(header+tabs+input)

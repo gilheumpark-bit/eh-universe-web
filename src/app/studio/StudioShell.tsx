@@ -10,6 +10,7 @@ import { createT } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';
 import { createHFCPState, type HFCPState as HFCPStateType } from '@/engine/hfcp';
+import { StudioProvider, type StudioContextValue } from './StudioContext';
 import { logger } from '@/lib/logger';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
@@ -33,7 +34,6 @@ import { getApiKey, getActiveProvider, hasStoredApiKey, hasDgxService as hasDgxS
 import dynamic from 'next/dynamic';
 // StudioSaveSlotPanel removed
 import { useStudioShellController } from './useStudioShellController';
-
 const OSDesktop = dynamic(() => import('@/components/studio/OSDesktop'), { ssr: false });
 const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: false });
 const StudioOverlayManager = dynamic(() => import('@/components/studio/StudioOverlayManager'), { ssr: false });
@@ -531,6 +531,86 @@ export default function StudioShell() {
     setUxError, triggerSave, saveFlash,
   };
 
+  // ── StudioContext value (replaces 109-prop waterfall) ──
+  const studioContextValue: StudioContextValue = {
+    // Layout
+    focusMode, setFocusMode,
+    isSidebarOpen, setIsSidebarOpen,
+    // Theme
+    themeLevel, toggleTheme,
+    // Search
+    showSearch, setShowSearch,
+    searchQuery, setSearchQuery,
+    showShortcuts, setShowShortcuts,
+    // Global search
+    showGlobalSearch, setShowGlobalSearch,
+    globalSearchQuery, setGlobalSearchQuery,
+    // Tab
+    activeTab, handleTabChange, setActiveTab,
+    // Session/Project
+    currentSession, currentSessionId,
+    currentProjectId, currentProject,
+    sessions, projects,
+    setCurrentSessionId, setCurrentProjectId,
+    hydrated,
+    // Config
+    setConfig, updateCurrentSession,
+    // Writing
+    writingMode, setWritingMode: setWritingMode as React.Dispatch<React.SetStateAction<string>>,
+    editDraft, setEditDraft, editDraftRef,
+    canvasContent, setCanvasContent,
+    canvasPass, setCanvasPass,
+    promptDirective, setPromptDirective,
+    advancedSettings, setAdvancedSettings,
+    // AI
+    isGenerating, lastReport, directorReport,
+    handleSend, doHandleSend,
+    handleCancel, handleRegenerate,
+    handleVersionSwitch, handleTypoFix,
+    hfcpState,
+    // Input
+    input, setInput,
+    // Display state
+    showDashboard, setShowDashboard,
+    rightPanelOpen, setRightPanelOpen,
+    showAiLock, hasAiAccess, aiCapabilitiesLoaded,
+    bannerDismissed, setBannerDismissed,
+    showApiKeyModal, setShowApiKeyModal,
+    showQuickStartLock,
+    hostedProviders: hostedProviders as Record<string, boolean>,
+    // Save
+    saveFlash, lastSaveTime, triggerSave,
+    // UX
+    setUxError, messagesEndRef,
+    filteredMessages, searchMatchesEditDraft,
+    writingColumnShell, writingInputDockOffset,
+    apiBannerMessage, apiSetupLabel,
+    // Language
+    language, isKO,
+    // Immersion
+    sessionStartChars: sessionStartCharsRef.current ?? 0,
+    editorFontSize,
+    // History tab
+    archiveScope, setArchiveScope,
+    archiveFilter, setArchiveFilter,
+    charSubTab, setCharSubTab,
+    // Session management
+    createNewSession, createDemoSession, openQuickStart,
+    startRename,
+    renamingSessionId, setRenamingSessionId,
+    renameValue, setRenameValue,
+    confirmRename,
+    moveSessionToProject,
+    deleteSession, handleNextEpisode, handlePrint,
+    // External
+    suggestions, setSuggestions,
+    pipelineResult,
+    // Versioned backups
+    versionedBackups, doRestoreVersionedBackup, refreshBackupList,
+    // Modals/actions
+    clearAllSessions,
+  };
+
   // IDENTITY_SEAL: PART-4 | role=callbacks-derived | inputs=state | outputs=handlers+derived-values
 
   // ============================================================
@@ -631,70 +711,12 @@ export default function StudioShell() {
         </button>
       )}
 
-      <StudioMainContent
-        focusMode={focusMode} setFocusMode={setFocusMode}
-        isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-        themeLevel={themeLevel} toggleTheme={toggleTheme}
-        showSearch={showSearch} setShowSearch={setShowSearch}
-        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-        showShortcuts={showShortcuts} setShowShortcuts={setShowShortcuts}
-        showGlobalSearch={showGlobalSearch} setShowGlobalSearch={setShowGlobalSearch}
-        globalSearchQuery={globalSearchQuery} setGlobalSearchQuery={setGlobalSearchQuery}
-        activeTab={activeTab} handleTabChange={handleTabChange} setActiveTab={setActiveTab}
-        currentSession={currentSession} currentSessionId={currentSessionId}
-        currentProjectId={currentProjectId} currentProject={currentProject}
-        sessions={sessions} projects={projects}
-        setCurrentSessionId={setCurrentSessionId} setCurrentProjectId={setCurrentProjectId}
-        hydrated={hydrated}
-        setConfig={setConfig} updateCurrentSession={updateCurrentSession}
-        writingMode={writingMode} setWritingMode={setWritingMode}
-        editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
-        canvasContent={canvasContent} setCanvasContent={setCanvasContent}
-        canvasPass={canvasPass} setCanvasPass={setCanvasPass}
-        promptDirective={promptDirective} setPromptDirective={setPromptDirective}
-        advancedSettings={advancedSettings} setAdvancedSettings={setAdvancedSettings}
-        isGenerating={isGenerating} lastReport={lastReport} directorReport={directorReport}
-        handleSend={handleSend} doHandleSend={doHandleSend}
-        handleCancel={handleCancel} handleRegenerate={handleRegenerate}
-        handleVersionSwitch={handleVersionSwitch} handleTypoFix={handleTypoFix}
-        hfcpState={hfcpState}
-        input={input} setInput={setInput}
-        showDashboard={showDashboard} setShowDashboard={setShowDashboard}
-        rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
-        showAiLock={showAiLock} hasAiAccess={hasAiAccess}
-        aiCapabilitiesLoaded={aiCapabilitiesLoaded}
-        bannerDismissed={bannerDismissed} setBannerDismissed={setBannerDismissed}
-        showApiKeyModal={showApiKeyModal} setShowApiKeyModal={setShowApiKeyModal}
-        showQuickStartLock={showQuickStartLock} hostedProviders={hostedProviders as Record<string, boolean>}
-        saveFlash={saveFlash} lastSaveTime={lastSaveTime} triggerSave={triggerSave}
-        setUxError={setUxError} messagesEndRef={messagesEndRef}
-        filteredMessages={filteredMessages} searchMatchesEditDraft={searchMatchesEditDraft}
-        writingColumnShell={writingColumnShell} writingInputDockOffset={writingInputDockOffset}
-        apiBannerMessage={apiBannerMessage} apiSetupLabel={apiSetupLabel}
-        language={language} isKO={isKO}
-        sessionStartChars={sessionStartCharsRef.current ?? 0} editorFontSize={editorFontSize}
-        archiveScope={archiveScope} setArchiveScope={setArchiveScope}
-        archiveFilter={archiveFilter} setArchiveFilter={setArchiveFilter}
-        charSubTab={charSubTab} setCharSubTab={setCharSubTab}
-        createNewSession={createNewSession} createDemoSession={createDemoSession}
-        openQuickStart={openQuickStart}
-        startRename={startRename} renamingSessionId={renamingSessionId}
-        setRenamingSessionId={setRenamingSessionId}
-        renameValue={renameValue} setRenameValue={setRenameValue}
-        confirmRename={confirmRename}
-        moveSessionToProject={moveSessionToProject}
-        deleteSession={deleteSession} handleNextEpisode={handleNextEpisode}
-        handlePrint={handlePrint}
-        versionedBackups={versionedBackups} doRestoreVersionedBackup={doRestoreVersionedBackup}
-        refreshBackupList={refreshBackupList}
-        clearAllSessions={clearAllSessions}
-        suggestions={suggestions}
-        setSuggestions={setSuggestions}
-        pipelineResult={pipelineResult}
-      >
-        {/* StudioSaveSlotPanel removed — save slots accessible via modal */}
-        {/* StudioWritingAssistantPanel removed - now integrated into WritingTabInline via RightChatPanel */}
-      </StudioMainContent>
+      <StudioProvider value={studioContextValue}>
+        <StudioMainContent>
+          {/* StudioSaveSlotPanel removed — save slots accessible via modal */}
+          {/* StudioWritingAssistantPanel removed - now integrated into WritingTabInline via RightChatPanel */}
+        </StudioMainContent>
+      </StudioProvider>
 
       <StudioOverlayManager
         language={language}
