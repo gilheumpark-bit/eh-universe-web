@@ -21,6 +21,7 @@ import {
 } from '@/lib/google-genai-server';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { SPARK_SERVER_URL, streamSparkAI } from '@/services/sparkService';
+import { MODEL_GENERAL } from '@/lib/dgx-models';
 import { logger } from '@/lib/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -225,7 +226,7 @@ export async function POST(req: NextRequest) {
       if (SPARK_SERVER_URL) {
         try {
           const sparkStream = await streamSparkAI(
-            'Qwen/Qwen2.5-14B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
+            MODEL_GENERAL, prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
             { userId: 'vercel-server', userTier: 'free' }
           );
           const reader = sparkStream.getReader();
@@ -277,7 +278,7 @@ export async function POST(req: NextRequest) {
       if (SPARK_SERVER_URL) {
         try {
           const sparkStream = await streamSparkAI(
-            'Qwen/Qwen2.5-14B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
+            MODEL_GENERAL, prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
             { userId: 'vercel-server', userTier: 'free' }
           );
           const reader = sparkStream.getReader();

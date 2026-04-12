@@ -2,6 +2,7 @@ import { Type } from '@google/genai';
 import { createServerGeminiClient, hasGeminiServerCredentials } from '@/lib/google-genai-server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
+import { MODEL_PLANNER } from '@/lib/dgx-models';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = {
@@ -20,7 +21,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
   const MAX_RETRIES = 2;
   const DELAYS = [1500, 3000];
   const body = JSON.stringify({
-    model: 'Qwen/Qwen2.5-14B-Instruct-AWQ',
+    model: MODEL_PLANNER,
     messages: [
       { role: 'system', content: 'You are a creative writing assistant. CRITICAL: Always respond with a single flat JSON object. Use EXACTLY the field names specified in the prompt (e.g. title, synopsis, corePremise). Do NOT nest fields or create your own structure. No markdown, no explanation, just JSON.' },
       { role: 'user', content: prompt },

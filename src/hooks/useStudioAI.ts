@@ -16,6 +16,7 @@ import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/engine/director';
 import { stripEngineArtifacts } from '@/engine/pipeline';
 import { getGenreTemperature } from '@/engine/genre-presets';
+import { buildStoryBible } from '@/engine/context-builder';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
@@ -238,6 +239,14 @@ export function useStudioAI({
       let currentRetryHint = '';
       const gateHistory: QualityGateAttemptRecord[] = [];
 
+      // Story Bible — 망각 방지 동적 컨텍스트
+      const storyBible = buildStoryBible({
+        config: capturedConfig,
+        manuscripts: capturedConfig.manuscripts || [],
+        currentEpisode: capturedConfig.episode ?? 1,
+        language,
+      });
+
       while (attempt <= maxAttempts) {
         fullContent = '';
         const promptWithHint = basePrompt + (currentRetryHint ? `\n\n${currentRetryHint}` : '');
@@ -258,7 +267,7 @@ export function useStudioAI({
               return s;
             }));
           },
-          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
         );
 
         // Trademark/IP filter

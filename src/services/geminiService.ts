@@ -7,6 +7,7 @@
 // ============================================================
 
 import { logger } from '@/lib/logger';
+import { MODEL_PLANNER } from '@/lib/dgx-models';
 import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
@@ -28,6 +29,8 @@ export interface GenerateOptions {
   platform?: PlatformType;
   history?: Message[];
   temperature?: number;
+  /** Story Bible — 망각 방지 동적 컨텍스트 (시스템 프롬프트에 append) */
+  storyBible?: string;
 }
 
 export interface GenerateResult {
@@ -70,7 +73,7 @@ async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'Qwen/Qwen2.5-14B-Instruct-AWQ',
+      model: MODEL_PLANNER,
       messages: [
         { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
         { role: 'user', content: prompt },
@@ -196,7 +199,10 @@ export const generateStoryStream = async (
   const platform = options.platform ?? config.platform ?? PlatformType.MOBILE;
   const temperature = options.temperature ?? parseFloat(localStorage.getItem('noa_temperature') || '0.9');
 
-  const systemInstruction = buildSystemInstruction(config, language, platform, config.simulatorRef?.ruleLevel);
+  const baseSystem = buildSystemInstruction(config, language, platform, config.simulatorRef?.ruleLevel);
+  const systemInstruction = options.storyBible
+    ? `${baseSystem}\n\n${options.storyBible}`
+    : baseSystem;
   const userPrompt = buildUserPrompt(config, draft, {
     previousContent: options.previousContent,
     language,
