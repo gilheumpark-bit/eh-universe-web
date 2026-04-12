@@ -153,6 +153,8 @@ export function supportsStructuredOutput(providerId: ProviderId): boolean {
 }
 /** 현재 활성 provider가 structured output을 지원하는지 */
 export function activeSupportsStructured(): boolean {
+  // DGX 서비스 모드면 항상 구조화 생성 지원 (서버에서 DGX 폴백)
+  if (hasDgxService()) return true;
   return supportsStructuredOutput(getActiveProvider());
 }
 
