@@ -192,3 +192,34 @@ export function buildProfileHint(profile: WriterProfile, isKO: boolean): string 
 }
 
 // IDENTITY_SEAL: PART-7 | role=prompt hint | inputs=profile | outputs=prompt string
+
+// ============================================================
+// PART 8 — Inline Correction Utilities (피드백 루프)
+// ============================================================
+
+import type { WriterCorrection } from '@/lib/studio-types';
+
+/** 인라인 리라이트 수정 항목 생성 */
+export function buildCorrectionEntry(
+  original: string,
+  revised: string,
+  action: WriterCorrection['action'] = 'rewrite',
+): WriterCorrection {
+  return {
+    original: original.slice(0, 200),
+    revised: revised.slice(0, 200),
+    action,
+    timestamp: Date.now(),
+  };
+}
+
+/** corrections 배열에 항목 추가 (최대 20개, FIFO) */
+export function appendCorrection(
+  existing: WriterCorrection[] | undefined,
+  entry: WriterCorrection,
+): WriterCorrection[] {
+  const list = [...(existing || []), entry];
+  return list.length > 20 ? list.slice(-20) : list;
+}
+
+// IDENTITY_SEAL: PART-8 | role=correction utils | inputs=oldText,newText | outputs=WriterCorrection

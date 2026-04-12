@@ -85,14 +85,36 @@ export function buildStoryBible(input: StoryBibleInput): string {
   // 미해결 복선
   const openThreads = formatOpenThreads(report);
 
-  // 이전 회차 요약 (원고에서 첫 2줄 추출 — Phase 2에서 AI 요약으로 교체 예정)
+  // 이전 회차 요약 (AI 요약 우선, 없으면 첫 2줄 fallback)
   const recentSummaries = manuscripts
     .filter(m => m.episode >= currentEpisode - 3 && m.episode < currentEpisode && m.content)
     .map(m => {
-      const first2Lines = m.content.split(/\n/).filter(l => l.trim()).slice(0, 2).join(' ').slice(0, 150);
-      return `- ${m.episode}화: ${first2Lines}`;
+      const summary = m.summary
+        || m.content.split(/\n/).filter(l => l.trim()).slice(0, 2).join(' ').slice(0, 150);
+      return `- ${m.episode}화: ${summary}`;
     })
     .join('\n');
+
+  // 작가 수정 패턴 분석 (최근 corrections에서 스타일 힌트 추출)
+  const allCorrections = manuscripts
+    .filter(m => m.corrections && m.corrections.length > 0)
+    .flatMap(m => m.corrections || [])
+    .slice(-10); // 최근 10개
+
+  let writerStyleHint = '';
+  if (allCorrections.length >= 3) {
+    const patterns: string[] = [];
+    const rewriteCount = allCorrections.filter(c => c.action === 'rewrite').length;
+    const compressCount = allCorrections.filter(c => c.action === 'compress').length;
+    const expandCount = allCorrections.filter(c => c.action === 'expand').length;
+    if (rewriteCount >= 2) patterns.push(isKO ? '문장 표현을 자주 다듬음' : 'Frequently polishes phrasing');
+    if (compressCount >= 2) patterns.push(isKO ? '간결한 문체 선호' : 'Prefers concise style');
+    if (expandCount >= 2) patterns.push(isKO ? '상세한 묘사 선호' : 'Prefers detailed description');
+    if (patterns.length > 0) {
+      writerStyleHint = (isKO ? '\n\n📝 작가 스타일 메모:\n' : '\n\n📝 Writer Style Notes:\n')
+        + patterns.map(p => `- ${p}`).join('\n');
+    }
+  }
 
   // 프롬프트 조립 (800토큰 이내)
   const sections: string[] = [];
@@ -135,6 +157,11 @@ export function buildStoryBible(input: StoryBibleInput): string {
     sections.push(isKO
       ? `\n---\n🔥 직전 화 마지막 씬:\n"${lastScene}"\n\n위 장면에서 1초의 단절도 없이 바로 다음 행동/대사로 시작하십시오. 배경 설명이나 과거 회상으로 시작하지 마십시오.`
       : `\n---\n🔥 Last Scene (Episode ${currentEpisode - 1}):\n"${lastScene}"\n\nContinue IMMEDIATELY from this scene. No background exposition or flashbacks to start.`);
+  }
+
+  // 작가 스타일 메모 (수정 패턴 기반)
+  if (writerStyleHint) {
+    sections.push(writerStyleHint);
   }
 
   return sections.join('\n');

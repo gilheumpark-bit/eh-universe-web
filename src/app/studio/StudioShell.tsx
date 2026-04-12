@@ -506,7 +506,27 @@ export default function StudioShell() {
   const handleNextEpisode = () => {
     if (!currentSession) return;
     const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
-    setConfig({ ...currentSession.config, episode: nextEp });
+    // 현재 에피소드 원고를 manuscripts에 자동 저장 (유실 방지)
+    const currentEp = currentSession.config.episode ?? 1;
+    const draftContent = editDraft || '';
+    if (draftContent.trim()) {
+      const manuscript = {
+        episode: currentEp,
+        title: currentSession.config.title || `EP.${currentEp}`,
+        content: draftContent,
+        charCount: draftContent.replace(/\s/g, '').length,
+        lastUpdate: Date.now(),
+      };
+      setConfig(prev => {
+        const msList = [...(prev.manuscripts || [])];
+        const idx = msList.findIndex(m => m.episode === currentEp);
+        if (idx >= 0) msList[idx] = { ...msList[idx], ...manuscript };
+        else msList.push(manuscript);
+        return { ...prev, manuscripts: msList, episode: nextEp };
+      });
+    } else {
+      setConfig({ ...currentSession.config, episode: nextEp });
+    }
   };
 
   const writingColumnShell = writingMode === 'edit'

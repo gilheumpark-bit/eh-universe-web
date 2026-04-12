@@ -272,6 +272,14 @@ export interface StoryConfig {
   translatedManuscripts?: TranslatedManuscriptEntry[];
 }
 
+/** 작가 수정 내역 (AI 초안 → 작가 수정) */
+export interface WriterCorrection {
+  original: string;    // AI가 쓴 원문 (최대 200자)
+  revised: string;     // 작가가 고친 문장 (최대 200자)
+  action: 'rewrite' | 'expand' | 'compress' | 'tone' | 'manual';
+  timestamp: number;
+}
+
 // Episode manuscript entry
 export interface EpisodeManuscript {
   episode: number;
@@ -279,6 +287,10 @@ export interface EpisodeManuscript {
   content: string;
   charCount: number;
   lastUpdate: number;
+  /** AI 자동 생성 요약 (2~3줄, 150자 이내) */
+  summary?: string;
+  /** 작가 수정 내역 — 인라인 리라이트 기록 (최대 20개/에피소드) */
+  corrections?: WriterCorrection[];
 }
 
 // Translated manuscript entry (번역 원고)

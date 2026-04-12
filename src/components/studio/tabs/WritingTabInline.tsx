@@ -576,6 +576,17 @@ export default function WritingTabInline(props: Props) {
                   onReplace={(oldText, newText) => {
                     undoStack.push(editDraft, isKO ? '리라이트' : 'Rewrite');
                     setEditDraft(editDraft.replace(oldText, newText));
+                    // 작가 수정 내역 기록 (피드백 루프)
+                    const ep = currentSession.config.episode ?? 1;
+                    setConfig(prev => {
+                      const msList = [...(prev.manuscripts || [])];
+                      const ms = msList.find(m => m.episode === ep);
+                      if (ms) {
+                        const entry = { original: oldText.slice(0, 200), revised: newText.slice(0, 200), action: 'rewrite' as const, timestamp: Date.now() };
+                        ms.corrections = [...(ms.corrections || []).slice(-19), entry];
+                      }
+                      return { ...prev, manuscripts: msList };
+                    });
                   }}
                 />
               </div>
