@@ -104,7 +104,7 @@ MAX_OUTPUT_CHARS = int(os.getenv("MAX_OUTPUT_CHARS", "8000"))
 MAX_OUTPUT_TOKENS = int(MAX_OUTPUT_CHARS * 1.5)
 
 class ChatRequest(BaseModel):
-    model: str = "Qwen/Qwen2.5-32B-Instruct-AWQ"
+    model: str = "Qwen/Qwen2.5-14B-Instruct-AWQ"
     messages: list[dict]
     temperature: float = 0.7
     max_tokens: int | None = None

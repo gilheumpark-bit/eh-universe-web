@@ -17,7 +17,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
   const MAX_RETRIES = 2;
   const DELAYS = [1500, 3000];
   const body = JSON.stringify({
-    model: 'Qwen/Qwen2.5-32B-Instruct-AWQ',
+    model: 'Qwen/Qwen2.5-14B-Instruct-AWQ',
     messages: [
       { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
       { role: 'user', content: prompt },

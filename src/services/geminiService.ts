@@ -70,7 +70,7 @@ async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'Qwen/Qwen2.5-32B-Instruct-AWQ',
+      model: 'Qwen/Qwen2.5-14B-Instruct-AWQ',
       messages: [
         { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
         { role: 'user', content: prompt },
