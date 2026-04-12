@@ -15,6 +15,7 @@ import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
 import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/engine/director';
 import { stripEngineArtifacts } from '@/engine/pipeline';
+import { getGenreTemperature } from '@/engine/genre-presets';
 import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
@@ -257,7 +258,7 @@ export function useStudioAI({
               return s;
             }));
           },
-          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, temperature: (() => { const d = getNarrativeDepth(); const base = parseFloat(localStorage.getItem('noa_temperature') || '0.9'); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
         );
 
         // Trademark/IP filter
@@ -475,7 +476,7 @@ export function useStudioAI({
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, temperature: (() => { const d = getNarrativeDepth(); const base = parseFloat(localStorage.getItem('noa_temperature') || '0.9'); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig2.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
       );
 
       // Trademark/IP filter
