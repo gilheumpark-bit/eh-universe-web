@@ -427,9 +427,38 @@ export function getActiveProvider(): ProviderId {
   return provider;
 }
 
+/** 서버 측 DGX 가용 여부 캐시 (런타임 체크 결과) */
+let _serverDgxAvailable: boolean | null = null;
+
+/**
+ * 앱 초기화 시 서버의 DGX 가용 여부를 비동기로 확인 → 캐시.
+ * NEXT_PUBLIC_SPARK_SERVER_URL이 빌드 시 없어도 서버에 SPARK_SERVER_URL이 있으면 true.
+ */
+export async function initDgxCheck(): Promise<boolean> {
+  if (_serverDgxAvailable !== null) return _serverDgxAvailable;
+  try {
+    const res = await fetch('/api/ai-capabilities', { cache: 'no-store' });
+    if (!res.ok) { _serverDgxAvailable = false; return false; }
+    const data = await res.json();
+    _serverDgxAvailable = data.hasDgx ?? false;
+    return _serverDgxAvailable as boolean;
+  } catch {
+    _serverDgxAvailable = false;
+    return false;
+  }
+}
+
+/** 이미 fetch된 결과로 DGX 캐시를 직접 세팅 (중복 fetch 방지) */
+export function setServerDgxCache(hasDgx: boolean): void {
+  _serverDgxAvailable = hasDgx;
+}
+
 /** DGX Spark 서비스 모드 여부 (API 키 없이 AI 사용 가능) */
 export function hasDgxService(): boolean {
-  return typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+  if (typeof window === 'undefined') return false;
+  // 빌드 시 NEXT_PUBLIC_ 변수 OR 런타임 서버 체크 결과
+  if (!!process.env.NEXT_PUBLIC_SPARK_SERVER_URL) return true;
+  return _serverDgxAvailable === true;
 }
 
 /** Persist the active AI provider selection to localStorage */

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,11 @@ void REQUEST_TIMEOUT;
  * This prevents attackers from discovering which server keys are available.
  */
 export async function GET() {
+  const hasGemini = hasServerProviderCredentials('gemini');
+  const hasDgx = !!SPARK_SERVER_URL;
+
   const hosted = {
-    gemini: hasServerProviderCredentials('gemini'),
+    gemini: hasGemini,
     openai: false,
     claude: false,
     groq: false,
@@ -26,11 +30,14 @@ export async function GET() {
   };
 
   return NextResponse.json({
-    byokRequired: !hosted.gemini,
+    byokRequired: !hasGemini && !hasDgx,
+    hasDgx,
     hosted,
     supportedProviders: ['gemini', 'openai', 'claude', 'groq', 'mistral', 'ollama', 'lmstudio'],
-    message: hosted.gemini
-      ? 'Server-hosted Gemini is available.'
-      : 'Bring Your Own Key (BYOK) mode. Enter your API key in Settings.',
+    message: hasDgx
+      ? 'DGX Spark AI engine is available.'
+      : hasGemini
+        ? 'Server-hosted Gemini is available.'
+        : 'Bring Your Own Key (BYOK) mode. Enter your API key in Settings.',
   });
 }

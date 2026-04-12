@@ -29,7 +29,7 @@ import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
-import { getApiKey, getActiveProvider, hasStoredApiKey, type ProviderId } from '@/lib/ai-providers';
+import { getApiKey, getActiveProvider, hasStoredApiKey, hasDgxService as hasDgxServiceFn, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import dynamic from 'next/dynamic';
 // StudioSaveSlotPanel removed
 import { useStudioShellController } from './useStudioShellController';
@@ -121,6 +121,7 @@ export default function StudioShell() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
   const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
+  const [dgxReady, setDgxReady] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,9 +133,9 @@ export default function StudioShell() {
   const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && (!!getApiKey(activeProviderId) || hasStoredApiKey('lmstudio') || hasStoredApiKey('ollama'));
   const hasHostedAiAccess = hydrated && Boolean(user) && Boolean(hostedProviders[activeProviderId]);
   const hasHostedQuickStartAccess = hydrated && Boolean(user) && Boolean(hostedProviders.gemini);
-  const hasDgxService = !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
-  const hasAiAccess = hydrated && (hasLocalApiKey || hasHostedAiAccess || hasDgxService);
-  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || hasHostedQuickStartAccess || hasDgxService);
+  const dgxAvailable = dgxReady || hasDgxServiceFn();
+  const hasAiAccess = hydrated && (hasLocalApiKey || hasHostedAiAccess || dgxAvailable);
+  const hasQuickStartAccess = hydrated && (!!getApiKey('gemini') || hasHostedQuickStartAccess || dgxAvailable);
   const showAiLock = aiCapabilitiesLoaded && !hasAiAccess;
   const showQuickStartLock = aiCapabilitiesLoaded && !hasQuickStartAccess;
   const apiBannerMessage = hasHostedAiAccess
@@ -260,13 +261,18 @@ export default function StudioShell() {
       try {
         const response = await fetch('/api/ai-capabilities', { cache: 'no-store' });
         if (!response.ok) throw new Error(`Capability check failed: ${response.status}`);
-        const data = await response.json() as { hosted?: Record<string, unknown> };
+        const data = await response.json() as { hosted?: Record<string, unknown>; hasDgx?: boolean };
         if (cancelled) return;
         const nextHosted: HostedAiAvailability = {};
         for (const providerId of PROVIDER_IDS) {
           nextHosted[providerId] = Boolean(data.hosted?.[providerId]);
         }
         setHostedProviders(nextHosted);
+        // DGX 가용 → ai-providers 캐시 + 로컬 상태 모두 갱신
+        if (data.hasDgx) {
+          setDgxReady(true);
+          setServerDgxCache(true);
+        }
       } catch (error) {
         logger.warn('AI', 'Capability check failed', error);
         if (!cancelled) setHostedProviders({});
