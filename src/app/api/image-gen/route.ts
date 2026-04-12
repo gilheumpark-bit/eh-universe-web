@@ -12,7 +12,7 @@ import { isFeatureEnabledServer } from '@/lib/feature-flags';
 
 const MAX_REQUEST_BYTES = 1_048_576;
 
-export const maxDuration = 60;
+export const maxDuration = 180; // FLUX.1 이미지 생성 최대 180초
 
 export async function POST(req: NextRequest) {
   try {
@@ -150,7 +150,7 @@ const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, refere
           height: clampSize(height || 1024, 512, 1536),
           seed: seed ?? Math.floor(Math.random() * 2147483647),
         }),
-        signal: AbortSignal.timeout(55_000),
+        signal: AbortSignal.timeout(180_000), // FLUX.1 8K — 최대 180초
       });
 
       if (!res.ok) {

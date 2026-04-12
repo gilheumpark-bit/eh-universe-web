@@ -4,11 +4,11 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Plus, Image as ImageIcon, Settings, Star, Trash2,
-  Play, Loader2, Grid, ChevronDown,
+  Play, Loader2, Grid, ChevronDown, Zap,
 } from 'lucide-react';
 import {
   ChatSession, VisualPromptCard, StoryConfig, AppLanguage,
@@ -328,6 +328,47 @@ function useBatchGeneration(
 // IDENTITY_SEAL: PART-3 | role=batch generation hook | inputs=cards,api | outputs=progress,start,cancel
 
 // ============================================================
+// PART 3.5 — Premium Loading Text
+// ============================================================
+
+const LOADING_MESSAGES_KO = [
+  '차원 데이터 스캔 중...',
+  'FLUX.1 신경망 활성화...',
+  '시각적 구조 합성 중...',
+  '텍스처 매핑 계산...',
+  '라이팅 시뮬레이션...',
+  '최종 픽셀 렌더링...',
+  '고해상도 후처리...',
+  '아티팩트 제거 중...',
+];
+const LOADING_MESSAGES_EN = [
+  'Scanning dimensional data...',
+  'Activating FLUX.1 neural net...',
+  'Synthesizing visual structure...',
+  'Computing texture mapping...',
+  'Simulating lighting...',
+  'Rendering final pixels...',
+  'Post-processing in HD...',
+  'Removing artifacts...',
+];
+
+function PremiumLoadingText({ isKO }: { isKO: boolean }) {
+  const msgs = isKO ? LOADING_MESSAGES_KO : LOADING_MESSAGES_EN;
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIdx(i => (i + 1) % msgs.length), 3000);
+    return () => clearInterval(timer);
+  }, [msgs.length]);
+  return (
+    <div className="h-4 overflow-hidden">
+      <span key={idx} className="block text-[10px] text-accent-purple/80 font-mono animate-[fadeIn_0.5s_ease-in]">
+        {msgs[idx]}
+      </span>
+    </div>
+  );
+}
+
+// ============================================================
 // PART 4 — Main Component
 // ============================================================
 
@@ -529,16 +570,27 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
               {isKO ? '일괄 생성' : 'Batch Generation'}
             </div>
             {batch.progress.running ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
-                  <span className="text-[10px] text-text-secondary">
-                    {batch.progress.current}/{batch.progress.total} — {batch.progress.currentCardTitle}
+              <div className="space-y-3 p-3 rounded-xl bg-accent-purple/5 border border-accent-purple/20 backdrop-blur-sm">
+                {/* 엔진 뱃지 */}
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-[9px] font-bold text-accent-purple uppercase tracking-widest">
+                    <Zap className="w-3 h-3 animate-pulse" />
+                    {hasDgxService ? 'FLUX.1 · DGX 128GB' : imgProvider.toUpperCase()}
+                  </span>
+                  <span className="text-[10px] font-mono text-text-tertiary">
+                    {batch.progress.current}/{batch.progress.total}
                   </span>
                 </div>
-                <div className="w-full bg-bg-tertiary rounded-full h-1.5">
+                {/* 프리미엄 로딩 텍스트 */}
+                <PremiumLoadingText isKO={isKO} />
+                {/* 현재 카드 */}
+                <div className="text-[10px] text-text-secondary font-semibold truncate">
+                  {batch.progress.currentCardTitle}
+                </div>
+                {/* 프로그레스 바 */}
+                <div className="w-full bg-bg-tertiary rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-blue-500 h-1.5 rounded-full transition-all"
+                    className="h-full rounded-full bg-linear-to-r from-accent-purple via-accent-blue to-accent-purple bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] transition-all duration-500"
                     style={{ width: `${(batch.progress.current / Math.max(batch.progress.total, 1)) * 100}%` }}
                   />
                 </div>

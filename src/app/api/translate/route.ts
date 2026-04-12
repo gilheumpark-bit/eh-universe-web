@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
       if (SPARK_SERVER_URL) {
         try {
           const sparkStream = await streamSparkAI(
-            'google/gemma-4-26b-a4b', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
+            'Qwen2.5-32B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
           );
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();
@@ -276,7 +276,7 @@ export async function POST(req: NextRequest) {
       if (SPARK_SERVER_URL) {
         try {
           const sparkStream = await streamSparkAI(
-            'google/gemma-4-26b-a4b', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
+            'Qwen2.5-32B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
           );
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();

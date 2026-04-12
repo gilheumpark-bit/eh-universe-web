@@ -424,7 +424,7 @@ export async function POST(req: NextRequest) {
     // DGX Spark 폴백: 모든 프로바이더 실패 시 DGX 서버로 재시도
     if (!dispatched.ok && SPARK_SERVER_URL) {
       apiLog({ level: 'info', event: 'dgx_fallback', route: '/api/chat', ip, requestId, meta: { originalError: dispatched.error } });
-      dispatched = await dispatchStream('spark', '', 'google/gemma-4-26b-a4b', finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+      dispatched = await dispatchStream('spark', '', 'Qwen2.5-32B-Instruct-AWQ', finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
     }
     if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { Save, Circle, Loader2 } from 'lucide-react';
+import { Save, Circle, Loader2, Cpu, Zap } from 'lucide-react';
 import type { AppLanguage, ChatSession } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
+import { SPARK_SERVER_URL } from '@/services/sparkService';
 
 interface StudioStatusBarProps {
   editDraft: string;
@@ -91,6 +92,20 @@ export function StudioStatusBar({
           <span className="flex items-center gap-1">
             <Circle className="w-2 h-2 fill-accent-green text-accent-green" />
             {isKO ? '자동 저장' : 'Auto-saved'}
+          </span>
+        )}
+        <span className="text-border">|</span>
+        {/* AI 엔진 뱃지 */}
+        {SPARK_SERVER_URL ? (
+          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-purple/10 border border-accent-purple/20">
+            <Zap className="w-2.5 h-2.5 text-accent-purple" />
+            <span className="text-accent-purple font-bold">DGX 128GB</span>
+            {isGenerating && <span className="text-accent-amber animate-pulse">Qwen-32B</span>}
+          </span>
+        ) : (
+          <span className="flex items-center gap-1">
+            <Cpu className="w-2.5 h-2.5" />
+            BYOK
           </span>
         )}
         <span className="text-border">|</span>
