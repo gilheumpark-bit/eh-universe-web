@@ -225,7 +225,8 @@ export async function POST(req: NextRequest) {
       if (SPARK_SERVER_URL) {
         try {
           const sparkStream = await streamSparkAI(
-            'Qwen/Qwen2.5-14B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
+            'Qwen/Qwen2.5-14B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
+            { userId: 'vercel-server', userTier: 'free' }
           );
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();
@@ -276,7 +277,8 @@ export async function POST(req: NextRequest) {
       if (SPARK_SERVER_URL) {
         try {
           const sparkStream = await streamSparkAI(
-            'Qwen/Qwen2.5-14B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature
+            'Qwen/Qwen2.5-14B-Instruct-AWQ', prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
+            { userId: 'vercel-server', userTier: 'free' }
           );
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();

@@ -36,7 +36,11 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
     try {
       const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'vercel-server',
+          'x-user-tier': 'free',
+        },
         body,
         signal: AbortSignal.timeout(58_000), // Vercel 60초 maxDuration — 응답 구성 여유 2초
       });
