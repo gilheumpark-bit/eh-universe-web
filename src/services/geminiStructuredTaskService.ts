@@ -212,6 +212,13 @@ export async function handleWorldDesign(apiKey: string, model: string, genre: st
   return generateJson<Record<string, string>>(apiKey, model, `Generate a unique ${genre} story concept in ${LANGUAGE_NAMES[language]}. Be creative, original, and DETAILED.
 Fill ALL of the following fields thoroughly — do not leave any empty.
 
+[Basic Info — REQUIRED]
+- title: A compelling, unique title for this story (1 sentence)
+- povCharacter: The main protagonist's name and brief description (1-2 sentences)
+- setting: Where and when this story takes place (1-2 sentences)
+- primaryEmotion: The dominant emotional tone of the story (1 word or short phrase)
+- synopsis: A captivating 3-4 sentence summary of the entire story
+
 [Tier 1 — Core]
 - corePremise: The one key rule that makes this world different from reality (2-3 sentences)
 - powerStructure: Who holds power and how it is maintained (2-3 sentences)
