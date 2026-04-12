@@ -1,7 +1,7 @@
 /**
  * DGX Spark AI Server Client
- * LM Studio 프록시 서버와 통신. 회원당 일 100회 제한 지원.
- * Cloudflare 임시 터널 SSE 비호환 → non-stream 모드 + 가짜 스트림 변환
+ * vLLM 프록시 서버와 통신. Cloudflare 100초 하드 타임아웃 대응.
+ * 전략: 청크 이어쓰기 — max_tokens 4000 단위로 분할 요청, finish_reason=length면 이어서 요청
  */
 
 export const SPARK_SERVER_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
@@ -66,37 +66,18 @@ async function extractSparkError(res: Response): Promise<string> {
 }
 
 // ============================================================
-// PART 3 — AI 호출 (non-stream → 가짜 스트림 변환)
+// PART 3 — 단건 non-stream 요청 (90초 이내 응답용)
 // ============================================================
 
-/**
- * OpenAI 호환 chat completions
- * Cloudflare 임시 터널이 SSE를 차단하므로 non-stream으로 요청 후
- * 응답을 ReadableStream으로 변환하여 기존 스트리밍 인터페이스 유지
- */
-export async function streamSparkAI(
-  model: string,
-  system: string,
+async function singleSparkRequest(
+  url: string,
+  headers: Record<string, string>,
   messages: { role: string; content: string }[],
+  model: string,
   temperature: number,
-  opts?: { userId?: string; apiKey?: string; signal?: AbortSignal; userTier?: string },
-): Promise<ReadableStream> {
-  if (!SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
-
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (opts?.userId) headers['x-user-id'] = opts.userId;
-  if (opts?.userTier) headers['x-user-tier'] = opts.userTier;
-  if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
-
-  // non-stream 모드로 요청 (Cloudflare 터널 SSE 520 방지)
-  const body = JSON.stringify({
-    model,
-    messages: [{ role: 'system', content: system }, ...messages],
-    temperature,
-    stream: false,
-    max_tokens: 12000,
-  });
-
+  maxTokens: number,
+  signal?: AbortSignal,
+): Promise<{ content: string; finishReason: string }> {
   let lastError = '';
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -105,11 +86,17 @@ export async function streamSparkAI(
     }
 
     try {
-      const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers,
-        signal: opts?.signal ?? AbortSignal.timeout(180_000),
-        body,
+        signal: signal ?? AbortSignal.timeout(90_000), // 90초 — Cloudflare 100초 내
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature,
+          stream: false,
+          max_tokens: maxTokens,
+        }),
       });
 
       if (res.status === 429) {
@@ -131,31 +118,12 @@ export async function streamSparkAI(
         throw new Error(`Spark API ${res.status}: ${lastError}`);
       }
 
-      // non-stream 응답 파싱
       const data = await res.json();
       const msg = data.choices?.[0]?.message;
-      const content = msg?.content || msg?.reasoning_content || '';
+      const content = msg?.content || '';
+      const finishReason = data.choices?.[0]?.finish_reason || 'stop';
 
-      if (!content) {
-        throw new Error('DGX 서버에서 빈 응답을 받았습니다. 다시 시도해주세요.');
-      }
-
-      // non-stream 응답을 SSE 스트림으로 변환 (기존 인터페이스 호환)
-      const encoder = new TextEncoder();
-      return new ReadableStream({
-        start(controller) {
-          // 청크 단위로 분할하여 스트리밍 효과
-          const chunks = splitIntoChunks(content, 20);
-          for (const chunk of chunks) {
-            const sseData = JSON.stringify({
-              choices: [{ delta: { content: chunk } }],
-            });
-            controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
-          }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-          controller.close();
-        },
-      });
+      return { content, finishReason };
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') throw err;
       if (err instanceof TypeError && attempt < MAX_RETRIES) {
@@ -169,7 +137,93 @@ export async function streamSparkAI(
   throw new Error(`DGX 서버 연결 실패 (${MAX_RETRIES + 1}회 시도). ${lastError}`);
 }
 
-/** 텍스트를 n자 단위로 분할 (단어 경계 존중) */
+// ============================================================
+// PART 4 — 청크 이어쓰기 AI 호출 (Cloudflare 100초 대응)
+// ============================================================
+
+const CHUNK_MAX_TOKENS = 4000; // 청크당 최대 토큰 (90초 이내 완료)
+const MAX_CHUNKS = 4; // 최대 4연타 = 16,000 토큰
+
+/**
+ * 청크 이어쓰기 방식 AI 호출
+ * - 1차: max_tokens=4000으로 요청 (90초 이내 완료)
+ * - finish_reason=length면: 이전 내용을 컨텍스트에 넣고 "이어서 써" 2차 요청
+ * - 최대 4연타 = 16,000 토큰
+ * - 결과를 SSE 스트림으로 변환하여 기존 인터페이스 호환
+ */
+export async function streamSparkAI(
+  model: string,
+  system: string,
+  messages: { role: string; content: string }[],
+  temperature: number,
+  opts?: { userId?: string; apiKey?: string; signal?: AbortSignal; userTier?: string },
+): Promise<ReadableStream> {
+  if (!SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (opts?.userId) headers['x-user-id'] = opts.userId;
+  if (opts?.userTier) headers['x-user-tier'] = opts.userTier;
+  if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
+
+  const url = `${SPARK_SERVER_URL}/v1/chat/completions`;
+  const encoder = new TextEncoder();
+
+  // 청크 이어쓰기를 ReadableStream으로 감싸서 실시간 전달
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        let fullContent = '';
+        const chatMessages = [{ role: 'system', content: system }, ...messages];
+
+        for (let chunk = 0; chunk < MAX_CHUNKS; chunk++) {
+          const currentMessages = chunk === 0
+            ? chatMessages
+            : [
+                ...chatMessages,
+                { role: 'assistant', content: fullContent },
+                { role: 'user', content: '이어서 계속 작성해주세요. 앞의 내용에 자연스럽게 이어서 쓰세요.' },
+              ];
+
+          const result = await singleSparkRequest(
+            url, headers, currentMessages, model, temperature, CHUNK_MAX_TOKENS, opts?.signal,
+          );
+
+          if (!result.content && chunk === 0) {
+            throw new Error('DGX 서버에서 빈 응답을 받았습니다.');
+          }
+
+          // 청크 결과를 즉시 SSE로 전달 (실시간 느낌)
+          if (result.content) {
+            const pieces = splitIntoChunks(result.content, 30);
+            for (const piece of pieces) {
+              const sseData = JSON.stringify({ choices: [{ delta: { content: piece } }] });
+              controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
+            }
+            fullContent += result.content;
+          }
+
+          // finish_reason이 stop이면 완료
+          if (result.finishReason !== 'length') break;
+
+          // 이어쓰기 간 짧은 딜레이 (vLLM 캐시 활용)
+          await new Promise(r => setTimeout(r, 100));
+        }
+
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        // 에러도 SSE로 전달
+        const sseError = JSON.stringify({ choices: [{ delta: { content: `\n\n[오류: ${msg}]` } }] });
+        controller.enqueue(encoder.encode(`data: ${sseError}\n\n`));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      }
+    },
+  });
+}
+
+/** 텍스트를 n자 단위로 분할 */
 function splitIntoChunks(text: string, charsPerChunk: number): string[] {
   const chunks: string[] = [];
   let i = 0;
@@ -181,7 +235,7 @@ function splitIntoChunks(text: string, charsPerChunk: number): string[] {
 }
 
 // ============================================================
-// PART 4 — 코드 샌드박스
+// PART 5 — 코드 샌드박스
 // ============================================================
 
 /** 코드 샌드박스 실행 */
