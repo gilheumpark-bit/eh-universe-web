@@ -86,17 +86,16 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
 
   if (tracks.length === 0) {
     return (
-      <div className="relative flex flex-col items-center justify-center py-16 text-center border border-[rgba(255,200,50,0.2)] bg-bg-secondary rounded-2xl overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,200,50,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,200,50,0.03)_1px,transparent_1px)] bg-size-[20px_20px] mix-blend-screen opacity-30"></div>
-        <div className="w-14 h-14 bg-[rgba(255,200,50,0.05)] border border-[rgba(255,200,50,0.2)] rounded-full flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(255,200,50,0.1)] relative z-10">
-          <Clock className="w-7 h-7 text-text-tertiary" />
+      <div className="ds-empty-state py-16 border border-border bg-bg-secondary rounded-2xl">
+        <div className="ds-empty-state-icon">
+          <Clock className="w-7 h-7" />
         </div>
-        <p className="text-xs font-black text-amber-400 uppercase tracking-[0.3em] mb-2 relative z-10 drop-shadow-[0_0_5px_rgba(255,200,50,0.5)]">
+        <p className="ds-empty-state-title">
           {isKO ? '타임라인 없음' : 'No Timeline'}
         </p>
-        <p className="text-[11px] text-text-secondary max-w-[280px] relative z-10 font-mono">
+        <p className="ds-empty-state-desc">
           {isKO
-            ? '시뮬레이터에서 문명을 추가하면 타임라인이 표기됩니다. ATLAS 동기화 대기중...'
+            ? '시뮬레이터에서 문명을 추가하면 타임라인이 표기됩니다.'
             : 'Add civilizations in the Simulator to initialize the timeline visualization.'}
         </p>
       </div>
@@ -117,17 +116,17 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
         {L4(language, { ko: '문명 타임라인', en: 'Civilization Timeline', ja: '文明タイムライン', zh: '文明时间线' })}
       </h3>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto bg-bg-secondary rounded-2xl border border-border p-2">
         <svg viewBox={`0 0 ${w} ${h}`} className="min-w-[500px] h-auto" style={{ fontFamily: 'var(--font-mono, monospace)' }}
           role="img" aria-label={isKO ? '문명 타임라인' : 'Civilization timeline'}>
 
-          {/* Background */}
-          <rect width={w} height={h} fill="rgba(15,10,0,0.6)" rx="8" opacity="0.8" />
+          {/* Background — transparent so parent bg shows through */}
+          <rect width={w} height={h} fill="transparent" rx="8" />
           <rect width={w} height={h} fill="url(#grid)" rx="8" />
 
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,200,50,0.03)" strokeWidth="1"/>
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--color-border, #2f2c26)" strokeWidth="0.5" opacity="0.3"/>
             </pattern>
           </defs>
 
@@ -144,10 +143,10 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
                     fill="rgba(255,200,50,0.1)" rx="4" />
                 )}
                 <line x1={PAD.left + i * ERA_W} y1={PAD.top - 10} x2={PAD.left + i * ERA_W} y2={h - PAD.bottom}
-                  stroke={isSelected ? 'rgba(255,200,50,0.4)' : 'rgba(255,200,50,0.1)'} strokeWidth={isSelected ? "1" : "0.5"} />
+                  stroke={isSelected ? 'var(--color-accent-amber, #b8955c)' : 'var(--color-border, #2f2c26)'} strokeWidth={isSelected ? "1" : "0.5"} />
                 <text x={eraX(era)} y={PAD.top - 18}
-                  fill={isSelected ? 'rgba(255,220,100,1)' : 'rgba(255,200,50,0.6)'}
-                  fontSize="8" textAnchor="middle" fontWeight="bold">
+                  fill={isSelected ? 'var(--color-accent-amber, #b8955c)' : 'var(--color-text-secondary, #b5ac9d)'}
+                  fontSize="9" textAnchor="middle" fontWeight="bold">
                   {era.length > 12 ? era.slice(0, 12) + '…' : era}
                 </text>
               </g>
@@ -157,7 +156,7 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
           {/* Track labels */}
           {tracks.map((track, i) => (
             <text key={track.civName} x={PAD.left - 10} y={trackY(i) + 4}
-              fill={track.color} fontSize="9" textAnchor="end" fontWeight="bold">
+              fill="var(--color-text-primary, #f4f0ea)" fontSize="10" textAnchor="end" fontWeight="bold">
               {track.civName.length > 8 ? track.civName.slice(0, 8) + '…' : track.civName}
             </text>
           ))}

@@ -56,9 +56,10 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
         ...prev,
         characters: [...prev.characters, ...generated]
       }));
-    } catch {
-      const msg = ({ KO: "캐릭터 생성 중 오류가 발생했습니다.", EN: "Error generating characters.", JP: "キャラクター生成中にエラーが発生しました。", CN: "生成角色时出错。" })[language];
-      setUxError({ error: new Error(msg) });
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : '';
+      const prefix = ({ KO: "캐릭터 생성 실패", EN: "Character generation failed", JP: "キャラクター生成失敗", CN: "角色生成失败" })[language];
+      setUxError({ error: new Error(`${prefix}: ${detail}`), retry: handleAutoGenerate });
     } finally {
       setIsGenerating(false);
     }

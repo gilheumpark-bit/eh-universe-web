@@ -151,6 +151,8 @@ export default function StudioShell() {
   const themeLevel = theme === 'dark' ? 0 : 1;
 
   const [focusMode, setFocusMode] = useState(false);
+  const [editorFontSize, setEditorFontSize] = useState(16);
+  const sessionStartCharsRef = useRef<number | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -337,6 +339,11 @@ export default function StudioShell() {
     promptDirective, setPromptDirective,
   } = useStudioWritingMode(currentSessionId, hydrated);
 
+  // Session word counter — capture initial char count once
+  if (sessionStartCharsRef.current === null && editDraft) {
+    sessionStartCharsRef.current = editDraft.replace(/\s/g, '').length;
+  }
+
   useEffect(() => {
     if (!aiCapabilitiesLoaded) return;
     // AI 접근 상태만 기록. 모드 강제 전환은 하지 않음 — 입력 UI에서 잠금 안내 표시.
@@ -477,6 +484,8 @@ export default function StudioShell() {
       if (showGlobalSearch) { dispatchUi({ showGlobalSearch: false, globalSearchQuery: '' }); return; }
     },
     onGlobalSearch: () => dispatchUi((s: UiState) => ({ showGlobalSearch: !s.showGlobalSearch })),
+    onFontSizeUp: () => setEditorFontSize(s => { const n = Math.min(s + 2, 28); document.documentElement.style.setProperty('--editor-font-size', `${n}px`); return n; }),
+    onFontSizeDown: () => setEditorFontSize(s => { const n = Math.max(s - 2, 12); document.documentElement.style.setProperty('--editor-font-size', `${n}px`); return n; }),
     disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
   });
 
@@ -663,6 +672,7 @@ export default function StudioShell() {
         writingColumnShell={writingColumnShell} writingInputDockOffset={writingInputDockOffset}
         apiBannerMessage={apiBannerMessage} apiSetupLabel={apiSetupLabel}
         language={language} isKO={isKO}
+        sessionStartChars={sessionStartCharsRef.current ?? 0} editorFontSize={editorFontSize}
         archiveScope={archiveScope} setArchiveScope={setArchiveScope}
         archiveFilter={archiveFilter} setArchiveFilter={setArchiveFilter}
         charSubTab={charSubTab} setCharSubTab={setCharSubTab}

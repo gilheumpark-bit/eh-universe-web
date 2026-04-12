@@ -186,22 +186,22 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
 
   // ── Dock items (소설 탭) — 집필 앱 아이콘/색상 ──
   const allDockItems: DockItem[] = [
-    { id: 'world' as AppTab, icon: ScrollText, label: language === 'KO' ? '세계관' : 'World', color: 'text-amber-300' },
-    { id: 'characters' as AppTab, icon: UserCircle, label: language === 'KO' ? '인물' : 'Characters', color: 'text-orange-300' },
-    { id: 'rulebook' as AppTab, icon: BookOpen, label: language === 'KO' ? '설정집' : 'Rulebook', color: 'text-amber-400' },
-    { id: 'writing' as AppTab, icon: Feather, label: language === 'KO' ? '집필' : 'Writing', color: 'text-amber-200' },
-    { id: 'manuscript' as AppTab, icon: Library, label: language === 'KO' ? '원고' : 'Manuscript', color: 'text-amber-300' },
-    { id: 'visual' as AppTab, icon: ImageIcon, label: language === 'KO' ? '이미지' : 'Image', color: 'text-violet-300' },
-    { id: 'style' as AppTab, icon: Type, label: language === 'KO' ? '문체' : 'Style', color: 'text-orange-200' },
-    { id: 'history' as AppTab, icon: Clock, label: language === 'KO' ? '기록' : 'History', color: 'text-stone-300' },
-    { id: 'docs' as AppTab, icon: BookMarked, label: language === 'KO' ? '가이드' : 'Docs', color: 'text-amber-300' },
+    { id: 'world' as AppTab, icon: ScrollText, label: language === 'KO' ? '세계관' : 'World', color: 'text-text-secondary' },
+    { id: 'characters' as AppTab, icon: UserCircle, label: language === 'KO' ? '인물' : 'Characters', color: 'text-text-secondary' },
+    { id: 'rulebook' as AppTab, icon: BookOpen, label: language === 'KO' ? '설정집' : 'Rulebook', color: 'text-text-secondary' },
+    { id: 'writing' as AppTab, icon: Feather, label: language === 'KO' ? '집필' : 'Writing', color: 'text-text-secondary' },
+    { id: 'manuscript' as AppTab, icon: Library, label: language === 'KO' ? '원고' : 'Manuscript', color: 'text-text-secondary' },
+    { id: 'visual' as AppTab, icon: ImageIcon, label: language === 'KO' ? '이미지' : 'Image', color: 'text-text-secondary' },
+    { id: 'style' as AppTab, icon: Type, label: language === 'KO' ? '문체' : 'Style', color: 'text-text-secondary' },
+    { id: 'history' as AppTab, icon: Clock, label: language === 'KO' ? '기록' : 'History', color: 'text-text-secondary' },
+    { id: 'docs' as AppTab, icon: BookMarked, label: language === 'KO' ? '가이드' : 'Docs', color: 'text-text-secondary' },
   ];
 
   // ── App 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) ──
   const appLinks = [
-    { href: '/archive', icon: Globe, label: language === 'KO' ? '유니버스' : 'Universe', color: 'text-amber-400' },
-    { href: '/code-studio', icon: Code2, label: language === 'KO' ? '코드' : 'Code', color: 'text-stone-300' },
-    { href: '/translation-studio', icon: Languages, label: language === 'KO' ? '번역' : 'Translate', color: 'text-amber-300' },
+    { href: '/archive', icon: Globe, label: language === 'KO' ? '유니버스' : 'Universe', color: 'text-text-secondary' },
+    { href: '/code-studio', icon: Code2, label: language === 'KO' ? '코드' : 'Code', color: 'text-text-secondary' },
+    { href: '/translation-studio', icon: Languages, label: language === 'KO' ? '번역' : 'Translate', color: 'text-text-secondary' },
   ];
 
   // ── Drag-and-drop reorder ──
@@ -265,10 +265,10 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   return (
     <>
       {/* OS Top Menu Bar — 집필 세피아 톤 */}
-      <div data-zen-hide className="fixed top-0 left-0 w-full h-10 bg-[#1c1208]/90 backdrop-blur-xl border-b border-amber-900/25 z-[9999] flex items-center justify-between px-4 text-xs font-mono text-amber-200/90">
+      <div data-zen-hide className="fixed top-0 left-0 w-full h-10 bg-bg-secondary/90 backdrop-blur-xl border-b border-border z-[9999] flex items-center justify-between px-4 text-xs font-mono text-text-secondary">
         <div className="flex items-center gap-4">
-          <Link href="/studio" className="flex items-center gap-2 text-amber-200/90 hover:text-amber-100 transition-colors">
-            <Feather className="h-4 w-4 text-amber-400" />
+          <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors">
+            <Feather className="h-4 w-4 text-accent-amber" />
             <span className="font-serif font-semibold tracking-wider">{language === 'KO' ? 'NOA 스튜디오' : language === 'JP' ? 'NOA スタジオ' : language === 'CN' ? 'NOA 工作室' : 'NOA Studio'}</span>
           </Link>
 
@@ -276,14 +276,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             <select
               value={currentProjectId || ''}
               onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-              className="bg-transparent border-none text-amber-200/80 outline-none hover:text-amber-100 cursor-pointer font-serif"
+              className="bg-transparent border-none text-text-secondary outline-none hover:text-text-primary cursor-pointer font-serif"
             >
               <option value="" disabled>{t('sidebar.activeProject')}</option>
               {projects.map(p => (
                 <option key={p.id} value={p.id} className="bg-[#1c1208]">{p.name}</option>
               ))}
             </select>
-            <button onClick={createNewProject} className="text-amber-600/60 hover:text-amber-400 transition-colors" title={t('project.newProject')}>
+            <button onClick={createNewProject} className="text-text-tertiary hover:text-accent-amber transition-colors" title={t('project.newProject')}>
               <Plus className="h-3 w-3" />
             </button>
           </div>
@@ -294,14 +294,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             <select
               value={currentSessionId || ''}
               onChange={e => setCurrentSessionId(e.target.value)}
-              className="bg-transparent border-none text-amber-200/80 outline-none hover:text-amber-100 cursor-pointer max-w-[200px] font-serif"
+              className="bg-transparent border-none text-text-secondary outline-none hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
             >
               <option value="" disabled>{language === 'KO' ? '챕터 선택' : 'Select Chapter'}</option>
               {sessions.map(s => (
                 <option key={s.id} value={s.id} className="bg-[#1c1208]">{s.title}</option>
               ))}
             </select>
-            <button onClick={createNewSession} className="text-amber-600/60 hover:text-amber-400 transition-colors" title="New Chapter">
+            <button onClick={createNewSession} className="text-text-tertiary hover:text-accent-amber transition-colors" title="New Chapter">
               <Plus className="h-3 w-3" />
             </button>
           </div>
@@ -319,13 +319,13 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               <button
                 key={l}
                 onClick={() => setLanguage(l)}
-                className={`text-[9px] font-bold px-1.5 rounded transition ${language === l ? 'text-amber-300 bg-amber-900/40' : 'text-amber-700/60 hover:text-amber-400'}`}
+                className={`text-[9px] font-bold px-1.5 rounded transition ${language === l ? 'text-accent-amber bg-accent-amber/15' : 'text-text-tertiary hover:text-accent-amber'}`}
               >
                 {l}
               </button>
             ))}
           </div>
-          <span className="text-amber-200/70 font-serif">
+          <span className="text-text-tertiary font-serif">
             {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
@@ -335,7 +335,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
       <div
         ref={dockRef}
         data-zen-hide
-        className={`fixed z-[9999] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-[#16100a]/95 backdrop-blur-2xl border border-amber-800/20 shadow-[0_8px_40px_rgba(101,67,33,0.35)] hover:shadow-[0_8px_48px_rgba(101,67,33,0.45)] ${!isDockDraggingState ? 'transition-all duration-500' : ''}`}
+        className={`fixed z-[9999] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-all duration-500' : ''}`}
         style={
           dockPos
             ? { left: dockPos.x, top: dockPos.y }
@@ -349,7 +349,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-amber-800/20 bg-amber-900/10 hover:bg-amber-900/20 active:bg-amber-900/30 transition-all mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-[0_0_16px_rgba(180,120,40,0.3)]' : ''}`}
           title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
         >
-          <GripVertical className="w-5 h-5 text-amber-700/40 group-hover/handle:text-amber-400 transition-colors" />
+          <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
         </div>
 
         {/* 소설 탭 아이콘 */}
@@ -381,14 +381,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0.5 h-8 bg-accent-amber rounded-full shadow-[0_0_8px_rgba(202,161,92,0.8)]" />
               )}
               <div className={`absolute -top-1 left-1/2 -translate-x-1/2 transition-opacity duration-200 ${isHovered && !isDragging ? 'opacity-50' : 'opacity-0'}`}>
-                <GripVertical className="w-3 h-3 text-white/40 rotate-90" />
+                <GripVertical className="w-3 h-3 text-text-tertiary rotate-90" />
               </div>
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
                 isActive
                   ? 'bg-amber-900/30 border border-amber-700/40 shadow-[0_0_12px_rgba(180,120,40,0.25)]'
                   : 'bg-transparent border border-transparent hover:bg-amber-900/15'
               }`}>
-                <tab.icon className={`w-6 h-6 ${tab.color} ${isActive || isHovered ? 'opacity-100 drop-shadow-[0_0_8px_rgba(180,120,40,0.6)]' : 'opacity-50'} transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
+                <tab.icon className={`w-6 h-6 ${isActive ? 'text-accent-amber' : tab.color} ${isActive || isHovered ? 'opacity-100' : 'opacity-70'} transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
               </div>
               <span className={`text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide transition-colors ${
                 isActive ? 'text-accent-amber' : 'text-text-secondary group-hover:text-text-primary'
@@ -415,9 +415,9 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             title={link.label}
           >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center bg-transparent border border-transparent hover:bg-amber-900/15 transition-all duration-200">
-              <link.icon className={`w-6 h-6 ${link.color} opacity-50 group-hover:opacity-100 group-hover:drop-shadow-[0_0_8px_rgba(180,120,40,0.5)] transition-opacity`} strokeWidth={1.8} />
+              <link.icon className={`w-6 h-6 ${link.color} opacity-70 group-hover:opacity-100 transition-opacity`} strokeWidth={1.8} />
             </div>
-            <span className="text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide text-amber-700/50 group-hover:text-amber-300 transition-colors">
+            <span className="text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide text-text-tertiary group-hover:text-text-primary transition-colors">
               {link.label}
             </span>
           </Link>

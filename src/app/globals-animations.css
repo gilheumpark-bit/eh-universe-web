@@ -89,12 +89,22 @@ body:has(textarea[data-zen-editor]:focus) [data-zen-hide-bar] {
   pointer-events: none !important;
   transition: opacity 0.4s ease-out !important;
 }
+/* Dim surroundings for tunnel-vision immersion */
+body:has(textarea[data-zen-editor]:focus) [data-zen-dim] {
+  opacity: 0.25 !important;
+  transition: opacity 0.6s ease-out !important;
+}
 /* Restore on hover near edges */
 body:has(textarea[data-zen-editor]:focus) [data-zen-hide]:hover,
 body:has(textarea[data-zen-editor]:focus) header:hover,
-body:has(textarea[data-zen-editor]:focus) [data-zen-hide-bar]:hover {
+body:has(textarea[data-zen-editor]:focus) [data-zen-hide-bar]:hover,
+body:has(textarea[data-zen-editor]:focus) [data-zen-dim]:hover {
   opacity: 1 !important;
   pointer-events: auto !important;
+}
+/* Typing rhythm — warm glow pulse while editor has content */
+textarea[data-zen-editor]:not(:placeholder-shown):focus {
+  box-shadow: 0 0 32px rgba(202, 161, 92, 0.14), 0 0 64px rgba(202, 161, 92, 0.04);
 }
 
 /* Dark mode: boost placeholder for AA on dark backgrounds */
@@ -599,6 +609,48 @@ html[data-theme-changing]::after {
 
 .animate-text-swap-in {
   animation: text-fade-in 0.2s ease-out forwards;
+}
+
+/* ============================================================
+   Labor Illusion — deliberate progress steps for AI generation
+   ============================================================ */
+
+@keyframes labor-step-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes labor-step-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ds-labor-illusion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  padding: var(--sp-md);
+}
+.ds-labor-step {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  animation: labor-step-enter 0.3s ease-out both;
+}
+.ds-labor-step.active {
+  color: var(--color-accent-amber);
+  animation: labor-step-pulse 1.5s ease-in-out infinite;
+}
+.ds-labor-step.done {
+  color: var(--color-accent-green);
+  opacity: 0.6;
+}
+.ds-labor-step.done::before {
+  content: "\2713";
+  font-weight: 700;
 }
 
 /* ============================================================

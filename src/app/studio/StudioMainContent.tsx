@@ -155,6 +155,10 @@ export interface StudioMainContentProps {
   language: AppLanguage;
   isKO: boolean;
 
+  // Immersion
+  sessionStartChars?: number;
+  editorFontSize?: number;
+
   // History tab
   archiveScope: 'project' | 'all';
   setArchiveScope: React.Dispatch<React.SetStateAction<'project' | 'all'>>;
@@ -232,6 +236,7 @@ export default function StudioMainContent(props: StudioMainContentProps) {
     writingColumnShell,
     apiBannerMessage, apiSetupLabel,
     language, isKO,
+    sessionStartChars, editorFontSize,
     archiveScope, setArchiveScope, archiveFilter, setArchiveFilter,
     charSubTab, setCharSubTab,
     createNewSession, createDemoSession, openQuickStart,
@@ -435,6 +440,8 @@ export default function StudioMainContent(props: StudioMainContentProps) {
           isGenerating={isGenerating}
           language={language}
           currentSession={currentSession}
+          sessionStartChars={sessionStartChars}
+          editorFontSize={editorFontSize}
         />
       )}
     </main>

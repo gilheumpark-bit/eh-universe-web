@@ -138,18 +138,17 @@ async function singleSparkRequest(
 }
 
 // ============================================================
-// PART 4 — 청크 이어쓰기 AI 호출 (Cloudflare 100초 대응)
+// PART 4 — 진짜 SSE 스트리밍 AI 호출 (TTFT 0.05초 활용)
 // ============================================================
 
-const CHUNK_MAX_TOKENS = 2000; // 청크당 최대 토큰 (50초 이내 완료)
-const MAX_CHUNKS = 6; // 최대 6연타 = 12,000 토큰
+const STREAM_MAX_TOKENS = 4000; // 스트리밍 요청당 최대 토큰
+const MAX_CHUNKS = 4;           // 최대 4연타 = 16,000 토큰
 
 /**
- * 청크 이어쓰기 방식 AI 호출
- * - 1차: max_tokens=4000으로 요청 (90초 이내 완료)
- * - finish_reason=length면: 이전 내용을 컨텍스트에 넣고 "이어서 써" 2차 요청
- * - 최대 4연타 = 16,000 토큰
- * - 결과를 SSE 스트림으로 변환하여 기존 인터페이스 호환
+ * 진짜 SSE 스트리밍 AI 호출
+ * - stream: true로 백엔드에 요청 → TTFT 0.05초 만에 첫 토큰 수신
+ * - 백엔드 SSE 청크를 즉시 프론트 SSE로 포워딩 (zero-copy)
+ * - finish_reason=length면 이어쓰기 요청 (청크 이어쓰기 유지)
  */
 export async function streamSparkAI(
   model: string,
@@ -167,8 +166,8 @@ export async function streamSparkAI(
 
   const url = `${SPARK_SERVER_URL}/v1/chat/completions`;
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
 
-  // 청크 이어쓰기를 ReadableStream으로 감싸서 실시간 전달
   return new ReadableStream({
     async start(controller) {
       try {
@@ -184,28 +183,20 @@ export async function streamSparkAI(
                 { role: 'user', content: '이어서 계속 작성해주세요. 앞의 내용에 자연스럽게 이어서 쓰세요.' },
               ];
 
-          const result = await singleSparkRequest(
-            url, headers, currentMessages, model, temperature, CHUNK_MAX_TOKENS, opts?.signal,
+          // 진짜 스트리밍 결과를 읽고, finish_reason 반환
+          const finishReason = await streamOneRequest(
+            url, headers, currentMessages, model, temperature,
+            opts?.signal, decoder, encoder, controller,
+            (text) => { fullContent += text; },
           );
 
-          if (!result.content && chunk === 0) {
+          if (!fullContent && chunk === 0) {
             throw new Error('DGX 서버에서 빈 응답을 받았습니다.');
           }
 
-          // 청크 결과를 즉시 SSE로 전달 (실시간 느낌)
-          if (result.content) {
-            const pieces = splitIntoChunks(result.content, 30);
-            for (const piece of pieces) {
-              const sseData = JSON.stringify({ choices: [{ delta: { content: piece } }] });
-              controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
-            }
-            fullContent += result.content;
-          }
+          if (finishReason !== 'length') break;
 
-          // finish_reason이 stop이면 완료
-          if (result.finishReason !== 'length') break;
-
-          // 이어쓰기 간 짧은 딜레이 (vLLM 캐시 활용)
+          // 이어쓰기 간 짧은 딜레이 (vLLM KV-cache 활용)
           await new Promise(r => setTimeout(r, 100));
         }
 
@@ -213,7 +204,6 @@ export async function streamSparkAI(
         controller.close();
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error';
-        // 에러도 SSE로 전달
         const sseError = JSON.stringify({ choices: [{ delta: { content: `\n\n[오류: ${msg}]` } }] });
         controller.enqueue(encoder.encode(`data: ${sseError}\n\n`));
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
@@ -223,15 +213,110 @@ export async function streamSparkAI(
   });
 }
 
-/** 텍스트를 n자 단위로 분할 */
-function splitIntoChunks(text: string, charsPerChunk: number): string[] {
-  const chunks: string[] = [];
-  let i = 0;
-  while (i < text.length) {
-    chunks.push(text.slice(i, i + charsPerChunk));
-    i += charsPerChunk;
+/**
+ * 단일 스트리밍 요청: stream:true로 fetch → SSE 파싱 → 즉시 포워딩
+ * @returns finish_reason ('stop' | 'length')
+ */
+async function streamOneRequest(
+  url: string,
+  headers: Record<string, string>,
+  messages: { role: string; content: string }[],
+  model: string,
+  temperature: number,
+  signal: AbortSignal | undefined,
+  decoder: TextDecoder,
+  encoder: TextEncoder,
+  controller: ReadableStreamDefaultController,
+  onContent: (text: string) => void,
+): Promise<string> {
+  let lastError = '';
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        signal: signal ?? AbortSignal.timeout(90_000),
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature,
+          stream: true,
+          max_tokens: STREAM_MAX_TOKENS,
+        }),
+      });
+
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || '일일 호출 한도 초과 (100회). 내일 초기화됩니다.');
+      }
+      if (res.status === 401) throw new Error('DGX 서버 인증 실패.');
+
+      if (isRetryableError(res.status)) {
+        lastError = await extractSparkError(res);
+        if (attempt < MAX_RETRIES) continue;
+        throw new Error(lastError);
+      }
+
+      if (!res.ok) {
+        lastError = await extractSparkError(res);
+        throw new Error(`Spark API ${res.status}: ${lastError}`);
+      }
+
+      // 스트리밍 본문 읽기
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('응답 스트림을 읽을 수 없습니다.');
+
+      let finishReason = 'stop';
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 마지막 불완전 라인 보존
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+          const payload = trimmed.slice(6);
+          if (payload === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(payload);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            const reason = parsed.choices?.[0]?.finish_reason;
+
+            if (delta) {
+              // 즉시 프론트 SSE로 포워딩 — zero delay
+              const sseData = JSON.stringify({ choices: [{ delta: { content: delta } }] });
+              controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
+              onContent(delta);
+            }
+
+            if (reason) finishReason = reason;
+          } catch {
+            // 파싱 불가 라인 무시 (빈 줄, 코멘트 등)
+          }
+        }
+      }
+
+      return finishReason;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') throw err;
+      if (err instanceof TypeError && attempt < MAX_RETRIES) {
+        lastError = err.message;
+        continue;
+      }
+      throw err;
+    }
   }
-  return chunks;
+
+  throw new Error(`DGX 서버 연결 실패 (${MAX_RETRIES + 1}회 시도). ${lastError}`);
 }
 
 // ============================================================

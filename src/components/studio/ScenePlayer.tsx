@@ -784,7 +784,9 @@ export default function ScenePlayer({
               <img
                 src={characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ?? ''}
                 alt={currentBeat.speaker}
-                className="h-64 object-contain drop-shadow-2xl"
+                width={256}
+                height={256}
+                className="h-64 w-auto object-contain drop-shadow-2xl"
               />
               <div className="text-center mt-1 bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
                 <span className="text-xs font-mono text-accent-purple">{currentBeat.speaker}</span>

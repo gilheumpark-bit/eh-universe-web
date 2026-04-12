@@ -429,9 +429,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
         const generated = await generateMagicSystems(config, language, 2);
         setMagicSystems(prev => [...prev, ...generated]);
       }
-    } catch {
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : '';
       const targetName = subTab === 'skills' ? 'Skill' : subTab === 'magic' ? 'Magic System' : 'Item';
-      const msg = ({ KO: `${targetName} 생성에 실패했습니다. API 키를 확인하세요.`, EN: `${targetName} generation failed. Check API key.`, JP: '生成に失敗しました。', CN: '生成失败。' })[language];
+      const msg = ({ KO: `${targetName} 생성 실패: ${detail}`, EN: `${targetName} generation failed: ${detail}`, JP: `生成失敗: ${detail}`, CN: `生成失败: ${detail}` })[language];
       showAlert(msg);
     } finally {
       setIsGenerating(false);

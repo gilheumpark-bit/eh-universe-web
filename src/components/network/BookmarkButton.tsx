@@ -69,16 +69,22 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
       return;
     }
     if (loading) return;
+
+    // Optimistic update: flip UI state immediately
+    const prev = saved;
+    const next = !saved;
+    setSaved(next);
+    setLoading(true);
+
     try {
-      setLoading(true);
-      if (saved) {
+      if (prev) {
         await removeBookmark(user.uid, planetId);
-        setSaved(false);
       } else {
         await addBookmark(user.uid, planetId);
-        setSaved(true);
       }
     } catch {
+      // Revert on failure
+      setSaved(prev);
       setErrShake(true);
       setTimeout(() => setErrShake(false), 600);
     } finally {

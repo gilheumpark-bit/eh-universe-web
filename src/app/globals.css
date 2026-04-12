@@ -50,6 +50,8 @@
   --bl-sm: 10px;
   --bl-md: 18px;
   --bl-lg: 28px;
+  /* Vertical rhythm base unit — 8pt grid for margin/padding rhythm */
+  --vr-unit: 8px;
   --gradient-page: linear-gradient(180deg, #141311 0%, #11100e 45%, #0f0e0c 100%);
   --font-sans:
     var(--font-ibm-plex-sans), var(--font-noto-sans-kr), "Noto Sans JP",

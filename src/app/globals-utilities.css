@@ -176,6 +176,23 @@ select {
   padding-right: env(safe-area-inset-right, 0px);
 }
 
+/* ── Vertical Rhythm (8pt grid) ── */
+.eh-vr-1 { margin-bottom: var(--vr-unit); }           /* 8px */
+.eh-vr-2 { margin-bottom: calc(var(--vr-unit) * 2); } /* 16px */
+.eh-vr-3 { margin-bottom: calc(var(--vr-unit) * 3); } /* 24px */
+.eh-vr-4 { margin-bottom: calc(var(--vr-unit) * 4); } /* 32px */
+.eh-vr-5 { margin-bottom: calc(var(--vr-unit) * 5); } /* 40px */
+.eh-vr-6 { margin-bottom: calc(var(--vr-unit) * 6); } /* 48px */
+.eh-vr-section { margin-bottom: calc(var(--vr-unit) * 8); } /* 64px */
+
+/* ── CLS Prevention — stable height containers ── */
+.eh-stable-height {
+  min-height: var(--eh-stable-h, auto);
+}
+.eh-contain-content {
+  contain: content;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

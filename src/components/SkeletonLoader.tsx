@@ -49,7 +49,7 @@ export function SkeletonLoader({
     editor: { w: "100%", h: "400px", rounded: "rounded-xl" },
     sidebar: { w: "240px", h: "100%", rounded: "rounded-xl" },
     avatar: { w: "40px", h: "40px", rounded: "rounded-full" },
-    button: { w: "100px", h: "36px", rounded: "rounded-xl" },
+    button: { w: "100px", h: "44px", rounded: "rounded-xl" },
     badge: { w: "60px", h: "24px", rounded: "rounded-full" },
   };
 

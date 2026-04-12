@@ -58,11 +58,13 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
       const data = await res.json();
       const msg = data.choices?.[0]?.message;
       const text = msg?.content || msg?.reasoning_content || '';
-      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\[[\s\S]*\])/) || text.match(/(\{[\s\S]*\})/);
       if (jsonMatch) {
         try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }
       }
-      try { return JSON.parse(text) as T; } catch { return fallback; }
+      try { return JSON.parse(text) as T; } catch {
+        throw new Error(`DGX Spark JSON 파싱 실패 — 응답: ${text.slice(0, 200)}`);
+      }
     } catch (err) {
       if (err instanceof TypeError && attempt < MAX_RETRIES) continue; // 네트워크 에러 재시도
       throw err;
@@ -86,7 +88,9 @@ export async function generateJson<T>(apiKey: string, model: string, prompt: str
         contents: prompt,
         config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS) },
       });
-      try { return JSON.parse(response.text || JSON.stringify(fallback)) as T; } catch { return fallback; }
+      try { return JSON.parse(response.text || JSON.stringify(fallback)) as T; } catch {
+        throw new Error(`Gemini JSON 파싱 실패 — 응답: ${(response.text || '').slice(0, 200)}`);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       const isRetryable = /500|502|503|504|INTERNAL|resource.*exhausted|deadline|overloaded/i.test(msg);

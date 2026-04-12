@@ -6,6 +6,7 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Moon, Sun, Globe, Key, User, LogOut, HardDrive } from "lucide-react";
 import { useUnifiedSettings } from "@/lib/UnifiedSettingsContext";
 import { useAuth } from "@/lib/AuthContext";
@@ -41,7 +42,7 @@ export default function UnifiedSettingsBar() {
             title={user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out" })}
           >
             {user.photoURL && /^https:\/\//.test(user.photoURL) ? (
-              <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+              <Image src={user.photoURL} alt="" width={20} height={20} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
             ) : (
               <LogOut className="w-4 h-4" />
             )}

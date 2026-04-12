@@ -88,16 +88,19 @@ export function useStudioAI({
   const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const generationLockRef = useRef(false);
+  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Cleanup: abort streaming + clear timeout on unmount
+  // Cleanup: abort streaming + clear timeout + release lock on unmount
   useEffect(() => () => {
     abortControllerRef.current?.abort();
     clearTimeout(timeoutIdRef.current);
+    generationLockRef.current = false;
   }, []);
 
   const handleCancel = useCallback(() => {
     abortControllerRef.current?.abort();
+    generationLockRef.current = false;
     setIsGenerating(false);
   }, []);
 
@@ -112,6 +115,9 @@ export function useStudioAI({
       return;
     }
     generationLockRef.current = true;
+    // Safety: auto-release lock after 120s to prevent permanent deadlock
+    clearTimeout(lockTimerRef.current);
+    lockTimerRef.current = setTimeout(() => { generationLockRef.current = false; }, 120_000);
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
     const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';

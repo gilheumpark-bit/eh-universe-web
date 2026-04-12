@@ -17,6 +17,9 @@ interface StudioStatusBarProps {
   currentSession: ChatSession | null;
   lastSaveTime?: number;
   isDirty?: boolean;
+  /** Character count at session start — for session delta display */
+  sessionStartChars?: number;
+  editorFontSize?: number;
 }
 
 const MODE_LABELS: Record<string, { ko: string; en: string }> = {
@@ -28,7 +31,7 @@ const MODE_LABELS: Record<string, { ko: string; en: string }> = {
 };
 
 export function StudioStatusBar({
-  editDraft, writingMode, activeTab, saveFlash, isSaving, isGenerating, language, currentSession, lastSaveTime, isDirty,
+  editDraft, writingMode, activeTab, saveFlash, isSaving, isGenerating, language, currentSession, lastSaveTime, isDirty, sessionStartChars = 0, editorFontSize,
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
@@ -56,6 +59,18 @@ export function StudioStatusBar({
             <span>{stats.words.toLocaleString()}{isKO ? '어' : 'w'}</span>
             <span className="text-border">|</span>
             <span>{isKO ? modeLabel.ko : modeLabel.en}</span>
+            {stats.chars > sessionStartChars && (
+              <>
+                <span className="text-border">|</span>
+                <span className="text-accent-green">+{(stats.chars - sessionStartChars).toLocaleString()}{isKO ? '자' : 'ch'}</span>
+              </>
+            )}
+            {editorFontSize && editorFontSize !== 16 && (
+              <>
+                <span className="text-border">|</span>
+                <span>{editorFontSize}px</span>
+              </>
+            )}
           </>
         )}
         {activeTab !== 'writing' && (

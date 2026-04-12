@@ -23,6 +23,9 @@ interface UseStudioKeyboardOptions {
   onRedo?: () => void;
   /** Ctrl+K — open global search palette */
   onGlobalSearch?: () => void;
+  /** Ctrl+= / Ctrl+- — adjust editor font size */
+  onFontSizeUp?: () => void;
+  onFontSizeDown?: () => void;
   /** When true, suppress all shortcuts (e.g. modal is open) */
   disabled?: boolean;
 }
@@ -72,6 +75,9 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
       }
       // Ctrl+K — global search palette
       if (ctrl && e.key === 'k') { e.preventDefault(); opts.onGlobalSearch?.(); return; }
+      // Ctrl+= / Ctrl+- — editor font size
+      if (ctrl && (e.key === '=' || e.key === '+')) { e.preventDefault(); opts.onFontSizeUp?.(); return; }
+      if (ctrl && e.key === '-') { e.preventDefault(); opts.onFontSizeDown?.(); return; }
 
       if (ctrl && e.key === 'f') { e.preventDefault(); opts.onToggleSearch(); }
       if (ctrl && e.key === 'e') { e.preventDefault(); opts.onExportTXT(); }

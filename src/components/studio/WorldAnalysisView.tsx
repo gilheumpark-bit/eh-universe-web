@@ -295,9 +295,10 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           )}
         </div>
         <div className="relative group">
-          <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[linear-gradient(rgba(255,200,50,0.03)_50%,transparent_50%)] bg-size-[100%_4px] mix-blend-screen opacity-50 z-10 transition-opacity group-focus-within:opacity-100"></div>
+          {/* Scanline overlay — dark mode only */}
+          <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[linear-gradient(rgba(255,200,50,0.03)_50%,transparent_50%)] bg-size-[100%_4px] mix-blend-screen opacity-50 z-10 transition-opacity group-focus-within:opacity-100 hidden dark:block [data-theme=dark]:block"></div>
           <textarea
-            className="w-full bg-[linear-gradient(to_bottom,rgba(255,200,50,0.02),rgba(0,0,0,0.4))] border border-[rgba(255,200,50,0.2)] rounded-2xl p-6 text-sm h-64 resize-none focus:border-[rgba(255,200,50,0.6)] focus:shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_20px_rgba(255,200,50,0.05)] outline-none font-serif leading-relaxed text-text-primary placeholder-[rgba(255,200,50,0.3)] relative z-20 backdrop-blur-md transition-all"
+            className="w-full bg-bg-secondary border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-accent-amber/60 focus:shadow-[0_0_20px_rgba(184,149,92,0.12)] outline-none font-serif leading-relaxed text-text-primary placeholder-text-tertiary relative z-20 backdrop-blur-md transition-all"
             placeholder={t('worldAnalysis.inputPlaceholder')}
             value={inputText}
             onChange={e => setInputText(e.target.value)}
