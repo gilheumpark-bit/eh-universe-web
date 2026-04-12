@@ -27,7 +27,7 @@ export default function ErrorOverlay({ error, onDismiss, onFixWithAI }: Props) {
           {onFixWithAI && (
             <button onClick={onFixWithAI}
               className="flex items-center gap-1.5 px-3 py-1 text-xs bg-white/15 border border-white/30 rounded hover:bg-white/25 transition-colors">
-              <Sparkles size={12} /> AI로 수정
+              <Sparkles size={12} /> 자동 수정
             </button>
           )}
           <button onClick={onDismiss}

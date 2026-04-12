@@ -14,13 +14,28 @@ export default function SplashScreen({
   onCodeStudio: () => void;
   onTranslationStudio: () => void;
 }) {
-  const { lang } = useLang();
+  const { lang: contextLang, toggleLang } = useLang();
   const [mounted, setMounted] = useState(false);
-  // hovered state removed — single CTA, no card hover
+  const [resolvedLang, setResolvedLang] = useState<"ko" | "en" | "ja" | "zh">("ko");
 
   useEffect(() => {
+    // Read directly from storage to bypass SSR hydration lag
+    const saved = localStorage.getItem("eh-lang");
+    const detected = saved && ["ko", "en", "ja", "zh"].includes(saved)
+      ? (saved as typeof resolvedLang)
+      : contextLang;
+    setResolvedLang(detected);
     setMounted(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Sync when user toggles language via button
+  useEffect(() => {
+    setResolvedLang(contextLang);
+  }, [contextLang]);
+
+  const lang = resolvedLang;
+  void toggleLang; // keep reference for UnifiedSettingsBar
 
   return (
     <div className="relative min-h-dvh flex w-full items-center justify-center overflow-hidden eh-page-canvas">

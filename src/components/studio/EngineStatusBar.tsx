@@ -24,7 +24,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
   const tipAct = isKO ? '현재 3막 구조에서의 위치' : 'Current position in 3-act structure';
   const tipTension = isKO ? '이 에피소드의 목표 긴장도' : 'Target tension for this episode';
   const tipPlatform = isKO ? '출판 플랫폼 (글자수 기준)' : 'Publishing platform (char count target)';
-  const tipGrade = isKO ? 'NOA가 평가한 품질 등급' : 'Quality grade from AI';
+  const tipGrade = isKO ? 'NOA가 평가한 품질 등급' : 'Quality grade by NOA';
   const tipVol = isKO ? '분량 적정성 점수' : 'Volume adequacy score';
   const tipChars = isKO ? '현재 글자수 / 목표 범위' : 'Current chars / target range';
 

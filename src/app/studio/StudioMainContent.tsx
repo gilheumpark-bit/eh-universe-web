@@ -85,7 +85,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       {!isOnline && (
         <div className="bg-accent-red/15 border-b border-accent-red/30 px-4 py-2 flex items-center justify-center gap-2 text-xs font-bold text-accent-red z-50 shrink-0">
           <span className="w-2 h-2 rounded-full bg-accent-red animate-pulse" />
-          {isKO ? '인터넷 연결이 끊겼습니다. AI 기능이 작동하지 않습니다.' : 'No internet connection. AI features are unavailable.'}
+          {isKO ? '인터넷 연결이 끊겼습니다. 일부 기능이 제한됩니다.' : 'No internet connection. Some features are unavailable.'}
         </div>
       )}
       {focusMode && (

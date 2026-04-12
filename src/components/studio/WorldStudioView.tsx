@@ -161,7 +161,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               <div className="flex items-center gap-3 px-5 py-4 bg-[linear-gradient(45deg,rgba(255,200,50,0.05),transparent)] border border-[rgba(255,200,50,0.2)] rounded-xl shadow-[0_0_20px_rgba(255,200,50,0.05)]">
                 <ArrowDown className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
                 <span className="text-xs text-text-secondary font-mono tracking-wide">
-                  {language === 'EN' ? 'Enter a title and synopsis below — AI will forge your Universe' : language === 'JP' ? 'タイトルとシノプシスを入力すると、AIが世界を設計します' : language === 'CN' ? '输入标题和大纲，AI将设计您的世界' : '아래에 제목과 시놉시스를 입력하면 AI 컨스트럭트가 우주를 설계합니다'}
+                  {language === 'EN' ? 'Enter a title and synopsis below to forge your Universe' : language === 'JP' ? 'タイトルとシノプシスを入力すると世界が設計されます' : language === 'CN' ? '输入标题和大纲来设计您的世界' : '아래에 제목과 시놉시스를 입력하면 우주가 설계됩니다'}
                 </span>
               </div>
             </div>

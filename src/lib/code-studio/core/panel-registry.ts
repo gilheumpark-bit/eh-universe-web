@@ -15,7 +15,7 @@ export type PanelGroup = "editing" | "ai" | "verification" | "git" | "tools" | "
  */
 export const GROUP_LABELS: Record<PanelGroup, { en: string; ko: string }> = {
   editing:      { en: "Editing",      ko: "편집" },
-  ai:           { en: "AI",           ko: "AI" },
+  ai:           { en: "Assistant",    ko: "어시스턴트" },
   verification: { en: "Verification", ko: "검증" },
   git:          { en: "Git & Deploy", ko: "Git & 배포" },
   tools:        { en: "Tools",        ko: "도구" },
@@ -60,7 +60,7 @@ export interface PanelDef {
 
 export const PANEL_REGISTRY: readonly PanelDef[] = [
   // ── editing (편집) ─────────────────────────────────────────
-  { id: "chat",           label: "AI Chat",              labelKo: "AI 채팅",         icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
+  { id: "chat",           label: "NOA Chat",             labelKo: "NOA 채팅",        icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
   { id: "quick-verify",   label: "Quick Verify",         labelKo: "원클릭 검증",      icon: "Shield",          group: "editing",      category: "Tools", color: "text-accent-green",   status: "stable", isEssential: true },
   { id: "project-spec",   label: "Project Spec",         labelKo: "이지모드(명세서)", icon: "Wand2",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable", isEssential: true },
   { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable", isEssential: true },
@@ -80,8 +80,8 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "autopilot",      label: "Autopilot",            labelKo: "오토파일럿",        icon: "Play",            group: "ai",           category: "Tools", color: "text-accent-amber",   status: "stable" },
   { id: "agents",         label: "Agent Pipeline",       labelKo: "에이전트 파이프라인", icon: "Shield",          group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
   { id: "creator",        label: "Code Creator",         labelKo: "코드 크리에이터",    icon: "Wand2",           group: "ai",           category: "Tools", color: "text-accent-amber",   status: "stable" },
-  { id: "ai-hub",         label: "AI Hub",               labelKo: "AI 허브",          icon: "Brain",           group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
-  { id: "ai-workspace",   label: "AI Workspace",         labelKo: "AI 워크스페이스",    icon: "BrainCircuit",    group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable" },
+  { id: "ai-hub",         label: "NOA Hub",              labelKo: "NOA 허브",         icon: "Brain",           group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
+  { id: "ai-workspace",   label: "NOA Workspace",        labelKo: "NOA 워크스페이스",   icon: "BrainCircuit",    group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable" },
   { id: "model-switcher", label: "Model Switcher",       labelKo: "모델 전환",         icon: "Cpu",             group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
 
   // ── verification (검증) ────────────────────────────────────

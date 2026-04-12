@@ -202,7 +202,7 @@ export default function StudioToasts({
         <AutoDismissToast variant="info" duration={5000} onDismiss={() => setFallbackNotice(null)}>
           <Info className="w-5 h-5 text-accent-blue shrink-0" />
           <p className="flex-1 text-sm font-medium text-text-primary">
-            {isKO ? `AI 제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}
+            {isKO ? `제공자 자동 전환: ${fallbackNotice}` : `Provider auto-switched: ${fallbackNotice}`}
           </p>
         </AutoDismissToast>
       )}

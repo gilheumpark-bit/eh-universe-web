@@ -90,7 +90,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50" />
           <button onClick={() => setShowAiPrompt(!showAiPrompt)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-amber-900/30 text-amber-400" : "bg-white/5 text-white/60 hover:text-amber-400"}`}>
-            <Sparkles size={12} /> AI로 생성
+            <Sparkles size={12} /> 자동 생성
           </button>
         </div>
         {showAiPrompt && (

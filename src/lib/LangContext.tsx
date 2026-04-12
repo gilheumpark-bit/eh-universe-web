@@ -36,16 +36,12 @@ function detectLang(): Lang {
 }
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  // Always start with 'ko' to match SSR — detect real language in useEffect
-  const [lang, setLang] = useState<Lang>("ko");
-
-  // Detect browser/saved language after hydration to avoid mismatch
-  useEffect(() => {
-    const detected = detectLang();
-    if (detected !== "ko") {
-      queueMicrotask(() => setLang(detected));
-    }
-  }, []);
+  // Initialize with detected language immediately on client.
+  // SSR will use "ko", client will correct on first render via useState initializer.
+  const [lang, setLang] = useState<Lang>(() => {
+    if (typeof window === "undefined") return "ko";
+    return detectLang();
+  });
 
   // Sync DOM lang attribute when lang changes
   useEffect(() => {

@@ -49,6 +49,29 @@ export function useStudioUX() {
     return () => window.removeEventListener('noa:export-done', handler);
   }, []);
 
+  // Export progress (step-by-step feedback)
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { step?: string };
+      setExportProgress(detail.step || null);
+    };
+    window.addEventListener('noa:export-progress', handler);
+    return () => window.removeEventListener('noa:export-progress', handler);
+  }, []);
+
+  // Storage warning (from project migration)
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { message?: string };
+      setStorageWarning(detail.message || '저장 공간이 부족합니다.');
+      setTimeout(() => setStorageWarning(null), 5000);
+    };
+    window.addEventListener('noa:storage-warning', handler);
+    return () => window.removeEventListener('noa:storage-warning', handler);
+  }, []);
+
   // Auto-save timestamp
   const [lastSaveTime, setLastSaveTime] = useState<number | null>(null);
   useEffect(() => {
@@ -119,6 +142,9 @@ export function useStudioUX() {
     storageFull, setStorageFull,
     // Export
     exportDoneFormat, setExportDoneFormat,
+    exportProgress,
+    // Storage warning
+    storageWarning, setStorageWarning,
     // Save
     lastSaveTime, saveFlash, triggerSave,
     // Fallback

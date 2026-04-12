@@ -291,7 +291,7 @@ export default function WritingTabInline(props: Props) {
                       ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
                       : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
                   }`}
-                  title={isKO ? '📐 뼈대를 쓰면 AI가 초안→다듬기까지 3단계로 완성합니다' : '📐 Write skeleton → AI expands to draft → polish in 3 steps'}
+                  title={isKO ? '📐 뼈대를 쓰면 초안→다듬기까지 3단계로 완성합니다' : '📐 Write skeleton → expands to draft → polish in 3 steps'}
                 >
                   <Layers className="w-3.5 h-3.5" />
                   {isKO ? '3단계' : '3-Step'}
@@ -304,7 +304,7 @@ export default function WritingTabInline(props: Props) {
                       ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue'
                       : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
                   }`}
-                  title={isKO ? '🪄 원고를 붙여넣으면 약한 문단을 AI가 자동 개선 (점수 50 미만 감지)' : '🪄 Paste manuscript, AI auto-improves paragraphs scoring below 50'}
+                  title={isKO ? '🪄 원고를 붙여넣으면 약한 문단을 자동 개선 (점수 50 미만 감지)' : '🪄 Paste manuscript, auto-improves paragraphs scoring below 50'}
                 >
                   <Wand2 className="w-3.5 h-3.5" />
                   {isKO ? '다듬기' : 'Refine'}
@@ -586,7 +586,7 @@ export default function WritingTabInline(props: Props) {
                 <div className="bg-accent-green/5 border border-accent-green/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-green mb-2">{isKO ? '3단계 캔버스 모드' : 'Three-Step Canvas'}</h3>
                   <p className="text-xs text-text-secondary mb-2">{isKO ? '구조 → 초안 → 다듬기 3단계로 글을 완성합니다.' : 'Complete your writing in 3 steps: Structure → Draft → Polish.'}</p>
-                  <p className="text-[11px] text-text-tertiary mb-4">{isKO ? '💡 1단계: 아래 캔버스에 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요. AI가 초안으로 확장합니다.' : '💡 Step 1: Write the scene skeleton (characters, events, mood) below. AI will expand it into a draft.'}</p>
+                  <p className="text-[11px] text-text-tertiary mb-4">{isKO ? '💡 1단계: 아래 캔버스에 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요. 초안으로 확장됩니다.' : '💡 Step 1: Write the scene skeleton (characters, events, mood) below. It will be expanded into a draft.'}</p>
                   <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     <span className={`px-2 py-1 rounded ${canvasPass >= 1 ? 'bg-accent-green/20 text-accent-green' : 'bg-bg-secondary'}`}>{isKO ? '1. 구조' : '1. Structure'}</span>
                     <span className="text-text-quaternary">→</span>
