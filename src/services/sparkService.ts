@@ -89,7 +89,7 @@ async function singleSparkRequest(
       const res = await fetch(url, {
         method: 'POST',
         headers,
-        signal: signal ?? AbortSignal.timeout(55_000), // 55초 — Vercel 60초 내
+        signal: signal ?? AbortSignal.timeout(58_000), // 58초 — Vercel 60초 maxDuration 내
         body: JSON.stringify({
           model,
           messages,

@@ -23,7 +23,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
       { role: 'user', content: prompt },
     ],
     temperature: 0.8,
-    max_tokens: 2000, // Vercel 60초 + Cloudflare 100초 내 완료
+    max_tokens: 1000, // TTFT 50초 + 생성 5초 = 55초 이내
     stream: false,
   });
 
@@ -35,7 +35,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
-        signal: AbortSignal.timeout(55_000), // Vercel 60초 maxDuration 내
+        signal: AbortSignal.timeout(58_000), // Vercel 60초 maxDuration — 응답 구성 여유 2초
       });
 
       if (RETRYABLE.has(res.status) && attempt < MAX_RETRIES) continue;

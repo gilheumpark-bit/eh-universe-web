@@ -47,7 +47,7 @@ function getStructuredModel(): string {
 // 5분 TTL 메모리 캐시 — 동일 요청 반복 호출 방지
 const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
-const STRUCTURED_FETCH_TIMEOUT_MS = 55_000; // Vercel Hobby 60초 내
+const STRUCTURED_FETCH_TIMEOUT_MS = 120_000; // 프론트→Vercel: 넉넉히 120초 (Vercel maxDuration=60이 실제 제한)
 
 /** 프론트엔드에서 DGX 직접 호출 — Vercel 60초 제한 우회 */
 async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable: boolean, cacheKey: string): Promise<T> {
