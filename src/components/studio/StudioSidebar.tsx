@@ -200,7 +200,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           <div className="border-b border-white/8 px-4 py-3">
             <div className="mb-3 flex items-start justify-between gap-2">
               <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-85">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(202,161,92,0.22)] bg-[linear-gradient(135deg,rgba(202,161,92,0.2),rgba(92,143,214,0.14))] text-[rgba(246,226,188,0.94)] shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(202,161,92,0.22)] bg-[linear-gradient(135deg,rgba(202,161,92,0.2),rgba(92,143,214,0.14))] text-text-primary shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
                   <Zap className="h-4 w-4" />
                 </span>
                 <div>
@@ -235,7 +235,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               {projects.length === 0 ? (
                 <button
                   onClick={createNewProject}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[rgba(202,161,92,0.28)] bg-[rgba(202,161,92,0.08)] py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-[rgba(246,226,188,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(202,161,92,0.12)]"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[rgba(202,161,92,0.28)] bg-[rgba(202,161,92,0.08)] py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-text-primary transition-all hover:-translate-y-0.5 hover:bg-[rgba(202,161,92,0.12)]"
                 >
                   <Plus className="h-4 w-4" /> {t('project.newProject')}
                 </button>
@@ -602,7 +602,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                           batchMode && selectedSessionIds.has(s.id)
                             ? 'border-accent-purple/30 bg-accent-purple/15 text-accent-purple shadow-[0_0_15px_rgba(141,123,195,0.1)]'
                             : currentSessionId === s.id
-                            ? 'border-[rgba(202,161,92,0.3)] bg-gradient-to-r from-[rgba(202,161,92,0.15)] to-[rgba(202,161,92,0.05)] text-[rgba(246,226,188,0.92)] shadow-[0_0_15px_rgba(202,161,92,0.1)] backdrop-blur-md'
+                            ? 'border-[rgba(202,161,92,0.3)] bg-gradient-to-r from-[rgba(202,161,92,0.15)] to-[rgba(202,161,92,0.05)] text-text-primary shadow-[0_0_15px_rgba(202,161,92,0.1)] backdrop-blur-md'
                             : 'border-transparent text-text-tertiary hover:border-white/10 hover:bg-white/[0.04] hover:text-text-secondary hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
                         } ${dragIdx === i ? 'opacity-40' : ''} ${dragOverIdx === i && dragIdx !== i ? 'border-t-2 border-accent-purple' : ''}`}
                         title={batchMode ? (language === 'KO' ? 'Shift+클릭으로 범위 선택' : 'Shift+click for range select') : (language === 'KO' ? '드래그하여 순서 변경' : 'Drag to reorder')}
@@ -680,7 +680,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             <div className="rounded-xl border border-white/8 bg-black/20 p-3">
               {user ? (
                 <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-[rgba(216,230,255,0.92)] shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-blue-400 shrink-0">
                     {user.photoURL ? (
                       <Image src={user.photoURL} alt="" width={44} height={44} className="h-full w-full object-cover" />
                     ) : (
@@ -728,9 +728,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     disabled={syncStatus === 'syncing'}
                     className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-all ${
                       syncStatus === 'syncing'
-                        ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-[rgba(216,230,255,0.92)]'
+                        ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-blue-400'
                         : syncStatus === 'done'
-                        ? 'border-[rgba(92,214,143,0.28)] bg-[rgba(92,214,143,0.08)] text-[rgba(188,255,224,0.9)]'
+                        ? 'border-[rgba(92,214,143,0.28)] bg-[rgba(92,214,143,0.08)] text-green-400'
                         : syncStatus === 'error'
                         ? 'border-accent-red/30 bg-accent-red/8 text-accent-red'
                         : 'border-white/8 bg-white/4 text-text-secondary hover:-translate-y-0.5 hover:border-[rgba(92,143,214,0.26)] hover:text-text-primary'
@@ -773,7 +773,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             <div className="space-y-2 pt-2">
             {exportProjectManuscripts && (
               <div className="rounded-xl border border-[rgba(202,161,92,0.22)] bg-[rgba(202,161,92,0.06)] p-2.5 space-y-2">
-                <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-[rgba(246,226,188,0.75)]">
+                <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-primary">
                   {language === 'KO' ? '보내기 · 대표 5형식 (전 회차 원고)' : 'Export · 5 formats (all episodes)'}
                 </div>
                 <p className="text-[9px] text-text-tertiary leading-snug">
@@ -788,7 +788,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       type="button"
                       disabled={!projectManuscriptExportEnabled}
                       onClick={() => exportProjectManuscripts(fmt)}
-                      className="rounded-lg border border-white/12 bg-black/35 py-2 text-[8px] font-black uppercase tracking-wide text-text-secondary transition-colors hover:border-[rgba(202,161,92,0.35)] hover:bg-[rgba(202,161,92,0.12)] hover:text-[rgba(246,226,188,0.95)] disabled:cursor-not-allowed disabled:opacity-30"
+                      className="rounded-lg border border-white/12 bg-black/35 py-2 text-[8px] font-black uppercase tracking-wide text-text-secondary transition-colors hover:border-[rgba(202,161,92,0.35)] hover:bg-[rgba(202,161,92,0.12)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-30"
                       title={fmt.toUpperCase()}
                     >
                       {fmt}
@@ -842,7 +842,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     onClick={() => setLanguage(l)}
                     className={`${languageButtonClass} ${
                       language === l
-                        ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-[rgba(246,226,188,0.92)]'
+                        ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-text-primary'
                         : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
                     }`}
                   >
@@ -856,7 +856,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 onClick={() => handleTabChange('settings')}
                 className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all ${
                   activeTab === 'settings'
-                    ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-[rgba(246,226,188,0.92)]'
+                    ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-text-primary'
                     : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
                 }`}
                 title={t('sidebar.settings')}

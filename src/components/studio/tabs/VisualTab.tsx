@@ -20,6 +20,7 @@ import { generateImage } from '@/services/imageGenerationService';
 import VisualPromptEditor from '../VisualPromptEditor';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import type { ImageGenProvider } from '@/services/imageGenerationService';
+import { hasDgxService as hasDgxServiceFn } from '@/lib/ai-providers';
 
 interface VisualTabProps {
   config: StoryConfig;
@@ -382,7 +383,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const totalEpisodes = config.totalEpisodes ?? 1;
 
   // Image generation API key + provider (persisted in localStorage, lazy init)
-  const hasDgxService = !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+  const hasDgxService = hasDgxServiceFn();
   const [imgProvider, setImgProvider] = useState<ImageGenProvider>(() => {
     try {
       const saved = localStorage.getItem('noa-img-provider');

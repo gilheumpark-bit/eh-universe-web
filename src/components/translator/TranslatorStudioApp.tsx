@@ -6,7 +6,7 @@ import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, 
 import { Key } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
-import { getApiKey, type ProviderId } from '@/lib/ai-providers';
+import { getApiKey, hasDgxService, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import type { AppLanguage } from '@/lib/studio-types';
 import { APIKeySlotManager } from '@/components/home/APIKeySlotManager';
 import { logger } from '@/lib/logger';
@@ -217,6 +217,7 @@ export default function TranslatorStudioApp() {
     const key = getEffectiveApiKeyForProvider(provider);
     if (key) return true;
     if (provider === 'gemini' && hostedGemini) return true;
+    if (hasDgxService()) return true;
     return false;
   }, [provider, hostedGemini, getEffectiveApiKeyForProvider, apiKeyRefresh]);
 
@@ -251,11 +252,12 @@ export default function TranslatorStudioApp() {
     void (async () => {
       try {
         const res = await fetch('/api/ai-capabilities', { cache: 'no-store' });
-        const data = (await res.json()) as { hosted?: Partial<Record<ProviderId, boolean>> };
+        const data = (await res.json()) as { hosted?: Partial<Record<ProviderId, boolean>>; hasDgx?: boolean };
         if (!cancelled) {
           const h = data.hosted ?? {};
           setHostedProviders(h);
           setHostedGemini(Boolean(h.gemini));
+          if (data.hasDgx) setServerDgxCache(true);
           setAiCapabilitiesLoaded(true);
         }
       } catch (e) {

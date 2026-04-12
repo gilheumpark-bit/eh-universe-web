@@ -86,15 +86,15 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
 
   if (tracks.length === 0) {
     return (
-      <div className="relative flex flex-col items-center justify-center py-16 text-center border border-[rgba(255,200,50,0.2)] bg-[linear-gradient(135deg,rgba(255,200,50,0.02),transparent)] rounded-2xl overflow-hidden">
+      <div className="relative flex flex-col items-center justify-center py-16 text-center border border-[rgba(255,200,50,0.2)] bg-bg-secondary rounded-2xl overflow-hidden">
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,200,50,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,200,50,0.03)_1px,transparent_1px)] bg-size-[20px_20px] mix-blend-screen opacity-30"></div>
         <div className="w-14 h-14 bg-[rgba(255,200,50,0.05)] border border-[rgba(255,200,50,0.2)] rounded-full flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(255,200,50,0.1)] relative z-10">
-          <Clock className="w-7 h-7 text-[rgba(255,200,50,0.6)]" />
+          <Clock className="w-7 h-7 text-text-tertiary" />
         </div>
-        <p className="text-xs font-black text-[rgba(255,200,50,0.8)] uppercase tracking-[0.3em] mb-2 relative z-10 drop-shadow-[0_0_5px_rgba(255,200,50,0.5)]">
+        <p className="text-xs font-black text-amber-400 uppercase tracking-[0.3em] mb-2 relative z-10 drop-shadow-[0_0_5px_rgba(255,200,50,0.5)]">
           {isKO ? '타임라인 없음' : 'No Timeline'}
         </p>
-        <p className="text-[11px] text-[rgba(230,220,180,0.6)] max-w-[280px] relative z-10 font-mono">
+        <p className="text-[11px] text-text-secondary max-w-[280px] relative z-10 font-mono">
           {isKO
             ? '시뮬레이터에서 문명을 추가하면 타임라인이 표기됩니다. ATLAS 동기화 대기중...'
             : 'Add civilizations in the Simulator to initialize the timeline visualization.'}
@@ -112,8 +112,8 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-[10px] font-black text-[rgba(255,200,50,0.8)] uppercase tracking-widest font-mono drop-shadow-[0_0_5px_rgba(255,200,50,0.3)] flex items-center gap-2">
-        <Clock className="w-3 h-3 text-[rgba(255,200,50,0.8)]" />
+      <h3 className="text-[10px] font-black text-amber-400 uppercase tracking-widest font-mono drop-shadow-[0_0_5px_rgba(255,200,50,0.3)] flex items-center gap-2">
+        <Clock className="w-3 h-3 text-amber-400" />
         {L4(language, { ko: '문명 타임라인', en: 'Civilization Timeline', ja: '文明タイムライン', zh: '文明时间线' })}
       </h3>
 
@@ -214,10 +214,10 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[9px] mt-4 p-3 border border-[rgba(255,200,50,0.15)] bg-[rgba(255,200,50,0.02)] rounded-xl backdrop-blur-sm">
         {tracks.map(track => (
-          <span key={track.civName} className="flex items-center gap-1.5 px-2 py-1 bg-[rgba(0,0,0,0.2)] rounded-md border border-[rgba(255,255,255,0.05)]">
+          <span key={track.civName} className="flex items-center gap-1.5 px-2 py-1 bg-bg-tertiary rounded-md border border-[rgba(255,255,255,0.05)]">
             <span className="w-2.5 h-2.5 rounded-full inline-block shadow-[0_0_5px_currentColor]" style={{ background: track.color, color: track.color }} />
-            <span className="text-[rgba(230,220,180,0.9)] font-mono">{track.civName}</span>
-            <span className="text-[rgba(255,200,50,0.5)] font-mono">({track.eras.length}{isKO ? '시대' : 'Era'})</span>
+            <span className="text-text-secondary font-mono">{track.civName}</span>
+            <span className="text-text-tertiary font-mono">({track.eras.length}{isKO ? '시대' : 'Era'})</span>
           </span>
         ))}
       </div>

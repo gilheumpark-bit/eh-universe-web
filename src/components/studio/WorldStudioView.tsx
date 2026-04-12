@@ -113,8 +113,8 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 }}
                 className={`relative z-10 group flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
                   active
-                    ? "bg-[linear-gradient(135deg,rgba(255,200,50,0.15),rgba(0,0,0,0.2))] text-[rgba(255,220,100,0.95)] border border-[rgba(255,200,50,0.4)] shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_10px_rgba(255,200,50,0.1)] -translate-y-px"
-                    : "text-text-tertiary hover:text-[rgba(255,200,50,0.8)] hover:bg-[rgba(255,200,50,0.05)] border border-transparent hover:border-[rgba(255,200,50,0.1)]"
+                    ? "bg-[linear-gradient(135deg,rgba(255,200,50,0.15),rgba(0,0,0,0.2))] text-amber-400 border border-[rgba(255,200,50,0.4)] shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_10px_rgba(255,200,50,0.1)] -translate-y-px"
+                    : "text-text-tertiary hover:text-amber-400 hover:bg-[rgba(255,200,50,0.05)] border border-transparent hover:border-[rgba(255,200,50,0.1)]"
                 }`}
               >
                 <Icon className={`w-4 h-4 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,200,50,0.8)]' : 'group-hover:scale-110 group-hover:drop-shadow-[0_0_5px_rgba(255,200,50,0.4)]'}`} />
@@ -137,18 +137,18 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               <div className="flex flex-col gap-2 p-4 bg-[linear-gradient(to_right,rgba(255,200,50,0.05),transparent)] border-l-4 border-l-[rgba(255,200,50,0.8)] border border-y-[rgba(255,200,50,0.2)] border-r-[rgba(255,200,50,0.2)] rounded-r-xl rounded-l-sm backdrop-blur-sm shadow-[0_5px_15px_rgba(0,0,0,0.2)]">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[rgba(255,200,50,0.1)] border border-[rgba(255,200,50,0.3)] shadow-[0_0_10px_rgba(255,200,50,0.2)]">
-                    <Cpu className="w-3 h-3 text-[rgba(255,200,50,0.9)]" />
+                    <Cpu className="w-3 h-3 text-amber-400" />
                   </div>
-                  <span className="text-[11px] font-bold text-[rgba(255,200,50,0.9)] uppercase tracking-widest font-mono">
+                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest font-mono">
                     {language === 'KO' ? 'AI 스튜디오 궤도 동기화 (ORBITAL SYNC)' : 'A.I. Orbital Sync Completed'}
                   </span>
                 </div>
-                <ul className="list-disc list-inside text-[11px] text-[rgba(220,200,150,0.8)] font-mono space-y-1 ml-9">
+                <ul className="list-disc list-inside text-[11px] text-text-secondary font-mono space-y-1 ml-9">
                   {config.worldSimData._latestUpdates.map((update: string, i: number) => (
                     <li key={i}>{update}</li>
                   ))}
                 </ul>
-                <div className="text-[9px] text-[rgba(255,200,50,0.4)] mt-1 ml-9 font-mono tracking-widest">
+                <div className="text-[9px] text-text-tertiary mt-1 ml-9 font-mono tracking-widest">
                   {language === 'KO' ? '에피소드 데이터 변경분이 항성계 데이터베이스(World Database)에 머지되었습니다.' : 'Story modifications merged into Atlas Database.'}
                 </div>
               </div>
@@ -159,8 +159,8 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
           {!config.title && !config.synopsis && (
             <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
               <div className="flex items-center gap-3 px-5 py-4 bg-[linear-gradient(45deg,rgba(255,200,50,0.05),transparent)] border border-[rgba(255,200,50,0.2)] rounded-xl shadow-[0_0_20px_rgba(255,200,50,0.05)]">
-                <ArrowDown className="w-4 h-4 text-[rgba(255,200,50,0.8)] shrink-0 animate-bounce" />
-                <span className="text-xs text-[rgba(220,200,150,0.9)] font-mono tracking-wide">
+                <ArrowDown className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
+                <span className="text-xs text-text-secondary font-mono tracking-wide">
                   {language === 'EN' ? 'Enter a title and synopsis below — AI will forge your Universe' : language === 'JP' ? 'タイトルとシノプシスを入力すると、AIが世界を設計します' : language === 'CN' ? '输入标题和大纲，AI将设计您的世界' : '아래에 제목과 시놉시스를 입력하면 AI 컨스트럭트가 우주를 설계합니다'}
                 </span>
               </div>
@@ -175,7 +175,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             {config.title || config.synopsis ? (
               <>
                 <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-accent-amber/30 bg-bg-secondary/60 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:bg-accent-amber/10 hover:border-accent-amber/60 hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-accent-amber hover:text-text-primary">
-                  <Cpu className="w-4 h-4 group-hover:text-[rgba(255,200,50,0.9)] transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JP' ? 'シミュレーター' : language === 'CN' ? '地图模拟器' : '엔진 시뮬레이션'}
+                  <Cpu className="w-4 h-4 group-hover:text-amber-400 transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JP' ? 'シミュレーター' : language === 'CN' ? '地图模拟器' : '엔진 시뮬레이션'}
                 </button>
                 <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-amber/70 to-accent-amber/90 border border-accent-amber/60 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-bg-primary shadow-lg">
                   <Compass className="w-4 h-4 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" /> {startLabel ?? t('planning.commence')}

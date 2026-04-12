@@ -123,7 +123,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   const iconMap: Record<ResultType, React.ReactNode> = {
     character: <UserCircle className="w-4 h-4 text-accent-purple" />,
     episode: <FileText className="w-4 h-4 text-accent-green" />,
-    world: <Globe className="w-4 h-4 text-[rgba(202,161,92,0.8)]" />,
+    world: <Globe className="w-4 h-4 text-amber-400" />,
   };
 
   const categoryLabel = (type: ResultType): string => {
