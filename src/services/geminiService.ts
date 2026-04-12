@@ -49,6 +49,56 @@ const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 const STRUCTURED_FETCH_TIMEOUT_MS = 65_000;
 
+/** 프론트엔드에서 DGX 직접 호출 — Vercel 60초 제한 우회 */
+async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable: boolean, cacheKey: string): Promise<T> {
+  const sparkUrl = process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
+  const TASK_PROMPTS: Record<string, (b: Record<string, unknown>) => string> = {
+    worldDesign: (b) => `Generate a unique ${b.genre || 'fantasy'} story concept in ${b.language === 'KO' ? 'Korean' : 'English'}. Return JSON with fields: title, povCharacter, setting, primaryEmotion, synopsis, corePremise, powerStructure, currentConflict. 2-3 sentences per field.${b.hints ? `\nHints: ${JSON.stringify(b.hints)}` : ''}`,
+    characters: (b) => `Generate ${b.count || 4} characters for a ${(b.config as Record<string,string>)?.genre || 'fantasy'} story in ${b.language === 'KO' ? 'Korean' : 'English'}. Return JSON array with: name, role, traits, speechStyle, backstory. ${b.existingNames ? `Avoid names: ${b.existingNames}` : ''}`,
+    worldSim: (b) => `Simulate world dynamics for: ${b.synopsis}. Genre: ${b.genre}. Return JSON with civilizations and relations arrays. ${b.language === 'KO' ? 'Korean' : 'English'}.`,
+    sceneDirection: (b) => `Generate scene direction for: ${b.synopsis}. Characters: ${b.characters}. Return JSON with hooks, emotionTargets, dialogueTones. ${b.language === 'KO' ? 'Korean' : 'English'}.`,
+    items: (b) => `Generate ${b.count || 3} items for ${(b.config as Record<string,string>)?.genre || 'fantasy'} story. Return JSON array with: name, category, rarity, description, effect. ${b.language === 'KO' ? 'Korean' : 'English'}.`,
+    skills: (b) => `Generate skills for ${(b.config as Record<string,string>)?.genre || 'fantasy'} story. Return JSON array with: name, type, description, cooldown. ${b.language === 'KO' ? 'Korean' : 'English'}.`,
+    magicSystems: (b) => `Generate magic system for ${(b.config as Record<string,string>)?.genre || 'fantasy'} story. Return JSON with: name, source, rules, limitations, schools. ${b.language === 'KO' ? 'Korean' : 'English'}.`,
+  };
+  const taskKey = body.task as string;
+  const promptFn = TASK_PROMPTS[taskKey];
+  if (!promptFn) throw new Error(`Unknown task: ${taskKey}`);
+  const prompt = promptFn(body);
+
+  const res = await fetch(`${sparkUrl}/v1/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'Qwen/Qwen2.5-32B-Instruct-AWQ',
+      messages: [
+        { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.8,
+      max_tokens: 4000,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(95_000),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    const isHtml = errText.trimStart().startsWith('<!') || errText.trimStart().startsWith('<html');
+    throw new Error(isHtml ? `DGX 연결 오류 (${res.status})` : errText.slice(0, 150));
+  }
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/) || text.match(/(\[[\s\S]*\])/);
+  let result: T;
+  try {
+    result = JSON.parse(jsonMatch ? jsonMatch[1] : text) as T;
+  } catch {
+    result = {} as T;
+  }
+  if (cacheable && cacheKey) structuredCache.set(cacheKey, { data: result, ts: Date.now() });
+  return result;
+}
+
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
   // 프로바이더 자동 감지: LM Studio/Ollama가 등록되어 있으면 해당 프로바이더로 라우팅
   const activeProvider = getActiveProvider();
@@ -74,8 +124,12 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
   }
 
-  // 모든 경로가 /api/gemini-structured 사용 (task→prompt 변환 로직 보유)
-  // DGX 폴백은 서버측 gemini-structured에서 처리
+  // DGX 서비스 모드: Gemini 키 없으면 프론트에서 DGX 직접 호출 (Vercel 60초 제한 우회)
+  const hasDgx = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+  if (!apiKey && hasDgx) {
+    return fetchStructuredViaDgx<T>(body, cacheable, cacheKey);
+  }
+
   const endpoint = '/api/gemini-structured';
 
   let response;
