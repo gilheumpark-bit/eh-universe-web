@@ -47,7 +47,7 @@ function getStructuredModel(): string {
 // 5분 TTL 메모리 캐시 — 동일 요청 반복 호출 방지
 const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
-const STRUCTURED_FETCH_TIMEOUT_MS = 65_000;
+const STRUCTURED_FETCH_TIMEOUT_MS = 55_000; // Vercel Hobby 60초 내
 
 /** 프론트엔드에서 DGX 직접 호출 — Vercel 60초 제한 우회 */
 async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable: boolean, cacheKey: string): Promise<T> {
@@ -122,12 +122,6 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
   if (cacheable) {
     const cached = structuredCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data as T;
-  }
-
-  // DGX 서비스 모드: Gemini 키 없으면 프론트에서 DGX 직접 호출 (Vercel 60초 제한 우회)
-  const hasDgx = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
-  if (!apiKey && hasDgx) {
-    return fetchStructuredViaDgx<T>(body, cacheable, cacheKey);
   }
 
   const endpoint = '/api/gemini-structured';

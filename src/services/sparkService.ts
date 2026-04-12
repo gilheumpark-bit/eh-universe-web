@@ -89,7 +89,7 @@ async function singleSparkRequest(
       const res = await fetch(url, {
         method: 'POST',
         headers,
-        signal: signal ?? AbortSignal.timeout(95_000), // 95초 — Cloudflare 100초 하드락 직전
+        signal: signal ?? AbortSignal.timeout(55_000), // 55초 — Vercel 60초 내
         body: JSON.stringify({
           model,
           messages,
@@ -141,8 +141,8 @@ async function singleSparkRequest(
 // PART 4 — 청크 이어쓰기 AI 호출 (Cloudflare 100초 대응)
 // ============================================================
 
-const CHUNK_MAX_TOKENS = 4000; // 청크당 최대 토큰 (90초 이내 완료)
-const MAX_CHUNKS = 4; // 최대 4연타 = 16,000 토큰
+const CHUNK_MAX_TOKENS = 2000; // 청크당 최대 토큰 (50초 이내 완료)
+const MAX_CHUNKS = 6; // 최대 6연타 = 12,000 토큰
 
 /**
  * 청크 이어쓰기 방식 AI 호출
