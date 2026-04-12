@@ -22,7 +22,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MAX_REQUEST_BYTES = 524_288;
-const SAFE_MODEL_PATTERN = /^[a-zA-Z0-9._-]+$/;
+const SAFE_MODEL_PATTERN = /^[a-zA-Z0-9._\/-]+$/;
 
 // ============================================================
 // PART 1 — Request helpers

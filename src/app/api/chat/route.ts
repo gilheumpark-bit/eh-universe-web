@@ -125,7 +125,7 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
   }
   // After isServerProviderId guard, provider is narrowed to ServerProviderId
   const validProvider = provider as ServerProviderId;
-  if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(model)) {
+  if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._\/-]+$/.test(model)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 }) };
   }
   return {
