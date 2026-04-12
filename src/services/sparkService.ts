@@ -89,7 +89,7 @@ async function singleSparkRequest(
       const res = await fetch(url, {
         method: 'POST',
         headers,
-        signal: signal ?? AbortSignal.timeout(90_000), // 90초 — Cloudflare 100초 내
+        signal: signal ?? AbortSignal.timeout(95_000), // 95초 — Cloudflare 100초 하드락 직전
         body: JSON.stringify({
           model,
           messages,

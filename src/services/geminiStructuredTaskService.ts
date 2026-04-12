@@ -35,7 +35,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
-        signal: AbortSignal.timeout(90_000), // Cloudflare 100초 내
+        signal: AbortSignal.timeout(95_000), // Cloudflare 100초 하드락 직전
       });
 
       if (RETRYABLE.has(res.status) && attempt < MAX_RETRIES) continue;
