@@ -19,11 +19,11 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
   const body = JSON.stringify({
     model: 'Qwen/Qwen2.5-14B-Instruct-AWQ',
     messages: [
-      { role: 'system', content: 'You are a creative writing assistant. Always respond with valid JSON only, no markdown or explanation.' },
+      { role: 'system', content: 'You are a creative writing assistant. CRITICAL: Always respond with a single flat JSON object. Use EXACTLY the field names specified in the prompt (e.g. title, synopsis, corePremise). Do NOT nest fields or create your own structure. No markdown, no explanation, just JSON.' },
       { role: 'user', content: prompt },
     ],
     temperature: 0.8,
-    max_tokens: 1000, // TTFT 50초 + 생성 5초 = 55초 이내
+    max_tokens: 4000, // 14B TTFT ~5초 + 생성 ~20초 = 충분
     stream: false,
   });
 
