@@ -45,7 +45,7 @@ EH Universe is a full-stack creative platform built on a single Next.js 16.2 app
 <td width="50%">
 
 **NOA Studio** `/studio`
-Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine / Advanced), real-time paragraph quality analysis (show/tell, repetition, variety, density, dialogue), continuity checking (name typos, trait conflicts, setting contradictions), inline rewrite with Ctrl+Shift+R, EPUB/DOCX/TXT export, and version diff.
+Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine / Advanced), real-time paragraph quality analysis (show/tell, repetition, variety, density, dialogue), continuity checking, inline rewrite (Ctrl+Shift+R), EPUB/DOCX/TXT export, version diff, DGX SSE streaming (TTFT 0.05s), Zen tunnel-vision mode, manuscript editor (65ch width, font scaling Ctrl+=/-).
 
 </td>
 </tr>

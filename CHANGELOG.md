@@ -3,6 +3,40 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0] - 2026-04-13
+
+### Added — DGX 진짜 SSE 스트리밍
+- `sparkService.ts`: `stream:false` → `stream:true` 전환 — 첫 토큰 30초→0.05초
+- SSE 실시간 파싱 + 프론트 SSE 즉시 포워딩 (zero-copy)
+- 청크 이어쓰기 유지 (4000토큰/청크, 최대 4연타 = 16K)
+- DGX 엔드포인트: `api.ehuniverse.com` (프로덕션) + `192.168.219.100:8000` (로컬)
+
+### Added — 집필 몰입도 시스템
+- 에디터 원고지 모드: `max-width: 65ch` + `text-indent: 1em` + `--editor-font-size` CSS 변수
+- Zen 터널 비전: `[data-zen-dim]` opacity 0.25 + 강화된 amber glow (32px+64px)
+- 타이핑 리듬: `not(:placeholder-shown):focus` 따뜻한 glow pulse
+- `Ctrl+=` / `Ctrl+-` 글자 크기 조절 (12~28px)
+- 세션 워드카운터: 상태바에 `+N자` 초록색 표시
+
+### Added — 디자인 시스템 보강
+- 터치 타겟 44px: `.ds-btn`, `.ds-input`, `.premium-button.sm`
+- Optimistic UI: `BookmarkButton` 즉시 반영 + 실패 시 롤백
+- CSS 유틸리티: `.ds-disclosure`, `.ds-icon-text`, `.ds-empty-state`, `.ds-labor-illusion`
+- Vertical Rhythm: `--vr-unit: 8px`, `.eh-vr-1`~`.eh-vr-section`
+- CLS 방어: `.eh-stable-height`, `.eh-contain-content`, 이미지 width/height 명시
+
+### Fixed — AI 생성 버그
+- `geminiStructuredTaskService.ts`: 사일런트 `fallback: []` → `throw Error` 전환
+- 배열 JSON regex 추가 (`/(\[[\s\S]*\])/`) — DGX 응답 파싱 실패 해소
+- `CharacterTab`/`ItemStudioView`: 실제 에러 메시지 표시 + retry 콜백
+- `useStudioAI.ts`: `generationLockRef` 데드락 수정 — cancel/cleanup/120s 타임아웃 3중 방어
+
+### Fixed — 라이트 모드 시인성
+- OSDesktop 독/상단바: 하드코딩 amber-200~700 → 시맨틱 토큰 (`text-text-secondary` 등)
+- `WorldAnalysisView`: textarea placeholder `rgba(255,200,50,0.3)` → `placeholder-text-tertiary`
+- `WorldTimeline`: SVG fill 하드코딩 → CSS 변수 (`--color-text-primary` 등)
+- 독 아이콘: `opacity-50` → `opacity-70`, `text-white/40` → `text-text-tertiary`
+
 ## [1.4.0] - 2026-04-11
 
 ### Added — 집필 스튜디오 OS 변환

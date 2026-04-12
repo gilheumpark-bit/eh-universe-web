@@ -160,14 +160,18 @@
 
 ---
 
-## [인프라 연동] DGX Spark & Gemma 4 로컬 서버 (2026-04-11 업데이트)
+## [인프라 연동] DGX Spark 14B 단일 엔진 (2026-04-13 업데이트)
 
-현재 이 프로젝트는 외부 API뿐만 아니라, 사장님의 극강 하드웨어인 **NVIDIA DGX 서버(128GB VRAM)**를 프라이빗 엔진으로 적극 활용합니다. 코드 수정 시 다음 인프라 구조를 반드시 인지하세요.
+**NVIDIA DGX 서버(128GB VRAM)**를 프라이빗 엔진으로 활용. 단일 모델로 전체 트래픽 처리.
 
-- **통합 백엔드:** `ai-spark-server/main.py` (FastAPI + PySpark 기반)
-- **프론트엔드 프록시:** `src/services/sparkService.ts` 및 `aiProviders.ts`의 `spark` 라우터
-- **로컬 메인 모델:** LM Studio를 통한 Gemma 4 시리즈 (`gemma-4-26B/31B-it`, `gemma-4-E4B-it` 등) 멀티 라우팅
-- **외부 터널링:** `start_tunnel.sh` 스크립트를 통한 Cloudflare Tunnel 연동 (`포트 1234/8000` 포워딩 유지)
-- **분리형 샌드박스:** `/api/sandbox/execute` 엔드포인트를 통해 Code Studio용 격리된 코드 검증 루프 작동
+- **메인 모델:** `Qwen/Qwen2.5-14B-Instruct-AWQ` (다중 모델 하이브리드 폐기)
+- **통합 백엔드:** `ai-spark-server/main.py` (FastAPI + vLLM, OpenAI 호환 API)
+- **프론트엔드:** `src/services/sparkService.ts` — **진짜 SSE 스트리밍** (`stream:true`, TTFT 0.05초)
+- **프로덕션:** `https://api.ehuniverse.com/v1` (Cloudflare Tunnel)
+- **로컬 개발:** `http://192.168.219.100:8000/v1` (내부망)
+- **샌드박스:** `/api/sandbox/execute` — Code Studio 격리 코드 검증
 
-향후 AI API 호출 구조나 백엔드 로직을 수정할 때, 이 로컬 DGX 기반 프라이빗망 아키텍처를 훼손하지 않도록 주의해야 합니다. Vercel 배포 시에는 `SPARK_SERVER_URL` 환경 변수 통신을 우선합니다.
+통신 구조:
+- 스트리밍(글쓰기/번역): `streamSparkAI()` → `stream:true` → SSE 실시간 파싱
+- 구조화 생성(캐릭터/아이템/스킬): `generateJsonViaSpark()` → `stream:false` → JSON 파싱
+- Vercel 배포 시 `SPARK_SERVER_URL` 환경 변수 우선
