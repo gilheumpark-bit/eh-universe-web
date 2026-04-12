@@ -17,22 +17,39 @@ const DEBOUNCE_MS = 3000;
 // PART 2 — 동기화 함수
 // ============================================================
 
-/** Firestore에 프로젝트 목록 저장 (merge 모드) */
+/** Firestore에 프로젝트 목록 저장 (충돌 감지 + merge 모드) */
 export async function syncProjectsToFirestore(uid: string, projects: Project[]): Promise<void> {
   const db = getDb();
   if (!db || !uid || !projects.length) return;
 
   try {
-    const { doc, setDoc } = await import('firebase/firestore');
+    const { doc, setDoc, getDoc } = await import('firebase/firestore');
     const colName = collectionName('studio-sessions');
 
     const results = await Promise.allSettled(
-      projects.map(p =>
-        setDoc(doc(db, colName, uid, 'projects', p.id), {
-          ...p,
-          lastSync: Date.now(),
-        }, { merge: true })
-      )
+      projects.map(async (p) => {
+        const ref = doc(db, colName, uid, 'projects', p.id);
+
+        // 충돌 감지: 서버의 lastSync가 로컬보다 새로우면 경고
+        try {
+          const remote = await getDoc(ref);
+          if (remote.exists()) {
+            const remoteSync = remote.data()?.lastSync ?? 0;
+            const localSync = (p as Project & { lastSync?: number }).lastSync ?? 0;
+            if (remoteSync > localSync + 1000) {
+              // 서버가 더 최신 — 이벤트로 알림 (UI에서 처리)
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('noa:sync-conflict', {
+                  detail: { projectId: p.id, projectTitle: p.title, remoteSync, localSync },
+                }));
+              }
+              logger.warn('cloud-sync', `Conflict detected for ${p.id}: remote=${remoteSync} > local=${localSync}`);
+            }
+          }
+        } catch { /* getDoc 실패 — 그냥 덮어쓰기 */ }
+
+        await setDoc(ref, { ...p, lastSync: Date.now() }, { merge: true });
+      })
     );
 
     const failed = results.filter(r => r.status === 'rejected').length;

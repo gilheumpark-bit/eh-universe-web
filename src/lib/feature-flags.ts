@@ -31,8 +31,8 @@ const FLAGS: FeatureFlags = {
   OFFLINE_CACHE: true,
   CODE_STUDIO: true,
   EPISODE_COMPARE: true,
-  /** Firestore 세션 클라우드 동기화 — 기본 비활성, localStorage ff_CLOUD_SYNC=true로 활성 */
-  CLOUD_SYNC: false,
+  /** Firestore 세션 클라우드 동기화 — 기본 활성, localStorage ff_CLOUD_SYNC=false로 비활성 */
+  CLOUD_SYNC: true,
 };
 
 /**

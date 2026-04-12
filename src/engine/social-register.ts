@@ -85,3 +85,52 @@ export function formatSocialProfile(
 export { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS };
 
 // IDENTITY_SEAL: PART-2 | role=Prompt builder for social register | inputs=SocialProfile,name,lang | outputs=string
+
+// ============================================================
+// PART 3 — Affinity Calculator
+// ============================================================
+
+const RELATION_AFFINITY: Record<SocialProfile['relationDistance'], number> = {
+  intimate: 80,
+  friend: 50,
+  colleague: 20,
+  formal: 0,
+  stranger: -10,
+  hostile: -80,
+};
+
+const AGE_BRACKETS: Record<SocialProfile['ageRegister'], number> = {
+  teen: 0,
+  young_adult: 1,
+  adult: 2,
+  middle: 3,
+  elder: 4,
+};
+
+/**
+ * Compute a numerical affinity score (-100 to +100) between two characters
+ * based on their SocialProfile data.
+ *
+ * Scoring:
+ *  - Base score from the first character's relation distance to the second.
+ *  - +10 bonus if both characters are in the same age bracket.
+ *  - Result clamped to [-100, +100].
+ */
+export function calculateAffinity(a: SocialProfile, b: SocialProfile): number {
+  // Base: average of both relation distances
+  const baseA = RELATION_AFFINITY[a.relationDistance] ?? 0;
+  const baseB = RELATION_AFFINITY[b.relationDistance] ?? 0;
+  let score = Math.round((baseA + baseB) / 2);
+
+  // Age bracket bonus
+  const bracketA = AGE_BRACKETS[a.ageRegister] ?? -1;
+  const bracketB = AGE_BRACKETS[b.ageRegister] ?? -1;
+  if (bracketA >= 0 && bracketA === bracketB) {
+    score += 10;
+  }
+
+  // Clamp to [-100, +100]
+  return Math.max(-100, Math.min(100, score));
+}
+
+// IDENTITY_SEAL: PART-3 | role=affinity calculator | inputs=SocialProfile,SocialProfile | outputs=number

@@ -238,3 +238,54 @@ export function buildPipelineSummary(
 }
 
 // IDENTITY_SEAL: PART-5 | role=summary builder | inputs=execution | outputs=UI summary
+
+// ============================================================
+// PART 6 — Pipeline Results Text Summarizer
+// ============================================================
+
+/**
+ * Generate a human-readable text summary from PipelineStageResult[].
+ * Format:
+ *   [Pipeline Summary]
+ *   ✅ world_check: 90/100
+ *   ⚠️ character_sync: 65/100 — traits_incomplete, role_missing
+ *   ❌ generation: 45/100 — quality_below_threshold
+ *   Overall: 3/4 passed
+ */
+export function summarizePipelineResults(results: PipelineStageResult[]): string {
+  if (results.length === 0) return '[Pipeline Summary]\nNo stages executed.';
+
+  const lines: string[] = ['[Pipeline Summary]'];
+  let passedCount = 0;
+  let totalCount = 0;
+
+  for (const r of results) {
+    // Skip stages that were never actually evaluated
+    if (r.status === 'pending') {
+      lines.push(`⏳ ${r.stage}: pending`);
+      continue;
+    }
+    if (r.status === 'skipped') {
+      lines.push(`⏭️ ${r.stage}: skipped`);
+      continue;
+    }
+
+    totalCount++;
+    const scoreStr = r.score != null ? `${r.score}/100` : 'N/A';
+    const warningStr = r.warnings.length > 0 ? ` \u2014 ${r.warnings.join(', ')}` : '';
+
+    if (r.status === 'passed') {
+      passedCount++;
+      lines.push(`\u2705 ${r.stage}: ${scoreStr}`);
+    } else {
+      // failed — check if it had a passable score (warn territory) or hard fail
+      const icon = (r.score != null && r.score >= 50) ? '\u26a0\ufe0f' : '\u274c';
+      lines.push(`${icon} ${r.stage}: ${scoreStr}${warningStr}`);
+    }
+  }
+
+  lines.push(`Overall: ${passedCount}/${totalCount} passed`);
+  return lines.join('\n');
+}
+
+// IDENTITY_SEAL: PART-6 | role=text summarizer | inputs=PipelineStageResult[] | outputs=string

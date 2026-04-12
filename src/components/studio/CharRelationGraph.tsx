@@ -374,6 +374,11 @@ function FilterableLegend({ visibleTypes, onToggle, isKO, zoomLevel, onResetZoom
 // PART 6 — Main Component + Detail Panel
 // ============================================================
 
+/** Helper to safely read an optional introducedEpisode from a relation */
+function getIntroducedEpisode(rel: CharRelation): number | undefined {
+  return (rel as CharRelation & { introducedEpisode?: number }).introducedEpisode;
+}
+
 const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, onSelectCharacter }) => {
   const isKO = language === 'KO';
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -387,6 +392,22 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
 
   // --- Search state ---
   const [searchQuery, setSearchQuery] = useState('');
+
+  // --- Episode filter state ---
+  const maxEpisode = useMemo(() => {
+    let max = 1;
+    for (const r of relations) {
+      const ep = getIntroducedEpisode(r);
+      if (ep != null && ep > max) max = ep;
+    }
+    return max;
+  }, [relations]);
+  const [episodeFilter, setEpisodeFilter] = useState<number>(maxEpisode);
+
+  // Keep episodeFilter in sync when maxEpisode changes
+  useEffect(() => {
+    setEpisodeFilter(maxEpisode);
+  }, [maxEpisode]);
 
   // Compute viewBox from transform
   const viewBox = useMemo(() => {
@@ -485,11 +506,27 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
     setTransform({ zoom: 1, panX: 0, panY: 0 });
   }, []);
 
-  // Filtered relations based on visible types
+  // Filtered relations based on visible types + episode filter
   const filteredRelations = useMemo(
-    () => relations.filter(r => visibleTypes.has(r.type)),
-    [relations, visibleTypes]
+    () => relations.filter(r => {
+      if (!visibleTypes.has(r.type)) return false;
+      const ep = getIntroducedEpisode(r);
+      // Show if no introducedEpisode set, or if within filter range
+      if (ep != null && ep > episodeFilter) return false;
+      return true;
+    }),
+    [relations, visibleTypes, episodeFilter]
   );
+
+  // Relations newly introduced at exactly the selected episode
+  const newAtEpisode = useMemo(() => {
+    const set = new Set<number>();
+    filteredRelations.forEach((r, i) => {
+      const ep = getIntroducedEpisode(r);
+      if (ep != null && ep === episodeFilter) set.add(i);
+    });
+    return set;
+  }, [filteredRelations, episodeFilter]);
 
   return (
     <div className={`relative transition-all duration-300 ${expanded ? 'fixed inset-4 z-50 bg-bg-primary/95 backdrop-blur-xl rounded-3xl border border-border p-4' : ''}`}>
@@ -561,8 +598,28 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
               const from = getNodeById(rel.from);
               const to = getNodeById(rel.to);
               if (!from || !to) return null;
+              const isNew = newAtEpisode.has(i);
               return (
-                <EdgeLine key={`e-${i}`} from={from} to={to} rel={rel} isKO={isKO} highlight={isHighlighted(rel)} />
+                <g key={`e-${i}`}>
+                  <EdgeLine from={from} to={to} rel={rel} isKO={isKO} highlight={isHighlighted(rel)} />
+                  {isNew && (
+                    <g>
+                      <rect
+                        x={(from.x + to.x) / 2 - 14}
+                        y={(from.y + to.y) / 2 - 16}
+                        width="28" height="12" rx="3"
+                        fill="#22c55e" opacity="0.9"
+                      />
+                      <text
+                        x={(from.x + to.x) / 2}
+                        y={(from.y + to.y) / 2 - 8}
+                        fill="white" fontSize="7" textAnchor="middle" fontWeight="bold"
+                      >
+                        NEW
+                      </text>
+                    </g>
+                  )}
+                </g>
               );
             })}
 
@@ -664,6 +721,27 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
         zoomLevel={transform.zoom}
         onResetZoom={handleResetZoom}
       />
+
+      {/* 에피소드 범위 슬라이더 */}
+      {maxEpisode > 1 && (
+        <div className="flex items-center gap-3 mt-2 px-1">
+          <span className="text-[9px] font-mono text-text-tertiary shrink-0">
+            {isKO ? '에피소드' : 'Episode'}
+          </span>
+          <input
+            type="range"
+            min={1}
+            max={maxEpisode}
+            value={episodeFilter}
+            onChange={e => setEpisodeFilter(Number(e.target.value))}
+            className="flex-1 h-1 accent-accent-blue cursor-pointer"
+            aria-label={isKO ? '에피소드 필터' : 'Episode filter'}
+          />
+          <span className="text-[10px] font-mono font-bold text-text-secondary w-10 text-right">
+            {episodeFilter}/{maxEpisode}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

@@ -12,6 +12,8 @@ import { L4 } from '@/lib/i18n';
 interface Props {
   messages: Message[];
   language: AppLanguage;
+  /** Optional genre string for ideal arc reference line */
+  genre?: string;
 }
 
 interface EmotionPoint {
@@ -69,6 +71,60 @@ function findPeaksAndValleys(points: EmotionPoint[]): { peaks: number[]; valleys
   return { peaks, valleys };
 }
 
+/**
+ * Generate ideal arc sample points based on genre.
+ * Returns array of { progress: 0~1, value: 0~100 } control points.
+ */
+function getIdealArc(genre?: string): { progress: number; value: number }[] {
+  const g = (genre ?? '').toLowerCase();
+
+  if (g.includes('action') || g.includes('fantasy') || g.includes('액션') || g.includes('판타지')) {
+    // Steady rise to 80 at 70%, spike to 100 at climax
+    return [
+      { progress: 0, value: 30 },
+      { progress: 0.2, value: 40 },
+      { progress: 0.4, value: 55 },
+      { progress: 0.7, value: 80 },
+      { progress: 0.85, value: 100 },
+      { progress: 1.0, value: 60 },
+    ];
+  }
+
+  if (g.includes('romance') || g.includes('로맨스') || g.includes('연애')) {
+    // Wave pattern, peaks at 30% and 80%
+    return [
+      { progress: 0, value: 30 },
+      { progress: 0.15, value: 50 },
+      { progress: 0.3, value: 75 },
+      { progress: 0.45, value: 45 },
+      { progress: 0.6, value: 55 },
+      { progress: 0.8, value: 85 },
+      { progress: 0.9, value: 70 },
+      { progress: 1.0, value: 50 },
+    ];
+  }
+
+  if (g.includes('horror') || g.includes('thriller') || g.includes('공포') || g.includes('스릴러')) {
+    // Slow build, exponential rise after 60%
+    return [
+      { progress: 0, value: 20 },
+      { progress: 0.2, value: 25 },
+      { progress: 0.4, value: 30 },
+      { progress: 0.6, value: 40 },
+      { progress: 0.75, value: 65 },
+      { progress: 0.9, value: 90 },
+      { progress: 1.0, value: 100 },
+    ];
+  }
+
+  // Default: linear rise
+  return [
+    { progress: 0, value: 25 },
+    { progress: 0.5, value: 55 },
+    { progress: 1.0, value: 80 },
+  ];
+}
+
 // IDENTITY_SEAL: PART-2 | role=emotion extraction | inputs=Message[] | outputs=EmotionPoint[]
 
 // ============================================================
@@ -88,9 +144,10 @@ function getEmotionColor(score: number): string {
   return EMOTION_COLORS.low;
 }
 
-function EmotionArcChart({ messages, language }: Props) {
+function EmotionArcChart({ messages, language, genre }: Props) {
   const points = useMemo(() => extractEmotionArc(messages), [messages]);
   const { peaks, valleys } = useMemo(() => findPeaksAndValleys(points), [points]);
+  const idealArc = useMemo(() => getIdealArc(genre), [genre]);
 
   if (points.length < 2) {
     return (
@@ -150,6 +207,21 @@ function EmotionArcChart({ messages, language }: Props) {
 
         {/* 감정 영역 (그라데이션 채움) */}
         <polygon points={areaPoints} fill="url(#emotionGrad)" />
+
+        {/* 장르별 이상적 아크 참조선 (dashed gray) */}
+        <polyline
+          fill="none"
+          stroke="#9ca3af"
+          strokeWidth="1.5"
+          strokeDasharray="5,4"
+          strokeLinejoin="round"
+          opacity="0.45"
+          points={idealArc.map(p => {
+            const x = padX + p.progress * chartW;
+            const y = padY + chartH - (p.value / 100) * chartH;
+            return `${x},${y}`;
+          }).join(' ')}
+        />
 
         {/* 감정 라인 */}
         <polyline fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinejoin="round"
@@ -224,6 +296,10 @@ function EmotionArcChart({ messages, language }: Props) {
         <span className="flex items-center gap-1 opacity-50">
           <span className="w-4 h-0.5 bg-green-500 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #22c55e 0 3px, transparent 3px 6px)' }} />
           {L4(language, { ko: '몰입도', en: 'Immersion', ja: '没入度', zh: '沉浸度' })}
+        </span>
+        <span className="flex items-center gap-1 opacity-50">
+          <span className="w-4 h-0.5 bg-gray-400 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #9ca3af 0 3px, transparent 3px 6px)' }} />
+          {L4(language, { ko: '이상적 아크', en: 'Ideal Arc', ja: '理想アーク', zh: '理想弧线' })}
         </span>
         <span className="text-red-400">▲ {L4(language, { ko: '피크', en: 'Peak', ja: 'ピーク', zh: '峰值' })}</span>
         <span className="text-blue-400">▼ {L4(language, { ko: '밸리', en: 'Valley', ja: '谷', zh: '谷值' })}</span>

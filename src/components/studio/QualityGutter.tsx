@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import type { ParagraphScore } from '@/hooks/useQualityAnalysis';
+import React, { useState, useRef, useEffect } from 'react';
+import type { ParagraphScore, QualityIssue } from '@/hooks/useQualityAnalysis';
 
 // ============================================================
 // PART 1 — 타입
@@ -38,7 +38,159 @@ function scoreTextColor(score: number): string {
 }
 
 // ============================================================
-// PART 3 — 메인 컴포넌트
+// PART 3 — 이슈별 개선 제안 유틸
+// ============================================================
+
+function getIssueSuggestion(issue: QualityIssue, isKO: boolean): string {
+  const suggestions: Record<QualityIssue['type'], { ko: string; en: string }> = {
+    'weak-opening': {
+      ko: '첫 문장에 행동/감각 묘사를 넣어 독자를 즉시 끌어들이세요.',
+      en: 'Start with action or sensory detail to hook the reader immediately.',
+    },
+    'too-long': {
+      ko: '문단을 2~3개로 분할하여 가독성을 높이세요.',
+      en: 'Split into 2-3 shorter paragraphs for better readability.',
+    },
+    'too-short': {
+      ko: '묘사나 내면 독백을 추가하여 깊이를 더하세요.',
+      en: 'Add description or inner monologue for more depth.',
+    },
+    'repetition': {
+      ko: '반복되는 단어를 동의어나 다른 표현으로 교체하세요.',
+      en: 'Replace repeated words with synonyms or rephrase.',
+    },
+    'flat-pacing': {
+      ko: '문장 길이에 변화를 주거나 긴장감 요소를 삽입하세요.',
+      en: 'Vary sentence length or insert tension-building elements.',
+    },
+    'low-dialogue': {
+      ko: '대사를 추가하여 장면에 생동감을 부여하세요.',
+      en: 'Add dialogue to bring the scene to life.',
+    },
+    'info-dump': {
+      ko: '정보를 행동이나 대화 속에 자연스럽게 녹이세요.',
+      en: 'Weave information into action or dialogue naturally.',
+    },
+  };
+  const s = suggestions[issue.type];
+  return s ? (isKO ? s.ko : s.en) : '';
+}
+
+// ============================================================
+// PART 4 — 팝오버 컴포넌트
+// ============================================================
+
+function ParagraphPopover({
+  paragraph,
+  isKO,
+  onClose,
+}: {
+  paragraph: ParagraphScore;
+  isKO: boolean;
+  onClose: () => void;
+}) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+
+  const m = paragraph.metrics;
+
+  return (
+    <div
+      ref={popoverRef}
+      className="absolute left-0 right-0 z-20 mt-1 mx-2 bg-bg-primary border border-border rounded-xl shadow-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150"
+    >
+      {/* 헤더: 점수 + 닫기 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`text-lg font-black font-mono ${scoreTextColor(paragraph.score)}`}>
+            {paragraph.score}
+          </span>
+          <span className="text-[10px] text-text-tertiary">
+            / 100
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-text-tertiary hover:text-text-primary transition-colors text-sm px-1"
+          aria-label="Close"
+        >
+          x
+        </button>
+      </div>
+
+      {/* 지표 상세 */}
+      <div className="grid grid-cols-2 gap-2 text-[10px]">
+        {([
+          ['S/T', m.showTellRatio, isKO ? 'Show vs Tell' : 'Show vs Tell'],
+          ['VAR', m.sentenceVariety, isKO ? '문장 다양성' : 'Sentence Variety'],
+          ['REP', m.repetition, isKO ? '반복어 비율' : 'Repetition'],
+          ['DLG', m.dialogueRatio, isKO ? '대사 비율' : 'Dialogue Ratio'],
+          ['DNS', m.density, isKO ? '정보 밀도' : 'Density'],
+        ] as [string, number, string][]).map(([key, val, label]) => (
+          <div key={key} className="flex items-center gap-2">
+            <span className="font-mono font-bold text-text-tertiary w-7">{key}</span>
+            <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${
+                  key === 'REP' ? (val > 0.3 ? 'bg-accent-red' : 'bg-accent-green') : (val >= 0.5 ? 'bg-accent-green' : 'bg-accent-amber')
+                }`}
+                style={{ width: `${Math.round(val * 100)}%` }}
+              />
+            </div>
+            <span className="font-mono text-text-secondary w-8 text-right">{Math.round(val * 100)}%</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 이슈 목록 + 개선 제안 */}
+      {paragraph.issues.length > 0 && (
+        <div className="space-y-2 border-t border-border/40 pt-2">
+          <h5 className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">
+            {isKO ? '이슈 & 개선 제안' : 'Issues & Suggestions'}
+          </h5>
+          {paragraph.issues.map((issue, j) => (
+            <div key={j} className="space-y-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  issue.severity === 'warning' ? 'bg-accent-amber' : 'bg-text-tertiary'
+                }`} />
+                <span className={`text-[10px] font-bold ${
+                  issue.severity === 'warning' ? 'text-accent-amber' : 'text-text-secondary'
+                }`}>
+                  {isKO ? issue.messageKO : issue.messageEN}
+                </span>
+              </div>
+              {getIssueSuggestion(issue, isKO) && (
+                <p className="text-[9px] text-text-tertiary ml-3 italic">
+                  {getIssueSuggestion(issue, isKO)}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 이슈 없으면 OK 표시 */}
+      {paragraph.issues.length === 0 && (
+        <p className="text-[10px] text-accent-green italic">
+          {isKO ? '이 문단에는 감지된 이슈가 없습니다.' : 'No issues detected in this paragraph.'}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// PART 5 — 메인 컴포넌트
 // ============================================================
 
 const QualityGutter: React.FC<QualityGutterProps> = ({
@@ -49,9 +201,15 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
   onSelectWeak,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [selectedParagraph, setSelectedParagraph] = useState<number | null>(null);
   const isKO = language === 'KO';
 
   if (paragraphs.length === 0) return null;
+
+  const handleRowClick = (p: ParagraphScore, rowIndex: number) => {
+    onSelectWeak?.(p.index);
+    setSelectedParagraph(prev => prev === rowIndex ? null : rowIndex);
+  };
 
   return (
     <div className="border border-border/50 rounded-xl bg-bg-secondary/50 overflow-hidden">
@@ -99,49 +257,59 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
 
       {/* 상세 목록 */}
       {expanded && (
-        <div className="border-t border-border/40 px-4 py-3 space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+        <div className="border-t border-border/40 px-4 py-3 space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
           {paragraphs.map((p, i) => (
-            <div
-              key={i}
-              className={`flex items-start gap-2 px-3 py-2 rounded-lg ${
-                p.score < 50 ? 'bg-accent-red/5 border border-accent-red/20' : 'bg-bg-primary/50'
-              } cursor-pointer hover:bg-bg-secondary transition-colors`}
-              onClick={() => onSelectWeak?.(p.index)}
-            >
-              {/* 점수 */}
-              <span className={`text-xs font-bold font-mono shrink-0 w-8 ${scoreTextColor(p.score)}`}>
-                {p.score}
-              </span>
+            <div key={i} className="relative">
+              <div
+                className={`flex items-start gap-2 px-3 py-2 rounded-lg ${
+                  p.score < 50 ? 'bg-accent-red/5 border border-accent-red/20' : 'bg-bg-primary/50'
+                } ${selectedParagraph === i ? 'ring-1 ring-white/20' : ''} cursor-pointer hover:bg-bg-secondary transition-colors`}
+                onClick={() => handleRowClick(p, i)}
+              >
+                {/* 점수 */}
+                <span className={`text-xs font-bold font-mono shrink-0 w-8 ${scoreTextColor(p.score)}`}>
+                  {p.score}
+                </span>
 
-              {/* 문단 미리보기 + 이슈 */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-text-secondary truncate">
-                  {p.text.slice(0, 60)}...
-                </p>
-                {p.issues.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {p.issues.map((issue, j) => (
-                      <span
-                        key={j}
-                        className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
-                          issue.severity === 'warning'
-                            ? 'bg-accent-amber/10 text-accent-amber'
-                            : 'bg-bg-tertiary text-text-tertiary'
-                        }`}
-                      >
-                        {isKO ? issue.messageKO : issue.messageEN}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* 문단 미리보기 + 이슈 */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-text-secondary truncate">
+                    {p.text.slice(0, 60)}...
+                  </p>
+                  {p.issues.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {p.issues.map((issue, j) => (
+                        <span
+                          key={j}
+                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                            issue.severity === 'warning'
+                              ? 'bg-accent-amber/10 text-accent-amber'
+                              : 'bg-bg-tertiary text-text-tertiary'
+                          }`}
+                        >
+                          {isKO ? issue.messageKO : issue.messageEN}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 지표 미니 게이지 */}
+                <div className="hidden sm:flex flex-col gap-0.5 text-[8px] font-mono text-text-tertiary shrink-0">
+                  <span>S/T {Math.round(p.metrics.showTellRatio * 100)}%</span>
+                  <span>VAR {Math.round(p.metrics.sentenceVariety * 100)}%</span>
+                  <span>REP {Math.round(p.metrics.repetition * 100)}%</span>
+                </div>
               </div>
 
-              {/* 지표 미니 게이지 */}
-              <div className="hidden sm:flex flex-col gap-0.5 text-[8px] font-mono text-text-tertiary shrink-0">
-                <span>S/T {Math.round(p.metrics.showTellRatio * 100)}%</span>
-                <span>VAR {Math.round(p.metrics.sentenceVariety * 100)}%</span>
-                <span>REP {Math.round(p.metrics.repetition * 100)}%</span>
-              </div>
+              {/* 팝오버 */}
+              {selectedParagraph === i && (
+                <ParagraphPopover
+                  paragraph={p}
+                  isKO={isKO}
+                  onClose={() => setSelectedParagraph(null)}
+                />
+              )}
             </div>
           ))}
         </div>
