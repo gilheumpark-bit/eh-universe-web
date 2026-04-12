@@ -280,7 +280,7 @@ describe("ReviewCenter", () => {
 describe("EvaluationPanel", () => {
   it("renders with files", () => {
     const files = [
-      { name: "index.ts", type: "file" as const, content: "const x = 1;" },
+      { id: "f1", name: "index.ts", type: "file" as const, content: "const x = 1;" },
     ];
     const { container } = render(
       <EvaluationPanel files={files} onClose={jest.fn()} />,
