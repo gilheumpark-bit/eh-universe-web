@@ -209,14 +209,21 @@ function getEmotionEmoji(emotion?: Emotion): string {
   if (!emotion) return "😐";
   const entries = Object.entries(emotion) as [keyof Emotion, number][];
   const dominant = entries.sort((a, b) => b[1] - a[1])[0];
-  if (!dominant || dominant[1] < 0.2) return "😐";
+  if (!dominant || dominant[1] < 0.2) return "😐"; // 평온
   switch (dominant[0]) {
     case "joy": return "😊";
     case "sadness": return "😢";
     case "anger": return "😠";
-    case "fear": return "😨";
+    case "fear": return dominant[1] > 0.7 ? "😱" : "😨"; // 공포 강도별
     case "surprise": return "😲";
   }
+  // 복합 감정: 결의 = anger + joy, 혐오 = anger + sadness
+  const anger = emotion.anger ?? 0;
+  const joy = emotion.joy ?? 0;
+  const sadness = emotion.sadness ?? 0;
+  if (anger > 0.3 && joy > 0.3) return "😤"; // 결의
+  if (anger > 0.3 && sadness > 0.3) return "😒"; // 혐오
+  return "😐"; // 평온
 }
 
 function CharacterDisplay({ name, emotion, side }: { name: string; emotion?: Emotion; side: "left" | "right" }) {
@@ -411,6 +418,8 @@ export default function ScenePlayer({
     showOverlay: showMetrics,
   });
 
+  const [sceneTransition, setSceneTransition] = useState<'none' | 'fade-out' | 'fade-in'>('none');
+
   const ttsRef = useRef<TTSController | null>(null);
   const autoPlayRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -522,7 +531,14 @@ export default function ScenePlayer({
         return { ...prev, beatIndex: prev.beatIndex + 1 };
       }
       if (prev.sceneIndex < scenes.length - 1) {
-        return { ...prev, sceneIndex: prev.sceneIndex + 1, beatIndex: 0 };
+        // 장면 전환: fade-out → 씬 변경 → fade-in
+        setSceneTransition('fade-out');
+        setTimeout(() => {
+          setState(p => ({ ...p, sceneIndex: p.sceneIndex + 1, beatIndex: 0 }));
+          setSceneTransition('fade-in');
+          setTimeout(() => setSceneTransition('none'), 300);
+        }, 300);
+        return prev; // 즉시 상태 변경하지 않음
       }
       return { ...prev, isPlaying: false }; // 끝
     });
@@ -543,8 +559,17 @@ export default function ScenePlayer({
         return { ...prev, beatIndex: prev.beatIndex - 1 };
       }
       if (prev.sceneIndex > 0) {
-        const prevScene = scenes[prev.sceneIndex - 1];
-        return { ...prev, sceneIndex: prev.sceneIndex - 1, beatIndex: prevScene.beats.length - 1 };
+        // 장면 전환: fade-out → 씬 변경 → fade-in
+        setSceneTransition('fade-out');
+        setTimeout(() => {
+          setState(p => {
+            const prevScene = scenes[p.sceneIndex - 1];
+            return { ...p, sceneIndex: p.sceneIndex - 1, beatIndex: prevScene.beats.length - 1 };
+          });
+          setSceneTransition('fade-in');
+          setTimeout(() => setSceneTransition('none'), 300);
+        }, 300);
+        return prev; // 즉시 상태 변경하지 않음
       }
       return prev;
     });
@@ -614,7 +639,7 @@ export default function ScenePlayer({
   useEffect(() => { setFadeKey(k => k + 1); }, [state.sceneIndex]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden select-none" style={{ background: bgGradient }}>
+    <div ref={containerRef} className={`relative w-full h-full overflow-hidden select-none ${sceneTransition === 'fade-out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} style={{ background: bgGradient }}>
       {/* 장면 전환 페이드 오버레이 */}
       <div key={fadeKey} className="absolute inset-0 bg-black pointer-events-none z-50 animate-[fadeOut_0.6s_ease-out_forwards]" />
       {/* ── 라디오 모드: 어둠 + 최소 비주얼 ── */}
@@ -735,6 +760,19 @@ export default function ScenePlayer({
         <span className="text-[9px] font-mono text-text-tertiary bg-bg-primary/30 backdrop-blur-sm rounded-full px-2.5 py-1">
           {state.sceneIndex + 1}/{scenes.length} · {state.beatIndex + 1}/{currentScene.beats.length}
         </span>
+
+        {/* 타이핑 속도 */}
+        <div className="flex items-center gap-1 bg-bg-primary/30 backdrop-blur-sm rounded-full px-1 py-0.5">
+          {[0.5, 1, 1.5, 2, 999].map((s) => (
+            <button
+              key={s}
+              onClick={() => setState(p => ({ ...p, speed: s }))}
+              className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition-colors ${state.speed === s ? 'bg-accent-purple/25 text-accent-purple' : 'text-text-tertiary hover:text-text-primary'}`}
+            >
+              {s === 999 ? '즉시' : s === 0.5 ? '느림' : s === 1 ? '보통' : s === 1.5 ? '빠름' : '최고'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 캐릭터 표시 (비주얼 모드만) */}
@@ -757,6 +795,17 @@ export default function ScenePlayer({
           )}
         </>
       )}
+
+      {/* 전체 진행률 */}
+      <div className="absolute bottom-[140px] left-4 right-4 z-10">
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] text-text-tertiary font-mono">{currentGlobalBeat}/{totalBeats}</span>
+          <div className="flex-1 h-1 bg-bg-tertiary/50 rounded-full overflow-hidden">
+            <div className="h-full bg-accent-purple rounded-full transition-all duration-300" style={{ width: `${(currentGlobalBeat / totalBeats) * 100}%` }} />
+          </div>
+          <span className="text-[9px] text-text-tertiary font-mono">{Math.round((currentGlobalBeat / totalBeats) * 100)}%</span>
+        </div>
+      </div>
 
       {/* 대사창 (비주얼 모드), 라디오는 중앙 텍스트로 대체 */}
       {!isRadio && <DialogueBox

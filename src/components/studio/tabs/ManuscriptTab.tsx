@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Share2, Languages, Film, PenLine, Headphones } from 'lucide-react';
+import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2 } from 'lucide-react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
@@ -8,7 +8,7 @@ import EmotionArcChart from '@/components/studio/EmotionArcChart';
 import FatigueDetector from '@/components/studio/FatigueDetector';
 import ShareToNetwork from '@/components/studio/ShareToNetwork';
 import TranslationPanel from '@/components/studio/TranslationPanel';
-import { parseManuscript, generateVoiceMappings } from '@/engine/scene-parser';
+import { parseManuscript, generateVoiceMappings, exportScenesAsHTML } from '@/engine/scene-parser';
 import type { ParsedScene } from '@/engine/scene-parser';
 
 const ScenePlayer = dynamic(() => import('@/components/studio/ScenePlayer'), { ssr: false });
@@ -34,6 +34,8 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   const [showTranslation, setShowTranslation] = useState(false);
   const [sceneMode, setSceneMode] = useState<'off' | 'radio' | 'visual' | 'edit'>('off');
   const [parsedScenes, setParsedScenes] = useState<ParsedScene[]>([]);
+  const [showSceneProps, setShowSceneProps] = useState(false);
+  const [editingSceneIdx, setEditingSceneIdx] = useState<number | null>(null);
 
   // 현재 선택된 에피소드 원고에서 장면 파싱
   const handleSceneMode = useCallback((mode: 'radio' | 'visual' | 'edit') => {
@@ -58,6 +60,23 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
     () => generateVoiceMappings(config.characters ?? []),
     [config.characters],
   );
+
+  const handleExportHTML = useCallback(() => {
+    if (parsedScenes.length === 0) return;
+    const title = config.title || '비주얼 노벨';
+    const html = exportScenesAsHTML(parsedScenes, title);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9가-힣]/g, '_')}_visual_novel.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [parsedScenes, config.title]);
+
+  const updateSceneProp = useCallback((idx: number, key: 'location' | 'timeOfDay' | 'mood' | 'backgroundPrompt', value: string) => {
+    setParsedScenes(prev => prev.map((s, i) => i === idx ? { ...s, [key]: value } : s));
+  }, []);
 
   return (
     <>
@@ -96,6 +115,20 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           }`}>
           <Film className="w-3 h-3" /> {language === 'KO' ? '③ 비주얼 노벨' : '③ Visual Novel'}
         </button>
+        {parsedScenes.length > 0 && (
+          <>
+            <button onClick={() => setShowSceneProps(!showSceneProps)}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+                showSceneProps ? 'bg-accent-green text-white border-accent-green' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+              }`}>
+              <Settings2 className="w-3 h-3" /> {language === 'KO' ? '속성' : 'Props'}
+            </button>
+            <button onClick={handleExportHTML}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary transition-all flex items-center gap-1.5">
+              <Download className="w-3 h-3" /> HTML
+            </button>
+          </>
+        )}
       </div>
       {showShare && (
         <ShareToNetwork
@@ -114,6 +147,54 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
       )}
       {showTranslation && (
         <TranslationPanel language={language} config={config} setConfig={setConfig} />
+      )}
+      {/* 장면 속성 패널 */}
+      {showSceneProps && parsedScenes.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="bg-bg-secondary/50 border border-border/30 rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-mono font-semibold text-text-primary uppercase tracking-wider mb-2">
+              {language === 'KO' ? '장면 속성 편집' : 'Scene Properties'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto">
+              {parsedScenes.map((scene, idx) => (
+                <div key={scene.id} className={`border rounded-lg p-3 space-y-2 transition-colors ${editingSceneIdx === idx ? 'border-accent-purple/50 bg-accent-purple/5' : 'border-border/20 bg-bg-primary/50'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-text-primary">{scene.title}</span>
+                    <button onClick={() => setEditingSceneIdx(editingSceneIdx === idx ? null : idx)} className="text-[9px] text-accent-purple">
+                      {editingSceneIdx === idx ? (language === 'KO' ? '접기' : 'Close') : (language === 'KO' ? '편집' : 'Edit')}
+                    </button>
+                  </div>
+                  {editingSceneIdx === idx && (
+                    <div className="space-y-1.5">
+                      <label className="block">
+                        <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '장소' : 'Location'}</span>
+                        <input value={scene.location ?? ''} onChange={e => updateSceneProp(idx, 'location', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus:border-accent-purple" placeholder={language === 'KO' ? '예: 왕궁 정원' : 'e.g. Royal Garden'} />
+                      </label>
+                      <label className="block">
+                        <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '시간대' : 'Time'}</span>
+                        <select value={scene.timeOfDay ?? ''} onChange={e => updateSceneProp(idx, 'timeOfDay', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none">
+                          <option value="">-</option>
+                          {['새벽','아침','낮','저녁','밤'].map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '분위기' : 'Mood'}</span>
+                        <select value={scene.mood ?? ''} onChange={e => updateSceneProp(idx, 'mood', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none">
+                          <option value="">-</option>
+                          {['dark','bright','rainy','snowy','misty','eerie','warm','cold','peaceful'].map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '배경 이미지 프롬프트' : 'Background prompt'}</span>
+                        <input value={scene.backgroundPrompt ?? ''} onChange={e => updateSceneProp(idx, 'backgroundPrompt', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus:border-accent-purple" placeholder={language === 'KO' ? '이미지 생성용 프롬프트' : 'Prompt for image generation'} />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
       {sceneMode !== 'off' && !showTranslation && parsedScenes.length === 0 && (
         <div className="max-w-2xl mx-auto text-center py-16 px-4">

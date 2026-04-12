@@ -136,6 +136,7 @@ function BeatBlock({
   onDelete,
   onEdit,
   onInsertAfter,
+  onSplit,
   onDragStart,
   onDragOver,
   onDrop,
@@ -150,12 +151,15 @@ function BeatBlock({
   onEdit?: (text: string, type: BeatType) => void;
   onInsertAfter?: () => void;
   onDragStart: () => void;
+  onSplit?: (splitPos: number) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(beat.text);
   const [editType, setEditType] = useState<BeatType>(beat.type);
+  const [splitting, setSplitting] = useState(false);
+  const [splitPos, setSplitPos] = useState(0);
 
   const handleDoubleClick = () => {
     setEditText(beat.text);
@@ -169,6 +173,29 @@ function BeatBlock({
     }
     setEditing(false);
   };
+
+  if (splitting) {
+    return (
+      <div className={`relative px-2 py-2 rounded-lg border ${BEAT_COLORS[beat.type]} space-y-1.5`}>
+        <div className="text-[10px] text-text-secondary font-mono mb-1">분할 위치를 클릭하세요</div>
+        <div
+          className="text-[11px] text-text-primary leading-relaxed cursor-text select-none"
+          onClick={(e) => {
+            const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            if (range) setSplitPos(range.startOffset);
+          }}
+        >
+          <span className="bg-accent-blue/20">{beat.text.slice(0, splitPos)}</span>
+          <span className="border-l-2 border-accent-blue" />
+          <span>{beat.text.slice(splitPos)}</span>
+        </div>
+        <div className="flex gap-1 justify-end">
+          <button onClick={() => setSplitting(false)} className="px-2 py-0.5 text-[9px] text-text-tertiary hover:text-text-primary rounded">취소</button>
+          <button onClick={() => { onSplit?.(splitPos); setSplitting(false); }} className="px-2 py-0.5 text-[9px] bg-accent-blue/15 text-accent-blue rounded font-bold">분할</button>
+        </div>
+      </div>
+    );
+  }
 
   if (editing) {
     return (
@@ -236,6 +263,17 @@ function BeatBlock({
         </div>
       )}
 
+      {/* 분할 (호버) */}
+      {onSplit && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setSplitting(true); setSplitPos(Math.floor(beat.text.length / 2)); }}
+          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-accent-blue/20 transition-opacity"
+          aria-label="분할"
+        >
+          <Split className="h-3 w-3 text-accent-blue" />
+        </button>
+      )}
+
       {/* 삭제 (호버) */}
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -278,6 +316,7 @@ function SceneLane({
   onDeleteBeat,
   onEditBeat,
   onInsertBeat,
+  onSplitBeat,
   onPlayFrom,
   onDragStart,
   onDragOver,
@@ -293,6 +332,7 @@ function SceneLane({
   onDeleteBeat: (si: number, bi: number) => void;
   onEditBeat?: (si: number, bi: number, text: string, type: BeatType) => void;
   onInsertBeat?: (si: number, bi: number) => void;
+  onSplitBeat?: (si: number, bi: number, splitPos: number) => void;
   onPlayFrom?: (si: number, bi: number) => void;
   onDragStart: (si: number, bi: number) => void;
   onDragOver: (si: number, bi: number, e: React.DragEvent) => void;
@@ -352,6 +392,7 @@ function SceneLane({
                 onDelete={() => onDeleteBeat(sceneIndex, bi)}
                 onEdit={(text, type) => onEditBeat?.(sceneIndex, bi, text, type)}
                 onInsertAfter={() => onInsertBeat?.(sceneIndex, bi)}
+                onSplit={onSplitBeat ? (pos) => onSplitBeat(sceneIndex, bi, pos) : undefined}
                 onDragStart={() => onDragStart(sceneIndex, bi)}
                 onDragOver={(e) => onDragOver(sceneIndex, bi, e)}
                 onDrop={() => onDrop(sceneIndex, bi)}
@@ -510,6 +551,25 @@ export default function SceneTimeline({
     });
   }, [pushUndo, onScenesChange]);
 
+  // 비트 분할
+  const splitBeat = useCallback((si: number, bi: number, splitPos: number) => {
+    pushUndo();
+    setScenes((prev) => {
+      const next = prev.map((s, i) => {
+        if (i !== si) return s;
+        const beat = s.beats[bi];
+        if (!beat || splitPos <= 0 || splitPos >= beat.text.length) return s;
+        const firstHalf: SceneBeat = { ...beat, id: `beat-${Date.now()}-a`, text: beat.text.slice(0, splitPos).trim() };
+        const secondHalf: SceneBeat = { ...beat, id: `beat-${Date.now()}-b`, text: beat.text.slice(splitPos).trim() };
+        const beats = [...s.beats];
+        beats.splice(bi, 1, firstHalf, secondHalf);
+        return { ...s, beats };
+      });
+      onScenesChange(next);
+      return next;
+    });
+  }, [pushUndo, onScenesChange]);
+
   // 장면 추가
   const addScene = useCallback(() => {
     pushUndo();
@@ -609,6 +669,7 @@ export default function SceneTimeline({
             onDeleteBeat={deleteBeat}
             onEditBeat={(si2, bi, text, type) => editBeat(si2, bi, text, type)}
             onInsertBeat={(si2, bi) => insertBeat(si2, bi)}
+            onSplitBeat={(si2, bi, pos) => splitBeat(si2, bi, pos)}
             onPlayFrom={onPlayFrom}
             onDragStart={(si2, bi) => setDragSource({ sceneIndex: si2, beatIndex: bi })}
             onDragOver={(si2, bi, e) => e.preventDefault()}

@@ -657,3 +657,70 @@ export function createTTSController(): TTSController | null {
 }
 
 // IDENTITY_SEAL: PART-12 | role=tts-engine | inputs=text,VoiceMapping,Emotion | outputs=TTSController
+
+// ============================================================
+// PART 13 — HTML 내보내기
+// ============================================================
+
+/** 비주얼 노벨을 self-contained HTML 파일로 내보내기 */
+export function exportScenesAsHTML(
+  scenes: ParsedScene[],
+  title: string = '비주얼 노벨',
+): string {
+  const emotionEmoji = (e?: Emotion): string => {
+    if (!e) return '😐';
+    const entries = Object.entries(e) as [keyof Emotion, number][];
+    const dom = entries.sort((a, b) => b[1] - a[1])[0];
+    if (!dom || dom[1] < 0.2) return '😐';
+    const map: Record<string, string> = { joy: '😊', sadness: '😢', anger: '😠', fear: '😨', surprise: '😲' };
+    return map[dom[0]] ?? '😐';
+  };
+
+  const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const scenesHtml = scenes.map((scene, si) => {
+    const beatsHtml = scene.beats.map((beat) => {
+      const emoji = emotionEmoji(beat.emotion);
+      const speaker = beat.speaker ? `<span class="speaker">${escapeHtml(beat.speaker)}</span>` : '';
+      const typeClass = beat.type;
+      return `<div class="beat ${typeClass}">${speaker}<span class="emoji">${emoji}</span><p>${escapeHtml(beat.text)}</p></div>`;
+    }).join('\n');
+
+    return `<section class="scene" id="scene-${si}">
+  <h2>${escapeHtml(scene.title)}${scene.timeOfDay ? ` <small>${escapeHtml(scene.timeOfDay)}</small>` : ''}</h2>
+  <div class="tension-bar"><div class="fill" style="width:${scene.tension}%"></div></div>
+  ${beatsHtml}
+</section>`;
+  }).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:#0d1117;color:#e6e1d8;max-width:720px;margin:0 auto;padding:24px 16px}
+h1{text-align:center;font-size:1.5rem;margin-bottom:32px;color:#fbbf24}
+.scene{margin-bottom:40px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;background:rgba(255,255,255,0.02)}
+.scene h2{font-size:1rem;color:#fbbf24;margin-bottom:8px}
+.scene h2 small{font-size:0.75rem;color:#888;margin-left:8px}
+.tension-bar{height:4px;background:#222;border-radius:2px;margin-bottom:16px;overflow:hidden}
+.tension-bar .fill{height:100%;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);border-radius:2px}
+.beat{padding:8px 12px;margin:4px 0;border-radius:8px;border-left:3px solid transparent;line-height:1.7}
+.beat.dialogue{border-color:#22c55e;background:rgba(34,197,94,0.06)}
+.beat.narration{border-color:#3b82f6;background:rgba(59,130,246,0.04)}
+.beat.action{border-color:#f59e0b;background:rgba(245,158,11,0.06)}
+.beat.thought{border-color:#a855f7;background:rgba(168,85,247,0.06);font-style:italic}
+.beat.description{border-color:#64748b;background:rgba(100,116,139,0.04);font-size:0.9em}
+.speaker{display:inline-block;font-weight:700;color:#22c55e;margin-right:8px;font-size:0.85em}
+.emoji{margin-right:6px}
+.nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;background:#1a1a2e;padding:8px 16px;border-radius:24px;border:1px solid rgba(255,255,255,0.1)}
+.nav a{color:#fbbf24;text-decoration:none;font-size:0.8rem;padding:4px 12px;border-radius:12px}
+.nav a:hover{background:rgba(251,191,36,0.15)}
+</style></head><body>
+<h1>${escapeHtml(title)}</h1>
+${scenesHtml}
+<nav class="nav">${scenes.map((s, i) => `<a href="#scene-${i}">${i + 1}</a>`).join('')}</nav>
+</body></html>`;
+}
+
+// IDENTITY_SEAL: PART-13 | role=html-export | inputs=ParsedScene[],title | outputs=self-contained-HTML
