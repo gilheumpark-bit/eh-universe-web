@@ -4,7 +4,7 @@ import React from 'react';
 import { Film, ChevronDown } from 'lucide-react';
 import { DirectorReport, gradeFromScore } from '@/engine/director';
 import { AppLanguage } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 
 interface DirectorPanelProps {
   report: DirectorReport | null;
@@ -117,12 +117,12 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
 
         {/* Stats summary */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-border/50 text-[10px] text-text-tertiary font-mono">
-          {report.stats.ending_mono > 0 && <span>{({KO:'종결',EN:'End',JP:'語尾',CN:'结尾'}[language])}{report.stats.ending_mono}%</span>}
-          {report.stats.blur > 0 && <span>{({KO:'흐림',EN:'Blur',JP:'ぼかし',CN:'模糊'}[language])}{report.stats.blur}</span>}
-          {report.stats.gain_no_cost > 0 && <span>{({KO:'무대가',EN:'NoCost',JP:'無対価',CN:'无代价'}[language])}{report.stats.gain_no_cost}</span>}
-          {report.stats.ai_tone > 0 && <span>{({KO:'NOA톤',EN:'NOA',JP:'NOA',CN:'NOA'}[language])}{report.stats.ai_tone}</span>}
-          {report.stats.typo > 0 && <span>{({KO:'오타',EN:'Typo',JP:'誤字',CN:'错字'}[language])}{report.stats.typo}</span>}
-          {report.stats.similar_context > 0 && <span>{({KO:'반복',EN:'Repeat',JP:'繰返',CN:'重复'}[language])}{report.stats.similar_context}</span>}
+          {report.stats.ending_mono > 0 && <span>{L4(language, { ko: '종결', en: 'End', ja: '語尾', zh: '结尾' })}{report.stats.ending_mono}%</span>}
+          {report.stats.blur > 0 && <span>{L4(language, { ko: '흐림', en: 'Blur', ja: 'ぼかし', zh: '模糊' })}{report.stats.blur}</span>}
+          {report.stats.gain_no_cost > 0 && <span>{L4(language, { ko: '무대가', en: 'NoCost', ja: '無対価', zh: '无代价' })}{report.stats.gain_no_cost}</span>}
+          {report.stats.ai_tone > 0 && <span>{L4(language, { ko: 'NOA톤', en: 'NOA', ja: 'NOA', zh: 'NOA' })}{report.stats.ai_tone}</span>}
+          {report.stats.typo > 0 && <span>{L4(language, { ko: '오타', en: 'Typo', ja: '誤字', zh: '错字' })}{report.stats.typo}</span>}
+          {report.stats.similar_context > 0 && <span>{L4(language, { ko: '반복', en: 'Repeat', ja: '繰返', zh: '重复' })}{report.stats.similar_context}</span>}
         </div>
       </div>
     </details>

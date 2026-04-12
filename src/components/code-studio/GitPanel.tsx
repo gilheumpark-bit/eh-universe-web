@@ -33,6 +33,7 @@ import {
   FileText,
   Plus,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
 import {
@@ -822,15 +823,43 @@ export default function GitPanel({
       {/* Branch selector */}
       <div className="flex items-center gap-2 border-b border-border/30 px-2 py-1.5">
         <GitBranch size={14} className="shrink-0 text-accent-green" />
-        <select
-          value={currentBranch}
-          onChange={(e) => handleSwitchBranch(e.target.value)}
-          className="flex-1 rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-mono text-xs text-text-primary outline-none"
-        >
-          {branches.map((b) => (
-            <option key={b} value={b}>{b}</option>
-          ))}
-        </select>
+        <div className="relative flex-1 group/branch">
+          <select
+            value={currentBranch}
+            onChange={(e) => handleSwitchBranch(e.target.value)}
+            className="w-full rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-mono text-xs text-text-primary outline-none"
+          >
+            {branches.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+          {/* Branch delete — only non-current branches */}
+          {branches.length > 1 && (
+            <div className="absolute right-0 top-full z-10 mt-0.5 hidden w-full rounded border border-border/30 bg-bg-secondary shadow-lg group-focus-within/branch:block group-hover/branch:block">
+              {branches.filter((b) => b !== currentBranch).map((b) => (
+                <div key={b} className="flex items-center justify-between px-2 py-1 text-xs hover:bg-bg-primary/50">
+                  <span className="truncate font-mono text-text-secondary">{b}</span>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Delete branch '${b}'?`)) {
+                        setBranches((prev) => prev.filter((br) => br !== b));
+                        setBranchCommits((prev) => {
+                          const next = { ...prev };
+                          delete next[b];
+                          return next;
+                        });
+                      }
+                    }}
+                    className="ml-2 rounded p-0.5 text-accent-red/60 hover:bg-accent-red/10 hover:text-accent-red"
+                    title={L4(lang, { ko: `'${b}' 브랜치 삭제`, en: `Delete branch '${b}'` })}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         {showNewBranch ? (
           <div className="flex items-center gap-1">
             <input

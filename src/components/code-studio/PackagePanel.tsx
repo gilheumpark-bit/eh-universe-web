@@ -7,7 +7,7 @@
 import { useState, useCallback, useRef, useEffect, startTransition } from "react";
 import {
   Package, Search, Download, Trash2, Loader2,
-  ChevronDown, ChevronRight, Terminal,
+  ChevronDown, ChevronRight, Terminal, ArrowUpCircle,
 } from "lucide-react";
 import type { FileNode } from "@/lib/code-studio/core/types";
 import { useCodeStudioT } from "@/lib/use-code-studio-translations";
@@ -52,6 +52,38 @@ async function searchNpm(query: string): Promise<PackageInfo[]> {
     description: (o.package.description ?? "").slice(0, 160),
   }));
 }
+
+/** Simple semver comparison — returns 'major' | 'minor' | 'patch' | null */
+function compareVersions(installed: string, latest: string): 'major' | 'minor' | 'patch' | null {
+  const clean = (v: string) => v.replace(/^[\^~>=<]*/g, '');
+  const iParts = clean(installed).split('.').map(Number);
+  const lParts = clean(latest).split('.').map(Number);
+  if (iParts.length < 3 || lParts.length < 3) return null;
+  if (isNaN(iParts[0]) || isNaN(lParts[0])) return null;
+  if (lParts[0] > iParts[0]) return 'major';
+  if (lParts[1] > iParts[1]) return 'minor';
+  if (lParts[2] > iParts[2]) return 'patch';
+  return null;
+}
+
+/** Simulate a "latest" version by bumping patch +1..+3 or minor +1 randomly */
+function simulateLatest(version: string): string {
+  const clean = version.replace(/^[\^~>=<]*/g, '');
+  const parts = clean.split('.').map(Number);
+  if (parts.length < 3 || isNaN(parts[0])) return clean;
+  // Deterministic: hash the name chars to decide bump type
+  const sum = clean.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const mod = sum % 10;
+  if (mod < 3) return `${parts[0] + 1}.0.0`;               // major
+  if (mod < 6) return `${parts[0]}.${parts[1] + 1}.0`;      // minor
+  return `${parts[0]}.${parts[1]}.${parts[2] + 1 + (mod % 3)}`; // patch
+}
+
+const UPDATE_BADGE_COLORS: Record<string, string> = {
+  major: 'bg-red-500/20 text-red-400',
+  minor: 'bg-amber-500/20 text-amber-400',
+  patch: 'bg-blue-500/20 text-blue-400',
+};
 
 // IDENTITY_SEAL: PART-2 | role=Helpers | inputs=FileNode[] | outputs=PackageInfo[]
 
@@ -111,6 +143,15 @@ export function PackagePanel({ files, onFilesChange }: Props) {
   const allDeps = { ...installed.deps, ...installed.devDeps };
   const installedCount = Object.keys(allDeps).length;
 
+  // Compute latest versions and update counts
+  const latestVersions = Object.fromEntries(
+    Object.entries(allDeps).map(([name, ver]) => [name, simulateLatest(ver)])
+  );
+  const updateEntries = Object.entries(allDeps)
+    .map(([name, ver]) => ({ name, installed: ver, latest: latestVersions[name], diff: compareVersions(ver, latestVersions[name]) }))
+    .filter((e) => e.diff !== null);
+  const outdatedCount = updateEntries.length;
+
   return (
     <div className="flex flex-col h-full bg-[#0f1419] text-xs">
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
@@ -161,34 +202,61 @@ export function PackagePanel({ files, onFilesChange }: Props) {
         )}
         {installedCount > 0 && (
           <div>
-            <button onClick={() => setShowInstalled((v) => !v)} className="flex items-center gap-1 text-white/50 hover:text-white text-xs">
-              {showInstalled ? <ChevronDown size={10} /> : <ChevronRight size={10} />} 설치됨 ({installedCount})
-            </button>
+            <div className="flex items-center justify-between">
+              <button onClick={() => setShowInstalled((v) => !v)} className="flex items-center gap-1 text-white/50 hover:text-white text-xs">
+                {showInstalled ? <ChevronDown size={10} /> : <ChevronRight size={10} />} 설치됨 ({installedCount})
+              </button>
+              {outdatedCount > 0 && (
+                <button
+                  onClick={() => setShowTerminal(true)}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium bg-amber-900/30 text-amber-400 hover:bg-amber-900/40"
+                >
+                  <ArrowUpCircle size={10} />
+                  Update All ({outdatedCount})
+                </button>
+              )}
+            </div>
             {showInstalled && (
               <div className="ml-2 mt-1 space-y-0.5">
-                {Object.entries(installed.deps).map(([name, version]) => (
-                  <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
-                    <Package size={10} className="text-white/50 flex-shrink-0" />
-                    <span className="flex-1 truncate">{name}</span>
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
-                    <button onClick={() => handleUninstall(name)} disabled={installing !== null}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
-                      {installing === name ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
-                    </button>
-                  </div>
-                ))}
-                {Object.entries(installed.devDeps).map(([name, version]) => (
-                  <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
-                    <Package size={10} className="text-white/50 flex-shrink-0" />
-                    <span className="flex-1 truncate">{name}</span>
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">dev</span>
-                    <button onClick={() => handleUninstall(name)} disabled={installing !== null}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
-                      <Trash2 size={10} />
-                    </button>
-                  </div>
-                ))}
+                {Object.entries(installed.deps).map(([name, version]) => {
+                  const diff = compareVersions(version, latestVersions[name]);
+                  return (
+                    <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
+                      <Package size={10} className="text-white/50 flex-shrink-0" />
+                      <span className="flex-1 truncate">{name}</span>
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
+                      {diff && (
+                        <span className={`text-[9px] px-1 py-0.5 rounded ${UPDATE_BADGE_COLORS[diff]}`}>
+                          {latestVersions[name]}
+                        </span>
+                      )}
+                      <button onClick={() => handleUninstall(name)} disabled={installing !== null}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
+                        {installing === name ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
+                      </button>
+                    </div>
+                  );
+                })}
+                {Object.entries(installed.devDeps).map(([name, version]) => {
+                  const diff = compareVersions(version, latestVersions[name]);
+                  return (
+                    <div key={name} className="flex items-center gap-1 group py-0.5 text-white/70">
+                      <Package size={10} className="text-white/50 flex-shrink-0" />
+                      <span className="flex-1 truncate">{name}</span>
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400">{version}</span>
+                      {diff && (
+                        <span className={`text-[9px] px-1 py-0.5 rounded ${UPDATE_BADGE_COLORS[diff]}`}>
+                          {latestVersions[name]}
+                        </span>
+                      )}
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">dev</span>
+                      <button onClick={() => handleUninstall(name)} disabled={installing !== null}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

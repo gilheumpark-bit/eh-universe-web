@@ -63,6 +63,25 @@ export const ACTIVE_MODEL_OVERRIDES: Partial<Record<AITier, string>> = {};
 /**
  * Resolve configuration mapping per requested tier.
  */
+/**
+ * Auto-select the most appropriate tier for a given task context.
+ * Returns the tier ID string that can be passed to resolveTierConfig().
+ */
+export function selectTierForTask(context: {
+  codeLength: number;
+  taskType: 'edit' | 'generate' | 'analyze' | 'complete';
+  hasErrors?: boolean;
+}): AITier {
+  // t1-auditor: analysis tasks or error investigation
+  if (context.taskType === 'analyze' || context.hasErrors) return 't1-auditor';
+  // t2-composer: large code generation or architecture
+  if (context.codeLength > 200 || context.taskType === 'generate') return 't2-composer';
+  // t3-patcher: medium edits
+  if (context.codeLength > 50 && context.taskType === 'edit') return 't3-patcher';
+  // t4-predictor: small completions
+  return 't4-predictor';
+}
+
 export function resolveTierConfig(tier: AITier, currentStressLevel = 0): TierConfig {
   const config = { ...TIER_REGISTRY[tier] };
   

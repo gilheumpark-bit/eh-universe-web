@@ -280,16 +280,55 @@ h2 { font-size: 1.2em; margin-top: 1.5em; margin-bottom: 0.5em; }`);
 // PART 2 — DOCX Export (Office Open XML, store-mode ZIP)
 // ============================================================
 
+/** Detect whether a trimmed line is dialogue (starts with " or 「) */
+function isDialogueLine(line: string): boolean {
+  return /^[\u201C\u201D"\u300C\u300E"]/.test(line);
+}
+
+/** Detect chapter title lines (e.g. "제1장 ...", "Chapter 1 ...", "EP.1", "# Title") */
+function isChapterTitle(line: string): boolean {
+  return /^(제?\d+장|Chapter\s+\d+|EP\.\d+|#\s+)/i.test(line);
+}
+
+/** Build a DOCX paragraph XML string with proper styles */
+function buildDocxParagraph(trimmed: string): string {
+  if (!trimmed) {
+    return '<w:p><w:r><w:t xml:space="preserve"> </w:t></w:r></w:p>';
+  }
+
+  // Chapter title → Heading2 (18pt, bold)
+  if (isChapterTitle(trimmed)) {
+    return `<w:p><w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="360" w:after="200" w:line="360" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:b/><w:sz w:val="36"/></w:rPr><w:t xml:space="preserve">${escapeXml(trimmed)}</w:t></w:r></w:p>`;
+  }
+
+  // Dialogue line → hanging indent (left 600, hanging 300)
+  if (isDialogueLine(trimmed)) {
+    return `<w:p><w:pPr><w:spacing w:after="120" w:line="360" w:lineRule="auto"/><w:ind w:left="600" w:hanging="300"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(trimmed)}</w:t></w:r></w:p>`;
+  }
+
+  // Normal paragraph
+  return `<w:p><w:pPr><w:spacing w:after="120" w:line="360" w:lineRule="auto"/><w:ind w:firstLine="400"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(trimmed)}</w:t></w:r></w:p>`;
+}
+
 /** Generate and download a DOCX (Office Open XML) file from a chat session's manuscript content */
 export function exportDOCX(session: ChatSession): void {
   const encoder = new TextEncoder();
   const title = session.config.title || session.title || 'NOA Story';
+
+  // A4 page size in twips: 210mm=11906tw, 297mm=16838tw
+  // Margins: top/bottom 2.5cm=1418tw, left/right 2cm=1134tw
+  const sectionProps = `<w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1418" w:right="1134" w:bottom="1418" w:left="1134" w:header="720" w:footer="720" w:gutter="0"/>
+      <w:footerReference w:type="default" r:id="rId2"/>
+    </w:sectPr>`;
 
   const contentTypes = encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>
 </Types>`);
 
   const rels = encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -299,25 +338,44 @@ export function exportDOCX(session: ChatSession): void {
 
   const wordRels = encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
 </Relationships>`);
+
+  // Footer with page numbers
+  const footer = encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr><w:jc w:val="center"/></w:pPr>
+    <w:r>
+      <w:rPr><w:sz w:val="18"/><w:color w:val="888888"/></w:rPr>
+      <w:fldChar w:fldCharType="begin"/>
+    </w:r>
+    <w:r>
+      <w:rPr><w:sz w:val="18"/><w:color w:val="888888"/></w:rPr>
+      <w:instrText xml:space="preserve"> PAGE </w:instrText>
+    </w:r>
+    <w:r>
+      <w:rPr><w:sz w:val="18"/><w:color w:val="888888"/></w:rPr>
+      <w:fldChar w:fldCharType="end"/>
+    </w:r>
+  </w:p>
+</w:ftr>`);
 
   const paragraphs = session.messages
     .filter(m => m.role === 'assistant')
     .flatMap(m => m.content.split('\n'))
-    .map(line => {
-      const trimmed = line.trim();
-      if (!trimmed) return '<w:p><w:r><w:t xml:space="preserve"> </w:t></w:r></w:p>';
-      return `<w:p><w:pPr><w:spacing w:after="120" w:line="360" w:lineRule="auto"/><w:ind w:firstLine="400"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(trimmed)}</w:t></w:r></w:p>`;
-    })
+    .map(line => buildDocxParagraph(line.trim()))
     .join('\n');
 
-  const titlePara = `<w:p><w:pPr><w:spacing w:after="400"/><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>${escapeXml(title)}</w:t></w:r></w:p>`;
+  // Title → Heading1 (28pt, bold, center)
+  const titlePara = `<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:spacing w:after="400"/><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:b/><w:sz w:val="56"/></w:rPr><w:t>${escapeXml(title)}</w:t></w:r></w:p>`;
 
   const document = encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
     ${titlePara}
     ${paragraphs}
+    ${sectionProps}
   </w:body>
 </w:document>`);
 
@@ -325,6 +383,7 @@ export function exportDOCX(session: ChatSession): void {
     { name: '[Content_Types].xml', data: contentTypes },
     { name: '_rels/.rels', data: rels },
     { name: 'word/_rels/document.xml.rels', data: wordRels },
+    { name: 'word/footer1.xml', data: footer },
     { name: 'word/document.xml', data: document },
   ]);
 

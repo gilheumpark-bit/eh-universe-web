@@ -4,8 +4,8 @@
 // PART 1 — Types, constants, and planet loader
 // ============================================================
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Share2, X, Globe, Lock, Users as UsersIcon, Check, AlertCircle, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Share2, X, Globe, Lock, Users as UsersIcon, Check, AlertCircle, ChevronDown, Copy, ExternalLink } from 'lucide-react';
 import type { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
@@ -72,6 +72,8 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
   const [publishStatus, setPublishStatus] = useState<PublishStatus>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
   const [ingestWarning, setIngestWarning] = useState<string | null>(null);
+  const [publishedPostId, setPublishedPostId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Planet selection for network publish
   const [planets, setPlanets] = useState<PlanetRecord[]>([]);
@@ -146,6 +148,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
       });
 
       setPublishStatus('success');
+      setPublishedPostId(postRecord.id);
       onShare?.({ type: shareType, title, content, visibility, publishedPostId: postRecord.id });
 
       const idToken = await user.getIdToken();
@@ -169,7 +172,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
         }
       });
 
-      setTimeout(() => onClose(), 2000);
+      // Don't auto-close — let user see the link and copy it
     } catch (caught) {
       setPublishStatus('error');
       setPublishError(
@@ -189,6 +192,28 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
   };
 
   const selectedPlanet = planets.find(p => p.id === selectedPlanetId);
+
+  // Content preview for pre-publish review
+  const contentPreview = useMemo(() => {
+    const full = buildContent();
+    return full.length > 300 ? full.slice(0, 300) + '...' : full;
+  }, [shareType, messages, config]);
+
+  const publishedUrl = publishedPostId ? `/network/posts/${publishedPostId}` : null;
+
+  const handleCopyLink = async () => {
+    if (!publishedUrl) return;
+    const fullUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}${publishedUrl}`
+      : publishedUrl;
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Fallback: select-copy not available in all contexts
+    }
+  };
 
   // IDENTITY_SEAL: PART-2 | role=main share modal component | inputs=studio config, messages, auth | outputs=share/publish UI
 
@@ -313,6 +338,27 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           </div>
         </div>
 
+        {/* Content preview (before publish) */}
+        {publishStatus !== 'success' && (
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest">
+              {isKO ? '미리보기' : 'Preview'}
+            </label>
+            <div className="bg-bg-secondary/50 border border-border/50 rounded-xl px-4 py-2.5 space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+              <p className="text-[10px] font-bold text-text-secondary">{title || (isKO ? '(제목 없음)' : '(No title)')}</p>
+              <p className="text-[10px] text-text-tertiary leading-relaxed whitespace-pre-wrap">{contentPreview || (isKO ? '(내용 없음)' : '(No content)')}</p>
+              <div className="flex gap-2 mt-1">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent-purple/10 text-accent-purple font-mono">
+                  {SHARE_TYPES.find(st => st.value === shareType)?.[isKO ? 'ko' : 'en']}
+                </span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-text-tertiary font-mono">
+                  {VISIBILITIES.find(v => v.value === visibility)?.[isKO ? 'ko' : 'en']}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Info */}
         <div className="text-[10px] text-text-tertiary bg-bg-secondary/50 border border-border/50 rounded-xl px-4 py-2.5">
           {shareType === 'episode' && (
@@ -337,9 +383,32 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           </div>
         )}
         {publishStatus === 'success' && (
-          <div className="flex items-center gap-2 text-[11px] text-green-400 bg-green-900/20 border border-green-800/40 rounded-xl px-4 py-2.5">
-            <Check className="w-4 h-4" />
-            {isKO ? '네트워크에 게시되었습니다!' : 'Published to Network!'}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-[11px] text-green-400 bg-green-900/20 border border-green-800/40 rounded-xl px-4 py-2.5">
+              <Check className="w-4 h-4" />
+              {isKO ? '네트워크에 게시되었습니다!' : 'Published to Network!'}
+            </div>
+            {publishedUrl && (
+              <div className="flex items-center gap-2 bg-bg-secondary/50 border border-border/50 rounded-xl px-4 py-2.5">
+                <ExternalLink className="w-3.5 h-3.5 text-accent-purple shrink-0" />
+                <a href={publishedUrl} className="text-[11px] text-accent-purple hover:underline truncate flex-1">
+                  {publishedUrl}
+                </a>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-accent-purple/15 text-accent-purple hover:bg-accent-purple/25 transition-colors shrink-0"
+                >
+                  <Copy className="w-3 h-3" />
+                  {linkCopied
+                    ? (isKO ? '복사됨' : 'Copied!')
+                    : (isKO ? '링크 복사' : 'Copy Link')
+                  }
+                </button>
+              </div>
+            )}
+            {linkCopied && (
+              <p className="text-[10px] text-green-400 text-center">{isKO ? '클립보드에 복사됨' : 'Copied to clipboard'}</p>
+            )}
           </div>
         )}
         {publishStatus === 'error' && publishError && (

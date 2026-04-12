@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Bug, Trash2, Circle, ToggleLeft, ToggleRight,
   AlertTriangle, Info, XCircle, Play, Square,
+  Eye, Plus, X,
 } from "lucide-react";
 import {
   startConsoleCapture,
@@ -193,6 +194,102 @@ function BreakpointsSection() {
 // IDENTITY_SEAL: PART-3 | role=BreakpointsSection | inputs=debugger | outputs=JSX
 
 // ============================================================
+// PART 3.5 — Variables / Watch Section
+// ============================================================
+
+interface WatchVariable {
+  expression: string;
+  value: string;
+}
+
+function VariablesSection() {
+  const [watchExpressions, setWatchExpressions] = useState<string[]>([]);
+  const [newExpr, setNewExpr] = useState("");
+  const [variables] = useState<WatchVariable[]>([]);
+
+  const addWatch = useCallback(() => {
+    const trimmed = newExpr.trim();
+    if (!trimmed || watchExpressions.includes(trimmed)) return;
+    setWatchExpressions(prev => [...prev, trimmed]);
+    setNewExpr("");
+  }, [newExpr, watchExpressions]);
+
+  const removeWatch = useCallback((idx: number) => {
+    setWatchExpressions(prev => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addWatch();
+    }
+  }, [addWatch]);
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-bg-tertiary border-b border-border">
+        <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Variables</span>
+        <Eye size={11} className="text-text-tertiary" />
+      </div>
+      <div className="max-h-[240px] overflow-y-auto scrollbar-thin">
+        {/* Runtime variables (scaffold - empty until WebContainer integration) */}
+        {variables.length === 0 && watchExpressions.length === 0 && (
+          <div className="px-3 py-4 text-center text-[10px] text-text-tertiary">
+            No variables in scope. Add watch expressions below.
+          </div>
+        )}
+
+        {/* Runtime variables list */}
+        {variables.map((v, idx) => (
+          <div key={idx} className="flex items-center justify-between px-3 py-1 text-[11px] font-mono border-b border-border/50">
+            <span className="text-accent-blue truncate max-w-[45%]">{v.expression}</span>
+            <span className="text-text-primary truncate max-w-[50%] text-right">{v.value}</span>
+          </div>
+        ))}
+
+        {/* Watch expressions */}
+        {watchExpressions.map((expr, idx) => (
+          <div key={idx} className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-mono border-b border-border/50 group hover:bg-bg-tertiary">
+            <Eye size={9} className="text-accent-purple shrink-0" />
+            <span className="text-accent-purple truncate flex-1">{expr}</span>
+            <span className="text-text-tertiary italic text-[10px]">pending</span>
+            <button
+              onClick={() => removeWatch(idx)}
+              className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all shrink-0"
+              title="Remove"
+            >
+              <X size={10} />
+            </button>
+          </div>
+        ))}
+
+        {/* Add watch input */}
+        <div className="flex items-center gap-1 px-3 py-1.5 border-t border-border/50">
+          <input
+            type="text"
+            value={newExpr}
+            onChange={(e) => setNewExpr(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Add watch expression..."
+            className="flex-1 bg-transparent text-[10px] font-mono text-text-primary placeholder:text-text-tertiary outline-none"
+          />
+          <button
+            onClick={addWatch}
+            disabled={!newExpr.trim()}
+            className="p-0.5 text-text-tertiary hover:text-accent-green transition-colors disabled:opacity-30"
+            title="Add watch"
+          >
+            <Plus size={11} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// IDENTITY_SEAL: PART-3.5 | role=VariablesSection | inputs=state | outputs=JSX
+
+// ============================================================
 // PART 4 — Main DebugPanel Component
 // ============================================================
 
@@ -210,6 +307,7 @@ export function DebugPanel() {
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <ConsoleSection />
         <BreakpointsSection />
+        <VariablesSection />
       </div>
     </div>
   );

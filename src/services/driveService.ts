@@ -25,7 +25,7 @@ async function deriveKey(passphrase: string): Promise<CryptoKey> {
 }
 
 async function encryptData(data: string, passphrase: string): Promise<string> {
-  const key = await deriveKey(passphrase);
+  const key = await getCachedKey(passphrase);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(data);
   const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
@@ -43,14 +43,44 @@ async function decryptData(stored: string, passphrase: string): Promise<string> 
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
   const iv = bytes.slice(0, 12);
   const ciphertext = bytes.slice(12);
-  const key = await deriveKey(passphrase);
+  const key = await getCachedKey(passphrase);
   const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
   return new TextDecoder().decode(decrypted);
 }
 
 // Encryption passphrase = user UID (설정 가능)
 let _encryptionPassphrase: string | null = null;
-export function setDriveEncryptionKey(uid: string): void { _encryptionPassphrase = `noa:${uid}`; }
+
+/** Cached derived CryptoKey to avoid re-running PBKDF2 on every call */
+let _cachedDerivedKey: CryptoKey | null = null;
+let _cachedPassphrase: string | null = null;
+
+async function getCachedKey(passphrase: string): Promise<CryptoKey> {
+  if (_cachedDerivedKey && _cachedPassphrase === passphrase) return _cachedDerivedKey;
+  _cachedDerivedKey = await deriveKey(passphrase);
+  _cachedPassphrase = passphrase;
+  return _cachedDerivedKey;
+}
+
+export function setDriveEncryptionKey(uid: string): void {
+  const next = `noa:${uid}`;
+  if (_encryptionPassphrase !== next) {
+    _cachedDerivedKey = null;
+    _cachedPassphrase = null;
+  }
+  _encryptionPassphrase = next;
+}
+
+/** Returns the current encryption status */
+export function getEncryptionStatus(): { active: boolean; method: 'AES-GCM-256' | 'none' } {
+  if (_encryptionPassphrase) return { active: true, method: 'AES-GCM-256' };
+  return { active: false, method: 'none' };
+}
+
+/** Checks if data starts with the NOA encryption prefix */
+export function isDataEncrypted(data: string): boolean {
+  return data.startsWith(ENCRYPTION_PREFIX);
+}
 
 export interface DriveFile {
   id: string;

@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { AppLanguage } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
@@ -125,7 +125,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
             <div className="bg-bg-secondary p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-text-secondary">{language === 'KO' ? '로컬 저장 용량' : 'Local Storage'}</span>
+                <span className="text-xs text-text-secondary">{L4(language, { ko: '로컬 저장 용량', en: 'Local Storage' })}</span>
                 {storageEstimate && storageEstimate.quota > 0 ? (() => {
                   const usageMB = storageEstimate.usage / 1024 / 1024;
                   const quotaMB = storageEstimate.quota / 1024 / 1024;
@@ -156,7 +156,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 )}
               </div>
               {storageEstimate && storageEstimate.quota > 0 && (storageEstimate.usage / storageEstimate.quota) > 0.8 && (
-                <p className="text-[10px] text-red-400">{language === 'KO' ? '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.' : 'Storage nearly full. Delete old sessions or export a backup.'}</p>
+                <p className="text-[10px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.' })}</p>
               )}
             </div>
           </div>
@@ -191,9 +191,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 </div>
                 {hasPersonalApiKey && isKeyExpiringSoon(apiProvider) && (
                   <div className="text-[8px] md:text-[9px] text-accent-amber">
-                    {language === 'KO'
-                      ? `키 갱신 권장 (${getKeyAge(apiProvider)}일)`
-                      : `Rotate key (${getKeyAge(apiProvider)}d old)`}
+                    {L4(language, { ko: `키 갱신 권장 (${getKeyAge(apiProvider)}일)`, en: `Rotate key (${getKeyAge(apiProvider)}d old)` })}
                   </div>
                 )}
               </div>
@@ -211,12 +209,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Shield className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">
-                    {language === 'KO' ? '저장된 키 암호화' : 'Encrypt Saved Keys'}
+                    {L4(language, { ko: '저장된 키 암호화', en: 'Encrypt Saved Keys' })}
                   </div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
-                    {language === 'KO'
-                      ? '평문으로 저장된 API 키를 난독화 포맷으로 재저장합니다'
-                      : 'Re-saves any plain-text API keys in obfuscated format'}
+                    {L4(language, { ko: '평문으로 저장된 API 키를 난독화 포맷으로 재저장합니다', en: 'Re-saves any plain-text API keys in obfuscated format' })}
                   </div>
                 </div>
               </div>
@@ -268,17 +264,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <div className="md:col-span-2 ds-card-lg">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <Shield className="w-4 h-4 text-green-500" /> {language === 'KO' ? '자동 백업 (10분 간격)' : 'Auto Backup (every 10 min)'}
+                <Shield className="w-4 h-4 text-green-500" /> {L4(language, { ko: '자동 백업 (10분 간격)', en: 'Auto Backup (every 10 min)' })}
               </h3>
               {onRefreshBackups && (
-                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors" title={language === 'KO' ? '목록 새로고침' : 'Refresh list'}>
-                  {language === 'KO' ? '새로고침' : 'Refresh'}
+                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors" title={L4(language, { ko: '목록 새로고침', en: 'Refresh list' })}>
+                  {L4(language, { ko: '새로고침', en: 'Refresh' })}
                 </button>
               )}
             </div>
             {versionedBackups.length === 0 ? (
               <div className="text-sm text-text-tertiary py-4 text-center">
-                {language === 'KO' ? '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.' : 'No backups yet. Auto-backup runs every 10 minutes.'}
+                {L4(language, { ko: '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.', en: 'No backups yet. Auto-backup runs every 10 minutes.' })}
               </div>
             ) : (
               <div className="space-y-2">
@@ -287,22 +283,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                     <div>
                       <div className="text-xs font-bold text-text-primary">{new Date(b.timestamp).toLocaleString()}</div>
                       <div className="text-[10px] text-text-tertiary font-mono">
-                        {language === 'KO' ? '자동 백업' : 'Auto backup'}
+                        {L4(language, { ko: '자동 백업', en: 'Auto backup' })}
                       </div>
                     </div>
                     <button
                       onClick={async () => {
                         const ok = await onRestoreBackup(b.timestamp);
                         if (ok) {
-                          showAlert(language === 'KO' ? '백업에서 복원되었습니다.' : 'Restored from backup.');
+                          showAlert(L4(language, { ko: '백업에서 복원되었습니다.', en: 'Restored from backup.' }));
                         } else {
-                          showAlert(language === 'KO' ? '복원에 실패했습니다.' : 'Restore failed.');
+                          showAlert(L4(language, { ko: '복원에 실패했습니다.', en: 'Restore failed.' }));
                         }
                       }}
                       className="text-[10px] font-bold font-mono uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors px-3 py-1.5 border border-blue-500/30 rounded-lg hover:bg-blue-500/10"
-                      title={language === 'KO' ? '이 백업으로 복원' : 'Restore from this backup'}
+                      title={L4(language, { ko: '이 백업으로 복원', en: 'Restore from this backup' })}
                     >
-                      {language === 'KO' ? '복원' : 'Restore'}
+                      {L4(language, { ko: '복원', en: 'Restore' })}
                     </button>
                   </div>
                 ))}
@@ -388,12 +384,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-accent-purple shrink-0" />
                 <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate">{language === 'KO' ? '서사 깊이' : 'Narrative Depth'}</div>
+                  <div className="text-xs md:text-sm font-bold truncate">{L4(language, { ko: '서사 깊이', en: 'Narrative Depth' })}</div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
-                    {narrativeDepth <= 0.9 ? (language === 'KO' ? '평작 — 가독성 우선' : 'Light — Readability first') :
-                     narrativeDepth <= 1.0 ? (language === 'KO' ? '기본 — 장르 균형' : 'Standard — Genre balance') :
-                     narrativeDepth <= 1.2 ? (language === 'KO' ? '심화 — 비유/상징 활용' : 'Deep — Metaphor/symbolism') :
-                     (language === 'KO' ? '최대 — 문예 수준 밀도' : 'Maximum — Literary density')}
+                    {narrativeDepth <= 0.9 ? L4(language, { ko: '평작 — 가독성 우선', en: 'Light — Readability first' }) :
+                     narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance' }) :
+                     narrativeDepth <= 1.2 ? L4(language, { ko: '심화 — 비유/상징 활용', en: 'Deep — Metaphor/symbolism' }) :
+                     L4(language, { ko: '최대 — 문예 수준 밀도', en: 'Maximum — Literary density' })}
                   </div>
                 </div>
               </div>

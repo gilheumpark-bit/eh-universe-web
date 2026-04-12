@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import { useLang, L2 } from "@/lib/LangContext";
 import ToolNav from "@/components/tools/ToolNav";
+import { X, RotateCcw } from "lucide-react";
 
 /* ─── ZONE DATA ─── */
 const ZONES = [
@@ -102,8 +104,145 @@ const CALCS = [
   { label: { ko: "\uc778\ub958 \ud589\uc131\uacc4 (3%)", en: "Human Systems (3%)" }, val: "~6,000", color: "#cc2222" },
 ];
 
+/* ─── ZONE EDIT TYPES ─── */
+const STORAGE_KEY = "noa_galaxy_map_edits";
+const GRADE_OPTIONS = ["—", "S", "A", "B", "C", "D", "E", "S~A", "A~B", "B~D", "C~E", "D~E"];
+
+interface ZoneEdit {
+  id: string;
+  range: string;
+  grade: string;
+}
+
+type EditedZones = Record<string, ZoneEdit>;
+
+function loadEdits(): EditedZones {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveEdits(edits: EditedZones) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(edits));
+}
+
+/* ─── ZONE EDIT PANEL ─── */
+function ZoneEditPanel({
+  zone, edits, en,
+  onSave, onClose, onReset,
+}: {
+  zone: typeof ZONES[number];
+  edits: EditedZones;
+  en: boolean;
+  onSave: (edit: ZoneEdit) => void;
+  onClose: () => void;
+  onReset: () => void;
+}) {
+  const current = edits[zone.id] ?? { id: zone.id, range: zone.range, grade: zone.grade };
+  const [range, setRange] = useState(current.range);
+  const [grade, setGrade] = useState(current.grade);
+
+  useEffect(() => {
+    const c = edits[zone.id] ?? { range: zone.range, grade: zone.grade };
+    setRange(c.range);
+    setGrade(c.grade);
+  }, [zone.id, edits, zone.range, zone.grade]);
+
+  return (
+    <div className="fixed right-0 top-0 h-full w-80 bg-bg-secondary border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: zone.color }} />
+          <span className="text-sm font-bold font-mono">{zone.id}</span>
+        </div>
+        <button onClick={onClose} className="p-1 hover:bg-bg-tertiary rounded transition-colors">
+          <X className="w-4 h-4 text-text-tertiary" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* Zone Name (display only for id) */}
+        <div>
+          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-1">
+            {en ? "Zone Name" : "구역 이름"}
+          </label>
+          <div className="bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary">
+            {zone.id}
+          </div>
+        </div>
+
+        {/* Range */}
+        <div>
+          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-1">
+            {en ? "Range" : "범위"}
+          </label>
+          <input
+            type="text"
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none"
+          />
+        </div>
+
+        {/* Grade */}
+        <div>
+          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-1">
+            {en ? "Grade" : "등급"}
+          </label>
+          <select
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none"
+          >
+            {GRADE_OPTIONS.map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Description preview */}
+        <div>
+          <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block mb-1">
+            {en ? "Description" : "설명"}
+          </label>
+          <p className="text-xs text-text-tertiary leading-relaxed">
+            {en ? zone.en : zone.ko}
+          </p>
+        </div>
+      </div>
+
+      <div className="px-4 py-3 border-t border-border space-y-2">
+        <button
+          onClick={() => onSave({ id: zone.id, range, grade })}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+        >
+          {en ? "Save Changes" : "변경 저장"}
+        </button>
+        <button
+          onClick={onReset}
+          className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-bg-tertiary text-text-secondary rounded-lg text-xs font-bold hover:bg-bg-tertiary/80 transition-colors"
+        >
+          <RotateCcw className="w-3 h-3" />
+          {en ? "Reset to Default" : "기본값 복원"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── SVG COMPONENTS ─── */
-function GalaxyMapSVG() {
+function GalaxyMapSVG({ onZoneClick }: { onZoneClick?: (id: string) => void }) {
+  const zoneCircles: { id: string; cx: number; cy: number; r: number; color: string }[] = [
+    { id: "RED", cx: 250, cy: 250, r: 245, color: "#cc2222" },
+    { id: "AMBER", cx: 250, cy: 250, r: 237, color: "#cc6622" },
+    { id: "YELLOW", cx: 250, cy: 250, r: 228, color: "#c8a020" },
+    { id: "BLUE", cx: 250, cy: 250, r: 200, color: "#2980b9" },
+    { id: "GREEN", cx: 250, cy: 250, r: 168, color: "#2a7a44" },
+    { id: "BLACK", cx: 250, cy: 250, r: 78, color: "#333355" },
+  ];
   return (
     <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Galaxy zone map showing concentric zones from BLACK core to RED warzone" className="w-full max-w-[600px] mx-auto" style={{ fontFamily: "var(--font-mono, monospace)" }}>
       <circle cx="250" cy="250" r="245" fill="none" stroke="#cc2222" strokeWidth="8" opacity="0.5"/>
@@ -114,6 +253,20 @@ function GalaxyMapSVG() {
       <circle cx="250" cy="250" r="168" fill="#080f0c" stroke="#2a7a44" strokeWidth="0.8" opacity="0.4"/>
       <circle cx="250" cy="250" r="78" fill="#0a0a10" stroke="#333355" strokeWidth="0.5" opacity="0.5"/>
       <circle cx="250" cy="250" r="3" fill="#555566"/>
+      {/* Clickable zone overlays */}
+      {onZoneClick && zoneCircles.map((zc) => (
+        <circle
+          key={`click-${zc.id}`}
+          cx={zc.cx} cy={zc.cy} r={zc.r}
+          fill="transparent"
+          stroke="transparent"
+          strokeWidth="12"
+          className="cursor-pointer hover:stroke-white/20 transition-all"
+          onClick={(e) => { e.stopPropagation(); onZoneClick(zc.id); }}
+        >
+          <title>{zc.id}</title>
+        </circle>
+      ))}
       {/* Gate Hubs */}
       {[[250,140],[345,195],[345,305],[250,360],[155,305],[155,195]].map(([x,y],i) => (
         <circle key={i} cx={x} cy={y} r="5" fill="#4488cc" opacity="0.8"/>
@@ -171,10 +324,57 @@ function WarzoneCalcSVG() {
 export default function GalaxyMapPage() {
   const { lang } = useLang();
   const en = lang !== "ko";
+  const [editedZones, setEditedZones] = useState<EditedZones>({});
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+
+  // Load edits from localStorage on mount
+  useEffect(() => {
+    setEditedZones(loadEdits());
+  }, []);
+
+  const handleZoneClick = useCallback((id: string) => {
+    setSelectedZoneId(id);
+  }, []);
+
+  const handleSaveEdit = useCallback((edit: ZoneEdit) => {
+    const next = { ...editedZones, [edit.id]: edit };
+    setEditedZones(next);
+    saveEdits(next);
+    setSelectedZoneId(null);
+  }, [editedZones]);
+
+  const handleResetAll = useCallback(() => {
+    setEditedZones({});
+    if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
+    setSelectedZoneId(null);
+  }, []);
+
+  // Merge edits with original data for display
+  const getZoneDisplay = useCallback((z: typeof ZONES[number]) => {
+    const edit = editedZones[z.id];
+    return {
+      ...z,
+      range: edit?.range ?? z.range,
+      grade: edit?.grade ?? z.grade,
+    };
+  }, [editedZones]);
+
+  const selectedZone = selectedZoneId ? ZONES.find(z => z.id === selectedZoneId) : null;
 
   return (
     <>
       <Header />
+      {/* Zone edit side panel */}
+      {selectedZone && (
+        <ZoneEditPanel
+          zone={selectedZone}
+          edits={editedZones}
+          en={en}
+          onSave={handleSaveEdit}
+          onClose={() => setSelectedZoneId(null)}
+          onReset={handleResetAll}
+        />
+      )}
       <main className="pt-24">
         <div className="site-shell py-16 md:py-20">
           <ToolNav
@@ -203,7 +403,12 @@ export default function GalaxyMapPage() {
               </p>
 
               <div className="mb-8">
-                <GalaxyMapSVG />
+                <GalaxyMapSVG onZoneClick={handleZoneClick} />
+                {Object.keys(editedZones).length > 0 && (
+                  <p className="text-center text-[10px] text-accent-amber mt-2 font-mono">
+                    {en ? `${Object.keys(editedZones).length} zone(s) edited (click zone to modify)` : `${Object.keys(editedZones).length}개 구역 수정됨 (구역 클릭하여 편집)`}
+                  </p>
+                )}
               </div>
 
               {/* Zone Table */}
@@ -219,19 +424,27 @@ export default function GalaxyMapPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ZONES.map((z) => (
-                      <tr key={z.id} className="border-b border-border/50">
-                        <td className="p-2">
-                          <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold tracking-wider text-white font-mono" style={{ background: z.color }}>
-                            {z.id}
-                          </span>
-                        </td>
-                        <td className="p-2 text-text-secondary font-mono">{z.range}</td>
-                        <td className="p-2 text-text-secondary font-mono">{z.net}</td>
-                        <td className="p-2 text-text-secondary font-mono">{z.gate}</td>
-                        <td className="p-2 text-text-secondary">{en ? z.en : z.ko}</td>
-                      </tr>
-                    ))}
+                    {ZONES.map((z) => {
+                      const display = getZoneDisplay(z);
+                      const isEdited = !!editedZones[z.id];
+                      return (
+                        <tr
+                          key={z.id}
+                          className={`border-b border-border/50 cursor-pointer hover:bg-bg-secondary/30 transition-colors ${isEdited ? 'bg-accent-amber/5' : ''}`}
+                          onClick={() => handleZoneClick(z.id)}
+                        >
+                          <td className="p-2">
+                            <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold tracking-wider text-white font-mono" style={{ background: z.color }}>
+                              {z.id}
+                            </span>
+                          </td>
+                          <td className="p-2 text-text-secondary font-mono">{display.range}</td>
+                          <td className="p-2 text-text-secondary font-mono">{z.net}</td>
+                          <td className="p-2 text-text-secondary font-mono">{z.gate}</td>
+                          <td className="p-2 text-text-secondary">{en ? z.en : z.ko}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

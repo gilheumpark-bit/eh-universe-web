@@ -9,7 +9,7 @@ import { showAlert } from '@/lib/show-alert';
 import React, { useState, useRef, useCallback } from 'react';
 import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider, hasDgxService } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { ErrorToast, StreamingIndicator } from './UXHelpers';
@@ -273,7 +273,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey && !hasDgxService()) {
-      alert(language === 'KO' ? 'API 키가 필요합니다. 설정에서 등록해주세요.' : 'API key required. Please add one in Settings.');
+      alert(L4(language, { ko: 'API 키가 필요합니다. 설정에서 등록해주세요.', en: 'API key required. Please add one in Settings.' }));
       return;
     }
 

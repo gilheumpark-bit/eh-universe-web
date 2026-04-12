@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Globe, Users, BookOpen, X } from 'lucide-react';
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
+
+// ============================================================
+// PART 1 — Constants and types
+// ============================================================
 
 interface ReferenceSplitPaneProps {
   config: StoryConfig;
@@ -12,9 +16,85 @@ interface ReferenceSplitPaneProps {
 
 type RefTab = 'world' | 'chars' | 'rulebook';
 
+const STORAGE_KEY = 'noa_ref_pane_width';
+const DEFAULT_WIDTH = 320;
+const MIN_WIDTH = 200;
+
+function clampWidth(w: number): number {
+  const maxWidth = typeof window !== 'undefined' ? window.innerWidth * 0.5 : 600;
+  return Math.min(Math.max(w, MIN_WIDTH), maxWidth);
+}
+
+function loadPersistedWidth(): number {
+  if (typeof window === 'undefined') return DEFAULT_WIDTH;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed) && parsed >= MIN_WIDTH) return clampWidth(parsed);
+    }
+  } catch { /* SSR / security error — ignore */ }
+  return DEFAULT_WIDTH;
+}
+
+// ============================================================
+// PART 2 — Component
+// ============================================================
+
 export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplitPaneProps) {
   const isKO = language === 'KO';
   const [tab, setTab] = useState<RefTab>('chars');
+  const [width, setWidth] = useState<number>(loadPersistedWidth);
+
+  // Drag state refs (avoid re-renders during drag)
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
+  const handleRef = useRef<HTMLDivElement>(null);
+
+  // Persist width to localStorage on change
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, String(width)); } catch { /* ignore */ }
+  }, [width]);
+
+  // --- Drag handlers ---
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging.current) return;
+    // Handle is on the left edge, so dragging left = wider
+    const delta = startX.current - e.clientX;
+    setWidth(clampWidth(startWidth.current + delta));
+  }, []);
+
+  const onMouseUp = useCallback(() => {
+    isDragging.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+  }, [onMouseMove]);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    startX.current = e.clientX;
+    startWidth.current = width;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, [width, onMouseMove, onMouseUp]);
+
+  const onHandleDoubleClick = useCallback(() => {
+    setWidth(DEFAULT_WIDTH);
+  }, []);
+
+  // Cleanup listeners on unmount
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [onMouseMove, onMouseUp]);
 
   const tabs: { id: RefTab; icon: typeof Globe; label: string }[] = [
     { id: 'world', icon: Globe, label: isKO ? '세계관' : 'World' },
@@ -23,7 +103,21 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
   ];
 
   return (
-    <div className="flex flex-col h-full border-l border-border bg-bg-primary/95 backdrop-blur-sm animate-in slide-in-from-right duration-300">
+    <div
+      className="relative flex flex-col h-full border-l border-border bg-bg-primary/95 backdrop-blur-sm animate-in slide-in-from-right duration-300"
+      style={{ width }}
+    >
+      {/* Resize handle — 4px bar on the left edge */}
+      <div
+        ref={handleRef}
+        onMouseDown={onMouseDown}
+        onDoubleClick={onHandleDoubleClick}
+        className="absolute left-0 top-0 bottom-0 w-[4px] cursor-col-resize z-10 group"
+        aria-label="Resize handle"
+      >
+        <div className="absolute inset-0 bg-transparent transition-colors group-hover:bg-accent-amber/30 group-active:bg-accent-amber/50" />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
         <div className="flex gap-0.5">

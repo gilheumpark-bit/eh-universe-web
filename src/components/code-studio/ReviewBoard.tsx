@@ -4,10 +4,11 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Shield, Eye, Accessibility, Code2, Gauge,
   Play, CheckCircle, Loader2, AlertTriangle,
+  MessageSquare, Filter,
 } from 'lucide-react';
 import { runStaticPipeline, type PipelineResult } from '@/lib/code-studio/pipeline/pipeline';
 
@@ -172,8 +173,26 @@ function scoreColor(score: number): string {
   return 'text-accent-red';
 }
 
-const ReviewerCard: React.FC<ReviewerCardProps> = ({ persona, result }) => {
+interface ReviewerCardExtProps extends ReviewerCardProps {
+  selectedFinding: string | null;
+  onSelectFinding: (key: string | null) => void;
+  comments: Map<string, string[]>;
+  onAddComment: (findingKey: string, text: string) => void;
+  severityFilter: Set<string>;
+}
+
+const ReviewerCard: React.FC<ReviewerCardExtProps> = ({
+  persona, result, selectedFinding, onSelectFinding, comments, onAddComment, severityFilter,
+}) => {
+  const [commentText, setCommentText] = useState('');
   const status = result?.status ?? 'pending';
+
+  const visibleFindings = useMemo(() => {
+    if (!result) return [];
+    return result.findings
+      .map((f, i) => ({ ...f, idx: i }))
+      .filter((f) => severityFilter.has(f.severity));
+  }, [result, severityFilter]);
 
   return (
     <div className="bg-bg-secondary border border-border rounded-xl p-4 space-y-3">
@@ -209,17 +228,67 @@ const ReviewerCard: React.FC<ReviewerCardProps> = ({ persona, result }) => {
       </div>
 
       {/* Findings */}
-      {status === 'done' && result != null && result.findings.length > 0 && (
+      {status === 'done' && result != null && visibleFindings.length > 0 && (
         <ul className="space-y-1.5">
-          {result.findings.map((f, i) => (
-            <li
-              key={`${persona.id}-f-${i}`}
-              className={`flex items-start gap-2 text-[11px] rounded-lg px-2.5 py-1.5 ${SEVERITY_BG[f.severity]}`}
-            >
-              <AlertTriangle className={`w-3 h-3 mt-0.5 flex-shrink-0 ${SEVERITY_COLORS[f.severity]}`} />
-              <span className="text-text-secondary">{f.message}</span>
-            </li>
-          ))}
+          {visibleFindings.map((f) => {
+            const findingKey = `${persona.id}-${f.idx}`;
+            const isSelected = selectedFinding === findingKey;
+            const commentCount = comments.get(findingKey)?.length ?? 0;
+
+            return (
+              <li key={findingKey} className="space-y-1">
+                <button
+                  onClick={() => onSelectFinding(isSelected ? null : findingKey)}
+                  className={`flex w-full items-start gap-2 text-[11px] rounded-lg px-2.5 py-1.5 text-left transition-all ${
+                    isSelected
+                      ? 'ring-2 ring-accent-blue ' + SEVERITY_BG[f.severity]
+                      : SEVERITY_BG[f.severity] + ' hover:opacity-80'
+                  }`}
+                >
+                  <AlertTriangle className={`w-3 h-3 mt-0.5 flex-shrink-0 ${SEVERITY_COLORS[f.severity]}`} />
+                  <span className="flex-1 text-text-secondary">{f.message}</span>
+                  {commentCount > 0 && (
+                    <span className="flex items-center gap-0.5 text-[9px] text-accent-blue shrink-0">
+                      <MessageSquare className="w-3 h-3" />
+                      {commentCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Inline comment input */}
+                {isSelected && (
+                  <div className="ml-5 space-y-1">
+                    {(comments.get(findingKey) ?? []).map((c, ci) => (
+                      <div key={ci} className="text-[10px] text-text-secondary bg-bg-tertiary rounded px-2 py-1">
+                        {c}
+                      </div>
+                    ))}
+                    <div className="flex gap-1">
+                      <textarea
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder="Add a comment..."
+                        rows={2}
+                        className="flex-1 bg-bg-primary border border-border rounded px-2 py-1 text-[10px] text-text-primary resize-none outline-none focus-visible:ring-2 ring-accent-blue"
+                      />
+                      <button
+                        onClick={() => {
+                          if (commentText.trim()) {
+                            onAddComment(findingKey, commentText.trim());
+                            setCommentText('');
+                          }
+                        }}
+                        disabled={!commentText.trim()}
+                        className="self-end px-2 py-1 bg-accent-blue/20 text-accent-blue text-[10px] rounded hover:bg-accent-blue/30 disabled:opacity-30"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -248,8 +317,32 @@ export interface ReviewBoardProps {
 export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.JSX.Element {
   const [results, setResults] = useState<Record<string, ReviewerResult>>({});
   const [isRunning, setIsRunning] = useState(false);
+  const [selectedFinding, setSelectedFinding] = useState<string | null>(null);
+  const [comments, setComments] = useState<Map<string, string[]>>(new Map());
+  const [severityFilter, setSeverityFilter] = useState<Set<string>>(new Set(['error', 'warning', 'info']));
 
   const isKo = language === 'ko' || language === 'KO';
+
+  const toggleSeverity = useCallback((sev: string) => {
+    setSeverityFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(sev)) {
+        if (next.size > 1) next.delete(sev); // keep at least one active
+      } else {
+        next.add(sev);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleAddComment = useCallback((findingKey: string, text: string) => {
+    setComments((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(findingKey) ?? [];
+      next.set(findingKey, [...existing, text]);
+      return next;
+    });
+  }, []);
 
   /**
    * Run all reviewers sequentially.
@@ -331,7 +424,7 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
         </button>
       </div>
 
-      {/* Summary bar */}
+      {/* Summary bar + severity filter */}
       {completedResults.length > 0 && (
         <div className="flex items-center gap-4 px-4 py-2 border-b border-border bg-bg-tertiary text-[10px]">
           <span className="text-text-secondary">
@@ -345,6 +438,23 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
               {errorCount} critical
             </span>
           )}
+          {/* Severity filter toggles */}
+          <div className="ml-auto flex items-center gap-1">
+            <Filter className="w-3 h-3 text-text-tertiary" />
+            {(['error', 'warning', 'info'] as const).map((sev) => (
+              <button
+                key={sev}
+                onClick={() => toggleSeverity(sev)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-all ${
+                  severityFilter.has(sev)
+                    ? SEVERITY_BG[sev] + ' ' + SEVERITY_COLORS[sev]
+                    : 'bg-bg-primary text-text-tertiary opacity-50'
+                }`}
+              >
+                {sev}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -360,6 +470,11 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
               key={persona.id}
               persona={persona}
               result={results[persona.id] ?? null}
+              selectedFinding={selectedFinding}
+              onSelectFinding={setSelectedFinding}
+              comments={comments}
+              onAddComment={handleAddComment}
+              severityFilter={severityFilter}
             />
           ))
         )}
