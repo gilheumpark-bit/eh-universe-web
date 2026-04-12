@@ -425,6 +425,11 @@ export function getActiveProvider(): ProviderId {
   return provider;
 }
 
+/** DGX Spark 서비스 모드 여부 (API 키 없이 AI 사용 가능) */
+export function hasDgxService(): boolean {
+  return typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
+}
+
 /** Persist the active AI provider selection to localStorage */
 export function setActiveProvider(id: ProviderId): void {
   if (typeof window === "undefined") return;

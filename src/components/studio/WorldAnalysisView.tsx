@@ -9,7 +9,7 @@ import { Search, Loader2, BookOpen, Layers, Map, Users, Zap, AlertTriangle, Copy
 import { logger } from '@/lib/logger';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { streamChat, getApiKey, getActiveProvider, hasDgxService } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 
 interface WorldAnalysisViewProps {
@@ -180,7 +180,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
     if (!trimmed) return;
 
     const provider = getActiveProvider();
-    if (!getApiKey(provider)) {
+    if (!getApiKey(provider) && !hasDgxService()) {
       setError(t('worldAnalysis.apiKeyAlert'));
       return;
     }

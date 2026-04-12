@@ -8,7 +8,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Bot, User, Trash2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
-import { streamChat, getApiKey, getActiveProvider, getActiveModel } from '@/lib/ai-providers';
+import { streamChat, getApiKey, getActiveProvider, getActiveModel, hasDgxService } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
 import { classifyError } from './UXHelpers';
@@ -471,7 +471,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
   const backendLabel = useStudioBackendLabel(language, hostedProviders);
 
   // Check AI access: local key OR hosted provider
-  const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()]);
+  const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()] || hasDgxService());
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
     if (typeof window === 'undefined') return [];

@@ -10,7 +10,7 @@ import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import PlanningView from './PlanningView';
 import TabAssistant from './TabAssistant';
-import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { getApiKey, getActiveProvider, hasDgxService } from '@/lib/ai-providers';
 import WorldAnalysisView from './WorldAnalysisView';
 import WorldTimeline from './WorldTimeline';
 import WorldMap from './WorldMap';
@@ -166,7 +166,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               </div>
             </div>
           )}
-          <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} hasAiAccess={!!getApiKey(getActiveProvider()) || Object.values(hostedProviders).some(Boolean)} />
+          <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} hasAiAccess={!!getApiKey(getActiveProvider()) || Object.values(hostedProviders).some(Boolean) || hasDgxService()} />
           <div className="max-w-6xl mx-auto px-4 pb-4">
             <TabAssistant tab="world" language={language} config={config} hostedProviders={hostedProviders} />
           </div>
