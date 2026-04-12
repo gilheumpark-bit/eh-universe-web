@@ -10,9 +10,12 @@ interface StudioStatusBarProps {
   writingMode: string;
   activeTab: string;
   saveFlash: boolean;
+  isSaving?: boolean;
   isGenerating: boolean;
   language: AppLanguage;
   currentSession: ChatSession | null;
+  lastSaveTime?: number;
+  isDirty?: boolean;
 }
 
 const MODE_LABELS: Record<string, { ko: string; en: string }> = {
@@ -24,7 +27,7 @@ const MODE_LABELS: Record<string, { ko: string; en: string }> = {
 };
 
 export function StudioStatusBar({
-  editDraft, writingMode, activeTab, saveFlash, isGenerating, language, currentSession,
+  editDraft, writingMode, activeTab, saveFlash, isSaving, isGenerating, language, currentSession, lastSaveTime, isDirty,
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
@@ -68,10 +71,21 @@ export function StudioStatusBar({
             <Loader2 className="w-3 h-3 animate-spin" />
             {isKO ? '생성 중' : 'Generating'}
           </span>
+        ) : isSaving ? (
+          <span className="flex items-center gap-1 text-accent-amber">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            {isKO ? '저장 중...' : 'Saving...'}
+          </span>
         ) : saveFlash ? (
           <span className="flex items-center gap-1 text-accent-green">
             <Save className="w-3 h-3" />
             {isKO ? '저장됨' : 'Saved'}
+            {lastSaveTime ? <span className="text-text-quaternary ml-1">{new Date(lastSaveTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> : null}
+          </span>
+        ) : isDirty ? (
+          <span className="flex items-center gap-1 text-accent-amber">
+            <Circle className="w-2 h-2 fill-accent-amber text-accent-amber" />
+            {isKO ? '미저장' : 'Unsaved'}
           </span>
         ) : (
           <span className="flex items-center gap-1">

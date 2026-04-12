@@ -120,6 +120,22 @@ export default function WritingTabInline(props: Props) {
   });
 
   const t = createT(language);
+
+  // #4 파일 드래그앤드롭
+  const [isDragOver, setIsDragOver] = useState(false);
+  const handleFileDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    if (!file.name.match(/\.(txt|md|json)$/i)) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result as string;
+      if (text) setEditDraft(editDraft ? editDraft + '\n\n---\n\n' + text : text);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }, [setEditDraft, editDraft]);
   const [splitView, setSplitView] = useState<'chat' | 'reference' | null>(null);
   const isKO = language === 'KO';
   const textMenu = useTextAreaContextMenu(language);
@@ -307,6 +323,31 @@ export default function WritingTabInline(props: Props) {
                   {isKO ? '엔진' : 'Engine'}
                 </button>
               </>
+            )}
+            {/* Undo/Redo — 편집 모드에서만 표시 */}
+            {writingMode === 'edit' && (
+              <div className="flex items-center gap-0.5 ml-2 pl-2 border-l border-border/40">
+                <button
+                  type="button"
+                  onClick={() => undoStack.undo()}
+                  disabled={!undoStack.canUndo}
+                  className={`p-1.5 rounded-lg transition-colors ${undoStack.canUndo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
+                  title={isKO ? '실행취소 (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
+                  aria-label="Undo"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => undoStack.redo()}
+                  disabled={!undoStack.canRedo}
+                  className={`p-1.5 rounded-lg transition-colors ${undoStack.canRedo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
+                  title={isKO ? '다시실행 (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
+                  aria-label="Redo"
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
             {/* Split view toggles */}
             <div className="hidden lg:flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
@@ -498,17 +539,29 @@ export default function WritingTabInline(props: Props) {
                   />
                 )}
 
-                <textarea
-                  ref={editDraftRef}
-                  data-zen-editor
-                  value={editDraft}
-                  onChange={e => setEditDraft(e.target.value)}
-                  onKeyDown={handleWritingKeyDown}
-                  onContextMenu={textMenu.openMenu}
-                  autoFocus
-                  className="w-full min-h-[70vh] bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl px-8 py-8 md:px-12 md:py-10 text-base md:text-lg font-serif leading-[2] tracking-wide focus:border-accent-amber/40 focus:shadow-[0_0_24px_rgba(202,161,92,0.08)] outline-none transition-all resize-none"
-                  placeholder={isKO ? '여기에 이야기를 써 내려가세요...' : 'Start writing your story here...'}
-                />
+                <div
+                  className="relative"
+                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={handleFileDrop}
+                >
+                  {isDragOver && (
+                    <div className="absolute inset-0 bg-accent-amber/10 border-2 border-dashed border-accent-amber rounded-2xl z-10 flex items-center justify-center pointer-events-none">
+                      <span className="text-accent-amber font-bold text-sm">{isKO ? '파일을 놓아서 원고 가져오기' : 'Drop file to import manuscript'}</span>
+                    </div>
+                  )}
+                  <textarea
+                    ref={editDraftRef}
+                    data-zen-editor
+                    value={editDraft}
+                    onChange={e => setEditDraft(e.target.value)}
+                    onKeyDown={handleWritingKeyDown}
+                    onContextMenu={textMenu.openMenu}
+                    autoFocus
+                    className="w-full min-h-[70vh] bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl px-8 py-8 md:px-12 md:py-10 text-base md:text-lg font-serif leading-[2] tracking-wide focus:border-accent-amber/40 focus:shadow-[0_0_24px_rgba(202,161,92,0.08)] outline-none transition-all resize-none"
+                    placeholder={isKO ? '여기에 이야기를 써 내려가세요... (TXT/MD 파일을 끌어다 놓을 수도 있어요)' : 'Start writing here... (or drag & drop a TXT/MD file)'}
+                  />
+                </div>
                 <InlineActionPopup
                   textareaRef={editDraftRef}
                   language={language}

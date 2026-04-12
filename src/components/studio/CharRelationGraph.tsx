@@ -611,7 +611,7 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
                 {selectedChar.name.slice(0, 2)}
               </div>
               <div className="min-w-0">
-                <h4 className="text-sm font-black text-white truncate">{selectedChar.name}</h4>
+                <h4 className="text-sm font-black text-text-primary truncate">{selectedChar.name}</h4>
                 <p className="text-[9px] text-text-tertiary uppercase font-bold tracking-wider">{selectedChar.role}</p>
               </div>
             </div>
@@ -637,7 +637,7 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
                       className="w-full flex items-center gap-2 bg-black/20 border border-border/30 rounded-lg px-3 py-1.5 text-left hover:border-white/20 transition-colors"
                     >
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: style.color }} />
-                      <span className="text-[10px] font-bold text-white truncate">{other?.name}</span>
+                      <span className="text-[10px] font-bold text-text-primary truncate">{other?.name}</span>
                       <span className="text-[9px] font-bold ml-auto shrink-0" style={{ color: style.color }}>
                         {isKO ? style.ko : style.en}
                       </span>

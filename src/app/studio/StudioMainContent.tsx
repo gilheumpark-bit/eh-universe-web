@@ -5,8 +5,9 @@
 // ============================================================
 import { type RefObject } from 'react';
 import { useState } from 'react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
-  Menu, X, Save, Download,
+  Menu, X, Save, Download, Undo2, Redo2,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
   Key, Sparkles,
 } from 'lucide-react';
@@ -244,9 +245,17 @@ export default function StudioMainContent(props: StudioMainContentProps) {
   } = props;
 
   const t = createT(language);
+  const isOnline = useOnlineStatus();
 
   return (
     <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
+      {/* 오프라인 배너 */}
+      {!isOnline && (
+        <div className="bg-accent-red/15 border-b border-accent-red/30 px-4 py-2 flex items-center justify-center gap-2 text-xs font-bold text-accent-red z-50 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-accent-red animate-pulse" />
+          {isKO ? '인터넷 연결이 끊겼습니다. AI 기능이 작동하지 않습니다.' : 'No internet connection. AI features are unavailable.'}
+        </div>
+      )}
       {focusMode && (
         <button onClick={() => setFocusMode(false)}
           className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-30 hover:opacity-100"
