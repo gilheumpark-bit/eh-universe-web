@@ -111,6 +111,69 @@ function buildAuditIssues(
     }
   }
 
+  // ── Auto-Check: 미번역 세그먼트 감지 (source == target) ──
+  if (s.length > 20 && r.length > 20) {
+    const srcLines = s.split(/\r?\n/).filter((l) => l.trim().length > 5);
+    const resLines = r.split(/\r?\n/).filter((l) => l.trim().length > 5);
+    let untranslated = 0;
+    const checkLen = Math.min(srcLines.length, resLines.length);
+    for (let i = 0; i < checkLen; i++) {
+      if (srcLines[i].trim() === resLines[i].trim()) untranslated++;
+    }
+    if (untranslated > 0 && checkLen > 0) {
+      const pct = Math.round((untranslated / checkLen) * 100);
+      if (pct > 10) {
+        issues.push({
+          id: 'untranslated-segments',
+          type: 'warning',
+          text: `미번역 세그먼트 ${untranslated}개 감지 (${pct}%) — 원문과 동일한 줄이 있습니다.`,
+          severity: pct > 50 ? 'high' : 'medium',
+        });
+      }
+    }
+  }
+
+  // ── Auto-Check: 숫자 일관성 검사 ──
+  if (s.length > 10 && r.length > 10) {
+    const srcNums = (s.match(/\d+/g) ?? []).sort();
+    const resNums = (r.match(/\d+/g) ?? []).sort();
+    const srcSet = new Set(srcNums);
+    const missing = srcNums.filter((n) => !new Set(resNums).has(n));
+    const extra = resNums.filter((n) => !srcSet.has(n));
+    if (missing.length > 0 || extra.length > 0) {
+      const parts: string[] = [];
+      if (missing.length > 0) parts.push(`누락: ${missing.slice(0, 5).join(', ')}`);
+      if (extra.length > 0) parts.push(`추가: ${extra.slice(0, 5).join(', ')}`);
+      issues.push({
+        id: 'number-consistency',
+        type: 'warning',
+        text: `숫자 불일치 — ${parts.join(' / ')}`,
+        severity: missing.length > 3 ? 'high' : 'medium',
+      });
+    }
+  }
+
+  // ── Auto-Check: 길이 비율 경고 (>2x 또는 <0.5x) ──
+  if (s.length > 30 && r.length > 0) {
+    const ratio = r.length / s.length;
+    if (ratio > 2.0 && !issues.some((i) => i.id === 'length-too-long')) {
+      issues.push({
+        id: 'length-ratio-high',
+        type: 'warning',
+        text: `번역문이 원문의 ${Math.round(ratio * 100)}% — 지나치게 길 수 있습니다.`,
+        severity: ratio > 3.0 ? 'high' : 'medium',
+      });
+    }
+    if (ratio < 0.5 && !issues.some((i) => i.id === 'length-too-short')) {
+      issues.push({
+        id: 'length-ratio-low',
+        type: 'warning',
+        text: `번역문이 원문의 ${Math.round(ratio * 100)}% — 심각한 내용 누락 가능`,
+        severity: ratio < 0.3 ? 'high' : 'medium',
+      });
+    }
+  }
+
   return issues;
 }
 
@@ -152,6 +215,22 @@ export function AuditPanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3 pointer-events-auto">
+        {/* Auto-check summary */}
+        {issues.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5 text-[11px] text-text-tertiary">
+            <ShieldAlert className="w-3.5 h-3.5 text-accent-amber shrink-0" />
+            <span>
+              {issues.filter((i) => i.severity === 'high').length > 0
+                ? `${issues.filter((i) => i.severity === 'high').length} high / `
+                : ''}
+              {issues.filter((i) => i.severity === 'medium').length > 0
+                ? `${issues.filter((i) => i.severity === 'medium').length} medium / `
+                : ''}
+              {issues.filter((i) => i.severity === 'low').length} low
+              {' '}&mdash; {issues.length}개 자동 점검 항목
+            </span>
+          </div>
+        )}
         {issues.map((issue) => (
           <div key={issue.id} className="flex gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
             <div className="shrink-0 mt-0.5">

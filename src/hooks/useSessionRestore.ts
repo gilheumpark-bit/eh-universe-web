@@ -84,6 +84,32 @@ async function loadSession(): Promise<SessionSnapshot | null> {
 // IDENTITY_SEAL: PART-2 | role=IndexedDB | inputs=SessionSnapshot | outputs=save/load
 
 // ============================================================
+// PART 2.5 — Validation
+// ============================================================
+
+/** Validate that a restored snapshot has valid structure and required fields */
+function validateSnapshot(data: unknown): data is SessionSnapshot {
+  if (data == null || typeof data !== "object") return false;
+  const s = data as Record<string, unknown>;
+  // savedAt must be a valid ISO string
+  if (typeof s.savedAt !== "string" || isNaN(Date.parse(s.savedAt))) return false;
+  // openFiles must be an array of strings
+  if (!Array.isArray(s.openFiles) || s.openFiles.some((f: unknown) => typeof f !== "string")) return false;
+  // projectId: string | null
+  if (s.projectId !== null && typeof s.projectId !== "string") return false;
+  // activeFile: string | null
+  if (s.activeFile !== null && typeof s.activeFile !== "string") return false;
+  // activePanel: string | null
+  if (s.activePanel !== null && typeof s.activePanel !== "string") return false;
+  // sidebarWidth: number (reasonable bounds)
+  if (typeof s.sidebarWidth !== "number" || s.sidebarWidth < 0 || s.sidebarWidth > 2000) return false;
+  // Reject snapshots older than 30 days (stale data)
+  const age = Date.now() - new Date(s.savedAt).getTime();
+  if (age > 30 * 24 * 60 * 60 * 1000) return false;
+  return true;
+}
+
+// ============================================================
 // PART 3 — React Hook
 // ============================================================
 
@@ -118,13 +144,39 @@ export function useSessionRestore({
   const restoredRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Restore on mount (once)
+  // Restore on mount (once) — with validation and fallback
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    loadSession().then((snapshot) => {
-      if (snapshot && onRestore) onRestore(snapshot);
-    });
+    loadSession()
+      .then((raw) => {
+        if (raw == null) {
+          if (process.env.NODE_ENV === "development") {
+            console.debug("[SessionRestore] No previous session found");
+          }
+          return;
+        }
+        if (!validateSnapshot(raw)) {
+          console.warn("[SessionRestore] Corrupted or stale session data — discarding", raw);
+          // Clear corrupted data to prevent repeated warnings
+          saveSession({
+            savedAt: new Date().toISOString(),
+            projectId: null,
+            openFiles: [],
+            activeFile: null,
+            activePanel: null,
+            sidebarWidth: 260,
+          });
+          return;
+        }
+        if (process.env.NODE_ENV === "development") {
+          console.debug("[SessionRestore] Restored session from", raw.savedAt);
+        }
+        if (onRestore) onRestore(raw);
+      })
+      .catch((err) => {
+        console.warn("[SessionRestore] Restore failed — starting fresh", err);
+      });
   }, [onRestore]);
 
   // Auto-save (debounced)

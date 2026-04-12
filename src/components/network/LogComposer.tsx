@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import type { PlanetStatus, ReportType } from "@/lib/network-types";
@@ -8,6 +9,58 @@ import {
   REPORT_TYPE_LABELS,
   pickNetworkLabel,
 } from "@/lib/network-labels";
+
+// ============================================================
+// PART 0 - LOG CATEGORIES
+// ============================================================
+
+export type LogCategory = "dev" | "translation" | "worldbuild" | "patch" | "other";
+
+interface LogCategoryDef {
+  id: LogCategory;
+  icon: string;
+  label: { ko: string; en: string };
+  template: { ko: string; en: string };
+  tag: string;
+}
+
+const LOG_CATEGORIES: LogCategoryDef[] = [
+  {
+    id: "dev",
+    icon: "\uD83D\uDEE0\uFE0F",
+    label: { ko: "\uAC1C\uBC1C \uB85C\uADF8", en: "Dev Log" },
+    template: { ko: "## \uAC1C\uBC1C \uB85C\uADF8\n\n### \uBCC0\uACBD \uC0AC\uD56D\n- \n\n### \uBE44\uACE0\n", en: "## Dev Log\n\n### Changes\n- \n\n### Notes\n" },
+    tag: "dev-log",
+  },
+  {
+    id: "translation",
+    icon: "\uD83C\uDF10",
+    label: { ko: "\uBC88\uC5ED \uB85C\uADF8", en: "Translation Log" },
+    template: { ko: "## \uBC88\uC5ED \uB85C\uADF8\n\n### \uBC88\uC5ED \uBC94\uC704\n- \n\n### \uC6A9\uC5B4 \uBCC0\uACBD\n", en: "## Translation Log\n\n### Scope\n- \n\n### Glossary Changes\n" },
+    tag: "translation-log",
+  },
+  {
+    id: "worldbuild",
+    icon: "\uD83C\uDF0D",
+    label: { ko: "\uC138\uACC4\uAD00 \uC5C5\uB370\uC774\uD2B8", en: "Worldbuild Update" },
+    template: { ko: "## \uC138\uACC4\uAD00 \uC5C5\uB370\uC774\uD2B8\n\n### \uBCC0\uACBD \uD56D\uBAA9\n- \n\n### \uC601\uD5A5 \uBC94\uC704\n", en: "## Worldbuild Update\n\n### Changes\n- \n\n### Impact Scope\n" },
+    tag: "worldbuild",
+  },
+  {
+    id: "patch",
+    icon: "\uD83D\uDCCB",
+    label: { ko: "\uD328\uCE58 \uB178\uD2B8", en: "Patch Notes" },
+    template: { ko: "## \uD328\uCE58 \uB178\uD2B8\n\n### \uC2E0\uADDC\n- \n\n### \uC218\uC815\n- \n\n### \uC54C\uB824\uC9C4 \uBB38\uC81C\n", en: "## Patch Notes\n\n### New\n- \n\n### Fixed\n- \n\n### Known Issues\n" },
+    tag: "patch-notes",
+  },
+  {
+    id: "other",
+    icon: "\uD83D\uDCDD",
+    label: { ko: "\uAE30\uD0C0", en: "Other" },
+    template: { ko: "", en: "" },
+    tag: "",
+  },
+];
 
 export interface LogComposerPlanetOption {
   id: string;
@@ -53,6 +106,8 @@ export function LogComposer({
   onInsertTemplate,
   onSubmit,
 }: LogComposerProps) {
+  const [selectedCategory, setSelectedCategory] = useState<LogCategory | null>(null);
+
   const handleField = <K extends keyof LogComposerValue>(key: K, nextValue: LogComposerValue[K]) => {
     onChange({
       ...value,
@@ -60,8 +115,48 @@ export function LogComposer({
     });
   };
 
+  const applyCategory = (catId: LogCategory) => {
+    const cat = LOG_CATEGORIES.find((c) => c.id === catId);
+    if (!cat) return;
+    setSelectedCategory(catId);
+    const tplText = L4(lang, cat.template);
+    const nextContent = tplText ? tplText : value.content;
+    const nextTitle = value.title || L4(lang, cat.label);
+    onChange({
+      ...value,
+      content: nextContent,
+      title: nextTitle,
+      eventCategory: value.eventCategory || cat.tag,
+    });
+  };
+
   return (
     <div className="premium-panel-soft p-5 md:p-6">
+      {/* Category Selector */}
+      <div className="mb-4">
+        <div className="mb-2 text-sm text-text-secondary">
+          {L4(lang, { ko: "\uB85C\uADF8 \uCE74\uD14C\uACE0\uB9AC", en: "Log Category" })}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {LOG_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => applyCategory(cat.id)}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                selectedCategory === cat.id
+                  ? "border-accent-amber/40 bg-accent-amber/10 text-accent-amber"
+                  : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16 hover:text-text-primary"
+              }`}
+            >
+              <span>{cat.icon}</span>
+              <span>{L4(lang, cat.label)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         {showPlanetSelect ? (
           <label className="block">

@@ -324,6 +324,13 @@ export interface EngineReport {
   issues: ValidationIssue[];
   processingTimeMs: number;
   worldUpdates?: Record<string, unknown>;
+  /** Per-stage pipeline execution timing (ms) */
+  stageTiming?: {
+    worldUpdateParse?: number;
+    scoring?: number;
+    stripArtifacts?: number;
+    total?: number;
+  };
 }
 
 // ============================================================

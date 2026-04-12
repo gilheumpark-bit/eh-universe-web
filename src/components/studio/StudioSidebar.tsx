@@ -632,8 +632,19 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         <span className="font-mono text-[10px] font-black w-5 text-right shrink-0 text-text-tertiary z-10">
                           {i + 1}
                         </span>
-                        <span className="truncate font-mono text-[11px] font-semibold z-10 relative">
-                          {s.title}
+                        <span className="flex flex-col min-w-0 z-10 relative">
+                          <span className="truncate font-mono text-[11px] font-semibold">
+                            {s.title}
+                          </span>
+                          {(() => {
+                            const ms = s.config?.manuscripts?.find(m => m.episode === s.config.episode);
+                            const summary = ms?.summary;
+                            return (
+                              <span className="truncate text-[10px] text-text-tertiary leading-tight mt-0.5 line-clamp-2">
+                                {summary || (language === 'KO' ? '요약 생성 중...' : 'Generating summary...')}
+                              </span>
+                            );
+                          })()}
                         </span>
                       </button>
                     ))}

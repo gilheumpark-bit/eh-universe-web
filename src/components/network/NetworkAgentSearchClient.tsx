@@ -13,6 +13,37 @@ interface SearchMessage {
   content: string;
   results?: NetworkSearchResult[];
   isError?: boolean;
+  queryTerms?: string[];
+}
+
+/** Compute a simple relevance percentage for a search result against the query */
+function computeRelevance(query: string, result: NetworkSearchResult): number {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return 50;
+  const haystack = `${result.title} ${result.snippet}`.toLowerCase();
+  let matched = 0;
+  for (const term of terms) {
+    if (haystack.includes(term)) matched++;
+  }
+  const base = Math.round((matched / terms.length) * 80) + 20;
+  return Math.min(99, base);
+}
+
+/** Wrap matched keywords in <mark> for display */
+function highlightKeywords(text: string, terms: string[]): React.ReactNode[] {
+  if (!terms.length || !text) return [text];
+  const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const re = new RegExp(`(${escaped.join("|")})`, "gi");
+  const parts = text.split(re);
+  return parts.map((part, i) =>
+    re.test(part) ? (
+      <mark key={i} className="bg-accent-amber/30 text-text-primary rounded-sm px-0.5">
+        {part}
+      </mark>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  );
 }
 
 export function NetworkAgentSearchClient() {
@@ -59,6 +90,8 @@ export function NetworkAgentSearchClient() {
       userKey: user.uid,
     });
 
+    const searchTerms = queryText.toLowerCase().split(/\s+/).filter(Boolean);
+
     if (result) {
       setMessages((prev) => [
         ...prev,
@@ -67,6 +100,7 @@ export function NetworkAgentSearchClient() {
           role: "agent",
           content: result.summary,
           results: result.results,
+          queryTerms: searchTerms,
         },
       ]);
     } else {
@@ -135,19 +169,49 @@ export function NetworkAgentSearchClient() {
                     {msg.content}
                   </div>
                   {msg.results && msg.results.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
+                    <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
                       <p className="text-[10px] font-mono tracking-widest text-text-tertiary">SOURCES</p>
-                      <div className="flex flex-wrap gap-2">
-                        {msg.results.map((res, i) => (
-                          <Link 
-                            key={i} 
-                            href={res.planetId ? `/network/posts/${res.id}` : `/network/planets/${res.id}`}
-                            className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded px-2 py-1 transition-colors"
-                          >
-                            {res.title}
-                          </Link>
-                        ))}
+                      <div className="space-y-2">
+                        {msg.results.map((res, i) => {
+                          const userQuery = messages.find((m) => m.role === "user" && messages.indexOf(m) < messages.indexOf(msg));
+                          const terms = msg.queryTerms ?? (userQuery?.content.toLowerCase().split(/\s+/).filter(Boolean) ?? []);
+                          const relevance = computeRelevance(userQuery?.content ?? "", res);
+                          return (
+                            <Link
+                              key={i}
+                              href={res.planetId ? `/network/posts/${res.id}` : `/network/planets/${res.id}`}
+                              className="flex items-start gap-3 p-2 rounded-lg bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-colors"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-text-primary truncate">
+                                  {highlightKeywords(res.title, terms)}
+                                </div>
+                                {res.snippet && (
+                                  <p className="text-[11px] text-text-tertiary mt-0.5 line-clamp-2">
+                                    {highlightKeywords(res.snippet, terms)}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent-amber/10 text-accent-amber border border-accent-amber/20">
+                                {L4(lang, { ko: "\uC815\uD655\uB3C4", en: "Relevance" })} {relevance}%
+                              </span>
+                            </Link>
+                          );
+                        })}
                       </div>
+                    </div>
+                  )}
+                  {msg.results && msg.results.length === 0 && !msg.isError && (
+                    <div className="mt-4 pt-4 border-t border-white/10 text-center">
+                      <p className="text-sm text-text-tertiary">
+                        {L4(lang, { ko: "\uAC80\uC0C9 \uACB0\uACFC \uC5C6\uC74C", en: "No results found" })}
+                      </p>
+                      <p className="text-xs text-text-tertiary mt-1">
+                        {L4(lang, {
+                          ko: "\uB2E4\uB978 \uD0A4\uC6CC\uB4DC\uB97C \uC0AC\uC6A9\uD558\uAC70\uB098, \uC9C8\uBB38\uC744 \uB354 \uAD6C\uCCB4\uC801\uC73C\uB85C \uC791\uC131\uD574 \uBCF4\uC138\uC694.",
+                          en: "Try different keywords or make your question more specific.",
+                        })}
+                      </p>
                     </div>
                   )}
                 </div>

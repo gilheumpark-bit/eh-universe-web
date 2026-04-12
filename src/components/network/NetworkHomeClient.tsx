@@ -49,10 +49,38 @@ interface DashboardState {
 }
 
 type BoardFilter = "all" | BoardType;
+type FeedSort = "latest" | "popular" | "recommended";
 
 const BOARD_FILTER_LABELS: Record<"all", { ko: string; en: string }> = {
   all: { ko: "전체", en: "All" },
 };
+
+const FEED_SORT_LABELS: Record<FeedSort, { ko: string; en: string }> = {
+  latest: { ko: "최신", en: "Latest" },
+  popular: { ko: "인기", en: "Popular" },
+  recommended: { ko: "추천", en: "Recommended" },
+};
+
+function scorePosts(
+  posts: PostRecord[],
+  selectedTags: string[],
+): (PostRecord & { _score: number })[] {
+  const now = Date.now();
+  const tagSet = new Set(selectedTags.map((t) => t.toLowerCase()));
+  return posts.map((post) => {
+    const ageMs = now - new Date(post.createdAt).getTime();
+    const ageHours = Math.max(1, ageMs / 3_600_000);
+    const recency = 100 / Math.sqrt(ageHours);
+    const reactions = (post.metrics.reactionCount ?? 0) * 5 + (post.metrics.commentCount ?? 0) * 3;
+    let tagOverlap = 0;
+    if (tagSet.size > 0) {
+      for (const t of post.tags ?? []) {
+        if (tagSet.has(t.toLowerCase())) tagOverlap += 15;
+      }
+    }
+    return { ...post, _score: recency + reactions + tagOverlap };
+  });
+}
 
 const SAMPLE_PLANETS = [
   {
@@ -150,6 +178,7 @@ export function NetworkHomeClient() {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(initialBookmarks);
   const [boardFilter, setBoardFilter] = useState<BoardFilter>(initialBoard);
+  const [feedSort, setFeedSort] = useState<FeedSort>("latest");
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
   const [showSamples, setShowSamples] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -315,8 +344,15 @@ export function NetworkHomeClient() {
         (p.tags ?? []).some((t) => tagSet.has(t.toLowerCase())),
       );
     }
+    if (feedSort === "popular") {
+      posts = [...posts].sort((a, b) => (b.metrics.reactionCount ?? 0) - (a.metrics.reactionCount ?? 0));
+    } else if (feedSort === "recommended") {
+      const scored = scorePosts(posts, selectedTags);
+      scored.sort((a, b) => b._score - a._score);
+      posts = scored;
+    }
     return posts.slice(0, 12);
-  }, [state.posts, boardFilter, selectedTags]);
+  }, [state.posts, boardFilter, selectedTags, feedSort]);
 
   const filteredPlanets = useMemo(() => {
     let planets = state.planets;
@@ -606,6 +642,24 @@ export function NetworkHomeClient() {
             >
               + {L4(lang, { ko: "글쓰기", en: "Write" })}
             </Link>
+          </div>
+
+          {/* Feed Sort Tabs */}
+          <div className="flex gap-2">
+            {(["latest", "popular", "recommended"] as const).map((sort) => (
+              <button
+                key={sort}
+                type="button"
+                onClick={() => setFeedSort(sort)}
+                className={`rounded-full border px-4 py-2 text-[11px] font-medium tracking-wide transition ${
+                  feedSort === sort
+                    ? "border-accent-amber/40 bg-accent-amber/10 text-accent-amber"
+                    : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16 hover:text-text-primary"
+                }`}
+              >
+                {L4(lang, FEED_SORT_LABELS[sort])}
+              </button>
+            ))}
           </div>
 
           <div className="grid gap-4">

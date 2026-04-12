@@ -4,6 +4,29 @@ import { useTranslator } from '../core/TranslatorContext';
 import { useWebFeatures } from '@/hooks/useWebFeatures';
 import { getGlossaryManager } from '@/lib/translation/glossary-manager';
 
+// ============================================================
+// EXPORTED UTILITIES FOR GLOSSARY HIGHLIGHTING
+// ============================================================
+
+/** Returns all glossary term strings from the current glossary manager snapshot. */
+export function getGlossaryTerms(): string[] {
+  const mgr = getGlossaryManager();
+  return Object.keys(mgr.toRecord());
+}
+
+/**
+ * Wraps matching glossary terms in the given text with <mark> tags.
+ * Returns an HTML string safe for dangerouslySetInnerHTML.
+ * Terms are matched case-insensitively with longest-first priority.
+ */
+export function highlightGlossaryTerms(text: string, terms: string[]): string {
+  if (!terms.length || !text) return text;
+  const sorted = [...terms].sort((a, b) => b.length - a.length);
+  const escaped = sorted.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const re = new RegExp(`(${escaped.join('|')})`, 'gi');
+  return text.replace(re, '<mark class="bg-accent-cyan/25 text-text-primary rounded-sm px-0.5">$1</mark>');
+}
+
 export function GlossaryPanel() {
   const { glossary, setGlossary, source } = useTranslator();
   const web = useWebFeatures();

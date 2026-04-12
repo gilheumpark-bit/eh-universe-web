@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, GitCompare, Copy, Check } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, GitCompare, Copy, Check, RotateCcw } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
@@ -10,6 +10,7 @@ interface VersionDiffProps {
   currentIndex: number;
   language: AppLanguage;
   onSwitch: (index: number) => void;
+  onRestore?: (index: number) => void;
 }
 
 // ============================================================
@@ -59,12 +60,31 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
 }
 
 // ============================================================
-// PART 2 — Component
+// PART 2 — Word Count Helpers
 // ============================================================
 
-const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, language, onSwitch }) => {
+function countWords(text: string): number {
+  if (!text) return 0;
+  // Korean/CJK: count characters; English/Latin: count whitespace-delimited tokens
+  const cjk = text.match(/[\u3000-\u9fff\uac00-\ud7af]/g);
+  const latin = text.replace(/[\u3000-\u9fff\uac00-\ud7af]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  return (cjk?.length ?? 0) + latin.length;
+}
+
+function getChangeMagnitudeColor(pct: number): string {
+  if (pct < 10) return 'text-green-400';
+  if (pct < 30) return 'text-amber-400';
+  return 'text-red-400';
+}
+
+// ============================================================
+// PART 3 — Component
+// ============================================================
+
+const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, language, onSwitch, onRestore }) => {
   const [showDiff, setShowDiff] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState<number | null>(null);
   const t = createT(language);
   const total = versions.length;
 
@@ -78,6 +98,23 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const handleRestore = useCallback((idx: number) => {
+    if (confirmRestore === idx) {
+      onRestore?.(idx);
+      setConfirmRestore(null);
+    } else {
+      setConfirmRestore(idx);
+      setTimeout(() => setConfirmRestore(null), 3000);
+    }
+  }, [confirmRestore, onRestore]);
+
+  // Word count delta for current vs previous
+  const currentWords = countWords(versions[currentIndex]);
+  const prevWords = currentIndex > 0 ? countWords(versions[currentIndex - 1]) : currentWords;
+  const wordDelta = currentWords - prevWords;
+  const changePct = prevWords > 0 ? Math.abs(wordDelta / prevWords) * 100 : 0;
+  const magnitudeColor = getChangeMagnitudeColor(changePct);
 
   return (
     <div className="mt-2">
@@ -124,6 +161,33 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
         >
           {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
         </button>
+
+        {/* Word count change indicator */}
+        {currentIndex > 0 && (
+          <span className={`font-mono text-[9px] tabular-nums ${magnitudeColor}`}>
+            {wordDelta >= 0 ? '+' : ''}{wordDelta} {language === 'KO' ? '단어' : 'words'}
+            <span className="text-text-tertiary ml-1">({Math.round(changePct)}%)</span>
+          </span>
+        )}
+
+        {/* Restore button */}
+        {onRestore && currentIndex < total - 1 && (
+          <button
+            onClick={() => handleRestore(currentIndex)}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md border transition-colors ${
+              confirmRestore === currentIndex
+                ? 'bg-red-600/15 border-red-500/30 text-red-400'
+                : 'border-border text-text-tertiary hover:text-text-secondary'
+            }`}
+            title={language === 'KO' ? '이 버전으로 복원' : 'Restore this version'}
+          >
+            <RotateCcw className="w-2.5 h-2.5" />
+            {confirmRestore === currentIndex
+              ? (language === 'KO' ? '확인' : 'Confirm')
+              : (language === 'KO' ? '복원' : 'Restore')
+            }
+          </button>
+        )}
       </div>
 
       {/* Diff view */}

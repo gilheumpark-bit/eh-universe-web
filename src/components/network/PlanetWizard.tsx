@@ -57,12 +57,78 @@ const TRANSCENDENCE_COST_OPTIONS: { value: string; ko: string; en: string }[] = 
 ];
 
 // ============================================================
+// PART 0 - PLANET TEMPLATES
+// ============================================================
+
+interface PlanetTemplate {
+  id: string;
+  icon: string;
+  label: { ko: string; en: string };
+  name: string;
+  genre: string;
+  civilizationLevel: string;
+  summary: { ko: string; en: string };
+  tags: string[];
+  goal: PlanetGoal;
+  status: PlanetStatus;
+}
+
+const PLANET_TEMPLATES: PlanetTemplate[] = [
+  {
+    id: "fantasy",
+    icon: "\u2694\uFE0F",
+    label: { ko: "\uD310\uD0C0\uC9C0 \uC655\uAD6D", en: "Fantasy Kingdom" },
+    name: "",
+    genre: "Fantasy",
+    civilizationLevel: "Medieval",
+    summary: {
+      ko: "\uB9C8\uBC95\uACFC \uAC80\uC774 \uC9C0\uBC30\uD558\uB294 \uC911\uC138 \uC655\uAD6D. \uADC0\uC871 \uAC04 \uAD8C\uB825 \uD22C\uC7C1\uACFC \uACE0\uB300 \uC720\uC801\uC758 \uBE44\uBC00\uC774 \uC5BD\uD600 \uC788\uB2E4.",
+      en: "A medieval kingdom ruled by magic and steel. Noble power struggles intertwine with ancient ruin secrets.",
+    },
+    tags: ["fantasy", "kingdom", "magic"],
+    goal: "maintain",
+    status: "maintain",
+  },
+  {
+    id: "modern",
+    icon: "\uD83C\uDFD9\uFE0F",
+    label: { ko: "\uD604\uB300 \uB3C4\uC2DC", en: "Modern City" },
+    name: "",
+    genre: "Urban",
+    civilizationLevel: "Modern",
+    summary: {
+      ko: "\uCD08\uB2A5\uB825\uC790\uC640 \uBE44\uBC00 \uC870\uC9C1\uC774 \uACF5\uC874\uD558\uB294 \uD604\uB300 \uB300\uB3C4\uC2DC. \uD45C\uBA74 \uC544\uB798 \uC228\uACA8\uC9C4 \uC804\uC7C1\uC774 \uC9C4\uD589 \uC911\uC774\uB2E4.",
+      en: "A modern metropolis where supernatural beings and secret organizations coexist. Hidden wars rage beneath the surface.",
+    },
+    tags: ["urban", "modern", "supernatural"],
+    goal: "develop",
+    status: "maintain",
+  },
+  {
+    id: "scifi",
+    icon: "\uD83D\uDE80",
+    label: { ko: "SF \uD589\uC131", en: "Sci-Fi Planet" },
+    name: "",
+    genre: "Sci-Fi",
+    civilizationLevel: "Interstellar",
+    summary: {
+      ko: "\uC131\uAC04 \uBB38\uBA85\uC774 \uBC1C\uB2EC\uD55C \uBBF8\uB798 \uD589\uC131. \uC778\uACF5\uC9C0\uB2A5\uACFC \uC678\uACC4 \uC885\uC758 \uC704\uD611\uC774 \uACF5\uC874\uD55C\uB2E4.",
+      en: "A future planet with interstellar civilization. AI threats and alien species coexist in uneasy balance.",
+    },
+    tags: ["scifi", "space", "AI"],
+    goal: "experiment",
+    status: "develop",
+  },
+];
+
+// ============================================================
 // PART 1 - LOCAL STATE AND HELPERS
 // ============================================================
 
 export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTags = [] }: PlanetWizardProps) {
   const { user } = useAuth();
   const { ingestAgent } = useNetworkAgent();
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [maxVisitedStep, setMaxVisitedStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -656,6 +722,53 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           );
         })}
       </div>
+
+      {/* Template Selection (shown on step 0 only) */}
+      {step === 0 && !selectedTemplate && (
+        <div className="mt-8 space-y-3">
+          <div className="text-sm text-text-secondary">
+            {L4(lang, { ko: "템플릿으로 빠르게 시작하기", en: "Quick start with a template" })}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {PLANET_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => {
+                  setSelectedTemplate(tpl.id);
+                  setPlanet((prev) => ({
+                    ...prev,
+                    genre: tpl.genre,
+                    civilizationLevel: tpl.civilizationLevel,
+                    summary: L4(lang, tpl.summary),
+                    goal: tpl.goal,
+                    status: tpl.status,
+                  }));
+                  setTagInput(tpl.tags.join(", "));
+                  setPlanetTags(tpl.tags);
+                }}
+                className="flex flex-col items-start gap-2 rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-left transition hover:border-accent-amber/30 hover:bg-accent-amber/5"
+              >
+                <span className="text-2xl">{tpl.icon}</span>
+                <span className="text-sm font-semibold text-text-primary">{L4(lang, tpl.label)}</span>
+                <span className="text-xs text-text-tertiary leading-relaxed">{L4(lang, tpl.summary).slice(0, 60)}...</span>
+                <span className="mt-1 flex flex-wrap gap-1">
+                  {tpl.tags.map((t) => (
+                    <span key={t} className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-text-tertiary">{t}</span>
+                  ))}
+                </span>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedTemplate("custom")}
+            className="text-xs text-text-tertiary hover:text-text-secondary transition-colors underline underline-offset-2"
+          >
+            {L4(lang, { ko: "직접 만들기", en: "Custom" })}
+          </button>
+        </div>
+      )}
 
       <div className="mt-8">{stepPanel}</div>
       {error ? <p className="mt-5 text-sm text-accent-red">{error}</p> : null}

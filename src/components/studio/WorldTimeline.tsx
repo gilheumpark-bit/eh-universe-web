@@ -4,8 +4,8 @@
 // PART 1 — Types & Imports
 // ============================================================
 
-import { useMemo, memo } from 'react';
-import { Clock } from 'lucide-react';
+import { useMemo, memo, useState, useCallback } from 'react';
+import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import type { WorldSimData, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
@@ -14,6 +14,10 @@ interface Props {
   language: AppLanguage;
   selectedEra?: string;
   onSelectEra?: (era: string) => void;
+  /** Callback to reorder civilizations in the timeline */
+  onReorderCiv?: (fromIndex: number, toIndex: number) => void;
+  /** Current episode number for badge display */
+  currentEpisode?: number;
 }
 
 interface TimelineTrack {
@@ -80,9 +84,17 @@ const TRACK_H = 40;
 const ERA_W = 120;
 const PAD = { top: 40, left: 100, right: 20, bottom: 20 };
 
-function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
+function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderCiv, currentEpisode }: Props) {
   const isKO = language === 'KO';
   const { tracks, allEras } = useMemo(() => buildTracks(simData), [simData]);
+
+  const handleMoveUp = useCallback((idx: number) => {
+    if (idx > 0 && onReorderCiv) onReorderCiv(idx, idx - 1);
+  }, [onReorderCiv]);
+
+  const handleMoveDown = useCallback((idx: number) => {
+    if (idx < tracks.length - 1 && onReorderCiv) onReorderCiv(idx, idx + 1);
+  }, [onReorderCiv, tracks.length]);
 
   if (tracks.length === 0) {
     return (
@@ -153,12 +165,42 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
             );
           })}
 
-          {/* Track labels */}
+          {/* Track labels with reorder arrows */}
           {tracks.map((track, i) => (
-            <text key={track.civName} x={PAD.left - 10} y={trackY(i) + 4}
-              fill="var(--color-text-primary, #f4f0ea)" fontSize="10" textAnchor="end" fontWeight="bold">
-              {track.civName.length > 8 ? track.civName.slice(0, 8) + '…' : track.civName}
-            </text>
+            <g key={`label-${track.civName}`}>
+              <text x={PAD.left - 10} y={trackY(i) + 4}
+                fill="var(--color-text-primary, #f4f0ea)" fontSize="10" textAnchor="end" fontWeight="bold">
+                {track.civName.length > 8 ? track.civName.slice(0, 8) + '…' : track.civName}
+              </text>
+              {/* Episode badge */}
+              {currentEpisode != null && (
+                <g>
+                  <rect x={PAD.left - 70} y={trackY(i) - 7} width={22} height={14} rx="4"
+                    fill="var(--color-accent-amber, #b8955c)" opacity="0.25" />
+                  <text x={PAD.left - 59} y={trackY(i) + 4} fontSize="7" textAnchor="middle"
+                    fill="var(--color-accent-amber, #b8955c)" fontWeight="bold">
+                    E{currentEpisode}
+                  </text>
+                </g>
+              )}
+              {/* Reorder arrows (up/down) */}
+              {onReorderCiv && (
+                <foreignObject x={2} y={trackY(i) - 10} width="20" height="22">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                    {i > 0 && (
+                      <button onClick={() => handleMoveUp(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: '10px', color: 'var(--color-text-tertiary, #888)' }} aria-label="Move up">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 15l-6-6-6 6"/></svg>
+                      </button>
+                    )}
+                    {i < tracks.length - 1 && (
+                      <button onClick={() => handleMoveDown(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: '10px', color: 'var(--color-text-tertiary, #888)' }} aria-label="Move down">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    )}
+                  </div>
+                </foreignObject>
+              )}
+            </g>
           ))}
 
           {/* Track bands */}
@@ -182,6 +224,26 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra }: Props) {
               </g>
             );
           })}
+
+          {/* Causal connection lines (cross-track links for shared eras) */}
+          {tracks.map((trackA, idxA) =>
+            tracks.slice(idxA + 1).map((trackB, offsetB) => {
+              const idxB = idxA + 1 + offsetB;
+              // Find shared eras between the two tracks
+              const shared = trackA.eras.filter(era => trackB.eras.includes(era));
+              return shared.map(era => {
+                const x = eraX(era);
+                const y1 = trackY(idxA);
+                const y2 = trackY(idxB);
+                return (
+                  <line key={`causal-${idxA}-${idxB}-${era}`}
+                    x1={x} y1={y1 + 6} x2={x} y2={y2 - 6}
+                    stroke="var(--color-text-tertiary, #888)"
+                    strokeWidth="1" strokeDasharray="3,3" opacity="0.35" />
+                );
+              });
+            })
+          )}
 
           {/* Transitions */}
           {tracks.map((track, trackIdx) =>

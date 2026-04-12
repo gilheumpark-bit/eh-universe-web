@@ -674,9 +674,11 @@ export function postProcessResponse(
   language: AppLanguage,
   platform: PlatformType = PlatformType.MOBILE
 ): { content: string; report: EngineReport } {
+  const totalStart = performance.now();
   let worldUpdates = undefined;
-  
-  // Attempt to parse world_updates from any trailing JSON block
+
+  // Stage 1: world_updates parse
+  const parseStart = performance.now();
   const jsonMatch = text.match(/```(?:json|JSON)?\s*(\{[\s\S]*?\})\s*```/);
   if (jsonMatch) {
     try {
@@ -703,12 +705,34 @@ export function postProcessResponse(
       }
     } catch { /* JSON fallback parse advisory — non-blocking */ }
   }
+  const parseEnd = performance.now();
 
+  // Stage 2: scoring / report generation
+  const scoringStart = performance.now();
   const report = generateEngineReport(text, config, language, platform);
+  const scoringEnd = performance.now();
+
   if (worldUpdates) {
     report.worldUpdates = worldUpdates;
   }
-  return { content: stripEngineArtifacts(text), report };
+
+  // Stage 3: strip artifacts
+  const stripStart = performance.now();
+  const content = stripEngineArtifacts(text);
+  const stripEnd = performance.now();
+
+  const totalEnd = performance.now();
+
+  // Attach per-stage timing
+  report.stageTiming = {
+    worldUpdateParse: Math.round(parseEnd - parseStart),
+    scoring: Math.round(scoringEnd - scoringStart),
+    stripArtifacts: Math.round(stripEnd - stripStart),
+    total: Math.round(totalEnd - totalStart),
+  };
+  report.processingTimeMs = Math.round(totalEnd - totalStart);
+
+  return { content, report };
 }
 
 function stripTrailingReportJson(text: string): string {

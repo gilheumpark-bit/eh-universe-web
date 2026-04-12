@@ -24,17 +24,108 @@ type ConfirmState = {
   onConfirm: () => void;
 };
 
+// ── Storage helpers ─────────────────────────────────────
+
+/** Estimate current localStorage usage as bytes and percentage of quota */
+function estimateStorageUsage(): { usedBytes: number; totalBytes: number; percent: number } {
+  try {
+    let usedBytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        usedBytes += key.length * 2; // UTF-16
+        usedBytes += (localStorage.getItem(key)?.length ?? 0) * 2;
+      }
+    }
+    // Most browsers allow ~5MB for localStorage
+    const totalBytes = 5 * 1024 * 1024;
+    return { usedBytes, totalBytes, percent: (usedBytes / totalBytes) * 100 };
+  } catch {
+    return { usedBytes: 0, totalBytes: 5 * 1024 * 1024, percent: 0 };
+  }
+}
+
+/** Remove old versioned backup keys to free localStorage space */
+function cleanupOldBackups(maxAge: number = 7 * 24 * 60 * 60 * 1000): number {
+  let removed = 0;
+  try {
+    const now = Date.now();
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      // Match versioned backup keys: *_backup_*, *_v\d+, *_bak_*
+      if (/_(backup|bak|v\d+)_?\d*/i.test(key) || key.includes('-snapshot-')) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const ts = parsed?.savedAt || parsed?.timestamp || parsed?.createdAt;
+            if (ts && (now - new Date(ts).getTime()) > maxAge) {
+              keysToRemove.push(key);
+            }
+          }
+        } catch {
+          // Non-JSON backup key older than 7 days — safe to remove
+          keysToRemove.push(key);
+        }
+      }
+    }
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+      removed++;
+    }
+  } catch {
+    // localStorage unavailable
+  }
+  return removed;
+}
+
 /** Manages UX transient state: toasts, error alerts, save flash, confirm modal, provider fallback notices */
 export function useStudioUX() {
   // Error toast
   const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
 
+  // Storage usage tracking
+  const [storagePercent, setStoragePercent] = useState(0);
+
   // Storage-full warning
   const [storageFull, setStorageFull] = useState(false);
+
+  // Storage 80% capacity warning
+  const [storageNearFull, setStorageNearFull] = useState(false);
+
+  // Proactive storage monitoring on mount
+  useEffect(() => {
+    const { percent } = estimateStorageUsage();
+    setStoragePercent(percent);
+    if (percent >= 80 && percent < 100) {
+      setStorageNearFull(true);
+    }
+    if (percent >= 98) {
+      setStorageFull(true);
+    }
+  }, []);
+
+  // Listen for storage-full event
   useEffect(() => {
     const handler = () => setStorageFull(true);
     window.addEventListener('noa:storage-full', handler);
     return () => window.removeEventListener('noa:storage-full', handler);
+  }, []);
+
+  // Auto cleanup: remove old backups to free space
+  const triggerAutoCleanup = useCallback(() => {
+    const removed = cleanupOldBackups();
+    const { percent } = estimateStorageUsage();
+    setStoragePercent(percent);
+    if (percent < 80) {
+      setStorageNearFull(false);
+    }
+    if (percent < 98) {
+      setStorageFull(false);
+    }
+    return removed;
   }, []);
 
   // Export done toast
@@ -140,6 +231,9 @@ export function useStudioUX() {
     uxError, setUxError,
     // Storage
     storageFull, setStorageFull,
+    storageNearFull, setStorageNearFull,
+    storagePercent,
+    triggerAutoCleanup,
     // Export
     exportDoneFormat, setExportDoneFormat,
     exportProgress,

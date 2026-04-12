@@ -284,12 +284,14 @@ button, a, [role="button"] {
    MOBILE / TABLET OPTIMIZATION
    ============================================================ */
 
-/* 터치 타겟 최소 44px 보장 */
-@media (max-width: 768px) {
-  button, a, [role="button"] {
+/* ── WCAG Touch Targets (pointer: coarse = 터치 디바이스) ── */
+@media (pointer: coarse) {
+  button, a, [role="button"], [role="tab"], input, select, textarea {
     min-height: 44px;
     min-width: 44px;
   }
+  /* 인라인 텍스트 링크 예외 */
+  p a, li a, span a { min-height: auto; min-width: auto; }
   /* 사이드바 내 작은 버튼 예외 */
   [data-compact] button,
   nav button {
@@ -307,6 +309,16 @@ button, a, [role="button"] {
   .site-title {
     font-size: 28px;
   }
+}
+
+/* ── Responsive sm Overflow Prevention (640px) ── */
+@media (max-width: 640px) {
+  /* Prevent horizontal overflow on mobile */
+  .studio-main-content { overflow-x: hidden; max-width: 100vw; }
+  /* Ensure text doesn't overflow containers */
+  .truncate-mobile { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  /* Stack horizontal layouts vertically */
+  .flex-col-mobile { flex-direction: column !important; }
 }
 
 /* iOS safe area 대응 */

@@ -231,6 +231,58 @@ export function createHFCPState(): HFCPState {
   };
 }
 
+// ============================================================
+// PART 7b: SUMMARY — Human-readable HFCP state summary
+// ============================================================
+
+export interface HFCPSummary {
+  totalTurns: number;
+  currentScore: number;
+  verdict: HFCPVerdict;
+  nrgStrategy: NRGStrategy;
+  /** Conversation quality tier */
+  qualityTier: 'excellent' | 'good' | 'neutral' | 'declining' | 'poor';
+  /** Verdict distribution (estimated from score trajectory) */
+  verdictCounts: { pass: number; warn: number; fail: number };
+  /** Human-readable text */
+  text: { ko: string; en: string };
+}
+
+export function getHFCPSummary(state: HFCPState): HFCPSummary {
+  const { score, turns, verdict, nrgStrategy, momentumK } = state;
+
+  // Quality tier from score
+  const qualityTier: HFCPSummary['qualityTier'] =
+    score >= 120 ? 'excellent' :
+    score >= 90 ? 'good' :
+    score >= 70 ? 'neutral' :
+    score >= 55 ? 'declining' : 'poor';
+
+  // Estimate verdict distribution from turns and current score
+  // Higher score = more passes; lower score = more engagement/warns
+  const passRatio = Math.min(1, Math.max(0, (score - 50) / 100));
+  const failRatio = Math.min(1, Math.max(0, (100 - score) / 100));
+  const warnRatio = 1 - passRatio - failRatio;
+
+  const pass = Math.round(turns * Math.max(0, passRatio));
+  const fail = Math.round(turns * Math.max(0, failRatio));
+  const warn = Math.max(0, turns - pass - fail);
+
+  const nrgLabel = nrgStrategy === 'normal' ? '' : `, NRG: ${nrgStrategy}`;
+  const momentumLabel = momentumK > 1 ? `, momentum x${momentumK}` : '';
+
+  const text = {
+    ko: `[HFCP] ${turns}턴 | 점수 ${Math.round(score)} | ${verdict}${nrgLabel}${momentumLabel} | 품질: ${qualityTier} | 통과 ~${pass}, 경고 ~${warn}, 실패 ~${fail}`,
+    en: `[HFCP] ${turns} turns | Score ${Math.round(score)} | ${verdict}${nrgLabel}${momentumLabel} | Quality: ${qualityTier} | Pass ~${pass}, Warn ~${warn}, Fail ~${fail}`,
+  };
+
+  return { totalTurns: turns, currentScore: Math.round(score), verdict, nrgStrategy, qualityTier, verdictCounts: { pass, warn, fail }, text };
+}
+
+// ============================================================
+// PART 8: ENGINE — 통합 실행
+// ============================================================
+
 export function processHFCPTurn(state: HFCPState, userInput: string): {
   mode: InputMode;
   verdict: HFCPVerdict;

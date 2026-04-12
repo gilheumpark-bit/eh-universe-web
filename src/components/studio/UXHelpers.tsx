@@ -4,7 +4,7 @@
 // PART 1 — Confirm Modal (replaces window.confirm)
 // ============================================================
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, X, Copy, Check } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -25,6 +25,49 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   open, title, message, confirmLabel = 'OK', cancelLabel = 'Cancel',
   variant = 'danger', onConfirm, onCancel,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const confirmBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus confirm button on open
+  useEffect(() => {
+    if (open && confirmBtnRef.current) {
+      confirmBtnRef.current.focus();
+    }
+  }, [open]);
+
+  // ESC to close + Focus trap (tab cycling within modal)
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onCancel]);
+
   if (!open) return null;
 
   const colors = {
@@ -40,11 +83,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60" onClick={onCancel}>
-      <div className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div ref={dialogRef} className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
         <div className={`flex items-start gap-3 p-3 rounded-lg mb-4 ${colors[variant]}`}>
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-bold text-sm">{title}</h3>
+            <h3 id="confirm-modal-title" className="font-bold text-sm">{title}</h3>
             <p className="text-xs mt-1 opacity-80">{message}</p>
           </div>
         </div>
@@ -52,7 +95,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button onClick={onCancel} className="px-4 py-2 text-xs text-text-tertiary border border-border rounded-lg hover:bg-bg-secondary transition-colors">
             {cancelLabel}
           </button>
-          <button onClick={onConfirm} className={`px-4 py-2 text-xs text-white rounded-lg transition-colors ${btnColors[variant]}`}>
+          <button ref={confirmBtnRef} onClick={onConfirm} className={`px-4 py-2 text-xs text-white rounded-lg transition-colors ${btnColors[variant]}`}>
             {confirmLabel}
           </button>
         </div>

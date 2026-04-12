@@ -1,17 +1,26 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2 } from 'lucide-react';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
+import { highlightGlossaryTerms } from '../panels/GlossaryPanel';
 
 export function BilateralEditor() {
-  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel, translate, loading } = useTranslator();
+  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel, translate, loading, glossary } = useTranslator();
   const layout = useTranslatorLayout();
-  
+
   const [syncedScrolling, setSyncedScrolling] = useState(true);
   const { handleSVIKeyDown } = useSVIRecorder();
+
+  // Glossary highlight overlay for source text
+  const glossaryTerms = useMemo(() => Object.keys(glossary ?? {}), [glossary]);
+  const sourceHighlightHtml = useMemo(
+    () => glossaryTerms.length > 0 ? highlightGlossaryTerms(source, glossaryTerms) + '\n' : '',
+    [source, glossaryTerms],
+  );
+  const highlightRef = useRef<HTMLDivElement>(null);
   
   const sourceRef = useRef<HTMLTextAreaElement>(null);
   const resultRef = useRef<HTMLTextAreaElement>(null);
@@ -38,7 +47,13 @@ export function BilateralEditor() {
       requestAnimationFrame(() => { isSyncing = false; });
     };
 
-    const handleSrcScroll = () => syncFrom(src, res);
+    const handleSrcScroll = () => {
+      syncFrom(src, res);
+      // Sync glossary highlight overlay scroll
+      if (highlightRef.current) {
+        highlightRef.current.scrollTop = src.scrollTop;
+      }
+    };
     const handleResScroll = () => syncFrom(res, src);
 
     src.addEventListener('scroll', handleSrcScroll);
@@ -217,10 +232,19 @@ export function BilateralEditor() {
             <span className="w-2 h-2 rounded-full bg-text-secondary/60 inline-block shadow-[0_0_5px_rgba(128,128,128,0.3)]"></span>
             Source ({from})
           </div>
+          {/* Glossary highlight overlay */}
+          {glossaryTerms.length > 0 && sourceHighlightHtml && (
+            <div
+              ref={highlightRef}
+              aria-hidden="true"
+              className="absolute inset-0 p-8 pt-12 text-[15px] leading-[1.8] font-sans whitespace-pre-wrap break-words overflow-hidden pointer-events-none text-transparent"
+              dangerouslySetInnerHTML={{ __html: sourceHighlightHtml }}
+            />
+          )}
           <textarea
             ref={sourceRef}
             placeholder="여기에 원문을 입력하세요..."
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary placeholder:font-light"
+            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary placeholder:font-light relative z-[1]"
             value={source}
             onChange={(e) => setSource(e.target.value)}
             onKeyDown={handleSVIKeyDown}

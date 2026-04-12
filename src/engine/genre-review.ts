@@ -581,3 +581,119 @@ export function runGenreLevelReview(
 
   return { genre, level, levelMeta, aspects, overallGrade, summary };
 }
+
+// ============================================================
+// PART 5 — CROSS-GENRE / HYBRID EVALUATION
+// ============================================================
+
+export interface CrossGenreResult {
+  /** Per-genre individual results */
+  reviews: GenreLevelReview[];
+  /** Blended aspect scores (primary 60%, secondary 40%) */
+  blendedAspects: AspectResult[];
+  /** Weighted overall grade */
+  blendedGrade: 'S' | 'A' | 'B' | 'C' | 'D';
+  /** Human-readable summary */
+  blendedSummary: { ko: string; en: string };
+}
+
+/**
+ * Evaluate text against multiple genres simultaneously (hybrid/cross-genre).
+ * Primary genre gets 60% weight, secondary gets 40%.
+ * When more than 2 genres, the first is primary and the rest share the 40% equally.
+ */
+export function evaluateCrossGenre(
+  text: string,
+  genres: string[],
+  level: ReaderLevel = 2,
+): CrossGenreResult {
+  if (!genres || genres.length === 0) {
+    // Fallback to Fantasy
+    const single = runGenreLevelReview(text, Genre.FANTASY, level);
+    return {
+      reviews: [single],
+      blendedAspects: single.aspects,
+      blendedGrade: single.overallGrade,
+      blendedSummary: single.summary,
+    };
+  }
+
+  if (genres.length === 1) {
+    const single = runGenreLevelReview(text, genres[0] as Genre, level);
+    return {
+      reviews: [single],
+      blendedAspects: single.aspects,
+      blendedGrade: single.overallGrade,
+      blendedSummary: single.summary,
+    };
+  }
+
+  // Run evaluation for each genre
+  const reviews = genres.map(g => runGenreLevelReview(text, g as Genre, level));
+
+  // Weight distribution: primary=60%, rest share 40% equally
+  const primaryWeight = 0.6;
+  const secondaryTotalWeight = 0.4;
+  const secondaryCount = genres.length - 1;
+  const secondaryEach = secondaryTotalWeight / secondaryCount;
+
+  const weights = [primaryWeight, ...Array(secondaryCount).fill(secondaryEach)];
+
+  // Collect all unique aspect keys across all reviews
+  const allKeys = new Set<ReviewAspectKey>();
+  for (const r of reviews) {
+    for (const a of r.aspects) allKeys.add(a.key);
+  }
+
+  // Blend aspect scores
+  const blendedAspects: AspectResult[] = [];
+  let totalWeightedScore = 0;
+  let aspectCount = 0;
+
+  for (const key of allKeys) {
+    let weightedValue = 0;
+    let totalWeight = 0;
+    let bestAspect: AspectResult | null = null;
+
+    for (let i = 0; i < reviews.length; i++) {
+      const aspect = reviews[i].aspects.find(a => a.key === key);
+      if (aspect) {
+        weightedValue += aspect.value * weights[i];
+        totalWeight += weights[i];
+        if (!bestAspect) bestAspect = aspect;
+      }
+    }
+
+    if (bestAspect && totalWeight > 0) {
+      const blendedValue = Math.round(weightedValue / totalWeight);
+      const pos = blendedValue < bestAspect.benchmark.min ? 'below' as const
+        : blendedValue > bestAspect.benchmark.max ? 'above' as const
+        : 'within' as const;
+      const severity = pos === 'within' ? 'ok' as const
+        : Math.abs(blendedValue - (pos === 'below' ? bestAspect.benchmark.min : bestAspect.benchmark.max)) <= 10 ? 'warn' as const
+        : 'danger' as const;
+
+      blendedAspects.push({
+        ...bestAspect,
+        value: blendedValue,
+        position: pos,
+        severity,
+      });
+
+      totalWeightedScore += severity === 'ok' ? 100 : severity === 'warn' ? 60 : 20;
+      aspectCount++;
+    }
+  }
+
+  const avg = aspectCount > 0 ? totalWeightedScore / aspectCount : 0;
+  const blendedGrade: 'S' | 'A' | 'B' | 'C' | 'D' =
+    avg >= 90 ? 'S' : avg >= 75 ? 'A' : avg >= 55 ? 'B' : avg >= 35 ? 'C' : 'D';
+
+  const genreNames = genres.join(' + ');
+  const blendedSummary = {
+    ko: `크로스장르 [${genreNames}] 평가 — ${blendedAspects.length}개 관점, 종합 ${blendedGrade} (1차 60% / 2차 40%)`,
+    en: `Cross-genre [${genreNames}] evaluation — ${blendedAspects.length} aspects, Grade ${blendedGrade} (primary 60% / secondary 40%)`,
+  };
+
+  return { reviews, blendedAspects, blendedGrade, blendedSummary };
+}
