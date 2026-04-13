@@ -238,10 +238,12 @@ async function callProvider(
       ...config.authHeader(key),
     };
 
+    const FETCH_TIMEOUT_MS = 30_000;
     const res = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(config.buildBody(req)),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -265,22 +267,23 @@ async function callProvider(
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
+    let totalBytes = 0;
     while (true) {
       if (sender.isDestroyed()) {
-        try {
-          await reader.cancel();
-        } catch {
-          /* noop */
-        }
+        try { await reader.cancel(); } catch { /* noop */ }
         return { ok: false, error: 'sender-destroyed' };
       }
       const { done, value } = await reader.read();
       if (done) break;
+      totalBytes += value.byteLength;
       const chunk = decoder.decode(value, { stream: true });
       sender.send(channels.chunk, chunk);
     }
 
     recordSuccess(req.provider);
+    // Estimate token usage (~4 chars per token for English)
+    const { recordTokenUsage } = await import('../services/ai-service');
+    recordTokenUsage(Math.ceil(totalBytes / 4));
     sender.send(channels.end);
     return { ok: true };
   } catch (err) {

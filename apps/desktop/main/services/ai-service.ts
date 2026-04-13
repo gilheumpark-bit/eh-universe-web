@@ -32,9 +32,23 @@ export interface ChatRequest {
 
 const DAILY_TOKEN_BUDGET = 500_000;
 
+// In-memory daily token tracker (resets on app restart)
+const tokenUsage = { date: '', used: 0 };
+
 function checkTokenBudget(isByok: boolean, dailyLimit: number = DAILY_TOKEN_BUDGET): { allowed: boolean; remaining: number } {
   if (isByok) return { allowed: true, remaining: Infinity };
-  return { allowed: true, remaining: dailyLimit };
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (tokenUsage.date !== today) { tokenUsage.date = today; tokenUsage.used = 0; }
+
+  const remaining = dailyLimit - tokenUsage.used;
+  return { allowed: remaining > 0, remaining: Math.max(0, remaining) };
+}
+
+export function recordTokenUsage(estimatedTokens: number): void {
+  const today = new Date().toISOString().slice(0, 10);
+  if (tokenUsage.date !== today) { tokenUsage.date = today; tokenUsage.used = 0; }
+  tokenUsage.used += estimatedTokens;
 }
 
 // ============================================================

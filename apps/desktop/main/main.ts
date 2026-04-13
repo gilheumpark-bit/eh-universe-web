@@ -26,6 +26,7 @@ import { initAutoUpdate, disposeAutoUpdate, registerUpdaterIpc } from './service
 import { registerCliInstallerIpc } from './services/cli-installer';
 import { registerSystemIpc } from './ipc/system';
 import { registerOllamaIpc } from './ipc/ollama';
+import { registerGithubIpc } from './ipc/github';
 import { registerMcpIpc, disposeMcp } from './ipc/mcp';
 import { initCrashReporter } from './services/crash-reporter';
 
@@ -249,6 +250,7 @@ function registerIpc(): void {
   registerCliInstallerIpc();
   registerSystemIpc();
   registerOllamaIpc();
+  registerGithubIpc();
   registerMcpIpc();
   registerLocalFeatureIpc();
 }

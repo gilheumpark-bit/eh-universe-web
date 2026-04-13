@@ -363,7 +363,32 @@ const local = {
 };
 
 // ============================================================
-// PART 3b2 — Crash reporter (persistent error logging)
+// PART 3b2 — GitHub API
+// ============================================================
+
+const github = {
+  user: (): Promise<{ login: string; name: string; avatar_url: string } | { error: string }> =>
+    ipcRenderer.invoke('github:user'),
+  listRepos: (opts?: { per_page?: number; sort?: string }): Promise<unknown[]> =>
+    ipcRenderer.invoke('github:list-repos', opts),
+  getRepo: (owner: string, repo: string): Promise<unknown> =>
+    ipcRenderer.invoke('github:get-repo', owner, repo),
+  listPRs: (owner: string, repo: string, state?: string): Promise<unknown[]> =>
+    ipcRenderer.invoke('github:list-prs', owner, repo, state),
+  createPR: (owner: string, repo: string, data: { title: string; head: string; base: string; body?: string; draft?: boolean }): Promise<unknown> =>
+    ipcRenderer.invoke('github:create-pr', owner, repo, data),
+  listIssues: (owner: string, repo: string, state?: string): Promise<unknown[]> =>
+    ipcRenderer.invoke('github:list-issues', owner, repo, state),
+  createIssue: (owner: string, repo: string, data: { title: string; body?: string; labels?: string[] }): Promise<unknown> =>
+    ipcRenderer.invoke('github:create-issue', owner, repo, data),
+  listRuns: (owner: string, repo: string): Promise<unknown> =>
+    ipcRenderer.invoke('github:list-runs', owner, repo),
+  cloneUrl: (owner: string, repo: string): Promise<{ url: string } | { error: string }> =>
+    ipcRenderer.invoke('github:clone-url', owner, repo),
+};
+
+// ============================================================
+// PART 3b3 — Crash reporter (persistent error logging)
 // ============================================================
 
 const crash = {
@@ -446,7 +471,7 @@ const ollama = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system, local, ollama, mcp, crash };
+const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system, local, ollama, mcp, crash, github };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

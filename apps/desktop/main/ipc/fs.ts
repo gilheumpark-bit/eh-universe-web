@@ -66,10 +66,25 @@ function registerDialogHandlers() {
 // PART 2 — Read/write/stat handlers
 // ============================================================
 
+// Security: reject paths that escape common safe directories
+const BLOCKED_PATHS = ['/etc/shadow', '/etc/passwd', 'C:\\Windows\\System32'];
+function validatePath(p: string): string {
+  const resolved = path.resolve(p);
+  // Block null bytes (path traversal attack vector)
+  if (resolved.includes('\0')) throw new Error('Invalid path: null byte');
+  // Block known sensitive system paths
+  for (const blocked of BLOCKED_PATHS) {
+    if (resolved.toLowerCase().startsWith(blocked.toLowerCase())) {
+      throw new Error(`Access denied: ${blocked}`);
+    }
+  }
+  return resolved;
+}
+
 function registerIOHandlers() {
   ipcMain.handle('fs:read-file', async (_event, filePath: string) => {
     try {
-      return await fs.readFile(filePath, 'utf-8');
+      return await fs.readFile(validatePath(filePath), 'utf-8');
     } catch {
       // Return empty string for missing files — avoids Electron's "Error occurred in handler" stderr spam.
       // Callers (e.g. InfiniteContext) already handle empty content gracefully.
@@ -78,22 +93,24 @@ function registerIOHandlers() {
   });
 
   ipcMain.handle('fs:write-file', async (_event, filePath: string, content: string) => {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, content, 'utf-8');
+    const safe = validatePath(filePath);
+    await fs.mkdir(path.dirname(safe), { recursive: true });
+    await fs.writeFile(safe, content, 'utf-8');
   });
 
   ipcMain.handle('fs:readdir', async (_event, dirPath: string) => {
-    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    const safe = validatePath(dirPath);
+    const entries = await fs.readdir(safe, { withFileTypes: true });
     return entries.map((entry) => ({
       name: entry.name,
       isDirectory: entry.isDirectory(),
-      path: path.join(dirPath, entry.name),
+      path: path.join(safe, entry.name),
     }));
   });
 
   ipcMain.handle('fs:exists', async (_event, filePath: string) => {
     try {
-      await fs.access(filePath);
+      await fs.access(validatePath(filePath));
       return true;
     } catch {
       return false;
@@ -101,7 +118,7 @@ function registerIOHandlers() {
   });
 
   ipcMain.handle('fs:stat', async (_event, filePath: string) => {
-    const s = await fs.stat(filePath);
+    const s = await fs.stat(validatePath(filePath));
     return {
       size: s.size,
       mtimeMs: s.mtimeMs,
@@ -112,14 +129,14 @@ function registerIOHandlers() {
   });
 
   ipcMain.handle('fs:rename', async (_event, from: string, to: string) => {
-    await fs.rename(from, to);
+    await fs.rename(validatePath(from), validatePath(to));
   });
 
   ipcMain.handle('fs:delete', async (_event, target: string) => {
     // We never permanently delete from main directly; renderer should
     // confirm with the user. This handler accepts whatever the renderer
     // sends after confirmation.
-    await fs.rm(target, { recursive: true, force: false });
+    await fs.rm(validatePath(target), { recursive: true, force: false });
   });
 
   ipcMain.handle('fs:mkdir', async (_event, dirPath: string) => {

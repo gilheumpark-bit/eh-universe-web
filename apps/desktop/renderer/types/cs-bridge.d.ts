@@ -181,6 +181,26 @@ declare global {
     local: CSLocal;
     ollama: CSOllama;
     mcp: CSMcp;
+    crash: CSCrash;
+    github: CSGitHub;
+  }
+
+  interface CSCrash {
+    report: (entry: Record<string, unknown>) => Promise<{ ok: true }>;
+    getLogs: () => Promise<{ logs: unknown[] }>;
+    getLogPath: () => Promise<string>;
+  }
+
+  interface CSGitHub {
+    user: () => Promise<{ login: string; name: string; avatar_url: string } | { error: string }>;
+    listRepos: (opts?: { per_page?: number; sort?: string }) => Promise<unknown[]>;
+    getRepo: (owner: string, repo: string) => Promise<unknown>;
+    listPRs: (owner: string, repo: string, state?: string) => Promise<unknown[]>;
+    createPR: (owner: string, repo: string, data: { title: string; head: string; base: string; body?: string; draft?: boolean }) => Promise<unknown>;
+    listIssues: (owner: string, repo: string, state?: string) => Promise<unknown[]>;
+    createIssue: (owner: string, repo: string, data: { title: string; body?: string; labels?: string[] }) => Promise<unknown>;
+    listRuns: (owner: string, repo: string) => Promise<unknown>;
+    cloneUrl: (owner: string, repo: string) => Promise<{ url: string } | { error: string }>;
   }
 
   interface MCPServerConfig {
