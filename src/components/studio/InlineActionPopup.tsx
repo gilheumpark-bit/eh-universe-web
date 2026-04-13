@@ -14,11 +14,24 @@ interface StoryContext {
   narrativeIntensity?: string;
 }
 
+/** Selection info from Tiptap NovelEditor */
+export interface EditorSelection {
+  from: number;
+  to: number;
+  text: string;
+  coords: { top: number; left: number; bottom: number } | null;
+}
+
 interface InlineActionPopupProps {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  /** Legacy textarea ref — ignored when editorSelection is provided */
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
   language: string;
   onReplace: (oldText: string, newText: string) => void;
   storyConfig?: StoryContext;
+  /** Full text from the editor — used to extract surrounding context */
+  fullText?: string;
+  /** Selection info pushed from Tiptap NovelEditor */
+  editorSelection?: EditorSelection | null;
 }
 
 interface PopupState {
@@ -33,7 +46,7 @@ interface PopupState {
 // ============================================================
 // PART 2 — 컴포넌트
 // ============================================================
-export function InlineActionPopup({ textareaRef, language, onReplace, storyConfig }: InlineActionPopupProps) {
+export function InlineActionPopup({ textareaRef, language, onReplace, storyConfig, fullText: fullTextProp, editorSelection }: InlineActionPopupProps) {
   const isKO = language === 'KO';
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selectedText: '', selStart: 0, selEnd: 0 });
   const [result, setResult] = useState<string | null>(null);
@@ -50,8 +63,35 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     };
   }, []);
 
+  // --- Tiptap path: react to editorSelection prop ---
+  useEffect(() => {
+    if (editorSelection === undefined) return; // not using Tiptap path
+    if (!editorSelection || editorSelection.text.length < 2) {
+      hideTimeout.current = setTimeout(() => {
+        setPopup(p => ({ ...p, visible: false }));
+        setResult(null);
+      }, 200);
+      return;
+    }
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
+    const coords = editorSelection.coords;
+    const x = coords ? coords.left : 200;
+    const y = coords ? coords.top - 48 : 100;
+    setPopup({
+      visible: true,
+      x: Math.max(80, x),
+      y: Math.max(40, y),
+      selectedText: editorSelection.text,
+      selStart: editorSelection.from,
+      selEnd: editorSelection.to,
+    });
+    setResult(null);
+  }, [editorSelection]);
+
+  // --- Legacy textarea path ---
   const checkSelection = useCallback(() => {
-    const ta = textareaRef.current;
+    if (editorSelection !== undefined) return;
+    const ta = textareaRef?.current;
     if (!ta) return;
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
@@ -65,7 +105,6 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
       return;
     }
 
-    // 정확한 Y 좌표: textarea의 뷰포트 위치 + 선택 라인 위치 - 내부 스크롤
     const taRect = ta.getBoundingClientRect();
     const linesBefore = ta.value.slice(0, start).split('\n').length - 1;
     const lh = parseFloat(getComputedStyle(ta).lineHeight);
@@ -77,11 +116,12 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     if (hideTimeout.current) clearTimeout(hideTimeout.current);
     setPopup({ visible: true, x: Math.max(80, x), y: Math.max(40, y), selectedText: text, selStart: start, selEnd: end });
     setResult(null);
-  }, [textareaRef]);
+  }, [textareaRef, editorSelection]);
 
-  // selectionchange 이벤트 (mouseup/keyup보다 안정적)
+  // Legacy textarea selection listeners
   useEffect(() => {
-    const ta = textareaRef.current;
+    if (editorSelection !== undefined) return;
+    const ta = textareaRef?.current;
     if (!ta) return;
     const onMouseUp = () => requestAnimationFrame(checkSelection);
     const onKeyUp = (e: KeyboardEvent) => { if (e.shiftKey || e.key === 'Shift') requestAnimationFrame(checkSelection); };
@@ -91,14 +131,17 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
       ta.removeEventListener('mouseup', onMouseUp);
       ta.removeEventListener('keyup', onKeyUp);
     };
-  }, [textareaRef, checkSelection]);
+  }, [textareaRef, checkSelection, editorSelection]);
 
   // 외부 클릭 시 닫기 (cleanup 보장)
   useEffect(() => {
     if (!popup.visible) return;
     const onClick = (e: MouseEvent) => {
       if (popupRef.current?.contains(e.target as Node)) return;
-      if (textareaRef.current?.contains(e.target as Node)) return;
+      if (textareaRef?.current?.contains(e.target as Node)) return;
+      // For Tiptap: check if click is inside .novel-editor-wrapper
+      const target = e.target as HTMLElement;
+      if (target.closest?.('.novel-editor-wrapper')) return;
       setPopup(p => ({ ...p, visible: false }));
       setResult(null);
       abortRef.current?.abort();
@@ -119,10 +162,10 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     }
 
     // 주변 문맥 추출 (±200자)
-    const fullText = textareaRef.current?.value ?? '';
+    const sourceText = fullTextProp ?? textareaRef?.current?.value ?? '';
     const CONTEXT_RADIUS = 200;
-    const beforeText = fullText.slice(Math.max(0, popup.selStart - CONTEXT_RADIUS), popup.selStart).trim();
-    const afterText = fullText.slice(popup.selEnd, popup.selEnd + CONTEXT_RADIUS).trim();
+    const beforeText = sourceText.slice(Math.max(0, popup.selStart - CONTEXT_RADIUS), popup.selStart).trim();
+    const afterText = sourceText.slice(popup.selEnd, popup.selEnd + CONTEXT_RADIUS).trim();
 
     // 스토리 컨텍스트 블록 구성
     const ctxParts: string[] = [];
@@ -197,14 +240,14 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     } finally {
       setLoading(false);
     }
-  }, [popup.selectedText, isKO]);
+  }, [popup.selectedText, popup.selStart, popup.selEnd, isKO, storyConfig, fullTextProp, textareaRef]);
 
   const applyResult = useCallback(() => {
-    if (!result || !textareaRef.current) return;
+    if (!result) return;
     onReplace(popup.selectedText, result);
     setPopup(p => ({ ...p, visible: false }));
     setResult(null);
-  }, [result, popup.selectedText, onReplace, textareaRef]);
+  }, [result, popup.selectedText, onReplace]);
 
   if (!popup.visible) return null;
 

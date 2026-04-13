@@ -9,6 +9,7 @@ import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
+import { episodeToMarkdown } from '@/lib/markdown-serializer';
 
 type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
@@ -521,6 +522,58 @@ export function useStudioExport({
     exportProjectManuscripts('md');
   }, [exportProjectManuscripts]);
 
+  // Export individual episode manuscripts as separate .md files with YAML frontmatter
+  const exportAsMarkdown = useCallback(() => {
+    const project = projects.find(p => p.id === currentProjectId);
+    if (!project) return;
+
+    // Gather all manuscripts from all sessions in the project
+    const allManuscripts = project.sessions
+      .flatMap(s => s.config?.manuscripts ?? [])
+      .filter(m => m && m.content);
+
+    if (allManuscripts.length === 0) {
+      // Fallback: build manuscripts from session messages
+      const rows = manuscriptRowsFromProject(project);
+      if (rows.length === 0) return;
+
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const md = episodeToMarkdown({
+          episode: i + 1,
+          title: r.title,
+          content: r.content,
+          charCount: r.content.length,
+          lastUpdate: Date.now(),
+        }, 1);
+
+        const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ep-${String(i + 1).padStart(3, '0')}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } else {
+      // Export each manuscript as its own .md file with frontmatter
+      for (const ms of allManuscripts) {
+        const vol = ms.volume ?? 1;
+        const md = episodeToMarkdown(ms, vol);
+        const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ep-${String(ms.episode).padStart(3, '0')}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    showExportToast('Markdown (YAML)');
+    trackExport('markdown');
+  }, [projects, currentProjectId, showExportToast]);
+
   return {
     exportTXT,
     exportJSON,
@@ -534,5 +587,6 @@ export function useStudioExport({
     exportProjectManuscripts,
     exportAllEpisodesTXT,
     exportMarkdown,
+    exportAsMarkdown,
   };
 }

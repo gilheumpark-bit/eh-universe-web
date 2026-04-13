@@ -7,13 +7,14 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   X, Save, Download,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
-  Key, Sparkles,
+  Key, Sparkles, BookOpen,
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { StatusBadge } from '@/components/ui/StatusIndicator';
 import type { AppTab } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
+import { useStudioUIStore } from '@/store/studio-ui-store';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
@@ -25,6 +26,7 @@ import { useStudio } from './StudioContext';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
+const EpisodeExplorer = dynamic(() => import('@/components/studio/EpisodeExplorer'), { ssr: false });
 
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
 
@@ -77,6 +79,8 @@ export default function StudioMainContent({ children }: { children?: React.React
 
   const t = createT(language);
   const isOnline = useOnlineStatus();
+  const episodeExplorerOpen = useStudioUIStore(s => s.episodeExplorerOpen);
+  const setEpisodeExplorerOpen = useStudioUIStore(s => s.setEpisodeExplorerOpen);
 
   return (
     <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
@@ -114,6 +118,7 @@ export default function StudioMainContent({ children }: { children?: React.React
           {/* Genre badge + ANS engine badge removed for cleaner header */}
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
+            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer' })} aria-label="Episode Explorer"><BookOpen className="w-4 h-4" /></button>
             <button onClick={triggerSave} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${saveFlash ? 'text-accent-green' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={isKO ? '저장 (Ctrl+S)' : 'Save (Ctrl+S)'} aria-label="Save"><Save className="w-4 h-4" /></button>
             <button onClick={handlePrint} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '내보내기 (Ctrl+E)' : 'Export (Ctrl+E)'} aria-label="Export"><Download className="w-4 h-4" /></button>
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
@@ -181,6 +186,27 @@ export default function StudioMainContent({ children }: { children?: React.React
       )}
 
       <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Episode Explorer Panel */}
+        {episodeExplorerOpen && currentSession?.config && (
+          <div className="hidden md:flex w-[240px] shrink-0 border-r border-border bg-bg-primary overflow-hidden">
+            <EpisodeExplorer
+              config={currentSession.config}
+              currentEpisode={currentSession.config.episode}
+              language={language}
+              onSelectEpisode={(ep) => {
+                if (currentSession) {
+                  setConfig((prev) => ({ ...prev, episode: ep }));
+                  handleTabChange('writing');
+                }
+              }}
+              onCreateEpisode={() => handleTabChange('manuscript')}
+              onCreateVolume={() => handleTabChange('manuscript')}
+              onClose={() => setEpisodeExplorerOpen(false)}
+              onNavigateTab={(tab) => handleTabChange(tab as AppTab)}
+              className="w-full"
+            />
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto pb-20 md:pb-0 min-h-0">
           {/* API key banner */}
           {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !bannerDismissed && (

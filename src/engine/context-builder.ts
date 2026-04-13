@@ -1,12 +1,15 @@
 // ============================================================
 // PART 1 — Story Bible Context Builder
 // 망각 방지 동적 시스템 프롬프트 생성
+// Phase 5: Hybrid Context 3-Tier 명시화
 // ============================================================
 
 import type { Character, StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
 import { buildContinuityReport, type ContinuityReport } from './continuity-tracker';
 import { loadProfile, buildProfileHint } from './writer-profile';
 import { buildShadowPrompt, type ShadowState } from './shadow';
+
+// IDENTITY_SEAL: PART-1 | role=module header + imports | inputs=none | outputs=none
 
 // ============================================================
 // PART 2 — 데이터 추출 헬퍼
@@ -17,6 +20,24 @@ function extractLastScene(content: string): string {
   if (!content) return '';
   const sentences = content.split(/(?<=[.!?。！？\n])\s*/).filter(s => s.trim().length > 5);
   return sentences.slice(-3).join(' ').trim().slice(0, 500);
+}
+
+/** 원고에서 마지막 3문장 추출 + 🔥 태깅 — Tier C 전용 */
+function extractLast3Sentences(content: string): string {
+  if (!content) return '';
+  const sentences = content.split(/(?<=[.!?。！？])\s*/).filter(s => s.trim().length > 5);
+  const last3 = sentences.slice(-3);
+  if (last3.length === 0) return '';
+  return last3.map(s => `🔥 ${s.trim()}`).join('\n');
+}
+
+/** 토큰 추정 (CJK 혼합 텍스트용) */
+function estimateTokens(text: string): number {
+  if (!text) return 0;
+  const cjkChars = (text.match(/[\u3000-\u9fff\uac00-\ud7af]/g) || []).length;
+  const cjkRatio = text.length > 0 ? cjkChars / text.length : 0;
+  const tokensPerChar = cjkRatio * 1.5 + (1 - cjkRatio) * 0.35;
+  return Math.round(text.length * tokensPerChar);
 }
 
 /** 캐릭터 상태를 마크다운 텍스트로 변환 */
@@ -48,8 +69,137 @@ function formatOpenThreads(report: ContinuityReport): string {
   return allOpen.slice(0, 2).map((t, i) => `${i + 1}. ${t}`).join('\n');
 }
 
+// IDENTITY_SEAL: PART-2 | role=data extraction helpers | inputs=content/report | outputs=formatted strings
+
 // ============================================================
-// PART 3 — Story Bible 프롬프트 생성
+// PART 3 — 3-Tier Episode Context Builder
+// Tier A (1~N-3): compact summary 150자
+// Tier B (N-2):   detailed summary 500자 + shadow hints
+// Tier C (N-1):   full content 2000자 + last 3 sentences 🔥
+// ============================================================
+
+/**
+ * Hybrid Context 3-Tier 에피소드 요약 생성.
+ * 각 Tier별 다른 해상도로 이전 에피소드를 압축.
+ * @returns { text: 조립된 텍스트, tierATokens, tierBTokens, tierCTokens }
+ */
+function buildTieredEpisodeSummaries(
+  manuscripts: EpisodeManuscript[],
+  currentEpisode: number,
+  isKO: boolean,
+  shadowState?: ShadowState,
+  totalEpisodes?: number,
+): { text: string; tierATokens: number; tierBTokens: number; tierCTokens: number } {
+  const prevEpisodes = manuscripts
+    .filter(m => m.episode < currentEpisode && m.content)
+    .sort((a, b) => a.episode - b.episode);
+
+  if (prevEpisodes.length === 0) {
+    return { text: '', tierATokens: 0, tierBTokens: 0, tierCTokens: 0 };
+  }
+
+  const tierALines: string[] = [];
+  const tierBLines: string[] = [];
+  const tierCLines: string[] = [];
+
+  const nMinus2 = currentEpisode - 2; // Tier B episode
+  const nMinus1 = currentEpisode - 1; // Tier C episode
+
+  for (const m of prevEpisodes) {
+    // --------------------------------------------------------
+    // TIER C (N-1): FULL content (up to 2000 chars) + last 3 sentences 🔥
+    // 가장 최근 에피소드 — 최대 해상도
+    // --------------------------------------------------------
+    if (m.episode === nMinus1) {
+      const fullContent = m.content.slice(0, 2000);
+      const last3 = extractLast3Sentences(m.content);
+      let tierCText = isKO
+        ? `[Tier C — ${m.episode}화 전문 (직전 화)]:\n${fullContent}`
+        : `[Tier C — Ep.${m.episode} Full Text (Previous)]:\n${fullContent}`;
+      if (last3) {
+        tierCText += isKO
+          ? `\n\n[마지막 3문장 — 연결 필수]:\n${last3}`
+          : `\n\n[Last 3 Sentences — Must Continue]:\n${last3}`;
+      }
+      tierCLines.push(tierCText);
+      continue;
+    }
+
+    // --------------------------------------------------------
+    // TIER B (N-2): detailed summary (500 chars) + shadow state hints
+    // 2화 전 에피소드 — 중간 해상도 + 서사 파수꾼 힌트
+    // --------------------------------------------------------
+    if (m.episode === nMinus2) {
+      let detail: string;
+      if (m.detailedSummary) {
+        detail = m.detailedSummary;
+      } else if (m.summary) {
+        detail = m.summary;
+      } else {
+        detail = m.content.slice(0, 500);
+      }
+      let tierBText = isKO
+        ? `[Tier B — ${m.episode}화 상세 요약 (2화 전)]:\n${detail}`
+        : `[Tier B — Ep.${m.episode} Detailed Summary (2 eps ago)]:\n${detail}`;
+
+      // Shadow State 힌트를 Tier B에 인라인 주입
+      if (shadowState) {
+        const total = totalEpisodes ?? 25;
+        const shadowHint = buildShadowPrompt(shadowState, currentEpisode, total, isKO);
+        if (shadowHint) {
+          tierBText += isKO
+            ? `\n[서사 파수꾼 상태]:\n${shadowHint}`
+            : `\n[Narrative Sentinel State]:\n${shadowHint}`;
+        }
+      }
+
+      tierBLines.push(tierBText);
+      continue;
+    }
+
+    // --------------------------------------------------------
+    // TIER A (1~N-3): compact summary (150 chars)
+    // 초기 에피소드 — 최소 해상도
+    // --------------------------------------------------------
+    if (m.summary) {
+      tierALines.push(`- ${m.episode}${isKO ? '화' : ''}: ${m.summary}`);
+    } else {
+      const firstLines = m.content.split(/\n/).filter(l => l.trim()).slice(0, 2).join(' ').slice(0, 150);
+      tierALines.push(`- ${m.episode}${isKO ? '화' : ''}: ${firstLines}`);
+    }
+  }
+
+  // 조립
+  const parts: string[] = [];
+
+  if (tierALines.length > 0) {
+    parts.push(isKO
+      ? `[Tier A — 초기 에피소드 요약 (압축)]:\n${tierALines.join('\n')}`
+      : `[Tier A — Early Episodes (Compact)]:\n${tierALines.join('\n')}`);
+  }
+  if (tierBLines.length > 0) {
+    parts.push(tierBLines.join('\n'));
+  }
+  if (tierCLines.length > 0) {
+    parts.push(tierCLines.join('\n'));
+  }
+
+  const tierAText = tierALines.join('\n');
+  const tierBText = tierBLines.join('\n');
+  const tierCText = tierCLines.join('\n');
+
+  return {
+    text: parts.join('\n\n'),
+    tierATokens: estimateTokens(tierAText),
+    tierBTokens: estimateTokens(tierBText),
+    tierCTokens: estimateTokens(tierCText),
+  };
+}
+
+// IDENTITY_SEAL: PART-3 | role=3-tier context builder | inputs=manuscripts,currentEpisode | outputs=tiered text + token counts
+
+// ============================================================
+// PART 4 — Story Bible 프롬프트 생성
 // ============================================================
 
 export interface StoryBibleInput {
@@ -59,11 +209,16 @@ export interface StoryBibleInput {
   language: 'KO' | 'EN' | 'JP' | 'CN';
   /** Optional shadow state for narrative sentinel integration */
   shadowState?: ShadowState;
+  /** Phase 6: Active branch name (e.g. "universe/dark-ending"). Omit or set "main" to skip. */
+  branch?: string;
+  /** Phase 6: Episode number where the branch diverged from main. */
+  branchForkEpisode?: number;
 }
 
 /**
  * 망각 방지 시스템 프롬프트(Story Bible)를 동적으로 생성.
  * useStudioAI에서 AI 호출 직전에 시스템 프롬프트에 주입.
+ * Phase 5: Hybrid Context — 3-Tier episode context 적용
  * 토큰 예산: ~800토큰 이내 (14B 4K 컨텍스트의 20%)
  */
 export function buildStoryBible(input: StoryBibleInput): string {
@@ -92,15 +247,24 @@ export function buildStoryBible(input: StoryBibleInput): string {
   // 미해결 복선
   const openThreads = formatOpenThreads(report);
 
-  // 이전 회차 요약 (AI 요약 우선 → 첫 2줄 fallback — 단일 폴백 체인)
-  const recentSummaries = manuscripts
-    .filter(m => m.episode >= currentEpisode - 3 && m.episode < currentEpisode && m.content)
-    .map(m => {
-      if (m.summary) return `- ${m.episode}화: ${m.summary}`;
-      const firstLines = m.content.split(/\n/).filter(l => l.trim()).slice(0, 2).join(' ').slice(0, 150);
-      return `- ${m.episode}화: ${firstLines}`;
-    })
-    .join('\n');
+  // ── Phase 5: 3-Tier Hybrid Context ──
+  // Shadow State는 Tier B(N-2) 섹션에 인라인으로 주입됨
+  const tieredContext = buildTieredEpisodeSummaries(
+    manuscripts,
+    currentEpisode,
+    isKO,
+    input.shadowState,
+    config.totalEpisodes,
+  );
+
+  // 토큰 분배 로그
+  if (typeof console !== 'undefined') {
+    console.log(
+      `[StoryBible] Tier A: ${tieredContext.tierATokens} tokens, ` +
+      `Tier B: ${tieredContext.tierBTokens} tokens, ` +
+      `Tier C: ${tieredContext.tierCTokens} tokens`
+    );
+  }
 
   // 작가 수정 패턴 분석 (최근 corrections에서 스타일 힌트 추출)
   const allCorrections = manuscripts
@@ -131,6 +295,18 @@ export function buildStoryBible(input: StoryBibleInput): string {
     ? `# 작품 사전 (Story Bible) — ${config.title || '무제'}`
     : `# Story Bible — ${config.title || 'Untitled'}`);
 
+  // Phase 6: Branch Context — 분기 우주 정보
+  const activeBranch = input.branch;
+  if (activeBranch && activeBranch !== 'main') {
+    const forkEp = input.branchForkEpisode;
+    const forkInfo = forkEp
+      ? (isKO ? `${forkEp}화에서 분기` : `branched from ep.${forkEp}`)
+      : (isKO ? '분기점 미상' : 'fork point unknown');
+    sections.push(isKO
+      ? `\n🌌 [현재 우주: ${activeBranch} (${forkInfo})]\n(※ 이 우주는 메인 타임라인과 다른 전개입니다. 분기 이후의 설정 변경을 존중하십시오.)`
+      : `\n🌌 [Active Universe: ${activeBranch} (${forkInfo})]\n(※ This is an alternate timeline. Respect divergent developments after the branch point.)`);
+  }
+
   // 현재 장소 (P0)
   if (currentLocation) {
     sections.push(isKO
@@ -145,11 +321,11 @@ export function buildStoryBible(input: StoryBibleInput): string {
       : `\n👥 Character States:\n${charStates}\n(※ Reflect injuries/states in character actions.)`);
   }
 
-  // 이전 줄거리 (P0)
-  if (recentSummaries) {
+  // 이전 줄거리 — Phase 5: 3-Tier Hybrid Context (P0)
+  if (tieredContext.text) {
     sections.push(isKO
-      ? `\n📜 이전 줄거리:\n${recentSummaries}`
-      : `\n📜 Story So Far:\n${recentSummaries}`);
+      ? `\n📜 이전 줄거리 (Hybrid Context):\n${tieredContext.text}`
+      : `\n📜 Story So Far (Hybrid Context):\n${tieredContext.text}`);
   }
 
   // 미해결 복선 (P1 — 소프트)
@@ -166,14 +342,8 @@ export function buildStoryBible(input: StoryBibleInput): string {
       : `\n---\n🔥 Last Scene (Episode ${currentEpisode - 1}):\n"${lastScene}"\n\nContinue IMMEDIATELY from this scene. No background exposition or flashbacks to start.`);
   }
 
-  // Shadow State — 서사 파수꾼 동적 힌트
-  if (input.shadowState) {
-    const totalEpisodes = config.totalEpisodes ?? 25;
-    const shadowHint = buildShadowPrompt(input.shadowState, currentEpisode, totalEpisodes, isKO);
-    if (shadowHint) {
-      sections.push(shadowHint);
-    }
-  }
+  // NOTE: Shadow State는 Tier B(N-2) 섹션에 이미 인라인 주입됨 (buildTieredEpisodeSummaries)
+  // 별도 shadow 섹션을 중복 추가하지 않음
 
   // 작가 스타일 메모 (수정 패턴 기반)
   if (writerStyleHint) {
@@ -181,6 +351,7 @@ export function buildStoryBible(input: StoryBibleInput): string {
   }
 
   // 작가 프로필 힌트 (누적 학습 데이터 기반)
+  // NOTE: 이 섹션은 모든 Tier 이후 최하위 우선순위 — 토큰 부족 시 트리밍 대상
   try {
     const profile = loadProfile();
     const profileHint = buildProfileHint(profile, isKO);
@@ -191,3 +362,5 @@ export function buildStoryBible(input: StoryBibleInput): string {
 
   return sections.join('\n');
 }
+
+// IDENTITY_SEAL: PART-4 | role=story bible assembler | inputs=StoryBibleInput | outputs=system prompt string

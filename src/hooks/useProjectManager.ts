@@ -10,6 +10,7 @@ import { trackStudioSessionStart } from '@/lib/analytics';
 import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { debouncedSyncToFirestore, loadProjectsFromFirestore, subscribeToProjectChanges } from '@/lib/firestore-project-sync';
+import { configToRepoFiles } from '@/lib/project-serializer';
 
 // ============================================================
 // PART 1 — Initial config & types
@@ -365,6 +366,52 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
     }
   }, [updateCurrentSession, currentSession?.config]);
 
+  // ============================================================
+  // PART 6 — GitHub Sync (serialize config -> repo files)
+  // ============================================================
+
+  /**
+   * Serialize the current session's config into repo files using project-serializer.
+   * The caller (e.g. a settings panel) provides a `saveFileFn` from useGitHubSync
+   * so that this hook does not depend on GitHub connection state directly.
+   *
+   * Returns the count of files synced, or 0 on failure.
+   */
+  const syncProjectToGitHub = useCallback(
+    async (
+      saveFileFn: (path: string, content: string, message?: string) => Promise<string | null>,
+    ): Promise<number> => {
+      if (!isFeatureEnabled('GITHUB_SYNC')) return 0;
+
+      const session = currentSession;
+      if (!session?.config) return 0;
+
+      try {
+        const repoFiles = configToRepoFiles(session.config);
+        if (repoFiles.length === 0) return 0;
+
+        let synced = 0;
+        for (const file of repoFiles) {
+          const sha = await saveFileFn(file.path, file.content);
+          if (sha) synced++;
+        }
+
+        if (synced > 0) {
+          logger.info('GitHubSync', `Synced ${synced}/${repoFiles.length} files`);
+          window.dispatchEvent(new CustomEvent('noa:github-synced', {
+            detail: { count: synced, total: repoFiles.length },
+          }));
+        }
+
+        return synced;
+      } catch (err) {
+        logger.error('GitHubSync', 'Sync failed:', err);
+        return 0;
+      }
+    },
+    [currentSession],
+  );
+
   return {
     // State
     projects, setProjects,
@@ -383,5 +430,7 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
     versionedBackups: isFeatureEnabled('OFFLINE_CACHE') ? versionedBackups : undefined,
     doRestoreVersionedBackup,
     refreshBackupList,
+    // GitHub sync
+    syncProjectToGitHub,
   };
 }

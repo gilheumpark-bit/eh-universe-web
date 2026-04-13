@@ -20,6 +20,9 @@ import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { InlineActionPopup } from '@/components/studio/InlineActionPopup';
+import { NovelEditor } from '@/components/studio/NovelEditor';
+import type { NovelEditorSelection, NovelEditorHandle } from '@/components/studio/NovelEditor';
+import { useInlineCompletion } from '@/hooks/useInlineCompletion';
 import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
 import { ReferenceSplitPane } from '@/components/studio/ReferenceSplitPane';
 import { DirectionReferencePanel } from '@/components/studio/DirectionReferencePanel';
@@ -237,6 +240,17 @@ export default function WritingTabInline(props: Props) {
   const quality = useQualityAnalysis(editDraft);
   // P1: 연속성 경고
   const continuityWarnings = useContinuityCheck(editDraft, currentSession?.config ?? null);
+  // Tiptap selection state for InlineActionPopup integration
+  const [novelSelection, setNovelSelection] = useState<NovelEditorSelection | null>(null);
+  // P7: Inline completion (Tab autocomplete)
+  const novelEditorRef = useRef<NovelEditorHandle>(null);
+  const inlineCompletion = useInlineCompletion({
+    enabled: writingMode === 'edit' && !novelSelection && !isGenerating,
+    debounceMs: 1500,
+    maxTokens: 100,
+    genre: currentSession?.config?.genre,
+    characters: currentSession?.config?.characters?.slice(0, 10),
+  });
   // P2: Undo 스택
   const undoStack = useUndoStack(editDraft);
 
@@ -258,43 +272,35 @@ export default function WritingTabInline(props: Props) {
     }
   }, [editDraft, writingMode]);
 
-  // P2: 키보드 단축키 — Ctrl+Shift+R (인라인 리라이트), Ctrl+Z/Y (undo/redo)
-  const handleWritingKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    handleSVIKeyDown(e);
+  // Note: Ctrl+Shift+R (inline rewrite) is now handled by NovelKeymap extension in Tiptap.
+  // Ctrl+Z/Y (undo/redo) is handled by Tiptap StarterKit History.
+  // InlineRewrite undo is available via the UI buttons (undoStack.undo/redo).
 
-    // Ctrl+Shift+R → 선택 영역 인라인 리라이트 트리거
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
-      e.preventDefault();
-      const ta = editDraftRef.current;
-      if (!ta) return;
-      const start = ta.selectionStart;
-      const end = ta.selectionEnd;
-      if (end - start < 2) return;
-      // mouseup 이벤트를 시뮬레이트해서 InlineActionPopup이 표시되도록
-      ta.dispatchEvent(new Event('mouseup', { bubbles: true }));
-      return;
+  // P7: Sync inline completion suggestion → editor ghost text decoration
+  useEffect(() => {
+    const editor = novelEditorRef.current?.getEditor();
+    if (!editor) return;
+    const storage = editor.storage as unknown as Record<string, Record<string, unknown>>;
+    if (storage.inlineCompletion) {
+      storage.inlineCompletion.suggestion = inlineCompletion.suggestion;
+      // Force ProseMirror to re-evaluate decorations
+      editor.view.dispatch(editor.view.state.tr);
     }
+  }, [inlineCompletion.suggestion]);
 
-    // Ctrl+Z → Undo (인라인 리라이트 전용)
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z' && undoStack.canUndo) {
-      // 브라우저 기본 undo와 겹치므로 undoStack에 항목이 있을 때만
-      if (undoStack.undoCount > 1) {
-        e.preventDefault();
-        const prev = undoStack.undo();
-        if (prev !== null) setEditDraft(prev);
-      }
+  // P7: Trigger completion when editDraft changes (debounced inside hook)
+  const prevDraftRef = useRef(editDraft);
+  useEffect(() => {
+    if (writingMode !== 'edit') return;
+    if (editDraft === prevDraftRef.current) return;
+    prevDraftRef.current = editDraft;
+    // Dismiss old suggestion on text change, then trigger new one
+    inlineCompletion.dismiss();
+    if (editDraft.length >= 20) {
+      inlineCompletion.triggerCompletion(editDraft);
     }
-
-    // Ctrl+Shift+Z 또는 Ctrl+Y → Redo
-    if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
-        ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
-      if (undoStack.canRedo) {
-        e.preventDefault();
-        const next = undoStack.redo();
-        if (next !== null) setEditDraft(next);
-      }
-    }
-  }, [handleSVIKeyDown, editDraftRef, undoStack, setEditDraft]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editDraft, writingMode]);
 
   // Fix #10: Streaming auto-scroll with manual scroll detection
   const streamContainerRef = useRef<HTMLDivElement>(null);
@@ -558,16 +564,14 @@ export default function WritingTabInline(props: Props) {
                     weakCount={quality.weakCount}
                     language={language}
                     onSelectWeak={(index) => {
-                      // 해당 문단으로 스크롤
-                      const ta = editDraftRef.current;
-                      if (!ta) return;
-                      const paras = editDraft.split(/\n\s*\n/);
-                      let offset = 0;
-                      for (let i = 0; i < index && i < paras.length; i++) offset += paras[i].length + 2;
-                      ta.focus();
-                      ta.setSelectionRange(offset, offset + (paras[index]?.length || 0));
-                      const lineHeight = parseInt(getComputedStyle(ta).lineHeight) || 28;
-                      ta.scrollTop = Math.max(0, editDraft.slice(0, offset).split('\n').length * lineHeight - ta.clientHeight / 3);
+                      // 해당 문단으로 스크롤 — Tiptap ProseMirror 내부 p 요소 활용
+                      const wrapper = document.querySelector('.novel-editor-wrapper .ProseMirror');
+                      if (!wrapper) return;
+                      const paragraphs = wrapper.querySelectorAll('p');
+                      const targetP = paragraphs[index];
+                      if (targetP) {
+                        targetP.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
                     }}
                   />
                 )}
@@ -630,21 +634,19 @@ export default function WritingTabInline(props: Props) {
                       <span className="text-accent-amber font-bold text-sm">{isKO ? '파일을 놓아서 원고 가져오기' : 'Drop file to import manuscript'}</span>
                     </div>
                   )}
-                  <textarea
-                    ref={editDraftRef}
+                  <NovelEditor
+                    ref={novelEditorRef}
                     data-zen-editor
-                    value={editDraft}
-                    onChange={e => setEditDraft(e.target.value)}
-                    onKeyDown={handleWritingKeyDown}
-                    onContextMenu={textMenu.openMenu}
-                    autoFocus
-                    style={{ fontSize: 'var(--editor-font-size, 1rem)' }}
-                  className="w-full min-h-[70vh] bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl px-8 py-8 md:px-12 md:py-10 md:text-lg font-serif leading-[2] tracking-wide text-indent-[1em] focus:border-accent-amber/40 focus:shadow-[0_0_32px_rgba(202,161,92,0.14)] outline-none transition-all resize-none"
+                    content={editDraft}
+                    onChange={setEditDraft}
+                    onSelectionChange={setNovelSelection}
                     placeholder={isKO ? '여기에 이야기를 써 내려가세요... (TXT/MD 파일을 끌어다 놓을 수도 있어요)' : 'Start writing here... (or drag & drop a TXT/MD file)'}
+                    className="w-full bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl md:text-lg tracking-wide focus-within:border-accent-amber/40 focus-within:shadow-[0_0_32px_rgba(202,161,92,0.14)] transition-all"
                   />
                 </div>
                 <InlineActionPopup
-                  textareaRef={editDraftRef}
+                  editorSelection={novelSelection}
+                  fullText={editDraft}
                   language={language}
                   storyConfig={{
                     genre: currentSession.config.genre || undefined,

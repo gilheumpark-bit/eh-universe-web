@@ -290,10 +290,18 @@ export interface EpisodeManuscript {
   content: string;
   charCount: number;
   lastUpdate: number;
-  /** AI 자동 생성 요약 (2~3줄, 150자 이내) */
+  /** AI 자동 생성 요약 (2~3줄, 150자 이내) — Tier A context */
   summary?: string;
+  /** AI 자동 생성 상세 요약 (5~8줄, 500자 이내) — Tier B (N-2) context */
+  detailedSummary?: string;
   /** 작가 수정 내역 — 인라인 리라이트 기록 (최대 20개/에피소드) */
   corrections?: WriterCorrection[];
+  /** GitHub file path (e.g. 'volumes/vol-01/ep-001.md') */
+  filePath?: string;
+  /** GitHub file sha for conflict detection */
+  sha?: string;
+  /** Volume number */
+  volume?: number;
 }
 
 // Translated manuscript entry (번역 원고)
@@ -539,6 +547,13 @@ export interface ChatSession {
   lastUpdate: number;
 }
 
+// Volume grouping for episode tree
+export interface Volume {
+  id: number;
+  title: string;
+  description?: string;
+}
+
 // Project (multi-project folder structure)
 export interface Project {
   id: string;
@@ -548,6 +563,8 @@ export interface Project {
   createdAt: number;
   lastUpdate: number;
   sessions: ChatSession[];
+  volumes?: Volume[];
+  currentBranch?: string;
 }
 
 export { PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
@@ -655,4 +672,6 @@ export interface WriterProfile {
   overrideRate: number;
   skillLevel: SkillLevel;
   levelConfidence: number;
+  /** 0-1, how often user accepts Tab inline completions */
+  completionAcceptRate: number;
 }

@@ -639,9 +639,26 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
   };
   const contextLimit = CONTEXT_LIMITS.default;
   const ratio = estimatedTokens / contextLimit;
+
+  // Phase 5: Hybrid Context tier-level breakdown logging
+  // Tier별 토큰 소비를 추적하여 컨텍스트 예산 최적화에 활용
+  const tierBreakdown = {
+    total: estimatedTokens,
+    storyBible: Math.round(systemPromptText.indexOf('📜') >= 0
+      ? (systemPromptText.length - systemPromptText.indexOf('📜')) * tokensPerChar * 0.4
+      : 0),
+    contextRatio: Math.round(ratio * 100),
+  };
+  if (typeof console !== 'undefined') {
+    console.log(
+      `[Pipeline TokenBudget] total: ${tierBreakdown.total} tokens (${tierBreakdown.contextRatio}% of ${contextLimit}), ` +
+      `storyBible estimate: ~${tierBreakdown.storyBible} tokens`
+    );
+  }
+
   if (ratio > 0.30 && typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('noa:token-budget-warning', {
-      detail: { estimatedTokens, contextLimit, ratio: Math.round(ratio * 100) },
+      detail: { estimatedTokens, contextLimit, ratio: Math.round(ratio * 100), tierBreakdown },
     }));
   }
 

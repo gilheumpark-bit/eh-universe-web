@@ -34,6 +34,10 @@ interface StudioUIState {
   mobileDrawerOpen: boolean;
   setMobileDrawerOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
 
+  // Episode Explorer panel
+  episodeExplorerOpen: boolean;
+  setEpisodeExplorerOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
+
   // Core Writing/Drafting state
   writingMode: WritingMode;
   setWritingMode: (val: WritingMode) => void;
@@ -84,6 +88,9 @@ export const useStudioUIStore = create<StudioUIState>((set) => ({
 
   mobileDrawerOpen: false,
   setMobileDrawerOpen: (val) => set((state) => ({ mobileDrawerOpen: typeof val === 'function' ? val(state.mobileDrawerOpen) : val })),
+
+  episodeExplorerOpen: false,
+  setEpisodeExplorerOpen: (val) => set((state) => ({ episodeExplorerOpen: typeof val === 'function' ? val(state.episodeExplorerOpen) : val })),
 
   writingMode: 'ai',
   setWritingMode: (val) => set({ writingMode: val }),

@@ -18,6 +18,8 @@ export interface FeatureFlags {
   EPISODE_COMPARE: boolean;
   /** Firestore 클라우드 동기화 */
   CLOUD_SYNC: boolean;
+  /** GitHub 원고 동기화 */
+  GITHUB_SYNC: boolean;
 }
 
 // ============================================================
@@ -33,6 +35,8 @@ const FLAGS: FeatureFlags = {
   EPISODE_COMPARE: true,
   /** Firestore 세션 클라우드 동기화 — 기본 활성, localStorage ff_CLOUD_SYNC=false로 비활성 */
   CLOUD_SYNC: true,
+  /** GitHub 원고 동기화 — Phase 1 기본 비활성, localStorage ff_GITHUB_SYNC=true로 활성 */
+  GITHUB_SYNC: false,
 };
 
 /**

@@ -44,6 +44,7 @@ export function createEmptyProfile(id: string = 'default'): WriterProfile {
     overrideRate: 0,
     skillLevel: 'beginner',
     levelConfidence: 0,
+    completionAcceptRate: 0,
   };
 }
 
@@ -69,6 +70,9 @@ interface EpisodeMetrics {
   findings: Array<{ kind: string }>;
   wasRegenerated: boolean;
   wasOverridden: boolean;
+  /** Tab completion stats for this episode (optional) */
+  completionAccepted?: number;
+  completionDismissed?: number;
 }
 
 export function updateProfile(profile: WriterProfile, metrics: EpisodeMetrics): WriterProfile {
@@ -111,6 +115,15 @@ export function updateProfile(profile: WriterProfile, metrics: EpisodeMetrics): 
     p.overrideRate = ((p.overrideRate * (total - 1)) + 1) / total;
   } else {
     p.overrideRate = (p.overrideRate * (total - 1)) / total;
+  }
+
+  // Tab completion 수락률 추적
+  const compAccepted = metrics.completionAccepted ?? 0;
+  const compDismissed = metrics.completionDismissed ?? 0;
+  const compTotal = compAccepted + compDismissed;
+  if (compTotal > 0) {
+    const sessionRate = compAccepted / compTotal;
+    p.completionAcceptRate = isFirst ? sessionRate : ema(p.completionAcceptRate, sessionRate);
   }
 
   // 레벨 판정
@@ -194,6 +207,15 @@ export function buildVoiceFingerprint(profile: WriterProfile, isKO: boolean): st
   return traits.join(', ');
 }
 
+/**
+ * 작가 프로필 기반 프롬프트 힌트 생성.
+ *
+ * [Phase 5: Hybrid Context 우선순위]
+ * 이 함수의 출력은 Story Bible의 **최하위 우선순위**로 주입됨.
+ * Tier A/B/C 에피소드 컨텍스트, 캐릭터 상태, 복선, 꼬리물기 등
+ * 모든 핵심 섹션 이후에 배치되며, 토큰 예산 초과 시 트리밍 1순위 대상.
+ * 우선순위: Location > Characters > Tiered Episodes > Hooks > LastScene > Shadow > Style > **Profile(here)**
+ */
 export function buildProfileHint(profile: WriterProfile, isKO: boolean): string {
   if (profile.episodeCount < 5) return ''; // 5화 미만 — 학습 데이터 부족
 
