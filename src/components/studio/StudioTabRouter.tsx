@@ -8,13 +8,13 @@ import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritin
 import type { VersionedBackup } from '@/lib/indexeddb-backup';
 import { SectionErrorBoundary } from '@/components/studio/SectionErrorBoundary';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import WorldTab from '@/components/studio/tabs/WorldTab';
-import CharacterTab from '@/components/studio/tabs/CharacterTab';
-import SettingsView from '@/components/studio/SettingsView';
-import StyleTab from '@/components/studio/tabs/StyleTab';
-import ManuscriptTab from '@/components/studio/tabs/ManuscriptTab';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
+const WorldTab = dynamic(() => import('@/components/studio/tabs/WorldTab'), { ssr: false, loading: DynSkeleton });
+const CharacterTab = dynamic(() => import('@/components/studio/tabs/CharacterTab'), { ssr: false, loading: DynSkeleton });
+const SettingsView = dynamic(() => import('@/components/studio/SettingsView'), { ssr: false, loading: DynSkeleton });
+const StyleTab = dynamic(() => import('@/components/studio/tabs/StyleTab'), { ssr: false, loading: DynSkeleton });
+const ManuscriptTab = dynamic(() => import('@/components/studio/tabs/ManuscriptTab'), { ssr: false, loading: DynSkeleton });
 const NetworkFeedWidget = dynamic(() => import('@/components/studio/NetworkFeedWidget'), { ssr: false, loading: DynSkeleton });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
 const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });

@@ -26,7 +26,13 @@
 
 /* forwards만 사용: backwards 시 전환 직전 한 프레임이 비어 보이거나 잘못된 레이어가 비칠 수 있음 */
 #main-content > * {
-  animation: page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: page-enter 0.18s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* GPU 가속 힌트: 탭 전환/패널 애니메이션 */
+[role="tabpanel"], .animate-in, [data-zen-editor] {
+  will-change: opacity, transform;
+  contain: layout style;
 }
 
 /* View Transitions navigation:auto 는 App Router 클라이언트 전환과 겹치면 홈 등 잘못된 스냅샷이 섞여 보일 수 있어 비활성화 */
@@ -130,12 +136,12 @@ textarea[data-zen-editor]:not(:placeholder-shown):focus {
    Theme Transition Animation
    Smooth color transitions when switching themes
    ============================================================ */
-html,
-html *,
-html *::before,
-html *::after {
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-  transition-duration: 0.3s;
+/* 테마 전환: 인터랙티브 요소만 (전체 DOM에 적용하면 탭 전환 시 수백 노드 repaint 발생) */
+button, a, input, select, textarea,
+[role="button"], [role="tab"], [role="tabpanel"],
+.premium-button, .premium-panel, nav {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.2s;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
