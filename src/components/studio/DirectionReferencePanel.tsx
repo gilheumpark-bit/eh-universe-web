@@ -229,6 +229,46 @@ function QuickDirectionPanel({ config, language, setConfig }: { config: StoryCon
           </div>
         )}
       </div>
+
+      {/* 씬시트 요약 (훅/클리프/복선) */}
+      {sd && (sd.hooks?.length || sd.cliffhanger || sd.foreshadows?.length) ? (
+        <div>
+          <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+            {isKO ? '씬시트' : 'Scene Sheet'}
+          </span>
+          <div className="mt-1 space-y-1 pl-2 border-l-2 border-accent-amber/30">
+            {sd.hooks?.slice(0, 3).map((h, i) => (
+              <div key={i} className="text-[10px] text-accent-blue/80 truncate">⚓ {h.desc}</div>
+            ))}
+            {sd.cliffhanger && (
+              <div className="text-[10px] text-accent-red/80 truncate">🔚 &ldquo;{sd.cliffhanger.desc}&rdquo;</div>
+            )}
+            {sd.foreshadows?.filter(f => !f.resolved).slice(0, 3).map((f, i) => (
+              <div key={i} className="text-[10px] text-accent-purple/80 truncate">🔮 EP{f.episode}: {f.planted}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* 에피소드 씬시트 */}
+      {config.episodeSceneSheets?.length ? (
+        <div>
+          <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+            {isKO ? '에피소드 씬시트' : 'Episode Scenes'}
+          </span>
+          <div className="mt-1 space-y-1">
+            {config.episodeSceneSheets
+              .filter(s => s.episode === config.episode)
+              .flatMap(s => s.scenes || [])
+              .map((scene, i) => (
+                <div key={i} className="text-[10px] px-2 py-1 rounded bg-bg-secondary/50 flex items-center gap-1.5">
+                  <span className="font-medium text-text-primary truncate">{scene.sceneName || `#${i + 1}`}</span>
+                  {scene.tone && <span className="text-[8px] px-1 py-0.5 rounded bg-accent-amber/10 text-accent-amber">{scene.tone}</span>}
+                </div>
+              ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
