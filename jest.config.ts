@@ -46,10 +46,10 @@ const config: Config = {
   ],
   coverageThreshold: {
     global: {
-      branches: 15,
-      functions: 15,
-      lines: 20,
-      statements: 20,
+      branches: 30,
+      functions: 30,
+      lines: 40,
+      statements: 40,
     },
     './renderer/lib/rate-limit.ts': {
       lines: 90,

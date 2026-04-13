@@ -1036,6 +1036,7 @@ import {
   runTeam6Stability,
   runTeam7ReleaseIP,
   runTeam8Governance,
+  runTeam9Quill,
   type TeamResult as FullTeamResult,
 } from './pipeline-teams';
 
@@ -1069,6 +1070,7 @@ const FULL_TEAMS: { stage: string; run: TeamFn; blocking: boolean }[] = [
   { stage: 'stability',     run: runTeam6Stability,    blocking: false },
   { stage: 'release-ip',    run: runTeam7ReleaseIP,    blocking: true  },
   { stage: 'governance',    run: runTeam8Governance,   blocking: false },
+  { stage: 'quill',          run: runTeam9Quill,        blocking: false },
 ];
 
 /**

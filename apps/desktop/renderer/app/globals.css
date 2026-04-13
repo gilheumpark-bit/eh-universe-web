@@ -50,6 +50,8 @@
   --bl-sm: 10px;
   --bl-md: 18px;
   --bl-lg: 28px;
+  /* Vertical rhythm base unit — 8pt grid for margin/padding rhythm */
+  --vr-unit: 8px;
   --gradient-page: linear-gradient(180deg, #141311 0%, #11100e 45%, #0f0e0c 100%);
   --font-sans:
     var(--font-ibm-plex-sans), var(--font-noto-sans-kr), "Noto Sans JP",
@@ -352,6 +354,119 @@ body[data-theme="light"] {
 [data-theme="light"] .text-cyan-200,
 [data-theme="light"] .text-cyan-300 {
   color: #0e7490;
+}
+/* ── Light mode: amber/orange/yellow warm tones → readable dark tones ── */
+[data-theme=”light”] .text-amber-100,
+[data-theme=”light”] .text-amber-200,
+[data-theme=”light”] .text-amber-200\/90,
+[data-theme=”light”] .text-amber-200\/80,
+[data-theme=”light”] .text-amber-200\/70,
+[data-theme=”light”] .text-amber-200\/60 {
+  color: #92400e;
+}
+[data-theme=”light”] .text-amber-300 {
+  color: #b45309;
+}
+[data-theme=”light”] .text-amber-400 {
+  color: #92400e;
+}
+[data-theme=”light”] .text-orange-200,
+[data-theme=”light”] .text-orange-300 {
+  color: #9a3412;
+}
+[data-theme=”light”] .text-orange-400 {
+  color: #9a3412;
+}
+[data-theme=”light”] .text-yellow-300,
+[data-theme=”light”] .text-yellow-400 {
+  color: #854d0e;
+}
+[data-theme=”light”] .text-green-400 {
+  color: #166534;
+}
+[data-theme=”light”] .text-red-400 {
+  color: #991b1b;
+}
+[data-theme=”light”] .text-blue-400 {
+  color: #1e40af;
+}
+[data-theme=”light”] .text-purple-400 {
+  color: #6b21a8;
+}
+/* ── Light mode: gray 200/300 → readable ── */
+[data-theme=”light”] .text-gray-200,
+[data-theme=”light”] .text-gray-300 {
+  color: #555550;
+}
+/* ── Light mode: status badge 300-level tones → readable ── */
+[data-theme=”light”] .text-green-300 { color: #166534; }
+[data-theme=”light”] .text-red-300 { color: #991b1b; }
+[data-theme=”light”] .text-blue-300 { color: #1e40af; }
+[data-theme=”light”] .text-purple-300 { color: #6b21a8; }
+[data-theme=”light”] .text-indigo-300 { color: #3730a3; }
+/* ── Light mode: status badge bg-*-900 tints → light fills ── */
+[data-theme=”light”] .bg-green-900\/40 { background-color: rgba(22, 101, 52, 0.08); }
+[data-theme=”light”] .bg-yellow-900\/40 { background-color: rgba(133, 77, 14, 0.08); }
+[data-theme=”light”] .bg-blue-900\/40 { background-color: rgba(30, 64, 175, 0.08); }
+[data-theme=”light”] .bg-red-900\/40 { background-color: rgba(153, 27, 27, 0.08); }
+[data-theme=”light”] .bg-purple-900\/40 { background-color: rgba(107, 33, 168, 0.08); }
+[data-theme=”light”] .bg-orange-900\/40 { background-color: rgba(154, 52, 18, 0.08); }
+[data-theme=”light”] .bg-indigo-900\/40 { background-color: rgba(55, 48, 163, 0.08); }
+[data-theme=”light”] .bg-emerald-500\/20 { background-color: rgba(5, 150, 105, 0.1); }
+/* ── Light mode: toast/alert 100-level text → readable dark ── */
+[data-theme=”light”] .text-red-100 { color: #991b1b; }
+[data-theme=”light”] .text-blue-100 { color: #1e40af; }
+/* ── Light mode: toast/alert 900-level bg → light-safe fills ── */
+[data-theme=”light”] .bg-red-900\/95 { background-color: rgba(254, 226, 226, 0.97); }
+[data-theme=”light”] .bg-blue-900\/95 { background-color: rgba(219, 234, 254, 0.97); }
+[data-theme=”light”] .border-red-600 { border-color: #dc2626; }
+[data-theme=”light”] .border-blue-600 { border-color: #2563eb; }
+/* ── Light mode: amber-700 low opacity dock labels → readable ── */
+[data-theme=”light”] .text-amber-700\/50,
+[data-theme=”light”] .text-amber-700\/60 {
+  color: #78716c;
+}
+/* ── Light mode: hover states for warm tones ── */
+[data-theme=”light”] .hover\:text-amber-300:hover,
+[data-theme=”light”] .hover\:text-amber-200:hover,
+[data-theme=”light”] .group-hover\:text-amber-300:hover {
+  color: #b45309;
+}
+[data-theme=”light”] .hover\:text-white:hover,
+[data-theme=”light”] .hover\:text-amber-100:hover {
+  color: var(--color-text-primary);
+}
+/* ── Light mode: amber-900 dark bg tints → light neutral fills ── */
+[data-theme=”light”] .bg-amber-900\/10,
+[data-theme=”light”] .bg-amber-900\/15,
+[data-theme=”light”] .bg-amber-900\/20,
+[data-theme=”light”] .bg-amber-900\/25,
+[data-theme=”light”] .bg-amber-900\/30,
+[data-theme=”light”] .bg-amber-900\/40 {
+  background-color: rgba(180, 83, 9, 0.08);
+}
+[data-theme=”light”] .hover\:bg-amber-900\/15:hover,
+[data-theme=”light”] .hover\:bg-amber-900\/20:hover,
+[data-theme=”light”] .hover\:bg-amber-900\/30:hover {
+  background-color: rgba(180, 83, 9, 0.12);
+}
+[data-theme=”light”] .bg-amber-900\/95 {
+  background-color: rgba(255, 251, 235, 0.97);
+}
+/* ── Light mode: hardcoded dark hex backgrounds → light fills ── */
+[data-theme=”light”] .bg-\[\#1c1208\],
+[data-theme=”light”] .bg-\[\#1c1208\]\/90 {
+  background-color: var(--color-bg-secondary);
+}
+[data-theme=”light”] .bg-\[\#16100a\],
+[data-theme=”light”] .bg-\[\#16100a\]\/95 {
+  background-color: var(--color-bg-secondary);
+}
+/* ── Light mode: border amber overrides ── */
+[data-theme=”light”] .border-amber-600,
+[data-theme=”light”] .border-amber-700,
+[data-theme=”light”] .border-amber-800 {
+  border-color: #d97706;
 }
 
 /* ============================================================

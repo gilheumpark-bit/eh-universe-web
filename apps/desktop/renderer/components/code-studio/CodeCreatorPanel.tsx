@@ -63,7 +63,7 @@ interface CodeCreatorPanelProps {
 const PHASES: Array<{ phase: CreationPhase; label: string }> = [
   { phase: "spec", label: "Spec" },
   { phase: "architecture", label: "Plan" },
-  { phase: "generation", label: "AI Generate" },
+  { phase: "generation", label: "NOA Generate" },
   { phase: "self-review", label: "Verify" },
   { phase: "user-review", label: "Review" },
 ];
@@ -144,7 +144,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
 
       setProgress({
         phase: "generation",
-        phaseLabel: "AI Generate",
+        phaseLabel: "NOA Generate",
         phaseIndex: 2,
         totalPhases: PHASES.length,
         detail: "Streaming model output (this may take a minute)…",
@@ -164,7 +164,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
       if (files.length === 0) {
         setProgress({
           phase: "generation",
-          phaseLabel: "AI Generate",
+          phaseLabel: "NOA Generate",
           phaseIndex: 2,
           totalPhases: PHASES.length,
           detail: "No file blocks parsed — check API key / model output and try again.",
@@ -203,7 +203,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
       logger.error("CodeCreatorPanel/generateApp", e);
       setProgress({
         phase: "generation",
-        phaseLabel: "AI Generate",
+        phaseLabel: "NOA Generate",
         phaseIndex: 2,
         totalPhases: PHASES.length,
         detail: e instanceof Error ? e.message.slice(0, 200) : "Generation failed.",
@@ -257,7 +257,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
     try {
       setProgress({
         phase: "generation",
-        phaseLabel: "AI Generate",
+        phaseLabel: "NOA Generate",
         phaseIndex: 2,
         totalPhases: PHASES.length,
         detail: "Re-generating with your revision notes…",
@@ -360,7 +360,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
             <span className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Verification</span>
             <div className="flex items-center justify-around">
               <ScoreBadge score={result.pipelineScore} label="Pipeline" />
-              <ScoreBadge score={result.reviewScore} label="AI Review" />
+              <ScoreBadge score={result.reviewScore} label="NOA Review" />
               <ScoreBadge score={result.stressScore} label="Stress" />
               <ScoreBadge score={result.patentScore} label="Patent" />
               <div className="flex flex-col items-center gap-0.5">
