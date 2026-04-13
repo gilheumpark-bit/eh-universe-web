@@ -409,6 +409,10 @@ export default function StudioShell() {
         if (scrollContainer) scrollContainer.scrollTop = 0;
       }, 50);
     };
+    // Auto-save draft before tab switch so work is never lost
+    if (editDraft && editDraft.trim() && currentSessionId) {
+      localStorage.setItem(`noa_editdraft_${currentSessionId}`, editDraft);
+    }
     if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
       showConfirm({
         title: t('confirm.unsavedEdits'),
@@ -430,7 +434,7 @@ export default function StudioShell() {
     scrollReset();
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm]);
+  }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm, currentSessionId]);
 
   const {
     deleteSession, clearAllSessions, startRename, confirmRename,

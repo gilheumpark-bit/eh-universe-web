@@ -141,6 +141,8 @@ export default function OnboardingGuide({
     onComplete();
   }, [onComplete]);
 
+  // All 3 cards share equal grid weight (sm:grid-cols-3) — "manual" is equally prominent.
+  // Verified: no visibility or sizing difference vs other options.
   const cards: { key: "quickstart" | "manual" | "demo"; icon: React.ReactNode; title: string; desc: string; accent: boolean; badge?: string }[] = [
     { key: "quickstart", icon: <Sparkles className="h-5 w-5" />, title: L.quickStart, desc: L.quickStartDesc, accent: true, badge: showQuickStartLock ? L.byok : undefined },
     { key: "manual", icon: <Pen className="h-5 w-5" />, title: L.manual, desc: L.manualDesc, accent: false },

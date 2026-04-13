@@ -40,6 +40,10 @@ function CharacterSelector({ config, language, setConfig }: { config: StoryConfi
         : [...current, name];
       return { ...prev, sceneDirection: { ...sd, activeCharacters: next } };
     });
+    // Notify session persistence layer of config change
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('noa:config-changed'));
+    }
   }, [setConfig]);
 
   const selectAll = useCallback(() => {

@@ -140,6 +140,16 @@ ${textToXhtmlParagraphs(content)}
 /** Generate and download a valid EPUB 3.0 file from a chat session's manuscript content
  * @param coverImageDataUrl 표지 이미지 (data:image/jpeg;base64,... 또는 data:image/png;base64,...) */
 export function exportEPUB(session: ChatSession, coverImageDataUrl?: string): void {
+  // Guard: prevent exporting empty manuscripts
+  const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
+    session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
+  if (!hasContent) {
+    if (typeof window !== 'undefined') {
+      alert('내보낼 원고가 없습니다. / No manuscript content to export.');
+    }
+    return;
+  }
+
   const encoder = new TextEncoder();
   const title = session.config.title || session.title || 'NOA Story';
   const safeTitle = escapeXml(title);
@@ -312,6 +322,16 @@ function buildDocxParagraph(trimmed: string): string {
 
 /** Generate and download a DOCX (Office Open XML) file from a chat session's manuscript content */
 export function exportDOCX(session: ChatSession): void {
+  // Guard: prevent exporting empty manuscripts
+  const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
+    session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
+  if (!hasContent) {
+    if (typeof window !== 'undefined') {
+      alert('내보낼 원고가 없습니다. / No manuscript content to export.');
+    }
+    return;
+  }
+
   const encoder = new TextEncoder();
   const title = session.config.title || session.title || 'NOA Story';
 

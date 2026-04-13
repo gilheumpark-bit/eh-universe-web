@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2 } from 'lucide-react';
+import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2, Plus } from 'lucide-react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
@@ -78,6 +78,20 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
     setParsedScenes(prev => prev.map((s, i) => i === idx ? { ...s, [key]: value } : s));
   }, []);
 
+  const handleAddEpisode = useCallback(() => {
+    const manuscripts = config.manuscripts ?? [];
+    const nextEpisode = manuscripts.length > 0
+      ? Math.max(...manuscripts.map(m => m.episode)) + 1
+      : 1;
+    setConfig(prev => ({
+      ...prev,
+      manuscripts: [
+        ...(prev.manuscripts ?? []),
+        { episode: nextEpisode, title: `EP.${nextEpisode}`, content: '', charCount: 0, lastUpdate: Date.now() },
+      ],
+    }));
+  }, [config.manuscripts, setConfig]);
+
   return (
     <>
       <div className="max-w-6xl mx-auto px-4 pt-4 flex gap-2">
@@ -114,6 +128,11 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
             sceneMode === 'visual' ? 'bg-accent-amber text-white border-accent-amber' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
           }`}>
           <Film className="w-3 h-3" /> {language === 'KO' ? '③ 비주얼 노벨' : '③ Visual Novel'}
+        </button>
+        <button onClick={handleAddEpisode}
+          className="px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border bg-bg-secondary text-text-tertiary border-border hover:text-text-primary hover:border-accent-green transition-all flex items-center gap-1.5"
+          title={language === 'KO' ? '새 에피소드 추가' : 'Add new episode'}>
+          <Plus className="w-3 h-3" /> {language === 'KO' ? '에피소드 추가' : 'Add Episode'}
         </button>
         {parsedScenes.length > 0 && (
           <>
