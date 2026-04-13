@@ -95,7 +95,7 @@ export function getDefaultGateConfig(level: SkillLevel, tierMaxRetries?: number)
 
 const GRADE_NUMERIC: Record<string, number> = {
   'S++': 100, 'S+': 95, 'S': 90, 'A+': 85, 'A': 80,
-  'B+': 75, 'B': 70, 'C+': 65, 'C': 60, 'D': 50,
+  'B+': 75, 'B': 70, 'C+': 65, 'C': 60, 'D': 50, 'F': 30,
 };
 
 function gradeToNumeric(grade: string): number {

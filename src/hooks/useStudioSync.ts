@@ -47,11 +47,13 @@ export function useStudioSync({
       channelRef.current = channel;
 
       channel.onmessage = (event: MessageEvent) => {
-        const data = event.data as { type?: string; sessionId?: string; timestamp?: number } | null;
-        if (!data || data.type !== 'save') return;
+        // Full type guard: reject malformed messages
+        if (!event.data || typeof event.data !== 'object' || !event.data.type || !event.data.sessionId || !event.data.timestamp) return;
+        const data = event.data as { type: string; sessionId: string; timestamp: number };
+        if (data.type !== 'save') return;
         // Only react if it's from a different tab (different sessionId) and newer
         if (data.sessionId === SESSION_ID) return;
-        if (typeof data.timestamp === 'number' && data.timestamp > lastBroadcastTs.current) {
+        if (data.timestamp > lastBroadcastTs.current) {
           lastBroadcastTs.current = data.timestamp;
           // Dispatch custom event with reload action for downstream listeners
           window.dispatchEvent(new CustomEvent('noa:cross-tab-update', {

@@ -55,7 +55,7 @@ export function createEmptyProfile(id: string = 'default'): WriterProfile {
 
 const GRADE_NUMERIC: Record<string, number> = {
   'S++': 100, 'S+': 95, 'S': 90, 'A+': 85, 'A': 80,
-  'B+': 75, 'B': 70, 'C+': 65, 'C': 60, 'D': 50,
+  'B+': 75, 'B': 70, 'C+': 65, 'C': 60, 'D': 50, 'F': 30,
 };
 
 interface EpisodeMetrics {
@@ -195,7 +195,7 @@ export function buildVoiceFingerprint(profile: WriterProfile, isKO: boolean): st
 }
 
 export function buildProfileHint(profile: WriterProfile, isKO: boolean): string {
-  if (profile.episodeCount < 3) return ''; // 3화 미만 — 학습 데이터 부족 (기존 5→3으로 하향)
+  if (profile.episodeCount < 5) return ''; // 5화 미만 — 학습 데이터 부족
 
   const hints: string[] = [];
 

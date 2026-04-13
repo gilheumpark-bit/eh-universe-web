@@ -98,11 +98,11 @@ export function generateSuggestions(
     });
   };
 
-  // --- Character Drift: 3화 이상 미등장 ---
+  // --- Character Drift: 5화 이상 미등장 ---
   if (ctx.characterNames.length > 0) {
     for (const name of ctx.characterNames) {
       const lastEp = ctx.characterLastAppearance[name] ?? 0;
-      if (ep - lastEp >= 3) {
+      if (ep - lastEp >= 5) {
         add('character_drift', 'warning',
           msg(`캐릭터 '${name}'이(가) ${ep - lastEp}화째 등장하지 않았습니다.`, `Character '${name}' hasn't appeared for ${ep - lastEp} episodes.`, lang),
           msg(`다음 장면에 등장시키거나, 다른 캐릭터의 대화에서 언급하세요.`, `Include them in the next scene or mention them in dialogue.`, lang),

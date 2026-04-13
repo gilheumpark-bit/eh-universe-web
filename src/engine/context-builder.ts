@@ -6,6 +6,7 @@
 import type { Character, StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
 import { buildContinuityReport, type ContinuityReport } from './continuity-tracker';
 import { loadProfile, buildProfileHint } from './writer-profile';
+import { buildShadowPrompt, type ShadowState } from './shadow';
 
 // ============================================================
 // PART 2 — 데이터 추출 헬퍼
@@ -26,8 +27,11 @@ function formatCharacterStates(report: ContinuityReport): string {
   if (!activeChars.length) return '';
 
   return activeChars.map(c => {
-    const states = c.stateFlags.length ? c.stateFlags.join(', ') : '정상';
-    return `- ${c.name}: ${states}${c.dialogueCount > 0 ? ` (대사 ${c.dialogueCount}회)` : ''}`;
+    const flags = c.stateFlags;
+    const lastAction = c.dialogueCount > 0 ? `대사 ${c.dialogueCount}회` : undefined;
+    const isKO = true; // formatCharacterStates is called in KO context by default
+    const state = flags.length > 0 ? flags.join(', ') : (lastAction || (isKO ? '특이사항 없음' : 'No notable state'));
+    return `- ${c.name}: ${state}${c.dialogueCount > 0 && flags.length > 0 ? ` (대사 ${c.dialogueCount}회)` : ''}`;
   }).join('\n');
 }
 
@@ -53,6 +57,8 @@ export interface StoryBibleInput {
   manuscripts: EpisodeManuscript[];
   currentEpisode: number;
   language: 'KO' | 'EN' | 'JP' | 'CN';
+  /** Optional shadow state for narrative sentinel integration */
+  shadowState?: ShadowState;
 }
 
 /**
@@ -86,13 +92,13 @@ export function buildStoryBible(input: StoryBibleInput): string {
   // 미해결 복선
   const openThreads = formatOpenThreads(report);
 
-  // 이전 회차 요약 (AI 요약 우선, 없으면 첫 2줄 fallback)
+  // 이전 회차 요약 (AI 요약 우선 → 첫 2줄 fallback — 단일 폴백 체인)
   const recentSummaries = manuscripts
     .filter(m => m.episode >= currentEpisode - 3 && m.episode < currentEpisode && m.content)
     .map(m => {
-      const summary = m.summary
-        || m.content.split(/\n/).filter(l => l.trim()).slice(0, 2).join(' ').slice(0, 150);
-      return `- ${m.episode}화: ${summary}`;
+      if (m.summary) return `- ${m.episode}화: ${m.summary}`;
+      const firstLines = m.content.split(/\n/).filter(l => l.trim()).slice(0, 2).join(' ').slice(0, 150);
+      return `- ${m.episode}화: ${firstLines}`;
     })
     .join('\n');
 
@@ -158,6 +164,15 @@ export function buildStoryBible(input: StoryBibleInput): string {
     sections.push(isKO
       ? `\n---\n🔥 직전 화 마지막 씬:\n"${lastScene}"\n\n위 장면에서 1초의 단절도 없이 바로 다음 행동/대사로 시작하십시오. 배경 설명이나 과거 회상으로 시작하지 마십시오.`
       : `\n---\n🔥 Last Scene (Episode ${currentEpisode - 1}):\n"${lastScene}"\n\nContinue IMMEDIATELY from this scene. No background exposition or flashbacks to start.`);
+  }
+
+  // Shadow State — 서사 파수꾼 동적 힌트
+  if (input.shadowState) {
+    const totalEpisodes = config.totalEpisodes ?? 25;
+    const shadowHint = buildShadowPrompt(input.shadowState, currentEpisode, totalEpisodes, isKO);
+    if (shadowHint) {
+      sections.push(shadowHint);
+    }
   }
 
   // 작가 스타일 메모 (수정 패턴 기반)

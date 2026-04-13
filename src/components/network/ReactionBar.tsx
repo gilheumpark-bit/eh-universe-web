@@ -61,34 +61,41 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
   const handleToggle = useCallback(
     async (type: ReactionType) => {
       if (!user || toggling) return;
+      const optimisticId = `${targetId}_${user.uid}_${type}`;
+      // Snapshot for rollback
+      const prevReactions = [...reactions];
       try {
         setToggling(type);
-        const added = await toggleReaction({ targetType, targetId, userId: user.uid, reactionType: type });
 
-        setReactions((prev) => {
-          if (added) {
-            return [
-              ...prev,
-              {
-                id: `${targetId}_${user.uid}_${type}`,
-                targetType,
-                targetId,
-                userId: user.uid,
-                reactionType: type,
-                createdAt: new Date().toISOString(),
-              },
-            ];
-          }
-          return prev.filter((r) => !(r.userId === user.uid && r.reactionType === type));
-        });
+        // Optimistic update: apply immediately
+        const alreadyExists = reactions.some((r) => r.userId === user.uid && r.reactionType === type);
+        if (alreadyExists) {
+          setReactions((prev) => prev.filter((r) => !(r.userId === user.uid && r.reactionType === type)));
+        } else {
+          setReactions((prev) => [
+            ...prev,
+            {
+              id: optimisticId,
+              targetType,
+              targetId,
+              userId: user.uid,
+              reactionType: type,
+              createdAt: new Date().toISOString(),
+            },
+          ]);
+        }
+
+        await toggleReaction({ targetType, targetId, userId: user.uid, reactionType: type });
       } catch {
+        // Rollback optimistic update
+        setReactions(prevReactions);
         setError(L4(lang, { ko: "반응 처리에 실패했습니다.", en: "Failed to toggle reaction." }));
         setTimeout(() => setError(null), 4000);
       } finally {
         setToggling(null);
       }
     },
-    [lang, targetId, targetType, toggling, user],
+    [lang, reactions, targetId, targetType, toggling, user],
   );
 
   const countByType = (type: ReactionType) => reactions.filter((r) => r.reactionType === type).length;

@@ -68,8 +68,8 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     // 정확한 Y 좌표: textarea의 뷰포트 위치 + 선택 라인 위치 - 내부 스크롤
     const taRect = ta.getBoundingClientRect();
     const linesBefore = ta.value.slice(0, start).split('\n').length - 1;
-    const computedLH = getComputedStyle(ta).lineHeight;
-    const lineHeight = computedLH === 'normal' ? 28 : parseInt(computedLH) || 28;
+    const lh = parseFloat(getComputedStyle(ta).lineHeight);
+    const lineHeight = isNaN(lh) || lh < 10 ? 28 : lh;
     const paddingTop = parseInt(getComputedStyle(ta).paddingTop) || 0;
     const y = taRect.top + paddingTop + (linesBefore * lineHeight) - ta.scrollTop - 48;
     const x = taRect.left + Math.min(taRect.width / 2, 200);

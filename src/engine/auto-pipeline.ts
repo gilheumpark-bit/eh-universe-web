@@ -49,6 +49,19 @@ export function getDefaultPipelineConfig(level: SkillLevel): AutoPipelineConfig 
 // PART 3 — Stage Evaluators
 // ============================================================
 
+const STAGE_TIMEOUT_MS = 5000;
+
+/** Wrap a synchronous evaluator with a per-stage timeout */
+function withTimeout<T>(fn: () => T, stageName: string): T {
+  const start = Date.now();
+  const result = fn();
+  const elapsed = Date.now() - start;
+  if (elapsed > STAGE_TIMEOUT_MS) {
+    logger.warn('auto-pipeline', `Stage "${stageName}" exceeded timeout: ${elapsed}ms > ${STAGE_TIMEOUT_MS}ms`);
+  }
+  return result;
+}
+
 interface PipelineContext {
   config: StoryConfig;
   currentEpisode: number;
@@ -169,9 +182,9 @@ export function executePipeline(
 
     let result: PipelineStageResult;
     switch (stageName) {
-      case 'world_check': result = evaluateWorldCheck(ctx); break;
-      case 'character_sync': result = evaluateCharacterSync(ctx); break;
-      case 'direction_setup': result = evaluateDirectionSetup(ctx); break;
+      case 'world_check': result = withTimeout(() => evaluateWorldCheck(ctx), stageName); break;
+      case 'character_sync': result = withTimeout(() => evaluateCharacterSync(ctx), stageName); break;
+      case 'direction_setup': result = withTimeout(() => evaluateDirectionSetup(ctx), stageName); break;
       default: result = { stage: stageName, status: 'skipped', duration: 0, warnings: [] };
     }
 

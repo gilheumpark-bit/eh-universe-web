@@ -5,13 +5,20 @@
 import type { ChatMsg } from './ai-providers';
 
 // Approximate token counts per character by language
-// Korean/CJK: ~1.5 tokens per char, English: ~0.25 tokens per word (~4 chars/token)
-/** Estimate token count using CJK density heuristic (~1.5 tok/char CJK, ~0.25 tok/char Latin) */
+// Korean: ~2.0 tok/char (jamo decomposition), Japanese: ~1.3 tok/char (kanji+kana mix),
+// Chinese/Other CJK: ~1.5 tok/char, English: ~0.25 tok/word (~4 chars/token)
+/** Estimate token count using language-specific CJK density heuristic */
 function estimateTokens(text: string): number {
   if (!text) return 0;
-  const cjkChars = (text.match(/[\u3000-\u9fff\uac00-\ud7af]/g) || []).length;
-  const otherChars = text.length - cjkChars;
-  return Math.ceil(cjkChars * 1.5 + otherChars / 4);
+  // Korean syllables (Hangul): higher ratio due to jamo decomposition
+  const koreanChars = (text.match(/[\uAC00-\uD7AF]/g) || []).length;
+  // Japanese kana (Hiragana + Katakana): lower ratio due to kanji+kana mix
+  const japaneseKana = (text.match(/[\u3040-\u309F\u30A0-\u30FF]/g) || []).length;
+  // Other CJK (Chinese hanzi, kanji, etc.)
+  const otherCjk = (text.match(/[\u3000-\u303F\u3400-\u9FFF]/g) || []).length;
+  const cjkTotal = koreanChars + japaneseKana + otherCjk;
+  const otherChars = text.length - cjkTotal;
+  return Math.ceil(koreanChars * 2.0 + japaneseKana * 1.3 + otherCjk * 1.5 + otherChars / 4);
 }
 
 // Context window limits per provider/model family

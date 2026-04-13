@@ -11,7 +11,7 @@ import {
   Code2, Languages, Globe, Zap, ImageIcon, Clapperboard,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
 
 const DOCK_STORAGE_KEY = 'eh-dock-order';
@@ -186,15 +186,15 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
 
   // ── Dock items (소설 탭) — 집필 앱 아이콘/색상 ──
   const allDockItems: DockItem[] = [
-    { id: 'world' as AppTab, icon: ScrollText, label: language === 'KO' ? '세계관' : 'World', color: 'text-text-secondary' },
-    { id: 'characters' as AppTab, icon: UserCircle, label: language === 'KO' ? '인물' : 'Characters', color: 'text-text-secondary' },
-    { id: 'rulebook' as AppTab, icon: Clapperboard, label: language === 'KO' ? '연출' : 'Direction', color: 'text-text-secondary' },
-    { id: 'writing' as AppTab, icon: Feather, label: language === 'KO' ? '집필' : 'Writing', color: 'text-text-secondary' },
-    { id: 'manuscript' as AppTab, icon: Library, label: language === 'KO' ? '원고' : 'Manuscript', color: 'text-text-secondary' },
-    { id: 'visual' as AppTab, icon: ImageIcon, label: language === 'KO' ? '이미지' : 'Image', color: 'text-text-secondary' },
-    { id: 'style' as AppTab, icon: Type, label: language === 'KO' ? '문체' : 'Style', color: 'text-text-secondary' },
-    { id: 'history' as AppTab, icon: Clock, label: language === 'KO' ? '기록' : 'History', color: 'text-text-secondary' },
-    { id: 'docs' as AppTab, icon: BookMarked, label: language === 'KO' ? '가이드' : 'Docs', color: 'text-text-secondary' },
+    { id: 'world' as AppTab, icon: ScrollText, label: L4(language, { ko: '세계관', en: 'World' }), color: 'text-text-secondary' },
+    { id: 'characters' as AppTab, icon: UserCircle, label: L4(language, { ko: '인물', en: 'Characters' }), color: 'text-text-secondary' },
+    { id: 'rulebook' as AppTab, icon: Clapperboard, label: L4(language, { ko: '연출', en: 'Direction' }), color: 'text-text-secondary' },
+    { id: 'writing' as AppTab, icon: Feather, label: L4(language, { ko: '집필', en: 'Writing' }), color: 'text-text-secondary' },
+    { id: 'manuscript' as AppTab, icon: Library, label: L4(language, { ko: '원고', en: 'Manuscript' }), color: 'text-text-secondary' },
+    { id: 'visual' as AppTab, icon: ImageIcon, label: L4(language, { ko: '이미지', en: 'Image' }), color: 'text-text-secondary' },
+    { id: 'style' as AppTab, icon: Type, label: L4(language, { ko: '문체', en: 'Style' }), color: 'text-text-secondary' },
+    { id: 'history' as AppTab, icon: Clock, label: L4(language, { ko: '기록', en: 'History' }), color: 'text-text-secondary' },
+    { id: 'docs' as AppTab, icon: BookMarked, label: L4(language, { ko: '가이드', en: 'Docs' }), color: 'text-text-secondary' },
   ];
 
   // ── App 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) ──
@@ -296,7 +296,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               onChange={e => setCurrentSessionId(e.target.value)}
               className="bg-transparent border-none text-text-secondary outline-none hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
             >
-              <option value="" disabled>{language === 'KO' ? '챕터 선택' : 'Select Chapter'}</option>
+              <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter' })}</option>
               {sessions.map(s => (
                 <option key={s.id} value={s.id} className="bg-bg-primary">{s.title}</option>
               ))}

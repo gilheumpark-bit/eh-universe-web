@@ -119,9 +119,9 @@ export function useStudioAI({
       return;
     }
     generationLockRef.current = true;
-    // Safety: auto-release lock after 120s to prevent permanent deadlock
+    // Safety: auto-release lock after 30s to prevent permanent deadlock
     clearTimeout(lockTimerRef.current);
-    lockTimerRef.current = setTimeout(() => { generationLockRef.current = false; }, 120_000);
+    lockTimerRef.current = setTimeout(() => { generationLockRef.current = false; }, 30_000);
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
     const hfcpPrefix = [

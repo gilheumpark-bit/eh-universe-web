@@ -107,6 +107,7 @@ function ParagraphPopover({
     <div
       ref={popoverRef}
       className="absolute left-0 right-0 z-20 mt-1 mx-2 bg-bg-primary border border-border rounded-xl shadow-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150"
+      style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
     >
       {/* 헤더: 점수 + 닫기 */}
       <div className="flex items-center justify-between">
@@ -259,7 +260,7 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
       {expanded && (
         <div className="border-t border-border/40 px-4 py-3 space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
           {paragraphs.map((p, i) => (
-            <div key={i} className="relative">
+            <div key={i} className="relative" style={{ position: 'relative' }}>
               <div
                 className={`flex items-start gap-2 px-3 py-2 rounded-lg ${
                   p.score < 50 ? 'bg-accent-red/5 border border-accent-red/20' : 'bg-bg-primary/50'

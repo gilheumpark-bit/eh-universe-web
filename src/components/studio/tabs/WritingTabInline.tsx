@@ -12,7 +12,7 @@ import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
 import type { HFCPState } from '@/engine/hfcp';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { RightChatPanel } from '@/components/studio/tabs/RightChatPanel';
 import { useWritingChat } from '@/hooks/useWritingChat';
 import type { ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
@@ -134,7 +134,7 @@ function SplitPanelTabs({
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          {isKO ? '연출' : 'Direction'}
+          {L4(language, { ko: '연출', en: 'Direction' })}
         </button>
         <button
           onClick={() => setActivePanel('chat')}
@@ -145,7 +145,7 @@ function SplitPanelTabs({
           }`}
         >
           <Columns2 className="w-3.5 h-3.5" />
-          {isKO ? '채팅' : 'Chat'}
+          {L4(language, { ko: '채팅', en: 'Chat' })}
         </button>
       </div>
       {/* 패널 콘텐츠 */}
@@ -352,7 +352,7 @@ export default function WritingTabInline(props: Props) {
               title={isKO ? '✍️ 직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.' : '✍️ Write your novel by typing directly. Real-time quality analysis, inline rewrite.'}
             >
               <PenLine className="w-3.5 h-3.5" />
-              {isKO ? '집필' : 'Write'}
+              {L4(language, { ko: '집필', en: 'Write' })}
             </button>
             <button
               type="button"
@@ -368,7 +368,7 @@ export default function WritingTabInline(props: Props) {
               title={isKO ? '✨ 장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.' : '✨ Describe a scene and NOA writes the novel text. Press Enter to send.'}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              {isKO ? 'NOA 생성' : 'Generate'}
+              {L4(language, { ko: 'NOA 생성', en: 'Generate' })}
             </button>
 
             {/* 더보기: API 키 있을 때만 노출 */}
@@ -386,7 +386,7 @@ export default function WritingTabInline(props: Props) {
                   title={isKO ? '📐 뼈대를 쓰면 초안→다듬기까지 3단계로 완성합니다' : '📐 Write skeleton → expands to draft → polish in 3 steps'}
                 >
                   <Layers className="w-3.5 h-3.5" />
-                  {isKO ? '3단계' : '3-Step'}
+                  {L4(language, { ko: '3단계', en: '3-Step' })}
                 </button>
                 <button
                   type="button"
@@ -399,7 +399,7 @@ export default function WritingTabInline(props: Props) {
                   title={isKO ? '🪄 원고를 붙여넣으면 약한 문단을 자동 개선 (점수 50 미만 감지)' : '🪄 Paste manuscript, auto-improves paragraphs scoring below 50'}
                 >
                   <Wand2 className="w-3.5 h-3.5" />
-                  {isKO ? '다듬기' : 'Refine'}
+                  {L4(language, { ko: '다듬기', en: 'Refine' })}
                 </button>
                 <button
                   type="button"
@@ -412,7 +412,7 @@ export default function WritingTabInline(props: Props) {
                   title={isKO ? '⚙️ 고급: temperature/top-p/장르 프리셋 직접 제어 (경험자용)' : '⚙️ Advanced: Direct control of temperature/top-p/genre presets'}
                 >
                   <Settings2 className="w-3.5 h-3.5" />
-                  {isKO ? '엔진' : 'Engine'}
+                  {L4(language, { ko: '엔진', en: 'Engine' })}
                 </button>
               </>
             )}
@@ -424,7 +424,7 @@ export default function WritingTabInline(props: Props) {
                   onClick={() => undoStack.undo()}
                   disabled={!undoStack.canUndo}
                   className={`p-1.5 rounded-lg transition-colors ${undoStack.canUndo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
-                  title={isKO ? '실행취소 (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
+                  title={L4(language, { ko: '실행취소 (Ctrl+Z)', en: 'Undo (Ctrl+Z)' })}
                   aria-label="Undo"
                 >
                   <Undo2 className="w-3.5 h-3.5" />
@@ -434,7 +434,7 @@ export default function WritingTabInline(props: Props) {
                   onClick={() => undoStack.redo()}
                   disabled={!undoStack.canRedo}
                   className={`p-1.5 rounded-lg transition-colors ${undoStack.canRedo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
-                  title={isKO ? '다시실행 (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
+                  title={L4(language, { ko: '다시실행 (Ctrl+Shift+Z)', en: 'Redo (Ctrl+Shift+Z)' })}
                   aria-label="Redo"
                 >
                   <Redo2 className="w-3.5 h-3.5" />
@@ -452,7 +452,7 @@ export default function WritingTabInline(props: Props) {
               }`}
             >
               <Columns2 className="w-4 h-4" />
-              {isKO ? '분할 뷰' : 'Split'}
+              {L4(language, { ko: '분할 뷰', en: 'Split' })}
             </button>
           </div>
         </div>
@@ -749,9 +749,12 @@ export default function WritingTabInline(props: Props) {
                             : (isKO ? `[캔버스 초안 → 다듬기]\n\n${canvasContent}` : `[Canvas Draft → Polish]\n\n${canvasContent}`)
                           );
                         }}
-                        className="px-4 py-1.5 text-xs font-bold bg-accent-green/20 hover:bg-accent-green/30 border border-accent-green/30 text-accent-green rounded-lg transition-colors"
+                        disabled={isGenerating}
+                        className={`px-4 py-1.5 text-xs font-bold border border-accent-green/30 rounded-lg transition-colors ${isGenerating ? 'bg-bg-tertiary text-text-tertiary opacity-50 cursor-not-allowed' : 'bg-accent-green/20 hover:bg-accent-green/30 text-accent-green'}`}
                       >
-                        {canvasPass === 0 ? (isKO ? '초안으로 확장 →' : 'Expand to Draft →') : (isKO ? '다듬기 시작 →' : 'Start Polish →')}
+                        {isGenerating
+                          ? (isKO ? 'AI 생성 중...' : 'AI generating...')
+                          : canvasPass === 0 ? (isKO ? '초안으로 확장 →' : 'Expand to Draft →') : (isKO ? '다듬기 시작 →' : 'Start Polish →')}
                       </button>
                     )}
                     {canvasPass >= 2 && canvasContent.trim() && (

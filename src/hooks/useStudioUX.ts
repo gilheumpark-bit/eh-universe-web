@@ -54,8 +54,8 @@ function cleanupOldBackups(maxAge: number = 7 * 24 * 60 * 60 * 1000): number {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
-      // Match versioned backup keys: *_backup_*, *_v\d+, *_bak_*
-      if (/_(backup|bak|v\d+)_?\d*/i.test(key) || key.includes('-snapshot-')) {
+      // Match timestamped backup keys only — prevents matching active versioned keys
+      if (/_backup_\d{13}|_bak_\d{13}|-snapshot-\d{13}/.test(key)) {
         try {
           const raw = localStorage.getItem(key);
           if (raw) {

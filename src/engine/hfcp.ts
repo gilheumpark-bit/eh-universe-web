@@ -140,13 +140,13 @@ export function resolveVerdict(score: number): HFCPVerdict {
 // PART 5: NRG — 반복 응답 방지
 // ============================================================
 
+/** FNV-1a hash — better collision resistance than simple shift-hash */
 function simpleHash(text: string): string {
-  let hash = 0;
+  let h = 2166136261;
   for (let i = 0; i < text.length; i++) {
-    hash = ((hash << 5) - hash) + text.charCodeAt(i);
-    hash |= 0;
+    h = Math.imul(h ^ text.charCodeAt(i), 16777619);
   }
-  return hash.toString(36);
+  return (h >>> 0).toString(36);
 }
 
 export function resolveNRG(state: HFCPState, inputText: string): NRGStrategy {

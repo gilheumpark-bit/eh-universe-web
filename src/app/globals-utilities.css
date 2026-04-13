@@ -95,7 +95,7 @@ select:focus-visible,
   body {
     background: white !important;
     color: black !important;
-    font-family: 'Noto Serif KR', 'Georgia', serif !important;
+    font-family: 'Noto Serif KR', 'Batang', Georgia, 'Times New Roman', serif !important;
     font-size: 11pt;
     line-height: 1.8;
   }
@@ -198,7 +198,7 @@ input[data-no-spellcheck],
   opacity: 0.7;
 }
 
-/* ── Native Select 개선 (화살표 커스텀) ── */
+/* ── Native Select 개선 (화살표 커스텀, 테마 대응) ── */
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -206,6 +206,12 @@ select {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px;
+}
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23a09585'/%3E%3C/svg%3E");
+}
+[data-theme="light"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23665d52'/%3E%3C/svg%3E");
 }
 
 /* ── Tap Highlight (iOS/Android) ── */
@@ -286,7 +292,7 @@ button, a, [role="button"] {
 
 /* ── WCAG Touch Targets (pointer: coarse = 터치 디바이스) ── */
 @media (pointer: coarse) {
-  button, a, [role="button"], [role="tab"], input, select, textarea {
+  button, a, [role="button"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], .ds-btn, input, select, textarea {
     min-height: 44px;
     min-width: 44px;
   }
