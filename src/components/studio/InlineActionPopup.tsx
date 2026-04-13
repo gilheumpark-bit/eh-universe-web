@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2, Undo2 } from 'lucide-react';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { L4 } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — 타입
@@ -260,12 +262,13 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
 
   if (!popup.visible) return null;
 
+  const lang = (language ?? 'KO') as AppLanguage;
   const actions = [
-    { id: 'rewrite', icon: RefreshCw, label: isKO ? '리라이트' : 'Rewrite', color: 'text-accent-purple' },
-    { id: 'expand', icon: Expand, label: isKO ? '확장' : 'Expand', color: 'text-accent-green' },
-    { id: 'compress', icon: Shrink, label: isKO ? '축소' : 'Compress', color: 'text-accent-amber' },
-    { id: 'tone', icon: Palette, label: isKO ? '톤 변경' : 'Tone', color: 'text-accent-blue' },
-    { id: 'copy', icon: Copy, label: isKO ? '복사' : 'Copy', color: 'text-text-secondary' },
+    { id: 'rewrite', icon: RefreshCw, label: L4(lang, { ko: '다시쓰기', en: 'Rewrite', ja: '書き直し', zh: '重写' }), color: 'text-accent-purple' },
+    { id: 'expand', icon: Expand, label: L4(lang, { ko: '확장', en: 'Expand', ja: '展開', zh: '扩展' }), color: 'text-accent-green' },
+    { id: 'compress', icon: Shrink, label: L4(lang, { ko: '축약', en: 'Compress', ja: '圧縮', zh: '压缩' }), color: 'text-accent-amber' },
+    { id: 'tone', icon: Palette, label: L4(lang, { ko: '문체', en: 'Style', ja: '文体', zh: '文风' }), color: 'text-accent-blue' },
+    { id: 'copy', icon: Copy, label: L4(lang, { ko: '복사', en: 'Copy', ja: 'コピー', zh: '复制' }), color: 'text-text-secondary' },
   ];
 
   return (
@@ -274,8 +277,8 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
       className="fixed z-[9999] animate-in fade-in slide-in-from-bottom-2 duration-200"
       style={{ left: popup.x, top: popup.y, transform: 'translateX(-50%)' }}
     >
-      {/* Action buttons */}
-      <div className="flex items-center gap-0.5 px-1.5 py-1 rounded-xl bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+      {/* Action buttons — icon + label vertically stacked */}
+      <div className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-xl bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
         {actions.map(a => {
           const Icon = a.icon;
           return (
@@ -283,11 +286,11 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
               key={a.id}
               onClick={() => a.id === 'copy' ? navigator.clipboard.writeText(popup.selectedText) : handleAction(a.id)}
               disabled={loading}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold ${a.color} hover:bg-bg-secondary transition-colors whitespace-nowrap disabled:opacity-40`}
+              className={`flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 rounded-lg text-[9px] font-bold ${a.color} hover:bg-bg-secondary transition-colors whitespace-nowrap disabled:opacity-40`}
               title={a.label}
             >
               <Icon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{a.label}</span>
+              <span>{a.label}</span>
             </button>
           );
         })}

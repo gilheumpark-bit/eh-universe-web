@@ -776,8 +776,8 @@ const translations = {
     "aiModel": "NOA 모델",
     "latency": "지연 시간",
     "generalPreferences": "일반 설정",
-    "apiKeyManagement": "API 키 관리",
-    "apiKeyDesc": "Gemini API 키를 설정하고 관리합니다.",
+    "apiKeyManagement": "AI 서비스 연결",
+    "apiKeyDesc": "AI 서비스 키를 설정하고 관리합니다.",
     "apiKeySet": "설정됨",
     "apiKeyPlatformOnly": "플랫폼 키만",
     "apiKeyNotSet": "미설정",
@@ -1177,13 +1177,13 @@ const translations = {
     "settings": "설정"
   },
   "settingsEngine": {
-    "engineSettings": "엔진 설정",
+    "engineSettings": "고급 설정",
     "defaultPlatform": "기본 플랫폼",
     "defaultPlatformDesc": "새 프로젝트의 기본 출력 플랫폼",
     "defaultEpisodes": "기본 에피소드 수",
     "defaultEpisodesDesc": "새 프로젝트의 기본 총 에피소드 수",
-    "temperature": "온도 (창의성)",
-    "temperatureDesc": "자동 생성의 창의성 수준 (0.0 = 정확, 1.0 = 창의적)",
+    "temperature": "창의성",
+    "temperatureDesc": "AI 생성의 창의성 수준 (낮을수록 정확, 높을수록 자유로운 표현)",
     "mobile": "모바일",
     "web": "웹"
   },

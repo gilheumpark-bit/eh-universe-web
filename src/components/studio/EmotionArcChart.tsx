@@ -235,31 +235,58 @@ function EmotionArcChart({ messages, language, genre }: Props) {
         <polyline fill="none" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3" opacity="0.5"
           points={points.map((p, i) => `${toX(i)},${toY(p.immersion)}`).join(' ')} />
 
-        {/* 피크 마커 */}
-        {peaks.map(i => (
-          <g key={`peak-${i}`}>
-            <circle cx={toX(i)} cy={toY(points[i].emotionScore)} r="5"
-              fill="#ef4444" opacity="0.3" />
-            <circle cx={toX(i)} cy={toY(points[i].emotionScore)} r="3"
-              fill="#ef4444" />
-            <text x={toX(i)} y={toY(points[i].emotionScore) - 8}
-              fill="#ef4444" fontSize="7" textAnchor="middle" fontWeight="bold">
-              ▲{points[i].emotionScore}
-            </text>
-          </g>
-        ))}
+        {/* 피크 마커 + 조언 */}
+        {peaks.map(i => {
+          const cx = toX(i);
+          const cy = toY(points[i].emotionScore);
+          const adviceText = L4(language, {
+            ko: '좋은 클라이맥스입니다!',
+            en: 'Great climax!',
+            ja: '良いクライマックスです！',
+            zh: '很好的高潮！',
+          });
+          return (
+            <g key={`peak-${i}`}>
+              <circle cx={cx} cy={cy} r="5" fill="#ef4444" opacity="0.3" />
+              <circle cx={cx} cy={cy} r="3" fill="#ef4444" />
+              <text x={cx} y={cy - 8} fill="#ef4444" fontSize="7" textAnchor="middle" fontWeight="bold">
+                ▲{points[i].emotionScore}
+              </text>
+              {/* Actionable annotation */}
+              <rect x={cx - 50} y={cy - 26} width="100" height="12" rx="3"
+                fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" strokeWidth="0.5" />
+              <text x={cx} y={cy - 18} fill="#22c55e" fontSize="5.5" textAnchor="middle" fontWeight="bold">
+                {adviceText}
+              </text>
+            </g>
+          );
+        })}
 
-        {/* 밸리 마커 */}
-        {valleys.map(i => (
-          <g key={`valley-${i}`}>
-            <circle cx={toX(i)} cy={toY(points[i].emotionScore)} r="4"
-              fill="#3b82f6" opacity="0.4" />
-            <text x={toX(i)} y={toY(points[i].emotionScore) + 12}
-              fill="#3b82f6" fontSize="7" textAnchor="middle">
-              ▼{points[i].emotionScore}
-            </text>
-          </g>
-        ))}
+        {/* 밸리 마커 + 조언 */}
+        {valleys.map(i => {
+          const cx = toX(i);
+          const cy = toY(points[i].emotionScore);
+          const adviceText = L4(language, {
+            ko: '긴장감이 낮음 — 갈등/반전 추가 권장',
+            en: 'Low tension — add conflict/twist',
+            ja: '緊張感が低い — 葛藤や逆転を追加',
+            zh: '紧张感低 — 建议添加冲突/反转',
+          });
+          return (
+            <g key={`valley-${i}`}>
+              <circle cx={cx} cy={cy} r="4" fill="#3b82f6" opacity="0.4" />
+              <text x={cx} y={cy + 12} fill="#3b82f6" fontSize="7" textAnchor="middle">
+                ▼{points[i].emotionScore}
+              </text>
+              {/* Actionable annotation */}
+              <rect x={cx - 60} y={cy + 15} width="120" height="12" rx="3"
+                fill="rgba(59,130,246,0.12)" stroke="rgba(59,130,246,0.25)" strokeWidth="0.5" />
+              <text x={cx} y={cy + 23} fill="#60a5fa" fontSize="5" textAnchor="middle" fontWeight="bold">
+                {adviceText}
+              </text>
+            </g>
+          );
+        })}
 
         {/* 데이터 포인트 */}
         {points.map((p, i) => (

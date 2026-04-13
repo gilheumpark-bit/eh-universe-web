@@ -54,12 +54,12 @@ const STAGE_EST_SEC: Record<string, number> = {
 
 export default function PipelineProgress({ stages, finalStatus, language }: PipelineProgressProps) {
   const statusLabel = finalStatus === 'completed'
-    ? L4(language, { ko: '파이프라인 완료', en: 'Pipeline Complete' })
+    ? L4(language, { ko: '검사 완료', en: 'Check Complete' })
     : finalStatus === 'partial'
-    ? L4(language, { ko: '부분 통과', en: 'Partial Pass' })
+    ? L4(language, { ko: '일부 완료', en: 'Partial Complete' })
     : finalStatus === 'running'
-    ? L4(language, { ko: '실행 중...', en: 'Running...' })
-    : L4(language, { ko: '차단됨', en: 'Blocked' });
+    ? L4(language, { ko: '검사 중...', en: 'Checking...' })
+    : L4(language, { ko: '개선이 필요합니다', en: 'Needs Improvement' });
 
   const statusColor = finalStatus === 'completed' ? 'text-green-400' : finalStatus === 'partial' ? 'text-amber-400' : finalStatus === 'running' ? 'text-blue-400' : 'text-red-400';
 
@@ -67,7 +67,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
     <div className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
       <div className="flex items-center justify-between mb-3">
         <span className="font-mono text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
-          {L4(language, { ko: '자동 파이프라인', en: 'Auto-Pipeline' })}
+          {L4(language, { ko: '자동 품질 검사', en: 'Auto Quality Check' })}
         </span>
         <span className={`font-mono text-[10px] font-bold ${statusColor}`}>
           {statusLabel}

@@ -776,8 +776,8 @@ const translations = {
     "aiModel": "NOA Model",
     "latency": "Latency",
     "generalPreferences": "General Preferences",
-    "apiKeyManagement": "API Key Management",
-    "apiKeyDesc": "Configure and manage your Gemini API key.",
+    "apiKeyManagement": "AI Service Connection",
+    "apiKeyDesc": "Configure and manage your AI service key.",
     "apiKeySet": "Set",
     "apiKeyPlatformOnly": "Platform only",
     "apiKeyNotSet": "Not Set",
@@ -1177,13 +1177,13 @@ const translations = {
     "settings": "Settings"
   },
   "settingsEngine": {
-    "engineSettings": "Engine Settings",
+    "engineSettings": "Advanced Settings",
     "defaultPlatform": "Default Platform",
     "defaultPlatformDesc": "Default output platform for new projects",
     "defaultEpisodes": "Default Episodes",
     "defaultEpisodesDesc": "Default total episodes for new projects",
-    "temperature": "Temperature",
-    "temperatureDesc": "NOA generation creativity level (0.0 = precise, 1.0 = creative)",
+    "temperature": "Creativity",
+    "temperatureDesc": "AI generation creativity level (lower = precise, higher = expressive)",
     "mobile": "Mobile",
     "web": "Web"
   },

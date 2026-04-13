@@ -6,10 +6,11 @@
 // 세계관 Tier 1/2/3 / 긴장도 곡선 / 가드레일 / PRISM / PRISM-MODE
 // ============================================================
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, BarChart3, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, BarChart3, Shield, Info, CheckCircle2, Circle } from 'lucide-react';
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { PublishPlatform } from '@/lib/studio-types';
+import { L4 } from '@/lib/i18n';
 import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
 import { createT } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-constants';
@@ -112,6 +113,9 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
         <textarea className="w-full bg-bg-tertiary border border-border rounded-2xl p-6 text-sm h-64 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
       </div>
 
+      {/* 세계관 작성 가이드 배너 */}
+      <WorldBuildingGuide language={language} config={config} />
+
       {/* 세계관 Tier 1 */}
       <div className="space-y-4 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.worldTier1}</h3>
@@ -122,7 +126,10 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { key: 'currentConflict', label: t.currentConflict, ph: t.currentConflictPH },
           ] as const).map(f => (
             <div key={f.key} className="space-y-2">
-              <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
+              <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-1.5">
+                {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
+                {f.label}
+              </label>
               <textarea className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm h-24 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
             </div>
           ))}
@@ -154,7 +161,10 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               { key: 'survivalEnvironment', label: t.survivalEnvironment, ph: t.survivalEnvironmentPH },
             ] as const).map(f => (
               <div key={f.key} className="space-y-2">
-                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
+                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-1.5">
+                  {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
+                  {f.label}
+                </label>
                 <textarea className="w-full bg-bg-tertiary border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none text-text-primary placeholder:text-text-tertiary focus:border-amber-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
               </div>
             ))}
@@ -180,7 +190,10 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               { key: 'truthVsBeliefs', label: t.truthVsBeliefs, ph: t.truthVsBeliefsPH },
             ] as const).map(f => (
               <div key={f.key} className="space-y-2">
-                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{f.label}</label>
+                <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-1.5">
+                  {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
+                  {f.label}
+                </label>
                 <textarea className="w-full bg-bg-tertiary border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none text-text-primary placeholder:text-text-tertiary focus:border-emerald-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
               </div>
             ))}
@@ -312,5 +325,121 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
     </>
   );
 };
+
+// ============================================================
+// WorldBuildingGuide — 세계관 작성 순서 안내 배너
+// ============================================================
+
+function WorldBuildingGuide({ language, config }: { language: AppLanguage; config: StoryConfig }) {
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('noa_world_guide_dismissed') === '1';
+  });
+
+  // Auto-dismiss after first view (5 seconds)
+  useEffect(() => {
+    if (dismissed) return;
+    const timer = setTimeout(() => {
+      // Don't auto-dismiss; let user collapse manually
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [dismissed]);
+
+  const tier1Filled = [config.corePremise, config.powerStructure, config.currentConflict]
+    .filter(v => v?.trim()).length;
+  const tier2Filled = [config.worldHistory, config.socialSystem, config.economy, config.magicTechSystem, config.factionRelations, config.survivalEnvironment]
+    .filter(v => (v as string | undefined)?.trim()).length;
+  const tier3Filled = [config.culture, config.religion, config.education, config.lawOrder, config.taboo, config.dailyLife, config.travelComm, config.truthVsBeliefs]
+    .filter(v => (v as string | undefined)?.trim()).length;
+  const totalFilled = tier1Filled + tier2Filled + tier3Filled;
+  const totalFields = 3 + 6 + 8; // 17
+
+  if (dismissed) {
+    return (
+      <div className="pt-4">
+        <button
+          type="button"
+          onClick={() => {
+            setDismissed(false);
+            localStorage.removeItem('noa_world_guide_dismissed');
+          }}
+          className="flex items-center gap-1.5 text-[9px] text-text-quaternary hover:text-text-tertiary transition-colors"
+        >
+          <Info className="w-3 h-3" />
+          {L4(language, { ko: '세계관 가이드 보기', en: 'Show world guide', ja: '世界観ガイド表示', zh: '显示世界观指南' })}
+          <span className="font-mono text-accent-amber">({totalFilled}/{totalFields})</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-4">
+      <div className="relative p-4 bg-[linear-gradient(135deg,rgba(255,200,50,0.04),rgba(100,130,255,0.04))] border border-border/60 rounded-xl">
+        <button
+          type="button"
+          onClick={() => {
+            setDismissed(true);
+            localStorage.setItem('noa_world_guide_dismissed', '1');
+          }}
+          className="absolute top-2.5 right-3 text-text-quaternary hover:text-text-tertiary transition-colors text-[9px]"
+          aria-label="Close guide"
+        >
+          {L4(language, { ko: '접기', en: 'Hide', ja: '閉じる', zh: '收起' })}
+        </button>
+        <div className="flex items-start gap-3">
+          <Info className="w-4 h-4 text-accent-amber shrink-0 mt-0.5" />
+          <div className="space-y-2 flex-1">
+            <div className="text-[10px] font-bold text-text-secondary">
+              {L4(language, { ko: '세계관 작성 순서', en: 'World Building Order', ja: '世界観作成順序', zh: '世界观创作顺序' })}
+            </div>
+            <div className="space-y-1.5 text-[10px] text-text-tertiary">
+              <div className="flex items-center gap-2">
+                <span className={`font-mono font-bold ${tier1Filled === 3 ? 'text-emerald-400' : 'text-accent-amber'}`}>1</span>
+                <span>{L4(language, {
+                  ko: '한 줄 세계관 (핵심 전제, 권력 구조, 현재 갈등)',
+                  en: 'Core premise (premise, power structure, current conflict)',
+                  ja: '一行世界観（核心前提・権力構造・現在の葛藤）',
+                  zh: '一句世界观（核心前提、权力结构、当前冲突）',
+                })}</span>
+                <span className="ml-auto text-[8px] font-mono">{tier1Filled}/3</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`font-mono font-bold ${tier2Filled === 6 ? 'text-emerald-400' : 'text-text-quaternary'}`}>2</span>
+                <span>{L4(language, {
+                  ko: '주요 설정 (역사, 사회, 경제, 마법/기술, 세력, 환경)',
+                  en: 'Key settings (history, society, economy, magic/tech, factions, environment)',
+                  ja: '主要設定（歴史・社会・経済・魔法/技術・勢力・環境）',
+                  zh: '主要设定（历史、社会、经济、魔法/科技、势力、环境）',
+                })}</span>
+                <span className="ml-auto text-[8px] font-mono">{tier2Filled}/6</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`font-mono font-bold ${tier3Filled === 8 ? 'text-emerald-400' : 'text-text-quaternary'}`}>3</span>
+                <span>{L4(language, {
+                  ko: '세부 사항 (문화, 종교, 교육, 법, 금기, 일상, 교통, 진실)',
+                  en: 'Details (culture, religion, education, law, taboo, daily life, travel, truth)',
+                  ja: '詳細（文化・宗教・教育・法・禁忌・日常・交通・真実）',
+                  zh: '细节（文化、宗教、教育、法律、禁忌、日常、交通、真相）',
+                })}</span>
+                <span className="ml-auto text-[8px] font-mono">{tier3Filled}/8</span>
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-accent-amber to-emerald-400"
+                  style={{ width: `${Math.round((totalFilled / totalFields) * 100)}%` }}
+                />
+              </div>
+              <span className="text-[8px] font-mono text-text-quaternary">{Math.round((totalFilled / totalFields) * 100)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default AdvancedPlanningSection;

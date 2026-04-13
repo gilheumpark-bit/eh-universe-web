@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   BookOpen, Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
-  Code2, Languages, Globe, Zap, ImageIcon, Film,
+  Code2, Languages, Globe, Zap, ImageIcon, Film, MoreHorizontal, Printer,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -109,7 +109,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   currentSessionId, setCurrentSessionId, currentProject: _currentProject, sessions,
   createNewSession, activeTab, handleTabChange, studioMode: _studioMode, setStudioMode: _setStudioMode,
   exportTXT, exportJSON, exportAllJSON,
-  handleExportEPUB: _handleExportEPUB, handleExportDOCX: _handleExportDOCX,
+  handleExportEPUB, handleExportDOCX,
   handleImportJSON: _handleImportJSON, handleImportTextFiles, fileInputRef,
   user, signInWithGoogle: _signInWithGoogle, signOut: _signOut,
   authConfigured: _authConfigured, handleSync: _handleSync, syncStatus,
@@ -185,17 +185,36 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   }, []);
 
   // ── Dock items (소설 탭) — 집필 앱 아이콘/색상 ──
+  // Primary 5: 항상 표시 | Overflow 4: "더보기" 뒤에 숨김
+  const PRIMARY_TAB_IDS: AppTab[] = ['world' as AppTab, 'characters' as AppTab, 'rulebook' as AppTab, 'writing' as AppTab, 'manuscript' as AppTab];
+  const OVERFLOW_TAB_IDS: AppTab[] = ['visual' as AppTab, 'style' as AppTab, 'history' as AppTab, 'docs' as AppTab];
+
   const allDockItems: DockItem[] = [
-    { id: 'world' as AppTab, icon: ScrollText, label: L4(language, { ko: '세계관', en: 'World' }), color: 'text-text-secondary' },
-    { id: 'characters' as AppTab, icon: UserCircle, label: L4(language, { ko: '인물', en: 'Characters' }), color: 'text-text-secondary' },
-    { id: 'rulebook' as AppTab, icon: Film, label: L4(language, { ko: '연출', en: 'Direction' }), color: 'text-text-secondary' },
-    { id: 'writing' as AppTab, icon: Feather, label: L4(language, { ko: '집필', en: 'Writing' }), color: 'text-text-secondary' },
-    { id: 'manuscript' as AppTab, icon: Library, label: L4(language, { ko: '원고', en: 'Manuscript' }), color: 'text-text-secondary' },
-    { id: 'visual' as AppTab, icon: ImageIcon, label: L4(language, { ko: '이미지', en: 'Image' }), color: 'text-text-secondary' },
-    { id: 'style' as AppTab, icon: Type, label: L4(language, { ko: '문체', en: 'Style' }), color: 'text-text-secondary' },
-    { id: 'history' as AppTab, icon: Clock, label: L4(language, { ko: '기록', en: 'History' }), color: 'text-text-secondary' },
-    { id: 'docs' as AppTab, icon: BookMarked, label: L4(language, { ko: '가이드', en: 'Docs' }), color: 'text-text-secondary' },
+    { id: 'world' as AppTab, icon: ScrollText, label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }), color: 'text-text-secondary' },
+    { id: 'characters' as AppTab, icon: UserCircle, label: L4(language, { ko: '인물', en: 'Characters', ja: '人物', zh: '人物' }), color: 'text-text-secondary' },
+    { id: 'rulebook' as AppTab, icon: Film, label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }), color: 'text-text-secondary' },
+    { id: 'writing' as AppTab, icon: Feather, label: L4(language, { ko: '집필', en: 'Writing', ja: '執筆', zh: '写作' }), color: 'text-text-secondary' },
+    { id: 'manuscript' as AppTab, icon: Library, label: L4(language, { ko: '원고', en: 'Manuscript', ja: '原稿', zh: '稿件' }), color: 'text-text-secondary' },
+    { id: 'visual' as AppTab, icon: ImageIcon, label: L4(language, { ko: '이미지', en: 'Image', ja: '画像', zh: '图片' }), color: 'text-text-secondary' },
+    { id: 'style' as AppTab, icon: Type, label: L4(language, { ko: '문체', en: 'Style', ja: '文体', zh: '文风' }), color: 'text-text-secondary' },
+    { id: 'history' as AppTab, icon: Clock, label: L4(language, { ko: '기록', en: 'History', ja: '履歴', zh: '历史' }), color: 'text-text-secondary' },
+    { id: 'docs' as AppTab, icon: BookMarked, label: L4(language, { ko: '가이드', en: 'Docs', ja: 'ガイド', zh: '指南' }), color: 'text-text-secondary' },
   ];
+
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowRef = useRef<HTMLDivElement>(null);
+
+  // Close overflow on outside click
+  useEffect(() => {
+    if (!overflowOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+        setOverflowOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [overflowOpen]);
 
   // ── App 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) ──
   const appLinks = [
@@ -352,55 +371,134 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
         </div>
 
-        {/* 소설 탭 아이콘 */}
-        {orderedDockItems.map((tab, idx) => {
-          const isActive = activeTab === tab.id;
-          const isHovered = hoveredTab === tab.id;
-          const isDragging = dragIdx === idx;
-          const isDragOver = dragOverIdx === idx && dragIdx !== idx;
+        {/* 소설 탭 아이콘 — Primary 5개 + 활성 overflow 탭 */}
+        {orderedDockItems
+          .filter((tab) => {
+            // Always show primary tabs
+            if (PRIMARY_TAB_IDS.includes(tab.id)) return true;
+            // Show overflow tab if it is currently active (temporary promotion)
+            if (OVERFLOW_TAB_IDS.includes(tab.id) && activeTab === tab.id) return true;
+            return false;
+          })
+          .map((tab) => {
+            const idx = orderedDockItems.indexOf(tab);
+            const isActive = activeTab === tab.id;
+            const isHovered = hoveredTab === tab.id;
+            const isDragging = dragIdx === idx;
+            const isDragOver = dragOverIdx === idx && dragIdx !== idx;
+            const isPromoted = OVERFLOW_TAB_IDS.includes(tab.id);
 
-          return (
-            <button
-              key={tab.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, idx)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, idx)}
-              onDrop={(e) => handleDrop(e, idx)}
-              onMouseEnter={() => setHoveredTab(tab.id)}
-              onMouseLeave={() => setHoveredTab(null)}
-              onClick={() => handleTabChange(tab.id as AppTab)}
-              className={`relative flex flex-col items-center justify-center transition-all duration-200 ease-out group ${
-                isDragging ? 'opacity-40' : ''
-              } ${isDragOver ? 'brightness-125' : ''} ${
-                isHovered && !isDragging ? 'brightness-125' : ''
-              }`}
-              style={{ width: '56px', height: '56px' }}
-            >
-              {isDragOver && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0.5 h-8 bg-accent-amber rounded-full" />
-              )}
-              <div className={`absolute -top-1 left-1/2 -translate-x-1/2 transition-opacity duration-200 ${isHovered && !isDragging ? 'opacity-50' : 'opacity-0'}`}>
-                <GripVertical className="w-3 h-3 text-text-tertiary rotate-90" />
-              </div>
-              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
-                isActive
-                  ? 'bg-accent-amber/10 border border-accent-amber/30'
-                  : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
-              }`}>
-                <tab.icon className={`w-6 h-6 ${isActive ? 'text-accent-amber' : tab.color} ${isActive || isHovered ? 'opacity-100' : 'opacity-70'} transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
-              </div>
-              <span className={`text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide transition-colors ${
-                isActive ? 'text-accent-amber' : 'text-text-secondary group-hover:text-text-primary'
-              }`}>
-                {tab.label}
-              </span>
-              {isActive && (
-                <div className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-accent-amber" />
-              )}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={tab.id}
+                draggable={!isPromoted}
+                onDragStart={(e) => !isPromoted && handleDragStart(e, idx)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => !isPromoted && handleDragOver(e, idx)}
+                onDrop={(e) => !isPromoted && handleDrop(e, idx)}
+                onMouseEnter={() => setHoveredTab(tab.id)}
+                onMouseLeave={() => setHoveredTab(null)}
+                onClick={() => handleTabChange(tab.id as AppTab)}
+                className={`relative flex flex-col items-center justify-center transition-all duration-200 ease-out group ${
+                  isDragging ? 'opacity-40' : ''
+                } ${isDragOver ? 'brightness-125' : ''} ${
+                  isHovered && !isDragging ? 'brightness-125' : ''
+                }`}
+                style={{ width: '56px', height: '56px' }}
+              >
+                {isDragOver && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0.5 h-8 bg-accent-amber rounded-full" />
+                )}
+                {!isPromoted && (
+                  <div className={`absolute -top-1 left-1/2 -translate-x-1/2 transition-opacity duration-200 ${isHovered && !isDragging ? 'opacity-50' : 'opacity-0'}`}>
+                    <GripVertical className="w-3 h-3 text-text-tertiary rotate-90" />
+                  </div>
+                )}
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
+                  isActive
+                    ? 'bg-accent-amber/10 border border-accent-amber/30'
+                    : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
+                }`}>
+                  <tab.icon className={`w-6 h-6 ${isActive ? 'text-accent-amber' : tab.color} ${isActive || isHovered ? 'opacity-100' : 'opacity-70'} transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
+                </div>
+                <span className={`text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide transition-colors ${
+                  isActive ? 'text-accent-amber' : 'text-text-secondary group-hover:text-text-primary'
+                }`}>
+                  {tab.label}
+                </span>
+                {isActive && (
+                  <div className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-accent-amber" />
+                )}
+              </button>
+            );
+          })}
+
+        {/* "더보기" overflow toggle button */}
+        <div ref={overflowRef} className="relative">
+          <button
+            onClick={() => setOverflowOpen(!overflowOpen)}
+            className={`relative flex flex-col items-center justify-center transition-all duration-200 ease-out group ${
+              overflowOpen ? 'brightness-125' : ''
+            }`}
+            style={{ width: '56px', height: '56px' }}
+            title={L4(language, { ko: '더보기', en: 'More', ja: 'もっと見る', zh: '更多' })}
+          >
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
+              overflowOpen
+                ? 'bg-bg-tertiary/60 border border-border/50'
+                : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
+            }`}>
+              <MoreHorizontal className={`w-6 h-6 ${overflowOpen ? 'text-accent-amber' : 'text-text-secondary'} opacity-70 group-hover:opacity-100 transition-opacity`} strokeWidth={1.8} />
+            </div>
+            <span className={`text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide transition-colors ${
+              overflowOpen ? 'text-accent-amber' : 'text-text-secondary group-hover:text-text-primary'
+            }`}>
+              {L4(language, { ko: '더보기', en: 'More', ja: 'もっと', zh: '更多' })}
+            </span>
+            {/* Dot indicator when any overflow tab is active */}
+            {OVERFLOW_TAB_IDS.includes(activeTab) && (
+              <div className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-accent-amber" />
+            )}
+          </button>
+
+          {/* Overflow popup — 4 hidden tabs */}
+          {overflowOpen && (
+            <div className="absolute bottom-[68px] left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-2 rounded-2xl bg-bg-secondary/95 backdrop-blur-xl border border-border shadow-panel z-[var(--z-dropdown)]">
+              {allDockItems
+                .filter((tab) => OVERFLOW_TAB_IDS.includes(tab.id))
+                .map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        handleTabChange(tab.id as AppTab);
+                        setOverflowOpen(false);
+                      }}
+                      className="relative flex flex-col items-center justify-center transition-all duration-200 ease-out group"
+                      style={{ width: '56px', height: '56px' }}
+                    >
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
+                        isActive
+                          ? 'bg-accent-amber/10 border border-accent-amber/30'
+                          : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
+                      }`}>
+                        <tab.icon className={`w-6 h-6 ${isActive ? 'text-accent-amber' : tab.color} ${isActive ? 'opacity-100' : 'opacity-70'} group-hover:opacity-100 transition-opacity`} strokeWidth={isActive ? 2.5 : 1.8} />
+                      </div>
+                      <span className={`text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide transition-colors ${
+                        isActive ? 'text-accent-amber' : 'text-text-secondary group-hover:text-text-primary'
+                      }`}>
+                        {tab.label}
+                      </span>
+                      {isActive && (
+                        <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-accent-amber" />
+                      )}
+                    </button>
+                  );
+                })}
+            </div>
+          )}
+        </div>
 
         {/* 구분선 */}
         <div className="w-px h-10 bg-border/30 mx-1" />
@@ -447,21 +545,41 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 <Move className="w-4 h-4" /> {language === 'KO' ? '독 위치 초기화' : 'Reset Dock Position'}
               </button>
               <div className="h-px bg-border/30 my-1" />
-              <button onClick={exportTXT} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
-                <Download className="w-4 h-4" /> TXT {language === 'KO' ? '원고 내보내기' : 'Export'}
+              {/* Export submenu (내보내기) */}
+              <div className="px-3 py-1.5 text-[10px] font-black text-text-tertiary uppercase tracking-widest font-serif">
+                <Download className="w-3 h-3 inline mr-1.5" />
+                {L4(language, { ko: '내보내기', en: 'Export', ja: 'エクスポート', zh: '导出' })}
+              </div>
+              <button onClick={() => { setIsSystemMenuOpen(false); handleExportEPUB(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                EPUB <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '전자책', en: 'E-book', ja: '電子書籍', zh: '电子书' })})</span>
               </button>
-              <button onClick={exportJSON} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
-                <Download className="w-4 h-4" /> JSON {language === 'KO' ? '내보내기' : 'Export'}
+              <button onClick={() => { setIsSystemMenuOpen(false); handleExportDOCX(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                DOCX <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '워드', en: 'Word', ja: 'ワード', zh: 'Word' })})</span>
               </button>
-              <button onClick={exportAllJSON} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
-                <Download className="w-4 h-4" /> {language === 'KO' ? '전체 백업' : 'Full Backup'} (JSON)
+              <button onClick={() => { setIsSystemMenuOpen(false); exportTXT(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                TXT <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '텍스트', en: 'Text', ja: 'テキスト', zh: '文本' })})</span>
               </button>
+              <button onClick={() => { setIsSystemMenuOpen(false); exportJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                JSON <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '데이터', en: 'Data', ja: 'データ', zh: '数据' })})</span>
+              </button>
+              <button onClick={() => { setIsSystemMenuOpen(false); exportAllJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                {L4(language, { ko: '전체 백업', en: 'Full Backup', ja: '全体バックアップ', zh: '全量备份' })} (JSON)
+              </button>
+              <button onClick={() => { setIsSystemMenuOpen(false); window.print(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                <Printer className="w-3 h-3" /> {L4(language, { ko: '인쇄', en: 'Print', ja: '印刷', zh: '打印' })}
+              </button>
+
               <div className="h-px bg-border/30 my-1" />
-              <button onClick={() => fileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
-                <Upload className="w-4 h-4" /> JSON {language === 'KO' ? '가져오기' : 'Import'}
+              {/* Import submenu (가져오기) */}
+              <div className="px-3 py-1.5 text-[10px] font-black text-text-tertiary uppercase tracking-widest font-serif">
+                <Upload className="w-3 h-3 inline mr-1.5" />
+                {L4(language, { ko: '가져오기', en: 'Import', ja: 'インポート', zh: '导入' })}
+              </div>
+              <button onClick={() => fileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                JSON {L4(language, { ko: '프로젝트', en: 'Project', ja: 'プロジェクト', zh: '项目' })}
               </button>
-              <button onClick={() => textFileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
-                <Upload className="w-4 h-4" /> {language === 'KO' ? '원고 텍스트 가져오기' : 'Import TXT novel'}
+              <button onClick={() => textFileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
+                {L4(language, { ko: '원고 텍스트 (TXT/MD)', en: 'Manuscript Text (TXT/MD)', ja: '原稿テキスト (TXT/MD)', zh: '稿件文本 (TXT/MD)' })}
               </button>
               <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />
             </div>

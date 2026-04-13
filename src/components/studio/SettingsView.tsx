@@ -9,7 +9,7 @@ import { createT, L4 } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
-  ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen,
+  ChevronRight, ChevronDown, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen,
   GitBranch, Check, Unplug,
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
@@ -57,6 +57,7 @@ function migrateAllKeysToObfuscated(): number {
 const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders = {}, onClearAll, onManageApiKey, versionedBackups, onRestoreBackup, onRefreshBackups }) => {
   const t = createT(language);
   const [notificationsOn, setNotificationsOn] = useState(true);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [obfuscateDone, setObfuscateDone] = useState<number | null>(null);
   const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
   const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
@@ -113,7 +114,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         {/* Engine Status Card */}
         <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
           <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-blue-500" /> Narrative Engine
+            <Cpu className="w-4 h-4 text-blue-500" /> {L4(language, { ko: '집필 엔진 상태', en: 'Writing Engine Status', ja: '執筆エンジン状態', zh: '写作引擎状态' })}
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
@@ -184,71 +185,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <WriterProfileCard language={language} />
         </div>
 
-        {/* Global Settings */}
+        {/* Writer Settings (작가 설정) */}
         <div className="md:col-span-2 ds-card-lg">
           <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-8 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-blue-500" /> {t('settings.generalPreferences')}
+            <Shield className="w-4 h-4 text-blue-500" /> {L4(language, { ko: '작가 설정', en: 'Writer Settings', ja: '作家設定', zh: '作家设置' })}
           </h3>
 
           <div className="space-y-2">
-            <div
-              data-testid="settings-api-key-row"
-              onClick={onManageApiKey}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Key className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
-                <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.apiKeyDesc')}</div>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-0.5 shrink-0">
-                <div data-testid="settings-api-key-status" className="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">
-                  {hasPersonalApiKey
-                    ? t('settings.apiKeySet')
-                    : hasHostedApi
-                      ? t('settings.apiKeyPlatformOnly')
-                      : t('settings.apiKeyNotSet')}
-                </div>
-                {hasPersonalApiKey && isKeyExpiringSoon(apiProvider) && (
-                  <div className="text-[8px] md:text-[9px] text-accent-amber">
-                    {L4(language, { ko: `키 갱신 권장 (${getKeyAge(apiProvider)}일)`, en: `Rotate key (${getKeyAge(apiProvider)}d old)` })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div
-              onClick={() => {
-                const count = migrateAllKeysToObfuscated();
-                setObfuscateDone(count);
-                setTimeout(() => setObfuscateDone(null), 3000);
-              }}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Shield className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
-                <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate">
-                    {L4(language, { ko: '저장된 키 암호화', en: 'Encrypt Saved Keys' })}
-                  </div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
-                    {L4(language, { ko: '평문으로 저장된 API 키를 난독화 포맷으로 재저장합니다', en: 'Re-saves any plain-text API keys in obfuscated format' })}
-                  </div>
-                </div>
-              </div>
-              <div className="text-[9px] md:text-[10px] font-black uppercase shrink-0">
-                {obfuscateDone === null ? (
-                  <span className="text-text-tertiary">RUN</span>
-                ) : obfuscateDone === 0 ? (
-                  <span className="text-green-500">ALL SECURE</span>
-                ) : (
-                  <span className="text-blue-400">{obfuscateDone} MIGRATED</span>
-                )}
-              </div>
-            </div>
-
             <div
               onClick={() => setNotificationsOn(prev => !prev)}
               className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border"
@@ -354,12 +297,53 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         {/* GitHub Cloud Backup */}
         <GitHubSyncSection language={language} />
 
-        {/* Engine Settings */}
+        {/* Advanced Settings (고급 설정) — Collapsible */}
         <div className="md:col-span-2 ds-card-lg">
-          <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-8 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-blue-500" /> {t('settingsEngine.engineSettings')}
-          </h3>
-          <div className="space-y-2">
+          <button
+            onClick={() => setAdvancedOpen(prev => !prev)}
+            className="w-full flex items-center justify-between mb-4 group cursor-pointer"
+          >
+            <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-500" /> {t('settingsEngine.engineSettings')}
+            </h3>
+            <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <p className="text-[10px] text-text-tertiary mb-4">
+            {L4(language, { ko: 'AI 서비스 연결, 창의성 조절 등 기술적인 설정입니다.', en: 'Technical settings including AI service connection and creativity tuning.', ja: 'AIサービス接続や創造性調整などの技術設定です。', zh: 'AI服务连接和创造性调整等技术设置。' })}
+          </p>
+          {advancedOpen && <div className="space-y-2">
+            {/* AI Service Connection (API Key) */}
+            <div
+              data-testid="settings-api-key-row"
+              onClick={onManageApiKey}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Key className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
+                    {t('settings.apiKeyDesc')}
+                    <span className="ml-1 opacity-60">(API {L4(language, { ko: '키', en: 'Key' })})</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-0.5 shrink-0">
+                <div data-testid="settings-api-key-status" className="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">
+                  {hasPersonalApiKey
+                    ? t('settings.apiKeySet')
+                    : hasHostedApi
+                      ? t('settings.apiKeyPlatformOnly')
+                      : t('settings.apiKeyNotSet')}
+                </div>
+                {hasPersonalApiKey && isKeyExpiringSoon(apiProvider) && (
+                  <div className="text-[8px] md:text-[9px] text-accent-amber">
+                    {L4(language, { ko: `키 갱신 권장 (${getKeyAge(apiProvider)}일)`, en: `Rotate key (${getKeyAge(apiProvider)}d old)` })}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Default Platform */}
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
@@ -454,7 +438,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               </div>
             </div>
 
-          </div>
+          </div>}
         </div>
 
         {/* Footer */}

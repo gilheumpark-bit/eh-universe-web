@@ -3,10 +3,10 @@
 // ============================================================
 import React, { useState } from 'react';
 import type { AppLanguage, StoryConfig, Character } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import {
   Target, Sliders, BookOpen, Lock, FileOutput,
-  ChevronDown, ChevronUp, Check,
+  ChevronDown, ChevronUp, Check, Zap,
 } from 'lucide-react';
 
 // ============================================================
@@ -91,6 +91,105 @@ const SCENE_GOALS: { key: string; tKey: string }[] = [
   { key: 'payoff', tKey: 'advancedWritingExtra.goalPayoff' },
   { key: 'action', tKey: 'advancedWritingExtra.goalAction' },
   { key: 'calm', tKey: 'advancedWritingExtra.goalCalm' },
+];
+
+// ============================================================
+// PART 2.5 — SITUATION PRESETS
+// ============================================================
+
+interface SituationPreset {
+  id: string;
+  emoji: string;
+  label: { ko: string; en: string; ja?: string; zh?: string };
+  desc: { ko: string; en: string; ja?: string; zh?: string };
+  dialogueRatio: number;
+  tempo: 'fast' | 'stable' | 'slow';
+  sentenceLen: 'short' | 'normal' | 'long';
+  emotionExposure: 'restrained' | 'normal' | 'intense';
+  sceneGoals: string[];
+}
+
+const SITUATION_PRESETS: SituationPreset[] = [
+  {
+    id: 'battle',
+    emoji: '\u2694\uFE0F',
+    label: { ko: '\uC804\uD22C\uC528', en: 'Battle', ja: '\u6226\u95D8\u30B7\u30FC\u30F3', zh: '\u6218\u6597' },
+    desc: {
+      ko: '\uB192\uC740 \uC561\uC158, \uB0AE\uC740 \uB300\uD654, \uBE60\uB978 \uD15C\uD3EC',
+      en: 'High action, low dialogue, fast tempo',
+      ja: '\u9AD8\u30A2\u30AF\u30B7\u30E7\u30F3\u3001\u4F4E\u4F1A\u8A71\u3001\u901F\u3044\u30C6\u30F3\u30DD',
+      zh: '\u9AD8\u52A8\u4F5C\u3001\u4F4E\u5BF9\u8BDD\u3001\u5FEB\u8282\u594F',
+    },
+    dialogueRatio: 20,
+    tempo: 'fast',
+    sentenceLen: 'short',
+    emotionExposure: 'intense',
+    sceneGoals: ['action', 'conflict'],
+  },
+  {
+    id: 'daily',
+    emoji: '\u2615',
+    label: { ko: '\uC77C\uC0C1\uC528', en: 'Daily', ja: '\u65E5\u5E38\u30B7\u30FC\u30F3', zh: '\u65E5\u5E38' },
+    desc: {
+      ko: '\uB0AE\uC740 \uAE34\uC7A5\uAC10, \uB192\uC740 \uB300\uD654, \uC794\uC794\uD55C \uD15C\uD3EC',
+      en: 'Low tension, high dialogue, calm pacing',
+      ja: '\u4F4E\u7DCA\u5F35\u3001\u9AD8\u4F1A\u8A71\u3001\u843D\u3061\u7740\u3044\u305F\u30DA\u30FC\u30B9',
+      zh: '\u4F4E\u7D27\u5F20\u3001\u9AD8\u5BF9\u8BDD\u3001\u5E73\u9759\u8282\u594F',
+    },
+    dialogueRatio: 70,
+    tempo: 'slow',
+    sentenceLen: 'normal',
+    emotionExposure: 'restrained',
+    sceneGoals: ['calm', 'relationship'],
+  },
+  {
+    id: 'confession',
+    emoji: '\uD83D\uDC97',
+    label: { ko: '\uACE0\uBC31\uC528', en: 'Confession', ja: '\u544A\u767D\u30B7\u30FC\u30F3', zh: '\u544A\u767D' },
+    desc: {
+      ko: '\uB192\uC740 \uAC10\uC815, \uC911\uAC04 \uB300\uD654, \uCE5C\uBC00\uD55C \uBD84\uC704\uAE30',
+      en: 'High emotion, medium dialogue, intimate',
+      ja: '\u9AD8\u611F\u60C5\u3001\u4E2D\u7A0B\u5EA6\u306E\u4F1A\u8A71\u3001\u89AA\u5BC6',
+      zh: '\u9AD8\u60C5\u611F\u3001\u4E2D\u7B49\u5BF9\u8BDD\u3001\u4EB2\u5BC6',
+    },
+    dialogueRatio: 50,
+    tempo: 'slow',
+    sentenceLen: 'long',
+    emotionExposure: 'intense',
+    sceneGoals: ['emotion-turn', 'relationship'],
+  },
+  {
+    id: 'chase',
+    emoji: '\uD83C\uDFC3',
+    label: { ko: '\uCD94\uACA9\uC528', en: 'Chase', ja: '\u8FFD\u8DE1\u30B7\u30FC\u30F3', zh: '\u8FFD\u51FB' },
+    desc: {
+      ko: '\uB192\uC740 \uAE34\uC7A5\uAC10, \uC9E7\uC740 \uBB38\uC7A5, \uBE60\uB978 \uD15C\uD3EC',
+      en: 'High tension, short sentences, fast',
+      ja: '\u9AD8\u7DCA\u5F35\u3001\u77ED\u6587\u3001\u901F\u3044',
+      zh: '\u9AD8\u7D27\u5F20\u3001\u77ED\u53E5\u3001\u5FEB\u901F',
+    },
+    dialogueRatio: 15,
+    tempo: 'fast',
+    sentenceLen: 'short',
+    emotionExposure: 'intense',
+    sceneGoals: ['action', 'cliffhanger'],
+  },
+  {
+    id: 'dialogue',
+    emoji: '\uD83D\uDCAC',
+    label: { ko: '\uB300\uD654\uC528', en: 'Dialogue', ja: '\u4F1A\u8A71\u30B7\u30FC\u30F3', zh: '\u5BF9\u8BDD' },
+    desc: {
+      ko: '70%+ \uB300\uD654 \uBE44\uC728, \uBCF4\uD1B5 \uD15C\uD3EC',
+      en: '70%+ dialogue ratio, normal tempo',
+      ja: '70%+\u4F1A\u8A71\u7387\u3001\u666E\u901A\u306E\u30C6\u30F3\u30DD',
+      zh: '70%+\u5BF9\u8BDD\u6BD4\u4F8B\u3001\u6B63\u5E38\u8282\u594F',
+    },
+    dialogueRatio: 75,
+    tempo: 'stable',
+    sentenceLen: 'normal',
+    emotionExposure: 'normal',
+    sceneGoals: ['reveal', 'relationship'],
+  },
 ];
 
 const OUTPUT_MODES: { key: AdvancedWritingSettings['outputMode']; tKey: string }[] = [
@@ -220,10 +319,47 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
     update('sceneGoals', next);
   };
 
+  const applyPreset = (preset: SituationPreset) => {
+    onSettingsChange({
+      ...s,
+      constraints: {
+        ...s.constraints,
+        dialogueRatio: preset.dialogueRatio,
+        tempo: preset.tempo,
+        sentenceLen: preset.sentenceLen,
+        emotionExposure: preset.emotionExposure,
+      },
+      sceneGoals: preset.sceneGoals,
+    });
+  };
+
   return (
     <div className="space-y-3">
       {/* Context summary */}
       <ContextSummary config={config} language={language} />
+
+      {/* Situation presets */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-bg-secondary">
+          <Zap className="w-3.5 h-3.5 text-accent-amber" />
+          <span className="text-[10px] font-bold uppercase tracking-wider flex-1">
+            {L4(language, { ko: '상황 프리셋', en: 'Scene Presets', ja: 'シーンプリセット', zh: '场景预设' })}
+          </span>
+        </div>
+        <div className="px-3 py-2.5 flex flex-wrap gap-1.5">
+          {SITUATION_PRESETS.map(p => (
+            <button
+              key={p.id}
+              onClick={() => applyPreset(p)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-bg-primary border border-border hover:border-accent-amber/40 hover:bg-accent-amber/5 transition-all group"
+              title={L4(language, p.desc)}
+            >
+              <span>{p.emoji}</span>
+              <span className="text-text-secondary group-hover:text-text-primary transition-colors">{L4(language, p.label)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 1. 장면 목표 */}
       <Section title={t('advancedWriting.sceneGoal')} icon={Target}>

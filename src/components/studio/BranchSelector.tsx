@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { GitBranch, Plus, Check, ChevronDown, X } from 'lucide-react';
+import { BookCopy, Plus, Check, ChevronDown, X } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
@@ -20,8 +20,17 @@ interface BranchSelectorProps {
 }
 
 // ============================================================
-// PART 2 — Create Branch Modal
+// PART 2 — Create Version Modal (다른 결말 만들기)
 // ============================================================
+
+/** Display name helper: strip internal prefix, rename "main" to localized original */
+function displayBranchName(branch: string, lang: AppLanguage): string {
+  const stripped = branch.replace(/^universe\//, '');
+  if (stripped === 'main') {
+    return L4(lang, { ko: '본편', en: 'Original', ja: '本編', zh: '原版' });
+  }
+  return stripped;
+}
 
 interface CreateBranchModalProps {
   language: AppLanguage;
@@ -62,14 +71,13 @@ const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
     >
       <div className="text-[10px] text-text-tertiary font-serif px-1 mb-1">
         {L4(language, {
-          ko: '새 브랜치 (우주) 생성',
-          en: 'Create new branch (universe)',
+          ko: '다른 결말 만들기',
+          en: 'Create alternate ending',
+          ja: '別エンディングを作成',
+          zh: '创建替代结局',
         })}
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-text-tertiary font-mono shrink-0">
-          universe/
-        </span>
         <input
           ref={inputRef}
           type="text"
@@ -77,11 +85,13 @@ const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
           onChange={(e) => setName(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={L4(language, {
-            ko: '이름 입력',
-            en: 'Enter name',
+            ko: '버전 이름 입력',
+            en: 'Enter version name',
+            ja: 'バージョン名を入力',
+            zh: '输入版本名称',
           })}
           className="flex-1 min-w-0 bg-bg-tertiary/50 text-xs text-text-primary
-            border border-border rounded-lg px-2 py-1 font-mono
+            border border-border rounded-lg px-2 py-1 font-serif
             outline-none focus-visible:ring-2 ring-accent-blue
             placeholder:text-text-tertiary/50"
         />
@@ -93,7 +103,7 @@ const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
             hover:text-text-primary hover:bg-bg-tertiary rounded-lg
             transition-colors min-h-[28px]"
         >
-          {L4(language, { ko: '취소', en: 'Cancel' })}
+          {L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
         </button>
         <button
           onClick={handleSubmit}
@@ -102,7 +112,7 @@ const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
             hover:bg-accent-amber/10 rounded-lg transition-colors
             disabled:opacity-30 disabled:cursor-not-allowed min-h-[28px]"
         >
-          {L4(language, { ko: '생성', en: 'Create' })}
+          {L4(language, { ko: '만들기', en: 'Create', ja: '作成', zh: '创建' })}
         </button>
       </div>
     </div>
@@ -159,7 +169,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
     [onCreateBranch],
   );
 
-  // Disabled state (no Git connection)
+  // Disabled state (버전 관리 비활성)
   if (disabled) {
     return (
       <div
@@ -167,13 +177,15 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
           bg-bg-tertiary/50 border border-border text-text-tertiary
           opacity-60 cursor-not-allowed ${className}`}
         title={L4(language, {
-          ko: 'Git 연동 후 사용 가능',
-          en: 'Available after Git connection',
+          ko: '버전 관리 준비 중',
+          en: 'Version management not ready',
+          ja: 'バージョン管理準備中',
+          zh: '版本管理准备中',
         })}
       >
-        <GitBranch className="w-3 h-3 shrink-0" />
-        <span className="text-[11px] font-mono truncate max-w-[100px]">
-          {currentBranch}
+        <BookCopy className="w-3 h-3 shrink-0" />
+        <span className="text-[11px] font-serif truncate max-w-[100px]">
+          {displayBranchName(currentBranch, language)}
         </span>
       </div>
     );
@@ -181,16 +193,16 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* Trigger button */}
+      {/* Trigger button — 버전 전환 */}
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className="flex items-center gap-1.5 px-2 py-1 rounded-lg
           bg-bg-tertiary/50 border border-border text-text-primary
           hover:bg-bg-tertiary transition-colors cursor-pointer"
       >
-        <GitBranch className="w-3 h-3 shrink-0 text-accent-amber" />
-        <span className="text-[11px] font-mono truncate max-w-[100px]">
-          {currentBranch}
+        <BookCopy className="w-3 h-3 shrink-0 text-accent-amber" />
+        <span className="text-[11px] font-serif truncate max-w-[100px]">
+          {displayBranchName(currentBranch, language)}
         </span>
         <ChevronDown className={`w-3 h-3 shrink-0 text-text-tertiary
           transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
@@ -199,7 +211,12 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
           <button
             className="ml-auto w-5 h-5 flex items-center justify-center
               rounded hover:bg-accent-amber/10 transition-colors"
-            title={L4(language, { ko: '새 브랜치', en: 'New branch' })}
+            title={L4(language, {
+              ko: '다른 결말 만들기',
+              en: 'Create alternate ending',
+              ja: '別エンディングを作成',
+              zh: '创建替代结局',
+            })}
             onClick={(e) => {
               e.stopPropagation();
               setCreating(true);
@@ -211,26 +228,29 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
         )}
       </button>
 
-      {/* Dropdown list */}
+      {/* Dropdown list — 버전 전환 */}
       {dropdownOpen && (
         <div
           className="absolute left-0 top-full mt-1 w-48 bg-bg-secondary border border-border
             rounded-xl shadow-lg py-1 z-[var(--z-dropdown)] max-h-[200px] overflow-y-auto
             scrollbar-thin"
         >
+          <div className="px-3 py-1 text-[9px] text-text-tertiary font-serif uppercase tracking-wider">
+            {L4(language, { ko: '버전 전환', en: 'Switch Version', ja: 'バージョン切替', zh: '切换版本' })}
+          </div>
           {branches.map((br) => (
             <button
               key={br}
               onClick={() => handleSelect(br)}
               className={`flex items-center gap-2 w-full px-3 py-1.5 text-left
-                text-[11px] font-mono transition-colors min-h-[32px]
+                text-[11px] font-serif transition-colors min-h-[32px]
                 ${br === currentBranch
                   ? 'text-accent-amber bg-accent-amber/5'
                   : 'text-text-secondary hover:bg-bg-tertiary hover:text-text-primary'
                 }`}
             >
-              <GitBranch className="w-3 h-3 shrink-0" />
-              <span className="truncate">{br}</span>
+              <BookCopy className="w-3 h-3 shrink-0" />
+              <span className="truncate">{displayBranchName(br, language)}</span>
               {br === currentBranch && (
                 <Check className="w-3 h-3 ml-auto shrink-0 text-accent-amber" />
               )}
@@ -239,7 +259,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
         </div>
       )}
 
-      {/* Create branch modal */}
+      {/* Create version modal — 다른 결말 만들기 */}
       {creating && (
         <CreateBranchModal
           language={language}

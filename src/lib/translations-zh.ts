@@ -776,8 +776,8 @@ const translations = {
     "aiModel": "NOA模型",
     "latency": "延迟",
     "generalPreferences": "通用设置",
-    "apiKeyManagement": "API密钥管理",
-    "apiKeyDesc": "配置和管理您的Gemini API密钥。",
+    "apiKeyManagement": "AI服务连接",
+    "apiKeyDesc": "配置和管理您的AI服务密钥。",
     "apiKeySet": "已设置",
     "apiKeyPlatformOnly": "仅平台密钥",
     "apiKeyNotSet": "未设置",
@@ -1177,13 +1177,13 @@ const translations = {
     "settings": "设置"
   },
   "settingsEngine": {
-    "engineSettings": "引擎设置",
+    "engineSettings": "高级设置",
     "defaultPlatform": "默认平台",
     "defaultPlatformDesc": "新项目的默认输出平台",
     "defaultEpisodes": "默认集数",
     "defaultEpisodesDesc": "新项目的默认总集数",
-    "temperature": "温度（创造性）",
-    "temperatureDesc": "NOA生成创意水平（0.0 = 精确，1.0 = 创意）",
+    "temperature": "创造性",
+    "temperatureDesc": "AI生成创意水平（低＝精确，高＝表现丰富）",
     "mobile": "移动端",
     "web": "网页端"
   },

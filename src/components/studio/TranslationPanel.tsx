@@ -611,7 +611,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary">
               <Check className="h-3 w-3" />
-              {isKO ? "품질 게이트 기준점" : "Score Threshold"}
+              {isKO ? "품질 검사 기준점" : "Quality Threshold"}
             </label>
             <div className="flex items-center gap-2">
               <input

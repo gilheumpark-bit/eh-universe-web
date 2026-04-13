@@ -255,7 +255,7 @@ export default function WritingTabInline(props: Props) {
   });
   const [completionHintShown, setCompletionHintShown] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
-    return localStorage.getItem('noa_completion_hint_shown') === '1';
+    return localStorage.getItem('noa_tab_hint_shown') === '1';
   });
   const [showCompletionHint, setShowCompletionHint] = useState(false);
 
@@ -271,7 +271,7 @@ export default function WritingTabInline(props: Props) {
   const dismissCompletionHint = useCallback(() => {
     setShowCompletionHint(false);
     setCompletionHintShown(true);
-    localStorage.setItem('noa_completion_hint_shown', '1');
+    localStorage.setItem('noa_tab_hint_shown', '1');
   }, []);
 
   const toggleInlineCompletion = useCallback(() => {
@@ -512,6 +512,23 @@ export default function WritingTabInline(props: Props) {
                 <Wand2 className="w-3.5 h-3.5" />
               </button>
             )}
+            {/* 시네마 모드 바로가기 */}
+            {currentSession.messages.some(m => m.role === 'assistant' && m.content) && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('manuscript')}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs font-bold text-text-secondary hover:border-accent-purple/40 hover:text-accent-purple transition-colors"
+                title={L4(language, {
+                  ko: '시네마 모드 — 원고 탭에서 비주얼 노벨/라디오 재생',
+                  en: 'Cinema mode — Play as visual novel/radio in Manuscript tab',
+                  ja: 'シネマモード — 原稿タブでビジュアルノベル/ラジオ再生',
+                  zh: '电影模式 — 在稿件标签中播放视觉小说/广播',
+                })}
+              >
+                <span className="text-sm">🎬</span>
+                {L4(language, { ko: '시네마', en: 'Cinema', ja: 'シネマ', zh: '影院' })}
+              </button>
+            )}
             {/* 분할 뷰 토글 — 단일 버튼 */}
             <button
               type="button"
@@ -527,19 +544,21 @@ export default function WritingTabInline(props: Props) {
             </button>
           </div>
         </div>
-        {/* One-time inline completion hint */}
+        {/* One-time Tab autocomplete hint — inside editor area */}
         {showCompletionHint && writingMode === 'edit' && (
-          <div className="mx-4 mt-2 flex items-center gap-2 px-3 py-2 bg-accent-amber/10 border border-accent-amber/30 rounded-lg text-xs text-accent-amber animate-in fade-in slide-in-from-top-2 duration-300">
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            <span className="flex-1">
+          <div className="mx-4 mt-2 flex items-center gap-2 py-2 px-3 bg-accent-amber/5 border-l-2 border-accent-amber rounded text-xs text-text-tertiary animate-in fade-in slide-in-from-top-2 duration-300">
+            <span className="shrink-0">&#128161;</span>
+            <span className="flex-1 text-xs leading-relaxed">
               {L4(language, {
-                ko: 'NOA가 다음 문장을 제안합니다. Tab으로 수락, Esc로 무시',
-                en: 'NOA suggests the next sentence. Tab to accept, Esc to dismiss',
+                ko: '글을 멈추면 AI가 다음 문장을 제안합니다. Tab으로 수락, Esc로 무시',
+                en: 'When you pause writing, AI suggests the next sentence. Tab to accept, Esc to dismiss',
+                ja: '入力を止めるとAIが次の文を提案します。Tabで採用、Escで無視',
+                zh: '停止输入时AI会建议下一句。Tab接受，Esc忽略',
               })}
             </span>
             <button
               onClick={dismissCompletionHint}
-              className="text-accent-amber/60 hover:text-accent-amber transition-colors text-sm leading-none shrink-0"
+              className="text-text-tertiary/60 hover:text-text-primary transition-colors text-sm leading-none shrink-0"
               aria-label="Dismiss hint"
             >
               <X className="w-3.5 h-3.5" />
@@ -595,6 +614,35 @@ export default function WritingTabInline(props: Props) {
                       </span>
                     )}
                   </div>
+                )}
+                {/* Cinema Mode entry — after generation completes */}
+                {!isGenerating && currentSession.messages.length > 0 && currentSession.messages.some(m => m.role === 'assistant' && m.content) && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('manuscript')}
+                    className="mx-3 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent-purple/5 to-accent-blue/5 border border-accent-purple/20 rounded-xl hover:border-accent-purple/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-all group"
+                  >
+                    <span className="text-lg">🎬</span>
+                    <div className="flex-1 text-left">
+                      <div className="text-[11px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
+                        {L4(language, {
+                          ko: '이 에피소드를 시네마 모드로 체험해보세요',
+                          en: 'Experience this episode in Cinema Mode',
+                          ja: 'このエピソードをシネマモードで体験しよう',
+                          zh: '用电影模式体验这一集',
+                        })}
+                      </div>
+                      <div className="text-[9px] text-text-quaternary">
+                        {L4(language, {
+                          ko: '원고 탭에서 라디오/비주얼 노벨 플레이어 실행',
+                          en: 'Launch radio/visual novel player in Manuscript tab',
+                          ja: '原稿タブでラジオ/ビジュアルノベルプレイヤーを起動',
+                          zh: '在稿件标签中启动广播/视觉小说播放器',
+                        })}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-accent-purple opacity-60 group-hover:opacity-100 transition-opacity">▶</span>
+                  </button>
                 )}
                 {currentSession.messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-center space-y-6 py-12 md:py-20 px-2">
