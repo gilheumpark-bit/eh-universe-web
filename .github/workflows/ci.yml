@@ -2,43 +2,31 @@ name: CI
 
 on:
   push:
-    branches: [master, main, 'feat/**', 'fix/**']
+    branches: [master]
   pull_request:
-    branches: [master, main]
+    branches: [master]
 
 jobs:
-  test:
-    name: Lint + Typecheck + Test (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+  build-and-test:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
-          cache: pnpm
+          cache: npm
 
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Theme contrast (WCAG AA)
-        run: node tools/scripts/contrast-check.mjs
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
 
-      - name: Null byte scan (renderer + packages)
-        shell: bash
+      - name: Null byte scan
         run: |
-          BAD=$(find apps packages -type f \( -name '*.ts' -o -name '*.tsx' \) -print0 \
-                | xargs -0 grep -Pl '\x00' 2>/dev/null || true)
+          BAD=$(find src -name '*.ts' -o -name '*.tsx' | xargs grep -Pl '\x00' 2>/dev/null || true)
           if [ -n "$BAD" ]; then
             echo "❌ Null bytes detected in:"
             echo "$BAD"
@@ -46,24 +34,61 @@ jobs:
           fi
           echo "✅ No null bytes found"
 
-      - name: Typecheck (turbo)
-        run: pnpm turbo run typecheck
+      - name: Lint
+        run: npm run lint
 
-      - name: Lint (turbo)
-        run: pnpm turbo run lint
+      - name: TypeScript type check
+        run: npx tsc --noEmit --strict
 
-      - name: Test + Coverage (turbo)
-        run: pnpm run test:coverage
+      - name: Critical path tests
+        run: npx jest --testPathPatterns="verification|composer-state|panel-registry|rate-limit|safe-fix|logger|server-ai" --no-coverage
+
+      - name: Run tests with coverage
+        run: npx jest --coverage --coverageThreshold='{"global":{"branches":15,"functions":15,"lines":20,"statements":20}}'
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+      - name: Restore Next.js build cache
+        uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build
+        run: npm run build
+
+      - name: Build size report
+        run: |
+          echo "## Build Size Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          du -sh .next/static/ 2>/dev/null || echo "static: N/A"
+          du -sh .next/static/ >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          find .next/static -name '*.js' -exec du -sh {} \; | sort -rh | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "Total JS chunks:"
+          find .next/static -name '*.js' | wc -l
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test
         env:
           CI: true
 
-      - name: Upload coverage (if generated)
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
         with:
-          name: coverage-${{ matrix.os }}
-          path: |
-            apps/desktop/coverage/
-            packages/*/coverage/
-          if-no-files-found: ignore
+          name: playwright-report
+          path: playwright-report/
           retention-days: 14

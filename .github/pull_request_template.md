@@ -1,21 +1,17 @@
-## Description
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context.
+## Summary
+<!-- What does this PR do? -->
 
-Fixes # (issue)
+## Changes
+-
 
-## Type of change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
+## Testing
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npx eslint src/` passes
+- [ ] Manual testing done on affected pages
+- [ ] E2E tests pass (if applicable)
 
-## How Has This Been Tested?
-Please describe the tests that you ran to verify your changes.
-- [ ] NOA 3-Persona Verification Passed
-- [ ] Local build verified (`npm run build:electron` / `npm run build`)
+## Screenshots
+<!-- If UI changes, add before/after screenshots -->
 
-## Checklist:
-- [ ] My code follows the project's ZERO-TOLERANCE styling guidelines (GEMINI.md).
-- [ ] I have performed a self-review of my own code.
-- [ ] I have commented my code, particularly in hard-to-understand areas.
-- [ ] My changes generate no new warnings or errors.
+## Related Issues
+<!-- Closes #123 -->

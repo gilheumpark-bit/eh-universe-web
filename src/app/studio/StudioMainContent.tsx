@@ -1,0 +1,277 @@
+"use client";
+
+// ============================================================
+// PART 1 — Imports & Types
+// ============================================================
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import {
+  X, Save, Download,
+  Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
+  Key, Sparkles,
+} from 'lucide-react';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { StatusBadge } from '@/components/ui/StatusIndicator';
+import type { AppTab } from '@/lib/studio-types';
+import { createT } from '@/lib/i18n';
+import EngineDashboard from '@/components/studio/EngineDashboard';
+import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
+import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
+import { ShortcutsModal } from '@/components/studio/StudioModals';
+import StudioTabRouter from '@/components/studio/StudioTabRouter';
+import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
+import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
+import { useStudio } from './StudioContext';
+
+const DynSkeleton = () => <LoadingSkeleton height={120} />;
+const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
+
+// IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
+
+// ============================================================
+// PART 2 — Main Content Component (header + tabs + writing input)
+// ============================================================
+export default function StudioMainContent({ children }: { children?: React.ReactNode }) {
+  const {
+    focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
+    themeLevel, toggleTheme,
+    showSearch, setShowSearch, searchQuery, setSearchQuery,
+    showShortcuts, setShowShortcuts,
+    showGlobalSearch, setShowGlobalSearch, globalSearchQuery, setGlobalSearchQuery,
+    activeTab, handleTabChange, setActiveTab,
+    currentSession, currentSessionId, currentProjectId, currentProject,
+    sessions, projects, setCurrentSessionId, setCurrentProjectId,
+    hydrated,
+    setConfig, updateCurrentSession,
+    writingMode, setWritingMode,
+    editDraft, setEditDraft, editDraftRef,
+    canvasContent, setCanvasContent, canvasPass, setCanvasPass,
+    promptDirective, setPromptDirective,
+    advancedSettings, setAdvancedSettings,
+    isGenerating, lastReport, directorReport,
+    doHandleSend, handleCancel, handleRegenerate,
+    handleVersionSwitch, handleTypoFix, hfcpState,
+    input, setInput,
+    showDashboard, setShowDashboard,
+    rightPanelOpen, setRightPanelOpen,
+    showAiLock, hasAiAccess, aiCapabilitiesLoaded,
+    bannerDismissed, setBannerDismissed,
+    setShowApiKeyModal,
+    showQuickStartLock, hostedProviders,
+    saveFlash, triggerSave,
+    setUxError, messagesEndRef, filteredMessages, searchMatchesEditDraft,
+    writingColumnShell,
+    apiBannerMessage, apiSetupLabel,
+    language, isKO,
+    sessionStartChars, editorFontSize,
+    archiveScope, setArchiveScope, archiveFilter, setArchiveFilter,
+    charSubTab, setCharSubTab,
+    createNewSession, createDemoSession, openQuickStart,
+    startRename, renamingSessionId, setRenamingSessionId,
+    renameValue, setRenameValue, confirmRename,
+    moveSessionToProject, deleteSession, handleNextEpisode, handlePrint,
+    versionedBackups, doRestoreVersionedBackup, refreshBackupList,
+    clearAllSessions,
+    suggestions, setSuggestions, pipelineResult,
+  } = useStudio();
+
+  const t = createT(language);
+  const isOnline = useOnlineStatus();
+
+  return (
+    <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
+      {/* 오프라인 배너 */}
+      {!isOnline && (
+        <div className="bg-accent-red/15 border-b border-accent-red/30 px-4 py-2 flex items-center justify-center gap-2 text-xs font-bold text-accent-red z-50 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-accent-red animate-pulse" />
+          {isKO ? '인터넷 연결이 끊겼습니다. 일부 기능이 제한됩니다.' : 'No internet connection. Some features are unavailable.'}
+        </div>
+      )}
+      {focusMode && (
+        <button onClick={() => setFocusMode(false)}
+          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-30 hover:opacity-100"
+          title="F11">
+          <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
+        </button>
+      )}
+
+      {/* Window Frame */}
+      {!focusMode && (
+        <WindowTitleBar activeTab={activeTab} language={language} focusMode={focusMode} onToggleFocus={() => setFocusMode(prev => !prev)} />
+      )}
+
+      {/* Header */}
+      <header className={`h-14 flex items-center justify-between px-3 md:px-8 border-b border-border bg-bg-primary/90 backdrop-blur-xl z-30 shrink-0 ${focusMode ? 'hidden' : ''}`}>
+        <div className="flex items-center gap-1.5 md:gap-4 min-w-0 flex-1 mr-2">
+          {/* Sidebar toggle removed — OSDesktop handles navigation */}
+          <div className="text-xs md:text-sm font-bold tracking-tight uppercase flex items-center gap-1.5 md:gap-2 min-w-0 font-(family-name:--font-mono)">
+            <span className="text-text-secondary hidden md:inline">{t('sidebar.activeProject')}:</span>
+            <span className="text-text-primary truncate max-w-[120px] md:max-w-none">{currentSession?.title || t('engine.noStory')}</span>
+            {currentSessionId && <span className={`text-[10px] font-(family-name:--font-mono) transition-all duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Genre badge + ANS engine badge removed for cleaner header */}
+          {/* Tool buttons */}
+          <div className="flex items-center gap-1">
+            <button onClick={triggerSave} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${saveFlash ? 'text-accent-green' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={isKO ? '저장 (Ctrl+S)' : 'Save (Ctrl+S)'} aria-label="Save"><Save className="w-4 h-4" /></button>
+            <button onClick={handlePrint} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '내보내기 (Ctrl+E)' : 'Export (Ctrl+E)'} aria-label="Export"><Download className="w-4 h-4" /></button>
+            <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
+            <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
+            <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+            {/* Premium Theme Controls - Brightness + Color */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-bg-secondary/40 border border-white/4">
+              {/* Brightness Dial */}
+              <button 
+                onClick={toggleTheme} 
+                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                title={isKO ? ['밤','낮'][themeLevel] : ['Night','Day'][themeLevel]}
+                aria-label={t('ui.toggleThemeLabel')}
+              >
+                <span className={`relative z-10 transition-all duration-300 ${
+                  themeLevel === 0 ? 'text-accent-purple' : 'text-accent-amber'
+                }`}>
+                  {themeLevel === 0 ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                </span>
+              </button>
+
+              {/* Divider */}
+            </div>
+            <StatusBadge showStorage />
+            <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
+          </div>
+        </div>
+      </header>
+
+      {/* Search bar */}
+      {showSearch && (
+        <div className="px-4 py-2 bg-bg-secondary border-b border-border flex items-center gap-2">
+          <Search className="w-4 h-4 text-text-tertiary shrink-0" />
+          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('ui.searchMessages')} autoFocus
+            className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
+          {searchMatchesEditDraft && (
+            <button onClick={() => setWritingMode('edit')} className="text-[11px] text-accent-green font-bold font-(family-name:--font-mono) shrink-0">
+              {t('ui.foundInDraft')}
+            </button>
+          )}
+          <button onClick={() => { setShowSearch(false); setSearchQuery(''); }} aria-label="Close search" className="text-text-tertiary hover:text-text-primary"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {/* Shortcuts modal */}
+      {showShortcuts && <ShortcutsModal language={language} onClose={() => setShowShortcuts(false)} />}
+
+      {/* Global Search Palette (Ctrl+K) */}
+      {showGlobalSearch && (
+        <GlobalSearchPalette
+          query={globalSearchQuery}
+          setQuery={setGlobalSearchQuery}
+          sessions={sessions}
+          config={currentSession?.config ?? null}
+          language={language}
+          onSelect={(type, id) => {
+            setShowGlobalSearch(false);
+            setGlobalSearchQuery('');
+            if (type === 'character') handleTabChange('characters');
+            else if (type === 'episode') { if (id) setCurrentSessionId(id); handleTabChange('writing'); }
+            else if (type === 'world') handleTabChange('world');
+          }}
+          onClose={() => { setShowGlobalSearch(false); setGlobalSearchQuery(''); }}
+        />
+      )}
+
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        <div className="flex-1 overflow-y-auto pb-20 md:pb-0 min-h-0">
+          {/* API key banner */}
+          {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !bannerDismissed && (
+            <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-accent-amber/10 border border-accent-amber/30 rounded-xl text-accent-amber text-xs">
+              <Key className="w-4 h-4 shrink-0" />
+              <span className="flex-1">{apiBannerMessage}</span>
+              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-accent-amber/20 hover:bg-accent-amber/30 rounded-lg text-[10px] font-bold uppercase transition-colors">
+                {apiSetupLabel}
+              </button>
+              <button onClick={() => { setBannerDismissed(true); localStorage.setItem('noa_api_banner_dismissed', '1'); }} className="shrink-0 text-text-tertiary hover:text-text-primary transition-colors text-sm leading-none" aria-label="Dismiss">
+                {'\u2715'}
+              </button>
+            </div>
+          )}
+
+          {/* No session selected — Onboarding */}
+          {!currentSessionId && !['settings', 'history', 'rulebook', 'style', 'docs'].includes(activeTab) ? (
+            <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden z-1">
+              <div className="absolute inset-0 z-0">
+                <Image src="/images/gate-infrastructure-visual.jpg" alt="" fill priority={true} className="object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
+              </div>
+              <div className="absolute inset-0 z-1 pointer-events-none opacity-4" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+              <div className="relative z-10 flex flex-col items-center w-full">
+                <OnboardingGuide
+                  lang={language}
+                  onComplete={() => { window.dispatchEvent(new Event('storage')); }}
+                  onNavigate={(tab) => { createNewSession(tab as AppTab); }}
+                  onQuickStart={openQuickStart}
+                  onDemo={createDemoSession}
+                  showQuickStartLock={showQuickStartLock}
+                />
+              </div>
+            </div>
+          ) : (
+              <StudioTabRouter
+                activeTab={activeTab} language={language} currentSession={currentSession}
+                currentSessionId={currentSessionId} config={currentSession?.config || null}
+                setConfig={setConfig} updateCurrentSession={updateCurrentSession}
+                triggerSave={triggerSave} saveFlash={saveFlash} hostedProviders={hostedProviders}
+                showAiLock={showAiLock} setActiveTab={setActiveTab} charSubTab={charSubTab}
+                setCharSubTab={setCharSubTab} setUxError={setUxError} clearAllSessions={clearAllSessions}
+                setShowApiKeyModal={setShowApiKeyModal} versionedBackups={versionedBackups}
+                doRestoreVersionedBackup={doRestoreVersionedBackup} refreshBackupList={refreshBackupList}
+                writingMode={writingMode} setWritingMode={setWritingMode} editDraft={editDraft}
+                setEditDraft={setEditDraft} editDraftRef={editDraftRef} canvasContent={canvasContent}
+                setCanvasContent={setCanvasContent} canvasPass={canvasPass} setCanvasPass={setCanvasPass}
+                promptDirective={promptDirective} setPromptDirective={setPromptDirective}
+                isGenerating={isGenerating} lastReport={lastReport} doHandleSend={doHandleSend}
+                handleCancel={handleCancel} handleRegenerate={handleRegenerate} handleVersionSwitch={handleVersionSwitch}
+                handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef} searchQuery={searchQuery}
+                filteredMessages={filteredMessages} hasAiAccess={hasAiAccess} advancedSettings={advancedSettings}
+                setAdvancedSettings={setAdvancedSettings} showDashboard={showDashboard}
+                rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
+                directorReport={directorReport} hfcpState={hfcpState} handleNextEpisode={handleNextEpisode}
+                writingColumnShell={writingColumnShell} input={input} setInput={setInput}
+                archiveScope={archiveScope} setArchiveScope={setArchiveScope} archiveFilter={archiveFilter}
+                setArchiveFilter={setArchiveFilter} projects={projects} sessions={sessions}
+                currentProject={currentProject} currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId}
+                setCurrentSessionId={setCurrentSessionId} startRename={startRename}
+                renamingSessionId={renamingSessionId} setRenamingSessionId={setRenamingSessionId}
+                renameValue={renameValue} setRenameValue={setRenameValue} confirmRename={confirmRename}
+                moveSessionToProject={moveSessionToProject} handlePrint={handlePrint} deleteSession={deleteSession}
+                suggestions={suggestions} setSuggestions={setSuggestions} pipelineResult={pipelineResult}
+              />
+          )}
+        </div>
+
+        {showDashboard && activeTab === 'writing' && currentSession && !showAiLock && (
+          <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
+        )}
+
+        {/* Right panel slots (injected from parent) */}
+        {children}
+      </div>
+
+      {/* Status Bar */}
+      {!focusMode && (
+        <StudioStatusBar
+          editDraft={editDraft}
+          writingMode={writingMode}
+          activeTab={activeTab}
+          saveFlash={saveFlash}
+          isGenerating={isGenerating}
+          language={language}
+          currentSession={currentSession}
+          sessionStartChars={sessionStartChars}
+          editorFontSize={editorFontSize}
+        />
+      )}
+    </main>
+  );
+}
+
+// IDENTITY_SEAL: PART-2 | role=main-content-area | inputs=StudioContext | outputs=JSX(header+tabs+input)

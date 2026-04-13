@@ -5,9 +5,9 @@
 // 집필 탭 오른쪽 분할 뷰에 표시
 // ============================================================
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { X, Users, BookOpen, Clapperboard, Check } from 'lucide-react';
-import type { StoryConfig, AppLanguage, SceneDirectionData } from '@/lib/studio-types';
+import React, { useState, useCallback } from 'react';
+import { X, Users, BookOpen, Clapperboard, Check, ChevronDown } from 'lucide-react';
+import type { StoryConfig, AppLanguage, Character, SceneDirectionData } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — Types & Props
@@ -28,7 +28,7 @@ interface Props {
 
 function CharacterSelector({ config, language, setConfig }: { config: StoryConfig; language: AppLanguage; setConfig: Props['setConfig'] }) {
   const isKO = language === 'KO';
-  const characters = useMemo(() => config.characters || [], [config.characters]);
+  const characters = config.characters || [];
   const active = config.sceneDirection?.activeCharacters || [];
 
   const toggle = useCallback((name: string) => {

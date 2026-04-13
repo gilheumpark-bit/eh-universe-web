@@ -36,42 +36,6 @@
       }
     }
   ],
-  "shortcuts": [
-    {
-      "name": "NOA 스튜디오",
-      "short_name": "Studio",
-      "url": "/studio",
-      "icons": [{ "src": "/icon", "sizes": "512x512", "type": "image/png" }]
-    },
-    {
-      "name": "코드 스튜디오",
-      "short_name": "Code",
-      "url": "/code-studio",
-      "icons": [{ "src": "/icon", "sizes": "512x512", "type": "image/png" }]
-    },
-    {
-      "name": "번역 스튜디오",
-      "short_name": "Translate",
-      "url": "/translation-studio",
-      "icons": [{ "src": "/icon", "sizes": "512x512", "type": "image/png" }]
-    },
-    {
-      "name": "아카이브",
-      "short_name": "Archive",
-      "url": "/archive",
-      "icons": [{ "src": "/icon", "sizes": "512x512", "type": "image/png" }]
-    }
-  ],
-  "share_target": {
-    "action": "/studio",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
   "icons": [
     {
       "src": "/favicon.ico",

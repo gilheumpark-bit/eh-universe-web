@@ -1,10 +1,9 @@
 # Default owner for all files
-* @gilheumpark-bit
+* @sung4
 
-# Security-critical paths
-.github/workflows/ @gilheumpark-bit
-apps/desktop/main/ipc/keystore.ts @gilheumpark-bit
-apps/desktop/main/ipc/ai.ts @gilheumpark-bit
-apps/desktop/main/services/mcp-stdio.ts @gilheumpark-bit
-apps/desktop/main/preload.ts @gilheumpark-bit
-packages/shared-types/ @gilheumpark-bit
+# Security-critical paths — require explicit review
+firestore.rules @sung4
+.github/workflows/ @sung4
+src/app/api/ @sung4
+src/lib/server-ai.ts @sung4
+src/lib/firebase.ts @sung4

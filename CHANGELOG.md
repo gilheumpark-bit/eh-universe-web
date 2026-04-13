@@ -1,38 +1,139 @@
 # Changelog
 
-All notable changes to EH Code Studio are documented here.
+All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.1.0-beta] - 2026-04-13
+## [2.0.0] - 2026-04-13
 
-### Added
-- **Ollama local model integration**: model discovery, pull with progress, health check, ARI circuit breaker
-- **Tab autocomplete (FIM)**: Ollama direct HTTP for sub-200ms completions, CodeLlama/DeepSeek/StarCoder/Qwen2.5 native FIM tokens
-- **MCP protocol**: stdio transport (JSON-RPC over stdin/stdout), HTTP transport, tool calling in chat, auto-restart, heartbeat
-- **Multi-file agent**: dependency graph (import tracing + topological sort), AI-driven planning, cross-file context, snapshot rollback
-- Desktop-native features: OS notifications, global shortcut (Ctrl+Shift+E), native clipboard, recent documents, drag-and-drop
-- 1024x1024 application icon
-- `get-app-version` IPC handler
-- Patent scanner with keyword + license detection
+### Added — Quill Engine Integration
+- 224-rule catalog ported from local-code-studio (16 categories, CWE mappings)
+- 4-layer verification engine (pre-filter → AST → TypeChecker → esquery)
+- Deep Verify: 5th-order logic bug detection
+- Pipeline upgraded: 8-team → 9-team (Quill non-blocking stage)
+
+### Added — Scene Direction Overhaul
+- Inline DirectionReferencePanel: [연출] [인물] [참고] 3-tab split view
+- Character smart injection: activeCharacters → Tier 1 (full DNA) / Tier 2 (name+role only)
+- Token savings: 3000 → 840 tokens (72% reduction)
+- Scene sheet moved from chat to direction panel
+
+### Added — Multi-Agent DGX Routing
+- 4-model routing: writer(abliterated) / planner(r1) / actor(eva) / general(qwen)
+- Task-based structured generation routing (characters→eva, items→r1)
+- Genre temperature: 11 genres × 0.01 precision
+- Writer profile: voiceFingerprint + skill-level differentiation
+
+### Added — 90+ Score Upgrade (56 items)
+- Phase 1-5: Theme auto-detect, token alert, focus management, print stylesheet
+- Canvas 3-step mode, quality gate user controls, episode summary UX
+- Network: feed recommendation, comment threading, planet templates
+- EPUB cover image, DOCX heading styles, settlement roles
+
+### Fixed — Precision Diagnostic (20 items)
+- Retry callback binding, pipeline failure diagnostics
+- HFCP NRG strategy injection, storage auto-cleanup
+- Event listener/dispatch pairing verification
+- Session restore failure notification
+
+### Fixed — UX Audit (42 items)
+- Delete confirmations on all destructive actions
+- Modal stacking prevention (priority queue)
+- 39 aria-label additions, sr-only screen reader text
+- Color-coded guardrail indicators, metric tooltips
+
+### Performance
+- Global CSS transition: html * → interactive elements only (2-3x faster tab switch)
+- 5 static tabs → dynamic import (bundle size reduction)
+- will-change + contain:layout GPU hints
+- Page transition: 0.28s → 0.18s
+
+## [1.5.0] - 2026-04-13
+
+### Added — DGX 진짜 SSE 스트리밍
+- `sparkService.ts`: `stream:false` → `stream:true` 전환 — 첫 토큰 30초→0.05초
+- SSE 실시간 파싱 + 프론트 SSE 즉시 포워딩 (zero-copy)
+- 청크 이어쓰기 유지 (4000토큰/청크, 최대 4연타 = 16K)
+- DGX 엔드포인트: `api.ehuniverse.com` (프로덕션) + `192.168.219.100:8000` (로컬)
+
+### Added — 집필 몰입도 시스템
+- 에디터 원고지 모드: `max-width: 65ch` + `text-indent: 1em` + `--editor-font-size` CSS 변수
+- Zen 터널 비전: `[data-zen-dim]` opacity 0.25 + 강화된 amber glow (32px+64px)
+- 타이핑 리듬: `not(:placeholder-shown):focus` 따뜻한 glow pulse
+- `Ctrl+=` / `Ctrl+-` 글자 크기 조절 (12~28px)
+- 세션 워드카운터: 상태바에 `+N자` 초록색 표시
+
+### Added — 디자인 시스템 보강
+- 터치 타겟 44px: `.ds-btn`, `.ds-input`, `.premium-button.sm`
+- Optimistic UI: `BookmarkButton` 즉시 반영 + 실패 시 롤백
+- CSS 유틸리티: `.ds-disclosure`, `.ds-icon-text`, `.ds-empty-state`, `.ds-labor-illusion`
+- Vertical Rhythm: `--vr-unit: 8px`, `.eh-vr-1`~`.eh-vr-section`
+- CLS 방어: `.eh-stable-height`, `.eh-contain-content`, 이미지 width/height 명시
+
+### Fixed — AI 생성 버그
+- `geminiStructuredTaskService.ts`: 사일런트 `fallback: []` → `throw Error` 전환
+- 배열 JSON regex 추가 (`/(\[[\s\S]*\])/`) — DGX 응답 파싱 실패 해소
+- `CharacterTab`/`ItemStudioView`: 실제 에러 메시지 표시 + retry 콜백
+- `useStudioAI.ts`: `generationLockRef` 데드락 수정 — cancel/cleanup/120s 타임아웃 3중 방어
+
+### Fixed — 라이트 모드 시인성
+- OSDesktop 독/상단바: 하드코딩 amber-200~700 → 시맨틱 토큰 (`text-text-secondary` 등)
+- `WorldAnalysisView`: textarea placeholder `rgba(255,200,50,0.3)` → `placeholder-text-tertiary`
+- `WorldTimeline`: SVG fill 하드코딩 → CSS 변수 (`--color-text-primary` 등)
+- 독 아이콘: `opacity-50` → `opacity-70`, `text-white/40` → `text-text-tertiary`
+
+## [1.4.0] - 2026-04-11
+
+### Added — 집필 스튜디오 OS 변환
+- OSDesktop: macOS 스타일 독 + 상단 메뉴바 (`OSDesktop.tsx`)
+- WindowTitleBar: 트래픽 라이트 + 탭 이름 표시 + 포커스 모드
+- StudioStatusBar: 글자수/단어수/모드/에피소드/저장 상태
+- Zen 모드: `body:has(textarea[data-zen-editor]:focus)` CSS 자동 숨김
+- ReferenceSplitPane: 세계관/인물/설정집 3탭 참조 패널
+- WritingContextPanel: 편집 모드 좌측 슬라이드 참조
+
+### Added — 품질 분석 엔진
+- `useQualityAnalysis`: 문단별 show/tell, 반복, 다양성, 밀도, 대사 비율 (5지표, 0~100점)
+- `QualityGutter`: 미니 바 차트 + 약한 문단 클릭→점프
+- `useContinuityCheck`: 캐릭터 이름 편집거리 1, 특성 모순, 시간대/장르 모순
+- `ContinuityWarnings`: 인라인 경고 패널 (dismiss 가능)
+
+### Added — AI 워크플로우 강화
+- 재시도: 3회 + 지터 백오프 + Retry-After 헤더 연동
+- 토큰 버짓 감사: 시스템 프롬프트 30% 초과 경고 이벤트
+- 캐릭터 절삭 경고: 20명 초과 시 `noa:character-truncated` 이벤트
+- `QualityGateAttemptRecord`: 시도별 등급/감독점수/태그/실패사유 이력
+- 인라인 리라이트: 문맥 인식 (장르+캐릭터+주변 ±200자 주입)
+- `useUndoStack`: 인라인 리라이트 50단계 Undo/Redo
+- Ctrl+Shift+R: 인라인 리라이트 단축키
+- VersionDiff 통합: 300자+ 변경 시 자동 스냅샷 + diff 뷰
+- Firestore 클라우드 동기화: `CLOUD_SYNC` feature-flag, 3초 디바운스, onSnapshot
+- `useStudioUX`: `noa:token-budget-warning` + `noa:character-truncated` 리스너
+
+### Added — 코드 스튜디오 데스크탑 동기화
+- `diff-guard.ts`: SCOPE/CONTRACT/@block 편집 경계 보호 (450줄)
+- `apply-guard.ts`: diff-guard 래퍼, 코드 적용 시 자동 검증
+- `intent-parser.ts`: 결정론적 의도→AST 제약 변환 (LLM 불필요)
+- `design-transpiler.ts`: 외부 AI 코드 보안 필터 + 시맨틱 토큰 변환
+- `calc-protocol.ts`: SCAN→VALIDATE→ROUTE→PLAN 4단계 프로토콜
+- `tier-registry.ts`: Ultra/ProPlus/Standard/Lite 4-Tier 오케스트레이션
+- `AuditInvoice.tsx`: NOA-AGI 실행 명세서 UI
+- `deploy-logic.ts` + `git-logic.ts`: 패널별 로직 분리
 
 ### Fixed
-- React #418 hydration mismatch (ScopeShell SSR disabled via dynamic import)
-- P0 ReferenceError in useCodeStudioPanels (accumulated scope bug)
-- Auto-updater 404 log flood (silent handling + logger suppression)
-- fs.Stats deprecation warning (Node 24 + chokidar)
-- 39 diagnostic fixes: stubs, dead code, unwired IPC, simulations
+- 아이템 스튜디오: SF 하드코딩 색상(emerald/cyan) → 시맨틱 토큰 전수 교체
+- 캐릭터 데이터베이스: 연보라 rgba(141,123,195) 28개소 → 시맨틱 토큰
+- clip-path polygon SF 장식 → rounded-xl 일반 라운드
+- InlineActionPopup: streamChat 호출 시그니처 수정 (StreamOptions 객체)
+- useProjectManager: uid 파라미터 기본값 null 명시
 
 ### Changed
-- Version bump to 0.1.0-beta
-- Global theme transition: 300ms on all elements -> conditional 250ms only during theme switch
-- Animation durations reduced: panel 150->80ms, sidebar 200->120ms, editor 200->100ms
-- CSS transition variables shortened: fast 150->80ms, normal 250->150ms, slow 400->250ms
-- Monaco editor key stabilized to prevent full remount on file switch
-- electron-builder.yml files section cleaned up
-- nextron.config.js: preload entry added
-- package.json: description + author metadata added
-- Ollama provider: devOnly removed (production-visible)
-- AIProvider shared type: extended with ollama/lmstudio
+- 유니버스 아카이브: 히어로 헤더 + 카테고리별 테마 아이콘 + 등급 색상(PUBLIC/RESTRICTED/CLASSIFIED)
+- 스플래시 화면: 단일 STUDIO CTA + "웹소설 집필 스튜디오" 정체성
+- 설정집(Rulebook): 카드 대시보드 4그룹 리디자인
+- NOA 브랜딩: AI→NOA 4개 언어 ~150건 치환
+- 12점 디자인: skeleton-shimmer + hover-lift + button:active 마이크로 인터랙션
+- 집필 모드 기본값: ai → edit (수동 집필 우선)
+- feature-flags: `CLOUD_SYNC` 추가 (기본 비활성)
 
 ## [1.3.0] - 2026-04-06
 ### Added

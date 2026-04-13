@@ -20,55 +20,6 @@
 # production
 /build
 
-# Electron / Nextron build outputs
-/dist/
-/app/main.js
-/app/main.js.map
-/app/preload.js
-/app/preload.js.map
-/main/dist/
-/preload/dist/
-/renderer/.next/
-/renderer/out/
-/renderer/build3.log
-
-# Monorepo Electron/Next build outputs
-apps/desktop/app/main.js
-apps/desktop/app/main.js.map
-apps/desktop/app/preload.js
-apps/desktop/app/preload.js.map
-apps/desktop/app/_next/
-apps/desktop/app/dev/
-apps/desktop/app/**/*.js
-apps/desktop/app/**/*.js.map
-apps/desktop/app/**/*.LICENSE.txt
-apps/desktop/app/**/*.html
-apps/desktop/app/**/*.css
-apps/desktop/app/__next._*.txt
-apps/desktop/app/__next.__PAGE__.txt
-apps/desktop/main/dist/
-apps/desktop/preload/dist/
-apps/desktop/renderer/.next/
-apps/desktop/renderer/out/
-apps/desktop/renderer/build3.log
-apps/desktop/dist/
-
-# Workspace caches
-.turbo/
-**/.turbo/
-**/node_modules/
-
-# Build logs
-/build*.log
-/out.log
-/build_err.txt
-/tsc-errors.txt
-/verify_output.txt
-/tmp_*.txt
-/e2e_out*.log
-/test_*.log
-/test_frontend.log
-
 # misc
 .DS_Store
 *.pem
@@ -183,11 +134,18 @@ test2.out
 test3.out
 tmp/
 
-# Claude Code workspace
+# CS Quill local receipts
 .cs/
 
-# Per-app coverage (already have /coverage at root)
-apps/desktop/coverage/
+# Playwright results
+playwright-results.json
 
-# Next.js build trace files
-apps/desktop/app/**/*.txt
+# Obsolete work orders
+plans/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/

@@ -197,7 +197,6 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- storyConfig/textareaRef are stable refs; adding causes unnecessary re-renders
   }, [popup.selectedText, isKO]);
 
   const applyResult = useCallback(() => {
