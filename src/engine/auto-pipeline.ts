@@ -8,6 +8,7 @@ import type {
   StoryConfig, AutoPipelineConfig, PipelineStage, PipelineStageResult,
   StageStatus, SkillLevel,
 } from '@/lib/studio-types';
+import { logger } from '@/lib/logger';
 
 // ============================================================
 // PART 2 — Default Config
@@ -185,6 +186,9 @@ export function executePipeline(
         result.status = 'skipped';
       }
       // 'warn' → 실패지만 계속 진행, status는 'failed' 유지하되 차단 안 함
+      if (stageConfig.failAction === 'warn') {
+        logger.warn('auto-pipeline', `Stage "${stageName}" failed with warnings: ${result.warnings?.join(', ')}`, { score: result.score });
+      }
     }
 
     stages.push(result);

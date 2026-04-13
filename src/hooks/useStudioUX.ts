@@ -107,9 +107,20 @@ export function useStudioUX() {
     }
   }, []);
 
-  // Listen for storage-full event
+  // Listen for storage-full event — auto cleanup on trigger
+  // Dispatch source: src/hooks/useProjectManager.ts:115
   useEffect(() => {
-    const handler = () => setStorageFull(true);
+    const handler = () => {
+      setStorageFull(true);
+      // Auto cleanup: attempt to free space when storage-full fires
+      const removed = cleanupOldBackups();
+      if (removed > 0) {
+        const { percent } = estimateStorageUsage();
+        setStoragePercent(percent);
+        if (percent < 98) setStorageFull(false);
+        if (percent < 80) setStorageNearFull(false);
+      }
+    };
     window.addEventListener('noa:storage-full', handler);
     return () => window.removeEventListener('noa:storage-full', handler);
   }, []);
@@ -129,6 +140,7 @@ export function useStudioUX() {
   }, []);
 
   // Export done toast
+  // Dispatch source: src/hooks/useStudioExport.ts:98
   const [exportDoneFormat, setExportDoneFormat] = useState<string | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
@@ -141,6 +153,7 @@ export function useStudioUX() {
   }, []);
 
   // Export progress (step-by-step feedback)
+  // Dispatch source: src/hooks/useStudioExport.ts:447,462
   const [exportProgress, setExportProgress] = useState<string | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
@@ -152,6 +165,7 @@ export function useStudioUX() {
   }, []);
 
   // Storage warning (from project migration)
+  // Dispatch source: src/lib/project-migration.ts:130
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
@@ -164,6 +178,7 @@ export function useStudioUX() {
   }, []);
 
   // Auto-save timestamp
+  // Dispatch source: src/hooks/useProjectManager.ts:122
   const [lastSaveTime, setLastSaveTime] = useState<number | null>(null);
   useEffect(() => {
     const handler = () => setLastSaveTime(Date.now());
@@ -172,6 +187,7 @@ export function useStudioUX() {
   }, []);
 
   // Provider fallback notice
+  // Dispatch source: src/lib/ai-providers.ts:860,951
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
@@ -192,6 +208,7 @@ export function useStudioUX() {
   }, []);
 
   // Token budget warning
+  // Dispatch source: src/engine/pipeline.ts:643
   const [tokenBudgetWarning, setTokenBudgetWarning] = useState<{ estimatedTokens: number; ratio: number } | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
@@ -204,6 +221,7 @@ export function useStudioUX() {
   }, []);
 
   // Character truncation warning
+  // Dispatch source: src/engine/pipeline.ts:278
   const [charTruncation, setCharTruncation] = useState<{ total: number; dropped: number } | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
@@ -213,6 +231,17 @@ export function useStudioUX() {
     };
     window.addEventListener('noa:character-truncated', handler);
     return () => window.removeEventListener('noa:character-truncated', handler);
+  }, []);
+
+  // Session restore failure toast
+  const [sessionRestoreFailed, setSessionRestoreFailed] = useState(false);
+  useEffect(() => {
+    const handler = () => {
+      setSessionRestoreFailed(true);
+      setTimeout(() => setSessionRestoreFailed(false), 5000);
+    };
+    window.addEventListener('noa:session-restore-failed', handler);
+    return () => window.removeEventListener('noa:session-restore-failed', handler);
   }, []);
 
   // Confirm modal
@@ -246,6 +275,8 @@ export function useStudioUX() {
     // Token/Character warnings
     tokenBudgetWarning, setTokenBudgetWarning,
     charTruncation, setCharTruncation,
+    // Session restore
+    sessionRestoreFailed, setSessionRestoreFailed,
     // Confirm
     confirmState, showConfirm, closeConfirm,
   };

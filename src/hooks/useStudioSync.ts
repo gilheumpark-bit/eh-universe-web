@@ -53,8 +53,10 @@ export function useStudioSync({
         if (data.sessionId === SESSION_ID) return;
         if (typeof data.timestamp === 'number' && data.timestamp > lastBroadcastTs.current) {
           lastBroadcastTs.current = data.timestamp;
-          // Dispatch custom event for downstream listeners
-          window.dispatchEvent(new CustomEvent('noa:cross-tab-update', { detail: data }));
+          // Dispatch custom event with reload action for downstream listeners
+          window.dispatchEvent(new CustomEvent('noa:cross-tab-update', {
+            detail: { ...data, reload: () => reloadFromStorage() },
+          }));
           setCrossTabNotification('다른 탭에서 변경됨. 새로고침하시겠습니까? / Modified in another tab. Refresh?');
         }
       };
@@ -83,6 +85,23 @@ export function useStudioSync({
   const dismissCrossTabNotification = useCallback(() => {
     setCrossTabNotification(null);
   }, []);
+
+  /** Re-read projects from localStorage/IndexedDB after cross-tab update */
+  const reloadFromStorage = useCallback(() => {
+    try {
+      const stored = localStorage.getItem('noa-studio-projects');
+      if (stored) {
+        const parsed = JSON.parse(stored) as Project[];
+        if (Array.isArray(parsed)) {
+          setProjects(parsed);
+          logger.info('Sync', 'Reloaded projects from storage after cross-tab update');
+        }
+      }
+      setCrossTabNotification(null);
+    } catch (err) {
+      logger.error('Sync', 'Failed to reload from storage', err);
+    }
+  }, [setProjects]);
 
   // 2-hour sync reminder
   const SYNC_REMINDER_MS = 2 * 60 * 60 * 1000;
@@ -159,5 +178,6 @@ export function useStudioSync({
     handleSync,
     crossTabNotification,
     dismissCrossTabNotification,
+    reloadFromStorage,
   };
 }

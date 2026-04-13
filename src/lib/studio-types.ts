@@ -244,6 +244,7 @@ export interface StoryConfig {
   savedSlots?: SavedSlot[];
   manuscripts?: EpisodeManuscript[];
   chapterAnalyses?: ChapterAnalysis[];
+  /** Consumed by EpisodeScenePanel UI only — not read in engine/pipeline.ts */
   episodeSceneSheets?: EpisodeSceneSheet[];
   visualPromptCards?: VisualPromptCard[];
   // NOA-PRISM v1.1 — Writing Quality Control

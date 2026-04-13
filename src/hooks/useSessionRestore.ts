@@ -176,6 +176,9 @@ export function useSessionRestore({
       })
       .catch((err) => {
         console.warn("[SessionRestore] Restore failed — starting fresh", err);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('noa:session-restore-failed'));
+        }
       });
   }, [onRestore]);
 

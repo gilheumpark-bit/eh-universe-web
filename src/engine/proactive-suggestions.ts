@@ -75,10 +75,12 @@ export function generateSuggestions(
     if (s.dismissed) dismissCounts[s.category] = (dismissCounts[s.category] || 0) + 1;
   });
 
+  // Cooldown filter: suppresses categories that fired recently or were dismissed too many times.
+  // This is by design — prevents notification fatigue. Suppressed suggestions are silently dropped.
   const canSuggest = (cat: SuggestionCategory): boolean => {
     if (!sgConfig.categories[cat]) return false;
-    if (recentCategories.has(cat)) return false;
-    if ((dismissCounts[cat] || 0) >= sgConfig.suppressAfterDismiss) return false;
+    if (recentCategories.has(cat)) return false; // cooldown: same category within N turns
+    if ((dismissCounts[cat] || 0) >= sgConfig.suppressAfterDismiss) return false; // user dismissed N times
     return true;
   };
 

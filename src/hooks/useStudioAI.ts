@@ -115,7 +115,7 @@ export function useStudioAI({
 
     // Tier gate: check generation limit (before acquiring lock to avoid permanent lock)
     if (!canGenerate()) {
-      setUxError?.({ error: new Error('Free tier limit reached'), retry: () => {} });
+      setUxError?.({ error: new Error('Free tier limit reached'), retry: () => handleSend(customPrompt, inputValue, clearInput) });
       return;
     }
     generationLockRef.current = true;
@@ -124,7 +124,11 @@ export function useStudioAI({
     lockTimerRef.current = setTimeout(() => { generationLockRef.current = false; }, 120_000);
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
-    const hfcpPrefix = hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : '';
+    const hfcpPrefix = [
+      hfcpResult.promptModifier,
+      hfcpResult.nrg && hfcpResult.nrg !== 'normal' ? `[NRG: ${hfcpResult.nrg}]` : '',
+    ].filter(Boolean).join('\n');
+    const hfcpPrefixWrapped = hfcpPrefix ? `\n${hfcpPrefix}\n` : '';
     const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
     const OUTPUT_MODE_LABELS: Record<string, string> = {
       'draft': '', 'dialogue-boost': '[출력 모드: 대화문 강화 — 대화 비율 60% 이상]',
@@ -192,15 +196,18 @@ export function useStudioAI({
     onPipelineUpdate?.(pipelineResultExecution);
 
     if (pipelineResultExecution.finalStatus === 'failed') {
+      logger.error('pipeline', 'Pipeline failed at stage:', pipelineResultExecution.blockedAt, pipelineResultExecution.stages);
       generationLockRef.current = false;
       setIsGenerating(false);
       clearTimeout(timeoutIdRef.current);
+      const failedStages = pipelineResultExecution.stages?.filter(s => s.status === 'failed') || [];
+      const failedDetails = failedStages.map(s => `${s.stage}: ${s.warnings?.join(', ')}`).join('\n');
       const blockedMsg: Message = {
-        id: `sys-${Date.now()}`, role: 'assistant', 
-        content: language === 'KO' 
-          ? `[시스템 통보] 파이프라인 검증 실패로 인해 AI 생성이 차단되었습니다. (${pipelineResultExecution.blockedAt} 완료 필요)` 
-          : `[SYSTEM] AI generation blocked due to pipeline verification failure. (${pipelineResultExecution.blockedAt} required)`, 
-        timestamp: Date.now() 
+        id: `sys-${Date.now()}`, role: 'assistant',
+        content: language === 'KO'
+          ? `[시스템 통보] 파이프라인 검증 실패로 인해 AI 생성이 차단되었습니다. (${pipelineResultExecution.blockedAt} 완료 필요)${failedDetails ? `\n실패 상세:\n${failedDetails}` : ''}`
+          : `[SYSTEM] AI generation blocked due to pipeline verification failure. (${pipelineResultExecution.blockedAt} required)${failedDetails ? `\nFailed stages:\n${failedDetails}` : ''}`,
+        timestamp: Date.now()
       };
       updateCurrentSession({
         messages: [...updatedMessages.slice(0, -1), blockedMsg], // Replace empty assistant message
@@ -221,7 +228,7 @@ export function useStudioAI({
       };
       // 3.8 — Writer Profile 힌트를 프롬프트에 주입
       const profileHint = buildProfileHint(writerProfile, language === 'KO');
-      const basePrompt = directivePrefix + outputModePrefix + advancedPrefix + hfcpPrefix + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
+      const basePrompt = directivePrefix + outputModePrefix + advancedPrefix + hfcpPrefixWrapped + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
       
       const { getDefaultGateConfig } = await import('@/engine/quality-gate');
       const gateConfig = getDefaultGateConfig(writerProfile.skillLevel);
@@ -381,6 +388,8 @@ export function useStudioAI({
           wasOverridden: false,
         });
         saveProfile(updated);
+        const hint = buildProfileHint(updated, language === 'KO');
+        logger.info('writer-profile', 'Profile updated, hint length:', hint.length);
       } catch { /* profile learning is meta — never block */ }
 
       setSessions(prev => prev.map(s => {

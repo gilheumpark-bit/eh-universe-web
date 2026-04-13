@@ -18,7 +18,7 @@ import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredMode
 async function getApiKeyFallback(providerId: 'gemini'): Promise<string> {
   const sync = getApiKey(providerId);
   if (sync) return sync;
-  try { return await getApiKeyAsync(providerId); } catch { return ''; }
+  try { return await getApiKeyAsync(providerId); } catch (err) { logger.warn('geminiService', 'API key fallback failed:', err); return ''; }
 }
 import { HISTORY_LIMITS, truncateMessages } from "../lib/token-utils";
 
@@ -53,6 +53,16 @@ function getStructuredModel(): string {
 const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 const STRUCTURED_FETCH_TIMEOUT_MS = 120_000; // 프론트→Vercel: 넉넉히 120초 (Vercel maxDuration=60이 실제 제한)
+
+// Clean stale cache entries every 60 seconds
+if (typeof globalThis !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of structuredCache) {
+      if (now - val.ts > CACHE_TTL) structuredCache.delete(key);
+    }
+  }, 60_000);
+}
 
 /** Phase 3A: task별 DGX 멀티에이전트 모델 라우팅 */
 function getDgxModelForTask(task: string): string {
