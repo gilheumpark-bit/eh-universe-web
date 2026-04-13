@@ -107,8 +107,8 @@ function CharacterSelector({ config, language, setConfig }: { config: StoryConfi
       </div>
       <p className="text-[9px] text-text-quaternary mt-1">
         {isKO
-          ? `선택: ${active.length}명 → AI가 이 캐릭터의 풀 DNA를 참조합니다`
-          : `Selected: ${active.length} → AI will reference full DNA for these characters`}
+          ? `선택: ${active.length}명 → AI가 이 캐릭터의 성격 강도를 참조합니다`
+          : `Selected: ${active.length} → AI will reference full personality for these characters`}
       </p>
     </div>
   );

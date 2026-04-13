@@ -188,7 +188,7 @@ const translations = {
     "switch": "Switch",
     "keepEditing": "Keep Editing",
     "deleteSession": "Delete Session",
-    "deleteSessionMsg": " will be deleted. Are you sure?",
+    "deleteSessionMsg": " will be deleted. All chat history will be lost.",
     "deleteAll": "Delete All",
     "deleteAllMsg": "Delete all sessions? This cannot be undone.",
     "deleteAllConfirm": "Delete All",

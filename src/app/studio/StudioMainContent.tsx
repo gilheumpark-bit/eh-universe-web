@@ -8,7 +8,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   X, Save, Download,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
-  Key, Sparkles, BookOpen,
+  Key, Sparkles, BookOpen, SearchCode,
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -84,6 +84,16 @@ export default function StudioMainContent({ children }: { children?: React.React
   const episodeExplorerOpen = useStudioUIStore(s => s.episodeExplorerOpen);
   const setEpisodeExplorerOpen = useStudioUIStore(s => s.setEpisodeExplorerOpen);
 
+  // First-session keyboard shortcuts hint
+  const [shortcutsHintVisible, setShortcutsHintVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('noa_shortcuts_hint_shown');
+  });
+  const dismissShortcutsHint = useCallback(() => {
+    setShortcutsHintVisible(false);
+    localStorage.setItem('noa_shortcuts_hint_shown', '1');
+  }, []);
+
   // GitHub Sync — pass branch data to EpisodeExplorer
   const gh = useGitHubSync();
   const [ghBranches, setGhBranches] = useState<string[]>([]);
@@ -139,11 +149,18 @@ export default function StudioMainContent({ children }: { children?: React.React
           {/* Genre badge + ANS engine badge removed for cleaner header */}
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
-            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer' })} aria-label="Episode Explorer"><BookOpen className="w-4 h-4" /></button>
+            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer' })} aria-label="Episode Explorer">
+              <BookOpen className="w-4 h-4" />
+              {currentSession?.config?.episode != null && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-accent-purple text-[8px] font-black text-white leading-none">
+                  {currentSession.config.episode}{L4(language, { ko: '화', en: '', ja: '話', zh: '话' })}
+                </span>
+              )}
+            </button>
             <button onClick={triggerSave} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${saveFlash ? 'text-accent-green' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={isKO ? '저장 (Ctrl+S)' : 'Save (Ctrl+S)'} aria-label="Save"><Save className="w-4 h-4" /></button>
             <button onClick={handlePrint} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '내보내기 (Ctrl+E)' : 'Export (Ctrl+E)'} aria-label="Export"><Download className="w-4 h-4" /></button>
             <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
-            <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><Sparkles className="w-4 h-4" /></button>
+            <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><SearchCode className="w-4 h-4" /></button>
             <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
             {/* Premium Theme Controls - Brightness + Color */}
             <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-bg-secondary/40 border border-white/4">
@@ -310,6 +327,16 @@ export default function StudioMainContent({ children }: { children?: React.React
         {/* Right panel slots (injected from parent) */}
         {children}
       </div>
+
+      {/* First-session keyboard shortcuts hint */}
+      {shortcutsHintVisible && !focusMode && (
+        <div className="flex items-center justify-center gap-4 px-4 py-1 bg-bg-secondary/60 border-t border-border/30 text-[10px] text-text-tertiary shrink-0">
+          <span>{L4(language, { ko: 'F5: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'F5: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus' })}</span>
+          <button onClick={dismissShortcutsHint} className="text-text-quaternary hover:text-text-secondary transition-colors px-1" aria-label="Dismiss">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* Status Bar */}
       {!focusMode && (

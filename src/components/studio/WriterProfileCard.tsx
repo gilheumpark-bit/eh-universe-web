@@ -60,8 +60,8 @@ const WriterProfileCard: React.FC<WriterProfileCardProps> = ({ language }) => {
         <span className="text-xs text-text-tertiary font-mono">
           {profile.episodeCount} {L4(language, { ko: '에피소드', en: 'episodes', ja: 'エピソード', zh: '章节' })}
         </span>
-        <span className="text-[10px] text-text-quaternary font-mono">
-          ({L4(language, { ko: '신뢰도', en: 'confidence', ja: '信頼度', zh: '置信度' })} {Math.round(profile.levelConfidence * 100)}%)
+        <span className="text-[10px] text-text-quaternary font-mono" title={L4(language, { ko: '에피소드가 쌓일수록 높아집니다', en: 'Improves as you write more episodes' })}>
+          ({L4(language, { ko: '분석 정확도', en: 'analysis accuracy', ja: '分析精度', zh: '分析准确度' })} {Math.round(profile.levelConfidence * 100)}%)
         </span>
       </div>
 
@@ -69,7 +69,7 @@ const WriterProfileCard: React.FC<WriterProfileCardProps> = ({ language }) => {
       {voice && (
         <div className="p-3 bg-bg-secondary/50 rounded-lg border border-border">
           <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1">
-            {L4(language, { ko: '보이스 핑거프린트', en: 'Voice Fingerprint', ja: 'ボイスフィンガープリント', zh: '声音指纹' })}
+            {L4(language, { ko: '문체 특징', en: 'Writing Style', ja: '文体特徴', zh: '文风特征' })}
           </div>
           <p className="text-xs text-text-primary font-serif">{voice}</p>
         </div>

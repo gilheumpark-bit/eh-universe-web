@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import TabAssistant from '@/components/studio/TabAssistant';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { BookOpen, TrendingUp, Palette, PenTool, ArrowLeft } from 'lucide-react';
 
@@ -244,10 +244,9 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       {/* Back button */}
       <button
         onClick={() => setViewMode('dashboard')}
-        className="flex items-center gap-2 mb-6 text-xs text-text-tertiary hover:text-text-primary transition-colors font-mono uppercase tracking-wider"
+        className="flex items-center gap-2 mb-6 text-xs text-text-tertiary hover:text-text-primary transition-colors font-mono uppercase tracking-wider min-h-[44px]"
       >
-        <ArrowLeft className="w-4 h-4" />
-        {isKO ? '연출 대시보드' : 'Direction Dashboard'}
+        {L4(language, { ko: '← 돌아가기', en: '← Back', ja: '← 戻る', zh: '← 返回' })}
       </button>
 
       <SceneSheet {...sceneSheetProps} initialTab={CARD_INITIAL_TABS[viewMode] || 'goguma'} />

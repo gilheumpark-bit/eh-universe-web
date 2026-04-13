@@ -722,6 +722,13 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
         onResetZoom={handleResetZoom}
       />
 
+      {/* Instruction bar */}
+      <p className="text-[9px] text-text-tertiary text-center mt-2">
+        {isKO
+          ? '마우스 휠: 확대/축소 | 드래그: 이동 | 노드 클릭: 선택'
+          : 'Scroll: Zoom | Drag: Pan | Click node: Select'}
+      </p>
+
       {/* 에피소드 범위 슬라이더 */}
       {maxEpisode > 1 && (
         <div className="flex items-center gap-3 mt-2 px-1">

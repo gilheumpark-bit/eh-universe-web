@@ -396,7 +396,10 @@ export default function WritingTabInline(props: Props) {
               title={L4(language, { ko: '직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.', en: 'Write your novel by typing directly. Real-time quality analysis, inline rewrite.' })}
             >
               <PenLine className="w-3.5 h-3.5" />
-              {L4(language, { ko: '집필', en: 'Write' })}
+              <span className="flex flex-col items-start leading-tight">
+                <span>{L4(language, { ko: '집필', en: 'Write' })}</span>
+                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '직접 타이핑', en: 'Type directly' })}</span>
+              </span>
             </button>
             <button
               type="button"
@@ -412,7 +415,10 @@ export default function WritingTabInline(props: Props) {
               title={L4(language, { ko: '장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.', en: 'Describe a scene and NOA writes the novel text. Press Enter to send.' })}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              {L4(language, { ko: 'NOA 생성', en: 'Generate' })}
+              <span className="flex flex-col items-start leading-tight">
+                <span>{L4(language, { ko: 'NOA 생성', en: 'Generate' })}</span>
+                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: 'AI가 다음 장면을 씁니다', en: 'AI writes the next scene' })}</span>
+              </span>
             </button>
 
             {/* 더보기: API 키 있을 때만 노출 — 고급 모드는 드롭다운으로 숨김 */}
@@ -447,21 +453,33 @@ export default function WritingTabInline(props: Props) {
                       {L4(language, { ko: '고급', en: 'More' })}
                       <ChevronDown className="w-3 h-3 opacity-60" />
                     </button>
-                    <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover/adv:opacity-100 group-hover/adv:visible transition-all z-50 min-w-[140px]">
+                    <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover/adv:opacity-100 group-hover/adv:visible transition-all z-50 min-w-[180px]">
                       <button type="button" onClick={() => setWritingMode('canvas')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-green transition-colors"
                         title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps' })}>
-                        <Layers className="w-3.5 h-3.5" />{L4(language, { ko: '3단계', en: '3-Step' })}
+                        <Layers className="w-3.5 h-3.5" />
+                        <span className="flex flex-col items-start leading-tight">
+                          <span>{L4(language, { ko: '3단계', en: '3-Step' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish' })}</span>
+                        </span>
                       </button>
                       <button type="button" onClick={() => setWritingMode('refine')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-blue transition-colors"
                         title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs' })}>
-                        <Wand2 className="w-3.5 h-3.5" />{L4(language, { ko: '다듬기', en: 'Refine' })}
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span className="flex flex-col items-start leading-tight">
+                          <span>{L4(language, { ko: '다듬기', en: 'Refine' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%' })}</span>
+                        </span>
                       </button>
                       <button type="button" onClick={() => setWritingMode('advanced')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-red transition-colors"
                         title={L4(language, { ko: 'temperature/top-p 직접 제어', en: 'Direct control of temperature/top-p' })}>
-                        <Settings2 className="w-3.5 h-3.5" />{L4(language, { ko: '고급', en: 'Advanced' })}
+                        <Settings2 className="w-3.5 h-3.5" />
+                        <span className="flex flex-col items-start leading-tight">
+                          <span>{L4(language, { ko: '고급', en: 'Advanced' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings' })}</span>
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -617,32 +635,45 @@ export default function WritingTabInline(props: Props) {
                 )}
                 {/* Cinema Mode entry — after generation completes */}
                 {!isGenerating && currentSession.messages.length > 0 && currentSession.messages.some(m => m.role === 'assistant' && m.content) && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('manuscript')}
-                    className="mx-3 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent-purple/5 to-accent-blue/5 border border-accent-purple/20 rounded-xl hover:border-accent-purple/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-all group"
-                  >
-                    <span className="text-lg">🎬</span>
-                    <div className="flex-1 text-left">
-                      <div className="text-[11px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
-                        {L4(language, {
-                          ko: '이 에피소드를 시네마 모드로 체험해보세요',
-                          en: 'Experience this episode in Cinema Mode',
-                          ja: 'このエピソードをシネマモードで体験しよう',
-                          zh: '用电影模式体验这一集',
-                        })}
+                  <div className="mx-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('manuscript')}
+                      className="flex-1 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent-purple/5 to-accent-blue/5 border border-transparent rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-all group"
+                      style={{ backgroundClip: 'padding-box', boxShadow: 'inset 0 0 0 1px rgba(139,92,246,0.25)' }}
+                    >
+                      <span className="text-lg">🎬</span>
+                      <div className="flex-1 text-left">
+                        <div className="text-[11px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
+                          {L4(language, {
+                            ko: '시네마 모드',
+                            en: 'Cinema Mode',
+                            ja: 'シネマモード',
+                            zh: '电影模式',
+                          })}
+                        </div>
+                        <div className="text-[9px] text-text-quaternary">
+                          {L4(language, { ko: '비주얼 노벨 플레이어', en: 'Visual novel player', ja: 'ビジュアルノベル', zh: '视觉小说播放器' })}
+                        </div>
                       </div>
-                      <div className="text-[9px] text-text-quaternary">
-                        {L4(language, {
-                          ko: '원고 탭에서 라디오/비주얼 노벨 플레이어 실행',
-                          en: 'Launch radio/visual novel player in Manuscript tab',
-                          ja: '原稿タブでラジオ/ビジュアルノベルプレイヤーを起動',
-                          zh: '在稿件标签中启动广播/视觉小说播放器',
-                        })}
+                      <span className="text-[10px] font-bold text-accent-purple opacity-60 group-hover:opacity-100 transition-opacity">▶</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('manuscript')}
+                      className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-accent-amber/5 to-accent-green/5 border border-accent-amber/20 rounded-xl hover:border-accent-amber/40 transition-all group"
+                    >
+                      <span className="text-lg">📻</span>
+                      <div className="text-left">
+                        <div className="text-[11px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
+                          {L4(language, { ko: '라디오 모드', en: 'Radio Mode', ja: 'ラジオモード', zh: '广播模式' })}
+                        </div>
+                        <div className="text-[9px] text-text-quaternary">
+                          {L4(language, { ko: '오디오 드라마 스타일', en: 'Audio drama style', ja: 'オーディオドラマ', zh: '广播剧风格' })}
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-accent-purple opacity-60 group-hover:opacity-100 transition-opacity">▶</span>
-                  </button>
+                    </button>
+                  </div>
                 )}
                 {currentSession.messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-center space-y-6 py-12 md:py-20 px-2">
@@ -1023,6 +1054,21 @@ export default function WritingTabInline(props: Props) {
         {writingMode === 'ai' && currentSessionId && (
           <div className="p-4 md:p-6 bg-linear-to-t from-bg-primary via-bg-primary/95 to-transparent sticky bottom-0 z-20">
             {/* API lock banner removed — settings accessible via splash screen */}
+            {/* Prompt example chips */}
+            {!input.trim() && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  { ko: '다음 장면을 이어 써줘', en: 'Continue the next scene', ja: '次のシーンを続けて', zh: '续写下一个场景' },
+                  { ko: '주인공이 적과 대면하는 장면', en: 'Hero confronts the enemy', ja: '主人公が敵と対峙する場面', zh: '主角与敌人对峙的场景' },
+                  { ko: '감정적인 대화 장면으로', en: 'An emotional dialogue scene', ja: '感情的な対話シーンで', zh: '一段感人的对话场景' },
+                ].map((chip, i) => (
+                  <button key={i} type="button" onClick={() => setInput(L4(language, chip))}
+                    className="px-3 py-1.5 rounded-xl border border-border/60 bg-bg-tertiary/30 text-[10px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all">
+                    {L4(language, chip)}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="relative group bg-bg-secondary border border-border rounded-2xl shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 flex items-end">
               <textarea
                 value={input}

@@ -78,7 +78,12 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   };
 
   const removeCharacter = (id: string) => {
-    if (!confirm(L4(language, { ko: '이 캐릭터를 삭제하시겠습니까?', en: 'Delete this character?' }))) return;
+    const charName = config.characters.find(c => c.id === id)?.name ?? '';
+    const msg = L4(language, {
+      ko: `'${charName}' 캐릭터를 삭제할까요? 되돌릴 수 없습니다.`,
+      en: `Delete character '${charName}'? This cannot be undone.`,
+    });
+    if (!confirm(msg)) return;
     setConfig({ ...config, characters: config.characters.filter(c => c.id !== id) });
   };
 

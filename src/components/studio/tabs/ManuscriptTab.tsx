@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2, Plus } from 'lucide-react';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
+import { L4 } from '@/lib/i18n';
 import ManuscriptView from '@/components/studio/ManuscriptView';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
 import EmotionArcChart from '@/components/studio/EmotionArcChart';
@@ -223,8 +224,8 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           <p className="text-text-tertiary text-xs">
             {language === 'KO' ? '집필 탭에서 에피소드를 생성하면 편집 · 라디오 · 비주얼 노벨 기능을 사용할 수 있습니다.' : 'Create an episode in the Writing tab to use edit, radio, and visual novel features.'}
           </p>
-          <button onClick={() => setSceneMode('off')} className="mt-6 px-4 py-2 rounded-lg bg-bg-secondary border border-border text-text-secondary text-xs hover:text-text-primary transition-colors">
-            {language === 'KO' ? '돌아가기' : 'Go back'}
+          <button onClick={() => setSceneMode('off')} className="mt-6 px-4 py-2 rounded-lg bg-bg-secondary border border-border text-text-tertiary text-xs hover:text-text-primary transition-colors min-h-[44px]">
+            {L4(language, { ko: '← 돌아가기', en: '← Back', ja: '← 戻る', zh: '← 返回' })}
           </button>
         </div>
       )}

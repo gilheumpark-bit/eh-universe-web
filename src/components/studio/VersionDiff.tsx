@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, GitCompare, Copy, Check, RotateCcw } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 
 interface VersionDiffProps {
   versions: string[];
@@ -75,6 +75,16 @@ function getChangeMagnitudeColor(pct: number): string {
   if (pct < 10) return 'text-green-400';
   if (pct < 30) return 'text-amber-400';
   return 'text-red-400';
+}
+
+function getChangeSummary(pct: number, delta: number, lang: AppLanguage): string {
+  if (pct < 5) return L4(lang, { ko: '거의 같습니다', en: 'Nearly identical' });
+  if (pct < 20) {
+    const n = Math.max(1, Math.abs(delta));
+    return L4(lang, { ko: `${n}단어가 수정되었습니다`, en: `${n} words changed` });
+  }
+  if (pct < 50) return L4(lang, { ko: '상당 부분이 바뀌었습니다', en: 'Significant changes' });
+  return L4(lang, { ko: '대폭 변경되었습니다', en: 'Major rewrite' });
 }
 
 // ============================================================
@@ -167,6 +177,9 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
           <span className={`font-mono text-[9px] tabular-nums ${magnitudeColor}`}>
             {wordDelta >= 0 ? '+' : ''}{wordDelta} {language === 'KO' ? '단어' : 'words'}
             <span className="text-text-tertiary ml-1">({Math.round(changePct)}%)</span>
+            <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-bg-secondary text-text-tertiary text-[8px] font-normal">
+              {getChangeSummary(changePct, wordDelta, language)}
+            </span>
           </span>
         )}
 

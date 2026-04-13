@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import type { ParagraphScore, QualityIssue } from '@/hooks/useQualityAnalysis';
+import { L4 } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — 타입
@@ -118,6 +120,17 @@ function ParagraphPopover({
           <span className="text-[10px] text-text-tertiary">
             / 100
           </span>
+          <span className={`text-[9px] px-1.5 py-0.5 rounded-md ${
+            paragraph.score >= 90 ? 'bg-green-500/10 text-green-400' :
+            paragraph.score >= 75 ? 'bg-accent-green/10 text-accent-green' :
+            paragraph.score >= 50 ? 'bg-accent-amber/10 text-accent-amber' :
+            'bg-accent-red/10 text-accent-red'
+          }`}>
+            {paragraph.score >= 90 ? (isKO ? '출판 수준' : 'Publication level')
+              : paragraph.score >= 75 ? (isKO ? '게시 가능' : 'Ready to publish')
+              : paragraph.score >= 50 ? (isKO ? '수정 권장' : 'Revision suggested')
+              : (isKO ? '개선 필요' : 'Needs work')}
+          </span>
         </div>
         <button
           onClick={onClose}
@@ -205,7 +218,13 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
   const [selectedParagraph, setSelectedParagraph] = useState<number | null>(null);
   const isKO = language === 'KO';
 
-  if (paragraphs.length === 0) return null;
+  if (paragraphs.length === 0) return (
+    <div className="border border-border/50 rounded-xl bg-bg-secondary/50 px-4 py-3 text-center">
+      <p className="text-[10px] text-text-tertiary">
+        {L4(language as AppLanguage, { ko: '글을 쓰면 문단별 품질 점수가 표시됩니다', en: 'Write to see paragraph quality scores' })}
+      </p>
+    </div>
+  );
 
   const handleRowClick = (p: ParagraphScore, rowIndex: number) => {
     onSelectWeak?.(p.index);

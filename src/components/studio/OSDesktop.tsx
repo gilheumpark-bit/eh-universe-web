@@ -550,17 +550,21 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 <Download className="w-3 h-3 inline mr-1.5" />
                 {L4(language, { ko: '내보내기', en: 'Export', ja: 'エクスポート', zh: '导出' })}
               </div>
-              <button onClick={() => { setIsSystemMenuOpen(false); handleExportEPUB(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                EPUB <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '전자책', en: 'E-book', ja: '電子書籍', zh: '电子书' })})</span>
+              <button onClick={() => { setIsSystemMenuOpen(false); handleExportEPUB(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
+                <span>EPUB <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '전자책', en: 'E-book', ja: '電子書籍', zh: '电子书' })})</span></span>
+                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '전자책 리더용', en: 'For e-book readers', ja: '電子書籍リーダー用', zh: '电子书阅读器用' })}</span>
               </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); handleExportDOCX(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                DOCX <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '워드', en: 'Word', ja: 'ワード', zh: 'Word' })})</span>
+              <button onClick={() => { setIsSystemMenuOpen(false); handleExportDOCX(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
+                <span>DOCX <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '워드', en: 'Word', ja: 'ワード', zh: 'Word' })})</span></span>
+                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '워드 편집용', en: 'For Word editing', ja: 'ワード編集用', zh: 'Word编辑用' })}</span>
               </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); exportTXT(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                TXT <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '텍스트', en: 'Text', ja: 'テキスト', zh: '文本' })})</span>
+              <button onClick={() => { setIsSystemMenuOpen(false); exportTXT(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
+                <span>TXT <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '텍스트', en: 'Text', ja: 'テキスト', zh: '文本' })})</span></span>
+                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '플랫폼 등록용', en: 'For platform submission', ja: 'プラットフォーム登録用', zh: '平台提交用' })}</span>
               </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); exportJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                JSON <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '데이터', en: 'Data', ja: 'データ', zh: '数据' })})</span>
+              <button onClick={() => { setIsSystemMenuOpen(false); exportJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
+                <span>JSON <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '데이터', en: 'Data', ja: 'データ', zh: '数据' })})</span></span>
+                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '백업/복원용', en: 'For backup/restore', ja: 'バックアップ/復元用', zh: '备份/恢复用' })}</span>
               </button>
               <button onClick={() => { setIsSystemMenuOpen(false); exportAllJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
                 {L4(language, { ko: '전체 백업', en: 'Full Backup', ja: '全体バックアップ', zh: '全量备份' })} (JSON)

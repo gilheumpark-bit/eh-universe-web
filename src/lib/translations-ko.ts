@@ -188,7 +188,7 @@ const translations = {
     "switch": "전환",
     "keepEditing": "계속 편집",
     "deleteSession": "세션 삭제",
-    "deleteSessionMsg": "을 삭제합니다. 계속할까요?",
+    "deleteSessionMsg": "을 삭제할까요? 모든 채팅 기록이 사라집니다.",
     "deleteAll": "전체 삭제",
     "deleteAllMsg": "모든 세션을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     "deleteAllConfirm": "전체 삭제",

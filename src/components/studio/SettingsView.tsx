@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
   ChevronRight, ChevronDown, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen,
-  GitBranch, Check, Unplug,
+  GitBranch, Check, Unplug, HelpCircle,
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
@@ -392,7 +392,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Thermometer className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate">{t('settingsEngine.temperature')}</div>
+                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">{t('settingsEngine.temperature')}
+                    <span className="group relative">
+                      <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
+                        {L4(language, { ko: '낮을수록 안정적이고 예측 가능, 높을수록 독창적이고 예측 불가', en: 'Lower = stable & predictable, Higher = creative & unpredictable', ja: '低いほど安定的で予測可能、高いほど独創的で予測不能', zh: '越低越稳定可预测，越高越独创不可预测' })}
+                      </span>
+                    </span>
+                  </div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
                 </div>
               </div>
@@ -415,7 +422,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-accent-purple shrink-0" />
                 <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate">{L4(language, { ko: '서사 깊이', en: 'Narrative Depth' })}</div>
+                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">{L4(language, { ko: '서사 깊이', en: 'Narrative Depth' })}
+                    <span className="group relative">
+                      <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
+                        {L4(language, { ko: '낮을수록 간결하고 빠른 전개, 높을수록 묘사가 풍부', en: 'Lower = concise & fast pacing, Higher = rich descriptions', ja: '低いほど簡潔で速い展開、高いほど描写が豊か', zh: '越低越简洁节奏快，越高描写越丰富' })}
+                      </span>
+                    </span>
+                  </div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
                     {narrativeDepth <= 0.9 ? L4(language, { ko: '평작 — 가독성 우선', en: 'Light — Readability first' }) :
                      narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance' }) :

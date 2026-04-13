@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
-import { AlertTriangle, ChevronDown, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, X } from 'lucide-react';
 import type { ContinuityWarning } from '@/hooks/useContinuityCheck';
+import { L4 } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — 타입
@@ -17,13 +19,38 @@ interface ContinuityWarningsProps {
 // PART 2 — 메인 컴포넌트
 // ============================================================
 
+/** Wrap character/location names in the message with clickable spans that trigger Ctrl+K search */
+function linkifyWarningText(text: string, onClick: (term: string) => void): React.ReactNode {
+  // Match quoted names or capitalized Korean names (2-5 chars surrounded by quotes or brackets)
+  const parts = text.split(/(["'「『][^"'」』]+["'」』]|\[[^\]]+\])/g);
+  return parts.map((part, i) => {
+    const match = part.match(/^["'「『\[](.+)["'」』\]]$/);
+    if (match) {
+      return (
+        <button key={i} type="button" onClick={() => onClick(match[1])}
+          className="underline underline-offset-2 decoration-dotted cursor-pointer hover:text-text-primary transition-colors">
+          {part}
+        </button>
+      );
+    }
+    return part;
+  });
+}
+
 const ContinuityWarnings: React.FC<ContinuityWarningsProps> = ({ warnings, language }) => {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState(true);
   const isKO = language === 'KO';
 
   const active = warnings.filter(w => !dismissed.has(w.messageKO));
-  if (active.length === 0) return null;
+  if (active.length === 0) return (
+    <div className="flex items-center gap-2 px-4 py-2.5 border border-accent-green/20 rounded-xl bg-accent-green/5">
+      <CheckCircle2 className="w-3.5 h-3.5 text-accent-green shrink-0" />
+      <span className="text-[10px] text-accent-green">
+        {L4(language as AppLanguage, { ko: '연속성 문제가 발견되지 않았습니다', en: 'No continuity issues found' })}
+      </span>
+    </div>
+  );
 
   const errorCount = active.filter(w => w.severity === 'error').length;
   const warnCount = active.filter(w => w.severity === 'warning').length;
@@ -74,7 +101,9 @@ const ContinuityWarnings: React.FC<ContinuityWarningsProps> = ({ warnings, langu
                 {w.severity === 'error' ? '●' : w.severity === 'warning' ? '▲' : 'ℹ'}
               </span>
               <span className="flex-1 leading-relaxed">
-                {isKO ? w.messageKO : w.messageEN}
+                {linkifyWarningText(isKO ? w.messageKO : w.messageEN, (term) => {
+                  window.dispatchEvent(new CustomEvent('studio:global-search', { detail: { query: term } }));
+                })}
               </span>
               <button
                 onClick={() => setDismissed(prev => new Set([...prev, w.messageKO]))}

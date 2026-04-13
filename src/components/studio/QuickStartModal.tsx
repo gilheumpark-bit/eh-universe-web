@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { X, Sparkles, Wand2, Loader2, BookOpen } from "lucide-react";
 import { Genre, type AppLanguage } from "@/lib/studio-types";
 import { GENRE_LABELS } from "@/lib/studio-constants";
-import { createT } from "@/lib/i18n";
+import { createT, L4 } from "@/lib/i18n";
 
 interface QuickStartModalProps {
   language: AppLanguage;
@@ -114,6 +114,18 @@ export default function QuickStartModal({
               <div className="absolute bottom-3 right-3 opacity-20">
                 <BookOpen className="h-5 w-5 text-text-tertiary" />
               </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5 -mt-1">
+              {[
+                { ko: '회귀한 공작이 망해가는 가문을 구한다', en: 'A regressed duke saves his crumbling family', ja: '回帰した公爵が没落する家門を救う', zh: '回归的公爵拯救没落的家族' },
+                { ko: '시스템 능력을 얻은 평범한 고등학생', en: 'An ordinary student gains a System ability', ja: 'システム能力を得た普通の高校生', zh: '获得系统能力的普通高中生' },
+                { ko: '마왕을 쓰러뜨린 용사의 일상', en: 'The daily life of a hero who defeated the Demon King', ja: '魔王を倒した勇者の日常', zh: '打败魔王的勇者的日常' },
+              ].map((ex, i) => (
+                <button key={i} type="button" onClick={() => setPrompt(L4(language, ex))}
+                  className="px-2.5 py-1 rounded-lg border border-border/50 text-[10px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all">
+                  {L4(language, ex)}
+                </button>
+              ))}
             </div>
           </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, Sparkles, Pen, BookOpen, Sword, RotateCcw } from "lucide-react";
 import type { AppLanguage } from "@/lib/studio-types";
+import { L4 } from "@/lib/i18n";
 
 import { DEMO_PRESETS } from "@/lib/demo-presets";
 
@@ -237,8 +238,8 @@ export default function OnboardingGuide({
           /* Demo Preset Selection */
           <div className="mt-6 space-y-3">
             <button type="button" onClick={() => setShowDemoList(false)}
-              className="text-[11px] text-text-tertiary hover:text-text-primary transition-colors">
-              ← {language === 'KO' ? '돌아가기' : 'Back'}
+              className="text-[11px] text-text-tertiary hover:text-text-primary transition-colors min-h-[44px]">
+              {L4(language, { ko: '← 돌아가기', en: '← Back', ja: '← 戻る', zh: '← 返回' })}
             </button>
             <p className="text-center text-sm font-bold text-text-primary">
               {language === 'KO' ? '체험할 장르를 선택하세요' : 'Choose a genre to explore'}

@@ -10,6 +10,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { NovelKeymap } from '@/components/studio/extensions/novel-keymap';
 import { InlineCompletion } from '@/components/studio/extensions/inline-completion';
+import { L4 } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
 
 export interface NovelEditorSelection {
   from: number;
@@ -30,6 +32,7 @@ interface NovelEditorProps {
   placeholder?: string;
   readOnly?: boolean;
   className?: string;
+  language?: AppLanguage;
   onSelectionChange?: (selection: NovelEditorSelection | null) => void;
   'data-zen-editor'?: boolean;
 }
@@ -39,7 +42,7 @@ interface NovelEditorProps {
 // ============================================================
 export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
   function NovelEditor(
-    { content, onChange, placeholder, readOnly = false, className, onSelectionChange, ...rest },
+    { content, onChange, placeholder, readOnly = false, className, language, onSelectionChange, ...rest },
     ref,
   ) {
     // Debounce timer for onChange
@@ -61,7 +64,12 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
           horizontalRule: false,
         }),
         Placeholder.configure({
-          placeholder: placeholder ?? '',
+          placeholder: placeholder ?? L4(language ?? 'KO', {
+            ko: '여기에 이야기를 써 내려가세요... (기존 원고 .txt 파일을 여기에 드래그할 수 있습니다)',
+            en: 'Start writing your story here... (You can drag & drop .txt manuscript files)',
+            ja: 'ここに物語を書き始めてください... (.txtファイルをドラッグ＆ドロップできます)',
+            zh: '在这里开始写作... (可以拖放.txt稿件文件)',
+          }),
           emptyEditorClass: 'novel-editor-empty',
         }),
         CharacterCount,
