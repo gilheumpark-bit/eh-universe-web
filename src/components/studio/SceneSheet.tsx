@@ -147,6 +147,20 @@ const PLOT_PRESETS: Record<PlotType, { ko: string; en: string; segments: Omit<Pl
   },
 };
 
+/** Genre visual style: emoji + Tailwind color classes per genre */
+const GENRE_VISUAL: Record<string, { emoji: string; bg: string; border: string; text: string }> = {
+  thriller:  { emoji: "🔪", bg: "bg-red-500/10",    border: "border-red-400/40",    text: "text-red-400" },
+  romance:   { emoji: "💕", bg: "bg-pink-500/10",   border: "border-pink-400/40",   text: "text-pink-400" },
+  action:    { emoji: "⚔️", bg: "bg-orange-500/10", border: "border-orange-400/40", text: "text-orange-400" },
+  mystery:   { emoji: "🔍", bg: "bg-indigo-500/10", border: "border-indigo-400/40", text: "text-indigo-400" },
+  fantasy:   { emoji: "🐉", bg: "bg-purple-500/10", border: "border-purple-400/40", text: "text-purple-400" },
+  horror:    { emoji: "👻", bg: "bg-gray-500/10",   border: "border-gray-400/40",   text: "text-gray-400" },
+  sf:        { emoji: "🚀", bg: "bg-cyan-500/10",   border: "border-cyan-400/40",   text: "text-cyan-400" },
+  slice:     { emoji: "☕", bg: "bg-green-500/10",   border: "border-green-400/40",  text: "text-green-400" },
+  wuxia:     { emoji: "🗡️", bg: "bg-amber-500/10",  border: "border-amber-400/40",  text: "text-amber-400" },
+  dark:      { emoji: "🌑", bg: "bg-zinc-500/10",   border: "border-zinc-400/40",   text: "text-zinc-400" },
+};
+
 const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, isKO: boolean) => { gogumas: GogumaEntry[]; hooks: HookEntry[]; emotions: EmotionPoint[]; dialogue: DialogueRule[]; dopamines: DopamineEntry[]; cliffs: CliffEntry[] } }[] = [
   { key: "thriller", ko: "스릴러/서스펜스", en: "Thriller/Suspense", gen: (ts, k) => ({
     gogumas: [{ id: `g-${ts}-1`, type: "goguma", intensity: "medium", desc: k ? "거짓 단서 투척" : "Red herring planted", episode: 1 }, { id: `g-${ts}-2`, type: "cider", intensity: "large", desc: k ? "반전 폭탄" : "Twist bomb", episode: 1 }],
@@ -523,14 +537,25 @@ export default function SceneSheet({
 
         {/* Main scrollable content */}
         <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 space-y-2">
-          {/* Preset Bar */}
-          <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1" style={{ WebkitOverflowScrolling: "touch" }}>
-            {SCENE_PRESETS.map(p => (
-              <button key={p.key} onClick={() => applyScenePreset(p.key)}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0 border transition-all min-h-[44px] ${activePreset === p.key ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary hover:text-text-secondary"}`}>
-                {L4(lang, p)}
-              </button>
-            ))}
+          {/* Preset Bar — 장르별 색상 + 이모지 */}
+          <div className="grid grid-cols-5 gap-2 pb-3">
+            {SCENE_PRESETS.map(p => {
+              const meta = GENRE_VISUAL[p.key] ?? { emoji: "📖", bg: "bg-bg-tertiary", border: "border-border", text: "text-text-primary" };
+              const isActive = activePreset === p.key;
+              return (
+                <button key={p.key} onClick={() => applyScenePreset(p.key)}
+                  className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-center transition-all min-h-[64px] border-2 ${
+                    isActive
+                      ? `${meta.bg} ${meta.border} ring-2 ring-offset-1 ring-accent-purple shadow-lg scale-[1.04]`
+                      : `bg-bg-primary border-border/50 hover:${meta.bg} hover:${meta.border} hover:shadow-md`
+                  }`}>
+                  <span className="text-xl leading-none">{meta.emoji}</span>
+                  <span className={`text-[10px] font-bold leading-tight ${isActive ? meta.text : "text-text-secondary"}`}>
+                    {L4(lang, p)}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Section 1: Story */}
