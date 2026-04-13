@@ -348,33 +348,31 @@ export default function WritingTabInline(props: Props) {
                 </button>
               </div>
             )}
-            {/* Split view toggles — 시인성 강화 */}
-            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
+            {/* Split view toggles — 항상 표시, 시인성 강화 */}
+            <div className="flex items-center gap-1.5 ml-auto pl-2 border-l border-border/40">
               <button
                 type="button"
                 onClick={() => setSplitView(splitView === 'reference' ? null : 'reference')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
                   splitView === 'reference'
-                    ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
-                    : 'border-border/50 text-text-tertiary hover:text-text-secondary hover:border-border'
+                    ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber shadow-sm'
+                    : 'border-border bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary hover:border-accent-amber/30'
                 }`}
-                title={isKO ? '연출/참조 패널' : 'Direction/Reference Panel'}
               >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isKO ? '연출' : 'Dir'}</span>
+                <BookOpen className="w-4 h-4" />
+                {isKO ? '연출' : 'Dir'}
               </button>
               <button
                 type="button"
                 onClick={() => setSplitView(splitView === 'chat' ? null : 'chat')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
                   splitView === 'chat'
-                    ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
-                    : 'border-border/50 text-text-tertiary hover:text-text-secondary hover:border-border'
+                    ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple shadow-sm'
+                    : 'border-border bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary hover:border-accent-purple/30'
                 }`}
-                title={isKO ? 'NOA 채팅' : 'NOA Chat'}
               >
-                <Columns2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isKO ? '채팅' : 'Chat'}</span>
+                <Columns2 className="w-4 h-4" />
+                {isKO ? '채팅' : 'Chat'}
               </button>
             </div>
           </div>

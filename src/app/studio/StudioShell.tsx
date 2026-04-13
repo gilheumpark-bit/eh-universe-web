@@ -549,7 +549,7 @@ export default function StudioShell() {
   };
 
   const writingColumnShell = writingMode === 'edit'
-    ? 'w-full px-4 md:px-6 lg:px-8'
+    ? 'max-w-5xl w-full mx-auto px-4 md:px-6 lg:px-8'
     : 'max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12';
   const writingInputDockOffset = activeTab === 'writing' && !showDashboard
     ? (writingMode === 'ai'
