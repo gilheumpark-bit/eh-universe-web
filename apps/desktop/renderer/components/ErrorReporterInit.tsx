@@ -7,6 +7,7 @@ const RING_KEY = "eh-error-ring";
 const RING_MAX = 20;
 
 function pushRing(entry: Record<string, unknown>): void {
+  if (typeof window === "undefined") return;
   try {
     const raw = sessionStorage.getItem(RING_KEY);
     const prev: Record<string, unknown>[] = raw ? (JSON.parse(raw) as Record<string, unknown>[]) : [];

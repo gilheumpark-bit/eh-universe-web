@@ -178,6 +178,51 @@ declare global {
     git: CSGit;
     meta: CSMeta;
     system: CSSystem;
+    local: CSLocal;
+    ollama: CSOllama;
+    mcp: CSMcp;
+  }
+
+  interface MCPServerConfig {
+    id: string;
+    name: string;
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+    cwd?: string;
+  }
+
+  interface CSMcp {
+    startServer: (config: MCPServerConfig) => Promise<{ ok: boolean; id?: string; tools?: unknown[]; error?: string }>;
+    stopServer: (id: string) => Promise<{ ok: boolean }>;
+    restartServer: (id: string) => Promise<{ ok: boolean; id?: string; tools?: unknown[]; error?: string }>;
+    listServers: () => Promise<Array<{ id: string; name: string; status: string; tools: unknown[] }>>;
+    listTools: (serverId: string) => Promise<Array<{ name: string; description: string; inputSchema: Record<string, unknown> }>>;
+    callTool: (serverId: string, toolName: string, args: Record<string, unknown>) => Promise<{ content: string; isError: boolean }>;
+    serverStatus: (id: string) => Promise<{ status: string; tools?: unknown[] }>;
+    saveConfig: (configs: MCPServerConfig[]) => Promise<{ ok: boolean }>;
+    loadConfig: () => Promise<MCPServerConfig[]>;
+    onServerEvent: (id: string, cb: (event: { status: string; tools?: unknown[]; reason?: string }) => void) => () => void;
+  }
+
+  interface CSOllama {
+    healthCheck: (baseUrl?: string) => Promise<{ ok: boolean; version?: string }>;
+    listModels: (baseUrl?: string) => Promise<Array<{ name: string; size: number; digest: string; modified_at: string }>>;
+    modelInfo: (modelName: string, baseUrl?: string) => Promise<Record<string, unknown> | null>;
+    pullModel: (baseUrl: string, modelName: string) => Promise<{ requestId: string }>;
+    onPullProgress: (requestId: string, cb: (progress: { status: string; percent?: number }) => void) => () => void;
+    onPullDone: (requestId: string, cb: () => void) => () => void;
+  }
+
+  interface CSLocal {
+    addRecent: (filePath: string) => Promise<{ ok: true }>;
+    clearRecent: () => Promise<{ ok: true }>;
+    notify: (opts: { title: string; body: string; silent?: boolean }) => Promise<{ ok: boolean; error?: string }>;
+    clipboardRead: () => Promise<string>;
+    clipboardWrite: (text: string) => Promise<{ ok: true }>;
+    clipboardReadHtml: () => Promise<string>;
+    clipboardHasImage: () => Promise<boolean>;
+    onFileDropped: (cb: (filePath: string) => void) => () => void;
   }
 
   interface Window {

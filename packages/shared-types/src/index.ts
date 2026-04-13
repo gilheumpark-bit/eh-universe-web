@@ -48,7 +48,11 @@ export interface VerifyReport {
 // PART 3 — Provider / AI shapes
 // ============================================================
 
-export type AIProvider = 'gemini' | 'openai' | 'claude' | 'groq';
+export type AIProvider = 'gemini' | 'openai' | 'claude' | 'groq' | 'ollama' | 'lmstudio';
+export type LocalAIProvider = 'ollama' | 'lmstudio';
+export function isLocalProvider(p: AIProvider): p is LocalAIProvider {
+  return p === 'ollama' || p === 'lmstudio';
+}
 
 export interface AIChatRequest {
   provider: AIProvider;

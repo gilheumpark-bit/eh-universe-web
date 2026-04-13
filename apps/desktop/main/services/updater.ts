@@ -72,6 +72,8 @@ export function initAutoUpdate(mainWindow: BrowserWindow): void {
 
   updater.autoUpdater.autoDownload = false; // require consent
   updater.autoUpdater.autoInstallOnAppQuit = false;
+  // Suppress electron-updater's own console.error output for expected failures
+  updater.autoUpdater.logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };
 
   updater.autoUpdater.on('checking-for-update', () => {
     broadcast('updater:checking', null);
@@ -92,18 +94,20 @@ export function initAutoUpdate(mainWindow: BrowserWindow): void {
     broadcast('updater:downloaded', info);
   });
 
-  // Background check
-  setTimeout(() => {
-    void updater.autoUpdater.checkForUpdates().catch((err) => {
-      console.warn('[updater] initial check failed:', err);
+  // Background check — fail silently (repo may not exist yet)
+  const quietCheck = () => {
+    void updater.autoUpdater.checkForUpdates().catch((err: Error & { statusCode?: number }) => {
+      // 404 = no releases published yet — expected for pre-release builds
+      if (err.statusCode === 404 || /404/.test(err.message)) {
+        console.log('[updater] no releases found (404) — skipping');
+        return;
+      }
+      console.warn('[updater] check failed:', err.message);
     });
-  }, INITIAL_DELAY_MS);
+  };
 
-  intervalHandle = setInterval(() => {
-    void updater.autoUpdater.checkForUpdates().catch((err) => {
-      console.warn('[updater] periodic check failed:', err);
-    });
-  }, ONE_DAY_MS);
+  setTimeout(quietCheck, INITIAL_DELAY_MS);
+  intervalHandle = setInterval(quietCheck, ONE_DAY_MS);
 }
 
 export function disposeAutoUpdate(): void {

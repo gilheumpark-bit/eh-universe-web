@@ -92,10 +92,14 @@ export function registerMonaco(monaco: MonacoLike): void {
 
 function applyDom(theme: ResolvedTheme): void {
   if (typeof document === "undefined") return;
+  // Enable transition only during theme switch, then remove
+  document.documentElement.setAttribute("data-theme-transitioning", "");
   document.documentElement.setAttribute("data-theme", theme);
   document.documentElement.dataset.theme = theme;
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.style.colorScheme = theme;
+  // Remove transition flag after animation completes
+  setTimeout(() => document.documentElement.removeAttribute("data-theme-transitioning"), 300);
 }
 
 function applyMonaco(theme: ResolvedTheme): void {

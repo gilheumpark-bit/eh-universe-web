@@ -92,20 +92,41 @@ export function PackagePanel({ files, onFilesChange }: Props) {
     setSearching(false);
   };
 
-  // [시뮬레이션] 실제 npm 설치 없음
+  const runNpmCommand = async (cmd: string, label: string) => {
+    setShowTerminal(true);
+    setTerminalOutput((p) => [...p, `\n$ ${cmd}\n`]);
+    // Use Electron shell IPC if available, otherwise simulate
+    if (typeof window !== 'undefined' && 'cs' in window) {
+      const cs = (window as unknown as { cs: { shell: { create: (o: { id: string; cwd?: string }) => Promise<{ ok: boolean; id: string }>; onData: (id: string, cb: (d: string) => void) => () => void; onExit: (id: string, cb: (e: { exitCode: number }) => void) => () => void; write: (id: string, data: string) => void } } }).cs;
+      try {
+        const shellId = `npm-${Date.now()}`;
+        await cs.shell.create({ id: shellId });
+        const unsub = cs.shell.onData(shellId, (data) => setTerminalOutput((p) => [...p, data]));
+        cs.shell.write(shellId, cmd + '\r');
+        await new Promise<void>((resolve) => {
+          cs.shell.onExit(shellId, () => { unsub(); resolve(); });
+          setTimeout(resolve, 30000); // timeout safety
+        });
+      } catch {
+        setTerminalOutput((p) => [...p, `[${label}] shell unavailable, using simulation\n`]);
+        await new Promise((r) => setTimeout(r, 800));
+        setTerminalOutput((p) => [...p, `${label} complete (simulated)\n`]);
+      }
+    } else {
+      await new Promise((r) => setTimeout(r, 800));
+      setTerminalOutput((p) => [...p, `${label} complete (simulated)\n`]);
+    }
+  };
+
   const handleInstall = async (name: string) => {
-    setInstalling(name); setShowTerminal(true);
-    setTerminalOutput((p) => [...p, `\n$ npm install ${name}\n`]);
-    await new Promise((r) => setTimeout(r, 1000));
-    setTerminalOutput((p) => [...p, `added ${name}@1.0.0\n`, "done\n"]);
+    setInstalling(name);
+    await runNpmCommand(`npm install ${name}`, `install ${name}`);
     setInstalling(null); onFilesChange?.();
   };
 
   const handleUninstall = async (name: string) => {
-    setInstalling(name); setShowTerminal(true);
-    setTerminalOutput((p) => [...p, `\n$ npm uninstall ${name}\n`]);
-    await new Promise((r) => setTimeout(r, 600));
-    setTerminalOutput((p) => [...p, `removed ${name}\n`, "done\n"]);
+    setInstalling(name);
+    await runNpmCommand(`npm uninstall ${name}`, `uninstall ${name}`);
     setInstalling(null); onFilesChange?.();
   };
 

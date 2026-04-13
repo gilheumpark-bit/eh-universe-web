@@ -166,7 +166,7 @@ function isQuillCandidate(filePath: string): boolean {
   ].includes(ext);
 }
 
-export function notifyFileChange(rootPath: string, filePath: string): void {
+function notifyFileChange(rootPath: string, filePath: string): void {
   for (const state of autoStates.values()) {
     if (state.rootPath !== rootPath) continue;
     if (!state.enabled) continue;
@@ -180,11 +180,42 @@ export function notifyFileChange(rootPath: string, filePath: string): void {
 // PART 3 — Worker pool stub (tier C heavy scans)
 // ============================================================
 
-async function runFullProjectScan(_rootPath: string): Promise<{ scanned: number; issues: number }> {
-  // STUB: future implementation will use child_process worker pool
-  // (apps/desktop/main/workers/quill-worker.ts) to run all detectors
-  // in parallel against every tracked file.
-  return { scanned: 0, issues: 0 };
+const SCANNABLE_EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
+
+async function collectFiles(dir: string, results: string[] = []): Promise<string[]> {
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return results;
+  }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') continue;
+      await collectFiles(full, results);
+    } else if (SCANNABLE_EXTS.has(path.extname(entry.name))) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
+async function runFullProjectScan(rootPath: string): Promise<{ scanned: number; issues: number }> {
+  const files = await collectFiles(rootPath);
+  let totalIssues = 0;
+
+  // Sequential scan to avoid CPU spike — future: worker pool for parallelism
+  for (const filePath of files) {
+    try {
+      const result = await verifyFile({ filePath, tier: 'A' });
+      totalIssues += result.issues.length;
+    } catch {
+      // Skip files that fail to verify
+    }
+  }
+
+  return { scanned: files.length, issues: totalIssues };
 }
 
 // ============================================================

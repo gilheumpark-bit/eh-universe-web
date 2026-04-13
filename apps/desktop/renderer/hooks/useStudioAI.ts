@@ -24,16 +24,20 @@ export function useStudioAI(_params: UseStudioAIParams) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSend = useCallback(async () => {
-    /* story generation entry */
-  }, []);
+    // Story generation is not available in Code Studio desktop.
+    // This hook exists for the narrative engine module (소설 엔진) which
+    // is not wired in the current desktop build. The full HFCP pipeline
+    // will be connected when the narrative workspace is activated.
+    _params.setUxError?.({ message: "Story generation is not available in this build." });
+  }, [_params]);
 
   const handleCancel = useCallback(() => {
     setIsGenerating(false);
   }, []);
 
   const handleRegenerate = useCallback(async () => {
-    /* regenerate last turn */
-  }, []);
+    _params.setUxError?.({ message: "Story regeneration is not available in this build." });
+  }, [_params]);
 
   return {
     isGenerating,

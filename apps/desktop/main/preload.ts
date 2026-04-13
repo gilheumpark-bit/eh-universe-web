@@ -126,7 +126,7 @@ const quill = {
 // ============================================================
 
 interface AIChatRequest {
-  provider: 'gemini' | 'openai' | 'claude' | 'groq';
+  provider: 'gemini' | 'openai' | 'claude' | 'groq' | 'ollama' | 'lmstudio';
   model: string;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
   temperature?: number;
@@ -337,10 +337,103 @@ const system = {
 };
 
 // ============================================================
+// PART 3b — Local-only features (desktop advantage)
+// ============================================================
+
+const local = {
+  addRecent: (filePath: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('local:add-recent', filePath),
+  clearRecent: (): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('local:clear-recent'),
+  notify: (opts: { title: string; body: string; silent?: boolean }): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('local:notify', opts),
+  clipboardRead: (): Promise<string> =>
+    ipcRenderer.invoke('local:clipboard-read'),
+  clipboardWrite: (text: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('local:clipboard-write', text),
+  clipboardReadHtml: (): Promise<string> =>
+    ipcRenderer.invoke('local:clipboard-read-html'),
+  clipboardHasImage: (): Promise<boolean> =>
+    ipcRenderer.invoke('local:clipboard-has-image'),
+  onFileDropped: (cb: (filePath: string) => void): (() => void) => {
+    const sub = (_e: IpcRendererEvent, fp: string) => cb(fp);
+    ipcRenderer.on('local:file-dropped', sub);
+    return () => ipcRenderer.removeListener('local:file-dropped', sub);
+  },
+};
+
+// ============================================================
+// PART 3c — MCP (Model Context Protocol) servers
+// ============================================================
+
+interface MCPServerConfig {
+  id: string;
+  name: string;
+  command: string;
+  args: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+}
+
+const mcp = {
+  startServer: (config: MCPServerConfig): Promise<{ ok: boolean; id?: string; tools?: unknown[]; error?: string }> =>
+    ipcRenderer.invoke('mcp:start-server', config),
+  stopServer: (id: string): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('mcp:stop-server', id),
+  restartServer: (id: string): Promise<{ ok: boolean; id?: string; tools?: unknown[]; error?: string }> =>
+    ipcRenderer.invoke('mcp:restart-server', id),
+  listServers: (): Promise<Array<{ id: string; name: string; status: string; tools: unknown[] }>> =>
+    ipcRenderer.invoke('mcp:list-servers'),
+  listTools: (serverId: string): Promise<Array<{ name: string; description: string; inputSchema: Record<string, unknown> }>> =>
+    ipcRenderer.invoke('mcp:list-tools', serverId),
+  callTool: (serverId: string, toolName: string, args: Record<string, unknown>): Promise<{ content: string; isError: boolean }> =>
+    ipcRenderer.invoke('mcp:call-tool', serverId, toolName, args),
+  serverStatus: (id: string): Promise<{ status: string; tools?: unknown[] }> =>
+    ipcRenderer.invoke('mcp:server-status', id),
+  saveConfig: (configs: MCPServerConfig[]): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('mcp:save-config', configs),
+  loadConfig: (): Promise<MCPServerConfig[]> =>
+    ipcRenderer.invoke('mcp:load-config'),
+  onServerEvent: (id: string, cb: (event: { status: string; tools?: unknown[]; reason?: string }) => void): (() => void) => {
+    const channel = `mcp:server-event:${id}`;
+    const sub = (_e: IpcRendererEvent, ev: { status: string; tools?: unknown[]; reason?: string }) => cb(ev);
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+};
+
+// ============================================================
+// PART 3d — Ollama local model management
+// ============================================================
+
+const ollama = {
+  healthCheck: (baseUrl?: string): Promise<{ ok: boolean; version?: string }> =>
+    ipcRenderer.invoke('ollama:health-check', baseUrl),
+  listModels: (baseUrl?: string): Promise<Array<{ name: string; size: number; digest: string; modified_at: string }>> =>
+    ipcRenderer.invoke('ollama:list-models', baseUrl),
+  modelInfo: (modelName: string, baseUrl?: string): Promise<Record<string, unknown> | null> =>
+    ipcRenderer.invoke('ollama:model-info', modelName, baseUrl),
+  pullModel: (baseUrl: string, modelName: string): Promise<{ requestId: string }> =>
+    ipcRenderer.invoke('ollama:pull-model', baseUrl, modelName),
+  onPullProgress: (requestId: string, cb: (progress: { status: string; percent?: number }) => void): (() => void) => {
+    const channel = `ollama:pull-progress:${requestId}`;
+    const sub = (_e: IpcRendererEvent, p: { status: string; percent?: number }) => cb(p);
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+  onPullDone: (requestId: string, cb: () => void): (() => void) => {
+    const channel = `ollama:pull-done:${requestId}`;
+    const sub = () => cb();
+    ipcRenderer.on(channel, sub);
+    return () => ipcRenderer.removeListener(channel, sub);
+  },
+};
+
+// ============================================================
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system };
+const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system, local, ollama, mcp };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

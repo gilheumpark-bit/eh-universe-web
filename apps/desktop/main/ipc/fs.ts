@@ -68,7 +68,13 @@ function registerDialogHandlers() {
 
 function registerIOHandlers() {
   ipcMain.handle('fs:read-file', async (_event, filePath: string) => {
-    return fs.readFile(filePath, 'utf-8');
+    try {
+      return await fs.readFile(filePath, 'utf-8');
+    } catch {
+      // Return empty string for missing files — avoids Electron's "Error occurred in handler" stderr spam.
+      // Callers (e.g. InfiniteContext) already handle empty content gracefully.
+      return '';
+    }
   });
 
   ipcMain.handle('fs:write-file', async (_event, filePath: string, content: string) => {

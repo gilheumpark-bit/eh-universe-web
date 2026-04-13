@@ -6,10 +6,13 @@
  * PART 3 — App lifecycle
  */
 
+// Suppress Node 24 fs.Stats deprecation from chokidar (DEP0180)
+process.noDeprecation = true;
+
 import path from 'path';
 import fs from 'fs';
 import http from 'http';
-import { app, BrowserWindow, Menu, shell } from 'electron';
+import { app, BrowserWindow, Menu, shell, globalShortcut, Notification, clipboard, ipcMain } from 'electron';
 import serve from 'electron-serve';
 
 
@@ -22,6 +25,8 @@ import { registerGitIpc } from './ipc/git';
 import { initAutoUpdate, disposeAutoUpdate, registerUpdaterIpc } from './services/updater';
 import { registerCliInstallerIpc } from './services/cli-installer';
 import { registerSystemIpc } from './ipc/system';
+import { registerOllamaIpc } from './ipc/ollama';
+import { registerMcpIpc, disposeMcp } from './ipc/mcp';
 
 // ============================================================
 // PART 1 — Environment + window
@@ -36,7 +41,7 @@ const isProd =
 
 const loadApp =
   isProd
-    ? serve({ directory: 'renderer/out' })
+    ? serve({ directory: 'app' })
     : null;
 
 if (isProd) {
@@ -115,7 +120,7 @@ async function createWindow(): Promise<void> {
     if (!loadApp) throw new Error('Production loader not initialized');
     try {
       const appRoot = app.getAppPath();
-      const exportDir = path.join(appRoot, 'renderer', 'out');
+      const exportDir = path.join(appRoot, 'app');
 
       // Next export output shape can be either:
       // - `code-studio/index.html` (trailingSlash=true style), or
@@ -168,6 +173,24 @@ async function createWindow(): Promise<void> {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
+  });
+
+  // ── Drag-and-Drop from OS file manager ──────────────────
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    // Prevent navigation from drag-and-drop — handle via IPC instead
+    if (url.startsWith('file://')) {
+      event.preventDefault();
+      const filePath = decodeURIComponent(url.replace('file:///', '').replace('file://', ''));
+      mainWindow.webContents.send('local:file-dropped', filePath);
+    }
+  });
+
+  // ── Global shortcut: focus window from anywhere ─────────
+  const toggleShortcut = process.platform === 'darwin' ? 'CommandOrControl+Shift+E' : 'Ctrl+Shift+E';
+  globalShortcut.register(toggleShortcut, () => {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
   });
 
   // Auto-update (no-op in dev or when electron-updater is missing)
@@ -224,8 +247,50 @@ function registerIpc(): void {
   registerUpdaterIpc();
   registerCliInstallerIpc();
   registerSystemIpc();
+  registerOllamaIpc();
+  registerMcpIpc();
+  registerLocalFeatureIpc();
+}
 
+// ============================================================
+// PART 2b — Local-only features (desktop advantage)
+// ============================================================
 
+function registerLocalFeatureIpc(): void {
+  // ── Recent Documents ────────────────────────────────────
+  ipcMain.handle('local:add-recent', (_event, filePath: string) => {
+    if (typeof filePath === 'string' && filePath.trim()) {
+      app.addRecentDocument(filePath);
+    }
+    return { ok: true };
+  });
+
+  ipcMain.handle('local:clear-recent', () => {
+    app.clearRecentDocuments();
+    return { ok: true };
+  });
+
+  // ── Native Notifications ────────────────────────────────
+  ipcMain.handle('local:notify', (_event, opts: { title: string; body: string; silent?: boolean }) => {
+    if (!Notification.isSupported()) return { ok: false, error: 'not-supported' };
+    const n = new Notification({
+      title: opts.title,
+      body: opts.body,
+      silent: opts.silent ?? false,
+      icon: path.join(__dirname, '..', 'build', 'icon.png'),
+    });
+    n.show();
+    return { ok: true };
+  });
+
+  // ── Advanced Clipboard ──────────────────────────────────
+  ipcMain.handle('local:clipboard-read', () => clipboard.readText());
+  ipcMain.handle('local:clipboard-write', (_event, text: string) => {
+    clipboard.writeText(text);
+    return { ok: true };
+  });
+  ipcMain.handle('local:clipboard-read-html', () => clipboard.readHTML());
+  ipcMain.handle('local:clipboard-has-image', () => !clipboard.readImage().isEmpty());
 }
 
 // ============================================================
@@ -344,6 +409,8 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', async () => {
+  globalShortcut.unregisterAll();
+  disposeMcp();
   disposeAllShellSessions();
   disposeAutoUpdate();
   await disposeAllWatchers();

@@ -923,8 +923,9 @@ function ScopeShellInner() {
       if (rootNode) {
         setFiles([rootNode]);
         setHasEverOpened(true);
-        // Persist for GitPanel desktop-git backend (Step 3)
+        // Register in OS recent documents + persist for GitPanel
         try {
+          window.cs?.local?.addRecent(selected);
           window.localStorage.setItem("cs:last-project", selected);
           window.dispatchEvent(new Event("cs-last-project"));
         } catch {
@@ -978,6 +979,13 @@ function ScopeShellInner() {
         toast(`Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.totalFixesApplied} fixes staged. Open Review Center to apply.`, result.finalStatus === "pass" ? "success" : "info");
       } else {
         toast(`Verification: ${result.finalStatus.toUpperCase()} (${result.finalScore}/100) — ${result.stopReason}`, result.finalStatus === "pass" ? "success" : result.finalStatus === "warn" ? "info" : "error");
+      }
+      // Native OS notification when app is backgrounded
+      if (typeof window !== "undefined" && window.cs?.local?.notify && !document.hasFocus()) {
+        window.cs.local.notify({
+          title: `Verification ${result.finalStatus.toUpperCase()}`,
+          body: `${activeFile.name}: ${result.finalScore}/100 — ${result.totalFixesApplied} fixes`,
+        });
       }
     } catch { toast(tcs.verificationFailed, "error"); }
     finally { dispatchVerify({ isVerifying: false }); }
@@ -1230,13 +1238,14 @@ function ScopeShellInner() {
         />
 
         {/* File Explorer Sidebar */}
+        {/* File Explorer Sidebar */}
         <AnimatePresence initial={false}>
           {sidebarVisible && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: sidebarWidth, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
               className="flex shrink-0 flex-col border-r border-border bg-bg-secondary overflow-hidden"
             >
               <div style={{ width: sidebarWidth }} className="h-full">
@@ -1247,26 +1256,20 @@ function ScopeShellInner() {
         </AnimatePresence>
 
         {/* Sidebar Resize Handle */}
-        <AnimatePresence initial={false}>
-          {sidebarVisible && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
-              onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
-                e.preventDefault();
-                const startX = e.clientX;
-                const startWidth = sidebarWidth;
-                const onMove = (ev: MouseEvent) => { setSidebarWidth(Math.max(150, Math.min(500, startWidth + ev.clientX - startX))); };
-                const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-                document.addEventListener("mousemove", onMove);
-                document.addEventListener("mouseup", onUp);
-              }}
-            />
-          )}
-        </AnimatePresence>
+        {sidebarVisible && (
+          <div
+            className="w-1 cursor-col-resize hover:bg-accent-purple/30 active:bg-accent-purple/50 transition-colors shrink-0"
+            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
+              e.preventDefault();
+              const startX = e.clientX;
+              const startWidth = sidebarWidth;
+              const onMove = (ev: MouseEvent) => { setSidebarWidth(Math.max(150, Math.min(500, startWidth + ev.clientX - startX))); };
+              const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          />
+        )}
 
         {/* Center column: editor fills height; 콘솔/Problems는 하단 (가로 flex에 두면 오른쪽 열로 붙는 버그 방지) */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">

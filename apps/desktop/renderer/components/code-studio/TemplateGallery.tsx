@@ -67,17 +67,35 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
     return matchFw && matchSearch;
   }), [lang, activeFramework, searchQuery]);
 
-  // [시뮬레이션] 실제 AI 호출 없음
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim() || isGenerating) return;
     setIsGenerating(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    const generated: AppTemplate = {
-      id: `ai-${Date.now()}`, name: `AI: ${aiPrompt.slice(0, 30)}`, framework: "React",
-      description: aiPrompt, files: [{ name: "src/App.tsx", content: `// AI Generated: ${aiPrompt}\nexport default function App() { return <div>Generated</div>; }` }],
-    };
-    onSelectTemplate(generated); onClose();
-    setIsGenerating(false);
+    try {
+      const { streamChat } = await import("@/lib/code-studio/ai/stream-chat");
+      let result = '';
+      await streamChat({
+        systemInstruction: "You are a project scaffolding assistant. Generate a minimal but complete project structure as JSON: {files: [{name: string, content: string}]}. Return only valid JSON.",
+        messages: [{ role: "user", content: `Create a project: ${aiPrompt}` }],
+        onChunk: (c) => { result += c; },
+      });
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+      const files = parsed?.files ?? [{ name: "src/App.tsx", content: `// ${aiPrompt}\nexport default function App() { return <div>${aiPrompt}</div>; }` }];
+      const generated: AppTemplate = {
+        id: `ai-${Date.now()}`, name: `AI: ${aiPrompt.slice(0, 30)}`, framework: "React",
+        description: aiPrompt, files,
+      };
+      onSelectTemplate(generated); onClose();
+    } catch {
+      // Fallback: generate minimal template without AI
+      const generated: AppTemplate = {
+        id: `ai-${Date.now()}`, name: `${aiPrompt.slice(0, 30)}`, framework: "React",
+        description: aiPrompt, files: [{ name: "src/App.tsx", content: `// ${aiPrompt}\nexport default function App() { return <div>Hello</div>; }` }],
+      };
+      onSelectTemplate(generated); onClose();
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (

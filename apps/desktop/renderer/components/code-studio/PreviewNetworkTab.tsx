@@ -61,7 +61,7 @@ const DEMO_ENTRIES: NetworkEntry[] = [
 // ============================================================
 
 export default function PreviewNetworkTab({ visible, onClose }: Props) {
-  const [entries, setEntries] = useState<NetworkEntry[]>(DEMO_ENTRIES);
+  const [entries, setEntries] = useState<NetworkEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);

@@ -48,7 +48,7 @@ export function getTierLimits(tier: string) {
   return { tier, dailyLimit: 500_000 };
 }
 
-export function createServerGeminiClient(apiKey?: string): GoogleGenAI {
+function createServerGeminiClient(apiKey?: string): GoogleGenAI {
   const explicitApiKey = apiKey?.trim();
   if (explicitApiKey) {
     return new GoogleGenAI({ apiKey: explicitApiKey });
@@ -182,12 +182,20 @@ async function streamGemini(
 // PART 4: SECURITY & DISPATCHER
 // ============================================================
 
-export async function runNoa(_input: { text: string; domain?: string; sourceTier?: number }): Promise<{ allowed: boolean; tactical: { reason: string }; auditEntry: { id: string } }> {
-  // Simplified NOA Passthrough for Main process
+export async function runNoa(input: { text: string; domain?: string; sourceTier?: number }): Promise<{ allowed: boolean; tactical: { reason: string }; auditEntry: { id: string } }> {
+  // Main-process NOA gate: basic safety checks before allowing AI requests
+  const MAX_INPUT_LENGTH = 200_000;
+  if (!input.text || input.text.length > MAX_INPUT_LENGTH) {
+    return {
+      allowed: false,
+      tactical: { reason: input.text ? 'INPUT_TOO_LARGE' : 'EMPTY_INPUT' },
+      auditEntry: { id: `main-reject-${Date.now()}` },
+    };
+  }
   return {
     allowed: true,
     tactical: { reason: 'MAIN_PROCESS_PASSTHROUGH' },
-    auditEntry: { id: `main-${Date.now()}` }
+    auditEntry: { id: `main-${Date.now()}` },
   };
 }
 

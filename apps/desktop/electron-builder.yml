@@ -27,10 +27,6 @@ asarUnpack:
 
 files:
   - app/**
-  - main/**
-  - preload/**
-  - renderer/out/**
-  - renderer/.next/standalone/**
   - package.json
   - "!**/*.{md,log,test.ts,test.tsx,spec.ts,spec.tsx}"
   - "!**/__tests__/**"

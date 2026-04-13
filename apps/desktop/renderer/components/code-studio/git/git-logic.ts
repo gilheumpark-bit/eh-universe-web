@@ -170,7 +170,7 @@ let _isoGitPromise: Promise<IsomorphicGitEngine | null> | null = null;
  * Lazy-loads isomorphic-git + lightning-fs.
  * Returns null if modules are unavailable.
  *
- * [확인 필요] isomorphic-git + lightning-fs may not be installed — dynamic import with fallback
+ * [GRACEFUL DEGRADATION] isomorphic-git + lightning-fs: dynamic import, returns null if unavailable
  */
 export function loadIsomorphicGit(): Promise<IsomorphicGitEngine | null> {
   if (_isoGitPromise) return _isoGitPromise;

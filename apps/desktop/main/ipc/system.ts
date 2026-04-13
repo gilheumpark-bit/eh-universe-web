@@ -19,6 +19,9 @@ export interface LocalMachineSpec {
 }
 
 export function registerSystemIpc(): void {
+  // Legacy channel used by preload.ts meta.getAppVersion
+  ipcMain.handle('get-app-version', () => app.getVersion());
+
   ipcMain.handle('system:get-local-spec', (): LocalMachineSpec => {
     return {
       platform: process.platform,

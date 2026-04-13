@@ -62,13 +62,36 @@ export class InfiniteContextEngine {
    */
   private async analyzeFile(filePath: string): Promise<FileMetadata> {
     const name = path.basename(filePath);
-    
-    // 구조적 분석 (Regex 기반 임시 구현 - 향후 AST 파서 연결)
+
+    // Try to read file content via Electron IPC for regex analysis
+    let content = '';
+    if (typeof window !== 'undefined' && 'cs' in window) {
+      try {
+        content = await (window as unknown as { cs: { fs: { readFile: (p: string) => Promise<string> } } }).cs.fs.readFile(filePath);
+      } catch {
+        // File may not be accessible — proceed with empty content
+      }
+    }
+
+    const exports: string[] = [];
+    const dependencies: string[] = [];
+
+    if (content) {
+      // Extract exports: export function/class/const/type/interface
+      const exportRe = /export\s+(?:default\s+)?(?:function|class|const|let|type|interface)\s+(\w+)/g;
+      let m: RegExpExecArray | null;
+      while ((m = exportRe.exec(content)) !== null) exports.push(m[1]);
+
+      // Extract imports: import ... from '...'
+      const importRe = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
+      while ((m = importRe.exec(content)) !== null) dependencies.push(m[1]);
+    }
+
     return {
       path: filePath,
       name,
-      exports: [], 
-      dependencies: [], 
+      exports,
+      dependencies,
       lastModified: Date.now(),
       role: this.detectRole(filePath)
     };

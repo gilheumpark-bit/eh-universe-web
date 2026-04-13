@@ -128,7 +128,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     testPrompt: 'Say "OK" in one word.',
     storageKey: "noa_ollama_url",
     isUrlBased: true,
-    devOnly: true,
+    devOnly: false,
     capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
   },
   lmstudio: {

@@ -36,12 +36,17 @@ self.addEventListener('message', async (e: MessageEvent) => {
       }
 
       isHardwareSupported = true;
-      // TODO: Actually load WebLLM model (e.g. Qwen2.5-0.5B-Coder) here
-      // For now, simulate async load
-      await new Promise(res => setTimeout(res, 500));
-      isModelLoaded = true;
 
-      self.postMessage({ type: 'INIT_SUCCESS', isLocalGPU: true });
+      // WebLLM model loading requires @mlc-ai/web-llm which is not bundled
+      // in the current desktop build. When the dependency is added, uncomment:
+      //   const { CreateMLCEngine } = await import('@mlc-ai/web-llm');
+      //   engine = await CreateMLCEngine('Qwen2.5-0.5B-Instruct-q4f16_1-MLC');
+      //   isModelLoaded = true;
+      //
+      // Until then, all FIM requests gracefully fall back to cloud API.
+      isModelLoaded = false;
+
+      self.postMessage({ type: 'INIT_SUCCESS', isLocalGPU: false });
 
     } catch (err) {
       console.warn('[V-Core Worker] Initialization failed, falling back to cloud:', err);

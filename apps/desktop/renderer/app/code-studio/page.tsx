@@ -2,11 +2,19 @@
 "use client";
 
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import type { AppLanguage } from "@/types/i18n";
 import { CodeStudioSkeleton } from "@/components/SkeletonLoader";
-import ScopeShell from "@/components/code-studio/ScopeShell";
+
+// SSR disabled — ScopeShell depends heavily on window.cs (Electron preload bridge),
+// localStorage, sessionStorage, and other browser-only APIs.
+// Rendering it server-side during static export causes React #418 hydration mismatch.
+const ScopeShell = dynamic(() => import("@/components/code-studio/ScopeShell"), {
+  ssr: false,
+  loading: () => <CodeStudioSkeleton />,
+});
 
 function CodeStudioLoading() {
   const { lang } = useLang();

@@ -32,9 +32,9 @@ export interface ChatRequest {
 
 const DAILY_TOKEN_BUDGET = 500_000;
 
-function checkTokenBudget(isByok: boolean): { allowed: boolean; remaining: number } {
+function checkTokenBudget(isByok: boolean, dailyLimit: number = DAILY_TOKEN_BUDGET): { allowed: boolean; remaining: number } {
   if (isByok) return { allowed: true, remaining: Infinity };
-  return { allowed: true, remaining: DAILY_TOKEN_BUDGET };
+  return { allowed: true, remaining: dailyLimit };
 }
 
 // ============================================================
@@ -74,8 +74,8 @@ export async function handleAiChatRequest(
     const isByok = userApiKey.length > 0;
 
     // 1. Auth & Tier Resolve
-    getTierLimits(userTier);
-    const budget = checkTokenBudget(isByok);
+    const tierLimits = getTierLimits(userTier);
+    const budget = checkTokenBudget(isByok, tierLimits.dailyLimit);
     
     if (!budget.allowed) {
       webContents.send(`ai:chat-error:${requestId}`, 'Daily usage limit reached.');

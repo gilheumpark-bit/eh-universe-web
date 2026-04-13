@@ -74,21 +74,17 @@ button:focus-visible {
 
 /* ============================================================
    Theme Transition Animation
-   Smooth color transitions when switching themes
+   Only active during theme switch (data-theme-transitioning).
+   Previously applied to ALL elements at ALL times (300ms on html *),
+   which caused cascading delays on every interaction.
    ============================================================ */
-html,
-html *,
-html *::before,
-html *::after {
+html[data-theme-transitioning],
+html[data-theme-transitioning] *,
+html[data-theme-transitioning] *::before,
+html[data-theme-transitioning] *::after {
   transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-  transition-duration: 0.3s;
+  transition-duration: 0.25s;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Disable transitions for specific elements that shouldn't animate */
-html [data-no-theme-transition],
-html [data-no-theme-transition] * {
-  transition-property: none !important;
 }
 
 /* Theme change overlay flash effect */

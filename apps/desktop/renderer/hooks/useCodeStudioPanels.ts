@@ -58,8 +58,6 @@ function extractSymbols(content: string, fileName: string): SymbolEntry[] {
   if (!content) return [];
   const symbols: SymbolEntry[] = [];
   const seen = new Set<string>();
-  const _lines = content.split("\n");
-
   for (const { re, kind } of SYMBOL_PATTERNS) {
     const regex = new RegExp(re.source, re.flags);
     let match: RegExpExecArray | null;
@@ -85,7 +83,6 @@ function extractSymbols(content: string, fileName: string): SymbolEntry[] {
 function generateCanvasNodes(fileTree: FileNode[], parentX = 0, parentY = 0): { nodes: CanvasNode[]; connections: CanvasConnection[] } {
   const nodes: CanvasNode[] = [];
   const connections: CanvasConnection[] = [];
-  const _x = parentX;
   let y = parentY;
 
   function traverse(items: FileNode[], depth: number, parentId?: string) {
@@ -428,7 +425,7 @@ export function useCodeStudioPanels({ files, activeFileContent, activeFileName, 
 
     try {
       wsAbortRef.current = new AbortController();
-      const _accumulated = '';
+      let accumulated = '';
       const response = await streamChat({
         systemInstruction: systemPrompt,
         messages: [
@@ -443,6 +440,13 @@ export function useCodeStudioPanels({ files, activeFileContent, activeFileName, 
 
       const assistantMsg: WorkspaceMessage = { id: `msg-${Date.now()}-resp`, role: "assistant", content: response, timestamp: Date.now() };
       setWsThreads((prev) => prev.map((t) => t.id === threadId ? { ...t, messages: [...t.messages, assistantMsg] } : t));
+
+      // Persist key insights to workspace shared memory for cross-thread context
+      const persona = thread?.persona ?? "developer";
+      _setWsSharedMemory((prev) => [
+        ...prev.slice(-(49)),
+        { key: `${persona}:${threadId}`, value: response.slice(0, 500), source: persona as AgentRole, timestamp: Date.now() },
+      ]);
 
       return response;
     } catch {

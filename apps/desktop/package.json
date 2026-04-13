@@ -1,6 +1,8 @@
 {
   "name": "eh-code-studio-desktop",
-  "version": "0.1.0-alpha",
+  "version": "0.1.0-beta",
+  "description": "EH Code Studio — Agentic Coding Engine with verification pipeline",
+  "author": "EH Universe <dev@eh-universe.com>",
   "license": "CC-BY-NC-4.0",
   "private": true,
   "main": "app/main.js",

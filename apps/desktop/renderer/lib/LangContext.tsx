@@ -23,11 +23,13 @@ const LangContext = createContext<LangContextType>({
 
 // Stable pure function — defined at module level to avoid hoisting issues
 function applyLangToDOM(next: Lang): void {
+  if (typeof window === "undefined") return;
   localStorage.setItem("eh-lang", next);
   document.documentElement.lang = next;
 }
 
 function detectLang(): Lang {
+  if (typeof window === "undefined") return "ko";
   const saved = localStorage.getItem("eh-lang");
   if (saved && VALID_LANGS.has(saved)) return saved as Lang;
   const browserLang = (navigator.language || "").toLowerCase();

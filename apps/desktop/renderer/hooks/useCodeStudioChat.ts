@@ -175,8 +175,8 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
     systemInstruction = `You are an expert software engineer assistant in Code Studio.\n${DESIGN_SYSTEM_MINIMAL}`,
     autoSave = true,
     tree,
-    _onCommand,
-    _onCodeApply,
+    onCommand,
+    onCodeApply,
   } = options;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -241,7 +241,15 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
   const sendMessage = useCallback(async (content: string, msgOptions: MessageOptions = {}) => {
     if (!content.trim() || isStreaming) return;
 
-    const { _resolved, mentions } = resolveContext(content, tree);
+    const { resolved, mentions } = resolveContext(content, tree);
+
+    // Dispatch commands (e.g. /verify, /deploy) to host if handler provided
+    if (resolved.startsWith('/') && onCommand) {
+      const spaceIdx = resolved.indexOf(' ');
+      const cmd = spaceIdx > 0 ? resolved.slice(1, spaceIdx) : resolved.slice(1);
+      const args = spaceIdx > 0 ? resolved.slice(spaceIdx + 1) : '';
+      onCommand(cmd, args);
+    }
     
     const userMsg: ChatMessage = {
       id: generateId(),
@@ -296,12 +304,16 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
         }
       });
       
-      // Auto-save on success
+      // Auto-save on success + code apply callback
       setMessages(current => {
         const last = current[current.length - 1];
         if (last && last.role === 'assistant') {
-           // Simple confidence heuristic if not provided
            last.confidence = Math.min(1, 0.7 + (last.content.length / 2000));
+           // Notify host of code blocks for apply-to-editor
+           if (onCodeApply && /```[\s\S]+```/.test(last.content)) {
+             const codeMatch = last.content.match(/```(?:\w+)?\n([\s\S]+?)```/);
+             if (codeMatch) onCodeApply(codeMatch[1]);
+           }
         }
         saveCurrentSession(current);
         return current;
@@ -342,10 +354,16 @@ export function useCodeStudioChat(options: UseCodeStudioChatOptions = {}): UseCo
     setIsStreaming(false);
   }, []);
 
-  const clearHistory = useCallback(() => {
+  const clearHistory = useCallback(async () => {
     setMessages([]);
-    // Optionally delete from IndexedDB too
-  }, []);
+    try {
+      const { deleteChatSession } = await import('@/lib/code-studio/core/store');
+      await deleteChatSession(activeSessionId);
+      refreshSessions();
+    } catch {
+      // IndexedDB may not be available
+    }
+  }, [activeSessionId, refreshSessions]);
 
   // 3. Lifecycle
   useEffect(() => {

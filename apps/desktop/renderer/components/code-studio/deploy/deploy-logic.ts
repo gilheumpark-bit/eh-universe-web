@@ -351,7 +351,7 @@ export async function runBuildVerification(
  * Streaming ZIP creation — adds files in chunks to avoid blocking the main thread.
  * Falls back to JSON bundle if JSZip fails.
  *
- * [확인 필요] JSZip may not be installed — dynamic import with JSON fallback
+ * [GRACEFUL DEGRADATION] JSZip: dynamic import with JSON bundle fallback
  */
 export async function createZipBlob(
   files: FlatFile[],

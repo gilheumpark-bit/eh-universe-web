@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@eh/quill-engine/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
-// import { detectLanguage } from "@eh/quill-engine/types";
 import { registerGhostTextProvider, cancelGhostText } from "@/lib/code-studio/ai/ghost";
 import { processStealthClipboard } from "@/lib/code-studio/ai/stealth-clipboard";
 import { registerEditorFeatures } from "@/lib/code-studio/editor/editor-features";
@@ -476,11 +475,11 @@ export function ScopeEditor(props: ScopeEditorProps) {
         <div id="main-editor" className="flex min-h-0 flex-1 min-w-0 flex-col relative overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
-              key={rightPanel === "canvas" ? "canvas" : useEditorGroup ? "group" : activeFileId ? "editor" : "empty"}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              key={rightPanel === "canvas" ? "canvas" : useEditorGroup ? "group" : "editor"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               className="absolute inset-0 flex flex-col bg-bg-primary"
             >
               {rightPanel === "canvas" ? (

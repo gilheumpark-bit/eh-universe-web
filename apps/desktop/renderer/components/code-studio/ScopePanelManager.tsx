@@ -751,10 +751,10 @@ const RightPanelContent = memo(function RightPanelContent(props: ScopePanelManag
     <AnimatePresence mode="wait">
       <motion.div
         key={props.rightPanel}
-        initial={{ opacity: 0, x: 10 }}
+        initial={{ opacity: 0, x: 6 }}
         animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -10 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+        exit={{ opacity: 0, x: -6 }}
+        transition={{ duration: 0.08, ease: "easeOut" }}
         className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-bg-secondary"
       >
         {body}
@@ -797,10 +797,10 @@ const BottomPanels = memo(function BottomPanels({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.2 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.1 }}
         className="shrink-0 border-t border-border flex max-h-[min(520px,55vh)] min-h-0 w-full flex-col overflow-hidden bg-bg-primary"
       >
         <div className="flex shrink-0 items-center gap-1 border-b border-white/8 bg-bg-secondary px-2 py-1">

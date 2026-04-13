@@ -84,6 +84,28 @@ const providers: Record<AIProvider, ProviderConfig> = {
       stream: req.stream ?? true,
     }),
   },
+  ollama: {
+    endpoint: '', // dynamic: read from keystore (URL, not API key)
+    authHeader: () => ({}), // no auth for local Ollama
+    buildBody: (req) => ({
+      model: req.model,
+      messages: req.messages,
+      temperature: req.temperature ?? 0.7,
+      max_tokens: req.maxTokens ?? 4096,
+      stream: req.stream ?? true,
+    }),
+  },
+  lmstudio: {
+    endpoint: '', // dynamic: read from keystore (URL)
+    authHeader: () => ({}),
+    buildBody: (req) => ({
+      model: req.model,
+      messages: req.messages,
+      temperature: req.temperature ?? 0.7,
+      max_tokens: req.maxTokens ?? 4096,
+      stream: req.stream ?? true,
+    }),
+  },
 };
 
 // ============================================================
@@ -94,7 +116,6 @@ const EMA_ALPHA = 0.3;
 const FAILURE_THRESHOLD = 0.4;       // close-to-open if EMA drops below
 const RECOVERY_THRESHOLD = 0.7;      // half-open to closed if EMA rises above
 const OPEN_COOLDOWN_MS = 30_000;
-const _HALF_OPEN_PROBE_INTERVAL = 5;
 
 const ari = new Map<AIProvider, ARIState>();
 
@@ -186,22 +207,31 @@ async function callProvider(
     return { ok: false, error: 'unknown-provider' };
   }
 
+  const isLocal = req.provider === 'ollama' || req.provider === 'lmstudio';
   const key = await getKey(req.provider);
   if (!key) {
     sender.send(channels.error, {
       reason: 'no-key',
       provider: req.provider,
-      message: `No API key registered for ${req.provider}. Add one in Settings.`,
+      message: isLocal
+        ? `No URL configured for ${req.provider}. Add one in Settings.`
+        : `No API key registered for ${req.provider}. Add one in Settings.`,
     });
     sender.send(channels.end);
     return { ok: false, error: 'no-key' };
   }
 
   try {
-    const url =
-      req.provider === 'gemini'
-        ? `${config.endpoint}/${req.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(key)}`
-        : config.endpoint;
+    let url: string;
+    if (isLocal) {
+      // key is the base URL for local providers (e.g. http://localhost:11434)
+      const baseUrl = key.replace(/\/+$/, '');
+      url = `${baseUrl}/v1/chat/completions`;
+    } else if (req.provider === 'gemini') {
+      url = `${config.endpoint}/${req.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(key)}`;
+    } else {
+      url = config.endpoint;
+    }
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

@@ -9,6 +9,7 @@
 
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import { createWebGpuWorker } from '@/lib/code-studio/ai/worker-loader';
+import { ollamaFIM, shouldFallbackToCloud, recordLatency } from '@/lib/code-studio/ai/ollama-fim';
 
 // 디바운스 + 취소 제어
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -188,9 +189,18 @@ function buildStyleHint(): string {
  */
 function getAdaptiveDebounceMs(): number {
   const rate = getAcceptanceRate();
-  if (totalSuggestions < 5) return DEFAULT_DEBOUNCE_MS; // Not enough data yet
+  const hasLocal = !!getApiKey('ollama');
 
-  // AI-2 Damper: 인간(엔진)이 돌 때는 바퀴는 조용히 대기 (최소 1초 이상 보장)
+  if (totalSuggestions < 5) return hasLocal ? 500 : DEFAULT_DEBOUNCE_MS;
+
+  if (hasLocal && !shouldFallbackToCloud()) {
+    // Local model: much shorter debounce (sub-200ms inference)
+    if (rate > 0.6) return 300;
+    if (rate >= 0.3) return 500;
+    return 800;
+  }
+
+  // Cloud: conservative debounce
   if (rate > 0.6) return 1000;
   if (rate >= 0.3) return 1500;
   return 2000;
@@ -385,6 +395,35 @@ export async function requestGhostCompletion(
     }
   }
 
+  // Tier 2: Ollama FIM (direct HTTP, no IPC overhead, sub-200ms target)
+  if (!vCoreSuccess) {
+    const ollamaUrl = getApiKey('ollama');
+    if (ollamaUrl && !shouldFallbackToCloud()) {
+      try {
+        const preferredModel = (typeof localStorage !== 'undefined' && localStorage.getItem('noa_ollama_fim_model'))
+          || localStorage.getItem('noa_active_model_ollama')
+          || 'codellama:7b-code';
+        const fimResult = await ollamaFIM({
+          baseUrl: ollamaUrl,
+          model: preferredModel,
+          codeBefore: before,
+          codeAfter: after,
+          language,
+          maxTokens: getAdaptiveMaxTokens(),
+          signal,
+        });
+        recordLatency(fimResult.latencyMs);
+        if (fimResult.completion) {
+          result = fimResult.completion;
+          vCoreSuccess = true;
+        }
+      } catch {
+        // Fall through to cloud
+      }
+    }
+  }
+
+  // Tier 3: Cloud fallback (streamChat)
   if (!vCoreSuccess) {
     const blockType = detectIncompleteBlock(before);
     const multiLineHint = blockType

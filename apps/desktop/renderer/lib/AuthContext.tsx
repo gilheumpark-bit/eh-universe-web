@@ -46,7 +46,7 @@ const AuthContext = createContext<AuthState | null>(null);
 // ============================================================
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(readStoredUser);
+  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser());
   const [loading] = useState(false);
 
   const signInDemo = useCallback(() => {

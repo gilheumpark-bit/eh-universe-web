@@ -25,20 +25,52 @@ export class PrecisionScanner {
   static async runMECEScan(targetDir: string, filePath?: string): Promise<ASTChunk[]> {
     const targetFile = filePath || `${targetDir}/legacy-panel.tsx`;
     const threshold = this.determineThreshold(targetFile);
-    
-    logger.info(`[SYSTEM] 진단 스캔 밎 컨텍스트-인식형 AST 청킹 가동. 타겟: ${targetFile} | 동적 임계값: ${threshold} Lines`);
-    
-    // 시뮬레이션: 동적 임계값에 따른 AST 덩어리로 잘랐다고 가정
-    const vulnerableChunks: ASTChunk[] = [
-      {
-        chunkId: `${targetFile}#L10-${10 + Math.min(15, threshold)}`,
-        originalCode: `export function Panel(props: P) { ... }`,
-        symbolContext: `[Available Globals: React, logger, z, useState]`, 
-        signature: `export function Panel(props: P)`
+
+    logger.info(`[SYSTEM] MECE scan: ${targetFile} | threshold: ${threshold} lines`);
+
+    // Read file via Electron IPC if available, otherwise return empty scan
+    let sourceCode = '';
+    if (typeof window !== 'undefined' && 'cs' in window) {
+      try {
+        sourceCode = await (window as { cs: { fs: { readFile: (p: string) => Promise<string> } } }).cs.fs.readFile(targetFile);
+      } catch {
+        logger.warn(`[MECE] Cannot read file: ${targetFile}`);
+        return [];
       }
-    ];
-    logger.info(`[VERDICT] AST 분석 결과, ${vulnerableChunks.length}건의 SPOF 도출. 기저 문맥(Context) 테이블 동기화 완료.`);
-    return vulnerableChunks;
+    } else {
+      return [];
+    }
+
+    const lines = sourceCode.split('\n');
+    const chunks: ASTChunk[] = [];
+
+    // Split source into threshold-sized chunks at function/class boundaries
+    let chunkStart = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const isChunkBoundary =
+        i - chunkStart >= threshold &&
+        (/^(export\s+)?(function|class|const|interface|type)\s/.test(line.trimStart()) || i === lines.length - 1);
+
+      if (isChunkBoundary || i === lines.length - 1) {
+        const end = i === lines.length - 1 ? i + 1 : i;
+        const code = lines.slice(chunkStart, end).join('\n');
+        if (code.trim()) {
+          // Extract exported symbol signatures from this chunk
+          const sigMatch = code.match(/^(export\s+(?:default\s+)?(?:function|class|const|interface|type)\s+\w+[^{]*)/m);
+          chunks.push({
+            chunkId: `${targetFile}#L${chunkStart + 1}-${end}`,
+            originalCode: code,
+            symbolContext: `[Lines ${chunkStart + 1}-${end}, ${code.split('\n').length} lines]`,
+            signature: sigMatch?.[1]?.trim() || `chunk@L${chunkStart + 1}`,
+          });
+        }
+        chunkStart = i;
+      }
+    }
+
+    logger.info(`[MECE] ${chunks.length} chunks extracted from ${lines.length} lines.`);
+    return chunks;
   }
 }
 // [SCOPE_END]
