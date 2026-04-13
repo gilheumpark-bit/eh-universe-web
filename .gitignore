@@ -182,3 +182,12 @@ test.out
 test2.out
 test3.out
 tmp/
+
+# Claude Code workspace
+.cs/
+
+# Per-app coverage (already have /coverage at root)
+apps/desktop/coverage/
+
+# Next.js build trace files
+apps/desktop/app/**/*.txt
