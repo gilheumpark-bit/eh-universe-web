@@ -1,129 +1,195 @@
 <div align="center">
 
-<img src="public/images/logo-badge.svg" alt="NOA Code Studio" width="320" />
+# EH Code Studio
 
-# NOA Code Studio
+### Agentic Coding Engine
 
-### Validation-First Code Generation IDE
+Desktop AI IDE with verification pipeline, local Ollama models, MCP tool protocol, and multi-file agent.
 
-A standalone AI IDE built around the **CS-Quill** verification engine.
-Local files, real terminals, real git, BYOK AI — all in your workspace with 
-a transparent, glassmorphism-inspired UI.
+Your keys. Your files. Your machine.
 
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
-![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
+![Electron](https://img.shields.io/badge/Electron-41-47848F?style=flat-square&logo=electron&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Status](https://img.shields.io/badge/status-alpha-orange?style=flat-square)
-
-[Architecture](docs/ARCHITECTURE.md) · [IPC Reference](docs/IPC.md) · [Theming](docs/THEMING.md)
+![Status](https://img.shields.io/badge/status-beta-green?style=flat-square)
 
 </div>
 
 ---
 
-## What this is
+## Quick Start
 
-NOA Code Studio is a standalone IDE with a single mission: **verified code generation** backed by an autonomous Gen-Verify-Fix pipeline. 
-It differs from simple LLM wrappers by natively supporting code verification, executing design linters, and autonomously escalating fixes within the browser environment.
+```bash
+git clone https://github.com/gilheumpark-bit/local-code-studio.git
+cd local-code-studio
+pnpm install
 
-## Why desktop
+# Dev mode (hot reload)
+pnpm --filter eh-code-studio-desktop run dev:electron
 
-Web Code Studio could only fake what an IDE actually needs:
-- Real local files (Chrome's File System Access API is partial and gated)
-- Real `git` (lightning-fs is a memory simulation)
-- Real `npm install` / `tsc` / `eslint` (webcontainer is a sandbox)
-- Real terminal (no PTY in the browser)
-- OS keychain for API keys (browsers store in plaintext localStorage)
+# Production build
+pnpm --filter eh-code-studio-desktop run build:electron
+# Output: dist/desktop/*.exe, *.zip
+```
 
-Desktop fixes all of those. Same UI, real plumbing.
+## Why Desktop
+
+| Need | Browser | Desktop |
+|------|---------|---------|
+| Local files | File System Access API (partial) | **Native fs** |
+| Git | isomorphic-git (memory simulation) | **Real `git` CLI** |
+| Terminal | No PTY | **node-pty** |
+| npm/tsc/eslint | WebContainer sandbox | **Real shell** |
+| API key security | localStorage (plaintext) | **OS keychain (DPAPI/Keychain)** |
+| Local AI | CORS blocked | **Direct Ollama HTTP** |
 
 ## Features
 
-- **CS-Quill engine** — 300+ detectors across security, runtime, API,
-  performance, complexity, type safety, logging, error handling
-- **ARI Circuit Breaker** — per-provider EMA-based failover for AI calls
-- **BYOK with OS keychain** — API keys never leave the main process,
-  XSS-immune by design (`window.cs.keystore` has no `get` method)
-- **Real local file system** with chokidar watcher → automatic
-  Quill verify on save
-- **Real git** via spawned `git` (no isomorphic-git emulation)
-- **Real terminal** via node-pty (with child_process fallback)
-- **Bundled CLI** — install `cs` to your PATH from the Tools menu
-- **Light + dark themes** — both AA-compliant (32/32 pairs verified)
-  with Monaco editor in lockstep
-- **Auto-update** via electron-updater (consent-required, no silent
-  installs)
+### AI Providers (BYOK)
 
-## Quick start
+| Provider | Type | Models |
+|----------|------|--------|
+| Gemini | Cloud | 2.5-pro, 2.5-flash, 3.x |
+| OpenAI | Cloud | gpt-5.4, 4.1 |
+| Claude | Cloud | opus-4-6, sonnet-4-6 |
+| Groq | Cloud | llama-3.3-70b |
+| **Ollama** | **Local** | Any (codellama, deepseek-coder, qwen2.5, ...) |
+| LM Studio | Local | Any |
+
+### Tab Autocomplete (FIM)
+
+- Local FIM via Ollama (sub-200ms, no cloud needed)
+- Native FIM tokens: CodeLlama, DeepSeek Coder, StarCoder, Qwen2.5-Coder
+- Adaptive debounce: 300ms local / 1000ms cloud
+- Style learning from accepted completions
+- Cloud fallback when local unavailable
+
+### MCP Protocol (Model Context Protocol)
+
+- **stdio**: Spawn MCP servers as child processes
+- **HTTP**: Connect to remote servers
+- Tool calling in chat (AI requests tools, results flow back)
+- Auto-restart with exponential backoff
+- Config persistence
+
+### Multi-File Agent
+
+- Dependency graph analysis (import tracing + topological sort)
+- AI-driven planning (team-leader agent)
+- Cross-file context injection
+- Snapshot manager for atomic rollback
+- Per-file accept/reject with diff preview
+
+### Quill Verification Pipeline
+
+8-team static analysis with auto-fix loop:
+
+| Team | Type | Role |
+|------|------|------|
+| Simulation | Non-blocking | Static analysis |
+| Generation | Non-blocking | Code gen |
+| Validation | **Blocking** | Must pass |
+| Size-density | Non-blocking | Metrics |
+| Asset-trace | Non-blocking | Asset tracking |
+| Stability | Non-blocking | Stress test |
+| Release-IP | **Blocking** | Patent/license scan |
+| Governance | Non-blocking | Final checks |
+
+### Desktop-Native
+
+- Native terminal (node-pty)
+- Git CLI (real commands, not simulation)
+- OS keychain (API keys encrypted at rest)
+- OS notifications (background tasks)
+- Global shortcut: `Ctrl+Shift+E`
+- Recent documents in OS task bar
+- Native clipboard (text, HTML, image)
+- File watcher (chokidar)
+- Auto-updater (GitHub Releases)
+
+## Architecture
+
+```
+apps/desktop/
+  main/                     # Electron main process
+    ipc/                    # ai, fs, git, shell, quill, ollama, mcp, system
+    services/               # ai-service, providers, updater, mcp-stdio
+  renderer/                 # Next.js 16 (React 19)
+    components/code-studio/ # 51-panel UI
+    hooks/                  # Chat, Composer, Agent, FileSystem, Panels
+    lib/code-studio/
+      ai/                   # ghost, ollama-fim, mcp-tool-bridge, composer-planner
+      core/                 # panel-registry, store, dependency-analyzer, snapshot-manager
+      pipeline/             # verification loop, master-autopilot
+      features/             # infinite-context, mcp-client, patent-scanner
+packages/
+  quill-engine/             # Verification engine (300+ detectors)
+  quill-cli/                # CLI: cs verify, cs suggest, cs audit
+  shared-types/             # Cross-package types
+```
+
+## Configuration
+
+### Ollama
 
 ```bash
-# Clone + install
-git clone https://github.com/eh-universe/code-studio.git
-cd code-studio
-pnpm install
+# 1. Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
 
-# Run in dev (Next + Electron with hot reload)
-pnpm --filter @eh/desktop dev:electron
+# 2. Pull a model
+ollama pull codellama:7b-code
 
-# Or build a packaged app for your OS
-pnpm --filter @eh/desktop run build
-pnpm --filter @eh/desktop exec electron-builder
+# 3. In app: Settings > Ollama > http://localhost:11434
 ```
 
-After installing, use **Tools → Install Command Line Tools (cs)**
-to put `cs` on your PATH:
+### MCP Server
+
+```
+Settings > MCP Servers > Add
+  Transport: stdio
+  Command: npx
+  Args: -y @modelcontextprotocol/server-filesystem /home/user
+```
+
+### CI/CD
+
+Push `v*` tag to build for all platforms:
 
 ```bash
-cs --help
-cs verify ./src/foo.ts
-cs audit
+git tag v0.1.0-beta && git push --tags
 ```
 
-## Repository layout
+See [`.github/workflows/release.yml`](.github/workflows/release.yml).
 
-```
-.
-├── packages/
-│   ├── shared-types/      # @eh/shared-types — pure type defs
-│   ├── quill-engine/      # @eh/quill-engine — Pure TS verification
-│   └── quill-cli/         # @eh/quill-cli — `cs` binary
-├── apps/
-│   └── desktop/           # @eh/desktop — Electron + Next.js
-│       ├── main/          #   Electron main + IPC modules
-│       ├── renderer/      #   Next.js (Code Studio UI)
-│       ├── e2e/           #   Playwright Electron smoke tests
-│       └── electron-builder.yml
-├── tools/
-│   └── scripts/
-│       ├── codemod-quill-imports.mjs
-│       └── contrast-check.mjs   # WCAG AA verifier
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── IPC.md
-│   └── THEMING.md
-├── pnpm-workspace.yaml
-└── turbo.json
+| Secret | Purpose |
+|--------|---------|
+| `GH_TOKEN` | GitHub Releases |
+| `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID` | macOS notarization |
+| `CSC_LINK` + `CSC_KEY_PASSWORD` | Windows code signing |
+
+## Development
+
+```bash
+pnpm --filter eh-code-studio-desktop run dev:electron  # Dev + hot reload
+pnpm --filter eh-code-studio-desktop run lint           # ESLint
+pnpm --filter eh-code-studio-desktop run test           # Jest
+pnpm --filter eh-code-studio-desktop run verify:static  # Lint + TypeScript
 ```
 
-## Documentation
+## Tech Stack
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Process model + monorepo layout
-- [docs/IPC.md](docs/IPC.md) — Complete `window.cs` reference
-- [docs/THEMING.md](docs/THEMING.md) — Token system + light/dark guide
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [SECURITY.md](SECURITY.md)
-- [CHANGELOG.md](CHANGELOG.md)
-
-## Status
-
-**Alpha.** The desktop migration is structurally complete (Phases 0
-through F-2). Functional integration of the Quill engine into the
-auto-watch loop and the GitPanel rewrite to use `window.cs.git`
-are still in progress.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#phase-history) for
-the full phase log.
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Electron 41 + Node.js 20+ |
+| Framework | Next.js 16 (static export) + Nextron |
+| UI | React 19 + Tailwind 4 + Framer Motion |
+| Editor | Monaco Editor |
+| Terminal | xterm.js + node-pty |
+| State | Zustand + IndexedDB |
+| AI | Vercel AI SDK + direct provider APIs |
+| Build | Turbo + pnpm workspaces + electron-builder |
 
 ## License
 
-CC-BY-NC-4.0
+[CC BY-NC 4.0](LICENSE) - Attribution-NonCommercial.
