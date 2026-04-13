@@ -22,6 +22,7 @@ import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { InlineActionPopup } from '@/components/studio/InlineActionPopup';
 import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
 import { ReferenceSplitPane } from '@/components/studio/ReferenceSplitPane';
+import { DirectionReferencePanel } from '@/components/studio/DirectionReferencePanel';
 import { useQualityAnalysis } from '@/hooks/useQualityAnalysis';
 import { useContinuityCheck } from '@/hooks/useContinuityCheck';
 import { useUndoStack } from '@/hooks/useUndoStack';
@@ -347,31 +348,33 @@ export default function WritingTabInline(props: Props) {
                 </button>
               </div>
             )}
-            {/* Split view toggles */}
-            <div className="hidden lg:flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
+            {/* Split view toggles — 시인성 강화 */}
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
               <button
                 type="button"
                 onClick={() => setSplitView(splitView === 'reference' ? null : 'reference')}
-                className={`p-2 rounded-xl border transition-colors ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
                   splitView === 'reference'
                     ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
-                    : 'border-transparent text-text-tertiary hover:text-text-secondary'
+                    : 'border-border/50 text-text-tertiary hover:text-text-secondary hover:border-border'
                 }`}
-                title={isKO ? '참조 패널' : 'Reference Pane'}
+                title={isKO ? '연출/참조 패널' : 'Direction/Reference Panel'}
               >
-                <BookOpen className="w-4 h-4" />
+                <BookOpen className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isKO ? '연출' : 'Dir'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setSplitView(splitView === 'chat' ? null : 'chat')}
-                className={`p-2 rounded-xl border transition-colors ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
                   splitView === 'chat'
                     ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
-                    : 'border-transparent text-text-tertiary hover:text-text-secondary'
+                    : 'border-border/50 text-text-tertiary hover:text-text-secondary hover:border-border'
                 }`}
                 title={isKO ? 'NOA 채팅' : 'NOA Chat'}
               >
-                <Columns2 className="w-4 h-4" />
+                <Columns2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isKO ? '채팅' : 'Chat'}</span>
               </button>
             </div>
           </div>
@@ -806,10 +809,12 @@ export default function WritingTabInline(props: Props) {
         </div>
       )}
       {splitView === 'reference' && (
-        <div className="hidden lg:flex w-[35%] min-w-[280px] max-w-[500px] shrink-0">
-          <ReferenceSplitPane
+        <div className="hidden lg:flex flex-col w-[35%] min-w-[280px] max-w-[500px] shrink-0 border-l border-border/40 bg-bg-primary">
+          {/* 3탭: 연출 / 참고 / 캐릭터 선택 */}
+          <DirectionReferencePanel
             config={currentSession.config}
             language={language}
+            setConfig={setConfig}
             onClose={() => setSplitView(null)}
           />
         </div>

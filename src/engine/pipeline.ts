@@ -254,12 +254,23 @@ export function buildSystemInstruction(
   const t = createT(language);
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
 
-  // Character DNA formatting (with personality, speech style, dialogue example + 3-tier)
-  // Limit to top 20 characters to prevent system prompt explosion (P0: OOM prevention)
+  // Character DNA formatting — 스마트 주입
+  // activeCharacters 설정 시: 선택된 캐릭터만 풀 DNA, 나머지 요약
+  // 미설정 시: 기존 상위 20명 풀 DNA (폴백)
   const MAX_CHARACTERS = 20;
-  const injectedCharacters = config.characters.length > MAX_CHARACTERS
-    ? config.characters.slice(0, MAX_CHARACTERS)
-    : config.characters;
+  const activeNames = new Set(config.sceneDirection?.activeCharacters || []);
+  const hasActiveSelection = activeNames.size > 0;
+
+  const injectedCharacters = hasActiveSelection
+    ? config.characters.filter(c => activeNames.has(c.name)).slice(0, MAX_CHARACTERS)
+    : config.characters.length > MAX_CHARACTERS
+      ? config.characters.slice(0, MAX_CHARACTERS)
+      : config.characters;
+
+  // Tier 2: 미선택 캐릭터 이름+역할만 (토큰 절약)
+  const tier2Characters = hasActiveSelection
+    ? config.characters.filter(c => !activeNames.has(c.name)).slice(0, 30)
+    : [];
 
   // P0: 캐릭터 절삭 경고 이벤트 발행
   if (config.characters.length > MAX_CHARACTERS && typeof window !== 'undefined') {
@@ -308,6 +319,12 @@ export function buildSystemInstruction(
       return entry;
     }).join('\n')
     : `  ${cl('noCharacters')}`;
+
+  // Tier 2: 미선택 캐릭터 간략 목록 (이름+역할만)
+  const tier2Block = tier2Characters.length > 0
+    ? `\n  [${isKO ? '기타 등장인물 (간략)' : 'Other Characters (brief)'}]\n` +
+      tier2Characters.map(c => `  - ${c.name} (${c.role})`).join('\n')
+    : '';
 
   // Character relationships — filter to only include relations where BOTH characters
   // are within the injectedCharacters list (first 20) to avoid ghost references.
@@ -549,7 +566,7 @@ ${actGuide[language] ?? actGuide.EN}
 ${buildGenrePreset(config.genre, isKO)}
 
 [CHARACTER DATABASE / DIALOGUE DNA]
-${characterDNA}
+${characterDNA}${tier2Block}
 ${charRelations ? `\n[CHARACTER RELATIONSHIPS]\n${charRelations}` : ''}
 ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}

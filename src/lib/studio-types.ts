@@ -93,6 +93,8 @@ export interface SceneDirectionData {
   canonRules?: { character: string; rule: string }[];
   sceneTransitions?: { fromScene: string; toScene: string; method: string }[];
   writerNotes?: string;
+  /** 이번 화 등장인물 — 선택된 캐릭터만 프롬프트에 풀 DNA 주입 */
+  activeCharacters?: string[];
 }
 
 // Genre selection entry (multi-genre support)
