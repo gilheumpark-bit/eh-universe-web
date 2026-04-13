@@ -43,7 +43,7 @@ const translations = {
     "loginRequired": "请先登录Google"
   },
   "writing": {
-    "ready": "神经接口已连接",
+    "ready": "写作引擎准备就绪",
     "inputPlaceholder": "输入情节或场景描述...",
     "quickNext": "下一章",
     "quickAction": "剧情反转",
@@ -68,7 +68,7 @@ const translations = {
     "guardrails": "叙事护栏",
     "minDensity": "最小密度",
     "maxCapacity": "最大容量",
-    "oracle": "引擎先知",
+    "oracle": "引擎顾问",
     "commence": "开始写作",
     "corePremise": "核心前提",
     "corePremisePH": "与现实不同的这个世界独有的规则...",
@@ -142,7 +142,7 @@ const translations = {
     "socialProfession": "职业语域",
     "socialProfessionPH": "军人、医生、学生...",
     "socialExplicitness": "露骨程度",
-    "socialProfanity": "脏话",
+    "socialProfanity": "粗俗语言",
     "socialAdvanced": "高级设置"
   },
   "engine": {
@@ -872,7 +872,7 @@ const translations = {
     "prismModeCustomDesc": "自定义",
     "prismSexual": "性描写",
     "prismViolence": "暴力",
-    "prismProfanity": "脏话",
+    "prismProfanity": "粗俗语言",
     "ratingGuide": "中国标准: ALL=全年龄, T15=限制级, M18=成人级"
   },
   "resourceExtra": {

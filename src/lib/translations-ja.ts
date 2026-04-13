@@ -43,7 +43,7 @@ const translations = {
     "loginRequired": "Googleログイン後に使用可能"
   },
   "writing": {
-    "ready": "ニューラルインターフェース接続済み",
+    "ready": "執筆エンジン準備完了",
     "inputPlaceholder": "プロットやシーンの説明を入力...",
     "quickNext": "次の章",
     "quickAction": "どんでん返し",
@@ -110,8 +110,8 @@ const translations = {
     "truthVsBeliefsPH": "人々が信じること vs 実際の真実..."
   },
   "resource": {
-    "title": "エンティティデータベース",
-    "subtitle": "キャラクターDNA",
+    "title": "キャラクター一覧",
+    "subtitle": "キャラクター特性",
     "autoGen": "自動生成",
     "creator": "キャラクタークリエイター",
     "name": "名前",
@@ -163,7 +163,7 @@ const translations = {
     "startPrompt": "設計完了。シーンの描写やイベントを入力して執筆を開始してください。",
     "noArchive": "アーカイブが見つかりません。",
     "nextChapter": "次の章",
-    "plotTwist": "プロットツイスト",
+    "plotTwist": "どんでん返し",
     "nextChapterPrompt": "次の章を書いてください。",
     "plotTwistPrompt": "劇的などんでん返しを起こしてください。",
     "apiKeyTitle": "APIキー設定",

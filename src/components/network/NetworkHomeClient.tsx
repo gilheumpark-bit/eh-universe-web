@@ -51,14 +51,14 @@ interface DashboardState {
 type BoardFilter = "all" | BoardType;
 type FeedSort = "latest" | "popular" | "recommended";
 
-const BOARD_FILTER_LABELS: Record<"all", { ko: string; en: string }> = {
-  all: { ko: "전체", en: "All" },
+const BOARD_FILTER_LABELS: Record<"all", { ko: string; en: string; ja: string; zh: string }> = {
+  all: { ko: "전체", en: "All", ja: "すべて", zh: "全部" },
 };
 
-const FEED_SORT_LABELS: Record<FeedSort, { ko: string; en: string }> = {
-  latest: { ko: "최신", en: "Latest" },
-  popular: { ko: "인기", en: "Popular" },
-  recommended: { ko: "추천", en: "Recommended" },
+const FEED_SORT_LABELS: Record<FeedSort, { ko: string; en: string; ja: string; zh: string }> = {
+  latest: { ko: "최신", en: "Latest", ja: "最新", zh: "最新" },
+  popular: { ko: "인기", en: "Popular", ja: "人気", zh: "热门" },
+  recommended: { ko: "추천", en: "Recommended", ja: "おすすめ", zh: "推荐" },
 };
 
 function scorePosts(

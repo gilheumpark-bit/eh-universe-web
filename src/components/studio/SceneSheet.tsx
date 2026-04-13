@@ -407,9 +407,9 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
   const [cliffs, setCliffs] = useState<CliffEntry[]>(initialDirection?.cliffs || []);
   const [foreshadows, setForeshadows] = useState<ForeshadowEntry[]>(initialDirection?.foreshadows || []);
   const [pacings, setPacings] = useState<PacingEntry[]>(initialDirection?.pacings || [
-    { id: 'p-1', section: lang === 'ko' ? '도입' : 'Intro', percent: 20, desc: '' },
-    { id: 'p-2', section: lang === 'ko' ? '전개' : 'Development', percent: 50, desc: '' },
-    { id: 'p-3', section: lang === 'ko' ? '전환' : 'Transition', percent: 30, desc: '' },
+    { id: 'p-1', section: L4(lang, { ko: '도입', en: 'Intro', ja: '導入', zh: '引入' }), percent: 20, desc: '' },
+    { id: 'p-2', section: L4(lang, { ko: '전개', en: 'Development', ja: '展開', zh: '发展' }), percent: 50, desc: '' },
+    { id: 'p-3', section: L4(lang, { ko: '전환', en: 'Transition', ja: '転換', zh: '转折' }), percent: 30, desc: '' },
   ]);
   const [tensionPoints, setTensionPoints] = useState<TensionPoint[]>(initialDirection?.tensionPoints || []);
   const [canons, setCanons] = useState<CanonEntry[]>(initialDirection?.canons || []);
@@ -575,11 +575,12 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
           )}
           <button onClick={async () => {
             const { activeSupportsStructured } = await import('@/lib/ai-providers');
-            if (!activeSupportsStructured()) { showAlert(lang === 'ko' ? '현재 AI 서비스는 구조화 생성 미지원. Gemini를 사용하세요.' : 'Current AI service does not support structured generation.'); return; }
+            if (!activeSupportsStructured()) { showAlert(L4(lang, { ko: '현재 AI 서비스는 구조화 생성 미지원. Gemini를 사용하세요.', en: 'Current AI service does not support structured generation.', ja: '現在のAIサービスは構造化生成に未対応です。Geminiを使用してください。', zh: '当前AI服务不支持结构化生成，请使用Gemini。' })); return; }
             if (!synopsis) { showAlert(tl('sceneSheet.synopsisRequired')); return; }
             try {
               const { generateSceneDirection } = await import('@/services/geminiService');
-              const result = await generateSceneDirection(synopsis, characterNames || [], lang === "ko" ? 'KO' : 'EN', tierContext);
+              const appLang: AppLanguage = lang === 'ko' ? (languageProp === 'JP' ? 'JP' : languageProp === 'CN' ? 'CN' : 'KO') : 'EN';
+              const result = await generateSceneDirection(synopsis, characterNames || [], appLang, tierContext);
               const ts = Date.now();
               // hooks
               if (result.hooks?.length) setHooks(result.hooks.map((h, i) => ({ id: `ai-h-${ts}-${i}`, position: (h.position || 'opening') as "opening" | "middle" | "ending", hookType: h.hookType || 'question', desc: h.desc || '' })));
@@ -617,10 +618,10 @@ export default function SceneSheet({ lang: langProp, language: languageProp, syn
               <div>
                 <h3 className="text-sm font-black flex items-center gap-2">
                   <span className="text-lg">{pack.flag}</span>
-                  {lang === 'ko' ? pack.label.ko : pack.label.en}
+                  {L4(lang, pack.label)}
                 </h3>
                 <p className="text-[9px] text-text-tertiary font-bold tracking-wider uppercase mt-0.5">
-                  {lang === 'ko' ? pack.subtitle.ko : pack.subtitle.en}
+                  {L4(lang, pack.subtitle)}
                 </p>
               </div>
               <div className="text-[9px] text-text-tertiary">
