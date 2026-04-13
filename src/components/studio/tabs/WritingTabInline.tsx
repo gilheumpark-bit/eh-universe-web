@@ -532,7 +532,9 @@ export default function WritingTabInline(props: Props) {
             )}
 
             {writingMode === 'edit' && (
-              <div className="flex-1 space-y-3">
+              <div className="flex-1 flex flex-col lg:flex-row gap-0 min-h-0">
+                {/* 좌측: 본문 편집 영역 */}
+                <div className="flex-1 min-w-0 overflow-y-auto space-y-3 custom-scrollbar">
                 {/* 모드 설명 배너 — 첫 진입 가이드 */}
                 {editDraft.length === 0 && (
                   <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-amber/5 border border-accent-amber/20 text-[11px] text-accent-amber">
@@ -666,6 +668,32 @@ export default function WritingTabInline(props: Props) {
                     });
                   }}
                 />
+                </div>
+                {/* 우측: 연출/채팅 분할 패널 (데스크톱에서만) */}
+                {splitView && (
+                  <div className="hidden lg:flex flex-col w-[340px] shrink-0 border-l border-border/40 bg-bg-primary h-full overflow-hidden">
+                    <SplitPanelTabs
+                      splitView={splitView}
+                      setSplitView={setSplitView}
+                      language={language}
+                      config={currentSession.config}
+                      setConfig={setConfig}
+                      currentSession={currentSession}
+                      chatMessages={chatMessages}
+                      chatLoading={chatLoading}
+                      handleChatSend={handleChatSend}
+                      abortChat={abortChat}
+                      clearChat={clearChat}
+                      directorReport={props.directorReport}
+                      hfcpState={props.hfcpState}
+                      suggestions={suggestions}
+                      setSuggestions={setSuggestions}
+                      pipelineResult={pipelineResult}
+                      setActiveTab={setActiveTab}
+                      hostedProviders={props.hostedProviders}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -855,17 +883,15 @@ export default function WritingTabInline(props: Props) {
         )}
       </div>
 
-      {/* 3: 우측 통합 패널 — 분할 뷰 (연출/인물/참고/채팅 탭) */}
+      {/* 모바일 전용: 분할 뷰 오버레이 */}
       {splitView && (
-        <div className="fixed inset-0 z-40 bg-bg-primary/95 backdrop-blur-sm lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:backdrop-blur-none lg:w-[38%] lg:min-w-[300px] lg:max-w-[520px] lg:shrink-0 flex flex-col border-l border-border/40">
-          {/* 모바일 닫기 헤더 */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border lg:hidden">
-            <span className="text-sm font-bold text-text-primary">{isKO ? '분할 뷰' : 'Split View'}</span>
+        <div className="fixed inset-0 z-40 bg-bg-primary/95 backdrop-blur-sm lg:hidden flex flex-col">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+            <span className="text-sm font-bold text-text-primary">{isKO ? '연출/채팅' : 'Direction/Chat'}</span>
             <button onClick={() => setSplitView(null)} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary">
               <X className="w-4 h-4" />
             </button>
           </div>
-          {/* 패널 내부 탭: 연출 / 채팅 */}
           <SplitPanelTabs
             splitView={splitView}
             setSplitView={setSplitView}
