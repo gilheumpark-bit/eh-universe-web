@@ -248,7 +248,7 @@ function SceneTable({ sheet, lang }: { sheet: EpisodeSceneSheet; lang: AppLangua
           </tr>
         </thead>
         <tbody>
-          {sheet.scenes.map((s, i) => (
+          {(sheet.scenes ?? []).map((s, i) => (
             <tr key={i} className="hover:bg-bg-secondary/30">
               <td className="border border-border px-2 py-1 text-text-secondary text-center">{s.sceneId}</td>
               <td className="border border-border px-2 py-1 text-text-primary">{s.sceneName}</td>
@@ -348,7 +348,7 @@ export default function EpisodeScenePanel({
               {sheet.characters && <span className="ml-2 text-xs text-text-tertiary">{sheet.characters}</span>}
             </div>
             <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-              <span className="text-[10px] text-text-tertiary">{sheet.scenes.length}{L.scenes}</span>
+              <span className="text-[10px] text-text-tertiary">{(sheet.scenes ?? []).length}{L.scenes}</span>
               <span className="text-text-tertiary">{expandedEp === sheet.episode ? "▼" : "▶"}</span>
             </div>
           </button>

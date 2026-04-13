@@ -335,9 +335,13 @@ export interface EpisodeSceneEntry {
 export interface EpisodeSceneSheet {
   episode: number;
   title: string;
-  arc: string;
-  characters: string;
-  scenes: EpisodeSceneEntry[];
+  arc?: string;
+  characters?: string;
+  scenes?: EpisodeSceneEntry[];
+  /** SceneDirectionData snapshot saved per-episode */
+  directionSnapshot?: SceneDirectionData;
+  /** Which genre preset was used (e.g. 'romance', 'thriller') */
+  presetUsed?: string;
   lastUpdate: number;
 }
 
