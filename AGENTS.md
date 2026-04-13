@@ -32,10 +32,44 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Network | `/network` | 행성 커뮤니티 + 보고서 + 정착지 |
 | Translation Studio | `/translation-studio` | 소설 전용 번역 스튜디오 (6축 채점) |
 
-## 소설 스튜디오 아키텍처 (2026-04-11 최신)
+## 소설 스튜디오 아키텍처 (2026-04-14 최신)
 
-- **집필 OS UI**: OSDesktop(독) + WindowTitleBar + StudioStatusBar + Zen 모드
+### 7-Phase Novel IDE
+- **Phase 1**: GitHub OAuth + Octokit 파일 CRUD — `github-sync.ts`, `useGitHubSync`
+- **Phase 2**: Markdown + YAML 직렬화 — `project-serializer.ts`
+- **Phase 3**: Tiptap 블록 에디터 — `NovelEditor.tsx` (textarea 교체)
+- **Phase 4**: 에피소드 파일 트리 — `EpisodeExplorer.tsx` (Volume 구조)
+- **Phase 5**: 하이브리드 컨텍스트 3-Tier — context builder
+- **Phase 6**: Git 브랜치 평행우주 — `BranchSelector`, `ParallelUniversePanel`, `BranchDiffView`
+- **Phase 7**: Tab 인라인 자동완성 — `extensions/inline-completion.ts`, `useInlineCompletion`
+
+### 집필 OS UI
+- OSDesktop(독) + WindowTitleBar + StudioStatusBar + Zen 모드
 - **5가지 집필 모드**: AI생성 / 수동편집 / 3단계캔버스 / 자동30%리파인 / 고급
+
+### 신규 컴포넌트 (2026-04-14)
+- `NovelEditor.tsx` — Tiptap 기반 블록 에디터
+- `EpisodeExplorer.tsx` — 볼륨/에피소드 파일 트리 UI
+- `BranchSelector.tsx` — Git 브랜치 (평행우주) 선택기
+- `ParallelUniversePanel.tsx` — IF 전개 패널
+- `BranchDiffView.tsx` — 브랜치 간 차이 비교
+- `WriterProfileCard.tsx` — 작가 프로필 카드
+- `EpisodeScenePanel.tsx` — 에피소드별 씬시트 이력
+
+### 신규 훅
+- `useGitHubSync` — Octokit 기반 GitHub 동기화
+- `useInlineCompletion` — Tab 자동완성 Tiptap 연동
+
+### 신규 라이브러리
+- `lib/github-sync.ts` — GitHub Octokit CRUD 추상화
+- `lib/project-serializer.ts` — MD+YAML 프로젝트 직렬화
+
+### 씬시트 리웍 (SceneSheet 3-section)
+- 13탭 → 3섹션 (줄거리/분위기/캐릭터) + 고급 설정 접기
+- 10개 장르 프리셋 (이모지+색상 그리드)
+- 에피소드별 씬시트 저장 (`EpisodeSceneSheet` 타입)
+
+### 기존 시스템 유지
 - **실시간 품질 분석**: `useQualityAnalysis` — show/tell, 반복어, 문장 다양성, 밀도, 대사 비율
 - **연속성 검사**: `useContinuityCheck` — 캐릭터 이름 오타, 특성 모순, 설정 충돌
 - **인라인 리라이트**: `InlineActionPopup` — 문맥 인식(장르/캐릭터/주변 ±200자) + Undo 스택
@@ -43,7 +77,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **버전 히스토리**: 300자+ 변경 시 자동 스냅샷 + VersionDiff
 - **내보내기**: EPUB 3.0 + DOCX + TXT/MD/JSON/HTML/CSV
 
-## 코드 스튜디오 아키텍처 (2026-04-13 업데이트)
+## 코드 스튜디오 아키텍처 (2026-04-14 동기화)
 
 - **Shell 3파일 분리**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`

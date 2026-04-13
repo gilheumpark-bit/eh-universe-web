@@ -20,15 +20,43 @@ A worldbuilding portal for 200,000 star systems — with an AI writing OS and a 
 
 ## Overview
 
-EH Universe is a full-stack creative platform built on a single Next.js 16.2 application. Five apps share a unified design system and authentication layer:
+**EH Universe Web — NOA Studio** is a full-stack creative platform built on a single Next.js 16.2 application. Five apps share a unified design system and authentication layer:
 
 1. **Universe Portal** — 140+ lore documents across 8 categories
-2. **NOA Studio** — AI writing OS with real-time quality analysis
-3. **Code Studio** — Verified code IDE with 9-team pipeline + Quill Engine
+2. **NOA Studio** — Novel IDE with GitHub-backed persistence, Tiptap block editor, and 7-Phase architecture
+3. **Code Studio** — Verified code IDE with 9-team pipeline + Quill Engine (224 rules)
 4. **Translation Studio** — Novel-specific AI translation with 6-axis scoring
 5. **EH Network** — Writer community with planet systems
 
 **BYOK (Bring Your Own Key)** — works with Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio. Free to use.
+
+---
+
+## 주요 기능 / Key Features
+
+### 소설 IDE 7-Phase 아키텍처
+- **Phase 1**: GitHub OAuth + Octokit 파일 CRUD (persistent storage)
+- **Phase 2**: Markdown + YAML 직렬화 계층 (project-serializer)
+- **Phase 3**: Tiptap 블록 에디터 (NovelEditor — textarea 교체)
+- **Phase 4**: 에피소드 파일 트리 UI (EpisodeExplorer — Volume 구조)
+- **Phase 5**: 하이브리드 컨텍스트 3-Tier (context builder)
+- **Phase 6**: Git 브랜치 평행우주 (BranchSelector, ParallelUniversePanel, BranchDiffView)
+- **Phase 7**: Tab 인라인 자동완성 (InlineCompletion extension, Copilot 방식)
+
+### 연출탭 리웍
+- 13탭 → 3섹션 (줄거리/분위기/캐릭터) + 고급 설정 접기
+- 10개 장르 프리셋 (SceneSheet 3-section rework)
+- 에피소드별 씬시트 저장 (EpisodeScenePanel)
+
+### 품질 검증
+- 100개 기능 점수 시스템 (avg 875/1000 target)
+- UX 직관성 45건 개선 (9.5+/10 목표)
+- 4개국어 i18n (KO/EN/JA/ZH) — 자연스러운 번역 품질
+
+### AI 인프라
+- DGX Spark 14B 서버 (Qwen2.5-14B-Instruct-AWQ, 128GB VRAM)
+- SSE 스트리밍 (TTFT 0.05s)
+- Quill Engine 224-rule verification (4-layer: pre-filter, AST, TypeChecker, esquery)
 
 ---
 
@@ -45,7 +73,7 @@ EH Universe is a full-stack creative platform built on a single Next.js 16.2 app
 <td width="50%">
 
 **NOA Studio** `/studio`
-Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine / Advanced), real-time paragraph quality analysis (show/tell, repetition, variety, density, dialogue), continuity checking, inline rewrite (Ctrl+Shift+R), EPUB/DOCX/TXT export, version diff, DGX SSE streaming (TTFT 0.05s), Zen tunnel-vision mode, manuscript editor (65ch width, font scaling Ctrl+=/-), scene direction sheet (13-field inline panel), character smart injection, Story Bible anti-forgetting.
+Novel IDE with Tiptap block editor, GitHub persistence, 5 writing modes, real-time paragraph quality analysis, continuity checking, inline rewrite (Ctrl+Shift+R), parallel universe branching, Tab autocomplete, EPUB/DOCX/TXT export, version diff, DGX SSE streaming, Zen mode, scene direction sheet (3-section), character smart injection, Story Bible.
 
 </td>
 </tr>
@@ -53,7 +81,7 @@ Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine /
 <td>
 
 **Code Studio** `/code-studio`
-Browser IDE with Monaco editor, 51-panel registry, 9-team verification pipeline, diff-guard (SCOPE/CONTRACT/@block protection), 4-Tier orchestration (Ultra/ProPlus/Standard/Lite), 224-rule Quill Engine + 436-rule dual catalog, design linter (16 rules), and WebContainer preview.
+Browser IDE with Monaco editor, 51-panel registry, 9-team verification pipeline, diff-guard (SCOPE/CONTRACT/@block protection), 4-Tier orchestration, 224-rule Quill Engine + 436-rule dual catalog, design linter (16 rules), and WebContainer preview.
 
 </td>
 <td>
@@ -87,15 +115,18 @@ Galaxy map, vessel specs, warp gate calculator, soundtrack player, Neka sound ge
 |-------|-----------|
 | Framework | Next.js 16.2, React 19, TypeScript 5 |
 | UI | Tailwind CSS 4, Design System v8.0 (3-Tier), Lucide Icons |
+| Novel Editor | Tiptap (block editor) + InlineCompletion extension + Octokit (GitHub sync) |
 | AI | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio (BYOK) |
-| Writing Engine | ANS 10.0 — quality gate, tension curves, genre presets, HFCP, 4-agent DGX routing, genre temperature optimization |
+| Writing Engine | ANS 10.0 — quality gate, tension curves, genre presets, HFCP, DGX routing |
 | Code Engine | 9-team pipeline + 224-rule Quill Engine, diff-guard, apply-guard, intent-parser, 4-Tier |
-| DGX Spark | GB10 128GB, 4-model multi-agent (qwen/abliterated/r1/eva) |
+| DGX Spark | GB10 128GB, Qwen2.5-14B-Instruct-AWQ (single model) |
 | Translation Engine | 6-axis scoring, 41-band, auto-recreation, glossary, CAT standard |
-| Editor | Monaco Editor, xterm.js, WebContainer API |
-| Storage | localStorage + IndexedDB + Firestore (CLOUD_SYNC) + Google Drive |
+| Editor | Monaco Editor (Code Studio), Tiptap (Novel Studio), xterm.js, WebContainer API |
+| Storage | localStorage + IndexedDB + GitHub (Octokit) + Firestore (CLOUD_SYNC) + Google Drive |
+| Serialization | Markdown + YAML front-matter (project-serializer, markdown-serializer) |
 | Auth | Firebase Auth + Stripe tiers |
 | Export | EPUB 3.0 / DOCX / TXT / XLIFF / TMX — pure JS |
+| i18n | 4 languages (KO, EN, JA, ZH) via LangContext |
 | Testing | Jest (~1,600 tests), Playwright E2E |
 | Deploy | Vercel (ehsu.app) |
 
@@ -125,92 +156,25 @@ npm test             # Unit tests
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── studio/             # NOA Writing OS
+│   ├── studio/             # NOA Writing OS (Novel IDE)
 │   ├── code-studio/        # Verified Code IDE
 │   ├── translation-studio/ # Translation Workspace
 │   ├── network/            # Writer Community
 │   ├── archive/            # Universe Archive (140+ docs)
 │   └── api/                # 22 API routes
 ├── components/
-│   ├── studio/             # Writing OS (OSDesktop, WindowTitleBar, StatusBar, Zen)
+│   ├── studio/             # Novel IDE (NovelEditor, EpisodeExplorer, BranchSelector, etc.)
+│   │   └── extensions/     # Tiptap extensions (inline-completion, novel-keymap)
 │   ├── code-studio/        # IDE panels (87 files)
 │   └── translator/         # Translation editor + panels
 ├── engine/                 # ANS 10.0 — pipeline, quality-gate, director, genre-presets
-├── hooks/                  # useQualityAnalysis, useContinuityCheck, useUndoStack, etc.
+├── hooks/                  # useGitHubSync, useInlineCompletion, useQualityAnalysis, etc.
 └── lib/
     ├── code-studio/        # IDE core (6 directories)
-    │   ├── core/           # Panel registry, design system, scope policy
-    │   ├── ai/             # Intent parser, calc protocol, tier registry
-    │   ├── pipeline/       # Diff guard, apply guard, design transpiler, verification loop
-    │   ├── editor/         # Monaco, IntelliSense
-    │   ├── features/       # Terminal, Git, sandbox
-    │   └── audit/          # Quality engine
+    ├── github-sync.ts      # GitHub Octokit integration
+    ├── project-serializer.ts  # MD+YAML serialization
     └── firestore-project-sync.ts  # Cloud sync (feature-flagged)
 ```
-
----
-
-## NOA Studio — Writing OS
-
-| Feature | Description |
-|---------|-------------|
-| **5 Writing Modes** | AI Draft / Manual Edit / 3-Step Canvas / Auto 30% Refine / Advanced |
-| **Real-time Quality** | Paragraph scoring: show/tell, repetition, sentence variety, density, dialogue ratio |
-| **Continuity Check** | Character name typos (edit distance 1), trait conflicts, time/genre contradictions |
-| **Inline Rewrite** | Select text → Ctrl+Shift+R → context-aware AI rewrite with undo stack |
-| **Quality Gate** | 6-dimension evaluation with per-attempt history tracking |
-| **Version Diff** | Auto-snapshot at 300+ char changes, LCS-based diff view |
-| **Export** | EPUB 3.0, DOCX (Office XML), TXT, MD, JSON, HTML, CSV |
-| **Writing OS UI** | macOS dock, window title bar, status bar, zen mode |
-
----
-
-## AI Workflow
-
-| Feature | Detail |
-|---------|--------|
-| Retry | 3 attempts + jittered exponential backoff + Retry-After header |
-| Token Budget | System prompt audit — warns at 30% context usage |
-| Character Limit | Warns when >20 characters truncated from prompt |
-| ARI Circuit Breaker | EMA scoring, auto-failover to healthy provider |
-| Quality Gate History | Per-attempt grade/director-score/tag/fail-reasons tracking |
-| Firestore Sync | Debounced 3s writes + onSnapshot real-time (CLOUD_SYNC flag) |
-
----
-
-## Design System v8.0
-
-| Tier | Tokens | Usage |
-|------|--------|-------|
-| FULL | ~3,000 | CSS layout agents, ChatPanel |
-| COMPACT | ~800 | App generator, Autopilot |
-| MINIMAL | ~100 | Chat fallback |
-
-- Semantic tokens required (`bg-bg-primary`, not raw Tailwind)
-- Z-index variables (`--z-dropdown` through `--z-tooltip`)
-- 4px spacing grid, 44px touch targets
-- 16-rule runtime design linter
-- 5 design presets with auto-detection
-
----
-
-## CS Quill — Code Quality CLI
-
-```
-    /\_/\
-   ( o.o )  CS Quill — Code Quality Guardian
-    > ^ <   56 engines | 274 tests | SBOM | Offline
-  /||||||\\
-```
-
-```bash
-npm run cs -- init
-npm run cs -- generate "REST API with auth"
-npm run cs -- verify ./src
-npm run cs -- audit
-```
-
-28 commands, 56 engines, 3-tier architecture (Web + CLI + VS Code Extension).
 
 ---
 
@@ -219,7 +183,7 @@ npm run cs -- audit
 | Document | Description |
 |----------|------------|
 | [README.ko.md](README.ko.md) | Korean documentation |
-| [CHANGELOG.md](CHANGELOG.md) | Version history (v2.0.0) |
+| [CHANGELOG.md](CHANGELOG.md) | Version history (v2.1.0) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |
 | [SECURITY.md](SECURITY.md) | Security policy |
@@ -237,6 +201,6 @@ npm run cs -- audit
 
 *"Where are you headed?"*
 
-Built with Next.js 16.2, TypeScript, seven AI providers, and CS Quill.
+Built with Next.js 16.2, TypeScript, Tiptap, seven AI providers, and Quill Engine.
 
 </div>

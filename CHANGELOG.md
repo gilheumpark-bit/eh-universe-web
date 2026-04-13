@@ -3,6 +3,52 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] — 2026-04-14
+
+### 소설 IDE 아키텍처 전면 구현 (7-Phase)
+- Phase 1: GitHub OAuth + Octokit 파일 CRUD (`github-sync.ts`, `useGitHubSync`)
+- Phase 2: Markdown + YAML 직렬화 계층 (`project-serializer.ts`)
+- Phase 3: Tiptap 블록 에디터 (`NovelEditor.tsx` — textarea 교체)
+- Phase 4: 에피소드 파일 트리 UI (`EpisodeExplorer.tsx` — Volume 구조)
+- Phase 5: 하이브리드 컨텍스트 3-Tier 명시화 (context builder)
+- Phase 6: Git 브랜치 평행우주 (`BranchSelector`, `ParallelUniversePanel`, `BranchDiffView`)
+- Phase 7: Tab 인라인 자동완성 (`InlineCompletion` Tiptap extension, `useInlineCompletion`)
+
+### 연출탭 디자인 리웍
+- 13탭 → 3섹션 (줄거리/분위기/캐릭터) + 고급 설정 접기 (`SceneSheet` 3-section rework)
+- 10개 장르 프리셋 이모지+색상 그리드
+- 에피소드별 씬시트 저장 (`EpisodeScenePanel` — 오른쪽 이력 사이드바)
+
+### UX 직관성 대폭 개선 (45건)
+- Git 용어 → 소설 용어 (branch→버전, main→본편)
+- 독 13개→5개+더보기
+- 인라인 리라이트 한글 라벨
+- 고급 모드 5개 상황 프리셋 (전투/일상/고백/추격/대화)
+- 품질 게이트→품질 검사 용어 순화
+- 세계관 3단계 가이드 배너
+- 씬 플레이어 시네마 모드 진입점
+- Tab 자동완성 온보딩 힌트
+- 프롬프트 예시 칩 (퀵스타트 + AI 입력)
+- 20개 마이크로 폴리시 (빈 상태 메시지, 툴팁, 돌아가기 통일 등)
+
+### 100개 기능 전수 개선
+- 30건 수정 — 점수 평균 731→875+ 목표
+- `WriterProfileCard`: 작가 프로필 카드 신규 추가
+
+### i18n 번역 품질
+- 일본어: キャラクターDNA→キャラクター特性, プロットツイスト→どんでん返し
+- 중국어: 引擎先知→引擎顾问, 脏话→粗俗语言
+
+### 린트 대청소
+- eslint 917 → 0 에러
+- rules-of-hooks 3건, exhaustive-deps 18건 수정
+- TypeScript 0 에러, 빌드 Pass
+
+### 인프라
+- Gemini 데스크톱 마이그레이션 리버트 (618파일 복구)
+- 번역 스튜디오 에디터 색 밸런스 (앰버/블루 톤 분리)
+- DGX Spark 14B 단일 모델 통합 (다중 모델 하이브리드 폐기)
+
 ## [2.0.0] - 2026-04-13
 
 ### Added — Quill Engine Integration
