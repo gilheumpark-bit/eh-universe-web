@@ -307,4 +307,30 @@ export function buildFPSuppressionPrompt(filePath = ''): string {
   return lines.join('\n');
 }
 
-// IDENTITY_SEAL: PART-5 | role=prompt-text-builder | inputs=patterns,filePath,tokenBudget | outputs=qualityRulesString,fpSuppressionString
+// ============================================================
+// PART 6 — Quill 224-Rule Catalog Re-export
+// ============================================================
+// Consumers that already import from this module can access
+// the full 224-rule catalog without a separate import path.
+
+export {
+  RULE_CATALOG,
+  getRule,
+  getRulesByCategory,
+  getRulesByEngine,
+  getRulesByAction,
+  getHardFailRules,
+  getAISpecificRules,
+  getCatalogStats,
+} from '@/lib/code-studio/core/quill-catalog';
+
+export type {
+  Severity,
+  Confidence,
+  Engine,
+  Source,
+  Action,
+  RuleMeta,
+} from '@/lib/code-studio/core/quill-catalog';
+
+// IDENTITY_SEAL: PART-6 | role=quill-catalog-re-export | inputs=quill-catalog | outputs=224-rule types+helpers

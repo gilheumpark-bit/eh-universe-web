@@ -1,7 +1,7 @@
 // ============================================================
 // PART 1 — Static pipeline team stages (runFullPipeline)
 // ============================================================
-// Logical "8 teams" execution model: non-blocking stages run in parallel,
+// Logical "9 teams" execution model: non-blocking stages run in parallel,
 // then blocking stages run in order. Keep in sync with pipeline.ts FULL_TEAMS.
 
 export type PipelineTeamStage =
@@ -12,7 +12,8 @@ export type PipelineTeamStage =
   | 'asset-trace'
   | 'stability'
   | 'release-ip'
-  | 'governance';
+  | 'governance'
+  | 'quill';
 
 export interface PipelineTeamMeta {
   stage: PipelineTeamStage;
@@ -33,6 +34,7 @@ export const PIPELINE_TEAM_STAGES: readonly PipelineTeamMeta[] = [
   { stage: 'stability', blocking: false },
   { stage: 'release-ip', blocking: true },
   { stage: 'governance', blocking: false },
+  { stage: 'quill', blocking: false },
 ] as const;
 
 // IDENTITY_SEAL: PART-1 | role=pipeline-execution-model | inputs=none | outputs=PIPELINE_TEAM_STAGES

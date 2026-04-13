@@ -1,11 +1,14 @@
 // ============================================================
-// Code Studio — 8-Team Pipeline (Static Analysis, No AI)
+// Code Studio — 9-Team Pipeline (Static Analysis, No AI)
 // ============================================================
 // Each team: (code, language, fileName) => TeamResult
-// Pure regex + heuristic based analysis.
+// Teams 1-8: Pure regex + heuristic based analysis.
+// Team 9 (Quill): TypeScript AST + TypeChecker deep analysis.
 
 import { detectGoodPatterns, downgradeFindings } from './good-pattern-detector';
 import { applyScopePolicyToFindings } from '../core/scope-policy';
+import { runQuillVerification } from '../core/quill-integration';
+import { getCatalogStats } from '../core/quill-catalog';
 
 // ============================================================
 // PART 1 — Shared Types
@@ -1007,3 +1010,56 @@ export function filterTeamResultByScope(
 }
 
 // IDENTITY_SEAL: PART-10 | role=ScopePolicyFilter | inputs=TeamResult,filePath | outputs=TeamResult
+
+// ============================================================
+// PART 11 — Team 9: Quill (TypeScript AST + TypeChecker Deep Analysis)
+// ============================================================
+
+/**
+ * Team 9 runs the Quill engine for deep TypeScript analysis:
+ * - 4-layer analysis (pre-filter → AST → TypeChecker → esquery)
+ * - 224-rule catalog coverage with CWE/OWASP mappings
+ * - Cyclomatic complexity, scope graph, symbol resolution
+ *
+ * Browser-safe: gracefully degrades when typescript is unavailable.
+ */
+export function runTeam9Quill(code: string, _language: string, fileName: string): TeamResult {
+  const quillResult = runQuillVerification(code, fileName);
+  const catalogInfo = getCatalogStats();
+
+  // Map Quill findings → pipeline Finding format
+  const findings: Finding[] = quillResult.findings.map((qf) => {
+    let severity: Severity;
+    if (qf.severity === 'critical') severity = 'critical';
+    else if (qf.severity === 'error') severity = 'major';
+    else if (qf.severity === 'warning') severity = 'minor';
+    else severity = 'info';
+
+    return {
+      severity,
+      message: qf.message,
+      line: qf.line,
+      rule: qf.ruleId,
+    };
+  });
+
+  const score = quillResult.score;
+
+  return {
+    stage: 'quill',
+    status: score >= 80 ? 'pass' : score >= 50 ? 'warn' : 'fail',
+    score,
+    findings,
+    metrics: {
+      catalogRules: catalogInfo.total,
+      catalogCategories: catalogInfo.categories,
+      findingsCount: quillResult.stats.findingsCount,
+      criticalCount: quillResult.stats.criticalCount,
+      cyclomaticComplexity: quillResult.stats.cyclomaticComplexity,
+      nodeCount: quillResult.stats.nodeCount,
+      enginesUsed: quillResult.stats.enginesUsed.length,
+    },
+  };
+}
+
+// IDENTITY_SEAL: PART-11 | role=Quill | inputs=code,lang,fileName | outputs=TeamResult
