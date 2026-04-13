@@ -235,9 +235,9 @@ function BeatBlock({
         onDoubleClick={handleDoubleClick}
         className={`flex items-start gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-all
           ${BEAT_COLORS[beat.type]}
-          ${isSelected ? "ring-1 ring-accent-purple" : ""}
+          ${isSelected ? "ring-2 ring-accent-purple shadow-sm shadow-accent-purple/20" : ""}
           ${warning ? "ring-1 ring-accent-amber/50" : ""}
-          hover:brightness-110`}
+          hover:brightness-110 active:scale-[0.98] transition-transform`}
       >
       {/* 드래그 핸들 */}
       <div className="opacity-0 group-hover:opacity-50 cursor-grab active:cursor-grabbing pt-0.5">
@@ -343,9 +343,10 @@ function SceneLane({
   const hasWarnings = sceneWarnings.length > 0;
 
   return (
-    <div className={`border rounded-xl ${hasWarnings ? "border-accent-amber/30" : "border-border/20"} bg-bg-secondary/30`}>
+    <div className={`border rounded-xl ${hasWarnings ? "border-accent-amber/30" : "border-border/20"} bg-bg-secondary/30 transition-transform`}>
       {/* 장면 헤더 */}
-      <div role="button" tabIndex={0} className="w-full flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/[0.02] transition-colors text-left" onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}>
+      <div role="button" tabIndex={0} className="w-full flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/[0.02] transition-colors text-left group/scene" onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}>
+        <GripVertical className="h-3.5 w-3.5 text-text-tertiary opacity-0 group-hover/scene:opacity-50 cursor-grab active:cursor-grabbing shrink-0" />
         {collapsed ? <ChevronRight className="h-3.5 w-3.5 text-text-tertiary" /> : <ChevronDown className="h-3.5 w-3.5 text-text-tertiary" />}
 
         <span className="text-xs font-mono text-text-primary font-medium">{scene.title}</span>
@@ -467,6 +468,7 @@ export default function SceneTimeline({
   const [selectedBeat, setSelectedBeat] = useState<DragState | null>(null);
   const [dragSource, setDragSource] = useState<DragState | null>(null);
   const [undoStack, setUndoStack] = useState<ParsedScene[][]>([]);
+  const [dragOverTarget, setDragOverTarget] = useState<{ sceneIndex: number; beatIndex: number } | null>(null);
 
   const timelineWarnings = useMemo(() => detectTimelineWarnings(scenes), [scenes]);
   const allWarnings = [...timelineWarnings, ...(externalWarnings ?? []).map((w) => ({ sceneIndex: -1, message: w, severity: "info" as const }))];
@@ -672,8 +674,8 @@ export default function SceneTimeline({
             onSplitBeat={(si2, bi, pos) => splitBeat(si2, bi, pos)}
             onPlayFrom={onPlayFrom}
             onDragStart={(si2, bi) => setDragSource({ sceneIndex: si2, beatIndex: bi })}
-            onDragOver={(si2, bi, e) => e.preventDefault()}
-            onDrop={(si2, bi) => handleDrop(si2, bi)}
+            onDragOver={(si2, bi, e) => { e.preventDefault(); setDragOverTarget({ sceneIndex: si2, beatIndex: bi }); }}
+            onDrop={(si2, bi) => { handleDrop(si2, bi); setDragOverTarget(null); }}
           />
         ))}
 

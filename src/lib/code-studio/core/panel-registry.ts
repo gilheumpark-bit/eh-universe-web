@@ -50,6 +50,10 @@ export interface PanelDef {
   status: PanelStatus;
   /** true = shown by default; false/undefined = hidden behind "Advanced" toggle */
   isEssential?: boolean;
+  /** Brief description for tooltip (English) */
+  description?: string;
+  /** Brief description for tooltip (Korean) */
+  descriptionKo?: string;
 }
 
 // IDENTITY_SEAL: PART-1 | role=TypeDef | inputs=none | outputs=PanelDef,PanelGroup,GROUP_LABELS
@@ -60,12 +64,12 @@ export interface PanelDef {
 
 export const PANEL_REGISTRY: readonly PanelDef[] = [
   // ── editing (편집) ─────────────────────────────────────────
-  { id: "chat",           label: "NOA Chat",             labelKo: "NOA 채팅",        icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
-  { id: "quick-verify",   label: "Quick Verify",         labelKo: "원클릭 검증",      icon: "Shield",          group: "editing",      category: "Tools", color: "text-accent-green",   status: "stable", isEssential: true },
-  { id: "project-spec",   label: "Project Spec",         labelKo: "이지모드(명세서)", icon: "Wand2",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable", isEssential: true },
-  { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable", isEssential: true },
-  { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true },
-  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable", isEssential: true },
+  { id: "chat",           label: "NOA Chat",             labelKo: "NOA 채팅",        icon: "MessageSquare",   group: "editing",      category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true, description: "AI chat assistant for code generation and Q&A", descriptionKo: "코드 생성 및 질의응답 AI 채팅 어시스턴트" },
+  { id: "quick-verify",   label: "Quick Verify",         labelKo: "원클릭 검증",      icon: "Shield",          group: "editing",      category: "Tools", color: "text-accent-green",   status: "stable", isEssential: true, description: "One-click code verification with Quill Engine", descriptionKo: "Quill 엔진으로 원클릭 코드 검증" },
+  { id: "project-spec",   label: "Project Spec",         labelKo: "이지모드(명세서)", icon: "Wand2",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable", isEssential: true, description: "Easy-mode project specification generator", descriptionKo: "프로젝트 명세서를 쉽게 작성하는 이지모드" },
+  { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable", isEssential: true, description: "Full-text search across all project files", descriptionKo: "프로젝트 전체 파일에서 텍스트 검색" },
+  { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true, description: "Symbol tree and function outline navigator", descriptionKo: "심볼 트리 및 함수 아웃라인 탐색기" },
+  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable", isEssential: true, description: "Real-time HTML/CSS preview of the current file", descriptionKo: "현재 파일의 실시간 HTML/CSS 프리뷰" },
   { id: "templates",      label: "Template Gallery",     labelKo: "템플릿 갤러리",     icon: "Layout",          group: "editing",      category: "File",  color: "text-accent-purple",  status: "stable" },
   { id: "diff-editor",    label: "Diff Editor",          labelKo: "비교 편집기",       icon: "GitCompare",      group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
   { id: "canvas",         label: "Canvas",               labelKo: "캔버스",           icon: "PenTool",         group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
@@ -76,7 +80,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "multi-terminal", label: "Multi Terminal",       labelKo: "멀티 터미널",       icon: "Layers",          group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
 
   // ── ai (AI) ────────────────────────────────────────────────
-  { id: "composer",       label: "Multi-file Composer",  labelKo: "멀티파일 작성기",    icon: "Edit3",           group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable", isEssential: true },
+  { id: "composer",       label: "Multi-file Composer",  labelKo: "멀티파일 작성기",    icon: "Edit3",           group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable", isEssential: true, description: "Generate and edit code across multiple files simultaneously", descriptionKo: "여러 파일을 동시에 생성/편집하는 멀티파일 작성기" },
   { id: "autopilot",      label: "Autopilot",            labelKo: "오토파일럿",        icon: "Play",            group: "ai",           category: "Tools", color: "text-accent-amber",   status: "stable" },
   { id: "agents",         label: "Agent Pipeline",       labelKo: "에이전트 파이프라인", icon: "Shield",          group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
   { id: "creator",        label: "Code Creator",         labelKo: "코드 크리에이터",    icon: "Wand2",           group: "ai",           category: "Tools", color: "text-accent-amber",   status: "stable" },
@@ -85,8 +89,8 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "model-switcher", label: "Model Switcher",       labelKo: "모델 전환",         icon: "Cpu",             group: "ai",           category: "Tools", color: "text-accent-purple",  status: "stable" },
 
   // ── verification (검증) ────────────────────────────────────
-  { id: "pipeline",       label: "Pipeline",             labelKo: "파이프라인",        icon: "Activity",        group: "verification", category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true },
-  { id: "bugs",           label: "Bug Finder",           labelKo: "버그 파인더",       icon: "Bug",             group: "verification", category: "Tools", color: "text-accent-red",     status: "stable", isEssential: true },
+  { id: "pipeline",       label: "Pipeline",             labelKo: "파이프라인",        icon: "Activity",        group: "verification", category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true, description: "9-team verification pipeline status and results", descriptionKo: "9팀 검증 파이프라인 상태 및 결과" },
+  { id: "bugs",           label: "Bug Finder",           labelKo: "버그 파인더",       icon: "Bug",             group: "verification", category: "Tools", color: "text-accent-red",     status: "stable", isEssential: true, description: "Automated bug detection and code issue scanner", descriptionKo: "자동 버그 탐지 및 코드 이슈 스캐너" },
   { id: "review",         label: "Review Center",        labelKo: "리뷰 센터",         icon: "AlertTriangle",   group: "verification", category: "Tools", color: "text-accent-green",   status: "stable" },
   { id: "evaluation",     label: "Project Evaluation",   labelKo: "프로젝트 평가",     icon: "BarChart3",       group: "verification", category: "Tools", color: "text-accent-blue",    status: "stable" },
   { id: "progress",       label: "Progress Dashboard",   labelKo: "진행 대시보드",     icon: "TrendingUp",      group: "verification", category: "View",  color: "text-accent-green",   status: "stable" },
@@ -94,7 +98,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "merge-conflict", label: "Merge Conflicts",      labelKo: "머지 충돌",         icon: "GitMerge",        group: "verification", category: "Tools", color: "text-accent-red",     status: "stable" },
 
   // ── git (Git & 배포) ──────────────────────────────────────
-  { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true },
+  { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true, description: "Git status, staging, commit, and branch management", descriptionKo: "Git 상태, 스테이징, 커밋, 브랜치 관리" },
   { id: "deploy",         label: "Deploy",               labelKo: "배포",              icon: "Upload",          group: "git",          category: "View",  color: "text-accent-green",   status: "stable" },
   { id: "git-graph",      label: "Git Graph",            labelKo: "Git 그래프",        icon: "GitFork",         group: "git",          category: "View",  color: "text-accent-purple",  status: "stable" },
   { id: "packages",       label: "Package Manager",      labelKo: "패키지 관리",       icon: "Package",         group: "git",          category: "Tools", color: "text-accent-green",   status: "stable" },
@@ -165,6 +169,15 @@ export const getGroupLabel = (group: PanelGroup, lang: string): string =>
  */
 export const getVisiblePanels = (showAll: boolean): readonly PanelDef[] =>
   showAll ? PANEL_REGISTRY : PANEL_REGISTRY.filter((p) => p.isEssential);
+
+/**
+ * Get the localized description for a panel definition.
+ * Returns empty string when no description is defined.
+ */
+export const getPanelDescription = (p: PanelDef, lang: string): string => {
+  if (!p.description && !p.descriptionKo) return "";
+  return L4(lang, { ko: p.descriptionKo ?? p.description ?? "", en: p.description ?? "" });
+};
 
 /** Count of essential panels */
 export const ESSENTIAL_PANEL_COUNT = PANEL_REGISTRY.filter((p) => p.isEssential).length;

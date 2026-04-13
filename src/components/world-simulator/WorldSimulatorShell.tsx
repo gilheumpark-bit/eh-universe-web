@@ -189,6 +189,12 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
 
           {/* Generate Buttons */}
           <div className="flex gap-2 shrink-0 relative">
+            {/* AI loading explanation */}
+            {aiGenerating && (
+              <div className="absolute -top-12 right-0 bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[9px] text-text-secondary shadow-lg z-10 whitespace-nowrap">
+                {L4(lang, { ko: '세계관 시뮬레이터는 AI가 세계의 변화를 예측합니다.', en: 'World Simulator uses AI to predict world changes.' })}
+              </div>
+            )}
             <button onClick={() => setShowPresetMenu(v => !v)}
               className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
               &#9889; {L4(lang, { ko: '\uD504\uB9AC\uC14B', en: 'Preset' })}
@@ -356,6 +362,28 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             </span>
           </div>
         </div>
+
+        {/* AI Setup Guide — shown when no API key or DGX */}
+        {civs.length === 0 && !aiGenerating && (
+          <div className="rounded-xl border border-accent-purple/20 bg-accent-purple/5 p-5 text-center space-y-3">
+            <div className="text-3xl">{'\uD83C\uDF0D'}</div>
+            <h3 className="text-sm font-bold text-accent-purple">
+              {L4(lang, { ko: '세계관 시뮬레이터', en: 'World Simulator' })}
+            </h3>
+            <p className="text-xs text-text-secondary max-w-md mx-auto">
+              {L4(lang, {
+                ko: 'AI가 시놉시스를 분석하여 문명, 관계, 타임라인을 자동 생성합니다. 위에서 장르와 규칙 강도를 선택한 후 "자동 생성" 버튼을 눌러 시작하세요.',
+                en: 'AI analyzes your synopsis to auto-generate civilizations, relations, and timelines. Select genres and rule intensity above, then click "Auto Generate" to start.',
+              })}
+            </p>
+            <p className="text-[10px] text-text-tertiary">
+              {L4(lang, {
+                ko: '설정 > API 키에서 AI 키를 등록하면 자동 생성을 사용할 수 있습니다.',
+                en: 'Register an AI key in Settings > API Keys to enable auto-generation.',
+              })}
+            </p>
+          </div>
+        )}
 
         {/* World Narrative Summary */}
         {civs.length > 0 && (() => {

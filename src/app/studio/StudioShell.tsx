@@ -30,6 +30,7 @@ import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
 import { generateEpisodeSummary } from '@/engine/episode-summarizer';
+import { showAlert } from '@/lib/show-alert';
 import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, hasStoredApiKey, hasDgxService as hasDgxServiceFn, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import dynamic from 'next/dynamic';
@@ -314,6 +315,7 @@ export default function StudioShell() {
     syncStatus, lastSyncTime,
     showSyncReminder, setShowSyncReminder,
     handleSync,
+    crossTabNotification, dismissCrossTabNotification, reloadFromStorage,
   } = useStudioSync({ user, accessToken, refreshAccessToken, projects, setProjects, setUxError });
 
   const deleteProject = useCallback((projectId: string) => {
@@ -374,7 +376,7 @@ export default function StudioShell() {
     showConfirm, closeConfirm,
   });
 
-  const { isGenerating, lastReport, directorReport, handleCancel, handleSend: doHandleSend, handleRegenerate } = useStudioAI({
+  const { isGenerating, lastReport, directorReport, generationTime, tokenUsage, handleCancel, handleSend: doHandleSend, handleRegenerate } = useStudioAI({
     currentSession, currentSessionId, setSessions, updateCurrentSession,
     hfcpState, promptDirective, language, canvasPass,
     setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError,
@@ -543,6 +545,13 @@ export default function StudioShell() {
                 if (target) target.summary = summary;
                 return { ...prev, manuscripts: ms2 };
               });
+              // Toast: notify user that episode summary was auto-generated
+              showAlert(
+                lang === 'KO'
+                  ? `에피소드 요약이 자동 생성되었습니다`
+                  : `Episode summary auto-generated`,
+                'info',
+              );
             }
           } catch { /* background — non-critical */ }
         }, 0);
@@ -607,6 +616,7 @@ export default function StudioShell() {
     advancedSettings, setAdvancedSettings,
     // AI
     isGenerating, lastReport, directorReport,
+    generationTime, tokenUsage,
     handleSend, doHandleSend,
     handleCancel, handleRegenerate,
     handleVersionSwitch, handleTypoFix,
@@ -668,6 +678,15 @@ export default function StudioShell() {
       data-testid="studio-content"
     >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
+
+      {/* Cross-tab sync notification toast */}
+      {crossTabNotification && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[var(--z-tooltip)] flex items-center gap-3 px-4 py-3 bg-accent-amber/15 border border-accent-amber/30 rounded-xl shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top duration-300" role="alert">
+          <span className="text-xs font-serif text-text-primary">{isKO ? '다른 탭에서 변경됨' : 'Modified in another tab'}</span>
+          <button onClick={() => { reloadFromStorage(); dismissCrossTabNotification(); }} className="px-3 py-1 text-[10px] font-bold bg-accent-amber/20 text-accent-amber rounded-lg hover:bg-accent-amber/30 transition-colors">{isKO ? '새로고침' : 'Refresh'}</button>
+          <button onClick={dismissCrossTabNotification} className="text-text-tertiary hover:text-text-primary transition-colors text-xs" aria-label="Dismiss">&times;</button>
+        </div>
+      )}
 
       <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} mode={studioMode} />
 

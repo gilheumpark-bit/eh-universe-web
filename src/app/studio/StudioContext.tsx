@@ -76,6 +76,8 @@ export interface StudioContextValue {
   isGenerating: boolean;
   lastReport: EngineReport | null;
   directorReport: DirectorReport | null;
+  generationTime: number | null;
+  tokenUsage: { used: number; budget: number } | null;
   handleSend: (customPrompt?: string) => void;
   doHandleSend: (customPrompt?: string, inputValue?: string, clearInput?: () => void) => void;
   handleCancel: () => void;

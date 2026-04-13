@@ -412,6 +412,22 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
     [currentSession],
   );
 
+  /** Compute summary statistics for a given project */
+  const getProjectStats = useCallback((projectId: string): { episodeCount: number; totalChars: number; lastModified: number | null } => {
+    const proj = projects.find(p => p.id === projectId);
+    if (!proj) return { episodeCount: 0, totalChars: 0, lastModified: null };
+    let totalChars = 0;
+    let episodeCount = 0;
+    for (const session of proj.sessions) {
+      const manuscripts = session.config?.manuscripts ?? [];
+      episodeCount += manuscripts.length;
+      for (const m of manuscripts) {
+        totalChars += m.charCount ?? m.content?.length ?? 0;
+      }
+    }
+    return { episodeCount, totalChars, lastModified: proj.lastUpdate ?? proj.createdAt ?? null };
+  }, [projects]);
+
   return {
     // State
     projects, setProjects,
@@ -430,6 +446,8 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
     versionedBackups: isFeatureEnabled('OFFLINE_CACHE') ? versionedBackups : undefined,
     doRestoreVersionedBackup,
     refreshBackupList,
+    // Project stats
+    getProjectStats,
     // GitHub sync
     syncProjectToGitHub,
   };

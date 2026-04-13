@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2 } from 'lucide-react';
+import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2, Undo2 } from 'lucide-react';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 
 // ============================================================
@@ -51,6 +51,8 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selectedText: '', selStart: 0, selEnd: 0 });
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** Tracks the last applied replacement so we can undo it */
+  const [lastApplied, setLastApplied] = useState<{ original: string; replacement: string } | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -244,10 +246,17 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
 
   const applyResult = useCallback(() => {
     if (!result) return;
+    setLastApplied({ original: popup.selectedText, replacement: result });
     onReplace(popup.selectedText, result);
     setPopup(p => ({ ...p, visible: false }));
     setResult(null);
   }, [result, popup.selectedText, onReplace]);
+
+  const handleUndo = useCallback(() => {
+    if (!lastApplied) return;
+    onReplace(lastApplied.replacement, lastApplied.original);
+    setLastApplied(null);
+  }, [lastApplied, onReplace]);
 
   if (!popup.visible) return null;
 
@@ -316,6 +325,16 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
                 >
                   {isKO ? '취소' : 'Cancel'}
                 </button>
+                {lastApplied && (
+                  <button
+                    onClick={handleUndo}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-accent-amber text-[11px] font-bold hover:bg-accent-amber/10 transition-colors"
+                    title={isKO ? '이전으로 되돌리기' : 'Undo last change'}
+                  >
+                    <Undo2 className="w-3 h-3" />
+                    {isKO ? '이전으로' : 'Undo'}
+                  </button>
+                )}
                 <span className="ml-auto text-[9px] text-text-tertiary">
                   {result.length}{isKO ? '자' : 'ch'}
                 </span>

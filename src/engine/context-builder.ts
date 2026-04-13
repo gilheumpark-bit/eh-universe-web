@@ -32,7 +32,7 @@ function extractLast3Sentences(content: string): string {
 }
 
 /** 토큰 추정 (CJK 혼합 텍스트용) */
-function estimateTokens(text: string): number {
+export function estimateTokens(text: string): number {
   if (!text) return 0;
   const cjkChars = (text.match(/[\u3000-\u9fff\uac00-\ud7af]/g) || []).length;
   const cjkRatio = text.length > 0 ? cjkChars / text.length : 0;
@@ -364,3 +364,50 @@ export function buildStoryBible(input: StoryBibleInput): string {
 }
 
 // IDENTITY_SEAL: PART-4 | role=story bible assembler | inputs=StoryBibleInput | outputs=system prompt string
+
+// ============================================================
+// PART 5 — Context Budget Summary (UI display helper)
+// ============================================================
+
+export interface ContextBudgetSummary {
+  tierA: { label: string; episodes: number; tokens: number };
+  tierB: { label: string; episodes: number; tokens: number };
+  tierC: { label: string; episodes: number; tokens: number };
+  total: number;
+}
+
+/** Compute a UI-friendly summary of hybrid context token budgets. */
+export function getContextBudgetSummary(input: StoryBibleInput): ContextBudgetSummary {
+  const { manuscripts, currentEpisode, language } = input;
+  const isKO = language === 'KO';
+
+  const tiered = buildTieredEpisodeSummaries(
+    manuscripts, currentEpisode, isKO, input.shadowState, input.config.totalEpisodes,
+  );
+
+  const prevEps = manuscripts.filter(m => m.episode < currentEpisode && m.content);
+  const nMinus1 = currentEpisode - 1;
+  const nMinus2 = currentEpisode - 2;
+  const tierACount = prevEps.filter(m => m.episode < nMinus2).length;
+
+  return {
+    tierA: {
+      label: isKO ? `Tier A: ${tierACount}화 요약` : `Tier A: ${tierACount} ep summaries`,
+      episodes: tierACount,
+      tokens: tiered.tierATokens,
+    },
+    tierB: {
+      label: isKO ? `Tier B: ${nMinus2}화 상세` : `Tier B: Ep.${nMinus2} detailed`,
+      episodes: nMinus2 > 0 ? 1 : 0,
+      tokens: tiered.tierBTokens,
+    },
+    tierC: {
+      label: isKO ? `Tier C: ${nMinus1}화 원문` : `Tier C: Ep.${nMinus1} full text`,
+      episodes: nMinus1 > 0 ? 1 : 0,
+      tokens: tiered.tierCTokens,
+    },
+    total: tiered.tierATokens + tiered.tierBTokens + tiered.tierCTokens,
+  };
+}
+
+// IDENTITY_SEAL: PART-5 | role=context budget summary | inputs=StoryBibleInput | outputs=ContextBudgetSummary

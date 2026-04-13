@@ -91,13 +91,14 @@ const VolumeNode: React.FC<VolumeNodeProps> = ({
   const toggle = useCallback(() => setExpanded(v => !v), []);
 
   return (
-    <div className="mb-1">
+    <div className="mb-1" role="treeitem" aria-expanded={expanded} aria-label={group.title}>
       {/* Volume header */}
       <button
         onClick={toggle}
         className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded-lg
           text-text-secondary hover:bg-bg-tertiary/60 transition-colors
           text-left min-h-[44px]"
+        aria-label={`${group.title} — ${group.episodes.length} ${language === 'KO' ? '에피소드' : 'episodes'}`}
       >
         {expanded ? (
           <ChevronDown className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
@@ -115,7 +116,7 @@ const VolumeNode: React.FC<VolumeNodeProps> = ({
 
       {/* Episode items */}
       {expanded && (
-        <div className="ml-4 border-l border-border/40 pl-1">
+        <div className="ml-4 border-l border-border/40 pl-1" role="group">
           {group.episodes.map(ms => {
             const status = getEpisodeStatus(ms);
             const isActive = ms.episode === currentEpisode;
@@ -124,13 +125,16 @@ const VolumeNode: React.FC<VolumeNodeProps> = ({
               <button
                 key={ms.episode}
                 onClick={() => onSelectEpisode(ms.episode)}
+                role="treeitem"
+                aria-selected={isActive}
+                aria-label={`${L4(language, { ko: `${ms.episode}화`, en: `Episode ${ms.episode}` })} — ${ms.title} — ${statusLabel(status, language)}`}
                 className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded-lg
                   transition-colors text-left min-h-[44px] group/ep
                   ${isActive
                     ? 'bg-accent-amber/10 border border-accent-amber/30 text-text-primary'
                     : 'text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
                   }`}
-                title={ms.summary ?? ms.title}
+                title={ms.detailedSummary ? `${ms.summary ?? ms.title}\n\n${ms.detailedSummary}` : (ms.summary ?? ms.title)}
               >
                 <FileText className={`w-3.5 h-3.5 shrink-0 ${
                   isActive ? 'text-accent-amber' : 'text-text-tertiary'
@@ -263,7 +267,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
       </div>
 
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin" role="tree" aria-label={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })}>
         {volumeGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
             <FileText className="w-8 h-8 mb-2 opacity-40" />

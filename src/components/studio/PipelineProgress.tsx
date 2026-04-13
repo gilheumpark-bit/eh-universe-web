@@ -5,8 +5,9 @@
 // ============================================================
 
 import React from 'react';
-import { CheckCircle, XCircle, SkipForward, Loader, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, SkipForward, Loader, Clock, Globe, Users, Film, PenLine } from 'lucide-react';
 import type { PipelineStageResult, StageStatus, AppLanguage } from '@/lib/studio-types';
+import { L4 } from '@/lib/i18n';
 
 interface PipelineProgressProps {
   stages: PipelineStageResult[];
@@ -30,6 +31,13 @@ const STATUS_COLORS: Record<StageStatus, string> = {
   skipped: 'text-text-tertiary',
 };
 
+const STAGE_ICONS: Record<string, React.ElementType> = {
+  world_check: Globe,
+  character_sync: Users,
+  direction_setup: Film,
+  generation: PenLine,
+};
+
 const STAGE_LABELS: Record<string, { ko: string; en: string }> = {
   world_check: { ko: '세계관 검증', en: 'World Check' },
   character_sync: { ko: '캐릭터 동기화', en: 'Character Sync' },
@@ -37,48 +45,89 @@ const STAGE_LABELS: Record<string, { ko: string; en: string }> = {
   generation: { ko: '집필 생성', en: 'Generation' },
 };
 
+const STAGE_EST_SEC: Record<string, number> = {
+  world_check: 3,
+  character_sync: 5,
+  direction_setup: 4,
+  generation: 20,
+};
+
 export default function PipelineProgress({ stages, finalStatus, language }: PipelineProgressProps) {
-  const isKO = language === 'KO';
-
   const statusLabel = finalStatus === 'completed'
-    ? (isKO ? '파이프라인 완료' : 'Pipeline Complete')
+    ? L4(language, { ko: '파이프라인 완료', en: 'Pipeline Complete' })
     : finalStatus === 'partial'
-    ? (isKO ? '부분 통과' : 'Partial Pass')
-    : (isKO ? '차단됨' : 'Blocked');
+    ? L4(language, { ko: '부분 통과', en: 'Partial Pass' })
+    : finalStatus === 'running'
+    ? L4(language, { ko: '실행 중...', en: 'Running...' })
+    : L4(language, { ko: '차단됨', en: 'Blocked' });
 
-  const statusColor = finalStatus === 'completed' ? 'text-green-400' : finalStatus === 'partial' ? 'text-amber-400' : 'text-red-400';
+  const statusColor = finalStatus === 'completed' ? 'text-green-400' : finalStatus === 'partial' ? 'text-amber-400' : finalStatus === 'running' ? 'text-blue-400' : 'text-red-400';
 
   return (
     <div className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
       <div className="flex items-center justify-between mb-3">
         <span className="font-mono text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
-          {isKO ? '자동 파이프라인' : 'Auto-Pipeline'}
+          {L4(language, { ko: '자동 파이프라인', en: 'Auto-Pipeline' })}
         </span>
         <span className={`font-mono text-[10px] font-bold ${statusColor}`}>
           {statusLabel}
         </span>
       </div>
 
-      <div className="flex items-center gap-1">
+      {/* Stage-by-stage progress */}
+      <div className="space-y-2">
         {stages.map((stage, i) => {
-          const Icon = STATUS_ICONS[stage.status];
+          const StatusIcon = STATUS_ICONS[stage.status];
+          const StageIcon = STAGE_ICONS[stage.stage] ?? Clock;
           const color = STATUS_COLORS[stage.status];
           const label = STAGE_LABELS[stage.stage];
+          const estSec = STAGE_EST_SEC[stage.stage] ?? 5;
+          const isRunning = stage.status === 'running';
+          const isPassed = stage.status === 'passed';
           return (
-            <React.Fragment key={stage.stage}>
-              {i > 0 && <div className="w-4 h-px bg-white/10" />}
-              <div className="flex items-center gap-1.5 group relative" title={`${label ? (isKO ? label.ko : label.en) : stage.stage}: ${stage.score ?? '-'}/100`} aria-label={`${label ? (isKO ? label.ko : label.en) : stage.stage}: ${isKO ? '상태' : 'status'} ${stage.status}, ${isKO ? '점수' : 'score'} ${stage.score ?? '-'}`}>
-                <Icon className={`w-4 h-4 ${color}`} />
-                <span className="font-mono text-[9px] text-text-tertiary hidden sm:inline">
-                  {label ? (isKO ? label.ko : label.en) : stage.stage}
-                </span>
-                {stage.score != null && stage.status !== 'skipped' && (
-                  <span className="font-mono text-[9px] text-text-tertiary">
-                    {stage.score}
+            <div
+              key={stage.stage}
+              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all ${
+                isRunning ? 'bg-blue-500/5 ring-1 ring-blue-500/20' : isPassed ? 'bg-green-500/5' : ''
+              }`}
+              aria-label={`${label ? L4(language, label) : stage.stage}: ${L4(language, { ko: '상태', en: 'status' })} ${stage.status}, ${L4(language, { ko: '점수', en: 'score' })} ${stage.score ?? '-'}`}
+            >
+              {/* Stage icon */}
+              <StageIcon className={`w-4 h-4 shrink-0 ${isPassed ? 'text-green-400' : isRunning ? 'text-blue-400' : 'text-text-tertiary/50'}`} />
+
+              {/* Connector line */}
+              {i < stages.length - 1 && (
+                <div className="absolute left-[26px] top-full w-px h-2 bg-white/6" />
+              )}
+
+              {/* Label + est time */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={`font-mono text-[10px] font-bold ${isRunning ? 'text-blue-400' : isPassed ? 'text-green-400' : 'text-text-tertiary'}`}>
+                    {label ? L4(language, label) : stage.stage}
                   </span>
+                  {isRunning && (
+                    <span className="font-mono text-[8px] text-blue-400/60">
+                      ~{estSec}{L4(language, { ko: '초', en: 's' })}
+                    </span>
+                  )}
+                </div>
+                {stage.score != null && stage.status !== 'skipped' && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex-1 h-0.5 bg-bg-tertiary rounded-full overflow-hidden max-w-[80px]">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        style={{ width: `${stage.score}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-[8px] text-text-tertiary">{stage.score}</span>
+                  </div>
                 )}
               </div>
-            </React.Fragment>
+
+              {/* Status icon */}
+              <StatusIcon className={`w-3.5 h-3.5 shrink-0 ${color} ${isRunning ? 'animate-spin' : ''}`} />
+            </div>
           );
         })}
       </div>
@@ -87,7 +136,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
       {stages.some(s => s.warnings.length > 0) && (
         <div className="mt-2 pt-2 border-t border-white/5">
           {stages.filter(s => s.warnings.length > 0).map(s => {
-            const stageLabel = STAGE_LABELS[s.stage] ? (isKO ? STAGE_LABELS[s.stage].ko : STAGE_LABELS[s.stage].en) : s.stage;
+            const stageLabel = STAGE_LABELS[s.stage] ? L4(language, STAGE_LABELS[s.stage]) : s.stage;
             return (
               <div key={s.stage} className="font-mono text-[9px] text-amber-400/70 leading-snug">
                 {stageLabel}: {s.warnings.slice(0, 2).map((w, wi) => (

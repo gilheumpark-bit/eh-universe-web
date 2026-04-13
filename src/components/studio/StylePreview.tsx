@@ -36,7 +36,7 @@ type SampleKey = keyof typeof SAMPLE_KO;
 // PART 2 — Style Transformation Engine (client-side)
 // ============================================================
 
-function applyStyleTransform(text: string, sliders: Record<string, number>, language: AppLanguage): string {
+export function applyStyleTransform(text: string, sliders: Record<string, number>, language: AppLanguage): string {
   let result = text;
   const s1 = sliders.s1 ?? 3; // sentence length
   const s2 = sliders.s2 ?? 3; // emotion density

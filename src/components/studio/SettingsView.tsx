@@ -18,6 +18,8 @@ import { idbEstimateSize } from '@/lib/browser/idb-store';
 import { setNarrativeDepth as narrativeDepthSetter, getNarrativeDepth } from '@/lib/noa/lora-swap';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
 import { isFeatureEnabled } from '@/lib/feature-flags';
+import dynamic from 'next/dynamic';
+const WriterProfileCard = dynamic(() => import('@/components/studio/WriterProfileCard'), { ssr: false });
 
 interface VersionedBackup {
   timestamp: number;
@@ -126,6 +128,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <span className="text-xs text-text-secondary">{t('settings.latency')}</span>
               <span className="text-xs font-black text-green-500">OPTIMAL</span>
             </div>
+            <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
+              <span className="text-xs text-text-secondary">{L4(language, { ko: '클라우드 동기화', en: 'Cloud Sync', ja: 'クラウド同期', zh: '云同步' })}</span>
+              <span className={`text-xs font-black ${isFeatureEnabled('CLOUD_SYNC') ? 'text-green-500' : 'text-text-tertiary'}`}>
+                {isFeatureEnabled('CLOUD_SYNC')
+                  ? L4(language, { ko: '활성', en: 'Active', ja: '有効', zh: '启用' })
+                  : L4(language, { ko: '비활성', en: 'Disabled', ja: '無効', zh: '停用' })}
+              </span>
+            </div>
             <div className="bg-bg-secondary p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">{L4(language, { ko: '로컬 저장 용량', en: 'Local Storage' })}</span>
@@ -163,6 +173,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               )}
             </div>
           </div>
+        </div>
+
+        {/* Writer Profile */}
+        <div className="md:col-span-2 ds-card-lg">
+          <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
+            <User className="w-4 h-4 text-accent-purple" />
+            {L4(language, { ko: '작가 프로파일', en: 'Writer Profile', ja: 'ライタープロフィール', zh: '作者档案' })}
+          </h3>
+          <WriterProfileCard language={language} />
         </div>
 
         {/* Global Settings */}
@@ -327,6 +346,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           </div>
         )}
 
+        {/* Google Drive Backup */}
+        {isFeatureEnabled('GOOGLE_DRIVE_BACKUP') && (
+          <GoogleDriveSection language={language} />
+        )}
+
         {/* GitHub Cloud Backup */}
         <GitHubSyncSection language={language} />
 
@@ -460,6 +484,35 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
   const [tokenInput, setTokenInput] = useState('');
   const [connecting, setConnecting] = useState(false);
 
+  // GitHub OAuth popup handler
+  const handleOAuthLogin = useCallback(() => {
+    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+    if (!clientId) return;
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`;
+    const w = 600, h = 700;
+    const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+    window.open(authUrl, 'github-oauth', `width=${w},height=${h},left=${left},top=${top}`);
+  }, []);
+
+  // Listen for OAuth token from callback redirect hash
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash.includes('github_token=')) {
+        const token = hash.split('github_token=')[1]?.split('&')[0];
+        if (token) {
+          gh.connect(token);
+          window.location.hash = '';
+        }
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, [gh]);
+
+  const hasOAuthClientId = typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+
   if (!ghEnabled) {
     return (
       <div className="md:col-span-2 ds-card-lg opacity-60">
@@ -536,6 +589,23 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
         </div>
       ) : (
         <div className="space-y-4">
+          {/* OAuth Login Button */}
+          {hasOAuthClientId && (
+            <button
+              onClick={handleOAuthLogin}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#24292f] hover:bg-[#2f363d] text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              <GitBranch className="w-4 h-4" />
+              {L4(language, { ko: 'GitHub으로 로그인', en: 'Sign in with GitHub' })}
+            </button>
+          )}
+          {hasOAuthClientId && (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] text-text-tertiary font-mono uppercase">{L4(language, { ko: '또는 PAT 입력', en: 'or enter PAT' })}</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          )}
           <p className="text-xs text-text-tertiary">
             {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.' })}
           </p>
@@ -587,6 +657,81 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// PART 3 — Google Drive Backup Section
+// ============================================================
+
+function GoogleDriveSection({ language }: { language: AppLanguage }) {
+  const { user } = useAuth();
+  const [lastSync, setLastSync] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('noa_drive_last_sync') : null;
+    if (stored) setLastSync(parseInt(stored));
+  }, []);
+
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_token');
+  const encActive = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_enc');
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    try {
+      // Dispatch sync event for the main studio to handle
+      window.dispatchEvent(new CustomEvent('noa:drive-sync-requested'));
+      const now = Date.now();
+      setLastSync(now);
+      localStorage.setItem('noa_drive_last_sync', String(now));
+    } finally {
+      setTimeout(() => setSyncing(false), 2000);
+    }
+  };
+
+  return (
+    <div className="md:col-span-2 ds-card-lg">
+      <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
+        <Shield className="w-4 h-4 text-blue-500" />
+        {L4(language, { ko: 'Google Drive 백업', en: 'Google Drive Backup', ja: 'Google Driveバックアップ', zh: 'Google Drive备份' })}
+      </h3>
+      <div className="space-y-3">
+        {/* Connection status */}
+        <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
+          <span className="text-xs text-text-secondary">{L4(language, { ko: '연결 상태', en: 'Connection', ja: '接続状態', zh: '连接状态' })}</span>
+          <span className={`text-xs font-black ${user && hasToken ? 'text-green-500' : 'text-text-tertiary'}`}>
+            {user && hasToken
+              ? L4(language, { ko: '연결됨', en: 'Connected', ja: '接続済み', zh: '已连接' })
+              : L4(language, { ko: '미연결', en: 'Not Connected', ja: '未接続', zh: '未连接' })}
+          </span>
+        </div>
+        {/* Last sync time */}
+        <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
+          <span className="text-xs text-text-secondary">{L4(language, { ko: '마지막 동기화', en: 'Last Sync', ja: '最終同期', zh: '上次同步' })}</span>
+          <span className="text-xs font-black text-text-tertiary">
+            {lastSync ? new Date(lastSync).toLocaleString() : L4(language, { ko: '없음', en: 'Never', ja: 'なし', zh: '从未' })}
+          </span>
+        </div>
+        {/* Encryption status */}
+        <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
+          <span className="text-xs text-text-secondary">{L4(language, { ko: '암호화', en: 'Encryption', ja: '暗号化', zh: '加密' })}</span>
+          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${encActive ? 'bg-green-500/15 text-green-500 border border-green-500/30' : 'bg-bg-tertiary text-text-tertiary'}`}>
+            {encActive ? 'AES-GCM-256' : L4(language, { ko: '비활성', en: 'Off', ja: '無効', zh: '关闭' })}
+          </span>
+        </div>
+        {/* Manual sync button */}
+        <button
+          onClick={handleManualSync}
+          disabled={syncing || !user}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600/10 border border-blue-500/30 rounded-xl text-xs font-bold text-blue-400 hover:bg-blue-600/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {syncing
+            ? L4(language, { ko: '동기화 중...', en: 'Syncing...', ja: '同期中...', zh: '同步中...' })
+            : L4(language, { ko: '지금 동기화', en: 'Sync Now', ja: '今すぐ同期', zh: '立即同步' })}
+        </button>
+      </div>
     </div>
   );
 }

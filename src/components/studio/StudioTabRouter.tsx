@@ -66,6 +66,8 @@ interface StudioTabRouterProps {
   setPromptDirective: (v: string) => void;
   isGenerating: boolean;
   lastReport: EngineReport | null;
+  generationTime?: number | null;
+  tokenUsage?: { used: number; budget: number } | null;
   doHandleSend: (customPrompt?: string, inputValue?: string, clearInput?: () => void) => void;
   handleCancel: () => void;
   handleRegenerate: (assistantMsgId: string) => Promise<void>;
@@ -120,7 +122,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
     clearAllSessions, setShowApiKeyModal, versionedBackups, doRestoreVersionedBackup, refreshBackupList,
     writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef,
     canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective, setPromptDirective,
-    isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix,
+    isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix, generationTime, tokenUsage,
     messagesEndRef, searchQuery, filteredMessages, hasAiAccess, advancedSettings, setAdvancedSettings,
     showDashboard, rightPanelOpen, setRightPanelOpen, directorReport, hfcpState, handleNextEpisode,
     writingColumnShell, input, setInput,
@@ -177,7 +179,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
           canvasContent={canvasContent} setCanvasContent={setCanvasContent} canvasPass={canvasPass} setCanvasPass={setCanvasPass}
           promptDirective={promptDirective} setPromptDirective={setPromptDirective}
-          isGenerating={isGenerating} lastReport={lastReport}
+          isGenerating={isGenerating} lastReport={lastReport} generationTime={generationTime} tokenUsage={tokenUsage}
           handleSend={doHandleSend} handleCancel={handleCancel} handleRegenerate={handleRegenerate}
           handleVersionSwitch={handleVersionSwitch} handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef}
           searchQuery={searchQuery} filteredMessages={filteredMessages}

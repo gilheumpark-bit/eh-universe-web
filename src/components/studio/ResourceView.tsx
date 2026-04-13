@@ -282,11 +282,35 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   <div key={char.id} className="relative group overflow-hidden bg-bg-secondary/60 backdrop-blur-xl border border-border/40 hover:border-accent-purple/40 rounded-2xl p-6 transition-all hover-lift">
                     {/* Visual DNA Bar */}
                     <div className="absolute top-0 left-0 h-1 rounded-tl-2xl bg-gradient-to-r from-accent-purple to-accent-amber opacity-40 group-hover:opacity-100 transition-opacity" style={{ width: `${char.dna}%` }}></div>
-                    
+
                     <div className="flex justify-between items-start mb-6 relative z-10">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-accent-purple/15 rounded-2xl flex items-center justify-center text-accent-purple font-black border border-accent-purple/30 text-xl group-hover:scale-110 transition-transform duration-500">
-                          {char.name[0]}
+                        <div className="relative w-14 h-14">
+                          {/* Completion ring */}
+                          {(() => {
+                            const warnings = validateCharacter(char, language);
+                            const totalFields = 6;
+                            const score = calcCompletionScore(warnings, totalFields);
+                            return (
+                              <>
+                                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="2" className="text-border/30" />
+                                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="2"
+                                    className="text-accent-purple"
+                                    strokeDasharray={`${score} 100`}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <div className="absolute inset-0 bg-accent-purple/15 rounded-2xl flex items-center justify-center text-accent-purple font-black border border-accent-purple/30 text-xl group-hover:scale-110 transition-transform duration-500">
+                                  {char.name[0]}
+                                </div>
+                                {/* Completion % on hover */}
+                                <div className="absolute -bottom-1 -right-1 bg-bg-primary border border-border/60 rounded-full px-1.5 py-0.5 text-[8px] font-mono font-bold text-accent-purple opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {score}%
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                         <div className="min-w-0">
                           <div className="text-base font-black text-text-primary truncate mb-0.5">{char.name}</div>

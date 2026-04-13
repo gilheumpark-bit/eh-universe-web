@@ -277,16 +277,36 @@ function HomePageContent() {
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
 
-  // SSR → hydration 전까지 최소한의 배경과 초기화 메시지 표시 (검은 화면 방지)
+  // SSR → hydration 전까지 구조적 스켈레톤 표시 (검은 화면 방지)
   if (splashState === "loading") {
     return (
-      <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
-        <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
-          <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
-            EH
+      <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="Loading">
+        {/* Skeleton header */}
+        <div className="h-14 border-b border-border/20 bg-bg-secondary/30 animate-pulse" />
+        {/* Skeleton hero */}
+        <div className="site-shell pt-28 md:pt-32 px-6">
+          <div className="premium-panel px-6 py-8 md:px-10 md:py-12">
+            <div className="space-y-4 max-w-2xl">
+              <div className="h-3 w-32 rounded bg-bg-tertiary/40 animate-pulse" />
+              <div className="h-12 w-64 rounded bg-bg-tertiary/40 animate-pulse" />
+              <div className="h-4 w-full max-w-lg rounded bg-bg-tertiary/30 animate-pulse" />
+              <div className="h-4 w-3/4 max-w-md rounded bg-bg-tertiary/30 animate-pulse" />
+              <div className="flex gap-3 pt-4">
+                <div className="h-10 w-28 rounded-lg bg-bg-tertiary/30 animate-pulse" />
+                <div className="h-10 w-28 rounded-lg bg-bg-tertiary/30 animate-pulse" />
+              </div>
+            </div>
           </div>
-          <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-            EH Universe
+        </div>
+        {/* Centered logo */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-4 animate-in fade-in duration-700">
+            <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
+              EH
+            </div>
+            <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
+              EH Universe
+            </div>
           </div>
         </div>
       </div>

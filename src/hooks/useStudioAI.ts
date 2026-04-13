@@ -90,10 +90,15 @@ export function useStudioAI({
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastReport, setLastReport] = useState<EngineReport | null>(null);
   const [directorReport, setDirectorReport] = useState<DirectorReport | null>(null);
+  /** Generation elapsed time in seconds (null when not yet completed) */
+  const [generationTime, setGenerationTime] = useState<number | null>(null);
+  /** Approximate token usage from last generation */
+  const [tokenUsage, setTokenUsage] = useState<{ used: number; budget: number } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const generationLockRef = useRef(false);
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const generationStartRef = useRef<number>(0);
 
   // Cleanup: abort streaming + clear timeout + release lock on unmount
   useEffect(() => () => {
@@ -119,6 +124,9 @@ export function useStudioAI({
       return;
     }
     generationLockRef.current = true;
+    generationStartRef.current = performance.now();
+    setGenerationTime(null);
+    setTokenUsage(null);
     // Safety: auto-release lock after 30s to prevent permanent deadlock
     clearTimeout(lockTimerRef.current);
     lockTimerRef.current = setTimeout(() => { generationLockRef.current = false; }, 30_000);
@@ -318,6 +326,14 @@ export function useStudioAI({
       setLastReport(result.report);
       incrementGenerationCount();
       setDirectorReport(dReport);
+
+      // Track generation time and approximate token usage
+      const elapsedSec = Math.round((performance.now() - generationStartRef.current) / 100) / 10;
+      setGenerationTime(elapsedSec);
+      const approxTokens = Math.round(finalContent.length / 3.5);
+      const budget = (capturedConfig.guardrails?.max ?? 5000);
+      const tokenBudget = Math.round(budget / 3.5);
+      setTokenUsage({ used: approxTokens, budget: tokenBudget });
 
       const retryHint = !gateResult.passed ? currentRetryHint : '';
       const gateMeta = { qualityGatePassed: gateResult.passed, qualityGateAttempt: gateResult.attempt, qualityGateReasons: gateResult.failReasons, qualityGateRetryHint: retryHint, qualityGateHistory: gateHistory };
@@ -538,6 +554,10 @@ export function useStudioAI({
     setIsGenerating,
     lastReport,
     directorReport,
+    /** Elapsed generation time in seconds (null until generation completes) */
+    generationTime,
+    /** Approximate token usage from last generation */
+    tokenUsage,
     handleCancel,
     handleSend,
     handleRegenerate,

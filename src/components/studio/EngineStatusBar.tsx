@@ -1,12 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
-import { Activity, Cpu, Zap, AlertCircle } from 'lucide-react';
+import { Activity, Cpu, Zap, AlertCircle, Database } from 'lucide-react';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { EngineReport, PlatformType, getActFromEpisode } from '@/engine/types';
 import { tensionCurve } from '@/engine/models';
 import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serialization';
 import { getOverdueThreads, getHighPriorityUnresolved, type NarrativeThread } from '@/engine/shadow';
+import { getContextBudgetSummary, type ContextBudgetSummary } from '@/engine/context-builder';
+import { L4 } from '@/lib/i18n';
 
 interface EngineStatusBarProps {
   language: AppLanguage;
@@ -66,6 +68,72 @@ function ShadowThreadAlert({ config, language }: { config: StoryConfig; language
                 {overdue.includes(t) && <span className="ml-1 text-accent-red font-bold">{isKO ? '(7화+)' : '(7ep+)'}</span>}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Hybrid Context Budget tooltip badge */
+function ContextBudgetBadge({ config, language }: { config: StoryConfig; language: AppLanguage }) {
+  const [open, setOpen] = useState(false);
+
+  const budget: ContextBudgetSummary | null = useMemo(() => {
+    const manuscripts = config.manuscripts ?? [];
+    const currentEpisode = config.episode ?? 1;
+    if (manuscripts.length === 0 || currentEpisode <= 1) return null;
+    try {
+      return getContextBudgetSummary({
+        config,
+        manuscripts,
+        currentEpisode,
+        language,
+      });
+    } catch { return null; }
+  }, [config, language]);
+
+  if (!budget || budget.total === 0) return null;
+
+  const maxTokens = 800;
+  const usagePct = Math.min(100, Math.round((budget.total / maxTokens) * 100));
+
+  return (
+    <div className="relative hidden lg:block">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg text-text-tertiary hover:text-text-secondary transition-colors"
+        title={L4(language, { ko: '하이브리드 컨텍스트 예산', en: 'Hybrid Context Budget' })}
+      >
+        <Database className="w-3 h-3" />
+        <span className="text-[9px] font-bold font-mono">{budget.total}</span>
+        <span className="text-[8px] text-text-tertiary/60">tok</span>
+      </button>
+      {open && (
+        <div className="absolute bottom-full mb-2 right-0 w-56 bg-bg-primary border border-border rounded-xl shadow-xl p-3 z-50 space-y-2">
+          <p className="text-[10px] font-bold text-text-primary mb-1.5">
+            {L4(language, { ko: '컨텍스트 예산', en: 'Context Budget' })}
+          </p>
+          {[budget.tierA, budget.tierB, budget.tierC].map((tier, i) => (
+            <div key={i} className="space-y-0.5">
+              <div className="flex justify-between text-[9px]">
+                <span className="text-text-secondary">{tier.label}</span>
+                <span className="text-text-tertiary font-mono">~{tier.tokens}{L4(language, { ko: ' 토큰', en: ' tok' })}</span>
+              </div>
+              <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-amber-500' : 'bg-green-500'}`}
+                  style={{ width: `${maxTokens > 0 ? Math.min(100, (tier.tokens / maxTokens) * 100) : 0}%` }}
+                />
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-between text-[9px] pt-1 border-t border-border/50">
+            <span className="text-text-tertiary font-bold">{L4(language, { ko: '합계', en: 'Total' })}</span>
+            <span className={`font-mono font-bold ${usagePct > 90 ? 'text-red-400' : usagePct > 70 ? 'text-amber-400' : 'text-green-400'}`}>
+              {budget.total} / {maxTokens} ({usagePct}%)
+            </span>
           </div>
         </div>
       )}
@@ -145,6 +213,9 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
 
       {/* 미해결 복선 알림 */}
       <ShadowThreadAlert config={config} language={language} />
+
+      {/* Hybrid Context Budget */}
+      <ContextBudgetBadge config={config} language={language} />
 
       {isGenerating && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-600/10 border border-blue-500/20 rounded-lg whitespace-nowrap">

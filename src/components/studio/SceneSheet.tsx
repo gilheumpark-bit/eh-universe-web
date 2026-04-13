@@ -231,8 +231,8 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
 ];
 
 /** Collapsible section wrapper */
-function Section({ title, children, defaultOpen = true }: {
-  title: string; children: React.ReactNode; defaultOpen?: boolean;
+function Section({ title, children, defaultOpen = true, badge }: {
+  title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -240,6 +240,11 @@ function Section({ title, children, defaultOpen = true }: {
       <button type="button" onClick={() => setOpen(v => !v)}
         className="flex items-center gap-2 w-full py-3 px-1 text-left min-h-[44px]">
         <span className="text-xs font-bold font-mono uppercase tracking-wider text-text-primary flex-1">{title}</span>
+        {badge && (
+          <span className="text-[9px] font-mono font-bold text-accent-purple bg-accent-purple/10 border border-accent-purple/20 rounded-full px-2 py-0.5">
+            {badge}
+          </span>
+        )}
         <span className={`text-[10px] text-text-tertiary transition-transform ${open ? "rotate-90" : ""}`}>&#9654;</span>
       </button>
       {open && <div className="pb-4 px-1 space-y-3">{children}</div>}
@@ -529,7 +534,12 @@ export default function SceneSheet({
           </div>
 
           {/* Section 1: Story */}
-          <Section title={L4(lang, { ko: "줄거리", en: "Story", ja: "ストーリー", zh: "故事" })}>
+          <Section title={L4(lang, { ko: "줄거리", en: "Story", ja: "ストーリー", zh: "故事" })}
+            badge={(() => {
+              const items = [writerNotes.trim(), gogumas.length > 0, cliffs.length > 0, foreshadows.length > 0, hooks.length > 0];
+              const filled = items.filter(Boolean).length;
+              return `${filled}/5 ${L4(lang, { ko: "항목 설정", en: "set" })}`;
+            })()}>
             {/* Writer summary */}
             <input value={writerNotes.split("\n")[0] ?? ""} onChange={e => {
               const lines = writerNotes.split("\n"); lines[0] = e.target.value; setWriterNotes(lines.join("\n"));
@@ -601,7 +611,10 @@ export default function SceneSheet({
           </Section>
 
           {/* Section 2: Mood */}
-          <Section title={L4(lang, { ko: "분위기", en: "Mood", ja: "ムード", zh: "氛围" })}>
+          <Section title={L4(lang, { ko: "분위기", en: "Mood", ja: "ムード", zh: "氛围" })}
+            badge={emotions.length > 0
+              ? `${L4(lang, { ko: "감정", en: "Emotion" })}: ${emotions[0].emotion} ${Math.round(emotions[0].intensity)}%`
+              : undefined}>
             {/* Emotion chips */}
             <div>
               <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "감정", en: "Emotion", ja: "感情", zh: "情绪" })}</span>
@@ -673,7 +686,12 @@ export default function SceneSheet({
           </Section>
 
           {/* Section 3: Cast */}
-          <Section title={L4(lang, { ko: "캐릭터", en: "Cast", ja: "キャスト", zh: "角色" })}>
+          <Section title={L4(lang, { ko: "캐릭터", en: "Cast", ja: "キャスト", zh: "角色" })}
+            badge={dialogueRules.length > 0
+              ? `${dialogueRules.length}${L4(lang, { ko: "명 선택", en: " selected" })}`
+              : characterNames && characterNames.length > 0
+                ? `${characterNames.length}${L4(lang, { ko: "명 등록", en: " available" })}`
+                : undefined}>
             {characterNames && characterNames.length > 0 ? (
               <div className="space-y-2">
                 <div className="flex gap-2">

@@ -980,6 +980,8 @@ function CodeStudioShellInner() {
           onZoomIn={() => setSettings(s => ({ ...s, fontSize: Math.min(24, s.fontSize + 1) }))}
           onZoomOut={() => setSettings(s => ({ ...s, fontSize: Math.max(10, s.fontSize - 1) }))}
           onZoomReset={() => setSettings(s => ({ ...s, fontSize: 14 }))}
+          onToggleMinimap={() => setSettings(s => ({ ...s, minimap: !s.minimap }))}
+          onToggleWordWrap={() => setSettings(s => ({ ...s, wordWrap: s.wordWrap === "on" ? "off" : "on" }))}
           onSaveToast={() => toast(tcs.savedLocally, "success")}
           onSettingsSaved={() => toast(L4(lang, { ko: "설정 저장됨", en: "Settings saved" }), "success")}
           fsUpdateContent={fsUpdateContent}

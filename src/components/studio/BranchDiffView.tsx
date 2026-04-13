@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GitBranch, ArrowLeftRight } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
@@ -26,7 +26,52 @@ function branchBadgeClass(branch: string): string {
 }
 
 // ============================================================
-// PART 2 — Content Column
+// PART 2 — Line Diff Engine
+// ============================================================
+
+type DiffLineType = 'same' | 'added' | 'removed' | 'changed';
+
+interface DiffLine {
+  text: string;
+  type: DiffLineType;
+}
+
+/** Simple line-by-line diff: compare left vs right paragraph arrays */
+function computeLineDiff(leftLines: string[], rightLines: string[]): { left: DiffLine[]; right: DiffLine[] } {
+  const left: DiffLine[] = [];
+  const right: DiffLine[] = [];
+  const maxLen = Math.max(leftLines.length, rightLines.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const l = i < leftLines.length ? leftLines[i] : null;
+    const r = i < rightLines.length ? rightLines[i] : null;
+
+    if (l !== null && r !== null) {
+      if (l === r) {
+        left.push({ text: l, type: 'same' });
+        right.push({ text: r, type: 'same' });
+      } else {
+        left.push({ text: l, type: 'changed' });
+        right.push({ text: r, type: 'changed' });
+      }
+    } else if (l !== null) {
+      left.push({ text: l, type: 'removed' });
+    } else if (r !== null) {
+      right.push({ text: r, type: 'added' });
+    }
+  }
+  return { left, right };
+}
+
+const DIFF_BG: Record<DiffLineType, string> = {
+  same: '',
+  added: 'bg-accent-green/10 border-l-2 border-accent-green/40',
+  removed: 'bg-accent-red/10 border-l-2 border-accent-red/40',
+  changed: 'bg-accent-amber/10 border-l-2 border-accent-amber/40',
+};
+
+// ============================================================
+// PART 3 — Content Column
 // ============================================================
 
 interface ContentColumnProps {
@@ -34,6 +79,7 @@ interface ContentColumnProps {
   content: string;
   side: 'left' | 'right';
   language: AppLanguage;
+  diffLines?: DiffLine[];
 }
 
 const ContentColumn: React.FC<ContentColumnProps> = ({
@@ -41,12 +87,14 @@ const ContentColumn: React.FC<ContentColumnProps> = ({
   content,
   side,
   language,
+  diffLines,
 }) => {
   const badgeClass = branchBadgeClass(branch);
-  const paragraphs = content
+  const paragraphs = diffLines ?? content
     .split(/\n\n+/)
     .map((p) => p.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((text) => ({ text, type: 'same' as DiffLineType }));
 
   return (
     <div
@@ -68,13 +116,13 @@ const ContentColumn: React.FC<ContentColumnProps> = ({
       {/* Content area */}
       <div className="flex-1 overflow-y-auto px-3 py-3 scrollbar-thin">
         {paragraphs.length > 0 ? (
-          paragraphs.map((para, idx) => (
+          paragraphs.map((line, idx) => (
             <p
               key={idx}
-              className="text-xs font-serif text-text-primary leading-relaxed mb-3
-                last:mb-0"
+              className={`text-xs font-serif text-text-primary leading-relaxed mb-3
+                last:mb-0 px-2 py-0.5 rounded ${DIFF_BG[line.type]}`}
             >
-              {para}
+              {line.text}
             </p>
           ))
         ) : (
@@ -104,6 +152,12 @@ const BranchDiffView: React.FC<BranchDiffViewProps> = ({
   episode,
   language,
 }) => {
+  const diff = useMemo(() => {
+    const leftLines = leftContent.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+    const rightLines = rightContent.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+    return computeLineDiff(leftLines, rightLines);
+  }, [leftContent, rightContent]);
+
   return (
     <div className="flex flex-col h-full bg-bg-primary border border-border rounded-xl overflow-hidden">
       {/* Header */}
@@ -142,12 +196,14 @@ const BranchDiffView: React.FC<BranchDiffViewProps> = ({
           content={leftContent}
           side="left"
           language={language}
+          diffLines={diff.left}
         />
         <ContentColumn
           branch={rightBranch}
           content={rightContent}
           side="right"
           language={language}
+          diffLines={diff.right}
         />
       </div>
     </div>

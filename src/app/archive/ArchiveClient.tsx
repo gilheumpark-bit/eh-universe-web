@@ -186,6 +186,20 @@ function BadgeLevel({ level }: { level: string }) {
   );
 }
 
+/** Highlight matching substring in text with a <mark> tag */
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-accent-amber/30 text-text-primary rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
 export default function ArchiveClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -396,7 +410,7 @@ export default function ArchiveClient() {
                         <div className="flex-1 min-w-0">
                           <span className="text-[9px] font-mono uppercase tracking-wider text-text-tertiary">{article.categoryLabel}</span>
                           <p className="text-sm font-medium text-text-primary group-hover:text-accent-purple transition-colors truncate mt-0.5">
-                            {L2(article.title, lang)}
+                            <HighlightText text={L2(article.title, lang)} query={searchQuery} />
                           </p>
                         </div>
                         <BadgeLevel level={article.level} />

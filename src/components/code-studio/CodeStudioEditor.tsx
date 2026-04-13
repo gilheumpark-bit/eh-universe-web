@@ -7,7 +7,7 @@
 import React, { useCallback, useRef, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
-  Files, Columns2, Command, Settings, Loader2,
+  Files, Columns2, Command, Settings, Loader2, Map, WrapText,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
 import type { EditorPane } from "@/components/code-studio/EditorGroup";
@@ -120,6 +120,10 @@ export interface CodeStudioEditorProps {
   // Filesystem updater (for cross-file providers)
   fsUpdateContent: (id: string, content: string) => void;
 
+  // Quick toggle callbacks (optional — wired from Shell)
+  onToggleMinimap?: () => void;
+  onToggleWordWrap?: () => void;
+
   // i18n
   tcs: Record<string, string>;
 
@@ -149,6 +153,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
     onDeploy, onToggleSplit, onUndo, onRedo, onZoomIn, onZoomOut,
     onZoomReset, onSaveToast, onSettingsSaved,
     fsUpdateContent, tcs, children,
+    onToggleMinimap, onToggleWordWrap,
   } = props;
 
   const { lang } = useLang();
@@ -301,6 +306,26 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           />
         </div>
         <div className="flex items-center gap-1 px-2 flex-shrink-0">
+          {onToggleMinimap && (
+            <button
+              onClick={onToggleMinimap}
+              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${settings.minimap ? "text-accent-blue" : "text-text-tertiary hover:text-text-secondary"}`}
+              title={settings.minimap ? "Hide Minimap" : "Show Minimap"}
+              aria-label="Toggle minimap"
+            >
+              <Map className="h-4 w-4" />
+            </button>
+          )}
+          {onToggleWordWrap && (
+            <button
+              onClick={onToggleWordWrap}
+              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${settings.wordWrap === "on" ? "text-accent-blue" : "text-text-tertiary hover:text-text-secondary"}`}
+              title={settings.wordWrap === "on" ? "Disable Word Wrap" : "Enable Word Wrap"}
+              aria-label="Toggle word wrap"
+            >
+              <WrapText className="h-4 w-4" />
+            </button>
+          )}
           <button
             onClick={onToggleEditorGroup}
             disabled={openFiles.length === 0}

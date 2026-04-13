@@ -8,7 +8,7 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
-import StylePreview from "./StylePreview";
+import StylePreview, { applyStyleTransform } from "./StylePreview";
 
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
 const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
@@ -804,6 +804,35 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                 )}
               </div>
             </div>
+
+            {/* Quick Style Preview — inline sample */}
+            <hr className="ss-divider" />
+            <div className="ss-section-title">
+              {en ? "Quick Preview" : "미리보기"}
+            </div>
+            <p className="ss-hint">
+              {en
+                ? "See how your current style settings transform a sample paragraph."
+                : "현재 문체 설정이 샘플 문단에 어떻게 적용되는지 미리 봅니다."}
+            </p>
+            {(() => {
+              const sampleText = en
+                ? 'He opened the door. No one was inside. Something lay on the floor. He approached carefully. Cold metal touched his fingertips.'
+                : '그가 문을 열었다. 안에는 아무도 없었다. 바닥에 뭔가가 떨어져 있었다. 그는 조심스럽게 다가갔다. 차가운 금속 질감이 손끝에 닿았다.';
+              const preview = applyStyleTransform(sampleText, sliderVals, language);
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
+                  <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-text-tertiary, #888)', textTransform: 'uppercase', marginBottom: 6 }}>{en ? 'Original' : '원문'}</div>
+                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-secondary, #aaa)', whiteSpace: 'pre-wrap' }}>{sampleText}</div>
+                  </div>
+                  <div style={{ background: 'rgba(245,166,35,0.05)', borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(245,166,35,0.2)' }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: '#f5a623', textTransform: 'uppercase', marginBottom: 6 }}>{en ? 'With Your Style' : '내 문체 적용'}</div>
+                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-secondary, #aaa)', whiteSpace: 'pre-wrap' }}>{preview}</div>
+                  </div>
+                </div>
+              );
+            })()}
 
             <button className="ss-btn-primary" onClick={() => setTab(1)} style={{ marginTop: 20 }}>
               {en ? "Next: Technique Checklist →" : "다음: 기법 체크리스트 →"}

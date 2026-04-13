@@ -513,10 +513,26 @@ export function NetworkHomeClient() {
           <div className="grid gap-4 lg:grid-cols-3">
             {loading
               ? (
-                  <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-green border-t-transparent mb-3" />
-                    <p className="text-sm text-text-tertiary">{L4(lang, { ko: "행성을 불러오는 중...", en: "Loading planets..." })}</p>
-                  </div>
+                  <>
+                    {/* Loading skeleton cards */}
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="premium-panel-soft p-5 animate-pulse space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-bg-tertiary/50" />
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-3.5 bg-bg-tertiary/50 rounded w-3/4" />
+                            <div className="h-2.5 bg-bg-tertiary/30 rounded w-1/2" />
+                          </div>
+                        </div>
+                        <div className="h-2.5 bg-bg-tertiary/30 rounded w-full" />
+                        <div className="h-2.5 bg-bg-tertiary/30 rounded w-5/6" />
+                        <div className="flex gap-2 mt-2">
+                          <div className="h-5 w-12 bg-bg-tertiary/20 rounded-full" />
+                          <div className="h-5 w-16 bg-bg-tertiary/20 rounded-full" />
+                        </div>
+                      </div>
+                    ))}
+                  </>
                 )
               : !loading && error && state.planets.length === 0
                 ? (
@@ -665,10 +681,21 @@ export function NetworkHomeClient() {
           <div className="grid gap-4">
             {loading
               ? (
-                  <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
-                    <p className="text-sm text-text-tertiary">{L4(lang, { ko: "게시글을 불러오는 중...", en: "Loading posts..." })}</p>
-                  </div>
+                  <>
+                    {/* Post loading skeletons */}
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="premium-panel-soft p-4 animate-pulse space-y-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-bg-tertiary/50" />
+                          <div className="h-3 bg-bg-tertiary/40 rounded w-24" />
+                          <div className="h-2.5 bg-bg-tertiary/20 rounded w-16 ml-auto" />
+                        </div>
+                        <div className="h-4 bg-bg-tertiary/40 rounded w-3/4" />
+                        <div className="h-2.5 bg-bg-tertiary/20 rounded w-full" />
+                        <div className="h-2.5 bg-bg-tertiary/20 rounded w-2/3" />
+                      </div>
+                    ))}
+                  </>
                 )
               : error && state.posts.length === 0
                 ? (

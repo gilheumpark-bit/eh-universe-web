@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import { Film, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Film, ChevronDown, AlertTriangle, AlertCircle, Info, FileSearch } from 'lucide-react';
 import { DirectorReport, gradeFromScore } from '@/engine/director';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -36,25 +36,51 @@ const KIND_LABELS: Record<string, Record<AppLanguage, string>> = {
   ENDING_MONO: { KO: '종결 단조', EN: 'Ending Monotone', JP: '語尾単調', CN: '结尾单调' },
 };
 
+const SEV_ICONS: Record<number, React.ElementType> = {
+  5: AlertCircle,
+  4: AlertCircle,
+  3: AlertTriangle,
+  2: Info,
+  1: Info,
+};
+
+const GRADE_BADGE_COLORS: Record<string, string> = {
+  'S++': 'bg-green-500/20 text-green-300 ring-green-500/30',
+  'S+': 'bg-green-500/15 text-green-400 ring-green-500/20',
+  'S': 'bg-green-500/10 text-green-400 ring-green-500/15',
+  'A': 'bg-blue-500/15 text-blue-400 ring-blue-500/20',
+  'B': 'bg-amber-500/15 text-amber-400 ring-amber-500/20',
+  'C': 'bg-red-500/15 text-red-400 ring-red-500/20',
+  'D': 'bg-red-500/20 text-red-300 ring-red-500/30',
+};
+
 const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
   const t = createT(language);
+  const [showAll, setShowAll] = useState(false);
 
   if (!report) {
     return (
-      <details className="group">
-        <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">
+      <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-text-tertiary">
           <Film className="w-3 h-3" /> {t('director.nodDirector')}
-        </summary>
-        <p className="mt-1.5 text-[10px] text-text-tertiary pl-4 italic">
-          {t('director.autoAnalysis')}
-        </p>
-      </details>
+        </div>
+        <div className="mt-3 flex flex-col items-center gap-2 py-4">
+          <FileSearch className="w-8 h-8 text-text-tertiary/30" />
+          <p className="text-[11px] text-text-tertiary text-center">
+            {L4(language, { ko: '아직 분석 결과가 없습니다', en: 'No analysis results yet', ja: 'まだ分析結果がありません', zh: '暂无分析结果' })}
+          </p>
+          <p className="text-[9px] text-text-tertiary/60 text-center">
+            {L4(language, { ko: 'AI 생성이 완료되면 자동으로 서사 품질을 분석합니다', en: 'Narrative quality will be analyzed automatically after AI generation', ja: 'AI生成後に自動的にナラティブ品質を分析します', zh: 'AI生成完成后将自动分析叙事质量' })}
+          </p>
+        </div>
+      </div>
     );
   }
 
   const grade = gradeFromScore(report.score);
   const gradeColor = report.score >= 80 ? 'text-accent-green' : report.score >= 60 ? 'text-accent-amber' : 'text-accent-red';
-  const findingsToShow = report.findings.slice(0, 6);
+  const gradeBadgeColor = GRADE_BADGE_COLORS[grade] ?? GRADE_BADGE_COLORS['C'];
+  const findingsToShow = showAll ? report.findings : report.findings.slice(0, 6);
 
   return (
     <details className="group" open={report.findings.length > 0}>
@@ -63,7 +89,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
           <Film className="w-3 h-3" /> {t('director.nodDirector')}
         </span>
         <span className="flex items-center gap-2">
-          <span className={`text-[9px] font-black ${gradeColor}`}>{grade}</span>
+          <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ring-1 ${gradeBadgeColor}`}>{grade}</span>
           {report.findings.length > 0 && (
             <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">
               {report.findings.length}
@@ -92,25 +118,33 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
           </p>
         ) : (
           <div className="space-y-1.5">
-            {findingsToShow.map((f, i) => (
-              <div key={i} className="flex items-start gap-1.5">
-                <span className="text-[9px] shrink-0 mt-0.5">{SEV_DOTS[f.severity] || '⚪'}</span>
-                <div className="min-w-0">
-                  <div className={`text-[10px] font-bold ${SEV_COLORS[f.severity] || 'text-text-tertiary'}`}>
-                    {KIND_LABELS[f.kind]?.[language] || f.kind}
-                    {f.lineNo ? ` L${f.lineNo}` : ''}
+            {findingsToShow.map((f, i) => {
+              const SevIcon = SEV_ICONS[f.severity] ?? Info;
+              return (
+                <div key={i} className="flex items-start gap-1.5">
+                  <SevIcon className={`w-3 h-3 shrink-0 mt-0.5 ${SEV_COLORS[f.severity] || 'text-text-tertiary'}`} />
+                  <div className="min-w-0">
+                    <div className={`text-[10px] font-bold ${SEV_COLORS[f.severity] || 'text-text-tertiary'}`}>
+                      {KIND_LABELS[f.kind]?.[language] || f.kind}
+                      {f.lineNo ? ` L${f.lineNo}` : ''}
+                    </div>
+                    <div className="text-[9px] text-text-tertiary break-words">{f.message}</div>
+                    {f.excerpt && (
+                      <div className="text-[9px] text-text-tertiary italic truncate">&quot;{f.excerpt}&quot;</div>
+                    )}
                   </div>
-                  <div className="text-[9px] text-text-tertiary break-words">{f.message}</div>
-                  {f.excerpt && (
-                    <div className="text-[9px] text-text-tertiary italic truncate">&quot;{f.excerpt}&quot;</div>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {report.findings.length > 6 && (
-              <div className="text-[9px] text-text-tertiary">
-                +{report.findings.length - 6}{t('director.more')}
-              </div>
+              <button
+                onClick={() => setShowAll(prev => !prev)}
+                className="text-[9px] text-accent-purple hover:underline font-medium mt-1"
+              >
+                {showAll
+                  ? L4(language, { ko: '접기', en: 'Collapse', ja: '折りたたむ', zh: '收起' })
+                  : `+${report.findings.length - 6} ${L4(language, { ko: '더 보기', en: 'more', ja: 'もっと見る', zh: '更多' })}`}
+              </button>
             )}
           </div>
         )}

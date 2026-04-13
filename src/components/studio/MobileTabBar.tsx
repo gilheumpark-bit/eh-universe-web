@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Map, Zap } from 'lucide-react';
+import { Globe, UserCircle, PenTool, FileText, Menu, X, History, Settings, Map, Zap, BookOpen } from 'lucide-react';
 import type { AppTab, AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
@@ -14,6 +14,7 @@ interface MobileTabBarProps {
   onTabChange: (tab: AppTab) => void;
   language: AppLanguage;
   mode?: 'guided' | 'free';
+  onEpisodeNav?: () => void;
 }
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
@@ -45,7 +46,7 @@ const GUIDED_TABS: { key: AppTab; icon: React.ElementType }[] = [
 // PART 2 — Premium Component
 // ============================================================
 
-export default function MobileTabBar({ activeTab, onTabChange, language, mode = 'free' }: MobileTabBarProps) {
+export default function MobileTabBar({ activeTab, onTabChange, language, mode = 'free', onEpisodeNav }: MobileTabBarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -168,6 +169,19 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
             </div>
           </div>
         </>
+      )}
+
+      {/* Episode Navigator button — floating action */}
+      {!isGuided && onEpisodeNav && activeTab === 'writing' && (
+        <button
+          type="button"
+          onClick={() => { triggerHaptic(); onEpisodeNav(); }}
+          className="absolute -top-14 right-4 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/20 border border-accent-purple/30 text-accent-purple text-[10px] font-bold shadow-lg backdrop-blur-sm transition-all active:scale-95"
+          aria-label={getTabLabel('writing') + ' - Episodes'}
+        >
+          <BookOpen size={14} strokeWidth={2.5} />
+          <span>{language === 'KO' ? '에피소드' : 'Episodes'}</span>
+        </button>
       )}
 
       {/* Primary tab bar — glass morphism style */}
