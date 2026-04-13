@@ -1,19 +1,19 @@
 ---
-name: Feature Request
-about: Suggest a new feature or improvement
-title: "[Feature] "
+name: Feature request
+about: Suggest an idea for NOA Code Studio
+title: "[FEATURE] "
 labels: enhancement
 assignees: ''
 ---
 
-## Problem
-What problem does this feature solve?
+**Is your feature request related to a problem? Please describe.**
+A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
-## Proposed Solution
-How should it work?
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
 
-## Alternatives Considered
-Other approaches you've thought about.
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions or features you've considered.
 
-## Additional Context
-Any mockups, references, or related issues.
+**Additional context**
+Add any other context or screenshots about the feature request here.

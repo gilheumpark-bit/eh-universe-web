@@ -10,10 +10,8 @@ It hosts five applications under a single domain with shared auth, i18n, and des
 | App | Route | Purpose |
 |-----|-------|---------|
 | Universe Portal | `/`, `/archive`, `/codex`, `/reference`, `/rulebook`, `/tools/*` | Lore archive, codex, reference tools |
-| NOA Studio | `/studio` | AI-assisted narrative workbench (9 tabs: World, Characters, Rulebook, Writing, Style, Manuscript, History, Docs, Settings) |
 | Code Studio | `/code-studio` | Verified code generation studio with 8-team pipeline |
-| EH Network | `/network` | Community platform -- planets, posts, reports, settlements |
-| Translation Studio | `/translation-studio` | Multi-provider translation workbench |
+| EH Network | `/network` | Community platform -- posts, reports, and network interactions |
 
 ## Directory Structure
 
@@ -22,10 +20,8 @@ src/
   app/                  # Next.js App Router pages + API routes
     api/                # 22 API routes (chat, translate, agent-search, etc.)
     (universe)/         # Universe Portal pages
-    studio/             # NOA Studio
     code-studio/        # Code Studio
     network/            # EH Network
-    translation-studio/ # Translation Studio
   components/           # Shared React components
   lib/                  # Core libraries
     code-studio/        # Code Studio engine (6 dirs: core, ai, pipeline, editor, features, audit)
@@ -66,9 +62,7 @@ LUCIDE_MAP provides icon mappings for all 51 panels.
 - **Server proxy**: All AI calls route through `/api/chat` (SSE streaming) to prevent key exposure
 - **BYOK + hosted**: Server env keys or user-provided keys
 - **Structured generation**: `/api/structured-generate` (provider-agnostic JSON schema output)
-- **Agent Builder**: Vertex AI Discovery Engine for semantic search across 3 studios
-- **ANS v10.0**: Adaptive Narrative System with tension curves, HFCP state tracking, genre presets
-- **NOA-PRISM v1.1**: Content rating and preservation/expansion control
+- **Agent Builder**: Vertex AI Discovery Engine for semantic search across code repositories
 
 ## CLI Integration
 

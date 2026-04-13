@@ -1,108 +1,97 @@
-# Contributing to EH Universe Web
+# Contributing to EH Code Studio
 
-EH Universe Web에 기여해 주셔서 감사합니다.
-Thank you for your interest in contributing to EH Universe Web.
+Thank you for your interest. This document explains how to set up, develop, and submit changes.
 
-## Getting Started
+## Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+- Git
+- (Optional) Ollama for local model testing
+
+## Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/gilheumpark-bit/eh-universe-web.git
-cd eh-universe-web
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+git clone https://github.com/gilheumpark-bit/local-code-studio.git
+cd local-code-studio
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
-
-## Tech Stack
-
-- **Framework**: Next.js 16 (App Router, Turbopack)
-- **Language**: TypeScript (strict mode)
-- **Styling**: Tailwind CSS v4
-- **Auth/DB**: Firebase (Google Sign-In, Firestore)
-- **AI**: Multi-provider (Gemini, OpenAI, Claude, Groq, Mistral)
-- **Testing**: Playwright (E2E)
-
-## Development Workflow
-
-1. Create a branch from `master`
-2. Make your changes
-3. Run checks before submitting:
+## Development
 
 ```bash
-# Type check
-npx tsc --noEmit
+# Electron dev mode (Next.js hot reload + Electron)
+pnpm --filter eh-code-studio-desktop run dev:electron
+
+# Run tests
+pnpm --filter eh-code-studio-desktop run test
 
 # Lint
-npx eslint src/
+pnpm --filter eh-code-studio-desktop run lint
 
-# E2E tests (requires dev server running)
-npx playwright test
+# Type check (strict)
+pnpm --filter eh-code-studio-desktop run verify:static
 ```
 
-4. Open a Pull Request
+## Build
 
-## Code Conventions
+```bash
+# Full production build (renderer export + Electron packaging)
+pnpm --filter eh-code-studio-desktop run build:electron
+```
 
-### File Structure
+## Project Structure
 
-- Large files (100+ lines) must use `PART` section markers
-- Each PART ends with an `IDENTITY_SEAL` comment
-- Components go in `src/components/`, hooks in `src/hooks/`
+```
+apps/desktop/
+  main/          # Electron main process (Node.js)
+    ipc/         # IPC handlers (one file per domain)
+    services/    # Business logic (ai-service, mcp-stdio, updater)
+  renderer/      # Next.js frontend (React)
+    components/  # UI components (51-panel system)
+    hooks/       # React hooks
+    lib/         # Core logic, AI providers, features
+packages/
+  quill-engine/  # Verification engine
+  quill-cli/     # CLI tool
+  shared-types/  # Shared TypeScript types
+```
 
-### Naming
+## Coding Standards
 
-- Components: PascalCase (`StudioSidebar.tsx`)
-- Hooks: camelCase with `use` prefix (`useProjectManager.ts`)
-- Utilities: camelCase (`ai-providers.ts`)
-- Constants: SCREAMING_SNAKE_CASE
+### Architecture Rules
 
-### Styling
+- **Panel registry**: All panels must be registered in `panel-registry.ts` and imported via `PanelImports.tsx`. No hardcoded panels.
+- **IPC security**: API keys never leave the main process. Renderer calls `keystore.set()` / `keystore.has()` but never `get()`.
+- **Semantic tokens**: Use Design System v8.0 tokens (`bg-bg-primary`, `text-text-primary`). No raw Tailwind colors.
+- **z-index variables**: Use `var(--z-dropdown)` etc. No hardcoded z-index numbers.
 
-- Use Tailwind CSS utility classes
-- Design tokens defined in CSS variables (`--color-bg-primary`, etc.)
-- Premium components use the `premium-panel-soft` class
+### Code Quality
 
-### Internationalization
+- Verification-first: All code changes should pass `pnpm run verify:static`
+- No `eval()`, `exec()`, `os.system()`, `__import__()`
+- `typeof window` guard on all browser APIs used at module scope
+- Empty catch blocks must have a comment explaining why
 
-- All user-facing strings must support KO/EN/JP/CN
-- Use `createT(language)` for translations
-- Add new keys to `src/lib/studio-constants.ts` TRANSLATIONS object
+## Pull Request Process
 
-## What to Contribute
+1. Fork and create a branch from `feat/desktop-only-migration`
+2. Make changes, ensure `verify:static` passes
+3. Write a clear PR description with what changed and why
+4. If adding a new IPC channel, update `preload.ts` + `cs-bridge.d.ts`
+5. If adding a new panel, register in `panel-registry.ts` + `PanelImports.tsx`
 
-### Welcome
-- Bug fixes with reproduction steps
-- Accessibility improvements
-- Performance optimizations
-- Translation corrections (KO/EN/JP/CN)
-- Documentation improvements
+## Commit Convention
 
-### Needs Discussion First
-- New features (open an Issue first)
-- Architecture changes
-- New AI provider integrations
-- World-building lore additions
+```
+type(scope): description
 
-### Not Accepted
-- Changes to core EH Universe lore without author approval
-- Commercial use integrations (see LICENSE: CC BY-NC 4.0)
-- Dependencies with incompatible licenses
-
-## Reporting Bugs
-
-Use the **Bug Report** issue template. Include:
-- Steps to reproduce
-- Expected vs actual behavior
-- Browser and OS information
-- Console errors (if any)
+# Examples:
+feat(desktop): add Ollama local model integration
+fix(code-studio): resolve hydration mismatch
+chore: update dependencies
+```
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under
-the [CC BY-NC 4.0](./LICENSE) license.
+By contributing, you agree that your contributions will be licensed under [CC BY-NC 4.0](LICENSE).

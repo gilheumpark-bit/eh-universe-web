@@ -118,13 +118,7 @@ rm src/__tests__/_audit.test.ts
 
 | 파일 | 줄 | 전략 |
 |------|-----|------|
-| `src/app/tools/noa-tower/page.tsx` | 1,443 | Shell + GameBoard + Controls + ScorePanel |
-| `src/app/tools/warp-gate/page.tsx` | 1,336 | Shell + CommandInput + StarMap + StatusPanel |
-| `src/components/studio/SceneSheet.tsx` | 1,321 | Shell + SceneEditor + BeatList + MetricsPanel |
 | `src/components/code-studio/IDEPanels.tsx` | 1,133 | 패널별 개별 파일로 분리 (패널 레지스트리 연결) |
-| `src/components/studio/StyleStudioView.tsx` | 1,126 | Tab별 분리 (Slider + DNA + Rhythm + Analysis) |
-| `src/components/studio/ResourceView.tsx` | 919 | 리소스 타입별 분리 |
-| `src/components/studio/ItemStudioView.tsx` | 906 | Shell + ItemEditor + ItemList |
 
 ### lib 파일 (5개)
 
@@ -141,7 +135,6 @@ rm src/__tests__/_audit.test.ts
 | 파일 | 줄 | 상태 |
 |------|-----|------|
 | `src/components/code-studio/CodeStudioShell.tsx` | 964 | 이전 세션에서 분리 완료 — 추가 분리 가능 |
-| `src/app/studio/StudioShell.tsx` | 952 | 이전 세션에서 분리 완료 — useState 33개 → useReducer 전환 권장 |
 | `src/lib/ai-providers.ts` | 859 | Provider별 분리 가능 |
 
 ### 작업 순서
@@ -248,9 +241,7 @@ grep -rn "for.*of\|for\s*(" src/ --include="*.ts" --include="*.tsx" -A5 | grep "
 ### 5-3. useState 과다 (3파일)
 | 파일 | useState 수 | 전략 |
 |------|-------------|------|
-| StudioShell.tsx | 33 | useReducer + StudioContext 분리 |
 | CodeStudioShell.tsx | 25+ | useReducer + CodeStudioContext |
-| noa-tower/page.tsx | 20+ | useReducer + GameState |
 
 각 파일에서:
 1. 관련 state를 그룹화 (예: UI state, data state, AI state)

@@ -1,35 +1,76 @@
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import { defineConfig, globalIgnores } from "eslint/config";
+import { defineConfig } from "eslint/config";
+import unusedImports from "eslint-plugin-unused-imports";
 
 const eslintConfig = defineConfig([
+  {
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "node_modules/**",
+      "next-env.d.ts",
+      ".claude/**",
+      "test-results/**",
+      "playwright-report/**",
+      "apps/desktop/app/**",
+      "apps/desktop/renderer/.next/**",
+      "apps/desktop/renderer/out/**",
+      "apps/desktop/scripts/**",
+      "apps/desktop/main/**/*.compiled.cjs",
+      "apps/desktop/renderer/generate_stubs.js"
+    ]
+  },
+  {
+    settings: {
+      next: {
+        rootDir: "renderer/"
+      }
+    }
+  },
   ...nextVitals,
   ...nextTs,
   {
+    plugins: {
+      "unused-imports": unusedImports,
+    },
     rules: {
-      "@typescript-eslint/no-unused-vars": [
+      "unused-imports/no-unused-imports": "error",
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-vars": [
         "warn",
         {
-          argsIgnorePattern: "^_",
+          vars: "all",
           varsIgnorePattern: "^_",
-          destructuredArrayIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
         },
       ],
     },
   },
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-    // Nested Codex/Claude worktrees include generated app output.
-    ".claude/**",
-    // Test artifacts (may not exist locally)
-    "test-results/**",
-    "playwright-report/**",
-  ]),
+  {
+    files: ["renderer/cli/**/*.ts", "renderer/cli/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "prefer-const": "off",
+      "@typescript-eslint/no-unused-vars": "warn"
+    }
+  },
+  // Desktop Electron + Next renderer: legacy @ts-nocheck / gradual strictness — tsc --strict is the gate.
+  {
+    files: [
+      "apps/desktop/renderer/**/*.{ts,tsx}",
+      "apps/desktop/main/**/*.ts",
+      "renderer/**/*.{ts,tsx}",
+      "main/**/*.ts",
+    ],
+    rules: {
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

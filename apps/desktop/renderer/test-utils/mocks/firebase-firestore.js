@@ -1,0 +1,15 @@
+module.exports = {
+  collection: jest.fn(),
+  deleteDoc: jest.fn(),
+  doc: jest.fn(),
+  getDoc: jest.fn(),
+  getDocs: jest.fn(),
+  increment: jest.fn(),
+  limit: jest.fn(),
+  orderBy: jest.fn(),
+  query: jest.fn(),
+  setDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  writeBatch: jest.fn(),
+  where: jest.fn(),
+};

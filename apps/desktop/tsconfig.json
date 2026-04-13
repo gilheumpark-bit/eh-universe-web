@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./renderer/*"]
+    }
+  },
+  "include": ["main/**/*.ts", "preload/**/*.ts", "renderer/**/*.ts", "renderer/**/*.tsx"]
+}
+

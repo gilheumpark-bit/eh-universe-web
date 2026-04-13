@@ -3,7 +3,7 @@
     "module": "commonjs",
     "target": "ES2022",
     "outDir": "./dist/cli",
-    "rootDir": "./src",
+    "rootDir": "./renderer",
     "declaration": true,
     "sourceMap": true,
     "esModuleInterop": true,
@@ -15,11 +15,11 @@
     "moduleResolution": "node",
     "isolatedModules": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./renderer/*"]
     }
   },
   "include": [
-    "src/cli/**/*.ts"
+    "renderer/cli/**/*.ts"
   ],
   "exclude": [
     "node_modules",

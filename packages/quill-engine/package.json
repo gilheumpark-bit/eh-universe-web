@@ -1,0 +1,70 @@
+{
+  "name": "@eh/quill-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EH Code Studio verification engine — pure TS, no Node API deps",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "@babel/runtime-corejs3": "^7.29.2",
+    "@eh/shared-types": "workspace:*",
+    "acorn": "^8.16.0",
+    "esquery": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
+    "ts-morph": "^23.0.0",
+    "typescript": "^5"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./pipeline/*": {
+      "require": "./src/pipeline/*.ts",
+      "import": "./src/pipeline/*.ts",
+      "types": "./src/pipeline/*.ts"
+    },
+    "./_stubs/*": {
+      "require": "./src/_stubs/*.ts",
+      "import": "./src/_stubs/*.ts",
+      "types": "./src/_stubs/*.ts"
+    },
+    "./audit/audit-types": {
+      "require": "./src/audit/audit-types.ts",
+      "import": "./src/audit/audit-types.ts",
+      "types": "./src/audit/audit-types.ts"
+    },
+    "./audit/audit-engine": {
+      "require": "./src/audit/audit-engine.ts",
+      "import": "./src/audit/audit-engine.ts",
+      "types": "./src/audit/audit-engine.ts"
+    },
+    "./quality-rules-from-catalog": {
+      "require": "./src/quality-rules-from-catalog.ts",
+      "import": "./src/quality-rules-from-catalog.ts",
+      "types": "./src/quality-rules-from-catalog.ts"
+    },
+    "./autofix-policy": {
+      "require": "./src/autofix-policy.ts",
+      "import": "./src/autofix-policy.ts",
+      "types": "./src/autofix-policy.ts"
+    },
+    "./types": {
+      "require": "./src/types.ts",
+      "import": "./src/types.ts",
+      "types": "./src/types.ts"
+    }
+  }
+}

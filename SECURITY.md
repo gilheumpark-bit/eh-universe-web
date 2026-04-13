@@ -2,83 +2,60 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-|---------|--------------------|
-| 1.3.x   | :white_check_mark: Full support |
-| 1.2.x   | :white_check_mark: Full support |
-| 1.0.x–1.1.x | :warning: Limited support (critical fixes only) |
-| < 1.0   | :x: Not supported  |
+| Version | Supported |
+|---------|-----------|
+| 0.1.x-beta | Yes |
+| < 0.1 | No |
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in EH Universe Web, please report it responsibly.
+**Do not open a public issue.** Report via GitHub private vulnerability reporting or email the maintainer directly.
 
-### How to Report
+- Acknowledgment within 48 hours
+- Timeline for fix provided within 1 week
+- Attribution in security advisories for verified reports
 
-1. **Email**: Send a detailed report to **security@eh-universe.dev**
-2. **Subject line**: `[SECURITY] Brief description of the issue`
-3. **Include**:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact assessment
-   - Suggested fix (if any)
+## Security Architecture
 
-### Response Timeline
+### API Key Protection
 
-| Stage | Timeframe |
-|-------|-----------|
-| Acknowledgment | Within 48 hours |
-| Initial assessment | Within 5 business days |
-| Status update | Every 7 days until resolved |
-| Fix release | Depends on severity (critical: 72h, high: 2 weeks, medium/low: next release) |
+- Keys stored in OS keychain via `electron.safeStorage` (DPAPI on Windows, Keychain on macOS, libsecret on Linux)
+- Renderer process can SET/HAS/LIST/DELETE keys but **never GET**
+- `window.cs.keystore` exposes no decryption to the renderer
+- XSS cannot exfiltrate API keys by design
 
-### What to Expect
+### Process Isolation
 
-- You will receive an acknowledgment within 48 hours confirming receipt.
-- We will investigate and provide an initial assessment within 5 business days.
-- If the vulnerability is accepted, we will work on a fix and coordinate disclosure.
-- If the vulnerability is declined, we will provide a detailed explanation.
+- `contextIsolation: true` — renderer has no access to Node.js APIs
+- `nodeIntegration: false` — no `require()` in renderer
+- All privileged operations go through the preload bridge (`window.cs`)
+- Preload exposes only typed, narrow methods
 
-## Security Scope
+### Content Security
 
-The following are considered in-scope vulnerabilities:
+- Production builds: `Cross-Origin-Embedder-Policy: require-corp` + `Cross-Origin-Opener-Policy: same-origin`
+- External links open in default browser (not in-app)
+- No `eval()`, `new Function()` in application code
+- Design transpiler has FORBIDDEN_PATTERN blocklist
 
-- **Authentication/Authorization bypass** in Firebase Auth integration
-- **Cross-Site Scripting (XSS)** in user-generated content or AI responses
-- **API key exposure** through client-side code or network requests
-- **Rate limit bypass** on server-side API routes
-- **Injection attacks** via AI prompt inputs or structured generation
-- **Data leakage** of user manuscripts, session data, or API keys stored in localStorage
-- **CSRF/SSRF** on API endpoints
-- **Insecure data storage** exposing sensitive user information
+### MCP Server Security
 
-## Out of Scope
+- MCP servers run as child processes with inherited env only
+- No automatic execution of tools — user must configure servers explicitly
+- Server configs stored in `userData/mcp-servers.json` (not in renderer localStorage)
+- Max 3 auto-restarts before marking server as failed
 
-The following items are **not** considered vulnerabilities for this project:
+### Severity Classification
 
-- Vulnerabilities in third-party services (Firebase, Vercel, AI providers) -- report these to the respective vendors
-- Rate limiting on client-side AI providers when using BYOK (Bring Your Own Key)
-- Self-XSS or attacks requiring physical access to the user's browser
-- Issues requiring social engineering
-- Denial of Service (DoS) attacks against Vercel infrastructure
-- Content quality issues in AI-generated text
-- Browser extensions or plugins interfering with the application
-- Vulnerabilities in unsupported versions (< 1.0)
+| Severity | Description |
+|----------|-------------|
+| P0 Critical | Context isolation bypass, main process compromise, key exfiltration |
+| P1 High | Arbitrary file write outside project scope, remote code execution in renderer |
+| P2 Medium | Information disclosure, denial of service, sandbox escape |
+| P3 Low | UI redressing, non-exploitable edge cases |
 
-## Responsible Disclosure Policy
+## Known Limitations
 
-- **Do not** publicly disclose the vulnerability before a fix is available.
-- **Do not** exploit the vulnerability beyond what is necessary to demonstrate it.
-- **Do not** access or modify other users' data.
-- **Do** provide sufficient detail for us to reproduce and fix the issue.
-- **Do** give us reasonable time to address the vulnerability before disclosure.
-
-We are committed to working with security researchers and will not pursue legal action against those who discover and report vulnerabilities in good faith following this policy.
-
-## Security Best Practices for Contributors
-
-- Never commit API keys or secrets to the repository.
-- Use environment variables (`NEXT_PUBLIC_*` for client, server-only for API keys).
-- All API routes must use the rate limiter middleware.
-- User input displayed in the UI must be sanitized.
-- AI-generated content must be rendered safely (no `dangerouslySetInnerHTML` with raw AI output).
+- `sandbox: false` on renderer window (required for preload Node APIs like chokidar)
+- `forceCodeSigning: false` in electron-builder (no code signing certificate yet)
+- Local Ollama connections are unencrypted HTTP (localhost only)

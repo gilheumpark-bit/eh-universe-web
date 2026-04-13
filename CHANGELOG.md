@@ -1,7 +1,38 @@
 # Changelog
 
-All notable changes to EH Universe Web are documented here.
+All notable changes to EH Code Studio are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [0.1.0-beta] - 2026-04-13
+
+### Added
+- **Ollama local model integration**: model discovery, pull with progress, health check, ARI circuit breaker
+- **Tab autocomplete (FIM)**: Ollama direct HTTP for sub-200ms completions, CodeLlama/DeepSeek/StarCoder/Qwen2.5 native FIM tokens
+- **MCP protocol**: stdio transport (JSON-RPC over stdin/stdout), HTTP transport, tool calling in chat, auto-restart, heartbeat
+- **Multi-file agent**: dependency graph (import tracing + topological sort), AI-driven planning, cross-file context, snapshot rollback
+- Desktop-native features: OS notifications, global shortcut (Ctrl+Shift+E), native clipboard, recent documents, drag-and-drop
+- 1024x1024 application icon
+- `get-app-version` IPC handler
+- Patent scanner with keyword + license detection
+
+### Fixed
+- React #418 hydration mismatch (ScopeShell SSR disabled via dynamic import)
+- P0 ReferenceError in useCodeStudioPanels (accumulated scope bug)
+- Auto-updater 404 log flood (silent handling + logger suppression)
+- fs.Stats deprecation warning (Node 24 + chokidar)
+- 39 diagnostic fixes: stubs, dead code, unwired IPC, simulations
+
+### Changed
+- Version bump to 0.1.0-beta
+- Global theme transition: 300ms on all elements -> conditional 250ms only during theme switch
+- Animation durations reduced: panel 150->80ms, sidebar 200->120ms, editor 200->100ms
+- CSS transition variables shortened: fast 150->80ms, normal 250->150ms, slow 400->250ms
+- Monaco editor key stabilized to prevent full remount on file switch
+- electron-builder.yml files section cleaned up
+- nextron.config.js: preload entry added
+- package.json: description + author metadata added
+- Ollama provider: devOnly removed (production-visible)
+- AIProvider shared type: extended with ollama/lmstudio
 
 ## [1.3.0] - 2026-04-06
 ### Added

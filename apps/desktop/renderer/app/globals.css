@@ -1,0 +1,548 @@
+@import "tailwindcss";
+
+@theme {
+  /* Archive / editorial base — 도서·원고실 톤 (SF 글로우·쿨 블루 최소화) */
+  --color-bg-primary: #11100e;
+  --color-bg-secondary: #1a1816;
+  --color-bg-tertiary: #242018;
+  --color-text-primary: #f4f0ea;
+  --color-text-secondary: #b5ac9d;
+  --color-text-tertiary: #847a6c;
+  --color-accent-purple: #8b6f56;
+  --color-accent-red: #a85c52;
+  --color-accent-green: #4a8f78;
+  --color-accent-amber: #b8955c;
+  --color-accent-blue: #6d7d8f;
+  --color-border: #2f2c26;
+  --color-surface-strong: rgba(26, 24, 22, 0.94);
+  --color-surface-soft: rgba(20, 19, 17, 0.78);
+  --shadow-luxury: 0 30px 60px rgba(0, 0, 0, 0.5), 0 15px 25px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  --shadow-panel: 0 12px 36px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-manuscript: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(184, 149, 92, 0.07);
+  /* Transition scale — High-end Easing Curves */
+  --transition-fast: 80ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Border-radius scale — 5 tiers only */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  /* Spacing scale — NOTE: --spacing-{sm,md,lg,xl} MUST NOT be in @theme
+     because Tailwind CSS 4 uses --spacing-* for max-w-md, w-lg etc.
+     Custom spacing tokens moved to --sp-* namespace to avoid collision. */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 48px;
+  /* Z-index layer system — semantic tokens to prevent arbitrary z-index collisions */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  /* Blur scale — glassmorphism depth (--bl-* to avoid Tailwind blur-sm/md/lg collision) */
+  --bl-sm: 10px;
+  --bl-md: 18px;
+  --bl-lg: 28px;
+  --gradient-page: linear-gradient(180deg, #141311 0%, #11100e 45%, #0f0e0c 100%);
+  --font-sans:
+    var(--font-ibm-plex-sans), var(--font-noto-sans-kr), "Noto Sans JP",
+    "Noto Sans SC", "Hiragino Kaku Gothic ProN", "Microsoft YaHei", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "Fira Code", monospace;
+  --font-display: var(--font-cormorant-garamond), var(--font-noto-serif-kr), serif;
+  --font-document: var(--font-noto-serif-kr), var(--font-ibm-plex-mono), serif;
+}
+
+/* ============================================================
+   Base Reset & Typography
+   ============================================================ */
+
+/* Fonts loaded via <link> in layout.tsx — no @font-face needed */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background: var(--gradient-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  letter-spacing: 0;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+  background-attachment: fixed;
+  overscroll-behavior-y: none; /* AI-2: 제스처 및 리플로우 폭주 차단 */
+  overscroll-behavior-x: none;
+}
+
+/**
+ * 전체 뷰포트 배경을 body와 동일하게 맞출 때 사용 (스플래시 등).
+ * bg-bg-primary 만 주면 --gradient-page / 테마 배경이 가려져 "창 색만 바뀌는" 현상이 난다.
+ */
+.eh-page-canvas {
+  background: var(--gradient-page);
+  background-attachment: fixed;
+}
+
+@media (max-width: 768px) {
+  .eh-page-canvas {
+    background-attachment: scroll;
+  }
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+/* 아카이브 톤: 전역 노이즈·스캔라인 제거 (작업 UI = 에디토리얼, SF 장식은 페이지 단위로만) */
+
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
+main[class~="pt-14"] {
+  padding-top: 6rem !important;
+}
+
+/* Focus-visible — unified system */
+*:focus-visible {
+  outline: 2px solid var(--color-accent-amber, #b8955c);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent-amber) 20%, transparent);
+}
+
+/* ============================================================
+   2-Level Brightness Theme: dark (밤) / light (낮)
+   ============================================================ */
+
+/* ── 테마 변수 오버라이드 ── */
+/* Tailwind CSS 4: @theme 블록은 @layer theme { :root { ... } }로 컴파일됨.
+   테마 전환 오버라이드는 @layer 밖(unlayered)에서 선언해야 @layer theme보다 우선함.
+   data-theme 미설정 시 @theme 기본값(다크 아카이브 톤)이 적용됨. */
+/* 낮 모드: 따뜻한 페이퍼 캔버스 + 카드는 밝게(secondary=표면), 보더로만 구분 */
+[data-theme="light"] {
+  --color-bg-primary: #f5f4f0;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #e8e6e0;
+  --color-text-primary: #141312;
+  --color-text-secondary: #45423c;
+  --color-text-tertiary: #6c6860;
+  --color-border: #cfc9be;
+  --color-accent-purple: #5c4d7a;
+  --color-accent-red: #b54a41;
+  --color-accent-green: #1a6b4f;
+  --color-accent-amber: #8a6618;
+  --color-accent-blue: #355c7d;
+  --color-surface-strong: rgba(255, 255, 255, 0.96);
+  --color-surface-soft: rgba(245, 244, 240, 0.92);
+  --shadow-luxury:
+    0 10px 32px rgba(20, 19, 17, 0.07),
+    0 2px 10px rgba(20, 19, 17, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-panel:
+    0 4px 18px rgba(20, 19, 17, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --shadow-manuscript: 0 10px 36px rgba(20, 19, 17, 0.06), 0 0 0 1px rgba(138, 102, 24, 0.08);
+  --gradient-page: linear-gradient(180deg, #faf9f6 0%, #f3f1ec 50%, #ebe8e1 100%);
+}
+[data-theme="dark"] {
+  --color-bg-primary: #1c1a17;
+  --color-bg-secondary: #252320;
+  --color-bg-tertiary: #2e2b26;
+  --color-text-primary: #f2ede4;
+  --color-text-secondary: #aca292;
+  --color-text-tertiary: #7b7367;
+  --color-border: #3d3830;
+  --color-surface-strong: rgba(37, 35, 32, 0.94);
+  --color-surface-soft: rgba(28, 26, 23, 0.78);
+  --gradient-page: none;
+}
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  background: #1c1a17;
+  color: var(--color-text-primary);
+}
+[data-theme="dark"] .eh-page-canvas {
+  background: #1c1a17;
+}
+[data-theme="dark"] .bg-black\/40,
+[data-theme="dark"] .bg-black\/30,
+[data-theme="dark"] .bg-black\/20,
+[data-theme="dark"] .bg-black\/60 {
+  background-color: rgba(28, 26, 23, 0.4);
+}
+[data-theme="dark"] .bg-zinc-900,
+[data-theme="dark"] .bg-zinc-900\/20,
+[data-theme="dark"] .bg-zinc-900\/30,
+[data-theme="dark"] .bg-zinc-900\/50 {
+  background-color: rgba(37, 35, 32, 0.5);
+}
+[data-theme="dark"] .border-zinc-800,
+[data-theme="dark"] .border-zinc-800\/50 {
+  border-color: #3d3830;
+}
+[data-theme="dark"] .text-zinc-500,
+[data-theme="dark"] .text-zinc-600 {
+  color: #8a8478;
+}
+[data-theme="dark"] .text-zinc-400 {
+  color: #a8a198;
+}
+html[data-theme="light"],
+body[data-theme="light"] {
+  background: var(--gradient-page);
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+}
+[data-theme="light"] .eh-page-canvas {
+  background: var(--gradient-page);
+  background-attachment: fixed;
+}
+[data-theme="light"] .bg-black\/40,
+[data-theme="light"] .bg-black\/30,
+[data-theme="light"] .bg-black\/20,
+[data-theme="light"] .bg-black\/60 {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .bg-zinc-900,
+[data-theme="light"] .bg-zinc-900\/20,
+[data-theme="light"] .bg-zinc-900\/30,
+[data-theme="light"] .bg-zinc-900\/50 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] .border-zinc-800,
+[data-theme="light"] .border-zinc-800\/50,
+[data-theme="light"] .border-white\/6,
+[data-theme="light"] .border-white\/8,
+[data-theme="light"] .border-white\/5 {
+  border-color: #d0d0c8;
+}
+[data-theme="light"] .text-zinc-500,
+[data-theme="light"] .text-zinc-600,
+[data-theme="light"] .text-zinc-700 {
+  color: #666660;
+}
+[data-theme="light"] .text-zinc-400,
+[data-theme="light"] .text-zinc-300 {
+  color: #555550;
+}
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-text-primary {
+  color: var(--color-text-primary);
+}
+[data-theme="light"] .bg-white\/\[0\.02\],
+[data-theme="light"] .bg-white\/\[0\.03\],
+[data-theme="light"] .bg-white\/\[0\.04\] {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+/* ── Light mode: bg-black/* → subtle light fills ── */
+[data-theme="light"] .bg-black\/10,
+[data-theme="light"] .bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+[data-theme="light"] .bg-black\/50,
+[data-theme="light"] .bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+/* ── Light mode: bg-white/* → subtle dark fills (inverted) ── */
+[data-theme="light"] .bg-white\/1,
+[data-theme="light"] .bg-white\/2,
+[data-theme="light"] .bg-white\/3,
+[data-theme="light"] .bg-white\/4,
+[data-theme="light"] .bg-white\/5,
+[data-theme="light"] .bg-white\/\[0\.01\],
+[data-theme="light"] .bg-white\/\[0\.02\],
+[data-theme="light"] .bg-white\/\[0\.03\],
+[data-theme="light"] .bg-white\/\[0\.04\] {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+[data-theme="light"] .bg-white\/10,
+[data-theme="light"] .bg-white\/15 {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+/* ── Light mode: hardcoded hex dark bgs → handled by specific overrides ── */
+/* ── Light mode: border-white/* → visible borders ── */
+[data-theme="light"] .border-white\/3,
+[data-theme="light"] .border-white\/4,
+[data-theme="light"] .border-white\/5,
+[data-theme="light"] .border-white\/6,
+[data-theme="light"] .border-white\/8,
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/12,
+[data-theme="light"] .border-white\/15,
+[data-theme="light"] .border-white\/20,
+[data-theme="light"] .border-white\/\[0\.06\] {
+  border-color: var(--color-border);
+}
+/* ── Light mode: text-white → dark text ── */
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-white\/95,
+[data-theme="light"] .text-white\/90,
+[data-theme="light"] .text-white\/80,
+[data-theme="light"] .text-white\/70 {
+  color: var(--color-text-primary);
+}
+[data-theme="light"] .text-white\/60,
+[data-theme="light"] .text-white\/50,
+[data-theme="light"] .text-white\/40,
+[data-theme="light"] .text-white\/30,
+[data-theme="light"] .text-white\/20,
+[data-theme="light"] .text-white\/10 {
+  color: var(--color-text-tertiary);
+}
+/* ── Light mode: placeholder visibility ── */
+[data-theme="light"] .placeholder\:text-white\/10::placeholder,
+[data-theme="light"] .placeholder\:text-white\/20::placeholder,
+[data-theme="light"] .placeholder\:text-white\/30::placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 0.5;
+}
+/* ── Light mode: text legibility ── */
+/* ── Light mode: hover states ── */
+[data-theme="light"] .hover\:bg-white\/5:hover,
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .hover\:text-white:hover {
+  color: var(--color-text-primary);
+}
+[data-theme="light"] .hover\:border-white\/12:hover,
+[data-theme="light"] .hover\:border-white\/10:hover {
+  border-color: var(--color-border);
+}
+/* ── Light mode: heavy shadows reduced ── */
+/* ── Light mode: ring/focus ── */
+[data-theme="light"] .ring-white\/10,
+[data-theme="light"] .ring-white\/5 {
+  --tw-ring-color: rgba(0, 0, 0, 0.08);
+}
+/* ── Light mode: bg-bg-secondary/40,50,60 ── */
+[data-theme="light"] .bg-bg-secondary\/40,
+[data-theme="light"] .bg-bg-secondary\/50,
+[data-theme="light"] .bg-bg-secondary\/60 {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+/* ── Light mode: select/option dark bgs ── */
+[data-theme="light"] option {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
+/* ── Light mode: dark gradient overlays → handled by opacity reduction ── */
+/* ── Light mode: cyan/teal themed views ── */
+[data-theme="light"] .text-cyan-100,
+[data-theme="light"] .text-cyan-200,
+[data-theme="light"] .text-cyan-300 {
+  color: #0e7490;
+}
+
+/* ============================================================
+   Color Theme: Bright (밝은) — data-color-theme="bright"
+   ============================================================ */
+[data-color-theme="bright"] {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #f0f2f5;
+  --color-bg-tertiary: #e4e7ec;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94a3b8;
+  --color-border: #cbd5e1;
+  --color-accent-purple: #7c3aed;
+  --color-accent-red: #dc2626;
+  --color-accent-green: #16a34a;
+  --color-accent-amber: #caa15c;
+  --color-accent-blue: #2563eb;
+  --color-surface-strong: rgba(248, 250, 252, 0.97);
+  --color-surface-soft: rgba(240, 242, 245, 0.88);
+  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.05);
+  --shadow-manuscript: 0 12px 40px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(37, 99, 235, 0.08);
+  --gradient-page: none;
+}
+html[data-color-theme="bright"],
+body[data-color-theme="bright"] {
+  background: #f8fafc;
+  color: var(--color-text-primary);
+}
+[data-color-theme="bright"] .eh-page-canvas {
+  background: #f8fafc;
+}
+
+/* ============================================================
+   Color Theme: Beige (베이지) — data-color-theme="beige"
+   ============================================================ */
+[data-color-theme="beige"] {
+  --color-bg-primary: #f5f0e8;
+  --color-bg-secondary: #ede6da;
+  --color-bg-tertiary: #e0d8ca;
+  --color-text-primary: #1c1a16;
+  --color-text-secondary: #5c5548;
+  --color-text-tertiary: #8a8070;
+  --color-border: #d4cabb;
+  --color-accent-purple: #7b6340;
+  --color-accent-red: #a85c52;
+  --color-accent-green: #4a8f78;
+  --color-accent-amber: #c09840;
+  --color-accent-blue: #6d7d8f;
+  --color-surface-strong: rgba(245, 240, 232, 0.97);
+  --color-surface-soft: rgba(237, 230, 218, 0.88);
+  --shadow-luxury: 0 12px 32px rgba(0, 0, 0, 0.07), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-panel: 0 6px 16px rgba(0, 0, 0, 0.05);
+  --shadow-manuscript: 0 12px 40px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(192, 152, 64, 0.1);
+  --gradient-page: none;
+}
+html[data-color-theme="beige"],
+body[data-color-theme="beige"] {
+  background: #f5f0e8;
+  color: var(--color-text-primary);
+}
+[data-color-theme="beige"] .eh-page-canvas {
+  background: #f5f0e8;
+}
+
+/* ============================================================
+   Home — Stellar White (Stitch "Universe Studio | Stellar White")
+   활성: URL `/?skin=white` 또는 localStorage / env `HOME_STELLAR_WHITE`
+   ============================================================ */
+.home-skin-stellar-white {
+  --color-bg-primary: #f5f5f5;
+  --color-bg-secondary: #f0f0ef;
+  --color-bg-tertiary: #e8e8e6;
+  --color-text-primary: #1c1b1b;
+  --color-text-secondary: #6b6258;
+  --color-text-tertiary: #756c5f;
+  --color-border: rgba(155, 143, 128, 0.38);
+  --color-accent-amber: #caa15c;
+  --color-accent-purple: #4f3e81;
+  --color-surface-strong: rgba(255, 255, 255, 0.78);
+  --color-surface-soft: rgba(255, 255, 255, 0.62);
+  --shadow-luxury: 0 16px 48px rgba(0, 0, 0, 0.08);
+  --shadow-panel: 0 8px 28px rgba(0, 0, 0, 0.06);
+  --shadow-manuscript: 0 12px 40px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(202, 161, 92, 0.12);
+  --gradient-page: linear-gradient(180deg, #f5f5f5 0%, #fafafa 100%);
+  background-color: #f5f5f5;
+  background-image: radial-gradient(circle at 2px 2px, rgba(202, 161, 92, 0.055) 1px, transparent 0);
+  background-size: 40px 40px;
+  color: var(--color-text-primary);
+}
+
+.home-skin-stellar-white.eh-page-canvas {
+  background-color: #f5f5f5;
+  background-image: radial-gradient(circle at 2px 2px, rgba(202, 161, 92, 0.055) 1px, transparent 0);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+}
+
+@media (max-width: 768px) {
+  .home-skin-stellar-white.eh-page-canvas {
+    background-attachment: scroll;
+  }
+}
+
+.home-skin-stellar-white .premium-panel,
+.home-skin-stellar-white .premium-panel-soft {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.home-skin-stellar-white .premium-panel::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.45),
+    transparent 38%,
+    transparent 72%,
+    rgba(202, 161, 92, 0.05)
+  );
+}
+
+/* ============================================================
+   FINAL: Light mode text contrast overrides (outside @layer)
+   Tailwind CSS 4 oklch gamut mapping distorts hex colors.
+   These rules sit outside any @layer → highest cascade priority.
+   ============================================================ */
+/* Override inside @layer theme to match Tailwind CSS 4 cascade priority */
+@layer theme {
+  [data-theme="light"] {
+    --color-bg-primary: #aca99d;
+    --color-bg-secondary: #9f9b8e;
+    --color-bg-tertiary: #928d7f;
+    --color-text-primary: #111111;
+    --color-text-secondary: #222222;
+    --color-text-tertiary: #444444;
+    --color-border: #9e9b8d;
+    --color-accent-purple: #5b4b93;
+    --color-accent-amber: #8a6a20;
+    --color-accent-red: #c16258;
+    --color-accent-green: #2f9b83;
+    --color-accent-blue: #4a6a8f;
+    --color-surface-strong: rgba(172, 169, 157, 0.97);
+    --color-surface-soft: rgba(159, 155, 142, 0.88);
+  }
+}
+
+/* ============================================================
+   Light mode: Badge overrides (dark badges → light-readable)
+   ============================================================ */
+[data-theme="light"] .badge-classified {
+  background: #fde8e8;
+  color: #991b1b;
+  border-color: #f5c6c6;
+}
+[data-theme="light"] .badge-amber {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+[data-theme="light"] .badge-allow {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+[data-theme="light"] .badge-blue {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+/* ============================================================
+   Missing hover states for DS components
+   ============================================================ */
+.ds-card-sm {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+.ds-card-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-panel);
+}
+.ds-panel {
+  transition: border-color var(--transition-normal);
+}
+.ds-panel:hover {
+  border-color: var(--color-accent-amber);
+}
+.zone-card {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+.zone-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-accent-amber) 40%, transparent);
+  box-shadow: var(--shadow-panel);
+}
