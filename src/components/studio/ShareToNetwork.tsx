@@ -43,7 +43,7 @@ type Visibility = SharePayload['visibility'];
 type PublishStatus = 'idle' | 'loading' | 'success' | 'error';
 
 const SHARE_TYPES: { value: ShareType; ko: string; en: string; boardType: BoardType }[] = [
-  { value: 'episode', ko: '에피소드', en: 'Episode', boardType: 'log' },
+  { value: 'episode', ko: 'EP', en: 'EP', boardType: 'log' },
   { value: 'character_sheet', ko: '캐릭터 시트', en: 'Character Sheet', boardType: 'log' },
   { value: 'world_bible', ko: '세계관 설정', en: 'World Bible', boardType: 'registry' },
   { value: 'style_profile', ko: '문체 프로필', en: 'Style Profile', boardType: 'feedback' },
@@ -307,6 +307,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
                         selectedPlanetId === p.id ? 'text-accent-amber font-semibold' : 'text-text-secondary'
                       }`}
                     >
+                      {selectedPlanetId === p.id && <span className="sr-only">{isKO ? '활성' : 'Active'}</span>}
                       {p.name} <span className="text-text-tertiary">· {p.genre}</span>
                     </button>
                   ))}
@@ -362,7 +363,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
         {/* Info */}
         <div className="text-[10px] text-text-tertiary bg-bg-secondary/50 border border-border/50 rounded-xl px-4 py-2.5">
           {shareType === 'episode' && (
-            <>{isKO ? `${episodes.length}개 에피소드가 공유됩니다.` : `${episodes.length} episodes will be shared.`}</>
+            <>{isKO ? `EP.1~${episodes.length} (${episodes.length}개)가 공유됩니다.` : `EP.1~${episodes.length} (${episodes.length}) will be shared.`}</>
           )}
           {shareType === 'character_sheet' && (
             <>{isKO ? `${config.characters.length}명의 캐릭터 시트가 공유됩니다.` : `${config.characters.length} character sheets will be shared.`}</>

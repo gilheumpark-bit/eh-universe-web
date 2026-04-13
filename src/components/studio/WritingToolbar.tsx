@@ -100,6 +100,7 @@ function useFindReplace(
   const [replaceText, setReplaceText] = useState('');
   const [matchIndex, setMatchIndex] = useState(0);
 
+  // TODO: findText matching could benefit from debouncing (e.g. 150ms) for very large documents
   const matches = useMemo(() => {
     if (!findText) return [] as number[];
     const result: number[] = [];
@@ -205,15 +206,15 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
       <div className="flex items-center gap-0.5 px-2 py-1 bg-bg-secondary border border-border rounded-lg flex-wrap gap-y-1">
 
         {/* 서식 — 소설 작성용 (마크다운 기호 대신 가시적 구분자) */}
-        <button onClick={() => wrapSelection('「', '」')} title={isKO ? '강조 (괄호)' : 'Emphasis'} className={`${btn} text-xs font-black w-6 h-6 flex items-center justify-center`}>「」</button>
-        <button onClick={() => insertAtCursor('\n\n* * *\n\n')} title={isKO ? '장면 전환' : 'Scene Break'} className={`${btn} text-[10px] font-black font-mono px-1.5`}>***</button>
-        <button onClick={() => insertAtCursor('\n\n────────────────\n\n')} title={isKO ? '구분선' : 'Divider'} className={`${btn} text-[10px] font-mono px-1.5`}>──</button>
+        <button onClick={() => wrapSelection('「', '」')} title={isKO ? '강조 (괄호)' : 'Emphasis'} aria-label={isKO ? '강조 (괄호)' : 'Emphasis'} className={`${btn} text-xs font-black w-6 h-6 flex items-center justify-center`}>「」</button>
+        <button onClick={() => insertAtCursor('\n\n* * *\n\n')} title={isKO ? '장면 전환' : 'Scene Break'} aria-label={isKO ? '장면 전환' : 'Scene Break'} className={`${btn} text-[10px] font-black font-mono px-1.5`}>***</button>
+        <button onClick={() => insertAtCursor('\n\n────────────────\n\n')} title={isKO ? '구분선' : 'Divider'} aria-label={isKO ? '구분선' : 'Divider'} className={`${btn} text-[10px] font-mono px-1.5`}>──</button>
 
         {divider}
 
         {/* 들여쓰기 */}
-        <button onClick={() => adjustIndent('out')} title="내어쓰기" className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇤</button>
-        <button onClick={() => adjustIndent('in')} title="들여쓰기 (Tab)" className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇥</button>
+        <button onClick={() => adjustIndent('out')} title={isKO ? '내어쓰기' : 'Outdent'} aria-label={isKO ? '내어쓰기' : 'Outdent'} className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇤</button>
+        <button onClick={() => adjustIndent('in')} title={isKO ? '들여쓰기' : 'Indent'} aria-label={isKO ? '들여쓰기' : 'Indent'} className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇥</button>
 
         {divider}
 
@@ -221,6 +222,7 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
         <button
           onClick={() => setShowFind(v => !v)}
           title={isKO ? '찾기/바꾸기' : 'Find / Replace'}
+          aria-label={isKO ? '찾기/바꾸기' : 'Find / Replace'}
           className={`${btn} text-[11px] w-6 h-6 flex items-center justify-center ${showFind ? 'text-accent-purple bg-accent-purple/15 rounded' : ''}`}
         >🔍</button>
 
@@ -265,7 +267,7 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
 
       {/* ── 찾기/바꾸기 바 ── */}
       {showFind && (
-        <div className="flex flex-wrap gap-2 items-center px-3 py-2 bg-bg-secondary border border-border rounded-lg">
+        <div className="flex flex-wrap gap-2 items-center px-3 py-2 bg-bg-secondary border border-border rounded-lg sticky top-0 z-10">
           <span className="text-[10px] font-black text-text-tertiary font-mono uppercase tracking-widest shrink-0">
             {isKO ? '찾기/바꾸기' : 'Find / Replace'}
           </span>

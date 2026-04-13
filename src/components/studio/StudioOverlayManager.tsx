@@ -68,36 +68,54 @@ export default function StudioOverlayManager({
   uxError, setUxError,
   alertToast, setAlertToast
 }: StudioOverlayManagerProps) {
+  // Modal stacking guard: only render the highest-priority active modal.
+  // Priority order: ConfirmModal > QuickStartModal > ApiKeyModal > SaveSlotModal > MoveSessionModal
+  const activeModalKey = confirmState.open
+    ? 'confirm'
+    : showQuickStartModal
+      ? 'quickstart'
+      : showApiKeyModal
+        ? 'apikey'
+        : saveSlotModalOpen
+          ? 'saveslot'
+          : moveModal
+            ? 'move'
+            : null;
+
   return (
     <>
-      <QuickStartModal
-        language={language}
-        isOpen={showQuickStartModal}
-        onClose={() => setShowQuickStartModal(false)}
-        onStart={handleQuickStart}
-        isGenerating={isQuickGenerating}
-      />
+      {activeModalKey === 'quickstart' && (
+        <QuickStartModal
+          language={language}
+          isOpen={showQuickStartModal}
+          onClose={() => setShowQuickStartModal(false)}
+          onStart={handleQuickStart}
+          isGenerating={isQuickGenerating}
+        />
+      )}
 
-      {showApiKeyModal && (
+      {activeModalKey === 'apikey' && (
         <APIKeySlotManager
           onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }}
         />
       )}
 
-      <ConfirmModal
-        open={confirmState.open}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmLabel={confirmState.confirmLabel}
-        cancelLabel={confirmState.cancelLabel}
-        variant={confirmState.variant}
-        onConfirm={confirmState.onConfirm}
-        onCancel={closeConfirm}
-      />
+      {activeModalKey === 'confirm' && (
+        <ConfirmModal
+          open={confirmState.open}
+          title={confirmState.title}
+          message={confirmState.message}
+          confirmLabel={confirmState.confirmLabel}
+          cancelLabel={confirmState.cancelLabel}
+          variant={confirmState.variant}
+          onConfirm={confirmState.onConfirm}
+          onCancel={closeConfirm}
+        />
+      )}
 
-      {moveModal && <MoveSessionModal data={moveModal} language={language} onMove={moveSessionToProject} onClose={() => setMoveModal(null)} />}
+      {activeModalKey === 'move' && moveModal && <MoveSessionModal data={moveModal} language={language} onMove={moveSessionToProject} onClose={() => setMoveModal(null)} />}
 
-      {saveSlotModalOpen && <SaveSlotModal language={language} activeTab={activeTab} config={currentSession?.config}
+      {activeModalKey === 'saveslot' && <SaveSlotModal language={language} activeTab={activeTab} config={currentSession?.config}
         onSave={(slot) => {
           updateCurrentSession({ config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config?.savedSlots || []), slot] } });
           triggerSave();

@@ -27,6 +27,7 @@ interface TabAssistantProps {
   hostedProviders?: Partial<Record<string, boolean>>;
 }
 
+// TODO: Extract to lib/tab-assistant-prompts.ts
 const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; systemEn: string; temperature: number }> = {
   world: {
     ko: 'NOL — Narrative Origin Lore',
@@ -471,6 +472,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
   const backendLabel = useStudioBackendLabel(language, hostedProviders);
 
   // Check AI access: local key OR hosted provider
+  // TODO: Ctrl+/ keyboard shortcut would be useful to toggle this assistant panel open/closed
   const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()] || hasDgxService());
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {

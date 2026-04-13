@@ -67,7 +67,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
           return (
             <React.Fragment key={stage.stage}>
               {i > 0 && <div className="w-4 h-px bg-white/10" />}
-              <div className="flex items-center gap-1.5 group relative" title={`${label ? (isKO ? label.ko : label.en) : stage.stage}: ${stage.score ?? '-'}/100`}>
+              <div className="flex items-center gap-1.5 group relative" title={`${label ? (isKO ? label.ko : label.en) : stage.stage}: ${stage.score ?? '-'}/100`} aria-label={`${label ? (isKO ? label.ko : label.en) : stage.stage}: ${isKO ? '상태' : 'status'} ${stage.status}, ${isKO ? '점수' : 'score'} ${stage.score ?? '-'}`}>
                 <Icon className={`w-4 h-4 ${color}`} />
                 <span className="font-mono text-[9px] text-text-tertiary hidden sm:inline">
                   {label ? (isKO ? label.ko : label.en) : stage.stage}
@@ -86,11 +86,19 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
       {/* 경고 요약 */}
       {stages.some(s => s.warnings.length > 0) && (
         <div className="mt-2 pt-2 border-t border-white/5">
-          {stages.filter(s => s.warnings.length > 0).map(s => (
-            <div key={s.stage} className="font-mono text-[9px] text-amber-400/70 leading-snug">
-              {STAGE_LABELS[s.stage] ? (isKO ? STAGE_LABELS[s.stage].ko : STAGE_LABELS[s.stage].en) : s.stage}: {s.warnings.slice(0, 2).join(', ')}
-            </div>
-          ))}
+          {stages.filter(s => s.warnings.length > 0).map(s => {
+            const stageLabel = STAGE_LABELS[s.stage] ? (isKO ? STAGE_LABELS[s.stage].ko : STAGE_LABELS[s.stage].en) : s.stage;
+            return (
+              <div key={s.stage} className="font-mono text-[9px] text-amber-400/70 leading-snug">
+                {stageLabel}: {s.warnings.slice(0, 2).map((w, wi) => (
+                  <span key={wi}>{wi > 0 ? ', ' : ''}{w}</span>
+                ))}
+                {s.warnings.length > 2 && (
+                  <span className="text-text-tertiary ml-1">(+{s.warnings.length - 2} more)</span>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

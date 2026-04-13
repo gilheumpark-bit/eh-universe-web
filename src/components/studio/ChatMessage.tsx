@@ -1,7 +1,8 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Bot, User, Copy, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
+// Copy action is handled by ActionBar (more discoverable); no standalone copy button needed
+import { Bot, User, RotateCcw, Activity, Zap, Cpu, ChevronDown, Wrench } from 'lucide-react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { createT } from '@/lib/i18n';
@@ -34,11 +35,16 @@ interface ChatMessageProps {
   hostedProviders?: Partial<Record<string, boolean>>;
   /** 어시스턴트 상단 라벨(미지정 시 NOW 페르소나) */
   assistantPersonaLine?: string;
+  /** Search highlight mode: current match index (1-based) */
+  searchMatchIndex?: number;
+  /** Search highlight mode: total match count */
+  searchMatchTotal?: number;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ 
+const ChatMessage: React.FC<ChatMessageProps> = ({
   message, language = 'KO', onRegenerate, onAutoFix, isCompact,
   hostedProviders = {}, assistantPersonaLine,
+  searchMatchIndex, searchMatchTotal,
 }) => {
   const t = createT(language);
   const isUser = message.role === 'user';
@@ -51,6 +57,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   let analysisData: AnalysisData | null = null;
 
   if (!report && !isUser) {
+    // 3-pass JSON extraction approach:
+    // Pass 1: Extract ```json ... ``` fenced code blocks
+    // Pass 2: Extract standalone JSON objects with known keys (grade, metrics, etc.)
+    // Pass 3: Cleanup residual JSON fragments and engine report labels
+    // Each pass first extracts data, then strips the matched content from mainContent.
+
     // 1) ```json ... ``` blocks (case-insensitive, with or without newlines)
     const jsonBlockRe = /```(?:json|JSON)?\s*\n?([\s\S]*?)\n?\s*```/g;
     let blockMatch: RegExpExecArray | null;
@@ -104,6 +116,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       </div>
 
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
+        {/* Search highlight counter (n/N) */}
+        {searchMatchIndex != null && searchMatchTotal != null && (
+          <span className="text-[9px] font-mono text-accent-blue/70 tabular-nums">
+            {searchMatchIndex}/{searchMatchTotal}
+          </span>
+        )}
         {!isUser && (
           <span
             className="text-[9px] font-black text-accent-purple/60 uppercase tracking-widest font-mono max-w-full truncate"

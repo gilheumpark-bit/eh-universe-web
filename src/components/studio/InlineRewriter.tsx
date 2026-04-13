@@ -287,14 +287,14 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
             </span>
             <div className="flex gap-1.5">
               {!isStreaming && preview && !showApplyConfirm && (
-                <button onClick={applyPreview} className="flex items-center gap-1 px-2.5 py-1 bg-green-600/20 border border-green-500/30 rounded-lg text-[9px] font-bold text-green-400 hover:bg-green-600/30 font-mono">
+                <button onClick={applyPreview} title="Ctrl+Shift+R" className="flex items-center gap-1 px-2.5 py-1 bg-green-600/20 border border-green-500/30 rounded-lg text-[9px] font-bold text-green-400 hover:bg-green-600/30 font-mono">
                   <Check className="w-3 h-3" /> {t('inlineRewriter.apply')}
                 </button>
               )}
               {showApplyConfirm && (
                 <span className="flex items-center gap-1.5">
                   <span className="text-[10px] text-amber-400 font-mono">{t('inlineRewriter.replaceConfirm')}</span>
-                  <button onClick={applyPreview} className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
+                  <button onClick={applyPreview} title="Ctrl+Shift+R" className="px-2 py-1 bg-green-600/30 border border-green-500/40 rounded text-[9px] font-bold text-green-400 hover:bg-green-600/40">
                     {t('inlineRewriter.confirmYes')}
                   </button>
                   <button onClick={() => setShowApplyConfirm(false)} className="px-2 py-1 bg-bg-tertiary/30 border border-zinc-600/40 rounded text-[9px] text-text-secondary hover:bg-bg-tertiary/50">

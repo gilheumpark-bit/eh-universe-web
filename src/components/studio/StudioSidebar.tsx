@@ -13,7 +13,7 @@ import {
   Download, Upload, Cloud, CloudOff, Settings, X, BookOpen, Hash,
 } from 'lucide-react';
 import { AppLanguage, AppTab, Project, ChatSession } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
@@ -29,6 +29,15 @@ type ConfirmOpts = {
   onConfirm: () => void;
 };
 
+// TODO: Extract into context providers for future refactor:
+// - UIState (isSidebarOpen, setIsSidebarOpen, focusMode)
+// - ProjectState (projects, currentProjectId, setCurrentProjectId, currentProject, createNewProject, renameProject, deleteProject)
+// - SessionState (sessions, currentSessionId, setCurrentSessionId, createNewSession, onReorderSessions)
+// - Navigation (activeTab, handleTabChange, studioMode, setStudioMode)
+// - Export (exportTXT, exportJSON, handleImportJSON, exportAllJSON, handleExportEPUB, handleExportDOCX, handleImportTextFiles, exportProjectJSON, exportProjectManuscripts)
+// - Auth (user, signInWithGoogle, signOut, authConfigured, handleSync, syncStatus, lastSyncTime)
+// - I18n (language, setLanguage)
+// - Confirm (showConfirm, closeConfirm)
 interface StudioSidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
@@ -132,7 +141,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const [lastClickedIdx, setLastClickedIdx] = useState<number | null>(null);
   const [batchMode, setBatchMode] = useState(false);
   
-  // Track hydration to prevent mismatch for studioMode text
+  // hydrated check needed for SSR mismatch — suppressHydrationWarning won't work for conditional text content
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -193,7 +202,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             onClick={() => setIsSidebarOpen(false)}
             className="hidden md:flex items-center justify-center gap-1 py-1.5 border-b border-white/8 text-[9px] font-mono text-text-tertiary hover:text-text-primary transition-colors uppercase tracking-widest"
           >
-            ◀ {language === 'KO' ? '접기' : 'Collapse'}
+            ◀ {L4(language, { ko: '접기', en: 'Collapse', ja: '折りたたむ', zh: '收起' })}
           </button>
 
           {/* Header: logo + project selector + new session */}

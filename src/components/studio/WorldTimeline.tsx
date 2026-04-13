@@ -110,6 +110,12 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
             ? '시뮬레이터에서 문명을 추가하면 타임라인이 표기됩니다.'
             : 'Add civilizations in the Simulator to initialize the timeline visualization.'}
         </p>
+        <button
+          onClick={() => onSelectEra?.('')}
+          className="mt-4 px-4 py-2 bg-accent-amber/15 border border-accent-amber/30 rounded-xl text-[10px] font-bold text-accent-amber hover:bg-accent-amber/25 transition-colors font-mono uppercase tracking-wider"
+        >
+          {isKO ? '타임라인 이벤트 추가' : 'Add Timeline Event'}
+        </button>
       </div>
     );
   }

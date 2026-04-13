@@ -24,6 +24,14 @@ const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingT
 
 type HostedAiAvailability = Record<string, boolean>;
 
+// TODO: Extract into context providers for future refactor:
+// - UIState (activeTab, setActiveTab, charSubTab, setCharSubTab, showDashboard, rightPanelOpen, setRightPanelOpen, writingColumnShell)
+// - WritingState (writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef, canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective, setPromptDirective, input, setInput, advancedSettings, setAdvancedSettings)
+// - AIHandlers (isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix, hasAiAccess, hostedProviders, showAiLock, directorReport, hfcpState, suggestions, setSuggestions, pipelineResult)
+// - SessionConfig (currentSession, currentSessionId, config, setConfig, updateCurrentSession, triggerSave, saveFlash, language)
+// - ArchiveState (archiveScope, setArchiveScope, archiveFilter, setArchiveFilter, searchQuery, filteredMessages, messagesEndRef)
+// - ProjectNav (projects, sessions, currentProject, currentProjectId, setCurrentProjectId, setCurrentSessionId, startRename, renamingSessionId, setRenamingSessionId, renameValue, setRenameValue, confirmRename, moveSessionToProject, deleteSession, handlePrint, handleNextEpisode)
+// - Modals (setUxError, clearAllSessions, setShowApiKeyModal, versionedBackups, doRestoreVersionedBackup, refreshBackupList)
 interface StudioTabRouterProps {
   activeTab: AppTab;
   language: AppLanguage;

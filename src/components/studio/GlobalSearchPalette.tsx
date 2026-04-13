@@ -154,7 +154,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
               ja: 'キャラクター、エピソード、世界観を検索... (Ctrl+K)',
               zh: '搜索角色、章节、世界观... (Ctrl+K)',
             })}
-            className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary"
+            className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary text-ellipsis overflow-hidden"
           />
           <button onClick={onClose} className="text-text-tertiary hover:text-text-primary">
             <X className="w-4 h-4" />
@@ -183,6 +183,15 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-text-primary truncate">{r.label}</div>
                 <div className="text-[11px] text-text-tertiary truncate">{r.detail}</div>
+                {r.detail && (
+                  <div className="text-[9px] text-text-tertiary/60 truncate">
+                    {r.type === 'character'
+                      ? (language === 'KO' ? `캐릭터 > ${r.label}` : `Character > ${r.label}`)
+                      : r.type === 'episode'
+                      ? (language === 'KO' ? `에피소드 > ${r.detail}` : `Episode > ${r.detail}`)
+                      : (language === 'KO' ? `세계관 > ${r.label}` : `World > ${r.label}`)}
+                  </div>
+                )}
               </div>
               <span className="text-[9px] font-mono uppercase text-text-tertiary tracking-widest shrink-0">
                 {categoryLabel(r.type)}

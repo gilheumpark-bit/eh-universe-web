@@ -566,11 +566,12 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color: rCfg.color, border: `1px solid ${rCfg.color}40` }}>
                         {t(rCfg.tKey)}
                       </span>
-                      <button 
+                      <button
                         onClick={(e) => {
+                          if (!window.confirm(language === 'KO' ? '이 항목을 삭제하시겠습니까?' : 'Delete this item permanently?')) return;
                           e.currentTarget.classList.add('animate-delete-warning');
                           setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
-                        }} 
+                        }}
                         className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -711,11 +712,12 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       {(() => { const st = SKILL_TYPES.find(s => s.value === skill.type); return st ? t(st.tKey) : skill.type; })()}
                     </span>
                   </div>
-                      <button 
+                      <button
                         onClick={(e) => {
+                          if (!window.confirm(language === 'KO' ? '이 항목을 삭제하시겠습니까?' : 'Delete this item permanently?')) return;
                           e.currentTarget.classList.add('animate-delete-warning');
                           setTimeout(() => setSkills(prev => prev.filter(s => s.id !== skill.id)), 300);
-                        }} 
+                        }}
                         className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -762,7 +764,10 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               key={magic.id}
               magic={magic}
               t={t}
-              onDelete={() => setMagicSystems(prev => prev.filter(m => m.id !== magic.id))}
+              onDelete={() => {
+                if (!window.confirm(language === 'KO' ? '이 항목을 삭제하시겠습니까?' : 'Delete this item permanently?')) return;
+                setMagicSystems(prev => prev.filter(m => m.id !== magic.id));
+              }}
               onAddRank={(rank) => setMagicSystems(prev => prev.map(m =>
                 m.id === magic.id ? { ...m, ranks: [...m.ranks, rank] } : m
               ))}

@@ -35,6 +35,7 @@ export function StudioStatusBar({
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
+  // TODO: Extract to useTextStats(text) hook
   const stats = useMemo(() => {
     const text = activeTab === 'writing' ? editDraft : '';
     const chars = text.replace(/\s/g, '').length;
@@ -44,6 +45,8 @@ export function StudioStatusBar({
 
   const modeLabel = MODE_LABELS[writingMode] || { ko: writingMode, en: writingMode };
   const episodeNum = currentSession?.config?.episode ?? 1;
+  const guardrailMin = currentSession?.config?.guardrails?.min ?? 0;
+  const guardrailMax = currentSession?.config?.guardrails?.max ?? Infinity;
 
   return (
     <div
@@ -54,7 +57,7 @@ export function StudioStatusBar({
       <div className="flex items-center gap-3">
         {activeTab === 'writing' && (
           <>
-            <span>{stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}</span>
+            <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-red-400' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>{stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}</span>
             <span className="text-border">|</span>
             <span>{stats.words.toLocaleString()}{isKO ? '어' : 'w'}</span>
             <span className="text-border">|</span>

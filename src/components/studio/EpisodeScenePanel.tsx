@@ -301,10 +301,9 @@ export default function EpisodeScenePanel({
   }, [episodeSceneSheets, onSave, onUpdate]);
 
   const handleDelete = useCallback((ep: number) => {
-    if (confirm(L.deleteConfirm)) {
-      onDelete(ep);
-      if (expandedEp === ep) setExpandedEp(null);
-    }
+    if (!window.confirm(L.deleteConfirm)) return;
+    onDelete(ep);
+    if (expandedEp === ep) setExpandedEp(null);
   }, [onDelete, expandedEp, L.deleteConfirm]);
 
   return (

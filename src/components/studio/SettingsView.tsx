@@ -368,14 +368,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-2 md:gap-3 shrink-0">
                 <input
                   type="range"
-                  min="0"
-                  max="1"
+                  min="0.1"
+                  max="1.5"
                   step="0.1"
                   value={temperature}
                   onChange={e => { const v = parseFloat(e.target.value); setTemperature(v); localStorage.setItem('noa_temperature', String(v)); }}
                   className="w-20 md:w-24 accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
-                <span className="text-xs md:text-sm font-black text-blue-400 w-7 md:w-8 text-right">{temperature.toFixed(1)}</span>
+                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${temperature < 0.1 || temperature > 1.5 ? 'text-red-400' : 'text-blue-400'}`}>{temperature.toFixed(1)}</span>
               </div>
             </div>
 
@@ -396,14 +396,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-2 md:gap-3 shrink-0">
                 <input
                   type="range"
-                  min="0.9"
-                  max="1.5"
+                  min="0.5"
+                  max="2.0"
                   step="0.1"
                   value={narrativeDepth}
                   onChange={e => { const v = parseFloat(e.target.value); setNarrativeDepthState(v); localStorage.setItem('noa_narrative_depth', String(v)); narrativeDepthSetter(v); }}
                   className="w-20 md:w-24 accent-purple-500 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
-                <span className="text-xs md:text-sm font-black text-accent-purple w-7 md:w-8 text-right">{narrativeDepth.toFixed(1)}</span>
+                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${narrativeDepth < 0.5 || narrativeDepth > 2.0 ? 'text-red-400' : 'text-accent-purple'}`}>{narrativeDepth.toFixed(1)}</span>
               </div>
             </div>
 

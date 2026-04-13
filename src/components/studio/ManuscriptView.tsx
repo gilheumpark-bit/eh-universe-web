@@ -4,6 +4,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles, GitCompare } from "lucide-react";
 import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
 import { createT, L4 } from "@/lib/i18n";
+import { showAlert } from '@/lib/show-alert';
 import ChapterAnalysisView from "./ChapterAnalysisView";
 
 // ============================================================
@@ -12,6 +13,7 @@ import ChapterAnalysisView from "./ChapterAnalysisView";
 
 interface DiffLine { type: 'same' | 'add' | 'remove'; text: string }
 
+// Consider extracting to lib/text-utils.ts for reuse
 function computeDiff(oldText: string, newText: string): DiffLine[] {
   const oldLines = oldText.split('\n');
   const newLines = newText.split('\n');
@@ -249,6 +251,8 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
     const msg = t('manuscript.deleteConfirm').replace('{ep}', String(ep));
     if (!window.confirm(msg)) return;
     updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
+    // Dispatch alert toast for delete feedback
+    showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.` }));
   };
 
   const saveAnalysis = useCallback(
@@ -477,10 +481,10 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         >
                           <GitCompare className="w-3 h-3" />
                         </button>
-                        <button onClick={() => startEdit(m)} aria-label="편집" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
+                        <button onClick={() => startEdit(m)} aria-label="편집" title="편집" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-purple transition-colors">
                           <Edit3 className="w-3 h-3" />
                         </button>
-                        <button onClick={() => deleteManuscript(m.episode)} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-red transition-colors">
+                        <button onClick={() => deleteManuscript(m.episode)} aria-label="삭제" title="삭제" className="p-1.5 bg-bg-tertiary/50 rounded text-text-tertiary hover:text-accent-red transition-colors">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>

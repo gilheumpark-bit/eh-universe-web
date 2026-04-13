@@ -111,9 +111,9 @@ function ParagraphPopover({
       {/* 헤더: 점수 + 닫기 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className={`text-lg font-black font-mono ${scoreTextColor(paragraph.score)}`}>
+          <h4 className={`text-lg font-black font-mono ${scoreTextColor(paragraph.score)}`}>
             {paragraph.score}
-          </span>
+          </h4>
           <span className="text-[10px] text-text-tertiary">
             / 100
           </span>
@@ -137,7 +137,7 @@ function ParagraphPopover({
           ['DNS', m.density, isKO ? '정보 밀도' : 'Density'],
         ] as [string, number, string][]).map(([key, val, label]) => (
           <div key={key} className="flex items-center gap-2">
-            <span className="font-mono font-bold text-text-tertiary w-7">{key}</span>
+            <span className="font-mono font-bold text-text-tertiary w-7" title={label}>{key}</span>
             <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
@@ -296,9 +296,9 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
 
                 {/* 지표 미니 게이지 */}
                 <div className="hidden sm:flex flex-col gap-0.5 text-[8px] font-mono text-text-tertiary shrink-0">
-                  <span>S/T {Math.round(p.metrics.showTellRatio * 100)}%</span>
-                  <span>VAR {Math.round(p.metrics.sentenceVariety * 100)}%</span>
-                  <span>REP {Math.round(p.metrics.repetition * 100)}%</span>
+                  <span title="Show/Tell Ratio">S/T {Math.round(p.metrics.showTellRatio * 100)}%</span>
+                  <span title="Sentence Variety">VAR {Math.round(p.metrics.sentenceVariety * 100)}%</span>
+                  <span title="Repetition">REP {Math.round(p.metrics.repetition * 100)}%</span>
                 </div>
               </div>
 

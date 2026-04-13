@@ -59,6 +59,7 @@ export function ShortcutsModal({ language, onClose }: { language: AppLanguage; o
         onClick={e => e.stopPropagation()} 
         role="dialog" 
         aria-modal="true"
+        // Verified: aria-labelledby matches id="shortcuts-title"
         aria-labelledby="shortcuts-title"
       >
         {/* Header */}
