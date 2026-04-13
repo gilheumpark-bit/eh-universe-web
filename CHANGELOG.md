@@ -3,6 +3,50 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-04-13
+
+### Added — Quill Engine Integration
+- 224-rule catalog ported from local-code-studio (16 categories, CWE mappings)
+- 4-layer verification engine (pre-filter → AST → TypeChecker → esquery)
+- Deep Verify: 5th-order logic bug detection
+- Pipeline upgraded: 8-team → 9-team (Quill non-blocking stage)
+
+### Added — Scene Direction Overhaul
+- Inline DirectionReferencePanel: [연출] [인물] [참고] 3-tab split view
+- Character smart injection: activeCharacters → Tier 1 (full DNA) / Tier 2 (name+role only)
+- Token savings: 3000 → 840 tokens (72% reduction)
+- Scene sheet moved from chat to direction panel
+
+### Added — Multi-Agent DGX Routing
+- 4-model routing: writer(abliterated) / planner(r1) / actor(eva) / general(qwen)
+- Task-based structured generation routing (characters→eva, items→r1)
+- Genre temperature: 11 genres × 0.01 precision
+- Writer profile: voiceFingerprint + skill-level differentiation
+
+### Added — 90+ Score Upgrade (56 items)
+- Phase 1-5: Theme auto-detect, token alert, focus management, print stylesheet
+- Canvas 3-step mode, quality gate user controls, episode summary UX
+- Network: feed recommendation, comment threading, planet templates
+- EPUB cover image, DOCX heading styles, settlement roles
+
+### Fixed — Precision Diagnostic (20 items)
+- Retry callback binding, pipeline failure diagnostics
+- HFCP NRG strategy injection, storage auto-cleanup
+- Event listener/dispatch pairing verification
+- Session restore failure notification
+
+### Fixed — UX Audit (42 items)
+- Delete confirmations on all destructive actions
+- Modal stacking prevention (priority queue)
+- 39 aria-label additions, sr-only screen reader text
+- Color-coded guardrail indicators, metric tooltips
+
+### Performance
+- Global CSS transition: html * → interactive elements only (2-3x faster tab switch)
+- 5 static tabs → dynamic import (bundle size reduction)
+- will-change + contain:layout GPU hints
+- Page transition: 0.28s → 0.18s
+
 ## [1.5.0] - 2026-04-13
 
 ### Added — DGX 진짜 SSE 스트리밍

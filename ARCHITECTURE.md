@@ -5,7 +5,7 @@
 EH Universe Web is a Next.js 16.2 single-app (App Router, Turbopack) deployed on Vercel ICN (ehsu.app).
 It hosts five applications under a single domain with shared auth, i18n, and design system infrastructure.
 
-**Version**: 1.4.0 (2026-04-11)
+**Version**: 2.0.0 (2026-04-13)
 
 ## Applications
 
@@ -13,7 +13,7 @@ It hosts five applications under a single domain with shared auth, i18n, and des
 |-----|-------|---------|
 | Universe Portal | `/`, `/archive`, `/codex`, `/reference`, `/rulebook`, `/tools/*` | Lore archive (140+ 문서, 8 카테고리), codex, reference tools |
 | NOA Studio | `/studio` | 집필 OS — macOS 스타일 독/윈도우프레임, 5가지 집필 모드, 실시간 품질 분석, 연속성 검사 |
-| Code Studio | `/code-studio` | 검증형 코드 생성 — 8-team 파이프라인, diff-guard, 4-Tier 오케스트레이션 |
+| Code Studio | `/code-studio` | 검증형 코드 생성 — 9-team 파이프라인 + Quill Engine, diff-guard, 4-Tier 오케스트레이션 |
 | EH Network | `/network` | 행성 커뮤니티 — 보고서, 정착지, 포스트 |
 | Translation Studio | `/translation-studio` | 소설 전용 AI 번역 — 6축 채점, MODE1/MODE2, 재창조 루프 |
 
@@ -67,9 +67,9 @@ src/
 - **클라우드**: Firestore (CLOUD_SYNC flag) + Google Drive 동기화
 - **비상**: beforeunload 동기 저장 + sendBeacon 폴백
 
-## Code Studio Pipeline (8 Teams)
+## Code Studio Pipeline (9 Teams)
 
-The Code Studio uses a simulated 8-team development pipeline:
+The Code Studio uses a simulated 9-team development pipeline:
 
 1. **PM** -- Requirements analysis and task decomposition
 2. **Architect** -- System design and component structure
@@ -79,6 +79,7 @@ The Code Studio uses a simulated 8-team development pipeline:
 6. **Security** -- Vulnerability scanning (436-rule dual catalog)
 7. **DevOps** -- Build verification and deployment prep
 8. **Tech Lead** -- Final review, scoring, and approval gate
+9. **Quill** -- 224-rule catalog verification (4-layer: pre-filter -> AST -> TypeChecker -> esquery)
 
 Each team runs in sequence within a Gen-Verify-Fix loop (adaptive 5-round, convergence detection).
 Pipeline scoring: goodBoost 20, filterBonus 15, teamHealthBonus 5.
@@ -111,6 +112,7 @@ LUCIDE_MAP provides icon mappings for all 51 panels.
 - **Structured generation**: `/api/structured-generate` (provider-agnostic JSON schema output)
 - **Agent Builder**: Vertex AI Discovery Engine for semantic search across 3 studios
 - **ANS v10.0**: Adaptive Narrative System with tension curves, HFCP state tracking, genre presets
+- **DGX Spark multi-agent**: MODEL_WRITER (abliterated), MODEL_PLANNER (r1), MODEL_ACTOR (eva), MODEL_GENERAL (qwen)
 - **NOA-PRISM v1.1**: Content rating and preservation/expansion control
 
 ## CLI Integration
@@ -125,6 +127,16 @@ LUCIDE_MAP provides icon mappings for all 51 panels.
 Three-tier token system (FULL ~3K / COMPACT ~800 / MINIMAL ~100 tokens).
 16-rule runtime linter (`runDesignLint`), 5 presets, 4 UI primitives (Tooltip, Dropdown, Accordion, ProgressBar).
 Semantic tokens required (`bg-bg-primary`, `text-text-primary`); raw Tailwind values prohibited.
+
+## Scene Direction System
+
+13-field inline panel for scene direction management:
+
+- **DirectionReferencePanel**: [연출] [인물] [참고] 3-tab split view
+- **Character Smart Injection**: activeCharacters -> Tier 1 (full DNA profile) / Tier 2 (name+role only)
+- **Token Optimization**: 3000 -> 840 tokens (72% reduction) via tiered character injection
+- **Scene Sheet**: Moved from chat panel to dedicated direction panel for persistent reference
+- **13 Fields**: scene goal, mood, tempo, POV, location, time, weather, props, BGM, foreshadowing, callback, constraint, note
 
 ## Translation Studio Architecture
 

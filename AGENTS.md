@@ -28,7 +28,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 |----|------|------|
 | Universe | `/`, `/archive`, `/codex`, `/reference`, `/rulebook`, `/tools/*` | 아카이브 + 코덱스 + 도구 |
 | Studio | `/studio` | 소설 집필 스튜디오 (NOA Writing Engine + 집필 OS) |
-| Code Studio | `/code-studio` | 검증형 코드 생성 스튜디오 |
+| Code Studio | `/code-studio` | 검증형 코드 생성 스튜디오 (9-team + Quill Engine) |
 | Network | `/network` | 행성 커뮤니티 + 보고서 + 정착지 |
 | Translation Studio | `/translation-studio` | 소설 전용 번역 스튜디오 (6축 채점) |
 
@@ -43,12 +43,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **버전 히스토리**: 300자+ 변경 시 자동 스냅샷 + VersionDiff
 - **내보내기**: EPUB 3.0 + DOCX + TXT/MD/JSON/HTML/CSV
 
-## 코드 스튜디오 아키텍처
+## 코드 스튜디오 아키텍처 (2026-04-13 업데이트)
 
 - **Shell 3파일 분리**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
 - **Panel Registry**: `core/panel-registry.ts` + `PanelImports.ts` — 하드코딩 금지
-- **파이프라인 모듈** (2026-04-11 동기화):
+- **9-team 파이프라인**: PM→Architect→Frontend→Backend→QA→Security→DevOps→Tech Lead→Quill
+- **Quill Engine**: 224룰 카탈로그 검증 (4-layer: pre-filter → AST → TypeChecker → esquery)
+- **파이프라인 모듈** (2026-04-13 동기화):
   - `pipeline/diff-guard.ts` — SCOPE/CONTRACT/@block 편집 경계 보호 (450줄)
   - `pipeline/apply-guard.ts` — diff-guard 래퍼, 코드 적용 시 자동 검증
   - `pipeline/design-transpiler.ts` — 외부 AI 코드 보안 필터 + 시맨틱 토큰 변환

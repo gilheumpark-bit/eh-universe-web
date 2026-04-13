@@ -24,7 +24,7 @@ EH Universe is a full-stack creative platform built on a single Next.js 16.2 app
 
 1. **Universe Portal** — 140+ lore documents across 8 categories
 2. **NOA Studio** — AI writing OS with real-time quality analysis
-3. **Code Studio** — Verified code IDE with 8-team pipeline
+3. **Code Studio** — Verified code IDE with 9-team pipeline + Quill Engine
 4. **Translation Studio** — Novel-specific AI translation with 6-axis scoring
 5. **EH Network** — Writer community with planet systems
 
@@ -45,7 +45,7 @@ EH Universe is a full-stack creative platform built on a single Next.js 16.2 app
 <td width="50%">
 
 **NOA Studio** `/studio`
-Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine / Advanced), real-time paragraph quality analysis (show/tell, repetition, variety, density, dialogue), continuity checking, inline rewrite (Ctrl+Shift+R), EPUB/DOCX/TXT export, version diff, DGX SSE streaming (TTFT 0.05s), Zen tunnel-vision mode, manuscript editor (65ch width, font scaling Ctrl+=/-).
+Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine / Advanced), real-time paragraph quality analysis (show/tell, repetition, variety, density, dialogue), continuity checking, inline rewrite (Ctrl+Shift+R), EPUB/DOCX/TXT export, version diff, DGX SSE streaming (TTFT 0.05s), Zen tunnel-vision mode, manuscript editor (65ch width, font scaling Ctrl+=/-), scene direction sheet (13-field inline panel), character smart injection, Story Bible anti-forgetting.
 
 </td>
 </tr>
@@ -53,7 +53,7 @@ Writing OS with macOS-style dock, 5 writing modes (AI / Edit / Canvas / Refine /
 <td>
 
 **Code Studio** `/code-studio`
-Browser IDE with Monaco editor, 51-panel registry, 8-team verification pipeline, diff-guard (SCOPE/CONTRACT/@block protection), 4-Tier orchestration (Ultra/ProPlus/Standard/Lite), 436-rule dual catalog, design linter (16 rules), and WebContainer preview.
+Browser IDE with Monaco editor, 51-panel registry, 9-team verification pipeline, diff-guard (SCOPE/CONTRACT/@block protection), 4-Tier orchestration (Ultra/ProPlus/Standard/Lite), 224-rule Quill Engine + 436-rule dual catalog, design linter (16 rules), and WebContainer preview.
 
 </td>
 <td>
@@ -88,8 +88,9 @@ Galaxy map, vessel specs, warp gate calculator, soundtrack player, Neka sound ge
 | Framework | Next.js 16.2, React 19, TypeScript 5 |
 | UI | Tailwind CSS 4, Design System v8.0 (3-Tier), Lucide Icons |
 | AI | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio (BYOK) |
-| Writing Engine | ANS 10.0 — quality gate, tension curves, genre presets, HFCP |
-| Code Engine | 8-team pipeline, diff-guard, apply-guard, intent-parser, 4-Tier |
+| Writing Engine | ANS 10.0 — quality gate, tension curves, genre presets, HFCP, 4-agent DGX routing, genre temperature optimization |
+| Code Engine | 9-team pipeline + 224-rule Quill Engine, diff-guard, apply-guard, intent-parser, 4-Tier |
+| DGX Spark | GB10 128GB, 4-model multi-agent (qwen/abliterated/r1/eva) |
 | Translation Engine | 6-axis scoring, 41-band, auto-recreation, glossary, CAT standard |
 | Editor | Monaco Editor, xterm.js, WebContainer API |
 | Storage | localStorage + IndexedDB + Firestore (CLOUD_SYNC) + Google Drive |
@@ -218,7 +219,7 @@ npm run cs -- audit
 | Document | Description |
 |----------|------------|
 | [README.ko.md](README.ko.md) | Korean documentation |
-| [CHANGELOG.md](CHANGELOG.md) | Version history (v1.4.0) |
+| [CHANGELOG.md](CHANGELOG.md) | Version history (v2.0.0) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |
 | [SECURITY.md](SECURITY.md) | Security policy |
