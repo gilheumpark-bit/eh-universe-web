@@ -56,6 +56,10 @@ export function episodeToMarkdown(
   if (manuscript.lastUpdate) {
     frontmatter.lastUpdate = new Date(manuscript.lastUpdate).toISOString();
   }
+  // Preserve sha for conflict detection round-trip
+  if (manuscript.sha) {
+    (frontmatter as unknown as Record<string, unknown>).sha = manuscript.sha;
+  }
 
   const body = manuscript.content ?? '';
 
@@ -118,6 +122,9 @@ export function markdownToEpisode(
   if (fm.detailedSummary) result.detailedSummary = fm.detailedSummary;
   if (fm.volume !== undefined) result.volume = fm.volume;
   if (filePath) result.filePath = filePath;
+  // Restore sha from frontmatter for conflict detection
+  const rawSha = (data as Record<string, unknown>).sha;
+  if (typeof rawSha === 'string') result.sha = rawSha;
 
   return result;
 }

@@ -6,8 +6,10 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   FolderOpen, FileText, Plus, ChevronRight, ChevronDown,
-  Users, Globe, Clapperboard, X,
+  Users, Globe, Clapperboard, X, GitBranch,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+const ParallelUniversePanel = dynamic(() => import('./ParallelUniversePanel'), { ssr: false });
 import type { StoryConfig, AppLanguage, EpisodeManuscript } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import BranchSelector from './BranchSelector';
@@ -21,6 +23,12 @@ interface EpisodeExplorerProps {
   onCreateVolume?: () => void;
   onClose?: () => void;
   onNavigateTab?: (tab: string) => void;
+  /** Git branch data from useGitHubSync */
+  branches?: string[];
+  currentBranch?: string;
+  onSwitchBranch?: (branch: string) => void;
+  onCreateBranch?: (name: string) => void;
+  gitConnected?: boolean;
   className?: string;
 }
 
@@ -170,8 +178,15 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
   onCreateVolume,
   onClose,
   onNavigateTab,
+  branches,
+  currentBranch,
+  onSwitchBranch,
+  onCreateBranch,
+  gitConnected,
   className = '',
 }) => {
+  const [showUniverse, setShowUniverse] = useState(false);
+
   // Build volume groups from manuscripts
   const volumeGroups = useMemo<VolumeGroup[]>(() => {
     const manuscripts = config.manuscripts ?? [];
@@ -225,10 +240,11 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
             {config.title || L4(language, { ko: '제목 없음', en: 'Untitled' })}
           </span>
           <BranchSelector
-            currentBranch="main"
-            branches={['main']}
-            onSwitchBranch={() => {}}
-            disabled
+            currentBranch={currentBranch ?? 'main'}
+            branches={branches ?? ['main']}
+            onSwitchBranch={onSwitchBranch ?? (() => {})}
+            onCreateBranch={onCreateBranch}
+            disabled={!gitConnected}
             language={language}
             className="mt-1"
           />
@@ -304,6 +320,29 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
           </button>
         )}
       </div>
+
+      {/* Parallel Universe toggle */}
+      {gitConnected && (
+        <div className="px-2 py-1 border-t border-border">
+          <button
+            onClick={() => setShowUniverse(v => !v)}
+            className={`flex items-center gap-1.5 w-full px-2.5 py-1.5 rounded-lg text-xs font-serif transition-colors min-h-[44px] border ${showUniverse ? 'text-accent-purple bg-accent-purple/10 border-accent-purple/30' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary/50 border-border'}`}
+          >
+            <GitBranch className="w-3.5 h-3.5" />
+            {L4(language, { ko: '평행우주', en: 'Parallel Universe', ja: '並行宇宙', zh: '平行宇宙' })}
+          </button>
+          {showUniverse && (
+            <ParallelUniversePanel
+              branches={branches ?? ['main']}
+              currentBranch={currentBranch ?? 'main'}
+              episodes={(config.manuscripts ?? []).map(m => ({ episode: m.episode, title: m.title }))}
+              onSwitchBranch={onSwitchBranch ?? (() => {})}
+              onCreateBranch={(name, _ep) => onCreateBranch?.(name)}
+              language={language}
+            />
+          )}
+        </div>
+      )}
 
       {/* Quick links */}
       <div className="flex items-center gap-1 px-2 py-2 border-t border-border">
