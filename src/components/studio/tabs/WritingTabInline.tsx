@@ -90,6 +90,98 @@ interface Props {
   pipelineResult: { stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null;
 }
 
+// ============================================================
+// 분할 뷰 우측 통합 패널 (연출 + 채팅 탭)
+// ============================================================
+function SplitPanelTabs({
+  splitView, setSplitView, language, config, setConfig,
+  currentSession, chatMessages, chatLoading, handleChatSend, abortChat, clearChat,
+  directorReport, hfcpState, suggestions, setSuggestions, pipelineResult,
+  setActiveTab, hostedProviders,
+}: {
+  splitView: 'chat' | 'reference' | null;
+  setSplitView: (v: 'chat' | 'reference' | null) => void;
+  language: AppLanguage;
+  config: StoryConfig;
+  setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
+  currentSession: ChatSession;
+  chatMessages: Message[];
+  chatLoading: boolean;
+  handleChatSend: (msg: string) => void;
+  abortChat: () => void;
+  clearChat: () => void;
+  directorReport: DirectorReport | null;
+  hfcpState: HFCPState;
+  suggestions: ProactiveSuggestion[];
+  setSuggestions: React.Dispatch<React.SetStateAction<ProactiveSuggestion[]>>;
+  pipelineResult: Props['pipelineResult'];
+  setActiveTab: (tab: AppTab) => void;
+  hostedProviders: Partial<Record<string, boolean>>;
+}) {
+  const isKO = language === 'KO';
+  const [activePanel, setActivePanel] = useState<'direction' | 'chat'>(splitView === 'chat' ? 'chat' : 'direction');
+
+  return (
+    <>
+      {/* 탭 헤더 */}
+      <div className="flex border-b border-border/50 shrink-0 bg-bg-primary">
+        <button
+          onClick={() => setActivePanel('direction')}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-colors ${
+            activePanel === 'direction'
+              ? 'text-accent-amber border-b-2 border-accent-amber bg-accent-amber/5'
+              : 'text-text-tertiary hover:text-text-secondary'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          {isKO ? '연출' : 'Direction'}
+        </button>
+        <button
+          onClick={() => setActivePanel('chat')}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-colors ${
+            activePanel === 'chat'
+              ? 'text-accent-purple border-b-2 border-accent-purple bg-accent-purple/5'
+              : 'text-text-tertiary hover:text-text-secondary'
+          }`}
+        >
+          <Columns2 className="w-3.5 h-3.5" />
+          {isKO ? '채팅' : 'Chat'}
+        </button>
+      </div>
+      {/* 패널 콘텐츠 */}
+      <div className="flex-1 overflow-hidden">
+        {activePanel === 'direction' && (
+          <DirectionReferencePanel
+            config={config}
+            language={language}
+            setConfig={setConfig}
+            onClose={() => setSplitView(null)}
+          />
+        )}
+        {activePanel === 'chat' && (
+          <RightChatPanel
+            language={language}
+            currentSession={currentSession}
+            messages={chatMessages}
+            loading={chatLoading}
+            onSend={handleChatSend}
+            onAbort={abortChat}
+            onClear={clearChat}
+            directorReport={directorReport}
+            hfcpState={hfcpState}
+            suggestions={suggestions}
+            setSuggestions={setSuggestions}
+            pipelineResult={pipelineResult}
+            setConfig={setConfig}
+            setActiveTab={setActiveTab}
+            hostedProviders={hostedProviders}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
 export default function WritingTabInline(props: Props) {
   const {
     language, currentSession, currentSessionId,
@@ -348,33 +440,19 @@ export default function WritingTabInline(props: Props) {
                 </button>
               </div>
             )}
-            {/* Split view toggles — 항상 표시, 시인성 강화 */}
-            <div className="flex items-center gap-1.5 ml-auto pl-2 border-l border-border/40">
-              <button
-                type="button"
-                onClick={() => setSplitView(splitView === 'reference' ? null : 'reference')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
-                  splitView === 'reference'
-                    ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber shadow-sm'
-                    : 'border-border bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary hover:border-accent-amber/30'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                {isKO ? '연출' : 'Dir'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitView(splitView === 'chat' ? null : 'chat')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
-                  splitView === 'chat'
-                    ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple shadow-sm'
-                    : 'border-border bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary hover:border-accent-purple/30'
-                }`}
-              >
-                <Columns2 className="w-4 h-4" />
-                {isKO ? '채팅' : 'Chat'}
-              </button>
-            </div>
+            {/* 분할 뷰 토글 — 단일 버튼 */}
+            <button
+              type="button"
+              onClick={() => setSplitView(splitView ? null : 'reference')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ml-auto ${
+                splitView
+                  ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber shadow-sm'
+                  : 'border-border bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary hover:border-accent-amber/30'
+              }`}
+            >
+              <Columns2 className="w-4 h-4" />
+              {isKO ? '분할 뷰' : 'Split'}
+            </button>
           </div>
         </div>
         <div 
@@ -777,43 +855,36 @@ export default function WritingTabInline(props: Props) {
         )}
       </div>
 
-      {/* 3: 우측 패널 — 채팅 또는 참조 분할 뷰 (모바일: 오버레이, 데스크톱: 사이드) */}
-      {splitView === 'chat' && (
-        <div className="fixed inset-0 z-40 bg-bg-primary/95 backdrop-blur-sm lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:backdrop-blur-none lg:w-[35%] lg:min-w-[280px] lg:max-w-[500px] lg:shrink-0">
+      {/* 3: 우측 통합 패널 — 분할 뷰 (연출/인물/참고/채팅 탭) */}
+      {splitView && (
+        <div className="fixed inset-0 z-40 bg-bg-primary/95 backdrop-blur-sm lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:backdrop-blur-none lg:w-[38%] lg:min-w-[300px] lg:max-w-[520px] lg:shrink-0 flex flex-col border-l border-border/40">
           {/* 모바일 닫기 헤더 */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-border lg:hidden">
-            <span className="text-sm font-bold text-text-primary">{isKO ? '채팅' : 'Chat'}</span>
+            <span className="text-sm font-bold text-text-primary">{isKO ? '분할 뷰' : 'Split View'}</span>
             <button onClick={() => setSplitView(null)} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary">
               <X className="w-4 h-4" />
             </button>
           </div>
-          <RightChatPanel
+          {/* 패널 내부 탭: 연출 / 채팅 */}
+          <SplitPanelTabs
+            splitView={splitView}
+            setSplitView={setSplitView}
             language={language}
+            config={currentSession.config}
+            setConfig={setConfig}
             currentSession={currentSession}
-            messages={chatMessages}
-            loading={chatLoading}
-            onSend={handleChatSend}
-            onAbort={abortChat}
-            onClear={clearChat}
+            chatMessages={chatMessages}
+            chatLoading={chatLoading}
+            handleChatSend={handleChatSend}
+            abortChat={abortChat}
+            clearChat={clearChat}
             directorReport={props.directorReport}
             hfcpState={props.hfcpState}
             suggestions={suggestions}
             setSuggestions={setSuggestions}
             pipelineResult={pipelineResult}
-            setConfig={setConfig}
             setActiveTab={setActiveTab}
             hostedProviders={props.hostedProviders}
-          />
-        </div>
-      )}
-      {splitView === 'reference' && (
-        <div className="hidden lg:flex flex-col w-[35%] min-w-[280px] max-w-[500px] shrink-0 border-l border-border/40 bg-bg-primary">
-          {/* 3탭: 연출 / 참고 / 캐릭터 선택 */}
-          <DirectionReferencePanel
-            config={currentSession.config}
-            language={language}
-            setConfig={setConfig}
-            onClose={() => setSplitView(null)}
           />
         </div>
       )}
