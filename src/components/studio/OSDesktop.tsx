@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   BookOpen, Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
-  Code2, Languages, Globe, Zap, ImageIcon,
+  Code2, Languages, Globe, Zap, ImageIcon, Clapperboard,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
@@ -188,7 +188,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   const allDockItems: DockItem[] = [
     { id: 'world' as AppTab, icon: ScrollText, label: language === 'KO' ? '세계관' : 'World', color: 'text-text-secondary' },
     { id: 'characters' as AppTab, icon: UserCircle, label: language === 'KO' ? '인물' : 'Characters', color: 'text-text-secondary' },
-    { id: 'rulebook' as AppTab, icon: BookOpen, label: language === 'KO' ? '설정집' : 'Rulebook', color: 'text-text-secondary' },
+    { id: 'rulebook' as AppTab, icon: Clapperboard, label: language === 'KO' ? '연출' : 'Direction', color: 'text-text-secondary' },
     { id: 'writing' as AppTab, icon: Feather, label: language === 'KO' ? '집필' : 'Writing', color: 'text-text-secondary' },
     { id: 'manuscript' as AppTab, icon: Library, label: language === 'KO' ? '원고' : 'Manuscript', color: 'text-text-secondary' },
     { id: 'visual' as AppTab, icon: ImageIcon, label: language === 'KO' ? '이미지' : 'Image', color: 'text-text-secondary' },

@@ -177,11 +177,11 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
         {/* Header */}
         <div className="text-center mb-10">
           <h2 className="font-serif text-2xl md:text-3xl font-bold text-text-primary mb-2">
-            {isKO ? '설정집' : 'Rulebook'}
+            {isKO ? '연출' : 'Direction'}
           </h2>
           <p className="text-sm text-text-secondary">
             {isKO
-              ? '이야기의 뼈대를 설계합니다. 필요한 섹션만 편집하세요.'
+              ? '장면의 연출과 구조를 설계합니다. 필요한 섹션만 편집하세요.'
               : 'Design the skeleton of your story. Edit only what you need.'}
           </p>
         </div>
@@ -247,7 +247,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
         className="flex items-center gap-2 mb-6 text-xs text-text-tertiary hover:text-text-primary transition-colors font-mono uppercase tracking-wider"
       >
         <ArrowLeft className="w-4 h-4" />
-        {isKO ? '설정집 대시보드' : 'Rulebook Dashboard'}
+        {isKO ? '연출 대시보드' : 'Direction Dashboard'}
       </button>
 
       <SceneSheet {...sceneSheetProps} initialTab={CARD_INITIAL_TABS[viewMode] || 'goguma'} />

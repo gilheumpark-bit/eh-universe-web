@@ -99,7 +99,7 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
   const tabs: { id: RefTab; icon: typeof Globe; label: string }[] = [
     { id: 'world', icon: Globe, label: isKO ? '세계관' : 'World' },
     { id: 'chars', icon: Users, label: isKO ? '인물' : 'Characters' },
-    { id: 'rulebook', icon: BookOpen, label: isKO ? '설정집' : 'Rulebook' },
+    { id: 'rulebook', icon: BookOpen, label: isKO ? '연출' : 'Direction' },
   ];
 
   return (
@@ -222,7 +222,7 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
               </div>
             )}
             {!config.sceneDirection?.plotStructure && !config.sceneDirection?.writerNotes && (
-              <p className="text-text-tertiary text-center py-6 italic">{isKO ? '설정집 데이터 없음' : 'No rulebook data'}</p>
+              <p className="text-text-tertiary text-center py-6 italic">{isKO ? '연출 데이터 없음' : 'No direction data'}</p>
             )}
           </div>
         )}

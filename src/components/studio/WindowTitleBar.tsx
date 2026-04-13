@@ -14,7 +14,7 @@ interface WindowTitleBarProps {
 const TAB_NAMES: Record<string, { ko: string; en: string }> = {
   world: { ko: '세계관 설계', en: 'World Design' },
   characters: { ko: '캐릭터', en: 'Characters' },
-  rulebook: { ko: '설정집', en: 'Rulebook' },
+  rulebook: { ko: '연출', en: 'Direction' },
   writing: { ko: '집필', en: 'Writing' },
   style: { ko: '문체', en: 'Style' },
   manuscript: { ko: '원고', en: 'Manuscript' },
