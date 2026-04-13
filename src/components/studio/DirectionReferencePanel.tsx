@@ -278,7 +278,7 @@ function ReferencePanel({ config, language }: { config: StoryConfig; language: A
 // PART 5 — 메인 패널 (3탭 통합)
 // ============================================================
 
-export function DirectionReferencePanel({ config, language, setConfig, onClose }: Props) {
+export function DirectionReferencePanel({ config, language, setConfig, onClose, hideClose }: Props & { hideClose?: boolean }) {
   const isKO = language === 'KO';
   const [tab, setTab] = useState<PanelTab>('direction');
   const activeCount = config.sceneDirection?.activeCharacters?.length || 0;
@@ -317,9 +317,11 @@ export function DirectionReferencePanel({ config, language, setConfig, onClose }
           <BookOpen className="w-3.5 h-3.5" />
           {isKO ? '참고' : 'Ref'}
         </button>
-        <button onClick={onClose} className="ml-auto p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors">
-          <X className="w-4 h-4" />
-        </button>
+        {!hideClose && (
+          <button onClick={onClose} className="ml-auto p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* 콘텐츠 */}

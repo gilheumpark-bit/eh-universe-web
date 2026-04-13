@@ -156,6 +156,7 @@ function SplitPanelTabs({
             language={language}
             setConfig={setConfig}
             onClose={() => setSplitView(null)}
+            hideClose
           />
         )}
         {activePanel === 'chat' && (
@@ -638,7 +639,7 @@ export default function WritingTabInline(props: Props) {
                     onContextMenu={textMenu.openMenu}
                     autoFocus
                     style={{ fontSize: 'var(--editor-font-size, 1rem)' }}
-                  className="w-full max-w-[65ch] mx-auto min-h-[70vh] bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl px-8 py-8 md:px-12 md:py-10 md:text-lg font-serif leading-[2] tracking-wide text-indent-[1em] focus:border-accent-amber/40 focus:shadow-[0_0_32px_rgba(202,161,92,0.14)] outline-none transition-all resize-none"
+                  className="w-full min-h-[70vh] bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl px-8 py-8 md:px-12 md:py-10 md:text-lg font-serif leading-[2] tracking-wide text-indent-[1em] focus:border-accent-amber/40 focus:shadow-[0_0_32px_rgba(202,161,92,0.14)] outline-none transition-all resize-none"
                     placeholder={isKO ? '여기에 이야기를 써 내려가세요... (TXT/MD 파일을 끌어다 놓을 수도 있어요)' : 'Start writing here... (or drag & drop a TXT/MD file)'}
                   />
                 </div>
@@ -671,7 +672,7 @@ export default function WritingTabInline(props: Props) {
                 </div>
                 {/* 우측: 연출/채팅 분할 패널 (데스크톱에서만) */}
                 {splitView && (
-                  <div className="hidden lg:flex flex-col w-[340px] shrink-0 border-l border-border/40 bg-bg-primary h-full overflow-hidden">
+                  <div className="hidden lg:flex flex-col w-[380px] shrink-0 border-l border-border/40 bg-bg-primary h-full overflow-hidden">
                     <SplitPanelTabs
                       splitView={splitView}
                       setSplitView={setSplitView}
