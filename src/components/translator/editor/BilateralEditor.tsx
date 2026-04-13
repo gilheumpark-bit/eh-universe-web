@@ -225,12 +225,14 @@ export function BilateralEditor() {
 
       {/* Editor Body (Bilateral Split) */}
       <div className="flex-1 flex overflow-hidden z-10 w-full relative">
-        {/* Source Textarea */}
-        <div className="relative flex flex-col h-full bg-bg-primary hover:bg-bg-secondary/30 transition-colors duration-500" style={{ width: `${layout.editorSplitRatio * 100}%` }}>
-          <div className="absolute top-4 right-5 text-[11px] font-mono text-text-secondary uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-3">
-            <span className="text-[9px] normal-case tracking-normal text-text-tertiary">{source.length.toLocaleString()}{langKo ? '자' : ' chars'}</span>
-            <span className="w-2 h-2 rounded-full bg-text-secondary/60 inline-block shadow-[0_0_5px_rgba(128,128,128,0.3)]"></span>
-            Source ({from})
+        {/* Source Textarea — warm tone */}
+        <div className="relative flex flex-col h-full bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,#f59e0b_6%)] hover:bg-[color-mix(in_srgb,var(--color-bg-primary)_90%,#f59e0b_10%)] transition-colors duration-500 border-r border-border/20" style={{ width: `${layout.editorSplitRatio * 100}%` }}>
+          <div className="absolute top-4 left-5 right-5 flex items-center justify-between select-none pointer-events-none z-10">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-accent-amber inline-block shadow-[0_0_8px_rgba(251,191,36,0.6)]"></span>
+              <span className="text-[11px] font-mono text-accent-amber/80 uppercase tracking-[0.2em] drop-shadow-sm font-bold">Source ({from})</span>
+            </div>
+            <span className="text-[9px] font-mono text-text-tertiary">{source.length.toLocaleString()}{langKo ? '자' : ' chars'}</span>
           </div>
           {/* Glossary highlight overlay */}
           {glossaryTerms.length > 0 && sourceHighlightHtml && (
@@ -243,8 +245,8 @@ export function BilateralEditor() {
           )}
           <textarea
             ref={sourceRef}
-            placeholder="여기에 원문을 입력하세요..."
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary placeholder:font-light relative z-[1]"
+            placeholder={langKo ? "여기에 원문을 입력하세요..." : "Enter source text here..."}
+            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-accent-amber/40 placeholder:font-serif placeholder:text-base relative z-[1]"
             value={source}
             onChange={(e) => setSource(e.target.value)}
             onKeyDown={handleSVIKeyDown}
@@ -284,17 +286,19 @@ export function BilateralEditor() {
           </div>
         </div>
 
-        {/* Result Textarea */}
-        <div className="relative flex flex-col h-full bg-bg-secondary hover:bg-bg-secondary/80 transition-colors duration-500 shadow-[inset_1px_0_6px_rgba(0,0,0,0.08)]" style={{ width: `${(1 - layout.editorSplitRatio) * 100}%` }}>
-          <div className="absolute top-4 right-5 text-[11px] font-mono text-accent-amber uppercase tracking-[0.2em] select-none pointer-events-none drop-shadow-sm flex items-center gap-3">
-            <span className="text-[9px] normal-case tracking-normal text-text-tertiary">{result.length.toLocaleString()}{langKo ? '자' : ' chars'}{source.length > 0 ? ` (${Math.round((result.length / source.length) * 100)}%)` : ''}</span>
-            <span className="w-2 h-2 rounded-full bg-accent-amber inline-block shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
-            Translation ({to})
+        {/* Result Textarea — cool tone */}
+        <div className="relative flex flex-col h-full bg-[color-mix(in_srgb,var(--color-bg-secondary)_94%,#3b82f6_6%)] hover:bg-[color-mix(in_srgb,var(--color-bg-secondary)_90%,#3b82f6_10%)] transition-colors duration-500 shadow-[inset_1px_0_6px_rgba(0,0,0,0.06)]" style={{ width: `${(1 - layout.editorSplitRatio) * 100}%` }}>
+          <div className="absolute top-4 left-5 right-5 flex items-center justify-between select-none pointer-events-none z-10">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-accent-blue inline-block shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
+              <span className="text-[11px] font-mono text-accent-blue/80 uppercase tracking-[0.2em] drop-shadow-sm font-bold">Translation ({to})</span>
+            </div>
+            <span className="text-[9px] font-mono text-text-tertiary">{result.length.toLocaleString()}{langKo ? '자' : ' chars'}{source.length > 0 ? ` (${Math.round((result.length / source.length) * 100)}%)` : ''}</span>
           </div>
           <textarea
             ref={resultRef}
-            placeholder="번역 결과가 여기에 표시됩니다..."
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-12 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary placeholder:font-light"
+            placeholder={langKo ? "번역 결과가 여기에 표시됩니다..." : "Translation results appear here..."}
+            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-accent-blue/40 placeholder:font-serif placeholder:text-base"
             value={result}
             onChange={(e) => setResult(e.target.value)}
             onContextMenu={textMenu.openMenu}
