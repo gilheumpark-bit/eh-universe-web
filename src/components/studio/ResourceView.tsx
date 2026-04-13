@@ -78,6 +78,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
   };
 
   const removeCharacter = (id: string) => {
+    if (!confirm(L4(language, { ko: '이 캐릭터를 삭제하시겠습니까?', en: 'Delete this character?' }))) return;
     setConfig({ ...config, characters: config.characters.filter(c => c.id !== id) });
   };
 
@@ -207,7 +208,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
-                  <span>{L4(language, { ko: '서사 잠재력', en: 'Narrative Potential' })}</span>
+                  <span>{L4(language, { ko: '개성 (고유도)', en: 'Individuality' })}</span>
                   <span className="text-accent-blue">{newChar.dna} pts</span>
                 </div>
                 <input
@@ -717,7 +718,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />
-                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{L4(language, { ko: '서사 잠재력', en: 'Narrative Potential' })}</span>
+                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{L4(language, { ko: '개성 (고유도)', en: 'Individuality' })}</span>
                        </div>
                        <span className="text-[11px] font-mono text-blue-400 font-black">{char.dna}%</span>
                     </div>

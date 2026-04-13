@@ -244,8 +244,42 @@ export default function WritingTabInline(props: Props) {
   const [novelSelection, setNovelSelection] = useState<NovelEditorSelection | null>(null);
   // P7: Inline completion (Tab autocomplete)
   const novelEditorRef = useRef<NovelEditorHandle>(null);
+  const [inlineCompletionEnabled, setInlineCompletionEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem('noa_inline_completion_enabled');
+    return stored !== 'false'; // default true
+  });
+  const [completionHintShown, setCompletionHintShown] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('noa_completion_hint_shown') === '1';
+  });
+  const [showCompletionHint, setShowCompletionHint] = useState(false);
+
+  // Show one-time hint when user first enters edit mode
+  useEffect(() => {
+    if (writingMode === 'edit' && !completionHintShown && inlineCompletionEnabled) {
+      const timer = setTimeout(() => setShowCompletionHint(true), 800);
+      return () => clearTimeout(timer);
+    }
+    if (writingMode !== 'edit') setShowCompletionHint(false);
+  }, [writingMode, completionHintShown, inlineCompletionEnabled]);
+
+  const dismissCompletionHint = useCallback(() => {
+    setShowCompletionHint(false);
+    setCompletionHintShown(true);
+    localStorage.setItem('noa_completion_hint_shown', '1');
+  }, []);
+
+  const toggleInlineCompletion = useCallback(() => {
+    setInlineCompletionEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('noa_inline_completion_enabled', String(next));
+      return next;
+    });
+  }, []);
+
   const inlineCompletion = useInlineCompletion({
-    enabled: writingMode === 'edit' && !novelSelection && !isGenerating,
+    enabled: inlineCompletionEnabled && writingMode === 'edit' && !novelSelection && !isGenerating,
     debounceMs: 1500,
     maxTokens: 100,
     genre: currentSession?.config?.genre,
@@ -377,49 +411,57 @@ export default function WritingTabInline(props: Props) {
               {L4(language, { ko: 'NOA 생성', en: 'Generate' })}
             </button>
 
-            {/* 더보기: API 키 있을 때만 노출 */}
+            {/* 더보기: API 키 있을 때만 노출 — 고급 모드는 드롭다운으로 숨김 */}
             {hasApiKey && (
               <>
                 <div className="w-px h-5 bg-border/50 mx-1" />
-                <button
-                  type="button"
-                  onClick={() => setWritingMode('canvas')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
-                    writingMode === 'canvas'
-                      ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
-                      : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
-                  }`}
-                  title={isKO ? '📐 뼈대를 쓰면 초안→다듬기까지 3단계로 완성합니다' : '📐 Write skeleton → expands to draft → polish in 3 steps'}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  {L4(language, { ko: '3단계', en: '3-Step' })}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWritingMode('refine')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
-                    writingMode === 'refine'
-                      ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue'
-                      : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
-                  }`}
-                  title={isKO ? '🪄 원고를 붙여넣으면 약한 문단을 자동 개선 (점수 50 미만 감지)' : '🪄 Paste manuscript, auto-improves paragraphs scoring below 50'}
-                >
-                  <Wand2 className="w-3.5 h-3.5" />
-                  {L4(language, { ko: '다듬기', en: 'Refine' })}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWritingMode('advanced')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
-                    writingMode === 'advanced'
-                      ? 'bg-accent-red/20 border-accent-red/50 text-accent-red'
-                      : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
-                  }`}
-                  title={isKO ? '⚙️ 고급: temperature/top-p/장르 프리셋 직접 제어 (경험자용)' : '⚙️ Advanced: Direct control of temperature/top-p/genre presets'}
-                >
-                  <Settings2 className="w-3.5 h-3.5" />
-                  {L4(language, { ko: '엔진', en: 'Engine' })}
-                </button>
+                {/* 고급 모드가 활성 상태면 해당 버튼을 직접 표시 */}
+                {(writingMode === 'canvas' || writingMode === 'refine' || writingMode === 'advanced') ? (
+                  <button
+                    type="button"
+                    onClick={() => setWritingMode('edit')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
+                      writingMode === 'canvas' ? 'bg-accent-green/20 border-accent-green/50 text-accent-green' :
+                      writingMode === 'refine' ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue' :
+                      'bg-accent-red/20 border-accent-red/50 text-accent-red'
+                    }`}
+                    title={isKO ? '기본 모드로 돌아가기' : 'Back to basic mode'}
+                  >
+                    {writingMode === 'canvas' && <><Layers className="w-3.5 h-3.5" />{L4(language, { ko: '3단계', en: '3-Step' })}</>}
+                    {writingMode === 'refine' && <><Wand2 className="w-3.5 h-3.5" />{L4(language, { ko: '다듬기', en: 'Refine' })}</>}
+                    {writingMode === 'advanced' && <><Settings2 className="w-3.5 h-3.5" />{L4(language, { ko: '고급', en: 'Advanced' })}</>}
+                    <X className="w-3 h-3 ml-0.5 opacity-60" />
+                  </button>
+                ) : (
+                  <div className="relative group/adv">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-transparent text-text-tertiary hover:text-text-secondary hover:border-border transition-colors"
+                      title={isKO ? '고급 모드 (3단계·다듬기·고급)' : 'Advanced modes (3-Step, Refine, Advanced)'}
+                    >
+                      <Settings2 className="w-3.5 h-3.5" />
+                      {L4(language, { ko: '고급', en: 'More' })}
+                      <ChevronDown className="w-3 h-3 opacity-60" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover/adv:opacity-100 group-hover/adv:visible transition-all z-50 min-w-[140px]">
+                      <button type="button" onClick={() => setWritingMode('canvas')}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-green transition-colors"
+                        title={isKO ? '📐 뼈대→초안→다듬기 3단계 완성' : '📐 Skeleton → draft → polish in 3 steps'}>
+                        <Layers className="w-3.5 h-3.5" />{L4(language, { ko: '3단계', en: '3-Step' })}
+                      </button>
+                      <button type="button" onClick={() => setWritingMode('refine')}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-blue transition-colors"
+                        title={isKO ? '🪄 약한 문단 자동 개선' : '🪄 Auto-improve weak paragraphs'}>
+                        <Wand2 className="w-3.5 h-3.5" />{L4(language, { ko: '다듬기', en: 'Refine' })}
+                      </button>
+                      <button type="button" onClick={() => setWritingMode('advanced')}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-red transition-colors"
+                        title={isKO ? '⚙️ temperature/top-p 직접 제어' : '⚙️ Direct control of temperature/top-p'}>
+                        <Settings2 className="w-3.5 h-3.5" />{L4(language, { ko: '고급', en: 'Advanced' })}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
             {/* Undo/Redo — 편집 모드에서만 표시 */}
@@ -447,6 +489,25 @@ export default function WritingTabInline(props: Props) {
                 </button>
               </div>
             )}
+            {/* 인라인 자동완성 토글 — 편집 모드에서만 */}
+            {writingMode === 'edit' && (
+              <button
+                type="button"
+                onClick={toggleInlineCompletion}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  inlineCompletionEnabled
+                    ? 'text-accent-amber hover:text-accent-amber/80 hover:bg-accent-amber/10'
+                    : 'text-text-quaternary hover:text-text-secondary hover:bg-bg-secondary'
+                }`}
+                title={L4(language, {
+                  ko: `인라인 자동완성 (Tab) — ${inlineCompletionEnabled ? '켜짐' : '꺼짐'}`,
+                  en: `Inline autocomplete (Tab) — ${inlineCompletionEnabled ? 'On' : 'Off'}`,
+                })}
+                aria-label={L4(language, { ko: '인라인 자동완성 토글', en: 'Toggle inline autocomplete' })}
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+              </button>
+            )}
             {/* 분할 뷰 토글 — 단일 버튼 */}
             <button
               type="button"
@@ -462,9 +523,28 @@ export default function WritingTabInline(props: Props) {
             </button>
           </div>
         </div>
-        <div 
-          ref={streamContainerRef} 
-          onScroll={handleStreamScroll} 
+        {/* One-time inline completion hint */}
+        {showCompletionHint && writingMode === 'edit' && (
+          <div className="mx-4 mt-2 flex items-center gap-2 px-3 py-2 bg-accent-amber/10 border border-accent-amber/30 rounded-lg text-xs text-accent-amber animate-in fade-in slide-in-from-top-2 duration-300">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="flex-1">
+              {L4(language, {
+                ko: 'NOA가 다음 문장을 제안합니다. Tab으로 수락, Esc로 무시',
+                en: 'NOA suggests the next sentence. Tab to accept, Esc to dismiss',
+              })}
+            </span>
+            <button
+              onClick={dismissCompletionHint}
+              className="text-accent-amber/60 hover:text-accent-amber transition-colors text-sm leading-none shrink-0"
+              aria-label="Dismiss hint"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+        <div
+          ref={streamContainerRef}
+          onScroll={handleStreamScroll}
           className={`${writingColumnShell} flex-1 overflow-y-auto ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'flex flex-col justify-center items-center px-4' : 'py-6 md:py-8 space-y-6 px-4 md:px-8 custom-scrollbar'}`}
         >
           {/* Continuity Tracker Graph */}

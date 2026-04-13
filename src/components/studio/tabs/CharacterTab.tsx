@@ -39,7 +39,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
 
   const handleAutoGenerate = async () => {
     if (!activeSupportsStructured()) {
-      const msg = ({ KO: "현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current provider doesn't support structured generation. Please use Gemini.", JP: "現在のプロバイダーは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前提供商不支持结构化生成，请使用Gemini。" })[language];
+      const msg = ({ KO: "현재 AI 서비스는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.", EN: "Current AI service doesn't support structured generation. Please use Gemini.", JP: "現在のAIサービスは構造化生成に対応していません。Geminiをご利用ください。", CN: "当前AI服务不支持结构化生成，请使用Gemini。" })[language];
       setUxError({ error: new Error(msg) });
       return;
     }

@@ -3,6 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
+import { useState, useEffect, useCallback } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   X, Save, Download,
@@ -23,6 +24,7 @@ import StudioTabRouter from '@/components/studio/StudioTabRouter';
 import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
 import { useStudio } from './StudioContext';
+import { useGitHubSync } from '@/hooks/useGitHubSync';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
@@ -82,6 +84,26 @@ export default function StudioMainContent({ children }: { children?: React.React
   const episodeExplorerOpen = useStudioUIStore(s => s.episodeExplorerOpen);
   const setEpisodeExplorerOpen = useStudioUIStore(s => s.setEpisodeExplorerOpen);
 
+  // GitHub Sync — pass branch data to EpisodeExplorer
+  const gh = useGitHubSync();
+  const [ghBranches, setGhBranches] = useState<string[]>([]);
+  useEffect(() => {
+    if (gh.connected) {
+      gh.getBranches().then(setGhBranches);
+    } else {
+      setGhBranches([]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gh.connected]);
+  const handleGhSwitchBranch = useCallback((branch: string) => {
+    gh.switchBranch(branch);
+  }, [gh]);
+  const handleGhCreateBranch = useCallback((name: string) => {
+    gh.createBranchFromCurrent(name).then((ok) => {
+      if (ok) gh.getBranches().then(setGhBranches);
+    });
+  }, [gh]);
+
   return (
     <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
       {/* 오프라인 배너 */}
@@ -109,7 +131,6 @@ export default function StudioMainContent({ children }: { children?: React.React
         <div className="flex items-center gap-1.5 md:gap-4 min-w-0 flex-1 mr-2">
           {/* Sidebar toggle removed — OSDesktop handles navigation */}
           <div className="text-xs md:text-sm font-bold tracking-tight uppercase flex items-center gap-1.5 md:gap-2 min-w-0 font-(family-name:--font-mono)">
-            <span className="text-text-secondary hidden md:inline">{t('sidebar.activeProject')}:</span>
             <span className="text-text-primary truncate max-w-[120px] md:max-w-none">{currentSession?.title || t('engine.noStory')}</span>
             {currentSessionId && <span className={`text-[10px] font-(family-name:--font-mono) transition-all duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
           </div>
@@ -186,9 +207,12 @@ export default function StudioMainContent({ children }: { children?: React.React
       )}
 
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Episode Explorer Panel */}
+        {/* Episode Explorer Panel — mobile: slide-up overlay, desktop: sidebar */}
         {episodeExplorerOpen && currentSession?.config && (
-          <div className="hidden md:flex w-[240px] shrink-0 border-r border-border bg-bg-primary overflow-hidden">
+          <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setEpisodeExplorerOpen(false)} />
+        )}
+        {episodeExplorerOpen && currentSession?.config && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 max-h-[60vh] border-t border-border bg-bg-primary overflow-hidden rounded-t-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 md:static md:max-h-none md:rounded-none md:shadow-none md:z-auto md:w-[240px] md:shrink-0 md:border-t-0 md:border-r md:flex">
             <EpisodeExplorer
               config={currentSession.config}
               currentEpisode={currentSession.config.episode}
@@ -203,6 +227,11 @@ export default function StudioMainContent({ children }: { children?: React.React
               onCreateVolume={() => handleTabChange('manuscript')}
               onClose={() => setEpisodeExplorerOpen(false)}
               onNavigateTab={(tab) => handleTabChange(tab as AppTab)}
+              branches={ghBranches}
+              currentBranch={gh.config?.branch}
+              onSwitchBranch={handleGhSwitchBranch}
+              onCreateBranch={handleGhCreateBranch}
+              gitConnected={gh.connected}
               className="w-full"
             />
           </div>

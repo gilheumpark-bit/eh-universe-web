@@ -406,7 +406,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // ============================================================
   const handleAIGenerate = async () => {
     if (!activeSupportsStructured()) {
-      showAlert(language === 'KO' ? '현재 프로바이더는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.' : 'Current provider does not support structured generation. Please use Gemini.');
+      showAlert(language === 'KO' ? '현재 AI 서비스는 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.' : 'Current AI service does not support structured generation. Please use Gemini.');
       return;
     }
     if (!config.synopsis) {

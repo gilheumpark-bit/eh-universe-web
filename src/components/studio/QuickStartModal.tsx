@@ -21,7 +21,7 @@ export default function QuickStartModal({
   onStart,
   isGenerating,
 }: QuickStartModalProps) {
-  const [selectedGenre, setSelectedGenre] = useState<Genre>(Genre.SF);
+  const [selectedGenre, setSelectedGenre] = useState<Genre>(Genre.FANTASY);
   const [prompt, setPrompt] = useState("");
   const t = createT(language);
   const trimmedPrompt = prompt.trim();

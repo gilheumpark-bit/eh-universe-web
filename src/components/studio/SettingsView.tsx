@@ -9,12 +9,15 @@ import { createT, L4 } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2,
-  ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen
+  ChevronRight, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen,
+  GitBranch, Check, Unplug,
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { idbEstimateSize } from '@/lib/browser/idb-store';
 import { setNarrativeDepth as narrativeDepthSetter, getNarrativeDepth } from '@/lib/noa/lora-swap';
+import { useGitHubSync } from '@/hooks/useGitHubSync';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 
 interface VersionedBackup {
   timestamp: number;
@@ -244,6 +247,23 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
 
             <div
+              onClick={() => {
+                localStorage.removeItem('noa_onboarding_done');
+                window.location.reload();
+              }}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><BookOpen className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">{L4(language, { ko: '가이드 다시 보기', en: 'Restart Onboarding Guide' })}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{L4(language, { ko: '처음 시작 가이드를 다시 표시합니다', en: 'Show the getting started guide again' })}</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-text-tertiary shrink-0" />
+            </div>
+
+            <div
               onClick={(e) => { e.stopPropagation(); onClearAll(); }}
               className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-red-500/10 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-red-500/30 group active:scale-[0.98] active:bg-red-500/20"
             >
@@ -306,6 +326,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             )}
           </div>
         )}
+
+        {/* GitHub Cloud Backup */}
+        <GitHubSyncSection language={language} />
 
         {/* Engine Settings */}
         <div className="md:col-span-2 ds-card-lg">
@@ -426,6 +449,147 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
     </div>
   );
 };
+
+// ============================================================
+// PART 2 — GitHub Sync Section
+// ============================================================
+
+function GitHubSyncSection({ language }: { language: AppLanguage }) {
+  const ghEnabled = typeof window !== 'undefined' && isFeatureEnabled('GITHUB_SYNC');
+  const gh = useGitHubSync();
+  const [tokenInput, setTokenInput] = useState('');
+  const [connecting, setConnecting] = useState(false);
+
+  if (!ghEnabled) {
+    return (
+      <div className="md:col-span-2 ds-card-lg opacity-60">
+        <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-4 flex items-center gap-2">
+          <GitBranch className="w-4 h-4 text-text-tertiary" />
+          {L4(language, { ko: '클라우드 백업 (GitHub)', en: 'Cloud Backup (GitHub)' })}
+          <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-bg-tertiary text-text-tertiary font-bold uppercase tracking-wider">
+            {L4(language, { ko: '준비 중', en: 'Coming Soon' })}
+          </span>
+        </h3>
+        <p className="text-xs text-text-tertiary">
+          {L4(language, { ko: '원고를 GitHub에 백업하고 버전 관리할 수 있습니다. 곧 활성화됩니다.', en: 'Back up manuscripts to GitHub with version control. Coming soon.' })}
+        </p>
+      </div>
+    );
+  }
+
+  const handleConnect = async () => {
+    if (!tokenInput.trim()) return;
+    setConnecting(true);
+    try {
+      await gh.connect(tokenInput.trim());
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleSelectRepo = (value: string) => {
+    const repo = gh.repos.find(r => `${r.owner}/${r.name}` === value);
+    if (repo) gh.selectRepo(repo.owner, repo.name);
+  };
+
+  return (
+    <div className="md:col-span-2 ds-card-lg">
+      <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
+        <GitBranch className="w-4 h-4 text-green-500" />
+        {L4(language, { ko: '원고 백업 (GitHub)', en: 'Manuscript Backup (GitHub)' })}
+      </h3>
+
+      {gh.connected ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-bg-secondary rounded-xl border border-border">
+            <div className="flex items-center gap-3 min-w-0">
+              <GitBranch className="w-4 h-4 text-green-500 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-text-primary truncate">
+                  {gh.config?.owner}/{gh.config?.repo}
+                </div>
+                <div className="text-[10px] text-text-tertiary">
+                  {gh.config?.branch ?? 'main'}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[9px] font-bold text-green-500 flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                {L4(language, { ko: '연결됨', en: 'Connected' })}
+              </span>
+              <button
+                onClick={gh.disconnect}
+                className="p-1.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                title={L4(language, { ko: '연결 해제', en: 'Disconnect' })}
+                aria-label="Disconnect GitHub"
+              >
+                <Unplug className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          {gh.lastSyncAt && (
+            <div className="text-[10px] text-text-tertiary px-2">
+              {L4(language, { ko: '마지막 동기화', en: 'Last sync' })}: {new Date(gh.lastSyncAt).toLocaleString()}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-xs text-text-tertiary">
+            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.' })}
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder={L4(language, { ko: 'ghp_xxxx...', en: 'ghp_xxxx...' })}
+              className="flex-1 bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary placeholder-text-quaternary focus:border-green-500 outline-none font-mono"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleConnect(); }}
+            />
+            <button
+              onClick={handleConnect}
+              disabled={connecting || !tokenInput.trim()}
+              className="px-4 py-2.5 bg-green-600/80 hover:bg-green-600 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              {connecting
+                ? L4(language, { ko: '연결 중...', en: 'Connecting...' })
+                : L4(language, { ko: '연결', en: 'Connect' })}
+            </button>
+          </div>
+
+          {/* Repo selector after token is validated */}
+          {gh.repos.length > 0 && !gh.connected && (
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+                {L4(language, { ko: '저장소 선택', en: 'Select Repository' })}
+              </label>
+              <select
+                onChange={(e) => handleSelectRepo(e.target.value)}
+                defaultValue=""
+                className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary focus:border-green-500 outline-none cursor-pointer"
+              >
+                <option value="" disabled>
+                  {L4(language, { ko: '저장소를 선택하세요...', en: 'Choose a repository...' })}
+                </option>
+                {gh.repos.map((r) => (
+                  <option key={`${r.owner}/${r.name}`} value={`${r.owner}/${r.name}`}>
+                    {r.owner}/{r.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {gh.error && (
+            <p className="text-xs text-red-400 px-2">{gh.error}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ProfileCard({ language }: { language: AppLanguage }) {
   const t = createT(language);

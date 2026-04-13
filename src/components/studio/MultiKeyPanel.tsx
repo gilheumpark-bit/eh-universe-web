@@ -289,7 +289,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                   <div className="grid grid-cols-2 gap-2 pt-3">
                     <div>
                       <label className="text-[10px] text-gray-500 uppercase mb-1 block">
-                        {ko ? "프로바이더" : "Provider"}
+                        {ko ? "AI 서비스" : "Provider"}
                       </label>
                       <select
                         value={slot.provider}
@@ -472,7 +472,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
         <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
           <DollarSign className="w-3 h-3" />
           {ko
-            ? "API 키는 브라우저에 저장됩니다. 과금은 각 프로바이더 계정에서 직접 발생합니다."
+            ? "API 키는 브라우저에 저장됩니다. 과금은 각 AI 서비스 계정에서 직접 발생합니다."
             : "Keys stored locally. Costs billed directly to your provider accounts."
           }
         </div>

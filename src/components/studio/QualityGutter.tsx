@@ -301,6 +301,22 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
                   <span title="Sentence Variety">VAR {Math.round(p.metrics.sentenceVariety * 100)}%</span>
                   <span title="Repetition">REP {Math.round(p.metrics.repetition * 100)}%</span>
                 </div>
+
+                {/* 약한 문단 자동 수정 버튼 */}
+                {p.score < 50 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectWeak?.(p.index);
+                      window.dispatchEvent(new CustomEvent('noa:trigger-inline-rewrite'));
+                    }}
+                    className="shrink-0 px-2 py-1 text-[9px] font-bold rounded-lg bg-accent-blue/10 text-accent-blue hover:bg-accent-blue/20 border border-accent-blue/20 transition-colors"
+                    title={isKO ? 'NOA 자동 수정 (Ctrl+Shift+R)' : 'NOA auto-fix (Ctrl+Shift+R)'}
+                  >
+                    {isKO ? '수정' : 'Fix'}
+                  </button>
+                )}
               </div>
 
               {/* 팝오버 */}
