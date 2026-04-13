@@ -16,6 +16,15 @@ function pushRing(entry: Record<string, unknown>): void {
   } catch {
     /* storage full */
   }
+  // Persist to main process crash log (survives app restart)
+  try {
+    const cs = (window as unknown as { cs?: { crash?: { report: (e: Record<string, unknown>) => Promise<unknown> } } }).cs;
+    if (cs?.crash) {
+      void cs.crash.report(entry).catch(() => {});
+    }
+  } catch {
+    /* best effort */
+  }
 }
 
 export default function ErrorReporterInit() {

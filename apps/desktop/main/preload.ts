@@ -363,6 +363,19 @@ const local = {
 };
 
 // ============================================================
+// PART 3b2 — Crash reporter (persistent error logging)
+// ============================================================
+
+const crash = {
+  report: (entry: Record<string, unknown>): Promise<{ ok: true }> =>
+    ipcRenderer.invoke('crash:report', entry),
+  getLogs: (): Promise<{ logs: unknown[] }> =>
+    ipcRenderer.invoke('crash:get-logs'),
+  getLogPath: (): Promise<string> =>
+    ipcRenderer.invoke('crash:get-log-path'),
+};
+
+// ============================================================
 // PART 3c — MCP (Model Context Protocol) servers
 // ============================================================
 
@@ -433,7 +446,7 @@ const ollama = {
 // PART 4 — Public bridge
 // ============================================================
 
-const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system, local, ollama, mcp };
+const cs = { fs, quill, ai, keystore, shell, git, updater, cli, menu, meta, system, local, ollama, mcp, crash };
 
 // New canonical surface
 contextBridge.exposeInMainWorld('cs', cs);

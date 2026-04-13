@@ -50,16 +50,19 @@ const config: Config = {
   collectCoverageFrom: [
     'renderer/engine/**/*.ts',
     'renderer/lib/**/*.ts',
+    'renderer/lib/**/*.tsx',
+    'renderer/hooks/**/*.ts',
+    'renderer/hooks/**/*.tsx',
     'renderer/services/**/*.ts',
     '!renderer/**/__tests__/**',
     '!renderer/**/*.d.ts',
   ],
   coverageThreshold: {
     global: {
-      branches: 10,
-      functions: 10,
-      lines: 15,
-      statements: 15,
+      branches: 12,
+      functions: 18,
+      lines: 22,
+      statements: 22,
     },
   },
 };

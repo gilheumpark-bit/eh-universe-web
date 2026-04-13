@@ -51,7 +51,7 @@ test('2. window.cs bridge surfaces are present', async () => {
   });
   expect(surfaces).not.toBeNull();
   expect(surfaces).toEqual(
-    expect.arrayContaining(['fs', 'quill', 'ai', 'keystore', 'shell', 'git', 'updater', 'cli', 'menu', 'meta']),
+    expect.arrayContaining(['fs', 'quill', 'ai', 'keystore', 'shell', 'git', 'updater', 'cli', 'menu', 'meta', 'system', 'local', 'ollama', 'mcp']),
   );
 });
 
@@ -155,7 +155,6 @@ test('6. keystore set/has/list/delete (key never returned)', async () => {
 // ============================================================
 
 test('7. git status works against current repo', async () => {
-  // Use the monorepo root as cwd — known to be a git repo
   const repoRoot = path.resolve(__dirname, '../../../..');
   const result = await page.evaluate(async (cwd) => {
     const cs = (window as unknown as { cs: { git: { status: (cwd: string) => Promise<{ ok: boolean; branch?: string | null }> } } }).cs;
@@ -164,4 +163,49 @@ test('7. git status works against current repo', async () => {
 
   expect(result.ok).toBe(true);
   expect(typeof result.branch === 'string' || result.branch === null).toBe(true);
+});
+
+// ============================================================
+// Scenario 8 — Ollama health check (graceful fail when not installed)
+// ============================================================
+
+test('8. ollama health check returns structured result', async () => {
+  const result = await page.evaluate(async () => {
+    const cs = (window as unknown as { cs: { ollama: { healthCheck: (url?: string) => Promise<{ ok: boolean; version?: string }> } } }).cs;
+    return cs.ollama.healthCheck('http://localhost:11434');
+  });
+  // Ollama may not be installed — both ok:true and ok:false are valid
+  expect(result).toHaveProperty('ok');
+  expect(typeof result.ok).toBe('boolean');
+});
+
+// ============================================================
+// Scenario 9 — MCP server list returns empty array
+// ============================================================
+
+test('9. mcp list-servers returns empty array initially', async () => {
+  const servers = await page.evaluate(async () => {
+    const cs = (window as unknown as { cs: { mcp: { listServers: () => Promise<unknown[]> } } }).cs;
+    return cs.mcp.listServers();
+  });
+  expect(Array.isArray(servers)).toBe(true);
+  expect(servers).toHaveLength(0);
+});
+
+// ============================================================
+// Scenario 10 — System spec returns valid machine info
+// ============================================================
+
+test('10. system local spec returns valid info', async () => {
+  const spec = await page.evaluate(async () => {
+    const cs = (window as unknown as { cs: { system: { getLocalSpec: () => Promise<{
+      platform: string; arch: string; cpus: number; totalMem: number; appVersion: string;
+    }> } } }).cs;
+    return cs.system.getLocalSpec();
+  });
+  expect(spec.platform).toBeTruthy();
+  expect(spec.arch).toBeTruthy();
+  expect(spec.cpus).toBeGreaterThan(0);
+  expect(spec.totalMem).toBeGreaterThan(0);
+  expect(spec.appVersion).toMatch(/^\d+\.\d+\.\d+/);
 });

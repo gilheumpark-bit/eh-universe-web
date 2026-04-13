@@ -27,6 +27,7 @@ import { registerCliInstallerIpc } from './services/cli-installer';
 import { registerSystemIpc } from './ipc/system';
 import { registerOllamaIpc } from './ipc/ollama';
 import { registerMcpIpc, disposeMcp } from './ipc/mcp';
+import { initCrashReporter } from './services/crash-reporter';
 
 // ============================================================
 // PART 1 — Environment + window
@@ -391,6 +392,7 @@ function buildMenu(): void {
 app.whenReady().then(() => {
    
   console.log('[desktop] app ready (isProd=%s, nodeEnv=%s)', isProd, process.env.NODE_ENV);
+  initCrashReporter();
   registerIpc();
   buildMenu();
   void createWindow().catch((err) => {
