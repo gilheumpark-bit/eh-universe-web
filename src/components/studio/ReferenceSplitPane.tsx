@@ -65,14 +65,6 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
     setWidth(clampWidth(startWidth.current + delta));
   }, []);
 
-  const onMouseUp = useCallback(() => {
-    isDragging.current = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    window.removeEventListener('mousemove', onMouseMove);
-    window.removeEventListener('mouseup', onMouseUp);
-  }, [onMouseMove]);
-
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     isDragging.current = true;
@@ -80,9 +72,18 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
     startWidth.current = width;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+
+    const handleUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+
     window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  }, [width, onMouseMove, onMouseUp]);
+    window.addEventListener('mouseup', handleUp);
+  }, [width, onMouseMove]);
 
   const onHandleDoubleClick = useCallback(() => {
     setWidth(DEFAULT_WIDTH);
@@ -92,9 +93,8 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
   useEffect(() => {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [onMouseMove, onMouseUp]);
+  }, [onMouseMove]);
 
   const tabs: { id: RefTab; icon: typeof Globe; label: string }[] = [
     { id: 'world', icon: Globe, label: isKO ? '세계관' : 'World' },
