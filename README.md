@@ -1,138 +1,144 @@
 <div align="center">
 
-<img src="public/images/logo-badge.svg" alt="EH Universe" width="320" />
+<img src="public/images/logo-badge.svg" alt="NOA Studio" width="320" />
 
-### Where are you headed?
+# NOA Studio
 
-A worldbuilding portal for 200,000 star systems — with an AI writing OS and a verified code IDE.
+**AI 소설 집필 스튜디오**
+
+글을 쓰면 AI가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.
 
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
-![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
+![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
-[Live](https://ehsu.app) · [Docs](#documentation) · [Contributing](CONTRIBUTING.md)
+[Live](https://ehsu.app) · [Changelog](CHANGELOG.md) · [Architecture](ARCHITECTURE.md)
 
 </div>
 
 ---
 
-## Overview
+## 한 줄 소개
 
-**EH Universe Web — NOA Studio** is a full-stack creative platform built on a single Next.js 16.2 application. Five apps share a unified design system and authentication layer:
+**"VS Code 감성의 소설 IDE. 글만 쓰면 나머지는 NOA가."**
 
-1. **Universe Portal** — 140+ lore documents across 8 categories
-2. **NOA Studio** — Novel IDE with GitHub-backed persistence, Tiptap block editor, and 7-Phase architecture
-3. **Code Studio** — Verified code IDE with 9-team pipeline + Quill Engine (224 rules)
-4. **Translation Studio** — Novel-specific AI translation with 6-axis scoring
-5. **EH Network** — Writer community with planet systems
-
-**BYOK (Bring Your Own Key)** — works with Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio. Free to use.
+- 장르 프리셋 한 번이면 연출 세팅 끝
+- Tab 누르면 다음 문장 제안
+- 저장하면 GitHub에 자동 백업
+- 에피소드마다 품질 등급 자동 채점
 
 ---
 
-## 주요 기능 / Key Features
+## 이런 분을 위한 도구입니다
 
-### 소설 IDE 7-Phase 아키텍처
-- **Phase 1**: GitHub OAuth + Octokit 파일 CRUD (persistent storage)
-- **Phase 2**: Markdown + YAML 직렬화 계층 (project-serializer)
-- **Phase 3**: Tiptap 블록 에디터 (NovelEditor — textarea 교체)
-- **Phase 4**: 에피소드 파일 트리 UI (EpisodeExplorer — Volume 구조)
-- **Phase 5**: 하이브리드 컨텍스트 3-Tier (context builder)
-- **Phase 6**: Git 브랜치 평행우주 (BranchSelector, ParallelUniversePanel, BranchDiffView)
-- **Phase 7**: Tab 인라인 자동완성 (InlineCompletion extension, Copilot 방식)
-
-### 연출탭 리웍
-- 13탭 → 3섹션 (줄거리/분위기/캐릭터) + 고급 설정 접기
-- 10개 장르 프리셋 (SceneSheet 3-section rework)
-- 에피소드별 씬시트 저장 (EpisodeScenePanel)
-
-### 품질 검증
-- 100개 기능 점수 시스템 (avg 875/1000 target)
-- UX 직관성 45건 개선 (9.5+/10 목표)
-- 4개국어 i18n (KO/EN/JA/ZH) — 자연스러운 번역 품질
-
-### AI 인프라
-- DGX Spark 14B 서버 (Qwen2.5-14B-Instruct-AWQ, 128GB VRAM)
-- SSE 스트리밍 (TTFT 0.05s)
-- Quill Engine 224-rule verification (4-layer: pre-filter, AST, TypeChecker, esquery)
+| | |
+|---|---|
+| 웹소설 작가 | 노벨피아/문피아/카카오페이지 연재 |
+| 라이트노벨 작가 | 나로우계/판타지/회귀물 |
+| 스토리 기획자 | 세계관 설계 + 캐릭터 관리 |
+| 1인 창작자 | 글쓰기 + 번역 + 출판까지 |
 
 ---
 
-## Apps
+## 핵심 기능
 
-<table>
-<tr>
-<td width="50%">
+### 1. 글쓰기
 
-**Universe Portal** `/archive`
-140+ documents across 8 categories (Core, Timeline, Factions, Technology, Geography, Military, Classified, Reports). Color-coded security levels (PUBLIC / RESTRICTED / CLASSIFIED).
+| 기능 | 설명 |
+|------|------|
+| **Tiptap 블록 에디터** | 서체·줄간격·들여쓰기 소설 전용 에디터 |
+| **Tab 자동완성** | 1.5초 멈추면 다음 문장 제안 → Tab으로 수락 |
+| **인라인 리라이트** | 텍스트 선택 → 다시쓰기/확장/축약/문체변환/복사 |
+| **5가지 집필 모드** | 직접 쓰기 · AI 생성 · 3단계 캔버스 · 자동 다듬기 · 고급 |
+| **고급 모드 상황 프리셋** | 전투씬/일상씬/고백씬/추격씬/대화씬 원클릭 |
 
-</td>
-<td width="50%">
+### 2. 품질 자동화
 
-**NOA Studio** `/studio`
-Novel IDE with Tiptap block editor, GitHub persistence, 5 writing modes, real-time paragraph quality analysis, continuity checking, inline rewrite (Ctrl+Shift+R), parallel universe branching, Tab autocomplete, EPUB/DOCX/TXT export, version diff, DGX SSE streaming, Zen mode, scene direction sheet (3-section), character smart injection, Story Bible.
+| 기능 | 설명 |
+|------|------|
+| **품질 검사** | 문단별 점수 (출판 수준/게시 가능/수정 권장) |
+| **디렉터 리포트** | S++~D 등급 + 구체적 개선점 |
+| **연속성 검사** | 캐릭터 이름 오타, 설정 모순 자동 감지 |
+| **작가 프로파일** | 에피소드마다 문체 학습 → 문체 특징 분석 |
 
-</td>
-</tr>
-<tr>
-<td>
+### 3. 연출 시트
 
-**Code Studio** `/code-studio`
-Browser IDE with Monaco editor, 51-panel registry, 9-team verification pipeline, diff-guard (SCOPE/CONTRACT/@block protection), 4-Tier orchestration, 224-rule Quill Engine + 436-rule dual catalog, design linter (16 rules), and WebContainer preview.
+| 기능 | 설명 |
+|------|------|
+| **10개 장르 프리셋** | 🔪스릴러 💕로맨스 ⚔️액션 🔍미스터리 🐉판타지 👻호러 🚀SF ☕힐링 🗡️무협 🌑다크 |
+| **3섹션 구조** | 줄거리 (고구마·사이다·클리프) + 분위기 (감정·긴장·훅) + 캐릭터 (대사 톤) |
+| **에피소드별 저장** | 화마다 독립 연출 시트 → 오른쪽에 이력 쌓임 |
+| **고급 설정** | 도파민 장치 · 복선 관리 · 플롯 구조 · 씬 전환 (접기 가능) |
 
-</td>
-<td>
+### 4. 세계관 · 캐릭터
 
-**Translation Studio** `/translation-studio`
-Novel-specific AI translation with 2-mode x 41-band scoring (Fidelity 4-axis / Experience 6-axis), auto-recreation loop (score < 0.70), glossary manager, character register (6 relation levels), XLIFF/TMX/TBX export, and language-specific presets (JP narou-kei, CN wangwen).
+| 기능 | 설명 |
+|------|------|
+| **캐릭터 프로파일** | 이름/역할/특성/외모 + 배경/동기/대사 스타일 + 관계 그래프 |
+| **세계관 3-tier** | 핵심 전제 → 권력 구조 → 세부 설정 (단계별 가이드 포함) |
+| **109개 아카이브** | 8개 카테고리 설정 문서 DB |
+| **아이템/스킬/마법** | AI 자동 생성 + 레어리티 시스템 |
 
-</td>
-</tr>
-<tr>
-<td>
+### 5. 관리 · 내보내기
 
-**EH Network** `/network`
-Writer community with planet systems, posts, comments, logs, settlements, and moderation.
-
-</td>
-<td>
-
-**Tools** `/tools/*`
-Galaxy map, vessel specs, warp gate calculator, soundtrack player, Neka sound generator, NOA tower, style studio.
-
-</td>
-</tr>
-</table>
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16.2, React 19, TypeScript 5 |
-| UI | Tailwind CSS 4, Design System v8.0 (3-Tier), Lucide Icons |
-| Novel Editor | Tiptap (block editor) + InlineCompletion extension + Octokit (GitHub sync) |
-| AI | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio (BYOK) |
-| Writing Engine | ANS 10.0 — quality gate, tension curves, genre presets, HFCP, DGX routing |
-| Code Engine | 9-team pipeline + 224-rule Quill Engine, diff-guard, apply-guard, intent-parser, 4-Tier |
-| DGX Spark | GB10 128GB, Qwen2.5-14B-Instruct-AWQ (single model) |
-| Translation Engine | 6-axis scoring, 41-band, auto-recreation, glossary, CAT standard |
-| Editor | Monaco Editor (Code Studio), Tiptap (Novel Studio), xterm.js, WebContainer API |
-| Storage | localStorage + IndexedDB + GitHub (Octokit) + Firestore (CLOUD_SYNC) + Google Drive |
-| Serialization | Markdown + YAML front-matter (project-serializer, markdown-serializer) |
-| Auth | Firebase Auth + Stripe tiers |
-| Export | EPUB 3.0 / DOCX / TXT / XLIFF / TMX — pure JS |
-| i18n | 4 languages (KO, EN, JA, ZH) via LangContext |
-| Testing | Jest (~1,600 tests), Playwright E2E |
-| Deploy | Vercel (ehsu.app) |
+| 기능 | 설명 |
+|------|------|
+| **에피소드 탐색기** | Volume/Episode 트리 + 상태 아이콘 + 요약 툴팁 |
+| **다른 결말 만들기** | 분기점에서 버전 생성 → 평행우주 타임라인 시각화 |
+| **GitHub 클라우드 백업** | Markdown+YAML 포맷, git diff 친화 |
+| **내보내기** | EPUB(전자책) · DOCX(워드) · TXT(플랫폼용) · MD · JSON |
+| **씬 플레이어** | 소설을 시네마 모드(비주얼노벨) / 라디오 모드로 체험 |
 
 ---
 
-## Quick Start
+## 더 알고 싶다면
+
+<details>
+<summary><b>🖥️ 코드 스튜디오</b> — 검증형 코드 생성 IDE</summary>
+
+- Monaco 에디터 + 52개 패널
+- 9팀 멀티에이전트 파이프라인 (PM→Architect→Frontend→Backend→QA→Security→DevOps→TechLead→Quill)
+- Quill Engine 224룰 4-layer 검증
+- 디자인 시스템 v8.0 (시맨틱 토큰)
+- 터미널 + 라이브 프리뷰 + Git 패널
+
+</details>
+
+<details>
+<summary><b>🌐 번역 스튜디오</b> — 소설 전용 AI 번역</summary>
+
+- 원문/번역 양방향 에디터 (앰버/블루 톤 분리)
+- 4축 채점 (정확성/자연스러움/완성도/포맷)
+- 용어집 관리 + 번역 메모리
+- 배치 번역 (다국어 병렬)
+
+</details>
+
+<details>
+<summary><b>🌍 EH Network</b> — 작가 커뮤니티</summary>
+
+- 행성 기반 커뮤니티 시스템
+- 게시판 + 댓글 + 반응
+- 신고/관리 시스템
+
+</details>
+
+---
+
+## AI 서버
+
+| 방식 | 설명 |
+|------|------|
+| **BYOK** | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio — API 키만 넣으면 동작 |
+| **자체 서버** | NVIDIA DGX Spark (128GB), Qwen2.5-14B-Instruct-AWQ, SSE 실시간 스트리밍 |
+
+API 키 없어도 글쓰기·편집·내보내기·아카이브는 100% 사용 가능.
+
+---
+
+## 시작하기
 
 ```bash
 git clone https://github.com/gilheumpark-bit/eh-universe-web.git
@@ -141,66 +147,54 @@ npm install
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). No API key required for archive, editing, and export.
+[localhost:3000](http://localhost:3000)에서 바로 사용.
 
 ```bash
-npm run build        # Production build
-npm run lint         # ESLint
-npm test             # Unit tests
+npm run build    # 프로덕션 빌드
+npm test         # 테스트
 ```
 
 ---
 
-## Architecture
+## 기술 스택
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── studio/             # NOA Writing OS (Novel IDE)
-│   ├── code-studio/        # Verified Code IDE
-│   ├── translation-studio/ # Translation Workspace
-│   ├── network/            # Writer Community
-│   ├── archive/            # Universe Archive (140+ docs)
-│   └── api/                # 22 API routes
-├── components/
-│   ├── studio/             # Novel IDE (NovelEditor, EpisodeExplorer, BranchSelector, etc.)
-│   │   └── extensions/     # Tiptap extensions (inline-completion, novel-keymap)
-│   ├── code-studio/        # IDE panels (87 files)
-│   └── translator/         # Translation editor + panels
-├── engine/                 # ANS 10.0 — pipeline, quality-gate, director, genre-presets
-├── hooks/                  # useGitHubSync, useInlineCompletion, useQualityAnalysis, etc.
-└── lib/
-    ├── code-studio/        # IDE core (6 directories)
-    ├── github-sync.ts      # GitHub Octokit integration
-    ├── project-serializer.ts  # MD+YAML serialization
-    └── firestore-project-sync.ts  # Cloud sync (feature-flagged)
-```
+| 레이어 | 기술 |
+|--------|------|
+| 프레임워크 | Next.js 15, React 19, TypeScript 5 |
+| 에디터 | Tiptap (소설) + Monaco (코드) + 인라인 자동완성 |
+| AI | 7개 프로바이더 + DGX Spark 14B (자체) |
+| 집필 엔진 | ANS 10.0 — 품질 검사, 디렉터, 연속성, HFCP, 장르 프리셋 |
+| 코드 엔진 | 9팀 파이프라인 + Quill 224룰 |
+| 저장 | localStorage + IndexedDB + GitHub(Octokit) + Drive + Firestore |
+| 직렬화 | Markdown + YAML (git diff 친화) |
+| UI | Tailwind CSS 4, Design System v8.0, Lucide Icons |
+| 인증 | Firebase Auth + Stripe 티어 |
+| 내보내기 | EPUB 3.0 / DOCX / TXT / MD / JSON |
+| i18n | 4개국어 (한국어, English, 日本語, 中文) |
+| 배포 | Vercel |
 
 ---
 
-## Documentation
+## 문서
 
-| Document | Description |
-|----------|------------|
-| [README.ko.md](README.ko.md) | Korean documentation |
-| [CHANGELOG.md](CHANGELOG.md) | Version history (v2.1.0) |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guide |
-| [SECURITY.md](SECURITY.md) | Security policy |
-| [RUNBOOK.md](RUNBOOK.md) | Operations runbook |
+| 문서 | 설명 |
+|------|------|
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.0) |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
+| [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |
+| [SECURITY.md](SECURITY.md) | 보안 정책 |
 
 ---
 
-## License
+## 라이선스
 
-[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — Free for non-commercial use.
+[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 비상업적 용도 무료.
 
 <div align="center">
 
 ---
 
-*"Where are you headed?"*
-
-Built with Next.js 16.2, TypeScript, Tiptap, seven AI providers, and Quill Engine.
+*"글만 쓰면 나머지는 NOA가."*
 
 </div>
