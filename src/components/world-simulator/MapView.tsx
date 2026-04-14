@@ -107,7 +107,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
       if (ownerId) {
         setSelectedCiv(ownerId);
       } else {
-        setHexHint(L4(lang, { ko: '먼저 세력을 선택하세요. (드래그로 배경 이동 가능)', en: 'Select a faction first to paint. (Drag to pan)' }));
+        setHexHint(L4(lang, { ko: '먼저 세력을 선택하세요. (드래그로 배경 이동 가능)', en: 'Select a faction first to paint. (Drag to pan)', ja: '먼저 세력을 選択하세요. (드래그로 배경 이동 가능)', zh: '먼저 세력을 选择하세요. (드래그로 배경 이동 가능)' }));
         setTimeout(() => setHexHint(''), 2000);
       }
     }
@@ -125,7 +125,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
       <div className="flex flex-wrap gap-2 items-center justify-between">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-            {L4(lang, { ko: "세력 페인트:", en: "Paint faction:" })}
+            {L4(lang, { ko: "세력 페인트:", en: "Paint faction:", ja: "Paint faction:", zh: "Paint faction:" })}
           </span>
           {civs.map(c => (
             <button key={c.id} onClick={() => { setPaintCiv(paintCiv === c.id ? null : c.id); setSelectedCiv(c.id); }}
@@ -139,7 +139,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
           ))}
           {paintCiv && (
             <button onClick={() => setPaintCiv(null)} className="text-[10px] text-text-tertiary hover:text-accent-red">
-              {L4(lang, { ko: "해제", en: "Clear" })}
+              {L4(lang, { ko: "해제", en: "Clear", ja: "Clear", zh: "Clear" })}
             </button>
           )}
         </div>
@@ -154,7 +154,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
 
       {civs.length === 0 ? (
         <div className="text-center py-12 text-text-tertiary text-xs italic">
-          {L4(lang, { ko: "문명을 추가하면 영역을 칠할 수 있습니다", en: "Add civilizations to paint territories" })}
+          {L4(lang, { ko: "문명을 추가하면 영역을 칠할 수 있습니다", en: "Add civilizations to paint territories", ja: "문名을 追加하면 영역을 칠할 수 있습니다", zh: "문人을 添加하면 영역을 칠할 수 있습니다" })}
         </div>
       ) : (
         <div 
@@ -233,7 +233,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
           <div className="border border-border rounded-lg p-3" style={{ borderLeftWidth: 3, borderLeftColor: civ.color }}>
             <div className="font-bold text-sm" style={{ color: civ.color }}>{civ.name}</div>
             <div className="text-[10px] text-text-tertiary">{era ? L4(lang, era) : ''} | TL{era?.techLevel}</div>
-            <div className="text-[10px] text-text-secondary mt-1">{civ.traits.join(", ") || (L4(lang, { ko: "특성 없음", en: "No traits" }))}</div>
+            <div className="text-[10px] text-text-secondary mt-1">{civ.traits.join(", ") || (L4(lang, { ko: "특성 없음", en: "No traits", ja: "특성 なし", zh: "특성 无" }))}</div>
           </div>
         );
       })()}

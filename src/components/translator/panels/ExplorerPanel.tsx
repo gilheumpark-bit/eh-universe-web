@@ -43,7 +43,7 @@ export function ExplorerPanel() {
             placeholder="Search chapters..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
+            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
           />
         </div>
         <div className="mt-3 flex flex-col gap-2 border-t border-white/5 pt-3">
@@ -55,7 +55,7 @@ export function ExplorerPanel() {
               placeholder="https://…"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/40 py-1.5 pl-2 pr-2 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-amber/50 pointer-events-auto"
+              className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/40 py-1.5 pl-2 pr-2 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50 pointer-events-auto"
             />
             <button
               type="button"

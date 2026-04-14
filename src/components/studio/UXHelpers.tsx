@@ -82,7 +82,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-black/60" onClick={onCancel}>
+    <div className="fixed inset-0 z-[var(--z-tooltip)] flex items-center justify-center bg-black/60" onClick={onCancel}>
       <div ref={dialogRef} className="bg-bg-primary border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
         <div className={`flex items-start gap-3 p-3 rounded-lg mb-4 ${colors[variant]}`}>
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -205,7 +205,7 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismi
   }, [onDismiss]);
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9990] max-w-sm w-full mx-4 animate-in slide-in-from-bottom-4">
+    <div className="fixed bottom-4 right-4 z-[var(--z-tooltip)] max-w-sm w-full mx-4 animate-in slide-in-from-bottom-4">
       <div className="bg-red-950/90 border border-red-500/30 rounded-xl p-4 shadow-2xl backdrop-blur-sm">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">

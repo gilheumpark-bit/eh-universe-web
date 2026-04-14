@@ -47,14 +47,14 @@ export async function createWebContainer(): Promise<WebContainerInstance> {
 // ============================================================
 
 async function bootRealContainer(): Promise<WebContainerInstance | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let api: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic import; @webcontainer/api types unavailable at build
+  let api: { WebContainer?: { boot: () => Promise<any> } } | undefined;
   try {
     // SECURITY: dynamic import of a hardcoded module name only — no eval/new Function.
     // The module name is a constant to prevent any injection vector.
     const moduleName = "@webcontainer/api" as const;
     api = await import(/* webpackIgnore: true */ moduleName);
-  } catch {
+  } catch { /* [의도적 무시] @webcontainer/api 미설치 환경에서 null 반환 */
     return null;
   }
 
@@ -246,7 +246,7 @@ function createSimulatedContainer(): WebContainerInstance {
 function simulateCommand(
   command: string,
   fs: Map<string, string>,
-  isServerRunning: () => boolean,
+  _isServerRunning: () => boolean,
 ): SimProcess {
   const parts = command.trim().split(/\s+/);
   const cmd = parts[0] ?? "";

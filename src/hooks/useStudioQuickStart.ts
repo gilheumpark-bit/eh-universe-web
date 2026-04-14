@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { StoryConfig, ChatSession, Project, AppLanguage } from '@/lib/studio-types';
+import type { StoryConfig, ChatSession, Project, AppLanguage, AppTab, PipelineStageResult } from '@/lib/studio-types';
 import { Genre } from '@/lib/studio-types';
 import { generateWorldDesign, generateCharacters } from '@/services/geminiService';
 import { logger } from '@/lib/logger';
@@ -32,16 +32,12 @@ export function useStudioQuickStart({
   createNewProject: () => string;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   setCurrentSessionId: (id: string | null) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setActiveTab: (tab: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setPipelineResult: React.Dispatch<React.SetStateAction<any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setUxError: (error: any) => void;
+  setActiveTab: (tab: AppTab) => void;
+  setPipelineResult: React.Dispatch<React.SetStateAction<{ stages: PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null>>;
+  setUxError: (error: { error: unknown; retry?: () => void } | null) => void;
   doHandleSend: (customPrompt?: string, overrideInput?: string, cb?: () => void) => void;
   currentSessionId: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  currentSession: any;
+  currentSession: ChatSession | null;
 }) {
   const [showQuickStartModal, setShowQuickStartModal] = useState(false);
   const [isQuickGenerating, setIsQuickGenerating] = useState(false);
@@ -129,8 +125,7 @@ export function useStudioQuickStart({
     if (!currentSession || currentSession.id !== pendingQuickStart.sessionId) return;
 
     doHandleSend(pendingQuickStart.prompt, '', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setPipelineResult((prev: any) => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map((s: any) => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
+        setPipelineResult((prev) => prev ? { ...prev, finalStatus: 'completed' as const, stages: prev.stages.map((s) => ({ ...s, status: s.status === 'skipped' ? 'skipped' as const : 'passed' as const })) } : null);
     });
     setPendingQuickStart(null);
   }, [currentSession, currentSessionId, doHandleSend, pendingQuickStart, setPipelineResult]);

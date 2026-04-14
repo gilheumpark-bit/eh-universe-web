@@ -104,7 +104,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder={language === 'KO' ? '제목 검색...' : 'Search by title...'}
-          className="w-full max-w-xs px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent-purple transition-colors font-mono"
+          className="w-full max-w-xs px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors font-mono"
         />
         <div className="flex gap-1.5 flex-wrap">
           {categories.map(cat => (
@@ -153,7 +153,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenamingSessionId(null); }}
                   onBlur={confirmRename} onClick={e => e.stopPropagation()}
-                  className="font-black text-sm mb-2 pr-16 w-full bg-transparent border-b border-accent-purple outline-none" />
+                  className="font-black text-sm mb-2 pr-16 w-full bg-transparent border-b border-accent-purple outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
               ) : (
                 <h4 className="font-black text-sm mb-2 pr-16 truncate">{s.title}</h4>
               )}
@@ -193,12 +193,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
 
       {/* Move Session Modal */}
       {moveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setMoveModal(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="presentation" onClick={() => setMoveModal(null)}>
           <div className="bg-bg-primary border border-border rounded-2xl p-6 w-80 space-y-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
             <select
               autoFocus
-              className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
+              className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple"
               defaultValue=""
               onChange={e => {
                 if (e.target.value) {

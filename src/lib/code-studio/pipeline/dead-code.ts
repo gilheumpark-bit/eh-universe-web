@@ -32,7 +32,7 @@ function findUnreachableCode(content: string, filePath: string, fileId: string):
   const findings: DeadCodeFinding[] = [];
   const lines = content.split('\n');
   let inFunction = false;
-  let braceDepth = 0;
+  let _braceDepth = 0;
   let afterReturn = false;
 
   for (let i = 0; i < lines.length; i++) {
@@ -40,8 +40,8 @@ function findUnreachableCode(content: string, filePath: string, fileId: string):
 
     // Track brace depth
     for (const ch of line) {
-      if (ch === '{') { braceDepth++; inFunction = true; }
-      if (ch === '}') { braceDepth--; afterReturn = false; }
+      if (ch === '{') { _braceDepth++; inFunction = true; }
+      if (ch === '}') { _braceDepth--; afterReturn = false; }
     }
 
     if (afterReturn && inFunction && line.length > 0 && line !== '}' && !line.startsWith('//') && !line.startsWith('*')) {
@@ -171,7 +171,7 @@ function findUnusedExports(
   for (const file of allFiles) {
     const exportRe = /export\s+(?:const|let|var|function|class|interface|type|enum)\s+(\w+)/g;
     let m: RegExpExecArray | null;
-    const lines = file.content.split('\n');
+    const _lines = file.content.split('\n');
     while ((m = exportRe.exec(file.content)) !== null) {
       const sym = m[1];
       if (!allImportedSymbols.has(sym) && sym !== 'default') {

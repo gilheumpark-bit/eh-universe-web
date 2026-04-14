@@ -10,7 +10,7 @@ import ReactDOM from 'react-dom/client';
 import { act } from 'react';
 import {
   useCodeStudioComposer,
-  type ComposerChange,
+  
 } from '@/hooks/useCodeStudioComposer';
 
 // Mock streamChat and logger to avoid real AI calls
@@ -126,7 +126,7 @@ describe('useCodeStudioComposer', () => {
     });
 
     const { get, cleanup } = createHarness();
-    const getContent = (id: string) => 'original content';
+    const getContent = (_id: string) => 'original content';
     const getFileName = (id: string) => `${id}.ts`;
 
     await act(async () => {

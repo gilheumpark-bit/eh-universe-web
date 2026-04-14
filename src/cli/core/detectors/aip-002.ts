@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind, FunctionDeclaration, MethodDeclaration } from 'ts-morph';
+import { FunctionDeclaration, MethodDeclaration } from 'ts-morph';
 
 /**
  * AIP-002: 리팩터링 회피 — 중복 구현 (Refactoring avoidance — duplicate implementation)

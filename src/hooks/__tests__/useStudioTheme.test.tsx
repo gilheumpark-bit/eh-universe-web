@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { act } from 'react';
-import { useStudioTheme, useStudioLanguage, type ThemeLevel } from '@/hooks/useStudioTheme';
+import { useStudioTheme, useStudioLanguage } from '@/hooks/useStudioTheme';
 
 // ============================================================
 // PART 1 — Test Harnesses

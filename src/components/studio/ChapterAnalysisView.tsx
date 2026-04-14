@@ -135,7 +135,7 @@ function TextInput({ value, onChange, placeholder }: { value: string; onChange: 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors"
+      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors"
     />
   );
 }
@@ -146,7 +146,7 @@ function ArrayInput({ value, onChange, placeholder }: { value: string[]; onChang
       value={arrayToString(value)}
       onChange={(e) => onChange(stringToArray(e.target.value))}
       placeholder={placeholder}
-      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors"
+      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors"
     />
   );
 }
@@ -575,7 +575,7 @@ export default function ChapterAnalysisView({
                   value={imagePrompt.characterFocus}
                   onChange={(e) => setImagePrompt((p) => ({ ...p, characterFocus: e.target.value }))}
                   rows={2}
-                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors resize-y"
+                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors resize-y"
                 />
                 <CopyButton text={imagePrompt.characterFocus} language={language} />
               </div>
@@ -586,7 +586,7 @@ export default function ChapterAnalysisView({
                   value={imagePrompt.backgroundFocus}
                   onChange={(e) => setImagePrompt((p) => ({ ...p, backgroundFocus: e.target.value }))}
                   rows={2}
-                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors resize-y"
+                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors resize-y"
                 />
                 <CopyButton text={imagePrompt.backgroundFocus} language={language} />
               </div>
@@ -597,7 +597,7 @@ export default function ChapterAnalysisView({
                   value={imagePrompt.sceneFocus}
                   onChange={(e) => setImagePrompt((p) => ({ ...p, sceneFocus: e.target.value }))}
                   rows={2}
-                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:border-accent-purple transition-colors resize-y"
+                  className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors resize-y"
                 />
                 <CopyButton text={imagePrompt.sceneFocus} language={language} />
               </div>

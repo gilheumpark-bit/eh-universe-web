@@ -53,6 +53,7 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selectedText: '', selStart: 0, selEnd: 0 });
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
   /** Tracks the last applied replacement so we can undo it */
   const [lastApplied, setLastApplied] = useState<{ original: string; replacement: string } | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -219,6 +220,7 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
 
     setLoading(true);
     setResult(null);
+    setActiveAction(action);
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -271,14 +273,30 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     { id: 'copy', icon: Copy, label: L4(lang, { ko: '복사', en: 'Copy', ja: 'コピー', zh: '复制' }), color: 'text-text-secondary' },
   ];
 
+  // P0-4: Mobile bottom sheet vs desktop floating with viewport clamping
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const POPUP_WIDTH = 320;
+  const POPUP_HEIGHT = 160;
+  const MARGIN = 16;
+  const vpW = typeof window !== 'undefined' ? window.innerWidth : 800;
+  const vpH = typeof window !== 'undefined' ? window.innerHeight : 600;
+
+  const popupStyle: React.CSSProperties = isMobile
+    ? { position: 'fixed', bottom: 0, left: 0, right: 0, top: 'auto', transform: 'none' }
+    : {
+        left: Math.max(MARGIN, Math.min(popup.x, vpW - POPUP_WIDTH / 2 - MARGIN)),
+        top: Math.max(MARGIN, Math.min(popup.y, vpH - POPUP_HEIGHT - MARGIN)),
+        transform: 'translateX(-50%)',
+      };
+
   return (
     <div
       ref={popupRef}
-      className="fixed z-[9999] animate-in fade-in slide-in-from-bottom-2 duration-200"
-      style={{ left: popup.x, top: popup.y, transform: 'translateX(-50%)' }}
+      className={`fixed z-[var(--z-tooltip)] animate-in fade-in duration-200 ${isMobile ? 'slide-in-from-bottom-4 rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.4)]' : 'slide-in-from-bottom-2'}`}
+      style={popupStyle}
     >
       {/* Action buttons — icon + label vertically stacked */}
-      <div className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-xl bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+      <div className={`flex items-center gap-0.5 px-1.5 py-1.5 bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)] ${isMobile ? 'rounded-t-2xl justify-around py-3 px-4' : 'rounded-xl'}`}>
         {actions.map(a => {
           const Icon = a.icon;
           return (
@@ -304,11 +322,15 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
 
       {/* Result preview + apply */}
       {(loading || result) && (
-        <div className="mt-1.5 max-w-md rounded-xl bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-3">
+        <div className={`mt-1.5 bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-3 ${isMobile ? 'rounded-none max-w-full' : 'max-w-md rounded-xl'}`}>
           {loading && !result && (
             <div className="flex items-center gap-2 text-[11px] text-text-tertiary">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              {isKO ? '생성 중...' : 'Generating...'}
+              {activeAction === 'rewrite' ? (isKO ? '다시쓰기 중...' : 'Rewriting...')
+                : activeAction === 'expand' ? (isKO ? '확장 중...' : 'Expanding...')
+                : activeAction === 'compress' ? (isKO ? '축약 중...' : 'Condensing...')
+                : activeAction === 'tone' ? (isKO ? '문체 변환 중...' : 'Changing style...')
+                : (isKO ? '생성 중...' : 'Generating...')}
             </div>
           )}
           {result && (

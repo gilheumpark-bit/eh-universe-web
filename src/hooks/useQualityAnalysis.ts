@@ -129,7 +129,7 @@ function scoreParagraph(text: string, index: number, offset: number): ParagraphS
   const density = analyzeDensity(trimmed);
 
   const issues: QualityIssue[] = [];
-  const isKO = /[가-힣]/.test(trimmed);
+  const _isKO = /[가-힣]/.test(trimmed);
 
   // 이슈 감지
   if (trimmed.length > 800) {

@@ -6,7 +6,8 @@ import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import TabAssistant from '@/components/studio/TabAssistant';
 import { createT, L4 } from '@/lib/i18n';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
-import { BookOpen, TrendingUp, Palette, PenTool, ArrowLeft } from 'lucide-react';
+import { BookOpen, TrendingUp, Palette, PenTool } from 'lucide-react';
+import type { FullDirectionData } from '@/components/studio/SceneSheet';
 
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), {
   ssr: false,
@@ -127,8 +128,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       writerNotes: config.sceneDirection.writerNotes,
       plotStructure: config.sceneDirection.plotStructure,
     } : undefined,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onDirectionUpdate: (data: any) => {
+    onDirectionUpdate: (data: FullDirectionData) => {
       if (!currentSessionId) return;
       const d = data as { goguma: { type: string; intensity: string; desc: string; episode: number }[]; hooks: { position: string; hookType: string; desc: string }[]; emotions: { emotion: string; intensity: number; position: number }[]; dialogueRules: { character: string; tone: string; notes: string }[]; dopamines: { scale: string; device: string; desc: string; resolved: boolean }[]; cliffs: { cliffType: string; desc: string; episode: number }[]; foreshadows: { planted: string; payoff: string; episode: number; resolved: boolean }[]; pacings: { section: string; percent: number; desc: string }[]; tensionPoints: { position: number; level: number; label: string }[]; canons: { character: string; rule: string }[]; transitions: { fromScene: string; toScene: string; method: string }[]; writerNotes?: string; plotStructure?: string };
       updateCurrentSession({

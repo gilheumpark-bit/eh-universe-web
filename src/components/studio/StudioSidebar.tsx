@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Zap, Plus, Globe, UserCircle, FileText, PenTool, Edit3, History,
-  Download, Upload, Cloud, CloudOff, Settings, X, BookOpen, Hash,
+  Download, Upload, Cloud, Settings, X, BookOpen, Hash,
 } from 'lucide-react';
 import { AppLanguage, AppTab, Project, ChatSession } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -254,7 +254,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     <select
                       value={currentProjectId || ''}
                       onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-                      className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[12px] font-semibold text-text-primary outline-none transition-colors hover:border-[rgba(202,161,92,0.2)]"
+                      className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[12px] font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors hover:border-[rgba(202,161,92,0.2)]"
                     >
                       {projects.map(p => (
                         <option key={p.id} value={p.id}>{p.name} ({p.sessions.length})</option>
@@ -675,7 +675,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     onChange={e => setJumpValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleEpisodeJump(); }}
                     placeholder={`1–${orderedSessions.length}`}
-                    className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-3 py-2 font-mono text-[11px] font-semibold text-text-primary outline-none transition-colors hover:border-[rgba(202,161,92,0.2)] focus:border-[rgba(92,143,214,0.4)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-3 py-2 font-mono text-[11px] font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors hover:border-[rgba(202,161,92,0.2)] focus:border-[rgba(92,143,214,0.4)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <button
                     onClick={handleEpisodeJump}

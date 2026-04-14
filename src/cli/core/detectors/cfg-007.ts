@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 /**
  * CFG-007: 순환 의존성 (Circular dependency)

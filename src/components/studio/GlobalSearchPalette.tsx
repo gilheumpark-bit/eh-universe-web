@@ -133,7 +133,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh]" onClick={onClose}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh]" role="presentation" onClick={onClose}>
       <div
         className="w-full max-w-lg bg-bg-secondary border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
@@ -154,7 +154,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
               ja: 'キャラクター、エピソード、世界観を検索... (Ctrl+K)',
               zh: '搜索角色、章节、世界观... (Ctrl+K)',
             })}
-            className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary text-ellipsis overflow-hidden"
+            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder-text-tertiary text-ellipsis overflow-hidden"
           />
           <button onClick={onClose} className="text-text-tertiary hover:text-text-primary">
             <X className="w-4 h-4" />

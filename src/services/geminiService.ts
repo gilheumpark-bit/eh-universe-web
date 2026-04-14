@@ -12,7 +12,7 @@ import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message 
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
-import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasStoredApiKey, hasDgxService, ChatMsg } from "../lib/ai-providers";
+import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasDgxService, ChatMsg } from "../lib/ai-providers";
 
 /** 동기 getApiKey가 빈 문자열이면 비동기로 재시도 */
 async function getApiKeyFallback(providerId: 'gemini'): Promise<string> {

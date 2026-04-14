@@ -96,7 +96,7 @@ const LABELS: Record<AppLanguage, {
 // ============================================================
 
 function markOnboardingDone() {
-  localStorage.setItem("noa_onboarding_done", "1");
+  try { localStorage.setItem("noa_onboarding_done", "1"); } catch { /* quota/private */ }
 }
 
 export default function OnboardingGuide({

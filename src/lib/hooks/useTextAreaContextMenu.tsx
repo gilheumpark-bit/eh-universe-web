@@ -8,11 +8,11 @@ export type TextAreaContextAction = "cut" | "copy" | "paste" | "select-all";
 
 function buildTextAreaContextMenu(lang: string): ContextMenuItem[] {
   return [
-    { id: "cut", label: L4(lang, { ko: "잘라내기", en: "Cut" }), icon: <Scissors size={12} />, shortcut: "Ctrl+X" },
-    { id: "copy", label: L4(lang, { ko: "복사", en: "Copy" }), icon: <Copy size={12} />, shortcut: "Ctrl+C" },
-    { id: "paste", label: L4(lang, { ko: "붙여넣기", en: "Paste" }), icon: <ClipboardPaste size={12} />, shortcut: "Ctrl+V" },
+    { id: "cut", label: L4(lang, { ko: "잘라내기", en: "Cut", ja: "Cut", zh: "Cut" }), icon: <Scissors size={12} />, shortcut: "Ctrl+X" },
+    { id: "copy", label: L4(lang, { ko: "복사", en: "Copy", ja: "コピー", zh: "复制" }), icon: <Copy size={12} />, shortcut: "Ctrl+C" },
+    { id: "paste", label: L4(lang, { ko: "붙여넣기", en: "Paste", ja: "Paste", zh: "Paste" }), icon: <ClipboardPaste size={12} />, shortcut: "Ctrl+V" },
     { id: "sep-1", label: "", separator: true },
-    { id: "select-all", label: L4(lang, { ko: "모두 선택", en: "Select All" }), icon: <TextSelect size={12} />, shortcut: "Ctrl+A" },
+    { id: "select-all", label: L4(lang, { ko: "모두 선택", en: "Select All", ja: "모두 選択", zh: "모두 选择" }), icon: <TextSelect size={12} />, shortcut: "Ctrl+A" },
   ];
 }
 

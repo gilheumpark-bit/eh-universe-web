@@ -126,7 +126,7 @@ function FullPageFallback({ error, onRetry }: { error: Error; onRetry: () => voi
           zh: '发生了意外错误。请点击下方按钮重试，如果问题持续存在，请刷新页面。',
         })}
       </p>
-      <pre className="text-gray-300 text-xs bg-black/50 rounded-lg px-4 py-2 max-w-full overflow-auto whitespace-pre-wrap break-all border border-red-500/20">
+      <pre className="text-text-tertiary text-xs bg-black/50 rounded-lg px-4 py-2 max-w-full overflow-auto whitespace-pre-wrap break-all border border-red-500/20">
         {error.message}
       </pre>
       <div className="flex items-center gap-3">

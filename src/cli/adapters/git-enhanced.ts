@@ -101,7 +101,7 @@ export function resolveConflictRule(
 
 export async function resolveConflictWithAI(
   conflict: ConflictInfo['conflicts'][0],
-  context: string,
+  _context: string,
 ): Promise<string> {
   try {
     // CLI 환경에서 AI provider 동적 로드

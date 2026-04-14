@@ -291,7 +291,7 @@ function GraphSearchBar({ value, onChange, onClear, isKO }: {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={isKO ? '캐릭터 검색...' : 'Search characters...'}
-        className="w-full pl-8 pr-8 py-1.5 text-xs bg-bg-secondary/50 border border-border/50 rounded-lg text-white placeholder:text-text-tertiary focus:outline-none focus:border-white/30 transition-colors"
+        className="w-full pl-8 pr-8 py-1.5 text-xs bg-bg-secondary/50 border border-border/50 rounded-lg text-white placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-white/30 transition-colors"
       />
       {value && (
         <button

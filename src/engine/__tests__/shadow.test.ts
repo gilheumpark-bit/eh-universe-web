@@ -8,10 +8,10 @@ import {
   buildShadowPrompt,
 } from '../shadow';
 import type {
-  ShadowState,
+  
   CharacterShadow,
   NarrativeThread,
-  ArcPhase,
+  ArcPhase as _ArcPhase,
 } from '../shadow';
 
 // ============================================================

@@ -54,7 +54,7 @@ export interface StyleProfile {
 const IGNORE_DIRS = new Set(['node_modules', '.next', '.git', 'dist', 'build', '.cs']);
 
 export function scanProjectStyle(rootPath: string): StyleProfile {
-  let camelCount = 0, pascalCount = 0, snakeCount = 0, kebabCount = 0;
+  let camelCount = 0, pascalCount = 0, snakeCount = 0; const kebabCount = 0;
   let semiCount = 0, noSemiCount = 0;
   let singleQuoteCount = 0, doubleQuoteCount = 0;
   let totalLineLength = 0, lineCount = 0;

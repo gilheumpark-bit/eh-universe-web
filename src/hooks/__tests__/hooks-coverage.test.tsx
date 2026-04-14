@@ -333,7 +333,7 @@ describe('useCodeStudioFileSystem', () => {
 // PART 4 — useCodeStudioKeyboard (3 tests)
 // ============================================================
 
-import { useCodeStudioKeyboard, type ShortcutBinding } from '../useCodeStudioKeyboard';
+import { useCodeStudioKeyboard } from '../useCodeStudioKeyboard';
 
 describe('useCodeStudioKeyboard', () => {
   it('registers a binding and returns it via getBindings', () => {
@@ -354,7 +354,7 @@ describe('useCodeStudioKeyboard', () => {
 
   it('handler is invoked on matching keydown event', () => {
     const handler = jest.fn();
-    const { result } = renderHook(() =>
+    const { result: _result } = renderHook(() =>
       useCodeStudioKeyboard({
         bindings: [{ keys: 'ctrl+k', handler, description: 'test' }],
       }),
@@ -394,7 +394,7 @@ describe('useCodeStudioKeyboard', () => {
 // the project (e.g. noa_temperature in useStudioAI).
 // ============================================================
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useLocalStorage(key: string, initialValue: any) {

@@ -7,11 +7,11 @@
 import type { PipelineResult, PipelineStage } from '@/lib/code-studio/pipeline/pipeline';
 import type { BugReport } from '@/lib/code-studio/pipeline/bugfinder';
 import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
-import type { Finding } from '@/lib/code-studio/pipeline/pipeline-teams';
+
 import {
   runVerificationLoop,
-  type VerificationConfig,
-  type VerificationResult,
+  
+  
 } from '@/lib/code-studio/pipeline/verification-loop';
 import {
   canTransition,
@@ -44,19 +44,19 @@ jest.mock('@/lib/code-studio/features/patent-scanner', () => ({
   scanProject: jest.fn(),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { runStaticPipeline } = require('@/lib/code-studio/pipeline/pipeline') as {
   runStaticPipeline: jest.Mock;
 };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { findBugsStatic } = require('@/lib/code-studio/pipeline/bugfinder') as {
   findBugsStatic: jest.Mock;
 };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { generateFixes } = require('@/lib/code-studio/pipeline/pipeline-utils') as {
   generateFixes: jest.Mock;
 };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { scanProject } = require('@/lib/code-studio/features/patent-scanner') as {
   scanProject: jest.Mock;
 };
@@ -148,7 +148,7 @@ describe('Verification Integration', () => {
 
     test('failing code with fixable issues improves across rounds', async () => {
       const codeV1 = 'import { foo } from "bar";\nconst x = 1;\n';
-      const codeV2 = 'const x = 1;\n';
+      const _codeV2 = 'const x = 1;\n';
 
       // Round 1: score 60, one finding with fix
       runStaticPipeline

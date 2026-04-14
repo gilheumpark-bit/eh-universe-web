@@ -176,7 +176,7 @@ export async function orchestrateVerify(
   const falsePositivesRemoved = dismissedIds.size;
 
   // 팀별로 오탐 제거된 findings 재구성
-  const refinedTeams = staticResult.teams.map((team, teamIdx) => {
+  const refinedTeams = staticResult.teams.map((team, _teamIdx) => {
     const teamFindings = team.findings
       .map((f, fIdx) => {
         const id = `static-${team.name}-${fIdx}`;

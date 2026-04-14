@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind, Node, Block } from 'ts-morph';
+import { Node, Block } from 'ts-morph';
 
 /**
  * AIP-009: Copy-paste coupling

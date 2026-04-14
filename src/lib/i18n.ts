@@ -26,11 +26,10 @@ export function createT(language: AppLanguage) {
 
   return function t(key: string, fallback?: string): string {
     const parts = key.split('.');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cur: any = dict;
+    let cur: unknown = dict;
     for (const p of parts) {
       if (cur == null || typeof cur !== 'object') return fallback ?? key;
-      cur = cur[p];
+      cur = (cur as Record<string, unknown>)[p];
     }
     return typeof cur === 'string' ? cur : (fallback ?? key);
   };

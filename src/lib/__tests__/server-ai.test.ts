@@ -4,7 +4,7 @@
  *         getHostedProviderAvailability, getFirstHostedProvider
  */
 
-/* eslint-disable @typescript-eslint/no-require-imports -- require() after jest.resetModules() reloads server-ai with fresh process.env */
+ 
 
 // ============================================================
 // PART 1 — isServerProviderId (pure type guard, no env dependency)

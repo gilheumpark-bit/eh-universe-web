@@ -39,7 +39,7 @@ export const stl005Detector: RuleDetector = {
     }
 
     const hasCamel = names.some(n => /^[a-z]/.test(n));
-    const hasPascal = names.some(n => /^[A-Z]/.test(n));
+    const _hasPascal = names.some(n => /^[A-Z]/.test(n));
     const hasSnake = names.some(n => n.includes('_') && n === n.toLowerCase());
 
     if (hasCamel && hasSnake) {

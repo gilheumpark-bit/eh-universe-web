@@ -7,7 +7,7 @@
 
 const { execSync } = require('child_process');
 const { readdirSync, readFileSync, statSync } = require('fs');
-const { join, relative, extname } = require('path');
+const { join, relative, _extname } = require('path');
 
 // ============================================================
 // PART 1 — Ripgrep Integration (코드 내용 검색)
@@ -133,7 +133,7 @@ function rankSearchResults(results: SearchResult[], query: string): SearchResult
   return results.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
 }
 
-function grepFallback(query: string, rootPath: string, maxResults: number): SearchResult[] {
+function grepFallback(query: string, rootPath: string, _maxResults: number): SearchResult[] {
   try {
     const output = execSync(
       `grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" "${query.replace(/"/g, '\\"')}" "${rootPath}"`,

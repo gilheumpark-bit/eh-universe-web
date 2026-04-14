@@ -47,7 +47,7 @@ const ContinuityWarnings: React.FC<ContinuityWarningsProps> = ({ warnings, langu
     <div className="flex items-center gap-2 px-4 py-2.5 border border-accent-green/20 rounded-xl bg-accent-green/5">
       <CheckCircle2 className="w-3.5 h-3.5 text-accent-green shrink-0" />
       <span className="text-[10px] text-accent-green">
-        {L4(language as AppLanguage, { ko: '연속성 문제가 발견되지 않았습니다', en: 'No continuity issues found' })}
+        {L4(language as AppLanguage, { ko: '연속성 문제가 발견되지 않았습니다', en: 'No continuity issues found', ja: '連続性の問題は見つかりませんでした', zh: '未发现连续性问题' })}
       </span>
     </div>
   );

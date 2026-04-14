@@ -8,11 +8,11 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  Files, Plus, FileText, FolderOpen, Folder,
-  Edit3, Trash2, Home, Loader2,
+  Files, Plus,
+  Home, Loader2,
 } from "lucide-react";
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
-import { DEFAULT_SETTINGS, detectLanguage, fileIconColor } from "@/lib/code-studio/core/types";
+import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio/core/types";
 import { saveSettings, loadSettings, listProjects, switchProject } from "@/lib/code-studio/core/store";
 import { runStaticPipeline } from "@/lib/code-studio/pipeline/pipeline";
 import { findBugsStatic, type BugReport } from "@/lib/code-studio/pipeline/bugfinder";
@@ -44,6 +44,7 @@ import type * as MonacoNS from "monaco-editor";
 // Extracted components
 import { CodeStudioEditor } from "@/components/code-studio/CodeStudioEditor";
 import { ActivityBar, RightPanelContent, BottomPanels, type PipelineStage } from "@/components/code-studio/CodeStudioPanelManager";
+import { FileTreeItem } from "@/components/code-studio/FileTreeItem";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 const CommandPalette = dynamic(() => import("@/components/code-studio/CommandPalette"), { ssr: false });
@@ -116,64 +117,7 @@ function findFileNodeByName(nodes: FileNode[], name: string): FileNode | null {
   return null;
 }
 
-function FileTreeItem({
-  node, depth, activeFileId, onSelect, onDelete, onRename,
-}: {
-  node: FileNode; depth: number; activeFileId: string | null;
-  onSelect: (node: FileNode) => void;
-  onDelete: (id: string) => void;
-  onRename: (id: string, name: string) => void;
-}) {
-  const [open, setOpen] = useState(depth < 2);
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(node.name);
-  const isFolder = node.type === "folder";
-  const isActive = node.id === activeFileId;
-
-  return (
-    <div>
-      <div
-        className={`group flex w-full items-center gap-1.5 px-2 py-1 text-[12px] transition-colors hover:bg-white/6 ${
-          isActive ? "bg-accent-green/10 text-accent-green" : "text-text-secondary"
-        }`}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
-      >
-        <button
-          onClick={() => { if (isFolder) setOpen(!open); else onSelect(node); }}
-          className="flex flex-1 items-center gap-1.5 text-left min-w-0"
-        >
-          {isFolder ? (
-            open ? <FolderOpen className="h-3.5 w-3.5 shrink-0 text-accent-amber" /> : <Folder className="h-3.5 w-3.5 shrink-0 text-accent-amber" />
-          ) : (
-            <FileText className={`h-3.5 w-3.5 shrink-0 ${fileIconColor(node.name)}`} />
-          )}
-          {editing ? (
-            <input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              onBlur={() => { setEditing(false); if (editName.trim()) onRename(node.id, editName.trim()); }}
-              onKeyDown={(e) => { if (e.key === "Enter") { setEditing(false); if (editName.trim()) onRename(node.id, editName.trim()); } }}
-              className="w-full bg-transparent text-[12px] font-mono outline-none border-b border-accent-green"
-              autoFocus
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <span className="truncate font-mono">{node.name}</span>
-          )}
-        </button>
-        {!isFolder && node.id !== "root" && (
-          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
-            <button onClick={() => { setEditing(true); setEditName(node.name); }} className="rounded p-0.5 hover:bg-white/10"><Edit3 className="h-2.5 w-2.5" /></button>
-            <button onClick={() => onDelete(node.id)} aria-label="삭제" className="rounded p-0.5 hover:bg-white/10 text-accent-red"><Trash2 className="h-2.5 w-2.5" /></button>
-          </div>
-        )}
-      </div>
-      {isFolder && open && node.children?.map((child) => (
-        <FileTreeItem key={child.id} node={child} depth={depth + 1} activeFileId={activeFileId} onSelect={onSelect} onDelete={onDelete} onRename={onRename} />
-      ))}
-    </div>
-  );
-}
+// FileTreeItem is now imported from ./FileTreeItem
 
 // IDENTITY_SEAL: PART-2 | role=DemoFiles+FileTree | inputs=none | outputs=DEMO_FILES,FileTreeItem
 
@@ -407,8 +351,8 @@ function CodeStudioShellInner() {
           const af = openFiles.find((f) => f.id === activeFileId);
           if (af?.isDirty) {
             setConfirmState({
-              title: L4(lang, { ko: "저장하지 않은 변경사항", en: "Unsaved Changes" }),
-              message: L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?" }),
+              title: L4(lang, { ko: "저장하지 않은 변경사항", en: "Unsaved Changes", ja: "未保存の変更", zh: "未保存的更改"}),
+              message: L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다. 닫으시겠습니까?", en: "Unsaved changes will be lost. Close anyway?", ja: "未保存の変更が失われます。閉じますか？", zh: "未保存的更改将丢失。确定关闭吗？"}),
               onConfirm: () => {
                 setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== activeFileId); setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; });
                 setConfirmState(null);
@@ -525,12 +469,10 @@ function CodeStudioShellInner() {
       fit.fit();
       const bannerTitle = L4(lang, {
         ko: "== EH Code Studio 콘솔 v1.0 (브라우저 내장) ==",
-        en: "== EH Code Studio Console v1.0 (in-browser) ==",
-      });
+        en: "== EH Code Studio Console v1.0 (in-browser) ==", ja: "== EH Code Studio コンソール v1.0 (ブラウザ内蔵) ==", zh: "== EH Code Studio 控制台 v1.0 (浏览器内置) =="});
       const bannerHint = L4(lang, {
         ko: "  \x1b[36mhelp\x1b[0m 입력으로 명령 목록",
-        en: "  Type \x1b[36mhelp\x1b[0m for commands",
-      });
+        en: "  Type \x1b[36mhelp\x1b[0m for commands", ja: "  \x1b[36mhelp\x1b[0m でコマンド一覧", zh: "  输入 \x1b[36mhelp\x1b[0m 查看命令列表"});
       term.writeln("\x1b[32m" + bannerTitle + "\x1b[0m");
       term.writeln(bannerHint);
       term.write("\x1b[32m$ \x1b[0m");
@@ -580,7 +522,7 @@ function CodeStudioShellInner() {
 
   const handleCloseTab = useCallback((id: string) => {
     const file = openFiles.find((f) => f.id === id);
-    if (file?.isDirty) { setConfirmState({ title: L4(lang, { ko: "저장하지 않은 변경사항", en: "Unsaved Changes" }), message: L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다.", en: "Unsaved changes will be lost. Close anyway?" }), onConfirm: () => { setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== id); if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; }); setConfirmState(null); } }); return; }
+    if (file?.isDirty) { setConfirmState({ title: L4(lang, { ko: "저장하지 않은 변경사항", en: "Unsaved Changes", ja: "未保存の変更", zh: "未保存的更改"}), message: L4(lang, { ko: "저장하지 않은 변경사항이 손실됩니다.", en: "Unsaved changes will be lost. Close anyway?", ja: "未保存の変更が失われます。", zh: "未保存的更改将丢失。"}), onConfirm: () => { setOpenFiles((prev) => { const next = prev.filter((f) => f.id !== id); if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null); return next; }); setConfirmState(null); } }); return; }
     setOpenFiles((prev) => {
       const next = prev.filter((f) => f.id !== id);
       if (activeFileId === id) setActiveFileId(next.length > 0 ? next[next.length - 1].id : null);
@@ -616,8 +558,8 @@ function CodeStudioShellInner() {
     const node = files.flatMap(function walk(n: FileNode): FileNode[] { return [n, ...(n.children ?? []).flatMap(walk)]; }).find(n => n.id === id);
     const name = node?.name ?? id;
     setConfirmState({
-      title: L4(lang, { ko: "파일 삭제", en: "Delete File" }),
-      message: L4(lang, { ko: `"${name}"을(를) 삭제하시겠습니까? 되돌릴 수 없습니다.`, en: `Delete "${name}"? This cannot be undone.` }),
+      title: L4(lang, { ko: "파일 삭제", en: "Delete File", ja: "ファイル削除", zh: "删除文件"}),
+      message: L4(lang, { ko: `"${name}"을(를) 삭제하시겠습니까? 되돌릴 수 없습니다.`, en: `Delete "${name}"? This cannot be undone.`, ja: `"${name}"を削除しますか？元に戻せません。`, zh: `"${name}"确定删除吗？此操作无法撤销。`}),
       onConfirm: () => {
         fsDeleteNode(id);
         setOpenFiles((prev) => prev.filter((f) => f.id !== id));
@@ -672,9 +614,9 @@ function CodeStudioShellInner() {
   }, [setFiles, toast, tcs.demoLoaded]);
 
   const handleBlankProject = useCallback(() => {
-    const projectName = L4(lang, { ko: "프로젝트", en: "project" });
-    const newProjectStr = L4(lang, { ko: "새 프로젝트", en: "New Project" });
-    const describeStr = L4(lang, { ko: "프로젝트 설명을 작성하세요.", en: "Describe your project here." });
+    const projectName = L4(lang, { ko: "프로젝트", en: "project", ja: "プロジェクト", zh: "项目"});
+    const newProjectStr = L4(lang, { ko: "새 프로젝트", en: "New Project", ja: "新規プロジェクト", zh: "新建项目"});
+    const describeStr = L4(lang, { ko: "프로젝트 설명을 작성하세요.", en: "Describe your project here.", ja: "プロジェクトの説明を入力してください。", zh: "请输入项目描述。"});
     const mdContent = `# ${newProjectStr}\n\n${describeStr}\n`;
     
     const blankFiles: FileNode[] = [{ id: "root", name: projectName, type: "folder", children: [{ id: "readme", name: "README.md", type: "file", content: mdContent }] }];
@@ -696,7 +638,7 @@ function CodeStudioShellInner() {
         const firstFile = tree.flatMap(function findFiles(n: FileNode): FileNode[] { return n.type === "file" ? [n] : (n.children ?? []).flatMap(findFiles); })[0];
         if (firstFile) { setOpenFiles([{ id: firstFile.id, name: firstFile.name, content: firstFile.content ?? "", language: detectLanguage(firstFile.name) }]); setActiveFileId(firstFile.id); }
         setHasEverOpened(true);
-        toast(L4(lang, { ko: "프로젝트 복원됨", en: "Project resumed" }), "success");
+        toast(L4(lang, { ko: "프로젝트 복원됨", en: "Project resumed", ja: "プロジェクト復元完了", zh: "项目已恢复"}), "success");
       } else { handleOpenDemo(); }
     } catch { handleOpenDemo(); }
   }, [handleOpenDemo, lang, setFiles, toast]);
@@ -754,12 +696,12 @@ function CodeStudioShellInner() {
       setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: code, isDirty: true } : f));
     }
     setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
-    toast(L4(lang, { ko: `${fileName}의 변경사항을 승인했습니다`, en: `Approved fixes for ${fileName}` }), "success");
+    toast(L4(lang, { ko: `${fileName}의 변경사항을 승인했습니다`, en: `Approved fixes for ${fileName}`, ja: `${fileName}の変更を承認しました`, zh: `${fileName}的变更已批准`}), "success");
   }, [stagedFiles, openFiles, files, fsUpdateContent, toast, lang]);
 
   const handleRejectFile = useCallback((fileName: string) => {
     setStagedFiles(prev => { const next = { ...prev }; delete next[fileName]; return next; });
-    toast(L4(lang, { ko: `${fileName}의 변경사항을 거절했습니다`, en: `Rejected fixes for ${fileName}` }), "info");
+    toast(L4(lang, { ko: `${fileName}의 변경사항을 거절했습니다`, en: `Rejected fixes for ${fileName}`, ja: `${fileName}の変更を拒否しました`, zh: `${fileName}的变更已拒绝`}), "info");
   }, [lang, toast]);
 
   const handleRollback = useCallback((fileName: string) => {
@@ -771,7 +713,7 @@ function CodeStudioShellInner() {
       fsUpdateContent(targetFileId, snapshot);
       setOpenFiles((prev) => prev.map((f) => f.id === targetFileId ? { ...f, content: snapshot, isDirty: true } : f));
       setPreApplySnapshot(prev => { const next = { ...prev }; delete next[fileName]; return next; });
-      toast(L4(lang, { ko: `${fileName}을(를) 검증 이전 상태로 되돌렸습니다`, en: `Rolled back ${fileName} to pre-verification state` }), "info");
+      toast(L4(lang, { ko: `${fileName}을(를) 검증 이전 상태로 되돌렸습니다`, en: `Rolled back ${fileName} to pre-verification state`, ja: `${fileName}を検証前の状態にロールバックしました`, zh: `${fileName}已回滚到验证前状态`}), "info");
     }
   }, [preApplySnapshot, openFiles, files, fsUpdateContent, lang, toast]);
 
@@ -786,7 +728,7 @@ function CodeStudioShellInner() {
       <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2">
         <Link href="/" className="rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-accent-amber transition-colors" title="Home"><Home className="h-3.5 w-3.5" /></Link>
         <Files className="h-4 w-4 text-accent-green" />
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{L4(lang, { ko: "탐색기", en: "Explorer" })}</span>
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{L4(lang, { ko: "탐색기", en: "Explorer", ja: "エクスプローラー", zh: "资源管理器"})}</span>
         <button onClick={() => setShowNewFile(!showNewFile)} className="ml-auto rounded p-1 text-text-tertiary hover:bg-white/8 hover:text-text-primary" title="New File"><Plus className="h-3.5 w-3.5" /></button>
       </div>
       {showNewFile && (
@@ -794,7 +736,7 @@ function CodeStudioShellInner() {
           <input value={newFileName} onChange={(e) => setNewFileName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleNewFile(); if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); } }}
             placeholder="filename.ts"
-            className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-mono text-[11px] text-text-primary outline-none focus:border-accent-green"
+            className="w-full rounded border border-accent-green/30 bg-black/30 px-2 py-1 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-green"
             autoFocus
           />
         </div>
@@ -983,7 +925,7 @@ function CodeStudioShellInner() {
           onToggleMinimap={() => setSettings(s => ({ ...s, minimap: !s.minimap }))}
           onToggleWordWrap={() => setSettings(s => ({ ...s, wordWrap: s.wordWrap === "on" ? "off" : "on" }))}
           onSaveToast={() => toast(tcs.savedLocally, "success")}
-          onSettingsSaved={() => toast(L4(lang, { ko: "설정 저장됨", en: "Settings saved" }), "success")}
+          onSettingsSaved={() => toast(L4(lang, { ko: "설정 저장됨", en: "Settings saved", ja: "設定保存完了", zh: "设置已保存"}), "success")}
           fsUpdateContent={fsUpdateContent}
           tcs={tcs}
         >
@@ -1022,8 +964,8 @@ function CodeStudioShellInner() {
         {/* Rollback Banner */}
         {Object.keys(preApplySnapshot).length > 0 && Object.keys(stagedFiles).length === 0 && (
           <div className="border-t border-accent-purple/30 bg-accent-purple/5 px-4 py-2 flex items-center justify-between animate-[fadeSlideDown_0.2s_ease-out]">
-            <span className="font-mono text-[11px] text-accent-purple">{L4(lang, { ko: "검증 수정 사항 적용됨 — 롤백 가능", en: "Verification fixes applied — Rollback available" })}</span>
-            <button onClick={() => { Object.keys(preApplySnapshot).forEach(f => handleRollback(f)); }} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">{L4(lang, { ko: "모두 롤백", en: "Rollback All" })}</button>
+            <span className="font-mono text-[11px] text-accent-purple">{L4(lang, { ko: "검증 수정 사항 적용됨 — 롤백 가능", en: "Verification fixes applied — Rollback available", ja: "検証修正適用済み — ロールバック可能", zh: "验证修复已应用 - 可回滚"})}</span>
+            <button onClick={() => { Object.keys(preApplySnapshot).forEach(f => handleRollback(f)); }} className="rounded border border-accent-purple/30 bg-accent-purple/10 px-3 py-1 text-[11px] text-accent-purple hover:bg-accent-purple/20">{L4(lang, { ko: "모두 롤백", en: "Rollback All", ja: "すべてロールバック", zh: "全部回滚"})}</button>
           </div>
         )}
 
@@ -1045,10 +987,10 @@ function CodeStudioShellInner() {
         {showCommandPalette && (
           <CommandPalette
             open={showCommandPalette}
-            searchPlaceholder={L4(lang, { ko: "명령어 검색…", en: "Search commands…" })}
-            noResultsText={L4(lang, { ko: "일치하는 명령이 없습니다", en: "No matching commands" })}
-            formatFoundCount={(n) => L4(lang, { ko: `${n}개`, en: `${n} found` })}
-            ariaLabel={L4(lang, { ko: "명령 팔레트", en: "Command palette" })}
+            searchPlaceholder={L4(lang, { ko: "명령어 검색…", en: "Search commands…", ja: "コマンド検索…", zh: "搜索命令…"})}
+            noResultsText={L4(lang, { ko: "일치하는 명령이 없습니다", en: "No matching commands", ja: "一致するコマンドがありません", zh: "没有匹配的命令"})}
+            formatFoundCount={(n) => L4(lang, { ko: `${n}개`, en: `${n} found`, ja: `${n}件`, zh: `${n}个`})}
+            ariaLabel={L4(lang, { ko: "명령 팔레트", en: "Command palette", ja: "コマンドパレット", zh: "命令面板"})}
             onClose={() => setShowCommandPalette(false)}
             onExecute={(cmdId) => {
               setShowCommandPalette(false);
@@ -1062,17 +1004,17 @@ function CodeStudioShellInner() {
               if (PANEL_REGISTRY.some((p) => p.id === panelId)) { setRightPanel((v) => v === panelId ? null : panelId as RightPanel); }
             }}
             commands={[
-              { id: "new-file", label: L4(lang, { ko: "새 파일", en: "New File" }), shortcut: "Ctrl+N", category: "File" },
-              { id: "toggle-terminal", label: L4(lang, { ko: "콘솔 토글", en: "Toggle Console" }), shortcut: "Ctrl+`", category: "View" },
+              { id: "new-file", label: L4(lang, { ko: "새 파일", en: "New File", ja: "新規ファイル", zh: "新建文件"}), shortcut: "Ctrl+N", category: "File" },
+              { id: "toggle-terminal", label: L4(lang, { ko: "콘솔 토글", en: "Toggle Console", ja: "コンソール切替", zh: "切换控制台"}), shortcut: "Ctrl+`", category: "View" },
               ...Object.entries(
                 PANEL_REGISTRY.reduce<Record<string, readonly PanelDef[]>>((acc, p) => { const g = p.group; return { ...acc, [g]: [...(acc[g] ?? []), p] }; }, {})
               ).flatMap(([group, panels]) =>
                 panels.map((p) => ({ id: `toggle-${p.id}`, label: `${getPanelLabel(p, lang)}${p.status === 'stub' ? ' (Preview)' : p.status === 'beta' ? ' (Beta)' : ''}`, shortcut: p.shortcut, category: getGroupLabel(group as PanelGroup, lang) }))
               ),
-              { id: "quick-open", label: L4(lang, { ko: "빠른 파일 열기", en: "Quick Open File" }), shortcut: "Ctrl+P", category: "File" },
-              { id: "toggle-settings", label: L4(lang, { ko: "인라인 설정 토글", en: "Toggle Inline Settings" }), category: "View" },
-              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (NOA-Predicted)" }), category: "Tools" },
-              { id: "run-verification", label: L4(lang, { ko: "통합 검증 실행", en: "Run Full Verification (Pipeline + Bugs + Stress)" }), category: "Tools" },
+              { id: "quick-open", label: L4(lang, { ko: "빠른 파일 열기", en: "Quick Open File", ja: "クイックファイルオープン", zh: "快速打开文件"}), shortcut: "Ctrl+P", category: "File" },
+              { id: "toggle-settings", label: L4(lang, { ko: "인라인 설정 토글", en: "Toggle Inline Settings", ja: "インライン設定切替", zh: "切换内联设置"}), category: "View" },
+              { id: "run-stress-test", label: L4(lang, { ko: "스트레스 테스트 실행", en: "Run Stress Test (NOA-Predicted)", ja: "ストレステスト実行", zh: "运行压力测试"}), category: "Tools" },
+              { id: "run-verification", label: L4(lang, { ko: "통합 검증 실행", en: "Run Full Verification (Pipeline + Bugs + Stress)", ja: "統合検証実行", zh: "运行综合验证"}), category: "Tools" },
             ]}
           />
         )}

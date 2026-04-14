@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang } from "@/lib/LangContext";
 import { logger } from "@/lib/logger";
-import { netT } from "@/lib/network-translations";
+
 import { L4 } from "@/lib/i18n";
 import { BookmarkButton } from "@/components/network/BookmarkButton";
 import { CommentSection } from "@/components/network/CommentSection";
@@ -59,7 +59,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
 
         const planetRecord = await getPlanetById(planetId);
         if (!planetRecord) {
-          throw new Error(L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found." }));
+          throw new Error(L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found.", ja: "惑星을 찾을 수 없습니다.", zh: "星球을 찾을 수 없습니다." }));
         }
 
         const [postRecords, settlementRecords, nextOwner, nextViewer] = await Promise.all([
@@ -127,13 +127,13 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
         id: post.id,
         label: post.title,
         date: post.createdAt,
-        kind: L4(lang, { ko: "로그", en: "Log" }),
+        kind: L4(lang, { ko: "로그", en: "Log", ja: "ログ", zh: "日志" }),
       })),
       ...settlements.map((settlement) => ({
         id: settlement.id,
         label: settlement.action ?? settlement.verdict,
         date: settlement.createdAt,
-        kind: L4(lang, { ko: "정산", en: "Settlement" }),
+        kind: L4(lang, { ko: "정산", en: "Settlement", ja: "Settlement", zh: "Settlement" }),
       })),
     ];
 
@@ -206,12 +206,12 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
             <>
               {canWriteLog ? (
                 <Link href={`/network/logs/new?planetId=${planet.id}`} className="premium-button">
-                  {L4(lang, { ko: "새 로그 작성", en: "Write New Log" })}
+                  {L4(lang, { ko: "새 로그 작성", en: "Write New Log", ja: "새 ログ 作成", zh: "새 日志 撰写" })}
                 </Link>
               ) : null}
               {isManager ? (
                 <Link href="/network/admin/settlements" className="premium-button secondary">
-                  {L4(lang, { ko: "정산 워크벤치", en: "Settlement Workbench" })}
+                  {L4(lang, { ko: "정산 워크벤치", en: "Settlement Workbench", ja: "Settlement Workbench", zh: "Settlement Workbench" })}
                 </Link>
               ) : null}
               <button
@@ -229,7 +229,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                 }}
                 className="premium-button secondary"
               >
-                {L4(lang, { ko: "이 세계관으로 집필 시작", en: "Start Writing with this World" })}
+                {L4(lang, { ko: "이 세계관으로 집필 시작", en: "Start Writing with this World", ja: "이 世界観으로 執筆 시작", zh: "이 世界观으로 写作 시작" })}
               </button>
               <BookmarkButton planetId={planet.id} />
               <ReportButton targetType="planet" targetId={planet.id} />
@@ -254,10 +254,10 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
           <section className="space-y-4">
             <div className="flex flex-wrap gap-3">
               {([
-                ["logs", L4(lang, { ko: "최근 관측 로그", en: "Logs" })],
-                ["if", L4(lang, { ko: "IF / 분기 루트", en: "IF / Side Route" })],
-                ["settlements", L4(lang, { ko: "정산 기록", en: "Settlements" })],
-                ["feedback", L4(lang, { ko: "피드백", en: "Feedback" })],
+                ["logs", L4(lang, { ko: "최근 관측 로그", en: "Logs", ja: "최근 観測 ログ", zh: "최근 观测 日志" })],
+                ["if", L4(lang, { ko: "IF / 분기 루트", en: "IF / Side Route", ja: "IF / Side Route", zh: "IF / Side Route" })],
+                ["settlements", L4(lang, { ko: "정산 기록", en: "Settlements", ja: "Settlements", zh: "Settlements" })],
+                ["feedback", L4(lang, { ko: "피드백", en: "Feedback", ja: "Feedback", zh: "Feedback" })],
               ] as [DetailTab, string][]).map(([key, label]) => (
                 <button
                   key={key}
@@ -278,18 +278,18 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
               <div className="space-y-4">
                 {settlements.length === 0 ? (
                   <div className="premium-panel-soft p-6 text-sm text-text-secondary">
-                    {L4(lang, { ko: "아직 정산 기록이 없습니다.", en: "No settlements have been posted yet." })}
+                    {L4(lang, { ko: "아직 정산 기록이 없습니다.", en: "No settlements have been posted yet.", ja: "No settlements have been posted yet.", zh: "No settlements have been posted yet." })}
                   </div>
                 ) : (
                   settlements.map((settlement) => (
                     <article key={settlement.id} className="premium-panel-soft p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="site-kicker">{settlement.archiveLevel ?? L4(lang, { ko: "보관 등급 없음", en: "No archive level" })}</div>
+                        <div className="site-kicker">{settlement.archiveLevel ?? L4(lang, { ko: "보관 등급 없음", en: "No archive level", ja: "アーカイブ 등급 なし", zh: "归档 등급 无" })}</div>
                         <SettlementBadge status={settlement.verdict} lang={lang} />
                       </div>
                       <div className="mt-4 grid gap-3 text-sm text-text-secondary md:grid-cols-3">
-                        <div>{L4(lang, { ko: `EH 수치 ${settlement.ehValue ?? "-"}`, en: `EH ${settlement.ehValue ?? "-"}` })}</div>
-                        <div>{L4(lang, { ko: `위험도 ${settlement.risk ?? "-"}`, en: `Risk ${settlement.risk ?? "-"}` })}</div>
+                        <div>{L4(lang, { ko: `EH 수치 ${settlement.ehValue ?? "-"}`, en: `EH ${settlement.ehValue ?? "-"}`, ja: `EH ${settlement.ehValue ?? "-"}`, zh: `EH ${settlement.ehValue ?? "-"}` })}</div>
+                        <div>{L4(lang, { ko: `위험도 ${settlement.risk ?? "-"}`, en: `Risk ${settlement.risk ?? "-"}`, ja: `Risk ${settlement.risk ?? "-"}`, zh: `Risk ${settlement.risk ?? "-"}` })}</div>
                         <div>{new Date(settlement.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }))}</div>
                       </div>
                       {settlement.action ? <p className="mt-4 text-sm text-text-primary">{settlement.action}</p> : null}
@@ -302,8 +302,8 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                 {filteredPosts.length === 0 ? (
                   <div className="premium-panel-soft p-6 text-sm text-text-secondary">
                     {tab === "logs"
-                      ? L4(lang, { ko: "관측 로그가 아직 없습니다.", en: "There are no logs yet." })
-                      : L4(lang, { ko: "아직 문서가 없습니다.", en: "No records yet." })}
+                      ? L4(lang, { ko: "관측 로그가 아직 없습니다.", en: "There are no logs yet.", ja: "観測 ログ가 아직 없습니다.", zh: "观测 日志가 아직 없습니다." })
+                      : L4(lang, { ko: "아직 문서가 없습니다.", en: "No records yet.", ja: "No records yet.", zh: "No records yet." })}
                   </div>
                 ) : (
                   filteredPosts.map((post) => (
@@ -314,7 +314,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                       </div>
                       <h2 className="text-lg font-semibold text-text-primary">{post.title}</h2>
                       <div className="text-xs text-text-tertiary">
-                        {post.eventCategory ?? L4(lang, { ko: "미분류", en: "Unclassified" })} ·{" "}
+                        {post.eventCategory ?? L4(lang, { ko: "미분류", en: "Unclassified", ja: "Unclassified", zh: "Unclassified" })} ·{" "}
                         {new Date(post.createdAt).toLocaleString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }))}
                       </div>
                       <p className="whitespace-pre-wrap text-sm leading-7 text-text-secondary">{post.content}</p>
@@ -334,31 +334,31 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
 
           <aside className="space-y-4">
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "대표 로그", en: "Featured Log" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "대표 로그", en: "Featured Log", ja: "대표 ログ", zh: "대표 日志" })}</div>
               {featuredPost ? (
                 <>
                   <h3 className="mt-3 text-lg font-semibold text-text-primary">{featuredPost.title}</h3>
                   <p className="mt-3 text-sm text-text-secondary">{featuredPost.summary}</p>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "대표 로그가 없습니다.", en: "No featured log yet." })}</p>
+                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "대표 로그가 없습니다.", en: "No featured log yet.", ja: "대표 ログ가 없습니다.", zh: "대표 日志가 없습니다." })}</p>
               )}
             </div>
 
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "가장 많이 읽힌 로그", en: "Most Read" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "가장 많이 읽힌 로그", en: "Most Read", ja: "가장 많이 읽힌 ログ", zh: "가장 많이 읽힌 日志" })}</div>
               {topReadPost ? (
                 <>
                   <h3 className="mt-3 text-lg font-semibold text-text-primary">{topReadPost.title}</h3>
-                  <p className="mt-2 text-sm text-text-secondary">{topReadPost.metrics.viewCount} {L4(lang, { ko: "조회", en: "views" })}</p>
+                  <p className="mt-2 text-sm text-text-secondary">{topReadPost.metrics.viewCount} {L4(lang, { ko: "조회", en: "views", ja: "閲覧", zh: "浏览" })}</p>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "아직 집계 전입니다.", en: "No reads tracked yet." })}</p>
+                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "아직 집계 전입니다.", en: "No reads tracked yet.", ja: "No reads tracked yet.", zh: "No reads tracked yet." })}</p>
               )}
             </div>
 
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "최근 정산 결과", en: "Latest Settlement" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "최근 정산 결과", en: "Latest Settlement", ja: "최근 정산 結果", zh: "최근 정산 结果" })}</div>
               {settlements[0] ? (
                 <>
                   <div className="mt-3 flex items-center gap-3">
@@ -368,12 +368,12 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                   {settlements[0].action ? <p className="mt-3 text-sm text-text-secondary">{settlements[0].action}</p> : null}
                 </>
               ) : (
-                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "정산이 아직 없습니다.", en: "No settlement yet." })}</p>
+                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "정산이 아직 없습니다.", en: "No settlement yet.", ja: "No settlement yet.", zh: "No settlement yet." })}</p>
               )}
             </div>
 
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "최근 활동", en: "Recent Activity" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "최근 활동", en: "Recent Activity", ja: "最近のアクティビティ", zh: "最近活动" })}</div>
               <ul className="mt-4 space-y-3 text-sm text-text-secondary">
                 {recentActivity.map((item) => (
                   <li key={item.id} className="flex items-start justify-between gap-3">

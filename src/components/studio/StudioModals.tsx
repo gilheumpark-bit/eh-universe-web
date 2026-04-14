@@ -50,8 +50,9 @@ export function ShortcutsModal({ language, onClose }: { language: AppLanguage; o
   const isKO = language === 'KO';
 
   return (
-    <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200" 
+    <div
+      className="fixed inset-0 z-[var(--z-dropdown)] flex items-center justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+      role="presentation"
       onClick={onClose}
     >
       <div 
@@ -143,11 +144,11 @@ export function MoveSessionModal({
 }) {
   const t = createT(language);
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/50" role="presentation" onClick={onClose}>
       <div className="bg-bg-primary border border-border rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
         <select autoFocus
-          className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-accent-purple"
+          className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple"
           defaultValue=""
           onChange={e => { if (e.target.value) { onMove(data.sessionId, e.target.value); onClose(); } }}>
           <option value="" disabled>{L4(language, { ko: '프로젝트 선택...', en: 'Select project...', ja: 'プロジェクトを選択...', zh: '选择项目...' })}</option>
@@ -176,7 +177,7 @@ export function SaveSlotModal({
 }) {
   const t = createT(language);
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 backdrop-blur-sm" role="presentation" onClick={onClose}>
       <div className="bg-bg-primary border border-border rounded-2xl p-6 w-full max-w-sm mx-4 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <h3 className="text-sm font-bold text-text-primary">{t('saveSlot.enterSaveName')}</h3>
         <input
@@ -184,7 +185,7 @@ export function SaveSlotModal({
           type="text"
           placeholder={L4(language, { ko: '세이브 이름...', en: 'Save name...', ja: 'セーブ名...', zh: '存档名称...' })}
           maxLength={40}
-          className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-accent-purple"
+          className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple"
           onKeyDown={e => {
             if (e.key === 'Enter') {
               const val = (e.target as HTMLInputElement).value.trim();

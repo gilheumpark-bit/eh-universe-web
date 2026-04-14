@@ -5,9 +5,9 @@
 // 집필 탭 오른쪽 분할 뷰에 표시
 // ============================================================
 
-import React, { useState, useCallback } from 'react';
-import { X, Users, BookOpen, Clapperboard, Check, ChevronDown } from 'lucide-react';
-import type { StoryConfig, AppLanguage, Character, SceneDirectionData } from '@/lib/studio-types';
+import React, { useState, useCallback, useMemo } from 'react';
+import { X, Users, BookOpen, Clapperboard, Check } from 'lucide-react';
+import type { StoryConfig, AppLanguage, SceneDirectionData } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — Types & Props
@@ -28,7 +28,7 @@ interface Props {
 
 function CharacterSelector({ config, language, setConfig }: { config: StoryConfig; language: AppLanguage; setConfig: Props['setConfig'] }) {
   const isKO = language === 'KO';
-  const characters = config.characters || [];
+  const characters = useMemo(() => config.characters || [], [config.characters]);
   const active = config.sceneDirection?.activeCharacters || [];
 
   const toggle = useCallback((name: string) => {
@@ -140,7 +140,7 @@ function QuickDirectionPanel({ config, language, setConfig }: { config: StoryCon
           value={sd.writerNotes || ''}
           onChange={e => updateSD({ writerNotes: e.target.value })}
           placeholder={isKO ? '이번 화의 핵심 의도, 분위기, 주의사항...' : 'Episode intent, mood, notes...'}
-          className="mt-1 w-full h-20 bg-bg-secondary/50 border border-border/50 rounded-lg p-2 text-xs text-text-primary placeholder-text-tertiary resize-none outline-none focus:border-accent-amber/50"
+          className="mt-1 w-full h-20 bg-bg-secondary/50 border border-border/50 rounded-lg p-2 text-xs text-text-primary placeholder-text-tertiary resize-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50"
         />
       </div>
 

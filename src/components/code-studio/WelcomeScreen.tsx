@@ -78,7 +78,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           <div className="mb-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/10 border border-accent-green/20">
             <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
-              {L4(lang, { ko: "코드 스튜디오", en: "Code Studio" })}
+              {L4(lang, { ko: "코드 스튜디오", en: "Code Studio", ja: "コードスタジオ", zh: "代码工作室"})}
             </span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight bg-linear-to-b from-text-primary to-text-secondary bg-clip-text text-transparent" style={{ fontFamily: "var(--font-display, var(--font-mono))" }}>
@@ -137,10 +137,10 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
               </div>
               <div className="text-left">
                 <div className="font-mono text-sm font-bold text-accent-green">
-                  {L4(lang, { ko: "NOA 코드 검증", en: "NOA Code Verify" })}
+                  {L4(lang, { ko: "NOA 코드 검증", en: "NOA Code Verify", ja: "NOAコード検証", zh: "NOA代码验证"})}
                 </div>
                 <div className="font-mono text-[10px] text-text-tertiary">
-                  {L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify" })}
+                  {L4(lang, { ko: "붙여넣기 → 검증 / 생성 → 검증", en: "Paste → Verify / Generate → Verify", ja: "ペースト → 検証 / 生成 → 検証", zh: "粘贴 → 验证 / 生成 → 验证"})}
                 </div>
               </div>
             </button>
@@ -155,8 +155,8 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           >
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`} />
             {showExtras
-              ? L4(lang, { ko: "접기", en: "Less" })
-              : L4(lang, { ko: "더 보기", en: "More options" })}
+              ? L4(lang, { ko: "접기", en: "Less", ja: "折りたたむ", zh: "收起"})
+              : L4(lang, { ko: "더 보기", en: "More options", ja: "もっと見る", zh: "更多选项"})}
           </button>
 
           {showExtras && (
@@ -185,13 +185,13 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
               {/* Keyboard shortcuts */}
               <div className="font-mono text-[10px] text-text-tertiary/50">
                 <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+N</span>
-                <span className="mx-1.5">{L4(lang, { ko: "새 파일", en: "New File" })}</span>
+                <span className="mx-1.5">{L4(lang, { ko: "새 파일", en: "New File", ja: "新規ファイル", zh: "新建文件"})}</span>
                 <span className="mx-2 text-white/10">|</span>
                 <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+Shift+P</span>
-                <span className="mx-1.5">{L4(lang, { ko: "명령 팔레트", en: "Commands" })}</span>
+                <span className="mx-1.5">{L4(lang, { ko: "명령 팔레트", en: "Commands", ja: "コマンドパレット", zh: "命令面板"})}</span>
                 <span className="mx-2 text-white/10">|</span>
                 <span className="rounded border border-white/6 bg-white/3 px-1.5 py-0.5">Ctrl+`</span>
-                <span className="mx-1.5">{L4(lang, { ko: "터미널", en: "Terminal" })}</span>
+                <span className="mx-1.5">{L4(lang, { ko: "터미널", en: "Terminal", ja: "ターミナル", zh: "终端"})}</span>
               </div>
             </div>
           )}

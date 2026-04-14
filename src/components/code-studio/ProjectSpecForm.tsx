@@ -126,7 +126,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
               <p className="text-sm mb-1 text-text-primary">어떤 프로젝트를 만드시겠어요?</p>
               <p className="text-xs text-text-tertiary mb-4">프롬프트를 입력하면 카테고리가 자동 선택됩니다</p>
               <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 수제 케이크 쇼핑몰 만들어줘"
-                className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber mb-4" />
+                className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber mb-4" />
               <div className="grid grid-cols-3 gap-2">
                 {CATEGORIES.map((cat) => (
                   <button key={cat.id} onClick={() => setCategory(cat.id)}
@@ -143,11 +143,11 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
               <p className="text-sm font-medium text-text-primary mb-3">{currentQuestion.question}</p>
               {currentQuestion.type === "text" && (
                 <input value={(getAnswer(currentQuestion.id) as string) ?? ""} onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber" autoFocus />
+                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber" autoFocus />
               )}
               {currentQuestion.type === "textarea" && (
                 <textarea value={(getAnswer(currentQuestion.id) as string) ?? ""} onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus:border-accent-amber min-h-[100px]" autoFocus />
+                  placeholder={currentQuestion.placeholder} className="w-full px-3 py-2 bg-bg-secondary/50 border border-border rounded-lg text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber min-h-[100px]" autoFocus />
               )}
               {currentQuestion.type === "select" && currentQuestion.options && (
                 <div className="grid grid-cols-2 gap-2">

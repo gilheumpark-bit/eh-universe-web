@@ -262,7 +262,7 @@ export function getHFCPSummary(state: HFCPState): HFCPSummary {
   // Higher score = more passes; lower score = more engagement/warns
   const passRatio = Math.min(1, Math.max(0, (score - 50) / 100));
   const failRatio = Math.min(1, Math.max(0, (100 - score) / 100));
-  const warnRatio = 1 - passRatio - failRatio;
+  const _warnRatio = 1 - passRatio - failRatio;
 
   const pass = Math.round(turns * Math.max(0, passRatio));
   const fail = Math.round(turns * Math.max(0, failRatio));

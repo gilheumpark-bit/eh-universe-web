@@ -71,6 +71,7 @@ export function useStudioSync({
       // BroadcastChannel not supported — silent fallback
       logger.warn?.('Sync', 'BroadcastChannel not available', err);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reloadFromStorage is stable (useCallback) but declared after this effect; safe to omit
   }, []);
 
   /** Broadcast a save event to other tabs */
@@ -170,7 +171,6 @@ export function useStudioSync({
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 5000);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- projectsRef.current avoids stale closure
   }, [accessToken, refreshAccessToken, setProjects, setUxError, broadcastSave]);
 
   return {

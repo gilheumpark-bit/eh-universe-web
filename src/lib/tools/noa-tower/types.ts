@@ -1,4 +1,4 @@
-import { type Lang } from "@/lib/LangContext";
+
 
 export type Bi = { ko: string; en: string };
 

@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 /**
  * CFG-009: peerDependencies 미선언 (Undeclared peerDependencies)

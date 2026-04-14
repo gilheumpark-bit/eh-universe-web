@@ -73,9 +73,9 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
     } catch (caught) {
       const msg = caught instanceof Error ? caught.message : '';
       if (msg.includes('Duplicate report') || msg.includes('already reported')) {
-        setSubmitError(L4(lang, { ko: "이미 동일한 신고가 접수되어 있습니다.", en: "You have already reported this item." }));
+        setSubmitError(L4(lang, { ko: "이미 동일한 신고가 접수되어 있습니다.", en: "You have already reported this item.", ja: "이미 동일한 報告가 접수되어 있습니다.", zh: "이미 동일한 举报가 접수되어 있습니다." }));
       } else {
-        setSubmitError(L4(lang, { ko: "신고 제출에 실패했습니다.", en: "Failed to submit report." }));
+        setSubmitError(L4(lang, { ko: "신고 제출에 실패했습니다.", en: "Failed to submit report.", ja: "報告 제출에 실패했습니다.", zh: "举报 제출에 실패했습니다." }));
       }
     } finally {
       setSubmitting(false);
@@ -90,7 +90,7 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
           onClick={() => {
             if (!user) {
               void signInWithGoogle().then(() => {
-                const hint = L4(lang, { ko: "로그인 후 다시 신고 버튼을 눌러주세요", en: "Please tap report again after login" });
+                const hint = L4(lang, { ko: "로그인 후 다시 신고 버튼을 눌러주세요", en: "Please tap report again after login", ja: "ログイン 후 다시 報告 버튼을 눌러주세요", zh: "登录 후 다시 举报 버튼을 눌러주세요" });
                 setLoginHint(hint);
                 clearTimeout(loginHintTimer.current);
                 loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);
@@ -131,7 +131,7 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
                   <select
                     value={reason}
                     onChange={(e) => setReason(e.target.value as ReportReason)}
-                    className="w-full rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary focus:border-accent-red/40 focus:outline-none"
+                    className="w-full rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary focus:border-accent-red/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                   >
                     {REPORT_REASONS.map((r) => (
                       <option key={r} value={r}>
@@ -144,7 +144,7 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
                 <div>
                   <label className="mb-1 block text-xs text-text-secondary">{L2(LABELS.detail, lang)}</label>
                   <textarea
-                    className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-red/40 focus:outline-none"
+                    className="w-full resize-none rounded-lg border border-white/8 bg-white/[0.02] p-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-red/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                     rows={3}
                     maxLength={1000}
                     placeholder={L2(LABELS.detailPlaceholder, lang)}

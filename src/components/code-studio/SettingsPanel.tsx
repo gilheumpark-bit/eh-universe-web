@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { X, RotateCcw, ShieldCheck, Shield, ShieldOff, AlertTriangle, Briefcase, Code2, Landmark } from "lucide-react";
-import { setCodingMode, getCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
+import { setCodingMode, type CodingMode } from "@/lib/noa/lora-swap";
 
 export interface IDESettings {
   fontSize: number;
@@ -88,7 +88,7 @@ function NumberInput({ value, onChange, min, max, step = 1 }: { value: number; o
     <input
       type="number" value={value} min={min} max={max} step={step}
       onChange={(e) => onChange(Number(e.target.value))}
-      className="w-20 rounded-lg border border-white/8 bg-white/2 px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple/40"
+      className="w-20 rounded-lg border border-white/8 bg-white/2 px-2 py-1 text-xs text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/40"
     />
   );
 }
@@ -97,7 +97,7 @@ function SelectInput<T extends string>({ value, options, onChange }: { value: T;
   return (
     <select
       value={value} onChange={(e) => onChange(e.target.value as T)}
-      className="rounded-lg border border-white/8 bg-white/2 px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple/40"
+      className="rounded-lg border border-white/8 bg-white/2 px-2 py-1 text-xs text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/40"
     >
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>

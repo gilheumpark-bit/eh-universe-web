@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-type DialogState =
+export type DialogState =
   | null
   | {
       kind: 'alert';

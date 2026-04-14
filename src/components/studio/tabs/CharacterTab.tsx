@@ -105,7 +105,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
                   max={10}
                   value={genCount}
                   onChange={e => setGenCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 4)))}
-                  className="w-12 bg-bg-secondary/80 border border-border rounded-xl px-2 py-3 text-center text-xs font-black text-accent-purple focus:border-accent-purple/60 outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="w-12 bg-bg-secondary/80 border border-border rounded-xl px-2 py-3 text-center text-xs font-black text-accent-purple focus:border-accent-purple/60 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   title={language === 'KO' ? '생성할 캐릭터 수' : 'Number of characters'}
                 />
                 <button

@@ -266,13 +266,13 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
               <input
                 value={t.name}
                 onChange={e => updateTerritory(t.id, { name: e.target.value })}
-                className="flex-1 bg-transparent text-[10px] font-bold text-amber-400 outline-none placeholder:text-[rgba(255,200,50,0.3)]"
+                className="flex-1 bg-transparent text-[10px] font-bold text-amber-400 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-[rgba(255,200,50,0.3)]"
                 maxLength={30}
               />
               <select
                 value={t.civName}
                 onChange={e => updateTerritory(t.id, { civName: e.target.value, color: civColors[e.target.value] })}
-                className="bg-bg-secondary border border-[rgba(255,200,50,0.2)] rounded px-2 py-0.5 text-[9px] text-amber-400 font-mono outline-none focus:border-[rgba(255,200,50,0.6)]"
+                className="bg-bg-secondary border border-[rgba(255,200,50,0.2)] rounded px-2 py-0.5 text-[9px] text-amber-400 font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-[rgba(255,200,50,0.6)]"
               >
                 <option value="">{isKO ? '소속 없음' : 'Unassigned'}</option>
                 {civNames.map(name => (

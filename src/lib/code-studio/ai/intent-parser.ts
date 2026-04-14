@@ -57,8 +57,7 @@ export function extractPhysicalConstraints(userPrompt: string): IntentConstraint
   const lowerPrompt = userPrompt.toLowerCase();
   
   // Iterate through dictionary and apply matching constraints
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  for (const [vectorName, vectorData] of Object.entries(VECTOR_DICTIONARY)) {
+  for (const [_vectorName, vectorData] of Object.entries(VECTOR_DICTIONARY)) {
     const isMatch = vectorData.keywords.some((kw) => lowerPrompt.includes(kw));
     if (isMatch) {
       result.matrixLog.push(vectorData.log);

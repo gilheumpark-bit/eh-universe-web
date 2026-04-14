@@ -5,7 +5,7 @@
 // 함수별 벤치마크. 베이스라인 저장 + 비교.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join, basename } from 'path';
+import { join } from 'path';
 
 // ============================================================
 // PART 1 — Function Extractor

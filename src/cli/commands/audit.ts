@@ -5,7 +5,7 @@
 // 16영역 프로젝트 건강도 감사. 로컬, $0.
 // 원본 lib/code-studio/audit/audit-engine.ts 호출.
 
-import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, extname, relative } from 'path';
 
 // ============================================================
@@ -42,7 +42,7 @@ function collectFiles(rootPath: string): FileEntry[] {
   return files;
 }
 
-function loadPackageJson(rootPath: string): Record<string, unknown> | null {
+function _loadPackageJson(rootPath: string): Record<string, unknown> | null {
   const pkgPath = join(rootPath, 'package.json');
   if (!existsSync(pkgPath)) return null;
   try {

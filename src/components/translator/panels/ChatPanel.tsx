@@ -286,7 +286,7 @@ export function ChatPanel() {
             }}
             placeholder={langKo ? '번역에 대해 질문…' : 'Ask about this translation…'}
             disabled={sending}
-            className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-3 pr-10 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 transition-all resize-none h-[44px] max-h32 disabled:opacity-50"
+            className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-3 pr-10 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 transition-all resize-none h-[44px] max-h32 disabled:opacity-50"
             rows={1}
           />
           <button

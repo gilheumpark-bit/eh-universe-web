@@ -29,6 +29,8 @@ interface EpisodeExplorerProps {
   onSwitchBranch?: (branch: string) => void;
   onCreateBranch?: (name: string) => void;
   gitConnected?: boolean;
+  /** Load episode content for a specific branch (for diff view). */
+  onLoadBranchContent?: (branch: string, episode: number) => Promise<string>;
   className?: string;
 }
 
@@ -77,6 +79,59 @@ function formatCharCount(n: number): string {
 // PART 3 — Volume Tree Node
 // ============================================================
 
+interface EpisodeItemProps {
+  ms: EpisodeManuscript;
+  isActive: boolean;
+  language: AppLanguage;
+  onSelectEpisode: (ep: number) => void;
+}
+
+const EpisodeItem = React.memo(function EpisodeItem({ ms, isActive, language, onSelectEpisode }: EpisodeItemProps) {
+  const status = getEpisodeStatus(ms);
+  const handleClick = useCallback(() => onSelectEpisode(ms.episode), [onSelectEpisode, ms.episode]);
+
+  return (
+    <button
+      onClick={handleClick}
+      role="treeitem"
+      aria-selected={isActive}
+      aria-label={`${L4(language, { ko: `${ms.episode}화`, en: `Episode ${ms.episode}`, ja: `Episode ${ms.episode}`, zh: `Episode ${ms.episode}` })} — ${ms.title} — ${statusLabel(status, language)}`}
+      className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded-lg
+        transition-colors text-left min-h-[44px] group/ep
+        ${isActive
+          ? 'bg-accent-amber/10 border border-accent-amber/30 text-text-primary'
+          : 'text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
+        }`}
+      title={ms.detailedSummary ? `${ms.summary ?? ms.title}\n\n${ms.detailedSummary}` : (ms.summary ?? ms.title)}
+    >
+      <FileText className={`w-3.5 h-3.5 shrink-0 ${
+        isActive ? 'text-accent-amber' : 'text-text-tertiary'
+      }`} />
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-text-tertiary font-mono shrink-0">
+            {String(ms.episode).padStart(3, '0')}
+          </span>
+          <span className="text-xs font-serif truncate">
+            {truncate(ms.title, 18)}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <span
+          className="text-[10px]"
+          title={statusLabel(status, language)}
+        >
+          {statusIcon(status)}
+        </span>
+        <span className="text-[10px] text-text-tertiary font-mono">
+          {formatCharCount(ms.charCount)}
+        </span>
+      </div>
+    </button>
+  );
+});
+
 interface VolumeNodeProps {
   group: VolumeGroup;
   currentEpisode: number;
@@ -84,9 +139,9 @@ interface VolumeNodeProps {
   onSelectEpisode: (ep: number) => void;
 }
 
-const VolumeNode: React.FC<VolumeNodeProps> = ({
+const VolumeNode = React.memo(function VolumeNode({
   group, currentEpisode, language, onSelectEpisode,
-}) => {
+}: VolumeNodeProps) {
   const [expanded, setExpanded] = useState(true);
   const toggle = useCallback(() => setExpanded(v => !v), []);
 
@@ -117,57 +172,20 @@ const VolumeNode: React.FC<VolumeNodeProps> = ({
       {/* Episode items */}
       {expanded && (
         <div className="ml-4 border-l border-border/40 pl-1" role="group">
-          {group.episodes.map(ms => {
-            const status = getEpisodeStatus(ms);
-            const isActive = ms.episode === currentEpisode;
-
-            return (
-              <button
-                key={ms.episode}
-                onClick={() => onSelectEpisode(ms.episode)}
-                role="treeitem"
-                aria-selected={isActive}
-                aria-label={`${L4(language, { ko: `${ms.episode}화`, en: `Episode ${ms.episode}` })} — ${ms.title} — ${statusLabel(status, language)}`}
-                className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded-lg
-                  transition-colors text-left min-h-[44px] group/ep
-                  ${isActive
-                    ? 'bg-accent-amber/10 border border-accent-amber/30 text-text-primary'
-                    : 'text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
-                  }`}
-                title={ms.detailedSummary ? `${ms.summary ?? ms.title}\n\n${ms.detailedSummary}` : (ms.summary ?? ms.title)}
-              >
-                <FileText className={`w-3.5 h-3.5 shrink-0 ${
-                  isActive ? 'text-accent-amber' : 'text-text-tertiary'
-                }`} />
-                <div className="flex flex-col flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-text-tertiary font-mono shrink-0">
-                      {String(ms.episode).padStart(3, '0')}
-                    </span>
-                    <span className="text-xs font-serif truncate">
-                      {truncate(ms.title, 18)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span
-                    className="text-[10px]"
-                    title={statusLabel(status, language)}
-                  >
-                    {statusIcon(status)}
-                  </span>
-                  <span className="text-[10px] text-text-tertiary font-mono">
-                    {formatCharCount(ms.charCount)}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+          {group.episodes.map(ms => (
+            <EpisodeItem
+              key={ms.episode}
+              ms={ms}
+              isActive={ms.episode === currentEpisode}
+              language={language}
+              onSelectEpisode={onSelectEpisode}
+            />
+          ))}
         </div>
       )}
     </div>
   );
-};
+});
 
 // ============================================================
 // PART 4 — EpisodeExplorer Main Component
@@ -187,6 +205,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
   onSwitchBranch,
   onCreateBranch,
   gitConnected,
+  onLoadBranchContent,
   className = '',
 }) => {
   const [showUniverse, setShowUniverse] = useState(false);
@@ -241,7 +260,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-border min-h-[44px]">
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-xs font-serif font-semibold text-text-primary truncate">
-            {config.title || L4(language, { ko: '제목 없음', en: 'Untitled' })}
+            {config.title || L4(language, { ko: '제목 없음', en: 'Untitled', ja: 'タイトルなし', zh: '无标题' })}
           </span>
           <BranchSelector
             currentBranch={currentBranch ?? 'main'}
@@ -259,7 +278,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
             className="w-8 h-8 flex items-center justify-center rounded-lg
               text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary
               transition-colors shrink-0 ml-2"
-            title={L4(language, { ko: '닫기', en: 'Close' })}
+            title={L4(language, { ko: '닫기', en: 'Close', ja: '閉じる', zh: '关闭' })}
           >
             <X className="w-4 h-4" />
           </button>
@@ -303,7 +322,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
               hover:text-accent-amber hover:bg-accent-amber/10
               transition-colors min-h-[44px] flex-1 justify-center
               border border-border hover:border-accent-amber/30"
-            title={L4(language, { ko: '새 에피소드', en: 'New Episode' })}
+            title={L4(language, { ko: '새 에피소드', en: 'New Episode', ja: '새 エピソード', zh: '새 章节' })}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{L4(language, { ko: '에피소드', en: 'Episode', ja: 'エピソード', zh: '章节' })}</span>
@@ -317,7 +336,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
               hover:text-accent-amber hover:bg-accent-amber/10
               transition-colors min-h-[44px] flex-1 justify-center
               border border-border hover:border-accent-amber/30"
-            title={L4(language, { ko: '새 권', en: 'New Volume' })}
+            title={L4(language, { ko: '새 권', en: 'New Volume', ja: 'New Volume', zh: 'New Volume' })}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{L4(language, { ko: '권', en: 'Volume', ja: '巻', zh: '卷' })}</span>
@@ -343,6 +362,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
               onSwitchBranch={onSwitchBranch ?? (() => {})}
               onCreateBranch={(name, _ep) => onCreateBranch?.(name)}
               language={language}
+              onLoadBranchContent={onLoadBranchContent}
             />
           )}
         </div>

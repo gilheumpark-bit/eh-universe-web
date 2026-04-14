@@ -95,22 +95,22 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.povCharacter')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.settingLabel')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.coreEmotion')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
         </div>
       </div>
 
       {/* 시놉시스 */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.synopsis}</label>
-        <textarea className="w-full bg-bg-tertiary border border-border rounded-2xl p-6 text-sm h-64 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
+        <textarea className="w-full bg-bg-tertiary border border-border rounded-2xl p-6 text-sm h-64 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
       </div>
 
       {/* 세계관 작성 가이드 배너 */}
@@ -130,7 +130,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                 {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
                 {f.label}
               </label>
-              <textarea className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm h-24 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+              <textarea className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm h-24 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
             </div>
           ))}
         </div>
@@ -165,7 +165,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                   {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
                   {f.label}
                 </label>
-                <textarea className="w-full bg-bg-tertiary border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none text-text-primary placeholder:text-text-tertiary focus:border-amber-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+                <textarea className="w-full bg-bg-tertiary border border-amber-500/20 rounded-xl p-3 text-sm h-20 resize-none text-text-primary placeholder:text-text-tertiary focus:border-amber-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
               </div>
             ))}
           </div>
@@ -194,7 +194,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                   {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
                   {f.label}
                 </label>
-                <textarea className="w-full bg-bg-tertiary border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none text-text-primary placeholder:text-text-tertiary focus:border-emerald-500 outline-none leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+                <textarea className="w-full bg-bg-tertiary border border-emerald-500/20 rounded-xl p-3 text-sm h-16 resize-none text-text-primary placeholder:text-text-tertiary focus:border-emerald-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
               </div>
             ))}
           </div>
@@ -333,7 +333,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
 function WorldBuildingGuide({ language, config }: { language: AppLanguage; config: StoryConfig }) {
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('noa_world_guide_dismissed') === '1';
+    try { return localStorage.getItem('noa_world_guide_dismissed') === '1'; } catch { return false; }
   });
 
   // Auto-dismiss after first view (5 seconds)
@@ -361,7 +361,7 @@ function WorldBuildingGuide({ language, config }: { language: AppLanguage; confi
           type="button"
           onClick={() => {
             setDismissed(false);
-            localStorage.removeItem('noa_world_guide_dismissed');
+            try { localStorage.removeItem('noa_world_guide_dismissed'); } catch { /* private */ }
           }}
           className="flex items-center gap-1.5 text-[9px] text-text-quaternary hover:text-text-tertiary transition-colors"
         >
@@ -380,7 +380,7 @@ function WorldBuildingGuide({ language, config }: { language: AppLanguage; confi
           type="button"
           onClick={() => {
             setDismissed(true);
-            localStorage.setItem('noa_world_guide_dismissed', '1');
+            try { localStorage.setItem('noa_world_guide_dismissed', '1'); } catch { /* quota/private */ }
           }}
           className="absolute top-2.5 right-3 text-text-quaternary hover:text-text-tertiary transition-colors text-[9px]"
           aria-label="Close guide"

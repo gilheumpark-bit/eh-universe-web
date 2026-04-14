@@ -7,11 +7,11 @@ import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { DirectorReport } from '@/engine/director';
 import { createT } from '@/lib/i18n';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
-import { Send, StopCircle, RefreshCcw, BookOpen, ChevronDown, User, Clapperboard, Layers, ClipboardList } from 'lucide-react';
+import { Send, StopCircle, RefreshCcw, BookOpen, ChevronDown, ClipboardList } from 'lucide-react';
 import DirectorPanel from '@/components/studio/DirectorPanel';
 
 const DynSkeleton = () => <div className="h-20 w-full animate-pulse bg-white/5 rounded-lg mb-2" />;
-const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: DynSkeleton });
+const _EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: DynSkeleton });
 const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false, loading: DynSkeleton });
 const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false, loading: DynSkeleton });
 const ChatMessage = dynamic(() => import('@/components/studio/ChatMessage'), { ssr: false, loading: () => null });
@@ -40,9 +40,9 @@ interface RightChatPanelProps {
  * 독립 채팅 기능 + 참고 자료(Reference) 가 가 통합된 단일 패널.
  */
 export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({ 
-  language, currentSession, messages, loading, onSend, onAbort, onClear,
+  language, currentSession: _currentSession, messages, loading, onSend, onAbort, onClear,
   directorReport, hfcpState, suggestions, setSuggestions, pipelineResult,
-  setConfig, setActiveTab, hostedProviders = {},
+  setConfig: _setConfig, setActiveTab: _setActiveTab, hostedProviders = {},
 }) => {
   const t = createT(language);
   const isKO = language === 'KO';
@@ -208,7 +208,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
                 }
               }}
               placeholder={loading ? t('engine.thinking') : t('ui.askAnything')}
-              className="flex-1 bg-transparent border-none outline-none text-xs text-text-primary placeholder-text-tertiary/60 resize-none max-h-32 leading-relaxed font-sans scrollbar-none py-1"
+              className="flex-1 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-xs text-text-primary placeholder-text-tertiary/60 resize-none max-h-32 leading-relaxed font-sans scrollbar-none py-1"
               rows={1}
               disabled={loading}
             />

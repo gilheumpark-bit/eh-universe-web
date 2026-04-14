@@ -78,13 +78,13 @@ function getChangeMagnitudeColor(pct: number): string {
 }
 
 function getChangeSummary(pct: number, delta: number, lang: AppLanguage): string {
-  if (pct < 5) return L4(lang, { ko: '거의 같습니다', en: 'Nearly identical' });
+  if (pct < 5) return L4(lang, { ko: '거의 같습니다', en: 'Nearly identical', ja: 'Nearly identical', zh: 'Nearly identical' });
   if (pct < 20) {
     const n = Math.max(1, Math.abs(delta));
-    return L4(lang, { ko: `${n}단어가 수정되었습니다`, en: `${n} words changed` });
+    return L4(lang, { ko: `${n}단어가 수정되었습니다`, en: `${n} words changed`, ja: `${n}단어가 編集되었습니다`, zh: `${n}단어가 编辑되었습니다` });
   }
-  if (pct < 50) return L4(lang, { ko: '상당 부분이 바뀌었습니다', en: 'Significant changes' });
-  return L4(lang, { ko: '대폭 변경되었습니다', en: 'Major rewrite' });
+  if (pct < 50) return L4(lang, { ko: '상당 부분이 바뀌었습니다', en: 'Significant changes', ja: 'Significant changes', zh: 'Significant changes' });
+  return L4(lang, { ko: '대폭 변경되었습니다', en: 'Major rewrite', ja: 'Major rewrite', zh: 'Major rewrite' });
 }
 
 // ============================================================
@@ -98,6 +98,16 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
   const t = createT(language);
   const total = versions.length;
 
+  const handleRestore = useCallback((idx: number) => {
+    if (confirmRestore === idx) {
+      onRestore?.(idx);
+      setConfirmRestore(null);
+    } else {
+      setConfirmRestore(idx);
+      setTimeout(() => setConfirmRestore(null), 3000);
+    }
+  }, [confirmRestore, onRestore]);
+
   if (total <= 1) return null;
 
   const canPrev = currentIndex > 0;
@@ -108,16 +118,6 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
-
-  const handleRestore = useCallback((idx: number) => {
-    if (confirmRestore === idx) {
-      onRestore?.(idx);
-      setConfirmRestore(null);
-    } else {
-      setConfirmRestore(idx);
-      setTimeout(() => setConfirmRestore(null), 3000);
-    }
-  }, [confirmRestore, onRestore]);
 
   // Word count delta for current vs previous
   const currentWords = countWords(versions[currentIndex]);

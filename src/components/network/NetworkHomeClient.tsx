@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useLang, type Lang } from "@/lib/LangContext";
@@ -141,14 +141,124 @@ function withTimeout<T>(promise: Promise<T>, label: string, timeoutMs = NETWORK_
 function relativeTime(isoDate: string, lang: Lang): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return L4(lang, { ko: "방금 전", en: "Just now" });
-  if (minutes < 60) return L4(lang, { ko: `${minutes}분 전`, en: `${minutes}m ago` });
+  if (minutes < 1) return L4(lang, { ko: "방금 전", en: "Just now", ja: "たった今", zh: "刚刚" });
+  if (minutes < 60) return L4(lang, { ko: `${minutes}분 전`, en: `${minutes}m ago`, ja: `${minutes}m ago`, zh: `${minutes}m ago` });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago` });
+  if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago`, ja: `${hours}h ago`, zh: `${hours}h ago` });
   const days = Math.floor(hours / 24);
-  if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago` });
+  if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago`, ja: `${days}d ago`, zh: `${days}d ago` });
   return new Date(isoDate).toLocaleDateString(L4(lang, { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" }));
 }
+
+// ============================================================
+// PART 1-B — Memoized List Item Components
+// ============================================================
+
+interface PlanetCardProps {
+  planet: PlanetRecord;
+  lang: Lang;
+}
+
+const PlanetCard = memo(function PlanetCard({ planet, lang }: PlanetCardProps) {
+  return (
+    <div className="premium-link-card p-6">
+      <Link href={`/network/planets/${planet.id}`} className="block">
+        <div className="flex items-center justify-between gap-3">
+          <span className="site-kicker">{planet.genre}</span>
+          <SettlementBadge status={planet.status} lang={lang} />
+        </div>
+        <h3 className="mt-4 text-xl font-semibold text-text-primary">{planet.name}</h3>
+        <p className="mt-3 text-sm leading-7 text-text-secondary">{planet.summary}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {planet.representativeTags.slice(0, 3).map((tag) => (
+            <span key={tag} className="badge badge-blue">{tag}</span>
+          ))}
+          {(planet.tags ?? []).slice(0, 2).map((tag) => (
+            <span key={`t-${tag}`} className="badge badge-blue">{tag}</span>
+          ))}
+        </div>
+        <div className="mt-6 flex items-center justify-between text-xs text-text-tertiary">
+          <span>{L4(lang, { ko: `최근 로그 ${planet.stats.logCount}개`, en: `${planet.stats.logCount} recent logs`, ja: `최근 ログ ${planet.stats.logCount}件`, zh: `최근 日志 ${planet.stats.logCount}个` })}</span>
+          <span>{L4(lang, { ko: `정산 ${planet.stats.settlementCount}`, en: `${planet.stats.settlementCount} settlements`, ja: `${planet.stats.settlementCount} settlements`, zh: `${planet.stats.settlementCount} settlements` })}</span>
+        </div>
+      </Link>
+      <div className="mt-3 flex justify-end">
+        <BookmarkButton planetId={planet.id} compact />
+      </div>
+    </div>
+  );
+});
+
+interface PostCardProps {
+  post: PostRecord;
+  planet?: PlanetRecord;
+  author?: UserRecord;
+  lang: Lang;
+}
+
+const PostCard = memo(function PostCard({ post, planet, author, lang }: PostCardProps) {
+  const isIfPost = post.boardType === "if";
+  return (
+    <Link
+      href={`/network/posts/${post.id}`}
+      className={`premium-panel-soft p-5 transition ${
+        isIfPost
+          ? "border-purple-400/20 hover:border-purple-400/40"
+          : "hover:border-accent-amber/20"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="badge badge-amber">
+          {pickNetworkLabel(REPORT_TYPE_LABELS[post.reportType], lang)}
+        </span>
+        <span
+          className={
+            isIfPost
+              ? "inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-purple-400/10 px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] font-semibold tracking-[0.12em] text-purple-300 uppercase"
+              : "badge badge-redacted"
+          }
+        >
+          {isIfPost && (
+            <span className="text-[11px]" aria-hidden="true">IF</span>
+          )}
+          {pickNetworkLabel(BOARD_TYPE_LABELS[post.boardType], lang)}
+        </span>
+        {post.followupStatus ? <SettlementBadge status={post.followupStatus} lang={lang} /> : null}
+      </div>
+
+      <h3 className={`mt-4 text-lg font-semibold ${isIfPost ? "text-purple-200" : "text-text-primary"}`}>
+        {post.title}
+      </h3>
+      <p className="mt-2 text-sm text-text-secondary">{post.summary}</p>
+
+      {(post.tags ?? []).length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {post.tags.slice(0, 5).map((tag) => (
+            <span key={tag} className="rounded-full border border-white/8 bg-white/[0.02] px-2 py-0.5 text-[10px] text-text-tertiary">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-text-tertiary">
+        <span className="font-medium text-text-secondary">
+          {author?.nickname ?? `Explorer-${post.authorId.slice(0, 6)}`}
+        </span>
+        <span>{relativeTime(post.createdAt, lang)}</span>
+        <span>{planet?.name ?? (post.planetId || (L4(lang, { ko: "일반", en: "General", ja: "General", zh: "General" })))}</span>
+        <span className="ml-auto flex items-center gap-3">
+          {post.metrics.commentCount > 0 && (
+            <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments`, ja: `コメント ${post.metrics.commentCount}`, zh: `评论 ${post.metrics.commentCount}` })}</span>
+          )}
+          {post.metrics.reactionCount > 0 && (
+            <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions`, ja: `リアクション ${post.metrics.reactionCount}`, zh: `反应 ${post.metrics.reactionCount}` })}</span>
+          )}
+        </span>
+      </div>
+    </Link>
+  );
+});
 
 export function NetworkHomeClient() {
   const { lang } = useLang();
@@ -291,14 +401,14 @@ export function NetworkHomeClient() {
           // Graceful fallback: show sample planets when Firestore is completely unreachable
           setShowSamples(true);
           if (msg.includes("Firestore is not available")) {
-            setError(L4(lang, { ko: "데이터베이스에 연결할 수 없습니다. 샘플 데이터를 표시합니다.", en: "Unable to connect to the database. Showing sample data." }));
+            setError(L4(lang, { ko: "데이터베이스에 연결할 수 없습니다. 샘플 데이터를 표시합니다.", en: "Unable to connect to the database. Showing sample data.", ja: "データ베이스에 연결할 수 없습니다. 샘플 データ를 표시합니다.", zh: "数据베이스에 연결할 수 없습니다. 샘플 数据를 표시합니다." }));
           } else if (msg.startsWith("NETWORK_LOAD_TIMEOUT:")) {
             setError(L4(lang, {
               ko: "응답이 지연되어 샘플 데이터를 표시합니다. 다시 시도하면 최신 데이터로 갱신됩니다.",
               en: "Response was slow. Showing sample data. Retry to fetch the latest.",
             }));
           } else {
-            setError(msg || (L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load." })));
+            setError(msg || (L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load.", ja: "読み込みに失敗しました。", zh: "加载失败。" })));
           }
         }
       } finally {
@@ -383,29 +493,29 @@ export function NetworkHomeClient() {
             <div className="max-w-3xl">
               <div className="site-kicker">NMF — Narrative Management Foundation</div>
               <p className="mt-1 font-[family-name:var(--font-mono)] text-xs tracking-[0.1em] text-text-tertiary">
-                {L4(lang, { ko: "기록하라. 관리하라. 정산하라.", en: "Narrate. Manage. Finalize." })}
+                {L4(lang, { ko: "기록하라. 관리하라. 정산하라.", en: "Narrate. Manage. Finalize.", ja: "기록하라. 管理하라. 정산하라.", zh: "기록하라. 管理하라. 정산하라." })}
               </p>
               <h1 className="site-title mt-3 text-4xl font-semibold md:text-5xl">
-                {L4(lang, { ko: "행성을 만들고, 첫 로그를 남기고, 정산으로 세계를 쌓아가세요.", en: "Register planets, publish first logs, and grow a world through settlement records." })}
+                {L4(lang, { ko: "행성을 만들고, 첫 로그를 남기고, 정산으로 세계를 쌓아가세요.", en: "Register planets, publish first logs, and grow a world through settlement records.", ja: "惑星을 만들고, 첫 ログ를 남기고, 정산으로 세계를 쌓아가세요.", zh: "星球을 만들고, 첫 日志를 남기고, 정산으로 세계를 쌓아가세요." })}
               </h1>
               <p className="site-lede mt-4 max-w-2xl text-sm md:text-base">
-                {L4(lang, { ko: "EH Network는 행성 등록소, 관측 로그, 정산 결과를 한 흐름으로 묶는 세계관 게시판입니다.", en: "EH Network links planet registry, observation logs, and settlement outcomes into one narrative board." })}
+                {L4(lang, { ko: "EH Network는 행성 등록소, 관측 로그, 정산 결과를 한 흐름으로 묶는 세계관 게시판입니다.", en: "EH Network links planet registry, observation logs, and settlement outcomes into one narrative board.", ja: "EH Network는 惑星 登録소, 観測 ログ, 정산 結果를 한 흐름으로 묶는 世界観 投稿판입니다.", zh: "EH Network는 星球 提交소, 观测 日志, 정산 结果를 한 흐름으로 묶는 世界观 发布판입니다." })}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Link href="/network/new" className="premium-button">
-                {L4(lang, { ko: "행성 등록하기", en: "Register a Planet" })}
+                {L4(lang, { ko: "행성 등록하기", en: "Register a Planet", ja: "惑星 登録하기", zh: "星球 提交하기" })}
               </Link>
               <a href="#board-posts" className="premium-button secondary">
                 {netT('latestLogs', lang)}
               </a>
               <Link href="/network/agent" className="premium-button secondary border-accent-blue/30 text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20">
-                {L4(lang, { ko: "NOA 검색 어시스턴트", en: "NOA Search Assistant" })}
+                {L4(lang, { ko: "NOA 검색 어시스턴트", en: "NOA Search Assistant", ja: "NOA 検索 어시스턴트", zh: "NOA 搜索 어시스턴트" })}
               </Link>
               {!user ? (
                 <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">
-                  {L4(lang, { ko: "Google 로그인", en: "Sign In with Google" })}
+                  {L4(lang, { ko: "Google 로그인", en: "Sign In with Google", ja: "Googleログイン", zh: "Google登录" })}
                 </button>
               ) : null}
             </div>
@@ -414,16 +524,16 @@ export function NetworkHomeClient() {
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {[
               {
-                title: L4(lang, { ko: "행성 등록소", en: "Planet Registry" }),
-                body: L4(lang, { ko: "세계관 허브와 운영 목표를 등록합니다.", en: "Register the world hub and operating goal." }),
+                title: L4(lang, { ko: "행성 등록소", en: "Planet Registry", ja: "惑星 登録소", zh: "星球 提交소" }),
+                body: L4(lang, { ko: "세계관 허브와 운영 목표를 등록합니다.", en: "Register the world hub and operating goal.", ja: "世界観 허브와 운영 목표를 登録합니다.", zh: "世界观 허브와 운영 목표를 提交합니다." }),
               },
               {
-                title: L4(lang, { ko: "관측 로그", en: "Observation Logs" }),
-                body: L4(lang, { ko: "이야기, 보고서, 회수문서를 같은 흐름에 쌓습니다.", en: "Stack stories, reports, and recovered files in one stream." }),
+                title: L4(lang, { ko: "관측 로그", en: "Observation Logs", ja: "観測 ログ", zh: "观测 日志" }),
+                body: L4(lang, { ko: "이야기, 보고서, 회수문서를 같은 흐름에 쌓습니다.", en: "Stack stories, reports, and recovered files in one stream.", ja: "이야기, レポート, 회수문서를 같은 흐름에 쌓습니다.", zh: "이야기, 报告, 회수문서를 같은 흐름에 쌓습니다." }),
               },
               {
-                title: L4(lang, { ko: "정산 결과", en: "Settlement Results" }),
-                body: L4(lang, { ko: "행성 상태 판정과 위험도 기록을 운영 축으로 남깁니다.", en: "Track verdicts and risk changes as the operational layer." }),
+                title: L4(lang, { ko: "정산 결과", en: "Settlement Results", ja: "정산 結果", zh: "정산 结果" }),
+                body: L4(lang, { ko: "행성 상태 판정과 위험도 기록을 운영 축으로 남깁니다.", en: "Track verdicts and risk changes as the operational layer.", ja: "惑星 状態 판정과 위험도 기록을 운영 축으로 남깁니다.", zh: "星球 状态 판정과 위험도 기록을 운영 축으로 남깁니다." }),
               },
             ].map((item) => (
               <div key={item.title} className="premium-panel-soft p-5">
@@ -505,7 +615,7 @@ export function NetworkHomeClient() {
                     : "border-white/8 bg-white/[0.02] text-text-secondary hover:border-white/16"
                 }`}
               >
-                {showBookmarksOnly ? L4(lang, { ko: "전체 보기", en: "Show All" }) : L4(lang, { ko: "북마크만", en: "Bookmarked" })}
+                {showBookmarksOnly ? L4(lang, { ko: "전체 보기", en: "Show All", ja: "すべて 보기", zh: "全部 보기" }) : L4(lang, { ko: "북마크만", en: "Bookmarked", ja: "ブックマーク만", zh: "收藏만" })}
               </button>
             ) : null}
           </div>
@@ -538,14 +648,14 @@ export function NetworkHomeClient() {
                 ? (
                   <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-accent-red mb-3">
-                      {L4(lang, { ko: "데이터를 불러오는 데 실패했습니다", en: "Failed to load data" })}
+                      {L4(lang, { ko: "데이터를 불러오는 데 실패했습니다", en: "Failed to load data", ja: "データ를 불러오는 데 실패했습니다", zh: "数据를 불러오는 데 실패했습니다" })}
                     </p>
                     <button
                       type="button"
                       onClick={handleRetry}
                       className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
                     >
-                      {L4(lang, { ko: "다시 시도", en: "Retry" })}
+                      {L4(lang, { ko: "다시 시도", en: "Retry", ja: "再試行", zh: "重试" })}
                     </button>
                   </div>
                 )
@@ -555,16 +665,16 @@ export function NetworkHomeClient() {
                     {/* Empty state */}
                     <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                       <p className="text-lg font-semibold text-text-primary">
-                        {L4(lang, { ko: "아직 행성이 없습니다.", en: "No planets yet." })}
+                        {L4(lang, { ko: "아직 행성이 없습니다.", en: "No planets yet.", ja: "아직 惑星がありません。", zh: "아직 暂无星球。" })}
                       </p>
                       <p className="mt-2 text-sm text-text-secondary">
-                        {L4(lang, { ko: "첫 번째 행성을 만들어보세요!", en: "Create the first one!" })}
+                        {L4(lang, { ko: "첫 번째 행성을 만들어보세요!", en: "Create the first one!", ja: "첫 번째 惑星을 만들어보세요!", zh: "첫 번째 星球을 만들어보세요!" })}
                       </p>
                       <Link
                         href="/network/new"
                         className="mt-5 inline-block rounded-lg bg-accent-amber/20 px-6 py-3 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
                       >
-                        {L4(lang, { ko: "행성 등록하기", en: "Register a Planet" })}
+                        {L4(lang, { ko: "행성 등록하기", en: "Register a Planet", ja: "惑星 登録하기", zh: "星球 提交하기" })}
                       </Link>
                       <button
                         type="button"
@@ -572,15 +682,15 @@ export function NetworkHomeClient() {
                         className="mt-4 text-xs text-text-tertiary hover:text-text-secondary transition-colors underline underline-offset-2"
                       >
                         {showSamples
-                          ? (L4(lang, { ko: "샘플 숨기기", en: "Hide samples" }))
-                          : (L4(lang, { ko: "샘플 보기", en: "Show samples" }))}
+                          ? (L4(lang, { ko: "샘플 숨기기", en: "Hide samples", ja: "Hide samples", zh: "Hide samples" }))
+                          : (L4(lang, { ko: "샘플 보기", en: "Show samples", ja: "Show samples", zh: "Show samples" }))}
                       </button>
                     </div>
                     {/* Sample planets — only shown on explicit toggle */}
                     {showSamples && SAMPLE_PLANETS.map((sample) => (
                       <div key={sample.id} className="premium-link-card relative p-6 opacity-60">
                         <span className="absolute right-4 top-4 rounded-full border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-amber">
-                          {L4(lang, { ko: "샘플", en: "Sample" })}
+                          {L4(lang, { ko: "샘플", en: "Sample", ja: "Sample", zh: "Sample" })}
                         </span>
                         <div className="flex items-center gap-3">
                           <span className="site-kicker">{sample.genre}</span>
@@ -600,47 +710,19 @@ export function NetworkHomeClient() {
                 ? (
                   <div className="premium-panel-soft col-span-full flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-text-tertiary">
-                      {L4(lang, { ko: "필터 결과가 없습니다.", en: "No results match the current filters." })}
+                      {L4(lang, { ko: "필터 결과가 없습니다.", en: "No results match the current filters.", ja: "フィルター 結果がありません。", zh: "筛选 没有结果。" })}
                     </p>
                     <button
                       type="button"
                       onClick={() => { setBoardFilter("all"); setSelectedTags([]); setShowBookmarksOnly(false); }}
                       className="mt-4 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors"
                     >
-                      {L4(lang, { ko: "필터 해제", en: "Clear Filters" })}
+                      {L4(lang, { ko: "필터 해제", en: "Clear Filters", ja: "フィルター 해제", zh: "筛选 해제" })}
                     </button>
                   </div>
                 )
               : filteredPlanets.map((planet) => (
-                  <div key={planet.id} className="premium-link-card p-6">
-                    <Link href={`/network/planets/${planet.id}`} className="block">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="site-kicker">{planet.genre}</span>
-                        <SettlementBadge status={planet.status} lang={lang} />
-                      </div>
-                      <h3 className="mt-4 text-xl font-semibold text-text-primary">{planet.name}</h3>
-                      <p className="mt-3 text-sm leading-7 text-text-secondary">{planet.summary}</p>
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {planet.representativeTags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="badge badge-blue">
-                            {tag}
-                          </span>
-                        ))}
-                        {(planet.tags ?? []).slice(0, 2).map((tag) => (
-                          <span key={`t-${tag}`} className="badge badge-blue">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-6 flex items-center justify-between text-xs text-text-tertiary">
-                        <span>{L4(lang, { ko: `최근 로그 ${planet.stats.logCount}개`, en: `${planet.stats.logCount} recent logs` })}</span>
-                        <span>{L4(lang, { ko: `정산 ${planet.stats.settlementCount}`, en: `${planet.stats.settlementCount} settlements` })}</span>
-                      </div>
-                    </Link>
-                    <div className="mt-3 flex justify-end">
-                      <BookmarkButton planetId={planet.id} compact />
-                    </div>
-                  </div>
+                  <PlanetCard key={planet.id} planet={planet} lang={lang} />
                 ))}
           </div>
         </section>
@@ -649,14 +731,14 @@ export function NetworkHomeClient() {
         <section id="board-posts" className="space-y-4 scroll-mt-24">
           <div className="flex items-center justify-between">
             <div>
-              <div className="site-kicker">{L4(lang, { ko: "최신 관측 로그", en: "Latest Logs" })}</div>
-              <h2 className="site-title mt-2 text-2xl font-semibold">{L4(lang, { ko: "이야기와 기록 스트림", en: "Story and record stream" })}</h2>
+              <div className="site-kicker">{L4(lang, { ko: "최신 관측 로그", en: "Latest Logs", ja: "最新 観測 ログ", zh: "最新 观测 日志" })}</div>
+              <h2 className="site-title mt-2 text-2xl font-semibold">{L4(lang, { ko: "이야기와 기록 스트림", en: "Story and record stream", ja: "Story and record stream", zh: "Story and record stream" })}</h2>
             </div>
             <Link
               href="/network/posts/new"
               className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
             >
-              + {L4(lang, { ko: "글쓰기", en: "Write" })}
+              + {L4(lang, { ko: "글쓰기", en: "Write", ja: "投稿する", zh: "发帖" })}
             </Link>
           </div>
 
@@ -701,14 +783,14 @@ export function NetworkHomeClient() {
                 ? (
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-accent-red mb-3">
-                      {L4(lang, { ko: "게시글을 불러오는 데 실패했습니다", en: "Failed to load posts" })}
+                      {L4(lang, { ko: "게시글을 불러오는 데 실패했습니다", en: "Failed to load posts", ja: "投稿을 불러오는 데 실패했습니다", zh: "帖子을 불러오는 데 실패했습니다" })}
                     </p>
                     <button
                       type="button"
                       onClick={handleRetry}
                       className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-5 py-2.5 text-xs font-medium text-accent-amber transition hover:bg-accent-amber/20"
                     >
-                      {L4(lang, { ko: "다시 시도", en: "Retry" })}
+                      {L4(lang, { ko: "다시 시도", en: "Retry", ja: "再試行", zh: "重试" })}
                     </button>
                   </div>
                 )
@@ -716,92 +798,33 @@ export function NetworkHomeClient() {
                 ? (
                   <div className="premium-panel-soft flex flex-col items-center justify-center p-10 text-center">
                     <p className="text-sm text-text-tertiary">
-                      {L4(lang, { ko: "아직 게시글이 없습니다.", en: "No posts yet." })}
+                      {L4(lang, { ko: "아직 게시글이 없습니다.", en: "No posts yet.", ja: "아직 投稿がありません。", zh: "아직 暂无帖子。" })}
                     </p>
                     <Link
                       href="/network/posts/new"
                       className="mt-4 rounded-lg bg-accent-amber/20 px-5 py-2.5 text-sm font-medium text-accent-amber transition hover:bg-accent-amber/30"
                     >
-                      {L4(lang, { ko: "첫 글을 작성해보세요", en: "Write the first post" })}
+                      {L4(lang, { ko: "첫 글을 작성해보세요", en: "Write the first post", ja: "첫 글을 作成해보세요", zh: "첫 글을 撰写해보세요" })}
                     </Link>
                   </div>
                 )
-                : filteredPosts.map((post) => {
-                  const planet = state.planetMap[post.planetId];
-                  const author = state.authorMap[post.authorId];
-                  const isIfPost = post.boardType === "if";
-                  return (
-                    <Link
+                : filteredPosts.map((post) => (
+                    <PostCard
                       key={post.id}
-                      href={`/network/posts/${post.id}`}
-                      className={`premium-panel-soft p-5 transition ${
-                        isIfPost
-                          ? "border-purple-400/20 hover:border-purple-400/40"
-                          : "hover:border-accent-amber/20"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="badge badge-amber">
-                          {pickNetworkLabel(REPORT_TYPE_LABELS[post.reportType], lang)}
-                        </span>
-                        <span
-                          className={
-                            isIfPost
-                              ? "inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-purple-400/10 px-3 py-1 font-[family-name:var(--font-mono)] text-[10px] font-semibold tracking-[0.12em] text-purple-300 uppercase"
-                              : "badge badge-redacted"
-                          }
-                        >
-                          {isIfPost && (
-                            <span className="text-[11px]" aria-hidden="true">
-                              IF
-                            </span>
-                          )}
-                          {pickNetworkLabel(BOARD_TYPE_LABELS[post.boardType], lang)}
-                        </span>
-                        {post.followupStatus ? <SettlementBadge status={post.followupStatus} lang={lang} /> : null}
-                      </div>
-
-                      <h3 className={`mt-4 text-lg font-semibold ${isIfPost ? "text-purple-200" : "text-text-primary"}`}>
-                        {post.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-text-secondary">{post.summary}</p>
-
-                      {(post.tags ?? []).length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {post.tags.slice(0, 5).map((tag) => (
-                            <span key={tag} className="rounded-full border border-white/8 bg-white/[0.02] px-2 py-0.5 text-[10px] text-text-tertiary">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-text-tertiary">
-                        <span className="font-medium text-text-secondary">
-                          {author?.nickname ?? `Explorer-${post.authorId.slice(0, 6)}`}
-                        </span>
-                        <span>{relativeTime(post.createdAt, lang)}</span>
-                        <span>{planet?.name ?? (post.planetId || (L4(lang, { ko: "일반", en: "General" })))}</span>
-                        <span className="ml-auto flex items-center gap-3">
-                          {post.metrics.commentCount > 0 && (
-                            <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments` })}</span>
-                          )}
-                          {post.metrics.reactionCount > 0 && (
-                            <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions` })}</span>
-                          )}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
+                      post={post}
+                      planet={state.planetMap[post.planetId]}
+                      author={state.authorMap[post.authorId]}
+                      lang={lang}
+                    />
+                  ))}
           </div>
         </section>
 
         {/* Settlements section */}
         <section className="space-y-4">
           <div>
-            <div className="site-kicker">{L4(lang, { ko: "최신 정산", en: "Latest Settlements" })}</div>
-            <h2 className="site-title mt-2 text-2xl font-semibold">{L4(lang, { ko: "위험도와 판정 변화", en: "Risk and verdict changes" })}</h2>
+            <div className="site-kicker">{L4(lang, { ko: "최신 정산", en: "Latest Settlements", ja: "最新 정산", zh: "最新 정산" })}</div>
+            <h2 className="site-title mt-2 text-2xl font-semibold">{L4(lang, { ko: "위험도와 판정 변화", en: "Risk and verdict changes", ja: "Risk and verdict changes", zh: "Risk and verdict changes" })}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -819,15 +842,15 @@ export function NetworkHomeClient() {
                       </div>
                       <div className="mt-4 space-y-3 text-sm text-text-secondary">
                         <div className="flex items-center justify-between gap-3">
-                          <span>{L4(lang, { ko: "EH 수치", en: "EH Value" })}</span>
+                          <span>{L4(lang, { ko: "EH 수치", en: "EH Value", ja: "EH Value", zh: "EH Value" })}</span>
                           <span className="text-text-primary">{settlement.ehValue ?? "-"}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span>{L4(lang, { ko: "위험도", en: "Risk" })}</span>
+                          <span>{L4(lang, { ko: "위험도", en: "Risk", ja: "Risk", zh: "Risk" })}</span>
                           <span className="text-text-primary">{settlement.risk ?? "-"}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span>{L4(lang, { ko: "보관 등급", en: "Archive" })}</span>
+                          <span>{L4(lang, { ko: "보관 등급", en: "Archive", ja: "アーカイブ 등급", zh: "归档 등급" })}</span>
                           <span className="text-text-primary">{settlement.archiveLevel ?? "-"}</span>
                         </div>
                       </div>
@@ -842,7 +865,7 @@ export function NetworkHomeClient() {
             href="/network/guidelines"
             className="font-[family-name:var(--font-mono)] text-xs tracking-[0.12em] text-text-tertiary hover:text-accent-amber transition-colors"
           >
-            {L4(lang, { ko: "NMF 2차 창작 가이드라인", en: "NMF Creative Guidelines" })} &rarr;
+            {L4(lang, { ko: "NMF 2차 창작 가이드라인", en: "NMF Creative Guidelines", ja: "NMF Creative Guidelines", zh: "NMF Creative Guidelines" })} &rarr;
           </Link>
         </section>
       </div>

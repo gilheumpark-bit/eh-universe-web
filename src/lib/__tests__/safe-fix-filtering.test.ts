@@ -6,7 +6,7 @@
 
 import type { FixSuggestion } from '@/lib/code-studio/pipeline/pipeline-utils';
 import type { PipelineResult } from '@/lib/code-studio/pipeline/pipeline';
-import { runVerificationLoop, type SafeFixCategory } from '@/lib/code-studio/pipeline/verification-loop';
+import { runVerificationLoop } from '@/lib/code-studio/pipeline/verification-loop';
 
 // ============================================================
 // PART 1 — Mocks
@@ -32,19 +32,19 @@ jest.mock('@/lib/code-studio/features/patent-scanner', () => ({
   scanProject: jest.fn(),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { runStaticPipeline } = require('@/lib/code-studio/pipeline/pipeline') as {
   runStaticPipeline: jest.Mock;
 };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { findBugsStatic } = require('@/lib/code-studio/pipeline/bugfinder') as {
   findBugsStatic: jest.Mock;
 };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { generateFixes } = require('@/lib/code-studio/pipeline/pipeline-utils') as {
   generateFixes: jest.Mock;
 };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { scanProject } = require('@/lib/code-studio/features/patent-scanner') as {
   scanProject: jest.Mock;
 };

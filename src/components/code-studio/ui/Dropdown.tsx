@@ -168,7 +168,7 @@ export function Dropdown({
             tooltip-animate"
           style={{ zIndex: "var(--z-dropdown)" }}
         >
-          {options.map((opt, idx) => {
+          {options.map((opt, _idx) => {
             const enabledIdx = enabledOptions.indexOf(opt);
             const isFocused = enabledIdx === focusIdx;
             const isSelected = opt.value === value;

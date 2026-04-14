@@ -7,8 +7,8 @@
 // + 전이 의존성 스캔 (package-lock.json 기반)
 // + 개선된 채점 가중치
 
-const { readFileSync, readdirSync, statSync, existsSync } = require('fs');
-const { join, extname, relative } = require('path');
+const { readFileSync, readdirSync, _statSync, existsSync } = require('fs');
+const { join, _extname, relative } = require('path');
 
 // ============================================================
 // PART 1 — SPDX License Database & Patterns
@@ -414,7 +414,7 @@ function calculateIPScore(
 // PART 5 — IP Scan Runner
 // ============================================================
 
-export async function runIpScan(path: string, opts: Record<string, unknown>): Promise<void> {
+export async function runIpScan(_path: string, _opts: Record<string, unknown>): Promise<void> {
   const rootPath = process.cwd();
   console.log('🦔 CS Quill — IP/특허/라이선스 스캔\n');
 

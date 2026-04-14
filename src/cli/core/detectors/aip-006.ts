@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 /**
  * AIP-006: Vanilla Style — 라이브러리 대신 직접 구현

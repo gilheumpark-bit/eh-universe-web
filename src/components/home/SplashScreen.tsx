@@ -20,7 +20,8 @@ export default function SplashScreen({
 
   useEffect(() => {
     // Read directly from storage to bypass SSR hydration lag
-    const saved = localStorage.getItem("eh-lang");
+    let saved: string | null = null;
+    try { saved = localStorage.getItem("eh-lang"); } catch { /* private browsing */ }
     const detected = saved && ["ko", "en", "ja", "zh"].includes(saved)
       ? (saved as typeof resolvedLang)
       : contextLang;

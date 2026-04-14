@@ -72,7 +72,7 @@ export function ApiKeyModal({ onSave, onSkip }: Props) {
               <Key size={14} className="text-white/50" />
               <input type="password" value={key} onChange={(e) => setKey(e.target.value)}
                 placeholder={selectedProvider.placeholder}
-                className="flex-1 bg-transparent text-sm text-white outline-none" />
+                className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
             </div>
             <button onClick={() => onSave(key, provider)} disabled={!key.trim() && provider !== "ollama"}
               className="w-full py-2 bg-green-600 text-white text-sm rounded-lg font-semibold hover:bg-green-700 disabled:opacity-30 transition-colors">

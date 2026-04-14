@@ -2,9 +2,9 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import {
-  Key, Plus, Trash2, RotateCcw, Zap, Shield, Eye, EyeOff,
+  Key, Trash2, RotateCcw, Zap, Shield, Eye, EyeOff,
   Activity, DollarSign, ChevronDown, ChevronRight, CheckCircle2,
-  AlertTriangle, Loader2, Settings2, Layers, BarChart3,
+  AlertTriangle, Loader2, Layers, BarChart3,
 } from "lucide-react";
 import {
   type ProviderId,

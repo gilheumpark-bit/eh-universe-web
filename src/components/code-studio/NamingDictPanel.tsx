@@ -39,7 +39,7 @@ function loadDict(): NamingDict {
 }
 
 function saveDict(dict: NamingDict): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dict));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dict)); } catch { /* quota/private */ }
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types+Storage | inputs=none | outputs=NamingDict,loadDict,saveDict
@@ -203,7 +203,7 @@ export function NamingDictPanel({ activeFileContent = "" }: Props) {
           <input
             type="text" placeholder="Search rules..."
             value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
+            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
           />
         </div>
       </div>
@@ -236,9 +236,9 @@ export function NamingDictPanel({ activeFileContent = "" }: Props) {
               return editIdx === realIdx ? (
                 <div key={i} className="flex flex-col gap-2 p-3 rounded-lg bg-white/8 border border-accent-cyan/30">
                   <input value={editTerm} onChange={(e) => setEditTerm(e.target.value)} placeholder="Term"
-                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus:border-accent-cyan/50" />
+                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50" />
                   <input value={editConv} onChange={(e) => setEditConv(e.target.value)} placeholder="Convention"
-                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus:border-accent-cyan/50" />
+                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50" />
                   <div className="flex justify-end gap-2">
                     <button onClick={() => setEditIdx(null)} className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-text-tertiary hover:bg-white/10"><X className="w-3.5 h-3.5" /> Cancel</button>
                     <button onClick={saveEditTerm} className="flex items-center gap-1 px-2 py-1 rounded text-[11px] bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25 hover:bg-accent-cyan/25"><Check className="w-3.5 h-3.5" /> Save</button>
@@ -312,9 +312,9 @@ export function NamingDictPanel({ activeFileContent = "" }: Props) {
         <div className="p-3 shrink-0 border-t border-white/5 pointer-events-auto space-y-2">
           <div className="grid grid-cols-1 gap-2">
             <input value={newTerm} onChange={(e) => setNewTerm(e.target.value)} placeholder='Term (e.g. "user id")'
-              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/40" />
+              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/40" />
             <input value={newConvention} onChange={(e) => setNewConvention(e.target.value)} placeholder='Convention (e.g. "userId")'
-              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/40" />
+              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/40" />
           </div>
           <button onClick={addTerm}
             className="w-full flex items-center justify-center gap-2 py-1.5 bg-accent-cyan/10 hover:bg-accent-cyan/20 border border-accent-cyan/20 rounded-md text-[12px] font-medium transition-colors text-accent-cyan">
@@ -327,9 +327,9 @@ export function NamingDictPanel({ activeFileContent = "" }: Props) {
         <div className="p-3 shrink-0 border-t border-white/5 pointer-events-auto space-y-2">
           <div className="grid grid-cols-1 gap-2">
             <input value={newPattern} onChange={(e) => setNewPattern(e.target.value)} placeholder='Scope (e.g. "components")'
-              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/40" />
+              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/40" />
             <input value={newPatternConv} onChange={(e) => setNewPatternConv(e.target.value)} placeholder='Convention (e.g. "PascalCase")'
-              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/40" />
+              className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/40" />
           </div>
           <button onClick={addPattern}
             className="w-full flex items-center justify-center gap-2 py-1.5 bg-accent-cyan/10 hover:bg-accent-cyan/20 border border-accent-cyan/20 rounded-md text-[12px] font-medium transition-colors text-accent-cyan">

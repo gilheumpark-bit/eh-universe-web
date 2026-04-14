@@ -43,7 +43,7 @@ export function getEmbedMarkdown(config: EmbedConfig): string {
 
 /** oEmbed JSON 응답 (외부 서비스 연동용) */
 export function getOEmbedJson(config: EmbedConfig, title: string): object {
-  const url = getEmbedUrl(config);
+  const _url = getEmbedUrl(config);
   return {
     version: '1.0',
     type: 'rich',

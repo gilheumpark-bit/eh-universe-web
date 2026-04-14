@@ -369,7 +369,7 @@ export function useStudioExport({
     }
     
     e.target.value = '';
-  }, [ensureProject, setSessions, setCurrentSessionId, setActiveTab, language, t, setProjects, setCurrentProjectId]);
+  }, [ensureProject, setSessions, setCurrentSessionId, setActiveTab, language, t]);
 
   // Print — accepts an optional session to print a specific history card
   const handlePrint = useCallback((targetSession?: ChatSession) => {
@@ -381,7 +381,7 @@ export function useStudioExport({
       ? `<div style="white-space:pre-wrap;font-family:serif;line-height:1.8;">${escHtml(editDraft)}</div>`
       : session.messages.map(m => {
         const prefix = m.role === 'user' ? '\u{1F4DD} ' : '\u{1F916} ';
-        return `<div style="margin-bottom:24px;"><strong>${prefix}${m.role.toUpperCase()}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
+        return `<div style="margin-bottom:24px;"><strong>${prefix}${escHtml(m.role.toUpperCase())}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${escHtml(m.content)}</div></div>`;
       }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
     const w = window.open('', '_blank');
     if (!w) return;

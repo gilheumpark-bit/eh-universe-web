@@ -1,7 +1,43 @@
 /**
  * Basic SSRF mitigation: block obvious private/local targets before fetch.
  * Not a substitute for network-level egress controls.
+ *
+ * DNS rebinding risk: An attacker can make a domain resolve to a public IP
+ * during validation, then switch to a private IP before the actual fetch.
+ * We mitigate this by re-validating the final redirected URL after fetch
+ * via `validatePostFetchUrl()`. For full protection, network-level egress
+ * controls (e.g. firewall rules blocking RFC1918 from the fetch process)
+ * are recommended.
  */
+
+const PRIVATE_IP_PATTERNS = [
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,
+  /^0\./,
+  /^::1$/,
+  /^fc00:/,
+  /^fe80:/,
+  /^localhost$/i,
+];
+
+function isPrivateHost(hostname: string): boolean {
+  return PRIVATE_IP_PATTERNS.some(p => p.test(hostname));
+}
+
+/**
+ * Post-fetch DNS rebinding guard: validates the final URL after redirects.
+ * Call this after `fetch()` completes, passing `response.url`.
+ * Throws if the resolved destination is a private/internal address.
+ */
+export function validatePostFetchUrl(responseUrl: string): void {
+  const finalUrl = new URL(responseUrl);
+  if (isPrivateHost(finalUrl.hostname)) {
+    throw new Error('SSRF blocked: resolved to private IP after redirect');
+  }
+}
 
 const BLOCKED_HOSTNAMES = new Set([
   'localhost',

@@ -131,7 +131,7 @@ describe('useStudioSync', () => {
   });
 
   it('aborts sync when no token is available', async () => {
-    const { get, params, cleanup } = createHarness({
+    const { get, params: _params, cleanup } = createHarness({
       accessToken: null,
       refreshAccessToken: jest.fn().mockResolvedValue(null),
     });

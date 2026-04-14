@@ -14,7 +14,7 @@ export default function ErrorOverlay({ error, onDismiss, onFixWithAI }: Props) {
   const stackLines = error.stack ? error.stack.split("\n").filter((l) => l.trim()) : [];
 
   return (
-    <div className="absolute inset-0 z-[100] bg-red-900/92 text-white flex flex-col font-mono text-[13px] overflow-hidden">
+    <div className="absolute inset-0 z-[var(--z-dropdown)] bg-red-900/92 text-white flex flex-col font-mono text-[13px] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/15 bg-black/20">
         <div className="flex items-center gap-2">

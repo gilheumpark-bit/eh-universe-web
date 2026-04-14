@@ -278,7 +278,7 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
             onChange={e => { setFindText(e.target.value); }}
             onKeyDown={e => { if (e.key === 'Enter') navigateTo(matchIndex + 1); }}
             placeholder={isKO ? '검색어' : 'Find...'}
-            className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus:border-accent-purple transition-colors text-text-primary"
+            className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors text-text-primary"
           />
 
           <input
@@ -286,7 +286,7 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
             onChange={e => setReplaceText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') replaceOne(); }}
             placeholder={isKO ? '바꿀 내용' : 'Replace...'}
-            className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus:border-accent-purple transition-colors text-text-primary"
+            className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors text-text-primary"
           />
 
           <div className="flex items-center gap-1">

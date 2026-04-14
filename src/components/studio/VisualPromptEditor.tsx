@@ -123,12 +123,12 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
           value={card.title}
           onChange={e => update({ title: e.target.value })}
           placeholder={isKO ? '카드 제목' : 'Card title'}
-          className="flex-1 ds-input text-sm text-white placeholder-zinc-600 outline-none focus:border-zinc-600"
+          className="flex-1 ds-input text-sm text-white placeholder-zinc-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-zinc-600"
         />
         <select
           value={card.shotType}
           onChange={e => update({ shotType: e.target.value as VisualShotType })}
-          className="bg-black/40 border border-border rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+          className="bg-black/40 border border-border rounded-xl px-3 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
         >
           {SHOT_TYPES.map(s => (
             <option key={s.value} value={s.value}>{isKO ? s.ko : s.en}</option>
@@ -204,7 +204,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
                   value={card[field] || ''}
                   onChange={e => update({ [field]: e.target.value })}
                   rows={2}
-                  className="w-full ds-input text-xs text-[11px] text-text-secondary placeholder-zinc-700 outline-none resize-none focus:border-zinc-600"
+                  className="w-full ds-input text-xs text-[11px] text-text-secondary placeholder-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 resize-none focus:border-zinc-600"
                 />
               </div>
             );
@@ -225,7 +225,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
               value={card.seed || ''}
               onChange={e => update({ seed: e.target.value ? Number(e.target.value) : undefined })}
               placeholder="e.g. 42"
-              className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus:border-zinc-600 px-3 py-2 rounded-lg"
+              className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-zinc-600 px-3 py-2 rounded-lg"
             />
             <p className="text-[9px] text-zinc-500 mt-1">
               {isKO ? '시드 값을 고정하면 인물의 얼굴이나 아트 스타일의 시각적 일관성(Consistency)을 유지하기 쉽습니다.' : 'Fixing the seed helps maintain face/style consistency.'}
@@ -238,7 +238,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
               value={card.referenceImageUrl || ''}
               onChange={e => update({ referenceImageUrl: e.target.value })}
               placeholder="https://..."
-              className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus:border-zinc-600 px-3 py-2 rounded-lg"
+              className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-zinc-600 px-3 py-2 rounded-lg"
             />
             <p className="text-[9px] text-zinc-500 mt-1">
               {isKO ? '컨트롤넷이나 Image2Image 파이프라인에서 참조할 원본 캐릭터의 이미지 주소(URL)입니다.' : 'Source image URL for ControlNet or Image2Image pipeline.'}

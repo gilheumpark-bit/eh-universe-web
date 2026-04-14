@@ -150,7 +150,7 @@ export function TranslationActionDock() {
         <select
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
-          className="w-full cursor-pointer rounded-lg border border-white/10 bg-[#111113] p-2 text-sm text-text-secondary outline-none transition-colors hover:bg-[#151518] focus:border-accent-green/50"
+          className="w-full cursor-pointer rounded-lg border border-white/10 bg-[#111113] p-2 text-sm text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors hover:bg-[#151518] focus:border-accent-green/50"
         >
           {PROVIDERS.map((p) => (
             <option key={p.id} value={p.id}>

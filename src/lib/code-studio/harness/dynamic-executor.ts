@@ -10,7 +10,7 @@
 // 전부 브라우저 내 실행 → 서버 비용 0원
 
 import type { WebContainerInstance } from '@/lib/code-studio/features/webcontainer';
-import type { GateResult } from './adversarial-core';
+
 import { generateMutations } from './adversarial-core';
 
 // ── Types ──
@@ -45,7 +45,7 @@ async function runWithTimeout(
 export async function runSpyTest(
   wc: WebContainerInstance,
   code: string,
-  entryFunction: string,
+  _entryFunction: string,
 ): Promise<DynamicTestResult> {
   const start = Date.now();
   const findings: string[] = [];

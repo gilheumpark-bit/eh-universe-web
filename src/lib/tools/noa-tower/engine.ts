@@ -269,17 +269,17 @@ function advanceObjectives(session: GameState, analysis: Analysis): void {
 function resolveGameStatus(session: GameState, analysis: Analysis, bucket: string, playerText: string, lang: Lang): void {
   if (bucket === "give_up") {
     session.gameStatus = "withdrew";
-    session.endingText = L4(lang, { ko: "탑은 당신을 붙잡지 않았습니다. 하지만 이 중단도 기록으로 남았습니다.", en: "The tower did not hold you. But this interruption, too, remains as a record." });
+    session.endingText = L4(lang, { ko: "탑은 당신을 붙잡지 않았습니다. 하지만 이 중단도 기록으로 남았습니다.", en: "The tower did not hold you. But this interruption, too, remains as a record.", ja: "The tower did not hold you. But this interruption, too, remains as a record.", zh: "The tower did not hold you. But this interruption, too, remains as a record." });
     return;
   }
   if (session.distortion >= 1.1 || (bucket === "delusion_threshold" && session.distortion >= 0.84)) {
     session.gameStatus = "collapse";
-    session.endingText = L4(lang, { ko: "탑이 흐려졌습니다. 당신의 확신이 구조보다 앞서면서 기록이 붕괴했습니다. 같은 사건을 다시 시작하면 다른 문장을 남길 수 있습니다.", en: "The tower has grown hazy. Your conviction outran the structure and the records collapsed. If you restart the same case, you may leave a different statement." });
+    session.endingText = L4(lang, { ko: "탑이 흐려졌습니다. 당신의 확신이 구조보다 앞서면서 기록이 붕괴했습니다. 같은 사건을 다시 시작하면 다른 문장을 남길 수 있습니다.", en: "The tower has grown hazy. Your conviction outran the structure and the records collapsed. If you restart the same case, you may leave a different statement.", ja: "탑이 흐려졌습니다. 당신의 확신이 구조보다 앞서면서 기록이 붕괴했습니다. 같은 사件을 다시 시작하면 다른 문장을 남길 수 있습니다.", zh: "탑이 흐려졌습니다. 당신의 확신이 구조보다 앞서면서 기록이 붕괴했습니다. 같은 사条을 다시 시작하면 다른 문장을 남길 수 있습니다." });
     return;
   }
   if (session.completedObjectives.every(Boolean) && playerText.includes(FINAL_VERDICT.slice(0, 18))) {
     session.gameStatus = "breakthrough";
-    session.endingText = L4(lang, { ko: "탑이 당신의 마지막 문장을 기록으로 승인했습니다. 삭제된 층은 더 이상 숨겨진 공간이 아니라 지워진 증거로 남습니다.", en: "The tower has approved your final statement as a record. The deleted floor is no longer a hidden space but evidence of erasure." });
+    session.endingText = L4(lang, { ko: "탑이 당신의 마지막 문장을 기록으로 승인했습니다. 삭제된 층은 더 이상 숨겨진 공간이 아니라 지워진 증거로 남습니다.", en: "The tower has approved your final statement as a record. The deleted floor is no longer a hidden space but evidence of erasure.", ja: "탑이 당신의 마지막 문장을 기록으로 承認했습니다. 削除된 층은 더 이상 숨겨진 공간이 아니라 지워진 증거로 남습니다.", zh: "탑이 당신의 마지막 문장을 기록으로 批准했습니다. 删除된 층은 더 이상 숨겨진 공간이 아니라 지워진 증거로 남습니다." });
   }
 }
 
@@ -291,7 +291,7 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
   session.verdictAttemptCount += 1;
   const lowered = playerText.toLowerCase();
   if (!canSubmitVerdict(session)) {
-    const feedback = L4(lang, { ko: "탑은 아직 최종 기록을 받지 않습니다. 단서와 이론 조각을 더 모아야 합니다.", en: "The tower does not yet accept a final record. You must gather more clues and theory fragments." });
+    const feedback = L4(lang, { ko: "탑은 아직 최종 기록을 받지 않습니다. 단서와 이론 조각을 더 모아야 합니다.", en: "The tower does not yet accept a final record. You must gather more clues and theory fragments.", ja: "The tower does not yet accept a final record. You must gather more clues and theory fragments.", zh: "The tower does not yet accept a final record. You must gather more clues and theory fragments." });
     session.lastVerdictFeedback = feedback;
     session.distortion = Math.min(session.distortion + 0.04, 2);
     return feedback;
@@ -301,8 +301,8 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
     .map(([key]) => key);
   if (missingConcepts.length === 0 && analysis.vectors.delusion < 0.62) {
     session.gameStatus = "breakthrough";
-    session.endingText = L4(lang, { ko: "탑이 당신의 문장을 최종 기록으로 승인했습니다. 정답을 말했기 때문이 아니라, 방향과 삭제 규칙을 동시에 묶어냈기 때문입니다.", en: "The tower has approved your statement as the final record. Not because you gave the right answer, but because you bound direction and deletion rules together." });
-    const feedback = L4(lang, { ko: "탑이 문장을 접수했습니다. 기록이 닫히는 대신 한 층이 다시 드러납니다.", en: "The tower has accepted the statement. Instead of closing the record, a floor has been revealed once more." });
+    session.endingText = L4(lang, { ko: "탑이 당신의 문장을 최종 기록으로 승인했습니다. 정답을 말했기 때문이 아니라, 방향과 삭제 규칙을 동시에 묶어냈기 때문입니다.", en: "The tower has approved your statement as the final record. Not because you gave the right answer, but because you bound direction and deletion rules together.", ja: "탑이 당신의 문장을 최종 기록으로 承認했습니다. 정답을 말했기 때문이 아니라, 방향과 削除 규칙을 동시에 묶어냈기 때문입니다.", zh: "탑이 당신의 문장을 최종 기록으로 批准했습니다. 정답을 말했기 때문이 아니라, 방향과 删除 규칙을 동시에 묶어냈기 때문입니다." });
+    const feedback = L4(lang, { ko: "탑이 문장을 접수했습니다. 기록이 닫히는 대신 한 층이 다시 드러납니다.", en: "The tower has accepted the statement. Instead of closing the record, a floor has been revealed once more.", ja: "The tower has accepted the statement. Instead of closing the record, a floor has been revealed once more.", zh: "The tower has accepted the statement. Instead of closing the record, a floor has been revealed once more." });
     session.lastVerdictFeedback = feedback;
     return feedback;
   }
@@ -312,13 +312,13 @@ function evaluateVerdict(session: GameState, playerText: string, analysis: Analy
     deletion: { ko: "삭제", en: "deletion" },
     floor: { ko: "층", en: "floor" },
   };
-  const missingText = missingConcepts.map((c) => L(conceptNames[c], lang)).join(", ") || (L4(lang, { ko: "검증된 균형", en: "verified balance" }));
+  const missingText = missingConcepts.map((c) => L(conceptNames[c], lang)).join(", ") || (L4(lang, { ko: "검증된 균형", en: "verified balance", ja: "verified balance", zh: "verified balance" }));
   session.distortion = Math.min(session.distortion + 0.12, 2);
-  const feedback = L4(lang, { ko: `탑은 문장을 보류했습니다. 아직 ${missingText} 개념이 충분히 묶이지 않았습니다.`, en: `The tower has deferred your statement. The concepts of ${missingText} are not yet sufficiently bound.` });
+  const feedback = L4(lang, { ko: `탑은 문장을 보류했습니다. 아직 ${missingText} 개념이 충분히 묶이지 않았습니다.`, en: `The tower has deferred your statement. The concepts of ${missingText} are not yet sufficiently bound.`, ja: `탑은 문장을 보류했습니다. 아직 ${missingText} 件념이 충분히 묶이지 않았습니다.`, zh: `탑은 문장을 보류했습니다. 아직 ${missingText} 个념이 충분히 묶이지 않았습니다.` });
   session.lastVerdictFeedback = feedback;
   if (session.distortion >= 1.1) {
     session.gameStatus = "collapse";
-    session.endingText = L4(lang, { ko: "성급한 최종 기록 제출이 구조를 무너뜨렸습니다. 탑은 문장을 남겼지만, 사건은 흐려진 채 닫혔습니다.", en: "A hasty final record submission has collapsed the structure. The tower preserved the statement, but the case was closed in a haze." });
+    session.endingText = L4(lang, { ko: "성급한 최종 기록 제출이 구조를 무너뜨렸습니다. 탑은 문장을 남겼지만, 사건은 흐려진 채 닫혔습니다.", en: "A hasty final record submission has collapsed the structure. The tower preserved the statement, but the case was closed in a haze.", ja: "성급한 최종 기록 제출이 구조를 무너뜨렸습니다. 탑은 문장을 남겼지만, 사件은 흐려진 채 닫혔습니다.", zh: "성급한 최종 기록 제출이 구조를 무너뜨렸습니다. 탑은 문장을 남겼지만, 사条은 흐려진 채 닫혔습니다." });
   }
   return feedback;
 }
@@ -407,8 +407,8 @@ function buildCasePayload(state: GameState, lang: Lang): CasePayload {
   if (currentObjective.complete && state.objectiveIndex === objectives.length - 1) {
     currentObjective = {
       id: "OBJ-FINAL",
-      title: L4(lang, { ko: "최종 기록 확인", en: "Final Record Verification" }),
-      body: L4(lang, { ko: "탑이 당신의 문장을 최종 기록으로 받아들일지 지켜보십시오.", en: "Watch whether the tower accepts your statement as the final record." }),
+      title: L4(lang, { ko: "최종 기록 확인", en: "Final Record Verification", ja: "최종 기록 確認", zh: "최종 기록 确认" }),
+      body: L4(lang, { ko: "탑이 당신의 문장을 최종 기록으로 받아들일지 지켜보십시오.", en: "Watch whether the tower accepts your statement as the final record.", ja: "Watch whether the tower accepts your statement as the final record.", zh: "Watch whether the tower accepts your statement as the final record." }),
       complete: state.gameStatus === "breakthrough",
       active: state.gameStatus === "active",
     };
@@ -421,7 +421,7 @@ function buildCasePayload(state: GameState, lang: Lang): CasePayload {
     distortion: round4(state.distortion),
     progress: round4(state.progress),
     towerCondition: tc,
-    towerConditionLabel: tcLabel ? L(tcLabel, lang) : (L4(lang, { ko: "탐사 중", en: "Exploring" })),
+    towerConditionLabel: tcLabel ? L(tcLabel, lang) : (L4(lang, { ko: "탐사 중", en: "Exploring", ja: "探査 중", zh: "探索 중" })),
     gameStatus: state.gameStatus,
     endingText: state.endingText,
     clueCount: unlocked.size,
@@ -478,7 +478,7 @@ function buildPayload(
 
 export function bootstrap(lang: Lang): GamePayload {
   const state = createInitialState();
-  return buildPayload(state, "insight", null, "", emptyVectors(), "insight", "intro", L(INTRO_TEXT, lang), L4(lang, { ko: "탑이 첫 기록을 기다립니다.", en: "The tower awaits the first record." }), [], lang);
+  return buildPayload(state, "insight", null, "", emptyVectors(), "insight", "intro", L(INTRO_TEXT, lang), L4(lang, { ko: "탑이 첫 기록을 기다립니다.", en: "The tower awaits the first record.", ja: "The tower awaits the first record.", zh: "The tower awaits the first record." }), [], lang);
 }
 
 export function respond(message: string, currentState: GameState, action: string, lang: Lang): GamePayload {
@@ -489,18 +489,18 @@ export function respond(message: string, currentState: GameState, action: string
   if (normalizedAction === "restart") {
     const restarted = bootstrap(lang);
     restarted.mode = "restart";
-    restarted.reply.event = L4(lang, { ko: "탑이 이전 기록을 덮고 새 장을 폈습니다.", en: "The tower has overwritten the previous record and opened a new chapter." });
+    restarted.reply.event = L4(lang, { ko: "탑이 이전 기록을 덮고 새 장을 폈습니다.", en: "The tower has overwritten the previous record and opened a new chapter.", ja: "탑이 前へ 기록을 덮고 새 장을 폈습니다.", zh: "탑이 上一页 기록을 덮고 새 장을 폈습니다." });
     return restarted;
   }
 
   if (session.gameStatus !== "active") {
-    return buildPayload(session, session.lastBucket || "insight", null, playerText, emptyVectors(), "insight", "ended", session.endingText, L4(lang, { ko: "새 기록을 시작하려면 재시작하십시오.", en: "Restart to begin a new record." }), [], lang);
+    return buildPayload(session, session.lastBucket || "insight", null, playerText, emptyVectors(), "insight", "ended", session.endingText, L4(lang, { ko: "새 기록을 시작하려면 재시작하십시오.", en: "Restart to begin a new record.", ja: "Restart to begin a new record.", zh: "Restart to begin a new record." }), [], lang);
   }
 
   if (normalizedAction === "silence") {
     session.pendingReentry = true;
-    appendHistory(session, { role: "system", text: L(WAIT_TEXT, lang), bucket: "silence", code: "WAIT", title: L4(lang, { ko: "침묵 유지", en: "Silence Maintained" }) });
-    return buildPayload(session, "silence_reentry", null, "", emptyVectors(), "insight", "wait", "", L4(lang, { ko: "탑은 기다립니다. 다음 발화는 재진입으로 기록됩니다.", en: "The tower waits. Your next utterance will be recorded as a re-entry." }), [], lang);
+    appendHistory(session, { role: "system", text: L(WAIT_TEXT, lang), bucket: "silence", code: "WAIT", title: L4(lang, { ko: "침묵 유지", en: "Silence Maintained", ja: "Silence Maintained", zh: "Silence Maintained" }) });
+    return buildPayload(session, "silence_reentry", null, "", emptyVectors(), "insight", "wait", "", L4(lang, { ko: "탑은 기다립니다. 다음 발화는 재진입으로 기록됩니다.", en: "The tower waits. Your next utterance will be recorded as a re-entry.", ja: "탑은 기다립니다. 次へ 발화는 재진입으로 기록됩니다.", zh: "탑은 기다립니다. 下一页 발화는 재진입으로 기록됩니다." }), [], lang);
   }
 
   if (normalizedAction in ACTION_ECHO && !playerText) {
@@ -509,8 +509,8 @@ export function respond(message: string, currentState: GameState, action: string
 
   if (normalizedAction === "submit_verdict" && !playerText) {
     return buildPayload(session, session.lastBucket || "consistency", null, "", emptyVectors(), "consistency", "verdict_missing",
-      L4(lang, { ko: "탑은 빈 문장을 최종 기록으로 받지 않습니다.", en: "The tower does not accept an empty sentence as a final record." }),
-      L4(lang, { ko: "최종 기록 후보를 먼저 적어야 합니다.", en: "You must write a final record candidate first." }), [], lang);
+      L4(lang, { ko: "탑은 빈 문장을 최종 기록으로 받지 않습니다.", en: "The tower does not accept an empty sentence as a final record.", ja: "The tower does not accept an empty sentence as a final record.", zh: "The tower does not accept an empty sentence as a final record." }),
+      L4(lang, { ko: "최종 기록 후보를 먼저 적어야 합니다.", en: "You must write a final record candidate first.", ja: "You must write a final record candidate first.", zh: "You must write a final record candidate first." }), [], lang);
   }
 
   const analysis = analyzeMessage(playerText, session);
@@ -523,7 +523,7 @@ export function respond(message: string, currentState: GameState, action: string
   const dv = dominantVector(analysis.vectors);
 
   if (playerText) {
-    appendHistory(session, { role: "player", text: playerText, bucket: "player", code: "USER", title: L4(lang, { ko: "플레이어", en: "Player" }) });
+    appendHistory(session, { role: "player", text: playerText, bucket: "player", code: "USER", title: L4(lang, { ko: "플레이어", en: "Player", ja: "Player", zh: "Player" }) });
   }
 
   session.turnCount += 1;
@@ -549,13 +549,13 @@ export function respond(message: string, currentState: GameState, action: string
 
   appendHistory(session, { role: "tower", text: replyText, bucket, code: template.code, title: L(template.title, lang) });
   for (const clue of unlockedClues) {
-    appendHistory(session, { role: "system", text: `${clue.title}\n${clue.body}`, bucket: "clue", code: clue.id, title: L4(lang, { ko: "단서 해금", en: "Clue Unlocked" }) });
+    appendHistory(session, { role: "system", text: `${clue.title}\n${clue.body}`, bucket: "clue", code: clue.id, title: L4(lang, { ko: "단서 해금", en: "Clue Unlocked", ja: "Clue Unlocked", zh: "Clue Unlocked" }) });
   }
   for (const fragment of unlockedFragments) {
-    appendHistory(session, { role: "system", text: `${fragment.title}\n${fragment.body}`, bucket: "theory", code: fragment.id, title: L4(lang, { ko: "이론 조각", en: "Theory Fragment" }) });
+    appendHistory(session, { role: "system", text: `${fragment.title}\n${fragment.body}`, bucket: "theory", code: fragment.id, title: L4(lang, { ko: "이론 조각", en: "Theory Fragment", ja: "Theory Fragment", zh: "Theory Fragment" }) });
   }
   if (verdictFeedback) {
-    appendHistory(session, { role: "system", text: verdictFeedback, bucket: "verdict", code: "VERDICT", title: L4(lang, { ko: "최종 기록 판정", en: "Final Record Verdict" }) });
+    appendHistory(session, { role: "system", text: verdictFeedback, bucket: "verdict", code: "VERDICT", title: L4(lang, { ko: "최종 기록 판정", en: "Final Record Verdict", ja: "Final Record Verdict", zh: "Final Record Verdict" }) });
   }
 
   return buildPayload(session, bucket, template, playerText, analysis.vectors, dv, "reply", replyText, eventText, unlockedClues, lang);

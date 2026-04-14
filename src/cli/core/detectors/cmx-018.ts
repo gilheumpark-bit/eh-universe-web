@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind, Node } from 'ts-morph';
+import { SyntaxKind } from 'ts-morph';
 
 /**
  * CMX-018: Feature Envy

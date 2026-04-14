@@ -141,7 +141,7 @@ export function BilateralEditor() {
               <select
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
+                className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer rounded-md transition-colors appearance-none min-w-0"
               >
                 <option value="ja" className="bg-bg-secondary text-text-primary">JP</option>
                 <option value="en" className="bg-bg-secondary text-text-primary">EN</option>
@@ -158,7 +158,7 @@ export function BilateralEditor() {
               <select
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none cursor-pointer rounded-md transition-colors appearance-none min-w-0"
+                className="bg-transparent text-[11px] sm:text-sm font-medium text-text-secondary px-1.5 sm:px-3 py-1 sm:py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer rounded-md transition-colors appearance-none min-w-0"
               >
                 <option value="ko" className="bg-bg-secondary text-text-primary">KO</option>
                 <option value="ja" className="bg-bg-secondary text-text-primary">JP</option>
@@ -246,7 +246,7 @@ export function BilateralEditor() {
           <textarea
             ref={sourceRef}
             placeholder={langKo ? "여기에 원문을 입력하세요...\n\n붙여넣기 또는 직접 입력" : "Enter source text here...\n\nPaste or type directly"}
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2] relative z-[1]"
+            className="flex-1 w-full resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2] relative z-[1]"
             value={source}
             onChange={(e) => setSource(e.target.value)}
             onKeyDown={handleSVIKeyDown}
@@ -298,7 +298,7 @@ export function BilateralEditor() {
           <textarea
             ref={resultRef}
             placeholder={langKo ? "번역 결과가 여기에 표시됩니다...\n\n◀ 왼쪽에 원문을 입력하고 ▶ 버튼을 누르세요" : "Translation results appear here...\n\n◀ Enter source text and press ▶ to translate"}
-            className="flex-1 w-full resize-none bg-transparent outline-none p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2]"
+            className="flex-1 w-full resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2]"
             value={result}
             onChange={(e) => setResult(e.target.value)}
             onContextMenu={textMenu.openMenu}

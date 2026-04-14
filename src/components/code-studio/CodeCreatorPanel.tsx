@@ -306,7 +306,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
             <textarea
               value={prompt} onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe what you want to create..."
-              className="w-full h-24 px-3 py-2 text-sm bg-[#0d1117] border border-white/10 rounded resize-none focus:outline-none focus:border-amber-700/45"
+              className="w-full h-24 px-3 py-2 text-sm bg-[#0d1117] border border-white/10 rounded resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-amber-700/45"
               disabled={running}
             />
             <div className="flex gap-2">
@@ -386,10 +386,11 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
               return (
                 <div key={file.path} className="rounded border border-white/8 bg-[#0d1117] overflow-hidden">
                   <div className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-white/5"
-                    onClick={() => setExpandedFile(isExpanded ? null : file.path)}>
+                    role="button" tabIndex={0} onClick={() => setExpandedFile(isExpanded ? null : file.path)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedFile(isExpanded ? null : file.path); } }}>
                     {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                     <FileCode2 size={12} className="text-amber-400" />
-                    <span className="text-[11px] font-mono flex-1 truncate">{file.path}</span>
+                    <span className="text-[11px] font-mono flex-1 truncate" title={file.path}>{file.path}</span>
                     {file.isNew && <span className="text-[9px] px-1 py-0.5 rounded bg-green-600 text-white">NEW</span>}
                     <span className="text-[9px] px-1 py-0.5 rounded" style={{
                       background: decision === "approved" ? "rgba(63,185,80,0.15)" : decision === "rejected" ? "rgba(248,81,73,0.15)" : "rgba(255,255,255,0.05)",
@@ -441,7 +442,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
             <div className="flex gap-2">
               <input value={feedback} onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Revision feedback..."
-                className="flex-1 px-2 py-1 text-xs bg-[#0a0e17] border border-white/10 rounded focus:outline-none focus:border-amber-700/45" />
+                className="flex-1 px-2 py-1 text-xs bg-[#0a0e17] border border-white/10 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-amber-700/45" />
               <button type="button" disabled={!feedback.trim() || running} onClick={() => void handleRevise()}
                 className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-40">
                 <RefreshCw size={10} /> Revise

@@ -10,18 +10,19 @@
 import { useState, useCallback, useEffect, useRef, useMemo, type MutableRefObject } from "react";
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
-  Maximize2, Minimize2, BarChart3, X, ChevronLeft, ChevronRight,
-  Headphones, Film,
+  Maximize2, Minimize2, BarChart3, X, ChevronLeft, 
+  Headphones, 
 } from "lucide-react";
 import type {
   ParsedScene, SceneBeat, VoiceMapping, ParticleType,
   TTSController, Emotion,
 } from "@/engine/scene-parser";
-import { createTTSController, adjustVoiceForEmotion } from "@/engine/scene-parser";
+import { createTTSController } from "@/engine/scene-parser";
 import { createAudioEngine, detectAmbient, detectSFX, getDominantEmotion } from "@/engine/scene-audio";
 import type { AudioEngine } from "@/engine/scene-audio";
 import type { AppLanguage } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
+import { logger } from "@/lib/logger";
 
 // ============================================================
 // PART 1 — Props & State Types
@@ -265,11 +266,11 @@ function DialogueBox({
   const typingSpeed = Math.round(40 / speed);
 
   const typeLabel: Record<SceneBeat["type"], string> = {
-    dialogue: L4(language, { ko: "대사", en: "Dialogue" }),
-    narration: L4(language, { ko: "서술", en: "Narration" }),
-    action: L4(language, { ko: "행동", en: "Action" }),
-    thought: L4(language, { ko: "내면", en: "Thought" }),
-    description: L4(language, { ko: "묘사", en: "Description" }),
+    dialogue: L4(language, { ko: "대사", en: "Dialogue", ja: "Dialogue", zh: "Dialogue" }),
+    narration: L4(language, { ko: "서술", en: "Narration", ja: "Narration", zh: "Narration" }),
+    action: L4(language, { ko: "행동", en: "Action", ja: "Action", zh: "Action" }),
+    thought: L4(language, { ko: "내면", en: "Thought", ja: "Thought", zh: "Thought" }),
+    description: L4(language, { ko: "묘사", en: "Description", ja: "Description", zh: "Description" }),
   };
 
   return (
@@ -296,18 +297,18 @@ function DialogueBox({
         <div className="mt-3 flex items-center justify-between">
           {showMetrics ? (
             <div className="flex items-center gap-3 text-[10px] text-text-tertiary">
-              <span>{L4(language, { ko: '텐션', en: 'Tension' })} <span className={tension > 70 ? "text-accent-red" : tension > 40 ? "text-accent-amber" : "text-accent-green"}>{tension}</span></span>
-              <span>{L4(language, { ko: '템포', en: 'Tempo' })} {beat.tempo === "fast" ? "⚡" : beat.tempo === "slow" ? "🐌" : "▶"}</span>
-              <span>{L4(language, { ko: '카메라', en: 'Camera' })} {beat.camera}</span>
+              <span>{L4(language, { ko: '텐션', en: 'Tension', ja: 'Tension', zh: 'Tension' })} <span className={tension > 70 ? "text-accent-red" : tension > 40 ? "text-accent-amber" : "text-accent-green"}>{tension}</span></span>
+              <span>{L4(language, { ko: '템포', en: 'Tempo', ja: 'Tempo', zh: 'Tempo' })} {beat.tempo === "fast" ? "⚡" : beat.tempo === "slow" ? "🐌" : "▶"}</span>
+              <span>{L4(language, { ko: '카메라', en: 'Camera', ja: 'Camera', zh: 'Camera' })} {beat.camera}</span>
             </div>
           ) : <div />}
 
           <div className="flex items-center gap-2">
-            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors" aria-label={L4(language, { ko: '이전', en: 'Previous' })}>
+            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors" aria-label={L4(language, { ko: '이전', en: 'Previous', ja: '前へ', zh: '上一页' })}>
               <ChevronLeft className="h-4 w-4 text-text-secondary" />
             </button>
-            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label={L4(language, { ko: '다음', en: 'Next' })}>
-              {L4(language, { ko: '다음', en: 'Next' })} ▶
+            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label={L4(language, { ko: '다음', en: 'Next', ja: '次へ', zh: '下一页' })}>
+              {L4(language, { ko: '다음', en: 'Next', ja: '次へ', zh: '下一页' })} ▶
             </button>
           </div>
         </div>
@@ -461,7 +462,7 @@ export default function ScenePlayer({
       // Null out TTS ref
       ttsRef.current = null;
 
-      if (IS_DEV) console.log("[ScenePlayer] Unmount cleanup complete");
+      logger.debug("ScenePlayer", "Unmount cleanup complete");
     };
   }, []);
 
@@ -473,7 +474,7 @@ export default function ScenePlayer({
     if (prevSceneIndexRef.current !== debouncedSceneIndex) {
       disposeScene(ttsRef, audioRef, autoPlayRef);
       prevSceneIndexRef.current = debouncedSceneIndex;
-      if (IS_DEV) console.log("[ScenePlayer] Scene transition cleanup:", debouncedSceneIndex);
+      logger.debug("ScenePlayer", "Scene transition cleanup:", debouncedSceneIndex);
     }
 
     const ambient = detectAmbient(currentScene.mood, currentScene.timeOfDay);
@@ -611,6 +612,10 @@ export default function ScenePlayer({
     ? (currentScene.mood === "rainy" ? "rain" : currentScene.mood === "snowy" ? "snow" : "none") as ParticleType
     : "none";
 
+  // 장면 전환 페이드 효과 (hooks must be before any early return)
+  // Use sceneIndex directly as key to avoid setState-in-effect
+  const fadeKey = state.sceneIndex;
+
   // 키보드
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -633,10 +638,6 @@ export default function ScenePlayer({
 
   const bgUrl = backgroundUrls?.get(currentScene.id);
   const bgGradient = getMoodGradient(currentScene.mood, currentScene.timeOfDay);
-
-  // 장면 전환 페이드 효과
-  const [fadeKey, setFadeKey] = useState(0);
-  useEffect(() => { setFadeKey(k => k + 1); }, [state.sceneIndex]);
 
   return (
     <div ref={containerRef} className={`relative w-full h-full overflow-hidden select-none ${sceneTransition === 'fade-out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} style={{ background: bgGradient }}>
@@ -710,7 +711,7 @@ export default function ScenePlayer({
           <select
             value={state.speed}
             onChange={(e) => setState((p) => ({ ...p, speed: Number(e.target.value) }))}
-            className="bg-transparent text-[10px] text-text-tertiary border-none outline-none cursor-pointer"
+            className="bg-transparent text-[10px] text-text-tertiary border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer"
           >
             <option value={0.5}>0.5x</option>
             <option value={0.75}>0.75x</option>

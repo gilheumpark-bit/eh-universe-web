@@ -7,7 +7,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
-import { L4 } from '@/lib/i18n';
+
 import { BarChart3, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 
 interface Props {
@@ -455,7 +455,7 @@ function OverlayChart({ episodes, language, onEpisodeClick }: {
               return (
                 <tr key={key} className="border-t border-border/30">
                   <td className="py-1.5 px-2 text-text-tertiary font-bold">{label}</td>
-                  {episodes.map((ep, i) => {
+                  {episodes.map((ep, _i) => {
                     const val = ep[key] as number;
                     const isMax = val === max && episodes.length > 1;
                     const isMin = val === min && episodes.length > 1;

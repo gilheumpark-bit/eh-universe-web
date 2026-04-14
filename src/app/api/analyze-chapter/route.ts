@@ -349,6 +349,12 @@ const EMPTY_FALLBACK: AnalysisFallback = {
 
 export async function POST(req: NextRequest) {
   try {
+    // Hard limit: reject requests over 64KB before parsing body
+    const contentLength = parseInt(req.headers.get('content-length') ?? '0');
+    if (contentLength > 65_536) {
+      return NextResponse.json({ error: 'Request too large (max 64KB)' }, { status: 413 });
+    }
+
     const ip = getClientIp(req.headers);
     const rl = checkRateLimit(ip, 'analyze-chapter', RATE_LIMITS.default);
     if (!rl.allowed) {
@@ -371,7 +377,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const content = typeof body.content === 'string' ? body.content.trim() : '';
+    const content = typeof body.content === 'string' ? body.content.slice(0, MAX_CONTENT_CHARS).trim() : '';
     if (!content) {
       return NextResponse.json({ error: 'Manuscript content is required.' }, { status: 400 });
     }

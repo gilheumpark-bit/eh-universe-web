@@ -76,7 +76,7 @@ export function TranslatorShellInner() {
       {!isZenMode && layout.activeLeftPanel && (
         <>
           {/* Mobile: overlay */}
-          <div className="lg:hidden fixed inset-0 z-[150] flex">
+          <div className="lg:hidden fixed inset-0 z-[var(--z-overlay)] flex">
             <div className="w-[85vw] max-w-[360px] bg-bg-secondary border-r border-border shadow-2xl">
               <TranslatorPanelManager region="left" />
             </div>
@@ -109,7 +109,7 @@ export function TranslatorShellInner() {
       {!isZenMode && layout.activeRightPanel && (
         <>
           {/* Mobile: overlay */}
-          <div className="lg:hidden fixed inset-0 z-[150] flex justify-end">
+          <div className="lg:hidden fixed inset-0 z-[var(--z-overlay)] flex justify-end">
             <div className="flex-1 bg-black/40" onClick={() => layout.setActiveRightPanel(null)} />
             <div className="w-[85vw] max-w-[400px] bg-bg-secondary border-l border-border shadow-2xl">
               <TranslatorPanelManager region="right" />

@@ -108,9 +108,9 @@ function StatusBadge({ status, lang }: { status: string; lang: string }) {
     status === "warn" ? "bg-accent-amber/15 text-accent-amber" :
     "bg-accent-red/15 text-accent-red";
   
-  const text = status === "pass" ? L4(lang, { ko: "통과", en: "PASS" }) :
-               status === "warn" ? L4(lang, { ko: "경고", en: "WARN" }) :
-               L4(lang, { ko: "실패", en: "FAIL" });
+  const text = status === "pass" ? L4(lang, { ko: "통과", en: "PASS", ja: "合格", zh: "通过"}) :
+               status === "warn" ? L4(lang, { ko: "경고", en: "WARN", ja: "警告", zh: "警告"}) :
+               L4(lang, { ko: "실패", en: "FAIL", ja: "失敗", zh: "失败"});
 
   return <span className={`text-[10px] px-1.5 py-0.5 rounded inline-flex items-center gap-1 ${colors}`}>{icon}{text}</span>;
 }
@@ -311,14 +311,14 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
   /** Bilingual team label helper */
   const getTeamLabel = useCallback((key: string) => {
     const labels: Record<string, string> = {
-      simulation:     L4(lang, { ko: "시뮬레이션", en: "Simulation" }),
-      generation:     L4(lang, { ko: "생성", en: "Generation" }),
-      validation:     L4(lang, { ko: "검증", en: "Validation" }),
-      "size-density": L4(lang, { ko: "크기/밀도", en: "Size/Density" }),
-      "asset-trace":  L4(lang, { ko: "자산 추적", en: "Asset Trace" }),
-      stability:      L4(lang, { ko: "안정성", en: "Stability" }),
-      "release-ip":   L4(lang, { ko: "릴리스/IP", en: "Release/IP" }),
-      governance:     L4(lang, { ko: "거버넌스", en: "Governance" }),
+      simulation:     L4(lang, { ko: "시뮬레이션", en: "Simulation", ja: "シミュレーション", zh: "模拟"}),
+      generation:     L4(lang, { ko: "생성", en: "Generation", ja: "生成", zh: "生成"}),
+      validation:     L4(lang, { ko: "검증", en: "Validation", ja: "検証", zh: "验证"}),
+      "size-density": L4(lang, { ko: "크기/밀도", en: "Size/Density", ja: "サイズ/密度", zh: "大小/密度"}),
+      "asset-trace":  L4(lang, { ko: "자산 추적", en: "Asset Trace", ja: "アセット追跡", zh: "资产追踪"}),
+      stability:      L4(lang, { ko: "안정성", en: "Stability", ja: "安定性", zh: "稳定性"}),
+      "release-ip":   L4(lang, { ko: "릴리스/IP", en: "Release/IP", ja: "リリース/IP", zh: "发布/IP"}),
+      governance:     L4(lang, { ko: "거버넌스", en: "Governance", ja: "ガバナンス", zh: "治理"}),
     };
     return labels[key] ?? TEAM_CONFIG[key]?.label ?? key;
   }, [lang]);
@@ -334,14 +334,14 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
         <Shield size={32} className="text-text-tertiary opacity-30" />
-        <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 결과 없음", en: "No pipeline results yet" })}</p>
+        <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 결과 없음", en: "No pipeline results yet", ja: "パイプライン結果なし", zh: "暂无流水线结果"})}</p>
         {onRun && (
           <button onClick={handleRunWithProgress} className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-amber-800 text-stone-100 hover:opacity-90 transition-opacity">
-            <Play size={12} /> {L4(lang, { ko: "파이프라인 실행", en: "Run Pipeline" })}
+            <Play size={12} /> {L4(lang, { ko: "파이프라인 실행", en: "Run Pipeline", ja: "パイプライン実行", zh: "运行流水线"})}
           </button>
         )}
         {lastRunTimestamp && (
-          <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "최근 실행:", en: "Last run:" })} {new Date(lastRunTimestamp).toLocaleString()}</span>
+          <span className="text-[9px] text-text-tertiary">{L4(lang, { ko: "최근 실행:", en: "Last run:", ja: "最終実行:", zh: "最近运行:"})} {new Date(lastRunTimestamp).toLocaleString()}</span>
         )}
       </div>
     );
@@ -352,10 +352,10 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
     return (
       <div className="h-64 border-t border-border bg-bg-secondary flex flex-col items-center justify-center gap-3">
         <Loader2 size={32} className="animate-spin text-amber-400" />
-        <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 실행 중...", en: "Pipeline running..." })}</p>
+        <p className="text-xs text-text-tertiary">{L4(lang, { ko: "파이프라인 실행 중...", en: "Pipeline running...", ja: "パイプライン実行中...", zh: "流水线运行中..."})}</p>
         {onAbort && (
           <button onClick={handleAbort} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-border text-accent-amber hover:bg-bg-tertiary">
-            <Square size={12} /> {L4(lang, { ko: "중단", en: "Abort" })}
+            <Square size={12} /> {L4(lang, { ko: "중단", en: "Abort", ja: "中断", zh: "中断"})}
           </button>
         )}
       </div>
@@ -371,8 +371,8 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
         <span className="flex items-center gap-2 text-xs font-semibold text-text-primary">
           <Shield size={12} className="text-amber-400" />
           {liveRunning
-            ? L4(lang, { ko: "파이프라인 실행 중", en: "Pipeline Running" })
-            : L4(lang, { ko: "파이프라인 결과", en: "Pipeline Results" })
+            ? L4(lang, { ko: "파이프라인 실행 중", en: "Pipeline Running", ja: "パイプライン実行中", zh: "流水线运行中"})
+            : L4(lang, { ko: "파이프라인 결과", en: "Pipeline Results", ja: "パイプライン結果", zh: "流水线结果"})
           }
           {result && !liveRunning && (
             <>
@@ -391,15 +391,15 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
         <span className="flex items-center gap-1">
           {liveRunning ? (
             <button onClick={handleAbort} className="flex items-center gap-1 px-2 py-1 text-[10px] rounded border border-border text-accent-amber hover:bg-bg-tertiary">
-              <Square size={10} /> {L4(lang, { ko: "중단", en: "Abort" })}
+              <Square size={10} /> {L4(lang, { ko: "중단", en: "Abort", ja: "中断", zh: "中断"})}
             </button>
           ) : (
             <>
-              <button onClick={handleRunWithProgress} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title={L4(lang, { ko: "다시 실행", en: "Re-run" })} aria-label={L4(lang, { ko: "다시 실행", en: "Re-run" })}><Play size={12} /></button>
+              <button onClick={handleRunWithProgress} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title={L4(lang, { ko: "다시 실행", en: "Re-run", ja: "再実行", zh: "重新运行"})} aria-label={L4(lang, { ko: "다시 실행", en: "Re-run", ja: "再実行", zh: "重新运行"})}><Play size={12} /></button>
               {result && (
                 <>
-                  <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 복사", en: "Copy report" })} aria-label={L4(lang, { ko: "보고서 복사", en: "Copy report" })}><Copy size={12} /></button>
-                  <button onClick={handleDownloadReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 다운로드", en: "Download report" })} aria-label={L4(lang, { ko: "보고서 다운로드", en: "Download report" })}><Download size={12} /></button>
+                  <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 복사", en: "Copy report", ja: "レポートコピー", zh: "复制报告"})} aria-label={L4(lang, { ko: "보고서 복사", en: "Copy report", ja: "レポートコピー", zh: "复制报告"})}><Copy size={12} /></button>
+                  <button onClick={handleDownloadReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 다운로드", en: "Download report", ja: "レポートダウンロード", zh: "下载报告"})} aria-label={L4(lang, { ko: "보고서 다운로드", en: "Download report", ja: "レポートダウンロード", zh: "下载报告"})}><Download size={12} /></button>
                 </>
               )}
             </>
@@ -479,7 +479,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                     {stage.findings.length > 0 && (
                       <div className="flex items-center gap-1 mt-1 text-[9px] text-text-tertiary">
                         {isExpanded ? <ChevronDown size={8} /> : <ChevronRight size={8} />}
-                        {stage.findings.length} {L4(lang, { ko: "개 항목", en: "findings" })}
+                        {stage.findings.length} {L4(lang, { ko: "개 항목", en: "findings", ja: "件", zh: "个项目"})}
                       </div>
                     )}
                   </button>

@@ -776,7 +776,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                 <select
                   value={benchmarkAuthor}
                   onChange={(e) => setBenchmarkAuthor(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary text-sm cursor-pointer outline-none focus:border-accent-purple/50"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary text-sm cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50"
                 >
                   <option value="">{en ? "— None —" : "— 선택 안 함 —"}</option>
                   {Object.entries(AUTHOR_PROFILES).map(([key, prof]) => (

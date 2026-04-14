@@ -101,10 +101,12 @@ export default function StudioShell() {
   
   // Hydrate studioMode from localStorage after mount
   useEffect(() => {
-    const raw = localStorage.getItem('noa_studio_mode');
-    if (raw === 'guided' || raw === 'free') {
-      setStudioMode(raw);
-    }
+    try {
+      const raw = localStorage.getItem('noa_studio_mode');
+      if (raw === 'guided' || raw === 'free') {
+        setStudioMode(raw);
+      }
+    } catch { /* private browsing */ }
     setStudioModeHydrated(true);
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, []);
@@ -194,7 +196,7 @@ export default function StudioShell() {
   const setRightPanelOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ rightPanelOpen: typeof v === 'function' ? v(s.rightPanelOpen) : v })), []);
   const setMobileDrawerOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ mobileDrawerOpen: typeof v === 'function' ? v(s.mobileDrawerOpen) : v })), []);
   const setSaveSlotModalOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ saveSlotModalOpen: typeof v === 'function' ? v(s.saveSlotModalOpen) : v })), []);
-  const setSaveSlotName = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ saveSlotName: typeof v === 'function' ? v(s.saveSlotName) : v })), []);
+  const _setSaveSlotName = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ saveSlotName: typeof v === 'function' ? v(s.saveSlotName) : v })), []);
   const setShowGlobalSearch = useCallback((v: boolean | ((prev: boolean) => boolean)) => dispatchUi((s: UiState) => ({ showGlobalSearch: typeof v === 'function' ? v(s.showGlobalSearch) : v })), []);
   const setGlobalSearchQuery = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ globalSearchQuery: typeof v === 'function' ? v(s.globalSearchQuery) : v })), []);
 
@@ -350,7 +352,7 @@ export default function StudioShell() {
   useEffect(() => {
     if (!aiCapabilitiesLoaded) return;
     // AI 접근 상태만 기록. 모드 강제 전환은 하지 않음 — 입력 UI에서 잠금 안내 표시.
-    localStorage.setItem('noa_writing_access', hasAiAccess ? 'api' : 'manual');
+    try { localStorage.setItem('noa_writing_access', hasAiAccess ? 'api' : 'manual'); } catch { /* quota/private */ }
   }, [hasAiAccess, aiCapabilitiesLoaded]);
 
 
@@ -413,7 +415,7 @@ export default function StudioShell() {
     };
     // Auto-save draft before tab switch so work is never lost
     if (editDraft && editDraft.trim() && currentSessionId) {
-      localStorage.setItem(`noa_editdraft_${currentSessionId}`, editDraft);
+      try { localStorage.setItem(`noa_editdraft_${currentSessionId}`, editDraft); } catch { /* quota/private */ }
     }
     if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
       showConfirm({

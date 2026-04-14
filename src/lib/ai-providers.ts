@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
 import { ariManager } from '@/lib/code-studio/ai/ari-engine';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -768,7 +769,7 @@ async function streamViaProxy(
       } else if (errData.error) {
         errMsg = errData.error;
       }
-    } catch {}
+    } catch { /* [의도적 무시] errData JSON 파싱 실패 시 원래 errMsg 유지 */ }
     throw new Error(errMsg);
   }
 
@@ -845,6 +846,16 @@ function getFallbackProviders(
  * @returns Concatenated full response text
  */
 export async function streamChat(opts: StreamOptions): Promise<string> {
+  // Security Gate: pre-flight scan before any AI call
+  if (isFeatureEnabled('SECURITY_GATE')) {
+    const { scanContent, SecurityGateError } = await import('@/lib/security-gate');
+    const combined = opts.messages.map(m => m.content).join('\n');
+    const scan = scanContent(combined, { sensitivity: 'normal' });
+    if (!scan.safe) {
+      throw new SecurityGateError(scan.findings.map(f => `[${f.layer}] ${f.pattern}`).join('; '));
+    }
+  }
+
   const provider = getActiveProvider();
 
   // ARI gate: if current provider's circuit is open, try ARI-routed fallback
@@ -912,13 +923,13 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     const t0 = Date.now();
     try {
       const result = await streamViaProxy(provider, model, apiKey, safeOpts);
-      ariManager.updateAfterCall(provider, true, Date.now() - t0);
+      ariManager.updateAfterCall(provider, true, Date.now() - t0, model);
       return result;
     } catch (proxyErr) {
       if (proxyErr instanceof DOMException && proxyErr.name === 'AbortError') throw proxyErr;
 
       const errMsg = proxyErr instanceof Error ? proxyErr.message : '';
-      ariManager.updateAfterCall(provider, false, Date.now() - t0);
+      ariManager.updateAfterCall(provider, false, Date.now() - t0, model);
 
       const isRetryable = /429|500|502|503|504|fetch|network/i.test(errMsg);
 

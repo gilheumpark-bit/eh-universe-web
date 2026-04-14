@@ -196,12 +196,12 @@ function TreeNode({
           <FileCode size={14} className={iconColorClass || "text-amber-400"} />
         )}
         {isModified && (
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title={L4(lang, { ko: "수정됨", en: "Modified" })} />
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title={L4(lang, { ko: "수정됨", en: "Modified", ja: "変更済み", zh: "已修改"})} />
         )}
         {isRenaming ? (
           <input
             autoFocus
-            className="flex-1 bg-bg-primary border border-amber-600/45 rounded px-1 text-xs outline-none"
+            className="flex-1 bg-bg-primary border border-amber-600/45 rounded px-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onBlur={commitRename}
@@ -258,9 +258,9 @@ export function FileExplorer({
   const [sortMethod, setSortMethod] = useState<SortMethod>("name-asc");
 
   const sortLabels: Record<SortMethod, string> = {
-    "name-asc": L4(lang, { ko: "이름", en: "Name" }),
-    type: L4(lang, { ko: "유형", en: "Type" }),
-    size: L4(lang, { ko: "크기", en: "Size" })
+    "name-asc": L4(lang, { ko: "이름", en: "Name", ja: "名前", zh: "名称"}),
+    type: L4(lang, { ko: "유형", en: "Type", ja: "種類", zh: "类型"}),
+    size: L4(lang, { ko: "크기", en: "Size", ja: "サイズ", zh: "大小"})
   };
 
   // Flat file ID list for shift-select range
@@ -359,36 +359,36 @@ export function FileExplorer({
     <div className="text-xs" onContextMenu={(e) => handleContextMenu(e, null)}>
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
-          {L4(lang, { ko: "탐색기", en: "EXPLORER" })}
+          {L4(lang, { ko: "탐색기", en: "EXPLORER", ja: "エクスプローラー", zh: "资源管理器"})}
         </span>
         <div className="flex items-center gap-0.5">
           {selectedIds.size > 0 && (
             <button
               onClick={handleBulkDelete}
               className="px-1.5 py-0.5 text-[9px] bg-red-500/20 text-red-400 rounded hover:bg-red-500/30"
-              title={L4(lang, { ko: `${selectedIds.size}개 선택 항목 삭제`, en: `Delete ${selectedIds.size} selected` })}
+              title={L4(lang, { ko: `${selectedIds.size}개 선택 항목 삭제`, en: `Delete ${selectedIds.size} selected`, ja: `${selectedIds.size}件の選択項目を削除`, zh: `${selectedIds.size}个选中项删除`})}
             >
-              {L4(lang, { ko: "삭제", en: "Delete" })} ({selectedIds.size})
+              {L4(lang, { ko: "삭제", en: "Delete", ja: "削除", zh: "删除"})} ({selectedIds.size})
             </button>
           )}
           <button
             onClick={() => setSortMethod((m) => m === "name-asc" ? "type" : m === "type" ? "size" : "name-asc")}
             className="px-1 py-0.5 text-[9px] bg-white/5 text-text-tertiary rounded hover:text-text-primary"
-            title={`${L4(lang, { ko: "정렬", en: "Sort" })}: ${sortLabels[sortMethod]}`}
+            title={`${L4(lang, { ko: "정렬", en: "Sort", ja: "ソート", zh: "排序"})}: ${sortLabels[sortMethod]}`}
           >
             {sortLabels[sortMethod]}
           </button>
           <button
             onClick={() => setCollapseAllTrigger((v) => v + 1)}
             className="p-0.5 hover:bg-white/5 rounded text-text-tertiary hover:text-text-primary"
-            title={L4(lang, { ko: "모두 접기", en: "Collapse all" })}
+            title={L4(lang, { ko: "모두 접기", en: "Collapse all", ja: "すべて折りたたむ", zh: "全部折叠"})}
           >
             <FoldVertical size={12} />
           </button>
           <button
             onClick={() => setDialog({ type: "new-file", parentId: null })}
             className="p-0.5 hover:bg-white/5 rounded text-text-tertiary hover:text-text-primary"
-            title={L4(lang, { ko: "새 파일", en: "New file" })}
+            title={L4(lang, { ko: "새 파일", en: "New file", ja: "新規ファイル", zh: "新建文件"})}
           >
             <Plus size={12} />
           </button>
@@ -396,13 +396,13 @@ export function FileExplorer({
       </div>
       {selectedIds.size > 0 && (
         <div className="text-[9px] text-text-tertiary px-3 mb-1">
-          {selectedIds.size} {L4(lang, { ko: "개 선택됨 (Shift+클릭으로 범위 선택)", en: "selected (Shift+Click for range)" })}
+          {selectedIds.size} {L4(lang, { ko: "개 선택됨 (Shift+클릭으로 범위 선택)", en: "selected (Shift+Click for range)", ja: "件選択済み (Shift+クリックで範囲選択)", zh: "个已选中 (Shift+点击范围选择)"})}
         </div>
       )}
       {sortedFiles.length === 0 && (
         <div className="mx-3 my-4 px-3 py-8 text-center text-xs text-text-tertiary rounded-lg border-2 border-dashed border-white/8">
           <Folder size={20} className="mx-auto mb-2 opacity-40" />
-          <p>{L4(lang, { ko: "아직 파일이 없습니다. 파일을 생성하여 시작하세요.", en: "No files yet. Create one to get started." })}</p>
+          <p>{L4(lang, { ko: "아직 파일이 없습니다. 파일을 생성하여 시작하세요.", en: "No files yet. Create one to get started.", ja: "ファイルがありません。ファイルを作成して開始してください。", zh: "暂无文件。创建文件开始使用。"})}</p>
         </div>
       )}
       {sortedFiles.map((node) => (
@@ -427,8 +427,8 @@ export function FileExplorer({
 
       {dialog && (
         <InputDialog
-          title={dialog.type === "rename" ? L4(lang, { ko: "이름 바꾸기", en: "Rename" }) : dialog.type === "new-folder" ? L4(lang, { ko: "새 폴더", en: "New Folder" }) : L4(lang, { ko: "새 파일", en: "New File" })}
-          placeholder={dialog.type === "rename" ? L4(lang, { ko: "새 이름 입력", en: "Enter new name" }) : dialog.type === "new-folder" ? L4(lang, { ko: "폴더 이름", en: "Folder name" }) : L4(lang, { ko: "파일 이름", en: "File name" })}
+          title={dialog.type === "rename" ? L4(lang, { ko: "이름 바꾸기", en: "Rename", ja: "名前変更", zh: "重命名"}) : dialog.type === "new-folder" ? L4(lang, { ko: "새 폴더", en: "New Folder", ja: "新規フォルダー", zh: "新建文件夹"}) : L4(lang, { ko: "새 파일", en: "New File", ja: "新規ファイル", zh: "新建文件"})}
+          placeholder={dialog.type === "rename" ? L4(lang, { ko: "새 이름 입력", en: "Enter new name", ja: "新しい名前を入力", zh: "输入新名称"}) : dialog.type === "new-folder" ? L4(lang, { ko: "폴더 이름", en: "Folder name", ja: "フォルダー名", zh: "文件夹名称"}) : L4(lang, { ko: "파일 이름", en: "File name", ja: "ファイル名", zh: "文件名"})}
           defaultValue={dialog.defaultValue}
           onConfirm={handleDialogConfirm}
           onCancel={() => setDialog(null)}

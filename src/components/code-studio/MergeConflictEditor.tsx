@@ -4,8 +4,8 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useMemo } from "react";
-import { GitMerge, Check, ChevronLeft, ChevronRight, ArrowLeftRight, CheckCircle, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { GitMerge, ChevronLeft, ChevronRight, ArrowLeftRight, CheckCircle, AlertTriangle } from "lucide-react";
 
 export interface ConflictBlock {
   id: string;
@@ -136,7 +136,7 @@ function ConflictView({
             value={manualContent}
             onChange={(e) => setManualContent(e.target.value)}
             rows={4}
-            className="w-full rounded border border-white/10 bg-[#12121a] px-2 py-1.5 font-mono text-xs text-white outline-none"
+            className="w-full rounded border border-white/10 bg-[#12121a] px-2 py-1.5 font-mono text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           />
           <button
             onClick={() => onResolve("manual", manualContent)}

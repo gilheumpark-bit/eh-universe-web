@@ -234,7 +234,7 @@ export default function CollabPanel({ onClose }: Props) {
         <div className="p-3 border-b border-white/8">
           <label className="text-[11px] text-white/50 mb-1 block">사용자 이름</label>
           <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="이름 입력..."
-            className="w-full bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none" />
+            className="w-full bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
         </div>
         <div className="p-3 border-b border-white/8">
           <button onClick={createRoom} className="w-full flex items-center justify-center gap-1.5 py-2 bg-amber-800 text-stone-100 text-xs rounded hover:bg-amber-700 transition-colors">
@@ -246,7 +246,7 @@ export default function CollabPanel({ onClose }: Props) {
           <div className="flex gap-1">
             <input value={roomInput} onChange={(e) => setRoomInput(e.target.value)} placeholder={t.collabRoomPlaceholder}
               onKeyDown={(e) => e.key === "Enter" && joinRoom()}
-              className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none" />
+              className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1.5 text-xs text-white font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
             <button onClick={joinRoom} className="flex items-center gap-1 px-3 py-1.5 bg-amber-800 text-stone-100 text-xs rounded hover:bg-amber-700">
               <LogIn size={14} /> 참가
             </button>
@@ -322,7 +322,7 @@ export default function CollabPanel({ onClose }: Props) {
             <div className="flex gap-1 px-3 py-1.5 border-t border-white/8">
               <input value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
-                placeholder="메시지 입력..." className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1 text-xs text-white outline-none" />
+                placeholder="메시지 입력..." className="flex-1 bg-[#0a0e17] border border-white/10 rounded px-2 py-1 text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
               <button onClick={sendChat} disabled={!chatInput.trim()} className="px-2 py-1 bg-amber-800 text-stone-100 rounded text-xs hover:bg-amber-700 disabled:opacity-30">
                 <Send size={12} />
               </button>

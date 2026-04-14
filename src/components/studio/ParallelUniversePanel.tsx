@@ -4,12 +4,15 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import {
-  GitBranch, GitFork, Circle, Plus, Check, X,
+  GitBranch, GitFork, Circle, Plus, Check, X, Loader2, AlertCircle,
 } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
+
+const BranchDiffView = dynamic(() => import('./BranchDiffView'), { ssr: false });
 
 export interface ParallelUniversePanelProps {
   branches: string[];
@@ -18,6 +21,8 @@ export interface ParallelUniversePanelProps {
   onSwitchBranch: (branch: string) => void;
   onCreateBranch: (name: string, fromEpisode: number) => void;
   language: AppLanguage;
+  /** Load episode content for a specific branch. Returns the raw text. */
+  onLoadBranchContent?: (branch: string, episode: number) => Promise<string>;
 }
 
 /** Color palette for branch lanes (up to 6 distinct colors) */
@@ -79,7 +84,7 @@ const BranchCreateForm: React.FC<BranchCreateFormProps> = ({
           en: `Branch from ep.${fromEpisode}`,
         })}
         className="flex-1 min-w-0 bg-transparent text-xs text-text-primary
-          border-none outline-none placeholder:text-text-tertiary/50
+          border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-text-tertiary/50
           font-mono"
         autoFocus
       />
@@ -90,7 +95,7 @@ const BranchCreateForm: React.FC<BranchCreateFormProps> = ({
           text-accent-green hover:bg-accent-green/10
           disabled:opacity-30 disabled:cursor-not-allowed
           transition-colors"
-        title={L4(language, { ko: '확인', en: 'Confirm' })}
+        title={L4(language, { ko: '확인', en: 'Confirm', ja: '確認', zh: '确认' })}
       >
         <Check className="w-3.5 h-3.5" />
       </button>
@@ -98,7 +103,7 @@ const BranchCreateForm: React.FC<BranchCreateFormProps> = ({
         onClick={onCancel}
         className="w-6 h-6 flex items-center justify-center rounded
           text-text-tertiary hover:bg-bg-tertiary transition-colors"
-        title={L4(language, { ko: '취소', en: 'Cancel' })}
+        title={L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
       >
         <X className="w-3.5 h-3.5" />
       </button>
@@ -117,8 +122,58 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
   onSwitchBranch,
   onCreateBranch,
   language,
+  onLoadBranchContent,
 }) => {
   const [creatingAtEpisode, setCreatingAtEpisode] = useState<number | null>(null);
+  const [diffBranch, setDiffBranch] = useState<string | null>(null);
+
+  // Branch diff content loading state
+  const [diffLeftContent, setDiffLeftContent] = useState('');
+  const [diffRightContent, setDiffRightContent] = useState('');
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [diffError, setDiffError] = useState<string | null>(null);
+  const loadAbortRef = useRef(0);
+
+  // Load content when diffBranch changes
+  /* eslint-disable react-hooks/set-state-in-effect -- resetting/loading derived state on dependency change */
+  useEffect(() => {
+    if (!diffBranch || !onLoadBranchContent) {
+      setDiffLeftContent('');
+      setDiffRightContent('');
+      setDiffError(null);
+      return;
+    }
+
+    const episode = episodes[0]?.episode ?? 1;
+    const loadId = ++loadAbortRef.current;
+
+    setDiffLoading(true);
+    setDiffError(null);
+    setDiffLeftContent('');
+    setDiffRightContent('');
+
+    Promise.all([
+      onLoadBranchContent(currentBranch, episode),
+      onLoadBranchContent(diffBranch, episode),
+    ])
+      .then(([left, right]) => {
+        if (loadAbortRef.current !== loadId) return; // stale
+        setDiffLeftContent(left);
+        setDiffRightContent(right);
+      })
+      .catch(() => {
+        if (loadAbortRef.current !== loadId) return;
+        setDiffError(L4(language, {
+          ko: '브랜치 콘텐츠를 불러오지 못했습니다',
+          en: 'Failed to load branch content',
+        }));
+      })
+      .finally(() => {
+        if (loadAbortRef.current !== loadId) return;
+        setDiffLoading(false);
+      });
+  }, [diffBranch, currentBranch, episodes, onLoadBranchContent, language]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   /** Map branches to color indices, current branch always first */
   const branchColorMap = useMemo(() => {
@@ -164,7 +219,7 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
           })}
         </span>
         <span className="ml-auto text-[10px] text-text-tertiary font-mono">
-          {branches.length} {L4(language, { ko: '브랜치', en: 'branches' })}
+          {branches.length} {L4(language, { ko: '브랜치', en: 'branches', ja: 'branches', zh: 'branches' })}
         </span>
       </div>
 
@@ -231,7 +286,7 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
                     {String(ep.episode).padStart(3, '0')}
                   </span>
                   <span className="text-xs font-serif text-text-primary truncate">
-                    {ep.title || L4(language, { ko: `${ep.episode}화`, en: `Episode ${ep.episode}` })}
+                    {ep.title || L4(language, { ko: `${ep.episode}화`, en: `Episode ${ep.episode}`, ja: `Episode ${ep.episode}`, zh: `Episode ${ep.episode}` })}
                   </span>
                   <button
                     onClick={() => setCreatingAtEpisode(ep.episode)}
@@ -260,9 +315,10 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
 
                 {/* Branch lane indicators */}
                 {isFork && branches.filter(b => b !== 'main').length > 0 && (
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex flex-wrap gap-1 mt-1">
                     {branches.filter(b => b !== 'main').map(br => {
                       const colorIdx = branchColorMap.get(br) ?? 0;
+                      const isNotCurrent = br !== currentBranch;
                       return (
                         <span
                           key={br}
@@ -271,6 +327,15 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
                         >
                           <GitBranch className="w-2.5 h-2.5" style={{ color: getBranchColor(colorIdx) }} />
                           {br.replace('universe/', '')}
+                          {isNotCurrent && (
+                            <button
+                              onClick={() => setDiffBranch(br)}
+                              className="text-[10px] text-accent-blue hover:underline ml-auto"
+                              title="Compare"
+                            >
+                              {L4(language, { ko: '비교', en: 'Compare', ja: '比較', zh: '比较' })}
+                            </button>
+                          )}
                         </span>
                       );
                     })}
@@ -280,6 +345,60 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
             </div>
           );
         })}
+
+        {diffBranch && (
+          <div className="mt-2 border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-2 py-1 bg-bg-secondary border-b border-border">
+              <span className="text-[10px] text-text-secondary font-serif">
+                {L4(language, { ko: '버전 비교', en: 'Version Compare', ja: 'バージョン比較', zh: '版本比较' })}
+              </span>
+              <button onClick={() => setDiffBranch(null)} className="text-text-tertiary hover:text-text-primary text-xs">&#x2715;</button>
+            </div>
+
+            {/* No GitHub connection */}
+            {!onLoadBranchContent && (
+              <div className="flex items-center gap-2 px-3 py-4 text-text-tertiary">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="text-xs font-serif">
+                  {L4(language, {
+                    ko: 'GitHub 연결 후 브랜치 비교가 가능합니다',
+                    en: 'Connect GitHub to compare versions',
+                  })}
+                </span>
+              </div>
+            )}
+
+            {/* Loading spinner */}
+            {onLoadBranchContent && diffLoading && (
+              <div className="flex items-center justify-center gap-2 px-3 py-6">
+                <Loader2 className="w-4 h-4 text-accent-amber animate-spin" />
+                <span className="text-xs text-text-tertiary font-serif">
+                  {L4(language, { ko: '불러오는 중...', en: 'Loading...', ja: 'Loading...', zh: 'Loading...' })}
+                </span>
+              </div>
+            )}
+
+            {/* Error state */}
+            {onLoadBranchContent && diffError && !diffLoading && (
+              <div className="flex items-center gap-2 px-3 py-4 text-accent-red">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="text-xs font-serif">{diffError}</span>
+              </div>
+            )}
+
+            {/* Diff content */}
+            {onLoadBranchContent && !diffLoading && !diffError && (
+              <BranchDiffView
+                leftBranch={currentBranch}
+                rightBranch={diffBranch}
+                leftContent={diffLeftContent}
+                rightContent={diffRightContent}
+                episode={episodes[0]?.episode ?? 1}
+                language={language}
+              />
+            )}
+          </div>
+        )}
 
         {episodes.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">

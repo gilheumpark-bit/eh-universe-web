@@ -39,8 +39,7 @@ interface WorldStudioViewProps {
   startLabel?: string;
   onSave: () => void;
   saveFlash: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handleWorldSimChange: (data: any) => void;
+  handleWorldSimChange: (data: Record<string, unknown>) => void;
   hostedProviders?: Partial<Record<string, boolean>>;
 }
 

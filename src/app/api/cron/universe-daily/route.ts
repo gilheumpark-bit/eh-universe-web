@@ -1,15 +1,22 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { createServerGeminiClient } from '@/lib/google-genai-server';
 import { logger } from '@/lib/logger';
 import { collectionName } from '@/lib/firebase';
 import { firestoreCreateDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
 
+/** Constant-time string comparison to prevent timing attacks on secret tokens */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 // Vercel Cron Job: 매일 자정 실행
 // vercel.json 에 요건 등록: { "crons": [{ "path": "/api/cron/universe-daily", "schedule": "0 0 * * *" }] }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stringField(fields: any, key: string): string {
-  return fields?.[key]?.stringValue ?? '';
+function stringField(fields: Record<string, { stringValue?: string }> | undefined, key: string): string {
+  const field = fields?.[key];
+  return field?.stringValue ?? '';
 }
 
 export async function GET(req: Request) {
@@ -20,11 +27,15 @@ export async function GET(req: Request) {
       if (!secret) {
         return NextResponse.json({ error: 'Cron secret not configured' }, { status: 503 });
       }
-      if (authHeader !== `Bearer ${secret}`) {
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!safeCompare(token, secret)) {
         return new NextResponse('Unauthorized', { status: 401 });
       }
-    } else if (secret && authHeader !== `Bearer ${secret}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    } else if (secret) {
+      const devToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!safeCompare(devToken, secret)) {
+        return new NextResponse('Unauthorized', { status: 401 });
+      }
     }
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -48,7 +59,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Failed to list posts from Firestore.' }, { status: 502 });
     }
 
-    const docs = listed.documents as { fields?: Record<string, unknown> }[];
+    const docs = listed.documents as { fields?: Record<string, { stringValue?: string }> }[];
     if (!docs.length) {
       return NextResponse.json({ message: 'No new posts today. Skipping news generation.' });
     }

@@ -126,7 +126,7 @@ function loadEdits(): EditedZones {
 
 function saveEdits(edits: EditedZones) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(edits));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(edits)); } catch { /* quota/private */ }
 }
 
 /* ─── ZONE EDIT PANEL ─── */
@@ -141,15 +141,18 @@ function ZoneEditPanel({
   onClose: () => void;
   onReset: () => void;
 }) {
-  const current = edits[zone.id] ?? { id: zone.id, range: zone.range, grade: zone.grade };
-  const [range, setRange] = useState(current.range);
-  const [grade, setGrade] = useState(current.grade);
+  const resolved = edits[zone.id] ?? { id: zone.id, range: zone.range, grade: zone.grade };
+  const [range, setRange] = useState(resolved.range);
+  const [grade, setGrade] = useState(resolved.grade);
 
+  // Sync local state when zone/edits change (derived state from props)
+  /* eslint-disable react-hooks/set-state-in-effect -- syncing derived state from props */
   useEffect(() => {
     const c = edits[zone.id] ?? { range: zone.range, grade: zone.grade };
     setRange(c.range);
     setGrade(c.grade);
   }, [zone.id, edits, zone.range, zone.grade]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <div className="fixed right-0 top-0 h-full w-80 bg-bg-secondary border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200">
@@ -183,7 +186,7 @@ function ZoneEditPanel({
             type="text"
             value={range}
             onChange={(e) => setRange(e.target.value)}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none"
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           />
         </div>
 
@@ -195,7 +198,7 @@ function ZoneEditPanel({
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none"
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {GRADE_OPTIONS.map((g) => (
               <option key={g} value={g}>{g}</option>
@@ -324,13 +327,8 @@ function WarzoneCalcSVG() {
 export default function GalaxyMapPage() {
   const { lang } = useLang();
   const en = lang !== "ko";
-  const [editedZones, setEditedZones] = useState<EditedZones>({});
+  const [editedZones, setEditedZones] = useState<EditedZones>(() => loadEdits());
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-
-  // Load edits from localStorage on mount
-  useEffect(() => {
-    setEditedZones(loadEdits());
-  }, []);
 
   const handleZoneClick = useCallback((id: string) => {
     setSelectedZoneId(id);
@@ -345,7 +343,7 @@ export default function GalaxyMapPage() {
 
   const handleResetAll = useCallback(() => {
     setEditedZones({});
-    if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
+    if (typeof window !== "undefined") { try { localStorage.removeItem(STORAGE_KEY); } catch { /* private */ } }
     setSelectedZoneId(null);
   }, []);
 

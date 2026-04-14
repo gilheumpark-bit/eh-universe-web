@@ -7,7 +7,7 @@ export const stl009Detector: RuleDetector = {
     const findings: Array<{line: number; message: string}> = [];
     let singleQuoteCount = 0;
     let doubleQuoteCount = 0;
-    const inconsistentLines: number[] = [];
+    const _inconsistentLines: number[] = [];
 
     sourceFile.forEachDescendant(node => {
       if (node.getKind() === SyntaxKind.StringLiteral) {

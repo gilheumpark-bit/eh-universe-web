@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 /**
  * AIP-004: By-the-book 고집 (By-the-book stubbornness)
@@ -10,7 +10,7 @@ export const aip004Detector: RuleDetector = {
   ruleId: 'AIP-004',
   detect: (sourceFile) => {
     const findings: Array<{line: number; message: string}> = [];
-    const totalLines = sourceFile.getEndLineNumber();
+    const _totalLines = sourceFile.getEndLineNumber();
 
     // Heuristic: too many interfaces/type aliases in a small file
     const interfaces = sourceFile.getInterfaces();

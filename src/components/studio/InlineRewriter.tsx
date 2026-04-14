@@ -268,7 +268,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
               onChange={e => setCustomPrompt(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleCustomAction(); }}
               placeholder={t('inlineRewriter.customPlaceholder')}
-              className="flex-1 bg-bg-tertiary/50 border border-border/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus:border-accent-purple/30 font-mono"
+              className="flex-1 bg-bg-tertiary/50 border border-border/50 rounded-lg px-3 py-1.5 text-[10px] text-text-primary placeholder-zinc-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/30 font-mono"
               disabled={isStreaming}
             />
             <button onClick={handleCustomAction} disabled={isStreaming || !customPrompt.trim()} className="px-3 py-1.5 bg-accent-purple text-white rounded-lg text-[9px] font-bold disabled:opacity-30 font-mono">
@@ -323,7 +323,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
           setShowActions(false);
         }}
         onSelect={handleSelect}
-        className="w-full min-h-[40vh] sm:min-h-[55vh] bg-bg-primary border border-border rounded-xl p-4 sm:p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus:border-accent-purple/30 transition-colors resize-y"
+        className="w-full min-h-[40vh] sm:min-h-[55vh] bg-bg-primary border border-border rounded-xl p-4 sm:p-6 text-sm leading-[2] font-serif text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/30 transition-colors resize-y"
         placeholder={t('inlineRewriter.editorPlaceholder')}
       />
 

@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 /**
  * CFG-008: devDeps vs deps 분류 오류 (devDependencies vs dependencies classification error)

@@ -248,7 +248,7 @@ const VULN_PATTERNS: VulnPattern[] = [
   { id: 'SEC-013', name: 'Unsafe Deserialization', pattern: /JSON\.parse\s*\(\s*(?:req\.body|request\.body|body|input|data)\b/g, severity: 'medium', message: 'JSON.parse on untrusted input without validation', cwe: 'CWE-502', fix: 'Validate input schema before parsing (use Zod, Joi, etc.)' },
 ];
 
-export function scanForVulnPatterns(code: string, fileName: string = ''): Array<{
+export function scanForVulnPatterns(code: string, _fileName: string = ''): Array<{
   line: number;
   ruleId: string;
   name: string;

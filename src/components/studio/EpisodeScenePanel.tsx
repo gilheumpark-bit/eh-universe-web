@@ -133,8 +133,8 @@ function SceneEditor({
     });
   };
 
-  const inputCls = "w-full bg-bg-secondary border border-border rounded px-2 py-1 text-sm text-text-primary font-mono focus:border-accent-purple focus:outline-none";
-  const selectCls = "bg-bg-secondary border border-border rounded px-1 py-1 text-xs text-text-primary font-mono focus:border-accent-purple focus:outline-none";
+  const inputCls = "w-full bg-bg-secondary border border-border rounded px-2 py-1 text-sm text-text-primary font-mono focus:border-accent-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50";
+  const selectCls = "bg-bg-secondary border border-border rounded px-1 py-1 text-xs text-text-primary font-mono focus:border-accent-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50";
 
   return (
     <div className="space-y-3 p-3 bg-bg-secondary/50 rounded-lg border border-border">
@@ -173,10 +173,10 @@ function SceneEditor({
             {scenes.map((scene, idx) => (
               <tr key={idx} className="hover:bg-bg-secondary/50">
                 <td className="border border-border px-1 py-1">
-                  <input className="w-full bg-transparent text-xs text-text-primary text-center focus:outline-none" value={scene.sceneId} onChange={e => updateScene(idx, "sceneId", e.target.value)} />
+                  <input className="w-full bg-transparent text-xs text-text-primary text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" value={scene.sceneId} onChange={e => updateScene(idx, "sceneId", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1">
-                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none" value={scene.sceneName} onChange={e => updateScene(idx, "sceneName", e.target.value)} />
+                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" value={scene.sceneName} onChange={e => updateScene(idx, "sceneName", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1">
                   <select className={selectCls} value={scene.tone} onChange={e => updateScene(idx, "tone", e.target.value)}>
@@ -184,16 +184,16 @@ function SceneEditor({
                   </select>
                 </td>
                 <td className="border border-border px-1 py-1">
-                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none" value={scene.summary} onChange={e => updateScene(idx, "summary", e.target.value)} />
+                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" value={scene.summary} onChange={e => updateScene(idx, "summary", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1">
-                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none" value={scene.keyDialogue} onChange={e => updateScene(idx, "keyDialogue", e.target.value)} />
+                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" value={scene.keyDialogue} onChange={e => updateScene(idx, "keyDialogue", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1">
-                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none" value={scene.emotionPoint} onChange={e => updateScene(idx, "emotionPoint", e.target.value)} />
+                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" value={scene.emotionPoint} onChange={e => updateScene(idx, "emotionPoint", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1">
-                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none text-center" value={scene.nextScene} onChange={e => updateScene(idx, "nextScene", e.target.value)} />
+                  <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-center" value={scene.nextScene} onChange={e => updateScene(idx, "nextScene", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1 text-center">
                   <button onClick={() => removeScene(idx)} className="text-red-400 hover:text-red-300 text-xs" title={L.delete}>✕</button>

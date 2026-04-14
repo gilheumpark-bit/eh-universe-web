@@ -320,7 +320,7 @@ function detectSceneBoundaries(lines: string[]): SceneBoundary[] {
 // PART 7 — 장면 메타데이터 추출
 // ============================================================
 
-const LOCATION_EXTRACT = /(?:에서|에|로|으로|안|밖|위|아래|앞|뒤|속|at|in|on|inside|outside|near)\s/;
+const _LOCATION_EXTRACT = /(?:에서|에|로|으로|안|밖|위|아래|앞|뒤|속|at|in|on|inside|outside|near)\s/;
 const TIME_EXTRACT = /(?:아침|낮|오후|저녁|밤|새벽|해질녘|dawn|morning|noon|afternoon|evening|night|dusk|midnight)/i;
 const MOOD_MAP: Record<string, string> = {
   '어둠': 'dark', '빛': 'bright', '비': 'rainy', '눈': 'snowy',
@@ -622,7 +622,7 @@ export function createTTSController(): TTSController | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null;
 
   const synth = window.speechSynthesis;
-  let currentUtterance: SpeechSynthesisUtterance | null = null;
+  let _currentUtterance: SpeechSynthesisUtterance | null = null;
 
   return {
     speak(text: string, voice: VoiceMapping, emotion?: Emotion): Promise<void> {
@@ -637,19 +637,19 @@ export function createTTSController(): TTSController | null {
         utterance.volume = adjusted.volume;
         utterance.lang = 'ko-KR';
 
-        utterance.onend = () => { currentUtterance = null; resolve(); };
+        utterance.onend = () => { _currentUtterance = null; resolve(); };
         utterance.onerror = (e) => {
-          currentUtterance = null;
+          _currentUtterance = null;
           if (e.error === 'canceled' || e.error === 'interrupted') resolve();
           else reject(e);
         };
 
-        currentUtterance = utterance;
+        _currentUtterance = utterance;
         synth.speak(utterance);
       });
     },
 
-    stop() { synth.cancel(); currentUtterance = null; },
+    stop() { synth.cancel(); _currentUtterance = null; },
     pause() { synth.pause(); },
     resume() { synth.resume(); },
     isSpeaking() { return synth.speaking; },

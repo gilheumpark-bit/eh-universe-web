@@ -14,7 +14,7 @@ describe('rate-limit', () => {
 
   beforeEach(() => {
     jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('@/lib/rate-limit');
     checkRateLimit = mod.checkRateLimit;
     getClientIp = mod.getClientIp;

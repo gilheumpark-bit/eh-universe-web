@@ -119,7 +119,7 @@ export function QuickOpen({ files, recentFileIds, onOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -135,7 +135,7 @@ export function QuickOpen({ files, recentFileIds, onOpen, onClose }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type to search files..."
-            className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder:text-text-tertiary"
+            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder:text-text-tertiary"
           />
           <kbd className="text-[9px] text-text-tertiary bg-white/5 px-1.5 py-0.5 rounded">Esc</kbd>
         </div>

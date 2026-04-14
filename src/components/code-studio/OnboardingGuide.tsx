@@ -45,7 +45,7 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
 
   // mount 시 이미 완료 상태면 부모에 알림 (onComplete는 stable 참조 가정)
   const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
+  useEffect(() => { onCompleteRef.current = onComplete; });
   useEffect(() => { if (!visible) onCompleteRef.current(); }, [visible]);
 
   const markDone = useCallback(() => {
@@ -73,8 +73,8 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
   const isLast = step === STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleSkip} />
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" role="presentation" onClick={handleSkip} />
       <div className="relative z-10 w-full max-w-md mx-4 bg-bg-primary border border-border rounded-xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <span className="text-[10px] text-white/60 font-mono">{step + 1} / {STEPS.length}</span>

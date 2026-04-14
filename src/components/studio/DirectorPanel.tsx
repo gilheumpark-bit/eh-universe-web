@@ -19,7 +19,7 @@ const SEV_COLORS: Record<number, string> = {
   1: 'text-text-tertiary',
 };
 
-const SEV_DOTS: Record<number, string> = {
+const _SEV_DOTS: Record<number, string> = {
   5: '🔴',
   4: '🔴',
   3: '🟡',

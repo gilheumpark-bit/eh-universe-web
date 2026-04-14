@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 /**
  * CFG-005: moduleResolution 부재 (Missing moduleResolution)
@@ -18,7 +18,7 @@ export const cfg005Detector: RuleDetector = {
     // Check if compilerOptions exists but moduleResolution is missing
     const hasCompilerOptions = fullText.includes('"compilerOptions"');
     const hasModuleResolution = fullText.includes('"moduleResolution"');
-    const hasModule = fullText.includes('"module"');
+    const _hasModule = fullText.includes('"module"');
 
     if (hasCompilerOptions && !hasModuleResolution) {
       // Find the line of compilerOptions

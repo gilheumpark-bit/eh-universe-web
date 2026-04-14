@@ -1,5 +1,5 @@
 import { StoryConfig, AppLanguage, StyleProfile } from '../lib/studio-types';
-import { EngineReport, PlatformType, getActFromEpisode, PublishPlatform, PLATFORM_PRESETS, PRISM_MODE_PRESETS } from './types';
+import { EngineReport, PlatformType, getActFromEpisode } from './types';
 import { tensionCurve } from './models';
 import { generateEngineReport } from './scoring';
 import { getTargetCharRange } from './serialization';
@@ -10,6 +10,7 @@ import { formatSocialProfile } from './social-register';
 import { GENRE_PRESETS } from './genre-presets';
 import { buildPublishPlatformBlock } from './builders/platform-builder';
 import { buildPrismBlock, buildPrismModeBlock } from './builders/prism-builder';
+import { logger } from '@/lib/logger';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
 // ============================================================
@@ -649,12 +650,11 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
       : 0),
     contextRatio: Math.round(ratio * 100),
   };
-  if (typeof console !== 'undefined') {
-    console.log(
-      `[Pipeline TokenBudget] total: ${tierBreakdown.total} tokens (${tierBreakdown.contextRatio}% of ${contextLimit}), ` +
-      `storyBible estimate: ~${tierBreakdown.storyBible} tokens`
-    );
-  }
+  logger.debug(
+    'Pipeline TokenBudget',
+    `total: ${tierBreakdown.total} tokens (${tierBreakdown.contextRatio}% of ${contextLimit}), ` +
+    `storyBible estimate: ~${tierBreakdown.storyBible} tokens`
+  );
 
   if (ratio > 0.30 && typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('noa:token-budget-warning', {

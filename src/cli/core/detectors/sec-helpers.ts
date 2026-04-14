@@ -126,7 +126,7 @@ export function detectSec003(sourceFile: SourceFile): RuleFinding[] {
     const args = call.getArguments();
     if (args.length === 0) return;
     const first = args[0];
-    const t = first.getText();
+    const _t = first.getText();
     const dynamic = first.getKind() !== SyntaxKind.StringLiteral && first.getKind() !== SyntaxKind.NoSubstitutionTemplateLiteral;
     if (dynamic) {
       pushUnique(findings, seen, call.getStartLineNumber(), 'child_process: 첫 인자가 비상수 — Command Injection 의심');
@@ -447,7 +447,7 @@ export function detectSec022(sourceFile: SourceFile): RuleFinding[] {
   });
   const lines = sourceFile.getFullText().split('\n');
   let debugLines = 0;
-  lines.forEach((line, i) => {
+  lines.forEach((line, _i) => {
     if (/^\s*\/\//.test(line)) return;
     if (/console\.debug\s*\(/.test(line)) debugLines++;
   });

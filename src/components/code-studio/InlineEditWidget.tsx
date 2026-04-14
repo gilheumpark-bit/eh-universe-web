@@ -19,7 +19,7 @@ function loadHistory(): string[] {
 function saveToHistory(instruction: string) {
   const history = loadHistory().filter((h) => h !== instruction);
   history.unshift(instruction);
-  localStorage.setItem(INLINE_EDIT_HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  try { localStorage.setItem(INLINE_EDIT_HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY))); } catch { /* quota/private */ }
 }
 
 function computeSimpleDiff(original: string, modified: string): { type: "same" | "add" | "remove"; text: string }[] {
@@ -55,7 +55,7 @@ interface Props {
 // PART 2 — Component
 // ============================================================
 
-export function InlineEditWidget({ selectedText, fullCode, language, onApply, onCancel, onUndo, canUndo }: Props) {
+export function InlineEditWidget({ selectedText, fullCode, language: _language, onApply, onCancel, onUndo, canUndo }: Props) {
   const [prompt, setPrompt] = useState("");
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,7 +114,7 @@ export function InlineEditWidget({ selectedText, fullCode, language, onApply, on
         <Sparkles size={14} className="text-amber-400 flex-shrink-0" />
         <input ref={inputRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={handleKeyDown}
           placeholder="수정 지시 (Enter: 생성, Esc: 취소)"
-          className="flex-1 bg-white/5 text-xs text-white px-2 py-1.5 rounded outline-none placeholder:text-white/50" disabled={loading} />
+          className="flex-1 bg-white/5 text-xs text-white px-2 py-1.5 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-white/50" disabled={loading} />
         {history.length > 0 && (
           <button onClick={() => setShowHistory((v) => !v)} className="text-white/60 hover:text-amber-400 transition-colors"><History size={12} /></button>
         )}

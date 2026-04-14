@@ -70,7 +70,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(input); } }}
           placeholder={isKO ? '태그 입력 후 Enter' : 'Type tag + Enter'}
-          className="flex-1 bg-bg-tertiary border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-600 transition-colors"
+          className="flex-1 bg-bg-tertiary border border-border rounded-xl px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-600 transition-colors"
           maxLength={20}
         />
       </div>
@@ -122,7 +122,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   // showWorldTier2/3 → AdvancedPlanningSection 내부
   const [shareCopied, setShareCopied] = useState(false);
   const [advancedMode, setAdvancedMode] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('noa_planning_advanced') === 'true';
+    if (typeof window !== 'undefined') { try { return localStorage.getItem('noa_planning_advanced') === 'true'; } catch { return false; } }
     return false;
   });
   const router = useRouter();
@@ -235,7 +235,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <select value={autoGenGenre} onChange={e => setAutoGenGenre(e.target.value as Genre)}
-            className="bg-bg-secondary border border-border rounded-xl px-3 py-2 text-[10px] font-black text-text-secondary outline-none cursor-pointer uppercase">
+            className="bg-bg-secondary border border-border rounded-xl px-3 py-2 text-[10px] font-black text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer uppercase">
             {Object.values(Genre).map(g => (
               <option key={g} value={g}>{GENRE_LABELS[language][g]}</option>
             ))}
@@ -288,7 +288,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.projectTitle}</label>
             <input
-              className="w-full bg-bg-tertiary/60 border border-accent-amber/15 rounded-xl p-4 text-sm font-bold focus:border-accent-amber/60 focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none transition-all"
+              className="w-full bg-bg-tertiary/60 border border-accent-amber/15 rounded-xl p-4 text-sm font-bold focus:border-accent-amber/60 focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all"
               aria-label={t.projectTitle}
               maxLength={200}
               value={config.title}
@@ -298,7 +298,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.primaryGenre}</label>
             <select
-              className="w-full bg-bg-tertiary/60 border border-accent-amber/15 rounded-xl p-4 text-sm font-bold focus:border-accent-amber/60 focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none cursor-pointer"
+              className="w-full bg-bg-tertiary/60 border border-accent-amber/15 rounded-xl p-4 text-sm font-bold focus:border-accent-amber/60 focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer"
               aria-label={t.primaryGenre}
               value={config.genre}
               onChange={e => setConfig({ ...config, genre: e.target.value as Genre })}
@@ -316,7 +316,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             onClick={() => {
               const next = !advancedMode;
               setAdvancedMode(next);
-              localStorage.setItem('noa_planning_advanced', String(next));
+              try { localStorage.setItem('noa_planning_advanced', String(next)); } catch { /* quota/private */ }
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border ${
               advancedMode
@@ -348,7 +348,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               type="number"
               min={1}
               max={500}
-              className={`w-full bg-bg-tertiary border rounded-xl p-4 text-sm font-bold outline-none transition-all ${
+              className={`w-full bg-bg-tertiary border rounded-xl p-4 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all ${
                 totalEpisodes < 1 || totalEpisodes > 500
                   ? 'border-red-500/60 focus:border-red-500 text-red-400'
                   : 'border-border focus:border-blue-600'

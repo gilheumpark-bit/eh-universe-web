@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind, VariableDeclarationKind } from 'ts-morph';
+import { VariableDeclarationKind } from 'ts-morph';
 
 /**
  * VAR-001: let/const TDZ 위반 — 선언 전 사용

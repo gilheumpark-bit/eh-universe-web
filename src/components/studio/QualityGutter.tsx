@@ -221,7 +221,7 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
   if (paragraphs.length === 0) return (
     <div className="border border-border/50 rounded-xl bg-bg-secondary/50 px-4 py-3 text-center">
       <p className="text-[10px] text-text-tertiary">
-        {L4(language as AppLanguage, { ko: '글을 쓰면 문단별 품질 점수가 표시됩니다', en: 'Write to see paragraph quality scores' })}
+        {L4(language as AppLanguage, { ko: '글을 쓰면 문단별 품질 점수가 표시됩니다', en: 'Write to see paragraph quality scores', ja: '文章を書くと段落ごとの品質スコアが表示されます', zh: '写作后将显示段落质量评分' })}
       </p>
     </div>
   );

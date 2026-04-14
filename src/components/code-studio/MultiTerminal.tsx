@@ -105,7 +105,7 @@ export function MultiTerminal({ renderTerminal }: Props) {
                   if (e.key === "Escape") setRenamingId(null);
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-transparent border border-amber-600/45 rounded px-1 text-[10px] w-20 outline-none"
+                className="bg-transparent border border-amber-600/45 rounded px-1 text-[10px] w-20 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               />
             ) : (
               <span

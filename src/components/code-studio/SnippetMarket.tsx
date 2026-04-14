@@ -7,7 +7,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   Plus, Search, Copy, Trash2, Edit3, Save, X,
-  Tag, Code2, Check, ChevronDown, ChevronUp,
+  Code2, Check, ChevronDown, ChevronUp,
 } from 'lucide-react';
 
 export interface CodeSnippet {
@@ -37,7 +37,7 @@ function readSnippets(): CodeSnippet[] {
 
 function writeSnippets(snippets: CodeSnippet[]): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(snippets));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(snippets)); } catch { /* quota/private */ }
 }
 
 function createSnippet(data: Omit<CodeSnippet, 'id' | 'createdAt' | 'updatedAt'>): CodeSnippet {

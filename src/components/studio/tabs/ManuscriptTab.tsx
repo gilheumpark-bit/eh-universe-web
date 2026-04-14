@@ -55,7 +55,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
     const result = parseManuscript(latestMs.content, config.characters ?? []);
     setParsedScenes(result.scenes);
     setSceneMode(mode);
-  }, [config.manuscripts, config.characters]);
+  }, [config.manuscripts, config.characters, sceneMode]);
 
   const voiceMappings = useMemo(
     () => generateVoiceMappings(config.characters ?? []),
@@ -188,25 +188,25 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
                     <div className="space-y-1.5">
                       <label className="block">
                         <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '장소' : 'Location'}</span>
-                        <input value={scene.location ?? ''} onChange={e => updateSceneProp(idx, 'location', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus:border-accent-purple" placeholder={language === 'KO' ? '예: 왕궁 정원' : 'e.g. Royal Garden'} />
+                        <input value={scene.location ?? ''} onChange={e => updateSceneProp(idx, 'location', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" placeholder={language === 'KO' ? '예: 왕궁 정원' : 'e.g. Royal Garden'} />
                       </label>
                       <label className="block">
                         <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '시간대' : 'Time'}</span>
-                        <select value={scene.timeOfDay ?? ''} onChange={e => updateSceneProp(idx, 'timeOfDay', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none">
+                        <select value={scene.timeOfDay ?? ''} onChange={e => updateSceneProp(idx, 'timeOfDay', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
                           <option value="">-</option>
                           {['새벽','아침','낮','저녁','밤'].map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </label>
                       <label className="block">
                         <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '분위기' : 'Mood'}</span>
-                        <select value={scene.mood ?? ''} onChange={e => updateSceneProp(idx, 'mood', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none">
+                        <select value={scene.mood ?? ''} onChange={e => updateSceneProp(idx, 'mood', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
                           <option value="">-</option>
                           {['dark','bright','rainy','snowy','misty','eerie','warm','cold','peaceful'].map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </label>
                       <label className="block">
                         <span className="text-[9px] text-text-tertiary">{language === 'KO' ? '배경 이미지 프롬프트' : 'Background prompt'}</span>
-                        <input value={scene.backgroundPrompt ?? ''} onChange={e => updateSceneProp(idx, 'backgroundPrompt', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus:border-accent-purple" placeholder={language === 'KO' ? '이미지 생성용 프롬프트' : 'Prompt for image generation'} />
+                        <input value={scene.backgroundPrompt ?? ''} onChange={e => updateSceneProp(idx, 'backgroundPrompt', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" placeholder={language === 'KO' ? '이미지 생성용 프롬프트' : 'Prompt for image generation'} />
                       </label>
                     </div>
                   )}
@@ -259,7 +259,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
             scenes={parsedScenes}
             language={language}
             onScenesChange={setParsedScenes}
-            onPlayFrom={(si, bi) => { setSceneMode('visual'); }}
+            onPlayFrom={(_si, _bi) => { setSceneMode('visual'); }}
             onExportText={(text) => {
               setConfig((prev) => {
                 const manuscripts = [...(prev.manuscripts ?? [])];

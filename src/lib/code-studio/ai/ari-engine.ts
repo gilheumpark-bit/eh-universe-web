@@ -34,6 +34,22 @@ export interface ARIReport {
   timestamp: number;
 }
 
+export interface ModelARIState {
+  provider: string;
+  model: string;
+  score: number;
+  circuitState: 'closed' | 'open' | 'half-open';
+  errorCount: number;
+  successCount: number;
+}
+
+export interface ARIDashboardExport {
+  providers: ARIReport['providers'];
+  models: ModelARIState[];
+  timestamp: number;
+  uptimeMs: number;
+}
+
 // ============================================================
 // PART 2 — Constants
 // ============================================================
@@ -77,6 +93,8 @@ function clamp(val: number, min: number, max: number): number {
 
 export class ARIManager {
   private states: Map<string, ARIState> = new Map();
+  private modelStates: Map<string, ARIState> = new Map();
+  private readonly startedAt = Date.now();
 
   // ── State access ──
 
@@ -94,9 +112,11 @@ export class ARIManager {
   /**
    * Update ARI after an AI call completes (success or failure).
    * Handles score recalculation, EMA, and circuit breaker transitions.
+   * @param model - Optional model identifier for per-model tracking (ARI_ENHANCED)
    */
-  updateAfterCall(provider: string, success: boolean, latencyMs: number): void {
+  updateAfterCall(provider: string, success: boolean, latencyMs: number, model?: string): void {
     const s = this.getState(provider);
+    const prevState = s.circuitState;
 
     if (success) {
       s.successCount++;
@@ -134,6 +154,18 @@ export class ARIManager {
         s.circuitOpenedAt = Date.now();
         logger.warn('ari', `Circuit OPENED for ${provider} (ARI=${s.score.toFixed(1)} < ${CIRCUIT_OPEN_THRESHOLD})`);
       }
+    }
+
+    // Dispatch circuit state change event
+    if (s.circuitState !== prevState && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('noa:circuit-state-changed', {
+        detail: { provider, model, previousState: prevState, newState: s.circuitState, score: s.score },
+      }));
+    }
+
+    // Per-model tracking (lightweight mirror)
+    if (model) {
+      this.updateModelState(provider, model, success, latencyMs);
     }
   }
 
@@ -226,7 +258,74 @@ export class ARIManager {
     return this.getState(provider).circuitState;
   }
 
+  // ── Per-Model API (ARI_ENHANCED) ──
+
+  /** Get ARI score for a specific model under a provider. */
+  getModelScore(provider: string, model: string): number {
+    const key = `${provider}:${model}`;
+    const ms = this.modelStates.get(key);
+    return ms ? ms.score : this.getScore(provider);
+  }
+
+  /** Get circuit state for a specific model. */
+  getModelCircuitState(provider: string, model: string): 'closed' | 'open' | 'half-open' {
+    const key = `${provider}:${model}`;
+    const ms = this.modelStates.get(key);
+    return ms ? ms.circuitState : this.getCircuitState(provider);
+  }
+
+  /** Export full dashboard data for monitoring UI. */
+  exportDashboard(): ARIDashboardExport {
+    const report = this.getReport();
+    const models: ModelARIState[] = Array.from(this.modelStates.values()).map(s => ({
+      provider: s.provider,
+      model: s.provider, // overwritten below
+      score: Math.round(s.score * 10) / 10,
+      circuitState: s.circuitState,
+      errorCount: s.errorCount,
+      successCount: s.successCount,
+    }));
+    // Fix model field from composite key
+    for (const [key, state] of this.modelStates) {
+      const [prov, mod] = key.split(':');
+      const entry = models.find(m => m.provider === state.provider && m.score === Math.round(state.score * 10) / 10);
+      if (entry) {
+        entry.provider = prov;
+        entry.model = mod;
+      }
+    }
+    return {
+      providers: report.providers,
+      models,
+      timestamp: Date.now(),
+      uptimeMs: Date.now() - this.startedAt,
+    };
+  }
+
   // ── Internal helpers ──
+
+  /** Track per-model health (lightweight — no circuit breaker logic, score tracking only) */
+  private updateModelState(provider: string, model: string, success: boolean, latencyMs: number): void {
+    const key = `${provider}:${model}`;
+    let ms = this.modelStates.get(key);
+    if (!ms) {
+      ms = createDefaultState(key);
+      ms.provider = provider;
+      this.modelStates.set(key, ms);
+    }
+    if (success) {
+      ms.successCount++;
+      const penalty = this.calcLatencyPenalty(latencyMs);
+      const raw = clamp(ms.score + 10 - penalty, 0, 100);
+      ms.score = this.applyEMA(ms, raw);
+    } else {
+      ms.errorCount++;
+      ms.lastErrorAt = Date.now();
+      const raw = clamp(ms.score - 20, 0, 100);
+      ms.score = this.applyEMA(ms, raw);
+      if (ms.score < CIRCUIT_OPEN_THRESHOLD) ms.circuitState = 'open';
+    }
+  }
 
   private calcLatencyPenalty(latencyMs: number): number {
     if (latencyMs <= LATENCY_GOOD_MS) return 0;

@@ -4,10 +4,11 @@
 // Phase 5: Hybrid Context 3-Tier 명시화
 // ============================================================
 
-import type { Character, StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
+import type { StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
 import { buildContinuityReport, type ContinuityReport } from './continuity-tracker';
 import { loadProfile, buildProfileHint } from './writer-profile';
 import { buildShadowPrompt, type ShadowState } from './shadow';
+import { logger } from '@/lib/logger';
 
 // IDENTITY_SEAL: PART-1 | role=module header + imports | inputs=none | outputs=none
 
@@ -258,13 +259,12 @@ export function buildStoryBible(input: StoryBibleInput): string {
   );
 
   // 토큰 분배 로그
-  if (typeof console !== 'undefined') {
-    console.log(
-      `[StoryBible] Tier A: ${tieredContext.tierATokens} tokens, ` +
-      `Tier B: ${tieredContext.tierBTokens} tokens, ` +
-      `Tier C: ${tieredContext.tierCTokens} tokens`
-    );
-  }
+  logger.debug(
+    'StoryBible',
+    `Tier A: ${tieredContext.tierATokens} tokens, ` +
+    `Tier B: ${tieredContext.tierBTokens} tokens, ` +
+    `Tier C: ${tieredContext.tierCTokens} tokens`
+  );
 
   // 작가 수정 패턴 분석 (최근 corrections에서 스타일 힌트 추출)
   const allCorrections = manuscripts

@@ -49,6 +49,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
+  // Auth check — require either Firebase JWT Bearer token or BYOK API key
+  const authHeader = req.headers.get('authorization');
+  const hasAuth = authHeader?.startsWith('Bearer ') && authHeader.length > 20;
+  const hasByok = typeof body.apiKey === 'string' && body.apiKey.length > 10;
+  if (!hasAuth && !hasByok) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   if (text.length < 10) {
     return NextResponse.json({ error: 'Text too short' }, { status: 400 });
@@ -132,7 +140,6 @@ export async function POST(req: NextRequest) {
     const reader = result.stream.getReader();
     const decoder = new TextDecoder();
     let fullText = '';
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;

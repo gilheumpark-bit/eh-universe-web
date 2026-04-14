@@ -190,6 +190,10 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
             padding: 2rem;
             outline: none;
           }
+          .novel-editor-wrapper .ProseMirror:focus-visible {
+            outline: 2px solid var(--color-accent-blue);
+            outline-offset: 2px;
+          }
           .novel-editor-wrapper .ProseMirror p {
             text-indent: 1em;
             margin-bottom: 0;

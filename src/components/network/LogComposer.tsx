@@ -135,7 +135,7 @@ export function LogComposer({
       {/* Category Selector */}
       <div className="mb-4">
         <div className="mb-2 text-sm text-text-secondary">
-          {L4(lang, { ko: "\uB85C\uADF8 \uCE74\uD14C\uACE0\uB9AC", en: "Log Category" })}
+          {L4(lang, { ko: "\uB85C\uADF8 \uCE74\uD14C\uACE0\uB9AC", en: "Log Category", ja: "Log Category", zh: "Log Category" })}
         </div>
         <div className="flex flex-wrap gap-2">
           {LOG_CATEGORIES.map((cat) => (
@@ -160,14 +160,14 @@ export function LogComposer({
       <div className="grid gap-4 md:grid-cols-2">
         {showPlanetSelect ? (
           <label className="block">
-            <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "소속 행성", en: "Planet" })}</div>
+            <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "소속 행성", en: "Planet", ja: "所属惑星", zh: "所属星球" })}</div>
             <select
               value={value.planetId}
               disabled={disabled}
               onChange={(event) => handleField("planetId", event.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             >
-              <option value="">{L4(lang, { ko: "행성을 선택하세요", en: "Select a planet" })}</option>
+              <option value="">{L4(lang, { ko: "행성을 선택하세요", en: "Select a planet", ja: "惑星を選択してください", zh: "请选择星球" })}</option>
               {planetOptions.map((planet) => (
                 <option key={planet.id} value={planet.id}>
                   {planet.name}
@@ -178,12 +178,12 @@ export function LogComposer({
         ) : null}
 
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "문서 형식", en: "Report Type" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "문서 형식", en: "Report Type", ja: "文書形式", zh: "文档格式" })}</div>
           <select
             value={value.reportType}
             disabled={disabled}
             onChange={(event) => handleField("reportType", event.target.value as ReportType)}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {reportTypeOptions.map((type) => (
               <option key={type} value={type}>
@@ -194,51 +194,51 @@ export function LogComposer({
         </label>
 
         <label className="block md:col-span-2">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "제목", en: "Title" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "제목", en: "Title", ja: "タイトル", zh: "标题" })}</div>
           <input
             value={value.title}
             disabled={disabled}
             onChange={(event) => handleField("title", event.target.value)}
             maxLength={200}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
-            placeholder={L4(lang, { ko: "관측 로그 제목을 입력하세요", en: "Enter a title" })}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            placeholder={L4(lang, { ko: "관측 로그 제목을 입력하세요", en: "Enter a title", ja: "観測ログのタイトルを入力してください", zh: "请输入观测日志标题" })}
           />
         </label>
 
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "사건 분류", en: "Event Type" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "사건 분류", en: "Event Type", ja: "사件 분류", zh: "사条 분류" })}</div>
           <input
             value={value.eventCategory}
             disabled={disabled}
             onChange={(event) => handleField("eventCategory", event.target.value)}
             maxLength={100}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
-            placeholder={L4(lang, { ko: "예: 붕괴, 접촉, 회수", en: "e.g. Collapse, Contact, Recovery" })}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            placeholder={L4(lang, { ko: "예: 붕괴, 접촉, 회수", en: "e.g. Collapse, Contact, Recovery", ja: "e.g. Collapse, Contact, Recovery", zh: "e.g. Collapse, Contact, Recovery" })}
           />
         </label>
 
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "지역", en: "Region" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "지역", en: "Region", ja: "Region", zh: "Region" })}</div>
           <input
             value={value.region}
             disabled={disabled}
             onChange={(event) => handleField("region", event.target.value)}
             maxLength={100}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
-            placeholder={L4(lang, { ko: "관측 지역을 입력하세요", en: "Enter a region" })}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            placeholder={L4(lang, { ko: "관측 지역을 입력하세요", en: "Enter a region", ja: "観測 지역을 入力하세요", zh: "观测 지역을 输入하세요" })}
           />
         </label>
 
         <label className="block md:col-span-2">
           <div className="mb-2 flex items-center justify-between text-sm text-text-secondary">
-            <span>{L4(lang, { ko: "본문", en: "Body" })}</span>
+            <span>{L4(lang, { ko: "본문", en: "Body", ja: "本文", zh: "正文" })}</span>
             <button
               type="button"
               disabled={disabled}
               onClick={onInsertTemplate}
               className="rounded-full border border-accent-amber/25 bg-accent-amber/10 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] text-accent-amber uppercase"
             >
-              {L4(lang, { ko: "템플릿 삽입", en: "Insert Template" })}
+              {L4(lang, { ko: "템플릿 삽입", en: "Insert Template", ja: "Insert Template", zh: "Insert Template" })}
             </button>
           </div>
           <textarea
@@ -246,8 +246,8 @@ export function LogComposer({
             disabled={disabled}
             onChange={(event) => handleField("content", event.target.value)}
             maxLength={10000}
-            className="min-h-[260px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
-            placeholder={L4(lang, { ko: "관측 내용을 기록하세요", en: "Write the observation" })}
+            className="min-h-[260px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            placeholder={L4(lang, { ko: "관측 내용을 기록하세요", en: "Write the observation", ja: "観測 内容을 기록하세요", zh: "观测 内容을 기록하세요" })}
           />
           <div className="mt-1 text-right text-[11px] text-text-tertiary">{value.content.length}/10000</div>
         </label>
@@ -259,11 +259,11 @@ export function LogComposer({
             disabled={disabled}
             onChange={(event) => handleField("intervention", event.target.checked)}
           />
-          {L4(lang, { ko: "직접 개입이 있었음", en: "Direct intervention occurred" })}
+          {L4(lang, { ko: "직접 개입이 있었음", en: "Direct intervention occurred", ja: "직접 件입이 있었음", zh: "직접 个입이 있었음" })}
         </label>
 
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "EH 영향도", en: "EH Impact" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "EH 영향도", en: "EH Impact", ja: "EH Impact", zh: "EH Impact" })}</div>
           <input
             type="number"
             min={-100}
@@ -276,12 +276,12 @@ export function LogComposer({
                 event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0),
               )
             }
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           />
         </label>
 
         <label className="block md:col-span-2">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "후속 상태", en: "Follow-up Status" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "후속 상태", en: "Follow-up Status", ja: "후속 状態", zh: "후속 状态" })}</div>
           <select
             value={value.followupStatus ?? ""}
             disabled={disabled}
@@ -291,9 +291,9 @@ export function LogComposer({
                 event.target.value === "" ? null : (event.target.value as PlanetStatus),
               )
             }
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
-            <option value="">{L4(lang, { ko: "선택 안 함", en: "No follow-up verdict" })}</option>
+            <option value="">{L4(lang, { ko: "선택 안 함", en: "No follow-up verdict", ja: "選択 안 함", zh: "选择 안 함" })}</option>
             {(Object.keys(PLANET_STATUS_LABELS) as PlanetStatus[]).map((status) => (
               <option key={status} value={status}>
                 {pickNetworkLabel(PLANET_STATUS_LABELS[status], lang)}
@@ -310,7 +310,7 @@ export function LogComposer({
           onClick={onSubmit}
           className="premium-button"
         >
-          {submitting ? L4(lang, { ko: "저장 중...", en: "Saving..." }) : submitLabel}
+          {submitting ? L4(lang, { ko: "저장 중...", en: "Saving...", ja: "保存 중...", zh: "保存 중..." }) : submitLabel}
         </button>
       </div>
     </div>

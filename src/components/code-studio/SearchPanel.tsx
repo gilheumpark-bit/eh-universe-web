@@ -132,7 +132,7 @@ function FileGroup({
                 onClick={(e) => { e.stopPropagation(); onReplace?.(r.fileName, r.line); }}
                 className="text-[8px] px-1 py-0.5 rounded bg-amber-900/30 text-amber-400 opacity-0 group-hover:opacity-100 ml-1 shrink-0 cursor-pointer hover:bg-amber-900/35"
               >
-                {L4(lang, { ko: "바꾸기", en: "Replace" })}</span>
+                {L4(lang, { ko: "바꾸기", en: "Replace", ja: "置換", zh: "替换"})}</span>
             )}
           </button>
         </div>
@@ -217,7 +217,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
   const matchSummary = useMemo(() => {
     const total = results.length;
     const fileCount = new Set(results.map((r) => r.filePath)).size;
-    return L4(lang, { ko: `${total}개의 결과 (${fileCount}개 파일)`, en: `${total} result${total !== 1 ? "s" : ""} in ${fileCount} file${fileCount !== 1 ? "s" : ""}` });
+    return L4(lang, { ko: `${total}개의 결과 (${fileCount}개 파일)`, en: `${total} result${total !== 1 ? "s" : ""} in ${fileCount} file${fileCount !== 1 ? "s" : ""}`, ja: `${total}件の結果 (${fileCount}ファイル)`, zh: `${total}个结果 (${fileCount}个文件)`});
   }, [results, lang]);
 
   // Group by file
@@ -236,8 +236,8 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
         <span className="text-xs font-semibold flex items-center gap-1 text-text-primary">
-          <Search size={12} />{L4(lang, { ko: "검색", en: "Search" })}</span>
-        <button onClick={onClose} className="text-text-tertiary hover:text-text-primary" aria-label={L4(lang, { ko: "검색 닫기", en: "Close search" })}>
+          <Search size={12} />{L4(lang, { ko: "검색", en: "Search", ja: "検索", zh: "搜索"})}</span>
+        <button onClick={onClose} className="text-text-tertiary hover:text-text-primary" aria-label={L4(lang, { ko: "검색 닫기", en: "Close search", ja: "検索を閉じる", zh: "关闭搜索"})}>
           <X size={12} />
         </button>
       </div>
@@ -254,21 +254,21 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
               onKeyDown={handleSearchKeyDown}
               onFocus={() => searchHistory.length > 0 && setShowHistory(true)}
               onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-              placeholder={L4(lang, { ko: "검색...", en: "Search..." })}
-              className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
+              placeholder={L4(lang, { ko: "검색...", en: "Search...", ja: "検索...", zh: "搜索..."})}
+              className="flex-1 bg-transparent text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder:text-text-tertiary"
               autoFocus
             />
             <button
               onClick={() => setShowHistory((v) => !v)}
               className="text-text-tertiary hover:text-text-primary"
-              title={L4(lang, { ko: "검색 기록", en: "Search history" })}
+              title={L4(lang, { ko: "검색 기록", en: "Search history", ja: "検索履歴", zh: "搜索历史"})}
             >
               <History size={10} />
             </button>
             <button
               onClick={() => setShowReplace((v) => !v)}
               className={`text-text-tertiary hover:text-text-primary ${showReplace ? "text-amber-400" : ""}`}
-              title={L4(lang, { ko: "바꾸기 전환", en: "Toggle replace" })}
+              title={L4(lang, { ko: "바꾸기 전환", en: "Toggle replace", ja: "置換切替", zh: "切换替换"})}
             >
               <Replace size={10} />
             </button>
@@ -298,13 +298,13 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
             <input
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
-              placeholder={L4(lang, { ko: "바꿀 내용...", en: "Replace with..." })}
-              className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
+              placeholder={L4(lang, { ko: "바꿀 내용...", en: "Replace with...", ja: "置換内容...", zh: "替换为..."})}
+              className="flex-1 bg-transparent text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder:text-text-tertiary"
             />
             <button
               onClick={handleReplaceAll}
               className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 hover:bg-amber-900/35"
-            >{L4(lang, { ko: "모두 바꾸기", en: "Replace All" })}</button>
+            >{L4(lang, { ko: "모두 바꾸기", en: "Replace All", ja: "すべて置換", zh: "全部替换"})}</button>
           </div>
         )}
 
@@ -312,7 +312,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
         <div className="flex gap-2 mt-1 flex-wrap items-center">
           <button
             onClick={() => setCaseSensitive((v) => !v)}
-            aria-label={L4(lang, { ko: "대소문자 구분", en: "Case sensitive" })}
+            aria-label={L4(lang, { ko: "대소문자 구분", en: "Case sensitive", ja: "大小文字区別", zh: "区分大小写"})}
             aria-pressed={caseSensitive}
             className={`text-[9px] px-1.5 py-0.5 rounded transition-colors
               ${caseSensitive ? "bg-amber-900/30 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
@@ -321,7 +321,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
           </button>
           <button
             onClick={() => setUseRegex((v) => !v)}
-            aria-label={L4(lang, { ko: "정규식 사용", en: "Use regular expression" })}
+            aria-label={L4(lang, { ko: "정규식 사용", en: "Use regular expression", ja: "正規表現を使用", zh: "使用正则表达式"})}
             aria-pressed={useRegex}
             className={`text-[9px] px-1.5 py-0.5 rounded transition-colors
               ${useRegex ? "bg-amber-900/30 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
@@ -334,9 +334,9 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
               onClick={() => setShowFileTypeDropdown((v) => !v)}
               className={`flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded transition-colors
                 ${fileTypeFilter ? "bg-amber-500/20 text-amber-400" : "text-text-tertiary hover:text-text-primary"}`}
-              title={L4(lang, { ko: "파일 형식 필터", en: "File type filter" })}
+              title={L4(lang, { ko: "파일 형식 필터", en: "File type filter", ja: "ファイル種別フィルター", zh: "文件类型筛选"})}
             >
-              <Filter size={8} /> {fileTypeFilter || L4(lang, { ko: "모든 파일", en: "All Files" })}
+              <Filter size={8} /> {fileTypeFilter || L4(lang, { ko: "모든 파일", en: "All Files", ja: "すべてのファイル", zh: "所有文件"})}
             </button>
             {showFileTypeDropdown && (
               <div className="absolute right-0 top-full z-50 bg-bg-primary border border-white/8 rounded mt-0.5 shadow-lg">
@@ -346,7 +346,7 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
                     onClick={() => { setFileTypeFilter(ft.value); setShowFileTypeDropdown(false); }}
                     className={`w-full text-left px-3 py-1 text-[9px] hover:bg-white/5 ${fileTypeFilter === ft.value ? "text-amber-400" : "text-text-primary"}`}
                   >
-                    {ft.value === "" ? L4(lang, { ko: "모든 파일", en: "All Files" }) : ft.label}
+                    {ft.value === "" ? L4(lang, { ko: "모든 파일", en: "All Files", ja: "すべてのファイル", zh: "所有文件"}) : ft.label}
                   </button>
                 ))}
               </div>
@@ -362,9 +362,9 @@ export function SearchPanel({ files, onOpenFile, onClose, onReplaceInFile, onRep
       {/* Results */}
       <div className="flex-1 overflow-y-auto text-xs">
         {query.length < 2 ? (
-          <p className="text-center text-text-tertiary py-8">{L4(lang, { ko: "2글자 이상 입력하세요", en: "Type at least 2 characters" })}</p>
+          <p className="text-center text-text-tertiary py-8">{L4(lang, { ko: "2글자 이상 입력하세요", en: "Type at least 2 characters", ja: "2文字以上入力してください", zh: "请输入至少2个字符"})}</p>
         ) : results.length === 0 ? (
-          <p className="text-center text-text-tertiary py-8">{L4(lang, { ko: "일치하는 결과 없음", en: "No matching results" })}</p>
+          <p className="text-center text-text-tertiary py-8">{L4(lang, { ko: "일치하는 결과 없음", en: "No matching results", ja: "一致する結果なし", zh: "没有匹配结果"})}</p>
         ) : (
           Array.from(grouped).map(([filePath, items]) => (
             <FileGroup

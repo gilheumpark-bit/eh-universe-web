@@ -21,7 +21,7 @@
  *   - The final "deploy to production" step (no real hosting provider connection)
  */
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Upload,
   Download,

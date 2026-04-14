@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 
 export const stl006Detector: RuleDetector = {
   ruleId: 'STL-006',

@@ -46,7 +46,7 @@ export function KeybindingsPanel({ onClose }: Props) {
   const categories = [...new Set(filtered.map((k) => k.category))];
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true" aria-label="키보드 단축키">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true" aria-label="키보드 단축키">
       <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[500px] max-h-[500px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <span className="flex items-center gap-2 text-sm font-semibold text-white"><Keyboard size={14} /> 키보드 단축키</span>
@@ -56,7 +56,7 @@ export function KeybindingsPanel({ onClose }: Props) {
           <div className="flex items-center gap-2 bg-white/5 rounded px-2 py-1">
             <Search size={12} className="text-white/50" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="단축키 검색..."
-              className="flex-1 bg-transparent text-xs text-white outline-none" autoFocus />
+              className="flex-1 bg-transparent text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" autoFocus />
           </div>
         </div>
         <div className="overflow-y-auto max-h-[380px] p-2">

@@ -8,14 +8,29 @@ export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/github/callback?code=xxx
+ * GET /api/github/callback?code=xxx&state=xxx
  *
  * Exchanges the OAuth authorization code for an access token,
  * then redirects to /studio with the token in the URL hash
  * (hash fragment is never sent to the server — safer than query params).
+ *
+ * CSRF protection: the `state` query param must match the `gh_oauth_state`
+ * httpOnly cookie set by the client before redirecting to GitHub.
+ * See SettingsView.tsx handleOAuthLogin for the client-side setup.
  */
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code');
+  const state = req.nextUrl.searchParams.get('state');
+
+  // --- CSRF protection: verify state matches cookie ---
+  const expectedState = req.cookies.get('gh_oauth_state')?.value;
+  if (!state || !expectedState || state !== expectedState) {
+    return NextResponse.json(
+      { error: 'Invalid OAuth state — possible CSRF attack' },
+      { status: 403 },
+    );
+  }
+
   if (!code) {
     return NextResponse.json({ error: 'Missing code parameter' }, { status: 400 });
   }
@@ -55,15 +70,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: errMsg }, { status: 400 });
     }
 
-    // Redirect to /studio with token in hash (not exposed to server logs)
-    const redirectUrl = new URL('/studio', req.nextUrl.origin);
-    return NextResponse.redirect(
-      `${redirectUrl.toString()}#github_token=${tokenData.access_token}`,
-      { status: 302 },
-    );
+    // Set token in httpOnly cookie instead of URL hash to avoid browser history exposure
+    const response = NextResponse.redirect(new URL('/studio', req.url));
+    response.cookies.set('gh_access_token', tokenData.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60, // 8 hours
+      path: '/',
+    });
+
+    // Clear the one-time state cookie after successful verification
+    response.cookies.delete('gh_oauth_state');
+
+    return response;
   } catch {
     return NextResponse.json({ error: 'Failed to exchange code' }, { status: 502 });
   }
 }
 
-// IDENTITY_SEAL: PART-1 | role=github-oauth-callback | inputs=code | outputs=redirect+token
+// IDENTITY_SEAL: PART-1 | role=github-oauth-callback | inputs=code,state | outputs=redirect+token

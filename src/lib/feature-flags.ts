@@ -20,6 +20,14 @@ export interface FeatureFlags {
   CLOUD_SYNC: boolean;
   /** GitHub 원고 동기화 */
   GITHUB_SYNC: boolean;
+  /** AI 요청 보안 스캐너 (프롬프트 인젝션 / 코드 인젝션 / PII 탐지) */
+  SECURITY_GATE: boolean;
+  /** 멀티파일 에이전트 (스냅샷 + 의존성 그래프) */
+  MULTI_FILE_AGENT: boolean;
+  /** GitHub ETag 캐싱 + rate limit 추적 */
+  GITHUB_ETAG_CACHE: boolean;
+  /** ARI per-model 추적 + 상태 전환 이벤트 */
+  ARI_ENHANCED: boolean;
 }
 
 // ============================================================
@@ -37,6 +45,14 @@ const FLAGS: FeatureFlags = {
   CLOUD_SYNC: true,
   /** GitHub 원고 동기화 — Phase 1 기본 비활성, localStorage ff_GITHUB_SYNC=true로 활성 */
   GITHUB_SYNC: false,
+  /** AI 요청 보안 스캐너 — 프롬프트 인젝션·코드 인젝션·PII 탐지 */
+  SECURITY_GATE: false,
+  /** 멀티파일 에이전트 — 스냅샷 롤백 + 의존성 그래프 */
+  MULTI_FILE_AGENT: false,
+  /** GitHub ETag 캐싱 — 304 캐시 + rate limit 80% 경고 */
+  GITHUB_ETAG_CACHE: false,
+  /** ARI per-model 추적 — 모델별 건강도 + circuit 이벤트 */
+  ARI_ENHANCED: false,
 };
 
 /**

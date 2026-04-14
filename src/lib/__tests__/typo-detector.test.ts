@@ -3,7 +3,7 @@
  * Covers: detectTypos (double-char, batchim-swap, jamo-slip) + applyTypoFixes
  */
 
-import { detectTypos, applyTypoFixes, TypoMatch } from '@/lib/typo-detector';
+import { detectTypos, applyTypoFixes } from '@/lib/typo-detector';
 
 // ============================================================
 // PART 1 — detectDoubleChars (via detectTypos)

@@ -170,7 +170,7 @@ function ActivityBar({
       <div className="w-6 h-px bg-white/10 mb-2" />
       
       {coreItems.map((item) => {
-        const displayLabel = L4(lang, { ko: item.labelKo, en: item.label });
+        const displayLabel = L4(lang, { ko: item.labelKo, en: item.label, ja: item.label, zh: item.label });
         return (
           <button
             key={item.id}
@@ -202,7 +202,7 @@ function ActivityBar({
         .filter(p => !["chat","search","outline","preview","composer","pipeline","bugs","git"].includes(p.id))
         .map(p => {
           const Icon = LUCIDE_MAP[p.icon];
-          const lbl = L4(lang, { ko: p.labelKo, en: p.label });
+          const lbl = L4(lang, { ko: p.labelKo, en: p.label, ja: p.label, zh: p.label });
           return (
             <button key={p.id} onClick={() => onSetRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
               className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
@@ -274,8 +274,8 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
           const task = mode === "verify"
             ? `## Code Verification Request\n\nReview the following code for security vulnerabilities, performance issues, memory leaks, dead code, and convention violations.\n\n\`\`\`\n${code}\n\`\`\``
             : code;
-          localStorage.setItem("eh-cs-agent-task", task);
-          localStorage.setItem("eh-cs-agent-mode", mode);
+          try { localStorage.setItem("eh-cs-agent-task", task); } catch { /* quota/private */ }
+          try { localStorage.setItem("eh-cs-agent-mode", mode); } catch { /* quota/private */ }
           onSetRightPanel("agents");
           toast(mode === "verify" ? "검증 에이전트로 이동합니다." : "생성 + 검증을 시작합니다.", "success");
         }}
@@ -289,9 +289,9 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
           const coreSpec = toCoreProjectSpec(spec);
           saveProjectSpec(coreSpec);
           const chatSeed = buildProjectSpecChatSeed(coreSpec, spec);
-          localStorage.setItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY, chatSeed);
+          try { localStorage.setItem(CODE_STUDIO_SPEC_CHAT_SEED_KEY, chatSeed); } catch { /* quota/private */ }
           // 에이전트 파이프라인용 태스크도 저장
-          localStorage.setItem("eh-cs-agent-task", chatSeed);
+          try { localStorage.setItem("eh-cs-agent-task", chatSeed); } catch { /* quota/private */ }
           toast("명세서 저장 완료. 에이전트 파이프라인으로 이동합니다.", "success");
           onSetRightPanel("agents");
         }}

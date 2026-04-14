@@ -62,7 +62,7 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
       await signInWithGoogle();
       // After login completes, user state updates asynchronously.
       // Show a hint so the user knows to tap again.
-      const hint = L4(lang, { ko: "로그인 완료! 다시 눌러주세요", en: "Logged in! Tap again to bookmark" });
+      const hint = L4(lang, { ko: "로그인 완료! 다시 눌러주세요", en: "Logged in! Tap again to bookmark", ja: "ログイン完了！もう一度タップしてください", zh: "登录完成！请再次点击" });
       setLoginHint(hint);
       clearTimeout(loginHintTimer.current);
       loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);

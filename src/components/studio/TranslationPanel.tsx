@@ -43,7 +43,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const [showSegmentView, setShowSegmentView] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [glossaryCandidates, setGlossaryCandidates] = useState<any[]>([]);
-  const [multiLangTargets, setMultiLangTargets] = useState<string[]>(['EN']);
+  const [_multiLangTargets, _setMultiLangTargets] = useState<string[]>(['EN']);
   const [tmCount, setTmCount] = useState(0);
   const [mode, setMode] = useState<TranslationMode>("fidelity");
   const [targetLang, setTargetLang] = useState<TranslationTarget>("EN");
@@ -78,7 +78,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     localStorage.setItem('eh-novel-glossary', JSON.stringify(g));
   }, []);
 
-  const { translateEpisode, translateBatch, progress, batchProgress, isTranslating, abort } = useTranslation({
+  const { translateEpisode, translateBatch: _translateBatch, progress, batchProgress: _batchProgress, isTranslating, abort } = useTranslation({
     onProgress: (p) => {
       if (p.status === 'scoring') {
          setLogs(prev => [...prev.slice(-49), { id: Date.now(), type: 'info', text: `Analyzing metrics for chunk ${p.currentChunk + 1}...` }]);
@@ -349,7 +349,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               } catch { /* fallback: 일반 텍스트로 처리 */ }
             }}
             placeholder={isKO ? '번역할 텍스트 또는 URL을 붙여넣으세요...' : 'Paste text or URL to translate...'}
-            className="w-full min-h-[160px] bg-bg-tertiary border border-white/10 rounded-xl p-4 font-sans text-sm text-text-primary placeholder-text-tertiary/40 resize-y outline-none focus:border-border"
+            className="w-full min-h-[160px] bg-bg-tertiary border border-white/10 rounded-xl p-4 font-sans text-sm text-text-primary placeholder-text-tertiary/40 resize-y outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border"
           />
 
           {/* Translate Button */}
@@ -390,7 +390,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                             const updated = editSegment(seg, e.target.value);
                             setSegments((prev: typeof segments) => prev.map((s: typeof seg) => s.id === seg.id ? updated : s));
                           }}
-                          className="text-[12px] text-text-primary leading-relaxed bg-transparent outline-none border-b border-transparent focus:border-border"
+                          className="text-[12px] text-text-primary leading-relaxed bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border-b border-transparent focus:border-border"
                         />
                       </div>
                       <div className="shrink-0 flex flex-col gap-0.5">
@@ -575,7 +575,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               step={BAND_META.step}
               value={band}
               onChange={(e) => setBand(parseFloat(e.target.value))}
-              className="w-full h-1.5 bg-black/60 rounded-full appearance-none outline-none accent-[rgba(184,149,92,0.9)] cursor-pointer"
+              className="w-full h-1.5 bg-black/60 rounded-full appearance-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 accent-[rgba(184,149,92,0.9)] cursor-pointer"
             />
             {/* Custom slider track overlay for premium feel */}
             <div 
@@ -599,7 +599,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <select
               value={targetGenre}
               onChange={(e) => setTargetGenre(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus:border-border focus:ring-1 focus:ring-border transition-all"
+              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-all"
             >
               <option value="">(None - Auto Detect)</option>
               {Object.keys(GENRE_PRESETS).map(genre => (
@@ -619,7 +619,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 min={0.5} max={0.99} step={0.01}
                 value={scoreThreshold}
                 onChange={(e) => setScoreThreshold(parseFloat(e.target.value) || 0.75)}
-                className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus:border-border focus:ring-1 focus:ring-border transition-all"
+                className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-all"
               />
             </div>
           </div>
@@ -633,7 +633,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               value={contractionLevel}
               onChange={(e) => setContractionLevel(e.target.value as typeof contractionLevel)}
               disabled={mode !== 'experience'}
-              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-text-primary outline-none focus:border-border focus:ring-1 focus:ring-border transition-all"
+              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-all"
             >
               <option value="none">None (Strict/Formal)</option>
               <option value="low">Low (Dialogue only)</option>
@@ -652,8 +652,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         </summary>
         <div className="px-5 pb-4 space-y-3">
           <div className="flex gap-2">
-            <input value={glossaryTerm} onChange={(e) => setGlossaryTerm(e.target.value)} placeholder={isKO ? "원문 용어" : "Source term"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
-            <input value={glossaryTranslation} onChange={(e) => setGlossaryTranslation(e.target.value)} placeholder={isKO ? "번역" : "Translation"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none" />
+            <input value={glossaryTerm} onChange={(e) => setGlossaryTerm(e.target.value)} placeholder={isKO ? "원문 용어" : "Source term"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+            <input value={glossaryTranslation} onChange={(e) => setGlossaryTranslation(e.target.value)} placeholder={isKO ? "번역" : "Translation"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
             <button onClick={() => { if (glossaryTerm.trim() && glossaryTranslation.trim()) { saveGlossary({ ...glossary, [glossaryTerm.trim()]: glossaryTranslation.trim() }); setGlossaryTerm(''); setGlossaryTranslation(''); } }} className="px-3 py-2 rounded-lg bg-[rgba(184,149,92,0.15)] text-text-primary font-mono text-[10px] font-bold hover:bg-[rgba(184,149,92,0.25)] transition-colors">+</button>
           </div>
           {Object.entries(glossary).length > 0 && (
@@ -685,7 +685,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <select
               value={selectedEpisode ?? ""}
               onChange={(e) => setSelectedEpisode(e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full appearance-none rounded-xl border border-white/10 bg-bg-tertiary px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus:border-border group-hover:border-white/20 transition-all shadow-inner"
+              className="w-full appearance-none rounded-xl border border-white/10 bg-bg-tertiary px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border group-hover:border-white/20 transition-all shadow-inner"
             >
               <option value="">{isKO ? "/// 번역 대기 큐에서 선택 ///" : "/// Select queued episode ///"}</option>
               {manuscripts.map((m) => (

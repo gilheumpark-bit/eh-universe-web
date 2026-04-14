@@ -78,7 +78,7 @@ export function NetworkAgentSearchClient() {
         {
           id: (Date.now() + 1).toString(),
           role: "agent",
-          content: L4(lang, { ko: "인증 토큰을 가져올 수 없습니다. 다시 로그인해 주세요.", en: "Failed to get auth token. Please sign in again." }),
+          content: L4(lang, { ko: "인증 토큰을 가져올 수 없습니다. 다시 로그인해 주세요.", en: "Failed to get auth token. Please sign in again.", ja: "인증 토큰을 가져올 수 없습니다. 다시 ログイン해 주세요.", zh: "인증 토큰을 가져올 수 없습니다. 다시 登录해 주세요." }),
           isError: true,
         },
       ]);
@@ -109,7 +109,7 @@ export function NetworkAgentSearchClient() {
         {
           id: (Date.now() + 1).toString(),
           role: "agent",
-          content: L4(lang, { ko: "검색 중 오류가 발생했습니다. 구글 클라우드 설정을 확인하시거나 잠시 후 다시 시도해 주세요.", en: "Search failed. Please try again later." }),
+          content: L4(lang, { ko: "검색 중 오류가 발생했습니다. 구글 클라우드 설정을 확인하시거나 잠시 후 다시 시도해 주세요.", en: "Search failed. Please try again later.", ja: "検索 중 エラーが発生しました。 구글 클라우드 設定을 確認하시거나 잠시 후 再試行해 주세요.", zh: "搜索 중 发生了错误。 구글 클라우드 设置을 确认하시거나 잠시 후 重试해 주세요." }),
           isError: true,
         },
       ]);
@@ -121,9 +121,9 @@ export function NetworkAgentSearchClient() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required", ja: "ログイン 필요", zh: "登录 필요" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {L4(lang, { ko: "Agent Builder 검색을 이용하려면 로그인하세요.", en: "Sign in to use the Network Agent search." })}
+              {L4(lang, { ko: "Agent Builder 검색을 이용하려면 로그인하세요.", en: "Sign in to use the Network Agent search.", ja: "Agent Builder 検索을 이용하려면 ログイン하세요.", zh: "Agent Builder 搜索을 이용하려면 登录하세요." })}
             </h1>
           </section>
         </div>
@@ -142,10 +142,10 @@ export function NetworkAgentSearchClient() {
           <div className="border-b border-white/10 pb-4 mb-4">
             <div className="site-kicker text-accent-amber">Vertex AI Agent Builder</div>
             <h1 className="site-title mt-2 text-2xl font-semibold">
-              {L4(lang, { ko: "네트워크 기록물 NOA 검색", en: "Network Archives NOA Search" })}
+              {L4(lang, { ko: "네트워크 기록물 NOA 검색", en: "Network Archives NOA Search", ja: "ネットワーク 기록물 NOA 検索", zh: "网络 기록물 NOA 搜索" })}
             </h1>
             <p className="mt-2 text-sm text-text-tertiary">
-              {L4(lang, { ko: "내 행성, 게시글, 그리고 공개된 세계관 정보를 의미 기반으로 통합 검색합니다.", en: "Search your planets, posts, and public universe data using semantic matching." })}
+              {L4(lang, { ko: "내 행성, 게시글, 그리고 공개된 세계관 정보를 의미 기반으로 통합 검색합니다.", en: "Search your planets, posts, and public universe data using semantic matching.", ja: "マイ惑星, 投稿, 그리고 公開된 世界観 情報를 의미 기반으로 통합 検索합니다.", zh: "我的星球, 帖子, 그리고 公开된 世界观 信息를 의미 기반으로 통합 搜索합니다." })}
             </p>
           </div>
 
@@ -154,7 +154,7 @@ export function NetworkAgentSearchClient() {
               <div className="h-full flex flex-col items-center justify-center text-center opacity-50 p-4">
                 <span className="text-4xl mb-4">🌌</span>
                 <p className="text-sm font-medium">
-                  {L4(lang, { ko: "\"내 세계관의 주요 사건을 요약해줘\" 같이 질문해보세요.", en: "Try asking: \"Summarize the major events in my universe.\"" })}
+                  {L4(lang, { ko: "\"내 세계관의 주요 사건을 요약해줘\" 같이 질문해보세요.", en: "Try asking: \"Summarize the major events in my universe.\"", ja: "\"내 世界観의 주요 사件을 요약해줘\" 같이 질문해보세요.", zh: "\"내 世界观의 주요 사条을 요약해줘\" 같이 질문해보세요." })}
                 </p>
               </div>
             ) : null}
@@ -193,7 +193,7 @@ export function NetworkAgentSearchClient() {
                                 )}
                               </div>
                               <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent-amber/10 text-accent-amber border border-accent-amber/20">
-                                {L4(lang, { ko: "\uC815\uD655\uB3C4", en: "Relevance" })} {relevance}%
+                                {L4(lang, { ko: "\uC815\uD655\uB3C4", en: "Relevance", ja: "Relevance", zh: "Relevance" })} {relevance}%
                               </span>
                             </Link>
                           );
@@ -204,7 +204,7 @@ export function NetworkAgentSearchClient() {
                   {msg.results && msg.results.length === 0 && !msg.isError && (
                     <div className="mt-4 pt-4 border-t border-white/10 text-center">
                       <p className="text-sm text-text-tertiary">
-                        {L4(lang, { ko: "\uAC80\uC0C9 \uACB0\uACFC \uC5C6\uC74C", en: "No results found" })}
+                        {L4(lang, { ko: "\uAC80\uC0C9 \uACB0\uACFC \uC5C6\uC74C", en: "No results found", ja: "No results found", zh: "No results found" })}
                       </p>
                       <p className="text-xs text-text-tertiary mt-1">
                         {L4(lang, {
@@ -237,15 +237,15 @@ export function NetworkAgentSearchClient() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={isSearching}
-              placeholder={L4(lang, { ko: "세계관, 설정, 사건에 대해 질문하세요...", en: "Ask about your universe, settings, and events..." })}
-              className="flex-1 bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-amber/50 focus:bg-white/[0.04] transition-colors"
+              placeholder={L4(lang, { ko: "세계관, 설정, 사건에 대해 질문하세요...", en: "Ask about your universe, settings, and events...", ja: "世界観, 設定, 사件에 대해 질문하세요...", zh: "世界观, 设置, 사条에 대해 질문하세요..." })}
+              className="flex-1 bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50 focus:bg-white/[0.04] transition-colors"
             />
             <button
               type="submit"
               disabled={isSearching || !query.trim()}
               className="rounded-xl bg-accent-amber/20 text-accent-amber px-6 py-3 text-sm font-medium hover:bg-accent-amber/30 disabled:opacity-50 transition-colors"
             >
-              {L4(lang, { ko: "검색", en: "Search" })}
+              {L4(lang, { ko: "검색", en: "Search", ja: "検索", zh: "搜索" })}
             </button>
           </form>
         </section>

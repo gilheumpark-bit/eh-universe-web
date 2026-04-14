@@ -9,8 +9,8 @@
 const { existsSync, readFileSync, readdirSync } = require('fs');
 const { join } = require('path');
 const { saveGlobalConfig, loadGlobalConfig } = require('../core/config');
-type CSConfig = import('../core/config').CSConfig;
-type KeyConfig = import('../core/config').KeyConfig;
+type _CSConfig = import('../core/config').CSConfig;
+type _KeyConfig = import('../core/config').KeyConfig;
 
 // ============================================================
 // PART 1 — Dynamic Framework Detection

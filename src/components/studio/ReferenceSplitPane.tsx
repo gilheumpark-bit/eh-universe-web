@@ -57,10 +57,12 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
     try { localStorage.setItem(STORAGE_KEY, String(width)); } catch { /* ignore */ }
   }, [width]);
 
-  // --- Drag handlers ---
+  // --- Drag handlers (use refs to avoid circular useCallback deps) ---
+  const onMouseMoveRef = useRef<(e: MouseEvent) => void>(() => {});
+  const onMouseUpRef = useRef<() => void>(() => {});
+
   const onMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging.current) return;
-    // Handle is on the left edge, so dragging left = wider
     const delta = startX.current - e.clientX;
     setWidth(clampWidth(startWidth.current + delta));
   }, []);
@@ -69,9 +71,13 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
     isDragging.current = false;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-    window.removeEventListener('mousemove', onMouseMove);
-    window.removeEventListener('mouseup', onMouseUp);
-  }, [onMouseMove]);
+    window.removeEventListener('mousemove', onMouseMoveRef.current);
+    window.removeEventListener('mouseup', onMouseUpRef.current);
+  }, []);
+
+  // Keep refs in sync (must be in effect, not render)
+  useEffect(() => { onMouseMoveRef.current = onMouseMove; }, [onMouseMove]);
+  useEffect(() => { onMouseUpRef.current = onMouseUp; }, [onMouseUp]);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -80,9 +86,9 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
     startWidth.current = width;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  }, [width, onMouseMove, onMouseUp]);
+    window.addEventListener('mousemove', onMouseMoveRef.current);
+    window.addEventListener('mouseup', onMouseUpRef.current);
+  }, [width]);
 
   const onHandleDoubleClick = useCallback(() => {
     setWidth(DEFAULT_WIDTH);
@@ -90,11 +96,13 @@ export function ReferenceSplitPane({ config, language, onClose }: ReferenceSplit
 
   // Cleanup listeners on unmount
   useEffect(() => {
+    const moveRef = onMouseMoveRef;
+    const upRef = onMouseUpRef;
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mousemove', moveRef.current);
+      window.removeEventListener('mouseup', upRef.current);
     };
-  }, [onMouseMove, onMouseUp]);
+  }, []);
 
   const tabs: { id: RefTab; icon: typeof Globe; label: string }[] = [
     { id: 'world', icon: Globe, label: isKO ? '세계관' : 'World' },

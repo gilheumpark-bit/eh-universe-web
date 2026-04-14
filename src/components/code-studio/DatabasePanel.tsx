@@ -27,7 +27,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Database, Play, Clock, Table2, Settings, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
+import { Database, Play, Clock, Table2, Loader2, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
 
 export interface DBConnection {
   id: string;
@@ -268,7 +268,7 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
 
 export default function DatabasePanel({
   connections,
-  onConnect,
+  onConnect: _onConnect,
   onExecuteQuery,
   tables = [],
 }: DatabasePanelProps) {
@@ -371,7 +371,7 @@ export default function DatabasePanel({
           <select
             value={activeConn}
             onChange={(e) => setActiveConn(e.target.value)}
-            className="w-full rounded bg-bg-secondary/40 px-2 py-1 text-xs text-text-primary border border-border outline-none"
+            className="w-full rounded bg-bg-secondary/40 px-2 py-1 text-xs text-text-primary border border-border outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {connections.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -392,7 +392,7 @@ export default function DatabasePanel({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={4}
-            className="w-full resize-none rounded border border-border bg-bg-secondary/80 px-3 py-2 font-mono text-xs text-text-primary outline-none focus:border-accent-purple/50"
+            className="w-full resize-none rounded border border-border bg-bg-secondary/80 px-3 py-2 font-mono text-xs text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50"
             placeholder="Enter SQL query... (Ctrl+Enter to execute)"
           />
           <div className="mt-1 flex items-center justify-between">

@@ -6,9 +6,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  BookOpen, Plus, ScrollText, UserCircle, Feather, Type, Clock,
+  Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
-  Code2, Languages, Globe, Zap, ImageIcon, Film, MoreHorizontal, Printer,
+  Code2, Languages, Globe, ImageIcon, Film, MoreHorizontal, Printer,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -28,7 +28,7 @@ function loadDockPosition(): DockPosition | null {
   } catch { return null; }
 }
 function saveDockPosition(pos: DockPosition) {
-  try { localStorage.setItem(DOCK_POS_KEY, JSON.stringify(pos)); } catch {}
+  try { localStorage.setItem(DOCK_POS_KEY, JSON.stringify(pos)); } catch { /* [의도적 무시] localStorage 쓰기 실패 (private mode 등) */ }
 }
 
 interface DockItem {
@@ -47,7 +47,7 @@ function loadDockOrder(): AppTab[] | null {
   } catch { return null; }
 }
 function saveDockOrder(order: AppTab[]) {
-  try { localStorage.setItem(DOCK_STORAGE_KEY, JSON.stringify(order)); } catch {}
+  try { localStorage.setItem(DOCK_STORAGE_KEY, JSON.stringify(order)); } catch { /* [의도적 무시] localStorage 쓰기 실패 (private mode 등) */ }
 }
 
 interface OSDesktopProps {
@@ -181,7 +181,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
 
   const handleDockReset = useCallback(() => {
     setDockPos(null);
-    localStorage.removeItem(DOCK_POS_KEY);
+    try { localStorage.removeItem(DOCK_POS_KEY); } catch { /* private */ }
   }, []);
 
   // ── Dock items (소설 탭) — 집필 앱 아이콘/색상 ──
@@ -284,7 +284,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   return (
     <>
       {/* OS Top Menu Bar — 집필 세피아 톤 */}
-      <div data-zen-hide className="fixed top-0 left-0 w-full h-10 bg-bg-secondary/90 backdrop-blur-xl border-b border-border z-[9999] flex items-center justify-between px-4 text-xs font-mono text-text-secondary">
+      <div data-zen-hide className="fixed top-0 left-0 w-full h-10 bg-bg-secondary/90 backdrop-blur-xl border-b border-border z-[var(--z-tooltip)] flex items-center justify-between px-4 text-xs font-mono text-text-secondary">
         <div className="flex items-center gap-4">
           <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors">
             <Feather className="h-4 w-4 text-accent-amber" />
@@ -295,7 +295,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             <select
               value={currentProjectId || ''}
               onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-              className="bg-transparent border-none text-text-secondary outline-none hover:text-text-primary cursor-pointer font-serif"
+              className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer font-serif"
             >
               <option value="" disabled>{t('sidebar.activeProject')}</option>
               {projects.map(p => (
@@ -313,9 +313,9 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             <select
               value={currentSessionId || ''}
               onChange={e => setCurrentSessionId(e.target.value)}
-              className="bg-transparent border-none text-text-secondary outline-none hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
+              className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
             >
-              <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter' })}</option>
+              <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter', ja: '챕터 選択', zh: '챕터 选择' })}</option>
               {sessions.map(s => (
                 <option key={s.id} value={s.id} className="bg-bg-primary">{s.title}</option>
               ))}
@@ -354,7 +354,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
       <div
         ref={dockRef}
         data-zen-hide
-        className={`fixed z-[9999] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-all duration-500' : ''}`}
+        className={`fixed z-[var(--z-tooltip)] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-all duration-500' : ''}`}
         style={
           dockPos
             ? { left: dockPos.x, top: dockPos.y }
@@ -534,7 +534,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           </button>
 
           {isSystemMenuOpen && (
-            <div className="absolute bottom-16 right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[110]">
+            <div className="absolute bottom-16 right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[var(--z-dropdown)]">
               <button onClick={() => { setIsSystemMenuOpen(false); handleTabChange('settings'); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Settings className="w-4 h-4" /> {t('sidebar.settings')}
               </button>

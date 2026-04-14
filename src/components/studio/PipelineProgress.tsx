@@ -54,12 +54,12 @@ const STAGE_EST_SEC: Record<string, number> = {
 
 export default function PipelineProgress({ stages, finalStatus, language }: PipelineProgressProps) {
   const statusLabel = finalStatus === 'completed'
-    ? L4(language, { ko: '검사 완료', en: 'Check Complete' })
+    ? L4(language, { ko: '검사 완료', en: 'Check Complete', ja: '검사 完了', zh: '검사 完成' })
     : finalStatus === 'partial'
-    ? L4(language, { ko: '일부 완료', en: 'Partial Complete' })
+    ? L4(language, { ko: '일부 완료', en: 'Partial Complete', ja: '일부 完了', zh: '일부 完成' })
     : finalStatus === 'running'
-    ? L4(language, { ko: '검사 중...', en: 'Checking...' })
-    : L4(language, { ko: '개선이 필요합니다', en: 'Needs Improvement' });
+    ? L4(language, { ko: '검사 중...', en: 'Checking...', ja: 'Checking...', zh: 'Checking...' })
+    : L4(language, { ko: '개선이 필요합니다', en: 'Needs Improvement', ja: '件선이 필요합니다', zh: '个선이 필요합니다' });
 
   const statusColor = finalStatus === 'completed' ? 'text-green-400' : finalStatus === 'partial' ? 'text-amber-400' : finalStatus === 'running' ? 'text-blue-400' : 'text-red-400';
 
@@ -67,7 +67,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
     <div className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
       <div className="flex items-center justify-between mb-3">
         <span className="font-mono text-[10px] font-bold tracking-[0.15em] text-text-tertiary uppercase">
-          {L4(language, { ko: '자동 품질 검사', en: 'Auto Quality Check' })}
+          {L4(language, { ko: '자동 품질 검사', en: 'Auto Quality Check', ja: '자동 品質 검사', zh: '자동 质量 검사' })}
         </span>
         <span className={`font-mono text-[10px] font-bold ${statusColor}`}>
           {statusLabel}
@@ -90,7 +90,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
               className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all ${
                 isRunning ? 'bg-blue-500/5 ring-1 ring-blue-500/20' : isPassed ? 'bg-green-500/5' : ''
               }`}
-              aria-label={`${label ? L4(language, label) : stage.stage}: ${L4(language, { ko: '상태', en: 'status' })} ${stage.status}, ${L4(language, { ko: '점수', en: 'score' })} ${stage.score ?? '-'}`}
+              aria-label={`${label ? L4(language, label) : stage.stage}: ${L4(language, { ko: '상태', en: 'status', ja: '状態', zh: '状态' })} ${stage.status}, ${L4(language, { ko: '점수', en: 'score', ja: 'score', zh: 'score' })} ${stage.score ?? '-'}`}
             >
               {/* Stage icon */}
               <StageIcon className={`w-4 h-4 shrink-0 ${isPassed ? 'text-green-400' : isRunning ? 'text-blue-400' : 'text-text-tertiary/50'}`} />
@@ -108,7 +108,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
                   </span>
                   {isRunning && (
                     <span className="font-mono text-[8px] text-blue-400/60">
-                      ~{estSec}{L4(language, { ko: '초', en: 's' })}
+                      ~{estSec}{L4(language, { ko: '초', en: 's', ja: 's', zh: 's' })}
                     </span>
                   )}
                 </div>

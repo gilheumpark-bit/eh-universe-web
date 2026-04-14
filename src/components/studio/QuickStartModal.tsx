@@ -39,7 +39,7 @@ export default function QuickStartModal({
   };
 
   return (
-    <div className="animate-in fade-in zoom-in fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
+    <div className="animate-in fade-in zoom-in fixed inset-0 z-[var(--z-dropdown)] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
       <div className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
         <div className="relative px-8 pb-4 pt-8">
           <button
@@ -107,7 +107,7 @@ export default function QuickStartModal({
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder={t('quickStartModal.placeholder')}
-                className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none transition-all placeholder:text-text-tertiary focus:border-accent-purple"
+                className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all placeholder:text-text-tertiary focus:border-accent-purple"
                 disabled={isGenerating}
                 maxLength={240}
               />

@@ -186,7 +186,7 @@ function ChatArea({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSubmit()}
             placeholder={t.aiMsgPlaceholder}
-            className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500/50 placeholder:text-white/50"
+            className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500/50 placeholder:text-white/50"
           />
           <button
             onClick={handleSubmit}
@@ -281,7 +281,7 @@ export default function AIWorkspace({
 
       {/* New thread modal */}
       {showNewThread && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowNewThread(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="presentation" onClick={() => setShowNewThread(false)}>
           <div className="w-64 rounded-xl border border-white/10 bg-[#1e1e2e] p-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-3 text-sm font-medium text-white">{t.aiSelectPersona}</h3>
             <div className="space-y-1">

@@ -450,7 +450,7 @@ export function EditorGroup({
     if (pane.files.length === 0) {
       return (
         <div className="flex-1 flex items-center justify-center text-text-tertiary text-xs">
-          <FileCode size={16} className="mr-2 opacity-40" /> {L4(lang, { ko: "열린 파일 없음", en: "No files open" })}
+          <FileCode size={16} className="mr-2 opacity-40" /> {L4(lang, { ko: "열린 파일 없음", en: "No files open", ja: "開いているファイルなし", zh: "没有打开的文件"})}
         </div>
       );
     }

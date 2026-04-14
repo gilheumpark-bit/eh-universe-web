@@ -208,15 +208,15 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
 /** Build context menu items for the file explorer */
 export function buildFileExplorerMenu(isFolder: boolean, lang: string): ContextMenuItem[] {
   return [
-    { id: "new-file", label: L4(lang, { ko: "새 파일", en: "New File" }), icon: <FilePlus size={12} /> },
-    { id: "new-folder", label: L4(lang, { ko: "새 폴더", en: "New Folder" }), icon: <FolderPlus size={12} /> },
+    { id: "new-file", label: L4(lang, { ko: "새 파일", en: "New File", ja: "新規ファイル", zh: "新建文件"}), icon: <FilePlus size={12} /> },
+    { id: "new-folder", label: L4(lang, { ko: "새 폴더", en: "New Folder", ja: "新規フォルダー", zh: "新建文件夹"}), icon: <FolderPlus size={12} /> },
     { id: "sep-1", label: "", separator: true },
-    { id: "rename", label: L4(lang, { ko: "이름 바꾸기", en: "Rename" }), icon: <Pencil size={12} />, shortcut: "F2" },
-    { id: "duplicate", label: L4(lang, { ko: "복제", en: "Duplicate" }), icon: <Copy size={12} />, disabled: isFolder },
-    { id: "open-in-split", label: L4(lang, { ko: "분할 화면으로 열기", en: "Open in Split" }), icon: <Columns2 size={12} />, disabled: isFolder },
-    { id: "copy-path", label: L4(lang, { ko: "경로 복사", en: "Copy Path" }), icon: <Clipboard size={12} /> },
+    { id: "rename", label: L4(lang, { ko: "이름 바꾸기", en: "Rename", ja: "名前変更", zh: "重命名"}), icon: <Pencil size={12} />, shortcut: "F2" },
+    { id: "duplicate", label: L4(lang, { ko: "복제", en: "Duplicate", ja: "複製", zh: "复制"}), icon: <Copy size={12} />, disabled: isFolder },
+    { id: "open-in-split", label: L4(lang, { ko: "분할 화면으로 열기", en: "Open in Split", ja: "分割画面で開く", zh: "在分屏中打开"}), icon: <Columns2 size={12} />, disabled: isFolder },
+    { id: "copy-path", label: L4(lang, { ko: "경로 복사", en: "Copy Path", ja: "パスコピー", zh: "复制路径"}), icon: <Clipboard size={12} /> },
     { id: "sep-2", label: "", separator: true },
-    { id: "delete", label: L4(lang, { ko: "삭제", en: "Delete" }), icon: <Trash2 size={12} />, danger: true },
+    { id: "delete", label: L4(lang, { ko: "삭제", en: "Delete", ja: "削除", zh: "删除"}), icon: <Trash2 size={12} />, danger: true },
   ];
 }
 
@@ -229,32 +229,32 @@ export function buildFileExplorerMenu(isFolder: boolean, lang: string): ContextM
 /** Right-click menu for the code editor body; actions via {@link runEditorSurfaceMenuAction} */
 export function buildEditorSurfaceMenu(lang: string): ContextMenuItem[] {
   return [
-    { id: "editor-cut", label: L4(lang, { ko: "잘라내기", en: "Cut" }), icon: <Scissors size={12} />, shortcut: "Ctrl+X" },
-    { id: "editor-copy", label: L4(lang, { ko: "복사", en: "Copy" }), icon: <Copy size={12} />, shortcut: "Ctrl+C" },
-    { id: "editor-paste", label: L4(lang, { ko: "붙여넣기", en: "Paste" }), icon: <ClipboardPaste size={12} />, shortcut: "Ctrl+V" },
+    { id: "editor-cut", label: L4(lang, { ko: "잘라내기", en: "Cut", ja: "切り取り", zh: "剪切"}), icon: <Scissors size={12} />, shortcut: "Ctrl+X" },
+    { id: "editor-copy", label: L4(lang, { ko: "복사", en: "Copy", ja: "コピー", zh: "复制"}), icon: <Copy size={12} />, shortcut: "Ctrl+C" },
+    { id: "editor-paste", label: L4(lang, { ko: "붙여넣기", en: "Paste", ja: "貼り付け", zh: "粘贴"}), icon: <ClipboardPaste size={12} />, shortcut: "Ctrl+V" },
     { id: "editor-sep-1", label: "", separator: true },
     {
       id: "editor-format",
-      label: L4(lang, { ko: "문서 서식", en: "Format Document" }),
+      label: L4(lang, { ko: "문서 서식", en: "Format Document", ja: "ドキュメント整形", zh: "格式化文档"}),
       icon: <Sparkles size={12} />,
       shortcut: "Ctrl+Shift+I",
     },
     {
       id: "editor-select-all",
-      label: L4(lang, { ko: "모두 선택", en: "Select All" }),
+      label: L4(lang, { ko: "모두 선택", en: "Select All", ja: "すべて選択", zh: "全选"}),
       icon: <TextSelect size={12} />,
       shortcut: "Ctrl+A",
     },
     { id: "editor-sep-2", label: "", separator: true },
     {
       id: "editor-monaco-commands",
-      label: L4(lang, { ko: "에디터 명령…", en: "Editor Commands…" }),
+      label: L4(lang, { ko: "에디터 명령…", en: "Editor Commands…", ja: "エディターコマンド…", zh: "编辑器命令…"}),
       icon: <Command size={12} />,
       shortcut: "F1",
     },
     {
       id: "editor-app-commands",
-      label: L4(lang, { ko: "스튜디오 명령 팔레트", en: "Studio Command Palette" }),
+      label: L4(lang, { ko: "스튜디오 명령 팔레트", en: "Studio Command Palette", ja: "スタジオコマンドパレット", zh: "工作室命令面板"}),
       icon: <Command size={12} />,
       shortcut: "Ctrl+Shift+P",
     },

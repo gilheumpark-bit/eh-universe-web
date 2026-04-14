@@ -448,7 +448,7 @@ export async function computeASTMetrics(code: string, fileName: string = 'temp.t
       ts.SyntaxKind.SwitchStatement, ts.SyntaxKind.TryStatement, ts.SyntaxKind.ConditionalExpression,
     ];
 
-    let isNestingNode = nestTypes.includes(node.kind);
+    const isNestingNode = nestTypes.includes(node.kind);
     let newDepth = depth;
     let newContext = context;
 

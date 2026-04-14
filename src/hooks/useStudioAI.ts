@@ -4,8 +4,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Message, ChatSession, AppLanguage,
+  Message, ChatSession, AppLanguage, QualityGateResult,
 } from '@/lib/studio-types';
+import type { GenerateResult } from '@/services/geminiService';
 import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp';
 import { EngineReport } from '@/engine/types';
 import { logger } from '@/lib/logger';
@@ -13,13 +14,13 @@ import { classifyAsStudioError, StudioErrorCode } from '@/lib/errors';
 import { canGenerate, incrementGenerationCount } from '@/lib/tier';
 import { trackAIGeneration } from '@/lib/analytics';
 import { generateStoryStream } from '@/services/geminiService';
-import { analyzeManuscript, calculateQualityTag, type DirectorReport } from '@/engine/director';
+import { analyzeManuscript, calculateQualityTag, type DirectorReport, type DirectorFinding, type QualityTag } from '@/engine/director';
 import { stripEngineArtifacts } from '@/engine/pipeline';
 import { getGenreTemperature } from '@/engine/genre-presets';
 import { buildStoryBible } from '@/engine/context-builder';
 import { getModelForRole } from '@/lib/dgx-models';
 import { hasDgxService } from '@/lib/ai-providers';
-import { evaluateQuality, getDefaultThresholds, buildRetryHint } from '@/engine/quality-gate';
+import { evaluateQuality, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
 
@@ -52,8 +53,7 @@ interface UseStudioAIParams {
   setShowApiKeyModal: (val: boolean) => void;
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
   advancedOutputMode?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  advancedSettings?: any;
+  advancedSettings?: import('@/components/studio/AdvancedWritingPanel').AdvancedWritingSettings;
   // 3.8 자율 시스템 콜백
   onSuggestionsUpdate?: (suggestions: ProactiveSuggestion[]) => void;
   onQualityGateRetry?: (attempt: number, maxRetries: number, history: QualityGateAttemptRecord[]) => void;
@@ -99,11 +99,16 @@ export function useStudioAI({
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const generationStartRef = useRef<number>(0);
+  // P0-2: Slow generation warning timers
+  const slowTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const verySlowTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Cleanup: abort streaming + clear timeout + release lock on unmount
   useEffect(() => () => {
     abortControllerRef.current?.abort();
     clearTimeout(timeoutIdRef.current);
+    clearTimeout(slowTimerRef.current);
+    clearTimeout(verySlowTimerRef.current);
     generationLockRef.current = false;
   }, []);
 
@@ -180,6 +185,16 @@ export function useStudioAI({
     clearInput?.();
     setIsGenerating(true);
 
+    // P0-2: Start slow generation warning timers
+    clearTimeout(slowTimerRef.current);
+    clearTimeout(verySlowTimerRef.current);
+    slowTimerRef.current = setTimeout(() => {
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('noa:generation-slow'));
+    }, 30_000);
+    verySlowTimerRef.current = setTimeout(() => {
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('noa:generation-very-slow'));
+    }, 120_000);
+
     const controller = new AbortController();
     abortControllerRef.current = controller;
     clearTimeout(timeoutIdRef.current);
@@ -244,15 +259,11 @@ export function useStudioAI({
       
       let attempt = 1;
       let finalContent = '';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let result: any;
+      let result: GenerateResult = { content: '', report: {} as EngineReport };
       let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let qTag: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let gateResult: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let ipCheck: any;
+      let qTag: QualityTag = { tag: '🟢', label: 'CLEAR', visibleFindings: [] };
+      let gateResult: QualityGateResult = { passed: true, attempt: 1, failReasons: [], grade: '?', directorScore: 0, eosScore: 0, qualityTag: '' };
+      let ipCheck: { filtered: string; matches: { original: string; replacement: string }[] } = { filtered: '', matches: [] };
       let currentRetryHint = '';
       const gateHistory: QualityGateAttemptRecord[] = [];
 
@@ -304,7 +315,7 @@ export function useStudioAI({
           attempt,
           grade: gateResult.grade || '?',
           directorScore: dReport?.score ?? 0,
-          qualityTag: qTag || '⚪',
+          qualityTag: qTag?.tag || '⚪',
           failReasons: [...(gateResult.failReasons || [])],
           passed: gateResult.passed,
         });
@@ -349,11 +360,11 @@ export function useStudioAI({
             ...capturedConfig,
             worldSimData: {
               ...capturedConfig.worldSimData,
-              _latestUpdates: result.report.worldUpdates,
+              _latestUpdates: Array.isArray(result.report.worldUpdates) ? result.report.worldUpdates as string[] : [],
             }
           };
           updateCurrentSession({ config: updatedWorldSync });
-        } catch (e) {
+        } catch {
           // Sync fail is advisory, do not block pipeline
         }
       }
@@ -415,8 +426,7 @@ export function useStudioAI({
               ? { ...m, content: finalContent, meta: {
                   engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length,
                   qualityTag: qTag.tag, qualityLabel: qTag.label,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  qualityFindings: qTag.visibleFindings.map((f: any) => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
+                  qualityFindings: qTag.visibleFindings.map((f: DirectorFinding) => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
                   ...gateMeta,
                 } }
               : m
@@ -449,6 +459,8 @@ export function useStudioAI({
       }
     } finally {
       clearTimeout(timeoutIdRef.current);
+      clearTimeout(slowTimerRef.current);
+      clearTimeout(verySlowTimerRef.current);
       generationLockRef.current = false;
       // 3-pass canvas mode: auto-inject on pass completion
       if (canvasPass >= 1 && canvasPass <= 3 && fullContent) {
@@ -460,7 +472,7 @@ export function useStudioAI({
       abortControllerRef.current = null;
       trackAIGeneration('unknown', 'unknown', canvasPass > 0 ? 'canvas' : 'ai');
     }
-  }, [isGenerating, currentSessionId, currentSession, hfcpState, promptDirective, language, canvasPass, advancedOutputMode, setSessions, updateCurrentSession, setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError, onSuggestionsUpdate, onQualityGateRetry]);
+  }, [isGenerating, currentSessionId, currentSession, hfcpState, promptDirective, language, canvasPass, advancedOutputMode, setSessions, updateCurrentSession, setCanvasContent, setWritingMode, setShowApiKeyModal, setUxError, onSuggestionsUpdate, onQualityGateRetry, advancedSettings, onPipelineUpdate]);
 
   const handleRegenerate = useCallback(async (assistantMsgId: string) => {
     if (isGenerating || !currentSessionId || !currentSession) return;

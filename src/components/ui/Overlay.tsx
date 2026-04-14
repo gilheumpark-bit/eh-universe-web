@@ -6,7 +6,7 @@ interface OverlayProps {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  /** z-index 클래스 (기본: z-[200]) */
+  /** z-index 클래스 (기본: z-[var(--z-modal)]) */
   zClass?: string;
   /** 배경 클릭으로 닫기 허용 (기본: true) */
   closeOnBackdrop?: boolean;
@@ -20,7 +20,7 @@ export function Overlay({
   open,
   onClose,
   children,
-  zClass = 'z-[200]',
+  zClass = 'z-[var(--z-modal)]',
   closeOnBackdrop = true,
   closeOnEsc = true,
   className = '',

@@ -63,8 +63,8 @@ program
   .action(async (path, opts) => {
     // Precision mode: AI-powered review
     if (opts.precision || opts.precisionQuick) {
-      const { readFileSync, readdirSync, statSync } = require('fs');
-      const { join, extname, relative } = require('path');
+      const { readFileSync, _readdirSync, statSync } = require('fs');
+      const { _join, _extname, _relative } = require('path');
       const { runPrecisionReview } = require('../ai/precision-checklist');
       const targetPath = path ?? './src';
       const stat = statSync(targetPath);

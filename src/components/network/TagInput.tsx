@@ -85,7 +85,7 @@ export function TagInput({
               type="button"
               onClick={() => removeTag(index)}
               className="ml-0.5 text-accent-amber/60 transition hover:text-accent-amber"
-              aria-label={L4(lang, { ko: `${tag} 태그 제거`, en: `Remove tag ${tag}` })}
+              aria-label={L4(lang, { ko: `${tag} 태그 제거`, en: `Remove tag ${tag}`, ja: `${tag} タグ 削除`, zh: `${tag} 标签 移除` })}
             >
               x
             </button>
@@ -98,8 +98,8 @@ export function TagInput({
             onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 150)}
-            placeholder={placeholder ?? L4(lang, { ko: "태그 입력 후 Enter", en: "Type tag, press Enter" })}
-            className="min-w-[120px] flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
+            placeholder={placeholder ?? L4(lang, { ko: "태그 입력 후 Enter", en: "Type tag, press Enter", ja: "タグ入力 후 Enter", zh: "输入标签 후 Enter" })}
+            className="min-w-[120px] flex-1 bg-transparent text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-text-tertiary"
           />
         )}
       </div>
@@ -122,7 +122,7 @@ export function TagInput({
 
       {tags.length >= maxTags && (
         <p className="mt-1 text-[11px] text-text-tertiary">
-          {L4(lang, { ko: `최대 ${maxTags}개까지 가능합니다.`, en: `Maximum ${maxTags} tags allowed.` })}
+          {L4(lang, { ko: `최대 ${maxTags}개까지 가능합니다.`, en: `Maximum ${maxTags} tags allowed.`, ja: `最大 ${maxTags}件까지 가능합니다.`, zh: `最大 ${maxTags}个까지 가능합니다.` })}
         </p>
       )}
     </div>

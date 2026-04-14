@@ -86,26 +86,19 @@ export function useStudioUX() {
   // Error toast
   const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
 
-  // Storage usage tracking
-  const [storagePercent, setStoragePercent] = useState(0);
+  // Storage usage tracking (lazy init to avoid setState-in-effect)
+  const [storagePercent, setStoragePercent] = useState(() => {
+    const { percent } = estimateStorageUsage();
+    return percent;
+  });
 
   // Storage-full warning
-  const [storageFull, setStorageFull] = useState(false);
+  const [storageFull, setStorageFull] = useState(() => storagePercent >= 98);
 
   // Storage 80% capacity warning
-  const [storageNearFull, setStorageNearFull] = useState(false);
-
-  // Proactive storage monitoring on mount
-  useEffect(() => {
-    const { percent } = estimateStorageUsage();
-    setStoragePercent(percent);
-    if (percent >= 80 && percent < 100) {
-      setStorageNearFull(true);
-    }
-    if (percent >= 98) {
-      setStorageFull(true);
-    }
-  }, []);
+  const [storageNearFull, setStorageNearFull] = useState(
+    () => storagePercent >= 80 && storagePercent < 100,
+  );
 
   // Listen for storage-full event — auto cleanup on trigger
   // Dispatch source: src/hooks/useProjectManager.ts:115

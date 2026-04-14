@@ -15,7 +15,7 @@ import {
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { idbEstimateSize } from '@/lib/browser/idb-store';
-import { setNarrativeDepth as narrativeDepthSetter, getNarrativeDepth } from '@/lib/noa/lora-swap';
+import { setNarrativeDepth as narrativeDepthSetter } from '@/lib/noa/lora-swap';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import dynamic from 'next/dynamic';
@@ -40,10 +40,11 @@ interface SettingsViewProps {
 
 const OBFUSCATION_PREFIXES = ['noa:1:', 'noa:2:'];
 
-function migrateAllKeysToObfuscated(): number {
+function _migrateAllKeysToObfuscated(): number {
   let migrated = 0;
   for (const provider of PROVIDER_LIST_UI) {
-    const raw = localStorage.getItem(provider.storageKey);
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(provider.storageKey); } catch { /* private browsing */ }
     if (raw && !OBFUSCATION_PREFIXES.some(p => raw.startsWith(p))) {
       // Plain-text key detected — re-save through setApiKey which obfuscates it
       // deobfuscateKey handles both noa:1: and noa:2: so won't double-encode
@@ -58,13 +59,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
   const t = createT(language);
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [obfuscateDone, setObfuscateDone] = useState<number | null>(null);
-  const [defaultPlatform, setDefaultPlatform] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE');
-  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'));
-  const [temperature, setTemperature] = useState<number>(() => parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.9'));
+  // P0-1: 2-step reset confirmation with 3-second countdown
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetCountdown, setResetCountdown] = useState(3);
+  useEffect(() => {
+    if (!confirmReset) return;
+    // resetCountdown는 confirmReset 토글 시 handleConfirmStart에서 3으로 초기화됨
+    const interval = setInterval(() => {
+      setResetCountdown(prev => {
+        if (prev <= 1) { clearInterval(interval); setConfirmReset(false); return 3; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [confirmReset]);
+  const [_obfuscateDone, _setObfuscateDone] = useState<number | null>(null);
+  const [defaultPlatform, setDefaultPlatform] = useState<string>(() => { try { return (typeof window !== 'undefined' ? localStorage.getItem('noa_default_platform') : null) || 'MOBILE'; } catch { return 'MOBILE'; } });
+  const [defaultEpisodes, setDefaultEpisodes] = useState<number>(() => { try { return parseInt((typeof window !== 'undefined' ? localStorage.getItem('noa_default_episodes') : null) || '25'); } catch { return 25; } });
+  const [temperature, setTemperature] = useState<number>(() => { try { return parseFloat((typeof window !== 'undefined' ? localStorage.getItem('noa_temperature') : null) || '0.9'); } catch { return 0.9; } });
   const [narrativeDepth, setNarrativeDepthState] = useState<number>(() => {
     if (typeof window === 'undefined') return 1.0;
-    const stored = localStorage.getItem('noa_narrative_depth');
+    let stored: string | null = null;
+    try { stored = localStorage.getItem('noa_narrative_depth'); } catch { /* private */ }
     const val = stored ? parseFloat(stored) : 1.0;
     narrativeDepthSetter(val);
     return val;
@@ -139,7 +155,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
             <div className="bg-bg-secondary p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-text-secondary">{L4(language, { ko: '로컬 저장 용량', en: 'Local Storage' })}</span>
+                <span className="text-xs text-text-secondary">{L4(language, { ko: '로컬 저장 용량', en: 'Local Storage', ja: '로컬 保存 용량', zh: '로컬 保存 용량' })}</span>
                 {storageEstimate && storageEstimate.quota > 0 ? (() => {
                   const usageMB = storageEstimate.usage / 1024 / 1024;
                   const quotaMB = storageEstimate.quota / 1024 / 1024;
@@ -170,7 +186,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 )}
               </div>
               {storageEstimate && storageEstimate.quota > 0 && (storageEstimate.usage / storageEstimate.quota) > 0.8 && (
-                <p className="text-[10px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.' })}</p>
+                <p className="text-[10px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '용량이 부족합니다. 오래된 세션을 削除하거나 백업 후 정리하세요.', zh: '용량이 부족합니다. 오래된 세션을 删除하거나 백업 후 정리하세요.' })}</p>
               )}
             </div>
           </div>
@@ -210,7 +226,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
             <div
               onClick={() => {
-                localStorage.removeItem('noa_onboarding_done');
+                try { localStorage.removeItem('noa_onboarding_done'); } catch { /* private */ }
+                try { localStorage.removeItem('noa-onboarding-complete'); } catch { /* private */ }
+                try { localStorage.removeItem('noa_shortcuts_hint_shown'); } catch { /* private */ }
                 window.location.reload();
               }}
               className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
@@ -218,25 +236,42 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><BookOpen className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate">{L4(language, { ko: '가이드 다시 보기', en: 'Restart Onboarding Guide' })}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{L4(language, { ko: '처음 시작 가이드를 다시 표시합니다', en: 'Show the getting started guide again' })}</div>
+                  <div className="text-xs md:text-sm font-bold truncate">{L4(language, { ko: '온보딩 다시 보기', en: 'Replay Onboarding', ja: 'オンボーディング再表示', zh: '重新显示引导' })}</div>
+                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{L4(language, { ko: '처음 시작 가이드를 다시 표시합니다', en: 'Show the getting started guide again', ja: 'スタートガイドを再表示します', zh: '重新显示入门指南' })}</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-text-tertiary shrink-0" />
             </div>
 
             <div
-              onClick={(e) => { e.stopPropagation(); onClearAll(); }}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-red-500/10 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-red-500/30 group active:scale-[0.98] active:bg-red-500/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirmReset) { onClearAll(); setConfirmReset(false); }
+                else { setResetCountdown(3); setConfirmReset(true); }
+              }}
+              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-all cursor-pointer border group active:scale-[0.98] ${confirmReset ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'hover:bg-red-500/10 border-transparent hover:border-red-500/30'}`}
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl group-hover:bg-red-500/20 transition-colors shrink-0"><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" /></div>
+                <div className={`p-2 md:p-3 rounded-2xl transition-colors shrink-0 ${confirmReset ? 'bg-red-500/30' : 'bg-bg-secondary group-hover:bg-red-500/20'}`}><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" /></div>
                 <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold text-red-500 truncate">{t('settings.resetData')}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
+                  {confirmReset ? (
+                    <>
+                      <div className="text-xs md:text-sm font-bold text-red-500 truncate">
+                        {L4(language, { ko: `정말 삭제하시겠습니까? (${resetCountdown}초)`, en: `Are you sure? This cannot be undone. (${resetCountdown}s)`, ja: `本当に削除しますか？ (${resetCountdown}秒)`, zh: `确定要删除吗？ (${resetCountdown}秒)` })}
+                      </div>
+                      <div className="text-[10px] md:text-[11px] text-red-400 hidden sm:block">
+                        {L4(language, { ko: '한 번 더 클릭하면 모든 데이터가 삭제됩니다', en: 'Click again to permanently delete all data', ja: 'もう一度クリックすると全データが削除されます', zh: '再次点击将永久删除所有数据' })}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs md:text-sm font-bold text-red-500 truncate">{t('settings.resetData')}</div>
+                      <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
+                    </>
+                  )}
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-red-500 shrink-0" />
+              <ChevronRight className={`w-4 h-4 shrink-0 ${confirmReset ? 'text-red-500' : 'text-text-tertiary group-hover:text-red-500'}`} />
             </div>
           </div>
         </div>
@@ -246,17 +281,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <div className="md:col-span-2 ds-card-lg">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <Shield className="w-4 h-4 text-green-500" /> {L4(language, { ko: '자동 백업 (10분 간격)', en: 'Auto Backup (every 10 min)' })}
+                <Shield className="w-4 h-4 text-green-500" /> {L4(language, { ko: '자동 백업 (10분 간격)', en: 'Auto Backup (every 10 min)', ja: 'Auto Backup (every 10 min)', zh: 'Auto Backup (every 10 min)' })}
               </h3>
               {onRefreshBackups && (
-                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors" title={L4(language, { ko: '목록 새로고침', en: 'Refresh list' })}>
-                  {L4(language, { ko: '새로고침', en: 'Refresh' })}
+                <button onClick={onRefreshBackups} className="text-[10px] text-text-tertiary hover:text-text-primary font-mono uppercase tracking-wider transition-colors" title={L4(language, { ko: '목록 새로고침', en: 'Refresh list', ja: '一覧 更新', zh: '列表 刷新' })}>
+                  {L4(language, { ko: '새로고침', en: 'Refresh', ja: '更新', zh: '刷新' })}
                 </button>
               )}
             </div>
             {versionedBackups.length === 0 ? (
               <div className="text-sm text-text-tertiary py-4 text-center">
-                {L4(language, { ko: '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.', en: 'No backups yet. Auto-backup runs every 10 minutes.' })}
+                {L4(language, { ko: '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.', en: 'No backups yet. Auto-backup runs every 10 minutes.', ja: '保存된 백업이 없습니다. 10분 후 자동 백업됩니다.', zh: '保存된 백업이 없습니다. 10분 후 자동 백업됩니다.' })}
               </div>
             ) : (
               <div className="space-y-2">
@@ -265,22 +300,22 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                     <div>
                       <div className="text-xs font-bold text-text-primary">{new Date(b.timestamp).toLocaleString()}</div>
                       <div className="text-[10px] text-text-tertiary font-mono">
-                        {L4(language, { ko: '자동 백업', en: 'Auto backup' })}
+                        {L4(language, { ko: '자동 백업', en: 'Auto backup', ja: 'Auto backup', zh: 'Auto backup' })}
                       </div>
                     </div>
                     <button
                       onClick={async () => {
                         const ok = await onRestoreBackup(b.timestamp);
                         if (ok) {
-                          showAlert(L4(language, { ko: '백업에서 복원되었습니다.', en: 'Restored from backup.' }));
+                          showAlert(L4(language, { ko: '백업에서 복원되었습니다.', en: 'Restored from backup.', ja: 'Restored from backup.', zh: 'Restored from backup.' }));
                         } else {
-                          showAlert(L4(language, { ko: '복원에 실패했습니다.', en: 'Restore failed.' }));
+                          showAlert(L4(language, { ko: '복원에 실패했습니다.', en: 'Restore failed.', ja: 'Restore failed.', zh: 'Restore failed.' }));
                         }
                       }}
                       className="text-[10px] font-bold font-mono uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors px-3 py-1.5 border border-blue-500/30 rounded-lg hover:bg-blue-500/10"
-                      title={L4(language, { ko: '이 백업으로 복원', en: 'Restore from this backup' })}
+                      title={L4(language, { ko: '이 백업으로 복원', en: 'Restore from this backup', ja: 'Restore from this backup', zh: 'Restore from this backup' })}
                     >
-                      {L4(language, { ko: '복원', en: 'Restore' })}
+                      {L4(language, { ko: '복원', en: 'Restore', ja: 'Restore', zh: 'Restore' })}
                     </button>
                   </div>
                 ))}
@@ -324,7 +359,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
                     {t('settings.apiKeyDesc')}
-                    <span className="ml-1 opacity-60">(API {L4(language, { ko: '키', en: 'Key' })})</span>
+                    <span className="ml-1 opacity-60">(API {L4(language, { ko: '키', en: 'Key', ja: 'Key', zh: 'Key' })})</span>
                   </div>
                 </div>
               </div>
@@ -338,7 +373,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 </div>
                 {hasPersonalApiKey && isKeyExpiringSoon(apiProvider) && (
                   <div className="text-[8px] md:text-[9px] text-accent-amber">
-                    {L4(language, { ko: `키 갱신 권장 (${getKeyAge(apiProvider)}일)`, en: `Rotate key (${getKeyAge(apiProvider)}d old)` })}
+                    {L4(language, { ko: `키 갱신 권장 (${getKeyAge(apiProvider)}일)`, en: `Rotate key (${getKeyAge(apiProvider)}d old)`, ja: `Rotate key (${getKeyAge(apiProvider)}d old)`, zh: `Rotate key (${getKeyAge(apiProvider)}d old)` })}
                   </div>
                 )}
               </div>
@@ -359,7 +394,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 {(['MOBILE', 'WEB'] as const).map(p => (
                   <button
                     key={p}
-                    onClick={() => { setDefaultPlatform(p); localStorage.setItem('noa_default_platform', p); }}
+                    onClick={() => { setDefaultPlatform(p); try { localStorage.setItem('noa_default_platform', p); } catch { /* quota/private */ } }}
                     className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-text-primary' : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
@@ -382,8 +417,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 min={1}
                 max={200}
                 value={defaultEpisodes}
-                onChange={e => { const v = parseInt(e.target.value) || 25; setDefaultEpisodes(v); localStorage.setItem('noa_default_episodes', String(v)); }}
-                className="w-16 md:w-20 bg-bg-secondary border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none shrink-0"
+                onChange={e => { const v = parseInt(e.target.value) || 25; setDefaultEpisodes(v); try { localStorage.setItem('noa_default_episodes', String(v)); } catch { /* quota/private */ } }}
+                className="w-16 md:w-20 bg-bg-secondary border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0"
               />
             </div>
 
@@ -410,7 +445,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   max="1.5"
                   step="0.1"
                   value={temperature}
-                  onChange={e => { const v = parseFloat(e.target.value); setTemperature(v); localStorage.setItem('noa_temperature', String(v)); }}
+                  onChange={e => { const v = parseFloat(e.target.value); setTemperature(v); try { localStorage.setItem('noa_temperature', String(v)); } catch { /* quota/private */ } }}
                   className="w-20 md:w-24 accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
                 <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${temperature < 0.1 || temperature > 1.5 ? 'text-red-400' : 'text-blue-400'}`}>{temperature.toFixed(1)}</span>
@@ -422,7 +457,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-accent-purple shrink-0" />
                 <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">{L4(language, { ko: '서사 깊이', en: 'Narrative Depth' })}
+                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">{L4(language, { ko: '서사 깊이', en: 'Narrative Depth', ja: 'Narrative Depth', zh: 'Narrative Depth' })}
                     <span className="group relative">
                       <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
                       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
@@ -431,10 +466,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                     </span>
                   </div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
-                    {narrativeDepth <= 0.9 ? L4(language, { ko: '평작 — 가독성 우선', en: 'Light — Readability first' }) :
-                     narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance' }) :
-                     narrativeDepth <= 1.2 ? L4(language, { ko: '심화 — 비유/상징 활용', en: 'Deep — Metaphor/symbolism' }) :
-                     L4(language, { ko: '최대 — 문예 수준 밀도', en: 'Maximum — Literary density' })}
+                    {narrativeDepth <= 0.9 ? L4(language, { ko: '평작 — 가독성 우선', en: 'Light — Readability first', ja: 'Light — Readability first', zh: 'Light — Readability first' }) :
+                     narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance', ja: '기본 — ジャンル 균형', zh: '기본 — 类型 균형' }) :
+                     narrativeDepth <= 1.2 ? L4(language, { ko: '심화 — 비유/상징 활용', en: 'Deep — Metaphor/symbolism', ja: 'Deep — Metaphor/symbolism', zh: 'Deep — Metaphor/symbolism' }) :
+                     L4(language, { ko: '최대 — 문예 수준 밀도', en: 'Maximum — Literary density', ja: '最大 — 문예 수준 밀도', zh: '最大 — 문예 수준 밀도' })}
                   </div>
                 </div>
               </div>
@@ -445,7 +480,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   max="2.0"
                   step="0.1"
                   value={narrativeDepth}
-                  onChange={e => { const v = parseFloat(e.target.value); setNarrativeDepthState(v); localStorage.setItem('noa_narrative_depth', String(v)); narrativeDepthSetter(v); }}
+                  onChange={e => { const v = parseFloat(e.target.value); setNarrativeDepthState(v); try { localStorage.setItem('noa_narrative_depth', String(v)); } catch { /* quota/private */ } narrativeDepthSetter(v); }}
                   className="w-20 md:w-24 accent-purple-500 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
                 <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${narrativeDepth < 0.5 || narrativeDepth > 2.0 ? 'text-red-400' : 'text-accent-purple'}`}>{narrativeDepth.toFixed(1)}</span>
@@ -482,11 +517,16 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
   const [tokenInput, setTokenInput] = useState('');
   const [connecting, setConnecting] = useState(false);
 
-  // GitHub OAuth popup handler
+  // GitHub OAuth popup handler — with CSRF state parameter
   const handleOAuthLogin = useCallback(() => {
     const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
     if (!clientId) return;
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`;
+
+    // Generate random state for CSRF protection and store in cookie
+    const state = crypto.randomUUID();
+    document.cookie = `gh_oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
+
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo&state=${state}`;
     const w = 600, h = 700;
     const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
     window.open(authUrl, 'github-oauth', `width=${w},height=${h},left=${left},top=${top}`);
@@ -516,13 +556,13 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
       <div className="md:col-span-2 ds-card-lg opacity-60">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-4 flex items-center gap-2">
           <GitBranch className="w-4 h-4 text-text-tertiary" />
-          {L4(language, { ko: '클라우드 백업 (GitHub)', en: 'Cloud Backup (GitHub)' })}
+          {L4(language, { ko: '클라우드 백업 (GitHub)', en: 'Cloud Backup (GitHub)', ja: 'Cloud Backup (GitHub)', zh: 'Cloud Backup (GitHub)' })}
           <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-bg-tertiary text-text-tertiary font-bold uppercase tracking-wider">
-            {L4(language, { ko: '준비 중', en: 'Coming Soon' })}
+            {L4(language, { ko: '준비 중', en: 'Coming Soon', ja: 'Coming Soon', zh: 'Coming Soon' })}
           </span>
         </h3>
         <p className="text-xs text-text-tertiary">
-          {L4(language, { ko: '원고를 GitHub에 백업하고 버전 관리할 수 있습니다. 곧 활성화됩니다.', en: 'Back up manuscripts to GitHub with version control. Coming soon.' })}
+          {L4(language, { ko: '원고를 GitHub에 백업하고 버전 관리할 수 있습니다. 곧 활성화됩니다.', en: 'Back up manuscripts to GitHub with version control. Coming soon.', ja: '原稿를 GitHub에 백업하고 버전 管理할 수 있습니다. 곧 アクティブ화됩니다.', zh: '稿件를 GitHub에 백업하고 버전 管理할 수 있습니다. 곧 活跃화됩니다.' })}
         </p>
       </div>
     );
@@ -547,7 +587,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
     <div className="md:col-span-2 ds-card-lg">
       <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
         <GitBranch className="w-4 h-4 text-green-500" />
-        {L4(language, { ko: '원고 백업 (GitHub)', en: 'Manuscript Backup (GitHub)' })}
+        {L4(language, { ko: '원고 백업 (GitHub)', en: 'Manuscript Backup (GitHub)', ja: '原稿 백업 (GitHub)', zh: '稿件 백업 (GitHub)' })}
       </h3>
 
       {gh.connected ? (
@@ -567,12 +607,12 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-[9px] font-bold text-green-500 flex items-center gap-1">
                 <Check className="w-3 h-3" />
-                {L4(language, { ko: '연결됨', en: 'Connected' })}
+                {L4(language, { ko: '연결됨', en: 'Connected', ja: 'Connected', zh: 'Connected' })}
               </span>
               <button
                 onClick={gh.disconnect}
                 className="p-1.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                title={L4(language, { ko: '연결 해제', en: 'Disconnect' })}
+                title={L4(language, { ko: '연결 해제', en: 'Disconnect', ja: 'Disconnect', zh: 'Disconnect' })}
                 aria-label="Disconnect GitHub"
               >
                 <Unplug className="w-4 h-4" />
@@ -581,7 +621,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           </div>
           {gh.lastSyncAt && (
             <div className="text-[10px] text-text-tertiary px-2">
-              {L4(language, { ko: '마지막 동기화', en: 'Last sync' })}: {new Date(gh.lastSyncAt).toLocaleString()}
+              {L4(language, { ko: '마지막 동기화', en: 'Last sync', ja: 'Last sync', zh: 'Last sync' })}: {new Date(gh.lastSyncAt).toLocaleString()}
             </div>
           )}
         </div>
@@ -594,26 +634,26 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#24292f] hover:bg-[#2f363d] text-white text-xs font-bold rounded-xl transition-colors"
             >
               <GitBranch className="w-4 h-4" />
-              {L4(language, { ko: 'GitHub으로 로그인', en: 'Sign in with GitHub' })}
+              {L4(language, { ko: 'GitHub으로 로그인', en: 'Sign in with GitHub', ja: 'GitHub으로 ログイン', zh: 'GitHub으로 登录' })}
             </button>
           )}
           {hasOAuthClientId && (
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-[10px] text-text-tertiary font-mono uppercase">{L4(language, { ko: '또는 PAT 입력', en: 'or enter PAT' })}</span>
+              <span className="text-[10px] text-text-tertiary font-mono uppercase">{L4(language, { ko: '또는 PAT 입력', en: 'or enter PAT', ja: '또는 PAT 入力', zh: '또는 PAT 输入' })}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
           )}
           <p className="text-xs text-text-tertiary">
-            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.' })}
+            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.', ja: 'GitHub 접근 토큰(PAT)을 入力하면 原稿를 非公開 保存소에 백업할 수 있습니다.', zh: 'GitHub 접근 토큰(PAT)을 输入하면 稿件를 私密 保存소에 백업할 수 있습니다.' })}
           </p>
           <div className="flex gap-2">
             <input
               type="password"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              placeholder={L4(language, { ko: 'ghp_xxxx...', en: 'ghp_xxxx...' })}
-              className="flex-1 bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary placeholder-text-quaternary focus:border-green-500 outline-none font-mono"
+              placeholder={L4(language, { ko: 'ghp_xxxx...', en: 'ghp_xxxx...', ja: 'ghp_xxxx...', zh: 'ghp_xxxx...' })}
+              className="flex-1 bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary placeholder-text-quaternary focus:border-green-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-mono"
               onKeyDown={(e) => { if (e.key === 'Enter') handleConnect(); }}
             />
             <button
@@ -622,8 +662,8 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
               className="px-4 py-2.5 bg-green-600/80 hover:bg-green-600 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             >
               {connecting
-                ? L4(language, { ko: '연결 중...', en: 'Connecting...' })
-                : L4(language, { ko: '연결', en: 'Connect' })}
+                ? L4(language, { ko: '연결 중...', en: 'Connecting...', ja: 'Connecting...', zh: 'Connecting...' })
+                : L4(language, { ko: '연결', en: 'Connect', ja: 'Connect', zh: 'Connect' })}
             </button>
           </div>
 
@@ -631,15 +671,15 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           {gh.repos.length > 0 && !gh.connected && (
             <div className="space-y-2 pt-2 border-t border-border/50">
               <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
-                {L4(language, { ko: '저장소 선택', en: 'Select Repository' })}
+                {L4(language, { ko: '저장소 선택', en: 'Select Repository', ja: '保存소 選択', zh: '保存소 选择' })}
               </label>
               <select
                 onChange={(e) => handleSelectRepo(e.target.value)}
                 defaultValue=""
-                className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary focus:border-green-500 outline-none cursor-pointer"
+                className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary focus:border-green-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer"
               >
                 <option value="" disabled>
-                  {L4(language, { ko: '저장소를 선택하세요...', en: 'Choose a repository...' })}
+                  {L4(language, { ko: '저장소를 선택하세요...', en: 'Choose a repository...', ja: '保存소를 選択하세요...', zh: '保存소를 选择하세요...' })}
                 </option>
                 {gh.repos.map((r) => (
                   <option key={`${r.owner}/${r.name}`} value={`${r.owner}/${r.name}`}>
@@ -669,12 +709,15 @@ function GoogleDriveSection({ language }: { language: AppLanguage }) {
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('noa_drive_last_sync') : null;
+    let stored: string | null = null;
+    try { stored = typeof window !== 'undefined' ? localStorage.getItem('noa_drive_last_sync') : null; } catch { /* private */ }
     if (stored) setLastSync(parseInt(stored));
   }, []);
 
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_token');
-  const encActive = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_enc');
+  let hasToken = false;
+  let encActive = false;
+  try { hasToken = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_token'); } catch { /* private */ }
+  try { encActive = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_enc'); } catch { /* private */ }
 
   const handleManualSync = async () => {
     setSyncing(true);
@@ -683,7 +726,7 @@ function GoogleDriveSection({ language }: { language: AppLanguage }) {
       window.dispatchEvent(new CustomEvent('noa:drive-sync-requested'));
       const now = Date.now();
       setLastSync(now);
-      localStorage.setItem('noa_drive_last_sync', String(now));
+      try { localStorage.setItem('noa_drive_last_sync', String(now)); } catch { /* quota/private */ }
     } finally {
       setTimeout(() => setSyncing(false), 2000);
     }

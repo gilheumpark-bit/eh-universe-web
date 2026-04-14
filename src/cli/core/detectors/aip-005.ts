@@ -21,7 +21,7 @@ export const aip005Detector: RuleDetector = {
       const tryText = tryBlock.getText();
 
       // Heuristic: try block only has synchronous assignments, simple math, or string ops
-      const hasOnlySafe = /^[\s{}\n]*(?:(?:const|let|var)\s+\w+\s*=\s*(?:\d+|['"`][^'"`]*['"`]|\w+\s*[+\-*/]\s*\w+|\[.*?\]|{.*?});\s*)*[\s}]*$/.test(tryText);
+      const _hasOnlySafe = /^[\s{}\n]*(?:(?:const|let|var)\s+\w+\s*=\s*(?:\d+|['"`][^'"`]*['"`]|\w+\s*[+\-*/]\s*\w+|\[.*?\]|{.*?});\s*)*[\s}]*$/.test(tryText);
 
       // Heuristic: try block is very short (1-2 statements) with no function calls
       const lines = tryText.split('\n').filter(l => l.trim().length > 0 && !l.trim().startsWith('{') && !l.trim().startsWith('}'));

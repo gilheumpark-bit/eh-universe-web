@@ -71,8 +71,8 @@ export function TabletLayout({ sidebar, editor, rightPanel, terminal, statusBar 
         </div>
         {rightPanelVisible && (
           <>
-            <div className="absolute inset-0 z-[59] bg-black/30" onClick={() => setRightPanelVisible(false)} />
-            <div className="absolute top-0 right-0 bottom-0 z-[60] bg-[#0f1419] border-l border-white/8 overflow-y-auto" style={{ width: 320 }}>
+            <div className="absolute inset-0 z-[var(--z-overlay)] bg-black/30" role="presentation" onClick={() => setRightPanelVisible(false)} />
+            <div className="absolute top-0 right-0 bottom-0 z-[var(--z-overlay)] bg-[#0f1419] border-l border-white/8 overflow-y-auto" style={{ width: 320 }}>
               <div className="flex items-center justify-between px-3 py-1 border-b border-white/8">
                 <span className="text-xs text-white/60">AI</span>
                 <button className="flex items-center justify-center rounded hover:bg-white/10" style={{ minWidth: 44, minHeight: 44 }}

@@ -24,7 +24,9 @@ import { NovelEditor } from '@/components/studio/NovelEditor';
 import type { NovelEditorSelection, NovelEditorHandle } from '@/components/studio/NovelEditor';
 import { useInlineCompletion } from '@/hooks/useInlineCompletion';
 import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
-import { ReferenceSplitPane } from '@/components/studio/ReferenceSplitPane';
+import { CanvasStepIndicator } from '@/components/studio/tabs/CanvasStepIndicator';
+import { GenerationControls } from '@/components/studio/tabs/GenerationControls';
+
 import { DirectionReferencePanel } from '@/components/studio/DirectionReferencePanel';
 import { useQualityAnalysis } from '@/hooks/useQualityAnalysis';
 import { useContinuityCheck } from '@/hooks/useContinuityCheck';
@@ -125,7 +127,7 @@ function SplitPanelTabs({
   setActiveTab: (tab: AppTab) => void;
   hostedProviders: Partial<Record<string, boolean>>;
 }) {
-  const isKO = language === 'KO';
+  const _isKO = language === 'KO';
   const [activePanel, setActivePanel] = useState<'direction' | 'chat'>(splitView === 'chat' ? 'chat' : 'direction');
 
   return (
@@ -141,7 +143,7 @@ function SplitPanelTabs({
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          {L4(language, { ko: '연출', en: 'Direction' })}
+          {L4(language, { ko: '연출', en: 'Direction', ja: 'Direction', zh: 'Direction' })}
         </button>
         <button
           onClick={() => setActivePanel('chat')}
@@ -152,7 +154,7 @@ function SplitPanelTabs({
           }`}
         >
           <Columns2 className="w-3.5 h-3.5" />
-          {L4(language, { ko: '채팅', en: 'Chat' })}
+          {L4(language, { ko: '채팅', en: 'Chat', ja: 'Chat', zh: 'Chat' })}
         </button>
       </div>
       {/* 패널 콘텐츠 */}
@@ -197,7 +199,7 @@ export default function WritingTabInline(props: Props) {
     editDraft, setEditDraft, editDraftRef,
     canvasContent, setCanvasContent,
     canvasPass, setCanvasPass,
-    promptDirective, setPromptDirective,
+    promptDirective, setPromptDirective: _setPromptDirective,
     isGenerating, lastReport, generationTime, tokenUsage,
     handleSend, handleRegenerate,
     messagesEndRef, searchQuery, filteredMessages,
@@ -267,6 +269,23 @@ export default function WritingTabInline(props: Props) {
     }
     if (writingMode !== 'edit') setShowCompletionHint(false);
   }, [writingMode, completionHintShown, inlineCompletionEnabled]);
+
+  // P0-2: Slow generation warning listener
+  const [slowWarning, setSlowWarning] = useState<'slow' | 'very-slow' | null>(null);
+  useEffect(() => {
+    const onSlow = () => setSlowWarning('slow');
+    const onVerySlow = () => setSlowWarning('very-slow');
+    window.addEventListener('noa:generation-slow', onSlow);
+    window.addEventListener('noa:generation-very-slow', onVerySlow);
+    return () => {
+      window.removeEventListener('noa:generation-slow', onSlow);
+      window.removeEventListener('noa:generation-very-slow', onVerySlow);
+    };
+  }, []);
+  // Clear warning when generation ends
+  useEffect(() => {
+    if (!isGenerating) setSlowWarning(null);
+  }, [isGenerating]);
 
   const dismissCompletionHint = useCallback(() => {
     setShowCompletionHint(false);
@@ -393,12 +412,12 @@ export default function WritingTabInline(props: Props) {
                   ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
                   : 'border-border text-text-secondary hover:border-accent-amber/40'
               }`}
-              title={L4(language, { ko: '직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.', en: 'Write your novel by typing directly. Real-time quality analysis, inline rewrite.' })}
+              title={L4(language, { ko: '직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.', en: 'Write your novel by typing directly. Real-time quality analysis, inline rewrite.', ja: '직접 타이핑으로 小説을 씁니다. 실시간 品質 分析, 인라인 리라이트 지원.', zh: '직접 타이핑으로 小说을 씁니다. 실시간 质量 分析, 인라인 리라이트 지원.' })}
             >
               <PenLine className="w-3.5 h-3.5" />
               <span className="flex flex-col items-start leading-tight">
-                <span>{L4(language, { ko: '집필', en: 'Write' })}</span>
-                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '직접 타이핑', en: 'Type directly' })}</span>
+                <span>{L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}</span>
+                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '직접 타이핑', en: 'Type directly', ja: 'Type directly', zh: 'Type directly' })}</span>
               </span>
             </button>
             <button
@@ -412,12 +431,12 @@ export default function WritingTabInline(props: Props) {
                   ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
                   : 'border-border text-text-secondary hover:border-accent-purple/40'
               }`}
-              title={L4(language, { ko: '장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.', en: 'Describe a scene and NOA writes the novel text. Press Enter to send.' })}
+              title={L4(language, { ko: '장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.', en: 'Describe a scene and NOA writes the novel text. Press Enter to send.', ja: 'シーン/사件을 入力하면 NOA가 小説 本文을 生成합니다. Enter로 送信.', zh: '场景/사条을 输入하면 NOA가 小说 正文을 生成합니다. Enter로 发送.' })}
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span className="flex flex-col items-start leading-tight">
-                <span>{L4(language, { ko: 'NOA 생성', en: 'Generate' })}</span>
-                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: 'AI가 다음 장면을 씁니다', en: 'AI writes the next scene' })}</span>
+                <span>{L4(language, { ko: 'NOA 생성', en: 'Generate', ja: 'NOA 生成', zh: 'NOA 生成' })}</span>
+                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: 'AI가 다음 장면을 씁니다', en: 'AI writes the next scene', ja: 'AI가 次へ シーン을 씁니다', zh: 'AI가 下一页 场景을 씁니다' })}</span>
               </span>
             </button>
 
@@ -435,11 +454,11 @@ export default function WritingTabInline(props: Props) {
                       writingMode === 'refine' ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue' :
                       'bg-accent-red/20 border-accent-red/50 text-accent-red'
                     }`}
-                    title={L4(language, { ko: '기본 모드로 돌아가기', en: 'Back to basic mode' })}
+                    title={L4(language, { ko: '기본 모드로 돌아가기', en: 'Back to basic mode', ja: '기본 モード로 戻る', zh: '기본 模式로 返回' })}
                   >
-                    {writingMode === 'canvas' && <><Layers className="w-3.5 h-3.5" />{L4(language, { ko: '3단계', en: '3-Step' })}</>}
-                    {writingMode === 'refine' && <><Wand2 className="w-3.5 h-3.5" />{L4(language, { ko: '다듬기', en: 'Refine' })}</>}
-                    {writingMode === 'advanced' && <><Settings2 className="w-3.5 h-3.5" />{L4(language, { ko: '고급', en: 'Advanced' })}</>}
+                    {writingMode === 'canvas' && <><Layers className="w-3.5 h-3.5" />{L4(language, { ko: '3단계', en: '3-Step', ja: '3-Step', zh: '3-Step' })}</>}
+                    {writingMode === 'refine' && <><Wand2 className="w-3.5 h-3.5" />{L4(language, { ko: '다듬기', en: 'Refine', ja: 'Refine', zh: 'Refine' })}</>}
+                    {writingMode === 'advanced' && <><Settings2 className="w-3.5 h-3.5" />{L4(language, { ko: '고급', en: 'Advanced', ja: 'Advanced', zh: 'Advanced' })}</>}
                     <X className="w-3 h-3 ml-0.5 opacity-60" />
                   </button>
                 ) : (
@@ -447,38 +466,38 @@ export default function WritingTabInline(props: Props) {
                     <button
                       type="button"
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-transparent text-text-tertiary hover:text-text-secondary hover:border-border transition-colors"
-                      title={L4(language, { ko: '고급 모드 (3단계·다듬기·고급)', en: 'Advanced modes (3-Step, Refine, Advanced)' })}
+                      title={L4(language, { ko: '고급 모드 (3단계·다듬기·고급)', en: 'Advanced modes (3-Step, Refine, Advanced)', ja: '고급 モード (3단계·다듬기·고급)', zh: '고급 模式 (3단계·다듬기·고급)' })}
                     >
                       <Settings2 className="w-3.5 h-3.5" />
-                      {L4(language, { ko: '고급', en: 'More' })}
+                      {L4(language, { ko: '고급', en: 'More', ja: 'More', zh: 'More' })}
                       <ChevronDown className="w-3 h-3 opacity-60" />
                     </button>
                     <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover/adv:opacity-100 group-hover/adv:visible transition-all z-50 min-w-[180px]">
                       <button type="button" onClick={() => setWritingMode('canvas')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-green transition-colors"
-                        title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps' })}>
+                        title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps', ja: '뼈대 -> 下書き -> 다듬기 3단계 완성', zh: '뼈대 -> 草稿 -> 다듬기 3단계 완성' })}>
                         <Layers className="w-3.5 h-3.5" />
                         <span className="flex flex-col items-start leading-tight">
-                          <span>{L4(language, { ko: '3단계', en: '3-Step' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish' })}</span>
+                          <span>{L4(language, { ko: '3단계', en: '3-Step', ja: '3-Step', zh: '3-Step' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish', ja: '구상→下書き→완성 3스텝', zh: '구상→草稿→완성 3스텝' })}</span>
                         </span>
                       </button>
                       <button type="button" onClick={() => setWritingMode('refine')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-blue transition-colors"
-                        title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs' })}>
+                        title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs', ja: '약한 문단 자동 件선', zh: '약한 문단 자동 个선' })}>
                         <Wand2 className="w-3.5 h-3.5" />
                         <span className="flex flex-col items-start leading-tight">
-                          <span>{L4(language, { ko: '다듬기', en: 'Refine' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%' })}</span>
+                          <span>{L4(language, { ko: '다듬기', en: 'Refine', ja: 'Refine', zh: 'Refine' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%', ja: '기존 原稿를 30% 다듬기', zh: '기존 稿件를 30% 다듬기' })}</span>
                         </span>
                       </button>
                       <button type="button" onClick={() => setWritingMode('advanced')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-red transition-colors"
-                        title={L4(language, { ko: 'temperature/top-p 직접 제어', en: 'Direct control of temperature/top-p' })}>
+                        title={L4(language, { ko: 'temperature/top-p 직접 제어', en: 'Direct control of temperature/top-p', ja: 'Direct control of temperature/top-p', zh: 'Direct control of temperature/top-p' })}>
                         <Settings2 className="w-3.5 h-3.5" />
                         <span className="flex flex-col items-start leading-tight">
-                          <span>{L4(language, { ko: '고급', en: 'Advanced' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings' })}</span>
+                          <span>{L4(language, { ko: '고급', en: 'Advanced', ja: 'Advanced', zh: 'Advanced' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings', ja: '세부 設定 직접 조절', zh: '세부 设置 직접 조절' })}</span>
                         </span>
                       </button>
                     </div>
@@ -494,7 +513,7 @@ export default function WritingTabInline(props: Props) {
                   onClick={() => undoStack.undo()}
                   disabled={!undoStack.canUndo}
                   className={`p-1.5 rounded-lg transition-colors ${undoStack.canUndo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
-                  title={L4(language, { ko: '실행취소 (Ctrl+Z)', en: 'Undo (Ctrl+Z)' })}
+                  title={L4(language, { ko: '실행취소 (Ctrl+Z)', en: 'Undo (Ctrl+Z)', ja: '실행キャンセル (Ctrl+Z)', zh: '실행取消 (Ctrl+Z)' })}
                   aria-label="Undo"
                 >
                   <Undo2 className="w-3.5 h-3.5" />
@@ -504,7 +523,7 @@ export default function WritingTabInline(props: Props) {
                   onClick={() => undoStack.redo()}
                   disabled={!undoStack.canRedo}
                   className={`p-1.5 rounded-lg transition-colors ${undoStack.canRedo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
-                  title={L4(language, { ko: '다시실행 (Ctrl+Shift+Z)', en: 'Redo (Ctrl+Shift+Z)' })}
+                  title={L4(language, { ko: '다시실행 (Ctrl+Shift+Z)', en: 'Redo (Ctrl+Shift+Z)', ja: 'Redo (Ctrl+Shift+Z)', zh: 'Redo (Ctrl+Shift+Z)' })}
                   aria-label="Redo"
                 >
                   <Redo2 className="w-3.5 h-3.5" />
@@ -525,7 +544,7 @@ export default function WritingTabInline(props: Props) {
                   ko: `인라인 자동완성 (Tab) — ${inlineCompletionEnabled ? '켜짐' : '꺼짐'}`,
                   en: `Inline autocomplete (Tab) — ${inlineCompletionEnabled ? 'On' : 'Off'}`,
                 })}
-                aria-label={L4(language, { ko: '인라인 자동완성 토글', en: 'Toggle inline autocomplete' })}
+                aria-label={L4(language, { ko: '인라인 자동완성 토글', en: 'Toggle inline autocomplete', ja: 'Toggle inline autocomplete', zh: 'Toggle inline autocomplete' })}
               >
                 <Wand2 className="w-3.5 h-3.5" />
               </button>
@@ -558,7 +577,7 @@ export default function WritingTabInline(props: Props) {
               }`}
             >
               <Columns2 className="w-4 h-4" />
-              {L4(language, { ko: '분할 뷰', en: 'Split' })}
+              {L4(language, { ko: '분할 뷰', en: 'Split', ja: 'Split', zh: 'Split' })}
             </button>
           </div>
         </div>
@@ -587,7 +606,7 @@ export default function WritingTabInline(props: Props) {
           ref={streamContainerRef}
           onScroll={handleStreamScroll}
           aria-live="polite"
-          aria-label={L4(language, { ko: 'AI 생성 결과', en: 'AI generation output' })}
+          aria-label={L4(language, { ko: 'AI 생성 결과', en: 'AI generation output', ja: 'AI 生成 結果', zh: 'AI 生成 结果' })}
           className={`${writingColumnShell} flex-1 overflow-y-auto ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'flex flex-col justify-center items-center px-4' : 'py-6 md:py-8 space-y-6 px-4 md:px-8 custom-scrollbar'}`}
         >
           {/* Continuity Tracker Graph */}
@@ -619,20 +638,13 @@ export default function WritingTabInline(props: Props) {
             {writingMode === 'ai' && (
               <>
                 <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
-                {/* Generation stats: time + token usage */}
-                {!isGenerating && generationTime != null && (
-                  <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] font-mono text-text-tertiary">
-                    <span>{L4(language, { ko: `생성 완료 (${generationTime}초)`, en: `Done (${generationTime}s)` })}</span>
-                    {tokenUsage && (
-                      <span className={tokenUsage.used > tokenUsage.budget * 0.9 ? 'text-accent-amber' : ''}>
-                        {L4(language, {
-                          ko: `사용: ${tokenUsage.used.toLocaleString()} / 예산: ${tokenUsage.budget.toLocaleString()} 토큰`,
-                          en: `Used: ${tokenUsage.used.toLocaleString()} / Budget: ${tokenUsage.budget.toLocaleString()} tokens`,
-                        })}
-                      </span>
-                    )}
-                  </div>
-                )}
+                <GenerationControls
+                  isGenerating={isGenerating}
+                  slowWarning={slowWarning}
+                  generationTime={generationTime}
+                  tokenUsage={tokenUsage}
+                  language={language}
+                />
                 {/* Cinema Mode entry — after generation completes */}
                 {!isGenerating && currentSession.messages.length > 0 && currentSession.messages.some(m => m.role === 'assistant' && m.content) && (
                   <div className="mx-3 flex gap-2">
@@ -894,32 +906,8 @@ export default function WritingTabInline(props: Props) {
                       ? (isKO ? '3단계: AI가 초안을 다듬었습니다. 최종 확인 후 본문에 반영하세요.' : 'Step 3: AI polished your draft. Review and apply to manuscript.')
                       : (isKO ? '완료! 아래 버튼으로 본문에 반영하세요.' : 'Done! Apply to manuscript below.')}
                   </p>
-                  {/* 단계 인디케이터 — enhanced with emojis and progress bar */}
-                  <div className="flex items-center gap-1 text-xs mb-4">
-                    {[
-                      { emoji: '\uD83E\uDDB4', label: isKO ? '뼈대' : 'Skeleton', desc: isKO ? '구조 잡기' : 'Outline', pass: 0 },
-                      { emoji: '\uD83D\uDCDD', label: isKO ? '초안' : 'Draft', desc: isKO ? '살 붙이기' : 'Flesh out', pass: 1 },
-                      { emoji: '\u2728', label: isKO ? '다듬기' : 'Polish', desc: isKO ? '완성' : 'Refine', pass: 2 },
-                    ].map((step, i) => (
-                      <React.Fragment key={step.pass}>
-                        {i > 0 && (
-                          <div className={`flex-1 h-0.5 rounded-full transition-colors mx-1 ${
-                            canvasPass >= step.pass ? 'bg-accent-green/50' : 'bg-white/10'
-                          }`} />
-                        )}
-                        <div className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all min-w-[64px] ${
-                          canvasPass > step.pass ? 'bg-accent-green/20 text-accent-green' :
-                          canvasPass === step.pass ? 'bg-accent-green/30 text-accent-green ring-1 ring-accent-green/40 shadow-[0_0_12px_rgba(34,197,94,0.15)]' :
-                          'bg-bg-secondary text-text-tertiary'
-                        }`}>
-                          <span className="text-base leading-none">{step.emoji}</span>
-                          <span className="font-bold text-[10px]">{step.label}</span>
-                          <span className="text-[8px] opacity-70">{step.desc}</span>
-                          {canvasPass > step.pass && <span className="text-[9px] text-accent-green">{'\u2713'}</span>}
-                        </div>
-                      </React.Fragment>
-                    ))}
-                  </div>
+                  {/* 단계 인디케이터 */}
+                  <CanvasStepIndicator canvasPass={canvasPass} language={language} />
                   {/* 액션 버튼 */}
                   <div className="flex gap-2">
                     {canvasPass > 0 && (
@@ -967,7 +955,7 @@ export default function WritingTabInline(props: Props) {
                 <textarea
                   value={canvasContent}
                   onChange={e => setCanvasContent(e.target.value)}
-                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none transition-all resize-none"
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
                   placeholder={canvasPass === 0
                     ? (isKO ? '장면의 뼈대를 작성하세요... (등장인물, 핵심 사건, 분위기)' : 'Write scene skeleton... (characters, events, mood)')
                     : (isKO ? 'AI가 작성 중...' : 'AI is writing...')}
@@ -1024,7 +1012,7 @@ export default function WritingTabInline(props: Props) {
                 <textarea
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
-                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-blue outline-none transition-all resize-none"
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
                   placeholder={isKO ? '다듬을 원고를 붙여넣으세요...' : 'Paste your manuscript to refine...'}
                 />
               </div>
@@ -1041,7 +1029,7 @@ export default function WritingTabInline(props: Props) {
                   ref={editDraftRef}
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
-                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-red outline-none transition-all resize-none"
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-red outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
                   placeholder={isKO ? '고급 모드에서 직접 작성하세요...' : 'Write directly in advanced mode...'}
                 />
               </div>
@@ -1075,7 +1063,7 @@ export default function WritingTabInline(props: Props) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { handleSVIKeyDown(e); if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!showAiLock) handleSend(); } }}
                 placeholder={t('writing.inputPlaceholder')}
-                className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-text-primary placeholder-text-secondary resize-none max-h-32 leading-relaxed"
+                className="flex-1 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-3 text-sm text-text-primary placeholder-text-secondary resize-none max-h-32 leading-relaxed"
                 rows={1}
                 disabled={isGenerating || showAiLock}
               />

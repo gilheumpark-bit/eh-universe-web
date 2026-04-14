@@ -5,7 +5,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { createT } from '@/lib/i18n';
 
 import {
-  type Lang,
+  
   type ViewTab,
   type Civilization,
   type CivRelation,
@@ -107,7 +107,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
         return prev.map(s => s.genre === genre ? { ...s, level } : s);
       }
       if (prev.length >= MAX_GENRE_SELECTIONS) {
-        showAlert(L4(lang, { ko: `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다`, en: `Max ${MAX_GENRE_SELECTIONS} genres allowed` }));
+        showAlert(L4(lang, { ko: `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다`, en: `Max ${MAX_GENRE_SELECTIONS} genres allowed`, ja: `ジャンル는 最大 ${MAX_GENRE_SELECTIONS}件까지 選択 가능합니다`, zh: `类型는 最大 ${MAX_GENRE_SELECTIONS}个까지 选择 가능합니다` }));
         return prev;
       }
       return [...prev, { genre, level }];
@@ -141,7 +141,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
       {/* Header */}
       <div className="doc-header rounded-t mb-0">
         <span className="badge badge-blue mr-2">SIMULATOR</span>
-        {L4(lang, { ko: "세계관 시뮬레이터 — World Consistency Engine", en: "World Simulator — Consistency Engine" })}
+        {L4(lang, { ko: "세계관 시뮬레이터 — World Consistency Engine", en: "World Simulator — Consistency Engine", ja: "世界観 시뮬레이터 — World Consistency Engine", zh: "世界观 시뮬레이터 — World Consistency Engine" })}
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-6">
@@ -153,14 +153,14 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
-                {L4(lang, { ko: "EH 규칙 강도", en: "EH Rule Intensity" })}
+                {L4(lang, { ko: "EH 규칙 강도", en: "EH Rule Intensity", ja: "EH Rule Intensity", zh: "EH Rule Intensity" })}
               </h3>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded font-[family-name:var(--font-mono)]"
                 style={{
                   background: `${RULE_LEVELS[ruleLevel - 1].color}20`,
                   color: RULE_LEVELS[ruleLevel - 1].color,
                 }}>
-                {RULE_LEVELS[ruleLevel - 1].pct}% &mdash; {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].genre_ko, en: RULE_LEVELS[ruleLevel - 1].genre_en })}
+                {RULE_LEVELS[ruleLevel - 1].pct}% &mdash; {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].genre_ko, en: RULE_LEVELS[ruleLevel - 1].genre_en, ja: RULE_LEVELS[ruleLevel - 1].genre_ja, zh: RULE_LEVELS[ruleLevel - 1].genre_zh })}
               </span>
             </div>
             <div className="flex flex-wrap gap-1">
@@ -175,7 +175,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                     background: rl.color,
                     borderColor: "transparent",
                   } : undefined}
-                  title={L4(lang, { ko: rl.desc_ko, en: rl.desc_en })}
+                  title={L4(lang, { ko: rl.desc_ko, en: rl.desc_en, ja: rl.desc_ja, zh: rl.desc_zh })}
                 >
                   <div>{L4(lang, rl)}</div>
                   <div className="text-[7px] opacity-70">Lv{rl.lv}</div>
@@ -183,7 +183,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
               ))}
             </div>
             <div className="text-[9px] text-text-tertiary">
-              {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].desc_ko, en: RULE_LEVELS[ruleLevel - 1].desc_en })}
+              {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].desc_ko, en: RULE_LEVELS[ruleLevel - 1].desc_en, ja: RULE_LEVELS[ruleLevel - 1].desc_ja, zh: RULE_LEVELS[ruleLevel - 1].desc_zh })}
             </div>
           </div>
 
@@ -192,12 +192,12 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             {/* AI loading explanation */}
             {aiGenerating && (
               <div className="absolute -top-12 right-0 bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[9px] text-text-secondary shadow-lg z-10 whitespace-nowrap">
-                {L4(lang, { ko: '세계관 시뮬레이터는 AI가 세계의 변화를 예측합니다.', en: 'World Simulator uses AI to predict world changes.' })}
+                {L4(lang, { ko: '세계관 시뮬레이터는 AI가 세계의 변화를 예측합니다.', en: 'World Simulator uses AI to predict world changes.', ja: '世界観 시뮬레이터는 AI가 세계의 변화를 예측합니다.', zh: '世界观 시뮬레이터는 AI가 세계의 변화를 예측합니다.' })}
               </div>
             )}
             <button onClick={() => setShowPresetMenu(v => !v)}
               className="px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider hover:opacity-80 transition-opacity">
-              &#9889; {L4(lang, { ko: '\uD504\uB9AC\uC14B', en: 'Preset' })}
+              &#9889; {L4(lang, { ko: '\uD504\uB9AC\uC14B', en: 'Preset', ja: 'Preset', zh: 'Preset' })}
             </button>
             {showPresetMenu && (
               <div className="absolute bottom-full mb-2 right-0 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
@@ -227,7 +227,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
               type="button"
               disabled={aiGenerating}
               onClick={async () => {
-              if (!synopsis) { showAlert(L4(lang, { ko: '\uC138\uACC4\uAD00 \uC124\uACC4\uC5D0\uC11C \uC2DC\uB18D\uC2DC\uC2A4\uB97C \uBA3C\uC800 \uC791\uC131\uD558\uC138\uC694.', en: 'Write a synopsis in World Design first.' })); return; }
+              if (!synopsis) { showAlert(L4(lang, { ko: '\uC138\uACC4\uAD00 \uC124\uACC4\uC5D0\uC11C \uC2DC\uB18D\uC2DC\uC2A4\uB97C \uBA3C\uC800 \uC791\uC131\uD558\uC138\uC694.', en: 'Write a synopsis in World Design first.', ja: 'Write a synopsis in World Design first.', zh: 'Write a synopsis in World Design first.' })); return; }
               setAiGenerating(true);
               try {
                 const { generateWorldSim } = await import('@/services/geminiService');
@@ -242,11 +242,11 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                   setCivs(newCivs);
                   setRelations([]);
                 }
-              } catch { showAlert(L4(lang, { ko: '\uC790\uB3D9 \uC0DD\uC131 \uC2E4\uD328. API \uD0A4\uB97C \uD655\uC778\uD558\uC138\uC694.', en: 'Generation failed. Check API key.' })); }
+              } catch { showAlert(L4(lang, { ko: '\uC790\uB3D9 \uC0DD\uC131 \uC2E4\uD328. API \uD0A4\uB97C \uD655\uC778\uD558\uC138\uC694.', en: 'Generation failed. Check API key.', ja: 'Generation failed. Check API key.', zh: 'Generation failed. Check API key.' })); }
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>
-              {aiGenerating ? '\u23F3' : '\uD83E\uDD16'} {aiGenerating ? L4(lang, { ko: '생성 중...', en: 'Generating...' }) : L4(lang, { ko: '자동 생성', en: 'Auto Generate' })}
+              {aiGenerating ? '\u23F3' : '\uD83E\uDD16'} {aiGenerating ? L4(lang, { ko: '생성 중...', en: 'Generating...', ja: '生成中...', zh: '生成中...' }) : L4(lang, { ko: '자동 생성', en: 'Auto Generate', ja: '자동 生成', zh: '자동 生成' })}
             </button>
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           <div className="text-center py-8 space-y-3">
             {genreSelections.length === 0 ? (
               <div className="text-text-tertiary text-sm">
-                {L4(lang, { ko: "장르를 선택하세요 (최대 5개)", en: "Select genres (max 5)" })}
+                {L4(lang, { ko: "장르를 선택하세요 (최대 5개)", en: "Select genres (max 5)", ja: "ジャンル를 選択하세요 (最大 5件)", zh: "类型를 选择하세요 (最大 5个)" })}
               </div>
             ) : (
               <>
@@ -331,19 +331,19 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
         {/* Footer stats */}
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{L4(lang, { ko: "문명", en: "Civs" })}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "문명", en: "Civs", ja: "문名", zh: "문人" })}: </span>
             <span className="text-accent-purple font-bold">{civs.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{L4(lang, { ko: "관계", en: "Relations" })}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "관계", en: "Relations", ja: "Relations", zh: "Relations" })}: </span>
             <span className="text-accent-purple font-bold">{relations.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{L4(lang, { ko: "전환", en: "Transitions" })}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "전환", en: "Transitions", ja: "Transitions", zh: "Transitions" })}: </span>
             <span className="text-accent-purple font-bold">{transitions.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{L4(lang, { ko: "장르", en: "Genre" })}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "장르", en: "Genre", ja: "ジャンル", zh: "类型" })}: </span>
             {genreSelections.map((s, i) => (
               <span key={i}>
                 {i > 0 && <span className="text-text-tertiary"> + </span>}
@@ -368,7 +368,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           <div className="rounded-xl border border-accent-purple/20 bg-accent-purple/5 p-5 text-center space-y-3">
             <div className="text-3xl">{'\uD83C\uDF0D'}</div>
             <h3 className="text-sm font-bold text-accent-purple">
-              {L4(lang, { ko: '세계관 시뮬레이터', en: 'World Simulator' })}
+              {L4(lang, { ko: '세계관 시뮬레이터', en: 'World Simulator', ja: '世界観 시뮬레이터', zh: '世界观 시뮬레이터' })}
             </h3>
             <p className="text-xs text-text-secondary max-w-md mx-auto">
               {L4(lang, {

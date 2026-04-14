@@ -389,7 +389,7 @@ describe('executePipeline — state transitions & fail actions', () => {
       },
     };
     // no characters → character_sync fails with score 0
-    const exec = executePipeline(
+    const _exec = executePipeline(
       { config: makeMinimalConfig(), currentEpisode: 1 },
       cfg,
     );

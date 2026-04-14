@@ -10,21 +10,21 @@
 
 import {
   runStaticPipeline,
-  type PipelineResult,
-  type PipelineStage,
+  
+  
 } from '../pipeline';
 
 import {
   runTeam3Validation,
   runTeam8Governance,
-  type TeamResult,
-  type Finding,
+  
+  
 } from '../pipeline-teams';
 
 import {
   runTier1,
   generateChecklistReport,
-  type CheckItem,
+  
 } from '../quality-checklist';
 
 import {

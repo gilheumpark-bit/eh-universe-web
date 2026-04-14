@@ -15,11 +15,11 @@
 // ============================================================
 
 import {
-  PROVIDERS,
+  
   PROVIDER_LIST,
   getCapabilities,
   supportsStructuredOutput,
-  isPreviewModel,
+  
   getModelWarning,
 } from '../ai-providers';
 
@@ -257,12 +257,22 @@ import { L4 } from '../i18n';
 
 describe('L4 i18n helper', () => {
   it('returns Korean text for KO language', () => {
-    const result = L4('KO', { ko: '안녕', en: 'Hello' });
+    const result = L4('KO', { ko: '안녕', en: 'Hello', ja: 'こんにちは', zh: '你好' });
     expect(result).toBe('안녕');
   });
 
   it('returns English text for EN language', () => {
-    const result = L4('EN', { ko: '안녕', en: 'Hello' });
+    const result = L4('EN', { ko: '안녕', en: 'Hello', ja: 'こんにちは', zh: '你好' });
     expect(result).toBe('Hello');
+  });
+
+  it('returns Japanese text for JA language', () => {
+    const result = L4('JA', { ko: '안녕', en: 'Hello', ja: 'こんにちは', zh: '你好' });
+    expect(result).toBe('こんにちは');
+  });
+
+  it('returns Chinese text for ZH language', () => {
+    const result = L4('ZH', { ko: '안녕', en: 'Hello', ja: 'こんにちは', zh: '你好' });
+    expect(result).toBe('你好');
   });
 });

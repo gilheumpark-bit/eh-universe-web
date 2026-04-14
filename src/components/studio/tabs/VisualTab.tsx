@@ -8,7 +8,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image';
 import {
   Plus, Image as ImageIcon, Settings, Star, Trash2,
-  Play, Loader2, Grid, ChevronDown, Zap,
+  Play, Grid, ChevronDown, Zap,
 } from 'lucide-react';
 import {
   ChatSession, VisualPromptCard, StoryConfig, AppLanguage,
@@ -183,7 +183,7 @@ function SceneGallery({
           <select
             value={filterEp}
             onChange={e => setFilterEp(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-            className="bg-bg-secondary/80 border border-border rounded-lg px-3 py-1.5 text-[10px] text-text-secondary outline-none appearance-none pr-6 transition-colors"
+            className="bg-bg-secondary/80 border border-border rounded-lg px-3 py-1.5 text-[10px] text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 appearance-none pr-6 transition-colors"
           >
             <option value="all">{isKO ? '전체 에피소드' : 'All Episodes'}</option>
             {epOptions.map(ep => (
@@ -239,7 +239,7 @@ function SceneGallery({
                 <select
                   value={img.assignedEpisode ?? ''}
                   onChange={e => assignEpisode(img.cardId, img.id, Number(e.target.value) || 0)}
-                  className="flex-1 bg-bg-secondary/60 border border-border rounded px-1.5 py-0.5 text-[9px] text-text-tertiary outline-none transition-colors"
+                  className="flex-1 bg-bg-secondary/60 border border-border rounded px-1.5 py-0.5 text-[9px] text-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors"
                 >
                   <option value="">{isKO ? '에피소드 배정' : 'Assign EP'}</option>
                   {Array.from({ length: totalEpisodes }, (_, i) => i + 1).map(ep => (
@@ -694,7 +694,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                   value={imgApiKey}
                   onChange={e => setImgApiKey(e.target.value)}
                   placeholder={isKO ? 'API 키 입력...' : 'API Key...'}
-                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[11px] outline-none focus:border-accent-blue"
+                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue"
                 />
               )}
 

@@ -186,7 +186,7 @@ export default function StudioToasts({
   const t = createT(language);
 
   return (
-    <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 w-full max-w-md px-4">
+    <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[var(--z-modal)] flex flex-col gap-2 w-full max-w-md px-4">
       {/* Sync Reminder */}
       {showSyncReminder && (
         <ToastCard variant="info" onClose={() => setShowSyncReminder(false)}>

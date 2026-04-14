@@ -18,13 +18,13 @@ interface Props {
   onClose?: () => void;
 }
 
-export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
+export function QuickVerify({ onStartVerify, onEasyMode }: Props) {
   const { lang } = useLang();
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"choose" | "paste">("choose");
 
   const T = useCallback(
-    (v: { ko: string; en: string }) => L4(lang, v),
+    (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v),
     [lang],
   );
 
@@ -36,12 +36,12 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
           <Shield size={18} className="text-accent-green" />
           <div>
             <div className="flex items-center gap-1 text-[10px] text-text-tertiary mb-0.5">
-              <span>{T({ ko: "검증", en: "Verify" })}</span>
+              <span>{T({ ko: "검증", en: "Verify", ja: "検証", zh: "验证" })}</span>
               <span className="text-border">/</span>
-              <span className="text-text-secondary">{T({ ko: "코드 붙여넣기", en: "Paste Code" })}</span>
+              <span className="text-text-secondary">{T({ ko: "코드 붙여넣기", en: "Paste Code", ja: "コード貼り付け", zh: "粘贴代码" })}</span>
             </div>
             <h2 className="text-sm font-bold text-text-primary">
-              {T({ ko: "코드 검증", en: "Code Verification" })}
+              {T({ ko: "코드 검증", en: "Code Verification", ja: "コード検証", zh: "代码验证" })}
             </h2>
           </div>
         </div>
@@ -58,8 +58,10 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
             placeholder={T({
               ko: "검증할 코드를 붙여넣으세요...\n\nCursor, Copilot, ChatGPT 등에서 생성한 코드를 여기에 넣으면\n8개 에이전트가 자동으로 검증합니다.",
               en: "Paste code to verify...\n\nPaste code from Cursor, Copilot, ChatGPT, etc.\n8 agents will automatically review it.",
+              ja: "検証するコードを貼り付けてください...\n\nCursor、Copilot、ChatGPT等で生成したコードを\n8つのエージェントが自動検証します。",
+              zh: "粘贴要验证的代码...\n\n将Cursor、Copilot、ChatGPT等生成的代码粘贴到此处\n8个代理将自动验证。",
             })}
-            className="w-full h-full min-h-[200px] bg-bg-secondary border border-border rounded-xl p-4 text-sm font-mono text-text-primary placeholder-text-tertiary/50 resize-none outline-none focus:border-accent-green/30"
+            className="w-full h-full min-h-[200px] bg-bg-secondary border border-border rounded-xl p-4 text-sm font-mono text-text-primary placeholder-text-tertiary/50 resize-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-green/30"
           />
         </div>
 
@@ -67,7 +69,7 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
         <div className="p-4 border-t border-border">
           {!code.trim() && (
             <p className="text-[11px] text-text-tertiary text-center mb-2">
-              {T({ ko: "코드를 붙여넣으면 검증 버튼이 활성화됩니다", en: "Paste code above to enable verification" })}
+              {T({ ko: "코드를 붙여넣으면 검증 버튼이 활성화됩니다", en: "Paste code above to enable verification", ja: "コードを貼り付けると検証ボタンが有効になります", zh: "粘贴代码后验证按钮将启用" })}
             </p>
           )}
           <button
@@ -76,13 +78,13 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-30 bg-accent-green text-white hover:opacity-90"
           >
             <Play size={16} />
-            {T({ ko: "검증 시작", en: "Start Verification" })}
+            {T({ ko: "검증 시작", en: "Start Verification", ja: "検証開始", zh: "开始验证" })}
           </button>
           <button
             onClick={() => { setCode(''); setStep("choose"); }}
             className="w-full mt-2 py-2 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
-            {T({ ko: "뒤로", en: "Back" })}
+            {T({ ko: "뒤로", en: "Back", ja: "戻る", zh: "返回" })}
           </button>
         </div>
       </div>
@@ -96,16 +98,18 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-green/10 border border-accent-green/20 mb-4">
           <Shield size={14} className="text-accent-green" />
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent-green">
-            {T({ ko: "NOA 코드 검증", en: "NOA Code Review" })}
+            {T({ ko: "NOA 코드 검증", en: "NOA Code Review", ja: "NOAコードレビュー", zh: "NOA代码审查" })}
           </span>
         </div>
         <h2 className="text-2xl font-bold text-text-primary" style={{ fontFamily: "var(--font-display)" }}>
-          {T({ ko: "무엇을 검증할까요?", en: "What would you like to verify?" })}
+          {T({ ko: "무엇을 검증할까요?", en: "What would you like to verify?", ja: "何を検証しますか？", zh: "想要验证什么？" })}
         </h2>
         <p className="mt-2 text-sm text-text-tertiary max-w-sm">
           {T({
             ko: "8개 전문 에이전트가 보안, 성능, 메모리, 컨벤션을 자동 검사합니다.",
             en: "8 specialized agents check security, performance, memory, and conventions.",
+            ja: "8つの専門エージェントがセキュリティ、パフォーマンス、メモリ、コンベンションを自動検査します。",
+            zh: "8个专业代理自动检查安全、性能、内存和规范。",
           })}
         </p>
       </div>
@@ -121,10 +125,10 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
           </div>
           <div className="flex-1">
             <div className="font-mono text-sm font-bold text-text-primary">
-              {T({ ko: "코드 붙여넣기 → 검증", en: "Paste Code → Verify" })}
+              {T({ ko: "코드 붙여넣기 → 검증", en: "Paste Code → Verify", ja: "コード貼り付け → 検証", zh: "粘贴代码 → 验证" })}
             </div>
             <div className="mt-0.5 text-[11px] text-text-tertiary">
-              {T({ ko: "외부에서 만든 코드를 검증합니다", en: "Verify code from Cursor, Copilot, etc." })}
+              {T({ ko: "외부에서 만든 코드를 검증합니다", en: "Verify code from Cursor, Copilot, etc.", ja: "外部で作成したコードを検証します", zh: "验证外部创建的代码" })}
             </div>
           </div>
           <ArrowRight size={16} className="text-text-tertiary group-hover:text-accent-green transition-colors" />
@@ -140,10 +144,10 @@ export function QuickVerify({ onStartVerify, onEasyMode, onClose }: Props) {
           </div>
           <div className="flex-1">
             <div className="font-mono text-sm font-bold text-text-primary">
-              {T({ ko: "생성 → 검증 (이지모드)", en: "Generate → Verify (Easy Mode)" })}
+              {T({ ko: "생성 → 검증 (이지모드)", en: "Generate → Verify (Easy Mode)", ja: "生成 → 検証 (イージーモード)", zh: "生成 → 验证 (简易模式)" })}
             </div>
             <div className="mt-0.5 text-[11px] text-text-tertiary">
-              {T({ ko: "명세서 작성 → NOA 생성 → 자동 검증", en: "Write spec → NOA generates → Auto-verify" })}
+              {T({ ko: "명세서 작성 → NOA 생성 → 자동 검증", en: "Write spec → NOA generates → Auto-verify", ja: "仕様作成 → NOA生成 → 自動検証", zh: "编写规格 → NOA生成 → 自动验证" })}
             </div>
           </div>
           <ArrowRight size={16} className="text-text-tertiary group-hover:text-accent-purple transition-colors" />

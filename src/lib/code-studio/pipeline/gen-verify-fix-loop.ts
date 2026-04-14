@@ -460,7 +460,7 @@ export async function runGenVerifyFixLoop(
   const iterations: GenVerifyFixIteration[] = [];
 
   // --- Step 1: Generate initial code (with retry) ---
-  const roundStart = Date.now();
+  const _roundStart = Date.now();
   const { code: initialCode, tokenUsage: genTokens } = await generateCode(task, language, signal);
   if (!initialCode) {
     return buildFinalResult(

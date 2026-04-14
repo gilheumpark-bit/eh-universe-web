@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { FileText, Trash2, Clock, X } from "lucide-react";
+
+import { FileText, Trash2, Clock } from "lucide-react";
 import { fileIconColor } from "@/lib/code-studio/core/types";
 
 interface RecentFileEntry {
@@ -40,8 +40,8 @@ function getBaseName(fileName: string): string {
 export default function RecentFiles({ files, onOpen, onClear }: RecentFilesProps) {
   if (files.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-sm text-gray-500">
-        <Clock size={24} className="mb-2 text-gray-600" />
+      <div className="flex flex-col items-center justify-center py-8 text-sm text-text-tertiary">
+        <Clock size={24} className="mb-2 text-text-quaternary" />
         <span>No recent files</span>
       </div>
     );
@@ -50,11 +50,11 @@ export default function RecentFiles({ files, onOpen, onClear }: RecentFilesProps
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Recent Files</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-text-tertiary">Recent Files</span>
         <button
           onClick={onClear}
           title="Clear history"
-          className="text-gray-600 hover:text-red-400 transition-colors"
+          className="text-text-quaternary hover:text-red-400 transition-colors"
         >
           <Trash2 size={12} />
         </button>
@@ -73,9 +73,9 @@ export default function RecentFiles({ files, onOpen, onClear }: RecentFilesProps
               <FileText size={14} className={colorClass} />
               <div className="flex flex-col items-start truncate">
                 <span className="truncate">{base}</span>
-                {dir && <span className="text-[10px] text-gray-600 truncate">{dir}</span>}
+                {dir && <span className="text-[10px] text-text-quaternary truncate">{dir}</span>}
               </div>
-              <span className="ml-auto whitespace-nowrap text-[10px] text-gray-600">
+              <span className="ml-auto whitespace-nowrap text-[10px] text-text-quaternary">
                 {formatRelativeTime(f.timestamp)}
               </span>
             </button>

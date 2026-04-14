@@ -9,8 +9,8 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
-  Play, GripVertical, Trash2, Merge, Split, AlertTriangle,
-  Eye, RotateCcw, Save, Wand2, ChevronDown, ChevronRight,
+  Play, GripVertical, Trash2, Split, AlertTriangle,
+  RotateCcw, Save, ChevronDown, ChevronRight,
 } from "lucide-react";
 import type { ParsedScene, SceneBeat, BeatType } from "@/engine/scene-parser";
 import type { AppLanguage } from "@/lib/studio-types";
@@ -128,8 +128,8 @@ function detectTimelineWarnings(scenes: ParsedScene[]): TimelineWarning[] {
 
 function BeatBlock({
   beat,
-  sceneIndex,
-  beatIndex,
+  sceneIndex: _sceneIndex,
+  beatIndex: _beatIndex,
   isSelected,
   warning,
   onSelect,
@@ -203,7 +203,7 @@ function BeatBlock({
         <select
           value={editType}
           onChange={(e) => setEditType(e.target.value as BeatType)}
-          className="w-full bg-bg-secondary border border-border/50 rounded px-2 py-1 text-[10px] font-mono outline-none"
+          className="w-full bg-bg-secondary border border-border/50 rounded px-2 py-1 text-[10px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
         >
           {(Object.keys(BEAT_LABELS) as BeatType[]).map(t => (
             <option key={t} value={t}>{BEAT_ICONS[t]} {BEAT_LABELS[t]}</option>
@@ -213,7 +213,7 @@ function BeatBlock({
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
           autoFocus
-          className="w-full bg-bg-secondary border border-border/50 rounded px-2 py-1.5 text-[11px] min-h-[60px] resize-none outline-none focus:border-accent-purple text-text-primary"
+          className="w-full bg-bg-secondary border border-border/50 rounded px-2 py-1.5 text-[11px] min-h-[60px] resize-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple text-text-primary"
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); } if (e.key === 'Escape') setEditing(false); }}
         />
         <div className="flex gap-1 justify-end">
@@ -468,10 +468,10 @@ export default function SceneTimeline({
   const [selectedBeat, setSelectedBeat] = useState<DragState | null>(null);
   const [dragSource, setDragSource] = useState<DragState | null>(null);
   const [undoStack, setUndoStack] = useState<ParsedScene[][]>([]);
-  const [dragOverTarget, setDragOverTarget] = useState<{ sceneIndex: number; beatIndex: number } | null>(null);
+  const [_dragOverTarget, setDragOverTarget] = useState<{ sceneIndex: number; beatIndex: number } | null>(null);
 
   const timelineWarnings = useMemo(() => detectTimelineWarnings(scenes), [scenes]);
-  const allWarnings = [...timelineWarnings, ...(externalWarnings ?? []).map((w) => ({ sceneIndex: -1, message: w, severity: "info" as const }))];
+  const _allWarnings = [...timelineWarnings, ...(externalWarnings ?? []).map((w) => ({ sceneIndex: -1, message: w, severity: "info" as const }))];
 
   // Undo 지원
   const pushUndo = useCallback(() => {

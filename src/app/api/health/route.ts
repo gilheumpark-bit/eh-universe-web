@@ -45,13 +45,15 @@ export async function GET() {
   const hasWarn = Object.values(checks).includes('warn');
   const status = hasFail ? 'unhealthy' : hasWarn ? 'degraded' : 'healthy';
 
+  // Log detailed checks server-side only (do not expose infrastructure details)
+  if (hasWarn || hasFail) {
+    console.log('[health] detailed checks:', JSON.stringify({ checks, providers: { configured: keyCount, total: providers.length + 1 }, uptimeMs }));
+  }
+
+  // Return minimal health status — no provider/infrastructure details
   return NextResponse.json({
     status,
-    version: process.env.APP_VERSION || '1.0.0',
-    uptimeMs,
-    checks,
-    providers: { configured: keyCount, total: providers.length + 1 },
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now(),
   }, {
     status: hasFail ? 503 : 200,
     headers: { 'Cache-Control': 'no-store' },

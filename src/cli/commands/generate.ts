@@ -11,10 +11,9 @@ import { createHash } from 'crypto';
 
 import {
   PLANNER_SYSTEM_PROMPT, buildPlannerPrompt, parsePlanResult, buildExecutionWaves,
-  type SealContract, type PlanResult,
+  type SealContract, 
 } from '../ai/planner';
-import { TEAM_LEAD_SYSTEM_PROMPT, buildTeamLeadPrompt, parseVerdict } from '../ai/team-lead';
-import { CROSS_JUDGE_SYSTEM_PROMPT, buildJudgePrompt, parseJudgeResult } from '../ai/cross-judge';
+
 import { createLoopGuard } from '../core/loop-guard';
 import { computeReceiptHash, chainReceipt, formatReceipt, type ReceiptData } from '../formatters/receipt';
 
@@ -155,8 +154,8 @@ function buildQualityRulesFromCatalog(): string {
 // ============================================================
 
 export async function runGenerate(prompt: string, opts: GenerateOptions): Promise<void> {
-  const { printHeader, colors, icons } = require('../core/terminal-compat');
-  const { Spinner } = require('../tui/progress');
+  const { printHeader, _colors, _icons } = require('../core/terminal-compat');
+  const { _Spinner } = require('../tui/progress');
   printHeader('코드 생성');
   console.log('');
 
@@ -426,7 +425,7 @@ export async function runGenerate(prompt: string, opts: GenerateOptions): Promis
 
   // ── Step 5: Auto-fix loop ──
   const guard = createLoopGuard({ passThreshold: opts.mode === 'strict' ? 85 : 77 });
-  let finalCode = mergedCode;
+  const finalCode = mergedCode;
 
   if (pipelineResult.overallStatus !== 'pass' && opts.mode !== 'fast') {
     console.log('\n  [5/6] 🔧 자동수정 루프...');

@@ -76,7 +76,7 @@ const StepRow = memo(function StepRow({ step, expanded, onToggle }: { step: Agen
       <button onClick={onToggle} className="flex items-center gap-2 w-full text-left py-1 hover:bg-[#21262d]/50 rounded px-1 -ml-1">
         {statusIcon}
         <span className="text-[#8b949e]">{icon}</span>
-        <span className="text-xs flex-1 truncate text-[#e6edf3]">{step.label}</span>
+        <span className="text-xs flex-1 truncate text-[#e6edf3]" title={step.label}>{step.label}</span>
         {step.durationMs != null && <span className="text-[9px] text-[#8b949e]">{step.durationMs}ms</span>}
         {step.output && (expanded ? <ChevronDown size={10} className="text-[#8b949e]" /> : <ChevronRight size={10} className="text-[#8b949e]" />)}
       </button>
@@ -91,19 +91,19 @@ const StepRow = memo(function StepRow({ step, expanded, onToggle }: { step: Agen
 
 const AgentBadge = memo(function AgentBadge({ mode }: { mode: AgentMode }) {
   const { lang } = useLang();
-  const cfg: Record<AgentMode, { ko: string; en: string; color: string }> = {
-    idle: { ko: "대기", en: "Idle", color: "text-[#8b949e]" },
-    planning: { ko: "계획 중", en: "Planning", color: "text-blue-400" },
-    executing: { ko: "실행 중", en: "Running", color: "text-green-400" },
-    paused: { ko: "일시 정지", en: "Paused", color: "text-accent-amber" },
-    complete: { ko: "완료", en: "Done", color: "text-green-400" },
-    error: { ko: "오류", en: "Error", color: "text-red-400" },
+  const cfg: Record<AgentMode, { ko: string; en: string; ja: string; zh: string; color: string }> = {
+    idle: { ko: "대기", en: "Idle", ja: "待機", zh: "待机", color: "text-[#8b949e]" },
+    planning: { ko: "계획 중", en: "Planning", ja: "計画中", zh: "规划中", color: "text-blue-400" },
+    executing: { ko: "실행 중", en: "Running", ja: "実行中", zh: "运行中", color: "text-green-400" },
+    paused: { ko: "일시 정지", en: "Paused", ja: "一時停止", zh: "已暂停", color: "text-accent-amber" },
+    complete: { ko: "완료", en: "Done", ja: "完了", zh: "完成", color: "text-green-400" },
+    error: { ko: "오류", en: "Error", ja: "エラー", zh: "错误", color: "text-red-400" },
   };
   const c = cfg[mode];
   return (
     <span className={`text-[10px] px-1.5 py-0.5 rounded bg-current/10 ${c.color}`}>
       {mode === "executing" && <Loader2 size={8} className="inline animate-spin mr-1" />}
-      {L4(lang, { ko: c.ko, en: c.en })}
+      {L4(lang, { ko: c.ko, en: c.en, ja: c.ja, zh: c.zh })}
     </span>
   );
 });
@@ -302,7 +302,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       setSession(result);
       const confidence = Math.round((result.summary?.finalConfidence ?? agent.averageConfidence) * 100);
       const summaryText = `Pipeline complete — ${result.messages.length} messages, avg confidence: ${confidence}%`;
-      setSummary(L4(lang, { ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${confidence}%`, en: summaryText }));
+      setSummary(L4(lang, { ko: `파이프라인 완료 — ${result.messages.length} 메시지, 평균 신뢰도: ${confidence}%`, en: summaryText, ja: `パイプライン完了 — ${result.messages.length} メッセージ、平均信頼度: ${confidence}%`, zh: `流水线完成 — ${result.messages.length} 消息，平均置信度: ${confidence}%` }));
       setMode("staged");
       browser.notifyCodeVerifyComplete(result.messages.length, confidence);
       browser.incrementBadge();
@@ -310,11 +310,11 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       browser.cacheResponse('agents', 'verify', [{ role: 'user', content: input.trim() }], 0.2, result.messages.map((m: { content: string }) => m.content).join('\n---\n')).catch(() => {});
     } catch {
       setMode("error");
-      setSummary(L4(lang, { ko: "에이전트 파이프라인 실패", en: "Agent pipeline failed" }));
+      setSummary(L4(lang, { ko: "에이전트 파이프라인 실패", en: "Agent pipeline failed", ja: "エージェントパイプライン失敗", zh: "代理流水线失败"}));
     } finally {
       browser.releaseWakeLock().catch(() => {});
     }
-  }, [input, agent, fileName, language, code, lang]);
+  }, [input, agent, fileName, language, code, lang, agentPreset]);
 
   const handleReset = useCallback(() => {
     agent.reset();
@@ -347,7 +347,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
           // 롤백: 이전 코드로 복원
           onApplyCode?.(previousCode, applyCandidate.fileName);
           setMode("staged");
-          setSummary(L4(lang, { ko: "Saga 롤백: 이전 코드로 복원됨", en: "Saga rollback: reverted to previous code" }));
+          setSummary(L4(lang, { ko: "Saga 롤백: 이전 코드로 복원됨", en: "Saga rollback: reverted to previous code", ja: "Sagaロールバック: 以前のコードに復元", zh: "Saga回滚: 已恢复到先前代码"}));
         },
       });
 
@@ -355,8 +355,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       if (sagaResult.status !== 'COMPLETED') {
         setSummary(L4(lang, {
           ko: `Saga 실패: ${sagaResult.error ?? '알 수 없는 오류'}`,
-          en: `Saga failed: ${sagaResult.error ?? 'unknown error'}`,
-        }));
+          en: `Saga failed: ${sagaResult.error ?? 'unknown error'}`, ja: `Saga失敗: ${sagaResult.error ?? '不明なエラー'}`, zh: `Saga失败: ${sagaResult.error ?? '未知错误'}`}));
         return;
       }
 
@@ -378,6 +377,8 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
             setSummary(L4(lang, {
               ko: `하네스: ${step} 검증 중 (${iter}/2)${errors.length > 0 ? ` — ${errors.length}개 에러` : ''}`,
               en: `Harness: ${step} (${iter}/2)${errors.length > 0 ? ` — ${errors.length} error(s)` : ''}`,
+              ja: `ハーネス: ${step} 検証中 (${iter}/2)${errors.length > 0 ? ` — ${errors.length}件エラー` : ''}`,
+              zh: `测试: ${step} 验证中 (${iter}/2)${errors.length > 0 ? ` — ${errors.length}个错误` : ''}`,
             }));
           },
           onFixRequest: async (errors, currentCode) => {
@@ -402,7 +403,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
 
         if (result.success) {
           // 정적 하네스 통과 → 동적 테스트 실행
-          setSummary(L4(lang, { ko: `정적 검증 통과. 동적 테스트 실행 중...`, en: `Static checks passed. Running dynamic tests...` }));
+          setSummary(L4(lang, { ko: `정적 검증 통과. 동적 테스트 실행 중...`, en: `Static checks passed. Running dynamic tests...`, ja: `静的検証合格。動的テスト実行中...`, zh: `静态验证通过。正在运行动态测试...`}));
           try {
             const { runDynamicSuite, runFrontendGate1, runFrontendGate2 } = await import('@/lib/code-studio/harness');
 
@@ -414,7 +415,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
             const dynamic = await runDynamicSuite(wc, applyCandidate.code, {
               entryFunction: 'main',
               onProgress: (gate, status) => {
-                setSummary(L4(lang, { ko: `동적 테스트: ${gate} ${status}`, en: `Dynamic: ${gate} ${status}` }));
+                setSummary(L4(lang, { ko: `동적 테스트: ${gate} ${status}`, en: `Dynamic: ${gate} ${status}`, ja: `動的テスト: ${gate} ${status}`, zh: `动态测试: ${gate} ${status}`}));
               },
             });
 
@@ -423,20 +424,18 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
 
             setSummary(L4(lang, {
               ko: `검증 완료: ${allPassed ? '전 게이트 통과 ✅' : '일부 미통과 ⚠️'} (점수: ${totalScore}/100, ${result.iterations}회 반복)`,
-              en: `Verification: ${allPassed ? 'All gates passed ✅' : 'Some gates failed ⚠️'} (Score: ${totalScore}/100, ${result.iterations} iteration(s))`,
-            }));
+              en: `Verification: ${allPassed ? 'All gates passed ✅' : 'Some gates failed ⚠️'} (Score: ${totalScore}/100, ${result.iterations} iteration(s))`, ja: `検証完了: ${allPassed ? '全ゲート合格 ✅' : '一部未通過 ⚠️'} (スコア: ${totalScore}/100, ${result.iterations}回反復)`, zh: `验证完成: ${allPassed ? '全部通过 ✅' : '部分未通过 ⚠️'} (分数: ${totalScore}/100, ${result.iterations}次迭代)`}));
           } catch {
-            setSummary(L4(lang, { ko: `하네스 통과 (${result.iterations}회)`, en: `Harness passed (${result.iterations} iteration(s))` }));
+            setSummary(L4(lang, { ko: `하네스 통과 (${result.iterations}회)`, en: `Harness passed (${result.iterations} iteration(s))`, ja: `ハーネス合格 (${result.iterations}回)`, zh: `测试通过 (${result.iterations}次)`}));
           }
         } else {
           setSummary(L4(lang, {
             ko: `하네스: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length}개 에러 잔존 (${result.iterations}/${result.maxIterations}회)`,
-            en: `Harness: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length} error(s) remain (${result.iterations}/${result.maxIterations})`,
-          }));
+            en: `Harness: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length} error(s) remain (${result.iterations}/${result.maxIterations})`, ja: `ハーネス: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length}件エラー残存 (${result.iterations}/${result.maxIterations}回)`, zh: `测试: ${result.buildErrors.length + result.typeErrors.length + result.lintErrors.length}个错误残留 (${result.iterations}/${result.maxIterations}次)`}));
         }
       } catch { /* harness is best-effort, don't block */ }
     }
-  }, [applyCandidate, onApplyCode, onOpenPreview, agent, lang]);
+  }, [applyCandidate, onApplyCode, onOpenPreview, agent, lang, code]);
 
   const handleRollback = useCallback(() => {
     // Basic rollback: clear candidate and return to idle
@@ -451,7 +450,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#30363d]">
         <span className="flex items-center gap-2 text-xs font-semibold text-[#e6edf3]">
-          <Bot size={14} className="text-green-400" /> {L4(lang, { ko: "Action Dock (에이전트)", en: "Action Dock (Agent)" })}
+          <Bot size={14} className="text-green-400" /> {L4(lang, { ko: "Action Dock (에이전트)", en: "Action Dock (Agent)", ja: "Action Dock (エージェント)", zh: "Action Dock (代理)"})}
           {mode === "staged" ? (
              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">대기 중 (Staged)</span>
           ) : mode === "applied" ? (
@@ -498,7 +497,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
             className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded text-[9px] min-w-[60px] transition-all ${
               i === activeAgentIdx && mode === "executing" ? "bg-[#21262d] ring-1 ring-amber-700/35" : "bg-[#010409]"
             }`}>
-            <span className={a.color}>{L4(lang, { ko: a.ko, en: a.en })}</span>
+            <span className={a.color}>{L4(lang, { ko: a.ko, en: a.en, ja: a.en, zh: a.en })}</span>
             <ConfidenceBar value={confidences[a.role]} />
           </div>
         ))}
@@ -509,12 +508,12 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
         {mode === "idle" && !session ? (
           <div className="text-center text-[#8b949e] py-8">
             <Bot size={32} className="mx-auto mb-3 opacity-30" />
-            <p className="text-xs mb-2">{L4(lang, { ko: "Action Dock (에이전트 조율)", en: "Action Dock (Agent Orchestration)" })}</p>
-            <p className="text-[10px] opacity-60">{L4(lang, { ko: "지능형 팀이 실행할 작업을 설명하세요.", en: "Describe a task for the 5-agent team to execute." })}</p>
+            <p className="text-xs mb-2">{L4(lang, { ko: "Action Dock (에이전트 조율)", en: "Action Dock (Agent Orchestration)", ja: "Action Dock (エージェント調整)", zh: "Action Dock (代理协调)"})}</p>
+            <p className="text-[10px] opacity-60">{L4(lang, { ko: "지능형 팀이 실행할 작업을 설명하세요.", en: "Describe a task for the 5-agent team to execute.", ja: "インテリジェントチームに実行させるタスクを説明してください。", zh: "请描述智能团队要执行的任务。"})}</p>
             <div className="mt-4 space-y-1 text-[10px] text-left max-w-[220px] mx-auto">
-              <p className="text-green-400">{L4(lang, { ko: "예시:", en: "Examples:" })}</p>
-              <p>{L4(lang, { ko: "이 파일을 여러 모듈로 리팩터링하기", en: "Refactor this file into modules" })}</p>
-              <p>{L4(lang, { ko: "모든 비동기 호출에 에러 핸들링 추가", en: "Add error handling to all async calls" })}</p>
+              <p className="text-green-400">{L4(lang, { ko: "예시:", en: "Examples:", ja: "例:", zh: "示例:"})}</p>
+              <p>{L4(lang, { ko: "이 파일을 여러 모듈로 리팩터링하기", en: "Refactor this file into modules", ja: "このファイルを複数モジュールにリファクタリング", zh: "将此文件重构为多个模块"})}</p>
+              <p>{L4(lang, { ko: "모든 비동기 호출에 에러 핸들링 추가", en: "Add error handling to all async calls", ja: "すべての非同期呼び出しにエラー処理を追加", zh: "为所有异步调用添加错误处理"})}</p>
             </div>
           </div>
         ) : (
@@ -525,7 +524,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
                 onClick={() => toggleStep('__show_all__')}
                 className="w-full text-center py-1 text-[9px] text-text-tertiary hover:text-accent-purple transition-colors"
               >
-                {L4(lang, { ko: `+${steps.length - 10}개 이전 스텝 보기`, en: `Show ${steps.length - 10} earlier steps` })}
+                {L4(lang, { ko: `+${steps.length - 10}개 이전 스텝 보기`, en: `Show ${steps.length - 10} earlier steps`, ja: `+${steps.length - 10}件の以前のステップを表示`, zh: `+${steps.length - 10}个先前步骤`})}
               </button>
             )}
             {(steps.length <= 10 || expandedSteps.has('__show_all__') ? steps : steps.slice(-10)).map((step) => (
@@ -549,21 +548,20 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
                 <div className="text-[11px] text-blue-300 font-medium">
                   {L4(lang, {
                     ko: `[Staged] ${applyCandidate.sourceRole} 결과를 적용할 준비가 되었습니다.`,
-                    en: `[Staged] Ready to apply ${applyCandidate.sourceRole} output.`
-                  })}
+                    en: `[Staged] Ready to apply ${applyCandidate.sourceRole} output.`, ja: `[Staged] ${applyCandidate.sourceRole}の結果を適用する準備ができました。`, zh: `[Staged] ${applyCandidate.sourceRole}结果已准备好应用。`})}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleApply}
                     className="flex-1 rounded bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-500 transition-colors font-medium"
                   >
-                    {L4(lang, { ko: "수락 및 적용 (Accept)", en: "Accept & Apply" })}
+                    {L4(lang, { ko: "수락 및 적용 (Accept)", en: "Accept & Apply", ja: "承認して適用 (Accept)", zh: "接受并应用 (Accept)"})}
                   </button>
                   <button
                     onClick={handleRollback}
                     className="flex-1 rounded bg-[#21262d] border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
                   >
-                    {L4(lang, { ko: "폐기 (Rollback)", en: "Discard (Rollback)" })}
+                    {L4(lang, { ko: "폐기 (Rollback)", en: "Discard (Rollback)", ja: "破棄 (Rollback)", zh: "废弃 (Rollback)"})}
                   </button>
                 </div>
               </div>
@@ -583,8 +581,8 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
           <Bot size={14} className="text-green-400 shrink-0" />
           <input value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleRun()}
-            placeholder={L4(lang, { ko: "에이전트가 수행할 작업을 설명하세요...", en: "Describe a task for the agents..." })}
-            className="flex-1 bg-transparent text-xs outline-none text-[#e6edf3] placeholder:text-[#8b949e]"
+            placeholder={L4(lang, { ko: "에이전트가 수행할 작업을 설명하세요...", en: "Describe a task for the agents...", ja: "エージェントに実行させるタスクを説明してください...", zh: "请描述代理要执行的任务..."})}
+            className="flex-1 bg-transparent text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-[#e6edf3] placeholder:text-[#8b949e]"
             disabled={agent.running || mode === 'staged'}
           />
           <button onClick={handleRun} disabled={!input.trim() || agent.running || mode === 'staged'}

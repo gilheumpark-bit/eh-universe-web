@@ -11,7 +11,7 @@ const STORAGE_KEY = "eh-locale";
 
 function getLocale(): string {
   if (typeof window === "undefined") return "ko";
-  return localStorage.getItem(STORAGE_KEY) ?? "ko";
+  try { return localStorage.getItem(STORAGE_KEY) ?? "ko"; } catch { return "ko"; }
 }
 
 export function LanguageSwitch({ compact = false }: Props) {
@@ -20,7 +20,7 @@ export function LanguageSwitch({ compact = false }: Props) {
   const toggle = () => {
     const next = locale === "ko" ? "en" : "ko";
     setLocaleState(next);
-    localStorage.setItem(STORAGE_KEY, next);
+    try { localStorage.setItem(STORAGE_KEY, next); } catch { /* quota/private */ }
   };
 
   if (compact) {

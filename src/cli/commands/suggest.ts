@@ -51,7 +51,7 @@ function analyzeProject(): Suggestion[] {
 
   // ── Count source files and structure ──
   let totalFiles = 0;
-  let totalLines = 0;
+  const _totalLines = 0;
   const dirStructure = new Set<string>();
   function scanStructure(dir: string): void {
     try {

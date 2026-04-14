@@ -8,7 +8,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   X, Save, Download,
   Search, Maximize2, Minimize2, Keyboard, Sun, Moon,
-  Key, Sparkles, BookOpen, SearchCode,
+  Key, BookOpen, SearchCode,
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -25,6 +25,7 @@ import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
 import { useStudio } from './StudioContext';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
+import { getFile } from '@/lib/github-sync';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
@@ -37,7 +38,7 @@ const EpisodeExplorer = dynamic(() => import('@/components/studio/EpisodeExplore
 // ============================================================
 export default function StudioMainContent({ children }: { children?: React.ReactNode }) {
   const {
-    focusMode, setFocusMode, isSidebarOpen, setIsSidebarOpen,
+    focusMode, setFocusMode, 
     themeLevel, toggleTheme,
     showSearch, setShowSearch, searchQuery, setSearchQuery,
     showShortcuts, setShowShortcuts,
@@ -56,7 +57,7 @@ export default function StudioMainContent({ children }: { children?: React.React
     doHandleSend, handleCancel, handleRegenerate,
     handleVersionSwitch, handleTypoFix, hfcpState,
     input, setInput,
-    showDashboard, setShowDashboard,
+    showDashboard, setShowDashboard: _setShowDashboard,
     rightPanelOpen, setRightPanelOpen,
     showAiLock, hasAiAccess, aiCapabilitiesLoaded,
     bannerDismissed, setBannerDismissed,
@@ -87,11 +88,11 @@ export default function StudioMainContent({ children }: { children?: React.React
   // First-session keyboard shortcuts hint
   const [shortcutsHintVisible, setShortcutsHintVisible] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return !localStorage.getItem('noa_shortcuts_hint_shown');
+    try { return !localStorage.getItem('noa_shortcuts_hint_shown'); } catch { return false; }
   });
   const dismissShortcutsHint = useCallback(() => {
     setShortcutsHintVisible(false);
-    localStorage.setItem('noa_shortcuts_hint_shown', '1');
+    try { localStorage.setItem('noa_shortcuts_hint_shown', '1'); } catch { /* quota/private */ }
   }, []);
 
   // GitHub Sync — pass branch data to EpisodeExplorer
@@ -99,7 +100,7 @@ export default function StudioMainContent({ children }: { children?: React.React
   const [ghBranches, setGhBranches] = useState<string[]>([]);
   useEffect(() => {
     if (gh.connected) {
-      gh.getBranches().then(setGhBranches);
+      gh.getBranches().then(setGhBranches).catch(() => {});
     } else {
       setGhBranches([]);
     }
@@ -110,9 +111,21 @@ export default function StudioMainContent({ children }: { children?: React.React
   }, [gh]);
   const handleGhCreateBranch = useCallback((name: string) => {
     gh.createBranchFromCurrent(name).then((ok) => {
-      if (ok) gh.getBranches().then(setGhBranches);
-    });
+      if (ok) gh.getBranches().then(setGhBranches).catch(() => {});
+    }).catch(() => {});
   }, [gh]);
+
+  /** Load episode content from a specific branch for diff comparison. */
+  const handleLoadBranchContent = useCallback(
+    async (branch: string, episode: number): Promise<string> => {
+      if (!gh.config?.token || !gh.config.owner || !gh.config.repo) return '';
+      const path = `volumes/ep-${String(episode).padStart(3, '0')}.md`;
+      const branchConfig = { ...gh.config, branch };
+      const file = await getFile(branchConfig, path);
+      return file?.content ?? '';
+    },
+    [gh.config],
+  );
 
   return (
     <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
@@ -125,8 +138,8 @@ export default function StudioMainContent({ children }: { children?: React.React
       )}
       {focusMode && (
         <button onClick={() => setFocusMode(false)}
-          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-30 hover:opacity-100"
-          title="F11">
+          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-70 hover:opacity-100"
+          title={L4(language, { ko: '집중 모드 (F11)', en: 'Focus Mode (F11)', ja: 'フォーカスモード (F11)', zh: '专注模式 (F11)' })}>
           <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
         </button>
       )}
@@ -142,14 +155,15 @@ export default function StudioMainContent({ children }: { children?: React.React
           {/* Sidebar toggle removed — OSDesktop handles navigation */}
           <div className="text-xs md:text-sm font-bold tracking-tight uppercase flex items-center gap-1.5 md:gap-2 min-w-0 font-(family-name:--font-mono)">
             <span className="text-text-primary truncate max-w-[120px] md:max-w-none">{currentSession?.title || t('engine.noStory')}</span>
-            {currentSessionId && <span className={`text-[10px] font-(family-name:--font-mono) transition-all duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+            {currentSessionId && <span key={saveFlash ? Date.now() : 'idle'} className={`text-[13px] font-(family-name:--font-mono) transition-all duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black animate-[save-flash_0.5s_ease-out]' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+            <style>{`@keyframes save-flash{0%{opacity:0}30%{opacity:1}100%{opacity:0.6}}`}</style>
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
           {/* Genre badge + ANS engine badge removed for cleaner header */}
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
-            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer' })} aria-label="Episode Explorer">
+            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソード 탐색기', zh: '章节 탐색기' })} aria-label="Episode Explorer">
               <BookOpen className="w-4 h-4" />
               {currentSession?.config?.episode != null && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-accent-purple text-[8px] font-black text-white leading-none">
@@ -191,7 +205,7 @@ export default function StudioMainContent({ children }: { children?: React.React
         <div className="px-4 py-2 bg-bg-secondary border-b border-border flex items-center gap-2">
           <Search className="w-4 h-4 text-text-tertiary shrink-0" />
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('ui.searchMessages')} autoFocus
-            className="flex-1 bg-transparent text-sm outline-none text-text-primary placeholder-text-tertiary" />
+            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder-text-tertiary" />
           {searchMatchesEditDraft && (
             <button onClick={() => setWritingMode('edit')} className="text-[11px] text-accent-green font-bold font-(family-name:--font-mono) shrink-0">
               {t('ui.foundInDraft')}
@@ -249,6 +263,7 @@ export default function StudioMainContent({ children }: { children?: React.React
               onSwitchBranch={handleGhSwitchBranch}
               onCreateBranch={handleGhCreateBranch}
               gitConnected={gh.connected}
+              onLoadBranchContent={gh.connected ? handleLoadBranchContent : undefined}
               className="w-full"
             />
           </div>
@@ -262,7 +277,7 @@ export default function StudioMainContent({ children }: { children?: React.React
               <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-accent-amber/20 hover:bg-accent-amber/30 rounded-lg text-[10px] font-bold uppercase transition-colors">
                 {apiSetupLabel}
               </button>
-              <button onClick={() => { setBannerDismissed(true); localStorage.setItem('noa_api_banner_dismissed', '1'); }} className="shrink-0 text-text-tertiary hover:text-text-primary transition-colors text-sm leading-none" aria-label="Dismiss">
+              <button onClick={() => { setBannerDismissed(true); try { localStorage.setItem('noa_api_banner_dismissed', '1'); } catch { /* quota/private */ } }} className="shrink-0 text-text-tertiary hover:text-text-primary transition-colors text-sm leading-none" aria-label="Dismiss">
                 {'\u2715'}
               </button>
             </div>
@@ -331,7 +346,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       {/* First-session keyboard shortcuts hint */}
       {shortcutsHintVisible && !focusMode && (
         <div className="flex items-center justify-center gap-4 px-4 py-1 bg-bg-secondary/60 border-t border-border/30 text-[10px] text-text-tertiary shrink-0">
-          <span>{L4(language, { ko: 'F5: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'F5: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus' })}</span>
+          <span>{L4(language, { ko: 'F5: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'F5: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus', ja: 'F5: 執筆 | Ctrl+K: 検索 | Ctrl+S: 保存 | F11: 집중モード', zh: 'F5: 写作 | Ctrl+K: 搜索 | Ctrl+S: 保存 | F11: 집중模式' })}</span>
           <button onClick={dismissShortcutsHint} className="text-text-quaternary hover:text-text-secondary transition-colors px-1" aria-label="Dismiss">
             <X className="w-3 h-3" />
           </button>

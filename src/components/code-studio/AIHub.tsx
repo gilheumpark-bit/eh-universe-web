@@ -50,7 +50,7 @@ function ProviderCard({
       <div className="flex-1">
         <div className="text-sm text-white">{provider.name}</div>
         <div className="text-[10px] text-gray-500">
-          {hasKey ? L4(lang, { ko: "설정됨", en: "Configured" }) : L4(lang, { ko: "미설정", en: "Not configured" })} | {provider.capabilities.costTier}
+          {hasKey ? L4(lang, { ko: "설정됨", en: "Configured", ja: "設定済み", zh: "已配置"}) : L4(lang, { ko: "미설정", en: "Not configured", ja: "未設定", zh: "未配置"})} | {provider.capabilities.costTier}
         </div>
       </div>
       <span className={`h-2 w-2 rounded-full ${hasKey ? "bg-green-400" : "bg-gray-600"}`} />
@@ -96,7 +96,7 @@ function FeatureCard({
         <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{feature.description}</p>
         {feature.usageCount > 0 && (
           <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-gray-600">
-            <BarChart3 size={10} /> {feature.usageCount} {L4(lang, { ko: "회 사용", en: "uses" })}
+            <BarChart3 size={10} /> {feature.usageCount} {L4(lang, { ko: "회 사용", en: "uses", ja: "回使用", zh: "次使用"})}
           </span>
         )}
       </div>
@@ -134,17 +134,17 @@ export default function AIHub({ features, onToggleFeature, onConfigureProvider }
       <div className="border-b border-white/5 px-4 py-3">
         <div className="flex items-center gap-2 text-white">
           <Cpu size={18} />
-          <h2 className="text-lg font-semibold">{L4(lang, { ko: "NOA 허브", en: "NOA Hub" })}</h2>
+          <h2 className="text-lg font-semibold">{L4(lang, { ko: "NOA 허브", en: "NOA Hub", ja: "NOAハブ", zh: "NOA中心"})}</h2>
         </div>
         <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-          <span>{totalEnabled}/{features.length} {L4(lang, { ko: "개 기능 활성화됨", en: "features enabled" })}</span>
-          <span>{totalUsage} {L4(lang, { ko: "회 누적 사용", en: "total uses" })}</span>
+          <span>{totalEnabled}/{features.length} {L4(lang, { ko: "개 기능 활성화됨", en: "features enabled", ja: "機能が有効", zh: "个功能已启用"})}</span>
+          <span>{totalUsage} {L4(lang, { ko: "회 누적 사용", en: "total uses", ja: "回累計使用", zh: "次累计使用"})}</span>
         </div>
       </div>
 
       {/* Providers */}
       <div className="border-b border-white/5 p-4">
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">{L4(lang, { ko: "제공자", en: "Providers" })}</h3>
+        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">{L4(lang, { ko: "제공자", en: "Providers", ja: "プロバイダー", zh: "提供商"})}</h3>
         <div className="grid grid-cols-2 gap-2">
           {PROVIDER_LIST_UI.map((p) => (
             <ProviderCard

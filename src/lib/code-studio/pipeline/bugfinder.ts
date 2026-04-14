@@ -451,7 +451,7 @@ interface TsNode {
   clauses?: TsNode[];
   // AST nodes have inherently dynamic shape; explicit properties above
   // cover known accesses, index signature covers the rest.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AST nodes require dynamic property access
   [key: string]: any;
 }
 

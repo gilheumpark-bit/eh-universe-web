@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind, Node } from 'ts-morph';
+
 
 /**
  * AIP-001: 과도한 인라인 주석 (Excessive inline comments)

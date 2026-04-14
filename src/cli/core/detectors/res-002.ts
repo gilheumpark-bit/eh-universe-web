@@ -1,7 +1,7 @@
 import { RuleDetector } from '../detector-registry';
 import { SyntaxKind } from 'ts-morph';
 
-const POOL_METHODS = ['getConnection', 'connect', 'pool.query', 'createConnection', 'createPool'];
+const _POOL_METHODS = ['getConnection', 'connect', 'pool.query', 'createConnection', 'createPool'];
 
 export const res002Detector: RuleDetector = {
   ruleId: 'RES-002',

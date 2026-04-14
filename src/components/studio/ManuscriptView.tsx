@@ -150,7 +150,7 @@ function generateEpub(title: string, author: string, manuscripts: EpisodeManuscr
 <h1>${title}</h1>
 <p style="color:#888;">${author} | ${manuscripts.length} episodes | ${new Date().toLocaleDateString()}</p>
 <div class="toc">
-<h3>${L4(lang, { ko: '목차', en: 'Table of Contents' })}</h3>
+<h3>${L4(lang, { ko: '목차', en: 'Table of Contents', ja: 'Table of Contents', zh: 'Table of Contents' })}</h3>
 ${chapters.map((c, i) => `<a href="#ch${i}">${c.title}</a>`).join("\n")}
 </div>
 ${chapters
@@ -252,7 +252,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
     if (!window.confirm(msg)) return;
     updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
     // Dispatch alert toast for delete feedback
-    showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.` }));
+    showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.`, ja: `EP.${ep} 原稿가 削除されました。`, zh: `EP.${ep} 稿件가 已删除。` }));
   };
 
   const saveAnalysis = useCallback(
@@ -428,13 +428,13 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                       <input
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-accent-purple"
+                        className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple"
                         placeholder={t('manuscript.title')}
                       />
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-lg p-4 text-sm leading-[2] font-serif outline-none focus:border-accent-purple resize-y"
+                        className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-lg p-4 text-sm leading-[2] font-serif outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple resize-y"
                       />
                       <div className="flex justify-between items-center">
                         <span className="text-[9px] text-text-tertiary font-mono">

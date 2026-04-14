@@ -19,7 +19,7 @@ import { ConditionBadge } from "@/components/tools/noa-tower/ConditionBadge";
 const T: Record<string, { ko: string; en: string; ja: string; zh: string }> = {
   pageTitle: { ko: "NOA TOWER", en: "NOA TOWER", ja: "NOA TOWER", zh: "NOA TOWER" },
   pageSubtitle: { ko: "텍스트 추리 게임", en: "Text Investigation Game", ja: "テキスト推理ゲーム", zh: "文本推理解谜" },
-  progress: { ko: "진행도", en: "Progress", ja: "進行도", zh: "进度" },
+  progress: { ko: "진행도", en: "Progress", ja: "進行度", zh: "进度" },
   vectorAnalysis: { ko: "벡터 분석", en: "Vector Analysis", ja: "ベクトル分析", zh: "向量分析" },
   floorSense: { ko: "층 감각", en: "Floor Sense", ja: "階層感覚", zh: "楼层感官" },
   recordStatus: { ko: "기록 상태", en: "Record Status", ja: "記録状態", zh: "记录状态" },
@@ -30,7 +30,7 @@ const T: Record<string, { ko: string; en: string; ja: string; zh: string }> = {
   submit: { ko: "기록 전송", en: "Submit", ja: "記録送信", zh: "传送记录" },
   submitVerdict: { ko: "최종 기록 제출", en: "Submit Verdict", ja: "最終記録提出", zh: "提交最终记录" },
   silence: { ko: "숨 고르기", en: "Silence", ja: "一息つく", zh: "深呼吸" },
-  probe: { ko: "구조 탐색", en: "Probe", ja: "構造捜색", zh: "结构探测" },
+  probe: { ko: "구조 탐색", en: "Probe", ja: "構造探索", zh: "结构探测" },
   hardMode: { ko: "하드 모드", en: "Hard Mode", ja: "ハードモード", zh: "硬核模式" },
   giveUp: { ko: "포기 선언", en: "Give Up", ja: "放棄宣言", zh: "宣告放弃" },
   restart: { ko: "재시작", en: "Restart", ja: "再起動", zh: "重新开始" },
@@ -123,11 +123,11 @@ export default function NoaTowerPage() {
       <main className={`min-h-screen bg-bg-primary pt-28 pb-8 transition-colors duration-1000 bg-linear-to-b ${conditionColor} to-transparent`}>
         <div className="mx-auto max-w-7xl px-4">
           <ToolNav
-            toolName={L4(lang, { ko: "NOA 타워", en: "NOA Tower" })}
+            toolName={L4(lang, { ko: "NOA 타워", en: "NOA Tower", ja: "NOA Tower", zh: "NOA Tower" })}
             isKO={lang === "ko"}
             relatedTools={[
-              { href: '/tools/warp-gate', label: L4(lang, { ko: '워프 게이트', en: 'Warp Gate' }) },
-              { href: '/tools/neka-sound', label: L4(lang, { ko: '네카 사운드', en: 'NEKA Sound' }) },
+              { href: '/tools/warp-gate', label: L4(lang, { ko: '워프 게이트', en: 'Warp Gate', ja: 'Warp Gate', zh: 'Warp Gate' }) },
+              { href: '/tools/neka-sound', label: L4(lang, { ko: '네카 사운드', en: 'NEKA Sound', ja: 'NEKA Sound', zh: 'NEKA Sound' }) },
             ]}
           />
           
@@ -144,7 +144,7 @@ export default function NoaTowerPage() {
               onClick={() => setSidePanel(sidePanel === "status" ? "case" : "status")}
               className="w-full rounded-xl border bg-white/2 px-3 py-2 font-[--font-mono] text-[12px] tracking-wider text-text-tertiary hover:text-text-secondary transition-colors"
             >
-              {sidePanel === "status" ? L4(lang, { ko: "▲ 대시보드 닫기", en: "▲ Hide Dashboard" }) : L4(lang, { ko: "▼ 대시보드 보기", en: "▼ Show Dashboard" })}
+              {sidePanel === "status" ? L4(lang, { ko: "▲ 대시보드 닫기", en: "▲ Hide Dashboard", ja: "▲ ダッシュボードを閉じる", zh: "▲ 关闭仪表盘" }) : L4(lang, { ko: "▼ 대시보드 보기", en: "▼ Show Dashboard", ja: "▼ ダッシュボードを表示", zh: "▼ 显示仪表盘" })}
             </button>
           </div>
 
@@ -426,7 +426,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
             aria-label={t("placeholder", lang)}
             disabled={isEnded}
             rows={1}
-            className="flex-1 resize-none bg-transparent px-4 py-4 font-[--font-mono] text-sm leading-relaxed text-text-primary placeholder:text-text-tertiary/40 focus:outline-none disabled:opacity-40"
+            className="flex-1 resize-none bg-transparent px-4 py-4 font-[--font-mono] text-sm leading-relaxed text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 disabled:opacity-40"
           />
           <div className="flex items-center pr-2 gap-2">
             <button

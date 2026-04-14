@@ -15,7 +15,7 @@ const CharacterTab = dynamic(() => import('@/components/studio/tabs/CharacterTab
 const SettingsView = dynamic(() => import('@/components/studio/SettingsView'), { ssr: false, loading: DynSkeleton });
 const StyleTab = dynamic(() => import('@/components/studio/tabs/StyleTab'), { ssr: false, loading: DynSkeleton });
 const ManuscriptTab = dynamic(() => import('@/components/studio/tabs/ManuscriptTab'), { ssr: false, loading: DynSkeleton });
-const NetworkFeedWidget = dynamic(() => import('@/components/studio/NetworkFeedWidget'), { ssr: false, loading: DynSkeleton });
+const _NetworkFeedWidget = dynamic(() => import('@/components/studio/NetworkFeedWidget'), { ssr: false, loading: DynSkeleton });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
 const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });

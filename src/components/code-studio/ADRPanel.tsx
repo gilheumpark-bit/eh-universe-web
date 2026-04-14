@@ -185,7 +185,7 @@ export function ADRPanel({ files = [] }: Props) {
             <div key={adr.id} className="px-3 py-2 border-b border-border hover:bg-bg-tertiary transition-colors group">
               <div className="flex items-center gap-1.5">
                 {STATUS_ICON[adr.status]}
-                <span className="font-medium text-xs flex-1 truncate">{adr.title}</span>
+                <span className="font-medium text-xs flex-1 truncate" title={adr.title}>{adr.title}</span>
                 <span className="text-text-tertiary text-xs">{adr.date}</span>
                 <button onClick={() => handleEdit(adr)} className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-primary" aria-label="Edit"><Edit3 className="w-3 h-3" /></button>
                 <button onClick={() => { deleteADR(adr.id); reload(); }} className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-primary text-text-danger" aria-label="Delete"><Trash2 className="w-3 h-3" /></button>
@@ -212,10 +212,10 @@ export function ADRPanel({ files = [] }: Props) {
             <div key={i} className="px-3 py-2 border-b border-border">
               <div className="flex items-center gap-1.5 text-xs">
                 <AlertTriangle className={`w-3 h-3 ${v.severity === 'error' ? 'text-text-danger' : v.severity === 'warn' ? 'text-accent-amber' : 'text-accent-blue'}`} />
-                <span className="font-medium truncate">{v.adrTitle}</span>
+                <span className="font-medium truncate" title={v.adrTitle}>{v.adrTitle}</span>
               </div>
               <p className="text-text-secondary text-xs mt-0.5">{v.reason}</p>
-              <p className="text-text-tertiary text-xs font-mono mt-0.5 truncate">{v.file}</p>
+              <p className="text-text-tertiary text-xs font-mono mt-0.5 truncate" title={v.file}>{v.file}</p>
             </div>
           ))}
         </div>

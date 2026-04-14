@@ -69,7 +69,7 @@ async function extractSparkError(res: Response): Promise<string> {
 // PART 3 — 단건 non-stream 요청 (90초 이내 응답용)
 // ============================================================
 
-async function singleSparkRequest(
+async function _singleSparkRequest(
   url: string,
   headers: Record<string, string>,
   messages: { role: string; content: string }[],

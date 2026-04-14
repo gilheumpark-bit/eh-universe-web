@@ -13,13 +13,13 @@ export type PanelGroup = "editing" | "ai" | "verification" | "git" | "tools" | "
 /**
  * Human-readable labels for each PanelGroup (EN + KO).
  */
-export const GROUP_LABELS: Record<PanelGroup, { en: string; ko: string }> = {
-  editing:      { en: "Editing",      ko: "편집" },
-  ai:           { en: "Assistant",    ko: "어시스턴트" },
-  verification: { en: "Verification", ko: "검증" },
-  git:          { en: "Git & Deploy", ko: "Git & 배포" },
-  tools:        { en: "Tools",        ko: "도구" },
-  settings:     { en: "Settings",     ko: "설정" },
+export const GROUP_LABELS: Record<PanelGroup, { en: string; ko: string; ja: string; zh: string }> = {
+  editing:      { en: "Editing",      ko: "편집",       ja: "編集",        zh: "编辑" },
+  ai:           { en: "Assistant",    ko: "어시스턴트",  ja: "アシスタント", zh: "助手" },
+  verification: { en: "Verification", ko: "검증",       ja: "検証",        zh: "验证" },
+  git:          { en: "Git & Deploy", ko: "Git & 배포",  ja: "Git & デプロイ", zh: "Git & 部署" },
+  tools:        { en: "Tools",        ko: "도구",       ja: "ツール",       zh: "工具" },
+  settings:     { en: "Settings",     ko: "설정",       ja: "設定",        zh: "设置" },
 };
 
 /**
@@ -155,7 +155,7 @@ export const getPanelDef = (id: string): PanelDef | undefined =>
  * Falls back to English label when lang !== "ko".
  */
 export const getPanelLabel = (p: PanelDef, lang: string): string =>
-  L4(lang, { ko: p.labelKo, en: p.label });
+  L4(lang, { ko: p.labelKo, en: p.label, ja: p.labelKo, zh: p.labelKo });
 
 /**
  * Get the localized label for a PanelGroup.
@@ -176,7 +176,7 @@ export const getVisiblePanels = (showAll: boolean): readonly PanelDef[] =>
  */
 export const getPanelDescription = (p: PanelDef, lang: string): string => {
   if (!p.description && !p.descriptionKo) return "";
-  return L4(lang, { ko: p.descriptionKo ?? p.description ?? "", en: p.description ?? "" });
+  return L4(lang, { ko: p.descriptionKo ?? p.description ?? "", en: p.description ?? "", ja: p.description ?? "", zh: p.description ?? "" });
 };
 
 /** Count of essential panels */

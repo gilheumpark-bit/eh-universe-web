@@ -104,7 +104,7 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
         type="button"
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg text-text-tertiary hover:text-text-secondary transition-colors"
-        title={L4(language, { ko: '하이브리드 컨텍스트 예산', en: 'Hybrid Context Budget' })}
+        title={L4(language, { ko: '하이브리드 컨텍스트 예산', en: 'Hybrid Context Budget', ja: 'Hybrid Context Budget', zh: 'Hybrid Context Budget' })}
       >
         <Database className="w-3 h-3" />
         <span className="text-[9px] font-bold font-mono">{budget.total}</span>
@@ -113,13 +113,13 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
       {open && (
         <div className="absolute bottom-full mb-2 right-0 w-56 bg-bg-primary border border-border rounded-xl shadow-xl p-3 z-50 space-y-2">
           <p className="text-[10px] font-bold text-text-primary mb-1.5">
-            {L4(language, { ko: '컨텍스트 예산', en: 'Context Budget' })}
+            {L4(language, { ko: '컨텍스트 예산', en: 'Context Budget', ja: 'Context Budget', zh: 'Context Budget' })}
           </p>
           {[budget.tierA, budget.tierB, budget.tierC].map((tier, i) => (
             <div key={i} className="space-y-0.5">
               <div className="flex justify-between text-[9px]">
                 <span className="text-text-secondary">{tier.label}</span>
-                <span className="text-text-tertiary font-mono">~{tier.tokens}{L4(language, { ko: ' 토큰', en: ' tok' })}</span>
+                <span className="text-text-tertiary font-mono">~{tier.tokens}{L4(language, { ko: ' 토큰', en: ' tok', ja: ' tok', zh: ' tok' })}</span>
               </div>
               <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
                 <div
@@ -130,7 +130,7 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
             </div>
           ))}
           <div className="flex justify-between text-[9px] pt-1 border-t border-border/50">
-            <span className="text-text-tertiary font-bold">{L4(language, { ko: '합계', en: 'Total' })}</span>
+            <span className="text-text-tertiary font-bold">{L4(language, { ko: '합계', en: 'Total', ja: 'Total', zh: 'Total' })}</span>
             <span className={`font-mono font-bold ${usagePct > 90 ? 'text-red-400' : usagePct > 70 ? 'text-amber-400' : 'text-green-400'}`}>
               {budget.total} / {maxTokens} ({usagePct}%)
             </span>

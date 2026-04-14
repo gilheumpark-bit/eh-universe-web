@@ -52,7 +52,7 @@ export function QuickActions({ selectedText, position, language, onAction, onClo
   const adjustedLeft = Math.max(8, Math.min(position.left, (typeof window !== "undefined" ? window.innerWidth : 1000) - 380));
 
   return (
-    <div ref={barRef} className="fixed z-[400]" style={{ top: adjustedTop, left: adjustedLeft }}>
+    <div ref={barRef} className="fixed z-[var(--z-tooltip)]" style={{ top: adjustedTop, left: adjustedLeft }}>
       <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[#0f1419] border border-white/10 rounded-lg shadow-xl">
         {ACTIONS.map((action, i) => (
           <button key={action.id} onClick={() => handleAction(action)} onMouseEnter={() => setFocusIndex(i)} title={action.label}

@@ -3,6 +3,8 @@
 // ============================================================
 
 import { Octokit } from 'octokit';
+import { isFeatureEnabled } from '@/lib/feature-flags';
+import { cachedFetch, invalidateCache, type RateLimitState } from '@/lib/github-cache';
 
 export interface GitHubSyncConfig {
   token: string;       // GitHub PAT or OAuth token
@@ -352,4 +354,75 @@ function isNotFoundError(err: unknown): boolean {
   return false;
 }
 
-// IDENTITY_SEAL: PART-5 | role=github-sync | inputs=GitHubSyncConfig,token | outputs=GitHubFile,GitHubRepo
+// ============================================================
+// PART 6 — ETag Cache Integration (GITHUB_ETAG_CACHE flag)
+// ============================================================
+
+/**
+ * Build GitHub API URL for cache key construction.
+ */
+function buildApiUrl(config: GitHubSyncConfig, apiPath: string): string {
+  return `https://api.github.com/repos/${config.owner}/${config.repo}/${apiPath}`;
+}
+
+/**
+ * Cache-aware file fetch. When GITHUB_ETAG_CACHE is enabled,
+ * wraps the Octokit call through cachedFetch for ETag/304 optimization.
+ */
+export async function getFileCached(
+  config: GitHubSyncConfig,
+  path: string,
+): Promise<GitHubFile | null> {
+  if (!isFeatureEnabled('GITHUB_ETAG_CACHE')) return getFile(config, path);
+
+  const url = buildApiUrl(config, `contents/${path}?ref=${getBranch(config)}`);
+  try {
+    const res = await cachedFetch<{ path: string; content: string; sha: string; type: string }>(
+      url,
+      { headers: { Authorization: `Bearer ${config.token}`, Accept: 'application/vnd.github.v3+json' } },
+    );
+    const data = res.data;
+    if (!data || data.type !== 'file') return null;
+    const content = typeof atob === 'function'
+      ? atob(data.content.replace(/\n/g, ''))
+      : Buffer.from(data.content, 'base64').toString('utf-8');
+    return { path: data.path, content, sha: data.sha };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cache-aware branch list. Uses ETag caching when enabled.
+ */
+export async function listBranchesCached(
+  config: GitHubSyncConfig,
+): Promise<string[]> {
+  if (!isFeatureEnabled('GITHUB_ETAG_CACHE')) return listBranches(config);
+
+  const url = buildApiUrl(config, 'branches?per_page=100');
+  const res = await cachedFetch<Array<{ name: string }>>(
+    url,
+    { headers: { Authorization: `Bearer ${config.token}`, Accept: 'application/vnd.github.v3+json' } },
+  );
+  return res.data.map(b => b.name);
+}
+
+/**
+ * Invalidate cache entries after write operations.
+ * Call after putFile, deleteFile, createBranch, mergeBranch.
+ */
+export function invalidateGitHubCache(config: GitHubSyncConfig, affectedPath?: string): void {
+  const repoPrefix = `repos/${config.owner}/${config.repo}`;
+  if (affectedPath) {
+    invalidateCache(`${repoPrefix}/contents/${affectedPath}`);
+  }
+  // Always invalidate tree cache on writes
+  invalidateCache(`${repoPrefix}/git/trees`);
+  invalidateCache(`${repoPrefix}/branches`);
+}
+
+/** Re-export for hook consumption */
+export type { RateLimitState };
+
+// IDENTITY_SEAL: PART-6 | role=github-cache-integration | inputs=GitHubSyncConfig | outputs=cached responses

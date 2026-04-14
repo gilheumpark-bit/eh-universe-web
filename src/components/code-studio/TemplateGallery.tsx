@@ -77,7 +77,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/50 backdrop-blur-sm" role="presentation" onClick={onClose}
       onKeyDown={(e) => { if (e.key === "Escape") onClose(); if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && showAiPrompt) handleAiGenerate(); }}>
       <div className="bg-[#0f1419] border border-white/10 rounded-xl shadow-2xl w-[680px] max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
@@ -87,7 +87,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
         <div className="flex items-center gap-2 px-4 py-2 border-b border-white/8">
           <Search size={14} className="text-white/50 shrink-0" />
           <input ref={searchRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="템플릿 검색..."
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50" />
+            className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-white/50" />
           <button onClick={() => setShowAiPrompt(!showAiPrompt)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAiPrompt ? "bg-amber-900/30 text-amber-400" : "bg-white/5 text-white/60 hover:text-amber-400"}`}>
             <Sparkles size={12} /> 자동 생성
@@ -98,7 +98,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
             <p className="text-xs text-white/60 mb-2">만들고 싶은 앱을 설명하세요</p>
             <textarea ref={aiInputRef} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)}
               placeholder="예: Todo 앱을 React + Tailwind로 만들어줘"
-              className="w-full h-20 p-2 rounded-lg bg-[#0a0e17] border border-white/10 text-sm text-white placeholder:text-white/50 outline-none resize-none" disabled={isGenerating} />
+              className="w-full h-20 p-2 rounded-lg bg-[#0a0e17] border border-white/10 text-sm text-white placeholder:text-white/50 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 resize-none" disabled={isGenerating} />
             <div className="flex items-center justify-between mt-2">
               <span className="text-[10px] text-white/50">{isGenerating ? "생성 중..." : "Ctrl+Enter로 생성"}</span>
               <button onClick={handleAiGenerate} disabled={!aiPrompt.trim() || isGenerating}

@@ -7,7 +7,7 @@
 import React, { useMemo, useState } from 'react';
 import type { StyleProfile, AppLanguage } from '@/lib/studio-types';
 import { STYLE_ARCHETYPES, sliderToRadarPoints, StyleArchetype } from '@/lib/style-benchmarks';
-import { L4 } from '@/lib/i18n';
+
 
 interface Props {
   profile: StyleProfile;

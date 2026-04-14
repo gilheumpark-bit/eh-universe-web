@@ -19,6 +19,7 @@ export function hardenExternalLinks(): void {
 export function devToolsWarning(): void {
   if (typeof console === 'undefined') return;
   if (process.env.NODE_ENV !== 'production') return;
+  // Intentional: styled console output for devtools scam protection banner
   console.log(
     '%c⚠️ EH Universe Security Warning',
     'font-size: 20px; font-weight: bold; color: #ff6b6b;',

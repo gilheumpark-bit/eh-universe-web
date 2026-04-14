@@ -28,7 +28,7 @@ import { runDesignLint } from '@/lib/code-studio/pipeline/design-lint';
 import type { DesignLintResult } from '@/lib/code-studio/pipeline/design-lint';
 import {
   GOOD_PATTERN_CATALOG,
-  getSuppressorsFor,
+  
 } from '@/cli/core/good-pattern-catalog';
 
 // Re-export for existing consumers (`SafeFixCategory` was defined here).

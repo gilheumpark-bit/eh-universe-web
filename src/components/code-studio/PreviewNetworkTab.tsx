@@ -4,7 +4,7 @@
 // PART 1 — Types & Utilities
 // ============================================================
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { X, Trash2, Search, ChevronDown, ChevronRight, Filter } from "lucide-react";
 
 interface NetworkEntry {
@@ -91,7 +91,7 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
         <div className="flex items-center gap-1 bg-white/5 border border-white/8 rounded px-1.5 py-0.5">
           <Search size={10} className="text-white/50" />
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Filter..."
-            className="bg-transparent border-none outline-none text-[10px] text-white w-28" />
+            className="bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-[10px] text-white w-28" />
         </div>
         <div className="flex items-center gap-0.5">
           <Filter size={10} className="text-white/50 mr-0.5" />
@@ -112,7 +112,8 @@ export default function PreviewNetworkTab({ visible, onClose }: Props) {
             {filteredEntries.length === 0 ? (
               <div className="flex items-center justify-center h-full text-white/50 text-xs">No requests</div>
             ) : filteredEntries.map((entry) => (
-              <div key={entry.id} onClick={() => setSelectedId(entry.id === selectedId ? null : entry.id)}
+              <div key={entry.id} role="button" tabIndex={0} onClick={() => setSelectedId(entry.id === selectedId ? null : entry.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(entry.id === selectedId ? null : entry.id); } }}
                 className={`flex items-center text-[10px] cursor-pointer border-b border-white/5 hover:bg-white/5 ${entry.id === selectedId ? "bg-white/5" : ""}`}>
                 <div className={`w-14 px-1 py-0.5 font-mono ${statusColor(entry.status)}`}>{entry.status || "--"}</div>
                 <div className="w-14 px-1 py-0.5 font-mono text-white/60">{entry.method}</div>

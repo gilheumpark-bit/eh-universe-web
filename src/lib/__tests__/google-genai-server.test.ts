@@ -11,7 +11,7 @@ describe('google-genai-server helpers', () => {
   });
 
   function loadModule() {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     return require('@/lib/google-genai-server') as typeof import('@/lib/google-genai-server');
   }
 

@@ -109,7 +109,7 @@ export function SettingsPanel() {
               setApiKeys((prev) => ({ ...prev, deepseek: e.target.value }))
             }
             placeholder={langKo ? 'sk-…' : 'sk-…'}
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-text-primary placeholder:text-text-tertiary focus:border-accent-cyan/40 focus:outline-none"
+            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-text-primary placeholder:text-text-tertiary focus:border-accent-cyan/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           />
         </section>
 

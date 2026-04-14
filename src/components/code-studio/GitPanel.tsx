@@ -32,7 +32,6 @@ import {
   Check,
   FileText,
   Plus,
-  ChevronDown,
   Trash2,
 } from "lucide-react";
 import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
@@ -49,14 +48,11 @@ import {
   createWebContainer,
   type WebContainerInstance,
 } from "@/lib/code-studio/features/webcontainer";
-import { generateCommitMessage } from "@/lib/code-studio/ai/ai-features";
 import {
   initRepo,
   commitFiles as engineCommit,
   createBranch as engineCreateBranch,
   switchBranch as engineSwitchBranch,
-  getBranches as engineGetBranches,
-  getLog as engineGetLog,
   type GitRepo,
 } from "@/lib/code-studio/features/git-engine";
 import { useLang } from "@/lib/LangContext";
@@ -130,13 +126,11 @@ function loadIsomorphicGit(): Promise<IsomorphicGitEngine | null> {
   if (_isoGitPromise) return _isoGitPromise;
   _isoGitPromise = (async () => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- isomorphic-git dynamic import; full type unavailable without @types package
       let git: any;
-      try { git = await import("isomorphic-git"); } catch { git = null; }
+      try { git = await import("isomorphic-git"); } catch { /* [의도적 무시] isomorphic-git 미설치 환경 폴백 */ git = null; }
       if (!git) return null;
       // LightningFS packages unavailable on npm — use in-memory stub
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const LightningFS = class { constructor(_name: string) {} promises = { readdir: async () => [] as string[], readFile: async () => '', writeFile: async (_p: string, _d: string, _e?: string) => {}, mkdir: async (_p?: string) => {}, unlink: async (_p?: string) => {}, stat: async (_p?: string) => ({ type: 'file' as const, size: 0 }), rmdir: async (_p?: string) => {} }; };
 
       const fs = new LightningFS("eh-git-fs");
@@ -276,17 +270,17 @@ function DiffPreview({ snapshot, lang }: DiffPreviewProps) {
       </div>
       <div className="flex gap-3">
         <span className="text-text-tertiary">
-          {unchanged} {L4(lang, { ko: "줄 변경 없음", en: "unchanged" })}
+          {unchanged} {L4(lang, { ko: "줄 변경 없음", en: "unchanged", ja: "行変更なし", zh: "行无变更"})}
         </span>
         {added > 0 && (
-          <span className="text-accent-green">+{added} {L4(lang, { ko: "줄", en: "lines" })}</span>
+          <span className="text-accent-green">+{added} {L4(lang, { ko: "줄", en: "lines", ja: "行", zh: "行"})}</span>
         )}
         {removed > 0 && (
-          <span className="text-accent-red">-{removed} {L4(lang, { ko: "줄", en: "lines" })}</span>
+          <span className="text-accent-red">-{removed} {L4(lang, { ko: "줄", en: "lines", ja: "行", zh: "行"})}</span>
         )}
       </div>
       <div className="mt-1 text-text-tertiary">
-        {snapshot.linesBefore} {L4(lang, { ko: "줄", en: "lines" })} → {snapshot.linesAfter} {L4(lang, { ko: "줄", en: "lines" })}
+        {snapshot.linesBefore} {L4(lang, { ko: "줄", en: "lines", ja: "行", zh: "行"})} → {snapshot.linesAfter} {L4(lang, { ko: "줄", en: "lines", ja: "行", zh: "行"})}
       </div>
     </div>
   );
@@ -334,7 +328,7 @@ function ChangesTab({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
         <Check size={24} className="mb-2 opacity-50" />
-        <span className="text-sm">{L4(cLang, { ko: "변경 사항 없음", en: "No pending changes" })}</span>
+        <span className="text-sm">{L4(cLang, { ko: "변경 사항 없음", en: "No pending changes", ja: "変更なし", zh: "无待处理变更"})}</span>
       </div>
     );
   }
@@ -373,7 +367,7 @@ function ChangesTab({
         className="mt-1 flex items-center justify-center gap-2 rounded bg-accent-green/15 px-3 py-1.5 text-sm font-medium text-accent-green transition-colors hover:bg-accent-green/25"
       >
         <GitCommit size={14} />
-        {L4(cLang, { ko: `커밋 (${dirtyFiles.length}개 파일)`, en: `Commit ${dirtyFiles.length} file` })}{L4(cLang, { ko: "", en: dirtyFiles.length > 1 ? "s" : "" })}
+        {L4(cLang, { ko: `커밋 (${dirtyFiles.length}개 파일)`, en: `Commit ${dirtyFiles.length} file`, ja: `コミット (${dirtyFiles.length}ファイル)`, zh: `提交 (${dirtyFiles.length}个文件)`})}{L4(cLang, { ko: "", en: dirtyFiles.length > 1 ? "s" : "", ja: "", zh: "" })}
       </button>
     </div>
   );
@@ -405,7 +399,7 @@ function HistoryTab({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
         <History size={24} className="mb-2 opacity-50" />
-        <span className="text-sm">{L4(hLang, { ko: "커밋 기록 없음", en: "No commit history" })}</span>
+        <span className="text-sm">{L4(hLang, { ko: "커밋 기록 없음", en: "No commit history", ja: "コミット履歴なし", zh: "无提交历史"})}</span>
       </div>
     );
   }
@@ -458,7 +452,7 @@ function HistoryTab({
                   onClick={() => onRestore(commit)}
                   className="mt-2 flex items-center gap-1.5 rounded bg-accent-amber/15 px-2.5 py-1 text-xs font-medium text-accent-amber transition-colors hover:bg-accent-amber/25"
                 >
-                  <RotateCcw size={12} />{L4(hLang, { ko: "이 버전으로 복원", en: "Restore this version" })}</button>
+                  <RotateCcw size={12} />{L4(hLang, { ko: "이 버전으로 복원", en: "Restore this version", ja: "このバージョンに復元", zh: "恢复到此版本"})}</button>
               </div>
             )}
           </div>
@@ -483,7 +477,7 @@ export default function GitPanel({
   onClearDirty,
 }: GitPanelProps) {
   const { lang } = useLang();
-  const ko = lang === "ko";
+  const _ko = lang === "ko";
   const [activeTab, setActiveTab] = useState<TabId>("changes");
   const [commits, setCommits] = useState<CommitEntry[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
@@ -499,7 +493,7 @@ export default function GitPanel({
   // Real git integration state
   const [gitAvailable, setGitAvailable] = useState(false);
   const [gitBackendLabel, setGitBackendLabel] = useState("Simulation");
-  const [gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
+  const [_gitStatusData, setGitStatusData] = useState<GitStatus | null>(null);
   const gitContainerRef = useRef<WebContainerInstance | null>(null);
 
   // In-memory git engine (SHA-1 based)
@@ -771,7 +765,7 @@ export default function GitPanel({
     setActiveTab("history");
     // 커밋 후 dirty 상태 해제
     onClearDirty?.();
-  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty, gitAvailable, syncGitWorkspace]);
+  }, [dirtyFiles, flatFileMap, currentBranch, onClearDirty, gitAvailable, syncGitWorkspace, isoGitReady]);
 
   const handleRestore = useCallback(
     (commit: CommitEntry) => {
@@ -792,13 +786,13 @@ export default function GitPanel({
   const tabs: { id: TabId; label: string; icon: React.ReactNode; count?: number }[] = [
     {
       id: "changes",
-      label: L4(lang, { ko: "변경 사항", en: "Changes" }),
+      label: L4(lang, { ko: "변경 사항", en: "Changes", ja: "変更", zh: "变更"}),
       icon: <GitBranch size={14} />,
       count: dirtyFiles.length > 0 ? dirtyFiles.length : undefined,
     },
     {
       id: "history",
-      label: L4(lang, { ko: "실행 기록", en: "History" }),
+      label: L4(lang, { ko: "실행 기록", en: "History", ja: "実行履歴", zh: "执行历史"}),
       icon: <History size={14} />,
       count: commits.length > 0 ? commits.length : undefined,
     },
@@ -810,14 +804,14 @@ export default function GitPanel({
       <div className={`text-[9px] px-3 py-1 border-b border-white/[0.08] flex items-center gap-2 ${isoGitReady ? "text-emerald-300 bg-emerald-950/20" : "text-text-tertiary bg-white/[0.02]"}`}>
         <span>
           {isoGitReady
-            ? L4(lang, { ko: "isomorphic-git 연결됨 — 실제 Git 오브젝트 저장소", en: "isomorphic-git connected — real Git object store" })
+            ? L4(lang, { ko: "isomorphic-git 연결됨 — 실제 Git 오브젝트 저장소", en: "isomorphic-git connected — real Git object store", ja: "isomorphic-git接続済み — 実Gitオブジェクトストア", zh: "isomorphic-git已连接 — 真实Git对象存储"})
             : gitAvailable
-              ? L4(lang, { ko: `Git 러너 연결됨 — ${gitBackendLabel}`, en: `Git runner connected — ${gitBackendLabel}` })
-              : L4(lang, { ko: "로컬 시뮬레이션 — 변경 사항은 브라우저에만 저장됩니다", en: "Local simulation — changes are saved in browser only" })
+              ? L4(lang, { ko: `Git 러너 연결됨 — ${gitBackendLabel}`, en: `Git runner connected — ${gitBackendLabel}`, ja: `Gitランナー接続済み — ${gitBackendLabel}`, zh: `Git运行器已连接 — ${gitBackendLabel}`})
+              : L4(lang, { ko: "로컬 시뮬레이션 — 변경 사항은 브라우저에만 저장됩니다", en: "Local simulation — changes are saved in browser only", ja: "ローカルシミュレーション — 変更はブラウザにのみ保存", zh: "本地模拟 — 更改仅保存在浏览器中"})
           }
         </span>
         <span className={`text-[10px] px-1.5 py-0.5 rounded ${isoGitReady ? "bg-emerald-900/40 text-emerald-400" : "bg-white/5 text-gray-500"}`}>
-          {isoGitReady ? "isomorphic-git" : gitAvailable ? gitBackendLabel : L4(lang, { ko: "시뮬레이션", en: "Simulation" })}
+          {isoGitReady ? "isomorphic-git" : gitAvailable ? gitBackendLabel : L4(lang, { ko: "시뮬레이션", en: "Simulation", ja: "シミュレーション", zh: "模拟"})}
         </span>
       </div>
       {/* Branch selector */}
@@ -827,7 +821,7 @@ export default function GitPanel({
           <select
             value={currentBranch}
             onChange={(e) => handleSwitchBranch(e.target.value)}
-            className="w-full rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-mono text-xs text-text-primary outline-none"
+            className="w-full rounded border border-border/30 bg-bg-primary/50 px-2 py-1 font-mono text-xs text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {branches.map((b) => (
               <option key={b} value={b}>{b}</option>
@@ -851,7 +845,7 @@ export default function GitPanel({
                       }
                     }}
                     className="ml-2 rounded p-0.5 text-accent-red/60 hover:bg-accent-red/10 hover:text-accent-red"
-                    title={L4(lang, { ko: `'${b}' 브랜치 삭제`, en: `Delete branch '${b}'` })}
+                    title={L4(lang, { ko: `'${b}' 브랜치 삭제`, en: `Delete branch '${b}'`, ja: `'${b}' ブランチを削除`, zh: `'${b}' 分支删除`})}
                   >
                     <Trash2 size={12} />
                   </button>
@@ -869,17 +863,17 @@ export default function GitPanel({
                 if (e.key === "Enter") handleNewBranch();
                 if (e.key === "Escape") { setShowNewBranch(false); setNewBranchName(""); }
               }}
-              placeholder={L4(lang, { ko: "브랜치-이름", en: "branch-name" })}
-              className="w-24 rounded border border-accent-green/30 bg-bg-primary/50 px-1.5 py-0.5 font-mono text-[10px] text-text-primary outline-none"
+              placeholder={L4(lang, { ko: "브랜치-이름", en: "branch-name", ja: "ブランチ名", zh: "分支名称"})}
+              className="w-24 rounded border border-accent-green/30 bg-bg-primary/50 px-1.5 py-0.5 font-mono text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               autoFocus
             />
-            <button onClick={handleNewBranch} className="rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green hover:bg-accent-green/25">{L4(lang, { ko: "확인", en: "OK" })}</button>
+            <button onClick={handleNewBranch} className="rounded bg-accent-green/15 px-1.5 py-0.5 text-[10px] text-accent-green hover:bg-accent-green/25">{L4(lang, { ko: "확인", en: "OK", ja: "確認", zh: "确认"})}</button>
           </div>
         ) : (
           <button
             onClick={() => setShowNewBranch(true)}
             className="rounded p-1 text-text-tertiary hover:bg-bg-primary/50 hover:text-text-primary"
-            title={L4(lang, { ko: "새 브랜치", en: "New Branch" })}
+            title={L4(lang, { ko: "새 브랜치", en: "New Branch", ja: "新規ブランチ", zh: "新建分支"})}
           >
             <Plus size={14} />
           </button>

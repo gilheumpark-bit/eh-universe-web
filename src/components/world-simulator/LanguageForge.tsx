@@ -269,7 +269,7 @@ export function LanguageForge({
           {/* Presets */}
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-              {L4(lang, { ko: "프리셋:", en: "Presets:" })}
+              {L4(lang, { ko: "프리셋:", en: "Presets:", ja: "Presets:", zh: "Presets:" })}
             </span>
             {Object.entries(GENRE_PHONEME_PRESETS).map(([key, val]) => (
               <button key={key} onClick={() => loadPreset(key)}
@@ -284,7 +284,7 @@ export function LanguageForge({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                  {L4(lang, { ko: "자음", en: "Consonants" })} ({consonants.length})
+                  {L4(lang, { ko: "자음", en: "Consonants", ja: "Consonants", zh: "Consonants" })} ({consonants.length})
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {consonants.map(ph => {
@@ -306,7 +306,7 @@ export function LanguageForge({
               </div>
               <div className="space-y-2">
                 <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-                  {L4(lang, { ko: "모음", en: "Vowels" })} ({vowels.length})
+                  {L4(lang, { ko: "모음", en: "Vowels", ja: "Vowels", zh: "Vowels" })} ({vowels.length})
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {vowels.map(ph => {
@@ -332,28 +332,28 @@ export function LanguageForge({
           {/* Add custom phoneme */}
           <div className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
             <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-              {L4(lang, { ko: "커스텀 음소 추가", en: "Add Custom Phoneme" })}
+              {L4(lang, { ko: "커스텀 음소 추가", en: "Add Custom Phoneme", ja: "커스텀 음소 追加", zh: "커스텀 음소 添加" })}
             </h4>
             <div className="flex flex-wrap gap-2">
               <input value={newPhForm.symbol} onChange={e => setNewPhForm(p => ({ ...p, symbol: e.target.value }))}
-                placeholder={L4(lang, { ko: "기호", en: "Symbol" })} className="w-16 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus:border-accent-purple" />
+                placeholder={L4(lang, { ko: "기호", en: "Symbol", ja: "Symbol", zh: "Symbol" })} className="w-16 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" />
               <input value={newPhForm.roman} onChange={e => setNewPhForm(p => ({ ...p, roman: e.target.value }))}
-                placeholder={L4(lang, { ko: "로마자", en: "Roman" })} className="w-20 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus:border-accent-purple" />
+                placeholder={L4(lang, { ko: "로마자", en: "Roman", ja: "Roman", zh: "Roman" })} className="w-20 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" />
               <select value={newPhForm.type} onChange={e => setNewPhForm(p => ({ ...p, type: e.target.value as "consonant" | "vowel" }))}
-                className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none">
-                <option value="consonant">{L4(lang, { ko: "자음", en: "Cons." })}</option>
-                <option value="vowel">{L4(lang, { ko: "모음", en: "Vowel" })}</option>
+                className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
+                <option value="consonant">{L4(lang, { ko: "자음", en: "Cons.", ja: "Cons.", zh: "Cons." })}</option>
+                <option value="vowel">{L4(lang, { ko: "모음", en: "Vowel", ja: "Vowel", zh: "Vowel" })}</option>
               </select>
               <select value={newPhForm.sigClass} onChange={e => setNewPhForm(p => ({ ...p, sigClass: e.target.value as SigClass }))}
-                className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none">
+                className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
                 {(Object.keys(SIG_CLASS_META) as SigClass[]).map(sc => (
                   <option key={sc} value={sc}>{L4(lang, SIG_CLASS_META[sc])}</option>
                 ))}
               </select>
               <input type="number" value={newPhForm.freq} onChange={e => setNewPhForm(p => ({ ...p, freq: parseInt(e.target.value) || 0 }))}
-                className="w-16 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none" placeholder="Hz" />
+                className="w-16 bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" placeholder="Hz" />
               <select value={newPhForm.wave} onChange={e => setNewPhForm(p => ({ ...p, wave: e.target.value as WaveType }))}
-                className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none">
+                className="bg-bg-secondary border border-border rounded px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
                 <option value="sine">Sine</option><option value="sawtooth">Saw</option>
                 <option value="square">Square</option><option value="triangle">Triangle</option>
               </select>
@@ -378,14 +378,14 @@ export function LanguageForge({
         <div className="space-y-4">
           {phonemes.length === 0 ? (
             <div className="text-center py-8 text-text-tertiary text-xs italic">
-              {L4(lang, { ko: "먼저 음소 탭에서 음소를 추가하세요", en: "Add phonemes in the Phonemes tab first" })}
+              {L4(lang, { ko: "먼저 음소 탭에서 음소를 추가하세요", en: "Add phonemes in the Phonemes tab first", ja: "먼저 음소 탭에서 음소를 追加하세요", zh: "먼저 음소 탭에서 음소를 添加하세요" })}
             </div>
           ) : (
             <>
               <div className="border border-border rounded-lg p-3 bg-bg-primary space-y-3">
                 <input value={newWordMeaning} onChange={e => setNewWordMeaning(e.target.value)}
-                  placeholder={L4(lang, { ko: "뜻 (예: 불, 물, 인사)", en: "Meaning (e.g. fire, water, hello)" })}
-                  className="w-full bg-bg-secondary border border-border rounded px-3 py-2 text-xs outline-none focus:border-accent-purple" />
+                  placeholder={L4(lang, { ko: "뜻 (예: 불, 물, 인사)", en: "Meaning (e.g. fire, water, hello)", ja: "Meaning (e.g. fire, water, hello)", zh: "Meaning (e.g. fire, water, hello)" })}
+                  className="w-full bg-bg-secondary border border-border rounded px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" />
 
                 <div className="flex flex-wrap gap-1">
                   {phonemes.filter(p => p.sigClass !== "silent").map(ph => (
@@ -399,7 +399,7 @@ export function LanguageForge({
 
                 {wordPhBuf.length > 0 && (
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] text-text-tertiary">{L4(lang, { ko: "조합:", en: "Build:" })}</span>
+                    <span className="text-[10px] text-text-tertiary">{L4(lang, { ko: "조합:", en: "Build:", ja: "Build:", zh: "Build:" })}</span>
                     {wordPhBuf.map((pid, i) => {
                       const ph = phonemes.find(p => p.id === pid);
                       return (
@@ -421,10 +421,10 @@ export function LanguageForge({
                 <div className="flex gap-2">
                   <button onClick={addWord} disabled={!newWordMeaning.trim() || wordPhBuf.length === 0}
                     className="px-4 py-1.5 bg-accent-purple text-white rounded text-xs font-bold disabled:opacity-30">
-                    {L4(lang, { ko: "단어 등록", en: "Register Word" })}
+                    {L4(lang, { ko: "단어 등록", en: "Register Word", ja: "단어 登録", zh: "단어 提交" })}
                   </button>
                   <button onClick={() => setWordPhBuf([])} className="px-3 py-1.5 bg-bg-secondary border border-border rounded text-xs text-text-tertiary">
-                    {L4(lang, { ko: "초기화", en: "Clear" })}
+                    {L4(lang, { ko: "초기화", en: "Clear", ja: "リセット", zh: "重置" })}
                   </button>
                 </div>
               </div>
@@ -459,13 +459,13 @@ export function LanguageForge({
         <div className="space-y-4">
           {words.length === 0 ? (
             <div className="text-center py-8 text-text-tertiary text-xs italic">
-              {L4(lang, { ko: "먼저 어휘 탭에서 단어를 등록하세요", en: "Register words in the Vocabulary tab first" })}
+              {L4(lang, { ko: "먼저 어휘 탭에서 단어를 등록하세요", en: "Register words in the Vocabulary tab first", ja: "먼저 어휘 탭에서 단어를 登録하세요", zh: "먼저 어휘 탭에서 단어를 提交하세요" })}
             </div>
           ) : (
             <>
               <div className="space-y-2">
                 <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)] uppercase tracking-wider">
-                  {L4(lang, { ko: "단어를 클릭하여 문장 조립:", en: "Click words to compose sentence:" })}
+                  {L4(lang, { ko: "단어를 클릭하여 문장 조립:", en: "Click words to compose sentence:", ja: "Click words to compose sentence:", zh: "Click words to compose sentence:" })}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {words.map(w => (
@@ -496,7 +496,7 @@ export function LanguageForge({
 
                   {civs.length > 0 && (
                     <div className="flex items-center gap-2 text-[9px] text-text-tertiary">
-                      <span>{L4(lang, { ko: "문명 지정:", en: "Assign to civ:" })}</span>
+                      <span>{L4(lang, { ko: "문명 지정:", en: "Assign to civ:", ja: "문名 지정:", zh: "문人 지정:" })}</span>
                       {civs.map(c => (
                         <button key={c.id} onClick={() => {
                           setWords(prev => prev.map(w =>
@@ -515,14 +515,14 @@ export function LanguageForge({
                   <div className="flex gap-2">
                     <button onClick={() => playSequence(composePhIds)}
                       className="px-4 py-2 bg-accent-purple text-white rounded text-xs font-bold flex items-center gap-1.5">
-                      &#9654; {L4(lang, { ko: "신호음 재생", en: "Play Signal" })}
+                      &#9654; {L4(lang, { ko: "신호음 재생", en: "Play Signal", ja: "Play Signal", zh: "Play Signal" })}
                     </button>
                     <button onClick={() => speakTTS(composeRoman)}
                       className="px-4 py-2 bg-accent-blue text-white rounded text-xs font-bold flex items-center gap-1.5">
-                      &#9654; {L4(lang, { ko: "TTS 발음", en: "TTS Speak" })}
+                      &#9654; {L4(lang, { ko: "TTS 발음", en: "TTS Speak", ja: "TTS Speak", zh: "TTS Speak" })}
                     </button>
                     <button onClick={() => setComposeBuf([])} className="px-3 py-2 bg-bg-secondary border border-border rounded text-xs text-text-tertiary">
-                      {L4(lang, { ko: "초기화", en: "Clear" })}
+                      {L4(lang, { ko: "초기화", en: "Clear", ja: "リセット", zh: "重置" })}
                     </button>
                   </div>
                 </div>
@@ -534,10 +534,10 @@ export function LanguageForge({
 
       {/* Stats bar */}
       <div className="flex flex-wrap gap-3 text-[9px] font-[family-name:var(--font-mono)] pt-2 border-t border-border">
-        <span className="text-text-tertiary">{L4(lang, { ko: "음소", en: "Phonemes" })}: <span className="text-accent-purple font-bold">{phonemes.length}</span></span>
-        <span className="text-text-tertiary">{L4(lang, { ko: "자음", en: "Cons" })}: <span className="font-bold">{consonants.length}</span></span>
-        <span className="text-text-tertiary">{L4(lang, { ko: "모음", en: "Vowels" })}: <span className="font-bold">{vowels.length}</span></span>
-        <span className="text-text-tertiary">{L4(lang, { ko: "어휘", en: "Words" })}: <span className="text-accent-purple font-bold">{words.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "음소", en: "Phonemes", ja: "Phonemes", zh: "Phonemes" })}: <span className="text-accent-purple font-bold">{phonemes.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "자음", en: "Cons", ja: "Cons", zh: "Cons" })}: <span className="font-bold">{consonants.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "모음", en: "Vowels", ja: "Vowels", zh: "Vowels" })}: <span className="font-bold">{vowels.length}</span></span>
+        <span className="text-text-tertiary">{L4(lang, { ko: "어휘", en: "Words", ja: "Words", zh: "Words" })}: <span className="text-accent-purple font-bold">{words.length}</span></span>
       </div>
     </div>
   );

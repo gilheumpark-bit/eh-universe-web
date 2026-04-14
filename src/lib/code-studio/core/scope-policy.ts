@@ -28,7 +28,7 @@ interface StoredPolicy {
 const STORAGE_KEY = 'eh-scope-policy-v1';
 
 // 스코프 우선순위: 높을수록 우선
-const SCOPE_PRIORITY: Record<PolicyScope, number> = {
+const _SCOPE_PRIORITY: Record<PolicyScope, number> = {
   module: 0,
   workspace: 1,
   global: 2,
@@ -298,7 +298,7 @@ export function applyScopePolicyToFindings<
     if (resolved.action === 'suppress') return false;
 
     if (resolved.action === 'warn' && f.severity === 'critical') {
-      (f as any).severity = 'major';
+      (f as { severity?: string }).severity = 'major';
     }
 
     return true;

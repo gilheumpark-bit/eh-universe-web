@@ -25,12 +25,12 @@ import type { PlanetRecord, PostRecord, UserRecord } from "@/lib/network-types";
 function relativeTime(isoDate: string, lang: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return L4(lang, { ko: "방금 전", en: "Just now" });
-  if (minutes < 60) return L4(lang, { ko: `${minutes}분 전`, en: `${minutes}m ago` });
+  if (minutes < 1) return L4(lang, { ko: "방금 전", en: "Just now", ja: "たった今", zh: "刚刚" });
+  if (minutes < 60) return L4(lang, { ko: `${minutes}분 전`, en: `${minutes}m ago`, ja: `${minutes}分前`, zh: `${minutes}分钟前` });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago` });
+  if (hours < 24) return L4(lang, { ko: `${hours}시간 전`, en: `${hours}h ago`, ja: `${hours}時間前`, zh: `${hours}小时前` });
   const days = Math.floor(hours / 24);
-  if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago` });
+  if (days < 30) return L4(lang, { ko: `${days}일 전`, en: `${days}d ago`, ja: `${days}日前`, zh: `${days}天前` });
   return new Date(isoDate).toLocaleDateString(lang === "ko" ? "ko-KR" : "en-US");
 }
 
@@ -64,7 +64,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
 
         const postRecord = await getPostById(postId);
         if (!postRecord) {
-          throw new Error(L4(lang, { ko: "게시글을 찾을 수 없습니다.", en: "Post not found." }));
+          throw new Error(L4(lang, { ko: "게시글을 찾을 수 없습니다.", en: "Post not found.", ja: "投稿が見つかりません。", zh: "找不到帖子。" }));
         }
 
         const [authorRecord, planetRecord] = await Promise.all([
@@ -79,7 +79,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load." }));
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "불러오기에 실패했습니다.", en: "Failed to load.", ja: "読み込みに失敗しました。", zh: "加载失败。" }));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -111,7 +111,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
             &larr; NETWORK
           </Link>
           <section className="premium-panel p-8 text-center">
-            <p className="text-sm text-accent-red">{error ?? L4(lang, { ko: "게시글을 찾을 수 없습니다.", en: "Post not found." })}</p>
+            <p className="text-sm text-accent-red">{error ?? L4(lang, { ko: "게시글을 찾을 수 없습니다.", en: "Post not found.", ja: "投稿が見つかりません。", zh: "找不到帖子。" })}</p>
           </section>
         </div>
       </main>
@@ -179,9 +179,9 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
 
           {/* Metrics bar */}
           <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-white/8 pt-5 text-xs text-text-tertiary">
-            <span>{L4(lang, { ko: `조회 ${post.metrics.viewCount}`, en: `${post.metrics.viewCount} views` })}</span>
-            <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments` })}</span>
-            <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions` })}</span>
+            <span>{L4(lang, { ko: `조회 ${post.metrics.viewCount}`, en: `${post.metrics.viewCount} views`, ja: `閲覧 ${post.metrics.viewCount}`, zh: `${post.metrics.viewCount} 浏览` })}</span>
+            <span>{L4(lang, { ko: `댓글 ${post.metrics.commentCount}`, en: `${post.metrics.commentCount} comments`, ja: `コメント ${post.metrics.commentCount}`, zh: `${post.metrics.commentCount} 评论` })}</span>
+            <span>{L4(lang, { ko: `반응 ${post.metrics.reactionCount}`, en: `${post.metrics.reactionCount} reactions`, ja: `リアクション ${post.metrics.reactionCount}`, zh: `${post.metrics.reactionCount} 反应` })}</span>
             
             <div className="ml-auto flex gap-2">
               {user?.uid === post.authorId && (
@@ -189,7 +189,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
                   href={`/network/posts/${post.id}/edit`}
                   className="rounded-full border border-white/20 bg-white/5 px-4 py-1.5 font-mono text-[10px] font-medium tracking-widest text-text-tertiary transition hover:bg-white/10 hover:text-white"
                 >
-                  {L4(lang, { ko: "수정", en: "Edit" })}
+                  {L4(lang, { ko: "수정", en: "Edit", ja: "編集", zh: "编辑" })}
                 </Link>
               )}
               <button
@@ -208,7 +208,7 @@ export function BoardPostDetailClient({ postId }: BoardPostDetailClientProps) {
               }}
               className="ml-auto rounded-full border border-accent-amber/30 bg-accent-amber/10 px-4 py-1.5 font-[family-name:var(--font-mono)] text-[10px] font-medium tracking-[0.12em] text-accent-amber transition hover:bg-accent-amber/20"
             >
-                {L4(lang, { ko: "Studio에서 열기", en: "Open in Studio" })}
+                {L4(lang, { ko: "Studio에서 열기", en: "Open in Studio", ja: "Studioで開く", zh: "在Studio中打开" })}
               </button>
             </div>
           </div>

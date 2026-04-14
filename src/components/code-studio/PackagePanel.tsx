@@ -167,7 +167,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
             <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/50" />
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="npm 패키지 검색..."
-              className="w-full bg-white/5 pl-6 pr-2 py-1.5 rounded text-xs text-white outline-none border border-white/8 focus:border-amber-700" />
+              className="w-full bg-white/5 pl-6 pr-2 py-1.5 rounded text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-white/8 focus:border-amber-700" />
           </div>
           <button onClick={handleSearch} disabled={searching || !searchQuery.trim()}
             className="px-2 py-1.5 bg-amber-900/30 text-amber-400 rounded hover:bg-amber-900/35 disabled:opacity-30">

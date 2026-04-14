@@ -406,7 +406,7 @@ function computeConfidence(content: string): number {
 
   // 코드 존재 가점: 중괄호/세미콜론이 많으면 구체적 코드 출력일 가능성
   const codeChars = (content.match(/[{};()=>]/g) ?? []).length;
-  const codeRatio = codeChars / content.length;
+  const codeRatio = content.length > 0 ? codeChars / content.length : 0;
   if (codeRatio > 0.02) {
     score += 0.1;
   }

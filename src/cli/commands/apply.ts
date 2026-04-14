@@ -125,7 +125,7 @@ export async function runApply(file: string | undefined, opts: ApplyOptions): Pr
       failed++;
       // Clean up temp file if it exists
       try {
-        const tmpGlob = targetPath + '.tmp.';
+        const _tmpGlob = targetPath + '.tmp.';
         const { readdirSync: ls } = require('fs');
         const dir = require('path').dirname(targetPath);
         const base = require('path').basename(targetPath);

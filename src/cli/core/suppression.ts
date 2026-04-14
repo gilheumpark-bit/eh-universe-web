@@ -10,7 +10,7 @@
 //   .csquillignore (glob 패턴)
 
 import { readFileSync, existsSync } from 'fs';
-import { join, relative } from 'path';
+import { join } from 'path';
 
 // ============================================================
 // PART 1 — Inline Suppression Parser

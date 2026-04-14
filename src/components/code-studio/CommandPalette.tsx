@@ -244,7 +244,7 @@ export default function CommandPalette({
               if (e.target.value) setCollapsedGroups(new Set()); // 검색 시 모든 그룹 펼침
             }}
             placeholder={searchPlaceholder}
-            className="w-full bg-transparent font-mono text-[13px] text-text-primary placeholder-text-tertiary outline-none"
+            className="w-full bg-transparent font-mono text-[13px] text-text-primary placeholder-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             spellCheck={false}
             autoComplete="off"
           />

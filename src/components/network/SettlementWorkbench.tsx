@@ -70,7 +70,7 @@ export function SettlementWorkbench() {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 데이터를 불러오지 못했습니다.", en: "Failed to load settlements." }));
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 데이터를 불러오지 못했습니다.", en: "Failed to load settlements.", ja: "정산 データ를 불러오지 못했습니다.", zh: "정산 数据를 불러오지 못했습니다." }));
         }
       }
     };
@@ -117,7 +117,7 @@ export function SettlementWorkbench() {
       setEhValue(null);
       setRisk(null);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 저장에 실패했습니다.", en: "Failed to save settlement." }));
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 저장에 실패했습니다.", en: "Failed to save settlement.", ja: "정산 保存に失敗しました。", zh: "정산 保存失败。" }));
     } finally {
       setSubmitting(false);
     }
@@ -134,10 +134,10 @@ export function SettlementWorkbench() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "운영자 로그인 필요", en: "Administrator Sign-In Required" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "운영자 로그인 필요", en: "Administrator Sign-In Required", ja: "운영자 ログイン 필요", zh: "운영자 登录 필요" })}</div>
             <div className="mt-8 flex justify-center">
               <button type="button" onClick={() => void signInWithGoogle()} className="premium-button">
-                {L4(lang, { ko: "Google 로그인", en: "Sign In with Google" })}
+                {L4(lang, { ko: "Google 로그인", en: "Sign In with Google", ja: "Googleログイン", zh: "Google登录" })}
               </button>
             </div>
           </section>
@@ -151,12 +151,12 @@ export function SettlementWorkbench() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "권한 필요", en: "Permission Required" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "권한 필요", en: "Permission Required", ja: "Permission Required", zh: "Permission Required" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {L4(lang, { ko: "정산 워크벤치는 운영자 전용입니다.", en: "The settlement workbench is for administrators only." })}
+              {L4(lang, { ko: "정산 워크벤치는 운영자 전용입니다.", en: "The settlement workbench is for administrators only.", ja: "The settlement workbench is for administrators only.", zh: "The settlement workbench is for administrators only." })}
             </h1>
             <p className="site-lede mt-4 text-sm md:text-base">
-              {L4(lang, { ko: "현재 계정은 회원 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", en: "This account is currently recognized as a member. Set users/{uid}.role to admin in Firestore to enable this screen." })}
+              {L4(lang, { ko: "현재 계정은 회원 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", en: "This account is currently recognized as a member. Set users/{uid}.role to admin in Firestore to enable this screen.", ja: "현재 계정은 メンバー 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", zh: "현재 계정은 成员 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다." })}
             </p>
           </section>
         </div>
@@ -172,18 +172,18 @@ export function SettlementWorkbench() {
         </Link>
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="premium-panel p-6 md:p-8">
-          <div className="site-kicker">{L4(lang, { ko: "정산 워크벤치", en: "Settlement Workbench" })}</div>
+          <div className="site-kicker">{L4(lang, { ko: "정산 워크벤치", en: "Settlement Workbench", ja: "Settlement Workbench", zh: "Settlement Workbench" })}</div>
           <h1 className="site-title mt-3 text-3xl font-semibold">
-            {L4(lang, { ko: "관측 로그를 선택하고 상태 판정을 부여하세요.", en: "Select a log and attach the current verdict." })}
+            {L4(lang, { ko: "관측 로그를 선택하고 상태 판정을 부여하세요.", en: "Select a log and attach the current verdict.", ja: "観測 ログ를 選択하고 状態 판정을 부여하세요.", zh: "观测 日志를 选择하고 状态 판정을 부여하세요." })}
           </h1>
 
           <div className="mt-8 grid gap-4">
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "대상 로그", en: "Target Log" })}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "대상 로그", en: "Target Log", ja: "대상 ログ", zh: "대상 日志" })}</div>
               <select
                 value={selectedPostId}
                 onChange={(event) => setSelectedPostId(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               >
                 {posts.map((post) => (
                   <option key={post.id} value={post.id}>
@@ -194,11 +194,11 @@ export function SettlementWorkbench() {
             </label>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "판정", en: "Verdict" })}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "판정", en: "Verdict", ja: "Verdict", zh: "Verdict" })}</div>
               <select
                 value={verdict}
                 onChange={(event) => setVerdict(event.target.value as PlanetStatus)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               >
                 {PLANET_STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -210,46 +210,46 @@ export function SettlementWorkbench() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "EH 수치", en: "EH Value" })}</div>
+                <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "EH 수치", en: "EH Value", ja: "EH Value", zh: "EH Value" })}</div>
                 <input
                   type="number"
                   min={-100}
                   max={100}
                   value={ehValue ?? ""}
                   onChange={(event) => setEhValue(event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0))}
-                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 />
               </label>
               <label className="block">
-                <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "위험도", en: "Risk" })}</div>
+                <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "위험도", en: "Risk", ja: "Risk", zh: "Risk" })}</div>
                 <input
                   type="number"
                   min={0}
                   max={100}
                   value={risk ?? ""}
                   onChange={(event) => setRisk(event.target.value === "" ? null : (Number.parseInt(event.target.value, 10) || 0))}
-                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 />
               </label>
             </div>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "보관 등급", en: "Archive Level" })}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "보관 등급", en: "Archive Level", ja: "アーカイブ 등급", zh: "归档 등급" })}</div>
               <input
                 value={archiveLevel}
                 onChange={(event) => setArchiveLevel(event.target.value)}
                 maxLength={100}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               />
             </label>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "권고 조치", en: "Recommended Action" })}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "권고 조치", en: "Recommended Action", ja: "Recommended Action", zh: "Recommended Action" })}</div>
               <textarea
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
                 maxLength={2000}
-                className="min-h-[180px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none"
+                className="min-h-[180px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               />
               <div className="mt-1 text-right text-[11px] text-text-tertiary">{action.length}/2000</div>
             </label>
@@ -259,14 +259,14 @@ export function SettlementWorkbench() {
 
           <div className="mt-6 flex justify-end">
             <button type="button" onClick={() => void handleSubmit()} disabled={!canSubmit} className="premium-button">
-              {submitting ? L4(lang, { ko: "저장 중...", en: "Saving..." }) : L4(lang, { ko: "정산 기록 저장", en: "Save Settlement" })}
+              {submitting ? L4(lang, { ko: "저장 중...", en: "Saving...", ja: "保存 중...", zh: "保存 중..." }) : L4(lang, { ko: "정산 기록 저장", en: "Save Settlement", ja: "정산 기록 保存", zh: "정산 기록 保存" })}
             </button>
           </div>
         </section>
 
         <aside className="space-y-4">
           <div className="premium-panel-soft p-5">
-            <div className="site-kicker">{L4(lang, { ko: "대상 미리보기", en: "Selected Log Preview" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "대상 미리보기", en: "Selected Log Preview", ja: "대상 プレビュー", zh: "대상 预览" })}</div>
             {selectedPost ? (
               <>
                 <h2 className="mt-3 text-lg font-semibold text-text-primary">{selectedPost.title}</h2>
@@ -276,12 +276,12 @@ export function SettlementWorkbench() {
                 </div>
               </>
             ) : (
-              <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "선택된 로그가 없습니다.", en: "No log selected." })}</p>
+              <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "선택된 로그가 없습니다.", en: "No log selected.", ja: "選択된 ログ가 없습니다.", zh: "选择된 日志가 없습니다." })}</p>
             )}
           </div>
 
           <div className="premium-panel-soft p-5">
-            <div className="site-kicker">{L4(lang, { ko: "최근 정산", en: "Recent Settlements" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "최근 정산", en: "Recent Settlements", ja: "Recent Settlements", zh: "Recent Settlements" })}</div>
             <div className="mt-4 space-y-3">
               {settlements.map((settlement) => (
                 <div key={settlement.id} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">

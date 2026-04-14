@@ -65,7 +65,7 @@ export const asy003Detector: RuleDetector = {
     sourceFile.forEachDescendant((node) => {
       if (node.getKind() !== SyntaxKind.ExpressionStatement) return;
       const es = node as ExpressionStatement;
-      let expr = es.getExpression();
+      const expr = es.getExpression();
       if (expr.getKind() === SyntaxKind.VoidExpression) return;
       if (expr.getKind() === SyntaxKind.AwaitExpression) return;
       if (isFloatingAsyncCall(expr, asyncNames)) {

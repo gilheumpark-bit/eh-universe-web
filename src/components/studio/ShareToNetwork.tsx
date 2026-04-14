@@ -4,7 +4,7 @@
 // PART 1 — Types, constants, and planet loader
 // ============================================================
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Share2, X, Globe, Lock, Users as UsersIcon, Check, AlertCircle, ChevronDown, Copy, ExternalLink } from 'lucide-react';
 import type { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
@@ -108,7 +108,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
   // Count assistant messages as episodes
   const episodes = messages.filter(m => m.role === 'assistant' && m.content);
 
-  const buildContent = (): string => {
+  const buildContent = useCallback((): string => {
     switch (shareType) {
       case 'episode':
         return buildShareEpisodeContent(messages, config, isKO);
@@ -121,7 +121,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
       default:
         return '';
     }
-  };
+  }, [shareType, messages, config, isKO]);
 
   const handlePublishToNetwork = async () => {
     if (!user) return;
@@ -197,7 +197,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
   const contentPreview = useMemo(() => {
     const full = buildContent();
     return full.length > 300 ? full.slice(0, 300) + '...' : full;
-  }, [shareType, messages, config]);
+  }, [buildContent]);
 
   const publishedUrl = publishedPostId ? `/network/posts/${publishedPostId}` : null;
 

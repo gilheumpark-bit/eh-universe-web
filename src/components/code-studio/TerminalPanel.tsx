@@ -155,8 +155,8 @@ async function analyzeErrorWithAI(
 
     if (summaryMatch || suggestionMatch) {
       return {
-        summary: summaryMatch?.[1]?.trim() ?? L4(lang, { ko: "분석 완료", en: "Analysis complete" }),
-        suggestion: suggestionMatch?.[1]?.trim() ?? L4(lang, { ko: "stderr 로그를 확인하세요.", en: "Please check stderr logs." }),
+        summary: summaryMatch?.[1]?.trim() ?? L4(lang, { ko: "분석 완료", en: "Analysis complete", ja: "分析完了", zh: "分析完成"}),
+        suggestion: suggestionMatch?.[1]?.trim() ?? L4(lang, { ko: "stderr 로그를 확인하세요.", en: "Please check stderr logs.", ja: "stderrログを確認してください。", zh: "请检查stderr日志。"}),
       };
     }
     return null;
@@ -196,7 +196,7 @@ export function TerminalPanel({
     navigator.clipboard.writeText(text).then(() => {
       setLines((prev) => [
         ...prev,
-        { text: L4(lang, { ko: "[출력이 클립보드에 복사됨]", en: "[Output copied to clipboard]" }), color: "blue" },
+        { text: L4(lang, { ko: "[출력이 클립보드에 복사됨]", en: "[Output copied to clipboard]", ja: "[出力がクリップボードにコピーされました]", zh: "[输出已复制到剪贴板]"}), color: "blue" },
       ]);
     });
   }, [lines, lang]);
@@ -205,7 +205,7 @@ export function TerminalPanel({
   useEffect(() => {
     let cancelled = false;
     setWcBooting(true);
-    setLines([{ text: L4(lang, { ko: "WebContainer 부팅 중\u2026", en: "Booting WebContainer\u2026" }), color: "blue" }]);
+    setLines([{ text: L4(lang, { ko: "WebContainer 부팅 중\u2026", en: "Booting WebContainer\u2026", ja: "WebContainer\u8D77\u52D5\u4E2D\u2026", zh: "WebContainer\u542F\u52A8\u4E2D\u2026"}), color: "blue" }]);
 
     (async () => {
       try {
@@ -216,13 +216,13 @@ export function TerminalPanel({
           {
             text: instance.isAvailable
               ? "EH Code Studio Terminal v2.0 \u2014 WebContainer Ready"
-              : L4(lang, { ko: "EH Code Studio Terminal v2.0 \u2014 시뮬레이션 모드", en: "EH Code Studio Terminal v2.0 \u2014 Simulated Mode" }),
+              : L4(lang, { ko: "EH Code Studio Terminal v2.0 \u2014 시뮬레이션 모드", en: "EH Code Studio Terminal v2.0 \u2014 Simulated Mode", ja: "EH Code Studio Terminal v2.0 \u2014 \u30B7\u30DF\u30E5\u30EC\u30FC\u30B7\u30E7\u30F3\u30E2\u30FC\u30C9", zh: "EH Code Studio Terminal v2.0 \u2014 \u6A21\u62DF\u6A21\u5F0F"}),
             color: "green",
           },
           {
             text: instance.isAvailable
-              ? L4(lang, { ko: "실제 명령 실행 가능: npm, node, git, ls, cat 등", en: "Actual commands available: npm, node, git, ls, cat, etc." })
-              : L4(lang, { ko: "시뮬레이션 모드 \u2014 내장 명령 사용 가능 (type 'help')", en: "Simulated mode \u2014 built-in commands available (type 'help')" }),
+              ? L4(lang, { ko: "실제 명령 실행 가능: npm, node, git, ls, cat 등", en: "Actual commands available: npm, node, git, ls, cat, etc.", ja: "実際のコマンド実行可能: npm, node, git, ls, cat等", zh: "可执行实际命令: npm, node, git, ls, cat等"})
+              : L4(lang, { ko: "시뮬레이션 모드 \u2014 내장 명령 사용 가능 (type 'help')", en: "Simulated mode \u2014 built-in commands available (type 'help')", ja: "\u30B7\u30DF\u30E5\u30EC\u30FC\u30B7\u30E7\u30F3\u30E2\u30FC\u30C9 \u2014 \u7D44\u307F\u8FBC\u307F\u30B3\u30DE\u30F3\u30C9\u4F7F\u7528\u53EF\u80FD (type 'help')", zh: "\u6A21\u62DF\u6A21\u5F0F \u2014 \u53EF\u4F7F\u7528\u5185\u7F6E\u547D\u4EE4 (type 'help')"}),
             color: instance.isAvailable ? "green" : "yellow",
           },
           { text: "" },
@@ -232,11 +232,11 @@ export function TerminalPanel({
         setLines([
           { text: "EH Code Studio Terminal v2.0", color: "green" },
           {
-            text: L4(lang, { ko: `WebContainer 부팅 실패: ${(err as Error).message}`, en: `WebContainer boot failed: ${(err as Error).message}` }),
+            text: L4(lang, { ko: `WebContainer 부팅 실패: ${(err as Error).message}`, en: `WebContainer boot failed: ${(err as Error).message}`, ja: `WebContainer起動失敗: ${(err as Error).message}`, zh: `WebContainer启动失败: ${(err as Error).message}`}),
             color: "red",
           },
           {
-            text: L4(lang, { ko: "내장 명령으로 대체합니다 (type 'help')", en: "Fallback to built-in commands (type 'help')" }),
+            text: L4(lang, { ko: "내장 명령으로 대체합니다 (type 'help')", en: "Fallback to built-in commands (type 'help')", ja: "組み込みコマンドに切替 (type 'help')", zh: "切换到内置命令 (type 'help')"}),
             color: "yellow",
           },
           { text: "" },
@@ -382,7 +382,7 @@ export function TerminalPanel({
           setLines((prev) => [...prev, ...newLines]);
           setLines((prev) => [
             ...prev,
-            { text: L4(lang, { ko: "[NOA 분석 중\u2026]", en: "[NOA analysis in progress\u2026]" }), color: "blue" },
+            { text: L4(lang, { ko: "[NOA 분석 중\u2026]", en: "[NOA analysis in progress\u2026]", ja: "[NOA\u5206\u6790\u4E2D\u2026]", zh: "[NOA\u5206\u6790\u4E2D\u2026]"}), color: "blue" },
           ]);
           const analysis = await analyzeErrorWithAI(
             cmd,
@@ -394,7 +394,7 @@ export function TerminalPanel({
             setLines((prev) => [
               ...prev,
               { text: `[AI] ${analysis.summary}`, color: "blue" },
-              { text: `[AI] ${L4(lang, { ko: "제안", en: "Suggestion" })}: ${analysis.suggestion}`, color: "blue" },
+              { text: `[AI] ${L4(lang, { ko: "제안", en: "Suggestion", ja: "提案", zh: "建议"})}: ${analysis.suggestion}`, color: "blue" },
               { text: "" },
             ]);
           } else {
@@ -601,7 +601,7 @@ export function TerminalPanel({
       {/* Header bar */}
       <div className="flex items-center justify-between px-3 py-1 bg-bg-secondary border-b border-white/8">
         <span className="flex items-center gap-1 text-xs text-text-secondary">
-          <TerminalIcon size={12} /> {L4(lang, { ko: "터미널", en: "Terminal" })}
+          <TerminalIcon size={12} /> {L4(lang, { ko: "터미널", en: "Terminal", ja: "ターミナル", zh: "终端"})}
           {wcInstance?.isAvailable && (
             <span className="text-[9px] px-1 py-0.5 bg-green-500/15 text-green-400 rounded">
               WebContainer
@@ -615,8 +615,8 @@ export function TerminalPanel({
           <button
             onClick={handleCopyOutput}
             className="p-0.5 hover:bg-white/5 rounded text-text-secondary hover:text-white"
-            title={L4(lang, { ko: "출력 복사", en: "Copy output" })}
-            aria-label={L4(lang, { ko: "출력 복사", en: "Copy output" })}
+            title={L4(lang, { ko: "출력 복사", en: "Copy output", ja: "出力コピー", zh: "复制输出"})}
+            aria-label={L4(lang, { ko: "출력 복사", en: "Copy output", ja: "出力コピー", zh: "复制输出"})}
           >
             <Copy size={11} />
           </button>
@@ -627,8 +627,8 @@ export function TerminalPanel({
                 ? "text-accent-amber"
                 : "text-text-secondary hover:text-white"
             }`}
-            title={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll" })}
-            aria-label={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll" })}
+            title={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll", ja: scrollLock ? "自動スクロールON" : "スクロールロック", zh: scrollLock ? "启用自动滚动" : "锁定滚动" })}
+            aria-label={L4(lang, { ko: scrollLock ? "자동 스크롤 켜기" : "스크롤 잠금", en: scrollLock ? "Enable auto-scroll" : "Lock scroll", ja: scrollLock ? "自動スクロールON" : "スクロールロック", zh: scrollLock ? "启用自动滚动" : "锁定滚动" })}
           >
             {scrollLock ? <Lock size={11} /> : <Unlock size={11} />}
           </button>
@@ -663,7 +663,7 @@ export function TerminalPanel({
               borderRadius: line.isCommand ? 2 : undefined,
             }}
             className={line.isCommand ? "hover:bg-white/5" : ""}
-            title={line.isCommand ? L4(lang, { ko: "클릭하여 다시 실행", en: "Click to run again" }) : undefined}
+            title={line.isCommand ? L4(lang, { ko: "클릭하여 다시 실행", en: "Click to run again", ja: "クリックして再実行", zh: "点击重新运行"}) : undefined}
           >
             {parseAnsi(line.text).map((span, j) => (
               <span
@@ -722,15 +722,15 @@ export function TerminalPanel({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent text-xs font-mono text-green-400 outline-none placeholder:text-white/60"
+          className="flex-1 bg-transparent text-xs font-mono text-green-400 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-white/60"
           placeholder={
             wcBooting
-              ? L4(lang, { ko: "부팅 중\u2026", en: "Booting\u2026" })
-              : L4(lang, { ko: "명령어 입력... (Tab: 자동완성, Ctrl+L: 화면 지우기)", en: "command... (Tab: autocomplete, Ctrl+L: clear)" })
+              ? L4(lang, { ko: "부팅 중\u2026", en: "Booting\u2026", ja: "\u8D77\u52D5\u4E2D\u2026", zh: "\u542F\u52A8\u4E2D\u2026"})
+              : L4(lang, { ko: "명령어 입력... (Tab: 자동완성, Ctrl+L: 화면 지우기)", en: "command... (Tab: autocomplete, Ctrl+L: clear)", ja: "コマンド入力... (Tab: 自動補完, Ctrl+L: クリア)", zh: "输入命令... (Tab: 自动补全, Ctrl+L: 清屏)"})
           }
           disabled={wcBooting}
           autoFocus
-          aria-label={L4(lang, { ko: "터미널 명령 입력", en: "Terminal command input" })}
+          aria-label={L4(lang, { ko: "터미널 명령 입력", en: "Terminal command input", ja: "ターミナルコマンド入力", zh: "终端命令输入"})}
         />
       </div>
     </div>

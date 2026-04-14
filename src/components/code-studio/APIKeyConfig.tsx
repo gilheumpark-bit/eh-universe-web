@@ -72,7 +72,7 @@ function loadSlots(): APIKeySlot[] {
 }
 
 function saveSlots(slots: APIKeySlot[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(slots));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(slots)); } catch { /* quota/private */ }
 }
 
 // IDENTITY_SEAL: PART-2 | role=Storage | inputs=localStorage | outputs=APIKeySlot[]
@@ -213,7 +213,7 @@ export function APIKeyConfig({ onClose }: Props) {
                 <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
                   <Key size={14} className="text-white/50 shrink-0" />
                   <input type="password" value={formKey} onChange={(e) => { setFormKey(e.target.value); setTestResult(null); }}
-                    placeholder={provider.placeholder} className="flex-1 bg-transparent text-sm text-white outline-none" />
+                    placeholder={provider.placeholder} className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                   <button onClick={handleTest} disabled={testing || !formKey.trim()}
                     className="px-2 py-0.5 text-[10px] rounded border border-white/10 hover:bg-white/10 disabled:opacity-30 flex items-center gap-1 text-white/70">
                     {testing ? <Loader2 size={12} className="animate-spin" /> : testResult === true ? <Check size={12} className="text-green-400" /> : testResult === false ? <X size={12} className="text-red-400" /> : null}
@@ -224,7 +224,7 @@ export function APIKeyConfig({ onClose }: Props) {
               <div>
                 <label className="text-[11px] text-white/50 mb-1 block">모델</label>
                 <select value={formModel || provider.models[0]} onChange={(e) => setFormModel(e.target.value)}
-                  className="w-full bg-white/5 text-sm text-white rounded-lg px-3 py-2 outline-none border border-white/10">
+                  className="w-full bg-white/5 text-sm text-white rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-white/10">
                   {provider.models.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
@@ -245,13 +245,13 @@ export function APIKeyConfig({ onClose }: Props) {
                   <label className="text-[11px] text-white/50 mb-1 block">커스텀 관점 설명</label>
                   <input type="text" value={formCustom} onChange={(e) => setFormCustom(e.target.value)}
                     placeholder="예: 접근성 전문가, 성능 최적화 관점..."
-                    className="w-full bg-white/5 text-sm text-white rounded-lg px-3 py-2 outline-none border border-white/10" />
+                    className="w-full bg-white/5 text-sm text-white rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-white/10" />
                 </div>
               )}
               <div>
                 <label className="text-[11px] text-white/50 mb-1 block">라벨 (선택)</label>
                 <input type="text" value={formLabel} onChange={(e) => setFormLabel(e.target.value)} placeholder={autoLabel}
-                  className="w-full bg-white/5 text-sm text-white rounded-lg px-3 py-2 outline-none border border-white/10" />
+                  className="w-full bg-white/5 text-sm text-white rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-white/10" />
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={handleSave} disabled={!formKey.trim()}

@@ -122,7 +122,7 @@ interface _VerifyResult {
 export async function runVerify(path: string, opts: VerifyOptions): Promise<void> {
   const threshold = Math.max(0, Math.min(100, parseInt(opts.threshold, 10) || 77));
   const startTime = performance.now();
-  const { printHeader, printScore, printSection, icons, colors } = require('../core/terminal-compat');
+  const { printHeader, _printScore, printSection, icons, colors } = require('../core/terminal-compat');
 
   printHeader(opts.diff ? '증분 검증 (git diff)' : '8팀 검증');
   console.log('');
@@ -373,18 +373,18 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
   // AI orchestrator는 파일별 실행으로 이동 (위 순차 실행 루프 참조)
 
   // ── Waveform 이상 탐지 ──
-  let waveformAnomalies = 0;
+  let _waveformAnomalies = 0;
   try {
     const { analyzeWaveform } = require('../core/integrity-waveform');
-    const fileStats = files.map(f => {
-      const count = allDetails.filter(d => true).length / Math.max(files.length, 1); // 파일별 평균 추정
+    const _fileStats = files.map(f => {
+      const count = allDetails.filter(_d => true).length / Math.max(files.length, 1); // 파일별 평균 추정
       return { file: f.relativePath, findings: count };
     });
     // 팀별 findings로 더 정확하게
     const teamStats = teams.map(t => ({ file: t.name, findings: t.findings }));
     const waveform = analyzeWaveform(teamStats);
     if (waveform.anomalies.length > 0) {
-      waveformAnomalies = waveform.anomalies.length;
+      _waveformAnomalies = waveform.anomalies.length;
       console.log(`  ⚡ Waveform: ${waveform.anomalies.length}개 팀 이상치 감지 (μ=${waveform.mean}, σ=${waveform.stdDev})`);
       for (const a of waveform.anomalies) {
         console.log(`    → ${a.file}: ${a.findings}건 (z=${a.zScore})`);
@@ -417,7 +417,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
 
   try {
     const { loadBaseline, filterByBaseline, initBaseline } = require('../core/baseline');
-    const { parseSuppressions, applySuppression, loadIgnorePatterns, isIgnored } = require('../core/suppression');
+    const { parseSuppressions, applySuppression, _loadIgnorePatterns, _isIgnored } = require('../core/suppression');
 
     // --init-baseline: 현재 결과를 baseline으로 저장
     if (opts.initBaseline) {
@@ -446,7 +446,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
     for (const file of files) {
       const suppressions = parseSuppressions(file.content);
       if (suppressions.length > 0) {
-        const fileFindings = allDetails.filter(d => true); // 현재 file 단위 분리 없으므로 전체에서 적용
+        const fileFindings = allDetails.filter(_d => true); // 현재 file 단위 분리 없으므로 전체에서 적용
         const result = applySuppression(fileFindings, suppressions);
         inlineSuppressed += result.suppressed;
       }

@@ -125,11 +125,12 @@ function BreakpointsSection() {
 
   // Refresh breakpoints on mount and periodically
   useEffect(() => {
-    setBps(getBreakpoints());
-    const interval = setInterval(() => {
-      setBps(getBreakpoints());
-    }, 2000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const refresh = () => { if (!cancelled) setBps(getBreakpoints()); };
+    // Initial load via microtask to avoid synchronous setState in effect
+    queueMicrotask(refresh);
+    const interval = setInterval(refresh, 2000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const handleToggle = useCallback((id: string) => {
@@ -271,7 +272,7 @@ function VariablesSection() {
             onChange={(e) => setNewExpr(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Add watch expression..."
-            className="flex-1 bg-transparent text-[10px] font-mono text-text-primary placeholder:text-text-tertiary outline-none"
+            className="flex-1 bg-transparent text-[10px] font-mono text-text-primary placeholder:text-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           />
           <button
             onClick={addWatch}

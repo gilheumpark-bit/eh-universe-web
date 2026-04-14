@@ -120,7 +120,7 @@ export function BoardPostNewClient() {
 
       router.push(`/network/posts/${post.id}`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "저장에 실패했습니다.", en: "Failed to save." }));
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "저장에 실패했습니다.", en: "Failed to save.", ja: "保存に失敗しました。", zh: "保存失败。" }));
     } finally {
       setSubmitting(false);
     }
@@ -164,7 +164,7 @@ export function BoardPostNewClient() {
               <select
                 value={boardType}
                 onChange={(e) => setBoardType(e.target.value as BoardType)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               >
                 {WRITABLE_BOARD_TYPES.map((bt) => (
                   <option key={bt} value={bt}>
@@ -182,7 +182,7 @@ export function BoardPostNewClient() {
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
                 placeholder={L2(LABELS.titlePlaceholder, lang)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-accent-amber/40"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-text-tertiary focus:border-accent-amber/40"
               />
             </label>
 
@@ -200,7 +200,7 @@ export function BoardPostNewClient() {
               </div>
               {showPreview ? (
                 <div className="min-h-[240px] rounded-3xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-7 text-text-secondary whitespace-pre-line">
-                  {content || L4(lang, { ko: "(내용 없음)", en: "(empty)" })}
+                  {content || L4(lang, { ko: "(내용 없음)", en: "(empty)", ja: "(内容なし)", zh: "(无内容)" })}
                 </div>
               ) : (
                 <textarea
@@ -208,7 +208,7 @@ export function BoardPostNewClient() {
                   onChange={(e) => setContent(e.target.value)}
                   maxLength={10000}
                   placeholder={L2(LABELS.contentPlaceholder, lang)}
-                  className="min-h-[240px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none placeholder:text-text-tertiary focus:border-accent-amber/40"
+                  className="min-h-[240px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-text-tertiary focus:border-accent-amber/40"
                 />
               )}
               <div className="mt-1 text-right text-[11px] text-text-tertiary">{content.length}/10000</div>
@@ -233,7 +233,7 @@ export function BoardPostNewClient() {
                 <select
                   value={planetId}
                   onChange={(e) => setPlanetId(e.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none"
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 >
                   <option value="">{L2(LABELS.planetNone, lang)}</option>
                   {planets.map((p) => (

@@ -5,7 +5,7 @@
 // formatAuditReport (audit-engine.ts) 스타일 기반.
 // Pipeline, Harness, CrossModel 결과를 통합 영수증으로 포맷.
 
-import { createHash, createHmac } from 'crypto';
+import { createHmac } from 'crypto';
 
 // ============================================================
 // PART 1 — Types

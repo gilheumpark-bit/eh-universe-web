@@ -29,7 +29,7 @@ export function formatConventionalCommit(
   return msg;
 }
 
-export function generateCommitMessage(diffs: any[]): CommitMessage {
+export function generateCommitMessage(diffs: { filePath: string }[]): CommitMessage {
   if (!diffs || diffs.length === 0) {
     return {
       type: 'chore',

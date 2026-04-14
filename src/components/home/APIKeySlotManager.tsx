@@ -211,7 +211,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                   value={keyInput}
                   onChange={(e) => { setKeyInput(e.target.value); setTestResult(null); }}
                   placeholder={activeProvider.placeholder}
-                  className="flex-1 bg-transparent text-sm text-text-primary outline-none min-w-0"
+                  className="flex-1 bg-transparent text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-w-0"
                   autoFocus
                 />
                 <button onClick={() => setShowKey(v => !v)} className="p-0.5 text-text-tertiary hover:text-text-secondary">
@@ -234,7 +234,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                   <select
                     value={modelSelect}
                     onChange={(e) => setModelSelect(e.target.value)}
-                    className="w-full bg-bg-primary text-[12px] text-text-primary rounded-lg px-3 py-2 pr-7 outline-none border border-border appearance-none"
+                    className="w-full bg-bg-primary text-[12px] text-text-primary rounded-lg px-3 py-2 pr-7 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-border appearance-none"
                   >
                     {activeProvider.models.map((m) => (
                       <option key={m} value={m} className="bg-bg-secondary text-text-primary">{m}</option>

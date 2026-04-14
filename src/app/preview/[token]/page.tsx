@@ -120,7 +120,7 @@ function FeedbackPanel({
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
               placeholder="이름 (선택)"
-              className="w-full bg-bg-tertiary/50 rounded-lg px-3 py-1.5 text-[11px] text-text-primary placeholder-text-tertiary border border-border/20 outline-none focus:border-accent-purple/40"
+              className="w-full bg-bg-tertiary/50 rounded-lg px-3 py-1.5 text-[11px] text-text-primary placeholder-text-tertiary border border-border/20 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/40"
             />
             <div className="flex gap-1.5">
               <input
@@ -128,7 +128,7 @@ function FeedbackPanel({
                 onChange={(e) => setComment(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder="이 장면에 대한 의견..."
-                className="flex-1 bg-bg-tertiary/50 rounded-lg px-3 py-1.5 text-[11px] text-text-primary placeholder-text-tertiary border border-border/20 outline-none focus:border-accent-purple/40"
+                className="flex-1 bg-bg-tertiary/50 rounded-lg px-3 py-1.5 text-[11px] text-text-primary placeholder-text-tertiary border border-border/20 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/40"
               />
               <button
                 onClick={handleSend}
@@ -239,7 +239,7 @@ export default function PreviewPage() {
             onChange={(e) => setPasswordInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handlePasswordSubmit(); }}
             placeholder="비밀번호 입력"
-            className="bg-bg-secondary border border-border/40 rounded-xl px-4 py-2.5 text-sm text-text-primary outline-none focus:border-accent-purple/50"
+            className="bg-bg-secondary border border-border/40 rounded-xl px-4 py-2.5 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50"
             autoFocus
           />
           <button

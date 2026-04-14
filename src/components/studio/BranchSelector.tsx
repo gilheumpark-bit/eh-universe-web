@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { BookCopy, Plus, Check, ChevronDown, X } from 'lucide-react';
+import { BookCopy, Plus, Check, ChevronDown } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 

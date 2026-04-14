@@ -319,7 +319,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 {L4(lang, { ko: "탐색", en: "EXPLORE", ja: "探索", zh: "探索" })}
               </button>
               {exploreOpen && (
-                <div className="absolute left-0 top-full z-[100] pt-3">
+                <div className="absolute left-0 top-full z-[var(--z-dropdown)] pt-3">
                   <div
                     className="premium-panel-soft min-w-[180px] overflow-hidden rounded-3xl border border-white/8 p-2"
                     role="menu"
@@ -368,7 +368,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 {L4(lang, { ko: "도구", en: "TOOLS", ja: "ツール", zh: "工具" })}
               </button>
               {toolsOpen && (
-                <div className="absolute right-0 top-full z-[100] pt-3">
+                <div className="absolute right-0 top-full z-[var(--z-dropdown)] pt-3">
                   <div className="premium-panel-soft min-w-[220px] overflow-hidden rounded-3xl border border-white/8 p-2" role="menu" aria-label="Tools">
                     {toolItems.map((ti, idx) => (
                       <Link

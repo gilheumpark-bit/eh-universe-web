@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
 import { getApiKey, hasDgxService, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import type { AppLanguage } from '@/lib/studio-types';
-import { APIKeySlotManager } from '@/components/home/APIKeySlotManager';
+// APIKeySlotManager moved to TranslatorModals
 import { logger } from '@/lib/logger';
 import {
   loadProjectFromCloud,
@@ -18,7 +18,7 @@ import {
   supabaseUrl,
 } from '@/lib/supabase';
 import { useAppDialog } from '@/hooks/useAppDialog';
-import { AppDialog } from '@/components/ui/AppDialog';
+import { TranslatorModals } from './TranslatorModals';
 import {
   PROJECT_LIBRARY_KEY,
   MAX_LOCAL_PROJECTS,
@@ -87,7 +87,7 @@ export default function TranslatorStudioApp() {
   const [hostedProviders, setHostedProviders] = useState<Partial<Record<ProviderId, boolean>>>({});
   const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyRefresh, setApiKeyRefresh] = useState(0);
+  const [_apiKeyRefresh, setApiKeyRefresh] = useState(0);
   const [apiBannerDismissed, setApiBannerDismissed] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -150,7 +150,7 @@ export default function TranslatorStudioApp() {
 
   // ── GlossaryManager: real-time glossary injection ──
   const glossaryManagerRef = useRef(getGlossaryManager());
-  const [glossaryVersion, setGlossaryVersion] = useState(() => glossaryManagerRef.current.version);
+  const [_glossaryVersion, setGlossaryVersion] = useState(() => glossaryManagerRef.current.version);
 
   // Sync: glossary state → GlossaryManager (when user edits via setGlossary)
   useEffect(() => {
@@ -210,7 +210,7 @@ export default function TranslatorStudioApp() {
       }
       return '';
     },
-    [apiKeys, apiKeyRefresh],
+    [apiKeys],
   );
 
   const hasTranslatorAiAccess = useMemo(() => {
@@ -219,9 +219,9 @@ export default function TranslatorStudioApp() {
     if (provider === 'gemini' && hostedGemini) return true;
     if (hasDgxService()) return true;
     return false;
-  }, [provider, hostedGemini, getEffectiveApiKeyForProvider, apiKeyRefresh]);
+  }, [provider, hostedGemini, getEffectiveApiKeyForProvider]);
 
-  const studioLanguage: AppLanguage = useMemo(() => {
+  const _studioLanguage: AppLanguage = useMemo(() => {
     if (lang === 'ko') return 'KO';
     if (lang === 'ja') return 'JP';
     if (lang === 'zh') return 'CN';
@@ -1523,22 +1523,14 @@ export default function TranslatorStudioApp() {
           <TranslatorShell />
         </div>
       </div>
-      {showApiKeyModal && (
-        <APIKeySlotManager
-          onClose={() => { setShowApiKeyModal(false); setApiKeyRefresh((n) => n + 1); }}
-        />
-      )}
-      {dialog && (
-        <AppDialog
-          open
-          variant={dialog.kind === 'confirm' ? 'confirm' : 'alert'}
-          title={dialog.title ?? '알림'}
-          message={dialog.message}
-          onClose={dismiss}
-          onConfirm={confirmYes}
-          onAlertOk={alertOk}
-        />
-      )}
+      <TranslatorModals
+        showApiKeyModal={showApiKeyModal}
+        onCloseApiKeyModal={() => { setShowApiKeyModal(false); setApiKeyRefresh((n) => n + 1); }}
+        dialog={dialog}
+        onDismiss={dismiss}
+        onConfirmYes={confirmYes}
+        onAlertOk={alertOk}
+      />
     </TranslatorContext.Provider>
   );
 }

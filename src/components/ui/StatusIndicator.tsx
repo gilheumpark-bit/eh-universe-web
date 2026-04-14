@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff, HardDrive, Cpu } from "lucide-react";
+import { Wifi, WifiOff, HardDrive } from "lucide-react";
 
 export function StatusIndicator() {
   const [isOffline, setIsOffline] = useState(false);
@@ -34,7 +34,7 @@ export function StatusIndicator() {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
-  }, []);
+  }, [setStoragePercent, setStorageLabel]);
 
   // 오프라인일 때만 눈에 띄게 표시
   if (isOffline) {

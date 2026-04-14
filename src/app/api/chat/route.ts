@@ -17,6 +17,7 @@ import { dispatchStream } from '@/services/aiProviders';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { MODEL_WRITER } from '@/lib/dgx-models';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { isFeatureEnabledServer } from '@/lib/feature-flags';
 import { runNoa } from '@/lib/noa';
 import type { DomainType } from '@/lib/noa/types';
 import { getSwapController, type AdapterMode } from '@/lib/noa/lora-swap';
@@ -196,7 +197,7 @@ function resolveAuth(
   }
 
   // 티어별 기능 제한 적용 (OPEN_BETA=true면 모두 Pro급)
-  const tierLimits = getTierLimits(userTier as 'none' | 'free' | 'pro');
+  const _tierLimits = getTierLimits(userTier as 'none' | 'free' | 'pro');
 
   const hostedGeminiEnabled = provider === 'gemini' && hasServerProviderCredentials('gemini');
 
@@ -409,6 +410,17 @@ export async function POST(req: NextRequest) {
         status: 403,
         headers: { 'X-Noa-Audit-Id': noaResult.auditEntry.id }
       });
+    }
+
+    // Security Gate: server-side pre-flight scan (strict mode)
+    if (isFeatureEnabledServer('SECURITY_GATE')) {
+      const { scanContent } = await import('@/lib/security-gate');
+      const combined = messages.map((m: { content: string }) => m.content ?? '').join('\n');
+      const scan = scanContent(combined, { sensitivity: 'strict' });
+      if (!scan.safe) {
+        apiLog({ level: 'warn', event: 'security_gate_blocked', route: '/api/chat', ip, requestId, meta: { score: scan.score, findings: scan.findings.length } });
+        return NextResponse.json({ error: 'Security Gate: content blocked', findings: scan.findings.map(f => f.pattern) }, { status: 403 });
+      }
     }
 
     let dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);

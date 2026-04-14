@@ -97,6 +97,31 @@ function splitNarrativeContent(content: string, maxChunkChars: number) {
   return splitByParagraphBlocks(content, maxChunkChars);
 }
 
+// Magic bytes validation — ensures file content matches declared MIME type
+const MAGIC_BYTES: Record<string, number[]> = {
+  'application/pdf': [0x25, 0x50, 0x44, 0x46],           // %PDF
+  'application/epub+zip': [0x50, 0x4B, 0x03, 0x04],      // PK (ZIP)
+  'application/vnd.openxmlformats-officedocument': [0x50, 0x4B, 0x03, 0x04], // PK (ZIP for docx/xlsx)
+  'text/plain': [], // no magic bytes check for text
+  'text/markdown': [], // no magic bytes check for markdown
+};
+
+function validateMagicBytes(buffer: Buffer, expectedMime: string): boolean {
+  const magic = MAGIC_BYTES[expectedMime];
+  if (!magic || magic.length === 0) return true; // no check needed
+  if (buffer.length < magic.length) return false;
+  return magic.every((byte, i) => buffer[i] === byte);
+}
+
+function getMimeForExtension(fileName: string): string | null {
+  if (fileName.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument';
+  if (fileName.endsWith('.pdf')) return 'application/pdf';
+  if (fileName.endsWith('.epub')) return 'application/epub+zip';
+  if (fileName.endsWith('.txt')) return 'text/plain';
+  if (fileName.endsWith('.md')) return 'text/markdown';
+  return null;
+}
+
 const DEFAULT_PARAGRAPH_CHUNK = 4000;
 /** EH Translator 클라이언트가 보낼 때만 — 번역 스튜디오 업로드 한정 */
 const TRANSLATOR_PARAGRAPH_CHUNK = 9500;
@@ -141,7 +166,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File too large' }, { status: 413 });
     }
     const fileName = file.name.toLowerCase();
-    
+
+    // Validate magic bytes to prevent extension spoofing
+    const expectedMime = getMimeForExtension(fileName);
+    if (expectedMime && !validateMagicBytes(buffer, expectedMime)) {
+      return NextResponse.json({ error: 'File content does not match declared type' }, { status: 400 });
+    }
+
     let content = '';
 
     // DOCX PARSING
@@ -151,7 +182,7 @@ export async function POST(req: NextRequest) {
     } 
     // PDF PARSING
     else if (fileName.endsWith('.pdf')) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pdf-parse module shape varies across CJS/ESM
       const pdfParse = await import('pdf-parse').then((m: any) => m.default || m);
       // Create a blob/buffer for pdf-parse
       const data = await pdfParse(buffer);
@@ -161,43 +192,37 @@ export async function POST(req: NextRequest) {
     else if (fileName.endsWith('.epub')) {
       const EPubModule = await import('epub2');
       const EPub = EPubModule.default || EPubModule;
-      // epub2 usually expects a file path, to use buffer, we might need a temp file or memfs.
-      // But let's fallback to rudimentary regex extraction if epub2 requires file path.
-      // Actually epub2 supports parsing from buffer via EPub constructor if we hack the prototype, but the easiest way in a NextJS edge/serverless is using a tmp directory or just basic AdmZip parsing.
-      // For now, let's write the buffer to /tmp (Vercel allows write to /tmp)
       const fs = await import('fs');
       const os = await import('os');
       const path = await import('path');
       const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
-      fs.writeFileSync(tempPath, buffer);
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const epubData = await new Promise<any[]>((resolve) => {
-        const epub = new EPub(tempPath, '/images/', '/links/');
-        epub.on('end', () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const chaptersData: any[] = [];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const flow = (epub as any).flow || [];
-          let processed = 0;
-          if (flow.length === 0) return resolve([]);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          flow.forEach((chapter: any, index: number) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            epub.getChapter(chapter.id || '', (err: any, text?: string) => {
-              if (!err && text) {
-                const plain = text.replace(/<[^>]+>/g, '\n').trim();
-                if (plain.length > 50) chaptersData[index] = { title: chapter.title || `Chapter ${index+1}`, content: plain };
-              }
-              processed++;
-              if (processed === flow.length) resolve(chaptersData.filter(Boolean));
+      try {
+        fs.writeFileSync(tempPath, buffer);
+
+        const epubData = await new Promise<{ title: string; content: string }[]>((resolve) => {
+          const epub = new EPub(tempPath, '/images/', '/links/');
+          epub.on('end', () => {
+            const chaptersData: { title: string; content: string }[] = [];
+            const flow = ((epub as unknown as { flow?: { id?: string; title?: string }[] }).flow) || [];
+            let processed = 0;
+            if (flow.length === 0) return resolve([]);
+            flow.forEach((chapter: { id?: string; title?: string }, index: number) => {
+              epub.getChapter(chapter.id || '', (err: Error | null, text?: string) => {
+                if (!err && text) {
+                  const plain = text.replace(/<[^>]+>/g, '\n').trim();
+                  if (plain.length > 50) chaptersData[index] = { title: chapter.title || `Chapter ${index+1}`, content: plain };
+                }
+                processed++;
+                if (processed === flow.length) resolve(chaptersData.filter(Boolean));
+              });
             });
           });
+          epub.parse();
         });
-        epub.parse();
-      });
-      fs.unlinkSync(tempPath);
-      return NextResponse.json({ chapters: epubData });
+        return NextResponse.json({ chapters: epubData });
+      } finally {
+        try { fs.unlinkSync(tempPath); } catch { /* already cleaned */ }
+      }
     } 
     // TXT/MD
     else if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {

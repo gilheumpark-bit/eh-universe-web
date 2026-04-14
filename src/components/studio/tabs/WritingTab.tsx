@@ -20,9 +20,9 @@ const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: 
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false, loading: () => null });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: () => null });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: () => null });
-const DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false, loading: () => null });
+const _DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false, loading: () => null });
 const EngineDashboard = dynamic(() => import('@/components/studio/EngineDashboard'), { ssr: false, loading: () => null });
-const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: () => null });
+const _EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: () => null });
 
 interface WritingTabProps {
   language: AppLanguage;
@@ -74,7 +74,7 @@ interface WritingTabProps {
 }
 
 const WritingTab: React.FC<WritingTabProps> = ({
-  language, currentSession, currentSessionId, updateCurrentSession, setConfig,
+  language, currentSession, currentSessionId, updateCurrentSession, setConfig: _setConfig,
   writingMode, setWritingMode,
   editDraft, setEditDraft,
   canvasContent, setCanvasContent,
@@ -88,8 +88,8 @@ const WritingTab: React.FC<WritingTabProps> = ({
   advancedSettings, setAdvancedSettings,
   input, setInput,
   showDashboard,
-  rightPanelOpen, setRightPanelOpen,
-  directorReport, hfcpState: _hfcpState,
+  rightPanelOpen: _rightPanelOpen, setRightPanelOpen: _setRightPanelOpen,
+  directorReport: _directorReport, hfcpState: _hfcpState,
   handleNextEpisode,
   hostedProviders = {},
 }: WritingTabProps) => {
@@ -291,7 +291,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   value={promptDirective} 
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPromptDirective(e.target.value)} 
                   placeholder={t('writingMode.directivePlaceholder')} 
-                  className="flex-1 bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all placeholder:text-text-tertiary" 
+                  className="flex-1 bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all placeholder:text-text-tertiary" 
                 />
               </div>
             </div>
@@ -332,7 +332,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {!editDraft.trim() ? (
                   <div className="text-center py-16 space-y-4">
                     <PenTool className="w-8 h-8 text-text-tertiary mx-auto opacity-50" />
-                    <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} onContextMenu={textMenu.openMenu} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus:border-accent-purple transition-colors font-mono resize-y" />
+                    <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} onContextMenu={textMenu.openMenu} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors font-mono resize-y" />
                   </div>
                 ) : (
                   <InlineRewriter content={editDraft} language={language} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
@@ -351,7 +351,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 2 ? 'bg-pink-600/20 text-pink-400 border border-pink-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>💓 {t('canvas.emotion')}</div>
                   <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 3 ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>👁 {t('canvas.sensory')}</div>
                 </div>
-                <textarea value={canvasContent} onChange={e => setCanvasContent(e.target.value)} onContextMenu={textMenu.openMenu} className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif outline-none focus:border-accent-purple transition-colors resize-y" />
+                <textarea value={canvasContent} onChange={e => setCanvasContent(e.target.value)} onContextMenu={textMenu.openMenu} className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors resize-y" />
               </div>
             )}
             
@@ -388,7 +388,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
                 onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => { handleSVIKeyDown(e); if (e.nativeEvent.isComposing || e.keyCode === 229) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={!hasApiKey ? t('writingMode.apiKeyPlaceholder') : t('writing.inputPlaceholder')}
-                className={`flex-1 bg-transparent border-none outline-none py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${!hasApiKey ? 'cursor-not-allowed opacity-60' : ''}`}
+                className={`flex-1 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-3 md:py-4 text-sm md:text-[15px] text-text-primary placeholder-text-tertiary resize-none max-h-40 leading-relaxed ${!hasApiKey ? 'cursor-not-allowed opacity-60' : ''}`}
                 rows={1}
                 disabled={isGenerating || !hasApiKey}
               />

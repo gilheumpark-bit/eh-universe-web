@@ -137,7 +137,7 @@ function checkBraceBalance(code: string, fileName: string): DeepFinding[] {
 
   let braceDepth = 0;
   let parenDepth = 0;
-  let bracketDepth = 0;
+  let _bracketDepth = 0;
   const braceStack: Array<{ line: number; char: string }> = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -169,8 +169,8 @@ function checkBraceBalance(code: string, fileName: string): DeepFinding[] {
       }
       if (char === '(') parenDepth++;
       if (char === ')') parenDepth--;
-      if (char === '[') bracketDepth++;
-      if (char === ']') bracketDepth--;
+      if (char === '[') _bracketDepth++;
+      if (char === ']') _bracketDepth--;
     }
   }
 

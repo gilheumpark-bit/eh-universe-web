@@ -550,7 +550,7 @@ export function useTranslation({
     } finally {
       inFlightRef.current = false;
     }
-  }, [translateEpisode, onBatchProgress]);
+  }, [translateEpisode, onBatchProgress, getLatestGlossary]);
 
   const abort = useCallback(() => { abortRef.current?.abort(); }, []);
 

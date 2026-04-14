@@ -71,7 +71,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "데이터를 불러오지 못했습니다.", en: "Failed to load data." }));
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "데이터를 불러오지 못했습니다.", en: "Failed to load data.", ja: "データ를 불러오지 못했습니다.", zh: "数据를 불러오지 못했습니다." }));
         }
       } finally {
         if (!cancelled) {
@@ -96,7 +96,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
     setError(null);
 
     try {
-      const updated = await updatePost({
+      const _updated = await updatePost({
         postId: post.id,
         updaterId: user.uid,
         title: value.title,
@@ -123,7 +123,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
 
       router.push(`/network/posts/${post.id}`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "로그 수정에 실패했습니다.", en: "Failed to update the log." }));
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "로그 수정에 실패했습니다.", en: "Failed to update the log.", ja: "ログ 編集に失敗しました。", zh: "日志 编辑失败。" }));
     } finally {
       setSubmitting(false);
     }
@@ -137,7 +137,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
         <div className="site-shell py-10">
           <section className="premium-panel p-8 flex flex-col items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
-            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "게시글을 불러오는 중...", en: "Loading post..." })}</p>
+            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "게시글을 불러오는 중...", en: "Loading post...", ja: "投稿을 불러오는 중...", zh: "帖子을 불러오는 중..." })}</p>
           </section>
         </div>
       </main>
@@ -164,7 +164,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
         </Link>
         <section className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="site-kicker">{L4(lang, { ko: "관측 로그 수정", en: "Edit Observation Log" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "관측 로그 수정", en: "Edit Observation Log", ja: "観測 ログ 編集", zh: "观测 日志 编辑" })}</div>
             <h1 className="site-title mt-2 text-3xl font-semibold">
               {value.title}
             </h1>
@@ -180,7 +180,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
           planetOptions={planet ? [{ id: planet.id, name: planet.name }] : []}
           showPlanetSelect={false}
           submitting={submitting}
-          submitLabel={L4(lang, { ko: "수정 완료", en: "Save Changes" })}
+          submitLabel={L4(lang, { ko: "수정 완료", en: "Save Changes", ja: "編集完了", zh: "编辑完成" })}
           onChange={setValue}
           onInsertTemplate={() => {}} // 템플릿 삽입 없음
           onSubmit={() => void handleSubmit()}

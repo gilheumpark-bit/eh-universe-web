@@ -68,18 +68,18 @@ function TabContextMenu({
           onCloseTab(state.fileId);
           onClose();
         }}
-        className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10 flex items-center gap-2"
+        className="w-full text-left px-3 py-1.5 text-xs text-text-tertiary hover:bg-white/10 flex items-center gap-2"
       >
-        <X size={10} /> {L4(lang, { ko: "닫기", en: "Close" })}
+        <X size={10} /> {L4(lang, { ko: "닫기", en: "Close", ja: "閉じる", zh: "关闭"})}
       </button>
       <button
         onClick={() => {
           onCloseOtherTabs(state.fileId);
           onClose();
         }}
-        className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10"
+        className="w-full text-left px-3 py-1.5 text-xs text-text-tertiary hover:bg-white/10"
       >
-        {L4(lang, { ko: "다른 탭 닫기", en: "Close Other Tabs" })}
+        {L4(lang, { ko: "다른 탭 닫기", en: "Close Other Tabs", ja: "他のタブを閉じる", zh: "关闭其他标签页"})}
       </button>
       <div className="h-px bg-white/10 my-1" />
       <button
@@ -89,7 +89,7 @@ function TabContextMenu({
         }}
         className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-white/10"
       >
-        {L4(lang, { ko: "모든 탭 닫기", en: "Close All Tabs" })}
+        {L4(lang, { ko: "모든 탭 닫기", en: "Close All Tabs", ja: "すべてのタブを閉じる", zh: "关闭所有标签页"})}
       </button>
     </div>
   );
@@ -203,7 +203,7 @@ export const EditorTabs = memo(function EditorTabs({
     return (
       <div className="flex items-center h-9 px-3 bg-bg-primary border-b border-white/8">
         <span className="text-xs text-text-tertiary italic">
-          {L4(lang, { ko: "열린 파일 없음", en: "No open files" })}
+          {L4(lang, { ko: "열린 파일 없음", en: "No open files", ja: "開いているファイルなし", zh: "没有打开的文件"})}
         </span>
       </div>
     );
@@ -239,7 +239,7 @@ export const EditorTabs = memo(function EditorTabs({
                 ${
                   isActive
                     ? "bg-bg-primary text-white"
-                    : "text-text-secondary hover:bg-white/5 hover:text-gray-300"
+                    : "text-text-secondary hover:bg-white/5 hover:text-text-tertiary"
                 }
                 ${isDragTarget ? "border-l-2 border-l-amber-700" : ""}
               `}

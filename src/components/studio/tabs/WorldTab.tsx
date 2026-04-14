@@ -45,32 +45,35 @@ const WorldTab: React.FC<WorldTabProps> = ({
       onSave={onSave}
       saveFlash={saveFlash}
       hostedProviders={hostedProviders}
-      handleWorldSimChange={(data) => {
+      handleWorldSimChange={(data: Record<string, unknown>) => {
         if (!currentSessionId) return;
+        const civs = Array.isArray(data.civs) ? data.civs as { id?: string; name: string; era: string; color: string; traits: string[] }[] : [];
+        const relations = Array.isArray(data.relations) ? data.relations as { from: string; to: string; type: string }[] : [];
+        const simUpdate = data as unknown as import('@/lib/studio-types').WorldSimData;
         updateCurrentSession({
           config: {
             ...config,
             worldSimData: {
               ...config.worldSimData,
-              civs: data.civs.map((c: { name: string; era: string; color: string; traits: string[] }) => ({
+              civs: civs.map(c => ({
                 name: c.name,
                 era: c.era,
                 color: c.color,
                 traits: c.traits
               })),
-              relations: data.relations.map((r: { from: string; to: string; type: string }) => {
-                const from = data.civs.find((c: { id: string; name: string }) => c.id === r.from)?.name || '';
-                const to = data.civs.find((c: { id: string; name: string }) => c.id === r.to)?.name || '';
+              relations: relations.map(r => {
+                const from = civs.find(c => c.id === r.from)?.name || '';
+                const to = civs.find(c => c.id === r.to)?.name || '';
                 return { fromName: from, toName: to, type: r.type };
               }),
-              transitions: data.transitions,
-              selectedGenre: data.selectedGenre,
-              selectedLevel: data.selectedLevel,
-              genreSelections: data.genreSelections,
-              ruleLevel: data.ruleLevel,
-              phonemes: data.phonemes,
-              words: data.words,
-              hexMap: data.hexMap,
+              transitions: simUpdate.transitions,
+              selectedGenre: simUpdate.selectedGenre,
+              selectedLevel: simUpdate.selectedLevel,
+              genreSelections: simUpdate.genreSelections,
+              ruleLevel: simUpdate.ruleLevel,
+              phonemes: simUpdate.phonemes,
+              words: simUpdate.words,
+              hexMap: simUpdate.hexMap,
             },
           },
         });

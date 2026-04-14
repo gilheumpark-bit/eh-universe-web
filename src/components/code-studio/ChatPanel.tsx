@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, memo } from "react";
 import {
   Send, Sparkles, Shield, Square, AtSign, History,
   Trash2, Plus, Check, Zap, Stethoscope, Code2,
@@ -103,6 +103,64 @@ function extractCodeBlocks(content: string): Array<{ code: string; language: str
 }
 
 // IDENTITY_SEAL: PART-3 | role=CodeExtract | inputs=content | outputs=codeBlocks
+
+// ============================================================
+// PART 3-B — Memoized Chat Message Item
+// ============================================================
+
+interface ChatMessageItemProps {
+  msg: { id: string; role: string; content: string };
+  onApplyCode?: (code: string, fileName?: string) => void;
+}
+
+const ChatMessageItem = memo(function ChatMessageItem({ msg, onApplyCode }: ChatMessageItemProps) {
+  const codeBlocks = msg.role === "assistant" ? extractCodeBlocks(msg.content) : [];
+  return (
+    <div className="text-xs leading-relaxed">
+      <div className="flex items-center gap-1 mb-1">
+        {msg.role === "user" ? (
+          <span className="text-blue-400 font-semibold">You</span>
+        ) : (
+          <span className="text-amber-400 font-semibold flex items-center gap-1"><Shield size={10} /> EH</span>
+        )}
+      </div>
+      <div className="text-text-primary whitespace-pre-wrap">{msg.content}</div>
+      {codeBlocks.map((block, idx) => {
+        const isUI = /tsx?/.test(block.language ?? '') && (/</.test(block.code) || /className/.test(block.code));
+        const lint = isUI ? runDesignLint(block.code) : null;
+        return (
+          <div key={idx} className="mt-1 space-y-1">
+            <div className="flex items-center gap-1">
+              <button onClick={() => onApplyCode?.(block.code, block.fileName)}
+                className="text-[9px] px-2 py-0.5 rounded bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">
+                Apply
+              </button>
+              <button onClick={() => navigator.clipboard.writeText(block.code)}
+                className="text-[9px] px-2 py-0.5 rounded bg-bg-tertiary text-text-tertiary hover:bg-border transition-colors">
+                Copy
+              </button>
+              {lint && (
+                <span className={`text-[9px] px-1.5 py-0.5 rounded ${lint.passed ? 'bg-accent-green/15 text-accent-green' : 'bg-accent-red/15 text-accent-red'}`}>
+                  Design {lint.score}/100
+                </span>
+              )}
+            </div>
+            {lint && lint.issues.length > 0 && (
+              <details className="text-[9px] text-text-tertiary">
+                <summary className="cursor-pointer hover:text-text-secondary">
+                  {lint.issues.length} design issue{lint.issues.length !== 1 ? 's' : ''} found
+                </summary>
+                <pre className="mt-1 p-2 bg-bg-primary rounded text-[8px] leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
+                  {formatDesignLintReport(lint)}
+                </pre>
+              </details>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+});
 
 // ============================================================
 // PART 4 — Main Component
@@ -325,7 +383,7 @@ ${mcpToolsDoc}`,
       : '';
 
     await chat.sendMessage(presetHint ? `${text}${presetHint}` : text);
-  }, [input, chat]);
+  }, [input, chat, onFileAction, onTerminalCommand]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -383,7 +441,7 @@ ${mcpToolsDoc}`,
                     <input autoFocus value={renameValue} onChange={(e) => setRenameValue(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") handleConfirmRename(session.id); if (e.key === "Escape") { setRenamingId(null); setRenameValue(""); } }}
                       onBlur={() => handleConfirmRename(session.id)}
-                      className="flex-1 text-xs bg-bg-tertiary border border-border rounded px-1.5 py-0.5 outline-none text-text-primary"
+                      className="flex-1 text-xs bg-bg-tertiary border border-border rounded px-1.5 py-0.5 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary"
                     />
                     <button onClick={() => handleConfirmRename(session.id)} aria-label="이름 변경 확인" className="text-green-400 p-0.5"><Check size={11} /></button>
                   </div>
@@ -419,54 +477,9 @@ ${mcpToolsDoc}`,
             </div>
           </div>
         )}
-        {chat.messages.map((msg) => {
-          const codeBlocks = msg.role === "assistant" ? extractCodeBlocks(msg.content) : [];
-          return (
-            <div key={msg.id} className="text-xs leading-relaxed">
-              <div className="flex items-center gap-1 mb-1">
-                {msg.role === "user" ? (
-                  <span className="text-blue-400 font-semibold">You</span>
-                ) : (
-                  <span className="text-amber-400 font-semibold flex items-center gap-1"><Shield size={10} /> EH</span>
-                )}
-              </div>
-              <div className="text-text-primary whitespace-pre-wrap">{msg.content}</div>
-              {codeBlocks.map((block, idx) => {
-                const isUI = /tsx?/.test(block.language ?? '') && (/</.test(block.code) || /className/.test(block.code));
-                const lint = isUI ? runDesignLint(block.code) : null;
-                return (
-                  <div key={idx} className="mt-1 space-y-1">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => onApplyCode?.(block.code, block.fileName)}
-                        className="text-[9px] px-2 py-0.5 rounded bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">
-                        Apply
-                      </button>
-                      <button onClick={() => navigator.clipboard.writeText(block.code)}
-                        className="text-[9px] px-2 py-0.5 rounded bg-bg-tertiary text-text-tertiary hover:bg-border transition-colors">
-                        Copy
-                      </button>
-                      {lint && (
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${lint.passed ? 'bg-accent-green/15 text-accent-green' : 'bg-accent-red/15 text-accent-red'}`}>
-                          Design {lint.score}/100
-                        </span>
-                      )}
-                    </div>
-                    {lint && lint.issues.length > 0 && (
-                      <details className="text-[9px] text-text-tertiary">
-                        <summary className="cursor-pointer hover:text-text-secondary">
-                          {lint.issues.length} design issue{lint.issues.length !== 1 ? 's' : ''} found
-                        </summary>
-                        <pre className="mt-1 p-2 bg-bg-primary rounded text-[8px] leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
-                          {formatDesignLintReport(lint)}
-                        </pre>
-                      </details>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+        {chat.messages.map((msg) => (
+          <ChatMessageItem key={msg.id} msg={msg} onApplyCode={onApplyCode} />
+        ))}
         {chat.isStreaming && (
           <div className="flex items-center gap-2 text-xs text-text-tertiary">
             <Zap size={12} className="animate-pulse text-accent-amber" /> Generating...
@@ -480,7 +493,7 @@ ${mcpToolsDoc}`,
           <div className="absolute bottom-full left-2 right-2 mb-1 bg-bg-secondary border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
             {filteredFiles.map((f) => (
               <button key={f} onClick={() => handleMentionSelect(`@${f}`)}
-                className="block w-full text-left px-3 py-1.5 text-xs text-text-primary hover:bg-bg-tertiary truncate">
+                className="block w-full text-left px-3 py-1.5 text-xs text-text-primary hover:bg-bg-tertiary truncate" title={f}>
                 {f}
               </button>
             ))}
@@ -503,7 +516,7 @@ ${mcpToolsDoc}`,
           <input ref={inputRef} value={input} onChange={handleInputChange}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !showMentions) handleSend(); if (e.key === "Escape") setShowMentions(false); }}
             placeholder={chatMode === 'nod' ? (ko ? "NOD에게 물어보세요... 뭐든 쉽게 설명해드려요" : "Ask NOD anything... I'll explain it simply") : "Ask about your code..."} aria-label="Chat input"
-            className="flex-1 bg-transparent text-xs outline-none text-text-primary placeholder:text-text-tertiary"
+            className="flex-1 bg-transparent text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder:text-text-tertiary"
           />
           {chat.isStreaming ? (
             <button onClick={() => chat.abort()} aria-label="중지" className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>

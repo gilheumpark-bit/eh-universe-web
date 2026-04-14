@@ -169,7 +169,7 @@ function CommentThread({
             {new Date(comment.createdAt).toLocaleString(lang === "ko" ? "ko-KR" : "en-US")}
           </span>
           {comment.updatedAt && comment.updatedAt !== comment.createdAt ? (
-            <span className="text-xs text-text-tertiary">({L4(lang, { ko: "수정됨", en: "edited" })})</span>
+            <span className="text-xs text-text-tertiary">({L4(lang, { ko: "수정됨", en: "edited", ja: "編集済み", zh: "已编辑" })})</span>
           ) : null}
         </div>
 
@@ -177,7 +177,7 @@ function CommentThread({
         {editingId === comment.id ? (
           <div className="mt-2 space-y-2">
             <textarea
-              className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-2 text-sm text-text-primary focus:border-accent-purple/40 focus:outline-none"
+              className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-2 text-sm text-text-primary focus:border-accent-purple/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               rows={2}
               maxLength={2000}
               value={editDraft}
@@ -242,7 +242,7 @@ function CommentThread({
         {replyingTo === comment.id && user ? (
           <div className="mt-3 space-y-2 border-l-2 border-accent-purple/20 pl-3">
             <textarea
-              className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none"
+              className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               rows={2}
               maxLength={2000}
               placeholder={L2(LABELS.replyPlaceholder, lang)}
@@ -337,7 +337,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       const records = await listCommentsForPost(postId);
       setComments(records);
     } catch {
-      setError(L4(lang, { ko: "댓글을 불러오지 못했습니다.", en: "Failed to load comments." }));
+      setError(L4(lang, { ko: "댓글을 불러오지 못했습니다.", en: "Failed to load comments.", ja: "コメントの読み込みに失敗しました。", zh: "加载评论失败。" }));
     } finally {
       setLoading(false);
     }
@@ -383,11 +383,11 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
 
       setComments((prev) => [record, ...prev]);
       setDraft("");
-      setSuccessMsg(L4(lang, { ko: "댓글이 등록되었습니다", en: "Comment posted" }));
+      setSuccessMsg(L4(lang, { ko: "댓글이 등록되었습니다", en: "Comment posted", ja: "コメントが投稿されました", zh: "评论已发布" }));
       setTimeout(() => setSuccessMsg(null), 2500);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch {
-      setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post comment." }));
+      setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post comment.", ja: "登録に失敗しました。", zh: "提交失败。" }));
     } finally {
       setSubmitting(false);
     }
@@ -432,10 +432,10 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       setReplyingTo(null);
       setReplyParentId(null);
       setReplyDraft("");
-      setSuccessMsg(L4(lang, { ko: "답글이 등록되었습니다", en: "Reply posted" }));
+      setSuccessMsg(L4(lang, { ko: "답글이 등록되었습니다", en: "Reply posted", ja: "返信が投稿されました", zh: "回复已发布" }));
       setTimeout(() => setSuccessMsg(null), 2500);
     } catch {
-      setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post reply." }));
+      setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post reply.", ja: "登録に失敗しました。", zh: "提交失败。" }));
     } finally {
       setSubmitting(false);
     }
@@ -460,7 +460,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         setEditingId(null);
         setEditDraft("");
       } catch {
-        setError(L4(lang, { ko: "수정에 실패했습니다.", en: "Failed to update." }));
+        setError(L4(lang, { ko: "수정에 실패했습니다.", en: "Failed to update.", ja: "編集に失敗しました。", zh: "编辑失败。" }));
       } finally {
         setSubmitting(false);
       }
@@ -476,7 +476,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         await deleteComment(comment.id, comment.postId, user.uid);
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
       } catch {
-        setError(L4(lang, { ko: "삭제에 실패했습니다.", en: "Failed to delete comment." }));
+        setError(L4(lang, { ko: "삭제에 실패했습니다.", en: "Failed to delete comment.", ja: "削除に失敗しました。", zh: "删除失败。" }));
       }
     },
     [lang, user],
@@ -520,7 +520,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       {user ? (
         <div className="space-y-2">
           <textarea
-            className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none"
+            className="w-full resize-none rounded-lg border border-white/8 bg-white/2 p-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-purple/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             rows={3}
             maxLength={2000}
             placeholder={L2(LABELS.placeholder, lang)}
@@ -548,7 +548,7 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
             onClick={() => void signInWithGoogle()}
             className="rounded-lg bg-accent-purple/20 px-3 py-1.5 text-xs font-medium text-accent-purple transition hover:bg-accent-purple/30"
           >
-            {L4(lang, { ko: "Google 로그인", en: "Google Sign In" })}
+            {L4(lang, { ko: "Google 로그인", en: "Google Sign In", ja: "Googleログイン", zh: "Google登录" })}
           </button>
         </div>
       )}

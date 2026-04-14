@@ -6,7 +6,7 @@
 
 import { logger } from '@/lib/logger';
 import { detectGoodPatterns, type GoodPatternReport } from './good-pattern-detector';
-import { applyScopePolicy, PolicyManager } from '../core/scope-policy';
+import { applyScopePolicy } from '../core/scope-policy';
 
 export interface PipelineStage {
   name: string;
@@ -506,7 +506,7 @@ async function loadTS(): Promise<typeof import('typescript') | null> {
 function detectUnusedImportsAST(
   ts: typeof import('typescript'),
   sourceFile: import('typescript').SourceFile,
-  code: string,
+  _code: string,
 ): PipelineFinding[] {
   const findings: PipelineFinding[] = [];
   const importedNames = new Map<string, { line: number; node: import('typescript').Node }>();
@@ -754,7 +754,7 @@ async function runASTAnalysis(
 function mergeASTFindings(
   stage: PipelineStage,
   astFindings: PipelineFinding[],
-  category: string,
+  _category: string,
 ): PipelineStage {
   if (astFindings.length === 0) return stage;
 

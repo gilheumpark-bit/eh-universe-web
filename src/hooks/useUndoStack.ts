@@ -32,6 +32,8 @@ export interface UndoStack {
   push: (text: string, label?: string) => void;
   clear: () => void;
   lastLabel: string | null;
+  /** Call on every content change; auto-snapshots when delta >= 300 chars */
+  checkAutoSnapshot: (currentContent: string) => void;
 }
 
 // ============================================================
@@ -80,6 +82,8 @@ export function useUndoStack(initialText?: string): UndoStack {
   }));
 
   const lastPush = useRef(0);
+  /** Content at the time of the last auto-snapshot */
+  const lastSnapshotContent = useRef(initialText ?? '');
 
   const canUndo = state.pointer > 0;
   const canRedo = state.pointer < state.stack.length - 1;
@@ -107,5 +111,14 @@ export function useUndoStack(initialText?: string): UndoStack {
 
   const clear = useCallback(() => dispatch({ type: 'CLEAR' }), []);
 
-  return { canUndo, canRedo, undoCount, undo, redo, push, clear, lastLabel };
+  /** Auto-snapshot when content changes by 300+ characters since last snapshot */
+  const checkAutoSnapshot = useCallback((currentContent: string) => {
+    const delta = Math.abs(currentContent.length - lastSnapshotContent.current.length);
+    if (delta >= 300) {
+      push(currentContent, 'auto-snapshot');
+      lastSnapshotContent.current = currentContent;
+    }
+  }, [push]);
+
+  return { canUndo, canRedo, undoCount, undo, redo, push, clear, lastLabel, checkAutoSnapshot };
 }

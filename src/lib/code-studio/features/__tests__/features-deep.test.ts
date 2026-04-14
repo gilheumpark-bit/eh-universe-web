@@ -197,7 +197,7 @@ describe('CollaborationManager', () => {
     const mgr = new CollaborationManager('room-1', 'Bob');
     mgr.join();
 
-    const peer = MockBroadcastChannel.instances.find(ch => ch !== MockBroadcastChannel.instances[0]);
+    const _peer = MockBroadcastChannel.instances.find(ch => ch !== MockBroadcastChannel.instances[0]);
     const messages: unknown[] = [];
 
     // Create a second channel to listen

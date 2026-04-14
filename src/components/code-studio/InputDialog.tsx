@@ -63,7 +63,7 @@ export function InputDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={onCancel}
     >
       <div
@@ -89,7 +89,7 @@ export function InputDialog({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           aria-label={title}
-          className={`w-full bg-white/5 text-xs px-3 py-2 rounded border outline-none transition-colors
+          className={`w-full bg-white/5 text-xs px-3 py-2 rounded border outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors
             ${error ? "border-red-400 focus:border-red-400" : "border-white/8 focus:border-amber-600/50"}`}
         />
         {error && <p className="text-[10px] text-red-400 mt-1">{error}</p>}

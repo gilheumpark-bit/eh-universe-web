@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { BookA, Search, Plus, Trash2, Edit2, Check, X, Sparkles } from 'lucide-react';
+import { BookA, Search, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useWebFeatures } from '@/hooks/useWebFeatures';
 import { getGlossaryManager } from '@/lib/translation/glossary-manager';
@@ -28,8 +28,8 @@ export function highlightGlossaryTerms(text: string, terms: string[]): string {
 }
 
 export function GlossaryPanel() {
-  const { glossary, setGlossary, source } = useTranslator();
-  const web = useWebFeatures();
+  const { glossary, setGlossary: _setGlossary, source } = useTranslator();
+  const _web = useWebFeatures();
   const [extracting, setExtracting] = useState(false);
   const mgr = getGlossaryManager();
   const [glossaryVersion, setGlossaryVersion] = useState(mgr.version);
@@ -40,7 +40,7 @@ export function GlossaryPanel() {
   }, [mgr]);
 
   // AI 용어 자동 추출
-  const handleAutoExtract = useCallback(async () => {
+  const _handleAutoExtract = useCallback(async () => {
     if (!source?.trim() || extracting) return;
     setExtracting(true);
     try {
@@ -118,7 +118,7 @@ export function GlossaryPanel() {
             placeholder="Search glossary..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
+            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
           />
         </div>
       </div>
@@ -162,13 +162,13 @@ export function GlossaryPanel() {
                     value={editOriginal}
                     onChange={(e) => setEditOriginal(e.target.value)}
                     placeholder="원문 용어"
-                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/50"
+                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
                   />
                   <input
                     value={editTranslation}
                     onChange={(e) => setEditTranslation(e.target.value)}
                     placeholder="번역 용어"
-                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-cyan/50"
+                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
                   />
                   <div className="flex justify-end gap-2">
                     <button
@@ -227,19 +227,19 @@ export function GlossaryPanel() {
             value={newOriginal}
             onChange={(e) => setNewOriginal(e.target.value)}
             placeholder="원문 용어"
-            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-blue/40"
+            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
           />
           <input
             value={newTranslation}
             onChange={(e) => setNewTranslation(e.target.value)}
             placeholder="번역 용어"
-            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-blue/40"
+            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
           />
           <input
             value={newContext}
             onChange={(e) => setNewContext(e.target.value)}
             placeholder="맥락 (예: 주인공 이름, 세계관 고유 용어)"
-            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[11px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-blue/40"
+            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[11px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
           />
           <label className="flex items-center gap-2 text-[11px] text-text-secondary cursor-pointer px-1">
             <input type="checkbox" checked={newLocked} onChange={(e) => setNewLocked(e.target.checked)} className="rounded" />

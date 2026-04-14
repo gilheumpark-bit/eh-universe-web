@@ -201,7 +201,6 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
         return Array.from(localMap.values()).sort((a, b) => (b.lastUpdate || 0) - (a.lastUpdate || 0));
       });
     }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, uid]);
 
   // 실시간 구독: 다른 디바이스에서 변경 시 자동 반영
@@ -219,9 +218,8 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
         }
         return Array.from(localMap.values()).sort((a, b) => (b.lastUpdate || 0) - (a.lastUpdate || 0));
       });
-    }).then(fn => { unsub = fn; });
+    }).then(fn => { unsub = fn; }).catch(() => {});
     return () => { unsub?.(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, uid]);
 
   const doRestoreVersionedBackup = useCallback(async (timestamp: number) => {

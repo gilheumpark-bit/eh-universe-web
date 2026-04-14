@@ -1,4 +1,4 @@
-import { createContext, useContext, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useContext, Dispatch, SetStateAction } from 'react';
 import type { ProviderId } from '@/lib/ai-providers';
 import { ChapterEntry, ProjectSnapshot, HistoryEntry, StyleHeuristicAnalysis, TranslationMode, DomainPreset } from '@/types/translator';
 import { type TranslatorBackgroundMode, WorkspaceTab } from '@/lib/translator-constants';
@@ -100,13 +100,10 @@ export interface TranslatorContextState {
   setBackResult: Dispatch<SetStateAction<string>>;
   langKo: boolean;
   isAuthLoaded: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  userId: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  authUser: any;
+  userId: string | null;
+  authUser: { uid: string; email?: string | null; displayName?: string | null } | null;
   hasTranslatorAiAccess: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  referenceBundle: any;
+  referenceBundle: Record<string, unknown> | null;
   activeChapter: ChapterEntry | null;
   completedChapters: number;
   completionRate: number;
@@ -125,10 +122,8 @@ export interface TranslatorContextState {
   patchChapterAtIndex: (index: number, patch: Record<string, unknown>) => void;
   patchActiveChapter: (patch: Record<string, unknown>) => void;
   openChapter: (index: number | null, overrideChapters?: ChapterEntry[]) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  buildContinuityBundle: () => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  buildTranslationPayload: (opts: any) => any;
+  buildContinuityBundle: () => Record<string, unknown>;
+  buildTranslationPayload: (opts: Record<string, unknown>) => Record<string, unknown>;
   updateStoryBibleAfterTranslation: (options: { translatedText: string; chapterName: string; chapterIndex?: number | null; storySummaryBase?: string; }) => Promise<string>;
   translate: () => Promise<void>;
   deepTranslate: () => Promise<void>;
@@ -138,15 +133,12 @@ export interface TranslatorContextState {
   refineResult: () => Promise<void>;
   backTranslate: () => Promise<void>;
   batchTranslateAll: () => Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  importDocument: (e: any) => void;
+  importDocument: (e: React.ChangeEvent<HTMLInputElement>) => void;
   exportData: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  importData: (e: any) => void;
+  importData: (e: React.ChangeEvent<HTMLInputElement>) => void;
   importUrl: () => Promise<void>;
   downloadAllResults: (format?: 'txt' | 'md' | 'json' | 'html' | 'csv') => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handleChapterRemove: (e: any, idx: number) => void;
+  handleChapterRemove: (e: React.MouseEvent, idx: number) => void;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   getIdToken: () => Promise<string | null>;

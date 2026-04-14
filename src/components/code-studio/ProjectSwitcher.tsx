@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { FolderOpen, Plus, Trash2, Search, ChevronDown, Clock, X, Check, AlertTriangle } from "lucide-react";
+import { FolderOpen, Plus, Trash2, Search, ChevronDown, Clock, AlertTriangle } from "lucide-react";
 
 interface ProjectMeta { id: string; name: string; description: string; fileCount: number; updatedAt: number }
 
@@ -24,7 +24,7 @@ function loadProjects(): ProjectMeta[] {
 }
 
 function saveProjects(projects: ProjectMeta[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(projects)); } catch { /* quota/private */ }
 }
 
 function formatDate(ts: number): string {

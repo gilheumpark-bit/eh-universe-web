@@ -4,8 +4,8 @@
 // PART 1 — Types & Imports
 // ============================================================
 
-import { useMemo, memo, useState, useCallback } from 'react';
-import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
+import { useMemo, memo, useCallback } from 'react';
+import { Clock } from 'lucide-react';
 import type { WorldSimData, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 

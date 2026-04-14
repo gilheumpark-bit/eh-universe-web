@@ -5,7 +5,7 @@
 
 import { streamChat, getActiveProvider, PROVIDERS } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
-import { buildQualityRulesPrompt, buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
+import { buildFPSuppressionPrompt } from '@/lib/code-studio/ai/quality-rules-from-catalog';
 import { ariManager } from '@/lib/code-studio/ai/ari-engine';
 
 // ============================================================
@@ -68,7 +68,7 @@ function extractJSON(text: string): string {
 }
 
 /** Safe JSON parse with fallback (kept for backward compat in non-safeAICall paths) */
-function safeParseJSON<T>(text: string, fallback: T): T {
+function _safeParseJSON<T>(text: string, fallback: T): T {
   try {
     return JSON.parse(extractJSON(text)) as T;
   } catch {
@@ -492,7 +492,7 @@ export async function executeToolCall(
  * Cost tier definitions per task type.
  * Maps task type to desired costTier priority.
  */
-const TASK_COST_MAP: Record<string, ('free' | 'cheap' | 'moderate' | 'expensive')[]> = {
+const _TASK_COST_MAP: Record<string, ('free' | 'cheap' | 'moderate' | 'expensive')[]> = {
   completion: ['free', 'cheap', 'moderate', 'expensive'],
   explanation: ['cheap', 'moderate', 'free', 'expensive'],
   review: ['expensive', 'moderate', 'cheap', 'free'],

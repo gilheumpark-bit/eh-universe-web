@@ -5,7 +5,7 @@
 import {
   VisualLevelPack,
   VisualPromptCard,
-  VisualShotType,
+  
   VisualPreset,
 } from './studio-types';
 

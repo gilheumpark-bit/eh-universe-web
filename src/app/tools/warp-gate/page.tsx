@@ -928,7 +928,7 @@ export default function WarpGatePage() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const save = useCallback((ns: GameState) => {
-    if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ns));
+    if (typeof window !== "undefined") { try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ns)); } catch { /* quota/private */ } }
   }, []);
 
   const update = useCallback((fn: (draft: GameState) => void) => {

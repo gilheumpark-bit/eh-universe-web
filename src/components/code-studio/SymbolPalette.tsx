@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from "react";
-import { Hash, FileText, X, Search } from "lucide-react";
+import { FileText, X, Search } from "lucide-react";
 import { useCodeStudioT } from "@/lib/use-code-studio-translations";
 
 export interface SymbolEntry {
@@ -120,7 +120,7 @@ export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPale
   }, [selectedIndex]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/40" role="presentation" onClick={onClose}>
       <div
         className="w-[480px] max-h-[400px] rounded-xl border border-white/10 bg-[#1e1e2e] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -133,7 +133,7 @@ export default function SymbolPalette({ symbols, onSelect, onClose }: SymbolPale
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t.symSearchPlaceholder}
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50"
+            className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-white/50"
           />
           <button onClick={onClose} className="text-gray-500 hover:text-white">
             <X size={14} />

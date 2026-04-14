@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic utility requires any for arbitrary function signatures
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -24,6 +25,7 @@ export function debounce<T extends (...args: any[]) => any>(
   return debounced;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic utility requires any for arbitrary function signatures
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -38,6 +40,7 @@ export function throttle<T extends (...args: any[]) => any>(
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic utility requires any for arbitrary function signatures
 export function memoize<T extends (...args: any[]) => any>(
   func: T,
   maxSize: number = 100

@@ -307,7 +307,7 @@ export default function ArchiveClient() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder={L4(lang, { ko: "문서 검색...", en: "Search documents...", ja: "文書検索...", zh: "搜索文档..." })}
-                    className="w-full px-4 py-2.5 bg-bg-primary/80 border border-border/50 rounded-xl text-sm text-text-primary placeholder-text-tertiary outline-none focus:border-accent-purple/50 focus:shadow-[0_0_16px_rgba(141,123,195,0.1)] transition-all font-mono"
+                    className="w-full px-4 py-2.5 bg-bg-primary/80 border border-border/50 rounded-xl text-sm text-text-primary placeholder-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50 focus:shadow-[0_0_16px_rgba(141,123,195,0.1)] transition-all font-mono"
                   />
                 </div>
               </div>

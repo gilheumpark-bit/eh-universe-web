@@ -1,5 +1,5 @@
 import { RuleDetector } from '../detector-registry';
-import { SyntaxKind } from 'ts-morph';
+
 import { isInTryBlockOnly, isJsonParseCall } from './rte-helpers';
 
 export const rte008Detector: RuleDetector = {
