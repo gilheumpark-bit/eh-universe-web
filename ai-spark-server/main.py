@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO)
 # PART 1 — 설정
 # ============================================================
 
-# LM Studio 로컬 서버 URL
-LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://localhost:1234")
+# vLLM 서버 URL (32B + 1.5B Speculative Decoding)
+LM_STUDIO_URL = os.getenv("VLLM_URL", os.getenv("LM_STUDIO_URL", "http://localhost:8000"))
 
 # 허용 도메인 (운영)
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://ehsu.app,http://localhost:3000").split(",")
@@ -32,7 +32,7 @@ DAILY_LIMIT = int(os.getenv("DAILY_LIMIT", "100"))
 # API 키 (선택 — 설정 시 인증 필수)
 API_KEY = os.getenv("DGX_API_KEY", "")
 
-app = FastAPI(title="EH Universe DGX Spark Server", version="1.0.0")
+app = FastAPI(title="EH Universe DGX Spark Server", version="2.0.0")
 
 # ============================================================
 # PART 1.5 — 동시 사용자 제한 (세마포어)
@@ -104,7 +104,7 @@ MAX_OUTPUT_CHARS = int(os.getenv("MAX_OUTPUT_CHARS", "8000"))
 MAX_OUTPUT_TOKENS = int(MAX_OUTPUT_CHARS * 1.5)
 
 class ChatRequest(BaseModel):
-    model: str = "Qwen/Qwen2.5-14B-Instruct-AWQ"
+    model: str = "eh-universe-30b-fast"
     messages: list[dict]
     temperature: float = 0.7
     max_tokens: int | None = None
@@ -115,7 +115,8 @@ def health_check():
     return {
         "status": "ok",
         "server": "EH Universe DGX Spark",
-        "lm_studio": LM_STUDIO_URL,
+        "engine": "vLLM + Speculative Decoding (32B+1.5B)",
+        "vllm": LM_STUDIO_URL,
         "comfyui": COMFYUI_URL,
         "daily_limit": DAILY_LIMIT,
         "guest_limit": GUEST_LIMIT,

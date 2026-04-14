@@ -160,13 +160,20 @@
 
 ---
 
-## [인프라 연동] DGX Spark 14B 단일 엔진 (2026-04-14 동기화)
+## [인프라 연동] DGX Spark 32B + Speculative Decoding (2026-04-14 동기화)
 
-**NVIDIA DGX 서버(128GB VRAM)**를 프라이빗 엔진으로 활용. 단일 모델로 전체 트래픽 처리.
+**NVIDIA DGX 서버(128GB VRAM)** 듀얼 모델 Speculative Decoding 구성.
 
-- **메인 모델:** `Qwen/Qwen2.5-14B-Instruct-AWQ` (다중 모델 하이브리드 폐기)
-- **통합 백엔드:** `ai-spark-server/main.py` (FastAPI + vLLM, OpenAI 호환 API)
-- **프론트엔드:** `src/services/sparkService.ts` — **진짜 SSE 스트리밍** (`stream:true`, TTFT 0.05초)
+- **메인 모델:** `Qwen/Qwen2.5-32B-Instruct-AWQ` (Main Brain)
+- **보조 모델:** `Qwen2.5-1.5B` (Speculative Draft, 5 tokens lookahead)
+- **서빙 이름:** `eh-universe-30b-fast`
+- **통합 백엔드:** `ai-spark-server/main.py` (FastAPI v2.0 + vLLM, OpenAI 호환 API)
+- **인프라:**
+  - `scripts/start_vllm.sh` — vLLM 런처 (Speculative + APC + Chunked Prefill)
+  - `ai-spark-server/infra/celery_worker.py` — Redis+Celery 백그라운드 큐
+  - `ai-spark-server/infra/websocket_stream.py` — WebSocket 실시간 스트리밍
+- **이미지:** ComfyUI + FLUX.1 (포트 8188, ~24GB VRAM)
+- **프론트엔드:** `src/services/sparkService.ts` — SSE 스트리밍 (`stream:true`, TTFT 0.05초)
 - **프로덕션:** `https://api.ehuniverse.com/v1` (Cloudflare Tunnel)
 - **로컬 개발:** `http://192.168.219.100:8000/v1` (내부망)
 - **샌드박스:** `/api/sandbox/execute` — Code Studio 격리 코드 검증
@@ -174,4 +181,6 @@
 통신 구조:
 - 스트리밍(글쓰기/번역): `streamSparkAI()` → `stream:true` → SSE 실시간 파싱
 - 구조화 생성(캐릭터/아이템/스킬): `generateJsonViaSpark()` → `stream:false` → JSON 파싱
+- 장문 백그라운드: Celery worker → vLLM → 결과 저장
+- WebSocket: `/ws/generate` → vLLM SSE 중계 (Vercel 100초 우회)
 - Vercel 배포 시 `SPARK_SERVER_URL` 환경 변수 우선

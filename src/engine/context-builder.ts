@@ -220,7 +220,7 @@ export interface StoryBibleInput {
  * 망각 방지 시스템 프롬프트(Story Bible)를 동적으로 생성.
  * useStudioAI에서 AI 호출 직전에 시스템 프롬프트에 주입.
  * Phase 5: Hybrid Context — 3-Tier episode context 적용
- * 토큰 예산: ~800토큰 이내 (14B 4K 컨텍스트의 20%)
+ * 토큰 예산: ~800토큰 이내 (32B 8K 컨텍스트의 10%)
  */
 export function buildStoryBible(input: StoryBibleInput): string {
   const { config, manuscripts, currentEpisode, language } = input;
