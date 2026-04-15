@@ -10,7 +10,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
-![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
+![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-red?style=flat-square)
 
 [라이브](https://ehsu.app) · [문서](#문서) · [기여 가이드](CONTRIBUTING.md)
 
@@ -170,7 +170,9 @@ Fallback: JP/CN → EN → KO.
 
 ## 라이선스
 
-[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 비상업적 용도 무료.
+Copyright (c) 2024-2026 EH. All Rights Reserved.
+
+본 소프트웨어 및 창작 콘텐츠의 무단 상업적 이용 및 재배포를 금지합니다. 자세한 내용은 [LICENSE](LICENSE) 및 [LICENSE-CONTENT](LICENSE-CONTENT)를 참조하세요.
 
 <div align="center">
 
