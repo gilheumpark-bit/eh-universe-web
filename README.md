@@ -11,8 +11,7 @@
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Code License](https://img.shields.io/badge/Code-MIT-green?style=flat-square)
-![Content License](https://img.shields.io/badge/Content-CC--BY--NC--4.0-blue?style=flat-square)
+![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
 [Live](https://ehsu.app) · [Changelog](CHANGELOG.md) · [Architecture](ARCHITECTURE.md)
@@ -190,10 +189,7 @@ npm test         # 테스트
 
 ## 라이선스
 
-| 구분 | 라이선스 | 범위 |
-|------|---------|------|
-| **소스코드** | [MIT](LICENSE) | TypeScript, React 컴포넌트, API, 설정 파일 등 모든 코드 |
-| **창작 콘텐츠** | [CC-BY-NC-4.0](LICENSE-CONTENT) | 세계관, 캐릭터, 설정, 코덱스 등 스토리 자산 |
+[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 소스코드 및 창작 콘텐츠 전체 비상업적 용도 무료.
 
 <div align="center">
 
