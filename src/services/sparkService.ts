@@ -4,7 +4,21 @@
  * 전략: 청크 이어쓰기 — max_tokens 4000 단위로 분할 요청, finish_reason=length면 이어서 요청
  */
 
+import { getServerUrlForModel, getFallbackUrl, SPARK_UNIFIED_URL } from '@/lib/dgx-models';
+
 export const SPARK_SERVER_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
+
+/**
+ * 모델 기반 서버 URL 결정 (듀얼 엔진 라우팅)
+ * Heavy(35B) → 8080, Fast(0.8B) → 8081, 폴백 → 8000/SPARK_SERVER_URL
+ */
+function resolveServerUrl(model?: string): string {
+  if (model) {
+    const url = getServerUrlForModel(model);
+    if (url) return url;
+  }
+  return SPARK_SERVER_URL || SPARK_UNIFIED_URL;
+}
 
 /** Spark 서버 사용량 정보 */
 export interface SparkUsage {
@@ -157,14 +171,15 @@ export async function streamSparkAI(
   temperature: number,
   opts?: { userId?: string; apiKey?: string; signal?: AbortSignal; userTier?: string },
 ): Promise<ReadableStream> {
-  if (!SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
+  const serverUrl = resolveServerUrl(model);
+  if (!serverUrl && !SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (opts?.userId) headers['x-user-id'] = opts.userId;
   if (opts?.userTier) headers['x-user-tier'] = opts.userTier;
   if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
 
-  const url = `${SPARK_SERVER_URL}/v1/chat/completions`;
+  const url = `${serverUrl}/v1/chat/completions`;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 

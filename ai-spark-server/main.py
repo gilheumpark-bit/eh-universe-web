@@ -21,7 +21,16 @@ logging.basicConfig(level=logging.INFO)
 # ============================================================
 
 # vLLM 서버 URL (32B + 1.5B Speculative Decoding)
-LM_STUDIO_URL = os.getenv("VLLM_URL", os.getenv("LM_STUDIO_URL", "http://localhost:8000"))
+# 듀얼 엔진 URL (포트별 독립)
+VLLM_HEAVY_URL = os.getenv("VLLM_HEAVY_URL", "http://localhost:8080")  # 35B Heavy
+VLLM_FAST_URL = os.getenv("VLLM_FAST_URL", "http://localhost:8081")    # 0.8B Fast
+LM_STUDIO_URL = os.getenv("VLLM_URL", os.getenv("LM_STUDIO_URL", VLLM_HEAVY_URL))  # 폴백
+
+def resolve_backend_url(model: str) -> str:
+    """모델명 기반 백엔드 라우팅: fast → 8081, heavy → 8080"""
+    if 'fast' in model.lower() or '0.8b' in model.lower():
+        return VLLM_FAST_URL
+    return VLLM_HEAVY_URL
 
 # 허용 도메인 (운영)
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://ehsu.app,http://localhost:3000").split(",")
@@ -115,8 +124,9 @@ def health_check():
     return {
         "status": "ok",
         "server": "EH Universe DGX Spark",
-        "engine": "vLLM + Speculative Decoding (32B+1.5B)",
-        "vllm": LM_STUDIO_URL,
+        "engine": "Dual-Engine (35B Heavy + 0.8B Fast)",
+        "heavy": VLLM_HEAVY_URL,
+        "fast": VLLM_FAST_URL,
         "comfyui": COMFYUI_URL,
         "daily_limit": DAILY_LIMIT,
         "guest_limit": GUEST_LIMIT,
@@ -162,7 +172,8 @@ async def chat_completions(req: ChatRequest, request: Request):
             if _waiting > 0:
                 _waiting -= 1
 
-            logger.info(f"[{user_id}] 호출 {count}/{DAILY_LIMIT} — model={req.model}")
+            backend_url = resolve_backend_url(req.model)
+            logger.info(f"[{user_id}] 호출 {count}/{DAILY_LIMIT} — model={req.model} → {backend_url}")
 
             # max_tokens 강제: 8000자 ≈ 12000토큰 상한
             effective_max_tokens = min(req.max_tokens or MAX_OUTPUT_TOKENS, MAX_OUTPUT_TOKENS)
@@ -181,7 +192,7 @@ async def chat_completions(req: ChatRequest, request: Request):
                         async def stream_generator():
                             async with client.stream(
                                 "POST",
-                                f"{LM_STUDIO_URL}/v1/chat/completions",
+                                f"{backend_url}/v1/chat/completions",
                                 json=payload,
                                 timeout=180,
                             ) as resp:
@@ -202,7 +213,7 @@ async def chat_completions(req: ChatRequest, request: Request):
                         )
                     else:
                         resp = await client.post(
-                            f"{LM_STUDIO_URL}/v1/chat/completions",
+                            f"{backend_url}/v1/chat/completions",
                             json=payload,
                             timeout=180,
                         )

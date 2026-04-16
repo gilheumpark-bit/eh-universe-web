@@ -2,7 +2,7 @@ import { Type } from '@google/genai';
 import { createServerGeminiClient, hasGeminiServerCredentials } from '@/lib/google-genai-server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { MODEL_PLANNER } from '@/lib/dgx-models';
+import { MODEL_PLANNER, getServerUrlForModel } from '@/lib/dgx-models';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = {
@@ -27,7 +27,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
       { role: 'user', content: prompt },
     ],
     temperature: 0.8,
-    max_tokens: 4000, // 14B TTFT ~5초 + 생성 ~20초 = 충분
+    max_tokens: 4000, // 35B Heavy Core — 구조화 생성
     stream: false,
   });
 
@@ -35,7 +35,8 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
     if (attempt > 0) await new Promise(r => setTimeout(r, DELAYS[attempt - 1]));
 
     try {
-      const res = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
+      const baseUrl = getServerUrlForModel(MODEL_PLANNER) || SPARK_SERVER_URL;
+      const res = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
