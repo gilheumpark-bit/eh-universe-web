@@ -396,7 +396,7 @@ export default function GalaxyMapPage() {
               <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "I. GALAXY ZONE CLASSIFICATION" : "I. 은하 구역 분류 체계"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-mono">
+              <p className="text-text-secondary text-xs mb-6 font-mono">
                 {en ? "Area-based concentric zones (10% increments) \u00b7 Bureau Internal Code" : "면적 기준 10% 단위 동심원 분류 \u00b7 비밀조사국 내부 구역 코드"}
               </p>
 
@@ -436,10 +436,10 @@ export default function GalaxyMapPage() {
                               {z.id}
                             </span>
                           </td>
-                          <td className="p-2 text-text-secondary font-mono">{display.range}</td>
-                          <td className="p-2 text-text-secondary font-mono">{z.net}</td>
-                          <td className="p-2 text-text-secondary font-mono">{z.gate}</td>
-                          <td className="p-2 text-text-secondary">{en ? z.en : z.ko}</td>
+                          <td className="p-2 text-text-primary font-mono">{display.range}</td>
+                          <td className="p-2 text-text-primary font-mono">{z.net}</td>
+                          <td className="p-2 text-text-primary font-mono">{z.gate}</td>
+                          <td className="p-2 text-text-primary">{en ? z.en : z.ko}</td>
                         </tr>
                       );
                     })}
@@ -447,7 +447,7 @@ export default function GalaxyMapPage() {
                 </table>
               </div>
 
-              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-tertiary italic">
+              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-secondary italic">
                 <strong className="text-text-secondary not-italic">GREEN → RED:</strong> {en ? "Civilization\u2193 NET\u2193 Gate\u2193 Solitude\u2191 War\u2191" : "문명\u2193 NET\u2193 Gate\u2193 고독\u2191 전쟁\u2191"}
                 <br /><br />
                 {en
@@ -461,7 +461,7 @@ export default function GalaxyMapPage() {
               <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "II. GATE INFRASTRUCTURE \u2014 TIER SYSTEM" : "II. GATE 인프라 \u2014 계층 체계"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-mono">
+              <p className="text-text-secondary text-xs mb-6 font-mono">
                 {en ? "Inward → Outward \u00b7 Denser inside, sparser outside" : "안에서 밖으로 \u00b7 안쪽일수록 촘촘, 바깥일수록 희소"}
               </p>
 
@@ -474,7 +474,7 @@ export default function GalaxyMapPage() {
                     <div className="font-bold text-base mb-2" style={{ color: t.color }}>
                       {L2(t.name, lang)}
                     </div>
-                    <p className="text-xs text-text-tertiary leading-relaxed whitespace-pre-line mb-3">
+                    <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-line mb-3">
                       {L2(t.desc, lang)}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -496,7 +496,7 @@ export default function GalaxyMapPage() {
                   <div className="font-bold text-base mb-2" style={{ color: "#cc2222" }}>
                     {en ? "WARZONE \u2014 No Fixed Gate" : "전장 \u2014 고정 Gate 없음"}
                   </div>
-                  <p className="text-xs text-text-tertiary leading-relaxed whitespace-pre-line">
+                  <p className="text-xs text-text-secondary leading-relaxed whitespace-pre-line">
                     {en
                       ? "No fixed Gates installed \u2014 Neka's #1 destruction target.\nAlternative: Mobile temporary Gates or Q-Launch self-propulsion only.\nMobility vs. Security: Without Gate = slow. With Gate = position exposed to Neka."
                       : "전장에는 고정 Gate를 설치하지 않는다. 네카의 1순위 파괴 목표가 되기 때문.\n대안: 이동식 임시 Gate 또는 Q-Launch 자체 추진만 사용.\n기동성 vs 안전성의 트레이드오프."}
@@ -509,7 +509,7 @@ export default function GalaxyMapPage() {
                 <div className="font-mono text-[10px] tracking-wider mb-2" style={{ color: "#cc4422" }}>
                   {en ? "NEKA OPTIMAL STRATEGY" : "네카의 최적 전략"}
                 </div>
-                <p className="text-xs text-text-tertiary">
+                <p className="text-xs text-text-secondary">
                   {en
                     ? "Destroy AMBER Tier 4 Emergency Gates. 3 destroyed = RED warzone completely severed."
                     : "AMBER Tier 4 비상 Gate 파괴. 3개만 끊으면 RED 전장이 은하 본토와 완전 단절."}
@@ -520,7 +520,7 @@ export default function GalaxyMapPage() {
                 </p>
               </div>
 
-              <div className="mt-4 text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
+              <div className="mt-4 text-center text-xs text-text-secondary italic border border-border/50 rounded p-4 bg-bg-primary">
                 {en
                   ? "\"Warp does not shine. No sound. No explosion. 12 seconds of silence → ALLOW → Already arrived.\""
                   : "\"워프는 빛나지 않고 소리 없고 폭발 없다. HOLD 12초의 침묵 → ALLOW → 이미 도착해 있다.\""}
@@ -538,7 +538,7 @@ export default function GalaxyMapPage() {
               <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "III. WARZONE \u2014 OUTER 3% RING" : "III. 전장 \u2014 은하 외곽 3% 구역"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-mono">
+              <p className="text-text-secondary text-xs mb-6 font-mono">
                 {en ? "The war exists in the outermost 3%. 97% of humanity is unaware." : "전쟁은 은하 가장 바깥 3%에서 벌어진다. 97%의 인류는 모른다."}
               </p>
 
@@ -554,14 +554,14 @@ export default function GalaxyMapPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {CALCS.map((c, i) => (
-                  <div key={i} className="flex justify-between items-center border border-border rounded px-4 py-3 bg-bg-primary">
-                    <span className="text-xs text-text-tertiary">{L2(c.label, lang)}</span>
+                  <div key={i} className="flex justify-between items-center border border-border rounded px-4 py-3 bg-bg-secondary">
+                    <span className="text-xs text-text-secondary">{L2(c.label, lang)}</span>
                     <span className="font-mono text-sm font-bold" style={{ color: c.color }}>{c.val}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-tertiary italic">
+              <div className="premium-panel-soft mt-6 rounded-[22px] p-4 text-center text-xs text-text-secondary italic">
                 {en
                   ? "\"The warzone is 753 light-years wide. It contains 6,000 human systems. The Bureau fights this war alone.\""
                   : "\"전장은 753 광년 폭이다. 그 안에 6,000개의 인류 행성계가 있다. 비밀조사국이 이 전쟁을 혼자 치른다.\""}
@@ -577,7 +577,7 @@ export default function GalaxyMapPage() {
               <h2 className="font-mono text-lg font-bold tracking-wider mb-1" style={{ color: "#4488cc" }}>
                 {en ? "IV. GATE INSTALLATION PRINCIPLE" : "IV. GATE 설치 원칙"}
               </h2>
-              <p className="text-text-tertiary text-xs mb-6 font-mono">
+              <p className="text-text-secondary text-xs mb-6 font-mono">
                 {en ? "Inward → Outward. Dense at heart, sparse at edge." : "방향: 안에서 밖으로. 안쪽일수록 촘촘, 바깥일수록 희소."}
               </p>
 
@@ -591,7 +591,7 @@ export default function GalaxyMapPage() {
                 <span className="font-bold" style={{ color: "#c0392b" }}>Emergency</span>
               </div>
 
-              <div className="text-center text-xs text-text-tertiary italic border border-border/50 rounded p-4 bg-bg-primary">
+              <div className="text-center text-xs text-text-secondary italic border border-border/50 rounded p-4 bg-bg-primary">
                 {en
                   ? "\"Denser inside, sparser outside. Humanity's vascular structure \u2014 from the heart (GREEN) to the capillaries (AMBER). Beyond AMBER, there is no blood. Only silence.\""
                   : "\"안쪽일수록 촘촘하고, 바깥일수록 희소하다. 인류 문명의 혈관 구조 \u2014 심장(GREEN)에서 모세혈관(AMBER)으로. AMBER 너머에는 피가 닿지 않는다. 오직 정적뿐.\""}
@@ -600,7 +600,7 @@ export default function GalaxyMapPage() {
 
             {/* Footer */}
             <div className="border-t border-border pt-6">
-              <p className="font-[family-name:var(--font-document)] text-xs text-text-tertiary italic text-center">
+              <p className="font-[family-name:var(--font-document)] text-xs text-text-secondary italic text-center">
                 {en ? "This document is for Bureau of Investigation internal reference only." : "이 문서는 비밀조사국 내부 참조용이다."}
                 <br />
                 {en ? "Unauthorized disclosure will result in the personnel being processed as a typo." : "무단 유출 시 해당 인원은 오타로 처리된다."}
