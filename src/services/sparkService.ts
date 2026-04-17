@@ -181,7 +181,14 @@ export async function streamSparkAI(
   if (opts?.userTier) headers['x-user-tier'] = opts.userTier;
   if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
 
-  const url = `${serverUrl}/v1/chat/completions`;
+  // [스트림 복구] 브라우저가 DGX 직결 SSE 요청 시 Cloudflare Tunnel이 520 반환 →
+  // 브라우저에서는 같은 오리진의 Vercel Edge 프록시(/api/spark-stream) 사용.
+  // Edge가 내부적으로 non-stream 청크 연쇄 호출 후 타자기 SSE로 re-stream.
+  // 서버사이드(SPARK_SERVER_URL 설정)에서는 기존 직결 경로 사용.
+  const isBrowser = typeof window !== 'undefined';
+  const url = isBrowser
+    ? '/api/spark-stream'
+    : `${serverUrl}/v1/chat/completions`;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -254,19 +261,23 @@ async function streamOneRequest(
     if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
 
     try {
+      // Edge 프록시 경로엔 role 힌트도 함께 전달 (엔진 A/B 라우팅용)
+      // model 문자열이 "role:writer" 형태면 role 추출
+      const roleHint = model.startsWith('role:') ? model.slice(5) : 'writer';
+      const requestBody: Record<string, unknown> = {
+        model: VLLM_MODEL_ID,
+        messages,
+        temperature,
+        stream: true,
+        max_tokens: STREAM_MAX_TOKENS,
+      };
+      if (url === '/api/spark-stream') requestBody.role = roleHint;
+
       const res = await fetch(url, {
         method: 'POST',
         headers,
-        signal: signal ?? AbortSignal.timeout(90_000),
-        body: JSON.stringify({
-          // vLLM 서빙 규격: 엔진 A/B 모두 "/model" 문자열을 고정 사용.
-          // 내부 model 힌트는 엔진 라우팅에만 쓰이고 실제 요청 payload에는 포함하지 않음.
-          model: VLLM_MODEL_ID,
-          messages,
-          temperature,
-          stream: true,
-          max_tokens: STREAM_MAX_TOKENS,
-        }),
+        signal: signal ?? AbortSignal.timeout(180_000),
+        body: JSON.stringify(requestBody),
       });
 
       if (res.status === 429) {
