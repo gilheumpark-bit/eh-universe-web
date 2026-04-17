@@ -39,13 +39,13 @@ export default function QuickStartModal({
   };
 
   return (
-    <div className="animate-in fade-in zoom-in fixed inset-0 z-[var(--z-dropdown)] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
-      <div className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
+    <div className="animate-in fade-in zoom-in fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
+      <div className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
         <div className="relative px-8 pb-4 pt-8">
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-6 top-6 rounded-full p-2 text-text-tertiary transition-colors hover:bg-bg-secondary hover:text-text-primary"
+            className="absolute right-4 top-4 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-text-tertiary transition-colors hover:bg-bg-secondary hover:text-text-primary"
             aria-label={t('quickStartModal.closeQuickStart')}
           >
             <X className="h-5 w-5" />
@@ -85,7 +85,7 @@ export default function QuickStartModal({
                   key={genre}
                   type="button"
                   onClick={() => setSelectedGenre(genre)}
-                  className={`rounded-xl border px-4 py-2 text-[11px] font-bold transition-all ${
+                  className={`rounded-xl border px-4 min-h-[40px] text-[13px] font-bold transition-all ${
                     selectedGenre === genre
                       ? "border-accent-purple bg-accent-purple text-white shadow-lg shadow-accent-purple/20"
                       : "border-border bg-bg-secondary text-text-secondary hover:border-text-tertiary"
@@ -103,7 +103,6 @@ export default function QuickStartModal({
             </label>
             <div className="relative">
               <textarea
-                autoFocus
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder={t('quickStartModal.placeholder')}
@@ -111,18 +110,19 @@ export default function QuickStartModal({
                 disabled={isGenerating}
                 maxLength={240}
               />
-              <div className="absolute bottom-3 right-3 opacity-20">
-                <BookOpen className="h-5 w-5 text-text-tertiary" />
+              <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                <span className="text-[11px] font-mono text-text-tertiary tabular-nums">{prompt.length}/240</span>
+                <BookOpen className="h-5 w-5 text-text-tertiary opacity-20" />
               </div>
             </div>
-            <div className="flex flex-wrap gap-1.5 -mt-1">
+            <div className="flex flex-wrap gap-2">
               {[
                 { ko: '회귀한 공작이 망해가는 가문을 구한다', en: 'A regressed duke saves his crumbling family', ja: '回帰した公爵が没落する家門を救う', zh: '回归的公爵拯救没落的家族' },
                 { ko: '시스템 능력을 얻은 평범한 고등학생', en: 'An ordinary student gains a System ability', ja: 'システム能力を得た普通の高校生', zh: '获得系统能力的普通高中生' },
                 { ko: '마왕을 쓰러뜨린 용사의 일상', en: 'The daily life of a hero who defeated the Demon King', ja: '魔王を倒した勇者の日常', zh: '打败魔王的勇者的日常' },
               ].map((ex, i) => (
                 <button key={i} type="button" onClick={() => setPrompt(L4(language, ex))}
-                  className="px-2.5 py-1 rounded-lg border border-border/50 text-[10px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all">
+                  className="px-3 min-h-[36px] rounded-lg border border-border/50 text-[12px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all">
                   {L4(language, ex)}
                 </button>
               ))}

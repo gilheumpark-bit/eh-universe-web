@@ -9,15 +9,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Globe2, Users, GitBranch, Sparkles, Info, BookOpen, Monitor } from 'lucide-react';
+import { Globe2, Users, GitBranch, Sparkles, Info, BookOpen, Monitor, FileText, ChevronRight } from 'lucide-react';
 import { L4 } from '@/lib/i18n';
-import type { AppLanguage } from '@/lib/studio-types';
+import type { AppLanguage, EpisodeManuscript } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — 타입 및 상수
 // ============================================================
 
-type MobileTab = 'world' | 'characters' | 'plots';
+type MobileTab = 'world' | 'characters' | 'plots' | 'manuscripts';
 
 interface Props {
   language: AppLanguage;
@@ -363,7 +363,141 @@ function PlotBrainstormPanel({ language, store, setStore }: { language: AppLangu
 }
 
 // ============================================================
-// PART 6 — 메인 뷰 (탭 라우터 + 데스크톱 CTA)
+// PART 6 — 원고 읽기 전용 패널 (작가의 "확인" 시나리오)
+// ============================================================
+
+interface StudioProjectSession {
+  id: string;
+  title?: string;
+  config?: { title?: string; manuscripts?: EpisodeManuscript[] };
+}
+interface StudioProjectShape {
+  id: string;
+  name?: string;
+  sessions?: StudioProjectSession[];
+}
+
+function loadStudioManuscripts(): Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }> {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('noa_projects');
+    if (!raw) return [];
+    const projects = JSON.parse(raw) as StudioProjectShape[];
+    const out: Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }> = [];
+    for (const proj of projects) {
+      for (const sess of proj.sessions ?? []) {
+        const ms = sess.config?.manuscripts;
+        if (Array.isArray(ms) && ms.length > 0) {
+          out.push({
+            projectName: proj.name || 'Untitled',
+            sessionTitle: sess.config?.title || sess.title || 'Untitled session',
+            manuscripts: [...ms].sort((a, b) => a.episode - b.episode),
+          });
+        }
+      }
+    }
+    return out;
+  } catch { return []; }
+}
+
+function ManuscriptsPanel({ language }: { language: AppLanguage }) {
+  const [groups, setGroups] = useState<Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }>>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => { setGroups(loadStudioManuscripts()); }, []);
+
+  const hasAny = groups.some(g => g.manuscripts.length > 0);
+
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <div className="flex items-center gap-2 text-text-secondary">
+        <FileText className="w-4 h-4 text-accent-green" />
+        <h3 className="text-sm font-bold">
+          {L4(language, { ko: '내 원고', en: 'My Manuscripts', ja: '原稿一覧', zh: '我的稿件' })}
+        </h3>
+      </div>
+      <p className="text-xs text-text-tertiary">
+        {L4(language, {
+          ko: '데스크톱에서 쓴 원고를 모바일에서 읽기 전용으로 확인할 수 있습니다. 편집은 데스크톱에서.',
+          en: 'View desktop manuscripts here (read-only). Editing requires desktop.',
+          ja: 'デスクトップで書いた原稿を読み取り専用で確認できます。編集はデスクトップで。',
+          zh: '可在此只读查看桌面端稿件。编辑请在桌面端进行。',
+        })}
+      </p>
+
+      {!hasAny && (
+        <p className="text-xs text-text-quaternary text-center py-8">
+          {L4(language, {
+            ko: '저장된 원고가 없습니다. 데스크톱에서 집필을 시작해보세요.',
+            en: 'No manuscripts yet. Start writing on desktop.',
+            ja: 'まだ原稿がありません。デスクトップで執筆を始めましょう。',
+            zh: '暂无稿件。请在桌面端开始写作。',
+          })}
+        </p>
+      )}
+
+      {groups.map((g, gi) => (
+        <div key={gi} className="rounded-xl border border-border bg-bg-secondary overflow-hidden">
+          <div className="px-3 py-2 bg-bg-tertiary/40 border-b border-border">
+            <p className="text-[11px] text-text-tertiary font-mono uppercase truncate">{g.projectName}</p>
+            <p className="text-[13px] font-bold text-text-primary truncate">{g.sessionTitle}</p>
+          </div>
+          <div className="divide-y divide-border/50">
+            {g.manuscripts.map(m => {
+              const id = `${gi}-${m.episode}`;
+              const isOpen = openId === id;
+              const preview = (m.content ?? '').slice(0, 800);
+              return (
+                <div key={id}>
+                  <button
+                    onClick={() => setOpenId(isOpen ? null : id)}
+                    className="w-full flex items-center justify-between px-3 py-3 min-h-[44px] active:bg-bg-tertiary/50 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="text-[11px] text-accent-amber font-mono shrink-0">
+                        EP.{String(m.episode).padStart(2, '0')}
+                      </span>
+                      <span className="text-[13px] text-text-primary truncate">
+                        {m.title || L4(language, { ko: '제목 없음', en: 'Untitled', ja: '無題', zh: '无标题' })}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] text-text-tertiary">
+                        {(m.charCount ?? m.content?.length ?? 0).toLocaleString()}
+                      </span>
+                      <ChevronRight className={`w-4 h-4 text-text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-3 pb-3 pt-1 bg-bg-primary">
+                      <p className="text-[13px] text-text-secondary whitespace-pre-wrap leading-relaxed">
+                        {preview}
+                        {(m.content?.length ?? 0) > 800 && '…'}
+                      </p>
+                      {(m.content?.length ?? 0) > 800 && (
+                        <p className="mt-2 text-[11px] text-text-tertiary">
+                          {L4(language, {
+                            ko: '이후 내용은 데스크톱에서 확인하세요.',
+                            en: 'See full content on desktop.',
+                            ja: '続きはデスクトップで確認してください。',
+                            zh: '完整内容请在桌面端查看。',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// PART 7 — 메인 뷰 (탭 라우터 + 데스크톱 CTA)
 // ============================================================
 
 export default function MobileStudioView({ language, onDesktopCTA }: Props) {
@@ -383,6 +517,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
     { id: 'world', icon: Globe2, labelKo: '세계관', labelEn: 'World', labelJa: '世界観', labelZh: '世界观' },
     { id: 'characters', icon: Users, labelKo: '캐릭터', labelEn: 'Cast', labelJa: '人物', labelZh: '角色' },
     { id: 'plots', icon: GitBranch, labelKo: '플롯', labelEn: 'Plots', labelJa: 'プロット', labelZh: '情节' },
+    { id: 'manuscripts', icon: FileText, labelKo: '원고', labelEn: 'Draft', labelJa: '原稿', labelZh: '稿件' },
   ];
 
   return (
@@ -456,6 +591,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         {tab === 'world' && <WorldMemoPanel language={language} store={store} setStore={updateStore} />}
         {tab === 'characters' && <CharacterSketchPanel language={language} store={store} setStore={updateStore} />}
         {tab === 'plots' && <PlotBrainstormPanel language={language} store={store} setStore={updateStore} />}
+        {tab === 'manuscripts' && <ManuscriptsPanel language={language} />}
       </main>
 
       {/* 데스크톱 CTA */}

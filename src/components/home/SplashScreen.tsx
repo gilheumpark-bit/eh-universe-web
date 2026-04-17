@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-// lucide-react icons removed — CTA simplified
+import { LogIn } from "lucide-react";
 import UnifiedSettingsBar from "@/components/home/UnifiedSettingsBar";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function SplashScreen({
   onStudio,
@@ -15,7 +16,9 @@ export default function SplashScreen({
   onTranslationStudio: () => void;
 }) {
   const { lang: contextLang, toggleLang } = useLang();
+  const { user, signInWithGoogle, isConfigured: authConfigured } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [loginBusy, setLoginBusy] = useState(false);
   const [resolvedLang, setResolvedLang] = useState<"ko" | "en" | "ja" | "zh">("ko");
 
   useEffect(() => {
@@ -84,10 +87,29 @@ export default function SplashScreen({
           {/* Primary CTA — above the fold, instant action */}
           <button
             onClick={onStudio}
-            className="mt-6 px-8 py-3 rounded-xl bg-accent-amber text-[#1a1a1a] font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-all shadow-lg"
+            className="mt-6 px-8 min-h-[48px] rounded-xl bg-accent-amber text-[#1a1a1a] font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-all shadow-lg"
           >
             {L4(lang, { ko: "바로 시작하기 →", en: "Start Now →", ja: "今すぐ始める →", zh: "立即开始 →" })}
           </button>
+
+          {/* 로그인 CTA — 비로그인 사용자에게만 명시 노출 */}
+          {authConfigured && !user && (
+            <button
+              onClick={async () => {
+                if (loginBusy) return;
+                setLoginBusy(true);
+                try { await signInWithGoogle(); } catch { /* 실패 시 AuthContext.error로 노출 */ }
+                finally { setLoginBusy(false); }
+              }}
+              disabled={loginBusy}
+              className="mt-3 inline-flex items-center justify-center gap-2 px-6 min-h-[44px] rounded-xl border border-border bg-bg-secondary/70 hover:bg-bg-secondary text-text-secondary hover:text-text-primary text-sm font-medium active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              <LogIn className="w-4 h-4" />
+              {loginBusy
+                ? L4(lang, { ko: "연결 중…", en: "Connecting…", ja: "接続中…", zh: "连接中…" })
+                : L4(lang, { ko: "Google로 로그인", en: "Sign in with Google", ja: "Googleでログイン", zh: "使用 Google 登录" })}
+            </button>
+          )}
         </div>
 
         {/* Settings Bar */}
