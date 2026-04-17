@@ -252,7 +252,7 @@ export interface StoryConfig {
     lastUpdated?: number;
   };
   chapterAnalyses?: ChapterAnalysis[];
-  /** Consumed by EpisodeScenePanel UI only — not read in engine/pipeline.ts */
+  /** Consumed by EpisodeScenePanel UI + injected into AI prompt by engine/pipeline.ts */
   episodeSceneSheets?: EpisodeSceneSheet[];
   visualPromptCards?: VisualPromptCard[];
   // NOA-PRISM v1.1 — Writing Quality Control
