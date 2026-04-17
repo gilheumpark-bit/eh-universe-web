@@ -16,7 +16,7 @@ export default function SplashScreen({
   onTranslationStudio: () => void;
 }) {
   const { lang: contextLang, toggleLang } = useLang();
-  const { user, signInWithGoogle, isConfigured: authConfigured } = useAuth();
+  const { user, signInWithGoogle, isConfigured: authConfigured, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [loginBusy, setLoginBusy] = useState(false);
   const [resolvedLang, setResolvedLang] = useState<"ko" | "en" | "ja" | "zh">("ko");
@@ -92,8 +92,8 @@ export default function SplashScreen({
             {L4(lang, { ko: "바로 시작하기 →", en: "Start Now →", ja: "今すぐ始める →", zh: "立即开始 →" })}
           </button>
 
-          {/* 로그인 CTA — 비로그인 사용자에게만 명시 노출 */}
-          {authConfigured && !user && (
+          {/* 로그인 CTA — 비로그인 사용자에게만 명시 노출 (auth 확인 전 FOUC 방지) */}
+          {mounted && authConfigured && !user && !authLoading && (
             <button
               onClick={async () => {
                 if (loginBusy) return;

@@ -332,9 +332,9 @@ function HomePageContent() {
   const translatorStudioHref = useMemo(() => getTranslatorStudioHref(), []);
 
   const universeStats = [
-    { value: "173", label: T({ ko: "문서 + 보고서", en: "Docs + reports", ja: "文書+報告書", zh: "文档+报告" }) },
-    { value: "6", label: T({ ko: "세계관 카테고리", en: "Lore categories", ja: "世界観カテゴリ", zh: "世界观类别" }) },
-    { value: "200K+", label: T({ ko: "관할 행성계", en: "Planetary systems", ja: "管轄惑星系", zh: "管辖星系" }) },
+    { value: "10+", label: T({ ko: "장르 프리셋", en: "Genre presets", ja: "ジャンルプリセット", zh: "类型预设" }) },
+    { value: "99만", label: T({ ko: "RAG 문서", en: "RAG docs", ja: "RAG 文書", zh: "RAG 文档" }) },
+    { value: "4", label: T({ ko: "지원 언어", en: "Languages", ja: "対応言語", zh: "支持语言" }) },
     { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open license", ja: "オープンライセンス", zh: "开放许可" }) },
   ];
 
@@ -360,18 +360,10 @@ function HomePageContent() {
       color: "green" as const,
       title: T({ ko: "번역 스튜디오", en: "Translation Studio", ja: "翻訳スタジオ", zh: "翻译工作室" }),
       desc: T({
-        ko: translatorStudioHref.startsWith("http")
-          ? "별도 배포된 EH Translator에서 장편·용어·맥락 중심 워크플로를 사용합니다."
-          : "이 사이트의 번역 스튜디오(/translation-studio)에서 EH Translator 전체 UI를 사용합니다.",
-        en: translatorStudioHref.startsWith("http")
-          ? "Use the separately deployed EH Translator app."
-          : "Open the in-site Translation Studio for the full EH Translator workspace.",
-        ja: translatorStudioHref.startsWith("http")
-          ? "別URLの EH Translator を利用します。"
-          : "同一サイト内の翻訳スタジオで EH Translator を利用します。",
-        zh: translatorStudioHref.startsWith("http")
-          ? "使用单独部署的 EH Translator。"
-          : "在本站的翻译工作室使用完整 EH Translator。",
+        ko: "소설 전용 번역. 용어집과 문체를 기억하고, 정확성·자연스러움·완성도·포맷 4축으로 채점합니다.",
+        en: "Novel-specialized translator. Glossary-aware, style-aware, scored across accuracy, fluency, completeness, and format.",
+        ja: "小説専門の翻訳。用語集と文体を記憶し、正確性・自然さ・完成度・フォーマットの4軸で採点します。",
+        zh: "小说专用翻译。记忆术语集与文体，按准确性、流畅度、完整性、格式 4 轴评分。",
       }),
       meta: T({ ko: "번역 열기", en: "Open translation", ja: "翻訳へ", zh: "打开翻译" }),
       external: translatorStudioHref.startsWith("http"),
@@ -540,26 +532,20 @@ function HomePageContent() {
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div className="relative z-10 max-w-2xl">
                 <p className="site-kicker">
-                  {T({ ko: "세계관 탐색 포털", en: "Worldbuilding Portal", ja: "世界観探索ポータル", zh: "世界观探索门户" })}
+                  {T({ ko: "NOA 엔진 기반 AI 소설 집필 스튜디오", en: "NOA-powered AI Novel Studio", ja: "NOAエンジン搭載 AI小説スタジオ", zh: "基于 NOA 引擎的 AI 小说工作室" })}
                 </p>
                 <h1 className="site-title mt-5 text-4xl font-bold leading-[0.94] sm:text-5xl md:text-7xl xl:text-[5.4rem]">
-                  EH UNIVERSE
+                  LOREGUARD
                 </h1>
                 <p className="mt-6 font-document text-base leading-[1.85] text-text-secondary sm:text-lg sm:leading-[1.95] md:text-[1.24rem]">
-                  {T({ ko: "은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색합니다.", en: "Explore the history, factions, technology, and geography of 200,000 planetary systems under the Galactic Central Council.", ja: "銀河中央評議会が管轄する20万惑星系の歴史、勢力、技術、地理をアーカイブで探索します。", zh: "探索银河中央议会管辖的20万星系的历史、派系、技术和地理档案。" })}
+                  {T({ ko: "글만 쓰면 NOA가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.", en: "Just write. NOA learns your style, audits quality, and preserves continuity.", ja: "書くだけで、NOAが文体を学習し、品質を検査し、連続性を守ります。", zh: "只管写。NOA 学习文体、审核质量、守护连贯性。" })}
                 </p>
                 <p className="mt-5 font-[--font-mono] text-[11px] uppercase leading-5 tracking-[0.08em] text-text-tertiary sm:text-[0.82rem] sm:leading-8 sm:tracking-[0.16em] md:text-sm">
-                  {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", ja: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", zh: "档案库 · 网络 · 知识库 · 设定手册 · 参考" })}
+                  {T({ ko: "Tab 자동완성 · 품질 게이트 · 장르 프리셋 · GitHub 백업", en: "Tab completion · Quality gate · Genre presets · GitHub backup", ja: "Tab補完 · 品質ゲート · ジャンルプリセット · GitHub バックアップ", zh: "Tab 补全 · 质量门 · 类型预设 · GitHub 备份" })}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/archive" prefetch className="premium-button">
-                    {T({ ko: "아카이브 탐색", en: "Browse Archive", ja: "アーカイブを探索", zh: "浏览档案库" })}
-                  </Link>
-                  <Link href="/network" prefetch className="premium-button secondary">
-                    {T({ ko: "네트워크 진입", en: "Enter Network", ja: "ネットワークへ", zh: "进入网络" })}
-                  </Link>
-                  <Link href={NOVEL_STUDIO_PATH} prefetch className="premium-button secondary">
-                    {T({ ko: "소설 스튜디오", en: "Novel Studio", ja: "小説スタジオ", zh: "小说工作室" })}
+                  <Link href={NOVEL_STUDIO_PATH} prefetch className="premium-button">
+                    {T({ ko: "스튜디오 시작", en: "Start Studio", ja: "スタジオを始める", zh: "启动工作室" })}
                   </Link>
                   {translatorStudioHref.startsWith("http") ? (
                     <a
@@ -575,6 +561,12 @@ function HomePageContent() {
                       {T({ ko: "번역 스튜디오", en: "Translation", ja: "翻訳", zh: "翻译" })}
                     </Link>
                   )}
+                  <Link href="/archive" prefetch className="premium-button secondary">
+                    {T({ ko: "아카이브", en: "Archive", ja: "アーカイブ", zh: "档案库" })}
+                  </Link>
+                  <Link href="/network" prefetch className="premium-button secondary">
+                    {T({ ko: "네트워크", en: "Network", ja: "ネットワーク", zh: "网络" })}
+                  </Link>
                 </div>
               </div>
 
