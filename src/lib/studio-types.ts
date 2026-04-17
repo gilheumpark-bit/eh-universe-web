@@ -245,6 +245,7 @@ export interface StoryConfig {
   manuscripts?: EpisodeManuscript[];
   chapterAnalyses?: ChapterAnalysis[];
   grammarRegion?: 'KR' | 'US' | 'JP' | 'CN';
+  shadowState?: import('@/engine/shadow').ShadowState;
   /** Consumed by EpisodeScenePanel UI + injected into AI prompt by engine/pipeline.ts */
   episodeSceneSheets?: EpisodeSceneSheet[];
   visualPromptCards?: VisualPromptCard[];

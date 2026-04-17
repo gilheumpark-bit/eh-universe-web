@@ -123,7 +123,7 @@ export function detectHallucination(promptLength: number, responseLength: number
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
-/** Available but not wired into main generation pipeline (useStudioAI/pipeline.ts). Used in tests only. */
+/** Wired into pipeline.ts via config.shadowState → buildShadowPrompt() → [NARRATIVE SENTINEL] block */
 export function buildShadowPrompt(shadow: ShadowState, episode: number, totalEpisodes: number, isKO: boolean): string {
   const language: AppLanguage = isKO ? 'KO' : 'EN';
   const t = createT(language);
