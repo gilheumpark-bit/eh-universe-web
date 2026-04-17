@@ -283,9 +283,24 @@ export function useStudioAI({
         language,
       });
 
+      // [창작 파이프라인] RAG — 99만 세계관 설정 검색 → 프롬프트 앞에 자동 주입
+      // DGX 사용 가능할 때만 호출. 실패 시 원본 basePrompt 유지 (noop).
+      let ragContext = '';
+      if (hasDgxService() && text && text.trim().length >= 10) {
+        try {
+          const { ragBuildPrompt } = await import('@/services/ragService');
+          const enriched = await ragBuildPrompt({ query: text.slice(0, 500), top_k: 5 }, { timeoutMs: 4000 });
+          if (enriched && enriched !== text) {
+            // ragBuildPrompt는 "세계관 + 원본 질문"을 반환 — 여기서는 세계관 부분만 추출해 prefix로
+            ragContext = enriched.replace(text, '').trim();
+          }
+        } catch (err) { logger.warn('StudioAI', 'RAG enrich failed (non-blocking)', err); }
+      }
+
       while (attempt <= maxAttempts) {
         fullContent = '';
-        const promptWithHint = basePrompt + (currentRetryHint ? `\n\n${currentRetryHint}` : '');
+        const ragBlock = ragContext ? `\n[세계관 설정 컨텍스트]\n${ragContext}\n` : '';
+        const promptWithHint = basePrompt + ragBlock + (currentRetryHint ? `\n\n${currentRetryHint}` : '');
         result = await generateStoryStream(
           configForAI, promptWithHint,
           (chunk) => {

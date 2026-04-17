@@ -4,7 +4,7 @@
  * 전략: 청크 이어쓰기 — max_tokens 4000 단위로 분할 요청, finish_reason=length면 이어서 요청
  */
 
-import { getServerUrlForModel, getFallbackUrl, SPARK_UNIFIED_URL } from '@/lib/dgx-models';
+import { getServerUrlForModel, getFallbackUrl, SPARK_UNIFIED_URL, buildSparkSystemPrompt, VLLM_MODEL_ID } from '@/lib/dgx-models';
 
 export const SPARK_SERVER_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
 
@@ -187,7 +187,9 @@ export async function streamSparkAI(
     async start(controller) {
       try {
         let fullContent = '';
-        const chatMessages = [{ role: 'system', content: system }, ...messages];
+        // Qwen 3.5-9B 추론형 모델의 영어 Thinking Process 출력 차단 guard 자동 삽입
+        const guardedSystem = buildSparkSystemPrompt(system);
+        const chatMessages = [{ role: 'system', content: guardedSystem }, ...messages];
 
         for (let chunk = 0; chunk < MAX_CHUNKS; chunk++) {
           const currentMessages = chunk === 0
@@ -255,7 +257,9 @@ async function streamOneRequest(
         headers,
         signal: signal ?? AbortSignal.timeout(90_000),
         body: JSON.stringify({
-          model,
+          // vLLM 서빙 규격: 엔진 A/B 모두 "/model" 문자열을 고정 사용.
+          // 내부 model 힌트는 엔진 라우팅에만 쓰이고 실제 요청 payload에는 포함하지 않음.
+          model: VLLM_MODEL_ID,
           messages,
           temperature,
           stream: true,
