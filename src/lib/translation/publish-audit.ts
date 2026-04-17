@@ -293,7 +293,92 @@ export function runPublishAudit(text: string): PublishAuditReport {
 }
 
 // ============================================================
-// PART 10 — Auto-fix (안전한 것만)
+// PART 10 — AI 맞춤법 검수 (선택적, 사용자 API 키 소모)
+// ============================================================
+
+export interface AICorrection {
+  original: string;
+  suggested: string;
+  reason: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+const AI_AUDIT_SCHEMA = {
+  type: 'object',
+  properties: {
+    corrections: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          original: { type: 'string' },
+          suggested: { type: 'string' },
+          reason: { type: 'string' },
+          severity: { type: 'string', enum: ['high', 'medium', 'low'] },
+        },
+        required: ['original', 'suggested', 'reason', 'severity'],
+      },
+    },
+  },
+  required: ['corrections'],
+};
+
+/**
+ * AI를 통한 맞춤법·띄어쓰기·어색한 표현 검수.
+ * /api/structured-generate 단일 호출 (사용자 API 키 1회 소모).
+ * 실패하면 빈 배열 반환 — 로컬 규칙 검수에 영향 없음.
+ */
+export async function runAIAudit(
+  text: string,
+  provider: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<AICorrection[]> {
+  if (!text || text.trim().length < 10) return [];
+
+  const prompt = `당신은 한국어 원고 교정 전문가입니다. 다음 텍스트에서 맞춤법·띄어쓰기·문장부호·어색한 표현을 찾아 교정해주세요.
+
+규칙:
+- 실제 오류만 보고 (스타일 선호는 제외)
+- 원문 표현은 최소 3자, 최대 50자로 짧게 인용
+- severity: high(명백한 오류) / medium(의심) / low(가독성 제안)
+- 최대 20개 항목
+- 없으면 corrections: []
+
+텍스트:
+${text.slice(0, 4000)}`;
+
+  try {
+    const res = await fetch('/api/structured-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: signal ?? AbortSignal.timeout(45_000),
+      body: JSON.stringify({
+        provider,
+        prompt,
+        schema: AI_AUDIT_SCHEMA,
+        apiKey: apiKey || undefined,
+      }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const raw = typeof data === 'string' ? data : JSON.stringify(data);
+    const parsed = JSON.parse(raw);
+    const items = Array.isArray(parsed?.corrections) ? parsed.corrections : [];
+    return items
+      .filter((x: unknown): x is AICorrection =>
+        typeof x === 'object' && x !== null
+        && typeof (x as AICorrection).original === 'string'
+        && typeof (x as AICorrection).suggested === 'string'
+      )
+      .slice(0, 30);
+  } catch {
+    return [];
+  }
+}
+
+// ============================================================
+// PART 11 — Auto-fix (안전한 것만)
 // ============================================================
 
 /**

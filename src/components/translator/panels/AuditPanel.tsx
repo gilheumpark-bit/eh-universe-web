@@ -14,7 +14,9 @@ import {
   type ChunkScoreDetail,
   type TranslationMode as EngineScoringMode,
 } from '@/engine/translation';
-import { runPublishAudit, applyAutoFix, type PublishAuditReport, type PublishAuditFinding } from '@/lib/translation/publish-audit';
+import { runPublishAudit, applyAutoFix, runAIAudit, type PublishAuditReport, type PublishAuditFinding, type AICorrection } from '@/lib/translation/publish-audit';
+import { searchTM, type TMMatch } from '@/lib/translation/translation-memory';
+import { BookOpen } from 'lucide-react';
 
 type AuditIssue = {
   id: string;
@@ -206,9 +208,12 @@ function SeverityBadge({ severity }: { severity: PublishAuditFinding['severity']
 }
 
 function PublishAuditSection() {
-  const { result, setResult } = useTranslator();
+  const { result, setResult, provider, getEffectiveApiKeyForProvider } = useTranslator();
   const [report, setReport] = useState<PublishAuditReport | null>(null);
   const [lastRunAt, setLastRunAt] = useState<number | null>(null);
+  const [aiCorrections, setAiCorrections] = useState<AICorrection[]>([]);
+  const [aiRunning, setAiRunning] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const handleRun = useCallback(() => {
     if (!result || result.trim().length < 10) return;
@@ -225,6 +230,34 @@ function PublishAuditSection() {
       // 재검사
       setTimeout(() => setReport(runPublishAudit(fixed)), 50);
     }
+  }, [result, setResult]);
+
+  const handleRunAI = useCallback(async () => {
+    if (!result || result.trim().length < 10 || aiRunning) return;
+    setAiRunning(true);
+    setAiError(null);
+    try {
+      const apiKey = getEffectiveApiKeyForProvider(provider);
+      const corrections = await runAIAudit(result, provider, apiKey);
+      setAiCorrections(corrections);
+      if (corrections.length === 0) setAiError('AI가 교정 제안을 반환하지 않음. API 키 확인 또는 다시 시도.');
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'AI 검수 실패');
+      setAiCorrections([]);
+    } finally {
+      setAiRunning(false);
+    }
+  }, [result, provider, getEffectiveApiKeyForProvider, aiRunning]);
+
+  const handleApplyAICorrection = useCallback((c: AICorrection) => {
+    if (!result) return;
+    // 첫 번째 매치만 교체 (보수적)
+    const idx = result.indexOf(c.original);
+    if (idx < 0) return;
+    const fixed = result.slice(0, idx) + c.suggested + result.slice(idx + c.original.length);
+    setResult(fixed);
+    // 적용된 항목 제거
+    setAiCorrections(prev => prev.filter(x => x !== c));
   }, [result, setResult]);
 
   const canRun = result.trim().length >= 10;
@@ -340,6 +373,177 @@ function PublishAuditSection() {
           )}
         </>
       )}
+
+      {/* ── AI 교정 제안 (선택적, API 키 1회 소모) ── */}
+      {canRun && (
+        <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-text-secondary">
+              <Sparkles className="w-3 h-3 text-accent-purple" />
+              <span className="text-[10px] font-medium">AI 교정 (선택)</span>
+              <span className="text-[9px] text-text-tertiary">· API 키 소모</span>
+            </div>
+            {aiCorrections.length > 0 && (
+              <span className="text-[10px] text-accent-purple font-mono">{aiCorrections.length}건</span>
+            )}
+          </div>
+
+          {!aiRunning && aiCorrections.length === 0 && (
+            <button
+              type="button"
+              onClick={handleRunAI}
+              className="w-full min-h-[28px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/25 text-[11px] font-medium transition-colors"
+              title={`${provider}로 1회 호출 — 맞춤법·띄어쓰기·어색한 표현 제안`}
+            >
+              AI 교정 제안 실행
+            </button>
+          )}
+
+          {aiRunning && (
+            <div className="flex items-center gap-2 text-[10px] text-text-secondary py-1">
+              <Loader2 className="w-3 h-3 animate-spin text-accent-purple" />
+              <span>AI 교정 중… (최대 45초)</span>
+            </div>
+          )}
+
+          {aiError && !aiRunning && (
+            <div className="text-[10px] text-accent-amber bg-accent-amber/5 border border-accent-amber/20 rounded p-1.5">
+              {aiError}
+            </div>
+          )}
+
+          {aiCorrections.length > 0 && (
+            <div className="space-y-1.5">
+              {aiCorrections.map((c, i) => {
+                const sev = c.severity;
+                const sevColor = sev === 'high' ? 'text-red-400' : sev === 'medium' ? 'text-accent-amber' : 'text-accent-indigo';
+                return (
+                  <div key={i} className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-[9px] px-1 py-0.5 rounded border font-mono uppercase ${sevColor}`}>
+                        {sev}
+                      </span>
+                      <span className="text-[10px] text-text-secondary italic">{c.reason}</span>
+                    </div>
+                    <div className="text-[10px] text-text-tertiary">
+                      <span className="line-through">{c.original}</span>
+                    </div>
+                    <div className="text-[11px] text-accent-green">
+                      → {c.suggested}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyAICorrection(c)}
+                      className="w-full mt-1 text-[10px] py-1 rounded bg-accent-green/10 hover:bg-accent-green/20 text-accent-green border border-accent-green/25 font-medium transition-colors"
+                    >
+                      이 교정 적용
+                    </button>
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={handleRunAI}
+                className="w-full text-[10px] py-1 rounded bg-white/5 hover:bg-white/10 text-text-tertiary border border-white/10 transition-colors"
+              >
+                AI 재검수
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// PART 4b — TM Suggestions (번역 메모리 유사 매치)
+// ============================================================
+function TMSuggestionsSection() {
+  const { source, to } = useTranslator();
+  const [matches, setMatches] = useState<TMMatch[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
+
+  React.useEffect(() => {
+    if (!source || source.trim().length < 20) {
+      setMatches([]);
+      return;
+    }
+    try {
+      const targetUpper = (to || 'EN').toUpperCase();
+      // 문장 분할 → 각 문장별 상위 매치 1개씩 → 전체 유사도 평균
+      const sentences = source
+        .split(/[.!?…]+\s*|\n+/)
+        .map(s => s.trim())
+        .filter(s => s.length >= 15)
+        .slice(0, 8); // 최대 8 문장만 검사 (성능)
+      const allMatches: TMMatch[] = [];
+      for (const sent of sentences) {
+        const found = searchTM(sent, targetUpper, 0.65);
+        if (found.length > 0) allMatches.push(found[0]);
+      }
+      // similarity 높은 순, 중복 source 제거
+      const seen = new Set<string>();
+      const dedup = allMatches
+        .sort((a, b) => b.similarity - a.similarity)
+        .filter(m => {
+          if (seen.has(m.entry.source)) return false;
+          seen.add(m.entry.source);
+          return true;
+        })
+        .slice(0, 5);
+      setMatches(dedup);
+    } catch {
+      setMatches([]);
+    }
+  }, [source, to]);
+
+  if (matches.length === 0) return null;
+
+  return (
+    <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-2">
+      <button
+        type="button"
+        onClick={() => setCollapsed(c => !c)}
+        className="w-full flex items-center justify-between gap-2 text-text-secondary hover:text-text-primary transition-colors"
+      >
+        <div className="flex items-center gap-1.5">
+          <BookOpen className="w-3.5 h-3.5 text-accent-indigo" />
+          <span className="text-[12px] font-medium">번역 메모리 매칭</span>
+          <span className="text-[10px] text-accent-indigo bg-accent-indigo/10 px-1.5 py-0.5 rounded">{matches.length}</span>
+        </div>
+        <span className={`text-[10px] text-text-tertiary transition-transform ${collapsed ? '' : 'rotate-180'}`}>▼</span>
+      </button>
+
+      {!collapsed && (
+        <div className="space-y-1.5 pt-1">
+          {matches.map((m, i) => {
+            const pct = Math.round(m.similarity * 100);
+            const color = pct >= 90 ? 'text-accent-green' : pct >= 80 ? 'text-accent-amber' : 'text-accent-indigo';
+            return (
+              <div key={i} className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-[10px] font-mono font-bold ${color}`}>{pct}%</span>
+                  <span className="text-[9px] text-text-tertiary font-mono uppercase">{m.type}</span>
+                  {m.entry.confirmed && (
+                    <span className="text-[9px] text-accent-green bg-accent-green/10 px-1 rounded">확정</span>
+                  )}
+                  <span className="text-[9px] text-text-tertiary font-mono ml-auto">{m.entry.sourceLang}→{m.entry.targetLang}</span>
+                </div>
+                <div className="text-[10px] text-text-tertiary truncate" title={m.entry.source}>
+                  원문: {m.entry.source.slice(0, 80)}{m.entry.source.length > 80 ? '…' : ''}
+                </div>
+                <div className="text-[11px] text-text-secondary leading-snug" title={m.entry.target}>
+                  번역: {m.entry.target.slice(0, 120)}{m.entry.target.length > 120 ? '…' : ''}
+                </div>
+              </div>
+            );
+          })}
+          <p className="text-[9px] text-text-tertiary italic text-center pt-1">
+            과거 번역과 유사한 원문입니다. 참고하세요.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -423,6 +627,9 @@ export function AuditPanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pointer-events-auto">
+        {/* ── TM 매칭 (번역 메모리 유사 제안) ── */}
+        <TMSuggestionsSection />
+
         {/* ── 출판 검수 (로컬 규칙, 무료) ── */}
         <PublishAuditSection />
 
