@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Globe2, Users, GitBranch, Sparkles, Info, BookOpen, Monitor, FileText, ChevronRight } from 'lucide-react';
 import { L4 } from '@/lib/i18n';
 import type { AppLanguage, EpisodeManuscript } from '@/lib/studio-types';
+import { useVirtualKeyboard } from '@/hooks/useVirtualKeyboard';
 
 // ============================================================
 // PART 1 — 타입 및 상수
@@ -503,6 +504,7 @@ function ManuscriptsPanel({ language }: { language: AppLanguage }) {
 export default function MobileStudioView({ language, onDesktopCTA }: Props) {
   const [tab, setTab] = useState<MobileTab>('world');
   const [store, setStore] = useState<MobileSketchStore>(DEFAULT_STORE);
+  const kb = useVirtualKeyboard();
 
   useEffect(() => {
     setStore(loadStore());
@@ -594,8 +596,11 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         {tab === 'manuscripts' && <ManuscriptsPanel language={language} />}
       </main>
 
-      {/* 데스크톱 CTA */}
-      <footer className="shrink-0 px-4 py-3 border-t border-border bg-bg-secondary/50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+      {/* 데스크톱 CTA — 가상 키보드 올라오면 자동 숨김 (화면 공간 확보) */}
+      <footer
+        className={`shrink-0 px-4 py-3 border-t border-border bg-bg-secondary/50 transition-all duration-200 ${kb.isOpen ? 'hidden' : ''}`}
+        style={{ paddingBottom: kb.isOpen ? '0px' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+      >
         <div className="flex items-start gap-2 mb-2">
           <Info className="w-3.5 h-3.5 text-accent-blue mt-0.5 shrink-0" />
           <p className="text-[10px] text-text-tertiary leading-relaxed">

@@ -42,6 +42,34 @@ export function BilateralEditor() {
   const [sideView, setSideView] = useState<SideView>('A');
   const { handleSVIKeyDown } = useSVIRecorder();
 
+  // ── D3 키보드 단축키 — Alt+A/B/D 탭 전환, Alt+G B 생성 ──
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // 포커스가 textarea/input에 있을 때는 상쇄 (사용자 입력 방해 방지)
+      const target = e.target as HTMLElement | null;
+      const inEditor = target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT');
+      if (inEditor) return;
+      if (!e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === 'a') { e.preventDefault(); setSideView('A'); }
+      else if (k === 'b') { e.preventDefault(); setSideView('B'); }
+      else if (k === 'd') {
+        if (result.trim() && compareResultB.trim()) {
+          e.preventDefault();
+          setSideView('diff');
+        }
+      }
+      else if (k === 'g') {
+        if (source.trim() && !loading) {
+          e.preventDefault();
+          void runCompareB();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [result, compareResultB, source, loading, runCompareB]);
+
   // Glossary highlight overlay for source text
   const glossaryTerms = useMemo(() => Object.keys(glossary ?? {}), [glossary]);
   const sourceHighlightHtml = useMemo(
@@ -324,28 +352,42 @@ export function BilateralEditor() {
                 {sideView === 'B' ? `B안 (${to})` : sideView === 'diff' ? `Diff` : `Translation (${to})`}
               </span>
             </div>
-            {/* A/B/Diff 토글 + B 생성 버튼 */}
-            <div className="flex items-center gap-1">
-              <div className="flex items-center bg-bg-secondary/40 rounded-md border border-border/50 overflow-hidden pointer-events-auto">
+            {/* A/B/Diff 토글 + B 생성 버튼 (키보드: Alt+A/B/D, Alt+G = B 생성) */}
+            <div className="flex items-center gap-1 flex-wrap">
+              <div
+                role="tablist"
+                aria-label={langKo ? '번역 결과 뷰 전환' : 'Translation view selector'}
+                className="flex items-center bg-bg-secondary/40 rounded-md border border-border/50 overflow-hidden pointer-events-auto"
+              >
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={sideView === 'A'}
+                  aria-controls="translation-result-panel"
                   onClick={() => setSideView('A')}
-                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors ${sideView === 'A' ? 'bg-accent-blue/20 text-accent-blue' : 'text-text-tertiary hover:text-text-primary'}`}
-                  title={langKo ? '기본 번역 결과 보기' : 'View primary translation'}
+                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${sideView === 'A' ? 'bg-accent-blue/20 text-accent-blue' : 'text-text-tertiary hover:text-text-primary'}`}
+                  title={langKo ? '기본 번역 결과 (Alt+A)' : 'Primary translation (Alt+A)'}
                 >A</button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={sideView === 'B'}
+                  aria-controls="translation-result-panel"
                   onClick={() => setSideView('B')}
-                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors border-l border-border/50 ${sideView === 'B' ? 'bg-accent-purple/20 text-accent-purple' : 'text-text-tertiary hover:text-text-primary'}`}
-                  title={langKo ? '대체 엔진 B안 보기' : 'View alt engine B'}
+                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors border-l border-border/50 focus-visible:ring-2 focus-visible:ring-accent-purple/50 ${sideView === 'B' ? 'bg-accent-purple/20 text-accent-purple' : 'text-text-tertiary hover:text-text-primary'}`}
+                  title={langKo ? '대체 엔진 B안 (Alt+B)' : 'Alt engine B (Alt+B)'}
                 >B</button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={sideView === 'diff'}
+                  aria-controls="translation-result-panel"
+                  aria-label={langKo ? 'A vs B 차이 비교' : 'Compare A vs B'}
                   onClick={() => setSideView('diff')}
                   disabled={!result.trim() || !compareResultB.trim()}
-                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors border-l border-border/50 disabled:opacity-30 disabled:cursor-not-allowed ${sideView === 'diff' ? 'bg-accent-green/20 text-accent-green' : 'text-text-tertiary hover:text-text-primary'}`}
-                  title={langKo ? 'A vs B 차이 비교' : 'Compare A vs B'}
-                ><GitCompare className="w-3 h-3" /></button>
+                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors border-l border-border/50 disabled:opacity-30 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-accent-green/50 ${sideView === 'diff' ? 'bg-accent-green/20 text-accent-green' : 'text-text-tertiary hover:text-text-primary'}`}
+                  title={langKo ? 'A vs B 차이 비교 (Alt+D)' : 'Diff A vs B (Alt+D)'}
+                ><GitCompare className="w-3 h-3" aria-hidden="true" /></button>
               </div>
               {/* B 재번역 버튼 (A 또는 B 보기 중일 때 노출) */}
               {sideView !== 'diff' && (
@@ -353,10 +395,11 @@ export function BilateralEditor() {
                   type="button"
                   onClick={() => { if (source.trim() && !loading) void runCompareB(); }}
                   disabled={!source.trim() || loading}
-                  className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono font-bold bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title={langKo ? '다른 엔진(Claude↔OpenAI)으로 B안 재생성' : 'Generate alt-engine B'}
+                  aria-label={langKo ? 'B안 재생성 (Alt+G)' : 'Generate alt B (Alt+G)'}
+                  className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono font-bold bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-accent-purple/50"
+                  title={langKo ? '다른 엔진(Claude↔OpenAI)으로 B안 재생성 (Alt+G)' : 'Generate B via alt engine (Alt+G)'}
                 >
-                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  {loading ? <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> : <Sparkles className="w-3 h-3" aria-hidden="true" />}
                   <span>B 생성</span>
                 </button>
               )}
@@ -373,6 +416,9 @@ export function BilateralEditor() {
           {/* A view */}
           {sideView === 'A' && (
             <textarea
+              id="translation-result-panel"
+              role="tabpanel"
+              aria-label={langKo ? '기본 번역 결과' : 'Primary translation'}
               ref={resultRef}
               placeholder={langKo ? "번역 결과가 여기에 표시됩니다...\n\n◀ 왼쪽에 원문을 입력하고 ▶ 버튼을 누르세요" : "Translation results appear here...\n\n◀ Enter source text and press ▶ to translate"}
               className="flex-1 w-full resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2]"
