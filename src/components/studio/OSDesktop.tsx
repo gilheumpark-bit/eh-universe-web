@@ -9,6 +9,7 @@ import {
   Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
   Code2, Languages, Globe, ImageIcon, Film, MoreHorizontal, Printer,
+  ArrowUpToLine, ArrowDownToLine,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -16,6 +17,7 @@ import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
 
 const DOCK_STORAGE_KEY = 'eh-dock-order';
 const DOCK_POS_KEY = 'eh-dock-position';
+const DOCK_ANCHOR_KEY = 'eh-dock-anchor'; // 'top' | 'bottom'
 
 interface DockPosition { x: number; y: number; }
 
@@ -126,6 +128,26 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   const [isDockDraggingState, setIsDockDraggingState] = useState(false);
   const isDockDragging = useRef(false);
   const dockDragOffset = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
+
+  // ── Dock anchor (top | bottom) — 자유이동 없을 때 적용, 팝업 방향 결정 ──
+  const [dockAnchor, setDockAnchor] = useState<'top' | 'bottom'>(() => {
+    if (typeof window === 'undefined') return 'bottom';
+    try {
+      const saved = localStorage.getItem(DOCK_ANCHOR_KEY);
+      return saved === 'top' ? 'top' : 'bottom';
+    } catch { return 'bottom'; }
+  });
+
+  const toggleDockAnchor = useCallback(() => {
+    setDockAnchor(prev => {
+      const next = prev === 'top' ? 'bottom' : 'top';
+      try { localStorage.setItem(DOCK_ANCHOR_KEY, next); } catch { /* quota */ }
+      return next;
+    });
+    // 앵커 전환 시 자유이동 위치 초기화 (드래그로 옮긴 상태면 해제)
+    setDockPos(null);
+    try { localStorage.removeItem(DOCK_POS_KEY); } catch { /* private */ }
+  }, []);
 
   useEffect(() => {
     if (dockPos) saveDockPosition(dockPos);
@@ -360,14 +382,40 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
       <div
         ref={dockRef}
         data-zen-hide
+        data-dock-anchor={dockAnchor}
         className={`fixed z-[var(--z-tooltip)] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-all duration-500' : ''}`}
         style={
           dockPos
             ? { left: dockPos.x, top: dockPos.y }
-            : { bottom: 16, left: '50%', transform: 'translateX(-50%)' }
+            : dockAnchor === 'top'
+              ? { top: 'calc(env(safe-area-inset-top, 0px) + 16px)', left: '50%', transform: 'translateX(-50%)' }
+              : { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', left: '50%', transform: 'translateX(-50%)' }
         }
       >
-        {/* Move Handle */}
+        {/* 앵커 토글 — 상단/하단 전환 */}
+        <button
+          type="button"
+          onClick={toggleDockAnchor}
+          className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-all mr-1 shrink-0 group/anchor"
+          title={L4(language, {
+            ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
+            en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
+            ja: dockAnchor === 'top' ? '下部へ移動' : '上部へ移動',
+            zh: dockAnchor === 'top' ? '移至底部' : '移至顶部',
+          })}
+          aria-label={L4(language, {
+            ko: dockAnchor === 'top' ? '독을 하단으로' : '독을 상단으로',
+            en: dockAnchor === 'top' ? 'Dock to bottom' : 'Dock to top',
+            ja: dockAnchor === 'top' ? 'ドックを下部に' : 'ドックを上部に',
+            zh: dockAnchor === 'top' ? '停靠到底部' : '停靠到顶部',
+          })}
+        >
+          {dockAnchor === 'top'
+            ? <ArrowDownToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />
+            : <ArrowUpToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />}
+        </button>
+
+        {/* Move Handle — 자유 이동 */}
         <div
           onMouseDown={handleDockMoveStart}
           onDoubleClick={handleDockReset}
@@ -467,9 +515,9 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             )}
           </button>
 
-          {/* Overflow popup — 4 hidden tabs */}
+          {/* Overflow popup — 4 hidden tabs (앵커에 따라 방향 반전) */}
           {overflowOpen && (
-            <div className="absolute bottom-[68px] left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-2 rounded-2xl bg-bg-secondary/95 backdrop-blur-xl border border-border shadow-panel z-[var(--z-dropdown)]">
+            <div className={`absolute left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-2 rounded-2xl bg-bg-secondary/95 backdrop-blur-xl border border-border shadow-panel z-[var(--z-dropdown)] ${dockAnchor === 'top' ? 'top-[68px]' : 'bottom-[68px]'}`}>
               {allDockItems
                 .filter((tab) => OVERFLOW_TAB_IDS.includes(tab.id))
                 .map((tab) => {
@@ -540,7 +588,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           </button>
 
           {isSystemMenuOpen && (
-            <div className="absolute bottom-16 right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[var(--z-dropdown)]">
+            <div className={`absolute right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[var(--z-dropdown)] ${dockAnchor === 'top' ? 'top-16' : 'bottom-16'}`}>
               <button onClick={() => { setIsSystemMenuOpen(false); handleTabChange('settings'); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Settings className="w-4 h-4" /> {t('sidebar.settings')}
               </button>
