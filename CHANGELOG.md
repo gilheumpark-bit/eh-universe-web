@@ -3,6 +3,50 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.1] — 2026-04-17
+
+### Added
+- 로어가드 (Loreguard) 브랜딩 — 제품명 통일
+- 창작→번역→출판 파이프라인 (Studio → Translation Studio 자동 연결)
+- 원고 완성 감지 번역 CTA 토스트
+- 마지막 세션 자동 복원 (`noa_last_project_id` / `noa_last_session_id`)
+- 모바일 전용 스케치 뷰 (세계관/캐릭터/플롯 3탭)
+- `MobileDesktopOnlyGate` (PC 전용 기능 모바일 유도)
+- `AuditInvoice` 패널 등록 + `intent-parser` 연결
+- `apply-guard` / `snapshot-manager` / `tier-registry` 런타임 연결
+
+### Changed
+- Feature Flag 기본값 재조정
+  - `SECURITY_GATE`: false → true (상용 기본 활성)
+  - `GITHUB_ETAG_CACHE`: false → true
+  - `ARI_ENHANCED`: false → true
+  - `MULTI_FILE_AGENT`: false → true
+  - `GITHUB_SYNC`: false → true
+  - `CLOUD_SYNC`: true → false (Firestore 과금 리스크 차단)
+- 집필 탭 고급 드롭다운 호버→클릭 토글 (터치 접근성)
+- `window.confirm` / `window.alert` 13건 → `showConfirm` / `showAlert` 통일
+- 텍스트 하한 13px 적용 (83건)
+- 터치 타겟 44px 적용 (10건)
+- Sentry DSN 환경변수화
+
+### Fixed
+- Tab 인라인 자동완성 401 (Authorization 헤더 추가)
+- GitHub 역동기화 (`repoFilesToConfig` 연결)
+- Studio 설정 주입 파이프라인 43% 누락 복구
+- `handleRegenerate` 품질 파이프라인 복구
+- `exportDOCX` manuscripts 우선 사용
+- 138건 ja/zh 번역 한국어 혼입 정리
+- `OPEN_BETA` 안전 가드 (`STRIPE_SECRET_KEY` 감지)
+- Stripe `apiVersion` 가짜값 제거
+
+### Security
+- `/api/structured-generate` Firebase JWT 인증 게이트
+- `/api/analyze-chapter` Firebase JWT 인증 게이트
+- `/api/image-gen` local-spark 우회 방어
+- `/api/code/autopilot` JWT + 실측 시간
+- `/api/github/token` origin 엄격 비교
+- `/api/share` Firestore 영속화
+
 ## [2.1.0] — 2026-04-14
 
 ### 소설 IDE 아키텍처 전면 구현 (7-Phase)

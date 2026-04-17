@@ -73,7 +73,7 @@ export default function MobileDesktopOnlyGate({
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-bg-primary text-text-primary p-6">
-      <div className="shrink-0 pt-safe">
+      <div className="shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary text-sm min-h-[44px]"
@@ -148,7 +148,7 @@ export default function MobileDesktopOnlyGate({
         </div>
       </div>
 
-      <div className="shrink-0 text-center pb-safe">
+      <div className="shrink-0 text-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <p className="text-[10px] text-text-quaternary">
           {L4(lang, {
             ko: '로어가드 — 데스크톱 최적화',

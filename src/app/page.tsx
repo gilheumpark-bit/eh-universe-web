@@ -347,13 +347,13 @@ function HomePageContent() {
                 <p className="site-kicker">
                   {T({ ko: "세계관 탐색 포털", en: "Worldbuilding Portal", ja: "世界観探索ポータル", zh: "世界观探索门户" })}
                 </p>
-                <h1 className="site-title mt-5 text-5xl font-bold leading-[0.94] sm:text-6xl md:text-7xl xl:text-[5.4rem]">
+                <h1 className="site-title mt-5 text-4xl font-bold leading-[0.94] sm:text-5xl md:text-7xl xl:text-[5.4rem]">
                   EH UNIVERSE
                 </h1>
-                <p className="mt-6 font-document text-lg leading-[1.95] text-text-secondary md:text-[1.24rem]">
+                <p className="mt-6 font-document text-base leading-[1.85] text-text-secondary sm:text-lg sm:leading-[1.95] md:text-[1.24rem]">
                   {T({ ko: "은하 중앙 의회가 관할하는 20만 행성계의 역사, 세력, 기술, 지리를 아카이브로 탐색합니다.", en: "Explore the history, factions, technology, and geography of 200,000 planetary systems under the Galactic Central Council.", ja: "銀河中央評議会が管轄する20万惑星系の歴史、勢力、技術、地理をアーカイブで探索します。", zh: "探索银河中央议会管辖的20万星系的历史、派系、技术和地理档案。" })}
                 </p>
-                <p className="mt-5 font-[--font-mono] text-[0.82rem] uppercase leading-8 tracking-[0.16em] text-text-tertiary md:text-sm">
+                <p className="mt-5 font-[--font-mono] text-[11px] uppercase leading-5 tracking-[0.08em] text-text-tertiary sm:text-[0.82rem] sm:leading-8 sm:tracking-[0.16em] md:text-sm">
                   {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", ja: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", zh: "档案库 · 网络 · 知识库 · 设定手册 · 参考" })}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">

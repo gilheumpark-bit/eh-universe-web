@@ -261,8 +261,13 @@ export default function ArchiveClient() {
     <>
       <Header />
       <main className="min-h-screen pt-20 eh-page-canvas">
-        {/* 모바일 사이드바 토글 */}
-        <button className="fixed bottom-4 right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 p-3 text-accent-amber shadow-lg backdrop-blur-xl active:scale-95 transition-all" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
+        {/* 모바일 사이드바 토글 — safe-area 홈바 보호 + 44px 터치 타겟 */}
+        <button
+          className="fixed right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 text-accent-amber shadow-lg backdrop-blur-xl active:scale-95 transition-all flex items-center justify-center min-w-[44px] min-h-[44px]"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle sidebar"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 5H17M3 10H12M3 15H17" /></svg>
         </button>
 

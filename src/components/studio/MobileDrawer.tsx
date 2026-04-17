@@ -173,9 +173,13 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
 
   if (!open) return null;
 
+  // iOS Safari 주소창 접힘/펼침 시 vh 변동 방지 → dvh 사용
   const heightPercent = snap * 100;
+  const viewportH = typeof window !== 'undefined'
+    ? (window.visualViewport?.height ?? window.innerHeight)
+    : 800;
   const adjustedHeight = dragging
-    ? Math.max(10, heightPercent - (dragOffset / window.innerHeight) * 100)
+    ? Math.max(10, heightPercent - (dragOffset / viewportH) * 100)
     : (visible ? heightPercent : 0);
 
   const backdropOpacity = visible ? 1 : 0;
@@ -195,12 +199,12 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
         aria-hidden="true"
       />
 
-      {/* Drawer — Premium glass morphism */}
+      {/* Drawer — Premium glass morphism (dvh 기반으로 iOS 주소창 변동 대응) */}
       <div
         ref={containerRef}
         className="fixed bottom-0 inset-x-0 z-50 md:hidden overflow-hidden flex flex-col"
         style={{
-          height: `${adjustedHeight}vh`,
+          height: `${adjustedHeight}dvh`,
           transition: dragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           willChange: dragging ? 'height' : 'auto',

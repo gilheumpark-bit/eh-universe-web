@@ -246,7 +246,8 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
     <header
       data-testid="home-header"
       data-stellar-white={stellarWhite ? "true" : undefined}
-      className={`fixed inset-x-0 top-0 z-50 ${stellarWhite ? "px-0 pt-0" : "px-3 pt-3 md:px-5"}`}
+      className={`fixed inset-x-0 top-0 z-50 ${stellarWhite ? "px-0 pt-0" : "px-3 md:px-5"}`}
+      style={stellarWhite ? undefined : { paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
     >
       <div className={stellarWhite ? "w-full" : "site-shell"}>
         <div className={barShell}>
@@ -282,7 +283,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 )}
               </span>
               <span
-                className={`font-[family-name:var(--font-mono)] text-[10px] tracking-[0.24em] uppercase ${
+                className={`hidden sm:inline font-[family-name:var(--font-mono)] text-[10px] tracking-[0.24em] uppercase ${
                   stellarWhite ? "text-stone-500" : "text-text-tertiary"
                 }`}
               >
@@ -444,14 +445,14 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — overflow-y-auto로 모든 링크 스크롤 접근 보장 */}
       <div
         aria-hidden={!menuOpen}
-        className={`site-shell md:hidden transition-all duration-200 ease-out overflow-hidden ${
-          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+        className={`site-shell md:hidden transition-all duration-200 ease-out ${
+          menuOpen ? "max-h-[75dvh] overflow-y-auto overflow-x-hidden opacity-100" : "max-h-0 overflow-hidden opacity-0 pointer-events-none"
         }`}
       >
-        <nav className="premium-panel-soft mt-3 overflow-hidden rounded-[28px] border border-white/8 p-3" role="navigation" aria-label="Mobile navigation">
+        <nav className="premium-panel-soft mt-3 rounded-[28px] border border-white/8 p-3" role="navigation" aria-label="Mobile navigation">
           {navItems.map((item) => {
             const active = isNavActive(item);
             const cls = `block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] transition-colors duration-150 ${

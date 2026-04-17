@@ -156,7 +156,7 @@ function WorldMemoPanel({ language, store, setStore }: { language: AppLanguage; 
               </span>
               <button
                 onClick={() => removeMemo(m.id)}
-                className="text-[11px] text-accent-red hover:underline min-h-[32px] px-2"
+                className="text-[11px] text-accent-red hover:underline min-h-[44px] min-w-[44px] px-2 flex items-center justify-center"
               >
                 {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
               </button>
@@ -261,7 +261,7 @@ function CharacterSketchPanel({ language, store, setStore }: { language: AppLang
               </div>
               <button
                 onClick={() => removeChar(c.id)}
-                className="text-[11px] text-accent-red hover:underline shrink-0 min-h-[32px] px-2"
+                className="text-[11px] text-accent-red hover:underline shrink-0 min-h-[44px] min-w-[44px] px-2 flex items-center justify-center"
               >
                 {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
               </button>
@@ -350,7 +350,7 @@ function PlotBrainstormPanel({ language, store, setStore }: { language: AppLangu
               </div>
               <button
                 onClick={() => removePlot(p.id)}
-                className="text-[11px] text-accent-red hover:underline shrink-0 min-h-[32px] px-2"
+                className="text-[11px] text-accent-red hover:underline shrink-0 min-h-[44px] min-w-[44px] px-2 flex items-center justify-center"
               >
                 {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
               </button>
@@ -399,14 +399,22 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
           <button
             onClick={() => {
               if (typeof window === 'undefined') return;
+              const confirmMsg = L4(language, {
+                ko: '데스크톱 모드로 전환하면 모바일 최적화가 해제됩니다. 계속하시겠습니까?',
+                en: 'Switch to desktop mode? Mobile optimization will be disabled.',
+                ja: 'デスクトップモードに切り替えますか？モバイル最適化が解除されます。',
+                zh: '切换到桌面模式? 移动端优化将被禁用。',
+              });
+              if (!window.confirm(confirmMsg)) return;
               try { localStorage.setItem('noa_force_desktop', '1'); } catch { /* quota */ }
               window.location.reload();
             }}
             className="shrink-0 flex items-center gap-1 px-2.5 py-2 min-h-[44px] rounded-lg text-[11px] font-bold bg-bg-primary/60 border border-border text-text-secondary active:bg-bg-primary active:scale-95 transition-all"
             title={L4(language, { ko: '데스크톱 모드로 강제 전환', en: 'Force desktop mode', ja: 'デスクトップモードに強制切替', zh: '强制切换到桌面模式' })}
+            aria-label={L4(language, { ko: '데스크톱 모드 전환', en: 'Switch to desktop', ja: 'デスクトップに切替', zh: '切换桌面' })}
           >
             <Monitor className="w-3.5 h-3.5" />
-            {L4(language, { ko: 'PC', en: 'PC', ja: 'PC', zh: 'PC' })}
+            PC
           </button>
         </div>
         <p className="text-[11px] text-text-tertiary mt-1">

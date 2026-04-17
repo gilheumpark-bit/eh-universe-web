@@ -27,7 +27,7 @@ export default function CodexPage() {
   return (
     <>
       <Header />
-      <main className="pt-14">
+      <main className="pt-20 md:pt-24">
         <div className="mx-auto max-w-6xl px-4 py-12">
           {/* Header */}
           <div className="mb-8">
@@ -39,15 +39,15 @@ export default function CodexPage() {
             </p>
           </div>
 
-          {/* Tab Bar */}
-          <div className="flex gap-1 mb-8 border-b border-border pb-0">
+          {/* Tab Bar — 모바일 가로 스크롤 지원 */}
+          <div className="flex gap-1 mb-8 border-b border-border pb-0 overflow-x-auto flex-nowrap scrollbar-thin">
             {TABS.map(t => {
               const active = tab === t.id;
               return (
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`px-5 py-3 font-mono text-xs font-bold tracking-widest uppercase transition-all border-b-2 -mb-[1px] ${
+                  className={`shrink-0 px-4 sm:px-5 py-3 min-h-[44px] font-mono text-xs font-bold tracking-widest uppercase transition-all border-b-2 -mb-[1px] ${
                     active
                       ? "border-accent-purple text-accent-purple"
                       : "border-transparent text-text-tertiary hover:text-text-secondary"
