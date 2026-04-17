@@ -1,17 +1,45 @@
 import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
-import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2 } from 'lucide-react';
+import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2, GitCompare, Sparkles } from 'lucide-react';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { highlightGlossaryTerms } from '../panels/GlossaryPanel';
 
+type SideView = 'A' | 'B' | 'diff';
+
+/** 단순 라인 기준 diff — A와 B의 각 라인을 비교, same/added/removed 태그 */
+function computeLineDiff(a: string, b: string): { tag: 'same' | 'a' | 'b' | 'change'; text: string }[] {
+  const aLines = a.split('\n');
+  const bLines = b.split('\n');
+  const max = Math.max(aLines.length, bLines.length);
+  const out: { tag: 'same' | 'a' | 'b' | 'change'; text: string }[] = [];
+  for (let i = 0; i < max; i++) {
+    const al = aLines[i] ?? '';
+    const bl = bLines[i] ?? '';
+    if (al === bl) out.push({ tag: 'same', text: al });
+    else if (!al) out.push({ tag: 'b', text: bl });
+    else if (!bl) out.push({ tag: 'a', text: al });
+    else out.push({ tag: 'change', text: `A: ${al}\nB: ${bl}` });
+  }
+  return out;
+}
+
 export function BilateralEditor() {
-  const { source, setSource, result, setResult, from, to, setFrom, setTo, isZenMode, setIsZenMode, isCatMode, langKo, autoSaveLabel, translate, loading, glossary } = useTranslator();
+  const {
+    source, setSource,
+    result, setResult,
+    from, to, setFrom, setTo,
+    isZenMode, setIsZenMode,
+    isCatMode, langKo, autoSaveLabel,
+    translate, loading, glossary,
+    compareResultB, setCompareResultB, runCompareB,
+  } = useTranslator();
   const layout = useTranslatorLayout();
 
   const [syncedScrolling, setSyncedScrolling] = useState(true);
+  const [sideView, setSideView] = useState<SideView>('A');
   const { handleSVIKeyDown } = useSVIRecorder();
 
   // Glossary highlight overlay for source text
@@ -286,24 +314,139 @@ export function BilateralEditor() {
           </div>
         </div>
 
-        {/* Result Textarea — cool tone */}
+        {/* Result Textarea — cool tone. A/B/Diff 토글 지원. */}
         <div className="relative flex flex-col h-full bg-[color-mix(in_srgb,var(--color-bg-secondary)_94%,#3b82f6_6%)] hover:bg-[color-mix(in_srgb,var(--color-bg-secondary)_90%,#3b82f6_10%)] transition-colors duration-500 shadow-[inset_1px_0_6px_rgba(0,0,0,0.06)]" style={{ width: `${(1 - layout.editorSplitRatio) * 100}%` }}>
-          <div className="absolute top-4 left-5 right-5 flex items-center justify-between select-none pointer-events-none z-10">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-accent-blue inline-block shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
-              <span className="text-[11px] font-mono text-accent-blue/80 uppercase tracking-[0.2em] drop-shadow-sm font-bold">Translation ({to})</span>
+          {/* Header: 라벨 + A/B/Diff 토글 + 카운트 */}
+          <div className="absolute top-4 left-5 right-5 flex items-center justify-between z-10 gap-2 flex-wrap">
+            <div className="flex items-center gap-2 select-none pointer-events-none">
+              <span className={`w-2.5 h-2.5 rounded-full inline-block ${sideView === 'B' ? 'bg-accent-purple shadow-[0_0_8px_rgba(167,139,250,0.6)]' : sideView === 'diff' ? 'bg-accent-green shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.6)]'}`}></span>
+              <span className={`text-[11px] font-mono uppercase tracking-[0.2em] drop-shadow-sm font-bold ${sideView === 'B' ? 'text-accent-purple/80' : sideView === 'diff' ? 'text-accent-green/80' : 'text-accent-blue/80'}`}>
+                {sideView === 'B' ? `B안 (${to})` : sideView === 'diff' ? `Diff` : `Translation (${to})`}
+              </span>
             </div>
-            <span className="text-[9px] font-mono text-text-tertiary">{result.length.toLocaleString()}{langKo ? '자' : ' chars'}{source.length > 0 ? ` (${Math.round((result.length / source.length) * 100)}%)` : ''}</span>
+            {/* A/B/Diff 토글 + B 생성 버튼 */}
+            <div className="flex items-center gap-1">
+              <div className="flex items-center bg-bg-secondary/40 rounded-md border border-border/50 overflow-hidden pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={() => setSideView('A')}
+                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors ${sideView === 'A' ? 'bg-accent-blue/20 text-accent-blue' : 'text-text-tertiary hover:text-text-primary'}`}
+                  title={langKo ? '기본 번역 결과 보기' : 'View primary translation'}
+                >A</button>
+                <button
+                  type="button"
+                  onClick={() => setSideView('B')}
+                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors border-l border-border/50 ${sideView === 'B' ? 'bg-accent-purple/20 text-accent-purple' : 'text-text-tertiary hover:text-text-primary'}`}
+                  title={langKo ? '대체 엔진 B안 보기' : 'View alt engine B'}
+                >B</button>
+                <button
+                  type="button"
+                  onClick={() => setSideView('diff')}
+                  disabled={!result.trim() || !compareResultB.trim()}
+                  className={`px-2 py-1 text-[10px] font-mono font-bold transition-colors border-l border-border/50 disabled:opacity-30 disabled:cursor-not-allowed ${sideView === 'diff' ? 'bg-accent-green/20 text-accent-green' : 'text-text-tertiary hover:text-text-primary'}`}
+                  title={langKo ? 'A vs B 차이 비교' : 'Compare A vs B'}
+                ><GitCompare className="w-3 h-3" /></button>
+              </div>
+              {/* B 재번역 버튼 (A 또는 B 보기 중일 때 노출) */}
+              {sideView !== 'diff' && (
+                <button
+                  type="button"
+                  onClick={() => { if (source.trim() && !loading) void runCompareB(); }}
+                  disabled={!source.trim() || loading}
+                  className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono font-bold bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title={langKo ? '다른 엔진(Claude↔OpenAI)으로 B안 재생성' : 'Generate alt-engine B'}
+                >
+                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  <span>B 생성</span>
+                </button>
+              )}
+              <span className="text-[9px] font-mono text-text-tertiary pointer-events-none">
+                {sideView === 'B'
+                  ? `${compareResultB.length.toLocaleString()}${langKo ? '자' : ' chars'}`
+                  : sideView === 'diff'
+                    ? `A·B 비교`
+                    : `${result.length.toLocaleString()}${langKo ? '자' : ' chars'}${source.length > 0 ? ` (${Math.round((result.length / source.length) * 100)}%)` : ''}`}
+              </span>
+            </div>
           </div>
-          <textarea
-            ref={resultRef}
-            placeholder={langKo ? "번역 결과가 여기에 표시됩니다...\n\n◀ 왼쪽에 원문을 입력하고 ▶ 버튼을 누르세요" : "Translation results appear here...\n\n◀ Enter source text and press ▶ to translate"}
-            className="flex-1 w-full resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2]"
-            value={result}
-            onChange={(e) => setResult(e.target.value)}
-            onContextMenu={textMenu.openMenu}
-            spellCheck={false}
-          />
+
+          {/* A view */}
+          {sideView === 'A' && (
+            <textarea
+              ref={resultRef}
+              placeholder={langKo ? "번역 결과가 여기에 표시됩니다...\n\n◀ 왼쪽에 원문을 입력하고 ▶ 버튼을 누르세요" : "Translation results appear here...\n\n◀ Enter source text and press ▶ to translate"}
+              className="flex-1 w-full resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors placeholder:text-text-secondary/70 placeholder:font-serif placeholder:text-lg placeholder:leading-[2]"
+              value={result}
+              onChange={(e) => setResult(e.target.value)}
+              onContextMenu={textMenu.openMenu}
+              spellCheck={false}
+            />
+          )}
+
+          {/* B view */}
+          {sideView === 'B' && (
+            <>
+              {compareResultB.trim().length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 pt-16">
+                  <Sparkles className="w-10 h-10 text-accent-purple/30" />
+                  <p className="text-[13px] text-text-secondary text-center max-w-xs">
+                    {langKo ? '아직 B안이 없습니다.' : 'No B translation yet.'}
+                  </p>
+                  <p className="text-[11px] text-text-tertiary text-center max-w-xs leading-relaxed">
+                    {langKo
+                      ? '위의 [B 생성] 버튼을 누르면 다른 엔진(Claude↔OpenAI)으로 같은 원문을 재번역합니다.'
+                      : 'Click [B 생성] above to re-translate with an alt engine (Claude↔OpenAI).'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { if (source.trim() && !loading) void runCompareB(); }}
+                    disabled={!source.trim() || loading}
+                    className="mt-2 px-4 py-2 rounded-lg text-[12px] font-bold bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple border border-accent-purple/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {langKo ? 'B로 재번역' : 'Generate B'}
+                  </button>
+                </div>
+              ) : (
+                <textarea
+                  placeholder={langKo ? 'B안 번역이 여기에 표시됩니다…' : 'B translation appears here…'}
+                  className="flex-1 w-full resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent-purple/50 p-8 pt-14 text-[15px] leading-[1.8] text-text-primary font-sans transition-colors"
+                  value={compareResultB}
+                  onChange={(e) => setCompareResultB(e.target.value)}
+                  onContextMenu={textMenu.openMenu}
+                  spellCheck={false}
+                />
+              )}
+            </>
+          )}
+
+          {/* Diff view */}
+          {sideView === 'diff' && (
+            <div className="flex-1 overflow-y-auto p-6 pt-14 text-[13px] leading-[1.7] font-mono">
+              {computeLineDiff(result, compareResultB).map((line, i) => (
+                <div
+                  key={i}
+                  className={`whitespace-pre-wrap ${
+                    line.tag === 'same'
+                      ? 'text-text-tertiary'
+                      : line.tag === 'a'
+                        ? 'bg-accent-blue/10 text-accent-blue'
+                        : line.tag === 'b'
+                          ? 'bg-accent-purple/10 text-accent-purple'
+                          : 'bg-accent-amber/10 text-accent-amber border-l-2 border-accent-amber pl-2'
+                  }`}
+                >
+                  {line.text || '\u00A0'}
+                </div>
+              ))}
+              <div className="mt-4 pt-4 border-t border-border/50 flex gap-4 text-[10px] text-text-tertiary">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-accent-blue/60 rounded"></span>A 전용</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-accent-purple/60 rounded"></span>B 전용</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-accent-amber/60 rounded"></span>다름</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-text-tertiary/30 rounded"></span>같음</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {textMenu.menuState && (

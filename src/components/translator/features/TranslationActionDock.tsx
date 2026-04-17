@@ -17,6 +17,7 @@ import {
   Cloud,
   Key,
   HardDrive,
+  GitCompare,
 } from 'lucide-react';
 
 export function TranslationActionDock() {
@@ -30,6 +31,8 @@ export function TranslationActionDock() {
     setProvider,
     translate,
     deepTranslate,
+    runCompareB,
+    compareResultB,
     activeChapter,
     autoSaveLabel,
     cloudSyncEnabled,
@@ -42,6 +45,7 @@ export function TranslationActionDock() {
     authUser,
     isAuthLoaded,
     openApiKeyModal,
+    source,
   } = useTranslator();
 
   const stage = activeChapter?.stageProgress ?? 0;
@@ -206,6 +210,32 @@ export function TranslationActionDock() {
             </div>
           </div>
           <ChevronRight className="relative z-10 h-4 w-4 text-accent-indigo/50 transition-transform group-hover:translate-x-1 group-hover:text-accent-indigo" />
+        </button>
+
+        {/* B로 재번역 (A/B 비교용 대체 엔진) */}
+        <button
+          type="button"
+          onClick={() => void runCompareB()}
+          disabled={loading || !source.trim()}
+          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-purple/20 bg-linear-to-r from-accent-purple/10 to-transparent py-2.5 pl-4 pr-4 transition-[transform,background-color,border-color,color] hover:border-accent-purple/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          title={lang === 'ko' ? '다른 엔진(Claude↔OpenAI)으로 B안 재생성. 오른쪽 에디터 B 탭에서 비교 가능.' : 'Re-translate with alt engine (Claude↔OpenAI). View in right editor B tab.'}
+        >
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="rounded-md bg-accent-purple/15 p-1.5">
+              <GitCompare className="h-4 w-4 text-accent-purple" strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-[12px] font-semibold text-accent-purple">
+                {lang === 'ko' ? 'B안 재번역' : 'Generate B'}
+              </span>
+              <span className="text-[10px] text-accent-purple/60">
+                {compareResultB
+                  ? (lang === 'ko' ? `완료 · ${compareResultB.length.toLocaleString()}자` : `Done · ${compareResultB.length} chars`)
+                  : (lang === 'ko' ? '대체 엔진 A/B 비교' : 'Alt engine A/B compare')}
+              </span>
+            </div>
+          </div>
+          <ChevronRight className="relative z-10 h-4 w-4 text-accent-purple/50 transition-transform group-hover:translate-x-1 group-hover:text-accent-purple" />
         </button>
       </div>
 
