@@ -62,7 +62,9 @@ export async function getSparkUsage(userId?: string): Promise<SparkUsage> {
 // PART 2 — 재시도 유틸
 // ============================================================
 
-const RETRYABLE_STATUSES = new Set([502, 503, 520, 521, 522, 523, 524]);
+// 520, 502는 Cloudflare Tunnel이 SSE 스트림을 즉시 끊을 때 자주 반환.
+// non-stream 폴백 우선 시도 후, 폴백까지 실패하면 이 세트로 지수 백오프 재시도.
+const RETRYABLE_STATUSES = new Set([500, 502, 503, 504, 520, 521, 522, 523, 524]);
 const MAX_RETRIES = 2;
 const RETRY_DELAYS = [1500, 3000];
 
@@ -272,6 +274,37 @@ async function streamOneRequest(
         throw new Error(data.detail || '일일 호출 한도 초과 (100회). 내일 초기화됩니다.');
       }
       if (res.status === 401) throw new Error('DGX 서버 인증 실패.');
+
+      // Cloudflare Tunnel이 SSE stream을 차단하는 경우(520/502) non-stream 폴백
+      if ((res.status === 520 || res.status === 502 || res.status === 503) && attempt === 0) {
+        try {
+          const fbRes = await fetch(url, {
+            method: 'POST',
+            headers,
+            signal: signal ?? AbortSignal.timeout(90_000),
+            body: JSON.stringify({
+              model: VLLM_MODEL_ID,
+              messages,
+              temperature,
+              stream: false,
+              max_tokens: STREAM_MAX_TOKENS,
+            }),
+          });
+          if (fbRes.ok) {
+            const data = await fbRes.json() as {
+              choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+            };
+            const content = data.choices?.[0]?.message?.content ?? '';
+            const fbFinish = data.choices?.[0]?.finish_reason ?? 'stop';
+            if (content) {
+              onContent(content);
+              const sseChunk = `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
+              controller.enqueue(encoder.encode(sseChunk));
+              return fbFinish;
+            }
+          }
+        } catch { /* non-stream 폴백도 실패 → 기존 재시도 플로우로 */ }
+      }
 
       if (isRetryableError(res.status)) {
         lastError = await extractSparkError(res);
