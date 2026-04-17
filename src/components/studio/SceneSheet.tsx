@@ -244,22 +244,56 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
   }) },
 ];
 
+// ============================================================
+// Genre Smart Defaults — per-genre baseline values for empty fields
+// ============================================================
+
+interface GenreSmartDefault {
+  hooks: string[];
+  dopamine: string[];
+  tension: "low" | "medium" | "high" | "very_high";
+  pacing: "slow" | "medium" | "fast";
+  cliffhanger: string;
+  goguma_intensity: "small" | "medium" | "large";
+}
+
+const GENRE_SMART_DEFAULTS: Record<string, GenreSmartDefault> = {
+  thriller:  { hooks: ["crisis", "reversal"],   dopamine: ["escape", "info"],     tension: "very_high", pacing: "fast",   cliffhanger: "crisis-cut",    goguma_intensity: "medium" },
+  romance:   { hooks: ["emotion", "question"],  dopamine: ["relation", "growth"], tension: "medium",    pacing: "medium", cliffhanger: "info-before",   goguma_intensity: "small" },
+  action:    { hooks: ["shock", "crisis"],      dopamine: ["escape", "growth"],   tension: "very_high", pacing: "fast",   cliffhanger: "crisis-cut",    goguma_intensity: "large" },
+  mystery:   { hooks: ["question", "reversal"], dopamine: ["info", "escape"],     tension: "high",      pacing: "medium", cliffhanger: "info-before",   goguma_intensity: "medium" },
+  fantasy:   { hooks: ["question", "shock"],    dopamine: ["growth", "info"],     tension: "medium",    pacing: "medium", cliffhanger: "crisis-cut",    goguma_intensity: "small" },
+  horror:    { hooks: ["shock", "question"],    dopamine: ["info", "escape"],     tension: "very_high", pacing: "slow",   cliffhanger: "crisis-cut",    goguma_intensity: "large" },
+  sf:        { hooks: ["question", "shock"],    dopamine: ["info", "growth"],     tension: "high",      pacing: "medium", cliffhanger: "info-before",   goguma_intensity: "medium" },
+  slice:     { hooks: ["question", "emotion"],  dopamine: ["relation", "info"],   tension: "low",       pacing: "slow",   cliffhanger: "info-before",   goguma_intensity: "small" },
+  wuxia:     { hooks: ["shock", "reversal"],    dopamine: ["growth", "revenge"],  tension: "high",      pacing: "fast",   cliffhanger: "crisis-cut",    goguma_intensity: "large" },
+  dark:      { hooks: ["reversal", "shock"],    dopamine: ["info", "escape"],     tension: "very_high", pacing: "medium", cliffhanger: "crisis-cut",    goguma_intensity: "large" },
+};
+
+const TENSION_LEVEL_MAP: Record<string, number> = { low: 25, medium: 50, high: 75, very_high: 90 };
+
 /** Collapsible section wrapper */
-function Section({ title, children, defaultOpen = true, badge }: {
-  title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string;
+function Section({ title, children, defaultOpen = true, badge, desc, highlight }: {
+  title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string; desc?: string; highlight?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-border">
+    <div className={`border-b ${highlight ? 'border-accent-purple/30 bg-accent-purple/[0.03] rounded-lg -mx-1 px-1' : 'border-border'}`}>
       <button type="button" onClick={() => setOpen(v => !v)}
         className="flex items-center gap-2 w-full py-3 px-1 text-left min-h-[44px]">
-        <span className="text-xs font-bold font-mono uppercase tracking-wider text-text-primary flex-1">{title}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {highlight && <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />}
+            <span className="text-xs font-bold font-mono uppercase tracking-wider text-text-primary">{title}</span>
+          </div>
+          {desc && <p className="text-[9px] text-text-quaternary mt-0.5 ml-0 font-normal normal-case tracking-normal">{desc}</p>}
+        </div>
         {badge && (
-          <span className="text-[9px] font-mono font-bold text-accent-purple bg-accent-purple/10 border border-accent-purple/20 rounded-full px-2 py-0.5">
+          <span className="text-[9px] font-mono font-bold text-accent-purple bg-accent-purple/10 border border-accent-purple/20 rounded-full px-2 py-0.5 shrink-0">
             {badge}
           </span>
         )}
-        <span className={`text-[10px] text-text-tertiary transition-transform ${open ? "rotate-90" : ""}`}>&#9654;</span>
+        <span className={`text-[10px] text-text-tertiary transition-transform shrink-0 ${open ? "rotate-90" : ""}`}>&#9654;</span>
       </button>
       {open && <div className="pb-4 px-1 space-y-3">{children}</div>}
     </div>
@@ -427,6 +461,50 @@ export default function SceneSheet({
     setActivePreset(presetKey);
   }, [lang]);
 
+  /** Apply smart defaults — fills only empty fields based on active genre preset */
+  const applySmartDefaults = useCallback((presetKey: string) => {
+    const defaults = GENRE_SMART_DEFAULTS[presetKey];
+    if (!defaults) return;
+    const ts = Date.now();
+    const isKO = lang === "ko";
+
+    // Goguma: fill only if empty
+    if (gogumas.length === 0) {
+      setGogumas([
+        { id: `sd-g-${ts}-1`, type: "goguma", intensity: defaults.goguma_intensity, desc: "", episode: 1 },
+        { id: `sd-g-${ts}-2`, type: "cider", intensity: "large", desc: "", episode: 1 },
+      ]);
+    }
+
+    // Hooks: fill only if empty
+    if (hooks.length === 0) {
+      setHooks(defaults.hooks.map((ht, i) => ({
+        id: `sd-h-${ts}-${i}`, position: (i === 0 ? "opening" : "ending") as "opening" | "middle" | "ending",
+        hookType: ht, desc: "",
+      })));
+    }
+
+    // Cliffhanger: fill only if empty
+    if (cliffs.length === 0) {
+      setCliffs([{ id: `sd-cl-${ts}`, cliffType: defaults.cliffhanger, desc: "", episode: 1 }]);
+    }
+
+    // Dopamine: fill only if empty
+    if (dopamines.length === 0) {
+      setDopamines(defaults.dopamine.map((dev, i) => ({
+        id: `sd-dp-${ts}-${i}`, scale: "medium" as const, device: dev, desc: "", resolved: false,
+      })));
+    }
+
+    // Tension: fill only if empty
+    if (tensionPoints.length === 0) {
+      const level = TENSION_LEVEL_MAP[defaults.tension] ?? 50;
+      setTensionPoints([{ id: `sd-tp-${ts}`, position: 50, level, label: isKO ? "기본 텐션" : "Base tension" }]);
+    }
+
+    setActivePreset(presetKey);
+  }, [lang, gogumas.length, hooks.length, cliffs.length, dopamines.length, tensionPoints.length]);
+
   /** Save current direction as episode scene sheet */
   const handleSaveEpisode = useCallback(() => {
     if (!onSaveEpisodeSheet) return;
@@ -541,12 +619,12 @@ export default function SceneSheet({
         {/* Main scrollable content */}
         <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 space-y-2">
           {/* Preset Bar — 장르별 색상 + 이모지 */}
-          <div className="grid grid-cols-5 gap-2 pb-3">
+          <div className="grid grid-cols-5 gap-2 pb-2">
             {SCENE_PRESETS.map(p => {
               const meta = GENRE_VISUAL[p.key] ?? { emoji: "📖", bg: "bg-bg-tertiary", border: "border-border", text: "text-text-primary" };
               const isActive = activePreset === p.key;
               return (
-                <button key={p.key} onClick={() => applyScenePreset(p.key)}
+                <button key={p.key} onClick={() => { setActivePreset(p.key); }}
                   className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-center transition-all min-h-[64px] border-2 ${
                     isActive
                       ? `${meta.bg} ${meta.border} ring-2 ring-offset-1 ring-accent-purple shadow-lg scale-[1.04]`
@@ -561,8 +639,35 @@ export default function SceneSheet({
             })}
           </div>
 
-          {/* Section 1: Story */}
+          {/* Smart Defaults + Full Overwrite buttons */}
+          {activePreset && (
+            <div className="flex gap-2 pb-3">
+              <button
+                onClick={() => applySmartDefaults(activePreset)}
+                className="flex-1 px-4 py-2.5 bg-accent-green/10 border border-accent-green/30 rounded-xl text-[10px] font-bold text-accent-green hover:bg-accent-green/20 transition-colors min-h-[44px] font-mono uppercase tracking-wider"
+              >
+                {L4(lang, { ko: "기본값 적용 (빈 필드만)", en: "Apply Defaults (empty only)", ja: "デフォルト適用 (空のみ)", zh: "应用默认值 (仅空字段)" })}
+              </button>
+              <button
+                onClick={() => applyScenePreset(activePreset)}
+                className="px-4 py-2.5 bg-accent-amber/10 border border-accent-amber/30 rounded-xl text-[10px] font-bold text-accent-amber hover:bg-accent-amber/20 transition-colors min-h-[44px] font-mono uppercase tracking-wider"
+              >
+                {L4(lang, { ko: "전체 덮어쓰기", en: "Full Overwrite", ja: "全上書き", zh: "全部覆盖" })}
+              </button>
+            </div>
+          )}
+
+          {/* ========== 핵심 3개: goguma/cider, hooks, cliffhanger ========== */}
+          <div className="mb-2">
+            <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
+              {L4(lang, { ko: "이번 화에 꼭 설정할 것", en: "Must-set for this episode", ja: "今回必ず設定", zh: "本话必设" })}
+            </span>
+          </div>
+
+          {/* Section 1: Story (핵심 섹션 강조) */}
           <Section title={L4(lang, { ko: "줄거리", en: "Story", ja: "ストーリー", zh: "故事" })}
+            highlight
+            desc={L4(lang, { ko: "이번 화의 줄거리, 고구마/사이다, 클리프행어를 설계합니다", en: "Design this episode's story, tension/release, and cliffhanger", ja: "ストーリー・テンション・クリフハンガーを設計", zh: "设计故事、张力/释放和悬念" })}
             badge={(() => {
               const items = [writerNotes.trim(), gogumas.length > 0, cliffs.length > 0, foreshadows.length > 0, hooks.length > 0];
               const filled = items.filter(Boolean).length;
@@ -573,9 +678,13 @@ export default function SceneSheet({
               const lines = writerNotes.split("\n"); lines[0] = e.target.value; setWriterNotes(lines.join("\n"));
             }} placeholder={L4(lang, { ko: "이번 화 요약 (한 줄)", en: "Episode summary (one line)", ja: "Episode summary (one line)", zh: "Episode summary (one line)" })} maxLength={200}
               className="w-full bg-bg-primary border border-border rounded px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors min-h-[44px]" />
-            {/* Goguma / Cider */}
+            {/* Goguma / Cider — 핵심 1 */}
             <div>
-              <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "고구마/사이다", en: "Tension/Release", ja: "テンション", zh: "张力" })}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-amber shrink-0" />
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "고구마/사이다", en: "Tension/Release", ja: "テンション", zh: "张力" })}</span>
+              </div>
+              <p className="text-[9px] text-text-quaternary mt-0.5 mb-1">{L4(lang, { ko: "독자가 답답함을 느끼는 장치 (해소 시 사이다)", en: "Device that builds frustration (releases as catharsis)", ja: "読者がもどかしさを感じる仕掛け", zh: "让读者感到焦急的装置 (释放时的爽快感)" })}</p>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {(["small", "medium", "large"] as const).map(intensity => (
                   <button key={`g-${intensity}`} onClick={() => setGogumas(prev => [...prev, { id: `g-${Date.now()}`, type: "goguma", intensity, desc: "", episode: 1 }])}
@@ -597,9 +706,13 @@ export default function SceneSheet({
                 </div>
               ))}
             </div>
-            {/* Cliffhanger */}
+            {/* Cliffhanger — 핵심 3 */}
             <div>
-              <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "클리프행어", en: "Cliffhanger", ja: "クリフハンガー", zh: "悬念" })}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-red shrink-0" />
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "클리프행어", en: "Cliffhanger", ja: "クリフハンガー", zh: "悬念" })}</span>
+              </div>
+              <p className="text-[9px] text-text-quaternary mt-0.5 mb-1">{L4(lang, { ko: "화 끝에 긴장감을 남기는 방법", en: "How to leave tension at the end of the episode", ja: "エピソード終わりに緊張感を残す方法", zh: "在每话结尾留下悬念的方法" })}</p>
               <div className="flex gap-2 mt-1.5">
                 <select value={cliffs[0]?.cliffType ?? ""} onChange={e => {
                   if (cliffs.length === 0) setCliffs([{ id: `cl-${Date.now()}`, cliffType: e.target.value, desc: "", episode: 1 }]);
@@ -638,8 +751,10 @@ export default function SceneSheet({
             </div>
           </Section>
 
-          {/* Section 2: Mood */}
-          <Section title={L4(lang, { ko: "분위기", en: "Mood", ja: "ムード", zh: "氛围" })}
+          {/* Section 2: Mood (핵심 2: 훅 포함) */}
+          <Section title={L4(lang, { ko: "분위기 · 훅", en: "Mood · Hooks", ja: "ムード · フック", zh: "氛围 · 钩子" })}
+            highlight
+            desc={L4(lang, { ko: "감정선과 훅(독자 유입 장치)을 설계합니다", en: "Design emotion arcs and hooks to engage readers", ja: "感情線とフックを設計", zh: "设计情绪曲线和读者引入装置" })}
             badge={emotions.length > 0
               ? `${L4(lang, { ko: "감정", en: "Emotion", ja: "Emotion", zh: "Emotion" })}: ${emotions[0].emotion} ${Math.round(emotions[0].intensity)}%`
               : undefined}>
@@ -687,9 +802,13 @@ export default function SceneSheet({
                 </div>
               ))}
             </div>
-            {/* Hook */}
+            {/* Hook — 핵심 2 */}
             <div>
-              <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "훅 배치", en: "Hook Design", ja: "フック", zh: "钩子" })}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "훅 배치", en: "Hook Design", ja: "フック", zh: "钩子" })}</span>
+              </div>
+              <p className="text-[9px] text-text-quaternary mt-0.5 mb-1">{L4(lang, { ko: "독자가 다음 화를 클릭하게 만드는 요소", en: "Elements that make readers click the next episode", ja: "読者が次話をクリックしたくなる要素", zh: "让读者点击下一话的要素" })}</p>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {(["opening", "middle", "ending"] as const).map(pos => (
                   <button key={pos} onClick={() => setHooks(prev => [...prev, { id: `h-${Date.now()}`, position: pos, hookType: "question", desc: "" }])}
@@ -713,8 +832,17 @@ export default function SceneSheet({
             </div>
           </Section>
 
+          {/* ========== 추가 설정 (non-essential sections) ========== */}
+          <div className="mt-4 mb-2">
+            <span className="text-[9px] font-bold text-text-quaternary uppercase tracking-widest">
+              {L4(lang, { ko: "추가 설정", en: "Additional Settings", ja: "追加設定", zh: "附加设置" })}
+            </span>
+          </div>
+
           {/* Section 3: Cast */}
           <Section title={L4(lang, { ko: "캐릭터", en: "Cast", ja: "キャスト", zh: "角色" })}
+            defaultOpen={false}
+            desc={L4(lang, { ko: "캐릭터별 대사 톤과 등장 규칙", en: "Dialogue tone and rules per character", ja: "キャラクター別台詞トーンとルール", zh: "角色对话语气和规则" })}
             badge={dialogueRules.length > 0
               ? `${dialogueRules.length}${L4(lang, { ko: "명 선택", en: " selected", ja: "名 選択", zh: "人 选择" })}`
               : characterNames && characterNames.length > 0

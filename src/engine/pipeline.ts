@@ -533,6 +533,86 @@ export function buildSystemInstruction(
     }
   }
 
+  // Items & Equipment injection (token-budget-aware)
+  let itemsBlock = '';
+  if (config.items && config.items.length > 0) {
+    const MAX_ITEM_DESC = 100;
+    const MAX_ITEMS_FULL = 20;
+    const truncDesc = (s: string) => s.length > MAX_ITEM_DESC ? s.slice(0, MAX_ITEM_DESC) + '...' : s;
+    const itemParts: string[] = [];
+    const items = config.items;
+    const displayItems = items.length > MAX_ITEMS_FULL ? items.slice(0, MAX_ITEMS_FULL) : items;
+
+    displayItems.forEach(item => {
+      let entry = `- ${item.name} (${item.rarity.toUpperCase()}): ${truncDesc(item.description)}`;
+      if (item.effect) entry += `. ${isKO ? '효과' : 'Effect'}: ${truncDesc(item.effect)}`;
+      if (item.owner) entry += ` [${isKO ? '소유' : 'Owner'}: ${item.owner}]`;
+      if (item.purpose) entry += `\n  ${isKO ? '용도' : 'Purpose'}: ${truncDesc(item.purpose)}`;
+      if (item.activationCond) entry += `\n  ${isKO ? '발동 조건' : 'Activation'}: ${truncDesc(item.activationCond)}`;
+      if (item.costWeakness) entry += `\n  ${isKO ? '대가/약점' : 'Cost/Weakness'}: ${truncDesc(item.costWeakness)}`;
+      if (item.storyFunction) entry += `\n  ${isKO ? '스토리 기능' : 'Story function'}: ${truncDesc(item.storyFunction)}`;
+      itemParts.push(entry);
+    });
+
+    if (items.length > MAX_ITEMS_FULL) {
+      const remaining = items.slice(MAX_ITEMS_FULL);
+      itemParts.push(`[+${remaining.length} ${isKO ? '개 아이템 요약' : 'items summarized'}]: ${remaining.map(i => `${i.name}(${i.rarity})`).join(', ')}`);
+    }
+
+    itemsBlock = `\n[ITEMS & EQUIPMENT]\n${itemParts.join('\n')}`;
+  }
+
+  // Skills & Abilities injection
+  let skillsBlock = '';
+  if (config.skills && config.skills.length > 0) {
+    const skillParts = config.skills.map(s => {
+      const typeLabel = s.type === 'active' ? (isKO ? '액티브' : 'Active')
+        : s.type === 'passive' ? (isKO ? '패시브' : 'Passive')
+        : (isKO ? '궁극기' : 'Ultimate');
+      let entry = `- ${s.name} (${typeLabel}): ${s.description}`;
+      if (s.cost) entry += `. ${isKO ? '비용' : 'Cost'}: ${s.cost}`;
+      if (s.cooldown) entry += `. ${isKO ? '쿨다운' : 'CD'}: ${s.cooldown}`;
+      if (s.owner) entry += ` [${s.owner}]`;
+      return entry;
+    });
+    skillsBlock = `\n[SKILLS & ABILITIES]\n${skillParts.join('\n')}`;
+  }
+
+  // Magic Systems injection
+  let magicSystemsBlock = '';
+  if (config.magicSystems && config.magicSystems.length > 0) {
+    const magicParts = config.magicSystems.map(ms => {
+      let entry = `- ${ms.name}: ${ms.rules}`;
+      if (ms.source) entry += `. ${isKO ? '원천' : 'Source'}: ${ms.source}`;
+      if (ms.limitations) entry += `. ${isKO ? '제한' : 'Limitations'}: ${ms.limitations}`;
+      if (ms.ranks && ms.ranks.length > 0) entry += `. ${isKO ? '등급' : 'Ranks'}: ${ms.ranks.join(' → ')}`;
+      return entry;
+    });
+    magicSystemsBlock = `\n[MAGIC SYSTEMS]\n${magicParts.join('\n')}`;
+  }
+
+  // Episode Scene Sheet injection — merge with sceneDirection if exists
+  let episodeSceneBlock = '';
+  if (config.episodeSceneSheets && config.episodeSceneSheets.length > 0) {
+    const currentSheet = config.episodeSceneSheets.find(s => s.episode === config.episode);
+    if (currentSheet) {
+      const esParts: string[] = [];
+      if (currentSheet.arc) esParts.push(`- ${isKO ? '아크' : 'Arc'}: ${currentSheet.arc}`);
+      if (currentSheet.characters) esParts.push(`- ${isKO ? '등장인물' : 'Characters'}: ${currentSheet.characters}`);
+      if (currentSheet.scenes && currentSheet.scenes.length > 0) {
+        esParts.push(`- ${isKO ? '씬 구성' : 'Scene Layout'}:`);
+        currentSheet.scenes.forEach(sc => {
+          esParts.push(`  ${sc.sceneId}. ${sc.sceneName} [${sc.tone}] — ${sc.summary}`);
+          if (sc.keyDialogue) esParts.push(`    ${isKO ? '핵심 대사' : 'Key dialogue'}: ${sc.keyDialogue}`);
+        });
+      }
+      if (currentSheet.presetUsed) esParts.push(`- ${isKO ? '장르 프리셋' : 'Genre preset'}: ${currentSheet.presetUsed}`);
+      if (esParts.length > 0) {
+        episodeSceneBlock = `\n[EPISODE SCENE SHEET — EP${currentSheet.episode}${currentSheet.title ? ': ' + currentSheet.title : ''}]\n${esParts.join('\n')}`;
+      }
+    }
+  }
+
   // Sub-genre tags injection (only when user opts in)
   const subGenreBlock = (config.useSubGenrePrompt && config.subGenres && config.subGenres.length > 0)
     ? `\n[SUB-GENRE TAGS]\n${config.subGenres.map(t => `#${t}`).join(' ')}\n→ ${isKO ? '이 서브 장르의 관습과 클리셰를 숙지하고 활용하되, EH 세계관 법칙(QFR/CRL/HPP/Audit)으로 재해석하라.' : 'Master the conventions of these sub-genres and reinterpret them through EH universe physics (QFR/CRL/HPP/Audit).'}`
@@ -592,6 +672,10 @@ ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
 ${simulatorBlock}
 ${worldTierBlock}
+${itemsBlock}
+${skillsBlock}
+${magicSystemsBlock}
+${episodeSceneBlock}
 ${subGenreBlock}
 ${styleDnaBlock}
 ${prismBlock}
