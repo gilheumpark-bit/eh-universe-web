@@ -201,6 +201,98 @@ export async function createPost(input: CreatePostInput) {
   return postRecord;
 }
 
+/**
+ * 행성 수정 — owner만 가능. 부분 필드 업데이트.
+ * stats/createdAt/id/ownerId는 불변. updatedAt은 자동 갱신.
+ */
+export async function updatePlanet(input: {
+  planetId: string;
+  ownerId: string;
+  updates: Partial<Omit<PlanetRecord, 'id' | 'ownerId' | 'stats' | 'createdAt'>>;
+}) {
+  assertOwnership(input.ownerId);
+  const database = requireDb();
+  const planetRef = doc(database, COLLECTIONS.planets, input.planetId);
+  const snap = await getDoc(planetRef);
+  if (!snap.exists()) throw new Error('Planet not found');
+  const current = snap.data() as PlanetRecord;
+  if (current.ownerId !== input.ownerId) {
+    throw new Error('Unauthorized: not planet owner');
+  }
+  const timestamp = nowIso();
+  // 허용 필드만 sanitize 후 merge
+  const patch: Partial<PlanetRecord> = { updatedAt: timestamp };
+  const u = input.updates;
+  if (u.name !== undefined) patch.name = normalizeText(u.name);
+  if (u.summary !== undefined) patch.summary = normalizeText(u.summary);
+  if (u.genre !== undefined) patch.genre = normalizeText(u.genre);
+  if (u.civilizationLevel !== undefined) patch.civilizationLevel = normalizeText(u.civilizationLevel);
+  if (u.goal !== undefined) patch.goal = u.goal;
+  if (u.visibility !== undefined) patch.visibility = u.visibility;
+  if (u.representativeTags !== undefined) patch.representativeTags = normalizeStringArray(u.representativeTags, 6);
+  if (u.tags !== undefined) patch.tags = normalizeStringArray(u.tags, 10);
+  if (u.coreRules !== undefined) patch.coreRules = normalizeStringArray(u.coreRules, 3);
+  if (u.featuredFaction !== undefined) patch.featuredFaction = normalizeOptionalText(u.featuredFaction);
+  if (u.featuredCharacter !== undefined) patch.featuredCharacter = normalizeOptionalText(u.featuredCharacter);
+  if (u.transcendenceCost !== undefined) patch.transcendenceCost = normalizeOptionalText(u.transcendenceCost);
+  if (u.transcendenceCosts !== undefined) patch.transcendenceCosts = normalizeStringArray(u.transcendenceCosts, 5);
+  if (u.status !== undefined) patch.status = sanitizePlanetStatus(u.status, current.goal);
+  if (u.ehRisk !== undefined) patch.ehRisk = clampNullable(u.ehRisk, 0, 100);
+  if (u.systemExposure !== undefined) patch.systemExposure = clampNullable(u.systemExposure, 0, 100);
+
+  await setDoc(planetRef, patch, { merge: true });
+  return { ...current, ...patch };
+}
+
+/**
+ * 게시글 soft-delete — 작성자 또는 관리자만. 목록에서 자동 제외되되 복구 가능.
+ * hard-delete는 관리자 전용 별도 로직.
+ */
+export async function softDeletePost(input: {
+  postId: string;
+  actorId: string;
+  reason?: string;
+}) {
+  assertOwnership(input.actorId);
+  const database = requireDb();
+  const postRef = doc(database, COLLECTIONS.posts, input.postId);
+  const snap = await getDoc(postRef);
+  if (!snap.exists()) throw new Error('Post not found');
+  const current = snap.data() as PostRecord;
+  if (current.authorId !== input.actorId) {
+    // TODO: admin override 체크는 후속 단계 (isAdmin userRecord)
+    throw new Error('Unauthorized: only author can soft-delete');
+  }
+  const timestamp = nowIso();
+  await setDoc(postRef, {
+    deletedAt: timestamp,
+    deletedBy: input.actorId,
+    deleteReason: input.reason ?? null,
+    updatedAt: timestamp,
+  }, { merge: true });
+  return { ...current, deletedAt: timestamp, deletedBy: input.actorId };
+}
+
+/** Soft-delete 복구 (작성자만). */
+export async function restorePost(input: { postId: string; actorId: string }) {
+  assertOwnership(input.actorId);
+  const database = requireDb();
+  const postRef = doc(database, COLLECTIONS.posts, input.postId);
+  const snap = await getDoc(postRef);
+  if (!snap.exists()) throw new Error('Post not found');
+  const current = snap.data() as PostRecord;
+  if (current.authorId !== input.actorId) {
+    throw new Error('Unauthorized: only author can restore');
+  }
+  await setDoc(postRef, {
+    deletedAt: null,
+    deletedBy: null,
+    deleteReason: null,
+    updatedAt: nowIso(),
+  }, { merge: true });
+  return { ...current, deletedAt: null };
+}
+
 export async function updatePost(input: UpdatePostInput) {
   const database = requireDb();
   const timestamp = nowIso();

@@ -134,6 +134,10 @@ export interface PostRecord {
   approvedBy?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Soft-delete 타임스탬프 (ISO). 설정되면 목록에서 자동 제외. */
+  deletedAt?: string | null;
+  deletedBy?: string | null;
+  deleteReason?: string | null;
 }
 
 export interface SettlementRecord {

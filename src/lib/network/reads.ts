@@ -45,6 +45,11 @@ export async function listLatestPlanets(limitCount = 6) {
   return snapshot.docs.map((document) => document.data() as PlanetRecord);
 }
 
+/** Soft-delete 된 게시글 제외 (deletedAt 필드 존재 + null 아님). 기존 필드 없으면 통과 */
+function excludeSoftDeleted(posts: PostRecord[]): PostRecord[] {
+  return posts.filter((p) => !p.deletedAt);
+}
+
 export async function listLatestPosts(limitCount = 8, boardType?: BoardType) {
   const database = requireDb();
 
@@ -54,10 +59,10 @@ export async function listLatestPosts(limitCount = 8, boardType?: BoardType) {
         collection(database, COLLECTIONS.posts),
         where("visibility", "==", "public"),
         orderBy("createdAt", "desc"),
-        limit(limitCount),
+        limit(limitCount * 2), // soft-delete로 제외될 것 고려해 2배 로드
       ),
     );
-    return snapshot.docs.map((document) => document.data() as PostRecord);
+    return excludeSoftDeleted(snapshot.docs.map((document) => document.data() as PostRecord)).slice(0, limitCount);
   }
 
   // Composite index: boardType + visibility + createdAt (firestore.indexes.json)
@@ -67,10 +72,10 @@ export async function listLatestPosts(limitCount = 8, boardType?: BoardType) {
       where("boardType", "==", boardType),
       where("visibility", "==", "public"),
       orderBy("createdAt", "desc"),
-      limit(limitCount),
+      limit(limitCount * 2),
     ),
   );
-  return snapshot.docs.map((document) => document.data() as PostRecord);
+  return excludeSoftDeleted(snapshot.docs.map((document) => document.data() as PostRecord)).slice(0, limitCount);
 }
 
 // Note: no visibility filter — settlements are operational records
@@ -96,7 +101,7 @@ export async function listPlanetPosts(planetId: string, boardType?: BoardType, l
         limit(limitCount),
       ),
     );
-    return snapshot.docs.map((document) => document.data() as PostRecord);
+    return excludeSoftDeleted(snapshot.docs.map((document) => document.data() as PostRecord));
   }
 
   // Composite index: planetId + createdAt (firestore.indexes.json)
@@ -108,7 +113,7 @@ export async function listPlanetPosts(planetId: string, boardType?: BoardType, l
       limit(limitCount),
     ),
   );
-  return snapshot.docs.map((document) => document.data() as PostRecord);
+  return excludeSoftDeleted(snapshot.docs.map((document) => document.data() as PostRecord));
 }
 
 export async function listPlanetSettlements(planetId: string, limitCount = 120) {
