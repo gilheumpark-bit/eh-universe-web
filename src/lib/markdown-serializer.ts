@@ -3,7 +3,7 @@
 // ============================================================
 
 import matter from 'gray-matter';
-import type { EpisodeManuscript } from '@/lib/studio-types';
+import type { EpisodeManuscript, TranslatedManuscriptEntry, AppLanguage } from '@/lib/studio-types';
 
 /** Frontmatter shape stored in the YAML header of each .md file. */
 interface EpisodeFrontmatter {
@@ -134,11 +134,111 @@ export function markdownToEpisode(
 // ============================================================
 
 /**
- * Generate a standardised file path for an episode:
- *   volumes/vol-{XX}/ep-{XXX}.md
+ * Generate a standardised file path for an episode.
+ *
+ * 원본(KO): `volumes/vol-{XX}/ep-{XXX}.md`
+ * 번역본:   `translations/{lang}/volumes/vol-{XX}/ep-{XXX}.md`
+ *
+ * @param episode   에피소드 번호 (1-based)
+ * @param volume    볼륨 번호 (1-based)
+ * @param targetLang 번역본 언어 코드 ('EN'|'JP'|'CN'|'KO' or lowercase). 'ko'/undefined면 원본 경로.
  */
-export function episodeFilePath(episode: number, volume: number): string {
+export function episodeFilePath(episode: number, volume: number, targetLang?: string): string {
   const vol = String(volume ?? 1).padStart(2, '0');
   const ep = String(episode ?? 1).padStart(3, '0');
+  const lang = (targetLang ?? '').toLowerCase();
+  if (lang && lang !== 'ko') {
+    return `translations/${lang}/volumes/vol-${vol}/ep-${ep}.md`;
+  }
   return `volumes/vol-${vol}/ep-${ep}.md`;
+}
+
+// ============================================================
+// PART 4 — Translated Manuscript <-> Markdown
+// ============================================================
+
+/** Frontmatter shape for a translated episode. Distinct from EpisodeFrontmatter. */
+interface TranslatedEpisodeFrontmatter {
+  id: string;                                            // ep-XXX
+  episode: number;
+  volume?: number;
+  sourceLang: AppLanguage;
+  targetLang: 'EN' | 'JP' | 'CN' | 'KO';
+  mode: 'fidelity' | 'experience';
+  title: string;                                         // translatedTitle
+  charCount: number;
+  avgScore: number;                                      // 0~1
+  band: number;                                          // 0.480~0.520
+  lastUpdate?: string;
+  glossary?: { source: string; target: string; locked: boolean }[];
+}
+
+/**
+ * Convert a TranslatedManuscriptEntry to a Markdown file with YAML frontmatter.
+ * Body is the `translatedContent`.
+ */
+export function translatedManuscriptToMarkdown(entry: TranslatedManuscriptEntry): string {
+  if (!entry) return '';
+  const ep = entry.episode ?? 1;
+  const frontmatter: TranslatedEpisodeFrontmatter = {
+    id: `ep-${String(ep).padStart(3, '0')}`,
+    episode: ep,
+    sourceLang: entry.sourceLang,
+    targetLang: entry.targetLang,
+    mode: entry.mode,
+    title: entry.translatedTitle || `Episode ${ep}`,
+    charCount: entry.charCount ?? entry.translatedContent?.length ?? 0,
+    avgScore: entry.avgScore ?? 0,
+    band: entry.band ?? 0.5,
+  };
+  if (entry.glossarySnapshot && entry.glossarySnapshot.length > 0) {
+    frontmatter.glossary = entry.glossarySnapshot;
+  }
+  if (entry.lastUpdate) {
+    frontmatter.lastUpdate = new Date(entry.lastUpdate).toISOString();
+  }
+  const body = entry.translatedContent ?? '';
+  return matter.stringify(body, frontmatter);
+}
+
+/**
+ * Parse a translation Markdown file back to TranslatedManuscriptEntry.
+ * Returns null if frontmatter lacks `targetLang` (i.e. not a translation file).
+ */
+export function markdownToTranslatedManuscript(
+  markdown: string,
+  filePath?: string,
+): TranslatedManuscriptEntry | null {
+  if (!markdown || typeof markdown !== 'string') return null;
+  const { data, content } = matter(markdown);
+  const fm = data as Partial<TranslatedEpisodeFrontmatter>;
+
+  // translation 파일 식별: frontmatter의 targetLang 존재가 기준.
+  // 혹시 frontmatter에 없을 경우 filePath prefix로 보조 식별.
+  let targetLang = fm.targetLang;
+  if (!targetLang && filePath) {
+    const m = filePath.replace(/\\/g, '/').match(/^translations\/([a-z]+)\//i);
+    if (m) targetLang = m[1].toUpperCase() as TranslatedManuscriptEntry['targetLang'];
+  }
+  if (!targetLang) return null;
+
+  const episode = typeof fm.episode === 'number' ? fm.episode : 1;
+  const body = content.trim();
+
+  const lastUpdate = fm.lastUpdate ? new Date(fm.lastUpdate).getTime() : Date.now();
+
+  const entry: TranslatedManuscriptEntry = {
+    episode,
+    sourceLang: (fm.sourceLang ?? 'KO') as AppLanguage,
+    targetLang,
+    mode: (fm.mode === 'experience' ? 'experience' : 'fidelity'),
+    translatedTitle: fm.title ?? `Episode ${episode}`,
+    translatedContent: body,
+    charCount: typeof fm.charCount === 'number' ? fm.charCount : body.length,
+    avgScore: typeof fm.avgScore === 'number' ? fm.avgScore : 0,
+    band: typeof fm.band === 'number' ? fm.band : 0.5,
+    lastUpdate,
+  };
+  if (Array.isArray(fm.glossary)) entry.glossarySnapshot = fm.glossary;
+  return entry;
 }

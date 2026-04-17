@@ -8,8 +8,15 @@ import type {
   SceneDirectionData,
   WriterProfile,
   EpisodeManuscript,
+  TranslatedManuscriptEntry,
 } from '@/lib/studio-types';
-import { episodeToMarkdown, markdownToEpisode, episodeFilePath } from '@/lib/markdown-serializer';
+import {
+  episodeToMarkdown,
+  markdownToEpisode,
+  episodeFilePath,
+  translatedManuscriptToMarkdown,
+  markdownToTranslatedManuscript,
+} from '@/lib/markdown-serializer';
 
 /** A single file entry destined for a GitHub repo. */
 export interface RepoFile {
@@ -177,6 +184,19 @@ export function configToRepoFiles(config: StoryConfig): RepoFile[] {
     });
   }
 
+  // --- translations/<lang>/volumes/vol-XX/ep-XXX.md ---
+  // 번역본을 원본과 병렬로 관리. lang 코드는 소문자화(en/jp/cn).
+  const translations = config.translatedManuscripts ?? [];
+  for (const t of translations) {
+    if (!t) continue;
+    const vol = 1; // TranslatedManuscriptEntry에는 volume 정보가 없음 — 원본 매칭 시 vol=1 가정
+    const path = episodeFilePath(t.episode, vol, t.targetLang);
+    files.push({
+      path,
+      content: translatedManuscriptToMarkdown(t),
+    });
+  }
+
   return files;
 }
 
@@ -259,7 +279,7 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
     if (direction) result.sceneDirection = direction;
   }
 
-  // --- volumes/vol-XX/ep-XXX.md ---
+  // --- volumes/vol-XX/ep-XXX.md (원본) ---
   const manuscripts: EpisodeManuscript[] = [];
   for (const [path, content] of fileMap) {
     if (path.startsWith('volumes/') && path.endsWith('.md')) {
@@ -270,6 +290,21 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
   if (manuscripts.length > 0) {
     manuscripts.sort((a, b) => a.episode - b.episode);
     result.manuscripts = manuscripts;
+  }
+
+  // --- translations/<lang>/volumes/vol-XX/ep-XXX.md (번역본) ---
+  const translations: TranslatedManuscriptEntry[] = [];
+  for (const [path, content] of fileMap) {
+    if (path.startsWith('translations/') && path.endsWith('.md')) {
+      const t = markdownToTranslatedManuscript(content, path);
+      if (t) translations.push(t);
+    }
+  }
+  if (translations.length > 0) {
+    translations.sort((a, b) =>
+      a.targetLang === b.targetLang ? a.episode - b.episode : a.targetLang.localeCompare(b.targetLang)
+    );
+    result.translatedManuscripts = translations;
   }
 
   return result;
