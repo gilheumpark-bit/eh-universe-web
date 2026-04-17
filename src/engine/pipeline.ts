@@ -293,6 +293,11 @@ export function buildSystemInstruction(
     strength: { KO: '강점', EN: 'Strength', JP: '強み', CN: '优势' },
     weakness: { KO: '약점', EN: 'Weakness', JP: '弱み', CN: '弱点' },
     backstory: { KO: '과거', EN: 'Backstory', JP: '過去', CN: '过去' },
+    emotionStyle: { KO: '감정 표현', EN: 'Emotion style', JP: '感情表現', CN: '情感表达' },
+    relationPattern: { KO: '관계 패턴', EN: 'Relation pattern', JP: '関係パターン', CN: '关系模式' },
+    symbol: { KO: '상징', EN: 'Symbol', JP: '象徴', CN: '象征' },
+    secret: { KO: '비밀', EN: 'Secret', JP: '秘密', CN: '秘密' },
+    externalPerception: { KO: '타인의 시선', EN: 'External perception', JP: '他者から見た印象', CN: '他人印象' },
     noCharacters: { KO: '등록된 캐릭터 없음', EN: 'No characters registered', JP: 'キャラクター未登録', CN: '未注册角色' },
   };
   const cl = (key: string) => CHAR_LABELS[key]?.[language] ?? CHAR_LABELS[key]?.EN ?? key;
@@ -314,6 +319,12 @@ export function buildSystemInstruction(
       if (c.strength) entry += `\n    ${cl('strength')}: ${c.strength}`;
       if (c.weakness) entry += `\n    ${cl('weakness')}: ${c.weakness}`;
       if (c.backstory) entry += `\n    ${cl('backstory')}: ${c.backstory}`;
+      // Tier 3 detail fields
+      if (c.emotionStyle) entry += `\n    ${cl('emotionStyle')}: ${c.emotionStyle}`;
+      if (c.relationPattern) entry += `\n    ${cl('relationPattern')}: ${c.relationPattern}`;
+      if (c.symbol) entry += `\n    ${cl('symbol')}: ${c.symbol}`;
+      if (c.secret) entry += `\n    ${cl('secret')}: ${c.secret}`;
+      if (c.externalPerception) entry += `\n    ${cl('externalPerception')}: ${c.externalPerception}`;
       if (c.socialProfile) {
         entry += `\n    ${formatSocialProfile(c.socialProfile, c.name, language)}`;
       }
@@ -507,7 +518,15 @@ export function buildSystemInstruction(
     if (config.magicTechSystem) wParts.push(`- ${t('pipeline.magicTech')}: ${config.magicTechSystem}`);
     if (config.socialSystem) wParts.push(`- ${t('pipeline.socialSystem')}: ${config.socialSystem}`);
     if (config.factionRelations) wParts.push(`- ${t('pipeline.factionRelations')}: ${config.factionRelations}`);
+    if (config.economy) wParts.push(`- ${t('pipeline.economy')}: ${config.economy}`);
+    if (config.survivalEnvironment) wParts.push(`- ${t('pipeline.survivalEnvironment')}: ${config.survivalEnvironment}`);
+    if (config.culture) wParts.push(`- ${t('pipeline.culture')}: ${config.culture}`);
+    if (config.religion) wParts.push(`- ${t('pipeline.religion')}: ${config.religion}`);
+    if (config.education) wParts.push(`- ${t('pipeline.education')}: ${config.education}`);
+    if (config.lawOrder) wParts.push(`- ${t('pipeline.lawOrder')}: ${config.lawOrder}`);
+    if (config.taboo) wParts.push(`- ${t('pipeline.taboo')}: ${config.taboo}`);
     if (config.dailyLife) wParts.push(`- ${t('pipeline.dailyLife')}: ${config.dailyLife}`);
+    if (config.travelComm) wParts.push(`- ${t('pipeline.travelComm')}: ${config.travelComm}`);
     if (config.truthVsBeliefs) wParts.push(`- ${t('pipeline.beliefsVsTruth')}: ${config.truthVsBeliefs}`);
     if (wParts.length > 0) {
       worldTierBlock = `\n[WORLD FRAMEWORK — 세계관 3-tier]\n${wParts.join('\n')}`;
