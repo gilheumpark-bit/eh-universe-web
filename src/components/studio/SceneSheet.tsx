@@ -66,6 +66,9 @@ interface SceneSheetProps {
   currentEpisode?: number;
   onDeleteEpisodeSheet?: (episode: number) => void;
   onLoadEpisodeSheet?: (episode: number) => void;
+  /** 문법팩 국가 코드 (StoryConfig.grammarRegion). 변경 시 onGrammarRegionChange로 알림. */
+  grammarRegion?: GrammarRegion;
+  onGrammarRegionChange?: (region: GrammarRegion) => void;
 }
 
 const HOOK_TYPES = [
@@ -400,6 +403,7 @@ export default function SceneSheet({
   lang: langProp, language: languageProp, synopsis, characterNames, tierContext,
   onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet,
   initialTab: _initialTab, episodeSceneSheets, currentEpisode, onDeleteEpisodeSheet, onLoadEpisodeSheet,
+  grammarRegion: grammarRegionProp, onGrammarRegionChange,
 }: SceneSheetProps) {
   const lang: Lang = langProp ?? ((languageProp === "KO" || languageProp === "JP") ? "ko" : "en");
   const tl = createT(languageProp ?? (lang === "ko" ? "KO" : "EN"));
@@ -424,10 +428,24 @@ export default function SceneSheet({
   const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes ?? "");
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure ?? "");
   const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>("KR");
+  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>(grammarRegionProp ?? "KR");
   const [showGrammarPanel, setShowGrammarPanel] = useState(false);
-  // NOTE: grammarRegion의 config sync는 상위(StudioShell)에서 prop 전달로 처리
-  // 현재 SceneSheet은 props에 config/setConfig를 받지 않음 (local state만 유지)
+
+  // grammarRegion 변경 시 상위(StoryConfig)에 전파
+  useEffect(() => {
+    if (grammarRegionProp !== undefined && grammarRegion !== grammarRegionProp) {
+      onGrammarRegionChange?.(grammarRegion);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grammarRegion]);
+
+  // 상위에서 grammarRegion이 변경되면 로컬 state 동기화
+  useEffect(() => {
+    if (grammarRegionProp !== undefined && grammarRegionProp !== grammarRegion) {
+      setGrammarRegion(grammarRegionProp);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grammarRegionProp]);
 
   const sortedEmotions = useMemo(() => [...emotions].sort((a, b) => a.position - b.position), [emotions]);
   const sortedTensionPoints = useMemo(() => [...tensionPoints].sort((a, b) => a.position - b.position), [tensionPoints]);

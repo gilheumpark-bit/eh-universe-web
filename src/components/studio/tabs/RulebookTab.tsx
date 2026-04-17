@@ -104,6 +104,10 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
     language,
     synopsis: config.synopsis,
     characterNames: config.characters.map(c => c.name),
+    grammarRegion: config.grammarRegion,
+    onGrammarRegionChange: (region: StoryConfig['grammarRegion']) => {
+      updateCurrentSession({ config: { ...config, grammarRegion: region } });
+    },
     tierContext: {
       charProfiles: config.characters.map(c => ({
         name: c.name, desire: c.desire, conflict: c.conflict,
