@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 import React, { useMemo, useState, useCallback } from 'react';
-import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
+import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2 } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { scoreTranslation } from '@/hooks/useTranslation';
 import {
@@ -14,6 +14,7 @@ import {
   type ChunkScoreDetail,
   type TranslationMode as EngineScoringMode,
 } from '@/engine/translation';
+import { runPublishAudit, applyAutoFix, type PublishAuditReport, type PublishAuditFinding } from '@/lib/translation/publish-audit';
 
 type AuditIssue = {
   id: string;
@@ -179,7 +180,172 @@ function buildAxesFromScore(score: ChunkScoreDetail): AxisRow[] {
 }
 
 // ============================================================
-// PART 4 — AuditPanel (Main)
+// PART 4 — Publish Audit (로컬 규칙 기반 자체 검수, 외부 API 없음)
+// ============================================================
+const CATEGORY_LABEL: Record<PublishAuditFinding['category'], string> = {
+  punctuation: '문장부호',
+  spacing: '띄어쓰기',
+  spelling: '맞춤법',
+  structure: '구조',
+  consistency: '일관성',
+  completeness: '완성도',
+};
+
+function SeverityBadge({ severity }: { severity: PublishAuditFinding['severity'] }) {
+  const map: Record<PublishAuditFinding['severity'], string> = {
+    high: 'bg-red-500/10 border-red-500/30 text-red-400',
+    medium: 'bg-accent-amber/10 border-accent-amber/30 text-accent-amber',
+    low: 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo',
+    info: 'bg-white/5 border-white/10 text-text-tertiary',
+  };
+  return (
+    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono uppercase ${map[severity]}`}>
+      {severity}
+    </span>
+  );
+}
+
+function PublishAuditSection() {
+  const { result, setResult } = useTranslator();
+  const [report, setReport] = useState<PublishAuditReport | null>(null);
+  const [lastRunAt, setLastRunAt] = useState<number | null>(null);
+
+  const handleRun = useCallback(() => {
+    if (!result || result.trim().length < 10) return;
+    const r = runPublishAudit(result);
+    setReport(r);
+    setLastRunAt(Date.now());
+  }, [result]);
+
+  const handleAutoFix = useCallback(() => {
+    if (!result) return;
+    const { fixed, changes } = applyAutoFix(result);
+    if (changes > 0) {
+      setResult(fixed);
+      // 재검사
+      setTimeout(() => setReport(runPublishAudit(fixed)), 50);
+    }
+  }, [result, setResult]);
+
+  const canRun = result.trim().length >= 10;
+  const autoFixableCount = report?.findings.filter(f => f.autoFixable).length ?? 0;
+
+  return (
+    <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-text-secondary">
+          <ListChecks className="w-3.5 h-3.5 text-accent-green" />
+          <span className="text-[12px] font-medium">출판 검수</span>
+          <span className="text-[9px] text-text-tertiary">무료 · 로컬</span>
+        </div>
+        {report && (
+          <span className={`text-[11px] font-mono font-bold ${scoreColor(report.overallScore)}`}>
+            {report.overallScore}
+          </span>
+        )}
+      </div>
+
+      {!report && (
+        <button
+          type="button"
+          onClick={handleRun}
+          disabled={!canRun}
+          className="w-full min-h-[36px] rounded-md bg-accent-green/15 hover:bg-accent-green/25 text-accent-green border border-accent-green/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          title="맞춤법·띄어쓰기·문장부호·구조 자체 검수 실행 (외부 API 없음)"
+        >
+          {canRun ? '검수 실행' : '번역문 10자 이상 필요'}
+        </button>
+      )}
+
+      {report && (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-2 text-[10px]">
+            <div className="flex justify-between rounded bg-white/[0.02] px-2 py-1.5">
+              <span className="text-text-tertiary">총 문자</span>
+              <span className="font-mono text-text-secondary">{report.stats.totalChars.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between rounded bg-white/[0.02] px-2 py-1.5">
+              <span className="text-text-tertiary">문단</span>
+              <span className="font-mono text-text-secondary">{report.stats.totalParagraphs}</span>
+            </div>
+            <div className="flex justify-between rounded bg-white/[0.02] px-2 py-1.5">
+              <span className="text-text-tertiary">평균 문장</span>
+              <span className="font-mono text-text-secondary">{report.stats.avgSentenceLength}자</span>
+            </div>
+            <div className="flex justify-between rounded bg-white/[0.02] px-2 py-1.5">
+              <span className="text-text-tertiary">대사 비율</span>
+              <span className="font-mono text-text-secondary">{Math.round(report.stats.dialogueRatio * 100)}%</span>
+            </div>
+          </div>
+
+          {/* Findings */}
+          {report.findings.length === 0 ? (
+            <div className="flex items-center gap-2 text-[11px] text-accent-green bg-accent-green/5 border border-accent-green/20 rounded p-2">
+              <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>눈에 띄는 문제를 찾지 못했습니다.</span>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {report.findings.map((f) => (
+                <div key={f.id} className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <SeverityBadge severity={f.severity} />
+                    <span className="text-[9px] text-text-tertiary font-mono">{CATEGORY_LABEL[f.category]}</span>
+                    {f.autoFixable && (
+                      <span className="text-[9px] text-accent-purple font-mono">자동 고침</span>
+                    )}
+                    <span className="text-[11px] text-text-primary">{f.title}</span>
+                  </div>
+                  <div className="text-[10px] text-text-secondary">{f.detail}</div>
+                  {f.suggestion && (
+                    <div className="text-[10px] text-accent-amber">→ {f.suggestion}</div>
+                  )}
+                  {f.locations && f.locations.length > 0 && (
+                    <div className="text-[9px] text-text-tertiary font-mono truncate">
+                      예: {f.locations.map(l => `"${l.snippet}"`).join(', ')}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleRun}
+              className="flex-1 min-h-[32px] rounded-md bg-white/5 hover:bg-white/10 text-text-secondary border border-white/10 text-[11px] font-medium transition-colors"
+            >
+              재검수
+            </button>
+            {autoFixableCount > 0 && (
+              <button
+                type="button"
+                onClick={handleAutoFix}
+                className="flex-1 min-h-[32px] rounded-md bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple border border-accent-purple/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1"
+                title="중복 문장부호·전각/반각 혼용 등 안전한 항목만 자동 수정"
+              >
+                <Wand2 className="w-3 h-3" />
+                자동 고침 ({autoFixableCount})
+              </button>
+            )}
+          </div>
+
+          {lastRunAt && (
+            <div className="text-[9px] text-text-tertiary text-center italic">
+              마지막 검수: {new Date(lastRunAt).toLocaleTimeString('ko-KR')}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// PART 5 — AuditPanel (Main)
 // ============================================================
 export function AuditPanel() {
   const { source, result, chapters, glossaryText, glossary, to } = useTranslator();
@@ -257,6 +423,9 @@ export function AuditPanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pointer-events-auto">
+        {/* ── 출판 검수 (로컬 규칙, 무료) ── */}
+        <PublishAuditSection />
+
         {/* ── AI 4/6축 정밀 채점 섹션 ── */}
         <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">

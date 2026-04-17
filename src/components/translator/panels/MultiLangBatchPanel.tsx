@@ -12,8 +12,14 @@ import {
   Play,
   Download,
   Square,
+  FileDown,
 } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
+import {
+  translatedManuscriptToMarkdown,
+  episodeFilePath,
+} from '@/lib/markdown-serializer';
+import type { TranslatedManuscriptEntry, AppLanguage } from '@/lib/studio-types';
 
 type BatchLang = 'EN' | 'JP' | 'CN';
 
@@ -91,12 +97,14 @@ async function streamTranslateOneLang(
 }
 
 // ============================================================
-// PART 3 — Download Helper
+// PART 3 — Download Helpers
 // ============================================================
-function downloadText(filename: string, content: string) {
+
+/** 텍스트 파일을 브라우저 다운로드로 저장 */
+function downloadText(filename: string, content: string, mime: string = 'text/plain') {
   if (typeof window === 'undefined') return;
   try {
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([content], { type: `${mime};charset=utf-8` });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -106,6 +114,53 @@ function downloadText(filename: string, content: string) {
   } catch {
     // no-op
   }
+}
+
+/**
+ * 번역 결과를 `translations/<lang>/volumes/vol-01/ep-001.md` 호환 MD로 포맷.
+ * 파일 상단 주석에 저장소 권장 경로를 명시 (브라우저는 파일명에 슬래시 불가).
+ *
+ * from('ko'/'en'/'ja'/'zh' etc)을 AppLanguage('KO'|'EN'|'JP'|'CN')로 정규화.
+ */
+function toAppLanguage(code: string): AppLanguage {
+  const up = (code || '').toUpperCase();
+  if (up === 'KO' || up === 'KOREAN') return 'KO';
+  if (up === 'EN' || up === 'ENGLISH') return 'EN';
+  if (up === 'JP' || up === 'JA' || up === 'JAPANESE') return 'JP';
+  if (up === 'CN' || up === 'ZH' || up === 'CHINESE') return 'CN';
+  return 'KO';
+}
+
+/**
+ * 배치 번역 결과를 TranslatedManuscriptEntry → Markdown으로 직렬화.
+ * 반환: { suggestedPath, markdown } — suggestedPath는 파일 상단 주석으로 포함됨.
+ */
+function buildTranslationMd(params: {
+  from: string;
+  to: 'EN' | 'JP' | 'CN';
+  episode: number;
+  title: string;
+  content: string;
+}): { suggestedPath: string; markdown: string; downloadName: string } {
+  const { from, to, episode, title, content } = params;
+  const entry: TranslatedManuscriptEntry = {
+    episode,
+    sourceLang: toAppLanguage(from),
+    targetLang: to,
+    mode: 'fidelity',
+    translatedTitle: title,
+    translatedContent: content,
+    charCount: content.length,
+    avgScore: 0,
+    band: 0.5,
+    lastUpdate: Date.now(),
+  };
+  const suggestedPath = episodeFilePath(episode, 1, to);
+  const pathComment = `<!-- GitHub repo 저장 권장 경로: ${suggestedPath} -->\n`;
+  const markdown = pathComment + translatedManuscriptToMarkdown(entry);
+  // 브라우저 파일명은 슬래시 불가 → 평탄화
+  const downloadName = suggestedPath.replace(/\//g, '_');
+  return { suggestedPath, markdown, downloadName };
 }
 
 // ============================================================
@@ -191,16 +246,41 @@ export function MultiLangBatchPanel() {
     abortRef.current?.abort();
   }, []);
 
-  const handleDownloadOne = useCallback((lang: BatchLang) => {
+  /** 개별 언어 다운로드: TXT 평문 */
+  const handleDownloadOneTxt = useCallback((lang: BatchLang) => {
     const text = langs[lang].text;
     if (!text) return;
     downloadText(`translation-${lang.toLowerCase()}.txt`, text);
   }, [langs]);
 
+  /** 개별 언어 다운로드: translations/<lang>/... 파일트리 호환 MD */
+  const handleDownloadOneMd = useCallback((lang: BatchLang) => {
+    const text = langs[lang].text;
+    if (!text) return;
+    const { markdown, downloadName } = buildTranslationMd({
+      from,
+      to: lang,
+      episode: 1,
+      title: 'Batch Translation',
+      content: text,
+    });
+    downloadText(downloadName, markdown, 'text/markdown');
+  }, [langs, from]);
+
+  /** 완료된 모든 언어를 MD로 다운로드 (GitHub 저장소 호환 포맷) */
   const handleDownloadAll = useCallback(() => {
     const completed = (Object.keys(langs) as BatchLang[]).filter(l => langs[l].status === 'done' && langs[l].text);
-    completed.forEach(l => downloadText(`translation-${l.toLowerCase()}.txt`, langs[l].text));
-  }, [langs]);
+    completed.forEach(lang => {
+      const { markdown, downloadName } = buildTranslationMd({
+        from,
+        to: lang,
+        episode: 1,
+        title: 'Batch Translation',
+        content: langs[lang].text,
+      });
+      downloadText(downloadName, markdown, 'text/markdown');
+    });
+  }, [langs, from]);
 
   const selectedCount = (Object.keys(langs) as BatchLang[]).filter(l => langs[l].enabled).length;
   const completedCount = (Object.keys(langs) as BatchLang[]).filter(l => langs[l].status === 'done').length;
@@ -255,14 +335,24 @@ export function MultiLangBatchPanel() {
                     {state.status === 'done' && <Check className="w-3.5 h-3.5 text-accent-green" />}
                     {state.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-400" />}
                     {state.status === 'done' && state.text && (
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadOne(lang)}
-                        className="p-1 rounded hover:bg-white/10 text-text-tertiary hover:text-accent-green transition-colors"
-                        title={`${LANG_LABEL[lang].ko} 결과 다운로드`}
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadOneTxt(lang)}
+                          className="p-1 rounded hover:bg-white/10 text-text-tertiary hover:text-accent-green transition-colors"
+                          title={`${LANG_LABEL[lang].ko} TXT 다운로드 (평문)`}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadOneMd(lang)}
+                          className="p-1 rounded hover:bg-white/10 text-text-tertiary hover:text-accent-purple transition-colors"
+                          title={`${LANG_LABEL[lang].ko} MD 다운로드 (translations/${lang.toLowerCase()}/... 저장소 경로)`}
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -318,16 +408,23 @@ export function MultiLangBatchPanel() {
             </button>
           )}
 
-          {completedCount >= 2 && (
+          {completedCount >= 1 && (
             <button
               type="button"
               onClick={handleDownloadAll}
-              className="w-full min-h-[32px] rounded-md bg-accent-green/10 hover:bg-accent-green/20 text-accent-green border border-accent-green/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5"
-              title="완료된 언어를 모두 파일로 다운로드"
+              className="w-full min-h-[32px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5"
+              title="완료된 언어를 translations/<lang>/volumes/vol-01/ep-001.md 저장소 호환 MD로 일괄 다운로드"
             >
-              <Download className="w-3.5 h-3.5" />
-              전체 다운로드 ({completedCount}개)
+              <FileDown className="w-3.5 h-3.5" />
+              전체 MD 다운로드 ({completedCount}개) — GitHub 저장소 포맷
             </button>
+          )}
+
+          {completedCount >= 1 && (
+            <p className="text-[9px] text-text-tertiary italic leading-tight">
+              MD 파일 상단 주석에 권장 저장 경로(translations/&lt;lang&gt;/volumes/vol-01/ep-001.md) 포함.
+              소설 스튜디오 저장소에 그대로 넣으면 serializer가 자동 인식합니다.
+            </p>
           )}
         </div>
 
