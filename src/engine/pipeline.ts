@@ -11,6 +11,7 @@ import { GENRE_PRESETS } from './genre-presets';
 import { buildPublishPlatformBlock } from './builders/platform-builder';
 import { buildPrismBlock, buildPrismModeBlock } from './builders/prism-builder';
 import { GRAMMAR_PACKS } from '@/lib/grammar-packs';
+import { buildShadowPrompt } from './shadow';
 import { logger } from '@/lib/logger';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
@@ -750,6 +751,17 @@ ${tabooParts}
 ${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleString()}~${gp.episodeLength.max.toLocaleString()} ${gp.episodeLength.unit}`;
   }
 
+  // Shadow State injection — Narrative Sentinel™ 맥락이탈 방지
+  let shadowBlock = '';
+  if (config.shadowState) {
+    shadowBlock = buildShadowPrompt(
+      config.shadowState,
+      config.episode,
+      config.totalEpisodes,
+      isKO
+    );
+  }
+
   // Style DNA injection
   const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
 
@@ -805,7 +817,7 @@ ${sceneDirectionBlock}
 ${episodeSceneSheetBlock}
 ${simulatorBlock}
 ${worldTierBlock}
-${itemsBlock}${skillsBlock}${magicSystemsBlock}${grammarPackBlock}
+${itemsBlock}${skillsBlock}${magicSystemsBlock}${grammarPackBlock}${shadowBlock}
 ${subGenreBlock}
 ${styleDnaBlock}
 ${prismBlock}

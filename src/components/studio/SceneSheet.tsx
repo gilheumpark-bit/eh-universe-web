@@ -424,15 +424,10 @@ export default function SceneSheet({
   const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes ?? "");
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure ?? "");
   const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>(config.grammarRegion ?? "KR");
+  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>("KR");
   const [showGrammarPanel, setShowGrammarPanel] = useState(false);
-
-  // Sync grammarRegion → config so pipeline.ts can read it
-  useEffect(() => {
-    if (config.grammarRegion !== grammarRegion) {
-      setConfig({ ...config, grammarRegion });
-    }
-  }, [grammarRegion]);
+  // NOTE: grammarRegion의 config sync는 상위(StudioShell)에서 prop 전달로 처리
+  // 현재 SceneSheet은 props에 config/setConfig를 받지 않음 (local state만 유지)
 
   const sortedEmotions = useMemo(() => [...emotions].sort((a, b) => a.position - b.position), [emotions]);
   const sortedTensionPoints = useMemo(() => [...tensionPoints].sort((a, b) => a.position - b.position), [tensionPoints]);
