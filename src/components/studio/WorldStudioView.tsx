@@ -110,7 +110,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                   const sc = document.querySelector('[data-testid="studio-content"] .overflow-y-auto');
                   if (sc) sc.scrollTop = 0;
                 }}
-                className={`relative z-10 group flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
+                className={`relative z-10 group flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                   active
                     ? "bg-[linear-gradient(135deg,rgba(255,200,50,0.15),rgba(0,0,0,0.2))] text-amber-400 border border-[rgba(255,200,50,0.4)] shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_10px_rgba(255,200,50,0.1)] -translate-y-px"
                     : "text-text-tertiary hover:text-amber-400 hover:bg-[rgba(255,200,50,0.05)] border border-transparent hover:border-[rgba(255,200,50,0.1)]"
@@ -173,17 +173,17 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             {/* CTA: 세계관 설정 유무에 따라 다른 동선 - Stellar Buttons */}
             {config.title || config.synopsis ? (
               <>
-                <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-accent-amber/30 bg-bg-secondary/60 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:bg-accent-amber/10 hover:border-accent-amber/60 hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-accent-amber hover:text-text-primary">
+                <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-accent-amber/30 bg-bg-secondary/60 text-[12px] font-black uppercase tracking-widest font-mono transition-[background-color,border-color,box-shadow,color] hover:bg-accent-amber/10 hover:border-accent-amber/60 hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-accent-amber hover:text-text-primary">
                   <Cpu className="w-4 h-4 group-hover:text-amber-400 transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JP' ? 'シミュレーター' : language === 'CN' ? '地图模拟器' : '엔진 시뮬레이션'}
                 </button>
-                <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-amber/70 to-accent-amber/90 border border-accent-amber/60 text-[12px] font-black uppercase tracking-widest font-mono transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-bg-primary shadow-lg">
+                <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-amber/70 to-accent-amber/90 border border-accent-amber/60 text-[12px] font-black uppercase tracking-widest font-mono transition-transform hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-bg-primary shadow-lg">
                   <Compass className="w-4 h-4 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" /> {startLabel ?? t('planning.commence')}
                 </button>
               </>
             ) : null}
             <button 
               onClick={onSave} 
-              className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-all duration-300 ${
+              className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                 saveFlash 
                   ? 'bg-accent-green text-bg-primary border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
                   : 'bg-gradient-to-b from-accent-amber/15 to-accent-amber/20 border border-accent-amber/40 text-accent-amber hover:bg-accent-amber/25 hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
@@ -213,7 +213,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
           <div className="flex justify-end mt-6">
             <button 
               onClick={onSave} 
-              className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-all duration-300 ${
+              className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                 saveFlash 
                   ? 'bg-accent-green text-bg-primary border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
                   : 'bg-gradient-to-b from-accent-amber/15 to-accent-amber/20 border border-accent-amber/40 text-accent-amber hover:bg-accent-amber/25 hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
@@ -238,7 +238,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 {language === 'KO' ? `선택된 시대: ${selectedEra}` : `Selected era: ${selectedEra}`}
               </span>
               <button onClick={() => setSelectedEra(null)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-all">
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-colors">
                 <X className="w-3 h-3" />
                 {language === 'KO' ? '해제' : 'Clear'}
               </button>
@@ -257,7 +257,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 {language === 'KO' ? `필터: ${selectedEra} 시대` : `Filter: ${selectedEra} era`}
               </span>
               <button onClick={() => setSelectedEra(null)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-all">
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-colors">
                 <X className="w-3 h-3" />
                 {language === 'KO' ? '해제' : 'Clear'}
               </button>

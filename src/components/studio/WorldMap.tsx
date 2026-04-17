@@ -138,7 +138,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => { setLinkMode(!linkMode); setLinkFrom(null); }}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-transform active:scale-95 ${
               linkMode ? 'bg-[linear-gradient(135deg,rgba(255,100,50,0.2),rgba(200,50,20,0.1))] text-orange-400 border-[rgba(255,100,50,0.5)] shadow-[0_0_15px_rgba(255,100,50,0.2)]' : 'bg-[rgba(255,200,50,0.05)] text-amber-400 border-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:text-amber-400'
             }`}
           >
@@ -146,7 +146,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
             {isKO ? '연결 모드' : 'Link Mode'}
           </button>
           <button onClick={addTerritory}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-[rgba(255,220,100,0.6)] shadow-[0_5px_15px_rgba(255,200,50,0.2)] transition-all active:scale-95 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,200,50,0.4)]">
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-[rgba(255,220,100,0.6)] shadow-[0_5px_15px_rgba(255,200,50,0.2)] transition-transform active:scale-95 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,200,50,0.4)]">
             <Plus className="w-3.5 h-3.5" />
             {isKO ? '영역 추가' : 'Add Region'}
           </button>
@@ -158,7 +158,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
           <span className="text-[9px] text-text-tertiary font-mono px-1">{isKO ? '연결 유형:' : 'Link type:'}</span>
           {(Object.keys(LINK_COLORS) as TerritoryLink['type'][]).map(type => (
             <button key={type} onClick={() => setLinkType(type)}
-              className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+              className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-[transform,opacity,background-color,border-color,color] ${
                 linkType === type ? 'text-white border-transparent' : 'text-text-tertiary border-[rgba(255,200,50,0.2)] hover:text-amber-400 hover:bg-[rgba(255,200,50,0.05)]'
               }`}
               style={linkType === type ? { background: LINK_COLORS[type], borderColor: LINK_COLORS[type] } : undefined}
@@ -261,7 +261,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       {territories.length > 0 && (
         <div className="space-y-1">
           {territories.map(t => (
-            <div key={t.id} className="flex items-center gap-2 bg-[linear-gradient(135deg,rgba(255,200,50,0.02),rgba(0,0,0,0.3))] border border-[rgba(255,200,50,0.15)] rounded-lg px-3 py-1.5 backdrop-blur-sm transition-all hover:bg-[rgba(255,200,50,0.05)] hover:border-[rgba(255,200,50,0.3)]">
+            <div key={t.id} className="flex items-center gap-2 bg-[linear-gradient(135deg,rgba(255,200,50,0.02),rgba(0,0,0,0.3))] border border-[rgba(255,200,50,0.15)] rounded-lg px-3 py-1.5 backdrop-blur-sm transition-colors hover:bg-[rgba(255,200,50,0.05)] hover:border-[rgba(255,200,50,0.3)]">
               <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_5px_currentColor]" style={{ background: t.color || civColors[t.civName] || '#6b7280', color: t.color || civColors[t.civName] || '#6b7280' }} />
               <input
                 value={t.name}
@@ -279,7 +279,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-              <button onClick={() => removeTerritory(t.id)} className="text-text-tertiary hover:text-red-400 hover:drop-shadow-[0_0_5px_rgba(255,50,50,0.5)] transition-all">
+              <button onClick={() => removeTerritory(t.id)} className="text-text-tertiary hover:text-red-400 hover:drop-shadow-[0_0_5px_rgba(255,50,50,0.5)] transition-[background-color,border-color,box-shadow,color]">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>

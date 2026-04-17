@@ -175,12 +175,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
               <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                 {storageEstimate && storageEstimate.quota > 0 ? (
                   <div
-                    className={`h-full rounded-full transition-all ${(() => { const pct = (storageEstimate.usage / storageEstimate.quota) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500'; })()}`}
+                    className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${(() => { const pct = (storageEstimate.usage / storageEstimate.quota) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500'; })()}`}
                     style={{ width: `${Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)}%` }}
                   />
                 ) : (
                   <div
-                    className={`h-full rounded-full transition-all ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500'; })()}`}
+                    className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${(() => { const pct = (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100; return pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500'; })()}`}
                     style={{ width: `${Math.min(100, (getStorageUsageBytes() / (5 * 1024 * 1024)) * 100)}%` }}
                   />
                 )}
@@ -210,7 +210,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           <div className="space-y-2">
             <div
               onClick={() => setNotificationsOn(prev => !prev)}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-colors cursor-pointer border border-transparent hover:border-border"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Bell className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
@@ -231,7 +231,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 try { localStorage.removeItem('noa_shortcuts_hint_shown'); } catch { /* private */ }
                 window.location.reload();
               }}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><BookOpen className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
@@ -256,7 +256,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 // Re-render by toggling a dummy state — use location.reload for simplicity
                 window.location.reload();
               }}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
@@ -287,7 +287,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 if (confirmReset) { onClearAll(); setConfirmReset(false); }
                 else { setResetCountdown(3); setConfirmReset(true); }
               }}
-              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-all cursor-pointer border group active:scale-[0.98] ${confirmReset ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'hover:bg-red-500/10 border-transparent hover:border-red-500/30'}`}
+              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border group active:scale-[0.98] ${confirmReset ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'hover:bg-red-500/10 border-transparent hover:border-red-500/30'}`}
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className={`p-2 md:p-3 rounded-2xl transition-colors shrink-0 ${confirmReset ? 'bg-red-500/30' : 'bg-bg-secondary group-hover:bg-red-500/20'}`}><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" /></div>
@@ -389,7 +389,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <div
               data-testid="settings-api-key-row"
               onClick={onManageApiKey}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Key className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
@@ -433,7 +433,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   <button
                     key={p}
                     onClick={() => { setDefaultPlatform(p); try { localStorage.setItem('noa_default_platform', p); } catch { /* quota/private */ } }}
-                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${defaultPlatform === p ? 'bg-blue-600 text-text-primary' : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'}`}
+                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-colors ${defaultPlatform === p ? 'bg-blue-600 text-text-primary' : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
@@ -836,7 +836,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
           </div>
         </div>
         <button onClick={signOut}
-          className="w-full flex items-center justify-between px-6 py-4 bg-bg-secondary/50 border border-border rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-all active:scale-[0.98]">
+          className="w-full flex items-center justify-between px-6 py-4 bg-bg-secondary/50 border border-border rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-[transform,background-color,border-color,color] active:scale-[0.98]">
           {t('settings.signOut')} <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -861,7 +861,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
         }
         signInWithGoogle();
       }}
-        className="w-full flex items-center justify-between px-6 py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all active:scale-[0.98] text-blue-400">
+        className="w-full flex items-center justify-between px-6 py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-[transform,background-color,border-color,color] active:scale-[0.98] text-blue-400">
         🔑 {t('settings.googleSignIn')} <ChevronRight className="w-4 h-4" />
       </button>
       {error && (

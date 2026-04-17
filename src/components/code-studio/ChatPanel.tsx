@@ -236,7 +236,7 @@ import { Loader2 } from 'lucide-react';
 function Button({ children, loading, onClick }) {
   return (
     <button onClick={onClick} disabled={loading}
-      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-accent-purple/90 text-white text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 hover:bg-accent-purple disabled:opacity-50">
+      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-accent-purple/90 text-white text-sm font-medium transition-[transform,background-color,border-color,color] duration-200 hover:scale-[1.02] active:scale-95 hover:bg-accent-purple disabled:opacity-50">
       {loading && <Loader2 size={14} className="animate-spin" />}
       {children}
     </button>
@@ -470,7 +470,7 @@ ${mcpToolsDoc}`,
             <div className="flex flex-wrap justify-center gap-2 mt-2 max-w-[280px]">
               {["Review this file", "Find bugs", "Refactor", "Add tests"].map((s, i) => (
                 <button key={i} onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                  className="px-3 py-1.5 text-[10px] rounded-full border border-border text-text-tertiary hover:text-text-primary hover:border-amber-700 hover:bg-amber-900/18 transition-all">
+                  className="px-3 py-1.5 text-[10px] rounded-full border border-border text-text-tertiary hover:text-text-primary hover:border-amber-700 hover:bg-amber-900/18 transition-colors">
                   <Zap size={9} className="inline opacity-50 mr-1" />{s}
                 </button>
               ))}

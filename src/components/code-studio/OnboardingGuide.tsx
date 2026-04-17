@@ -82,7 +82,7 @@ export function OnboardingGuide({ onComplete, onSkip }: Props) {
         </div>
         <div className="flex justify-center gap-1.5 px-5 pb-3">
           {STEPS.map((_, i) => (
-            <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === step ? "w-6 bg-amber-500" : i < step ? "w-2 bg-amber-500/50" : "w-2 bg-white/10"}`} />
+            <div key={i} className={`h-1 rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300 ${i === step ? "w-6 bg-amber-500" : i < step ? "w-2 bg-amber-500/50" : "w-2 bg-white/10"}`} />
           ))}
         </div>
         <div className="px-6 py-4 flex flex-col items-center text-center">

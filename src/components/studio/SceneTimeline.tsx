@@ -233,7 +233,7 @@ function BeatBlock({
         onDrop={onDrop}
         onClick={onSelect}
         onDoubleClick={handleDoubleClick}
-        className={`flex items-start gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-all
+        className={`flex items-start gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-[transform,opacity,background-color,border-color,color]
           ${BEAT_COLORS[beat.type]}
           ${isSelected ? "ring-2 ring-accent-purple shadow-sm shadow-accent-purple/20" : ""}
           ${warning ? "ring-1 ring-accent-amber/50" : ""}
@@ -357,7 +357,7 @@ function SceneLane({
         <div className="flex-1 flex items-center gap-1.5 mx-2">
           <div className="h-1.5 flex-1 bg-bg-tertiary/50 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${scene.tension > 70 ? "bg-accent-red" : scene.tension > 40 ? "bg-accent-amber" : "bg-accent-green"}`}
+              className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${scene.tension > 70 ? "bg-accent-red" : scene.tension > 40 ? "bg-accent-amber" : "bg-accent-green"}`}
               style={{ width: `${scene.tension}%` }}
             />
           </div>

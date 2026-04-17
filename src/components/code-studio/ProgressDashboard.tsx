@@ -100,7 +100,7 @@ function TeamProgressBar({ team }: { team: TeamProgress }) {
     <div className="flex items-center gap-2">
       <span className="w-20 text-[10px] text-text-tertiary truncate">{team.name}</span>
       <div className="flex-1 h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-300" style={{
+        <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300" style={{
           width: `${Math.max(team.progress, 2)}%`, backgroundColor: barColor,
         }} />
       </div>
@@ -155,7 +155,7 @@ function ScoreBar({ score, grade }: { score: number; grade: string }) {
   return (
     <div className="flex-1 h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
       <div
-        className="h-full rounded-full transition-all duration-500"
+        className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500"
         style={{ width: `${Math.max(score, 2)}%`, backgroundColor: GRADE_COLOR[grade] ?? "#8b949e" }}
       />
     </div>
@@ -222,7 +222,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
                 <span>{overallProgress}%</span>
               </div>
               <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500 bg-amber-800" style={{ width: `${overallProgress}%` }} />
+                <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 bg-amber-800" style={{ width: `${overallProgress}%` }} />
               </div>
               {etaMs > 0 && (
                 <div className="flex items-center gap-1 text-[9px] text-text-tertiary">
@@ -251,7 +251,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
               </div>
               <div className="flex-1">
                 <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{
+                  <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{
                     width: `${pipelineScore}%`,
                     backgroundColor: pipelineScore >= 80 ? "#3fb950" : pipelineScore >= 60 ? "#d29922" : "#f85149",
                   }} />

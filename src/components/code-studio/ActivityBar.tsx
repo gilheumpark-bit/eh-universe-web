@@ -148,7 +148,7 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
           aria-label={item.label}
           tabIndex={isActive ? 0 : -1}
           onClick={() => onChangeView(item.id)}
-          className={`relative w-10 h-10 flex items-center justify-center rounded transition-all duration-150 ${
+          className={`relative w-10 h-10 flex items-center justify-center rounded transition-[transform,opacity,background-color,border-color,color] duration-150 ${
             isActive
               ? "text-text-primary bg-accent-purple/10"
               : "text-text-secondary hover:text-text-primary hover:bg-white/5"
@@ -156,7 +156,7 @@ export function ActivityBar({ activeView, onChangeView }: ActivityBarProps) {
         >
           {/* Active indicator — animated left border */}
           <span
-            className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
+            className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-[transform,opacity,background-color,border-color,color] duration-200 ${
               isActive ? "h-5 opacity-100" : "h-0 opacity-0"
             }`}
           />

@@ -386,7 +386,7 @@ function HomePageContent() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 lg:w-80 lg:shrink-0">
                 {universeStats.map((item) => (
-                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/6 hover:border-accent-amber/20 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
+                  <div key={item.label} className="card-glow premium-panel-soft rounded-[22px] px-5 py-6 border border-white/6 hover:border-accent-amber/20 transition-[transform,background-color,border-color,box-shadow,color] duration-200 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">
                     <div className="font-display text-[2.4rem] font-bold leading-none text-text-primary">
                       {item.value}
                     </div>

@@ -226,7 +226,7 @@ export default function SoundtrackPage() {
                 return (
                   <div
                     key={track.id}
-                    className="premium-link-card group overflow-hidden rounded-xl transition-all duration-300"
+                    className="premium-link-card group overflow-hidden rounded-xl transition-[transform,opacity,background-color,border-color,color] duration-300"
                     style={{
                       background: isPlaying
                         ? `linear-gradient(135deg, ${track.theme}40 0%, var(--color-bg-secondary) 100%)`
@@ -289,7 +289,7 @@ export default function SoundtrackPage() {
                           onClick={(e) => seek(track.id, e)}
                         >
                           <div
-                            className="h-full rounded-full transition-all duration-100"
+                            className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-100"
                             style={{
                               width: `${prog * 100}%`,
                               background: isPlaying

@@ -288,7 +288,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           {config && (
             <button
               onClick={loadFromConfig}
-              className="px-3 py-1.5 bg-[linear-gradient(45deg,rgba(255,200,50,0.1),transparent)] border border-[rgba(255,200,50,0.3)] rounded-lg text-xs font-bold text-amber-400 hover:bg-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:shadow-[0_0_15px_rgba(255,200,50,0.2)] transition-all font-mono"
+              className="px-3 py-1.5 bg-[linear-gradient(45deg,rgba(255,200,50,0.1),transparent)] border border-[rgba(255,200,50,0.3)] rounded-lg text-xs font-bold text-amber-400 hover:bg-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:shadow-[0_0_15px_rgba(255,200,50,0.2)] transition-[background-color,border-color,box-shadow,color] font-mono"
             >
               📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
             </button>
@@ -298,7 +298,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           {/* Scanline overlay — dark mode only */}
           <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[linear-gradient(rgba(255,200,50,0.03)_50%,transparent_50%)] bg-size-[100%_4px] mix-blend-screen opacity-50 z-10 transition-opacity group-focus-within:opacity-100 hidden dark:block [data-theme=dark]:block"></div>
           <textarea
-            className="w-full bg-bg-secondary border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-accent-amber/60 focus:shadow-[0_0_20px_rgba(184,149,92,0.12)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-serif leading-relaxed text-text-primary placeholder-text-tertiary relative z-20 backdrop-blur-md transition-all"
+            className="w-full bg-bg-secondary border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-accent-amber/60 focus:shadow-[0_0_20px_rgba(184,149,92,0.12)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-serif leading-relaxed text-text-primary placeholder-text-tertiary relative z-20 backdrop-blur-md transition-[box-shadow]"
             placeholder={t('worldAnalysis.inputPlaceholder')}
             value={inputText}
             onChange={e => setInputText(e.target.value)}
@@ -311,14 +311,14 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
-                className="px-4 py-2 bg-[rgba(255,100,50,0.1)] border border-[rgba(255,100,50,0.3)] text-orange-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[rgba(255,100,50,0.2)] transition-all">
+                className="px-4 py-2 bg-[rgba(255,100,50,0.1)] border border-[rgba(255,100,50,0.3)] text-orange-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[rgba(255,100,50,0.2)] transition-colors">
                 {t('worldAnalysis.cancelBtn')}
               </button>
             )}
             <button
               onClick={handleAnalyze}
               disabled={analyzing || !inputText.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] border border-[rgba(255,220,100,0.6)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] transition-all active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_15px_rgba(255,200,50,0.2)]"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] border border-[rgba(255,220,100,0.6)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] transition-[transform,opacity] active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_15px_rgba(255,200,50,0.2)]"
             >
               {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               {analyzing ? t('worldAnalysis.analyzing') : t('worldAnalysis.analyze')}
@@ -379,7 +379,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
 
               return (
                 <div key={key}
-                  className={`relative p-5 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${cardBg} ${cardBorder} ${cardShadow} ${key === 'summary' ? 'md:col-span-2' : ''} group overflow-hidden`}
+                  className={`relative p-5 rounded-2xl border backdrop-blur-xl transition-[transform,opacity,background-color,border-color,color] duration-300 ${cardBg} ${cardBorder} ${cardShadow} ${key === 'summary' ? 'md:col-span-2' : ''} group overflow-hidden`}
                 >
                   <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[20px_20px] mix-blend-screen opacity-10"></div>
                   <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">

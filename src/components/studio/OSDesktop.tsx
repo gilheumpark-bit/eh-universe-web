@@ -383,7 +383,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         ref={dockRef}
         data-zen-hide
         data-dock-anchor={dockAnchor}
-        className={`fixed z-[var(--z-tooltip)] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-all duration-500' : ''}`}
+        className={`fixed z-[var(--z-tooltip)] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-[transform,opacity,background-color,border-color,color] duration-500' : ''}`}
         style={
           dockPos
             ? { left: dockPos.x, top: dockPos.y }
@@ -396,7 +396,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <button
           type="button"
           onClick={toggleDockAnchor}
-          className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-all mr-1 shrink-0 group/anchor"
+          className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-1 shrink-0 group/anchor"
           title={L4(language, {
             ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
             en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
@@ -419,7 +419,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <div
           onMouseDown={handleDockMoveStart}
           onDoubleClick={handleDockReset}
-          className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-all mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
+          className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
           title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
         >
           <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
@@ -453,7 +453,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 onMouseEnter={() => setHoveredTab(tab.id)}
                 onMouseLeave={() => setHoveredTab(null)}
                 onClick={() => handleTabChange(tab.id as AppTab)}
-                className={`relative flex flex-col items-center justify-center transition-all duration-200 ease-out group ${
+                className={`relative flex flex-col items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out group ${
                   isDragging ? 'opacity-40' : ''
                 } ${isDragOver ? 'brightness-125' : ''} ${
                   isHovered && !isDragging ? 'brightness-125' : ''
@@ -468,7 +468,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                     <GripVertical className="w-3 h-3 text-text-tertiary rotate-90" />
                   </div>
                 )}
-                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                   isActive
                     ? 'bg-accent-amber/10 border border-accent-amber/30'
                     : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
@@ -491,13 +491,13 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <div ref={overflowRef} className="relative">
           <button
             onClick={() => setOverflowOpen(!overflowOpen)}
-            className={`relative flex flex-col items-center justify-center transition-all duration-200 ease-out group ${
+            className={`relative flex flex-col items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out group ${
               overflowOpen ? 'brightness-125' : ''
             }`}
             style={{ width: '56px', height: '56px' }}
             title={L4(language, { ko: '더보기', en: 'More', ja: 'もっと見る', zh: '更多' })}
           >
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ${
               overflowOpen
                 ? 'bg-bg-tertiary/60 border border-border/50'
                 : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
@@ -529,10 +529,10 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                         handleTabChange(tab.id as AppTab);
                         setOverflowOpen(false);
                       }}
-                      className="relative flex flex-col items-center justify-center transition-all duration-200 ease-out group"
+                      className="relative flex flex-col items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out group"
                       style={{ width: '56px', height: '56px' }}
                     >
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-200 ${
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                         isActive
                           ? 'bg-accent-amber/10 border border-accent-amber/30'
                           : 'bg-transparent border border-transparent hover:bg-bg-tertiary/50'
@@ -562,11 +562,11 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           <Link
             key={link.href}
             href={link.href}
-            className="relative flex flex-col items-center justify-center group transition-all duration-200"
+            className="relative flex flex-col items-center justify-center group transition-[transform,opacity,background-color,border-color,color] duration-200"
             style={{ width: '56px', height: '56px' }}
             title={link.label}
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center bg-transparent border border-transparent hover:bg-bg-tertiary/50 transition-all duration-200">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center bg-transparent border border-transparent hover:bg-bg-tertiary/50 transition-colors duration-200">
               <link.icon className={`w-6 h-6 ${link.color} opacity-70 group-hover:opacity-100 transition-opacity`} strokeWidth={1.8} />
             </div>
             <span className="text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide text-text-tertiary group-hover:text-text-primary transition-colors">

@@ -53,14 +53,14 @@ export function ChapterSidebar({
               type="button"
               onClick={onBatchTranslate}
               disabled={loading}
-              className="flex-1 rounded-xl bg-linear-to-r from-amber-800/90 to-stone-900/90 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-stone-100 transition-all hover:brightness-110 shadow-md shadow-amber-950/15"
+              className="flex-1 rounded-xl bg-linear-to-r from-amber-800/90 to-stone-900/90 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-stone-100 transition-[transform,opacity,background-color,border-color,color] hover:brightness-110 shadow-md shadow-amber-950/15"
             >
               ALL BATCH
             </button>
             <button
               type="button"
               onClick={onToggleExport}
-              className="theme-pill flex-1 rounded-xl py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:brightness-105"
+              className="theme-pill flex-1 rounded-xl py-2 text-[10px] font-black uppercase tracking-[0.15em] transition-[transform,opacity,background-color,border-color,color] hover:brightness-105"
             >
               EXPORT (5형식)
             </button>
@@ -95,7 +95,7 @@ export function ChapterSidebar({
               if (e.key === 'Enter' || e.key === ' ') onOpenChapter(idx);
             }}
             onClick={() => onOpenChapter(idx)}
-            className={`chapter-item group flex cursor-pointer items-center justify-between rounded-xl border p-2.5 transition-all ${activeChapterIndex === idx ? 'chapter-item-active' : ''} ${ch.error ? 'ring-1 ring-red-500/50' : ''}`}
+            className={`chapter-item group flex cursor-pointer items-center justify-between rounded-xl border p-2.5 transition-[transform,opacity,background-color,border-color,color] ${activeChapterIndex === idx ? 'chapter-item-active' : ''} ${ch.error ? 'ring-1 ring-red-500/50' : ''}`}
           >
             <div className="flex items-center gap-2 overflow-hidden">
               <span

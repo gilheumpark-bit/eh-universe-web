@@ -149,7 +149,7 @@ function ScoreCard({ label, score, icon }: { label: string; score: number; icon:
       <div className="flex items-center gap-1 text-[9px] text-[#8b949e]">{icon}{label}</div>
       <span className="text-sm font-bold font-mono" style={{ color }}>{score}</span>
       <div className="w-full h-1 bg-[#21262d] rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${score}%`, backgroundColor: color }} />
+        <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{ width: `${score}%`, backgroundColor: color }} />
       </div>
     </div>
   );
@@ -409,7 +409,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                 const isDone = progress.phaseIndex > i || progress.phase === "complete";
                 return (
                   <div key={phase} className="flex-1 flex flex-col items-center gap-1" title={L4(lang, { ko: meta.ko, en: meta.en, ja: meta.ja, zh: meta.zh })}>
-                    <div className={`w-full h-1 rounded-full transition-all ${isDone ? "bg-green-400" : isCurrent ? "bg-blue-400" : "bg-[#30363d]"}`} />
+                    <div className={`w-full h-1 rounded-full transition-[transform,opacity,background-color,border-color,color] ${isDone ? "bg-green-400" : isCurrent ? "bg-blue-400" : "bg-[#30363d]"}`} />
                     <span className={`text-[8px] ${isCurrent ? "text-[#e6edf3] font-semibold" : "text-[#8b949e] truncate overflow-hidden"}`}>{L4(lang, { ko: meta.ko, en: meta.en, ja: meta.ja, zh: meta.zh }).slice(0, 4)}</span>
                   </div>
                 );
@@ -421,7 +421,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1 bg-[#21262d] rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500 bg-amber-800" style={{ width: `${progress.overallProgress}%` }} />
+                <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 bg-amber-800" style={{ width: `${progress.overallProgress}%` }} />
               </div>
               <span className="text-[9px] text-[#8b949e] font-mono w-8 text-right">{progress.overallProgress}%</span>
             </div>

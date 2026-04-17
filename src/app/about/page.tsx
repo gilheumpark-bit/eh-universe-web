@@ -88,12 +88,12 @@ export default function AboutPage() {
               <div className="space-y-3">
                 <a href="https://github.com/gilheumpark-bit/eh-universe-web" target="_blank" rel="noopener noreferrer"
                   aria-label="GitHub Repository (opens in new tab)"
-                  className="group premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-amber hover:border-accent-amber/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-200 text-sm border border-transparent">
+                  className="group premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-amber hover:border-accent-amber/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-[transform,background-color,border-color,box-shadow,color] duration-200 text-sm border border-transparent">
                   <span className="font-[--font-mono] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true">→</span> GitHub Repository
                 </a>
                 <a href="https://github.com/gilheumpark-bit/eh-universe-web/issues/new" target="_blank" rel="noopener noreferrer"
                   aria-label="Report a bug (opens in new tab)"
-                  className="group premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-red hover:border-accent-red/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-200 text-sm border border-transparent">
+                  className="group premium-panel-soft flex items-center gap-3 rounded-[20px] px-4 py-4 text-text-secondary hover:text-accent-red hover:border-accent-red/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-[transform,background-color,border-color,box-shadow,color] duration-200 text-sm border border-transparent">
                   <span className="font-[--font-mono] transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true">→</span> Bug Report / 문제 제보
                 </a>
               </div>
@@ -118,7 +118,7 @@ export default function AboutPage() {
                 { value: "200K+", label: T({ ko: "관할 행성계", en: "Star Systems" }) },
                 { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open License" }) },
               ].map(({ value, label }) => (
-                <div key={label} className="premium-panel-soft rounded-[16px] px-4 py-5 text-center border border-transparent hover:border-accent-purple/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-200">
+                <div key={label} className="premium-panel-soft rounded-[16px] px-4 py-5 text-center border border-transparent hover:border-accent-purple/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-[transform,background-color,border-color,box-shadow,color] duration-200">
                   <div className="font-[--font-mono] text-xl font-black text-accent-purple mb-1">{value}</div>
                   <div className="text-[11px] text-text-tertiary font-[--font-mono] uppercase tracking-wider">{label}</div>
                 </div>

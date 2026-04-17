@@ -328,7 +328,7 @@ function TensionCurvePreview({ data, episodeLabel }: { data: { position: number;
           return (
             <div key={i} className="flex-1 relative h-full group cursor-default">
               <div
-                className="absolute bottom-0 w-full rounded-t-sm bg-gradient-to-t from-accent-purple/60 to-accent-blue/40 transition-all duration-300"
+                className="absolute bottom-0 w-full rounded-t-sm bg-gradient-to-t from-accent-purple/60 to-accent-blue/40 transition-[transform,opacity,background-color,border-color,color] duration-300"
                 style={{ height: `${height}%` }}
               />
               <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[8px] px-1.5 py-0.5 rounded whitespace-nowrap border border-border">

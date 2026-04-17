@@ -73,7 +73,7 @@ const AspectBar: React.FC<{ aspect: AspectResult; lang: 'ko' | 'en' }> = ({ aspe
         <span className="absolute text-[7px] text-text-tertiary" style={{ left: `${bmRight}%`, top: '-12px' }}>{bmRight}</span>
         {/* Current value marker */}
         <div
-          className="absolute top-0 h-full w-1.5 rounded-full transition-all"
+          className="absolute top-0 h-full w-1.5 rounded-full transition-[transform,opacity,background-color,border-color,color]"
           style={{
             left: `${Math.min(98, pct)}%`,
             backgroundColor: aspect.severity === 'ok' ? '#22c55e' : aspect.severity === 'warn' ? '#f59e0b' : '#ef4444',
@@ -314,7 +314,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
             <button
               key={lv.level}
               onClick={() => setSelectedLevel(lv.level)}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
                 selectedLevel === lv.level
                   ? 'bg-accent-purple text-white'
                   : 'bg-bg-primary text-text-tertiary hover:text-text-primary'
@@ -331,7 +331,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
           <button
             onClick={requestReview}
             disabled={isAnalyzing}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-purple text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-purple text-white rounded-xl text-xs font-bold hover:opacity-80 transition-opacity disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             {t('genreReview.requestReview')}
@@ -339,7 +339,7 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
           <button
             onClick={runAllLevels}
             disabled={isAnalyzing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-xl text-xs font-bold hover:opacity-80 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-xl text-xs font-bold hover:opacity-80 transition-opacity disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5" />
             {t('genreReview.fullReview')}

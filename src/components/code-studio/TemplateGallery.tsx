@@ -124,7 +124,7 @@ export function TemplateGallery({ onSelectTemplate, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               {filtered.map((template) => (
                 <button key={template.id} onClick={() => { onSelectTemplate(template); onClose(); }}
-                  className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-white/10 bg-[#0a0e17] hover:border-amber-700 hover:bg-amber-800/5 transition-all text-left">
+                  className="group flex flex-col items-start gap-2 p-4 rounded-xl border border-white/10 bg-[#0a0e17] hover:border-amber-700 hover:bg-amber-800/5 transition-colors text-left">
                   <div className="flex items-center gap-3 w-full">
                     <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/5 text-white/60 group-hover:text-amber-400 transition-colors">
                       {getFrameworkIcon(template.framework)}

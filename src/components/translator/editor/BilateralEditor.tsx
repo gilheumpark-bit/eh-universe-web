@@ -128,7 +128,7 @@ export function BilateralEditor() {
               type="button"
               title={langKo ? '저장·백업 패널 열기 (JSON·일괄보내기)' : 'Open save & backup panel'}
               onClick={() => { if (isZenMode) setIsZenMode(false); layout.setActiveLeftPanel('backup'); }}
-              className={`shrink-0 flex items-center justify-center rounded-lg border p-1.5 sm:px-2.5 sm:py-1.5 text-[10px] font-semibold transition-all ${
+              className={`shrink-0 flex items-center justify-center rounded-lg border p-1.5 sm:px-2.5 sm:py-1.5 text-[10px] font-semibold transition-[transform,opacity,background-color,border-color,color] ${
                 layout.activeLeftPanel === 'backup'
                   ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber'
                   : 'border-border bg-bg-secondary/50 text-text-tertiary hover:border-accent-amber/25 hover:text-accent-amber'
@@ -149,7 +149,7 @@ export function BilateralEditor() {
                 <option value="ko" className="bg-bg-secondary text-text-primary">KO</option>
               </select>
               <button
-                className="px-1 sm:px-2.5 py-1 text-text-tertiary hover:text-accent-amber rounded-md transition-all shrink-0"
+                className="px-1 sm:px-2.5 py-1 text-text-tertiary hover:text-accent-amber rounded-md transition-colors shrink-0"
                 onClick={() => { const t = from; setFrom(to); setTo(t); }}
                 title="서로 바꾸기 (Swap Languages)"
               >
@@ -186,7 +186,7 @@ export function BilateralEditor() {
                   if (isZenMode) setIsZenMode(false);
                   layout.setActiveRightPanel(layout.activeRightPanel === id ? null : id);
                 }}
-                className={`rounded-lg border p-1.5 sm:p-2 transition-all duration-300 ${
+                className={`rounded-lg border p-1.5 sm:p-2 transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                   layout.activeRightPanel === id
                     ? 'border-accent-purple/40 bg-accent-purple/10 text-accent-purple'
                     : 'border-transparent text-text-tertiary hover:border-border hover:bg-bg-secondary/50 hover:text-text-primary'
@@ -200,14 +200,14 @@ export function BilateralEditor() {
             <button
               title="Sync Scroll"
               onClick={() => setSyncedScrolling(!syncedScrolling)}
-              className={`p-1.5 sm:p-2 rounded-lg transition-all ${syncedScrolling ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-tertiary hover:text-text-primary'}`}
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors ${syncedScrolling ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-tertiary hover:text-text-primary'}`}
             >
               <AlignLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               title="Zen Mode"
               onClick={() => setIsZenMode(!isZenMode)}
-              className={`p-1.5 sm:p-2 rounded-lg transition-all ${isZenMode ? 'bg-accent-green/10 text-accent-green' : 'text-text-tertiary hover:text-text-primary'}`}
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isZenMode ? 'bg-accent-green/10 text-accent-green' : 'text-text-tertiary hover:text-text-primary'}`}
             >
               <Focus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
@@ -215,7 +215,7 @@ export function BilateralEditor() {
               type="button"
               title={langKo ? '설정·로그인·저장/백업' : 'Settings, sign-in, save & backup'}
               onClick={() => { if (isZenMode) setIsZenMode(false); layout.setActiveLeftPanel('settings'); }}
-              className="p-1.5 sm:p-2 rounded-lg text-text-tertiary hover:text-text-primary transition-all"
+              className="p-1.5 sm:p-2 rounded-lg text-text-tertiary hover:text-text-primary transition-colors"
             >
               <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
@@ -264,7 +264,7 @@ export function BilateralEditor() {
             type="button"
             onClick={() => { if (source.trim() && !loading) translate(); }}
             disabled={!source.trim() || loading}
-            className={`absolute -left-5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
+            className={`absolute -left-5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-[transform,opacity,background-color,border-color,color] ${
               source.trim() && !loading
                 ? 'bg-accent-amber text-white hover:scale-110 hover:shadow-xl cursor-pointer'
                 : 'bg-bg-tertiary text-text-tertiary opacity-40 cursor-not-allowed'
@@ -276,7 +276,7 @@ export function BilateralEditor() {
           {/* Drag Handle */}
           <div
             onMouseDown={onSplitDragStart}
-            className="w-1.5 h-full bg-border/40 backdrop-blur-md border-x border-border/30 cursor-col-resize flex flex-col justify-center items-center hover:bg-accent-amber/20 transition-all duration-300 group"
+            className="w-1.5 h-full bg-border/40 backdrop-blur-md border-x border-border/30 cursor-col-resize flex flex-col justify-center items-center hover:bg-accent-amber/20 transition-colors duration-300 group"
           >
             <div className="w-[2px] h-12 bg-border/50 group-hover:bg-accent-amber/80 rounded-full transition-colors duration-300 shadow-[0_0_10px_rgba(251,191,36,0)] group-hover:shadow-[0_0_10px_rgba(251,191,36,0.5)] flex flex-col gap-1 items-center justify-center py-2">
               <div className="w-1 h-1 rounded-full bg-text-tertiary/40 group-hover:bg-accent-amber transition-colors"></div>

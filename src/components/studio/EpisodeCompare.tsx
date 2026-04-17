@@ -311,7 +311,7 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
               key={m.index}
               onClick={() => onToggle(m.index)}
               disabled={!isSelected && selected.length >= MAX_COMPARE}
-              className={`relative p-2 rounded-lg border text-center transition-all ${
+              className={`relative p-2 rounded-lg border text-center transition-[transform,opacity,background-color,border-color,color] ${
                 isSelected
                   ? 'border-white/30 text-white'
                   : 'border-border/50 text-text-tertiary hover:border-white/20 disabled:opacity-30'
@@ -538,11 +538,11 @@ function DrilldownPanel({ data, language, onClose }: {
               <span className="text-text-tertiary font-mono w-5 shrink-0 text-right">P{i + 1}</span>
               {/* Tension bar */}
               <div className="flex-1 h-2 bg-black/20 rounded-full overflow-hidden" title={`Tension: ${p.tension}`}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${p.tension}%`, background: METRIC_COLORS.tension }} />
+                <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{ width: `${p.tension}%`, background: METRIC_COLORS.tension }} />
               </div>
               {/* Pacing bar */}
               <div className="flex-1 h-2 bg-black/20 rounded-full overflow-hidden" title={`Pacing: ${p.pacing}`}>
-                <div className="h-full rounded-full transition-all" style={{ width: `${p.pacing}%`, background: METRIC_COLORS.pacing }} />
+                <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{ width: `${p.pacing}%`, background: METRIC_COLORS.pacing }} />
               </div>
               {p.isDialogue && <span className="text-[7px] text-purple-400 font-bold shrink-0">DLG</span>}
             </div>

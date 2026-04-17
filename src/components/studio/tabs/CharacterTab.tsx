@@ -74,7 +74,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
           <div className="flex gap-2 p-1.5 bg-bg-secondary/30 backdrop-blur-sm border border-border rounded-2xl">
             <button 
               onClick={() => setCharSubTab('characters')} 
-              className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                 charSubTab === 'characters' 
                   ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/30 shadow-[0_0_16px_rgba(141,123,195,0.1)]' 
                   : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
@@ -85,7 +85,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
             </button>
             <button 
               onClick={() => setCharSubTab('items')} 
-              className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+              className={`group flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                 charSubTab === 'items' 
                   ? 'bg-accent-amber/15 text-accent-amber border border-accent-amber/30 shadow-[0_0_16px_rgba(202,161,92,0.1)]' 
                   : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
@@ -111,7 +111,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
                 <button
                   onClick={handleAutoGenerate}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-accent-amber/80 to-accent-amber/50 text-bg-primary rounded-xl text-sm font-bold tracking-widest transition-all shadow-lg hover:shadow-accent-amber/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-accent-amber/80 to-accent-amber/50 text-bg-primary rounded-xl text-sm font-bold tracking-widest transition-[transform,opacity] shadow-lg hover:shadow-accent-amber/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                 >
                   {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   {isGenerating ? "Synthesizing..." : (language === 'KO' ? '초안 생성' : 'Generate Draft')}
@@ -122,7 +122,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
             {/* Save Button — Premium Style with Micro-interactions */}
             <button 
               onClick={triggerSave} 
-              className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+              className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                 saveFlash 
                   ? 'bg-accent-green text-bg-primary animate-save-bounce-glow' 
                   : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-bg-primary hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'

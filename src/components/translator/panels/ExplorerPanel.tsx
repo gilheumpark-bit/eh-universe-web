@@ -43,7 +43,7 @@ export function ExplorerPanel() {
             placeholder="Search chapters..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
+            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
           />
         </div>
         <div className="mt-3 flex flex-col gap-2 border-t border-white/5 pt-3">
@@ -87,7 +87,7 @@ export function ExplorerPanel() {
               <div
                 key={ch.originalIndex}
                 onClick={() => openChapter(ch.originalIndex)}
-                className={`group flex items-center justify-between w-full px-3 py-1.5 rounded-md text-left transition-all cursor-pointer ${
+                className={`group flex items-center justify-between w-full px-3 py-1.5 rounded-md text-left transition-[transform,opacity,background-color,border-color,color] cursor-pointer ${
                   activeChapterIndex === ch.originalIndex 
                   ? 'bg-accent-indigo/20 text-accent-indigo shadow-[inset_2px_0_0_0_#6366f1]' 
                   : 'text-text-tertiary hover:bg-white/5 hover:text-text-secondary'
@@ -104,7 +104,7 @@ export function ExplorerPanel() {
                 
                 <button
                   onClick={(e) => handleChapterRemove(e, ch.originalIndex)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-red-400 transition-all shrink-0"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-red-400 transition-[opacity,background-color,border-color,color] shrink-0"
                   title="삭제"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

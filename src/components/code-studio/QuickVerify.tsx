@@ -75,7 +75,7 @@ export function QuickVerify({ onStartVerify, onEasyMode }: Props) {
           <button
             onClick={() => onStartVerify(code, "verify")}
             disabled={!code.trim()}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-30 bg-accent-green text-white hover:opacity-90"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-mono text-sm font-bold transition-opacity disabled:opacity-30 bg-accent-green text-white hover:opacity-90"
           >
             <Play size={16} />
             {T({ ko: "검증 시작", en: "Start Verification", ja: "検証開始", zh: "开始验证" })}
@@ -118,7 +118,7 @@ export function QuickVerify({ onStartVerify, onEasyMode }: Props) {
         {/* Option 1: Paste & Verify */}
         <button
           onClick={() => setStep("paste")}
-          className="group flex items-center gap-4 w-full rounded-2xl border border-border bg-bg-secondary/50 px-5 py-5 text-left transition-all hover:border-accent-green/30 hover:bg-accent-green/5 hover:-translate-y-0.5 hover:shadow-lg"
+          className="group flex items-center gap-4 w-full rounded-2xl border border-border bg-bg-secondary/50 px-5 py-5 text-left transition-[transform,background-color,border-color,box-shadow,color] hover:border-accent-green/30 hover:bg-accent-green/5 hover:-translate-y-0.5 hover:shadow-lg"
         >
           <div className="p-3 rounded-xl bg-accent-green/10 group-hover:bg-accent-green/20 transition-colors">
             <ClipboardPaste size={22} className="text-accent-green" />
@@ -137,7 +137,7 @@ export function QuickVerify({ onStartVerify, onEasyMode }: Props) {
         {/* Option 2: Generate & Verify */}
         <button
           onClick={onEasyMode}
-          className="group flex items-center gap-4 w-full rounded-2xl border border-border bg-bg-secondary/50 px-5 py-5 text-left transition-all hover:border-accent-purple/30 hover:bg-accent-purple/5 hover:-translate-y-0.5 hover:shadow-lg"
+          className="group flex items-center gap-4 w-full rounded-2xl border border-border bg-bg-secondary/50 px-5 py-5 text-left transition-[transform,background-color,border-color,box-shadow,color] hover:border-accent-purple/30 hover:bg-accent-purple/5 hover:-translate-y-0.5 hover:shadow-lg"
         >
           <div className="p-3 rounded-xl bg-accent-purple/10 group-hover:bg-accent-purple/20 transition-colors">
             <Sparkles size={22} className="text-accent-purple" />

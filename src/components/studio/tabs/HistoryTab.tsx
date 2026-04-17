@@ -131,10 +131,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 setCurrentSessionId(s.id);
                 setActiveTab('writing');
               }}
-              className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-all ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
+              className={`relative group p-6 bg-bg-secondary border border-border rounded-2xl cursor-pointer hover:border-accent-purple transition-colors ${currentSessionId === s.id ? 'border-accent-purple ring-1 ring-accent-purple' : ''}`}
             >
               <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 z-10">
-                <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} aria-label="이름 변경" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all"><Edit3 className="w-3 h-3" /></button>
+                <button onClick={(e) => { e.stopPropagation(); startRename(s.id, s.title); }} aria-label="이름 변경" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-colors"><Edit3 className="w-3 h-3" /></button>
                 {projects.length > 1 && (
                   <button onClick={(e) => {
                     e.stopPropagation();
@@ -144,10 +144,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                     } else if (others.length > 1) {
                       setMoveModal({ sessionId: s.id, others });
                     }
-                  }} aria-label="이동" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-all" title={t('project.moveSession')}><Upload className="w-3 h-3" /></button>
+                  }} aria-label="이동" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-purple transition-colors" title={t('project.moveSession')}><Upload className="w-3 h-3" /></button>
                 )}
-                <button onClick={(e) => { e.stopPropagation(); handlePrint(s); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-all"><Printer className="w-3 h-3" /></button>
-                <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-all"><X className="w-3 h-3" /></button>
+                <button onClick={(e) => { e.stopPropagation(); handlePrint(s); }} aria-label="인쇄" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-text-primary transition-colors"><Printer className="w-3 h-3" /></button>
+                <button onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} aria-label="삭제" className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-colors"><X className="w-3 h-3" /></button>
               </div>
               {renamingSessionId === s.id ? (
                 <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}

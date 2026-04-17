@@ -38,7 +38,7 @@ export default function UnifiedSettingsBar() {
         {user ? (
           <button
             onClick={signOut}
-            className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-all"
+            className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
             title={user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out" })}
           >
             {user.photoURL && /^https:\/\//.test(user.photoURL) ? (
@@ -51,7 +51,7 @@ export default function UnifiedSettingsBar() {
           <button
             onClick={signInWithGoogle}
             disabled={authLoading}
-            className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-all"
+            className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-colors"
             title={T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" })}
           >
             <User className="w-4 h-4" />
@@ -61,7 +61,7 @@ export default function UnifiedSettingsBar() {
         {/* API Keys — icon only */}
         <button
           onClick={() => setShowApiKeys(true)}
-          className="relative inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-all"
+          className="relative inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-colors"
           title={`API ${enabledSlots.length > 0 ? `(${enabledSlots.length})` : ''}`}
         >
           <Key className="w-4 h-4" />
@@ -75,7 +75,7 @@ export default function UnifiedSettingsBar() {
         {/* Theme — icon only */}
         <button
           onClick={toggleTheme}
-          className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-all"
+          className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
           title={theme === "dark" ? T({ ko: "밤", en: "Night" }) : T({ ko: "낮", en: "Day" })}
         >
           {theme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -84,7 +84,7 @@ export default function UnifiedSettingsBar() {
         {/* Language — icon only */}
         <button
           onClick={toggleLang}
-          className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-all"
+          className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
           title={LANG_LABELS[lang]}
         >
           <Globe className="w-4 h-4" />
@@ -93,7 +93,7 @@ export default function UnifiedSettingsBar() {
         {/* Storage — compact */}
         {storageInfo && (
           <div
-            className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary transition-all"
+            className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary transition-[transform,opacity,background-color,border-color,color]"
             title={`${storageInfo.used} / ${storageInfo.total} (${storageInfo.percent}%)`}
           >
             <HardDrive className="w-4 h-4" />

@@ -239,7 +239,7 @@ const ReviewerCard: React.FC<ReviewerCardExtProps> = ({
               <li key={findingKey} className="space-y-1">
                 <button
                   onClick={() => onSelectFinding(isSelected ? null : findingKey)}
-                  className={`flex w-full items-start gap-2 text-[11px] rounded-lg px-2.5 py-1.5 text-left transition-all ${
+                  className={`flex w-full items-start gap-2 text-[11px] rounded-lg px-2.5 py-1.5 text-left transition-[transform,opacity,background-color,border-color,color] ${
                     isSelected
                       ? 'ring-2 ring-accent-blue ' + SEVERITY_BG[f.severity]
                       : SEVERITY_BG[f.severity] + ' hover:opacity-80'
@@ -471,7 +471,7 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
               <button
                 key={sev}
                 onClick={() => toggleSeverity(sev)}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-all ${
+                className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-[transform,opacity,background-color,border-color,color] ${
                   severityFilter.has(sev)
                     ? SEVERITY_BG[sev] + ' ' + SEVERITY_COLORS[sev]
                     : 'bg-bg-primary text-text-tertiary opacity-50'

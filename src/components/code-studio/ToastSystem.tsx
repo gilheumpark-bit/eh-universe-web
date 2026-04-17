@@ -101,7 +101,7 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: strin
 
   return (
     <div
-      className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border bg-gradient-to-r ${colors.bg} backdrop-blur-xl px-4 py-3.5 transition-all duration-300 ${colors.border} ${colors.glow} ${
+      className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border bg-gradient-to-r ${colors.bg} backdrop-blur-xl px-4 py-3.5 transition-[transform,opacity,background-color,border-color,color] duration-300 ${colors.border} ${colors.glow} ${
         entering ? "translate-x-full opacity-0" : exiting ? "translate-x-full opacity-0" : "translate-x-0 opacity-100"
       }`}
     >

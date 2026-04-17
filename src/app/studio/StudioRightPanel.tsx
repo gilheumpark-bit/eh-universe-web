@@ -80,7 +80,7 @@ export function StudioSaveSlotPanel({
   if (shouldHide) return null;
 
   return (
-    <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-64' : 'w-8'}`}>
+    <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-[transform,opacity,background-color,border-color,color] duration-300 ${rightPanelOpen ? 'w-64' : 'w-8'}`}>
       <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-mono">
         {rightPanelOpen ? '\u25B6' : '\u25C0'}
       </button>
@@ -188,7 +188,7 @@ export function StudioWritingAssistantPanel({
   // NOTE: visibility check (writing/ai mode, dashboard closed) is done by parent
 
   return (
-    <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-all duration-300 ${rightPanelOpen ? 'w-80' : 'w-10'}`}>
+    <aside className={`hidden lg:flex shrink-0 flex-col border-l border-border bg-bg-primary transition-[transform,opacity,background-color,border-color,color] duration-300 ${rightPanelOpen ? 'w-80' : 'w-10'}`}>
       {/* Toggle button */}
       <button onClick={() => setRightPanelOpen(p => !p)} className="w-full py-2 text-[10px] text-text-tertiary hover:text-text-primary transition-colors border-b border-border font-mono">
         {rightPanelOpen ? '\u25B6' : '\u25C0'}

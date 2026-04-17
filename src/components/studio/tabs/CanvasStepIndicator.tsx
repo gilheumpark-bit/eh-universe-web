@@ -35,7 +35,7 @@ export const CanvasStepIndicator = React.memo(function CanvasStepIndicator({
             />
           )}
           <div
-            className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all min-w-[64px] ${
+            className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-[transform,opacity,background-color,border-color,color] min-w-[64px] ${
               canvasPass > step.pass
                 ? "bg-accent-green/20 text-accent-green"
                 : canvasPass === step.pass

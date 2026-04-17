@@ -363,7 +363,7 @@ export default function NekaSoundPage() {
       onClick={onClick}
       aria-label={`Consonant ${c.roman} (${c.id})`}
       aria-pressed={isActive}
-      className={`flex flex-col items-center p-3 border rounded-lg transition-all select-none cursor-pointer
+      className={`flex flex-col items-center p-3 border rounded-lg transition-[transform,opacity,background-color,border-color,color] select-none cursor-pointer
         ${isActive
           ? "border-accent-amber bg-[#d4a017]/10 shadow-[0_0_12px_rgba(212,160,23,0.2)]"
           : "border-border bg-bg-secondary hover:border-accent-purple hover:bg-accent-purple/5"
@@ -384,7 +384,7 @@ export default function NekaSoundPage() {
       onClick={onClick}
       aria-label={`Vowel ${v.roman} (${v.id})`}
       aria-pressed={isActive}
-      className={`flex flex-col items-center p-3 border rounded-lg transition-all select-none cursor-pointer
+      className={`flex flex-col items-center p-3 border rounded-lg transition-[transform,opacity,background-color,border-color,color] select-none cursor-pointer
         ${isActive
           ? "border-accent-amber bg-[#d4a017]/10"
           : "border-border bg-bg-secondary hover:border-accent-purple hover:bg-accent-purple/5"
@@ -439,7 +439,7 @@ export default function NekaSoundPage() {
                 aria-label={en ? "TTS Pronunciation tab" : "TTS 발음 탭"}
                 aria-selected={tab === "tts"}
                 role="tab"
-                className={`px-6 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
+                className={`px-6 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-[transform,opacity,background-color,border-color,color] -mb-px ${
                   tab === "tts" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
               >
@@ -450,7 +450,7 @@ export default function NekaSoundPage() {
                 aria-label={en ? "Signal Sound tab" : "신호음 탭"}
                 aria-selected={tab === "sig"}
                 role="tab"
-                className={`px-6 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-all -mb-px ${
+                className={`px-6 py-3 font-mono text-[10px] tracking-widest border-b-2 transition-[transform,opacity,background-color,border-color,color] -mb-px ${
                   tab === "sig" ? "text-accent-purple border-accent-purple" : "text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
               >
@@ -546,18 +546,18 @@ export default function NekaSoundPage() {
                       <canvas ref={ttsCanvasRef} className="block w-full h-14" />
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={speakAll} aria-label={en ? "Play all (TTS)" : "전체 재생 (TTS)"} className="px-4 py-2 border border-accent-purple text-accent-purple font-mono text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-all rounded">
+                      <button onClick={speakAll} aria-label={en ? "Play all (TTS)" : "전체 재생 (TTS)"} className="px-4 py-2 border border-accent-purple text-accent-purple font-mono text-[9px] tracking-widest hover:bg-accent-purple hover:text-white transition-colors rounded">
                         ▶ {en ? "TTS SPEAK" : "TTS 발음"}
                       </button>
                       <button
                         onClick={synthAll}
                         disabled={isSynthPlaying || syllables.length === 0}
                         aria-label={en ? "Synthesize all syllables" : "음향 합성 재생"}
-                        className="px-4 py-2 border border-[#d4a017] text-[#d4a017] font-mono text-[9px] tracking-widest hover:bg-[#d4a017] hover:text-black transition-all rounded disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border border-[#d4a017] text-[#d4a017] font-mono text-[9px] tracking-widest hover:bg-[#d4a017] hover:text-black transition-[opacity,background-color,border-color,color] rounded disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         ♫ {en ? "SYNTH PLAY" : "음향 합성"}
                       </button>
-                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded">
+                      <button onClick={() => setSyllables(prev => [...prev, { displaySym: " ", roman: " " }])} aria-label={en ? "Add space" : "공백 추가"} className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-colors rounded">
                         SPACE
                       </button>
                       <button
@@ -566,14 +566,14 @@ export default function NekaSoundPage() {
                           else setSyllables(prev => prev.slice(0, -1));
                         }}
                         aria-label={en ? "Delete last syllable" : "마지막 음절 삭제"}
-                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-all rounded"
+                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-text-secondary hover:text-text-secondary transition-colors rounded"
                       >
                         ← DEL
                       </button>
                       <button
                         onClick={() => { setSyllables([]); setSelectedCons(null); }}
                         aria-label={en ? "Clear all syllables" : "전체 삭제"}
-                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-all rounded"
+                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-colors rounded"
                       >
                         CLEAR
                       </button>

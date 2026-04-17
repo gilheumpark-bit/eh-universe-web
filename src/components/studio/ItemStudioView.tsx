@@ -493,7 +493,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           <div className="relative">
             <button
               onClick={() => setShowPresetMenu(prev => !prev)}
-              className="flex items-center gap-2 px-4 py-2 bg-accent-green/15 text-accent-green border border-accent-green/40 rounded-xl text-xs font-bold hover:bg-accent-green/25 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-accent-green/15 text-accent-green border border-accent-green/40 rounded-xl text-xs font-bold hover:bg-accent-green/25 transition-colors"
             >
               <ScrollText className="w-4 h-4" />
               {t('itemStudio.ehPresets')}
@@ -525,7 +525,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           <button
             onClick={handleAIGenerate}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl text-xs font-bold hover:bg-accent-blue/25 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl text-xs font-bold hover:bg-accent-blue/25 transition-[opacity,background-color,border-color,color] disabled:opacity-50"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {t('itemStudio.aiGenerate')}
@@ -539,7 +539,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           <button
             key={key}
             onClick={() => setSubTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all rounded-xl ${
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-[transform,opacity,background-color,border-color,color] rounded-xl ${
               subTab === key
                 ? 'bg-accent-blue/15 text-accent-blue border border-accent-blue/40'
                 : 'bg-bg-secondary/50 border border-border/50 text-text-secondary hover:text-text-primary hover:border-border'
@@ -575,7 +575,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               const cCfg = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.misc;
               const CatIcon = cCfg.icon;
               return (
-                <div key={item.id} className={`${rCfg.bg} border border-border/50 backdrop-blur-md rounded-xl p-4 space-y-2 rounded-xl transition-all hover:shadow-md hover:border-border`}>
+                <div key={item.id} className={`${rCfg.bg} border border-border/50 backdrop-blur-md rounded-xl p-4 space-y-2 rounded-xl transition-[background-color,border-color,box-shadow,color] hover:shadow-md hover:border-border`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CatIcon className="w-4 h-4" style={{ color: rCfg.color }} />
@@ -593,7 +593,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                             setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
                           });
                         }}
-                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -710,7 +710,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
               <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
-              <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-all">
+              <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-[opacity,background-color,border-color,color]">
                 <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
             </div>
@@ -724,7 +724,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           {/* Skill Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {skills.map(skill => (
-              <div key={skill.id} className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-2 rounded-xl shadow-sm transition-all hover:bg-bg-secondary hover:shadow-md hover:border-border">
+              <div key={skill.id} className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-2 rounded-xl shadow-sm transition-[background-color,border-color,box-shadow,color] hover:bg-bg-secondary hover:shadow-md hover:border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-accent-blue' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
@@ -741,7 +741,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                             setTimeout(() => setSkills(prev => prev.filter(s => s.id !== skill.id)), 300);
                           });
                         }}
-                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -771,7 +771,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
               <input value={newSkill.description ?? ''} onChange={e => setNewSkill(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs col-span-2" />
               <input value={newSkill.cost ?? ''} onChange={e => setNewSkill(p => ({ ...p, cost: e.target.value }))} placeholder={t('itemStudio.costPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
-              <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-all">
+              <button onClick={addSkill} disabled={!newSkill.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-[opacity,background-color,border-color,color]">
                 <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
               </button>
             </div>
@@ -812,7 +812,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               <textarea value={newMagic.rules ?? ''} onChange={e => setNewMagic(p => ({ ...p, rules: e.target.value }))} placeholder={t('itemStudio.rulesPlaceholder')} rows={2} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs resize-none" />
               <textarea value={newMagic.limitations ?? ''} onChange={e => setNewMagic(p => ({ ...p, limitations: e.target.value }))} placeholder={t('itemStudio.limitationsPlaceholder')} rows={2} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs resize-none" />
             </div>
-            <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-all">
+            <button onClick={addMagic} disabled={!newMagic.name} className="flex items-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-[opacity,background-color,border-color,color]">
               <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
             </button>
           </div>
@@ -847,7 +847,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       <div key={r} className="flex items-center gap-3">
                         <span className="text-[10px] font-bold w-12" style={{ color: RARITY_CONFIG[r].color }}>{t(RARITY_CONFIG[r].tKey)}</span>
                         <div className="flex-1 h-4 bg-bg-primary rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: RARITY_CONFIG[r].color }} />
+                          <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{ width: `${pct}%`, backgroundColor: RARITY_CONFIG[r].color }} />
                         </div>
                         <span className="text-[10px] text-text-tertiary w-8 text-right">{count}</span>
                       </div>
@@ -912,7 +912,7 @@ const MagicSystemCard: React.FC<{
   const [rankInput, setRankInput] = useState('');
 
   return (
-    <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm transition-all hover:bg-bg-secondary hover:shadow-md hover:border-border">
+    <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm transition-[background-color,border-color,box-shadow,color] hover:bg-bg-secondary hover:shadow-md hover:border-border">
       <div className="flex items-center justify-between">
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
           <Wand2 className="w-4 h-4 text-accent-blue" />
@@ -924,7 +924,7 @@ const MagicSystemCard: React.FC<{
             e.currentTarget.classList.add('animate-delete-warning');
             setTimeout(onDelete, 300);
           }} 
-          className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200"
+          className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-colors duration-200"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>

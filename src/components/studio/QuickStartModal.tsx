@@ -85,7 +85,7 @@ export default function QuickStartModal({
                   key={genre}
                   type="button"
                   onClick={() => setSelectedGenre(genre)}
-                  className={`rounded-xl border px-4 min-h-[40px] text-[13px] font-bold transition-all ${
+                  className={`rounded-xl border px-4 min-h-[40px] text-[13px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
                     selectedGenre === genre
                       ? "border-accent-purple bg-accent-purple text-white shadow-lg shadow-accent-purple/20"
                       : "border-border bg-bg-secondary text-text-secondary hover:border-text-tertiary"
@@ -106,7 +106,7 @@ export default function QuickStartModal({
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder={t('quickStartModal.placeholder')}
-                className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all placeholder:text-text-tertiary focus:border-accent-purple"
+                className="h-32 w-full resize-none rounded-2xl border border-border bg-bg-secondary p-4 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] placeholder:text-text-tertiary focus:border-accent-purple"
                 disabled={isGenerating}
                 maxLength={240}
               />
@@ -122,7 +122,7 @@ export default function QuickStartModal({
                 { ko: '마왕을 쓰러뜨린 용사의 일상', en: 'The daily life of a hero who defeated the Demon King', ja: '魔王を倒した勇者の日常', zh: '打败魔王的勇者的日常' },
               ].map((ex, i) => (
                 <button key={i} type="button" onClick={() => setPrompt(L4(language, ex))}
-                  className="px-3 min-h-[36px] rounded-lg border border-border/50 text-[12px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all">
+                  className="px-3 min-h-[36px] rounded-lg border border-border/50 text-[12px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-colors">
                   {L4(language, ex)}
                 </button>
               ))}
@@ -132,7 +132,7 @@ export default function QuickStartModal({
           <button
             type="submit"
             disabled={!trimmedPrompt || isGenerating}
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em] transition-all ${
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em] transition-[transform,opacity,background-color,border-color,color] ${
               !trimmedPrompt || isGenerating
                 ? "cursor-not-allowed bg-bg-secondary text-text-tertiary"
                 : "bg-accent-purple text-white shadow-xl shadow-accent-purple/20 hover:scale-[1.02] active:scale-[0.98]"

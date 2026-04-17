@@ -70,7 +70,7 @@ AI가 UI 코드를 생성할 때 반드시 아래 규칙을 따른다.
 - 다크/라이트 모드 자동 호환성을 보장하기 위해 CSS 변수 체계를 따를 것.
 
 **2. 마이크로모션 강제**
-- 모든 클릭 가능 요소에 \`hover:scale-[1.02] active:scale-95 transition-all duration-200\` 적용.
+- 모든 클릭 가능 요소에 \`hover:scale-[1.02] active:scale-95 transition-transform duration-200\` 적용.
 - opacity 변화에는 \`transition-opacity duration-150\` 필수.
 - 패널/모달 진입에 \`animate-in fade-in slide-in-from-bottom-2 duration-200\` 적용.
 - 인터랙티브 hover/focus 상태: \`hover:bg-bg-secondary/50\`, \`focus-visible:ring-2 ring-accent-purple/40\`.

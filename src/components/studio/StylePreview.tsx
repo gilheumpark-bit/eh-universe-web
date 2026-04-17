@@ -222,7 +222,7 @@ export default function StylePreview({ profile, language }: Props) {
               const active = compareArchs.includes(arch.id);
               return (
                 <button key={arch.id} onClick={() => toggleArch(arch.id)}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-bold border transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-[9px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
                     active ? 'text-white' : 'text-text-tertiary border-border hover:border-white/20'
                   }`}
                   style={active ? { borderColor: arch.color, background: `${arch.color}20` } : undefined}
@@ -245,7 +245,7 @@ export default function StylePreview({ profile, language }: Props) {
       <div className="flex gap-1">
         {(Object.keys(sampleLabels) as SampleKey[]).map(key => (
           <button key={key} onClick={() => setSampleKey(key)}
-            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold border transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
               sampleKey === key ? 'bg-white/10 text-white border-white/20' : 'text-text-tertiary border-border'
             }`}
           >

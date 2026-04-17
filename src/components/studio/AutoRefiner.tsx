@@ -442,7 +442,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
           {suggestions.map((sug, idx) => {
             const actionInfo = ACTION_LABEL[sug.action] ?? ACTION_LABEL.rewrite;
             return (
-              <div key={sug.id} className={`border rounded-xl p-3 space-y-2 transition-all ${
+              <div key={sug.id} className={`border rounded-xl p-3 space-y-2 transition-[transform,opacity,background-color,border-color,color] ${
                 sug.status === 'applied' ? 'border-green-500/20 bg-green-900/5' :
                 sug.status === 'skipped' ? 'border-border/30 bg-bg-secondary/30 opacity-40' :
                 sug.status === 'generating' ? 'border-blue-500/30 bg-blue-900/5' :

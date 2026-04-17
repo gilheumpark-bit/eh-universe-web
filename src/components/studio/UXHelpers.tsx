@@ -458,7 +458,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {actionLabel && onAction && (
             <button
               onClick={onAction}
-              className="px-5 py-2.5 bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-accent-purple/20 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+              className="px-5 py-2.5 bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-accent-purple/20 hover:-translate-y-0.5 transition-transform duration-200 flex items-center gap-2"
             >
               <Wand2 className="w-4 h-4" />
               {actionLabel}
@@ -467,7 +467,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {secondaryLabel && onSecondary && (
             <button
               onClick={onSecondary}
-              className="px-5 py-2.5 bg-bg-secondary text-text-secondary text-sm font-medium rounded-xl border border-border hover:border-text-tertiary hover:text-text-primary transition-all duration-200"
+              className="px-5 py-2.5 bg-bg-secondary text-text-secondary text-sm font-medium rounded-xl border border-border hover:border-text-tertiary hover:text-text-primary transition-colors duration-200"
             >
               {secondaryLabel}
             </button>
@@ -572,7 +572,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           <div className={`${height} w-1/3 rounded-full ${gradients[variant]} animate-[progress-slide_1.5s_ease-in-out_infinite]`} />
         ) : (
           <div
-            className={`${height} rounded-full transition-all duration-500 ease-out ${gradients[variant]}`}
+            className={`${height} rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 ease-out ${gradients[variant]}`}
             style={{ width: `${percent}%` }}
           />
         )}
@@ -652,7 +652,7 @@ export const SaveButton: React.FC<{
       onClick={onClick}
       disabled={saving}
       className={`
-        relative px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200
+        relative px-5 py-2.5 rounded-xl font-bold text-sm transition-[transform,opacity,background-color,border-color,color] duration-200
         ${saved 
           ? 'bg-accent-green text-white animate-save-success' 
           : saving

@@ -26,7 +26,7 @@ export default function CodeStudioError({
         </p>
         <button
           onClick={reset}
-          className="px-6 py-2 bg-accent-purple text-bg-primary rounded-lg text-xs font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-all duration-200 hover:scale-[1.02] active:scale-95"
+          className="px-6 py-2 bg-accent-purple text-bg-primary rounded-lg text-xs font-bold font-mono uppercase tracking-wider hover:opacity-80 transition-[transform,opacity] duration-200 hover:scale-[1.02] active:scale-95"
         >
           Retry
         </button>

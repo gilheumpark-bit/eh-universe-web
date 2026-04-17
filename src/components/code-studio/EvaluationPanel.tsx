@@ -43,7 +43,7 @@ function ScoreBar({ label, value, icon }: { label: string; value: number; icon: 
         <span style={{ color }}>{value}/100</span>
       </div>
       <div className="w-full h-2 rounded-full bg-white/5">
-        <div className="h-2 rounded-full transition-all" style={{ width: `${value}%`, background: color }} />
+        <div className="h-2 rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{ width: `${value}%`, background: color }} />
       </div>
     </div>
   );

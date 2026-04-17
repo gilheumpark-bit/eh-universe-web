@@ -614,7 +614,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
                       <button
                         key={i}
                         onClick={() => { setInput(preset[lk]); }}
-                        className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-all font-mono leading-tight"
+                        className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-colors font-mono leading-tight"
                       >
                         {preset[lk]}
                       </button>

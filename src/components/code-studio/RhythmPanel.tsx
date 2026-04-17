@@ -47,7 +47,7 @@ function SectionBar({ section }: { section: RhythmSection }) {
         </span>
         <div className="flex-1 h-2 rounded-full bg-bg-tertiary overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${densityColor}`}
+            className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${densityColor}`}
             style={{ width: `${section.density}%` }}
           />
         </div>

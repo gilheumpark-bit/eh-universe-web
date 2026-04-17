@@ -264,7 +264,7 @@ function GalaxyMapSVG({ onZoneClick }: { onZoneClick?: (id: string) => void }) {
           fill="transparent"
           stroke="transparent"
           strokeWidth="12"
-          className="cursor-pointer hover:stroke-white/20 transition-all"
+          className="cursor-pointer hover:stroke-white/20 transition-[transform,opacity,background-color,border-color,color]"
           onClick={(e) => { e.stopPropagation(); onZoneClick(zc.id); }}
         >
           <title>{zc.id}</title>

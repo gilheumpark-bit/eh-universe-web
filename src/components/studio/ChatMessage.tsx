@@ -130,7 +130,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             {backendLine ? `${personaLine} · ${backendLine}` : personaLine}
           </span>
         )}
-        <div className={`overflow-hidden transition-all ${
+        <div className={`overflow-hidden transition-[transform,opacity,background-color,border-color,color] ${
           isUser
             ? 'bg-bg-secondary/80 border border-border px-4 py-3 md:px-5 rounded-2xl rounded-tr-none text-text-secondary'
             : 'bg-transparent text-zinc-200'
@@ -220,7 +220,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             <div className="mt-3">
               <button
                 onClick={() => setShowDetail(d => !d)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] ${
                   message.meta.qualityTag === '🔴' ? 'bg-red-500/10 text-red-400 border border-red-500/20'
                   : message.meta.qualityTag === '🟡' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                   : 'bg-green-500/10 text-green-400 border border-green-500/20'
@@ -281,7 +281,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
 
         {!isUser && (
-          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <ActionBar
               content={message.content}
               title={`NOA Message`}
@@ -292,7 +292,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             {onRegenerate && (
               <button
                 onClick={() => onRegenerate(message.id)}
-                className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-secondary transition-all"
+                className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-secondary transition-colors"
                 title={language === 'KO' ? '재생성' : 'Regenerate'}
               >
                 <RotateCcw className="w-3.5 h-3.5" />

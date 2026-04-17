@@ -16,14 +16,14 @@ const IconWrapper = ({ icon: Icon, title, isActive, onClick }: IconWrapperProps)
     <button
       onClick={onClick}
       title={title}
-      className={`group flex h-[48px] w-[50px] items-center justify-center transition-all duration-300 relative cursor-pointer pointer-events-auto border-l-[3px] my-1 ${
+      className={`group flex h-[48px] w-[50px] items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-300 relative cursor-pointer pointer-events-auto border-l-[3px] my-1 ${
         isActive
           ? 'border-accent-amber bg-linear-to-r from-accent-amber/10 to-transparent'
           : 'border-transparent hover:border-text-secondary/30'
       }`}
     >
       <div 
-        className={`flex items-center justify-center transition-all duration-300 ${
+        className={`flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-300 ${
           isActive 
             ? 'text-accent-amber drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] scale-110' 
             : 'text-text-tertiary group-hover:text-text-primary group-hover:scale-105'

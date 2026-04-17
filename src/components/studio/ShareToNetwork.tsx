@@ -245,7 +245,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           <div className="flex gap-1.5">
             {SHARE_TYPES.map(st => (
               <button key={st.value} onClick={() => setShareType(st.value)}
-                className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-all ${
+                className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
                   shareType === st.value ? 'bg-accent-purple/20 border-accent-purple text-white' : 'border-border text-text-tertiary'
                 }`}
               >
@@ -327,7 +327,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
               const Icon = v.icon;
               return (
                 <button key={v.value} onClick={() => setVisibility(v.value)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
                     visibility === v.value ? 'bg-white/10 border-white/20 text-white' : 'border-border text-text-tertiary'
                   }`}
                 >
@@ -421,14 +421,14 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-[10px] font-bold border border-border text-text-tertiary hover:text-white transition-all">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-[10px] font-bold border border-border text-text-tertiary hover:text-white transition-colors">
             {isKO ? '취소' : 'Cancel'}
           </button>
           {!user ? (
             <button
               onClick={handleLocalShare}
               disabled={!title.trim()}
-              className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-all active:scale-95"
+              className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-[transform,opacity] active:scale-95"
             >
               {isKO ? '로컬 공유' : 'Share Locally'}
             </button>
@@ -436,7 +436,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
             <button
               onClick={handlePublishToNetwork}
               disabled={!title.trim() || publishStatus === 'loading' || publishStatus === 'success'}
-              className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-all active:scale-95"
+              className="flex-1 py-2.5 rounded-xl text-[10px] font-bold bg-accent-purple text-white disabled:opacity-40 transition-[transform,opacity] active:scale-95"
             >
               {publishStatus === 'loading'
                 ? (isKO ? '게시 중...' : 'Publishing...')

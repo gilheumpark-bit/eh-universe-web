@@ -48,12 +48,12 @@ const MiniBarChart: React.FC<{
           <button
             key={ep.episode}
             onClick={() => onSelect(ep)}
-            className={`relative group flex flex-col items-center transition-all ${isSelected ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
+            className={`relative group flex flex-col items-center transition-opacity ${isSelected ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
             style={{ width: barWidth }}
             title={`EP.${ep.episode}: ${ep.continuityScore}${lang === 'ko' ? '점' : 'pt'}`}
           >
             <div
-              className="rounded-t-sm transition-all"
+              className="rounded-t-sm transition-[transform,opacity,background-color,border-color,color]"
               style={{
                 height: h,
                 width: barWidth - 2,

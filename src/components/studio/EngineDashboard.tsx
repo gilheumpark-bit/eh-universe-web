@@ -77,7 +77,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                 <div key={i} className="flex-1 relative h-full group">
                   <div className="absolute bottom-0 w-full bg-blue-500/10 h-full rounded-t-sm" />
                   <div
-                    className={`absolute bottom-0 w-full rounded-t-sm transition-all duration-300 ${
+                    className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                       isCurrentEp ? 'bg-gradient-to-t from-blue-500 to-cyan-400' : 'bg-gradient-to-t from-blue-600/60 to-indigo-400/40'
                     }`}
                     style={{ height: `${height}%` }}
@@ -133,7 +133,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     <span>{v}%</span>
                   </div>
                   <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={v} aria-valuemin={0} aria-valuemax={100} aria-label={`${k} ${v}%`}>
-                    <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${v}%` }} />
+                    <div className="h-full bg-blue-600 transition-[transform,opacity,background-color,border-color,color] duration-500" style={{ width: `${v}%` }} />
                   </div>
                 </div>
               ))}
@@ -148,7 +148,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                 </div>
                 <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative" role="progressbar" aria-valuenow={Math.round(Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={`Byte size ${(report.serialization.byteSize / 1024).toFixed(1)}KB`}>
                   <div
-                    className={`h-full transition-all duration-500 ${report.serialization.withinRange ? 'bg-green-600' : 'bg-amber-600'}`}
+                    className={`h-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${report.serialization.withinRange ? 'bg-green-600' : 'bg-amber-600'}`}
                     style={{ width: `${Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100)}%` }}
                   />
                 </div>
@@ -173,7 +173,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     </div>
                     <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative" role="progressbar" aria-valuenow={Math.round(Math.min(100, (chars / charRange.max) * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={`Character count ${chars.toLocaleString()}`}>
                       <div
-                        className={`h-full transition-all duration-500 ${charInRange ? 'bg-green-600' : 'bg-amber-600'}`}
+                        className={`h-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${charInRange ? 'bg-green-600' : 'bg-amber-600'}`}
                         style={{ width: `${Math.min(100, (chars / charRange.max) * 100)}%` }}
                       />
                     </div>

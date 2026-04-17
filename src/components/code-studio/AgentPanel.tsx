@@ -494,7 +494,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       <div className="flex gap-1 px-3 py-2 border-b border-[#30363d] overflow-x-auto scrollbar-hide">
         {AGENT_ROLES.map((a, i) => (
           <div key={a.role}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded text-[9px] min-w-[60px] transition-all ${
+            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded text-[9px] min-w-[60px] transition-[transform,opacity,background-color,border-color,color] ${
               i === activeAgentIdx && mode === "executing" ? "bg-[#21262d] ring-1 ring-amber-700/35" : "bg-[#010409]"
             }`}>
             <span className={a.color}>{L4(lang, { ko: a.ko, en: a.en, ja: a.en, zh: a.en })}</span>

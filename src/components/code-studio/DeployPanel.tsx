@@ -527,7 +527,7 @@ function ExportSection({ files, t }: ExportSectionProps) {
             </div>
             <div className="h-1 w-full rounded-full bg-bg-primary/50 overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent-green transition-all"
+                className="h-full rounded-full bg-accent-green transition-[transform,opacity,background-color,border-color,color]"
                 style={{ width: `${(zipProgress.processed / zipProgress.total) * 100}%` }}
               />
             </div>
@@ -708,7 +708,7 @@ function DeploySimulation({ files, t, onDeployComplete }: DeploySimulationProps)
             <div className="mb-2">
               <div className="h-1.5 w-full rounded-full bg-bg-primary/50 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-accent-green transition-all duration-300"
+                  className="h-full rounded-full bg-accent-green transition-[transform,opacity,background-color,border-color,color] duration-300"
                   style={{
                     width: `${(steps.filter((s) => s.status === "done").length / steps.length) * 100}%`,
                   }}

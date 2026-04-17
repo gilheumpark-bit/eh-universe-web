@@ -229,7 +229,7 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
           >
             {/* Handle pill with glow on drag */}
             <div className={`
-              w-12 h-1.5 rounded-full transition-all duration-200
+              w-12 h-1.5 rounded-full transition-[transform,opacity,background-color,border-color,color] duration-200
               ${dragging ? 'bg-accent-purple scale-110 shadow-[0_0_12px_rgba(141,123,195,0.5)]' : 'bg-white/25'}
             `} />
             
@@ -255,7 +255,7 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
               </span>
               <button
                 onClick={() => { triggerHaptic(); onClose(); }}
-                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-tertiary hover:text-white hover:bg-white/5 transition-all active:scale-90"
+                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-tertiary hover:text-white hover:bg-white/5 transition-[transform,background-color,border-color,color] active:scale-90"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />

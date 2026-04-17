@@ -278,7 +278,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         </div>
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className={`group flex items-center gap-2 rounded-xl border px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider transition-all duration-300 ${
+          className={`group flex items-center gap-2 rounded-xl border px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider transition-[transform,opacity,background-color,border-color,color] duration-300 ${
             showAdvanced 
               ? 'border-border bg-[rgba(184,149,92,0.1)] text-text-primary shadow-[0_0_15px_rgba(184,149,92,0.1)]' 
               : 'border-white/8 bg-black/20 text-text-tertiary hover:border-border hover:bg-[rgba(184,149,92,0.05)] hover:text-text-secondary'
@@ -292,10 +292,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
       {/* Scope Switch: 소설 / 일반 */}
       <div className="flex items-center gap-2 p-1 rounded-xl bg-black/30 border border-white/5 w-fit">
-        <button onClick={() => setScope('novel')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-all ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+        <button onClick={() => setScope('novel')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
           {isKO ? '소설 번역' : 'Novel'}
         </button>
-        <button onClick={() => setScope('general')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-all ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+        <button onClick={() => setScope('general')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
           {isKO ? '일반 번역' : 'General'}
         </button>
       </div>
@@ -308,7 +308,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             {['general', 'academic', 'business', 'essay', 'legal', 'medical', 'it', 'journalism'].map((d) => {
               const labels: Record<string, string> = { general: isKO ? '범용' : 'General', academic: isKO ? '학술' : 'Academic', business: isKO ? '비즈니스' : 'Business', essay: isKO ? '에세이' : 'Essay', legal: isKO ? '법률' : 'Legal', medical: isKO ? '의료' : 'Medical', it: 'IT', journalism: isKO ? '저널리즘' : 'News' };
               return (
-                <button key={d} onClick={() => setGeneralDomain(d)} className={`px-3 py-2 rounded-xl font-mono text-[10px] font-bold uppercase tracking-wider border transition-all ${generalDomain === d ? 'border-border bg-[rgba(184,149,92,0.12)] text-text-primary' : 'border-white/8 text-text-tertiary hover:border-white/15'}`}>
+                <button key={d} onClick={() => setGeneralDomain(d)} className={`px-3 py-2 rounded-xl font-mono text-[10px] font-bold uppercase tracking-wider border transition-colors ${generalDomain === d ? 'border-border bg-[rgba(184,149,92,0.12)] text-text-primary' : 'border-white/8 text-text-tertiary hover:border-white/15'}`}>
                   {labels[d] || d}
                 </button>
               );
@@ -318,7 +318,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           {/* Target Language (reuse) */}
           <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5 w-fit">
             {(["EN", "JP", "CN"] as const).map((l) => (
-              <button key={l} onClick={() => setTargetLang(l)} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-all ${targetLang === l ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+              <button key={l} onClick={() => setTargetLang(l)} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-[background-color,border-color,box-shadow,color] ${targetLang === l ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
                 {l}
               </button>
             ))}
@@ -355,7 +355,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <button
             onClick={handleGeneralTranslate}
             disabled={!generalText.trim() || generalTranslating}
-            className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-border px-8 py-3 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-all hover:scale-[1.02] disabled:opacity-40 shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
+            className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-border px-8 py-3 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-[transform,opacity] hover:scale-[1.02] disabled:opacity-40 shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
           >
             {generalTranslating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             {isKO ? '4단계 번역 시작' : '4-STAGE TRANSLATE'}
@@ -367,10 +367,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary">{isKO ? '번역 결과' : 'Result'}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setShowSegmentView(!showSegmentView)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-all">
+                  <button onClick={() => setShowSegmentView(!showSegmentView)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors">
                     {showSegmentView ? (isKO ? '전체 보기' : 'Full') : (isKO ? '문장 정렬' : 'Segments')}
                   </button>
-                  <button onClick={() => navigator.clipboard.writeText(generalResult)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-all">
+                  <button onClick={() => navigator.clipboard.writeText(generalResult)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors">
                     {isKO ? '복사' : 'Copy'}
                   </button>
                 </div>
@@ -456,7 +456,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 const blob = new Blob([xml], { type: 'application/xml' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url; a.download = `translation_${targetLang}.xlf`; a.click(); URL.revokeObjectURL(url);
-              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">XLIFF</button>
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-colors">XLIFF</button>
               {/* TMX */}
               <button onClick={async () => {
                 const { loadTM, exportTMX } = await import('@/lib/translation');
@@ -466,7 +466,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 const blob = new Blob([xml], { type: 'application/xml' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url; a.download = 'translation_memory.tmx'; a.click(); URL.revokeObjectURL(url);
-              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">TMX ({tmCount})</button>
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-colors">TMX ({tmCount})</button>
               {/* TBX */}
               <button onClick={async () => {
                 if (Object.keys(glossary).length === 0) return;
@@ -475,13 +475,13 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 const blob = new Blob([xml], { type: 'application/xml' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url; a.download = 'glossary.tbx'; a.click(); URL.revokeObjectURL(url);
-              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">TBX</button>
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-colors">TBX</button>
               {/* Plain text */}
               <button onClick={() => {
                 const blob = new Blob([generalResult], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url; a.download = `translation_${targetLang}.txt`; a.click(); URL.revokeObjectURL(url);
-              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-all">TXT</button>
+              }} className="font-mono text-[10px] px-2 py-1 rounded border border-white/10 text-text-tertiary hover:text-text-secondary hover:border-white/20 transition-colors">TXT</button>
             </div>
           )}
         </div>
@@ -499,7 +499,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`relative overflow-hidden rounded-[1.25rem] border p-5 text-left transition-all duration-300 ${
+              className={`relative overflow-hidden rounded-[1.25rem] border p-5 text-left transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                 isSelected
                   ? "border-accent-amber/40 bg-bg-secondary shadow-panel translate-y-[-2px]"
                   : "border-border bg-bg-tertiary/50 hover:border-border hover:bg-bg-secondary"
@@ -538,7 +538,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 key={l}
                 onClick={() => setTargetLang(l)}
                 title={l === 'JP' ? '나로우/라노벨 최적화 알고리즘 탑재' : l === 'CN' ? '선협/웹소설 전용 호칭 처리 포함' : '영미권 픽션 표준 번역'}
-                className={`flex-1 rounded-lg px-3 py-2 font-mono text-[12px] font-bold tracking-wider transition-all duration-200 ${
+                className={`flex-1 rounded-lg px-3 py-2 font-mono text-[12px] font-bold tracking-wider transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                   targetLang === l
                     ? "bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3),0_0_10px_rgba(184,149,92,0.1)]"
                     : "text-text-tertiary hover:bg-white/5 hover:text-text-secondary"
@@ -598,7 +598,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <select
               value={targetGenre}
               onChange={(e) => setTargetGenre(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-all"
+              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-[transform,opacity,background-color,border-color,color]"
             >
               <option value="">(None - Auto Detect)</option>
               {Object.keys(GENRE_PRESETS).map(genre => (
@@ -618,7 +618,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 min={0.5} max={0.99} step={0.01}
                 value={scoreThreshold}
                 onChange={(e) => setScoreThreshold(parseFloat(e.target.value) || 0.75)}
-                className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-all"
+                className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-[transform,opacity,background-color,border-color,color]"
               />
             </div>
           </div>
@@ -632,7 +632,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               value={contractionLevel}
               onChange={(e) => setContractionLevel(e.target.value as typeof contractionLevel)}
               disabled={mode !== 'experience'}
-              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-all"
+              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-opacity"
             >
               <option value="none">None (Strict/Formal)</option>
               <option value="low">Low (Dialogue only)</option>
@@ -676,7 +676,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               <FileText className="h-3 w-3 text-text-secondary" />
               {isKO ? "에피소드 타겟 지정" : "Episode Target"}
             </label>
-            <button onClick={() => setBatchMode(!batchMode)} className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border transition-all ${batchMode ? 'border-border bg-[rgba(184,149,92,0.15)] text-text-primary' : 'border-white/10 text-text-tertiary hover:border-white/20'}`}>
+            <button onClick={() => setBatchMode(!batchMode)} className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border transition-colors ${batchMode ? 'border-border bg-[rgba(184,149,92,0.15)] text-text-primary' : 'border-white/10 text-text-tertiary hover:border-white/20'}`}>
               {isKO ? (batchMode ? '배치 ON' : '배치 OFF') : (batchMode ? 'BATCH ON' : 'BATCH OFF')}
             </button>
           </div>
@@ -684,7 +684,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <select
               value={selectedEpisode ?? ""}
               onChange={(e) => setSelectedEpisode(e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full appearance-none rounded-xl border border-white/10 bg-bg-tertiary px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border group-hover:border-white/20 transition-all shadow-inner"
+              className="w-full appearance-none rounded-xl border border-white/10 bg-bg-tertiary px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border group-hover:border-white/20 transition-colors shadow-inner"
             >
               <option value="">{isKO ? "/// 번역 대기 큐에서 선택 ///" : "/// Select queued episode ///"}</option>
               {manuscripts.map((m) => (
@@ -700,7 +700,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         {isTranslating ? (
           <button
             onClick={abort}
-            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(to_bottom,rgba(255,100,100,0.15),rgba(200,50,50,0.4))] border border-[rgba(255,100,100,0.5)] px-6 font-mono text-[12px] font-black uppercase tracking-widest text-red-400 transition-all hover:brightness-125 shadow-[0_0_20px_rgba(200,50,50,0.2)]"
+            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(to_bottom,rgba(255,100,100,0.15),rgba(200,50,50,0.4))] border border-[rgba(255,100,100,0.5)] px-6 font-mono text-[12px] font-black uppercase tracking-widest text-red-400 transition-[box-shadow] hover:brightness-125 shadow-[0_0_20px_rgba(200,50,50,0.2)]"
           >
             <Square className="h-4 w-4" /> {isKO ? "강제 종료 (HALT)" : "HALT"}
           </button>
@@ -708,7 +708,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <button
             onClick={handleTranslate}
             disabled={batchMode ? manuscripts.length === 0 : (selectedEpisode === null || manuscripts.length === 0)}
-            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-border px-6 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(184,149,92,0.4)] disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
+            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-border px-6 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-[transform,opacity] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(184,149,92,0.4)] disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
           >
             <Play className="h-4 w-4" fill="currentColor" /> {batchMode ? (isKO ? `배치 번역 (${manuscripts.length}화)` : `BATCH (${manuscripts.length})`) : (isKO ? "번역 연결 (INIT)" : "INIT")}
           </button>
@@ -736,7 +736,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               </span>
               <div className="w-32 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/5 relative">
                 <div
-                  className="absolute inset-y-0 left-0 bg-[rgba(184,149,92,0.9)] shadow-[0_0_10px_rgba(184,149,92,0.8)] transition-all duration-300"
+                  className="absolute inset-y-0 left-0 bg-[rgba(184,149,92,0.9)] shadow-[0_0_10px_rgba(184,149,92,0.8)] transition-[box-shadow] duration-300"
                   style={{ width: `${progress.totalChunks > 0 ? (progress.completedChunks / progress.totalChunks) * 100 : 0}%` }}
                 />
               </div>
@@ -764,7 +764,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                     }`}>{log.text}</div>
                     {log.detail && (
                       <div className="relative pl-3 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-[linear-gradient(to_bottom,rgba(184,149,92,0.4),transparent)]">
-                        <div className="text-text-primary text-[10px] leading-relaxed font-sans line-clamp-3 group-hover:line-clamp-none transition-all duration-300">
+                        <div className="text-text-primary text-[10px] leading-relaxed font-sans line-clamp-3 group-hover:line-clamp-none transition-[transform,opacity,background-color,border-color,color] duration-300">
                           {log.detail}
                         </div>
                       </div>
@@ -796,7 +796,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {translatedList.map((t, i) => (
-               <div key={i} className="group relative flex flex-col gap-2.5 rounded-2xl border border-border bg-bg-tertiary backdrop-blur-md p-4 transition-all duration-300 hover:border-border hover:bg-[rgba(184,149,92,0.05)] hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(184,149,92,0.1)]">
+               <div key={i} className="group relative flex flex-col gap-2.5 rounded-2xl border border-border bg-bg-tertiary backdrop-blur-md p-4 transition-[transform,background-color,border-color,box-shadow,color] duration-300 hover:border-border hover:bg-[rgba(184,149,92,0.05)] hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(184,149,92,0.1)]">
                 <div className="absolute top-0 left-4 right-4 h-px bg-[linear-gradient(90deg,transparent,rgba(184,149,92,0.3),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(184,149,92,0.1)] text-text-primary">

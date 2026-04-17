@@ -309,7 +309,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           {onToggleMinimap && (
             <button
               onClick={onToggleMinimap}
-              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${settings.minimap ? "text-accent-blue" : "text-text-tertiary hover:text-text-secondary"}`}
+              className={`rounded p-1.5 transition-[transform,background-color,border-color,color] duration-150 active:scale-95 ${settings.minimap ? "text-accent-blue" : "text-text-tertiary hover:text-text-secondary"}`}
               title={settings.minimap ? "Hide Minimap" : "Show Minimap"}
               aria-label="Toggle minimap"
             >
@@ -319,7 +319,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           {onToggleWordWrap && (
             <button
               onClick={onToggleWordWrap}
-              className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${settings.wordWrap === "on" ? "text-accent-blue" : "text-text-tertiary hover:text-text-secondary"}`}
+              className={`rounded p-1.5 transition-[transform,background-color,border-color,color] duration-150 active:scale-95 ${settings.wordWrap === "on" ? "text-accent-blue" : "text-text-tertiary hover:text-text-secondary"}`}
               title={settings.wordWrap === "on" ? "Disable Word Wrap" : "Enable Word Wrap"}
               aria-label="Toggle word wrap"
             >
@@ -329,13 +329,13 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
           <button
             onClick={onToggleEditorGroup}
             disabled={openFiles.length === 0}
-            className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${useEditorGroup ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
+            className={`rounded p-1.5 transition-[transform,opacity] duration-150 active:scale-95 ${useEditorGroup ? "text-accent-green" : "text-text-tertiary"} disabled:opacity-30`}
             title="Split Editor (EditorGroup)"
           >
             <Columns2 className="h-4 w-4" />
           </button>
-          <button onClick={onShowCommandPalette} className="rounded p-1.5 transition-all duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
-          <button onClick={() => { if (showSettings) onSettingsSaved(); onToggleSettings(); }} className={`rounded p-1.5 transition-all duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Inline Settings" aria-label="인라인 설정"><Settings className="h-4 w-4" /></button>
+          <button onClick={onShowCommandPalette} className="rounded p-1.5 transition-[transform,background-color,border-color,color] duration-150 active:scale-95 text-text-tertiary hover:text-text-secondary" title="Commands (Ctrl+Shift+P)"><Command className="h-4 w-4" /></button>
+          <button onClick={() => { if (showSettings) onSettingsSaved(); onToggleSettings(); }} className={`rounded p-1.5 transition-[transform,background-color,border-color,color] duration-150 active:scale-95 ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} title="Inline Settings" aria-label="인라인 설정"><Settings className="h-4 w-4" /></button>
         </div>
       </div>
 

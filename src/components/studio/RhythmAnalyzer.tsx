@@ -179,7 +179,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
               </span>
               <div className="flex-1 h-4 bg-white/5 rounded overflow-hidden relative">
                 <div
-                  className="h-full rounded transition-all"
+                  className="h-full rounded transition-[transform,opacity,background-color,border-color,color]"
                   style={{ width: `${pct}%`, backgroundColor: bucket.color, opacity: 0.7 }}
                 />
                 <span className="absolute right-1 top-0 h-full flex items-center text-[8px] text-text-tertiary font-mono">

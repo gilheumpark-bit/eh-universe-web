@@ -222,7 +222,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
         <div className="mt-8 flex justify-center">
           <button
             onClick={() => setViewMode('editor-all')}
-            className="px-6 py-3 rounded-xl bg-accent-amber/10 border border-accent-amber/30 text-accent-amber text-xs font-bold font-mono uppercase tracking-wider hover:bg-accent-amber/20 transition-all"
+            className="px-6 py-3 rounded-xl bg-accent-amber/10 border border-accent-amber/30 text-accent-amber text-xs font-bold font-mono uppercase tracking-wider hover:bg-accent-amber/20 transition-colors"
           >
             {isKO ? '전체 설정 편집기 열기' : 'Open Full Editor'}
           </button>
@@ -254,7 +254,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       <div className="flex justify-end mt-4">
         <button
           onClick={triggerSave}
-          className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-mono transition-all duration-300 ${
+          className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-mono transition-[transform,opacity,background-color,border-color,color] duration-300 ${
             saveFlash
               ? 'bg-accent-green text-white animate-save-bounce-glow'
               : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-white hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'

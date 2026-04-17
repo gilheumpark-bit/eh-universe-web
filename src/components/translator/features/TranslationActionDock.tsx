@@ -167,7 +167,7 @@ export function TranslationActionDock() {
           type="button"
           onClick={() => void translate()}
           disabled={loading}
-          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-linear-to-r from-[#1A1A1D] to-[#111113] py-3 pl-4 pr-4 transition-all hover:border-accent-green/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-linear-to-r from-[#1A1A1D] to-[#111113] py-3 pl-4 pr-4 transition-[transform,background-color,border-color,color] hover:border-accent-green/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <div className="absolute inset-0 bg-accent-green/5 opacity-0 transition-opacity group-hover:opacity-100" />
           <div className="relative z-10 flex items-center gap-3">
@@ -190,7 +190,7 @@ export function TranslationActionDock() {
           type="button"
           onClick={() => void deepTranslate()}
           disabled={loading}
-          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-indigo/20 bg-linear-to-r from-accent-indigo/10 to-transparent py-3 pl-4 pr-4 shadow-[0_0_15px_rgba(47,155,131,0.05)] transition-all hover:border-accent-indigo/60 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-indigo/20 bg-linear-to-r from-accent-indigo/10 to-transparent py-3 pl-4 pr-4 shadow-[0_0_15px_rgba(47,155,131,0.05)] transition-[transform,background-color,border-color,box-shadow,color] hover:border-accent-indigo/60 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <div className="absolute inset-0 bg-accent-indigo/10 opacity-0 transition-opacity group-hover:opacity-100" />
           <div className="relative z-10 flex items-center gap-3">

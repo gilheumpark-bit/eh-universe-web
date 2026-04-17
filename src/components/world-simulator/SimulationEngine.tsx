@@ -41,7 +41,7 @@ export function GenreLeveling({ lang, selections, onToggle }: {
           const sel = selections.find(s => s.genre === g.genre);
           const isSelected = !!sel;
           return (
-            <div key={g.genre} className={`space-y-1 rounded-lg p-1.5 transition-all border-2 ${isSelected ? "" : "border-transparent"}`}
+            <div key={g.genre} className={`space-y-1 rounded-lg p-1.5 transition-[transform,opacity,background-color,border-color,color] border-2 ${isSelected ? "" : "border-transparent"}`}
               style={isSelected ? { borderColor: g.color, background: `${g.color}10` } : undefined}>
               <div className="text-[10px] font-bold tracking-wider text-center font-[family-name:var(--font-mono)] flex items-center justify-center gap-1" style={{ color: g.color }}>
                 {isSelected && <span className="text-[8px]">&#10003;</span>}
@@ -54,7 +54,7 @@ export function GenreLeveling({ lang, selections, onToggle }: {
                     <button
                       key={lv.lv}
                       onClick={() => onToggle(g.genre, lv.lv)}
-                      className={`flex-1 py-1.5 rounded text-[8px] font-bold transition-all border ${
+                      className={`flex-1 py-1.5 rounded text-[8px] font-bold transition-[transform,opacity,background-color,border-color,color] border ${
                         active
                           ? "text-white shadow-lg"
                           : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
@@ -294,7 +294,7 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
         <div className="flex gap-1">
           {(Object.keys(RELATION_STYLES) as RelationType[]).map(rt => (
             <button key={rt} onClick={() => setSelType(rt)}
-              className={`px-2 py-1.5 rounded text-[10px] font-bold border transition-all ${
+              className={`px-2 py-1.5 rounded text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
                 selType === rt ? "text-white" : "text-text-tertiary border-border hover:border-text-tertiary"
               }`}
               style={selType === rt ? { background: RELATION_STYLES[rt].color, borderColor: RELATION_STYLES[rt].color } : undefined}
@@ -441,7 +441,7 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
               const hasCivs = civsByEra[era.id]?.length > 0;
               return (
                 <React.Fragment key={era.id}>
-                  <div className={`flex-1 text-center py-3 border border-border rounded-lg mx-0.5 transition-all ${
+                  <div className={`flex-1 text-center py-3 border border-border rounded-lg mx-0.5 transition-[transform,opacity,background-color,border-color,color] ${
                     hasCivs ? "bg-accent-purple/10 border-accent-purple/30" : "bg-bg-primary"
                   }`}>
                     <div className="text-[9px] font-bold text-text-tertiary font-[family-name:var(--font-mono)] uppercase">

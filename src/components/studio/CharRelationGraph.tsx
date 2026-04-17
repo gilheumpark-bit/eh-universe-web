@@ -327,7 +327,7 @@ function FilterableLegend({ visibleTypes, onToggle, isKO, zoomLevel, onResetZoom
           <button
             key={rt}
             onClick={() => onToggle(rt)}
-            className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-all border ${
+            className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-[transform,opacity,background-color,border-color,color] border ${
               active
                 ? 'border-border/50 opacity-100'
                 : 'border-transparent opacity-40 line-through'
@@ -529,7 +529,7 @@ const CharRelationGraph: React.FC<Props> = ({ characters, relations, language, o
   }, [filteredRelations, episodeFilter]);
 
   return (
-    <div className={`relative transition-all duration-300 ${expanded ? 'fixed inset-4 z-50 bg-bg-primary/95 backdrop-blur-xl rounded-3xl border border-border p-4' : ''}`}>
+    <div className={`relative transition-[transform,opacity,background-color,border-color,color] duration-300 ${expanded ? 'fixed inset-4 z-50 bg-bg-primary/95 backdrop-blur-xl rounded-3xl border border-border p-4' : ''}`}>
       {/* Expand/collapse button */}
       <button
         onClick={() => setExpanded(!expanded)}

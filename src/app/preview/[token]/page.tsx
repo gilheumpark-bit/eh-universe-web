@@ -286,7 +286,7 @@ export default function PreviewPage() {
         <div className="flex gap-4">
           <button
             onClick={() => setPreviewMode('radio')}
-            className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-purple/10 border border-border/30 hover:border-accent-purple/40 rounded-2xl transition-all group"
+            className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-purple/10 border border-border/30 hover:border-accent-purple/40 rounded-2xl transition-colors group"
           >
             <Headphones className="h-10 w-10 text-accent-purple group-hover:scale-110 transition-transform" />
             <span className="text-sm font-mono text-text-primary">🎧 라디오 드라마</span>
@@ -294,7 +294,7 @@ export default function PreviewPage() {
           </button>
           <button
             onClick={() => setPreviewMode('visual')}
-            className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-amber/10 border border-border/30 hover:border-accent-amber/40 rounded-2xl transition-all group"
+            className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-amber/10 border border-border/30 hover:border-accent-amber/40 rounded-2xl transition-colors group"
           >
             <Film className="h-10 w-10 text-accent-amber group-hover:scale-110 transition-transform" />
             <span className="text-sm font-mono text-text-primary">🎬 비주얼 노벨</span>

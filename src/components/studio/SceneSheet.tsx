@@ -309,11 +309,11 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
       <div className="flex flex-wrap gap-2">
         {(Object.keys(PLOT_PRESETS) as PlotType[]).map(key => (
           <button key={key} onClick={() => loadPreset(key)}
-            className={`px-3 py-1.5 rounded text-[13px] font-bold border transition-all min-h-[44px] ${selectedPreset === key ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"}`}>
+            className={`px-3 py-1.5 rounded text-[13px] font-bold border transition-colors min-h-[44px] ${selectedPreset === key ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"}`}>
             {L4(lang, PLOT_PRESETS[key])}
           </button>
         ))}
-        <button onClick={addSegment} className="px-3 py-1.5 rounded text-[10px] font-bold border border-dashed border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple transition-all min-h-[44px]">
+        <button onClick={addSegment} className="px-3 py-1.5 rounded text-[10px] font-bold border border-dashed border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple transition-colors min-h-[44px]">
           + {L4(lang, { ko: "구간 추가", en: "Add Segment", ja: "区間を追加", zh: "添加区间" })}
         </button>
       </div>
@@ -505,7 +505,7 @@ export default function SceneSheet({
             <div className="flex items-center gap-0.5 p-0.5 bg-black/30 rounded-lg">
               {GRAMMAR_REGIONS.map(r => (
                 <button key={r} onClick={() => setGrammarRegion(r)}
-                  className={`px-2 py-1 rounded text-[11px] transition-all min-h-[44px] ${grammarRegion === r ? "bg-accent-purple text-white shadow" : "text-text-tertiary hover:text-text-primary"}`}>
+                  className={`px-2 py-1 rounded text-[11px] transition-colors min-h-[44px] ${grammarRegion === r ? "bg-accent-purple text-white shadow" : "text-text-tertiary hover:text-text-primary"}`}>
                   {GRAMMAR_PACKS[r].flag}
                 </button>
               ))}
@@ -520,7 +520,7 @@ export default function SceneSheet({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowGrammarPanel(v => !v)}
-              className={`px-3 py-1.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-all min-h-[44px] ${showGrammarPanel ? "bg-accent-green text-white" : "bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary"}`}>
+              className={`px-3 py-1.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-colors min-h-[44px] ${showGrammarPanel ? "bg-accent-green text-white" : "bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary"}`}>
               {GRAMMAR_PACKS[grammarRegion].flag} {L4(lang, { ko: "문법", en: "Grammar", ja: "Grammar", zh: "Grammar" })}
             </button>
             <button onClick={handleAIGenerate}
@@ -562,7 +562,7 @@ export default function SceneSheet({
               const isActive = activePreset === p.key;
               return (
                 <button key={p.key} onClick={() => applyScenePreset(p.key)}
-                  className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-center transition-all min-h-[64px] border-2 ${
+                  className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-center transition-[transform,opacity,background-color,border-color,color] min-h-[64px] border-2 ${
                     isActive
                       ? `${meta.bg} ${meta.border} ring-2 ring-offset-1 ring-accent-purple shadow-lg scale-[1.04]`
                       : `bg-bg-primary border-border/50 hover:${meta.bg} hover:${meta.border} hover:shadow-md`

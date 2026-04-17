@@ -444,7 +444,7 @@ function buildCampaignChecks(s: GameState, campaign: Campaign, metrics: Metrics)
 
 const panelCls = "border border-border rounded-2xl bg-bg-secondary/80 backdrop-blur-sm p-4 shadow-lg";
 const cardCls = "border border-white/[0.06] rounded-2xl bg-white/[0.03] p-3.5";
-const btnCls = "rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-text-primary cursor-pointer transition-all hover:border-accent-blue/40 hover:bg-accent-blue/10 hover:-translate-y-px disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none font-mono";
+const btnCls = "rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-text-primary cursor-pointer transition-[transform,background-color,border-color,color] hover:border-accent-blue/40 hover:bg-accent-blue/10 hover:-translate-y-px disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none font-mono";
 const btnPrimary = `${btnCls} !bg-gradient-to-b from-accent-blue/25 to-accent-blue/15 !border-accent-blue/40`;
 const btnAlt = `${btnCls} !bg-gradient-to-b from-accent-amber/15 to-accent-amber/8 !border-accent-amber/35`;
 const btnDanger = `${btnCls} !border-red-400/30 !bg-red-400/10`;
@@ -724,7 +724,7 @@ function ZoneMapPanel({ s, metrics, en, onSelectZone }: { s: GameState; metrics:
             const sel = z.id === s.selectedZoneId; const comp = s.completedZones.includes(z.id);
             const lock = networkSpan(s) < z.requiredSpan * 0.82 && !s.completedZones.includes(z.id);
             return (
-              <button key={z.id} className={`absolute rounded-xl p-2 border text-left transition-all ${sel ? "border-accent-blue/50 bg-accent-blue/20 z-10" : comp ? "border-green-400/30 bg-green-400/10" : lock ? "border-white/[0.04] bg-white/[0.02] opacity-40" : "border-white/[0.08] bg-white/[0.05]"} hover:border-accent-blue/40`}
+              <button key={z.id} className={`absolute rounded-xl p-2 border text-left transition-[opacity,background-color,border-color,color] ${sel ? "border-accent-blue/50 bg-accent-blue/20 z-10" : comp ? "border-green-400/30 bg-green-400/10" : lock ? "border-white/[0.04] bg-white/[0.02] opacity-40" : "border-white/[0.08] bg-white/[0.05]"} hover:border-accent-blue/40`}
                 style={{ left: `${z.x}%`, top: `${z.y}%`, transform: "translate(-50%, -50%)" }}
                 onClick={() => onSelectZone(z.id)}>
                 <strong className="block text-xs text-text-primary">{z.name}</strong>
@@ -819,7 +819,7 @@ function GateChamberPanel({ s, metrics, en, onCalibrate, onCharge, onFocus, onJu
           {bars.map(([label, val, color]) => (
             <div key={label}>
               <div className="flex justify-between items-center mb-1"><span className={mutedCls + " !text-xs"}>{label}</span><strong className="text-sm text-text-primary">{fixed(val, 3)}</strong></div>
-              <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden"><div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${val * 100}%` }} /></div>
+              <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden"><div className={`h-full rounded-full ${color} transition-[transform,opacity,background-color,border-color,color]`} style={{ width: `${val * 100}%` }} /></div>
             </div>
           ))}
           <div className="grid gap-1.5 mt-2">
@@ -1285,7 +1285,7 @@ export default function WarpGatePage() {
               <div className="flex gap-1 rounded-xl border border-white/6 bg-white/[0.02] p-1">
                 {(["ship", "struct", "upgrade"] as const).map(tab => (
                   <button key={tab} onClick={() => setSideTab(tab)}
-                    className={`flex-1 rounded-lg px-2 py-1.5 font-mono text-[10px] font-bold tracking-wider uppercase transition-all ${
+                    className={`flex-1 rounded-lg px-2 py-1.5 font-mono text-[10px] font-bold tracking-wider uppercase transition-[transform,opacity,background-color,border-color,color] ${
                       sideTab === tab ? "bg-white/[0.08] text-text-primary" : "text-text-tertiary hover:text-text-secondary"
                     }`}>
                     {tab === "ship" ? (en ? "Ship" : "함선") : tab === "struct" ? (en ? "Build" : "건설") : (en ? "Upgrade" : "강화")}

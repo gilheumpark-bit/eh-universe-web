@@ -132,13 +132,13 @@ function FullPageFallback({ error, onRetry }: { error: Error; onRetry: () => voi
       <div className="flex items-center gap-3">
         <button
           onClick={onRetry}
-          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/10 active:scale-[0.97] transition-all duration-200"
+          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/10 active:scale-[0.97] transition-[transform,background-color,border-color,box-shadow,color] duration-200"
         >
           {L4(lang, { ko: '다시 시도', en: 'Retry', ja: '再試行', zh: '重试' })}
         </button>
         <Link
           href="/"
-          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-white/5 border border-border text-text-secondary hover:bg-white/10 hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20 active:scale-[0.97] transition-all duration-200"
+          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-white/5 border border-border text-text-secondary hover:bg-white/10 hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20 active:scale-[0.97] transition-[transform,background-color,border-color,box-shadow,color] duration-200"
         >
           {L4(lang, { ko: '홈으로', en: 'Go Home', ja: 'ホームへ', zh: '回到首页' })}
         </Link>
@@ -172,7 +172,7 @@ function SectionFallback({
       </div>
       <button
         onClick={onRetry}
-        className="mt-1 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
+        className="mt-1 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
         autoFocus
       >
         Retry

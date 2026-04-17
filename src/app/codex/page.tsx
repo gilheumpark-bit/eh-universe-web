@@ -47,7 +47,7 @@ export default function CodexPage() {
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`shrink-0 px-4 sm:px-5 py-3 min-h-[44px] font-mono text-xs font-bold tracking-widest uppercase transition-all border-b-2 -mb-[1px] ${
+                  className={`shrink-0 px-4 sm:px-5 py-3 min-h-[44px] font-mono text-xs font-bold tracking-widest uppercase transition-[transform,opacity,background-color,border-color,color] border-b-2 -mb-[1px] ${
                     active
                       ? "border-accent-purple text-accent-purple"
                       : "border-transparent text-text-tertiary hover:text-text-secondary"

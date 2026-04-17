@@ -157,7 +157,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       )}
       {focusMode && (
         <button onClick={() => setFocusMode(false)}
-          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-all font-(family-name:--font-mono) opacity-70 hover:opacity-100"
+          className="fixed top-2 right-2 z-50 px-2 py-1 bg-bg-secondary/80 border border-border rounded-lg text-[11px] text-text-tertiary hover:text-text-primary transition-[opacity,background-color,border-color,color] font-(family-name:--font-mono) opacity-70 hover:opacity-100"
           title={L4(language, { ko: '집중 모드 (F11)', en: 'Focus Mode (F11)', ja: 'フォーカスモード (F11)', zh: '专注模式 (F11)' })}>
           <Minimize2 className="w-3 h-3 inline mr-1" />{t('ui.exitFocus')}
         </button>
@@ -174,7 +174,7 @@ export default function StudioMainContent({ children }: { children?: React.React
           {/* Sidebar toggle removed — OSDesktop handles navigation */}
           <div className="text-xs md:text-sm font-bold tracking-tight uppercase flex items-center gap-1.5 md:gap-2 min-w-0 font-(family-name:--font-mono)">
             <span className="text-text-primary truncate max-w-[120px] md:max-w-none">{currentSession?.title || t('engine.noStory')}</span>
-            {currentSessionId && <span key={saveFlash ? Date.now() : 'idle'} className={`text-[13px] font-(family-name:--font-mono) transition-all duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black animate-[save-flash_0.5s_ease-out]' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
+            {currentSessionId && <span key={saveFlash ? Date.now() : 'idle'} className={`text-[13px] font-(family-name:--font-mono) transition-[transform,opacity,background-color,border-color,color] duration-300 hidden sm:inline ${saveFlash ? 'text-accent-green scale-125 font-black animate-[save-flash_0.5s_ease-out]' : 'text-text-tertiary'}`}>{'\u2713'} {saveFlash ? t('ui.saved') : t('ui.autoSaved')}</span>}
             <style>{`@keyframes save-flash{0%{opacity:0}30%{opacity:1}100%{opacity:0.6}}`}</style>
           </div>
         </div>
@@ -200,11 +200,11 @@ export default function StudioMainContent({ children }: { children?: React.React
               {/* Brightness Dial */}
               <button 
                 onClick={toggleTheme} 
-                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
                 title={isKO ? ['밤','낮'][themeLevel] : ['Night','Day'][themeLevel]}
                 aria-label={t('ui.toggleThemeLabel')}
               >
-                <span className={`relative z-10 transition-all duration-300 ${
+                <span className={`relative z-10 transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                   themeLevel === 0 ? 'text-accent-purple' : 'text-accent-amber'
                 }`}>
                   {themeLevel === 0 ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}

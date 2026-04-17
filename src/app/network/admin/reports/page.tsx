@@ -120,7 +120,7 @@ export default function ReportsAdminPage() {
         <div className="flex gap-2 mb-6">
           {(["pending", "under_review", "resolved", "dismissed", "all"] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider border transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono uppercase tracking-wider border transition-[transform,opacity,background-color,border-color,color] ${
                 filter === f ? "bg-accent-purple text-white border-accent-purple" : "bg-bg-secondary text-text-tertiary border-border hover:text-text-primary"
               }`}>
               {f === "pending" ? "대기" : f === "under_review" ? "검토중" : f === "resolved" ? "해결" : f === "dismissed" ? "기각" : "전체"} {filter === f && `(${reports.length})`}

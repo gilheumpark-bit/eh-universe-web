@@ -146,7 +146,7 @@ function SceneGallery({
             <button
               key={ep}
               onClick={() => setFilterEp(ep === 0 ? 'all' : ep)}
-              className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all ${
+              className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-[transform,opacity,background-color,border-color,color] ${
                 filterEp === ep ? 'border-accent-purple/40 bg-accent-purple/10' : 'border-border bg-bg-secondary/50 hover:border-border'
               }`}
             >
@@ -194,7 +194,7 @@ function SceneGallery({
         </div>
         <button
           onClick={() => setShowFavOnly(!showFavOnly)}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
             showFavOnly
               ? 'bg-accent-amber/15 border-accent-amber/30 text-accent-amber'
               : 'bg-bg-secondary/50 border-border text-text-tertiary hover:text-text-secondary'
@@ -475,7 +475,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
         <div className="ds-card flex gap-1 p-1">
           <button
             onClick={() => setActiveView('editor')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
               activeView === 'editor'
                 ? 'bg-blue-600/20 border border-blue-500/30 text-blue-300'
                 : 'text-text-tertiary hover:text-text-secondary'
@@ -485,7 +485,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
           </button>
           <button
             onClick={() => setActiveView('gallery')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
               activeView === 'gallery'
                 ? 'bg-purple-600/20 border border-purple-500/30 text-purple-300'
                 : 'text-text-tertiary hover:text-text-secondary'
@@ -516,7 +516,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   key={ep}
                   onClick={() => generateFromAnalysis(ep)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-bg-secondary border border-border hover:border-blue-600/40 text-text-secondary hover:text-accent-blue transition-all"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-bg-secondary border border-border hover:border-blue-600/40 text-text-secondary hover:text-accent-blue transition-colors"
                 >
                   <span>EP.{ep}</span>
                   <span className="text-[9px] text-text-tertiary">
@@ -545,7 +545,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   key={c.id}
                   onClick={() => { setSelectedCardId(c.id); setActiveView('editor'); }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all ${
+                  className={`w-full text-left px-3 py-2 rounded-lg text-[11px] transition-[transform,opacity,background-color,border-color,color] ${
                     selectedCardId === c.id && activeView === 'editor'
                       ? 'bg-blue-600/15 border border-blue-500/30 text-blue-300'
                       : 'bg-bg-secondary/50 border border-transparent text-text-tertiary hover:border-border hover:text-text-secondary'
@@ -591,13 +591,13 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 {/* 프로그레스 바 */}
                 <div className="w-full bg-bg-tertiary rounded-full h-2 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-linear-to-r from-accent-purple via-accent-blue to-accent-purple bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] transition-all duration-500"
+                    className="h-full rounded-full bg-linear-to-r from-accent-purple via-accent-blue to-accent-purple bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] transition-[transform,opacity,background-color,border-color,color] duration-500"
                     style={{ width: `${(batch.progress.current / Math.max(batch.progress.total, 1)) * 100}%` }}
                   />
                 </div>
                 <button
                   onClick={batch.cancel}
-                  className="w-full py-1.5 text-[10px] font-bold text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/10 transition-all"
+                  className="w-full py-1.5 text-[10px] font-bold text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/10 transition-colors"
                 >
                   {isKO ? '중단' : 'Cancel'}
                 </button>
@@ -607,7 +607,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   onClick={batch.start}
                   disabled={cardsWithoutImages === 0}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600/80 to-purple-600/80 text-white disabled:opacity-30 transition-all active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600/80 to-purple-600/80 text-white disabled:opacity-30 transition-[transform,opacity] active:scale-[0.98]"
                 >
                   <Play className="w-3 h-3" />
                   {isKO ? `이미지 없는 카드 전체 생성 (${cardsWithoutImages})` : `Generate All (${cardsWithoutImages} pending)`}
@@ -656,7 +656,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                   <button
                     key={p.id}
                     onClick={() => setImgProvider(p.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-[transform,opacity,background-color,border-color,color] ${
                       imgProvider === p.id
                         ? p.free
                           ? 'bg-accent-purple/15 border-accent-purple/50 shadow-[0_0_12px_rgba(141,123,195,0.15)]'
@@ -699,7 +699,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
               )}
 
               <button onClick={saveImgSettings}
-                className="w-full py-2 bg-accent-purple/15 border border-accent-purple/30 rounded-lg text-[10px] font-bold text-accent-purple hover:bg-accent-purple/25 transition-all">
+                className="w-full py-2 bg-accent-purple/15 border border-accent-purple/30 rounded-lg text-[10px] font-bold text-accent-purple hover:bg-accent-purple/25 transition-colors">
                 {isKO ? '저장' : 'Save'}
               </button>
 
@@ -755,7 +755,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             </p>
             <button
               onClick={addEmptyCard}
-              className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-300 text-sm font-semibold hover:bg-blue-600/30 transition-all"
+              className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-300 text-sm font-semibold hover:bg-blue-600/30 transition-colors"
             >
               <Plus className="w-4 h-4" /> {isKO ? '빈 카드 만들기' : 'Create Empty Card'}
             </button>

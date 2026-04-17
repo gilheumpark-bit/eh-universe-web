@@ -129,7 +129,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
           </span>
           {civs.map(c => (
             <button key={c.id} onClick={() => { setPaintCiv(paintCiv === c.id ? null : c.id); setSelectedCiv(c.id); }}
-              className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${
+              className={`px-2 py-1 rounded text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
                 paintCiv === c.id ? "text-white" : "text-text-tertiary border-border"
               }`}
               style={paintCiv === c.id ? { background: c.color, borderColor: c.color } : undefined}
@@ -179,7 +179,7 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
                     fillOpacity={owner ? 0.3 : 1}
                     stroke={owner ? owner.color : "var(--color-border)"}
                     strokeWidth={owner ? 1.5 : 0.5}
-                    className="transition-all hover:opacity-80 cursor-pointer"
+                    className="transition-opacity hover:opacity-80 cursor-pointer"
                   />
                   {owner && zoom > 0.6 && (
                     <text x={h.x} y={h.y + 3} fill={owner.color} fontSize="7" textAnchor="middle" fontWeight="bold" opacity="0.8" className="pointer-events-none select-none">

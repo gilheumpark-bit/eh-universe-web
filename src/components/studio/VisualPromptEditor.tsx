@@ -147,7 +147,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
             <button
               key={p.id}
               onClick={() => update({ levels: { ...p.levels }, shotType: p.defaultShotType || card.shotType })}
-              className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-bg-secondary/50 border border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 hover:bg-accent-purple/5 transition-all duration-200"
+              className="group flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-bg-secondary/50 border border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 hover:bg-accent-purple/5 transition-colors duration-200"
             >
               <span className="text-lg group-hover:scale-110 transition-transform">🎬</span>
               <span className="text-[10px] font-bold uppercase tracking-wider">{p.name}</span>
@@ -172,7 +172,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
                   <button
                     key={v}
                     onClick={() => updateLevel(key, v)}
-                    className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider transition-all ${
+                    className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider transition-[transform,opacity,background-color,border-color,color] ${
                       card.levels[key] === v
                         ? 'bg-blue-600/30 border-blue-500/50 text-blue-300 border'
                         : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'
@@ -297,7 +297,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
             <button
               onClick={handleGenerate}
               disabled={genLoading || !finalPrompt}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600 to-purple-600 text-white disabled:opacity-40 transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600 to-purple-600 text-white disabled:opacity-40 transition-[transform,opacity] active:scale-95"
             >
               {genLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
               {genLoading ? (isKO ? '생성 중...' : 'Generating...') : (isKO ? '이미지 생성' : 'Generate')}
@@ -382,7 +382,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
                 }
                 update({ consistencyTags: allTags });
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 transition-all"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 transition-colors"
             >
               <Sparkles className="w-3 h-3" /> {isKO ? '추출' : 'Extract'}
             </button>

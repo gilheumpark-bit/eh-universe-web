@@ -238,7 +238,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
           return (
             <div
               key={slot.id}
-              className={`rounded-lg border transition-all ${
+              className={`rounded-lg border transition-[transform,opacity,background-color,border-color,color] ${
                 isActive
                   ? "border-emerald-500/30 bg-emerald-500/5"
                   : "border-white/5 bg-white/[0.02]"

@@ -136,7 +136,7 @@ function WorldMemoPanel({ language, store, setStore }: { language: AppLanguage; 
       <button
         onClick={addMemo}
         disabled={!draft.trim()}
-        className="w-full py-3 bg-accent-blue text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-all min-h-[44px]"
+        className="w-full py-3 bg-accent-blue text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
       >
         {L4(language, { ko: '메모 추가', en: 'Add Memo', ja: 'メモ追加', zh: '添加备忘' })}
       </button>
@@ -238,7 +238,7 @@ function CharacterSketchPanel({ language, store, setStore }: { language: AppLang
       <button
         onClick={addChar}
         disabled={!name.trim()}
-        className="w-full py-3 bg-accent-purple text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-all min-h-[44px]"
+        className="w-full py-3 bg-accent-purple text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
       >
         {L4(language, { ko: '캐릭터 추가', en: 'Add Character', ja: 'キャラクター追加', zh: '添加角色' })}
       </button>
@@ -330,7 +330,7 @@ function PlotBrainstormPanel({ language, store, setStore }: { language: AppLangu
       <button
         onClick={addPlot}
         disabled={!title.trim()}
-        className="w-full py-3 bg-accent-amber text-bg-primary font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-all min-h-[44px]"
+        className="w-full py-3 bg-accent-amber text-bg-primary font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
       >
         {L4(language, { ko: '아이디어 추가', en: 'Add Idea', ja: 'アイデア追加', zh: '添加创意' })}
       </button>
@@ -544,7 +544,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
               try { localStorage.setItem('noa_force_desktop', '1'); } catch { /* quota */ }
               window.location.reload();
             }}
-            className="shrink-0 flex items-center gap-1 px-2.5 py-2 min-h-[44px] rounded-lg text-[11px] font-bold bg-bg-primary/60 border border-border text-text-secondary active:bg-bg-primary active:scale-95 transition-all"
+            className="shrink-0 flex items-center gap-1 px-2.5 py-2 min-h-[44px] rounded-lg text-[11px] font-bold bg-bg-primary/60 border border-border text-text-secondary active:bg-bg-primary active:scale-95 transition-[transform,background-color,border-color,color]"
             title={L4(language, { ko: '데스크톱 모드로 강제 전환', en: 'Force desktop mode', ja: 'デスクトップモードに強制切替', zh: '强制切换到桌面模式' })}
             aria-label={L4(language, { ko: '데스크톱 모드 전환', en: 'Switch to desktop', ja: 'デスクトップに切替', zh: '切换桌面' })}
           >
@@ -609,7 +609,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         </div>
         <button
           onClick={onDesktopCTA}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent-purple/10 text-accent-purple border border-accent-purple/30 rounded-xl text-xs font-bold active:scale-98 transition-all min-h-[44px]"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent-purple/10 text-accent-purple border border-accent-purple/30 rounded-xl text-xs font-bold active:scale-98 transition-transform min-h-[44px]"
         >
           <BookOpen className="w-4 h-4" />
           {L4(language, {

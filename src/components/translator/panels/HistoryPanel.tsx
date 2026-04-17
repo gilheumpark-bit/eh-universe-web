@@ -99,7 +99,7 @@ export function HistoryPanel() {
                       <button
                         type="button"
                         onClick={() => restore(item)}
-                        className={`text-[11px] flex items-center gap-1 shrink-0 transition-all duration-200 ${
+                        className={`text-[11px] flex items-center gap-1 shrink-0 transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                           restoredId === item.time
                             ? 'text-accent-green font-bold'
                             : 'text-accent-purple hover:underline'

@@ -84,7 +84,7 @@ export function TranslatorShellInner() {
           </div>
           {/* Desktop: inline */}
           <div
-            className="hidden lg:flex shrink-0 z-90 relative border-r border-border bg-bg-secondary/60 backdrop-blur-2xl transition-all duration-300 ease-out"
+            className="hidden lg:flex shrink-0 z-90 relative border-r border-border bg-bg-secondary/60 backdrop-blur-2xl transition-[transform,opacity,background-color,border-color,color] duration-300 ease-out"
             style={{ width: layout.leftSidebarWidth }}
           >
             <TranslatorPanelManager region="left" />
@@ -122,7 +122,7 @@ export function TranslatorShellInner() {
             style={{ marginLeft: -3, marginRight: -3 }}
           />
           <div
-            className="hidden lg:flex shrink-0 border-l border-border z-90 bg-bg-secondary/60 backdrop-blur-2xl transition-all duration-300 ease-out"
+            className="hidden lg:flex shrink-0 border-l border-border z-90 bg-bg-secondary/60 backdrop-blur-2xl transition-[transform,opacity,background-color,border-color,color] duration-300 ease-out"
             style={{ width: layout.rightSidebarWidth }}
           >
             <TranslatorPanelManager region="right" />

@@ -40,7 +40,7 @@ function LoadBar({ fn }: { fn: FunctionMetrics }) {
       </div>
       <div className="mt-1 h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${colorClass}`}
+          className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${colorClass}`}
           style={{ width: `${Math.min(fn.score, 100)}%` }}
         />
       </div>

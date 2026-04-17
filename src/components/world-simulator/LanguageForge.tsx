@@ -252,7 +252,7 @@ export function LanguageForge({
           { id: "compose" as const, ko: "문장 합성", en: "Compose" },
         ]).map(st => (
           <button key={st.id} onClick={() => setSubTab(st.id)}
-            className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider uppercase transition-all ${
+            className={`px-3 py-1.5 rounded text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider uppercase transition-[transform,opacity,background-color,border-color,color] ${
               subTab === st.id ? "bg-accent-purple text-white" : "bg-bg-primary text-text-tertiary border border-border hover:text-text-secondary"
             }`}>
             {L4(lang, st)}
@@ -291,7 +291,7 @@ export function LanguageForge({
                     const meta = SIG_CLASS_META[ph.sigClass];
                     return (
                       <button key={ph.id} onClick={() => playPhoneme(ph)}
-                        className={`relative px-2.5 py-2 rounded border text-xs font-bold transition-all ${
+                        className={`relative px-2.5 py-2 rounded border text-xs font-bold transition-[transform,opacity,background-color,border-color,color] ${
                           playingId === ph.id ? "ring-2 ring-accent-purple scale-105" : ""
                         }`}
                         style={{ borderColor: meta.color, color: meta.color, background: `${meta.color}10` }}
@@ -313,7 +313,7 @@ export function LanguageForge({
                     const meta = SIG_CLASS_META[ph.sigClass];
                     return (
                       <button key={ph.id} onClick={() => playPhoneme(ph)}
-                        className={`relative px-2.5 py-2 rounded border text-xs font-bold transition-all ${
+                        className={`relative px-2.5 py-2 rounded border text-xs font-bold transition-[transform,opacity,background-color,border-color,color] ${
                           playingId === ph.id ? "ring-2 ring-accent-purple scale-105" : ""
                         }`}
                         style={{ borderColor: meta.color, color: meta.color, background: `${meta.color}10` }}
@@ -390,7 +390,7 @@ export function LanguageForge({
                 <div className="flex flex-wrap gap-1">
                   {phonemes.filter(p => p.sigClass !== "silent").map(ph => (
                     <button key={ph.id} onClick={() => { setWordPhBuf(prev => [...prev, ph.id]); playPhoneme(ph); }}
-                      className="px-2 py-1 rounded border text-[10px] font-bold hover:scale-105 transition-all"
+                      className="px-2 py-1 rounded border text-[10px] font-bold hover:scale-105 transition-transform"
                       style={{ borderColor: SIG_CLASS_META[ph.sigClass].color, color: SIG_CLASS_META[ph.sigClass].color }}>
                       {ph.symbol}
                     </button>

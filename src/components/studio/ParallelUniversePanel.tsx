@@ -233,7 +233,7 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
               key={br}
               onClick={() => onSwitchBranch(br)}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px]
-                font-mono transition-all min-h-[28px]
+                font-mono transition-[transform,opacity,background-color,border-color,color] min-h-[28px]
                 ${isActive
                   ? 'bg-accent-amber/15 border border-accent-amber/40 text-text-primary'
                   : 'bg-bg-tertiary/40 border border-border text-text-secondary hover:bg-bg-tertiary'

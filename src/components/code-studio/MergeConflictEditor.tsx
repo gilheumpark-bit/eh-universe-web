@@ -216,7 +216,7 @@ export default function MergeConflictEditor({
       <div className="border-t border-white/5 px-4 py-2">
         <div className="h-1 w-full rounded-full bg-white/10">
           <div
-            className={`h-full rounded-full transition-all duration-300 ${allResolved ? "bg-green-500" : "bg-accent-amber"}`}
+            className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300 ${allResolved ? "bg-green-500" : "bg-accent-amber"}`}
             style={{ width: `${totalCount > 0 ? (resolvedCount / totalCount) * 100 : 0}%` }}
           />
         </div>

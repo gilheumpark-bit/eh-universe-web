@@ -351,7 +351,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             <button
               key={p.id}
               onClick={() => applyPreset(p)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-bg-primary border border-border hover:border-accent-amber/40 hover:bg-accent-amber/5 transition-all group"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-bg-primary border border-border hover:border-accent-amber/40 hover:bg-accent-amber/5 transition-colors group"
               title={L4(language, p.desc)}
             >
               <span>{p.emoji}</span>
@@ -368,7 +368,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             <button
               key={g.key}
               onClick={() => toggleGoal(g.key)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
                 s.sceneGoals.includes(g.key)
                   ? 'bg-accent-purple text-white'
                   : 'bg-bg-primary text-text-tertiary hover:text-text-primary border border-border'
@@ -478,7 +478,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             { key: 'platformPreset' as const, tKey: 'advancedWritingExtra.refPlatformPreset' },
           ]).map(r => (
             <button key={r.key} onClick={() => updateRef(r.key, !s.references[r.key])}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
                 s.references[r.key]
                   ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
                   : 'bg-bg-primary text-text-tertiary border border-border'
@@ -500,7 +500,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             { key: 'bannedWords' as const, tKey: 'advancedWritingExtra.lockBannedWords' },
           ]).map(lk => (
             <button key={lk.key} onClick={() => updateLock(lk.key, !s.locks[lk.key])}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
                 s.locks[lk.key]
                   ? 'bg-red-500/15 text-red-400 border border-red-500/20'
                   : 'bg-bg-primary text-text-tertiary border border-border'
@@ -516,7 +516,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
         <div className="flex flex-wrap gap-1.5">
           {OUTPUT_MODES.map(m => (
             <button key={m.key} onClick={() => update('outputMode', m.key)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
                 s.outputMode === m.key
                   ? 'bg-accent-purple text-white'
                   : 'bg-bg-primary text-text-tertiary border border-border hover:text-text-primary'

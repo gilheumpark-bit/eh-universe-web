@@ -151,7 +151,7 @@ export default function OnboardingGuide({
   ];
 
   return (
-    <div className={`mx-auto w-full max-w-2xl transition-all duration-700 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
+    <div className={`mx-auto w-full max-w-2xl transition-opacity duration-700 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
       {/* Premium Glass Container */}
       <div className="relative rounded-4xl border border-white/8 bg-linear-to-b from-bg-secondary/90 to-bg-primary/80 p-8 shadow-[0_32px_64px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur-xl md:p-10">
         {/* Decorative Glow */}
@@ -159,7 +159,7 @@ export default function OnboardingGuide({
         
         {/* Skip */}
         <button type="button" onClick={skip}
-          className="absolute right-5 top-5 p-2 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-white/5 transition-all"
+          className="absolute right-5 top-5 p-2 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-white/5 transition-colors"
           aria-label={L.skip}>
           <X className="h-4 w-4" />
         </button>
@@ -186,14 +186,14 @@ export default function OnboardingGuide({
                 type="button"
                 onClick={() => handleAction(key)}
                 style={{ animationDelay: `${idx * 100}ms` }}
-              className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 ${
+              className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-transform duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 ${
                   accent
                     ? "border-accent-purple/40 bg-linear-to-b from-accent-purple/15 to-accent-purple/5 hover:border-accent-purple/60 hover:shadow-[0_8px_32px_rgba(141,123,195,0.2)]"
                     : "border-white/8 bg-linear-to-b from-white/4 to-transparent hover:border-white/15 hover:bg-white/6 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                 }`}
               >
                 {/* Icon Container */}
-                <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-300 ${
+                <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                   accent 
                     ? "bg-accent-purple/20 text-accent-purple group-hover:bg-accent-purple/30 group-hover:shadow-[0_0_24px_rgba(141,123,195,0.3)]" 
                     : "bg-white/6 text-text-tertiary group-hover:text-text-primary group-hover:bg-white/10"
@@ -224,7 +224,7 @@ export default function OnboardingGuide({
                 )}
                 
                 {/* Arrow indicator */}
-                <span className={`mt-auto text-[10px] uppercase tracking-wider font-bold transition-all duration-300 ${
+                <span className={`mt-auto text-[10px] uppercase tracking-wider font-bold transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                   accent 
                     ? "text-accent-purple/60 group-hover:text-accent-purple" 
                     : "text-text-tertiary/40 group-hover:text-text-tertiary"
@@ -251,7 +251,7 @@ export default function OnboardingGuide({
                 const idx = DEMO_PRESETS.indexOf(preset);
                 return (
                   <button key={preset.id} type="button" onClick={() => handleDemoSelect(preset.id)}
-                    className={`group flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-all hover:scale-[1.02] active:scale-[0.98] bg-bg-primary/50 ${colors[idx] || 'border-border/50'}`}>
+                    className={`group flex flex-col items-center gap-3 rounded-2xl border p-5 text-center transition-transform hover:scale-[1.02] active:scale-[0.98] bg-bg-primary/50 ${colors[idx] || 'border-border/50'}`}>
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-text-tertiary group-hover:text-text-primary">
                       {icons[idx]}
                     </div>

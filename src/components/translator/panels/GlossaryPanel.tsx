@@ -118,7 +118,7 @@ export function GlossaryPanel() {
             placeholder="Search glossary..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-all pointer-events-auto"
+            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
           />
         </div>
       </div>
@@ -190,7 +190,7 @@ export function GlossaryPanel() {
               ) : (
                 <div
                   key={term}
-                  className="group relative flex flex-col gap-1 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-left"
+                  className="group relative flex flex-col gap-1 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors text-left"
                 >
                   <div className="flex items-start justify-between">
                     <span className="text-[14px] font-medium text-text-primary">{term}</span>

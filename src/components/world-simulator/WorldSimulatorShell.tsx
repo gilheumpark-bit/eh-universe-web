@@ -166,7 +166,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             <div className="flex flex-wrap gap-1">
               {RULE_LEVELS.map(rl => (
                 <button key={rl.lv} type="button" onClick={() => setRuleLevel(rl.lv)}
-                  className={`py-1.5 px-2 rounded text-[8px] font-bold border transition-all min-w-[60px] ${
+                  className={`py-1.5 px-2 rounded text-[8px] font-bold border transition-[transform,opacity,background-color,border-color,color] min-w-[60px] ${
                     ruleLevel === rl.lv
                       ? "text-white border-transparent"
                       : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
@@ -257,7 +257,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             <button
               key={tab.id}
               onClick={() => setActiveView(tab.id)}
-              className={`px-3 py-2 rounded-t text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider uppercase transition-all whitespace-nowrap ${
+              className={`px-3 py-2 rounded-t text-[10px] font-bold font-[family-name:var(--font-mono)] tracking-wider uppercase transition-[transform,opacity,background-color,border-color,color] whitespace-nowrap ${
                 activeView === tab.id
                   ? "bg-accent-purple/10 text-accent-purple border-b-2 border-accent-purple"
                   : "text-text-tertiary hover:text-text-secondary"

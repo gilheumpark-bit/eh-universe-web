@@ -252,7 +252,7 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 bg-bg-tertiary/50 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${
+                className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${
                   stats.charsNoSpace >= targetMin ? 'bg-accent-green' : stats.charsNoSpace >= targetMin * 0.5 ? 'bg-accent-purple' : 'bg-border'
                 }`}
                 style={{ width: `${Math.min(100, (stats.charsNoSpace / (targetMax || targetMin)) * 100)}%` }}

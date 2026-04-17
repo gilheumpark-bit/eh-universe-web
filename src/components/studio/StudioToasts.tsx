@@ -101,7 +101,7 @@ function ToastCard({
       {progress !== undefined && (
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
           <div 
-            className={`h-full ${v.progress} transition-all duration-100`} 
+            className={`h-full ${v.progress} transition-[transform,opacity,background-color,border-color,color] duration-100`} 
             style={{ width: `${progress}%`, opacity: 0.6 }}
           />
         </div>

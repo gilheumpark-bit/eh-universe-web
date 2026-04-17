@@ -24,7 +24,7 @@ export function WritingContextPanel({ config, language }: Props) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 w-8 h-20 bg-bg-secondary/80 backdrop-blur-sm border border-l-0 border-border rounded-r-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-all group"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-30 w-8 h-20 bg-bg-secondary/80 backdrop-blur-sm border border-l-0 border-border rounded-r-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors group"
           title={isKO ? '참조 패널' : 'Reference Panel'}
         >
           <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

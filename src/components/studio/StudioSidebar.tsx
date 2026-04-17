@@ -151,9 +151,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const projectManuscriptExportEnabled = (currentProject?.sessions?.length ?? 0) > 0;
 
   const exportButtonClass =
-    'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
+    'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-[transform,border-color,color,opacity] hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
   const languageButtonClass =
-    'rounded-full border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-all';
+    'rounded-full border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-[background-color,border-color,color]';
   const lastSyncLabel = lastSyncTime
     ? new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
@@ -186,7 +186,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
   return (
     <aside
-      className={`fixed md:relative inset-y-0 left-0 z-50 transition-transform duration-300 md:transition-all ${
+      className={`fixed md:relative inset-y-0 left-0 z-50 transition-transform duration-300 md:transition-[transform,width] ${
         focusMode
           ? '-translate-x-full md:translate-x-0 md:w-0'
           : isSidebarOpen
@@ -225,7 +225,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/4 text-text-secondary transition-all hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary md:hidden"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/4 text-text-secondary transition-[border-color,color] hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary md:hidden"
                 aria-label="Close sidebar"
               >
                 <X className="h-4.5 w-4.5" />
@@ -244,7 +244,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               {projects.length === 0 ? (
                 <button
                   onClick={createNewProject}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[rgba(202,161,92,0.28)] bg-[rgba(202,161,92,0.08)] py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-text-primary transition-all hover:-translate-y-0.5 hover:bg-[rgba(202,161,92,0.12)]"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[rgba(202,161,92,0.28)] bg-[rgba(202,161,92,0.08)] py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-text-primary transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-[rgba(202,161,92,0.12)]"
                 >
                   <Plus className="h-4 w-4" /> {t('project.newProject')}
                 </button>
@@ -262,7 +262,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     </select>
                     <button
                       onClick={createNewProject}
-                      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-all hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-[transform,border-color,color] hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
                       title={t('project.newProject')}
                     >
                       <Plus className="h-4 w-4" />
@@ -276,14 +276,14 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                           const name = window.prompt(t('project.renameProject'), currentProject.name);
                           if (name) renameProject(currentProject.id, name);
                         }}
-                        className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-all hover:border-[rgba(92,143,214,0.28)] hover:text-text-primary"
+                        className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-[border-color,color] hover:border-[rgba(92,143,214,0.28)] hover:text-text-primary"
                       >
                         {t('project.renameProject')}
                       </button>
                       {projects.length > 1 && (
                         <button
                           onClick={() => deleteProject(currentProject.id)}
-                          className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-all hover:border-accent-red/30 hover:text-accent-red"
+                          className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-[border-color,color] hover:border-accent-red/30 hover:text-accent-red"
                         >
                           {t('project.deleteProject')}
                         </button>
@@ -417,7 +417,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       onClick={() => handleTabChange(tab)}
                       className={`
                         group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left overflow-hidden
-                        transition-all duration-200 ease-out
+                        transition-[transform,background-color,border-color,box-shadow,color] duration-200 ease-out
                         ${isActive
                           ? `border ${c.active} backdrop-blur-sm`
                           : 'border border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary active:scale-[0.98]'
@@ -435,7 +435,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       <span
                         className={`
                           flex h-9 w-9 items-center justify-center rounded-xl border
-                          transition-all duration-200
+                          transition-[background-color,border-color,color] duration-200
                           ${isActive ? c.icon : 'border-white/8 bg-black/20 text-text-tertiary group-hover:border-white/12 group-hover:text-text-secondary'}
                         `}
                       >
@@ -487,7 +487,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   {showSessionList && orderedSessions.length > 1 && (
                     <button
                       onClick={() => { setBatchMode(prev => !prev); setSelectedSessionIds(new Set()); }}
-                      className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-all ${
+                      className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-[background-color,border-color,color] ${
                         batchMode ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/30' : 'text-text-tertiary border-white/8 hover:text-text-secondary'
                       }`}
                       title={language === 'KO' ? '일괄 선택 모드' : 'Batch select mode'}
@@ -540,7 +540,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                               },
                             });
                           }}
-                          className="px-2 py-1 rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-red-400 hover:bg-accent-red/10 active:animate-delete-warning transition-all duration-200"
+                          className="px-2 py-1 rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-red-400 hover:bg-accent-red/10 active:animate-delete-warning transition-[background-color,color] duration-200"
                           title={language === 'KO' ? '선택 삭제' : 'Delete selected'}
                         >
                           {language === 'KO' ? '삭제' : 'Del'}
@@ -607,7 +607,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                             setShowSessionList(false);
                           }
                         }}
-                        className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all border overflow-hidden ${
+                        className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-[background-color,border-color,box-shadow,color] border overflow-hidden ${
                           batchMode && selectedSessionIds.has(s.id)
                             ? 'border-accent-purple/30 bg-accent-purple/15 text-accent-purple shadow-[0_0_15px_rgba(141,123,195,0.1)]'
                             : currentSessionId === s.id
@@ -679,7 +679,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   />
                   <button
                     onClick={handleEpisodeJump}
-                    className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-all hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
+                    className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-[border-color,color] hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
                     title={language === 'KO' ? '이동' : 'Jump'}
                   >
                     <span className="text-[12px] font-black">↵</span>
@@ -720,7 +720,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                         onConfirm: () => { closeConfirm(); signOut(); },
                       })
                     }
-                    className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary transition-all hover:border-accent-red/30 hover:text-accent-red shrink-0"
+                    className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary transition-[border-color,color] hover:border-accent-red/30 hover:text-accent-red shrink-0"
                   >
                     {t('confirm.logout')}
                   </button>
@@ -735,7 +735,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     signInWithGoogle();
                   }}
                   aria-disabled={!canUseGoogleAuth}
-                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-all ${canUseGoogleAuth ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary' : 'cursor-not-allowed opacity-35'}`}
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-[transform,border-color,color,opacity] ${canUseGoogleAuth ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary' : 'cursor-not-allowed opacity-35'}`}
                 >
                   <Cloud className="h-4 w-4" /> {t('auth.googleLogin')}
                 </button>
@@ -746,7 +746,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   <button
                     onClick={handleSync}
                     disabled={syncStatus === 'syncing'}
-                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-all ${
+                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-[transform,background-color,border-color,color] ${
                       syncStatus === 'syncing'
                         ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-blue-400'
                         : syncStatus === 'done'
@@ -874,7 +874,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               <button
                 data-testid="tab-settings"
                 onClick={() => handleTabChange('settings')}
-                className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all ${
+                className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-[background-color,border-color,color] ${
                   activeTab === 'settings'
                     ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-text-primary'
                     : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
@@ -892,7 +892,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 {storageUsagePct > 60 && <span className="text-accent-amber">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
               </div>
               <div className="h-1 overflow-hidden rounded-full bg-white/8">
-                <div className={`h-full ${storageUsageColor} rounded-full transition-all`} style={{ width: `${storageUsagePct}%` }} />
+                <div className={`h-full ${storageUsageColor} rounded-full transition-[width,background-color]`} style={{ width: `${storageUsagePct}%` }} />
               </div>
             </div>
           </div>

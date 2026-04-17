@@ -47,7 +47,7 @@ export default function SplashScreen({
 
         {/* Badge */}
         <div
-          className={`transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+          className={`transition-opacity duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-bg-secondary/60 backdrop-blur-sm">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-amber/20 font-mono text-[8px] font-bold tracking-wider text-accent-amber">
@@ -66,7 +66,7 @@ export default function SplashScreen({
 
         {/* Headline */}
         <div
-          className={`text-center transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+          className={`text-center transition-opacity duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
           <h1 className="font-serif text-4xl sm:text-5xl font-bold text-text-primary leading-snug">
             {L4(lang, {
@@ -87,7 +87,7 @@ export default function SplashScreen({
           {/* Primary CTA — above the fold, instant action */}
           <button
             onClick={onStudio}
-            className="mt-6 px-8 min-h-[48px] rounded-xl bg-accent-amber text-[#1a1a1a] font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-all shadow-lg"
+            className="mt-6 px-8 min-h-[48px] rounded-xl bg-accent-amber text-[#1a1a1a] font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-[transform,background-color,border-color,color] shadow-lg"
           >
             {L4(lang, { ko: "바로 시작하기 →", en: "Start Now →", ja: "今すぐ始める →", zh: "立即开始 →" })}
           </button>
@@ -102,7 +102,7 @@ export default function SplashScreen({
                 finally { setLoginBusy(false); }
               }}
               disabled={loginBusy}
-              className="mt-3 inline-flex items-center justify-center gap-2 px-6 min-h-[44px] rounded-xl border border-border bg-bg-secondary/70 hover:bg-bg-secondary text-text-secondary hover:text-text-primary text-sm font-medium active:scale-[0.98] transition-all disabled:opacity-50"
+              className="mt-3 inline-flex items-center justify-center gap-2 px-6 min-h-[44px] rounded-xl border border-border bg-bg-secondary/70 hover:bg-bg-secondary text-text-secondary hover:text-text-primary text-sm font-medium active:scale-[0.98] transition-[transform,background-color,border-color,color] disabled:opacity-50"
             >
               <LogIn className="w-4 h-4" />
               {loginBusy
@@ -114,14 +114,14 @@ export default function SplashScreen({
 
         {/* Settings Bar */}
         <div
-          className={`w-full transition-all duration-700 delay-150 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full transition-opacity duration-700 delay-150 ${mounted ? 'opacity-100' : 'opacity-0'}`}
         >
           <UnifiedSettingsBar />
         </div>
 
         {/* Footer — 4언어 브랜드명 + 태그라인 */}
         <div
-          className={`flex flex-col items-center gap-1 transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+          className={`flex flex-col items-center gap-1 transition-opacity duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}
         >
           <p className="text-[11px] text-text-secondary font-mono tracking-[0.2em] uppercase">
             {L4(lang, {

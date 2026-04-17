@@ -49,7 +49,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { value: 'soft' as const, label: isKO ? '약 (Soft)' : 'Soft', activeClass: 'bg-text-tertiary/10 border-zinc-500/30 text-text-secondary', desc: isKO ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
           ]).map(({ value, label, activeClass, desc }) => (
             <button key={value} onClick={() => setConfig({ ...config, narrativeIntensity: value })}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-colors ${(config.narrativeIntensity || 'standard') === value ? activeClass : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'}`}
               title={desc}>
               <span>{label}</span>
               <span className="text-[8px] font-normal normal-case tracking-normal text-text-tertiary">{desc}</span>
@@ -76,7 +76,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                 if (preset) updates.guardrails = { min: preset.episodeLength.min, max: preset.episodeLength.max };
                 setConfig(prev => ({ ...prev, ...updates }));
               }}
-                className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${selected ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple' : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'}`}>
+                className={`px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-colors ${selected ? 'bg-accent-purple/10 border-accent-purple/40 text-accent-purple' : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'}`}>
                 {labels[pp] || pp}
               </button>
             );
@@ -95,15 +95,15 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.povCharacter')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.settingLabel')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.coreEmotion')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
         </div>
       </div>
 
@@ -213,7 +213,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               const isCurrentEp = i + 1 === config.episode;
               return (
                 <div key={i} className="flex-1 relative h-full group cursor-default">
-                  <div className={`absolute bottom-0 w-full rounded-t-sm transition-all duration-300 ${isCurrentEp ? 'bg-gradient-to-t from-blue-500 to-cyan-400' : 'bg-gradient-to-t from-blue-600/40 to-indigo-400/20'}`} style={{ height: `${height}%` }} />
+                  <div className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${isCurrentEp ? 'bg-gradient-to-t from-blue-500 to-cyan-400' : 'bg-gradient-to-t from-blue-600/40 to-indigo-400/20'}`} style={{ height: `${height}%` }} />
                   {isCurrentEp && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full" />}
                   <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[7px] px-1 py-0.5 rounded whitespace-nowrap">EP.{i + 1}: {height}%</div>
                 </div>
@@ -261,7 +261,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { label: tl('planningExtra.prism150'), preserve: 100, scale: 150 },
           ]).map(p => {
             const isActive = (config.prismPreserve ?? 100) === p.preserve && (config.prismScale ?? 120) === p.scale;
-            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-mono ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
+            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors font-mono ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
           })}
         </div>
       </div>
@@ -279,7 +279,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { key: 'CUSTOM' as const, label: tl('planningExtra.prismModeCustom'), desc: tl('planningExtra.prismModeCustomDesc') },
           ]).map(pm => (
             <button key={pm.key} onClick={() => setConfig({ ...config, prismMode: pm.key })}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all font-mono ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors font-mono ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
               title={pm.desc}>{pm.label}</button>
           ))}
         </div>
@@ -429,7 +429,7 @@ function WorldBuildingGuide({ language, config }: { language: AppLanguage; confi
             <div className="flex items-center gap-2 pt-1">
               <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-accent-amber to-emerald-400"
+                  className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 bg-gradient-to-r from-accent-amber to-emerald-400"
                   style={{ width: `${Math.round((totalFilled / totalFields) * 100)}%` }}
                 />
               </div>

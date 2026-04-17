@@ -180,12 +180,12 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const navLinkClass = (active: boolean) =>
     stellarWhite
-      ? `rounded-none border-0 border-b-2 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+      ? `rounded-none border-0 border-b-2 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-amber-200 font-bold text-amber-200"
             : "border-transparent font-medium text-stone-400 hover:bg-white/5 hover:text-stone-200"
         }`
-      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold border-b-2 border-b-accent-amber"
             : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
@@ -227,20 +227,20 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const exploreBtnClass = (active: boolean) =>
     stellarWhite
-      ? `rounded-full border-0 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+      ? `rounded-full border-0 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "font-bold text-amber-200 underline decoration-amber-200/80 decoration-2 underline-offset-8"
             : "font-medium text-stone-400 hover:bg-white/5 hover:text-stone-200"
         }`
-      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-all duration-150 ${
+      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold"
             : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
         }`;
 
   const toolsBtnClass = stellarWhite
-    ? "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-stone-400 transition-all hover:bg-white/5 hover:text-stone-200"
-    : "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-all hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
+    ? "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-stone-400 transition-colors hover:bg-white/5 hover:text-stone-200"
+    : "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-colors hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
 
   return (
     <header
@@ -448,7 +448,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
       {/* Mobile menu — overflow-y-auto로 모든 링크 스크롤 접근 보장 */}
       <div
         aria-hidden={!menuOpen}
-        className={`site-shell md:hidden transition-all duration-200 ease-out ${
+        className={`site-shell md:hidden transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out ${
           menuOpen ? "max-h-[75dvh] overflow-y-auto overflow-x-hidden opacity-100" : "max-h-0 overflow-hidden opacity-0 pointer-events-none"
         }`}
       >

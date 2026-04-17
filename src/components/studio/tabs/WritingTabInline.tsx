@@ -591,7 +591,7 @@ export default function WritingTabInline(props: Props) {
             <button
               type="button"
               onClick={() => setSplitView(splitView ? null : 'reference')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ml-auto ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-[transform,opacity,background-color,border-color,color] ml-auto ${
                 splitView
                   ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber shadow-sm'
                   : 'border-border bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary hover:border-accent-amber/30'
@@ -672,7 +672,7 @@ export default function WritingTabInline(props: Props) {
                     <button
                       type="button"
                       onClick={() => setActiveTab('manuscript')}
-                      className="flex-1 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent-purple/5 to-accent-blue/5 border border-transparent rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-all group"
+                      className="flex-1 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent-purple/5 to-accent-blue/5 border border-transparent rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-[box-shadow] group"
                       style={{ backgroundClip: 'padding-box', boxShadow: 'inset 0 0 0 1px rgba(139,92,246,0.25)' }}
                     >
                       <span className="text-lg">🎬</span>
@@ -694,7 +694,7 @@ export default function WritingTabInline(props: Props) {
                     <button
                       type="button"
                       onClick={() => setActiveTab('manuscript')}
-                      className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-accent-amber/5 to-accent-green/5 border border-accent-amber/20 rounded-xl hover:border-accent-amber/40 transition-all group"
+                      className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-accent-amber/5 to-accent-green/5 border border-accent-amber/20 rounded-xl hover:border-accent-amber/40 transition-colors group"
                     >
                       <span className="text-lg">📻</span>
                       <div className="text-left">
@@ -855,7 +855,7 @@ export default function WritingTabInline(props: Props) {
                     onChange={setEditDraft}
                     onSelectionChange={setNovelSelection}
                     placeholder={isKO ? '여기에 이야기를 써 내려가세요... (TXT/MD 파일을 끌어다 놓을 수도 있어요)' : 'Start writing here... (or drag & drop a TXT/MD file)'}
-                    className="w-full bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl md:text-lg tracking-wide focus-within:border-accent-amber/40 focus-within:shadow-[0_0_32px_rgba(202,161,92,0.14)] transition-all"
+                    className="w-full bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl md:text-lg tracking-wide focus-within:border-accent-amber/40 focus-within:shadow-[0_0_32px_rgba(202,161,92,0.14)] transition-[box-shadow]"
                   />
                 </div>
                 <InlineActionPopup
@@ -976,7 +976,7 @@ export default function WritingTabInline(props: Props) {
                 <textarea
                   value={canvasContent}
                   onChange={e => setCanvasContent(e.target.value)}
-                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] resize-none"
                   placeholder={canvasPass === 0
                     ? (isKO ? '장면의 뼈대를 작성하세요... (등장인물, 핵심 사건, 분위기)' : 'Write scene skeleton... (characters, events, mood)')
                     : (isKO ? '노아가 집필 중...' : 'NOA is writing...')}
@@ -1033,7 +1033,7 @@ export default function WritingTabInline(props: Props) {
                 <textarea
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
-                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] resize-none"
                   placeholder={isKO ? '다듬을 원고를 붙여넣으세요...' : 'Paste your manuscript to refine...'}
                 />
               </div>
@@ -1050,7 +1050,7 @@ export default function WritingTabInline(props: Props) {
                   ref={editDraftRef}
                   value={editDraft}
                   onChange={e => setEditDraft(e.target.value)}
-                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-red outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
+                  className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-red outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] resize-none"
                   placeholder={isKO ? '고급 모드에서 직접 작성하세요...' : 'Write directly in advanced mode...'}
                 />
               </div>
@@ -1072,13 +1072,13 @@ export default function WritingTabInline(props: Props) {
                   { ko: '감정적인 대화 장면으로', en: 'An emotional dialogue scene', ja: '感情的な対話シーンで', zh: '一段感人的对话场景' },
                 ].map((chip, i) => (
                   <button key={i} type="button" onClick={() => setInput(L4(language, chip))}
-                    className="px-3 py-1.5 rounded-xl border border-border/60 bg-bg-tertiary/30 text-[13px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all min-h-[44px]">
+                    className="px-3 py-1.5 rounded-xl border border-border/60 bg-bg-tertiary/30 text-[13px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-colors min-h-[44px]">
                     {L4(language, chip)}
                   </button>
                 ))}
               </div>
             )}
-            <div className="relative group bg-bg-secondary border border-border rounded-2xl shadow-2xl focus-within:border-accent-purple/30 transition-all p-2 pl-4 flex items-end">
+            <div className="relative group bg-bg-secondary border border-border rounded-2xl shadow-2xl focus-within:border-accent-purple/30 transition-[transform,opacity,background-color,border-color,color] p-2 pl-4 flex items-end">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -1091,7 +1091,7 @@ export default function WritingTabInline(props: Props) {
               <button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isGenerating || showAiLock}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 ${input.trim() && !isGenerating && !showAiLock ? 'bg-accent-purple text-bg-primary shadow-lg hover:scale-[1.02] active:scale-95' : 'bg-bg-tertiary text-text-tertiary opacity-50'}`}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-[transform,opacity] shrink-0 ${input.trim() && !isGenerating && !showAiLock ? 'bg-accent-purple text-bg-primary shadow-lg hover:scale-[1.02] active:scale-95' : 'bg-bg-tertiary text-text-tertiary opacity-50'}`}
               >
                 {isGenerating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
               </button>

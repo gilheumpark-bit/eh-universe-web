@@ -257,7 +257,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             ))}
           </select>
           <div className="relative">
-            <button onClick={() => setShowPresetMenu(v => !v)} className="flex items-center gap-2 px-4 py-2 bg-accent-amber/10 text-accent-amber border border-accent-amber/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent-amber/20 transition-all active:scale-95 shadow-[0_0_10px_rgba(255,200,50,0.1)]">
+            <button onClick={() => setShowPresetMenu(v => !v)} className="flex items-center gap-2 px-4 py-2 bg-accent-amber/10 text-accent-amber border border-accent-amber/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent-amber/20 transition-[transform,background-color,border-color,box-shadow,color] active:scale-95 shadow-[0_0_10px_rgba(255,200,50,0.1)]">
               <Shuffle className="w-3.5 h-3.5" /> {tl('planningExtra.preset')}
             </button>
             {showPresetMenu && (
@@ -286,12 +286,12 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             )}
           </div>
           <button onClick={handleAIGenerate} disabled={aiGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-accent-amber/60 shadow-[0_5px_15px_rgba(255,200,50,0.2)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] text-white border border-accent-amber/60 shadow-[0_5px_15px_rgba(255,200,50,0.2)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-[transform,opacity] active:scale-95 disabled:opacity-50">
             {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
             {aiGenerating ? tl('planningExtra.aiGenerating') : tl('planningExtra.aiGenerate')}
           </button>
           <button onClick={handleReset} disabled={aiGenerating}
-            className="flex items-center gap-1.5 px-3 py-2 bg-bg-secondary border border-border rounded-xl text-[10px] font-bold text-text-tertiary hover:text-accent-red hover:border-accent-red/40 transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 bg-bg-secondary border border-border rounded-xl text-[10px] font-bold text-text-tertiary hover:text-accent-red hover:border-accent-red/40 transition-[transform,background-color,border-color,color] active:scale-95 disabled:opacity-50"
             title={isKO ? '세계관 초기화' : 'Reset World'}
           >
             <RotateCcw className="w-3 h-3" />
@@ -304,7 +304,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.projectTitle}</label>
             <input
-              className="w-full bg-bg-tertiary/60 border border-accent-amber/15 rounded-xl p-4 text-sm font-bold focus:border-accent-amber/60 focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all"
+              className="w-full bg-bg-tertiary/60 border border-accent-amber/15 rounded-xl p-4 text-sm font-bold focus:border-accent-amber/60 focus:shadow-[0_0_15px_rgba(255,200,50,0.1)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[box-shadow]"
               aria-label={t.projectTitle}
               maxLength={200}
               value={config.title}
@@ -334,7 +334,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               setAdvancedMode(next);
               try { localStorage.setItem('noa_planning_advanced', String(next)); } catch { /* quota/private */ }
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] border ${
               advancedMode
                 ? 'border-accent-amber/30 bg-accent-amber/10 text-accent-amber shadow-[0_0_10px_rgba(255,200,50,0.1)]'
                 : 'border-accent-amber/10 bg-bg-secondary text-text-tertiary hover:border-accent-amber/30 hover:text-accent-amber'
@@ -364,7 +364,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               type="number"
               min={1}
               max={500}
-              className={`w-full bg-bg-tertiary border rounded-xl p-4 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all ${
+              className={`w-full bg-bg-tertiary border rounded-xl p-4 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] ${
                 totalEpisodes < 1 || totalEpisodes > 500
                   ? 'border-red-500/60 focus:border-red-500 text-red-400'
                   : 'border-border focus:border-blue-600'
@@ -389,7 +389,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <div className="flex gap-3">
               <button
                 onClick={() => setConfig({ ...config, platform: PlatformType.MOBILE })}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] ${
                   config.platform === PlatformType.MOBILE
                     ? 'bg-accent-amber/15 border-accent-amber/50 text-accent-amber shadow-sm'
                     : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'
@@ -399,7 +399,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               </button>
               <button
                 onClick={() => setConfig({ ...config, platform: PlatformType.WEB })}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border text-xs font-black uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] ${
                   config.platform === PlatformType.WEB
                     ? 'bg-accent-amber/15 border-accent-amber/50 text-accent-amber shadow-sm'
                     : 'bg-bg-tertiary border-border text-text-tertiary hover:text-text-secondary'
@@ -420,7 +420,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           </span>
           {(['OFF', 'FREE', 'ALL', 'T15', 'M18'] as const).map(mode => (
             <button key={mode} onClick={() => setConfig({ ...config, prismMode: mode })}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest font-mono border transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest font-mono border transition-[transform,opacity,background-color,border-color,color] ${
                 (config.prismMode ?? 'OFF') === mode
                   ? 'bg-blue-600/20 border-blue-500/40 text-blue-400'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-secondary'
@@ -439,7 +439,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
       )}
 
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-        <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-[linear-gradient(45deg,rgba(180,120,20,0.8),rgba(255,200,50,1))] text-white border border-[rgba(255,220,100,0.6)] rounded-2xl font-black hover:scale-[1.02] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,200,50,0.3)]">
+        <button onClick={onStart} className="flex items-center gap-3 md:gap-4 px-8 py-4 text-lg md:px-12 md:py-6 md:text-xl bg-[linear-gradient(45deg,rgba(180,120,20,0.8),rgba(255,200,50,1))] text-white border border-[rgba(255,220,100,0.6)] rounded-2xl font-black hover:scale-[1.02] active:scale-95 transition-transform shadow-[0_10px_30px_rgba(255,200,50,0.3)]">
           <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
           {startLabel ?? t.commence}
         </button>
@@ -476,7 +476,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               window.prompt(language === 'KO' ? '클립보드 접근이 거부됐습니다. 아래 링크를 직접 복사하세요:' : 'Clipboard access denied. Copy the link below:', url);
             });
           }}
-          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color]"
         >
           {shareCopied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
           {shareCopied
@@ -496,7 +496,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(planetPayload))));
             router.push(`/network/new?import=${encoded}`);
           }}
-          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color]"
         >
           <Globe className="w-4 h-4" />
           {isKO ? '행성으로 등록' : 'Register as Planet'}

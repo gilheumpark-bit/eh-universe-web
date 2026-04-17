@@ -229,7 +229,7 @@ function getEmotionEmoji(emotion?: Emotion): string {
 
 function CharacterDisplay({ name, emotion, side }: { name: string; emotion?: Emotion; side: "left" | "right" }) {
   return (
-    <div className={`absolute bottom-32 ${side === "left" ? "left-8" : "right-8"} flex flex-col items-center gap-1 transition-all duration-300`}>
+    <div className={`absolute bottom-32 ${side === "left" ? "left-8" : "right-8"} flex flex-col items-center gap-1 transition-[transform,opacity,background-color,border-color,color] duration-300`}>
       <div className="text-3xl">{getEmotionEmoji(emotion)}</div>
       <div className="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
         <span className="text-xs font-mono text-accent-purple">{name}</span>
@@ -781,7 +781,7 @@ export default function ScenePlayer({
         <>
           {/* 캐릭터 이미지 (있으면) */}
           {characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ? (
-            <div className="absolute bottom-32 left-8 transition-all duration-500">
+            <div className="absolute bottom-32 left-8 transition-[transform,opacity,background-color,border-color,color] duration-500">
               <img
                 src={characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ?? ''}
                 alt={currentBeat.speaker}
@@ -804,7 +804,7 @@ export default function ScenePlayer({
         <div className="flex items-center gap-2">
           <span className="text-[9px] text-text-tertiary font-mono">{currentGlobalBeat}/{totalBeats}</span>
           <div className="flex-1 h-1 bg-bg-tertiary/50 rounded-full overflow-hidden">
-            <div className="h-full bg-accent-purple rounded-full transition-all duration-300" style={{ width: `${(currentGlobalBeat / totalBeats) * 100}%` }} />
+            <div className="h-full bg-accent-purple rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300" style={{ width: `${(currentGlobalBeat / totalBeats) * 100}%` }} />
           </div>
           <span className="text-[9px] text-text-tertiary font-mono">{Math.round((currentGlobalBeat / totalBeats) * 100)}%</span>
         </div>
@@ -837,7 +837,7 @@ export default function ScenePlayer({
       {/* 진행률 바 */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-bg-primary/30">
         <div
-          className="h-full bg-accent-purple/60 transition-all duration-300"
+          className="h-full bg-accent-purple/60 transition-[transform,opacity,background-color,border-color,color] duration-300"
           style={{ width: `${(currentGlobalBeat / totalBeats) * 100}%` }}
         />
       </div>

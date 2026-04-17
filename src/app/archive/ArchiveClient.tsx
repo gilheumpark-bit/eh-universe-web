@@ -263,7 +263,7 @@ export default function ArchiveClient() {
       <main className="min-h-screen pt-20 eh-page-canvas">
         {/* 모바일 사이드바 토글 — safe-area 홈바 보호 + 44px 터치 타겟 */}
         <button
-          className="fixed right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 text-accent-amber shadow-lg backdrop-blur-xl active:scale-95 transition-all flex items-center justify-center min-w-[44px] min-h-[44px]"
+          className="fixed right-4 z-40 md:hidden rounded-full border border-accent-amber/20 bg-accent-amber/15 text-accent-amber shadow-lg backdrop-blur-xl active:scale-95 transition-transform flex items-center justify-center min-w-[44px] min-h-[44px]"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle sidebar"
@@ -312,7 +312,7 @@ export default function ArchiveClient() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder={L4(lang, { ko: "문서 검색...", en: "Search documents...", ja: "文書検索...", zh: "搜索文档..." })}
-                    className="w-full px-4 py-2.5 bg-bg-primary/80 border border-border/50 rounded-xl text-sm text-text-primary placeholder-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50 focus:shadow-[0_0_16px_rgba(141,123,195,0.1)] transition-all font-mono"
+                    className="w-full px-4 py-2.5 bg-bg-primary/80 border border-border/50 rounded-xl text-sm text-text-primary placeholder-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50 focus:shadow-[0_0_16px_rgba(141,123,195,0.1)] transition-[box-shadow] font-mono"
                   />
                 </div>
               </div>
@@ -332,7 +332,7 @@ export default function ArchiveClient() {
                   return (
                     <button key={cat.id} onClick={() => changeCategory(cat.id)}
                       aria-current={isActive ? "true" : undefined}
-                      className={`w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm transition-all active:scale-[0.98] ${
+                      className={`w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm transition-transform active:scale-[0.98] ${
                         isActive
                           ? `${ct.bgColor} border ${ct.borderColor} shadow-sm`
                           : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/50'
@@ -363,7 +363,7 @@ export default function ArchiveClient() {
                   { href: '/tools/galaxy-map', icon: '🌌', label: t('archivePage.galaxyZoneGateMap') },
                 ].map(tool => (
                   <Link key={tool.href} href={tool.href}
-                    className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-xs text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary/50 transition-all group">
+                    className="flex items-center gap-2.5 py-2 px-3 rounded-xl text-xs text-text-secondary hover:text-accent-purple hover:bg-bg-tertiary/50 transition-colors group">
                     <span>{tool.icon}</span>
                     <span className="font-mono text-[11px] tracking-wide group-hover:text-accent-purple">{tool.label}</span>
                   </Link>
@@ -373,7 +373,7 @@ export default function ArchiveClient() {
               {/* 스튜디오 복귀 */}
               <div className="mt-4 pt-4 border-t border-border/40">
                 <Link href="/studio"
-                  className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-xs font-bold text-accent-amber bg-accent-amber/10 border border-accent-amber/20 hover:bg-accent-amber/20 transition-all">
+                  className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl text-xs font-bold text-accent-amber bg-accent-amber/10 border border-accent-amber/20 hover:bg-accent-amber/20 transition-colors">
                   <span>{'<-'}</span>
                   <span className="font-mono uppercase tracking-wider">
                     {L4(lang, { ko: '스튜디오로 돌아가기', en: 'Back to Studio', ja: 'スタジオに戻る', zh: '返回工作室' })}
@@ -411,7 +411,7 @@ export default function ArchiveClient() {
                     const ls = LEVEL_STYLES[article.level] || LEVEL_STYLES.PUBLIC;
                     return (
                       <Link key={article.slug} href={`/archive/${article.slug}`}
-                        className={`group flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-bg-secondary/50 hover:bg-bg-secondary hover:border-border/60 transition-all hover-lift border-l-[3px] ${ls.border}`}>
+                        className={`group flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-bg-secondary/50 hover:bg-bg-secondary hover:border-border/60 transition-colors hover-lift border-l-[3px] ${ls.border}`}>
                         <div className="flex-1 min-w-0">
                           <span className="text-[9px] font-mono uppercase tracking-wider text-text-tertiary">{article.categoryLabel}</span>
                           <p className="text-sm font-medium text-text-primary group-hover:text-accent-purple transition-colors truncate mt-0.5">
@@ -437,7 +437,7 @@ export default function ArchiveClient() {
                     return (
                       <Link key={article.slug} href={href}
                         aria-label={`${L2(article.title, lang)} — ${article.level}`}
-                        className={`group flex items-center gap-4 p-4 rounded-xl border border-border/30 bg-bg-secondary/40 hover:bg-bg-secondary/80 hover:border-border/60 transition-all hover-lift border-l-[3px] ${ls.border}`}
+                        className={`group flex items-center gap-4 p-4 rounded-xl border border-border/30 bg-bg-secondary/40 hover:bg-bg-secondary/80 hover:border-border/60 transition-colors hover-lift border-l-[3px] ${ls.border}`}
                       >
                         {/* 번호 */}
                         <span className="w-6 text-center text-[10px] font-mono font-bold text-text-quaternary shrink-0">
@@ -455,7 +455,7 @@ export default function ArchiveClient() {
                         <BadgeLevel level={article.level} />
 
                         {/* 화살표 */}
-                        <span className="text-text-quaternary group-hover:text-text-secondary group-hover:translate-x-0.5 transition-all text-xs shrink-0">
+                        <span className="text-text-quaternary group-hover:text-text-secondary group-hover:translate-x-0.5 transition-[transform,background-color,border-color,color] text-xs shrink-0">
                           {'->'}
                         </span>
                       </Link>

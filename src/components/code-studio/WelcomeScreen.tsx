@@ -69,7 +69,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
       </div>
 
       <div
-        className={`relative z-10 flex flex-col items-center gap-10 px-6 py-12 transition-all duration-700 ease-out ${
+        className={`relative z-10 flex flex-col items-center gap-10 px-6 py-12 transition-[transform,opacity,background-color,border-color,color] duration-700 ease-out ${
           visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
         }`}
       >
@@ -94,7 +94,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {/* Primary CTA */}
           <button
             onClick={primaryAction}
-            className="group relative flex w-full items-center gap-5 rounded-2xl border border-border bg-linear-to-b from-bg-secondary/80 to-bg-secondary/30 px-8 py-6 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:border-accent-green/30 hover:shadow-[0_16px_48px_rgba(0,0,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50"
+            className="group relative flex w-full items-center gap-5 rounded-2xl border border-border bg-linear-to-b from-bg-secondary/80 to-bg-secondary/30 px-8 py-6 backdrop-blur-md transition-[transform,background-color,border-color,box-shadow,color] duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:border-accent-green/30 hover:shadow-[0_16px_48px_rgba(0,0,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50"
           >
             <div className={`rounded-2xl border border-border p-4 ${primaryAccent} group-hover:scale-110 transition-transform duration-300`}>
               {primaryIcon}
@@ -107,7 +107,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
                 {primaryDesc}
               </div>
             </div>
-            <span className="text-text-tertiary group-hover:text-accent-green group-hover:translate-x-1 transition-all duration-300">
+            <span className="text-text-tertiary group-hover:text-accent-green group-hover:translate-x-1 transition-[transform,background-color,border-color,color] duration-300">
               &rarr;
             </span>
           </button>
@@ -115,7 +115,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {/* Secondary CTA */}
           <button
             onClick={onNewFile}
-            className="group flex w-full items-center justify-center gap-4 rounded-xl border border-border bg-bg-secondary/30 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/30 hover:bg-accent-green/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
+            className="group flex w-full items-center justify-center gap-4 rounded-xl border border-border bg-bg-secondary/30 px-6 py-4 backdrop-blur-md transition-colors duration-300 hover:border-accent-green/30 hover:bg-accent-green/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
           >
             <div className="p-2 rounded-xl bg-accent-green/10 group-hover:bg-accent-green/20 transition-colors">
               <Code2 className="h-5 w-5 text-accent-green" />
@@ -130,7 +130,7 @@ export default function WelcomeScreen({ onNewFile, onOpenDemo, onBlankProject, o
           {onQuickVerify && (
             <button
               onClick={onQuickVerify}
-              className="group flex w-full items-center justify-center gap-4 rounded-xl border border-accent-green/20 bg-accent-green/5 px-6 py-4 backdrop-blur-md transition-all duration-300 hover:border-accent-green/40 hover:bg-accent-green/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
+              className="group flex w-full items-center justify-center gap-4 rounded-xl border border-accent-green/20 bg-accent-green/5 px-6 py-4 backdrop-blur-md transition-colors duration-300 hover:border-accent-green/40 hover:bg-accent-green/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/30"
             >
               <div className="p-2 rounded-xl bg-accent-green/15 group-hover:bg-accent-green/25 transition-colors">
                 <Shield className="h-5 w-5 text-accent-green" />

@@ -140,7 +140,7 @@ function AnimatedProgressBar({ status, score }: { status: ProgressStatus; score:
   return (
     <div className="w-full h-1.5 bg-bg-secondary rounded-full overflow-hidden">
       <div
-        className={`h-full rounded-full transition-all duration-700 ease-out ${barColor} ${
+        className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-700 ease-out ${barColor} ${
           status === "running" ? "animate-pulse opacity-70" : ""
         } ${status === "pending" ? "opacity-0" : ""}`}
         style={{ width: `${width}%` }}
@@ -436,7 +436,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
           {liveRunning && (
             <div className="mt-1.5 w-full h-0.5 bg-bg-secondary rounded-full overflow-hidden">
               <div
-                className="h-full bg-accent-blue rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-accent-blue rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300 ease-out"
                 style={{ width: `${(completedTeams / TEAM_ORDER.length) * 100}%` }}
               />
             </div>
@@ -457,7 +457,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                 <div key={stageKey} className="flex flex-col">
                   <button
                     onClick={() => setExpandedTeam(isExpanded ? null : stageKey)}
-                    className={`p-2 rounded-lg border transition-all ${
+                    className={`p-2 rounded-lg border transition-[transform,opacity,background-color,border-color,color] ${
                       stage.status === "pass" ? "border-green-500/30 hover:border-green-500/60" :
                       stage.status === "warn" ? "border-accent-amber/30 hover:border-accent-amber/60" :
                       stage.status === "fail" ? "border-accent-red/30 hover:border-accent-red/60" :
@@ -470,7 +470,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                       <TeamStatusIcon status={stage.status} />
                     </div>
                     <div className="w-full h-1.5 bg-bg-secondary rounded-full overflow-hidden mb-1">
-                      <div className={`h-full rounded-full transition-all duration-500 ${stage.score >= 80 ? "bg-accent-green" : stage.score >= 60 ? "bg-accent-amber" : "bg-accent-red"}`}
+                      <div className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${stage.score >= 80 ? "bg-accent-green" : stage.score >= 60 ? "bg-accent-amber" : "bg-accent-red"}`}
                         style={{ width: `${stage.score}%` }} />
                     </div>
                     <div className="flex items-center justify-between">

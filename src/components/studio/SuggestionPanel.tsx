@@ -85,7 +85,7 @@ export default function SuggestionPanel({ suggestions, onDismiss, onNavigate, la
         return (
           <div
             key={sg.id}
-            className={`rounded-xl border ${style.border} ${style.bg} border-l-[3px] ${style.leftBorder} p-3 transition-all duration-300 ${isDismissing ? 'opacity-0 translate-x-4 max-h-0 p-0 overflow-hidden' : 'opacity-100 translate-x-0'}`}
+            className={`rounded-xl border ${style.border} ${style.bg} border-l-[3px] ${style.leftBorder} p-3 transition-opacity duration-300 ${isDismissing ? 'opacity-0 translate-x-4 max-h-0 p-0 overflow-hidden' : 'opacity-100 translate-x-0'}`}
           >
             <div className="flex items-start gap-2">
               <Icon className={`w-4 h-4 ${style.color} shrink-0 mt-0.5`} />

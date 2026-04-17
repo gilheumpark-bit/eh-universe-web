@@ -165,7 +165,7 @@ export function AuditPanel({ files, onRunAudit, auditResult, isRunning, progress
       {isRunning && progress && (
         <div className="h-1 bg-white/5">
           <div
-            className="h-full bg-accent-green transition-all duration-300"
+            className="h-full bg-accent-green transition-[transform,opacity,background-color,border-color,color] duration-300"
             style={{ width: `${(progress.index / progress.total) * 100}%` }}
           />
         </div>

@@ -150,7 +150,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
                     className={`
                       relative flex flex-col items-center gap-1 py-3 px-4 rounded-xl text-xs 
                       min-h-[52px] min-w-[68px] shrink-0 
-                      transition-all duration-200 ease-out
+                      transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out
                       ${isActive 
                         ? 'text-accent-purple bg-accent-purple/15 shadow-[0_0_16px_rgba(141,123,195,0.2)]' 
                         : 'text-text-tertiary hover:text-text-secondary active:bg-white/5 active:scale-95'
@@ -176,7 +176,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
         <button
           type="button"
           onClick={() => { triggerHaptic(); onEpisodeNav(); }}
-          className="absolute -top-14 right-4 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/20 border border-accent-purple/30 text-accent-purple text-[10px] font-bold shadow-lg backdrop-blur-sm transition-all active:scale-95"
+          className="absolute -top-14 right-4 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/20 border border-accent-purple/30 text-accent-purple text-[10px] font-bold shadow-lg backdrop-blur-sm transition-transform active:scale-95"
           aria-label={getTabLabel('writing') + ' - Episodes'}
         >
           <BookOpen size={14} strokeWidth={2.5} />
@@ -216,7 +216,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
                 relative flex flex-col items-center gap-1 py-2.5 px-4 
                 text-[11px] font-medium leading-tight 
                 min-h-[52px] min-w-[52px] rounded-xl
-                transition-all duration-200 ease-out
+                transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out
                 ${active 
                   ? 'text-accent-purple' 
                   : 'text-text-tertiary'

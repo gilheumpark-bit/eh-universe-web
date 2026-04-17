@@ -111,7 +111,7 @@ export default function MobileDesktopOnlyGate({
         <div className="w-full max-w-sm space-y-3">
           <button
             onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-accent-purple text-white font-bold text-sm rounded-xl active:scale-98 transition-all min-h-[44px]"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-accent-purple text-white font-bold text-sm rounded-xl active:scale-98 transition-transform min-h-[44px]"
           >
             <ExternalLink className="w-4 h-4" />
             {L4(lang, {
@@ -124,7 +124,7 @@ export default function MobileDesktopOnlyGate({
 
           <button
             onClick={() => router.push('/studio')}
-            className="w-full py-3 bg-bg-secondary text-text-primary font-bold text-sm rounded-xl border border-border active:scale-98 transition-all min-h-[44px]"
+            className="w-full py-3 bg-bg-secondary text-text-primary font-bold text-sm rounded-xl border border-border active:scale-98 transition-transform min-h-[44px]"
           >
             {L4(lang, {
               ko: '모바일 스케치 스튜디오로 이동',

@@ -39,7 +39,7 @@ export default function ToolNav({ toolName, relatedTools, isKO = true }: Props) 
       <div className="flex items-center gap-2 flex-wrap">
         <Link
           href="/studio"
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-accent-purple/10 border border-accent-purple/20 text-accent-purple hover:bg-accent-purple/20 transition-all"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold bg-accent-purple/10 border border-accent-purple/20 text-accent-purple hover:bg-accent-purple/20 transition-colors"
         >
           <PenTool className="w-3 h-3" />
           {isKO ? '스튜디오에서 열기' : 'Open in Studio'}
@@ -54,7 +54,7 @@ export default function ToolNav({ toolName, relatedTools, isKO = true }: Props) 
               <Link
                 key={tool.href}
                 href={tool.href}
-                className="px-2 py-1 rounded-lg text-[9px] font-bold text-text-tertiary border border-border/30 hover:border-white/20 hover:text-white transition-all"
+                className="px-2 py-1 rounded-lg text-[9px] font-bold text-text-tertiary border border-border/30 hover:border-white/20 hover:text-white transition-colors"
               >
                 {tool.label}
               </Link>

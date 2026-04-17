@@ -179,7 +179,7 @@ function BreakpointsSection() {
               </button>
               <button
                 onClick={() => handleRemove(bp.file, bp.line)}
-                className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all"
+                className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-[opacity,background-color,border-color,color]"
                 title="Remove"
               >
                 <Trash2 size={11} />
@@ -256,7 +256,7 @@ function VariablesSection() {
             <span className="text-text-tertiary italic text-[10px]">pending</span>
             <button
               onClick={() => removeWatch(idx)}
-              className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all shrink-0"
+              className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-[opacity,background-color,border-color,color] shrink-0"
               title="Remove"
             >
               <X size={10} />

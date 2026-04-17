@@ -157,7 +157,7 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
     <div className="flex gap-2 mb-6">
       <Link
         href="/archive"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active === "archive"
             ? "bg-accent-amber/15 border border-accent-amber/30 text-accent-amber"
             : "border text-text-tertiary hover:text-text-secondary hover:border-white/12"
@@ -173,7 +173,7 @@ function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
       </Link>
       <Link
         href="/reports"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-all duration-150 ${
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active === "reports"
             ? "bg-accent-red/15 border border-accent-red/30 text-accent-red"
             : "border text-text-tertiary hover:text-text-secondary hover:border-white/12"
@@ -272,7 +272,7 @@ export default function ReportsClient() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveSubcategory(cat.id)}
-                    className={`rounded-full px-3.5 py-1.5 font-mono text-[10px] font-medium tracking-[0.12em] transition-all ${
+                    className={`rounded-full px-3.5 py-1.5 font-mono text-[10px] font-medium tracking-[0.12em] transition-[transform,opacity,background-color,border-color,color] ${
                       activeSubcategory === cat.id
                         ? "bg-white/10 border border-white/20 text-text-primary"
                         : "border border-white/6 text-text-tertiary hover:text-text-secondary hover:border-white/10"
@@ -297,7 +297,7 @@ export default function ReportsClient() {
                   <button
                     key={f}
                     onClick={() => setClassFilter(f)}
-                    className={`rounded-full px-3 py-1.5 font-mono text-[10px] font-medium tracking-[0.12em] transition-all ${classFilterColor(f, classFilter === f)}`}
+                    className={`rounded-full px-3 py-1.5 font-mono text-[10px] font-medium tracking-[0.12em] transition-[transform,opacity,background-color,border-color,color] ${classFilterColor(f, classFilter === f)}`}
                   >
                     {f}{" "}
                     <span className="opacity-50">({levelCounts[f]})</span>
@@ -324,7 +324,7 @@ export default function ReportsClient() {
                     <Link
                       key={report.slug}
                       href={`/archive/${report.slug}`}
-                      className={`group flex items-center justify-between gap-3 rounded-2xl p-4 transition-all duration-200 ${
+                      className={`group flex items-center justify-between gap-3 rounded-2xl p-4 transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                         isClassified
                           ? "border border-accent-red/12 bg-accent-red/5 hover:border-accent-red/25 hover:bg-accent-red/10 hover:-translate-y-0.5"
                           : "premium-link-card card-glow"

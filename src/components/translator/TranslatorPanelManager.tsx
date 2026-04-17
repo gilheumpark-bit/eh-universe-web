@@ -53,7 +53,7 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
             if (region === 'left') layout.setActiveLeftPanel(null);
             else layout.setActiveRightPanel(null);
           }}
-          className="group rounded-full p-1.5 transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95"
+          className="group rounded-full p-1.5 transition-[transform,background-color,border-color,box-shadow,color] hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95"
           title="Close Panel"
         >
           <X className="h-4 w-4 text-text-tertiary group-hover:text-text-primary transition-colors" />

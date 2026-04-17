@@ -75,7 +75,7 @@ export function transpileVendorCode(rawCode: string): SanitizeResult {
     }
     // 마이크로 모션(버튼, 링크 등)
     if ((tag === 'button' || tag === 'a') && !newClass.includes('hover:scale')) {
-      newClass += ' hover:scale-[1.02] active:scale-95 transition-all duration-200';
+      newClass += ' hover:scale-[1.02] active:scale-95 transition-transform duration-200';
     }
     
     if (newClass !== classNames) {

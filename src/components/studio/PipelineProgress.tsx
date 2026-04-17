@@ -87,7 +87,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
           return (
             <div
               key={stage.stage}
-              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all ${
+              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-[transform,opacity,background-color,border-color,color] ${
                 isRunning ? 'bg-blue-500/5 ring-1 ring-blue-500/20' : isPassed ? 'bg-green-500/5' : ''
               }`}
               aria-label={`${label ? L4(language, label) : stage.stage}: ${L4(language, { ko: '상태', en: 'status', ja: '状態', zh: '状态' })} ${stage.status}, ${L4(language, { ko: '점수', en: 'score', ja: 'score', zh: 'score' })} ${stage.score ?? '-'}`}
@@ -116,7 +116,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
                   <div className="flex items-center gap-1 mt-0.5">
                     <div className="flex-1 h-0.5 bg-bg-tertiary rounded-full overflow-hidden max-w-[80px]">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
                         style={{ width: `${stage.score}%` }}
                       />
                     </div>

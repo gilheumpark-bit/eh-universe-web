@@ -208,7 +208,7 @@ function PART3_Header({ lang, isEnded, caseData, doAction }: Pick<SubComponentPr
         {isEnded && (
           <button
             onClick={() => doAction("restart")}
-            className="rounded-full border border-accent-amber/50 bg-accent-amber/10 px-4 py-2 font-[--font-mono] text-[13px] font-bold tracking-wider text-accent-amber shadow-[0_0_20px_rgba(245,158,11,0.1)] transition-all hover:bg-accent-amber/20 hover:scale-105"
+            className="rounded-full border border-accent-amber/50 bg-accent-amber/10 px-4 py-2 font-[--font-mono] text-[13px] font-bold tracking-wider text-accent-amber shadow-[0_0_20px_rgba(245,158,11,0.1)] transition-[transform,background-color,border-color,box-shadow,color] hover:bg-accent-amber/20 hover:scale-105"
           >
             {t("restart", lang)}
           </button>
@@ -230,7 +230,7 @@ interface SidebarProps extends Pick<SubComponentProps, "lang" | "state" | "caseD
 
 function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps) {
   return (
-    <aside className={`space-y-3 ${sidePanel !== "status" ? "hidden lg:block transition-all" : ""}`}>
+    <aside className={`space-y-3 ${sidePanel !== "status" ? "hidden lg:block transition-[transform,opacity,background-color,border-color,color]" : ""}`}>
       {/* Progress & Persistence */}
       <div className="rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md p-3 shadow-inner">
         <div className="flex items-center justify-between mb-2">
@@ -239,7 +239,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
         </div>
         <div className="relative h-2 overflow-hidden rounded-full bg-white/5">
           <div 
-            className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-accent-amber/60 to-accent-amber shadow-[0_0_10px_rgba(245,158,11,0.3)] transition-all duration-1000" 
+            className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-accent-amber/60 to-accent-amber shadow-[0_0_10px_rgba(245,158,11,0.3)] transition-[box-shadow] duration-1000" 
             style={{ width: `${Math.min(caseData.progress * 100, 100)}%` }} 
           />
         </div>
@@ -256,7 +256,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
           <div key={k} className="flex items-center gap-2 mb-2">
             <span className="w-14 font-[--font-mono] text-[9px] text-text-tertiary uppercase tracking-tighter">{k}</span>
             <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
-              <div className={`h-full rounded-full transition-all duration-700 ${k === "risk" ? "bg-red-500/60" : k === "delusion" ? "bg-purple-500/60" : "bg-cyan-500/60"}`}
+              <div className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-700 ${k === "risk" ? "bg-red-500/60" : k === "delusion" ? "bg-purple-500/60" : "bg-cyan-500/60"}`}
                 style={{ width: `${(reply.vectorScores[k] * 100)}%` }} />
             </div>
             <span className="w-7 font-[--font-mono] text-[9px] text-text-secondary text-right">{(reply.vectorScores[k] * 100).toFixed(0)}</span>
@@ -289,7 +289,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
           {caseData.objectives.map((obj) => (
             <div key={obj.id} className="flex items-start gap-2">
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${obj.complete ? "bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]" : obj.active ? "bg-accent-amber animate-pulse" : "bg-white/10"}`} />
-              <span className={`font-[--font-mono] text-[11px] leading-relaxed transition-all ${obj.complete ? "text-cyan-400/50 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/40"}`}>
+              <span className={`font-[--font-mono] text-[11px] leading-relaxed transition-[transform,opacity,background-color,border-color,color] ${obj.complete ? "text-cyan-400/50 line-through" : obj.active ? "text-text-secondary" : "text-text-tertiary/40"}`}>
                 {obj.title}
               </span>
             </div>
@@ -298,7 +298,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
       </div>
 
       {/* Clues & Fragments */}
-      <details className="group rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md transition-all open:bg-white/5">
+      <details className="group rounded-2xl border border-white/10 bg-white/3 backdrop-blur-md transition-[transform,opacity,background-color,border-color,color] open:bg-white/5">
         <summary className="p-3 cursor-pointer font-[--font-mono] text-[10px] font-bold tracking-[0.2em] text-text-tertiary uppercase flex items-center justify-between group-hover:text-text-secondary transition-colors">
           <span>{t("clues", lang)} ({caseData.clueCount})</span>
           <span className="text-white/20 transition-transform group-open:rotate-180">↓</span>
@@ -392,7 +392,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
 
       {/* Suggested Input Seeds */}
       {!isEnded && caseData.promptSeeds.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2 transition-all">
+        <div className="mb-4 flex flex-wrap gap-2 transition-[transform,opacity,background-color,border-color,color]">
           {caseData.promptSeeds.map((seed) => (
             <button
               key={seed.id}
@@ -400,7 +400,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
                 setInput(seed.body);
                 inputRef.current?.focus();
               }}
-              className="rounded-full border border-white/10 bg-white/3 px-3 py-1.5 font-[--font-mono] text-[12px] text-text-tertiary transition-all hover:border-white/20 hover:bg-white/8 hover:text-text-secondary active:scale-95"
+              className="rounded-full border border-white/10 bg-white/3 px-3 py-1.5 font-[--font-mono] text-[12px] text-text-tertiary transition-[transform,background-color,border-color,color] hover:border-white/20 hover:bg-white/8 hover:text-text-secondary active:scale-95"
               title={seed.body}
             >
               # {seed.title}
@@ -411,7 +411,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
 
       {/* Input Module */}
       <div className="relative group">
-        <form onSubmit={handleSubmit} className="relative flex gap-3 p-1 rounded-2xl border border-white/10 bg-white/3 focus-within:border-accent-amber/30 transition-all duration-300 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.5)]">
+        <form onSubmit={handleSubmit} className="relative flex gap-3 p-1 rounded-2xl border border-white/10 bg-white/3 focus-within:border-accent-amber/30 transition-[box-shadow] duration-300 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.5)]">
           <textarea
             ref={inputRef}
             value={input}
@@ -432,7 +432,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
             <button
               type="submit"
               disabled={isEnded || !input.trim()}
-              className="rounded-xl bg-accent-amber/10 border border-accent-amber/30 px-5 py-2.5 font-[--font-mono] text-[12px] font-bold text-accent-amber transition-all hover:bg-accent-amber/20 disabled:opacity-20 active:scale-95"
+              className="rounded-xl bg-accent-amber/10 border border-accent-amber/30 px-5 py-2.5 font-[--font-mono] text-[12px] font-bold text-accent-amber transition-[transform,background-color,border-color,color] hover:bg-accent-amber/20 disabled:opacity-20 active:scale-95"
             >
               {t("submit", lang)}
             </button>
@@ -441,7 +441,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
                 type="button"
                 onClick={() => { if (input.trim()) doAction("submit_verdict", input); }}
                 disabled={!input.trim()}
-                className="rounded-xl bg-cyan-400/10 border border-cyan-400/30 px-5 py-2.5 font-[--font-mono] text-[12px] font-bold text-cyan-400 transition-all hover:bg-cyan-400/20 disabled:opacity-20 active:scale-95"
+                className="rounded-xl bg-cyan-400/10 border border-cyan-400/30 px-5 py-2.5 font-[--font-mono] text-[12px] font-bold text-cyan-400 transition-[transform,background-color,border-color,color] hover:bg-cyan-400/20 disabled:opacity-20 active:scale-95"
               >
                 {t("submitVerdict", lang)}
               </button>
@@ -482,7 +482,7 @@ function QuickActionBtn({ children, onClick, className = "" }: QuickActionProps)
   return (
     <button 
       onClick={onClick}
-      className={`rounded-xl border border-white/10 bg-white/2 px-4 py-2 font-[--font-mono] text-[11px] font-medium tracking-wide text-text-tertiary transition-all hover:border-white/30 hover:bg-white/8 hover:text-text-secondary active:translate-y-0.5 ${className}`}
+      className={`rounded-xl border border-white/10 bg-white/2 px-4 py-2 font-[--font-mono] text-[11px] font-medium tracking-wide text-text-tertiary transition-[transform,background-color,border-color,color] hover:border-white/30 hover:bg-white/8 hover:text-text-secondary active:translate-y-0.5 ${className}`}
     >
       {children}
     </button>

@@ -355,7 +355,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
         </div>
         <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-accent-purple to-accent-blue rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-accent-purple to-accent-blue rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -376,7 +376,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
             <button
               key={ep}
               onClick={() => ms && setExpandedEp(expandedEp === ep ? null : ep)}
-              className={`relative h-8 rounded text-[9px] font-bold font-mono transition-all ${
+              className={`relative h-8 rounded text-[9px] font-bold font-mono transition-[transform,opacity,background-color,border-color,color] ${
                 ms
                   ? pct >= 100
                     ? "bg-accent-green/20 text-accent-green border border-accent-green/30"

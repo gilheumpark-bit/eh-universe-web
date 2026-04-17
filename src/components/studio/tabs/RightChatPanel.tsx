@@ -82,7 +82,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
         </div>
         <button 
           onClick={onClear}
-          className="p-1.5 text-text-tertiary hover:text-accent-red transition-all hover:rotate-12 active:scale-95"
+          className="p-1.5 text-text-tertiary hover:text-accent-red transition-[transform,background-color,border-color,color] hover:rotate-12 active:scale-95"
           title={t('ui.clearChat')}
         >
           <RefreshCcw className="w-3.5 h-3.5" />
@@ -196,7 +196,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
 
       {/* 5. Footer Input Area (Sticky) */}
       <div className="p-5 bg-bg-primary/60 backdrop-blur-xl border-t border-border shrink-0">
-        <div className="relative group bg-bg-secondary/80 border border-border rounded-2xl p-1.5 focus-within:border-accent-purple/40 transition-all shadow-[0_4px_24px_rgba(0,0,0,0.2)] focus-within:shadow-[0_8px_32px_rgba(139,92,246,0.15)]">
+        <div className="relative group bg-bg-secondary/80 border border-border rounded-2xl p-1.5 focus-within:border-accent-purple/40 transition-[box-shadow] shadow-[0_4px_24px_rgba(0,0,0,0.2)] focus-within:shadow-[0_8px_32px_rgba(139,92,246,0.15)]">
           <div className="flex items-end gap-2 px-2 py-1.5">
             <textarea
               value={input}
@@ -225,7 +225,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
               <button 
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] shrink-0 ${
                   input.trim() 
                     ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/20' 
                     : 'bg-bg-tertiary text-text-tertiary opacity-40 cursor-not-allowed'

@@ -156,13 +156,13 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 
                 {/* Quick Edit Buttons */}
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <button onClick={() => setActiveTab('world')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-all duration-200">
+                  <button onClick={() => setActiveTab('world')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-colors duration-200">
                     🌍 {t('applied.editWorld')}
                   </button>
-                  <button onClick={() => setActiveTab('characters')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-all duration-200">
+                  <button onClick={() => setActiveTab('characters')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-colors duration-200">
                     👥 {t('applied.editCharacters')}
                   </button>
-                  <button onClick={() => setActiveTab('rulebook')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-all duration-200">
+                  <button onClick={() => setActiveTab('rulebook')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-colors duration-200">
                     🎬 {t('applied.editDirection')}
                   </button>
                 </div>
@@ -178,7 +178,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {/* AI Draft Mode */}
                 <button 
                   onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }} 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                     writingMode === 'ai' 
                       ? 'bg-accent-purple/15 border-accent-purple/40 shadow-[0_0_20px_rgba(141,123,195,0.15)]' 
                       : 'bg-bg-secondary/50 border-border hover:border-accent-purple/30 hover:bg-bg-secondary'
@@ -194,7 +194,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {/* Manual Edit Mode */}
                 <button 
                   onClick={() => { setWritingMode('edit'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                     writingMode === 'edit' 
                       ? 'bg-accent-amber/15 border-accent-amber/40 shadow-[0_0_20px_rgba(202,161,92,0.15)]' 
                       : 'bg-bg-secondary/50 border-border hover:border-accent-amber/30 hover:bg-bg-secondary'
@@ -209,7 +209,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {/* Canvas 3-Step Mode */}
                 <button 
                   onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }} 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                     writingMode === 'canvas' 
                       ? 'bg-accent-green/15 border-accent-green/40 shadow-[0_0_20px_rgba(47,155,131,0.15)]' 
                       : 'bg-bg-secondary/50 border-border hover:border-accent-green/30 hover:bg-bg-secondary'
@@ -225,7 +225,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {/* Auto Refine Mode */}
                 <button 
                   onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('refine'); if (!editDraft && currentSession.messages.length > 0) { const allText = currentSession.messages.filter(m => m.role === 'assistant' && m.content).map(m => m.content.replace(/```json\n[\s\S]*?\n```/g, '').trim()).join('\n\n---\n\n'); setEditDraft(allText); } }} 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                     writingMode === 'refine' 
                       ? 'bg-gradient-to-br from-accent-purple/15 to-accent-blue/15 border-accent-blue/40 shadow-[0_0_20px_rgba(92,143,214,0.15)]' 
                       : 'bg-bg-secondary/50 border-border hover:border-accent-blue/30 hover:bg-bg-secondary'
@@ -241,7 +241,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 {/* Advanced Mode */}
                 <button 
                   onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }} 
-                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-200 ${
+                  className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                     writingMode === 'advanced' 
                       ? 'bg-gradient-to-br from-amber-500/15 to-orange-500/15 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)]' 
                       : 'bg-bg-secondary/50 border-border hover:border-amber-500/30 hover:bg-bg-secondary'
@@ -281,7 +281,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   value={promptDirective} 
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPromptDirective(e.target.value)} 
                   placeholder={t('writingMode.directivePlaceholder')} 
-                  className="flex-1 bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all placeholder:text-text-tertiary" 
+                  className="flex-1 bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-[transform,opacity,background-color,border-color,color] placeholder:text-text-tertiary" 
                 />
               </div>
             </div>
@@ -296,7 +296,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                     <p className="text-text-tertiary text-base font-medium">{t('engine.startPrompt')}</p>
                     <div className="flex flex-wrap gap-2 justify-center pt-2 max-w-2xl">
                       {(tObj.presets as string[]).map((preset: string, i: number) => (
-                        <button key={i} onClick={() => handleSend(preset)} className="px-3 py-1.5 bg-bg-secondary/80 border border-border rounded-full text-[10px] text-text-tertiary hover:text-accent-purple transition-all">{preset}</button>
+                        <button key={i} onClick={() => handleSend(preset)} className="px-3 py-1.5 bg-bg-secondary/80 border border-border rounded-full text-[10px] text-text-tertiary hover:text-accent-purple transition-colors">{preset}</button>
                       ))}
                     </div>
                   </div>
@@ -366,8 +366,8 @@ const WritingTab: React.FC<WritingTabProps> = ({
         <div className="px-4 md:px-6 pb-4 md:pb-6 bg-gradient-to-t from-bg-primary via-bg-primary to-transparent pt-8 md:pt-12 shrink-0">
           <div className="max-w-6xl mx-auto relative px-0">
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 md:bottom-auto md:-top-10 md:left-4 md:translate-x-0 flex gap-2 items-center">
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-mono ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.nextChapter')}</button>
-              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-all whitespace-nowrap font-mono ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.plotTwist')}</button>
+              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.nextChapterPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-[opacity,background-color,border-color,color] whitespace-nowrap font-mono ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.nextChapter')}</button>
+              <button onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } handleSend(t('engine.plotTwistPrompt')); }} className={`px-3 py-1.5 bg-bg-secondary border border-border rounded-full text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-[opacity,background-color,border-color,color] whitespace-nowrap font-mono ${!hasApiKey ? 'opacity-50' : ''}`}>{t('engine.plotTwist')}</button>
               {currentSession.config.episode < currentSession.config.totalEpisodes && (
                 <button onClick={handleNextEpisode} className="px-3 py-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-full text-[10px] font-bold text-accent-purple">EP.{currentSession.config.episode} → {currentSession.config.episode + 1}</button>
               )}
@@ -385,7 +385,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
               {isGenerating ? (
                 <button onClick={handleCancel} aria-label="생성 중지" className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center bg-accent-red text-white shrink-0"><StopCircle className="w-5 h-5" /></button>
               ) : (
-                <button onClick={() => handleSend()} disabled={!input.trim()} aria-label="전송" className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all shrink-0 ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}><Send className="w-5 h-5" /></button>
+                <button onClick={() => handleSend()} disabled={!input.trim()} aria-label="전송" className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] shrink-0 ${input.trim() ? 'bg-accent-purple text-white' : 'bg-bg-tertiary text-text-tertiary'}`}><Send className="w-5 h-5" /></button>
               )}
             </div>
           </div>

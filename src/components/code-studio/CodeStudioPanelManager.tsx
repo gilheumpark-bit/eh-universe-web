@@ -162,7 +162,7 @@ function ActivityBar({
       {/* Home button — always visible at the top */}
       <Link
         href="/"
-        className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-accent-amber/10 group mb-2"
+        className="w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 hover:bg-accent-amber/10 group mb-2"
         title={L4(lang, { ko: "홈으로", en: "Go Home", ja: "ホームへ", zh: "返回首页" })}
       >
         <Home className="h-[18px] w-[18px] text-text-tertiary group-hover:text-accent-amber transition-colors" />
@@ -181,10 +181,10 @@ function ActivityBar({
                 onSetRightPanel(rightPanel === item.id ? null : item.id as RightPanel);
               }
             }}
-            className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
+            className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 hover:bg-white/6 group"
             title={`${displayLabel}${item.shortcut ? ` (${item.shortcut})` : ""}`}
           >
-            <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${
+            <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-[transform,opacity,background-color,border-color,color] duration-200 ${
               rightPanel === item.id ? "h-5 opacity-100" : "h-0 opacity-0"
             }`} />
             <item.icon className={`h-[18px] w-[18px] transition-colors ${
@@ -205,9 +205,9 @@ function ActivityBar({
           const lbl = L4(lang, { ko: p.labelKo, en: p.label, ja: p.label, zh: p.label });
           return (
             <button key={p.id} onClick={() => onSetRightPanel(rightPanel === p.id ? null : p.id as RightPanel)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/6 group"
+              className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors duration-150 hover:bg-white/6 group"
               title={lbl}>
-              <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-all duration-200 ${rightPanel === p.id ? "h-5 opacity-100" : "h-0 opacity-0"}`} />
+              <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-r bg-accent-purple transition-opacity duration-200 ${rightPanel === p.id ? "h-5 opacity-100" : "h-0 opacity-0"}`} />
               {Icon ? <Icon className={`h-[18px] w-[18px] transition-colors ${rightPanel === p.id ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"}`} /> : <span className="text-[10px] text-text-tertiary">{p.label.substring(0,2)}</span>}
             </button>
           );
@@ -216,11 +216,11 @@ function ActivityBar({
       <div className="flex-1" />
 
       <button onClick={onToggleAdvancedPanels}
-        className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/6"
+        className="w-10 h-10 flex items-center justify-center rounded-lg transition-colors hover:bg-white/6"
         title={showAdvancedPanels ? "Hide advanced panels" : "Show all panels"}>
         <ChevronRight className={`h-[18px] w-[18px] text-text-tertiary transition-transform ${showAdvancedPanels ? "rotate-90" : ""}`} />
       </button>
-      <button onClick={onToggleSettings} className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:bg-white/6" title="Settings">
+      <button onClick={onToggleSettings} className="w-10 h-10 flex items-center justify-center rounded-lg transition-colors hover:bg-white/6" title="Settings">
         <Settings className={`h-[18px] w-[18px] ${showSettings ? "text-accent-amber" : "text-text-tertiary hover:text-text-secondary"}`} />
       </button>
     </div>

@@ -208,7 +208,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                         update("actionApprovalMode", mode);
                       }
                     }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-transform duration-200 hover:scale-[1.02] active:scale-95 ${
                       settings.actionApprovalMode === mode
                         ? `border-${color}/40 bg-${color}/10 text-${color}`
                         : 'border-border bg-bg-secondary/30 text-text-tertiary hover:border-border hover:text-text-secondary'
@@ -234,7 +234,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                         <button
                           type="button"
                           onClick={() => { update("actionApprovalMode", "pro"); setShowProConfirm(false); }}
-                          className="flex-1 flex items-center justify-center gap-1 rounded-md border border-accent-red/50 bg-accent-red/15 px-2 py-1.5 text-[9px] font-bold text-accent-red transition-all duration-200 hover:bg-accent-red/25 hover:scale-[1.02] active:scale-95"
+                          className="flex-1 flex items-center justify-center gap-1 rounded-md border border-accent-red/50 bg-accent-red/15 px-2 py-1.5 text-[9px] font-bold text-accent-red transition-[transform,background-color,border-color,color] duration-200 hover:bg-accent-red/25 hover:scale-[1.02] active:scale-95"
                         >
                           <ShieldOff size={10} />
                           위험 감수 — 활성화
@@ -242,7 +242,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                         <button
                           type="button"
                           onClick={() => setShowProConfirm(false)}
-                          className="flex-1 rounded-md border border-border bg-bg-secondary/50 px-2 py-1.5 text-[9px] font-medium text-text-secondary transition-all duration-200 hover:text-text-primary hover:scale-[1.02] active:scale-95"
+                          className="flex-1 rounded-md border border-border bg-bg-secondary/50 px-2 py-1.5 text-[9px] font-medium text-text-secondary transition-[transform,background-color,border-color,color] duration-200 hover:text-text-primary hover:scale-[1.02] active:scale-95"
                         >
                           취소
                         </button>
@@ -265,7 +265,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
                     key={mode}
                     type="button"
                     onClick={() => { setCodingModeState(mode); setCodingMode(mode); localStorage.setItem('eh_coding_mode', mode); }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-[10px] transition-transform duration-200 hover:scale-[1.02] active:scale-95 ${
                       codingMode === mode
                         ? `border-${color}/40 bg-${color}/10 text-${color}`
                         : 'border-border bg-bg-secondary/30 text-text-tertiary hover:border-border hover:text-text-secondary'
@@ -286,7 +286,7 @@ export function SettingsPanel({ settings: settingsProp, onChange: onChangeProp, 
               <button
                 type="button"
                 onClick={onOpenAPIConfig}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 hover:scale-[1.02] active:scale-95 border border-accent-purple/30 rounded-lg text-xs font-mono transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 hover:scale-[1.02] active:scale-95 border border-accent-purple/30 rounded-lg text-xs font-mono transition-[transform,background-color,border-color,color] duration-200"
               >
                 API Key Configuration
               </button>

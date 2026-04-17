@@ -142,7 +142,7 @@ export function APIKeySlotManager({ onClose }: Props) {
             {slots.map((slot) => {
               const p = PROVIDERS.find((pr) => pr.id === slot.provider);
               return (
-                <div key={slot.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all ${slot.enabled ? "border-border bg-bg-secondary/60" : "border-transparent bg-bg-tertiary/30 opacity-50"}`}>
+                <div key={slot.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-opacity ${slot.enabled ? "border-border bg-bg-secondary/60" : "border-transparent bg-bg-tertiary/30 opacity-50"}`}>
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p?.color ?? "#888" }} />
                   <div className="flex-1 min-w-0">
                     <span className="text-[12px] font-semibold text-text-primary truncate block">{p?.name}</span>
@@ -181,7 +181,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                     setTestResult(null);
                     setShowKey(false);
                   }}
-                  className={`relative flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                  className={`relative flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-[transform,opacity,background-color,border-color,color] ${
                     isActive
                       ? "border-accent-amber bg-accent-amber/10 shadow-sm"
                       : isRegistered
