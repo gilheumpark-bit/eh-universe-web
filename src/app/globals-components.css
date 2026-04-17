@@ -420,6 +420,19 @@
 }
 
 /* ============================================================
+   Galaxy Map: noise/grain 제거 (지도 시인성 우선)
+   premium-panel::before의 glassmorphism은 유지, fractalNoise URL만 off.
+   ============================================================ */
+.galaxy-map-clean .premium-panel::before {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent 30%, transparent 70%, rgba(202, 161, 92, 0.03));
+  opacity: 0.08;
+}
+.galaxy-map-clean .premium-panel-soft::before,
+.galaxy-map-clean .doc-header::before {
+  display: none;
+}
+
+/* ============================================================
    Premium Button System — Commercial Grade (Flat & Archive-style)
    ============================================================ */
 .premium-button {

@@ -373,7 +373,7 @@ export default function GalaxyMapPage() {
           onReset={handleResetAll}
         />
       )}
-      <main className="pt-24">
+      <main className="pt-24 galaxy-map-clean">
         <div className="site-shell py-16 md:py-20">
           <ToolNav
             toolName={en ? "Galaxy Map" : "은하 지도"}
