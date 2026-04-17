@@ -252,6 +252,7 @@ export interface StoryConfig {
     lastUpdated?: number;
   };
   chapterAnalyses?: ChapterAnalysis[];
+  grammarRegion?: 'KR' | 'US' | 'JP' | 'CN';
   /** Consumed by EpisodeScenePanel UI + injected into AI prompt by engine/pipeline.ts */
   episodeSceneSheets?: EpisodeSceneSheet[];
   visualPromptCards?: VisualPromptCard[];

@@ -10,6 +10,7 @@ import { formatSocialProfile } from './social-register';
 import { GENRE_PRESETS } from './genre-presets';
 import { buildPublishPlatformBlock } from './builders/platform-builder';
 import { buildPrismBlock, buildPrismModeBlock } from './builders/prism-builder';
+import { GRAMMAR_PACKS } from '@/lib/grammar-packs';
 import { logger } from '@/lib/logger';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
@@ -719,6 +720,36 @@ export function buildSystemInstruction(
     ? `\n[SUB-GENRE TAGS]\n${config.subGenres.map(t => `#${t}`).join(' ')}\n→ ${isKO ? '이 서브 장르의 관습과 클리셰를 숙지하고 활용하되, EH 세계관 법칙(QFR/CRL/HPP/Audit)으로 재해석하라.' : 'Master the conventions of these sub-genres and reinterpret them through EH universe physics (QFR/CRL/HPP/Audit).'}`
     : '';
 
+  // Grammar Pack injection — 국가별 서사 문법 (beatSheet / rhythmRules / mustHave / taboo)
+  let grammarPackBlock = '';
+  if (config.grammarRegion && GRAMMAR_PACKS[config.grammarRegion]) {
+    const gp = GRAMMAR_PACKS[config.grammarRegion];
+    const rhythmParts = gp.rhythmRules.map(r => `- ${r.name}: ${r.desc}`).join('\n');
+    const mustParts = gp.mustHave.map(m => `- ${m}`).join('\n');
+    const tabooParts = gp.taboo.map(t => `- ${t}`).join('\n');
+    const beatParts = gp.beatSheet
+      .map(b => `- ${b.position}% ${b.name}: ${b.desc}`)
+      .join('\n');
+    const rewardParts = gp.rewardPatterns.map(r => `- ${r.name} (${r.interval}): ${r.desc}`).join('\n');
+    grammarPackBlock = `\n[NARRATIVE GRAMMAR — ${gp.region} ${gp.flag}]
+${isKO ? '서사 비트시트' : 'Beat Sheet'}:
+${beatParts}
+
+${isKO ? '리듬 규칙' : 'Rhythm Rules'}:
+${rhythmParts}
+
+${isKO ? '독자 보상 패턴' : 'Reward Patterns'}:
+${rewardParts}
+
+${isKO ? '필수 요소' : 'Must Have'}:
+${mustParts}
+
+${isKO ? '금기' : 'Taboo'}:
+${tabooParts}
+
+${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleString()}~${gp.episodeLength.max.toLocaleString()} ${gp.episodeLength.unit}`;
+  }
+
   // Style DNA injection
   const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
 
@@ -774,7 +805,7 @@ ${sceneDirectionBlock}
 ${episodeSceneSheetBlock}
 ${simulatorBlock}
 ${worldTierBlock}
-${itemsBlock}${skillsBlock}${magicSystemsBlock}
+${itemsBlock}${skillsBlock}${magicSystemsBlock}${grammarPackBlock}
 ${subGenreBlock}
 ${styleDnaBlock}
 ${prismBlock}

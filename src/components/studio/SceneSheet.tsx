@@ -424,8 +424,15 @@ export default function SceneSheet({
   const [writerNotes, setWriterNotes] = useState(initialDirection?.writerNotes ?? "");
   const [plotStructure, setPlotStructure] = useState(initialDirection?.plotStructure ?? "");
   const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>("KR");
+  const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>(config.grammarRegion ?? "KR");
   const [showGrammarPanel, setShowGrammarPanel] = useState(false);
+
+  // Sync grammarRegion → config so pipeline.ts can read it
+  useEffect(() => {
+    if (config.grammarRegion !== grammarRegion) {
+      setConfig({ ...config, grammarRegion });
+    }
+  }, [grammarRegion]);
 
   const sortedEmotions = useMemo(() => [...emotions].sort((a, b) => a.position - b.position), [emotions]);
   const sortedTensionPoints = useMemo(() => [...tensionPoints].sort((a, b) => a.position - b.position), [tensionPoints]);
