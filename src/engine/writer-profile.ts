@@ -7,12 +7,29 @@
 import type { WriterProfile, SkillLevel } from '@/lib/studio-types';
 
 // ============================================================
-// PART 2 — EMA Calculator
+// PART 2 — EMA Calculator (레벨별 차등 smoothing)
 // ============================================================
 
-const EMA_ALPHA = 0.3;
+/**
+ * 레벨별 EMA α (평활도):
+ * - beginner: 0.5 — 초급자는 빠른 학습/피드백 반영 (초기 변동 큰 패턴 포착)
+ * - intermediate: 0.3 — 안정화된 스무딩 (기본값)
+ * - advanced: 0.2 — 고급자는 기존 패턴 유지, 새 데이터 영향 축소 (노이즈 내성)
+ */
+const EMA_ALPHA_BY_LEVEL: Record<SkillLevel, number> = {
+  beginner: 0.5,
+  intermediate: 0.3,
+  advanced: 0.2,
+};
 
-function ema(prev: number, next: number, alpha: number = EMA_ALPHA): number {
+const EMA_ALPHA_DEFAULT = 0.3;
+
+function getAlphaForLevel(level: SkillLevel | undefined): number {
+  if (!level) return EMA_ALPHA_DEFAULT;
+  return EMA_ALPHA_BY_LEVEL[level] ?? EMA_ALPHA_DEFAULT;
+}
+
+function ema(prev: number, next: number, alpha: number = EMA_ALPHA_DEFAULT): number {
   return alpha * next + (1 - alpha) * prev;
 }
 
@@ -86,18 +103,19 @@ export function updateProfile(profile: WriterProfile, metrics: EpisodeMetrics): 
   const dialogueLines = metrics.text.split('\n').filter(l => /^[「『"']/.test(l.trim()) || /^[""']/.test(l.trim()));
   const dlgRatio = dialogueLines.length / Math.max(metrics.text.split('\n').length, 1);
 
-  // EMA 업데이트
+  // EMA 업데이트 — 현재 레벨의 α 적용 (beginner 빠른 학습 / advanced 안정 유지)
   const isFirst = p.episodeCount === 1;
-  p.avgSentenceLength = isFirst ? avgLen : ema(p.avgSentenceLength, avgLen);
-  p.dialogueRatio = isFirst ? dlgRatio : ema(p.dialogueRatio, dlgRatio);
-  p.avgEpisodeLength = isFirst ? metrics.text.length : ema(p.avgEpisodeLength, metrics.text.length);
-  p.pacingPreference = isFirst ? metrics.pacing : ema(p.pacingPreference, metrics.pacing);
-  p.avgGrade = isFirst ? (GRADE_NUMERIC[metrics.grade] ?? 70) : ema(p.avgGrade, GRADE_NUMERIC[metrics.grade] ?? 70);
-  p.avgDirectorScore = isFirst ? metrics.directorScore : ema(p.avgDirectorScore, metrics.directorScore);
-  p.avgEOS = isFirst ? metrics.eosScore : ema(p.avgEOS, metrics.eosScore);
+  const alpha = getAlphaForLevel(p.skillLevel);
+  p.avgSentenceLength = isFirst ? avgLen : ema(p.avgSentenceLength, avgLen, alpha);
+  p.dialogueRatio = isFirst ? dlgRatio : ema(p.dialogueRatio, dlgRatio, alpha);
+  p.avgEpisodeLength = isFirst ? metrics.text.length : ema(p.avgEpisodeLength, metrics.text.length, alpha);
+  p.pacingPreference = isFirst ? metrics.pacing : ema(p.pacingPreference, metrics.pacing, alpha);
+  p.avgGrade = isFirst ? (GRADE_NUMERIC[metrics.grade] ?? 70) : ema(p.avgGrade, GRADE_NUMERIC[metrics.grade] ?? 70, alpha);
+  p.avgDirectorScore = isFirst ? metrics.directorScore : ema(p.avgDirectorScore, metrics.directorScore, alpha);
+  p.avgEOS = isFirst ? metrics.eosScore : ema(p.avgEOS, metrics.eosScore, alpha);
 
   // 감정 밀도 — EOS 기반
-  p.emotionDensity = isFirst ? metrics.eosScore / 100 : ema(p.emotionDensity, metrics.eosScore / 100);
+  p.emotionDensity = isFirst ? metrics.eosScore / 100 : ema(p.emotionDensity, metrics.eosScore / 100, alpha);
 
   // 자주 발생하는 이슈
   for (const f of metrics.findings) {
@@ -123,7 +141,7 @@ export function updateProfile(profile: WriterProfile, metrics: EpisodeMetrics): 
   const compTotal = compAccepted + compDismissed;
   if (compTotal > 0) {
     const sessionRate = compAccepted / compTotal;
-    p.completionAcceptRate = isFirst ? sessionRate : ema(p.completionAcceptRate, sessionRate);
+    p.completionAcceptRate = isFirst ? sessionRate : ema(p.completionAcceptRate, sessionRate, alpha);
   }
 
   // 레벨 판정

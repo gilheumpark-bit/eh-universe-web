@@ -263,7 +263,13 @@ export function useStudioAI({
       
       const { getDefaultGateConfig } = await import('@/engine/quality-gate');
       const gateConfig = getDefaultGateConfig(writerProfile.skillLevel);
-      const maxAttempts = (gateConfig.enabled && gateConfig.autoMode === 'full_auto') ? gateConfig.maxRetries : 1;
+      // full_auto: 무인 재시도 / confirm: 재시도 + 각 라운드 알림 / off: 1회만
+      const maxAttempts = (
+        gateConfig.enabled &&
+        (gateConfig.autoMode === 'full_auto' || gateConfig.autoMode === 'confirm')
+      ) ? gateConfig.maxRetries : 1;
+      // confirm 모드: 재시도 전 CustomEvent로 상위 UI 토스트 트리거
+      const confirmMode = gateConfig.autoMode === 'confirm';
       
       let attempt = 1;
       let finalContent = '';
@@ -358,9 +364,23 @@ export function useStudioAI({
 
         currentRetryHint = buildRetryHint(gateResult, attempt, language === 'KO');
         onQualityGateRetry?.(attempt, maxAttempts, gateHistory);
+        // confirm 모드: 상위 UI(StudioShell)가 Toast/알림을 표시하도록 CustomEvent 발행
+        if (confirmMode && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('noa:quality-gate-confirm', {
+            detail: {
+              attempt,
+              maxAttempts,
+              grade: gateResult.grade,
+              failReasons: gateResult.failReasons,
+              directorScore: dReport?.score ?? 0,
+            },
+          }));
+        }
         if (attempt < maxAttempts) {
           // 지수 백오프 딜레이: 2초, 4초, 8초... (API 부하 방지)
-          const retryDelay = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
+          // confirm 모드는 사용자가 상황 파악할 수 있도록 딜레이 +1초
+          const baseDelay = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
+          const retryDelay = confirmMode ? baseDelay + 1000 : baseDelay;
           await new Promise(r => setTimeout(r, retryDelay));
           attempt++;
         } else {
