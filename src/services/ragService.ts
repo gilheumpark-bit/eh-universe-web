@@ -78,14 +78,13 @@ async function postJson<T>(path: string, body: unknown, opts?: RagRequestOpts): 
 
 /**
  * 단순 Top-K 검색 — 원본 문서 배열 반환.
- * 검색 결과를 UI에서 보여주거나 직접 프롬프트 조립할 때 사용.
+ * 게이트웨이 경로: POST ${SPARK_RAG_URL}/search
  */
 export async function ragSearch(req: RagSearchRequest, opts?: RagRequestOpts): Promise<RagDocument[]> {
   const { query, top_k = 5 } = req;
   if (!query || !query.trim()) return [];
   try {
     const data = await postJson<RagSearchResponse | RagDocument[]>('/search', { query, top_k }, opts);
-    // 서버가 배열 직반환 / {documents: []} 둘 다 가능
     if (Array.isArray(data)) return data;
     return Array.isArray(data.documents) ? data.documents : [];
   } catch (err) {
@@ -96,14 +95,14 @@ export async function ragSearch(req: RagSearchRequest, opts?: RagRequestOpts): P
 
 /**
  * 프롬프트 자동 조립 — 권장 경로.
- * 유저 입력에 세계관 컨텍스트가 앞에 붙은 완성 프롬프트를 받아
- * 그대로 LLM userMessage로 사용하면 됨.
+ * 게이트웨이 경로: POST ${SPARK_RAG_URL}/prompt
+ * (백엔드 통합 후 endpoint가 /rag_prompt → /prompt로 단순화됨)
  */
 export async function ragBuildPrompt(req: RagSearchRequest, opts?: RagRequestOpts): Promise<string> {
   const { query, top_k = 5 } = req;
   if (!query || !query.trim()) return query;
   try {
-    const data = await postJson<RagPromptResponse | { prompt?: string }>('/rag_prompt', { query, top_k }, opts);
+    const data = await postJson<RagPromptResponse | { prompt?: string }>('/prompt', { query, top_k }, opts);
     if (typeof data?.prompt === 'string' && data.prompt.trim()) return data.prompt;
     return query;
   } catch (err) {

@@ -21,10 +21,19 @@ export const SPARK_HEAVY_URL = process.env.NEXT_PUBLIC_SPARK_HEAVY_URL || 'http:
 export const SPARK_FAST_URL = process.env.NEXT_PUBLIC_SPARK_FAST_URL || 'http://localhost:8081';
 /** 통합 폴백 */
 export const SPARK_UNIFIED_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || 'http://localhost:8000';
-/** RAG — 세계관 설정 검색 */
-export const SPARK_RAG_URL = process.env.NEXT_PUBLIC_SPARK_RAG_URL || 'http://localhost:8082';
-/** ComfyUI — 이미지 생성 */
-export const COMFYUI_URL = process.env.NEXT_PUBLIC_COMFYUI_URL || 'http://localhost:8188';
+/**
+ * API Gateway — DGX 서버가 단일 게이트웨이(api.ehuniverse.com)로 일원화.
+ * 내부 포트(8082/8188)는 더 이상 직접 호출하지 않고 /api/rag/* , /api/image/* 경로로 프록시.
+ * 로컬 dev에서만 환경변수로 직접 포트 오버라이드 가능.
+ */
+export const SPARK_GATEWAY_URL = process.env.NEXT_PUBLIC_SPARK_GATEWAY_URL
+  || process.env.NEXT_PUBLIC_SPARK_SERVER_URL
+  || 'https://api.ehuniverse.com';
+
+/** RAG — 세계관 설정 검색 (게이트웨이 /api/rag/*) */
+export const SPARK_RAG_URL = process.env.NEXT_PUBLIC_SPARK_RAG_URL || `${SPARK_GATEWAY_URL}/api/rag`;
+/** ComfyUI — 이미지 생성 (게이트웨이 /api/image/generate) */
+export const COMFYUI_URL = process.env.NEXT_PUBLIC_COMFYUI_URL || `${SPARK_GATEWAY_URL}/api/image`;
 
 // ============================================================
 // PART 2 — 모델 ID 및 역할 매핑
