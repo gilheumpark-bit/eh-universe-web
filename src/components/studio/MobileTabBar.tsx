@@ -18,9 +18,9 @@ interface MobileTabBarProps {
 }
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
+  { key: 'rulebook',   icon: FileText },
   { key: 'style',      icon: Map },
   { key: 'visual',     icon: Zap },
-  { key: 'manuscript', icon: FileText },
   { key: 'history',    icon: History },
   { key: 'settings',   icon: Settings },
 ];
@@ -29,7 +29,7 @@ const PRIMARY_TABS: { key: AppTab | 'more'; icon: React.ElementType }[] = [
   { key: 'world',      icon: Globe },
   { key: 'characters', icon: UserCircle },
   { key: 'writing',    icon: PenTool },
-  { key: 'rulebook',   icon: FileText },
+  { key: 'manuscript', icon: BookOpen },
   { key: 'more',       icon: Menu },
 ];
 

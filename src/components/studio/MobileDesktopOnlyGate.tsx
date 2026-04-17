@@ -8,7 +8,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Monitor, Smartphone, ArrowLeft, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { L4 } from '@/lib/i18n';
@@ -36,6 +36,16 @@ export default function MobileDesktopOnlyGate({
 }: Props) {
   const { lang } = useLang();
   const router = useRouter();
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+
+  // SSR 안전: 마운트 후에만 window 참조
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const measure = () => setViewportWidth(window.innerWidth);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   const handleForce = () => {
     if (onForceContinue) {
@@ -105,6 +115,21 @@ export default function MobileDesktopOnlyGate({
               ja: reasonJa || 'この機能は複雑な編集環境と大画面が必要です。モバイルはタッチUXと入力速度の制約があります。',
               zh: reasonZh || '此功能需要复杂的编辑环境和大屏幕。移动端受触控 UX 和输入速度限制。',
             })}
+          </p>
+          <p className="text-xs text-text-tertiary leading-relaxed mt-2">
+            {viewportWidth !== null
+              ? L4(lang, {
+                  ko: `집필 스튜디오는 최소 1024px 이상의 큰 화면에서 사용할 수 있어요. (태블릿 가로모드 OK · 현재 ${viewportWidth}px)`,
+                  en: `The writing studio requires a screen at least 1024px wide. (Tablet landscape OK · current ${viewportWidth}px)`,
+                  ja: `執筆スタジオは最小1024px以上の大画面でご利用いただけます。(タブレット横向き対応 · 現在 ${viewportWidth}px)`,
+                  zh: `写作工作室需要至少 1024px 的大屏幕。(平板横屏可用 · 当前 ${viewportWidth}px)`,
+                })
+              : L4(lang, {
+                  ko: '집필 스튜디오는 최소 1024px 이상의 큰 화면에서 사용할 수 있어요. (태블릿 가로모드 OK)',
+                  en: 'The writing studio requires a screen at least 1024px wide. (Tablet landscape OK)',
+                  ja: '執筆スタジオは最小1024px以上の大画面でご利用いただけます。(タブレット横向き対応)',
+                  zh: '写作工作室需要至少 1024px 的大屏幕。(平板横屏可用)',
+                })}
           </p>
         </div>
 

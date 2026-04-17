@@ -45,6 +45,8 @@ export function useStudioQuickStart({
   const inFlightRef = useRef(false);
 
   const handleQuickStart = async (genre: Genre, userPrompt: string) => {
+    // [C] Lock 체크는 사용자가 DGX/기존키 없이 Gemini 무료키 경로를 선택한 경우에만 의미있음.
+    // QuickStartModal의 provider 선택 UI에서 이미 분기하므로 여기서는 실패 시 fallback만.
     if (showQuickStartLock) { setShowApiKeyModal(true); return; }
     if (inFlightRef.current) return;
     inFlightRef.current = true;
@@ -131,9 +133,10 @@ export function useStudioQuickStart({
   }, [currentSession, currentSessionId, doHandleSend, pendingQuickStart, setPipelineResult]);
 
   const openQuickStart = useCallback(() => {
-    if (showQuickStartLock) { setShowApiKeyModal(true); return; }
+    // [K] Lock 상태여도 모달을 열어 provider 선택(Gemini/DGX/기타) UI를 먼저 보여줌.
+    // 사용자는 왜 키가 필요한지 이해한 뒤 스스로 선택할 수 있음 (이탈 방지).
     setShowQuickStartModal(true);
-  }, [showQuickStartLock, setShowApiKeyModal]);
+  }, []);
 
   return {
     showQuickStartModal,

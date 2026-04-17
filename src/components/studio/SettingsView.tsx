@@ -123,11 +123,41 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         <p className="text-text-tertiary text-[10px] font-bold tracking-widest uppercase">System Control Center</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {/* Profile Card */}
-        <ProfileCard language={language} />
+      <div className="space-y-4">
+        {/* ===== 그룹 1: 계정 (Account) ===== */}
+        <details open className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden">
+          <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
+            <User className="w-4 h-4 text-accent-purple shrink-0" />
+            <span className="text-sm font-black text-text-primary flex-1">
+              {L4(language, { ko: '계정', en: 'Account', ja: 'アカウント', zh: '账户' })}
+            </span>
+            <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Profile Card */}
+            <ProfileCard language={language} />
+            {/* Writer Profile */}
+            <div className="md:col-span-2 ds-card-lg">
+              <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
+                <User className="w-4 h-4 text-accent-purple" />
+                {L4(language, { ko: '작가 프로파일', en: 'Writer Profile', ja: 'ライタープロフィール', zh: '作者档案' })}
+              </h3>
+              <WriterProfileCard language={language} />
+            </div>
+          </div>
+        </details>
 
-        {/* Engine Status Card */}
+        {/* ===== 그룹 2: AI (AI Provider) ===== */}
+        <details className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden group">
+          <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
+            <Cpu className="w-4 h-4 text-blue-500 shrink-0" />
+            <span className="text-sm font-black text-text-primary flex-1">
+              {L4(language, { ko: 'AI 엔진', en: 'AI Engine', ja: 'AIエンジン', zh: 'AI 引擎' })}
+            </span>
+            <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Engine Status Card */}
         <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
           <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
             <Cpu className="w-4 h-4 text-blue-500" /> {L4(language, { ko: '집필 엔진 상태', en: 'Writing Engine Status', ja: '執筆エンジン状態', zh: '写作引擎状态' })}
@@ -192,14 +222,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           </div>
         </div>
 
-        {/* Writer Profile */}
-        <div className="md:col-span-2 ds-card-lg">
-          <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
-            <User className="w-4 h-4 text-accent-purple" />
-            {L4(language, { ko: '작가 프로파일', en: 'Writer Profile', ja: 'ライタープロフィール', zh: '作者档案' })}
-          </h3>
-          <WriterProfileCard language={language} />
-        </div>
+          </div>
+        </details>
+
+        {/* ===== 그룹 3: 기본 설정 / 알림 / 초기화 (Writer Settings) ===== */}
+        <details className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden group">
+          <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
+            <Bell className="w-4 h-4 text-accent-amber shrink-0" />
+            <span className="text-sm font-black text-text-primary flex-1">
+              {L4(language, { ko: '알림 · 기본값', en: 'Notifications & Defaults', ja: '通知・既定値', zh: '通知与默认值' })}
+            </span>
+            <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Writer Settings (작가 설정) */}
         <div className="md:col-span-2 ds-card-lg">
@@ -314,6 +349,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           </div>
         </div>
 
+          </div>
+        </details>
+
+        {/* ===== 그룹 4: GitHub / 백업 ===== */}
+        <details className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden group">
+          <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
+            <GitBranch className="w-4 h-4 text-green-500 shrink-0" />
+            <span className="text-sm font-black text-text-primary flex-1">
+              {L4(language, { ko: 'GitHub / 백업', en: 'GitHub / Backup', ja: 'GitHub / バックアップ', zh: 'GitHub / 备份' })}
+            </span>
+            <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
         {/* Versioned Backup Section */}
         {versionedBackups && onRestoreBackup && (
           <div className="md:col-span-2 ds-card-lg">
@@ -369,6 +418,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
         {/* GitHub Cloud Backup */}
         <GitHubSyncSection language={language} />
+
+          </div>
+        </details>
+
+        {/* ===== 그룹 5: 고급 (Advanced) — 엔진 설정 ===== */}
+        <details className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden group">
+          <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
+            <Zap className="w-4 h-4 text-blue-500 shrink-0" />
+            <span className="text-sm font-black text-text-primary flex-1">
+              {L4(language, { ko: '고급', en: 'Advanced', ja: '詳細設定', zh: '高级' })}
+            </span>
+            <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Advanced Settings (고급 설정) — Collapsible */}
         <div className="md:col-span-2 ds-card-lg">
@@ -527,6 +590,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
 
           </div>}
         </div>
+
+          </div>
+        </details>
 
         {/* Footer */}
         <div className="md:col-span-2 flex flex-col gap-4 md:flex-row justify-between items-center px-2 md:px-10">

@@ -91,6 +91,10 @@ export default function StudioOverlayManager({
           onClose={() => setShowQuickStartModal(false)}
           onStart={handleQuickStart}
           isGenerating={isQuickGenerating}
+          onOpenApiKeys={() => {
+            setShowQuickStartModal(false);
+            setShowApiKeyModal(true);
+          }}
         />
       )}
 

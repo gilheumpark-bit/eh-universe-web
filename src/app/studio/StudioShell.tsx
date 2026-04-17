@@ -15,6 +15,8 @@ import { logger } from '@/lib/logger';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 import MobileDrawer from '@/components/studio/MobileDrawer';
+import MobileSketchImportBanner from '@/components/studio/MobileSketchImportBanner';
+import FirstVisitOnboarding from '@/components/studio/FirstVisitOnboarding';
 import { useProjectManager } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
@@ -456,6 +458,13 @@ export default function StudioShell() {
     language, showQuickStartLock, setShowApiKeyModal, currentProjectId, createNewProject, setProjects, setCurrentSessionId, setActiveTab, setPipelineResult, setUxError, doHandleSend, currentSessionId, currentSession
   });
 
+  // [First-visit 온보딩] FirstVisitOnboarding → QuickStart 모달 연결
+  useEffect(() => {
+    const handler = () => openQuickStart();
+    window.addEventListener('noa:open-quickstart', handler);
+    return () => window.removeEventListener('noa:open-quickstart', handler);
+  }, [openQuickStart]);
+
   const prevFocusRef = useRef<Element | null>(null);
   const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal;
   useEffect(() => {
@@ -780,6 +789,10 @@ export default function StudioShell() {
       )}
 
       <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} mode={studioMode} />
+
+      <MobileSketchImportBanner />
+
+      <FirstVisitOnboarding />
 
       <MobileDrawer
         open={mobileDrawerOpen}

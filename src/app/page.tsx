@@ -103,12 +103,175 @@ function HomePageFallback() {
   );
 }
 
+// ============================================================
+// HubGrid — Hero(소설 스튜디오 + 번역 스튜디오) + 접힘 섹션(나머지)
+// ============================================================
+// localStorage 'home_apps_expanded' 로 접힘 상태 저장 (한 번 펼치면 유지).
+// Hero 카드 = badge 'NS' (소설 스튜디오) / 'TR' (번역 스튜디오).
+// 나머지 카드는 [모든 앱 보기] 토글 섹션에 그리드로 노출.
+// ============================================================
+
+type HubItem = {
+  href: string;
+  badge: string;
+  color: 'amber' | 'blue' | 'green' | 'purple';
+  title: string;
+  desc: string;
+  meta: string;
+  external?: boolean;
+};
+type ColorToken = {
+  border: string; bg: string; text: string; hoverText: string; glow: string;
+};
+type ColorMap = Record<HubItem['color'], ColorToken>;
+
+function HubGrid({
+  hubs,
+  colorMap,
+  lang,
+  T,
+}: {
+  hubs: HubItem[];
+  colorMap: ColorMap;
+  lang: string;
+  T: <V,>(v: { ko: V; en: V; ja?: V; zh?: V }) => V;
+}) {
+  void lang;
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('home_apps_expanded');
+      if (raw === '1') setExpanded(true);
+    } catch { /* private browsing */ }
+  }, []);
+  const toggleExpanded = useCallback(() => {
+    setExpanded(prev => {
+      const next = !prev;
+      try {
+        if (next) localStorage.setItem('home_apps_expanded', '1');
+        else localStorage.removeItem('home_apps_expanded');
+      } catch { /* quota/private */ }
+      return next;
+    });
+  }, []);
+
+  // Hero: NS(소설 스튜디오) → primary / TR(번역 스튜디오) → secondary
+  const heroPrimary = hubs.find(h => h.badge === 'NS');
+  const heroSecondary = hubs.find(h => h.badge === 'TR');
+  const rest = hubs.filter(h => h.badge !== 'NS' && h.badge !== 'TR');
+
+  const renderCard = (hub: HubItem, variant: 'hero-primary' | 'hero-secondary' | 'rest') => {
+    const c = colorMap[hub.color];
+    const isExternal = Boolean(hub.external || hub.href.startsWith('http'));
+    const sizeCls =
+      variant === 'hero-primary'
+        ? 'md:col-span-2 md:row-span-2 p-8 md:p-10 min-h-[220px]'
+        : variant === 'hero-secondary'
+          ? 'md:col-span-2 p-6 md:p-8 min-h-[180px]'
+          : 'p-6';
+    const badgeCls =
+      variant === 'hero-primary'
+        ? 'h-14 w-14 text-sm'
+        : variant === 'hero-secondary'
+          ? 'h-12 w-12 text-xs'
+          : 'h-11 w-11 text-xs';
+    const titleCls =
+      variant === 'hero-primary'
+        ? 'text-2xl md:text-3xl tracking-wide normal-case font-display'
+        : variant === 'hero-secondary'
+          ? 'text-lg md:text-xl tracking-wide normal-case font-display'
+          : 'font-[--font-mono] text-sm font-semibold uppercase tracking-widest';
+
+    const inner = (
+      <>
+        <div className="pointer-events-none absolute inset-0">
+          <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
+        </div>
+        <span className={`flex items-center justify-center rounded-full border ${c.border} ${c.bg} font-[--font-mono] tracking-[0.14em] ${c.text} ${badgeCls}`}>
+          {hub.badge}
+        </span>
+        <div className="mt-4">
+          <h3 className={`font-semibold text-text-primary transition-colors ${c.hoverText} ${titleCls}`}>
+            {hub.title}
+          </h3>
+          <p className={`mt-2 ${variant === 'hero-primary' ? 'text-base leading-8' : 'text-sm leading-7'} text-text-secondary`}>{hub.desc}</p>
+        </div>
+        <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
+          {hub.meta} →
+        </div>
+      </>
+    );
+    const cls = `group relative overflow-hidden premium-link-card flex flex-col ${sizeCls}`;
+    return isExternal ? (
+      <a key={hub.title} href={hub.href} target="_blank" rel="noopener noreferrer"
+        className={cls}
+        aria-label={`${hub.title} (opens in new tab)`}>
+        {inner}
+      </a>
+    ) : (
+      <Link key={hub.title} href={hub.href} className={cls}>
+        {inner}
+      </Link>
+    );
+  };
+
+  return (
+    <div className="site-shell">
+      <div className="mb-8 px-1">
+        <p className="site-kicker">
+          {T({ ko: "탐색 허브", en: "Explore Hubs", ja: "探索ハブ", zh: "探索中心" })}
+        </p>
+        <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
+          {T({ ko: "지금 시작하세요", en: "Start now", ja: "今すぐ始める", zh: "立即开始" })}
+        </h2>
+      </div>
+
+      {/* Hero: Studio (primary, 크게) + Translation (secondary) */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {heroPrimary && renderCard(heroPrimary, 'hero-primary')}
+        {heroSecondary && renderCard(heroSecondary, 'hero-secondary')}
+      </div>
+
+      {/* 모든 앱 보기 토글 */}
+      {rest.length > 0 && (
+        <div className="mt-10">
+          <button
+            type="button"
+            onClick={toggleExpanded}
+            aria-expanded={expanded}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-bg-secondary/40 hover:bg-bg-secondary text-text-secondary hover:text-text-primary font-[--font-mono] text-xs tracking-[0.14em] uppercase transition-colors focus-visible:ring-2 focus-visible:ring-accent-amber"
+          >
+            <span>
+              {T({
+                ko: expanded ? "모든 앱 닫기" : "모든 앱 보기",
+                en: expanded ? "Hide all apps" : "Show all apps",
+                ja: expanded ? "すべてのアプリを閉じる" : "すべてのアプリを表示",
+                zh: expanded ? "收起所有应用" : "查看所有应用",
+              })}
+            </span>
+            <span className="opacity-60">({rest.length})</span>
+            <span className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
+          </button>
+
+          {expanded && (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
+              {rest.map(h => renderCard(h, 'rest'))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HomePageContent() {
   const { lang } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
   const flags = useFeatureFlags();
   const stellarWhite = searchParams.get("skin") === "white";
+  // `?splash=1` 쿼리는 30일 스킵을 무시하고 스플래시를 강제로 노출한다.
+  const forceSplash = searchParams.get("splash") === "1";
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
@@ -116,10 +279,25 @@ function HomePageContent() {
   useEffect(() => {
     if (stellarWhite) {
       queueMicrotask(() => setSplashState("hide"));
-    } else {
-      queueMicrotask(() => setSplashState("show"));
+      return;
     }
-  }, [stellarWhite]);
+    // [30일 재방문자 스킵] loreguard_splash_seen_at 타임스탬프가 30일 이내면 스플래시를 건너뛴다.
+    // `?splash=1` 쿼리 파라미터로 강제 노출 가능.
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    let shouldSkip = false;
+    if (!forceSplash && typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem("loreguard_splash_seen_at");
+        const seenAt = raw ? parseInt(raw, 10) : 0;
+        if (Number.isFinite(seenAt) && seenAt > 0 && Date.now() - seenAt < THIRTY_DAYS_MS) {
+          shouldSkip = true;
+        }
+      } catch {
+        /* private browsing / storage 접근 차단 시 정상 노출 */
+      }
+    }
+    queueMicrotask(() => setSplashState(shouldSkip ? "hide" : "show"));
+  }, [stellarWhite, forceSplash]);
 
   useEffect(() => {
     if (!stellarWhite) return;
@@ -131,9 +309,18 @@ function HomePageContent() {
   }, [stellarWhite]);
 
   const showSplash = splashState === "show";
+  // [30일 재방문자 스킵] 스플래시를 닫을 때 타임스탬프를 기록해 30일간 재노출되지 않도록 한다.
+  const markSplashSeen = () => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem("loreguard_splash_seen_at", String(Date.now()));
+    } catch {
+      /* storage 접근 불가 시 무시 */
+    }
+  };
   const setShowSplash = (v: boolean) => {
     setSplashState(v ? "show" : "hide");
-    // No longer store the "seen" state to ensure it always shows on refresh.
+    if (!v) markSplashSeen();
   };
 
   // Auto-dismiss is removed as requested by the user so they can choose a path.
@@ -317,9 +504,17 @@ function HomePageContent() {
     return (
       <SplashScreen
         onUniverse={() => setShowSplash(false)}
-        onStudio={() => router.push("/studio")}
-        onCodeStudio={() => router.push("/code-studio")}
+        onStudio={() => {
+          // [30일 재방문자 스킵] 스튜디오 진입도 "본 것"으로 간주해 타임스탬프 기록.
+          markSplashSeen();
+          router.push("/studio");
+        }}
+        onCodeStudio={() => {
+          markSplashSeen();
+          router.push("/code-studio");
+        }}
         onTranslationStudio={() => {
+          markSplashSeen();
           const href = getTranslatorStudioHref();
           if (href.startsWith("http")) {
             window.open(href, "_blank", "noopener,noreferrer");
@@ -437,57 +632,9 @@ function HomePageContent() {
         </div>
       </section>
 
-      {/* HUB GRID */}
+      {/* HUB GRID — Hero(Studio primary + Translation secondary) + collapsed rest */}
       <section ref={hubRef} className="section-divider py-20">
-        <div className="site-shell">
-          <div className="mb-8 px-1">
-            <p className="site-kicker">
-              {T({ ko: "탐색 허브", en: "Explore Hubs", ja: "探索ハブ", zh: "探索中心" })}
-            </p>
-            <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-              {T({ ko: "세계관의 모든 입구", en: "Every entry point into the universe", ja: "世界観へのすべての入口", zh: "进入世界观的所有入口" })}
-            </h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {universeHubs.map((hub) => {
-              const c = colorMap[hub.color];
-              const isExternal = Boolean(
-                (hub as { external?: boolean }).external || hub.href.startsWith("http"),
-              );
-              const inner = (
-                <>
-                  <div className="pointer-events-none absolute inset-0">
-                    <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
-                  </div>
-                  <span className={`flex h-11 w-11 items-center justify-center rounded-full border ${c.border} ${c.bg} font-[--font-mono] text-xs tracking-[0.14em] ${c.text}`}>
-                    {hub.badge}
-                  </span>
-                  <div className="mt-4">
-                    <h3 className={`font-[--font-mono] text-sm font-semibold uppercase tracking-widest text-text-primary transition-colors ${c.hoverText}`}>
-                      {hub.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-text-secondary">{hub.desc}</p>
-                  </div>
-                  <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
-                    {hub.meta} →
-                  </div>
-                </>
-              );
-
-              return isExternal ? (
-                <a key={hub.title} href={hub.href} target="_blank" rel="noopener noreferrer"
-                  className="group relative overflow-hidden premium-link-card flex flex-col p-6"
-                  aria-label={`${hub.title} (opens in new tab)`}>
-                  {inner}
-                </a>
-              ) : (
-                <Link key={hub.title} href={hub.href} className="group relative overflow-hidden premium-link-card flex flex-col p-6">
-                  {inner}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+        <HubGrid hubs={universeHubs} colorMap={colorMap} lang={lang} T={T} />
       </section>
 
       {/* CTA */}
