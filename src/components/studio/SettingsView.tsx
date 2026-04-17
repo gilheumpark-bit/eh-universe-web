@@ -683,16 +683,112 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
             </div>
           )}
           <p className="text-xs text-text-tertiary">
-            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.', ja: 'GitHubアクセストークン(PAT)を入力すると、原稿を非公開リポジトリにバックアップできます。', zh: '输入 GitHub 访问令牌(PAT)后，可将稿件备份至私有仓库。' })}
+            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 안전하게 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to safely back up manuscripts to a private repository.', ja: 'GitHubアクセストークン(PAT)を入力すると、原稿を非公開リポジトリに安全にバックアップできます。', zh: '输入 GitHub 访问令牌(PAT)后，可将稿件安全备份至私有仓库。' })}
           </p>
+
+          {/* 친절 가이드 — PAT 처음 만들어보는 사용자를 위한 3단계 안내 */}
+          <details className="bg-bg-secondary/60 border border-border rounded-xl overflow-hidden" open>
+            <summary className="px-4 py-3 text-xs font-bold text-text-primary cursor-pointer select-none hover:bg-bg-tertiary/40 transition-colors flex items-center gap-2">
+              <span>💡</span>
+              <span>{L4(language, { ko: '처음이신가요? 1분이면 끝나요', en: 'New here? Takes 1 minute', ja: '初めての方へ — 1分で完了', zh: '第一次使用?一分钟搞定' })}</span>
+            </summary>
+            <div className="px-4 pb-4 pt-2 space-y-3 border-t border-border/50">
+
+              {/* Step 1 — GitHub 계정 */}
+              <div className="flex gap-3 items-start">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-green-600/15 text-green-500 font-bold text-[11px] flex items-center justify-center">1</span>
+                <div className="space-y-1.5 flex-1">
+                  <p className="text-xs text-text-primary font-semibold">
+                    {L4(language, { ko: 'GitHub 계정이 있으신가요?', en: 'Do you have a GitHub account?', ja: 'GitHubアカウントはお持ちですか?', zh: '您有 GitHub 账号吗?' })}
+                  </p>
+                  <p className="text-[11px] text-text-tertiary leading-relaxed">
+                    {L4(language, {
+                      ko: '없다면 무료로 가입할 수 있어요. 이메일만 있으면 됩니다.',
+                      en: "If not, sign up for free — just an email is enough.",
+                      ja: 'なければ無料で登録できます。メールアドレスだけでOK。',
+                      zh: '没有的话可以免费注册,只需一个邮箱即可。',
+                    })}
+                  </p>
+                  <a
+                    href="https://github.com/signup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-accent-blue hover:underline font-medium"
+                  >
+                    {L4(language, { ko: 'GitHub 가입하기 →', en: 'Sign up for GitHub →', ja: 'GitHubに登録 →', zh: '注册 GitHub →' })}
+                  </a>
+                </div>
+              </div>
+
+              {/* Step 2 — 토큰 생성 (프리셋 링크) */}
+              <div className="flex gap-3 items-start">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-green-600/15 text-green-500 font-bold text-[11px] flex items-center justify-center">2</span>
+                <div className="space-y-1.5 flex-1">
+                  <p className="text-xs text-text-primary font-semibold">
+                    {L4(language, { ko: '토큰 만들기 (원클릭)', en: 'Create a token (one click)', ja: 'トークンを作成(ワンクリック)', zh: '创建令牌(一键完成)' })}
+                  </p>
+                  <p className="text-[11px] text-text-tertiary leading-relaxed">
+                    {L4(language, {
+                      ko: '아래 버튼을 누르면 GitHub이 열리고, 필요한 권한(repo)이 미리 체크되어 있어요. 페이지 아래 초록색 [Generate token] 버튼만 누르면 됩니다.',
+                      en: 'Click below — GitHub opens with the required permission (repo) pre-checked. Just click the green [Generate token] button at the bottom of the page.',
+                      ja: '下のボタンを押すとGitHubが開き、必要な権限(repo)がすでにチェックされています。ページ下部の緑の[Generate token]ボタンを押すだけです。',
+                      zh: '点击下方按钮打开 GitHub,所需权限(repo)已预先勾选。只需点击页面底部绿色的 [Generate token] 按钮。',
+                    })}
+                  </p>
+                  <a
+                    href="https://github.com/settings/tokens/new?scopes=repo&description=%EB%A1%9C%EC%96%B4%EA%B0%80%EB%93%9C%20%EC%9B%90%EA%B3%A0%20%EB%B0%B1%EC%97%85"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600/80 hover:bg-green-600 text-white text-[11px] font-bold rounded-lg transition-colors"
+                  >
+                    <GitBranch className="w-3 h-3" />
+                    {L4(language, { ko: 'GitHub에서 토큰 만들기', en: 'Create token on GitHub', ja: 'GitHubでトークンを作成', zh: '在 GitHub 创建令牌' })}
+                  </a>
+                </div>
+              </div>
+
+              {/* Step 3 — 붙여넣기 */}
+              <div className="flex gap-3 items-start">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-green-600/15 text-green-500 font-bold text-[11px] flex items-center justify-center">3</span>
+                <div className="space-y-1.5 flex-1">
+                  <p className="text-xs text-text-primary font-semibold">
+                    {L4(language, { ko: '토큰 복사 → 아래 칸에 붙여넣기', en: 'Copy the token → paste below', ja: 'トークンをコピー → 下の欄に貼り付け', zh: '复制令牌 → 粘贴到下方' })}
+                  </p>
+                  <p className="text-[11px] text-text-tertiary leading-relaxed">
+                    {L4(language, {
+                      ko: '토큰은 "ghp_"로 시작하는 긴 문자열이에요. 한 번만 표시되니 바로 복사하세요. 그 후 아래 입력칸에 붙여넣고 [연결] 버튼을 누르면 끝!',
+                      en: 'The token is a long string starting with "ghp_". It is shown only once — copy it right away, paste into the input below, and click [Connect].',
+                      ja: 'トークンは「ghp_」で始まる長い文字列です。一度しか表示されないのですぐにコピーし、下の欄に貼り付けて[Connect]をクリック。',
+                      zh: '令牌是以 "ghp_" 开头的长字符串,仅显示一次,请立即复制,粘贴到下方输入框并点击 [Connect]。',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* 안전 안내 */}
+              <div className="flex gap-2 items-start px-3 py-2.5 rounded-lg bg-accent-blue/10 border border-accent-blue/20">
+                <span className="shrink-0">🔒</span>
+                <p className="text-[11px] text-text-secondary leading-relaxed">
+                  {L4(language, {
+                    ko: '토큰은 이 브라우저에만 저장되고, 로어가드 서버로는 절대 전송되지 않습니다. GitHub 호출은 브라우저에서 직접 실행돼요.',
+                    en: 'The token is stored only in this browser and never sent to Loreguard servers. All GitHub calls happen directly from your browser.',
+                    ja: 'トークンはこのブラウザにのみ保存され、ロアガードのサーバーには送信されません。GitHubへの通信はブラウザから直接行われます。',
+                    zh: '令牌仅保存在当前浏览器,绝不发送至洛尔加德服务器。所有 GitHub 调用均由浏览器直接发起。',
+                  })}
+                </p>
+              </div>
+            </div>
+          </details>
+
           <div className="flex gap-2">
             <input
               type="password"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              placeholder={L4(language, { ko: 'ghp_xxxx...', en: 'ghp_xxxx...', ja: 'ghp_xxxx...', zh: 'ghp_xxxx...' })}
+              placeholder={L4(language, { ko: 'ghp_xxxx... (2단계에서 복사한 토큰 붙여넣기)', en: 'ghp_xxxx... (paste the token from step 2)', ja: 'ghp_xxxx... (手順2でコピーしたトークンを貼り付け)', zh: 'ghp_xxxx... (粘贴步骤2中复制的令牌)' })}
               className="flex-1 bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary placeholder-text-quaternary focus:border-green-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-mono"
               onKeyDown={(e) => { if (e.key === 'Enter') handleConnect(); }}
+              aria-label={L4(language, { ko: 'GitHub 개인 접근 토큰 입력', en: 'GitHub Personal Access Token input', ja: 'GitHub個人アクセストークン入力', zh: '输入 GitHub 个人访问令牌' })}
             />
             <button
               onClick={handleConnect}
