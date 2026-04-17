@@ -270,8 +270,6 @@ function HomePageContent() {
   const searchParams = useSearchParams();
   const flags = useFeatureFlags();
   const stellarWhite = searchParams.get("skin") === "white";
-  // `?splash=1` 쿼리는 30일 스킵을 무시하고 스플래시를 강제로 노출한다.
-  const forceSplash = searchParams.get("splash") === "1";
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
   const [splashState, setSplashState] = useState<"loading" | "show" | "hide">("loading");
@@ -281,23 +279,9 @@ function HomePageContent() {
       queueMicrotask(() => setSplashState("hide"));
       return;
     }
-    // [30일 재방문자 스킵] loreguard_splash_seen_at 타임스탬프가 30일 이내면 스플래시를 건너뛴다.
-    // `?splash=1` 쿼리 파라미터로 강제 노출 가능.
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    let shouldSkip = false;
-    if (!forceSplash && typeof window !== "undefined") {
-      try {
-        const raw = window.localStorage.getItem("loreguard_splash_seen_at");
-        const seenAt = raw ? parseInt(raw, 10) : 0;
-        if (Number.isFinite(seenAt) && seenAt > 0 && Date.now() - seenAt < THIRTY_DAYS_MS) {
-          shouldSkip = true;
-        }
-      } catch {
-        /* private browsing / storage 접근 차단 시 정상 노출 */
-      }
-    }
-    queueMicrotask(() => setSplashState(shouldSkip ? "hide" : "show"));
-  }, [stellarWhite, forceSplash]);
+    // 스플래시를 메인 초기 화면으로 고정 — 매 방문마다 표시 (유니버스 허브 직진입 방지)
+    queueMicrotask(() => setSplashState("show"));
+  }, [stellarWhite]);
 
   useEffect(() => {
     if (!stellarWhite) return;
