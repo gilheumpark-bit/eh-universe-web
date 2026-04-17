@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-export type LeftPanelType = 'explorer' | 'glossary' | 'history' | 'settings' | 'backup' | null;
+export type LeftPanelType = 'explorer' | 'glossary' | 'history' | 'settings' | 'backup' | 'multilang' | null;
 export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | null;
 export type BottomPanelType = 'terminal' | 'problems' | null;
 

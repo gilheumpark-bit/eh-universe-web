@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslatorLayout, LeftPanelType } from '../core/TranslatorLayoutContext';
-import { Files, BookA, Settings, History, Menu, Layers, HardDrive } from 'lucide-react';
+import { Files, BookA, Settings, History, Menu, Layers, HardDrive, Languages } from 'lucide-react';
 import { useLang } from '@/lib/LangContext';
 
 interface IconWrapperProps {
@@ -94,6 +94,13 @@ export function ActivityBar() {
           title={lang === 'ko' ? '용어집 (Glossary)' : 'Glossary'}
           isActive={layout.activeLeftPanel === 'glossary'}
           onClick={() => handleToggle('glossary')}
+        />
+        <IconWrapper
+          type="multilang"
+          icon={Languages}
+          title={lang === 'ko' ? '다국어 배치 번역' : 'Multi-language batch'}
+          isActive={layout.activeLeftPanel === 'multilang'}
+          onClick={() => handleToggle('multilang')}
         />
         <IconWrapper
           type="backup"

@@ -22,7 +22,8 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
       case 'settings': return <PI.SettingsPanel />;
       case 'history': return <PI.HistoryPanel />;
       case 'backup': return <PI.SaveBackupPanel />;
-      
+      case 'multilang': return <PI.MultiLangBatchPanel />;
+
       // Right
       case 'actions': return <TranslationActionDock />;
       case 'chat': return <PI.ChatPanel />;

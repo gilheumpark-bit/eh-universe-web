@@ -1,11 +1,135 @@
 'use client';
 
-import React, { useRef, type ChangeEvent } from 'react';
-import { Save, Download, Upload, FileStack } from 'lucide-react';
+import React, { useRef, useState, useMemo, type ChangeEvent } from 'react';
+import { Save, Download, Upload, FileStack, Send } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
+import { getAdapter, SUPPORTED_PLATFORMS, PLATFORM_LABELS, type PlatformId } from '@/lib/translation/platform-adapters';
 
 /** 번역 스튜디오·챕터 사이드바와 동일한 대표 보내기 5형식 */
 const EXPORT_FORMATS = ['txt', 'md', 'json', 'html', 'csv'] as const;
+
+// ============================================================
+// Platform Export Section — 플랫폼 규격별 TXT 내보내기
+// ============================================================
+function PlatformExportSection({
+  chapters,
+  langKo,
+}: {
+  chapters: { name: string; content: string; result: string; isDone: boolean }[];
+  langKo: boolean;
+}) {
+  const [platformId, setPlatformId] = useState<PlatformId>('novelpia');
+  const [includeNumber, setIncludeNumber] = useState(true);
+  const adapter = useMemo(() => getAdapter(platformId), [platformId]);
+
+  const completed = chapters.filter(c => (c.result || '').trim().length > 0);
+  const canExport = adapter !== null && completed.length > 0;
+
+  const handleDownload = () => {
+    if (!adapter || completed.length === 0) return;
+    const parts: string[] = [];
+    completed.forEach((ch, idx) => {
+      const episode = { episode: idx + 1, title: ch.name || `Episode ${idx + 1}`, content: ch.result };
+      const body = adapter.toText(episode, { includeTitle: true, includeChapterNumber: includeNumber });
+      parts.push(`====== ${episode.title} ======\n\n${body}`);
+    });
+    const combined = parts.join('\n\n\n');
+    if (typeof window === 'undefined') return;
+    try {
+      const blob = new Blob([combined], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${platformId}-export-${new Date().toISOString().slice(0, 10)}.txt`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { /* no-op */ }
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[10px] text-text-tertiary leading-relaxed">
+        {langKo
+          ? '각 플랫폼 규격(HTML 제거·공백줄 정규화·제약 적용)으로 전체 회차를 TXT로 묶어 받습니다.'
+          : 'Export all chapters as platform-regulated TXT (HTML strip, blank normalize).'}
+      </p>
+
+      {/* 플랫폼 선택 */}
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-mono uppercase tracking-wider text-text-tertiary">
+          {langKo ? '플랫폼' : 'Platform'}
+        </label>
+        <div className="grid grid-cols-2 gap-1.5">
+          {SUPPORTED_PLATFORMS.map(id => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setPlatformId(id)}
+              className={`rounded-lg border py-2 text-[11px] font-semibold transition-colors ${
+                platformId === id
+                  ? 'border-accent-amber/50 bg-accent-amber/15 text-accent-amber'
+                  : 'border-white/10 bg-white/[0.02] text-text-secondary hover:border-white/20 hover:bg-white/[0.04]'
+              }`}
+            >
+              {langKo ? PLATFORM_LABELS[id].ko : PLATFORM_LABELS[id].en}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 제약 요약 */}
+      {adapter && (
+        <div className="rounded-md bg-white/[0.02] border border-white/5 p-2 space-y-1 text-[10px] text-text-tertiary">
+          <div className="flex justify-between">
+            <span>{langKo ? '제목 한도' : 'Title max'}</span>
+            <span className="font-mono text-text-secondary">{adapter.constraints.titleMaxLength}자</span>
+          </div>
+          <div className="flex justify-between">
+            <span>{langKo ? '태그 한도' : 'Tag max'}</span>
+            <span className="font-mono text-text-secondary">{adapter.constraints.tagMaxCount}개{adapter.constraints.tagMaxLength ? ` / ${adapter.constraints.tagMaxLength}자` : ''}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>{langKo ? 'HTML' : 'HTML'}</span>
+            <span className="font-mono text-text-secondary">{adapter.constraints.allowHtml ? 'OK' : '제거'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>{langKo ? '연속 빈 줄' : 'Max blanks'}</span>
+            <span className="font-mono text-text-secondary">{adapter.constraints.maxConsecutiveBlanks}줄</span>
+          </div>
+        </div>
+      )}
+
+      {/* 옵션 */}
+      <label className="flex items-center gap-2 text-[11px] text-text-secondary cursor-pointer">
+        <input
+          type="checkbox"
+          checked={includeNumber}
+          onChange={(e) => setIncludeNumber(e.target.checked)}
+          className="w-3.5 h-3.5 accent-accent-amber"
+        />
+        {langKo ? '회차 번호 앞에 "N화." 붙이기' : 'Prefix with "Chapter N."'}
+      </label>
+
+      {/* 다운로드 버튼 */}
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={!canExport}
+        className="w-full flex items-center justify-center gap-2 rounded-xl border border-accent-amber/30 bg-accent-amber/10 py-2.5 text-[11px] font-semibold text-accent-amber transition-colors hover:bg-accent-amber/20 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <Send className="w-3.5 h-3.5" />
+        {langKo
+          ? `${adapter?.name ?? '플랫폼'} 규격 TXT 받기 (${completed.length}회차)`
+          : `Download ${adapter?.name ?? 'platform'} TXT (${completed.length} chapters)`}
+      </button>
+      {completed.length === 0 && (
+        <p className="text-[10px] text-text-tertiary text-center italic">
+          {langKo ? '번역 완료된 회차가 없습니다.' : 'No completed translations.'}
+        </p>
+      )}
+    </div>
+  );
+}
 
 /**
  * 소설 스튜디오「EXPORT (5형식)」와 동일 — 번역 결과는 TXT/MD/JSON/HTML/CSV를 메인으로 둠.
@@ -90,6 +214,20 @@ export function SaveBackupPanel() {
               : 'Edits autosave locally. Use the five formats above to keep translation files.'}
           </p>
         </div>
+
+        {/* 플랫폼 규격 내보내기 — 노벨피아/문피아 */}
+        <details className="group rounded-xl border border-accent-amber/20 bg-accent-amber/[0.03] open:border-accent-amber/30">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 select-none [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
+              <Send className="h-3.5 w-3.5 text-accent-amber opacity-80" />
+              {langKo ? '플랫폼 규격 내보내기 (노벨피아·문피아)' : 'Platform export (Novelpia · Munpia)'}
+            </span>
+            <span className="text-[9px] text-text-tertiary transition-transform group-open:rotate-180">▼</span>
+          </summary>
+          <div className="border-t border-white/5 px-3 py-3">
+            <PlatformExportSection chapters={chapters} langKo={langKo} />
+          </div>
+        </details>
 
         {/* 프로젝트 전체 — JSON만, 접어 둠 */}
         <details className="group rounded-xl border border-white/10 bg-black/25 open:border-white/15">
