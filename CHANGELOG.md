@@ -3,6 +3,41 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.2] — 2026-04-17
+
+### Changed — DGX 인프라 전환
+- **단일 게이트웨이 일원화**: 모든 백엔드 트래픽을 `https://api.ehuniverse.com`으로 통합
+  - `/v1/chat/completions` → Nginx LB(8090) → Engine A/B 자동 분산
+  - `/api/rag/*`, `/api/image/generate` → RAG API / ComfyUI
+- **Qwen 3.5-9B FP8 듀얼 엔진 전환** — 기존 32B+1.5B Speculative Decoding 폐기
+  - Engine A(8080): 메인 집필 / Engine B(8081): 번역·요약
+  - TTFT 0.13초, 18-20 tok/s 실측
+- **SSE 직결 전환** (Cloudflare Tunnel 관통)
+  - 게이트웨이의 `: heartbeat` 코멘트 선행 + aiohttp 스트리밍으로 520/502 해결
+  - 브라우저·서버 모두 직결 경로 사용, 진짜 SSE passthrough
+- **`/api/spark-stream` Edge 프록시 폐기** — non-stream 청크 체이닝 + 타자기 폴백 제거 (373줄 순감소)
+- **`AIPhaseIndicator` 컴포넌트 폐기** — SSE 직결 TTFT 0.13초로 단계 pill 불필요
+
+### Removed — 라우팅 부채 전수 청산
+- `SPARK_HEAVY_URL` / `SPARK_FAST_URL` / `SPARK_UNIFIED_URL` 중복 export 제거
+- `ROLE_ENGINE_MAP` / `getServerUrlForRole` / `getServerUrlForModel` / `getFallbackUrl` 제거
+- `MODEL_WRITER` / `MODEL_PLANNER` / `MODEL_ACTOR` / `MODEL_GENERAL` 상수 삭제
+  → 전 호출 지점을 `VLLM_MODEL_ID` (`'/model'`)로 일괄 교체
+- `getModelForRole()` → `VLLM_MODEL_ID` 직접 사용으로 대체
+- `_singleSparkRequest` 데드 코드(70줄) 제거
+- `noa:ai-phase` CustomEvent dispatch 로직 제거
+
+### Added
+- **GitHub PAT 친절 가이드** (`SettingsView.tsx`) — 처음 사용자 30분 → 1분 축소
+  - 3단계 펼침식 안내 (가입 → 토큰 생성 → 붙여넣기)
+  - 원클릭 프리셋 URL: `github.com/settings/tokens/new?scopes=repo&description=로어가드`
+  - 4개 언어 (ko/en/ja/zh) 전체 번역
+  - 🔒 "브라우저에만 저장, 서버 전송 안 됨" 신뢰 안내
+
+### Fixed
+- SSE 파서 `:` 코멘트 라인 명시 스킵 (`sparkService.ts` heartbeat 대응)
+- DGX 주석 최신화 — "별도 프록시 불필요, SSE 직결 관통"
+
 ## [2.1.1] — 2026-04-17
 
 ### Added

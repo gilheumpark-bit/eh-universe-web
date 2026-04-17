@@ -5,7 +5,7 @@
 EH Universe Web is a Next.js 16.2 single-app (App Router, Turbopack) deployed on Vercel ICN (ehsu.app).
 It hosts five applications under a single domain with shared auth, i18n, and design system infrastructure.
 
-**Version**: 2.1.0 (2026-04-14)
+**Version**: 2.1.2 (2026-04-17)
 
 ## Applications
 
@@ -158,7 +158,9 @@ LUCIDE_MAP provides icon mappings for all 51 panels.
 - **BYOK + hosted**: Server env keys or user-provided keys
 - **Structured generation**: `/api/structured-generate` (provider-agnostic JSON schema output)
 - **ANS v10.0**: Adaptive Narrative System with tension curves, HFCP state tracking, genre presets
-- **DGX Spark**: Qwen2.5-14B-Instruct-AWQ single model (128GB VRAM), SSE streaming (TTFT 0.05s)
+- **DGX Spark (GB10, 128GB VRAM)**: Qwen 3.5-9B FP8 **dual engine** (A 8080 / B 8081) behind Nginx LB (8090, least_conn). Single gateway `https://api.ehuniverse.com` (Cloudflare Tunnel, SSE passthrough with `: heartbeat` lead). TTFT 0.13s, 18–20 tok/s
+- **RAG layer**: ChromaDB 990k docs + 25 genre rules auto-assembled via `/api/rag/prompt`
+- **Image layer**: Flux-Schnell FP8 4-step via `/api/image/generate` (ComfyUI 8188)
 - **NOA-PRISM v1.1**: Content rating and preservation/expansion control
 
 ## Design System v8.0

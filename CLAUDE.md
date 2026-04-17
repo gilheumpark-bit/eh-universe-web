@@ -160,27 +160,40 @@
 
 ---
 
-## [인프라 연동] DGX Spark 32B + Speculative Decoding (2026-04-14 동기화)
+## [인프라 연동] DGX Spark 듀얼 엔진 + 단일 게이트웨이 (2026-04-17 동기화)
 
-**NVIDIA DGX 서버(128GB VRAM)** 듀얼 모델 Speculative Decoding 구성.
+**NVIDIA DGX GB10 (128GB VRAM)** 쌍포 구성 + Nginx LB 내부 분산.
 
-- **메인 모델:** `Qwen/Qwen2.5-32B-Instruct-AWQ` (Main Brain)
-- **보조 모델:** `Qwen2.5-1.5B` (Speculative Draft, 5 tokens lookahead)
-- **서빙 이름:** `eh-universe-30b-fast`
-- **통합 백엔드:** `ai-spark-server/main.py` (FastAPI v2.0 + vLLM, OpenAI 호환 API)
-- **인프라:**
-  - `scripts/start_vllm.sh` — vLLM 런처 (Speculative + APC + Chunked Prefill)
-  - `ai-spark-server/infra/celery_worker.py` — Redis+Celery 백그라운드 큐
-  - `ai-spark-server/infra/websocket_stream.py` — WebSocket 실시간 스트리밍
-- **이미지:** ComfyUI + FLUX.1 (포트 8188, ~24GB VRAM)
-- **프론트엔드:** `src/services/sparkService.ts` — SSE 스트리밍 (`stream:true`, TTFT 0.05초)
-- **프로덕션:** `https://api.ehuniverse.com/v1` (Cloudflare Tunnel)
+### 모델
+- **Engine A (포트 8080):** `Qwen 3.5-9B FP8` — 메인 집필 / 캐릭터 대사
+- **Engine B (포트 8081):** `Qwen 3.5-9B FP8` — 번역 / 요약 / 보조
+- **모델 ID:** `/model` (vLLM `--served-model-name` 미지정, 로드 경로 그대로)
+- **공통 실측:** TTFT 0.13초, 18~20 tok/s
+
+### 백엔드 경로
+- **단일 게이트웨이:** `https://api.ehuniverse.com` — 모든 외부 트래픽 통합 진입
+  - `/v1/chat/completions` → **Nginx LB(8090)** least_conn → Engine A/B 자동 분산
+  - `/api/rag/search`, `/api/rag/prompt` → RAG API(8082) — ChromaDB 99만 문서 + 25 장르 규칙
+  - `/api/image/generate` → ComfyUI(8188) — Flux-Schnell FP8 (4-step)
 - **로컬 개발:** `http://192.168.219.100:8000/v1` (내부망)
 - **샌드박스:** `/api/sandbox/execute` — Code Studio 격리 코드 검증
 
-통신 구조:
-- 스트리밍(글쓰기/번역): `streamSparkAI()` → `stream:true` → SSE 실시간 파싱
+### SSE 스트리밍 (2026-04-17 직결 전환)
+- **Cloudflare Tunnel 관통 성공:** 게이트웨이가 `: heartbeat` SSE 코멘트 선행 전송 +
+  aiohttp 스트리밍으로 520/502 우회. stream:true 진짜 passthrough.
+- **프론트엔드:** `src/services/sparkService.ts` — 브라우저·서버 모두 게이트웨이 직결.
+  SSE 파서가 `:` 코멘트 라인 스킵, `data: {...}` chunk를 즉시 렌더.
+- **폐기됨:** `/api/spark-stream` Vercel Edge 프록시 + non-stream 타자기 폴백 (Cloudflare 520 해결로 불필요)
+
+### Qwen 추론 모델 아티팩트 처리
+- Qwen 3.5-9B는 답변 전 영어 "Thinking Process:" 분석 블록 출력 — 프롬프트만으로 완전 차단 불가
+- 클라이언트 `stripEngineArtifacts` (`src/engine/pipeline.ts`) 최종 필터:
+  - `<think></think>` 태그 블록 제거
+  - "Thinking Process:" / "Reasoning:" 선행 감지 → 첫 한글 문자까지 건너뛰기
+  - 시스템 프롬프트에 `/no_think` + NO_ENGLISH_THINKING_GUARD 자동 주입
+
+### 통신 구조
+- 스트리밍(글쓰기/번역): `streamSparkAI()` → `stream:true` → 게이트웨이 직결 SSE
 - 구조화 생성(캐릭터/아이템/스킬): `generateJsonViaSpark()` → `stream:false` → JSON 파싱
-- 장문 백그라운드: Celery worker → vLLM → 결과 저장
-- WebSocket: `/ws/generate` → vLLM SSE 중계 (Vercel 100초 우회)
-- Vercel 배포 시 `SPARK_SERVER_URL` 환경 변수 우선
+- RAG 보강: `useStudioAI` → `ragBuildPrompt()` → 세계관+규칙 프롬프트 자동 조립
+- Vercel 배포 시 `SPARK_SERVER_URL` 환경 변수 우선, 없으면 `NEXT_PUBLIC_SPARK_GATEWAY_URL`

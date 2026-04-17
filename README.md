@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="public/images/logo-badge.svg" alt="NOA Studio" width="320" />
+<img src="public/images/logo-badge.svg" alt="로어가드 스튜디오" width="320" />
 
-# NOA Studio
+# 로어가드 스튜디오 (Loreguard Studio)
 
-**AI 소설 집필 스튜디오**
+**NOA 엔진 기반 AI 소설 집필 스튜디오**
 
-글을 쓰면 AI가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.
+글을 쓰면 NOA가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.
 
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
@@ -26,8 +26,9 @@
 
 - 장르 프리셋 한 번이면 연출 세팅 끝
 - Tab 누르면 다음 문장 제안
-- 저장하면 GitHub에 자동 백업
+- 저장하면 GitHub에 자동 백업 (설정 1분 가이드 제공)
 - 에피소드마다 품질 등급 자동 채점
+- 99만 문서 RAG + 25 장르 규칙 자동 주입
 
 ---
 
@@ -132,7 +133,11 @@
 | 방식 | 설명 |
 |------|------|
 | **BYOK** | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio — API 키만 넣으면 동작 |
-| **자체 서버** | NVIDIA DGX Spark (128GB), Qwen2.5-14B-Instruct-AWQ, SSE 실시간 스트리밍 |
+| **자체 서버** | NVIDIA DGX Spark (GB10, 128GB) — Qwen 3.5-9B FP8 **듀얼 엔진** + Nginx LB + SSE 직결 스트리밍 (TTFT 0.13초, 18~20 tok/s) |
+| **RAG** | ChromaDB 99만 문서 + 25 장르 작법 규칙 자동 조립 (`/api/rag/prompt`) |
+| **이미지** | Flux-Schnell FP8 (4-step, `/api/image/generate`) |
+
+모든 백엔드 트래픽은 단일 게이트웨이 `https://api.ehuniverse.com`로 통합 (Nginx LB least_conn 자동 분산).
 
 API 키 없어도 글쓰기·편집·내보내기·아카이브는 100% 사용 가능.
 
@@ -160,9 +165,10 @@ npm test         # 테스트
 
 | 레이어 | 기술 |
 |--------|------|
-| 프레임워크 | Next.js 15, React 19, TypeScript 5 |
+| 프레임워크 | Next.js 16.2, React 19.2, TypeScript 5 |
 | 에디터 | Tiptap (소설) + Monaco (코드) + 인라인 자동완성 |
-| AI | 7개 프로바이더 + DGX Spark 14B (자체) |
+| AI | 7개 프로바이더 + DGX Spark **Qwen 3.5-9B FP8 듀얼** (자체) |
+| RAG | ChromaDB 99만 문서 + 25 장르 규칙 |
 | 집필 엔진 | ANS 10.0 — 품질 검사, 디렉터, 연속성, HFCP, 장르 프리셋 |
 | 코드 엔진 | 9팀 파이프라인 + Quill 224룰 |
 | 저장 | localStorage + IndexedDB + GitHub(Octokit) + Drive + Firestore |
