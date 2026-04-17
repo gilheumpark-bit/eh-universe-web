@@ -51,7 +51,12 @@ export default function SplashScreen({
               EH
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
-              Loreguard · Writing OS
+              {L4(lang, {
+                ko: '로어가드 · 집필 OS',
+                en: 'Loreguard · Writing OS',
+                ja: 'ローアガード · 執筆 OS',
+                zh: '洛尔加德 · 写作 OS',
+              })}
             </span>
           </div>
         </div>
@@ -92,35 +97,24 @@ export default function SplashScreen({
           <UnifiedSettingsBar />
         </div>
 
-        {/* Info Card (non-clickable) */}
-        <div
-          className={`w-full transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          <div className="rounded-2xl border border-border/30 bg-bg-secondary/60 backdrop-blur-xl px-6 py-5 text-center">
-            <p className="text-xs text-text-secondary leading-relaxed">
-              {L4(lang, {
-                ko: "세계관 · 인물 · 원고를 한 화면에서 관리하고, 유니버스 · 코드 · 번역은 하단 독에서 이동합니다.",
-                en: "Manage world, characters & manuscript in one place. Access Universe, Code & Translate from the dock.",
-                ja: "世界観・人物・原稿を一画面で管理。ユニバース・コード・翻訳はドックから。",
-                zh: "一个界面管理世界观、人物和原稿。从Dock访问宇宙、代码和翻译。",
-              })}
-            </p>
-          </div>
-        </div>
-
-        {/* Footer — 4언어 + 한 줄 브랜드 서명 */}
+        {/* Footer — 4언어 브랜드명 + 태그라인 */}
         <div
           className={`flex flex-col items-center gap-1 transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}
         >
           <p className="text-[11px] text-text-secondary font-mono tracking-[0.2em] uppercase">
-            Loreguard · 로어가드
+            {L4(lang, {
+              ko: '로어가드',
+              en: 'Loreguard',
+              ja: 'ローアガード',
+              zh: '洛尔加德',
+            })}
           </p>
           <p className="text-[10px] text-text-tertiary font-mono tracking-wide">
             {L4(lang, {
-              ko: '© EH · 창작에서 번역·출판까지 · CC-BY-NC-4.0',
-              en: '© EH · From creation to translation & publishing · CC-BY-NC-4.0',
-              ja: '© EH · 創作から翻訳・出版まで · CC-BY-NC-4.0',
-              zh: '© EH · 从创作到翻译与出版 · CC-BY-NC-4.0',
+              ko: '© EH · 창작 · 번역 · 출판',
+              en: '© EH · Create · Translate · Publish',
+              ja: '© EH · 創作 · 翻訳 · 出版',
+              zh: '© EH · 创作 · 翻译 · 出版',
             })}
           </p>
         </div>
