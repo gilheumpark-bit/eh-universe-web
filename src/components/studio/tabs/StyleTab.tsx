@@ -29,7 +29,8 @@ const StyleTab: React.FC<StyleTabProps> = ({
   messages = [],
 }) => {
   const t = createT(language);
-  const [showRhythm, setShowRhythm] = useState(false);
+  // Rhythm은 messages가 있으면 기본 펼침 (UX 개선 — 숨김 방지)
+  const [showRhythm, setShowRhythm] = useState(true);
 
   return (
     <>

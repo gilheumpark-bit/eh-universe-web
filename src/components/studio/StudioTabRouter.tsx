@@ -211,6 +211,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           language={language} config={config} setConfig={setConfig}
           messages={currentSession.messages}
           onEditInStudio={(content: string) => { setEditDraft(content); setWritingMode('edit'); setActiveTab('writing'); }}
+          onOpenVisual={() => setActiveTab('visual')}
         />
         </SectionErrorBoundary>
       )}

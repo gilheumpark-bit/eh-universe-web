@@ -21,6 +21,8 @@ interface ManuscriptTabProps {
   setConfig: (c: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   messages: Message[];
   onEditInStudio: (content: string) => void;
+  /** Visual 탭으로 전환 (이미지 카드 편집용) */
+  onOpenVisual?: () => void;
 }
 
 const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
@@ -28,7 +30,8 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   config,
   setConfig,
   messages,
-  onEditInStudio
+  onEditInStudio,
+  onOpenVisual,
 }) => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -166,7 +169,29 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
         </div>
       )}
       {showTranslation && (
-        <TranslationPanel language={language} config={config} setConfig={setConfig} />
+        <div className="max-w-6xl mx-auto px-4">
+          {/* 번역 패널 컨텍스트 안내 — 전용 스튜디오로 유도 */}
+          <div className="mb-3 rounded-xl border border-accent-green/25 bg-accent-green/[0.04] px-4 py-3 flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-start gap-2.5 flex-1 min-w-0">
+              <Languages className="w-4 h-4 text-accent-green shrink-0 mt-0.5" />
+              <div className="text-[11px] text-text-secondary leading-relaxed">
+                {L4(language, {
+                  ko: '이 패널은 빠른 인라인 번역용입니다. 장편·용어집·문체 관리·4축 채점·플랫폼별 내보내기는 전용 번역 스튜디오가 더 강력합니다.',
+                  en: 'This panel is for quick inline translation. The dedicated Translation Studio has glossary, style retention, 4-axis scoring, and platform exports.',
+                  ja: 'このパネルはクイックインライン翻訳用です。用語集・文体・4軸採点・プラットフォーム出力は翻訳スタジオが高機能。',
+                  zh: '此面板用于快速内联翻译。专用翻译工作室支持术语表、文体、4 轴评分和平台导出。',
+                })}
+              </div>
+            </div>
+            <a
+              href="/translation-studio"
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-green/15 hover:bg-accent-green/25 text-accent-green border border-accent-green/40 text-[11px] font-bold transition-colors"
+            >
+              {L4(language, { ko: '번역 스튜디오 열기 →', en: 'Open Translation Studio →', ja: '翻訳スタジオへ →', zh: '打开翻译工作室 →' })}
+            </a>
+          </div>
+          <TranslationPanel language={language} config={config} setConfig={setConfig} />
+        </div>
       )}
       {/* 장면 속성 패널 */}
       {showSceneProps && parsedScenes.length > 0 && (
@@ -243,6 +268,17 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
       )}
       {sceneMode === 'visual' && parsedScenes.length > 0 && (
         <div className="fixed inset-0 z-50 bg-black">
+          {/* Visual 탭 이동 버튼 — ScenePlayer 상단 오버레이 */}
+          {onOpenVisual && (
+            <button
+              type="button"
+              onClick={() => { setSceneMode('off'); onOpenVisual(); }}
+              className="absolute top-4 right-16 z-[60] flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-amber/20 hover:bg-accent-amber/30 text-accent-amber border border-accent-amber/40 text-[11px] font-bold backdrop-blur-md transition-colors"
+              title={language === 'KO' ? '이미지 카드 편집 (Visual 탭)' : 'Edit image cards (Visual tab)'}
+            >
+              🎨 {language === 'KO' ? '이미지 편집' : 'Edit Images'}
+            </button>
+          )}
           <ScenePlayer
             scenes={parsedScenes}
             voiceMappings={voiceMappings}
