@@ -15,24 +15,27 @@
 // PART 1 — 엔드포인트 URL (환경변수 오버라이드 가능)
 // ============================================================
 
-/** Engine A — 메인 집필 */
-export const SPARK_HEAVY_URL = process.env.NEXT_PUBLIC_SPARK_HEAVY_URL || 'http://localhost:8080';
-/** Engine B — 번역/요약/보조 */
-export const SPARK_FAST_URL = process.env.NEXT_PUBLIC_SPARK_FAST_URL || 'http://localhost:8081';
-/** 통합 폴백 */
-export const SPARK_UNIFIED_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || 'http://localhost:8000';
 /**
  * API Gateway — DGX 서버가 단일 게이트웨이(api.ehuniverse.com)로 일원화.
- * 내부 포트(8082/8188)는 더 이상 직접 호출하지 않고 /api/rag/* , /api/image/* 경로로 프록시.
- * 로컬 dev에서만 환경변수로 직접 포트 오버라이드 가능.
+ * - /v1/chat/completions: Nginx LB(8090)가 vLLM Engine A/B(8080/8081) 자동 분산
+ * - /api/rag/*: ChromaDB 99만 문서 + 25 장르 규칙
+ * - /api/image/generate: Flux-Schnell FP8
+ *
+ * ⚠️ 포트 직결(8080/8081/8082/8188)은 Cloudflare Tunnel에서 차단됨.
+ * ⚠️ stream:true 요청은 Cloudflare가 현재 520 반환 → /api/spark-stream Edge 프록시 사용.
  */
 export const SPARK_GATEWAY_URL = process.env.NEXT_PUBLIC_SPARK_GATEWAY_URL
   || process.env.NEXT_PUBLIC_SPARK_SERVER_URL
   || 'https://api.ehuniverse.com';
 
-/** RAG — 세계관 설정 검색 (게이트웨이 /api/rag/*) */
+/** LLM — Nginx LB가 A/B 자동 분산. 역할별 라우팅 불필요. */
+export const SPARK_HEAVY_URL = SPARK_GATEWAY_URL;
+export const SPARK_FAST_URL = SPARK_GATEWAY_URL;
+/** 하위 호환 — 기존 코드가 UNIFIED를 찾던 패턴 유지 */
+export const SPARK_UNIFIED_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || SPARK_GATEWAY_URL;
+/** RAG — 세계관 설정 검색 */
 export const SPARK_RAG_URL = process.env.NEXT_PUBLIC_SPARK_RAG_URL || `${SPARK_GATEWAY_URL}/api/rag`;
-/** ComfyUI — 이미지 생성 (게이트웨이 /api/image/generate) */
+/** Image — Flux-Schnell 이미지 생성 */
 export const COMFYUI_URL = process.env.NEXT_PUBLIC_COMFYUI_URL || `${SPARK_GATEWAY_URL}/api/image`;
 
 // ============================================================
@@ -45,17 +48,16 @@ export const COMFYUI_URL = process.env.NEXT_PUBLIC_COMFYUI_URL || `${SPARK_GATEW
  */
 export const VLLM_MODEL_ID = '/model';
 
-/** 역할 정의 — 메인 집필 vs 보조 작업 */
+/**
+ * 역할 정의 — 단일 게이트웨이 도입 후 분산은 Nginx LB가 알아서 담당.
+ * AgentRole은 프롬프트 튜닝/메타데이터 힌트 용도로만 유지.
+ */
 export type AgentRole = 'general' | 'writer' | 'planner' | 'actor' | 'translator' | 'summarizer';
 
-/** 스펙: 메인 집필/메인 캐릭터 대사 → Engine A, 보조(번역·요약·교정) → Engine B */
+/** 하위 호환 — 기존 A/B 분류는 Nginx LB가 대체하므로 라우팅 효과 없음. 표시 목적만. */
 const ROLE_ENGINE_MAP: Record<AgentRole, 'A' | 'B'> = {
-  writer: 'A',        // 소설 본문 생성
-  actor: 'A',         // 메인 캐릭터 대사
-  planner: 'A',       // 세계관 기획 (본문 레벨)
-  general: 'B',       // 일반 채팅/보조
-  translator: 'B',    // 다국어 번역
-  summarizer: 'B',    // 줄거리 요약 / 설정 교정
+  writer: 'A', actor: 'A', planner: 'A',
+  general: 'B', translator: 'B', summarizer: 'B',
 };
 
 /**
@@ -70,10 +72,15 @@ export function getModelForRole(role: AgentRole): string {
   return `role:${role}`;
 }
 
-/** 역할 기반으로 A/B 엔진 URL 반환 */
-export function getServerUrlForRole(role: AgentRole): string {
-  return ROLE_ENGINE_MAP[role] === 'A' ? SPARK_HEAVY_URL : SPARK_FAST_URL;
+/**
+ * 역할 기반 URL — 현재는 단일 게이트웨이로 통합, Nginx LB가 내부 분산.
+ * 호환용으로 함수 시그니처는 유지.
+ */
+export function getServerUrlForRole(_role: AgentRole): string {
+  return SPARK_GATEWAY_URL;
 }
+// ROLE_ENGINE_MAP은 메타데이터 힌트 전용으로 유지 (실제 URL 라우팅에는 사용 안 함)
+void ROLE_ENGINE_MAP;
 
 /** 하위 호환 — 기존 코드가 MODEL_WRITER/MODEL_PLANNER 상수를 URL 라우팅 힌트로 쓰던 패턴 지원 */
 export const MODEL_WRITER = 'role:writer';

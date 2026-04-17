@@ -18,7 +18,7 @@
 // ============================================================
 
 import { NextRequest } from 'next/server';
-import { SPARK_HEAVY_URL, SPARK_FAST_URL, SPARK_UNIFIED_URL, VLLM_MODEL_ID, buildSparkSystemPrompt, type AgentRole } from '@/lib/dgx-models';
+import { SPARK_GATEWAY_URL, VLLM_MODEL_ID, buildSparkSystemPrompt, type AgentRole } from '@/lib/dgx-models';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -43,10 +43,10 @@ interface ChatCompletionResp {
   }>;
 }
 
-function pickBackendUrl(role?: AgentRole): string {
-  if (role === 'writer' || role === 'actor' || role === 'planner') return SPARK_HEAVY_URL;
-  if (role === 'translator' || role === 'summarizer' || role === 'general') return SPARK_FAST_URL;
-  return SPARK_UNIFIED_URL;
+// Nginx LB(8090)가 Engine A/B(8080/8081) 자동 분산 — 프록시에서는 게이트웨이만 호출.
+// role은 서버 메타데이터/로깅 힌트 용도로만 유지.
+function pickBackendUrl(_role?: AgentRole): string {
+  return SPARK_GATEWAY_URL;
 }
 
 async function callDgxNonStream(
