@@ -55,6 +55,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
   // Fix #6: Character name validation
   const [nameError, setNameError] = React.useState(false);
+  const [creatorDnaOpen, setCreatorDnaOpen] = React.useState(true);
 
   const roleLabels = ROLE_KEYS.map(key => ({
     value: key,
@@ -86,7 +87,12 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
       role: newChar.role || 'hero',
       traits: newChar.traits || '',
       appearance: newChar.appearance || '',
-      dna: newChar.dna || 50
+      dna: newChar.dna || 50,
+      ...(newChar.desire ? { desire: newChar.desire } : {}),
+      ...(newChar.deficiency ? { deficiency: newChar.deficiency } : {}),
+      ...(newChar.conflict ? { conflict: newChar.conflict } : {}),
+      ...(newChar.changeArc ? { changeArc: newChar.changeArc } : {}),
+      ...(newChar.values ? { values: newChar.values } : {}),
     };
     setConfig({ ...config, characters: [...config.characters, char] });
     setNewChar({ name: '', role: 'hero', traits: '', appearance: '', dna: 50 });
@@ -182,7 +188,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
               </div>
 
               <div className="space-y-2">
-                <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.role}</span>
+                <div className="flex items-center">
+                  <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.role}</span>
+                  <FieldBadge required language={language} />
+                </div>
                 <div className="relative group">
                   <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                   <select
@@ -211,32 +220,62 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 </div>
               </div>
 
-              {/* 3-Tier 서사 프레임워크 — 핵심 */}
-              <div className="space-y-2 pt-2 border-t border-border/30">
-                <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest ml-2">
-                  {L4(language, { ko: '서사 뼈대 (선택)', en: 'Story Framework (Optional)', ja: '物語骨格', zh: '叙事框架' })}
-                </span>
-                <input
-                  className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-purple outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
-                  placeholder={L4(language, { ko: '욕망 — 이 캐릭터가 원하는 것', en: 'Desire — What this character wants', ja: '欲望', zh: '欲望' })}
-                  maxLength={200}
-                  value={newChar.desire ?? ''}
-                  onChange={e => setNewChar({...newChar, desire: e.target.value})}
-                />
-                <input
-                  className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-amber outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
-                  placeholder={L4(language, { ko: '결핍 — 부족하거나 잃은 것', en: 'Deficiency — What they lack or lost', ja: '欠乏', zh: '缺陷' })}
-                  maxLength={200}
-                  value={newChar.deficiency ?? ''}
-                  onChange={e => setNewChar({...newChar, deficiency: e.target.value})}
-                />
-                <input
-                  className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-red outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
-                  placeholder={L4(language, { ko: '갈등 — 이야기 속 충돌', en: 'Conflict — The core struggle', ja: '葛藤', zh: '冲突' })}
-                  maxLength={200}
-                  value={newChar.conflict ?? ''}
-                  onChange={e => setNewChar({...newChar, conflict: e.target.value})}
-                />
+              {/* 캐릭터 DNA — Tier 1 Accordion */}
+              <div className="pt-2 border-t border-border/30">
+                <button
+                  type="button"
+                  onClick={() => setCreatorDnaOpen(v => !v)}
+                  className="flex items-center gap-2 w-full text-left min-h-[44px] group"
+                >
+                  {creatorDnaOpen ? <ChevronUp className="w-3.5 h-3.5 text-accent-purple" /> : <ChevronDown className="w-3.5 h-3.5 text-accent-purple" />}
+                  <Dna className="w-3.5 h-3.5 text-accent-purple" />
+                  <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
+                    {t.tier1DNA ?? L4(language, { ko: '캐릭터 DNA', en: 'Character DNA', ja: 'キャラクター DNA', zh: '角色 DNA' })}
+                  </span>
+                  <FieldBadge required={false} language={language} />
+                </button>
+                <p className="text-[9px] text-text-quaternary ml-8 -mt-1 mb-2">
+                  {t.tier1Desc ?? L4(language, { ko: '캐릭터의 서사적 핵심을 정의합니다', en: 'Define the narrative core of the character', ja: '物語の核心を定義', zh: '定义叙事核心' })}
+                </p>
+                {creatorDnaOpen && (
+                  <div className="space-y-2 ml-1">
+                    <input
+                      className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-purple outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
+                      placeholder={t.desirePH ?? L4(language, { ko: '예: 세계 최고의 검사가 되고 싶다', en: 'e.g. Become the greatest swordsman', ja: '例: 最強の剣士になりたい', zh: '例: 成为世界最强的剑客' })}
+                      maxLength={200}
+                      value={newChar.desire ?? ''}
+                      onChange={e => setNewChar({...newChar, desire: e.target.value})}
+                    />
+                    <input
+                      className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-amber outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
+                      placeholder={t.deficiencyPH ?? L4(language, { ko: '예: 타인을 믿지 못하는 성격', en: 'e.g. Unable to trust others', ja: '例: 他人を信じられない性格', zh: '例: 无法信任他人的性格' })}
+                      maxLength={200}
+                      value={newChar.deficiency ?? ''}
+                      onChange={e => setNewChar({...newChar, deficiency: e.target.value})}
+                    />
+                    <input
+                      className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-red outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
+                      placeholder={t.conflictPH ?? L4(language, { ko: '예: 복수심과 우정 사이의 갈등', en: 'e.g. Torn between revenge and friendship', ja: '例: 復讐と友情の間の葛藤', zh: '例: 复仇与友谊之间的矛盾' })}
+                      maxLength={200}
+                      value={newChar.conflict ?? ''}
+                      onChange={e => setNewChar({...newChar, conflict: e.target.value})}
+                    />
+                    <input
+                      className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-green outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
+                      placeholder={t.changeArcPH ?? L4(language, { ko: '예: 복수에서 용서로', en: 'e.g. From revenge to forgiveness', ja: '例: 復讐から許しへ', zh: '例: 从复仇到宽恕' })}
+                      maxLength={200}
+                      value={newChar.changeArc ?? ''}
+                      onChange={e => setNewChar({...newChar, changeArc: e.target.value})}
+                    />
+                    <input
+                      className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-xs focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary"
+                      placeholder={t.valuesPH ?? L4(language, { ko: '예: 강함이 곧 정의', en: 'e.g. Strength equals justice', ja: '例: 強さこそ正義', zh: '例: 力量就是正义' })}
+                      maxLength={200}
+                      value={newChar.values ?? ''}
+                      onChange={e => setNewChar({...newChar, values: e.target.value})}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3 pt-2">
@@ -419,9 +458,13 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       />
                     </div>
 
-                    {/* 1단계 뼈대 — 3-tier framework */}
+                    {/* 1단계 뼈대 — 캐릭터 DNA */}
                     <div className="space-y-2 mb-4 pt-3 border-t border-border/50">
-                      <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.tier1}</span>
+                      <div className="flex items-center gap-1.5">
+                        <Dna className="w-3.5 h-3.5 text-accent-purple" />
+                        <span className="text-[10px] font-black text-accent-purple uppercase tracking-widest">{t.tier1DNA ?? t.tier1}</span>
+                        <FieldBadge required={false} language={language} />
+                      </div>
                       <input
                         value={char.desire || ''}
                         onChange={e => setConfig((prev: StoryConfig) => ({
@@ -481,10 +524,11 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       <button
                         type="button"
                         onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t2: !prev[char.id]?.t2 } }))}
-                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1.5 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
                       >
                         {expandedTiers[char.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        {t.tier2}
+                        <Settings2 className="w-3 h-3" />
+                        {t.tier2Link ?? t.tier2}
                       </button>
                       {expandedTiers[char.id]?.t2 && (
                         <div className="space-y-2">
