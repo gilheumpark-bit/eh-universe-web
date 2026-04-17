@@ -222,6 +222,20 @@ export default function WritingTabInline(props: Props) {
 
   const t = createT(language);
 
+  // 고급 모드 드롭다운 — 호버 대신 클릭 토글 (터치 디바이스 지원)
+  const [advancedMenuOpen, setAdvancedMenuOpen] = useState(false);
+  const advancedMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!advancedMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (advancedMenuRef.current && !advancedMenuRef.current.contains(e.target as Node)) {
+        setAdvancedMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [advancedMenuOpen]);
+
   // #4 파일 드래그앤드롭
   const [isDragOver, setIsDragOver] = useState(false);
   const handleFileDrop = useCallback((e: React.DragEvent) => {
@@ -451,7 +465,7 @@ export default function WritingTabInline(props: Props) {
                   <button
                     type="button"
                     onClick={() => setWritingMode('edit')}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-bold border transition-colors min-h-[44px] ${
                       writingMode === 'canvas' ? 'bg-accent-green/20 border-accent-green/50 text-accent-green' :
                       writingMode === 'refine' ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue' :
                       'bg-accent-red/20 border-accent-red/50 text-accent-red'
@@ -464,45 +478,50 @@ export default function WritingTabInline(props: Props) {
                     <X className="w-3 h-3 ml-0.5 opacity-60" />
                   </button>
                 ) : (
-                  <div className="relative group/adv">
+                  <div className="relative" ref={advancedMenuRef}>
                     <button
                       type="button"
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-transparent text-text-tertiary hover:text-text-secondary hover:border-border transition-colors"
+                      onClick={() => setAdvancedMenuOpen(v => !v)}
+                      aria-haspopup="menu"
+                      aria-expanded={advancedMenuOpen}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[13px] font-bold border min-h-[44px] transition-colors ${advancedMenuOpen ? 'text-text-primary border-border bg-bg-secondary' : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'}`}
                       title={L4(language, { ko: '고급 모드 (3단계·다듬기·고급)', en: 'Advanced modes (3-Step, Refine, Advanced)', ja: '上級モード（3ステップ・リファイン・アドバンス）', zh: '高级模式（3 步骤·润色·进阶）' })}
                     >
-                      <Settings2 className="w-3.5 h-3.5" />
+                      <Settings2 className="w-4 h-4" />
                       {L4(language, { ko: '고급', en: 'More', ja: 'More', zh: 'More' })}
-                      <ChevronDown className="w-3 h-3 opacity-60" />
+                      <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${advancedMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
-                    <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover/adv:opacity-100 group-hover/adv:visible transition-all z-50 min-w-[180px]">
-                      <button type="button" onClick={() => setWritingMode('canvas')}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-green transition-colors"
-                        title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps', ja: '骨組み→下書き→仕上げの3ステップで完成', zh: '骨架→草稿→润色 3 步完成' })}>
-                        <Layers className="w-3.5 h-3.5" />
-                        <span className="flex flex-col items-start leading-tight">
-                          <span>{L4(language, { ko: '3단계', en: '3-Step', ja: '3-Step', zh: '3-Step' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish', ja: '構想→下書き→完成の3ステップ', zh: '构思→草稿→完成 3 步' })}</span>
-                        </span>
-                      </button>
-                      <button type="button" onClick={() => setWritingMode('refine')}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-blue transition-colors"
-                        title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs', ja: '弱い段落を自動改善', zh: '自动改善薄弱段落' })}>
-                        <Wand2 className="w-3.5 h-3.5" />
-                        <span className="flex flex-col items-start leading-tight">
-                          <span>{L4(language, { ko: '다듬기', en: 'Refine', ja: 'Refine', zh: 'Refine' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%', ja: '既存原稿を30%仕上げ', zh: '将现有稿件润色 30%' })}</span>
-                        </span>
-                      </button>
-                      <button type="button" onClick={() => setWritingMode('advanced')}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-red transition-colors"
-                        title={L4(language, { ko: 'temperature/top-p 직접 제어', en: 'Direct control of temperature/top-p', ja: 'Direct control of temperature/top-p', zh: 'Direct control of temperature/top-p' })}>
-                        <Settings2 className="w-3.5 h-3.5" />
-                        <span className="flex flex-col items-start leading-tight">
-                          <span>{L4(language, { ko: '고급', en: 'Advanced', ja: 'Advanced', zh: 'Advanced' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings', ja: '詳細設定を直接調整', zh: '直接调整详细设置' })}</span>
-                        </span>
-                      </button>
-                    </div>
+                    {advancedMenuOpen && (
+                      <div role="menu" className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl min-w-[200px]" style={{ zIndex: 'var(--z-dropdown, 50)' }}>
+                        <button type="button" onClick={() => { setWritingMode('canvas'); setAdvancedMenuOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-3 text-[13px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-green transition-colors min-h-[44px]"
+                          title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps', ja: '骨組み→下書き→仕上げの3ステップで完成', zh: '骨架→草稿→润色 3 步完成' })}>
+                          <Layers className="w-4 h-4 shrink-0" />
+                          <span className="flex flex-col items-start leading-tight">
+                            <span>{L4(language, { ko: '3단계', en: '3-Step', ja: '3-Step', zh: '3-Step' })}</span>
+                            <span className="text-[13px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish', ja: '構想→下書き→完成の3ステップ', zh: '构思→草稿→完成 3 步' })}</span>
+                          </span>
+                        </button>
+                        <button type="button" onClick={() => { setWritingMode('refine'); setAdvancedMenuOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-3 text-[13px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-blue transition-colors min-h-[44px]"
+                          title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs', ja: '弱い段落を自動改善', zh: '自动改善薄弱段落' })}>
+                          <Wand2 className="w-4 h-4 shrink-0" />
+                          <span className="flex flex-col items-start leading-tight">
+                            <span>{L4(language, { ko: '다듬기', en: 'Refine', ja: 'Refine', zh: 'Refine' })}</span>
+                            <span className="text-[13px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%', ja: '既存原稿を30%仕上げ', zh: '将现有稿件润色 30%' })}</span>
+                          </span>
+                        </button>
+                        <button type="button" onClick={() => { setWritingMode('advanced'); setAdvancedMenuOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-3 text-[13px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-red transition-colors min-h-[44px]"
+                          title={L4(language, { ko: 'temperature/top-p 직접 제어', en: 'Direct control of temperature/top-p', ja: 'Direct control of temperature/top-p', zh: 'Direct control of temperature/top-p' })}>
+                          <Settings2 className="w-4 h-4 shrink-0" />
+                          <span className="flex flex-col items-start leading-tight">
+                            <span>{L4(language, { ko: '고급', en: 'Advanced', ja: 'Advanced', zh: 'Advanced' })}</span>
+                            <span className="text-[13px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings', ja: '詳細設定を直接調整', zh: '直接调整详细设置' })}</span>
+                          </span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -625,7 +644,7 @@ export default function WritingTabInline(props: Props) {
                 </span>
                 <span className="text-[11px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
               </summary>
-              <div className="px-4 pb-4 space-y-3 text-[10px] border-t border-border pt-3">
+              <div className="px-4 pb-4 space-y-3 text-[13px] border-t border-border pt-3">
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   <span className="text-text-tertiary font-bold uppercase w-16">{t('applied.genre')}</span>
                   <span className="text-accent-purple font-bold">{currentSession.config.genre}</span>
@@ -658,7 +677,7 @@ export default function WritingTabInline(props: Props) {
                     >
                       <span className="text-lg">🎬</span>
                       <div className="flex-1 text-left">
-                        <div className="text-[11px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
+                        <div className="text-[13px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
                           {L4(language, {
                             ko: '시네마 모드',
                             en: 'Cinema Mode',
@@ -679,7 +698,7 @@ export default function WritingTabInline(props: Props) {
                     >
                       <span className="text-lg">📻</span>
                       <div className="text-left">
-                        <div className="text-[11px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
+                        <div className="text-[13px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
                           {L4(language, { ko: '라디오 모드', en: 'Radio Mode', ja: 'ラジオモード', zh: '广播模式' })}
                         </div>
                         <div className="text-[9px] text-text-quaternary">
@@ -695,7 +714,7 @@ export default function WritingTabInline(props: Props) {
                     <div className="space-y-3 max-w-md">
                       <p className="text-text-primary text-xl font-black">{t('engine.startPrompt')}</p>
                       <p className="text-text-tertiary text-xs font-mono">{t('writingMode.describeFirstScene')}</p>
-                      <p className="text-text-tertiary text-[11px] leading-relaxed pt-1">{t('writingMode.emptyStateManualHint')}</p>
+                      <p className="text-text-tertiary text-[13px] leading-relaxed pt-1">{t('writingMode.emptyStateManualHint')}</p>
                       <button
                         type="button"
                         onClick={() => {
@@ -737,7 +756,7 @@ export default function WritingTabInline(props: Props) {
                 <div className="flex-1 min-w-0 overflow-y-auto space-y-3 custom-scrollbar">
                 {/* 모드 설명 배너 — 첫 진입 가이드 */}
                 {editDraft.length === 0 && (
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-amber/5 border border-accent-amber/20 text-[11px] text-accent-amber">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-amber/5 border border-accent-amber/20 text-[13px] text-accent-amber">
                     <PenLine className="w-4 h-4 shrink-0" />
                     <span>{isKO ? '직접 타이핑으로 집필합니다. 텍스트 선택 후 Ctrl+Shift+R로 NOA 리라이트를 사용할 수 있습니다.' : 'Write by typing. Select text and press Ctrl+Shift+R for NOA inline rewrite.'}</span>
                   </div>
@@ -778,7 +797,7 @@ export default function WritingTabInline(props: Props) {
                       type="button"
                       onClick={() => { const prev = undoStack.undo(); if (prev !== null) setEditDraft(prev); }}
                       disabled={!undoStack.canUndo}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-text-tertiary hover:text-text-primary hover:bg-bg-secondary disabled:opacity-30 transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[13px] font-mono text-text-tertiary hover:text-text-primary hover:bg-bg-secondary disabled:opacity-30 transition-colors min-h-[44px] min-w-[44px]"
                       title={isKO ? '되돌리기 (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
                     >
                       <Undo2 className="w-3 h-3" />
@@ -788,7 +807,7 @@ export default function WritingTabInline(props: Props) {
                       type="button"
                       onClick={() => { const next = undoStack.redo(); if (next !== null) setEditDraft(next); }}
                       disabled={!undoStack.canRedo}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono text-text-tertiary hover:text-text-primary hover:bg-bg-secondary disabled:opacity-30 transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[13px] font-mono text-text-tertiary hover:text-text-primary hover:bg-bg-secondary disabled:opacity-30 transition-colors min-h-[44px] min-w-[44px]"
                       title={isKO ? '다시 실행 (Ctrl+Y)' : 'Redo (Ctrl+Y)'}
                     >
                       <Redo2 className="w-3 h-3" />
@@ -970,7 +989,7 @@ export default function WritingTabInline(props: Props) {
                 <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-blue mb-2 flex items-center gap-2"><Wand2 className="w-4 h-4" /> {isKO ? '다듬기' : 'Refine'}</h3>
                   <p className="text-xs text-text-secondary mb-1">{isKO ? 'NOA가 현재 원고를 분석하고 약한 문단(점수 50 미만)을 자동으로 개선합니다.' : 'NOA analyzes your manuscript and automatically improves weak paragraphs (score <50).'}</p>
-                  <p className="text-[11px] text-text-tertiary mb-3">{isKO ? '💡 아래에 원고를 붙여넣으면 문단별 품질 점수가 표시됩니다. 점수가 낮은 문단을 선택하여 자동 개선할 수 있습니다.' : '💡 Paste your manuscript below to see paragraph quality scores. Select low-scoring paragraphs for automatic improvement.'}</p>
+                  <p className="text-[13px] text-text-tertiary mb-3">{isKO ? '💡 아래에 원고를 붙여넣으면 문단별 품질 점수가 표시됩니다. 점수가 낮은 문단을 선택하여 자동 개선할 수 있습니다.' : '💡 Paste your manuscript below to see paragraph quality scores. Select low-scoring paragraphs for automatic improvement.'}</p>
                   {promptDirective && <p className="text-xs text-accent-blue font-mono bg-accent-blue/5 rounded px-3 py-2">{isKO ? '지시:' : 'Directive:'} {promptDirective}</p>}
 
                   {/* 약한 문단 감지 결과 */}
@@ -996,7 +1015,7 @@ export default function WritingTabInline(props: Props) {
                   {quality.weakCount > 0 && (
                     <div className="mt-3 space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
                       {quality.paragraphs.filter(p => p.score < 50).map((p, i) => (
-                        <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-accent-red/5 border border-accent-red/15 text-[11px]">
+                        <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-accent-red/5 border border-accent-red/15 text-[13px]">
                           <span className="font-mono font-bold text-accent-red shrink-0">{p.score}</span>
                           <span className="text-text-secondary truncate">{p.text.slice(0, 80)}...</span>
                           <div className="flex gap-1 shrink-0">
@@ -1025,7 +1044,7 @@ export default function WritingTabInline(props: Props) {
                 <div className="bg-accent-red/5 border border-accent-red/20 rounded-xl p-6">
                   <h3 className="text-sm font-bold text-accent-red mb-2 flex items-center gap-2"><Settings2 className="w-4 h-4" /> {isKO ? '엔진 설정' : 'Engine Settings'}</h3>
                   <p className="text-xs text-text-secondary mb-1">{isKO ? '엔진 파라미터, 장르 프리셋, HFCP 설정을 직접 제어합니다.' : 'Direct control over engine parameters, genre presets, and HFCP settings.'}</p>
-                  <p className="text-[11px] text-text-tertiary">{isKO ? '💡 경험 있는 사용자용: temperature, top-p, 장르 프리셋, 프롬프트 지시문을 직접 조정할 수 있습니다.' : '💡 For experienced users: Adjust temperature, top-p, genre presets, and prompt directives.'}</p>
+                  <p className="text-[13px] text-text-tertiary">{isKO ? '💡 경험 있는 사용자용: temperature, top-p, 장르 프리셋, 프롬프트 지시문을 직접 조정할 수 있습니다.' : '💡 For experienced users: Adjust temperature, top-p, genre presets, and prompt directives.'}</p>
                 </div>
                 <textarea
                   ref={editDraftRef}
@@ -1053,7 +1072,7 @@ export default function WritingTabInline(props: Props) {
                   { ko: '감정적인 대화 장면으로', en: 'An emotional dialogue scene', ja: '感情的な対話シーンで', zh: '一段感人的对话场景' },
                 ].map((chip, i) => (
                   <button key={i} type="button" onClick={() => setInput(L4(language, chip))}
-                    className="px-3 py-1.5 rounded-xl border border-border/60 bg-bg-tertiary/30 text-[10px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all">
+                    className="px-3 py-1.5 rounded-xl border border-border/60 bg-bg-tertiary/30 text-[13px] text-text-tertiary hover:text-text-secondary hover:border-accent-purple/30 hover:bg-accent-purple/5 transition-all min-h-[44px]">
                     {L4(language, chip)}
                   </button>
                 ))}

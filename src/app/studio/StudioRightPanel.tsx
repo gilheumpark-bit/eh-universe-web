@@ -9,7 +9,8 @@ import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 
 import type { DirectorReport } from '@/engine/director';
 import { TRANSLATIONS } from '@/lib/studio-constants';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
+import { useStudioUI } from '@/contexts/StudioContext';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import DirectorPanel from '@/components/studio/DirectorPanel';
@@ -70,6 +71,7 @@ export function StudioSaveSlotPanel({
   setSaveSlotModalOpen, setSaveSlotName,
 }: StudioSaveSlotPanelProps) {
   const t = createT(language);
+  const { showConfirm, closeConfirm } = useStudioUI();
 
   // Visibility: hide for certain tabs/modes
   const shouldHide =
@@ -109,9 +111,18 @@ export function StudioSaveSlotPanel({
                   <div className="text-[10px] text-text-tertiary">{new Date(slot.timestamp).toLocaleString()}</div>
                 </div>
                 <button onClick={() => {
-                  if (!confirm(`"${slot.name}"${t('confirm.loadSlotMsg')}`)) return;
-                  updateCurrentSession({ config: { ...INITIAL_CONFIG, ...slot.data, savedSlots: currentSession.config.savedSlots, manuscripts: currentSession.config.manuscripts } });
-                  triggerSave();
+                  showConfirm({
+                    title: L4(language, { ko: '슬롯 불러오기', en: 'Load Slot', ja: 'スロット読込', zh: '加载存档' }),
+                    message: `"${slot.name}"${t('confirm.loadSlotMsg')}`,
+                    variant: 'warning',
+                    confirmLabel: L4(language, { ko: '불러오기', en: 'Load', ja: '読込', zh: '加载' }),
+                    cancelLabel: L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' }),
+                    onConfirm: () => {
+                      updateCurrentSession({ config: { ...INITIAL_CONFIG, ...slot.data, savedSlots: currentSession.config.savedSlots, manuscripts: currentSession.config.manuscripts } });
+                      triggerSave();
+                      closeConfirm();
+                    },
+                  });
                 }}
                   className="px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[10px] font-bold hover:bg-accent-purple/20 transition-colors opacity-0 group-hover:opacity-100">
                   {t('saveSlot.load')}

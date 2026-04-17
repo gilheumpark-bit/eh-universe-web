@@ -2,6 +2,8 @@
 
 import React, { useState, useCallback } from "react";
 import type { EpisodeSceneSheet, EpisodeSceneEntry, AppLanguage } from "@/lib/studio-types";
+import { useStudioUI } from "@/contexts/StudioContext";
+import { L4 } from "@/lib/i18n";
 
 // ============================================================
 // PART 0 — TYPES & CONSTANTS
@@ -281,6 +283,7 @@ export default function EpisodeScenePanel({
   onUpdate,
 }: EpisodeScenePanelProps) {
   const L = getL(lang);
+  const { showConfirm, closeConfirm } = useStudioUI();
   const [editingEp, setEditingEp] = useState<number | null>(null);
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
 
@@ -301,10 +304,19 @@ export default function EpisodeScenePanel({
   }, [episodeSceneSheets, onSave, onUpdate]);
 
   const handleDelete = useCallback((ep: number) => {
-    if (!window.confirm(L.deleteConfirm)) return;
-    onDelete(ep);
-    if (expandedEp === ep) setExpandedEp(null);
-  }, [onDelete, expandedEp, L.deleteConfirm]);
+    showConfirm({
+      title: L4(lang, { ko: '씬시트 삭제', en: 'Delete Scene Sheet', ja: 'シーンシート削除', zh: '删除场景表' }),
+      message: L.deleteConfirm,
+      variant: 'danger',
+      confirmLabel: L4(lang, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' }),
+      cancelLabel: L4(lang, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' }),
+      onConfirm: () => {
+        onDelete(ep);
+        if (expandedEp === ep) setExpandedEp(null);
+        closeConfirm();
+      },
+    });
+  }, [onDelete, expandedEp, L.deleteConfirm, lang, showConfirm, closeConfirm]);
 
   return (
     <div className="space-y-2">

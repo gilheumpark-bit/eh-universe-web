@@ -5,6 +5,7 @@ import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenToo
 import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
 import { createT, L4 } from "@/lib/i18n";
 import { showAlert } from '@/lib/show-alert';
+import { useStudioUI } from '@/contexts/StudioContext';
 import ChapterAnalysisView from "./ChapterAnalysisView";
 
 // ============================================================
@@ -178,6 +179,7 @@ ${manuscripts
 
 export default function ManuscriptView({ language, config, setConfig, messages, onEditInStudio }: ManuscriptViewProps) {
   const t = createT(language);
+  const { showConfirm, closeConfirm } = useStudioUI();
   const manuscripts = useMemo(() => config.manuscripts || [], [config.manuscripts]);
   const [expandedEp, setExpandedEp] = useState<number | null>(null);
   const [editingEp, setEditingEp] = useState<number | null>(null);
@@ -249,10 +251,19 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
 
   const deleteManuscript = (ep: number) => {
     const msg = t('manuscript.deleteConfirm').replace('{ep}', String(ep));
-    if (!window.confirm(msg)) return;
-    updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
-    // Dispatch alert toast for delete feedback
-    showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.`, ja: `EP.${ep}の原稿が削除されました。`, zh: `EP.${ep} 稿件已删除。` }));
+    showConfirm({
+      title: L4(language, { ko: '원고 삭제', en: 'Delete Manuscript', ja: '原稿削除', zh: '删除稿件' }),
+      message: msg,
+      variant: 'danger',
+      confirmLabel: L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' }),
+      cancelLabel: L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' }),
+      onConfirm: () => {
+        updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
+        // Dispatch alert toast for delete feedback
+        showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.`, ja: `EP.${ep}の原稿が削除されました。`, zh: `EP.${ep} 稿件已删除。` }));
+        closeConfirm();
+      },
+    });
   };
 
   const saveAnalysis = useCallback(

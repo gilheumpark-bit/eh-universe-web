@@ -53,9 +53,22 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
       const active = document.activeElement;
       const isInInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
       if (isInInput) {
-        // Allow F-keys and Ctrl combos even in inputs, but not when a dialog is open
+        // Dialog 안의 input — 단축키 전부 차단
         const isInDialog = active.closest('[role="dialog"], [data-modal]');
         if (isInDialog) return;
+        // 일반 input에서는 F-key 탭 전환 차단 (F5=새로고침 등 브라우저 기본 동작 보존)
+        if (e.key.startsWith('F') && !ctrl && !shift) return;
+      }
+
+      // 단축키 사용자 설정 — localStorage ff_shortcuts_disabled=1이면 전체 비활성화
+      let shortcutsDisabled = false;
+      try {
+        shortcutsDisabled = typeof window !== 'undefined' && localStorage.getItem('noa_shortcuts_disabled') === '1';
+      } catch { /* quota */ }
+      if (shortcutsDisabled) {
+        // Save(Ctrl+S), Escape는 항상 작동. 나머지 단축키는 무시.
+        if (ctrl && !shift && e.key === 's') { e.preventDefault(); opts.onSave?.(); return; }
+        return;
       }
 
       // Ctrl+S — save

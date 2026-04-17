@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Globe, Cloud, AlertTriangle, CheckCircle, Info, X, RefreshCw, Download, Scissors } from 'lucide-react';
+import { Globe, Cloud, AlertTriangle, CheckCircle, Info, X, RefreshCw, Download, Scissors, Languages } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
+import { useLang } from '@/lib/LangContext';
 import { ErrorToast } from './UXHelpers';
 
 interface StudioToastsProps {
@@ -174,6 +175,53 @@ function TokenTruncationToast({ isKO }: { isKO: boolean }) {
   );
 }
 
+/** 창작→번역 파이프라인 CTA — 에피소드 3개 이상 완성 시 번역 유도 */
+function TranslateCtaToast() {
+  const { lang } = useLang();
+  const [detail, setDetail] = useState<{ sessionId: string; episodeCount: number } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ sessionId: string; episodeCount: number }>;
+      if (custom.detail) setDetail(custom.detail);
+    };
+    window.addEventListener('noa:translate-cta', handler);
+    return () => window.removeEventListener('noa:translate-cta', handler);
+  }, []);
+
+  if (!detail) return null;
+  return (
+    <AutoDismissToast variant="info" duration={10000} onDismiss={() => setDetail(null)}>
+      <Languages className="w-5 h-5 text-accent-amber shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-text-primary">
+          {L4(lang, {
+            ko: `${detail.episodeCount}화까지 완성됐습니다`,
+            en: `${detail.episodeCount} episodes completed`,
+            ja: `${detail.episodeCount}話まで完成しました`,
+            zh: `已完成 ${detail.episodeCount} 章`,
+          })}
+        </p>
+        <p className="text-xs text-text-secondary">
+          {L4(lang, {
+            ko: '번역 스튜디오로 바로 가시겠어요?',
+            en: 'Jump to Translation Studio?',
+            ja: '翻訳スタジオへ進みますか?',
+            zh: '前往翻译工作室?',
+          })}
+        </p>
+      </div>
+      <a
+        href={`/translation-studio?from=${encodeURIComponent(detail.sessionId)}`}
+        onClick={() => setDetail(null)}
+        className="shrink-0 px-3 py-2 min-h-[44px] bg-accent-amber/20 hover:bg-accent-amber/30 border border-accent-amber/30 text-accent-amber text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+      >
+        {L4(lang, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' })} →
+      </a>
+    </AutoDismissToast>
+  );
+}
+
 export default function StudioToasts({
   language, isKO,
   showSyncReminder, setShowSyncReminder, user, lastSyncTime, handleSync, signInWithGoogle,
@@ -255,6 +303,9 @@ export default function StudioToasts({
 
       {/* Token Truncation Alert */}
       <TokenTruncationToast isKO={isKO} />
+
+      {/* 창작→번역 파이프라인 CTA */}
+      <TranslateCtaToast />
 
       {/* Error Toast */}
       {uxError && (

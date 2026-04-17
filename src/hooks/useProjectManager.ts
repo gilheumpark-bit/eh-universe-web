@@ -97,8 +97,23 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
       loaded = sanitizeLoadedProjects(loaded);
       if (loaded.length > 0) {
         setProjects(loaded);
-        setCurrentProjectId(loaded[0].id);
-        setCurrentSessionId(loaded[0].sessions?.[0]?.id ?? null);
+        // [세션 자동 복원] 마지막 사용 프로젝트/세션 ID를 localStorage에서 복원
+        // 없거나 유효하지 않으면 첫 프로젝트의 첫 세션으로 폴백
+        let lastProjectId: string | null = null;
+        let lastSessionId: string | null = null;
+        try {
+          lastProjectId = localStorage.getItem('noa_last_project_id');
+          lastSessionId = localStorage.getItem('noa_last_session_id');
+        } catch { /* quota */ }
+        const matchedProject = lastProjectId ? loaded.find(p => p.id === lastProjectId) : null;
+        const matchedSession = matchedProject?.sessions?.find(s => s.id === lastSessionId);
+        if (matchedProject && matchedSession) {
+          setCurrentProjectId(matchedProject.id);
+          setCurrentSessionId(matchedSession.id);
+        } else {
+          setCurrentProjectId(loaded[0].id);
+          setCurrentSessionId(loaded[0].sessions?.[0]?.id ?? null);
+        }
       }
       setHydrated(true);
     })();
@@ -128,6 +143,15 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
     }, 500);
     return () => clearTimeout(timer);
   }, [projects, hydrated, uid]);
+
+  // [세션 자동 복원 저장] 마지막 활성 프로젝트/세션 ID를 localStorage에 기록
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      if (currentProjectId) localStorage.setItem('noa_last_project_id', currentProjectId);
+      if (currentSessionId) localStorage.setItem('noa_last_session_id', currentSessionId);
+    } catch { /* quota/private */ }
+  }, [currentProjectId, currentSessionId, hydrated]);
 
   // Fix #4: beforeunload — flush save synchronously to prevent data loss
   useEffect(() => {

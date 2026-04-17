@@ -9,7 +9,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Globe2, Users, GitBranch, Sparkles, Info, BookOpen, Zap } from 'lucide-react';
+import { Globe2, Users, GitBranch, Sparkles, Info, BookOpen, Monitor } from 'lucide-react';
 import { L4 } from '@/lib/i18n';
 import type { AppLanguage } from '@/lib/studio-types';
 
@@ -389,13 +389,27 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
     <div className="flex flex-col h-[100dvh] bg-bg-primary text-text-primary">
       {/* 헤더 */}
       <header className="shrink-0 px-4 py-3 border-b border-border bg-bg-secondary/50 backdrop-blur-sm" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent-purple" />
-          <h1 className="text-sm font-bold">
-            {L4(language, { ko: 'EH Universe — 모바일 스케치', en: 'EH Universe — Mobile Sketch', ja: 'EH Universe — モバイルスケッチ', zh: 'EH Universe — 移动速写' })}
-          </h1>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="w-4 h-4 text-accent-purple shrink-0" />
+            <h1 className="text-sm font-bold truncate">
+              {L4(language, { ko: 'EH Universe — 모바일 스케치', en: 'EH Universe — Mobile Sketch', ja: 'EH Universe — モバイルスケッチ', zh: 'EH Universe — 移动速写' })}
+            </h1>
+          </div>
+          <button
+            onClick={() => {
+              if (typeof window === 'undefined') return;
+              try { localStorage.setItem('noa_force_desktop', '1'); } catch { /* quota */ }
+              window.location.reload();
+            }}
+            className="shrink-0 flex items-center gap-1 px-2.5 py-2 min-h-[44px] rounded-lg text-[11px] font-bold bg-bg-primary/60 border border-border text-text-secondary active:bg-bg-primary active:scale-95 transition-all"
+            title={L4(language, { ko: '데스크톱 모드로 강제 전환', en: 'Force desktop mode', ja: 'デスクトップモードに強制切替', zh: '强制切换到桌面模式' })}
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            {L4(language, { ko: 'PC', en: 'PC', ja: 'PC', zh: 'PC' })}
+          </button>
         </div>
-        <p className="text-[10px] text-text-tertiary mt-1">
+        <p className="text-[11px] text-text-tertiary mt-1">
           {L4(language, {
             ko: '집필·번역·코드 스튜디오는 데스크톱에서만 이용 가능합니다.',
             en: 'Writing / Translation / Code Studio are desktop-only.',

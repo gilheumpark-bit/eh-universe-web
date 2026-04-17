@@ -217,10 +217,16 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   }, [overflowOpen]);
 
   // ── App 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) ──
+  // 번역: 창작→번역→출판 파이프라인의 "다음 단계". 현재 세션이 있으면 세션 ID 전달.
+  const translationHref = currentSessionId
+    ? `/translation-studio?from=${encodeURIComponent(currentSessionId)}`
+    : '/translation-studio';
+  const hasManuscript = (sessions.find(s => s.id === currentSessionId)?.config.manuscripts?.length ?? 0) > 0;
   const appLinks = [
-    { href: '/archive', icon: Globe, label: language === 'KO' ? '유니버스' : 'Universe', color: 'text-text-secondary' },
-    { href: '/code-studio', icon: Code2, label: language === 'KO' ? '코드' : 'Code', color: 'text-text-secondary' },
-    { href: '/translation-studio', icon: Languages, label: language === 'KO' ? '번역' : 'Translate', color: 'text-text-secondary' },
+    { href: '/archive', icon: Globe, label: L4(language, { ko: '유니버스', en: 'Universe', ja: 'ユニバース', zh: '宇宙' }), color: 'text-text-secondary' },
+    { href: '/code-studio', icon: Code2, label: L4(language, { ko: '코드', en: 'Code', ja: 'コード', zh: '代码' }), color: 'text-text-secondary' },
+    // 번역은 파이프라인 "다음 단계" — 원고 있으면 앰버 강조, 없으면 일반
+    { href: translationHref, icon: Languages, label: L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' }), color: hasManuscript ? 'text-accent-amber' : 'text-text-secondary' },
   ];
 
   // ── Drag-and-drop reorder ──

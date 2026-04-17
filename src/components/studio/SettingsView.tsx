@@ -8,7 +8,7 @@ import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { createT, L4 } from '@/lib/i18n';
 import { useAuth } from '@/lib/AuthContext';
 import {
-  User, Shield, Cpu, Trash2,
+  User, Shield, Cpu, Trash2, Settings,
   ChevronRight, ChevronDown, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen,
   GitBranch, Check, Unplug, HelpCircle,
 } from 'lucide-react';
@@ -186,7 +186,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 )}
               </div>
               {storageEstimate && storageEstimate.quota > 0 && (storageEstimate.usage / storageEstimate.quota) > 0.8 && (
-                <p className="text-[10px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '容量が不足しています。古いセッションを削除するか、バックアップ後に整理してください。', zh: '容量不足。请删除旧会话或备份后清理。' })}</p>
+                <p className="text-[13px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '容量が不足しています。古いセッションを削除するか、バックアップ後に整理してください。', zh: '容量不足。请删除旧会话或备份后清理。' })}</p>
               )}
             </div>
           </div>
@@ -216,7 +216,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Bell className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">{t('settings.notifications')}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
                 </div>
               </div>
               <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-bg-tertiary justify-start'}`}>
@@ -237,10 +237,48 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><BookOpen className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">{L4(language, { ko: '온보딩 다시 보기', en: 'Replay Onboarding', ja: 'オンボーディング再表示', zh: '重新显示引导' })}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{L4(language, { ko: '처음 시작 가이드를 다시 표시합니다', en: 'Show the getting started guide again', ja: 'スタートガイドを再表示します', zh: '重新显示入门指南' })}</div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">{L4(language, { ko: '처음 시작 가이드를 다시 표시합니다', en: 'Show the getting started guide again', ja: 'スタートガイドを再表示します', zh: '重新显示入门指南' })}</div>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-text-tertiary shrink-0" />
+            </div>
+
+            {/* 단축키 토글 — Ctrl+E/P 등 브라우저 단축키 충돌 방지 */}
+            <div
+              onClick={() => {
+                const current = typeof window !== 'undefined' ? localStorage.getItem('noa_shortcuts_disabled') === '1' : false;
+                try {
+                  if (current) localStorage.removeItem('noa_shortcuts_disabled');
+                  else localStorage.setItem('noa_shortcuts_disabled', '1');
+                } catch { /* quota */ }
+                // force re-render
+                window.dispatchEvent(new Event('noa:settings-changed'));
+                // Re-render by toggling a dummy state — use location.reload for simplicity
+                window.location.reload();
+              }}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-all cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  <Settings className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">
+                    {L4(language, { ko: '키보드 단축키', en: 'Keyboard Shortcuts', ja: 'キーボードショートカット', zh: '键盘快捷键' })}
+                  </div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: 'Ctrl+E/P 등 브라우저와 충돌하는 단축키 활성/비활성',
+                      en: 'Toggle shortcuts that conflict with browser defaults (Ctrl+E/P)',
+                      ja: 'ブラウザと競合するショートカット(Ctrl+E/P)の有効/無効',
+                      zh: '切换与浏览器冲突的快捷键 (Ctrl+E/P)',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${typeof window !== 'undefined' && localStorage.getItem('noa_shortcuts_disabled') === '1' ? 'bg-bg-tertiary justify-start' : 'bg-blue-600 justify-end'}`}>
+                <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
+              </div>
             </div>
 
             <div
@@ -259,14 +297,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                       <div className="text-xs md:text-sm font-bold text-red-500 truncate">
                         {L4(language, { ko: `정말 삭제하시겠습니까? (${resetCountdown}초)`, en: `Are you sure? This cannot be undone. (${resetCountdown}s)`, ja: `本当に削除しますか？ (${resetCountdown}秒)`, zh: `确定要删除吗？ (${resetCountdown}秒)` })}
                       </div>
-                      <div className="text-[10px] md:text-[11px] text-red-400 hidden sm:block">
+                      <div className="text-[13px] text-red-400 hidden sm:block">
                         {L4(language, { ko: '한 번 더 클릭하면 모든 데이터가 삭제됩니다', en: 'Click again to permanently delete all data', ja: 'もう一度クリックすると全データが削除されます', zh: '再次点击将永久删除所有数据' })}
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="text-xs md:text-sm font-bold text-red-500 truncate">{t('settings.resetData')}</div>
-                      <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
+                      <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
                     </>
                   )}
                 </div>
@@ -343,7 +381,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </h3>
             <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
           </button>
-          <p className="text-[10px] text-text-tertiary mb-4">
+          <p className="text-[13px] text-text-tertiary mb-4">
             {L4(language, { ko: 'AI 서비스 연결, 창의성 조절 등 기술적인 설정입니다.', en: 'Technical settings including AI service connection and creativity tuning.', ja: 'AIサービス接続や創造性調整などの技術設定です。', zh: 'AI服务连接和创造性调整等技术设置。' })}
           </p>
           {advancedOpen && <div className="space-y-2">
@@ -357,7 +395,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Key className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
                     {t('settings.apiKeyDesc')}
                     <span className="ml-1 opacity-60">(API {L4(language, { ko: '키', en: 'Key', ja: 'Key', zh: 'Key' })})</span>
                   </div>
@@ -387,7 +425,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">{t('settingsEngine.defaultPlatform')}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultPlatformDesc')}</div>
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
@@ -409,7 +447,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Hash className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">{t('settingsEngine.defaultEpisodes')}</div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settingsEngine.defaultEpisodesDesc')}</div>
                 </div>
               </div>
               <input
@@ -435,7 +473,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                       </span>
                     </span>
                   </div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 md:gap-3 shrink-0">
@@ -465,7 +503,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                       </span>
                     </span>
                   </div>
-                  <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
                     {narrativeDepth <= 0.9 ? L4(language, { ko: '평작 — 가독성 우선', en: 'Light — Readability first', ja: 'Light — Readability first', zh: 'Light — Readability first' }) :
                      narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance', ja: '標準 — ジャンルのバランス', zh: '标准 — 类型均衡' }) :
                      narrativeDepth <= 1.2 ? L4(language, { ko: '심화 — 비유/상징 활용', en: 'Deep — Metaphor/symbolism', ja: 'Deep — Metaphor/symbolism', zh: 'Deep — Metaphor/symbolism' }) :

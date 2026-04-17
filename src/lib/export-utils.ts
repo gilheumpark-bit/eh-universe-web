@@ -4,6 +4,7 @@
 
 import { ChatSession } from './studio-types';
 import { stripEngineArtifacts } from '@/engine/pipeline';
+import { showAlert } from './show-alert';
 
 /** Simple CRC32 + ZIP builder — minimal spec-compliant for EPUB containers */
 function crc32(buf: Uint8Array): number {
@@ -145,9 +146,7 @@ export function exportEPUB(session: ChatSession, coverImageDataUrl?: string): vo
   const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
     session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
   if (!hasContent) {
-    if (typeof window !== 'undefined') {
-      alert('내보낼 원고가 없습니다. / No manuscript content to export.');
-    }
+    showAlert('내보낼 원고가 없습니다. / No manuscript content to export. / 書き出す原稿がありません。 / 没有可导出的稿件。', 'warning');
     return;
   }
 
@@ -327,9 +326,7 @@ export function exportDOCX(session: ChatSession): void {
   const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
     session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
   if (!hasContent) {
-    if (typeof window !== 'undefined') {
-      alert('내보낼 원고가 없습니다. / No manuscript content to export.');
-    }
+    showAlert('내보낼 원고가 없습니다. / No manuscript content to export. / 書き出す原稿がありません。 / 没有可导出的稿件。', 'warning');
     return;
   }
 

@@ -7,7 +7,8 @@ import {
   Item, Skill, MagicSystem, ItemRarity, ItemCategory,
   StoryConfig, AppLanguage,
 } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
+import { useStudioUI } from '@/contexts/StudioContext';
 import {
   Sword, Shield, Sparkles, Zap, ScrollText, Plus, Trash2,
   BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
@@ -282,10 +283,28 @@ function analyzeBalance(items: Item[], skills: Skill[], t: (key: string) => stri
 // ============================================================
 
 const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setConfig }) => {
+  const { showConfirm, closeConfirm } = useStudioUI();
   const [subTab, setSubTab] = useState<SubTab>('items');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const t = createT(language);
+
+  /** Shared delete-confirmation helper for item/skill/magic lists */
+  const confirmItemDelete = useCallback((onOk: () => void) => {
+    showConfirm({
+      title: L4(language, { ko: '항목 삭제', en: 'Delete Item', ja: '項目削除', zh: '删除项目' }),
+      message: L4(language, {
+        ko: '이 항목을 삭제하시겠습니까? 되돌릴 수 없습니다.',
+        en: 'Delete this item permanently? This cannot be undone.',
+        ja: 'この項目を削除しますか? 元に戻せません。',
+        zh: '要永久删除此项目吗? 此操作不可恢复。',
+      }),
+      variant: 'danger',
+      confirmLabel: L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' }),
+      cancelLabel: L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' }),
+      onConfirm: () => { onOk(); closeConfirm(); },
+    });
+  }, [language, showConfirm, closeConfirm]);
   const [tierExpanded, setTierExpanded] = useState<Record<string, { t2?: boolean; t3?: boolean }>>({});
 
   const items = useMemo(() => config.items ?? [], [config.items]);
@@ -536,13 +555,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
         <div className="space-y-4">
           {/* Category Filter */}
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border ${itemFilter === 'all' ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
+            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-2 rounded-lg text-[13px] font-bold border min-h-[44px] ${itemFilter === 'all' ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
               {t('itemStudio.filterAll')} ({items.length})
             </button>
             {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => {
               const count = items.filter(i => i.category === cat).length;
               return (
-                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border ${itemFilter === cat ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
+                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-2 rounded-lg text-[13px] font-bold border min-h-[44px] ${itemFilter === cat ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
                   {t(CATEGORY_CONFIG[cat].tKey)} ({count})
                 </button>
               );
@@ -568,29 +587,31 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       </span>
                       <button
                         onClick={(e) => {
-                          if (!window.confirm(language === 'KO' ? '이 항목을 삭제하시겠습니까?' : 'Delete this item permanently?')) return;
-                          e.currentTarget.classList.add('animate-delete-warning');
-                          setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
+                          const btn = e.currentTarget;
+                          confirmItemDelete(() => {
+                            btn.classList.add('animate-delete-warning');
+                            setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
+                          });
                         }}
-                        className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200"
+                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                   {item.description && <p className="text-xs text-text-secondary">{item.description}</p>}
-                  {item.effect && <p className="text-[10px] text-accent-blue font-bold tracking-wider relative z-10">✦ {item.effect}</p>}
-                  {item.obtainedFrom && <p className="text-[10px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
+                  {item.effect && <p className="text-[13px] text-accent-blue font-bold tracking-wider relative z-10">✦ {item.effect}</p>}
+                  {item.obtainedFrom && <p className="text-[13px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
                   {/* 1단계 뼈대 필드 */}
                   <div className="space-y-1.5 pt-2 border-t border-border/50">
                     <input value={item.purpose ?? ''} onChange={e => updateItemField(item.id, 'purpose', e.target.value)}
-                      placeholder={t('itemStudio.purposePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-1.5 text-[10px]" />
+                      placeholder={t('itemStudio.purposePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
                     <input value={item.activationCond ?? ''} onChange={e => updateItemField(item.id, 'activationCond', e.target.value)}
-                      placeholder={t('itemStudio.activationCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-1.5 text-[10px]" />
+                      placeholder={t('itemStudio.activationCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
                     <input value={item.costWeakness ?? ''} onChange={e => updateItemField(item.id, 'costWeakness', e.target.value)}
-                      placeholder={t('itemStudio.costWeaknessPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-1.5 text-[10px]" />
+                      placeholder={t('itemStudio.costWeaknessPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
                     <input value={item.storyFunction ?? ''} onChange={e => updateItemField(item.id, 'storyFunction', e.target.value)}
-                      placeholder={t('itemStudio.storyFunctionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-1.5 text-[10px]" />
+                      placeholder={t('itemStudio.storyFunctionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
                   </div>
                   {/* 2단계 — 작동 */}
                   <div className="pt-1">
@@ -605,19 +626,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     {tierExpanded[item.id]?.t2 && (
                       <div className="space-y-1.5 pt-1.5">
                         <input value={item.worldConnection ?? ''} onChange={e => updateItemField(item.id, 'worldConnection', e.target.value)}
-                          placeholder={t('itemStudio.worldConnectionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.worldConnectionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.misuse ?? ''} onChange={e => updateItemField(item.id, 'misuse', e.target.value)}
-                          placeholder={t('itemStudio.misusePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.misusePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.lore ?? ''} onChange={e => updateItemField(item.id, 'lore', e.target.value)}
-                          placeholder={t('itemStudio.lorePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.lorePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.material ?? ''} onChange={e => updateItemField(item.id, 'material', e.target.value)}
-                          placeholder={t('itemStudio.materialPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.materialPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.craftMethod ?? ''} onChange={e => updateItemField(item.id, 'craftMethod', e.target.value)}
-                          placeholder={t('itemStudio.craftMethodPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.craftMethodPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.valueRarity ?? ''} onChange={e => updateItemField(item.id, 'valueRarity', e.target.value)}
-                          placeholder={t('itemStudio.valueRarityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.valueRarityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.whoTargets ?? ''} onChange={e => updateItemField(item.id, 'whoTargets', e.target.value)}
-                          placeholder={t('itemStudio.whoTargetsPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.whoTargetsPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                       </div>
                     )}
                   </div>
@@ -634,19 +655,19 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                     {tierExpanded[item.id]?.t3 && (
                       <div className="space-y-1.5 pt-1.5">
                         <input value={item.itemAppearance ?? ''} onChange={e => updateItemField(item.id, 'itemAppearance', e.target.value)}
-                          placeholder={t('itemStudio.appearancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.appearancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.symbolism ?? ''} onChange={e => updateItemField(item.id, 'symbolism', e.target.value)}
-                          placeholder={t('itemStudio.symbolismPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.symbolismPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.currentLocation ?? ''} onChange={e => updateItemField(item.id, 'currentLocation', e.target.value)}
-                          placeholder={t('itemStudio.currentLocationPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.currentLocationPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.ownershipCond ?? ''} onChange={e => updateItemField(item.id, 'ownershipCond', e.target.value)}
-                          placeholder={t('itemStudio.ownershipCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.ownershipCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.durability ?? ''} onChange={e => updateItemField(item.id, 'durability', e.target.value)}
-                          placeholder={t('itemStudio.durabilityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.durabilityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.evolution ?? ''} onChange={e => updateItemField(item.id, 'evolution', e.target.value)}
-                          placeholder={t('itemStudio.evolutionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.evolutionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                         <input value={item.maintenance ?? ''} onChange={e => updateItemField(item.id, 'maintenance', e.target.value)}
-                          placeholder={t('itemStudio.maintenancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
+                          placeholder={t('itemStudio.maintenancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                       </div>
                     )}
                   </div>
@@ -714,18 +735,20 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                   </div>
                       <button
                         onClick={(e) => {
-                          if (!window.confirm(language === 'KO' ? '이 항목을 삭제하시겠습니까?' : 'Delete this item permanently?')) return;
-                          e.currentTarget.classList.add('animate-delete-warning');
-                          setTimeout(() => setSkills(prev => prev.filter(s => s.id !== skill.id)), 300);
+                          const btn = e.currentTarget;
+                          confirmItemDelete(() => {
+                            btn.classList.add('animate-delete-warning');
+                            setTimeout(() => setSkills(prev => prev.filter(s => s.id !== skill.id)), 300);
+                          });
                         }}
-                        className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200"
+                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-all duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                 </div>
-                {skill.owner && <p className="text-[10px] text-text-tertiary">👤 {skill.owner}</p>}
+                {skill.owner && <p className="text-[13px] text-text-tertiary">👤 {skill.owner}</p>}
                 {skill.description && <p className="text-xs text-text-secondary">{skill.description}</p>}
-                <div className="flex gap-3 text-[10px] text-text-tertiary">
+                <div className="flex gap-3 text-[13px] text-text-tertiary">
                   {skill.cost && <span>💎 {skill.cost}</span>}
                   {skill.cooldown && <span>⏱ {skill.cooldown}</span>}
                   {skill.rank && <span>🏅 {skill.rank}</span>}
@@ -765,8 +788,9 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               magic={magic}
               t={t}
               onDelete={() => {
-                if (!window.confirm(language === 'KO' ? '이 항목을 삭제하시겠습니까?' : 'Delete this item permanently?')) return;
-                setMagicSystems(prev => prev.filter(m => m.id !== magic.id));
+                confirmItemDelete(() => {
+                  setMagicSystems(prev => prev.filter(m => m.id !== magic.id));
+                });
               }}
               onAddRank={(rank) => setMagicSystems(prev => prev.map(m =>
                 m.id === magic.id ? { ...m, ranks: [...m.ranks, rank] } : m
@@ -842,7 +866,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                       return (
                         <div key={st.value} className="text-center">
                           <div className="text-2xl font-black">{count}</div>
-                          <div className="text-[10px] text-text-tertiary">{t(st.tKey)}</div>
+                          <div className="text-[13px] text-text-tertiary">{t(st.tKey)}</div>
                         </div>
                       );
                     })}
@@ -861,7 +885,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                   <div key={label} className="bg-bg-secondary rounded-xl p-4 text-center">
                     <Icon className="w-5 h-5 mx-auto text-text-tertiary mb-2" />
                     <div className="text-xl font-black">{value}</div>
-                    <div className="text-[10px] text-text-tertiary">{label}</div>
+                    <div className="text-[13px] text-text-tertiary">{label}</div>
                   </div>
                 ))}
               </div>
@@ -929,7 +953,7 @@ const MagicSystemCard: React.FC<{
                 onChange={e => setRankInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && rankInput.trim()) { onAddRank(rankInput.trim()); setRankInput(''); } }}
                 placeholder={t('itemStudio.addRankPlaceholder')}
-                className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-1.5 text-[10px] flex-1"
+                className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px] flex-1"
               />
             </div>
           </div>

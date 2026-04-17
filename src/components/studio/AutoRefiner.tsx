@@ -273,7 +273,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey && !hasDgxService()) {
-      alert(L4(language, { ko: 'API 키가 필요합니다. 설정에서 등록해주세요.', en: 'API key required. Please add one in Settings.', ja: 'APIキーが必要です。設定で登録してください。', zh: '需要API密钥，请在设置中添加。' }));
+      showAlert(L4(language, { ko: 'API 키가 필요합니다. 설정에서 등록해주세요.', en: 'API key required. Please add one in Settings.', ja: 'APIキーが必要です。設定で登録してください。', zh: '需要API密钥，请在设置中添加。' }), 'warning');
       return;
     }
 

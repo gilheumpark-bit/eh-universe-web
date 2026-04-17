@@ -367,6 +367,28 @@ export default function StudioShell() {
     try { localStorage.setItem('noa_writing_access', hasAiAccess ? 'api' : 'manual'); } catch { /* quota/private */ }
   }, [hasAiAccess, aiCapabilitiesLoaded]);
 
+  // [창작→번역 파이프라인] 원고 완성 감지 → 번역 CTA 토스트
+  // 에피소드 3개 + 3000자 이상 완성되면 1회성 제안
+  useEffect(() => {
+    if (!hydrated || !currentSession) return;
+    const manuscripts = currentSession.config.manuscripts ?? [];
+    const completedCount = manuscripts.filter(m => (m.content?.length ?? 0) >= 3000).length;
+    if (completedCount < 3) return;
+    const key = `noa_translate_cta_${currentSessionId}`;
+    try {
+      if (localStorage.getItem(key) === '1') return;
+      localStorage.setItem(key, '1');
+    } catch { /* quota */ }
+    // 번역 CTA 이벤트 발행 — StudioToasts에서 수신
+    window.dispatchEvent(new CustomEvent('noa:translate-cta', {
+      detail: {
+        sessionId: currentSessionId,
+        episodeCount: completedCount,
+      },
+    }));
+
+  }, [currentSession, currentSessionId, hydrated]);
+
   // editDraft → manuscripts 자동 전이 (수동 편집 내용이 EPUB/DOCX/JSON 내보내기에 반영되도록)
   // 2초 debounce로 config.manuscripts[episode].content 업데이트
   useEffect(() => {

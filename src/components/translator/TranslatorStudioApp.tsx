@@ -364,6 +364,43 @@ export default function TranslatorStudioApp() {
     }
   }, []);
 
+  // [창작→번역 파이프라인] Studio 세션에서 원고 자동 로드
+  // URL query: ?from=<sessionId> — Studio에서 번역 스튜디오로 진입 시
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const fromSessionId = params.get('from');
+    if (!fromSessionId) return;
+
+    try {
+      // Studio가 사용하는 localStorage 키에서 세션 데이터 읽기
+      const projectsRaw = localStorage.getItem('noa_projects');
+      if (!projectsRaw) return;
+      const projects = JSON.parse(projectsRaw) as Array<{ sessions?: Array<{ id: string; config?: { manuscripts?: Array<{ episode: number; content: string; title?: string }> } }> }>;
+      let matchedManuscripts: Array<{ episode: number; content: string; title?: string }> | null = null;
+      for (const proj of projects) {
+        const sess = proj.sessions?.find(s => s.id === fromSessionId);
+        if (sess?.config?.manuscripts && sess.config.manuscripts.length > 0) {
+          matchedManuscripts = sess.config.manuscripts;
+          break;
+        }
+      }
+      if (!matchedManuscripts) return;
+
+      // 첫 에피소드를 source에 자동 주입 + 이후 chapters로 추가
+      const sorted = [...matchedManuscripts].sort((a, b) => a.episode - b.episode);
+      const first = sorted[0];
+      if (first?.content) {
+        setSource(first.content);
+        // URL 정리 (?from 제거) — history 오염 방지
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    } catch (err) {
+      logger.warn('TranslatorStudioApp', 'failed to import studio session manuscripts', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isHydrated.current) return;
 

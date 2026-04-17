@@ -3,7 +3,8 @@ import { showAlert } from '@/lib/show-alert';
 import React, { useState, useMemo } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType } from '@/lib/studio-types';
 import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
+import { useStudioUI } from '@/contexts/StudioContext';
 import { Sparkles, Monitor, Smartphone, Shuffle, Bot, Loader2, Share2, Check, Globe, RotateCcw } from 'lucide-react';
 import AdvancedPlanningSection from './planning/AdvancedPlanningSection';
 import { useRouter } from 'next/navigation';
@@ -46,20 +47,20 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
               onChange={e => onTogglePrompt(e.target.checked)}
               className="w-3.5 h-3.5 rounded accent-blue-600"
             />
-            <span className="text-[10px] text-text-tertiary">{isKO ? 'NOA 프롬프트에 반영' : 'Apply to NOA prompt'}</span>
+            <span className="text-[13px] text-text-tertiary">{isKO ? 'NOA 프롬프트에 반영' : 'Apply to NOA prompt'}</span>
           </label>
         )}
       </div>
       {/* Current tags */}
       <div className="flex flex-wrap gap-1.5">
         {subGenres.map(tag => (
-          <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-accent-amber/10 border border-accent-amber/20 rounded-full text-[11px] font-bold text-accent-amber">
+          <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-accent-amber/10 border border-accent-amber/20 rounded-full text-[13px] font-bold text-accent-amber">
             #{tag}
             <button onClick={() => onChange(subGenres.filter(t => t !== tag))} className="text-accent-amber/50 hover:text-accent-amber text-xs">&times;</button>
           </span>
         ))}
         {subGenres.length === 0 && (
-          <span className="text-[11px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 설계에 반영됩니다' : 'Tags will be injected into NOA prompts'}</span>
+          <span className="text-[13px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 설계에 반영됩니다' : 'Tags will be injected into NOA prompts'}</span>
         )}
       </div>
       {/* Input */}
@@ -81,7 +82,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
             <button
               key={s}
               onClick={() => addTag(s)}
-              className="px-2 py-0.5 text-[10px] font-bold text-text-tertiary bg-bg-secondary border border-border rounded-full hover:border-accent-amber/30 hover:text-accent-amber transition-colors"
+              className="px-2.5 py-1 text-[13px] font-bold text-text-tertiary bg-bg-secondary border border-border rounded-full hover:border-accent-amber/30 hover:text-accent-amber transition-colors min-h-[44px]"
             >
               +{s}
             </button>
@@ -109,6 +110,7 @@ interface PlanningViewProps {
 // ============================================================
 
 const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart, startLabel, hasAiAccess }) => {
+  const { showConfirm, closeConfirm } = useStudioUI();
   const tl = createT(language);
   const t = TRANSLATIONS[language].planning;
   const te = TRANSLATIONS[language].engine;
@@ -128,16 +130,30 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
   const router = useRouter();
 
   const handleReset = () => {
-    if (!confirm(isKO ? '세계관 설정을 모두 초기화하시겠습니까?' : 'Reset all world settings?')) return;
-    setConfig((prev: StoryConfig) => ({
-      ...prev,
-      title: '', povCharacter: '', setting: '', primaryEmotion: '', synopsis: '',
-      corePremise: '', powerStructure: '', currentConflict: '',
-      worldHistory: '', socialSystem: '', economy: '', magicTechSystem: '',
-      factionRelations: '', survivalEnvironment: '',
-      culture: '', religion: '', education: '', lawOrder: '',
-      taboo: '', dailyLife: '', travelComm: '', truthVsBeliefs: '',
-    }));
+    showConfirm({
+      title: L4(language, { ko: '세계관 초기화', en: 'Reset World Settings', ja: '世界観リセット', zh: '重置世界设定' }),
+      message: L4(language, {
+        ko: '세계관 설정을 모두 초기화하시겠습니까? 입력한 내용이 모두 사라집니다.',
+        en: 'Reset all world settings? All entered content will be lost.',
+        ja: '世界観設定をすべてリセットしますか? 入力した内容がすべて消えます。',
+        zh: '要重置所有世界设定吗? 已输入的内容将全部丢失。',
+      }),
+      variant: 'warning',
+      confirmLabel: L4(language, { ko: '초기화', en: 'Reset', ja: 'リセット', zh: '重置' }),
+      cancelLabel: L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' }),
+      onConfirm: () => {
+        setConfig((prev: StoryConfig) => ({
+          ...prev,
+          title: '', povCharacter: '', setting: '', primaryEmotion: '', synopsis: '',
+          corePremise: '', powerStructure: '', currentConflict: '',
+          worldHistory: '', socialSystem: '', economy: '', magicTechSystem: '',
+          factionRelations: '', survivalEnvironment: '',
+          culture: '', religion: '', education: '', lawOrder: '',
+          taboo: '', dailyLife: '', travelComm: '', truthVsBeliefs: '',
+        }));
+        closeConfirm();
+      },
+    });
   };
 
   const handleAIGenerate = async () => {
@@ -257,14 +273,14 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
                       }));
                       setShowPresetMenu(false);
                     }}
-                      className="w-full text-left px-4 py-3 text-[11px] text-accent-amber/60 hover:bg-accent-amber/10 hover:text-accent-amber transition-colors border-b border-accent-amber/10 last:border-0">
+                      className="w-full text-left px-4 py-3 text-[13px] text-accent-amber/60 hover:bg-accent-amber/10 hover:text-accent-amber transition-colors border-b border-accent-amber/10 last:border-0 min-h-[44px]">
                       <div className="font-bold text-text-primary">{data.title}</div>
                       <div className="text-[9px] mt-0.5 opacity-70">{data.pov} · {data.emotion}</div>
                     </button>
                   );
                 })}
                 {(!AUTO_PRESETS[autoGenGenre] || AUTO_PRESETS[autoGenGenre].length === 0) && (
-                  <div className="px-4 py-3 text-[11px] text-text-tertiary">{tl('planningExtra.noPreset')}</div>
+                  <div className="px-4 py-3 text-[13px] text-text-tertiary">{tl('planningExtra.noPreset')}</div>
                 )}
               </div>
             )}
@@ -361,7 +377,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               }}
             />
             {(totalEpisodes < 1 || totalEpisodes > 500) && (
-              <p className="text-[10px] font-bold text-red-400 px-1">
+              <p className="text-[13px] font-bold text-red-400 px-1">
                 {totalEpisodes < 1
                   ? (language === 'KO' ? '에피소드 수는 1 이상이어야 합니다.' : 'Episode count must be at least 1.')
                   : (language === 'KO' ? '500화 초과는 시스템 부하를 유발할 수 있습니다.' : 'Over 500 episodes may cause performance issues.')}
