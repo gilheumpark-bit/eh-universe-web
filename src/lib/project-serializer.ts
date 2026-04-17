@@ -102,7 +102,10 @@ export function yamlToCharacter(yaml: string): Character {
  * - .noa/profile.json       (WriterProfile if available)
  * - volumes/vol-XX/ep-XXX.md (one per episode manuscript)
  */
-export function configToRepoFiles(config: StoryConfig): RepoFile[] {
+export function configToRepoFiles(
+  config: StoryConfig,
+  writerProfile?: WriterProfile,
+): RepoFile[] {
   if (!config) return [];
 
   const files: RepoFile[] = [];
@@ -168,9 +171,15 @@ export function configToRepoFiles(config: StoryConfig): RepoFile[] {
     });
   }
 
-  // --- .noa/profile.json (WriterProfile — stored as JSON for tooling) ---
-  // WriterProfile is not on StoryConfig directly; skip if not present.
-  // Callers can inject it via a wrapper if needed.
+  // --- .noa/profile.json (WriterProfile — 작가 학습 프로필, 다른 기기 sync용) ---
+  // useProjectManager.syncProjectToGithub에서 loadProfile() 결과를 전달하면
+  // GitHub 레포에 커밋되어 다른 기기/세션에서도 프로필 이어받기 가능.
+  if (writerProfile && writerProfile.episodeCount > 0) {
+    files.push({
+      path: '.noa/profile.json',
+      content: writerProfileToJson(writerProfile),
+    });
+  }
 
   // --- volumes/vol-XX/ep-XXX.md ---
   const manuscripts = config.manuscripts ?? [];
@@ -308,6 +317,18 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
   }
 
   return result;
+}
+
+/**
+ * Repo 파일에서 .noa/profile.json 을 추출해 WriterProfile 로 복원.
+ * GitHub pull 후 StudioShell 등에서 호출 → saveProfile(profile)로 localStorage 반영.
+ * 파일 없으면 null.
+ */
+export function extractWriterProfile(files: RepoFile[]): WriterProfile | null {
+  if (!files || files.length === 0) return null;
+  const file = files.find((f) => f?.path === '.noa/profile.json');
+  if (!file || typeof file.content !== 'string') return null;
+  return jsonToWriterProfile(file.content);
 }
 
 // ============================================================

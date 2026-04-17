@@ -26,7 +26,8 @@ import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
 import { useStudio } from './StudioContext';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
 import { getFile, getTree } from '@/lib/github-sync';
-import { repoFilesToConfig } from '@/lib/project-serializer';
+import { repoFilesToConfig, extractWriterProfile } from '@/lib/project-serializer';
+import { saveProfile } from '@/engine/writer-profile';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
@@ -125,6 +126,11 @@ export default function StudioMainContent({ children }: { children?: React.React
         if (Object.keys(patch).length > 0) {
           setConfig(prev => ({ ...prev, ...patch }));
         }
+        // .noa/profile.json 있으면 WriterProfile localStorage에 반영
+        try {
+          const profile = extractWriterProfile(repoFiles);
+          if (profile) saveProfile(profile);
+        } catch { /* profile restore is non-fatal */ }
       }
     } catch { /* branch pull fail is non-fatal */ }
   }, [gh, setConfig]);

@@ -11,6 +11,7 @@ import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { debouncedSyncToFirestore, loadProjectsFromFirestore, subscribeToProjectChanges } from '@/lib/firestore-project-sync';
 import { configToRepoFiles } from '@/lib/project-serializer';
+import { loadProfile } from '@/engine/writer-profile';
 
 // ============================================================
 // PART 1 — Initial config & types
@@ -409,7 +410,11 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
       if (!session?.config) return 0;
 
       try {
-        const repoFiles = configToRepoFiles(session.config);
+        // WriterProfile 동반 push — 다른 기기에서도 작가 학습 상태 이어받기
+        const writerProfile = (() => {
+          try { return loadProfile(); } catch { return undefined; }
+        })();
+        const repoFiles = configToRepoFiles(session.config, writerProfile);
         if (repoFiles.length === 0) return 0;
 
         let synced = 0;
