@@ -18,7 +18,7 @@ import { analyzeManuscript, calculateQualityTag, type DirectorReport, type Direc
 import { stripEngineArtifacts } from '@/engine/pipeline';
 import { getGenreTemperature } from '@/engine/genre-presets';
 import { buildStoryBible } from '@/engine/context-builder';
-import { getModelForRole } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { hasDgxService } from '@/lib/ai-providers';
 import { evaluateQuality, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
@@ -329,7 +329,7 @@ export function useStudioAI({
               return s;
             }));
           },
-          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, model: hasDgxService() ? VLLM_MODEL_ID : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
         );
 
         // Trademark/IP filter
@@ -558,7 +558,7 @@ export function useStudioAI({
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig2.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
+        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, model: hasDgxService() ? VLLM_MODEL_ID : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig2.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
       );
 
       // Trademark/IP filter

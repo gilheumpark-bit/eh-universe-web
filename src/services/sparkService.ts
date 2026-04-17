@@ -4,20 +4,16 @@
  * 전략: 청크 이어쓰기 — max_tokens 4000 단위로 분할 요청, finish_reason=length면 이어서 요청
  */
 
-import { getServerUrlForModel, getFallbackUrl, SPARK_UNIFIED_URL, buildSparkSystemPrompt, VLLM_MODEL_ID } from '@/lib/dgx-models';
+import { SPARK_GATEWAY_URL, buildSparkSystemPrompt, VLLM_MODEL_ID } from '@/lib/dgx-models';
 
 export const SPARK_SERVER_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
 
 /**
- * 모델 기반 서버 URL 결정 (듀얼 엔진 라우팅)
- * Heavy(35B) → 8080, Fast(0.8B) → 8081, 폴백 → 8000/SPARK_SERVER_URL
+ * 서버 URL 결정 — Nginx LB(8090)가 Engine A/B 자동 분산하므로
+ * 게이트웨이 단일 URL로 일원화.
  */
-function resolveServerUrl(model?: string): string {
-  if (model) {
-    const url = getServerUrlForModel(model);
-    if (url) return url;
-  }
-  return SPARK_SERVER_URL || SPARK_UNIFIED_URL;
+function resolveServerUrl(): string {
+  return SPARK_SERVER_URL || SPARK_GATEWAY_URL;
 }
 
 /** Spark 서버 사용량 정보 */
@@ -82,79 +78,7 @@ async function extractSparkError(res: Response): Promise<string> {
 }
 
 // ============================================================
-// PART 3 — 단건 non-stream 요청 (90초 이내 응답용)
-// ============================================================
-
-async function _singleSparkRequest(
-  url: string,
-  headers: Record<string, string>,
-  messages: { role: string; content: string }[],
-  model: string,
-  temperature: number,
-  maxTokens: number,
-  signal?: AbortSignal,
-): Promise<{ content: string; finishReason: string }> {
-  let lastError = '';
-
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 0) {
-      await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
-    }
-
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        signal: signal ?? AbortSignal.timeout(58_000), // 58초 — Vercel 60초 maxDuration 내
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature,
-          stream: false,
-          max_tokens: maxTokens,
-        }),
-      });
-
-      if (res.status === 429) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || '일일 호출 한도 초과 (100회). 내일 초기화됩니다.');
-      }
-      if (res.status === 401) {
-        throw new Error('DGX 서버 인증 실패. API 키를 확인하세요.');
-      }
-
-      if (isRetryableError(res.status)) {
-        lastError = await extractSparkError(res);
-        if (attempt < MAX_RETRIES) continue;
-        throw new Error(lastError);
-      }
-
-      if (!res.ok) {
-        lastError = await extractSparkError(res);
-        throw new Error(`Spark API ${res.status}: ${lastError}`);
-      }
-
-      const data = await res.json();
-      const msg = data.choices?.[0]?.message;
-      const content = msg?.content || '';
-      const finishReason = data.choices?.[0]?.finish_reason || 'stop';
-
-      return { content, finishReason };
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') throw err;
-      if (err instanceof TypeError && attempt < MAX_RETRIES) {
-        lastError = err.message;
-        continue;
-      }
-      throw err;
-    }
-  }
-
-  throw new Error(`DGX 서버 연결 실패 (${MAX_RETRIES + 1}회 시도). ${lastError}`);
-}
-
-// ============================================================
-// PART 4 — 진짜 SSE 스트리밍 AI 호출 (TTFT 0.05초 활용)
+// PART 3 — 진짜 SSE 스트리밍 AI 호출 (TTFT 0.05초 활용)
 // ============================================================
 
 const STREAM_MAX_TOKENS = 4000; // 스트리밍 요청당 최대 토큰
@@ -167,13 +91,13 @@ const MAX_CHUNKS = 4;           // 최대 4연타 = 16,000 토큰
  * - finish_reason=length면 이어쓰기 요청 (청크 이어쓰기 유지)
  */
 export async function streamSparkAI(
-  model: string,
+  _model: string, // API 호환용 — 실제 payload는 VLLM_MODEL_ID 고정 사용
   system: string,
   messages: { role: string; content: string }[],
   temperature: number,
   opts?: { userId?: string; apiKey?: string; signal?: AbortSignal; userTier?: string },
 ): Promise<ReadableStream> {
-  const serverUrl = resolveServerUrl(model);
+  const serverUrl = resolveServerUrl();
   if (!serverUrl && !SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -211,7 +135,7 @@ export async function streamSparkAI(
 
           // 진짜 스트리밍 결과를 읽고, finish_reason 반환
           const finishReason = await streamOneRequest(
-            url, headers, currentMessages, model, temperature,
+            url, headers, currentMessages, temperature,
             opts?.signal, decoder, encoder, controller,
             (text) => { fullContent += text; },
           );
@@ -247,7 +171,6 @@ async function streamOneRequest(
   url: string,
   headers: Record<string, string>,
   messages: { role: string; content: string }[],
-  model: string,
   temperature: number,
   signal: AbortSignal | undefined,
   decoder: TextDecoder,
@@ -261,9 +184,7 @@ async function streamOneRequest(
     if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
 
     try {
-      // Edge 프록시 경로엔 role 힌트도 함께 전달 (엔진 A/B 라우팅용)
-      // model 문자열이 "role:writer" 형태면 role 추출
-      const roleHint = model.startsWith('role:') ? model.slice(5) : 'writer';
+      // Nginx LB가 Engine A/B 자동 분산. role 힌트는 더 이상 불필요.
       const requestBody: Record<string, unknown> = {
         model: VLLM_MODEL_ID,
         messages,
@@ -271,7 +192,6 @@ async function streamOneRequest(
         stream: true,
         max_tokens: STREAM_MAX_TOKENS,
       };
-      if (url === '/api/spark-stream') requestBody.role = roleHint;
 
       const res = await fetch(url, {
         method: 'POST',

@@ -2,7 +2,7 @@ import { Type } from '@google/genai';
 import { createServerGeminiClient, hasGeminiServerCredentials } from '@/lib/google-genai-server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { MODEL_PLANNER, getServerUrlForModel } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID, SPARK_GATEWAY_URL } from '@/lib/dgx-models';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = {
@@ -21,7 +21,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
   const MAX_RETRIES = 2;
   const DELAYS = [1500, 3000];
   const body = JSON.stringify({
-    model: MODEL_PLANNER,
+    model: VLLM_MODEL_ID,
     messages: [
       { role: 'system', content: 'You are a creative writing assistant. CRITICAL: Always respond with a single flat JSON object. Use EXACTLY the field names specified in the prompt (e.g. title, synopsis, corePremise). Do NOT nest fields or create your own structure. No markdown, no explanation, just JSON.' },
       { role: 'user', content: prompt },
@@ -35,7 +35,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
     if (attempt > 0) await new Promise(r => setTimeout(r, DELAYS[attempt - 1]));
 
     try {
-      const baseUrl = getServerUrlForModel(MODEL_PLANNER) || SPARK_SERVER_URL;
+      const baseUrl = SPARK_SERVER_URL || SPARK_GATEWAY_URL;
       const res = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: 'POST',
         headers: {

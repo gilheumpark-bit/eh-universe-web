@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { MODEL_GENERAL } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { getFirstHostedProvider, resolveServerProviderKey } from '@/lib/server-ai';
 import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: MODEL_GENERAL,
+          model: VLLM_MODEL_ID,
           messages: [
             { role: 'system', content: systemPrompt },
             ...messages,

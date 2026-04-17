@@ -15,7 +15,7 @@ import { getTierLimits } from '@/lib/tier-gate';
 import { isGeminiAllocationExhaustedError, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { dispatchStream } from '@/services/aiProviders';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { MODEL_WRITER } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { isFeatureEnabledServer } from '@/lib/feature-flags';
 import { runNoa } from '@/lib/noa';
@@ -437,7 +437,7 @@ export async function POST(req: NextRequest) {
     // DGX Spark 폴백: 모든 프로바이더 실패 시 DGX 서버로 재시도
     if (!dispatched.ok && SPARK_SERVER_URL) {
       apiLog({ level: 'info', event: 'dgx_fallback', route: '/api/chat', ip, requestId, meta: { originalError: dispatched.error } });
-      dispatched = await dispatchStream('spark', '', MODEL_WRITER, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+      dispatched = await dispatchStream('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
     }
     if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 

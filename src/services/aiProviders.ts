@@ -1,6 +1,6 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
 import { streamSparkAI, SPARK_SERVER_URL } from './sparkService';
-import { MODEL_WRITER } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai:  'https://api.openai.com/v1/chat/completions',
@@ -137,7 +137,7 @@ export async function dispatchStream(
       case 'lmstudio':
         // 프로덕션: DGX Spark 서버로 폴백 (모델명을 DGX 기본 모델로 교체)
         if (SPARK_SERVER_URL) {
-          return { ok: true, stream: await streamSparkAI(MODEL_WRITER, system, messages, temperature, { userId: 'vercel-server', userTier: 'free' }) };
+          return { ok: true, stream: await streamSparkAI(VLLM_MODEL_ID, system, messages, temperature, { userId: 'vercel-server', userTier: 'free' }) };
         }
         return { ok: false, error: 'Local providers must use /api/local-proxy' };
       case 'claude':

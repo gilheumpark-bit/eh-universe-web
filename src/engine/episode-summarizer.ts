@@ -6,7 +6,7 @@
 
 import type { AppLanguage } from '@/lib/studio-types';
 import { streamChat, getApiKey, getActiveProvider, hasDgxService } from '@/lib/ai-providers';
-import { getModelForRole } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { logger } from '@/lib/logger';
 
 // IDENTITY_SEAL: PART-1 | role=module header | inputs=none | outputs=none
@@ -39,7 +39,7 @@ export async function generateEpisodeSummary(
       messages: [{ role: 'user', content: truncated }],
       temperature: 0.3, // 요약은 낮은 온도로 정확하게
       onChunk: (chunk) => { summary += chunk; },
-      model: hasDgxService() ? getModelForRole('general') : undefined,
+      model: hasDgxService() ? VLLM_MODEL_ID : undefined,
     });
 
     // 150자 제한 + 정리
@@ -94,7 +94,7 @@ export async function generateDetailedSummary(
       messages: [{ role: 'user', content: truncated }],
       temperature: 0.3, // 요약은 낮은 온도로 정확하게
       onChunk: (chunk) => { summary += chunk; },
-      model: hasDgxService() ? getModelForRole('general') : undefined,
+      model: hasDgxService() ? VLLM_MODEL_ID : undefined,
     });
 
     // 500자 제한 + 정리

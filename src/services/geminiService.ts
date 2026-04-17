@@ -7,7 +7,7 @@
 // ============================================================
 
 import { logger } from '@/lib/logger';
-import { MODEL_PLANNER, MODEL_ACTOR, MODEL_GENERAL } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { StoryConfig, Character, Item, Skill, MagicSystem, AppLanguage, Message } from "../lib/studio-types";
 import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
@@ -64,17 +64,13 @@ if (typeof globalThis !== 'undefined') {
   }, 60_000);
 }
 
-/** Phase 3A: task별 DGX 멀티에이전트 모델 라우팅 */
-function getDgxModelForTask(task: string): string {
-  switch (task) {
-    case 'characters': return MODEL_ACTOR;               // eva — 캐릭터 빙의/대사
-    case 'items':
-    case 'skills':
-    case 'worldDesign':
-    case 'worldSim':
-    case 'sceneDirection': return MODEL_PLANNER;          // r1 — 기획/논리
-    default: return MODEL_GENERAL;                        // qwen — 범용
-  }
+/**
+ * Phase 3A: task별 DGX 모델 라우팅.
+ * Nginx LB가 Engine A/B 자동 분산. 단일 모델만 서빙하므로 task와 무관하게 동일 ID 반환.
+ * 시그니처 유지(호출처 변경 방지).
+ */
+function getDgxModelForTask(_task: string): string {
+  return VLLM_MODEL_ID;
 }
 
 /** 프론트엔드에서 DGX 직접 호출 — Vercel 60초 제한 우회 */
