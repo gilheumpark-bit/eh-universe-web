@@ -12,8 +12,9 @@
  *   └ /api/rag/*           → RAG API
  *   └ /api/image/generate  → ComfyUI
  *
- * ⚠️ 포트 직결(8080/8081/8082/8188)은 Cloudflare Tunnel에서 차단됨.
- * ⚠️ stream:true 요청은 Cloudflare가 현재 520 반환 → /api/spark-stream Edge 프록시 사용.
+ * ⚠️ 포트 직결(8080/8081/8082/8188)은 Cloudflare Tunnel에서 차단됨 — 반드시 게이트웨이 경유.
+ * ✅ stream:true 요청은 게이트웨이가 `: heartbeat` 선행 + aiohttp 스트리밍으로
+ *    Cloudflare Tunnel을 직접 관통. 별도 Edge 프록시 불필요. TTFT 0.13초.
  */
 
 // ============================================================

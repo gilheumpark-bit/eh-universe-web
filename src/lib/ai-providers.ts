@@ -804,16 +804,6 @@ async function streamViaProxy(
         try {
           const json = JSON.parse(data);
 
-          // DGX Edge 프록시의 phase/status chunk — content 누적에서 제외, UI 이벤트로만 전달
-          if (typeof json.phase === 'string') {
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('noa:ai-phase', {
-                detail: { phase: json.phase, status: json.status || '' },
-              }));
-            }
-            continue;
-          }
-
           // Handle different provider formats
           const delta = json.choices?.[0]?.delta;
           const text = delta?.content || delta?.reasoning_content // OpenAI/Groq/Mistral + Gemma reasoning

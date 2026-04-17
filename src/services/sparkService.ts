@@ -105,14 +105,10 @@ export async function streamSparkAI(
   if (opts?.userTier) headers['x-user-tier'] = opts.userTier;
   if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
 
-  // [스트림 복구] 브라우저가 DGX 직결 SSE 요청 시 Cloudflare Tunnel이 520 반환 →
-  // 브라우저에서는 같은 오리진의 Vercel Edge 프록시(/api/spark-stream) 사용.
-  // Edge가 내부적으로 non-stream 청크 연쇄 호출 후 타자기 SSE로 re-stream.
-  // 서버사이드(SPARK_SERVER_URL 설정)에서는 기존 직결 경로 사용.
-  const isBrowser = typeof window !== 'undefined';
-  const url = isBrowser
-    ? '/api/spark-stream'
-    : `${serverUrl}/v1/chat/completions`;
+  // [SSE 직결] DGX 게이트웨이가 `: heartbeat` 선행 + aiohttp 스트리밍으로
+  // Cloudflare Tunnel 520/502 이슈 해결. 브라우저/서버 모두 직결 경로 사용.
+  // TTFT 0.13초, 진짜 SSE 관통.
+  const url = `${serverUrl}/v1/chat/completions`;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -206,37 +202,6 @@ async function streamOneRequest(
       }
       if (res.status === 401) throw new Error('DGX 서버 인증 실패.');
 
-      // Cloudflare Tunnel이 SSE stream을 차단하는 경우(520/502) non-stream 폴백
-      if ((res.status === 520 || res.status === 502 || res.status === 503) && attempt === 0) {
-        try {
-          const fbRes = await fetch(url, {
-            method: 'POST',
-            headers,
-            signal: signal ?? AbortSignal.timeout(90_000),
-            body: JSON.stringify({
-              model: VLLM_MODEL_ID,
-              messages,
-              temperature,
-              stream: false,
-              max_tokens: STREAM_MAX_TOKENS,
-            }),
-          });
-          if (fbRes.ok) {
-            const data = await fbRes.json() as {
-              choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
-            };
-            const content = data.choices?.[0]?.message?.content ?? '';
-            const fbFinish = data.choices?.[0]?.finish_reason ?? 'stop';
-            if (content) {
-              onContent(content);
-              const sseChunk = `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
-              controller.enqueue(encoder.encode(sseChunk));
-              return fbFinish;
-            }
-          }
-        } catch { /* non-stream 폴백도 실패 → 기존 재시도 플로우로 */ }
-      }
-
       if (isRetryableError(res.status)) {
         lastError = await extractSparkError(res);
         if (attempt < MAX_RETRIES) continue;
@@ -265,19 +230,14 @@ async function streamOneRequest(
 
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+          // SSE 코멘트(": heartbeat" 등) 스킵 — DGX 게이트웨이가 TTFT 유지 위해 선행 전송
+          if (!trimmed || trimmed.startsWith(':')) continue;
+          if (!trimmed.startsWith('data: ')) continue;
           const payload = trimmed.slice(6);
           if (payload === '[DONE]') continue;
 
           try {
             const parsed = JSON.parse(payload);
-
-            // 상태 chunk (phase/status) — content가 아니므로 누적에서 제외, UI로 릴레이만
-            if (typeof parsed.phase === 'string') {
-              controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
-              continue;
-            }
-
             const delta = parsed.choices?.[0]?.delta?.content;
             const reason = parsed.choices?.[0]?.finish_reason;
 
