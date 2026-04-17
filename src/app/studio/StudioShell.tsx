@@ -15,6 +15,7 @@ import { logger } from '@/lib/logger';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 import MobileDrawer from '@/components/studio/MobileDrawer';
+import { AIPhaseIndicator } from '@/components/studio/AIPhaseIndicator';
 import { useProjectManager } from '@/hooks/useProjectManager';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
@@ -769,6 +770,9 @@ export default function StudioShell() {
       data-testid="studio-content"
     >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
+
+      {/* DGX 생성 단계 상태 pill (bottom center) */}
+      <AIPhaseIndicator />
 
       {/* Cross-tab sync notification toast */}
       {crossTabNotification && (

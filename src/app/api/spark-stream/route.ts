@@ -91,6 +91,21 @@ async function pushTypewriter(
   }
 }
 
+/**
+ * 상태 chunk 전송 — content가 아니라 phase/status 필드로 구분.
+ * 클라이언트 파서는 status 필드가 있으면 content 누적에서 제외하고
+ * noa:ai-phase CustomEvent로 UI에 전달.
+ */
+function pushPhase(
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder,
+  phase: 'search' | 'prepare' | 'writing' | 'continue' | 'done',
+  status: string,
+): void {
+  const chunk = `data: ${JSON.stringify({ phase, status })}\n\n`;
+  controller.enqueue(encoder.encode(chunk));
+}
+
 // ============================================================
 // PART 4 — POST 핸들러
 // ============================================================
@@ -137,6 +152,19 @@ export async function POST(req: NextRequest) {
       const workingMessages = [...messages];
 
       try {
+        // [즉시] 첫 상태 메시지 — 15초 무반응 구간 채우기
+        pushPhase(controller, encoder, 'search', '🔍 세계관 설정 검색 중…');
+
+        // 3초 후 단계 전환 (DGX 응답 전까지 빈 화면 방지)
+        const prepareTimer = setTimeout(() => {
+          if (!abort.aborted) pushPhase(controller, encoder, 'prepare', '✍️ 집필 준비 중…');
+        }, 3000);
+
+        // 8초 후 집필 시작 단계 (DGX 첫 chunk 도달 전)
+        const writingTimer = setTimeout(() => {
+          if (!abort.aborted) pushPhase(controller, encoder, 'writing', '📝 첫 문장 생성 중…');
+        }, 8000);
+
         while (chainCount < MAX_CHAINS) {
           if (abort.aborted) break;
 
@@ -147,6 +175,11 @@ export async function POST(req: NextRequest) {
                 { role: 'assistant', content: accumulated },
                 { role: 'user', content: '이어서 계속 작성해주세요. 끊긴 부분에 자연스럽게 이어지도록.' },
               ];
+
+          // chain 2회차부터는 "다음 장면 준비 중" 상태 표시
+          if (chainCount > 0) {
+            pushPhase(controller, encoder, 'continue', `📖 다음 장면 준비 중… (${chainCount + 1}/${MAX_CHAINS})`);
+          }
 
           const { content, finishReason } = await callDgxNonStream(
             backendUrl,
@@ -159,6 +192,12 @@ export async function POST(req: NextRequest) {
             },
             abort,
           );
+
+          // 첫 chunk 받으면 예비 상태 타이머 취소
+          if (chainCount === 0) {
+            clearTimeout(prepareTimer);
+            clearTimeout(writingTimer);
+          }
 
           if (!content) {
             if (chainCount === 0) {
@@ -175,6 +214,7 @@ export async function POST(req: NextRequest) {
           if (finishReason !== 'length') break;
         }
 
+        pushPhase(controller, encoder, 'done', '');
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

@@ -271,6 +271,13 @@ async function streamOneRequest(
 
           try {
             const parsed = JSON.parse(payload);
+
+            // 상태 chunk (phase/status) — content가 아니므로 누적에서 제외, UI로 릴레이만
+            if (typeof parsed.phase === 'string') {
+              controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+              continue;
+            }
+
             const delta = parsed.choices?.[0]?.delta?.content;
             const reason = parsed.choices?.[0]?.finish_reason;
 
