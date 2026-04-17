@@ -468,7 +468,27 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const cardsWithoutImages = cards.filter(c => !(c.generatedImages && c.generatedImages.length > 0)).length;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full">
+    <div className="flex flex-col gap-4 h-full">
+      {/* 안내 배너 — Visual 탭이 Manuscript 비주얼 노벨 모드와 어떻게 연결되는지 명시 */}
+      {cards.length === 0 && (
+        <div className="ds-card rounded-lg border border-accent-amber/25 bg-accent-amber/[0.04] px-4 py-3">
+          <div className="flex items-start gap-3">
+            <ImageIcon className="w-5 h-5 text-accent-amber shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[13px] font-bold text-text-primary">
+                {isKO ? '🎨 이미지 생성 → 원고 Manuscript → 비주얼 노벨 모드로 재생' : '🎨 Generate images → Manuscript → Play as Visual Novel'}
+              </p>
+              <p className="text-[11px] text-text-tertiary mt-1 leading-relaxed">
+                {isKO
+                  ? '에피소드별 장면을 AI로 생성하고, 원고 탭의 「비주얼 노벨」 모드에서 시네마처럼 재생할 수 있습니다. 회차 선택 → 카드 추가 → 생성 실행.'
+                  : 'Generate scene visuals per episode, then play cinematically in Manuscript tab\'s "Visual Novel" mode. Pick an episode → add card → run generate.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
       {/* Left: Episode list + card list */}
       <div className="w-full lg:w-64 shrink-0 space-y-4">
         {/* View toggle */}
@@ -761,6 +781,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

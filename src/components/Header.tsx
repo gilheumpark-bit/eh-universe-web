@@ -88,6 +88,8 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
       { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", ja: "アーカイブ", zh: "档案" }) },
       { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", ja: "報告書", zh: "报告书" }) },
       { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", ja: "コーデックス", zh: "索引" }) },
+      { href: "/rulebook", label: L4(lang, { ko: "룰북", en: "RULEBOOK", ja: "ルールブック", zh: "设定手册" }) },
+      { href: "/reference", label: L4(lang, { ko: "레퍼런스", en: "REFERENCE", ja: "リファレンス", zh: "参考" }) },
     ],
     [lang],
   );

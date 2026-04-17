@@ -460,9 +460,19 @@ function PublishAuditSection() {
 // PART 4b — TM Suggestions (번역 메모리 유사 매치)
 // ============================================================
 function TMSuggestionsSection() {
-  const { source, to } = useTranslator();
+  const { source, to, glossary, setGlossary } = useTranslator();
   const [matches, setMatches] = useState<TMMatch[]>([]);
   const [collapsed, setCollapsed] = useState(false);
+  const [addedKeys, setAddedKeys] = useState<Set<string>>(new Set());
+
+  /** TM 매치의 원문-번역 쌍을 용어집에 추가 (이미 있으면 덮어쓰기) */
+  const handleAddToGlossary = useCallback((match: TMMatch) => {
+    const src = match.entry.source.trim().slice(0, 100);
+    const tgt = match.entry.target.trim().slice(0, 200);
+    if (!src || !tgt) return;
+    setGlossary(prev => ({ ...(prev ?? {}), [src]: tgt }));
+    setAddedKeys(prev => new Set(prev).add(src));
+  }, [setGlossary]);
 
   React.useEffect(() => {
     if (!source || source.trim().length < 20) {
@@ -520,15 +530,31 @@ function TMSuggestionsSection() {
           {matches.map((m, i) => {
             const pct = Math.round(m.similarity * 100);
             const color = pct >= 90 ? 'text-accent-green' : pct >= 80 ? 'text-accent-amber' : 'text-accent-indigo';
+            const srcKey = m.entry.source.trim().slice(0, 100);
+            const inGlossary = Boolean(glossary?.[srcKey]);
+            const justAdded = addedKeys.has(srcKey);
             return (
               <div key={i} className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className={`text-[10px] font-mono font-bold ${color}`}>{pct}%</span>
                   <span className="text-[9px] text-text-tertiary font-mono uppercase">{m.type}</span>
                   {m.entry.confirmed && (
                     <span className="text-[9px] text-accent-green bg-accent-green/10 px-1 rounded">확정</span>
                   )}
-                  <span className="text-[9px] text-text-tertiary font-mono ml-auto">{m.entry.sourceLang}→{m.entry.targetLang}</span>
+                  <span className="text-[9px] text-text-tertiary font-mono">{m.entry.sourceLang}→{m.entry.targetLang}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleAddToGlossary(m)}
+                    disabled={justAdded || inGlossary}
+                    className={`ml-auto text-[9px] px-1.5 py-0.5 rounded border font-mono transition-colors ${
+                      justAdded || inGlossary
+                        ? 'border-accent-green/30 bg-accent-green/10 text-accent-green cursor-default'
+                        : 'border-accent-indigo/30 bg-accent-indigo/5 text-accent-indigo hover:bg-accent-indigo/15'
+                    }`}
+                    title={inGlossary ? '이미 용어집에 있음' : '원문-번역 쌍을 용어집에 추가'}
+                  >
+                    {justAdded || inGlossary ? '📖 용어집에 있음' : '+ 용어집'}
+                  </button>
                 </div>
                 <div className="text-[10px] text-text-tertiary truncate" title={m.entry.source}>
                   원문: {m.entry.source.slice(0, 80)}{m.entry.source.length > 80 ? '…' : ''}
