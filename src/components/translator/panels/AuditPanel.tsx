@@ -1,6 +1,19 @@
-import React, { useMemo } from 'react';
-import { Activity, ShieldAlert, CheckCircle, AlertTriangle } from 'lucide-react';
+"use client";
+
+// ============================================================
+// PART 1 — Imports & Types
+// ============================================================
+import React, { useMemo, useState, useCallback } from 'react';
+import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
+import { scoreTranslation } from '@/hooks/useTranslation';
+import {
+  getDefaultConfig,
+  isFidelityScore,
+  isExperienceScore,
+  type ChunkScoreDetail,
+  type TranslationMode as EngineScoringMode,
+} from '@/engine/translation';
 
 type AuditIssue = {
   id: string;
@@ -9,6 +22,9 @@ type AuditIssue = {
   severity: 'high' | 'medium' | 'low';
 };
 
+// ============================================================
+// PART 2 — Heuristic Issue Builder (기존 자동 점검, 유지)
+// ============================================================
 function buildAuditIssues(
   source: string,
   result: string,
@@ -21,21 +37,11 @@ function buildAuditIssues(
   const r = result.trim();
 
   if (s.length > 0 && r.length === 0) {
-    issues.push({
-      id: 'empty-result',
-      type: 'warning',
-      text: '현재 편집 중인 챕터에 원문은 있으나 번역문이 비어 있습니다.',
-      severity: 'medium',
-    });
+    issues.push({ id: 'empty-result', type: 'warning', text: '현재 편집 중인 챕터에 원문은 있으나 번역문이 비어 있습니다.', severity: 'medium' });
   }
 
   if (s.length > 400 && r.length > 0 && r.length < s.length * 0.12) {
-    issues.push({
-      id: 'short-result',
-      type: 'warning',
-      text: '번역문 길이가 원문에 비해 매우 짧습니다. 누락이나 요약 번역 여부를 확인해 보세요.',
-      severity: 'medium',
-    });
+    issues.push({ id: 'short-result', type: 'warning', text: '번역문 길이가 원문에 비해 매우 짧습니다. 누락이나 요약 번역 여부를 확인해 보세요.', severity: 'medium' });
   }
 
   const pending = chapters.filter((c) => (c.content || '').trim() && !(c.result || '').trim() && !c.isDone);
@@ -43,75 +49,44 @@ function buildAuditIssues(
     issues.push({
       id: 'pending-chapters',
       type: 'info',
-      text: `미번역 챕터가 ${pending.length}개 있습니다. (${pending
-        .slice(0, 3)
-        .map((c) => c.name)
-        .join(', ')}${pending.length > 3 ? '…' : ''})`,
+      text: `미번역 챕터가 ${pending.length}개 있습니다. (${pending.slice(0, 3).map((c) => c.name).join(', ')}${pending.length > 3 ? '…' : ''})`,
       severity: 'low',
     });
   }
 
-  const glossaryLines = glossaryText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean).length;
+  const glossaryLines = glossaryText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).length;
   const dictCount = Object.keys(glossary || {}).length;
   if (glossaryLines >= 3 && dictCount === 0) {
-    issues.push({
-      id: 'glossary-orphan',
-      type: 'style',
-      text: '용어집(텍스트)에 줄이 있으나 용어 사전 항목이 비어 있습니다. 패널에서 용어를 추가하면 번역 일관성에 도움이 됩니다.',
-      severity: 'low',
-    });
+    issues.push({ id: 'glossary-orphan', type: 'style', text: '용어집(텍스트)에 줄이 있으나 용어 사전 항목이 비어 있습니다. 패널에서 용어를 추가하면 번역 일관성에 도움이 됩니다.', severity: 'low' });
   }
 
   const openJa = (source.match(/「|『|【/g) || []).length;
   const closeJa = (source.match(/」|』|】/g) || []).length;
   if (openJa !== closeJa && openJa + closeJa > 0) {
-    issues.push({
-      id: 'bracket-balance',
-      type: 'style',
-      text: `원문에 여닫는 괄호/인용부호 개수가 맞지 않을 수 있습니다. (「」류 ${openJa}/${closeJa})`,
-      severity: 'low',
-    });
+    issues.push({ id: 'bracket-balance', type: 'style', text: `원문에 여닫는 괄호/인용부호 개수가 맞지 않을 수 있습니다. (「」류 ${openJa}/${closeJa})`, severity: 'low' });
   }
 
-  // 엔진 검증: 길이 비율 체크 (KO→EN 1.10~1.60 기대)
   if (s.length > 100 && r.length > 0) {
     const ratio = r.length / s.length;
-    if (ratio < 0.5) {
-      issues.push({ id: 'length-too-short', type: 'warning', text: `번역문이 원문 대비 ${Math.round(ratio * 100)}% — 심각한 누락 가능`, severity: 'high' });
-    } else if (ratio > 2.5) {
-      issues.push({ id: 'length-too-long', type: 'warning', text: `번역문이 원문 대비 ${Math.round(ratio * 100)}% — 과잉 번역 가능`, severity: 'medium' });
-    }
+    if (ratio < 0.5) issues.push({ id: 'length-too-short', type: 'warning', text: `번역문이 원문 대비 ${Math.round(ratio * 100)}% — 심각한 누락 가능`, severity: 'high' });
+    else if (ratio > 2.5) issues.push({ id: 'length-too-long', type: 'warning', text: `번역문이 원문 대비 ${Math.round(ratio * 100)}% — 과잉 번역 가능`, severity: 'medium' });
   }
 
-  // 엔진 검증: 용어집 locked 항목 누락 체크
   if (r.length > 0 && glossary) {
     for (const [src, target] of Object.entries(glossary)) {
       if (s.includes(src) && !r.includes(target)) {
-        issues.push({
-          id: `glossary-miss-${src}`,
-          type: 'warning',
-          text: `용어 "${src}" → "${target}" 이(가) 번역문에 없습니다.`,
-          severity: 'medium',
-        });
+        issues.push({ id: `glossary-miss-${src}`, type: 'warning', text: `용어 "${src}" → "${target}" 이(가) 번역문에 없습니다.`, severity: 'medium' });
       }
     }
   }
 
-  // 엔진 검증: 번역투 패턴 감지 (EN)
   if (r.length > 50) {
     const translationese = ['것으로 보인다', '하는 것이 가능하다', '에 대하여', '측면에서'];
     for (const pat of translationese) {
-      if (r.includes(pat)) {
-        issues.push({ id: `translationese-${pat}`, type: 'style', text: `번역투 패턴: "${pat}"`, severity: 'low' });
-        break;
-      }
+      if (r.includes(pat)) { issues.push({ id: `translationese-${pat}`, type: 'style', text: `번역투 패턴: "${pat}"`, severity: 'low' }); break; }
     }
   }
 
-  // ── Auto-Check: 미번역 세그먼트 감지 (source == target) ──
   if (s.length > 20 && r.length > 20) {
     const srcLines = s.split(/\r?\n/).filter((l) => l.trim().length > 5);
     const resLines = r.split(/\r?\n/).filter((l) => l.trim().length > 5);
@@ -123,17 +98,11 @@ function buildAuditIssues(
     if (untranslated > 0 && checkLen > 0) {
       const pct = Math.round((untranslated / checkLen) * 100);
       if (pct > 10) {
-        issues.push({
-          id: 'untranslated-segments',
-          type: 'warning',
-          text: `미번역 세그먼트 ${untranslated}개 감지 (${pct}%) — 원문과 동일한 줄이 있습니다.`,
-          severity: pct > 50 ? 'high' : 'medium',
-        });
+        issues.push({ id: 'untranslated-segments', type: 'warning', text: `미번역 세그먼트 ${untranslated}개 감지 (${pct}%) — 원문과 동일한 줄이 있습니다.`, severity: pct > 50 ? 'high' : 'medium' });
       }
     }
   }
 
-  // ── Auto-Check: 숫자 일관성 검사 ──
   if (s.length > 10 && r.length > 10) {
     const srcNums = (s.match(/\d+/g) ?? []).sort();
     const resNums = (r.match(/\d+/g) ?? []).sort();
@@ -144,48 +113,83 @@ function buildAuditIssues(
       const parts: string[] = [];
       if (missing.length > 0) parts.push(`누락: ${missing.slice(0, 5).join(', ')}`);
       if (extra.length > 0) parts.push(`추가: ${extra.slice(0, 5).join(', ')}`);
-      issues.push({
-        id: 'number-consistency',
-        type: 'warning',
-        text: `숫자 불일치 — ${parts.join(' / ')}`,
-        severity: missing.length > 3 ? 'high' : 'medium',
-      });
-    }
-  }
-
-  // ── Auto-Check: 길이 비율 경고 (>2x 또는 <0.5x) ──
-  if (s.length > 30 && r.length > 0) {
-    const ratio = r.length / s.length;
-    if (ratio > 2.0 && !issues.some((i) => i.id === 'length-too-long')) {
-      issues.push({
-        id: 'length-ratio-high',
-        type: 'warning',
-        text: `번역문이 원문의 ${Math.round(ratio * 100)}% — 지나치게 길 수 있습니다.`,
-        severity: ratio > 3.0 ? 'high' : 'medium',
-      });
-    }
-    if (ratio < 0.5 && !issues.some((i) => i.id === 'length-too-short')) {
-      issues.push({
-        id: 'length-ratio-low',
-        type: 'warning',
-        text: `번역문이 원문의 ${Math.round(ratio * 100)}% — 심각한 내용 누락 가능`,
-        severity: ratio < 0.3 ? 'high' : 'medium',
-      });
+      issues.push({ id: 'number-consistency', type: 'warning', text: `숫자 불일치 — ${parts.join(' / ')}`, severity: missing.length > 3 ? 'high' : 'medium' });
     }
   }
 
   return issues;
 }
 
+// ============================================================
+// PART 3 — AI Score UI (신규, FidelityScoreDetail / ExperienceScoreDetail 렌더)
+// ============================================================
+
+type AxisRow = { label: string; value: number; hint?: string };
+
+/** 0~100 점수 → 색상 토큰 */
+function scoreColor(v: number): string {
+  if (v >= 80) return 'text-accent-green';
+  if (v >= 60) return 'text-accent-amber';
+  return 'text-red-400';
+}
+
+function scoreBarColor(v: number): string {
+  if (v >= 80) return 'bg-accent-green';
+  if (v >= 60) return 'bg-accent-amber';
+  return 'bg-red-400';
+}
+
+function AxisBar({ row }: { row: AxisRow }) {
+  const pct = Math.max(0, Math.min(100, Math.round(row.value)));
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-text-secondary">{row.label}</span>
+        <span className={`text-[12px] font-mono font-bold ${scoreColor(pct)}`}>{pct}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+        <div className={`h-full ${scoreBarColor(pct)} transition-[width] duration-500`} style={{ width: `${pct}%` }} />
+      </div>
+      {row.hint ? <span className="text-[9px] text-text-tertiary">{row.hint}</span> : null}
+    </div>
+  );
+}
+
+function buildAxesFromScore(score: ChunkScoreDetail): AxisRow[] {
+  if (isFidelityScore(score)) {
+    // 번역투는 낮을수록 좋음 → 100-값으로 반전
+    return [
+      { label: '정확성 (Fidelity)', value: score.fidelity, hint: '원문 충실도' },
+      { label: '자연스러움 (Naturalness)', value: score.naturalness, hint: '타겟어 자연도' },
+      { label: '완성도 (낮은 번역투)', value: 100 - score.translationese, hint: '번역투 ↓일수록 좋음' },
+      { label: '포맷·일관성 (Consistency)', value: score.consistency, hint: '용어·스타일 통일' },
+    ];
+  }
+  if (isExperienceScore(score)) {
+    return [
+      { label: '몰입도 (Immersion)', value: score.immersion },
+      { label: '감정 재현 (Emotion)', value: score.emotionResonance },
+      { label: '문화 적합 (Cultural)', value: score.culturalFit },
+      { label: '일관성 (Consistency)', value: score.consistency },
+      { label: '원문 근거 (Grounded)', value: score.groundedness },
+      { label: '번역자 투명 (Voice)', value: score.voiceInvisibility },
+    ];
+  }
+  return [];
+}
+
+// ============================================================
+// PART 4 — AuditPanel (Main)
+// ============================================================
 export function AuditPanel() {
-  const { source, result, chapters, glossaryText, glossary } = useTranslator();
+  const { source, result, chapters, glossaryText, glossary, to } = useTranslator();
 
   const issues = useMemo(
     () => buildAuditIssues(source, result, chapters, glossaryText, glossary),
     [source, result, chapters, glossaryText, glossary]
   );
 
-  const score = useMemo(() => {
+  const heuristicScore = useMemo(() => {
     let penalty = 0;
     for (const issue of issues) {
       if (issue.severity === 'high') penalty += 18;
@@ -195,51 +199,156 @@ export function AuditPanel() {
     return Math.max(0, Math.min(100, 100 - penalty));
   }, [issues]);
 
+  // ── AI 4축/6축 정밀 채점 ──
+  const [aiScore, setAiScore] = useState<ChunkScoreDetail | null>(null);
+  const [scoring, setScoring] = useState(false);
+  const [scoreError, setScoreError] = useState<string | null>(null);
+  const [scoreMode, setScoreMode] = useState<EngineScoringMode>('fidelity');
+
+  const canScore = source.trim().length >= 20 && result.trim().length >= 20;
+
+  const handleRunAIScore = useCallback(async () => {
+    if (!canScore || scoring) return;
+    setScoring(true);
+    setScoreError(null);
+    try {
+      const toUpper = (to || '').toUpperCase();
+      const targetLang: 'EN' | 'JP' | 'CN' | 'KO' =
+        toUpper === 'KO' ? 'KO'
+        : toUpper === 'JP' || toUpper === 'JA' || toUpper === 'JAPANESE' ? 'JP'
+        : toUpper === 'CN' || toUpper === 'ZH' || toUpper === 'CHINESE' ? 'CN'
+        : 'EN';
+      const config = { ...getDefaultConfig(scoreMode), targetLang };
+      const s = await scoreTranslation(source, result, config);
+      setAiScore(s);
+    } catch (err) {
+      setScoreError(err instanceof Error ? err.message : '채점 실패');
+    } finally {
+      setScoring(false);
+    }
+  }, [canScore, scoring, scoreMode, source, result, to]);
+
+  const axes = aiScore ? buildAxesFromScore(aiScore) : [];
+  const aiOverall = aiScore ? Math.round(aiScore.overall) : null;
+
   return (
     <div className="flex h-full flex-col font-sans">
+      {/* ── Header ── */}
       <div className="p-4 shrink-0 border-b border-white/5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 text-text-secondary">
             <Activity className="w-4 h-4 text-accent-green" />
             <span className="text-[13px] font-medium">Quality Audit</span>
           </div>
-          <div className="flex gap-2">
-            <span className="flex items-center gap-1 text-[11px] text-accent-green bg-accent-green/10 px-2 py-0.5 rounded border border-accent-green/20">
-              <CheckCircle className="w-3 h-3" /> {score}% 점수
+          <div className="flex gap-1.5 flex-wrap">
+            <span className="flex items-center gap-1 text-[11px] text-text-secondary bg-white/[0.03] px-2 py-0.5 rounded border border-white/10" title="원문·번역문·챕터·용어 휴리스틱 자동 점검">
+              <CheckCircle className="w-3 h-3" /> 자동 {heuristicScore}%
             </span>
+            {aiOverall !== null && (
+              <span className={`flex items-center gap-1 text-[11px] bg-white/[0.03] px-2 py-0.5 rounded border border-white/10 ${scoreColor(aiOverall)}`} title={`AI 정밀 채점 (${scoreMode === 'fidelity' ? '원문 보존형 4축' : '독자 경험형 6축'})`}>
+                <Sparkles className="w-3 h-3" /> AI {aiOverall}%
+              </span>
+            )}
           </div>
         </div>
         <p className="text-[10px] text-text-tertiary mt-2 leading-snug">
-          원문·번역문·챕터·용어 상태를 기준으로 한 자동 점검입니다. LLM 품질 판정은 포함되지 않습니다.
+          자동 점검은 길이·용어·숫자 같은 기계적 지표입니다. AI 정밀 채점으로 4축(원문보존) 또는 6축(독자경험) 품질 분석을 실행할 수 있습니다.
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pointer-events-auto">
-        {/* Auto-check summary */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pointer-events-auto">
+        {/* ── AI 4/6축 정밀 채점 섹션 ── */}
+        <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 text-text-secondary">
+              <Sparkles className="w-3.5 h-3.5 text-accent-amber" />
+              <span className="text-[12px] font-medium">AI 정밀 채점</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setScoreMode('fidelity')}
+                className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${scoreMode === 'fidelity' ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber' : 'border-white/10 text-text-tertiary hover:text-text-secondary'}`}
+                title="원문 보존형 4축 — 정확성·자연스러움·완성도·포맷"
+              >4축</button>
+              <button
+                type="button"
+                onClick={() => setScoreMode('experience')}
+                className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${scoreMode === 'experience' ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber' : 'border-white/10 text-text-tertiary hover:text-text-secondary'}`}
+                title="독자 경험형 6축 — 몰입·감정·문화·일관·근거·투명"
+              >6축</button>
+            </div>
+          </div>
+
+          {!aiScore && !scoring && (
+            <button
+              type="button"
+              onClick={handleRunAIScore}
+              disabled={!canScore}
+              className="w-full min-h-[36px] rounded-md bg-accent-amber/15 hover:bg-accent-amber/25 text-accent-amber border border-accent-amber/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title={canScore ? '현재 원문·번역문을 AI로 정밀 채점' : '원문/번역문이 20자 이상일 때 실행 가능'}
+            >
+              {canScore ? `AI ${scoreMode === 'fidelity' ? '4축' : '6축'} 채점 실행` : '원문/번역문 20자 이상 필요'}
+            </button>
+          )}
+
+          {scoring && (
+            <div className="flex items-center gap-2 text-[12px] text-text-secondary py-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-amber" />
+              <span>AI 채점 실행 중… (10~25초)</span>
+            </div>
+          )}
+
+          {scoreError && !scoring && (
+            <div className="flex items-center gap-2 text-[11px] text-red-400 bg-red-500/5 border border-red-500/20 rounded p-2">
+              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+              <span>{scoreError}</span>
+            </div>
+          )}
+
+          {aiScore && !scoring && (
+            <>
+              <div className="flex items-center justify-between gap-3 pt-1 pb-2 border-b border-white/5">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-text-tertiary uppercase tracking-wider">Overall</span>
+                  <span className={`text-2xl font-bold font-mono ${scoreColor(aiOverall ?? 0)}`}>{aiOverall}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRunAIScore}
+                  className="text-[10px] text-text-tertiary hover:text-accent-amber transition-colors underline underline-offset-2"
+                  title="현재 설정으로 재채점"
+                >재채점</button>
+              </div>
+              <div className="space-y-2.5">
+                {axes.map((row) => <AxisBar key={row.label} row={row} />)}
+              </div>
+              <p className="text-[9px] text-text-tertiary italic">
+                {scoreMode === 'fidelity' ? '원문 보존형 — 원문 구조·의미 보존 중심' : '독자 경험형 — 타겟 독자 몰입 중심'}
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* ── 자동 점검 (기존 휴리스틱) ── */}
         {issues.length > 0 && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5 text-[11px] text-text-tertiary">
             <ShieldAlert className="w-3.5 h-3.5 text-accent-amber shrink-0" />
             <span>
-              {issues.filter((i) => i.severity === 'high').length > 0
-                ? `${issues.filter((i) => i.severity === 'high').length} high / `
-                : ''}
-              {issues.filter((i) => i.severity === 'medium').length > 0
-                ? `${issues.filter((i) => i.severity === 'medium').length} medium / `
-                : ''}
-              {issues.filter((i) => i.severity === 'low').length} low
-              {' '}&mdash; {issues.length}개 자동 점검 항목
+              {issues.filter((i) => i.severity === 'high').length > 0 ? `${issues.filter((i) => i.severity === 'high').length} high / ` : ''}
+              {issues.filter((i) => i.severity === 'medium').length > 0 ? `${issues.filter((i) => i.severity === 'medium').length} medium / ` : ''}
+              {issues.filter((i) => i.severity === 'low').length} low — {issues.length}개 자동 점검 항목
             </span>
           </div>
         )}
+
         {issues.map((issue) => (
           <div key={issue.id} className="flex gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
             <div className="shrink-0 mt-0.5">
               {issue.severity === 'high' ? (
                 <ShieldAlert className="w-4 h-4 text-red-400" />
               ) : (
-                <AlertTriangle
-                  className={`w-4 h-4 ${issue.severity === 'medium' ? 'text-accent-amber' : 'text-accent-indigo'}`}
-                />
+                <AlertTriangle className={`w-4 h-4 ${issue.severity === 'medium' ? 'text-accent-amber' : 'text-accent-indigo'}`} />
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -248,7 +357,7 @@ export function AuditPanel() {
           </div>
         ))}
 
-        {issues.length === 0 && (
+        {issues.length === 0 && !aiScore && (
           <div className="flex flex-col items-center justify-center py-10 gap-2 opacity-60">
             <CheckCircle className="w-8 h-8 text-accent-green" />
             <span className="text-[13px] text-text-secondary w-2/3 text-center">
@@ -260,3 +369,5 @@ export function AuditPanel() {
     </div>
   );
 }
+
+// IDENTITY_SEAL: AuditPanel | role=quality audit + AI scoring | inputs=source,result,chapters,glossary | outputs=UI(heuristic+AI 4/6axis)

@@ -145,7 +145,7 @@ const EXPERIENCE_SCORE_SCHEMA = {
  * 채점: /api/structured-generate (범용 JSON 생성) 우선 → 실패 시 스트리밍 폴백.
  * gemini-structured는 task 화이트리스트에 translationScore가 없어 사용 불가.
  */
-async function scoreTranslation(
+export async function scoreTranslation(
   sourceText: string,
   translatedText: string,
   config: TranslationConfig,
