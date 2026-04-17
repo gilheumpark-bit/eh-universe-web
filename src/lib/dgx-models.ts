@@ -101,11 +101,12 @@ export function getFallbackUrl(): string {
 // ============================================================
 
 /**
- * [중요] 추론형 모델(Qwen 3.5-9B)이 답변 전에 영어 Thinking Process를 출력하는
- * 버릇이 있어, 모든 소설/대사 생성 요청의 System Prompt에 반드시 포함해야 함.
+ * [중요] 추론형 모델(Qwen 3.5-9B)의 영어 Thinking Process 출력 차단 가드.
+ * Qwen3 지원 토큰 `/no_think` + 명시적 금지 문구 + <think> 태그 생성 차단.
+ * 완전 차단은 불가능하므로 클라이언트측 stripEngineArtifacts가 최종 필터.
  */
 export const NO_ENGLISH_THINKING_GUARD =
-  '[중요 지시사항]: 절대 당신의 분석 과정이나 생각(Thinking Process)을 영어로 출력하지 마십시오. 오직 완성된 한글 소설 본문만 즉시 출력해야 합니다.';
+  '/no_think\n[절대 규칙]: <think> 태그, "Thinking Process:", "Reasoning:", "Let me analyze", 숫자 리스트 분석("1. Analyze...") 등 모든 형태의 사고 과정을 영어 또는 한국어로 출력하지 마십시오. <think></think> 블록도 생성 금지. 오직 완성된 한글 소설 본문만 즉시 출력하십시오. 첫 문자는 반드시 한글이어야 합니다.';
 
 /**
  * 집필 시스템 프롬프트 빌더. 기존 systemInstruction이 있으면 뒤에 guard 문장을
@@ -113,7 +114,7 @@ export const NO_ENGLISH_THINKING_GUARD =
  */
 export function buildSparkSystemPrompt(existing?: string): string {
   const base = existing?.trim() ?? "당신은 'EH Universe' 세계관을 집필하는 전문 웹소설 작가입니다.";
-  if (base.includes('Thinking Process')) return base; // 이미 포함
+  if (base.includes('/no_think')) return base; // 이미 포함
   return `${base}\n\n${NO_ENGLISH_THINKING_GUARD}`;
 }
 

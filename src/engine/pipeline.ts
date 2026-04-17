@@ -1005,7 +1005,33 @@ function stripTrailingReportJson(text: string): string {
 }
 
 export function stripEngineArtifacts(text: string): string {
-  let clean = text
+  let clean = text;
+
+  // ============================================================
+  // Qwen reasoning-model artifact 대응 (최우선)
+  // ============================================================
+  // 1. <think></think> 태그 블록 제거
+  clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, '');
+
+  // 2. "Thinking Process:" 또는 영어 분석 리드 감지 → 한글 소설 본문 시작점까지 건너뛰기
+  const reasoningLead = /^\s*(?:Thinking Process|Reasoning|Let me (?:think|analyze)|Analysis|Step\s*\d)[\s:]/i;
+  if (reasoningLead.test(clean)) {
+    // 한글 문자로 시작하는 첫 줄(또는 첫 위치) 탐색 — 그 이전은 전부 제거
+    const hangulStart = clean.search(/[가-힣]/);
+    if (hangulStart > 0) {
+      // 줄 시작 위치까지 백트래킹 (문단 단위로 깔끔히)
+      const lineStart = clean.lastIndexOf('\n', hangulStart);
+      clean = clean.slice(lineStart >= 0 ? lineStart + 1 : hangulStart);
+    } else {
+      // 한글이 전혀 없는 응답 → 전체 비우기 (오류 상황)
+      clean = '';
+    }
+  }
+
+  // 3. 선행 영어 마크다운 리스트 ("1. **Analyze...") 제거 — 한글 만날 때까지
+  clean = clean.replace(/^(?:\s*\d+\.\s+\*{0,2}[A-Z][^\n]*\n(?:\s{2,}\*[\s\S]*?\n)+\s*)+/m, '');
+
+  clean = clean
     .replace(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*"(?:grade|metrics|critique|tension|eos(?:_score|Score)?|pacing|immersion)"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, '')
     .replace(/\{\s*\n\s*"(?:grade|metrics|tension|pacing|immersion|eos|active_eh_layer|critique|eosScore|serialization)"[\s\S]*?\n\s*\}/g, '')
     .replace(/\[?(Engine|엔진)\s*(Report|리포트|분석)[:\]].*/gi, '')
