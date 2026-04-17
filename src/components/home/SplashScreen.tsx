@@ -51,7 +51,7 @@ export default function SplashScreen({
               EH
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
-              Universe · Writing Studio
+              Loreguard · Writing OS
             </span>
           </div>
         </div>
@@ -108,12 +108,22 @@ export default function SplashScreen({
           </div>
         </div>
 
-        {/* Footer */}
-        <p
-          className={`text-xs text-text-tertiary font-mono tracking-wide transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+        {/* Footer — 4언어 + 한 줄 브랜드 서명 */}
+        <div
+          className={`flex flex-col items-center gap-1 transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}
         >
-          CC-BY-NC-4.0 · 로어가드 by EH
-        </p>
+          <p className="text-[11px] text-text-secondary font-mono tracking-[0.2em] uppercase">
+            Loreguard · 로어가드
+          </p>
+          <p className="text-[10px] text-text-tertiary font-mono tracking-wide">
+            {L4(lang, {
+              ko: '© EH · 창작에서 번역·출판까지 · CC-BY-NC-4.0',
+              en: '© EH · From creation to translation & publishing · CC-BY-NC-4.0',
+              ja: '© EH · 創作から翻訳・出版まで · CC-BY-NC-4.0',
+              zh: '© EH · 从创作到翻译与出版 · CC-BY-NC-4.0',
+            })}
+          </p>
+        </div>
       </div>
     </div>
   );

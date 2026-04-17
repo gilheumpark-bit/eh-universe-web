@@ -526,11 +526,11 @@ function HomePageContent() {
                 EH
               </span>
               <p className="font-[--font-mono] text-xs tracking-[0.16em] text-text-tertiary">
-                EH UNIVERSE · CC-BY-NC-4.0
+                LOREGUARD · 로어가드 · CC-BY-NC-4.0
               </p>
             </div>
             <p className="font-document text-xs italic text-text-tertiary">
-              {T({ ko: "세계관을 탐색하고, 이야기를 만든다.", en: "Explore the universe. Build the story.", ja: "世界観を探索し、物語を作る。", zh: "探索世界观，创造故事。" })}
+              {T({ ko: "창작에서 번역·출판까지, 한 흐름으로.", en: "From creation to translation & publishing — one pipeline.", ja: "創作から翻訳・出版まで、ひとつの流れで。", zh: "从创作到翻译与出版，一气呵成。" })}
             </p>
           </div>
         </div>
