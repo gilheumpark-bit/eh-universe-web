@@ -142,7 +142,7 @@ function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
     return {
       type: 'server',
       title: L4(language, { ko: '서버 오류', en: 'Server Error', ja: 'サーバーエラー', zh: '服务器错误' }),
-      message: L4(language, { ko: 'AI 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.', en: 'AI server is temporarily unavailable. Please try again shortly.', ja: 'AIサーバーが一時的に応答していません。しばらくしてから再試行してください。', zh: 'AI服务器暂时无法响应，请稍后重试。' }),
+      message: L4(language, { ko: '노아 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.', en: 'NOA server is temporarily unavailable. Please try again shortly.', ja: 'ノアサーバーが一時的に応答していません。しばらくしてから再試行してください。', zh: '诺亚服务器暂时无法响应，请稍后重试。' }),
     };
   }
   if (lower.includes('404') || lower.includes('not found')) {

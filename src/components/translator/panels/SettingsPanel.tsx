@@ -86,8 +86,8 @@ export function SettingsPanel() {
           <p className="text-[10px] text-text-tertiary">
             {aiCapabilitiesLoaded
               ? langKo
-                ? `AI 준비: 호스팅 Gemini ${hostedGemini ? 'ON' : 'OFF'}`
-                : `AI: hosted Gemini ${hostedGemini ? 'ON' : 'OFF'}`
+                ? `노아 준비: 호스팅 Gemini ${hostedGemini ? 'ON' : 'OFF'}`
+                : `NOA: hosted Gemini ${hostedGemini ? 'ON' : 'OFF'}`
               : '…'}
           </p>
         </section>

@@ -475,7 +475,7 @@ export default function SceneSheet({
   /** AI auto-generate direction */
   const handleAIGenerate = useCallback(async () => {
     const { activeSupportsStructured } = await import("@/lib/ai-providers");
-    if (!activeSupportsStructured()) { showAlert(L4(lang, { ko: "현재 AI 서비스는 구조화 생성 미지원.", en: "Current AI does not support structured generation.", ja: "現在のAIサービスは構造化生成に未対応。", zh: "当前 AI 服务不支持结构化生成。" })); return; }
+    if (!activeSupportsStructured()) { showAlert(L4(lang, { ko: "현재 노아 엔진은 구조화 생성 미지원.", en: "Current NOA does not support structured generation.", ja: "現在のノアエンジンは構造化生成に未対応。", zh: "当前诺亚引擎不支持结构化生成。" })); return; }
     if (!synopsis) { showAlert(tl("sceneSheet.synopsisRequired")); return; }
     try {
       const { generateSceneDirection } = await import("@/services/geminiService");

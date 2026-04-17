@@ -452,7 +452,7 @@ export default function WritingTabInline(props: Props) {
               <Sparkles className="w-3.5 h-3.5" />
               <span className="flex flex-col items-start leading-tight">
                 <span>{L4(language, { ko: 'NOA 생성', en: 'Generate', ja: 'NOA 生成', zh: 'NOA 生成' })}</span>
-                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: 'AI가 다음 장면을 씁니다', en: 'AI writes the next scene', ja: 'AIが次のシーンを書きます', zh: 'AI 将撰写下一个场景' })}</span>
+                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '노아가 다음 장면을 씁니다', en: 'NOA writes the next scene', ja: 'ノアが次のシーンを書きます', zh: '诺亚将撰写下一个场景' })}</span>
               </span>
             </button>
 
@@ -608,10 +608,10 @@ export default function WritingTabInline(props: Props) {
             <span className="shrink-0">&#128161;</span>
             <span className="flex-1 text-xs leading-relaxed">
               {L4(language, {
-                ko: '글을 멈추면 AI가 다음 문장을 제안합니다. Tab으로 수락, Esc로 무시',
-                en: 'When you pause writing, AI suggests the next sentence. Tab to accept, Esc to dismiss',
-                ja: '入力を止めるとAIが次の文を提案します。Tabで採用、Escで無視',
-                zh: '停止输入时AI会建议下一句。Tab接受，Esc忽略',
+                ko: '글을 멈추면 노아가 다음 문장을 제안합니다. Tab으로 수락, Esc로 무시',
+                en: 'When you pause writing, NOA suggests the next sentence. Tab to accept, Esc to dismiss',
+                ja: '入力を止めるとノアが次の文を提案します。Tabで採用、Escで無視',
+                zh: '停止输入时诺亚会建议下一句。Tab接受，Esc忽略',
               })}
             </span>
             <button
@@ -627,7 +627,7 @@ export default function WritingTabInline(props: Props) {
           ref={streamContainerRef}
           onScroll={handleStreamScroll}
           aria-live="polite"
-          aria-label={L4(language, { ko: 'AI 생성 결과', en: 'AI generation output', ja: 'AI 生成 結果', zh: 'AI 生成 结果' })}
+          aria-label={L4(language, { ko: '노아 생성 결과', en: 'NOA generation output', ja: 'ノア生成結果', zh: '诺亚生成结果' })}
           className={`${writingColumnShell} flex-1 overflow-y-auto ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'flex flex-col justify-center items-center px-4' : 'py-6 md:py-8 space-y-6 px-4 md:px-8 custom-scrollbar'}`}
         >
           {/* Continuity Tracker Graph */}
@@ -922,9 +922,9 @@ export default function WritingTabInline(props: Props) {
                     {canvasPass === 0
                       ? (isKO ? '1단계: 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요.' : 'Step 1: Write the scene skeleton (characters, events, mood).')
                       : canvasPass === 1
-                      ? (isKO ? '2단계: AI가 구조를 초안으로 확장했습니다. 수정 후 다듬기로 넘어가세요.' : 'Step 2: AI expanded your structure into a draft. Edit and proceed to polish.')
+                      ? (isKO ? '2단계: 노아가 구조를 초안으로 확장했습니다. 수정 후 다듬기로 넘어가세요.' : 'Step 2: NOA expanded your structure into a draft. Edit and proceed to polish.')
                       : canvasPass === 2
-                      ? (isKO ? '3단계: AI가 초안을 다듬었습니다. 최종 확인 후 본문에 반영하세요.' : 'Step 3: AI polished your draft. Review and apply to manuscript.')
+                      ? (isKO ? '3단계: 노아가 초안을 다듬었습니다. 최종 확인 후 본문에 반영하세요.' : 'Step 3: NOA polished your draft. Review and apply to manuscript.')
                       : (isKO ? '완료! 아래 버튼으로 본문에 반영하세요.' : 'Done! Apply to manuscript below.')}
                   </p>
                   {/* 단계 인디케이터 */}
@@ -954,7 +954,7 @@ export default function WritingTabInline(props: Props) {
                         className={`px-4 py-1.5 text-xs font-bold border border-accent-green/30 rounded-lg transition-colors ${isGenerating ? 'bg-bg-tertiary text-text-tertiary opacity-50 cursor-not-allowed' : 'bg-accent-green/20 hover:bg-accent-green/30 text-accent-green'}`}
                       >
                         {isGenerating
-                          ? (isKO ? 'AI 생성 중...' : 'AI generating...')
+                          ? (isKO ? '노아 생성 중...' : 'NOA generating...')
                           : canvasPass === 0 ? (isKO ? '초안으로 확장 →' : 'Expand to Draft →') : (isKO ? '다듬기 시작 →' : 'Start Polish →')}
                       </button>
                     )}
@@ -979,7 +979,7 @@ export default function WritingTabInline(props: Props) {
                   className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-all resize-none"
                   placeholder={canvasPass === 0
                     ? (isKO ? '장면의 뼈대를 작성하세요... (등장인물, 핵심 사건, 분위기)' : 'Write scene skeleton... (characters, events, mood)')
-                    : (isKO ? 'AI가 작성 중...' : 'AI is writing...')}
+                    : (isKO ? '노아가 집필 중...' : 'NOA is writing...')}
                 />
               </div>
             )}

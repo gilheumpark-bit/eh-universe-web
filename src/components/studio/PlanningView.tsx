@@ -60,7 +60,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
           </span>
         ))}
         {subGenres.length === 0 && (
-          <span className="text-[13px] text-text-tertiary italic">{isKO ? '태그를 추가하면 AI 설계에 반영됩니다' : 'Tags will be injected into NOA prompts'}</span>
+          <span className="text-[13px] text-text-tertiary italic">{isKO ? '태그를 추가하면 노아 설계에 반영됩니다' : 'Tags will be injected into NOA prompts'}</span>
         )}
       </div>
       {/* Input */}

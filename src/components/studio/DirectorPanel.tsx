@@ -70,7 +70,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
             {L4(language, { ko: '아직 분석 결과가 없습니다', en: 'No analysis results yet', ja: 'まだ分析結果がありません', zh: '暂无分析结果' })}
           </p>
           <p className="text-[9px] text-text-tertiary/60 text-center">
-            {L4(language, { ko: 'AI 생성이 완료되면 자동으로 서사 품질을 분석합니다', en: 'Narrative quality will be analyzed automatically after AI generation', ja: 'AI生成後に自動的にナラティブ品質を分析します', zh: 'AI生成完成后将自动分析叙事质量' })}
+            {L4(language, { ko: '노아 생성이 완료되면 자동으로 서사 품질을 분석합니다', en: 'Narrative quality will be analyzed automatically after NOA generation', ja: 'ノア生成後に自動的にナラティブ品質を分析します', zh: '诺亚生成完成后将自动分析叙事质量' })}
           </p>
         </div>
       </div>

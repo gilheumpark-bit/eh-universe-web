@@ -382,7 +382,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
           </button>
           <p className="text-[13px] text-text-tertiary mb-4">
-            {L4(language, { ko: 'AI 서비스 연결, 창의성 조절 등 기술적인 설정입니다.', en: 'Technical settings including AI service connection and creativity tuning.', ja: 'AIサービス接続や創造性調整などの技術設定です。', zh: 'AI服务连接和创造性调整等技术设置。' })}
+            {L4(language, { ko: '노아 엔진 연결, 창의성 조절 등 기술적인 설정입니다.', en: 'Technical settings including NOA engine connection and creativity tuning.', ja: 'ノアエンジン接続や創造性調整などの技術設定です。', zh: '诺亚引擎连接和创造性调整等技术设置。' })}
           </p>
           {advancedOpen && <div className="space-y-2">
             {/* AI Service Connection (API Key) */}

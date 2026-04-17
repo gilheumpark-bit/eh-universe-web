@@ -139,7 +139,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                     <Cpu className="w-3 h-3 text-amber-400" />
                   </div>
                   <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest font-mono">
-                    {language === 'KO' ? 'AI 스튜디오 궤도 동기화 (ORBITAL SYNC)' : 'A.I. Orbital Sync Completed'}
+                    {language === 'KO' ? '노아 스튜디오 궤도 동기화 (ORBITAL SYNC)' : 'NOA Orbital Sync Completed'}
                   </span>
                 </div>
                 <ul className="list-disc list-inside text-[11px] text-text-secondary font-mono space-y-1 ml-9">
