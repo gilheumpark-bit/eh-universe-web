@@ -27,12 +27,18 @@ export interface RagDocument {
   title?: string;
   content: string;
   score?: number;
+  /** 검색 순위 (서버가 반환) */
+  rank?: number;
   /** 출처 메타 — 카테고리/태그 등 */
   meta?: Record<string, unknown>;
 }
 
 export interface RagSearchResponse {
-  documents: RagDocument[];
+  /** 서버 실 응답 포맷: {query, results[]} */
+  query?: string;
+  results?: RagDocument[];
+  /** 호환용 (과거/다른 서버 변형) */
+  documents?: RagDocument[];
 }
 
 export interface RagPromptResponse {
@@ -86,7 +92,11 @@ export async function ragSearch(req: RagSearchRequest, opts?: RagRequestOpts): P
   try {
     const data = await postJson<RagSearchResponse | RagDocument[]>('/search', { query, top_k }, opts);
     if (Array.isArray(data)) return data;
-    return Array.isArray(data.documents) ? data.documents : [];
+    // 서버 정식 포맷: {query, results[]}
+    if (Array.isArray(data.results)) return data.results;
+    // 레거시/대체: {documents[]}
+    if (Array.isArray(data.documents)) return data.documents;
+    return [];
   } catch (err) {
     logger.warn('RAG', 'search failed', err);
     return [];
