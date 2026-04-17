@@ -782,11 +782,14 @@ export default function ScenePlayer({
           {/* 캐릭터 이미지 (있으면) */}
           {characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ? (
             <div className="absolute bottom-32 left-8 transition-[transform,opacity,background-color,border-color,color] duration-500">
+              {/* 캐릭터 이미지 — 동적 URL(data URI / 원격) 모두 지원. lazy+async로 대역폭 절감. */}
               <img
                 src={characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ?? ''}
                 alt={currentBeat.speaker}
                 width={256}
                 height={256}
+                loading="lazy"
+                decoding="async"
                 className="h-64 w-auto object-contain drop-shadow-2xl"
               />
               <div className="text-center mt-1 bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">

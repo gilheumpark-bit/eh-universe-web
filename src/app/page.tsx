@@ -357,13 +357,13 @@ function HomePageContent() {
                   {T({ ko: "아카이브 · 네트워크 · 코덱스 · 룰북 · 레퍼런스", en: "Archive · Network · Codex · Rulebook · Reference", ja: "アーカイブ · ネットワーク · コデックス · ルールブック · リファレンス", zh: "档案库 · 网络 · 知识库 · 设定手册 · 参考" })}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href="/archive" className="premium-button">
+                  <Link href="/archive" prefetch className="premium-button">
                     {T({ ko: "아카이브 탐색", en: "Browse Archive", ja: "アーカイブを探索", zh: "浏览档案库" })}
                   </Link>
-                  <Link href="/network" className="premium-button secondary">
+                  <Link href="/network" prefetch className="premium-button secondary">
                     {T({ ko: "네트워크 진입", en: "Enter Network", ja: "ネットワークへ", zh: "进入网络" })}
                   </Link>
-                  <Link href={NOVEL_STUDIO_PATH} className="premium-button secondary">
+                  <Link href={NOVEL_STUDIO_PATH} prefetch className="premium-button secondary">
                     {T({ ko: "소설 스튜디오", en: "Novel Studio", ja: "小説スタジオ", zh: "小说工作室" })}
                   </Link>
                   {translatorStudioHref.startsWith("http") ? (
@@ -376,7 +376,7 @@ function HomePageContent() {
                       {T({ ko: "번역 스튜디오", en: "Translation", ja: "翻訳", zh: "翻译" })}
                     </a>
                   ) : (
-                    <Link href={translatorStudioHref} className="premium-button secondary">
+                    <Link href={translatorStudioHref} prefetch className="premium-button secondary">
                       {T({ ko: "번역 스튜디오", en: "Translation", ja: "翻訳", zh: "翻译" })}
                     </Link>
                   )}

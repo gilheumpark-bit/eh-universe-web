@@ -7,6 +7,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useLang, L2 } from "@/lib/LangContext";
 import { createT, L4 } from "@/lib/i18n";
 import { ArchiveReportsTabs } from "@/app/reports/ReportsClient";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { SearchX } from "lucide-react";
 
 const CATEGORY_THEMES: Record<string, { icon: string; color: string; bgColor: string; borderColor: string }> = {
   core:       { icon: '🔬', color: 'text-accent-purple', bgColor: 'bg-accent-purple/10', borderColor: 'border-accent-purple/30' },
@@ -423,9 +425,20 @@ export default function ArchiveClient() {
                     );
                   })}
                   {searchResults.length === 0 && (
-                    <div className="text-center py-16">
-                      <p className="text-text-tertiary text-sm">{L4(lang, { ko: "검색 결과가 없습니다.", en: "No results found.", ja: "検索結果がありません。", zh: "未找到搜索结果。" })}</p>
-                    </div>
+                    <EmptyState
+                      icon={SearchX}
+                      title={L4(lang, { ko: "검색 결과가 없습니다", en: "No results found", ja: "検索結果がありません", zh: "未找到搜索结果" })}
+                      description={L4(lang, {
+                        ko: "다른 키워드로 검색해보거나 전체 카테고리를 탐색해보세요.",
+                        en: "Try a different keyword or browse all categories.",
+                        ja: "別のキーワードで検索するか、全カテゴリを閲覧してください。",
+                        zh: "请尝试其他关键词或浏览全部分类。",
+                      })}
+                      action={{
+                        label: L4(lang, { ko: "검색 초기화", en: "Clear search", ja: "検索をリセット", zh: "清除搜索" }),
+                        onClick: () => setSearchQuery(""),
+                      }}
+                    />
                   )}
                 </div>
               ) : (

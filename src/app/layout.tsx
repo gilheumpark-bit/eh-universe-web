@@ -25,17 +25,20 @@ import "./globals-studio.css";
 import "./globals-animations.css";
 import "./globals-utilities.css";
 
-/** Fewer weights = fewer font files and faster first paint (see build-performance-report.txt). */
+/** Fewer weights = fewer font files and faster first paint (see build-performance-report.txt).
+ *  홈/허브는 Plex 2패밀리만 preload. display/serif 계열은 preload: false로 실제 사용 시 lazy. */
 const ibmPlexMono = IBM_Plex_Mono({ weight: ["400", "600"], subsets: ["latin"], variable: "--font-ibm-plex-mono", display: "swap" });
 const ibmPlexSans = IBM_Plex_Sans({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-ibm-plex-sans", display: "swap" });
-const jetbrainsMono = JetBrains_Mono({ weight: ["400", "600"], subsets: ["latin"], variable: "--font-jetbrains-mono", display: "swap" });
-const spaceGrotesk = Space_Grotesk({ weight: ["500", "600", "700"], subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
+// 아래 5개는 편집기/스튜디오/세계관 페이지 진입 시에만 실제 로드되도록 preload 차단
+const jetbrainsMono = JetBrains_Mono({ weight: ["400", "600"], subsets: ["latin"], variable: "--font-jetbrains-mono", display: "swap", preload: false });
+const spaceGrotesk = Space_Grotesk({ weight: ["500", "600", "700"], subsets: ["latin"], variable: "--font-space-grotesk", display: "swap", preload: false });
 const notoSansKr = Noto_Sans_KR({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-noto-sans-kr", display: "swap", preload: false });
 const cormorantGaramond = Cormorant_Garamond({
   weight: ["500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-cormorant-garamond",
   display: "swap",
+  preload: false,
 });
 const notoSerifKr = Noto_Serif_KR({
   weight: ["400", "600"],
