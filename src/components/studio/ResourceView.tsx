@@ -3,11 +3,24 @@ import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType, SocialProfile } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { createT, L4 } from '@/lib/i18n';
-import { UserPlus, Trash2, Fingerprint, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, ChevronDown, ChevronUp, Link2 } from 'lucide-react';
+import { UserPlus, Trash2, Fingerprint, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, ChevronDown, ChevronUp, Link2, Dna, Settings2, Circle } from 'lucide-react';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
 import CharRelationGraph from './CharRelationGraph';
 import { useStudioUI } from '@/contexts/StudioContext';
+
+// ============================================================
+// Required/Optional Badge helper
+// ============================================================
+function FieldBadge({ required, language }: { required: boolean; language: AppLanguage }) {
+  const t = TRANSLATIONS[language].resource;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider ml-2 ${required ? 'text-accent-red' : 'text-text-quaternary'}`}>
+      <Circle className={`w-2 h-2 ${required ? 'fill-accent-red text-accent-red' : 'fill-none text-text-quaternary'}`} />
+      {required ? (t.required ?? 'Required') : (t.optional ?? 'Optional')}
+    </span>
+  );
+}
 
 const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color: string }> = {
   lover:       { ko: "연인", en: "Lover", color: "#ec4899" },
@@ -146,7 +159,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
             
             <div className="space-y-5">
               <div className="space-y-2">
-                <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.name}</span>
+                <div className="flex items-center">
+                  <span className="text-[9px] font-black text-text-tertiary uppercase ml-2">{t.name}</span>
+                  <FieldBadge required language={language} />
+                </div>
                 <div className="relative group">
                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
                    <input
