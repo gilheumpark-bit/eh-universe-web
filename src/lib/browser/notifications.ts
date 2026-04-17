@@ -3,7 +3,7 @@
 // ============================================================
 // 탭이 비활성일 때 AI 생성/검증/번역 완료를 데스크톱 알림으로
 
-const APP_NAME = 'EH Universe';
+const APP_NAME = 'Loreguard';
 
 /** 알림 권한 요청 (사용자 제스처 필요) */
 export async function requestNotificationPermission(): Promise<boolean> {

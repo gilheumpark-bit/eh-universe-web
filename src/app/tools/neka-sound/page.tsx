@@ -422,7 +422,7 @@ export default function NekaSoundPage() {
             {/* Title */}
             <div className="text-center mb-10">
               <p className="font-mono text-[9px] tracking-[0.4em] text-text-tertiary uppercase mb-2">
-                EH UNIVERSE — NEKA LANGUAGE SYSTEM
+                NEKA LANGUAGE SYSTEM
               </p>
               <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#d4a017] mb-2">
                 {en ? "NEKA CHEMICAL SIGNAL — SOUND INTERFACE" : "네카 화학신호 — 음향 인터페이스"}

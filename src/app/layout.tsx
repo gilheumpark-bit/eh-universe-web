@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     template: "로어가드 | %s",
   },
   description:
-    "로어가드(Loreguard) — EH의 집필 OS. 소설 창작부터 번역·출판까지 한 곳에서. 6600만 년의 SF 세계관 EH Universe 아카이브 포함.",
+    "로어가드(Loreguard) — AI 소설 집필 스튜디오. 창작부터 번역·출판까지 한 흐름으로.",
   metadataBase: new URL("https://eh-universe.com"),
   alternates: {
     canonical: "https://eh-universe.com",
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "로어가드 — 집필 OS",
-    description: "창작·번역·출판을 잇는 집필 OS. EH Universe 세계관 아카이브 포함.",
+    description: "창작·번역·출판을 잇는 AI 집필 스튜디오.",
     images: ["/images/hero-mina.jpg"],
   },
   robots: {

@@ -20,10 +20,10 @@ export default function ToolsIndexPage() {
           </p>
           <h1 className="site-title text-3xl font-bold tracking-tight mb-3">
             {L4(lang, {
-              ko: "EH Universe 도구",
-              en: "EH Universe Tools",
-              ja: "EH Universe ツール",
-              zh: "EH Universe 工具",
+              ko: "창작 도구",
+              en: "Creator Tools",
+              ja: "創作ツール",
+              zh: "创作工具",
             })}
           </h1>
           <p className="text-text-secondary text-sm max-w-2xl mb-10 leading-relaxed">

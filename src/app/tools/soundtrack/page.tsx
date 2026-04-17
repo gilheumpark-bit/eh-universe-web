@@ -210,7 +210,7 @@ export default function SoundtrackPage() {
 
           <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-[30px] rounded-t-none border-t-0 p-6 sm:p-10">
             <h1 className="site-title text-2xl font-bold tracking-tight mb-2">
-              {T({ ko: "EH Universe — 사운드트랙", en: "EH Universe — Soundtrack", ja: "EH Universe — サウンドトラック", zh: "EH Universe — 原声带" })}
+              {T({ ko: "사운드트랙", en: "Soundtrack", ja: "サウンドトラック", zh: "原声带" })}
             </h1>
             <p className="text-text-tertiary text-sm mb-10 font-mono">
               {T({ ko: "은하 전역에서 수신된 음향 파편", en: "Intercepted audio fragments from across the galaxy" })}

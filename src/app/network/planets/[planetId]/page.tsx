@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: PlanetDetailPageProps): Promi
   const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(planetId)}&genre=Planet`;
   return {
     openGraph: {
-      title: `${planetId} — EH Universe`,
-      description: "EH Universe Network — 세계관 게시판",
+      title: `${planetId} — 작가 네트워크`,
+      description: "작가 네트워크 — 세계관 기반 게시판",
       images: [{ url: ogUrl, width: 1200, height: 630 }],
     },
     twitter: { card: "summary_large_image" },

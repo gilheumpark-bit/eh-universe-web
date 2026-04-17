@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tools — EH Universe",
+  title: "Tools — Loreguard",
   description:
-    "EH Universe tools: Galaxy Map, Neka Sound system, and Soundtrack archive.",
+    "Creator tools: Galaxy Map, Neka Sound system, and Soundtrack archive.",
   openGraph: {
-    title: "Tools — EH Universe",
-    description: "Interactive tools for the EH Universe.",
+    title: "Tools — Loreguard",
+    description: "Interactive creator tools.",
   },
 };
 

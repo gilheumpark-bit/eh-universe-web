@@ -1263,7 +1263,7 @@ export default function WarpGatePage() {
 
           {/* Hero */}
           <div className={`${panelCls} mt-0 rounded-t-none border-t-0`}>
-            <div className={kickerCls}>EH UNIVERSE // HPG 7.0 {en ? "Field Prototype" : "현장 시제품"}</div>
+            <div className={kickerCls}>HPG 7.0 {en ? "Field Prototype" : "현장 시제품"}</div>
             <h1 className="text-3xl md:text-5xl font-bold mt-2 mb-3 text-text-primary leading-tight">{en ? "Warp Gate Command" : "워프 게이트 사령부"}</h1>
             <p className="text-text-tertiary text-sm leading-relaxed max-w-[840px]">
               {en ? "Build relay infrastructure, phase-lock the chamber to 0.51 consistency, and lead humanity from the age of ships to the galactic center."

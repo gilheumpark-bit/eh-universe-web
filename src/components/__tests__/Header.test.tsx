@@ -45,9 +45,9 @@ describe('Header', () => {
     expect(screen.getByTestId('home-header')).toBeInTheDocument();
   });
 
-  it('renders EH UNIVERSE brand text', () => {
+  it('renders 로어가드 brand text', () => {
     render(<Header />);
-    expect(screen.getByText('EH UNIVERSE')).toBeInTheDocument();
+    expect(screen.getByText('로어가드')).toBeInTheDocument();
   });
 
   it('renders main navigation links (desktop + mobile)', () => {
