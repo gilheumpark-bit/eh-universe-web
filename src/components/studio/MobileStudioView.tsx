@@ -393,7 +393,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
           <div className="flex items-center gap-2 min-w-0">
             <Sparkles className="w-4 h-4 text-accent-purple shrink-0" />
             <h1 className="text-sm font-bold truncate">
-              {L4(language, { ko: 'EH Universe — 모바일 스케치', en: 'EH Universe — Mobile Sketch', ja: 'EH Universe — モバイルスケッチ', zh: 'EH Universe — 移动速写' })}
+              {L4(language, { ko: '로어가드 — 모바일 스케치', en: 'Loreguard — Mobile Sketch', ja: 'ローアガード — モバイルスケッチ', zh: '洛尔加德 — 移动速写' })}
             </h1>
           </div>
           <button

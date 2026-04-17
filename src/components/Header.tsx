@@ -252,7 +252,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         <div className={barShell}>
           <Link
             href="/"
-            aria-label="EH Universe — Home"
+            aria-label="로어가드 (Loreguard) — Home"
             className="group flex items-center gap-3 rounded-full pr-2"
           >
             <span
@@ -273,7 +273,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                       : "text-text-primary group-hover:text-accent-amber"
                   }`}
                 >
-                  EH UNIVERSE
+                  로어가드
                 </span>
                 {isTestEnvironment && (
                   <span className="rounded-md border border-accent-red/30 bg-accent-red/10 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.18em] text-accent-red uppercase">
@@ -286,7 +286,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                   stellarWhite ? "text-stone-500" : "text-text-tertiary"
                 }`}
               >
-                Narrative Engine
+                Loreguard · 집필 OS
               </span>
             </span>
           </Link>

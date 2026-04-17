@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "NOA Studio — EH Universe",
+  title: "로어가드 스튜디오 · 소설 집필",
   description:
-    "NOA-powered creative writing studio with multi-provider LLM support. Write stories within the EH Universe narrative engine.",
+    "로어가드(Loreguard) 소설 스튜디오 — NOA 엔진 기반 AI 창작, 세계관 일관성, 번역·출판까지 원스톱.",
   openGraph: {
-    title: "NOA Studio — EH Universe",
+    title: "로어가드 스튜디오 · 소설 집필",
     description:
-      "NOA-powered creative writing studio with narrative engine.",
+      "창작에서 번역·출판까지. 로어가드 집필 OS.",
   },
 };
 

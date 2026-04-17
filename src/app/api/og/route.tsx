@@ -5,7 +5,7 @@ export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-  const title = searchParams.get('title') || 'EH Universe';
+  const title = searchParams.get('title') || '로어가드 · Loreguard';
   const genre = searchParams.get('genre') || '';
   const status = searchParams.get('status') || '';
   const tags = (searchParams.get('tags') || '').split(',').filter(Boolean).slice(0, 5);

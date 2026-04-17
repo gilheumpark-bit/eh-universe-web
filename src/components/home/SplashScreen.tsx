@@ -112,7 +112,7 @@ export default function SplashScreen({
         <p
           className={`text-xs text-text-tertiary font-mono tracking-wide transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}
         >
-          CC-BY-NC-4.0 · EH Universe
+          CC-BY-NC-4.0 · 로어가드 by EH
         </p>
       </div>
     </div>

@@ -215,10 +215,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 <div>
                   <div className="site-kicker text-[0.62rem]">Writing Workbench</div>
                   <h1 className="font-display text-lg font-semibold tracking-[-0.04em] text-text-primary">
-                    NOA Studio
+                    로어가드 스튜디오
                   </h1>
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-text-tertiary">
-                    EH Universe
+                    Loreguard · EH
                   </span>
                 </div>
               </Link>

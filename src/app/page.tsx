@@ -96,7 +96,7 @@ function HomePageFallback() {
           EH
         </div>
         <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-          EH Universe
+          로어가드 · Loreguard
         </div>
       </div>
     </div>
@@ -305,7 +305,7 @@ function HomePageContent() {
               EH
             </div>
             <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-              EH Universe
+              로어가드 · Loreguard
             </div>
           </div>
         </div>

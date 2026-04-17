@@ -22,7 +22,8 @@ export function buildArticleJsonLd(article: {
     url: `https://eh-universe.com/archive/${article.slug}`,
     publisher: {
       '@type': 'Organization',
-      name: 'EH Universe',
+      name: 'EH',
+      alternateName: '로어가드 · Loreguard',
       url: 'https://eh-universe.com',
     },
     isAccessibleForFree: true,
@@ -34,8 +35,9 @@ export function buildWebAppJsonLd(): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'EH Universe',
-    description: 'AI-powered narrative engine with novel studio, code studio, and translation studio.',
+    name: '로어가드 (Loreguard)',
+    alternateName: 'Loreguard · EH',
+    description: '창작에서 번역·출판까지 잇는 집필 OS. AI 소설 창작, 6축 번역 채점, 세계관 아카이브.',
     url: 'https://eh-universe.com',
     applicationCategory: 'CreativeWork',
     operatingSystem: 'Web Browser',

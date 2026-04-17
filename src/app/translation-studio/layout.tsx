@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swa
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "EH Translator — EH Universe",
-  description: "장편·챕터·용어 중심 번역 워크스페이스",
+  title: "로어가드 번역 스튜디오",
+  description: "로어가드(Loreguard) 번역 — 장편·챕터·용어 중심 번역 워크스페이스. 창작→번역→출판 파이프라인.",
 };
 
 export default function TranslationStudioLayout({ children }: { children: React.ReactNode }) {

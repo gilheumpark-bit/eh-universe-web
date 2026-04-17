@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'EH Universe',
+    title: '로어가드',
   },
   formatDetection: {
     telephone: false,
@@ -69,27 +69,27 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
   },
   title: {
-    default: "EH Universe — A Narrative Engine That Prevents Story Collapse",
-    template: "NOA Studio | %s",
+    default: "로어가드 — 창작에서 번역·출판까지 잇는 집필 OS",
+    template: "로어가드 | %s",
   },
   description:
-    "66 million years of verified SF universe. Open-source narrative engine EH Rulebook. 200+ article archive.",
+    "로어가드(Loreguard) — EH의 집필 OS. 소설 창작부터 번역·출판까지 한 곳에서. 6600만 년의 SF 세계관 EH Universe 아카이브 포함.",
   metadataBase: new URL("https://eh-universe.com"),
   alternates: {
     canonical: "https://eh-universe.com",
   },
   openGraph: {
-    title: "EH Universe — A Narrative Engine That Prevents Story Collapse",
+    title: "로어가드 — 창작에서 번역·출판까지 잇는 집필 OS",
     description:
-      "66 million years of verified SF universe. Open-source narrative engine EH Rulebook.",
+      "로어가드(Loreguard) — EH의 집필 OS. 창작·번역·출판을 하나의 파이프라인으로.",
     type: "website",
     url: "https://eh-universe.com",
-    images: [{ url: "/images/hero-mina.jpg", width: 1200, height: 630, alt: "EH Universe" }],
+    images: [{ url: "/images/hero-mina.jpg", width: 1200, height: 630, alt: "로어가드 (Loreguard)" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "EH Universe — Narrative Engine",
-    description: "66 million years of verified SF universe. Open-source narrative engine.",
+    title: "로어가드 — 집필 OS",
+    description: "창작·번역·출판을 잇는 집필 OS. EH Universe 세계관 아카이브 포함.",
     images: ["/images/hero-mina.jpg"],
   },
   robots: {
@@ -133,7 +133,7 @@ export default function RootLayout({
         {/* Noscript fallback */}
         <noscript>
           <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
-            <h1>EH Universe</h1>
+            <h1>로어가드 (Loreguard)</h1>
             <p>이 사이트는 JavaScript가 필요합니다. 브라우저 설정에서 JavaScript를 활성화해주세요.</p>
             <p>This site requires JavaScript. Please enable JavaScript in your browser settings.</p>
           </div>

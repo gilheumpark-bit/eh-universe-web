@@ -745,8 +745,8 @@ export default function StudioShell() {
           onDesktopCTA={() => {
             if (typeof navigator !== 'undefined' && navigator.share) {
               navigator.share({
-                title: 'EH Universe Studio',
-                text: 'EH Universe 소설 스튜디오 (데스크톱에서 열기)',
+                title: '로어가드 집필 스튜디오',
+                text: '로어가드 (Loreguard) 소설 스튜디오 (데스크톱에서 열기)',
                 url: typeof window !== 'undefined' ? `${window.location.origin}/studio` : '',
               }).catch(() => {/* user cancelled */});
             } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
