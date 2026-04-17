@@ -322,7 +322,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
               hover:text-accent-amber hover:bg-accent-amber/10
               transition-colors min-h-[44px] flex-1 justify-center
               border border-border hover:border-accent-amber/30"
-            title={L4(language, { ko: '새 에피소드', en: 'New Episode', ja: '새 エピソード', zh: '새 章节' })}
+            title={L4(language, { ko: '새 에피소드', en: 'New Episode', ja: '新しいエピソード', zh: '新章节' })}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{L4(language, { ko: '에피소드', en: 'Episode', ja: 'エピソード', zh: '章节' })}</span>

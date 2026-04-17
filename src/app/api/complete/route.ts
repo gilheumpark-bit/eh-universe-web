@@ -49,11 +49,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Auth check — require either Firebase JWT Bearer token or BYOK API key
+  // Auth check — Firebase JWT 실검증 또는 BYOK 키 형식 검증
   const authHeader = req.headers.get('authorization');
-  const hasAuth = authHeader?.startsWith('Bearer ') && authHeader.length > 20;
-  const hasByok = typeof body.apiKey === 'string' && body.apiKey.length > 10;
-  if (!hasAuth && !hasByok) {
+  let firebaseVerified = false;
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7).trim();
+    // 길이만 보던 기존 검증을 실제 JWT 검증으로 교체
+    try {
+      const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+      const verified = await verifyFirebaseIdToken(token);
+      firebaseVerified = Boolean(verified);
+    } catch { /* verification module load failed — deny */ }
+  }
+  // BYOK: 제공자 키 형식 검사 (sk-xxx / AIza... / gsk_... 등 최소 패턴)
+  const byokKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
+  const hasByok = /^(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|gsk_[A-Za-z0-9_-]{20,})$/.test(byokKey);
+  if (!firebaseVerified && !hasByok) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 

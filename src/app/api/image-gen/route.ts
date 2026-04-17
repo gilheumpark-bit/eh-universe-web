@@ -45,11 +45,31 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    // TODO: implement reference image support
-const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, referenceImageUrl: _referenceImageUrl } = body;
+    // referenceImageUrl은 현재 서버에서 파싱만 하고 무시 — 프로바이더별 img2img 지원 여부에 따라
+    // 향후 분기 구현 예정. 사용자에게 오해가 없도록 응답에 metadata로 명시.
+    const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, referenceImageUrl } = body;
+    const referenceImageRequested = typeof referenceImageUrl === 'string' && referenceImageUrl.length > 0;
 
-    if (!provider || !prompt || !apiKey) {
-      return NextResponse.json({ error: 'Missing required fields: provider, prompt, apiKey' }, { status: 400 });
+    if (!provider || !prompt) {
+      return NextResponse.json({ error: 'Missing required fields: provider, prompt' }, { status: 400 });
+    }
+
+    // 인증 게이트 — local-spark(DGX 무료 경로)와 외부 provider 모두 인증 필수
+    // local-spark는 apiKey 없이도 실행 가능했던 이슈 방어
+    if (!apiKey) {
+      // Firebase JWT 검증 (BYOK 없을 때)
+      const authHeader = req.headers.get('authorization');
+      let verified = false;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+          const token = authHeader.slice(7).trim();
+          verified = Boolean(await verifyFirebaseIdToken(token));
+        } catch { /* verification failed */ }
+      }
+      if (!verified) {
+        return NextResponse.json({ error: 'Authentication required (no apiKey, no valid JWT)' }, { status: 401 });
+      }
     }
 
     // ============================================================

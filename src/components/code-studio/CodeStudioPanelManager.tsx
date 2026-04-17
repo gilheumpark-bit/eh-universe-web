@@ -537,6 +537,21 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
     "naming-dict": () => <PI.NamingDictPanelComponent />,
     "dep-graph": () => <PI.DependencyGraphComponent files={openFiles.reduce<Record<string, string>>((acc, f) => { acc[f.name] = f.content; return acc; }, {})} />,
     "review-board": () => <PI.ReviewBoardComponent code={activeFile?.content ?? ''} />,
+    "audit-invoice": () => {
+      // intent-parser를 현재 활성 파일 코드/최근 프롬프트에 적용해 실시간 invoice 생성
+      // 최근 AI 프롬프트가 없으면 파일 경로/내용 첫 줄을 사용해 기본 규제 적용
+      const source = activeFile?.content?.slice(0, 500) ?? activeFile?.name ?? '';
+      try {
+        // 동적 import로 번들 영향 최소화. 동기 렌더가 아니라도 invoice는 단순 객체라 inline 계산 가능.
+        // intent-parser는 동기 함수이므로 require-style import로 접근.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { extractPhysicalConstraints } = require('@/lib/code-studio/ai/intent-parser');
+        const invoice = extractPhysicalConstraints(source);
+        return <PI.AuditInvoiceComponent invoice={invoice} />;
+      } catch {
+        return <PI.AuditInvoiceComponent invoice={{ matrixLog: ['분석 대기 중'], systemOverride: [] }} />;
+      }
+    },
   };
 
   const renderer = panelPropsMap[rightPanel];

@@ -22,14 +22,14 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
   const summaryItems = [
     {
       label: L4(lang, { ko: "운영자", en: "Owner", ja: "Owner", zh: "Owner" }),
-      value: ownerName ?? L4(lang, { ko: "미확인", en: "Unknown", ja: "미確認", zh: "미确认" }),
+      value: ownerName ?? L4(lang, { ko: "미확인", en: "Unknown", ja: "未確認", zh: "未确认" }),
     },
     {
       label: L4(lang, { ko: "장르", en: "Genre", ja: "ジャンル", zh: "类型" }),
       value: planet.genre,
     },
     {
-      label: L4(lang, { ko: "문명 단계", en: "Civilization", ja: "문名 단계", zh: "문人 단계" }),
+      label: L4(lang, { ko: "문명 단계", en: "Civilization", ja: "文明段階", zh: "文明阶段" }),
       value: planet.civilizationLevel,
     },
     {
@@ -37,14 +37,14 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
       value: pickNetworkLabel(PLANET_GOAL_LABELS[planet.goal], lang),
     },
     {
-      label: L4(lang, { ko: "공개 범위", en: "Visibility", ja: "公開 범위", zh: "公开 범위" }),
+      label: L4(lang, { ko: "공개 범위", en: "Visibility", ja: "公開範囲", zh: "公开范围" }),
       value: pickNetworkLabel(VISIBILITY_LABELS[planet.visibility], lang),
     },
   ];
 
   const statItems = [
     {
-      label: L4(lang, { ko: "최근 로그 수", en: "Log Count", ja: "최근 ログ 수", zh: "최근 日志 수" }),
+      label: L4(lang, { ko: "최근 로그 수", en: "Log Count", ja: "最近のログ数", zh: "最近日志数" }),
       value: `${planet.stats.logCount}`,
     },
     {
@@ -62,7 +62,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="site-kicker">{L4(lang, { ko: "행성 상세", en: "Planet Overview", ja: "惑星 상세", zh: "星球 상세" })}</span>
+            <span className="site-kicker">{L4(lang, { ko: "행성 상세", en: "Planet Overview", ja: "惑星の詳細", zh: "星球详情" })}</span>
             <SettlementBadge status={planet.status} lang={lang} />
           </div>
           <div>
@@ -97,7 +97,7 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
 
         <div className="premium-panel-soft p-5">
           <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.2em] text-text-tertiary">
-            {L4(lang, { ko: "상태 지표", en: "Status Metrics", ja: "状態 지표", zh: "状态 지표" })}
+            {L4(lang, { ko: "상태 지표", en: "Status Metrics", ja: "状態指標", zh: "状态指标" })}
           </div>
           <div className="mt-4 space-y-4">
             {statItems.map((item) => (

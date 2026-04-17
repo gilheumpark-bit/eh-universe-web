@@ -36,6 +36,13 @@ service cloud.firestore {
         && userDoc(request.auth.uid).data.role == "admin";
     }
 
+    function isModeratorOrHigher() {
+      return signedIn()
+        && userDoc(request.auth.uid).exists()
+        && (userDoc(request.auth.uid).data.role == "admin"
+          || userDoc(request.auth.uid).data.role == "moderator");
+    }
+
     function planetDoc(planetId) {
       return get(/databases/$(database)/documents/planets/$(planetId));
     }
@@ -199,7 +206,8 @@ service cloud.firestore {
     match /settlements/{settlementId} {
       // Safe read: verify linked planet exists before accessing its data
       allow read: if canReadByPlanet(resource.data.planetId);
-      allow create, update, delete: if isAdmin();
+      // UI(SettlementWorkbench)가 moderator+에게 workbench를 열어주므로 rules도 일치시킴
+      allow create, update, delete: if isModeratorOrHigher();
     }
 
     match /comments/{commentId} {

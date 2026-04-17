@@ -311,12 +311,14 @@ export default function WritingTabInline(props: Props) {
   // P2: Undo 스택
   const undoStack = useUndoStack(editDraft);
 
-  // P2: 버전 히스토리 — 300자 이상 변경 시 자동 스냅샷
+  // P2: 버전 히스토리 — 300자 이상 변경 시 자동 스냅샷 (draftVersions + undoStack 동시)
   const [draftVersions, setDraftVersions] = useState<string[]>([]);
   const [draftVersionIdx, setDraftVersionIdx] = useState(0);
   const lastSnapshotRef = useRef(editDraft);
   useEffect(() => {
     if (writingMode !== 'edit' || !editDraft) return;
+    // undoStack 자체의 checkAutoSnapshot도 함께 호출 (useUndoStack의 자동 스냅샷 연결)
+    undoStack.checkAutoSnapshot(editDraft);
     const diff = Math.abs(editDraft.length - lastSnapshotRef.current.length);
     if (diff >= 300 && editDraft.length > 50) {
       lastSnapshotRef.current = editDraft;
@@ -327,7 +329,7 @@ export default function WritingTabInline(props: Props) {
       });
       setDraftVersionIdx(prev => prev + 1);
     }
-  }, [editDraft, writingMode]);
+  }, [editDraft, writingMode, undoStack]);
 
   // Note: Ctrl+Shift+R (inline rewrite) is now handled by NovelKeymap extension in Tiptap.
   // Ctrl+Z/Y (undo/redo) is handled by Tiptap StarterKit History.
@@ -412,7 +414,7 @@ export default function WritingTabInline(props: Props) {
                   ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
                   : 'border-border text-text-secondary hover:border-accent-amber/40'
               }`}
-              title={L4(language, { ko: '직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.', en: 'Write your novel by typing directly. Real-time quality analysis, inline rewrite.', ja: '직접 타이핑으로 小説을 씁니다. 실시간 品質 分析, 인라인 리라이트 지원.', zh: '직접 타이핑으로 小说을 씁니다. 실시간 质量 分析, 인라인 리라이트 지원.' })}
+              title={L4(language, { ko: '직접 타이핑으로 소설을 씁니다. 실시간 품질 분석, 인라인 리라이트 지원.', en: 'Write your novel by typing directly. Real-time quality analysis, inline rewrite.', ja: '直接タイピングで小説を書きます。リアルタイム品質分析、インラインリライトに対応。', zh: '通过直接键入撰写小说。支持实时质量分析与内联重写。' })}
             >
               <PenLine className="w-3.5 h-3.5" />
               <span className="flex flex-col items-start leading-tight">
@@ -431,12 +433,12 @@ export default function WritingTabInline(props: Props) {
                   ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
                   : 'border-border text-text-secondary hover:border-accent-purple/40'
               }`}
-              title={L4(language, { ko: '장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.', en: 'Describe a scene and NOA writes the novel text. Press Enter to send.', ja: 'シーン/사件을 入力하면 NOA가 小説 本文을 生成합니다. Enter로 送信.', zh: '场景/사条을 输入하면 NOA가 小说 正文을 生成합니다. Enter로 发送.' })}
+              title={L4(language, { ko: '장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.', en: 'Describe a scene and NOA writes the novel text. Press Enter to send.', ja: 'シーン/事件を入力するとNOAが小説本文を生成します。Enterで送信。', zh: '输入场景/事件后 NOA 将生成小说正文。按 Enter 发送。' })}
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span className="flex flex-col items-start leading-tight">
                 <span>{L4(language, { ko: 'NOA 생성', en: 'Generate', ja: 'NOA 生成', zh: 'NOA 生成' })}</span>
-                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: 'AI가 다음 장면을 씁니다', en: 'AI writes the next scene', ja: 'AI가 次へ シーン을 씁니다', zh: 'AI가 下一页 场景을 씁니다' })}</span>
+                <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: 'AI가 다음 장면을 씁니다', en: 'AI writes the next scene', ja: 'AIが次のシーンを書きます', zh: 'AI 将撰写下一个场景' })}</span>
               </span>
             </button>
 
@@ -454,7 +456,7 @@ export default function WritingTabInline(props: Props) {
                       writingMode === 'refine' ? 'bg-accent-blue/20 border-accent-blue/50 text-accent-blue' :
                       'bg-accent-red/20 border-accent-red/50 text-accent-red'
                     }`}
-                    title={L4(language, { ko: '기본 모드로 돌아가기', en: 'Back to basic mode', ja: '기본 モード로 戻る', zh: '기본 模式로 返回' })}
+                    title={L4(language, { ko: '기본 모드로 돌아가기', en: 'Back to basic mode', ja: '基本モードに戻る', zh: '返回基础模式' })}
                   >
                     {writingMode === 'canvas' && <><Layers className="w-3.5 h-3.5" />{L4(language, { ko: '3단계', en: '3-Step', ja: '3-Step', zh: '3-Step' })}</>}
                     {writingMode === 'refine' && <><Wand2 className="w-3.5 h-3.5" />{L4(language, { ko: '다듬기', en: 'Refine', ja: 'Refine', zh: 'Refine' })}</>}
@@ -466,7 +468,7 @@ export default function WritingTabInline(props: Props) {
                     <button
                       type="button"
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-transparent text-text-tertiary hover:text-text-secondary hover:border-border transition-colors"
-                      title={L4(language, { ko: '고급 모드 (3단계·다듬기·고급)', en: 'Advanced modes (3-Step, Refine, Advanced)', ja: '고급 モード (3단계·다듬기·고급)', zh: '고급 模式 (3단계·다듬기·고급)' })}
+                      title={L4(language, { ko: '고급 모드 (3단계·다듬기·고급)', en: 'Advanced modes (3-Step, Refine, Advanced)', ja: '上級モード（3ステップ・リファイン・アドバンス）', zh: '高级模式（3 步骤·润色·进阶）' })}
                     >
                       <Settings2 className="w-3.5 h-3.5" />
                       {L4(language, { ko: '고급', en: 'More', ja: 'More', zh: 'More' })}
@@ -475,20 +477,20 @@ export default function WritingTabInline(props: Props) {
                     <div className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover/adv:opacity-100 group-hover/adv:visible transition-all z-50 min-w-[180px]">
                       <button type="button" onClick={() => setWritingMode('canvas')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-green transition-colors"
-                        title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps', ja: '뼈대 -> 下書き -> 다듬기 3단계 완성', zh: '뼈대 -> 草稿 -> 다듬기 3단계 완성' })}>
+                        title={L4(language, { ko: '뼈대 -> 초안 -> 다듬기 3단계 완성', en: 'Skeleton, draft, polish in 3 steps', ja: '骨組み→下書き→仕上げの3ステップで完成', zh: '骨架→草稿→润色 3 步完成' })}>
                         <Layers className="w-3.5 h-3.5" />
                         <span className="flex flex-col items-start leading-tight">
                           <span>{L4(language, { ko: '3단계', en: '3-Step', ja: '3-Step', zh: '3-Step' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish', ja: '구상→下書き→완성 3스텝', zh: '구상→草稿→완성 3스텝' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '구상→초안→완성 3스텝', en: 'Idea→Draft→Polish', ja: '構想→下書き→完成の3ステップ', zh: '构思→草稿→完成 3 步' })}</span>
                         </span>
                       </button>
                       <button type="button" onClick={() => setWritingMode('refine')}
                         className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-blue transition-colors"
-                        title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs', ja: '약한 문단 자동 件선', zh: '약한 문단 자동 个선' })}>
+                        title={L4(language, { ko: '약한 문단 자동 개선', en: 'Auto-improve weak paragraphs', ja: '弱い段落を自動改善', zh: '自动改善薄弱段落' })}>
                         <Wand2 className="w-3.5 h-3.5" />
                         <span className="flex flex-col items-start leading-tight">
                           <span>{L4(language, { ko: '다듬기', en: 'Refine', ja: 'Refine', zh: 'Refine' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%', ja: '기존 原稿를 30% 다듬기', zh: '기존 稿件를 30% 다듬기' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '기존 원고를 30% 다듬기', en: 'Polish existing draft 30%', ja: '既存原稿を30%仕上げ', zh: '将现有稿件润色 30%' })}</span>
                         </span>
                       </button>
                       <button type="button" onClick={() => setWritingMode('advanced')}
@@ -497,7 +499,7 @@ export default function WritingTabInline(props: Props) {
                         <Settings2 className="w-3.5 h-3.5" />
                         <span className="flex flex-col items-start leading-tight">
                           <span>{L4(language, { ko: '고급', en: 'Advanced', ja: 'Advanced', zh: 'Advanced' })}</span>
-                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings', ja: '세부 設定 직접 조절', zh: '세부 设置 직접 조절' })}</span>
+                          <span className="text-[9px] font-normal text-text-tertiary">{L4(language, { ko: '세부 설정 직접 조절', en: 'Fine-tune settings', ja: '詳細設定を直接調整', zh: '直接调整详细设置' })}</span>
                         </span>
                       </button>
                     </div>
@@ -513,7 +515,7 @@ export default function WritingTabInline(props: Props) {
                   onClick={() => undoStack.undo()}
                   disabled={!undoStack.canUndo}
                   className={`p-1.5 rounded-lg transition-colors ${undoStack.canUndo ? 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary' : 'text-text-quaternary opacity-40 cursor-not-allowed'}`}
-                  title={L4(language, { ko: '실행취소 (Ctrl+Z)', en: 'Undo (Ctrl+Z)', ja: '실행キャンセル (Ctrl+Z)', zh: '실행取消 (Ctrl+Z)' })}
+                  title={L4(language, { ko: '실행취소 (Ctrl+Z)', en: 'Undo (Ctrl+Z)', ja: '元に戻す (Ctrl+Z)', zh: '撤销 (Ctrl+Z)' })}
                   aria-label="Undo"
                 >
                   <Undo2 className="w-3.5 h-3.5" />

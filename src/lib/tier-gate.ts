@@ -3,9 +3,22 @@
 // ============================================================
 // 오픈베타 기간에는 OPEN_BETA = true → 모든 기능 Pro급 해금
 // 정식 출시 시 OPEN_BETA = false로 전환하면 티어별 제한 활성화
+//
+// 안전 장치: Stripe 결제가 실제 운영 중(STRIPE_SECRET_KEY 설정)이면
+// OPEN_BETA가 true여도 자동으로 비활성화됨 — "플래그 깜빡 잊고 결제 오픈" 방지.
 
-/** 오픈베타 플래그 — true면 모든 유저에게 Pro 기능 해금 */
-export const OPEN_BETA = true;
+const BETA_FLAG = true;
+
+/** 결제가 실제 연결되어 있는지 감지 (Stripe 키 존재 여부로 판별) */
+function isPaymentLive(): boolean {
+  if (typeof process === 'undefined') return false;
+  const sk = process.env.STRIPE_SECRET_KEY;
+  // sk_live_ 또는 sk_test_로 시작하는 유효 형식만 "운영 중"으로 간주
+  return typeof sk === 'string' && /^sk_(live|test)_[A-Za-z0-9_-]{20,}$/.test(sk);
+}
+
+/** 오픈베타 플래그 — true면 모든 유저에게 Pro 기능 해금. 결제 활성 시 자동 false. */
+export const OPEN_BETA: boolean = BETA_FLAG && !isPaymentLive();
 
 // ── Types ──
 export type UserTier = 'none' | 'free' | 'pro';

@@ -155,7 +155,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
             <div className="bg-bg-secondary p-4 rounded-xl border border-border space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-text-secondary">{L4(language, { ko: '로컬 저장 용량', en: 'Local Storage', ja: '로컬 保存 용량', zh: '로컬 保存 용량' })}</span>
+                <span className="text-xs text-text-secondary">{L4(language, { ko: '로컬 저장 용량', en: 'Local Storage', ja: 'ローカル保存容量', zh: '本地存储容量' })}</span>
                 {storageEstimate && storageEstimate.quota > 0 ? (() => {
                   const usageMB = storageEstimate.usage / 1024 / 1024;
                   const quotaMB = storageEstimate.quota / 1024 / 1024;
@@ -186,7 +186,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 )}
               </div>
               {storageEstimate && storageEstimate.quota > 0 && (storageEstimate.usage / storageEstimate.quota) > 0.8 && (
-                <p className="text-[10px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '용량이 부족합니다. 오래된 세션을 削除하거나 백업 후 정리하세요.', zh: '용량이 부족합니다. 오래된 세션을 删除하거나 백업 후 정리하세요.' })}</p>
+                <p className="text-[10px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '容量が不足しています。古いセッションを削除するか、バックアップ後に整理してください。', zh: '容量不足。请删除旧会话或备份后清理。' })}</p>
               )}
             </div>
           </div>
@@ -291,7 +291,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
             </div>
             {versionedBackups.length === 0 ? (
               <div className="text-sm text-text-tertiary py-4 text-center">
-                {L4(language, { ko: '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.', en: 'No backups yet. Auto-backup runs every 10 minutes.', ja: '保存된 백업이 없습니다. 10분 후 자동 백업됩니다.', zh: '保存된 백업이 없습니다. 10분 후 자동 백업됩니다.' })}
+                {L4(language, { ko: '저장된 백업이 없습니다. 10분 후 자동 백업됩니다.', en: 'No backups yet. Auto-backup runs every 10 minutes.', ja: '保存されたバックアップがありません。10分後に自動バックアップが実行されます。', zh: '暂无已保存的备份。10 分钟后将自动备份。' })}
               </div>
             ) : (
               <div className="space-y-2">
@@ -467,9 +467,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                   </div>
                   <div className="text-[10px] md:text-[11px] text-text-tertiary hidden sm:block">
                     {narrativeDepth <= 0.9 ? L4(language, { ko: '평작 — 가독성 우선', en: 'Light — Readability first', ja: 'Light — Readability first', zh: 'Light — Readability first' }) :
-                     narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance', ja: '기본 — ジャンル 균형', zh: '기본 — 类型 균형' }) :
+                     narrativeDepth <= 1.0 ? L4(language, { ko: '기본 — 장르 균형', en: 'Standard — Genre balance', ja: '標準 — ジャンルのバランス', zh: '标准 — 类型均衡' }) :
                      narrativeDepth <= 1.2 ? L4(language, { ko: '심화 — 비유/상징 활용', en: 'Deep — Metaphor/symbolism', ja: 'Deep — Metaphor/symbolism', zh: 'Deep — Metaphor/symbolism' }) :
-                     L4(language, { ko: '최대 — 문예 수준 밀도', en: 'Maximum — Literary density', ja: '最大 — 문예 수준 밀도', zh: '最大 — 문예 수준 밀도' })}
+                     L4(language, { ko: '최대 — 문예 수준 밀도', en: 'Maximum — Literary density', ja: '最大 — 文芸レベルの密度', zh: '最大 — 文学级密度' })}
                   </div>
                 </div>
               </div>
@@ -562,7 +562,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           </span>
         </h3>
         <p className="text-xs text-text-tertiary">
-          {L4(language, { ko: '원고를 GitHub에 백업하고 버전 관리할 수 있습니다. 곧 활성화됩니다.', en: 'Back up manuscripts to GitHub with version control. Coming soon.', ja: '原稿를 GitHub에 백업하고 버전 管理할 수 있습니다. 곧 アクティブ화됩니다.', zh: '稿件를 GitHub에 백업하고 버전 管理할 수 있습니다. 곧 活跃화됩니다.' })}
+          {L4(language, { ko: '원고를 GitHub에 백업하고 버전 관리할 수 있습니다. 곧 활성화됩니다.', en: 'Back up manuscripts to GitHub with version control. Coming soon.', ja: '原稿をGitHubにバックアップし、バージョン管理できます。まもなく有効化されます。', zh: '将稿件备份到 GitHub 并进行版本管理。即将启用。' })}
         </p>
       </div>
     );
@@ -587,7 +587,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
     <div className="md:col-span-2 ds-card-lg">
       <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-6 flex items-center gap-2">
         <GitBranch className="w-4 h-4 text-green-500" />
-        {L4(language, { ko: '원고 백업 (GitHub)', en: 'Manuscript Backup (GitHub)', ja: '原稿 백업 (GitHub)', zh: '稿件 백업 (GitHub)' })}
+        {L4(language, { ko: '원고 백업 (GitHub)', en: 'Manuscript Backup (GitHub)', ja: '原稿バックアップ (GitHub)', zh: '稿件备份 (GitHub)' })}
       </h3>
 
       {gh.connected ? (
@@ -634,18 +634,18 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#24292f] hover:bg-[#2f363d] text-white text-xs font-bold rounded-xl transition-colors"
             >
               <GitBranch className="w-4 h-4" />
-              {L4(language, { ko: 'GitHub으로 로그인', en: 'Sign in with GitHub', ja: 'GitHub으로 ログイン', zh: 'GitHub으로 登录' })}
+              {L4(language, { ko: 'GitHub으로 로그인', en: 'Sign in with GitHub', ja: 'GitHubでログイン', zh: '使用 GitHub 登录' })}
             </button>
           )}
           {hasOAuthClientId && (
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-[10px] text-text-tertiary font-mono uppercase">{L4(language, { ko: '또는 PAT 입력', en: 'or enter PAT', ja: '또는 PAT 入力', zh: '또는 PAT 输入' })}</span>
+              <span className="text-[10px] text-text-tertiary font-mono uppercase">{L4(language, { ko: '또는 PAT 입력', en: 'or enter PAT', ja: 'またはPATを入力', zh: '或输入 PAT' })}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
           )}
           <p className="text-xs text-text-tertiary">
-            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.', ja: 'GitHub 접근 토큰(PAT)을 入力하면 原稿를 非公開 保存소에 백업할 수 있습니다.', zh: 'GitHub 접근 토큰(PAT)을 输入하면 稿件를 私密 保存소에 백업할 수 있습니다.' })}
+            {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to back up manuscripts to a private repository.', ja: 'GitHubアクセストークン(PAT)を入力すると、原稿を非公開リポジトリにバックアップできます。', zh: '输入 GitHub 访问令牌(PAT)后，可将稿件备份至私有仓库。' })}
           </p>
           <div className="flex gap-2">
             <input
@@ -671,7 +671,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           {gh.repos.length > 0 && !gh.connected && (
             <div className="space-y-2 pt-2 border-t border-border/50">
               <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
-                {L4(language, { ko: '저장소 선택', en: 'Select Repository', ja: '保存소 選択', zh: '保存소 选择' })}
+                {L4(language, { ko: '저장소 선택', en: 'Select Repository', ja: 'リポジトリを選択', zh: '选择仓库' })}
               </label>
               <select
                 onChange={(e) => handleSelectRepo(e.target.value)}
@@ -679,7 +679,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
                 className="w-full bg-bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-text-primary focus:border-green-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer"
               >
                 <option value="" disabled>
-                  {L4(language, { ko: '저장소를 선택하세요...', en: 'Choose a repository...', ja: '保存소를 選択하세요...', zh: '保存소를 选择하세요...' })}
+                  {L4(language, { ko: '저장소를 선택하세요...', en: 'Choose a repository...', ja: 'リポジトリを選択してください...', zh: '请选择仓库...' })}
                 </option>
                 {gh.repos.map((r) => (
                   <option key={`${r.owner}/${r.name}`} value={`${r.owner}/${r.name}`}>

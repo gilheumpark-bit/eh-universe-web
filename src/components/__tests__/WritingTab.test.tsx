@@ -42,19 +42,8 @@ import WritingTab from "../studio/tabs/WritingTab";
 import { INITIAL_CONFIG } from "@/hooks/useProjectManager";
 import { Genre } from "@/lib/studio-types";
 import { DEFAULT_SETTINGS } from "@/components/studio/AdvancedWritingPanel";
-import type { HFCPState } from "@/engine/hfcp";
 
 const noop = () => {};
-
-const defaultHfcp: HFCPState = {
-  score: 0,
-  momentumK: 1,
-  lastDelta: 0,
-  turns: 0,
-  verdict: "normal_free",
-  nrgStrategy: "normal",
-  lastQuestionHash: "",
-};
 
 describe("WritingTab", () => {
   it("exports a valid React component", () => {
@@ -87,7 +76,6 @@ describe("WritingTab", () => {
       },
       currentSessionId: "test-session",
       updateCurrentSession: noop,
-      setConfig: noop,
       writingMode: "edit" as const,
       setWritingMode: noop,
       editDraft: "some text",
@@ -108,7 +96,6 @@ describe("WritingTab", () => {
       messagesEndRef: messagesEndRefTyped,
       searchQuery: "",
       filteredMessages: [],
-      searchMatchesEditDraft: false,
       hasApiKey: false,
       setShowApiKeyModal: noop,
       setActiveTab: noop,
@@ -117,10 +104,6 @@ describe("WritingTab", () => {
       input: "",
       setInput: noop,
       showDashboard: false,
-      rightPanelOpen: false,
-      setRightPanelOpen: noop,
-      directorReport: null,
-      hfcpState: defaultHfcp,
       handleNextEpisode: noop,
     } satisfies ComponentProps<typeof WritingTab>;
 

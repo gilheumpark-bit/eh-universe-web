@@ -98,7 +98,7 @@ export function TagInput({
             onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 150)}
-            placeholder={placeholder ?? L4(lang, { ko: "태그 입력 후 Enter", en: "Type tag, press Enter", ja: "タグ入力 후 Enter", zh: "输入标签 후 Enter" })}
+            placeholder={placeholder ?? L4(lang, { ko: "태그 입력 후 Enter", en: "Type tag, press Enter", ja: "タグを入力してEnter", zh: "输入标签后按 Enter" })}
             className="min-w-[120px] flex-1 bg-transparent text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 placeholder:text-text-tertiary"
           />
         )}
@@ -122,7 +122,7 @@ export function TagInput({
 
       {tags.length >= maxTags && (
         <p className="mt-1 text-[11px] text-text-tertiary">
-          {L4(lang, { ko: `최대 ${maxTags}개까지 가능합니다.`, en: `Maximum ${maxTags} tags allowed.`, ja: `最大 ${maxTags}件까지 가능합니다.`, zh: `最大 ${maxTags}个까지 가능합니다.` })}
+          {L4(lang, { ko: `최대 ${maxTags}개까지 가능합니다.`, en: `Maximum ${maxTags} tags allowed.`, ja: `最大${maxTags}件まで可能です。`, zh: `最多可添加${maxTags}个。` })}
         </p>
       )}
     </div>

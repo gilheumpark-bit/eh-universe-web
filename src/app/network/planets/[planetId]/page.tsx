@@ -7,7 +7,11 @@ interface PlanetDetailPageProps {
 
 export async function generateMetadata({ params }: PlanetDetailPageProps): Promise<Metadata> {
   const { planetId } = await params;
-  const ogUrl = `https://eh-universe-web.vercel.app/api/og?title=${encodeURIComponent(planetId)}&genre=Planet`;
+  // OG URL은 배포 도메인 기반으로 동적 생성 (하드코딩된 vercel.app 제거)
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+    ? (process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.VERCEL_URL}`)
+    : '';
+  const ogUrl = `${baseUrl}/api/og?title=${encodeURIComponent(planetId)}&genre=Planet`;
   return {
     openGraph: {
       title: `${planetId} — EH Universe`,

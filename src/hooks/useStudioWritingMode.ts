@@ -4,8 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
-
-type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
+import type { WritingMode } from '@/lib/studio-types';
 
 const DEFAULT_ADVANCED: AdvancedWritingSettings = {
   sceneGoals: [],

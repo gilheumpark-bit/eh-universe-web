@@ -73,9 +73,9 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
     } catch (caught) {
       const msg = caught instanceof Error ? caught.message : '';
       if (msg.includes('Duplicate report') || msg.includes('already reported')) {
-        setSubmitError(L4(lang, { ko: "이미 동일한 신고가 접수되어 있습니다.", en: "You have already reported this item.", ja: "이미 동일한 報告가 접수되어 있습니다.", zh: "이미 동일한 举报가 접수되어 있습니다." }));
+        setSubmitError(L4(lang, { ko: "이미 동일한 신고가 접수되어 있습니다.", en: "You have already reported this item.", ja: "すでに同じ報告が受理されています。", zh: "相同的举报已被受理。" }));
       } else {
-        setSubmitError(L4(lang, { ko: "신고 제출에 실패했습니다.", en: "Failed to submit report.", ja: "報告 제출에 실패했습니다.", zh: "举报 제출에 실패했습니다." }));
+        setSubmitError(L4(lang, { ko: "신고 제출에 실패했습니다.", en: "Failed to submit report.", ja: "報告の送信に失敗しました。", zh: "举报提交失败。" }));
       }
     } finally {
       setSubmitting(false);
@@ -90,7 +90,7 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
           onClick={() => {
             if (!user) {
               void signInWithGoogle().then(() => {
-                const hint = L4(lang, { ko: "로그인 후 다시 신고 버튼을 눌러주세요", en: "Please tap report again after login", ja: "ログイン 후 다시 報告 버튼을 눌러주세요", zh: "登录 후 다시 举报 버튼을 눌러주세요" });
+                const hint = L4(lang, { ko: "로그인 후 다시 신고 버튼을 눌러주세요", en: "Please tap report again after login", ja: "ログイン後に再度「報告」ボタンを押してください", zh: "登录后请再次点击举报按钮" });
                 setLoginHint(hint);
                 clearTimeout(loginHintTimer.current);
                 loginHintTimer.current = setTimeout(() => setLoginHint(null), 3000);

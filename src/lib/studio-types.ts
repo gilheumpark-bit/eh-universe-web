@@ -17,6 +17,7 @@ export enum Genre {
 export type GenerationMode = 'cloud' | 'local';
 export type ViewMode = 'mobile' | 'desktop';
 export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
+export type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
 export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual';
 
@@ -243,6 +244,13 @@ export interface StoryConfig {
   magicSystems?: MagicSystem[];
   savedSlots?: SavedSlot[];
   manuscripts?: EpisodeManuscript[];
+  /** 번역 작가 프로필 — 번역 스튜디오 학습 루프에서 업데이트 */
+  translatorProfile?: {
+    skillLevel?: 'beginner' | 'intermediate' | 'advanced' | 'pro';
+    axisAverages?: Record<string, number>;
+    preferredStyles?: string[];
+    lastUpdated?: number;
+  };
   chapterAnalyses?: ChapterAnalysis[];
   /** Consumed by EpisodeScenePanel UI only — not read in engine/pipeline.ts */
   episodeSceneSheets?: EpisodeSceneSheet[];

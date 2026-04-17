@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import type { GitHubSyncConfig, GitHubFile, GitHubFileEntry, GitHubRepo } from '@/lib/github-sync';
 import {
   getFile,
@@ -57,7 +58,8 @@ function loadStoredConfig(): GitHubSyncConfig | null {
     const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
     if (!raw) return null;
     return JSON.parse(raw) as GitHubSyncConfig;
-  } catch {
+  } catch (err) {
+    logger.warn('GitHubSync', 'loadStoredConfig parse failed', err);
     return null;
   }
 }
@@ -77,7 +79,8 @@ function loadShaMap(): ShaMap {
     const raw = localStorage.getItem(STORAGE_KEY_SHA_MAP);
     if (!raw) return {};
     return JSON.parse(raw) as ShaMap;
-  } catch {
+  } catch (err) {
+    logger.warn('GitHubSync', 'loadShaMap parse failed', err);
     return {};
   }
 }
@@ -207,7 +210,8 @@ export function useGitHubSync(): UseGitHubSyncReturn {
       if (!config || !config.owner || !config.repo) return [];
       try {
         return await listFiles(config, dirPath ?? 'volumes');
-      } catch {
+      } catch (err) {
+        logger.warn('GitHubSync', 'listEpisodes failed', err);
         return [];
       }
     },
@@ -227,8 +231,9 @@ export function useGitHubSync(): UseGitHubSyncReturn {
         const localSha = shaMapRef.current[path];
         if (!localSha) return false; // never synced — treat as no conflict
         return remote.sha !== localSha;
-      } catch {
-        return false;
+      } catch (err) {
+        logger.warn('GitHubSync', 'checkConflict failed — treating as conflict for safety', err);
+        return true; // 안전 방향: 충돌 있다고 가정
       }
     },
     [config],
@@ -291,7 +296,8 @@ export function useGitHubSync(): UseGitHubSyncReturn {
       if (!config || !config.owner || !config.repo) return [];
       try {
         return await listBranches(config);
-      } catch {
+      } catch (err) {
+        logger.warn('GitHubSync', 'getBranches failed', err);
         return [];
       }
     },

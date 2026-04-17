@@ -59,7 +59,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
 
         const planetRecord = await getPlanetById(planetId);
         if (!planetRecord) {
-          throw new Error(L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found.", ja: "惑星을 찾을 수 없습니다.", zh: "星球을 찾을 수 없습니다." }));
+          throw new Error(L4(lang, { ko: "행성을 찾을 수 없습니다.", en: "Planet not found.", ja: "惑星が見つかりません。", zh: "找不到该星球。" }));
         }
 
         const [postRecords, settlementRecords, nextOwner, nextViewer] = await Promise.all([
@@ -206,7 +206,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
             <>
               {canWriteLog ? (
                 <Link href={`/network/logs/new?planetId=${planet.id}`} className="premium-button">
-                  {L4(lang, { ko: "새 로그 작성", en: "Write New Log", ja: "새 ログ 作成", zh: "새 日志 撰写" })}
+                  {L4(lang, { ko: "새 로그 작성", en: "Write New Log", ja: "新規ログ作成", zh: "撰写新日志" })}
                 </Link>
               ) : null}
               {isManager ? (
@@ -229,7 +229,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                 }}
                 className="premium-button secondary"
               >
-                {L4(lang, { ko: "이 세계관으로 집필 시작", en: "Start Writing with this World", ja: "이 世界観으로 執筆 시작", zh: "이 世界观으로 写作 시작" })}
+                {L4(lang, { ko: "이 세계관으로 집필 시작", en: "Start Writing with this World", ja: "この世界観で執筆を開始", zh: "用此世界观开始写作" })}
               </button>
               <BookmarkButton planetId={planet.id} />
               <ReportButton targetType="planet" targetId={planet.id} />
@@ -254,7 +254,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
           <section className="space-y-4">
             <div className="flex flex-wrap gap-3">
               {([
-                ["logs", L4(lang, { ko: "최근 관측 로그", en: "Logs", ja: "최근 観測 ログ", zh: "최근 观测 日志" })],
+                ["logs", L4(lang, { ko: "최근 관측 로그", en: "Logs", ja: "最近の観測ログ", zh: "最近观测日志" })],
                 ["if", L4(lang, { ko: "IF / 분기 루트", en: "IF / Side Route", ja: "IF / Side Route", zh: "IF / Side Route" })],
                 ["settlements", L4(lang, { ko: "정산 기록", en: "Settlements", ja: "Settlements", zh: "Settlements" })],
                 ["feedback", L4(lang, { ko: "피드백", en: "Feedback", ja: "Feedback", zh: "Feedback" })],
@@ -284,7 +284,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                   settlements.map((settlement) => (
                     <article key={settlement.id} className="premium-panel-soft p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="site-kicker">{settlement.archiveLevel ?? L4(lang, { ko: "보관 등급 없음", en: "No archive level", ja: "アーカイブ 등급 なし", zh: "归档 등급 无" })}</div>
+                        <div className="site-kicker">{settlement.archiveLevel ?? L4(lang, { ko: "보관 등급 없음", en: "No archive level", ja: "アーカイブ等級なし", zh: "无归档等级" })}</div>
                         <SettlementBadge status={settlement.verdict} lang={lang} />
                       </div>
                       <div className="mt-4 grid gap-3 text-sm text-text-secondary md:grid-cols-3">
@@ -302,7 +302,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
                 {filteredPosts.length === 0 ? (
                   <div className="premium-panel-soft p-6 text-sm text-text-secondary">
                     {tab === "logs"
-                      ? L4(lang, { ko: "관측 로그가 아직 없습니다.", en: "There are no logs yet.", ja: "観測 ログ가 아직 없습니다.", zh: "观测 日志가 아직 없습니다." })
+                      ? L4(lang, { ko: "관측 로그가 아직 없습니다.", en: "There are no logs yet.", ja: "観測ログはまだありません。", zh: "尚无观测日志。" })
                       : L4(lang, { ko: "아직 문서가 없습니다.", en: "No records yet.", ja: "No records yet.", zh: "No records yet." })}
                   </div>
                 ) : (
@@ -334,19 +334,19 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
 
           <aside className="space-y-4">
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "대표 로그", en: "Featured Log", ja: "대표 ログ", zh: "대표 日志" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "대표 로그", en: "Featured Log", ja: "代表ログ", zh: "代表日志" })}</div>
               {featuredPost ? (
                 <>
                   <h3 className="mt-3 text-lg font-semibold text-text-primary">{featuredPost.title}</h3>
                   <p className="mt-3 text-sm text-text-secondary">{featuredPost.summary}</p>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "대표 로그가 없습니다.", en: "No featured log yet.", ja: "대표 ログ가 없습니다.", zh: "대표 日志가 없습니다." })}</p>
+                <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "대표 로그가 없습니다.", en: "No featured log yet.", ja: "代表ログはありません。", zh: "暂无代表日志。" })}</p>
               )}
             </div>
 
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "가장 많이 읽힌 로그", en: "Most Read", ja: "가장 많이 읽힌 ログ", zh: "가장 많이 읽힌 日志" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "가장 많이 읽힌 로그", en: "Most Read", ja: "最も読まれたログ", zh: "阅读量最高的日志" })}</div>
               {topReadPost ? (
                 <>
                   <h3 className="mt-3 text-lg font-semibold text-text-primary">{topReadPost.title}</h3>
@@ -358,7 +358,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
             </div>
 
             <div className="premium-panel-soft p-5">
-              <div className="site-kicker">{L4(lang, { ko: "최근 정산 결과", en: "Latest Settlement", ja: "최근 정산 結果", zh: "최근 정산 结果" })}</div>
+              <div className="site-kicker">{L4(lang, { ko: "최근 정산 결과", en: "Latest Settlement", ja: "最近の精算結果", zh: "最近结算结果" })}</div>
               {settlements[0] ? (
                 <>
                   <div className="mt-3 flex items-center gap-3">

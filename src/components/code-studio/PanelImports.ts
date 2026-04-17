@@ -243,6 +243,12 @@ export const AuditPanelComponent = dynamic(
   { ssr: false },
 );
 
+// ── audit-invoice (named) ───────────────────────────────────
+export const AuditInvoiceComponent = dynamic(
+  () => import("@/components/code-studio/AuditInvoice").then((m) => ({ default: m.AuditInvoice })),
+  { ssr: false },
+);
+
 // ── multi-diff (named) ──────────────────────────────────────
 export const MultiFileDiffComponent = dynamic(
   () => import("@/components/code-studio/MultiFileDiff").then((m) => ({ default: m.MultiFileDiff })),
@@ -262,7 +268,13 @@ export const NamingDictPanelComponent = dynamic(
 );
 
 // ── dep-graph (default) ─────────────────────────────────────
+// DependencyGraphPanel: 순환 감지 + 고급 시각화 (buildDependencyGraph 사용)
+// DependencyGraph: 단순 시각화 (legacy, DependencyGraphLegacyComponent로 보존)
 export const DependencyGraphComponent = dynamic(
+  () => import("@/components/code-studio/DependencyGraphPanel"),
+  { ssr: false },
+);
+export const DependencyGraphLegacyComponent = dynamic(
   () => import("@/components/code-studio/DependencyGraph"),
   { ssr: false },
 );

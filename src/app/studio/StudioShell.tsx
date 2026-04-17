@@ -5,7 +5,7 @@
 // ============================================================
 import { useState, useRef, useEffect, useCallback, useReducer } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import type { AppLanguage, AppTab, Project } from '@/lib/studio-types';
+import type { AppLanguage, AppTab, Project, WritingMode } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -39,6 +39,8 @@ import { useStudioShellController } from './useStudioShellController';
 const OSDesktop = dynamic(() => import('@/components/studio/OSDesktop'), { ssr: false });
 const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: false });
 const StudioOverlayManager = dynamic(() => import('@/components/studio/StudioOverlayManager'), { ssr: false });
+const MobileStudioView = dynamic(() => import('@/components/studio/MobileStudioView'), { ssr: false });
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
@@ -61,6 +63,16 @@ export default function StudioShell() {
     const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', ja: 'JP', zh: 'CN' };
     setLanguage(map[lang] || 'KO');
   }, [lang]);
+
+  // 모바일 감지 — 전체 PC UX 대신 경량 스케치 뷰로 교체
+  // 사용자가 명시적으로 PC 뷰 강제 모드(?force=desktop)를 선택하면 우회 가능
+  const isMobile = useIsMobile();
+  const [forceDesktop, setForceDesktop] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search);
+    setForceDesktop(p.get('force') === 'desktop' || localStorage.getItem('noa_force_desktop') === '1');
+  }, []);
 
   const pm = useProjectManager(language);
   const {
@@ -355,6 +367,35 @@ export default function StudioShell() {
     try { localStorage.setItem('noa_writing_access', hasAiAccess ? 'api' : 'manual'); } catch { /* quota/private */ }
   }, [hasAiAccess, aiCapabilitiesLoaded]);
 
+  // editDraft → manuscripts 자동 전이 (수동 편집 내용이 EPUB/DOCX/JSON 내보내기에 반영되도록)
+  // 2초 debounce로 config.manuscripts[episode].content 업데이트
+  useEffect(() => {
+    if (!hydrated || !currentSessionId || !editDraft) return;
+    if (writingMode !== 'edit') return;
+    if (!currentSession) return;
+    const episode = currentSession.config?.episode ?? 1;
+    const timer = setTimeout(() => {
+      const prevArr = currentSession.config.manuscripts ?? [];
+      const idx = prevArr.findIndex(m => m.episode === episode);
+      const title = currentSession.config.title || `Episode ${episode}`;
+      const now = Date.now();
+      const nextEntry = idx >= 0
+        ? { ...prevArr[idx], content: editDraft, charCount: editDraft.length, lastUpdate: now }
+        : { episode, title, content: editDraft, charCount: editDraft.length, lastUpdate: now };
+      const nextArr = idx >= 0
+        ? prevArr.map((m, i) => i === idx ? nextEntry : m)
+        : [...prevArr, nextEntry];
+      updateCurrentSession({
+        config: {
+          ...currentSession.config,
+          manuscripts: nextArr,
+        },
+      });
+    }, 2000);
+    return () => clearTimeout(timer);
+
+  }, [editDraft, writingMode, currentSessionId, hydrated]);
+
 
 
 
@@ -610,7 +651,7 @@ export default function StudioShell() {
     // Config
     setConfig, updateCurrentSession,
     // Writing
-    writingMode, setWritingMode: setWritingMode as React.Dispatch<React.SetStateAction<string>>,
+    writingMode, setWritingMode: setWritingMode as React.Dispatch<React.SetStateAction<WritingMode>>,
     editDraft, setEditDraft, editDraftRef,
     canvasContent, setCanvasContent,
     canvasPass, setCanvasPass,
@@ -671,6 +712,32 @@ export default function StudioShell() {
   // ============================================================
   // PART 5 — Render
   // ============================================================
+
+  // 모바일 전용 스케치 뷰 — PC급 스튜디오 대체
+  // 데스크톱 강제 모드(?force=desktop 또는 localStorage noa_force_desktop)면 우회
+  if (isMobile && !forceDesktop && hydrated) {
+    return (
+      <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
+        <MobileStudioView
+          language={language}
+          onDesktopCTA={() => {
+            if (typeof navigator !== 'undefined' && navigator.share) {
+              navigator.share({
+                title: 'EH Universe Studio',
+                text: 'EH Universe 소설 스튜디오 (데스크톱에서 열기)',
+                url: typeof window !== 'undefined' ? `${window.location.origin}/studio` : '',
+              }).catch(() => {/* user cancelled */});
+            } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+              navigator.clipboard.writeText(typeof window !== 'undefined' ? `${window.location.origin}/studio` : '')
+                .then(() => showAlert(isKO ? '데스크톱 링크가 클립보드에 복사되었습니다' : 'Desktop link copied to clipboard'))
+                .catch(() => {/* clipboard denied */});
+            }
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
     <StudioConfigProvider value={studioConfigValue}>

@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger";
 import type { AppLanguage, StoryConfig, EpisodeManuscript } from "@/lib/studio-types";
 import type { TranslationMode, TranslationTarget } from "@/engine/translation";
 import type { TranslationSegment } from "@/lib/translation/editable-segment";
+import type { GlossaryCandidate } from "@/lib/translation/glossary-extractor";
 import { bandLabel, modeDescription, BAND_META } from "@/engine/translation";
 import { GENRE_PRESETS } from "@/engine/genre-presets";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -37,12 +38,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const [generalText, setGeneralText] = useState('');
   const [generalResult, setGeneralResult] = useState('');
   const [generalTranslating, setGeneralTranslating] = useState(false);
-  // Segment editor state (lazy loaded types)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [segments, setSegments] = useState<any[]>([]);
+  // Segment editor state
+  const [segments, setSegments] = useState<TranslationSegment[]>([]);
   const [showSegmentView, setShowSegmentView] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [glossaryCandidates, setGlossaryCandidates] = useState<any[]>([]);
+  const [glossaryCandidates, setGlossaryCandidates] = useState<GlossaryCandidate[]>([]);
   const [_multiLangTargets, _setMultiLangTargets] = useState<string[]>(['EN']);
   const [tmCount, setTmCount] = useState(0);
   const [mode, setMode] = useState<TranslationMode>("fidelity");

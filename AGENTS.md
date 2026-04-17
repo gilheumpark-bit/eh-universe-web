@@ -82,16 +82,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Shell 3파일 분리**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager
 - **lib/code-studio/ 6-directory**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
 - **Panel Registry**: `core/panel-registry.ts` + `PanelImports.ts` — 하드코딩 금지
-- **9-team 파이프라인**: PM→Architect→Frontend→Backend→QA→Security→DevOps→Tech Lead→Quill
+- **9-stage 정적 파이프라인** (`pipeline/pipeline.ts` `FULL_TEAMS`):
+  1. simulation → 2. generation → 3. validation (blocking) → 4. size-density →
+  5. asset-trace → 6. stability → 7. release-ip (blocking) → 8. governance → 9. quill
+  - blocking 단계(validation/release-ip) 실패 시 다음 스테이지 차단
+- **에이전트 역할** (`types/code-studio-agent.ts` `AGENT_REGISTRY`): 19개 role (team-leader, frontend-lead, backend-lead, domain-analyst, state-designer, css-layout, interaction-motion, core-engine, api-binding, overflow-guard, security-auth, memory-cache, render-optimizer, deadcode-scanner, coding-convention, stress-tester, dependency-linker, progressive-repair, snapshot-manager)
 - **Quill Engine**: 224룰 카탈로그 검증 (4-layer: pre-filter → AST → TypeChecker → esquery)
-- **파이프라인 모듈** (2026-04-13 동기화):
+- **파이프라인 모듈** (2026-04-17 동기화):
   - `pipeline/diff-guard.ts` — SCOPE/CONTRACT/@block 편집 경계 보호 (450줄)
-  - `pipeline/apply-guard.ts` — diff-guard 래퍼, 코드 적용 시 자동 검증
-  - `pipeline/design-transpiler.ts` — 외부 AI 코드 보안 필터 + 시맨틱 토큰 변환
-  - `ai/intent-parser.ts` — 결정론적 의도→AST 제약 변환 (LLM 불필요)
-  - `ai/calc-protocol.ts` — SCAN→VALIDATE→ROUTE→PLAN 4단계 프롬프트 프로토콜
-  - `ai/tier-registry.ts` — Ultra/ProPlus/Standard/Lite 4-Tier 오케스트레이션
-- **AuditInvoice.tsx** — NOA-AGI 실행 명세서 UI
+  - `pipeline/apply-guard.ts` — diff-guard 래퍼, `handleApplyCode`에서 MULTI_FILE_AGENT flag로 호출
+  - `pipeline/design-transpiler.ts` — 외부 AI 코드 보안 필터 (연결 대기)
+  - `ai/intent-parser.ts` — 결정론적 의도→제약 변환, `agents.ts:runSingleAgent`에서 MULTI_FILE_AGENT flag로 프롬프트 주입
+  - `ai/calc-protocol.ts` — SCAN→VALIDATE→ROUTE→PLAN 4단계 프롬프트 프로토콜 (헬퍼 정의)
+  - `ai/tier-registry.ts` — 4-Tier (Auditor/Composer/Patcher/Predictor) 오케스트레이션, MULTI_FILE_AGENT flag로 temperature/systemPrompt 분기
+  - `core/snapshot-manager.ts` — IndexedDB 스냅샷, `runAgentPipeline`의 progressive-repair 전에 자동 생성 + 실패 시 rollbackSnapshotId 노출
+- **AuditInvoice.tsx** — `panel-registry.ts`의 `audit-invoice` 패널로 등록, 활성 파일 기반 intent-parser 실시간 분석 렌더
 - **Design v8.0 3-Tier 토큰 효율**:
   - FULL (~3K) → css-layout, interaction-motion, ChatPanel
   - COMPACT (~800) → app-generator, autopilot UI step

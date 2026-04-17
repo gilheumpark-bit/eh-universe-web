@@ -377,6 +377,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 인증 게이트 — BYOK 없으면 Firebase JWT 필수 (16K 토큰/호출 비용 방어)
+    if (!userApiKey) {
+      const authHeader = req.headers.get('authorization');
+      let verified = false;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+          const token = authHeader.slice(7).trim();
+          verified = Boolean(await verifyFirebaseIdToken(token));
+        } catch { /* verification failed */ }
+      }
+      if (!verified) {
+        return NextResponse.json({ error: 'Authentication required for hosted credits' }, { status: 401 });
+      }
+    }
+
     const content = typeof body.content === 'string' ? body.content.slice(0, MAX_CONTENT_CHARS).trim() : '';
     if (!content) {
       return NextResponse.json({ error: 'Manuscript content is required.' }, { status: 400 });

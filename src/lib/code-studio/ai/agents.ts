@@ -9,6 +9,11 @@ import { CODE_STUDIO_ARCHITECTURE_APPENDIX } from '@/lib/code-studio/core/archit
 import { DESIGN_SYSTEM_SPEC } from '@/lib/code-studio/core/design-system-spec';
 import { DESIGN_LINTER_SPEC } from '@/lib/code-studio/core/design-linter';
 import { buildIdiomDirective, detectFramework, type FrameworkId } from '@/lib/code-studio/ai/idiom-presets';
+import { extractPhysicalConstraints, buildConstraintInjection } from '@/lib/code-studio/ai/intent-parser';
+import { selectTierForTask, resolveTierConfig } from '@/lib/code-studio/ai/tier-registry';
+import { snapshotManager } from '@/lib/code-studio/core/snapshot-manager';
+import { isFeatureEnabled } from '@/lib/feature-flags';
+import { logger } from '@/lib/logger';
 
 // Re-export for consumers that need provider info alongside agent sessions.
 export { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -89,6 +94,8 @@ export interface AgentSession {
   finalOutput?: string;
   conflicts: ConflictEntry[];
   summary?: SessionSummary;
+  /** Pre-repair snapshot ID for rollback if pipeline fails (MULTI_FILE_AGENT) */
+  rollbackSnapshotId?: string;
 }
 
 // IDENTITY_SEAL: PART-1 | role=TypeDefinitions | inputs=none | outputs=AgentRole,AgentMessage,ConflictEntry,SessionSummary,AgentSession
@@ -542,10 +549,32 @@ async function runSingleAgent(
     ? `\n\n${buildIdiomDirective(_detectedFramework)}`
     : '';
 
+  // [NOA-AGI] Shadow Translator — 사용자 입력 의도를 결정론적 AST/System 제약으로 변환
+  // feature flag: MULTI_FILE_AGENT 활성 시 프롬프트에 주입
+  const intentAppendix = isFeatureEnabled('MULTI_FILE_AGENT')
+    ? `\n\n${buildConstraintInjection(extractPhysicalConstraints(userInput).systemOverride)}`
+    : '';
+
+  // [Tier Registry] role 기반 태스크 특성 → 온도/systemPrompt 미세 조정
+  // 기본 temperature 로직은 유지하되, MULTI_FILE_AGENT 활성 시 tier-registry로 override
+  const defaultTemp = ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4;
+  let resolvedTemp = defaultTemp;
+  let tierAppendix = '';
+  if (isFeatureEnabled('MULTI_FILE_AGENT')) {
+    const taskType: 'edit' | 'generate' | 'analyze' | 'complete' =
+      AGENT_REGISTRY[role].category === 'verification' ? 'analyze'
+      : AGENT_REGISTRY[role].category === 'repair' ? 'edit'
+      : 'generate';
+    const tier = selectTierForTask({ codeLength: userInput.length, taskType });
+    const tierCfg = resolveTierConfig(tier);
+    resolvedTemp = tierCfg.temperature;
+    if (tierCfg.systemPrompt) tierAppendix = `\n\n${tierCfg.systemPrompt}`;
+  }
+
   const streamOpts = {
-    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}${idiomAppendix}`,
+    systemInstruction: `${AGENT_PROMPTS[role]}\n\n${CODE_STUDIO_ARCHITECTURE_APPENDIX}${designAppendix}${idiomAppendix}${intentAppendix}${tierAppendix}`,
     messages: [{ role: 'user' as const, content: userInput }],
-    temperature: ['verification', 'repair'].includes(AGENT_REGISTRY[role].category) ? 0.2 : 0.4,
+    temperature: resolvedTemp,
     signal,
     onChunk(text: string) {
       accumulated += text;
@@ -625,6 +654,22 @@ export async function runAgentPipeline(
 
   const sortedRoles = ROLE_ORDER.filter((r) => roles.includes(r));
 
+  // [NOA-AGI] 리페어 에이전트 실행 전 스냅샷 저장 (MULTI_FILE_AGENT 플래그 활성 시)
+  // 실패 시 rollback 가능. codeContext가 파일 맵 형태가 아니라 단일 문자열이므로 단일 파일 스냅샷으로 저장.
+  let preRepairSnapshotId: string | null = null;
+  if (isFeatureEnabled('MULTI_FILE_AGENT') && sortedRoles.includes('progressive-repair') && codeContext.trim()) {
+    try {
+      const snapshot = await snapshotManager.createSnapshot(
+        `pre-repair-${session.id}`,
+        { 'context.tsx': codeContext },
+        { agentRole: 'progressive-repair', sessionId: session.id }
+      );
+      preRepairSnapshotId = snapshot.id;
+    } catch (err) {
+      logger.warn('agents', 'pre-repair snapshot failed', err);
+    }
+  }
+
   try {
     // --- Pre-processing: Architectural Rules Check ---
     const enforceArchRules = () => {
@@ -699,6 +744,11 @@ export async function runAgentPipeline(
     } else {
       session.status = 'error';
       session.finalOutput = err instanceof Error ? err.message : String(err);
+    }
+    // 리페어 실패 시 pre-repair 스냅샷으로 롤백 힌트 메타데이터 저장 (UI에서 복원 버튼 노출)
+    if (preRepairSnapshotId) {
+      session.rollbackSnapshotId = preRepairSnapshotId;
+      logger.warn('agents', 'pipeline failed, rollback snapshot available', { snapshotId: preRepairSnapshotId });
     }
   }
 

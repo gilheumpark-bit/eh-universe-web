@@ -17,7 +17,9 @@ interface RateLimitConfig {
   maxRequests: number;
 }
 
-// Global shared map — singleton across all route imports in the same serverless instance
+// Global shared map — singleton across all route imports in the same serverless instance.
+// ⚠️ Vercel 서버리스 환경 주의: 각 람다 인스턴스마다 독립 Map이므로, 분산 공격 방어력은 제한적.
+// 프로덕션에서 DDoS 방어가 필요하면 Cloudflare/Vercel WAF + Upstash Redis 레이어 추가 권장.
 const rateLimitMap = new Map<string, RateLimitEntry>();
 let lastCleanup = Date.now();
 

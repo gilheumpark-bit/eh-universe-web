@@ -537,12 +537,12 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
                 <div className="text-sm font-medium">{pickNetworkLabel(PLANET_GOAL_LABELS[goal], lang)}</div>
                 <div className="mt-1 text-xs text-text-tertiary">
                   {goal === "maintain"
-                    ? L4(lang, { ko: "현재 상태를 보존하고 안정적으로 운영합니다.", en: "Preserve current state and operate stably.", ja: "현재 状態를 보존하고 안정적으로 운영합니다.", zh: "현재 状态를 보존하고 안정적으로 운영합니다." })
+                    ? L4(lang, { ko: "현재 상태를 보존하고 안정적으로 운영합니다.", en: "Preserve current state and operate stably.", ja: "現在の状態を維持し、安定的に運営します。", zh: "保持当前状态，稳定运营。" })
                     : goal === "develop"
                       ? L4(lang, { ko: "성장과 확장을 목표로 운영합니다.", en: "Operate toward growth and expansion.", ja: "Operate toward growth and expansion.", zh: "Operate toward growth and expansion." })
                       : goal === "collapse"
                         ? L4(lang, { ko: "의도적 해체 또는 붕괴를 허용합니다.", en: "Allow intentional dismantling or collapse.", ja: "Allow intentional dismantling or collapse.", zh: "Allow intentional dismantling or collapse." })
-                        : L4(lang, { ko: "실험적 운영을 허용합니다. 결과는 미확정입니다.", en: "Allow experimental operation. Results are undetermined.", ja: "실험적 운영을 허용합니다. 結果는 미확정입니다.", zh: "실험적 운영을 허용합니다. 结果는 미확정입니다." })}
+                        : L4(lang, { ko: "실험적 운영을 허용합니다. 결과는 미확정입니다.", en: "Allow experimental operation. Results are undetermined.", ja: "実験的な運営を許可します。結果は未確定です。", zh: "允许实验性运营，结果尚未确定。" })}
                 </div>
               </div>
             </label>
@@ -550,14 +550,14 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
         </div>
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-5 py-4">
           <p className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.1em] text-text-tertiary">
-            {L4(lang, { ko: "\"통치자는 신이 아니다. 통치자는 관리자다.\" — NMF 운영 원칙", en: "\"A governor is not a god. A governor is a manager.\" — NMF Operational Principle", ja: "\"통치자는 신이 아니다. 통치자는 管理者다.\" — NMF 운영 원칙", zh: "\"통치자는 신이 아니다. 통치자는 管理员다.\" — NMF 운영 원칙" })}
+            {L4(lang, { ko: "\"통치자는 신이 아니다. 통치자는 관리자다.\" — NMF 운영 원칙", en: "\"A governor is not a god. A governor is a manager.\" — NMF Operational Principle", ja: "「統治者は神ではない。統治者は管理者である。」— NMF運営原則", zh: "\"统治者不是神，统治者是管理者。\" — NMF 运营原则" })}
           </p>
         </div>
       </div>
     ) : (
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "로그 제목", en: "Log Title", ja: "ログ タイトル", zh: "日志 标题" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "로그 제목", en: "Log Title", ja: "ログタイトル", zh: "日志标题" })}</div>
           <input
             value={firstLog.title}
             onChange={(event) => setFirstLog((current) => ({ ...current, title: event.target.value }))}
@@ -586,7 +586,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           </select>
         </label>
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "사건 분류", en: "Event Type", ja: "사件 분류", zh: "사条 분류" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "사건 분류", en: "Event Type", ja: "事件分類", zh: "事件分类" })}</div>
           <input
             value={firstLog.eventCategory}
             onChange={(event) => setFirstLog((current) => ({ ...current, eventCategory: event.target.value }))}
@@ -604,7 +604,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
           />
         </label>
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "후속 상태", en: "Follow-up Status", ja: "후속 状態", zh: "후속 状态" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "후속 상태", en: "Follow-up Status", ja: "フォローアップ状態", zh: "后续状态" })}</div>
           <select
             value={firstLog.followupStatus ?? ""}
             onChange={(event) =>
@@ -615,7 +615,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             }
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
-            <option value="">{L4(lang, { ko: "선택 안 함", en: "No verdict", ja: "選択 안 함", zh: "选择 안 함" })}</option>
+            <option value="">{L4(lang, { ko: "선택 안 함", en: "No verdict", ja: "選択しない", zh: "不选择" })}</option>
             {PLANET_STATUSES.map((status) => (
               <option key={status} value={status}>
                 {pickNetworkLabel(PLANET_STATUS_LABELS[status], lang)}
@@ -645,7 +645,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             checked={firstLog.intervention}
             onChange={(event) => setFirstLog((current) => ({ ...current, intervention: event.target.checked }))}
           />
-          {L4(lang, { ko: "직접 개입이 있었음", en: "Direct intervention occurred", ja: "직접 件입이 있었음", zh: "직접 个입이 있었음" })}
+          {L4(lang, { ko: "직접 개입이 있었음", en: "Direct intervention occurred", ja: "直接介入があった", zh: "存在直接介入" })}
         </label>
         <div className="md:col-span-2">
           <div className="mb-2 flex items-center justify-between text-sm text-text-secondary">
@@ -679,15 +679,15 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
     <section className="premium-panel p-6 md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="site-kicker">{L4(lang, { ko: "행성 등록 위저드", en: "Planet Registration Wizard", ja: "惑星 登録 위저드", zh: "星球 提交 위저드" })}</div>
+          <div className="site-kicker">{L4(lang, { ko: "행성 등록 위저드", en: "Planet Registration Wizard", ja: "惑星登録ウィザード", zh: "星球登记向导" })}</div>
           <h1 className="site-title mt-2 text-3xl font-semibold">
-            {L4(lang, { ko: "행성을 만들고 첫 관측 로그를 남기세요.", en: "Register a planet and publish its first observation.", ja: "惑星을 만들고 첫 観測 ログ를 남기세요.", zh: "星球을 만들고 첫 观测 日志를 남기세요." })}
+            {L4(lang, { ko: "행성을 만들고 첫 관측 로그를 남기세요.", en: "Register a planet and publish its first observation.", ja: "惑星を作成し、最初の観測ログを残してください。", zh: "创建星球并留下首条观测日志。" })}
           </h1>
         </div>
         <div className="flex items-center gap-3">
           {importedFromStudio && (
             <span className="rounded-full border border-accent-amber/30 bg-accent-amber/10 px-3 py-1 text-[11px] font-semibold tracking-[0.08em] text-accent-amber">
-              {L4(lang, { ko: "스튜디오에서 불러옴", en: "Imported from Studio", ja: "スタジオ에서 불러옴", zh: "工作室에서 불러옴" })}
+              {L4(lang, { ko: "스튜디오에서 불러옴", en: "Imported from Studio", ja: "スタジオから読み込み", zh: "已从工作室导入" })}
             </span>
           )}
           <span className="font-[family-name:var(--font-mono)] text-xs tracking-[0.18em] text-text-tertiary uppercase">
@@ -705,7 +705,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
               type="button"
               disabled={!reachable}
               onClick={() => { if (reachable) setStep(index); }}
-              title={!reachable ? L4(lang, { ko: "이전 단계를 먼저 완료하세요", en: "Complete previous steps first", ja: "前のステップ를 먼저 完了하세요", zh: "上一步를 먼저 完成하세요" }) : undefined}
+              title={!reachable ? L4(lang, { ko: "이전 단계를 먼저 완료하세요", en: "Complete previous steps first", ja: "先に前のステップを完了してください", zh: "请先完成上一步" }) : undefined}
               className={`rounded-2xl border px-4 py-3 text-left transition ${
                 index === step
                   ? "border-accent-amber/40 bg-accent-amber/10 text-text-primary"
@@ -727,7 +727,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
       {step === 0 && !selectedTemplate && (
         <div className="mt-8 space-y-3">
           <div className="text-sm text-text-secondary">
-            {L4(lang, { ko: "템플릿으로 빠르게 시작하기", en: "Quick start with a template", ja: "템플릿으로 빠르게 始める", zh: "템플릿으로 빠르게 开始" })}
+            {L4(lang, { ko: "템플릿으로 빠르게 시작하기", en: "Quick start with a template", ja: "テンプレートで素早く開始", zh: "使用模板快速开始" })}
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             {PLANET_TEMPLATES.map((tpl) => (
@@ -805,7 +805,7 @@ export function PlanetWizard({ ownerId, ownerName, lang, onCreated, availableTag
             >
               {submitting
                 ? L4(lang, { ko: "생성 중...", en: "Creating...", ja: "生成中...", zh: "生成中..." })
-                : L4(lang, { ko: "행성 등록 + 첫 로그 생성", en: "Create Planet + First Log", ja: "惑星 登録 + 첫 ログ 生成", zh: "星球 提交 + 첫 日志 生成" })}
+                : L4(lang, { ko: "행성 등록 + 첫 로그 생성", en: "Create Planet + First Log", ja: "惑星を登録 + 最初のログを生成", zh: "登记星球 + 生成首条日志" })}
             </button>
           )}
         </div>

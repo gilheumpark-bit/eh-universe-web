@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { logger } from '@/lib/logger';
 import type { AppTab, StoryConfig, Project } from '@/lib/studio-types';
 import { Genre } from '@/lib/studio-types';
 
@@ -68,7 +69,8 @@ export function useStudioImport({
       setWorldImportDone(raw);
       setTimeout(() => setWorldImportBanner(false), 5000);
       studioRouter.replace(`${pathname}?tab=world`, { scroll: false });
-    } catch {
+    } catch (err) {
+      logger.warn('StudioImport', 'worldImport parse failed', err);
       setAlertToast({ message: language === 'KO' ? '\\uC138\\uACC4\\uAD00 \\uB370\\uC774\\uD130\\uB97C \\uBD88\\uB7EC\\uC624\\uC9C0 \\uBABB\\uD588\\uC2B5\\uB2C8\\uB2E4. \\uB9C1\\uD06C\\uAC00 \\uC190\\uC0C1\\uB410\\uC744 \\uC218 \\uC788\\uC2B5\\uB2C8\\uB2E4.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });
       studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
     }
@@ -112,7 +114,8 @@ export function useStudioImport({
       setWorldImportBanner(true);
       setTimeout(() => setWorldImportBanner(false), 5000);
       studioRouter.replace(`${pathname}?tab=writing`, { scroll: false });
-    } catch {
+    } catch (err) {
+      logger.warn('StudioImport', 'postImport parse failed', err);
       setAlertToast({ message: language === 'KO' ? '\\uAC8C\\uC2DC\\uAE00 \\uB370\\uC774\\uD130\\uB97C \\uBD88\\uB7EC\\uC624\\uC9C0 \\uBABB\\uD588\\uC2B5\\uB2C8\\uB2E4.' : 'Failed to import post data.', variant: 'error' });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

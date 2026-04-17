@@ -89,7 +89,7 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
       } catch {
         // Rollback optimistic update
         setReactions(prevReactions);
-        setError(L4(lang, { ko: "반응 처리에 실패했습니다.", en: "Failed to toggle reaction.", ja: "リアクション 처리에 실패했습니다.", zh: "反应 처리에 실패했습니다." }));
+        setError(L4(lang, { ko: "반응 처리에 실패했습니다.", en: "Failed to toggle reaction.", ja: "リアクションの処理に失敗しました。", zh: "反应处理失败。" }));
         setTimeout(() => setError(null), 4000);
       } finally {
         setToggling(null);

@@ -252,7 +252,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
     if (!window.confirm(msg)) return;
     updateManuscripts(manuscripts.filter((m) => m.episode !== ep));
     // Dispatch alert toast for delete feedback
-    showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.`, ja: `EP.${ep} 原稿가 削除されました。`, zh: `EP.${ep} 稿件가 已删除。` }));
+    showAlert(L4(language, { ko: `EP.${ep} 원고가 삭제되었습니다.`, en: `EP.${ep} manuscript deleted.`, ja: `EP.${ep}の原稿が削除されました。`, zh: `EP.${ep} 稿件已删除。` }));
   };
 
   const saveAnalysis = useCallback(

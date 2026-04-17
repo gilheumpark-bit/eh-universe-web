@@ -7,7 +7,7 @@ import { createT, L4 } from "@/lib/i18n";
 import type { AppLanguage, EpisodeSceneSheet } from "@/lib/studio-types";
 
 // ============================================================
-// PART 1 — Types, Constants & Sub-components  (lines ~10–290)
+// PART 1 — 타입 및 상수
 // ============================================================
 
 type Lang = "ko" | "en";
@@ -244,6 +244,10 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
   }) },
 ];
 
+// ============================================================
+// PART 2 — PlotBarEditor 서브컴포넌트
+// ============================================================
+
 /** Collapsible section wrapper */
 function Section({ title, children, defaultOpen = true, badge }: {
   title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string;
@@ -309,7 +313,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
           </button>
         ))}
         <button onClick={addSegment} className="px-3 py-1.5 rounded text-[10px] font-bold border border-dashed border-border text-text-tertiary hover:text-accent-purple hover:border-accent-purple transition-all min-h-[44px]">
-          + {L4(lang, { ko: "구간 추가", en: "Add Segment", ja: "구간 追加", zh: "구간 添加" })}
+          + {L4(lang, { ko: "구간 추가", en: "Add Segment", ja: "区間を追加", zh: "添加区间" })}
         </button>
       </div>
       <div className="flex rounded-lg overflow-hidden h-12 border border-border">
@@ -358,7 +362,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
 }
 
 // ============================================================
-// PART 2 — Main SceneSheet Component  (lines ~300–640)
+// PART 3 — SceneSheet 메인 컴포넌트
 // ============================================================
 
 export default function SceneSheet({
@@ -415,7 +419,7 @@ export default function SceneSheet({
   const applyScenePreset = useCallback((presetKey: string) => {
     const preset = SCENE_PRESETS.find(p => p.key === presetKey);
     if (!preset) return;
-    if (!window.confirm(L4(lang, { ko: "현재 연출 데이터를 프리셋으로 덮어쓰시겠습니까?", en: "Overwrite current scene sheet data with this preset?", ja: "현재 연출 データ를 프리셋으로 덮어쓰시겠습니까?", zh: "현재 연출 数据를 프리셋으로 덮어쓰시겠습니까?" }))) return;
+    if (!window.confirm(L4(lang, { ko: "현재 연출 데이터를 프리셋으로 덮어쓰시겠습니까?", en: "Overwrite current scene sheet data with this preset?", ja: "現在の演出データをプリセットで上書きしますか？", zh: "要将当前演出数据以预设覆盖吗？" }))) return;
     const ts = Date.now();
     const data = preset.gen(ts, lang === "ko");
     setGogumas(data.gogumas);
@@ -434,7 +438,7 @@ export default function SceneSheet({
     const dir = buildDirection();
     const sheet: EpisodeSceneSheet = {
       episode: ep,
-      title: L4(lang, { ko: `${ep}화 씬시트`, en: `Episode ${ep} Scene Sheet`, ja: `${ep}화 シーンシート`, zh: `${ep}화 场景表` }),
+      title: L4(lang, { ko: `${ep}화 씬시트`, en: `Episode ${ep} Scene Sheet`, ja: `第${ep}話 シーンシート`, zh: `第${ep}章 场景表` }),
       directionSnapshot: {
         goguma: dir.goguma.map(g => ({ type: g.type, intensity: g.intensity, desc: g.desc, episode: g.episode })),
         hooks: dir.hooks.map(h => ({ position: h.position, hookType: h.hookType, desc: h.desc })),
@@ -460,7 +464,7 @@ export default function SceneSheet({
   /** AI auto-generate direction */
   const handleAIGenerate = useCallback(async () => {
     const { activeSupportsStructured } = await import("@/lib/ai-providers");
-    if (!activeSupportsStructured()) { showAlert(L4(lang, { ko: "현재 AI 서비스는 구조화 생성 미지원.", en: "Current AI does not support structured generation.", ja: "현재 AI 서비스는 구조화 生成 미지원.", zh: "현재 AI 서비스는 구조화 生成 미지원." })); return; }
+    if (!activeSupportsStructured()) { showAlert(L4(lang, { ko: "현재 AI 서비스는 구조화 생성 미지원.", en: "Current AI does not support structured generation.", ja: "現在のAIサービスは構造化生成に未対応。", zh: "当前 AI 服务不支持结构化生成。" })); return; }
     if (!synopsis) { showAlert(tl("sceneSheet.synopsisRequired")); return; }
     try {
       const { generateSceneDirection } = await import("@/services/geminiService");
@@ -497,7 +501,7 @@ export default function SceneSheet({
             </div>
             <div className="flex items-center gap-2">
               <span className="badge badge-amber mr-2">SCENE</span>
-              {L4(lang, { ko: "씬시트 — 장르 문법 설계", en: "Scene Sheet — Genre Grammar Design", ja: "シーンシート — ジャンル 문법 설계", zh: "场景表 — 类型 문법 설계" })}
+              {L4(lang, { ko: "씬시트 — 장르 문법 설계", en: "Scene Sheet — Genre Grammar Design", ja: "シーンシート — ジャンル文法の設計", zh: "场景表 — 类型文法设计" })}
               <span className="text-[10px] text-accent-green/70 font-mono ml-auto">
                 {L4(lang, { ko: '자동 저장', en: 'Auto-saved', ja: '自動保存', zh: '自动保存' })}
               </span>
@@ -566,7 +570,7 @@ export default function SceneSheet({
             badge={(() => {
               const items = [writerNotes.trim(), gogumas.length > 0, cliffs.length > 0, foreshadows.length > 0, hooks.length > 0];
               const filled = items.filter(Boolean).length;
-              return `${filled}/5 ${L4(lang, { ko: "항목 설정", en: "set", ja: "항목 設定", zh: "항목 设置" })}`;
+              return `${filled}/5 ${L4(lang, { ko: "항목 설정", en: "set", ja: "項目設定", zh: "项目设置" })}`;
             })()}>
             {/* Writer summary */}
             <input value={writerNotes.split("\n")[0] ?? ""} onChange={e => {
@@ -611,7 +615,7 @@ export default function SceneSheet({
                 <input value={cliffs[0]?.desc ?? ""} onChange={e => {
                   if (cliffs.length === 0) setCliffs([{ id: `cl-${Date.now()}`, cliffType: "crisis-cut", desc: e.target.value, episode: 1 }]);
                   else setCliffs(prev => [{ ...prev[0], desc: e.target.value }, ...prev.slice(1)]);
-                }} placeholder={L4(lang, { ko: "클리프행어 내용...", en: "Cliffhanger content...", ja: "클리프행어 内容...", zh: "클리프행어 内容..." })} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
+                }} placeholder={L4(lang, { ko: "클리프행어 내용...", en: "Cliffhanger content...", ja: "クリフハンガー内容...", zh: "悬念钩子内容..." })} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
               </div>
             </div>
             {/* Foreshadow */}
@@ -677,7 +681,7 @@ export default function SceneSheet({
               <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "텐션 레벨", en: "Tension Level", ja: "テンション", zh: "张力等级" })}</span>
               {tensionPoints.length === 0 && (
                 <button onClick={() => setTensionPoints([{ id: `tp-${Date.now()}`, position: 50, level: 50, label: "" }])}
-                  className="block mt-1 text-[10px] text-accent-purple hover:underline min-h-[44px]">+ {L4(lang, { ko: "텐션 포인트 추가", en: "Add Tension Point", ja: "텐션 포인트 追加", zh: "텐션 포인트 添加" })}</button>
+                  className="block mt-1 text-[10px] text-accent-purple hover:underline min-h-[44px]">+ {L4(lang, { ko: "텐션 포인트 추가", en: "Add Tension Point", ja: "テンションポイントを追加", zh: "添加张力点" })}</button>
               )}
               {tensionPoints.length > 0 && tensionPoints.slice(0, 1).map((tp, i) => (
                 <div key={tp.id} className="flex items-center gap-2 mt-1.5">
@@ -706,7 +710,7 @@ export default function SceneSheet({
                     {HOOK_TYPES.map(ht => <option key={ht.id} value={ht.id}>{L4(lang, ht)}</option>)}
                   </select>
                   <input value={h.desc} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, desc: e.target.value } : hh))}
-                    placeholder={L4(lang, { ko: "훅 내용...", en: "Hook content...", ja: "훅 内容...", zh: "훅 内容..." })} maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
+                    placeholder={L4(lang, { ko: "훅 내용...", en: "Hook content...", ja: "フック内容...", zh: "钩子内容..." })} maxLength={500} className="flex-1 bg-transparent text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
                   <button onClick={() => setHooks(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
                 </div>
               ))}
@@ -742,7 +746,7 @@ export default function SceneSheet({
                       {isActive && (
                         <select value={rule?.tone ?? ""} onChange={e => setDialogueRules(prev => prev.map(d => d.character === name ? { ...d, tone: e.target.value } : d))}
                           className="bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]">
-                          <option value="">{L4(lang, { ko: "톤 선택", en: "Select tone", ja: "톤 選択", zh: "톤 选择" })}</option>
+                          <option value="">{L4(lang, { ko: "톤 선택", en: "Select tone", ja: "トーン選択", zh: "选择语调" })}</option>
                           {TONE_OPTIONS.map(t => <option key={t.id} value={t.id}>{L4(lang, t)}</option>)}
                         </select>
                       )}
@@ -753,7 +757,7 @@ export default function SceneSheet({
             ) : (
               <div className="space-y-2">
                 <button onClick={() => setDialogueRules(prev => [...prev, { id: `d-${Date.now()}`, character: "", tone: "", notes: "" }])}
-                  className="text-[10px] text-accent-purple hover:underline min-h-[44px]">+ {L4(lang, { ko: "캐릭터 대사 규칙 추가", en: "Add Dialogue Rule", ja: "キャラクター 대사 규칙 追加", zh: "角色 대사 규칙 添加" })}</button>
+                  className="text-[10px] text-accent-purple hover:underline min-h-[44px]">+ {L4(lang, { ko: "캐릭터 대사 규칙 추가", en: "Add Dialogue Rule", ja: "キャラクターの台詞ルールを追加", zh: "添加角色台词规则" })}</button>
                 {dialogueRules.map((dr, i) => (
                   <div key={dr.id} className="flex items-center gap-2 border border-border rounded px-2.5 py-1.5 bg-bg-primary">
                     <input value={dr.character} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, character: e.target.value } : d))}
@@ -811,7 +815,7 @@ export default function SceneSheet({
               </div>
               {/* Canon rules */}
               <div>
-                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "캐릭터 규칙", en: "Canon Rules", ja: "キャラクター 규칙", zh: "角色 규칙" })}</span>
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "캐릭터 규칙", en: "Canon Rules", ja: "キャラクタールール", zh: "角色规则" })}</span>
                 <button onClick={() => setCanons(prev => [...prev, { id: `cn-${Date.now()}`, character: "", rule: "" }])}
                   className="block mt-1 text-[10px] text-accent-purple hover:underline min-h-[44px]">+ {L4(lang, { ko: "추가", en: "Add", ja: "追加", zh: "添加" })}</button>
                 {canons.map((cn, i) => (
@@ -826,7 +830,7 @@ export default function SceneSheet({
               </div>
               {/* Scene transitions */}
               <div>
-                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "장면 전환", en: "Scene Transitions", ja: "シーン 전환", zh: "场景 전환" })}</span>
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "장면 전환", en: "Scene Transitions", ja: "シーン転換", zh: "场景切换" })}</span>
                 <button onClick={() => setTransitions(prev => [...prev, { id: `tr-${Date.now()}`, fromScene: "", toScene: "", method: "" }])}
                   className="block mt-1 text-[10px] text-accent-purple hover:underline min-h-[44px]">+ {L4(lang, { ko: "추가", en: "Add", ja: "追加", zh: "添加" })}</button>
                 {transitions.map((tr, i) => (
@@ -963,7 +967,7 @@ export default function SceneSheet({
                       className="flex-1 px-2 py-1 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold hover:bg-accent-purple/20 transition-colors min-h-[44px]">
                       {L4(lang, { ko: "불러오기", en: "Load", ja: "Load", zh: "Load" })}
                     </button>
-                    <button onClick={() => { if (window.confirm(L4(lang, { ko: "삭제하시겠습니까?", en: "Delete this sheet?", ja: "削除하시겠습니까?", zh: "删除하시겠습니까?" }))) onDeleteEpisodeSheet?.(sheet.episode); }}
+                    <button onClick={() => { if (window.confirm(L4(lang, { ko: "삭제하시겠습니까?", en: "Delete this sheet?", ja: "削除しますか？", zh: "要删除吗？" }))) onDeleteEpisodeSheet?.(sheet.episode); }}
                       className="px-2 py-1 bg-accent-red/10 text-accent-red rounded text-[9px] font-bold hover:bg-accent-red/20 transition-colors min-h-[44px]">
                       {L4(lang, { ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })}
                     </button>
@@ -977,3 +981,8 @@ export default function SceneSheet({
     </div>
   );
 }
+
+// ============================================================
+// PART 4 — 내보내기
+// ============================================================
+// export default SceneSheet — 위 함수 선언부에 포함

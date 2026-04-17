@@ -69,15 +69,15 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "project-spec",   label: "Project Spec",         labelKo: "이지모드(명세서)", icon: "Wand2",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable", isEssential: true, description: "Easy-mode project specification generator", descriptionKo: "프로젝트 명세서를 쉽게 작성하는 이지모드" },
   { id: "search",         label: "Search in Files",      labelKo: "파일 검색",        icon: "Search",          group: "editing",      category: "Edit",  shortcut: "Ctrl+Shift+F", color: "text-accent-amber", status: "stable", isEssential: true, description: "Full-text search across all project files", descriptionKo: "프로젝트 전체 파일에서 텍스트 검색" },
   { id: "outline",        label: "Code Outline",         labelKo: "코드 아웃라인",     icon: "List",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable", isEssential: true, description: "Symbol tree and function outline navigator", descriptionKo: "심볼 트리 및 함수 아웃라인 탐색기" },
-  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "stable", isEssential: true, description: "Real-time HTML/CSS preview of the current file", descriptionKo: "현재 파일의 실시간 HTML/CSS 프리뷰" },
+  { id: "preview",        label: "Live Preview",         labelKo: "실시간 프리뷰",     icon: "Eye",             group: "editing",      category: "View",  color: "text-accent-green",   status: "beta", isEssential: true, description: "Real-time HTML/CSS preview (WebContainer required for JS execution)", descriptionKo: "실시간 HTML/CSS 프리뷰 (JS 실행은 WebContainer 환경 필요)" },
   { id: "templates",      label: "Template Gallery",     labelKo: "템플릿 갤러리",     icon: "Layout",          group: "editing",      category: "File",  color: "text-accent-purple",  status: "stable" },
-  { id: "diff-editor",    label: "Diff Editor",          labelKo: "비교 편집기",       icon: "GitCompare",      group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
+  { id: "diff-editor",    label: "Diff Editor",          labelKo: "비교 편집기",       icon: "GitCompare",      group: "editing",      category: "View",  color: "text-accent-amber",   status: "beta" },
   { id: "canvas",         label: "Canvas",               labelKo: "캔버스",           icon: "PenTool",         group: "editing",      category: "View",  color: "text-accent-amber",   status: "stable" },
   { id: "symbol-palette", label: "Symbol Palette",       labelKo: "심볼 팔레트",       icon: "Hash",            group: "editing",      category: "View",  color: "text-accent-blue",    status: "stable" },
   { id: "recent-files",   label: "Recent Files",         labelKo: "최근 파일",         icon: "Clock",           group: "editing",      category: "File",  color: "text-accent-amber",   status: "stable" },
   { id: "code-actions",   label: "Code Actions",         labelKo: "코드 액션",         icon: "Zap",             group: "editing",      category: "Tools", color: "text-accent-green",   status: "stable" },
-  { id: "terminal-panel", label: "Terminal",             labelKo: "터미널",            icon: "Terminal",        group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
-  { id: "multi-terminal", label: "Multi Terminal",       labelKo: "멀티 터미널",       icon: "Layers",          group: "editing",      category: "View",  color: "text-accent-green",   status: "stable" },
+  { id: "terminal-panel", label: "Terminal",             labelKo: "터미널",            icon: "Terminal",        group: "editing",      category: "View",  color: "text-accent-green",   status: "beta", description: "In-browser terminal (WebContainer fallback to simulation)", descriptionKo: "브라우저 내 터미널 (WebContainer 미지원 시 시뮬레이션 모드)" },
+  { id: "multi-terminal", label: "Multi Terminal",       labelKo: "멀티 터미널",       icon: "Layers",          group: "editing",      category: "View",  color: "text-accent-green",   status: "beta" },
 
   // ── ai (AI) ────────────────────────────────────────────────
   { id: "composer",       label: "Multi-file Composer",  labelKo: "멀티파일 작성기",    icon: "Edit3",           group: "ai",           category: "Tools", color: "text-accent-blue",    status: "stable", isEssential: true, description: "Generate and edit code across multiple files simultaneously", descriptionKo: "여러 파일을 동시에 생성/편집하는 멀티파일 작성기" },
@@ -99,13 +99,13 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
 
   // ── git (Git & 배포) ──────────────────────────────────────
   { id: "git",            label: "Git",                  labelKo: "Git",              icon: "GitBranch",       group: "git",          category: "View",  color: "text-accent-purple",  status: "stable", isEssential: true, description: "Git status, staging, commit, and branch management", descriptionKo: "Git 상태, 스테이징, 커밋, 브랜치 관리" },
-  { id: "deploy",         label: "Deploy",               labelKo: "배포",              icon: "Upload",          group: "git",          category: "View",  color: "text-accent-green",   status: "stable" },
-  { id: "git-graph",      label: "Git Graph",            labelKo: "Git 그래프",        icon: "GitFork",         group: "git",          category: "View",  color: "text-accent-purple",  status: "stable" },
+  { id: "deploy",         label: "Deploy",               labelKo: "배포",              icon: "Upload",          group: "git",          category: "View",  color: "text-accent-green",   status: "beta", description: "Build verification + ZIP/JSON bundle download (Vercel API not connected)", descriptionKo: "빌드 검증 + ZIP/JSON 번들 다운로드 (Vercel API 미연결)" },
+  { id: "git-graph",      label: "Git Graph",            labelKo: "Git 그래프",        icon: "GitFork",         group: "git",          category: "View",  color: "text-accent-purple",  status: "beta" },
   { id: "packages",       label: "Package Manager",      labelKo: "패키지 관리",       icon: "Package",         group: "git",          category: "Tools", color: "text-accent-green",   status: "stable" },
 
   // ── tools (도구) ──────────────────────────────────────────
   { id: "database",       label: "Database",             labelKo: "데이터베이스",       icon: "Database",        group: "tools",        category: "Tools", color: "text-accent-blue",    status: "stable" },
-  { id: "collab",         label: "Collaboration",        labelKo: "협업",              icon: "Users",           group: "tools",        category: "Tools", color: "text-accent-purple",  status: "stable" },
+  { id: "collab",         label: "Collaboration",        labelKo: "협업",              icon: "Users",           group: "tools",        category: "Tools", color: "text-accent-purple",  status: "beta", description: "Same-tab collaboration demo via BroadcastChannel (no remote peers)", descriptionKo: "동일 브라우저 탭 협업 데모 (원격 피어 미지원)" },
   { id: "onboarding",     label: "Onboarding Guide",     labelKo: "온보딩 가이드",     icon: "GraduationCap",   group: "tools",        category: "View",  color: "text-accent-blue",    status: "stable" },
   { id: "project-switcher", label: "Projects",           labelKo: "프로젝트 전환",     icon: "FolderKanban",    group: "tools",        category: "File",  color: "text-accent-purple",  status: "stable" },
   { id: "keybindings",    label: "Keybindings",          labelKo: "단축키 설정",       icon: "Keyboard",        group: "tools",        category: "View",  color: "text-accent-amber",   status: "stable" },
@@ -115,6 +115,7 @@ export const PANEL_REGISTRY: readonly PanelDef[] = [
   { id: "api-config",     label: "API Configuration",    labelKo: "API 설정",          icon: "Key",             group: "settings",     category: "View",  color: "text-accent-red",     status: "stable" },
   // ── audit (감사) ─────────────────────────────────────────
   { id: "audit",           label: "Project Audit",        labelKo: "프로젝트 감사",     icon: "ShieldCheck",     group: "verification", category: "View",  color: "text-accent-purple",  status: "stable" },
+  { id: "audit-invoice",   label: "Audit Invoice",        labelKo: "감사 명세서",       icon: "Receipt",         group: "verification", category: "View",  color: "text-accent-amber",   status: "beta" },
   // ── multi-diff (멀티 파일 비교) ─────────────────────────
   { id: "multi-diff",      label: "Multi-file Diff",      labelKo: "멀티파일 비교",     icon: "GitCompareArrows", group: "editing",     category: "View",  color: "text-accent-amber",   status: "beta" },
   // ── debugger (디버거) ──────────────────────────────────

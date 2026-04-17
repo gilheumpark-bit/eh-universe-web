@@ -58,7 +58,7 @@ export function NetworkLogNewClient() {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "행성 목록을 불러오지 못했습니다.", en: "Failed to load planets.", ja: "惑星一覧을 불러오지 못했습니다.", zh: "星球列表을 불러오지 못했습니다." }));
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "행성 목록을 불러오지 못했습니다.", en: "Failed to load planets.", ja: "惑星一覧を読み込めませんでした。", zh: "无法加载星球列表。" }));
         }
       } finally {
         if (!cancelled) {
@@ -138,9 +138,9 @@ export function NetworkLogNewClient() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required", ja: "ログイン 필요", zh: "登录 필요" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required", ja: "ログインが必要", zh: "需要登录" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {L4(lang, { ko: "관측 로그를 쓰려면 로그인하세요.", en: "Sign in to publish a log.", ja: "観測 ログ를 쓰려면 ログイン하세요.", zh: "观测 日志를 쓰려면 登录하세요." })}
+              {L4(lang, { ko: "관측 로그를 쓰려면 로그인하세요.", en: "Sign in to publish a log.", ja: "観測ログを書くにはログインしてください。", zh: "撰写观测日志请先登录。" })}
             </h1>
             <div className="mt-8 flex justify-center">
               <button type="button" onClick={() => void signInWithGoogle()} className="premium-button">
@@ -159,7 +159,7 @@ export function NetworkLogNewClient() {
         <div className="site-shell py-10">
           <section className="premium-panel p-8 flex flex-col items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
-            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "행성 목록을 불러오는 중...", en: "Loading planets...", ja: "惑星一覧을 불러오는 중...", zh: "星球列表을 불러오는 중..." })}</p>
+            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "행성 목록을 불러오는 중...", en: "Loading planets...", ja: "惑星一覧を読み込み中...", zh: "正在加载星球列表..." })}</p>
           </section>
         </div>
       </main>
@@ -171,13 +171,13 @@ export function NetworkLogNewClient() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "먼저 행성을 등록하세요", en: "Create a Planet First", ja: "먼저 惑星을 登録하세요", zh: "먼저 星球을 提交하세요" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "먼저 행성을 등록하세요", en: "Create a Planet First", ja: "先に惑星を登録してください", zh: "请先登记星球" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {L4(lang, { ko: "로그는 소속 행성이 있어야 쌓입니다.", en: "Logs need a planet anchor before they can be published.", ja: "ログ는 所属惑星이 있어야 쌓입니다.", zh: "日志는 所属星球이 있어야 쌓입니다." })}
+              {L4(lang, { ko: "로그는 소속 행성이 있어야 쌓입니다.", en: "Logs need a planet anchor before they can be published.", ja: "ログは所属惑星がないと蓄積できません。", zh: "日志需要所属星球才能累积。" })}
             </h1>
             <div className="mt-8 flex justify-center">
               <Link href="/network/new" className="premium-button">
-                {L4(lang, { ko: "신규 행성 만들기", en: "Create New Planet", ja: "신규 惑星を作成", zh: "신규 创建星球" })}
+                {L4(lang, { ko: "신규 행성 만들기", en: "Create New Planet", ja: "新規惑星を作成", zh: "创建新星球" })}
               </Link>
             </div>
           </section>
@@ -194,13 +194,13 @@ export function NetworkLogNewClient() {
         </Link>
         <section className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="site-kicker">{L4(lang, { ko: "관측 로그 작성", en: "Write Observation Log", ja: "観測 ログ 作成", zh: "观测 日志 撰写" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "관측 로그 작성", en: "Write Observation Log", ja: "観測ログの作成", zh: "撰写观测日志" })}</div>
             <h1 className="site-title mt-2 text-3xl font-semibold">
-              {L4(lang, { ko: "이야기부터 떠오른 사람을 위한 빠른 작성 화면", en: "A fast composer for writers who start from the scene first.", ja: "이야기부터 떠오른 사람을 위한 빠른 作成 화면", zh: "이야기부터 떠오른 사람을 위한 빠른 撰写 화면" })}
+              {L4(lang, { ko: "이야기부터 떠오른 사람을 위한 빠른 작성 화면", en: "A fast composer for writers who start from the scene first.", ja: "物語から思い浮かんだ人のための、素早い作成画面", zh: "为先有故事灵感的人准备的快速撰写界面" })}
             </h1>
           </div>
           <Link href="/network/new" className="premium-button secondary">
-            {L4(lang, { ko: "신규 행성 만들기", en: "Create New Planet", ja: "신규 惑星を作成", zh: "신규 创建星球" })}
+            {L4(lang, { ko: "신규 행성 만들기", en: "Create New Planet", ja: "新規惑星を作成", zh: "创建新星球" })}
           </Link>
         </section>
 

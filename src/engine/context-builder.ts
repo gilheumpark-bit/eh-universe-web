@@ -42,7 +42,7 @@ export function estimateTokens(text: string): number {
 }
 
 /** 캐릭터 상태를 마크다운 텍스트로 변환 */
-function formatCharacterStates(report: ContinuityReport): string {
+function formatCharacterStates(report: ContinuityReport, isKO: boolean): string {
   if (!report.episodes.length) return '';
   const latest = report.episodes[report.episodes.length - 1];
   const activeChars = latest.characters.filter(c => c.present);
@@ -51,7 +51,6 @@ function formatCharacterStates(report: ContinuityReport): string {
   return activeChars.map(c => {
     const flags = c.stateFlags;
     const lastAction = c.dialogueCount > 0 ? `대사 ${c.dialogueCount}회` : undefined;
-    const isKO = true; // formatCharacterStates is called in KO context by default
     const state = flags.length > 0 ? flags.join(', ') : (lastAction || (isKO ? '특이사항 없음' : 'No notable state'));
     return `- ${c.name}: ${state}${c.dialogueCount > 0 && flags.length > 0 ? ` (대사 ${c.dialogueCount}회)` : ''}`;
   }).join('\n');
@@ -243,7 +242,7 @@ export function buildStoryBible(input: StoryBibleInput): string {
   const currentLocation = latestEp?.location || '';
 
   // 캐릭터 상태
-  const charStates = formatCharacterStates(report);
+  const charStates = formatCharacterStates(report, isKO);
 
   // 미해결 복선
   const openThreads = formatOpenThreads(report);

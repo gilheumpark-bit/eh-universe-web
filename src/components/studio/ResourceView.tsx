@@ -213,7 +213,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
-                  <span>{L4(language, { ko: '개성 (고유도)', en: 'Individuality', ja: '件성 (고유도)', zh: '个성 (고유도)' })}</span>
+                  <span>{L4(language, { ko: '개성 (고유도)', en: 'Individuality', ja: '個性（固有度）', zh: '个性（独特度）' })}</span>
                   <span className="text-accent-blue">{newChar.dna} pts</span>
                 </div>
                 <input
@@ -747,7 +747,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />
-                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{L4(language, { ko: '개성 (고유도)', en: 'Individuality', ja: '件성 (고유도)', zh: '个성 (고유도)' })}</span>
+                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{L4(language, { ko: '개성 (고유도)', en: 'Individuality', ja: '個性（固有度）', zh: '个性（独特度）' })}</span>
                        </div>
                        <span className="text-[11px] font-mono text-blue-400 font-black">{char.dna}%</span>
                     </div>

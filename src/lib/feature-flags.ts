@@ -41,18 +41,18 @@ const FLAGS: FeatureFlags = {
   OFFLINE_CACHE: true,
   CODE_STUDIO: true,
   EPISODE_COMPARE: true,
-  /** Firestore 세션 클라우드 동기화 — 기본 활성, localStorage ff_CLOUD_SYNC=false로 비활성 */
-  CLOUD_SYNC: true,
-  /** GitHub 원고 동기화 — Phase 1 기본 비활성, localStorage ff_GITHUB_SYNC=true로 활성 */
-  GITHUB_SYNC: false,
-  /** AI 요청 보안 스캐너 — 프롬프트 인젝션·코드 인젝션·PII 탐지 */
-  SECURITY_GATE: false,
-  /** 멀티파일 에이전트 — 스냅샷 롤백 + 의존성 그래프 */
-  MULTI_FILE_AGENT: false,
-  /** GitHub ETag 캐싱 — 304 캐시 + rate limit 80% 경고 */
-  GITHUB_ETAG_CACHE: false,
-  /** ARI per-model 추적 — 모델별 건강도 + circuit 이벤트 */
-  ARI_ENHANCED: false,
+  /** Firestore 세션 클라우드 동기화 — 기본 비활성 (Firestore 과금 리스크, AGENTS.md와 일치). ff_CLOUD_SYNC=true로 opt-in */
+  CLOUD_SYNC: false,
+  /** GitHub 원고 동기화 — Phase 1 완성, 기본 활성 */
+  GITHUB_SYNC: true,
+  /** AI 요청 보안 스캐너 — 상업 운영 기본 활성 (프롬프트/코드 인젝션 + PII 차단) */
+  SECURITY_GATE: true,
+  /** 멀티파일 에이전트 — 스냅샷 롤백 + 의존성 그래프 + intent-parser + tier-registry */
+  MULTI_FILE_AGENT: true,
+  /** GitHub ETag 캐싱 — 304 캐시 + rate limit 80% 경고, 상업 기본 활성 (rate limit 절약) */
+  GITHUB_ETAG_CACHE: true,
+  /** ARI per-model 추적 — 모델별 건강도 + circuit 이벤트, 기본 활성 */
+  ARI_ENHANCED: true,
 };
 
 /**

@@ -206,7 +206,7 @@ export function LogComposer({
         </label>
 
         <label className="block">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "사건 분류", en: "Event Type", ja: "사件 분류", zh: "사条 분류" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "사건 분류", en: "Event Type", ja: "事件分類", zh: "事件分类" })}</div>
           <input
             value={value.eventCategory}
             disabled={disabled}
@@ -225,7 +225,7 @@ export function LogComposer({
             onChange={(event) => handleField("region", event.target.value)}
             maxLength={100}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
-            placeholder={L4(lang, { ko: "관측 지역을 입력하세요", en: "Enter a region", ja: "観測 지역을 入力하세요", zh: "观测 지역을 输入하세요" })}
+            placeholder={L4(lang, { ko: "관측 지역을 입력하세요", en: "Enter a region", ja: "観測地域を入力してください", zh: "请输入观测地区" })}
           />
         </label>
 
@@ -247,7 +247,7 @@ export function LogComposer({
             onChange={(event) => handleField("content", event.target.value)}
             maxLength={10000}
             className="min-h-[260px] w-full rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
-            placeholder={L4(lang, { ko: "관측 내용을 기록하세요", en: "Write the observation", ja: "観測 内容을 기록하세요", zh: "观测 内容을 기록하세요" })}
+            placeholder={L4(lang, { ko: "관측 내용을 기록하세요", en: "Write the observation", ja: "観測内容を記録してください", zh: "请记录观测内容" })}
           />
           <div className="mt-1 text-right text-[11px] text-text-tertiary">{value.content.length}/10000</div>
         </label>
@@ -259,7 +259,7 @@ export function LogComposer({
             disabled={disabled}
             onChange={(event) => handleField("intervention", event.target.checked)}
           />
-          {L4(lang, { ko: "직접 개입이 있었음", en: "Direct intervention occurred", ja: "직접 件입이 있었음", zh: "직접 个입이 있었음" })}
+          {L4(lang, { ko: "직접 개입이 있었음", en: "Direct intervention occurred", ja: "直接介入があった", zh: "存在直接介入" })}
         </label>
 
         <label className="block">
@@ -281,7 +281,7 @@ export function LogComposer({
         </label>
 
         <label className="block md:col-span-2">
-          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "후속 상태", en: "Follow-up Status", ja: "후속 状態", zh: "후속 状态" })}</div>
+          <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "후속 상태", en: "Follow-up Status", ja: "フォローアップ状態", zh: "后续状态" })}</div>
           <select
             value={value.followupStatus ?? ""}
             disabled={disabled}
@@ -293,7 +293,7 @@ export function LogComposer({
             }
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
-            <option value="">{L4(lang, { ko: "선택 안 함", en: "No follow-up verdict", ja: "選択 안 함", zh: "选择 안 함" })}</option>
+            <option value="">{L4(lang, { ko: "선택 안 함", en: "No follow-up verdict", ja: "選択しない", zh: "不选择" })}</option>
             {(Object.keys(PLANET_STATUS_LABELS) as PlanetStatus[]).map((status) => (
               <option key={status} value={status}>
                 {pickNetworkLabel(PLANET_STATUS_LABELS[status], lang)}
@@ -310,7 +310,7 @@ export function LogComposer({
           onClick={onSubmit}
           className="premium-button"
         >
-          {submitting ? L4(lang, { ko: "저장 중...", en: "Saving...", ja: "保存 중...", zh: "保存 중..." }) : submitLabel}
+          {submitting ? L4(lang, { ko: "저장 중...", en: "Saving...", ja: "保存中...", zh: "保存中..." }) : submitLabel}
         </button>
       </div>
     </div>

@@ -46,6 +46,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Gemini API key required. Add your key in Settings or configure server credentials.' }, { status: 400 });
     }
 
+    // 인증 게이트 — BYOK 없이 서버 크레딧 사용 시 Firebase JWT 필수 (6-9회 Gemini 호출 비용 방어)
+    if (!clientApiKey) {
+      const authHeader = req.headers.get('authorization');
+      let verified = false;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+          const token = authHeader.slice(7).trim();
+          verified = Boolean(await verifyFirebaseIdToken(token));
+        } catch { /* verification failed */ }
+      }
+      if (!verified) {
+        return NextResponse.json({ error: 'Authentication required for hosted credits (6-9 Gemini calls per request)' }, { status: 401 });
+      }
+    }
+
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -58,6 +74,8 @@ export async function POST(req: NextRequest) {
           "security", "chaos", "fixing", "documenting", "committing"
         ];
 
+        const pipelineStartTime = Date.now();
+        let iterationCount = 0;
         let score = 100;
         let currentCode = code || '';
         let commitMsg = 'refactor: autopilot enhancements';
@@ -123,9 +141,26 @@ export async function POST(req: NextRequest) {
         // 2~5. reviewing, testing, security, chaos (병렬 처리)
         for (let i = 2; i <= 5; i++) sendPhaseStart(phases[i], i);
         let logsReview: Record<string, unknown>[] = [];
-        const logsTesting: Record<string, unknown>[] = [{ level: "success", message: `testing phase passed checks.`, timestamp: Date.now() }];
-        const logsSecurity: Record<string, unknown>[] = [{ level: "success", message: `security phase passed checks.`, timestamp: Date.now() }];
-        const logsChaos: Record<string, unknown>[] = [{ level: "success", message: `chaos phase passed checks.`, timestamp: Date.now() }];
+        // testing/security/chaos — 실제 정적 검사 기반 결과 (가짜 success 로그 제거)
+        const logsTesting: Record<string, unknown>[] = [];
+        const logsSecurity: Record<string, unknown>[] = [];
+        const logsChaos: Record<string, unknown>[] = [];
+        try {
+          // 간단한 정적 테스트 검사: TODO/FIXME/throw/test 커버리지
+          const hasTests = /\b(test|it|describe|expect)\s*\(/.test(currentCode);
+          const todoCount = (currentCode.match(/TODO|FIXME/g) || []).length;
+          logsTesting.push({ level: hasTests ? 'success' : 'warning', message: hasTests ? 'Test signatures detected.' : 'No test assertions found.', timestamp: Date.now() });
+          if (todoCount > 0) logsTesting.push({ level: 'info', message: `${todoCount} TODO/FIXME markers found.`, timestamp: Date.now() });
+          // 보안 검사: eval/exec/innerHTML 패턴
+          const dangerous = /\b(eval|new\s+Function|document\.write|dangerouslySetInnerHTML|\.innerHTML\s*=)\b/.test(currentCode);
+          logsSecurity.push({ level: dangerous ? 'warning' : 'success', message: dangerous ? 'Dangerous pattern detected (eval/innerHTML).' : 'No obvious dangerous patterns.', timestamp: Date.now() });
+          // chaos: 에러 핸들링 부재 감지
+          const hasTry = /\btry\s*\{/.test(currentCode);
+          const hasAsync = /\basync\b/.test(currentCode);
+          logsChaos.push({ level: (!hasTry && hasAsync) ? 'warning' : 'success', message: (!hasTry && hasAsync) ? 'Async code without try-catch detected.' : 'Error handling appears reasonable.', timestamp: Date.now() });
+        } catch {
+          logsTesting.push({ level: 'warning', message: 'Static checks failed to run.', timestamp: Date.now() });
+        }
         
         try {
           const reviewRes = config.enableReview 
@@ -148,11 +183,13 @@ export async function POST(req: NextRequest) {
         sendPhaseEnd("security", 4, logsSecurity);
         sendPhaseEnd("chaos", 5, logsChaos);
 
-        // 6. fixing
+        // 6. fixing — iterationCount 증가
         sendPhaseStart("fixing", 6);
         const logsFixing: Record<string, unknown>[] = [];
+        iterationCount++;
         try {
           if (config.enableAutoFix && score < config.passThreshold) {
+            iterationCount++;
             const fixRes = await generateJsonGemini(apiKey, 'gemini-2.5-flash',
               `The code scored ${score}. Fix issues to improve it.\nCode:\n${currentCode}`,
               { type: "object", properties: { fixedCode: { type: "string" }, newScore: { type: "integer" } }, required: ["fixedCode", "newScore"] },
@@ -215,8 +252,10 @@ export async function POST(req: NextRequest) {
             success: score >= config.passThreshold,
             pipelineScore: score,
             summary: `Pipeline executed thoroughly via Engine. Final verification score: ${score}`,
-            totalTimeMs: phases.length * 900,
-            iterations: score < config.passThreshold ? 2 : 1,
+            // 실측 시간 — pipelineStartTime 기준
+            totalTimeMs: Date.now() - pipelineStartTime,
+            // 실제 반복 횟수 — fixing 단계에서 증가시킨 카운터
+            iterations: Math.max(1, iterationCount),
             logs: [{ level: 'success', message: 'Full pipeline applied!', timestamp: Date.now() }],
             files: [{ path: fileName || 'src/optimized.ts', isNew: false, content: currentCode }],
             commitMessage: commitMsg,

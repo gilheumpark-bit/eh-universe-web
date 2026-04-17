@@ -1232,6 +1232,10 @@ const translations = {
     "lockCharRelations": "关系冲突防护",
     "lockBannedWords": "禁用词应用"
   },
+  "system": {
+    "pipelineBlocked": "由于管道验证失败，AI生成已被阻止。",
+    "qualityGateRetry": "[质量关卡：自动重写尝试 {n}/{max}]"
+  },
   "codeStudio": {
     "title": "代码工作室",
     "aiChat": "对话",

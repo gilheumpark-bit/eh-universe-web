@@ -8,7 +8,7 @@
 import { createContext, useContext, type ReactNode, type Dispatch, type SetStateAction, type RefObject } from 'react';
 import type {
   ChatSession, StoryConfig, AppTab, AppLanguage, Message,
-  Project, ProactiveSuggestion, PipelineStageResult,
+  Project, ProactiveSuggestion, PipelineStageResult, WritingMode,
 } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { EngineReport } from '@/engine/types';
@@ -59,8 +59,8 @@ export interface StudioContextValue {
   setConfig: (config: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   updateCurrentSession: (patch: Partial<ChatSession>) => void;
   // Writing
-  writingMode: string;
-  setWritingMode: Dispatch<SetStateAction<string>>;
+  writingMode: WritingMode;
+  setWritingMode: Dispatch<SetStateAction<WritingMode>>;
   editDraft: string;
   setEditDraft: Dispatch<SetStateAction<string>>;
   editDraftRef: RefObject<HTMLTextAreaElement | null>;

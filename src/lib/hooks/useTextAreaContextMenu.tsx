@@ -12,7 +12,7 @@ function buildTextAreaContextMenu(lang: string): ContextMenuItem[] {
     { id: "copy", label: L4(lang, { ko: "복사", en: "Copy", ja: "コピー", zh: "复制" }), icon: <Copy size={12} />, shortcut: "Ctrl+C" },
     { id: "paste", label: L4(lang, { ko: "붙여넣기", en: "Paste", ja: "Paste", zh: "Paste" }), icon: <ClipboardPaste size={12} />, shortcut: "Ctrl+V" },
     { id: "sep-1", label: "", separator: true },
-    { id: "select-all", label: L4(lang, { ko: "모두 선택", en: "Select All", ja: "모두 選択", zh: "모두 选择" }), icon: <TextSelect size={12} />, shortcut: "Ctrl+A" },
+    { id: "select-all", label: L4(lang, { ko: "모두 선택", en: "Select All", ja: "すべて選択", zh: "全选" }), icon: <TextSelect size={12} />, shortcut: "Ctrl+A" },
   ];
 }
 

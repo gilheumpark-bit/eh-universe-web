@@ -293,16 +293,34 @@ export function buildSystemInstruction(
     strength: { KO: '강점', EN: 'Strength', JP: '強み', CN: '优势' },
     weakness: { KO: '약점', EN: 'Weakness', JP: '弱み', CN: '弱点' },
     backstory: { KO: '과거', EN: 'Backstory', JP: '過去', CN: '过去' },
+    appearance: { KO: '외형', EN: 'Appearance', JP: '外見', CN: '外形' },
+    failureCost: { KO: '실패 대가', EN: 'Failure cost', JP: '失敗の代償', CN: '失败代价' },
+    currentProblem: { KO: '현재 문제', EN: 'Current problem', JP: '現在の問題', CN: '当前问题' },
+    emotionStyle: { KO: '감정 스타일', EN: 'Emotion style', JP: '感情表現', CN: '情感风格' },
+    relationPattern: { KO: '관계 패턴', EN: 'Relation pattern', JP: '関係パターン', CN: '关系模式' },
+    symbol: { KO: '상징', EN: 'Symbol', JP: '象徴', CN: '象征' },
+    secret: { KO: '비밀', EN: 'Secret', JP: '秘密', CN: '秘密' },
+    externalPerception: { KO: '외부 인식', EN: 'External perception', JP: '外部認識', CN: '外部印象' },
     noCharacters: { KO: '등록된 캐릭터 없음', EN: 'No characters registered', JP: 'キャラクター未登録', CN: '未注册角色' },
   };
   const cl = (key: string) => CHAR_LABELS[key]?.[language] ?? CHAR_LABELS[key]?.EN ?? key;
+
+  // Tier 별 필드 분류
+  const TIER1_KEYS = ['desire', 'deficiency', 'conflict', 'values', 'changeArc'] as const;
+  const TIER2_KEYS = ['strength', 'weakness', 'backstory', 'failureCost', 'currentProblem'] as const;
+  const TIER3_KEYS = ['emotionStyle', 'relationPattern', 'symbol', 'secret', 'externalPerception'] as const;
+
+  const hasAnyField = (c: typeof injectedCharacters[number], keys: readonly string[]) =>
+    keys.some(k => Boolean((c as unknown as Record<string, unknown>)[k]));
 
   const characterDNA = injectedCharacters.length > 0
     ? (config.characters.length > MAX_CHARACTERS
         ? `  [NOTE: Showing top ${MAX_CHARACTERS} of ${config.characters.length} characters]\n`
         : ''
       ) + injectedCharacters.map(c => {
+      // Tier 1: 기본 정체성 + 1단계 뼈대
       let entry = `  - ${c.name} (${c.role}): ${c.traits}. DNA: ${c.dna}`;
+      if (c.appearance) entry += `\n    ${cl('appearance')}: ${c.appearance}`;
       if (c.personality) entry += `\n    ${cl('personality')}: ${c.personality}`;
       if (c.speechStyle) entry += `\n    ${cl('speechStyle')}: ${c.speechStyle}`;
       if (c.speechExample) entry += `\n    ${cl('speechExample')}: ${c.speechExample}`;
@@ -311,15 +329,45 @@ export function buildSystemInstruction(
       if (c.conflict) entry += `\n    ${cl('conflict')}: ${c.conflict}`;
       if (c.values) entry += `\n    ${cl('values')}: ${c.values}`;
       if (c.changeArc) entry += `\n    ${cl('changeArc')}: ${c.changeArc}`;
-      if (c.strength) entry += `\n    ${cl('strength')}: ${c.strength}`;
-      if (c.weakness) entry += `\n    ${cl('weakness')}: ${c.weakness}`;
-      if (c.backstory) entry += `\n    ${cl('backstory')}: ${c.backstory}`;
       if (c.socialProfile) {
         entry += `\n    ${formatSocialProfile(c.socialProfile, c.name, language)}`;
       }
       return entry;
     }).join('\n')
     : `  ${cl('noCharacters')}`;
+
+  // Tier 2 풀 필드 블록 (강점/약점/배경/실패비용/현재문제)
+  const tier2DetailChars = injectedCharacters.filter(c => hasAnyField(c, TIER2_KEYS));
+  const tier2DetailBlock = tier2DetailChars.length > 0
+    ? `\n[CHARACTERS — ${isKO ? '심층 설정 (Tier 2)' : 'Deep Profile (Tier 2)'}]\n` +
+      tier2DetailChars.map(c => {
+        const parts: string[] = [`  - ${c.name}`];
+        if (c.strength) parts.push(`    ${cl('strength')}: ${c.strength}`);
+        if (c.weakness) parts.push(`    ${cl('weakness')}: ${c.weakness}`);
+        if (c.backstory) parts.push(`    ${cl('backstory')}: ${c.backstory}`);
+        if (c.failureCost) parts.push(`    ${cl('failureCost')}: ${c.failureCost}`);
+        if (c.currentProblem) parts.push(`    ${cl('currentProblem')}: ${c.currentProblem}`);
+        return parts.join('\n');
+      }).join('\n')
+    : '';
+
+  // Tier 3 풀 필드 블록 (감정스타일/관계패턴/상징/비밀/외부인식)
+  const tier3DetailChars = injectedCharacters.filter(c => hasAnyField(c, TIER3_KEYS));
+  const tier3DetailBlock = tier3DetailChars.length > 0
+    ? `\n[CHARACTERS — ${isKO ? '상징/비밀 (Tier 3)' : 'Symbol / Secret (Tier 3)'}]\n` +
+      tier3DetailChars.map(c => {
+        const parts: string[] = [`  - ${c.name}`];
+        if (c.emotionStyle) parts.push(`    ${cl('emotionStyle')}: ${c.emotionStyle}`);
+        if (c.relationPattern) parts.push(`    ${cl('relationPattern')}: ${c.relationPattern}`);
+        if (c.symbol) parts.push(`    ${cl('symbol')}: ${c.symbol}`);
+        if (c.secret) parts.push(`    ${cl('secret')}: ${c.secret}`);
+        if (c.externalPerception) parts.push(`    ${cl('externalPerception')}: ${c.externalPerception}`);
+        return parts.join('\n');
+      }).join('\n')
+    : '';
+
+  // TIER1_KEYS는 조건부 생략 체크용 (향후 라벨 블록 분리 시 사용)
+  void TIER1_KEYS;
 
   // Tier 2: 미선택 캐릭터 간략 목록 (이름+역할만)
   const tier2Block = tier2Characters.length > 0
@@ -496,21 +544,173 @@ export function buildSystemInstruction(
     simulatorBlock = '\n[WORLD SIMULATOR REFERENCE]\n' + simParts.join('\n');
   }
 
-  // World 3-tier framework injection
+  // World 3-tier framework injection — Tier 별 분리 출력
+  // Tier 1(핵심): corePremise / powerStructure / currentConflict
+  // Tier 2(구조): worldHistory / magicTechSystem / socialSystem / factionRelations / economy / survivalEnvironment
+  // Tier 3(문화): culture / religion / education / lawOrder / taboo / travelComm / truthVsBeliefs / dailyLife
   let worldTierBlock = '';
   {
-    const wParts: string[] = [];
-    if (config.corePremise) wParts.push(`- ${t('pipeline.corePremise')}: ${config.corePremise}`);
-    if (config.powerStructure) wParts.push(`- ${t('pipeline.powerStructure')}: ${config.powerStructure}`);
-    if (config.currentConflict) wParts.push(`- ${t('pipeline.currentConflict')}: ${config.currentConflict}`);
-    if (config.worldHistory) wParts.push(`- ${t('pipeline.history')}: ${config.worldHistory}`);
-    if (config.magicTechSystem) wParts.push(`- ${t('pipeline.magicTech')}: ${config.magicTechSystem}`);
-    if (config.socialSystem) wParts.push(`- ${t('pipeline.socialSystem')}: ${config.socialSystem}`);
-    if (config.factionRelations) wParts.push(`- ${t('pipeline.factionRelations')}: ${config.factionRelations}`);
-    if (config.dailyLife) wParts.push(`- ${t('pipeline.dailyLife')}: ${config.dailyLife}`);
-    if (config.truthVsBeliefs) wParts.push(`- ${t('pipeline.beliefsVsTruth')}: ${config.truthVsBeliefs}`);
-    if (wParts.length > 0) {
-      worldTierBlock = `\n[WORLD FRAMEWORK — 세계관 3-tier]\n${wParts.join('\n')}`;
+    const WORLD_LABELS = {
+      economy: { KO: '경제/생활 방식', EN: 'Economy / Livelihood' },
+      survivalEnvironment: { KO: '생존 환경', EN: 'Survival Environment' },
+      culture: { KO: '문화', EN: 'Culture' },
+      religion: { KO: '종교/신화', EN: 'Religion / Mythology' },
+      education: { KO: '교육/지식 전달', EN: 'Education' },
+      lawOrder: { KO: '법/질서', EN: 'Law & Order' },
+      taboo: { KO: '금기/규범', EN: 'Taboo / Norms' },
+      travelComm: { KO: '이동/통신', EN: 'Travel / Communication' },
+    } as const;
+    const wl = (key: keyof typeof WORLD_LABELS) =>
+      isKO ? WORLD_LABELS[key].KO : WORLD_LABELS[key].EN;
+
+    const tier1Parts: string[] = [];
+    if (config.corePremise) tier1Parts.push(`- ${t('pipeline.corePremise')}: ${config.corePremise}`);
+    if (config.powerStructure) tier1Parts.push(`- ${t('pipeline.powerStructure')}: ${config.powerStructure}`);
+    if (config.currentConflict) tier1Parts.push(`- ${t('pipeline.currentConflict')}: ${config.currentConflict}`);
+
+    const tier2Parts: string[] = [];
+    if (config.worldHistory) tier2Parts.push(`- ${t('pipeline.history')}: ${config.worldHistory}`);
+    if (config.magicTechSystem) tier2Parts.push(`- ${t('pipeline.magicTech')}: ${config.magicTechSystem}`);
+    if (config.socialSystem) tier2Parts.push(`- ${t('pipeline.socialSystem')}: ${config.socialSystem}`);
+    if (config.factionRelations) tier2Parts.push(`- ${t('pipeline.factionRelations')}: ${config.factionRelations}`);
+    if (config.economy) tier2Parts.push(`- ${wl('economy')}: ${config.economy}`);
+    if (config.survivalEnvironment) tier2Parts.push(`- ${wl('survivalEnvironment')}: ${config.survivalEnvironment}`);
+
+    const tier3Parts: string[] = [];
+    if (config.culture) tier3Parts.push(`- ${wl('culture')}: ${config.culture}`);
+    if (config.religion) tier3Parts.push(`- ${wl('religion')}: ${config.religion}`);
+    if (config.education) tier3Parts.push(`- ${wl('education')}: ${config.education}`);
+    if (config.lawOrder) tier3Parts.push(`- ${wl('lawOrder')}: ${config.lawOrder}`);
+    if (config.taboo) tier3Parts.push(`- ${wl('taboo')}: ${config.taboo}`);
+    if (config.travelComm) tier3Parts.push(`- ${wl('travelComm')}: ${config.travelComm}`);
+    if (config.truthVsBeliefs) tier3Parts.push(`- ${t('pipeline.beliefsVsTruth')}: ${config.truthVsBeliefs}`);
+    if (config.dailyLife) tier3Parts.push(`- ${t('pipeline.dailyLife')}: ${config.dailyLife}`);
+
+    const blocks: string[] = [];
+    if (tier1Parts.length > 0) {
+      blocks.push(`[WORLD — ${isKO ? 'Tier 1 핵심' : 'Tier 1 Core'}]\n${tier1Parts.join('\n')}`);
+    }
+    if (tier2Parts.length > 0) {
+      blocks.push(`[WORLD — ${isKO ? 'Tier 2 구조' : 'Tier 2 Structure'}]\n${tier2Parts.join('\n')}`);
+    }
+    if (tier3Parts.length > 0) {
+      blocks.push(`[WORLD — ${isKO ? 'Tier 3 문화/사회' : 'Tier 3 Culture / Society'}]\n${tier3Parts.join('\n')}`);
+    }
+    if (blocks.length > 0) {
+      worldTierBlock = '\n' + blocks.join('\n\n');
+    }
+  }
+
+  // ── Resource Studio: Items / Skills / MagicSystems ──
+  // 최대 20개 제한, 초과 시 "외 N개" 표기 + 토큰 버짓 경고 이벤트 발행
+  const RESOURCE_LIMIT = 20;
+  const resourceTruncated: { kind: string; total: number; dropped: number }[] = [];
+
+  const buildItemsBlock = (): string => {
+    const items = config.items;
+    if (!Array.isArray(items) || items.length === 0) return '';
+    const visible = items.slice(0, RESOURCE_LIMIT);
+    const lines = visible.map(it => {
+      const name = it.name || '(unnamed)';
+      const category = it.category || 'misc';
+      const desc = (it.description || it.effect || '').trim();
+      return `  - ${name} (${category})${desc ? `: ${desc}` : ''}`;
+    });
+    if (items.length > RESOURCE_LIMIT) {
+      const extra = items.length - RESOURCE_LIMIT;
+      resourceTruncated.push({ kind: 'items', total: items.length, dropped: extra });
+      lines.push(`  - ${isKO ? `외 ${extra}개` : `and ${extra} more`}`);
+    }
+    return `\n[INVENTORY — ${isKO ? '등장 아이템' : 'Items'}]\n${lines.join('\n')}`;
+  };
+
+  const buildSkillsBlock = (): string => {
+    const skills = config.skills;
+    if (!Array.isArray(skills) || skills.length === 0) return '';
+    const visible = skills.slice(0, RESOURCE_LIMIT);
+    const lines = visible.map(sk => {
+      const name = sk.name || '(unnamed)';
+      const type = sk.type || 'active';
+      const desc = (sk.description || '').trim();
+      return `  - ${name} (${type})${desc ? `: ${desc}` : ''}`;
+    });
+    if (skills.length > RESOURCE_LIMIT) {
+      const extra = skills.length - RESOURCE_LIMIT;
+      resourceTruncated.push({ kind: 'skills', total: skills.length, dropped: extra });
+      lines.push(`  - ${isKO ? `외 ${extra}개` : `and ${extra} more`}`);
+    }
+    return `\n[SKILL-SET — ${isKO ? '등장 스킬' : 'Skills'}]\n${lines.join('\n')}`;
+  };
+
+  const buildMagicSystemsBlock = (): string => {
+    const magics = config.magicSystems;
+    if (!Array.isArray(magics) || magics.length === 0) return '';
+    const visible = magics.slice(0, RESOURCE_LIMIT);
+    const lines = visible.map(m => {
+      const name = m.name || '(unnamed)';
+      const source = m.source || '';
+      const rules = (m.rules || '').trim();
+      const head = source ? `${name} (${source})` : name;
+      return `  - ${head}${rules ? `: ${rules}` : ''}`;
+    });
+    if (magics.length > RESOURCE_LIMIT) {
+      const extra = magics.length - RESOURCE_LIMIT;
+      resourceTruncated.push({ kind: 'magicSystems', total: magics.length, dropped: extra });
+      lines.push(`  - ${isKO ? `외 ${extra}개` : `and ${extra} more`}`);
+    }
+    return `\n[MAGIC-SYSTEM — ${isKO ? '마법 체계' : 'Magic Systems'}]\n${lines.join('\n')}`;
+  };
+
+  const itemsBlock = buildItemsBlock();
+  const skillsBlock = buildSkillsBlock();
+  const magicSystemsBlock = buildMagicSystemsBlock();
+
+  // Resource 절삭 경고 이벤트 발행 (토큰 버짓 감사)
+  if (resourceTruncated.length > 0 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('noa:token-budget-warning', {
+      detail: { reason: 'resource-truncated', truncated: resourceTruncated, limit: RESOURCE_LIMIT },
+    }));
+  }
+
+  // ── 현재 에피소드 씬시트 주입 ──
+  // config.episodeSceneSheets 는 EpisodeSceneSheet[] 로 UI 용도지만,
+  // 해당 에피소드 시트가 있으면 프롬프트에도 반영 (타 에피소드는 토큰 폭발 방지로 제외)
+  let episodeSceneSheetBlock = '';
+  {
+    const sheets = config.episodeSceneSheets;
+    if (Array.isArray(sheets) && sheets.length > 0) {
+      const current = sheets.find(s => s.episode === config.episode);
+      if (current) {
+        const sheetLines: string[] = [];
+        if (current.title) {
+          sheetLines.push(`${isKO ? '제목' : 'Title'}: ${current.title}`);
+        }
+        if (current.arc) {
+          sheetLines.push(`${isKO ? '아크' : 'Arc'}: ${current.arc}`);
+        }
+        if (current.characters) {
+          sheetLines.push(`${isKO ? '주요 캐릭터' : 'Main Characters'}: ${current.characters}`);
+        }
+        if (Array.isArray(current.scenes) && current.scenes.length > 0) {
+          sheetLines.push(`${isKO ? '씬 구성' : 'Scenes'}:`);
+          current.scenes.slice(0, 10).forEach(sc => {
+            const parts: string[] = [`  - [${sc.sceneId}] ${sc.sceneName || ''}`.trim()];
+            if (sc.tone) parts.push(`톤:${sc.tone}`);
+            if (sc.summary) parts.push(`요약:${sc.summary}`);
+            if (sc.emotionPoint) parts.push(`감정:${sc.emotionPoint}`);
+            sheetLines.push(parts.join(' | '));
+          });
+          if (current.scenes.length > 10) {
+            sheetLines.push(`  - ${isKO ? `외 ${current.scenes.length - 10}씬` : `and ${current.scenes.length - 10} more scenes`}`);
+          }
+        }
+        if (current.presetUsed) {
+          sheetLines.push(`${isKO ? '프리셋' : 'Preset'}: ${current.presetUsed}`);
+        }
+        if (sheetLines.length > 0) {
+          episodeSceneSheetBlock = `\n[EPISODE SCENE — ${isKO ? `현재 에피소드(${config.episode}화) 씬시트` : `Current Episode (Ep.${config.episode}) Scene Sheet`}]\n${sheetLines.join('\n')}`;
+        }
+      }
     }
   }
 
@@ -566,13 +766,15 @@ ${actGuide[language] ?? actGuide.EN}
 
 ${buildGenrePreset(config.genre, isKO)}
 
-[CHARACTER DATABASE / DIALOGUE DNA]
-${characterDNA}${tier2Block}
+[CHARACTER DATABASE / DIALOGUE DNA — Tier 1]
+${characterDNA}${tier2Block}${tier2DetailBlock}${tier3DetailBlock}
 ${charRelations ? `\n[CHARACTER RELATIONSHIPS]\n${charRelations}` : ''}
 ${config.primaryEmotion ? `\n[PRIMARY EMOTION]\n${config.primaryEmotion}` : ''}
 ${sceneDirectionBlock}
+${episodeSceneSheetBlock}
 ${simulatorBlock}
 ${worldTierBlock}
+${itemsBlock}${skillsBlock}${magicSystemsBlock}
 ${subGenreBlock}
 ${styleDnaBlock}
 ${prismBlock}

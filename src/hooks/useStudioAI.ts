@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Message, ChatSession, AppLanguage, QualityGateResult,
+  Message, ChatSession, AppLanguage, QualityGateResult, WritingMode,
 } from '@/lib/studio-types';
 import type { GenerateResult } from '@/services/geminiService';
 import { type HFCPState as HFCPStateType, processHFCPTurn } from '@/engine/hfcp';
@@ -23,6 +23,7 @@ import { hasDgxService } from '@/lib/ai-providers';
 import { evaluateQuality, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
+import { createT } from '@/lib/i18n';
 
 /** 품질 게이트 시도별 기록 */
 export interface QualityGateAttemptRecord {
@@ -34,10 +35,9 @@ export interface QualityGateAttemptRecord {
   passed: boolean;
 }
 import { getNarrativeDepth } from '@/lib/noa/lora-swap';
+import { computeTemperature, getTemperatureOverride } from '@/lib/temperature-settings';
 import { executePipeline, getDefaultPipelineConfig, type PipelineExecution } from '@/engine/auto-pipeline';
 import type { ProactiveSuggestion } from '@/lib/studio-types';
-
-type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
 interface UseStudioAIParams {
   currentSession: ChatSession | null;
@@ -58,6 +58,19 @@ interface UseStudioAIParams {
   onSuggestionsUpdate?: (suggestions: ProactiveSuggestion[]) => void;
   onQualityGateRetry?: (attempt: number, maxRetries: number, history: QualityGateAttemptRecord[]) => void;
   onPipelineUpdate?: (result: PipelineExecution) => void;
+}
+
+// ============================================================
+// PART 1-B — 순수 헬퍼 함수
+// ============================================================
+
+/** HFCP 결과를 프롬프트 prefix 문자열로 변환 */
+function buildHFCPPrefix(hfcpResult: ReturnType<typeof processHFCPTurn>): string {
+  const raw = [
+    hfcpResult.promptModifier,
+    hfcpResult.nrg && hfcpResult.nrg !== 'normal' ? `[NRG: ${hfcpResult.nrg}]` : '',
+  ].filter(Boolean).join('\n');
+  return raw ? `\n${raw}\n` : '';
 }
 
 // ============================================================
@@ -137,11 +150,7 @@ export function useStudioAI({
     lockTimerRef.current = setTimeout(() => { generationLockRef.current = false; }, 30_000);
     // HFCP: classify input and get prompt modifier
     const hfcpResult = processHFCPTurn(hfcpState, text);
-    const hfcpPrefix = [
-      hfcpResult.promptModifier,
-      hfcpResult.nrg && hfcpResult.nrg !== 'normal' ? `[NRG: ${hfcpResult.nrg}]` : '',
-    ].filter(Boolean).join('\n');
-    const hfcpPrefixWrapped = hfcpPrefix ? `\n${hfcpPrefix}\n` : '';
+    const hfcpPrefixWrapped = buildHFCPPrefix(hfcpResult);
     const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
     const OUTPUT_MODE_LABELS: Record<string, string> = {
       'draft': '', 'dialogue-boost': '[출력 모드: 대화문 강화 — 대화 비율 60% 이상]',
@@ -203,6 +212,7 @@ export function useStudioAI({
     // 비동기 타이밍에 currentSession이 null일 수 있으므로 방어 체크
     if (!currentSession) { clearTimeout(timeoutIdRef.current); generationLockRef.current = false; setIsGenerating(false); return; }
     const capturedConfig = currentSession.config;
+    const t = createT(language);
 
     // --- AUTO PIPELINE EXECUTION ---
     const writerProfile = loadProfile('default');
@@ -227,9 +237,7 @@ export function useStudioAI({
       const failedDetails = failedStages.map(s => `${s.stage}: ${s.warnings?.join(', ')}`).join('\n');
       const blockedMsg: Message = {
         id: `sys-${Date.now()}`, role: 'assistant',
-        content: language === 'KO'
-          ? `[시스템 통보] 파이프라인 검증 실패로 인해 AI 생성이 차단되었습니다. (${pipelineResultExecution.blockedAt} 완료 필요)${failedDetails ? `\n실패 상세:\n${failedDetails}` : ''}`
-          : `[SYSTEM] AI generation blocked due to pipeline verification failure. (${pipelineResultExecution.blockedAt} required)${failedDetails ? `\nFailed stages:\n${failedDetails}` : ''}`,
+        content: `${t('system.pipelineBlocked')} (${pipelineResultExecution.blockedAt})${failedDetails ? `\n${failedDetails}` : ''}`,
         timestamp: Date.now()
       };
       updateCurrentSession({
@@ -288,14 +296,14 @@ export function useStudioAI({
             }
             setSessions(prev => prev.map(s => {
               if (s.id === capturedSessionId) {
-                const visualPrefix = attempt > 1 ? `[Quality Gate: 자동 재작성 시도 ${attempt}/${maxAttempts}]\n\n` : '';
+                const visualPrefix = attempt > 1 ? `${t('system.qualityGateRetry').replace('{n}', String(attempt)).replace('{max}', String(maxAttempts))}\n\n` : '';
                 const msgs = s.messages.map(m => m.id === aiMsgId ? { ...m, content: visualPrefix + displayContent } : m);
                 return { ...s, messages: msgs };
               }
               return s;
             }));
           },
-          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+          { language, signal: controller.signal, platform: capturedConfig.platform, history: existingMessages, storyBible, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
         );
 
         // Trademark/IP filter
@@ -305,7 +313,7 @@ export function useStudioAI({
 
         finalContent = stripEngineArtifacts(fullContent) || result.content;
         
-        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform, capturedConfig.genre); } catch { /* manuscript analysis advisory — non-blocking */ }
+        try { dReport = analyzeManuscript(finalContent, capturedConfig.publishPlatform, capturedConfig.genre); } catch (err) { logger.warn('StudioAI', 'analyzeManuscript failed (non-blocking)', err); }
         qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
 
         gateResult = evaluateQuality(finalContent, capturedConfig, gateConfig.thresholds, language, attempt);
@@ -364,8 +372,8 @@ export function useStudioAI({
             }
           };
           updateCurrentSession({ config: updatedWorldSync });
-        } catch {
-          // Sync fail is advisory, do not block pipeline
+        } catch (err) {
+          logger.warn('StudioAI', 'worldSync update failed', err);
         }
       }
 
@@ -396,7 +404,7 @@ export function useStudioAI({
           language,
         }, sgConfig);
         if (newSuggestions.length > 0) onSuggestionsUpdate?.(newSuggestions);
-      } catch { /* suggestions are advisory — never block */ }
+      } catch (err) { logger.warn('StudioAI', 'proactiveSuggestions failed', err); }
 
       // ============================================================
       // 3.8 — Writer Profile 학습
@@ -417,7 +425,7 @@ export function useStudioAI({
         saveProfile(updated);
         const hint = buildProfileHint(updated, language === 'KO');
         logger.info('writer-profile', 'Profile updated, hint length:', hint.length);
-      } catch { /* profile learning is meta — never block */ }
+      } catch (err) { logger.warn('StudioAI', 'writerProfile save failed', err); }
 
       setSessions(prev => prev.map(s => {
         if (s.id === capturedSessionId) {
@@ -524,7 +532,7 @@ export function useStudioAI({
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: (() => { const d = getNarrativeDepth(); const userOverride = localStorage.getItem('noa_temperature'); const base = userOverride ? parseFloat(userOverride) : getGenreTemperature(capturedConfig2.genre || ''); return Math.max(0.1, Math.min(1.5, base + (d - 1.0) * 0.4)); })() }
+        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, model: hasDgxService() ? getModelForRole('writer') : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig2.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
       );
 
       // Trademark/IP filter
@@ -536,12 +544,53 @@ export function useStudioAI({
 
       const finalContent = stripEngineArtifacts(fullContent) || result.content;
       setLastReport(result.report);
+
+      // Regenerate 품질 파이프라인 — handleSend와 동일하게 감독/품질태그 연결
+      let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };
+      let qTag: QualityTag = { tag: '🟢', label: 'CLEAR', visibleFindings: [] };
+      try { dReport = analyzeManuscript(finalContent, capturedConfig2.publishPlatform, capturedConfig2.genre); } catch (err) { logger.warn('StudioAI', 'analyzeManuscript failed (regenerate, non-blocking)', err); }
+      qTag = calculateQualityTag(dReport, capturedConfig2.narrativeIntensity || 'standard');
+      setDirectorReport(dReport);
+
+      // Writer Profile 학습 (재생성은 wasRegenerated=true)
+      try {
+        const profile = loadProfile();
+        const updated = updateProfile(profile, {
+          text: finalContent,
+          grade: result.report.grade,
+          directorScore: dReport.score,
+          eosScore: result.report.eosScore,
+          tension: result.report.metrics.tension,
+          pacing: result.report.metrics.pacing,
+          immersion: result.report.metrics.immersion,
+          findings: dReport.findings,
+          wasRegenerated: true,
+          wasOverridden: false,
+        });
+        saveProfile(updated);
+      } catch (err) { logger.warn('StudioAI', 'writerProfile save failed (regenerate)', err); }
+
       setSessions(prev => prev.map(s => {
         if (s.id === capturedSessionId2) {
           const msgs = s.messages.map(m => {
             if (m.id !== assistantMsgId) return m;
             const updatedVersions = [...(m.versions ?? []), finalContent];
-            return { ...m, content: finalContent, versions: updatedVersions, currentVersionIndex: updatedVersions.length - 1, meta: { engineReport: result.report, grade: result.report.grade, eosScore: result.report.eosScore, metrics: result.report.metrics, ipFiltered: ipCheck.matches.length } };
+            return {
+              ...m,
+              content: finalContent,
+              versions: updatedVersions,
+              currentVersionIndex: updatedVersions.length - 1,
+              meta: {
+                engineReport: result.report,
+                grade: result.report.grade,
+                eosScore: result.report.eosScore,
+                metrics: result.report.metrics,
+                ipFiltered: ipCheck.matches.length,
+                qualityTag: qTag.tag,
+                qualityLabel: qTag.label,
+                qualityFindings: qTag.visibleFindings.map((f: DirectorFinding) => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),
+              },
+            };
           });
           return { ...s, messages: msgs };
         }

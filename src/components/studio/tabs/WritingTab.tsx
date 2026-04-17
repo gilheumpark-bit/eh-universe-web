@@ -1,10 +1,8 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { Sparkles, PenTool, StopCircle, Send } from 'lucide-react';
-import { AppLanguage, AppTab, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
+import { AppLanguage, AppTab, ChatSession, Message } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
-import type { DirectorReport } from '@/engine/director';
-import type { HFCPState } from '@/engine/hfcp';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import { createT } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-translations';
@@ -29,7 +27,6 @@ interface WritingTabProps {
   currentSession: ChatSession;
   currentSessionId: string | null;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
-  setConfig: (config: StoryConfig) => void;
   writingMode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
   setWritingMode: (mode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced') => void;
   editDraft: string;
@@ -50,7 +47,6 @@ interface WritingTabProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   searchQuery: string;
   filteredMessages: Message[];
-  searchMatchesEditDraft: boolean;
   hasApiKey: boolean;
   setShowApiKeyModal: (show: boolean) => void;
   setActiveTab: (tab: AppTab) => void;
@@ -59,10 +55,6 @@ interface WritingTabProps {
   input: string;
   setInput: (val: string) => void;
   showDashboard: boolean;
-  rightPanelOpen: boolean;
-  setRightPanelOpen: (open: boolean) => void;
-  directorReport: DirectorReport | null;
-  hfcpState: HFCPState;
   handleNextEpisode: () => void;
   editDraftRef?: React.RefObject<HTMLTextAreaElement | null>;
   showAiLock?: boolean;
@@ -74,7 +66,7 @@ interface WritingTabProps {
 }
 
 const WritingTab: React.FC<WritingTabProps> = ({
-  language, currentSession, currentSessionId, updateCurrentSession, setConfig: _setConfig,
+  language, currentSession, currentSessionId, updateCurrentSession,
   writingMode, setWritingMode,
   editDraft, setEditDraft,
   canvasContent, setCanvasContent,
@@ -83,13 +75,11 @@ const WritingTab: React.FC<WritingTabProps> = ({
   isGenerating, lastReport,
   handleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix,
   messagesEndRef,
-  searchQuery, filteredMessages, searchMatchesEditDraft: _searchMatchesEditDraft,
+  searchQuery, filteredMessages,
   hasApiKey, setShowApiKeyModal, setActiveTab,
   advancedSettings, setAdvancedSettings,
   input, setInput,
   showDashboard,
-  rightPanelOpen: _rightPanelOpen, setRightPanelOpen: _setRightPanelOpen,
-  directorReport: _directorReport, hfcpState: _hfcpState,
   handleNextEpisode,
   hostedProviders = {},
 }: WritingTabProps) => {

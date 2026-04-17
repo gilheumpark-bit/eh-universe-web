@@ -1232,6 +1232,10 @@ const translations = {
     "lockCharRelations": "関係図の衝突防止",
     "lockBannedWords": "禁止語適用"
   },
+  "system": {
+    "pipelineBlocked": "パイプライン検証失敗によりAI生成がブロックされました。",
+    "qualityGateRetry": "[品質ゲート: 自動リライト試行 {n}/{max}]"
+  },
   "codeStudio": {
     "title": "コードスタジオ",
     "aiChat": "チャット",

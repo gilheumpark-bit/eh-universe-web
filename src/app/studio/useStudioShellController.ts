@@ -11,6 +11,7 @@
  */
 
 import { useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 import type {
   StoryConfig, ChatSession, AppLanguage,
   ProactiveSuggestion, Message,
@@ -105,9 +106,9 @@ export function useStudioShellController(
         .filter((m: Message) => m.role === 'assistant' && m.meta?.metrics)
         .slice(-5)
         .map((m: Message) => ({
-          tension: m.meta!.metrics!.tension,
-          pacing: m.meta!.metrics!.pacing,
-          immersion: m.meta!.metrics!.immersion,
+          tension: m.meta?.metrics?.tension ?? 50,
+          pacing: m.meta?.metrics?.pacing ?? 50,
+          immersion: m.meta?.metrics?.immersion ?? 50,
           eos: m.meta?.eosScore ?? 0,
           grade: m.meta?.grade ?? 'C',
         }));
@@ -121,8 +122,8 @@ export function useStudioShellController(
         characterLastAppearance: charLastAppearance, language,
       }, sgConfig, suggestions);
       setSuggestions(newSuggestions);
-    } catch {
-      // Proactive suggestions are non-critical
+    } catch (err) {
+      logger.warn('StudioShell', 'suggestion update failed', err);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSession, config, language]);

@@ -345,11 +345,8 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
   }, []);
 
   /**
-   * Run all reviewers sequentially.
-   * Currently uses placeholder results. To integrate real AI:
-   * 1. Import streamChat or runSingleAgent from agents.ts
-   * 2. For each persona, call with persona.systemPrompt + code
-   * 3. Parse the structured response into ReviewerResult
+   * Run all reviewers sequentially with real AI calls (streamChat).
+   * Falls back to heuristic placeholder if AI call fails.
    */
   const runReview = useCallback(async () => {
     if (isRunning) return;
@@ -358,24 +355,53 @@ export function ReviewBoard({ code, language = 'en' }: ReviewBoardProps): React.
     setIsRunning(true);
     setResults({});
 
+    // Dynamic import to avoid bundling agents into all panels
+    let streamChatFn: ((opts: Record<string, unknown>) => Promise<void>) | null = null;
+    try {
+      const mod = await import('@/lib/ai-providers');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      streamChatFn = mod.streamChat as any;
+    } catch { /* AI not available — fallback */ }
+
     for (const persona of REVIEWER_PERSONAS) {
-      // Mark as reviewing
       setResults((prev) => ({
         ...prev,
         [persona.id]: { personaId: persona.id, score: 0, findings: [], status: 'reviewing' },
       }));
 
-      // Simulate async delay (replace with real AI call)
-      await new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, 600 + Math.random() * 400);
-        // Cleanup not needed for one-shot timer, but structured for safety
-        return () => clearTimeout(timer);
-      });
+      let result: ReviewerResult | null = null;
+      if (streamChatFn) {
+        try {
+          let accumulated = '';
+          const jsonSchemaHint = `\n\nRespond STRICTLY in JSON: {"score":0-100,"findings":[{"severity":"error|warning|info","message":"...","line":number?}]}`;
+          await streamChatFn({
+            systemInstruction: persona.systemPrompt + jsonSchemaHint,
+            messages: [{ role: 'user', content: `Review this code:\n\n\`\`\`\n${code.slice(0, 6000)}\n\`\`\`` }],
+            temperature: 0.2,
+            onChunk(text: string) { accumulated += text; },
+          });
+          // Extract JSON from response
+          const jsonMatch = accumulated.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]) as { score: number; findings: unknown[] };
+            if (typeof parsed.score === 'number' && Array.isArray(parsed.findings)) {
+              result = {
+                personaId: persona.id,
+                score: Math.min(100, Math.max(0, parsed.score)),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                findings: parsed.findings as any,
+                status: 'done',
+              };
+            }
+          }
+        } catch { /* AI call failed — use fallback */ }
+      }
+      // Fallback to heuristic if AI unavailable or response invalid
+      if (!result) result = generateReviewResult(persona.id, code);
 
-      const result = generateReviewResult(persona.id, code);
       setResults((prev) => ({
         ...prev,
-        [persona.id]: result,
+        [persona.id]: result!,
       }));
     }
 

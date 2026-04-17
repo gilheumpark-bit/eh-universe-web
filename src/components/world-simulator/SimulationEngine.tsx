@@ -30,7 +30,7 @@ export function GenreLeveling({ lang, selections, onToggle }: {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
-          {L4(lang, { ko: "장르별 세계관 복잡도", en: "Genre World Complexity", ja: "ジャンル별 世界観 복잡도", zh: "类型별 世界观 복잡도" })}
+          {L4(lang, { ko: "장르별 세계관 복잡도", en: "Genre World Complexity", ja: "ジャンル別 世界観の複雑度", zh: "各类型的世界观复杂度" })}
         </h3>
         <span className="text-[9px] font-[family-name:var(--font-mono)] text-text-tertiary">
           {selections.length}/{MAX_GENRE_SELECTIONS} {L4(lang, { ko: "선택", en: "selected", ja: "選択", zh: "选择" })}
@@ -152,7 +152,7 @@ export function CivMapper({ lang, civs, setCivs }: {
           value={newName}
           onChange={e => setNewName(e.target.value)}
           onKeyDown={e => e.key === "Enter" && addCiv()}
-          placeholder={L4(lang, { ko: "문명 이름...", en: "Civilization name...", ja: "문名 名前...", zh: "문人 名称..." })}
+          placeholder={L4(lang, { ko: "문명 이름...", en: "Civilization name...", ja: "文明の名前...", zh: "文明名称..." })}
           className="flex-1 bg-bg-primary border border-border rounded px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors"
         />
         <select
@@ -171,7 +171,7 @@ export function CivMapper({ lang, civs, setCivs }: {
 
       {civs.length === 0 && (
         <div className="text-center py-8 text-text-tertiary text-xs italic">
-          {L4(lang, { ko: "문명을 추가하세요", en: "Add civilizations", ja: "문名을 追加하세요", zh: "문人을 添加하세요" })}
+          {L4(lang, { ko: "문명을 추가하세요", en: "Add civilizations", ja: "文明を追加してください", zh: "请添加文明" })}
         </div>
       )}
 
@@ -217,7 +217,7 @@ export function CivMapper({ lang, civs, setCivs }: {
                 ))}
               </div>
               <input
-                placeholder={L4(lang, { ko: "특성 추가 (Enter)", en: "Add trait (Enter)", ja: "특성 追加 (Enter)", zh: "특성 添加 (Enter)" })}
+                placeholder={L4(lang, { ko: "특성 추가 (Enter)", en: "Add trait (Enter)", ja: "特性を追加 (Enter)", zh: "添加特性 (Enter)" })}
                 className="w-full bg-bg-secondary border border-border rounded px-2 py-1 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple"
                 onKeyDown={e => {
                   if (e.key === "Enter") {
@@ -274,7 +274,7 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
   if (civs.length < 2) {
     return (
       <div className="text-center py-12 text-text-tertiary text-xs italic">
-        {L4(lang, { ko: "문명을 2개 이상 추가하면 관계도를 구성할 수 있습니다", en: "Add 2+ civilizations to create a relationship map", ja: "문名을 2件 이상 追加하면 관계도를 구성할 수 있습니다", zh: "문人을 2个 이상 添加하면 관계도를 구성할 수 있습니다" })}
+        {L4(lang, { ko: "문명을 2개 이상 추가하면 관계도를 구성할 수 있습니다", en: "Add 2+ civilizations to create a relationship map", ja: "文明を2件以上追加すると関係図を構成できます", zh: "添加2个以上文明可构建关系图" })}
       </div>
     );
   }
@@ -284,11 +284,11 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
       {/* Controls */}
       <div className="flex flex-wrap gap-2 items-end">
         <select value={selFrom} onChange={e => setSelFrom(e.target.value)} className="bg-bg-primary border border-border rounded px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
-          <option value="">{L4(lang, { ko: "문명 A", en: "Civ A", ja: "문名 A", zh: "문人 A" })}</option>
+          <option value="">{L4(lang, { ko: "문명 A", en: "Civ A", ja: "文明A", zh: "文明A" })}</option>
           {civs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={selTo} onChange={e => setSelTo(e.target.value)} className="bg-bg-primary border border-border rounded px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50">
-          <option value="">{L4(lang, { ko: "문명 B", en: "Civ B", ja: "문名 B", zh: "문人 B" })}</option>
+          <option value="">{L4(lang, { ko: "문명 B", en: "Civ B", ja: "文明B", zh: "文明B" })}</option>
           {civs.filter(c => c.id !== selFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <div className="flex gap-1">
@@ -398,7 +398,7 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
   const addTransition = (fromEra: string, toEra: string) => {
     const exists = transitions.some(t => t.fromEra === fromEra && t.toEra === toEra);
     if (exists) return;
-    const defaultDesc = L4(lang, { ko: "전환 이벤트를 입력하세요", en: "Enter transition event", ja: "전환 이벤트를 入力하세요", zh: "전환 이벤트를 输入하세요" });
+    const defaultDesc = L4(lang, { ko: "전환 이벤트를 입력하세요", en: "Enter transition event", ja: "遷移イベントを入力してください", zh: "请输入过渡事件" });
     setTransitions(prev => [...prev, { fromEra, toEra, description: defaultDesc }]);
   };
 
@@ -461,7 +461,7 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
                         <button
                           onClick={() => addTransition(era.id, eraOrder[i + 1])}
                           className="w-4 h-4 rounded-full border border-border text-text-tertiary text-[8px] hover:border-accent-purple hover:text-accent-purple transition-colors"
-                          title={L4(lang, { ko: "전환 이벤트 추가", en: "Add transition event", ja: "전환 이벤트 追加", zh: "전환 이벤트 添加" })}
+                          title={L4(lang, { ko: "전환 이벤트 추가", en: "Add transition event", ja: "遷移イベント追加", zh: "添加过渡事件" })}
                         >
                           +
                         </button>
@@ -494,7 +494,7 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
                   <div className="flex gap-1">
                     <button onClick={() => generateAIEvent(tr.fromEra, tr.toEra, i)}
                       className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold hover:bg-accent-purple/20 transition-colors"
-                      title={L4(lang, { ko: '템플릿에서 자동 생성', en: 'Auto-generate from templates', ja: '템플릿에서 자동 生成', zh: '템플릿에서 자동 生成' })}>
+                      title={L4(lang, { ko: '템플릿에서 자동 생성', en: 'Auto-generate from templates', ja: 'テンプレートから自動生成', zh: '从模板自动生成' })}>
                       {L4(lang, { ko: '자동', en: 'Auto', ja: 'Auto', zh: 'Auto' })}
                     </button>
                     <button onClick={() => removeTransition(i)} className="text-text-tertiary hover:text-accent-red text-xs">&#10005;</button>
@@ -573,7 +573,7 @@ export function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
       if (dupes.length > 1 && dupes[0].id === civ.id) {
         result.push({
           civName: civ.name,
-          message: L4(lang, { ko: `"${civ.name}" 이름이 중복됩니다`, en: `Duplicate name: "${civ.name}"`, ja: `"${civ.name}" 名前이 중복됩니다`, zh: `"${civ.name}" 名称이 중복됩니다` }),
+          message: L4(lang, { ko: `"${civ.name}" 이름이 중복됩니다`, en: `Duplicate name: "${civ.name}"`, ja: `"${civ.name}" の名前が重複しています`, zh: `"${civ.name}" 名称重复` }),
           severity: "error",
         });
       }
@@ -582,7 +582,7 @@ export function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
     if (civs.length === 0) {
       result.push({
         civName: "-",
-        message: L4(lang, { ko: "문명이 하나도 등록되지 않았습니다", en: "No civilizations registered", ja: "문名이 하나도 登録되지 않았습니다", zh: "문人이 하나도 提交되지 않았습니다" }),
+        message: L4(lang, { ko: "문명이 하나도 등록되지 않았습니다", en: "No civilizations registered", ja: "文明が一つも登録されていません", zh: "尚未登记任何文明" }),
         severity: "warning",
       });
     }
@@ -609,7 +609,7 @@ export function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
           }
         </div>
         <span className="text-[10px] text-text-tertiary font-[family-name:var(--font-mono)]">
-          {civs.length} {L4(lang, { ko: "문명", en: "civs", ja: "문名", zh: "문人" })} | {selectedGenre} Lv{selectedLevel}
+          {civs.length} {L4(lang, { ko: "문명", en: "civs", ja: "文明", zh: "文明" })} | {selectedGenre} Lv{selectedLevel}
         </span>
       </div>
 
@@ -617,10 +617,10 @@ export function ValidationView({ lang, civs, selectedGenre, selectedLevel }: {
         <div className="text-center py-12 border border-border rounded-lg">
           <div className="text-2xl mb-2">&#10003;</div>
           <div className="text-text-secondary text-sm font-bold">
-            {L4(lang, { ko: "세계관 일관성 검증 통과", en: "World consistency validation passed", ja: "世界観 일관성 검증 통과", zh: "世界观 일관성 검증 통과" })}
+            {L4(lang, { ko: "세계관 일관성 검증 통과", en: "World consistency validation passed", ja: "世界観の一貫性検証に合格", zh: "世界观一致性验证通过" })}
           </div>
           <div className="text-text-tertiary text-xs mt-1">
-            {L4(lang, { ko: "기술 수준, 장르 레벨, 명칭 충돌 없음", en: "No tech level, genre, or naming conflicts", ja: "기술 수준, ジャンル 레벨, 名칭 충돌 なし", zh: "기술 수준, 类型 레벨, 人칭 충돌 无" })}
+            {L4(lang, { ko: "기술 수준, 장르 레벨, 명칭 충돌 없음", en: "No tech level, genre, or naming conflicts", ja: "技術レベル、ジャンルレベル、名称衝突なし", zh: "技术等级、类型等级、名称冲突均无" })}
           </div>
         </div>
       ) : (

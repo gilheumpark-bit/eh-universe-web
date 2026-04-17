@@ -154,6 +154,22 @@ export async function POST(req: NextRequest) {
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;
 
+    // 인증 게이트 — BYOK가 없으면 Firebase JWT 필수 (호스팅 크레딧 방어)
+    if (!body.apiKey) {
+      const authHeader = req.headers.get('authorization');
+      let verified = false;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+          const token = authHeader.slice(7).trim();
+          verified = Boolean(await verifyFirebaseIdToken(token));
+        } catch { /* verification failed */ }
+      }
+      if (!verified) {
+        return NextResponse.json({ error: 'Authentication required for hosted credits' }, { status: 401 });
+      }
+    }
+
     const validated = validateInput(body);
     if (!validated.ok) return validated.response;
 

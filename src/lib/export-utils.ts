@@ -3,6 +3,7 @@
 // ============================================================
 
 import { ChatSession } from './studio-types';
+import { stripEngineArtifacts } from '@/engine/pipeline';
 
 /** Simple CRC32 + ZIP builder — minimal spec-compliant for EPUB containers */
 function crc32(buf: Uint8Array): number {
@@ -381,9 +382,17 @@ export function exportDOCX(session: ChatSession): void {
   </w:p>
 </w:ftr>`);
 
-  const paragraphs = session.messages
-    .filter(m => m.role === 'assistant')
-    .flatMap(m => m.content.split('\n'))
+  // manuscripts 우선 → 수동 편집 반영. 없으면 messages로 fallback.
+  const manuscripts = session.config?.manuscripts ?? [];
+  const sourceLines: string[] = manuscripts.length > 0
+    ? [...manuscripts]
+        .sort((a, b) => a.episode - b.episode)
+        .flatMap(m => (m.content ?? '').split('\n'))
+    : session.messages
+        .filter(m => m.role === 'assistant')
+        .flatMap(m => stripEngineArtifacts(m.content).split('\n'));
+
+  const paragraphs = sourceLines
     .map(line => buildDocxParagraph(line.trim()))
     .join('\n');
 

@@ -70,7 +70,7 @@ export function SettlementWorkbench() {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 데이터를 불러오지 못했습니다.", en: "Failed to load settlements.", ja: "정산 データ를 불러오지 못했습니다.", zh: "정산 数据를 불러오지 못했습니다." }));
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 데이터를 불러오지 못했습니다.", en: "Failed to load settlements.", ja: "精算データを読み込めませんでした。", zh: "无法加载结算数据。" }));
         }
       }
     };
@@ -117,7 +117,7 @@ export function SettlementWorkbench() {
       setEhValue(null);
       setRisk(null);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 저장에 실패했습니다.", en: "Failed to save settlement.", ja: "정산 保存に失敗しました。", zh: "정산 保存失败。" }));
+      setError(caught instanceof Error ? caught.message : L4(lang, { ko: "정산 저장에 실패했습니다.", en: "Failed to save settlement.", ja: "精算の保存に失敗しました。", zh: "结算保存失败。" }));
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +134,7 @@ export function SettlementWorkbench() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "운영자 로그인 필요", en: "Administrator Sign-In Required", ja: "운영자 ログイン 필요", zh: "운영자 登录 필요" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "운영자 로그인 필요", en: "Administrator Sign-In Required", ja: "管理者ログインが必要", zh: "需要管理员登录" })}</div>
             <div className="mt-8 flex justify-center">
               <button type="button" onClick={() => void signInWithGoogle()} className="premium-button">
                 {L4(lang, { ko: "Google 로그인", en: "Sign In with Google", ja: "Googleログイン", zh: "Google登录" })}
@@ -156,7 +156,7 @@ export function SettlementWorkbench() {
               {L4(lang, { ko: "정산 워크벤치는 운영자 전용입니다.", en: "The settlement workbench is for administrators only.", ja: "The settlement workbench is for administrators only.", zh: "The settlement workbench is for administrators only." })}
             </h1>
             <p className="site-lede mt-4 text-sm md:text-base">
-              {L4(lang, { ko: "현재 계정은 회원 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", en: "This account is currently recognized as a member. Set users/{uid}.role to admin in Firestore to enable this screen.", ja: "현재 계정은 メンバー 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", zh: "현재 계정은 成员 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다." })}
+              {L4(lang, { ko: "현재 계정은 회원 권한으로 인식되었습니다. Firestore users 문서의 role 값을 admin으로 지정하면 사용할 수 있습니다.", en: "This account is currently recognized as a member. Set users/{uid}.role to admin in Firestore to enable this screen.", ja: "現在のアカウントはメンバー権限として認識されています。Firestoreのusersドキュメントのrole値をadminに指定すると使用できます。", zh: "当前账号被识别为会员权限。请在 Firestore users 文档中将 role 值设为 admin 后即可使用。" })}
             </p>
           </section>
         </div>
@@ -174,12 +174,12 @@ export function SettlementWorkbench() {
         <section className="premium-panel p-6 md:p-8">
           <div className="site-kicker">{L4(lang, { ko: "정산 워크벤치", en: "Settlement Workbench", ja: "Settlement Workbench", zh: "Settlement Workbench" })}</div>
           <h1 className="site-title mt-3 text-3xl font-semibold">
-            {L4(lang, { ko: "관측 로그를 선택하고 상태 판정을 부여하세요.", en: "Select a log and attach the current verdict.", ja: "観測 ログ를 選択하고 状態 판정을 부여하세요.", zh: "观测 日志를 选择하고 状态 판정을 부여하세요." })}
+            {L4(lang, { ko: "관측 로그를 선택하고 상태 판정을 부여하세요.", en: "Select a log and attach the current verdict.", ja: "観測ログを選択して状態判定を付与してください。", zh: "请选择观测日志并赋予状态判定。" })}
           </h1>
 
           <div className="mt-8 grid gap-4">
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "대상 로그", en: "Target Log", ja: "대상 ログ", zh: "대상 日志" })}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "대상 로그", en: "Target Log", ja: "対象ログ", zh: "目标日志" })}</div>
               <select
                 value={selectedPostId}
                 onChange={(event) => setSelectedPostId(event.target.value)}
@@ -234,7 +234,7 @@ export function SettlementWorkbench() {
             </div>
 
             <label className="block">
-              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "보관 등급", en: "Archive Level", ja: "アーカイブ 등급", zh: "归档 등급" })}</div>
+              <div className="mb-2 text-sm text-text-secondary">{L4(lang, { ko: "보관 등급", en: "Archive Level", ja: "アーカイブ等級", zh: "归档等级" })}</div>
               <input
                 value={archiveLevel}
                 onChange={(event) => setArchiveLevel(event.target.value)}
@@ -259,14 +259,14 @@ export function SettlementWorkbench() {
 
           <div className="mt-6 flex justify-end">
             <button type="button" onClick={() => void handleSubmit()} disabled={!canSubmit} className="premium-button">
-              {submitting ? L4(lang, { ko: "저장 중...", en: "Saving...", ja: "保存 중...", zh: "保存 중..." }) : L4(lang, { ko: "정산 기록 저장", en: "Save Settlement", ja: "정산 기록 保存", zh: "정산 기록 保存" })}
+              {submitting ? L4(lang, { ko: "저장 중...", en: "Saving...", ja: "保存中...", zh: "保存中..." }) : L4(lang, { ko: "정산 기록 저장", en: "Save Settlement", ja: "精算記録を保存", zh: "保存结算记录" })}
             </button>
           </div>
         </section>
 
         <aside className="space-y-4">
           <div className="premium-panel-soft p-5">
-            <div className="site-kicker">{L4(lang, { ko: "대상 미리보기", en: "Selected Log Preview", ja: "대상 プレビュー", zh: "대상 预览" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "대상 미리보기", en: "Selected Log Preview", ja: "対象プレビュー", zh: "目标预览" })}</div>
             {selectedPost ? (
               <>
                 <h2 className="mt-3 text-lg font-semibold text-text-primary">{selectedPost.title}</h2>
@@ -276,7 +276,7 @@ export function SettlementWorkbench() {
                 </div>
               </>
             ) : (
-              <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "선택된 로그가 없습니다.", en: "No log selected.", ja: "選択된 ログ가 없습니다.", zh: "选择된 日志가 없습니다." })}</p>
+              <p className="mt-3 text-sm text-text-secondary">{L4(lang, { ko: "선택된 로그가 없습니다.", en: "No log selected.", ja: "選択されたログはありません。", zh: "未选择日志。" })}</p>
             )}
           </div>
 

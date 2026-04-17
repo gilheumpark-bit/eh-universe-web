@@ -4,14 +4,13 @@
 
 import { showAlert } from '@/lib/show-alert';
 import { useCallback } from 'react';
-import { ChatSession, AppLanguage, AppTab, Project, Genre, StoryConfig } from '@/lib/studio-types';
+import { logger } from '@/lib/logger';
+import { ChatSession, AppLanguage, AppTab, Project, Genre, StoryConfig, WritingMode } from '@/lib/studio-types';
 import { exportEPUB, exportDOCX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { episodeToMarkdown } from '@/lib/markdown-serializer';
-
-type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
 /** 번역 스튜디오 `downloadAllResults`와 동일한 대표 5형식 — 현재 프로젝트 전체 회차 원고 */
 export type ProjectManuscriptFormat = 'txt' | 'md' | 'json' | 'html' | 'csv';
@@ -285,7 +284,8 @@ export function useStudioExport({
           return;
         }
         setActiveTab('writing');
-      } catch {
+      } catch (err) {
+        logger.warn('StudioExport', 'JSON import parse failed', err);
         showAlert(t('studioExport.invalidJson'));
       }
     };

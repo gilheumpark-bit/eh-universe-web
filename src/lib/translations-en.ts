@@ -1232,6 +1232,10 @@ const translations = {
     "lockCharRelations": "Relation guard",
     "lockBannedWords": "Banned words"
   },
+  "system": {
+    "pipelineBlocked": "AI generation blocked due to pipeline validation failure.",
+    "qualityGateRetry": "[Quality Gate: Auto-rewrite attempt {n}/{max}]"
+  },
   "codeStudio": {
     "title": "Code Studio",
     "aiChat": "Chat",

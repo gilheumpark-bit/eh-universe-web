@@ -315,7 +315,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               onChange={e => setCurrentSessionId(e.target.value)}
               className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
             >
-              <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter', ja: '챕터 選択', zh: '챕터 选择' })}</option>
+              <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter', ja: 'チャプター選択', zh: '选择章节' })}</option>
               {sessions.map(s => (
                 <option key={s.id} value={s.id} className="bg-bg-primary">{s.title}</option>
               ))}

@@ -1,6 +1,6 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import type { ChatSession, StoryConfig, AppTab, AppLanguage, Project, Message, ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
+import type { ChatSession, StoryConfig, AppTab, AppLanguage, Project, Message, ProactiveSuggestion, PipelineStageResult, WritingMode } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
@@ -53,8 +53,8 @@ interface StudioTabRouterProps {
   versionedBackups?: VersionedBackup[];
   doRestoreVersionedBackup?: (timestamp: number) => Promise<boolean>;
   refreshBackupList?: () => void;
-  writingMode: string;
-  setWritingMode: (mode: string) => void;
+  writingMode: WritingMode;
+  setWritingMode: (mode: WritingMode) => void;
   editDraft: string;
   setEditDraft: (v: string) => void;
   editDraftRef: React.RefObject<HTMLTextAreaElement | null>;

@@ -78,7 +78,7 @@ export function NetworkAgentSearchClient() {
         {
           id: (Date.now() + 1).toString(),
           role: "agent",
-          content: L4(lang, { ko: "인증 토큰을 가져올 수 없습니다. 다시 로그인해 주세요.", en: "Failed to get auth token. Please sign in again.", ja: "인증 토큰을 가져올 수 없습니다. 다시 ログイン해 주세요.", zh: "인증 토큰을 가져올 수 없습니다. 다시 登录해 주세요." }),
+          content: L4(lang, { ko: "인증 토큰을 가져올 수 없습니다. 다시 로그인해 주세요.", en: "Failed to get auth token. Please sign in again.", ja: "認証トークンを取得できません。再度ログインしてください。", zh: "无法获取身份验证令牌。请重新登录。" }),
           isError: true,
         },
       ]);
@@ -109,7 +109,7 @@ export function NetworkAgentSearchClient() {
         {
           id: (Date.now() + 1).toString(),
           role: "agent",
-          content: L4(lang, { ko: "검색 중 오류가 발생했습니다. 구글 클라우드 설정을 확인하시거나 잠시 후 다시 시도해 주세요.", en: "Search failed. Please try again later.", ja: "検索 중 エラーが発生しました。 구글 클라우드 設定을 確認하시거나 잠시 후 再試行해 주세요.", zh: "搜索 중 发生了错误。 구글 클라우드 设置을 确认하시거나 잠시 후 重试해 주세요." }),
+          content: L4(lang, { ko: "검색 중 오류가 발생했습니다. 구글 클라우드 설정을 확인하시거나 잠시 후 다시 시도해 주세요.", en: "Search failed. Please try again later.", ja: "検索中にエラーが発生しました。Google Cloud設定を確認するか、しばらくしてから再試行してください。", zh: "搜索时发生错误。请检查 Google Cloud 设置或稍后重试。" }),
           isError: true,
         },
       ]);
@@ -121,9 +121,9 @@ export function NetworkAgentSearchClient() {
       <main className="pt-14 pb-20">
         <div className="site-shell py-10">
           <section className="premium-panel p-8 text-center">
-            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required", ja: "ログイン 필요", zh: "登录 필요" })}</div>
+            <div className="site-kicker">{L4(lang, { ko: "로그인 필요", en: "Authentication Required", ja: "ログインが必要", zh: "需要登录" })}</div>
             <h1 className="site-title mt-3 text-3xl font-semibold">
-              {L4(lang, { ko: "Agent Builder 검색을 이용하려면 로그인하세요.", en: "Sign in to use the Network Agent search.", ja: "Agent Builder 検索을 이용하려면 ログイン하세요.", zh: "Agent Builder 搜索을 이용하려면 登录하세요." })}
+              {L4(lang, { ko: "Agent Builder 검색을 이용하려면 로그인하세요.", en: "Sign in to use the Network Agent search.", ja: "Agent Builder 検索を利用するにはログインしてください。", zh: "请登录以使用 Agent Builder 搜索。" })}
             </h1>
           </section>
         </div>
@@ -142,10 +142,10 @@ export function NetworkAgentSearchClient() {
           <div className="border-b border-white/10 pb-4 mb-4">
             <div className="site-kicker text-accent-amber">Vertex AI Agent Builder</div>
             <h1 className="site-title mt-2 text-2xl font-semibold">
-              {L4(lang, { ko: "네트워크 기록물 NOA 검색", en: "Network Archives NOA Search", ja: "ネットワーク 기록물 NOA 検索", zh: "网络 기록물 NOA 搜索" })}
+              {L4(lang, { ko: "네트워크 기록물 NOA 검색", en: "Network Archives NOA Search", ja: "ネットワーク記録 NOA 検索", zh: "网络记录 NOA 搜索" })}
             </h1>
             <p className="mt-2 text-sm text-text-tertiary">
-              {L4(lang, { ko: "내 행성, 게시글, 그리고 공개된 세계관 정보를 의미 기반으로 통합 검색합니다.", en: "Search your planets, posts, and public universe data using semantic matching.", ja: "マイ惑星, 投稿, 그리고 公開된 世界観 情報를 의미 기반으로 통합 検索합니다.", zh: "我的星球, 帖子, 그리고 公开된 世界观 信息를 의미 기반으로 통합 搜索합니다." })}
+              {L4(lang, { ko: "내 행성, 게시글, 그리고 공개된 세계관 정보를 의미 기반으로 통합 검색합니다.", en: "Search your planets, posts, and public universe data using semantic matching.", ja: "自分の惑星、投稿、そして公開された世界観の情報を意味ベースで統合検索します。", zh: "基于语义统一搜索我的星球、帖子以及公开的世界观信息。" })}
             </p>
           </div>
 
@@ -237,7 +237,7 @@ export function NetworkAgentSearchClient() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={isSearching}
-              placeholder={L4(lang, { ko: "세계관, 설정, 사건에 대해 질문하세요...", en: "Ask about your universe, settings, and events...", ja: "世界観, 設定, 사件에 대해 질문하세요...", zh: "世界观, 设置, 사条에 대해 질문하세요..." })}
+              placeholder={L4(lang, { ko: "세계관, 설정, 사건에 대해 질문하세요...", en: "Ask about your universe, settings, and events...", ja: "世界観、設定、事件について質問してください...", zh: "请就世界观、设定、事件提问..." })}
               className="flex-1 bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50 focus:bg-white/[0.04] transition-colors"
             />
             <button

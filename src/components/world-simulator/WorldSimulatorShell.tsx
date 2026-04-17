@@ -107,7 +107,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
         return prev.map(s => s.genre === genre ? { ...s, level } : s);
       }
       if (prev.length >= MAX_GENRE_SELECTIONS) {
-        showAlert(L4(lang, { ko: `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다`, en: `Max ${MAX_GENRE_SELECTIONS} genres allowed`, ja: `ジャンル는 最大 ${MAX_GENRE_SELECTIONS}件까지 選択 가능합니다`, zh: `类型는 最大 ${MAX_GENRE_SELECTIONS}个까지 选择 가능합니다` }));
+        showAlert(L4(lang, { ko: `장르는 최대 ${MAX_GENRE_SELECTIONS}개까지 선택 가능합니다`, en: `Max ${MAX_GENRE_SELECTIONS} genres allowed`, ja: `ジャンルは最大${MAX_GENRE_SELECTIONS}件まで選択可能です`, zh: `最多可选择${MAX_GENRE_SELECTIONS}个类型` }));
         return prev;
       }
       return [...prev, { genre, level }];
@@ -141,7 +141,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
       {/* Header */}
       <div className="doc-header rounded-t mb-0">
         <span className="badge badge-blue mr-2">SIMULATOR</span>
-        {L4(lang, { ko: "세계관 시뮬레이터 — World Consistency Engine", en: "World Simulator — Consistency Engine", ja: "世界観 시뮬레이터 — World Consistency Engine", zh: "世界观 시뮬레이터 — World Consistency Engine" })}
+        {L4(lang, { ko: "세계관 시뮬레이터 — World Consistency Engine", en: "World Simulator — Consistency Engine", ja: "世界観シミュレーター — World Consistency Engine", zh: "世界观模拟器 — World Consistency Engine" })}
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-6">
@@ -192,7 +192,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             {/* AI loading explanation */}
             {aiGenerating && (
               <div className="absolute -top-12 right-0 bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[9px] text-text-secondary shadow-lg z-10 whitespace-nowrap">
-                {L4(lang, { ko: '세계관 시뮬레이터는 AI가 세계의 변화를 예측합니다.', en: 'World Simulator uses AI to predict world changes.', ja: '世界観 시뮬레이터는 AI가 세계의 변화를 예측합니다.', zh: '世界观 시뮬레이터는 AI가 세계의 변화를 예측합니다.' })}
+                {L4(lang, { ko: '세계관 시뮬레이터는 AI가 세계의 변화를 예측합니다.', en: 'World Simulator uses AI to predict world changes.', ja: '世界観シミュレーターはAIが世界の変化を予測します。', zh: '世界观模拟器由AI预测世界的变化。' })}
               </div>
             )}
             <button onClick={() => setShowPresetMenu(v => !v)}
@@ -246,7 +246,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>
-              {aiGenerating ? '\u23F3' : '\uD83E\uDD16'} {aiGenerating ? L4(lang, { ko: '생성 중...', en: 'Generating...', ja: '生成中...', zh: '生成中...' }) : L4(lang, { ko: '자동 생성', en: 'Auto Generate', ja: '자동 生成', zh: '자동 生成' })}
+              {aiGenerating ? '\u23F3' : '\uD83E\uDD16'} {aiGenerating ? L4(lang, { ko: '생성 중...', en: 'Generating...', ja: '生成中...', zh: '生成中...' }) : L4(lang, { ko: '자동 생성', en: 'Auto Generate', ja: '自動生成', zh: '自动生成' })}
             </button>
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           <div className="text-center py-8 space-y-3">
             {genreSelections.length === 0 ? (
               <div className="text-text-tertiary text-sm">
-                {L4(lang, { ko: "장르를 선택하세요 (최대 5개)", en: "Select genres (max 5)", ja: "ジャンル를 選択하세요 (最大 5件)", zh: "类型를 选择하세요 (最大 5个)" })}
+                {L4(lang, { ko: "장르를 선택하세요 (최대 5개)", en: "Select genres (max 5)", ja: "ジャンルを選択してください（最大5件）", zh: "请选择类型（最多5个）" })}
               </div>
             ) : (
               <>
@@ -331,7 +331,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
         {/* Footer stats */}
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
-            <span className="text-text-tertiary">{L4(lang, { ko: "문명", en: "Civs", ja: "문名", zh: "문人" })}: </span>
+            <span className="text-text-tertiary">{L4(lang, { ko: "문명", en: "Civs", ja: "文明", zh: "文明" })}: </span>
             <span className="text-accent-purple font-bold">{civs.length}</span>
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
@@ -368,7 +368,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           <div className="rounded-xl border border-accent-purple/20 bg-accent-purple/5 p-5 text-center space-y-3">
             <div className="text-3xl">{'\uD83C\uDF0D'}</div>
             <h3 className="text-sm font-bold text-accent-purple">
-              {L4(lang, { ko: '세계관 시뮬레이터', en: 'World Simulator', ja: '世界観 시뮬레이터', zh: '世界观 시뮬레이터' })}
+              {L4(lang, { ko: '세계관 시뮬레이터', en: 'World Simulator', ja: '世界観シミュレーター', zh: '世界观模拟器' })}
             </h3>
             <p className="text-xs text-text-secondary max-w-md mx-auto">
               {L4(lang, {

@@ -71,7 +71,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "데이터를 불러오지 못했습니다.", en: "Failed to load data.", ja: "データ를 불러오지 못했습니다.", zh: "数据를 불러오지 못했습니다." }));
+          setError(caught instanceof Error ? caught.message : L4(lang, { ko: "데이터를 불러오지 못했습니다.", en: "Failed to load data.", ja: "データを読み込めませんでした。", zh: "无法加载数据。" }));
         }
       } finally {
         if (!cancelled) {
@@ -137,7 +137,7 @@ export function NetworkPostEditClient({ postId }: { postId: string }) {
         <div className="site-shell py-10">
           <section className="premium-panel p-8 flex flex-col items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent-amber border-t-transparent mb-3" />
-            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "게시글을 불러오는 중...", en: "Loading post...", ja: "投稿을 불러오는 중...", zh: "帖子을 불러오는 중..." })}</p>
+            <p className="text-sm text-text-tertiary">{L4(lang, { ko: "게시글을 불러오는 중...", en: "Loading post...", ja: "投稿を読み込み中...", zh: "正在加载帖子..." })}</p>
           </section>
         </div>
       </main>

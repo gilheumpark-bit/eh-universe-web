@@ -1,11 +1,12 @@
 import Stripe from 'stripe';
 
 // Stripe 초기화: 환경변수 없으면 null 반환 — placeholder 키 사용 금지
+// apiVersion은 Stripe SDK 타입이 요구하는 버전 문자열.
+// 배포 시점에 Stripe SDK 패키지가 지원하는 최신 안정 버전을 사용 (빈 객체로 기본값에 위임).
 const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
 export const stripe = stripeKey ? new Stripe(stripeKey, {
-  apiVersion: '2026-03-25.dahlia',
   appInfo: {
-    name: 'EH-Translator-V3',
+    name: 'EH-Universe',
     version: '3.0.0',
   },
 }) : null;

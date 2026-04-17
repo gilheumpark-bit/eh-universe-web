@@ -1232,6 +1232,10 @@ const translations = {
     "lockCharRelations": "관계도 충돌 방지",
     "lockBannedWords": "금지어 적용"
   },
+  "system": {
+    "pipelineBlocked": "파이프라인 검증 실패로 AI 생성이 차단되었습니다.",
+    "qualityGateRetry": "[품질 게이트: 자동 재작성 시도 {n}/{max}]"
+  },
   "codeStudio": {
     "title": "코드 스튜디오",
     "aiChat": "채팅",

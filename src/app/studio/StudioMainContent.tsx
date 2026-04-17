@@ -25,7 +25,8 @@ import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
 import { useStudio } from './StudioContext';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
-import { getFile } from '@/lib/github-sync';
+import { getFile, getTree } from '@/lib/github-sync';
+import { repoFilesToConfig } from '@/lib/project-serializer';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
@@ -106,9 +107,27 @@ export default function StudioMainContent({ children }: { children?: React.React
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gh.connected]);
-  const handleGhSwitchBranch = useCallback((branch: string) => {
+  const handleGhSwitchBranch = useCallback(async (branch: string) => {
     gh.switchBranch(branch);
-  }, [gh]);
+    // [역동기화] 브랜치 전환 후 원격 파일 로드 → config 복원
+    try {
+      if (!gh.config?.token || !gh.config.owner || !gh.config.repo) return;
+      const branchConfig = { ...gh.config, branch };
+      const tree = await getTree(branchConfig);
+      const yamlEntries = tree.filter(e => e.type === 'blob' && (e.path.endsWith('.yaml') || e.path.endsWith('.md')));
+      const repoFiles: { path: string; content: string }[] = [];
+      for (const entry of yamlEntries.slice(0, 100)) {
+        const file = await getFile(branchConfig, entry.path);
+        if (file?.content) repoFiles.push({ path: entry.path, content: file.content });
+      }
+      if (repoFiles.length > 0) {
+        const patch = repoFilesToConfig(repoFiles);
+        if (Object.keys(patch).length > 0) {
+          setConfig(prev => ({ ...prev, ...patch }));
+        }
+      }
+    } catch { /* branch pull fail is non-fatal */ }
+  }, [gh, setConfig]);
   const handleGhCreateBranch = useCallback((name: string) => {
     gh.createBranchFromCurrent(name).then((ok) => {
       if (ok) gh.getBranches().then(setGhBranches).catch(() => {});
@@ -163,7 +182,7 @@ export default function StudioMainContent({ children }: { children?: React.React
           {/* Genre badge + ANS engine badge removed for cleaner header */}
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
-            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソード 탐색기', zh: '章节 탐색기' })} aria-label="Episode Explorer">
+            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })} aria-label="Episode Explorer">
               <BookOpen className="w-4 h-4" />
               {currentSession?.config?.episode != null && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-accent-purple text-[8px] font-black text-white leading-none">
@@ -346,7 +365,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       {/* First-session keyboard shortcuts hint */}
       {shortcutsHintVisible && !focusMode && (
         <div className="flex items-center justify-center gap-4 px-4 py-1 bg-bg-secondary/60 border-t border-border/30 text-[10px] text-text-tertiary shrink-0">
-          <span>{L4(language, { ko: 'F5: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'F5: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus', ja: 'F5: 執筆 | Ctrl+K: 検索 | Ctrl+S: 保存 | F11: 집중モード', zh: 'F5: 写作 | Ctrl+K: 搜索 | Ctrl+S: 保存 | F11: 집중模式' })}</span>
+          <span>{L4(language, { ko: 'F5: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'F5: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus', ja: 'F5: 執筆 | Ctrl+K: 検索 | Ctrl+S: 保存 | F11: 集中モード', zh: 'F5: 写作 | Ctrl+K: 搜索 | Ctrl+S: 保存 | F11: 专注模式' })}</span>
           <button onClick={dismissShortcutsHint} className="text-text-quaternary hover:text-text-secondary transition-colors px-1" aria-label="Dismiss">
             <X className="w-3 h-3" />
           </button>

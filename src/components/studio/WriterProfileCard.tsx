@@ -60,7 +60,7 @@ const WriterProfileCard: React.FC<WriterProfileCardProps> = ({ language }) => {
         <span className="text-xs text-text-tertiary font-mono">
           {profile.episodeCount} {L4(language, { ko: '에피소드', en: 'episodes', ja: 'エピソード', zh: '章节' })}
         </span>
-        <span className="text-[10px] text-text-quaternary font-mono" title={L4(language, { ko: '에피소드가 쌓일수록 높아집니다', en: 'Improves as you write more episodes', ja: 'エピソード가 쌓일수록 높아집니다', zh: '章节가 쌓일수록 높아집니다' })}>
+        <span className="text-[10px] text-text-quaternary font-mono" title={L4(language, { ko: '에피소드가 쌓일수록 높아집니다', en: 'Improves as you write more episodes', ja: 'エピソードが積み重なるほど高くなります', zh: '章节累积越多数值越高' })}>
           ({L4(language, { ko: '분석 정확도', en: 'analysis accuracy', ja: '分析精度', zh: '分析准确度' })} {Math.round(profile.levelConfidence * 100)}%)
         </span>
       </div>

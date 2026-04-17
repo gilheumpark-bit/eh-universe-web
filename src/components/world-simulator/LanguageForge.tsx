@@ -332,7 +332,7 @@ export function LanguageForge({
           {/* Add custom phoneme */}
           <div className="border border-border rounded-lg p-3 bg-bg-primary space-y-2">
             <h4 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-[family-name:var(--font-mono)]">
-              {L4(lang, { ko: "커스텀 음소 추가", en: "Add Custom Phoneme", ja: "커스텀 음소 追加", zh: "커스텀 음소 添加" })}
+              {L4(lang, { ko: "커스텀 음소 추가", en: "Add Custom Phoneme", ja: "カスタム音素を追加", zh: "添加自定义音素" })}
             </h4>
             <div className="flex flex-wrap gap-2">
               <input value={newPhForm.symbol} onChange={e => setNewPhForm(p => ({ ...p, symbol: e.target.value }))}
@@ -378,7 +378,7 @@ export function LanguageForge({
         <div className="space-y-4">
           {phonemes.length === 0 ? (
             <div className="text-center py-8 text-text-tertiary text-xs italic">
-              {L4(lang, { ko: "먼저 음소 탭에서 음소를 추가하세요", en: "Add phonemes in the Phonemes tab first", ja: "먼저 음소 탭에서 음소를 追加하세요", zh: "먼저 음소 탭에서 음소를 添加하세요" })}
+              {L4(lang, { ko: "먼저 음소 탭에서 음소를 추가하세요", en: "Add phonemes in the Phonemes tab first", ja: "先に音素タブで音素を追加してください", zh: "请先在音素标签中添加音素" })}
             </div>
           ) : (
             <>
@@ -421,7 +421,7 @@ export function LanguageForge({
                 <div className="flex gap-2">
                   <button onClick={addWord} disabled={!newWordMeaning.trim() || wordPhBuf.length === 0}
                     className="px-4 py-1.5 bg-accent-purple text-white rounded text-xs font-bold disabled:opacity-30">
-                    {L4(lang, { ko: "단어 등록", en: "Register Word", ja: "단어 登録", zh: "단어 提交" })}
+                    {L4(lang, { ko: "단어 등록", en: "Register Word", ja: "単語を登録", zh: "登记单词" })}
                   </button>
                   <button onClick={() => setWordPhBuf([])} className="px-3 py-1.5 bg-bg-secondary border border-border rounded text-xs text-text-tertiary">
                     {L4(lang, { ko: "초기화", en: "Clear", ja: "リセット", zh: "重置" })}
@@ -459,7 +459,7 @@ export function LanguageForge({
         <div className="space-y-4">
           {words.length === 0 ? (
             <div className="text-center py-8 text-text-tertiary text-xs italic">
-              {L4(lang, { ko: "먼저 어휘 탭에서 단어를 등록하세요", en: "Register words in the Vocabulary tab first", ja: "먼저 어휘 탭에서 단어를 登録하세요", zh: "먼저 어휘 탭에서 단어를 提交하세요" })}
+              {L4(lang, { ko: "먼저 어휘 탭에서 단어를 등록하세요", en: "Register words in the Vocabulary tab first", ja: "先に語彙タブで単語を登録してください", zh: "请先在词汇标签中登记单词" })}
             </div>
           ) : (
             <>
@@ -496,7 +496,7 @@ export function LanguageForge({
 
                   {civs.length > 0 && (
                     <div className="flex items-center gap-2 text-[9px] text-text-tertiary">
-                      <span>{L4(lang, { ko: "문명 지정:", en: "Assign to civ:", ja: "문名 지정:", zh: "문人 지정:" })}</span>
+                      <span>{L4(lang, { ko: "문명 지정:", en: "Assign to civ:", ja: "文明を指定:", zh: "指定文明:" })}</span>
                       {civs.map(c => (
                         <button key={c.id} onClick={() => {
                           setWords(prev => prev.map(w =>

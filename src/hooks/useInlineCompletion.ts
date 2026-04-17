@@ -69,13 +69,35 @@ export function useInlineCompletion(opts: UseInlineCompletionOpts): UseInlineCom
       if (characters && characters.length > 0) {
         body.characters = characters.slice(0, 10).map(c => c.name);
       }
-      // Detect language from text (simple heuristic)
-      const hasKorean = /[\uAC00-\uD7AF]/.test(textBefore.slice(-200));
-      body.language = hasKorean ? 'ko' : 'en';
+      // Detect language from text (한/일/중 구분)
+      const sample = textBefore.slice(-200);
+      const hasKorean = /[\uAC00-\uD7AF]/.test(sample);
+      const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(sample);
+      const hasChinese = /[\u4E00-\u9FFF]/.test(sample) && !hasJapanese;
+      body.language = hasKorean ? 'ko' : hasJapanese ? 'ja' : hasChinese ? 'zh' : 'en';
+
+      // 인증 헤더 구성 — Firebase JWT 우선, BYOK 키 fallback
+      const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      try {
+        // Firebase 로그인 상태면 ID 토큰
+        const { getAuth } = await import('firebase/auth');
+        const user = getAuth().currentUser;
+        if (user) {
+          const idToken = await user.getIdToken();
+          authHeaders['Authorization'] = `Bearer ${idToken}`;
+        }
+      } catch { /* firebase not ready */ }
+      // BYOK fallback — localStorage 키를 body.apiKey로 전달
+      if (!authHeaders['Authorization']) {
+        const byok = typeof window !== 'undefined'
+          ? localStorage.getItem('noa_api_key') || localStorage.getItem('apiKey_gemini') || ''
+          : '';
+        if (byok) body.apiKey = byok;
+      }
 
       const res = await fetch('/api/complete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify(body),
         signal: controller.signal,
       });

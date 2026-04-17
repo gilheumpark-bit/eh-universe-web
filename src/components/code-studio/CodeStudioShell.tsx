@@ -575,8 +575,8 @@ function CodeStudioShellInner() {
     setOpenFiles((prev) => prev.map((f) => f.id === id ? { ...f, name, language: detectLanguage(name) } : f));
   }, [fsRenameNode]);
 
-  const handleApplyCode = useCallback((code: string, fileName?: string) => {
-    const targetFileId = fileName 
+  const handleApplyCode = useCallback(async (code: string, fileName?: string) => {
+    const targetFileId = fileName
       ? openFiles.find(f => f.name === fileName)?.id || findFileNodeByName(files, fileName)?.id
       : activeFileId;
 
@@ -584,6 +584,25 @@ function CodeStudioShellInner() {
       toast(`Cannot find file: ${fileName ?? 'active file'}`, "error");
       return;
     }
+
+    // [NOA-AGI] apply-guard — SCOPE/CONTRACT/@block 편집 경계 보호
+    // MULTI_FILE_AGENT 플래그 활성 시 코드 적용 전 검증. critical 실패 시 사용자에게 경고 후 차단.
+    try {
+      const { isFeatureEnabled } = await import('@/lib/feature-flags');
+      if (isFeatureEnabled('MULTI_FILE_AGENT')) {
+        const { runApplyGuard } = await import('@/lib/code-studio/pipeline/apply-guard');
+        const original = openFiles.find(f => f.id === targetFileId)?.content ?? '';
+        const resolvedFileName = fileName ?? openFiles.find(f => f.id === targetFileId)?.name ?? 'unknown';
+        const decision = runApplyGuard({ original, modified: code, fileName: resolvedFileName });
+        if (decision.status === 'fail') {
+          const critical = decision.findings.find(f => f.severity === 'critical');
+          if (critical) {
+            toast(`Apply blocked: ${critical.message}`, 'error');
+            return;
+          }
+        }
+      }
+    } catch { /* guard module load failed — proceed without guard */ }
 
     setOpenFiles((prev) => {
       const exists = prev.some(f => f.id === targetFileId);
