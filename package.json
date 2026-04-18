@@ -47,7 +47,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@sentry/nextjs": "^10.46.0",
     "@stripe/stripe-js": "^9.0.1",
-    "@supabase/supabase-js": "^2.101.1",
+    "@supabase/supabase-js": "^2.103.3",
     "@tiptap/extension-character-count": "^3.22.3",
     "@tiptap/extension-placeholder": "^3.22.3",
     "@tiptap/pm": "^3.22.3",
