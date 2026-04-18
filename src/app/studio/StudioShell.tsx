@@ -570,7 +570,13 @@ export default function StudioShell() {
     onNewSession: createNewSession,
     onToggleFocus: () => setFocusMode(prev => !prev),
     onToggleShortcuts: () => setShowShortcuts(prev => !prev),
-    onSave: () => { triggerSave(); setAlertToast({ message: language === 'KO' ? '저장 완료' : 'Saved', variant: 'info' }); setTimeout(() => setAlertToast(null), 2000); },
+    onSave: () => {
+      triggerSave();
+      // [C] noa:alert 이벤트로 위임 — 언마운트 시 dismissTimer cleanup 자동 처리 (useEffect L237~)
+      window.dispatchEvent(new CustomEvent('noa:alert', {
+        detail: { message: language === 'KO' ? '저장 완료' : 'Saved', variant: 'info' },
+      }));
+    },
     onNewEpisode: () => {
       if (!currentSession) return;
       const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
@@ -938,13 +944,15 @@ export default function StudioShell() {
           setSessions(result.sessions);
           dispatchUi({ renameDialogOpen: false });
           triggerSave();
-          setAlertToast({
-            message: isKO
-              ? `${result.changedCount}건 변경되었습니다`
-              : `${result.changedCount} changes applied`,
-            variant: 'info',
-          });
-          setTimeout(() => setAlertToast(null), 3000);
+          // [C] noa:alert 이벤트로 위임 — 언마운트 시 dismissTimer cleanup 자동 처리
+          window.dispatchEvent(new CustomEvent('noa:alert', {
+            detail: {
+              message: isKO
+                ? `${result.changedCount}건 변경되었습니다`
+                : `${result.changedCount} changes applied`,
+              variant: 'info',
+            },
+          }));
         }}
         onClose={() => dispatchUi({ renameDialogOpen: false })}
       />
@@ -955,7 +963,7 @@ export default function StudioShell() {
         showQuickStartModal={showQuickStartModal} setShowQuickStartModal={setShowQuickStartModal}
         handleQuickStart={handleQuickStart} isQuickGenerating={isQuickGenerating}
         showApiKeyModal={showApiKeyModal} setShowApiKeyModal={setShowApiKeyModal}
-        hostedProviders={hostedProviders} setApiKeyVersion={setApiKeyVersion}
+        setApiKeyVersion={setApiKeyVersion}
         confirmState={confirmState} closeConfirm={closeConfirm}
         moveModal={moveModal} setMoveModal={setMoveModal} moveSessionToProject={moveSessionToProject}
         saveSlotModalOpen={saveSlotModalOpen} setSaveSlotModalOpen={setSaveSlotModalOpen}

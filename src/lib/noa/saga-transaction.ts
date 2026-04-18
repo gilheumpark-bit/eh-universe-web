@@ -244,16 +244,16 @@ export interface SignedEnvelope {
   sessionId: string;
 }
 
-/** Web Crypto API 기반 HMAC-SHA256 서명 */
+/**
+ * Web Crypto API 기반 HMAC-SHA256 서명.
+ * [C] WebCrypto 미지원 환경에서 폴백(단순 해시) 금지 — 감사 무결성 보호.
+ *     hmac.ts와 동일 패턴 (fallback → throw) 적용.
+ */
 async function hmacSign(data: string, key: string): Promise<string> {
   if (typeof crypto === 'undefined' || !crypto.subtle) {
-    // 폴백: 단순 해시 (서버 환경)
-    let hash = 0;
-    const combined = key + data;
-    for (let i = 0; i < combined.length; i++) {
-      hash = ((hash << 5) - hash + combined.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash).toString(16).padStart(8, '0');
+    throw new Error(
+      'HMAC requires Web Crypto API. Environment not supported — saga signing disabled.',
+    );
   }
   const encoder = new TextEncoder();
   const cryptoKey = await crypto.subtle.importKey(
@@ -263,17 +263,43 @@ async function hmacSign(data: string, key: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** SHA-256 해시 */
+/**
+ * SHA-256 해시.
+ * [C] WebCrypto 미지원 환경에서 폴백(단순 해시) 금지 — 해시 충돌 공격 방어.
+ */
 async function sha256(data: string): Promise<string> {
   if (typeof crypto === 'undefined' || !crypto.subtle) {
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      hash = ((hash << 5) - hash + data.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash).toString(16).padStart(8, '0');
+    throw new Error(
+      'SHA-256 requires Web Crypto API. Environment not supported — saga hashing disabled.',
+    );
   }
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * HSM 서명 키 해석.
+ * - 서버 환경: process.env.NOA_SAGA_KEY 우선.
+ * - 미설정 시: 'noa-hsm-dev-key' 폴백 + 개발용 WARN 로그 (1회만).
+ * - 프로덕션 환경에서 NOA_SAGA_KEY 없으면 콘솔 경고.
+ */
+let _sagaKeyWarned = false;
+function resolveSagaKey(): string {
+  const envKey =
+    typeof process !== 'undefined' && process.env && process.env.NOA_SAGA_KEY
+      ? process.env.NOA_SAGA_KEY
+      : '';
+  if (envKey) return envKey;
+  if (!_sagaKeyWarned) {
+    _sagaKeyWarned = true;
+    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        '[saga-transaction] NOA_SAGA_KEY env not set — using dev fallback key. ' +
+          'Set NOA_SAGA_KEY in production (required for HSM signature integrity).',
+      );
+    }
+  }
+  return 'noa-hsm-dev-key';
 }
 
 export class HSMSigner {
@@ -288,7 +314,7 @@ export class HSMSigner {
     const serialized = this.serialize(payload);
     const payloadHash = await sha256(serialized);
     // NOTE: 프로덕션에서는 WebAuthn 또는 서버 HSM으로 교체
-    const signature = await hmacSign(serialized, 'noa-hsm-dev-key');
+    const signature = await hmacSign(serialized, resolveSagaKey());
 
     return {
       payloadHash,
@@ -303,7 +329,7 @@ export class HSMSigner {
   async verify(envelope: SignedEnvelope, payload: OrbitPayload): Promise<boolean> {
     const expectedHash = await sha256(this.serialize(payload));
     if (expectedHash !== envelope.payloadHash) return false;
-    const expectedSig = await hmacSign(this.serialize(payload), 'noa-hsm-dev-key');
+    const expectedSig = await hmacSign(this.serialize(payload), resolveSagaKey());
     return expectedSig === envelope.signature;
   }
 

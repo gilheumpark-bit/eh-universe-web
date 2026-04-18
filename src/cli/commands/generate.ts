@@ -154,8 +154,8 @@ function buildQualityRulesFromCatalog(): string {
 // ============================================================
 
 export async function runGenerate(prompt: string, opts: GenerateOptions): Promise<void> {
-  const { printHeader, _colors, _icons } = require('../core/terminal-compat');
-  const { _Spinner } = require('../tui/progress');
+  // [K] 유령 destructuring 제거 — printHeader만 실제 사용 (colors/icons/Spinner 미사용)
+  const { printHeader } = require('../core/terminal-compat');
   printHeader('코드 생성');
   console.log('');
 

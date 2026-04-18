@@ -505,8 +505,7 @@ export default function MarketplacePanel({
       {/* Detail dialog */}
       {selected ? (
         <div
-          className="absolute inset-0 bg-black/60 flex items-stretch sm:items-center justify-center p-0 sm:p-4"
-          style={{ zIndex: "var(--z-modal, 50)" as unknown as number }}
+          className="absolute inset-0 bg-black/60 flex items-stretch sm:items-center justify-center p-0 sm:p-4 z-[var(--z-modal)]"
           role="dialog"
           aria-modal="true"
           aria-label={labels.detailTitle}

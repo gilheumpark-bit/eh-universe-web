@@ -47,8 +47,7 @@ export default function MarketplaceModal({ language, onClose }: MarketplaceModal
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4"
-      style={{ zIndex: "var(--z-modal, 50)" as unknown as number }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[var(--z-modal)]"
       role="presentation"
       data-testid="marketplace-modal"
       onClick={(e) => {

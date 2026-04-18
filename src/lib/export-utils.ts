@@ -35,7 +35,7 @@ function buildZip(files: { name: string; data: Uint8Array; store?: boolean }[]):
 
   for (const file of files) {
     const nameBytes = encoder.encode(file.name);
-    const crc = file.store ? crc32(file.data) : crc32(file.data);
+    const crc = crc32(file.data);
     const size = file.data.length;
 
     // Local file header (30 + name + data)

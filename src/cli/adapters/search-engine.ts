@@ -7,7 +7,8 @@
 
 const { execSync, execFileSync } = require('child_process');
 const { readdirSync, readFileSync, statSync } = require('fs');
-const { join, relative, _extname } = require('path');
+// [K] 유령 destructuring 제거 — extname 미사용
+const { join, relative } = require('path');
 
 // ============================================================
 // PART 1 — Ripgrep Integration (코드 내용 검색)

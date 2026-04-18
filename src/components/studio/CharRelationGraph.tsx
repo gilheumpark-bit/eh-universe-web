@@ -113,16 +113,17 @@ function useDragAndPan(
       return;
     }
     // Pan drag
-    if (panning.current) {
+    const pan = panning.current;
+    if (pan) {
       const svg = svgRef.current;
       if (!svg) return;
       const rect = svg.getBoundingClientRect();
-      const dx = (e.clientX - panning.current.startX) / rect.width * (SVG_W / transform.zoom);
-      const dy = (e.clientY - panning.current.startY) / rect.height * (SVG_H / transform.zoom);
+      const dx = (e.clientX - pan.startX) / rect.width * (SVG_W / transform.zoom);
+      const dy = (e.clientY - pan.startY) / rect.height * (SVG_H / transform.zoom);
       setTransform(prev => ({
         ...prev,
-        panX: panning.current!.startPanX + dx,
-        panY: panning.current!.startPanY + dy,
+        panX: pan.startPanX + dx,
+        panY: pan.startPanY + dy,
       }));
     }
   }, [edges, nodesRef, setNodes, toSVGCoord, transform.zoom, setTransform]);

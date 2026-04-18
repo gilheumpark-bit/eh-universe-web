@@ -20,6 +20,8 @@ export interface DaemonConfig {
   allowedOrigins: string[];
   maxConnections: number;
   analysisTimeout: number;
+  /** 파일 워치/읽기 허용 루트 (path.resolve 후 startsWith 검증) */
+  allowedRoots?: string[];
 }
 
 export interface ClientSession {
@@ -64,7 +66,59 @@ const DEFAULT_CONFIG: DaemonConfig = {
   allowedOrigins: ['vscode-webview://*', 'http://localhost:*', 'https://localhost:*'],
   maxConnections: 10,
   analysisTimeout: 30000,
+  // 기본값 없음 — 런타임에 process.cwd()로 세팅
+  allowedRoots: undefined,
 };
+
+// ============================================================
+// Security helpers — path traversal + origin allowlist 검증
+// ============================================================
+
+/**
+ * 요청 경로가 allowedRoots 내부인지 검증.
+ * [C] path traversal 방어 — resolve 후 startsWith 체크.
+ * allowedRoots 미설정 시 process.cwd()로 폴백.
+ */
+function isPathAllowed(filePath: string, allowedRoots?: string[]): boolean {
+  try {
+    const { resolve } = require('path');
+    const resolvedPath = resolve(filePath);
+    const roots =
+      allowedRoots && allowedRoots.length > 0
+        ? allowedRoots.map((r) => resolve(r))
+        : [resolve(process.cwd())];
+    return roots.some((root) => {
+      // 루트 자체이거나 루트/ 로 시작하는 경우만 허용 (부분 매칭 방지)
+      return resolvedPath === root || resolvedPath.startsWith(root + require('path').sep);
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * WebSocket origin이 allowedOrigins 패턴 목록과 매칭되는지 검증.
+ * 패턴: `scheme://host:port` 또는 `scheme://host:*` (와일드카드 포트).
+ */
+function isOriginAllowed(origin: string | undefined, allowedOrigins: string[]): boolean {
+  // origin 미전송(동일 출처) 또는 허용 목록 미설정 → 허용 (로컬 데몬 용도)
+  if (!origin) return true;
+  if (!allowedOrigins || allowedOrigins.length === 0) return true;
+
+  for (const pattern of allowedOrigins) {
+    if (pattern === '*') return true;
+    // 와일드카드 변환: scheme://host:* → scheme://host:<port>
+    const regex = new RegExp(
+      '^' +
+        pattern
+          .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*') +
+        '$',
+    );
+    if (regex.test(origin)) return true;
+  }
+  return false;
+}
 
 // Step 9: 분석 결과 → VS Code Diagnostic 포맷 변환기
 export function formatFindingsForVSCode(
@@ -186,9 +240,23 @@ class SessionTracker {
 // PART 3 — WebSocket Frame Handler (RFC 6455, 외부 의존성 0)
 // ============================================================
 
-function acceptWebSocket(req: IncomingMessage, socket: Duplex): boolean {
+function acceptWebSocket(
+  req: IncomingMessage,
+  socket: Duplex,
+  allowedOrigins?: string[],
+): boolean {
   const key = req.headers['sec-websocket-key'];
   if (!key) return false;
+
+  // [C] Origin 화이트리스트 검증 — CSRF/크로스 오리진 방어.
+  //     allowedOrigins 미설정 시 (로컬 전용) 허용.
+  const origin = req.headers.origin as string | undefined;
+  if (allowedOrigins && !isOriginAllowed(origin, allowedOrigins)) {
+    socket.write(
+      'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nOrigin not allowed',
+    );
+    return false;
+  }
 
   const GUID = '258EAFA5-E914-47DA-95CA-5AB5DC76E98B';
   const accept = createHash('sha1').update(key + GUID).digest('base64');
@@ -280,12 +348,13 @@ async function handleMessage(
   msg: WSMessage,
   session: ClientSession,
   tracker: SessionTracker,
+  cfg: DaemonConfig,
 ): Promise<void> {
   tracker.touch(session.id);
   const requestId = msg.id ?? `req-${Date.now().toString(36)}`;
 
   // Step 12: 에러 복구 — 분석 엔진이 뻗어도 소켓은 안 죽음
-  try { await _handleMessageInner(msg, session, tracker, requestId); }
+  try { await _handleMessageInner(msg, session, tracker, requestId, cfg); }
   catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
     console.error(`  ⚠️  [${session.id}] 핸들러 에러: ${errMsg}`);
@@ -298,6 +367,7 @@ async function _handleMessageInner(
   session: ClientSession,
   tracker: SessionTracker,
   requestId: string,
+  cfg: DaemonConfig,
 ): Promise<void> {
 
   switch (msg.type) {
@@ -452,6 +522,15 @@ async function _handleMessageInner(
     case 'subscribe_file': {
       // Step 8: 파일 워치 구독 (데몬이 파일 변경 감지 → 자동 분석)
       const { filePath: watchPath } = msg.payload as { filePath: string };
+      // [C] Path traversal 방어 — allowedRoots 내부 경로만 허용.
+      if (!isPathAllowed(watchPath, cfg.allowedRoots)) {
+        sendWS(session.socket, {
+          type: 'error',
+          id: requestId,
+          payload: { message: `Path not allowed: ${watchPath}` },
+        });
+        break;
+      }
       try {
         const { watch } = require('fs');
         const watcher = watch(watchPath, { persistent: false }, async () => {
@@ -570,7 +649,7 @@ export function startDaemon(config: Partial<DaemonConfig> = {}): { stop: () => v
 
   // WebSocket Upgrade
   server.on('upgrade', (req: IncomingMessage, socket: Duplex) => {
-    if (!acceptWebSocket(req, socket)) {
+    if (!acceptWebSocket(req, socket, cfg.allowedOrigins)) {
       socket.destroy();
       return;
     }
@@ -615,7 +694,7 @@ export function startDaemon(config: Partial<DaemonConfig> = {}): { stop: () => v
         if (frame.opcode === 0x01) {
           try {
             const msg: WSMessage = JSON.parse(frame.payload);
-            handleMessage(msg, session, tracker).catch((e) => {
+            handleMessage(msg, session, tracker, cfg).catch((e) => {
               sendWS(socket, { type: 'error', payload: { message: (e as Error).message } });
             });
           } catch {

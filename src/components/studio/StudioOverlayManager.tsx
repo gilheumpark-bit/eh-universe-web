@@ -20,7 +20,6 @@ interface StudioOverlayManagerProps {
   isQuickGenerating: boolean;
   showApiKeyModal: boolean;
   setShowApiKeyModal: (v: boolean) => void;
-  hostedProviders: Partial<Record<string, boolean>>;
   setApiKeyVersion: React.Dispatch<React.SetStateAction<number>>;
   confirmState: { open: boolean; title: string; message: string; confirmLabel?: string; cancelLabel?: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void };
   closeConfirm: () => void;
@@ -57,7 +56,7 @@ interface StudioOverlayManagerProps {
 export default function StudioOverlayManager({
   language, isKO,
   showQuickStartModal, setShowQuickStartModal, handleQuickStart, isQuickGenerating,
-  showApiKeyModal, setShowApiKeyModal, hostedProviders: _hostedProviders, setApiKeyVersion,
+  showApiKeyModal, setShowApiKeyModal, setApiKeyVersion,
   confirmState, closeConfirm,
   moveModal, setMoveModal, moveSessionToProject,
   saveSlotModalOpen, setSaveSlotModalOpen, activeTab, currentSession, updateCurrentSession, triggerSave,

@@ -119,24 +119,6 @@ function countMatches(value: string, rx: RegExp): number {
   return count;
 }
 
-/** Extract ±contextLen chars around the first regex match. */
-function snippet(value: string, rx: RegExp, contextLen = 30): { before: string; after: string } {
-  if (!value) return { before: '', after: '' };
-  const local = new RegExp(rx.source, rx.flags);
-  const match = local.exec(value);
-  if (!match) return { before: '', after: '' };
-  const start = Math.max(0, match.index - contextLen);
-  const end = Math.min(value.length, match.index + match[0].length + contextLen);
-  const head = start > 0 ? '…' : '';
-  const tail = end < value.length ? '…' : '';
-  const beforeSlice = value.slice(start, end);
-  const afterSlice = value
-    .slice(start, end)
-    .replace(new RegExp(rx.source, rx.flags), ''); // placeholder, replaced below
-  // Rebuild the `after` snippet using the caller-provided replacement is done outside.
-  return { before: head + beforeSlice + tail, after: head + afterSlice + tail };
-}
-
 /** Build a preview snippet pair with actual replacement text. */
 function buildSnippetPair(value: string, rx: RegExp, to: string, contextLen = 30): { before: string; after: string } {
   if (!value) return { before: '', after: '' };

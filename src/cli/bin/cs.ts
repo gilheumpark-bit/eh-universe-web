@@ -63,8 +63,8 @@ program
   .action(async (path, opts) => {
     // Precision mode: AI-powered review
     if (opts.precision || opts.precisionQuick) {
-      const { readFileSync, _readdirSync, statSync } = require('fs');
-      const { _join, _extname, _relative } = require('path');
+      // [K] 유령 destructuring 제거 — 실제 사용되는 fs API만 유지 (path 미사용)
+      const { readFileSync, statSync } = require('fs');
       const { runPrecisionReview } = require('../ai/precision-checklist');
       const targetPath = path ?? './src';
       const stat = statSync(targetPath);
