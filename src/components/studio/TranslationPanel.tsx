@@ -151,7 +151,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     localStorage.setItem('eh-novel-glossary', JSON.stringify(g));
   }, []);
 
-  const { translateEpisode, translateBatch: _translateBatch, progress, batchProgress: _batchProgress, isTranslating, abort, driftWarnings, voiceViolations, voiceRetryNeeded, voiceRetryHint, ragStatus } = useTranslation({
+  const { translateEpisode, translateBatch: _translateBatch, progress, batchProgress: _batchProgress, isTranslating, abort, driftWarnings, voiceViolations, voiceRetryNeeded, voiceRetryHint, ragStatus, retryWithVoiceHint } = useTranslation({
     projectContext,
     onProgress: (p) => {
       if (p.status === 'scoring') {
@@ -409,22 +409,36 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       ) : null}
 
       {/* Voice Guard 재번역 권장 배지 — voiceRetryNeeded=true 시 노출.
-          자동 재번역 루프 미구현 — 사용자가 수동으로 재시도 트리거 가능. */}
+          "힌트로 재번역" 버튼 1회 클릭으로 retryWithVoiceHint() 호출 → 수동 트리거.
+          자동 루프는 비용/UX 관리로 미구현 — 사용자가 결정. */}
       {voiceRetryNeeded && voiceRetryHint && (
-        <div
-          className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg"
-          title={voiceRetryHint}
-        >
-          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs">
-            <div className="font-medium text-text-primary mb-0.5">
-              {isKO ? '캐릭터 말투 위반 감지' : 'Character voice violations detected'}
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1 text-xs">
+                <div className="font-medium text-text-primary mb-0.5">
+                  {isKO ? '캐릭터 말투 개선 가능' : 'Character voice improvements possible'}
+                </div>
+                <div className="text-text-secondary">
+                  {isKO
+                    ? `${voiceViolations.filter(v => v.severity === 'error').length}건의 심각한 위반 — 힌트를 반영해 다시 번역할 수 있습니다.`
+                    : `${voiceViolations.filter(v => v.severity === 'error').length} critical violation(s) — re-translate with hint to improve.`}
+                </div>
+              </div>
             </div>
-            <div className="text-text-secondary">
-              {isKO
-                ? `${voiceViolations.filter(v => v.severity === 'error').length}건의 심각한 위반 — 재번역을 권장합니다.`
-                : `${voiceViolations.filter(v => v.severity === 'error').length} critical violation(s) — re-translation recommended.`}
-            </div>
+            <button
+              type="button"
+              onClick={() => { void retryWithVoiceHint(); }}
+              disabled={isTranslating}
+              className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed text-amber-200 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              aria-label={isKO ? '힌트로 재번역 실행' : 'Retry translation with hint'}
+            >
+              {isKO ? '힌트로 재번역' : 'Retry with hint'}
+            </button>
+          </div>
+          <div className="text-xs text-text-tertiary mt-2 line-clamp-2" title={voiceRetryHint}>
+            {voiceRetryHint.length > 120 ? `${voiceRetryHint.slice(0, 120)}...` : voiceRetryHint}
           </div>
         </div>
       )}

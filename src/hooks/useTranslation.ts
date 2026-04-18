@@ -153,6 +153,15 @@ interface UseTranslationReturn {
    * projectContext 존재만으로는 RAG 성공이 보장되지 않음 (silent fallback 가능).
    */
   ragStatus: RagStatus;
+  /**
+   * Voice 힌트로 수동 재번역 트리거 — 사용자가 버튼으로 1회 재시도.
+   * - 마지막 translateEpisode 입력 (manuscript + config) 를 재사용
+   * - voiceRetryHint 를 config.contextBridge 에 append 해서 systemPrompt 에 주입
+   * - 재번역 중에는 isRetryingRef 락으로 중복 호출 차단
+   * - 실패 시 기존 상태 유지 (퇴행 방지)
+   * - 자동 루프는 복잡도/비용 문제로 미구현 — 1회 수동 재시도만 허용
+   */
+  retryWithVoiceHint: () => Promise<void>;
 }
 
 // ============================================================
@@ -322,21 +331,139 @@ function mergeScores(a: ChunkScoreDetail, b: ChunkScoreDetail): ChunkScoreDetail
 //
 // 전략:
 //   - 영문/숫자: \b word boundary 사용 (정확)
-//   - CJK (한/중/일): word boundary 가 작동하지 않으므로 길이 ≥ 2 + 포함 여부.
-//     완벽한 토크나이저는 사전 필요 — 현 시점은 휴리스틱.
+//   - 한국어: 앞뒤 한글 경계 + 조사 화이트리스트 — "그림자가" 매치, "큰그림자" 차단
+//   - 일본어: 앞 한자/카나 차단 + 뒤 조사/구두점 매치 — "魔王だ" 매치, "大魔王" 차단
+//   - 중국어: 길이 ≥ 2 + 포함 여부 (기존 휴리스틱 유지, 조사 체계 없음)
 // [C] target 빈 문자열, 1글자 단어 skip
-// [C] escapeRegex 로 정규식 메타 문자 방어 ($, *, +, ?, ^, ., 등)
+// [G] 정규식은 모듈 상수로 사전 컴파일 (반복 호출 최적화)
+// [G] indexOf + searchFrom 증분으로 O(n) 유지
 
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// [G] 사전 컴파일된 정규식 — findGlossaryUsage 가 glossary.length 만큼 호출되므로
+//     매 호출마다 RegExp 생성 비용 절감.
 const CJK_REGEX = /[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]/;
+const KO_CHAR_REGEX = /[가-힣]/;
+const JP_KANA_KANJI_REGEX = /[一-龠ぁ-んァ-ン]/;
+const JP_HIRAGANA_KATAKANA_REGEX = /[\u3040-\u309F\u30A0-\u30FF]/;
+const JP_BOUNDARY_PUNCT_REGEX = /[。、！？「」『』,.!?\s]/;
+
+// 한국어 조사/어미 — target 뒤에 붙어도 매치 유효 (긴 것 우선 정렬).
+// 예: "그림자에서" (에서) 매치, "그림자가" (가) 매치, "그림자마을" (마) 비매치.
+export const KO_PARTICLES_AFTER = [
+  '입니다', '였다', '이었다', '다가', '까지', '에서', '에게', '께서',
+  '이다', '부터', '라고', '라는', '지만', '니까',
+  '으로', '해요', '합니다',
+  '은', '는', '을', '를', '의', '에', '도', '만', '께',
+  '이', '가', '로', '와', '과', '해', '다', '면',
+];
+
+// 일본어 조사 — target 뒤에 붙으면 매치.
+// 예: "魔王は" 매치, "魔王が" 매치. "大魔王" 은 앞 한자 차단으로 비매치.
+export const JP_PARTICLES_AFTER = [
+  'である', 'です', 'した',
+  'から', 'まで', 'より',
+  'は', 'が', 'を', 'に', 'の', 'で', 'と', 'へ',
+  'や', 'か', 'も', 'だ',
+];
+
+/**
+ * 한국어 단어 경계 인식 검색.
+ * - 앞에 한글이 있으면 복합단어 가능성 → 매치 안 함 ("큰그림자" 안 "그림자")
+ * - 뒤가 한글이면 조사 체크 → 조사면 매치 ("그림자가"), 아니면 비매치 ("그림자마을")
+ * - 앞뒤 모두 비한글/문장부호면 매치
+ * [G] indexOf + searchFrom 증분 O(n) — 매치 실패 시 index+1 로 다음 후보 스캔.
+ */
+export function findKOBoundaryMatch(text: string, target: string): boolean {
+  if (!text || !target) return false;
+  if (target.length === 0) return false;
+
+  let searchFrom = 0;
+  while (searchFrom <= text.length - target.length) {
+    const index = text.indexOf(target, searchFrom);
+    if (index === -1) return false;
+
+    const before = index > 0 ? text[index - 1] : '';
+    const afterIndex = index + target.length;
+    const after = afterIndex < text.length ? text[afterIndex] : '';
+
+    // 1. 앞 한글 → 복합단어 → skip
+    if (before && KO_CHAR_REGEX.test(before)) {
+      searchFrom = index + 1;
+      continue;
+    }
+
+    // 2. 뒤 한글이면 조사 확인 (최대 5자까지 check)
+    if (after && KO_CHAR_REGEX.test(after)) {
+      const suffix = text.slice(afterIndex, afterIndex + 5);
+      const hasParticle = KO_PARTICLES_AFTER.some(p => suffix.startsWith(p));
+      if (!hasParticle) {
+        searchFrom = index + 1;
+        continue;
+      }
+    }
+
+    // 유효 매치 — 앞뒤 경계 모두 통과
+    return true;
+  }
+  return false;
+}
+
+/**
+ * 일본어 단어 경계 인식 검색.
+ * - 앞에 한자/히라가나/카타카나 있으면 복합단어 → 매치 안 함 ("大魔王" 안 "魔王")
+ * - 뒤가 비일본어(조사/구두점/공백/영숫자) → 매치
+ * - 뒤가 일본어 문자면 조사 화이트리스트 확인
+ */
+export function findJPBoundaryMatch(text: string, target: string): boolean {
+  if (!text || !target) return false;
+  if (target.length === 0) return false;
+
+  let searchFrom = 0;
+  while (searchFrom <= text.length - target.length) {
+    const index = text.indexOf(target, searchFrom);
+    if (index === -1) return false;
+
+    const before = index > 0 ? text[index - 1] : '';
+    const afterIndex = index + target.length;
+
+    // 1. 앞 한자/카나 → 복합단어 → skip
+    if (before && JP_KANA_KANJI_REGEX.test(before)) {
+      searchFrom = index + 1;
+      continue;
+    }
+
+    // 2. 뒤 문자 분기
+    if (afterIndex >= text.length) {
+      // 문장 끝 → 매치
+      return true;
+    }
+    const after = text[afterIndex];
+
+    // 뒤가 일본어 (한자/히라가나/카타카나) 가 아니면 → 경계 OK
+    if (!JP_KANA_KANJI_REGEX.test(after)) {
+      return true;
+    }
+
+    // 뒤가 일본어 → 조사 화이트리스트 확인
+    const suffix = text.slice(afterIndex, afterIndex + 3);
+    const hasParticle = JP_PARTICLES_AFTER.some(p => suffix.startsWith(p));
+    if (hasParticle) return true;
+
+    // 조사 아닌 일본어 → 복합단어로 간주 → skip
+    searchFrom = index + 1;
+  }
+  return false;
+}
 
 /**
  * glossary 항목 중 translatedText 에 실제 등장한 것만 반환.
- * - 영문/숫자 target: word boundary 매칭
- * - CJK target: 길이 ≥ 2 + 포함 여부 (휴리스틱)
+ * - 영문/숫자 target: \b word boundary 매칭
+ * - 한국어 target: KO boundary (앞 한글 차단 + 뒤 조사 허용)
+ * - 일본어 target: JP boundary (앞 한자/카나 차단 + 뒤 조사/구두점 허용)
+ * - 중국어 target: 길이 ≥ 2 + 포함 여부 (기존 휴리스틱 유지)
  *
  * @returns 사용된 glossary entry 의 얕은 복사. 원본 객체 mutate 없음.
  */
@@ -351,27 +478,44 @@ export function findGlossaryUsage<T extends { source: string; target: string; co
   for (const g of glossary) {
     if (!g || !g.target || g.target.length < 2) continue;
     const target = g.target;
-    const isCJK = CJK_REGEX.test(target);
 
-    if (isCJK) {
-      // CJK: word boundary 부재 → 길이 + 포함 매칭. false positive 일부 잔존하나
-      // 단순 substring 보다 정밀 (1자 단어 제외로 최소 노이즈 차단).
+    // 한국어 우선 판별 (한글은 CJK 범위 안의 별도 정규식)
+    if (KO_CHAR_REGEX.test(target)) {
+      if (findKOBoundaryMatch(translatedText, target)) {
+        used.push(g);
+      }
+      continue;
+    }
+
+    // 일본어 판별 (히라가나/카타카나 존재 — 한자만 있으면 중국어로 fallback)
+    if (JP_HIRAGANA_KATAKANA_REGEX.test(target)) {
+      if (findJPBoundaryMatch(translatedText, target)) {
+        used.push(g);
+      }
+      continue;
+    }
+
+    // CJK (한자만 있는 경우 — 중국어 또는 순 한자 고유명사)
+    if (CJK_REGEX.test(target)) {
+      // 한자만 있는 target: 단순 include (기존 동작 유지 — 중국어는 조사 체계 없음).
+      // [G] substring 매칭 — 2자 이상 한자 고유명사는 false positive 비율 낮음.
       if (translatedText.includes(target)) {
         used.push(g);
       }
-    } else {
-      // ASCII/라틴: \b word boundary 로 부분 단어 매칭 차단.
-      // 예: target="Hero" 일 때 "Heroic" 비매칭, "Hero" 매칭.
-      try {
-        const pattern = new RegExp(`\\b${escapeRegex(target)}\\b`, 'i');
-        if (pattern.test(translatedText)) {
-          used.push(g);
-        }
-      } catch {
-        // [C] RegExp 생성 실패 (escape 실패 등) → substring fallback
-        if (translatedText.toLowerCase().includes(target.toLowerCase())) {
-          used.push(g);
-        }
+      continue;
+    }
+
+    // ASCII/라틴: \b word boundary 로 부분 단어 매칭 차단.
+    // 예: target="Hero" 일 때 "Heroic" 비매칭, "Hero" 매칭.
+    try {
+      const pattern = new RegExp(`\\b${escapeRegex(target)}\\b`, 'i');
+      if (pattern.test(translatedText)) {
+        used.push(g);
+      }
+    } catch {
+      // [C] RegExp 생성 실패 (escape 실패 등) → substring fallback
+      if (translatedText.toLowerCase().includes(target.toLowerCase())) {
+        used.push(g);
       }
     }
   }
@@ -526,6 +670,14 @@ export function useTranslation({
   const inFlightRef = useRef(false);
   const progressRef = useRef(progress); // 클로저에서 최신 progress 접근용
   progressRef.current = progress;
+  // [C] 마지막 translateEpisode 입력 스냅샷 — retryWithVoiceHint 가 재사용.
+  //     신규 번역 시작 시마다 덮어써서 최신 번역만 재시도 대상으로 유지.
+  const lastTranslationInputRef = useRef<{
+    manuscript: EpisodeManuscript;
+    config: Partial<TranslationConfig>;
+  } | null>(null);
+  // [C] 재시도 락 — 사용자 rapid click 방어 + 재시도 중 translateEpisode 재진입 차단.
+  const isRetryingRef = useRef(false);
 
   const updateProgress = useCallback((patch: Partial<TranslationProgress>) => {
     setProgress((prev: TranslationProgress) => {
@@ -628,6 +780,12 @@ export function useTranslation({
     if (!_isInternal) {
       if (inFlightRef.current) return null;
       inFlightRef.current = true;
+      // [C] 재시도용 입력 스냅샷 저장 — 재시도 경로(_isInternal=true 대체 호출) 가 아니라
+      //     사용자 진입 경로일 때만 덮어쓴다. 내부 batch 재호출이 덮어쓰지 않도록 분기.
+      lastTranslationInputRef.current = {
+        manuscript,
+        config: configOverride ?? {},
+      };
     }
 
     const mode: TranslationMode = configOverride?.mode ?? 'fidelity';
@@ -984,6 +1142,51 @@ export function useTranslation({
 
   const abort = useCallback(() => { abortRef.current?.abort(); }, []);
 
+  /**
+   * Voice Guard 힌트로 마지막 번역을 재시도.
+   * - 마지막 translateEpisode 입력 (manuscript + config) 을 재사용
+   * - voiceRetryHint 를 config.contextBridge 에 append → systemPrompt 에 주입
+   * - 재시도 1회 한도 (isRetryingRef 락 + voiceRetryNeeded 초기화 없이 중복 클릭 방어)
+   * - translateEpisode 내부가 voiceViolations 를 재계산 → UI 가 자동 갱신
+   * - 실패 시 기존 상태 유지 (setVoiceViolations 건드리지 않음)
+   * [C] voiceRetryHint 빈 문자열 / lastInput null → no-op
+   * [C] isRetryingRef 로 동시 재시도 차단
+   */
+  const retryWithVoiceHint = useCallback(async () => {
+    // [C] no-op 가드: 힌트 없음, 재시도 필요 없음, 락 잡힘, 번역 중
+    if (!voiceRetryNeeded) return;
+    if (!voiceRetryHint || !voiceRetryHint.trim()) return;
+    if (!lastTranslationInputRef.current) return;
+    if (isRetryingRef.current) return;
+    if (inFlightRef.current) return;
+
+    isRetryingRef.current = true;
+    try {
+      const { manuscript, config: originalConfig } = lastTranslationInputRef.current;
+      // Voice 힌트를 contextBridge 에 append — 기존 bridge 를 보존.
+      // contextBridge 는 buildTranslationSystemPrompt PART 5 에서 [Context from previous chapter]
+      // 블록으로 주입되며, Voice 힌트를 같은 블록에 덧붙여 재번역 시 말투 규칙을 상기시킴.
+      const existingBridge = (originalConfig.contextBridge ?? '').trim();
+      const enhancedBridge = existingBridge
+        ? `${existingBridge}\n\n[Voice Retry Hint]\n${voiceRetryHint}`
+        : `[Voice Retry Hint]\n${voiceRetryHint}`;
+
+      const enhancedConfig: Partial<TranslationConfig> = {
+        ...originalConfig,
+        contextBridge: enhancedBridge,
+      };
+
+      // translateEpisode 는 내부에서 voiceViolations / voiceRetryNeeded / voiceRetryHint 를 재갱신.
+      // _isInternal=true 를 주지 않아 inFlightRef 가 정상 관리됨.
+      await translateEpisode(manuscript, enhancedConfig);
+    } catch (err) {
+      logger.warn('Translation', 'voice retry failed', err);
+      // [C] 실패 시 상태 건드리지 않음 → 기존 번역 그대로 유지
+    } finally {
+      isRetryingRef.current = false;
+    }
+  }, [voiceRetryNeeded, voiceRetryHint, translateEpisode]);
+
   return {
     translateEpisode,
     translateBatch,
@@ -996,10 +1199,11 @@ export function useTranslation({
     voiceRetryNeeded,
     voiceRetryHint,
     ragStatus,
+    retryWithVoiceHint,
   };
 }
 
 // IDENTITY_SEAL: PART-1 | role=ImportsTypes | inputs=none | outputs=UseTranslationReturn,RagStatus
 // IDENTITY_SEAL: PART-2 | role=AIHelper | inputs=prompt,signal | outputs=string,ChunkScoreDetail
-// IDENTITY_SEAL: PART-2B | role=GlossaryUsageTokenizer | inputs=glossary,translatedText | outputs=usedGlossary[]
-// IDENTITY_SEAL: PART-3 | role=HookImpl | inputs=manuscript,config | outputs=TranslatedEpisode,progress,ragStatus
+// IDENTITY_SEAL: PART-2B | role=GlossaryUsageTokenizer | inputs=glossary,translatedText | outputs=usedGlossary[],findKOBoundaryMatch,findJPBoundaryMatch
+// IDENTITY_SEAL: PART-3 | role=HookImpl | inputs=manuscript,config | outputs=TranslatedEpisode,progress,ragStatus,retryWithVoiceHint

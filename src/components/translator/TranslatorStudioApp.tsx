@@ -3,7 +3,7 @@
 import { TranslatorContext } from './core/TranslatorContext';
 import { TranslatorShell } from './TranslatorShell';
 import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Key } from 'lucide-react';
+import { Key, BookOpen } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
 import { getApiKey, hasDgxService, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
@@ -19,6 +19,7 @@ import {
 } from '@/lib/supabase';
 import { useAppDialog } from '@/hooks/useAppDialog';
 import { TranslatorModals } from './TranslatorModals';
+import { GlossaryManagerDialog, type GlossaryDialogLang } from './GlossaryManagerDialog';
 import {
   PROJECT_LIBRARY_KEY,
   MAX_LOCAL_PROJECTS,
@@ -44,6 +45,7 @@ import {
 import { getGlossaryManager } from '@/lib/translation/glossary-manager';
 import {
   buildProjectTranslationContext,
+  loadLocalGlossary,
   type TranslationProjectContext,
 } from '@/lib/translation/project-bridge';
 import type {
@@ -155,6 +157,12 @@ export default function TranslatorStudioApp() {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chapters' | 'context'>('chapters');
   const [showExportOptions, setShowExportOptions] = useState(false);
+  // [Glossary Dialog] open/close + entry count badge (updated on close)
+  const [glossaryDialogOpen, setGlossaryDialogOpen] = useState(false);
+  const [glossaryEntryCount, setGlossaryEntryCount] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    try { return loadLocalGlossary().length; } catch { return 0; }
+  });
 
   // Specialized Contexts
   const [worldContext, setWorldContext] = useState('');
@@ -1784,6 +1792,36 @@ export default function TranslatorStudioApp() {
           <TranslatorShell />
         </div>
       </div>
+      {/* Glossary Manager — persistent floating trigger (bottom-right, above status bar) */}
+      <button
+        type="button"
+        onClick={() => setGlossaryDialogOpen(true)}
+        className="fixed bottom-4 right-4 z-40 px-3 py-1.5 text-xs bg-bg-secondary hover:bg-bg-tertiary border border-border rounded-full shadow-lg transition inline-flex items-center gap-1.5 text-text-primary focus-visible:ring-2 focus-visible:ring-accent-blue"
+        aria-label={langKo ? '용어집 관리' : 'Glossary manager'}
+        title={langKo ? '용어집 관리' : 'Glossary manager'}
+      >
+        <BookOpen className="w-3.5 h-3.5" aria-hidden />
+        <span>{langKo ? '용어집' : 'Glossary'}</span>
+        <span className="text-[10px] text-text-tertiary tabular-nums">
+          ({glossaryEntryCount})
+        </span>
+      </button>
+      <GlossaryManagerDialog
+        open={glossaryDialogOpen}
+        onClose={() => {
+          setGlossaryDialogOpen(false);
+          // Refresh count after close (user may have added/deleted)
+          try { setGlossaryEntryCount(loadLocalGlossary().length); } catch { /* ignore */ }
+        }}
+        lang={((): GlossaryDialogLang => {
+          switch (lang) {
+            case 'en': return 'EN';
+            case 'ja': return 'JP';
+            case 'zh': return 'CN';
+            default: return 'KO';
+          }
+        })()}
+      />
       <TranslatorModals
         showApiKeyModal={showApiKeyModal}
         onCloseApiKeyModal={() => { setShowApiKeyModal(false); setApiKeyRefresh((n) => n + 1); }}
