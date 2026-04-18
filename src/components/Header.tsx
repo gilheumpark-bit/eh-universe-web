@@ -106,6 +106,8 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         }),
       })),
       { href: "/about", label: L4(lang, { ko: "소개", en: "ABOUT", ja: "紹介", zh: "关于" }) },
+      { href: "/privacy", label: L4(lang, { ko: "개인정보", en: "PRIVACY", ja: "プライバシー", zh: "隐私" }) },
+      { href: "/terms", label: L4(lang, { ko: "이용약관", en: "TERMS", ja: "利用規約", zh: "条款" }) },
     ],
     [lang],
   );

@@ -8,8 +8,8 @@ import '@testing-library/jest-dom';
 import EngineStatusBar from '../studio/EngineStatusBar';
 import type { StoryConfig } from '@/lib/studio-types';
 
-const minConfig: StoryConfig = {
-  genre: 'SF' as StoryConfig['genre'],
+const minConfig = {
+  genre: 'SF',
   title: 'Test',
   episode: 1,
   totalEpisodes: 10,
@@ -19,8 +19,8 @@ const minConfig: StoryConfig = {
   plotOutline: '',
   primaryEmotion: '',
   povCharacter: '',
-  platform: 'KAKAO' as StoryConfig['platform'],
-} as StoryConfig;
+  platform: 'KAKAO',
+} as unknown as StoryConfig;
 
 describe('EngineStatusBar', () => {
   it('생성 중이 아닐 때 렌더링 (KO)', () => {

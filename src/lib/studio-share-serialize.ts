@@ -1,4 +1,4 @@
-import type { Message, StoryConfig } from "@/lib/studio-types";
+import type { Message, StoryConfig, AppLanguage } from "@/lib/studio-types";
 
 const MAX_SIM_JSON = 6000;
 
@@ -47,7 +47,9 @@ function compactWorldSimJson(config: StoryConfig): string | null {
   }
 }
 
-export function buildShareWorldBible(config: StoryConfig, isKO: boolean): string {
+export function buildShareWorldBible(config: StoryConfig, language: AppLanguage): string {
+  // JSON 공유용 — KO 또는 EN 2개국어. JP/CN은 EN fallback.
+  const isKO = language === 'KO';
   const t = {
     core: isKO ? "핵심 전제" : "Core Premise",
     power: isKO ? "권력 구조" : "Power Structure",
@@ -91,7 +93,8 @@ export function buildShareWorldBible(config: StoryConfig, isKO: boolean): string
   return blocks.join("\n\n");
 }
 
-function charBlock(c: StoryConfig["characters"][number], isKO: boolean): string {
+function charBlock(c: StoryConfig["characters"][number], language: AppLanguage): string {
+  const isKO = language === 'KO';
   const lines: string[] = [`### ${c.name} (${c.role})`, c.traits];
   if (c.appearance?.trim()) lines.push(isKO ? `외형: ${c.appearance}` : `Appearance: ${c.appearance}`);
   const extras: [string, string | undefined][] = [
@@ -111,8 +114,9 @@ function charBlock(c: StoryConfig["characters"][number], isKO: boolean): string 
   return lines.join("\n");
 }
 
-export function buildShareCharacterSheet(config: StoryConfig, isKO: boolean): string {
-  const parts = config.characters.map((c) => charBlock(c, isKO));
+export function buildShareCharacterSheet(config: StoryConfig, language: AppLanguage): string {
+  const isKO = language === 'KO';
+  const parts = config.characters.map((c) => charBlock(c, language));
   const rel = config.charRelations;
   if (rel?.length) {
     const hdr = isKO ? "## 관계" : "## Relations";
@@ -125,7 +129,8 @@ export function buildShareCharacterSheet(config: StoryConfig, isKO: boolean): st
   return parts.join("\n\n");
 }
 
-export function buildShareStyleProfile(config: StoryConfig, isKO: boolean): string {
+export function buildShareStyleProfile(config: StoryConfig, language: AppLanguage): string {
+  const isKO = language === 'KO';
   const sp = config.styleProfile;
   if (!sp) return isKO ? "스타일 프로필이 설정되지 않았습니다." : "No style profile configured.";
   const lines: string[] = [];
@@ -145,8 +150,9 @@ export function buildShareStyleProfile(config: StoryConfig, isKO: boolean): stri
 export function buildShareEpisodeContent(
   messages: Message[],
   config: StoryConfig,
-  isKO: boolean,
+  language: AppLanguage,
 ): string {
+  const isKO = language === 'KO';
   const episodes = messages.filter((m) => m.role === "assistant" && m.content);
   const ep = episodes.length
     ? episodes

@@ -111,17 +111,17 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
   const buildContent = useCallback((): string => {
     switch (shareType) {
       case 'episode':
-        return buildShareEpisodeContent(messages, config, isKO);
+        return buildShareEpisodeContent(messages, config, language);
       case 'character_sheet':
-        return buildShareCharacterSheet(config, isKO);
+        return buildShareCharacterSheet(config, language);
       case 'world_bible':
-        return buildShareWorldBible(config, isKO);
+        return buildShareWorldBible(config, language);
       case 'style_profile':
-        return buildShareStyleProfile(config, isKO);
+        return buildShareStyleProfile(config, language);
       default:
         return '';
     }
-  }, [shareType, messages, config, isKO]);
+  }, [shareType, messages, config, language]);
 
   const handlePublishToNetwork = async () => {
     if (!user) return;

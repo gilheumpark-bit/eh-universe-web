@@ -100,6 +100,13 @@ export function useStudioShellController(
     lastSuggestionEp.current = config.episode;
 
     try {
+      // Pull/Push 브랜드 철학 Part 2.3 — 사용자 opt-out 확인
+      // localStorage.noa_suggestions_disabled === '1' 이면 선제 제안 생성 skip (Pull 전용)
+      const pullOnly = typeof window !== 'undefined' && localStorage.getItem('noa_suggestions_disabled') === '1';
+      if (pullOnly) {
+        setSuggestions([]);
+        return;
+      }
       const sgConfig = getDefaultSuggestionConfig('intermediate');
       const msgs = currentSession.messages;
       const recentMetrics = msgs

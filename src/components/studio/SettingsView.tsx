@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/AuthContext';
 import {
   User, Shield, Cpu, Trash2, Settings,
   ChevronRight, ChevronDown, Zap, Bell, Key, Monitor, Smartphone, Hash, Thermometer, BookOpen,
-  GitBranch, Check, Unplug, HelpCircle,
+  GitBranch, Check, Unplug, HelpCircle, Sparkles,
 } from 'lucide-react';
 import { getActiveProvider, getActiveModel, setApiKey, PROVIDERS, PROVIDER_LIST_UI, isKeyExpiringSoon, getKeyAge, hasStoredApiKey } from '@/lib/ai-providers';
 import { getStorageUsageBytes } from '@/lib/project-migration';
@@ -312,6 +312,42 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
                 </div>
               </div>
               <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${typeof window !== 'undefined' && localStorage.getItem('noa_shortcuts_disabled') === '1' ? 'bg-bg-tertiary justify-start' : 'bg-blue-600 justify-end'}`}>
+                <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
+              </div>
+            </div>
+
+            {/* Pull/Push 토글 — AI 선제 제안 활성/비활성 (브랜드 철학 Part 2.3) */}
+            <div
+              onClick={() => {
+                const current = typeof window !== 'undefined' ? localStorage.getItem('noa_suggestions_disabled') === '1' : false;
+                try {
+                  if (current) localStorage.removeItem('noa_suggestions_disabled');
+                  else localStorage.setItem('noa_suggestions_disabled', '1');
+                } catch { /* quota */ }
+                window.dispatchEvent(new Event('noa:settings-changed'));
+                window.location.reload();
+              }}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">
+                    {L4(language, { ko: 'AI 선제 제안', en: 'AI Proactive Suggestions', ja: 'AI先制提案', zh: 'AI 主动建议' })}
+                  </div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: '작가가 쓰는 중 AI가 먼저 조언. 끄면 질문할 때만 응답 (Pull 모드).',
+                      en: 'AI advises while writing. Off = respond only on demand (Pull mode).',
+                      ja: '執筆中にAIが先に助言。オフで質問時のみ応答 (Pullモード)。',
+                      zh: '写作时AI主动提示。关闭后仅响应询问 (Pull 模式)。',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${typeof window !== 'undefined' && localStorage.getItem('noa_suggestions_disabled') === '1' ? 'bg-bg-tertiary justify-start' : 'bg-blue-600 justify-end'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
               </div>
             </div>

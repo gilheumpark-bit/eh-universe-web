@@ -13,7 +13,7 @@ describe('studio-share-serialize', () => {
       worldHistory: 'B',
       worldSimData: { civs: [{ name: 'X', era: '1', color: '#fff', traits: ['t'] }] },
     } as unknown as StoryConfig;
-    const out = buildShareWorldBible(config, true);
+    const out = buildShareWorldBible(config, 'KO');
     expect(out).toContain('역사');
     expect(out).toContain('세계 시뮬레이터');
   });
@@ -24,7 +24,7 @@ describe('studio-share-serialize', () => {
         { id: '1', name: 'N', role: 'R', traits: 'T', appearance: '', dna: 1, desire: 'want' },
       ],
     } as unknown as StoryConfig;
-    expect(buildShareCharacterSheet(config, true)).toContain('욕망');
+    expect(buildShareCharacterSheet(config, 'KO')).toContain('욕망');
   });
 
   test('episode appends scene direction block', () => {
@@ -32,7 +32,7 @@ describe('studio-share-serialize', () => {
     const config = {
       sceneDirection: { plotStructure: 'three-act', writerNotes: 'note' },
     } as unknown as StoryConfig;
-    const out = buildShareEpisodeContent(messages, config, false);
+    const out = buildShareEpisodeContent(messages, config, 'EN');
     expect(out).toContain('Scene direction');
     expect(out).toContain('three-act');
   });
@@ -46,6 +46,6 @@ describe('studio-share-serialize', () => {
         checkedWeb: [],
       },
     } as unknown as StoryConfig;
-    expect(buildShareStyleProfile(config, false)).toContain('s1: 3/5');
+    expect(buildShareStyleProfile(config, 'EN')).toContain('s1: 3/5');
   });
 });

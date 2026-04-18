@@ -377,8 +377,9 @@ He said it to no one but himself.
 
 export const DEMO_PRESETS: DemoPreset[] = [SYSTEM_HUNTER, NOA_HEALING, IF_ASCENSION];
 
-export function buildDemoSession(preset: DemoPreset, isKO: boolean): ChatSession {
-  const lang = isKO ? 'ko' : 'en';
+export function buildDemoSession(preset: DemoPreset, language: import('@/lib/studio-types').AppLanguage): ChatSession {
+  // 데모 메시지는 KO/EN 2개국어만 지원 — JP/CN은 EN으로 fallback
+  const lang: 'ko' | 'en' = language === 'KO' ? 'ko' : 'en';
   const now = Date.now();
   return {
     id: `session-${preset.id}-${now}`,

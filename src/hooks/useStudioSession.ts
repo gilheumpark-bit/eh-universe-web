@@ -76,7 +76,7 @@ export function useStudioSession({
     const preset = presetId
       ? DEMO_PRESETS.find(p => p.id === presetId) || DEMO_PRESETS[0]
       : DEMO_PRESETS[0];
-    const demoSession = buildDemoSession(preset, isKO);
+    const demoSession = buildDemoSession(preset, language);
     doCreateNewSession();
     // requestAnimationFrame ensures React has flushed the new session state
     requestAnimationFrame(() => {
