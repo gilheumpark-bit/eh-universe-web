@@ -99,14 +99,18 @@ export function useUndoStack(initialText?: string): UndoStack {
 
   const undo = useCallback((): string | null => {
     if (state.pointer <= 0) return null;
+    // [C] dispatch 이전에 타겟 텍스트를 확정 — stale closure 읽기여도 명시적 계산으로 의도 고정
+    const target = state.stack[state.pointer - 1]?.text ?? null;
     dispatch({ type: 'UNDO' });
-    return state.stack[state.pointer - 1]?.text ?? null;
+    return target;
   }, [state.pointer, state.stack]);
 
   const redo = useCallback((): string | null => {
     if (state.pointer >= state.stack.length - 1) return null;
+    // [C] dispatch 이전에 타겟 텍스트를 확정
+    const target = state.stack[state.pointer + 1]?.text ?? null;
     dispatch({ type: 'REDO' });
-    return state.stack[state.pointer + 1]?.text ?? null;
+    return target;
   }, [state.pointer, state.stack]);
 
   const clear = useCallback(() => dispatch({ type: 'CLEAR' }), []);

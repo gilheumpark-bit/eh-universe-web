@@ -183,4 +183,21 @@ describe("VisualTab", () => {
     // Editor mock appears with the selected card id
     expect(getByTestId("visual-prompt-editor-mock")).toHaveTextContent("editor:c1");
   });
+
+  it("migrates legacy localStorage API key to sessionStorage on mount", () => {
+    // Seed a legacy key in localStorage and ensure sessionStorage is empty.
+    localStorage.setItem("noa-img-apikey", "legacy-key-xyz");
+    sessionStorage.removeItem("noa-img-apikey");
+
+    try {
+      renderTab();
+
+      // Legacy slot is purged; session slot now carries the key.
+      expect(localStorage.getItem("noa-img-apikey")).toBeNull();
+      expect(sessionStorage.getItem("noa-img-apikey")).toBe("legacy-key-xyz");
+    } finally {
+      localStorage.removeItem("noa-img-apikey");
+      sessionStorage.removeItem("noa-img-apikey");
+    }
+  });
 });

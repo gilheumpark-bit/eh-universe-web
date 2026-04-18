@@ -24,11 +24,26 @@ export interface EditorSelection {
   coords: { top: number; left: number; bottom: number } | null;
 }
 
+/** Range info forwarded to onReplace so callers can do range-based replacement
+ *  instead of string-search (which replaces the first match — P0 bug if the
+ *  same sentence appears multiple times in the manuscript). */
+export interface ReplaceRangeInfo {
+  /** Start offset in the source string. For Tiptap this is ProseMirror doc pos;
+   *  the caller validates & falls back to first-match if the range drifted. */
+  from: number;
+  /** End offset (exclusive). */
+  to: number;
+}
+
 interface InlineActionPopupProps {
   /** Legacy textarea ref — ignored when editorSelection is provided */
   textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
   language: string;
-  onReplace: (oldText: string, newText: string) => void;
+  /** Called when the user confirms a replacement.
+   *  `range` is optional but STRONGLY preferred — callers should use
+   *  range-based replacement and only fall back to string-search if the
+   *  slice no longer matches oldText. */
+  onReplace: (oldText: string, newText: string, range?: ReplaceRangeInfo) => void;
   storyConfig?: StoryContext;
   /** Full text from the editor — used to extract surrounding context */
   fullText?: string;
@@ -251,13 +266,18 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
   const applyResult = useCallback(() => {
     if (!result) return;
     setLastApplied({ original: popup.selectedText, replacement: result });
-    onReplace(popup.selectedText, result);
+    // [C] Pass the selection range so the caller can replace the EXACT
+    // occurrence the user selected — not just the first string match.
+    // P0 fix: avoids wrong-location edits when the same sentence repeats.
+    onReplace(popup.selectedText, result, { from: popup.selStart, to: popup.selEnd });
     setPopup(p => ({ ...p, visible: false }));
     setResult(null);
-  }, [result, popup.selectedText, onReplace]);
+  }, [result, popup.selectedText, popup.selStart, popup.selEnd, onReplace]);
 
   const handleUndo = useCallback(() => {
     if (!lastApplied) return;
+    // Undo: no reliable range available (manuscript shifted after apply) →
+    // caller falls back to first-match of the replacement string.
     onReplace(lastApplied.replacement, lastApplied.original);
     setLastApplied(null);
   }, [lastApplied, onReplace]);

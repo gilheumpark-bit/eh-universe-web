@@ -13,6 +13,7 @@ import type { HFCPState } from '@/engine/hfcp';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { InlineActionPopup } from '@/components/studio/InlineActionPopup';
+import { safeReplaceRange } from '@/lib/rewrite-range';
 import { NovelEditor } from '@/components/studio/NovelEditor';
 import type { NovelEditorSelection, NovelEditorHandle } from '@/components/studio/NovelEditor';
 import type { UndoStack } from '@/hooks/useUndoStack';
@@ -316,9 +317,26 @@ export function EditModeSection({
               name: c.name, role: c.role, speechStyle: c.speechStyle,
             })),
           }}
-          onReplace={(oldText, newText) => {
+          onReplace={(oldText, newText, range) => {
+            // [C] P0 fix: 범위 기반 치환. `.replace()` 는 첫 매치만 교체하므로
+            // 같은 문장이 여러 번 나오면 잘못된 위치를 수정할 수 있다.
+            // safeReplaceRange 는 selection from/to 를 우선 사용하고,
+            // 해당 slice 가 oldText 와 불일치하면 첫 매치로 폴백, 아예 없으면 no-op.
+            const { content: nextContent, strategy } = safeReplaceRange(
+              editDraft,
+              oldText,
+              newText,
+              range?.from ?? null,
+              range?.to ?? null,
+            );
+            if (strategy === 'no-op') {
+              logger.warn('EditModeSection', 'inline replace skipped — oldText not found', {
+                oldPreview: oldText.slice(0, 40),
+              });
+              return;
+            }
             undoStack.push(editDraft, L4(language, { ko: '리라이트', en: 'Rewrite', ja: 'リライト', zh: '重写' }));
-            setEditDraft(editDraft.replace(oldText, newText));
+            setEditDraft(nextContent);
             // 작가 수정 내역 기록 (피드백 루프)
             const ep = currentSession.config.episode ?? 1;
             setConfig(prev => {

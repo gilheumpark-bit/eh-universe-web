@@ -1,13 +1,14 @@
 // ============================================================
 // PART 1 — imports, types, props (Archive + session grid tab)
 // ============================================================
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { AppLanguage, AppTab, ChatSession, Project } from '@/lib/studio-types';
 import GenreReviewChat from '@/components/studio/GenreReviewChat';
 import { Edit3, Upload, Printer, X, BarChart3 } from 'lucide-react';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 // Lazy: SVG charts only render when user opens the profiler modal.
 const WorkProfilerView = dynamic(
@@ -73,8 +74,17 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
 }) => {
   const t = createT(language);
   const [moveModal, setMoveModal] = useState<{ sessionId: string; others: Project[] } | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [profilerOpen, setProfilerOpen] = useState(false);
+  // [C] 삭제 확인 다이얼로그 — 즉시 삭제 방지 (되돌리기 불가 작업 보호)
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    sessionId: string;
+    sessionTitle: string;
+    error?: string;
+  } | null>(null);
+  const deleteDialogRef = useRef<HTMLDivElement | null>(null);
+  const moveModalRef = useRef<HTMLDivElement | null>(null);
 
   // [G] 파생 데이터 메모이제이션 — 이전: 렌더마다 flatMap/Set/sort 3회 반복
   const allSessions: EnrichedSession[] = useMemo(() => {
@@ -147,30 +157,70 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
     [projects, currentProjectId, moveSessionToProject],
   );
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      try {
-        deleteSession(id);
-      } catch (err) {
-        logger.warn('HistoryTab', 'deleteSession failed', { id, err });
-      }
+  // [C] Trash 클릭 → 확인 다이얼로그 표시 (즉시 삭제 금지)
+  const handleDeleteClick = useCallback(
+    (sessionId: string, sessionTitle: string) => {
+      setDeleteConfirm({ sessionId, sessionTitle });
     },
-    [deleteSession],
+    [],
   );
 
+  // [C] 확인 후 실제 삭제. 실패 시 다이얼로그 유지 + 에러 노출
+  const confirmDelete = useCallback(() => {
+    if (!deleteConfirm) return;
+    try {
+      deleteSession(deleteConfirm.sessionId);
+      setDeleteConfirm(null);
+    } catch (err) {
+      logger.warn('HistoryTab', 'deleteSession failed', { id: deleteConfirm.sessionId, err });
+      setDeleteConfirm({
+        ...deleteConfirm,
+        error: L4(language, {
+          ko: '삭제 실패. 다시 시도하세요.',
+          en: 'Delete failed. Please try again.',
+          ja: '削除に失敗しました。再試行してください。',
+          zh: '删除失败。请重试。',
+        }),
+      });
+    }
+  }, [deleteConfirm, deleteSession, language]);
+
+  const cancelDelete = useCallback(() => setDeleteConfirm(null), []);
+
+  // [C] 이동 모달: 실패 시 모달 유지 + 에러 표시 (사용자가 실패를 인지할 수 있게)
   const handleModalSelect = useCallback(
     (pid: string) => {
       if (!moveModal) return;
+      setMoveError(null);
       try {
         moveSessionToProject(moveModal.sessionId, pid);
+        // 성공 시에만 모달 닫기
+        setMoveModal(null);
       } catch (err) {
         logger.warn('HistoryTab', 'moveSessionToProject failed', { sessionId: moveModal.sessionId, pid, err });
-      } finally {
-        setMoveModal(null);
+        setMoveError(
+          L4(language, {
+            ko: '이동 실패. 다시 시도하세요.',
+            en: 'Move failed. Please try again.',
+            ja: '移動に失敗しました。再試行してください。',
+            zh: '移动失败。请重试。',
+          }),
+        );
+        // 모달 유지
       }
     },
-    [moveModal, moveSessionToProject],
+    [moveModal, moveSessionToProject, language],
   );
+
+  const closeMoveModal = useCallback(() => {
+    setMoveModal(null);
+    setMoveError(null);
+  }, []);
+
+  // [C] Escape 키 + focus trap for delete-confirm dialog
+  useFocusTrap(deleteDialogRef, !!deleteConfirm, cancelDelete);
+  // [C] Escape 키 + focus trap for move modal (기존 인라인 모달 강화)
+  useFocusTrap(moveModalRef, !!moveModal, closeMoveModal);
 
   const openSession = useCallback(
     (s: EnrichedSession) => {
@@ -326,7 +376,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(s.id);
+                    handleDeleteClick(s.id, s.title || s.config.genre || 'Untitled');
                   }}
                   aria-label={L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
                   className="p-1.5 bg-bg-tertiary/50 rounded-full text-text-tertiary hover:text-accent-red transition-colors"
@@ -439,10 +489,14 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           role="presentation"
-          onClick={() => setMoveModal(null)}
+          onClick={closeMoveModal}
         >
           <div
+            ref={moveModalRef}
             className="bg-bg-primary border border-border rounded-2xl p-6 w-80 space-y-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('project.moveSession')}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-black uppercase tracking-widest">{t('project.moveSession')}</h3>
@@ -469,12 +523,89 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                 </option>
               ))}
             </select>
+            {moveError && (
+              <div
+                role="alert"
+                className="p-2 rounded bg-accent-red/10 border border-accent-red/30 text-xs text-accent-red"
+              >
+                {moveError}
+              </div>
+            )}
             <button
-              onClick={() => setMoveModal(null)}
-              className="w-full py-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-text-primary transition-colors"
+              onClick={closeMoveModal}
+              className="w-full py-2 text-xs font-black uppercase tracking-widest text-text-tertiary hover:text-text-primary transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded"
             >
               {L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Dialog — 되돌리기 불가 작업 보호 */}
+      {deleteConfirm && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/60 p-4"
+          style={{ zIndex: 'var(--z-modal)' }}
+          role="presentation"
+          onClick={cancelDelete}
+        >
+          <div
+            ref={deleteDialogRef}
+            className="bg-bg-secondary border border-border rounded-xl p-6 max-w-md w-full"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirm-title"
+            aria-describedby="delete-confirm-desc"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="delete-confirm-title" className="text-lg font-semibold mb-2 text-text-primary">
+              {L4(language, {
+                ko: '세션 삭제',
+                en: 'Delete Session',
+                ja: 'セッションを削除',
+                zh: '删除会话',
+              })}
+            </h3>
+            <p id="delete-confirm-desc" className="text-sm text-text-secondary mb-2 break-words">
+              {L4(language, {
+                ko: `"${deleteConfirm.sessionTitle}" 세션을 정말 삭제하시겠습니까?`,
+                en: `Really delete "${deleteConfirm.sessionTitle}"?`,
+                ja: `「${deleteConfirm.sessionTitle}」を削除しますか?`,
+                zh: `确定删除"${deleteConfirm.sessionTitle}"?`,
+              })}
+            </p>
+            <p className="text-xs text-accent-red mb-4">
+              {L4(language, {
+                ko: '⚠ 이 작업은 되돌릴 수 없습니다',
+                en: '⚠ This action cannot be undone',
+                ja: '⚠ この操作は元に戻せません',
+                zh: '⚠ 此操作无法撤销',
+              })}
+            </p>
+            {deleteConfirm.error && (
+              <div
+                role="alert"
+                className="mb-3 p-2 rounded bg-accent-red/10 border border-accent-red/30 text-xs text-accent-red"
+              >
+                {deleteConfirm.error}
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="px-4 py-2 min-h-[44px] rounded-lg bg-bg-tertiary hover:bg-bg-tertiary/80 text-sm text-text-primary focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors"
+              >
+                {L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="px-4 py-2 min-h-[44px] rounded-lg bg-accent-red hover:bg-accent-red/80 text-white text-sm font-semibold focus-visible:ring-2 focus-visible:ring-accent-red transition-colors"
+              >
+                {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
+              </button>
+            </div>
           </div>
         </div>
       )}

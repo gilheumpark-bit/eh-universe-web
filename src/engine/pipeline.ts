@@ -13,6 +13,7 @@ import { buildPrismBlock, buildPrismModeBlock } from './builders/prism-builder';
 import { GRAMMAR_PACKS } from '@/lib/grammar-packs';
 import { buildShadowPrompt } from './shadow';
 import { logger } from '@/lib/logger';
+import { quickPurify, type TargetLang } from './language-purity';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
 // ============================================================
@@ -1017,9 +1018,9 @@ export function postProcessResponse(
     report.worldUpdates = worldUpdates;
   }
 
-  // Stage 3: strip artifacts
+  // Stage 3: strip artifacts (+ 언어별 오염 치환)
   const stripStart = performance.now();
-  const content = stripEngineArtifacts(text);
+  const content = stripEngineArtifacts(text, language);
   const stripEnd = performance.now();
 
   const totalEnd = performance.now();
@@ -1069,7 +1070,7 @@ function stripTrailingReportJson(text: string): string {
   return text;
 }
 
-export function stripEngineArtifacts(text: string): string {
+export function stripEngineArtifacts(text: string, language?: AppLanguage): string {
   let clean = text;
 
   // ============================================================
@@ -1109,6 +1110,14 @@ export function stripEngineArtifacts(text: string): string {
     .replace(/^(?:알겠습니다[,.]?\s*작가님[.!]?\s*|네[,.]?\s*(?:이어서|계속|작성|시작)\s*(?:하겠습니다|합니다|할게요)[.!]?\s*|(?:Sure|Okay|Got it)[,.]?\s*(?:I'll|Let me)\s*(?:continue|start|write)[.!]?\s*)/i, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  // ============================================================
+  // 언어별 오염 제거 (본문 내 영어 단어 → 한국어/일본어/중국어 치환)
+  // ============================================================
+  // language 파라미터 미지정 시 건너뜀 → 기존 호출자 무영향.
+  if (language === 'KO' || language === 'JP' || language === 'CN') {
+    clean = quickPurify(clean, language as TargetLang);
+  }
 
   return clean;
 }

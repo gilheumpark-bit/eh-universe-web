@@ -432,13 +432,55 @@ function readSavedProvider(): ImageGenProvider | null {
   }
 }
 
-/** Lazy-init reader for API key. */
+/**
+ * Lazy-init reader for API key (sessionStorage for XSS-resistance).
+ *
+ * Security note: the BYOK API key is held in sessionStorage so it is cleared
+ * automatically when the browser tab closes. A one-time migration from the
+ * legacy localStorage slot runs on mount (see migrateApiKeyToSession).
+ */
 function readSavedApiKey(): string {
+  if (typeof window === 'undefined') return '';
   try {
-    return localStorage.getItem('noa-img-apikey') ?? '';
+    return sessionStorage.getItem('noa-img-apikey') ?? '';
   } catch (err) {
     logger.warn('VisualTab', 'readSavedApiKey failed (SSR or disabled storage)', err);
     return '';
+  }
+}
+
+/** Persist API key to sessionStorage; empty string removes the slot. */
+function saveApiKey(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (key) sessionStorage.setItem('noa-img-apikey', key);
+    else sessionStorage.removeItem('noa-img-apikey');
+  } catch (err) {
+    logger.warn('VisualTab', 'saveApiKey failed (quota or SSR)', err);
+  }
+}
+
+/**
+ * One-time migration from legacy localStorage → sessionStorage.
+ *
+ * Older builds persisted the BYOK key in localStorage, which survives across
+ * browser sessions and is exposed to any XSS payload on the origin. On mount
+ * we copy any existing legacy value into sessionStorage and purge the
+ * localStorage slot. Safe to call repeatedly — subsequent calls become no-ops.
+ */
+function migrateApiKeyToSession(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const legacy = localStorage.getItem('noa-img-apikey');
+    if (!legacy) return;
+    // Only copy over if session slot is empty — avoid overwriting a freshly typed key.
+    if (!sessionStorage.getItem('noa-img-apikey')) {
+      sessionStorage.setItem('noa-img-apikey', legacy);
+    }
+    localStorage.removeItem('noa-img-apikey');
+    logger.info('VisualTab', 'API key migrated from localStorage to sessionStorage');
+  } catch (err) {
+    logger.warn('VisualTab', 'API key migration failed', err);
   }
 }
 
@@ -449,7 +491,7 @@ const PROVIDER_OPTIONS: readonly ProviderOption[] = [
   { id: 'stability', name: 'Stability AI', badge: 'BYOK', free: false },
 ];
 
-// IDENTITY_SEAL: PART-6 | role=storage helpers+provider options | inputs=localStorage | outputs=ImageGenProvider,apikey,options
+// IDENTITY_SEAL: PART-6 | role=storage helpers+provider options | inputs=localStorage+sessionStorage | outputs=ImageGenProvider,apikey,options,migration
 
 // ============================================================
 // PART 7 — Main Component
@@ -465,7 +507,9 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const episode = config.episode ?? 1;
   const totalEpisodes = config.totalEpisodes ?? 1;
 
-  // Image generation API key + provider (persisted in localStorage, lazy init)
+  // Image generation settings:
+  //  - provider preference → localStorage (non-sensitive UI choice)
+  //  - BYOK API key       → sessionStorage (XSS-resistant; auto-cleared on tab close)
   const hasDgxService = hasDgxServiceFn();
   const [imgProvider, setImgProvider] = useState<ImageGenProvider>(() => {
     const saved = readSavedProvider();
@@ -475,13 +519,24 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const [imgApiKey, setImgApiKey] = useState<string>(() => readSavedApiKey());
   const [showImgSettings, setShowImgSettings] = useState(false);
 
+  // One-time migration of legacy localStorage API keys → sessionStorage.
+  // Runs once on mount; subsequent mounts are no-ops (legacy slot empty).
+  useEffect(() => {
+    migrateApiKeyToSession();
+    // After migration, re-read in case a legacy value was just promoted.
+    const migrated = readSavedApiKey();
+    if (migrated && !imgApiKey) setImgApiKey(migrated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const saveImgSettings = () => {
     try {
       localStorage.setItem('noa-img-provider', imgProvider);
-      localStorage.setItem('noa-img-apikey', imgApiKey);
     } catch (err) {
-      logger.warn('VisualTab', 'saveImgSettings failed (quota or SSR)', err);
+      logger.warn('VisualTab', 'saveImgSettings (provider) failed (quota or SSR)', err);
     }
+    // API key is persisted to sessionStorage only — never localStorage.
+    saveApiKey(imgApiKey);
     setShowImgSettings(false);
   };
 
@@ -799,13 +854,32 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
 
               {/* API 키 — BYOK 프로바이더만 */}
               {imgProvider !== 'local-spark' && (
-                <input
-                  type="password"
-                  value={imgApiKey}
-                  onChange={e => setImgApiKey(e.target.value)}
-                  placeholder={L4(lang, { ko: 'API 키 입력...', en: 'API Key...' })}
-                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue"
-                />
+                <div className="space-y-2">
+                  {/* 보안 경고 — sessionStorage 정책 고지 (4언어) */}
+                  <div
+                    role="note"
+                    className="flex items-start gap-2 px-3 py-2 rounded-lg bg-accent-amber/10 border border-accent-amber/30 text-[10px] text-accent-amber leading-relaxed"
+                  >
+                    <span aria-hidden="true" className="mt-0.5">🔒</span>
+                    <span>
+                      {L4(lang, {
+                        ko: '보안을 위해 브라우저를 닫으면 API 키가 자동 삭제됩니다',
+                        en: 'API key is auto-cleared when browser closes for security',
+                        ja: 'セキュリティのため、ブラウザを閉じるとAPIキーは自動削除されます',
+                        zh: '为安全起见，关闭浏览器时API密钥将自动清除',
+                      })}
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={imgApiKey}
+                    onChange={e => setImgApiKey(e.target.value)}
+                    placeholder={L4(lang, { ko: 'API 키 입력...', en: 'API Key...' })}
+                    className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue"
+                  />
+                </div>
               )}
 
               <button onClick={saveImgSettings}
