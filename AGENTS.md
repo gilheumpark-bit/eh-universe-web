@@ -64,6 +64,77 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `lib/github-sync.ts` — GitHub Octokit CRUD 추상화
 - `lib/project-serializer.ts` — MD+YAML 프로젝트 직렬화
 
+## 신규 컴포넌트 (2026-04-18 v2.0)
+
+### Novel Studio 확장
+- `NovelBreadcrumb.tsx` — 3단계 경로 네비 (모바일 축약)
+- `OutlinePanel.tsx` — 씬 트리 + 검색/필터
+- `RenameDialog.tsx` + `rename-engine.ts` — 일괄 변경 엔진
+- `EditorMinimap.tsx` — Canvas 기반 품질 색상 미니맵
+- `WorkProfilerView.tsx` + `work-profiler-engine.ts` — 작품 전체 분석
+- `MarketplacePanel.tsx` + `MarketplaceModal.tsx` — 플러그인 카탈로그
+- `MergeConflictResolver.tsx` + `conflict-parser.ts` — Git 3-way diff
+- `WorkspaceTrustDialog.tsx` + `workspace-trust.ts` — 외부 신뢰 모델
+- `WordCountBadge.tsx` — 플러그인 실동작 샘플
+
+### Settings 섹션 분리 (2026-04-18)
+- `settings/ApiKeysSection.tsx` (81줄)
+- `settings/ProvidersSection.tsx` (104줄)
+- `settings/BackupsSection.tsx` (489줄)
+- `settings/AdvancedSection.tsx` (205줄)
+- `settings/PluginsSection.tsx` (167줄)
+
+### Writing 모드 섹션 분리 (2026-04-18)
+- `writing/AIModeSection.tsx` (139줄)
+- `writing/EditModeSection.tsx` (242줄)
+- `writing/CanvasModeSection.tsx` (102줄)
+- `writing/RefineModeSection.tsx` (80줄)
+- `writing/AdvancedModeSection.tsx` (38줄)
+- `writing/InputDockSection.tsx` (68줄)
+- `writing/MobileOverlaySection.tsx` (90줄)
+- `writing/SplitPanelTabs.tsx` (105줄, 공용)
+
+## 신규 훅 (2026-04-18)
+
+- `useEditorScroll` — RAF + passive scroll + ResizeObserver
+- `useFocusTrap` — WCAG 2.1 AA focus 관리
+- `useMediaQuery` + `useIsMobileQuery/TabletQuery/DesktopQuery`
+
+## 신규 라이브러리 (2026-04-18)
+
+- `lib/rename-engine.ts` — 범위 기반 순수 치환 엔진
+- `lib/conflict-parser.ts` — Git 충돌 마커 파싱
+- `lib/workspace-trust.ts` — URL 신뢰 관리
+- `lib/rewrite-range.ts` — 3-tier 치환 폴백
+- `lib/novel-plugin-registry.ts` — 플러그인 등록/활성화
+- `lib/plugin-sandbox.ts` — Worker 샌드박스 실행기
+- `lib/novel-plugins/` — 번들 샘플 플러그인 3종
+
+## 신규 엔진 (2026-04-18)
+
+- `engine/language-purity.ts` — 로컬 AI 영어 혼입 정화
+- `engine/contamination-dict.ts` — 영어→한국어 치환 사전 222개
+
+## E2E 테스트 인프라 (2026-04-18)
+
+- `playwright.config.ts`
+- `e2e/fixtures/studio-state.ts` — 공통 픽스처 (DGX 모킹)
+- `e2e/scenarios/01-onboarding.spec.ts` — /welcome 플로우
+- `e2e/scenarios/02-new-episode.spec.ts` — Ctrl+Shift+N
+- `e2e/scenarios/03-writing-flow.spec.ts` — AI 생성 플로우
+- `e2e/scenarios/04-global-search.spec.ts` — Ctrl+K 팔레트
+- `e2e/scenarios/05-rename-flow.spec.ts` — Ctrl+Shift+H
+
+## 카테고리 선언 (2026-04-18 신규)
+
+Loreguard는 "하라 시장"(제작 도구)의 카테고리 창시자.
+- 해줘 시장 (소비): Sudowrite, Novelcrafter 등
+- 하라 시장 (제작): **Loreguard (유일)**
+- 레퍼런스: Adobe, VS Code, Logic Pro 계열
+
+상세: `docs/category-declaration.md` / `docs/brand-philosophy.md` Part 13
+상세 릴리스 노트: `docs/patch-notes-v2.md`
+
 ### 씬시트 리웍 (SceneSheet 3-section)
 - 13탭 → 3섹션 (줄거리/분위기/캐릭터) + 고급 설정 접기
 - 10개 장르 프리셋 (이모지+색상 그리드)
