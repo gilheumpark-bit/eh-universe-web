@@ -51,7 +51,7 @@
     "@tiptap/extension-character-count": "^3.22.3",
     "@tiptap/extension-placeholder": "^3.22.3",
     "@tiptap/pm": "^3.22.3",
-    "@tiptap/react": "^3.22.3",
+    "@tiptap/react": "^3.22.4",
     "@tiptap/starter-kit": "^3.22.3",
     "@vercel/analytics": "^2.0.1",
     "@webcontainer/api": "^1.6.1",
