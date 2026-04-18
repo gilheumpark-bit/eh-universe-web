@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import mammoth from 'mammoth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -151,6 +152,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // [C] 인증 게이트 — 익명 20MB 업로드 → CPU/메모리/디스크 고갈 방어
+    const authHeader = req.headers.get('authorization');
+    let verified = false;
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+        const token = authHeader.slice(7).trim();
+        verified = Boolean(await verifyFirebaseIdToken(token));
+      } catch { /* verification failed */ }
+    }
+    if (!verified) {
+      return NextResponse.json(
+        { error: 'Authentication required for file upload' },
+        { status: 401 },
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     if (!file) {
@@ -195,7 +213,8 @@ export async function POST(req: NextRequest) {
       const fs = await import('fs');
       const os = await import('os');
       const path = await import('path');
-      const tempPath = path.join(os.tmpdir(), `temp-${Date.now()}.epub`);
+      // [G] randomUUID — Date.now() 충돌 race condition 방지
+      const tempPath = path.join(os.tmpdir(), `temp-${crypto.randomUUID()}.epub`);
       try {
         fs.writeFileSync(tempPath, buffer);
 

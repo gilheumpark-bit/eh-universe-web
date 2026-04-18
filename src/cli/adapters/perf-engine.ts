@@ -72,11 +72,28 @@ export async function runTinybench(benchmarks: Array<{ name: string; fn: () => v
 // ============================================================
 
 export async function runC8(command: string, rootPath: string) {
-  const { execSync } = require('child_process');
+  const { execFileSync } = require('child_process');
+
+  // Parse command string into argv tokens (shell-free)
+  const cmdTokens = typeof command === 'string'
+    ? command.trim().split(/\s+/).filter(Boolean)
+    : Array.isArray(command) ? command : [];
+
+  if (cmdTokens.length === 0) {
+    return { lines: 0, branches: 0, functions: 0, statements: 0 };
+  }
+
   try {
-    const _output = execSync(`npx c8 --reporter=json-summary ${command} 2>/dev/null`, {
-      cwd: rootPath, encoding: 'utf-8', timeout: 60000,
-    });
+    const _output = execFileSync(
+      'npx',
+      ['c8', '--reporter=json-summary', ...cmdTokens],
+      {
+        cwd: rootPath,
+        encoding: 'utf-8',
+        timeout: 60000,
+        stdio: ['pipe', 'pipe', 'ignore'], // ignore stderr (replaces 2>/dev/null)
+      },
+    );
 
     // Parse summary from coverage/coverage-summary.json
     const { readFileSync, existsSync } = require('fs');
@@ -189,7 +206,8 @@ export async function runFullPerfAnalysis(rootPath: string) {
 
   // c8 coverage
   try {
-    const coverage = await runC8('npm test -- --no-coverage 2>/dev/null', rootPath);
+    // stderr suppression now handled by stdio:'ignore' inside runC8 (no shell redirection needed)
+    const coverage = await runC8('npm test -- --no-coverage', rootPath);
     const score = Math.round((coverage.lines + coverage.branches + coverage.functions) / 3);
     results.push({ engine: 'c8', score, detail: `lines ${coverage.lines}% branches ${coverage.branches}%` });
   } catch {

@@ -125,7 +125,20 @@ export function createAuditManager(hmacSecret: string = "noa-default-secret"): A
       });
 
       const hash = await computeHash(payload);
-      const hmacSignature = await signHmac(hash, hmacSecret);
+      // [C] WebCrypto 미지원 환경에서 signHmac이 throw — audit 기록 자체가 깨지지 않도록
+      // 명시적 거부 마커("__HMAC_UNAVAILABLE__")로 저장. verifyHmac이 항상 false 반환.
+      let hmacSignature: string;
+      try {
+        hmacSignature = await signHmac(hash, hmacSecret);
+      } catch (err) {
+        if (typeof console !== "undefined") {
+          console.warn(
+            "[NOA-Audit] HMAC unavailable — audit chain signed with rejection marker:",
+            err instanceof Error ? err.message : err,
+          );
+        }
+        hmacSignature = "__HMAC_UNAVAILABLE__";
+      }
 
       const entry: AuditEntry = {
         id,

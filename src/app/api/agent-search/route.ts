@@ -45,6 +45,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
+    // [C] 인증 게이트 — Discovery Engine 142만 원 크레딧 무차별 소진 방어
+    // Agent Builder 전용 (BYOK 지원 없음 → 항상 Firebase JWT 필수)
+    const authHeader = req.headers.get('authorization');
+    let verified = false;
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+        const token = authHeader.slice(7).trim();
+        verified = Boolean(await verifyFirebaseIdToken(token));
+      } catch { /* verification failed */ }
+    }
+    if (!verified) {
+      return NextResponse.json(
+        { error: 'Authentication required for Agent Builder credits' },
+        { status: 401 },
+      );
+    }
+
     const { studio, query, pageSize, conversationId, mode } = body as {
       studio?: string;
       query?: string;

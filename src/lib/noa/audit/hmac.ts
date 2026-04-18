@@ -37,28 +37,32 @@ async function getCachedKey(secret: string): Promise<CryptoKey> {
   return key;
 }
 
+/**
+ * HMAC unavailable 명시적 거부 마커.
+ * WebCrypto 미지원 환경에서 가짜 서명을 만들지 않고 verify가 즉시 false 처리하도록.
+ */
+const HMAC_UNAVAILABLE_MARKER = "__HMAC_UNAVAILABLE__";
+
 export async function signHmac(data: string, secret: string): Promise<string> {
-  if (typeof crypto !== "undefined" && crypto.subtle) {
-    try {
-      const encoder = new TextEncoder();
-      const key = await getCachedKey(secret);
-      const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
-      return Array.from(new Uint8Array(sig))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-    } catch {
-      // Fall through to fallback
-    }
+  if (typeof crypto === "undefined" || !crypto.subtle) {
+    // [C] WebCrypto 미지원 — fallback 키드해시는 가짜 서명을 만들어 감사 무결성을 위협한다.
+    // 명시적 거부 마커 반환 → verifyHmac이 즉시 false 처리.
+    throw new Error(
+      "HMAC requires Web Crypto API. Environment not supported — audit chain disabled.",
+    );
   }
-  // Fallback: simple keyed hash (non-cryptographic, for chain continuity)
-  let h = 0x9e3779b9;
-  for (let i = 0; i < secret.length; i++) {
-    h = Math.imul(h ^ secret.charCodeAt(i), 0x01000193);
+  try {
+    const encoder = new TextEncoder();
+    const key = await getCachedKey(secret);
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
+    return Array.from(new Uint8Array(sig))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch (err) {
+    // [C] WebCrypto 호출 실패 — fallback 금지. 호출자에게 명시적 실패 전달.
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`HMAC signing failed: ${detail}`);
   }
-  for (let i = 0; i < data.length; i++) {
-    h = Math.imul(h ^ data.charCodeAt(i), 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, "0").repeat(8);
 }
 
 /**
@@ -72,9 +76,19 @@ export async function signHmac(data: string, secret: string): Promise<string> {
 export async function verifyHmac(
   data: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
-  const expected = await signHmac(data, secret);
+  // [C] 명시적 거부 마커 또는 비어있는 서명은 즉시 invalid 처리.
+  if (!signature || signature === HMAC_UNAVAILABLE_MARKER) return false;
+
+  let expected: string;
+  try {
+    expected = await signHmac(data, secret);
+  } catch {
+    // signHmac이 throw하면 (WebCrypto 미지원) 검증 불가 → invalid 처리.
+    return false;
+  }
+
   // Timing-safe comparison
   if (expected.length !== signature.length) return false;
   let result = 0;

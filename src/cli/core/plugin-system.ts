@@ -218,12 +218,24 @@ export async function executeHooks(hookType: HookType, context: Record<string, u
 // ============================================================
 
 export async function searchPlugins(query: string): Promise<Array<{ name: string; description: string; version: string }>> {
-  const { execSync } = require('child_process');
+  const { execFileSync } = require('child_process');
+
+  // Sanitize query: only npm-package-name-safe chars (npm package names allow lowercase + digits + - _ .)
+  const safeQuery = (query ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!safeQuery) return [];
+
+  const searchTerm = `cs-quill-plugin-${safeQuery}`;
 
   try {
-    const output = execSync(`npm search cs-quill-plugin-${query} --json 2>/dev/null`, {
-      encoding: 'utf-8', timeout: 10000,
-    });
+    const output = execFileSync(
+      'npm',
+      ['search', searchTerm, '--json'],
+      {
+        encoding: 'utf-8',
+        timeout: 10000,
+        stdio: ['pipe', 'pipe', 'ignore'], // ignore stderr (replaces 2>/dev/null)
+      },
+    );
 
     const data = JSON.parse(output);
     return (Array.isArray(data) ? data : []).slice(0, 10).map((pkg: unknown) => ({

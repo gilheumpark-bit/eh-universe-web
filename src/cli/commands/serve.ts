@@ -4,6 +4,7 @@
 // 로컬 API 서버. 웹/IDE에서 HTTP로 검증 파이프라인 호출.
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'http';
+import { timingSafeEqual } from 'crypto';
 
 
 // ============================================================
@@ -72,12 +73,41 @@ async function handleHealth(): Promise<object> {
 // PART 2 — Auth, Cache & Rate Limiting Middleware
 // ============================================================
 
+// [C] Timing-safe API key 비교 — naive === 는 길이 의존 시간차로 키 추출 가능
+function safeCompareKey(provided: string, expected: string): boolean {
+  if (!provided || !expected) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  // timingSafeEqual은 길이 다르면 throw — 사전 길이 체크로 즉시 false
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
 // API key validation — set CS_QUILL_API_KEY env var to enable
 function validateApiKey(req: IncomingMessage): boolean {
   const requiredKey = process.env.CS_QUILL_API_KEY;
   if (!requiredKey) return true; // no key configured = open access
   const provided = req.headers['x-api-key'] as string | undefined;
-  return provided === requiredKey;
+  return safeCompareKey(provided ?? '', requiredKey);
+}
+
+// [C] CORS — '*' 와일드카드는 임의 사이트가 사용자 브라우저에서 키 탈취 가능
+// Loopback 전용. 추가 도메인은 CS_QUILL_ALLOWED_ORIGINS env로 콤마 구분 등록.
+const DEFAULT_ALLOWED_ORIGINS = ['http://localhost', 'http://127.0.0.1'];
+
+function getAllowedOrigins(): string[] {
+  const extra = (process.env.CS_QUILL_ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
+  return [...DEFAULT_ALLOWED_ORIGINS, ...extra];
+}
+
+function resolveCorsOrigin(req: IncomingMessage): string {
+  const origin = (req.headers.origin as string | undefined) ?? '';
+  const allowed = getAllowedOrigins();
+  const isAllowed = origin && allowed.some(a => origin.startsWith(a));
+  return isAllowed ? origin : allowed[0];
 }
 
 // In-memory response cache (keyed by route + body hash)
@@ -159,8 +189,10 @@ export async function runServe(port: string): Promise<void> {
   };
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    // CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // [C] CORS — loopback 화이트리스트 (와일드카드 금지)
+    res.setHeader('Access-Control-Allow-Origin', resolveCorsOrigin(req));
+    res.setHeader('Access-Control-Allow-Credentials', 'false');
+    res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
 

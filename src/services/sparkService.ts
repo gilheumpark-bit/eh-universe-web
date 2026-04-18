@@ -27,11 +27,12 @@ export interface SparkUsage {
 // PART 1 — 헬스체크 + 사용량
 // ============================================================
 
-/** Spark 서버 건강 체크 */
+/** Spark 서버 건강 체크 — [G] resolveServerUrl 단일 진입 */
 export async function checkSparkHealth(): Promise<{ ok: boolean; lmStudio: string }> {
-  if (!SPARK_SERVER_URL) return { ok: false, lmStudio: '' };
+  const serverUrl = resolveServerUrl();
+  if (!serverUrl) return { ok: false, lmStudio: '' };
   try {
-    const res = await fetch(`${SPARK_SERVER_URL}/`, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(`${serverUrl}/`, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return { ok: false, lmStudio: '' };
     const data = await res.json();
     return { ok: data.status === 'ok', lmStudio: data.lm_studio || '' };
@@ -40,13 +41,14 @@ export async function checkSparkHealth(): Promise<{ ok: boolean; lmStudio: strin
   }
 }
 
-/** 현재 사용자 일일 사용량 조회 */
+/** 현재 사용자 일일 사용량 조회 — [G] resolveServerUrl 단일 진입 */
 export async function getSparkUsage(userId?: string): Promise<SparkUsage> {
-  if (!SPARK_SERVER_URL) return { count: 0, limit: 100, remaining: 100 };
+  const serverUrl = resolveServerUrl();
+  if (!serverUrl) return { count: 0, limit: 100, remaining: 100 };
   try {
     const headers: Record<string, string> = {};
     if (userId) headers['x-user-id'] = userId;
-    const res = await fetch(`${SPARK_SERVER_URL}/api/usage`, { headers, signal: AbortSignal.timeout(5000) });
+    const res = await fetch(`${serverUrl}/api/usage`, { headers, signal: AbortSignal.timeout(5000) });
     if (!res.ok) return { count: 0, limit: 100, remaining: 100 };
     return await res.json();
   } catch {
@@ -98,7 +100,8 @@ export async function streamSparkAI(
   opts?: { userId?: string; apiKey?: string; signal?: AbortSignal; userTier?: string },
 ): Promise<ReadableStream> {
   const serverUrl = resolveServerUrl();
-  if (!serverUrl && !SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
+  // [G] 단일 검사로 일관화 — gateway/server 양쪽 모두 비어있을 때만 차단
+  if (!serverUrl) throw new Error('SPARK gateway not configured (set SPARK_SERVER_URL or NEXT_PUBLIC_SPARK_GATEWAY_URL)');
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (opts?.userId) headers['x-user-id'] = opts.userId;
@@ -273,17 +276,18 @@ async function streamOneRequest(
 // PART 5 — 코드 샌드박스
 // ============================================================
 
-/** 코드 샌드박스 실행 */
+/** 코드 샌드박스 실행 — [G] resolveServerUrl 단일 진입 */
 export async function executeOnSandbox(
   code: string,
   opts?: { apiKey?: string },
 ): Promise<{ status: string; output: string; security_check: string; reason?: string }> {
-  if (!SPARK_SERVER_URL) throw new Error('SPARK_SERVER_URL not configured');
+  const serverUrl = resolveServerUrl();
+  if (!serverUrl) throw new Error('SPARK gateway not configured (set SPARK_SERVER_URL or NEXT_PUBLIC_SPARK_GATEWAY_URL)');
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (opts?.apiKey) headers['authorization'] = `Bearer ${opts.apiKey}`;
 
-  const res = await fetch(`${SPARK_SERVER_URL}/api/sandbox/execute`, {
+  const res = await fetch(`${serverUrl}/api/sandbox/execute`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ code }),

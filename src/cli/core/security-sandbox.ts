@@ -2,8 +2,7 @@
 // CS Quill 🦔 — Security Sandbox (권한 분리 + 네트워크 제어)
 // ============================================================
 // 보안 85% → 92%: 네트워크 접근 제어, 파일 권한 분리, 플러그인 격리.
-
-import { execSync } from 'child_process';
+// CLI 컨텍스트(tsconfig exclude=src/cli) — alias 미경유, console 직접 사용.
 
 // ============================================================
 // PART 1 — Permission Model
@@ -167,12 +166,14 @@ export function enforceResourceLimits(pid?: number): void {
     return;
   }
 
-  // For child processes: use ulimit (Unix)
-  if (process.platform !== 'win32') {
-    try {
-      execSync(`ulimit -v ${maxMem * 1024} 2>/dev/null`, { stdio: 'pipe' });
-    } catch { /* ulimit not available */ }
-  }
+  // [C] 자식 프로세스 메모리 제한 미구현 — 정직한 경고로 허위 보안 제거.
+  // 기존 구현(`ulimit -v ... 2>/dev/null` execSync)은 자식 shell 내부에만 적용되어
+  // 즉시 소멸 → 실제 효과 0. resourceLimits(worker_threads, Node 18+) 또는
+  // child_process spawn의 cgroup/job-object 기반 제한으로 이전 예정.
+  console.warn(
+    `[SecuritySandbox] Memory limit (${maxMem}MB) NOT enforced for pid=${pid} — ` +
+      `child process bounding pending. Treat sandbox as advisory until resourceLimits/cgroup migration completes.`,
+  );
 }
 
 export function getActivePolicy(): SecurityPolicy {

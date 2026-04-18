@@ -33,10 +33,23 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json().catch(() => ({}));
-    const { prompt, config, code, language, fileName } = body ?? {};
+    const { prompt, config: rawConfig, code, language, fileName } = body ?? {};
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
+
+    // [C] config undefined 가드 — body.config 미전달 시 SSE 스트림 내부 TypeError 방어
+    const DEFAULT_CONFIG = {
+      enableReview: true,
+      enableAutoFix: true,
+      enableDocs: true,
+      passThreshold: 80,
+      maxFixAttempts: 2,
+    };
+    const config = {
+      ...DEFAULT_CONFIG,
+      ...(rawConfig && typeof rawConfig === 'object' ? rawConfig : {}),
+    };
 
     // BYOK 키 우선, 서버 키 폴백
     const clientApiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';

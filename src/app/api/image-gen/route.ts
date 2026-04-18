@@ -96,7 +96,9 @@ export async function POST(req: NextRequest) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
-        return NextResponse.json({ error: err.error?.message || `OpenAI error: ${res.status}` }, { status: res.status });
+        // [C] provider 에러 sanitize — API 키/quota 정보 유출 방어
+        const safeMessage = sanitizeProviderError(err.error?.message, `OpenAI error: ${res.status}`);
+        return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
 
       const data = await res.json();
@@ -141,7 +143,9 @@ export async function POST(req: NextRequest) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: res.statusText }));
-        return NextResponse.json({ error: err.message || `Stability error: ${res.status}` }, { status: res.status });
+        // [C] provider 에러 sanitize — API 키/quota 정보 유출 방어
+        const safeMessage = sanitizeProviderError(err.message, `Stability error: ${res.status}`);
+        return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
 
       const data = await res.json();
@@ -175,7 +179,9 @@ export async function POST(req: NextRequest) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: res.statusText }));
-        return NextResponse.json({ error: err.error || `DGX Spark error: ${res.status}` }, { status: res.status });
+        // [C] provider 에러 sanitize — DGX 내부 경로/스택 유출 방어
+        const safeMessage = sanitizeProviderError(err.error, `DGX Spark error: ${res.status}`);
+        return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
 
       const data = await res.json();
@@ -214,4 +220,18 @@ function clampSize(val: number, min: number, max: number): number {
   // Stability requires multiples of 64
   const clamped = Math.max(min, Math.min(max, val));
   return Math.round(clamped / 64) * 64;
+}
+
+/**
+ * Sanitize provider error messages — redact API keys, tokens, long hex/base64 strings,
+ * and clamp length to prevent quota/identifier leakage.
+ */
+function sanitizeProviderError(raw: unknown, fallback: string): string {
+  if (typeof raw !== 'string' || !raw) return fallback;
+  return raw
+    .replace(/sk-[A-Za-z0-9_-]{10,}/g, 'sk-***')
+    .replace(/(?:Bearer|Basic)\s+\S+/gi, '[REDACTED]')
+    .replace(/(?:api[_-]?)?key[=:]\s*\S+/gi, 'key=[REDACTED]')
+    .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
+    .slice(0, 200);
 }

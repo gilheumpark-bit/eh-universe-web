@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { firestoreCreateDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
 
@@ -69,7 +70,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'type and content required' }, { status: 400 });
     }
 
-    const id = `sh_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    // [C] crypto.randomBytes(16) — Math.random 약한 ID 대신 128bit 엔트로피
+    const id = `sh_${crypto.randomBytes(16).toString('base64url')}`;
     const expiresAt = Date.now() + expiresInHours * 3600000;
     const payload = { type, title, content, meta };
 

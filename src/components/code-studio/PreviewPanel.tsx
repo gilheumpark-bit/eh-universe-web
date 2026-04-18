@@ -118,6 +118,39 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
     }
   }, [previewUrl]);
 
+  // Determine whether the iframe src is cross-origin from the parent window.
+  // Same-origin sources (about:blank, data:, blob:, simulation fallbacks) MUST NOT
+  // receive `allow-same-origin` together with `allow-scripts` — that combination
+  // is a documented sandbox escape, allowing the iframe to remove its own sandbox.
+  const isPreviewCrossOrigin = useMemo(() => {
+    if (!previewUrl) return false;
+    if (
+      previewUrl.startsWith("about:") ||
+      previewUrl.startsWith("data:") ||
+      previewUrl.startsWith("blob:") ||
+      previewUrl.startsWith("javascript:")
+    ) {
+      return false;
+    }
+    if (typeof window === "undefined") return false;
+    try {
+      const url = new URL(previewUrl, window.location.href);
+      return url.origin !== window.location.origin;
+    } catch {
+      return false;
+    }
+  }, [previewUrl]);
+
+  // Sandbox attribute selection — fail-closed when origin is uncertain.
+  // Cross-origin (real WebContainer URL): allow-same-origin is safe because the
+  //   iframe's origin differs from the parent. Needed by WebContainer for its
+  //   own storage/network APIs.
+  // Same-origin fallback (simulation, about:blank): drop allow-same-origin so the
+  //   iframe cannot script the parent or remove its sandbox.
+  const sandboxAttr = isPreviewCrossOrigin
+    ? "allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
+    : "allow-scripts allow-forms allow-modals allow-popups";
+
   // Auto-detect framework
   const detectedFramework = useMemo(() => {
     const pkgFile = findFile(files, "package.json");
@@ -229,7 +262,11 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
-      if (previewOrigin && event.origin !== previewOrigin) return;
+      // Fail-closed: if previewOrigin is unknown (empty), reject all messages.
+      // Previously an empty previewOrigin skipped origin validation entirely,
+      // letting any window.parent.postMessage from the iframe (or any opener) through.
+      if (!previewOrigin) return;
+      if (event.origin !== previewOrigin) return;
       if (event.data?.__eh_console) {
         const { type, args } = event.data.__eh_console as { type: string; args: string[] };
         setConsoleEntries((prev) => [...prev.slice(-200), {
@@ -383,7 +420,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
                 borderRadius: deviceMode === "responsive" ? 0 : 6,
                 background: "#fff", transition: "width 0.2s ease",
               }}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
+              sandbox={sandboxAttr}
             />
           )}
         </div>

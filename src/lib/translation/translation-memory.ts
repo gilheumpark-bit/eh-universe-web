@@ -101,7 +101,8 @@ export function addToTM(
     existing.timestamp = Date.now();
     existing.useCount++;
   } else {
-    entries.push({ source, target, sourceLang, targetLang, domain, confirmed, timestamp: Date.now(), useCount: 0 });
+    // [K] 신규 entry는 1회 사용으로 시작 (0으로 두면 사용 통계가 영원히 0에 갇힘)
+    entries.push({ source, target, sourceLang, targetLang, domain, confirmed, timestamp: Date.now(), useCount: 1 });
   }
   saveTM(entries);
 }
@@ -120,8 +121,11 @@ export function addBatchToTM(
       existing.target = target;
       existing.confirmed = confirmed || existing.confirmed;
       existing.timestamp = Date.now();
+      // [K] addToTM과 동일하게 사용 횟수 증가 — 누락 보완
+      existing.useCount++;
     } else {
-      entries.push({ source, target, sourceLang, targetLang, confirmed, timestamp: Date.now(), useCount: 0 });
+      // [K] 신규 entry useCount=1 시작
+      entries.push({ source, target, sourceLang, targetLang, confirmed, timestamp: Date.now(), useCount: 1 });
     }
   }
   saveTM(entries);
@@ -177,7 +181,9 @@ export function importTM(json: string): number {
       if (!entry.source || !entry.target) continue;
       const dup = existing.find(e => e.source === entry.source && e.targetLang === entry.targetLang);
       if (!dup) {
-        existing.push({ ...entry, timestamp: entry.timestamp || Date.now(), useCount: 0 });
+        // [K] import한 entry의 useCount는 보존(>=1)하고, 없거나 0이면 1로 시작
+        const importedUseCount = typeof entry.useCount === 'number' && entry.useCount > 0 ? entry.useCount : 1;
+        existing.push({ ...entry, timestamp: entry.timestamp || Date.now(), useCount: importedUseCount });
         added++;
       }
     }

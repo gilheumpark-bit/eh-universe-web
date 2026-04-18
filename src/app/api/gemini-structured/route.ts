@@ -173,6 +173,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // [C] 인증 게이트 — BYOK 없으면 Firebase JWT 필수 (호스팅 Gemini 크레딧 방어)
+    if (!userApiKey) {
+      const authHeader = req.headers.get('authorization');
+      let verified = false;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
+          const token = authHeader.slice(7).trim();
+          verified = Boolean(await verifyFirebaseIdToken(token));
+        } catch { /* verification failed */ }
+      }
+      if (!verified) {
+        return NextResponse.json(
+          { error: 'Authentication required for hosted credits (or provide apiKey)' },
+          { status: 401 },
+        );
+      }
+    }
+
     if (!validateTask(body.task)) {
       return NextResponse.json({ error: 'Invalid task' }, { status: 400 });
     }

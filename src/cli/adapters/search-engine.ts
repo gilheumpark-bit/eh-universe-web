@@ -5,7 +5,7 @@
 // 프로젝트 내 파일/코드 초고속 검색.
 // fzf = 퍼지 파일 검색, ripgrep = 코드 내용 검색.
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const { readdirSync, readFileSync, statSync } = require('fs');
 const { join, relative, _extname } = require('path');
 
@@ -33,14 +33,23 @@ export function ripgrepSearch(query: string, rootPath: string, opts?: {
 }): SearchResult[] {
   const maxResults = opts?.maxResults ?? 50;
   const contextLines = opts?.contextLines ?? 0;
-  const caseFlag = opts?.caseSensitive ? '' : '-i';
-  const globFlag = opts?.glob ? `--glob "${opts.glob}"` : '--glob "*.{ts,tsx,js,jsx,py,go,rs,java,rb,php}"';
-  const regexFlag = opts?.regex ? '' : '--fixed-strings';
-  const contextFlag = contextLines > 0 ? `--context ${contextLines}` : '';
+
+  // Empty query guard
+  if (!query || query.length === 0) return [];
+
+  // Build argv array (no shell — execFileSync) — preserves all original flags
+  const rgArgs: string[] = [];
+  if (!opts?.caseSensitive) rgArgs.push('-i');
+  if (!opts?.regex) rgArgs.push('--fixed-strings');
+  rgArgs.push('--glob', opts?.glob ?? '*.{ts,tsx,js,jsx,py,go,rs,java,rb,php}');
+  if (contextLines > 0) rgArgs.push('--context', String(contextLines));
+  rgArgs.push('--json', '--max-count', String(maxResults));
+  rgArgs.push('--', query, rootPath);
 
   try {
-    const output = execSync(
-      `rg ${caseFlag} ${regexFlag} ${globFlag} ${contextFlag} --json --max-count ${maxResults} -- "${query.replace(/["\\`$]/g, '\\$&')}" "${rootPath}"`,
+    const output = execFileSync(
+      'rg',
+      rgArgs,
       { encoding: 'utf-8', timeout: 10000, maxBuffer: 5 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'] },
     );
 
@@ -134,9 +143,22 @@ function rankSearchResults(results: SearchResult[], query: string): SearchResult
 }
 
 function grepFallback(query: string, rootPath: string, _maxResults: number): SearchResult[] {
+  // Empty query guard
+  if (!query || query.length === 0) return [];
+
   try {
-    const output = execSync(
-      `grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" "${query.replace(/"/g, '\\"')}" "${rootPath}"`,
+    const output = execFileSync(
+      'grep',
+      [
+        '-rn',
+        '--include=*.ts',
+        '--include=*.tsx',
+        '--include=*.js',
+        '--include=*.jsx',
+        '--',
+        query,
+        rootPath,
+      ],
       { encoding: 'utf-8', timeout: 10000, stdio: ['pipe', 'pipe', 'pipe'] },
     );
 

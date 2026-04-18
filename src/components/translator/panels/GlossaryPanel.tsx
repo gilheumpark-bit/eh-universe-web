@@ -3,6 +3,7 @@ import { BookA, Search, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useWebFeatures } from '@/hooks/useWebFeatures';
 import { getGlossaryManager } from '@/lib/translation/glossary-manager';
+import { escapeHtml } from '@/lib/web-features';
 
 // ============================================================
 // EXPORTED UTILITIES FOR GLOSSARY HIGHLIGHTING
@@ -16,15 +17,41 @@ export function getGlossaryTerms(): string[] {
 
 /**
  * Wraps matching glossary terms in the given text with <mark> tags.
- * Returns an HTML string safe for dangerouslySetInnerHTML.
+ * Returns an HTML-escaped string with <mark> wrappers around matches.
+ * Safe for dangerouslySetInnerHTML — both surrounding text and matched terms
+ * are HTML-escaped before being assembled, preventing XSS via user input.
  * Terms are matched case-insensitively with longest-first priority.
  */
 export function highlightGlossaryTerms(text: string, terms: string[]): string {
-  if (!terms.length || !text) return text;
+  if (!text) return '';
+  if (!terms.length) return escapeHtml(text);
+
   const sorted = [...terms].sort((a, b) => b.length - a.length);
-  const escaped = sorted.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const re = new RegExp(`(${escaped.join('|')})`, 'gi');
-  return text.replace(re, '<mark class="bg-accent-cyan/25 text-text-primary rounded-sm px-0.5">$1</mark>');
+  const escapedPatterns = sorted.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const re = new RegExp(`(${escapedPatterns.join('|')})`, 'gi');
+
+  // Split the text into segments and HTML-escape every segment (matched and unmatched).
+  const parts: string[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(escapeHtml(text.slice(lastIndex, match.index)));
+    }
+    parts.push(
+      `<mark class="bg-accent-cyan/25 text-text-primary rounded-sm px-0.5">${escapeHtml(match[0])}</mark>`
+    );
+    lastIndex = match.index + match[0].length;
+    // Zero-width match guard: prevent infinite loop when a pattern matches empty string.
+    if (match.index === re.lastIndex) re.lastIndex++;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(escapeHtml(text.slice(lastIndex)));
+  }
+
+  return parts.join('');
 }
 
 export function GlossaryPanel() {
