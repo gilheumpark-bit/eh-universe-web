@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+// ============================================================
+// PART 1 — imports & types (dynamic StyleStudioView + safe fallbacks)
+// ============================================================
+import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { StoryConfig, Message } from '@/lib/studio-types';
 import TabAssistant from '@/components/studio/TabAssistant';
 import RhythmAnalyzer from '@/components/studio/RhythmAnalyzer';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
+import { logger } from '@/lib/logger';
 
-const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), { ssr: false, loading: () => <div className="animate-pulse p-6"><div className="h-8 bg-bg-secondary rounded-xl w-1/3 mb-3" /><div className="h-48 bg-bg-secondary rounded-2xl" /></div> });
+const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), {
+  ssr: false,
+  loading: () => (
+    <div className="animate-pulse p-6" aria-label="style-loading">
+      <div className="h-8 bg-bg-secondary rounded-xl w-1/3 mb-3" />
+      <div className="h-48 bg-bg-secondary rounded-2xl" />
+    </div>
+  ),
+});
 
 interface StyleTabProps {
   language: 'KO' | 'EN' | 'JP' | 'CN';
@@ -18,6 +30,9 @@ interface StyleTabProps {
   messages?: Message[];
 }
 
+// ============================================================
+// PART 2 — StyleTab component
+// ============================================================
 const StyleTab: React.FC<StyleTabProps> = ({
   language,
   config,
@@ -29,28 +44,66 @@ const StyleTab: React.FC<StyleTabProps> = ({
   messages = [],
 }) => {
   const t = createT(language);
-  // Rhythm은 messages가 있으면 기본 펼침 (UX 개선 — 숨김 방지)
-  const [showRhythm, setShowRhythm] = useState(true);
+
+  // [K] 리듬 패널 기본값: 메시지가 있을 때만 의미가 있으므로 기본 true.
+  //     사용자가 접으면 false로 전환 — messages가 비면 버튼 자체가 렌더되지 않음(아래 guard).
+  //     showRhythm === 표시 여부 토글 (닫기=false, 열기=true). UX 개선으로 숨김 방지 기본 펼침.
+  const [showRhythm, setShowRhythm] = useState<boolean>(true);
+
+  // [C] messages 유효성: 배열 + 최소 1개 + 유효 role (빈 값/비정상 페이로드 방어)
+  const hasValidMessages =
+    Array.isArray(messages) &&
+    messages.length > 0 &&
+    messages.some((m) => m && typeof m === 'object' && (m.role === 'user' || m.role === 'assistant'));
+
+  // [G] onProfileChange는 매 렌더마다 재생성될 필요 없음 — useCallback으로 고정
+  const handleProfileChange = useCallback(
+    (profile: StoryConfig['styleProfile']) => {
+      try {
+        updateCurrentSession({
+          config: { ...config, styleProfile: profile },
+        });
+      } catch (err) {
+        logger.warn('StyleTab', 'profile update failed', err);
+      }
+    },
+    [config, updateCurrentSession],
+  );
+
+  const toggleRhythm = useCallback(() => setShowRhythm((prev) => !prev), []);
 
   return (
     <>
       <StyleStudioView
         language={language}
         initialProfile={config.styleProfile}
-        onProfileChange={(profile) => {
-          updateCurrentSession({
-            config: { ...config, styleProfile: profile },
-          });
-        }}
+        onProfileChange={handleProfileChange}
       />
-      {/* 문장 리듬 분석 */}
-      {messages.length > 0 && (
+      {/* 문장 리듬 분석 — messages가 유효할 때만 표시 */}
+      {hasValidMessages && (
         <div className="max-w-6xl mx-auto px-4 pt-2 pb-2">
-          <button onClick={() => setShowRhythm(!showRhythm)}
+          <button
+            onClick={toggleRhythm}
+            aria-pressed={showRhythm}
+            aria-label={L4(language, {
+              ko: '문장 리듬 분석 토글',
+              en: 'Toggle sentence rhythm',
+              ja: '文章リズム分析の切り替え',
+              zh: '切换句子节奏分析',
+            })}
             className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider border transition-[transform,opacity,background-color,border-color,color] ${
-              showRhythm ? 'bg-accent-purple text-bg-primary border-accent-purple' : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
-            }`}>
-            📐 {language === 'KO' ? '문장 리듬 분석' : 'Sentence Rhythm'}
+              showRhythm
+                ? 'bg-accent-purple text-bg-primary border-accent-purple'
+                : 'bg-bg-secondary text-text-tertiary border-border hover:text-text-primary'
+            }`}
+          >
+            📐{' '}
+            {L4(language, {
+              ko: '문장 리듬 분석',
+              en: 'Sentence Rhythm',
+              ja: '文章リズム分析',
+              zh: '句子节奏分析',
+            })}
           </button>
           {showRhythm && (
             <div className="mt-3">
@@ -60,16 +113,22 @@ const StyleTab: React.FC<StyleTabProps> = ({
         </div>
       )}
       {!showAiLock && (
-      <div className="max-w-6xl mx-auto px-4 pb-4">
-        <TabAssistant tab="style" language={language} config={config} hostedProviders={hostedProviders} />
-      </div>
+        <div className="max-w-6xl mx-auto px-4 pb-4">
+          <TabAssistant tab="style" language={language} config={config} hostedProviders={hostedProviders} />
+        </div>
       )}
       <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">
-        <button 
-          onClick={triggerSave} 
+        <button
+          onClick={triggerSave}
+          aria-label={L4(language, {
+            ko: '스타일 설정 저장',
+            en: 'Save style setting',
+            ja: 'スタイル設定を保存',
+            zh: '保存风格设置',
+          })}
           className={`btn-ripple group flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest font-mono transition-[transform,opacity,background-color,border-color,color] duration-300 ${
-            saveFlash 
-              ? 'bg-accent-green text-bg-primary animate-save-bounce-glow' 
+            saveFlash
+              ? 'bg-accent-green text-bg-primary animate-save-bounce-glow'
               : 'bg-gradient-to-r from-accent-purple to-accent-purple/80 text-bg-primary hover:shadow-[0_4px_20px_rgba(141,123,195,0.3)] hover:-translate-y-0.5 active:scale-95'
           }`}
         >

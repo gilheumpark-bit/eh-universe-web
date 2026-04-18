@@ -17,6 +17,7 @@ import {
   translatedManuscriptToMarkdown,
   markdownToTranslatedManuscript,
 } from '@/lib/markdown-serializer';
+import { logger } from '@/lib/logger';
 
 /** A single file entry destined for a GitHub repo. */
 export interface RepoFile {
@@ -51,7 +52,8 @@ function fromYaml<T>(raw: string): T | null {
     const cleaned = jsonLines.join('\n').trim();
     if (!cleaned) return null;
     return JSON.parse(cleaned) as T;
-  } catch {
+  } catch (err) {
+    logger.warn('project-serializer', 'fromYaml JSON parse failed', err);
     return null;
   }
 }
@@ -348,7 +350,8 @@ export function writerProfileToJson(profile: WriterProfile): string {
 export function jsonToWriterProfile(json: string): WriterProfile | null {
   try {
     return JSON.parse(json) as WriterProfile;
-  } catch {
+  } catch (err) {
+    logger.warn('project-serializer', 'jsonToWriterProfile parse failed', err);
     return null;
   }
 }

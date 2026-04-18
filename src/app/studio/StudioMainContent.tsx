@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   X, Save, Download,
@@ -18,11 +18,12 @@ import { createT, L4 } from '@/lib/i18n';
 import { useStudioUIStore } from '@/store/studio-ui-store';
 import EngineDashboard from '@/components/studio/EngineDashboard';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import GlobalSearchPalette from '@/components/studio/GlobalSearchPalette';
+import GlobalSearchPalette, { type StudioAction } from '@/components/studio/GlobalSearchPalette';
 import { ShortcutsModal } from '@/components/studio/StudioModals';
 import StudioTabRouter from '@/components/studio/StudioTabRouter';
 import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
+import { NovelBreadcrumb, type NovelBreadcrumbTarget } from '@/components/studio/NovelBreadcrumb';
 import { useStudio } from './StudioContext';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
 import { getFile, getTree } from '@/lib/github-sync';
@@ -40,7 +41,7 @@ const EpisodeExplorer = dynamic(() => import('@/components/studio/EpisodeExplore
 // ============================================================
 export default function StudioMainContent({ children }: { children?: React.ReactNode }) {
   const {
-    focusMode, setFocusMode, 
+    focusMode, setFocusMode,
     themeLevel, toggleTheme,
     showSearch, setShowSearch, searchQuery, setSearchQuery,
     showShortcuts, setShowShortcuts,
@@ -152,6 +153,161 @@ export default function StudioMainContent({ children }: { children?: React.React
     [gh.config],
   );
 
+  // Breadcrumb navigation — Project > Episode > Scene
+  const handleBreadcrumbNavigate = useCallback(
+    (target: NovelBreadcrumbTarget) => {
+      if (target === 'project') handleTabChange('history');
+      else if (target === 'episode') handleTabChange('manuscript');
+      else if (target === 'scene') setEpisodeExplorerOpen(true);
+    },
+    [handleTabChange, setEpisodeExplorerOpen],
+  );
+
+  // ============================================================
+  // PART 2.5 — Command Palette Actions (L4 labels + handlers)
+  // ============================================================
+  /** Route actionId to the appropriate handler. */
+  const handleCommandAction = useCallback((actionId: string) => {
+    switch (actionId) {
+      case 'new-session': createNewSession(); break;
+      case 'export-txt': window.dispatchEvent(new Event('noa:export-txt')); break;
+      case 'print': handlePrint(); break;
+      case 'toggle-focus': setFocusMode(prev => !prev); break;
+      case 'toggle-shortcuts': setShowShortcuts(prev => !prev); break;
+      case 'save-now': triggerSave(); break;
+      case 'open-settings': handleTabChange('settings'); break;
+      case 'switch-branch': window.dispatchEvent(new Event('noa:switch-branch')); break;
+      case 'export-epub': window.dispatchEvent(new Event('noa:export-epub')); break;
+      case 'translate-current': window.dispatchEvent(new Event('noa:translate-current')); break;
+      case 'toggle-assistant': setRightPanelOpen(prev => !prev); break;
+      case 'open-api-key': setShowApiKeyModal(true); break;
+      case 'open-marketplace': {
+        // Navigate to Settings so PluginsSection is mounted, then trigger its modal.
+        // Defer the event to the next tick so the tab transition has committed.
+        handleTabChange('settings');
+        setTimeout(() => {
+          try {
+            window.dispatchEvent(new CustomEvent('noa:open-marketplace', { detail: { actionId: 'open-marketplace' } }));
+          } catch { /* best-effort — no user-facing consequence if it fails */ }
+        }, 50);
+        break;
+      }
+      default: break;
+    }
+  }, [createNewSession, handlePrint, setFocusMode, setShowShortcuts, triggerSave, handleTabChange, setRightPanelOpen, setShowApiKeyModal]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { actionId?: string } | undefined;
+      if (detail?.actionId) handleCommandAction(detail.actionId);
+    };
+    window.addEventListener('noa:command-action', handler);
+    return () => window.removeEventListener('noa:command-action', handler);
+  }, [handleCommandAction]);
+
+  const paletteActions = useMemo<StudioAction[]>(() => [
+    {
+      id: 'new-session',
+      label: L4(language, { ko: '새 에피소드', en: 'New Episode', ja: '新規エピソード', zh: '新章节' }),
+      description: L4(language, { ko: '빈 에피소드 세션 생성', en: 'Create a blank episode session', ja: '空のエピソードセッションを作成', zh: '创建空白章节会话' }),
+      shortcut: 'Ctrl+Shift+N',
+      keywords: ['new', 'session', 'episode', '새', '에피소드'],
+      handler: () => handleCommandAction('new-session'),
+    },
+    {
+      id: 'export-txt',
+      label: L4(language, { ko: 'TXT 내보내기', en: 'Export TXT', ja: 'TXTエクスポート', zh: '导出TXT' }),
+      description: L4(language, { ko: '현재 세션을 TXT로 저장', en: 'Save current session as TXT', ja: '現在のセッションをTXTとして保存', zh: '将当前会话保存为TXT' }),
+      shortcut: 'Ctrl+E',
+      keywords: ['export', 'txt', 'save', '내보내기'],
+      handler: () => handleCommandAction('export-txt'),
+    },
+    {
+      id: 'print',
+      label: L4(language, { ko: '인쇄', en: 'Print', ja: '印刷', zh: '打印' }),
+      description: L4(language, { ko: '원고 인쇄 대화상자 열기', en: 'Open manuscript print dialog', ja: '原稿印刷ダイアログを開く', zh: '打开稿件打印对话框' }),
+      shortcut: 'Ctrl+P',
+      keywords: ['print', '인쇄'],
+      handler: () => handleCommandAction('print'),
+    },
+    {
+      id: 'toggle-focus',
+      label: L4(language, { ko: '집중 모드', en: 'Focus Mode', ja: 'フォーカスモード', zh: '专注模式' }),
+      description: L4(language, { ko: 'UI 숨기고 글쓰기만', en: 'Hide UI, write only', ja: 'UIを隠して執筆のみ', zh: '隐藏UI，只写作' }),
+      shortcut: 'F11',
+      keywords: ['focus', 'zen', '집중'],
+      handler: () => handleCommandAction('toggle-focus'),
+    },
+    {
+      id: 'toggle-shortcuts',
+      label: L4(language, { ko: '단축키 도움말', en: 'Keyboard Shortcuts', ja: 'キーボードショートカット', zh: '键盘快捷键' }),
+      description: L4(language, { ko: '전체 단축키 목록 보기', en: 'Show all keyboard shortcuts', ja: '全ショートカットを表示', zh: '显示所有快捷键' }),
+      shortcut: 'F12',
+      keywords: ['help', 'shortcut', '단축키'],
+      handler: () => handleCommandAction('toggle-shortcuts'),
+    },
+    {
+      id: 'save-now',
+      label: L4(language, { ko: '지금 저장', en: 'Save Now', ja: '今すぐ保存', zh: '立即保存' }),
+      description: L4(language, { ko: '즉시 수동 저장', en: 'Trigger manual save immediately', ja: '即時に手動保存', zh: '立即手动保存' }),
+      shortcut: 'Ctrl+S',
+      keywords: ['save', '저장'],
+      handler: () => handleCommandAction('save-now'),
+    },
+    {
+      id: 'open-settings',
+      label: L4(language, { ko: '설정 열기', en: 'Open Settings', ja: '設定を開く', zh: '打开设置' }),
+      description: L4(language, { ko: '스튜디오 설정 탭으로 이동', en: 'Jump to Studio settings tab', ja: 'スタジオ設定タブへ移動', zh: '跳转到工作室设置标签' }),
+      shortcut: 'F8',
+      keywords: ['settings', 'preferences', '설정'],
+      handler: () => handleCommandAction('open-settings'),
+    },
+    {
+      id: 'switch-branch',
+      label: L4(language, { ko: '브랜치 전환', en: 'Switch Branch', ja: 'ブランチ切替', zh: '切换分支' }),
+      description: L4(language, { ko: 'GitHub 평행우주 브랜치 선택', en: 'Select a parallel-universe Git branch', ja: 'Git並行ブランチを選択', zh: '选择平行宇宙Git分支' }),
+      keywords: ['branch', 'git', 'parallel', '브랜치'],
+      handler: () => handleCommandAction('switch-branch'),
+    },
+    {
+      id: 'export-epub',
+      label: L4(language, { ko: 'EPUB 내보내기', en: 'Export EPUB', ja: 'EPUBエクスポート', zh: '导出EPUB' }),
+      description: L4(language, { ko: '전자책 EPUB 3.0 파일 생성', en: 'Generate EPUB 3.0 ebook', ja: 'EPUB 3.0電子書籍を生成', zh: '生成EPUB 3.0电子书' }),
+      keywords: ['export', 'epub', 'ebook', '전자책'],
+      handler: () => handleCommandAction('export-epub'),
+    },
+    {
+      id: 'translate-current',
+      label: L4(language, { ko: '현재 에피소드 번역', en: 'Translate Current Episode', ja: '現在のエピソードを翻訳', zh: '翻译当前章节' }),
+      description: L4(language, { ko: '번역 스튜디오로 보내기', en: 'Send to Translation Studio', ja: '翻訳スタジオへ送信', zh: '发送至翻译工作室' }),
+      keywords: ['translate', 'i18n', '번역'],
+      handler: () => handleCommandAction('translate-current'),
+    },
+    {
+      id: 'toggle-assistant',
+      label: L4(language, { ko: '어시스턴트 토글', en: 'Toggle Assistant', ja: 'アシスタントを切替', zh: '切换助手' }),
+      description: L4(language, { ko: '오른쪽 어시스턴트 패널 열기/닫기', en: 'Open/close right assistant panel', ja: '右アシスタントパネルを開閉', zh: '打开/关闭右侧助手面板' }),
+      shortcut: 'Ctrl+/',
+      keywords: ['assistant', 'ai', 'panel', '어시스턴트'],
+      handler: () => handleCommandAction('toggle-assistant'),
+    },
+    {
+      id: 'open-api-key',
+      label: L4(language, { ko: 'API 키 설정', en: 'Configure API Key', ja: 'APIキー設定', zh: '配置API密钥' }),
+      description: L4(language, { ko: 'AI 공급자 키 관리 모달 열기', en: 'Open AI provider key manager', ja: 'AIプロバイダキー管理を開く', zh: '打开AI提供商密钥管理' }),
+      keywords: ['api', 'key', 'provider', '키'],
+      handler: () => handleCommandAction('open-api-key'),
+    },
+    {
+      id: 'open-marketplace',
+      label: L4(language, { ko: '플러그인 마켓플레이스', en: 'Plugin Marketplace', ja: 'プラグインマーケットプレイス', zh: '插件市场' }),
+      description: L4(language, { ko: '추가 기능 플러그인 탐색 및 활성화', en: 'Browse and enable plugin extras', ja: 'プラグインを参照して有効化', zh: '浏览并启用插件' }),
+      shortcut: 'Ctrl+Shift+P',
+      keywords: ['plugin', 'marketplace', 'addon', 'extension', '플러그인', '마켓'],
+      handler: () => handleCommandAction('open-marketplace'),
+    },
+  ], [language, handleCommandAction]);
+
   return (
     <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
       {/* 오프라인 배너 */}
@@ -225,6 +381,16 @@ export default function StudioMainContent({ children }: { children?: React.React
         </div>
       </header>
 
+      {/* Breadcrumb — Project > Episode > Scene (hidden in Zen/focus mode) */}
+      {!focusMode && (currentProject || currentSession) && (
+        <NovelBreadcrumb
+          project={currentProject}
+          currentSession={currentSession}
+          language={language}
+          onNavigate={handleBreadcrumbNavigate}
+        />
+      )}
+
       {/* Search bar */}
       {showSearch && (
         <div className="px-4 py-2 bg-bg-secondary border-b border-border flex items-center gap-2">
@@ -251,12 +417,20 @@ export default function StudioMainContent({ children }: { children?: React.React
           sessions={sessions}
           config={currentSession?.config ?? null}
           language={language}
-          onSelect={(type, id) => {
+          actions={paletteActions}
+          onSelect={(type, id, sessionId) => {
             setShowGlobalSearch(false);
             setGlobalSearchQuery('');
+            const targetSession = sessionId ?? id;
             if (type === 'character') handleTabChange('characters');
-            else if (type === 'episode') { if (id) setCurrentSessionId(id); handleTabChange('writing'); }
+            else if (type === 'episode') { if (targetSession) setCurrentSessionId(targetSession); handleTabChange('writing'); }
             else if (type === 'world') handleTabChange('world');
+            else if (type === 'text') { if (targetSession) setCurrentSessionId(targetSession); handleTabChange('writing'); }
+          }}
+          onExecuteAction={(actionId) => {
+            setShowGlobalSearch(false);
+            setGlobalSearchQuery('');
+            window.dispatchEvent(new CustomEvent('noa:command-action', { detail: { actionId } }));
           }}
           onClose={() => { setShowGlobalSearch(false); setGlobalSearchQuery(''); }}
         />

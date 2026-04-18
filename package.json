@@ -17,6 +17,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:scenarios": "playwright test e2e/scenarios",
     "test:e2e:byok": "playwright test e2e/byok-api-settings-commercial.spec.ts",
     "test:e2e:byok:stress": "node scripts/e2e-commercial-stress.mjs",
     "test:e2e:byok:stress:smoke": "cross-env COMMERCIAL_E2E_TARGET_RUNS=60 node scripts/e2e-commercial-stress.mjs",
@@ -25,6 +28,8 @@
     "verify:build": "npm run verify:static && npm run build",
     "verify": "npm run verify:build && npm run test:e2e",
     "integrity:scan": "node scripts/project-integrity-scan.mjs",
+    "docs:api": "typedoc",
+    "docs:api:watch": "typedoc --watch",
     "cs": "ts-node --project tsconfig.cli.json src/cli/bin/cs.ts",
     "cs:build": "tsc --project tsconfig.cli.json"
   },
@@ -94,6 +99,7 @@
     "ts-jest": "^29.4.6",
     "ts-morph": "^23.0.0",
     "ts-node": "^10.9.2",
+    "typedoc": "^0.28.19",
     "typescript": "^5"
   }
 }

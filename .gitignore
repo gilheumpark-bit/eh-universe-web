@@ -149,3 +149,6 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+
+# TypeDoc API docs (regenerated locally)
+docs/api/

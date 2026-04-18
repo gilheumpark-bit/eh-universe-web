@@ -284,7 +284,9 @@ function Section({ title, children, defaultOpen = true, badge, desc, highlight }
   return (
     <div className={`border-b ${highlight ? 'border-accent-purple/30 bg-accent-purple/[0.03] rounded-lg -mx-1 px-1' : 'border-border'}`}>
       <button type="button" onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 w-full py-3 px-1 text-left min-h-[44px]">
+        aria-expanded={open}
+        aria-label={`${title} ${open ? 'collapse' : 'expand'}`}
+        className="flex items-center gap-2 w-full py-3 px-1 text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {highlight && <span className="w-1.5 h-1.5 rounded-full bg-accent-purple shrink-0" />}
@@ -379,7 +381,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
               <input value={seg.label} onChange={e => updateSegment(i, { label: e.target.value })} maxLength={100} className="bg-transparent font-bold text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 flex-1" />
               <div className="flex items-center gap-1">
                 <input type="color" value={seg.color} onChange={e => updateSegment(i, { color: e.target.value })} aria-label={`${seg.label || "segment"} color`} className="w-5 h-5 rounded cursor-pointer border-0" />
-                {segments.length > 2 && <button onClick={() => removeSegment(i)} className="text-text-tertiary hover:text-accent-red text-[10px]">&#10005;</button>}
+                {segments.length > 2 && <button onClick={() => removeSegment(i)} aria-label={L4(lang, { ko: `${seg.label || '구간'} 삭제`, en: `Delete ${seg.label || 'segment'}`, ja: `${seg.label || '区間'}を削除`, zh: `删除${seg.label || '区间'}` })} className="text-text-tertiary hover:text-accent-red text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>}
               </div>
             </div>
             <input value={seg.desc} onChange={e => updateSegment(i, { desc: e.target.value })} placeholder={L4(lang, { ko: "설명...", en: "Description...", ja: "説明...", zh: "描述..." })} maxLength={500} className="w-full bg-bg-secondary border border-border rounded px-2 py-1 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
@@ -599,7 +601,9 @@ export default function SceneSheet({
             <div className="flex items-center gap-0.5 p-0.5 bg-black/30 rounded-lg">
               {GRAMMAR_REGIONS.map(r => (
                 <button key={r} onClick={() => setGrammarRegion(r)}
-                  className={`px-2 py-1 rounded text-[11px] transition-colors min-h-[44px] ${grammarRegion === r ? "bg-accent-purple text-white shadow" : "text-text-tertiary hover:text-text-primary"}`}>
+                  aria-pressed={grammarRegion === r}
+                  aria-label={L4(lang, { ko: `문법팩 ${GRAMMAR_PACKS[r].label.ko}`, en: `Grammar pack ${GRAMMAR_PACKS[r].label.en}`, ja: `文法パック ${GRAMMAR_PACKS[r].label.en}`, zh: `语法包 ${GRAMMAR_PACKS[r].label.en}` })}
+                  className={`px-2 py-1 rounded text-[11px] transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${grammarRegion === r ? "bg-accent-purple text-white shadow" : "text-text-tertiary hover:text-text-primary"}`}>
                   {GRAMMAR_PACKS[r].flag}
                 </button>
               ))}
@@ -614,7 +618,9 @@ export default function SceneSheet({
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowGrammarPanel(v => !v)}
-              className={`px-3 py-1.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-colors min-h-[44px] ${showGrammarPanel ? "bg-accent-green text-white" : "bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary"}`}>
+              aria-expanded={showGrammarPanel}
+              aria-pressed={showGrammarPanel}
+              className={`px-3 py-1.5 rounded text-[10px] font-bold font-mono uppercase tracking-wider transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${showGrammarPanel ? "bg-accent-green text-white" : "bg-bg-secondary text-text-tertiary border border-border hover:text-text-primary"}`}>
               {GRAMMAR_PACKS[grammarRegion].flag} {L4(lang, { ko: "문법", en: "Grammar", ja: "Grammar", zh: "Grammar" })}
             </button>
             <button onClick={handleAIGenerate}
@@ -656,7 +662,9 @@ export default function SceneSheet({
               const isActive = activePreset === p.key;
               return (
                 <button key={p.key} onClick={() => { setActivePreset(p.key); }}
-                  className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-center transition-[transform,opacity,background-color,border-color,color] min-h-[64px] border-2 ${
+                  aria-pressed={isActive}
+                  aria-label={L4(lang, { ko: `${L4(lang, p)} 프리셋 선택`, en: `Select ${L4(lang, p)} preset`, ja: `${L4(lang, p)} プリセットを選択`, zh: `选择 ${L4(lang, p)} 预设` })}
+                  className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-center transition-[transform,opacity,background-color,border-color,color] min-h-[64px] border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                     isActive
                       ? `${meta.bg} ${meta.border} ring-2 ring-offset-1 ring-accent-purple shadow-lg scale-[1.04]`
                       : `bg-bg-primary border-border/50 hover:${meta.bg} hover:${meta.border} hover:shadow-md`
@@ -733,7 +741,7 @@ export default function SceneSheet({
                   <span className="text-[9px] font-bold uppercase min-w-[32px]">{g.type === "goguma" ? g.intensity[0].toUpperCase() : "R"}</span>
                   <input value={g.desc} onChange={e => setGogumas(prev => prev.map((gg, ii) => ii === i ? { ...gg, desc: e.target.value } : gg))}
                     placeholder={L4(lang, { ko: "설명...", en: "Description...", ja: "説明...", zh: "描述..." })} maxLength={500} className="flex-1 bg-transparent text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-secondary min-h-[44px]" />
-                  <button onClick={() => setGogumas(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                  <button onClick={() => setGogumas(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `고구마/사이다 ${i + 1} 삭제`, en: `Delete tension/release ${i + 1}`, ja: `テンション ${i + 1} を削除`, zh: `删除张力 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                 </div>
               ))}
             </div>
@@ -776,7 +784,7 @@ export default function SceneSheet({
                     <input type="checkbox" checked={fs.resolved} onChange={e => setForeshadows(prev => prev.map((f, ii) => ii === i ? { ...f, resolved: e.target.checked } : f))} className="accent-accent-green" />
                     {L4(lang, { ko: "완료", en: "Done", ja: "完了", zh: "完成" })}
                   </label>
-                  <button onClick={() => setForeshadows(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                  <button onClick={() => setForeshadows(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `복선 ${i + 1} 삭제`, en: `Delete foreshadow ${i + 1}`, ja: `伏線 ${i + 1} を削除`, zh: `删除伏笔 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                 </div>
               ))}
             </div>
@@ -814,7 +822,7 @@ export default function SceneSheet({
                   <input type="range" min={0} max={100} value={em.intensity} aria-label={L4(lang, { ko: "감정 강도", en: "Emotion intensity", ja: "Emotion intensity", zh: "Emotion intensity" })}
                     onChange={e => setEmotions(prev => prev.map((ee, ii) => ii === i ? { ...ee, intensity: parseInt(e.target.value) } : ee))} className="flex-1 h-1 accent-accent-purple" />
                   <span className="text-[9px] font-bold text-accent-purple w-6 text-right">{em.intensity}</span>
-                  <button onClick={() => setEmotions(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                  <button onClick={() => setEmotions(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `감정점 ${i + 1} 삭제`, en: `Delete emotion point ${i + 1}`, ja: `感情点 ${i + 1} を削除`, zh: `删除情感点 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                 </div>
               ))}
             </div>
@@ -857,7 +865,7 @@ export default function SceneSheet({
                   </select>
                   <input value={h.desc} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, desc: e.target.value } : hh))}
                     placeholder={L4(lang, { ko: "훅 내용...", en: "Hook content...", ja: "フック内容...", zh: "钩子内容..." })} maxLength={500} className="flex-1 bg-transparent text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
-                  <button onClick={() => setHooks(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                  <button onClick={() => setHooks(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `훅 ${i + 1} 삭제`, en: `Delete hook ${i + 1}`, ja: `フック ${i + 1} を削除`, zh: `删除钩子 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red text-xs min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                 </div>
               ))}
             </div>
@@ -919,7 +927,7 @@ export default function SceneSheet({
                       placeholder={L4(lang, { ko: "캐릭터명", en: "Character", ja: "キャラクター名", zh: "角色人" })} maxLength={100} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
                     <input value={dr.tone} onChange={e => setDialogueRules(prev => prev.map((d, ii) => ii === i ? { ...d, tone: e.target.value } : d))}
                       placeholder={L4(lang, { ko: "톤", en: "Tone", ja: "Tone", zh: "Tone" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
-                    <button onClick={() => setDialogueRules(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                    <button onClick={() => setDialogueRules(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `대사 규칙 ${i + 1} 삭제`, en: `Delete dialogue rule ${i + 1}`, ja: `台詞ルール ${i + 1} を削除`, zh: `删除对话规则 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                   </div>
                 ))}
               </div>
@@ -964,7 +972,7 @@ export default function SceneSheet({
                       <input type="checkbox" checked={dp.resolved} onChange={e => setDopamines(prev => prev.map((d, ii) => ii === i ? { ...d, resolved: e.target.checked } : d))} className="accent-accent-green" />
                       {L4(lang, { ko: "회수", en: "Resolved", ja: "Resolved", zh: "Resolved" })}
                     </label>
-                    <button onClick={() => setDopamines(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                    <button onClick={() => setDopamines(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `도파민 ${i + 1} 삭제`, en: `Delete dopamine ${i + 1}`, ja: `ドーパミン ${i + 1} を削除`, zh: `删除多巴胺 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                   </div>
                 ))}
               </div>
@@ -979,7 +987,7 @@ export default function SceneSheet({
                       placeholder={L4(lang, { ko: "캐릭터명", en: "Character", ja: "キャラクター名", zh: "角色人" })} maxLength={100} className="w-24 bg-bg-secondary border border-border rounded px-2 py-1.5 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
                     <input value={cn.rule} onChange={e => setCanons(prev => prev.map((c, ii) => ii === i ? { ...c, rule: e.target.value } : c))}
                       placeholder={L4(lang, { ko: "규칙", en: "Rule", ja: "Rule", zh: "Rule" })} maxLength={500} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
-                    <button onClick={() => setCanons(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                    <button onClick={() => setCanons(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `캐논 규칙 ${i + 1} 삭제`, en: `Delete canon rule ${i + 1}`, ja: `キャノン ${i + 1} を削除`, zh: `删除规则 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                   </div>
                 ))}
               </div>
@@ -997,7 +1005,7 @@ export default function SceneSheet({
                       placeholder={L4(lang, { ko: "장면 B", en: "Scene B", ja: "シーン B", zh: "场景 B" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
                     <input value={tr.method} onChange={e => setTransitions(prev => prev.map((t, ii) => ii === i ? { ...t, method: e.target.value } : t))}
                       placeholder={L4(lang, { ko: "전환 방법", en: "Method", ja: "Method", zh: "Method" })} maxLength={200} className="flex-1 bg-bg-secondary border border-border rounded px-2 py-1.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]" />
-                    <button onClick={() => setTransitions(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                    <button onClick={() => setTransitions(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `전환 ${i + 1} 삭제`, en: `Delete transition ${i + 1}`, ja: `トランジション ${i + 1} を削除`, zh: `删除转场 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                   </div>
                 ))}
               </div>
@@ -1046,7 +1054,7 @@ export default function SceneSheet({
                       <span className="text-[9px] text-text-tertiary">Lv</span>
                       <input type="range" min={0} max={100} value={tp.level} aria-label="level" onChange={e => setTensionPoints(prev => prev.map((t, ii) => ii === i ? { ...t, level: parseInt(e.target.value) } : t))} className="w-16 h-1 accent-accent-red" />
                       <span className="text-[9px] font-bold text-accent-red w-6">{tp.level}</span>
-                      <button onClick={() => setTensionPoints(prev => prev.filter((_, ii) => ii !== i))} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center">&#10005;</button>
+                      <button onClick={() => setTensionPoints(prev => prev.filter((_, ii) => ii !== i))} aria-label={L4(lang, { ko: `긴장점 ${i + 1} 삭제`, en: `Delete tension point ${i + 1}`, ja: `テンション点 ${i + 1} を削除`, zh: `删除张力点 ${i + 1}` })} className="text-text-tertiary hover:text-accent-red min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#10005;</button>
                     </div>
                   ))}
                 </div>

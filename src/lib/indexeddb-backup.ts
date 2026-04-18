@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { Project } from '@/lib/studio-types';
+import { logger } from '@/lib/logger';
 
 const DB_NAME = 'noa_backup';
 const DB_VERSION = 2;
@@ -14,7 +15,8 @@ const MAX_VERSIONED_BACKUPS = 5;
 export function isIndexedDBAvailable(): boolean {
   try {
     return typeof indexedDB !== 'undefined' && indexedDB !== null;
-  } catch {
+  } catch (err) {
+    logger.warn('indexeddb-backup', 'isIndexedDBAvailable check threw', err);
     return false;
   }
 }
@@ -37,8 +39,12 @@ function openDB(): Promise<IDBDatabase | null> {
       };
 
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
-    } catch {
+      request.onerror = () => {
+        logger.warn('indexeddb-backup', 'openDB request.onerror', request.error);
+        resolve(null);
+      };
+    } catch (err) {
+      logger.warn('indexeddb-backup', 'openDB threw synchronously', err);
       resolve(null);
     }
   });
@@ -60,8 +66,13 @@ export async function backupToIndexedDB(projects: Project[]): Promise<boolean> {
       }
 
       tx.oncomplete = () => { db.close(); resolve(true); };
-      tx.onerror = () => { db.close(); resolve(false); };
-    } catch {
+      tx.onerror = () => {
+        logger.warn('indexeddb-backup', 'backupToIndexedDB tx.onerror', tx.error);
+        db.close();
+        resolve(false);
+      };
+    } catch (err) {
+      logger.warn('indexeddb-backup', 'backupToIndexedDB threw', err);
       db.close();
       resolve(false);
     }
@@ -84,8 +95,13 @@ export async function restoreFromIndexedDB(): Promise<Project[] | null> {
         const results = request.result as Project[];
         resolve(results.length > 0 ? results : null);
       };
-      request.onerror = () => { db.close(); resolve(null); };
-    } catch {
+      request.onerror = () => {
+        logger.warn('indexeddb-backup', 'restoreFromIndexedDB request.onerror', request.error);
+        db.close();
+        resolve(null);
+      };
+    } catch (err) {
+      logger.warn('indexeddb-backup', 'restoreFromIndexedDB threw', err);
       db.close();
       resolve(null);
     }
@@ -136,8 +152,13 @@ export async function saveVersionedBackup(projects: Project[]): Promise<boolean>
       };
 
       tx.oncomplete = () => { db.close(); resolve(true); };
-      tx.onerror = () => { db.close(); resolve(false); };
-    } catch {
+      tx.onerror = () => {
+        logger.warn('indexeddb-backup', 'saveVersionedBackup tx.onerror', tx.error);
+        db.close();
+        resolve(false);
+      };
+    } catch (err) {
+      logger.warn('indexeddb-backup', 'saveVersionedBackup threw', err);
       db.close();
       resolve(false);
     }
@@ -161,8 +182,13 @@ export async function listVersionedBackups(): Promise<VersionedBackup[]> {
           .sort((a, b) => b.timestamp - a.timestamp);
         resolve(results);
       };
-      request.onerror = () => { db.close(); resolve([]); };
-    } catch {
+      request.onerror = () => {
+        logger.warn('indexeddb-backup', 'listVersionedBackups request.onerror', request.error);
+        db.close();
+        resolve([]);
+      };
+    } catch (err) {
+      logger.warn('indexeddb-backup', 'listVersionedBackups threw', err);
       db.close();
       resolve([]);
     }
@@ -185,8 +211,13 @@ export async function restoreVersionedBackup(timestamp: number): Promise<Project
         const backup = request.result as VersionedBackup | undefined;
         resolve(backup?.projects ?? null);
       };
-      request.onerror = () => { db.close(); resolve(null); };
-    } catch {
+      request.onerror = () => {
+        logger.warn('indexeddb-backup', 'restoreVersionedBackup request.onerror', request.error);
+        db.close();
+        resolve(null);
+      };
+    } catch (err) {
+      logger.warn('indexeddb-backup', 'restoreVersionedBackup threw', err);
       db.close();
       resolve(null);
     }

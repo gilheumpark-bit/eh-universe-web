@@ -225,7 +225,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <button
                   type="button"
                   onClick={() => setCreatorDnaOpen(v => !v)}
-                  className="flex items-center gap-2 w-full text-left min-h-[44px] group"
+                  aria-expanded={creatorDnaOpen}
+                  aria-label={L4(language, { ko: '캐릭터 DNA 섹션 토글', en: 'Toggle Character DNA section', ja: 'キャラクター DNA セクション切替', zh: '切换角色 DNA 区块' })}
+                  className="flex items-center gap-2 w-full text-left min-h-[44px] group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                 >
                   {creatorDnaOpen ? <ChevronUp className="w-3.5 h-3.5 text-accent-purple" /> : <ChevronDown className="w-3.5 h-3.5 text-accent-purple" />}
                   <Dna className="w-3.5 h-3.5 text-accent-purple" />
@@ -524,7 +526,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       <button
                         type="button"
                         onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t2: !prev[char.id]?.t2 } }))}
-                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1.5 text-amber-500/60 hover:text-amber-400 transition-colors mb-2"
+                        aria-expanded={!!expandedTiers[char.id]?.t2}
+                        aria-label={L4(language, { ko: `${char.name ?? '캐릭터'} 2단계 섹션 토글`, en: `Toggle Tier 2 section for ${char.name ?? 'character'}`, ja: `${char.name ?? 'キャラクター'} 2段階切替`, zh: `切换 ${char.name ?? '角色'} 第 2 层级` })}
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1.5 text-amber-500/60 hover:text-amber-400 transition-colors mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                       >
                         {expandedTiers[char.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         <Settings2 className="w-3 h-3" />
@@ -592,7 +596,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       <button
                         type="button"
                         onClick={() => setExpandedTiers(prev => ({ ...prev, [char.id]: { ...prev[char.id], t3: !prev[char.id]?.t3 } }))}
-                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-emerald-500/60 hover:text-emerald-400 transition-colors mb-2"
+                        aria-expanded={!!expandedTiers[char.id]?.t3}
+                        aria-label={L4(language, { ko: `${char.name ?? '캐릭터'} 3단계 섹션 토글`, en: `Toggle Tier 3 section for ${char.name ?? 'character'}`, ja: `${char.name ?? 'キャラクター'} 3段階切替`, zh: `切换 ${char.name ?? '角色'} 第 3 层级` })}
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 text-emerald-500/60 hover:text-emerald-400 transition-colors mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                       >
                         {expandedTiers[char.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         {language === 'KO' ? '3단계 — 디테일' : 'Tier 3 — Detail'}
@@ -829,25 +835,27 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
             )}
             {/* Fix #7: Pagination controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
+              <nav className="flex items-center justify-center gap-2 pt-4" aria-label={language === 'KO' ? '캐릭터 목록 페이지네이션' : 'Character list pagination'}>
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-[opacity,background-color,border-color,color]"
+                  aria-label={language === 'KO' ? '이전 페이지' : 'Previous page'}
+                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-[opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
                 >
                   {language === 'KO' ? '이전' : 'Prev'}
                 </button>
-                <span className="text-[10px] font-bold text-text-tertiary font-mono">
+                <span className="text-[10px] font-bold text-text-tertiary font-mono" aria-live="polite" aria-label={language === 'KO' ? `${currentPage} / ${totalPages} 페이지` : `Page ${currentPage} of ${totalPages}`}>
                   {currentPage} / {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-[opacity,background-color,border-color,color]"
+                  aria-label={language === 'KO' ? '다음 페이지' : 'Next page'}
+                  className="px-3 py-1.5 bg-bg-secondary border border-border rounded-lg text-[10px] font-bold text-text-tertiary hover:text-text-primary disabled:opacity-30 transition-[opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
                 >
                   {language === 'KO' ? '다음' : 'Next'}
                 </button>
-              </div>
+              </nav>
             )}
           </div>
         </div>
@@ -966,7 +974,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
                   </span>
                   {rel.desc && <span className="ml-2 text-text-tertiary italic">{rel.desc}</span>}
                 </span>
-                <button onClick={() => removeRelation(i)} className="text-text-tertiary hover:text-red-500 transition-colors">✕</button>
+                <button onClick={() => removeRelation(i)} aria-label={language === 'KO' ? `관계 ${i + 1} 삭제` : `Delete relation ${i + 1}`} className="text-text-tertiary hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">✕</button>
               </div>
             );
           })}

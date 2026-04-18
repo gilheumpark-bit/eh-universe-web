@@ -198,7 +198,7 @@ function SceneEditor({
                   <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-center" value={scene.nextScene} onChange={e => updateScene(idx, "nextScene", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1 text-center">
-                  <button onClick={() => removeScene(idx)} className="text-red-400 hover:text-red-300 text-xs" title={L.delete}>✕</button>
+                  <button onClick={() => removeScene(idx)} aria-label={`${L.delete} scene ${idx + 1}`} className="text-red-400 hover:text-red-300 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded" title={L.delete}>✕</button>
                 </td>
               </tr>
             ))}
@@ -349,7 +349,9 @@ export default function EpisodeScenePanel({
           {/* Header */}
           <button
             onClick={() => setExpandedEp(expandedEp === sheet.episode ? null : sheet.episode)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-bg-secondary/50 hover:bg-bg-secondary text-left transition-colors"
+            aria-expanded={expandedEp === sheet.episode}
+            aria-label={`Episode ${sheet.episode} ${expandedEp === sheet.episode ? 'collapse' : 'expand'}`}
+            className="w-full flex items-center justify-between px-3 py-2 bg-bg-secondary/50 hover:bg-bg-secondary text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
           >
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium text-text-primary font-mono">

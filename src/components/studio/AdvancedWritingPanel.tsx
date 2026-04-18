@@ -217,7 +217,9 @@ const Section: React.FC<{
     <div className="border border-border rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen(p => !p)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-bg-secondary hover:bg-bg-secondary/80 transition-colors"
+        aria-expanded={open}
+        aria-label={`${title} ${open ? 'collapse' : 'expand'}`}
+        className="w-full flex items-center gap-2 px-3 py-2 bg-bg-secondary hover:bg-bg-secondary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
       >
         <Icon className="w-3.5 h-3.5 text-accent-purple" />
         <span className="text-[10px] font-bold uppercase tracking-wider flex-1 text-left">{title}</span>
@@ -368,7 +370,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             <button
               key={g.key}
               onClick={() => toggleGoal(g.key)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
+              aria-pressed={s.sceneGoals.includes(g.key)}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                 s.sceneGoals.includes(g.key)
                   ? 'bg-accent-purple text-white'
                   : 'bg-bg-primary text-text-tertiary hover:text-text-primary border border-border'
@@ -392,7 +395,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
               { v: '3rd-omni' as const, tKey: 'advancedWritingExtra.pov3rdOmni' },
             ]).map(p => (
               <button key={p.v} onClick={() => updateConstraint('pov', p.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.pov === p.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                aria-pressed={s.constraints.pov === p.v}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${s.constraints.pov === p.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
                 {t(p.tKey)}
               </button>
             ))}
@@ -418,7 +422,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
               { v: 'slow' as const, tKey: 'advancedWritingExtra.tempoSlow' },
             ]).map(ti => (
               <button key={ti.v} onClick={() => updateConstraint('tempo', ti.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.tempo === ti.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                aria-pressed={s.constraints.tempo === ti.v}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${s.constraints.tempo === ti.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
                 {t(ti.tKey)}
               </button>
             ))}
@@ -435,7 +440,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
               { v: 'long' as const, tKey: 'advancedWritingExtra.sentenceLong' },
             ]).map(sl => (
               <button key={sl.v} onClick={() => updateConstraint('sentenceLen', sl.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.sentenceLen === sl.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                aria-pressed={s.constraints.sentenceLen === sl.v}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${s.constraints.sentenceLen === sl.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
                 {t(sl.tKey)}
               </button>
             ))}
@@ -452,7 +458,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
               { v: 'intense' as const, tKey: 'advancedWritingExtra.emotionIntense' },
             ]).map(em => (
               <button key={em.v} onClick={() => updateConstraint('emotionExposure', em.v)}
-                className={`px-2 py-0.5 rounded text-[9px] font-bold ${s.constraints.emotionExposure === em.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
+                aria-pressed={s.constraints.emotionExposure === em.v}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${s.constraints.emotionExposure === em.v ? 'bg-accent-purple text-white' : 'bg-bg-primary text-text-tertiary border border-border'}`}>
                 {t(em.tKey)}
               </button>
             ))}
@@ -478,7 +485,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             { key: 'platformPreset' as const, tKey: 'advancedWritingExtra.refPlatformPreset' },
           ]).map(r => (
             <button key={r.key} onClick={() => updateRef(r.key, !s.references[r.key])}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
+              aria-pressed={!!s.references[r.key]}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                 s.references[r.key]
                   ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
                   : 'bg-bg-primary text-text-tertiary border border-border'
@@ -500,7 +508,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
             { key: 'bannedWords' as const, tKey: 'advancedWritingExtra.lockBannedWords' },
           ]).map(lk => (
             <button key={lk.key} onClick={() => updateLock(lk.key, !s.locks[lk.key])}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
+              aria-pressed={!!s.locks[lk.key]}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                 s.locks[lk.key]
                   ? 'bg-red-500/15 text-red-400 border border-red-500/20'
                   : 'bg-bg-primary text-text-tertiary border border-border'
@@ -516,7 +525,8 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
         <div className="flex flex-wrap gap-1.5">
           {OUTPUT_MODES.map(m => (
             <button key={m.key} onClick={() => update('outputMode', m.key)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
+              aria-pressed={s.outputMode === m.key}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                 s.outputMode === m.key
                   ? 'bg-accent-purple text-white'
                   : 'bg-bg-primary text-text-tertiary border border-border hover:text-text-primary'

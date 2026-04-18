@@ -3,8 +3,13 @@
  * P0 작업 (다른 기기 sync) 검증
  */
 
+jest.mock('@/lib/logger', () => ({
+  logger: { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() },
+}));
+
 import { extractWriterProfile } from '../project-serializer';
 import { createEmptyProfile } from '@/engine/writer-profile';
+import { logger } from '@/lib/logger';
 
 describe('extractWriterProfile', () => {
   it('빈 배열 입력 시 null 반환', () => {
@@ -36,12 +41,16 @@ describe('extractWriterProfile', () => {
   });
 
   it('잘못된 JSON은 null 반환 (파싱 실패 가드)', () => {
+    const warnSpy = logger.warn as jest.Mock;
+    warnSpy.mockClear();
     const files = [
       { path: '.noa/profile.json', content: '{invalid json' },
     ];
-    // jsonToWriterProfile 내부 try/catch로 보호됨
+    // jsonToWriterProfile 내부 try/catch로 보호됨 + logger.warn 호출
     const result = extractWriterProfile(files);
     expect(result).toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy.mock.calls[0][0]).toBe('project-serializer');
   });
 
   it('profile.json이 문자열이 아닌 경우 null 반환', () => {

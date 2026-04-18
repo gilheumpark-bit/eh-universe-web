@@ -1,37 +1,55 @@
 "use client";
 
 // ============================================================
-// PART 1 — Global Search Palette (Ctrl+K command palette)
+// PART 1 — Types & Imports (Global Search Palette — command palette)
 // ============================================================
 
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { Search, X, UserCircle, Globe, FileText } from 'lucide-react';
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import { Search, X, UserCircle, Globe, FileText, Type, Zap } from 'lucide-react';
 import type { StoryConfig, ChatSession, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
-type ResultType = 'character' | 'episode' | 'world';
+export type ResultType = 'character' | 'episode' | 'world' | 'text' | 'action';
+export type FilterType = 'all' | ResultType;
 
-interface SearchResult {
+export interface StudioAction {
+  id: string;
+  label: string;
+  description: string;
+  shortcut?: string;
+  keywords?: string[];
+  handler: () => void;
+}
+
+export interface SearchResult {
   type: ResultType;
   label: string;
   detail: string;
   id?: string;
+  snippet?: string;
+  matchStart?: number;
+  matchLength?: number;
+  sessionId?: string;
+  shortcut?: string;
+  actionId?: string;
 }
 
-interface GlobalSearchPaletteProps {
+export interface GlobalSearchPaletteProps {
   query: string;
   setQuery: (q: string) => void;
   sessions: ChatSession[];
   config: StoryConfig | null;
   language: AppLanguage;
-  onSelect: (type: ResultType, id?: string) => void;
+  actions?: StudioAction[];
+  onSelect: (type: ResultType, id?: string, sessionId?: string) => void;
+  onExecuteAction?: (actionId: string) => void;
   onClose: () => void;
 }
 
-// IDENTITY_SEAL: PART-1 | role=search palette | inputs=query,sessions,config | outputs=SearchResult[]
+// IDENTITY_SEAL: PART-1 | role=types+imports | inputs=none | outputs=types
 
 // ============================================================
-// PART 2 — Search logic with debounce
+// PART 2 — Hooks & Snippet helpers
 // ============================================================
 
 function useDebounce(value: string, delay: number): string {
@@ -43,15 +61,191 @@ function useDebounce(value: string, delay: number): string {
   return debounced;
 }
 
+/** Build a ±30 char snippet around the first match. Returns null if no match. */
+function buildSnippet(
+  text: string,
+  query: string,
+): { snippet: string; matchStart: number; matchLength: number } | null {
+  if (!text || !query) return null;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return null;
+  const radius = 30;
+  const start = Math.max(0, idx - radius);
+  const end = Math.min(text.length, idx + query.length + radius);
+  const prefix = start > 0 ? '…' : '';
+  const suffix = end < text.length ? '…' : '';
+  return {
+    snippet: prefix + text.slice(start, end) + suffix,
+    matchStart: idx - start + prefix.length,
+    matchLength: query.length,
+  };
+}
+
+/** Render a snippet with the match highlighted. */
+function HighlightSnippet({
+  snippet,
+  start,
+  length,
+}: {
+  snippet: string;
+  start: number;
+  length: number;
+}): React.ReactElement {
+  if (start < 0 || length <= 0 || start + length > snippet.length) {
+    return <>{snippet}</> as React.ReactElement;
+  }
+  const before = snippet.slice(0, start);
+  const match = snippet.slice(start, start + length);
+  const after = snippet.slice(start + length);
+  return (
+    <>
+      {before}
+      <mark className="bg-accent-blue/25 text-accent-blue rounded-sm px-0.5">{match}</mark>
+      {after}
+    </>
+  );
+}
+
+// IDENTITY_SEAL: PART-2 | role=hooks+snippet | inputs=text,query | outputs=snippet-result
+
+// ============================================================
+// PART 3 — Search logic (characters, episodes, world, body, actions)
+// ============================================================
+
+interface BuildResultsInput {
+  query: string;
+  sessions: ChatSession[];
+  config: StoryConfig | null;
+  actions: StudioAction[];
+  worldFieldLabels: { key: string; label: string }[];
+}
+
+/** Collect search hits across all categories. Caller applies filter/limit. */
+function buildResults({
+  query,
+  sessions,
+  config,
+  actions,
+  worldFieldLabels,
+}: BuildResultsInput): SearchResult[] {
+  const q = query.toLowerCase().trim();
+  const out: SearchResult[] = [];
+
+  // ── Action category (always shown; matches if query empty or matches label/keyword)
+  for (const a of actions) {
+    const hay = [a.label, a.description, ...(a.keywords ?? [])].join(' ').toLowerCase();
+    if (!q || hay.includes(q)) {
+      out.push({
+        type: 'action',
+        label: a.label,
+        detail: a.description,
+        shortcut: a.shortcut,
+        actionId: a.id,
+      });
+    }
+  }
+
+  // Below this point the query is required
+  if (!q) return out;
+
+  // ── Characters
+  if (config?.characters) {
+    for (const char of config.characters) {
+      if (
+        char.name.toLowerCase().includes(q) ||
+        (char.traits ?? '').toLowerCase().includes(q) ||
+        (char.role ?? '').toLowerCase().includes(q)
+      ) {
+        out.push({
+          type: 'character',
+          label: char.name,
+          detail: `${char.role ?? ''} — ${(char.traits ?? '').slice(0, 50)}`,
+        });
+      }
+    }
+  }
+
+  // ── Episodes (title match)
+  for (const session of sessions) {
+    if (
+      (session.title ?? '').toLowerCase().includes(q) ||
+      (session.config?.title ?? '').toLowerCase().includes(q)
+    ) {
+      out.push({
+        type: 'episode',
+        label: session.config?.title || session.title,
+        detail: `EP.${session.config?.episode ?? '?'}`,
+        id: session.id,
+        sessionId: session.id,
+      });
+    }
+  }
+
+  // ── World fields (first hit per session)
+  if (config) {
+    for (const wf of worldFieldLabels) {
+      const val = (config as unknown as Record<string, unknown>)[wf.key];
+      if (typeof val === 'string' && val.toLowerCase().includes(q)) {
+        out.push({
+          type: 'world',
+          label: wf.label,
+          detail: val.slice(0, 60) + (val.length > 60 ? '…' : ''),
+        });
+        break; // one world match suffices
+      }
+    }
+  }
+
+  // ── Body text search (assistant messages only). Query must be ≥2 chars.
+  if (q.length >= 2) {
+    let totalMatches = 0;
+    const GLOBAL_CAP = 5;
+    const PER_SESSION_CAP = 3;
+    for (const session of sessions) {
+      if (totalMatches >= GLOBAL_CAP) break;
+      let perSession = 0;
+      for (const msg of session.messages ?? []) {
+        if (perSession >= PER_SESSION_CAP || totalMatches >= GLOBAL_CAP) break;
+        if (msg.role !== 'assistant' || !msg.content) continue;
+        const snippet = buildSnippet(msg.content, q);
+        if (!snippet) continue;
+        out.push({
+          type: 'text',
+          label: session.config?.title || session.title || `EP.${session.config?.episode ?? '?'}`,
+          detail: `EP.${session.config?.episode ?? '?'}`,
+          id: session.id,
+          sessionId: session.id,
+          snippet: snippet.snippet,
+          matchStart: snippet.matchStart,
+          matchLength: snippet.matchLength,
+        });
+        perSession++;
+        totalMatches++;
+      }
+    }
+  }
+
+  return out;
+}
+
+// IDENTITY_SEAL: PART-3 | role=search-logic | inputs=query,sessions,config,actions | outputs=SearchResult[]
+
+// ============================================================
+// PART 4 — Component (UI, tab filter, keyboard nav)
+// ============================================================
+
 const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
-  query, setQuery, sessions, config, language, onSelect, onClose,
+  query, setQuery, sessions, config, language,
+  actions = [],
+  onSelect, onExecuteAction, onClose,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 300);
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
   const worldFieldLabels = useMemo(() => [
     { key: 'setting', label: L4(language, { ko: '배경', en: 'Setting', ja: '背景', zh: '背景' }) },
@@ -65,80 +259,124 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
     { key: 'magicTechSystem', label: L4(language, { ko: '마법/기술', en: 'Magic/Tech', ja: '魔法/技術', zh: '魔法/科技' }) },
   ], [language]);
 
+  const allResults = useMemo<SearchResult[]>(() => {
+    return buildResults({
+      query: debouncedQuery,
+      sessions,
+      config,
+      actions,
+      worldFieldLabels,
+    });
+  }, [debouncedQuery, sessions, config, actions, worldFieldLabels]);
+
   const results = useMemo<SearchResult[]>(() => {
-    const q = debouncedQuery.toLowerCase().trim();
-    if (!q) return [];
-    const out: SearchResult[] = [];
+    const filtered = filter === 'all' ? allResults : allResults.filter(r => r.type === filter);
+    return filtered.slice(0, 20);
+  }, [allResults, filter]);
 
-    // Search character names & traits
-    if (config?.characters) {
-      for (const char of config.characters) {
-        if (
-          char.name.toLowerCase().includes(q) ||
-          char.traits?.toLowerCase().includes(q) ||
-          char.role?.toLowerCase().includes(q)
-        ) {
-          out.push({
-            type: 'character',
-            label: char.name,
-            detail: `${char.role} — ${char.traits?.slice(0, 50) ?? ''}`,
-          });
-        }
-      }
-    }
+  // Reset selection when query/filter changes — React-idiomatic "derived state"
+  // pattern (store previous key in state, setState during render, which React
+  // supports and is preferred over a setState-in-effect).
+  const resetKey = `${debouncedQuery}\u0001${filter}`;
+  const [prevResetKey, setPrevResetKey] = useState<string>(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    setSelectedIndex(0);
+  }
+  // Clamp selectedIndex within results length — derived during render.
+  const effectiveIndex = results.length === 0
+    ? 0
+    : Math.min(selectedIndex, results.length - 1);
 
-    // Search episode titles
-    for (const session of sessions) {
-      if (
-        session.title?.toLowerCase().includes(q) ||
-        session.config?.title?.toLowerCase().includes(q)
-      ) {
-        out.push({
-          type: 'episode',
-          label: session.config?.title || session.title,
-          detail: `EP.${session.config?.episode ?? '?'}`,
-          id: session.id,
-        });
-      }
-    }
-
-    // Search world settings text fields
-    if (config) {
-      for (const wf of worldFieldLabels) {
-        const val = (config as unknown as Record<string, unknown>)[wf.key];
-        if (typeof val === 'string' && val.toLowerCase().includes(q)) {
-          out.push({
-            type: 'world',
-            label: wf.label,
-            detail: val.slice(0, 60) + (val.length > 60 ? '...' : ''),
-          });
-          break; // Only show one world match
-        }
-      }
-    }
-
-    return out.slice(0, 12);
-  }, [debouncedQuery, sessions, config, worldFieldLabels]);
+  const filterTabs: { id: FilterType; label: string }[] = useMemo(() => [
+    { id: 'all', label: L4(language, { ko: '전체', en: 'All', ja: '全て', zh: '全部' }) },
+    { id: 'character', label: L4(language, { ko: '캐릭터', en: 'Character', ja: 'キャラ', zh: '角色' }) },
+    { id: 'episode', label: L4(language, { ko: '에피소드', en: 'Episode', ja: 'エピソード', zh: '章节' }) },
+    { id: 'world', label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }) },
+    { id: 'text', label: L4(language, { ko: '본문', en: 'Text', ja: '本文', zh: '正文' }) },
+    { id: 'action', label: L4(language, { ko: '명령', en: 'Action', ja: 'コマンド', zh: '命令' }) },
+  ], [language]);
 
   const iconMap: Record<ResultType, React.ReactNode> = {
     character: <UserCircle className="w-4 h-4 text-accent-purple" />,
     episode: <FileText className="w-4 h-4 text-accent-green" />,
     world: <Globe className="w-4 h-4 text-amber-400" />,
+    text: <Type className="w-4 h-4 text-accent-blue" />,
+    action: <Zap className="w-4 h-4 text-accent-amber" />,
   };
 
-  const categoryLabel = (type: ResultType): string => {
+  const categoryLabel = useCallback((type: ResultType): string => {
     if (type === 'character') return L4(language, { ko: '캐릭터', en: 'CHAR', ja: 'キャラ', zh: '角色' });
     if (type === 'episode') return L4(language, { ko: '에피소드', en: 'EP', ja: 'エピソード', zh: '章节' });
-    return L4(language, { ko: '세계관', en: 'WORLD', ja: '世界観', zh: '世界观' });
-  };
+    if (type === 'world') return L4(language, { ko: '세계관', en: 'WORLD', ja: '世界観', zh: '世界观' });
+    if (type === 'text') return L4(language, { ko: '본문', en: 'TEXT', ja: '本文', zh: '正文' });
+    return L4(language, { ko: '명령', en: 'ACTION', ja: 'コマンド', zh: '命令' });
+  }, [language]);
+
+  const executeResult = useCallback((r: SearchResult) => {
+    if (r.type === 'action' && r.actionId) {
+      onExecuteAction?.(r.actionId);
+      return;
+    }
+    onSelect(r.type, r.id, r.sessionId);
+  }, [onExecuteAction, onSelect]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(i => Math.min(i + 1, Math.max(0, results.length - 1)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(i => Math.max(0, i - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const r = results[effectiveIndex];
+      if (r) executeResult(r);
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const order: FilterType[] = ['all', 'character', 'episode', 'world', 'text', 'action'];
+      const idx = order.indexOf(filter);
+      const step = e.shiftKey ? order.length - 1 : 1;
+      const next = order[(idx + step) % order.length];
+      setFilter(next);
+    }
+  }, [results, effectiveIndex, filter, executeResult]);
+
+  // Scroll selected item into view (guard against jsdom where scrollIntoView is absent)
+  useEffect(() => {
+    if (!listRef.current) return;
+    const el = listRef.current.querySelector<HTMLElement>(`[data-result-index="${effectiveIndex}"]`);
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'nearest' });
+    }
+  }, [effectiveIndex]);
+
+  const placeholder = L4(language, {
+    ko: '검색 또는 명령… (Ctrl+K)',
+    en: 'Search or command… (Ctrl+K)',
+    ja: '検索またはコマンド… (Ctrl+K)',
+    zh: '搜索或命令… (Ctrl+K)',
+  });
+  const emptyLabel = L4(language, {
+    ko: '검색 결과가 없습니다',
+    en: 'No results found',
+    ja: '検索結果がありません',
+    zh: '没有找到结果',
+  });
 
   return (
-    <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh]" role="presentation" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh]"
+      role="presentation"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-lg bg-bg-secondary border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
+        aria-label={L4(language, { ko: '전역 검색 팔레트', en: 'Global search palette', ja: 'グローバル検索', zh: '全局搜索' })}
         data-modal
       >
         {/* Search input */}
@@ -148,56 +386,93 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder={L4(language, {
-              ko: '캐릭터, 에피소드, 세계관 검색... (Ctrl+K)',
-              en: 'Search characters, episodes, world... (Ctrl+K)',
-              ja: 'キャラクター、エピソード、世界観を検索... (Ctrl+K)',
-              zh: '搜索角色、章节、世界观... (Ctrl+K)',
-            })}
+            placeholder={placeholder}
+            aria-label={placeholder}
             className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder-text-tertiary text-ellipsis overflow-hidden"
           />
-          <button onClick={onClose} className="text-text-tertiary hover:text-text-primary">
+          <button onClick={onClose} className="text-text-tertiary hover:text-text-primary" aria-label="Close">
             <X className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Filter tabs */}
+        <div
+          className="flex items-center gap-1 px-3 py-2 border-b border-border bg-bg-primary/30 overflow-x-auto"
+          role="tablist"
+          aria-label={L4(language, { ko: '카테고리 필터', en: 'Category filter', ja: 'カテゴリーフィルター', zh: '类别过滤' })}
+        >
+          {filterTabs.map(tab => {
+            const active = filter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={active}
+                data-tab={tab.id}
+                onClick={() => setFilter(tab.id)}
+                className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-colors shrink-0 ${
+                  active
+                    ? 'bg-accent-blue/20 text-accent-blue'
+                    : 'text-text-tertiary hover:text-text-primary hover:bg-white/[0.05]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Results */}
-        <div className="max-h-80 overflow-y-auto">
-          {debouncedQuery && results.length === 0 && (
+        <div ref={listRef} className="max-h-80 overflow-y-auto" role="listbox">
+          {results.length === 0 && (
             <div className="px-4 py-6 text-center text-text-tertiary text-sm">
-              {L4(language, {
-                ko: '검색 결과가 없습니다',
-                en: 'No results found',
-                ja: '検索結果がありません',
-                zh: '没有找到结果',
-              })}
+              {emptyLabel}
             </div>
           )}
-          {results.map((r, i) => (
-            <button
-              key={`${r.type}-${i}`}
-              onClick={() => onSelect(r.type, r.id)}
-              className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-white/[0.06] transition-colors border-b border-border/50 last:border-0"
-            >
-              {iconMap[r.type]}
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-text-primary truncate">{r.label}</div>
-                <div className="text-[11px] text-text-tertiary truncate">{r.detail}</div>
-                {r.detail && (
-                  <div className="text-[9px] text-text-tertiary/60 truncate">
-                    {r.type === 'character'
-                      ? (language === 'KO' ? `캐릭터 > ${r.label}` : `Character > ${r.label}`)
-                      : r.type === 'episode'
-                      ? (language === 'KO' ? `에피소드 > ${r.detail}` : `Episode > ${r.detail}`)
-                      : (language === 'KO' ? `세계관 > ${r.label}` : `World > ${r.label}`)}
-                  </div>
+          {results.map((r, i) => {
+            const selected = i === effectiveIndex;
+            return (
+              <button
+                key={`${r.type}-${r.actionId ?? r.id ?? i}-${i}`}
+                data-result-index={i}
+                data-result-type={r.type}
+                role="option"
+                aria-selected={selected}
+                onClick={() => executeResult(r)}
+                onMouseEnter={() => setSelectedIndex(i)}
+                className={`flex items-center gap-3 w-full px-4 py-3 text-left transition-colors border-b border-border/50 last:border-0 ${
+                  selected ? 'bg-accent-blue/10' : 'hover:bg-white/[0.06]'
+                }`}
+              >
+                {iconMap[r.type]}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-text-primary truncate">{r.label}</div>
+                  {r.type === 'text' && r.snippet ? (
+                    <div className="text-[11px] text-text-secondary truncate" data-testid="text-snippet">
+                      <HighlightSnippet
+                        snippet={r.snippet}
+                        start={r.matchStart ?? 0}
+                        length={r.matchLength ?? 0}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-text-tertiary truncate">{r.detail}</div>
+                  )}
+                </div>
+                {r.type === 'action' && r.shortcut && (
+                  <span
+                    data-testid="action-shortcut"
+                    className="px-1.5 py-0.5 text-[9px] font-mono bg-white/[0.06] text-text-secondary rounded border border-border/50 shrink-0"
+                  >
+                    {r.shortcut}
+                  </span>
                 )}
-              </div>
-              <span className="text-[9px] font-mono uppercase text-text-tertiary tracking-widest shrink-0">
-                {categoryLabel(r.type)}
-              </span>
-            </button>
-          ))}
+                <span className="text-[9px] font-mono uppercase text-text-tertiary tracking-widest shrink-0">
+                  {categoryLabel(r.type)}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -206,4 +481,4 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
 
 export default GlobalSearchPalette;
 
-// IDENTITY_SEAL: PART-2 | role=search UI | inputs=query,results | outputs=JSX
+// IDENTITY_SEAL: PART-4 | role=UI+keyboard-nav | inputs=props | outputs=JSX

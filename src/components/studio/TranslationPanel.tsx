@@ -278,9 +278,11 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         </div>
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className={`group flex items-center gap-2 rounded-xl border px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider transition-[transform,opacity,background-color,border-color,color] duration-300 ${
-            showAdvanced 
-              ? 'border-border bg-[rgba(184,149,92,0.1)] text-text-primary shadow-[0_0_15px_rgba(184,149,92,0.1)]' 
+          aria-expanded={showAdvanced}
+          aria-label={isKO ? '고급 연동 설정 토글' : 'Toggle advanced settings'}
+          className={`group flex items-center gap-2 rounded-xl border px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-wider transition-[transform,opacity,background-color,border-color,color] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+            showAdvanced
+              ? 'border-border bg-[rgba(184,149,92,0.1)] text-text-primary shadow-[0_0_15px_rgba(184,149,92,0.1)]'
               : 'border-white/8 bg-black/20 text-text-tertiary hover:border-border hover:bg-[rgba(184,149,92,0.05)] hover:text-text-secondary'
           }`}
         >
@@ -291,11 +293,11 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       </div>
 
       {/* Scope Switch: 소설 / 일반 */}
-      <div className="flex items-center gap-2 p-1 rounded-xl bg-black/30 border border-white/5 w-fit">
-        <button onClick={() => setScope('novel')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+      <div className="flex items-center gap-2 p-1 rounded-xl bg-black/30 border border-white/5 w-fit" role="tablist" aria-label={isKO ? '번역 범위 선택' : 'Translation scope'}>
+        <button onClick={() => setScope('novel')} role="tab" aria-selected={scope === 'novel'} aria-pressed={scope === 'novel'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
           {isKO ? '소설 번역' : 'Novel'}
         </button>
-        <button onClick={() => setScope('general')} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+        <button onClick={() => setScope('general')} role="tab" aria-selected={scope === 'general'} aria-pressed={scope === 'general'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
           {isKO ? '일반 번역' : 'General'}
         </button>
       </div>
@@ -308,7 +310,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             {['general', 'academic', 'business', 'essay', 'legal', 'medical', 'it', 'journalism'].map((d) => {
               const labels: Record<string, string> = { general: isKO ? '범용' : 'General', academic: isKO ? '학술' : 'Academic', business: isKO ? '비즈니스' : 'Business', essay: isKO ? '에세이' : 'Essay', legal: isKO ? '법률' : 'Legal', medical: isKO ? '의료' : 'Medical', it: 'IT', journalism: isKO ? '저널리즘' : 'News' };
               return (
-                <button key={d} onClick={() => setGeneralDomain(d)} className={`px-3 py-2 rounded-xl font-mono text-[10px] font-bold uppercase tracking-wider border transition-colors ${generalDomain === d ? 'border-border bg-[rgba(184,149,92,0.12)] text-text-primary' : 'border-white/8 text-text-tertiary hover:border-white/15'}`}>
+                <button key={d} onClick={() => setGeneralDomain(d)} aria-pressed={generalDomain === d} aria-label={isKO ? `도메인 ${labels[d] || d} 선택` : `Select ${labels[d] || d} domain`} className={`px-3 py-2 rounded-xl font-mono text-[10px] font-bold uppercase tracking-wider border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${generalDomain === d ? 'border-border bg-[rgba(184,149,92,0.12)] text-text-primary' : 'border-white/8 text-text-tertiary hover:border-white/15'}`}>
                   {labels[d] || d}
                 </button>
               );
@@ -316,9 +318,9 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           </div>
 
           {/* Target Language (reuse) */}
-          <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5 w-fit">
+          <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5 w-fit" role="radiogroup" aria-label={isKO ? '대상 언어' : 'Target language'}>
             {(["EN", "JP", "CN"] as const).map((l) => (
-              <button key={l} onClick={() => setTargetLang(l)} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-[background-color,border-color,box-shadow,color] ${targetLang === l ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+              <button key={l} onClick={() => setTargetLang(l)} role="radio" aria-checked={targetLang === l} aria-label={isKO ? `${l} 언어 선택` : `Select ${l} language`} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${targetLang === l ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
                 {l}
               </button>
             ))}
@@ -367,10 +369,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary">{isKO ? '번역 결과' : 'Result'}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setShowSegmentView(!showSegmentView)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors">
+                  <button onClick={() => setShowSegmentView(!showSegmentView)} aria-pressed={showSegmentView} aria-label={isKO ? (showSegmentView ? '전체 보기로 전환' : '문장 정렬로 전환') : (showSegmentView ? 'Switch to full view' : 'Switch to segments view')} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
                     {showSegmentView ? (isKO ? '전체 보기' : 'Full') : (isKO ? '문장 정렬' : 'Segments')}
                   </button>
-                  <button onClick={() => navigator.clipboard.writeText(generalResult)} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors">
+                  <button onClick={() => navigator.clipboard.writeText(generalResult)} aria-label={isKO ? '번역 결과 복사' : 'Copy translation result'} className="font-mono text-[10px] text-text-tertiary hover:text-text-secondary px-2 py-1 rounded border border-white/10 hover:border-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
                     {isKO ? '복사' : 'Copy'}
                   </button>
                 </div>
@@ -660,7 +662,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               {Object.entries(glossary).map(([k, v]) => (
                 <span key={k} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(184,149,92,0.1)] border border-border font-mono text-[10px] text-text-primary">
                   {k} → {v}
-                  <button onClick={() => { const g = { ...glossary }; delete g[k]; saveGlossary(g); }} className="ml-1 text-red-400/60 hover:text-red-400">&times;</button>
+                  <button onClick={() => { const g = { ...glossary }; delete g[k]; saveGlossary(g); }} aria-label={isKO ? `용어 ${k} 삭제` : `Delete glossary term ${k}`} className="ml-1 text-red-400/60 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&times;</button>
                 </span>
               ))}
             </div>
@@ -676,7 +678,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               <FileText className="h-3 w-3 text-text-secondary" />
               {isKO ? "에피소드 타겟 지정" : "Episode Target"}
             </label>
-            <button onClick={() => setBatchMode(!batchMode)} className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border transition-colors ${batchMode ? 'border-border bg-[rgba(184,149,92,0.15)] text-text-primary' : 'border-white/10 text-text-tertiary hover:border-white/20'}`}>
+            <button onClick={() => setBatchMode(!batchMode)} aria-pressed={batchMode} aria-label={isKO ? `배치 모드 ${batchMode ? '끄기' : '켜기'}` : `Turn batch mode ${batchMode ? 'off' : 'on'}`} className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${batchMode ? 'border-border bg-[rgba(184,149,92,0.15)] text-text-primary' : 'border-white/10 text-text-tertiary hover:border-white/20'}`}>
               {isKO ? (batchMode ? '배치 ON' : '배치 OFF') : (batchMode ? 'BATCH ON' : 'BATCH OFF')}
             </button>
           </div>

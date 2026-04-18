@@ -42,6 +42,7 @@ const OSDesktop = dynamic(() => import('@/components/studio/OSDesktop'), { ssr: 
 const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: false });
 const StudioOverlayManager = dynamic(() => import('@/components/studio/StudioOverlayManager'), { ssr: false });
 const MobileStudioView = dynamic(() => import('@/components/studio/MobileStudioView'), { ssr: false });
+const RenameDialog = dynamic(() => import('@/components/studio/RenameDialog'), { ssr: false });
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
@@ -186,6 +187,7 @@ export default function StudioShell() {
     saveSlotName: string;
     showGlobalSearch: boolean;
     globalSearchQuery: string;
+    renameDialogOpen: boolean;
   };
   type UiAction = Partial<UiState> | ((prev: UiState) => Partial<UiState>);
   const [uiState, dispatchUi] = useReducer((state: UiState, action: UiAction) => {
@@ -201,8 +203,9 @@ export default function StudioShell() {
     saveSlotName: '',
     showGlobalSearch: false,
     globalSearchQuery: '',
+    renameDialogOpen: false,
   });
-  const { archiveFilter, archiveScope, moveModal, rightPanelOpen, mobileDrawerOpen, saveSlotModalOpen, showGlobalSearch, globalSearchQuery } = uiState;
+  const { archiveFilter, archiveScope, moveModal, rightPanelOpen, mobileDrawerOpen, saveSlotModalOpen, showGlobalSearch, globalSearchQuery, renameDialogOpen } = uiState;
 
   const setArchiveFilter = useCallback((v: string | ((prev: string) => string)) => dispatchUi((s: UiState) => ({ archiveFilter: typeof v === 'function' ? v(s.archiveFilter) : v })), []);
   const setArchiveScope = useCallback((v: 'project' | 'all' | ((prev: 'project' | 'all') => 'project' | 'all')) => dispatchUi((s: UiState) => ({ archiveScope: typeof v === 'function' ? v(s.archiveScope) : v })), []);
@@ -429,6 +432,19 @@ export default function StudioShell() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Rename dialog — Ctrl+Shift+H trigger (independent of useStudioKeyboard).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
+        e.preventDefault();
+        dispatchUi({ renameDialogOpen: true });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const messageCount = currentSession?.messages?.length ?? 0;
 
   const {
@@ -466,7 +482,7 @@ export default function StudioShell() {
   }, [openQuickStart]);
 
   const prevFocusRef = useRef<Element | null>(null);
-  const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal;
+  const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal || renameDialogOpen;
   useEffect(() => {
     if (anyModalOpen) {
       prevFocusRef.current = document.activeElement;
@@ -474,7 +490,7 @@ export default function StudioShell() {
       prevFocusRef.current.focus();
       prevFocusRef.current = null;
     }
-  }, [anyModalOpen, showApiKeyModal, showShortcuts, confirmState.open, saveSlotModalOpen, moveModal, showQuickStartModal]);
+  }, [anyModalOpen, showApiKeyModal, showShortcuts, confirmState.open, saveSlotModalOpen, moveModal, showQuickStartModal, renameDialogOpen]);
 
   const handleTabChange = useCallback((tab: AppTab) => {
     // 탭 전환 시 콘텐츠 스크롤을 상단으로 리셋
@@ -563,6 +579,7 @@ export default function StudioShell() {
       if (moveModal) { dispatchUi({ moveModal: null }); return; }
       if (showQuickStartModal) { setShowQuickStartModal(false); return; }
       if (showGlobalSearch) { dispatchUi({ showGlobalSearch: false, globalSearchQuery: '' }); return; }
+      if (renameDialogOpen) { dispatchUi({ renameDialogOpen: false }); return; }
     },
     onGlobalSearch: () => dispatchUi((s: UiState) => ({ showGlobalSearch: !s.showGlobalSearch })),
     onFontSizeUp: () => setEditorFontSize(s => { const n = Math.min(s + 2, 28); document.documentElement.style.setProperty('--editor-font-size', `${n}px`); return n; }),
@@ -883,6 +900,29 @@ export default function StudioShell() {
           {/* StudioWritingAssistantPanel removed - now integrated into WritingTabInline via RightChatPanel */}
         </StudioMainContent>
       </StudioProvider>
+
+      <RenameDialog
+        open={renameDialogOpen}
+        projects={projects}
+        sessions={sessions}
+        currentSession={currentSession || null}
+        currentProjectId={currentProjectId}
+        language={language}
+        onApply={(result) => {
+          setProjects(result.projects);
+          setSessions(result.sessions);
+          dispatchUi({ renameDialogOpen: false });
+          triggerSave();
+          setAlertToast({
+            message: isKO
+              ? `${result.changedCount}건 변경되었습니다`
+              : `${result.changedCount} changes applied`,
+            variant: 'info',
+          });
+          setTimeout(() => setAlertToast(null), 3000);
+        }}
+        onClose={() => dispatchUi({ renameDialogOpen: false })}
+      />
 
       <StudioOverlayManager
         language={language}

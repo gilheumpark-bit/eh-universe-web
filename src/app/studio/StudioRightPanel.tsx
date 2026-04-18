@@ -3,8 +3,10 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
+import { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { ChatSession, AppTab, AppLanguage, ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
+import { logger } from '@/lib/logger';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 
 import type { DirectorReport } from '@/engine/director';
@@ -21,6 +23,7 @@ const TabAssistant = dynamic(() => import('@/components/studio/TabAssistant'), {
 const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: DynSkeleton });
 const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false, loading: DynSkeleton });
 const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false, loading: DynSkeleton });
+const OutlinePanel = dynamic(() => import('@/components/studio/OutlinePanel'), { ssr: false, loading: DynSkeleton });
 
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
 
@@ -184,6 +187,53 @@ export function StudioWritingAssistantPanel({
   const t = createT(language);
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
   const backendLabel = useStudioBackendLabel(language, hostedProviders);
+  const [showOutline, setShowOutline] = useState(false);
+
+  // Resolve current episode sheet (matches currentSession.config.episode)
+  const currentEpisodeSheet = (() => {
+    const sheets = currentSession.config.episodeSceneSheets ?? [];
+    const ep = currentSession.config.episode ?? 1;
+    return sheets.find(s => s.episode === ep) ?? null;
+  })();
+
+  // Scene click → scroll to the scene marker in the page (if exists)
+  // 1순위: [data-scene-index="N"] 직접 매칭
+  // 2순위: 에디터 내부 ProseMirror 단락 N번째 (씬 당 균등 분할)
+  const handleSceneClick = useCallback((sceneIndex: number) => {
+    try {
+      const direct = document.querySelector(`[data-scene-index="${sceneIndex}"]`);
+      if (direct instanceof HTMLElement) {
+        direct.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      // Fallback — ProseMirror 내부 단락을 씬 개수에 맞춰 분할하여 N번째 씬의 시작 단락으로 이동
+      const proseMirror = document.querySelector<HTMLElement>('.novel-editor-wrapper .ProseMirror');
+      if (!proseMirror) {
+        logger.warn('StudioRightPanel', `scene[${sceneIndex}] not found in DOM`);
+        return;
+      }
+      const paragraphs = proseMirror.querySelectorAll<HTMLElement>('p');
+      if (paragraphs.length === 0) return;
+      // sceneIndex 0 → 첫 단락, 나머지는 비례
+      const ratio = Math.max(0, Math.min(1, sceneIndex / Math.max(1, paragraphs.length - 1)));
+      const idx = Math.min(paragraphs.length - 1, Math.floor(ratio * paragraphs.length));
+      paragraphs[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      logger.warn('StudioRightPanel', 'scene scroll failed', err);
+    }
+  }, []);
+
+  // Message click → scroll to the message id
+  const handleMessageClick = useCallback((messageId: string) => {
+    try {
+      const target = document.getElementById(`msg-${messageId}`) ?? document.querySelector(`[data-message-id="${messageId}"]`);
+      if (target && 'scrollIntoView' in target) {
+        (target as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch (err) {
+      logger.warn('StudioRightPanel', 'message scroll failed', err);
+    }
+  }, []);
 
   // NOTE: visibility check (writing/ai mode, dashboard closed) is done by parent
 
@@ -196,6 +246,32 @@ export function StudioWritingAssistantPanel({
 
       {rightPanelOpen && (
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          {/* Outline toggle + panel */}
+          <div className="border-b border-border">
+            <button
+              type="button"
+              onClick={() => setShowOutline(p => !p)}
+              aria-expanded={showOutline}
+              aria-label={L4(language, { ko: '\uC544\uC6C3\uB77C\uC778 \uD328\uB110 \uD1A0\uAE00', en: 'Toggle outline', ja: '\u30A2\u30A6\u30C8\u30E9\u30A4\u30F3\u5207\u66FF', zh: '\u5207\u6362\u5927\u7EB2' })}
+              className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-black text-text-tertiary hover:text-text-primary uppercase tracking-widest font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              <span>{'\uD83D\uDDC2\uFE0F'} {L4(language, { ko: '\uC544\uC6C3\uB77C\uC778', en: 'Outline', ja: '\u30A2\u30A6\u30C8\u30E9\u30A4\u30F3', zh: '\u5927\u7EB2' })}</span>
+              <span className="text-accent-purple">{showOutline ? '\u25BC' : '\u25B6'}</span>
+            </button>
+            {showOutline && (
+              <div className="max-h-[50vh] overflow-hidden">
+                <OutlinePanel
+                  currentSession={currentSession}
+                  currentSceneSheet={currentEpisodeSheet}
+                  language={language}
+                  onSceneClick={handleSceneClick}
+                  onMessageClick={handleMessageClick}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+
           {/* Chat history (previous messages excluding latest) */}
           {currentSession.messages.length > 2 && (
             <div className="p-3 border-b border-border max-h-[40vh] overflow-y-auto">

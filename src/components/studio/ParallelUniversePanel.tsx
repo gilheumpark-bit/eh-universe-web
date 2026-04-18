@@ -91,18 +91,20 @@ const BranchCreateForm: React.FC<BranchCreateFormProps> = ({
       <button
         onClick={handleSubmit}
         disabled={!name.trim()}
+        aria-label={L4(language, { ko: '분기 생성 확인', en: 'Confirm branch creation', ja: 'ブランチ作成を確認', zh: '确认创建分支' })}
         className="w-6 h-6 flex items-center justify-center rounded
           text-accent-green hover:bg-accent-green/10
           disabled:opacity-30 disabled:cursor-not-allowed
-          transition-colors"
+          transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
         title={L4(language, { ko: '확인', en: 'Confirm', ja: '確認', zh: '确认' })}
       >
         <Check className="w-3.5 h-3.5" />
       </button>
       <button
         onClick={onCancel}
+        aria-label={L4(language, { ko: '분기 생성 취소', en: 'Cancel branch creation', ja: 'ブランチ作成をキャンセル', zh: '取消创建分支' })}
         className="w-6 h-6 flex items-center justify-center rounded
-          text-text-tertiary hover:bg-bg-tertiary transition-colors"
+          text-text-tertiary hover:bg-bg-tertiary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
         title={L4(language, { ko: '취소', en: 'Cancel', ja: 'キャンセル', zh: '取消' })}
       >
         <X className="w-3.5 h-3.5" />
@@ -232,8 +234,11 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
             <button
               key={br}
               onClick={() => onSwitchBranch(br)}
+              aria-pressed={isActive}
+              aria-current={isActive ? 'true' : undefined}
+              aria-label={L4(language, { ko: `${br} 브랜치로 전환`, en: `Switch to ${br} branch`, ja: `${br} ブランチに切替`, zh: `切换到 ${br} 分支` })}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px]
-                font-mono transition-[transform,opacity,background-color,border-color,color] min-h-[28px]
+                font-mono transition-[transform,opacity,background-color,border-color,color] min-h-[28px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue
                 ${isActive
                   ? 'bg-accent-amber/15 border border-accent-amber/40 text-text-primary'
                   : 'bg-bg-tertiary/40 border border-border text-text-secondary hover:bg-bg-tertiary'
@@ -290,6 +295,7 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
                   </span>
                   <button
                     onClick={() => setCreatingAtEpisode(ep.episode)}
+                    aria-label={L4(language, { ko: `${ep.episode}화에서 분기 생성`, en: `Create branch from episode ${ep.episode}`, ja: `第${ep.episode}話から分岐作成`, zh: `从第 ${ep.episode} 话创建分支` })}
                     className="ml-auto w-6 h-6 flex items-center justify-center rounded
                       text-text-tertiary hover:text-accent-amber hover:bg-accent-amber/10
                       transition-colors opacity-0 group-hover/ep:opacity-100
@@ -352,7 +358,7 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
               <span className="text-[10px] text-text-secondary font-serif">
                 {L4(language, { ko: '버전 비교', en: 'Version Compare', ja: 'バージョン比較', zh: '版本比较' })}
               </span>
-              <button onClick={() => setDiffBranch(null)} className="text-text-tertiary hover:text-text-primary text-xs">&#x2715;</button>
+              <button onClick={() => setDiffBranch(null)} aria-label={L4(language, { ko: '비교 닫기', en: 'Close comparison', ja: '比較を閉じる', zh: '关闭比较' })} className="text-text-tertiary hover:text-text-primary text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&#x2715;</button>
             </div>
 
             {/* No GitHub connection */}

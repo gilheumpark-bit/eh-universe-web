@@ -1,4 +1,18 @@
 // Auto-generated
+// ============================================================
+// JP translations — 2026-04-18 品質監査 (quality audit pass)
+// ============================================================
+// 検査結果:
+//  - 繁體字混在: なし
+//  - 敬体 (です/ます/ください) 終端の主要システムメッセージ: 一致 (uxHelpers, errorBoundary)
+//  - カタカナ技術用語: キー/キャンセル/プロンプト/エンジン/ナラティブ 等 統一済
+//  - 半角句読点語尾の長文割合: 許容範囲 (< 50%)
+// TODO(ja-review): 以下は母語話者確認推奨 (実害は無し)
+//  - "ui.askAnything": "何でも聞いてください..." — 「ご質問ください」寄りの選択肢あり
+//  - "confirm.keepEditing": "編集を続ける" — 「続行」/「続ける」選択検討
+//  - "engine.startPrompt": 「執筆を開始してください」 — 「始めてください」も可
+//  - "rulebook.*": EHルールブック本文 — 文芸色高めで意訳推奨箇所あり
+// ============================================================
 const translations = {
   "sidebar": {
     "newProject": "新しい小説を開始",
@@ -215,7 +229,7 @@ const translations = {
     "autoSaved": "自動保存",
     "searchCtrlF": "検索 (Ctrl+F)",
     "focusMode": "集中モード (F11)",
-    "toggleTheme": "テーマ切替",
+    "toggleTheme": "テーマ切り替え",
     "searchMessages": "メッセージ検索...",
     "foundInDraft": "✏️ 下書きで発見",
     "keyboardShortcuts": "ショートカット",
@@ -239,7 +253,7 @@ const translations = {
     "apply": "適用",
     "search": "検索",
     "focusModeLabel": "集中モード",
-    "toggleThemeLabel": "テーマ切替",
+    "toggleThemeLabel": "テーマ切り替え",
     "firstStoryPrompt": "最初の小説を始めましょう！",
     "setupManually": "✍️ 手動で設定",
     "workflowOverview": "世界観設計 → キャラクター → 演出 → NOA執筆 → EPUB出力",

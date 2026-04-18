@@ -200,7 +200,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
           {/* Collapse toggle */}
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="hidden md:flex items-center justify-center gap-1 py-1.5 border-b border-white/8 text-[9px] font-mono text-text-tertiary hover:text-text-primary transition-colors uppercase tracking-widest"
+            aria-label={L4(language, { ko: '사이드바 접기', en: 'Collapse sidebar', ja: 'サイドバーを折りたたむ', zh: '收起侧边栏' })}
+            className="hidden md:flex items-center justify-center gap-1 py-1.5 border-b border-white/8 text-[9px] font-mono text-text-tertiary hover:text-text-primary transition-colors uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
           >
             ◀ {L4(language, { ko: '접기', en: 'Collapse', ja: '折りたたむ', zh: '收起' })}
           </button>
@@ -476,7 +477,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                 <div className="mb-3 flex w-full items-center justify-between gap-2">
                   <button
                     onClick={() => setShowSessionList(prev => !prev)}
-                    className="flex items-center gap-2 flex-1"
+                    aria-expanded={showSessionList}
+                    aria-label={L4(language, { ko: `에피소드 목록 ${showSessionList ? '접기' : '펼치기'}`, en: `${showSessionList ? 'Collapse' : 'Expand'} episode list`, ja: `エピソード一覧を${showSessionList ? '折りたたむ' : '展開'}`, zh: `${showSessionList ? '收起' : '展开'}剧集列表` })}
+                    className="flex items-center gap-2 flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                   >
                     <span className="flex items-center gap-2 site-kicker text-[0.58rem]">
                       <Hash className="h-3 w-3" />
@@ -487,7 +490,9 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   {showSessionList && orderedSessions.length > 1 && (
                     <button
                       onClick={() => { setBatchMode(prev => !prev); setSelectedSessionIds(new Set()); }}
-                      className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-[background-color,border-color,color] ${
+                      aria-pressed={batchMode}
+                      aria-label={language === 'KO' ? `일괄 선택 모드 ${batchMode ? '끄기' : '켜기'}` : `Turn batch select mode ${batchMode ? 'off' : 'on'}`}
+                      className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-[background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                         batchMode ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/30' : 'text-text-tertiary border-white/8 hover:text-text-secondary'
                       }`}
                       title={language === 'KO' ? '일괄 선택 모드' : 'Batch select mode'}
@@ -679,7 +684,8 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   />
                   <button
                     onClick={handleEpisodeJump}
-                    className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-[border-color,color] hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary"
+                    aria-label={language === 'KO' ? '에피소드로 이동' : 'Jump to episode'}
+                    className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-text-secondary transition-[border-color,color] hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
                     title={language === 'KO' ? '이동' : 'Jump'}
                   >
                     <span className="text-[12px] font-black">↵</span>

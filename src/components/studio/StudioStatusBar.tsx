@@ -5,6 +5,7 @@ import { Save, Circle, Loader2, Cpu, Zap } from 'lucide-react';
 import type { AppLanguage, ChatSession } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
+import WordCountBadge from '@/components/studio/WordCountBadge';
 
 interface StudioStatusBarProps {
   editDraft: string;
@@ -112,6 +113,8 @@ export function StudioStatusBar({
                   <span>{editorFontSize}px</span>
                 </>
               )}
+              {/* Plugin slot — renders only when word-count-badge plugin is enabled. */}
+              <WordCountBadge text={editDraft} isKO={isKO} testId="status-word-count-badge" />
             </>
           )}
           {activeTab !== 'writing' && (

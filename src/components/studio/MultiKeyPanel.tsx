@@ -145,13 +145,16 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowDashboard(!showDashboard)}
-            className="p-1.5 rounded hover:bg-white/10 transition-colors"
+            aria-expanded={showDashboard}
+            aria-pressed={showDashboard}
+            aria-label={ko ? '사용량 대시보드 토글' : 'Toggle usage dashboard'}
+            className="p-1.5 rounded hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
             title={ko ? "사용량 대시보드" : "Usage Dashboard"}
           >
             <BarChart3 className="w-4 h-4 text-gray-400" />
           </button>
           {onClose && (
-            <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 transition-colors text-gray-400 hover:text-white">
+            <button onClick={onClose} aria-label={ko ? '패널 닫기' : 'Close panel'} className="p-1.5 rounded hover:bg-white/10 transition-colors text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
               ✕
             </button>
           )}
@@ -247,7 +250,9 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
               {/* Slot Header */}
               <button
                 onClick={() => toggleExpand(slot.id)}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-white/5 rounded-lg transition-colors"
+                aria-expanded={isExpanded}
+                aria-label={ko ? `슬롯 ${slot.id} ${isExpanded ? '접기' : '펼치기'}` : `${isExpanded ? 'Collapse' : 'Expand'} slot ${slot.id}`}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-white/5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
               >
                 {isExpanded
                   ? <ChevronDown className="w-3.5 h-3.5 text-gray-500 shrink-0" />
@@ -347,7 +352,9 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                         />
                         <button
                           onClick={() => setShowKeys((p) => ({ ...p, [slot.id]: !p[slot.id] }))}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-text-secondary"
+                          aria-pressed={!!showKeys[slot.id]}
+                          aria-label={ko ? (showKeys[slot.id] ? 'API 키 숨기기' : 'API 키 표시') : (showKeys[slot.id] ? 'Hide API key' : 'Show API key')}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                         >
                           {showKeys[slot.id]
                             ? <EyeOff className="w-3.5 h-3.5" />

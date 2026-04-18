@@ -1,22 +1,22 @@
 "use client";
 
+// ============================================================
+// PART 1 — Imports, Types & Card Catalog
+// ============================================================
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import TabAssistant from '@/components/studio/TabAssistant';
 import { createT, L4 } from '@/lib/i18n';
+import { logger } from '@/lib/logger';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { BookOpen, TrendingUp, Palette, PenTool } from 'lucide-react';
 import type { FullDirectionData } from '@/components/studio/SceneSheet';
 
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), {
   ssr: false,
-  loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading...</div>
+  loading: () => <div className="text-center py-12 text-text-tertiary text-xs">Loading...</div>,
 });
-
-// ============================================================
-// PART 1 — 타입 및 카드 정의
-// ============================================================
 
 interface RulebookTabProps {
   language: AppLanguage;
@@ -30,6 +30,26 @@ interface RulebookTabProps {
 }
 
 type ViewMode = 'dashboard' | 'editor-structure' | 'editor-scene' | 'editor-character' | 'editor-notes' | 'editor-all';
+
+/**
+ * RulebookDirectionPayload — FullDirectionData가 runtime에서 갖는 실제 형태.
+ * 과거 인라인 700+자 캐스팅을 대체하여 가독성과 타입 재사용성을 확보.
+ */
+type RulebookDirectionPayload = {
+  goguma: { type: string; intensity: string; desc: string; episode: number }[];
+  hooks: { position: string; hookType: string; desc: string }[];
+  emotions: { emotion: string; intensity: number; position: number }[];
+  dialogueRules: { character: string; tone: string; notes: string }[];
+  dopamines: { scale: string; device: string; desc: string; resolved: boolean }[];
+  cliffs: { cliffType: string; desc: string; episode: number }[];
+  foreshadows: { planted: string; payoff: string; episode: number; resolved: boolean }[];
+  pacings: { section: string; percent: number; desc: string }[];
+  tensionPoints: { position: number; level: number; label: string }[];
+  canons: { character: string; rule: string }[];
+  transitions: { fromScene: string; toScene: string; method: string }[];
+  writerNotes?: string;
+  plotStructure?: string;
+};
 
 const CARD_INITIAL_TABS: Record<string, string> = {
   'editor-structure': 'plot',
@@ -83,7 +103,7 @@ const CARDS = [
 ] as const;
 
 // ============================================================
-// PART 2 — 메인 컴포넌트
+// PART 2 — Component State & Session Guard
 // ============================================================
 
 const RulebookTab: React.FC<RulebookTabProps> = ({
@@ -99,7 +119,22 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
   const isKO = language === 'KO';
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
 
-  // Build SceneSheet props (shared between dashboard and editor)
+  /**
+   * ensureSession — currentSessionId null 체크를 한 곳으로 모아
+   * onDirectionUpdate / onSimRefUpdate 두 콜백의 중복 guard를 제거.
+   * null이면 false 반환 + 경고 로깅, truthy면 true.
+   */
+  const ensureSession = (ctx: string): boolean => {
+    if (!currentSessionId) {
+      logger.warn('RulebookTab', `${ctx} skipped: no active session`);
+      return false;
+    }
+    return true;
+  };
+
+  // ============================================================
+  // PART 3 — SceneSheet Props Builder
+  // ============================================================
   const sceneSheetProps = {
     language,
     synopsis: config.synopsis,
@@ -110,31 +145,34 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
     },
     tierContext: {
       charProfiles: config.characters.map(c => ({
-        name: c.name, desire: c.desire, conflict: c.conflict,
-        changeArc: c.changeArc, values: c.values,
+        name: c.name,
+        desire: c.desire,
+        conflict: c.conflict,
+        changeArc: c.changeArc,
+        values: c.values,
       })),
       corePremise: config.corePremise,
       powerStructure: config.powerStructure,
       currentConflict: config.currentConflict,
     },
     initialDirection: config.sceneDirection ? {
-      goguma: config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as "goguma" | "cider", intensity: g.intensity as "small" | "medium" | "large", desc: g.desc, episode: g.episode || 1 })),
-      hooks: config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as "opening" | "middle" | "ending", hookType: h.hookType, desc: h.desc })),
+      goguma: config.sceneDirection.goguma?.map((g, i) => ({ id: `r-${i}`, type: g.type as 'goguma' | 'cider', intensity: g.intensity as 'small' | 'medium' | 'large', desc: g.desc, episode: g.episode || 1 })),
+      hooks: config.sceneDirection.hooks?.map((h, i) => ({ id: `r-${i}`, position: h.position as 'opening' | 'middle' | 'ending', hookType: h.hookType, desc: h.desc })),
       emotions: config.sceneDirection.emotionTargets?.map((e, i) => ({ id: `r-${i}`, position: e.position ?? i * 25, emotion: e.emotion, intensity: e.intensity })),
       dialogueRules: config.sceneDirection.dialogueTones?.map((d, i) => ({ id: `r-${i}`, character: d.character, tone: d.tone, notes: d.notes })),
-      dopamines: config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
+      dopamines: config.sceneDirection.dopamineDevices?.map((dp, i) => ({ id: `r-${i}`, scale: dp.scale as 'micro' | 'medium' | 'macro', device: dp.device, desc: dp.desc, resolved: dp.resolved ?? false })),
       cliffs: config.sceneDirection.cliffhanger ? [{ id: 'r-0', cliffType: config.sceneDirection.cliffhanger.cliffType, desc: config.sceneDirection.cliffhanger.desc, episode: config.sceneDirection.cliffhanger.episode || 1 }] : [],
       foreshadows: config.sceneDirection.foreshadows?.map((f, i) => ({ id: `r-${i}`, planted: f.planted, payoff: f.payoff, episode: f.episode, resolved: f.resolved })),
       pacings: config.sceneDirection.pacings?.map((p, i) => ({ id: `r-${i}`, section: p.section, percent: p.percent, desc: p.desc })),
-      tensionPoints: config.sceneDirection.tensionCurve?.map((t, i) => ({ id: `r-${i}`, position: t.position, level: t.level, label: t.label })),
+      tensionPoints: config.sceneDirection.tensionCurve?.map((tp, i) => ({ id: `r-${i}`, position: tp.position, level: tp.level, label: tp.label })),
       canons: config.sceneDirection.canonRules?.map((c, i) => ({ id: `r-${i}`, character: c.character, rule: c.rule })),
-      transitions: config.sceneDirection.sceneTransitions?.map((t, i) => ({ id: `r-${i}`, fromScene: t.fromScene, toScene: t.toScene, method: t.method })),
+      transitions: config.sceneDirection.sceneTransitions?.map((tr, i) => ({ id: `r-${i}`, fromScene: tr.fromScene, toScene: tr.toScene, method: tr.method })),
       writerNotes: config.sceneDirection.writerNotes,
       plotStructure: config.sceneDirection.plotStructure,
     } : undefined,
     onDirectionUpdate: (data: FullDirectionData) => {
-      if (!currentSessionId) return;
-      const d = data as { goguma: { type: string; intensity: string; desc: string; episode: number }[]; hooks: { position: string; hookType: string; desc: string }[]; emotions: { emotion: string; intensity: number; position: number }[]; dialogueRules: { character: string; tone: string; notes: string }[]; dopamines: { scale: string; device: string; desc: string; resolved: boolean }[]; cliffs: { cliffType: string; desc: string; episode: number }[]; foreshadows: { planted: string; payoff: string; episode: number; resolved: boolean }[]; pacings: { section: string; percent: number; desc: string }[]; tensionPoints: { position: number; level: number; label: string }[]; canons: { character: string; rule: string }[]; transitions: { fromScene: string; toScene: string; method: string }[]; writerNotes?: string; plotStructure?: string };
+      if (!ensureSession('onDirectionUpdate')) return;
+      const d = data as RulebookDirectionPayload;
       updateCurrentSession({
         config: {
           ...(config || INITIAL_CONFIG),
@@ -157,7 +195,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       });
     },
     onSimRefUpdate: (ref: Record<string, unknown>) => {
-      if (!currentSessionId) return;
+      if (!ensureSession('onSimRefUpdate')) return;
       updateCurrentSession({
         config: { ...(config || INITIAL_CONFIG), simulatorRef: { ...ref } },
       });
@@ -165,7 +203,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
   };
 
   // ============================================================
-  // PART 3 — 대시보드 뷰
+  // PART 4 — 대시보드 뷰
   // ============================================================
   if (viewMode === 'dashboard') {
     const sd = config.sceneDirection;
@@ -241,7 +279,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
   }
 
   // ============================================================
-  // PART 4 — 에디터 뷰 (SceneSheet)
+  // PART 5 — 에디터 뷰 (SceneSheet)
   // ============================================================
   return (
     <div className="max-w-5xl mx-auto py-6 px-4 md:py-8 md:px-6">
