@@ -56,7 +56,7 @@ export function useQualityGateRetry(
     setGrade(result.grade);
 
     if (!result.passed && attempt < gateConfig.current.maxRetries) {
-      const hint = buildRetryHint(result, attempt, language === 'KO');
+      const hint = buildRetryHint(result, attempt, language);
       setLastHint(hint);
     } else {
       setLastHint(null);

@@ -4,7 +4,7 @@
 // Meta Logic 원칙: 누적만, 차단 없음, 장기 추적
 // 작가 패턴 학습 → 다음 세션 자동 적용
 
-import type { WriterProfile, SkillLevel } from '@/lib/studio-types';
+import type { WriterProfile, SkillLevel, AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 2 — EMA Calculator (레벨별 차등 smoothing)
@@ -198,7 +198,8 @@ export function loadProfile(id: string = 'default'): WriterProfile {
  * 작가 고유 "목소리" 핑거프린트 생성
  * 문장 길이 + 대화 비율 + 감정 밀도 + 페이싱으로 작가 스타일 설명
  */
-export function buildVoiceFingerprint(profile: WriterProfile, isKO: boolean): string {
+export function buildVoiceFingerprint(profile: WriterProfile, language: AppLanguage): string {
+  const isKO = language === 'KO';
   const traits: string[] = [];
 
   // 문장 길이 선호
@@ -234,13 +235,14 @@ export function buildVoiceFingerprint(profile: WriterProfile, isKO: boolean): st
  * 모든 핵심 섹션 이후에 배치되며, 토큰 예산 초과 시 트리밍 1순위 대상.
  * 우선순위: Location > Characters > Tiered Episodes > Hooks > LastScene > Shadow > Style > **Profile(here)**
  */
-export function buildProfileHint(profile: WriterProfile, isKO: boolean): string {
+export function buildProfileHint(profile: WriterProfile, language: AppLanguage): string {
   if (profile.episodeCount < 5) return ''; // 5화 미만 — 학습 데이터 부족
 
+  const isKO = language === 'KO';
   const hints: string[] = [];
 
   // 작가 목소리 핑거프린트 (가장 중요)
-  const voice = buildVoiceFingerprint(profile, isKO);
+  const voice = buildVoiceFingerprint(profile, language);
   if (voice) {
     hints.push(isKO
       ? `[작가 스타일] ${voice}. 이 스타일에 맞춰 작성하세요.`

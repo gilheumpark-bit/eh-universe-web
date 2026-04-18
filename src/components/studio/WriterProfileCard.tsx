@@ -43,7 +43,7 @@ const WriterProfileCard: React.FC<WriterProfileCardProps> = ({ language }) => {
   }
 
   const isKO = language === 'KO';
-  const voice = buildVoiceFingerprint(profile, isKO);
+  const voice = buildVoiceFingerprint(profile, language);
   const levelInfo = LEVEL_BADGE[profile.skillLevel] ?? LEVEL_BADGE.beginner;
   const topIssues = Object.entries(profile.commonIssues)
     .sort(([, a], [, b]) => b - a)

@@ -177,7 +177,8 @@ export function evaluateQuality(
 // PART 5 — Retry Prompt Enhancement
 // ============================================================
 
-export function buildRetryHint(result: QualityGateResult, attempt: number, isKO: boolean): string {
+export function buildRetryHint(result: QualityGateResult, attempt: number, language: AppLanguage): string {
+  const isKO = language === 'KO';
   const hints: string[] = [];
 
   for (const reason of result.failReasons) {

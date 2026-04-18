@@ -60,9 +60,8 @@ const ACT_GUIDELINES: Record<number, Record<AppLanguage, string>> = {
 };
 
 
-export function buildGenrePreset(genre: string, isKO: boolean): string {
+export function buildGenrePreset(genre: string, language: AppLanguage): string {
   const preset = GENRE_PRESETS[genre] || GENRE_PRESETS.FANTASY;
-  const language: AppLanguage = isKO ? 'KO' : 'EN';
   const t = createT(language);
   return `[${t('pipeline.genrePresetLabel')}: ${genre}]
 - ${t('pipeline.narrativeRules')}: ${preset.rules}
@@ -92,14 +91,14 @@ const SLIDER_LABELS: Record<string, { name: string; nameEN: string; levels: stri
   s5: { name: '어휘 수준', nameEN: 'Vocabulary', levels: ['편한 말맛', '담백한 어휘', '균형', '정교한 어휘', '전문적 질감'], levelsEN: ['Plainspoken', 'Clean', 'Balanced', 'Refined', 'Specialized'] },
 };
 
-export function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean): string {
+export function buildStyleDNA(profile: StyleProfile | undefined, language: AppLanguage): string {
   if (!profile || profile.selectedDNA.length === 0) return '';
 
-  const language: AppLanguage = isKO ? 'KO' : 'EN';
+  const isKO = language === 'KO';
   const t = createT(language);
   const parts: string[] = [];
 
-  // DNA identity
+  // DNA identity — KO는 한글 이름, 그 외 언어는 영문 표기
   const dnaNames = profile.selectedDNA.map(i => isKO ? DNA_NAMES[i] : DNA_NAMES_EN[i]).join(' + ');
   parts.push(`- ${t('pipeline.styleIdentity')}: ${dnaNames}`);
 
@@ -143,28 +142,31 @@ export function buildStyleDNA(profile: StyleProfile | undefined, isKO: boolean):
 // Publish Platform Prompt Builder
 // ============================================================
 
-export function buildLanguagePackBlock(language: AppLanguage, isKO: boolean): string {
-  const pack = getLanguagePack(language);
-  const parts: string[] = [];
-  const header = isKO ? '언어팩 규칙' : 'Language Pack Rules';
+/** 언어팩 라벨 — 4개 언어 네이티브 표기 */
+const LANG_PACK_LABELS: Record<AppLanguage, {
+  header: string; banned: string; aiTone: string;
+  dialogue: string; rhythm: string; wordUnit: string;
+}> = {
+  KO: { header: '언어팩 규칙', banned: '인과율 금지어', aiTone: 'AI 톤 금지 표현', dialogue: '대화 마커', rhythm: '문장 리듬', wordUnit: '단어' },
+  EN: { header: 'Language Pack Rules', banned: 'Banned causality words', aiTone: 'AI tone forbidden phrases', dialogue: 'Dialogue markers', rhythm: 'Sentence rhythm', wordUnit: 'words' },
+  JP: { header: '言語パックルール', banned: '因果律禁止語', aiTone: 'AIトーン禁止表現', dialogue: '対話マーカー', rhythm: '文章リズム', wordUnit: '単語' },
+  CN: { header: '语言包规则', banned: '因果律禁用词', aiTone: 'AI 语调禁止表达', dialogue: '对话标记', rhythm: '句子节奏', wordUnit: '词' },
+};
 
-  parts.push(`\n[${header}: ${pack.id}]`);
+export function buildLanguagePackBlock(language: AppLanguage): string {
+  const pack = getLanguagePack(language);
+  const L = LANG_PACK_LABELS[language] ?? LANG_PACK_LABELS.EN;
+  const parts: string[] = [];
+
+  parts.push(`\n[${L.header}: ${pack.id}]`);
   if (pack.bannedWords.length > 0) {
-    const label = isKO ? '인과율 금지어' : 'Banned causality words';
-    parts.push(`- ${label}: ${pack.bannedWords.join(', ')}`);
+    parts.push(`- ${L.banned}: ${pack.bannedWords.join(', ')}`);
   }
   if (pack.aiTonePatterns.length > 0) {
-    const label = isKO ? 'AI 톤 금지 표현' : 'AI tone forbidden phrases';
-    parts.push(`- ${label}: ${pack.aiTonePatterns.join(', ')}`);
+    parts.push(`- ${L.aiTone}: ${pack.aiTonePatterns.join(', ')}`);
   }
-  {
-    const label = isKO ? '대화 마커' : 'Dialogue markers';
-    parts.push(`- ${label}: ${pack.dialogueMarkers.open}...${pack.dialogueMarkers.close}`);
-  }
-  {
-    const label = isKO ? '문장 리듬' : 'Sentence rhythm';
-    parts.push(`- ${label}: ${pack.sentenceRhythm.minWords}~${pack.sentenceRhythm.maxWords} ${isKO ? '단어' : 'words'}`);
-  }
+  parts.push(`- ${L.dialogue}: ${pack.dialogueMarkers.open}...${pack.dialogueMarkers.close}`);
+  parts.push(`- ${L.rhythm}: ${pack.sentenceRhythm.minWords}~${pack.sentenceRhythm.maxWords} ${L.wordUnit}`);
 
   return parts.join('\n');
 }
@@ -174,11 +176,39 @@ export function buildLanguagePackBlock(language: AppLanguage, isKO: boolean): st
 // Lv1: 미적용, Lv2: 10%, Lv3: 20%, Lv4: 30%, Lv5: 40%
 // ============================================================
 
-export function buildEHRules(ruleLevel: number, isKO: boolean): string {
+/** EH 룰 설명 — 4개 언어 네이티브 표기 */
+const EH_RULE_NOTES: Record<AppLanguage, {
+  costIntensity: (pct: number) => string;
+  narrativeMorph: string;
+  lv9Full: string;
+}> = {
+  KO: {
+    costIntensity: (pct) => `대가 강도: ${pct}%. 이 비율만큼 주인공의 성장/이득에 대한 손실을 서술에 반영하라.`,
+    narrativeMorph: `EH 수치가 낮아질수록 감정 형용사를 줄이고 행동/팩트 위주로 서술하라.`,
+    lv9Full: `EH v1.0 원본 100% 적용. 모든 보상에 등가의 대가를 강제. 자비 없음.`,
+  },
+  EN: {
+    costIntensity: (pct) => `Cost intensity: ${pct}%. Apply this ratio of loss against protagonist's gains.`,
+    narrativeMorph: `As EH drops, reduce emotional adjectives. Focus on actions and facts.`,
+    lv9Full: `EH v1.0 original 100% applied. Every reward demands equivalent cost. No mercy.`,
+  },
+  JP: {
+    costIntensity: (pct) => `代償強度: ${pct}%. この比率で主人公の成長・利得に対する損失を描写に反映せよ。`,
+    narrativeMorph: `EH数値が下がるほど感情形容詞を減らし、行動・事実中心に記述せよ。`,
+    lv9Full: `EH v1.0 原本100%適用。すべての報酬に等価の代償を強制。容赦なし。`,
+  },
+  CN: {
+    costIntensity: (pct) => `代价强度: ${pct}%。按此比例将主角的成长/收益损失体现在叙述中。`,
+    narrativeMorph: `EH 数值越低，越应减少情感形容词，以行动/事实为主进行叙述。`,
+    lv9Full: `EH v1.0 原版 100% 应用。每次奖励都强制等价代价。绝无宽恕。`,
+  },
+};
+
+export function buildEHRules(ruleLevel: number, language: AppLanguage): string {
   if (ruleLevel <= 1) return '';
 
-  const language: AppLanguage = isKO ? 'KO' : 'EN';
   const t = createT(language);
+  const notes = EH_RULE_NOTES[language] ?? EH_RULE_NOTES.EN;
   const sections: string[] = [];
 
   // 9단계 적용률 매핑: lv1=0%, lv2=15%, lv3=25%, lv4=35%, lv5=50%, lv6=65%, lv7=75%, lv8=90%, lv9=100%
@@ -194,9 +224,7 @@ export function buildEHRules(ruleLevel: number, isKO: boolean): string {
 
   // Lv3+: 대가 정산 (Cost Infliction) — 승수 적용
   if (ruleLevel >= 3) {
-    const costNote = isKO
-      ? `대가 강도: ${Math.round(costMul * 100)}%. 이 비율만큼 주인공의 성장/이득에 대한 손실을 서술에 반영하라.`
-      : `Cost intensity: ${Math.round(costMul * 100)}%. Apply this ratio of loss against protagonist's gains.`;
+    const costNote = notes.costIntensity(Math.round(costMul * 100));
     sections.push(`[${t('pipeline.costInflictionHeader')}]\n${t('pipeline.costInflictionBody')}\n${costNote}`);
   }
 
@@ -207,10 +235,7 @@ export function buildEHRules(ruleLevel: number, isKO: boolean): string {
 
   // Lv6+: 문체 변환 + 마스킹
   if (ruleLevel >= 6) {
-    const morphNote = isKO
-      ? `EH 수치가 낮아질수록 감정 형용사를 줄이고 행동/팩트 위주로 서술하라.`
-      : `As EH drops, reduce emotional adjectives. Focus on actions and facts.`;
-    sections.push(`[NARRATIVE MASKING LAYER]\n${t('pipeline.narrativeMaskingBody')}\n${morphNote}`);
+    sections.push(`[NARRATIVE MASKING LAYER]\n${t('pipeline.narrativeMaskingBody')}\n${notes.narrativeMorph}`);
   }
 
   // Lv7+: 이중 로그 + 글리치
@@ -225,10 +250,7 @@ export function buildEHRules(ruleLevel: number, isKO: boolean): string {
 
   // Lv9: v1.0 풀적용
   if (ruleLevel >= 9) {
-    const fullNote = isKO
-      ? `EH v1.0 원본 100% 적용. 모든 보상에 등가의 대가를 강제. 자비 없음.`
-      : `EH v1.0 original 100% applied. Every reward demands equivalent cost. No mercy.`;
-    sections.push(fullNote);
+    sections.push(notes.lv9Full);
   }
 
   const genre = GENRE_MAP[ruleLevel] || '';
@@ -763,19 +785,19 @@ ${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleStr
   }
 
   // Style DNA injection
-  const styleDnaBlock = buildStyleDNA(config.styleProfile, isKO);
+  const styleDnaBlock = buildStyleDNA(config.styleProfile, language);
 
   // NOA-PRISM v1.1 injection
-  const prismBlock = buildPrismBlock(config, isKO);
+  const prismBlock = buildPrismBlock(config, language);
 
   // PRISM-MODE content rating injection
-  const prismModeBlock = buildPrismModeBlock(config, isKO);
+  const prismModeBlock = buildPrismModeBlock(config, language);
 
   // Language Pack injection
-  const langPackBlock = buildLanguagePackBlock(language, isKO);
+  const langPackBlock = buildLanguagePackBlock(language);
 
   // Publish platform injection
-  const publishPlatformBlock = buildPublishPlatformBlock(config.publishPlatform, isKO);
+  const publishPlatformBlock = buildPublishPlatformBlock(config.publishPlatform, language);
 
   // Genre-based dialogue ratio guide
   const genreBenchmark = GENRE_BENCHMARKS[config.genre];
@@ -784,7 +806,7 @@ ${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleStr
     : '';
 
   // EH v1.4 rules injection
-  const ehRules = buildEHRules(ruleLevel, isKO);
+  const ehRules = buildEHRules(ruleLevel, language);
 
   const systemPromptText = `당신은 "NOA 소설 스튜디오"의 핵심 엔진 [ANS 10.0]입니다.
 당신은 'Project EH'의 세계관 물리 법칙을 준수하며 작가와 협업하여 소설을 집필합니다.
@@ -807,7 +829,7 @@ ${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleStr
 [ACT-SPECIFIC DIRECTIVE]
 ${actGuide[language] ?? actGuide.EN}
 
-${buildGenrePreset(config.genre, isKO)}
+${buildGenrePreset(config.genre, language)}
 
 [CHARACTER DATABASE / DIALOGUE DNA — Tier 1]
 ${characterDNA}${tier2Block}${tier2DetailBlock}${tier3DetailBlock}

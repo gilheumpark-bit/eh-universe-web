@@ -6,7 +6,7 @@ import type { StoryConfig } from '@/lib/studio-types';
 const MOCK_CONFIG = { genre: 'SF', prismMode: 'OFF' } as unknown as StoryConfig;
 
 describe('prism-builder', () => {
-  let buildPrismBlock: ((config: StoryConfig, isKO: boolean) => string) | undefined;
+  let buildPrismBlock: ((config: StoryConfig, language: 'KO' | 'EN' | 'JP' | 'CN') => string) | undefined;
 
   beforeAll(async () => {
     try {
@@ -24,14 +24,14 @@ describe('prism-builder', () => {
 
   it('always includes PRISM-CORE even for OFF mode', () => {
     if (!buildPrismBlock) return;
-    const result = buildPrismBlock(MOCK_CONFIG, true);
+    const result = buildPrismBlock(MOCK_CONFIG, 'KO');
     expect(result).toContain('PRISM-CORE');
   });
 
   it('includes PRISM-MODE for ALL mode', () => {
     if (!buildPrismBlock) return;
     const cfg = { ...MOCK_CONFIG, prismMode: 'ALL' } as unknown as StoryConfig;
-    const result = buildPrismBlock(cfg, true);
+    const result = buildPrismBlock(cfg, 'KO');
     expect(result).toContain('PRISM');
     expect(result.length).toBeGreaterThan(100);
   });

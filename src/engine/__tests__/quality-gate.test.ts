@@ -273,49 +273,49 @@ describe('buildRetryHint', () => {
 
   it('returns empty string when no fail reasons', () => {
     const result = makeResult({ failReasons: [] });
-    expect(buildRetryHint(result, 1, true)).toBe('');
+    expect(buildRetryHint(result, 1, 'KO')).toBe('');
   });
 
   it('KO: grade_below produces Korean hint', () => {
     const result = makeResult({ failReasons: ['grade_below: C < B'] });
-    const hint = buildRetryHint(result, 1, true);
+    const hint = buildRetryHint(result, 1, 'KO');
     expect(hint).toContain('품질');
     expect(hint).toContain('감정');
   });
 
   it('EN: grade_below produces English hint', () => {
     const result = makeResult({ failReasons: ['grade_below: C < B'] });
-    const hint = buildRetryHint(result, 1, false);
+    const hint = buildRetryHint(result, 1, 'EN');
     expect(hint).toContain('quality');
     expect(hint).toContain('emotional');
   });
 
   it('director_below produces causality hint', () => {
     const result = makeResult({ failReasons: ['director_below: 30 < 60'] });
-    const hintKO = buildRetryHint(result, 1, true);
-    const hintEN = buildRetryHint(result, 1, false);
+    const hintKO = buildRetryHint(result, 1, 'KO');
+    const hintEN = buildRetryHint(result, 1, 'EN');
     expect(hintKO).toContain('인과관계');
     expect(hintEN).toContain('cause-effect');
   });
 
   it('eos_below produces emotion keyword hint', () => {
     const result = makeResult({ failReasons: ['eos_below: 10 < 40'] });
-    const hintKO = buildRetryHint(result, 1, true);
-    const hintEN = buildRetryHint(result, 1, false);
+    const hintKO = buildRetryHint(result, 1, 'KO');
+    const hintEN = buildRetryHint(result, 1, 'EN');
     expect(hintKO).toContain('감정 키워드');
     expect(hintEN).toContain('emotion keywords');
   });
 
   it('tension_misaligned produces tension hint', () => {
     const result = makeResult({ failReasons: ['tension_misaligned: delta=35 > 25'] });
-    const hint = buildRetryHint(result, 1, true);
+    const hint = buildRetryHint(result, 1, 'KO');
     expect(hint).toContain('긴장감');
   });
 
   it('ai_tone produces AI tone removal hint', () => {
     const result = makeResult({ failReasons: ['ai_tone_high: 30% > 10%'] });
-    const hintKO = buildRetryHint(result, 1, true);
-    const hintEN = buildRetryHint(result, 1, false);
+    const hintKO = buildRetryHint(result, 1, 'KO');
+    const hintEN = buildRetryHint(result, 1, 'EN');
     expect(hintKO).toContain('AI 문투');
     expect(hintEN).toContain('AI-like');
   });
@@ -324,7 +324,7 @@ describe('buildRetryHint', () => {
     const result = makeResult({
       failReasons: ['grade_below: C < B', 'eos_below: 10 < 40', 'director_below: 20 < 60'],
     });
-    const hint = buildRetryHint(result, 1, true);
+    const hint = buildRetryHint(result, 1, 'KO');
     expect(hint).toContain('품질');
     expect(hint).toContain('감정 키워드');
     expect(hint).toContain('인과관계');
@@ -332,21 +332,21 @@ describe('buildRetryHint', () => {
 
   it('attempt >= 3 appends extra urgency line', () => {
     const result = makeResult({ failReasons: ['grade_below: C < B'] });
-    const hint1 = buildRetryHint(result, 1, true);
-    const hint3 = buildRetryHint(result, 3, true);
+    const hint1 = buildRetryHint(result, 1, 'KO');
+    const hint3 = buildRetryHint(result, 3, 'KO');
     expect(hint1).not.toContain('반드시 해결');
     expect(hint3).toContain('반드시 해결');
   });
 
   it('attempt >= 3 urgency works in EN too', () => {
     const result = makeResult({ failReasons: ['grade_below: C < B'] });
-    const hint = buildRetryHint(result, 4, false);
+    const hint = buildRetryHint(result, 4, 'EN');
     expect(hint).toContain('MUST fix');
   });
 
   it('includes attempt number in header', () => {
     const result = makeResult({ failReasons: ['eos_below: 5 < 20'] });
-    const hint = buildRetryHint(result, 2, true);
+    const hint = buildRetryHint(result, 2, 'KO');
     expect(hint).toContain('시도 2');
   });
 });

@@ -7,12 +7,12 @@ import { PublishPlatform, PLATFORM_PRESETS } from '../types';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
-export function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined, isKO: boolean): string {
+export function buildPublishPlatformBlock(publishPlatform: PublishPlatform | undefined, language: AppLanguage): string {
   if (!publishPlatform || publishPlatform === PublishPlatform.NONE) return '';
   const preset = PLATFORM_PRESETS[publishPlatform];
   if (!preset) return '';
 
-  const language: AppLanguage = isKO ? 'KO' : 'EN';
+  const isKO = language === 'KO';
   const t = createT(language);
 
   const platformNames: Record<string, string> = {

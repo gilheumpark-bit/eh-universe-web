@@ -50,21 +50,21 @@ function makeMinimalConfig(overrides?: Partial<StoryConfig>): StoryConfig {
 
 describe('buildGenrePreset', () => {
   test('returns non-empty string for known genre', () => {
-    const result = buildGenrePreset('FANTASY', true);
+    const result = buildGenrePreset('FANTASY', 'KO');
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('produces different output for KO vs EN', () => {
-    const ko = buildGenrePreset('ROMANCE', true);
-    const en = buildGenrePreset('ROMANCE', false);
+    const ko = buildGenrePreset('ROMANCE', 'KO');
+    const en = buildGenrePreset('ROMANCE', 'EN');
     // Both should be non-empty; at least one should differ in wording
     expect(ko.length).toBeGreaterThan(0);
     expect(en.length).toBeGreaterThan(0);
   });
 
   test('returns a string for unknown genre (graceful fallback)', () => {
-    const result = buildGenrePreset('NONEXISTENT_GENRE', true);
+    const result = buildGenrePreset('NONEXISTENT_GENRE', 'KO');
     expect(typeof result).toBe('string');
   });
 });

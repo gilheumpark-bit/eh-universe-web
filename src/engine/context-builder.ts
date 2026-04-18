@@ -353,7 +353,7 @@ export function buildStoryBible(input: StoryBibleInput): string {
   // NOTE: 이 섹션은 모든 Tier 이후 최하위 우선순위 — 토큰 부족 시 트리밍 대상
   try {
     const profile = loadProfile();
-    const profileHint = buildProfileHint(profile, isKO);
+    const profileHint = buildProfileHint(profile, language);
     if (profileHint) {
       sections.push((isKO ? '\n\n🎯 작가 프로필 힌트:\n' : '\n\n🎯 Writer Profile Hints:\n') + profileHint);
     }

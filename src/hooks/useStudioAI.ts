@@ -270,7 +270,7 @@ export function useStudioAI({
         },
       };
       // 3.8 — Writer Profile 힌트를 프롬프트에 주입
-      const profileHint = buildProfileHint(writerProfile, language === 'KO');
+      const profileHint = buildProfileHint(writerProfile, language);
       const basePrompt = directivePrefix + outputModePrefix + advancedPrefix + hfcpPrefixWrapped + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
       
       const { getDefaultGateConfig } = await import('@/engine/quality-gate');
@@ -374,7 +374,7 @@ export function useStudioAI({
 
         if (gateResult.passed) break;
 
-        currentRetryHint = buildRetryHint(gateResult, attempt, language === 'KO');
+        currentRetryHint = buildRetryHint(gateResult, attempt, language);
         onQualityGateRetry?.(attempt, maxAttempts, gateHistory);
         // confirm 모드: 상위 UI(StudioShell)가 Toast/알림을 표시하도록 CustomEvent 발행
         if (confirmMode && typeof window !== 'undefined') {
@@ -481,7 +481,7 @@ export function useStudioAI({
           wasOverridden: false,
         });
         saveProfile(updated);
-        const hint = buildProfileHint(updated, language === 'KO');
+        const hint = buildProfileHint(updated, language);
         logger.info('writer-profile', 'Profile updated, hint length:', hint.length);
       } catch (err) { logger.warn('StudioAI', 'writerProfile save failed', err); }
 

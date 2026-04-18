@@ -3,15 +3,18 @@
 // pipeline.ts에서 추출
 // ============================================================
 
-import type { StoryConfig } from '@/lib/studio-types';
+import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { PRISM_MODE_PRESETS } from '../types';
 import { GENRE_PRESETS } from '../genre-presets';
 
 // ============================================================
 // NOA-PRISM v1.1 — Writing Quality Control System
+// KO는 한글 네이티브, 그 외 언어(EN/JP/CN)는 AI 친화적 영문 지시 사용
+// (PRISM 규칙은 사람이 아닌 AI가 읽는 프롬프트 — Qwen은 영문 지시 안정적 처리)
 // ============================================================
 
-export function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
+export function buildPrismBlock(config: StoryConfig, language: AppLanguage): string {
+  const isKO = language === 'KO';
   const scale = config.prismScale ?? 120;
   const preserve = config.prismPreserve ?? 100;
 
@@ -99,7 +102,8 @@ export function buildPrismBlock(config: StoryConfig, isKO: boolean): string {
 // PRISM-MODE — Content Rating Prompt Builder
 // ============================================================
 
-export function buildPrismModeBlock(config: StoryConfig, isKO: boolean): string {
+export function buildPrismModeBlock(config: StoryConfig, language: AppLanguage): string {
+  const isKO = language === 'KO';
   const mode = config.prismMode ?? 'OFF';
   if (mode === 'OFF') return '';
 
