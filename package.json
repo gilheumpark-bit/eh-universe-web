@@ -37,7 +37,7 @@
     "cs": "./dist/cli/cli/bin/cs.js"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/anthropic": "^3.0.71",
     "@ai-sdk/deepseek": "^2.0.26",
     "@ai-sdk/google": "^3.0.55",
     "@ai-sdk/mistral": "^3.0.27",
