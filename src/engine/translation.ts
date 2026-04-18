@@ -3,6 +3,22 @@
 // ============================================================
 
 import type { AppLanguage } from '@/lib/studio-types';
+import {
+  buildRAGTranslationContext,
+  type RAGTranslationContext,
+  type RAGTranslationInput,
+} from '@/services/ragService';
+import {
+  detectVoiceViolations,
+  buildRetryHintFromViolations,
+  extractDialogueLines,
+  buildVoiceRulesFromProject,
+  type VoiceRule,
+  type VoiceViolation,
+} from './translation-voice-guard';
+
+// RAG 타입 re-export — useTranslation / Phase 2 통합 시 단일 import 경로 유지
+export type { RAGTranslationContext, RAGTranslationInput };
 
 /** 번역 대상 언어 */
 export type TranslationTarget = 'EN' | 'JP' | 'CN' | 'KO';
@@ -67,6 +83,26 @@ export interface TranslationConfig {
   translatorProfile?: TranslatorProfile;
 }
 
+/**
+ * 번역 세그먼트 — 원문/번역 1:1 대응 단위 (Voice Guard 검증용).
+ * speaker 가 있는 세그먼트만 캐릭터 말투 검증에 사용된다.
+ * 나레이션은 isDialogue=false, speaker=undefined.
+ *
+ * Phase 4 (Voice Guard) 호환:
+ * - applyVoiceGuard 가 segments[].translation + segments[].speaker 를 수집
+ * - speaker 미상이면 검증 skip (false positive 방지)
+ */
+export interface TranslatedSegment {
+  /** 원문 문장 */
+  sourceText: string;
+  /** 번역된 문장 */
+  translation: string;
+  /** 화자 (확인된 경우만, 나레이션은 undefined) */
+  speaker?: string;
+  /** 대사인지 나레이션인지 (감지 결과) */
+  isDialogue?: boolean;
+}
+
 /** 3문장 청크 */
 export interface TranslationChunk {
   index: number;
@@ -75,6 +111,11 @@ export interface TranslationChunk {
   score: number;
   attempt: number;
   passed: boolean;
+  /**
+   * 청크 내부의 문장별 세그먼트 분해 (선택).
+   * Voice Guard 활성화된 번역에서만 채워진다.
+   */
+  segments?: TranslatedSegment[];
 }
 
 /** MODE1 채점 — 원문 보존형 */
@@ -131,6 +172,12 @@ export interface TranslatedEpisode {
   avgScore: number;
   glossarySnapshot: GlossaryEntry[];
   timestamp: number;
+  /**
+   * 모든 청크의 세그먼트를 평탄화한 배열 (선택).
+   * Voice Guard 가 segments[].translation + segments[].speaker 로 화자별 검증 수행.
+   * speaker 미상 세그먼트는 검증 skip (나레이션 + 화자 추론 실패 케이스).
+   */
+  segments?: TranslatedSegment[];
 }
 
 // Band 상수 (양쪽 모드 공통)
@@ -384,7 +431,10 @@ function buildCountrySpecificDirective(targetLang: TranslationTarget, mode: Tran
 
 const MAX_CONTEXT_BRIDGE_CHARS = 2000;
 
-export function buildTranslationSystemPrompt(config: TranslationConfig): string {
+export function buildTranslationSystemPrompt(
+  config: TranslationConfig,
+  ragBlock: string = '',
+): string {
   // Guard: clamp band to valid range regardless of caller input
   const safeBand = clampBand(config.band);
   const safeConfig: TranslationConfig = {
@@ -394,6 +444,10 @@ export function buildTranslationSystemPrompt(config: TranslationConfig): string 
   };
 
   const parts: string[] = [];
+  // RAG 블록이 있으면 가장 앞(역할 정의 이전)에 주입 — 세계관이 지시문 해석의 전제가 되도록
+  if (ragBlock && ragBlock.trim()) {
+    parts.push(ragBlock.trim());
+  }
   const lang = langName(safeConfig.targetLang);
   const isMode1 = safeConfig.mode === 'fidelity';
 
@@ -494,6 +548,76 @@ ${safeConfig.contextBridge}`);
   }
 
   return parts.join('\n\n');
+}
+
+// ============================================================
+// PART 5B — RAG 컨텍스트 포매터 + 비동기 프롬프트 빌더
+// ============================================================
+
+// 프롬프트 길이 상한 (system prompt + RAG 블록이 컨텍스트 윈도우를 잠식하지 않도록)
+const RAG_WORLD_MAX = 2000;
+const RAG_TERMS_MAX = 20;
+const RAG_EPISODES_MAX = 3;
+const RAG_GENRE_MAX = 1500;
+
+/**
+ * RAGTranslationContext → 시스템 프롬프트 주입용 블록 문자열.
+ * ctx.fetched === false 이면 빈 문자열 반환 — 호출부는 기존 프롬프트 그대로 유지.
+ * 순수 함수 — 단위 테스트 대상.
+ */
+export function formatRAGBlock(ctx: RAGTranslationContext): string {
+  if (!ctx || !ctx.fetched) return '';
+
+  const sections: string[] = [];
+
+  if (ctx.worldBible && ctx.worldBible.trim()) {
+    sections.push(`[WORLD CONTEXT — source-of-truth, do NOT translate this block]
+${ctx.worldBible.slice(0, RAG_WORLD_MAX)}`);
+  }
+
+  if (ctx.pastTerms.length > 0) {
+    const termLines = ctx.pastTerms
+      .slice(0, RAG_TERMS_MAX)
+      .map(t => `- "${t.src}" → "${t.tgt}"${t.episode ? ` (ep.${t.episode})` : ''}`)
+      .join('\n');
+    sections.push(`[TERM HISTORY — MUST keep these mappings unchanged]
+${termLines}`);
+  }
+
+  if (ctx.pastEpisodeSummary.length > 0) {
+    const episodes = ctx.pastEpisodeSummary
+      .slice(-RAG_EPISODES_MAX)
+      .join('\n---\n');
+    sections.push(`[RECENT EPISODES — continuity reference only, do NOT translate]
+${episodes}`);
+  }
+
+  if (ctx.genreRules && ctx.genreRules.trim()) {
+    sections.push(`[GENRE RULES]
+${ctx.genreRules.slice(0, RAG_GENRE_MAX)}`);
+  }
+
+  return sections.length > 0 ? sections.join('\n\n') : '';
+}
+
+/**
+ * 비동기 시스템 프롬프트 빌더 — RAG 컨텍스트를 자동 주입한다.
+ * 호출부 (useTranslation 등) 가 Phase 2 완료 후 교체 사용.
+ * 내부 동작:
+ *   1) buildRAGTranslationContext — timeout 6s, 실패 시 빈 컨텍스트
+ *   2) formatRAGBlock — fetched=false 이면 빈 문자열
+ *   3) buildTranslationSystemPrompt(config, ragBlock) — 기존 프롬프트에 선두 주입
+ * RAG 실패는 번역을 차단하지 않는다 (silent fallback).
+ */
+export async function buildTranslationSystemPromptWithRAG(
+  config: TranslationConfig,
+  input: RAGTranslationInput,
+  options: { timeoutMs?: number } = {},
+): Promise<{ systemPrompt: string; ragCtx: RAGTranslationContext }> {
+  const ragCtx = await buildRAGTranslationContext(input, options);
+  const ragBlock = formatRAGBlock(ragCtx);
+  const systemPrompt = buildTranslationSystemPrompt(config, ragBlock);
+  return { systemPrompt, ragCtx };
 }
 
 // ============================================================
@@ -1402,11 +1526,263 @@ export function updateConsistencyTracker(
   }
 }
 
+// ============================================================
+// PART 20 — Voice Guard 통합 (Phase 4)
+// ============================================================
+
+/** Voice Guard 검증 결과 wrapper. */
+export interface VoiceGuardedResult<T> {
+  result: T;
+  voiceViolations: VoiceViolation[];
+  needsRetry: boolean;
+  retryHint: string;
+}
+
+// Phase 4 — 외부에서 voice-guard 헬퍼 직접 import 없이도 쓸 수 있도록 re-export
+export {
+  detectVoiceViolations,
+  buildRetryHintFromViolations,
+  extractDialogueLines,
+  buildVoiceRulesFromProject,
+};
+export type { VoiceRule, VoiceViolation };
+
+/**
+ * 번역 결과에 Voice Guard 검증 추가.
+ * violations 중 'error' 1개 이상이면 needsRetry=true.
+ * useTranslation 측에서 최대 2회 재번역 루프 제어.
+ *
+ * 입력 형식 가정:
+ * - segments[].translation + segments[].speaker가 있으면 화자별 검증
+ * - translatedText만 있고 speaker 매핑 없으면 검증 skip (false positive 방지)
+ */
+export function applyVoiceGuard<
+  T extends {
+    translatedText?: string;
+    segments?: Array<{ translation?: string; speaker?: string }>;
+  }
+>(
+  result: T,
+  opts: {
+    rules: VoiceRule[];
+    targetLang: AppLanguage;
+  },
+): VoiceGuardedResult<T> {
+  // 빈 입력 가드 — 규칙 없으면 즉시 통과
+  if (!opts || !Array.isArray(opts.rules) || opts.rules.length === 0) {
+    return { result, voiceViolations: [], needsRetry: false, retryHint: '' };
+  }
+
+  // 대사 라인 수집 — segments에 speaker가 매핑된 경우만 검증
+  let lines: Array<{ speaker: string; text: string }> = [];
+  if (result?.segments && Array.isArray(result.segments)) {
+    lines = result.segments
+      .filter((s): s is { translation: string; speaker: string } =>
+        Boolean(s?.translation && s?.speaker),
+      )
+      .map(s => ({ speaker: s.speaker, text: s.translation }));
+  }
+  // translatedText만 있으면 speaker 매핑 부재 → Voice Guard skip (false positive 방지)
+
+  if (lines.length === 0) {
+    return { result, voiceViolations: [], needsRetry: false, retryHint: '' };
+  }
+
+  const violations = detectVoiceViolations(lines, opts.rules);
+  const errorCount = violations.filter(v => v.severity === 'error').length;
+  return {
+    result,
+    voiceViolations: violations,
+    needsRetry: errorCount > 0,
+    retryHint: errorCount > 0 ? buildRetryHintFromViolations(violations) : '',
+  };
+}
+
+// ============================================================
+// PART 21 — Speaker Inference & Segment Builder
+// (Voice Guard 활성화용 화자 자동 추출)
+// ============================================================
+
+/**
+ * 대사 마커 — 따옴표/꺾쇠/3자 이상 작은따옴표.
+ * 모듈 상수 (재컴파일 비용 회피).
+ * - 한국어/중국어: " " 「 」
+ * - 영어: " "
+ * - 일본어: 「 」 『 』 " "
+ */
+const DIALOGUE_MARK_REGEX = /"[^"]+"|「[^」]+」|『[^』]+』|'[^']{3,}'/;
+
+/**
+ * 4개 언어별 화자 발화 동사 패턴.
+ * capture group 1 = 화자명 후보.
+ * 모듈 상수 — 매 호출 재컴파일 회피.
+ *
+ * 패턴 해설:
+ * - KO: 이름 + (조사) + 발화동사  →  "민아가 말했다"
+ * - EN: 대문자 시작 이름 + 공백 + said/asked  →  "Mina said"
+ * - JP: 이름 + (は/が)? + 言った/叫んだ  →  "ミナは言った"
+ * - CN: 이름 + 说/问/喊  →  "敏雅说"
+ */
+const SPEAKER_INFERENCE_PATTERNS: Record<TranslationTarget, RegExp> = {
+  // KO: 이름 (한글/영문 1~9글자) + 조사(이/가/는/은/의) + 발화동사.
+  //     negative lookbehind 로 capture 마지막 글자가 조사가 아님을 강제 — greedy 매칭이
+  //     조사를 삼키지 않게 한다. lookahead 로 조사+발화동사 패턴 확인.
+  KO: /([가-힣A-Za-z]{1,9}(?<![이가는은의]))(?=(?:이|가|는|은|의)\s*(?:말했|외쳤|속삭였|물었|대답했|중얼거렸))/,
+  EN: /([A-Z][a-zA-Z]{1,15})(?:\s+said|\s+asked|\s+whispered|\s+shouted|\s+replied|\s+murmured)/,
+  // JP: は/が 조사를 capture 에서 제외 (lookahead).
+  JP: /([一-龠ぁ-んァ-ンA-Za-z]{1,12})(?=(?:は|が)(?:言った|叫んだ|囁いた|尋ねた|答えた|呟いた))/,
+  // CN: 발화동사를 capture 에서 제외 (lookahead)
+  CN: /([一-龥A-Za-z]{1,10})(?=说|问|喊|低声说|回答|嘟囔)/,
+};
+
+/**
+ * 원문/번역 한 쌍에서 화자 추론.
+ *
+ * 알고리즘:
+ * 1. sourceText/translation 어느 쪽에도 대사 마커 없음 → 나레이션 (isDialogue=false)
+ * 2. 마커 있음 → 원문/번역 양쪽에서 화자 패턴 시도
+ *    - 우선 targetLang 패턴으로 translation 검사 (번역문에 화자 표기가 더 명확한 경우)
+ *    - sourceText 는 4개 언어 모두 순차 시도 (sourceLang 정보가 시그니처에 없음)
+ * 3. characterNames 와 fuzzy 매칭 (정확/포함/역포함)
+ * 4. 매칭 실패해도 패턴에서 잡힌 후보 그대로 사용
+ *
+ * [C] match[1] null 가드 — 정규식 capture group 미존재 시 undefined 반환 안전
+ * [C] characterNames 빈 배열도 안전 — find 결과 undefined → fallback to candidate
+ * [C] targetLang 가 4개 외 값이면 KO fallback
+ */
+export function inferSpeakerFromContext(
+  sourceText: string,
+  translation: string,
+  characterNames: string[],
+  targetLang: TranslationTarget,
+): { speaker?: string; isDialogue: boolean } {
+  // [C] sourceText 빈/비문자 가드
+  const safeSrc = typeof sourceText === 'string' ? sourceText : '';
+  const safeTrans = typeof translation === 'string' ? translation : '';
+  if (!safeSrc && !safeTrans) {
+    return { isDialogue: false };
+  }
+
+  // 1) 대사 마커 검사 — 원문 또는 번역문 둘 중 하나라도 있으면 대사 후보
+  const srcHasMark = safeSrc ? DIALOGUE_MARK_REGEX.test(safeSrc) : false;
+  const transHasMark = safeTrans ? DIALOGUE_MARK_REGEX.test(safeTrans) : false;
+  if (!srcHasMark && !transHasMark) {
+    return { isDialogue: false };
+  }
+
+  // 2) 화자 패턴 추출 — 우선순위:
+  //    a) translation 에 targetLang 패턴 매칭 (번역문에 화자 표기 명확)
+  //    b) sourceText 에 4개 언어 모두 순차 매칭 (sourceLang 정보 없음 → 시도)
+  const targetPattern =
+    SPEAKER_INFERENCE_PATTERNS[targetLang] ?? SPEAKER_INFERENCE_PATTERNS.KO;
+
+  let candidate: string | undefined;
+  if (safeTrans) {
+    const m = safeTrans.match(targetPattern);
+    if (m && m[1] && m[1].trim().length > 0) {
+      candidate = m[1].trim();
+    }
+  }
+  if (!candidate && safeSrc) {
+    // sourceText 4언어 순차 — 가장 먼저 매칭되는 언어 패턴 사용
+    for (const lang of ['KO', 'EN', 'JP', 'CN'] as const) {
+      const m = safeSrc.match(SPEAKER_INFERENCE_PATTERNS[lang]);
+      if (m && m[1] && m[1].trim().length > 0) {
+        candidate = m[1].trim();
+        break;
+      }
+    }
+  }
+
+  // [C] candidate 없음 → 대사인 건 확실하지만 화자 미상
+  if (!candidate) {
+    return { isDialogue: true };
+  }
+
+  // 3) characterNames fuzzy 매칭 (배열 빈 경우도 안전)
+  let speaker: string | undefined;
+  if (Array.isArray(characterNames) && characterNames.length > 0) {
+    const matched = characterNames.find(
+      name =>
+        name === candidate ||
+        name.includes(candidate) ||
+        candidate.includes(name),
+    );
+    speaker = matched ?? candidate;
+  } else {
+    // 캐릭터 목록 없으면 패턴에서 잡힌 후보 그대로
+    speaker = candidate;
+  }
+
+  return { speaker, isDialogue: true };
+}
+
+/**
+ * 청크 텍스트 (원문/번역) 를 문장 단위 세그먼트로 분해.
+ * 각 세그먼트마다 inferSpeakerFromContext 적용.
+ *
+ * 정렬 정책: 원문 문장 수와 번역 문장 수가 다를 수 있음 → max 기준 정렬,
+ * 빈 문자열 fallback (편집 가능 세그먼트와 동일 정책).
+ *
+ * [G] 정규식은 모듈 상수 — 매 세그먼트 재컴파일 회피
+ * [K] 기존 chunkBySentences 로직과 별도 (segments 는 1문장 단위, chunks 는 N문장 단위)
+ */
+export function buildSegmentsFromChunk(
+  sourceChunkText: string,
+  translatedChunkText: string,
+  characterNames: string[],
+  targetLang: TranslationTarget,
+): TranslatedSegment[] {
+  // [C] 입력 가드
+  const safeSrc = typeof sourceChunkText === 'string' ? sourceChunkText : '';
+  const safeTrans =
+    typeof translatedChunkText === 'string' ? translatedChunkText : '';
+  if (!safeSrc.trim() && !safeTrans.trim()) {
+    return [];
+  }
+
+  const safeNames = Array.isArray(characterNames) ? characterNames : [];
+
+  // 단순 라인 단위 분리 — 줄바꿈 또는 종결부호+공백
+  // (chunkBySentences 의 따옴표 스택 splitter 는 비공개이므로 가벼운 fallback 사용)
+  const splitToSentences = (s: string): string[] => {
+    if (!s.trim()) return [];
+    return s
+      .split(/\n+|(?<=[.!?。！？」』])\s+/)
+      .map(t => t.trim())
+      .filter(Boolean);
+  };
+
+  const srcSentences = splitToSentences(safeSrc);
+  const transSentences = splitToSentences(safeTrans);
+  const maxLen = Math.max(srcSentences.length, transSentences.length);
+
+  const segments: TranslatedSegment[] = [];
+  for (let i = 0; i < maxLen; i++) {
+    const sourceSentence = srcSentences[i] ?? '';
+    const translationSentence = transSentences[i] ?? '';
+    const { speaker, isDialogue } = inferSpeakerFromContext(
+      sourceSentence,
+      translationSentence,
+      safeNames,
+      targetLang,
+    );
+    segments.push({
+      sourceText: sourceSentence,
+      translation: translationSentence,
+      speaker,
+      isDialogue,
+    });
+  }
+  return segments;
+}
+
 // IDENTITY_SEAL: PART-1  | role=Types | inputs=none | outputs=TranslationMode,TranslationConfig,FidelityScoreDetail,ExperienceScoreDetail
 // IDENTITY_SEAL: PART-2  | role=BandUtils | inputs=band(number) | outputs=clamped(number),config
 // IDENTITY_SEAL: PART-3  | role=FidelityDirective | inputs=band | outputs=directive(string)
 // IDENTITY_SEAL: PART-4  | role=ExperienceDirective | inputs=band,targetLang(JP/CN/EN/KO) | outputs=directive(string)
-// IDENTITY_SEAL: PART-5  | role=SystemPromptBuilder | inputs=TranslationConfig | outputs=systemPrompt(string)
+// IDENTITY_SEAL: PART-5  | role=SystemPromptBuilder | inputs=TranslationConfig,ragBlock? | outputs=systemPrompt(string)
+// IDENTITY_SEAL: PART-5B | role=RAGBlockFormatter+AsyncPromptBuilder | inputs=RAGTranslationContext,RAGTranslationInput | outputs=ragBlock(string),{systemPrompt,ragCtx}
 // IDENTITY_SEAL: PART-6  | role=Chunking | inputs=text,chunkSize | outputs=string[]
 // IDENTITY_SEAL: PART-7  | role=ScoringPrompt | inputs=source,translation,config | outputs=scoringPrompt(string)
 // IDENTITY_SEAL: PART-8  | role=ScoreParsing | inputs=raw,mode | outputs=ChunkScoreDetail
@@ -1421,3 +1797,5 @@ export function updateConsistencyTracker(
 // IDENTITY_SEAL: PART-17 | role=GlossaryVerify | inputs=source,translated,glossary | outputs=GlossaryVerification
 // IDENTITY_SEAL: PART-18 | role=LengthVerify | inputs=source,translated,targetLang,mode | outputs=LengthVerification
 // IDENTITY_SEAL: PART-19 | role=AxisThreshold+ConsistencyTracker | inputs=score,mode,tracker,chunk | outputs=boolean,void
+// IDENTITY_SEAL: PART-20 | role=VoiceGuardIntegration | inputs=result,rules,targetLang | outputs=VoiceGuardedResult{voiceViolations,needsRetry,retryHint}
+// IDENTITY_SEAL: PART-21 | role=SpeakerInference+SegmentBuilder | inputs=sourceText,translation,characterNames,targetLang | outputs=TranslatedSegment[]{speaker?,isDialogue?}

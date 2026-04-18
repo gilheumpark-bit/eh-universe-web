@@ -4,6 +4,8 @@
 // AI 프로바이더를 옵션으로 추가 호출 가능하도록 확장점 제공.
 // ============================================================
 
+import { logger } from '@/lib/logger';
+
 // ============================================================
 // PART 1 — Types
 // ============================================================
@@ -372,7 +374,8 @@ ${text.slice(0, 4000)}`;
         && typeof (x as AICorrection).suggested === 'string'
       )
       .slice(0, 30);
-  } catch {
+  } catch (err) {
+    logger.warn('PublishAudit', 'AI audit fetch/parse failed', err);
     return [];
   }
 }

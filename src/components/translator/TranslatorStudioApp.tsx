@@ -42,6 +42,10 @@ import {
   splitTextIntoChunks,
 } from '@/lib/project-normalize';
 import { getGlossaryManager } from '@/lib/translation/glossary-manager';
+import {
+  buildProjectTranslationContext,
+  type TranslationProjectContext,
+} from '@/lib/translation/project-bridge';
 import type {
   ChapterEntry,
   ProjectSnapshot,
@@ -49,6 +53,20 @@ import type {
   StyleHeuristicAnalysis,
   DomainPreset,
 } from '@/types/translator';
+// Phase 1-7 RAG/Memory/Voice integration — bypassed by direct /api/translate fetch
+// before this repair. Now composed into payload.context to ensure /translation-studio
+// independent route benefits from the same pipeline as the studio panel.
+import { buildRAGTranslationContext, type RAGTranslationContext } from '@/services/ragService';
+import { formatRAGBlock } from '@/engine/translation';
+import {
+  getOrCreateGraph,
+  buildMemoryPromptHint,
+  detectTermDrift,
+  updateMemoryFromTranslation,
+  saveGraphLocal,
+  type EpisodeMemoryGraph,
+  type TermDriftWarning,
+} from '@/lib/translation/episode-memory';
 
 const AI_STORE_PROVIDER_IDS = new Set<ProviderId>([
   'gemini',
@@ -152,6 +170,15 @@ export default function TranslatorStudioApp() {
   const glossaryManagerRef = useRef(getGlossaryManager());
   const [_glossaryVersion, setGlossaryVersion] = useState(() => glossaryManagerRef.current.version);
 
+  // ── Phase 1-7 Pipeline: project context for RAG / Voice / Episode Memory ──
+  // [C] null-safe — 단독 실행에서도 동작 (?from 없으면 null 유지)
+  // 이 컨텍스트가 있으면 fetch 페이로드에 RAG block + memory hint 자동 주입
+  const [projectContext, setProjectContext] = useState<TranslationProjectContext | null>(null);
+  const [driftWarnings, setDriftWarnings] = useState<TermDriftWarning[]>([]);
+  const projectContextRef = useRef<TranslationProjectContext | null>(null);
+  projectContextRef.current = projectContext;
+  const memoryGraphRef = useRef<EpisodeMemoryGraph | null>(null);
+
   // Sync: glossary state → GlossaryManager (when user edits via setGlossary)
   useEffect(() => {
     const mgr = glossaryManagerRef.current;
@@ -165,6 +192,25 @@ export default function TranslatorStudioApp() {
       mgr.setAll(glossary);
     }
   }, [glossary]);
+
+  // [Phase 1-7] drift 경고 → status bar 알림 (UI 확장 여지 보존)
+  // [C] driftWarnings 비어있을 땐 statusMsg 변조하지 않음
+  useEffect(() => {
+    if (driftWarnings.length === 0) return;
+    const t = window.setTimeout(() => {
+      setStatusMsg(`DRIFT ${driftWarnings.length}건 감지 — 콘솔 확인`);
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [driftWarnings]);
+
+  // [Phase 1-7] projectContext 디버그 신호 — 향후 UI 패널 연결 대기
+  useEffect(() => {
+    if (!projectContext) return;
+    logger.info(
+      'TranslatorStudioApp',
+      `[Pipeline] projectContext loaded: chars=${projectContext.characters.length}, glossary=${projectContext.glossary.length}, episodes=${projectContext.recentEpisodes.length}`,
+    );
+  }, [projectContext]);
 
   // Sync: GlossaryManager → glossary state + version (when manager fires onChange)
   useEffect(() => {
@@ -364,8 +410,10 @@ export default function TranslatorStudioApp() {
     }
   }, []);
 
-  // [창작→번역 파이프라인] Studio 세션에서 원고 자동 로드
+  // [창작→번역 파이프라인] Studio 세션에서 원고 + 프로젝트 컨텍스트 자동 로드
   // URL query: ?from=<sessionId> — Studio에서 번역 스튜디오로 진입 시
+  // 번역 스튜디오는 독립 라우트라 StudioContext와 단절. localStorage에서 직접 읽고
+  // project-bridge로 변환하여 worldContext/characterProfiles/glossary 자동 채움.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -376,28 +424,89 @@ export default function TranslatorStudioApp() {
       // Studio가 사용하는 localStorage 키에서 세션 데이터 읽기
       const projectsRaw = localStorage.getItem('noa_projects');
       if (!projectsRaw) return;
-      const projects = JSON.parse(projectsRaw) as Array<{ sessions?: Array<{ id: string; config?: { manuscripts?: Array<{ episode: number; content: string; title?: string }> } }> }>;
-      let matchedManuscripts: Array<{ episode: number; content: string; title?: string }> | null = null;
+      const projects = JSON.parse(projectsRaw) as Array<{
+        id?: string;
+        name?: string;
+        sessions?: Array<{ id: string; config?: Record<string, unknown> }>;
+      }>;
+      let matchedSession: { id: string; config?: Record<string, unknown> } | null = null;
+      let matchedProject: { id?: string; name?: string } | null = null;
       for (const proj of projects) {
         const sess = proj.sessions?.find(s => s.id === fromSessionId);
-        if (sess?.config?.manuscripts && sess.config.manuscripts.length > 0) {
-          matchedManuscripts = sess.config.manuscripts;
+        if (sess) {
+          matchedSession = sess;
+          matchedProject = proj;
           break;
         }
       }
-      if (!matchedManuscripts) return;
+      if (!matchedSession?.config) return;
 
-      // 첫 에피소드를 source에 자동 주입 + 이후 chapters로 추가
-      const sorted = [...matchedManuscripts].sort((a, b) => a.episode - b.episode);
-      const first = sorted[0];
-      if (first?.content) {
-        setSource(first.content);
-        // URL 정리 (?from 제거) — history 오염 방지
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, '', cleanUrl);
+      const sessConfig = matchedSession.config as { manuscripts?: Array<{ episode: number; content: string; title?: string }> };
+      const matchedManuscripts = sessConfig.manuscripts;
+
+      // 첫 에피소드를 source에 자동 주입
+      if (Array.isArray(matchedManuscripts) && matchedManuscripts.length > 0) {
+        const sorted = [...matchedManuscripts].sort((a, b) => a.episode - b.episode);
+        const first = sorted[0];
+        if (first?.content) setSource(first.content);
       }
+
+      // [Project Bridge] StoryConfig → 번역 컨텍스트 자동 추출
+      const projectCtx = buildProjectTranslationContext(
+        {
+          id: matchedProject?.id || fromSessionId,
+          title: matchedProject?.name,
+          config: matchedSession.config,
+        },
+        { sourceLang: 'KO' }
+      );
+
+      if (projectCtx) {
+        // [Phase 1-7 연결] projectContext state 보존 — RAG / Voice / Memory 파이프라인 입구
+        setProjectContext(projectCtx);
+        // [C] localStorage 그래프 1회 로드 — 후속 번역에서 drift 감지 + 업데이트에 사용
+        memoryGraphRef.current = projectCtx.projectId
+          ? getOrCreateGraph(projectCtx.projectId)
+          : null;
+
+        // worldBible → worldContext (텍스트 형식)
+        if (projectCtx.worldBible) setWorldContext(projectCtx.worldBible);
+        // characters → characterProfiles (텍스트 형식)
+        if (projectCtx.characters.length > 0) {
+          const profileText = projectCtx.characters
+            .map(c => {
+              const reg = c.register;
+              const lines = [`## ${c.name}`];
+              if (c.aliases.length > 0) lines.push(`- 별칭: ${c.aliases.join(', ')}`);
+              if (reg?.role) lines.push(`- 역할: ${reg.role}`);
+              if (reg?.age) lines.push(`- 연령: ${reg.age}`);
+              if (reg?.tone) lines.push(`- 말투: ${reg.tone}`);
+              if (reg?.speechHint) lines.push(`- 말투 예시: ${reg.speechHint}`);
+              return lines.join('\n');
+            })
+            .join('\n\n');
+          setCharacterProfiles(profileText);
+        }
+        // glossary (locked entries만) → record 형식 + 텍스트
+        if (projectCtx.glossary.length > 0) {
+          const glossRecord: Record<string, string> = {};
+          for (const g of projectCtx.glossary) {
+            if (g.target) glossRecord[g.source] = g.target;
+            else glossRecord[g.source] = g.source; // alias / locked-only
+          }
+          if (Object.keys(glossRecord).length > 0) setGlossary(glossRecord);
+        }
+        // projectName 자동 채움 (비어있을 때만)
+        if (projectCtx.projectTitle) {
+          setProjectName(prev => prev || projectCtx.projectTitle);
+        }
+      }
+
+      // URL 정리 (?from 제거) — history 오염 방지
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
     } catch (err) {
-      logger.warn('TranslatorStudioApp', 'failed to import studio session manuscripts', err);
+      logger.warn('TranslatorStudioApp', 'failed to import studio session via project-bridge', err);
     }
   }, []);
 
@@ -790,6 +899,103 @@ export default function TranslatorStudioApp() {
     };
   };
 
+  // ── Phase 1-7 RAG/Memory 페이로드 강화 ──
+  // [C] projectContext null 가드 — ?from 없이 진입했으면 그대로 통과 (fallback)
+  // [C] RAG 실패해도 silent — 번역 자체는 항상 진행
+  // [G] sourceText 짧을 때 RAG 호출 스킵 (의미없는 컨텍스트 회피)
+  // [K] context 필드에 [RAG block] + [Memory hint] prepend — buildPrompt 추가 변경 불필요
+  const enrichPayloadWithPipeline = useCallback(async (
+    payload: Record<string, unknown>,
+    sourceText: string,
+    chapterIndex: number | null,
+  ): Promise<Record<string, unknown>> => {
+    const ctx = projectContextRef.current;
+    if (!ctx?.projectId || !sourceText || sourceText.trim().length < 50) {
+      return payload;
+    }
+
+    const targetLangNorm = ((): 'KO' | 'EN' | 'JP' | 'CN' => {
+      const t = String(payload.to ?? to ?? '').toLowerCase();
+      if (t === 'ja' || t === 'jp') return 'JP';
+      if (t === 'zh' || t === 'cn') return 'CN';
+      if (t === 'en') return 'EN';
+      return 'KO';
+    })();
+
+    const blocks: string[] = [];
+    // 1) RAG: ChromaDB 99만 문서 + 25 장르 규칙
+    try {
+      const ragCtx: RAGTranslationContext = await buildRAGTranslationContext(
+        {
+          projectId: ctx.projectId,
+          sourceText: sourceText.slice(0, 8000),
+          characterNames: ctx.characters.map(c => c.name).filter(Boolean),
+          targetGenre: ctx.genre,
+          targetLang: targetLangNorm,
+          episodeNo: typeof chapterIndex === 'number' ? chapterIndex + 1 : undefined,
+        },
+        { timeoutMs: 5000 },
+      );
+      const ragBlock = formatRAGBlock(ragCtx);
+      if (ragBlock) blocks.push(ragBlock);
+    } catch (err) {
+      logger.warn('TranslatorStudioApp', 'RAG context fetch failed (silent fallback)', err);
+    }
+
+    // 2) Episode Memory hint — 기존 canonical 매핑 보강
+    const memHint = buildMemoryPromptHint(memoryGraphRef.current);
+    if (memHint) blocks.push(memHint);
+
+    if (blocks.length === 0) return payload;
+
+    const prevContext = typeof payload.context === 'string' ? payload.context : '';
+    const merged = [blocks.join('\n\n'), prevContext].filter(Boolean).join('\n\n');
+    return { ...payload, context: merged };
+  }, [to]);
+
+  // ── 번역 완료 후 Episode Memory + drift 추적 ──
+  // [C] projectContext / memoryGraph null 가드 — 단독 실행 안전
+  // [C] glossary 매핑이 실제 출력에 등장할 때만 기록 — false-positive drift 방지
+  // [K] saveGraphLocal quota fail 무시
+  const recordEpisodeMemory = useCallback((
+    sourceText: string,
+    translatedText: string,
+    chapterIndex: number | null,
+  ) => {
+    const ctx = projectContextRef.current;
+    const graph = memoryGraphRef.current;
+    if (!ctx || !graph || !translatedText) return;
+
+    const epNo = typeof chapterIndex === 'number' && chapterIndex >= 0 ? chapterIndex + 1 : 0;
+    const lowerOut = translatedText.toLowerCase();
+
+    // glossary record(현재 컴포넌트 상태) → drift 입력 형식
+    const newPairs = Object.entries(glossary)
+      .filter(([src, tgt]) => src && tgt && lowerOut.includes(tgt.toLowerCase()))
+      .map(([source, target]) => ({
+        source,
+        target,
+        episodeNo: epNo,
+        isCharacter: ctx.characters.some(c =>
+          c.name === source || (c.aliases ?? []).includes(source),
+        ),
+      }));
+
+    if (newPairs.length === 0) return;
+
+    // drift 감지 (기존 canonical 과 다른 번역 시도 포착)
+    const warnings = detectTermDrift(graph, newPairs);
+    if (warnings.length > 0) {
+      setDriftWarnings(warnings);
+      logger.warn('TranslatorStudioApp', 'Term drift detected', warnings);
+    }
+
+    // 메모리 그래프 업데이트 + 영속화
+    const updated = updateMemoryFromTranslation(graph, newPairs);
+    memoryGraphRef.current = updated;
+    saveGraphLocal(updated);
+  }, [glossary]);
+
   const updateStoryBibleAfterTranslation = async (options: {
     translatedText: string;
     chapterName: string;
@@ -853,7 +1059,7 @@ export default function TranslatorStudioApp() {
     setLoading(true);
     setStatusMsg('FAST DRAFT');
     try {
-      const translated = await requestTranslation(
+      const enriched = await enrichPayloadWithPipeline(
         buildTranslationPayload({
           text: source,
           from,
@@ -861,9 +1067,13 @@ export default function TranslatorStudioApp() {
           provider,
           apiKey: getEffectiveApiKeyForProvider(provider),
           mode: translationMode,
-        })
+        }),
+        source,
+        activeChapterIndex,
       );
+      const translated = await requestTranslation(enriched);
       setResult(translated);
+      recordEpisodeMemory(source, translated, activeChapterIndex);
       patchActiveChapter({ result: translated, isDone: true, stageProgress: 5 });
       const mergedStoryBible = await updateStoryBibleAfterTranslation({
         translatedText: translated,
@@ -903,17 +1113,22 @@ export default function TranslatorStudioApp() {
       let currentResult = source;
       for (const item of stageSequence) {
         setStatusMsg(item.label);
+        const stagePayload = buildTranslationPayload({
+          text: item.stage === 1 ? source : currentResult,
+          sourceText: source,
+          stage: item.stage,
+          from,
+          to,
+          provider: item.providerId,
+          apiKey: getEffectiveApiKeyForProvider(item.providerId),
+          mode: translationMode,
+        });
+        // [Phase 1-7] stage 1 (FIRST DRAFT) 만 RAG 컨텍스트 강화 — 후속 단계는 누적 결과 기반이라 재주입 불필요
+        const enrichedStage = item.stage === 1
+          ? await enrichPayloadWithPipeline(stagePayload, source, activeChapterIndex)
+          : stagePayload;
         currentResult = await requestTranslation(
-          buildTranslationPayload({
-            text: item.stage === 1 ? source : currentResult,
-            sourceText: source,
-            stage: item.stage,
-            from,
-            to,
-            provider: item.providerId,
-            apiKey: getEffectiveApiKeyForProvider(item.providerId),
-            mode: translationMode,
-          }),
+          enrichedStage,
           { stream: true, onDelta: (s) => setResult(s) }
         );
         setResult(currentResult);
@@ -923,6 +1138,7 @@ export default function TranslatorStudioApp() {
           isDone: item.stage === 5,
         });
       }
+      recordEpisodeMemory(source, currentResult, activeChapterIndex);
       const mergedStoryBible = await updateStoryBibleAfterTranslation({
         translatedText: currentResult,
         chapterName: activeChapter?.name || 'Current Chapter',
@@ -1224,22 +1440,23 @@ export default function TranslatorStudioApp() {
         setStatusMsg(`BATCH ${index + 1}/${chapters.length}${freshGlossary ? ` [GLOSSv${currentGlossaryVersion}]` : ''}`);
 
         try {
-          const translated = await requestTranslation(
-            buildTranslationPayload(
-              {
-                text: chapter.content,
-                from,
-                to,
-                provider,
-                apiKey: getEffectiveApiKeyForProvider(provider),
-                mode: translationMode,
-                // Override glossary with fresh real-time version
-                glossary: freshGlossary || undefined,
-              },
-              { storySummaryBase: rollingStorySummary, chapterIndex: index }
-            )
+          const batchPayload = buildTranslationPayload(
+            {
+              text: chapter.content,
+              from,
+              to,
+              provider,
+              apiKey: getEffectiveApiKeyForProvider(provider),
+              mode: translationMode,
+              // Override glossary with fresh real-time version
+              glossary: freshGlossary || undefined,
+            },
+            { storySummaryBase: rollingStorySummary, chapterIndex: index }
           );
+          const enrichedBatch = await enrichPayloadWithPipeline(batchPayload, chapter.content, index);
+          const translated = await requestTranslation(enrichedBatch);
           setResult(translated);
+          recordEpisodeMemory(chapter.content, translated, index);
           patchChapterAtIndex(index, { result: translated, isDone: true, stageProgress: 5 });
 
           if (translationMode === 'novel') {
@@ -1365,7 +1582,7 @@ export default function TranslatorStudioApp() {
     setLoading(true);
     setStatusMsg('COMPARE B');
     try {
-      const b = await requestTranslation(
+      const enrichedB = await enrichPayloadWithPipeline(
         buildTranslationPayload({
           text: source,
           from,
@@ -1375,8 +1592,11 @@ export default function TranslatorStudioApp() {
             ? getEffectiveApiKeyForProvider(altProvider)
             : getEffectiveApiKeyForProvider(provider),
           mode: translationMode,
-        })
+        }),
+        source,
+        activeChapterIndex,
       );
+      const b = await requestTranslation(enrichedB);
       setCompareResultB(b);
     } catch (error) {
       await alert(error instanceof Error ? error.message : '비교 B안 실패');
@@ -1399,19 +1619,23 @@ export default function TranslatorStudioApp() {
     try {
       for (let i = 0; i < chunks.length; i++) {
         setStatusMsg(`CHUNK ${i + 1}/${chunks.length}`);
-        const part = await requestTranslation(
-          buildTranslationPayload({
-            text: chunks[i],
-            from,
-            to,
-            provider,
-            apiKey: getEffectiveApiKeyForProvider(provider),
-            mode: translationMode,
-          })
-        );
+        // [Phase 1-7] 첫 청크에만 RAG 강화 — 같은 텍스트 분할 시 중복 호출 회피
+        const chunkPayload = buildTranslationPayload({
+          text: chunks[i],
+          from,
+          to,
+          provider,
+          apiKey: getEffectiveApiKeyForProvider(provider),
+          mode: translationMode,
+        });
+        const enrichedChunk = i === 0
+          ? await enrichPayloadWithPipeline(chunkPayload, source, activeChapterIndex)
+          : chunkPayload;
+        const part = await requestTranslation(enrichedChunk);
         acc += (acc ? '\n\n' : '') + part;
         setResult(acc);
       }
+      recordEpisodeMemory(source, acc, activeChapterIndex);
       patchActiveChapter({ result: acc, isDone: true, stageProgress: 5 });
     } catch (error) {
       await alert(error instanceof Error ? error.message : '분할 번역 실패');

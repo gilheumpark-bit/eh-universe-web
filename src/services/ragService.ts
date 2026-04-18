@@ -20,6 +20,10 @@ export interface RagSearchRequest {
   query: string;
   /** Top-K 문서 수 (기본 5) */
   top_k?: number;
+  /** 프로젝트 식별자 — 서버가 지원하면 검색 범위 제한, 미지원 서버는 무시 */
+  project_id?: string;
+  /** 메타 필터 (예: { type: 'translatedPair' }) — 서버 미지원 시 무시 */
+  filters?: Record<string, unknown>;
 }
 
 export interface RagDocument {
@@ -87,10 +91,14 @@ async function postJson<T>(path: string, body: unknown, opts?: RagRequestOpts): 
  * 게이트웨이 경로: POST ${SPARK_RAG_URL}/search
  */
 export async function ragSearch(req: RagSearchRequest, opts?: RagRequestOpts): Promise<RagDocument[]> {
-  const { query, top_k = 5 } = req;
+  const { query, top_k = 5, project_id, filters } = req;
   if (!query || !query.trim()) return [];
   try {
-    const data = await postJson<RagSearchResponse | RagDocument[]>('/search', { query, top_k }, opts);
+    // [C] undefined 필드 제외 — spread 조건부로 신규 필드 추가 (하위 호환)
+    const body: Record<string, unknown> = { query, top_k };
+    if (project_id) body.project_id = project_id;
+    if (filters && Object.keys(filters).length > 0) body.filters = filters;
+    const data = await postJson<RagSearchResponse | RagDocument[]>('/search', body, opts);
     if (Array.isArray(data)) return data;
     // 서버 정식 포맷: {query, results[]}
     if (Array.isArray(data.results)) return data.results;
@@ -133,4 +141,144 @@ export async function ragHealth(): Promise<boolean> {
   }
 }
 
-// IDENTITY_SEAL: ragService | role=rag-client-8082 | inputs=query+top_k | outputs=documents|prompt
+// ============================================================
+// PART 4 — 번역 엔진 전용 컨텍스트 빌더
+// ============================================================
+
+/**
+ * 번역 엔진 전용 RAG 컨텍스트.
+ * worldBible: /prompt 로 조립된 세계관 프롬프트(단일 문자열).
+ * pastTerms / pastEpisodeSummary / genreRules: /search 결과의 meta 카테고리에서 분류.
+ * fetched: false 이면 번역 엔진은 기존 프롬프트 그대로 사용 (RAG 블록 생략).
+ */
+export interface RAGTranslationContext {
+  worldBible: string;
+  pastTerms: Array<{ src: string; tgt: string; episode: number }>;
+  pastEpisodeSummary: string[];
+  genreRules: string;
+  fetched: boolean;
+}
+
+export interface RAGTranslationInput {
+  projectId?: string;
+  sourceText: string;
+  characterNames?: string[];
+  targetGenre?: string;
+  targetLang: 'KO' | 'EN' | 'JP' | 'CN';
+  episodeNo?: number;
+}
+
+const EMPTY_TRANSLATION_CTX: RAGTranslationContext = {
+  worldBible: '',
+  pastTerms: [],
+  pastEpisodeSummary: [],
+  genreRules: '',
+  fetched: false,
+};
+
+function buildTranslationQuery(input: RAGTranslationInput): string {
+  const parts: string[] = [
+    input.sourceText.slice(0, 800),
+    ...(input.characterNames ?? []).slice(0, 5),
+  ];
+  if (input.targetGenre) parts.push(input.targetGenre);
+  return parts.filter(s => s && s.trim()).join(' | ');
+}
+
+/**
+ * RagDocument[] 을 카테고리별로 분류한다.
+ * meta.type / meta.category / title 를 우선적으로 본다.
+ * 서버 스키마가 확정 전이므로 방어적으로 필드를 검사한다.
+ */
+function partitionDocuments(docs: RagDocument[]): {
+  pastTerms: Array<{ src: string; tgt: string; episode: number }>;
+  pastEpisodeSummary: string[];
+  genreRules: string;
+} {
+  const pastTerms: Array<{ src: string; tgt: string; episode: number }> = [];
+  const pastEpisodeSummary: string[] = [];
+  const genreRuleChunks: string[] = [];
+
+  for (const doc of docs) {
+    const meta = (doc.meta ?? {}) as Record<string, unknown>;
+    const rawType = (meta['type'] ?? meta['category'] ?? meta['kind'] ?? '') as string;
+    const type = typeof rawType === 'string' ? rawType.toLowerCase() : '';
+
+    if (type === 'glossary' || type === 'term') {
+      const src = typeof meta['source'] === 'string' ? (meta['source'] as string) : doc.title ?? '';
+      const tgt = typeof meta['target'] === 'string' ? (meta['target'] as string) : doc.content;
+      const ep = typeof meta['episode'] === 'number' ? (meta['episode'] as number) : 0;
+      if (src && tgt) pastTerms.push({ src, tgt, episode: ep });
+      continue;
+    }
+    if (type === 'pastepisode' || type === 'episode' || type === 'summary') {
+      if (doc.content) pastEpisodeSummary.push(doc.content);
+      continue;
+    }
+    if (type === 'genrerule' || type === 'genre' || type === 'rule') {
+      if (doc.content) genreRuleChunks.push(doc.content);
+      continue;
+    }
+    // 분류 불가 — worldBible에 이미 포함되므로 skip
+  }
+
+  return {
+    pastTerms,
+    pastEpisodeSummary,
+    genreRules: genreRuleChunks.join('\n').slice(0, 2000),
+  };
+}
+
+/**
+ * 번역 엔진 전용 RAG 컨텍스트 빌더.
+ * /prompt + /search 를 병렬 호출하여 4종 필드를 조립한다.
+ * timeout 6000ms (기본). 실패 시 EMPTY_TRANSLATION_CTX (fetched=false) 반환 — 번역 엔진은 계속 진행.
+ */
+export async function buildRAGTranslationContext(
+  input: RAGTranslationInput,
+  options: { timeoutMs?: number } = {},
+): Promise<RAGTranslationContext> {
+  // 환경 가드 — 서버 사이드(Node/Edge) 또는 브라우저 모두 fetch 존재 여부만 확인
+  if (typeof fetch === 'undefined') return EMPTY_TRANSLATION_CTX;
+  if (!input.sourceText || !input.sourceText.trim()) return EMPTY_TRANSLATION_CTX;
+
+  const timeoutMs = options.timeoutMs ?? 6000;
+  const query = buildTranslationQuery(input);
+  if (!query) return EMPTY_TRANSLATION_CTX;
+
+  try {
+    const [promptResult, docsResult] = await Promise.allSettled([
+      ragBuildPrompt({ query, top_k: 6 }, { timeoutMs }),
+      ragSearch({ query, top_k: 6 }, { timeoutMs }),
+    ]);
+
+    const worldBible =
+      promptResult.status === 'fulfilled' && promptResult.value && promptResult.value !== query
+        ? promptResult.value.slice(0, 2000)
+        : '';
+
+    const partitioned =
+      docsResult.status === 'fulfilled' && Array.isArray(docsResult.value)
+        ? partitionDocuments(docsResult.value)
+        : { pastTerms: [], pastEpisodeSummary: [], genreRules: '' };
+
+    // 두 호출 모두 실패했으면 fetched=false (번역 엔진 무시)
+    const anySuccess =
+      promptResult.status === 'fulfilled' || docsResult.status === 'fulfilled';
+
+    if (!anySuccess) return EMPTY_TRANSLATION_CTX;
+
+    return {
+      worldBible,
+      pastTerms: partitioned.pastTerms,
+      pastEpisodeSummary: partitioned.pastEpisodeSummary,
+      genreRules: partitioned.genreRules,
+      fetched: true,
+    };
+  } catch (err) {
+    logger.warn('RAG', 'translation ctx build failed (non-blocking)', err);
+    return EMPTY_TRANSLATION_CTX;
+  }
+}
+
+// IDENTITY_SEAL: ragService | role=rag-client-8082 | inputs=query+top_k | outputs=documents|prompt|translationContext

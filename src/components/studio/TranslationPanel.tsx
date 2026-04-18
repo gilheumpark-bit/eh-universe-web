@@ -15,6 +15,22 @@ import { bandLabel, modeDescription, BAND_META } from "@/engine/translation";
 import { GENRE_PRESETS } from "@/engine/genre-presets";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getTaintTracker } from "@/lib/noa/taint-tracker";
+import { useStudio, type StudioContextValue } from "@/app/studio/StudioContext";
+import { buildProjectTranslationContext } from "@/lib/translation/project-bridge";
+import { searchWithRAGFallback, type TMSuggestion } from "@/lib/translation/translation-memory";
+
+/**
+ * StudioContext에 안전 접근 — Provider 밖에서는 null 반환.
+ * useStudio()는 throws하므로 try-catch로 감싸 외부 라우트 호환성 확보.
+ * 주의: hook 자체는 항상 호출되며, throw만 catch함 (Rules of Hooks 준수).
+ */
+function useStudioSafe(): StudioContextValue | null {
+  try {
+    return useStudio();
+  } catch {
+    return null;
+  }
+}
 
 interface TranslationPanelProps {
   language: AppLanguage;
@@ -33,6 +49,22 @@ type TranslationScope = 'novel' | 'general';
 
 export default function TranslationPanel({ language, config, setConfig }: TranslationPanelProps) {
   const isKO = language === "KO";
+
+  // ── Project Bridge: StudioContext의 프로젝트 메타 + StoryConfig → 번역 컨텍스트 ──
+  // useStudio는 StudioProvider 안에서만 호출 가능. 현재 ManuscriptTab→StudioShell 경로로 안전.
+  // 외부 라우트에서 직접 렌더 시 fallback 필요 — try-catch로 보호.
+  const studio = useStudioSafe();
+  const projectContext = useMemo(() => {
+    if (!config) return null;
+    const projectId = studio?.currentProjectId
+      || studio?.currentSessionId
+      || (config.title ? `local-${config.title}` : 'local-default');
+    const currentEpisodeNo = typeof config.episode === 'number' ? config.episode : undefined;
+    return buildProjectTranslationContext(
+      { id: projectId, title: config.title, config },
+      { currentEpisodeNo, sourceLang: language }
+    );
+  }, [studio?.currentProjectId, studio?.currentSessionId, config, language]);
   const [scope, setScope] = useState<TranslationScope>('novel');
   const [generalDomain, setGeneralDomain] = useState<string>('general');
   const [generalText, setGeneralText] = useState('');
@@ -56,6 +88,48 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
   const [targetGenre, setTargetGenre] = useState<string>('');
   const [scoreThreshold, setScoreThreshold] = useState<number>(0.75);
 
+  // ── TM + RAG 실시간 제안 (Phase 5) ──
+  // 세그먼트 편집 중 원문에 대해 로컬 TM → RAG fallback 검색 → 최대 3건.
+  const [tmSuggestions, setTmSuggestions] = useState<TMSuggestion[]>([]);
+  const [suggestionQuery, setSuggestionQuery] = useState('');
+  const suggestionDebounceRef = useRef<number | null>(null);
+
+  const handleSegmentFocus = useCallback((segmentText: string) => {
+    setSuggestionQuery(segmentText ?? '');
+  }, []);
+
+  useEffect(() => {
+    // [C] 짧은 쿼리 가드 (8자 미만은 무의미한 매칭 방지)
+    if (!suggestionQuery || suggestionQuery.length < 8) {
+      setTmSuggestions([]);
+      return;
+    }
+    if (suggestionDebounceRef.current !== null) {
+      window.clearTimeout(suggestionDebounceRef.current);
+    }
+    let cancelled = false;
+    suggestionDebounceRef.current = window.setTimeout(async () => {
+      try {
+        const results = await searchWithRAGFallback(suggestionQuery, {
+          topK: 3,
+          projectId: projectContext?.projectId,
+          targetLang,
+        });
+        if (!cancelled) setTmSuggestions(results);
+      } catch {
+        if (!cancelled) setTmSuggestions([]);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      if (suggestionDebounceRef.current !== null) {
+        window.clearTimeout(suggestionDebounceRef.current);
+        suggestionDebounceRef.current = null;
+      }
+    };
+  }, [suggestionQuery, projectContext?.projectId, targetLang]);
+
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,7 +151,8 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     localStorage.setItem('eh-novel-glossary', JSON.stringify(g));
   }, []);
 
-  const { translateEpisode, translateBatch: _translateBatch, progress, batchProgress: _batchProgress, isTranslating, abort } = useTranslation({
+  const { translateEpisode, translateBatch: _translateBatch, progress, batchProgress: _batchProgress, isTranslating, abort, driftWarnings, voiceViolations, voiceRetryNeeded, voiceRetryHint, ragStatus } = useTranslation({
+    projectContext,
     onProgress: (p) => {
       if (p.status === 'scoring') {
          setLogs(prev => [...prev.slice(-49), { id: Date.now(), type: 'info', text: `Analyzing metrics for chunk ${p.currentChunk + 1}...` }]);
@@ -292,6 +367,137 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         </button>
       </div>
 
+      {/* RAG 컨텍스트 활성 배지 — useTranslation.ragStatus 의 실제 fetched 여부에 연동.
+          projectContext 만으론 부족 (silent fallback 시 fetched=false 가능).
+          - fetched=true: 파란 활성 배지 + 실제 용어/과거화 카운트
+          - projectContext 있고 fetched=false: 노란 "대기" 배지 (아직 호출 전 또는 RAG 실패)
+          - projectContext 없음: 배지 숨김 */}
+      {ragStatus.fetched ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono uppercase tracking-wider bg-accent-blue/10 border border-accent-blue/30 text-accent-blue rounded"
+            title={isKO ? `RAG 활성 — 용어 ${ragStatus.pastTermsCount} · 과거화 ${ragStatus.pastEpisodesCount}` : `RAG active — terms ${ragStatus.pastTermsCount} · past episodes ${ragStatus.pastEpisodesCount}`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse" />
+            <span>{isKO ? 'RAG 활성' : 'RAG Active'}</span>
+            <span className="text-text-tertiary">·</span>
+            <span>{isKO ? `용어 ${ragStatus.pastTermsCount}` : `Terms ${ragStatus.pastTermsCount}`}</span>
+            <span className="text-text-tertiary">·</span>
+            <span>{isKO ? `과거화 ${ragStatus.pastEpisodesCount}` : `Past EP ${ragStatus.pastEpisodesCount}`}</span>
+            {ragStatus.worldBibleLoaded && (
+              <>
+                <span className="text-text-tertiary">·</span>
+                <span>{isKO ? '세계관' : 'World'}</span>
+              </>
+            )}
+          </div>
+        </div>
+      ) : projectContext ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono uppercase tracking-wider bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 rounded"
+            title={isKO ? 'RAG 대기 중 — 번역 시작 시 자동 호출' : 'RAG idle — fetched on translation start'}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+            <span>{isKO ? 'RAG 대기' : 'RAG Idle'}</span>
+            <span className="text-text-tertiary">·</span>
+            <span>{isKO ? `캐릭터 ${projectContext.characters.length}` : `Char ${projectContext.characters.length}`}</span>
+            <span className="text-text-tertiary">·</span>
+            <span>{isKO ? `용어 ${projectContext.glossary.length}` : `Term ${projectContext.glossary.length}`}</span>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Voice Guard 재번역 권장 배지 — voiceRetryNeeded=true 시 노출.
+          자동 재번역 루프 미구현 — 사용자가 수동으로 재시도 트리거 가능. */}
+      {voiceRetryNeeded && voiceRetryHint && (
+        <div
+          className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg"
+          title={voiceRetryHint}
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 text-xs">
+            <div className="font-medium text-text-primary mb-0.5">
+              {isKO ? '캐릭터 말투 위반 감지' : 'Character voice violations detected'}
+            </div>
+            <div className="text-text-secondary">
+              {isKO
+                ? `${voiceViolations.filter(v => v.severity === 'error').length}건의 심각한 위반 — 재번역을 권장합니다.`
+                : `${voiceViolations.filter(v => v.severity === 'error').length} critical violation(s) — re-translation recommended.`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drift 경고 패널 — Episode Memory canonical 위반 */}
+      {driftWarnings && driftWarnings.length > 0 && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-medium text-text-primary">
+              {isKO ? `용어 드리프트 감지 (${driftWarnings.length})` : `Term Drift Detected (${driftWarnings.length})`}
+            </span>
+          </div>
+          <ul className="space-y-1 text-xs">
+            {driftWarnings.slice(0, 5).map((w, i) => (
+              <li key={`drift-${i}-${w.source}`} className="text-text-secondary">
+                <span className="font-mono">&quot;{w.source}&quot;</span>
+                {' → '}
+                {isKO ? '이전 번역' : 'canonical'}{' '}
+                <span className="text-amber-300">&quot;{w.canonicalTarget}&quot;</span>
+                {` (${w.historyCount}${isKO ? '회' : 'x'}), `}
+                {isKO ? '시도' : 'attempted'}{' '}
+                <span className="text-red-400">&quot;{w.attemptedTarget}&quot;</span>
+                {w.severity === 'block' && (
+                  <span className="ml-1 text-red-400 font-bold">[{isKO ? '차단' : 'BLOCK'}]</span>
+                )}
+              </li>
+            ))}
+            {driftWarnings.length > 5 && (
+              <li className="text-text-tertiary italic">
+                {isKO ? `... 외 ${driftWarnings.length - 5}건` : `... and ${driftWarnings.length - 5} more`}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {/* Voice Guard 리포트 패널 — 캐릭터 말투 검증 */}
+      {voiceViolations && voiceViolations.length > 0 && (
+        <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium text-text-primary">
+              {isKO ? `캐릭터 말투 검증 — 위반 ${voiceViolations.length}건` : `Character Voice Guard — ${voiceViolations.length} violations`}
+            </span>
+          </div>
+          <ul className="space-y-1 text-xs">
+            {voiceViolations.slice(0, 5).map((v, i) => (
+              <li key={`voice-${i}-${v.speaker}`} className="text-text-secondary">
+                <span className={v.severity === 'error' ? 'text-red-400' : 'text-amber-400'}>
+                  [{v.severity === 'error' ? (isKO ? '오류' : 'ERR') : (isKO ? '경고' : 'WARN')}]
+                </span>
+                <span className="ml-1 font-mono">{v.speaker}</span>
+                {': '}
+                <span>{v.detail}</span>
+                {v.matched && (
+                  <span className="ml-1 text-text-tertiary">
+                    ({isKO ? '매치' : 'match'}: &quot;{v.matched}&quot;)
+                  </span>
+                )}
+              </li>
+            ))}
+            {voiceViolations.length > 5 && (
+              <li className="text-text-tertiary italic">
+                {isKO ? `... 외 ${voiceViolations.length - 5}건` : `... and ${voiceViolations.length - 5} more`}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
       {/* Scope Switch: 소설 / 일반 */}
       <div className="flex items-center gap-2 p-1 rounded-xl bg-black/30 border border-white/5 w-fit" role="tablist" aria-label={isKO ? '번역 범위 선택' : 'Translation scope'}>
         <button onClick={() => setScope('novel')} role="tab" aria-selected={scope === 'novel'} aria-pressed={scope === 'novel'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
@@ -383,9 +589,13 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                     <div key={seg.id} className="flex gap-2 group">
                       <span className="shrink-0 w-6 text-[10px] text-text-tertiary text-right pt-2">{idx + 1}</span>
                       <div className="flex-1 grid grid-cols-2 gap-2 rounded-lg border border-white/5 bg-white/2 p-2 hover:border-border transition-colors">
-                        <div className="text-[12px] text-text-secondary leading-relaxed">{seg.source}</div>
+                        <div
+                          className="text-[12px] text-text-secondary leading-relaxed cursor-text"
+                          onClick={() => handleSegmentFocus(seg.source)}
+                        >{seg.source}</div>
                         <input
                           value={seg.target}
+                          onFocus={() => handleSegmentFocus(seg.source)}
                           onChange={async (e) => {
                             const { editSegment } = await import('@/lib/translation');
                             const updated = editSegment(seg, e.target.value);
@@ -427,6 +637,52 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               ) : (
                 <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{generalResult}</div>
               )}
+            </div>
+          )}
+
+          {/* TM + RAG 실시간 제안 (Phase 5) */}
+          {tmSuggestions.length > 0 && (
+            <div className="rounded-xl border border-border bg-bg-tertiary p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+                  {isKO ? `TM 제안 (${tmSuggestions.length})` : `TM Suggestions (${tmSuggestions.length})`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTmSuggestions([])}
+                  aria-label={isKO ? '제안 닫기' : 'Close suggestions'}
+                  className="text-text-tertiary hover:text-text-primary text-xs px-1.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+                >
+                  ×
+                </button>
+              </div>
+              <ul className="space-y-1.5">
+                {tmSuggestions.map((s, i) => (
+                  <li key={`${s.source_type}-${i}-${s.source.slice(0, 16)}`} className="rounded-lg border border-white/5 bg-black/20 p-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                          s.source_type === 'local'
+                            ? 'bg-[rgba(184,149,92,0.12)] text-text-primary border border-border'
+                            : 'bg-accent-amber/10 text-accent-amber border border-accent-amber/30'
+                        }`}
+                      >
+                        {s.source_type === 'local' ? 'TM' : 'RAG'}
+                      </span>
+                      <span className="font-mono text-[10px] text-text-tertiary">
+                        {(s.similarity * 100).toFixed(0)}%
+                      </span>
+                      {s.meta?.episode !== undefined && (
+                        <span className="font-mono text-[9px] text-text-tertiary">
+                          EP {s.meta.episode}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-text-tertiary truncate" title={s.source}>{s.source}</div>
+                    <div className="text-[12px] text-text-primary mt-0.5 leading-relaxed">{s.target}</div>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
