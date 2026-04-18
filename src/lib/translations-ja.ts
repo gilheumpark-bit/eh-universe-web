@@ -1260,8 +1260,14 @@ const translations = {
     "lockBannedWords": "禁止語適用"
   },
   "system": {
-    "pipelineBlocked": "パイプライン検証失敗によりAI生成がブロックされました。",
-    "qualityGateRetry": "[品質ゲート: 自動リライト試行 {n}/{max}]"
+    "pipelineBlocked": "パイプライン検証の失敗により、AI生成がブロックされました。",
+    "qualityGateRetry": "[品質ゲート: 自動書き直し試行 {n}/{max}]",
+    "qualityGateFinalFail": "[品質ゲート: 最終試行に失敗]",
+    "contextTruncated": "[コンテキストが長すぎるため一部省略されました]",
+    "writerProfileLoaded": "作家プロフィールが適用されました。",
+    "analyzeComplete": "原稿分析が完了しました。",
+    "worldSyncComplete": "世界観の同期が完了しました。",
+    "suggestionReady": "提案の準備ができました。"
   },
   "codeStudio": {
     "title": "コードスタジオ",

@@ -1263,8 +1263,14 @@ const translations = {
     "lockBannedWords": "禁用词应用"
   },
   "system": {
-    "pipelineBlocked": "由于管道验证失败，AI生成已被阻止。",
-    "qualityGateRetry": "[质量关卡：自动重写尝试 {n}/{max}]"
+    "pipelineBlocked": "由于管道验证失败，AI 生成已被阻止。",
+    "qualityGateRetry": "[质量门：自动重写尝试 {n}/{max}]",
+    "qualityGateFinalFail": "[质量门：最终尝试失败]",
+    "contextTruncated": "[上下文过长，部分内容已省略]",
+    "writerProfileLoaded": "作家档案已应用。",
+    "analyzeComplete": "手稿分析完成。",
+    "worldSyncComplete": "世界观同步完成。",
+    "suggestionReady": "建议已准备就绪。"
   },
   "codeStudio": {
     "title": "代码工作室",

@@ -1247,7 +1247,13 @@ const translations = {
   },
   "system": {
     "pipelineBlocked": "파이프라인 검증 실패로 AI 생성이 차단되었습니다.",
-    "qualityGateRetry": "[품질 게이트: 자동 재작성 시도 {n}/{max}]"
+    "qualityGateRetry": "[품질 게이트: 자동 재작성 시도 {n}/{max}]",
+    "qualityGateFinalFail": "[품질 게이트: 최종 시도 실패]",
+    "contextTruncated": "[컨텍스트가 길어 일부가 생략되었습니다]",
+    "writerProfileLoaded": "작가 프로필이 적용되었습니다.",
+    "analyzeComplete": "원고 분석이 완료되었습니다.",
+    "worldSyncComplete": "세계관 동기화가 완료되었습니다.",
+    "suggestionReady": "제안이 준비되었습니다."
   },
   "codeStudio": {
     "title": "코드 스튜디오",

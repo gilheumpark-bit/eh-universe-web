@@ -9,6 +9,14 @@ import { analyzeManuscript, calculateQualityTag } from './director';
 import { tensionCurve } from './models';
 import type { StoryConfig, QualityThresholds, QualityGateConfig, QualityGateResult, SkillLevel, AppLanguage } from '@/lib/studio-types';
 
+/**
+ * 언어별 텍스트 픽업 헬퍼.
+ * KO/EN/JP/CN 4언어 직접 분기. 누락 키는 KO → EN 순으로 fallback.
+ */
+function pickLang(language: AppLanguage, dict: Partial<Record<AppLanguage, string>>): string {
+  return dict[language] ?? dict.KO ?? dict.EN ?? '';
+}
+
 // ============================================================
 // PART 2 — Default Thresholds by Skill Level
 // ============================================================
@@ -178,28 +186,64 @@ export function evaluateQuality(
 // ============================================================
 
 export function buildRetryHint(result: QualityGateResult, attempt: number, language: AppLanguage): string {
-  const isKO = language === 'KO';
   const hints: string[] = [];
 
   for (const reason of result.failReasons) {
     if (reason.startsWith('grade_below')) {
-      hints.push(isKO ? '전체 품질을 높여주세요. 감정 묘사와 감각 표현을 강화하세요.' : 'Improve overall quality. Enhance emotional and sensory descriptions.');
+      hints.push(pickLang(language, {
+        KO: '전체 품질을 높여주세요. 감정 묘사와 감각 표현을 강화하세요.',
+        EN: 'Improve overall quality. Enhance emotional and sensory descriptions.',
+        JP: '全体的な品質を高めてください。感情描写と感覚表現を強化してください。',
+        CN: '请提升整体质量。强化情感描写与感官表达。',
+      }));
     } else if (reason.startsWith('director_below')) {
-      hints.push(isKO ? '인과관계를 명확히 하고, AI 요약 문투를 피하세요.' : 'Clarify cause-effect and avoid AI summary tone.');
+      hints.push(pickLang(language, {
+        KO: '인과관계를 명확히 하고, AI 요약 문투를 피하세요.',
+        EN: 'Clarify cause-effect and avoid AI summary tone.',
+        JP: '因果関係を明確にし、AI要約口調を避けてください。',
+        CN: '请明确因果关系，避免AI总结式口吻。',
+      }));
     } else if (reason.startsWith('eos_below')) {
-      hints.push(isKO ? '감정 키워드와 내면 독백을 더 넣어주세요.' : 'Add more emotion keywords and inner monologue.');
+      hints.push(pickLang(language, {
+        KO: '감정 키워드와 내면 독백을 더 넣어주세요.',
+        EN: 'Add more emotion keywords and inner monologue.',
+        JP: '感情キーワードと内面独白をもっと加えてください。',
+        CN: '请增加更多情感关键词与内心独白。',
+      }));
     } else if (reason.startsWith('tension_misaligned')) {
-      hints.push(isKO ? '긴장감을 목표 수준에 맞춰주세요. 갈등과 위기감을 조절하세요.' : 'Align tension to target level. Adjust conflict and urgency.');
+      hints.push(pickLang(language, {
+        KO: '긴장감을 목표 수준에 맞춰주세요. 갈등과 위기감을 조절하세요.',
+        EN: 'Align tension to target level. Adjust conflict and urgency.',
+        JP: '緊張感を目標レベルに合わせてください。葛藤と危機感を調整してください。',
+        CN: '请将紧张感调整到目标水准。调节冲突与危机感。',
+      }));
     } else if (reason.startsWith('ai_tone')) {
-      hints.push(isKO ? '"요약하자면", "결론적으로" 같은 AI 문투를 제거하세요.' : 'Remove AI-like phrases such as "in summary", "in conclusion".');
+      hints.push(pickLang(language, {
+        KO: '"요약하자면", "결론적으로" 같은 AI 문투를 제거하세요.',
+        EN: 'Remove AI-like phrases such as "in summary", "in conclusion".',
+        JP: '「要約すると」「結論として」のようなAI口調を取り除いてください。',
+        CN: '请移除"总结来说"、"综上所述"等AI式口吻。',
+      }));
     }
   }
 
   if (attempt >= 3) {
-    hints.push(isKO ? '이전 시도의 문제를 반드시 해결한 뒤 작성하세요.' : 'You MUST fix the issues from previous attempts.');
+    hints.push(pickLang(language, {
+      KO: '이전 시도의 문제를 반드시 해결한 뒤 작성하세요.',
+      EN: 'You MUST fix the issues from previous attempts.',
+      JP: '前回の試行の問題を必ず解決してから執筆してください。',
+      CN: '务必先解决之前尝试中的问题再行撰写。',
+    }));
   }
 
-  return hints.length > 0 ? `\n[품질 보정 지시 — 시도 ${attempt}]\n${hints.join('\n')}` : '';
+  if (hints.length === 0) return '';
+  const header = pickLang(language, {
+    KO: `\n[품질 보정 지시 — 시도 ${attempt}]\n`,
+    EN: `\n[Quality Correction — Attempt ${attempt}]\n`,
+    JP: `\n[品質補正指示 — 試行 ${attempt}]\n`,
+    CN: `\n[质量修正指示 — 第 ${attempt} 次尝试]\n`,
+  });
+  return `${header}${hints.join('\n')}`;
 }
 
 // IDENTITY_SEAL: PART-5 | role=retry hint builder | inputs=result,attempt | outputs=prompt suffix

@@ -1247,7 +1247,13 @@ const translations = {
   },
   "system": {
     "pipelineBlocked": "AI generation blocked due to pipeline validation failure.",
-    "qualityGateRetry": "[Quality Gate: Auto-rewrite attempt {n}/{max}]"
+    "qualityGateRetry": "[Quality Gate: Auto-rewrite attempt {n}/{max}]",
+    "qualityGateFinalFail": "[Quality Gate: Final attempt failed]",
+    "contextTruncated": "[Context was truncated due to length]",
+    "writerProfileLoaded": "Writer profile has been applied.",
+    "analyzeComplete": "Manuscript analysis complete.",
+    "worldSyncComplete": "World sync complete.",
+    "suggestionReady": "Suggestion is ready."
   },
   "codeStudio": {
     "title": "Code Studio",

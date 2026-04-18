@@ -6,6 +6,14 @@
 
 import type { WriterProfile, SkillLevel, AppLanguage } from '@/lib/studio-types';
 
+/**
+ * 언어별 텍스트 픽업 헬퍼.
+ * KO/EN/JP/CN 4언어 직접 분기. 누락 키는 KO → EN 순으로 fallback.
+ */
+function pickLang(language: AppLanguage, dict: Partial<Record<AppLanguage, string>>): string {
+  return dict[language] ?? dict.KO ?? dict.EN ?? '';
+}
+
 // ============================================================
 // PART 2 — EMA Calculator (레벨별 차등 smoothing)
 // ============================================================
@@ -199,29 +207,55 @@ export function loadProfile(id: string = 'default'): WriterProfile {
  * 문장 길이 + 대화 비율 + 감정 밀도 + 페이싱으로 작가 스타일 설명
  */
 export function buildVoiceFingerprint(profile: WriterProfile, language: AppLanguage): string {
-  const isKO = language === 'KO';
   const traits: string[] = [];
 
   // 문장 길이 선호
   if (profile.avgSentenceLength > 60) {
-    traits.push(isKO ? '긴 문장(서술적)' : 'long sentences (descriptive)');
+    traits.push(pickLang(language, {
+      KO: '긴 문장(서술적)',
+      EN: 'long sentences (descriptive)',
+      JP: '長い文(叙述的)',
+      CN: '长句(叙述性)',
+    }));
   } else if (profile.avgSentenceLength < 25) {
-    traits.push(isKO ? '짧은 문장(간결)' : 'short sentences (concise)');
+    traits.push(pickLang(language, {
+      KO: '짧은 문장(간결)',
+      EN: 'short sentences (concise)',
+      JP: '短い文(簡潔)',
+      CN: '短句(简洁)',
+    }));
   } else {
-    traits.push(isKO ? '중간 길이 문장' : 'medium-length sentences');
+    traits.push(pickLang(language, {
+      KO: '중간 길이 문장',
+      EN: 'medium-length sentences',
+      JP: '中程度の長さの文',
+      CN: '中等长度句',
+    }));
   }
 
   // 대화 비율
-  if (profile.dialogueRatio > 0.5) traits.push(isKO ? '대화 중심' : 'dialogue-heavy');
-  else if (profile.dialogueRatio < 0.2) traits.push(isKO ? '서술 중심' : 'narration-heavy');
+  if (profile.dialogueRatio > 0.5) traits.push(pickLang(language, {
+    KO: '대화 중심', EN: 'dialogue-heavy', JP: '会話中心', CN: '对话为主',
+  }));
+  else if (profile.dialogueRatio < 0.2) traits.push(pickLang(language, {
+    KO: '서술 중심', EN: 'narration-heavy', JP: '叙述中心', CN: '叙述为主',
+  }));
 
   // 감정 밀도
-  if (profile.emotionDensity > 0.7) traits.push(isKO ? '감정 풍부' : 'emotionally rich');
-  else if (profile.emotionDensity < 0.3) traits.push(isKO ? '절제된 감정' : 'restrained emotion');
+  if (profile.emotionDensity > 0.7) traits.push(pickLang(language, {
+    KO: '감정 풍부', EN: 'emotionally rich', JP: '感情豊か', CN: '情感丰富',
+  }));
+  else if (profile.emotionDensity < 0.3) traits.push(pickLang(language, {
+    KO: '절제된 감정', EN: 'restrained emotion', JP: '抑制された感情', CN: '克制情感',
+  }));
 
   // 페이싱
-  if (profile.pacingPreference > 70) traits.push(isKO ? '빠른 전개' : 'fast-paced');
-  else if (profile.pacingPreference < 30) traits.push(isKO ? '느린 전개' : 'slow-paced');
+  if (profile.pacingPreference > 70) traits.push(pickLang(language, {
+    KO: '빠른 전개', EN: 'fast-paced', JP: '速い展開', CN: '快节奏',
+  }));
+  else if (profile.pacingPreference < 30) traits.push(pickLang(language, {
+    KO: '느린 전개', EN: 'slow-paced', JP: '遅い展開', CN: '慢节奏',
+  }));
 
   return traits.join(', ');
 }
@@ -238,26 +272,34 @@ export function buildVoiceFingerprint(profile: WriterProfile, language: AppLangu
 export function buildProfileHint(profile: WriterProfile, language: AppLanguage): string {
   if (profile.episodeCount < 5) return ''; // 5화 미만 — 학습 데이터 부족
 
-  const isKO = language === 'KO';
   const hints: string[] = [];
 
   // 작가 목소리 핑거프린트 (가장 중요)
   const voice = buildVoiceFingerprint(profile, language);
   if (voice) {
-    hints.push(isKO
-      ? `[작가 스타일] ${voice}. 이 스타일에 맞춰 작성하세요.`
-      : `[Writer Style] ${voice}. Match this writing style.`);
+    hints.push(pickLang(language, {
+      KO: `[작가 스타일] ${voice}. 이 스타일에 맞춰 작성하세요.`,
+      EN: `[Writer Style] ${voice}. Match this writing style.`,
+      JP: `[作家スタイル] ${voice}。このスタイルに合わせて執筆してください。`,
+      CN: `[作家风格] ${voice}。请按此风格写作。`,
+    }));
   }
 
   // 스킬레벨별 차별화된 지시
   if (profile.skillLevel === 'beginner' && profile.levelConfidence > 0.3) {
-    hints.push(isKO
-      ? '[가이드] 초보 작가입니다. 문장을 읽기 쉽게, 전개를 명확하게 작성하세요. 복잡한 수사보다 스토리 전달에 집중.'
-      : '[Guide] Beginner writer. Keep sentences readable, plot progression clear. Focus on storytelling over complex rhetoric.');
+    hints.push(pickLang(language, {
+      KO: '[가이드] 초보 작가입니다. 문장을 읽기 쉽게, 전개를 명확하게 작성하세요. 복잡한 수사보다 스토리 전달에 집중.',
+      EN: '[Guide] Beginner writer. Keep sentences readable, plot progression clear. Focus on storytelling over complex rhetoric.',
+      JP: '[ガイド] 初心者作家です。文章を読みやすく、展開を明確に書いてください。複雑な修辞よりストーリー伝達に集中。',
+      CN: '[指引] 新手作家。请保持句子易读、情节进展清晰。专注于叙事传达，而非复杂修辞。',
+    }));
   } else if (profile.skillLevel === 'advanced' && profile.levelConfidence > 0.5) {
-    hints.push(isKO
-      ? '[가이드] 숙련 작가입니다. 문학적 표현, 복선 배치, 감정 레이어링 등 고급 기법을 적극 활용하세요.'
-      : '[Guide] Advanced writer. Actively use literary devices, foreshadowing, and emotional layering.');
+    hints.push(pickLang(language, {
+      KO: '[가이드] 숙련 작가입니다. 문학적 표현, 복선 배치, 감정 레이어링 등 고급 기법을 적극 활용하세요.',
+      EN: '[Guide] Advanced writer. Actively use literary devices, foreshadowing, and emotional layering.',
+      JP: '[ガイド] 熟練作家です。文学的表現、伏線配置、感情の層化など高度な技法を積極的に活用してください。',
+      CN: '[指引] 资深作家。请积极运用文学修辞、伏笔布置、情感层次等高级技法。',
+    }));
   }
 
   // 상위 3개 자주 발생 이슈
@@ -267,17 +309,22 @@ export function buildProfileHint(profile: WriterProfile, language: AppLanguage):
     .map(([kind]) => kind);
 
   if (topIssues.length > 0) {
-    hints.push(isKO
-      ? `[패턴 보정] 자주 발생하는 문제: ${topIssues.join(', ')}. 반드시 피하세요.`
-      : `[Pattern Correction] Recurring issues: ${topIssues.join(', ')}. Avoid these.`
-    );
+    hints.push(pickLang(language, {
+      KO: `[패턴 보정] 자주 발생하는 문제: ${topIssues.join(', ')}. 반드시 피하세요.`,
+      EN: `[Pattern Correction] Recurring issues: ${topIssues.join(', ')}. Avoid these.`,
+      JP: `[パターン補正] 頻発する問題: ${topIssues.join(', ')}。必ず避けてください。`,
+      CN: `[模式修正] 反复出现的问题：${topIssues.join(', ')}。务必避免。`,
+    }));
   }
 
   // 재생성률이 높으면 품질 주의
   if (profile.regenerateRate > 0.4 && profile.episodeCount >= 10) {
-    hints.push(isKO
-      ? '[품질 주의] 이 작가는 재생성 비율이 높습니다(40%+). 첫 시도부터 높은 품질로 작성하세요.'
-      : '[Quality Alert] High regeneration rate (40%+). Deliver high quality on first attempt.');
+    hints.push(pickLang(language, {
+      KO: '[품질 주의] 이 작가는 재생성 비율이 높습니다(40%+). 첫 시도부터 높은 품질로 작성하세요.',
+      EN: '[Quality Alert] High regeneration rate (40%+). Deliver high quality on first attempt.',
+      JP: '[品質注意] この作家は再生成率が高いです(40%+)。初回から高品質で執筆してください。',
+      CN: '[质量提醒] 该作家重新生成率较高(40%+)。请首次尝试就交付高质量内容。',
+    }));
   }
 
   return hints.join('\n');

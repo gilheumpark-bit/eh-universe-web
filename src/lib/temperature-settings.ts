@@ -42,6 +42,9 @@ export function computeTemperature(
 // PART 3 — localStorage 브리지 (SSR 안전)
 // ============================================================
 
+/** localStorage 키 — 변경 시 기존 사용자 설정 무효화 주의 */
+const STORAGE_KEY = 'noa_temperature';
+
 /**
  * localStorage의 'noa_temperature' 값을 읽어 숫자로 반환한다.
  * SSR 환경(window 미정의)이거나 값이 없거나 파싱 불가이면 undefined를 반환한다.
@@ -50,8 +53,34 @@ export function computeTemperature(
  */
 export function getTemperatureOverride(): number | undefined {
   if (typeof window === 'undefined') return undefined;
-  const raw = localStorage.getItem('noa_temperature');
-  if (raw === null) return undefined;
-  const parsed = parseFloat(raw);
-  return Number.isNaN(parsed) ? undefined : parsed;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return undefined;
+    const parsed = parseFloat(raw);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  } catch {
+    // [C] Safari private mode 등 localStorage 접근 실패 방어
+    return undefined;
+  }
+}
+
+/**
+ * localStorage에 temperature override 저장. undefined 전달 시 키 제거.
+ * SSR 환경 또는 쓰기 실패(quota/Safari private) 시 false 반환.
+ *
+ * @param value 저장할 온도. undefined 이면 키 삭제.
+ * @returns 성공 여부
+ */
+export function setTemperatureOverride(value: number | undefined): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (value === undefined) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, String(value));
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }

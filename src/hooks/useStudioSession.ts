@@ -4,7 +4,7 @@
 // ============================================================
 
 import { useState, useCallback } from 'react';
-import type { AppLanguage, AppTab, StoryConfig, ChatSession, Message } from '@/lib/studio-types';
+import type { AppLanguage, AppTab, StoryConfig, ChatSession, Message, WritingMode } from '@/lib/studio-types';
 
 import { createT } from '@/lib/i18n';
 import { DEMO_PRESETS, buildDemoSession } from '@/lib/demo-presets';
@@ -17,7 +17,7 @@ interface UseStudioSessionParams {
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   setActiveTab: (tab: AppTab) => void;
   setIsSidebarOpen: (open: boolean) => void;
-  setWritingMode?: (mode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced') => void;
+  setWritingMode?: (mode: WritingMode) => void;
   showConfirm: (opts: {
     title: string; message: string;
     confirmLabel?: string; cancelLabel?: string;

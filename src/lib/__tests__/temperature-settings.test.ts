@@ -1,4 +1,8 @@
-import { computeTemperature, getTemperatureOverride } from '../temperature-settings';
+import {
+  computeTemperature,
+  getTemperatureOverride,
+  setTemperatureOverride,
+} from '../temperature-settings';
 
 // ============================================================
 // computeTemperature 순수 함수 테스트
@@ -83,5 +87,39 @@ describe('getTemperatureOverride', () => {
   test('0 값도 유효한 숫자로 반환', () => {
     localStorage.setItem('noa_temperature', '0');
     expect(getTemperatureOverride()).toBe(0);
+  });
+});
+
+// ============================================================
+// setTemperatureOverride — localStorage 저장/삭제
+// ============================================================
+
+describe('setTemperatureOverride', () => {
+  afterEach(() => {
+    if (typeof localStorage !== 'undefined') localStorage.clear();
+  });
+
+  test('숫자 전달 시 localStorage 키에 문자열로 저장', () => {
+    setTemperatureOverride(0.8);
+    expect(localStorage.getItem('noa_temperature')).toBe('0.8');
+  });
+
+  test('undefined 전달 시 키 제거', () => {
+    localStorage.setItem('noa_temperature', '0.5');
+    setTemperatureOverride(undefined);
+    expect(localStorage.getItem('noa_temperature')).toBeNull();
+  });
+
+  test('저장 성공 시 true 반환', () => {
+    expect(setTemperatureOverride(0.7)).toBe(true);
+  });
+
+  test('undefined 전달 + 키 없어도 true 반환 (idempotent)', () => {
+    expect(setTemperatureOverride(undefined)).toBe(true);
+  });
+
+  test('저장 후 getTemperatureOverride로 round-trip 가능', () => {
+    setTemperatureOverride(1.23);
+    expect(getTemperatureOverride()).toBeCloseTo(1.23, 5);
   });
 });

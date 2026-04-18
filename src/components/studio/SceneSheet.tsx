@@ -8,7 +8,7 @@ import type { AppLanguage, EpisodeSceneSheet } from "@/lib/studio-types";
 import { useStudioUI } from "@/contexts/StudioContext";
 
 // ============================================================
-// PART 1 — 타입 및 상수
+// PART 1 — 타입 및 상수 (장르 프리셋, 플롯 프리셋, 스마트 디폴트)
 // ============================================================
 
 type Lang = "ko" | "en";
@@ -248,10 +248,6 @@ const SCENE_PRESETS: { key: string; ko: string; en: string; gen: (ts: number, is
   }) },
 ];
 
-// ============================================================
-// PART 2 — Genre Smart Defaults + PlotBarEditor 서브컴포넌트
-// ============================================================
-
 interface GenreSmartDefault {
   hooks: string[];
   dopamine: string[];
@@ -275,6 +271,10 @@ const GENRE_SMART_DEFAULTS: Record<string, GenreSmartDefault> = {
 };
 
 const TENSION_LEVEL_MAP: Record<string, number> = { low: 25, medium: 50, high: 75, very_high: 90 };
+
+// ============================================================
+// PART 2 — PlotBarEditor 서브컴포넌트 (Section 헬퍼 포함)
+// ============================================================
 
 /** Collapsible section wrapper */
 function Section({ title, children, defaultOpen = true, badge, desc, highlight }: {
@@ -398,7 +398,7 @@ function PlotBarEditor({ lang, onPlotChange, initialPlot }: { lang: Lang; onPlot
 }
 
 // ============================================================
-// PART 3 — SceneSheet 메인 컴포넌트
+// PART 3 — SceneSheet 메인 컴포넌트 (3-section 씬시트 + 13탭 고급 설정)
 // ============================================================
 
 export default function SceneSheet({
@@ -1155,6 +1155,7 @@ export default function SceneSheet({
 }
 
 // ============================================================
-// PART 4 — 내보내기
+// PART 4 — 기본 export 및 타입 재노출
 // ============================================================
-// export default SceneSheet — 위 함수 선언부에 포함
+// `export default function SceneSheet` (PART 3 시작부) + `export interface FullDirectionData` (PART 1)
+// 외부 호출자는 이 두 심볼을 직접 import 한다.

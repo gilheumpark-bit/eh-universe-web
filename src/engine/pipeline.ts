@@ -27,6 +27,15 @@ const LANG_NAMES: Record<AppLanguage, string> = {
   CN: 'Chinese (中文)',
 };
 
+/**
+ * 언어별 텍스트 픽업 헬퍼.
+ * KO/EN/JP/CN 4언어 직접 분기. 누락 키는 KO → EN 순으로 fallback.
+ * pipeline.ts 내부의 isKO 2분 분기를 4언어로 확장하기 위한 게이트웨이.
+ */
+function pickLang(language: AppLanguage, dict: Partial<Record<AppLanguage, string>>): string {
+  return dict[language] ?? dict.KO ?? dict.EN ?? '';
+}
+
 const ACT_GUIDELINES: Record<number, Record<AppLanguage, string>> = {
   1: {
     KO: '도입부입니다. 세계와 인물을 자연스럽게 소개하고, 일상→균열의 흐름을 만드세요. 정보를 서사에 녹이세요.',
@@ -81,26 +90,72 @@ export function buildGenrePreset(genre: string, language: AppLanguage): string {
 // Style DNA Builder — from Style Studio settings
 // ============================================================
 
-const DNA_NAMES = ['Hard SF', '웹소설', '문학적', '멀티장르'];
-const DNA_NAMES_EN = ['Hard SF', 'Web Novel', 'Literary', 'Multi-Genre'];
+// DNA names per language (4-language). JP/CN inherit EN labels (Hard SF / Web Novel are de-facto pan-Asian terms).
+const DNA_NAMES_BY_LANG: Record<AppLanguage, string[]> = {
+  KO: ['Hard SF', '웹소설', '문학적', '멀티장르'],
+  EN: ['Hard SF', 'Web Novel', 'Literary', 'Multi-Genre'],
+  JP: ['ハードSF', 'ウェブ小説', '文学的', 'マルチジャンル'],
+  CN: ['硬科幻', '网络小说', '文学性', '多类型'],
+};
 
-const SLIDER_LABELS: Record<string, { name: string; nameEN: string; levels: string[]; levelsEN: string[] }> = {
-  s1: { name: '문장 길이', nameEN: 'Sentence Length', levels: ['짧고 단단하게', '짧은 호흡', '균형', '긴 호흡', '길게 밀어붙이기'], levelsEN: ['Tight and short', 'Short breath', 'Balanced', 'Long breath', 'Extended flow'] },
-  s2: { name: '감정 밀도', nameEN: 'Emotional Density', levels: ['감정 절제', '건조한 편', '균형', '정서 강조', '감정 밀도 높음'], levelsEN: ['Restrained', 'Dry-leaning', 'Balanced', 'Emotion-forward', 'Emotion-rich'] },
-  s3: { name: '묘사 방식', nameEN: 'Description', levels: ['사실 위주', '직설 묘사', '균형', '이미지 강조', '감각 몰입'], levelsEN: ['Factual', 'Direct', 'Balanced', 'Image-leaning', 'Sensory immersion'] },
-  s4: { name: '서술 시점', nameEN: 'Narrative Distance', levels: ['멀리 조망', '관찰자 시점', '균형', '인물 밀착', '내면 침투'], levelsEN: ['Panoramic', 'Observer', 'Balanced', 'Close POV', 'Deep interior'] },
-  s5: { name: '어휘 수준', nameEN: 'Vocabulary', levels: ['편한 말맛', '담백한 어휘', '균형', '정교한 어휘', '전문적 질감'], levelsEN: ['Plainspoken', 'Clean', 'Balanced', 'Refined', 'Specialized'] },
+interface SliderMeta { names: Record<AppLanguage, string>; levels: Record<AppLanguage, string[]>; }
+const SLIDER_LABELS: Record<string, SliderMeta> = {
+  s1: {
+    names: { KO: '문장 길이', EN: 'Sentence Length', JP: '文の長さ', CN: '句子长度' },
+    levels: {
+      KO: ['짧고 단단하게', '짧은 호흡', '균형', '긴 호흡', '길게 밀어붙이기'],
+      EN: ['Tight and short', 'Short breath', 'Balanced', 'Long breath', 'Extended flow'],
+      JP: ['短く引き締めて', '短い呼吸', 'バランス', '長い呼吸', '長く押し通す'],
+      CN: ['紧凑短促', '短呼吸', '平衡', '长呼吸', '延展铺陈'],
+    },
+  },
+  s2: {
+    names: { KO: '감정 밀도', EN: 'Emotional Density', JP: '感情密度', CN: '情感密度' },
+    levels: {
+      KO: ['감정 절제', '건조한 편', '균형', '정서 강조', '감정 밀도 높음'],
+      EN: ['Restrained', 'Dry-leaning', 'Balanced', 'Emotion-forward', 'Emotion-rich'],
+      JP: ['感情抑制', '乾いた傾向', 'バランス', '情緒重視', '感情密度高'],
+      CN: ['克制情感', '偏冷淡', '平衡', '强调情感', '高密度情感'],
+    },
+  },
+  s3: {
+    names: { KO: '묘사 방식', EN: 'Description', JP: '描写方式', CN: '描写方式' },
+    levels: {
+      KO: ['사실 위주', '직설 묘사', '균형', '이미지 강조', '감각 몰입'],
+      EN: ['Factual', 'Direct', 'Balanced', 'Image-leaning', 'Sensory immersion'],
+      JP: ['事実中心', '直接描写', 'バランス', 'イメージ重視', '感覚没入'],
+      CN: ['事实为主', '直接描写', '平衡', '强调意象', '感官沉浸'],
+    },
+  },
+  s4: {
+    names: { KO: '서술 시점', EN: 'Narrative Distance', JP: '叙述視点', CN: '叙述视角' },
+    levels: {
+      KO: ['멀리 조망', '관찰자 시점', '균형', '인물 밀착', '내면 침투'],
+      EN: ['Panoramic', 'Observer', 'Balanced', 'Close POV', 'Deep interior'],
+      JP: ['遠景俯瞰', '観察者視点', 'バランス', '人物密着', '内面浸透'],
+      CN: ['远观全景', '观察者视角', '平衡', '贴近角色', '深入内心'],
+    },
+  },
+  s5: {
+    names: { KO: '어휘 수준', EN: 'Vocabulary', JP: '語彙水準', CN: '词汇水准' },
+    levels: {
+      KO: ['편한 말맛', '담백한 어휘', '균형', '정교한 어휘', '전문적 질감'],
+      EN: ['Plainspoken', 'Clean', 'Balanced', 'Refined', 'Specialized'],
+      JP: ['平易な語感', 'あっさりした語彙', 'バランス', '精緻な語彙', '専門的質感'],
+      CN: ['通俗易懂', '简洁词汇', '平衡', '精致词汇', '专业质感'],
+    },
+  },
 };
 
 export function buildStyleDNA(profile: StyleProfile | undefined, language: AppLanguage): string {
   if (!profile || profile.selectedDNA.length === 0) return '';
 
-  const isKO = language === 'KO';
   const t = createT(language);
   const parts: string[] = [];
 
-  // DNA identity — KO는 한글 이름, 그 외 언어는 영문 표기
-  const dnaNames = profile.selectedDNA.map(i => isKO ? DNA_NAMES[i] : DNA_NAMES_EN[i]).join(' + ');
+  // DNA identity — 언어별 표기 (4-language)
+  const dnaNamesPack = DNA_NAMES_BY_LANG[language] ?? DNA_NAMES_BY_LANG.EN;
+  const dnaNames = profile.selectedDNA.map(i => dnaNamesPack[i] ?? DNA_NAMES_BY_LANG.EN[i]).join(' + ');
   parts.push(`- ${t('pipeline.styleIdentity')}: ${dnaNames}`);
 
   // Slider parameters — clamp to valid 1-5 range to prevent out-of-bounds crash
@@ -110,8 +165,10 @@ export function buildStyleDNA(profile: StyleProfile | undefined, language: AppLa
       const meta = SLIDER_LABELS[key];
       if (!meta) continue;
       const val = Math.max(1, Math.min(5, rawVal));
-      const label = isKO ? meta.levels[val - 1] : meta.levelsEN[val - 1];
-      sliderParts.push(`${isKO ? meta.name : meta.nameEN}: ${label} (${val}/5)`);
+      const levels = meta.levels[language] ?? meta.levels.EN;
+      const name = meta.names[language] ?? meta.names.EN;
+      const label = levels[val - 1] ?? meta.levels.EN[val - 1];
+      sliderParts.push(`${name}: ${label} (${val}/5)`);
     }
     if (sliderParts.length > 0) {
       parts.push(`- ${t('pipeline.styleParams')}: ${sliderParts.join(', ')}`);
@@ -276,7 +333,6 @@ export function buildSystemInstruction(
     min: config.guardrails?.min && config.guardrails.min > 0 ? config.guardrails.min : platformTarget.min,
     max: config.guardrails?.max && config.guardrails.max > 0 ? config.guardrails.max : platformTarget.max,
   };
-  const isKO = language === 'KO';
   const t = createT(language);
   const actGuide = ACT_GUIDELINES[actInfo.act] ?? ACT_GUIDELINES[1];
 
@@ -364,7 +420,7 @@ export function buildSystemInstruction(
   // Tier 2 풀 필드 블록 (강점/약점/배경/실패비용/현재문제)
   const tier2DetailChars = injectedCharacters.filter(c => hasAnyField(c, TIER2_KEYS));
   const tier2DetailBlock = tier2DetailChars.length > 0
-    ? `\n[CHARACTERS — ${isKO ? '심층 설정 (Tier 2)' : 'Deep Profile (Tier 2)'}]\n` +
+    ? `\n[CHARACTERS — ${pickLang(language, { KO: '심층 설정 (Tier 2)', EN: 'Deep Profile (Tier 2)', JP: '深層設定 (Tier 2)', CN: '深度设定 (Tier 2)' })}]\n` +
       tier2DetailChars.map(c => {
         const parts: string[] = [`  - ${c.name}`];
         if (c.strength) parts.push(`    ${cl('strength')}: ${c.strength}`);
@@ -379,7 +435,7 @@ export function buildSystemInstruction(
   // Tier 3 풀 필드 블록 (감정스타일/관계패턴/상징/비밀/외부인식)
   const tier3DetailChars = injectedCharacters.filter(c => hasAnyField(c, TIER3_KEYS));
   const tier3DetailBlock = tier3DetailChars.length > 0
-    ? `\n[CHARACTERS — ${isKO ? '상징/비밀 (Tier 3)' : 'Symbol / Secret (Tier 3)'}]\n` +
+    ? `\n[CHARACTERS — ${pickLang(language, { KO: '상징/비밀 (Tier 3)', EN: 'Symbol / Secret (Tier 3)', JP: '象徴/秘密 (Tier 3)', CN: '象征/秘密 (Tier 3)' })}]\n` +
       tier3DetailChars.map(c => {
         const parts: string[] = [`  - ${c.name}`];
         if (c.emotionStyle) parts.push(`    ${cl('emotionStyle')}: ${c.emotionStyle}`);
@@ -396,7 +452,7 @@ export function buildSystemInstruction(
 
   // Tier 2: 미선택 캐릭터 간략 목록 (이름+역할만)
   const tier2Block = tier2Characters.length > 0
-    ? `\n  [${isKO ? '기타 등장인물 (간략)' : 'Other Characters (brief)'}]\n` +
+    ? `\n  [${pickLang(language, { KO: '기타 등장인물 (간략)', EN: 'Other Characters (brief)', JP: 'その他の登場人物 (簡略)', CN: '其他登场角色 (简略)' })}]\n` +
       tier2Characters.map(c => `  - ${c.name} (${c.role})`).join('\n')
     : '';
 
@@ -422,7 +478,7 @@ export function buildSystemInstruction(
       const label = REL_LABELS[r.type]?.[language] ?? REL_LABELS[r.type]?.EN ?? r.type;
       let mapStr = `  - ${fromName} ⇄ ${toName}: ${label}${r.desc ? ` (${r.desc})` : ''}`;
       if (r.dynamicSpeechStyle) {
-        mapStr += `\n    └ ${isKO ? '대화 톤 지시' : 'Speech Rule'} (${fromName} -> ${toName}): ${r.dynamicSpeechStyle}`;
+        mapStr += `\n    └ ${pickLang(language, { KO: '대화 톤 지시', EN: 'Speech Rule', JP: '会話トーン指示', CN: '对话语气指示' })} (${fromName} -> ${toName}): ${r.dynamicSpeechStyle}`;
       }
       return mapStr;
     }).join('\n')
@@ -575,18 +631,18 @@ export function buildSystemInstruction(
   // Tier 3(문화): culture / religion / education / lawOrder / taboo / travelComm / truthVsBeliefs / dailyLife
   let worldTierBlock = '';
   {
-    const WORLD_LABELS = {
-      economy: { KO: '경제/생활 방식', EN: 'Economy / Livelihood' },
-      survivalEnvironment: { KO: '생존 환경', EN: 'Survival Environment' },
-      culture: { KO: '문화', EN: 'Culture' },
-      religion: { KO: '종교/신화', EN: 'Religion / Mythology' },
-      education: { KO: '교육/지식 전달', EN: 'Education' },
-      lawOrder: { KO: '법/질서', EN: 'Law & Order' },
-      taboo: { KO: '금기/규범', EN: 'Taboo / Norms' },
-      travelComm: { KO: '이동/통신', EN: 'Travel / Communication' },
-    } as const;
-    const wl = (key: keyof typeof WORLD_LABELS) =>
-      isKO ? WORLD_LABELS[key].KO : WORLD_LABELS[key].EN;
+    const WORLD_LABELS: Record<string, Record<AppLanguage, string>> = {
+      economy: { KO: '경제/생활 방식', EN: 'Economy / Livelihood', JP: '経済/生活様式', CN: '经济/生活方式' },
+      survivalEnvironment: { KO: '생존 환경', EN: 'Survival Environment', JP: '生存環境', CN: '生存环境' },
+      culture: { KO: '문화', EN: 'Culture', JP: '文化', CN: '文化' },
+      religion: { KO: '종교/신화', EN: 'Religion / Mythology', JP: '宗教/神話', CN: '宗教/神话' },
+      education: { KO: '교육/지식 전달', EN: 'Education', JP: '教育/知識伝達', CN: '教育/知识传承' },
+      lawOrder: { KO: '법/질서', EN: 'Law & Order', JP: '法/秩序', CN: '法律/秩序' },
+      taboo: { KO: '금기/규범', EN: 'Taboo / Norms', JP: '禁忌/規範', CN: '禁忌/规范' },
+      travelComm: { KO: '이동/통신', EN: 'Travel / Communication', JP: '移動/通信', CN: '出行/通讯' },
+    };
+    const wl = (key: string): string =>
+      WORLD_LABELS[key]?.[language] ?? WORLD_LABELS[key]?.EN ?? key;
 
     const tier1Parts: string[] = [];
     if (config.corePremise) tier1Parts.push(`- ${t('pipeline.corePremise')}: ${config.corePremise}`);
@@ -613,13 +669,13 @@ export function buildSystemInstruction(
 
     const blocks: string[] = [];
     if (tier1Parts.length > 0) {
-      blocks.push(`[WORLD — ${isKO ? 'Tier 1 핵심' : 'Tier 1 Core'}]\n${tier1Parts.join('\n')}`);
+      blocks.push(`[WORLD — ${pickLang(language, { KO: 'Tier 1 핵심', EN: 'Tier 1 Core', JP: 'Tier 1 核心', CN: 'Tier 1 核心' })}]\n${tier1Parts.join('\n')}`);
     }
     if (tier2Parts.length > 0) {
-      blocks.push(`[WORLD — ${isKO ? 'Tier 2 구조' : 'Tier 2 Structure'}]\n${tier2Parts.join('\n')}`);
+      blocks.push(`[WORLD — ${pickLang(language, { KO: 'Tier 2 구조', EN: 'Tier 2 Structure', JP: 'Tier 2 構造', CN: 'Tier 2 结构' })}]\n${tier2Parts.join('\n')}`);
     }
     if (tier3Parts.length > 0) {
-      blocks.push(`[WORLD — ${isKO ? 'Tier 3 문화/사회' : 'Tier 3 Culture / Society'}]\n${tier3Parts.join('\n')}`);
+      blocks.push(`[WORLD — ${pickLang(language, { KO: 'Tier 3 문화/사회', EN: 'Tier 3 Culture / Society', JP: 'Tier 3 文化/社会', CN: 'Tier 3 文化/社会' })}]\n${tier3Parts.join('\n')}`);
     }
     if (blocks.length > 0) {
       worldTierBlock = '\n' + blocks.join('\n\n');
@@ -630,6 +686,14 @@ export function buildSystemInstruction(
   // 최대 20개 제한, 초과 시 "외 N개" 표기 + 토큰 버짓 경고 이벤트 발행
   const RESOURCE_LIMIT = 20;
   const resourceTruncated: { kind: string; total: number; dropped: number }[] = [];
+
+  // "외 N개" 표현 헬퍼 (4언어)
+  const moreCountLabel = (n: number) => pickLang(language, {
+    KO: `외 ${n}개`,
+    EN: `and ${n} more`,
+    JP: `他 ${n}件`,
+    CN: `另外 ${n} 项`,
+  });
 
   const buildItemsBlock = (): string => {
     const items = config.items;
@@ -644,9 +708,10 @@ export function buildSystemInstruction(
     if (items.length > RESOURCE_LIMIT) {
       const extra = items.length - RESOURCE_LIMIT;
       resourceTruncated.push({ kind: 'items', total: items.length, dropped: extra });
-      lines.push(`  - ${isKO ? `외 ${extra}개` : `and ${extra} more`}`);
+      lines.push(`  - ${moreCountLabel(extra)}`);
     }
-    return `\n[INVENTORY — ${isKO ? '등장 아이템' : 'Items'}]\n${lines.join('\n')}`;
+    const header = pickLang(language, { KO: '등장 아이템', EN: 'Items', JP: '登場アイテム', CN: '登场物品' });
+    return `\n[INVENTORY — ${header}]\n${lines.join('\n')}`;
   };
 
   const buildSkillsBlock = (): string => {
@@ -662,9 +727,10 @@ export function buildSystemInstruction(
     if (skills.length > RESOURCE_LIMIT) {
       const extra = skills.length - RESOURCE_LIMIT;
       resourceTruncated.push({ kind: 'skills', total: skills.length, dropped: extra });
-      lines.push(`  - ${isKO ? `외 ${extra}개` : `and ${extra} more`}`);
+      lines.push(`  - ${moreCountLabel(extra)}`);
     }
-    return `\n[SKILL-SET — ${isKO ? '등장 스킬' : 'Skills'}]\n${lines.join('\n')}`;
+    const header = pickLang(language, { KO: '등장 스킬', EN: 'Skills', JP: '登場スキル', CN: '登场技能' });
+    return `\n[SKILL-SET — ${header}]\n${lines.join('\n')}`;
   };
 
   const buildMagicSystemsBlock = (): string => {
@@ -681,9 +747,10 @@ export function buildSystemInstruction(
     if (magics.length > RESOURCE_LIMIT) {
       const extra = magics.length - RESOURCE_LIMIT;
       resourceTruncated.push({ kind: 'magicSystems', total: magics.length, dropped: extra });
-      lines.push(`  - ${isKO ? `외 ${extra}개` : `and ${extra} more`}`);
+      lines.push(`  - ${moreCountLabel(extra)}`);
     }
-    return `\n[MAGIC-SYSTEM — ${isKO ? '마법 체계' : 'Magic Systems'}]\n${lines.join('\n')}`;
+    const header = pickLang(language, { KO: '마법 체계', EN: 'Magic Systems', JP: '魔法体系', CN: '魔法体系' });
+    return `\n[MAGIC-SYSTEM — ${header}]\n${lines.join('\n')}`;
   };
 
   const itemsBlock = buildItemsBlock();
@@ -707,17 +774,22 @@ export function buildSystemInstruction(
       const current = sheets.find(s => s.episode === config.episode);
       if (current) {
         const sheetLines: string[] = [];
+        const sheetTitleLabel = pickLang(language, { KO: '제목', EN: 'Title', JP: 'タイトル', CN: '标题' });
+        const sheetArcLabel = pickLang(language, { KO: '아크', EN: 'Arc', JP: 'アーク', CN: '弧' });
+        const sheetCharsLabel = pickLang(language, { KO: '주요 캐릭터', EN: 'Main Characters', JP: '主要キャラクター', CN: '主要角色' });
+        const sheetScenesLabel = pickLang(language, { KO: '씬 구성', EN: 'Scenes', JP: 'シーン構成', CN: '场景构成' });
+        const sheetPresetLabel = pickLang(language, { KO: '프리셋', EN: 'Preset', JP: 'プリセット', CN: '预设' });
         if (current.title) {
-          sheetLines.push(`${isKO ? '제목' : 'Title'}: ${current.title}`);
+          sheetLines.push(`${sheetTitleLabel}: ${current.title}`);
         }
         if (current.arc) {
-          sheetLines.push(`${isKO ? '아크' : 'Arc'}: ${current.arc}`);
+          sheetLines.push(`${sheetArcLabel}: ${current.arc}`);
         }
         if (current.characters) {
-          sheetLines.push(`${isKO ? '주요 캐릭터' : 'Main Characters'}: ${current.characters}`);
+          sheetLines.push(`${sheetCharsLabel}: ${current.characters}`);
         }
         if (Array.isArray(current.scenes) && current.scenes.length > 0) {
-          sheetLines.push(`${isKO ? '씬 구성' : 'Scenes'}:`);
+          sheetLines.push(`${sheetScenesLabel}:`);
           current.scenes.slice(0, 10).forEach(sc => {
             const parts: string[] = [`  - [${sc.sceneId}] ${sc.sceneName || ''}`.trim()];
             if (sc.tone) parts.push(`톤:${sc.tone}`);
@@ -726,14 +798,27 @@ export function buildSystemInstruction(
             sheetLines.push(parts.join(' | '));
           });
           if (current.scenes.length > 10) {
-            sheetLines.push(`  - ${isKO ? `외 ${current.scenes.length - 10}씬` : `and ${current.scenes.length - 10} more scenes`}`);
+            const extra = current.scenes.length - 10;
+            const moreScenes = pickLang(language, {
+              KO: `외 ${extra}씬`,
+              EN: `and ${extra} more scenes`,
+              JP: `他 ${extra}シーン`,
+              CN: `另外 ${extra} 个场景`,
+            });
+            sheetLines.push(`  - ${moreScenes}`);
           }
         }
         if (current.presetUsed) {
-          sheetLines.push(`${isKO ? '프리셋' : 'Preset'}: ${current.presetUsed}`);
+          sheetLines.push(`${sheetPresetLabel}: ${current.presetUsed}`);
         }
         if (sheetLines.length > 0) {
-          episodeSceneSheetBlock = `\n[EPISODE SCENE — ${isKO ? `현재 에피소드(${config.episode}화) 씬시트` : `Current Episode (Ep.${config.episode}) Scene Sheet`}]\n${sheetLines.join('\n')}`;
+          const sceneHeader = pickLang(language, {
+            KO: `현재 에피소드(${config.episode}화) 씬시트`,
+            EN: `Current Episode (Ep.${config.episode}) Scene Sheet`,
+            JP: `現在のエピソード(第${config.episode}話) シーンシート`,
+            CN: `当前剧集(第${config.episode}集) 场景表`,
+          });
+          episodeSceneSheetBlock = `\n[EPISODE SCENE — ${sceneHeader}]\n${sheetLines.join('\n')}`;
         }
       }
     }
@@ -741,7 +826,12 @@ export function buildSystemInstruction(
 
   // Sub-genre tags injection (only when user opts in)
   const subGenreBlock = (config.useSubGenrePrompt && config.subGenres && config.subGenres.length > 0)
-    ? `\n[SUB-GENRE TAGS]\n${config.subGenres.map(t => `#${t}`).join(' ')}\n→ ${isKO ? '이 서브 장르의 관습과 클리셰를 숙지하고 활용하되, EH 세계관 법칙(QFR/CRL/HPP/Audit)으로 재해석하라.' : 'Master the conventions of these sub-genres and reinterpret them through EH universe physics (QFR/CRL/HPP/Audit).'}`
+    ? `\n[SUB-GENRE TAGS]\n${config.subGenres.map(t => `#${t}`).join(' ')}\n→ ${pickLang(language, {
+        KO: '이 서브 장르의 관습과 클리셰를 숙지하고 활용하되, EH 세계관 법칙(QFR/CRL/HPP/Audit)으로 재해석하라.',
+        EN: 'Master the conventions of these sub-genres and reinterpret them through EH universe physics (QFR/CRL/HPP/Audit).',
+        JP: 'これらのサブジャンルの慣習とクリシェを把握・活用しつつ、EH世界観の法則(QFR/CRL/HPP/Audit)で再解釈してください。',
+        CN: '请掌握并运用这些子类型的惯例与套路，同时以 EH 世界观法则 (QFR/CRL/HPP/Audit) 重新诠释。',
+      })}`
     : '';
 
   // Grammar Pack injection — 국가별 서사 문법 (beatSheet / rhythmRules / mustHave / taboo)
@@ -755,23 +845,29 @@ export function buildSystemInstruction(
       .map(b => `- ${b.position}% ${b.name}: ${b.desc}`)
       .join('\n');
     const rewardParts = gp.rewardPatterns.map(r => `- ${r.name} (${r.interval}): ${r.desc}`).join('\n');
+    const gpBeatSheetLabel = pickLang(language, { KO: '서사 비트시트', EN: 'Beat Sheet', JP: '叙事ビートシート', CN: '叙事节拍表' });
+    const gpRhythmLabel = pickLang(language, { KO: '리듬 규칙', EN: 'Rhythm Rules', JP: 'リズム規則', CN: '节奏规则' });
+    const gpRewardLabel = pickLang(language, { KO: '독자 보상 패턴', EN: 'Reward Patterns', JP: '読者報酬パターン', CN: '读者奖励模式' });
+    const gpMustHaveLabel = pickLang(language, { KO: '필수 요소', EN: 'Must Have', JP: '必須要素', CN: '必备要素' });
+    const gpTabooLabel = pickLang(language, { KO: '금기', EN: 'Taboo', JP: '禁忌', CN: '禁忌' });
+    const gpEpLenLabel = pickLang(language, { KO: '화당 분량', EN: 'Episode Length', JP: '1話あたりの分量', CN: '每集篇幅' });
     grammarPackBlock = `\n[NARRATIVE GRAMMAR — ${gp.region} ${gp.flag}]
-${isKO ? '서사 비트시트' : 'Beat Sheet'}:
+${gpBeatSheetLabel}:
 ${beatParts}
 
-${isKO ? '리듬 규칙' : 'Rhythm Rules'}:
+${gpRhythmLabel}:
 ${rhythmParts}
 
-${isKO ? '독자 보상 패턴' : 'Reward Patterns'}:
+${gpRewardLabel}:
 ${rewardParts}
 
-${isKO ? '필수 요소' : 'Must Have'}:
+${gpMustHaveLabel}:
 ${mustParts}
 
-${isKO ? '금기' : 'Taboo'}:
+${gpTabooLabel}:
 ${tabooParts}
 
-${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleString()}~${gp.episodeLength.max.toLocaleString()} ${gp.episodeLength.unit}`;
+${gpEpLenLabel}: ${gp.episodeLength.min.toLocaleString()}~${gp.episodeLength.max.toLocaleString()} ${gp.episodeLength.unit}`;
   }
 
   // Shadow State injection — Narrative Sentinel™ 맥락이탈 방지
@@ -802,9 +898,25 @@ ${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleStr
 
   // Genre-based dialogue ratio guide
   const genreBenchmark = GENRE_BENCHMARKS[config.genre];
-  const dialogueGuide = genreBenchmark?.benchmarks?.dialogueRatio
-    ? `\n[${isKO ? '대화문 비율 가이드' : 'Dialogue Ratio Guide'}]\n- ${isKO ? '장르' : 'Genre'}: ${genreBenchmark.label[isKO ? 'ko' : 'en']}\n- ${isKO ? '권장 대화 비율' : 'Target dialogue ratio'}: ${genreBenchmark.benchmarks.dialogueRatio.min}%~${genreBenchmark.benchmarks.dialogueRatio.max}%\n- ${isKO ? '대화문이 부족하면 답답하고, 과하면 가벼워짐. 장르에 맞는 균형 유지.' : 'Too little dialogue feels heavy; too much feels shallow. Keep genre-appropriate balance.'}`
-    : '';
+  const dialogueGuide = (() => {
+    if (!genreBenchmark?.benchmarks?.dialogueRatio) return '';
+    const headerLabel = pickLang(language, {
+      KO: '대화문 비율 가이드', EN: 'Dialogue Ratio Guide', JP: '会話文比率ガイド', CN: '对话比例指南',
+    });
+    const genreLabel = pickLang(language, { KO: '장르', EN: 'Genre', JP: 'ジャンル', CN: '类型' });
+    // genreBenchmark.label has only 'ko'/'en' keys — JP/CN inherit EN naming.
+    const genreNameKey: 'ko' | 'en' = language === 'KO' ? 'ko' : 'en';
+    const targetLabel = pickLang(language, {
+      KO: '권장 대화 비율', EN: 'Target dialogue ratio', JP: '推奨会話比率', CN: '建议对话比例',
+    });
+    const tipLabel = pickLang(language, {
+      KO: '대화문이 부족하면 답답하고, 과하면 가벼워짐. 장르에 맞는 균형 유지.',
+      EN: 'Too little dialogue feels heavy; too much feels shallow. Keep genre-appropriate balance.',
+      JP: '会話が少なすぎると重く、多すぎると軽くなります。ジャンルに合った均衡を保ってください。',
+      CN: '对话过少会显沉闷，过多则显轻飘。请保持类型相应的平衡。',
+    });
+    return `\n[${headerLabel}]\n- ${genreLabel}: ${genreBenchmark.label[genreNameKey]}\n- ${targetLabel}: ${genreBenchmark.benchmarks.dialogueRatio.min}%~${genreBenchmark.benchmarks.dialogueRatio.max}%\n- ${tipLabel}`;
+  })();
 
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, language);

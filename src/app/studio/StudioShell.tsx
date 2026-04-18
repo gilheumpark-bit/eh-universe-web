@@ -601,54 +601,73 @@ export default function StudioShell() {
     doHandleSend(customPrompt, input, () => setInput(''));
   }, [doHandleSend, input]);
 
+  // ── handleNextEpisode 내부 헬퍼 분리 ──
+
+  /**
+   * 현재 에피소드 드래프트를 manuscripts에 저장하고 다음 에피소드로 이동한다.
+   * draft가 비어있으면 manuscripts 갱신 없이 episode만 증가.
+   */
+  const saveCurrentEpisodeDraft = (
+    currentEp: number,
+    nextEp: number,
+    draftContent: string,
+    title: string,
+  ) => {
+    if (!draftContent.trim()) {
+      setConfig(prev => ({ ...prev, episode: nextEp }));
+      return;
+    }
+    const manuscript = {
+      episode: currentEp,
+      title: title || `EP.${currentEp}`,
+      content: draftContent,
+      charCount: draftContent.replace(/\s/g, '').length,
+      lastUpdate: Date.now(),
+    };
+    setConfig(prev => {
+      const msList = [...(prev.manuscripts || [])];
+      const idx = msList.findIndex(m => m.episode === currentEp);
+      if (idx >= 0) msList[idx] = { ...msList[idx], ...manuscript };
+      else msList.push(manuscript);
+      return { ...prev, manuscripts: msList, episode: nextEp };
+    });
+  };
+
+  /**
+   * 백그라운드로 에피소드 요약을 생성하여 manuscripts에 반영.
+   * 100자 미만이면 생성 생략. 실패는 조용히 무시(비핵심).
+   */
+  const scheduleSummaryGeneration = (ep: number, draftContent: string) => {
+    if (draftContent.length < 100) return;
+    const lang = language;
+    setTimeout(async () => {
+      try {
+        const summary = await generateEpisodeSummary(draftContent, lang);
+        if (!summary) return;
+        setConfig(prev => {
+          const ms2 = [...(prev.manuscripts || [])];
+          const target = ms2.find(m => m.episode === ep);
+          if (target) target.summary = summary;
+          return { ...prev, manuscripts: ms2 };
+        });
+        showAlert(
+          lang === 'KO'
+            ? `에피소드 요약이 자동 생성되었습니다`
+            : `Episode summary auto-generated`,
+          'info',
+        );
+      } catch { /* background — non-critical */ }
+    }, 0);
+  };
+
   const handleNextEpisode = () => {
     if (!currentSession) return;
-    const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
-    // 현재 에피소드 원고를 manuscripts에 자동 저장 (유실 방지)
     const currentEp = currentSession.config.episode ?? 1;
+    const nextEp = Math.min(currentSession.config.episode + 1, currentSession.config.totalEpisodes);
     const draftContent = editDraft || '';
+    saveCurrentEpisodeDraft(currentEp, nextEp, draftContent, currentSession.config.title || '');
     if (draftContent.trim()) {
-      const manuscript = {
-        episode: currentEp,
-        title: currentSession.config.title || `EP.${currentEp}`,
-        content: draftContent,
-        charCount: draftContent.replace(/\s/g, '').length,
-        lastUpdate: Date.now(),
-      };
-      setConfig(prev => {
-        const msList = [...(prev.manuscripts || [])];
-        const idx = msList.findIndex(m => m.episode === currentEp);
-        if (idx >= 0) msList[idx] = { ...msList[idx], ...manuscript };
-        else msList.push(manuscript);
-        return { ...prev, manuscripts: msList, episode: nextEp };
-      });
-      // 백그라운드 요약 생성 (비동기, 실패해도 무시)
-      if (draftContent.length >= 100) {
-        const lang = language;
-        const ep = currentEp;
-        setTimeout(async () => {
-          try {
-            const summary = await generateEpisodeSummary(draftContent, lang);
-            if (summary) {
-              setConfig(prev => {
-                const ms2 = [...(prev.manuscripts || [])];
-                const target = ms2.find(m => m.episode === ep);
-                if (target) target.summary = summary;
-                return { ...prev, manuscripts: ms2 };
-              });
-              // Toast: notify user that episode summary was auto-generated
-              showAlert(
-                lang === 'KO'
-                  ? `에피소드 요약이 자동 생성되었습니다`
-                  : `Episode summary auto-generated`,
-                'info',
-              );
-            }
-          } catch { /* background — non-critical */ }
-        }, 0);
-      }
-    } else {
-      setConfig({ ...currentSession.config, episode: nextEp });
+      scheduleSummaryGeneration(currentEp, draftContent);
     }
   };
 

@@ -446,7 +446,8 @@ export function useStudioAI({
           .filter(m => m.role === 'assistant' && m.meta?.engineReport)
           .slice(-5)
           .map(m => {
-            const r = m.meta!.engineReport!;
+            const r = m.meta?.engineReport;
+            if (!r) return { tension: 50, pacing: 60, immersion: 60, eos: 50, grade: 'B' };
             return { tension: r.metrics?.tension ?? 50, pacing: r.metrics?.pacing ?? 60, immersion: r.metrics?.immersion ?? 60, eos: r.eosScore ?? 50, grade: r.grade ?? 'B' };
           });
         // 현재 에피소드 메트릭 추가
