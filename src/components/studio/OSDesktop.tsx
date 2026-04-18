@@ -62,18 +62,14 @@ interface OSDesktopProps {
   setCurrentProjectId: (id: string | null) => void;
   currentSessionId: string | null;
   setCurrentSessionId: (id: string | null) => void;
-  currentProject: Project | null;
   sessions: ChatSession[];
   renameProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
   createNewSession: () => void;
   activeTab: AppTab;
   handleTabChange: (tab: AppTab) => void;
-  studioMode: 'guided' | 'free';
-  setStudioMode: (mode: 'guided' | 'free') => void;
   exportTXT: () => void;
   exportJSON: () => void;
-  handleImportJSON: (e: React.ChangeEvent<HTMLInputElement>) => void;
   exportAllJSON: () => void;
   handleExportEPUB: () => void;
   handleExportDOCX: () => void;
@@ -82,24 +78,10 @@ interface OSDesktopProps {
   exportProjectManuscripts?: (format: ProjectManuscriptFormat) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
-  signInWithGoogle: () => void;
-  signOut: () => void;
-  authConfigured: boolean;
-  handleSync: () => void;
   syncStatus: string;
   lastSyncTime: number | null;
   language: AppLanguage;
   setLanguage: (lang: AppLanguage) => void;
-  showConfirm: (opts: {
-    title: string;
-    message: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    onConfirm: () => void;
-    onCancel?: () => void;
-    type?: 'danger' | 'warning' | 'info';
-  }) => void;
-  closeConfirm: () => void;
   onReorderSessions?: (fromIndex: number, toIndex: number) => void;
 }
 
@@ -108,14 +90,13 @@ interface OSDesktopProps {
 // ============================================================
 const OSDesktop: React.FC<OSDesktopProps> = ({
   focusMode, projects, createNewProject, currentProjectId, setCurrentProjectId,
-  currentSessionId, setCurrentSessionId, currentProject: _currentProject, sessions,
-  createNewSession, activeTab, handleTabChange, studioMode: _studioMode, setStudioMode: _setStudioMode,
+  currentSessionId, setCurrentSessionId, sessions,
+  createNewSession, activeTab, handleTabChange,
   exportTXT, exportJSON, exportAllJSON,
   handleExportEPUB, handleExportDOCX,
-  handleImportJSON: _handleImportJSON, handleImportTextFiles, fileInputRef,
-  user, signInWithGoogle: _signInWithGoogle, signOut: _signOut,
-  authConfigured: _authConfigured, handleSync: _handleSync, syncStatus,
-  language, setLanguage, showConfirm: _showConfirm, closeConfirm: _closeConfirm,
+  handleImportTextFiles, fileInputRef,
+  user, syncStatus,
+  language, setLanguage,
 }) => {
   const t = createT(language);
   const [hoveredTab, setHoveredTab] = useState<AppTab | null>(null);

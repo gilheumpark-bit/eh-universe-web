@@ -507,7 +507,7 @@ const translations = {
           "<strong>Tier 1 (-0.1 ~ -0.5):</strong> Sensory Loss (Disappearance of daily joy)",
           "<strong>Tier 2 (-0.5 ~ -2.0):</strong> Emotional Loss (Objectification of others)",
           "<strong>Tier 3 (-2.0 ~ -10.0):</strong> Memory Loss (Collapse of self-identity)",
-          "<strong>Tier 4 (&30):</strong> Structural Loss (Loss of the protagonist's position)"
+          "<strong>Tier 4 (&lt;= -10.0):</strong> Structural Loss (Loss of the protagonist's position)"
         ]
       },
       "logFormat": {

@@ -197,8 +197,13 @@ export function encodeSceneToUrl(scenes: ParsedScene[], title: string): string {
 
   const json = JSON.stringify(minimal);
   if (typeof window !== 'undefined') {
-    const encoded = btoa(unescape(encodeURIComponent(json)));
-    return encoded;
+    // [C] 레거시 escape/unescape 금지 — TextEncoder로 UTF-8 안전 인코딩.
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
   }
   return Buffer.from(json).toString('base64');
 }
@@ -208,7 +213,13 @@ export function decodeSceneFromUrl(encoded: string): { title: string; scenes: Pa
   try {
     let json: string;
     if (typeof window !== 'undefined') {
-      json = decodeURIComponent(escape(atob(encoded)));
+      // [C] 레거시 escape/unescape 금지 — TextDecoder로 UTF-8 안전 디코딩.
+      const binary = atob(encoded);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      json = new TextDecoder().decode(bytes);
     } else {
       json = Buffer.from(encoded, 'base64').toString('utf-8');
     }

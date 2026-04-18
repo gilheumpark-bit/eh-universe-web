@@ -178,7 +178,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           writingMode={writingMode as 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'} setWritingMode={setWritingMode}
           editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
           canvasContent={canvasContent} setCanvasContent={setCanvasContent} canvasPass={canvasPass} setCanvasPass={setCanvasPass}
-          promptDirective={promptDirective} setPromptDirective={setPromptDirective}
+          promptDirective={promptDirective}
           isGenerating={isGenerating} lastReport={lastReport} generationTime={generationTime} tokenUsage={tokenUsage}
           handleSend={doHandleSend} handleCancel={handleCancel} handleRegenerate={handleRegenerate}
           handleVersionSwitch={handleVersionSwitch} handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef}

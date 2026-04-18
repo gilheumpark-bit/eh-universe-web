@@ -524,7 +524,7 @@ const translations = {
           "<strong>1级（-0.1～-0.5）：</strong>感官丧失（日常快乐的消失）",
           "<strong>2级（-0.5～-2.0）：</strong>情感丧失（将他人工具化）",
           "<strong>3级（-2.0～-10.0）：</strong>记忆丧失（自我认同崩溃）",
-          "<strong>4级（&30）：</strong>结构丧失（失去主角地位）"
+          "<strong>4级（-10.0以下）：</strong>结构丧失（失去主角地位）"
         ]
       },
       "logFormat": {

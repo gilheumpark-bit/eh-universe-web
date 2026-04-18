@@ -882,18 +882,14 @@ export default function StudioShell() {
         setCurrentProjectId={setCurrentProjectId}
         currentSessionId={currentSessionId}
         setCurrentSessionId={setCurrentSessionId}
-        currentProject={currentProject}
         sessions={sessions}
         renameProject={renameProject}
         deleteProject={deleteProject}
         createNewSession={createNewSession}
         activeTab={activeTab}
         handleTabChange={handleTabChange}
-        studioMode={studioMode}
-        setStudioMode={setStudioMode}
         exportTXT={exportTXT}
         exportJSON={exportJSON}
-        handleImportJSON={handleImportJSON}
         handleImportTextFiles={handleImportTextFiles}
         exportAllJSON={exportAllJSON}
         handleExportEPUB={handleExportEPUB}
@@ -902,16 +898,10 @@ export default function StudioShell() {
         exportProjectManuscripts={exportProjectManuscripts}
         fileInputRef={fileInputRef}
         user={user}
-        signInWithGoogle={signInWithGoogle}
-        signOut={signOut}
-        authConfigured={authConfigured}
-        handleSync={handleSync}
         syncStatus={syncStatus}
         lastSyncTime={lastSyncTime}
         language={language}
         setLanguage={setLanguage}
-        showConfirm={showConfirm}
-        closeConfirm={closeConfirm}
         onReorderSessions={handleReorderSessions}
       />
 

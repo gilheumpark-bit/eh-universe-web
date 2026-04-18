@@ -52,7 +52,6 @@ interface Props {
   canvasPass: number;
   setCanvasPass: (val: number | ((p: number) => number)) => void;
   promptDirective: string;
-  setPromptDirective: (val: string) => void;
   isGenerating: boolean;
   lastReport: EngineReport | null;
   /** Elapsed generation time in seconds (null until generation completes) */
@@ -104,7 +103,7 @@ export default function WritingTabInline(props: Props) {
     editDraft, setEditDraft, editDraftRef,
     canvasContent, setCanvasContent,
     canvasPass, setCanvasPass,
-    promptDirective, setPromptDirective: _setPromptDirective,
+    promptDirective,
     isGenerating, lastReport, generationTime, tokenUsage,
     handleSend, handleRegenerate,
     messagesEndRef, searchQuery, filteredMessages,

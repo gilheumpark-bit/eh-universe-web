@@ -507,7 +507,7 @@ const translations = {
           "<strong>1등급 (-0.1 ~ -0.5):</strong> 감각 손실 (일상의 기쁨 소멸)",
           "<strong>2등급 (-0.5 ~ -2.0):</strong> 정서 손실 (타인 수단화)",
           "<strong>3등급 (-2.0 ~ -10.0):</strong> 기억 손실 (자기 정체성 붕괴)",
-          "<strong>4등급 (&30):</strong> 구조 손실 (주인공 자리 상실)"
+          "<strong>4등급 (-10.0 이하):</strong> 구조 손실 (주인공 자리 상실)"
         ]
       },
       "logFormat": {

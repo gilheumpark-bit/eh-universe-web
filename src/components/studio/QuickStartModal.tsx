@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { X, Sparkles, Wand2, Loader2, BookOpen, Zap, ExternalLink, Key, Check } from "lucide-react";
 import { Genre, type AppLanguage } from "@/lib/studio-types";
 import { GENRE_LABELS } from "@/lib/studio-constants";
 import { createT, L4 } from "@/lib/i18n";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 // ============================================================
 // PART 1 — 타입 + Provider 감지
@@ -50,6 +51,10 @@ export default function QuickStartModal({
   const [prompt, setPrompt] = useState("");
   const t = createT(language);
   const trimmedPrompt = prompt.trim();
+
+  // [C] WCAG 2.1 AA focus-trap — 모달 내부 Tab 순환 + Escape 닫기 + 이전 focus 복원.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, isOpen, onClose);
 
   if (!isOpen) {
     return null;
@@ -158,7 +163,7 @@ export default function QuickStartModal({
 
   return (
     <div className="animate-in fade-in zoom-in fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
-      <div className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
+      <div ref={panelRef} className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
         <div className="relative px-8 pb-4 pt-8">
           <button
             type="button"

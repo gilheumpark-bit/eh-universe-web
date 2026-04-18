@@ -23,9 +23,9 @@ export const LANGUAGES = [
 ] as const;
 
 export const PROVIDERS = [
-  { id: 'openai', label: 'GPT-4o (OAI)', role: 'Ensemble Base' },
-  { id: 'claude', label: 'CLAUDE 3.5 (ANT)', role: 'Creative Refinement' },
-  { id: 'gemini', label: 'GEMINI 1.5 (GOOG)', role: 'Context Analyst' },
+  { id: 'openai', label: 'GPT-5.4 (OAI)', role: 'Ensemble Base' },
+  { id: 'claude', label: 'Claude Sonnet 4.6 (ANT)', role: 'Creative Refinement' },
+  { id: 'gemini', label: 'Gemini 2.5-Pro (GOOG)', role: 'Context Analyst' },
   { id: 'deepseek', label: 'DEEPSEEK (DS)', role: 'Fast Draft' },
 ] as const;
 

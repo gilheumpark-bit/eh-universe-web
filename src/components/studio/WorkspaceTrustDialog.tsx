@@ -15,11 +15,12 @@
 // PART 1 — Imports + types + labels
 // ============================================================
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ShieldAlert, ShieldCheck, ShieldX, ExternalLink, X } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import {
   getTrustLevel,
   trustSource,
@@ -125,6 +126,11 @@ const WorkspaceTrustDialog: React.FC<WorkspaceTrustDialogProps> = ({
   const existingLevel = useMemo(() => (invalid ? 'unknown' : getTrustLevel(origin)), [origin, invalid]);
   const alreadyTrusted = existingLevel === 'trusted';
 
+  // [C] WCAG 2.1 AA focus-trap — Tab 순환 + 이전 focus 복원.
+  //     ESC는 아래 useEffect에서 이미 처리 → onEscape 인자 undefined로 중복 방지.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open, undefined);
+
   // Esc dismisses with no-decision (caller treats as deny).
   useEffect(() => {
     if (!open) return;
@@ -171,6 +177,7 @@ const WorkspaceTrustDialog: React.FC<WorkspaceTrustDialogProps> = ({
       data-testid="wtd-backdrop"
     >
       <div
+        ref={panelRef}
         className="relative bg-bg-primary border border-border rounded-2xl w-full max-w-md mx-4 max-h-[85vh] flex flex-col shadow-2xl"
         role="dialog"
         aria-modal="true"

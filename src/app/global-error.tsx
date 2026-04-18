@@ -17,7 +17,6 @@ export default function GlobalError({
   useEffect(() => {
     // Sentry/콘솔 에러 보고
     if (typeof window !== "undefined") {
-      // eslint-disable-next-line no-console
       console.error("[global-error]", error);
     }
   }, [error]);
@@ -89,6 +88,10 @@ export default function GlobalError({
             >
               다시 시도 / Retry
             </button>
+            {/* Raw <a> is intentional: global-error is the root fallback
+                when the framework is broken. next/link cannot be guaranteed
+                to work here, so we use a plain anchor for maximum robustness. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/"
               style={{

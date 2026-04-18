@@ -19,6 +19,7 @@ import { X, Search, Check, AlertTriangle } from 'lucide-react';
 import type { AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import {
   previewRename,
   applyRename,
@@ -129,6 +130,11 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   const [expandedPath, setExpandedPath] = useState<string | null>(null);
 
   const fromInputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // [C] WCAG 2.1 AA focus-trap — Tab 순환 + 이전 focus 복원.
+  //     ESC는 아래 useEscapeClose에서 이미 처리 → onEscape 인자 undefined로 중복 방지.
+  useFocusTrap(panelRef, open, undefined);
 
   // Reset on close
   useEffect(() => {
@@ -216,6 +222,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
       onClick={onClose}
     >
       <div
+        ref={panelRef}
         className="relative bg-bg-primary border border-border rounded-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"

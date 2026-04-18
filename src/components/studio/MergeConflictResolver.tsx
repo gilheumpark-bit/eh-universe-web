@@ -16,11 +16,12 @@
 // PART 1 — Imports + types + labels
 // ============================================================
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, GitMerge, ChevronUp, ChevronDown, Check, Plus } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import {
   parseConflicts,
   resolveConflict,
@@ -141,6 +142,11 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
   theirsLabelOverride,
 }) => {
   const t = useMemo(() => labels(language), [language]);
+
+  // [C] WCAG 2.1 AA focus-trap — Tab 순환 + 이전 focus 복원.
+  //     ESC는 아래 useEffect에서 이미 처리 → onEscape 인자 undefined로 중복 방지.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open, undefined);
 
   const [blocks, setBlocks] = useState<DocumentBlock[]>(() => parseConflicts(content));
   const [currentIndex, setCurrentIndex] = useState<number>(() => {
@@ -267,6 +273,7 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
       data-testid="mcr-backdrop"
     >
       <div
+        ref={panelRef}
         className="relative bg-bg-primary border border-border rounded-2xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col shadow-2xl"
         role="dialog"
         aria-modal="true"
