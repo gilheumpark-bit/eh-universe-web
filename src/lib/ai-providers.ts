@@ -707,7 +707,7 @@ async function streamViaProxy(
     const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
     if (isProduction) {
       // 프로덕션: /api/chat → DGX Spark 폴백 경로로 전환
-      provider = provider; // keep provider for logging, but route through /api/chat below
+      // [K] provider 자기할당 no-op 제거 — 아래 /api/chat 호출에서 그대로 사용
     } else {
       if (!apiKey.trim()) throw new Error('Local LLM URL is not configured. Set the server URL in BYOK settings.');
       return streamLocalDirect(apiKey, model, opts);

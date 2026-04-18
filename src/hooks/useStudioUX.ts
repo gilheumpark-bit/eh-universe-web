@@ -3,7 +3,7 @@
 // page.tsx에서 추출. 순수 UX 상태만 관리.
 // ============================================================
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 type ConfirmOpts = {
   title: string;
@@ -136,13 +136,19 @@ export function useStudioUX() {
   // Dispatch source: src/hooks/useStudioExport.ts:98
   const [exportDoneFormat, setExportDoneFormat] = useState<string | null>(null);
   useEffect(() => {
+    // [C] cleanup: 마운트 해제 시 토스트 타이머 취소 (setState-on-unmount 방지)
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { format: string };
       setExportDoneFormat(detail.format);
-      setTimeout(() => setExportDoneFormat(null), 3000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setExportDoneFormat(null), 3000);
     };
     window.addEventListener('noa:export-done', handler);
-    return () => window.removeEventListener('noa:export-done', handler);
+    return () => {
+      window.removeEventListener('noa:export-done', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
   // Export progress (step-by-step feedback)
@@ -161,13 +167,18 @@ export function useStudioUX() {
   // Dispatch source: src/lib/project-migration.ts:130
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   useEffect(() => {
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { message?: string };
       setStorageWarning(detail.message || '저장 공간이 부족합니다.');
-      setTimeout(() => setStorageWarning(null), 5000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setStorageWarning(null), 5000);
     };
     window.addEventListener('noa:storage-warning', handler);
-    return () => window.removeEventListener('noa:storage-warning', handler);
+    return () => {
+      window.removeEventListener('noa:storage-warning', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
   // Auto-save timestamp
@@ -183,58 +194,83 @@ export function useStudioUX() {
   // Dispatch source: src/lib/ai-providers.ts:860,951
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   useEffect(() => {
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { from: string; to: string };
       setFallbackNotice(`${detail.from} → ${detail.to}`);
-      setTimeout(() => setFallbackNotice(null), 5000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setFallbackNotice(null), 5000);
     };
     window.addEventListener('noa:provider-fallback', handler);
-    return () => window.removeEventListener('noa:provider-fallback', handler);
+    return () => {
+      window.removeEventListener('noa:provider-fallback', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
-  // Save flash
+  // Save flash — cleanup 타이머는 ref로 관리 (언마운트 시 취소)
+  const saveFlashTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveFlash, setSaveFlash] = useState(false);
   const triggerSave = useCallback(() => {
     setSaveFlash(true);
     setLastSaveTime(Date.now());
-    setTimeout(() => setSaveFlash(false), 1500);
+    if (saveFlashTimerRef.current) clearTimeout(saveFlashTimerRef.current);
+    saveFlashTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
+  }, []);
+  useEffect(() => () => {
+    if (saveFlashTimerRef.current) clearTimeout(saveFlashTimerRef.current);
   }, []);
 
   // Token budget warning
   // Dispatch source: src/engine/pipeline.ts:643
   const [tokenBudgetWarning, setTokenBudgetWarning] = useState<{ estimatedTokens: number; ratio: number } | null>(null);
   useEffect(() => {
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { estimatedTokens: number; ratio: number };
       setTokenBudgetWarning(detail);
-      setTimeout(() => setTokenBudgetWarning(null), 8000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setTokenBudgetWarning(null), 8000);
     };
     window.addEventListener('noa:token-budget-warning', handler);
-    return () => window.removeEventListener('noa:token-budget-warning', handler);
+    return () => {
+      window.removeEventListener('noa:token-budget-warning', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
   // Character truncation warning
   // Dispatch source: src/engine/pipeline.ts:278
   const [charTruncation, setCharTruncation] = useState<{ total: number; dropped: number } | null>(null);
   useEffect(() => {
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { total: number; dropped: number };
       setCharTruncation(detail);
-      setTimeout(() => setCharTruncation(null), 10000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setCharTruncation(null), 10000);
     };
     window.addEventListener('noa:character-truncated', handler);
-    return () => window.removeEventListener('noa:character-truncated', handler);
+    return () => {
+      window.removeEventListener('noa:character-truncated', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
   // Session restore failure toast
   const [sessionRestoreFailed, setSessionRestoreFailed] = useState(false);
   useEffect(() => {
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = () => {
       setSessionRestoreFailed(true);
-      setTimeout(() => setSessionRestoreFailed(false), 5000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setSessionRestoreFailed(false), 5000);
     };
     window.addEventListener('noa:session-restore-failed', handler);
-    return () => window.removeEventListener('noa:session-restore-failed', handler);
+    return () => {
+      window.removeEventListener('noa:session-restore-failed', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
   // Confirm modal

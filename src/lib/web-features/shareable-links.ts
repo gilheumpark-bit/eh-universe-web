@@ -96,7 +96,7 @@ export async function copyShareLink(url: string): Promise<boolean> {
   }
 }
 
-// ── 압축/해제 (base64 JSON) ──
+// ── 압축/해제 (base64 JSON, UTF-8 safe via TextEncoder) ──
 
 function compressPayload(payload: SharePayload): string {
   const json = JSON.stringify({
@@ -105,11 +105,21 @@ function compressPayload(payload: SharePayload): string {
     c: payload.content,
     m: payload.meta,
   });
-  return btoa(unescape(encodeURIComponent(json)));
+  const utf8Bytes = new TextEncoder().encode(json);
+  let binary = '';
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binary += String.fromCharCode(utf8Bytes[i]);
+  }
+  return btoa(binary);
 }
 
 function decompressPayload(compressed: string): SharePayload {
-  const json = decodeURIComponent(escape(atob(compressed)));
+  const binary = atob(compressed);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const json = new TextDecoder('utf-8').decode(bytes);
   const parsed = JSON.parse(json);
   return {
     type: parsed.t,

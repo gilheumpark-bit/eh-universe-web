@@ -64,13 +64,10 @@ export async function streamWithMultiKey(opts: MultiKeyStreamOptions): Promise<{
 
   // Fallback: 멀티키 미설정 → 기존 단일키
   if (activeCount === 0) {
-    let _accumulated = '';
+    // [K] _accumulated 미사용 — streamChat이 text 반환하므로 누적 불필요
     const text = await originalStreamChat({
       ...opts,
-      onChunk: (chunk) => {
-        _accumulated += chunk;
-        opts.onChunk(chunk);
-      },
+      onChunk: opts.onChunk,
     });
     return {
       text,
@@ -93,13 +90,10 @@ export async function streamWithMultiKey(opts: MultiKeyStreamOptions): Promise<{
 
   // 슬롯 없으면 fallback
   if (!slot) {
-    let _accumulated = '';
+    // [K] _accumulated 미사용 제거
     const text = await originalStreamChat({
       ...opts,
-      onChunk: (chunk) => {
-        _accumulated += chunk;
-        opts.onChunk(chunk);
-      },
+      onChunk: opts.onChunk,
     });
     return {
       text,
@@ -118,14 +112,10 @@ export async function streamWithMultiKey(opts: MultiKeyStreamOptions): Promise<{
   setActiveModel(slot.model);
   setApiKey(slot.provider, slot.apiKey);
 
-  let _accumulated = '';
   try {
     const text = await originalStreamChat({
       ...opts,
-      onChunk: (chunk) => {
-        _accumulated += chunk;
-        opts.onChunk(chunk);
-      },
+      onChunk: opts.onChunk,
     });
 
     // 사용량 추적 (대략적 토큰 추정: 4자 ≈ 1토큰)

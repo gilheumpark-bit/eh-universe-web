@@ -55,7 +55,7 @@ function Submenu({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div className="absolute left-full top-0 ml-0.5 bg-bg-primary border border-border/50 rounded-lg shadow-2xl py-1 min-w-[160px] z-101">
+    <div className="absolute left-full top-0 ml-0.5 bg-bg-primary border border-border/50 rounded-lg shadow-2xl py-1 min-w-[160px]" style={{ zIndex: 'calc(var(--z-dropdown) + 1)' }}>
       {items.map((item) =>
         item.separator ? (
           <div key={item.id} className="mx-2 my-1 border-t border-border/30" />
@@ -154,8 +154,8 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
       ref={ref}
       role="menu"
       aria-activedescendant={focusIdx >= 0 && visibleItems[focusIdx] ? `ctx-item-${visibleItems[focusIdx].id}` : undefined}
-      className="fixed z-100 bg-bg-primary border border-border/50 rounded-lg shadow-2xl py-1 min-w-[180px]"
-      style={style}
+      className="fixed bg-bg-primary border border-border/50 rounded-lg shadow-2xl py-1 min-w-[180px]"
+      style={{ ...style, zIndex: 'var(--z-dropdown)' }}
     >
       {items.map((item) =>
         item.separator ? (

@@ -8,6 +8,12 @@ const { execSync } = require('child_process');
 const { readFileSync, writeFileSync, existsSync } = require('fs');
 const { join } = require('path');
 
+// Git ref/branch sanitizer — injection + option injection 방지
+// git refname 허용 문자만 남김 (영숫자, /, _, -, .)
+function sanitizeGitRef(ref: string): string {
+  return (ref ?? '').replace(/[^A-Za-z0-9/_.-]/g, '').replace(/^-+/, '');
+}
+
 // ============================================================
 // PART 1 — Merge Conflict Detector
 // ============================================================
@@ -561,8 +567,10 @@ export function getBranchAgeWarnings(rootPath: string): Array<{
       // Get ahead/behind count
       let aheadBehind = '';
       try {
+        const safeDefault = sanitizeGitRef(defaultBranch);
+        const safeBranch = sanitizeGitRef(branch);
         const ab = execSync(
-          `git rev-list --left-right --count "${defaultBranch}...${branch}" 2>/dev/null`,
+          `git rev-list --left-right --count "${safeDefault}...${safeBranch}" 2>/dev/null`,
           { cwd: rootPath, encoding: 'utf-8', stdio: 'pipe' },
         ).trim();
         const [behind, ahead] = ab.split('\t').map(Number);

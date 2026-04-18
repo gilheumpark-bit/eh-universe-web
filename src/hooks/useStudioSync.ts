@@ -35,6 +35,16 @@ export function useStudioSync({
   const projectsRef = useRef(projects);
   projectsRef.current = projects;
 
+  // [C] syncStatus 리셋 타이머 — 언마운트 시 setState 방지
+  const statusResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleStatusReset = useCallback((ms: number) => {
+    if (statusResetTimerRef.current) clearTimeout(statusResetTimerRef.current);
+    statusResetTimerRef.current = setTimeout(() => setSyncStatus('idle'), ms);
+  }, []);
+  useEffect(() => () => {
+    if (statusResetTimerRef.current) clearTimeout(statusResetTimerRef.current);
+  }, []);
+
   // BroadcastChannel ref for cross-tab sync
   const channelRef = useRef<BroadcastChannel | null>(null);
   const lastBroadcastTs = useRef<number>(0);
@@ -140,7 +150,7 @@ export function useStudioSync({
       } else {
         setSyncStatus('done');
       }
-      setTimeout(() => setSyncStatus('idle'), 3000);
+      scheduleStatusReset(3000);
     } catch (err: unknown) {
       const msg = (err as Error)?.message || '';
       if (msg.includes('401')) {
@@ -157,21 +167,21 @@ export function useStudioSync({
             } else {
               setSyncStatus('done');
             }
-            setTimeout(() => setSyncStatus('idle'), 3000);
+            scheduleStatusReset(3000);
             return;
           } catch (retryErr) {
             logger.error('Sync', 'Retry failed', retryErr);
             setSyncStatus('error');
-            setTimeout(() => setSyncStatus('idle'), 5000);
+            scheduleStatusReset(5000);
             return;
           }
         }
       }
       logger.error('Sync', err);
       setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 5000);
+      scheduleStatusReset(5000);
     }
-  }, [accessToken, refreshAccessToken, setProjects, setUxError, broadcastSave]);
+  }, [accessToken, refreshAccessToken, setProjects, setUxError, broadcastSave, scheduleStatusReset]);
 
   return {
     syncStatus,

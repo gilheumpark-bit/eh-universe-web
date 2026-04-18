@@ -150,8 +150,7 @@ function checkSpacing(text: string): PublishAuditFinding[] {
     });
   }
   // "할 수 있다/할수있다" — 의존명사 "수" 띄어쓰기
-  const suBadPattern = /[할할것을돼어모할돼을할를]수\s*[있없]/g;
-  // 덜 정확한 대체: '[동사]수있/수없' 붙어있음 감지
+  // [K] 불필요한 예비 패턴(suBadPattern) 제거, 실제 매칭 정규식만 유지
   const suMatches = [...text.matchAll(/[\uAC00-\uD7A3]수[있없]/g)];
   if (suMatches.length >= 1) {
     findings.push({
@@ -165,7 +164,6 @@ function checkSpacing(text: string): PublishAuditFinding[] {
       autoFixable: false,
     });
   }
-  void antBadPattern; void suBadPattern; // 예비 참조, suppress
   return findings;
 }
 
@@ -391,11 +389,11 @@ export function applyAutoFix(text: string): { fixed: string; changes: number } {
   let fixed = text;
   let changes = 0;
 
-  // 중복 문장부호 정리
-  fixed = fixed.replace(/!{3,}/g, (m) => { changes++; return '!!'; });
-  fixed = fixed.replace(/\?{3,}/g, (m) => { changes++; return '??'; });
-  fixed = fixed.replace(/\.{4,}/g, (m) => { changes++; return '…'; });
-  fixed = fixed.replace(/,{2,}/g, (m) => { changes++; return ','; });
+  // 중복 문장부호 정리 — 콜백 인자 미사용이므로 생략
+  fixed = fixed.replace(/!{3,}/g, () => { changes++; return '!!'; });
+  fixed = fixed.replace(/\?{3,}/g, () => { changes++; return '??'; });
+  fixed = fixed.replace(/\.{4,}/g, () => { changes++; return '…'; });
+  fixed = fixed.replace(/,{2,}/g, () => { changes++; return ','; });
 
   // 전각 → 반각
   const fullToHalf: Record<string, string> = {

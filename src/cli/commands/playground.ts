@@ -40,8 +40,8 @@ export async function runPlayground(opts: PlaygroundOptions): Promise<void> {
   console.log('  [Phase 1] AST 엔진...');
   const astStart = performance.now();
   // Lightweight: count files + functions as proxy
-  const { readdirSync, readFileSync, _statSync } = require('fs');
-  const { join, _extname } = require('path');
+  const { readdirSync, readFileSync } = require('fs');
+  const { join } = require('path');
 
   let totalFiles = 0;
   let totalFunctions = 0;

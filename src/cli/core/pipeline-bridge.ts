@@ -522,7 +522,7 @@ export async function runProjectAudit(
   rootPath: string,
   _onProgress?: (area: string, index: number, total: number) => void,
 ): Promise<AuditReport> {
-  const { readdirSync, readFileSync, _statSync, existsSync } = require('fs');
+  const { readdirSync, readFileSync, existsSync } = require('fs');
   const { join, extname } = require('path');
 
   const areas: AuditArea[] = [];

@@ -2,6 +2,8 @@
 // Publishing Metadata Translation — 출판용 메타데이터
 // ============================================================
 
+import { logger } from '@/lib/logger';
+
 export interface PublishMetadata {
   title: string;
   titleTranslated: string;
@@ -73,7 +75,8 @@ export function parseMetadataResponse(raw: string): Partial<PublishMetadata> {
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) return {};
     return JSON.parse(match[0]);
-  } catch {
+  } catch (err) {
+    logger.warn('PublishMetadata', 'parseMetadataResponse JSON parse failed', err);
     return {};
   }
 }

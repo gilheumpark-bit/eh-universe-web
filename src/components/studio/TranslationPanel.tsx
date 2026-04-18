@@ -209,10 +209,15 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     setGeneralTranslating(true);
     setGeneralResult('');
     setLogs([{ id: Date.now(), type: 'info', text: `General translation: ${generalDomain} mode, ${targetLang}...` }]);
-    // Wake Lock + 알림 권한 (한 번만)
-    const browser = await import('@/lib/browser');
-    browser.acquireWakeLock().catch(() => {});
-    browser.requestNotificationPermission().catch(() => {});
+    // Wake Lock + 알림 권한 (한 번만) — import 실패 시 finally 가드
+    let browser: typeof import('@/lib/browser') | null = null;
+    try {
+      browser = await import('@/lib/browser');
+      browser.acquireWakeLock().catch(() => {});
+      browser.requestNotificationPermission().catch(() => {});
+    } catch {
+      // browser 모듈 로드 실패 — Wake Lock 없이 진행
+    }
     try {
       const { buildGeneralPrompt, applyPassthrough, restorePassthrough, GENERAL_DOMAIN_PRESETS } = await import('@/lib/translation');
       const preset = GENERAL_DOMAIN_PRESETS[generalDomain as keyof typeof GENERAL_DOMAIN_PRESETS] ?? GENERAL_DOMAIN_PRESETS.general;
@@ -264,16 +269,18 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       setGlossaryCandidates(candidates);
 
       setLogs(prev => [...prev, { id: Date.now(), type: 'success', text: `Translation complete. ${segs.length} segments, ${pairs.length} TM entries saved, ${candidates.length} terms detected.` }]);
-      // 완료 알림 + 뱃지
-      browser.notifyBatchComplete(`General translation → ${targetLang}`);
-      browser.incrementBadge();
-      // AI 캐시에 결과 저장
-      browser.cacheResponse('translate', generalDomain, [{ role: 'user', content: generalText.slice(0, 500) }], 0.1, final).catch(() => {});
+      // 완료 알림 + 뱃지 (browser 모듈 로드 시에만)
+      if (browser) {
+        browser.notifyBatchComplete(`General translation → ${targetLang}`);
+        browser.incrementBadge();
+        // AI 캐시에 결과 저장
+        browser.cacheResponse('translate', generalDomain, [{ role: 'user', content: generalText.slice(0, 500) }], 0.1, final).catch(() => {});
+      }
     } catch (err) {
       setLogs(prev => [...prev, { id: Date.now(), type: 'error', text: `Error: ${err}` }]);
     } finally {
       setGeneralTranslating(false);
-      browser.releaseWakeLock().catch(() => {});
+      browser?.releaseWakeLock?.().catch(() => {});
     }
   }, [generalText, generalDomain, targetLang, glossary, generalTranslating]);
 

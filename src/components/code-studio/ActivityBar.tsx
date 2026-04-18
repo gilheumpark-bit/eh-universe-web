@@ -89,7 +89,7 @@ function ActivityTooltip({
     <div className="relative" onMouseEnter={show} onMouseLeave={hide}>
       {children}
       {visible && (
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-bg-secondary text-text-primary text-[11px] rounded shadow-lg whitespace-nowrap z-50 border border-white/10 pointer-events-none">
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-bg-secondary text-text-primary text-[11px] rounded shadow-lg whitespace-nowrap border border-white/10 pointer-events-none" style={{ zIndex: 'var(--z-tooltip)' }}>
           {content}
         </div>
       )}

@@ -5,6 +5,7 @@
 // localStorage 기반 (오프라인 지원).
 
 import { logger } from '@/lib/logger';
+import { ragSearch, type RagDocument } from '@/services/ragService';
 
 const TM_STORAGE_KEY = 'eh-translation-memory';
 const MAX_TM_ENTRIES = 5000;
@@ -66,6 +67,8 @@ function getCachedTM(): { entries: TMEntry[]; index: Map<string, number[]> } {
 function invalidateCache() { _tmCache = null; _trigramIndex = null; _cacheVersion++; }
 
 function loadTMRaw(): TMEntry[] {
+  // [C] SSR 가드 — window/localStorage 미가용 시 빈 배열
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return [];
   try {
     const raw = localStorage.getItem(TM_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -80,10 +83,16 @@ export function loadTM(): TMEntry[] {
 }
 
 export function saveTM(entries: TMEntry[]): void {
+  // [C] SSR 가드 + quota 방어 — 실패해도 호출자 흐름 보존
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   const trimmed = entries
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, MAX_TM_ENTRIES);
-  localStorage.setItem(TM_STORAGE_KEY, JSON.stringify(trimmed));
+  try {
+    localStorage.setItem(TM_STORAGE_KEY, JSON.stringify(trimmed));
+  } catch (err) {
+    logger.warn('TranslationMemory', 'saveTM failed — localStorage quota?', err);
+  }
   invalidateCache();
 }
 
@@ -263,8 +272,6 @@ function jaroWinkler(s1: string, s2: string): number {
 // ============================================================
 // 로컬 TM 검색 결과가 부족할 때 RAG (DGX Spark 8082) 보강 검색.
 // 신규 export만 추가. 기존 searchTM/loadTM/addToTM 시그니처 미수정.
-
-import { ragSearch, type RagDocument } from '@/services/ragService';
 
 export interface TMSuggestion {
   source: string;

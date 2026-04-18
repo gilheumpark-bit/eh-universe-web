@@ -14,6 +14,7 @@ import {
 import type { FileNode, OpenFile, CodeStudioSettings } from "@/lib/code-studio/core/types";
 import { DEFAULT_SETTINGS, detectLanguage } from "@/lib/code-studio/core/types";
 import { saveSettings, loadSettings, listProjects, switchProject } from "@/lib/code-studio/core/store";
+import { logger } from "@/lib/logger";
 import { runStaticPipeline } from "@/lib/code-studio/pipeline/pipeline";
 import { findBugsStatic, type BugReport } from "@/lib/code-studio/pipeline/bugfinder";
 import { runStressReport, type StressReport } from "@/lib/code-studio/pipeline/stress-test";
@@ -587,9 +588,12 @@ function CodeStudioShellInner() {
 
     // [NOA-AGI] apply-guard — SCOPE/CONTRACT/@block 편집 경계 보호
     // MULTI_FILE_AGENT 플래그 활성 시 코드 적용 전 검증. critical 실패 시 사용자에게 경고 후 차단.
+    // guard 로드 실패 시: MULTI_FILE_AGENT가 활성이면 fail-closed(차단), 비활성이면 기존 동작(허용).
+    let multiFileAgentActive = false;
     try {
       const { isFeatureEnabled } = await import('@/lib/feature-flags');
-      if (isFeatureEnabled('MULTI_FILE_AGENT')) {
+      multiFileAgentActive = isFeatureEnabled('MULTI_FILE_AGENT');
+      if (multiFileAgentActive) {
         const { runApplyGuard } = await import('@/lib/code-studio/pipeline/apply-guard');
         const original = openFiles.find(f => f.id === targetFileId)?.content ?? '';
         const resolvedFileName = fileName ?? openFiles.find(f => f.id === targetFileId)?.name ?? 'unknown';
@@ -602,7 +606,15 @@ function CodeStudioShellInner() {
           }
         }
       }
-    } catch { /* guard module load failed — proceed without guard */ }
+    } catch (err) {
+      logger.warn('CodeStudioShell.applyCode', 'apply-guard load failed', err);
+      if (multiFileAgentActive) {
+        // MULTI_FILE_AGENT가 활성 상태에서 가드 로드 자체가 실패했다면 fail-closed.
+        toast('Apply blocked: safety guard unavailable', 'error');
+        return;
+      }
+      // 플래그 비활성 상태면 가드 로드 실패해도 기존 레거시 동작(허용)을 유지.
+    }
 
     setOpenFiles((prev) => {
       const exists = prev.some(f => f.id === targetFileId);

@@ -22,7 +22,7 @@ export async function runNpmAudit(rootPath: string) {
     };
   } catch (e) {
     try {
-      const output = (e as unknown).stdout ?? '{}';
+      const output = (e as { stdout?: string }).stdout ?? '{}';
       const data = JSON.parse(output);
       return {
         vulnerabilities: data.metadata?.vulnerabilities ?? {},
@@ -50,7 +50,8 @@ export async function runLockfileLint(rootPath: string) {
     });
     return { passed: true, issues: 0, detail: 'lockfile valid' };
   } catch (e) {
-    const output = (e as unknown).stdout ?? (e as unknown).stderr ?? '';
+    const err = e as { stdout?: string; stderr?: string };
+    const output = err.stdout ?? err.stderr ?? '';
     const issues = (output.match(/ERROR/g) ?? []).length;
     return { passed: false, issues, detail: output.slice(0, 200) };
   }

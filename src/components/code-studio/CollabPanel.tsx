@@ -95,7 +95,7 @@ export default function CollabPanel({ onClose }: Props) {
   const [connected, setConnected] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [roomInput, setRoomInput] = useState("");
-  const [userName, setUserName] = useState(() => `User-${Math.random().toString(36).slice(2, 6)}`);
+  const [userName, setUserName] = useState(() => `User-${crypto.randomUUID().slice(0, 6)}`);
   const [localUser] = useState<CollabUser>(() => ({ id: generateUserId(), name: userName, color: generateColor() }));
   const [remoteUsers, setRemoteUsers] = useState<CollabUser[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatEntry[]>([]);

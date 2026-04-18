@@ -5,6 +5,7 @@
 // 일반 번역에 맞는 평가 축 사용. 도메인별 추가 축 지원.
 
 import { type GeneralDomain, GENERAL_DOMAIN_PRESETS } from './general-domains';
+import { logger } from '@/lib/logger';
 
 // ── Base Scoring Axes (모든 도메인 공통) ──
 
@@ -102,7 +103,8 @@ export function parseGeneralScore(
     const score = values.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
 
     return { score, axes, passed: score >= threshold, domain };
-  } catch {
+  } catch (err) {
+    logger.warn('GeneralScoring', 'parseGeneralScore JSON parse failed', err);
     return {
       score: 0,
       axes: { accuracy: 0, naturalness: 0, completeness: 0, formatFidelity: 0 },

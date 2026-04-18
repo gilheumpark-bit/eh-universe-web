@@ -235,13 +235,19 @@ export default function StudioShell() {
   const [pipelineResult, setPipelineResult] = useState<{ stages: import('@/lib/studio-types').PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null>(null);
 
   useEffect(() => {
+    // [C] cleanup: 언마운트 시 토스트 타이머 취소 (setState-on-unmount 방지)
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
     const handler = (e: Event) => {
       const { message, variant } = (e as CustomEvent).detail;
       setAlertToast({ message, variant });
-      setTimeout(() => setAlertToast(null), 4000);
+      if (dismissTimer) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => setAlertToast(null), 4000);
     };
     window.addEventListener('noa:alert', handler);
-    return () => window.removeEventListener('noa:alert', handler);
+    return () => {
+      window.removeEventListener('noa:alert', handler);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, []);
 
   useEffect(() => {

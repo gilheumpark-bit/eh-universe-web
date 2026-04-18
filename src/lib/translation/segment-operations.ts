@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { TranslationSegment } from './editable-segment';
+import { logger } from '@/lib/logger';
 
 /** 특정 세그먼트만 재번역하기 위한 프롬프트 생성 */
 export function buildPartialRetranslatePrompt(
@@ -51,7 +52,8 @@ export function parseSegmentScore(raw: string): number {
     const parsed = JSON.parse(match[0]);
     const vals = [parsed.accuracy, parsed.naturalness, parsed.completeness].filter(v => typeof v === 'number');
     return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
-  } catch {
+  } catch (err) {
+    logger.warn('SegmentOperations', 'parseSegmentScore JSON parse failed', err);
     return 0;
   }
 }

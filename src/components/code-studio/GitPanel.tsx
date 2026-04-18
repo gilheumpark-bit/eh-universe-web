@@ -163,12 +163,14 @@ const ISO_GIT_AUTHOR = { name: "EH-Code-Studio", email: "code-studio@eh.local" }
 // ============================================================
 
 // [시뮬레이션] generateHash는 git-engine의 SHA-1 기반 커밋으로 대체됨.
-// 폴백용으로만 유지 (engineCommit 실패 시).
+// 폴백용으로만 유지 (engineCommit 실패 시). crypto.getRandomValues로 충돌 회피.
 function generateHashFallback(): string {
   const chars = "0123456789abcdef";
+  const buf = new Uint8Array(40);
+  crypto.getRandomValues(buf);
   let result = "";
   for (let i = 0; i < 40; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
+    result += chars[buf[i] & 0xf];
   }
   return result;
 }

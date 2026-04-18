@@ -5,7 +5,7 @@
 // 프로젝트 분석 후 개선 추천.
 
 import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join, _extname } from 'path';
+import { join } from 'path';
 
 // ============================================================
 // PART 1 — Project Analyzer
@@ -51,7 +51,7 @@ function analyzeProject(): Suggestion[] {
 
   // ── Count source files and structure ──
   let totalFiles = 0;
-  const _totalLines = 0;
+  let totalLines = 0;
   const dirStructure = new Set<string>();
   function scanStructure(dir: string): void {
     try {

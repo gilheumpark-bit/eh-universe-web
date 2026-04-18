@@ -6,6 +6,7 @@ import { L2, useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { getReactions, toggleReaction } from "@/lib/network-firestore";
 import { REACTION_EMOJI, REACTION_TYPES, type ReactionRecord, type ReactionType } from "@/lib/network-types";
+import { logger } from "@/lib/logger";
 
 // ============================================================
 // PART 1 - LABELS
@@ -48,8 +49,8 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
       try {
         const records = await getReactions(targetId);
         if (!cancelled) setReactions(records);
-      } catch {
-        /* silent */
+      } catch (err) {
+        logger.warn('ReactionBar', 'getReactions failed', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -86,7 +87,8 @@ export function ReactionBar({ targetType, targetId }: ReactionBarProps) {
         }
 
         await toggleReaction({ targetType, targetId, userId: user.uid, reactionType: type });
-      } catch {
+      } catch (err) {
+        logger.warn('ReactionBar', 'toggleReaction failed', err);
         // Rollback optimistic update
         setReactions(prevReactions);
         setError(L4(lang, { ko: "반응 처리에 실패했습니다.", en: "Failed to toggle reaction.", ja: "リアクションの処理に失敗しました。", zh: "反应处理失败。" }));

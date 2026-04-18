@@ -135,7 +135,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const toast = useCallback((message: string, type: ToastType = "info") => {
     const newToast: ToastItem = {
-      id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: `toast-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
       message,
       type,
       createdAt: Date.now(),

@@ -2,6 +2,8 @@
 // PART 1 — Types & Constants
 // ============================================================
 
+import { logger } from '@/lib/logger';
+
 /** Single glossary entry with metadata */
 export interface GlossaryEntry {
   source: string;
@@ -150,8 +152,9 @@ export class GlossaryManager {
     this.listeners.forEach((cb) => {
       try {
         cb(v);
-      } catch {
-        // listener errors must not break the manager
+      } catch (err) {
+        // listener errors must not break the manager — warn only
+        logger.warn('GlossaryManager', 'listener callback threw', err);
       }
     });
   }

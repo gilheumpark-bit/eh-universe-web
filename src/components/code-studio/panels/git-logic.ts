@@ -56,10 +56,20 @@ export const MAX_HISTORY = 50;
 // PART 2 — Pure Utilities
 // ============================================================
 
-/** Fallback hash generator when git engines are unavailable */
+/** Fallback hash generator when git engines are unavailable.
+ * Uses crypto.getRandomValues when available (browser + Node 19+) — CSPRNG quality.
+ * Falls back to Math.random only for environments without crypto (rare). */
 export function generateHashFallback(): string {
   const chars = "0123456789abcdef";
   let result = "";
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const buf = new Uint8Array(40);
+    crypto.getRandomValues(buf);
+    for (let i = 0; i < 40; i++) {
+      result += chars[buf[i] & 0xf];
+    }
+    return result;
+  }
   for (let i = 0; i < 40; i++) {
     result += chars[Math.floor(Math.random() * chars.length)];
   }

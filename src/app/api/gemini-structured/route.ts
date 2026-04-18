@@ -127,13 +127,6 @@ async function dispatchTask(
       }
       return { ok: true, data: await handleSceneDirection(apiKey, model, body.synopsis, toStringArray(body.characters), language, body.tierContext as SceneTierContext | undefined) };
     }
-    case 'items': {
-      const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
-      if (!config?.genre || !config?.synopsis) {
-        return { ok: false, response: NextResponse.json({ error: 'Invalid item config' }, { status: 400 }) };
-      }
-      return { ok: true, data: await handleItems(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames)) };
-    }
     default:
       return { ok: false, response: NextResponse.json({ error: 'Invalid task' }, { status: 400 }) };
   }

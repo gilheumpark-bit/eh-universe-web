@@ -3,6 +3,7 @@
 import { showAlert } from '@/lib/show-alert';
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { createT } from '@/lib/i18n';
+import { logger } from '@/lib/logger';
 
 import {
   
@@ -242,7 +243,10 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                   setCivs(newCivs);
                   setRelations([]);
                 }
-              } catch { showAlert(L4(lang, { ko: '\uC790\uB3D9 \uC0DD\uC131 \uC2E4\uD328. API \uD0A4\uB97C \uD655\uC778\uD558\uC138\uC694.', en: 'Generation failed. Check API key.', ja: 'Generation failed. Check API key.', zh: 'Generation failed. Check API key.' })); }
+              } catch (err) {
+                logger.warn('WorldSimulator', 'auto generation failed', err);
+                showAlert(L4(lang, { ko: '\uC790\uB3D9 \uC0DD\uC131 \uC2E4\uD328. API \uD0A4\uB97C \uD655\uC778\uD558\uC138\uC694.', en: 'Generation failed. Check API key.', ja: 'Generation failed. Check API key.', zh: 'Generation failed. Check API key.' }));
+              }
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>

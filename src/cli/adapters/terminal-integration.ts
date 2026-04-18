@@ -33,10 +33,11 @@ export function runShellCommand(command: string, opts?: {
     });
     return { stdout, stderr: '', exitCode: 0 };
   } catch (e: unknown) {
+    const err = e as { stdout?: string; stderr?: string; message?: string; status?: number };
     return {
-      stdout: e.stdout ?? '',
-      stderr: e.stderr ?? e.message ?? '',
-      exitCode: e.status ?? 1,
+      stdout: err.stdout ?? '',
+      stderr: err.stderr ?? err.message ?? '',
+      exitCode: err.status ?? 1,
     };
   }
 }

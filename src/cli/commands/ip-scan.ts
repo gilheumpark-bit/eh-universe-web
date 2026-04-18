@@ -7,8 +7,8 @@
 // + 전이 의존성 스캔 (package-lock.json 기반)
 // + 개선된 채점 가중치
 
-const { readFileSync, readdirSync, _statSync, existsSync } = require('fs');
-const { join, _extname, relative } = require('path');
+const { readFileSync, readdirSync, existsSync } = require('fs');
+const { join, relative } = require('path');
 
 // ============================================================
 // PART 1 — SPDX License Database & Patterns

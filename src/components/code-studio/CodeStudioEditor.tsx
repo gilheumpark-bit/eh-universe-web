@@ -369,7 +369,7 @@ export function CodeStudioEditor(props: CodeStudioEditorProps) {
 
       {/* Multi-Key Panel Modal */}
       {showMultiKey && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ zIndex: 'var(--z-modal)' }}>
           <div className="w-[480px] max-h-[80vh] rounded-xl border border-white/10 bg-[#0d1117] shadow-2xl overflow-hidden">
             <MultiKeyPanel language="ko" onClose={onCloseMultiKey} />
           </div>

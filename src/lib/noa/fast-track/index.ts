@@ -49,16 +49,10 @@ export function runFastTrack(sanitizedText: string): FastTrackResult {
 
   // ── Phase 2: 키워드 빈도 분석 (v42.6) ──
   // 단일 키워드 존재가 아닌 빈도 누적으로 위험도 측정
-  let _hardFreq = 0;
+  // [K] hardFreq / topHardKw 는 현재 분기에서 미사용 — 첫 번째 loop의 BLOCK이
+  // 이미 처리하므로, soft 집계만 필요.
   let softFreq = 0;
-  let topHardKw: string | undefined;
   let topSoftKw: string | undefined;
-
-  for (const kw of HARD_BLOCK_KEYWORDS) {
-    const count = countOccurrences(text, kw);
-    if (count > 0 && !topHardKw) topHardKw = kw;
-    _hardFreq += count;
-  }
 
   for (const kw of SOFT_WATCH_KEYWORDS) {
     const count = countOccurrences(text, kw);

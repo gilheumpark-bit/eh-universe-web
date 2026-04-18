@@ -2,6 +2,8 @@
 // Glossary Auto-Extractor — 원문에서 용어 자동 추출
 // ============================================================
 
+import { logger } from '@/lib/logger';
+
 /** 추출된 용어 후보 */
 export interface GlossaryCandidate {
   term: string;
@@ -39,7 +41,8 @@ export function parseGlossaryCandidates(raw: string): GlossaryCandidate[] {
         confidence: typeof item.confidence === 'number' ? item.confidence : 0.5,
       }))
       .slice(0, 30);
-  } catch {
+  } catch (err) {
+    logger.warn('GlossaryExtractor', 'parseGlossaryCandidates JSON parse failed', err);
     return [];
   }
 }

@@ -485,7 +485,7 @@ export function runDeepVerifyProject(rootPath: string): {
   byCategory: Record<string, number>;
 } {
   const { readdirSync, readFileSync } = require('fs');
-  const { join, relative, _extname } = require('path');
+  const { join, relative } = require('path');
 
   const IGNORE = new Set(['node_modules', '.next', '.git', 'dist', '.cs']);
   const allFindings: DeepFinding[] = [];

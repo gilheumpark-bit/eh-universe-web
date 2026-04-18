@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
+import { logger } from '@/lib/logger';
 
 /** 번역 스튜디오용 캐릭터 (말투 프로필 추론 포함) */
 export interface TranslationCharacter {
@@ -107,7 +108,8 @@ export function serializeWorldBible(worldBible: unknown, maxChars = 3000): strin
       }
     }
     return lines.join('\n\n').slice(0, maxChars);
-  } catch {
+  } catch (err) {
+    logger.warn('ProjectBridge', 'serializeWorldBible failed', err);
     return '';
   }
 }
@@ -355,7 +357,8 @@ export function loadLocalGlossary(): Array<{ source: string; target?: string; lo
       const pr = p as Record<string, unknown>;
       return typeof pr.source === 'string' && pr.source.trim().length > 0;
     });
-  } catch {
+  } catch (err) {
+    logger.warn('ProjectBridge', 'loadLocalGlossary parse failed', err);
     return [];
   }
 }
@@ -371,7 +374,8 @@ export function saveLocalGlossary(
       .slice(0, MAX_GLOSSARY_ENTRIES);
     localStorage.setItem(LOCAL_GLOSSARY_KEY, JSON.stringify(sanitized));
     return true;
-  } catch {
+  } catch (err) {
+    logger.warn('ProjectBridge', 'saveLocalGlossary failed — localStorage quota?', err);
     return false;
   }
 }

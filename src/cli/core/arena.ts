@@ -232,29 +232,34 @@ export async function runArena(
     }
 
     opinions = [{
-      role: 'judge' as const,
+      agentId: 'judge',
+      model: 'offline-evidence',
       verdict: offlineVerdict,
+      confidence: 0.6,
+      evidence,
       critiques: offlineCritiques,
       suggestedFixes: offlineCritiques.map(c => `Fix: ${c}`),
-      confidence: 0.6,
     }];
   }
+
+  // Re-bind judge after offline fallback (top-level `judge` may be null)
+  const finalJudge = opinions.find(o => o.agentId === 'judge') ?? null;
 
   // Determine consensus
   let consensus: ArenaResult['consensus'] = 'approved';
   let finalCode = code;
   let teamLeadVerdict = 'No issues found';
 
-  if (judge) {
-    if (judge.verdict === 'reject') {
+  if (finalJudge) {
+    if (finalJudge.verdict === 'reject') {
       consensus = 'rejected';
-      teamLeadVerdict = `Rejected: ${judge.critiques.join('; ')}`;
-    } else if (judge.verdict === 'fix-required') {
+      teamLeadVerdict = `Rejected: ${finalJudge.critiques.join('; ')}`;
+    } else if (finalJudge.verdict === 'fix-required') {
       consensus = 'fixed';
-      teamLeadVerdict = `Fix required: ${judge.suggestedFixes.join('; ')}`;
+      teamLeadVerdict = `Fix required: ${finalJudge.suggestedFixes.join('; ')}`;
 
       // Apply suggested fixes via AI
-      if (judge.suggestedFixes.length > 0) {
+      if (finalJudge.suggestedFixes.length > 0) {
         try {
           const { streamChat } = require('./ai-bridge');
           let fixedCode = '';
@@ -262,7 +267,7 @@ export async function runArena(
             systemInstruction: 'Apply the following fixes to the code. Output ONLY the fixed code.',
             messages: [{
               role: 'user',
-              content: `Fixes:\n${judge.suggestedFixes.join('\n')}\n\nCode:\n\`\`\`\n${code}\n\`\`\``,
+              content: `Fixes:\n${finalJudge.suggestedFixes.join('\n')}\n\nCode:\n\`\`\`\n${code}\n\`\`\``,
             }],
             onChunk: (t: string) => { fixedCode += t; },
           });
@@ -271,7 +276,7 @@ export async function runArena(
         } catch { /* keep original */ }
       }
     } else {
-      teamLeadVerdict = `Approved with confidence ${Math.round(judge.confidence * 100)}%`;
+      teamLeadVerdict = `Approved with confidence ${Math.round(finalJudge.confidence * 100)}%`;
     }
   }
 

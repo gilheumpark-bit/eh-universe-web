@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // ============================================================
 // PART 1 — 타입
 // ============================================================
@@ -212,8 +214,9 @@ export function saveGraphLocal(graph: EpisodeMemoryGraph): boolean {
     const payload = JSON.stringify(graph);
     localStorage.setItem(STORAGE_KEY_PREFIX + graph.projectId, payload);
     return true;
-  } catch {
-    // QuotaExceededError, SecurityError 등 모두 silent fallback
+  } catch (err) {
+    // QuotaExceededError, SecurityError 등 — 호출자 흐름 방해 없이 경고만
+    logger.warn('EpisodeMemory', 'saveGraphLocal failed — localStorage quota?', err);
     return false;
   }
 }
@@ -238,7 +241,8 @@ export function loadGraphLocal(projectId: string): EpisodeMemoryGraph | null {
       return parsed as EpisodeMemoryGraph;
     }
     return null;
-  } catch {
+  } catch (err) {
+    logger.warn('EpisodeMemory', 'loadGraphLocal JSON parse failed', err);
     return null;
   }
 }

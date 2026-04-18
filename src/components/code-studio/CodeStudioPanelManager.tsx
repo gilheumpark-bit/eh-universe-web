@@ -38,6 +38,7 @@ import {
 import { explainCode, lintCode, generateDocstring } from "@/lib/code-studio/ai/ai-features";
 import type { useCodeStudioPanels } from "@/hooks/useCodeStudioPanels";
 import * as PI from "@/components/code-studio/PanelImports";
+import { logger } from "@/lib/logger";
 
 /** Map registry icon names → lucide-react components for the activity bar */
 const LUCIDE_MAP: Record<string, LucideIcon> = {
@@ -429,7 +430,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
     "templates": () => <PI.TemplateGalleryComponent onSelectTemplate={(template) => {
       if (template?.files) {
         for (const f of template.files) {
-          const node: FileNode = { id: `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.name, type: "file", content: f.content };
+          const node: FileNode = { id: `tpl-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`, name: f.name, type: "file", content: f.content };
           onSetFiles((prev) => [...prev, node]);
         }
         toast(`Template "${template.name}" loaded`, "success");
@@ -444,7 +445,7 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
       <PI.CodeCreatorPanelComponent
         onMerge={(createdFiles: Array<{ path: string; content: string }>) => {
           for (const f of createdFiles) {
-            const node: FileNode = { id: `created-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: f.path.split("/").pop() ?? "file.ts", type: "file", content: f.content };
+            const node: FileNode = { id: `created-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`, name: f.path.split("/").pop() ?? "file.ts", type: "file", content: f.content };
             onSetFiles((prev) => [...prev, node]);
             onSetOpenFiles((prev) => [...prev, { id: node.id, name: node.name, content: f.content, language: detectLanguage(node.name) }]);
           }
@@ -498,7 +499,9 @@ function RightPanelContent(props: CodeStudioPanelManagerProps) {
           }
           else if (actionId === 'document') result = await generateDocstring(activeFile.content, activeFile.language);
           if (result) toast(result.slice(0, 100) + '...', 'info');
-        } catch { /* AI call failed */ }
+        } catch (err) {
+          logger.warn("CodeStudioPanelManager.codeActions", `AI call failed: ${actionId}`, err);
+        }
       }
     }} onClose={() => onSetRightPanel(null)} />,
     "model-switcher": () => <PI.ModelSwitcherComponent />,

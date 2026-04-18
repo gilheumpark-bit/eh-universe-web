@@ -176,14 +176,23 @@ export function executeInIframe(code: string, timeoutMs = 5000): Promise<Sandbox
     // The iframe has no access to parent DOM, cookies, or storage.
     // Code is base64-encoded to prevent script tag injection in the srcdoc HTML.
     // The nonce (declared above) validates postMessage authenticity.
+    // UTF-8 encoding uses TextEncoder instead of deprecated unescape/escape.
     const safeCode = code.replace(/<\/script/gi, '<\\/script');
-    const encoded = btoa(unescape(encodeURIComponent(safeCode)));
+    const utf8Bytes = new TextEncoder().encode(safeCode);
+    let binary = '';
+    for (let i = 0; i < utf8Bytes.length; i++) {
+      binary += String.fromCharCode(utf8Bytes[i]);
+    }
+    const encoded = btoa(binary);
     const html = `<!doctype html><html><body><script>
       try {
         var __out = [];
         var _log = console.log;
         console.log = function() { __out.push(Array.from(arguments).join(' ')); };
-        var __code = decodeURIComponent(escape(atob("${encoded}")));
+        var __binary = atob("${encoded}");
+        var __bytes = new Uint8Array(__binary.length);
+        for (var __i = 0; __i < __binary.length; __i++) { __bytes[__i] = __binary.charCodeAt(__i); }
+        var __code = new TextDecoder('utf-8').decode(__bytes);
         (new Function(__code))();
         parent.postMessage({ __nonce: "${execNonce}", output: __out.join('\\n') }, '*');
       } catch(e) {

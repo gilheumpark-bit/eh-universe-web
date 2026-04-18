@@ -163,7 +163,10 @@ export function createAIWorkSaga(config: {
 }): SagaOrchestrator {
   const saga = new SagaOrchestrator('ai-work');
 
+  // [C] Saga 단계 간 결과 공유용 클로저 스토리지.
+  // ai-execute의 결과를 apply-result가 재사용해야 한다 (AI 재호출 금지).
   let snapshot = '';
+  let aiResult = '';
 
   saga.addStep({
     name: 'snapshot',
@@ -180,7 +183,8 @@ export function createAIWorkSaga(config: {
   saga.addStep({
     name: 'ai-execute',
     execute: async () => {
-      return await config.executeAI();
+      aiResult = await config.executeAI();
+      return aiResult;
     },
     compensate: async () => {
       // AI 실행 취소 — 스냅샷 복원
@@ -191,7 +195,7 @@ export function createAIWorkSaga(config: {
   saga.addStep({
     name: 'apply-result',
     execute: async () => {
-      const aiResult = await config.executeAI(); // 이전 단계 결과 재사용 필요
+      // [C] 이전 단계 aiResult 재사용 — executeAI 재호출 금지 (토큰 낭비 + 비결정적)
       await config.applyResult(aiResult);
       return aiResult;
     },

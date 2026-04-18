@@ -11,6 +11,7 @@ import {
   listCommentsForPost,
   updateComment,
 } from "@/lib/network-firestore";
+import { logger } from "@/lib/logger";
 import type { CommentRecord } from "@/lib/network-types";
 
 // ============================================================
@@ -336,7 +337,8 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       setLoading(true);
       const records = await listCommentsForPost(postId);
       setComments(records);
-    } catch {
+    } catch (err) {
+      logger.warn('CommentSection', 'loadComments failed', err);
       setError(L4(lang, { ko: "댓글을 불러오지 못했습니다.", en: "Failed to load comments.", ja: "コメントの読み込みに失敗しました。", zh: "加载评论失败。" }));
     } finally {
       setLoading(false);
@@ -386,7 +388,8 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       setSuccessMsg(L4(lang, { ko: "댓글이 등록되었습니다", en: "Comment posted", ja: "コメントが投稿されました", zh: "评论已发布" }));
       setTimeout(() => setSuccessMsg(null), 2500);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-    } catch {
+    } catch (err) {
+      logger.warn('CommentSection', 'handleSubmit failed', err);
       setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post comment.", ja: "登録に失敗しました。", zh: "提交失败。" }));
     } finally {
       setSubmitting(false);
@@ -434,7 +437,8 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       setReplyDraft("");
       setSuccessMsg(L4(lang, { ko: "답글이 등록되었습니다", en: "Reply posted", ja: "返信が投稿されました", zh: "回复已发布" }));
       setTimeout(() => setSuccessMsg(null), 2500);
-    } catch {
+    } catch (err) {
+      logger.warn('CommentSection', 'handleReplySubmit failed', err);
       setError(L4(lang, { ko: "등록에 실패했습니다.", en: "Failed to post reply.", ja: "登録に失敗しました。", zh: "提交失败。" }));
     } finally {
       setSubmitting(false);
@@ -459,7 +463,8 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
         );
         setEditingId(null);
         setEditDraft("");
-      } catch {
+      } catch (err) {
+        logger.warn('CommentSection', 'handleUpdate failed', err);
         setError(L4(lang, { ko: "수정에 실패했습니다.", en: "Failed to update.", ja: "編集に失敗しました。", zh: "编辑失败。" }));
       } finally {
         setSubmitting(false);
@@ -475,7 +480,8 @@ export function CommentSection({ planetId, postId }: CommentSectionProps) {
       try {
         await deleteComment(comment.id, comment.postId, user.uid);
         setComments((prev) => prev.filter((c) => c.id !== comment.id));
-      } catch {
+      } catch (err) {
+        logger.warn('CommentSection', 'handleDelete failed', err);
         setError(L4(lang, { ko: "삭제에 실패했습니다.", en: "Failed to delete comment.", ja: "削除に失敗しました。", zh: "删除失败。" }));
       }
     },

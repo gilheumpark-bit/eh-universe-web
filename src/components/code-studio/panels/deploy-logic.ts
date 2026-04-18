@@ -156,7 +156,10 @@ export function countAllFiles(nodes: FileNode[]): number {
 }
 
 export function generateId(): string {
-  return `deploy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const rand = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID().slice(0, 8)
+    : Math.random().toString(36).slice(2, 8);
+  return `deploy-${Date.now()}-${rand}`;
 }
 
 export function formatTimestamp(ts: number): string {

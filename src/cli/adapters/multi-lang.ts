@@ -292,14 +292,18 @@ export async function runExternalLinter(filePath: string, language: LanguageDef)
   const { execSync } = require('child_process');
   const findings: Array<{ line: number; message: string; severity: string }> = [];
 
+  // [C] filePath 검증: shell 특수문자/스키마 차단
+  if (!filePath || /["'`$\\;|&<>()!*?]/.test(filePath)) return findings;
+  const safePath = filePath.replace(/^-+/, '');
+
   try {
     const commands: Record<string, string> = {
-      'pylint': `pylint --output-format=json "${filePath}" 2>/dev/null`,
-      'golangci-lint': `golangci-lint run --out-format json "${filePath}" 2>/dev/null`,
+      'pylint': `pylint --output-format=json "${safePath}" 2>/dev/null`,
+      'golangci-lint': `golangci-lint run --out-format json "${safePath}" 2>/dev/null`,
       'clippy': `cargo clippy --message-format=json 2>/dev/null`,
-      'shellcheck': `shellcheck -f json "${filePath}" 2>/dev/null`,
-      'rubocop': `rubocop --format json "${filePath}" 2>/dev/null`,
-      'phpstan': `phpstan analyze --error-format=json "${filePath}" 2>/dev/null`,
+      'shellcheck': `shellcheck -f json "${safePath}" 2>/dev/null`,
+      'rubocop': `rubocop --format json "${safePath}" 2>/dev/null`,
+      'phpstan': `phpstan analyze --error-format=json "${safePath}" 2>/dev/null`,
     };
 
     const cmd = commands[language.linter];

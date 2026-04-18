@@ -15,6 +15,7 @@ import {
 } from "@/lib/network-firestore";
 import { BOARD_TYPE_LABELS, pickNetworkLabel } from "@/lib/network-labels";
 import { BOARD_TYPES, type BoardType, type PlanetRecord } from "@/lib/network-types";
+import { logger } from "@/lib/logger";
 
 // ============================================================
 // PART 1 - LABELS AND CONSTANTS
@@ -79,8 +80,8 @@ export function BoardPostNewClient() {
           setPlanets(ownedPlanets);
           setAvailableTags(tagList);
         }
-      } catch {
-        /* silent */
+      } catch (err) {
+        logger.warn('BoardPostNewClient', 'initial planets/tags load failed', err);
       }
     };
 

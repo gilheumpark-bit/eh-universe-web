@@ -163,9 +163,12 @@ export async function getTypeInfo(filePath: string, line: number, column: number
 export function findReferences(rootPath: string, symbolName: string): LSPReference[] {
   const references: LSPReference[] = [];
 
+  // [C] symbol 이름 검증: 식별자 문자만 허용 (shell/regex 중복 방어)
+  if (!symbolName || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(symbolName)) return references;
+
   try {
     const output = execSync(
-      `grep -rn "\\b${symbolName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" src/ 2>/dev/null`,
+      `grep -rn "\\b${symbolName}\\b" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" src/ 2>/dev/null`,
       { cwd: rootPath, encoding: 'utf-8', timeout: 10000 },
     );
 

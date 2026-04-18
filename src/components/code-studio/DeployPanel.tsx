@@ -182,7 +182,7 @@ function countAllFiles(nodes: FileNode[]): number {
 }
 
 function generateId(): string {
-  return `deploy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `deploy-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 function formatTimestamp(ts: number): string {

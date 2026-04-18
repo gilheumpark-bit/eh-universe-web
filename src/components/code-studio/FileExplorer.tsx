@@ -219,7 +219,7 @@ function TreeNode({
         )}
       </button>
       {showPreview && filePreview && (
-        <div className="absolute left-full top-0 ml-2 z-50 bg-bg-primary border border-white/8 rounded shadow-lg p-2 max-w-xs pointer-events-none">
+        <div className="absolute left-full top-0 ml-2 bg-bg-primary border border-white/8 rounded shadow-lg p-2 max-w-xs pointer-events-none" style={{ zIndex: 'var(--z-tooltip)' }}>
           <pre className="text-[9px] text-text-tertiary whitespace-pre-wrap font-mono leading-tight">{filePreview}</pre>
         </div>
       )}

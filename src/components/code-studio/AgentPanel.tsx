@@ -17,6 +17,7 @@ import { ActionBar } from "@/components/ui/ActionBar";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { SagaOrchestrator } from "@/lib/noa/saga-transaction";
+import { logger } from "@/lib/logger";
 
 type AgentMode = "idle" | "planning" | "executing" | "paused" | "complete" | "error";
 
@@ -235,7 +236,9 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       // 모드별 에이전트 프리셋 적용
       setAgentPreset(agentMode === "verify" ? VERIFY_ONLY_ROLES : GENERATE_AND_VERIFY_ROLES);
       autoStartedRef.current = true;
-    } catch { /* */ }
+    } catch (err) {
+      logger.warn("AgentPanel.autoSeed", "failed to read task seed from localStorage", err);
+    }
   }, []);
 
   // Mode is controlled explicitly via handleRun, handleReset, and abort handles.

@@ -141,6 +141,11 @@ export async function checkBundleSize(rootPath: string) {
 export async function runLighthouse(url: string) {
   const { execSync } = require('child_process');
 
+  // [C] URL 검증: http(s) 스키마만 허용, shell 특수문자 차단
+  if (!/^https?:\/\/[^\s"'`$<>|;&()]+$/.test(url)) {
+    return { performance: 0, accessibility: 0, bestPractices: 0, seo: 0, engine: 'lighthouse (invalid URL)' };
+  }
+
   try {
     const output = execSync(
       `npx lighthouse "${url}" --output=json --quiet --chrome-flags="--headless --no-sandbox" 2>/dev/null`,

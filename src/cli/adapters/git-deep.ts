@@ -6,9 +6,11 @@
 
 const { execSync } = require('child_process');
 
-// Shell argument sanitizer — injection 방지
+// Shell argument sanitizer — injection + git option injection 방지
+// - shell 특수문자 제거
+// - 선행 '-' 제거: "-oexec=..." 같은 git option으로 오인되는 것 차단
 function sanitize(arg: string): string {
-  return arg.replace(/[`$\\!;"'|&<>(){}]/g, '');
+  return arg.replace(/[`$\\!;"'|&<>(){}]/g, '').replace(/^-+/, '');
 }
 
 // ============================================================

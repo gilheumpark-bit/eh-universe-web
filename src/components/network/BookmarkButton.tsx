@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { L2, useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { addBookmark, isBookmarked, removeBookmark } from "@/lib/network-firestore";
+import { logger } from "@/lib/logger";
 
 // ============================================================
 // PART 1 - LABELS
@@ -49,8 +50,8 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
       try {
         const result = await isBookmarked(user.uid, planetId);
         if (!cancelled) setSaved(result);
-      } catch {
-        /* silent */
+      } catch (err) {
+        logger.warn('BookmarkButton', 'isBookmarked failed', err);
       }
     };
     void check();
@@ -82,7 +83,8 @@ export function BookmarkButton({ planetId, compact }: BookmarkButtonProps) {
       } else {
         await addBookmark(user.uid, planetId);
       }
-    } catch {
+    } catch (err) {
+      logger.warn('BookmarkButton', 'toggle bookmark failed', err);
       // Revert on failure
       setSaved(prev);
       setErrShake(true);

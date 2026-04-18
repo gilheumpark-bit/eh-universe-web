@@ -69,7 +69,9 @@ export function ActionBar({
       await navigator.clipboard.writeText(content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch { /* */ }
+    } catch {
+      // clipboard unavailable (HTTPS 아닐 때) — 조용히 스킵, 사용자에게 별도 경고 없음
+    }
   }, [content]);
 
   const handleShare = useCallback(async () => {
@@ -79,7 +81,10 @@ export function ActionBar({
       await copyShareLink(result.url);
       setShared(true);
       setTimeout(() => setShared(false), 2000);
-    } catch { /* fallback to copy */ handleCopy(); }
+    } catch {
+      // share 실패 시 copy로 폴백 (명시적 UX)
+      handleCopy();
+    }
   }, [content, title, shareType, handleCopy]);
 
   const handlePrint = useCallback(async () => {

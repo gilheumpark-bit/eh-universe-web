@@ -163,17 +163,13 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
 
   const endpoint = '/api/gemini-structured';
 
-  let response;
-  try {
-    response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(STRUCTURED_FETCH_TIMEOUT_MS),
-      body: payload,
-    });
-  } catch (err) {
-    throw err;
-  }
+  // [K] 중복 try/catch(rethrow) 제거 — fetch 예외는 호출자로 자연 전파
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(STRUCTURED_FETCH_TIMEOUT_MS),
+    body: payload,
+  });
 
   const data = await response.json().catch(() => null);
   if (response.ok) {

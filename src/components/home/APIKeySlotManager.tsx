@@ -13,6 +13,7 @@ import {
 import { useUnifiedSettings } from "@/lib/UnifiedSettingsContext";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { logger } from "@/lib/logger";
 
 const PROVIDERS = [
   { id: "gemini", name: "Gemini", color: "#4285f4", placeholder: "AIza...", models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"] },
@@ -82,7 +83,8 @@ export function APIKeySlotManager({ onClose }: Props) {
         }),
       });
       setTestResult(res.ok || res.status === 200);
-    } catch {
+    } catch (err) {
+      logger.warn('APIKeySlotManager', 'key test request failed, falling back to length check', err);
       // [시뮬레이션] 네트워크 에러 시 길이 기반 폴백
       setTestResult(keyInput.trim().length > 5);
     }

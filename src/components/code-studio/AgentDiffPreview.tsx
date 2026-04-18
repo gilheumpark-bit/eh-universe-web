@@ -84,9 +84,9 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
 
   return (
     <div
-      className="fixed inset-0 z-300 flex bg-black/60"
+      className="fixed inset-0 flex bg-black/60"
       onKeyDown={handleKeyDown} tabIndex={0}
-      style={{ animation: "fadeIn 0.15s ease-out" }}
+      style={{ animation: "fadeIn 0.15s ease-out", zIndex: 'var(--z-modal)' }}
     >
       <div className="flex flex-col w-full max-w-[1200px] mx-auto my-4 bg-bg-primary rounded-xl shadow-2xl overflow-hidden border border-border"
         style={{ animation: "slideIn 0.2s ease-out" }}>

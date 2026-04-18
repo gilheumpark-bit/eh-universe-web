@@ -416,7 +416,7 @@ const DATASET_MAP: Record<string, { category: string; tags: string[] }> = {
 };
 
 export function loadExternalReferences(basePath: string): { loaded: number; skipped: number } {
-  const { readdirSync, _statSync } = require('fs');
+  const { readdirSync } = require('fs');
   let loaded = 0;
   let skipped = 0;
 

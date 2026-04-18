@@ -127,9 +127,15 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
         <div className="flex gap-2 mt-4 pt-4 border-t border-white/8">
           <button
             onClick={() => {
-              const url = typeof window !== 'undefined' ? window.location.href : '';
+              if (typeof window === 'undefined') return;
+              const url = window.location.href;
               const text = `${planet.name} — EH Universe`;
-              window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+              // [C] window.open 3번째 인자 'noopener,noreferrer' — 새 탭이 opener 참조 차단
+              window.open(
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                '_blank',
+                'noopener,noreferrer',
+              );
             }}
             className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-text-secondary hover:bg-white/10 transition-colors"
           >
@@ -137,8 +143,12 @@ export function PlanetHeaderCard({ planet, lang, ownerName, actions }: PlanetHea
           </button>
           <button
             onClick={() => {
-              const url = typeof window !== 'undefined' ? window.location.href : '';
-              navigator.clipboard.writeText(url);
+              if (typeof window === 'undefined') return;
+              const url = window.location.href;
+              // [C] clipboard.writeText 실패 시 silent — HTTPS 아닐 때 throw
+              navigator.clipboard?.writeText(url).catch(() => {
+                /* clipboard unavailable — ignore */
+              });
             }}
             className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-text-secondary hover:bg-white/10 transition-colors"
           >

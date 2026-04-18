@@ -216,7 +216,8 @@ export default function CommandPalette({
   return (
     // Overlay
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 flex items-start justify-center pt-[15vh]"
+      style={{ zIndex: 'var(--z-modal)' }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"

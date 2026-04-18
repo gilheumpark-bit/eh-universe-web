@@ -45,7 +45,7 @@ function createSnippet(data: Omit<CodeSnippet, 'id' | 'createdAt' | 'updatedAt'>
   const now = Date.now();
   const snippet: CodeSnippet = {
     ...data,
-    id: `snip-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `snip-${now}-${crypto.randomUUID().slice(0, 8)}`,
     createdAt: now,
     updatedAt: now,
   };

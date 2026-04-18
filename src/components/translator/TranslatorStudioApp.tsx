@@ -1290,6 +1290,13 @@ export default function TranslatorStudioApp() {
       }
 
       const reader = new FileReader();
+      // [C] onerror 누락 가드 — 파일 읽기 실패 시 alert + input 초기화
+      reader.onerror = () => {
+        void (async () => {
+          await alert('파일을 읽을 수 없습니다. 다시 시도해 주세요.');
+          input.value = '';
+        })();
+      };
       reader.onload = () => {
         void (async () => {
           try {

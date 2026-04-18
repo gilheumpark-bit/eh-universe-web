@@ -122,7 +122,7 @@ interface _VerifyResult {
 export async function runVerify(path: string, opts: VerifyOptions): Promise<void> {
   const threshold = Math.max(0, Math.min(100, parseInt(opts.threshold, 10) || 77));
   const startTime = performance.now();
-  const { printHeader, _printScore, printSection, icons, colors } = require('../core/terminal-compat');
+  const { printHeader, printSection, icons, colors } = require('../core/terminal-compat');
 
   printHeader(opts.diff ? '증분 검증 (git diff)' : '8팀 검증');
   console.log('');
@@ -417,7 +417,7 @@ export async function runVerify(path: string, opts: VerifyOptions): Promise<void
 
   try {
     const { loadBaseline, filterByBaseline, initBaseline } = require('../core/baseline');
-    const { parseSuppressions, applySuppression, _loadIgnorePatterns, _isIgnored } = require('../core/suppression');
+    const { parseSuppressions, applySuppression } = require('../core/suppression');
 
     // --init-baseline: 현재 결과를 baseline으로 저장
     if (opts.initBaseline) {
