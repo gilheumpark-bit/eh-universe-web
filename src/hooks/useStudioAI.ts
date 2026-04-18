@@ -73,6 +73,44 @@ function buildHFCPPrefix(hfcpResult: ReturnType<typeof processHFCPTurn>): string
   return raw ? `\n${raw}\n` : '';
 }
 
+/** 출력 모드 라벨 — handleSend/handleRegenerate 공용 */
+const OUTPUT_MODE_LABELS: Record<string, string> = {
+  'draft': '',
+  'dialogue-boost': '[출력 모드: 대화문 강화 — 대화 비율 60% 이상]',
+  'description-boost': '[출력 모드: 묘사 강화 — 배경/감각/내면 묘사 중심]',
+  'ending-hook': '[출력 모드: 엔딩 훅 강화 — 마지막 3문장에 강한 클리프행어]',
+  'bridge': '[출력 모드: 연결부 — 이전 에피소드와 자연스럽게 이어지는 브릿지]',
+};
+
+/** 출력 모드 prefix */
+function buildOutputModePrefix(advancedOutputMode?: string): string {
+  if (!advancedOutputMode) return '';
+  const label = OUTPUT_MODE_LABELS[advancedOutputMode];
+  return label ? `\n${label}\n` : '';
+}
+
+/** Advanced Writing Settings를 프롬프트 prefix 문자열로 변환 */
+function buildAdvancedPrefix(advancedSettings: import('@/components/studio/AdvancedWritingPanel').AdvancedWritingSettings | undefined): string {
+  if (!advancedSettings) return '';
+  const adv = advancedSettings;
+  const parts: string[] = [];
+  if (adv.sceneGoals && adv.sceneGoals.length > 0) {
+    parts.push(`- 장면 목표(Scene Goals): ${adv.sceneGoals.join(', ')}`);
+  }
+  if (adv.constraints) {
+    parts.push(`- 시점(POV): ${adv.constraints.pov}`);
+    parts.push(`- 대화 비율(Dialogue Ratio): 약 ${adv.constraints.dialogueRatio}%`);
+    parts.push(`- 템포(Tempo): ${adv.constraints.tempo}`);
+    parts.push(`- 문장 길이(Sentence Length): ${adv.constraints.sentenceLen}`);
+    parts.push(`- 감정 노출도(Emotion Exposure): ${adv.constraints.emotionExposure}`);
+  }
+  if (adv.includes) parts.push(`- 필수 포함 요소(Must Include): ${adv.includes}`);
+  if (adv.excludes) parts.push(`- 절대 금지 요소(Must Exclude): ${adv.excludes}`);
+  return parts.length > 0
+    ? `\n[ADVANCED WRITING SETTINGS — 고급 집필 설정]\n${parts.join('\n')}\n`
+    : '';
+}
+
 // ============================================================
 // PART 2 — Hook implementation
 // ============================================================
@@ -152,34 +190,8 @@ export function useStudioAI({
     const hfcpResult = processHFCPTurn(hfcpState, text);
     const hfcpPrefixWrapped = buildHFCPPrefix(hfcpResult);
     const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
-    const OUTPUT_MODE_LABELS: Record<string, string> = {
-      'draft': '', 'dialogue-boost': '[출력 모드: 대화문 강화 — 대화 비율 60% 이상]',
-      'description-boost': '[출력 모드: 묘사 강화 — 배경/감각/내면 묘사 중심]',
-      'ending-hook': '[출력 모드: 엔딩 훅 강화 — 마지막 3문장에 강한 클리프행어]',
-      'bridge': '[출력 모드: 연결부 — 이전 에피소드와 자연스럽게 이어지는 브릿지]',
-    };
-    const outputModePrefix = advancedOutputMode && OUTPUT_MODE_LABELS[advancedOutputMode] ? `\n${OUTPUT_MODE_LABELS[advancedOutputMode]}\n` : '';
-
-    let advancedPrefix = '';
-    // Advanced Writing Settings 적용 (집필 스튜디오 고도화)
-    if (advancedSettings) {
-      const adv = advancedSettings;
-      const parts = [];
-      if (adv.sceneGoals && adv.sceneGoals.length > 0) parts.push(`- 장면 목표(Scene Goals): ${adv.sceneGoals.join(', ')}`);
-      if (adv.constraints) {
-        parts.push(`- 시점(POV): ${adv.constraints.pov}`);
-        parts.push(`- 대화 비율(Dialogue Ratio): 약 ${adv.constraints.dialogueRatio}%`);
-        parts.push(`- 템포(Tempo): ${adv.constraints.tempo}`);
-        parts.push(`- 문장 길이(Sentence Length): ${adv.constraints.sentenceLen}`);
-        parts.push(`- 감정 노출도(Emotion Exposure): ${adv.constraints.emotionExposure}`);
-      }
-      if (adv.includes) parts.push(`- 필수 포함 요소(Must Include): ${adv.includes}`);
-      if (adv.excludes) parts.push(`- 절대 금지 요소(Must Exclude): ${adv.excludes}`);
-      
-      if (parts.length > 0) {
-        advancedPrefix = `\n[ADVANCED WRITING SETTINGS — 고급 집필 설정]\n${parts.join('\n')}\n`;
-      }
-    }
+    const outputModePrefix = buildOutputModePrefix(advancedOutputMode);
+    const advancedPrefix = buildAdvancedPrefix(advancedSettings);
 
     const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(), meta: { hfcpMode: hfcpResult.mode, hfcpVerdict: hfcpResult.verdict, hfcpScore: hfcpResult.score } as Message['meta'] };
     const aiMsgId = `a-${Date.now()}`;

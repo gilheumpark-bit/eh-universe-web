@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-
-type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
+import type { WritingMode } from '@/lib/studio-types';
 
 interface StudioUIState {
   // Layout & Visibility

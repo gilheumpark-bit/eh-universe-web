@@ -18,9 +18,7 @@ const TypoPanel = dynamic(() => import('@/components/studio/TypoPanel'), { ssr: 
 const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'), { ssr: false, loading: () => null });
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: () => null });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: () => null });
-const _DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false, loading: () => null });
 const EngineDashboard = dynamic(() => import('@/components/studio/EngineDashboard'), { ssr: false, loading: () => null });
-const _EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScenePanel'), { ssr: false, loading: () => null });
 
 interface WritingTabProps {
   language: AppLanguage;
