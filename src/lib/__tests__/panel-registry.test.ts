@@ -20,7 +20,7 @@ import {
 
 describe('PANEL_REGISTRY', () => {
   test('has expected entry count (update when panels are added/removed)', () => {
-    expect(PANEL_REGISTRY).toHaveLength(51);
+    expect(PANEL_REGISTRY).toHaveLength(52);
   });
 
   test('all IDs are unique', () => {
@@ -98,7 +98,7 @@ describe('getPanelDef', () => {
     const def = getPanelDef('chat');
     expect(def).toBeDefined();
     expect(def!.id).toBe('chat');
-    expect(def!.label).toBe('AI Chat');
+    expect(def!.label).toBe('NOA Chat');
     expect(def!.icon).toBe('MessageSquare');
   });
 
@@ -186,12 +186,12 @@ describe('GROUP_LABELS', () => {
 describe('getPanelLabel', () => {
   test('returns Korean label for ko', () => {
     const def = getPanelDef('chat')!;
-    expect(getPanelLabel(def, 'ko')).toBe('AI 채팅');
+    expect(getPanelLabel(def, 'ko')).toBe('NOA 채팅');
   });
 
   test('returns English label for en', () => {
     const def = getPanelDef('chat')!;
-    expect(getPanelLabel(def, 'en')).toBe('AI Chat');
+    expect(getPanelLabel(def, 'en')).toBe('NOA Chat');
   });
 });
 

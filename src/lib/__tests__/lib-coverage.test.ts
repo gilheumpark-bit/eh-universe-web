@@ -107,14 +107,14 @@ import {
 } from '../code-studio/core/panel-registry';
 
 describe('panel-registry', () => {
-  it('PANEL_REGISTRY has 51 entries', () => {
-    expect(PANEL_REGISTRY).toHaveLength(51);
+  it('PANEL_REGISTRY has 52 entries', () => {
+    expect(PANEL_REGISTRY).toHaveLength(52);
   });
 
   it('getPanelDef finds a panel by id', () => {
     const chat = getPanelDef('chat');
     expect(chat).toBeDefined();
-    expect(chat!.label).toBe('AI Chat');
+    expect(chat!.label).toBe('NOA Chat');
     expect(chat!.group).toBe('editing');
   });
 

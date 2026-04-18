@@ -283,14 +283,14 @@ describe('detectHallucination', () => {
 describe('buildShadowPrompt', () => {
   it('returns empty string for a fully empty shadow', () => {
     const shadow = createDefaultShadow();
-    const result = buildShadowPrompt(shadow, 1, 10, true);
+    const result = buildShadowPrompt(shadow, 1, 10, 'KO');
     // arc state is always included since it's always computed
     expect(typeof result).toBe('string');
   });
 
   it('includes arc phase information', () => {
     const shadow = createDefaultShadow();
-    const result = buildShadowPrompt(shadow, 5, 10, false);
+    const result = buildShadowPrompt(shadow, 5, 10, 'EN');
     // Should contain PROGRESS since 5/10 = 0.5 (between 0.20 and 0.60)
     expect(result).toContain('PROGRESS');
   });
@@ -308,7 +308,7 @@ describe('buildShadowPrompt', () => {
       unresolvedObservations: [],
       pendingJudgments: [],
     });
-    const result = buildShadowPrompt(shadow, 1, 10, true);
+    const result = buildShadowPrompt(shadow, 1, 10, 'KO');
     expect(result).toContain('Alice');
     expect(result).toContain('happy');
     expect(result).toContain('find treasure');
@@ -328,7 +328,7 @@ describe('buildShadowPrompt', () => {
       unresolvedObservations: ['saw a shadow', 'heard a noise'],
       pendingJudgments: [],
     });
-    const result = buildShadowPrompt(shadow, 1, 10, false);
+    const result = buildShadowPrompt(shadow, 1, 10, 'EN');
     expect(result).toContain('saw a shadow');
     expect(result).toContain('heard a noise');
   });
@@ -341,7 +341,7 @@ describe('buildShadowPrompt', () => {
       activeThreats: ['wolves'],
       environmentalMood: 'ominous',
     };
-    const result = buildShadowPrompt(shadow, 1, 10, true);
+    const result = buildShadowPrompt(shadow, 1, 10, 'KO');
     expect(result).toContain('Dark Forest');
     expect(result).toContain('midnight');
     expect(result).toContain('ominous');
@@ -356,7 +356,7 @@ describe('buildShadowPrompt', () => {
       activeThreats: ['rain'],
       environmentalMood: 'calm',
     };
-    const result = buildShadowPrompt(shadow, 1, 10, true);
+    const result = buildShadowPrompt(shadow, 1, 10, 'KO');
     // world section should not appear since location is empty
     expect(result).not.toContain('rain');
   });
@@ -370,7 +370,7 @@ describe('buildShadowPrompt', () => {
       priority: 5,
       resolved: false,
     });
-    const result = buildShadowPrompt(shadow, 10, 20, true);
+    const result = buildShadowPrompt(shadow, 10, 20, 'KO');
     // episode 10 - introduced 1 = 9 >= 7 → overdue
     expect(result).toContain('mystery letter');
   });
@@ -385,7 +385,7 @@ describe('buildShadowPrompt', () => {
       resolved: false,
     });
     // episode 70 / total 100 = 0.70 → CLIMAX phase (0.60~0.85)
-    const result = buildShadowPrompt(shadow, 70, 100, false);
+    const result = buildShadowPrompt(shadow, 70, 100, 'EN');
     expect(result).toContain('CLIMAX');
     expect(result).toContain('final battle');
   });
@@ -400,7 +400,7 @@ describe('buildShadowPrompt', () => {
       resolved: false,
     });
     // episode 10 / total 100 = 0.10 → INTRO phase, not overdue either (10-5=5 < 7)
-    const result = buildShadowPrompt(shadow, 10, 100, false);
+    const result = buildShadowPrompt(shadow, 10, 100, 'EN');
     expect(result).not.toContain('final battle');
   });
 
@@ -417,8 +417,8 @@ describe('buildShadowPrompt', () => {
       unresolvedObservations: [],
       pendingJudgments: [],
     });
-    const ko = buildShadowPrompt(shadow, 5, 10, true);
-    const en = buildShadowPrompt(shadow, 5, 10, false);
+    const ko = buildShadowPrompt(shadow, 5, 10, 'KO');
+    const en = buildShadowPrompt(shadow, 5, 10, 'EN');
     // Both should include the character name regardless of language
     expect(ko).toContain('Test');
     expect(en).toContain('Test');

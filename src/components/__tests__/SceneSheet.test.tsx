@@ -1,10 +1,26 @@
 /**
  * SceneSheet — renders without crash (smoke test)
+ * useStudioUI 훅 사용 → StudioUIProvider 래핑 필요
  */
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SceneSheet from '../studio/SceneSheet';
+import { StudioUIProvider } from '@/contexts/StudioContext';
+
+const mockUIValue = {
+  activeTab: 'writing' as const,
+  handleTabChange: jest.fn(),
+  showConfirm: jest.fn(),
+  closeConfirm: jest.fn(),
+  setUxError: jest.fn(),
+  triggerSave: jest.fn(),
+  saveFlash: false,
+};
+
+function withProvider(children: React.ReactElement) {
+  return <StudioUIProvider value={mockUIValue}>{children}</StudioUIProvider>;
+}
 
 jest.mock('@/lib/i18n', () => ({
   createT: () => (key: string, fallback?: string) => fallback ?? key,
@@ -28,14 +44,14 @@ jest.mock('@/lib/grammar-packs', () => ({
 describe('SceneSheet', () => {
   it('renders without crashing with minimal props', () => {
     const { container } = render(
-      <SceneSheet lang="ko" synopsis="" characterNames={[]} />,
+      withProvider(<SceneSheet lang="ko" synopsis="" characterNames={[]} />),
     );
     expect(container.firstChild).toBeTruthy();
   });
 
   it('renders tab navigation UI', () => {
     const { container } = render(
-      <SceneSheet lang="ko" synopsis="" characterNames={[]} />,
+      withProvider(<SceneSheet lang="ko" synopsis="" characterNames={[]} />),
     );
     const buttons = container.querySelectorAll('button');
     expect(buttons.length).toBeGreaterThan(0);

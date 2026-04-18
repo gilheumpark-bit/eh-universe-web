@@ -86,28 +86,28 @@ describe('NRG', () => {
     state1.score = 60;
     resolveNRG(state1, '반복 질문');
     expect(resolveNRG(state1, '반복 질문')).toBe('light_variation');
-    expect(verdictToPromptModifier('normal_free', 'light_variation', true)).toContain('이전과 다른 구조로');
+    expect(verdictToPromptModifier('normal_free', 'light_variation', 'KO')).toContain('이전과 다른 구조로');
 
     // 2) 70 <= score < 100 -> frame_shift
     const state2 = createHFCPState();
     state2.score = 80;
     resolveNRG(state2, '반복 질문');
     expect(resolveNRG(state2, '반복 질문')).toBe('frame_shift');
-    expect(verdictToPromptModifier('normal_free', 'frame_shift', true)).toContain('다른 관점에서');
+    expect(verdictToPromptModifier('normal_free', 'frame_shift', 'KO')).toContain('다른 관점에서');
 
     // 3) 100 <= score < 130 -> perspective_shift
     const state3 = createHFCPState();
     state3.score = 110;
     resolveNRG(state3, '반복 질문');
     expect(resolveNRG(state3, '반복 질문')).toBe('perspective_shift');
-    expect(verdictToPromptModifier('normal_free', 'perspective_shift', true)).toContain('비평적 시점');
+    expect(verdictToPromptModifier('normal_free', 'perspective_shift', 'KO')).toContain('비평적 시점');
 
     // 4) 130 <= score -> meta_ack
     const state4 = createHFCPState();
     state4.score = 140;
     resolveNRG(state4, '반복 질문');
     expect(resolveNRG(state4, '반복 질문')).toBe('meta_ack');
-    expect(verdictToPromptModifier('normal_free', 'meta_ack', true)).toContain('다른 각도에서');
+    expect(verdictToPromptModifier('normal_free', 'meta_ack', 'KO')).toContain('다른 각도에서');
   });
 });
 
@@ -129,17 +129,17 @@ describe('processHFCPTurn', () => {
 
 describe('verdictToPromptModifier', () => {
   it('engagement = warm tone (KO)', () => {
-    const mod = verdictToPromptModifier('engagement', 'normal', true);
+    const mod = verdictToPromptModifier('engagement', 'normal', 'KO');
     expect(mod).toContain('적극');
   });
 
   it('silent = questions only (EN)', () => {
-    const mod = verdictToPromptModifier('silent', 'normal', false);
+    const mod = verdictToPromptModifier('silent', 'normal', 'EN');
     expect(mod).toContain('questions only');
   });
 
   it('NRG variation adds modifier', () => {
-    const mod = verdictToPromptModifier('normal_free', 'frame_shift', true);
+    const mod = verdictToPromptModifier('normal_free', 'frame_shift', 'KO');
     expect(mod).toContain('프레임 전환');
   });
 });

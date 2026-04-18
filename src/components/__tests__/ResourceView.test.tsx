@@ -1,10 +1,27 @@
 /**
  * ResourceView — renders character resource panel (smoke test)
+ * useStudioUI 훅 의존성 → StudioUIProvider로 래핑
  */
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ResourceView from '../studio/ResourceView';
+import { StudioUIProvider } from '@/contexts/StudioContext';
+
+// Stub UI context value (ResourceView only uses showConfirm/closeConfirm)
+const mockUIValue = {
+  activeTab: 'characters' as const,
+  handleTabChange: jest.fn(),
+  showConfirm: jest.fn(),
+  closeConfirm: jest.fn(),
+  setUxError: jest.fn(),
+  triggerSave: jest.fn(),
+  saveFlash: false,
+};
+
+function withProvider(children: React.ReactElement) {
+  return <StudioUIProvider value={mockUIValue}>{children}</StudioUIProvider>;
+}
 
 jest.mock('@/lib/studio-translations', () => ({
   TRANSLATIONS: {
@@ -99,14 +116,14 @@ describe('ResourceView', () => {
 
   it('renders without crashing', () => {
     const { container } = render(
-      <ResourceView language="KO" config={minConfig as never} setConfig={jest.fn()} />,
+      withProvider(<ResourceView language="KO" config={minConfig as never} setConfig={jest.fn()} />),
     );
     expect(container.firstChild).toBeTruthy();
   });
 
   it('shows the add character section', () => {
     const { container } = render(
-      <ResourceView language="KO" config={minConfig as never} setConfig={jest.fn()} />,
+      withProvider(<ResourceView language="KO" config={minConfig as never} setConfig={jest.fn()} />),
     );
     // The component should render at least one interactive element
     const buttons = container.querySelectorAll('button');

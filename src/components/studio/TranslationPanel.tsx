@@ -253,7 +253,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     }
   }, [batchMode, selectedEpisode, manuscripts, translationConfig, translateEpisode]);
 
-  const bandLbl = bandLabel(band, mode, isKO);
+  const bandLbl = bandLabel(band, mode, language);
 
   const translatedList = config.translatedManuscripts ?? [];
 
@@ -493,7 +493,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       {/* Mode selector - Nexus Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(["fidelity", "experience"] as TranslationMode[]).map((m) => {
-          const info = modeDescription(m, isKO);
+          const info = modeDescription(m, language);
           const isSelected = mode === m;
           return (
             <button

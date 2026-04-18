@@ -38,19 +38,24 @@ describe('estimateTokens', () => {
     expect(estimateTokens(text)).toBe(11);
   });
 
-  it('estimates CJK text at ~1.5 tokens per char', () => {
-    const text = '안녕하세요'; // 5 CJK chars => ceil(5 * 1.5) = 8
-    expect(estimateTokens(text)).toBe(8);
+  it('estimates Korean Hangul at ~2.0 tokens per char (jamo decomposition)', () => {
+    const text = '안녕하세요'; // 5 Hangul chars => ceil(5 * 2.0) = 10
+    expect(estimateTokens(text)).toBe(10);
   });
 
-  it('estimates mixed English and CJK text', () => {
-    const text = 'Hello 세계'; // 6 non-CJK + 2 CJK => ceil(6/4 + 2*1.5) = ceil(1.5+3) = 5
-    expect(estimateTokens(text)).toBe(5);
+  it('estimates mixed English and Korean text', () => {
+    const text = 'Hello 세계'; // "Hello " = 6 chars / 4 = 1.5, "세계" = 2 Hangul * 2.0 = 4.0 → ceil(5.5) = 6
+    expect(estimateTokens(text)).toBe(6);
   });
 
-  it('handles Japanese/Chinese CJK characters', () => {
-    const text = '日本語テスト'; // 6 CJK chars => ceil(6 * 1.5) = 9
+  it('handles Japanese kana + kanji mix', () => {
+    const text = '日本語テスト'; // 3 kanji (1.5) + 3 katakana (1.3) => ceil(4.5 + 3.9) = 9
     expect(estimateTokens(text)).toBe(9);
+  });
+
+  it('handles Chinese hanzi', () => {
+    const text = '你好世界'; // 4 hanzi => ceil(4 * 1.5) = 6
+    expect(estimateTokens(text)).toBe(6);
   });
 });
 

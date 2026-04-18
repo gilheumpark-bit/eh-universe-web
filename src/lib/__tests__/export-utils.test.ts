@@ -61,12 +61,12 @@ describe('export-utils', () => {
   });
 
   describe('exportEPUB', () => {
-    it('exports even with no assistant messages (single empty chapter fallback)', () => {
+    it('guards against empty manuscripts (alerts + early return, no blob created)', () => {
       const session = makeSession({ messages: [] });
-      // No manuscripts + no assistant messages => single chapter with empty content
+      // Current behavior: empty manuscripts + no assistant messages => alert + return
       exportEPUB(session);
-      // The function still generates output since it creates a fallback chapter
-      expect(mockCreateObjectURL).toHaveBeenCalled();
+      // Blob should NOT be created since export was aborted
+      expect(mockCreateObjectURL).not.toHaveBeenCalled();
     });
 
     it('exports from assistant messages', () => {

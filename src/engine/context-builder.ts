@@ -145,7 +145,7 @@ function buildTieredEpisodeSummaries(
       // Shadow State 힌트를 Tier B에 인라인 주입
       if (shadowState) {
         const total = totalEpisodes ?? 25;
-        const shadowHint = buildShadowPrompt(shadowState, currentEpisode, total, isKO);
+        const shadowHint = buildShadowPrompt(shadowState, currentEpisode, total, isKO ? 'KO' : 'EN');
         if (shadowHint) {
           tierBText += isKO
             ? `\n[서사 파수꾼 상태]:\n${shadowHint}`

@@ -842,39 +842,41 @@ function langName(lang: TranslationTarget): string {
 function clamp01(v: number): number { return Math.max(0, Math.min(1, v)); }
 function round3(v: number): number { return Math.round(v * 1000) / 1000; }
 
-/** Band 값 → 사용자 레이블 (모드별) */
-export function bandLabel(band: number, mode: TranslationMode, isKO: boolean): string {
+/** Band 밴드 라벨 — 4개 언어 네이티브 */
+const BAND_LABELS: Record<AppLanguage, { fidelity: string[]; experience: string[] }> = {
+  KO: {
+    fidelity: ['자연스러움 허용', '약간의 보정', '원문 유지 (기본)', '원문 고수', '직역'],
+    experience: ['적극 재창조', '능동 적응', '균형 재현 (기본)', '보수적 재현', '최소 재현'],
+  },
+  EN: {
+    fidelity: ['Naturalization allowed', 'Slight adjustment', 'Source-faithful (default)', 'Source-strict', 'Near-literal'],
+    experience: ['Full recreation', 'Active adaptation', 'Balanced recreation (default)', 'Conservative recreation', 'Minimal recreation'],
+  },
+  JP: {
+    fidelity: ['自然さを許容', 'わずかな補正', '原文維持 (基本)', '原文厳守', '直訳'],
+    experience: ['積極的再創造', '能動的適応', 'バランス再現 (基本)', '保守的再現', '最小限再現'],
+  },
+  CN: {
+    fidelity: ['允许自然化', '轻微调整', '忠于原文 (基本)', '严守原文', '直译'],
+    experience: ['全面再创作', '主动适应', '平衡再现 (基本)', '保守再现', '最小再现'],
+  },
+};
+
+/** Band 값 → 사용자 레이블 (모드별, 4개 언어) */
+export function bandLabel(band: number, mode: TranslationMode, language: AppLanguage): string {
   const b = clampBand(band);
   const delta = b - BAND_DEFAULT;
+  const L = BAND_LABELS[language] ?? BAND_LABELS.EN;
+  const labels = mode === 'fidelity' ? L.fidelity : L.experience;
 
-  if (mode === 'fidelity') {
-    if (isKO) {
-      if (delta <= -0.012) return '자연스러움 허용';
-      if (delta <= -0.004) return '약간의 보정';
-      if (delta <= 0.004) return '원문 유지 (기본)';
-      if (delta <= 0.012) return '원문 고수';
-      return '직역';
-    }
-    if (delta <= -0.012) return 'Naturalization allowed';
-    if (delta <= -0.004) return 'Slight adjustment';
-    if (delta <= 0.004) return 'Source-faithful (default)';
-    if (delta <= 0.012) return 'Source-strict';
-    return 'Near-literal';
-  }
-
-  // MODE2: Experience
-  if (isKO) {
-    if (delta <= -0.012) return '적극 재창조';
-    if (delta <= -0.004) return '능동 적응';
-    if (delta <= 0.004) return '균형 재현 (기본)';
-    if (delta <= 0.012) return '보수적 재현';
-    return '최소 재현';
-  }
-  if (delta <= -0.012) return 'Full recreation';
-  if (delta <= -0.004) return 'Active adaptation';
-  if (delta <= 0.004) return 'Balanced recreation (default)';
-  if (delta <= 0.012) return 'Conservative recreation';
-  return 'Minimal recreation';
+  // delta 범위 → 인덱스 매핑 (−0.012 미만 ~ 0.012 초과)
+  let idx = 2; // 기본(중간)
+  if (delta <= -0.012) idx = 0;
+  else if (delta <= -0.004) idx = 1;
+  else if (delta <= 0.004) idx = 2;
+  else if (delta <= 0.012) idx = 3;
+  else idx = 4;
+  return labels[idx];
 }
 
 /** Band 메타데이터 */
@@ -886,16 +888,30 @@ export const BAND_META = {
   steps: Math.round((BAND_MAX - BAND_MIN) / BAND_STEP) + 1, // 41
 } as const;
 
-/** 모드 설명 */
-export function modeDescription(mode: TranslationMode, isKO: boolean): { title: string; desc: string } {
-  if (mode === 'fidelity') {
-    return isKO
-      ? { title: 'MODE 1 — 원문 보존', desc: '원문의 구조, 문장 형식, 리듬을 최대한 유지하며 번역합니다.' }
-      : { title: 'MODE 1 — Source Preservation', desc: 'Preserves the original structure, sentence form, and rhythm.' };
-  }
-  return isKO
-    ? { title: 'MODE 2 — 독자 경험', desc: '감정선을 보존하되, 타겟 독자의 몰입을 위해 리듬 재구성과 문화 적응을 허용합니다. 무근거 보강과 번역자 세공은 차단됩니다.' }
-    : { title: 'MODE 2 — Reader Experience', desc: 'Preserves emotional arc while allowing rhythm restructuring and cultural adaptation. Groundless additions and translator literary polish are blocked.' };
+/** 모드 설명 — 4개 언어 네이티브 */
+const MODE_DESCRIPTIONS: Record<AppLanguage, Record<TranslationMode, { title: string; desc: string }>> = {
+  KO: {
+    fidelity: { title: 'MODE 1 — 원문 보존', desc: '원문의 구조, 문장 형식, 리듬을 최대한 유지하며 번역합니다.' },
+    experience: { title: 'MODE 2 — 독자 경험', desc: '감정선을 보존하되, 타겟 독자의 몰입을 위해 리듬 재구성과 문화 적응을 허용합니다. 무근거 보강과 번역자 세공은 차단됩니다.' },
+  },
+  EN: {
+    fidelity: { title: 'MODE 1 — Source Preservation', desc: 'Preserves the original structure, sentence form, and rhythm.' },
+    experience: { title: 'MODE 2 — Reader Experience', desc: 'Preserves emotional arc while allowing rhythm restructuring and cultural adaptation. Groundless additions and translator literary polish are blocked.' },
+  },
+  JP: {
+    fidelity: { title: 'MODE 1 — 原文保存', desc: '原文の構造、文形式、リズムを最大限維持して翻訳します。' },
+    experience: { title: 'MODE 2 — 読者体験', desc: '感情線を保存しつつ、ターゲット読者の没入のためにリズム再構成と文化適応を許容します。根拠なき補強と翻訳者文学的磨きは遮断されます。' },
+  },
+  CN: {
+    fidelity: { title: 'MODE 1 — 原文保留', desc: '最大限度保留原文的结构、句式与节奏进行翻译。' },
+    experience: { title: 'MODE 2 — 读者体验', desc: '保留情感弧，同时允许重构节奏与文化适应以提升目标读者沉浸感。无据增补与译者文学润色被阻断。' },
+  },
+};
+
+/** 모드 설명 — 4개 언어 지원 */
+export function modeDescription(mode: TranslationMode, language: AppLanguage): { title: string; desc: string } {
+  const L = MODE_DESCRIPTIONS[language] ?? MODE_DESCRIPTIONS.EN;
+  return L[mode];
 }
 
 // ============================================================

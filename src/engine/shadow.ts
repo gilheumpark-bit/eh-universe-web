@@ -124,8 +124,7 @@ import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
 /** Wired into pipeline.ts via config.shadowState → buildShadowPrompt() → [NARRATIVE SENTINEL] block */
-export function buildShadowPrompt(shadow: ShadowState, episode: number, totalEpisodes: number, isKO: boolean): string {
-  const language: AppLanguage = isKO ? 'KO' : 'EN';
+export function buildShadowPrompt(shadow: ShadowState, episode: number, totalEpisodes: number, language: AppLanguage): string {
   const t = createT(language);
   const parts: string[] = [];
 

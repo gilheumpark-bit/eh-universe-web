@@ -95,31 +95,44 @@ describe('adaptiveChunkSize', () => {
 
 describe('bandLabel', () => {
   it('fidelity 모드 KO 라벨 반환', () => {
-    const label = bandLabel(3, 'fidelity', true);
+    const label = bandLabel(0.5, 'fidelity', 'KO');
     expect(typeof label).toBe('string');
     expect(label.length).toBeGreaterThan(0);
   });
   it('experience 모드 EN 라벨 반환', () => {
-    const label = bandLabel(4, 'experience', false);
+    const label = bandLabel(0.5, 'experience', 'EN');
     expect(typeof label).toBe('string');
   });
-  it('band 1~5 모든 값 처리', () => {
-    for (let b = 1; b <= 5; b++) {
-      expect(() => bandLabel(b, 'fidelity', true)).not.toThrow();
+  it('4개 언어 전수 처리 (band 기본값 0.5)', () => {
+    const langs: ('KO' | 'EN' | 'JP' | 'CN')[] = ['KO', 'EN', 'JP', 'CN'];
+    for (const lang of langs) {
+      expect(() => bandLabel(0.5, 'fidelity', lang)).not.toThrow();
+      expect(() => bandLabel(0.5, 'experience', lang)).not.toThrow();
     }
+  });
+  it('JP/CN 네이티브 라벨 반환', () => {
+    const jp = bandLabel(0.5, 'fidelity', 'JP');
+    const cn = bandLabel(0.5, 'fidelity', 'CN');
+    expect(jp).not.toBe(cn); // 언어별로 다른 문자열
   });
 });
 
 describe('modeDescription', () => {
   it('fidelity 모드 설명 KO 반환', () => {
-    const desc = modeDescription('fidelity', true);
+    const desc = modeDescription('fidelity', 'KO');
     expect(desc).toHaveProperty('title');
     expect(desc).toHaveProperty('desc');
     expect(desc.title.length).toBeGreaterThan(0);
   });
   it('experience 모드 설명 EN 반환', () => {
-    const desc = modeDescription('experience', false);
+    const desc = modeDescription('experience', 'EN');
     expect(desc).toHaveProperty('title');
     expect(desc.desc.length).toBeGreaterThan(0);
+  });
+  it('JP/CN 네이티브 설명', () => {
+    const jp = modeDescription('fidelity', 'JP');
+    const cn = modeDescription('fidelity', 'CN');
+    expect(jp.title).toContain('原文');
+    expect(cn.title).toContain('原文');
   });
 });

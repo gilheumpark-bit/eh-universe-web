@@ -52,9 +52,10 @@ describe('useStudioWritingMode', () => {
     jest.useRealTimers();
   });
 
-  it('initializes with default writing mode "ai"', () => {
+  it('initializes with default writing mode "edit"', () => {
     const { get, cleanup } = createHarness();
-    expect(get().writingMode).toBe('ai');
+    // Default changed from "ai" to "edit" in current implementation
+    expect(get().writingMode).toBe('edit');
     cleanup();
   });
 

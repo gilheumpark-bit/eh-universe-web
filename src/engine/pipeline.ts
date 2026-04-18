@@ -780,7 +780,7 @@ ${isKO ? '화당 분량' : 'Episode Length'}: ${gp.episodeLength.min.toLocaleStr
       config.shadowState,
       config.episode,
       config.totalEpisodes,
-      isKO
+      language
     );
   }
 

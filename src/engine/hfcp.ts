@@ -170,8 +170,7 @@ export function resolveNRG(state: HFCPState, inputText: string): NRGStrategy {
 import type { AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 
-export function verdictToPromptModifier(verdict: HFCPVerdict, nrg: NRGStrategy, isKO: boolean): string {
-  const language: AppLanguage = isKO ? 'KO' : 'EN';
+export function verdictToPromptModifier(verdict: HFCPVerdict, nrg: NRGStrategy, language: AppLanguage): string {
   const t = createT(language);
   const parts: string[] = [];
 
@@ -306,8 +305,9 @@ export function processHFCPTurn(state: HFCPState, userInput: string): {
   state.verdict = verdict;
   state.nrgStrategy = nrg;
 
-  const isKO = /[가-힣]/.test(userInput);
-  const promptModifier = verdictToPromptModifier(verdict, nrg, isKO);
+  // 입력에 한글이 포함되면 KO, 아니면 EN (향후 lang 감지 고도화 가능)
+  const hasKorean = /[가-힣]/.test(userInput);
+  const promptModifier = verdictToPromptModifier(verdict, nrg, hasKorean ? 'KO' : 'EN');
 
   return { mode, verdict, nrg, score: state.score, promptModifier };
 }

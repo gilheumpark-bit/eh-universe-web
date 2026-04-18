@@ -25,12 +25,17 @@ const mockGetPreferredModel = jest.fn().mockReturnValue('gemini-2.5-flash');
 const mockGetActiveModel = jest.fn().mockReturnValue('gemini-2.5-flash');
 const mockStreamChat = jest.fn();
 
-jest.mock('@/lib/ai-providers', () => ({
-  getApiKey: (...args: unknown[]) => mockGetApiKey(...args),
-  getPreferredModel: (...args: unknown[]) => mockGetPreferredModel(...args),
-  getActiveModel: (...args: unknown[]) => mockGetActiveModel(...args),
-  streamChat: (...args: unknown[]) => mockStreamChat(...args),
-}));
+jest.mock('@/lib/ai-providers', () => {
+  const actual = jest.requireActual('@/lib/ai-providers');
+  return {
+    ...actual,
+    getApiKey: (...args: unknown[]) => mockGetApiKey(...args),
+    getPreferredModel: (...args: unknown[]) => mockGetPreferredModel(...args),
+    getActiveModel: (...args: unknown[]) => mockGetActiveModel(...args),
+    streamChat: (...args: unknown[]) => mockStreamChat(...args),
+    hasDgxService: () => false, // 표준 Gemini API 경로로 라우팅
+  };
+});
 
 // engine/pipeline
 const mockBuildSystemInstruction = jest.fn().mockReturnValue('system-instruction');
