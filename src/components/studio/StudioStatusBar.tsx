@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { Save, Circle, Loader2, Cpu, Zap, Timer, Coffee } from 'lucide-react';
+import { Save, Circle, Loader2, Cpu, Zap, Timer, Coffee, AlertCircle, HardDrive } from 'lucide-react';
 import type { AppLanguage, ChatSession } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import WordCountBadge from '@/components/studio/WordCountBadge';
 import { useSessionTimer, formatSessionTime, formatDailyTime } from '@/hooks/useSessionTimer';
+import { useSparkHealth } from '@/hooks/useSparkHealth';
+import { useStorageQuota, formatBytes } from '@/hooks/useStorageQuota';
 
 interface StudioStatusBarProps {
   editDraft: string;
@@ -54,6 +56,12 @@ export function StudioStatusBar({
   const { state: session, config: sessionCfg, progress } = useSessionTimer({
     totalChars: stats.chars,
   });
+  // DGX Spark 헬스 — 다운 감지 시 BYOK 폴백 배지
+  const { state: sparkState, canFallback, activeEngine } = useSparkHealth();
+  const showDgxDownBadge = SPARK_SERVER_URL && sparkState.status === 'down';
+  // IndexedDB 용량 — 70%+ 배지, hover 상세
+  const { state: quotaState } = useStorageQuota();
+  const showQuotaBadge = quotaState.supported && quotaState.percentUsed !== null && quotaState.percentUsed >= 70;
   const sessionActive = session.startedAt > 0;
   const pomodoroActive = session.pomodoroPhase !== 'off';
   const pomodoroLabel = session.pomodoroPhase === 'work'
@@ -243,9 +251,40 @@ export function StudioStatusBar({
               {isKO ? '자동 저장' : 'Auto-saved'}
             </span>
           )}
+          {/* 저장 공간 배지 — 70%+ 경고 */}
+          {showQuotaBadge && quotaState.percentUsed !== null && (
+            <>
+              <span className="text-border">|</span>
+              <span
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded border ${
+                  quotaState.level === 'critical'
+                    ? 'bg-accent-red/10 border-accent-red/30 text-accent-red'
+                    : 'bg-accent-amber/10 border-accent-amber/30 text-accent-amber'
+                }`}
+                title={`${formatBytes(quotaState.usage)} / ${formatBytes(quotaState.quota)} (${quotaState.percentUsed.toFixed(1)}%)`}
+                data-testid="status-storage-quota"
+              >
+                <HardDrive className="w-2.5 h-2.5" />
+                <span className="font-bold">{Math.round(quotaState.percentUsed)}%</span>
+              </span>
+            </>
+          )}
           <span className="text-border">|</span>
-          {/* AI 엔진 뱃지 */}
-          {SPARK_SERVER_URL ? (
+          {/* AI 엔진 뱃지 — DGX 우선, 다운 시 BYOK 자동 표시 */}
+          {showDgxDownBadge ? (
+            <span
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-amber/10 border border-accent-amber/30 text-accent-amber"
+              title={sparkState.message || ''}
+              data-testid="status-spark-down"
+            >
+              <AlertCircle className="w-2.5 h-2.5" />
+              <span className="font-bold">
+                {activeEngine === 'byok' && canFallback
+                  ? (isKO ? '로컬 다운 — BYOK' : 'DGX down — BYOK')
+                  : (isKO ? '로컬 엔진 다운' : 'DGX down')}
+              </span>
+            </span>
+          ) : SPARK_SERVER_URL ? (
             <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-purple/10 border border-accent-purple/20">
               <Zap className="w-2.5 h-2.5 text-accent-purple" />
               <span className="text-accent-purple font-bold">DGX 128GB</span>

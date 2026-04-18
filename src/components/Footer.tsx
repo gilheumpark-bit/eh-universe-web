@@ -58,10 +58,28 @@ export default function Footer() {
               {T({ ko: "이용약관", en: "Terms", ja: "利用規約", zh: "服务条款" })}
             </Link>
             <Link
+              href="/copyright"
+              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+            >
+              {T({ ko: "저작권", en: "Copyright", ja: "著作権", zh: "著作权" })}
+            </Link>
+            <Link
+              href="/ai-disclosure"
+              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+            >
+              {T({ ko: "AI 고지", en: "AI Disclosure", ja: "AI告知", zh: "AI 告知" })}
+            </Link>
+            <Link
               href="/about"
               className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
             >
               {T({ ko: "소개", en: "About", ja: "紹介", zh: "关于" })}
+            </Link>
+            <Link
+              href="/changelog"
+              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+            >
+              {T({ ko: "변경 이력", en: "Changelog", ja: "変更履歴", zh: "更新日志" })}
             </Link>
             <a
               href="mailto:gilheumpark@gmail.com"

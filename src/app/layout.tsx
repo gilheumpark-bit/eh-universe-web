@@ -10,6 +10,7 @@ import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { MainContentRegion } from "@/components/MainContentRegion";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
+import TermsUpdateBanner from "@/components/legal/TermsUpdateBanner";
 import "@/lib/env"; // validate environment variables at startup
 import {
   IBM_Plex_Mono,
@@ -61,6 +62,9 @@ export const viewport = {
   ],
 };
 
+// [C] env fallback — 도메인 미확정/배포 환경 차이 대응. 기본값은 현행 운영 도메인.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://eh-universe.com";
+
 export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
@@ -78,28 +82,65 @@ export const metadata: Metadata = {
     template: "로어가드 | %s",
   },
   description:
-    "로어가드(Loreguard) — AI 소설 집필 스튜디오. 창작부터 번역·출판까지 한 흐름으로.",
-  metadataBase: new URL("https://eh-universe.com"),
+    "로어가드(Loreguard) — AI 소설 집필 스튜디오. 창작부터 번역·출판까지 한 흐름으로. 한국 웹소설의 해외 진출 OS.",
+  applicationName: "Loreguard",
+  keywords: [
+    "소설", "AI 소설", "집필", "번역", "웹소설", "IDE",
+    "Loreguard", "로어가드", "한국어 번역", "AI IDE",
+    "Novel Studio", "Translation Studio", "NOA", "EH Universe",
+  ],
+  authors: [{ name: "박길흠", url: "https://github.com/gilheumpark-bit" }],
+  creator: "박길흠",
+  publisher: "EH Universe",
+  category: "Writing Software",
+  metadataBase: new URL(SITE_URL),
   alternates: {
-    canonical: "https://eh-universe.com",
+    canonical: "/",
+    languages: {
+      "ko-KR": "/",
+      "en-US": "/?lang=en",
+      "ja-JP": "/?lang=ja",
+      "zh-CN": "/?lang=zh",
+    },
   },
   openGraph: {
     title: "로어가드 — 창작에서 번역·출판까지 잇는 집필 OS",
     description:
       "로어가드(Loreguard) — EH의 집필 OS. 창작·번역·출판을 하나의 파이프라인으로.",
+    url: SITE_URL,
+    siteName: "Loreguard",
+    locale: "ko_KR",
+    alternateLocale: ["en_US", "ja_JP", "zh_CN"],
     type: "website",
-    url: "https://eh-universe.com",
-    images: [{ url: "/images/hero-mina.jpg", width: 1200, height: 630, alt: "로어가드 (Loreguard)" }],
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Loreguard — 한국 웹소설의 해외 진출 OS",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "로어가드 — 집필 OS",
     description: "창작·번역·출판을 잇는 AI 집필 스튜디오.",
-    images: ["/images/hero-mina.jpg"],
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  // [확인 필요] 실제 Search Console verification code로 교체 필요
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION ?? undefined,
   },
   icons: {
     icon: [
@@ -109,6 +150,35 @@ export const metadata: Metadata = {
     apple: { url: "/apple-icon", sizes: "180x180", type: "image/png" },
   },
   manifest: "/manifest.webmanifest",
+};
+
+// ============================================================
+// JSON-LD 구조화 데이터 — SoftwareApplication 스키마
+// ============================================================
+const jsonLdSoftwareApplication = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Loreguard",
+  alternateName: ["로어가드", "EH Universe"],
+  applicationCategory: "WritingApplication",
+  operatingSystem: "Web",
+  url: SITE_URL,
+  description: "소설가를 위한 AI IDE — 집필·검수·번역·출간을 하나의 워크스페이스에서.",
+  inLanguage: ["ko", "en", "ja", "zh"],
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "KRW",
+  },
+  author: {
+    "@type": "Person",
+    name: "박길흠",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "EH Universe",
+    url: SITE_URL,
+  },
 };
 
 export default function RootLayout({
@@ -133,6 +203,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col">
+        {/* JSON-LD structured data — SoftwareApplication 스키마. 검색엔진 리치 스니펫용. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSoftwareApplication) }}
+        />
         {/* Skip navigation — multi-language */}
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline" lang="ko">본문으로 건너뛰기</a>
         {/* Noscript fallback */}
@@ -149,6 +224,7 @@ export default function RootLayout({
               <MainContentRegion>{children}</MainContentRegion>
               <Footer />
               <CookieConsent />
+              <TermsUpdateBanner />
             </UnifiedSettingsProvider>
           </LangProvider>
         </AuthProvider>

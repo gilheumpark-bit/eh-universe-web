@@ -626,6 +626,33 @@ function HomePageContent() {
         <HubGrid hubs={universeHubs} colorMap={colorMap} lang={lang} T={T} />
       </section>
 
+      {/* CATEGORY DECLARATION — "해줘 vs 하라" (SEO below-fold) */}
+      <section className="section-divider py-16" aria-labelledby="category-heading">
+        <div className="site-shell">
+          <div className="premium-panel-soft rounded-[22px] border border-white/6 px-6 py-8 md:px-10 md:py-10">
+            <p className="site-kicker">
+              {T({ ko: "카테고리 선언", en: "Category Declaration", ja: "カテゴリ宣言", zh: "类别宣言" })}
+            </p>
+            <h2 id="category-heading" className="site-title mt-3 text-2xl font-semibold sm:text-3xl">
+              {T({
+                ko: "해줘가 아니라, 하라.",
+                en: "Not 'do it for me'. 'Let me do it'.",
+                ja: "「やって」ではなく「やらせて」。",
+                zh: "不是“帮我做”，而是“让我做”。",
+              })}
+            </h2>
+            <p className="mt-4 font-document text-[0.98rem] leading-[1.9] text-text-secondary md:text-base">
+              {T({
+                ko: "해줘 시장은 버튼 한 번에 결과만 받습니다. 하라 시장은 작가가 도구의 주인입니다. 문체, 연속성, 용어집, 번역 기준 — 전부 작가가 지시하고 조정합니다. 로어가드는 하라 시장의 유일한 제작 IDE입니다. Adobe가 디자이너에게, VS Code가 개발자에게, Logic Pro가 음악가에게 그랬듯이.",
+                en: "The 'do it for me' market delivers a result from a single button. The 'let me do it' market makes the writer the owner of the tool. Style, continuity, glossary, translation standards — the writer directs and tunes all of it. Loreguard is the only authoring IDE in that market — the way Adobe is for designers, VS Code for developers, Logic Pro for musicians.",
+                ja: "「やって」市場はボタン一つで結果だけを受け取ります。「やらせて」市場は作家が道具の主人です。文体、連続性、用語集、翻訳基準 — すべて作家が指示し調整します。Loreguardはその市場で唯一の制作IDEです。デザイナーにとってのAdobe、開発者にとってのVS Code、音楽家にとってのLogic Proのように。",
+                zh: "“帮我做”市场一键交付结果。“让我做”市场让作家成为工具的主人——文体、连贯性、术语集、翻译基准全部由作家指挥并调校。Loreguard 是这个市场里唯一的创作 IDE——就像 Adobe 之于设计师、VS Code 之于开发者、Logic Pro 之于音乐家。",
+              })}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section ref={ctaRef} className="section-divider pb-24 pt-8">
         <div className="site-shell">

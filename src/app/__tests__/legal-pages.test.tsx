@@ -25,7 +25,7 @@ describe('Privacy Page', () => {
     const { container } = render(<PrivacyPage />);
     expect(container.textContent).toContain('개인정보처리방침');
     expect(container.textContent).toContain('수집 항목');
-    expect(container.textContent).toContain('이용 목적');
+    expect(container.textContent).toContain('수집 목적');
     expect(container.textContent).toContain('제3자');
   });
 
@@ -43,6 +43,19 @@ describe('Privacy Page', () => {
     const email = container.querySelector('a[href="mailto:gilheumpark@gmail.com"]');
     expect(email).not.toBeNull();
   });
+
+  it('알파 단계 초안 경고 표시', () => {
+    const PrivacyPage = require('../privacy/page').default;
+    const { container } = render(<PrivacyPage />);
+    expect(container.textContent).toContain('알파 단계 초안');
+  });
+
+  it('AI 학습 미사용 명시', () => {
+    const PrivacyPage = require('../privacy/page').default;
+    const { container } = render(<PrivacyPage />);
+    expect(container.textContent).toContain('AI 학습');
+    expect(container.textContent).toContain('재학습');
+  });
 });
 
 describe('Terms Page', () => {
@@ -50,8 +63,8 @@ describe('Terms Page', () => {
     const TermsPage = require('../terms/page').default;
     const { container } = render(<TermsPage />);
     expect(container.textContent).toContain('이용약관');
-    expect(container.textContent).toContain('서비스 소개');
-    expect(container.textContent).toContain('이용자 의무');
+    expect(container.textContent).toContain('서비스 개요');
+    expect(container.textContent).toContain('금지 행위');
     expect(container.textContent).toContain('저작권');
   });
 
@@ -65,6 +78,53 @@ describe('Terms Page', () => {
     const TermsPage = require('../terms/page').default;
     const { container } = render(<TermsPage />);
     expect(container.textContent).toContain('대한민국');
+  });
+
+  it('알파 단계 초안 경고 표시', () => {
+    const TermsPage = require('../terms/page').default;
+    const { container } = render(<TermsPage />);
+    expect(container.textContent).toContain('알파 단계 초안');
+  });
+});
+
+describe('Copyright Page', () => {
+  it('저작권 귀속·AI 학습·플랫폼 업로드 섹션 존재', () => {
+    const CopyrightPage = require('../copyright/page').default;
+    const { container } = render(<CopyrightPage />);
+    expect(container.textContent).toContain('저작권 귀속');
+    expect(container.textContent).toContain('AI 학습에 사용하지 않음');
+    expect(container.textContent).toContain('외부 플랫폼');
+  });
+
+  it('알파 단계 초안 경고 표시', () => {
+    const CopyrightPage = require('../copyright/page').default;
+    const { container } = render(<CopyrightPage />);
+    expect(container.textContent).toContain('알파 단계 초안');
+  });
+});
+
+describe('AI Disclosure Page', () => {
+  it('Qwen/Gemini/Claude/OpenAI 모델 명시', () => {
+    const AiDisclosurePage = require('../ai-disclosure/page').default;
+    const { container } = render(<AiDisclosurePage />);
+    expect(container.textContent).toContain('Qwen');
+    expect(container.textContent).toContain('Gemini');
+    expect(container.textContent).toContain('Claude');
+    expect(container.textContent).toContain('OpenAI');
+  });
+
+  it('DGX 재학습 미사용 명시', () => {
+    const AiDisclosurePage = require('../ai-disclosure/page').default;
+    const { container } = render(<AiDisclosurePage />);
+    expect(container.textContent).toContain('DGX');
+    expect(container.textContent).toContain('재학습');
+  });
+
+  it('AI 책임 한계(환각/편향) 섹션 존재', () => {
+    const AiDisclosurePage = require('../ai-disclosure/page').default;
+    const { container } = render(<AiDisclosurePage />);
+    expect(container.textContent).toContain('환각');
+    expect(container.textContent).toContain('편향');
   });
 });
 

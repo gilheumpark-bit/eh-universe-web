@@ -25,6 +25,7 @@ const BackupsSection = dynamic(() => import('@/components/studio/settings/Backup
 const AdvancedSection = dynamic(() => import('@/components/studio/settings/AdvancedSection'), { ssr: false });
 const PluginsSection = dynamic(() => import('@/components/studio/settings/PluginsSection'), { ssr: false });
 const SessionSection = dynamic(() => import('@/components/studio/settings/SessionSection'), { ssr: false });
+const ComplianceSection = dynamic(() => import('@/components/studio/settings/ComplianceSection'), { ssr: false });
 
 interface VersionedBackup {
   timestamp: number;
@@ -113,6 +114,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
           onRestoreBackup={onRestoreBackup}
           onRefreshBackups={onRefreshBackups}
         />
+
+        {/* Group 4b: Compliance — AI 사용 고지 + 19+ 콘텐츠 분기 */}
+        <ComplianceSection language={language} />
 
         {/* Group 5: Advanced (extracted) */}
         <AdvancedSection

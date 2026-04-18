@@ -832,6 +832,28 @@ function isQuotaError(msg: string): boolean {
   return /429|quota|rate.?limit|resource.?exhausted|billing|limit.?exceeded/i.test(msg);
 }
 
+/**
+ * DGX Spark 다운/게이트웨이 연결 불능 에러 판별.
+ * Cloudflare Tunnel 오류(520-524), DGX 연결 문구, 타임아웃, 네트워크 실패를 포괄.
+ */
+function isDgxDownError(msg: string): boolean {
+  return /DGX\s*(서버)?\s*(연결|응답|미설정|unresponsive|down|unavailable)|SPARK\s+gateway|Cloudflare|520|521|522|523|524|502|503|504|timeout|ECONNREFUSED|network|fetch\s+failed/i.test(msg);
+}
+
+/**
+ * BYOK 폴백 선호 여부 (Settings 토글로 제어). 기본 true.
+ * localStorage 직접 접근으로 순환 참조 회피.
+ */
+function isByokFallbackEnabled(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const v = localStorage.getItem('noa_byok_fallback_enabled');
+    return v === null ? true : v === '1';
+  } catch {
+    return true;
+  }
+}
+
 function getFallbackProviders(
   activeProvider: ProviderId,
 ): Array<{ id: ProviderId; model: string; key: string }> {
@@ -945,23 +967,40 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
     }
   }
 
-  // Primary provider exhausted — attempt ARI-ranked fallback providers on quota/rate-limit errors.
+  // Primary provider exhausted — attempt ARI-ranked fallback providers.
+  // Triggers: (1) quota/rate-limit errors, (2) DGX-down errors when BYOK fallback enabled.
   // Falls back in ARI score order, skipping providers without a stored API key.
   // Does NOT persist the switch to localStorage; active provider is unchanged.
-  if (lastError && isQuotaError(lastError.message)) {
+  const shouldFallback = lastError && (
+    isQuotaError(lastError.message) ||
+    (isDgxDownError(lastError.message) && isByokFallbackEnabled())
+  );
+  if (shouldFallback && lastError) {
+    const dgxDown = isDgxDownError(lastError.message);
+    const fallbackReason = dgxDown ? 'dgx-down-byok-fallback' : 'quota-ari-fallback';
     const fallbacks = getFallbackProviders(provider);
     // Sort fallbacks by ARI score (healthiest first)
     const ranked = [...fallbacks].sort(
       (a, b) => ariManager.getScore(b.id) - ariManager.getScore(a.id),
     );
+    // DGX-down인데 BYOK 키가 하나도 없으면 명시적 안내 에러로 교체
+    if (dgxDown && ranked.length === 0) {
+      logger.warn('fallback', 'DGX down and no BYOK keys configured — cannot fall back');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('noa:dgx-down-no-byok', {
+          detail: { originalError: lastError.message },
+        }));
+      }
+      throw new Error('DGX engine down. Please configure your own API key in Settings to continue.');
+    }
     for (const fallback of ranked) {
       if (!ariManager.isAvailable(fallback.id)) continue;
       const t0 = Date.now();
       try {
-        logger.warn('fallback', `${provider} quota/rate-limit hit. ARI-routing to ${fallback.id} (ARI=${ariManager.getScore(fallback.id).toFixed(1)})...`);
+        logger.warn('fallback', `${provider} ${dgxDown ? 'DGX-down' : 'quota/rate-limit hit'}. ARI-routing to ${fallback.id} (ARI=${ariManager.getScore(fallback.id).toFixed(1)})...`);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('noa:provider-fallback', {
-            detail: { from: provider, to: fallback.id, reason: 'quota-ari-fallback' },
+            detail: { from: provider, to: fallback.id, reason: fallbackReason },
           }));
         }
         const fallbackMaxTokens = getMaxOutputTokens(fallback.model, systemTokens, messageTokens);

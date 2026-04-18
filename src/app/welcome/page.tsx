@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ChevronRight, Feather, Brain, Users } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { confirmAge } from "@/lib/content-rating";
 
 // ============================================================
 // PART 2 — Onboarding 3-Slide Component
@@ -85,6 +86,9 @@ export default function WelcomePage() {
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [slideIdx, setSlideIdx] = useState(0);
+  // 만 14세 이상 자가 선언 — 기본 true로 기존 onboarding 플로우 유지.
+  // 사용자가 uncheck 시 '시작하기' 비활성.
+  const [ageConfirmed, setAgeConfirmed] = useState(true);
 
   // 이미 온보딩 마친 사용자는 스튜디오로 바로
   useEffect(() => {
@@ -112,6 +116,7 @@ export default function WelcomePage() {
   const handleFinish = () => {
     try {
       localStorage.setItem(STORAGE_KEY, "1");
+      if (ageConfirmed) confirmAge();
     } catch {
       /* private browsing — 다음 방문에 다시 표시될 수 있음 */
     }
@@ -168,10 +173,32 @@ export default function WelcomePage() {
             ))}
           </div>
 
+          {/* 만 14세 이상 자가 선언 — 마지막 슬라이드에서만 노출 */}
+          {isLast && (
+            <label className="flex items-center justify-center gap-2 mb-6 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={(e) => setAgeConfirmed(e.target.checked)}
+                className="w-4 h-4 rounded border-border text-accent-blue focus-visible:ring-2 focus-visible:ring-accent-blue"
+                aria-describedby="age-confirm-desc"
+              />
+              <span id="age-confirm-desc" className="text-xs md:text-sm text-text-secondary">
+                {T({
+                  ko: "만 14세 이상입니다 (한국 청소년보호법 기준)",
+                  en: "I am 14 or older (per Korea Youth Protection Act)",
+                  ja: "満14歳以上です(韓国青少年保護法基準)",
+                  zh: "年满 14 岁（依据韩国青少年保护法）",
+                })}
+              </span>
+            </label>
+          )}
+
           {/* Next / Start button */}
           <button
             onClick={handleNext}
-            className="bg-accent-blue text-white px-8 py-3 rounded-xl text-base font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[48px] inline-flex items-center gap-2"
+            disabled={isLast && !ageConfirmed}
+            className="bg-accent-blue text-white px-8 py-3 rounded-xl text-base font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[48px] inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLast
               ? T({ ko: "시작하기", en: "Start", ja: "はじめる", zh: "开始" })
@@ -194,6 +221,10 @@ export default function WelcomePage() {
           <span>·</span>
           <Link href="/about" className="hover:text-text-secondary hover:underline">
             {T({ ko: "소개", en: "About", ja: "紹介", zh: "关于" })}
+          </Link>
+          <span>·</span>
+          <Link href="/changelog" className="hover:text-text-secondary hover:underline">
+            {T({ ko: "변경 이력", en: "Changelog", ja: "変更履歴", zh: "更新日志" })}
           </Link>
         </div>
       </div>

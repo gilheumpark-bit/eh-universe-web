@@ -5,6 +5,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { recordAIUsage } from '@/lib/ai-usage-tracker';
 import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
 import { getTierLimits, type UserTier } from '@/lib/tier-gate';
 import type { EpisodeManuscript, TranslatedManuscriptEntry } from '@/lib/studio-types';
@@ -1044,6 +1045,16 @@ export function useTranslation({
       if (onSave) {
         onSave(toManuscriptEntry(result, manuscript.title));
       }
+
+      // AI 번역 사용 메타데이터 기록 — Export 고지문에 AI 번역 표기용
+      try {
+        const projId = projectCtx?.projectId;
+        if (projId) {
+          const prov = getActiveProvider();
+          const translatedLen = (result.translatedText ?? '').length;
+          recordAIUsage(projId, { type: 'translation', provider: prov, charsGenerated: translatedLen });
+        }
+      } catch (err) { logger.warn('useTranslation', 'recordAIUsage failed', err); }
 
       // 번역 프로필 업데이트 — 오류 패턴 학습
       if (onProfileUpdate && config.translatorProfile) {

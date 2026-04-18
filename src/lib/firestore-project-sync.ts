@@ -6,6 +6,7 @@
 
 import { logger } from '@/lib/logger';
 import { getDb, collectionName } from '@/lib/firebase';
+import { incrementFirebaseRead, incrementFirebaseWrite } from '@/lib/firebase-quota-tracker';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Project = any; // useProjectManager의 Project 타입 — 순환 참조 방지
@@ -32,6 +33,8 @@ export async function syncProjectsToFirestore(uid: string, projects: Project[]):
 
         // 충돌 감지: 서버의 lastSync가 로컬보다 새로우면 경고
         try {
+          // [quota] getDoc 1회 = read 1회
+          incrementFirebaseRead();
           const remote = await getDoc(ref);
           if (remote.exists()) {
             const remoteSync = remote.data()?.lastSync ?? 0;
@@ -48,6 +51,8 @@ export async function syncProjectsToFirestore(uid: string, projects: Project[]):
           }
         } catch { /* getDoc 실패 — 그냥 덮어쓰기 */ }
 
+        // [quota] setDoc 1회 = write 1회
+        incrementFirebaseWrite();
         await setDoc(ref, { ...p, lastSync: Date.now() }, { merge: true });
       })
     );
@@ -87,6 +92,8 @@ export async function loadProjectsFromFirestore(uid: string): Promise<Project[] 
     const snap = await getDocs(q);
 
     if (snap.empty) return null;
+    // [quota] getDocs 1회 = read N회 (문서 수만큼)
+    incrementFirebaseRead(snap.size);
     return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Project[];
   } catch (err) {
     logger.warn('cloud-sync', `Firestore load failed: ${err instanceof Error ? err.message : 'unknown'}`);
@@ -109,6 +116,10 @@ export async function subscribeToProjectChanges(
 
     const unsub = onSnapshot(q, (snap) => {
       if (snap.empty) return;
+      // [quota] onSnapshot 변경마다 docChanges() 개수만큼 read 발생
+      // 초기 스냅샷은 전체 size, 이후 변경만 카운트
+      const changes = snap.docChanges();
+      incrementFirebaseRead(changes.length || snap.size);
       const projects = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Project[];
       onUpdate(projects);
     }, (err) => {

@@ -19,7 +19,8 @@ import { stripEngineArtifacts } from '@/engine/pipeline';
 import { getGenreTemperature } from '@/engine/genre-presets';
 import { buildStoryBible } from '@/engine/context-builder';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
-import { hasDgxService } from '@/lib/ai-providers';
+import { hasDgxService, getActiveProvider } from '@/lib/ai-providers';
+import { recordAIUsage } from '@/lib/ai-usage-tracker';
 import { evaluateQuality, buildRetryHint } from '@/engine/quality-gate';
 import { generateSuggestions, getDefaultSuggestionConfig } from '@/engine/proactive-suggestions';
 import { updateProfile, loadProfile, saveProfile, buildProfileHint } from '@/engine/writer-profile';
@@ -404,6 +405,16 @@ export function useStudioAI({
       incrementGenerationCount();
       setDirectorReport(dReport);
 
+      // AI 사용 메타데이터 기록 — Export 시 고지문 생성에 사용 (ai-usage-tracker)
+      try {
+        const activeProv = hasDgxService() ? 'dgx-qwen' : getActiveProvider();
+        recordAIUsage(capturedSessionId, {
+          type: 'generation',
+          provider: activeProv,
+          charsGenerated: finalContent.length,
+        });
+      } catch (err) { logger.warn('StudioAI', 'recordAIUsage failed', err); }
+
       // Track generation time and approximate token usage
       const elapsedSec = Math.round((performance.now() - generationStartRef.current) / 100) / 10;
       setGenerationTime(elapsedSec);
@@ -603,6 +614,16 @@ export function useStudioAI({
 
       const finalContent = stripEngineArtifacts(fullContent) || result.content;
       setLastReport(result.report);
+
+      // AI 사용 메타데이터 기록 (재생성) — Export 고지문 생성 소스
+      try {
+        const activeProv = hasDgxService() ? 'dgx-qwen' : getActiveProvider();
+        recordAIUsage(capturedSessionId2, {
+          type: 'rewrite',
+          provider: activeProv,
+          charsGenerated: finalContent.length,
+        });
+      } catch (err) { logger.warn('StudioAI', 'recordAIUsage (regenerate) failed', err); }
 
       // Regenerate 품질 파이프라인 — handleSend와 동일하게 감독/품질태그 연결
       let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };

@@ -9,10 +9,11 @@ import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import {
-  ChevronDown, Zap, Monitor, Smartphone, Hash, Thermometer, BookOpen, HelpCircle,
+  ChevronDown, Zap, Monitor, Smartphone, Hash, Thermometer, BookOpen, HelpCircle, Shield,
 } from 'lucide-react';
 import { setNarrativeDepth as narrativeDepthSetter } from '@/lib/noa/lora-swap';
 import ApiKeysSection from '@/components/studio/settings/ApiKeysSection';
+import { getFallbackPreference, setFallbackPreference } from '@/hooks/useSparkHealth';
 
 interface AdvancedSectionProps {
   language: AppLanguage;
@@ -34,6 +35,12 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
     narrativeDepthSetter(val);
     return val;
   });
+  // [BYOK fallback] DGX Spark 다운 시 BYOK 자동 전환 선호 (기본 true)
+  const [byokFallback, setByokFallbackState] = useState<boolean>(() => getFallbackPreference());
+  const persistByokFallback = (enabled: boolean) => {
+    setByokFallbackState(enabled);
+    setFallbackPreference(enabled);
+  };
 
   // ============================================================
   // PART 2 — Persistence helpers (localStorage writes)
@@ -163,6 +170,45 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                 />
                 <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${temperature < 0.1 || temperature > 1.5 ? 'text-red-400' : 'text-blue-400'}`}>{temperature.toFixed(1)}</span>
               </div>
+            </div>
+
+            {/* BYOK Fallback (DGX down → 자동 전환) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  <Shield className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
+                    {L4(language, { ko: 'DGX 다운 시 BYOK 자동 사용', en: 'Auto BYOK on DGX down', ja: 'DGXダウン時にBYOK自動使用', zh: 'DGX宕机时自动使用BYOK' })}
+                    <span className="group relative">
+                      <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
+                        {L4(language, { ko: '권장: 로컬 엔진이 응답 없을 때 자신의 API 키로 자동 전환', en: 'Recommended: auto-switch to your API key when local engine is unresponsive', ja: '推奨:ローカルエンジン無応答時に自身のAPIキーへ自動切替', zh: '推荐:本地引擎无响应时自动切换到您的API密钥' })}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: '서비스 중단 방지 — BYOK 키가 설정된 경우에만 동작',
+                      en: 'Avoids downtime — works only when a BYOK key is configured',
+                      ja: 'ダウンタイムを回避 — BYOKキー設定時のみ動作',
+                      zh: '避免停机 — 仅在配置了BYOK密钥时有效',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={byokFallback}
+                onClick={() => persistByokFallback(!byokFallback)}
+                className={`relative w-11 h-6 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0 ${byokFallback ? 'bg-accent-green' : 'bg-bg-tertiary'}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${byokFallback ? 'translate-x-5' : 'translate-x-0.5'}`}
+                />
+              </button>
             </div>
 
             {/* Narrative Depth Slider */}

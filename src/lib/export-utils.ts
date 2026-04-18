@@ -2,9 +2,67 @@
 // PART 1 — EPUB Export (ZIP + XHTML + OPF, no external deps)
 // ============================================================
 
-import { ChatSession } from './studio-types';
+import { ChatSession, AppLanguage } from './studio-types';
 import { stripEngineArtifacts } from '@/engine/pipeline';
 import { showAlert } from './show-alert';
+import {
+  getAIUsageForProject,
+  isDisclosureEnabled,
+  buildAIDisclosure,
+  buildEpubAIMetaTags,
+} from './ai-usage-tracker';
+import {
+  getRating,
+  buildAdultWarning,
+  filenamePrefix,
+  epubAudience,
+} from './content-rating';
+
+/** Export 옵션 — 시그니처는 유지하고 선택 필드만 추가 */
+export interface ExportOptions {
+  /** AI 사용 고지문 자동 삽입 (기본: 사용자 설정 노아_ai_disclosure_enabled 값) */
+  includeAIDisclosure?: boolean;
+  /** 커스텀 고지문으로 기본 4언어 문구 덮어쓰기 */
+  aiDisclosureText?: string;
+  /** 고지문 언어. 지정 없으면 session.config.language → 'KO' */
+  disclosureLang?: AppLanguage;
+}
+
+/** session.config.language → AppLanguage (cast + default) */
+function resolveLang(session: ChatSession, opts?: ExportOptions): AppLanguage {
+  if (opts?.disclosureLang) return opts.disclosureLang;
+  const fromConfig = (session.config as unknown as Record<string, string>).language;
+  const v = String(fromConfig ?? 'KO').toUpperCase();
+  if (v === 'EN' || v === 'JP' || v === 'CN' || v === 'KO') return v as AppLanguage;
+  return 'KO';
+}
+
+/** AI 고지 + 성인 경고 문자열 결합 — null 시 빈 문자열 */
+function buildDisclosureFooter(session: ChatSession, opts?: ExportOptions): string {
+  // opt-out 우선순위: 명시 false → 글로벌 토글 off → 기본 on
+  const override = opts?.includeAIDisclosure;
+  const enabled = override === undefined ? isDisclosureEnabled() : override;
+  if (!enabled) return '';
+
+  const lang = resolveLang(session, opts);
+  const custom = opts?.aiDisclosureText?.trim();
+  let text = '';
+  if (custom) {
+    text = `\n---\n${custom}\n`;
+  } else {
+    const usage = getAIUsageForProject(session.id);
+    if (usage.hasAIAssist || usage.hasAITranslation) {
+      text = buildAIDisclosure(usage, lang);
+    }
+  }
+
+  // 19+ 성인 경고 (자가 선언 기준) — AI 고지와 별개로 삽입
+  const rating = getRating(session.id);
+  const adult = buildAdultWarning(rating, lang);
+  if (adult) text += (text ? '\n' : '\n---\n') + adult + '\n';
+
+  return text;
+}
 
 /** Simple CRC32 + ZIP builder — minimal spec-compliant for EPUB containers */
 function crc32(buf: Uint8Array): number {
@@ -140,8 +198,9 @@ ${textToXhtmlParagraphs(content)}
 }
 
 /** Generate and download a valid EPUB 3.0 file from a chat session's manuscript content
- * @param coverImageDataUrl 표지 이미지 (data:image/jpeg;base64,... 또는 data:image/png;base64,...) */
-export function exportEPUB(session: ChatSession, coverImageDataUrl?: string): void {
+ * @param coverImageDataUrl 표지 이미지 (data:image/jpeg;base64,... 또는 data:image/png;base64,...)
+ * @param opts Export 옵션 — AI 고지문 on/off, 커스텀 문구, 고지 언어 */
+export function exportEPUB(session: ChatSession, coverImageDataUrl?: string, opts?: ExportOptions): void {
   // Guard: prevent exporting empty manuscripts
   const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
     session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
@@ -202,10 +261,26 @@ export function exportEPUB(session: ChatSession, coverImageDataUrl?: string): vo
   ].join('\n') + '\n' : '';
   const coverSpine = hasCover ? `    <itemref idref="cover"/>\n` : '';
 
+  // ============================================================
+  // AI 사용 고지 + 성인 경고 → 별도 "disclosure" 챕터로 편입
+  // 기본 on, 사용자 설정(noa_ai_disclosure_enabled=false)에서만 끔
+  // ============================================================
+  const disclosureText = buildDisclosureFooter(session, opts);
+  if (disclosureText.trim()) {
+    chapters.push({ id: 'ai-disclosure', title: 'AI & Content Notice', content: disclosureText });
+  }
+
   const manifestItems = chapters.map(ch => `    <item id="${ch.id}" href="${ch.id}.xhtml" media-type="application/xhtml+xml"/>`).join('\n');
   const spineItems = chapters.map(ch => `    <itemref idref="${ch.id}"/>`).join('\n');
   const descParts = [genre, platform].filter(Boolean);
   const descMeta = descParts.length > 0 ? `\n    <dc:description>${escapeXml(descParts.join(' | '))}</dc:description>` : '';
+
+  // 콘텐츠 등급 → EPUB 메타 (dc:audience) + AI meta tags
+  const rating = getRating(session.id);
+  const audience = epubAudience(rating.rating);
+  const audienceMeta = audience ? `\n    <dc:audience>${audience}</dc:audience>` : '';
+  const aiMetaTags = buildEpubAIMetaTags(getAIUsageForProject(session.id));
+  const aiMetaBlock = aiMetaTags.length > 0 ? `\n${aiMetaTags.join('\n')}` : '';
 
   const contentOpf = encoder.encode(`<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="3.0">
@@ -213,7 +288,7 @@ export function exportEPUB(session: ChatSession, coverImageDataUrl?: string): vo
     <dc:identifier id="uid">${uid}</dc:identifier>
     <dc:title>${safeTitle}</dc:title>
     <dc:language>${escapeXml(({ KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh' } as Record<string, string>)[(session.config as unknown as Record<string, string>).language ?? 'KO'] ?? 'ko')}</dc:language>
-    <dc:creator>NOA Studio</dc:creator>${descMeta}
+    <dc:creator>NOA Studio</dc:creator>${descMeta}${audienceMeta}${aiMetaBlock}
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z/, 'Z')}</meta>
   </metadata>
   <manifest>
@@ -283,7 +358,8 @@ h2 { font-size: 1.2em; margin-top: 1.5em; margin-bottom: 0.5em; }`);
     ...chapterFiles,
   ]);
 
-  downloadBlob(zipData, `${title}.epub`, 'application/epub+zip');
+  const prefix = filenamePrefix(rating.rating);
+  downloadBlob(zipData, `${prefix}${title}.epub`, 'application/epub+zip');
 }
 
 // ============================================================
@@ -320,8 +396,9 @@ function buildDocxParagraph(trimmed: string): string {
   return `<w:p><w:pPr><w:spacing w:after="120" w:line="360" w:lineRule="auto"/><w:ind w:firstLine="400"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(trimmed)}</w:t></w:r></w:p>`;
 }
 
-/** Generate and download a DOCX (Office Open XML) file from a chat session's manuscript content */
-export function exportDOCX(session: ChatSession): void {
+/** Generate and download a DOCX (Office Open XML) file from a chat session's manuscript content
+ * @param opts Export 옵션 — AI 고지문 on/off, 커스텀 문구, 고지 언어 */
+export function exportDOCX(session: ChatSession, opts?: ExportOptions): void {
   // Guard: prevent exporting empty manuscripts
   const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
     session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
@@ -396,11 +473,18 @@ export function exportDOCX(session: ChatSession): void {
   // Title → Heading1 (28pt, bold, center)
   const titlePara = `<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:spacing w:after="400"/><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Batang" w:eastAsia="Batang" w:hAnsi="Batang"/><w:b/><w:sz w:val="56"/></w:rPr><w:t>${escapeXml(title)}</w:t></w:r></w:p>`;
 
+  // AI 고지 + 성인 경고 — 본문 뒤, 섹션 종료 앞 줄바꿈 문단으로 추가
+  const disclosureText = buildDisclosureFooter(session, opts);
+  const disclosureParas = disclosureText
+    ? disclosureText.split('\n').map(l => buildDocxParagraph(l.trim())).join('\n')
+    : '';
+
   const document = encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
     ${titlePara}
     ${paragraphs}
+    ${disclosureParas}
     ${sectionProps}
   </w:body>
 </w:document>`);
@@ -413,7 +497,9 @@ export function exportDOCX(session: ChatSession): void {
     { name: 'word/document.xml', data: document },
   ]);
 
-  downloadBlob(zipData, `${title}.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  const rating = getRating(session.id);
+  const prefix = filenamePrefix(rating.rating);
+  downloadBlob(zipData, `${prefix}${title}.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 }
 
 // ============================================================
