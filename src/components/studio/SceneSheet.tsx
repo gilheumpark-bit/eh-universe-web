@@ -8,6 +8,7 @@ import { createT, L4 } from "@/lib/i18n";
 import type { AppLanguage, EpisodeSceneSheet } from "@/lib/studio-types";
 import { useStudioUI } from "@/contexts/StudioContext";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TermTooltip } from "@/components/ui/TermTooltip";
 
 // ============================================================
 // PART 1 — 타입 및 상수 (장르 프리셋, 플롯 프리셋, 스마트 디폴트)
@@ -623,7 +624,11 @@ export default function SceneSheet({
             </div>
             <div className="flex items-center gap-2">
               <span className="badge badge-amber mr-2">SCENE</span>
-              {L4(lang, { ko: "씬시트 — 장르 문법 설계", en: "Scene Sheet — Genre Grammar Design", ja: "シーンシート — ジャンル文法の設計", zh: "场景表 — 类型文法设计" })}
+              {lang === 'ko' ? (
+                <><TermTooltip term="씬시트">씬시트</TermTooltip>{" — 장르 문법 설계"}</>
+              ) : (
+                L4(lang, { ko: "씬시트 — 장르 문법 설계", en: "Scene Sheet — Genre Grammar Design", ja: "シーンシート — ジャンル文法の設計", zh: "场景表 — 类型文法设计" })
+              )}
               <span className="text-[10px] text-accent-green/70 font-mono ml-auto">
                 {L4(lang, { ko: '자동 저장', en: 'Auto-saved', ja: '自動保存', zh: '自动保存' })}
               </span>

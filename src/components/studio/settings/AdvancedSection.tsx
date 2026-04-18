@@ -14,6 +14,7 @@ import {
 import { setNarrativeDepth as narrativeDepthSetter } from '@/lib/noa/lora-swap';
 import ApiKeysSection from '@/components/studio/settings/ApiKeysSection';
 import { getFallbackPreference, setFallbackPreference } from '@/hooks/useSparkHealth';
+import { TermTooltip } from '@/components/ui/TermTooltip';
 
 interface AdvancedSectionProps {
   language: AppLanguage;
@@ -180,7 +181,11 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
-                    {L4(language, { ko: 'DGX 다운 시 BYOK 자동 사용', en: 'Auto BYOK on DGX down', ja: 'DGXダウン時にBYOK自動使用', zh: 'DGX宕机时自动使用BYOK' })}
+                    {language === 'KO' ? (
+                      <>DGX 다운 시 <TermTooltip term="BYOK">BYOK</TermTooltip> 자동 사용</>
+                    ) : (
+                      <>Auto <TermTooltip term="BYOK">BYOK</TermTooltip> on DGX down</>
+                    )}
                     <span className="group relative">
                       <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
                       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">

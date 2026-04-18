@@ -9,6 +9,7 @@ import { isTestEnvironment } from "@/lib/firebase";
 import { TOOL_LINKS_HEADER_DROPDOWN } from "@/lib/tool-links";
 import { getTranslatorStudioHref, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useCanAccessCodeStudio } from "@/contexts/UserRoleContext";
 
 type NavKey = "home" | "network" | "studio" | "translate" | "code";
 
@@ -60,6 +61,9 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
   const translatorHref = useMemo(() => getTranslatorStudioHref(), []);
   const translatorExternal = translatorHref.startsWith("http");
   const flags = useFeatureFlags();
+  // 역할 기반 가드 — developer role 또는 developerMode가 아니면 Code 탭 숨김.
+  // Provider 미마운트 환경(테스트/SSR)에서도 false 반환되어 안전.
+  const canAccessCodeStudio = useCanAccessCodeStudio();
 
   const navItems = useMemo((): NavEntry[] => {
     const all: NavEntry[] = [
@@ -77,9 +81,11 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
     return all.filter((item) => {
       if (item.key === "network" && !flags.NETWORK_COMMUNITY) return false;
       if (item.key === "code" && !flags.CODE_STUDIO) return false;
+      // 코드 탭은 개발자 role/developerMode일 때만 노출 — 일반 사용자에게는 숨김.
+      if (item.key === "code" && !canAccessCodeStudio) return false;
       return true;
     });
-  }, [lang, translatorHref, translatorExternal, flags.NETWORK_COMMUNITY, flags.CODE_STUDIO]);
+  }, [lang, translatorHref, translatorExternal, flags.NETWORK_COMMUNITY, flags.CODE_STUDIO, canAccessCodeStudio]);
 
   const isNavActive = usePrimaryNavActive(pathname, searchParams);
 

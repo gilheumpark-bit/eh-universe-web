@@ -8,6 +8,7 @@ import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import ManuscriptView from '@/components/studio/ManuscriptView';
+import { TabHeader } from '@/components/studio/TabHeader';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
 import EmotionArcChart from '@/components/studio/EmotionArcChart';
 import FatigueDetector from '@/components/studio/FatigueDetector';
@@ -155,6 +156,16 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   // ============================================================
   return (
     <>
+      <TabHeader
+        icon="📚"
+        title={L4(language, { ko: '원고', en: 'Manuscript', ja: '原稿', zh: '原稿' })}
+        description={L4(language, {
+          ko: '에피소드 목록과 전체 구조',
+          en: 'Episode list and overall structure',
+          ja: 'エピソード一覧と全体構造',
+          zh: '剧集列表与整体结构',
+        })}
+      />
       <div className="max-w-6xl mx-auto px-4 pt-4 flex gap-2">
         <button
           onClick={() => setShowDashboard(!showDashboard)}

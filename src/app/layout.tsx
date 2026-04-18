@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import { UserRoleProvider } from "@/contexts/UserRoleContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import WebFeaturesInit from "@/components/WebFeaturesInit";
 import { StatusIndicator } from "@/components/ui/StatusIndicator";
@@ -221,10 +222,12 @@ export default function RootLayout({
         <AuthProvider>
           <LangProvider>
             <UnifiedSettingsProvider>
-              <MainContentRegion>{children}</MainContentRegion>
-              <Footer />
-              <CookieConsent />
-              <TermsUpdateBanner />
+              <UserRoleProvider>
+                <MainContentRegion>{children}</MainContentRegion>
+                <Footer />
+                <CookieConsent />
+                <TermsUpdateBanner />
+              </UserRoleProvider>
             </UnifiedSettingsProvider>
           </LangProvider>
         </AuthProvider>

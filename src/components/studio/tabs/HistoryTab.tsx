@@ -10,6 +10,7 @@ import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 // Lazy: SVG charts only render when user opens the profiler modal.
 const WorkProfilerView = dynamic(
@@ -236,6 +237,17 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
   // PART 4 — render (header + grid + reviewer + move modal)
   // ============================================================
   return (
+    <>
+    <TabHeader
+      icon="🕐"
+      title={L4(language, { ko: '버전', en: 'Versions', ja: 'バージョン', zh: '版本' })}
+      description={L4(language, {
+        ko: '300자 이상 변경 시 자동 스냅샷',
+        en: 'Auto-snapshot on 300+ character changes',
+        ja: '300文字以上変更時に自動スナップショット',
+        zh: '修改 300 字以上时自动快照',
+      })}
+    />
     <div className="p-4 md:p-10">
       {/* Archive Header: scope toggle + category filter */}
       <div className="mb-6 space-y-3">
@@ -626,6 +638,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };
 

@@ -18,6 +18,7 @@ import { getTaintTracker } from "@/lib/noa/taint-tracker";
 import { useStudio, type StudioContextValue } from "@/app/studio/StudioContext";
 import { buildProjectTranslationContext } from "@/lib/translation/project-bridge";
 import { searchWithRAGFallback, type TMSuggestion } from "@/lib/translation/translation-memory";
+import { TermTooltip } from "@/components/ui/TermTooltip";
 
 /**
  * StudioContext에 안전 접근 — Provider 밖에서는 null 반환.
@@ -491,7 +492,15 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
             </svg>
             <span className="text-sm font-medium text-text-primary">
-              {isKO ? `캐릭터 말투 검증 — 위반 ${voiceViolations.length}건` : `Character Voice Guard — ${voiceViolations.length} violations`}
+              {isKO ? (
+                <>
+                  캐릭터 말투 검증 (<TermTooltip term="Voice Guard">Voice Guard</TermTooltip>) — 위반 {voiceViolations.length}건
+                </>
+              ) : (
+                <>
+                  Character <TermTooltip term="Voice Guard">Voice Guard</TermTooltip> — {voiceViolations.length} violations
+                </>
+              )}
             </span>
           </div>
           <ul className="space-y-1 text-xs">
@@ -889,7 +898,11 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary">
               <Check className="h-3 w-3" />
-              {isKO ? "품질 검사 기준점" : "Quality Threshold"}
+              {isKO ? (
+                <><TermTooltip term="6축 점수">6축 점수</TermTooltip> 기준점</>
+              ) : (
+                <><TermTooltip term="6축 점수">6-Axis</TermTooltip> Threshold</>
+              )}
             </label>
             <div className="flex items-center gap-2">
               <input

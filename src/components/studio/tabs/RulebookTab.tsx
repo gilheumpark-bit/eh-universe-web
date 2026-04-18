@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { BookOpen, TrendingUp, Palette, PenTool } from 'lucide-react';
 import type { FullDirectionData } from '@/components/studio/SceneSheet';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), {
   ssr: false,
@@ -215,6 +216,17 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
     };
 
     return (
+      <>
+      <TabHeader
+        icon="📖"
+        title={isKO ? '규칙집' : 'Rulebook'}
+        description={L4(language, {
+          ko: '장르를 선택하면 자동 적용됩니다',
+          en: 'Pick a genre and rules apply automatically',
+          ja: 'ジャンルを選択すると自動適用',
+          zh: '选择类型后规则自动应用',
+        })}
+      />
       <div className="max-w-3xl mx-auto py-10 px-4 md:py-16 md:px-6">
         {/* Header */}
         <div className="text-center mb-10">
@@ -275,6 +287,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
           <TabAssistant tab="rulebook" language={language} config={config ?? null} hostedProviders={hostedProviders} />
         </div>
       </div>
+      </>
     );
   }
 
@@ -282,6 +295,17 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
   // PART 5 — 에디터 뷰 (SceneSheet)
   // ============================================================
   return (
+    <>
+    <TabHeader
+      icon="📖"
+      title={isKO ? '규칙집' : 'Rulebook'}
+      description={L4(language, {
+        ko: '장르를 선택하면 자동 적용됩니다',
+        en: 'Pick a genre and rules apply automatically',
+        ja: 'ジャンルを選択すると自動適用',
+        zh: '选择类型后规则自动应用',
+      })}
+    />
     <div className="max-w-5xl mx-auto py-6 px-4 md:py-8 md:px-6">
       {/* Back button */}
       <button
@@ -311,6 +335,7 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
         </button>
       </div>
     </div>
+    </>
   );
 };
 

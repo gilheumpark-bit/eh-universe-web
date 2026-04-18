@@ -7,10 +7,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Feather, Brain, Users } from "lucide-react";
+import { ChevronRight, Feather, Brain, Users, Compass } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { confirmAge } from "@/lib/content-rating";
+import { useUserRoleSafe, type UserRole } from "@/contexts/UserRoleContext";
 
 // ============================================================
 // PART 2 — Onboarding 3-Slide Component
@@ -75,6 +76,85 @@ const SLIDES: Slide[] = [
     },
     accent: "text-accent-green",
   },
+  {
+    icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />,
+    heading: {
+      ko: "어떻게 사용하시나요?",
+      en: "How will you use Loreguard?",
+      ja: "どのように使いますか?",
+      zh: "您会如何使用?",
+    },
+    body: {
+      ko: "선택에 따라 최적 화면을 보여드립니다.\n나중에 Settings에서 변경할 수 있습니다.",
+      en: "We'll tailor the first screen to your choice.\nYou can change this later in Settings.",
+      ja: "選択に応じて最適な画面をお見せします。\n後で Settings から変更できます。",
+      zh: "我们将根据您的选择呈现最佳界面。\n之后可在 Settings 中修改。",
+    },
+    accent: "text-accent-amber",
+  },
+];
+
+// ============================================================
+// PART 2.5 — Role 선택 카드 데이터 + 진입 라우트
+// ============================================================
+
+interface RoleOption {
+  role: UserRole;
+  icon: string;
+  title: { ko: string; en: string; ja: string; zh: string };
+  description: { ko: string; en: string; ja: string; zh: string };
+  route: string;
+}
+
+const ROLE_OPTIONS: RoleOption[] = [
+  {
+    role: "writer",
+    icon: "📝",
+    title: { ko: "소설가", en: "Writer", ja: "作家", zh: "作家" },
+    description: {
+      ko: "집필이 메인",
+      en: "Writing-focused",
+      ja: "執筆中心",
+      zh: "以写作为主",
+    },
+    route: "/studio",
+  },
+  {
+    role: "translator",
+    icon: "🌐",
+    title: { ko: "번역가", en: "Translator", ja: "翻訳者", zh: "译者" },
+    description: {
+      ko: "번역 중심",
+      en: "Translation-focused",
+      ja: "翻訳中心",
+      zh: "以翻译为主",
+    },
+    route: "/translation-studio",
+  },
+  {
+    role: "publisher",
+    icon: "🏢",
+    title: { ko: "출판사", en: "Publisher", ja: "出版社", zh: "出版社" },
+    description: {
+      ko: "대량 번역/팀",
+      en: "Bulk translation / teams",
+      ja: "大量翻訳/チーム",
+      zh: "批量翻译/团队",
+    },
+    route: "/network",
+  },
+  {
+    role: "explorer",
+    icon: "👁",
+    title: { ko: "둘러보기", en: "Explore", ja: "見学", zh: "浏览" },
+    description: {
+      ko: "전체 탐색",
+      en: "Full overview",
+      ja: "全体を探索",
+      zh: "全面浏览",
+    },
+    route: "/",
+  },
 ];
 
 // ============================================================
@@ -84,10 +164,11 @@ const SLIDES: Slide[] = [
 export default function WelcomePage() {
   const router = useRouter();
   const { lang } = useLang();
+  const userRole = useUserRoleSafe();
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [slideIdx, setSlideIdx] = useState(0);
   // 만 14세 이상 자가 선언 — 기본 true로 기존 onboarding 플로우 유지.
-  // 사용자가 uncheck 시 '시작하기' 비활성.
+  // 사용자가 uncheck 시 역할 카드 비활성 (마지막 슬라이드).
   const [ageConfirmed, setAgeConfirmed] = useState(true);
 
   // 이미 온보딩 마친 사용자는 스튜디오로 바로
@@ -101,30 +182,47 @@ export default function WelcomePage() {
     }
   }, [router]);
 
+  // 역할 선택 → 역할 저장 + 온보딩 완료 + 해당 진입 화면으로 이동.
+  // [C] Provider 미마운트 시 role 저장만 skip, 진입은 정상 수행.
+  const handleSelectRole = (option: RoleOption) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, "1");
+      if (ageConfirmed) confirmAge();
+    } catch {
+      /* private browsing */
+    }
+    userRole?.setRole(option.role);
+    router.push(option.route);
+  };
+
   const handleNext = () => {
     if (slideIdx < SLIDES.length - 1) {
       setSlideIdx(slideIdx + 1);
     } else {
-      handleFinish();
+      // 마지막(역할 선택) 슬라이드에서 버튼 대신 카드가 표시되므로 이 분기는 탐색 버튼으로만 도달.
+      handleFinish("explorer", "/");
     }
   };
 
+  // Skip / default fallback — explorer role로 진입.
   const handleSkip = () => {
-    handleFinish();
+    handleFinish("explorer", "/");
   };
 
-  const handleFinish = () => {
+  const handleFinish = (fallbackRole: UserRole = "explorer", route: string = "/studio") => {
     try {
       localStorage.setItem(STORAGE_KEY, "1");
       if (ageConfirmed) confirmAge();
     } catch {
       /* private browsing — 다음 방문에 다시 표시될 수 있음 */
     }
-    router.push("/studio");
+    userRole?.setRole(fallbackRole);
+    router.push(route);
   };
 
   const slide = SLIDES[slideIdx];
   const isLast = slideIdx === SLIDES.length - 1;
+  const isRoleSlide = isLast; // 마지막 슬라이드는 역할 선택 카드로 구성
 
   return (
     <main className="min-h-screen flex flex-col bg-bg-primary text-text-primary">
@@ -173,8 +271,8 @@ export default function WelcomePage() {
             ))}
           </div>
 
-          {/* 만 14세 이상 자가 선언 — 마지막 슬라이드에서만 노출 */}
-          {isLast && (
+          {/* 만 14세 이상 자가 선언 — 마지막(역할 선택) 슬라이드에서만 노출 */}
+          {isRoleSlide && (
             <label className="flex items-center justify-center gap-2 mb-6 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -194,17 +292,44 @@ export default function WelcomePage() {
             </label>
           )}
 
-          {/* Next / Start button */}
-          <button
-            onClick={handleNext}
-            disabled={isLast && !ageConfirmed}
-            className="bg-accent-blue text-white px-8 py-3 rounded-xl text-base font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[48px] inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLast
-              ? T({ ko: "시작하기", en: "Start", ja: "はじめる", zh: "开始" })
-              : T({ ko: "다음", en: "Next", ja: "次へ", zh: "下一步" })}
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {/* 역할 선택 카드 — 마지막 슬라이드 한정. 일반 Next 버튼 대체. */}
+          {isRoleSlide ? (
+            <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-lg mx-auto">
+              {ROLE_OPTIONS.map((option) => (
+                <RoleCard
+                  key={option.role}
+                  icon={option.icon}
+                  title={T(option.title)}
+                  description={T(option.description)}
+                  disabled={!ageConfirmed}
+                  onClick={() => {
+                    if (!ageConfirmed) return;
+                    handleSelectRole(option);
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="bg-accent-blue text-white px-8 py-3 rounded-xl text-base font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[48px] inline-flex items-center gap-2"
+            >
+              {T({ ko: "다음", en: "Next", ja: "次へ", zh: "下一步" })}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Role 선택 후 Settings 변경 안내 */}
+          {isRoleSlide && (
+            <p className="text-[11px] md:text-xs text-text-tertiary mt-6">
+              {T({
+                ko: "선택하신 역할은 Settings에서 언제든 변경할 수 있습니다.",
+                en: "You can change this role anytime in Settings.",
+                ja: "選択した役割は Settings からいつでも変更できます。",
+                zh: "您可以随时在 Settings 中更改所选角色。",
+              })}
+            </p>
+          )}
         </div>
       </div>
 
@@ -232,4 +357,31 @@ export default function WelcomePage() {
   );
 }
 
-// IDENTITY_SEAL: WelcomePage | role=onboarding-3slide | inputs=lang | outputs=welcome-ui
+// ============================================================
+// PART 4 — RoleCard 보조 컴포넌트
+// ============================================================
+
+interface RoleCardProps {
+  icon: string;
+  title: string;
+  description: string;
+  disabled?: boolean;
+  onClick: () => void;
+}
+
+function RoleCard({ icon, title, description, disabled, onClick }: RoleCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="p-5 md:p-6 bg-bg-secondary hover:bg-bg-tertiary border border-border hover:border-accent-blue/40 rounded-xl text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[96px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-bg-secondary disabled:hover:border-border"
+    >
+      <div className="text-3xl mb-2" aria-hidden="true">{icon}</div>
+      <div className="font-semibold text-sm md:text-base mb-1 text-text-primary">{title}</div>
+      <div className="text-xs md:text-sm text-text-secondary">{description}</div>
+    </button>
+  );
+}
+
+// IDENTITY_SEAL: WelcomePage | role=onboarding-4slide-role | inputs=lang,userRole | outputs=welcome-ui,role-selected

@@ -2,8 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useLang } from "@/lib/LangContext";
 import MobileDesktopOnlyGate from "@/components/studio/MobileDesktopOnlyGate";
+import { SampleTranslationDemo } from "@/components/translator/SampleTranslationDemo";
 
 const TranslatorStudioApp = dynamic(
   () => import("@/components/translator/TranslatorStudioApp"),
@@ -20,15 +23,47 @@ const TranslatorStudioApp = dynamic(
   },
 );
 
+const VISITED_KEY = "noa_translation_studio_visited";
+
+const DEMO_SUMMARY_LABEL: Record<string, string> = {
+  ko: "30초 체험 (샘플 번역)",
+  en: "30-Second Demo (Sample Translation)",
+  ja: "30秒体験 (サンプル翻訳)",
+  zh: "30 秒体验 (示例翻译)",
+};
+
 export default function TranslationStudioPage() {
   const isMobile = useIsMobile();
+  const { lang } = useLang();
   const [forceDesktop, setForceDesktop] = useState(false);
+  // [C] SSR-safe: 서버 렌더 시 null, 클라이언트 hydration 후 결정
+  const [hasVisited, setHasVisited] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search);
-    setForceDesktop(p.get('force') === 'desktop' || localStorage.getItem('noa_force_desktop') === '1');
+    setForceDesktop(
+      p.get("force") === "desktop" || localStorage.getItem("noa_force_desktop") === "1",
+    );
+    try {
+      setHasVisited(localStorage.getItem(VISITED_KEY) === "1");
+    } catch {
+      // localStorage 접근 실패 (private mode 등) → 첫 방문 취급
+      setHasVisited(false);
+    }
   }, []);
+
+  // 데모 펼침 시 방문 플래그 기록 (한 번만)
+  const handleDemoToggle = (e: React.SyntheticEvent<HTMLDetailsElement>) => {
+    if (e.currentTarget.open && hasVisited === false) {
+      try {
+        localStorage.setItem(VISITED_KEY, "1");
+        setHasVisited(true);
+      } catch {
+        /* ignore — 쿠키/스토리지 차단 환경 */
+      }
+    }
+  };
 
   if (isMobile && !forceDesktop) {
     return (
@@ -45,5 +80,30 @@ export default function TranslationStudioPage() {
     );
   }
 
-  return <TranslatorStudioApp />;
+  // hasVisited === null (SSR or initial): 데모 섹션은 collapsed 초기 렌더 (hydration mismatch 방지)
+  // hasVisited === false: 첫 방문 → open
+  // hasVisited === true: 재방문 → closed, 필요 시 수동 확장
+  const summaryLabel = DEMO_SUMMARY_LABEL[lang] ?? DEMO_SUMMARY_LABEL.ko;
+
+  return (
+    <>
+      {hasVisited !== null && (
+        <details
+          open={hasVisited === false}
+          onToggle={handleDemoToggle}
+          className="group max-w-3xl mx-auto mt-4 px-4"
+        >
+          <summary className="cursor-pointer list-none flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded transition focus-visible:ring-2 focus-visible:ring-accent-amber outline-none">
+            <ChevronDown
+              className="w-4 h-4 transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+            {summaryLabel}
+          </summary>
+          <SampleTranslationDemo />
+        </details>
+      )}
+      <TranslatorStudioApp />
+    </>
+  );
 }

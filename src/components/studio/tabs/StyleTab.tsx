@@ -8,6 +8,7 @@ import TabAssistant from '@/components/studio/TabAssistant';
 import RhythmAnalyzer from '@/components/studio/RhythmAnalyzer';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 const StyleStudioView = dynamic(() => import('@/components/studio/StyleStudioView'), {
   ssr: false,
@@ -74,6 +75,16 @@ const StyleTab: React.FC<StyleTabProps> = ({
 
   return (
     <>
+      <TabHeader
+        icon="🎨"
+        title={L4(language, { ko: '문체', en: 'Style', ja: '文体', zh: '文体' })}
+        description={L4(language, {
+          ko: '레이더 6축으로 문체 조정 · 프리셋 추천',
+          en: 'Tune style via 6-axis radar · preset recommendations',
+          ja: '6軸レーダーでスタイル調整・プリセット推奨',
+          zh: '通过 6 轴雷达调节文体 · 预设推荐',
+        })}
+      />
       <StyleStudioView
         language={language}
         initialProfile={config.styleProfile}

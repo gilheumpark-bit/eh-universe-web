@@ -4,11 +4,12 @@ import { Sparkles, PenTool, StopCircle, Send } from 'lucide-react';
 import { AppLanguage, AppTab, ChatSession, Message } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
 const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
@@ -93,6 +94,16 @@ const WritingTab: React.FC<WritingTabProps> = ({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative">
+      <TabHeader
+        icon="✍️"
+        title={L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}
+        description={L4(language, {
+          ko: '좌측 에디터에 글을 쓰세요. AI 도움은 우측 하단 버튼 (Ctrl+Enter)',
+          en: 'Write on the left editor. Use the bottom-right button for AI help (Ctrl+Enter)',
+          ja: '左側のエディタで執筆。右下のボタンでAIサポート (Ctrl+Enter)',
+          zh: '在左侧编辑器中写作。右下角按钮启用 AI 协助 (Ctrl+Enter)',
+        })}
+      />
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           <div className={`max-w-6xl w-full mx-auto px-4 md:px-8 lg:px-12 flex flex-col ${currentSession.messages.length === 0 && writingMode === 'ai' ? 'h-full justify-center items-center' : 'py-6 md:py-8 space-y-6 min-h-full'}`}>

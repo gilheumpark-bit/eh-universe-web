@@ -6,11 +6,12 @@ import { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import ResourceView from '@/components/studio/ResourceView';
 import ItemStudioView from '@/components/studio/ItemStudioView';
 import TabAssistant from '@/components/studio/TabAssistant';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { Loader2, Sparkles } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
 import { activeSupportsStructured } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 /** 다국어 에러/프리픽스 메시지 — 재렌더마다 재생성되지 않도록 모듈 상수로 추출 */
 const L10N = {
@@ -132,6 +133,16 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
 
   return (
     <>
+      <TabHeader
+        icon="👥"
+        title={L4(language, { ko: '등장인물', en: 'Characters', ja: '登場人物', zh: '角色' })}
+        description={L4(language, {
+          ko: '주인공 1명부터 시작하세요',
+          en: 'Start with one protagonist',
+          ja: '主人公1人から始めましょう',
+          zh: '从 1 位主角开始',
+        })}
+      />
       {/* Premium Header Bar */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-5 pb-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

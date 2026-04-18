@@ -24,6 +24,7 @@ import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
 import { useQualityAnalysis } from '@/hooks/useQualityAnalysis';
 import { useContinuityCheck } from '@/hooks/useContinuityCheck';
 import { useUndoStack } from '@/hooks/useUndoStack';
+import { useUserRoleSafe } from '@/contexts/UserRoleContext';
 
 import { AIModeSection } from './writing/AIModeSection';
 import { EditModeSection } from './writing/EditModeSection';
@@ -32,6 +33,7 @@ import { RefineModeSection } from './writing/RefineModeSection';
 import { AdvancedModeSection } from './writing/AdvancedModeSection';
 import { InputDockSection } from './writing/InputDockSection';
 import { MobileOverlaySection } from './writing/MobileOverlaySection';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 const DynSkeleton = () => <div className="h-8 rounded-lg bg-bg-secondary/50 animate-pulse" />;
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
@@ -130,6 +132,20 @@ export default function WritingTabInline(props: Props) {
   // ============================================================
   // PART 2 — 로컬 상태 / 이벤트 훅 (드롭다운·드래그앤드롭·품질·연속성)
   // ============================================================
+
+  // Tier 1 (기본) ↔ Tier 2+ (고급 모드 5탭) 토글 — UserRoleContext에서 영속화.
+  // 기본은 false → 단순 UI(집필+생성+미니 도구만). 고급 토글 시 5탭 노출.
+  // Context 미마운트(테스트/SSR 폴백) 시 항상 false → 안전한 기본 단순 UI.
+  const userRole = useUserRoleSafe();
+  const advancedWritingMode = userRole?.advancedWritingMode ?? false;
+  const setAdvancedWritingMode = userRole?.setAdvancedWritingMode ?? (() => undefined);
+
+  // 고급 모드가 꺼졌는데 writingMode가 고급 전용(canvas/refine/advanced)이면 edit로 안전 복귀.
+  useEffect(() => {
+    if (!advancedWritingMode && (writingMode === 'canvas' || writingMode === 'refine' || writingMode === 'advanced')) {
+      setWritingMode('edit');
+    }
+  }, [advancedWritingMode, writingMode, setWritingMode]);
 
   // 고급 모드 드롭다운 — 호버 대신 클릭 토글 (터치 디바이스 지원)
   const [advancedMenuOpen, setAdvancedMenuOpen] = useState(false);
@@ -394,7 +410,18 @@ export default function WritingTabInline(props: Props) {
   // ============================================================
 
   return (
-    <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-bg-primary">
+    <div className="flex flex-col h-full overflow-hidden bg-bg-primary">
+      <TabHeader
+        icon="✍️"
+        title={L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}
+        description={L4(language, {
+          ko: '좌측 에디터에 글을 쓰세요. AI 도움은 우측 하단 버튼 (Ctrl+Enter)',
+          en: 'Write on the left editor. Use the bottom-right button for AI help (Ctrl+Enter)',
+          ja: '左側のエディタで執筆。右下のボタンでAIサポート (Ctrl+Enter)',
+          zh: '在左侧编辑器中写作。右下角按钮启用 AI 协助 (Ctrl+Enter)',
+        })}
+      />
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
       {/* 참조 패널 — edit 모드에서만 */}
       {writingMode === 'edit' && (
         <WritingContextPanel config={currentSession.config} language={language} />
@@ -450,8 +477,8 @@ export default function WritingTabInline(props: Props) {
               </span>
             </button>
 
-            {/* 더보기: API 키 있을 때만 노출 — 고급 모드는 드롭다운으로 숨김 */}
-            {hasApiKey && (
+            {/* 더보기: API 키 + 고급 모드 활성 상태일 때만 노출 — Tier 2+ 진입 후 5모드 펼침 */}
+            {hasApiKey && advancedWritingMode && (
               <>
                 <div className="w-px h-5 bg-border/50 mx-1" />
                 {/* 고급 모드가 활성 상태면 해당 버튼을 직접 표시 */}
@@ -593,6 +620,26 @@ export default function WritingTabInline(props: Props) {
             >
               <Columns2 className="w-4 h-4" />
               {L4(language, { ko: '분할 뷰', en: 'Split', ja: 'Split', zh: 'Split' })}
+            </button>
+            {/* Tier 토글 — 기본/고급 모드. 텍스트만, opt-in 강조. */}
+            <button
+              type="button"
+              onClick={() => setAdvancedWritingMode(!advancedWritingMode)}
+              className={`text-[11px] tracking-wide px-2 py-1 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+                advancedWritingMode
+                  ? 'text-text-secondary hover:text-text-primary'
+                  : 'text-text-tertiary hover:text-text-secondary'
+              }`}
+              title={advancedWritingMode
+                ? L4(language, { ko: '5모드/세부 옵션 숨기기', en: 'Hide 5 modes / advanced options', ja: '5モード/詳細オプションを非表示', zh: '隐藏 5 模式/高级选项' })
+                : L4(language, { ko: '3단계·다듬기·고급 등 5모드 펼치기', en: 'Expand 5 modes (3-Step, Refine, Advanced)', ja: '5モードを展開', zh: '展开 5 模式' })
+              }
+              aria-pressed={advancedWritingMode}
+            >
+              {advancedWritingMode
+                ? L4(language, { ko: '← 기본 모드로', en: '← Basic Mode', ja: '← 基本モードへ', zh: '← 返回基础模式' })
+                : L4(language, { ko: '⚙ 고급 모드', en: '⚙ Advanced Mode', ja: '⚙ 高度モード', zh: '⚙ 高级模式' })
+              }
             </button>
           </div>
         </div>
@@ -836,6 +883,7 @@ export default function WritingTabInline(props: Props) {
           <kbd className="text-xs opacity-70 ml-1 hidden sm:inline">Ctrl+Enter</kbd>
         </button>
       )}
+      </div>
     </div>
   );
 }

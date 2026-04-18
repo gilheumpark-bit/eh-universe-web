@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { AppLanguage, StoryConfig, ChatSession, WorldSimData } from '@/lib/studio-types';
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
+import { TabHeader } from '@/components/studio/TabHeader';
 
 const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), {
   ssr: false,
@@ -98,6 +99,17 @@ const WorldTab: React.FC<WorldTabProps> = ({
   hostedProviders = {},
 }) => {
   return (
+    <>
+    <TabHeader
+      icon="🌍"
+      title={L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' })}
+      description={L4(language, {
+        ko: '장소 · 시대 · 법칙을 설계합니다',
+        en: 'Design places, eras, and rules',
+        ja: '場所・時代・法則を設計します',
+        zh: '设计地点、时代与法则',
+      })}
+    />
     <WorldStudioView
       language={language}
       config={config}
@@ -173,6 +185,7 @@ const WorldTab: React.FC<WorldTabProps> = ({
         }
       }}
     />
+    </>
   );
 };
 

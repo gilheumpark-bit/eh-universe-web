@@ -39,6 +39,22 @@ jest.mock('@/lib/firebase', () => ({
   db: null,
 }));
 
+// Mock UserRoleContext — developer role 가정(CODE 탭 노출 검증).
+// 별도 역할 숨김 테스트는 UserRoleContext 자체 테스트에서 커버.
+jest.mock('@/contexts/UserRoleContext', () => ({
+  useCanAccessCodeStudio: () => true,
+  useUserRoleSafe: () => ({
+    role: 'developer',
+    setRole: jest.fn(),
+    tier: 'tier1',
+    setTier: jest.fn(),
+    developerMode: true,
+    setDeveloperMode: jest.fn(),
+    advancedWritingMode: false,
+    setAdvancedWritingMode: jest.fn(),
+  }),
+}));
+
 describe('Header', () => {
   it('renders the header element with testid', () => {
     render(<Header />);
