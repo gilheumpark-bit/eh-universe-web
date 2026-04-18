@@ -31,6 +31,11 @@ interface UnifiedSettingsContextType {
   toggleTheme: () => void;
   setTheme: (mode: ThemeMode) => void;
 
+  // Blue-light filter (시각 편의 — 눈 피로 감소용 세피아/밝기 저감)
+  blueLightFilter: boolean;
+  toggleBlueLightFilter: () => void;
+  setBlueLightFilter: (on: boolean) => void;
+
   // API Key Slots
   slots: APIKeySlot[];
   addSlot: (slot: Omit<APIKeySlot, "id">) => void;
@@ -52,6 +57,7 @@ const UnifiedSettingsContext = createContext<UnifiedSettingsContextType | null>(
 // ── Storage Keys ──
 const THEME_KEY = "eh-theme";
 const SLOTS_KEY = "eh-api-key-slots";
+const BLUE_LIGHT_KEY = "noa_blue_light_filter";
 
 // ── Storage Helpers ──
 function loadTheme(): ThemeMode {
@@ -63,6 +69,16 @@ function loadTheme(): ThemeMode {
   if (legacy === "0" || legacy === "1") return "dark";
   if (legacy === "2" || legacy === "3") return "light";
   return "light";
+}
+
+/** [C] SSR 안전 블루라이트 로드 — window 미정의 시 기본 false */
+function loadBlueLightFilter(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(BLUE_LIGHT_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 function loadSlots(): APIKeySlot[] {
@@ -119,6 +135,7 @@ function saveSlots(slots: APIKeySlot[]): void {
 export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(loadTheme);
   const [slots, setSlots] = useState<APIKeySlot[]>(loadSlots);
+  const [blueLightFilter, setBlueLightFilterState] = useState<boolean>(loadBlueLightFilter);
 
   // ── Theme Effects ──
   // Tailwind CSS 4 inlines oklch colors from @theme, ignoring CSS variable overrides.
@@ -178,6 +195,31 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
     setThemeState(mode);
   }, []);
 
+  // ── Blue-Light Filter Effect ──
+  // [C] SSR 가드 + localStorage quota 예외 처리
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    if (blueLightFilter) {
+      root.setAttribute("data-blue-light", "on");
+    } else {
+      root.removeAttribute("data-blue-light");
+    }
+    try {
+      localStorage.setItem(BLUE_LIGHT_KEY, blueLightFilter ? "1" : "0");
+    } catch {
+      // quota or disabled storage — silent
+    }
+  }, [blueLightFilter]);
+
+  const toggleBlueLightFilter = useCallback(() => {
+    setBlueLightFilterState((prev) => !prev);
+  }, []);
+
+  const setBlueLightFilter = useCallback((on: boolean) => {
+    setBlueLightFilterState(on);
+  }, []);
+
   // ── 초기 로드 시 슬롯 → ai-providers 동기화 ──
   useEffect(() => {
     if (slots.length > 0) syncToLegacyKeys(slots);
@@ -233,6 +275,9 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
         theme,
         toggleTheme,
         setTheme,
+        blueLightFilter,
+        toggleBlueLightFilter,
+        setBlueLightFilter,
         slots,
         addSlot,
         updateSlot,

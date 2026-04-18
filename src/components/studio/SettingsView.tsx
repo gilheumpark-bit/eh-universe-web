@@ -14,15 +14,17 @@ import { useAuth } from '@/lib/AuthContext';
 import { logger } from '@/lib/logger';
 import {
   User, Shield, Trash2, Settings,
-  ChevronRight, ChevronDown, Zap, Bell, BookOpen, Sparkles,
+  ChevronRight, ChevronDown, Zap, Bell, BookOpen, Sparkles, Eye,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useUnifiedSettings } from '@/lib/UnifiedSettingsContext';
 
 const WriterProfileCard = dynamic(() => import('@/components/studio/WriterProfileCard'), { ssr: false });
 const ProvidersSection = dynamic(() => import('@/components/studio/settings/ProvidersSection'), { ssr: false });
 const BackupsSection = dynamic(() => import('@/components/studio/settings/BackupsSection'), { ssr: false });
 const AdvancedSection = dynamic(() => import('@/components/studio/settings/AdvancedSection'), { ssr: false });
 const PluginsSection = dynamic(() => import('@/components/studio/settings/PluginsSection'), { ssr: false });
+const SessionSection = dynamic(() => import('@/components/studio/settings/SessionSection'), { ssr: false });
 
 interface VersionedBackup {
   timestamp: number;
@@ -122,6 +124,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ language, hostedProviders =
         {/* Group 6: Plugins (Marketplace entry point) */}
         <PluginsSection language={language} />
 
+        {/* Group 7: Session · Pomodoro (writer fatigue management) */}
+        <SessionSection language={language} />
+
         {/* Footer */}
         <div className="md:col-span-2 flex flex-col gap-4 md:flex-row justify-between items-center px-2 md:px-10">
           <div className="flex items-center gap-4">
@@ -165,6 +170,7 @@ function WriterSettingsGroup({
   onClearAll,
 }: WriterSettingsGroupProps) {
   const t = createT(language);
+  const { blueLightFilter, toggleBlueLightFilter } = useUnifiedSettings();
 
   const shortcutsDisabled = typeof window !== 'undefined' && localStorage.getItem('noa_shortcuts_disabled') === '1';
   const suggestionsDisabled = typeof window !== 'undefined' && localStorage.getItem('noa_suggestions_disabled') === '1';
@@ -296,6 +302,40 @@ function WriterSettingsGroup({
                 </div>
               </div>
               <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${suggestionsDisabled ? 'bg-bg-tertiary justify-start' : 'bg-blue-600 justify-end'}`}>
+                <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
+              </div>
+            </div>
+
+            {/* Blue-Light Filter — 시각 편의 토글 */}
+            <div
+              onClick={toggleBlueLightFilter}
+              role="switch"
+              tabIndex={0}
+              aria-checked={blueLightFilter}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleBlueLightFilter(); }
+              }}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  <Eye className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate">
+                    {L4(language, { ko: '블루라이트 필터', en: 'Blue Light Filter', ja: 'ブルーライトフィルター', zh: '蓝光过滤' })}
+                  </div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: '세피아 12% + 밝기 저감으로 야간 눈 피로 감소',
+                      en: 'Sepia 12% + brightness cut to reduce eye fatigue at night',
+                      ja: 'セピア12% + 明度低減で夜間の目の疲れを軽減',
+                      zh: '应用 12% 棕褐色与亮度削减以减少夜间眼疲劳',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${blueLightFilter ? 'bg-blue-600 justify-end' : 'bg-bg-tertiary justify-start'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
               </div>
             </div>

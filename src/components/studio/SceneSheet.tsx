@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { FileText } from "lucide-react";
 import { showAlert } from "@/lib/show-alert";
 import { GRAMMAR_PACKS, GRAMMAR_REGIONS, type GrammarRegion } from "@/lib/grammar-packs";
 import { createT, L4 } from "@/lib/i18n";
 import type { AppLanguage, EpisodeSceneSheet } from "@/lib/studio-types";
 import { useStudioUI } from "@/contexts/StudioContext";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ============================================================
 // PART 1 — 타입 및 상수 (장르 프리셋, 플롯 프리셋, 스마트 디폴트)
@@ -432,6 +434,17 @@ export default function SceneSheet({
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [grammarRegion, setGrammarRegion] = useState<GrammarRegion>(grammarRegionProp ?? "KR");
   const [showGrammarPanel, setShowGrammarPanel] = useState(false);
+  // [C] "빈 씬시트로 바로 시작" 의도 추적 — 사용자가 EmptyState에서 "빈 시트" 선택하면 EmptyState 숨김
+  const [blankStarted, setBlankStarted] = useState(false);
+
+  // [C] 핵심 데이터가 모두 비어 있는지 계산. initialDirection이 있으면 false.
+  //     pacings는 기본값으로 3개 세팅되므로 제외.
+  const isSceneSheetEmpty =
+    !blankStarted &&
+    !activePreset &&
+    !writerNotes.trim() &&
+    (initialDirection?.goguma?.length ?? 0) === 0 &&
+    !initialDirection?.writerNotes;
 
   // grammarRegion 변경 시 상위(StoryConfig)에 전파
   useEffect(() => {
@@ -655,6 +668,53 @@ export default function SceneSheet({
 
         {/* Main scrollable content */}
         <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 space-y-2">
+          {/* Empty state — 완전 공백일 때 장르 프리셋 안내 */}
+          {isSceneSheetEmpty && (
+            <EmptyState
+              icon={FileText}
+              title={L4(lang, {
+                ko: '씬시트가 비어 있습니다',
+                en: 'Your scene sheet is empty',
+                ja: 'シーンシートが空です',
+                zh: '场景表是空的',
+              })}
+              description={L4(lang, {
+                ko: '장면 개요부터 시작하세요. 10+ 장르 프리셋 지원.',
+                en: 'Start with a scene outline. Supports 10+ genre presets.',
+                ja: 'シーン概要から始めましょう。10+ ジャンルプリセット対応。',
+                zh: '从场景概述开始。支持 10+ 类型预设。',
+              })}
+              actions={[
+                {
+                  label: L4(lang, {
+                    ko: '장르 프리셋 선택',
+                    en: 'Choose genre preset',
+                    ja: 'ジャンルプリセット選択',
+                    zh: '选择类型预设',
+                  }),
+                  variant: 'primary',
+                  onClick: () => {
+                    // [C] 첫 프리셋 버튼으로 포커스 이동 — 시각적 힌트
+                    const firstPreset = document.querySelector<HTMLButtonElement>(
+                      '[aria-pressed][aria-label*="preset" i], [aria-pressed][aria-label*="프리셋"]',
+                    );
+                    firstPreset?.focus();
+                  },
+                },
+                {
+                  label: L4(lang, {
+                    ko: '빈 씬시트 시작',
+                    en: 'Start blank',
+                    ja: '空のシーンシートで開始',
+                    zh: '从空白开始',
+                  }),
+                  variant: 'secondary',
+                  onClick: () => setBlankStarted(true),
+                },
+              ]}
+            />
+          )}
+
           {/* Preset Bar — 장르별 색상 + 이모지 */}
           <div className="grid grid-cols-5 gap-2 pb-2">
             {SCENE_PRESETS.map(p => {

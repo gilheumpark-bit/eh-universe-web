@@ -308,14 +308,14 @@ export default function MarketplacePanel({
     <div
       className={`flex flex-col bg-bg-secondary border border-border rounded-lg ${className}`}
       role="dialog"
-      aria-label={labels.title}
+      aria-labelledby="marketplace-panel-title"
       data-testid="marketplace-panel"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <Package size={16} className="text-accent-purple" />
-          <h2 className="text-sm font-black text-text-primary uppercase tracking-widest font-mono">
+          <Package size={16} className="text-accent-purple" aria-hidden="true" />
+          <h2 id="marketplace-panel-title" className="text-sm font-black text-text-primary uppercase tracking-widest font-mono">
             {labels.title}
           </h2>
         </div>
@@ -327,24 +327,25 @@ export default function MarketplacePanel({
             data-testid="marketplace-close"
             className="min-h-[32px] min-w-[32px] p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
           >
-            <X size={14} />
+            <X size={14} aria-hidden="true" />
           </button>
         ) : null}
       </div>
 
       {/* Filter bar */}
       <div className="px-4 py-3 border-b border-border flex flex-col sm:flex-row gap-2">
-        <label className="relative flex-1" aria-label={labels.searchPh}>
-          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+        <div className="relative flex-1">
+          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" aria-hidden="true" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={labels.searchPh}
+            aria-label={labels.searchPh}
             data-testid="marketplace-search"
             className="w-full min-h-[32px] pl-7 pr-2 py-1 text-[12px] bg-bg-primary border border-border rounded text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus:border-accent-purple"
           />
-        </label>
+        </div>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as CategoryFilter)}
@@ -365,7 +366,12 @@ export default function MarketplacePanel({
             {labels.empty}
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="marketplace-grid">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+            data-testid="marketplace-grid"
+            role="list"
+            aria-label={labels.title}
+          >
             {manifests.map((m) => {
               const Icon = iconFor(m.iconLucide);
               const enabled = pluginRegistry.isEnabled(m.id);
@@ -373,10 +379,11 @@ export default function MarketplacePanel({
                 <article
                   key={m.id}
                   data-testid={`plugin-card-${m.id}`}
+                  role="listitem"
                   className="flex flex-col border border-border rounded-lg p-3 bg-bg-primary hover:border-accent-purple/40 transition-colors"
                 >
                   <header className="flex items-start gap-2">
-                    <span className="shrink-0 w-8 h-8 rounded flex items-center justify-center bg-bg-tertiary text-accent-purple">
+                    <span className="shrink-0 w-8 h-8 rounded flex items-center justify-center bg-bg-tertiary text-accent-purple" aria-hidden="true">
                       <Icon size={16} />
                     </span>
                     <div className="flex-1 min-w-0">
@@ -403,6 +410,9 @@ export default function MarketplacePanel({
                       type="button"
                       onClick={() => handleToggle(m.id)}
                       data-testid={`plugin-toggle-${m.id}`}
+                      role="switch"
+                      aria-checked={enabled}
+                      aria-label={`${L4(language, m.name)} — ${enabled ? labels.disable : labels.enable}`}
                       className={`flex-1 min-h-[32px] px-2 py-1 text-[11px] font-semibold rounded border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                         enabled
                           ? "bg-bg-tertiary text-text-primary border-border hover:bg-bg-secondary"
@@ -415,6 +425,7 @@ export default function MarketplacePanel({
                       type="button"
                       onClick={() => setSelectedId(m.id)}
                       aria-label={labels.detailTitle}
+                      aria-haspopup="dialog"
                       data-testid={`plugin-detail-${m.id}`}
                       className="min-h-[32px] min-w-[32px] px-2 py-1 text-[11px] text-text-tertiary hover:text-text-primary rounded border border-border hover:bg-bg-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
                     >
@@ -482,6 +493,8 @@ export default function MarketplacePanel({
           {installMessage ? (
             <p
               data-testid="marketplace-install-message"
+              role={installStatus === "failed" ? "alert" : "status"}
+              aria-live={installStatus === "failed" ? "assertive" : "polite"}
               className={`mt-2 text-[11px] ${
                 installStatus === "failed"
                   ? "text-accent-red"
@@ -508,14 +521,15 @@ export default function MarketplacePanel({
           className="absolute inset-0 bg-black/60 flex items-stretch sm:items-center justify-center p-0 sm:p-4 z-[var(--z-modal)]"
           role="dialog"
           aria-modal="true"
-          aria-label={labels.detailTitle}
+          aria-labelledby="marketplace-detail-title"
+          aria-describedby="marketplace-detail-desc"
           data-testid="marketplace-detail"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}
         >
           <div className="bg-bg-secondary border border-border rounded-none sm:rounded-lg max-w-none sm:max-w-md w-full h-full sm:h-auto sm:max-h-[80vh] overflow-y-auto p-4">
             <div className="flex items-start justify-between gap-2 mb-3">
               <div>
-                <h3 className="text-sm font-bold text-text-primary">{L4(language, selected.name)}</h3>
+                <h3 id="marketplace-detail-title" className="text-sm font-bold text-text-primary">{L4(language, selected.name)}</h3>
                 <p className="text-[10px] text-text-tertiary font-mono">
                   {labels.version} v{selected.version} · {labels.author} {selected.author}
                   {selected.bundled ? ` · ${labels.bundled}` : ""}
@@ -528,26 +542,26 @@ export default function MarketplacePanel({
                 data-testid="marketplace-detail-close"
                 className="min-h-[32px] min-w-[32px] p-1 rounded hover:bg-bg-tertiary text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
               >
-                <X size={14} />
+                <X size={14} aria-hidden="true" />
               </button>
             </div>
-            <p className="text-[12px] text-text-secondary mb-3">
+            <p id="marketplace-detail-desc" className="text-[12px] text-text-secondary mb-3">
               {L4(language, selected.description)}
             </p>
             {selected.permissions && selected.permissions.length > 0 ? (
               <div className="mb-3">
-                <h4 className="text-[11px] font-semibold text-text-primary uppercase tracking-wide mb-1 flex items-center gap-1">
-                  <Shield size={11} />
+                <h4 id="marketplace-permissions-title" className="text-[11px] font-semibold text-text-primary uppercase tracking-wide mb-1 flex items-center gap-1">
+                  <Shield size={11} aria-hidden="true" />
                   {labels.permissionsTitle}
                 </h4>
-                <ul className="space-y-1">
+                <ul className="space-y-1" aria-labelledby="marketplace-permissions-title">
                   {selected.permissions.map((perm) => (
                     <li
                       key={perm}
                       className="text-[11px] text-text-secondary flex items-center gap-1"
                       data-testid={`marketplace-permission-${perm}`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-accent-amber" />
+                      <span className="w-1 h-1 rounded-full bg-accent-amber" aria-hidden="true" />
                       {L4(language, PERMISSION_LABELS[perm])}
                     </li>
                   ))}
@@ -559,6 +573,8 @@ export default function MarketplacePanel({
                 type="button"
                 onClick={() => { handleToggle(selected.id); setSelectedId(null); }}
                 data-testid="marketplace-detail-toggle"
+                role="switch"
+                aria-checked={pluginRegistry.isEnabled(selected.id)}
                 className={`min-h-[32px] px-3 py-1 text-[12px] font-semibold rounded border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                   pluginRegistry.isEnabled(selected.id)
                     ? "bg-bg-tertiary text-text-primary border-border"

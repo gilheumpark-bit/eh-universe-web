@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { generateItems, generateSkills, generateMagicSystems } from '@/services/geminiService';
 import { activeSupportsStructured } from '@/lib/ai-providers';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ============================================================
 // PART 1 — CONSTANTS & LABELS
@@ -569,6 +570,43 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
           </div>
 
           {/* Item Cards */}
+          {filteredItems.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              title={L4(language, {
+                ko: '등록된 아이템이 없습니다',
+                en: 'No items registered yet',
+                ja: '登録されたアイテムがありません',
+                zh: '尚未注册任何物品',
+              })}
+              description={L4(language, {
+                ko: '장비·마법·스킬을 추가하여 풍성한 세계를 만드세요.',
+                en: 'Add equipment, magic, and skills to enrich your world.',
+                ja: '装備・魔法・スキルを追加して豊かな世界を作りましょう。',
+                zh: '添加装备、魔法和技能，打造丰富的世界。',
+              })}
+              actions={[
+                {
+                  label: L4(language, {
+                    ko: '아이템 추가',
+                    en: 'Add item',
+                    ja: 'アイテム追加',
+                    zh: '添加物品',
+                  }),
+                  icon: Plus,
+                  variant: 'primary',
+                  onClick: () => {
+                    // [C] "새 아이템 추가" 섹션의 이름 입력 필드로 포커스 이동
+                    const nameInput = document.querySelector<HTMLInputElement>(
+                      `input[placeholder="${t('itemStudio.namePlaceholder')}"]`,
+                    );
+                    nameInput?.focus();
+                    nameInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  },
+                },
+              ]}
+            />
+          ) : null}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredItems.map(item => {
               const rCfg = RARITY_CONFIG[item.rarity] || RARITY_CONFIG.common;

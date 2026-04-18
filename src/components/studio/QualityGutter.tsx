@@ -231,6 +231,13 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
     setSelectedParagraph(prev => prev === rowIndex ? null : rowIndex);
   };
 
+  // [C] 상태표시 — 색상만으로 품질 구분 불가 (색맹/저시력 고려). 점수 뒤에 등급 텍스트 붙여 의미 중복.
+  const gradeLabel = (s: number): string => {
+    if (s >= 75) return isKO ? '양호' : 'Good';
+    if (s >= 50) return isKO ? '보통' : 'Fair';
+    return isKO ? '개선 필요' : 'Needs work';
+  };
+
   return (
     <div className="border border-border/50 rounded-xl bg-bg-secondary/50 overflow-hidden">
       {/* 요약 바 */}
@@ -238,13 +245,15 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
         type="button"
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-bg-secondary transition-colors"
+        aria-expanded={expanded}
       >
         {/* 평균 점수 배지 */}
         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${scoreBorder(averageScore)} bg-bg-primary`}>
-          <div className={`w-2 h-2 rounded-full ${scoreColor(averageScore)}`} />
+          <div className={`w-2 h-2 rounded-full ${scoreColor(averageScore)}`} aria-hidden="true" />
           <span className={`text-xs font-bold font-mono ${scoreTextColor(averageScore)}`}>
             {averageScore}
           </span>
+          <span className="sr-only"> {gradeLabel(averageScore)}</span>
         </div>
 
         <span className="text-[10px] font-mono uppercase tracking-wider text-text-tertiary">
@@ -252,12 +261,13 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
         </span>
 
         {/* 문단 미니 바 차트 */}
-        <div className="flex-1 flex items-center gap-px mx-2">
+        <div className="flex-1 flex items-center gap-px mx-2" role="presentation">
           {paragraphs.slice(0, 20).map((p, i) => (
             <div
               key={i}
               className={`h-3 flex-1 rounded-sm ${scoreColor(p.score)} opacity-60 hover:opacity-100 transition-opacity cursor-pointer`}
-              title={`P${i + 1}: ${p.score}`}
+              title={`P${i + 1}: ${p.score} (${gradeLabel(p.score)})`}
+              aria-label={`P${i + 1}: ${p.score} (${gradeLabel(p.score)})`}
               onClick={(e) => { e.stopPropagation(); onSelectWeak?.(p.index); }}
             />
           ))}
@@ -289,6 +299,7 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
                 {/* 점수 */}
                 <span className={`text-xs font-bold font-mono shrink-0 w-8 ${scoreTextColor(p.score)}`}>
                   {p.score}
+                  <span className="sr-only"> {gradeLabel(p.score)}</span>
                 </span>
 
                 {/* 문단 미리보기 + 이슈 */}

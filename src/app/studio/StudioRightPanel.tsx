@@ -280,7 +280,7 @@ export function StudioWritingAssistantPanel({
               </div>
               <div className="space-y-2">
                 {currentSession.messages.slice(0, -2).map(msg => (
-                  <div key={msg.id} className={`text-[10px] leading-relaxed px-2 py-1.5 rounded-lg ${
+                  <div key={msg.id} className={`text-[12px] leading-relaxed px-2 py-1.5 rounded-lg ${
                     msg.role === 'user' ? 'bg-bg-tertiary/50 text-zinc-400' : 'text-zinc-500'
                   }`}>
                     <span className="font-bold text-[9px] uppercase">{msg.role === 'user' ? '\uD83E\uDDD1' : '\uD83E\uDD16'}</span>{' '}
@@ -315,13 +315,13 @@ export function StudioWritingAssistantPanel({
                   : 'text-accent-amber hover:text-accent-amber/80'
               }`}>{'\uD83C\uDFAC'} {t('panel.scene')} {!currentSession.config.sceneDirection && <span className="text-[11px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{t('panel.notSet')}</span>}</summary>
               <div className="mt-1.5 pl-4 space-y-1 min-w-0">
-                {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[10px] text-blue-400 break-words">{'\uD83E\uDE9D'} {h.desc}</div>)}
-                {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[10px] break-words ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '\uD83C\uDF60' : '\uD83E\uDD64'} {g.desc}</div>)}
-                {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[10px] text-red-400 break-words">{'\uD83D\uDD1A'} {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
+                {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[12px] text-blue-400 break-words">{'\uD83E\uDE9D'} {h.desc}</div>)}
+                {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[12px] break-words ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '\uD83C\uDF60' : '\uD83E\uDD64'} {g.desc}</div>)}
+                {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[12px] text-red-400 break-words">{'\uD83D\uDD1A'} {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
                 {!currentSession.config.sceneDirection && (
                   <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
-                    <p className="text-[10px] text-accent-amber">{t('panel.sceneWarning')}</p>
-                    <button onClick={() => setActiveTab('rulebook')} className="text-[10px] text-accent-purple hover:underline font-bold">
+                    <p className="text-[12px] text-accent-amber">{t('panel.sceneWarning')}</p>
+                    <button onClick={() => setActiveTab('rulebook')} className="text-[12px] text-accent-purple hover:underline font-bold">
                       {'\u2192'} {t('panel.setupDirection')}
                     </button>
                   </div>
@@ -359,11 +359,11 @@ export function StudioWritingAssistantPanel({
               <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">{'\uD83D\uDC64'} {t('panel.chars')} ({currentSession.config.characters.length})</summary>
               <div className="mt-1.5 pl-4 space-y-1.5 min-w-0">
                 {currentSession.config.characters.length > 0 ? currentSession.config.characters.map(c => (
-                  <div key={c.id} className="text-[10px] break-words">
+                  <div key={c.id} className="text-[12px] break-words">
                     <span className="font-bold text-text-primary">{c.name}</span> <span className="text-text-tertiary">({c.role})</span>
                     {c.speechStyle && <span className="text-accent-blue ml-1">{'\uD83D\uDDE3\uFE0F'}{c.speechStyle}</span>}
                   </div>
-                )) : <p className="text-[10px] text-text-tertiary italic">{t('panel.none')}</p>}
+                )) : <p className="text-[12px] text-text-tertiary italic">{t('panel.none')}</p>}
               </div>
             </details>
 

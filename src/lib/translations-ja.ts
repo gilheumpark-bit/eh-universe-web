@@ -1364,6 +1364,28 @@ const translations = {
     "symNoSymbols": "シンボルが見つかりません",
     "splitReady": "準備完了。",
     "splitReadyCmd": "準備完了。コマンドを入力..."
+  },
+  "session": {
+    "label": "セッション",
+    "daily": "今日",
+    "goal": "本日の目標",
+    "pomodoro": "ポモドーロ",
+    "rest_due": "休憩推奨",
+    "rest_message": "50分執筆しました。5分ストレッチはいかがですか？"
+  },
+  "empty": {
+    "world.title": "まだ世界観が空です",
+    "world.description": "場所・出来事・法則を追加して世界を設計しましょう。",
+    "scene.title": "シーンシートが空です",
+    "scene.description": "シーン概要から始めましょう。10+ ジャンルプリセット対応。",
+    "codex.title": "登録されたアイテムがありません",
+    "codex.description": "装備・魔法・スキルを追加して豊かな世界を作りましょう。",
+    "history.title": "保存されたバージョンがありません",
+    "history.description": "300文字以上変更すると自動スナップショットが作成されます。",
+    "characters.title": "キャラクターがいません",
+    "characters.description": "主人公から始めましょう。",
+    "manuscript.title": "まだ原稿がありません",
+    "manuscript.description": "最初のエピソードを作成して執筆を始めましょう。"
   }
 };
 

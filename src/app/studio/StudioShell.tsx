@@ -596,6 +596,11 @@ export default function StudioShell() {
     onGlobalSearch: () => dispatchUi((s: UiState) => ({ showGlobalSearch: !s.showGlobalSearch })),
     onFontSizeUp: () => setEditorFontSize(s => { const n = Math.min(s + 2, 28); document.documentElement.style.setProperty('--editor-font-size', `${n}px`); return n; }),
     onFontSizeDown: () => setEditorFontSize(s => { const n = Math.max(s - 2, 12); document.documentElement.style.setProperty('--editor-font-size', `${n}px`); return n; }),
+    // Ctrl+\ — writing 탭의 분할 뷰(채팅/레퍼런스)를 토글.
+    // splitView state는 WritingTabInline 내부에 있으므로 CustomEvent로 브리지.
+    onToggleSplitView: () => {
+      window.dispatchEvent(new CustomEvent('noa:toggle-split-view'));
+    },
     disabled: showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen,
   });
 

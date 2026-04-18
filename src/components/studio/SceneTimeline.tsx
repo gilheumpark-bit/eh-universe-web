@@ -473,6 +473,23 @@ export default function SceneTimeline({
   const timelineWarnings = useMemo(() => detectTimelineWarnings(scenes), [scenes]);
   const _allWarnings = [...timelineWarnings, ...(externalWarnings ?? []).map((w) => ({ sceneIndex: -1, message: w, severity: "info" as const }))];
 
+  // ── 인라인 경고 브리지: 에디터 상단 배너(WritingTabInline)가 수신 ──
+  // 우측 패널이 닫혀 있어도 씬시트 경고가 작가의 시선 안에 들어오도록 CustomEvent 발송.
+  // [G] _allWarnings는 매 렌더마다 새 배열이라 deps에 쓰면 무한 루프 → timelineWarnings만 trigger.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload = timelineWarnings.map((w) => ({
+      severity: w.severity,
+      message: w.message,
+      sceneId: String(w.sceneIndex),
+    }));
+    window.dispatchEvent(new CustomEvent("noa:scene-warnings", { detail: payload }));
+    // unmount 시 배너 정리
+    return () => {
+      window.dispatchEvent(new CustomEvent("noa:scene-warnings", { detail: [] }));
+    };
+  }, [timelineWarnings]);
+
   // Undo 지원
   const pushUndo = useCallback(() => {
     setUndoStack((prev) => [...prev.slice(-20), scenes.map((s) => ({ ...s, beats: [...s.beats] }))]);

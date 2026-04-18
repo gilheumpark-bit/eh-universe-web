@@ -650,6 +650,15 @@ body[data-color-theme=”beige”] {
   box-shadow: var(--shadow-panel);
 }
 
+/* ============================================================
+   Blue-Light Filter — 시각 편의 (눈 피로 감소)
+   활성: html[data-blue-light="on"] (UnifiedSettingsContext 제어)
+   세피아 12% + 밝기 0.96 — 과한 감쇄 없이 블루 성분 경감
+   ============================================================ */
+html[data-blue-light="on"] {
+  filter: sepia(12%) brightness(0.96);
+}
+
 /* ── Accessibility: prefers-reduced-motion ── */
 @media (prefers-reduced-motion: reduce) {
   *,

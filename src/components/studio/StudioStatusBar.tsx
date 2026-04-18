@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { Save, Circle, Loader2, Cpu, Zap } from 'lucide-react';
+import { Save, Circle, Loader2, Cpu, Zap, Timer, Coffee } from 'lucide-react';
 import type { AppLanguage, ChatSession } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import WordCountBadge from '@/components/studio/WordCountBadge';
+import { useSessionTimer, formatSessionTime, formatDailyTime } from '@/hooks/useSessionTimer';
 
 interface StudioStatusBarProps {
   editDraft: string;
@@ -49,6 +50,27 @@ export function StudioStatusBar({
   const guardrailMin = currentSession?.config?.guardrails?.min ?? 0;
   const guardrailMax = currentSession?.config?.guardrails?.max ?? Infinity;
 
+  // 작가 피로도 관리: 세션 타이머 + 일일 누적 + 포모도로
+  const { state: session, config: sessionCfg, progress } = useSessionTimer({
+    totalChars: stats.chars,
+  });
+  const sessionActive = session.startedAt > 0;
+  const pomodoroActive = session.pomodoroPhase !== 'off';
+  const pomodoroLabel = session.pomodoroPhase === 'work'
+    ? (isKO ? '작업' : 'Work')
+    : session.pomodoroPhase === 'long-break'
+      ? (isKO ? '긴 휴식' : 'Long Break')
+      : session.pomodoroPhase === 'short-break'
+        ? (isKO ? '휴식' : 'Break')
+        : '';
+  const progressPct = Math.round(progress * 100);
+  const goalLabel = isKO
+    ? `${stats.chars.toLocaleString()} / ${sessionCfg.dailyGoalChars.toLocaleString()}자`
+    : `${stats.chars.toLocaleString()} / ${sessionCfg.dailyGoalChars.toLocaleString()} ch`;
+  const sessionTooltip = isKO
+    ? `세션 ${formatSessionTime(session.elapsed)} · 오늘 ${formatDailyTime(session.dailyTotal)} · 목표 ${progressPct}%`
+    : `Session ${formatSessionTime(session.elapsed)} · Today ${formatDailyTime(session.dailyTotal)} · Goal ${progressPct}%`;
+
   return (
     <>
       {/* P0-3: Mobile compact status bar — always visible */}
@@ -59,6 +81,17 @@ export function StudioStatusBar({
         <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-red-400' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>
           {stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}
         </span>
+        {sessionActive && activeTab === 'writing' && (
+          <span
+            className="flex items-center gap-0.5 text-text-tertiary"
+            title={sessionTooltip}
+            data-testid="status-session-mobile"
+          >
+            <Timer className="w-2.5 h-2.5" />
+            <span>{formatSessionTime(session.elapsed)}</span>
+            {pomodoroActive && <Coffee className="w-2.5 h-2.5 ml-0.5 text-accent-amber" />}
+          </span>
+        )}
         {isGenerating ? (
           <span className="flex items-center gap-1 text-accent-amber">
             <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -115,6 +148,45 @@ export function StudioStatusBar({
               )}
               {/* Plugin slot — renders only when word-count-badge plugin is enabled. */}
               <WordCountBadge text={editDraft} isKO={isKO} testId="status-word-count-badge" />
+
+              {/* Session timer + daily goal — writer fatigue management */}
+              {sessionActive && (
+                <>
+                  <span className="text-border">|</span>
+                  <span
+                    className="flex items-center gap-1 cursor-help"
+                    title={sessionTooltip}
+                    data-testid="status-session-timer"
+                  >
+                    <Timer className="w-2.5 h-2.5 text-accent-blue" />
+                    <span>{formatSessionTime(session.elapsed)}</span>
+                  </span>
+                  <span className="text-border">|</span>
+                  <span
+                    className="flex items-center gap-1 cursor-help"
+                    title={goalLabel}
+                    data-testid="status-session-daily"
+                  >
+                    <span className="text-text-tertiary">
+                      {isKO ? '오늘' : 'Today'} {formatDailyTime(session.dailyTotal)}
+                    </span>
+                    <span
+                      className="inline-block w-10 h-1.5 rounded-full bg-bg-tertiary overflow-hidden"
+                      role="progressbar"
+                      aria-valuenow={progressPct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={isKO ? '일일 목표 진행률' : 'Daily goal progress'}
+                    >
+                      <span
+                        className="block h-full bg-accent-green transition-[width] duration-300"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </span>
+                    <span className="text-[9px] text-text-tertiary">{progressPct}%</span>
+                  </span>
+                </>
+              )}
             </>
           )}
           {activeTab !== 'writing' && (
@@ -124,6 +196,24 @@ export function StudioStatusBar({
 
         {/* Right */}
         <div className="flex items-center gap-3">
+          {pomodoroActive && (
+            <>
+              <span
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded border ${
+                  session.pomodoroPhase === 'work'
+                    ? 'bg-accent-amber/10 border-accent-amber/30 text-accent-amber'
+                    : 'bg-accent-green/10 border-accent-green/30 text-accent-green'
+                }`}
+                data-testid="status-pomodoro"
+                title={`${pomodoroLabel} · ${formatSessionTime(session.pomodoroRemaining)}`}
+              >
+                <Coffee className="w-2.5 h-2.5" />
+                <span className="font-bold">{pomodoroLabel}</span>
+                <span className="font-mono">{formatSessionTime(session.pomodoroRemaining)}</span>
+              </span>
+              <span className="text-border">|</span>
+            </>
+          )}
           <span>{isKO ? `${episodeNum}화` : `Ep.${episodeNum}`}</span>
           <span className="text-border">|</span>
           {isGenerating ? (

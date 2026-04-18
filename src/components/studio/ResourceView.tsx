@@ -3,11 +3,12 @@ import React, { useState, useMemo } from 'react';
 import { Character, StoryConfig, AppLanguage, CharRelationType, SocialProfile } from '@/lib/studio-types';
 import { TRANSLATIONS } from '@/lib/studio-translations';
 import { createT, L4 } from '@/lib/i18n';
-import { UserPlus, Trash2, Fingerprint, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, ChevronDown, ChevronUp, Link2, Dna, Settings2, Circle } from 'lucide-react';
+import { UserPlus, Trash2, Fingerprint, Users, ChevronLeft, UserCircle, Briefcase, ScrollText, Zap, ChevronDown, ChevronUp, Link2, Dna, Settings2, Circle, Sparkles } from 'lucide-react';
 import { validateCharacter, calcCompletionScore, WarningBadge, CompletionBar } from './TierValidator';
 import { RELATION_LABELS, AGE_LABELS, EXPLICIT_LABELS, PROFANITY_LABELS } from '@/engine/social-register';
 import CharRelationGraph from './CharRelationGraph';
 import { useStudioUI } from '@/contexts/StudioContext';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ============================================================
 // Required/Optional Badge helper
@@ -337,16 +338,67 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
 
           <div className="relative min-h-[400px]">
             {filteredCharacters.length === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-12 border-2 border-dashed border-border rounded-[3rem] text-text-tertiary">
-                <div className="w-16 h-16 bg-bg-secondary/50 rounded-full flex items-center justify-center mb-6">
-                  <Users className="w-8 h-8 opacity-30" />
-                </div>
-                <span className="text-xs font-black tracking-[0.4em] uppercase mb-2">
-                  {language === 'KO' ? '캐릭터 없음' : language === 'JP' ? 'キャラクターなし' : language === 'CN' ? '没有角色' : 'No Characters Found'}
-                </span>
-                <p className="text-[13px] text-text-tertiary max-w-[280px] text-center">
-                  {language === 'KO' ? '왼쪽 패널에서 수동으로 추가하거나, 스튜디오 제안 버튼을 사용하세요.' : language === 'JP' ? '左パネルから追加するか、スタジオ提案を使用してください。' : language === 'CN' ? '从左侧面板手动添加，或使用工作室建议按钮。' : 'Add manually from the left panel, or use the Studio Suggest button.'}
-                </p>
+              <div className="absolute inset-0 flex items-center justify-center border-2 border-dashed border-border rounded-[3rem]">
+                <EmptyState
+                  icon={Users}
+                  title={L4(language, {
+                    ko: '캐릭터가 없습니다',
+                    en: 'No characters yet',
+                    ja: 'キャラクターがいません',
+                    zh: '还没有角色',
+                  })}
+                  description={L4(language, {
+                    ko: '주인공부터 시작하세요.',
+                    en: 'Start with your protagonist.',
+                    ja: '主人公から始めましょう。',
+                    zh: '从主角开始吧。',
+                  })}
+                  actions={[
+                    {
+                      label: L4(language, {
+                        ko: '첫 캐릭터 추가',
+                        en: 'Add first character',
+                        ja: '最初のキャラクターを追加',
+                        zh: '添加第一个角色',
+                      }),
+                      icon: UserPlus,
+                      variant: 'primary',
+                      onClick: () => {
+                        setIsPanelOpen(true);
+                        // [C] creator 패널의 이름 입력 필드로 포커스
+                        setTimeout(() => {
+                          const nameInput = document.querySelector<HTMLInputElement>(
+                            'input[data-testid="new-character-name"], input[name="newCharacterName"]',
+                          );
+                          nameInput?.focus();
+                        }, 50);
+                      },
+                    },
+                    {
+                      label: L4(language, {
+                        ko: 'AI 제안',
+                        en: 'AI suggest',
+                        ja: 'AI提案',
+                        zh: 'AI 建议',
+                      }),
+                      icon: Sparkles,
+                      variant: 'secondary',
+                      onClick: () => {
+                        // [C] 상위 CharacterTab 헤더의 "초안 생성" 버튼으로 포커스 이동
+                        const aiBtn = document.querySelector<HTMLButtonElement>(
+                          'button[data-testid="character-ai-generate"]',
+                        );
+                        if (aiBtn) {
+                          aiBtn.focus();
+                          aiBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                          // fallback: 제너레이트 버튼이 없으면 creator 열기
+                          setIsPanelOpen(true);
+                        }
+                      },
+                    },
+                  ]}
+                />
               </div>
             ) : (
               <div className={`grid gap-4 md:gap-6 transition-[transform,opacity,background-color,border-color,color] duration-500 ${

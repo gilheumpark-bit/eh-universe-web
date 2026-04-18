@@ -182,6 +182,7 @@ const WorkspaceTrustDialog: React.FC<WorkspaceTrustDialogProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="wtd-title"
+        aria-describedby="wtd-warning-body"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -247,12 +248,13 @@ const WorkspaceTrustDialog: React.FC<WorkspaceTrustDialogProps> = ({
           {/* Permissions */}
           {permissions && permissions.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary">
+              <span id="wtd-permissions-label" className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary">
                 {t.permissionsLabel}
               </span>
               <ul
                 className="bg-bg-secondary border border-border rounded-xl px-3 py-2.5 text-sm text-text-primary list-disc list-inside space-y-0.5"
                 data-testid="wtd-permissions"
+                aria-labelledby="wtd-permissions-label"
               >
                 {permissions.map((p, i) => (
                   <li key={`${p}-${i}`} className="font-mono text-xs">{p}</li>
@@ -261,12 +263,15 @@ const WorkspaceTrustDialog: React.FC<WorkspaceTrustDialogProps> = ({
             </div>
           )}
 
-          {/* Warning */}
-          <div className="flex items-start gap-2 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl px-3 py-2.5">
+          {/* Warning — aria-describedby target for the dialog. */}
+          <div
+            className="flex items-start gap-2 bg-accent-yellow/10 border border-accent-yellow/30 rounded-xl px-3 py-2.5"
+            role="alert"
+          >
             <ShieldAlert className="w-4 h-4 text-accent-yellow flex-shrink-0 mt-0.5" aria-hidden />
             <div className="text-xs text-text-primary">
               <div className="font-semibold text-accent-yellow">{t.warningTitle}</div>
-              <div className="mt-0.5 text-text-secondary">{t.warningBody}</div>
+              <div id="wtd-warning-body" className="mt-0.5 text-text-secondary">{t.warningBody}</div>
             </div>
           </div>
         </div>

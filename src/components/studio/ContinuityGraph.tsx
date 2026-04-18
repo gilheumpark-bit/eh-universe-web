@@ -44,13 +44,19 @@ const MiniBarChart: React.FC<{
         const color = SCORE_COLOR(ep.continuityScore);
         const isSelected = selectedEp === ep.episode;
 
+        const warnSuffix = ep.warnings.length > 0
+          ? (lang === 'ko' ? `, 경고 ${ep.warnings.length}건` : `, ${ep.warnings.length} warning${ep.warnings.length > 1 ? 's' : ''}`)
+          : '';
+        const ariaLabel = `EP.${ep.episode}: ${ep.continuityScore}${lang === 'ko' ? '점' : 'pt'}${warnSuffix}`;
         return (
           <button
             key={ep.episode}
             onClick={() => onSelect(ep)}
             className={`relative group flex flex-col items-center transition-opacity ${isSelected ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
             style={{ width: barWidth }}
-            title={`EP.${ep.episode}: ${ep.continuityScore}${lang === 'ko' ? '점' : 'pt'}`}
+            title={ariaLabel}
+            aria-label={ariaLabel}
+            aria-pressed={isSelected}
           >
             <div
               className="rounded-t-sm transition-[transform,opacity,background-color,border-color,color]"
@@ -60,10 +66,11 @@ const MiniBarChart: React.FC<{
                 backgroundColor: color,
                 boxShadow: isSelected ? `0 0 8px ${color}60` : 'none',
               }}
+              aria-hidden="true"
             />
-            <span className="text-[7px] text-text-tertiary mt-0.5">{ep.episode}</span>
+            <span className="text-[7px] text-text-tertiary mt-0.5" aria-hidden="true">{ep.episode}</span>
             {ep.warnings.length > 0 && (
-              <div className="absolute -top-1 -right-0.5 w-2 h-2 rounded-full bg-amber-500" />
+              <div className="absolute -top-1 -right-0.5 w-2 h-2 rounded-full bg-amber-500" aria-hidden="true" />
             )}
           </button>
         );

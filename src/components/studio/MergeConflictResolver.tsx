@@ -283,14 +283,14 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-accent-purple/20 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-accent-purple/20 flex items-center justify-center" aria-hidden="true">
               <GitMerge className="w-4 h-4 text-accent-purple" />
             </div>
             <div>
               <h3 id="mcr-title" className="font-bold text-base text-text-primary">
                 {t.title}
               </h3>
-              <div className="text-xs text-text-tertiary" data-testid="mcr-status">
+              <div className="text-xs text-text-tertiary" data-testid="mcr-status" role="status" aria-live="polite">
                 {t.status(resolvedCount, totalConflicts)}
               </div>
             </div>
@@ -301,7 +301,7 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
             aria-label={t.close}
             data-testid="mcr-close-btn"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -323,7 +323,12 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
             <>
               {/* Navigation */}
               <div className="flex items-center justify-between gap-3 bg-bg-secondary rounded-xl px-4 py-3 border border-border">
-                <div className="text-sm text-text-primary font-medium" data-testid="mcr-counter">
+                <div
+                  className="text-sm text-text-primary font-medium"
+                  data-testid="mcr-counter"
+                  role="status"
+                  aria-live="polite"
+                >
                   {t.counter(conflictPosition, totalConflicts)}
                 </div>
                 <div className="flex items-center gap-2">
@@ -333,7 +338,7 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
                     aria-label={t.prevConflict}
                     data-testid="mcr-prev-btn"
                   >
-                    <ChevronUp className="w-5 h-5" />
+                    <ChevronUp className="w-5 h-5" aria-hidden="true" />
                   </button>
                   <button
                     onClick={gotoNext}
@@ -341,7 +346,7 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
                     aria-label={t.nextConflict}
                     data-testid="mcr-next-btn"
                   >
-                    <ChevronDown className="w-5 h-5" />
+                    <ChevronDown className="w-5 h-5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -354,7 +359,11 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
                 return (
                   <div className={`grid ${gridCols} gap-3`}>
                     {/* Ours */}
-                    <div className="flex flex-col border border-border rounded-xl overflow-hidden bg-bg-secondary">
+                    <section
+                      className="flex flex-col border border-border rounded-xl overflow-hidden bg-bg-secondary"
+                      role="region"
+                      aria-label={oursHeader}
+                    >
                       <div className="flex items-center justify-between px-3 py-2 bg-accent-blue/10 border-b border-border">
                         <span className="text-xs font-bold uppercase tracking-wider text-accent-blue">
                           {oursHeader}
@@ -366,10 +375,14 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
                       >
                         {cb.ours}
                       </pre>
-                    </div>
+                    </section>
                     {/* Ancestor (diff3 only) */}
                     {showAncestor && (
-                      <div className="flex flex-col border border-border rounded-xl overflow-hidden bg-bg-secondary">
+                      <section
+                        className="flex flex-col border border-border rounded-xl overflow-hidden bg-bg-secondary"
+                        role="region"
+                        aria-label={t.ancestor}
+                      >
                         <div className="flex items-center justify-between px-3 py-2 bg-accent-yellow/10 border-b border-border">
                           <span className="text-xs font-bold uppercase tracking-wider text-accent-yellow">
                             {t.ancestor}
@@ -381,10 +394,14 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
                         >
                           {cb.ancestor}
                         </pre>
-                      </div>
+                      </section>
                     )}
                     {/* Theirs */}
-                    <div className="flex flex-col border border-border rounded-xl overflow-hidden bg-bg-secondary">
+                    <section
+                      className="flex flex-col border border-border rounded-xl overflow-hidden bg-bg-secondary"
+                      role="region"
+                      aria-label={theirsHeader}
+                    >
                       <div className="flex items-center justify-between px-3 py-2 bg-accent-purple/10 border-b border-border">
                         <span className="text-xs font-bold uppercase tracking-wider text-accent-purple">
                           {theirsHeader}
@@ -396,7 +413,7 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
                       >
                         {cb.theirs}
                       </pre>
-                    </div>
+                    </section>
                   </div>
                 );
               })()}

@@ -1350,6 +1350,28 @@ const translations = {
     "symNoSymbols": "No symbols found",
     "splitReady": "Ready.",
     "splitReadyCmd": "Ready. Type a command..."
+  },
+  "session": {
+    "label": "Session",
+    "daily": "Today",
+    "goal": "Daily Goal",
+    "pomodoro": "Pomodoro",
+    "rest_due": "Break Recommended",
+    "rest_message": "You've been writing for 50 minutes. How about a 5-minute stretch?"
+  },
+  "empty": {
+    "world.title": "Your world is empty",
+    "world.description": "Add places, events, and laws to design your world.",
+    "scene.title": "Your scene sheet is empty",
+    "scene.description": "Start with a scene outline. Supports 10+ genre presets.",
+    "codex.title": "No items registered yet",
+    "codex.description": "Add equipment, magic, and skills to enrich your world.",
+    "history.title": "No saved versions",
+    "history.description": "Auto-snapshots are created when you change 300+ characters.",
+    "characters.title": "No characters yet",
+    "characters.description": "Start with your protagonist.",
+    "manuscript.title": "No manuscript yet",
+    "manuscript.description": "Create your first episode to start writing."
   }
 };
 

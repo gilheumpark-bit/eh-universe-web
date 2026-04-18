@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles, GitCompare } from "lucide-react";
+import { Download, BookOpen, ChevronDown, ChevronUp, Save, Trash2, Edit3, PenTool, Sparkles, GitCompare, Plus } from "lucide-react";
 import type { StoryConfig, EpisodeManuscript, AppLanguage, ChapterAnalysis } from "@/lib/studio-types";
 import { createT, L4 } from "@/lib/i18n";
 import { showAlert } from '@/lib/show-alert';
 import { useStudioUI } from '@/contexts/StudioContext';
 import ChapterAnalysisView from "./ChapterAnalysisView";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ============================================================
 // PART 0 — DIFF UTILITY (line-level LCS)
@@ -400,9 +401,58 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
       {/* Episode List */}
       <div className="space-y-2">
         {sorted.length === 0 ? (
-          <div className="py-12 text-center text-text-tertiary text-sm">
-            {t('manuscript.noManuscripts')}
-          </div>
+          <EmptyState
+            icon={BookOpen}
+            title={L4(language, {
+              ko: '아직 원고가 없습니다',
+              en: 'No manuscript yet',
+              ja: 'まだ原稿がありません',
+              zh: '还没有手稿',
+            })}
+            description={L4(language, {
+              ko: '첫 에피소드를 만들어 집필을 시작하세요.',
+              en: 'Create your first episode to start writing.',
+              ja: '最初のエピソードを作成して執筆を始めましょう。',
+              zh: '创建第一个剧集开始写作。',
+            })}
+            actions={[
+              {
+                label: L4(language, {
+                  ko: '새 에피소드',
+                  en: 'New episode',
+                  ja: '新しいエピソード',
+                  zh: '新剧集',
+                }),
+                icon: Plus,
+                variant: 'primary',
+                onClick: () => {
+                  // [C] Ctrl+Shift+N 키보드 이벤트 시뮬레이션 —
+                  //     StudioShell의 useStudioKeyboard onNewEpisode 핸들러로 위임.
+                  //     window.dispatchEvent 대신 document에 KeyboardEvent를 쏘는 것이
+                  //     기존 키보드 핸들러와 동일 경로로 흐름 보장.
+                  try {
+                    document.dispatchEvent(
+                      new KeyboardEvent('keydown', {
+                        key: 'N',
+                        ctrlKey: true,
+                        shiftKey: true,
+                        bubbles: true,
+                      }),
+                    );
+                  } catch {
+                    // [C] 구형 브라우저 fallback — noa:new-episode custom event
+                    window.dispatchEvent(new CustomEvent('noa:new-episode'));
+                  }
+                },
+              },
+            ]}
+            tip={L4(language, {
+              ko: 'Ctrl+Shift+N으로 빠른 생성',
+              en: 'Ctrl+Shift+N for quick creation',
+              ja: 'Ctrl+Shift+Nで素早く作成',
+              zh: '按 Ctrl+Shift+N 快速创建',
+            })}
+          />
         ) : (
           sorted.map((m) => (
             <div key={m.episode} className="bg-bg-secondary border border-border rounded-xl overflow-hidden">

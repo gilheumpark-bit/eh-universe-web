@@ -1350,6 +1350,28 @@ const translations = {
     "symNoSymbols": "기호를 찾을 수 없습니다",
     "splitReady": "준비됨.",
     "splitReadyCmd": "준비됨. 명령을 입력하세요..."
+  },
+  "session": {
+    "label": "세션",
+    "daily": "오늘",
+    "goal": "일일 목표",
+    "pomodoro": "포모도로",
+    "rest_due": "휴식 권장",
+    "rest_message": "50분 집필했습니다. 5분 스트레칭 어떠세요?"
+  },
+  "empty": {
+    "world.title": "아직 세계관이 비어 있습니다",
+    "world.description": "장소·사건·법칙을 추가해 세계를 설계하세요.",
+    "scene.title": "씬시트가 비어 있습니다",
+    "scene.description": "장면 개요부터 시작하세요. 10+ 장르 프리셋 지원.",
+    "codex.title": "등록된 아이템이 없습니다",
+    "codex.description": "장비·마법·스킬을 추가하여 풍성한 세계를 만드세요.",
+    "history.title": "저장된 버전이 없습니다",
+    "history.description": "300자 이상 변경 시 자동 스냅샷이 생성됩니다.",
+    "characters.title": "캐릭터가 없습니다",
+    "characters.description": "주인공부터 시작하세요.",
+    "manuscript.title": "아직 원고가 없습니다",
+    "manuscript.description": "첫 에피소드를 만들어 집필을 시작하세요."
   }
 };
 

@@ -5,10 +5,11 @@ import React, { useState, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { AppLanguage, AppTab, ChatSession, Project } from '@/lib/studio-types';
 import GenreReviewChat from '@/components/studio/GenreReviewChat';
-import { Edit3, Upload, Printer, X, BarChart3 } from 'lucide-react';
+import { Edit3, Upload, Printer, X, BarChart3, Clock } from 'lucide-react';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // Lazy: SVG charts only render when user opens the profiler modal.
 const WorkProfilerView = dynamic(
@@ -327,8 +328,23 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
       {/* Session Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {filtered.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-text-tertiary font-bold uppercase tracking-widest font-mono">
-            {t('engine.noArchive')}
+          <div className="col-span-full">
+            <EmptyState
+              icon={Clock}
+              title={L4(language, {
+                ko: '저장된 버전이 없습니다',
+                en: 'No saved versions',
+                ja: '保存されたバージョンがありません',
+                zh: '没有保存的版本',
+              })}
+              description={L4(language, {
+                ko: '300자 이상 변경 시 자동 스냅샷이 생성됩니다.',
+                en: 'Auto-snapshots are created when you change 300+ characters.',
+                ja: '300文字以上変更すると自動スナップショットが作成されます。',
+                zh: '修改 300 字以上时会自动创建快照。',
+              })}
+              compact
+            />
           </div>
         ) : (
           filtered.map((s) => (

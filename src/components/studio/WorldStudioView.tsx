@@ -5,15 +5,16 @@
 // ============================================================
 
 import React, { useState, useCallback } from 'react';
-import { Compass, Cpu, Search, Clock, Map, X, ArrowDown, Check } from 'lucide-react';
+import { Compass, Cpu, Search, Clock, Map, X, Check, Globe, MapPin, Wand2 } from 'lucide-react';
 import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import PlanningView from './PlanningView';
 import TabAssistant from './TabAssistant';
 import { getApiKey, getActiveProvider, hasDgxService } from '@/lib/ai-providers';
 import WorldAnalysisView from './WorldAnalysisView';
 import WorldTimeline from './WorldTimeline';
 import WorldMap from './WorldMap';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // WorldSimulator uses dynamic import to avoid circular deps
 import dynamic from 'next/dynamic';
@@ -154,15 +155,59 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             </div>
           )}
 
-          {/* Empty state guide — 제목/시놉시스 미입력 시 시작 안내 */}
+          {/* Empty state — 제목/시놉시스 미입력 시 공용 EmptyState 패널로 안내 */}
           {!config.title && !config.synopsis && (
             <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
-              <div className="flex items-center gap-3 px-5 py-4 bg-[linear-gradient(45deg,rgba(255,200,50,0.05),transparent)] border border-[rgba(255,200,50,0.2)] rounded-xl shadow-[0_0_20px_rgba(255,200,50,0.05)]">
-                <ArrowDown className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
-                <span className="text-xs text-text-secondary font-mono tracking-wide">
-                  {language === 'EN' ? 'Enter a title and synopsis below to forge your Universe' : language === 'JP' ? 'タイトルとシノプシスを入力すると世界が設計されます' : language === 'CN' ? '输入标题和大纲来设计您的世界' : '아래에 제목과 시놉시스를 입력하면 우주가 설계됩니다'}
-                </span>
-              </div>
+              <EmptyState
+                icon={Globe}
+                title={L4(language, {
+                  ko: '아직 세계관이 비어 있습니다',
+                  en: 'Your world is empty',
+                  ja: 'まだ世界観が空です',
+                  zh: '世界观还是空的',
+                })}
+                description={L4(language, {
+                  ko: '장소·사건·법칙을 추가해 세계를 설계하세요.',
+                  en: 'Add places, events, and laws to design your world.',
+                  ja: '場所・出来事・法則を追加して世界を設計しましょう。',
+                  zh: '添加地点、事件和法则来设计你的世界。',
+                })}
+                actions={[
+                  {
+                    label: L4(language, {
+                      ko: '새 장소 추가',
+                      en: 'Add new place',
+                      ja: '新しい場所を追加',
+                      zh: '添加新地点',
+                    }),
+                    icon: MapPin,
+                    variant: 'primary',
+                    onClick: () => {
+                      // [C] 타이틀 입력 필드로 스크롤 이동 — PlanningView가 하단에 바로 위치
+                      const el = document.querySelector<HTMLElement>('[data-testid="studio-content"] input[name="title"], [data-testid="studio-content"] textarea');
+                      el?.focus();
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    },
+                  },
+                  {
+                    label: L4(language, {
+                      ko: 'AI 생성',
+                      en: 'Generate with AI',
+                      ja: 'AI生成',
+                      zh: 'AI 生成',
+                    }),
+                    icon: Wand2,
+                    variant: 'secondary',
+                    onClick: () => setSubTab('simulator'),
+                  },
+                ]}
+                tip={L4(language, {
+                  ko: 'Ctrl+K로 빠른 검색 가능',
+                  en: 'Press Ctrl+K for quick search',
+                  ja: 'Ctrl+Kでクイック検索',
+                  zh: '按 Ctrl+K 快速搜索',
+                })}
+              />
             </div>
           )}
           <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} hasAiAccess={!!getApiKey(getActiveProvider()) || Object.values(hostedProviders).some(Boolean) || hasDgxService()} />

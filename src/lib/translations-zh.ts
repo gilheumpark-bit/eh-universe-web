@@ -1367,6 +1367,28 @@ const translations = {
     "symNoSymbols": "未找到符号",
     "splitReady": "就绪。",
     "splitReadyCmd": "就绪。请输入命令..."
+  },
+  "session": {
+    "label": "会话",
+    "daily": "今天",
+    "goal": "每日目标",
+    "pomodoro": "番茄钟",
+    "rest_due": "建议休息",
+    "rest_message": "已连续写作 50 分钟，不如做 5 分钟拉伸？"
+  },
+  "empty": {
+    "world.title": "世界观还是空的",
+    "world.description": "添加地点、事件和法则来设计你的世界。",
+    "scene.title": "场景表是空的",
+    "scene.description": "从场景概述开始。支持 10+ 类型预设。",
+    "codex.title": "尚未注册任何物品",
+    "codex.description": "添加装备、魔法和技能，打造丰富的世界。",
+    "history.title": "没有保存的版本",
+    "history.description": "修改 300 字以上时会自动创建快照。",
+    "characters.title": "还没有角色",
+    "characters.description": "从主角开始吧。",
+    "manuscript.title": "还没有手稿",
+    "manuscript.description": "创建第一个剧集开始写作。"
   }
 };
 

@@ -7,7 +7,7 @@
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles, Columns2, Undo2, Redo2, PenLine, Layers, Wand2, Settings2, ChevronDown, X } from 'lucide-react';
+import { Sparkles, Columns2, Undo2, Redo2, PenLine, Layers, Wand2, Settings2, ChevronDown, X, AlertTriangle } from 'lucide-react';
 import type { AppLanguage, StoryConfig, ChatSession, Message, AppTab } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
@@ -165,7 +165,37 @@ export default function WritingTabInline(props: Props) {
     };
     reader.readAsText(file, 'UTF-8');
   }, [setEditDraft, editDraft]);
-  const [splitView, setSplitView] = useState<'chat' | 'reference' | null>(null);
+  // [C] localStorage 실패 가드 — private 모드/quota 무시.
+  // 기본 활성화: localStorage 'noa_split_view_default' === '1' 이면 'reference'로 오픈.
+  const [splitView, setSplitViewRaw] = useState<'chat' | 'reference' | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem('noa_split_view_default') === '1' ? 'reference' : null;
+    } catch {
+      return null;
+    }
+  });
+  // 토글 시 localStorage에 기본값 저장 — 다음 방문에도 유지.
+  const setSplitView = useCallback((v: 'chat' | 'reference' | null) => {
+    setSplitViewRaw(v);
+    try {
+      localStorage.setItem('noa_split_view_default', v ? '1' : '0');
+    } catch { /* quota/private */ }
+  }, []);
+  // Ctrl+\ (useStudioKeyboard) 브리지 — 이벤트 수신 시 reference ↔ null 토글.
+  useEffect(() => {
+    const handleToggle = () => {
+      setSplitViewRaw(prev => {
+        const next = prev ? null : 'reference';
+        try {
+          localStorage.setItem('noa_split_view_default', next ? '1' : '0');
+        } catch { /* quota/private */ }
+        return next;
+      });
+    };
+    window.addEventListener('noa:toggle-split-view', handleToggle);
+    return () => window.removeEventListener('noa:toggle-split-view', handleToggle);
+  }, []);
   const textMenu = useTextAreaContextMenu(language);
   const { handleSVIKeyDown } = useSVIRecorder();
 
@@ -213,6 +243,51 @@ export default function WritingTabInline(props: Props) {
   useEffect(() => {
     if (!isGenerating) setSlowWarning(null);
   }, [isGenerating]);
+
+  // ── 씬시트 인라인 경고 브리지 ──
+  // SceneTimeline / SceneSheet 등이 `window.dispatchEvent(new CustomEvent('noa:scene-warnings', { detail: warnings }))`
+  // 로 발송하면 에디터 상단 배너에 즉시 표시. 우측 패널을 닫아도 경고를 놓치지 않도록 하는 안전망.
+  interface SceneWarning { severity: 'critical' | 'warning' | 'info'; message: string; sceneId?: string }
+  const [sceneWarnings, setSceneWarnings] = useState<SceneWarning[]>([]);
+  useEffect(() => {
+    const onWarnings = (e: Event) => {
+      const custom = e as CustomEvent<unknown>;
+      const detail = custom.detail;
+      if (!Array.isArray(detail)) { setSceneWarnings([]); return; }
+      // [C] detail 항목 타입 방어: message 필드 없으면 스킵.
+      const safe: SceneWarning[] = detail
+        .filter((w): w is Record<string, unknown> => !!w && typeof w === 'object')
+        .map((w): SceneWarning => {
+          const sev: SceneWarning['severity'] =
+            w.severity === 'critical' ? 'critical' :
+            w.severity === 'info' ? 'info' : 'warning';
+          return {
+            severity: sev,
+            message: typeof w.message === 'string' ? w.message : '',
+            sceneId: typeof w.sceneId === 'string' ? w.sceneId : undefined,
+          };
+        })
+        .filter(w => w.message.length > 0);
+      setSceneWarnings(safe);
+    };
+    window.addEventListener('noa:scene-warnings', onWarnings as EventListener);
+    return () => window.removeEventListener('noa:scene-warnings', onWarnings as EventListener);
+  }, []);
+
+  // ── Ctrl+Enter 전역 생성 단축키 (AI 모드에서만 활성) ──
+  // 본문 textarea의 Enter 키와 별개로, 편집 중 빠른 생성을 위한 보조 경로.
+  useEffect(() => {
+    if (writingMode !== 'ai') return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (isGenerating || showAiLock) return;
+        e.preventDefault();
+        handleSend();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [writingMode, isGenerating, showAiLock, handleSend]);
 
   const dismissCompletionHint = useCallback(() => {
     setShowCompletionHint(false);
@@ -573,6 +648,42 @@ export default function WritingTabInline(props: Props) {
             </details>
           )}
 
+          {/* 씬시트 인라인 경고 — SceneTimeline/SceneSheet에서 dispatchEvent로 수신 */}
+          {sceneWarnings.length > 0 && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mb-2 px-3 py-2 bg-amber-500/10 border-l-4 border-amber-500 rounded-r"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium text-text-primary">
+                  {L4(language, {
+                    ko: `씬시트 경고 ${sceneWarnings.length}건`,
+                    en: `${sceneWarnings.length} Scene Warning${sceneWarnings.length === 1 ? '' : 's'}`,
+                    ja: `シーン警告 ${sceneWarnings.length}件`,
+                    zh: `场景警告 ${sceneWarnings.length} 条`,
+                  })}
+                </span>
+              </div>
+              <ul className="mt-1 text-xs text-text-secondary space-y-0.5">
+                {sceneWarnings.slice(0, 2).map((w, i) => (
+                  <li key={`${w.sceneId ?? 'global'}-${i}`} className="truncate">• {w.message}</li>
+                ))}
+                {sceneWarnings.length > 2 && (
+                  <li className="text-text-tertiary italic">
+                    {L4(language, {
+                      ko: `... 외 ${sceneWarnings.length - 2}건`,
+                      en: `... and ${sceneWarnings.length - 2} more`,
+                      ja: `... 他 ${sceneWarnings.length - 2}件`,
+                      zh: `... 其余 ${sceneWarnings.length - 2} 条`,
+                    })}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
           {/* Main Rendering Area */}
           <div className="space-y-6">
             {writingMode === 'ai' && (
@@ -704,6 +815,27 @@ export default function WritingTabInline(props: Props) {
         hostedProviders={hostedProviders}
         textMenu={textMenu}
       />
+
+      {/* AI 생성 FAB — AI 모드 전용 우측 하단 플로팅 버튼
+          기존 상단/하단 Send 버튼은 유지하고, 에디터 어디서든 빠르게 생성 실행 (Ctrl+Enter).
+          isGenerating 중 disable, showAiLock 중 숨김. Zen 모드는 data-zen-hide 미적용 → 항상 표시. */}
+      {writingMode === 'ai' && !showAiLock && currentSessionId && (
+        <button
+          type="button"
+          onClick={() => { if (!isGenerating) handleSend(); }}
+          disabled={isGenerating}
+          aria-label={L4(language, { ko: 'AI 생성 시작', en: 'Start AI generation', ja: 'AI生成開始', zh: '开始 AI 生成' })}
+          title={L4(language, { ko: 'AI 생성 (Ctrl+Enter)', en: 'Generate (Ctrl+Enter)', ja: 'AI生成 (Ctrl+Enter)', zh: 'AI 生成 (Ctrl+Enter)' })}
+          className="fixed bottom-24 right-6 md:bottom-6 md:right-8 z-40 px-4 py-3 bg-accent-blue hover:bg-accent-blue/90 text-white rounded-full shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue inline-flex items-center gap-2 transition-[transform,opacity,background-color] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+          style={{ zIndex: 'var(--z-overlay, 40)' }}
+        >
+          <Wand2 className="w-4 h-4" aria-hidden="true" />
+          <span className="text-sm font-medium">
+            {L4(language, { ko: 'AI 생성', en: 'Generate', ja: 'AI生成', zh: 'AI 生成' })}
+          </span>
+          <kbd className="text-xs opacity-70 ml-1 hidden sm:inline">Ctrl+Enter</kbd>
+        </button>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   FolderOpen, FileText, Plus, ChevronRight, ChevronDown,
   Users, Globe, Clapperboard, X, GitBranch,
@@ -209,6 +209,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
   className = '',
 }) => {
   const [showUniverse, setShowUniverse] = useState(false);
+  const treeRef = useRef<HTMLDivElement>(null);
 
   // Build volume groups from manuscripts
   const volumeGroups = useMemo<VolumeGroup[]>(() => {
@@ -234,6 +235,50 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
       episodes: eps.sort((a, b) => a.episode - b.episode),
     }));
   }, [config.manuscripts, language]);
+
+  // 키보드 내비게이션용 flat 목록 — volumeGroups 순서를 그대로 보존.
+  // [C] 빈 배열 가드: flatEpisodes.length === 0이면 Arrow 핸들러 no-op.
+  const flatEpisodes = useMemo<number[]>(() => {
+    const list: number[] = [];
+    for (const g of volumeGroups) {
+      for (const ep of g.episodes) list.push(ep.episode);
+    }
+    return list;
+  }, [volumeGroups]);
+
+  // ArrowUp/Down/Home/End — tree focus 시만 동작 (focus 안 잡힌 상태에서는 브라우저 기본 동작 보존).
+  const handleTreeKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (flatEpisodes.length === 0) return;
+    const idx = flatEpisodes.indexOf(currentEpisode);
+    // 현재 선택이 리스트에 없으면 첫 항목으로.
+    const safeIdx = idx < 0 ? 0 : idx;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = Math.min(safeIdx + 1, flatEpisodes.length - 1);
+      if (flatEpisodes[next] !== currentEpisode) onSelectEpisode(flatEpisodes[next]);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = Math.max(safeIdx - 1, 0);
+      if (flatEpisodes[next] !== currentEpisode) onSelectEpisode(flatEpisodes[next]);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      if (flatEpisodes[0] !== currentEpisode) onSelectEpisode(flatEpisodes[0]);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      const last = flatEpisodes[flatEpisodes.length - 1];
+      if (last !== currentEpisode) onSelectEpisode(last);
+    }
+  }, [flatEpisodes, currentEpisode, onSelectEpisode]);
+
+  // 선택 항목이 뷰포트 밖이면 스크롤 (needed 시에만 — block: 'nearest').
+  useEffect(() => {
+    const node = treeRef.current;
+    if (!node) return;
+    const selected = node.querySelector('[aria-selected="true"]');
+    if (selected && typeof (selected as HTMLElement).scrollIntoView === 'function') {
+      (selected as HTMLElement).scrollIntoView({ block: 'nearest' });
+    }
+  }, [currentEpisode]);
 
   const quickLinks = useMemo(() => [
     {
@@ -286,7 +331,14 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
       </div>
 
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin" role="tree" aria-label={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })}>
+      <div
+        ref={treeRef}
+        className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/50 rounded"
+        role="tree"
+        tabIndex={0}
+        onKeyDown={handleTreeKeyDown}
+        aria-label={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })}
+      >
         {volumeGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
             <FileText className="w-8 h-8 mb-2 opacity-40" />

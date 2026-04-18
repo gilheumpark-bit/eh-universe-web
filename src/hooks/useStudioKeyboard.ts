@@ -26,6 +26,8 @@ interface UseStudioKeyboardOptions {
   /** Ctrl+= / Ctrl+- — adjust editor font size */
   onFontSizeUp?: () => void;
   onFontSizeDown?: () => void;
+  /** Ctrl+\ — toggle split view (reference/chat right-pane) */
+  onToggleSplitView?: () => void;
   /** When true, suppress all shortcuts (e.g. modal is open) */
   disabled?: boolean;
 }
@@ -107,6 +109,12 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
         } else {
           opts.onToggleShortcuts();
         }
+      }
+      // Ctrl+\ — toggle split view (reference/chat right-pane)
+      if (ctrl && !shift && (e.key === '\\' || e.code === 'Backslash')) {
+        e.preventDefault();
+        opts.onToggleSplitView?.();
+        return;
       }
       const targetTab = tabByFKey[e.key];
       if (targetTab) { e.preventDefault(); opts.onTabChange(targetTab); }

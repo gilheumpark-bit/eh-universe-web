@@ -227,12 +227,13 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="rename-dialog-title"
+        aria-busy={isApplying}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-accent-purple/20 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-accent-purple/20 flex items-center justify-center" aria-hidden="true">
               <Search className="w-4 h-4 text-accent-purple" />
             </div>
             <h3 id="rename-dialog-title" className="font-bold text-base text-text-primary">
@@ -244,7 +245,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
             className="p-2 rounded-xl hover:bg-white/5 text-text-tertiary hover:text-text-primary transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             aria-label={t.close}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -307,14 +308,16 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
           {/* Scope */}
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1.5">
+            <div id="rename-scope-label" className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1.5">
               {t.scope}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="rename-scope-label">
               {(['session', 'project', 'all'] as RenameScope[]).map((sc) => (
                 <button
                   key={sc}
                   onClick={() => setScope(sc)}
+                  role="radio"
+                  aria-checked={scope === sc}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
                     scope === sc
                       ? 'bg-accent-purple text-white'
@@ -329,28 +332,34 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
             </div>
           </div>
 
-          {/* Status messages */}
-          {fromEmpty && (
-            <div className="flex items-center gap-2 text-xs text-text-tertiary">
-              <AlertTriangle className="w-3.5 h-3.5 text-accent-amber" />
-              <span>{t.emptyFrom}</span>
-            </div>
-          )}
-          {identical && (
-            <div className="flex items-center gap-2 text-xs text-accent-amber">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>{t.sameValue}</span>
-            </div>
-          )}
+          {/* Status messages — polite live region so screen readers announce input validity. */}
+          <div role="status" aria-live="polite">
+            {fromEmpty && (
+              <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                <AlertTriangle className="w-3.5 h-3.5 text-accent-amber" aria-hidden="true" />
+                <span>{t.emptyFrom}</span>
+              </div>
+            )}
+            {identical && (
+              <div className="flex items-center gap-2 text-xs text-accent-amber">
+                <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{t.sameValue}</span>
+              </div>
+            )}
+          </div>
 
           {/* Preview */}
           {preview && (
-            <div className="border-t border-border pt-4">
-              <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-2">
+            <section
+              className="border-t border-border pt-4"
+              role="region"
+              aria-labelledby="rename-preview-heading"
+            >
+              <div id="rename-preview-heading" className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-2">
                 {t.previewNHeader(preview.totalMatches, preview.matches.length)}
               </div>
               {preview.matches.length === 0 ? (
-                <div className="text-xs text-text-tertiary italic px-3 py-6 text-center bg-bg-secondary/50 rounded-lg">
+                <div className="text-xs text-text-tertiary italic px-3 py-6 text-center bg-bg-secondary/50 rounded-lg" role="status">
                   {t.noMatches}
                 </div>
               ) : (
@@ -378,11 +387,13 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
                         {expanded && (
                           <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed">
                             <div className="text-red-400/80">
-                              <span className="text-text-tertiary mr-1.5">-</span>
+                              <span className="text-text-tertiary mr-1.5" aria-hidden="true">-</span>
+                              <span className="sr-only">{L4(language, { ko: '삭제', en: 'Removed', ja: '削除', zh: '删除' })}: </span>
                               {m.before}
                             </div>
                             <div className="text-green-400/80">
-                              <span className="text-text-tertiary mr-1.5">+</span>
+                              <span className="text-text-tertiary mr-1.5" aria-hidden="true">+</span>
+                              <span className="sr-only">{L4(language, { ko: '추가', en: 'Added', ja: '追加', zh: '添加' })}: </span>
                               {m.after}
                             </div>
                           </div>
@@ -392,7 +403,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
                   })}
                 </ul>
               )}
-            </div>
+            </section>
           )}
         </div>
 
@@ -417,7 +428,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
             data-testid="rename-preview-btn"
           >
             <span className="flex items-center gap-1.5">
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-3.5 h-3.5" aria-hidden="true" />
               {t.preview}
             </span>
           </button>
@@ -433,7 +444,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
             data-testid="rename-apply-btn"
           >
             <span className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-3.5 h-3.5" aria-hidden="true" />
               {t.apply}
             </span>
           </button>

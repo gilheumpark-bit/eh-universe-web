@@ -163,7 +163,14 @@ export default function QuickStartModal({
 
   return (
     <div className="animate-in fade-in zoom-in fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-300">
-      <div ref={panelRef} className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20" role="dialog" aria-modal="true">
+      <div
+        ref={panelRef}
+        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[2rem] border border-border/80 bg-bg-primary shadow-2xl shadow-accent-purple/20"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quickstart-modal-title"
+        aria-describedby="quickstart-modal-desc"
+      >
         <div className="relative px-8 pb-4 pt-8">
           <button
             type="button"
@@ -171,19 +178,19 @@ export default function QuickStartModal({
             className="absolute right-4 top-4 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-text-tertiary transition-colors hover:bg-bg-secondary hover:text-text-primary"
             aria-label={t('quickStartModal.closeQuickStart')}
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
 
           <div className="mb-2 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-purple/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-purple/10" aria-hidden="true">
               <Sparkles className="h-6 w-6 text-accent-purple" />
             </div>
-            <h2 className="font-mono text-2xl font-black italic tracking-tighter">
+            <h2 id="quickstart-modal-title" className="font-mono text-2xl font-black italic tracking-tighter">
               {t('quickStartModal.title')}
             </h2>
           </div>
 
-          <p className="text-sm leading-relaxed text-text-tertiary">
+          <p id="quickstart-modal-desc" className="text-sm leading-relaxed text-text-tertiary">
             {t('quickStartModal.desc')}
           </p>
 
@@ -197,7 +204,7 @@ export default function QuickStartModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 px-8 pb-8">
+        <form onSubmit={handleSubmit} className="space-y-6 px-8 pb-8" aria-busy={isGenerating}>
           {/* Provider 선택 섹션 — QuickStartModal 최상단 */}
           <div className="space-y-3">
             <label className="px-1 text-[10px] font-black uppercase tracking-widest text-text-tertiary">
@@ -220,13 +227,13 @@ export default function QuickStartModal({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Zap className={`mt-0.5 h-5 w-5 shrink-0 ${dgxAvailable ? "text-emerald-400" : "text-text-tertiary"}`} />
+                  <Zap className={`mt-0.5 h-5 w-5 shrink-0 ${dgxAvailable ? "text-emerald-400" : "text-text-tertiary"}`} aria-hidden="true" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-text-primary">{L.dgxTitle}</span>
                       {dgxAvailable ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                          <Check className="h-3 w-3" />
+                          <Check className="h-3 w-3" aria-hidden="true" />
                           {L.dgxReady}
                         </span>
                       ) : (
@@ -253,7 +260,7 @@ export default function QuickStartModal({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-accent-purple" />
+                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-accent-purple" aria-hidden="true" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold text-text-primary">{L.geminiTitle}</span>
@@ -273,7 +280,7 @@ export default function QuickStartModal({
                       className="mt-2 inline-flex items-center gap-1 rounded-md bg-accent-purple/15 px-2 py-1 text-[11px] font-semibold text-accent-purple hover:bg-accent-purple/25 focus-visible:ring-2 focus-visible:ring-accent-blue/50 outline-none"
                     >
                       {L.geminiGuide}
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
                     </span>
                   </div>
                 </div>
@@ -292,7 +299,7 @@ export default function QuickStartModal({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Key className="mt-0.5 h-5 w-5 shrink-0 text-accent-blue" />
+                  <Key className="mt-0.5 h-5 w-5 shrink-0 text-accent-blue" aria-hidden="true" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-bold text-text-primary">{L.byokTitle}</span>
                     <p className="mt-1 text-xs leading-5 text-text-secondary">{L.byokDesc}</p>
@@ -367,17 +374,17 @@ export default function QuickStartModal({
           >
             {isGenerating ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 {t('quickStartModal.generating')}
               </>
             ) : provider === "byok" ? (
               <>
-                <Key className="h-4 w-4" />
+                <Key className="h-4 w-4" aria-hidden="true" />
                 {L.byokCta}
               </>
             ) : (
               <>
-                <Wand2 className="h-4 w-4" />
+                <Wand2 className="h-4 w-4" aria-hidden="true" />
                 {t('quickStartModal.submit')}
               </>
             )}

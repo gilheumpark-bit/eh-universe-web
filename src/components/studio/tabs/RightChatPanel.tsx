@@ -208,7 +208,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
                 }
               }}
               placeholder={loading ? t('engine.thinking') : t('ui.askAnything')}
-              className="flex-1 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-xs text-text-primary placeholder-text-tertiary/60 resize-none max-h-32 leading-relaxed font-sans scrollbar-none py-1"
+              className="flex-1 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-sm text-text-primary placeholder-text-tertiary/60 resize-none max-h-32 leading-relaxed font-sans scrollbar-none py-1"
               rows={1}
               disabled={loading}
             />
