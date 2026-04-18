@@ -8,6 +8,8 @@ import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import ApiKeyHydrator from "@/components/ApiKeyHydrator";
 import { MainContentRegion } from "@/components/MainContentRegion";
+import Footer from "@/components/Footer";
+import CookieConsent from "@/components/CookieConsent";
 import "@/lib/env"; // validate environment variables at startup
 import {
   IBM_Plex_Mono,
@@ -145,6 +147,8 @@ export default function RootLayout({
           <LangProvider>
             <UnifiedSettingsProvider>
               <MainContentRegion>{children}</MainContentRegion>
+              <Footer />
+              <CookieConsent />
             </UnifiedSettingsProvider>
           </LangProvider>
         </AuthProvider>
