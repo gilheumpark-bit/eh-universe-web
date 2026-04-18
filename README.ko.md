@@ -9,7 +9,8 @@
 [![English](https://img.shields.io/badge/lang-English-blue?style=flat-square)](README.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-1600+-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-2,331_passing-22c55e?style=flat-square)
+![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 
 [라이브](https://ehsu.app) · [문서](#문서) · [기여 가이드](CONTRIBUTING.md)
@@ -54,7 +55,7 @@ EH Universe는 단일 Next.js 16.2 앱 위에 5개 앱이 통합된 창작 플�
 | 저장소 | localStorage + IndexedDB + Firestore (CLOUD_SYNC) + Google Drive |
 | 인증 | Firebase Auth + Stripe 구독 |
 | 내보내기 | EPUB 3.0 / DOCX / TXT / XLIFF / TMX — 순수 JS |
-| 테스트 | Jest (~1,600 tests), Playwright E2E |
+| 테스트 | Jest (2,331 passing / 221 suites), Playwright E2E |
 | 배포 | Vercel (ehsu.app) |
 
 ---

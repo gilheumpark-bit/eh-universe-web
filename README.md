@@ -11,10 +11,12 @@
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-2,331_passing-22c55e?style=flat-square)
+![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
-[Live](https://ehsu.app) · [Changelog](CHANGELOG.md) · [Architecture](ARCHITECTURE.md)
+[Live](https://ehsu.app) · [Changelog](/changelog) · [Architecture](ARCHITECTURE.md) · [AI 고지](/ai-disclosure)
 
 </div>
 
@@ -40,6 +42,22 @@
 | 라이트노벨 작가 | 나로우계/판타지/회귀물 |
 | 스토리 기획자 | 세계관 설계 + 캐릭터 관리 |
 | 1인 창작자 | 글쓰기 + 번역 + 출판까지 |
+
+---
+
+## 역할 기반 UI (2026-04-19)
+
+처음 들어오면 단순한 화면, 필요할 때 펼치는 **Progressive Disclosure** 구조.
+
+| 역할 | 기본 화면 | opt-in 기능 |
+|------|----------|------------|
+| **둘러보기** | 30초 샘플 번역 데모 | — |
+| **작가** | 수동 편집기 + 씬시트 | 5가지 집필 모드 / 평행우주 / 품질 게이트 |
+| **번역가** | Translation Studio + 6축 점수 | RAG 세계관 / Voice Guard / Episode Memory |
+| **출판사** | EPUB·DOCX·XLIFF·TMX 내보내기 | 19+ 콘텐츠 자가 선언 / AI 사용 고지 |
+| **개발자** | Code Studio + Quill | 9팀 파이프라인 / 224룰 검증 |
+
+Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는 4언어 툴팁 사전 제공.
 
 ---
 
@@ -181,21 +199,58 @@ npm test         # 테스트
 
 ---
 
+## 프로젝트 상태 (2026-04-19)
+
+| 지표 | 값 |
+|------|----|
+| 테스트 | **2,331 passing** / 221 suites |
+| 타입 체크 | **0 errors** (strict) |
+| 보안 감사 | P0 6건 + P1 13건 수리 완료 |
+| 3루프 정밀 진단 | 850+ 파일 / 91 이슈 수리 |
+| 특허 | KIPO 2026-03-03 출원, PCT 진행 중 |
+| 단계 | **알파** (브릿G 작가 모집 중) |
+
+---
+
 ## 문서
 
 | 문서 | 설명 |
 |------|------|
-| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.0) |
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.1) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
 | [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |
 | [SECURITY.md](SECURITY.md) | 보안 정책 |
+| [RUNBOOK.md](RUNBOOK.md) | 운영 런북 |
+
+### 법적 문서 (4페이지)
+
+- [/terms](/terms) — 서비스 약관
+- [/privacy](/privacy) — 개인정보 처리방침
+- [/copyright](/copyright) — 저작권 정책
+- [/ai-disclosure](/ai-disclosure) — AI 사용 고지 (Amazon KDP 대응)
+- [/changelog](/changelog) — 변경 이력 (사용자용)
+
+---
+
+## 알파 작가 모집
+
+**브릿G 장르문학 작가 50명 공동 창설자** 모집 중.
+
+- 평생 50% 할인
+- 제품 크레딧 등재
+- 해외 플랫폼 런칭 지원
+- 직통 피드백 채널
+
+문의: gilheumpark@gmail.com
 
 ---
 
 ## 라이선스
 
 [CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 소스코드 및 창작 콘텐츠 전체 비상업적 용도 무료.
+
+특허: KIPO 2026-03-03 출원, PCT 국제 출원 진행 중.
 
 <div align="center">
 

@@ -29,6 +29,78 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.0-alpha.5',
+    date: '2026-04-19',
+    type: 'security',
+    scope: 'platform',
+    title: {
+      KO: '전수 보안 감사 — P0 6건 + P1 13건 수리',
+      EN: 'Full Security Audit — 6 P0 + 13 P1 fixed',
+      JP: '全数セキュリティ監査 — P0 6件 + P1 13件修正',
+      CN: '全面安全审计 — 修复 P0 6 件 + P1 13 件',
+    },
+    description: {
+      KO: 'XSS, iframe sandbox 탈출, CLI shell injection 3건, API 인증 누락 2건, AI 출력 shell 직주입 등 실제 공격 벡터를 전수 수리했습니다. HMAC fallback / ulimit 등 거짓 보안도 정직한 경고로 교체했습니다.',
+      EN: 'Fixed real attack vectors end-to-end: XSS, iframe sandbox escape, 3 CLI shell injections, 2 unauthenticated API routes, and AI-output shell injection. Fake-security paths (HMAC fallback, ulimit) replaced with honest warnings.',
+      JP: 'XSS、iframe sandbox脱出、CLI shell injection 3件、API認証欠落 2件、AI出力からのshell直注入など実際の攻撃ベクトルを一括修正。HMAC fallback / ulimit などの「偽セキュリティ」も正直な警告に置換。',
+      CN: '修复 XSS、iframe sandbox 逃逸、CLI shell 注入 3 件、API 认证缺失 2 件、AI 输出 shell 直注入等实际攻击载体。HMAC fallback / ulimit 等"假安全"也替换为如实告警。',
+    },
+  },
+  {
+    version: '0.2.0-alpha.4',
+    date: '2026-04-19',
+    type: 'feature',
+    scope: 'platform',
+    title: {
+      KO: 'Progressive Disclosure — 역할 기반 UI + Settings 4탭',
+      EN: 'Progressive Disclosure — Role-Based UI + Settings 4-Tab',
+      JP: 'プログレッシブディスクロージャー — 役割ベースUI + Settings 4タブ',
+      CN: '渐进披露 — 基于角色的 UI + Settings 4 标签',
+    },
+    description: {
+      KO: 'Welcome 4번째 슬라이드에서 소설가/번역가/출판사/둘러보기 4역할을 선택합니다. Writing 탭 기본은 수동+AI FAB로 단순화되고, 5모드는 고급 토글 시 노출됩니다. Settings는 Easy/Writing/Advanced/Developer 4탭으로 분리되었고, Translation 탭에는 30초 샘플 데모가 추가되었습니다.',
+      EN: 'A 4th Welcome slide picks role: Writer / Translator / Publisher / Explorer. Writing tab default is now manual + AI FAB; the 5-mode advanced view is opt-in. Settings split into Easy / Writing / Advanced / Developer (4 tabs). Translation tab gets a 30-second sample demo.',
+      JP: 'Welcomeの4枚目で小説家/翻訳家/出版社/おまかせの4役割を選択。Writingタブは既定で手動+AI FABに簡略化、5モードは詳細トグルで表示。Settingsは Easy / Writing / Advanced / Developer の4タブに分離、Translation には30秒サンプルデモを追加。',
+      CN: 'Welcome 第 4 张选择角色（小说家 / 译者 / 出版社 / 浏览）。Writing 标签默认改为手动 + AI FAB，5 种模式仅在高级开关下显示。Settings 拆分为 Easy / Writing / Advanced / Developer 4 标签；Translation 新增 30 秒样本演示。',
+    },
+  },
+  {
+    version: '0.2.0-alpha.3',
+    date: '2026-04-19',
+    type: 'feature',
+    scope: 'platform',
+    title: {
+      KO: '인프라 5축 — Fallback / Backup / 법적 / SEO / AI 라벨',
+      EN: 'Infrastructure 5-Axis — Fallback / Backup / Legal / SEO / AI Label',
+      JP: 'インフラ5軸 — Fallback / Backup / 法的 / SEO / AIラベル',
+      CN: '基础设施 5 轴 — Fallback / Backup / 法律 / SEO / AI 标签',
+    },
+    description: {
+      KO: 'DGX Spark 단일 장애점 대응(BYOK 자동 fallback), 원고 전체 JSON/ZIP 백업+롤백, 법적 문서 4페이지(Terms/Privacy/Copyright/AI Disclosure), Dynamic OG + sitemap 17 URL + AI 크롤러 9종 차단, EPUB/DOCX AI 사용 자동 라벨이 한 번에 들어왔습니다.',
+      EN: 'Five infra axes shipped at once: DGX-to-BYOK automatic fallback, full manuscript JSON/ZIP backup with rollback, 4 legal pages (Terms / Privacy / Copyright / AI Disclosure), dynamic OG + sitemap (17 URLs) + 9 AI crawlers blocked, and auto AI-usage labels in EPUB/DOCX.',
+      JP: 'インフラ5軸を一括投入: DGX→BYOK自動フォールバック、原稿全体のJSON/ZIPバックアップ+ロールバック、法的文書4ページ(Terms/Privacy/Copyright/AI Disclosure)、Dynamic OG + sitemap 17 URL + AIクローラー9種ブロック、EPUB/DOCXへのAI使用自動ラベル。',
+      CN: '一次性投入基础设施 5 轴：DGX→BYOK 自动 fallback、稿件整体 JSON/ZIP 备份与回滚、4 个法律页（Terms/Privacy/Copyright/AI Disclosure）、Dynamic OG + sitemap 17 个 URL + 屏蔽 9 种 AI 爬虫、EPUB/DOCX 自动 AI 使用标签。',
+    },
+  },
+  {
+    version: '0.2.0-alpha.2',
+    date: '2026-04-19',
+    type: 'improvement',
+    scope: 'platform',
+    title: {
+      KO: '3루프 정밀 진단 — 850+ 파일 / 200+ 수리',
+      EN: '3-Loop Full Audit — 850+ files / 200+ fixes',
+      JP: '3ループ精密監査 — 850+ファイル / 200+修正',
+      CN: '3 循环精密审计 — 850+ 文件 / 200+ 修复',
+    },
+    description: {
+      KO: '"효율 금지, 파일 1개당 Read 강제" 원칙으로 3루프(790/15/25 파일)를 돌려 200+ 이슈를 수리했습니다. saga-transaction AI 이중 호출, suggest.ts 침묵 ReferenceError, Tailwind 무효 z-class, useCodeStudioPanels 530→103줄 분해 등이 포함됩니다.',
+      EN: 'Ran 3 loops (790 / 15 / 25 files) under a "no shortcuts, full Read per file" rule and fixed 200+ issues. Includes the saga-transaction AI double-call, suggest.ts ReferenceError silently swallowed by try-catch, invalid Tailwind z-classes, and useCodeStudioPanels split (530 -> 103 lines).',
+      JP: '"効率禁止・1ファイル1 Read"を厳守し3ループ(790/15/25ファイル)で200+件を修正。saga-transactionのAI二重呼び出し、suggest.tsの沈黙ReferenceError、Tailwindの無効z-class、useCodeStudioPanelsの530→103行分解などを含みます。',
+      CN: '以"禁止效率、每个文件强制 Read"为原则跑完 3 循环（790/15/25 文件），修复 200+ 问题。包含 saga-transaction AI 双调用、suggest.ts 被 try-catch 静默吞噬的 ReferenceError、Tailwind 无效 z-class、useCodeStudioPanels 530→103 行拆分等。',
+    },
+  },
+  {
     version: '0.2.0-alpha.1',
     date: '2026-04-19',
     type: 'feature',

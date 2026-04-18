@@ -64,6 +64,74 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `lib/github-sync.ts` — GitHub Octokit CRUD 추상화
 - `lib/project-serializer.ts` — MD+YAML 프로젝트 직렬화
 
+## 2026-04-19 v2.1 업데이트
+
+### 보안 감사 (커밋 3419e3a2)
+- 전수 1,292 파일 스캔 → P0 6 + P1 13 수리
+- 주요 P0: GlossaryPanel XSS / PreviewPanel iframe sandbox / CLI shell injection × 3 / autopilot config
+
+### 3루프 정밀 진단 (e80a2fca → 7834b0f4 → 047ff905)
+- Loop 1: 790 파일 전수 Read / 69 수리 (saga AI 이중 호출 / suggest ReferenceError 등 진짜 P1)
+- Loop 2: 회귀 검증 + 크로스파일 통합 + 이월 6건
+- Loop 3: 최종 + `useCodeStudioPanels` 530→103줄 분해
+
+### UX 5축 (커밋 03c78412 / 32 파일)
+- 작가 세션 관리 (포모도로 / 일일 목표 / 휴식 알림)
+- 블루라이트 필터 / AI FAB (Ctrl+Enter) / 씬시트 인라인 경고
+- 키보드 내비 (Ctrl+\ 분할뷰, Arrow Key 에피소드)
+- 공용 `EmptyState` + 6곳 적용
+- 5모달 aria + 색상+텍스트 병기
+
+### 인프라 5축 (커밋 1920e0d2)
+- DGX fallback (DGX → BYOK 자동 전환)
+- IndexedDB quota 모니터링 + Firebase tracker
+- 원고 전체 export (JSON/ZIP + atomic rollback)
+- 법적 문서 4페이지 (Terms / Privacy / Copyright / AI Disclosure)
+- SEO 풀스택 (AI 크롤러 9종 차단)
+- AI 라벨 자동 삽입 + 19+ 자가 선언 + changelog
+
+### Progressive Disclosure (커밋 4faa70ae)
+- `UserRoleContext` (writer / translator / publisher / developer / explorer)
+- Writing Tier 단순화 (기본 = 수동, 5모드는 opt-in)
+- Code Studio 역할 기반 숨김
+- Translation Studio 30초 샘플 체험
+- Settings 4탭 (Easy / Writing / Advanced / Developer)
+- TabHeader + TermTooltip (12 용어 4언어 사전)
+- Welcome 4번째 슬라이드 (역할 선택)
+
+## 신규 컴포넌트/훅 (2026-04-19)
+
+- `contexts/UserRoleContext.tsx` — 역할 / Tier / developerMode
+- `hooks/useSessionTimer.ts` — 포모도로 + 일일 목표 + 휴식
+- `hooks/useSparkHealth.ts` — DGX 모니터
+- `hooks/useStorageQuota.ts` — IndexedDB 용량
+- `components/ui/EmptyState.tsx` — 공용 빈 상태
+- `components/ui/TermTooltip.tsx` — 용어 툴팁
+- `components/studio/TabHeader.tsx` — 탭 헤더
+- `components/studio/settings/SessionSection.tsx` / `ComplianceSection.tsx`
+- `components/legal/LegalPageLayout.tsx` / `TermsUpdateBanner.tsx`
+- `components/translator/SampleTranslationDemo.tsx`
+- `app/copyright/page.tsx` / `ai-disclosure/page.tsx` / `changelog/page.tsx`
+
+## 신규 라이브러리 (2026-04-19)
+
+- `lib/ai-usage-tracker.ts` — AI 메타데이터 자동 삽입
+- `lib/content-rating.ts` — 19+ 자가 선언
+- `lib/changelog-data.ts` — 7 엔트리
+- `lib/firebase-quota-tracker.ts`
+- `lib/full-backup.ts` — 전체 export (JSON/ZIP)
+
+## 프로젝트 상태 (2026-04-19)
+
+- 테스트: **2,331 passing** / 221 suites / 0 실패
+- 타입: **0 errors** (strict)
+- 보안: P0 모두 수리
+- 단계: **알파** (배포 가능 상태)
+
+오늘 7개 커밋 통합 결과: 164+ 파일 / 200+ 이슈 수리 / +99 테스트 (2,232→2,331)
+
+---
+
 ## 신규 컴포넌트 (2026-04-18 v2.0)
 
 ### Novel Studio 확장
