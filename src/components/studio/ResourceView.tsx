@@ -376,10 +376,10 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                     },
                     {
                       label: L4(language, {
-                        ko: 'AI 제안',
-                        en: 'AI suggest',
-                        ja: 'AI提案',
-                        zh: 'AI 建议',
+                        ko: 'NOA 제안',
+                        en: 'NOA suggest',
+                        ja: 'NOA提案',
+                        zh: 'NOA 建议',
                       }),
                       icon: Sparkles,
                       variant: 'secondary',

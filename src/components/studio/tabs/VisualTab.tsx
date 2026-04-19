@@ -617,8 +617,8 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
               </p>
               <p className="text-[11px] text-text-tertiary mt-1 leading-relaxed">
                 {L4(lang, {
-                  ko: '에피소드별 장면을 AI로 생성하고, 원고 탭의 「비주얼 노벨」 모드에서 시네마처럼 재생할 수 있습니다. 회차 선택 → 카드 추가 → 생성 실행.',
-                  en: 'Generate scene visuals per episode, then play cinematically in Manuscript tab\'s "Visual Novel" mode. Pick an episode → add card → run generate.',
+                  ko: '에피소드별 장면을 NOA로 생성하고, 원고 탭의 「비주얼 노벨」 모드에서 시네마처럼 재생할 수 있습니다. 회차 선택 → 카드 추가 → 생성 실행.',
+                  en: 'Generate scene visuals per episode with NOA, then play cinematically in Manuscript tab\'s "Visual Novel" mode. Pick an episode → add card → run generate.',
                 })}
               </p>
             </div>

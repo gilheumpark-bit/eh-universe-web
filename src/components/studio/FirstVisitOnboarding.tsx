@@ -155,10 +155,10 @@ export default function FirstVisitOnboarding() {
                 {' — '}
                 <span className="text-text-secondary">
                   {L4(lang, {
-                    ko: 'AI가 프로필을 자동 생성합니다',
-                    en: 'AI auto-generates full profiles',
-                    ja: 'AIがプロフィールを自動生成します',
-                    zh: 'AI 自动生成完整档案',
+                    ko: 'NOA가 프로필을 자동 생성합니다',
+                    en: 'NOA auto-generates full profiles',
+                    ja: 'NOAがプロフィールを自動生成します',
+                    zh: 'NOA 自动生成完整档案',
                   })}
                 </span>
               </span>

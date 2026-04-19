@@ -191,10 +191,10 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                   },
                   {
                     label: L4(language, {
-                      ko: 'AI 생성',
-                      en: 'Generate with AI',
-                      ja: 'AI生成',
-                      zh: 'AI 生成',
+                      ko: 'NOA 생성',
+                      en: 'Generate with NOA',
+                      ja: 'NOA生成',
+                      zh: 'NOA 生成',
                     }),
                     icon: Wand2,
                     variant: 'secondary',

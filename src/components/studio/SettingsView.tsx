@@ -626,10 +626,10 @@ function AdvancedWritingModeToggle({ language }: { language: AppLanguage }) {
       icon={<Sparkles className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />}
       title={L4(language, { ko: '고급 집필 모드', en: 'Advanced Writing Mode', ja: '高度執筆モード', zh: '高级写作模式' })}
       description={L4(language, {
-        ko: 'AI 생성 / 수동 편집 / 3단계 캔버스 / 자동 30% 리파인 / 고급 — 5모드 활성화',
-        en: 'AI / Manual / 3-step Canvas / 30% Auto-refine / Advanced — enable 5 modes',
-        ja: 'AI生成・手動編集・3段階キャンバス・自動30%リファイン・高度 — 5モード有効化',
-        zh: 'AI生成 / 手动编辑 / 3阶段画布 / 自动30%精修 / 高级 — 启用5种模式',
+        ko: 'NOA 생성 / 수동 편집 / 3단계 캔버스 / 자동 30% 리파인 / 고급 — 5모드 활성화',
+        en: 'NOA / Manual / 3-step Canvas / 30% Auto-refine / Advanced — enable 5 modes',
+        ja: 'NOA生成・手動編集・3段階キャンバス・自動30%リファイン・高度 — 5モード有効化',
+        zh: 'NOA生成 / 手动编辑 / 3阶段画布 / 自动30%精修 / 高级 — 启用5种模式',
       })}
       onClick={ctx ? () => ctx.setAdvancedWritingMode(!checked) : undefined}
     >
@@ -974,14 +974,14 @@ function WriterSettingsGroup({
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate">
-                    {L4(language, { ko: 'AI 선제 제안', en: 'AI Proactive Suggestions', ja: 'AI先制提案', zh: 'AI 主动建议' })}
+                    {L4(language, { ko: 'NOA 선제 제안', en: 'NOA Proactive Suggestions', ja: 'NOA先制提案', zh: 'NOA 主动建议' })}
                   </div>
                   <div className="text-[13px] text-text-tertiary hidden sm:block">
                     {L4(language, {
-                      ko: '작가가 쓰는 중 AI가 먼저 조언. 끄면 질문할 때만 응답 (Pull 모드).',
-                      en: 'AI advises while writing. Off = respond only on demand (Pull mode).',
-                      ja: '執筆中にAIが先に助言。オフで質問時のみ応答 (Pullモード)。',
-                      zh: '写作时AI主动提示。关闭后仅响应询问 (Pull 模式)。',
+                      ko: '작가가 쓰는 중 NOA가 먼저 조언. 끄면 질문할 때만 응답 (Pull 모드).',
+                      en: 'NOA advises while writing. Off = respond only on demand (Pull mode).',
+                      ja: '執筆中にNOAが先に助言。オフで質問時のみ応答 (Pullモード)。',
+                      zh: '写作时NOA主动提示。关闭后仅响应询问 (Pull 模式)。',
                     })}
                   </div>
                 </div>

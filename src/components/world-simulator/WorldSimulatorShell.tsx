@@ -193,7 +193,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             {/* AI loading explanation */}
             {aiGenerating && (
               <div className="absolute -top-12 right-0 bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[9px] text-text-secondary shadow-lg z-10 whitespace-nowrap">
-                {L4(lang, { ko: '세계관 시뮬레이터는 AI가 세계의 변화를 예측합니다.', en: 'World Simulator uses AI to predict world changes.', ja: '世界観シミュレーターはAIが世界の変化を予測します。', zh: '世界观模拟器由AI预测世界的变化。' })}
+                {L4(lang, { ko: '세계관 시뮬레이터는 NOA가 세계의 변화를 예측합니다.', en: 'World Simulator uses NOA to predict world changes.', ja: '世界観シミュレーターはNOAが世界の変化を予測します。', zh: '世界观模拟器由NOA预测世界的变化。' })}
               </div>
             )}
             <button onClick={() => setShowPresetMenu(v => !v)}
@@ -376,8 +376,8 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             </h3>
             <p className="text-xs text-text-secondary max-w-md mx-auto">
               {L4(lang, {
-                ko: 'AI가 시놉시스를 분석하여 문명, 관계, 타임라인을 자동 생성합니다. 위에서 장르와 규칙 강도를 선택한 후 "자동 생성" 버튼을 눌러 시작하세요.',
-                en: 'AI analyzes your synopsis to auto-generate civilizations, relations, and timelines. Select genres and rule intensity above, then click "Auto Generate" to start.',
+                ko: 'NOA가 시놉시스를 분석하여 문명, 관계, 타임라인을 자동 생성합니다. 위에서 장르와 규칙 강도를 선택한 후 "자동 생성" 버튼을 눌러 시작하세요.',
+                en: 'NOA analyzes your synopsis to auto-generate civilizations, relations, and timelines. Select genres and rule intensity above, then click "Auto Generate" to start.',
               })}
             </p>
             <p className="text-[10px] text-text-tertiary">

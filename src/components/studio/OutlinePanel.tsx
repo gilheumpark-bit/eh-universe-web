@@ -214,7 +214,7 @@ export default function OutlinePanel({
     emptyNoScenes: L4(language, { ko: "\uC52C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4", en: "No scenes yet", ja: "\u30B7\u30FC\u30F3\u304C\u3042\u308A\u307E\u305B\u3093", zh: "\u6682\u65E0\u573A\u666F" }),
     emptyNoResults: L4(language, { ko: "\uAC80\uC0C9 \uACB0\uACFC \uC5C6\uC74C", en: "No matches", ja: "\u4E00\u81F4\u306A\u3057", zh: "\u65E0\u5339\u914D" }),
     scenesHeader: L4(language, { ko: "\uC52C", en: "Scenes", ja: "\u30B7\u30FC\u30F3", zh: "\u573A\u666F" }),
-    messagesHeader: L4(language, { ko: "AI \uBA54\uC2DC\uC9C0", en: "AI Messages", ja: "AI \u30E1\u30C3\u30BB\u30FC\u30B8", zh: "AI \u6D88\u606F" }),
+    messagesHeader: L4(language, { ko: "NOA \uBA54\uC2DC\uC9C0", en: "NOA Messages", ja: "NOA \u30E1\u30C3\u30BB\u30FC\u30B8", zh: "NOA \u6D88\u606F" }),
     episodeLabel: L4(language, { ko: "\uD654", en: "Ep.", ja: "\u8A71", zh: "\u8BDD" }),
     wordsLabel: L4(language, { ko: "\uC790", en: "chars", ja: "\u5B57", zh: "\u5B57" }),
     paraLabel: L4(language, { ko: "\uB2E8\uB77D", en: "para", ja: "\u6BB5\u843D", zh: "\u6BB5" }),
