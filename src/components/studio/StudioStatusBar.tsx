@@ -191,7 +191,7 @@ export function StudioStatusBar({
                         style={{ width: `${progressPct}%` }}
                       />
                     </span>
-                    <span className="text-[11px] text-text-tertiary">{progressPct}%</span>
+                    <span className="text-[12px] text-text-tertiary">{progressPct}%</span>
                   </span>
                 </>
               )}
