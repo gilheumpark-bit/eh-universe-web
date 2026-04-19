@@ -415,10 +415,10 @@ export default function WritingTabInline(props: Props) {
         icon="✍️"
         title={L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}
         description={L4(language, {
-          ko: '좌측 에디터에 글을 쓰세요. AI 도움은 우측 하단 버튼 (Ctrl+Enter)',
-          en: 'Write on the left editor. Use the bottom-right button for AI help (Ctrl+Enter)',
-          ja: '左側のエディタで執筆。右下のボタンでAIサポート (Ctrl+Enter)',
-          zh: '在左侧编辑器中写作。右下角按钮启用 AI 协助 (Ctrl+Enter)',
+          ko: '좌측 에디터에 글을 쓰세요. NOA 도움은 우측 하단 버튼 (Ctrl+Enter)',
+          en: 'Write on the left editor. Use the bottom-right button for NOA help (Ctrl+Enter)',
+          ja: '左側のエディタで執筆。右下のボタンでNOAサポート (Ctrl+Enter)',
+          zh: '在左侧编辑器中写作。右下角按钮启用 NOA 协助 (Ctrl+Enter)',
         })}
       />
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
@@ -871,14 +871,14 @@ export default function WritingTabInline(props: Props) {
           type="button"
           onClick={() => { if (!isGenerating) handleSend(); }}
           disabled={isGenerating}
-          aria-label={L4(language, { ko: 'AI 생성 시작', en: 'Start AI generation', ja: 'AI生成開始', zh: '开始 AI 生成' })}
-          title={L4(language, { ko: 'AI 생성 (Ctrl+Enter)', en: 'Generate (Ctrl+Enter)', ja: 'AI生成 (Ctrl+Enter)', zh: 'AI 生成 (Ctrl+Enter)' })}
+          aria-label={L4(language, { ko: 'NOA 생성 시작', en: 'Start NOA generation', ja: 'NOA生成開始', zh: '开始 NOA 生成' })}
+          title={L4(language, { ko: 'NOA 생성 (Ctrl+Enter)', en: 'Generate with NOA (Ctrl+Enter)', ja: 'NOA生成 (Ctrl+Enter)', zh: 'NOA 生成 (Ctrl+Enter)' })}
           className="fixed bottom-24 right-6 md:bottom-6 md:right-8 z-40 px-4 py-3 bg-accent-blue hover:bg-accent-blue/90 text-white rounded-full shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue inline-flex items-center gap-2 transition-[transform,opacity,background-color] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           style={{ zIndex: 'var(--z-overlay, 40)' }}
         >
           <Wand2 className="w-4 h-4" aria-hidden="true" />
           <span className="text-sm font-medium">
-            {L4(language, { ko: 'AI 생성', en: 'Generate', ja: 'AI生成', zh: 'AI 生成' })}
+            {L4(language, { ko: 'NOA 생성', en: 'Generate', ja: 'NOA生成', zh: 'NOA 生成' })}
           </span>
           <kbd className="text-xs opacity-70 ml-1 hidden sm:inline">Ctrl+Enter</kbd>
         </button>

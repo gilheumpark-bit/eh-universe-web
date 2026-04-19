@@ -98,10 +98,10 @@ const WritingTab: React.FC<WritingTabProps> = ({
         icon="✍️"
         title={L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}
         description={L4(language, {
-          ko: '좌측 에디터에 글을 쓰세요. AI 도움은 우측 하단 버튼 (Ctrl+Enter)',
-          en: 'Write on the left editor. Use the bottom-right button for AI help (Ctrl+Enter)',
-          ja: '左側のエディタで執筆。右下のボタンでAIサポート (Ctrl+Enter)',
-          zh: '在左侧编辑器中写作。右下角按钮启用 AI 协助 (Ctrl+Enter)',
+          ko: '좌측 에디터에 글을 쓰세요. NOA 도움은 우측 하단 버튼 (Ctrl+Enter)',
+          en: 'Write on the left editor. Use the bottom-right button for NOA help (Ctrl+Enter)',
+          ja: '左側のエディタで執筆。右下のボタンでNOAサポート (Ctrl+Enter)',
+          zh: '在左侧编辑器中写作。右下角按钮启用 NOA 协助 (Ctrl+Enter)',
         })}
       />
       <div className="flex-1 flex overflow-hidden">

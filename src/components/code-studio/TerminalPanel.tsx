@@ -393,8 +393,8 @@ export function TerminalPanel({
           if (analysis) {
             setLines((prev) => [
               ...prev,
-              { text: `[AI] ${analysis.summary}`, color: "blue" },
-              { text: `[AI] ${L4(lang, { ko: "제안", en: "Suggestion", ja: "提案", zh: "建议"})}: ${analysis.suggestion}`, color: "blue" },
+              { text: `[NOA] ${analysis.summary}`, color: "blue" },
+              { text: `[NOA] ${L4(lang, { ko: "제안", en: "Suggestion", ja: "提案", zh: "建议"})}: ${analysis.suggestion}`, color: "blue" },
               { text: "" },
             ]);
           } else {
@@ -490,7 +490,7 @@ export function TerminalPanel({
         : (prompt) => {
             setLines((prev) => [
               ...prev,
-              { text: `[AI] ${prompt}`, color: "blue" },
+              { text: `[NOA] ${prompt}`, color: "blue" },
             ]);
           },
     };

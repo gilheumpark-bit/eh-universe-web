@@ -195,7 +195,7 @@ export function ProjectSpecForm({ initialPrompt, onComplete, onClose }: Props) {
             {step === "category" && title.trim() && (
               <button onClick={handleAutoFill} disabled={autoFilling}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs bg-accent-amber/15 text-accent-amber rounded-lg hover:bg-accent-amber/20 disabled:opacity-50">
-                {autoFilling ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} AI 자동 완성
+                {autoFilling ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} NOA 자동 완성
               </button>
             )}
           </div>

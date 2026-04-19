@@ -219,12 +219,12 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
       <>
       <TabHeader
         icon="📖"
-        title={isKO ? '규칙집' : 'Rulebook'}
+        title={L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' })}
         description={L4(language, {
-          ko: '장르를 선택하면 자동 적용됩니다',
-          en: 'Pick a genre and rules apply automatically',
-          ja: 'ジャンルを選択すると自動適用',
-          zh: '选择类型后规则自动应用',
+          ko: '장르를 선택하면 연출 설정이 자동 적용됩니다',
+          en: 'Pick a genre and direction presets apply automatically',
+          ja: 'ジャンルを選択すると演出設定が自動適用',
+          zh: '选择类型后演出设置自动应用',
         })}
       />
       <div className="max-w-3xl mx-auto py-10 px-4 md:py-16 md:px-6">

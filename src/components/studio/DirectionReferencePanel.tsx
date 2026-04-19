@@ -333,7 +333,7 @@ export function DirectionReferencePanel({ config, language, setConfig, onClose, 
   return (
     <div className="flex flex-col h-full">
       {/* 헤더: 3탭 + 닫기 */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/50 shrink-0" role="tablist" aria-label={isKO ? '연출 참고 탭' : 'Direction reference tabs'}>
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/50 shrink-0" role="tablist" aria-label={isKO ? '참고 패널 탭' : 'Reference panel tabs'}>
         <button
           onClick={() => setTab('direction')}
           role="tab"

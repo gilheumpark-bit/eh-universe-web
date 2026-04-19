@@ -302,7 +302,7 @@ export function ReviewCenter({ pipelineResult, files, onBugScan, onApproveFile, 
               <><Bug size={24} className="text-green-400" /><span className="text-xs text-text-tertiary">Bug scan complete</span>
                 <button onClick={handleBugScan} className="px-3 py-1.5 text-xs rounded bg-bg-tertiary hover:bg-border text-text-primary">Scan Again</button></>
             ) : (
-              <><Bug size={24} className="text-text-tertiary opacity-40" /><p className="text-xs text-text-tertiary">AI-powered bug detection across your codebase</p>
+              <><Bug size={24} className="text-text-tertiary opacity-40" /><p className="text-xs text-text-tertiary">NOA-powered bug detection across your codebase</p>
                 <button onClick={handleBugScan} disabled={!onBugScan}
                   className="px-4 py-2 rounded-lg text-xs font-medium bg-blue-500 text-white hover:opacity-90 disabled:opacity-40">
                   Start Bug Scan

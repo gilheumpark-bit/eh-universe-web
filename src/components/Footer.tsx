@@ -5,16 +5,36 @@
 // ============================================================
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
+/**
+ * 앱(몰입) 경로 — 이곳에서는 Footer 미렌더.
+ * 집필·번역·코드 스튜디오는 상태바(fixed bottom-0)를 사용하므로
+ * 법적 링크 푸터가 시각적으로 충돌·몰입 방해를 일으킨다.
+ * 공개 페이지(/, /archive, /privacy …)는 그대로 Footer 노출.
+ */
+const APP_ROUTE_PREFIXES: readonly string[] = [
+  "/studio",
+  "/translation-studio",
+  "/code-studio",
+  "/welcome",
+  "/network",
+];
+
 // ============================================================
 // PART 2 — Footer Component — 법적 링크 + 브랜드 표시
-// 전역 layout.tsx에 mount — 모든 페이지 하단 노출
+// 전역 layout.tsx에 mount — 공개 페이지에서만 노출 (앱 경로 제외)
 // ============================================================
 
 export default function Footer() {
   const { lang } = useLang();
+  const pathname = usePathname();
+  // 앱 경로에선 null 반환 — layout.tsx는 전역 mount 유지하되 컴포넌트가 스스로 차단
+  if (pathname && APP_ROUTE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    return null;
+  }
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const year = new Date().getFullYear();
 

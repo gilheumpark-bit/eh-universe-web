@@ -296,10 +296,10 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
           </div>
         </section>
 
-        {/* AI-Predicted Performance Analysis */}
+        {/* NOA-Predicted Performance Analysis */}
         <section>
           <h3 className="flex items-center gap-1.5 font-semibold text-text-primary mb-2">
-            <Gauge size={12} className="text-orange-400" /> AI-Predicted Performance
+            <Gauge size={12} className="text-orange-400" /> NOA-Predicted Performance
           </h3>
 
           {onRunStress && (
@@ -355,7 +355,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
               {/* Disclaimer */}
               <div className="flex items-start gap-1.5 pt-1 text-[9px] text-text-tertiary">
                 <AlertTriangle size={10} className="shrink-0 mt-px text-accent-amber" />
-                <span>AI-Predicted — not real load test results</span>
+                <span>NOA-Predicted — not real load test results</span>
               </div>
             </div>
           ) : !isStressTesting ? (

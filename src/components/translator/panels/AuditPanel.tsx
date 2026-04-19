@@ -240,9 +240,9 @@ function PublishAuditSection() {
       const apiKey = getEffectiveApiKeyForProvider(provider);
       const corrections = await runAIAudit(result, provider, apiKey);
       setAiCorrections(corrections);
-      if (corrections.length === 0) setAiError('AI가 교정 제안을 반환하지 않음. API 키 확인 또는 다시 시도.');
+      if (corrections.length === 0) setAiError('NOA가 교정 제안을 반환하지 않음. API 키 확인 또는 다시 시도.');
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : 'AI 검수 실패');
+      setAiError(err instanceof Error ? err.message : 'NOA 검수 실패');
       setAiCorrections([]);
     } finally {
       setAiRunning(false);
@@ -380,7 +380,7 @@ function PublishAuditSection() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-text-secondary">
               <Sparkles className="w-3 h-3 text-accent-purple" />
-              <span className="text-[10px] font-medium">AI 교정 (선택)</span>
+              <span className="text-[10px] font-medium">NOA 교정 (선택)</span>
               <span className="text-[9px] text-text-tertiary">· API 키 소모</span>
             </div>
             {aiCorrections.length > 0 && (
@@ -395,14 +395,14 @@ function PublishAuditSection() {
               className="w-full min-h-[28px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/25 text-[11px] font-medium transition-colors"
               title={`${provider}로 1회 호출 — 맞춤법·띄어쓰기·어색한 표현 제안`}
             >
-              AI 교정 제안 실행
+              NOA 교정 제안 실행
             </button>
           )}
 
           {aiRunning && (
             <div className="flex items-center gap-2 text-[10px] text-text-secondary py-1">
               <Loader2 className="w-3 h-3 animate-spin text-accent-purple" />
-              <span>AI 교정 중… (최대 45초)</span>
+              <span>NOA 교정 중… (최대 45초)</span>
             </div>
           )}
 
@@ -446,7 +446,7 @@ function PublishAuditSection() {
                 onClick={handleRunAI}
                 className="w-full text-[10px] py-1 rounded bg-white/5 hover:bg-white/10 text-text-tertiary border border-white/10 transition-colors"
               >
-                AI 재검수
+                NOA 재검수
               </button>
             </div>
           )}
@@ -641,14 +641,14 @@ export function AuditPanel() {
               <CheckCircle className="w-3 h-3" /> 자동 {heuristicScore}%
             </span>
             {aiOverall !== null && (
-              <span className={`flex items-center gap-1 text-[11px] bg-white/[0.03] px-2 py-0.5 rounded border border-white/10 ${scoreColor(aiOverall)}`} title={`AI 정밀 채점 (${scoreMode === 'fidelity' ? '원문 보존형 4축' : '독자 경험형 6축'})`}>
-                <Sparkles className="w-3 h-3" /> AI {aiOverall}%
+              <span className={`flex items-center gap-1 text-[11px] bg-white/[0.03] px-2 py-0.5 rounded border border-white/10 ${scoreColor(aiOverall)}`} title={`NOA 정밀 채점 (${scoreMode === 'fidelity' ? '원문 보존형 4축' : '독자 경험형 6축'})`}>
+                <Sparkles className="w-3 h-3" /> NOA {aiOverall}%
               </span>
             )}
           </div>
         </div>
         <p className="text-[10px] text-text-tertiary mt-2 leading-snug">
-          자동 점검은 길이·용어·숫자 같은 기계적 지표입니다. AI 정밀 채점으로 4축(원문보존) 또는 6축(독자경험) 품질 분석을 실행할 수 있습니다.
+          자동 점검은 길이·용어·숫자 같은 기계적 지표입니다. NOA 정밀 채점으로 4축(원문보존) 또는 6축(독자경험) 품질 분석을 실행할 수 있습니다.
         </p>
       </div>
 
@@ -664,7 +664,7 @@ export function AuditPanel() {
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 text-text-secondary">
               <Sparkles className="w-3.5 h-3.5 text-accent-amber" />
-              <span className="text-[12px] font-medium">AI 정밀 채점</span>
+              <span className="text-[12px] font-medium">NOA 정밀 채점</span>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -688,16 +688,16 @@ export function AuditPanel() {
               onClick={handleRunAIScore}
               disabled={!canScore}
               className="w-full min-h-[36px] rounded-md bg-accent-amber/15 hover:bg-accent-amber/25 text-accent-amber border border-accent-amber/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title={canScore ? '현재 원문·번역문을 AI로 정밀 채점' : '원문/번역문이 20자 이상일 때 실행 가능'}
+              title={canScore ? '현재 원문·번역문을 NOA로 정밀 채점' : '원문/번역문이 20자 이상일 때 실행 가능'}
             >
-              {canScore ? `AI ${scoreMode === 'fidelity' ? '4축' : '6축'} 채점 실행` : '원문/번역문 20자 이상 필요'}
+              {canScore ? `NOA ${scoreMode === 'fidelity' ? '4축' : '6축'} 채점 실행` : '원문/번역문 20자 이상 필요'}
             </button>
           )}
 
           {scoring && (
             <div className="flex items-center gap-2 text-[12px] text-text-secondary py-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-amber" />
-              <span>AI 채점 실행 중… (10~25초)</span>
+              <span>NOA 채점 실행 중… (10~25초)</span>
             </div>
           )}
 

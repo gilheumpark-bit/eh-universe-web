@@ -187,8 +187,8 @@ export function ReferencePanel() {
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value)}
               placeholder={langKo
-                ? '이 챕터의 세계관 설정·캐릭터·용어 힌트를 적어두세요. AI 번역 시 자동 참조됩니다.'
-                : 'Notes on world-setting, characters, terminology for this chapter. Used as AI translation context.'}
+                ? '이 챕터의 세계관 설정·캐릭터·용어 힌트를 적어두세요. NOA 번역 시 자동 참조됩니다.'
+                : 'Notes on world-setting, characters, terminology for this chapter. Used as NOA translation context.'}
               className={`w-full min-h-[120px] max-h-[300px] p-3 rounded-lg bg-white/5 border text-[13px] text-text-secondary leading-relaxed resize-y focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/50 transition-colors ${
                 query && !noteMatchesQuery ? 'border-white/10 opacity-50' : 'border-white/10'
               } ${query && noteMatchHits > 0 ? 'border-accent-amber/30' : ''}`}

@@ -141,6 +141,19 @@ export function EditModeSection({
     });
   }, []);
 
+  // ---- F9 단축키 — 미니맵 토글 (VSCode 유사) ----
+  // 입력 포커스 중이어도 허용 — F9는 브라우저 기본 동작 없음
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'F9' && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        toggleMinimap();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [toggleMinimap]);
+
   // ---- 씬 경계 주석 — 에피소드 씬시트 기준 ----
   const currentEpisode = currentSession.config.episode ?? 1;
   const sceneCount = React.useMemo(() => {
@@ -169,10 +182,10 @@ export function EditModeSection({
   }, [editDraft, sceneCount]);
 
   const minimapLabel = L4(language, {
-    ko: 'Minimap 표시',
-    en: 'Show minimap',
-    ja: 'ミニマップ表示',
-    zh: '显示缩略图',
+    ko: '미니맵 (F9)',
+    en: 'Minimap (F9)',
+    ja: 'ミニマップ (F9)',
+    zh: '缩略图 (F9)',
   });
   const minimapAriaExpanded = minimapEnabled ? 'true' : 'false';
 
@@ -191,7 +204,7 @@ export function EditModeSection({
           <div className="flex-1 min-w-0">
             <WritingToolbar textareaRef={_editDraftRef} value={editDraft} onChange={setEditDraft} language={language} targetMin={currentSession.config.guardrails?.min} targetMax={currentSession.config.guardrails?.max} />
           </div>
-          {/* Minimap 토글 — 데스크톱 전용 */}
+          {/* Minimap 토글 — 데스크톱 전용, 아이콘만 (F9 단축키) */}
           <button
             type="button"
             onClick={toggleMinimap}
@@ -200,14 +213,13 @@ export function EditModeSection({
             aria-label={minimapLabel}
             title={minimapLabel}
             data-testid="minimap-toggle"
-            className={`hidden md:inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border text-[11px] font-mono min-h-[32px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors ${
+            className={`hidden md:inline-flex items-center justify-center w-8 h-8 rounded-lg border shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors ${
               minimapEnabled
                 ? 'bg-accent-blue/10 border-accent-blue/30 text-accent-blue'
                 : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'
             }`}
           >
-            <MapIcon className="w-3 h-3" />
-            <span className="hidden xl:inline">{minimapLabel}</span>
+            <MapIcon className="w-4 h-4" />
           </button>
         </div>
 

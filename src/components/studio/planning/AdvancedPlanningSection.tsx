@@ -302,12 +302,13 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="space-y-6 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2"><Shield className="w-4 h-4" /> {tl('planningExtra.prismModeTitle')}</h3>
         <div className="flex flex-wrap gap-2">
+          {/* 순서: 미설정 → 전체이용가(안전) → 15세 → 청소년이용불가(자유) → AI자율 → CUSTOM */}
           {([
             { key: 'OFF' as const, label: tl('planningExtra.prismModeOff'), desc: tl('planningExtra.prismModeOffDesc') },
-            { key: 'FREE' as const, label: tl('planningExtra.prismModeFree'), desc: tl('planningExtra.prismModeFreeDesc') },
             { key: 'ALL' as const, label: tl('planningExtra.prismModeAll'), desc: tl('planningExtra.prismModeAllDesc') },
             { key: 'T15' as const, label: tl('planningExtra.prismModeT15'), desc: tl('planningExtra.prismModeT15Desc') },
             { key: 'M18' as const, label: tl('planningExtra.prismModeM18'), desc: tl('planningExtra.prismModeM18Desc') },
+            { key: 'FREE' as const, label: tl('planningExtra.prismModeFree'), desc: tl('planningExtra.prismModeFreeDesc') },
             { key: 'CUSTOM' as const, label: tl('planningExtra.prismModeCustom'), desc: tl('planningExtra.prismModeCustomDesc') },
           ]).map(pm => (
             <button key={pm.key} onClick={() => setConfig({ ...config, prismMode: pm.key })}
@@ -315,7 +316,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               title={pm.desc}>{pm.label}</button>
           ))}
         </div>
-        {/* 선택된 등급 설명 + 국가별 등급 기준 안내 */}
+        {/* 선택된 등급 설명 + 면피 증거 배지 + 플랫폼별 기준 안내 */}
         {(() => {
           const activePm = ([
             { key: 'OFF', desc: tl('planningExtra.prismModeOffDesc') },
@@ -325,14 +326,35 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { key: 'M18', desc: tl('planningExtra.prismModeM18Desc') },
             { key: 'CUSTOM', desc: tl('planningExtra.prismModeCustomDesc') },
           ] as const).find(p => p.key === (config.prismMode ?? 'OFF'));
+          const isRecorded = (config.prismMode ?? 'OFF') !== 'OFF';
           return (
-            <div className="space-y-1.5 mt-2">
+            <div className="space-y-2 mt-2">
               {activePm && (
-                <p className="text-[10px] text-text-secondary font-mono">
-                  {activePm.key}: {activePm.desc}
+                <p className="text-[11px] text-text-secondary leading-relaxed">
+                  {activePm.desc}
                 </p>
               )}
-              <p className="text-[9px] text-text-tertiary font-mono">
+              {/* 면피 증거 배지 — 등급 선택 시 AI·Export·EPUB에 기록됨을 명시 */}
+              <div className="flex items-center gap-2">
+                {isRecorded ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-accent-green/10 border border-accent-green/30 text-accent-green text-[10px] font-bold font-mono"
+                    data-testid="rating-recorded-badge"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    {tl('planningExtra.ratingRecorded')}
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-bg-secondary border border-border text-text-tertiary text-[10px] font-mono"
+                    data-testid="rating-not-recorded-badge"
+                  >
+                    <Circle className="w-3 h-3" />
+                    {tl('planningExtra.ratingNotRecorded')}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-tertiary leading-relaxed">
                 {tl('planningExtra.ratingGuide')}
               </p>
             </div>
