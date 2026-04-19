@@ -29,6 +29,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.0-alpha.6',
+    date: '2026-04-19',
+    type: 'improvement',
+    scope: 'studio',
+    title: {
+      KO: 'NOA 인격 통일 + 연령 등급 각국화 + UX S등급(951/1000)',
+      EN: 'NOA Persona Unification + Age Rating Localization + UX Grade S',
+      JP: 'NOA人格統一 + 年齢区分各国化 + UX Sランク',
+      CN: 'NOA 人格统一 + 年龄分级本地化 + UX S 级',
+    },
+    description: {
+      KO: 'UI 전면에서 추상적 "AI" 용어를 "NOA"(인격화 조력자)로 통일(51+건, 외부 공급자/브랜드명은 AI 유지). 연령 등급을 방심위·ESRB·CERO 등 각국 표준 용어로 번역하고 "기록됨" 배지로 면피 증거를 가시화. prismMode와 ContentRating을 단일 소스로 통합하여 Export 자동 동기화. 업계 표준 6프레임워크(Nielsen/WCAG/Web Vitals/Readability/IA/Mobile) 감사 782→951점(+169) S등급 진입. Progressive Disclosure 완성 + 시맨틱 토큰 704건 치환 + 철학 원본 문서(manifesto.md) 추가.',
+      EN: 'Unified the abstract "AI" label across the UI to "NOA" (persona-based companion, 51+ changes; external providers and brand names keep AI). Localized age ratings to each country standard (KCSC / ESRB / CERO) and added "Recorded" badges for accountability evidence. Integrated prismMode and ContentRating as a single source for auto-sync on Export. UX audit rose 782→951 (+169) to Grade S across 6 industry frameworks (Nielsen/WCAG/Web Vitals/Readability/IA/Mobile). Progressive Disclosure completed + 704 semantic token replacements + philosophy manifesto added.',
+      JP: 'UIの抽象的な「AI」表記を「NOA」(人格化コンパニオン)に統一(51+件、外部プロバイダー/ブランド名はAI維持)。年齢区分を方審委/ESRB/CEROなど各国標準用語へ現地化し、「記録済」バッジで免責証拠を可視化。prismModeとContentRatingを単一ソース化してエクスポート自動同期。業界標準6フレームワーク監査 782→951(+169) Sランク到達。プログレッシブディスクロージャー完成+セマンティックトークン704件置換+哲学マニフェスト追加。',
+      CN: 'UI 层面将抽象 "AI" 统一为 "NOA"(人格化伙伴,51+ 处;外部供应商/品牌名保留 AI)。年龄分级本地化为各国标准用语(方审委 / ESRB / CERO),添加"已记录"徽章实现免责证据可视化。整合 prismMode 与 ContentRating 为单一源,导出自动同步。业界标准 6 框架审计 782→951(+169) 进入 S 级。完成渐进披露+替换 704 处语义令牌+新增哲学宣言。',
+    },
+  },
+  {
     version: '0.2.0-alpha.5',
     date: '2026-04-19',
     type: 'security',

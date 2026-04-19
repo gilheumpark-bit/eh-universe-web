@@ -161,8 +161,9 @@ Fallback: JP/CN → EN → KO.
 
 | 문서 | 설명 |
 |------|------|
-| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.0.0) |
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.3) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
+| [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |
 | [SECURITY.md](SECURITY.md) | 보안 정책 |
 | [RUNBOOK.md](RUNBOOK.md) | 운영 런북 |

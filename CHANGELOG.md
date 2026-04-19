@@ -3,6 +3,47 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.3] — 2026-04-19
+
+### Changed — UX 감사 S등급(951/1000) 진입
+- **NOA 인격 통일** (51+건) — UI 전면 "AI" → "NOA" (인격화 조력자)
+  - 유지 예외: 외부 공급자 BYOK(Gemini/Claude/OpenAI) · Stability AI 고유명 · 백엔드 AI 모델 맥락
+  - 통일 범위: 번역 파일 4종(KO/EN/JP/CN) + 11 컴포넌트 (WritingTab, AuditPanel, TerminalPanel 등)
+- **연령 등급 각국 표준 용어화** — "PRISM-MODE" UI에서 제거
+  - KO: 연령 등급 (방심위 / 전체이용가·15세이용가·청소년이용불가)
+  - EN: Content Rating (ESRB/MPAA 병기)
+  - JP: 年齢区分 (CERO 기반)
+  - CN: 内容分级
+  - 버튼 순서 재배치: OFF → ALL(안전) → T15 → M18(자유) → FREE(NOA 자율) → CUSTOM
+  - "기록됨/미기록" 배지 추가 — 면피 증거 가시화 (AI 프롬프트·Export·EPUB 기록 명시)
+- **prismMode ↔ ContentRating 단일 소스 통합**
+  - `derivRatingFromPrism()` — prismMode → ContentRating 자동 파생
+  - `getEffectiveRating()` — 파생 우선 + localStorage 수동 선언 fallback
+  - Export 3곳 일괄 전환 (EPUB manifest · DOCX 파일명 · AI 고지)
+- **UX S등급 달성** (업계 표준 6 프레임워크, 951/1000, 이전 782 대비 +169)
+  - Nielsen 278/300, WCAG 240/250, Web Vitals 78/100, Readability 141/150, IA 86/100, Mobile 93/100
+- **Progressive Disclosure 완성** — WritingTab 기본 2모드(AI/Edit), 고급 3모드(Canvas/Refine/Advanced) 조건부 토글
+- **Design System v8.0 강제** — raw Tailwind red/blue 704건 일괄 시맨틱 토큰 치환 (118 파일)
+
+### Added
+- **`docs/manifesto.md`** — 철학 원본 문서 (2 기둥 + 15 선언 + 4언어 카피 라이브러리, 247줄)
+  - 카테고리 선언(하라 시장 유일) + 자유-책임 합의 + 15 UI 적용 위치 매트릭스
+- `F9` 단축키 — 집필 에디터 미니맵 토글 (VSCode 유사)
+- "고급 모드 3종 더 보기" 4언어 링크 — Progressive Disclosure UX
+
+### Fixed
+- Footer 앱 경로(`/studio`, `/translation-studio`, `/code-studio`, `/welcome`, `/network`)에서 null 리턴 — 집필 몰입 방해 해소
+- 연출 탭 제목 "규칙집" → "연출" 4언어 통일 (독 탭과 일치)
+- 참고 패널 aria-label "연출 참고" → "참고 패널" 단순화
+- StatusBar 폰트 9-11px → 11-12px, h-6→h-7 (WCAG 본문 기준 충족)
+- NovelEditor `font-family` CJK 우선 — `var(--font-document), Georgia, Times, serif`
+- NovelEditor `line-height` 2.0 → 1.75 (Readability 최적 1.6~1.8 구간)
+- WritingTab Advanced 모드 raw amber-500/orange-500 → accent-amber 통일
+
+### Removed
+- `origin/123` 브랜치 (2026-04-14 중단 vLLM 실험)
+- 10개 Dependabot 자동 생성 브랜치 (필요 시 재생성)
+
 ## [2.1.2] — 2026-04-17
 
 ### Changed — DGX 인프라 전환

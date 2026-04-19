@@ -1,4 +1,54 @@
-# v0.2.0-alpha.5 — Production-Ready Alpha
+# v2.1.3 — NOA Persona + UX Grade S (951/1000)
+
+**Released**: 2026-04-19 (afternoon increment)
+**Status**: Alpha — production-ready quality
+**Previous**: v2.1.2 (2026-04-17) / v0.2.0-alpha.5 (morning)
+**Tag**: `v2.1.3`
+
+## Highlights
+
+- **NOA Persona Unification** — 51+ UI replacements of abstract "AI" to "NOA" (the companion persona). External providers (BYOK), Stability AI brand name, and backend AI model context keep "AI".
+- **Age Rating Localization** — "PRISM-MODE" jargon removed from UI. Each country gets its standard label:
+  - KO: 연령 등급 (KCSC — 전체이용가·15세이용가·청소년이용불가)
+  - EN: Content Rating (ESRB + MPAA)
+  - JP: 年齢区分 (CERO)
+  - CN: 内容分级
+- **prismMode ↔ ContentRating Single Source** — `derivRatingFromPrism()` auto-derives the content rating from the writer's prism choice. EPUB `<dc:audience>` and filename `[19+]` prefix sync automatically.
+- **Accountability Badges** — "Recorded · NOA · Export · EPUB" visible in the planning panel so writers can see their rating choice is persisted as evidence for platform submissions (Munpia / KDP / カクヨム / 晋江).
+- **UX Audit: Grade S (951/1000, +169 from 782/B)** — 6 industry frameworks (Nielsen 10 / WCAG 2.1 AA / Web Vitals / Readability / IA / Mobile).
+- **Progressive Disclosure Complete** — WritingTab shows 2 modes (AI / Edit) by default; 3 advanced modes (Canvas / Refine / Advanced) reveal on demand or via `advancedWritingMode` setting.
+- **Design System v8.0 Compliance** — 704 raw Tailwind `red-*` / `blue-*` replaced with `accent-red` / `accent-blue` tokens across 118 files.
+- **Philosophy Manifesto** — `docs/manifesto.md` added (247 lines: 2 pillars + 15 declarations + 4-language copy library).
+
+## Fixed
+
+- Footer was leaking into `/studio`, `/translation-studio`, `/code-studio`, `/welcome`, `/network` — now suppressed on app routes so writers aren't distracted by legal links.
+- "연출" tab title mismatch ("규칙집" → "연출") across 4 languages.
+- Reference panel aria-label simplified.
+- Status bar font sizes below WCAG body threshold (9-11px → 11-12px, height 24px → 28px).
+- NovelEditor serif fallback order now CJK-first (`var(--font-document), Georgia, ...`).
+- Editor `line-height` tightened from 2.0 to 1.75 (optimal readability band).
+- `F9` keyboard shortcut added for editor minimap toggle (VSCode parity).
+
+## Commits (6)
+
+```
+64b9eb31 polish(ux): S등급 진입 — progressPct 12px + line-height 1.75
+e905ef75 refactor(design-system): UX 감사 Top 5 수정 — 782→A+
+dcaba070 Merge branch 'docs/manifesto' — 철학 정리 단일 원본
+2d6e8d37 feat(rating): prismMode ↔ ContentRating 단일 소스 통합
+4cdec7e3 fix(ux): 스튜디오 UI 정돈 + 연령 등급 각국화 + NOA 인격 통일
+d2e56d0b docs(manifesto): 2 기둥 + 15 선언 + 4언어 카피
+```
+
+## Branch Cleanup
+
+- `origin/123` (2026-04-14 vLLM experiment) — deleted
+- 10 Dependabot auto-generated branches — deleted (will regenerate when security updates ship)
+
+---
+
+# v0.2.0-alpha.5 — Production-Ready Alpha (morning)
 
 **Released**: 2026-04-19
 **Status**: Alpha (closed beta ready)

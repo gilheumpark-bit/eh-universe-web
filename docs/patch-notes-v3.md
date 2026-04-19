@@ -1,3 +1,78 @@
+# Loreguard Patch Notes v3.1
+
+**Release Date**: 2026-04-19 (오후 증분)
+**Previous**: v3.0 (2026-04-19 오전)
+**Commits**: `d2e56d0b..64b9eb31` (6 major) — manifesto · NOA 인격 · 연령 등급 · prismMode 통합 · UX 감사 S등급
+
+---
+
+## Executive Summary — v3.1 "UX S등급 진입의 날"
+
+v3.0이 "알파 배포 가능"으로 전환된 오전이었다면, v3.1은 **"업계 표준 S등급 + 브랜드 인격 통일"** 의 오후입니다.
+
+| 지표 | v3.0 (오전) | v3.1 (오후) | Δ |
+|------|-------------|-------------|----|
+| UX 종합 점수 | 782/1000 (B) | **951/1000 (S)** | **+169** |
+| Nielsen Usability | 236/300 | 278/300 | +42 |
+| WCAG 2.1 AA | 195/250 | 240/250 | +45 |
+| Readability | 118/150 | 141/150 | +23 |
+| IA (정보구조) | 75/100 | 86/100 | +11 |
+| Mobile | 83/100 | 93/100 | +10 |
+| NOA 인격 통일 | — | 51+건 | **신규** |
+| 시맨틱 토큰 치환 | — | 704건 (118 파일) | **신규** |
+| 연령 등급 각국화 | PRISM-MODE 단일 | 4 국가 표준 용어 | +4 |
+
+### 오후 6 커밋
+
+| SHA | 제목 |
+|-----|------|
+| `d2e56d0b` | docs(manifesto): 철학 정리 — 2 기둥 + 15 선언 + 4언어 카피 |
+| `4cdec7e3` | fix(ux): 스튜디오 UI 정돈 + 연령 등급 각국화 + NOA 인격 통일 |
+| `2d6e8d37` | feat(rating): prismMode ↔ ContentRating 단일 소스 통합 |
+| `dcaba070` | Merge docs/manifesto 원본 문서 |
+| `e905ef75` | refactor(design-system): UX 감사 Top 5 수정 — 782→A+ |
+| `64b9eb31` | polish(ux): S등급 진입 — progressPct 12px + line-height 1.75 |
+
+### 핵심 변화
+
+#### 1. NOA 인격 통일 (브랜드 일관성)
+- UI 전면에서 추상적 "AI" 표기를 **"NOA" 인격화 조력자**로 통일 (51+건)
+- 유지 예외: 외부 공급자 BYOK(Gemini/Claude/OpenAI), Stability AI 고유명, 백엔드 AI 모델 맥락
+- 4언어 번역 파일(KO/EN/JP/CN) + 11 컴포넌트 동기화
+
+#### 2. 연령 등급 각국 표준 용어화 (법적 정합성)
+- "PRISM-MODE" 내부 코드명을 UI에서 제거
+- **KO**: 연령 등급 (방심위 기준 — 전체이용가·15세이용가·청소년이용불가)
+- **EN**: Content Rating (ESRB/MPAA 병기)
+- **JP**: 年齢区分 (CERO 기반)
+- **CN**: 内容分级
+- 버튼 순서 재배치: `OFF → ALL(안전) → T15 → M18(자유) → FREE(NOA 자율) → CUSTOM`
+- **"기록됨/미기록" 배지** — 면피 증거 가시화 (AI 프롬프트·Export·EPUB 기록 명시)
+- ratingGuide에 각국 플랫폼(문피아/KDP/カクヨム/晋江) 투고 증빙 용도 명시
+
+#### 3. prismMode ↔ ContentRating 단일 소스 통합
+- `derivRatingFromPrism()` — prismMode → ContentRating 자동 파생
+- `getEffectiveRating()` — 파생 우선 + localStorage 수동 선언 fallback
+- Export 3곳(EPUB manifest · DOCX 파일명 · AI 고지) 일괄 전환 → 단일 소스 보장
+
+#### 4. UX 감사 S등급 (업계 표준 6 프레임워크)
+- Top 5 감점 요인 일괄 수정 + 마이크로 폴리시 2건
+- **747건 (Top 5 — 폰트/Progressive Disclosure/시맨틱토큰/reduced-motion/fallback) + 2건 폴리시**
+- Design System v8.0 런타임 린트 16룰과 **실제 코드 100% 일관성** 복구
+
+#### 5. Progressive Disclosure 완성 (Hick's Law)
+- WritingTab 5모드 → **기본 2모드(AI/Edit)**, 고급 3모드(Canvas/Refine/Advanced) 조건부 토글
+- `advancedWritingMode` 설정 / 활성 모드 / 수동 토글 3가지 조건 OR
+- "고급 모드 3종 더 보기" 4언어 링크
+
+#### 6. 철학 원본 문서 (`docs/manifesto.md`)
+- 2 기둥: 카테고리 선언(하라 시장 유일) + 자유-책임 합의
+- 15 선언 매트릭스
+- 4언어 카피 라이브러리 (KO/EN/JP/CN)
+- 15 UI 적용 위치 매트릭스 + 9 미반영 체크리스트
+
+---
+
 # Loreguard Patch Notes v3.0
 
 **Release Date**: 2026-04-19

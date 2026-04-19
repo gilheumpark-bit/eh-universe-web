@@ -16,7 +16,7 @@
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
-[Live](https://ehsu.app) · [Changelog](/changelog) · [Architecture](ARCHITECTURE.md) · [AI 고지](/ai-disclosure)
+[Live](https://ehsu.app) · [Changelog](https://ehsu.app/changelog) · [Architecture](ARCHITECTURE.md) · [AI 고지](https://ehsu.app/ai-disclosure)
 
 </div>
 
@@ -216,20 +216,20 @@ npm test         # 테스트
 
 | 문서 | 설명 |
 |------|------|
-| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.1) |
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.3) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
 | [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |
 | [SECURITY.md](SECURITY.md) | 보안 정책 |
 | [RUNBOOK.md](RUNBOOK.md) | 운영 런북 |
 
-### 법적 문서 (4페이지)
+### 법적 문서 (배포 사이트)
 
-- [/terms](/terms) — 서비스 약관
-- [/privacy](/privacy) — 개인정보 처리방침
-- [/copyright](/copyright) — 저작권 정책
-- [/ai-disclosure](/ai-disclosure) — AI 사용 고지 (Amazon KDP 대응)
-- [/changelog](/changelog) — 변경 이력 (사용자용)
+- [/terms](https://ehsu.app/terms) — 서비스 약관
+- [/privacy](https://ehsu.app/privacy) — 개인정보 처리방침
+- [/copyright](https://ehsu.app/copyright) — 저작권 정책
+- [/ai-disclosure](https://ehsu.app/ai-disclosure) — AI 사용 고지 (Amazon KDP 대응)
+- [/changelog](https://ehsu.app/changelog) — 변경 이력 (사용자용)
 
 ---
 
@@ -242,7 +242,7 @@ npm test         # 테스트
 - 해외 플랫폼 런칭 지원
 - 직통 피드백 채널
 
-문의: gilheumpark@gmail.com
+문의: [gilheumpark@gmail.com](mailto:gilheumpark@gmail.com)
 
 ---
 
