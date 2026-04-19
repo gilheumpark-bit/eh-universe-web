@@ -79,16 +79,17 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
   },
   title: {
-    default: "로어가드 — 창작에서 번역·출판까지 잇는 집필 OS",
-    template: "로어가드 | %s",
+    default: "EH Universe · Loreguard — 작가 주도형 집필 IDE",
+    template: "Loreguard | %s",
   },
   description:
-    "로어가드(Loreguard) — AI 소설 집필 스튜디오. 창작부터 번역·출판까지 한 흐름으로. 한국 웹소설의 해외 진출 OS.",
+    "Loreguard — 작가 주도형 집필 IDE. EH Universe 플래그십 제품. 집필·검수·번역·출판을 하나의 워크스페이스에서. 한국 웹소설의 해외 진출 OS.",
   applicationName: "Loreguard",
   keywords: [
     "소설", "AI 소설", "집필", "번역", "웹소설", "IDE",
     "Loreguard", "로어가드", "한국어 번역", "AI IDE",
     "Novel Studio", "Translation Studio", "NOA", "EH Universe",
+    "작가 주도형 집필 IDE", "집필 IDE", "writer-first",
   ],
   authors: [{ name: "박길흠", url: "https://github.com/gilheumpark-bit" }],
   creator: "박길흠",
@@ -105,9 +106,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "로어가드 — 창작에서 번역·출판까지 잇는 집필 OS",
+    title: "EH Universe · Loreguard — 작가 주도형 집필 IDE",
     description:
-      "로어가드(Loreguard) — EH의 집필 OS. 창작·번역·출판을 하나의 파이프라인으로.",
+      "Loreguard — EH Universe 플래그십. 작가가 쓰고, NOA가 돕는 집필 IDE. 창작·번역·출판을 하나의 파이프라인으로.",
     url: SITE_URL,
     siteName: "Loreguard",
     locale: "ko_KR",
@@ -124,8 +125,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "로어가드 — 집필 OS",
-    description: "창작·번역·출판을 잇는 AI 집필 스튜디오.",
+    title: "Loreguard — 작가 주도형 집필 IDE",
+    description: "EH Universe presents Loreguard. 작가가 쓰고, NOA가 돕는다.",
     images: ["/opengraph-image"],
   },
   robots: {
@@ -164,7 +165,7 @@ const jsonLdSoftwareApplication = {
   applicationCategory: "WritingApplication",
   operatingSystem: "Web",
   url: SITE_URL,
-  description: "소설가를 위한 AI IDE — 집필·검수·번역·출간을 하나의 워크스페이스에서.",
+  description: "Loreguard — 작가 주도형 집필 IDE. 집필·검수·번역·출간을 하나의 워크스페이스에서.",
   inLanguage: ["ko", "en", "ja", "zh"],
   offers: {
     "@type": "Offer",

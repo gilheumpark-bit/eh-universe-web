@@ -49,7 +49,7 @@ const ProvidersSection: React.FC<ProvidersSectionProps> = ({ language }) => {
       <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
         <Cpu className="w-4 h-4 text-accent-blue shrink-0" />
         <span className="text-sm font-black text-text-primary flex-1">
-          {L4(language, { ko: 'AI 엔진', en: 'AI Engine', ja: 'AIエンジン', zh: 'AI 引擎' })}
+          {L4(language, { ko: '엔진', en: 'Engine', ja: 'エンジン', zh: '引擎' })}
         </span>
         <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
       </summary>

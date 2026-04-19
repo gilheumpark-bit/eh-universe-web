@@ -352,19 +352,8 @@ function HomePageContent() {
       meta: T({ ko: "번역 열기", en: "Open translation", ja: "翻訳へ", zh: "打开翻译" }),
       external: translatorStudioHref.startsWith("http"),
     },
-    {
-      href: "/code-studio",
-      badge: "CS",
-      color: "blue" as const,
-      title: T({ ko: "코드 스튜디오", en: "Code Studio", ja: "コードスタジオ", zh: "代码工作室" }),
-      desc: T({
-        ko: "9팀 멀티에이전트 파이프라인 + Quill 224룰 4-layer 검증 IDE. 소설 코드 동반.",
-        en: "9-team multi-agent pipeline + Quill 224-rule 4-layer verified IDE. Companion to Novel Studio.",
-        ja: "9チーム マルチエージェント パイプライン + Quill 224ルール 4層検証 IDE。",
-        zh: "9 团队多代理流水线 + Quill 224 规则 4 层验证 IDE。",
-      }),
-      meta: T({ ko: "코드 열기", en: "Open code", ja: "コードへ", zh: "打开代码" }),
-    },
+    // [v2.2.0-alpha] Code Studio는 홈 카드에서 비노출 — 주 네비·푸터에서도 숨김.
+    // `/code-studio` 라우트는 유지 (URL 직접 접근 가능). 개발자 role에서만 Header 노출.
     {
       href: "/archive",
       badge: "AR",
@@ -529,7 +518,7 @@ function HomePageContent() {
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div className="relative z-10 max-w-2xl">
                 <p className="site-kicker">
-                  {T({ ko: "NOA 엔진 기반 AI 소설 집필 스튜디오", en: "NOA-powered AI Novel Studio", ja: "NOAエンジン搭載 AI小説スタジオ", zh: "基于 NOA 引擎的 AI 小说工作室" })}
+                  {T({ ko: "Loreguard — 작가 주도형 집필 IDE", en: "Loreguard — Writer-first Novel IDE", ja: "Loreguard — 作家主導型執筆IDE", zh: "Loreguard — 作家主导型写作 IDE" })}
                 </p>
                 <h1 className="site-title mt-5 text-4xl font-bold leading-[0.94] sm:text-5xl md:text-7xl xl:text-[5.4rem]">
                   LOREGUARD

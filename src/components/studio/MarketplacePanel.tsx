@@ -36,7 +36,7 @@ const CATEGORY_LABELS: Record<CategoryFilter, { ko: string; en: string; ja: stri
   analysis:        { ko: "분석",        en: "Analysis",        ja: "分析",          zh: "分析" },
   visualization:   { ko: "시각화",      en: "Visualization",   ja: "可視化",        zh: "可视化" },
   export:          { ko: "내보내기",    en: "Export",          ja: "エクスポート",  zh: "导出" },
-  "ai-enhancer":   { ko: "AI 보조",     en: "AI Enhancer",     ja: "AI補助",        zh: "AI辅助" },
+  "ai-enhancer":   { ko: "집필 보조",   en: "Writing Enhancer", ja: "執筆補助",      zh: "写作辅助" },
   "ui-theme":      { ko: "UI 테마",     en: "UI Theme",        ja: "UIテーマ",      zh: "UI主题" },
   utility:         { ko: "유틸리티",    en: "Utility",         ja: "ユーティリティ", zh: "实用工具" },
 };

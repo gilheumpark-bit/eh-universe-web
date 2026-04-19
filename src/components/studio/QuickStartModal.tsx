@@ -84,10 +84,10 @@ export default function QuickStartModal({
 
   const L = {
     providerHeading: L4(language, {
-      ko: "당신의 집필을 도와줄 AI를 선택하세요",
-      en: "Choose the AI to assist your writing",
-      ja: "執筆を助けるAIを選択してください",
-      zh: "选择辅助写作的AI",
+      ko: "당신의 작업 엔진을 선택하세요",
+      en: "Choose your work engine",
+      ja: "作業エンジンを選択してください",
+      zh: "选择您的工作引擎",
     }),
     dgxTitle: L4(language, {
       ko: "로어가드 자체 엔진 (DGX Spark)",
