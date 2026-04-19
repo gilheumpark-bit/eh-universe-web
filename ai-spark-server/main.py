@@ -20,17 +20,19 @@ logging.basicConfig(level=logging.INFO)
 # PART 1 — 설정
 # ============================================================
 
-# vLLM 서버 URL (32B + 1.5B Speculative Decoding)
-# 듀얼 엔진 URL (포트별 독립)
-VLLM_HEAVY_URL = os.getenv("VLLM_HEAVY_URL", "http://localhost:8080")  # 35B Heavy
-VLLM_FAST_URL = os.getenv("VLLM_FAST_URL", "http://localhost:8081")    # 0.8B Fast
-LM_STUDIO_URL = os.getenv("VLLM_URL", os.getenv("LM_STUDIO_URL", VLLM_HEAVY_URL))  # 폴백
+# vLLM 서버 URL (Nginx 로드밸런서 경유 — 8080/8081 자동 분산)
+VLLM_LB_URL = os.getenv("VLLM_LB_URL", "http://localhost:8090")   # Nginx LB
+VLLM_HEAVY_URL = os.getenv("VLLM_HEAVY_URL", "http://localhost:8080")  # 직접 접근용 (폴백)
+VLLM_FAST_URL = os.getenv("VLLM_FAST_URL", "http://localhost:8081")    # 직접 접근용 (폴백)
+LM_STUDIO_URL = os.getenv("VLLM_URL", os.getenv("LM_STUDIO_URL", VLLM_LB_URL))  # 폴백
 
 def resolve_backend_url(model: str) -> str:
-    """모델명 기반 백엔드 라우팅: fast → 8081, heavy → 8080"""
-    if 'fast' in model.lower() or '0.8b' in model.lower():
+    """Nginx LB를 통해 자동 분산. 특정 엔진 직접 지정도 가능"""
+    if 'direct-a' in model.lower():
+        return VLLM_HEAVY_URL
+    if 'direct-b' in model.lower():
         return VLLM_FAST_URL
-    return VLLM_HEAVY_URL
+    return VLLM_LB_URL  # 기본: Nginx가 least_conn으로 자동 분배
 
 # 허용 도메인 (운영)
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://ehsu.app,http://localhost:3000").split(",")
@@ -124,7 +126,7 @@ def health_check():
     return {
         "status": "ok",
         "server": "EH Universe DGX Spark",
-        "engine": "Dual-Engine (35B Heavy + 0.8B Fast)",
+        "engine": "Dual-Engine Qwen 3.5-9B FP8",
         "heavy": VLLM_HEAVY_URL,
         "fast": VLLM_FAST_URL,
         "comfyui": COMFYUI_URL,
@@ -189,15 +191,19 @@ async def chat_completions(req: ChatRequest, request: Request):
             async with httpx.AsyncClient(timeout=180) as client:
                 try:
                     if req.stream:
+                        import aiohttp as _aiohttp
+
                         async def stream_generator():
-                            async with client.stream(
-                                "POST",
-                                f"{backend_url}/v1/chat/completions",
-                                json=payload,
-                                timeout=180,
-                            ) as resp:
-                                async for chunk in resp.aiter_bytes():
-                                    yield chunk
+                            # Cloudflare Tunnel 520 방지: 즉시 heartbeat 전송
+                            yield ": heartbeat\n\n"
+                            timeout = _aiohttp.ClientTimeout(total=180)
+                            async with _aiohttp.ClientSession(timeout=timeout) as session:
+                                async with session.post(
+                                    f"{backend_url}/v1/chat/completions",
+                                    json=payload,
+                                ) as resp:
+                                    async for chunk in resp.content.iter_any():
+                                        yield chunk
 
                         return StreamingResponse(
                             stream_generator(),
@@ -205,10 +211,8 @@ async def chat_completions(req: ChatRequest, request: Request):
                             headers={
                                 "X-DGX-Usage": f"{count}/{DAILY_LIMIT}",
                                 "X-DGX-Queue": "0",
-                                "Cache-Control": "no-cache, no-transform",
+                                "Cache-Control": "no-cache, no-store, must-revalidate",
                                 "X-Accel-Buffering": "no",
-                                "Connection": "keep-alive",
-                                "Transfer-Encoding": "chunked",
                             },
                         )
                     else:
@@ -262,19 +266,88 @@ import json
 import uuid
 
 COMFYUI_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
+COMFYUI_CMD = [
+    "/home/gilheum/다운로드/comfyui-env/bin/python",
+    "/home/gilheum/다운로드/ComfyUI/main.py",
+    "--listen", "0.0.0.0", "--port", "8188",
+    "--preview-method", "auto", "--force-fp16",
+]
+COMFYUI_IDLE_TIMEOUT = 300  # 5분 무사용 시 자동 종료
 
-# SDXL 기본 워크플로우 템플릿
-def _build_sdxl_workflow(prompt: str, negative: str, width: int, height: int, seed: int) -> dict:
-    """ComfyUI API 형식의 SDXL 워크플로우 생성"""
+import subprocess, signal, threading
+
+class ComfyUIManager:
+    """ComfyUI 온디맨드 기동/종료 매니저 — 미사용 시 26GB 메모리 절약"""
+    def __init__(self):
+        self._proc: subprocess.Popen | None = None
+        self._timer: threading.Timer | None = None
+        self._lock = threading.Lock()
+
+    @property
+    def is_running(self) -> bool:
+        return self._proc is not None and self._proc.poll() is None
+
+    async def ensure_running(self) -> bool:
+        """ComfyUI가 떠 있지 않으면 기동하고 준비될 때까지 대기"""
+        with self._lock:
+            if not self.is_running:
+                logging.info("[ComfyUI] 온디맨드 기동 시작...")
+                self._proc = subprocess.Popen(
+                    COMFYUI_CMD,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                # 준비 대기 (최대 60초)
+                for _ in range(60):
+                    await asyncio.sleep(1)
+                    try:
+                        async with httpx.AsyncClient(timeout=2) as c:
+                            r = await c.get(f"{COMFYUI_URL}/system_stats")
+                            if r.status_code == 200:
+                                logging.info("[ComfyUI] 기동 완료 (PID %d)", self._proc.pid)
+                                break
+                    except Exception:
+                        pass
+                else:
+                    logging.error("[ComfyUI] 기동 타임아웃")
+                    return False
+        self._reset_idle_timer()
+        return True
+
+    def _reset_idle_timer(self):
+        """유휴 타이머 리셋 — 5분 후 자동 종료"""
+        if self._timer:
+            self._timer.cancel()
+        self._timer = threading.Timer(COMFYUI_IDLE_TIMEOUT, self._shutdown)
+        self._timer.daemon = True
+        self._timer.start()
+
+    def _shutdown(self):
+        """ComfyUI 종료 — 26GB 메모리 반환"""
+        with self._lock:
+            if self.is_running:
+                logging.info("[ComfyUI] %d초 유휴 → 자동 종료 (메모리 절약)", COMFYUI_IDLE_TIMEOUT)
+                self._proc.terminate()
+                try:
+                    self._proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    self._proc.kill()
+                self._proc = None
+
+_comfyui = ComfyUIManager()
+
+# Flux-Schnell FP8 워크플로우 템플릿
+def _build_flux_workflow(prompt: str, negative: str, width: int, height: int, seed: int) -> dict:
+    """ComfyUI API 형식의 Flux-Schnell FP8 워크플로우 생성"""
     return {
         "3": {
             "class_type": "KSampler",
             "inputs": {
                 "seed": seed,
-                "steps": 25,
-                "cfg": 7.0,
-                "sampler_name": "euler_ancestral",
-                "scheduler": "normal",
+                "steps": 4,
+                "cfg": 1.0,
+                "sampler_name": "euler",
+                "scheduler": "simple",
                 "denoise": 1.0,
                 "model": ["4", 0],
                 "positive": ["6", 0],
@@ -284,10 +357,10 @@ def _build_sdxl_workflow(prompt: str, negative: str, width: int, height: int, se
         },
         "4": {
             "class_type": "CheckpointLoaderSimple",
-            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"},
+            "inputs": {"ckpt_name": "flux1-schnell-fp8.safetensors"},
         },
         "5": {
-            "class_type": "EmptyLatentImage",
+            "class_type": "EmptySD3LatentImage",
             "inputs": {"width": width, "height": height, "batch_size": 1},
         },
         "6": {
@@ -317,10 +390,14 @@ class ImageRequest(BaseModel):
 
 @app.post("/api/image/generate")
 async def generate_image(req: ImageRequest, request: Request):
-    """ComfyUI를 통한 이미지 생성 — SDXL/FLUX"""
+    """ComfyUI를 통한 이미지 생성 — Flux-Schnell FP8 (온디맨드 기동)"""
     user_id = get_user_id(request)
     user_tier = request.headers.get("x-user-tier", "none")
     check_rate_limit(user_id, user_tier)
+
+    # ComfyUI 온디맨드 기동 (꺼져 있으면 자동 시작, 5분 유휴 시 자동 종료)
+    if not await _comfyui.ensure_running():
+        raise HTTPException(503, "ComfyUI 기동 실패 — 잠시 후 재시도")
 
     # 크기 제한: 512~1536, 64배수
     width = max(512, min(1536, (req.width // 64) * 64))
@@ -336,7 +413,7 @@ async def generate_image(req: ImageRequest, request: Request):
     else:
         prompt_text = req.prompt
 
-    workflow = _build_sdxl_workflow(prompt_text, negative, width, height, seed)
+    workflow = _build_flux_workflow(prompt_text, negative, width, height, seed)
 
     async with httpx.AsyncClient(timeout=120) as client:
         try:
@@ -432,6 +509,34 @@ async def execute_code(request: Request):
         "output": "정적 검사 통과",
         "security_check": "Safe",
     }
+
+# ============================================================
+# PART 6.5 — RAG 프록시 (8082 포트 연결)
+# ============================================================
+
+RAG_URL = os.getenv("RAG_URL", "http://localhost:8082")
+
+@app.post("/api/rag/search")
+async def proxy_rag_search(request: Request):
+    """RAG 서버 /search 프록시"""
+    body = await request.json()
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            resp = await client.post(f"{RAG_URL}/search", json=body)
+            return JSONResponse(status_code=resp.status_code, content=resp.json())
+        except httpx.ConnectError:
+            raise HTTPException(status_code=503, detail="RAG 서버에 연결할 수 없습니다.")
+
+@app.post("/api/rag/prompt")
+async def proxy_rag_prompt(request: Request):
+    """RAG 서버 /rag_prompt 프록시"""
+    body = await request.json()
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            resp = await client.post(f"{RAG_URL}/rag_prompt", json=body)
+            return JSONResponse(status_code=resp.status_code, content=resp.json())
+        except httpx.ConnectError:
+            raise HTTPException(status_code=503, detail="RAG 서버에 연결할 수 없습니다.")
 
 # ============================================================
 # PART 7 — 서버 시작

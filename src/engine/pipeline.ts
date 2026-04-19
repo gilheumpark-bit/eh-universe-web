@@ -13,6 +13,7 @@ import { buildPrismBlock, buildPrismModeBlock } from './builders/prism-builder';
 import { GRAMMAR_PACKS } from '@/lib/grammar-packs';
 import { buildShadowPrompt } from './shadow';
 import { logger } from '@/lib/logger';
+import { buildRAGBlock } from './rag-engine';
 import { quickPurify, type TargetLang } from './language-purity';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
@@ -960,6 +961,7 @@ ${prismModeBlock}
 ${langPackBlock}
 ${publishPlatformBlock}
 ${dialogueGuide}
+${buildRAGBlock(config.genre, language, 6000)}
 
 [SERIALIZATION CONSTRAINTS — MANDATORY]
 - Platform: ${platform}
