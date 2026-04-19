@@ -57,6 +57,7 @@ import {
 } from "@/lib/code-studio/features/git-engine";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { logger } from "@/lib/logger";
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -534,8 +535,9 @@ export default function GitPanel({
       await container.run("git init");
       await container.run("git config user.name EH-Code-Studio");
       await container.run("git config user.email code-studio@example.local");
-    } catch {
+    } catch (err) {
       // Simulated runners can no-op here.
+      logger.warn('GitPanel', 'webcontainer git init/config skipped (simulated runner)', err);
     }
 
     setGitBackendLabel(container.isAvailable ? "WebContainer" : "Simulated Runner");
@@ -560,8 +562,9 @@ export default function GitPanel({
         setGitAvailable(true);
         setGitStatusData(status);
         if (status.branch) setCurrentBranch(status.branch);
-      } catch {
+      } catch (err) {
         if (cancelled) return;
+        logger.warn('GitPanel', 'git status probe failed — falling back to simulation', err);
         setGitAvailable(false);
         setGitBackendLabel("Simulation");
       }
@@ -584,8 +587,9 @@ export default function GitPanel({
         isoGitRef.current = engine;
         setIsoGitReady(true);
         setGitBackendLabel("isomorphic-git");
-      } catch {
+      } catch (err) {
         // isomorphic-git init failed — stay in simulation mode
+        logger.warn('GitPanel', 'isomorphic-git init failed — staying in simulation mode', err);
       }
     })();
     return () => { cancelled = true; };
@@ -608,8 +612,9 @@ export default function GitPanel({
     if (isoGitReady && isoGitRef.current) {
       try {
         await isoGitRef.current.git.branch({ fs: isoGitRef.current.fs, dir: ISO_GIT_DIR, ref: name, checkout: true });
-      } catch {
+      } catch (err) {
         // Fall through to other backends
+        logger.warn('GitPanel', `isomorphic-git branch create failed for '${name}' — trying other backends`, err);
       }
     }
 
@@ -617,16 +622,18 @@ export default function GitPanel({
       try {
         await syncGitWorkspace();
         await gitCreateBranch(name);
-      } catch {
+      } catch (err) {
         // Fall through to simulation
+        logger.warn('GitPanel', `git branch create failed for '${name}' — falling back to simulation`, err);
       }
     }
 
     // In-memory engine branch
     try {
       engineCreateBranch(gitEngineRef.current, name);
-    } catch {
+    } catch (err) {
       // Branch may already exist in engine
+      logger.warn('GitPanel', `in-memory engine branch create skipped for '${name}' (may already exist)`, err);
     }
 
     setBranches((prev) => [...prev, name]);
@@ -646,8 +653,9 @@ export default function GitPanel({
     if (isoGitReady && isoGitRef.current) {
       try {
         await isoGitRef.current.git.checkout({ fs: isoGitRef.current.fs, dir: ISO_GIT_DIR, ref: branch });
-      } catch {
+      } catch (err) {
         // Fall through to other backends
+        logger.warn('GitPanel', `isomorphic-git checkout failed for '${branch}' — trying other backends`, err);
       }
     }
 
@@ -655,16 +663,18 @@ export default function GitPanel({
       try {
         await syncGitWorkspace();
         await gitCheckout(branch);
-      } catch {
+      } catch (err) {
         // Fall through to simulation
+        logger.warn('GitPanel', `git checkout failed for '${branch}' — falling back to simulation`, err);
       }
     }
 
     // In-memory engine switch
     try {
       engineSwitchBranch(gitEngineRef.current, branch);
-    } catch {
+    } catch (err) {
       // Branch may not exist in engine
+      logger.warn('GitPanel', `in-memory engine switch failed for '${branch}' (branch may not exist)`, err);
     }
 
     // Save current branch commits
@@ -690,8 +700,9 @@ export default function GitPanel({
         // Refresh git status after commit
         const status = await gitStatus();
         setGitStatusData(status);
-      } catch {
+      } catch (err) {
         // Real git failed — fall through to simulation below
+        logger.warn('GitPanel', 'real git commit failed — falling back to simulation commit', err);
       }
     }
 
@@ -724,14 +735,16 @@ export default function GitPanel({
           message: commitMessage,
           author: ISO_GIT_AUTHOR,
         });
-      } catch {
+      } catch (err) {
         // isomorphic-git commit failed — fall back to engine
+        logger.warn('GitPanel', 'isomorphic-git commit failed — falling back to in-memory engine', err);
         try {
           const engineFiles = new Map<string, string>();
           for (const df of dirtyFiles) { engineFiles.set(df.name, df.content); }
           const engineResult = await engineCommit(gitEngineRef.current, engineFiles, commitMessage);
           commitHash = engineResult.hash;
-        } catch {
+        } catch (engineErr) {
+          logger.warn('GitPanel', 'in-memory engine commit failed — using random hash fallback', engineErr);
           commitHash = generateHashFallback();
         }
       }
@@ -743,7 +756,8 @@ export default function GitPanel({
         }
         const engineResult = await engineCommit(gitEngineRef.current, engineFiles, commitMessage);
         commitHash = engineResult.hash;
-      } catch {
+      } catch (err) {
+        logger.warn('GitPanel', 'in-memory engine commit failed (simulation path) — using random hash fallback', err);
         commitHash = generateHashFallback();
       }
     }

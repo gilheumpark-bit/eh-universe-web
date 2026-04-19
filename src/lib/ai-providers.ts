@@ -315,7 +315,8 @@ function _obfuscateKeySync(plain: string): string {
     combined.set(salt, 0);
     combined.set(xored, salt.length);
     return _OBFUSCATION_PREFIX_V3 + btoa(String.fromCharCode(...combined));
-  } catch {
+  } catch (err) {
+    logger.warn('AIProviders', 'v3 obfuscateKey failed — returning plaintext as last resort', err);
     return plain;
   }
 }
@@ -328,8 +329,9 @@ export async function encryptKey(plain: string): Promise<string> {
   if (_isSubtleCryptoAvailable()) {
     try {
       return await _encryptAesGcm(plain);
-    } catch {
+    } catch (err) {
       // SubtleCrypto failed (e.g. insecure context) — fall back to v3
+      logger.warn('AIProviders', 'AES-GCM encrypt failed (insecure context?) — falling back to v3 XOR', err);
     }
   }
   return _obfuscateKeySync(plain);
@@ -347,7 +349,8 @@ export async function decryptKey(stored: string): Promise<string> {
   if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
     try {
       return await _decryptAesGcm(stored);
-    } catch {
+    } catch (err) {
+      logger.warn('AIProviders', 'v4 AES-GCM decrypt failed — returning empty key', err);
       return '';
     }
   }
@@ -371,7 +374,8 @@ function deobfuscateKeySync(stored: string): string {
       const bytes = new Uint8Array(xored.length);
       for (let i = 0; i < xored.length; i++) bytes[i] = xored[i] ^ combinedMask[i % combinedMask.length];
       return new TextDecoder().decode(bytes);
-    } catch {
+    } catch (err) {
+      logger.warn('AIProviders', 'v3 salt+XOR decode failed — returning empty key', err);
       return '';
     }
   }
@@ -383,7 +387,8 @@ function deobfuscateKeySync(stored: string): string {
       const bytes = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) ^ mask[i % mask.length];
       return new TextDecoder().decode(bytes);
-    } catch {
+    } catch (err) {
+      logger.warn('AIProviders', 'v2 XOR+base64 decode failed — returning empty key', err);
       return '';
     }
   }
@@ -391,7 +396,8 @@ function deobfuscateKeySync(stored: string): string {
   if (stored.startsWith(_LEGACY_PREFIX)) {
     try {
       return decodeURIComponent(escape(atob(stored.slice(_LEGACY_PREFIX.length))));
-    } catch {
+    } catch (err) {
+      logger.warn('AIProviders', 'v1 base64 decode failed — returning empty key', err);
       return '';
     }
   }
@@ -445,7 +451,8 @@ export async function initDgxCheck(): Promise<boolean> {
     const data = await res.json();
     _serverDgxAvailable = data.hasDgx ?? false;
     return _serverDgxAvailable as boolean;
-  } catch {
+  } catch (err) {
+    logger.warn('AIProviders', 'initDgxCheck fetch /api/ai-capabilities failed — treating DGX as unavailable', err);
     _serverDgxAvailable = false;
     return false;
   }
@@ -849,7 +856,8 @@ function isByokFallbackEnabled(): boolean {
   try {
     const v = localStorage.getItem('noa_byok_fallback_enabled');
     return v === null ? true : v === '1';
-  } catch {
+  } catch (err) {
+    logger.warn('AIProviders', 'localStorage read for BYOK fallback flag failed — defaulting to enabled', err);
     return true;
   }
 }
@@ -907,6 +915,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
           ariManager.updateAfterCall(bestId, false, Date.now() - t0);
           if (err instanceof DOMException && err.name === 'AbortError') throw err;
           // Fall through to normal flow with primary provider as last resort
+          logger.warn('AIProviders', `ARI-routed fallback to ${bestId} failed — falling through to primary provider`, err);
         }
       }
     }
@@ -1066,7 +1075,8 @@ export async function testApiKey(providerId: ProviderId, key: string): Promise<b
       }),
     });
     return res.ok;
-  } catch {
+  } catch (err) {
+    logger.warn('AIProviders', `testApiKey for provider '${providerId}' failed — treating as invalid`, err);
     return false;
   }
 }

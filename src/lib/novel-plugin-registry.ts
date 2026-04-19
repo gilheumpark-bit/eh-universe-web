@@ -445,8 +445,12 @@ export async function verifyPluginIntegrity(
     valid = true;
   }
   if (manifest.integrity?.signature) {
-    // TODO: signature verification — ed25519 key pinning planned.
-    warnings.push('signature-not-yet-verified');
+    // Signature verification is declared but not yet implemented (ed25519 key pinning planned).
+    // Fail-closed: a signed plugin whose signature cannot be verified MUST NOT be trusted.
+    // The warning remains for diagnostics; `valid` is forced to false so the marketplace
+    // cannot load signature-declared plugins until verification ships.
+    warnings.push('signature-declared-but-unverifiable');
+    valid = false;
   }
   return { valid, sha256: actual, warnings };
 }

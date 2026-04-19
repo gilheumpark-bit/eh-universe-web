@@ -244,10 +244,14 @@ export const KOREAN_CONTAMINATION_DICT: ContaminationDict = {
 };
 
 // ============================================================
-// PART 2 — Japanese / Chinese Dictionaries (TODO scaffolding)
+// PART 2 — Japanese / Chinese Dictionaries (not yet supported)
 // ============================================================
 // NOTE: 일본어/중국어 오염 패턴은 아직 실측 샘플 부족.
 // 실제 Qwen 출력에서 확인된 패턴만 추가 예정. 빈 객체로 시작.
+//
+// ⚠️ 빈 맵은 "검사 대상 없음 = 전부 통과"를 의미하므로,
+// 호출 측이 이를 "깨끗함" 으로 오인하지 않도록 LANGUAGE_PURITY_SUPPORTED 를 통해
+// 명시적으로 "지원 언어" 를 선언한다. JP/CN 은 샘플 수집 완료 전까지 미지원.
 
 export const JAPANESE_CONTAMINATION_DICT: ContaminationDict = {
   // TODO: 일본어 본문 생성 중 혼입 영어 패턴 수집 후 추가
@@ -256,6 +260,14 @@ export const JAPANESE_CONTAMINATION_DICT: ContaminationDict = {
 export const CHINESE_CONTAMINATION_DICT: ContaminationDict = {
   // TODO: 중국어 본문 생성 중 혼입 영어 패턴 수집 후 추가
 };
+
+/**
+ * 언어 순수성(영어 혼입 검사) 지원 언어.
+ * 이 Set 에 없는 언어는 빈 사전이므로 "검사 결과 통과" 가 실제 무검사를 의미한다.
+ * 호출 측(language-purity 엔진)은 이 Set 을 참조해 미지원 언어에 대해
+ * "검사 미수행" 상태를 명시해야 한다.
+ */
+export const LANGUAGE_PURITY_SUPPORTED: ReadonlySet<string> = new Set(['KO', 'EN']);
 
 // ============================================================
 // PART 3 — Whitelist (보편 차용어 + 고유명사)
