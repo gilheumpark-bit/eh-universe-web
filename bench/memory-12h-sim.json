@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-04-19T23:31:42.080Z",
+  "baseUrl": "http://127.0.0.1:3099",
+  "durationMin": 3,
+  "snapshotEveryMin": 1,
+  "typedChars": 41019,
+  "navDurationMs": 180314,
+  "snapshots": [
+    {
+      "phase": "initial",
+      "usedJSHeapBytes": 17100000,
+      "totalJSHeapBytes": 20500000,
+      "jsHeapLimitBytes": 3760000000,
+      "ts": 1776641322033
+    },
+    {
+      "phase": "ongoing",
+      "typedChars": 0,
+      "usedJSHeapBytes": 17100000,
+      "totalJSHeapBytes": 20500000,
+      "jsHeapLimitBytes": 3760000000,
+      "ts": 1776641382035
+    },
+    {
+      "phase": "ongoing",
+      "typedChars": 0,
+      "usedJSHeapBytes": 17100000,
+      "totalJSHeapBytes": 20500000,
+      "jsHeapLimitBytes": 3760000000,
+      "ts": 1776641442047
+    },
+    {
+      "phase": "final",
+      "typedChars": 41019,
+      "usedJSHeapBytes": 17100000,
+      "totalJSHeapBytes": 20500000,
+      "jsHeapLimitBytes": 3760000000,
+      "ts": 1776641502045
+    }
+  ],
+  "trend": {
+    "measurable": true,
+    "samples": 4,
+    "firstUsedMB": 16.31,
+    "lastUsedMB": 16.31,
+    "deltaMB": 0,
+    "growthMBPerHour": 0
+  }
+}
