@@ -195,9 +195,9 @@ function detectFatigue(snapshots: MetricSnapshot[], isKO: boolean): FatigueAlert
 // ============================================================
 
 const LEVEL_STYLES: Record<FatigueLevel, { bg: string; border: string; icon: string; text: string }> = {
-  danger:  { bg: 'bg-red-500/5', border: 'border-red-500/20', icon: '🔴', text: 'text-red-400' },
+  danger:  { bg: 'bg-accent-red/5', border: 'border-accent-red/20', icon: '🔴', text: 'text-accent-red' },
   warning: { bg: 'bg-amber-500/5', border: 'border-amber-500/20', icon: '🟡', text: 'text-amber-400' },
-  info:    { bg: 'bg-blue-500/5', border: 'border-blue-500/20', icon: '🔵', text: 'text-blue-400' },
+  info:    { bg: 'bg-accent-blue/5', border: 'border-accent-blue/20', icon: '🔵', text: 'text-accent-blue' },
 };
 
 function FatigueDetector({ messages, language }: Props) {

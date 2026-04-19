@@ -77,7 +77,7 @@ function Submenu({
               }}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
                 ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-bg-secondary"}
-                ${item.danger ? "text-red-400" : "text-text-primary"}`}
+                ${item.danger ? "text-accent-red" : "text-text-primary"}`}
             >
               {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}
               <span className="flex-1 text-left">{item.label}</span>
@@ -179,7 +179,7 @@ export function ContextMenu({ x, y, items, onSelect, onClose }: Props) {
               }}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors
                 ${item.disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-bg-secondary"}
-                ${item.danger ? "text-red-400" : "text-text-primary"}
+                ${item.danger ? "text-accent-red" : "text-text-primary"}
                 ${focusIdx === visibleItems.indexOf(item) ? "bg-bg-secondary" : ""}`}
             >
               {item.icon && <span className="w-3 shrink-0">{item.icon}</span>}

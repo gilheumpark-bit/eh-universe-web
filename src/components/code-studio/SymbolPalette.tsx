@@ -23,7 +23,7 @@ interface SymbolPaletteProps {
 
 const KIND_COLORS: Record<SymbolEntry["kind"], string> = {
   function: "text-accent-amber",
-  class: "text-blue-400",
+  class: "text-accent-blue",
   variable: "text-green-400",
   interface: "text-amber-400",
   type: "text-pink-400",

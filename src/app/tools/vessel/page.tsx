@@ -400,7 +400,7 @@ export default function VesselPage() {
                 <br />
                 Bureau of Investigation &mdash; Internal Design Archive / CLASSIFIED
                 <br />
-                <span className="text-red-500/80 not-italic">
+                <span className="text-accent-red/80 not-italic">
                   {en ? "Unauthorized disclosure will result in the personnel being processed as a typo." : "\uBB34\uB2E8 \uC720\uCD9C \uC2DC \uD574\uB2F9 \uC778\uC6D0\uC740 \uC624\uD0C0\uB85C \uCC98\uB9AC\uB41C\uB2E4."}
                 </span>
               </p>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Sparkles, PenTool, StopCircle, Send } from 'lucide-react';
 import { AppLanguage, AppTab, ChatSession, Message } from '@/lib/studio-types';
@@ -10,6 +10,7 @@ import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { TabHeader } from '@/components/studio/TabHeader';
+import { useUserRoleSafe } from '@/contexts/UserRoleContext';
 
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: () => null });
 const EngineStatusBar = dynamic(() => import('@/components/studio/EngineStatusBar'), { ssr: false, loading: () => null });
@@ -80,6 +81,15 @@ const WritingTab: React.FC<WritingTabProps> = ({
   const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
   const textMenu = useTextAreaContextMenu(language);
   const { handleSVIKeyDown } = useSVIRecorder();
+
+  // Progressive Disclosure — 기본은 AI/Edit 2모드만 노출 (Hick's Law)
+  // advancedWritingMode가 켜져 있거나, 이미 고급 모드를 사용 중이거나,
+  // 사용자가 "더 보기"를 눌렀을 때만 5모드 전부 표시.
+  const roleCtx = useUserRoleSafe();
+  const advancedWritingMode = roleCtx?.advancedWritingMode ?? false;
+  const [showMoreModes, setShowMoreModes] = useState(false);
+  const isAdvancedModeActive = writingMode === 'canvas' || writingMode === 'refine' || writingMode === 'advanced';
+  const showAllModes = advancedWritingMode || showMoreModes || isAdvancedModeActive;
   const handleApplyEdit = React.useCallback(() => {
     if (!editDraft.trim()) return;
     const now = Date.now();
@@ -176,8 +186,8 @@ const WritingTab: React.FC<WritingTabProps> = ({
             {/* Writing Modes — Premium Layout */}
             {(currentSession.messages.length > 0 || writingMode !== 'ai' || !hasApiKey) && (<>
             <div className="space-y-4">
-              {/* Mode Selection Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              {/* Mode Selection Cards — Progressive Disclosure (기본 2모드, 고급 3모드는 조건부) */}
+              <div className={`grid gap-2 ${showAllModes ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid-cols-2'}`}>
                 {/* AI Draft Mode */}
                 <button 
                   onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('ai'); }} 
@@ -209,9 +219,11 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   </span>
                 </button>
 
+                {/* 고급 3모드 — advancedWritingMode 또는 활성화된 경우만 노출 (Hick's Law) */}
+                {showAllModes && (<>
                 {/* Canvas 3-Step Mode */}
-                <button 
-                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }} 
+                <button
+                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('canvas'); if (!canvasContent) setCanvasPass(0); }}
                   className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                     writingMode === 'canvas' 
                       ? 'bg-accent-green/15 border-accent-green/40 shadow-[0_0_20px_rgba(47,155,131,0.15)]' 
@@ -242,21 +254,37 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 </button>
 
                 {/* Advanced Mode */}
-                <button 
-                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }} 
+                <button
+                  onClick={() => { if (!hasApiKey) { setShowApiKeyModal(true); return; } setWritingMode('advanced'); }}
                   className={`group relative flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-[transform,opacity,background-color,border-color,color] duration-200 ${
-                    writingMode === 'advanced' 
-                      ? 'bg-gradient-to-br from-amber-500/15 to-orange-500/15 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)]' 
-                      : 'bg-bg-secondary/50 border-border hover:border-amber-500/30 hover:bg-bg-secondary'
+                    writingMode === 'advanced'
+                      ? 'bg-accent-amber/15 border-accent-amber/40 shadow-[0_0_20px_rgba(202,161,92,0.15)]'
+                      : 'bg-bg-secondary/50 border-border hover:border-accent-amber/30 hover:bg-bg-secondary'
                   } ${!hasApiKey && writingMode !== 'advanced' ? 'opacity-60' : ''}`}
                 >
                   <span className="text-2xl">🎯</span>
-                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'advanced' ? 'text-amber-400' : 'text-text-secondary'}`}>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${writingMode === 'advanced' ? 'text-accent-amber' : 'text-text-secondary'}`}>
                     {t('writingMode.advanced')}
                   </span>
                   {!hasApiKey && <span className="absolute top-2 right-2 text-xs">🔒</span>}
                 </button>
+                </>)}
               </div>
+              {/* "고급 모드 더 보기" 링크 — showAllModes=false 일 때만 */}
+              {!showAllModes && (
+                <button
+                  type="button"
+                  onClick={() => setShowMoreModes(true)}
+                  className="text-[12px] text-text-tertiary hover:text-text-secondary underline underline-offset-4 self-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
+                >
+                  {L4(language, {
+                    ko: '고급 모드 3종 더 보기 (3단계 캔버스 · 자동 30% · 정밀)',
+                    en: 'Show 3 more advanced modes (Canvas · Auto 30% · Precision)',
+                    ja: '高度なモード3種を表示 (3段キャンバス · 自動30% · 精密)',
+                    zh: '显示3种高级模式 (3阶画布 · 自动30% · 精密)',
+                  })}
+                </button>
+              )}
 
               {/* Edit Mode Actions */}
               {writingMode === 'edit' && (
@@ -264,7 +292,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   <button 
                     onClick={handleApplyEdit} 
                     disabled={!editDraft.trim()} 
-                    className="px-5 py-2.5 bg-gradient-to-r from-accent-amber to-orange-500 text-white rounded-xl text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-30 shadow-lg"
+                    className="px-5 py-2.5 bg-accent-amber text-white rounded-xl text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-30 shadow-lg"
                   >
                     📋 {t('writingMode.applyToManuscript')}
                   </button>
@@ -340,9 +368,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
             {writingMode === 'canvas' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 1 ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>🦴 {t('canvas.skeleton')}</div>
+                  <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 1 ? 'bg-accent-blue/20 text-accent-blue border border-accent-blue/30' : 'bg-bg-secondary text-text-tertiary'}`}>🦴 {t('canvas.skeleton')}</div>
                   <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 2 ? 'bg-pink-600/20 text-pink-400 border border-pink-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>💓 {t('canvas.emotion')}</div>
-                  <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 3 ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30' : 'bg-bg-secondary text-text-tertiary'}`}>👁 {t('canvas.sensory')}</div>
+                  <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${canvasPass >= 3 ? 'bg-accent-amber/20 text-accent-amber border border-accent-amber/30' : 'bg-bg-secondary text-text-tertiary'}`}>👁 {t('canvas.sensory')}</div>
                 </div>
                 <textarea value={canvasContent} onChange={e => setCanvasContent(e.target.value)} onContextMenu={textMenu.openMenu} className="w-full min-h-[50vh] bg-bg-primary border border-border rounded-xl p-6 text-sm leading-[2] font-serif outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors resize-y" />
               </div>

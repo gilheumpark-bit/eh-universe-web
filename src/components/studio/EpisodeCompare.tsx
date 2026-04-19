@@ -321,7 +321,7 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
               {/* Delta badge */}
               {delta != null && delta !== 0 && (
                 <span className={`absolute -top-1.5 -right-1.5 text-[7px] font-black px-1 py-px rounded-full leading-none ${
-                  delta > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                  delta > 0 ? 'bg-green-500/20 text-green-400' : 'bg-accent-red/20 text-accent-red'
                 }`}>
                   {delta > 0 ? `▲+${delta}` : `▼${delta}`}
                 </span>
@@ -330,8 +330,8 @@ function EpisodeSelector({ metrics, selected, onToggle, language }: {
               <div className="text-[8px] opacity-60">{m.grade}</div>
               {/* Mini sparkline bar */}
               <div className="flex gap-px mt-1 h-1.5">
-                <div className="flex-1 rounded-sm bg-red-500/40" style={{ height: `${m.tension * 1.5}%` }} />
-                <div className="flex-1 rounded-sm bg-blue-500/40" style={{ height: `${m.pacing * 1.5}%` }} />
+                <div className="flex-1 rounded-sm bg-accent-red/40" style={{ height: `${m.tension * 1.5}%` }} />
+                <div className="flex-1 rounded-sm bg-accent-blue/40" style={{ height: `${m.pacing * 1.5}%` }} />
                 <div className="flex-1 rounded-sm bg-green-500/40" style={{ height: `${m.immersion * 1.5}%` }} />
               </div>
             </button>
@@ -460,7 +460,7 @@ function OverlayChart({ episodes, language, onEpisodeClick }: {
                     const isMax = val === max && episodes.length > 1;
                     const isMin = val === min && episodes.length > 1;
                     return (
-                      <td key={ep.index} className={`py-1.5 px-2 text-center font-bold ${isMax ? 'text-green-400' : isMin ? 'text-red-400' : 'text-text-secondary'}`}>
+                      <td key={ep.index} className={`py-1.5 px-2 text-center font-bold ${isMax ? 'text-green-400' : isMin ? 'text-accent-red' : 'text-text-secondary'}`}>
                         {key === 'charCount' ? val.toLocaleString() : key === 'dialogueRatio' || key === 'avgSentenceLen' ? val : `${val}%`}
                       </td>
                     );
@@ -589,7 +589,7 @@ function TrendIndicator({ current, previous }: { current: number; previous: numb
   const diff = current - previous;
   if (Math.abs(diff) < 3) return <Minus className="w-3 h-3 text-text-tertiary" />;
   if (diff > 0) return <TrendingUp className="w-3 h-3 text-green-400" />;
-  return <TrendingDown className="w-3 h-3 text-red-400" />;
+  return <TrendingDown className="w-3 h-3 text-accent-red" />;
 }
 
 function TrendSection({ metrics, language }: { metrics: EpMetric[]; language: AppLanguage }) {
@@ -626,7 +626,7 @@ function TrendSection({ metrics, language }: { metrics: EpMetric[]; language: Ap
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-black text-white">{curr}%</span>
                   <TrendIndicator current={curr} previous={prev} />
-                  <span className={`text-[8px] font-bold ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-text-tertiary'}`}>
+                  <span className={`text-[8px] font-bold ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-accent-red' : 'text-text-tertiary'}`}>
                     {diff > 0 ? '+' : ''}{diff}
                   </span>
                 </div>

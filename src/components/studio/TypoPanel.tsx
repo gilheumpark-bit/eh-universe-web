@@ -49,7 +49,7 @@ const TypoPanel: React.FC<TypoPanelProps> = ({ text, language, onApplyFix }) => 
               <span className="px-1.5 py-0.5 bg-bg-tertiary rounded text-text-tertiary text-[10px] font-mono">
                 {TYPE_LABEL[typo.type][language]}
               </span>
-              <span className="text-red-400/70 line-through font-mono">{typo.original}</span>
+              <span className="text-accent-red/70 line-through font-mono">{typo.original}</span>
               <span className="text-text-tertiary">→</span>
               <span className="text-green-400/80 font-mono">{typo.suggestion}</span>
               {onApplyFix && typo.type !== 'jamo-slip' && (

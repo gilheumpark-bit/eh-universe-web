@@ -447,7 +447,7 @@ const cardCls = "border border-white/[0.06] rounded-2xl bg-white/[0.03] p-3.5";
 const btnCls = "rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-text-primary cursor-pointer transition-[transform,background-color,border-color,color] hover:border-accent-blue/40 hover:bg-accent-blue/10 hover:-translate-y-px disabled:opacity-45 disabled:cursor-not-allowed disabled:transform-none font-mono";
 const btnPrimary = `${btnCls} !bg-gradient-to-b from-accent-blue/25 to-accent-blue/15 !border-accent-blue/40`;
 const btnAlt = `${btnCls} !bg-gradient-to-b from-accent-amber/15 to-accent-amber/8 !border-accent-amber/35`;
-const btnDanger = `${btnCls} !border-red-400/30 !bg-red-400/10`;
+const btnDanger = `${btnCls} !border-accent-red/30 !bg-accent-red/10`;
 const pillCls = "inline-flex items-center rounded-full border border-border px-3 py-1.5 bg-accent-blue/10 text-accent-blue text-sm font-mono";
 const kickerCls = "text-accent-blue text-sm tracking-[0.18em] uppercase font-mono";
 const mutedCls = "text-text-tertiary text-sm";
@@ -609,7 +609,7 @@ function CampaignPanel({ s, metrics, en, onEvaluate, onSkipHold, onTutorial, onS
           )}
 
           {sit && (
-            <div className={`rounded-2xl p-3.5 border grid gap-2 ${sit.tone === "support" ? "border-green-400/25 bg-green-400/10" : sit.tone === "danger" ? "border-red-400/25 bg-red-400/10" : "border-accent-blue/20 bg-accent-blue/10"}`}>
+            <div className={`rounded-2xl p-3.5 border grid gap-2 ${sit.tone === "support" ? "border-green-400/25 bg-green-400/10" : sit.tone === "danger" ? "border-accent-red/25 bg-accent-red/10" : "border-accent-blue/20 bg-accent-blue/10"}`}>
               <div className="flex justify-between items-start gap-2">
                 <strong className="text-sm text-text-primary">{en ? "Situation //" : "상황 //"} {sit.title}</strong>
                 <span className={mutedCls + " !text-xs uppercase"}>{sit.reason === "campaign-advance" ? (en ? "new stack" : "새 스택") : (en ? "active stack" : "활성 스택")}</span>
@@ -642,14 +642,14 @@ function CampaignPanel({ s, metrics, en, onEvaluate, onSkipHold, onTutorial, onS
               <div className={kickerCls + " !text-xs"}>SJC {en ? "Terminal" : "터미널"}</div>
               <h3 className="text-lg font-bold text-text-primary mt-1">{en ? "Evaluation Stack" : "평가 스택"}</h3>
             </div>
-            <span className={`${pillCls} ${s.terminal.mode === "ALLOW" ? "!border-green-400/40 !bg-green-400/15 !text-green-300" : s.terminal.mode === "DENY" ? "!border-red-400/40 !bg-red-400/15 !text-red-300" : ""}`}>{s.terminal.mode}</span>
+            <span className={`${pillCls} ${s.terminal.mode === "ALLOW" ? "!border-green-400/40 !bg-green-400/15 !text-green-300" : s.terminal.mode === "DENY" ? "!border-accent-red/40 !bg-accent-red/15 !text-accent-red" : ""}`}>{s.terminal.mode}</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className={cardCls}><span className={mutedCls + " !text-xs"}>{en ? "Simulations" : "시뮬레이션"}</span><strong className="block mt-1 text-sm text-text-primary">{(s.terminal.simCount || 0).toLocaleString()}</strong></div>
             <div className={cardCls}><span className={mutedCls + " !text-xs"}>{en ? "Hold Timer" : "홀드 타이머"}</span><strong className="block mt-1 text-sm text-text-primary">{fixed(s.terminal.holdTimeRemaining || 0, 1)} s</strong></div>
             <div className={cardCls}><span className={mutedCls + " !text-xs"}>{en ? "Campaign" : "캠페인"}</span><strong className="block mt-1 text-sm text-text-primary">{campaign.title}</strong></div>
           </div>
-          <pre className={`min-h-[200px] p-4 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap overflow-auto font-mono text-sky-100 ${s.terminal.mode === "ALLOW" ? "border-green-400/35 shadow-[inset_0_0_0_1px_rgba(134,240,183,0.08)]" : s.terminal.mode === "DENY" ? "border-red-400/35 shadow-[inset_0_0_0_1px_rgba(255,141,125,0.08)]" : "border-amber-400/25"} bg-gradient-to-b from-[rgba(0,8,14,0.94)] to-[rgba(4,10,21,0.96)]`}>
+          <pre className={`min-h-[200px] p-4 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap overflow-auto font-mono text-sky-100 ${s.terminal.mode === "ALLOW" ? "border-green-400/35 shadow-[inset_0_0_0_1px_rgba(134,240,183,0.08)]" : s.terminal.mode === "DENY" ? "border-accent-red/35 shadow-[inset_0_0_0_1px_rgba(255,141,125,0.08)]" : "border-amber-400/25"} bg-gradient-to-b from-[rgba(0,8,14,0.94)] to-[rgba(4,10,21,0.96)]`}>
             {s.terminal.lines.join("\n") || `> ${en ? "Awaiting evaluation for" : "평가 대기 중:"} ${campaign.title}.`}
           </pre>
           <div className="flex gap-2 flex-wrap">
@@ -760,11 +760,11 @@ function GateChamberPanel({ s, metrics, en, onCalibrate, onCharge, onFocus, onJu
   onSlider: (key: string, val: number) => void;
 }) {
   const gate = metrics.gate; const jc = actionCost(s, "jump");
-  const verdictColor = metrics.verdict === "ALLOW" ? "text-green-300 border-green-400/40" : metrics.verdict === "DENY" ? "text-red-300 border-red-400/40" : "text-amber-300 border-amber-400/40";
+  const verdictColor = metrics.verdict === "ALLOW" ? "text-green-300 border-green-400/40" : metrics.verdict === "DENY" ? "text-accent-red border-accent-red/40" : "text-amber-300 border-amber-400/40";
   const bars: [string, number, string][] = [
     [`phi // ${en ? "Hull Stability" : "선체 안정성"}`, metrics.phi, "bg-accent-blue"],
     [`psi // ${en ? "Gate Curvature" : "게이트 곡률"}`, metrics.psi, "bg-accent-blue"],
-    [en ? "Entropy" : "엔트로피", metrics.entropy, "bg-red-400"],
+    [en ? "Entropy" : "엔트로피", metrics.entropy, "bg-accent-red"],
     [en ? "Consistency" : "일관성", metrics.consistency, "bg-amber-400"],
     [en ? "Branch Probability" : "분기 확률", metrics.branchProbability, "bg-green-400"],
   ];
@@ -859,7 +859,7 @@ function MissionArchivePanel({ s, en, onSave, onReset }: { s: GameState; en: boo
         <div className={cardCls}><h3 className="font-bold text-sm text-text-primary mb-3">{en ? "Jump Log" : "점프 기록"}</h3>
           <div className="grid gap-2 max-h-[350px] overflow-auto">
             {s.log.map((entry, i) => (
-              <div key={i} className={`${cardCls} ${entry.kind === "allow" ? "!border-green-400/25" : entry.kind === "deny" ? "!border-red-400/25" : "!border-amber-400/20"}`}>
+              <div key={i} className={`${cardCls} ${entry.kind === "allow" ? "!border-green-400/25" : entry.kind === "deny" ? "!border-accent-red/25" : "!border-amber-400/20"}`}>
                 <strong className="block text-xs text-text-primary">{entry.year} {'// '}{entry.title}</strong>
                 <span className={mutedCls + " !text-xs"}>{entry.detail}</span>
               </div>
@@ -869,7 +869,7 @@ function MissionArchivePanel({ s, en, onSave, onReset }: { s: GameState; en: boo
         <div className={cardCls}><h3 className="font-bold text-sm text-text-primary mb-3">{en ? "Latest Verdict" : "최신 판정 결과"}</h3>
           {res ? (
             <div>
-              <div className={`rounded-2xl p-3 mb-3 ${String(res.verdict) === "ALLOW" ? "bg-green-400/15 border border-green-400/25" : String(res.verdict) === "DENY" ? "bg-red-400/15 border border-red-400/25" : "bg-amber-400/10 border border-amber-400/20"}`}>
+              <div className={`rounded-2xl p-3 mb-3 ${String(res.verdict) === "ALLOW" ? "bg-green-400/15 border border-green-400/25" : String(res.verdict) === "DENY" ? "bg-accent-red/15 border border-accent-red/25" : "bg-amber-400/10 border border-amber-400/20"}`}>
                 <strong className="text-sm text-text-primary">{String(res.verdict)}</strong>
                 <p className={mutedCls + " mt-1 !text-xs"}>{String(res.detail || "")}</p>
               </div>

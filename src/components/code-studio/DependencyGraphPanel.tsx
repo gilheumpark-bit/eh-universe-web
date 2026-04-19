@@ -172,7 +172,7 @@ export default function DependencyGraphPanel({ files, onNodeClick, className }: 
       <div className="flex items-center gap-4 px-3 py-1.5 text-xs border-t border-border text-text-secondary shrink-0">
         <span>Files: {graph.stats.totalFiles}</span>
         <span>Edges: {graph.stats.totalEdges}</span>
-        <span className={graph.stats.totalCycles > 0 ? 'text-red-400' : ''}>Cycles: {graph.stats.totalCycles}</span>
+        <span className={graph.stats.totalCycles > 0 ? 'text-accent-red' : ''}>Cycles: {graph.stats.totalCycles}</span>
         <span>Max Depth: {graph.stats.maxDepth}</span>
       </div>
     </div>

@@ -32,7 +32,7 @@ function statusColor(status: number): string {
   if (status === 0) return "text-white/60";
   if (status < 300) return "text-green-400";
   if (status < 400) return "text-amber-400";
-  return "text-red-400";
+  return "text-accent-red";
 }
 
 function truncateUrl(url: string, maxLen = 60): string {

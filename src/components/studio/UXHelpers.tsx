@@ -71,14 +71,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   if (!open) return null;
 
   const colors = {
-    danger: 'bg-red-500/10 border-red-500/30 text-red-400',
+    danger: 'bg-accent-red/10 border-accent-red/30 text-accent-red',
     warning: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+    info: 'bg-accent-blue/10 border-accent-blue/30 text-accent-blue',
   };
   const btnColors = {
-    danger: 'bg-red-600 hover:bg-red-700',
+    danger: 'bg-accent-red hover:bg-accent-red',
     warning: 'bg-amber-600 hover:bg-amber-700',
-    info: 'bg-blue-600 hover:bg-blue-700',
+    info: 'bg-accent-blue hover:bg-accent-blue',
   };
 
   return (
@@ -206,21 +206,21 @@ export const ErrorToast: React.FC<ErrorToastProps> = ({ error, language, onDismi
 
   return (
     <div className="fixed bottom-4 right-4 z-[var(--z-tooltip)] max-w-sm w-full mx-4 animate-in slide-in-from-bottom-4">
-      <div className="bg-red-950/90 border border-red-500/30 rounded-xl p-4 shadow-2xl backdrop-blur-sm">
+      <div className="bg-accent-red/90 border border-accent-red/30 rounded-xl p-4 shadow-2xl backdrop-blur-sm">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h4 className="text-sm font-bold text-red-400">{info.title}</h4>
-            <p className="text-xs text-red-300/80 mt-1">{info.message}</p>
+            <h4 className="text-sm font-bold text-accent-red">{info.title}</h4>
+            <p className="text-xs text-accent-red/80 mt-1">{info.message}</p>
             {info.action && (
               <p className="text-[10px] text-amber-400/70 mt-2 font-mono">{info.action}</p>
             )}
           </div>
-          <button onClick={onDismiss} aria-label="닫기" className="p-1 text-red-500/50 hover:text-red-400 transition-colors">
+          <button onClick={onDismiss} aria-label="닫기" className="p-1 text-accent-red/50 hover:text-accent-red transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
         {onRetry && (info.retryable !== false) && (
-          <button onClick={onRetry} className="mt-3 w-full px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-xs text-red-300 hover:bg-red-500/30 transition-colors">
+          <button onClick={onRetry} className="mt-3 w-full px-3 py-1.5 bg-accent-red/20 border border-accent-red/30 rounded-lg text-xs text-accent-red hover:bg-accent-red/30 transition-colors">
             {info.action || t('uxHelpers.retry')}
           </button>
         )}

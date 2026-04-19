@@ -35,7 +35,7 @@ const TYPE_COLORS: Record<CodeLineType, string> = {
 function SectionBar({ section }: { section: RhythmSection }) {
   const _total = section.endLine - section.startLine + 1;
   const densityColor =
-    section.density >= 90 ? 'bg-red-500'
+    section.density >= 90 ? 'bg-accent-red'
       : section.density >= 70 ? 'bg-amber-500'
         : 'bg-emerald-500';
 

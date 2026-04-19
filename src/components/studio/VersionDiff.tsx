@@ -74,7 +74,7 @@ function countWords(text: string): number {
 function getChangeMagnitudeColor(pct: number): string {
   if (pct < 10) return 'text-green-400';
   if (pct < 30) return 'text-amber-400';
-  return 'text-red-400';
+  return 'text-accent-red';
 }
 
 function getChangeSummary(pct: number, delta: number, lang: AppLanguage): string {
@@ -155,7 +155,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
             onClick={() => setShowDiff(!showDiff)}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-md border transition-colors ${
               showDiff
-                ? 'bg-blue-600/10 border-blue-500/30 text-blue-400'
+                ? 'bg-accent-blue/10 border-accent-blue/30 text-accent-blue'
                 : 'border-border text-text-tertiary hover:text-text-secondary'
             }`}
           >
@@ -189,7 +189,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
             onClick={() => handleRestore(currentIndex)}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-md border transition-colors ${
               confirmRestore === currentIndex
-                ? 'bg-red-600/15 border-red-500/30 text-red-400'
+                ? 'bg-accent-red/15 border-accent-red/30 text-accent-red'
                 : 'border-border text-text-tertiary hover:text-text-secondary'
             }`}
             title={language === 'KO' ? '이 버전으로 복원' : 'Restore this version'}
@@ -216,7 +216,7 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
                 line.type === 'add'
                   ? 'text-green-400/80 bg-green-900/10'
                   : line.type === 'remove'
-                  ? 'text-red-400/60 bg-red-900/10 line-through'
+                  ? 'text-accent-red/60 bg-accent-red/10 line-through'
                   : 'text-text-tertiary'
               }`}
             >

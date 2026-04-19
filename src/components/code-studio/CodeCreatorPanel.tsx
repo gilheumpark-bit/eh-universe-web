@@ -317,7 +317,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
                 </button>
               ) : (
                 <button onClick={handleStop}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-red-600 text-white hover:bg-red-500">
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-accent-red text-white hover:bg-accent-red">
                   <Square size={12} /> Stop
                 </button>
               )}
@@ -401,7 +401,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
                     <button onClick={(e) => { e.stopPropagation(); handleFileApprove(file.path); }}
                       className="p-0.5 rounded hover:bg-green-500/20"><CheckCircle size={12} className="text-green-500" /></button>
                     <button onClick={(e) => { e.stopPropagation(); handleFileReject(file.path); }}
-                      className="p-0.5 rounded hover:bg-red-500/20"><XCircle size={12} className="text-red-500" /></button>
+                      className="p-0.5 rounded hover:bg-accent-red/20"><XCircle size={12} className="text-accent-red" /></button>
                   </div>
                   {isExpanded && (
                     <div className="border-t border-white/8 p-2">
@@ -418,14 +418,14 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
 
         {/* Merge warning */}
         {showMergeWarning && (
-          <div className="p-3 rounded border-2 border-red-500 bg-red-500/10">
+          <div className="p-3 rounded border-2 border-accent-red bg-accent-red/10">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle size={16} className="text-red-500" />
-              <span className="text-sm font-bold text-red-500">Warning: Not all checks passed</span>
+              <AlertTriangle size={16} className="text-accent-red" />
+              <span className="text-sm font-bold text-accent-red">Warning: Not all checks passed</span>
             </div>
             <p className="text-xs text-text-secondary mb-2">Some verification steps did not pass. Merging may introduce issues.</p>
             <div className="flex gap-2">
-              <button onClick={handleForceMerge} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded bg-red-600 text-white hover:bg-red-500">
+              <button onClick={handleForceMerge} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded bg-accent-red text-white hover:bg-accent-red">
                 <AlertTriangle size={12} /> Force Merge
               </button>
               <button onClick={() => setShowMergeWarning(false)} className="px-3 py-1.5 text-xs rounded bg-white/5 text-text-primary hover:bg-white/10">
@@ -454,7 +454,7 @@ export default function CodeCreatorPanel({ onMerge, onClose }: CodeCreatorPanelP
                 <GitMerge size={14} /> Merge to Main
               </button>
               <button onClick={handleDiscard}
-                className="flex items-center gap-1 px-3 py-2 text-xs rounded bg-white/5 text-red-400 hover:bg-red-500/10">
+                className="flex items-center gap-1 px-3 py-2 text-xs rounded bg-white/5 text-accent-red hover:bg-accent-red/10">
                 <Trash2 size={12} /> Discard
               </button>
             </div>

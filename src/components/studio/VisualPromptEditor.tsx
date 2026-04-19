@@ -174,7 +174,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
                     onClick={() => updateLevel(key, v)}
                     className={`px-2 py-0.5 rounded text-[9px] font-black tracking-wider transition-[transform,opacity,background-color,border-color,color] ${
                       card.levels[key] === v
-                        ? 'bg-blue-600/30 border-blue-500/50 text-blue-300 border'
+                        ? 'bg-accent-blue/30 border-accent-blue/50 text-accent-blue border'
                         : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'
                     }`}
                   >
@@ -255,7 +255,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
           </span>
           <button
             onClick={() => copyToClipboard(finalPrompt)}
-            className="flex items-center gap-1 text-[10px] text-text-tertiary hover:text-blue-400 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-text-tertiary hover:text-accent-blue transition-colors"
           >
             <Copy className="w-3 h-3" /> {isKO ? '복사' : 'Copy'}
           </button>
@@ -266,10 +266,10 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
         {negPrompt && (
           <div className="mt-3 pt-3 border-t border-border">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-[9px] font-bold text-red-500/60 uppercase">Negative</span>
+              <span className="text-[9px] font-bold text-accent-red/60 uppercase">Negative</span>
               <button
                 onClick={() => copyToClipboard(negPrompt)}
-                className="text-[9px] text-text-tertiary hover:text-red-400"
+                className="text-[9px] text-text-tertiary hover:text-accent-red"
               >
                 <Copy className="w-2.5 h-2.5" />
               </button>
@@ -297,7 +297,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
             <button
               onClick={handleGenerate}
               disabled={genLoading || !finalPrompt}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600 to-purple-600 text-white disabled:opacity-40 transition-[transform,opacity] active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-linear-to-r from-accent-blue to-purple-600 text-white disabled:opacity-40 transition-[transform,opacity] active:scale-95"
             >
               {genLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
               {genLoading ? (isKO ? '생성 중...' : 'Generating...') : (isKO ? '이미지 생성' : 'Generate')}
@@ -305,7 +305,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
           </div>
 
           {genError && (
-            <div className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+            <div className="text-[10px] text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
               {genError}
             </div>
           )}
@@ -394,7 +394,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
                   {tag}
                   <button
                     onClick={() => update({ consistencyTags: card.consistencyTags!.filter((_, j) => j !== i) })}
-                    className="ml-1 text-purple-400/50 hover:text-red-400"
+                    className="ml-1 text-purple-400/50 hover:text-accent-red"
                   >×</button>
                 </span>
               ))}
@@ -406,7 +406,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="flex items-center gap-1.5 text-[10px] text-text-tertiary hover:text-red-400 transition-colors"
+        className="flex items-center gap-1.5 text-[10px] text-text-tertiary hover:text-accent-red transition-colors"
       >
         <Trash2 className="w-3 h-3" /> {isKO ? '카드 삭제' : 'Delete Card'}
       </button>

@@ -72,7 +72,7 @@ function ConflictView({
       <div className="grid grid-cols-2 divide-x divide-white/5">
         {/* Ours */}
         <div>
-          <div className="border-b border-white/5 px-3 py-1 text-[10px] font-bold uppercase text-blue-400">
+          <div className="border-b border-white/5 px-3 py-1 text-[10px] font-bold uppercase text-accent-blue">
             Current (Ours)
           </div>
           <pre className="max-h-40 overflow-y-auto p-3 text-xs text-gray-300 font-mono whitespace-pre-wrap">
@@ -106,7 +106,7 @@ function ConflictView({
       <div className="flex items-center gap-2 border-t border-white/5 px-3 py-2">
         <button
           onClick={() => onResolve("ours")}
-          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-blue-400 hover:bg-blue-500/10 transition-colors"
+          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-accent-blue hover:bg-accent-blue/10 transition-colors"
         >
           <ChevronLeft size={12} /> Accept Ours
         </button>
@@ -181,7 +181,7 @@ export default function MergeConflictEditor({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onResolveAll("ours")}
-              className="rounded px-2 py-1 text-xs text-blue-400 hover:bg-blue-500/10 transition-colors"
+              className="rounded px-2 py-1 text-xs text-accent-blue hover:bg-accent-blue/10 transition-colors"
             >
               Accept All Ours
             </button>

@@ -54,7 +54,7 @@ export default function RecentFiles({ files, onOpen, onClear }: RecentFilesProps
         <button
           onClick={onClear}
           title="Clear history"
-          className="text-text-quaternary hover:text-red-400 transition-colors"
+          className="text-text-quaternary hover:text-accent-red transition-colors"
         >
           <Trash2 size={12} />
         </button>

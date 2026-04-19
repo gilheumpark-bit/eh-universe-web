@@ -152,7 +152,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
           <div className="text-[8px] text-text-tertiary uppercase">{isKO ? '평균 길이' : 'Avg len'}</div>
         </div>
         <div className="bg-black/30 rounded-lg p-2 text-center">
-          <div className="text-sm font-black text-blue-400">{stats.shortRatio}%</div>
+          <div className="text-sm font-black text-accent-blue">{stats.shortRatio}%</div>
           <div className="text-[8px] text-text-tertiary uppercase">{isKO ? '단문' : 'Short'}</div>
         </div>
         <div className="bg-black/30 rounded-lg p-2 text-center">
@@ -160,7 +160,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
           <div className="text-[8px] text-text-tertiary uppercase">{isKO ? '장문' : 'Long'}</div>
         </div>
         <div className="bg-black/30 rounded-lg p-2 text-center">
-          <div className={`text-sm font-black ${stats.rhythmScore >= 60 ? 'text-green-400' : stats.rhythmScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
+          <div className={`text-sm font-black ${stats.rhythmScore >= 60 ? 'text-green-400' : stats.rhythmScore >= 40 ? 'text-amber-400' : 'text-accent-red'}`}>
             {stats.rhythmScore}
           </div>
           <div className="text-[8px] text-text-tertiary uppercase">{isKO ? '균형도' : 'Balance'}</div>
@@ -202,7 +202,7 @@ function RhythmAnalyzer({ messages, language }: Props) {
             <span className="font-bold text-text-primary">{stats.dominantPattern}</span>
           </div>
           {stats.shortRatio > 50 && (
-            <div className="text-blue-400">
+            <div className="text-accent-blue">
               {isKO ? '💡 단문 비율이 높습니다. 속도감은 좋지만, 장문으로 호흡을 늘리면 깊이가 생깁니다.'
                 : '💡 High short-sentence ratio. Great momentum, but longer sentences add depth.'}
             </div>

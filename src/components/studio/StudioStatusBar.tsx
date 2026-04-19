@@ -84,9 +84,9 @@ export function StudioStatusBar({
       {/* P0-3: Mobile compact status bar — always visible */}
       <div
         data-zen-hide
-        className="flex md:hidden fixed bottom-0 left-0 w-full h-6 z-40 items-center justify-between px-3 bg-bg-secondary/90 backdrop-blur-sm border-t border-border/40 font-mono text-[9px] text-text-tertiary select-none"
+        className="flex md:hidden fixed bottom-0 left-0 w-full h-7 z-40 items-center justify-between px-3 bg-bg-secondary/90 backdrop-blur-sm border-t border-border/40 font-mono text-[11px] text-text-tertiary select-none"
       >
-        <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-red-400' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>
+        <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-accent-red' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>
           {stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}
         </span>
         {sessionActive && activeTab === 'writing' && (
@@ -131,13 +131,13 @@ export function StudioStatusBar({
       {/* Desktop full status bar */}
       <div
         data-zen-hide
-        className="hidden md:flex fixed bottom-0 left-0 w-full h-6 z-40 items-center justify-between px-4 bg-bg-secondary/80 backdrop-blur-sm border-t border-border/40 font-mono text-[10px] text-text-tertiary select-none"
+        className="hidden md:flex fixed bottom-0 left-0 w-full h-7 z-40 items-center justify-between px-4 bg-bg-secondary/80 backdrop-blur-sm border-t border-border/40 font-mono text-[12px] text-text-tertiary select-none"
       >
         {/* Left */}
         <div className="flex items-center gap-3">
           {activeTab === 'writing' && (
             <>
-              <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-red-400' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>{stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}</span>
+              <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-accent-red' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>{stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}</span>
               <span className="text-border">|</span>
               <span>{stats.words.toLocaleString()}{isKO ? '어' : 'w'}</span>
               <span className="text-border">|</span>
@@ -191,7 +191,7 @@ export function StudioStatusBar({
                         style={{ width: `${progressPct}%` }}
                       />
                     </span>
-                    <span className="text-[9px] text-text-tertiary">{progressPct}%</span>
+                    <span className="text-[11px] text-text-tertiary">{progressPct}%</span>
                   </span>
                 </>
               )}

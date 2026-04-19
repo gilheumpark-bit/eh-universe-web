@@ -110,7 +110,7 @@ export function DiffEditorPanel({ original, modified, language: _language = "typ
           {fileName && <span className="text-xs font-medium text-white">{fileName}</span>}
           <span className="text-[10px] text-white/50 flex items-center gap-2">
             <span className="text-green-400">+{stats.added}</span>
-            <span className="text-red-400">-{stats.removed}</span>
+            <span className="text-accent-red">-{stats.removed}</span>
             <span>{stats.hunks} changes</span>
           </span>
         </div>
@@ -131,7 +131,7 @@ export function DiffEditorPanel({ original, modified, language: _language = "typ
             <button onClick={onAccept} className="flex items-center gap-1 px-3 py-1 text-xs bg-green-500/20 text-green-400 rounded hover:bg-green-500/30"><Check size={12} /> Accept All</button>
           )}
           {!readOnly && onReject && (
-            <button onClick={onReject} className="flex items-center gap-1 px-3 py-1 text-xs bg-red-500/20 text-red-400 rounded hover:bg-red-500/30"><X size={12} /> Reject All</button>
+            <button onClick={onReject} className="flex items-center gap-1 px-3 py-1 text-xs bg-accent-red/20 text-accent-red rounded hover:bg-accent-red/30"><X size={12} /> Reject All</button>
           )}
         </div>
       </div>
@@ -143,14 +143,14 @@ export function DiffEditorPanel({ original, modified, language: _language = "typ
             <div key={hunk.id} className={`flex items-center gap-2 text-[10px] px-1 py-0.5 rounded ${idx === currentChangeIndex ? "bg-white/5" : ""}`}>
               <span className="text-white/60 min-w-[4rem]">L{hunk.startLine}-{hunk.endLine}</span>
               <span className="text-green-400">+{hunk.addedLines}</span>
-              <span className="text-red-400">-{hunk.removedLines}</span>
+              <span className="text-accent-red">-{hunk.removedLines}</span>
               {hunk.status === "pending" ? (
                 <div className="flex items-center gap-1 ml-auto">
                   <button onClick={() => handleAcceptHunk(hunk.id)} className="flex items-center gap-0.5 px-1.5 py-0.5 text-green-400 hover:bg-green-500/20 rounded"><ArrowRight size={10} /> Accept</button>
-                  <button onClick={() => handleRejectHunk(hunk.id)} className="flex items-center gap-0.5 px-1.5 py-0.5 text-red-400 hover:bg-red-500/20 rounded"><ArrowLeft size={10} /> Reject</button>
+                  <button onClick={() => handleRejectHunk(hunk.id)} className="flex items-center gap-0.5 px-1.5 py-0.5 text-accent-red hover:bg-accent-red/20 rounded"><ArrowLeft size={10} /> Reject</button>
                 </div>
               ) : (
-                <span className={`ml-auto text-[10px] ${hunk.status === "accepted" ? "text-green-400" : "text-red-400"}`}>{hunk.status === "accepted" ? "Accepted" : "Rejected"}</span>
+                <span className={`ml-auto text-[10px] ${hunk.status === "accepted" ? "text-green-400" : "text-accent-red"}`}>{hunk.status === "accepted" ? "Accepted" : "Rejected"}</span>
               )}
             </div>
           ))}
@@ -187,7 +187,7 @@ export function DiffEditorPanel({ original, modified, language: _language = "typ
               return (
                 <div key={i}>
                   {wasRemoved && (
-                    <div className="flex bg-red-500/10"><span className="w-8 text-right pr-2 text-white/60 select-none">-</span><span className="text-red-400 line-through">{origLines[i]}</span></div>
+                    <div className="flex bg-accent-red/10"><span className="w-8 text-right pr-2 text-white/60 select-none">-</span><span className="text-accent-red line-through">{origLines[i]}</span></div>
                   )}
                   <div className={`flex ${isChanged ? "bg-green-500/10" : ""}`}>
                     <span className="w-8 text-right pr-2 text-white/60 select-none">{isChanged ? "+" : " "}</span>

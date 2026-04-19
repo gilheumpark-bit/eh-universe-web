@@ -98,7 +98,7 @@ const WarningList: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({ ep,
     <div className="space-y-1">
       {ep.warnings.map((w, i) => (
         <div key={i} className={`flex items-start gap-1.5 text-[10px] ${
-          w.severity === 'danger' ? 'text-red-400' : w.severity === 'warn' ? 'text-amber-400' : 'text-text-tertiary'
+          w.severity === 'danger' ? 'text-accent-red' : w.severity === 'warn' ? 'text-amber-400' : 'text-text-tertiary'
         }`}>
           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
           <span>{w.message[lang]}</span>
@@ -125,10 +125,10 @@ const CharPresenceRow: React.FC<{ ep: EpisodeSnapshot; lang: 'ko' | 'en' }> = ({
           title={c.stateFlags.length > 0 ? c.stateFlags.join(', ') : undefined}
         >
           {c.name}
-          {c.stateFlags.includes('부상') && <span className="ml-0.5 text-red-400">🩹</span>}
-          {c.stateFlags.includes('사망') && <span className="ml-0.5 text-red-500">💀</span>}
+          {c.stateFlags.includes('부상') && <span className="ml-0.5 text-accent-red">🩹</span>}
+          {c.stateFlags.includes('사망') && <span className="ml-0.5 text-accent-red">💀</span>}
           {c.stateFlags.includes('분노') && <span className="ml-0.5 text-amber-400">🔥</span>}
-          {c.stateFlags.includes('슬픔') && <span className="ml-0.5 text-blue-400">💧</span>}
+          {c.stateFlags.includes('슬픔') && <span className="ml-0.5 text-accent-blue">💧</span>}
           {c.dialogueCount > 0 && (
             <span className="ml-0.5 text-text-tertiary">({c.dialogueCount})</span>
           )}

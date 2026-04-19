@@ -283,7 +283,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 {language === 'KO' ? `선택된 시대: ${selectedEra}` : `Selected era: ${selectedEra}`}
               </span>
               <button onClick={() => setSelectedEra(null)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-colors">
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-accent-red hover:text-accent-red transition-colors">
                 <X className="w-3 h-3" />
                 {language === 'KO' ? '해제' : 'Clear'}
               </button>
@@ -302,7 +302,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                 {language === 'KO' ? `필터: ${selectedEra} 시대` : `Filter: ${selectedEra} era`}
               </span>
               <button onClick={() => setSelectedEra(null)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-red-400 hover:text-red-400 transition-colors">
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold text-text-tertiary border border-border hover:border-accent-red hover:text-accent-red transition-colors">
                 <X className="w-3 h-3" />
                 {language === 'KO' ? '해제' : 'Clear'}
               </button>

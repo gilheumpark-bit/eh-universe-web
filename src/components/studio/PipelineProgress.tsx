@@ -25,9 +25,9 @@ const STATUS_ICONS: Record<StageStatus, React.ElementType> = {
 
 const STATUS_COLORS: Record<StageStatus, string> = {
   pending: 'text-text-tertiary',
-  running: 'text-blue-400 animate-spin',
+  running: 'text-accent-blue animate-spin',
   passed: 'text-green-400',
-  failed: 'text-red-400',
+  failed: 'text-accent-red',
   skipped: 'text-text-tertiary',
 };
 
@@ -61,7 +61,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
     ? L4(language, { ko: '검사 중...', en: 'Checking...', ja: 'Checking...', zh: 'Checking...' })
     : L4(language, { ko: '개선이 필요합니다', en: 'Needs Improvement', ja: '改善が必要です', zh: '需要改进' });
 
-  const statusColor = finalStatus === 'completed' ? 'text-green-400' : finalStatus === 'partial' ? 'text-amber-400' : finalStatus === 'running' ? 'text-blue-400' : 'text-red-400';
+  const statusColor = finalStatus === 'completed' ? 'text-green-400' : finalStatus === 'partial' ? 'text-amber-400' : finalStatus === 'running' ? 'text-accent-blue' : 'text-accent-red';
 
   return (
     <div className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
@@ -88,12 +88,12 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
             <div
               key={stage.stage}
               className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-[transform,opacity,background-color,border-color,color] ${
-                isRunning ? 'bg-blue-500/5 ring-1 ring-blue-500/20' : isPassed ? 'bg-green-500/5' : ''
+                isRunning ? 'bg-accent-blue/5 ring-1 ring-accent-blue/20' : isPassed ? 'bg-green-500/5' : ''
               }`}
               aria-label={`${label ? L4(language, label) : stage.stage}: ${L4(language, { ko: '상태', en: 'status', ja: '状態', zh: '状态' })} ${stage.status}, ${L4(language, { ko: '점수', en: 'score', ja: 'score', zh: 'score' })} ${stage.score ?? '-'}`}
             >
               {/* Stage icon */}
-              <StageIcon className={`w-4 h-4 shrink-0 ${isPassed ? 'text-green-400' : isRunning ? 'text-blue-400' : 'text-text-tertiary/50'}`} />
+              <StageIcon className={`w-4 h-4 shrink-0 ${isPassed ? 'text-green-400' : isRunning ? 'text-accent-blue' : 'text-text-tertiary/50'}`} />
 
               {/* Connector line */}
               {i < stages.length - 1 && (
@@ -103,11 +103,11 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
               {/* Label + est time */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={`font-mono text-[10px] font-bold ${isRunning ? 'text-blue-400' : isPassed ? 'text-green-400' : 'text-text-tertiary'}`}>
+                  <span className={`font-mono text-[10px] font-bold ${isRunning ? 'text-accent-blue' : isPassed ? 'text-green-400' : 'text-text-tertiary'}`}>
                     {label ? L4(language, label) : stage.stage}
                   </span>
                   {isRunning && (
-                    <span className="font-mono text-[8px] text-blue-400/60">
+                    <span className="font-mono text-[8px] text-accent-blue/60">
                       ~{estSec}{L4(language, { ko: '초', en: 's', ja: 's', zh: 's' })}
                     </span>
                   )}
@@ -116,7 +116,7 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
                   <div className="flex items-center gap-1 mt-0.5">
                     <div className="flex-1 h-0.5 bg-bg-tertiary rounded-full overflow-hidden max-w-[80px]">
                       <div
-                        className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-accent-red'}`}
                         style={{ width: `${stage.score}%` }}
                       />
                     </div>

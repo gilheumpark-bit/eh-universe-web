@@ -103,7 +103,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
               <CheckCircle size={12} /> {L4(lang, { ko: "모두 수락", en: "Accept All", ja: "すべて承認", zh: "全部接受"})}
             </button>
             <button onClick={handleRejectAll}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500/15 text-red-400 rounded-lg hover:bg-red-500/25 transition-colors">
+              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-accent-red/15 text-accent-red rounded-lg hover:bg-accent-red/25 transition-colors">
               <XCircle size={12} /> {L4(lang, { ko: "모두 거절", en: "Reject All", ja: "すべて拒否", zh: "全部拒绝"})}
             </button>
             <button onClick={onReject} aria-label="닫기" className="p-1 hover:bg-bg-secondary/50 rounded transition-colors"><X size={14} /></button>
@@ -113,11 +113,11 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
         {/* Stats bar */}
         <div className="flex items-center gap-4 px-4 py-2 text-[10px] border-b border-border bg-bg-secondary/50">
           <span className="text-green-400">{L4(lang, { ko: `+${stats.totalLinesAdded}줄`, en: `+${stats.totalLinesAdded} lines`, ja: `+${stats.totalLinesAdded}行`, zh: `+${stats.totalLinesAdded}行`})}</span>
-          <span className="text-red-400">{L4(lang, { ko: `-${stats.totalLinesRemoved}줄`, en: `-${stats.totalLinesRemoved} lines`, ja: `-${stats.totalLinesRemoved}行`, zh: `-${stats.totalLinesRemoved}行`})}</span>
+          <span className="text-accent-red">{L4(lang, { ko: `-${stats.totalLinesRemoved}줄`, en: `-${stats.totalLinesRemoved} lines`, ja: `-${stats.totalLinesRemoved}行`, zh: `-${stats.totalLinesRemoved}行`})}</span>
           <span className="text-text-secondary">
             {stats.added > 0 && <span className="text-green-400">{L4(lang, { ko: `${stats.added} 추가됨`, en: `${stats.added} added`, ja: `${stats.added} 追加`, zh: `${stats.added} 已添加`})}</span>}
             {stats.modified > 0 && <span className="ml-2">{L4(lang, { ko: `${stats.modified} 수정됨`, en: `${stats.modified} modified`, ja: `${stats.modified} 変更`, zh: `${stats.modified} 已修改`})}</span>}
-            {stats.removed > 0 && <span className="ml-2 text-red-400">{L4(lang, { ko: `${stats.removed} 삭제됨`, en: `${stats.removed} deleted`, ja: `${stats.removed} 削除`, zh: `${stats.removed} 已删除`})}</span>}
+            {stats.removed > 0 && <span className="ml-2 text-accent-red">{L4(lang, { ko: `${stats.removed} 삭제됨`, en: `${stats.removed} deleted`, ja: `${stats.removed} 削除`, zh: `${stats.removed} 已删除`})}</span>}
           </span>
           <span className="ml-auto text-text-secondary">
             {L4(lang, { ko: `수락: ${acceptedCount} | 거절: ${rejectedCount} | 대기: ${changes.length - acceptedCount - rejectedCount}`, en: `Accept: ${acceptedCount} | Reject: ${rejectedCount} | Pending: ${changes.length - acceptedCount - rejectedCount}`, ja: `承認: ${acceptedCount} | 拒否: ${rejectedCount} | 保留: ${changes.length - acceptedCount - rejectedCount}`, zh: `接受: ${acceptedCount} | 拒绝: ${rejectedCount} | 待处理: ${changes.length - acceptedCount - rejectedCount}`})}
@@ -163,7 +163,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
                       <Check size={10} /> {L4(lang, { ko: "수락", en: "Accept", ja: "承認", zh: "接受"})}
                     </button>
                     <button onClick={() => handleDecision(selected.filePath, "reject")}
-                      className="flex items-center gap-1 px-2 py-1 text-[10px] bg-red-500/15 text-red-400 rounded hover:bg-red-500/25 transition-colors">
+                      className="flex items-center gap-1 px-2 py-1 text-[10px] bg-accent-red/15 text-accent-red rounded hover:bg-accent-red/25 transition-colors">
                       <X size={10} /> {L4(lang, { ko: "거절", en: "Reject", ja: "拒否", zh: "拒绝"})}
                     </button>
                   </div>
@@ -221,7 +221,7 @@ export default function AgentDiffPreview({ changes, onAccept, onReject, onPartia
 
 function StatusIcon({ status }: { status: "added" | "modified" | "deleted" }) {
   if (status === "added") return <Plus size={10} className="text-green-400" />;
-  if (status === "deleted") return <Minus size={10} className="text-red-400" />;
+  if (status === "deleted") return <Minus size={10} className="text-accent-red" />;
   return <Edit3 size={10} className="text-amber-400" />;
 }
 
@@ -229,7 +229,7 @@ function StatusBadge({ status, lang }: { status: "added" | "modified" | "deleted
   const styles = {
     added: "bg-green-500/15 text-green-400",
     modified: "bg-amber-500/15 text-amber-400",
-    deleted: "bg-red-500/15 text-red-400",
+    deleted: "bg-accent-red/15 text-accent-red",
   };
   const labels = {
     added: L4(lang, { ko: "추가됨", en: "Added", ja: "追加済み", zh: "已添加"}),
@@ -241,7 +241,7 @@ function StatusBadge({ status, lang }: { status: "added" | "modified" | "deleted
 
 function DecisionBadge({ decision }: { decision: "accept" | "reject" | "pending" }) {
   if (decision === "accept") return <CheckCircle size={10} className="text-green-400" />;
-  if (decision === "reject") return <XCircle size={10} className="text-red-400" />;
+  if (decision === "reject") return <XCircle size={10} className="text-accent-red" />;
   return <span className="w-2.5 h-2.5 rounded-full border border-text-secondary" />;
 }
 
@@ -275,14 +275,14 @@ function InlineDiffView({ original, modified }: { original: string; modified: st
     <div>
       {rows.map((row, i) => (
         <div key={i} className={`flex leading-5 ${
-          row.type === "add" ? "bg-green-900/15" : row.type === "remove" ? "bg-red-900/15" : ""
+          row.type === "add" ? "bg-green-900/15" : row.type === "remove" ? "bg-accent-red/15" : ""
         }`}>
           <span className="w-4 text-center shrink-0 text-text-tertiary select-none">
             {row.type === "add" ? "+" : row.type === "remove" ? "-" : " "}
           </span>
           <span className="w-10 text-right pr-2 shrink-0 text-text-tertiary select-none opacity-50">{row.num}</span>
           <span className={
-            row.type === "add" ? "text-green-400" : row.type === "remove" ? "text-red-400" : "text-text-primary"
+            row.type === "add" ? "text-green-400" : row.type === "remove" ? "text-accent-red" : "text-text-primary"
           }>{row.line}</span>
         </div>
       ))}

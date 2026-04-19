@@ -87,7 +87,7 @@ function TabContextMenu({
           onCloseAllTabs();
           onClose();
         }}
-        className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-white/10"
+        className="w-full text-left px-3 py-1.5 text-xs text-accent-red hover:bg-white/10"
       >
         {L4(lang, { ko: "모든 탭 닫기", en: "Close All Tabs", ja: "すべてのタブを閉じる", zh: "关闭所有标签页"})}
       </button>
@@ -262,7 +262,7 @@ export const EditorTabs = memo(function EditorTabs({
                   e.stopPropagation();
                   onCloseFile(file.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 hover:text-red-400 cursor-pointer shrink-0 transition-opacity"
+                className="opacity-0 group-hover:opacity-100 hover:text-accent-red cursor-pointer shrink-0 transition-opacity"
               >
                 <X size={12} />
               </span>

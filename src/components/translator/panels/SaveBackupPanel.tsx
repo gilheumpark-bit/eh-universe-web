@@ -243,7 +243,7 @@ function BridgeToNovelStudioSection({
       </button>
 
       {status === 'error' && errorMsg && (
-        <div className="text-[10px] text-red-400 bg-red-500/5 border border-red-500/20 rounded p-2">
+        <div className="text-[10px] text-accent-red bg-accent-red/5 border border-accent-red/20 rounded p-2">
           {errorMsg}
         </div>
       )}

@@ -635,7 +635,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             onClick={() => setActiveView('editor')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-[transform,opacity,background-color,border-color,color] ${
               activeView === 'editor'
-                ? 'bg-blue-600/20 border border-blue-500/30 text-blue-300'
+                ? 'bg-accent-blue/20 border border-accent-blue/30 text-accent-blue'
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
@@ -677,7 +677,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   key={ep}
                   onClick={() => generateFromAnalysis(ep)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-bg-secondary border border-border hover:border-blue-600/40 text-text-secondary hover:text-accent-blue transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] bg-bg-secondary border border-border hover:border-accent-blue/40 text-text-secondary hover:text-accent-blue transition-colors"
                 >
                   <span>EP.{ep}</span>
                   <span className="text-[9px] text-text-tertiary">
@@ -695,7 +695,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
               {L4(lang, { ko: `카드 (${cards.length})`, en: `Cards (${cards.length})` })}
             </span>
-            <button onClick={addEmptyCard} className="text-text-tertiary hover:text-blue-400 transition-colors">
+            <button onClick={addEmptyCard} className="text-text-tertiary hover:text-accent-blue transition-colors">
               <Plus className="w-4 h-4" />
             </button>
           </div>
@@ -708,7 +708,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                   onClick={() => { setSelectedCardId(c.id); setActiveView('editor'); }}
                   className={`w-full text-left px-3 py-2 rounded-lg text-[11px] transition-[transform,opacity,background-color,border-color,color] ${
                     selectedCardId === c.id && activeView === 'editor'
-                      ? 'bg-blue-600/15 border border-blue-500/30 text-blue-300'
+                      ? 'bg-accent-blue/15 border border-accent-blue/30 text-accent-blue'
                       : 'bg-bg-secondary/50 border border-transparent text-text-tertiary hover:border-border hover:text-text-secondary'
                   }`}
                 >
@@ -758,7 +758,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 </div>
                 <button
                   onClick={batch.cancel}
-                  className="w-full py-1.5 text-[10px] font-bold text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/10 transition-colors"
+                  className="w-full py-1.5 text-[10px] font-bold text-accent-red border border-accent-red/30 rounded-lg hover:bg-accent-red/10 transition-colors"
                 >
                   {L4(lang, { ko: '중단', en: 'Cancel' })}
                 </button>
@@ -768,7 +768,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 <button
                   onClick={batch.start}
                   disabled={cardsWithoutImages === 0}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold bg-linear-to-r from-blue-600/80 to-purple-600/80 text-white disabled:opacity-30 transition-[transform,opacity] active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold bg-linear-to-r from-accent-blue/80 to-purple-600/80 text-white disabled:opacity-30 transition-[transform,opacity] active:scale-[0.98]"
                 >
                   <Play className="w-3 h-3" />
                   {L4(lang, {
@@ -785,7 +785,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                   </p>
                 )}
                 {batch.progress.errors.length > 0 && (
-                  <div className="text-[9px] text-red-400 space-y-0.5">
+                  <div className="text-[9px] text-accent-red space-y-0.5">
                     {batch.progress.errors.slice(0, 3).map((e, i) => <p key={i}>{e}</p>)}
                   </div>
                 )}
@@ -949,7 +949,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             </p>
             <button
               onClick={addEmptyCard}
-              className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-300 text-sm font-semibold hover:bg-blue-600/30 transition-colors"
+              className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-blue/20 border border-accent-blue/30 text-accent-blue text-sm font-semibold hover:bg-accent-blue/30 transition-colors"
             >
               <Plus className="w-4 h-4" /> {L4(lang, { ko: '빈 카드 만들기', en: 'Create Empty Card' })}
             </button>

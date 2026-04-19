@@ -338,7 +338,7 @@ export default function CanvasPanel({
           <Plus size={14} />
         </button>
         {selectedId && (
-          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-red-400" title={t.canvasDeleteNode} aria-label={t.canvasDeleteNode}>
+          <button onClick={deleteSelected} className="p-1 text-gray-400 hover:text-accent-red" title={t.canvasDeleteNode} aria-label={t.canvasDeleteNode}>
             <Trash2 size={14} />
           </button>
         )}

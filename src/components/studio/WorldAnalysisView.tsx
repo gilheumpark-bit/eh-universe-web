@@ -329,7 +329,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-[rgba(255,50,50,0.1)] border border-[rgba(255,50,50,0.3)] rounded-xl text-red-400 text-xs font-bold drop-shadow-[0_0_5px_rgba(255,50,50,0.2)]">
+        <div className="p-4 bg-[rgba(255,50,50,0.1)] border border-[rgba(255,50,50,0.3)] rounded-xl text-accent-red text-xs font-bold drop-shadow-[0_0_5px_rgba(255,50,50,0.2)]">
           {error}
         </div>
       )}
@@ -372,8 +372,8 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
               } else if (isWarning) {
                 cardBg = 'bg-[linear-gradient(135deg,rgba(255,50,50,0.05),rgba(0,0,0,0.4))]';
                 cardBorder = 'border-[rgba(255,50,50,0.3)]';
-                iconColor = 'text-red-400 drop-shadow-[0_0_5px_rgba(255,50,50,0.5)]';
-                titleColor = 'text-red-400';
+                iconColor = 'text-accent-red drop-shadow-[0_0_5px_rgba(255,50,50,0.5)]';
+                titleColor = 'text-accent-red';
                 cardShadow = 'hover:shadow-[0_10px_30px_rgba(255,50,50,0.1),inset_0_0_15px_rgba(255,50,50,0.05)]';
               }
 

@@ -22,7 +22,7 @@ interface Props {
 
 function LoadBar({ fn }: { fn: FunctionMetrics }) {
   const colorClass =
-    fn.level === 'critical' ? 'bg-red-500'
+    fn.level === 'critical' ? 'bg-accent-red'
       : fn.level === 'warning' ? 'bg-amber-500'
         : 'bg-emerald-500';
 
@@ -126,7 +126,7 @@ export function CognitiveLoadPanel({ code }: Props) {
           <div className="px-3 py-1.5 border-t border-border flex gap-3 text-xs text-text-secondary">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> &lt;70</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> 70-84</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> 85+</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent-red" /> 85+</span>
           </div>
         </>
       )}

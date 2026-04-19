@@ -326,7 +326,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
               aria-pressed={archiveFilter === cat.key}
               className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${
                 archiveFilter === cat.key
-                  ? 'bg-blue-600/15 border-blue-500/30 text-blue-400'
+                  ? 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'
               }`}
             >

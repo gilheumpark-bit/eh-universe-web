@@ -61,9 +61,9 @@ const TABS: ReviewTab[] = ["problems", "pipeline", "checklist", "bugfinder"];
 
 const SEVERITY_ORDER: Severity[] = ["critical", "major", "minor", "info"];
 const SEVERITY_COLORS: Record<Severity, string> = {
-  critical: "text-red-400",
+  critical: "text-accent-red",
   major: "text-accent-amber",
-  minor: "text-blue-400",
+  minor: "text-accent-blue",
   info: "text-text-tertiary",
 };
 
@@ -125,7 +125,7 @@ function ChecklistView() {
     <div className="p-2 space-y-2">
       <div className="flex items-center justify-between text-[10px] text-text-tertiary px-2">
         <span>Review Checklist ({passCount}/{total})</span>
-        <span className={score >= 77 ? "text-green-400" : score >= 60 ? "text-accent-amber" : "text-red-400"}>
+        <span className={score >= 77 ? "text-green-400" : score >= 60 ? "text-accent-amber" : "text-accent-red"}>
           {score}%
         </span>
       </div>
@@ -168,7 +168,7 @@ function FileReviewList({ files, onApprove, onReject }: {
             <span className="flex-1 text-left font-mono truncate">{file.name}</span>
             <span className={`px-1 py-0.5 rounded text-[8px] font-bold ${
               file.status === "approved" ? "bg-green-500/15 text-green-400" :
-              file.status === "rejected" ? "bg-red-500/15 text-red-400" :
+              file.status === "rejected" ? "bg-accent-red/15 text-accent-red" :
               "bg-accent-amber/15 text-accent-amber"
             }`}>{file.status.toUpperCase()}</span>
             <span className="text-text-tertiary">{file.findings.length} issues</span>
@@ -182,7 +182,7 @@ function FileReviewList({ files, onApprove, onReject }: {
                 <button onClick={() => onApprove?.(file.name)} className="text-[9px] px-2 py-0.5 rounded bg-green-500/15 text-green-400 hover:bg-green-500/25">
                   <ThumbsUp size={8} className="inline mr-1" />Approve
                 </button>
-                <button onClick={() => onReject?.(file.name)} className="text-[9px] px-2 py-0.5 rounded bg-red-500/15 text-red-400 hover:bg-red-500/25">
+                <button onClick={() => onReject?.(file.name)} className="text-[9px] px-2 py-0.5 rounded bg-accent-red/15 text-accent-red hover:bg-accent-red/25">
                   <ThumbsDown size={8} className="inline mr-1" />Reject
                 </button>
               </div>
@@ -236,12 +236,12 @@ export function ReviewCenter({ pipelineResult, files, onBugScan, onApproveFile, 
         {TABS.map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex items-center gap-1.5 px-2.5 h-full text-[11px] font-medium transition-colors border-b-2 ${
-              activeTab === tab ? "border-blue-500 text-blue-400" : "border-transparent text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary"
+              activeTab === tab ? "border-accent-blue text-accent-blue" : "border-transparent text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary"
             }`} role="tab" aria-selected={activeTab === tab}>
             {TAB_ICONS[tab]}
             <span>{TAB_LABELS[tab]}</span>
             {tab === "problems" && problemCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0 text-[9px] rounded-full bg-red-500/20 text-red-400 font-semibold">{problemCount}</span>
+              <span className="ml-0.5 px-1.5 py-0 text-[9px] rounded-full bg-accent-red/20 text-accent-red font-semibold">{problemCount}</span>
             )}
           </button>
         ))}
@@ -273,7 +273,7 @@ export function ReviewCenter({ pipelineResult, files, onBugScan, onApproveFile, 
           <div className="p-2 space-y-1 overflow-y-auto" style={{ maxHeight: 200 }}>
             <div className="flex items-center gap-2 text-xs text-text-primary px-2 py-1">
               <span>Overall: <strong>{pipelineResult.overallScore}</strong>/100</span>
-              <span className={pipelineResult.overallStatus === "pass" ? "text-green-400" : pipelineResult.overallStatus === "warn" ? "text-accent-amber" : "text-red-400"}>
+              <span className={pipelineResult.overallStatus === "pass" ? "text-green-400" : pipelineResult.overallStatus === "warn" ? "text-accent-amber" : "text-accent-red"}>
                 {pipelineResult.overallStatus.toUpperCase()}
               </span>
             </div>
@@ -297,14 +297,14 @@ export function ReviewCenter({ pipelineResult, files, onBugScan, onApproveFile, 
         {activeTab === "bugfinder" && (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
             {bugScanning ? (
-              <><Loader2 size={24} className="animate-spin text-blue-400" /><span className="text-xs text-text-tertiary">Scanning for bugs...</span></>
+              <><Loader2 size={24} className="animate-spin text-accent-blue" /><span className="text-xs text-text-tertiary">Scanning for bugs...</span></>
             ) : bugScanDone ? (
               <><Bug size={24} className="text-green-400" /><span className="text-xs text-text-tertiary">Bug scan complete</span>
                 <button onClick={handleBugScan} className="px-3 py-1.5 text-xs rounded bg-bg-tertiary hover:bg-border text-text-primary">Scan Again</button></>
             ) : (
               <><Bug size={24} className="text-text-tertiary opacity-40" /><p className="text-xs text-text-tertiary">NOA-powered bug detection across your codebase</p>
                 <button onClick={handleBugScan} disabled={!onBugScan}
-                  className="px-4 py-2 rounded-lg text-xs font-medium bg-blue-500 text-white hover:opacity-90 disabled:opacity-40">
+                  className="px-4 py-2 rounded-lg text-xs font-medium bg-accent-blue text-white hover:opacity-90 disabled:opacity-40">
                   Start Bug Scan
                 </button></>
             )}

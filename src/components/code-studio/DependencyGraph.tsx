@@ -326,7 +326,7 @@ function DependencyGraph({ files }: Props) {
             {filePaths.length} files
           </span>
           {circularCount > 0 && (
-            <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+            <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-accent-red/10 text-accent-red border border-accent-red/20">
               <AlertTriangle className="w-3 h-3" /> {circularCount} circular
             </span>
           )}
@@ -391,7 +391,7 @@ function DependencyGraph({ files }: Props) {
           </div>
         ))}
         <span className="flex items-center gap-1 ml-auto">
-          <span className="w-4 h-0.5 inline-block rounded bg-red-500" />
+          <span className="w-4 h-0.5 inline-block rounded bg-accent-red" />
           <span>circular</span>
         </span>
       </div>

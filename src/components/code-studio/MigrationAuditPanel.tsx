@@ -18,7 +18,7 @@ import {
 
 function SigBadge({ sig, variant }: { sig: FunctionSignature; variant: 'lost' | 'new' | 'matched' }) {
   const color =
-    variant === 'lost' ? 'text-text-danger bg-red-500/10 border-red-500/30'
+    variant === 'lost' ? 'text-text-danger bg-accent-red/10 border-accent-red/30'
       : variant === 'new' ? 'text-accent-blue bg-accent-blue/10 border-accent-blue/30'
         : 'text-accent-green bg-accent-green/10 border-accent-green/30';
 

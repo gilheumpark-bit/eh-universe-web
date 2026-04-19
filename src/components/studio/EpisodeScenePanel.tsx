@@ -198,7 +198,7 @@ function SceneEditor({
                   <input className="w-full bg-transparent text-xs text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-center" value={scene.nextScene} onChange={e => updateScene(idx, "nextScene", e.target.value)} />
                 </td>
                 <td className="border border-border px-1 py-1 text-center">
-                  <button onClick={() => removeScene(idx)} aria-label={`${L.delete} scene ${idx + 1}`} className="text-red-400 hover:text-red-300 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded" title={L.delete}>✕</button>
+                  <button onClick={() => removeScene(idx)} aria-label={`${L.delete} scene ${idx + 1}`} className="text-accent-red hover:text-accent-red text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded" title={L.delete}>✕</button>
                 </td>
               </tr>
             ))}
@@ -227,8 +227,8 @@ function SceneTable({ sheet, lang }: { sheet: EpisodeSceneSheet; lang: AppLangua
   const toneColor: Record<string, string> = {
     감동: "bg-green-900/40 text-green-300",
     긴장: "bg-yellow-900/40 text-yellow-300",
-    개그: "bg-blue-900/40 text-blue-300",
-    액션: "bg-red-900/40 text-red-300",
+    개그: "bg-accent-blue/40 text-accent-blue",
+    액션: "bg-accent-red/40 text-accent-red",
     일상: "bg-bg-secondary text-text-secondary",
     반전: "bg-purple-900/40 text-purple-300",
     공포: "bg-orange-900/40 text-orange-300",
@@ -373,7 +373,7 @@ export default function EpisodeScenePanel({
               <SceneTable sheet={sheet} lang={lang} />
               <div className="flex gap-2 justify-end mt-2">
                 <button onClick={() => setEditingEp(sheet.episode)} className="px-2 py-1 text-[10px] bg-bg-secondary hover:bg-bg-secondary/80 rounded text-text-secondary border border-border font-mono">{L.edit}</button>
-                <button onClick={() => handleDelete(sheet.episode)} className="px-2 py-1 text-[10px] bg-red-900/30 hover:bg-red-900/50 rounded text-red-400 font-mono">{L.delete}</button>
+                <button onClick={() => handleDelete(sheet.episode)} className="px-2 py-1 text-[10px] bg-accent-red/30 hover:bg-accent-red/50 rounded text-accent-red font-mono">{L.delete}</button>
               </div>
             </div>
           )}

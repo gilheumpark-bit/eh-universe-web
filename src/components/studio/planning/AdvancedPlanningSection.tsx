@@ -76,8 +76,8 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
         </label>
         <div className="flex gap-3">
           {([
-            { value: 'iron' as const, label: isKO ? '강 (Iron)' : 'Iron', activeClass: 'bg-red-600/10 border-red-500/30 text-red-400', desc: isKO ? '인과 필수, 모든 경고 표시' : 'Strict causality, all warnings' },
-            { value: 'standard' as const, label: isKO ? '중 (Standard)' : 'Standard', activeClass: 'bg-blue-600/10 border-blue-500/30 text-blue-400', desc: isKO ? '주요 경고만 표시' : 'Major warnings only' },
+            { value: 'iron' as const, label: isKO ? '강 (Iron)' : 'Iron', activeClass: 'bg-accent-red/10 border-accent-red/30 text-accent-red', desc: isKO ? '인과 필수, 모든 경고 표시' : 'Strict causality, all warnings' },
+            { value: 'standard' as const, label: isKO ? '중 (Standard)' : 'Standard', activeClass: 'bg-accent-blue/10 border-accent-blue/30 text-accent-blue', desc: isKO ? '주요 경고만 표시' : 'Major warnings only' },
             { value: 'soft' as const, label: isKO ? '약 (Soft)' : 'Soft', activeClass: 'bg-text-tertiary/10 border-zinc-500/30 text-text-secondary', desc: isKO ? '자유 창작, 오타만 표시' : 'Free creation, typos only' },
           ]).map(({ value, label, activeClass, desc }) => (
             <button key={value} onClick={() => setConfig({ ...config, narrativeIntensity: value })}
@@ -127,22 +127,22 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.povCharacter')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.povPlaceholder')} maxLength={100} value={config.povCharacter} onChange={e => setConfig({ ...config, povCharacter: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.settingLabel')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.settingPlaceholder')} maxLength={300} value={config.setting} onChange={e => setConfig({ ...config, setting: e.target.value })} />
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.coreEmotion')}</label>
-          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
+          <input className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm font-bold text-text-primary placeholder:text-text-tertiary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color]" placeholder={tl('planningExtra.emotionPlaceholder')} value={config.primaryEmotion} onChange={e => setConfig({ ...config, primaryEmotion: e.target.value })} />
         </div>
       </div>
 
       {/* 시놉시스 */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{t.synopsis}</label>
-        <textarea className="w-full bg-bg-tertiary border border-border rounded-2xl p-6 text-sm h-64 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
+        <textarea className="w-full bg-bg-tertiary border border-border rounded-2xl p-6 text-sm h-64 resize-none text-text-primary placeholder:text-text-tertiary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-serif leading-relaxed" placeholder={t.synopsisPlaceholder} maxLength={5000} value={config.synopsis} onChange={e => setConfig({ ...config, synopsis: e.target.value })} />
       </div>
 
       {/* 세계관 작성 가이드 배너 */}
@@ -162,7 +162,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
                 {(config[f.key] as string)?.trim() ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Circle className="w-3 h-3 text-text-quaternary" />}
                 {f.label}
               </label>
-              <textarea className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm h-24 resize-none text-text-primary placeholder:text-text-tertiary focus:border-blue-600 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
+              <textarea className="w-full bg-bg-tertiary border border-border rounded-xl p-4 text-sm h-24 resize-none text-text-primary placeholder:text-text-tertiary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 leading-relaxed" placeholder={f.ph} value={(config[f.key] as string) ?? ''} onChange={e => setConfig({ ...config, [f.key]: e.target.value })} />
             </div>
           ))}
         </div>
@@ -236,7 +236,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       {/* Tension Curve */}
       <div className="space-y-4 pt-6 border-t border-border">
         <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-blue-500" /> {te.tensionPreview}
+          <BarChart3 className="w-4 h-4 text-accent-blue" /> {te.tensionPreview}
         </h3>
         <div className="bg-bg-tertiary/40 rounded-2xl border border-border/50 p-4">
           <div className="h-20 flex items-end gap-px">
@@ -245,8 +245,8 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               const isCurrentEp = i + 1 === config.episode;
               return (
                 <div key={i} className="flex-1 relative h-full group cursor-default">
-                  <div className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${isCurrentEp ? 'bg-gradient-to-t from-blue-500 to-cyan-400' : 'bg-gradient-to-t from-blue-600/40 to-indigo-400/20'}`} style={{ height: `${height}%` }} />
-                  {isCurrentEp && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full" />}
+                  <div className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${isCurrentEp ? 'bg-gradient-to-t from-accent-blue to-cyan-400' : 'bg-gradient-to-t from-accent-blue/40 to-indigo-400/20'}`} style={{ height: `${height}%` }} />
+                  {isCurrentEp && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-accent-blue rounded-full" />}
                   <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[7px] px-1 py-0.5 rounded whitespace-nowrap">EP.{i + 1}: {height}%</div>
                 </div>
               );
@@ -262,11 +262,11 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{t.minDensity}</span><span>{config.guardrails.min}{tl('planningExtra.chars')}</span></div>
-            <input type="range" min="1000" max="10000" step="500" aria-label={t.minDensity} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
+            <input type="range" min="1000" max="10000" step="500" aria-label={t.minDensity} className="w-full accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.guardrails.min} onChange={e => setConfig({...config, guardrails: {...config.guardrails, min: parseInt(e.target.value)}})} />
           </div>
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{t.maxCapacity}</span><span>{config.guardrails.max}{tl('planningExtra.chars')}</span></div>
-            <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
+            <input type="range" min="2000" max="15000" step="500" aria-label={t.maxCapacity} className="w-full accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.guardrails.max} onChange={e => setConfig({...config, guardrails: {...config.guardrails, max: parseInt(e.target.value)}})} />
           </div>
         </div>
       </div>
@@ -277,11 +277,11 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismPreserve')}</span><span className="font-mono">{config.prismPreserve ?? 100}</span></div>
-            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismPreserve')} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismPreserve ?? 100} onChange={e => setConfig({ ...config, prismPreserve: parseInt(e.target.value) })} />
+            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismPreserve')} className="w-full accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismPreserve ?? 100} onChange={e => setConfig({ ...config, prismPreserve: parseInt(e.target.value) })} />
           </div>
           <div className="space-y-4">
             <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl('planningExtra.prismExpand')}</span><span className="font-mono">{config.prismScale ?? 120}</span></div>
-            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismExpand')} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismScale ?? 120} onChange={e => setConfig({ ...config, prismScale: parseInt(e.target.value) })} />
+            <input type="range" min="0" max="150" step="5" aria-label={tl('planningExtra.prismExpand')} className="w-full accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none" value={config.prismScale ?? 120} onChange={e => setConfig({ ...config, prismScale: parseInt(e.target.value) })} />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -293,7 +293,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { label: tl('planningExtra.prism150'), preserve: 100, scale: 150 },
           ]).map(p => {
             const isActive = (config.prismPreserve ?? 100) === p.preserve && (config.prismScale ?? 120) === p.scale;
-            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors font-mono ${isActive ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
+            return (<button key={p.scale} onClick={() => setConfig({ ...config, prismPreserve: p.preserve, prismScale: p.scale })} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors font-mono ${isActive ? 'bg-accent-blue/20 border border-accent-blue/40 text-accent-blue' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}>PRISM-{p.scale} {p.label}</button>);
           })}
         </div>
       </div>
@@ -312,7 +312,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             { key: 'CUSTOM' as const, label: tl('planningExtra.prismModeCustom'), desc: tl('planningExtra.prismModeCustomDesc') },
           ]).map(pm => (
             <button key={pm.key} onClick={() => setConfig({ ...config, prismMode: pm.key })}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors font-mono ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors font-mono ${(config.prismMode ?? 'OFF') === pm.key ? 'bg-accent-blue/20 border border-accent-blue/40 text-accent-blue' : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'}`}
               title={pm.desc}>{pm.label}</button>
           ))}
         </div>
@@ -368,7 +368,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               return (
                 <div key={axis} className="space-y-2">
                   <div className="flex justify-between text-[10px] font-bold text-text-tertiary uppercase"><span>{tl(`planningExtra.${labelKey}`)}</span><span className="font-mono">{val}/5</span></div>
-                  <input type="range" min="0" max="5" step="1" aria-label={tl(`planningExtra.${labelKey}`)} className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none" value={val}
+                  <input type="range" min="0" max="5" step="1" aria-label={tl(`planningExtra.${labelKey}`)} className="w-full accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none" value={val}
                     onChange={e => setConfig({ ...config, prismCustom: { sexual: config.prismCustom?.sexual ?? 0, violence: config.prismCustom?.violence ?? 0, profanity: config.prismCustom?.profanity ?? 0, [axis]: parseInt(e.target.value) } })} />
                 </div>
               );

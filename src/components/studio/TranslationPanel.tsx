@@ -469,9 +469,9 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 <span className="text-amber-300">&quot;{w.canonicalTarget}&quot;</span>
                 {` (${w.historyCount}${isKO ? '회' : 'x'}), `}
                 {isKO ? '시도' : 'attempted'}{' '}
-                <span className="text-red-400">&quot;{w.attemptedTarget}&quot;</span>
+                <span className="text-accent-red">&quot;{w.attemptedTarget}&quot;</span>
                 {w.severity === 'block' && (
-                  <span className="ml-1 text-red-400 font-bold">[{isKO ? '차단' : 'BLOCK'}]</span>
+                  <span className="ml-1 text-accent-red font-bold">[{isKO ? '차단' : 'BLOCK'}]</span>
                 )}
               </li>
             ))}
@@ -506,7 +506,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           <ul className="space-y-1 text-xs">
             {voiceViolations.slice(0, 5).map((v, i) => (
               <li key={`voice-${i}-${v.speaker}`} className="text-text-secondary">
-                <span className={v.severity === 'error' ? 'text-red-400' : 'text-amber-400'}>
+                <span className={v.severity === 'error' ? 'text-accent-red' : 'text-amber-400'}>
                   [{v.severity === 'error' ? (isKO ? '오류' : 'ERR') : (isKO ? '경고' : 'WARN')}]
                 </span>
                 <span className="ml-1 font-mono">{v.speaker}</span>
@@ -952,7 +952,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
               {Object.entries(glossary).map(([k, v]) => (
                 <span key={k} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(184,149,92,0.1)] border border-border font-mono text-[10px] text-text-primary">
                   {k} → {v}
-                  <button onClick={() => { const g = { ...glossary }; delete g[k]; saveGlossary(g); }} aria-label={isKO ? `용어 ${k} 삭제` : `Delete glossary term ${k}`} className="ml-1 text-red-400/60 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&times;</button>
+                  <button onClick={() => { const g = { ...glossary }; delete g[k]; saveGlossary(g); }} aria-label={isKO ? `용어 ${k} 삭제` : `Delete glossary term ${k}`} className="ml-1 text-accent-red/60 hover:text-accent-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&times;</button>
                 </span>
               ))}
             </div>
@@ -992,7 +992,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
         {isTranslating ? (
           <button
             onClick={abort}
-            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(to_bottom,rgba(255,100,100,0.15),rgba(200,50,50,0.4))] border border-[rgba(255,100,100,0.5)] px-6 font-mono text-[12px] font-black uppercase tracking-widest text-red-400 transition-[box-shadow] hover:brightness-125 shadow-[0_0_20px_rgba(200,50,50,0.2)]"
+            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(to_bottom,rgba(255,100,100,0.15),rgba(200,50,50,0.4))] border border-[rgba(255,100,100,0.5)] px-6 font-mono text-[12px] font-black uppercase tracking-widest text-accent-red transition-[box-shadow] hover:brightness-125 shadow-[0_0_20px_rgba(200,50,50,0.2)]"
           >
             <Square className="h-4 w-4" /> {isKO ? "강제 종료 (HALT)" : "HALT"}
           </button>
@@ -1042,14 +1042,14 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
                 <div key={log.id} className="flex gap-4 items-start group">
                   <span className="text-text-tertiary shrink-0 font-bold group-hover:text-text-secondary transition-colors">[{new Date(log.id).toISOString().substring(11, 23)}]</span>
                   <span className={`shrink-0 w-12 text-center uppercase text-[9px] font-black tracking-widest py-0.5 rounded-sm border ${
-                    log.type === 'error' ? 'text-red-400 border-[#ff6b6b]/30 bg-[#ff6b6b]/10' :
+                    log.type === 'error' ? 'text-accent-red border-[#ff6b6b]/30 bg-[#ff6b6b]/10' :
                     log.type === 'success' ? 'text-green-400 border-[#38d9a9]/30 bg-[#38d9a9]/10' :
                     log.type === 'warn' ? 'text-amber-400 border-[#fcc419]/30 bg-[#fcc419]/10' :
                     'text-text-primary border-border bg-[rgba(184,149,92,0.1)]'
                   }`}>SYS</span>
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     <div className={`leading-relaxed ${
-                      log.type === 'error' ? 'text-red-400' :
+                      log.type === 'error' ? 'text-accent-red' :
                       log.type === 'warn' ? 'text-amber-400' :
                       log.type === 'success' ? 'text-green-400' :
                       'text-text-primary'

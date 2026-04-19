@@ -133,7 +133,7 @@ function getDefaultConfig(): AutopilotConfig {
 function ConfigToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-center gap-2 text-[10px] text-[#8b949e] cursor-pointer select-none">
-      <div className={`w-6 h-3.5 rounded-full relative transition-colors cursor-pointer ${checked ? "bg-blue-500" : "bg-[#30363d]"}`}
+      <div className={`w-6 h-3.5 rounded-full relative transition-colors cursor-pointer ${checked ? "bg-accent-blue" : "bg-[#30363d]"}`}
         onClick={() => onChange(!checked)}>
         <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-transform ${checked ? "translate-x-3" : "translate-x-0.5"}`} />
       </div>
@@ -334,9 +334,9 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#30363d]">
         <span className="flex items-center gap-2 text-xs font-semibold text-[#e6edf3]">
           <Rocket size={14} className="text-amber-400" /> {L4(lang, { ko: "풀 오토파일럿", en: "Full Autopilot", ja: "フルオートパイロット", zh: "全自动驾驶"})}
-          {running && <span className="flex items-center gap-1 text-blue-400"><Loader2 size={10} className="animate-spin" />{L4(lang, { ko: "실행 중", en: "Running", ja: "実行中", zh: "运行中"})}</span>}
+          {running && <span className="flex items-center gap-1 text-accent-blue"><Loader2 size={10} className="animate-spin" />{L4(lang, { ko: "실행 중", en: "Running", ja: "実行中", zh: "运行中"})}</span>}
           {result?.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/15 text-green-400">PASSED</span>}
-          {result && !result.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400">BELOW</span>}
+          {result && !result.success && <span className="px-1.5 py-0.5 rounded text-[10px] bg-accent-red/15 text-accent-red">BELOW</span>}
         </span>
         <div className="flex items-center gap-1">
           {running && <button onClick={() => { abortRef.current?.abort(); setRunning(false); }} aria-label="중지" className="p-1 hover:bg-[#21262d] rounded"><Square size={12} className="text-accent-amber" /></button>}
@@ -349,7 +349,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
         {/* Input Area */}
         {!running && !result && (
           <div className="p-3 space-y-3">
-            <textarea className="w-full h-24 px-3 py-2 text-xs bg-[#010409] border border-[#30363d] rounded-lg resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 text-[#e6edf3] placeholder:text-[#8b949e]"
+            <textarea className="w-full h-24 px-3 py-2 text-xs bg-[#010409] border border-[#30363d] rounded-lg resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue text-[#e6edf3] placeholder:text-[#8b949e]"
               placeholder={L4(lang, { ko: "만들거나 수정할 내용을 설명하세요...", en: "Describe what you want to build or fix...", ja: "作成または修正する内容を説明してください...", zh: "请描述要创建或修改的内容..."})} value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleStart(); }}
@@ -363,7 +363,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                   onClick={() => setMode(mode === "autopilot" ? "gen-verify-fix" : "autopilot")}
                   className={`flex items-center gap-1 px-2 py-1 text-[10px] rounded-md border transition-colors ${
                     mode === "gen-verify-fix"
-                      ? "border-blue-500 bg-blue-500/15 text-blue-400"
+                      ? "border-accent-blue bg-accent-blue/15 text-accent-blue"
                       : "border-[#30363d] text-[#8b949e] hover:text-[#e6edf3]"
                   }`}
                   title={L4(lang, { ko: "생성+검증+수정 모드", en: "Gen+Verify+Fix mode", ja: "生成+検証+修正モード", zh: "生成+验证+修复模式"})}
@@ -376,7 +376,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                   <Play size={12} /> {L4(lang, { ko: "오토파일럿 시작", en: "Start Autopilot", ja: "オートパイロット開始", zh: "启动自动驾驶"})}
                 </button>
               ) : (
-                <button onClick={handleStartGVF} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-700 text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
+                <button onClick={handleStartGVF} disabled={!prompt.trim()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent-blue text-stone-100 hover:opacity-90 disabled:opacity-40 transition-opacity">
                   <RefreshCw size={12} /> {L4(lang, { ko: "생성+검증+수정 시작", en: "Start GVF Loop", ja: "生成+検証+修正開始", zh: "启动生成+验证+修复"})}
                 </button>
               )}
@@ -409,7 +409,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                 const isDone = progress.phaseIndex > i || progress.phase === "complete";
                 return (
                   <div key={phase} className="flex-1 flex flex-col items-center gap-1" title={L4(lang, { ko: meta.ko, en: meta.en, ja: meta.ja, zh: meta.zh })}>
-                    <div className={`w-full h-1 rounded-full transition-[transform,opacity,background-color,border-color,color] ${isDone ? "bg-green-400" : isCurrent ? "bg-blue-400" : "bg-[#30363d]"}`} />
+                    <div className={`w-full h-1 rounded-full transition-[transform,opacity,background-color,border-color,color] ${isDone ? "bg-green-400" : isCurrent ? "bg-accent-blue" : "bg-[#30363d]"}`} />
                     <span className={`text-[8px] ${isCurrent ? "text-[#e6edf3] font-semibold" : "text-[#8b949e] truncate overflow-hidden"}`}>{L4(lang, { ko: meta.ko, en: meta.en, ja: meta.ja, zh: meta.zh }).slice(0, 4)}</span>
                   </div>
                 );
@@ -478,7 +478,7 @@ export function AutopilotPanel({ code, language, fileName, onComplete, onClose }
                   <div className="px-2 pb-2 space-y-1">
                     {result.files.map((f, i) => (
                       <div key={i} className="flex items-center gap-2 text-[10px] px-2 py-1 rounded bg-[#0d1117]">
-                        <span className={`px-1 py-0.5 rounded text-[8px] font-bold ${f.isNew ? "bg-green-500/15 text-green-400" : "bg-blue-500/15 text-blue-400"}`}>
+                        <span className={`px-1 py-0.5 rounded text-[8px] font-bold ${f.isNew ? "bg-green-500/15 text-green-400" : "bg-accent-blue/15 text-accent-blue"}`}>
                           {f.isNew ? "NEW" : "MOD"}
                         </span>
                         <span className="text-[#e6edf3] font-mono truncate">{f.path}</span>

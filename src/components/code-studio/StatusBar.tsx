@@ -42,13 +42,13 @@ export type { StatusBarProps };
 function getScoreBadgeClasses(score: number): string {
   if (score >= 80) return "bg-green-500/30 text-green-300";
   if (score >= 50) return "bg-accent-amber/30 text-yellow-300";
-  return "bg-red-500/30 text-red-300";
+  return "bg-accent-red/30 text-accent-red";
 }
 
 function getScoreIcon(score: number) {
   if (score >= 80) return <CheckCircle size={10} className="text-green-300" />;
   if (score >= 50) return <AlertTriangle size={10} className="text-yellow-300" />;
-  return <XCircle size={10} className="text-red-300" />;
+  return <XCircle size={10} className="text-accent-red" />;
 }
 
 function computeFileSize(content: string): string {
@@ -141,7 +141,7 @@ export function StatusBar({
             <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${
               verificationScore >= 77 ? 'bg-green-500/15 text-green-300' :
               verificationScore >= 60 ? 'bg-amber-500/15 text-amber-300' :
-              'bg-red-500/15 text-red-300'
+              'bg-accent-red/15 text-accent-red'
             }`}>
               {verificationScore}/100
             </div>

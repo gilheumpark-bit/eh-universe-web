@@ -156,7 +156,7 @@ const PLOT_PRESETS: Record<PlotType, { ko: string; en: string; segments: Omit<Pl
 
 /** Genre visual style: emoji + Tailwind color classes per genre */
 const GENRE_VISUAL: Record<string, { emoji: string; bg: string; border: string; text: string }> = {
-  thriller:  { emoji: "🔪", bg: "bg-red-500/10",    border: "border-red-400/40",    text: "text-red-400" },
+  thriller:  { emoji: "🔪", bg: "bg-accent-red/10",    border: "border-accent-red/40",    text: "text-accent-red" },
   romance:   { emoji: "💕", bg: "bg-pink-500/10",   border: "border-pink-400/40",   text: "text-pink-400" },
   action:    { emoji: "⚔️", bg: "bg-orange-500/10", border: "border-orange-400/40", text: "text-orange-400" },
   mystery:   { emoji: "🔍", bg: "bg-indigo-500/10", border: "border-indigo-400/40", text: "text-indigo-400" },
@@ -923,7 +923,7 @@ export default function SceneSheet({
               </div>
               {hooks.map((h, i) => (
                 <div key={h.id} className="flex items-center gap-2 mt-1.5 border border-border rounded px-2.5 py-1.5 bg-bg-primary">
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${h.position === "opening" ? "bg-blue-500/10 text-blue-400" : h.position === "ending" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}>{h.position}</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${h.position === "opening" ? "bg-accent-blue/10 text-accent-blue" : h.position === "ending" ? "bg-accent-red/10 text-accent-red" : "bg-amber-500/10 text-amber-400"}`}>{h.position}</span>
                   <select value={h.hookType} onChange={e => setHooks(prev => prev.map((hh, ii) => ii === i ? { ...hh, hookType: e.target.value } : hh))}
                     className="bg-bg-secondary border border-border rounded px-1.5 py-1 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-h-[44px]">
                     {HOOK_TYPES.map(ht => <option key={ht.id} value={ht.id}>{L4(lang, ht)}</option>)}

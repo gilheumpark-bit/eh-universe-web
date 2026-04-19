@@ -54,7 +54,7 @@ function ToggleRow({ label, description, checked, onChange, icon }: ToggleRowPro
       </div>
       <div
         className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${
-          checked ? "bg-blue-600 justify-end" : "bg-bg-tertiary justify-start"
+          checked ? "bg-accent-blue justify-end" : "bg-bg-tertiary justify-start"
         }`}
       >
         <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1" />

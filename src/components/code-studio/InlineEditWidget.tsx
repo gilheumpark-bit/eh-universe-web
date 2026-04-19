@@ -129,7 +129,7 @@ export function InlineEditWidget({ selectedText, fullCode, language: _language, 
         </div>
       )}
       <div className="flex items-center justify-between text-[9px] text-white/50 mb-1 px-1">
-        <span>선택{isMultiLine ? ` (${selectionLineCount}줄)` : ""}: <span className="text-red-400 line-through">{selectedText.slice(0, 80)}{selectedText.length > 80 ? "..." : ""}</span></span>
+        <span>선택{isMultiLine ? ` (${selectionLineCount}줄)` : ""}: <span className="text-accent-red line-through">{selectedText.slice(0, 80)}{selectedText.length > 80 ? "..." : ""}</span></span>
         <span className="flex items-center gap-2">
           <span>~{contextSize} tokens</span>
           {canUndo && onUndo && (
@@ -141,7 +141,7 @@ export function InlineEditWidget({ selectedText, fullCode, language: _language, 
         <div className="mb-2">
           <pre ref={previewRef} className="text-[10px] font-mono bg-[#0a0e17] p-2 rounded max-h-32 overflow-y-auto whitespace-pre-wrap">
             {diffLines.map((line, i) => (
-              <div key={i} className={line.type === "add" ? "text-green-400 bg-green-500/10" : line.type === "remove" ? "text-red-400 bg-red-500/10 line-through" : "text-white/60"}>
+              <div key={i} className={line.type === "add" ? "text-green-400 bg-green-500/10" : line.type === "remove" ? "text-accent-red bg-accent-red/10 line-through" : "text-white/60"}>
                 {line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  "}{line.text}
               </div>
             ))}
@@ -154,11 +154,11 @@ export function InlineEditWidget({ selectedText, fullCode, language: _language, 
         </div>
       )}
       {error && (
-        <div className="mb-2 px-2 py-1 text-[10px] text-red-400 bg-red-500/10 rounded">{error}</div>
+        <div className="mb-2 px-2 py-1 text-[10px] text-accent-red bg-accent-red/10 rounded">{error}</div>
       )}
       {preview && !loading && (
         <div className="flex items-center justify-end gap-2">
-          <button onClick={onCancel} className="flex items-center gap-1 px-2 py-1 text-[10px] text-white/60 hover:text-red-400"><X size={10} /> 거절</button>
+          <button onClick={onCancel} className="flex items-center gap-1 px-2 py-1 text-[10px] text-white/60 hover:text-accent-red"><X size={10} /> 거절</button>
           <button onClick={() => onApply(preview)} className="flex items-center gap-1 px-2 py-1 text-[10px] bg-green-500/20 text-green-400 rounded hover:bg-green-500/30">
             <Check size={10} /> 수락 (Enter)
           </button>

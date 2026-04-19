@@ -120,26 +120,26 @@ function ChangeCard({
         </button>
         <FileText size={14} className={fileIconColor(change.fileName)} />
         <span className="flex-1 truncate text-sm text-text-tertiary" title={change.fileName}>{change.fileName}</span>
-        <span className={`text-[10px] ${linesChanged >= 0 ? "text-green-400" : "text-red-400"}`}>
+        <span className={`text-[10px] ${linesChanged >= 0 ? "text-green-400" : "text-accent-red"}`}>
           {linesChanged >= 0 ? `+${linesChanged}` : linesChanged} {L4(lang, { ko: "줄", en: "lines", ja: "行", zh: "行"})}
         </span>
         {change.status === "pending" && (
           <div className="flex items-center gap-1">
             {onPreview && (
-              <button onClick={onPreview} className="p-1 text-gray-500 hover:text-blue-400" title={L4(lang, { ko: "변경 사항 미리보기", en: "Preview diff", ja: "変更プレビュー", zh: "预览变更"})}>
+              <button onClick={onPreview} className="p-1 text-gray-500 hover:text-accent-blue" title={L4(lang, { ko: "변경 사항 미리보기", en: "Preview diff", ja: "変更プレビュー", zh: "预览变更"})}>
                 <Eye size={14} />
               </button>
             )}
             <button onClick={onAccept} className="p-1 text-gray-500 hover:text-green-400" title={L4(lang, { ko: "수락", en: "Accept", ja: "承認", zh: "接受"})}>
               <Check size={14} />
             </button>
-            <button onClick={onReject} className="p-1 text-gray-500 hover:text-red-400" title={L4(lang, { ko: "거절", en: "Reject", ja: "拒否", zh: "拒绝"})}>
+            <button onClick={onReject} className="p-1 text-gray-500 hover:text-accent-red" title={L4(lang, { ko: "거절", en: "Reject", ja: "拒否", zh: "拒绝"})}>
               <X size={14} />
             </button>
           </div>
         )}
         {change.status === "accepted" && <Check size={14} className="text-green-400" />}
-        {change.status === "rejected" && <X size={14} className="text-red-400" />}
+        {change.status === "rejected" && <X size={14} className="text-accent-red" />}
       </div>
       {expanded && (
         <div className="border-t border-white/5 px-3 py-2">
@@ -219,14 +219,14 @@ export default function ComposerPanel({
           onChange={(e) => setInstruction(e.target.value)}
           rows={3}
           placeholder={L4(lang, { ko: "이 파일들에 적용할 변경 사항을 설명해주세요...", en: "Describe the changes you want across these files...", ja: "これらのファイルに適用する変更を説明してください...", zh: "请描述要应用到这些文件的更改..."})}
-          className="w-full resize-none rounded border border-white/10 bg-bg-primary px-3 py-2 text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500/50 placeholder:text-white/50"
+          className="w-full resize-none rounded border border-white/10 bg-bg-primary px-3 py-2 text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/50 placeholder:text-white/50"
         />
         <div className="mt-2 flex items-center justify-between">
           <span className="text-[10px] text-gray-600">{selectedIds.size}{L4(lang, { ko: "개 파일 선택됨", en: " file(s) selected", ja: "ファイル選択済み", zh: "个文件已选中"})}</span>
           <button
             onClick={handleCompose}
             disabled={composing || selectedIds.size === 0 || !instruction.trim()}
-            className="flex items-center gap-1 rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 rounded bg-accent-blue px-3 py-1 text-xs text-white hover:bg-accent-blue disabled:opacity-50 transition-colors"
           >
             {composing ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
             {L4(lang, { ko: "작성", en: "Compose", ja: "作成", zh: "编排"})}

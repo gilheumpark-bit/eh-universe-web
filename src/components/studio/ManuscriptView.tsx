@@ -536,7 +536,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         <button
                           onClick={() => setDiffEp(diffEp === m.episode ? null : m.episode)}
                           className={`p-1.5 rounded transition-colors ${
-                            diffEp === m.episode ? 'bg-blue-600/20 text-blue-400' : 'bg-bg-tertiary/50 text-text-tertiary hover:text-blue-400'
+                            diffEp === m.episode ? 'bg-accent-blue/20 text-accent-blue' : 'bg-bg-tertiary/50 text-text-tertiary hover:text-accent-blue'
                           }`}
                           title={t('manuscript.aiVsCurrent')}
                         >
@@ -562,14 +562,14 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         const adds = diff.filter(d => d.type === 'add').length;
                         const removes = diff.filter(d => d.type === 'remove').length;
                         return (
-                          <div className="mb-4 border border-blue-500/20 rounded-xl overflow-hidden">
-                            <div className="px-4 py-2 bg-blue-600/10 flex items-center justify-between">
-                              <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-mono">
+                          <div className="mb-4 border border-accent-blue/20 rounded-xl overflow-hidden">
+                            <div className="px-4 py-2 bg-accent-blue/10 flex items-center justify-between">
+                              <span className="text-[9px] font-bold text-accent-blue uppercase tracking-widest font-mono">
                                 {t('manuscript.aiVsCurrent')}
                               </span>
                               <span className="text-[9px] font-mono">
                                 <span className="text-green-400">+{adds}</span>{' '}
-                                <span className="text-red-400">-{removes}</span>
+                                <span className="text-accent-red">-{removes}</span>
                               </span>
                             </div>
                             <div className="p-3 bg-bg-primary max-h-60 overflow-y-auto text-[11px] font-mono leading-relaxed custom-scrollbar">
@@ -577,7 +577,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                               {(diff.length > 500 ? diff.slice(0, 500) : diff).map((line, i) => (
                                 <div key={i} className={`whitespace-pre-wrap ${
                                   line.type === 'add' ? 'text-green-400/80 bg-green-900/10' :
-                                  line.type === 'remove' ? 'text-red-400/60 bg-red-900/10 line-through' : 'text-text-tertiary'
+                                  line.type === 'remove' ? 'text-accent-red/60 bg-accent-red/10 line-through' : 'text-text-tertiary'
                                 }`}>
                                   <span className="inline-block w-4 text-text-tertiary select-none">
                                     {line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '}

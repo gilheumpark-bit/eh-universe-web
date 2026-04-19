@@ -93,7 +93,7 @@ function ThreadList({
             <span className="flex-1 truncate">{t.title}</span>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
-              className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-accent-red transition-opacity"
             >
               <X size={10} />
             </button>
@@ -162,7 +162,7 @@ function ChatArea({
             <div
               className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                 m.role === "user"
-                  ? "bg-blue-600/20 text-blue-100"
+                  ? "bg-accent-blue/20 text-accent-blue"
                   : "bg-white/5 text-gray-300"
               }`}
             >
@@ -186,12 +186,12 @@ function ChatArea({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSubmit()}
             placeholder={t.aiMsgPlaceholder}
-            className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500/50 placeholder:text-white/50"
+            className="flex-1 rounded border border-white/10 bg-[#12121a] px-3 py-1.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/50 placeholder:text-white/50"
           />
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || sending}
-            className="rounded bg-blue-600 p-1.5 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+            className="rounded bg-accent-blue p-1.5 text-white hover:bg-accent-blue disabled:opacity-50 transition-colors"
           >
             <Send size={14} />
           </button>

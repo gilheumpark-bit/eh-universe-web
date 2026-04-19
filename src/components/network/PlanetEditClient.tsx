@@ -117,7 +117,7 @@ export function PlanetEditClient({ planetId }: { planetId: string }) {
     return (
       <div className="min-h-dvh flex items-center justify-center p-8">
         <div className="text-center">
-          <p className="text-red-400 mb-4">{error || "행성을 찾을 수 없습니다."}</p>
+          <p className="text-accent-red mb-4">{error || "행성을 찾을 수 없습니다."}</p>
           <button onClick={() => router.push("/network")} className="premium-button">네트워크로</button>
         </div>
       </div>
@@ -219,7 +219,7 @@ export function PlanetEditClient({ planetId }: { planetId: string }) {
 
           {/* error */}
           {error && (
-            <div className="rounded-lg bg-red-500/5 border border-red-500/20 text-red-400 text-[13px] px-3 py-2">
+            <div className="rounded-lg bg-accent-red/5 border border-accent-red/20 text-accent-red text-[13px] px-3 py-2">
               {error}
             </div>
           )}

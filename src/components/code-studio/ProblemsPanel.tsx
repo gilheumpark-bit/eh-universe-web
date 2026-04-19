@@ -34,11 +34,11 @@ export type { ProblemsPanelProps, ProblemFinding };
 function severityIcon(severity: ProblemFinding["severity"]) {
   switch (severity) {
     case "critical":
-      return <XCircle size={10} className="text-red-400 flex-shrink-0" />;
+      return <XCircle size={10} className="text-accent-red flex-shrink-0" />;
     case "major":
       return <AlertTriangle size={10} className="text-accent-amber flex-shrink-0" />;
     case "minor":
-      return <Info size={10} className="text-blue-400 flex-shrink-0" />;
+      return <Info size={10} className="text-accent-blue flex-shrink-0" />;
     case "info":
       return <CheckCircle2 size={10} className="text-green-400 flex-shrink-0" />;
   }
@@ -80,7 +80,7 @@ export function ProblemsPanel({ findings }: ProblemsPanelProps) {
       <div className="flex items-center gap-3 px-3 py-1.5 border-b border-white/[0.08] text-[10px]">
         <span className="font-semibold text-xs text-text-primary">Problems</span>
         {counts.critical > 0 && (
-          <span className="flex items-center gap-0.5 text-red-400">
+          <span className="flex items-center gap-0.5 text-accent-red">
             <XCircle size={10} /> {counts.critical}
           </span>
         )}
@@ -90,7 +90,7 @@ export function ProblemsPanel({ findings }: ProblemsPanelProps) {
           </span>
         )}
         {counts.minor > 0 && (
-          <span className="flex items-center gap-0.5 text-blue-400">
+          <span className="flex items-center gap-0.5 text-accent-blue">
             <Info size={10} /> {counts.minor}
           </span>
         )}

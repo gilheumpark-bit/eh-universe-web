@@ -194,7 +194,7 @@ export function AuditPanel({ files, onRunAudit, auditResult, isRunning, progress
                 </span>
               </div>
               {auditResult.hardGateFail && (
-                <span className="px-2 py-0.5 text-[9px] font-mono bg-red-500/20 text-red-400 rounded">
+                <span className="px-2 py-0.5 text-[9px] font-mono bg-accent-red/20 text-accent-red rounded">
                   HARD GATE FAIL
                 </span>
               )}

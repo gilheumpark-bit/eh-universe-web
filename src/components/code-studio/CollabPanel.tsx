@@ -269,7 +269,7 @@ export default function CollabPanel({ onClose }: Props) {
       <div className="p-3 border-b border-white/8">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[11px] text-white/50">{t.collabRoomIdLabel}</span>
-          <button onClick={leaveRoom} className="flex items-center gap-1 text-[10px] text-white/50 hover:text-red-400 border border-white/10 rounded px-2 py-0.5">
+          <button onClick={leaveRoom} className="flex items-center gap-1 text-[10px] text-white/50 hover:text-accent-red border border-white/10 rounded px-2 py-0.5">
             <LogOut size={12} /> 나가기
           </button>
         </div>

@@ -46,7 +46,7 @@ export default function WelcomeTab({
 
   const actions = [
     { icon: <Plus size={16} />, label: t.welcomeActionNewFile, onClick: onNewFile, accent: "text-green-400" },
-    { icon: <FolderOpen size={16} />, label: t.welcomeActionOpenFolder, onClick: onOpenFolder, accent: "text-blue-400" },
+    { icon: <FolderOpen size={16} />, label: t.welcomeActionOpenFolder, onClick: onOpenFolder, accent: "text-accent-blue" },
     { icon: <GitBranch size={16} />, label: t.welcomeActionCloneRepo, onClick: onCloneRepo, accent: "text-amber-400" },
   ].filter((a) => a.onClick);
 
@@ -94,7 +94,7 @@ export default function WelcomeTab({
                 onClick={() => onOpenFile(f.fileId)}
                 className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-sm text-text-tertiary hover:bg-white/5 transition-colors"
               >
-                <FileText size={14} className="text-blue-400" />
+                <FileText size={14} className="text-accent-blue" />
                 <span className="truncate">{f.fileName}</span>
                 <span className="ml-auto text-xs text-text-quaternary">{formatTime(f.timestamp)}</span>
               </button>

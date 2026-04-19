@@ -288,7 +288,7 @@ export function ReferencePanel() {
                   <button
                     type="button"
                     onClick={() => handleRemoveRef(ref.id)}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-red-400 transition-[opacity,background-color]"
+                    className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent-red/20 text-accent-red transition-[opacity,background-color]"
                     title={langKo ? '삭제' : 'Delete'}
                     aria-label={langKo ? '참고 링크 삭제' : 'Delete reference'}
                   >

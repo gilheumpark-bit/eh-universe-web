@@ -317,7 +317,7 @@ function EmotionArcChart({ messages, language, genre }: Props) {
           {L4(language, { ko: '감정 강도', en: 'Emotion Score', ja: '感情強度', zh: '情感强度' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
-          <span className="w-4 h-0.5 bg-red-500 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #ef4444 0 3px, transparent 3px 6px)' }} />
+          <span className="w-4 h-0.5 bg-accent-red inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #ef4444 0 3px, transparent 3px 6px)' }} />
           {L4(language, { ko: '긴장감', en: 'Tension', ja: '緊張感', zh: '紧张感' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
@@ -328,8 +328,8 @@ function EmotionArcChart({ messages, language, genre }: Props) {
           <span className="w-4 h-0.5 bg-gray-400 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #9ca3af 0 3px, transparent 3px 6px)' }} />
           {L4(language, { ko: '이상적 아크', en: 'Ideal Arc', ja: '理想アーク', zh: '理想弧线' })}
         </span>
-        <span className="text-red-400">▲ {L4(language, { ko: '피크', en: 'Peak', ja: 'ピーク', zh: '峰值' })}</span>
-        <span className="text-blue-400">▼ {L4(language, { ko: '밸리', en: 'Valley', ja: '谷', zh: '谷值' })}</span>
+        <span className="text-accent-red">▲ {L4(language, { ko: '피크', en: 'Peak', ja: 'ピーク', zh: '峰值' })}</span>
+        <span className="text-accent-blue">▼ {L4(language, { ko: '밸리', en: 'Valley', ja: '谷', zh: '谷值' })}</span>
       </div>
 
       {/* 감정 흐름 진단 */}
@@ -349,7 +349,7 @@ function EmotionArcChart({ messages, language, genre }: Props) {
                 })}
               </span>
             ) : variance > 35 ? (
-              <span className="text-blue-400">
+              <span className="text-accent-blue">
                 {L4(language, {
                   ko: '💡 감정 기복이 큽니다. 독자 안정 구간(쿨링 비트)을 확인해보세요.',
                   en: '💡 High emotional swings. Check for reader cooling beats.',

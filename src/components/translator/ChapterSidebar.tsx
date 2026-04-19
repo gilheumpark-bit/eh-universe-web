@@ -95,7 +95,7 @@ export function ChapterSidebar({
               if (e.key === 'Enter' || e.key === ' ') onOpenChapter(idx);
             }}
             onClick={() => onOpenChapter(idx)}
-            className={`chapter-item group flex cursor-pointer items-center justify-between rounded-xl border p-2.5 transition-[transform,opacity,background-color,border-color,color] ${activeChapterIndex === idx ? 'chapter-item-active' : ''} ${ch.error ? 'ring-1 ring-red-500/50' : ''}`}
+            className={`chapter-item group flex cursor-pointer items-center justify-between rounded-xl border p-2.5 transition-[transform,opacity,background-color,border-color,color] ${activeChapterIndex === idx ? 'chapter-item-active' : ''} ${ch.error ? 'ring-1 ring-accent-red/50' : ''}`}
           >
             <div className="flex items-center gap-2 overflow-hidden">
               <span
@@ -104,12 +104,12 @@ export function ChapterSidebar({
                 {ch.isDone ? '✓' : idx + 1}
               </span>
               <span className="truncate text-xs font-medium">{ch.name}</span>
-              {ch.error && <span className="text-[8px] text-red-500 shrink-0">!</span>}
+              {ch.error && <span className="text-[8px] text-accent-red shrink-0">!</span>}
             </div>
             <button
               type="button"
               onClick={(e) => onRemoveChapter(e, idx)}
-              className="theme-text-secondary p-1 text-[10px] opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
+              className="theme-text-secondary p-1 text-[10px] opacity-0 transition-opacity group-hover:opacity-100 hover:text-accent-red"
             >
               ✕
             </button>

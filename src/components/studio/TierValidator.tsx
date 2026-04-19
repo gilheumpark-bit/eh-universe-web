@@ -107,7 +107,7 @@ export const WarningBadge: React.FC<WarningBadgeProps> = ({ warnings, language, 
   if (compact) {
     return (
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-        tier1.length > 0 ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'
+        tier1.length > 0 ? 'bg-accent-red/10 text-accent-red' : 'bg-amber-500/10 text-amber-400'
       }`}>
         <AlertTriangle className="w-2.5 h-2.5" />
         {warnings.length}
@@ -118,13 +118,13 @@ export const WarningBadge: React.FC<WarningBadgeProps> = ({ warnings, language, 
   return (
     <div className="space-y-1.5">
       {tier1.length > 0 && (
-        <div className="flex items-start gap-2 p-2.5 bg-red-500/5 border border-red-500/10 rounded-xl">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 p-2.5 bg-accent-red/5 border border-accent-red/10 rounded-xl">
+          <AlertTriangle className="w-3.5 h-3.5 text-accent-red shrink-0 mt-0.5" />
           <div>
-            <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">
+            <span className="text-[9px] font-black text-accent-red uppercase tracking-wider">
               {t('tierValidator.skeletonIncomplete')}
             </span>
-            <p className="text-[9px] text-red-300/70 mt-0.5">
+            <p className="text-[9px] text-accent-red/70 mt-0.5">
               {tier1.map(w => w.label).join(', ')}
             </p>
           </div>
@@ -158,8 +158,8 @@ interface CompletionBarProps {
 
 export const CompletionBar: React.FC<CompletionBarProps> = ({ score, language }) => {
   const t = createT(language);
-  const color = score >= 80 ? 'bg-green-500' : score >= 50 ? 'bg-amber-500' : 'bg-red-500';
-  const textColor = score >= 80 ? 'text-green-400' : score >= 50 ? 'text-amber-400' : 'text-red-400';
+  const color = score >= 80 ? 'bg-green-500' : score >= 50 ? 'bg-amber-500' : 'bg-accent-red';
+  const textColor = score >= 80 ? 'text-green-400' : score >= 50 ? 'text-amber-400' : 'text-accent-red';
 
   return (
     <div className="flex items-center gap-2">

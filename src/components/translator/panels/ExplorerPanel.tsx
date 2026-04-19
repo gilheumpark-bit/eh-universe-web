@@ -198,7 +198,7 @@ export function ExplorerPanel() {
                 
                 <button
                   onClick={(e) => handleChapterRemove(e, ch.originalIndex)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-red-400 transition-[opacity,background-color,border-color,color] shrink-0"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent-red/20 text-accent-red transition-[opacity,background-color,border-color,color] shrink-0"
                   title="삭제"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

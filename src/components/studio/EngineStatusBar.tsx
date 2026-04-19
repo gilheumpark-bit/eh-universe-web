@@ -123,7 +123,7 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
               </div>
               <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-amber-500' : 'bg-green-500'}`}
+                  className={`h-full rounded-full ${i === 0 ? 'bg-accent-blue' : i === 1 ? 'bg-amber-500' : 'bg-green-500'}`}
                   style={{ width: `${maxTokens > 0 ? Math.min(100, (tier.tokens / maxTokens) * 100) : 0}%` }}
                 />
               </div>
@@ -131,7 +131,7 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
           ))}
           <div className="flex justify-between text-[9px] pt-1 border-t border-border/50">
             <span className="text-text-tertiary font-bold">{L4(language, { ko: '합계', en: 'Total', ja: 'Total', zh: 'Total' })}</span>
-            <span className={`font-mono font-bold ${usagePct > 90 ? 'text-red-400' : usagePct > 70 ? 'text-amber-400' : 'text-green-400'}`}>
+            <span className={`font-mono font-bold ${usagePct > 90 ? 'text-accent-red' : usagePct > 70 ? 'text-amber-400' : 'text-green-400'}`}>
               {budget.total} / {maxTokens} ({usagePct}%)
             </span>
           </div>
@@ -159,7 +159,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
     <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest overflow-x-auto custom-scrollbar">
       {/* Act Position */}
       <div title={tipAct} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
-        <Activity className="w-3 h-3 text-blue-500" />
+        <Activity className="w-3 h-3 text-accent-blue" />
         <span className="text-text-tertiary">{t.act} {actInfo.act}</span>
         <span className="text-text-tertiary">|</span>
         <span className="text-text-secondary">{language === 'KO' ? actInfo.name : actInfo.nameEN}</span>
@@ -169,7 +169,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
       <div title={tipTension} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
         <Zap className="w-3 h-3 text-amber-500" />
         <span className="text-text-tertiary">{t.tensionTarget}</span>
-        <span className={`${targetTension > 70 ? 'text-red-400' : targetTension > 40 ? 'text-amber-400' : 'text-green-400'}`}>
+        <span className={`${targetTension > 70 ? 'text-accent-red' : targetTension > 40 ? 'text-amber-400' : 'text-green-400'}`}>
           {targetTension}%
         </span>
       </div>
@@ -185,11 +185,11 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
         <>
           <div title={tipGrade} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
             <span className="text-text-tertiary">{t.grade}</span>
-            <span className="text-blue-400">{report.grade}</span>
+            <span className="text-accent-blue">{report.grade}</span>
           </div>
           <div title={tipVol} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
             <span className="text-text-tertiary">{language === 'KO' ? '분량' : 'VOL'}</span>
-            <span className={`${report.eosScore >= 40 ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={`${report.eosScore >= 40 ? 'text-green-400' : 'text-accent-red'}`}>
               {report.eosScore}
             </span>
           </div>
@@ -201,7 +201,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
             return (
               <div title={tipChars} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
                 <span className="text-text-tertiary">{language === 'KO' ? '글자' : 'Chars'}</span>
-                <span className={inRange ? 'text-green-400' : chars < charRange.min ? 'text-amber-400' : 'text-red-400'}>
+                <span className={inRange ? 'text-green-400' : chars < charRange.min ? 'text-amber-400' : 'text-accent-red'}>
                   {chars.toLocaleString()}
                 </span>
                 <span className="text-text-tertiary">/ {charRange.min.toLocaleString()}~{charRange.max.toLocaleString()}</span>
@@ -218,9 +218,9 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
       <ContextBudgetBadge config={config} language={language} />
 
       {isGenerating && (
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-600/10 border border-blue-500/20 rounded-lg whitespace-nowrap">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping" />
-          <span className="text-blue-400">{t.generating}</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-accent-blue/10 border border-accent-blue/20 rounded-lg whitespace-nowrap">
+          <div className="w-2 h-2 bg-accent-blue rounded-full animate-ping" />
+          <span className="text-accent-blue">{t.generating}</span>
         </div>
       )}
     </div>

@@ -416,7 +416,7 @@ export function GlossaryManagerDialog({
                     <button
                       type="button"
                       onClick={() => handleDelete(realIndex)}
-                      className="p-1 text-text-tertiary hover:text-red-400 transition opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
+                      className="p-1 text-text-tertiary hover:text-accent-red transition opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                       aria-label={L.deleteTitle}
                       title={L.deleteTitle}
                     >

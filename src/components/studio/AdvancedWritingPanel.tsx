@@ -254,7 +254,7 @@ const ContextSummary: React.FC<{ config: StoryConfig; language: AppLanguage }> =
           </span>
         )}
         {hasScene && (
-          <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-[10px] text-blue-400 font-bold">
+          <span className="px-1.5 py-0.5 bg-accent-blue/10 border border-accent-blue/20 rounded text-[10px] text-accent-blue font-bold">
             🎬 {t('advancedWriting.scene')}
           </span>
         )}
@@ -511,7 +511,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
               aria-pressed={!!s.locks[lk.key]}
               className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-[transform,opacity,background-color,border-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                 s.locks[lk.key]
-                  ? 'bg-red-500/15 text-red-400 border border-red-500/20'
+                  ? 'bg-accent-red/15 text-accent-red border border-accent-red/20'
                   : 'bg-bg-primary text-text-tertiary border border-border'
               }`}>
               {s.locks[lk.key] ? '🔒' : '🔓'} {t(lk.tKey)}
@@ -550,7 +550,7 @@ const AdvancedWritingPanel: React.FC<AdvancedWritingPanelProps> = ({
           />
         </div>
         <div>
-          <span className="text-[9px] text-red-400 font-bold">{t('advancedWriting.exclude')}</span>
+          <span className="text-[9px] text-accent-red font-bold">{t('advancedWriting.exclude')}</span>
           <textarea
             value={s.excludes}
             onChange={e => update('excludes', e.target.value)}

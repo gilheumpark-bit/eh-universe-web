@@ -137,8 +137,8 @@ export default function StudioOverlayManager({
       />
       {alertToast && (
         <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[var(--z-modal)] px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 max-w-md text-sm ${
-          alertToast.variant === 'error' ? 'bg-red-900/95 border border-red-600 text-red-100'
-          : alertToast.variant === 'info' ? 'bg-blue-900/95 border border-blue-600 text-blue-100'
+          alertToast.variant === 'error' ? 'bg-accent-red/95 border border-accent-red text-accent-red'
+          : alertToast.variant === 'info' ? 'bg-accent-blue/95 border border-accent-blue text-accent-blue'
           : 'bg-amber-900/95 border border-amber-600 text-amber-100'
         }`}>
           <span>{alertToast.variant === 'error' ? '\u274C' : alertToast.variant === 'info' ? '\u2139\uFE0F' : '\u26A0\uFE0F'} {alertToast.message}</span>

@@ -333,7 +333,7 @@ export function MultiLangBatchPanel() {
                   <div className="flex items-center gap-1 shrink-0">
                     {state.status === 'running' && <Loader2 className="w-3.5 h-3.5 text-accent-amber animate-spin" />}
                     {state.status === 'done' && <Check className="w-3.5 h-3.5 text-accent-green" />}
-                    {state.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-400" />}
+                    {state.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-accent-red" />}
                     {state.status === 'done' && state.text && (
                       <>
                         <button
@@ -375,7 +375,7 @@ export function MultiLangBatchPanel() {
                 )}
                 {/* Error */}
                 {state.status === 'error' && state.error && (
-                  <div className="mt-2 text-[10px] text-red-400 bg-red-500/5 rounded px-2 py-1 border border-red-500/20">
+                  <div className="mt-2 text-[10px] text-accent-red bg-accent-red/5 rounded px-2 py-1 border border-accent-red/20">
                     {state.error}
                   </div>
                 )}
@@ -401,7 +401,7 @@ export function MultiLangBatchPanel() {
             <button
               type="button"
               onClick={handleStop}
-              className="w-full min-h-[40px] rounded-md bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 text-[12px] font-medium transition-colors flex items-center justify-center gap-1.5"
+              className="w-full min-h-[40px] rounded-md bg-accent-red/15 hover:bg-accent-red/25 text-accent-red border border-accent-red/30 text-[12px] font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               <Square className="w-3.5 h-3.5" />
               중지

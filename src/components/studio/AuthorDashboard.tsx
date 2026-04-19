@@ -80,8 +80,8 @@ function MetricBar({ value, max, color, label }: { value: number; max: number; c
 // ============================================================
 
 const GRADE_COLORS: Record<string, string> = {
-  S: 'text-accent-amber', A: 'text-green-400', B: 'text-blue-400',
-  C: 'text-purple-400', D: 'text-orange-400', F: 'text-red-400',
+  S: 'text-accent-amber', A: 'text-green-400', B: 'text-accent-blue',
+  C: 'text-purple-400', D: 'text-orange-400', F: 'text-accent-red',
 };
 
 type DashSubTab = 'overview' | 'compare';
@@ -176,8 +176,8 @@ function AuthorDashboard({ messages, language }: Props) {
         <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono mb-2">
           {language === 'KO' ? '평균 메트릭' : 'Average Metrics'}
         </h3>
-        <MetricBar value={avg.tension} max={100} color="bg-red-500" label={L4(language, { ko: "긴장감", en: "Tension", ja: "緊張感", zh: "紧张感" })} />
-        <MetricBar value={avg.pacing} max={100} color="bg-blue-500" label={L4(language, { ko: "호흡", en: "Pacing", ja: "テンポ", zh: "节奏" })} />
+        <MetricBar value={avg.tension} max={100} color="bg-accent-red" label={L4(language, { ko: "긴장감", en: "Tension", ja: "緊張感", zh: "紧张感" })} />
+        <MetricBar value={avg.pacing} max={100} color="bg-accent-blue" label={L4(language, { ko: "호흡", en: "Pacing", ja: "テンポ", zh: "节奏" })} />
         <MetricBar value={avg.immersion} max={100} color="bg-green-500" label={L4(language, { ko: "몰입도", en: "Immerse", ja: "没入度", zh: "沉浸度" })} />
         <MetricBar value={avg.eos} max={100} color="bg-purple-500" label={L4(language, { ko: "분량", en: "Volume", ja: "分量", zh: "篇幅" })} />
       </div>
@@ -225,8 +225,8 @@ function AuthorDashboard({ messages, language }: Props) {
         )}
         <div className="flex justify-between mt-1">
           <div className="flex gap-3">
-            <span className="text-[8px] text-red-400">● Tension</span>
-            <span className="text-[8px] text-blue-400">● Pacing</span>
+            <span className="text-[8px] text-accent-red">● Tension</span>
+            <span className="text-[8px] text-accent-blue">● Pacing</span>
             <span className="text-[8px] text-green-400">● Immersion</span>
           </div>
           <span className="text-[8px] text-text-tertiary">{metrics.length} {language === 'KO' ? '챕터' : 'chapters'}</span>

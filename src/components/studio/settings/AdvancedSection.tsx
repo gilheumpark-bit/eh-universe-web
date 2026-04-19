@@ -72,7 +72,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
   return (
     <details className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden group">
       <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
-        <Zap className="w-4 h-4 text-blue-500 shrink-0" />
+        <Zap className="w-4 h-4 text-accent-blue shrink-0" />
         <span className="text-sm font-black text-text-primary flex-1">
           {L4(language, { ko: '고급', en: 'Advanced', ja: '詳細設定', zh: '高级' })}
         </span>
@@ -86,7 +86,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
             className="w-full flex items-center justify-between mb-4 group cursor-pointer"
           >
             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <Zap className="w-4 h-4 text-blue-500" /> {t('settingsEngine.engineSettings')}
+              <Zap className="w-4 h-4 text-accent-blue" /> {t('settingsEngine.engineSettings')}
             </h3>
             <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -116,7 +116,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                   <button
                     key={p}
                     onClick={() => persistPlatform(p)}
-                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-colors ${defaultPlatform === p ? 'bg-blue-600 text-text-primary' : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'}`}
+                    className={`px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-colors ${defaultPlatform === p ? 'bg-accent-blue text-text-primary' : 'bg-bg-secondary text-text-tertiary hover:text-text-primary'}`}
                   >
                     {p === 'MOBILE' ? t('settingsEngine.mobile') : t('settingsEngine.web')}
                   </button>
@@ -139,7 +139,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                 max={200}
                 value={defaultEpisodes}
                 onChange={e => persistEpisodes(parseInt(e.target.value) || 25)}
-                className="w-16 md:w-20 bg-bg-secondary border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-blue-400 focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0"
+                className="w-16 md:w-20 bg-bg-secondary border border-border rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm font-black text-center text-accent-blue focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0"
               />
             </div>
 
@@ -167,9 +167,9 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                   step="0.1"
                   value={temperature}
                   onChange={e => persistTemperature(parseFloat(e.target.value))}
-                  className="w-20 md:w-24 accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
+                  className="w-20 md:w-24 accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
-                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${temperature < 0.1 || temperature > 1.5 ? 'text-red-400' : 'text-blue-400'}`}>{temperature.toFixed(1)}</span>
+                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${temperature < 0.1 || temperature > 1.5 ? 'text-accent-red' : 'text-accent-blue'}`}>{temperature.toFixed(1)}</span>
               </div>
             </div>
 
@@ -242,7 +242,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                   onChange={e => persistNarrativeDepth(parseFloat(e.target.value))}
                   className="w-20 md:w-24 accent-purple-500 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
-                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${narrativeDepth < 0.5 || narrativeDepth > 2.0 ? 'text-red-400' : 'text-accent-purple'}`}>{narrativeDepth.toFixed(1)}</span>
+                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${narrativeDepth < 0.5 || narrativeDepth > 2.0 ? 'text-accent-red' : 'text-accent-purple'}`}>{narrativeDepth.toFixed(1)}</span>
               </div>
             </div>
 

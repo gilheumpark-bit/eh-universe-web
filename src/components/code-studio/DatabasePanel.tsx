@@ -160,7 +160,7 @@ function TableList({
               onClick={() => onSelect(t)}
               className="flex w-full items-center gap-1.5 px-3 py-1 text-xs text-text-secondary hover:bg-bg-secondary/60 hover:text-text-primary"
             >
-              <Table2 size={12} className="text-blue-400" />
+              <Table2 size={12} className="text-accent-blue" />
               {t}
             </button>
           ))}
@@ -194,7 +194,7 @@ function HistoryList({
               key={h.id}
               onClick={() => onSelect(h.query)}
               className={`flex w-full items-start gap-1.5 px-3 py-1 text-xs hover:bg-bg-secondary/60 ${
-                h.success ? "text-text-secondary" : "text-red-400"
+                h.success ? "text-text-secondary" : "text-accent-red"
               }`}
             >
               <Clock size={10} className="mt-0.5 shrink-0" />
@@ -223,7 +223,7 @@ function ResultsTable({ result }: { result: QueryResult | null }) {
   }
   if (result.error) {
     return (
-      <div className="flex items-center gap-2 p-4 text-sm text-red-400">
+      <div className="flex items-center gap-2 p-4 text-sm text-accent-red">
         <AlertTriangle size={14} />
         {result.error}
       </div>

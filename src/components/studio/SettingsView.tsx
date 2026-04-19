@@ -426,12 +426,12 @@ function SettingCard({ icon, title, description, children, onClick, danger }: Se
       onClick={onClick}
       className={`flex items-center justify-between gap-3 p-4 md:p-5 rounded-3xl border border-transparent transition-[transform,background-color,border-color,color] ${
         interactive ? 'cursor-pointer hover:bg-bg-secondary/40 hover:border-border active:scale-[0.98]' : ''
-      } ${danger ? 'hover:bg-red-500/10 hover:border-red-500/30' : ''}`}
+      } ${danger ? 'hover:bg-accent-red/10 hover:border-accent-red/30' : ''}`}
     >
       <div className="flex items-center gap-3 md:gap-4 min-w-0">
         {icon && <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">{icon}</div>}
         <div className="min-w-0">
-          <div className={`text-xs md:text-sm font-bold truncate ${danger ? 'text-red-500' : ''}`}>{title}</div>
+          <div className={`text-xs md:text-sm font-bold truncate ${danger ? 'text-accent-red' : ''}`}>{title}</div>
           {description && <div className="text-[12px] text-text-tertiary hidden sm:block">{description}</div>}
         </div>
       </div>
@@ -455,7 +455,7 @@ function Toggle({ checked, onChange, label }: ToggleProps) {
       aria-label={label}
       onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
       className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
-        checked ? 'bg-blue-600 justify-end' : 'bg-bg-tertiary justify-start'
+        checked ? 'bg-accent-blue justify-end' : 'bg-bg-tertiary justify-start'
       }`}
     >
       <span className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1" />
@@ -903,7 +903,7 @@ function WriterSettingsGroup({
       <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="md:col-span-2 ds-card-lg">
           <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-8 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-blue-500" /> {L4(language, { ko: '작가 설정', en: 'Writer Settings', ja: '作家設定', zh: '作家设置' })}
+            <Shield className="w-4 h-4 text-accent-blue" /> {L4(language, { ko: '작가 설정', en: 'Writer Settings', ja: '作家設定', zh: '作家设置' })}
           </h3>
 
           <div className="space-y-2">
@@ -918,7 +918,7 @@ function WriterSettingsGroup({
                   <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settings.notificationsDesc')}</div>
                 </div>
               </div>
-              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-blue-600 justify-end' : 'bg-bg-tertiary justify-start'}`}>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${notificationsOn ? 'bg-accent-blue justify-end' : 'bg-bg-tertiary justify-start'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
               </div>
             </div>
@@ -959,7 +959,7 @@ function WriterSettingsGroup({
                   </div>
                 </div>
               </div>
-              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${shortcutsDisabled ? 'bg-bg-tertiary justify-start' : 'bg-blue-600 justify-end'}`}>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${shortcutsDisabled ? 'bg-bg-tertiary justify-start' : 'bg-accent-blue justify-end'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
               </div>
             </div>
@@ -986,36 +986,36 @@ function WriterSettingsGroup({
                   </div>
                 </div>
               </div>
-              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${suggestionsDisabled ? 'bg-bg-tertiary justify-start' : 'bg-blue-600 justify-end'}`}>
+              <div className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 ${suggestionsDisabled ? 'bg-bg-tertiary justify-start' : 'bg-accent-blue justify-end'}`}>
                 <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1"></div>
               </div>
             </div>
 
             <div
               onClick={handleResetClick}
-              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border group active:scale-[0.98] ${confirmReset ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'hover:bg-red-500/10 border-transparent hover:border-red-500/30'}`}
+              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border group active:scale-[0.98] ${confirmReset ? 'bg-accent-red/20 border-accent-red/50 animate-pulse' : 'hover:bg-accent-red/10 border-transparent hover:border-accent-red/30'}`}
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                <div className={`p-2 md:p-3 rounded-2xl transition-colors shrink-0 ${confirmReset ? 'bg-red-500/30' : 'bg-bg-secondary group-hover:bg-red-500/20'}`}><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" /></div>
+                <div className={`p-2 md:p-3 rounded-2xl transition-colors shrink-0 ${confirmReset ? 'bg-accent-red/30' : 'bg-bg-secondary group-hover:bg-accent-red/20'}`}><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-accent-red" /></div>
                 <div className="min-w-0">
                   {confirmReset ? (
                     <>
-                      <div className="text-xs md:text-sm font-bold text-red-500 truncate">
+                      <div className="text-xs md:text-sm font-bold text-accent-red truncate">
                         {L4(language, { ko: `정말 삭제하시겠습니까? (${resetCountdown}초)`, en: `Are you sure? This cannot be undone. (${resetCountdown}s)`, ja: `本当に削除しますか？ (${resetCountdown}秒)`, zh: `确定要删除吗？ (${resetCountdown}秒)` })}
                       </div>
-                      <div className="text-[13px] text-red-400 hidden sm:block">
+                      <div className="text-[13px] text-accent-red hidden sm:block">
                         {L4(language, { ko: '한 번 더 클릭하면 모든 데이터가 삭제됩니다', en: 'Click again to permanently delete all data', ja: 'もう一度クリックすると全データが削除されます', zh: '再次点击将永久删除所有数据' })}
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="text-xs md:text-sm font-bold text-red-500 truncate">{t('settings.resetData')}</div>
+                      <div className="text-xs md:text-sm font-bold text-accent-red truncate">{t('settings.resetData')}</div>
                       <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settings.resetDataDesc')}</div>
                     </>
                   )}
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 shrink-0 ${confirmReset ? 'text-red-500' : 'text-text-tertiary group-hover:text-red-500'}`} />
+              <ChevronRight className={`w-4 h-4 shrink-0 ${confirmReset ? 'text-accent-red' : 'text-text-tertiary group-hover:text-accent-red'}`} />
             </div>
           </div>
         </div>
@@ -1049,7 +1049,7 @@ function ProfileCard({ language }: { language: AppLanguage }) {
           </div>
         </div>
         <button onClick={signOut}
-          className="w-full flex items-center justify-between px-6 py-4 bg-bg-secondary/50 border border-border rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-red-500/50 hover:text-red-400 transition-[transform,background-color,border-color,color] active:scale-[0.98]">
+          className="w-full flex items-center justify-between px-6 py-4 bg-bg-secondary/50 border border-border rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-accent-red/50 hover:text-accent-red transition-[transform,background-color,border-color,color] active:scale-[0.98]">
           {t('settings.signOut')} <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -1074,11 +1074,11 @@ function ProfileCard({ language }: { language: AppLanguage }) {
         }
         signInWithGoogle();
       }}
-        className="w-full flex items-center justify-between px-6 py-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-[transform,background-color,border-color,color] active:scale-[0.98] text-blue-400">
+        className="w-full flex items-center justify-between px-6 py-4 bg-accent-blue/10 border border-accent-blue/30 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-accent-blue/20 transition-[transform,background-color,border-color,color] active:scale-[0.98] text-accent-blue">
         {t('settings.googleSignIn')} <ChevronRight className="w-4 h-4" />
       </button>
       {error && (
-        <p className="text-red-400 text-xs px-2">{error}</p>
+        <p className="text-accent-red text-xs px-2">{error}</p>
       )}
     </div>
   );

@@ -124,7 +124,7 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
 function ActionIcon({ type }: { type: RecentAction["type"] }) {
   switch (type) {
     case "ai": return <Brain size={10} className="text-amber-400 shrink-0" />;
-    case "edit": return <FileText size={10} className="text-blue-400 shrink-0" />;
+    case "edit": return <FileText size={10} className="text-accent-blue shrink-0" />;
     case "pipeline": return <Zap size={10} className="text-accent-amber shrink-0" />;
     default: return <Activity size={10} className="text-text-tertiary shrink-0" />;
   }
@@ -200,7 +200,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className="flex items-center gap-2 text-xs font-semibold text-text-primary">
-          <Activity size={14} className="text-blue-400" /> Progress Dashboard
+          <Activity size={14} className="text-accent-blue" /> Progress Dashboard
         </span>
         {onClose && (
           <button onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title="Close" aria-label="닫기"><X size={14} /></button>
@@ -419,7 +419,7 @@ export function ProgressDashboard({ teams, pipelineScore, pipelineStatus, onClos
                 </div>
               )}
               {verificationResult.hardGateFailures.length > 0 && (
-                <div className="flex items-center gap-1 text-[9px] text-red-400">
+                <div className="flex items-center gap-1 text-[9px] text-accent-red">
                   <AlertTriangle size={9} /> Hard gate: {verificationResult.hardGateFailures.join(", ")}
                 </div>
               )}

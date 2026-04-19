@@ -70,10 +70,10 @@ function ProviderCard({
 // ============================================================
 
 const CATEGORY_COLORS: Record<AIFeature["category"], string> = {
-  generation: "text-blue-400",
+  generation: "text-accent-blue",
   analysis: "text-green-400",
   automation: "text-amber-400",
-  security: "text-red-400",
+  security: "text-accent-red",
 };
 
 function FeatureCard({

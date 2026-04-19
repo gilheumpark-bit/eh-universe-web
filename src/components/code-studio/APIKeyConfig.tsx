@@ -188,7 +188,7 @@ export function APIKeyConfig({ onClose }: Props) {
                     {slot.enabled ? <ToggleRight size={18} className="text-green-400" /> : <ToggleLeft size={18} />}
                   </button>
                   <button onClick={() => handleStartEdit(slot)} className="p-1 rounded hover:bg-white/10 text-white/50"><Pencil size={14} /></button>
-                  <button onClick={() => handleDelete(slot.id)} aria-label="키 슬롯 삭제" className="p-1 rounded hover:bg-white/10 text-red-400"><Trash2 size={14} /></button>
+                  <button onClick={() => handleDelete(slot.id)} aria-label="키 슬롯 삭제" className="p-1 rounded hover:bg-white/10 text-accent-red"><Trash2 size={14} /></button>
                 </div>
               </div>
             );
@@ -216,7 +216,7 @@ export function APIKeyConfig({ onClose }: Props) {
                     placeholder={provider.placeholder} className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
                   <button onClick={handleTest} disabled={testing || !formKey.trim()}
                     className="px-2 py-0.5 text-[10px] rounded border border-white/10 hover:bg-white/10 disabled:opacity-30 flex items-center gap-1 text-white/70">
-                    {testing ? <Loader2 size={12} className="animate-spin" /> : testResult === true ? <Check size={12} className="text-green-400" /> : testResult === false ? <X size={12} className="text-red-400" /> : null}
+                    {testing ? <Loader2 size={12} className="animate-spin" /> : testResult === true ? <Check size={12} className="text-green-400" /> : testResult === false ? <X size={12} className="text-accent-red" /> : null}
                     테스트
                   </button>
                 </div>

@@ -413,7 +413,7 @@ export default function ShareToNetwork({ language, config, messages, onClose, on
           </div>
         )}
         {publishStatus === 'error' && publishError && (
-          <div className="flex items-center gap-2 text-[11px] text-red-400 bg-red-900/20 border border-red-800/40 rounded-xl px-4 py-2.5">
+          <div className="flex items-center gap-2 text-[11px] text-accent-red bg-accent-red/20 border border-accent-red/40 rounded-xl px-4 py-2.5">
             <AlertCircle className="w-4 h-4" />
             {publishError}
           </div>

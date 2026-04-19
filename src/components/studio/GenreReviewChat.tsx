@@ -36,7 +36,7 @@ interface GenreReviewChatProps {
 const SEVERITY_STYLE: Record<string, { bg: string; text: string; border: string }> = {
   ok:     { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
   warn:   { bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/20' },
-  danger: { bg: 'bg-red-500/10',     text: 'text-red-400',     border: 'border-red-500/20' },
+  danger: { bg: 'bg-accent-red/10',     text: 'text-accent-red',     border: 'border-accent-red/20' },
 };
 
 const GRADE_COLOR: Record<string, string> = {
@@ -284,8 +284,8 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
               )}
             </div>
             {msg.role === 'user' && (
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-blue-400" />
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-accent-blue/20 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-accent-blue" />
               </div>
             )}
           </div>

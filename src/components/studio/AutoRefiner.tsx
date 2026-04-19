@@ -182,10 +182,10 @@ function buildFixPrompt(original: string, action: string, before: string, after:
 // ============================================================
 
 const ACTION_LABEL: Record<string, { label: Record<AppLanguage, string>; color: string }> = {
-  rewrite: { label: { KO: '다시 쓰기', EN: 'Rewrite', JP: 'リライト', CN: '重写' }, color: 'text-blue-400 bg-blue-600/10 border-blue-500/20' },
+  rewrite: { label: { KO: '다시 쓰기', EN: 'Rewrite', JP: 'リライト', CN: '重写' }, color: 'text-accent-blue bg-accent-blue/10 border-accent-blue/20' },
   expand: { label: { KO: '살 붙이기', EN: 'Expand', JP: '拡張', CN: '扩展' }, color: 'text-green-400 bg-green-600/10 border-green-500/20' },
   compress: { label: { KO: '압축', EN: 'Compress', JP: '圧縮', CN: '压缩' }, color: 'text-orange-400 bg-orange-600/10 border-orange-500/20' },
-  tension: { label: { KO: '긴장감', EN: 'Tension', JP: '緊張感', CN: '紧张感' }, color: 'text-red-400 bg-red-600/10 border-red-500/20' },
+  tension: { label: { KO: '긴장감', EN: 'Tension', JP: '緊張感', CN: '紧张感' }, color: 'text-accent-red bg-accent-red/10 border-accent-red/20' },
   dialogue: { label: { KO: '대사', EN: 'Dialogue', JP: 'セリフ', CN: '台词' }, color: 'text-pink-400 bg-pink-600/10 border-pink-500/20' },
   insert_after: { label: { KO: '삽입', EN: 'Insert', JP: '挿入', CN: '插入' }, color: 'text-purple-400 bg-purple-600/10 border-purple-500/20' },
 };
@@ -407,13 +407,13 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
           {phase === 'analyzing' && (
             <>
               <StreamingIndicator charCount={streamingChars} language={language} />
-              <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold font-mono hover:bg-red-600/30 transition-colors">
+              <button onClick={cancel} className="flex items-center gap-1 px-2 py-1 bg-accent-red/20 border border-accent-red/30 text-accent-red rounded-lg text-[10px] font-bold font-mono hover:bg-accent-red/30 transition-colors">
                 <X className="w-3 h-3" /> {t('autoRefiner.stop')}
               </button>
             </>
           )}
           {phase === 'ready' && pendingCount > 0 && (
-            <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg text-[10px] font-bold font-mono hover:bg-blue-600/30 transition-colors">
+            <button onClick={runAllFixes} className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-blue/20 border border-accent-blue/30 text-accent-blue rounded-lg text-[10px] font-bold font-mono hover:bg-accent-blue/30 transition-colors">
               <Play className="w-3 h-3" /> {t('autoRefiner.generateAll')}
             </button>
           )}
@@ -445,7 +445,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
               <div key={sug.id} className={`border rounded-xl p-3 space-y-2 transition-[transform,opacity,background-color,border-color,color] ${
                 sug.status === 'applied' ? 'border-green-500/20 bg-green-900/5' :
                 sug.status === 'skipped' ? 'border-border/30 bg-bg-secondary/30 opacity-40' :
-                sug.status === 'generating' ? 'border-blue-500/30 bg-blue-900/5' :
+                sug.status === 'generating' ? 'border-accent-blue/30 bg-accent-blue/5' :
                 'border-border bg-bg-secondary/30'
               }`}>
                 {/* Header */}
@@ -460,7 +460,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                   <div className="flex items-center gap-1">
                     {sug.status === 'pending' && (
                       <>
-                        <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-blue-900/20 text-blue-500/50 hover:text-blue-400 transition-colors" title={t('ui.generate')}>
+                        <button onClick={() => fixSuggestion(idx)} className="p-1 rounded hover:bg-accent-blue/20 text-accent-blue/50 hover:text-accent-blue transition-colors" title={t('ui.generate')}>
                           <Play className="w-3 h-3" />
                         </button>
                         <button onClick={() => skipSuggestion(idx)} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors" title={t('ui.skip')}>
@@ -469,7 +469,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
                       </>
                     )}
                     {sug.status === 'generating' && (
-                      <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
+                      <Loader2 className="w-3 h-3 text-accent-blue animate-spin" />
                     )}
                     {sug.status === 'ready' && (
                       <>

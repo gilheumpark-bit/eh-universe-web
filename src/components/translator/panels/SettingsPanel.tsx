@@ -159,7 +159,7 @@ export function SettingsPanel() {
             </div>
           )}
           {authError ? (
-            <p className="text-[11px] text-red-400/90 break-words">{authError}</p>
+            <p className="text-[11px] text-accent-red/90 break-words">{authError}</p>
           ) : null}
         </section>
 

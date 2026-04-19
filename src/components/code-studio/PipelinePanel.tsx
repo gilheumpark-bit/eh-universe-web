@@ -395,7 +395,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
             </button>
           ) : (
             <>
-              <button onClick={handleRunWithProgress} className="p-1 rounded hover:bg-bg-tertiary text-blue-400" title={L4(lang, { ko: "다시 실행", en: "Re-run", ja: "再実行", zh: "重新运行"})} aria-label={L4(lang, { ko: "다시 실행", en: "Re-run", ja: "再実行", zh: "重新运行"})}><Play size={12} /></button>
+              <button onClick={handleRunWithProgress} className="p-1 rounded hover:bg-bg-tertiary text-accent-blue" title={L4(lang, { ko: "다시 실행", en: "Re-run", ja: "再実行", zh: "重新运行"})} aria-label={L4(lang, { ko: "다시 실행", en: "Re-run", ja: "再実行", zh: "重新运行"})}><Play size={12} /></button>
               {result && (
                 <>
                   <button onClick={handleCopyReport} className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary" title={L4(lang, { ko: "보고서 복사", en: "Copy report", ja: "レポートコピー", zh: "复制报告"})} aria-label={L4(lang, { ko: "보고서 복사", en: "Copy report", ja: "レポートコピー", zh: "复制报告"})}><Copy size={12} /></button>
@@ -489,7 +489,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
                       {(stage.findings.length > 10 ? stage.findings.filter((f: Finding) => f.severity === 'critical' || f.severity === 'major').slice(0, 10) : stage.findings).map((f: Finding, i: number) => (
                         <div key={i} className="flex items-start gap-1">
                           <span className={
-                            f.severity === "critical" ? "text-red-400" :
+                            f.severity === "critical" ? "text-accent-red" :
                             f.severity === "major" ? "text-accent-amber" :
                             "text-text-tertiary"
                           }>

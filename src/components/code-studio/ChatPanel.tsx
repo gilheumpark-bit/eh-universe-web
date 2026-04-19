@@ -119,7 +119,7 @@ const ChatMessageItem = memo(function ChatMessageItem({ msg, onApplyCode }: Chat
     <div className="text-xs leading-relaxed">
       <div className="flex items-center gap-1 mb-1">
         {msg.role === "user" ? (
-          <span className="text-blue-400 font-semibold">You</span>
+          <span className="text-accent-blue font-semibold">You</span>
         ) : (
           <span className="text-amber-400 font-semibold flex items-center gap-1"><Shield size={10} /> EH</span>
         )}
@@ -427,7 +427,7 @@ ${mcpToolsDoc}`,
         <div className="border-b border-border bg-bg-primary max-h-[200px] overflow-y-auto">
           <button
             onClick={() => { setShowHistory(false); chat.clearHistory(); setInput(""); }}
-            className="flex items-center gap-2 px-3 py-2 w-full text-left text-xs font-medium text-blue-400 hover:bg-bg-tertiary border-b border-border"
+            className="flex items-center gap-2 px-3 py-2 w-full text-left text-xs font-medium text-accent-blue hover:bg-bg-tertiary border-b border-border"
           >
             <Plus size={12} /> New Chat
           </button>
@@ -452,7 +452,7 @@ ${mcpToolsDoc}`,
                   >{session.title}</button>
                 )}
                 <span className="text-[9px] text-text-tertiary shrink-0">{formatRelativeTime(session.updatedAt)}</span>
-                <button onClick={() => handleDeleteSession(session.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-0.5" title="Delete">
+                <button onClick={() => handleDeleteSession(session.id)} className="opacity-0 group-hover:opacity-100 text-accent-red hover:text-accent-red transition-opacity p-0.5" title="Delete">
                   <Trash2 size={11} />
                 </button>
               </div>
@@ -510,7 +510,7 @@ ${mcpToolsDoc}`,
         </div>
         <div className="flex items-center gap-2 bg-bg-tertiary rounded-lg px-3 py-2">
           <button onClick={() => { setShowMentions(!showMentions); setMentionQuery(""); }}
-            className="text-text-tertiary hover:text-blue-400 transition-colors" title="Add context">
+            className="text-text-tertiary hover:text-accent-blue transition-colors" title="Add context">
             <AtSign size={14} />
           </button>
           <input ref={inputRef} value={input} onChange={handleInputChange}
@@ -519,9 +519,9 @@ ${mcpToolsDoc}`,
             className="flex-1 bg-transparent text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder:text-text-tertiary"
           />
           {chat.isStreaming ? (
-            <button onClick={() => chat.abort()} aria-label="중지" className="text-red-400 hover:text-white transition-colors"><Square size={14} /></button>
+            <button onClick={() => chat.abort()} aria-label="중지" className="text-accent-red hover:text-white transition-colors"><Square size={14} /></button>
           ) : (
-            <button onClick={handleSend} disabled={!input.trim()} aria-label="전송" className="text-blue-400 hover:text-white disabled:opacity-30 transition-colors"><Send size={14} /></button>
+            <button onClick={handleSend} disabled={!input.trim()} aria-label="전송" className="text-accent-blue hover:text-white disabled:opacity-30 transition-colors"><Send size={14} /></button>
           )}
         </div>
       </div>

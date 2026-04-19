@@ -107,7 +107,7 @@ export function EvaluationPanel({ files, onClose }: Props) {
               <p className="text-sm text-white/50">분석 중...</p>
             </div>
           )}
-          {error && <div className="text-sm text-red-400 p-3 rounded bg-white/5">오류: {error}</div>}
+          {error && <div className="text-sm text-accent-red p-3 rounded bg-white/5">오류: {error}</div>}
           {result && (
             <>
               <div className="text-center mb-6">

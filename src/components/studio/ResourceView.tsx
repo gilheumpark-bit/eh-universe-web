@@ -153,7 +153,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
           <div className="bg-bg-secondary/40 border border-white/5 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-blue-400" /> {t.creator}
+                <UserPlus className="w-4 h-4 text-accent-blue" /> {t.creator}
               </h3>
               <button
                 onClick={() => setIsPanelOpen(false)}
@@ -171,9 +171,9 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                   <FieldBadge required language={language} />
                 </div>
                 <div className="relative group">
-                   <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-blue-500 transition-colors" />
+                   <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary group-focus-within:text-accent-blue transition-colors" />
                    <input
-                    className={`w-full bg-bg-tertiary/50 border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary ${nameError ? 'border-red-500' : 'border-border'}`}
+                    className={`w-full bg-bg-tertiary/50 border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors placeholder:text-text-tertiary ${nameError ? 'border-accent-red' : 'border-border'}`}
                     placeholder={language === 'KO' ? '캐릭터 이름...' : language === 'JP' ? 'キャラクター名...' : language === 'CN' ? '角色名...' : 'Character name...'}
                     maxLength={50}
                     value={newChar.name}
@@ -182,7 +182,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 </div>
                 {/* Fix #6: Name validation warning */}
                 {nameError && (
-                  <p className="text-[10px] text-red-400 font-bold ml-2">
+                  <p className="text-[10px] text-accent-red font-bold ml-2">
                     {language === 'KO' ? '이름을 입력해주세요' : 'Name is required'}
                   </p>
                 )}
@@ -196,7 +196,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative group">
                   <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                   <select
-                    className="w-full bg-bg-tertiary/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 appearance-none cursor-pointer"
+                    className="w-full bg-bg-tertiary/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs font-bold focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 appearance-none cursor-pointer"
                     value={newChar.role}
                     onChange={e => setNewChar({...newChar, role: e.target.value})}
                   >
@@ -212,7 +212,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 <div className="relative">
                   <ScrollText className="absolute left-4 top-4 w-4 h-4 text-text-tertiary" />
                   <textarea
-                    className="w-full bg-bg-tertiary/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 resize-none leading-relaxed"
+                    className="w-full bg-bg-tertiary/50 border border-border rounded-xl pl-11 pr-4 py-4 text-xs min-h-[140px] focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 resize-none leading-relaxed"
                     placeholder={language === 'KO' ? '특성, 배경, 말투...' : language === 'JP' ? '特性、背景、口調...' : language === 'CN' ? '特征、背景、语气...' : 'Traits, background, dialect...'}
                     maxLength={500}
                     value={newChar.traits}
@@ -288,7 +288,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 </div>
                 <input
                   type="range" min="0" max="100"
-                  className="w-full accent-blue-600 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
+                  className="w-full accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                   value={newChar.dna}
                   onChange={e => setNewChar({...newChar, dna: parseInt(e.target.value)})}
                 />
@@ -315,7 +315,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                 onClick={() => setIsPanelOpen(true)}
                 className="hidden lg:flex items-center gap-2 px-5 py-3 bg-bg-secondary border border-border rounded-xl text-[10px] font-black text-text-secondary hover:text-white transition-colors uppercase tracking-widest"
                >
-                 <UserPlus className="w-3.5 h-3.5 text-blue-500" /> {t.creator}
+                 <UserPlus className="w-3.5 h-3.5 text-accent-blue" /> {t.creator}
                </button>
              )}
              
@@ -465,7 +465,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                       <button
                         onClick={() => removeCharacter(char.id)}
                         aria-label="삭제"
-                        className="p-2.5 text-text-tertiary hover:text-red-500 transition-[opacity,background-color,border-color,color] opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                        className="p-2.5 text-text-tertiary hover:text-accent-red transition-[opacity,background-color,border-color,color] opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -488,7 +488,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         }))}
                         placeholder={language === 'KO' ? '🧠 성격 (예: 냉소적이지만 내면은 따뜻함)' : '🧠 Personality (e.g. cynical but warm inside)'}
                         maxLength={200}
-                        className="w-full bg-bg-tertiary/30 border border-border/50 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        className="w-full bg-bg-tertiary/30 border border-border/50 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.speechStyle || ''}
@@ -498,7 +498,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         }))}
                         placeholder={language === 'KO' ? '🗣️ 억양/말투 (예: 반말, 짧은 문장, 냉담한 톤)' : '🗣️ Speech style (e.g. informal, short sentences, cold tone)'}
                         maxLength={200}
-                        className="w-full bg-bg-tertiary/30 border border-border/50 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        className="w-full bg-bg-tertiary/30 border border-border/50 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.speechExample || ''}
@@ -508,7 +508,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         }))}
                         placeholder={language === 'KO' ? '💬 대사 예시 (예: "...그래서 뭐 어쩌라고.")' : '💬 Example dialogue (e.g. "...so what do you want me to do.")'}
                         maxLength={300}
-                        className="w-full bg-bg-tertiary/30 border border-border/50 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary font-serif italic"
+                        className="w-full bg-bg-tertiary/30 border border-border/50 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary font-serif italic"
                       />
                     </div>
 
@@ -527,7 +527,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         }))}
                         placeholder={t.desirePH}
                         maxLength={200}
-                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        className="w-full bg-accent-blue/5 border border-accent-blue/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.deficiency || ''}
@@ -537,7 +537,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         }))}
                         placeholder={t.deficiencyPH}
                         maxLength={200}
-                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        className="w-full bg-accent-blue/5 border border-accent-blue/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                       />
                       <input
                         value={char.conflict || ''}
@@ -547,7 +547,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                         }))}
                         placeholder={t.conflictPH}
                         maxLength={200}
-                        className="w-full bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                        className="w-full bg-accent-blue/5 border border-accent-blue/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <input
@@ -558,7 +558,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           }))}
                           placeholder={t.valuesPH}
                           maxLength={200}
-                          className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                          className="bg-accent-blue/5 border border-accent-blue/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                         />
                         <input
                           value={char.changeArc || ''}
@@ -568,7 +568,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           }))}
                           placeholder={t.changeArcPH}
                           maxLength={200}
-                          className="bg-blue-500/5 border border-blue-500/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-500 transition-colors placeholder:text-text-tertiary"
+                          className="bg-accent-blue/5 border border-accent-blue/10 rounded-xl px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors placeholder:text-text-tertiary"
                         />
                       </div>
                     </div>
@@ -879,7 +879,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ language, config, setConfig
                           <Zap className="w-3.5 h-3.5 text-amber-500/50" />
                           <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">{L4(language, { ko: '개성 (고유도)', en: 'Individuality', ja: '個性（固有度）', zh: '个性（独特度）' })}</span>
                        </div>
-                       <span className="text-[11px] font-mono text-blue-400 font-black">{char.dna}%</span>
+                       <span className="text-[11px] font-mono text-accent-blue font-black">{char.dna}%</span>
                     </div>
                   </div>
                 ))}
@@ -996,7 +996,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
         <input value={relDesc} onChange={e => setRelDesc(e.target.value)} placeholder={tl('resourceExtra.description')}
           maxLength={200}
           className="flex-1 min-w-[120px] bg-bg-tertiary border border-border rounded-xl px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-        <button onClick={addRelation} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">
+        <button onClick={addRelation} className="px-4 py-2 bg-accent-blue text-white rounded-xl text-xs font-black uppercase tracking-wider">
           {tl('resourceExtra.add')}
         </button>
       </div>
@@ -1026,7 +1026,7 @@ function CharRelationMap({ language, config, setConfig }: ResourceViewProps) {
                   </span>
                   {rel.desc && <span className="ml-2 text-text-tertiary italic">{rel.desc}</span>}
                 </span>
-                <button onClick={() => removeRelation(i)} aria-label={language === 'KO' ? `관계 ${i + 1} 삭제` : `Delete relation ${i + 1}`} className="text-text-tertiary hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">✕</button>
+                <button onClick={() => removeRelation(i)} aria-label={language === 'KO' ? `관계 ${i + 1} 삭제` : `Delete relation ${i + 1}`} className="text-text-tertiary hover:text-accent-red transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">✕</button>
               </div>
             );
           })}

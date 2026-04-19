@@ -365,7 +365,7 @@ export function FileExplorer({
           {selectedIds.size > 0 && (
             <button
               onClick={handleBulkDelete}
-              className="px-1.5 py-0.5 text-[9px] bg-red-500/20 text-red-400 rounded hover:bg-red-500/30"
+              className="px-1.5 py-0.5 text-[9px] bg-accent-red/20 text-accent-red rounded hover:bg-accent-red/30"
               title={L4(lang, { ko: `${selectedIds.size}개 선택 항목 삭제`, en: `Delete ${selectedIds.size} selected`, ja: `${selectedIds.size}件の選択項目を削除`, zh: `${selectedIds.size}个选中项删除`})}
             >
               {L4(lang, { ko: "삭제", en: "Delete", ja: "削除", zh: "删除"})} ({selectedIds.size})

@@ -21,7 +21,7 @@ export default function NetworkError({
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-primary">
       <div className="text-center space-y-4 p-8 max-w-md" role="alert">
-        <h2 className="text-lg font-black tracking-tighter uppercase font-mono text-red-400">
+        <h2 className="text-lg font-black tracking-tighter uppercase font-mono text-accent-red">
           {L4(lang, {
             ko: '네트워크 오류',
             en: 'Network Error',

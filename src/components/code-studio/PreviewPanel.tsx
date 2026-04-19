@@ -343,7 +343,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
           </span>
         )}
         {errorCount > 0 && (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-red-500/40 bg-red-500/10 text-red-400">
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-accent-red/40 bg-accent-red/10 text-accent-red">
             {t.previewErrors.replace("{n}", String(errorCount))}
           </span>
         )}
@@ -396,7 +396,7 @@ export default function PreviewPanel({ files, visible }: PreviewPanelProps) {
         {state === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 bg-[#0a0e17]">
             <span className="text-2xl">&#x26A0;</span>
-            <span className="text-xs text-red-400 text-center max-w-md">{errorMsg}</span>
+            <span className="text-xs text-accent-red text-center max-w-md">{errorMsg}</span>
             <button
               onClick={() => { setState("idle"); setErrorMsg(""); startPreview(); }}
               className="mt-2 px-4 py-1.5 text-xs rounded border border-white/20 bg-white/5 hover:bg-white/10 text-text-primary"

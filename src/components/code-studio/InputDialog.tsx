@@ -90,9 +90,9 @@ export function InputDialog({
           placeholder={placeholder}
           aria-label={title}
           className={`w-full bg-white/5 text-xs px-3 py-2 rounded border outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors
-            ${error ? "border-red-400 focus:border-red-400" : "border-white/8 focus:border-amber-600/50"}`}
+            ${error ? "border-accent-red focus:border-accent-red" : "border-white/8 focus:border-amber-600/50"}`}
         />
-        {error && <p className="text-[10px] text-red-400 mt-1">{error}</p>}
+        {error && <p className="text-[10px] text-accent-red mt-1">{error}</p>}
         <div className="flex justify-end gap-2 mt-3">
           <button
             onClick={onCancel}

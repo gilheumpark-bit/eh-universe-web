@@ -57,7 +57,7 @@ const SIG_COLORS: Record<SigType, string> = {
   jis: "text-sky-400 bg-sky-400/10 border-sky-400/20",
   byun: "text-purple-400 bg-purple-400/10 border-purple-400/20",
   sun: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-  chung: "text-red-400 bg-red-400/10 border-red-400/20",
+  chung: "text-accent-red bg-accent-red/10 border-accent-red/20",
   mu: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20",
 };
 const SIG_LABEL: Record<string, { ko: string; en: string }> = {
@@ -68,7 +68,7 @@ const SIG_LABEL: Record<string, { ko: string; en: string }> = {
   mu:    { ko: "무성",      en: "Silent" },
 };
 const SIG_DOT_COLORS: Record<SigType, string> = {
-  jis: "bg-sky-400", byun: "bg-purple-400", sun: "bg-emerald-400", chung: "bg-red-400", mu: "bg-zinc-500",
+  jis: "bg-sky-400", byun: "bg-purple-400", sun: "bg-emerald-400", chung: "bg-accent-red", mu: "bg-zinc-500",
 };
 
 interface Syllable {
@@ -573,7 +573,7 @@ export default function NekaSoundPage() {
                       <button
                         onClick={() => { setSyllables([]); setSelectedCons(null); }}
                         aria-label={en ? "Clear all syllables" : "전체 삭제"}
-                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-red-500 hover:text-red-500 transition-colors rounded"
+                        className="px-4 py-2 border border-border text-text-tertiary font-mono text-[9px] tracking-widest hover:border-accent-red hover:text-accent-red transition-colors rounded"
                       >
                         CLEAR
                       </button>

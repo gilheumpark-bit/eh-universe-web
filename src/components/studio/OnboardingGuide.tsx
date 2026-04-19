@@ -247,7 +247,7 @@ export default function OnboardingGuide({
             <div className="grid gap-3 sm:grid-cols-3">
               {DEMO_PRESETS.map((preset) => {
                 const icons = [<Sword key="s" className="h-5 w-5" />, <BookOpen key="b" className="h-5 w-5" />, <RotateCcw key="r" className="h-5 w-5" />];
-                const colors = ['border-red-500/30 hover:border-red-500/50', 'border-blue-500/30 hover:border-blue-500/50', 'border-amber-500/30 hover:border-amber-500/50'];
+                const colors = ['border-accent-red/30 hover:border-accent-red/50', 'border-accent-blue/30 hover:border-accent-blue/50', 'border-amber-500/30 hover:border-amber-500/50'];
                 const idx = DEMO_PRESETS.indexOf(preset);
                 return (
                   <button key={preset.id} type="button" onClick={() => handleDemoSelect(preset.id)}

@@ -269,7 +269,7 @@ export function ChatPanel() {
       </div>
 
       {errorLine ? (
-        <div className="px-4 text-[11px] text-red-400/90 leading-snug shrink-0">{errorLine}</div>
+        <div className="px-4 text-[11px] text-accent-red/90 leading-snug shrink-0">{errorLine}</div>
       ) : null}
 
       <div className="p-4 shrink-0 border-t border-white/5 pointer-events-auto">

@@ -189,7 +189,8 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
         {/* scoped styles for ProseMirror element */}
         <style jsx global>{`
           .novel-editor-wrapper .ProseMirror {
-            font-family: 'Georgia', 'Times New Roman', serif;
+            /* CJK 독자 우선 — Noto Serif KR 이 있으면 먼저, fallback으로 Georgia. */
+            font-family: var(--font-document), 'Georgia', 'Times New Roman', serif;
             font-size: var(--editor-font-size, 1rem);
             line-height: 2;
             min-height: 70vh;

@@ -186,7 +186,7 @@ function ZoneEditPanel({
             type="text"
             value={range}
             onChange={(e) => setRange(e.target.value)}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           />
         </div>
 
@@ -198,7 +198,7 @@ function ZoneEditPanel({
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:border-accent-blue outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {GRADE_OPTIONS.map((g) => (
               <option key={g} value={g}>{g}</option>
@@ -220,7 +220,7 @@ function ZoneEditPanel({
       <div className="px-4 py-3 border-t border-border space-y-2">
         <button
           onClick={() => onSave({ id: zone.id, range, grade })}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+          className="w-full px-4 py-2 bg-accent-blue text-white rounded-lg text-xs font-bold hover:bg-accent-blue transition-colors"
         >
           {en ? "Save Changes" : "변경 저장"}
         </button>

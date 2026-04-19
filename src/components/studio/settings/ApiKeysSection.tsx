@@ -61,7 +61,7 @@ const ApiKeysSection: React.FC<ApiKeysSectionProps> = ({ language, hostedProvide
         </div>
       </div>
       <div className="flex flex-col items-end gap-0.5 shrink-0">
-        <div data-testid="settings-api-key-status" className="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">
+        <div data-testid="settings-api-key-status" className="text-[9px] md:text-[10px] font-black text-accent-blue uppercase">
           {hasPersonalApiKey
             ? t('settings.apiKeySet')
             : hasHostedApi

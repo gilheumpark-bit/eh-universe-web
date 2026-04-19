@@ -110,7 +110,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   return (
     <div className={`flex w-full ${isCompact ? 'gap-2' : 'gap-3 md:gap-4'} group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <div className={`shrink-0 ${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg flex items-center justify-center border shadow-lg ${
-        isUser ? 'bg-bg-tertiary border-border' : 'bg-linear-to-br from-blue-600 to-blue-800 border-blue-500'
+        isUser ? 'bg-bg-tertiary border-border' : 'bg-linear-to-br from-accent-blue to-accent-blue border-accent-blue'
       }`}>
         {isUser ? <User className={isCompact ? 'w-3 h-3 text-text-tertiary' : 'w-4 h-4 text-text-tertiary'} /> : <Bot className={isCompact ? 'w-3 h-3 text-white' : 'w-4 h-4 text-white'} />}
       </div>
@@ -146,13 +146,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* Engine Report Badges — Hide in compact mode */}
           {!isUser && report && !isCompact && (
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600/10 border border-blue-500/20 rounded-lg text-[9px] font-black text-blue-400">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-blue/10 border border-accent-blue/20 rounded-lg text-[9px] font-black text-accent-blue">
                 {report.grade}
               </span>
               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black border ${
                 report.eosScore >= 40
                   ? 'bg-green-600/10 border-green-500/20 text-green-400'
-                  : 'bg-red-600/10 border-red-500/20 text-red-400'
+                  : 'bg-accent-red/10 border-accent-red/20 text-accent-red'
               }`}>
                 <Zap className="w-2.5 h-2.5" /> EOS {report.eosScore}
               </span>
@@ -199,7 +199,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                   )}
                   {report.issues.length > 0 && (
                     <div className="border-t border-border/50 pt-2 space-y-1">
-                      <span className="text-red-500/80">{report.issues.length}{language === 'KO' ? '건 이슈' : ' issues'}</span>
+                      <span className="text-accent-red/80">{report.issues.length}{language === 'KO' ? '건 이슈' : ' issues'}</span>
                       {report.issues.slice(0, 2).map((iss, i) => (
                         <div key={i} className="text-text-tertiary truncate">{iss.message}</div>
                       ))}
@@ -221,7 +221,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <button
                 onClick={() => setShowDetail(d => !d)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] ${
-                  message.meta.qualityTag === '🔴' ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  message.meta.qualityTag === '🔴' ? 'bg-accent-red/10 text-accent-red border border-accent-red/20'
                   : message.meta.qualityTag === '🟡' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                   : 'bg-green-500/10 text-green-400 border border-green-500/20'
                 }`}
@@ -235,7 +235,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 <div className="mt-2 space-y-1 pl-2 border-l-2 border-border">
                   {message.meta.qualityFindings.map((f, i) => (
                     <div key={i} className="text-[10px] text-text-tertiary">
-                      <span className={f.severity >= 4 ? 'text-red-400' : f.severity >= 3 ? 'text-amber-400' : 'text-text-tertiary'}>
+                      <span className={f.severity >= 4 ? 'text-accent-red' : f.severity >= 3 ? 'text-amber-400' : 'text-text-tertiary'}>
                         [{f.kind}]
                       </span>{' '}
                       {f.message}
@@ -243,7 +243,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     </div>
                   ))}
                   {message.meta.qualityTag === '🔴' && (
-                    <p className="text-[10px] text-red-400/80 font-bold mt-2">
+                    <p className="text-[10px] text-accent-red/80 font-bold mt-2">
                       {language === 'KO' ? '⚠ 재작성을 권장합니다.' : '⚠ Rewrite recommended.'}
                     </p>
                   )}
@@ -256,8 +256,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           {!isUser && (displayGrade || displayMetrics) && !isCompact && (
             <div className="mt-8 p-4 md:p-6 bg-bg-secondary/50 border border-border rounded-2xl space-y-4 animate-in fade-in duration-500">
               <div className="flex justify-between items-center text-[9px] font-black text-text-tertiary uppercase tracking-widest">
-                <div className="flex items-center gap-2"><Activity className="w-3 h-3 text-blue-500" /> Engine Report</div>
-                {displayGrade && <div className="text-blue-500">{displayGrade} Grade</div>}
+                <div className="flex items-center gap-2"><Activity className="w-3 h-3 text-accent-blue" /> Engine Report</div>
+                {displayGrade && <div className="text-accent-blue">{displayGrade} Grade</div>}
               </div>
               {displayMetrics && (
                 <div className="grid grid-cols-3 gap-4">
@@ -265,7 +265,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     <div key={k} className="space-y-1">
                       <div className="flex justify-between text-[7px] font-black text-text-tertiary uppercase"><span>{k}</span><span>{v}%</span></div>
                       <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-600" style={{ width: `${v}%` }} />
+                        <div className="h-full bg-accent-blue" style={{ width: `${v}%` }} />
                       </div>
                     </div>
                   ))}

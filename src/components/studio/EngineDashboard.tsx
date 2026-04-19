@@ -23,11 +23,11 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
     <div className="h-full bg-bg-primary border-l border-border flex flex-col w-80 text-xs font-mono overflow-y-auto custom-scrollbar">
       <div className="p-6 border-b border-border bg-bg-secondary/30">
         <h2 className="text-zinc-100 font-black flex items-center gap-2 tracking-widest uppercase">
-          <Zap className="w-4 h-4 text-blue-500" />
+          <Zap className="w-4 h-4 text-accent-blue" />
           ANS {ENGINE_VERSION}
         </h2>
         <div className="flex items-center gap-2 mt-3">
-          <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-blue-500 animate-ping' : 'bg-bg-tertiary'}`} />
+          <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-accent-blue animate-ping' : 'bg-bg-tertiary'}`} />
           <span className="text-text-tertiary font-bold uppercase tracking-tighter">
             {isGenerating ? "Generating..." : "Idle"}
           </span>
@@ -43,7 +43,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
           <div className="bg-bg-secondary/50 rounded-2xl p-4 border border-border/50 space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-text-tertiary">Platform</span>
-              <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded font-black">
+              <span className="text-[9px] bg-accent-blue/10 text-accent-blue px-1.5 py-0.5 rounded font-black">
                 {config.platform === PlatformType.WEB ? 'WEB' : 'MOBILE'}
               </span>
             </div>
@@ -75,15 +75,15 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               const height = Math.round(t * 100);
               return (
                 <div key={i} className="flex-1 relative h-full group">
-                  <div className="absolute bottom-0 w-full bg-blue-500/10 h-full rounded-t-sm" />
+                  <div className="absolute bottom-0 w-full bg-accent-blue/10 h-full rounded-t-sm" />
                   <div
                     className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${
-                      isCurrentEp ? 'bg-gradient-to-t from-blue-500 to-cyan-400' : 'bg-gradient-to-t from-blue-600/60 to-indigo-400/40'
+                      isCurrentEp ? 'bg-gradient-to-t from-accent-blue to-cyan-400' : 'bg-gradient-to-t from-accent-blue/60 to-indigo-400/40'
                     }`}
                     style={{ height: `${height}%` }}
                   />
                   {isCurrentEp && (
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-accent-blue rounded-full" />
                   )}
                 </div>
               );
@@ -115,11 +115,11 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               <div className="flex gap-3">
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
                   <div className="text-[10px] text-text-tertiary mb-1">{isKO ? '등급' : 'GRADE'}</div>
-                  <div className="text-lg font-black text-blue-400">{report.grade}</div>
+                  <div className="text-lg font-black text-accent-blue">{report.grade}</div>
                 </div>
                 <div className="flex-1 text-center p-3 bg-black/40 rounded-xl">
                   <div className="text-[10px] text-text-tertiary mb-1">{isKO ? '분량' : 'VOLUME'}</div>
-                  <div className={`text-lg font-black ${report.eosScore >= 40 ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`text-lg font-black ${report.eosScore >= 40 ? 'text-green-400' : 'text-accent-red'}`}>
                     {report.eosScore}
                   </div>
                 </div>
@@ -133,7 +133,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     <span>{v}%</span>
                   </div>
                   <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={v} aria-valuemin={0} aria-valuemax={100} aria-label={`${k} ${v}%`}>
-                    <div className="h-full bg-blue-600 transition-[transform,opacity,background-color,border-color,color] duration-500" style={{ width: `${v}%` }} />
+                    <div className="h-full bg-accent-blue transition-[transform,opacity,background-color,border-color,color] duration-500" style={{ width: `${v}%` }} />
                   </div>
                 </div>
               ))}
@@ -188,7 +188,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
               {/* NOA Tone */}
               <div className="flex justify-between items-center">
                 <span className="text-text-tertiary text-[9px]">NOA Tone</span>
-                <span className={`text-[9px] font-black ${report.aiTonePercent <= 10 ? 'text-green-500' : report.aiTonePercent <= 30 ? 'text-amber-500' : 'text-red-500'}`}>
+                <span className={`text-[9px] font-black ${report.aiTonePercent <= 10 ? 'text-green-500' : report.aiTonePercent <= 30 ? 'text-amber-500' : 'text-accent-red'}`}>
                   {report.aiTonePercent}%
                 </span>
               </div>

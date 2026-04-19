@@ -80,9 +80,9 @@ function simulateLatest(version: string): string {
 }
 
 const UPDATE_BADGE_COLORS: Record<string, string> = {
-  major: 'bg-red-500/20 text-red-400',
+  major: 'bg-accent-red/20 text-accent-red',
   minor: 'bg-amber-500/20 text-amber-400',
-  patch: 'bg-blue-500/20 text-blue-400',
+  patch: 'bg-accent-blue/20 text-accent-blue',
 };
 
 // IDENTITY_SEAL: PART-2 | role=Helpers | inputs=FileNode[] | outputs=PackageInfo[]
@@ -156,7 +156,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
     <div className="flex flex-col h-full bg-[#0f1419] text-xs">
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/8">
         <span className="flex items-center gap-2 font-semibold text-white">
-          <Package size={14} className="text-red-400" /> Packages
+          <Package size={14} className="text-accent-red" /> Packages
           {installedCount > 0 && <span className="text-[10px] text-white/60">({installedCount})</span>}
         </span>
         <button onClick={() => setShowTerminal((v) => !v)} className="p-1 hover:bg-white/10 rounded text-white/60"><Terminal size={12} /></button>
@@ -231,7 +231,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                         </span>
                       )}
                       <button onClick={() => handleUninstall(name)} disabled={installing !== null}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-accent-red transition-opacity disabled:opacity-30">
                         {installing === name ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
                       </button>
                     </div>
@@ -251,7 +251,7 @@ export function PackagePanel({ files, onFilesChange }: Props) {
                       )}
                       <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">dev</span>
                       <button onClick={() => handleUninstall(name)} disabled={installing !== null}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-red-400 transition-opacity disabled:opacity-30">
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/5 rounded text-accent-red transition-opacity disabled:opacity-30">
                         <Trash2 size={10} />
                       </button>
                     </div>

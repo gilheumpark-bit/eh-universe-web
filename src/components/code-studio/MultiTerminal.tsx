@@ -120,7 +120,7 @@ export function MultiTerminal({ renderTerminal }: Props) {
             {tabs.length > 1 && (
               <span
                 onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
-                className="hover:text-red-400 ml-1 cursor-pointer"
+                className="hover:text-accent-red ml-1 cursor-pointer"
               >
                 <X size={8} />
               </span>

@@ -133,13 +133,13 @@ type AxisRow = { label: string; value: number; hint?: string };
 function scoreColor(v: number): string {
   if (v >= 80) return 'text-accent-green';
   if (v >= 60) return 'text-accent-amber';
-  return 'text-red-400';
+  return 'text-accent-red';
 }
 
 function scoreBarColor(v: number): string {
   if (v >= 80) return 'bg-accent-green';
   if (v >= 60) return 'bg-accent-amber';
-  return 'bg-red-400';
+  return 'bg-accent-red';
 }
 
 function AxisBar({ row }: { row: AxisRow }) {
@@ -195,7 +195,7 @@ const CATEGORY_LABEL: Record<PublishAuditFinding['category'], string> = {
 
 function SeverityBadge({ severity }: { severity: PublishAuditFinding['severity'] }) {
   const map: Record<PublishAuditFinding['severity'], string> = {
-    high: 'bg-red-500/10 border-red-500/30 text-red-400',
+    high: 'bg-accent-red/10 border-accent-red/30 text-accent-red',
     medium: 'bg-accent-amber/10 border-accent-amber/30 text-accent-amber',
     low: 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo',
     info: 'bg-white/5 border-white/10 text-text-tertiary',
@@ -416,7 +416,7 @@ function PublishAuditSection() {
             <div className="space-y-1.5">
               {aiCorrections.map((c, i) => {
                 const sev = c.severity;
-                const sevColor = sev === 'high' ? 'text-red-400' : sev === 'medium' ? 'text-accent-amber' : 'text-accent-indigo';
+                const sevColor = sev === 'high' ? 'text-accent-red' : sev === 'medium' ? 'text-accent-amber' : 'text-accent-indigo';
                 return (
                   <div key={i} className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -702,7 +702,7 @@ export function AuditPanel() {
           )}
 
           {scoreError && !scoring && (
-            <div className="flex items-center gap-2 text-[11px] text-red-400 bg-red-500/5 border border-red-500/20 rounded p-2">
+            <div className="flex items-center gap-2 text-[11px] text-accent-red bg-accent-red/5 border border-accent-red/20 rounded p-2">
               <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
               <span>{scoreError}</span>
             </div>
@@ -748,7 +748,7 @@ export function AuditPanel() {
           <div key={issue.id} className="flex gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
             <div className="shrink-0 mt-0.5">
               {issue.severity === 'high' ? (
-                <ShieldAlert className="w-4 h-4 text-red-400" />
+                <ShieldAlert className="w-4 h-4 text-accent-red" />
               ) : (
                 <AlertTriangle className={`w-4 h-4 ${issue.severity === 'medium' ? 'text-accent-amber' : 'text-accent-indigo'}`} />
               )}

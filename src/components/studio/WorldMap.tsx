@@ -279,7 +279,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-              <button onClick={() => removeTerritory(t.id)} className="text-text-tertiary hover:text-red-400 hover:drop-shadow-[0_0_5px_rgba(255,50,50,0.5)] transition-[background-color,border-color,box-shadow,color]">
+              <button onClick={() => removeTerritory(t.id)} className="text-text-tertiary hover:text-accent-red hover:drop-shadow-[0_0_5px_rgba(255,50,50,0.5)] transition-[background-color,border-color,box-shadow,color]">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>

@@ -608,7 +608,7 @@ export function TerminalPanel({
             </span>
           )}
           {wcBooting && (
-            <Loader2 size={10} className="animate-spin text-blue-400" />
+            <Loader2 size={10} className="animate-spin text-accent-blue" />
           )}
         </span>
         <div className="flex items-center gap-1">
@@ -698,7 +698,7 @@ export function TerminalPanel({
                 }}
                 className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
                   i === autocompleteIdx
-                    ? "bg-blue-500/30 text-blue-400"
+                    ? "bg-accent-blue/30 text-accent-blue"
                     : "bg-white/5 text-text-secondary"
                 }`}
               >

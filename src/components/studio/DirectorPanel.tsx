@@ -12,10 +12,10 @@ interface DirectorPanelProps {
 }
 
 const SEV_COLORS: Record<number, string> = {
-  5: 'text-red-400',
-  4: 'text-red-400',
+  5: 'text-accent-red',
+  4: 'text-accent-red',
   3: 'text-amber-400',
-  2: 'text-blue-400',
+  2: 'text-accent-blue',
   1: 'text-text-tertiary',
 };
 
@@ -48,10 +48,10 @@ const GRADE_BADGE_COLORS: Record<string, string> = {
   'S++': 'bg-green-500/20 text-green-300 ring-green-500/30',
   'S+': 'bg-green-500/15 text-green-400 ring-green-500/20',
   'S': 'bg-green-500/10 text-green-400 ring-green-500/15',
-  'A': 'bg-blue-500/15 text-blue-400 ring-blue-500/20',
+  'A': 'bg-accent-blue/15 text-accent-blue ring-accent-blue/20',
   'B': 'bg-amber-500/15 text-amber-400 ring-amber-500/20',
-  'C': 'bg-red-500/15 text-red-400 ring-red-500/20',
-  'D': 'bg-red-500/20 text-red-300 ring-red-500/30',
+  'C': 'bg-accent-red/15 text-accent-red ring-accent-red/20',
+  'D': 'bg-accent-red/20 text-accent-red ring-accent-red/30',
 };
 
 const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
@@ -104,7 +104,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 bg-bg-tertiary rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full ${report.score >= 80 ? 'bg-green-500' : report.score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+              className={`h-full rounded-full ${report.score >= 80 ? 'bg-green-500' : report.score >= 60 ? 'bg-amber-500' : 'bg-accent-red'}`}
               style={{ width: `${report.score}%` }}
             />
           </div>

@@ -24,10 +24,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 const RARITY_CONFIG: Record<ItemRarity, { tKey: string; color: string; bg: string }> = {
   common:    { tKey: 'itemStudio.rarityCommon',    color: '#9ca3af', bg: 'bg-gray-500/10' },
   uncommon:  { tKey: 'itemStudio.rarityUncommon',  color: '#22c55e', bg: 'bg-green-500/10' },
-  rare:      { tKey: 'itemStudio.rarityRare',      color: '#3b82f6', bg: 'bg-blue-500/10' },
+  rare:      { tKey: 'itemStudio.rarityRare',      color: '#3b82f6', bg: 'bg-accent-blue/10' },
   epic:      { tKey: 'itemStudio.rarityEpic',      color: '#a855f7', bg: 'bg-purple-500/10' },
   legendary: { tKey: 'itemStudio.rarityLegendary', color: '#f59e0b', bg: 'bg-amber-500/10' },
-  mythic:    { tKey: 'itemStudio.rarityMythic',    color: '#ef4444', bg: 'bg-red-500/10' },
+  mythic:    { tKey: 'itemStudio.rarityMythic',    color: '#ef4444', bg: 'bg-accent-red/10' },
 };
 
 const CATEGORY_CONFIG: Record<ItemCategory, { tKey: string; icon: React.ElementType }> = {
@@ -631,7 +631,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                             setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
                           });
                         }}
-                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                        className="p-2.5 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -765,7 +765,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
               <div key={skill.id} className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-2 rounded-xl shadow-sm transition-[background-color,border-color,box-shadow,color] hover:bg-bg-secondary hover:shadow-md hover:border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-accent-blue' : skill.type === 'passive' ? 'text-green-400' : 'text-blue-400'}`} />
+                    <Zap className={`w-4 h-4 ${skill.type === 'ultimate' ? 'text-accent-blue' : skill.type === 'passive' ? 'text-green-400' : 'text-accent-blue'}`} />
                     <span className="font-bold text-sm">{skill.name}</span>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-bg-primary text-text-tertiary">
                       {(() => { const st = SKILL_TYPES.find(s => s.value === skill.type); return st ? t(st.tKey) : skill.type; })()}
@@ -779,7 +779,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
                             setTimeout(() => setSkills(prev => prev.filter(s => s.id !== skill.id)), 300);
                           });
                         }}
-                        className="p-2.5 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                        className="p-2.5 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -962,7 +962,7 @@ const MagicSystemCard: React.FC<{
             e.currentTarget.classList.add('animate-delete-warning');
             setTimeout(onDelete, 300);
           }} 
-          className="p-1 rounded-lg text-text-tertiary hover:text-red-400 hover:bg-red-500/20 transition-colors duration-200"
+          className="p-1 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/20 transition-colors duration-200"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -972,7 +972,7 @@ const MagicSystemCard: React.FC<{
         <>
           {magic.source && <p className="text-xs text-text-secondary">🔮 {t('itemStudio.source')}: {magic.source}</p>}
           {magic.rules && <p className="text-xs text-text-secondary">📜 {t('itemStudio.rules')}: {magic.rules}</p>}
-          {magic.limitations && <p className="text-xs text-red-400/80">⛔ {t('itemStudio.limits')}: {magic.limitations}</p>}
+          {magic.limitations && <p className="text-xs text-accent-red/80">⛔ {t('itemStudio.limits')}: {magic.limitations}</p>}
 
           {/* Ranks */}
           <div className="space-y-2">
@@ -981,7 +981,7 @@ const MagicSystemCard: React.FC<{
               {magic.ranks.map((rank, i) => (
                 <span key={i} className="flex items-center gap-1 px-2 py-1 bg-bg-primary rounded-lg text-[10px] font-bold">
                   {i + 1}. {rank}
-                  <button onClick={() => onRemoveRank(i)} className="text-text-tertiary hover:text-red-400 ml-1">×</button>
+                  <button onClick={() => onRemoveRank(i)} className="text-text-tertiary hover:text-accent-red ml-1">×</button>
                 </span>
               ))}
             </div>

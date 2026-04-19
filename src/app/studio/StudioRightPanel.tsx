@@ -315,9 +315,9 @@ export function StudioWritingAssistantPanel({
                   : 'text-accent-amber hover:text-accent-amber/80'
               }`}>{'\uD83C\uDFAC'} {t('panel.scene')} {!currentSession.config.sceneDirection && <span className="text-[11px] ml-1 px-1.5 py-0.5 bg-amber-500/10 rounded text-amber-400">{t('panel.notSet')}</span>}</summary>
               <div className="mt-1.5 pl-4 space-y-1 min-w-0">
-                {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[12px] text-blue-400 break-words">{'\uD83E\uDE9D'} {h.desc}</div>)}
+                {currentSession.config.sceneDirection?.hooks?.map((h, i) => <div key={i} className="text-[12px] text-accent-blue break-words">{'\uD83E\uDE9D'} {h.desc}</div>)}
                 {currentSession.config.sceneDirection?.goguma?.map((g, i) => <div key={i} className={`text-[12px] break-words ${g.type === 'goguma' ? 'text-amber-400' : 'text-cyan-400'}`}>{g.type === 'goguma' ? '\uD83C\uDF60' : '\uD83E\uDD64'} {g.desc}</div>)}
-                {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[12px] text-red-400 break-words">{'\uD83D\uDD1A'} {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
+                {currentSession.config.sceneDirection?.cliffhanger && <div className="text-[12px] text-accent-red break-words">{'\uD83D\uDD1A'} {currentSession.config.sceneDirection.cliffhanger.desc}</div>}
                 {!currentSession.config.sceneDirection && (
                   <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
                     <p className="text-[12px] text-accent-amber">{t('panel.sceneWarning')}</p>

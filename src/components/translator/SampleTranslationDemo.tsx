@@ -325,7 +325,7 @@ function ScoreCard({ label, value }: { label: string; value: number }) {
   // [C] 값 범위 방어 (0..1)
   const safe = Math.min(Math.max(0, value), 1);
   // 색상 + 텍스트 2가지 신호 (Design System: 색상 단독 금지)
-  const color = safe >= 0.9 ? 'text-green-400' : safe >= 0.8 ? 'text-amber-400' : 'text-red-400';
+  const color = safe >= 0.9 ? 'text-green-400' : safe >= 0.8 ? 'text-amber-400' : 'text-accent-red';
   return (
     <div className="p-2 bg-bg-primary border border-border rounded text-center">
       <div className="text-[10px] text-text-tertiary uppercase tracking-wider">{label}</div>

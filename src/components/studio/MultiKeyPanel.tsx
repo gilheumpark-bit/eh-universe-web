@@ -173,7 +173,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
               <div className="text-[10px] text-gray-500 uppercase">{ko ? "총 호출" : "Total Calls"}</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-blue-400">
+              <div className="text-lg font-bold text-accent-blue">
                 {totalUsage.tokens > 1_000_000
                   ? `${(totalUsage.tokens / 1_000_000).toFixed(1)}M`
                   : totalUsage.tokens > 1_000
@@ -369,7 +369,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                       >
                         {testState === "testing" && <Loader2 className="w-3 h-3 animate-spin" />}
                         {testState === "success" && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
-                        {testState === "error" && <AlertTriangle className="w-3 h-3 text-red-400" />}
+                        {testState === "error" && <AlertTriangle className="w-3 h-3 text-accent-red" />}
                         {testState === "idle" && <Key className="w-3 h-3" />}
                         {ko ? "테스트" : "Test"}
                       </button>
@@ -422,7 +422,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                         </span>
                         <button
                           onClick={() => handleResetUsage(slot.id)}
-                          className="text-[10px] text-gray-500 hover:text-red-400 flex items-center gap-0.5"
+                          className="text-[10px] text-gray-500 hover:text-accent-red flex items-center gap-0.5"
                           title={ko ? "초기화" : "Reset"}
                         >
                           <RotateCcw className="w-3 h-3" />
@@ -458,7 +458,7 @@ const MultiKeyPanel: React.FC<MultiKeyPanelProps> = ({ language = "ko", onClose 
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => handleClearSlot(slot.id)}
-                      className="text-[10px] text-gray-500 hover:text-red-400 flex items-center gap-1 transition-colors"
+                      className="text-[10px] text-gray-500 hover:text-accent-red flex items-center gap-1 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                       {ko ? "슬롯 초기화" : "Clear Slot"}

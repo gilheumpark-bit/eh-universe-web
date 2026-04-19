@@ -103,7 +103,7 @@ function PaneTabBar({
           {f.isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
           <span
             onClick={(e) => { e.stopPropagation(); onCloseFile(f.id); }}
-            className="hover:text-red-400 cursor-pointer"
+            className="hover:text-accent-red cursor-pointer"
           >
             <X size={12} />
           </span>
@@ -177,7 +177,7 @@ function PaneContextMenu({
       <div className="h-px bg-white/8 my-1" />
       <button
         onClick={() => { onCloseGroup(state.paneId); onClose(); }}
-        className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-white/5 flex items-center gap-2"
+        className="w-full text-left px-3 py-1.5 text-xs text-accent-red hover:bg-white/5 flex items-center gap-2"
       >
         <X size={12} /> Close Group
       </button>

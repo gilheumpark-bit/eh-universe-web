@@ -17,9 +17,9 @@ interface SuggestionPanelProps {
 }
 
 const PRIORITY_STYLES = {
-  critical: { border: 'border-red-500/30', leftBorder: 'border-l-red-500', bg: 'bg-red-500/5', icon: XCircle, color: 'text-red-400' },
+  critical: { border: 'border-accent-red/30', leftBorder: 'border-l-red-500', bg: 'bg-accent-red/5', icon: XCircle, color: 'text-accent-red' },
   warning: { border: 'border-amber-500/30', leftBorder: 'border-l-amber-500', bg: 'bg-amber-500/5', icon: AlertTriangle, color: 'text-amber-400' },
-  info: { border: 'border-blue-500/30', leftBorder: 'border-l-blue-500', bg: 'bg-blue-500/5', icon: Info, color: 'text-blue-400' },
+  info: { border: 'border-accent-blue/30', leftBorder: 'border-l-blue-500', bg: 'bg-accent-blue/5', icon: Info, color: 'text-accent-blue' },
 };
 
 const CATEGORY_LABELS: Record<string, { ko: string; en: string; ja?: string; zh?: string }> = {

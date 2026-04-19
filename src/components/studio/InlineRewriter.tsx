@@ -280,9 +280,9 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
       {/* Preview */}
       {preview !== null && (
-        <div className="bg-bg-primary border border-blue-500/20 rounded-xl p-4 space-y-3">
+        <div className="bg-bg-primary border border-accent-blue/20 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 font-mono">
+            <span className="text-[9px] font-black uppercase tracking-widest text-accent-blue font-mono">
               {isStreaming ? t('inlineRewriter.generating') : t('inlineRewriter.preview')}
             </span>
             <div className="flex gap-1.5">
@@ -302,7 +302,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
                   </button>
                 </span>
               )}
-              <button onClick={cancelPreview} className="flex items-center gap-1 px-2.5 py-1 bg-red-600/10 border border-red-500/20 rounded-lg text-[9px] font-bold text-red-400 hover:bg-red-600/20 font-mono">
+              <button onClick={cancelPreview} className="flex items-center gap-1 px-2.5 py-1 bg-accent-red/10 border border-accent-red/20 rounded-lg text-[9px] font-bold text-accent-red hover:bg-accent-red/20 font-mono">
                 {isStreaming ? <X className="w-3 h-3" /> : <RotateCcw className="w-3 h-3" />}
                 {isStreaming ? t('inlineRewriter.stop') : t('inlineRewriter.cancel')}
               </button>

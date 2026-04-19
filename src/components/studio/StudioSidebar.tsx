@@ -171,7 +171,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   const quotaMb = storageEstimate ? storageEstimate.quota / 1024 / 1024 : 5;
   const usageMb = storageEstimate ? storageEstimate.usage / 1024 / 1024 : storageUsageMb;
   const storageUsagePct = Math.min(100, (usageMb / quotaMb) * 100);
-  const storageUsageColor = storageUsagePct > 80 ? 'bg-red-500' : storageUsagePct > 50 ? 'bg-accent-amber' : 'bg-green-500';
+  const storageUsageColor = storageUsagePct > 80 ? 'bg-accent-red' : storageUsagePct > 50 ? 'bg-accent-amber' : 'bg-green-500';
 
   // Sessions in chronological order (ep #1 = first created)
   const orderedSessions = [...sessions].sort((a, b) => a.lastUpdate - b.lastUpdate);
@@ -545,7 +545,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                               },
                             });
                           }}
-                          className="px-2 py-1 rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-red-400 hover:bg-accent-red/10 active:animate-delete-warning transition-[background-color,color] duration-200"
+                          className="px-2 py-1 rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider text-accent-red hover:text-accent-red hover:bg-accent-red/10 active:animate-delete-warning transition-[background-color,color] duration-200"
                           title={language === 'KO' ? '선택 삭제' : 'Delete selected'}
                         >
                           {language === 'KO' ? '삭제' : 'Del'}
@@ -706,7 +706,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             <div className="rounded-xl border border-white/8 bg-black/20 p-3">
               {user ? (
                 <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-blue-400 shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-accent-blue shrink-0">
                     {user.photoURL ? (
                       <Image src={user.photoURL} alt="" width={44} height={44} className="h-full w-full object-cover" />
                     ) : (
@@ -754,7 +754,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     disabled={syncStatus === 'syncing'}
                     className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-[transform,background-color,border-color,color] ${
                       syncStatus === 'syncing'
-                        ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-blue-400'
+                        ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-accent-blue'
                         : syncStatus === 'done'
                         ? 'border-[rgba(92,214,143,0.28)] bg-[rgba(92,214,143,0.08)] text-green-400'
                         : syncStatus === 'error'

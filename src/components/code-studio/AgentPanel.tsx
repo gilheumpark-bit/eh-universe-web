@@ -67,9 +67,9 @@ const STEP_ICONS: Record<string, React.ReactNode> = {
 const StepRow = memo(function StepRow({ step, expanded, onToggle }: { step: AgentStep; expanded: boolean; onToggle: () => void }) {
   const icon = STEP_ICONS[step.action] ?? <Bot size={11} />;
   const statusIcon =
-    step.status === "running" ? <Loader2 size={10} className="animate-spin text-blue-400" /> :
+    step.status === "running" ? <Loader2 size={10} className="animate-spin text-accent-blue" /> :
     step.status === "done" ? <CheckCircle size={10} className="text-green-400" /> :
-    step.status === "error" ? <XCircle size={10} className="text-red-400" /> :
+    step.status === "error" ? <XCircle size={10} className="text-accent-red" /> :
     <div className="w-2.5 h-2.5 rounded-full bg-[#30363d]" />;
 
   return (
@@ -94,11 +94,11 @@ const AgentBadge = memo(function AgentBadge({ mode }: { mode: AgentMode }) {
   const { lang } = useLang();
   const cfg: Record<AgentMode, { ko: string; en: string; ja: string; zh: string; color: string }> = {
     idle: { ko: "대기", en: "Idle", ja: "待機", zh: "待机", color: "text-[#8b949e]" },
-    planning: { ko: "계획 중", en: "Planning", ja: "計画中", zh: "规划中", color: "text-blue-400" },
+    planning: { ko: "계획 중", en: "Planning", ja: "計画中", zh: "规划中", color: "text-accent-blue" },
     executing: { ko: "실행 중", en: "Running", ja: "実行中", zh: "运行中", color: "text-green-400" },
     paused: { ko: "일시 정지", en: "Paused", ja: "一時停止", zh: "已暂停", color: "text-accent-amber" },
     complete: { ko: "완료", en: "Done", ja: "完了", zh: "完成", color: "text-green-400" },
-    error: { ko: "오류", en: "Error", ja: "エラー", zh: "错误", color: "text-red-400" },
+    error: { ko: "오류", en: "Error", ja: "エラー", zh: "错误", color: "text-accent-red" },
   };
   const c = cfg[mode];
   return (
@@ -111,7 +111,7 @@ const AgentBadge = memo(function AgentBadge({ mode }: { mode: AgentMode }) {
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);
-  const color = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-accent-amber" : "bg-red-400";
+  const color = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-accent-amber" : "bg-accent-red";
   return (
     <div className="flex items-center gap-1">
       <div className="w-16 h-1.5 bg-[#21262d] rounded-full overflow-hidden">
@@ -132,7 +132,7 @@ import { AGENT_REGISTRY, ALL_AGENT_ROLES } from "@/types/code-studio-agent";
 
 const CATEGORY_COLORS: Record<string, string> = {
   leadership: "text-amber-400",
-  generation: "text-blue-400",
+  generation: "text-accent-blue",
   verification: "text-accent-amber",
   repair: "text-green-400",
 };
@@ -455,7 +455,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
         <span className="flex items-center gap-2 text-xs font-semibold text-[#e6edf3]">
           <Bot size={14} className="text-green-400" /> {L4(lang, { ko: "Action Dock (에이전트)", en: "Action Dock (Agent)", ja: "Action Dock (エージェント)", zh: "Action Dock (代理)"})}
           {mode === "staged" ? (
-             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">대기 중 (Staged)</span>
+             <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-blue/20 text-accent-blue">대기 중 (Staged)</span>
           ) : mode === "applied" ? (
              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">적용됨 (Applied)</span>
           ) : (
@@ -476,7 +476,7 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
       {(mode === 'staged' || mode === 'applied') && hasVerification && (
         <div className="flex gap-2 px-3 py-2 border-b border-[#30363d] bg-[#161b22]/50 text-[10px]">
           <div className="flex items-center gap-1 rounded bg-[#21262d] px-1.5 py-0.5">
-            <span className="text-blue-400 font-bold">[C] 안전성</span>
+            <span className="text-accent-blue font-bold">[C] 안전성</span>
             <CheckCircle size={10} className="text-green-400" />
             <span className="text-[#8b949e]">예외/타입 패스</span>
           </div>
@@ -547,8 +547,8 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
               </div>
             )}
             {mode === "staged" && applyCandidate && (
-              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg flex flex-col gap-2">
-                <div className="text-[11px] text-blue-300 font-medium">
+              <div className="mt-3 p-3 bg-accent-blue/10 border border-accent-blue/30 rounded-lg flex flex-col gap-2">
+                <div className="text-[11px] text-accent-blue font-medium">
                   {L4(lang, {
                     ko: `[Staged] ${applyCandidate.sourceRole} 결과를 적용할 준비가 되었습니다.`,
                     en: `[Staged] Ready to apply ${applyCandidate.sourceRole} output.`, ja: `[Staged] ${applyCandidate.sourceRole}の結果を適用する準備ができました。`, zh: `[Staged] ${applyCandidate.sourceRole}结果已准备好应用。`})}
@@ -556,13 +556,13 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleApply}
-                    className="flex-1 rounded bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-500 transition-colors font-medium"
+                    className="flex-1 rounded bg-accent-blue px-3 py-1.5 text-xs text-white hover:bg-accent-blue transition-colors font-medium"
                   >
                     {L4(lang, { ko: "수락 및 적용 (Accept)", en: "Accept & Apply", ja: "承認して適用 (Accept)", zh: "接受并应用 (Accept)"})}
                   </button>
                   <button
                     onClick={handleRollback}
-                    className="flex-1 rounded bg-[#21262d] border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="flex-1 rounded bg-[#21262d] border border-accent-red/20 px-3 py-1.5 text-xs text-accent-red hover:bg-accent-red/10 transition-colors"
                   >
                     {L4(lang, { ko: "폐기 (Rollback)", en: "Discard (Rollback)", ja: "破棄 (Rollback)", zh: "废弃 (Rollback)"})}
                   </button>
@@ -570,8 +570,8 @@ export function AgentPanel({ code, language, fileName, onApplyCode, onOpenPrevie
               </div>
             )}
             {mode === "error" && summary && (
-              <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-red-400"><XCircle size={12} />{summary}</div>
+              <div className="mt-3 p-2 bg-accent-red/10 border border-accent-red/20 rounded-lg">
+                <div className="flex items-center gap-2 text-xs text-accent-red"><XCircle size={12} />{summary}</div>
               </div>
             )}
           </div>

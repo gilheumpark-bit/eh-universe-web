@@ -168,7 +168,7 @@ function CommitDetail({
         {onCheckout && (
           <button
             onClick={() => onCheckout(commit.hash)}
-            className="ml-auto text-xs text-blue-400 hover:text-blue-300"
+            className="ml-auto text-xs text-accent-blue hover:text-accent-blue"
           >
             Checkout
           </button>

@@ -45,7 +45,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
               type="checkbox"
               checked={usePrompt}
               onChange={e => onTogglePrompt(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-blue-600"
+              className="w-3.5 h-3.5 rounded accent-accent-blue"
             />
             <span className="text-[13px] text-text-tertiary">{isKO ? 'NOA 프롬프트에 반영' : 'Apply to NOA prompt'}</span>
           </label>
@@ -71,7 +71,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(input); } }}
           placeholder={isKO ? '태그 입력 후 Enter' : 'Type tag + Enter'}
-          className="flex-1 bg-bg-tertiary border border-border rounded-xl px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-blue-600 transition-colors"
+          className="flex-1 bg-bg-tertiary border border-border rounded-xl px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue transition-colors"
           maxLength={20}
         />
       </div>
@@ -366,8 +366,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               max={500}
               className={`w-full bg-bg-tertiary border rounded-xl p-4 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] ${
                 totalEpisodes < 1 || totalEpisodes > 500
-                  ? 'border-red-500/60 focus:border-red-500 text-red-400'
-                  : 'border-border focus:border-blue-600'
+                  ? 'border-accent-red/60 focus:border-accent-red text-accent-red'
+                  : 'border-border focus:border-accent-blue'
               }`}
               value={totalEpisodes}
               onChange={e => {
@@ -377,7 +377,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               }}
             />
             {(totalEpisodes < 1 || totalEpisodes > 500) && (
-              <p className="text-[13px] font-bold text-red-400 px-1">
+              <p className="text-[13px] font-bold text-accent-red px-1">
                 {totalEpisodes < 1
                   ? (language === 'KO' ? '에피소드 수는 1 이상이어야 합니다.' : 'Episode count must be at least 1.')
                   : (language === 'KO' ? '500화 초과는 시스템 부하를 유발할 수 있습니다.' : 'Over 500 episodes may cause performance issues.')}
@@ -422,7 +422,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             <button key={mode} onClick={() => setConfig({ ...config, prismMode: mode })}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest font-mono border transition-[transform,opacity,background-color,border-color,color] ${
                 (config.prismMode ?? 'OFF') === mode
-                  ? 'bg-blue-600/20 border-blue-500/40 text-blue-400'
+                  ? 'bg-accent-blue/20 border-accent-blue/40 text-accent-blue'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-secondary'
               }`}>
               {mode}

@@ -110,7 +110,7 @@ function FullPageFallback({ error, onRetry }: { error: Error; onRetry: () => voi
 
   return (
     <div className="flex flex-col items-center justify-center gap-5 p-12 min-h-[50vh]" role="alert">
-      <div className="text-red-400 text-xl font-bold">
+      <div className="text-accent-red text-xl font-bold">
         {L4(lang, {
           ko: '문제가 발생했습니다',
           en: 'Something went wrong',
@@ -126,13 +126,13 @@ function FullPageFallback({ error, onRetry }: { error: Error; onRetry: () => voi
           zh: '发生了意外错误。请点击下方按钮重试，如果问题持续存在，请刷新页面。',
         })}
       </p>
-      <pre className="text-text-tertiary text-xs bg-black/50 rounded-lg px-4 py-2 max-w-full overflow-auto whitespace-pre-wrap break-all border border-red-500/20">
+      <pre className="text-text-tertiary text-xs bg-black/50 rounded-lg px-4 py-2 max-w-full overflow-auto whitespace-pre-wrap break-all border border-accent-red/20">
         {error.message}
       </pre>
       <div className="flex items-center gap-3">
         <button
           onClick={onRetry}
-          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/10 active:scale-[0.97] transition-[transform,background-color,border-color,box-shadow,color] duration-200"
+          className="px-6 py-2.5 text-sm font-bold rounded-xl bg-accent-red/10 border border-accent-red/30 text-accent-red hover:bg-accent-red/20 hover:scale-[1.03] hover:shadow-lg hover:shadow-accent-red/10 active:scale-[0.97] transition-[transform,background-color,border-color,box-shadow,color] duration-200"
         >
           {L4(lang, { ko: '다시 시도', en: 'Retry', ja: '再試行', zh: '重试' })}
         </button>
@@ -160,11 +160,11 @@ function SectionFallback({
 }) {
   return (
     <div
-      className="flex flex-col items-center justify-center gap-2 bg-bg-secondary border border-red-500/20 rounded-xl mx-4 my-2"
+      className="flex flex-col items-center justify-center gap-2 bg-bg-secondary border border-accent-red/20 rounded-xl mx-4 my-2"
       style={{ minHeight: `${height}px` }}
       role="alert"
     >
-      <div className="text-red-400 text-xs font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider">
+      <div className="text-accent-red text-xs font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider">
         {section} Error
       </div>
       <div className="text-text-tertiary text-[10px] max-w-xs text-center px-4">
@@ -172,7 +172,7 @@ function SectionFallback({
       </div>
       <button
         onClick={onRetry}
-        className="mt-1 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
+        className="mt-1 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-accent-red/10 border border-accent-red/30 text-accent-red hover:bg-accent-red/20 transition-colors"
         autoFocus
       >
         Retry

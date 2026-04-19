@@ -38,8 +38,8 @@ const ProvidersSection: React.FC<ProvidersSectionProps> = ({ language }) => {
   const usageBytes = hasIdbEstimate ? storageEstimate!.usage : getStorageUsageBytes();
   const quotaBytes = hasIdbEstimate ? storageEstimate!.quota : 5 * 1024 * 1024;
   const pct = (usageBytes / quotaBytes) * 100;
-  const barColor = pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500';
-  const textColor = pct > 80 ? 'text-red-400' : pct > 50 ? 'text-accent-amber' : 'text-green-500';
+  const barColor = pct > 80 ? 'bg-accent-red' : pct > 50 ? 'bg-accent-amber' : 'bg-green-500';
+  const textColor = pct > 80 ? 'text-accent-red' : pct > 50 ? 'text-accent-amber' : 'text-green-500';
   const usageLabel = hasIdbEstimate
     ? `${formatSize(usageBytes / 1024 / 1024)} / ${formatSize(quotaBytes / 1024 / 1024)}`
     : `${(usageBytes / 1024 / 1024).toFixed(1)} MB / 5 MB`;
@@ -47,7 +47,7 @@ const ProvidersSection: React.FC<ProvidersSectionProps> = ({ language }) => {
   return (
     <details className="ds-accordion rounded-2xl bg-bg-secondary/20 border border-border overflow-hidden group">
       <summary className="cursor-pointer select-none list-none flex items-center gap-3 px-5 py-4 hover:bg-bg-secondary/40 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue">
-        <Cpu className="w-4 h-4 text-blue-500 shrink-0" />
+        <Cpu className="w-4 h-4 text-accent-blue shrink-0" />
         <span className="text-sm font-black text-text-primary flex-1">
           {L4(language, { ko: 'AI 엔진', en: 'AI Engine', ja: 'AIエンジン', zh: 'AI 引擎' })}
         </span>
@@ -56,12 +56,12 @@ const ProvidersSection: React.FC<ProvidersSectionProps> = ({ language }) => {
       <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-bg-secondary/20 border border-border rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-6">
           <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-blue-500" /> {L4(language, { ko: '집필 엔진 상태', en: 'Writing Engine Status', ja: '執筆エンジン状態', zh: '写作引擎状态' })}
+            <Cpu className="w-4 h-4 text-accent-blue" /> {L4(language, { ko: '집필 엔진 상태', en: 'Writing Engine Status', ja: '執筆エンジン状態', zh: '写作引擎状态' })}
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.engineVersion')}</span>
-              <span className="text-xs font-black text-blue-400">ANS {ENGINE_VERSION}</span>
+              <span className="text-xs font-black text-accent-blue">ANS {ENGINE_VERSION}</span>
             </div>
             <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
               <span className="text-xs text-text-secondary">{t('settings.aiModel')}</span>
@@ -91,7 +91,7 @@ const ProvidersSection: React.FC<ProvidersSectionProps> = ({ language }) => {
                 />
               </div>
               {hasIdbEstimate && pct > 80 && (
-                <p className="text-[13px] text-red-400">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '容量が不足しています。古いセッションを削除するか、バックアップ後に整理してください。', zh: '容量不足。请删除旧会话或备份后清理。' })}</p>
+                <p className="text-[13px] text-accent-red">{L4(language, { ko: '용량이 부족합니다. 오래된 세션을 삭제하거나 백업 후 정리하세요.', en: 'Storage nearly full. Delete old sessions or export a backup.', ja: '容量が不足しています。古いセッションを削除するか、バックアップ後に整理してください。', zh: '容量不足。请删除旧会话或备份后清理。' })}</p>
               )}
             </div>
           </div>

@@ -115,7 +115,7 @@ export default function NoaTowerPage() {
   const { reply, state } = payload;
   const caseData = payload.case;
   const isEnded = state.gameStatus !== "active";
-  const conditionColor = state.distortion >= 0.82 ? "from-red-900/40" : state.distortion >= 0.46 ? "from-amber-900/20" : "from-cyan-900/10";
+  const conditionColor = state.distortion >= 0.82 ? "from-accent-red/40" : state.distortion >= 0.46 ? "from-amber-900/20" : "from-cyan-900/10";
 
   return (
     <ErrorBoundary variant="full-page">
@@ -256,7 +256,7 @@ function PART4_Sidebar({ lang, sidePanel, state, caseData, reply }: SidebarProps
           <div key={k} className="flex items-center gap-2 mb-2">
             <span className="w-14 font-[--font-mono] text-[9px] text-text-tertiary uppercase tracking-tighter">{k}</span>
             <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
-              <div className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-700 ${k === "risk" ? "bg-red-500/60" : k === "delusion" ? "bg-purple-500/60" : "bg-cyan-500/60"}`}
+              <div className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-700 ${k === "risk" ? "bg-accent-red/60" : k === "delusion" ? "bg-purple-500/60" : "bg-cyan-500/60"}`}
                 style={{ width: `${(reply.vectorScores[k] * 100)}%` }} />
             </div>
             <span className="w-7 font-[--font-mono] text-[9px] text-text-secondary text-right">{(reply.vectorScores[k] * 100).toFixed(0)}</span>
@@ -461,7 +461,7 @@ function PART5_Content({ lang, state, reply, caseData, input, setInput, inputRef
           <div className="flex-1" />
           <button 
             onClick={() => doAction("give_up")} 
-            className="rounded-lg px-4 py-2 font-[--font-mono] text-[12px] text-red-400/40 hover:text-red-400/80 transition-colors"
+            className="rounded-lg px-4 py-2 font-[--font-mono] text-[12px] text-accent-red/40 hover:text-accent-red/80 transition-colors"
           >
             {t("giveUp", lang)}
           </button>

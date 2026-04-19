@@ -164,7 +164,7 @@ export function NetworkAgentSearchClient() {
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono text-[10px] ${msg.role === "agent" ? "bg-accent-amber/20 text-accent-amber" : "bg-white/10 text-white"}`}>
                   {msg.role === "agent" ? "NOA" : "YOU"}
                 </div>
-                <div className={`max-w-[85%] rounded-2xl p-4 ${msg.role === "agent" ? (msg.isError ? "bg-red-500/10 border border-red-500/20" : "bg-white/[0.03] border border-white/5") : "bg-accent-amber/10 border border-accent-amber/20"}`}>
+                <div className={`max-w-[85%] rounded-2xl p-4 ${msg.role === "agent" ? (msg.isError ? "bg-accent-red/10 border border-accent-red/20" : "bg-white/[0.03] border border-white/5") : "bg-accent-amber/10 border border-accent-amber/20"}`}>
                   <div className="text-sm whitespace-pre-wrap leading-relaxed">
                     {msg.content}
                   </div>

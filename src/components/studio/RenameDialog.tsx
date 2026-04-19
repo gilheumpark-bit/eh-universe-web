@@ -386,7 +386,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
                         </button>
                         {expanded && (
                           <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed">
-                            <div className="text-red-400/80">
+                            <div className="text-accent-red/80">
                               <span className="text-text-tertiary mr-1.5" aria-hidden="true">-</span>
                               <span className="sr-only">{L4(language, { ko: '삭제', en: 'Removed', ja: '削除', zh: '删除' })}: </span>
                               {m.before}

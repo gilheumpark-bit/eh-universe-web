@@ -20,8 +20,8 @@ export function ChatMarkdownBlock({ mainContent, isCompact }: ChatMarkdownBlockP
           <h1
             className={
               isCompact
-                ? "text-sm font-black text-text-primary mt-4 mb-2 border-l border-blue-600 pl-2 uppercase"
-                : "text-xl font-black text-text-primary mt-10 mb-4 border-l-2 border-blue-600 pl-4 uppercase"
+                ? "text-sm font-black text-text-primary mt-4 mb-2 border-l border-accent-blue pl-2 uppercase"
+                : "text-xl font-black text-text-primary mt-10 mb-4 border-l-2 border-accent-blue pl-4 uppercase"
             }
             {...props}
           />

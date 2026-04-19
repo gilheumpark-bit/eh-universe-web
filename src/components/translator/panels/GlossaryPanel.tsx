@@ -233,7 +233,7 @@ export function GlossaryPanel() {
                       <button
                         type="button"
                         onClick={() => handleRemoveTerm(term)}
-                        className="p-1 rounded hover:bg-red-500/20 text-text-tertiary hover:text-red-400 transition-colors"
+                        className="p-1 rounded hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors"
                         aria-label="Remove term"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
