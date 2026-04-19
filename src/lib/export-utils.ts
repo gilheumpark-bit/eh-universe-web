@@ -12,7 +12,7 @@ import {
   buildEpubAIMetaTags,
 } from './ai-usage-tracker';
 import {
-  getRating,
+  getEffectiveRating,
   buildAdultWarning,
   filenamePrefix,
   epubAudience,
@@ -56,8 +56,8 @@ function buildDisclosureFooter(session: ChatSession, opts?: ExportOptions): stri
     }
   }
 
-  // 19+ 성인 경고 (자가 선언 기준) — AI 고지와 별개로 삽입
-  const rating = getRating(session.id);
+  // 19+ 성인 경고 — prismMode 파생 우선, 수동 선언 fallback
+  const rating = getEffectiveRating(session.id, session.config);
   const adult = buildAdultWarning(rating, lang);
   if (adult) text += (text ? '\n' : '\n---\n') + adult + '\n';
 
@@ -275,8 +275,8 @@ export function exportEPUB(session: ChatSession, coverImageDataUrl?: string, opt
   const descParts = [genre, platform].filter(Boolean);
   const descMeta = descParts.length > 0 ? `\n    <dc:description>${escapeXml(descParts.join(' | '))}</dc:description>` : '';
 
-  // 콘텐츠 등급 → EPUB 메타 (dc:audience) + AI meta tags
-  const rating = getRating(session.id);
+  // 콘텐츠 등급 → EPUB 메타 (dc:audience) — prismMode 파생 우선
+  const rating = getEffectiveRating(session.id, session.config);
   const audience = epubAudience(rating.rating);
   const audienceMeta = audience ? `\n    <dc:audience>${audience}</dc:audience>` : '';
   const aiMetaTags = buildEpubAIMetaTags(getAIUsageForProject(session.id));
@@ -497,7 +497,7 @@ export function exportDOCX(session: ChatSession, opts?: ExportOptions): void {
     { name: 'word/document.xml', data: document },
   ]);
 
-  const rating = getRating(session.id);
+  const rating = getEffectiveRating(session.id, session.config);
   const prefix = filenamePrefix(rating.rating);
   downloadBlob(zipData, `${prefix}${title}.docx`, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 }

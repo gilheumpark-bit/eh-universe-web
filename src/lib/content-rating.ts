@@ -11,7 +11,7 @@
 // ============================================================
 
 import { logger } from './logger';
-import type { AppLanguage } from './studio-types';
+import type { AppLanguage, StoryConfig } from './studio-types';
 
 export type ContentRating = 'all' | '12+' | '15+' | '19+';
 export type ContentWarning = 'violence' | 'sexual' | 'language' | 'gambling' | 'drug';
@@ -116,6 +116,69 @@ export function getRecommendedRating(content: string): ContentRating {
 /** 미성년자 접근 경고가 필요한지 — 19+ 확정 시 true */
 export function warnIfMinorAccess(rating: ContentRating): boolean {
   return rating === '19+';
+}
+
+// ============================================================
+// PART 3B — prismMode ↔ ContentRating 자동 파생 (단일 소스 통합)
+// ============================================================
+//
+// 관계:
+//  - prismMode: 생성 시점 AI 제어 (작가가 만들 때 수위 제한)
+//  - ContentRating: 유통 시점 메타 (EPUB dc:audience, 파일명 prefix)
+//
+// 통합 원칙:
+//  - prismMode가 OFF/FREE가 아닌 이상 ContentRating을 자동 파생 (단일 소스)
+//  - OFF/FREE일 때만 수동 선언(localStorage)을 fallback 사용
+//  - warnings(성/폭/욕 태그)는 여전히 수동 선언 유지
+// ============================================================
+
+/**
+ * prismMode/prismCustom에서 ContentRating을 자동 파생.
+ * - OFF/FREE: null — 선언하지 않음 (수동 설정 fallback)
+ * - ALL → 'all', T15 → '15+', M18 → '19+'
+ * - CUSTOM: 성/폭/욕 3축 중 최대값으로 판정
+ *   (0-1 → all, 2 → 12+, 3 → 15+, 4-5 → 19+)
+ */
+export function derivRatingFromPrism(
+  config: Pick<StoryConfig, 'prismMode' | 'prismCustom'>,
+): ContentRating | null {
+  const mode = config.prismMode ?? 'OFF';
+  if (mode === 'OFF' || mode === 'FREE') return null;
+  if (mode === 'ALL') return 'all';
+  if (mode === 'T15') return '15+';
+  if (mode === 'M18') return '19+';
+  if (mode === 'CUSTOM') {
+    const c = config.prismCustom;
+    if (!c) return 'all';
+    const max = Math.max(c.sexual ?? 0, c.violence ?? 0, c.profanity ?? 0);
+    if (max >= 4) return '19+';
+    if (max >= 3) return '15+';
+    if (max >= 2) return '12+';
+    return 'all';
+  }
+  return null;
+}
+
+/**
+ * 유효 등급 — prismMode 파생값 우선, OFF/FREE일 때만 localStorage 수동 선언 fallback.
+ * Export·EPUB·파일명 모두 이 함수로 통일하면 단일 소스 보장.
+ */
+export function getEffectiveRating(
+  projectId: string,
+  config?: Pick<StoryConfig, 'prismMode' | 'prismCustom'>,
+): RatingMetadata {
+  const stored = safeRead(projectId);
+  const derived = config ? derivRatingFromPrism(config) : null;
+  if (derived) {
+    // prismMode 선언 있음 → 파생 등급 사용. warnings·declaredAt은 저장된 것 유지.
+    return {
+      rating: derived,
+      warnings: stored.warnings,
+      declaredAt: stored.declaredAt || new Date().toISOString(),
+    };
+  }
+  // prismMode OFF/FREE → 수동 선언 등급만 사용
+  return stored;
 }
 
 // ============================================================

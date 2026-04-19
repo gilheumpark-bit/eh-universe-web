@@ -15,6 +15,8 @@ import {
   filenamePrefix,
   buildAdultWarning,
   epubAudience,
+  derivRatingFromPrism,
+  getEffectiveRating,
 } from '../content-rating';
 
 describe('content-rating', () => {
@@ -103,5 +105,95 @@ describe('content-rating', () => {
     expect(epubAudience('15+')).toBe('Teen');
     expect(epubAudience('12+')).toBe('Juvenile');
     expect(epubAudience('all')).toBeNull();
+  });
+});
+
+// ============================================================
+// derivRatingFromPrism — prismMode → ContentRating 매핑
+// ============================================================
+describe('derivRatingFromPrism', () => {
+  it('OFF → null (선언 안 함)', () => {
+    expect(derivRatingFromPrism({ prismMode: 'OFF' })).toBeNull();
+  });
+  it('FREE → null (NOA 자율은 선언 안 함)', () => {
+    expect(derivRatingFromPrism({ prismMode: 'FREE' })).toBeNull();
+  });
+  it('ALL → all', () => {
+    expect(derivRatingFromPrism({ prismMode: 'ALL' })).toBe('all');
+  });
+  it('T15 → 15+', () => {
+    expect(derivRatingFromPrism({ prismMode: 'T15' })).toBe('15+');
+  });
+  it('M18 → 19+', () => {
+    expect(derivRatingFromPrism({ prismMode: 'M18' })).toBe('19+');
+  });
+  it('CUSTOM 성적 4 → 19+', () => {
+    expect(derivRatingFromPrism({
+      prismMode: 'CUSTOM',
+      prismCustom: { sexual: 4, violence: 1, profanity: 0 },
+    })).toBe('19+');
+  });
+  it('CUSTOM 폭력 3 → 15+', () => {
+    expect(derivRatingFromPrism({
+      prismMode: 'CUSTOM',
+      prismCustom: { sexual: 1, violence: 3, profanity: 2 },
+    })).toBe('15+');
+  });
+  it('CUSTOM 비속어 2 → 12+', () => {
+    expect(derivRatingFromPrism({
+      prismMode: 'CUSTOM',
+      prismCustom: { sexual: 0, violence: 0, profanity: 2 },
+    })).toBe('12+');
+  });
+  it('CUSTOM 전 축 0-1 → all', () => {
+    expect(derivRatingFromPrism({
+      prismMode: 'CUSTOM',
+      prismCustom: { sexual: 1, violence: 0, profanity: 1 },
+    })).toBe('all');
+  });
+  it('CUSTOM prismCustom 없을 때 → all', () => {
+    expect(derivRatingFromPrism({ prismMode: 'CUSTOM' })).toBe('all');
+  });
+  it('prismMode undefined → null (OFF 동작)', () => {
+    expect(derivRatingFromPrism({})).toBeNull();
+  });
+});
+
+// ============================================================
+// getEffectiveRating — prismMode 우선 / localStorage fallback
+// ============================================================
+describe('getEffectiveRating', () => {
+  beforeEach(() => { localStorage.clear(); });
+
+  it('prismMode=M18이면 localStorage 덮어씀', () => {
+    setRating('proj1', 'all');
+    const eff = getEffectiveRating('proj1', { prismMode: 'M18' });
+    expect(eff.rating).toBe('19+');
+  });
+  it('prismMode=T15이면 15+', () => {
+    setRating('proj1', 'all');
+    const eff = getEffectiveRating('proj1', { prismMode: 'T15' });
+    expect(eff.rating).toBe('15+');
+  });
+  it('prismMode=OFF이면 localStorage 등급 사용', () => {
+    setRating('proj1', '19+');
+    const eff = getEffectiveRating('proj1', { prismMode: 'OFF' });
+    expect(eff.rating).toBe('19+');
+  });
+  it('prismMode=FREE이면 localStorage 등급 사용', () => {
+    setRating('proj1', '15+');
+    const eff = getEffectiveRating('proj1', { prismMode: 'FREE' });
+    expect(eff.rating).toBe('15+');
+  });
+  it('config 인자 없으면 localStorage만', () => {
+    setRating('proj1', '19+');
+    const eff = getEffectiveRating('proj1');
+    expect(eff.rating).toBe('19+');
+  });
+  it('warnings는 localStorage에서 가져옴 (prismMode 파생에도)', () => {
+    setRating('proj1', 'all', ['violence', 'sexual']);
+    const eff = getEffectiveRating('proj1', { prismMode: 'M18' });
+    expect(eff.rating).toBe('19+');
+    expect(eff.warnings).toEqual(['violence', 'sexual']);
   });
 });
