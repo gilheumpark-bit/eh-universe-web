@@ -74,7 +74,7 @@ export default function PrivacyPage() {
           <li>GitHub (Microsoft, US) — {T({ ko: "사용자가 선택한 경우 원고 Git 동기화", en: "manuscript Git sync when enabled", ja: "任意 Git 同期 / Opt-in Git sync", zh: "可选 Git 同步 / Opt-in Git sync" })}</li>
           <li>Vercel (Vercel Inc., US) — {T({ ko: "호스팅·엣지 네트워크·Analytics", en: "hosting, edge network, Analytics", ja: "ホスティング・Analytics / Hosting & Analytics", zh: "托管与 Analytics / Hosting & Analytics" })}</li>
           <li>Sentry (Functional Software Inc., US) — {T({ ko: "에러 모니터링", en: "error monitoring", ja: "エラー監視 / Error monitoring", zh: "错误监控 / Error monitoring" })}</li>
-          <li>DGX Spark Gateway (api.ehuniverse.com, KR) — {T({ ko: "AI 추론 (Qwen 3.5-9B FP8 로컬)", en: "AI inference (Qwen 3.5-9B FP8 local)", ja: "AI推論 (ローカル) / Local AI inference", zh: "AI 推理 (本地) / Local AI inference" })}</li>
+          <li>DGX Spark Gateway (api.ehuniverse.com, KR) — {T({ ko: "AI 추론 (Qwen 3.6-35B-A3B-FP8 MoE 로컬)", en: "AI inference (Qwen 3.6-35B-A3B-FP8 MoE local)", ja: "AI推論 (Qwen 3.6-35B-A3B-FP8 MoE ローカル) / Local AI inference", zh: "AI 推理 (Qwen 3.6-35B-A3B-FP8 MoE 本地) / Local AI inference" })}</li>
           <li>{T({ ko: "사용자가 BYOK로 연결한 AI 제공사 (Gemini / Claude / OpenAI / Groq 등) — 각 제공사 정책에 따라 입력 데이터 처리", en: "User-connected AI providers (Gemini, Claude, OpenAI, Groq, etc.) — input data processed under each provider's policy", ja: "BYOK連携のAI提供者 — 各社ポリシー適用 / BYOK providers follow their own policies", zh: "用户自带密钥连接的 AI 提供商 — 遵循各自政策 / BYOK providers follow their own policies" })}</li>
         </ul>
         <p className="mt-3 text-text-tertiary text-xs leading-relaxed">

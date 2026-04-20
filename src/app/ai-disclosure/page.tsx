@@ -39,7 +39,7 @@ export default function AiDisclosurePage() {
               {T({ ko: "자사 운영", en: "First-Party (Self-Hosted)", ja: "自社運用", zh: "自有运营" })}
             </div>
             <ul className="list-disc pl-5 space-y-1">
-              <li>{T({ ko: "Qwen 3.5-9B FP8 (DGX Spark 로컬, 포트 8080/8081) — 집필, 번역, 요약, 대사", en: "Qwen 3.5-9B FP8 (DGX Spark local, ports 8080/8081) — writing, translation, summarization, dialogue", ja: "Qwen 3.5-9B FP8 (DGX ローカル) — 執筆・翻訳・要約 / Qwen 3.5-9B FP8 local DGX — writing/translation/summary", zh: "Qwen 3.5-9B FP8 (DGX 本地) — 写作、翻译、摘要 / Qwen 3.5-9B FP8 local DGX — writing/translation/summary" })}</li>
+              <li>{T({ ko: "Qwen 3.6-35B-A3B-FP8 MoE (DGX Spark 로컬, vLLM 포트 8001) — 집필, 번역, 요약, 대사", en: "Qwen 3.6-35B-A3B-FP8 MoE (DGX Spark local, vLLM port 8001) — writing, translation, summarization, dialogue", ja: "Qwen 3.6-35B-A3B-FP8 MoE (DGX ローカル, vLLM 8001) — 執筆・翻訳・要約 / Qwen 3.6-35B-A3B-FP8 MoE local DGX — writing/translation/summary", zh: "Qwen 3.6-35B-A3B-FP8 MoE (DGX 本地, vLLM 8001) — 写作、翻译、摘要 / Qwen 3.6-35B-A3B-FP8 MoE local DGX — writing/translation/summary" })}</li>
               <li>{T({ ko: "ComfyUI Flux-Schnell FP8 (DGX 로컬, 포트 8188) — 커버·삽화 생성", en: "ComfyUI Flux-Schnell FP8 (DGX local, port 8188) — cover / illustration generation", ja: "ComfyUI Flux-Schnell FP8 — カバー・挿絵生成 / Flux-Schnell local — cover & illustration", zh: "ComfyUI Flux-Schnell FP8 — 封面与插图生成 / Flux-Schnell local — cover & illustration" })}</li>
             </ul>
           </div>
