@@ -123,8 +123,9 @@ afterEach(async () => {
 // ============================================================
 
 describe('useShadowProjectWriter — flag off', () => {
-  test('flag 기본 off → onPrimarySaveComplete 호출해도 shadow 엔트리 0', async () => {
-    // 기본 — flag setItem 안 함 → default 'off'
+  test('명시적 flag off → onPrimarySaveComplete 호출해도 shadow 엔트리 0', async () => {
+    // [M9 P1-5] default 가 'shadow' 로 승격됐으므로 off 격리 테스트는 명시 override 필요.
+    setFlag('off');
     const { result } = renderHook(() => useShadowProjectWriter());
     result.current.onPrimarySaveComplete(makeProjects(), 10);
     await flush(60);

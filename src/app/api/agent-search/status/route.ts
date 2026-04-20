@@ -9,7 +9,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAgentBuilderStatus } from '@/lib/vertex-app-builder';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+/**
+ * [M9 audit P0-2] Feature gate — status endpoint also gated so unauthorized probes
+ * cannot reveal whether Discovery Engine credits are configured.
+ * Requires FEATURE_AGENT_SEARCH=on (same flag as the search endpoint).
+ */
 export async function GET(req: NextRequest) {
+  // [M9] Feature gate — credit protection until UI ships.
+  if (process.env.FEATURE_AGENT_SEARCH !== 'on') {
+    return NextResponse.json({ error: 'agent_search_disabled' }, { status: 503 });
+  }
+
   const ip = getClientIp(req.headers);
   const rl = checkRateLimit(ip, 'agent-search-status', RATE_LIMITS.default);
   if (!rl.allowed) {

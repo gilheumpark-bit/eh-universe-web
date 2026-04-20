@@ -12,7 +12,10 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const REQUEST_TIMEOUT = 10_000; // 10s timeout for error report ingestion
 void REQUEST_TIMEOUT;
 
-const MAX_REQUEST_SIZE = 16_384; // body size limit (16 KB — allows stack traces)
+// [M9 P1-10] body size cap — public error reporter, 10KB cap prevents DOS via oversized payload.
+// Tightened from 16KB → 10KB to match vitals route (both are unauthenticated public beacons).
+// Real stack traces after source-map resolution fit under 10KB; overflow is likely abuse.
+const MAX_REQUEST_SIZE = 10_000;
 
 export async function POST(req: NextRequest) {
   // Same-origin validation
@@ -43,7 +46,7 @@ export async function POST(req: NextRequest) {
   try {
     const raw = await req.text();
     if (raw.length > MAX_REQUEST_SIZE) {
-      return new NextResponse(null, { status: 413 });
+      return NextResponse.json({ error: 'body_too_large' }, { status: 413 });
     }
 
     const body = JSON.parse(raw);

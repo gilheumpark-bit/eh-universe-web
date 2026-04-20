@@ -6,8 +6,23 @@ import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 
 /**
  * Stripe Checkout for subscription (optional). Requires STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PRICE_ID in env.
+ *
+ * [M9 audit P0-1] Feature gate — this endpoint is intentionally disabled until the paywall UI lands.
+ * The server code is fully authenticated + rate-limited, but no client surface fetches it yet
+ * (see docs/m9-audit-unconnected-unfinished.md). To activate, set both:
+ *   - STRIPE_SECRET_KEY (server)
+ *   - FEATURE_STRIPE_CHECKOUT=on (opt-in flag)
+ * Otherwise the route returns 503 immediately to prevent a dead-code endpoint surface.
  */
 export async function POST(req: NextRequest) {
+  // --- [M9] Feature gate (must be first, before any other work) ---
+  if (
+    !process.env.STRIPE_SECRET_KEY ||
+    process.env.FEATURE_STRIPE_CHECKOUT !== 'on'
+  ) {
+    return NextResponse.json({ error: 'checkout_disabled' }, { status: 503 });
+  }
+
   // --- Rate limiting (10/min per IP) ---
   const ip = getClientIp(req.headers);
   const rl = checkRateLimit(ip, '/api/checkout', RATE_LIMITS.imageGen);

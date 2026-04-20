@@ -24,7 +24,18 @@ function isValidStudio(v: unknown): v is AgentStudioType {
   return typeof v === 'string' && VALID_STUDIOS.includes(v as AgentStudioType);
 }
 
+/**
+ * [M9 audit P0-2] Feature gate — protects 142만원 Discovery Engine credits from
+ * abuse while the client UI is absent. The search UI is not wired to `fetch('/api/agent-search')`
+ * anywhere in `src/**` (only referenced in e2e tests). Until the UI lands, require
+ * FEATURE_AGENT_SEARCH=on to activate — otherwise return 503 to keep the endpoint closed.
+ */
 export async function POST(req: NextRequest) {
+  // [M9] Feature gate — credit protection until UI ships.
+  if (process.env.FEATURE_AGENT_SEARCH !== 'on') {
+    return NextResponse.json({ error: 'agent_search_disabled' }, { status: 503 });
+  }
+
   const timer = createRequestTimer();
   const ip = getClientIp(req.headers);
   const requestId = crypto.randomUUID();

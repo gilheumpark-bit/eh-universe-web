@@ -13,6 +13,8 @@ import {
   REPORT_TYPE_TO_BOARD_TYPE,
 } from "@/lib/network-types";
 import { requireDb, normalizeText, COLLECTIONS, nowIso, clampNullable, normalizeOptionalText, normalizeStringArray, summarizeContent, buildDefaultUserRecord, sanitizePlanetStatus, sanitizeTitle, sanitizeContent } from "./helpers";
+import { getNetworkUserRecord } from "./users";
+import { isAdmin } from "@/lib/network-permissions";
 
 // ============================================================
 // PART 2.5 — WRITE AUTH GUARD
@@ -247,6 +249,10 @@ export async function updatePlanet(input: {
 /**
  * 게시글 soft-delete — 작성자 또는 관리자만. 목록에서 자동 제외되되 복구 가능.
  * hard-delete는 관리자 전용 별도 로직.
+ *
+ * [M9 audit P0-3 DONE] admin override 추가. 기본 경로는 작성자(author-only)이고,
+ * 작성자가 아닐 때는 Firestore 의 UserRecord.role === 'admin' 여부를 확인한다.
+ * 이는 콘텐츠 모더레이션을 위한 staff 권한 — SECURITY.md 약속과 일치.
  */
 export async function softDeletePost(input: {
   postId: string;
@@ -260,8 +266,12 @@ export async function softDeletePost(input: {
   if (!snap.exists()) throw new Error('Post not found');
   const current = snap.data() as PostRecord;
   if (current.authorId !== input.actorId) {
-    // TODO: admin override 체크는 후속 단계 (isAdmin userRecord)
-    throw new Error('Unauthorized: only author can soft-delete');
+    // [M9] admin override — UserRecord.role === 'admin' 이면 staff 모더레이션 허용.
+    // 작성자가 아닌 경우에만 조회 (성능 — 작성자 케이스는 DB 읽기 1건 절약).
+    const actorRecord = await getNetworkUserRecord(input.actorId);
+    if (!isAdmin(actorRecord)) {
+      throw new Error('Unauthorized: only author or admin can soft-delete');
+    }
   }
   const timestamp = nowIso();
   await setDoc(postRef, {

@@ -78,9 +78,9 @@ describe('feature-flags', () => {
       expect(flags.CODE_STUDIO).toBe(true);
     });
 
-    test('FEATURE_JOURNAL_ENGINE returns JournalEngineMode, default off', () => {
+    test('[M9 P1-5] FEATURE_JOURNAL_ENGINE returns JournalEngineMode, default shadow', () => {
       const flags = getAllFlags();
-      expect(flags.FEATURE_JOURNAL_ENGINE).toBe('off');
+      expect(flags.FEATURE_JOURNAL_ENGINE).toBe('shadow');
     });
   });
 
@@ -89,8 +89,8 @@ describe('feature-flags', () => {
   // ============================================================
 
   describe('getJournalEngineMode (3-mode enum)', () => {
-    test('default mode is off', () => {
-      expect(getJournalEngineMode()).toBe('off');
+    test('[M9 P1-5] default mode is shadow (promoted from off, validated by chaos-fortress-10k on-mode PASS)', () => {
+      expect(getJournalEngineMode()).toBe('shadow');
     });
 
     test('localStorage "shadow" → shadow', () => {
@@ -108,9 +108,9 @@ describe('feature-flags', () => {
       expect(getJournalEngineMode()).toBe('off');
     });
 
-    test('localStorage invalid value → default off (no throw)', () => {
+    test('localStorage invalid value → default shadow (no throw)', () => {
       localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'garbage');
-      expect(getJournalEngineMode()).toBe('off');
+      expect(getJournalEngineMode()).toBe('shadow');
     });
 
     test('legacy boolean localStorage "true" → on (backward compat)', () => {
@@ -168,7 +168,8 @@ describe('feature-flags', () => {
   });
 
   describe('isJournalEngineShadow', () => {
-    test('off → false', () => {
+    test('off → false (explicit override; default is now shadow per M9 P1-5)', () => {
+      localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'off');
       expect(isJournalEngineShadow()).toBe(false);
     });
 
@@ -189,7 +190,8 @@ describe('feature-flags', () => {
   });
 
   describe('isJournalEngineActive (shadow OR on)', () => {
-    test('off → false', () => {
+    test('off → false (explicit override; default is now shadow per M9 P1-5)', () => {
+      localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'off');
       expect(isJournalEngineActive()).toBe(false);
     });
 
@@ -208,9 +210,10 @@ describe('feature-flags', () => {
       expect(isJournalEngineActive()).toBe(true);
     });
 
-    test('invalid → false (default off)', () => {
+    test('invalid value → falls to default (shadow per M9 P1-5) → active true', () => {
       localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', '???');
-      expect(isJournalEngineActive()).toBe(false);
+      // default shadow is active (shadow OR on)
+      expect(isJournalEngineActive()).toBe(true);
     });
   });
 

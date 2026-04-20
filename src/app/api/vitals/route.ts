@@ -29,12 +29,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // body size check: Web Vitals payloads are small JSON (<2KB typical)
-    const contentLength = parseInt(req.headers.get('Content-Length') || '0', 10);
-    if (contentLength > 10_000) {
-      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    // [M9 P1-9] body size cap — public beacon endpoint, 10KB cap prevents DOS via oversized payload.
+    // Content-Length header is hint-only (spoofable) — enforce against actual body length.
+    const raw = await req.text();
+    if (raw.length > 10_000) {
+      return NextResponse.json({ error: 'body_too_large' }, { status: 413 });
     }
-    const body = await req.json();
+    const body = JSON.parse(raw);
     // Structured log for Vercel / server-side observability
     logger.info("web-vitals", JSON.stringify({ event: "web-vitals", ...body, timestamp: Date.now() }));
     return NextResponse.json({ ok: true });

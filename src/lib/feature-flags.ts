@@ -91,10 +91,24 @@ const FLAGS: FeatureFlags = {
   ARI_ENHANCED: true,
   /**
    * Journal Engine (M1.1 AUTOSAVE_FORTRESS Phase 1.1) — 3-mode enum.
-   * 기본 'off'. Phase 1.5.0 Shadow 검증 시 'shadow'로 전환.
-   * 99.9% 일치율 확인 후 M1.5.4에서 'on' 승격.
+   *
+   * [M9 audit P1-5 DONE — 'off' → 'shadow'] Shadow 기본화 근거:
+   *
+   * 1. Shadow 모드는 UI 가시 동작에 영향 없음 — legacy 경로는 그대로 Primary,
+   *    Journal Engine 은 관찰자(useShadowProjectWriter)로 병렬 쓰기만 수행.
+   * 2. 실행 경로가 안전 분리됨:
+   *    - SSR 가드(`typeof window === 'undefined'` 조기 return),
+   *    - `queueMicrotask` 비동기 분리 → Primary wall-clock 무영향,
+   *    - try/catch 2-deep → IDB/storage 차단 환경에서 조용히 degrade,
+   *    - 실패 시 `logger.warn` 만, user-facing 경로 무간섭.
+   * 3. 검증 근거 — bench/chaos-fortress-10k.mjs + -on-report.md:
+   *    - baseline(off) 0 data loss / on(더 강한 경로) 10,000회 0 data loss / 0 violations.
+   *    - Shadow 는 on 의 엄격한 서브셋(Primary 스왑 없음) → 동일 이상 안전.
+   *
+   * 다음 단계: Shadow 데이터 누적 → useJournalEngineMode.promoteNow() 수동 'on' 승격 또는
+   * beta 릴리스 이후 기준 충족 시 default 'on' 승격 (M1.5.4 승격 컨트롤러 경로).
    */
-  FEATURE_JOURNAL_ENGINE: 'off',
+  FEATURE_JOURNAL_ENGINE: 'shadow',
   /**
    * Firestore Mirror (M1.4 Secondary tier) — 기본 비활성.
    * 사용자가 Settings에서 명시 동의해야 활성화.

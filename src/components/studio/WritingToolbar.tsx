@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 // ============================================================
 // PART 1 — 타입 및 인터페이스
@@ -96,11 +96,42 @@ function useFindReplace(
   onChange: (v: string) => void,
 ) {
   const [showFind, setShowFind] = useState(false);
-  const [findText, setFindText] = useState('');
+  // [M9 P1-11] findText is split into input state (`findInput`) and debounced search state (`findText`).
+  // - input state updates immediately for the controlled <input> (no typing lag).
+  // - `findText` commits after 150ms idle, which is what drives the O(n) scan in `matches`.
+  // - Enter key calls `flushFind()` to commit immediately (preserves existing "instant search" behavior).
+  // Rationale: for 100k+ char episodes, a synchronous scan per keystroke janks typing; 150ms debounce cuts
+  // worst-case scans by ~10x on sustained typing without any observable delay for normal users.
+  const [findInput, setFindInput] = useState('');
+  const [findText, setFindTextCommitted] = useState('');
   const [replaceText, setReplaceText] = useState('');
   const [matchIndex, setMatchIndex] = useState(0);
 
-  // TODO: findText matching could benefit from debouncing (e.g. 150ms) for very large documents
+  // [C] clearTimeout on unmount + input change — no stale timer leak.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current !== null) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setFindTextCommitted(findInput);
+      debounceRef.current = null;
+    }, 150);
+    return () => {
+      if (debounceRef.current !== null) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+    };
+  }, [findInput]);
+
+  // Enter-key fast-path: flush pending debounce and commit immediately.
+  const flushFind = useCallback(() => {
+    if (debounceRef.current !== null) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    setFindTextCommitted(findInput);
+  }, [findInput]);
+
   const matches = useMemo(() => {
     if (!findText) return [] as number[];
     const result: number[] = [];
@@ -141,14 +172,19 @@ function useFindReplace(
   }, [findText, replaceText, matches, matchIndex, value, onChange]);
 
   const replaceAll = useCallback(() => {
-    if (!findText) return;
-    onChange(value.split(findText).join(replaceText));
+    // [M9 P1-11] replaceAll flushes pending debounce so the user gets the input they see, not stale state.
+    const target = findInput || findText;
+    if (!target) return;
+    onChange(value.split(target).join(replaceText));
     setMatchIndex(0);
-  }, [findText, replaceText, value, onChange]);
+  }, [findInput, findText, replaceText, value, onChange]);
 
   return {
     showFind, setShowFind,
-    findText, setFindText,
+    // findInput — controlled input binding (immediate); findText — debounced driver for search.
+    findInput, setFindInput,
+    findText,
+    flushFind,
     replaceText, setReplaceText,
     matchIndex: clampedIndex,
     matches,
@@ -190,7 +226,9 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
   }, [textareaRef, value, onChange]);
   const {
     showFind, setShowFind,
-    findText, setFindText,
+    findInput, setFindInput,
+    findText,
+    flushFind,
     replaceText, setReplaceText,
     matchIndex, matches,
     navigateTo, replaceOne, replaceAll,
@@ -274,9 +312,15 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
 
           <input
             autoFocus
-            value={findText}
-            onChange={e => { setFindText(e.target.value); }}
-            onKeyDown={e => { if (e.key === 'Enter') navigateTo(matchIndex + 1); }}
+            value={findInput}
+            onChange={e => { setFindInput(e.target.value); }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                // [M9 P1-11] Enter bypasses the 150ms debounce and searches immediately.
+                flushFind();
+                navigateTo(matchIndex + 1);
+              }
+            }}
             placeholder={isKO ? '검색어' : 'Find...'}
             className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors text-text-primary"
           />
@@ -309,7 +353,7 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
             >{isKO ? '바꾸기' : 'Replace'}</button>
             <button
               onClick={replaceAll}
-              disabled={!findText}
+              disabled={!findInput}
               className="px-2 py-1 bg-accent-purple/10 border border-accent-purple/30 rounded text-[10px] font-mono font-bold text-accent-purple hover:bg-accent-purple/20 disabled:opacity-30 transition-colors"
             >{isKO ? '모두 바꾸기' : 'All'}</button>
           </div>

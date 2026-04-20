@@ -83,9 +83,9 @@ export default function StudioShell() {
   }, []);
 
   // ── [M1.5.1~M1.5.5] UI 마운트 훅 + Shadow 쓰기 + Primary Writer ──
-  // FEATURE_JOURNAL_ENGINE='off' 기본값에서 모두 inert (shadow/primary 모두 legacy 패스스루).
-  // 'shadow' 로 전환 시: legacy Primary + Shadow 병렬 관찰.
-  // 'on' 으로 전환 시:    journal Primary + legacy Mirror (M1.5.5).
+  // FEATURE_JOURNAL_ENGINE 기본값 'shadow' (M9 P1-5 승격): legacy Primary + Shadow 병렬 관찰.
+  // 'off' 전환 시: 모두 inert (shadow/primary 모두 legacy 패스스루).
+  // 'on' 으로 전환 시: journal Primary + legacy Mirror (M1.5.5).
   // studioMounts 는 useProjectManager 보다 먼저 실행돼야 shadowWriter/primaryWriter 를
   // useProjectManager 의 옵셔널 콜백으로 주입 가능.
   const studioMounts = useStudioMounts({ language });
