@@ -67,7 +67,10 @@ const GRANDFATHERED = new Set([
   'src/components/code-studio/DeployPanel.tsx',
   'src/components/code-studio/GitPanel.tsx',
   'src/components/studio/StudioSidebar.tsx',
-  'src/components/studio/tabs/WritingTabInline.tsx',
+  // WritingTabInline.tsx removed from grandfather list in M2 Day 3-7 refactor
+  // (889 → 552 lines via ModeSwitch/FabControls/SceneWarnings extraction +
+  // useWritingReducer UI state cluster). Still above 500 WARN threshold,
+  // further compression targeted in Day 8-10 dynamic-import pass.
   'src/components/network/NetworkHomeClient.tsx',
   'src/components/studio/ScenePlayer.tsx',
   'src/lib/code-studio/pipeline/bugfinder.ts',
