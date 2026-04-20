@@ -1,20 +1,27 @@
 /**
- * DGX Spark (GB10) — 단일 게이트웨이 라우팅
+ * DGX Spark (GB10) — vLLM 직결 (2026-04-20 업데이트)
  *
- * ── 백엔드 구성 ──
- * Engine A (포트 8080) + Engine B (포트 8081): Qwen 3.5-9B FP8 쌍포
- *   └ Nginx LB (포트 8090)가 least_conn 자동 분산
+ * ── 현 백엔드 구성 ──
+ * vLLM 포트 8001: Qwen 3.6-35B-A3B-FP8 MoE (128GB 단일 장비 최적화)
+ *   └ 모델 ID: qwen36 (served-model-name)
+ *   └ max_model_len: 8192 tokens
+ *   └ FlashInfer + N-Gram Speculative Decoding (40~50 tok/s)
  * RAG API (포트 8082): ChromaDB 99만 문서 + 25 장르 규칙
  * ComfyUI  (포트 8188): Flux-Schnell FP8 이미지 생성
  *
- * 모든 외부 트래픽은 https://api.ehuniverse.com 게이트웨이 단일 진입.
- *   └ /v1/chat/completions → Nginx LB → Engine A/B
- *   └ /api/rag/*           → RAG API
- *   └ /api/image/generate  → ComfyUI
+ * ── 엔드포인트 우선순위 ──
+ * 1. NEXT_PUBLIC_SPARK_GATEWAY_URL (명시) — 프로덕션 게이트웨이
+ * 2. NEXT_PUBLIC_SPARK_SERVER_URL (명시) — 로컬 네트워크 직결
+ * 3. 기본값: http://192.168.219.100:8001 (내부망 기본)
  *
- * ⚠️ 포트 직결(8080/8081/8082/8188)은 Cloudflare Tunnel에서 차단됨 — 반드시 게이트웨이 경유.
- * ✅ stream:true 요청은 게이트웨이가 `: heartbeat` 선행 + aiohttp 스트리밍으로
- *    Cloudflare Tunnel을 직접 관통. 별도 Edge 프록시 불필요. TTFT 0.13초.
+ * ── 이력 ──
+ * - 이전: Engine A/B 쌍포(9B) + Nginx LB(8090) + https://api.ehuniverse.com 게이트웨이
+ * - 변경 사유: 35B MoE 단일 모델이 쌍포 9B보다 품질 우위,
+ *   FlashInfer + N-Gram Spec Decoding 으로 속도도 역전.
+ *
+ * ⚠️ Cloudflare Tunnel 통한 포트 직결은 차단. 게이트웨이 재구성 전까지는
+ *    내부망(192.168.x.x) 직결로 운용.
+ * ✅ stream:true 요청 — vLLM OpenAI 호환 엔드포인트가 직접 SSE 송출.
  */
 
 // ============================================================
@@ -25,7 +32,7 @@
 export const SPARK_GATEWAY_URL =
   process.env.NEXT_PUBLIC_SPARK_GATEWAY_URL
   || process.env.NEXT_PUBLIC_SPARK_SERVER_URL
-  || 'https://api.ehuniverse.com';
+  || 'http://192.168.219.100:8001';
 
 /** RAG — 세계관 설정 검색 */
 export const SPARK_RAG_URL =
@@ -40,13 +47,18 @@ export const COMFYUI_URL =
 // ============================================================
 
 /**
- * vLLM 서빙 모델 ID — 서버가 `--served-model-name`을 지정하지 않아 로드 경로 "/model"
- * 문자열이 그대로 모델 ID로 사용됨.
+ * vLLM 서빙 모델 ID — 서버의 `--served-model-name` 값과 일치해야 함.
+ * - 신 구성 (35B MoE): 'qwen36'
+ * - 구 구성 (9B 쌍포): '/model'
+ * env 우선, 기본값은 현 프로덕션 구성 고정.
  */
-export const VLLM_MODEL_ID = '/model';
+export const VLLM_MODEL_ID =
+  process.env.VLLM_MODEL_ID
+  || process.env.NEXT_PUBLIC_VLLM_MODEL_ID
+  || 'qwen36';
 
 /**
- * 메타데이터용 역할 힌트 — 실제 라우팅에는 사용되지 않음(Nginx LB가 처리).
+ * 메타데이터용 역할 힌트 — 실제 라우팅에는 사용되지 않음(단일 모델 서빙).
  * 로깅/프롬프트 튜닝 힌트 용도로만 유지.
  */
 export type AgentRole = 'general' | 'writer' | 'planner' | 'actor' | 'translator' | 'summarizer';
@@ -56,8 +68,10 @@ export type AgentRole = 'general' | 'writer' | 'planner' | 'actor' | 'translator
 // ============================================================
 
 /**
- * [중요] 추론형 모델(Qwen 3.5-9B)의 영어 Thinking Process 출력 차단 가드.
+ * [중요] 추론형 모델(Qwen 3.6-35B-A3B-FP8 MoE)의 영어 Thinking Process 출력 차단 가드.
  * Qwen3 지원 토큰 `/no_think` + 명시적 금지 문구 + <think> 태그 생성 차단.
+ * 2026-04-20 프로브 결과: 새 35B 서버에서도 "Here's a thinking process:\n1. Analyze..."
+ * 형태로 여전히 누출 확인됨. 가드 유지 필수.
  * 완전 차단은 불가능하므로 클라이언트측 stripEngineArtifacts가 최종 필터.
  */
 export const NO_ENGLISH_THINKING_GUARD =
