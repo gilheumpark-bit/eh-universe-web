@@ -479,13 +479,23 @@ const PART_TARGETS = [
   { min: 350, max: 700 }, // Part 10 (마무리)
 ];
 
-export function validate10PartStructure(text: string): { withinRange: boolean; partSizes: number[] } {
+/**
+ * 10-Part 구조 검증.
+ * @param text 본문 텍스트
+ * @param targetRange (Task 4) Draft pass 검증 시 사용. 미지정 시 레거시 5,500~7,000자.
+ */
+export function validate10PartStructure(
+  text: string,
+  targetRange?: { min: number; max: number },
+): { withinRange: boolean; partSizes: number[] } {
   const totalChars = text.length;
   const partSizes = PART_TARGETS.map(t => {
     const targetMid = (t.min + t.max) / 2;
     return Math.round(totalChars * (targetMid / 6000)); // proportional
   });
-  const withinRange = totalChars >= 5500 && totalChars <= 7000;
+  // Task 4 — targetRange 명시 시 그 범위 사용. 기본값은 레거시 5,500~7,000.
+  const range = targetRange ?? { min: 5500, max: 7000 };
+  const withinRange = totalChars >= range.min && totalChars <= range.max;
   return { withinRange, partSizes };
 }
 

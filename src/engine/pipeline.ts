@@ -1253,6 +1253,24 @@ export function buildUserPrompt(
     }
   }
 
+  // Task 4 Phase 1 — Draft/Detail V2 활성 시 목표 글자수 힌트 주입.
+  // 'off' 기본 = 레거시 프롬프트 유지 (5,500~7,000자 암묵 목표).
+  // 'shadow'/'on' = 4,000자 Draft 목표 명시 → 모델이 사고 과잉 줄임.
+  let draftTargetHint = '';
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { isDraftDetailActive } = require('@/lib/feature-flags') as { isDraftDetailActive: () => boolean };
+    if (isDraftDetailActive()) {
+      draftTargetHint = `\n[TARGET LENGTH — ${langName === 'Korean' ? 'Korean' : langName}]
+- Goal: ~4,000 characters (acceptable range 3,500~5,500)
+- This is an INITIAL DRAFT pass. The writer may expand it manually or via a separate detail pass.
+- Focus on structural completeness over length. Avoid padding.
+- DO NOT produce analysis, thinking process, or outline — just the narrative body.\n`;
+    }
+  } catch {
+    /* feature-flags 미로드 (SSR/테스트 환경) — 힌트 주입 건너뜀 */
+  }
+
   return `[SYSTEM COMMAND: NARRATIVE GENERATION]
 - Target Language: ${langName}
 - Episode: ${config.episode}
@@ -1260,7 +1278,7 @@ export function buildUserPrompt(
 - Genre: ${config.genre}
 - POV Character: ${config.povCharacter}
 - Setting: ${config.setting}
-
+${draftTargetHint}
 [MASTER SYNOPSIS]
 ${config.synopsis || 'No master synopsis provided.'}
 

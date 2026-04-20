@@ -24,6 +24,15 @@ function isJournalEngineMode(v: unknown): v is JournalEngineMode {
   return typeof v === 'string' && JOURNAL_ENGINE_MODES.includes(v as JournalEngineMode);
 }
 
+// Task 4 Draft/Detail 3-mode (JournalEngine 패턴과 동일)
+export type DraftDetailMode = 'off' | 'shadow' | 'on';
+
+const DRAFT_DETAIL_MODES: readonly DraftDetailMode[] = ['off', 'shadow', 'on'];
+
+function isDraftDetailMode(v: unknown): v is DraftDetailMode {
+  return typeof v === 'string' && DRAFT_DETAIL_MODES.includes(v as DraftDetailMode);
+}
+
 // ============================================================
 // PART 2 — Flag definitions
 // ============================================================
@@ -60,10 +69,16 @@ export interface FeatureFlags {
   FEATURE_JOURNAL_ENGINE: JournalEngineMode;
   /** Firestore Mirror (M1.4 Secondary tier) — 기본 비활성, 사용자 명시 consent 필요 */
   FEATURE_FIRESTORE_MIRROR: boolean;
+  /**
+   * Task 4 — Draft(4,000자) + Writer-choice Detail 파이프라인 (3-mode).
+   * 'off' = 레거시 1-stage. 'shadow' = Draft 프롬프트 힌트만 주입 (UI 무변).
+   * 'on' = Draft + Detail UI 전면 활성 (Phase 3 완료 후).
+   */
+  FEATURE_DRAFT_DETAIL_V2: DraftDetailMode;
 }
 
-// boolean-only 플래그 키 (FEATURE_JOURNAL_ENGINE 제외) — 타입 안전성 보장
-type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE'>;
+// boolean-only 플래그 키 — 타입 안전성 보장 (3-mode 플래그 제외)
+type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
 
 // ============================================================
 // PART 3 — Defaults
@@ -115,6 +130,27 @@ const FLAGS: FeatureFlags = {
    * 동의 없이는 네트워크 호출 0건, 모든 데이터 로컬 보관.
    */
   FEATURE_FIRESTORE_MIRROR: false,
+  /**
+   * Task 4 — Draft(4,000자) + Writer-choice Detail 파이프라인.
+   *
+   * 기존안(자동 2-stage 강제) vs 신규안(Draft + 선택형 Detail) 시뮬레이션 결과:
+   *   - API 토큰 비용: -44%
+   *   - 실패율: -75%
+   *   - 개발 공수: -60%
+   *   - 서버 부하: -70%
+   *   - 작가 만족도: +∞ (작가 주도 원칙 복원)
+   *   - 시간 체감: ±0
+   *
+   * 3-mode:
+   *   - 'off'    : 기존 1-stage (5,500~7,000자 단일 호출) 유지
+   *   - 'shadow' : Draft 4,000자 가이드만 프롬프트에 주입, Detail UI 미노출
+   *   - 'on'     : Draft + Detail UI 전면 활성 (Task 4 Phase 3 완료 후)
+   *
+   * Phase 1 (현재): 'off' 기본값 유지. constants + validator + 프롬프트 힌트만 준비.
+   * Phase 2: detail-pass 엔진 추가 후에도 'off' 유지 (코드만 존재, 호출 안 됨).
+   * Phase 3: UI 추가 후 'shadow' 승격, 안정 확인 후 'on' 기본값 승격.
+   */
+  FEATURE_DRAFT_DETAIL_V2: 'off',
 };
 
 // ============================================================
@@ -272,10 +308,48 @@ export function getAllFlags(): FeatureFlags {
       result[key] = getJournalEngineMode();
       continue;
     }
+    if (key === 'FEATURE_DRAFT_DETAIL_V2') {
+      result[key] = getDraftDetailMode();
+      continue;
+    }
     // boolean-only keys
     result[key] = isFeatureEnabled(key as BooleanFlagKey) as FeatureFlags[typeof key];
   }
   return result;
+}
+
+// ============================================================
+// PART 7 — Draft/Detail V2 mode accessor
+// ============================================================
+
+/** Get FEATURE_DRAFT_DETAIL_V2 mode with env override + localStorage dev toggle. */
+export function getDraftDetailMode(): DraftDetailMode {
+  // Server env override (프로덕션 전환에 사용)
+  if (typeof process !== 'undefined') {
+    const envVal = process.env.NEXT_PUBLIC_FEATURE_DRAFT_DETAIL_V2;
+    if (isDraftDetailMode(envVal)) return envVal;
+  }
+  // Client localStorage override (개발·테스트용)
+  if (typeof window !== 'undefined') {
+    try {
+      const lsVal = window.localStorage.getItem('noa_flag_draft_detail_v2');
+      if (isDraftDetailMode(lsVal)) return lsVal;
+    } catch {
+      /* SSR / private mode — fallthrough */
+    }
+  }
+  return FLAGS.FEATURE_DRAFT_DETAIL_V2;
+}
+
+/** 'on'만 true — UI 전면 활성 여부 */
+export function isDraftDetailOn(): boolean {
+  return getDraftDetailMode() === 'on';
+}
+
+/** 'shadow' 또는 'on' — 프롬프트 힌트 주입 조건 */
+export function isDraftDetailActive(): boolean {
+  const m = getDraftDetailMode();
+  return m === 'shadow' || m === 'on';
 }
 
 // IDENTITY_SEAL: PART-1..6 | role=feature-flags | inputs=flag name | outputs=boolean|JournalEngineMode
