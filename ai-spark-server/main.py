@@ -20,19 +20,15 @@ logging.basicConfig(level=logging.INFO)
 # PART 1 — 설정
 # ============================================================
 
-# vLLM 서버 URL (Nginx 로드밸런서 경유 — 8080/8081 자동 분산)
-VLLM_LB_URL = os.getenv("VLLM_LB_URL", "http://localhost:8090")   # Nginx LB
-VLLM_HEAVY_URL = os.getenv("VLLM_HEAVY_URL", "http://localhost:8080")  # 직접 접근용 (폴백)
-VLLM_FAST_URL = os.getenv("VLLM_FAST_URL", "http://localhost:8081")    # 직접 접근용 (폴백)
+# vLLM 서버 URL (DGX Spark vLLM 엔드포인트 8001)
+VLLM_LB_URL = os.getenv("VLLM_LB_URL", "http://localhost:8001")   # 기본 백엔드
+VLLM_HEAVY_URL = os.getenv("VLLM_HEAVY_URL", "http://localhost:8001")
+VLLM_FAST_URL = os.getenv("VLLM_FAST_URL", "http://localhost:8001")
 LM_STUDIO_URL = os.getenv("VLLM_URL", os.getenv("LM_STUDIO_URL", VLLM_LB_URL))  # 폴백
 
 def resolve_backend_url(model: str) -> str:
-    """Nginx LB를 통해 자동 분산. 특정 엔진 직접 지정도 가능"""
-    if 'direct-a' in model.lower():
-        return VLLM_HEAVY_URL
-    if 'direct-b' in model.lower():
-        return VLLM_FAST_URL
-    return VLLM_LB_URL  # 기본: Nginx가 least_conn으로 자동 분배
+    """단일 DGX vLLM (포트 8001)로 모두 라우팅"""
+    return VLLM_LB_URL
 
 # 허용 도메인 (운영)
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://ehsu.app,http://localhost:3000").split(",")
