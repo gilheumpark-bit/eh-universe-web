@@ -192,7 +192,6 @@ const DetailPassButton: React.FC<DetailPassButtonProps> = ({
   return (
     <button
       type="button"
-      role="button"
       aria-label={L4(language, LABEL_IDLE)}
       aria-busy={running}
       aria-disabled={isDisabled}

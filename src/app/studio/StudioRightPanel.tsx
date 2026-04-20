@@ -15,7 +15,6 @@ import { createT, L4 } from '@/lib/i18n';
 import { useStudioUI } from '@/contexts/StudioContext';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
-import DirectorPanel from '@/components/studio/DirectorPanel';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
@@ -24,6 +23,8 @@ const EpisodeScenePanel = dynamic(() => import('@/components/studio/EpisodeScene
 const SuggestionPanel = dynamic(() => import('@/components/studio/SuggestionPanel'), { ssr: false, loading: DynSkeleton });
 const PipelineProgress = dynamic(() => import('@/components/studio/PipelineProgress'), { ssr: false, loading: DynSkeleton });
 const OutlinePanel = dynamic(() => import('@/components/studio/OutlinePanel'), { ssr: false, loading: DynSkeleton });
+// [E 번들] DirectorPanel — 조건부 렌더(감독 리포트 존재 시만), eager 불필요
+const DirectorPanel = dynamic(() => import('@/components/studio/DirectorPanel'), { ssr: false, loading: DynSkeleton });
 
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
 

@@ -4,7 +4,7 @@
 // PART 1 — Confirm Dialog Modal
 // ============================================================
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useId } from "react";
 import { AlertTriangle } from "lucide-react";
 
 interface Props {
@@ -27,6 +27,9 @@ export function ConfirmDialog({
   onCancel,
 }: Props) {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  // [a11y] 고유 id — 여러 ConfirmDialog 인스턴스 동시 렌더 시 충돌 방지
+  const titleId = useId();
+  const descId = useId();
 
   // Auto-focus cancel for safety
   useEffect(() => {
@@ -60,14 +63,16 @@ export function ConfirmDialog({
       <div
         role="alertdialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         className="bg-[#0a0e17] border border-white/8 rounded-lg p-4 w-80 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle size={16} className={iconColor} />
-          <p className="text-sm font-semibold text-text-primary">{title}</p>
+          <p id={titleId} className="text-sm font-semibold text-text-primary">{title}</p>
         </div>
-        <p className="text-xs text-text-tertiary mb-4 leading-relaxed">{message}</p>
+        <p id={descId} className="text-xs text-text-tertiary mb-4 leading-relaxed">{message}</p>
         <div className="flex justify-end gap-2">
           <button
             ref={cancelRef}

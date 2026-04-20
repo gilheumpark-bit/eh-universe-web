@@ -16,10 +16,8 @@ import { StatusBadge } from '@/components/ui/StatusIndicator';
 import type { AppTab } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
 import { useStudioUIStore } from '@/store/studio-ui-store';
-import EngineDashboard from '@/components/studio/EngineDashboard';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import GlobalSearchPalette, { type StudioAction } from '@/components/studio/GlobalSearchPalette';
-import { ShortcutsModal } from '@/components/studio/StudioModals';
+import { type StudioAction } from '@/components/studio/GlobalSearchPalette';
 import StudioTabRouter from '@/components/studio/StudioTabRouter';
 import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
@@ -33,6 +31,10 @@ import { saveProfile } from '@/engine/writer-profile';
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuide'), { ssr: false, loading: DynSkeleton });
 const EpisodeExplorer = dynamic(() => import('@/components/studio/EpisodeExplorer'), { ssr: false });
+// [E 번들] 조건부 렌더 컴포넌트들 — 전부 특정 플래그 true 일 때만 렌더. initial 로드 불필요.
+const EngineDashboard = dynamic(() => import('@/components/studio/EngineDashboard'), { ssr: false, loading: DynSkeleton });
+const GlobalSearchPalette = dynamic(() => import('@/components/studio/GlobalSearchPalette'), { ssr: false, loading: DynSkeleton });
+const ShortcutsModal = dynamic(() => import('@/components/studio/StudioModals').then(m => ({ default: m.ShortcutsModal })), { ssr: false, loading: DynSkeleton });
 
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+components
 
