@@ -341,6 +341,10 @@ export interface StoryConfig {
   // Sub-genre tags (서브 장르 태그)
   subGenres?: string[];
   useSubGenrePrompt?: boolean; // 서브장르 태그를 AI 프롬프트에 삽입할지 여부
+  // M5 — Genre Translation Layer (novel/webtoon/drama/game)
+  // undefined 또는 누락 시 UI는 'novel'로 폴백. 작가가 명시적으로 전환해야 저장된다.
+  // 전환은 UI-only — 숨김 필드 값은 저장소에 그대로 유지된다.
+  genreMode?: 'novel' | 'webtoon' | 'drama' | 'game';
   // EH Engine — Narrative Intensity (서사 강도)
   narrativeIntensity?: 'iron' | 'standard' | 'soft';
   // Translation Engine — 번역 설정 (mirrors TranslationConfig from @/engine/translation, minus contextBridge)

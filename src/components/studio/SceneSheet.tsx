@@ -9,6 +9,9 @@ import type { AppLanguage, EpisodeSceneSheet } from "@/lib/studio-types";
 import { useStudioUI } from "@/contexts/StudioContext";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TermTooltip } from "@/components/ui/TermTooltip";
+import { useGenreLabel } from "@/hooks/useGenreLabel";
+import GenreModeSelector from "@/components/studio/GenreModeSelector";
+import type { GenreMode } from "@/lib/genre-labels";
 
 // ============================================================
 // PART 1 — 타입 및 상수 (장르 프리셋, 플롯 프리셋, 스마트 디폴트)
@@ -72,6 +75,9 @@ interface SceneSheetProps {
   /** 문법팩 국가 코드 (StoryConfig.grammarRegion). 변경 시 onGrammarRegionChange로 알림. */
   grammarRegion?: GrammarRegion;
   onGrammarRegionChange?: (region: GrammarRegion) => void;
+  /** M5 — 장르 모드 (undefined 시 UI는 'novel'로 폴백). 저장소 숨김 필드는 전환해도 삭제되지 않는다. */
+  genreMode?: GenreMode;
+  onGenreModeChange?: (mode: GenreMode) => void;
 }
 
 const HOOK_TYPES = [
@@ -409,6 +415,7 @@ export default function SceneSheet({
   onDirectionUpdate, onSimRefUpdate, initialDirection, onSaveEpisodeSheet,
   initialTab: _initialTab, episodeSceneSheets, currentEpisode, onDeleteEpisodeSheet, onLoadEpisodeSheet,
   grammarRegion: grammarRegionProp, onGrammarRegionChange,
+  genreMode, onGenreModeChange,
 }: SceneSheetProps) {
   const lang: Lang = langProp ?? ((languageProp === "KO" || languageProp === "JP") ? "ko" : "en");
   const tl = createT(languageProp ?? (lang === "ko" ? "KO" : "EN"));
@@ -465,6 +472,12 @@ export default function SceneSheet({
 
   const sortedEmotions = useMemo(() => [...emotions].sort((a, b) => a.position - b.position), [emotions]);
   const sortedTensionPoints = useMemo(() => [...tensionPoints].sort((a, b) => a.position - b.position), [tensionPoints]);
+
+  // M5 — Genre translation hook
+  const genre = useGenreLabel(genreMode);
+  const effectiveGenreMode: GenreMode = genreMode ?? 'novel';
+  // game 모드에서는 goguma 입력 UI를 숨긴다 (저장된 값은 그대로 유지).
+  const hideGoguma = effectiveGenreMode === 'game';
 
   // Simulator reference checkpoints
   const [simRef, setSimRef] = useState({ worldConsistency: false, civRelations: false, timeline: false, territoryMap: false, languageSystem: false, genreLevel: false });
@@ -761,6 +774,15 @@ export default function SceneSheet({
             </div>
           )}
 
+          {/* M5 — Genre mode selector (UI-only toggle; storage preserved) */}
+          {onGenreModeChange && (
+            <div className="mb-3 flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider shrink-0">
+                {L4(lang, { ko: "장르 모드", en: "Genre mode", ja: "ジャンルモード", zh: "类型模式" })}
+              </span>
+              <GenreModeSelector value={effectiveGenreMode} onChange={onGenreModeChange} />
+            </div>
+          )}
           {/* ========== 핵심 3개: goguma/cider, hooks, cliffhanger ========== */}
           <div className="mb-2">
             <span className="text-[9px] font-black text-accent-purple uppercase tracking-widest">
@@ -782,11 +804,14 @@ export default function SceneSheet({
               const lines = writerNotes.split("\n"); lines[0] = e.target.value; setWriterNotes(lines.join("\n"));
             }} placeholder={L4(lang, { ko: "이번 화 요약 (한 줄)", en: "Episode summary (one line)", ja: "Episode summary (one line)", zh: "Episode summary (one line)" })} maxLength={200}
               className="w-full bg-bg-primary border border-border rounded px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors min-h-[44px]" />
-            {/* Goguma / Cider — 핵심 1 */}
+            {/* Goguma / Cider — 핵심 1 (M5: game 모드에서는 UI 숨김, 저장 값 유지) */}
+            {!hideGoguma && (
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent-amber shrink-0" />
-                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{L4(lang, { ko: "고구마/사이다", en: "Tension/Release", ja: "テンション", zh: "张力" })}</span>
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">
+                  {genre.formatted('goguma')}
+                </span>
               </div>
               <p className="text-[9px] text-text-quaternary mt-0.5 mb-1">{L4(lang, { ko: "독자가 답답함을 느끼는 장치 (해소 시 사이다)", en: "Device that builds frustration (releases as catharsis)", ja: "読者がもどかしさを感じる仕掛け", zh: "让读者感到焦急的装置 (释放时的爽快感)" })}</p>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -810,6 +835,7 @@ export default function SceneSheet({
                 </div>
               ))}
             </div>
+            )}
             {/* Cliffhanger — 핵심 3 */}
             <div>
               <div className="flex items-center gap-1.5">

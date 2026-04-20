@@ -17,6 +17,7 @@ import { quickPurify, type TargetLang } from './language-purity';
 import { extractPreviousEpisodeSummary } from './previous-episode-extractor';
 import { unwrap, getOrigin } from '@/lib/origin-migration';
 import type { TaggedField, EntryOrigin } from '@/lib/studio-types';
+import { getGenreSystemPrompt, type PromptLang } from './genre-prompts';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
 // ============================================================
@@ -1164,11 +1165,22 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
 }
 \`\`\``;
 
+  // M5 — Genre Translation Layer: 장르 모드 프롬프트 추가분을 기존 프롬프트 뒤에 append.
+  // novel 모드는 빈 문자열이므로 no-op; webtoon/drama/game만 포맷 지시 블록을 붙인다.
+  const appLangToPromptLang: Record<AppLanguage, PromptLang> = {
+    KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh',
+  };
+  const genreAddendum = getGenreSystemPrompt(
+    config.genreMode ?? 'novel',
+    appLangToPromptLang[language] ?? 'ko',
+  );
+  const finalSystemPrompt = systemPromptText + genreAddendum;
+
   // 토큰 버짓 감사 — CJK/영문 혼합 추정 + 클라이언트/서버 양쪽 지원
-  const sysLen = systemPromptText.length;
+  const sysLen = finalSystemPrompt.length;
   // CJK 글자: ~1.5 토큰, ASCII 단어: ~1.3 토큰/단어(~0.25/글자)
   // 혼합 텍스트 보수적 추정: CJK 비율 감지 후 가중 평균
-  const cjkChars = (systemPromptText.match(/[\u3000-\u9fff\uac00-\ud7af]/g) || []).length;
+  const cjkChars = (finalSystemPrompt.match(/[\u3000-\u9fff\uac00-\ud7af]/g) || []).length;
   const cjkRatio = sysLen > 0 ? cjkChars / sysLen : 0;
   const tokensPerChar = cjkRatio * 1.5 + (1 - cjkRatio) * 0.35;
   const estimatedTokens = Math.round(sysLen * tokensPerChar);
@@ -1182,8 +1194,8 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
   // Tier별 토큰 소비를 추적하여 컨텍스트 예산 최적화에 활용
   const tierBreakdown = {
     total: estimatedTokens,
-    storyBible: Math.round(systemPromptText.indexOf('📜') >= 0
-      ? (systemPromptText.length - systemPromptText.indexOf('📜')) * tokensPerChar * 0.4
+    storyBible: Math.round(finalSystemPrompt.indexOf('📜') >= 0
+      ? (finalSystemPrompt.length - finalSystemPrompt.indexOf('📜')) * tokensPerChar * 0.4
       : 0),
     contextRatio: Math.round(ratio * 100),
   };
@@ -1199,7 +1211,7 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
     }));
   }
 
-  return systemPromptText;
+  return finalSystemPrompt;
 }
 
 // ============================================================
