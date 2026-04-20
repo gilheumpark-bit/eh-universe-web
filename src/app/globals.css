@@ -659,6 +659,26 @@ html[data-blue-light="on"] {
   filter: sepia(12%) brightness(0.96);
 }
 
+/* ============================================================
+   Eye-Strain Auto-Dimmer — 장시간 집필 자동 완화
+   활성: html[data-eye-strain-level="1"/"2"] (useEyeStrainDimmer 훅)
+   레벨 1(90분+): warm 톤 + 5% 밝기 감쇄
+   레벨 2(180분+): warm 톤 강화 + 10% 밝기 감쇄
+   blueLightFilter와 중첩 시 필터 합성 — 사용자 수동 토글 존중
+   ============================================================ */
+html[data-eye-strain-level="1"] {
+  filter: sepia(8%) saturate(0.94) brightness(0.95);
+}
+html[data-eye-strain-level="2"] {
+  filter: sepia(15%) saturate(0.88) brightness(0.90);
+}
+html[data-blue-light="on"][data-eye-strain-level="1"] {
+  filter: sepia(18%) saturate(0.93) brightness(0.92);
+}
+html[data-blue-light="on"][data-eye-strain-level="2"] {
+  filter: sepia(24%) saturate(0.86) brightness(0.88);
+}
+
 /* ── Accessibility: prefers-reduced-motion ── */
 @media (prefers-reduced-motion: reduce) {
   *,

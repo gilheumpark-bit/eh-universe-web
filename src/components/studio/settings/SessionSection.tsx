@@ -4,11 +4,18 @@
 // PART 1 — Imports, Types, Constants
 // ============================================================
 
-import React from "react";
-import { ChevronDown, Timer, Target, Coffee } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ChevronDown, Timer, Target, Coffee, Type, Eye, Activity, Hand, RefreshCw } from "lucide-react";
 import type { AppLanguage } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
 import { useSessionTimer, type SessionConfig } from "@/hooks/useSessionTimer";
+import {
+  DEFAULT_ERGONOMICS_SETTINGS,
+  loadErgonomicsSettings,
+  updateErgonomicsSettings,
+  type ErgonomicsSettings,
+} from "@/lib/ergonomics/ergonomics-settings";
+import { applyTypography, type TypographyPreset } from "@/lib/ergonomics/typography";
 
 export interface SessionSectionProps {
   language: AppLanguage;
@@ -115,6 +122,23 @@ const SessionSection: React.FC<SessionSectionProps> = ({ language }) => {
 
   const setField = <K extends keyof SessionConfig>(key: K, value: SessionConfig[K]) => {
     setConfig({ [key]: value } as Partial<SessionConfig>);
+  };
+
+  // M6 — 인체공학 토글 그룹
+  const [ergo, setErgo] = useState<ErgonomicsSettings>(DEFAULT_ERGONOMICS_SETTINGS);
+  useEffect(() => {
+    setErgo(loadErgonomicsSettings());
+  }, []);
+
+  const setErgoField = <K extends keyof ErgonomicsSettings>(
+    key: K,
+    value: ErgonomicsSettings[K],
+  ) => {
+    const next = updateErgonomicsSettings({ [key]: value } as Partial<ErgonomicsSettings>);
+    setErgo(next);
+    if (key === "typographyPreset") {
+      applyTypography(value as TypographyPreset);
+    }
   };
 
   return (
@@ -239,6 +263,184 @@ const SessionSection: React.FC<SessionSectionProps> = ({ language }) => {
             value={config.dailyGoalChars}
             onChange={(v) => setField("dailyGoalChars", v)}
             suffix={L4(language, { ko: "자", en: "chars", ja: "字", zh: "字" })}
+          />
+        </div>
+
+        {/* ============================================================
+            M6 — 장기 사용 편의 (Ergonomics)
+            작가가 2-10시간 집필 시 체력 부담 감쇄용 옵션군
+            ============================================================ */}
+        <div className="md:col-span-2 md:col-start-1 mt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="w-4 h-4 text-accent-amber" />
+            <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
+              {L4(language, {
+                ko: "장기 사용 편의 (Ergonomics)",
+                en: "Ergonomics (Long-Session Comfort)",
+                ja: "長時間使用の快適性 (エルゴノミクス)",
+                zh: "长时间使用舒适性 (人体工学)",
+              })}
+            </span>
+          </div>
+
+          {/* 타이포그래피 프리셋 */}
+          <div className="p-4 md:p-5 bg-bg-secondary/30 rounded-2xl border border-border mb-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Type className="w-4 h-4 text-accent-blue" />
+              <span className="text-xs font-bold text-text-primary">
+                {L4(language, {
+                  ko: "타이포그래피 프리셋",
+                  en: "Typography preset",
+                  ja: "タイポグラフィプリセット",
+                  zh: "排版预设",
+                })}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(["comfort", "compact", "large"] as TypographyPreset[]).map((p) => {
+                const active = ergo.typographyPreset === p;
+                const labelMap: Record<TypographyPreset, {
+                  ko: string; en: string; ja: string; zh: string;
+                }> = {
+                  comfort: {
+                    ko: "컴포트 (17px)",
+                    en: "Comfort (17px)",
+                    ja: "コンフォート (17px)",
+                    zh: "舒适 (17px)",
+                  },
+                  compact: {
+                    ko: "컴팩트 (14px)",
+                    en: "Compact (14px)",
+                    ja: "コンパクト (14px)",
+                    zh: "紧凑 (14px)",
+                  },
+                  large: {
+                    ko: "라지 (20px)",
+                    en: "Large (20px)",
+                    ja: "ラージ (20px)",
+                    zh: "大号 (20px)",
+                  },
+                };
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setErgoField("typographyPreset", p)}
+                    aria-pressed={active}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue ${
+                      active
+                        ? "bg-accent-blue/20 border border-accent-blue/40 text-accent-blue"
+                        : "bg-bg-tertiary border border-border text-text-secondary hover:border-accent-blue/30"
+                    }`}
+                  >
+                    {L4(language, labelMap[p])}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[11px] text-text-tertiary leading-relaxed">
+              {L4(language, {
+                ko: "장시간 집필엔 컴포트, 통독엔 컴팩트, 접근성엔 라지를 추천합니다.",
+                en: "Comfort for long sessions, Compact for overview, Large for accessibility.",
+                ja: "長時間はコンフォート、通読はコンパクト、アクセシビリティにはラージ推奨。",
+                zh: "长时间创作推荐舒适，通读推荐紧凑,无障碍使用推荐大号。",
+              })}
+            </p>
+          </div>
+
+          {/* 자세 nudge */}
+          <ToggleRow
+            icon={<RefreshCw className="w-4 h-4 md:w-5 md:h-5 text-accent-green" />}
+            label={L4(language, {
+              ko: "자세 점검 알림 (30분마다)",
+              en: "Posture nudge (every 30 min)",
+              ja: "姿勢チェック通知 (30分ごと)",
+              zh: "姿势提醒 (每 30 分钟)",
+            })}
+            description={L4(language, {
+              ko: "연속 타이핑 30분 후 허리·어깨 스트레칭을 권장합니다",
+              en: "Suggests back and shoulder stretches after 30 min of typing",
+              ja: "連続入力30分後に背中と肩のストレッチを提案",
+              zh: "连续打字 30 分钟后建议伸展腰背和肩膀",
+            })}
+            checked={ergo.postureNudgeEnabled}
+            onChange={(v) => setErgoField("postureNudgeEnabled", v)}
+          />
+
+          {/* 눈 피로 자동 다이머 */}
+          <ToggleRow
+            icon={<Eye className="w-4 h-4 md:w-5 md:h-5 text-accent-amber" />}
+            label={L4(language, {
+              ko: "눈 피로 자동 완화 (90분 후)",
+              en: "Eye-strain auto-dimmer (after 90 min)",
+              ja: "目の疲労自動軽減 (90分後)",
+              zh: "眼部疲劳自动缓解 (90 分钟后)",
+            })}
+            description={L4(language, {
+              ko: "90분 후 따뜻한 톤, 180분 후 추가 밝기 감쇄를 적용합니다",
+              en: "Warm tone after 90 min; extra dim after 180 min",
+              ja: "90分後に暖色、180分後に追加の減光を適用",
+              zh: "90 分钟后暖色调,180 分钟后进一步减光",
+            })}
+            checked={ergo.eyeStrainDimmerEnabled}
+            onChange={(v) => setErgoField("eyeStrainDimmerEnabled", v)}
+          />
+
+          {/* 키스트로크 히트맵 표시 */}
+          <ToggleRow
+            icon={<Activity className="w-4 h-4 md:w-5 md:h-5 text-accent-purple" />}
+            label={L4(language, {
+              ko: "인체공학 통계 표시 (KPM)",
+              en: "Show ergonomics stats (KPM)",
+              ja: "人間工学統計表示 (KPM)",
+              zh: "显示人体工学统计 (KPM)",
+            })}
+            description={L4(language, {
+              ko: "상태바에 분당 키스트로크를 표시합니다 (기기에만 저장·비영속)",
+              en: "Shows keystrokes-per-minute in status bar (local only, not persisted)",
+              ja: "ステータスバーにKPMを表示 (ローカルのみ、非永続)",
+              zh: "在状态栏显示每分钟键击次数 (仅本机,不持久化)",
+            })}
+            checked={ergo.keystrokeHeatmapVisible}
+            onChange={(v) => setErgoField("keystrokeHeatmapVisible", v)}
+          />
+
+          {/* 손목 힌트 */}
+          <ToggleRow
+            icon={<Hand className="w-4 h-4 md:w-5 md:h-5 text-accent-amber" />}
+            label={L4(language, {
+              ko: "AI 대기 중 손목 풀기 힌트",
+              en: "Wrist-rest hint during AI wait",
+              ja: "AI待機中の手首ストレッチヒント",
+              zh: "AI 生成等待时的手腕放松提示",
+            })}
+            description={L4(language, {
+              ko: "AI 생성이 10초 이상 걸릴 때 손목 회전 애니메이션을 보여줍니다",
+              en: "Shows wrist-circle animation when AI takes 10s or more",
+              ja: "AI生成が10秒以上かかる時に手首回転アニメーションを表示",
+              zh: "AI 生成超过 10 秒时显示手腕画圆动画",
+            })}
+            checked={ergo.wristRestHintEnabled}
+            onChange={(v) => setErgoField("wristRestHintEnabled", v)}
+          />
+
+          {/* Focus drift nudge */}
+          <ToggleRow
+            icon={<Timer className="w-4 h-4 md:w-5 md:h-5 text-accent-blue" />}
+            label={L4(language, {
+              ko: "탭 복귀 안내 (15분 이탈 후)",
+              en: "Return nudge (after 15 min away)",
+              ja: "復帰ナッジ (15分以上離席後)",
+              zh: "返回提示 (离开 15 分钟后)",
+            })}
+            description={L4(language, {
+              ko: "다른 탭에서 15분+ 후 복귀 시 마지막 커서 위치로 이동 안내를 보여줍니다",
+              en: "When returning after 15 min+, shows a button to jump to last cursor",
+              ja: "他タブから15分+経過後の復帰時、最終カーソル位置への復帰を案内",
+              zh: "从其他标签页 15 分钟+ 后返回时,提示跳至上次光标位置",
+            })}
+            checked={ergo.focusDriftEnabled}
+            onChange={(v) => setErgoField("focusDriftEnabled", v)}
           />
         </div>
       </div>

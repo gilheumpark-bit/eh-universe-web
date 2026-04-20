@@ -192,8 +192,9 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
             /* CJK 독자 우선 — Noto Serif KR 이 있으면 먼저, fallback으로 Georgia. */
             font-family: var(--font-document), 'Georgia', 'Times New Roman', serif;
             font-size: var(--editor-font-size, 1rem);
-            /* Readability 최적 1.6~1.8 — 2.0은 단락간 단절 과다 */
-            line-height: 1.75;
+            /* Readability 최적 1.6~1.8 — M6 타이포그래피 프리셋이 override */
+            line-height: var(--editor-line-height, 1.75);
+            letter-spacing: var(--editor-letter-spacing, 0.01em);
             min-height: 70vh;
             padding: 2rem;
             outline: none;
