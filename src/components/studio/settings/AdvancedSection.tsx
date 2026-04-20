@@ -150,12 +150,15 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
               />
             </div>
 
-            {/* Temperature */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
-              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+            {/* Temperature — M8: Pattern B (Preset > Knob)
+                3 프리셋 (자연스럽게 / 균형 / 강하게) 위, 슬라이더 아래 보조.
+                "Temperature" 라는 용어는 기술적이므로 작가용 라벨 "창의성"을 병기.  */}
+            <div className="p-4 md:p-6 rounded-3xl border border-transparent">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0 mb-3">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Thermometer className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
-                <div className="min-w-0">
-                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">{t('settingsEngine.temperature')}
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
+                    {L4(language, { ko: '창의성 (Temperature)', en: 'Creativity (Temperature)', ja: '創造性 (Temperature)', zh: '创造性 (Temperature)' })}
                     <span className="group relative">
                       <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
                       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
@@ -163,20 +166,64 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                       </span>
                     </span>
                   </div>
-                  <div className="text-[13px] text-text-tertiary hidden sm:block">{t('settingsEngine.temperatureDesc')}</div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: '프리셋을 고르면 됩니다. 세밀 조정이 필요할 때만 슬라이더를 사용하세요.',
+                      en: 'Pick a preset. Use the slider only for fine tuning.',
+                      ja: 'プリセットを選べば大丈夫。細かく調整したいときだけスライダーを使ってください。',
+                      zh: '选择一个预设即可。需要精细调整时再使用滑块。',
+                    })}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-3 shrink-0">
+              {/* 3 프리셋 버튼 (Pattern B) */}
+              <div
+                role="radiogroup"
+                aria-label={L4(language, { ko: '창의성 프리셋', en: 'Creativity preset', ja: '創造性プリセット', zh: '创造性预设' })}
+                className="grid grid-cols-3 gap-2 mb-3"
+              >
+                {([
+                  { val: 0.6, label: { ko: '자연스럽게', en: 'Natural', ja: '自然に', zh: '自然' } },
+                  { val: 0.9, label: { ko: '균형', en: 'Balanced', ja: 'バランス', zh: '均衡' } },
+                  { val: 1.2, label: { ko: '강하게', en: 'Bold', ja: '強めに', zh: '强烈' } },
+                ] as const).map(p => {
+                  // [C] 부동소수 오차 0.01 내 근사 매칭
+                  const selected = Math.abs(temperature - p.val) < 0.05;
+                  return (
+                    <button
+                      key={p.val}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      data-testid={`m8-temp-preset-${p.val}`}
+                      onClick={() => persistTemperature(p.val)}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue ${
+                        selected
+                          ? 'bg-accent-blue/20 border border-accent-blue/40 text-accent-blue'
+                          : 'bg-bg-secondary border border-border text-text-secondary hover:border-accent-blue/30'
+                      }`}
+                    >
+                      {L4(language, p.label)}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* 슬라이더 — 세밀 조정용, 시각적으로 secondary */}
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-bold text-text-quaternary uppercase tracking-widest shrink-0">
+                  {L4(language, { ko: '세밀 조정', en: 'Fine tune', ja: '微調整', zh: '精调' })}
+                </span>
                 <input
                   type="range"
+                  aria-label={L4(language, { ko: '창의성 세밀 조정', en: 'Creativity fine tune', ja: '創造性の微調整', zh: '创造性精调' })}
                   min="0.1"
                   max="1.5"
                   step="0.1"
                   value={temperature}
                   onChange={e => persistTemperature(parseFloat(e.target.value))}
-                  className="w-20 md:w-24 accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
+                  className="flex-1 accent-accent-blue h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
-                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${temperature < 0.1 || temperature > 1.5 ? 'text-accent-red' : 'text-accent-blue'}`}>{temperature.toFixed(1)}</span>
+                <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right font-mono ${temperature < 0.1 || temperature > 1.5 ? 'text-accent-red' : 'text-accent-blue'}`}>{temperature.toFixed(1)}</span>
               </div>
             </div>
 

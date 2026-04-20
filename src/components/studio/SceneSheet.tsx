@@ -733,7 +733,16 @@ export default function SceneSheet({
             />
           )}
 
-          {/* Preset Bar — 장르별 색상 + 이모지 */}
+          {/* Preset Bar — 장르별 색상 + 이모지
+              M8: 1-line 안심 문구 추가 (Pattern F) */}
+          <p className="text-[10px] text-text-quaternary leading-relaxed mb-1.5 px-0.5">
+            {L4(lang, {
+              ko: "프리셋을 고르면 자동으로 채워집니다. 비워둬도 괜찮아요.",
+              en: "Pick a preset and it fills in for you. Leaving it empty is also fine.",
+              ja: "プリセットを選ぶと自動で埋まります。空のままでも大丈夫。",
+              zh: "选择预设会自动填充。留空也没关系。",
+            })}
+          </p>
           <div className="grid grid-cols-5 gap-2 pb-2">
             {SCENE_PRESETS.map(p => {
               const meta = GENRE_VISUAL[p.key] ?? { emoji: "📖", bg: "bg-bg-tertiary", border: "border-border", text: "text-text-primary" };
@@ -774,13 +783,24 @@ export default function SceneSheet({
             </div>
           )}
 
-          {/* M5 — Genre mode selector (UI-only toggle; storage preserved) */}
+          {/* M5 — Genre mode selector (UI-only toggle; storage preserved)
+              M8 — 1-line 안내 추가. 대부분 "소설"이면 충분. */}
           {onGenreModeChange && (
-            <div className="mb-3 flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider shrink-0">
-                {L4(lang, { ko: "장르 모드", en: "Genre mode", ja: "ジャンルモード", zh: "类型模式" })}
-              </span>
-              <GenreModeSelector value={effectiveGenreMode} onChange={onGenreModeChange} />
+            <div className="mb-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider shrink-0">
+                  {L4(lang, { ko: "장르 모드", en: "Genre mode", ja: "ジャンルモード", zh: "类型模式" })}
+                </span>
+                <GenreModeSelector value={effectiveGenreMode} onChange={onGenreModeChange} />
+              </div>
+              <p className="mt-1 text-[10px] text-text-quaternary leading-relaxed">
+                {L4(lang, {
+                  ko: "대부분 '소설' 모드면 충분합니다. 장르가 분명히 다를 때만 변경하세요.",
+                  en: "Novel mode works for most projects. Switch only when the genre is clearly different.",
+                  ja: "たいていは「小説」モードで十分です。ジャンルが明らかに異なるときだけ変更してください。",
+                  zh: "大多数情况下使用「小说」模式即可。仅当类型明显不同时才切换。",
+                })}
+              </p>
             </div>
           )}
           {/* ========== 핵심 3개: goguma/cider, hooks, cliffhanger ========== */}
