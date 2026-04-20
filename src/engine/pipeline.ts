@@ -1375,26 +1375,95 @@ function stripTrailingReportJson(text: string): string {
   return text;
 }
 
+// ============================================================
+// Qwen 3.6-35B reasoning artifact 감지 키워드 (전방 500자 스캔)
+// ============================================================
+// 서버 AI 피드백 (2026-04-20): `--reasoning-parser` 플래그 자체를 vLLM이 거부하고
+// `chat_template_kwargs.enable_thinking=false` 로도 간헐적으로 뚫고 나옴.
+// 모델이 구조적으로 사고 과정을 뱉도록 파인튜닝됨 → 클라이언트 필터가 유일 방어.
+//
+// 실측 누출 패턴 (2종 이상):
+//   "Here's a thinking process:\n1. Analyze User Input..."
+//   "We are given: '테스트'. This is Korean..."
+//   "The user wants me to respond with..."
+//
+// 이전 reasoningLead 정규식은 `^\s*Thinking Process` 같은 문장 단독 시작만 매치 —
+// "Here's a thinking process" 는 `Here's a` 로 시작해서 놓침. 전방 500자 전체를 스캔.
+const REASONING_ARTIFACT_KEYWORDS: readonly RegExp[] = [
+  /here['’]s (?:a |my |the )?thinking process/i,
+  /we are given[:\s]/i,
+  /\bthinking process[:\s]/i,
+  /\breasoning[:\s]/i,
+  /let me (?:think|analyze|first|break|start|figure)/i,
+  /\banalysis[:\s]/i,
+  /\bdeconstruct(?:ing|\s+constraints)/i,
+  /the user (?:wants|asks|said|provided|is asking)/i,
+  /i (?:need|should|will|must) (?:analyze|think|understand|break)/i,
+  /step\s*\d[:\s.]/i,
+  /^\s*\d+\.\s+\*{1,2}(?:Analyze|Deconstruct|Plan|Formulate|Identify|Constraints|Drafting)/mi,
+];
+
+// ============================================================
+// Qwen "Draft → </think> → Final Output" 구조 종료 마커
+// ============================================================
+// Qwen reasoning 모델은 보통 이런 구조로 응답:
+//   <think>내부 사고</think>
+//   실제 본문
+// 또는 (열린 태그 없이 닫힌 태그만 샘):
+//   Here's a thinking process: ... 4. Self-Correction ... </think>
+//   실제 본문
+// 이 마커가 감지되면 그 이후만 본문으로 간주 (마커 이전은 모두 사고 과정).
+const FINAL_OUTPUT_MARKERS: readonly RegExp[] = [
+  /<\/think>[\s\n]*/i,
+  /\*{2}Final (?:Output|Response|Answer|Draft)\*{2}[:\s\n]*/i,
+  /^\s*##\s+Final[^\n]*\n/im,
+];
+
 export function stripEngineArtifacts(text: string, language?: AppLanguage): string {
   let clean = text;
 
   // ============================================================
   // Qwen reasoning-model artifact 대응 (최우선)
   // ============================================================
-  // 1. <think></think> 태그 블록 제거
+  // 0. "Final Output" 마커 또는 </think> 감지 시 그 이후만 본문 채택
+  //    [C] 여러 마커가 있으면 가장 늦게 나오는 것 기준 (Draft 중간에 </think> 언급 등)
+  let terminatorEnd = -1;
+  for (const re of FINAL_OUTPUT_MARKERS) {
+    const m = re.exec(clean);
+    if (m && typeof m.index === 'number') {
+      const candEnd = m.index + m[0].length;
+      if (candEnd > terminatorEnd) terminatorEnd = candEnd;
+    }
+  }
+  if (terminatorEnd > 0) {
+    clean = clean.slice(terminatorEnd);
+  }
+
+  // 1. 쌍으로 닫힌 <think></think> 블록 제거 (위 단계 후 혹시 남은 잔재)
   clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, '');
 
-  // 2. "Thinking Process:" 또는 영어 분석 리드 감지 → 한글 소설 본문 시작점까지 건너뛰기
-  const reasoningLead = /^\s*(?:Thinking Process|Reasoning|Let me (?:think|analyze)|Analysis|Step\s*\d)[\s:]/i;
-  if (reasoningLead.test(clean)) {
-    // 한글 문자로 시작하는 첫 줄(또는 첫 위치) 탐색 — 그 이전은 전부 제거
-    const hangulStart = clean.search(/[가-힣]/);
-    if (hangulStart > 0) {
-      // 줄 시작 위치까지 백트래킹 (문단 단위로 깔끔히)
-      const lineStart = clean.lastIndexOf('\n', hangulStart);
-      clean = clean.slice(lineStart >= 0 ? lineStart + 1 : hangulStart);
+  // 2. 전방 500자 내 영어 분석 키워드 감지 → 한글 본문 시작 라인까지 건너뛰기
+  //    [C] 정당한 영어 고유명사 보존을 위해 '키워드 감지' 전제 필수.
+  //    프리픽스에 영어만 있다고 무조건 자르면 "NOA는..." / "API를..." 같은 정당 시작 손실.
+  //    [C] 단순 첫 한글 검색은 따옴표 안 "테스트" 같은 영어 문장 속 한글에 걸림.
+  //    → 한글로 시작하는 '줄' (라인 시작 + 선택적 공백 + 한글) 을 찾아야 한다.
+  const head = clean.slice(0, 500);
+  const hasReasoningArtifact = REASONING_ARTIFACT_KEYWORDS.some(re => re.test(head));
+
+  if (hasReasoningArtifact) {
+    // 한글로 시작하는 첫 라인 탐색 (줄 시작 또는 문자열 시작 + 공백 0~ + 한글)
+    const hangulLineMatch = clean.match(/(?:^|\n)[ \t]*([\uac00-\ud7af])/);
+    if (hangulLineMatch && typeof hangulLineMatch.index === 'number') {
+      // match.index 는 '\n' 또는 시작 0. 실제 한글 위치는 groups[1] 직전 offset 계산.
+      const hangulOffset = hangulLineMatch.index + hangulLineMatch[0].length - 1;
+      if (hangulOffset > 0) {
+        // 해당 줄 시작으로 백트래킹 (문단 단위 깔끔 유지)
+        const lineStart = clean.lastIndexOf('\n', hangulOffset);
+        clean = clean.slice(lineStart >= 0 ? lineStart + 1 : hangulOffset);
+      }
+      // hangulOffset === 0: 이미 첫 글자가 한글 = artifact 오탐, 원본 유지
     } else {
-      // 한글이 전혀 없는 응답 → 전체 비우기 (오류 상황)
+      // 한글 라인 0개 + artifact 감지 = 전체가 쓰레기 → 빈 문자열
       clean = '';
     }
   }
