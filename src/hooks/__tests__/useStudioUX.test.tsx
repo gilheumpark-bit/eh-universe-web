@@ -6,19 +6,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { act } from 'react';
-import { useStudioUX } from '@/hooks/useStudioUX';
+import { useStudioUX, type UseStudioUXOptions } from '@/hooks/useStudioUX';
 
 // ============================================================
 // PART 1 — Test Harness
 // ============================================================
 
-function createHarness() {
+function createHarness(options: UseStudioUXOptions = {}) {
   const ref: { current: ReturnType<typeof useStudioUX> | null } = { current: null };
   const container = document.createElement('div');
   document.body.appendChild(container);
 
   function TestComponent() {
-    const hook = useStudioUX();
+    const hook = useStudioUX(options);
     React.useEffect(() => { ref.current = hook; });
     return null;
   }
@@ -96,16 +96,96 @@ describe('useStudioUX', () => {
     cleanup();
   });
 
-  it('triggerSave sets saveFlash and lastSaveTime, then clears flash after 1500ms', () => {
+  it('triggerSave (no flush) sets saveFlash and lastSaveTime, clears flash after 1500ms', async () => {
     const { get, cleanup } = createHarness();
     const before = Date.now();
 
-    act(() => { get().triggerSave(); });
+    // triggerSave is now async; with fake timers, the run() microtask resolves on flush
+    await act(async () => { await get().triggerSave(); });
     expect(get().saveFlash).toBe(true);
+    expect(get().saveFailed).toBe(false);
     expect(get().lastSaveTime).toBeGreaterThanOrEqual(before);
 
     act(() => { jest.advanceTimersByTime(1500); });
     expect(get().saveFlash).toBe(false);
+    cleanup();
+  });
+
+  it('triggerSave awaits onSaveFlush and only flashes on success', async () => {
+    const flush = jest.fn().mockResolvedValue(true);
+    const { get, cleanup } = createHarness({ onSaveFlush: flush });
+
+    let returned: boolean | undefined;
+    await act(async () => { returned = await get().triggerSave(); });
+
+    expect(flush).toHaveBeenCalledTimes(1);
+    expect(returned).toBe(true);
+    expect(get().saveFlash).toBe(true);
+    expect(get().saveFailed).toBe(false);
+    cleanup();
+  });
+
+  it('triggerSave surfaces failure state when flush returns false', async () => {
+    const flush = jest.fn().mockResolvedValue(false);
+    const { get, cleanup } = createHarness({ onSaveFlush: flush });
+
+    const failedListener = jest.fn();
+    window.addEventListener('noa:save-failed', failedListener);
+
+    let returned: boolean | undefined;
+    await act(async () => { returned = await get().triggerSave(); });
+
+    expect(returned).toBe(false);
+    expect(get().saveFlash).toBe(false);
+    expect(get().saveFailed).toBe(true);
+    expect(failedListener).toHaveBeenCalledTimes(1);
+
+    window.removeEventListener('noa:save-failed', failedListener);
+    cleanup();
+  });
+
+  it('triggerSave surfaces failure when flush throws', async () => {
+    const flush = jest.fn().mockRejectedValue(new Error('QuotaExceeded'));
+    const { get, cleanup } = createHarness({ onSaveFlush: flush });
+
+    const alertListener = jest.fn();
+    window.addEventListener('noa:alert', alertListener);
+
+    let returned: boolean | undefined;
+    await act(async () => { returned = await get().triggerSave(); });
+
+    expect(returned).toBe(false);
+    expect(get().saveFailed).toBe(true);
+    expect(alertListener).toHaveBeenCalled();
+    const alertEvent = alertListener.mock.calls[0][0] as CustomEvent;
+    expect(alertEvent.detail.variant).toBe('error');
+    expect(alertEvent.detail.message).toContain('QuotaExceeded');
+
+    window.removeEventListener('noa:alert', alertListener);
+    cleanup();
+  });
+
+  it('concurrent triggerSave calls share the same in-flight promise', async () => {
+    let resolveFlush!: (ok: boolean) => void;
+    const flush = jest.fn(() => new Promise<boolean>((r) => { resolveFlush = r; }));
+    const { get, cleanup } = createHarness({ onSaveFlush: flush });
+
+    let p1: Promise<boolean>;
+    let p2: Promise<boolean>;
+    await act(async () => {
+      p1 = get().triggerSave();
+      p2 = get().triggerSave();
+    });
+
+    // Only one flush call even though triggerSave was invoked twice
+    expect(flush).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveFlush(true);
+      const [r1, r2] = await Promise.all([p1, p2]);
+      expect(r1).toBe(true);
+      expect(r2).toBe(true);
+    });
     cleanup();
   });
 

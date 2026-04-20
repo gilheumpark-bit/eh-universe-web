@@ -3,7 +3,7 @@
 // page.tsx에서 추출. 순수 UX 상태만 관리.
 // ============================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 type ConfirmOpts = {
   title: string;
@@ -23,6 +23,27 @@ type ConfirmState = {
   variant?: 'danger' | 'warning' | 'info';
   onConfirm: () => void;
 };
+
+/**
+ * useStudioUX options.
+ *
+ * `onSaveFlush` is the synchronous save bridge wired by the caller (StudioShell).
+ * When provided, `triggerSave()` awaits its result BEFORE showing the
+ * "저장 완료" flash. Returning `false` (or throwing) surfaces a failure toast
+ * instead of a success flash — no silent pretend-saves.
+ *
+ * Contract:
+ *   - Must return `true` only after every pending write reached durable storage.
+ *   - Must return `false` (or throw) when any write failed (quota, I/O, etc.).
+ *   - Side-effects (localStorage.setItem, etc.) happen inside the callback;
+ *     the hook does not introspect them.
+ *
+ * Backwards-compat: if omitted, `triggerSave()` behaves as before (flash-only).
+ * This preserves existing call sites that did not have a real save wired.
+ */
+export interface UseStudioUXOptions {
+  onSaveFlush?: () => boolean | Promise<boolean>;
+}
 
 // ── Storage helpers ─────────────────────────────────────
 
@@ -82,7 +103,12 @@ function cleanupOldBackups(maxAge: number = 7 * 24 * 60 * 60 * 1000): number {
 }
 
 /** Manages UX transient state: toasts, error alerts, save flash, confirm modal, provider fallback notices */
-export function useStudioUX() {
+export function useStudioUX(options: UseStudioUXOptions = {}) {
+  // [C] ref to keep latest flush callback without re-creating triggerSave on every render
+  const onSaveFlushRef = useRef<UseStudioUXOptions['onSaveFlush']>(options.onSaveFlush);
+  useEffect(() => {
+    onSaveFlushRef.current = options.onSaveFlush;
+  }, [options.onSaveFlush]);
   // Error toast
   const [uxError, setUxError] = useState<{ error: unknown; retry?: () => void } | null>(null);
 
@@ -211,14 +237,75 @@ export function useStudioUX() {
   // Save flash — cleanup 타이머는 ref로 관리 (언마운트 시 취소)
   const saveFlashTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveFlash, setSaveFlash] = useState(false);
-  const triggerSave = useCallback(() => {
-    setSaveFlash(true);
-    setLastSaveTime(Date.now());
-    if (saveFlashTimerRef.current) clearTimeout(saveFlashTimerRef.current);
-    saveFlashTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
+  const [saveFailed, setSaveFailed] = useState(false);
+  // [C] race-guard: 중복 flush 방지 — 이미 진행 중이면 동일 promise 공유
+  const inFlightRef = React.useRef<Promise<boolean> | null>(null);
+  const saveFailedTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Ctrl+S / manual save handler.
+   *
+   * When `onSaveFlush` is wired, performs the REAL save first and only then
+   * shows the "저장 완료" flash. On failure, surfaces a 'noa:save-failed' alert
+   * and does NOT show success UI. If no flush is wired, falls back to the
+   * legacy flash-only behavior (no caller regression).
+   *
+   * Returns `true` on success, `false` on failure. Safe to call concurrently —
+   * overlapping calls share the same in-flight promise.
+   */
+  const triggerSave = useCallback(async (): Promise<boolean> => {
+    // [G] dedupe: concurrent Ctrl+S taps share one flush
+    if (inFlightRef.current) return inFlightRef.current;
+
+    const run = async (): Promise<boolean> => {
+      let ok = true;
+      const flush = onSaveFlushRef.current;
+      if (flush) {
+        try {
+          const result = await flush();
+          ok = result !== false; // only explicit false counts as failure
+        } catch (err) {
+          ok = false;
+          // [C] surface the underlying reason via alert event — avoid silent swallow
+          try {
+            window.dispatchEvent(new CustomEvent('noa:alert', {
+              detail: {
+                message: (err instanceof Error ? err.message : '저장에 실패했습니다.'),
+                variant: 'error',
+              },
+            }));
+          } catch { /* window unavailable (SSR) */ }
+        }
+      }
+
+      if (ok) {
+        setSaveFailed(false);
+        setSaveFlash(true);
+        setLastSaveTime(Date.now());
+        if (saveFlashTimerRef.current) clearTimeout(saveFlashTimerRef.current);
+        saveFlashTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
+      } else {
+        setSaveFlash(false);
+        setSaveFailed(true);
+        // Broadcast so external listeners (StudioShell toasts) can react uniformly
+        try {
+          window.dispatchEvent(new CustomEvent('noa:save-failed'));
+        } catch { /* SSR */ }
+        if (saveFailedTimerRef.current) clearTimeout(saveFailedTimerRef.current);
+        saveFailedTimerRef.current = setTimeout(() => setSaveFailed(false), 5000);
+      }
+      return ok;
+    };
+
+    const promise = run().finally(() => { inFlightRef.current = null; });
+    inFlightRef.current = promise;
+    return promise;
   }, []);
+
+  // [C] cleanup: unmount 시 모든 타이머 취소 (setState-on-unmount 방지)
   useEffect(() => () => {
     if (saveFlashTimerRef.current) clearTimeout(saveFlashTimerRef.current);
+    if (saveFailedTimerRef.current) clearTimeout(saveFailedTimerRef.current);
   }, []);
 
   // Token budget warning
@@ -298,7 +385,7 @@ export function useStudioUX() {
     // Storage warning
     storageWarning, setStorageWarning,
     // Save
-    lastSaveTime, saveFlash, triggerSave,
+    lastSaveTime, saveFlash, saveFailed, triggerSave,
     // Fallback
     fallbackNotice, setFallbackNotice,
     // Token/Character warnings

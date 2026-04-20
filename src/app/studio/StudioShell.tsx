@@ -18,6 +18,7 @@ import MobileDrawer from '@/components/studio/MobileDrawer';
 import MobileSketchImportBanner from '@/components/studio/MobileSketchImportBanner';
 import FirstVisitOnboarding from '@/components/studio/FirstVisitOnboarding';
 import { useProjectManager } from '@/hooks/useProjectManager';
+import { saveProjects } from '@/lib/project-migration';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
 import { useStudioWritingMode } from '@/hooks/useStudioWritingMode';
@@ -221,14 +222,25 @@ export default function StudioShell() {
     if (user?.uid) setDriveEncryptionKey(user.uid);
   }, [user?.uid]);
 
+  // [저장 무결성] Ctrl+S가 실제 저장을 수행하도록 flush bridge 구축.
+  // 실제 구현은 editDraft/projects 정의 이후에 주입 (saveFlushRef.current).
+  // 이 ref 덕에 useStudioUX 시그니처는 안정적인 콜백을 받고, 실제 flush는 늦게 바인딩.
+  const saveFlushRef = useRef<(() => Promise<boolean> | boolean) | null>(null);
+
   const {
     uxError, setUxError,
     storageFull, setStorageFull,
     exportDoneFormat, setExportDoneFormat,
-    lastSaveTime, saveFlash, triggerSave,
+    lastSaveTime, saveFlash, saveFailed, triggerSave,
     fallbackNotice, setFallbackNotice,
     confirmState, showConfirm, closeConfirm,
-  } = useStudioUX();
+  } = useStudioUX({
+    onSaveFlush: useCallback(async () => {
+      const flush = saveFlushRef.current;
+      if (!flush) return true; // flush 미주입 단계(마운트 직후) — 기만 방지용 noop OK
+      return await flush();
+    }, []),
+  });
 
   const [alertToast, setAlertToast] = useState<{ message: string; variant: string } | null>(null);
   const { suggestions, setSuggestions } = useStudioShellController(currentSession || null, language);
@@ -429,6 +441,104 @@ export default function StudioShell() {
 
   }, [editDraft, writingMode, currentSessionId, hydrated]);
 
+  // ── [저장 무결성] Ctrl+S 실제 flush — 기존 debounce 대기열을 즉시 강제 저장 ──
+  //
+  // 수행 순서 (실패 시 false 반환):
+  //   1. editDraft → noa_editdraft_<sid> localStorage 즉시 기록
+  //   2. editDraft 내용을 현재 세션의 manuscripts에 머지 (writing/edit 모드 한정)
+  //   3. 머지된 projects 배열을 직접 saveProjects() 호출 — 500ms debounce 우회
+  //   4. setProjects(next)로 React 상태 동기 (후속 렌더 정합성)
+  //
+  // 실패 조건: localStorage.setItem 예외(QuotaExceededError) → saveProjects 반환 false.
+  // 예외는 triggerSave 쪽에서 noa:alert + noa:save-failed 이벤트로 변환.
+  //
+  // [C] 참조는 ref가 아닌 최신 클로저 사용 — useCallback deps에 모두 포함.
+  // [G] 함수 호출 체인은 O(세션수 × 에피소드수) — 통상 수백 건 이하, 즉시 완료.
+  const projectsRefForFlush = useRef(projects);
+  projectsRefForFlush.current = projects;
+  const editDraftRefForFlush = useRef(editDraft);
+  editDraftRefForFlush.current = editDraft;
+  const currentSessionIdRefForFlush = useRef(currentSessionId);
+  currentSessionIdRefForFlush.current = currentSessionId;
+  const writingModeRefForFlush = useRef(writingMode);
+  writingModeRefForFlush.current = writingMode;
+
+  useEffect(() => {
+    saveFlushRef.current = () => {
+      const sid = currentSessionIdRefForFlush.current;
+      const draft = editDraftRefForFlush.current;
+      const mode = writingModeRefForFlush.current;
+      const currentProjects = projectsRefForFlush.current;
+
+      // Step 1: editDraft 임시 저장 (synchronous). quota 초과 시 throw → triggerSave가 잡음.
+      if (sid && draft) {
+        try {
+          localStorage.setItem(`noa_editdraft_${sid}`, draft);
+        } catch (err) {
+          // QuotaExceededError 등 — triggerSave의 catch로 위임
+          throw err instanceof Error ? err : new Error('localStorage write failed');
+        }
+      }
+
+      // Step 2: editDraft → manuscripts 머지 (writing/edit 모드 + 활성 세션 있을 때만)
+      let nextProjects = currentProjects;
+      if (sid && draft && mode === 'edit') {
+        const sess = currentProjects
+          .flatMap(p => p.sessions.map(s => ({ p, s })))
+          .find(x => x.s.id === sid);
+        if (sess) {
+          const episode = sess.s.config?.episode ?? 1;
+          const prevArr = sess.s.config.manuscripts ?? [];
+          const idx = prevArr.findIndex(m => m.episode === episode);
+          const title = sess.s.config.title || `Episode ${episode}`;
+          const now = Date.now();
+          const nextEntry = idx >= 0
+            ? { ...prevArr[idx], content: draft, charCount: draft.length, lastUpdate: now }
+            : { episode, title, content: draft, charCount: draft.length, lastUpdate: now };
+          const nextArr = idx >= 0
+            ? prevArr.map((m, i) => i === idx ? nextEntry : m)
+            : [...prevArr, nextEntry];
+          const nextSession = {
+            ...sess.s,
+            config: { ...sess.s.config, manuscripts: nextArr },
+            lastUpdate: now,
+          };
+          nextProjects = currentProjects.map(p =>
+            p.id === sess.p.id
+              ? { ...p, sessions: p.sessions.map(s => s.id === sid ? nextSession : s), lastUpdate: now }
+              : p,
+          );
+        }
+      }
+
+      // Step 3: saveProjects 직접 호출 — 500ms debounce 우회
+      //   saveProjects는 QuotaExceededError 내부 처리 후 false 반환 (throw 아님).
+      //   true면 React state 동기화, false면 실패로 귀결.
+      const ok = saveProjects(nextProjects);
+
+      // Step 4: React 상태 반영 (성공했을 때만 — 실패 상태를 화면에 남기지 않음)
+      if (ok && nextProjects !== currentProjects) {
+        setProjects(nextProjects);
+      }
+
+      return ok;
+    };
+    return () => { saveFlushRef.current = null; };
+  }, [setProjects]);
+
+  // 저장 실패 토스트 — saveFailed 상태를 사용자에게 노출
+  useEffect(() => {
+    if (!saveFailed) return;
+    window.dispatchEvent(new CustomEvent('noa:alert', {
+      detail: {
+        message: language === 'KO'
+          ? '저장 실패 — 용량을 확인하거나 일부 데이터를 내보내세요.'
+          : 'Save failed — check storage quota or export old data.',
+        variant: 'error',
+      },
+    }));
+  }, [saveFailed, language]);
+
 
 
 
@@ -571,11 +681,17 @@ export default function StudioShell() {
     onToggleFocus: () => setFocusMode(prev => !prev),
     onToggleShortcuts: () => setShowShortcuts(prev => !prev),
     onSave: () => {
-      triggerSave();
-      // [C] noa:alert 이벤트로 위임 — 언마운트 시 dismissTimer cleanup 자동 처리 (useEffect L237~)
-      window.dispatchEvent(new CustomEvent('noa:alert', {
-        detail: { message: language === 'KO' ? '저장 완료' : 'Saved', variant: 'info' },
-      }));
+      // [저장 무결성] triggerSave가 실제 flush를 수행하고 성공 여부를 반환.
+      // 성공 시에만 "저장 완료" 토스트 — 실패 시 useStudioUX 내부에서 noa:save-failed + 실패 alert 이벤트 자동 발행.
+      // fire-and-forget이지만 await 안 해도 useStudioUX가 내부 race-guard로 중복 방지.
+      void triggerSave().then((ok) => {
+        if (ok) {
+          // [C] noa:alert 이벤트로 위임 — 언마운트 시 dismissTimer cleanup 자동 처리 (useEffect L237~)
+          window.dispatchEvent(new CustomEvent('noa:alert', {
+            detail: { message: language === 'KO' ? '저장 완료' : 'Saved', variant: 'info' },
+          }));
+        }
+      });
     },
     onNewEpisode: () => {
       if (!currentSession) return;
