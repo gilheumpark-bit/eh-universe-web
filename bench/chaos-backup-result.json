@@ -1,0 +1,17 @@
+{
+  "iters": 1000,
+  "primaryFails": 0,
+  "primaryEverDegraded": 0,
+  "primaryAlertsTriggered": 0,
+  "secondaryFails": 361,
+  "tertiaryFails": 261,
+  "secondaryFailRateActual": 0.361,
+  "tertiaryFailRateActual": 0.261,
+  "primaryStateFinal": "healthy",
+  "secondaryStateFinal": "degraded",
+  "tertiaryStateFinal": "healthy",
+  "violations": [],
+  "totalMs": 4,
+  "success": true,
+  "ran_at": "2026-04-20T02:06:57.443Z"
+}

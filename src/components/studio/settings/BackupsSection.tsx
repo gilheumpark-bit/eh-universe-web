@@ -26,6 +26,7 @@ import {
   importFullBundle,
   rollbackFromPreRestoreBackup,
 } from '@/lib/full-backup';
+import BackupTiersIntegration from '@/components/studio/settings/BackupTiersIntegration';
 
 export interface VersionedBackup {
   timestamp: number;
@@ -63,6 +64,9 @@ const BackupsSection: React.FC<BackupsSectionProps> = ({
             onRefreshBackups={onRefreshBackups}
           />
         )}
+        <div className="md:col-span-2">
+          <BackupTiersIntegration language={language} />
+        </div>
         <FullBundleSection language={language} />
         {isFeatureEnabled('GOOGLE_DRIVE_BACKUP') && <GoogleDriveSection language={language} />}
         <GitHubSyncSection language={language} />

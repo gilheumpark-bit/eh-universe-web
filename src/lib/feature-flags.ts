@@ -30,6 +30,8 @@ export interface FeatureFlags {
   ARI_ENHANCED: boolean;
   /** Journal Engine (M1.1 AUTOSAVE_FORTRESS) — 기본 비활성, Phase 1.5에서 연결 후 활성화 */
   FEATURE_JOURNAL_ENGINE: boolean;
+  /** Firestore Mirror (M1.4 Secondary tier) — 기본 비활성, 사용자 명시 consent 필요 */
+  FEATURE_FIRESTORE_MIRROR: boolean;
 }
 
 // ============================================================
@@ -61,6 +63,12 @@ const FLAGS: FeatureFlags = {
    * flag off 상태에서는 저널 엔진이 완전히 우회되고 기존 경로만 동작.
    */
   FEATURE_JOURNAL_ENGINE: false,
+  /**
+   * Firestore Mirror (M1.4 Secondary tier) — 기본 비활성.
+   * 사용자가 Settings에서 명시 동의해야 활성화.
+   * 동의 없이는 네트워크 호출 0건, 모든 데이터 로컬 보관.
+   */
+  FEATURE_FIRESTORE_MIRROR: false,
 };
 
 /**

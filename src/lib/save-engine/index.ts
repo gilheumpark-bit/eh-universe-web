@@ -57,3 +57,52 @@ export type {
   DetectSaveCommittedInput,
   DetectPromotionInput,
 } from './conflict-detector';
+// M1.4 — 3-Tier Backup Orchestrator
+export {
+  BackupOrchestrator,
+  getDefaultBackupOrchestrator,
+  resetDefaultBackupOrchestratorForTests,
+  TIER_STATUS_EVENT,
+} from './backup-tiers';
+export type {
+  BackupTier,
+  BackupTierState,
+  BackupTierStatus,
+  BackupTierError,
+  BackupTierHandler,
+  BackupTierListener,
+  RegisterTierOptions,
+} from './backup-tiers';
+export {
+  isMirrorAllowed,
+  pushSnapshot,
+  pullSnapshot,
+  createFirestoreMirrorHandler,
+  FIRESTORE_MIRROR_DEFAULTS,
+} from './firestore-mirror';
+export type {
+  MirrorSnapshot,
+  MirrorPushResult,
+  MirrorPullResult,
+  FirestoreMirrorOptions,
+  MirrorSnapshotProvider,
+} from './firestore-mirror';
+export {
+  generateBackup,
+  backupNow,
+  buildBackupFilename,
+  loadBackupHistory,
+  getNotificationPermission,
+  requestNotificationPermissionOnce,
+  computeBundlePreview,
+  createFileTierHandler,
+  FILE_TIER_DEFAULTS,
+} from './file-tier';
+export type {
+  FileBackupRecord,
+  FileBackupResult,
+  FileTierOptions,
+  ProjectIdProvider,
+  NotificationDecision,
+  BundlePreview,
+} from './file-tier';
