@@ -48,6 +48,7 @@ const MultiTabBanner = dynamic(() => import('@/components/studio/MultiTabBanner'
 const StudioMountProviders = dynamic(() => import('@/components/studio/StudioMountProviders'), { ssr: false });
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useStudioMounts } from '@/hooks/useStudioMounts';
+import { useEnvironmentSanity } from '@/hooks/useEnvironmentSanity';
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
@@ -88,6 +89,8 @@ export default function StudioShell() {
   // studioMounts 는 useProjectManager 보다 먼저 실행돼야 shadowWriter/primaryWriter 를
   // useProjectManager 의 옵셔널 콜백으로 주입 가능.
   const studioMounts = useStudioMounts({ language });
+  // [M7] Boot-time environment probe — warns + emits noa:environment-degraded on missing browser APIs.
+  useEnvironmentSanity();
 
   const pm = useProjectManager(language, null, {
     onSaveComplete: studioMounts.shadowWriter.onPrimarySaveComplete,
