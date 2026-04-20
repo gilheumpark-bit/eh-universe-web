@@ -3,7 +3,8 @@
 // ============================================================
 //
 // 공용 훅. value 변경 감지 → debounce → delta 빌드 → appendEntry.
-// 내부적으로 feature-flag FEATURE_JOURNAL_ENGINE 확인 — off면 noop(기존 경로 활용).
+// 내부적으로 feature-flag FEATURE_JOURNAL_ENGINE 확인 — 'on'이 아니면 noop(기존 경로 활용).
+// 'shadow' 모드도 이 훅은 우회 — shadow 쓰기는 Phase 1.5.1 이후 shadow-logger가 담당.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
@@ -18,7 +19,7 @@ import { buildDelta } from '@/lib/save-engine/delta';
 import { appendEntry, getCurrentHLC } from '@/lib/save-engine/journal';
 import { toSaveMeta } from '@/lib/save-engine/atomic-write';
 import { detectAnomaly, countCharacters } from '@/lib/save-engine/anomaly-detector';
-import { isFeatureEnabled } from '@/lib/feature-flags';
+import { isJournalEngineOn } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
 
 // ============================================================
@@ -91,7 +92,7 @@ export function useAutoSave<T>(options: UseAutoSaveOptions<T>): UseAutoSaveResul
     logger.warn('save-engine:hook', `debounceMs > ${MAX_DEBOUNCE_WARN_MS}ms — UX 저하 위험`, { key: options.key });
   }
 
-  const engineEnabled = useFeatureFlagSafe('FEATURE_JOURNAL_ENGINE');
+  const engineEnabled = useJournalEngineOnSafe();
 
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
@@ -223,14 +224,17 @@ export function useAutoSave<T>(options: UseAutoSaveOptions<T>): UseAutoSaveResul
 }
 
 // ============================================================
-// PART 7 — Feature flag wrapper (isFeatureEnabled + SSR 안전)
+// PART 7 — Feature flag wrapper (isJournalEngineOn + SSR 안전)
 // ============================================================
+//
+// 'on' 모드에서만 primary 경로 활성. 'shadow'는 별도 로거 경유(훅은 우회).
+// try/catch — storage 차단 등 예외 시 false로 폴백(기존 경로 유지).
 
-function useFeatureFlagSafe(name: string): boolean {
+function useJournalEngineOnSafe(): boolean {
   try {
-    return isFeatureEnabled(name as Parameters<typeof isFeatureEnabled>[0]);
+    return isJournalEngineOn();
   } catch (err) {
-    logger.warn('save-engine:hook', `feature flag ${name} 조회 실패 — 기본 false`, err);
+    logger.warn('save-engine:hook', 'FEATURE_JOURNAL_ENGINE 조회 실패 — 기본 false', err);
     return false;
   }
 }

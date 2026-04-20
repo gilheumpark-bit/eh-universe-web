@@ -10,7 +10,8 @@
 //   3) noa:alert 이벤트로 성공/경고/에러 토스트 고지
 //
 // 이 훅은 Phase 1.2 단독 — Phase 1.5에서 StudioShell과 연결될 예정.
-// FEATURE_JOURNAL_ENGINE flag가 true일 때만 실제 실행(기본 false).
+// FEATURE_JOURNAL_ENGINE === 'on' 일 때만 실제 실행(기본 'off').
+// 'shadow' 모드는 복구를 연결하지 않음(관찰자 전용).
 //
 // [C] SSR 가드 / 중복 실행 방지 / 이벤트 dispatch 실패 시 로그만
 // [G] 1회 실행 — useRef 센티널로 반복 호출 차단

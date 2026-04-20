@@ -106,3 +106,27 @@ export type {
   NotificationDecision,
   BundlePreview,
 } from './file-tier';
+// M1.5.0 — Shadow Mode Logger + Diff Analyzer
+export {
+  startShadowWrite,
+  recordLegacyComplete,
+  completeShadowWrite,
+  getShadowLog,
+  getMatchRate,
+  clearShadowLog,
+} from './shadow-logger';
+export type {
+  ShadowLogEntry,
+  ShadowLogFilter,
+  ShadowOperation,
+} from './shadow-logger';
+export {
+  analyzeShadowLog,
+  isReadyForOnPromotion,
+  getUnmatchedOperations,
+} from './diff-analyzer';
+export type {
+  DiffAnalysisReport,
+  OperationMismatch,
+  ReadinessCheck,
+} from './diff-analyzer';

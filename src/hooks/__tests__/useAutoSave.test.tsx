@@ -19,7 +19,8 @@ beforeEach(() => {
   resetMemoryTierForTests();
   resetJournalHLCForTests();
   try { localStorage.clear(); } catch { /* noop */ }
-  try { localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'true'); } catch { /* noop */ }
+  // 3-mode enum: 'on'이 primary 경로 동작. 레거시 'true'도 역호환 지원(아래 PART 4 참조).
+  try { localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'on'); } catch { /* noop */ }
 });
 
 afterEach(() => {
@@ -90,9 +91,27 @@ describe('useAutoSave — debounce + flush', () => {
 // PART 4 — Feature flag off → engine 우회
 // ============================================================
 
-describe('useAutoSave — FEATURE_JOURNAL_ENGINE off', () => {
+describe('useAutoSave — FEATURE_JOURNAL_ENGINE off/shadow', () => {
   test('flag off면 flush → false, append 호출 안 됨', async () => {
+    try { localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'off'); } catch { /* noop */ }
+    const { result } = renderHook(() =>
+      useAutoSave({ key: 'k', value: { a: 1 }, target: 'project', projectId: 'p1', debounceMs: 10 })
+    );
+    const ok = await result.current.flush();
+    expect(ok).toBe(false);
+  });
+
+  test('레거시 "false" (역호환) → flush=false', async () => {
     try { localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'false'); } catch { /* noop */ }
+    const { result } = renderHook(() =>
+      useAutoSave({ key: 'k', value: { a: 1 }, target: 'project', projectId: 'p1', debounceMs: 10 })
+    );
+    const ok = await result.current.flush();
+    expect(ok).toBe(false);
+  });
+
+  test('shadow 모드 → primary 경로 우회 (flush=false, 쓰기는 shadow-logger 경유)', async () => {
+    try { localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', 'shadow'); } catch { /* noop */ }
     const { result } = renderHook(() =>
       useAutoSave({ key: 'k', value: { a: 1 }, target: 'project', projectId: 'p1', debounceMs: 10 })
     );

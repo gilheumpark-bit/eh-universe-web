@@ -29,6 +29,7 @@ const AdvancedSection = dynamic(() => import('@/components/studio/settings/Advan
 const PluginsSection = dynamic(() => import('@/components/studio/settings/PluginsSection'), { ssr: false });
 const SessionSection = dynamic(() => import('@/components/studio/settings/SessionSection'), { ssr: false });
 const ComplianceSection = dynamic(() => import('@/components/studio/settings/ComplianceSection'), { ssr: false });
+const ShadowDiffDashboard = dynamic(() => import('@/components/studio/settings/ShadowDiffDashboard'), { ssr: false });
 
 interface VersionedBackup {
   timestamp: number;
@@ -379,6 +380,9 @@ function DeveloperTab({ language }: { language: AppLanguage }) {
       >
         <FeatureFlagsSection language={language} />
       </AccordionGroup>
+
+      {/* Shadow Diff 대시보드 — M1.5.0 저널 엔진 검증 전용 */}
+      <ShadowDiffDashboard language={language} />
     </div>
   );
 }
