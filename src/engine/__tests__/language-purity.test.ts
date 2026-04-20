@@ -96,10 +96,19 @@ describe('purifyLanguage', () => {
     expect(result.stats.unknown).toBe(1); // notrealword
   });
 
-  it('JP 사전 TODO 상태 — 모두 unresolved', () => {
+  it('JP 사전 시드 — 표준 영어 치환 수행', () => {
+    // 2026-04-20: JP 사전에 40개 시드 추가. suddenly → 突然 로 치환되어야 함.
     const result = purifyLanguage('彼は suddenly 振り返った', 'JP');
-    expect(result.replacements).toHaveLength(0);
-    expect(result.unresolved.length).toBeGreaterThan(0);
+    expect(result.replacements).toHaveLength(1);
+    expect(result.replacements[0]?.replacement).toBe('突然');
+    expect(result.cleanedText).toContain('突然');
+  });
+
+  it('CN 사전 시드 — 표준 영어 치환 수행', () => {
+    const result = purifyLanguage('他 suddenly 转过身', 'CN');
+    expect(result.replacements).toHaveLength(1);
+    expect(result.replacements[0]?.replacement).toBe('突然');
+    expect(result.cleanedText).toContain('突然');
   });
 
   it('quickPurify 편의 함수', () => {

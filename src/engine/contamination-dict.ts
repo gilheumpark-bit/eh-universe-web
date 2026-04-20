@@ -244,30 +244,142 @@ export const KOREAN_CONTAMINATION_DICT: ContaminationDict = {
 };
 
 // ============================================================
-// PART 2 — Japanese / Chinese Dictionaries (not yet supported)
+// PART 2 — Japanese Dictionary (EN → 日本語)
 // ============================================================
-// NOTE: 일본어/중국어 오염 패턴은 아직 실측 샘플 부족.
-// 실제 Qwen 출력에서 확인된 패턴만 추가 예정. 빈 객체로 시작.
-//
-// ⚠️ 빈 맵은 "검사 대상 없음 = 전부 통과"를 의미하므로,
-// 호출 측이 이를 "깨끗함" 으로 오인하지 않도록 LANGUAGE_PURITY_SUPPORTED 를 통해
-// 명시적으로 "지원 언어" 를 선언한다. JP/CN 은 샘플 수집 완료 전까지 미지원.
+// 시드 40개 — 이중 언어 작가가 일본어 본문에 무의식적으로 남기는 영어 단어 대응.
+// 선정 원칙:
+//   1) 표준 사전(研究社 新英和, Weblio) 에 단일 번역이 명시된 단어만 채택.
+//   2) 의역 여지 큰 단어(present = 선물/현재 등) 는 제외.
+//   3) 외래어(テスト/ホテル/コンピュータ) 가 더 자연스러운 경우 カタカナ 채택.
 
 export const JAPANESE_CONTAMINATION_DICT: ContaminationDict = {
-  // TODO: 일본어 본문 생성 중 혼입 영어 패턴 수집 후 추가
+  // --- Greetings / Acknowledgements ---
+  hello: 'こんにちは',
+  hi: 'やあ',
+  sorry: 'ごめん',
+  thanks: 'ありがとう',
+  okay: '大丈夫',
+  ok: '大丈夫',
+
+  // --- Adverbs / Modifiers ---
+  really: '本当に',
+  actually: '実は',
+  maybe: 'たぶん',
+  perhaps: 'おそらく',
+  probably: 'おそらく',
+  suddenly: '突然',
+  finally: 'ついに',
+  almost: 'ほとんど',
+
+  // --- Common verbs ---
+  remember: '覚える',
+  forget: '忘れる',
+  understand: '理解する',
+
+  // --- Nouns (daily) ---
+  problem: '問題',
+  chance: '機会',
+  business: '仕事',
+  meeting: '会議',
+  hospital: '病院',
+  school: '学校',
+  friend: '友達',
+  family: '家族',
+  time: '時間',
+  money: 'お金',
+  book: '本',
+  movie: '映画',
+  music: '音楽',
+  food: '食べ物',
+  water: '水',
+
+  // --- Nouns (tech, カタカナ が 자연스러움) ---
+  hotel: 'ホテル',
+  computer: 'コンピュータ',
+  phone: '電話',
+  email: 'メール',
+  internet: 'インターネット',
+  test: 'テスト',
+
+  // --- Emotions / States ---
+  fear: '恐怖',
+  anger: '怒り',
+  love: '愛',
 };
 
+// ============================================================
+// PART 2b — Chinese Dictionary (EN → 中文)
+// ============================================================
+// 시드 40개 — 간체 중국어 기준. 번역 기준은 现代汉语词典 / 新世纪汉英大词典.
+// 선정 원칙 동일 — 단일 번역 가능한 단어만. 기술 용어는 표준 중국어 (电脑/手机 등).
+
 export const CHINESE_CONTAMINATION_DICT: ContaminationDict = {
-  // TODO: 중국어 본문 생성 중 혼입 영어 패턴 수집 후 추가
+  // --- Greetings / Acknowledgements ---
+  hello: '你好',
+  hi: '嗨',
+  sorry: '对不起',
+  thanks: '谢谢',
+  okay: '好的',
+  ok: '好的',
+
+  // --- Adverbs / Modifiers ---
+  really: '真的',
+  actually: '其实',
+  maybe: '也许',
+  perhaps: '也许',
+  probably: '大概',
+  suddenly: '突然',
+  finally: '终于',
+  almost: '几乎',
+
+  // --- Common verbs ---
+  remember: '记得',
+  forget: '忘记',
+  understand: '明白',
+
+  // --- Nouns (daily) ---
+  problem: '问题',
+  chance: '机会',
+  business: '生意',
+  meeting: '会议',
+  hospital: '医院',
+  school: '学校',
+  friend: '朋友',
+  family: '家人',
+  time: '时间',
+  money: '钱',
+  book: '书',
+  movie: '电影',
+  music: '音乐',
+  food: '食物',
+  water: '水',
+
+  // --- Nouns (tech) ---
+  hotel: '酒店',
+  computer: '电脑',
+  phone: '手机',
+  email: '邮件',
+  internet: '互联网',
+  test: '测试',
+
+  // --- Emotions / States ---
+  fear: '恐惧',
+  anger: '愤怒',
+  love: '爱',
 };
 
 /**
  * 언어 순수성(영어 혼입 검사) 지원 언어.
- * 이 Set 에 없는 언어는 빈 사전이므로 "검사 결과 통과" 가 실제 무검사를 의미한다.
+ * 4개 언어(KO/EN/JP/CN) 커버 — JP/CN 은 2026-04-20 시드 확보 후 지원 진입.
  * 호출 측(language-purity 엔진)은 이 Set 을 참조해 미지원 언어에 대해
  * "검사 미수행" 상태를 명시해야 한다.
  */
-export const LANGUAGE_PURITY_SUPPORTED: ReadonlySet<string> = new Set(['KO', 'EN']);
+export const LANGUAGE_PURITY_SUPPORTED: ReadonlySet<string> = new Set([
+  'KO',
+  'EN',
+  'JP',
+  'CN',
+]);
 
 // ============================================================
 // PART 3 — Whitelist (보편 차용어 + 고유명사)
@@ -295,4 +407,4 @@ export const COMMON_WHITELIST: ReadonlySet<string> = new Set<string>([
   'iOS', 'Android', 'Windows', 'macOS', 'Linux',
 ]);
 
-// IDENTITY_SEAL: PART-1~3 | role=contamination-dictionary | lang=KO(active), JP/CN(TODO) | whitelist=O(1)
+// IDENTITY_SEAL: PART-1~3 | role=contamination-dictionary | lang=KO/JP/CN/EN(4-way) | whitelist=O(1)

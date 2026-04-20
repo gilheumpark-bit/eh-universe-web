@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/AuthContext";
 import { UserRoleProvider } from "@/contexts/UserRoleContext";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import WebFeaturesInit from "@/components/WebFeaturesInit";
+import A11yCheckInit from "@/components/A11yCheckInit";
 import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
@@ -234,6 +235,7 @@ export default function RootLayout({
         </AuthProvider>
         <ErrorReporterInit />
         <WebFeaturesInit />
+        <A11yCheckInit />
         <ApiKeyHydrator />
         <StatusIndicator />
         <DeferredClientMetrics />
