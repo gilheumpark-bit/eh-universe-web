@@ -288,10 +288,12 @@ export function StudioStatusBar({
               </span>
             </span>
           ) : SPARK_SERVER_URL ? (
+            // 작가 친화 라벨 — 기술명(DGX/Qwen-32B) 제거, "로컬 AI" 로 통일.
+            // 생성 중 표시는 좌측 스피너가 이미 담당 → 우측 중복 제거.
+            // 엔지니어 지표(모델명·GPU)는 설정 → 고급 → 개발자 지표에서 노출 예정.
             <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-purple/10 border border-accent-purple/20">
               <Zap className="w-2.5 h-2.5 text-accent-purple" />
-              <span className="text-accent-purple font-bold">DGX 128GB</span>
-              {isGenerating && <span className="text-accent-amber animate-pulse">Qwen-32B</span>}
+              <span className="text-accent-purple font-bold">{isKO ? '로컬 AI' : 'Local AI'}</span>
             </span>
           ) : (
             <span className="flex items-center gap-1">

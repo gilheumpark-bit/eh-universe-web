@@ -3,6 +3,7 @@
 // ============================================================
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { isIMEComposing } from '@/lib/ime-guard';
 
 export interface UseInlineCompletionOpts {
   enabled: boolean;
@@ -126,12 +127,16 @@ export function useInlineCompletion(opts: UseInlineCompletionOpts): UseInlineCom
   // ── Trigger with debounce ──
   const triggerCompletion = useCallback((textBefore: string) => {
     if (!enabled) return;
+    // [R11 IME] 조합 중엔 자동 제안 금지 — 조합 중 Tab 은 조합 확정이어야 함
+    if (isIMEComposing()) return;
     lastTextRef.current = textBefore;
     // Clear previous suggestion while waiting
     setSuggestion(null);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
+      // [R11 IME] 타이머 만료 시점에도 재확인 — 디바운스 중 조합 재진입 방어
+      if (isIMEComposing()) return;
       // Only fire if text hasn't changed
       if (lastTextRef.current === textBefore) {
         fetchCompletion(textBefore);

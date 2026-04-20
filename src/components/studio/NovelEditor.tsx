@@ -197,6 +197,15 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
             letter-spacing: var(--editor-letter-spacing, 0.01em);
             min-height: 70vh;
             padding: 2rem;
+            /* R1 정지 직사각형 — 가로 최대 68ch + 가운데 정렬.
+               대형 모니터에서 본문이 가로로 늘어나지 않도록 고정.
+               typography preset이 --editor-max-width 로 재정의 가능. */
+            max-width: var(--editor-max-width, 68ch);
+            margin-left: auto;
+            margin-right: auto;
+            /* R5 Caret 색상 — 검정/흰 대신 amber 톤으로 시각 피로 감소.
+               blink 주기는 브라우저 기본(웹 표준 CSS로 변경 불가). */
+            caret-color: var(--editor-caret-color, var(--color-accent-amber, #d4a574));
             outline: none;
           }
           .novel-editor-wrapper .ProseMirror:focus-visible {
