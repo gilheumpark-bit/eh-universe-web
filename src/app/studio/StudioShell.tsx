@@ -81,15 +81,18 @@ export default function StudioShell() {
     setForceDesktop(p.get('force') === 'desktop' || localStorage.getItem('noa_force_desktop') === '1');
   }, []);
 
-  // ── [M1.5.1~M1.5.2] UI 마운트 훅 + Shadow 쓰기 어댑터 ──
-  // FEATURE_JOURNAL_ENGINE='off' 기본값에서 모두 inert (onPrimarySaveComplete 도 no-op).
-  // 'shadow' 로 전환 시에만 useProjectManager 저장 성공 → 저널 엔진 병렬 쓰기 활성.
-  // studioMounts 는 useProjectManager 보다 먼저 실행돼야 shadowWriter.onPrimarySaveComplete
-  // 를 useProjectManager 의 옵셔널 onSaveComplete 로 주입 가능.
+  // ── [M1.5.1~M1.5.5] UI 마운트 훅 + Shadow 쓰기 + Primary Writer ──
+  // FEATURE_JOURNAL_ENGINE='off' 기본값에서 모두 inert (shadow/primary 모두 legacy 패스스루).
+  // 'shadow' 로 전환 시: legacy Primary + Shadow 병렬 관찰.
+  // 'on' 으로 전환 시:    journal Primary + legacy Mirror (M1.5.5).
+  // studioMounts 는 useProjectManager 보다 먼저 실행돼야 shadowWriter/primaryWriter 를
+  // useProjectManager 의 옵셔널 콜백으로 주입 가능.
   const studioMounts = useStudioMounts({ language });
 
   const pm = useProjectManager(language, null, {
     onSaveComplete: studioMounts.shadowWriter.onPrimarySaveComplete,
+    // [M1.5.5] Primary Writer 주입 — flag 'on' 시 journal Primary, 그 외 legacy 패스스루.
+    primaryWriteFn: studioMounts.primaryWriter.write,
   });
   const {
     projects, setProjects,

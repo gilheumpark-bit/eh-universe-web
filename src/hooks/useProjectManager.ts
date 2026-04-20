@@ -40,6 +40,58 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
 };
 
 // ============================================================
+// PART 1.5 — Post-save side effects (M1.5.5 공통화)
+// ============================================================
+
+/**
+ * Primary 저장 직후 처리 — storage-full 경고, IndexedDB 백업, Cloud sync, Shadow 콜백.
+ *
+ * M1.5.5 에서 Primary 경로가 두 갈래(legacy / journal via primaryWriteFn)가 되었으므로
+ * 부가 동작을 별도 함수로 추출했다. 이는 단순 함수 — 기존 useEffect 의 내부 로직을
+ * 그대로 옮겼을 뿐 계약은 불변이다.
+ *
+ * [C] ok=false 여도 callback 은 호출하지 않음 (M1.5.2 규약).
+ * [G] 불필요한 재계산 없음 — 조건부 dispatch 만.
+ * [K] 단일 함수 — 두 경로에서 동일하게 재사용.
+ */
+function handleSaveAftermath(
+  projects: Project[],
+  ok: boolean,
+  primaryDurationMs: number,
+  uid: string | null,
+  onSaveCompleteCb: ProjectSaveCompleteCallback | undefined,
+): void {
+  if (!ok) {
+    const mb = (getStorageUsageBytes() / 1024 / 1024).toFixed(1);
+    logger.warn('NOA', `Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
+    try {
+      window.dispatchEvent(new CustomEvent('noa:storage-full', {
+        detail: { usageMB: mb },
+      }));
+    } catch { /* SSR/이벤트 차단 */ }
+  }
+  if (isFeatureEnabled('OFFLINE_CACHE')) {
+    backupToIndexedDB(projects).catch(err => logger.warn('IndexedDB', 'Backup failed:', err));
+  }
+  if (ok) {
+    try {
+      window.dispatchEvent(new CustomEvent('noa:auto-saved'));
+    } catch { /* SSR/이벤트 차단 */ }
+  }
+  if (uid && isFeatureEnabled('CLOUD_SYNC')) {
+    debouncedSyncToFirestore(uid, projects);
+  }
+  // [M1.5.2] Shadow 쓰기 콜백 — Primary 성공 시에만. throw 격리.
+  if (ok && onSaveCompleteCb) {
+    try {
+      onSaveCompleteCb(projects, primaryDurationMs);
+    } catch (err) {
+      logger.warn('NOA', 'onSaveComplete callback threw (isolated)', err);
+    }
+  }
+}
+
+// ============================================================
 // PART 2 — Hook implementation
 // ============================================================
 
@@ -58,9 +110,31 @@ export type ProjectSaveCompleteCallback = (
   durationMs: number,
 ) => void;
 
+/**
+ * [M1.5.5] Primary 저장 함수. 옵셔널. 미주입 시 기존 saveProjects 경로 100% 유지.
+ *
+ * 계약:
+ *   - 주입된 함수는 내부적으로 mode 판정 + fallback 책임을 가진다 (usePrimaryWriter).
+ *   - 반환 WriteResult.primarySuccess=true 면 저장 성공 (legacy/journal/degraded 무관).
+ *   - throw 는 허용하지 않음 — caller 는 항상 WriteResult 를 수신한다 (훅이 내부에서 흡수).
+ *   - 호출 후 onSaveComplete (M1.5.2) 콜백은 Primary 성공 시 여전히 트리거된다.
+ */
+export type PrimaryWriteFn = (projects: Project[]) => Promise<{
+  mode: 'legacy' | 'journal' | 'degraded';
+  primarySuccess: boolean;
+  mirrorSuccess: boolean;
+  journalEntryId?: string;
+  durationMs: number;
+}>;
+
 export interface UseProjectManagerOptions {
   /** [M1.5.2] Shadow 쓰기 등 외부 관찰자용 비간섭 콜백. */
   onSaveComplete?: ProjectSaveCompleteCallback;
+  /**
+   * [M1.5.5] Primary 저장 주입 — flag 'on' 시 journal Primary + legacy Mirror 경로.
+   * 미주입 시 기존 `saveProjects` 직접 호출 (완전 역호환).
+   */
+  primaryWriteFn?: PrimaryWriteFn;
 }
 
 /**
@@ -76,6 +150,9 @@ export function useProjectManager(
   // 재실행되는 일을 막는다. 콜백 자체는 호출 시점에 최신이 주입된다.
   const onSaveCompleteRef = useRef(options.onSaveComplete);
   onSaveCompleteRef.current = options.onSaveComplete;
+  // [M1.5.5] Primary Writer 주입 — 미주입 시 기존 saveProjects 직접 호출 (역호환).
+  const primaryWriteFnRef = useRef(options.primaryWriteFn);
+  primaryWriteFnRef.current = options.primaryWriteFn;
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -153,38 +230,52 @@ export function useProjectManager(
     if (!hydrated) return;
     const timer = setTimeout(() => {
       // [M1.5.2] Primary 저장 wall-clock 측정 — Shadow 콜백에 전달용.
-      // saveProjects 자체는 기존 로직 그대로. 측정 overhead 는 performance.now() 2회 (< 10μs).
+      // [M1.5.5] primaryWriteFn 주입 시 Journal Primary + legacy Mirror 경로로 분기.
+      //          미주입 시 saveProjects 직접 호출 (기존 M1.5.2 경로와 100% 동일).
       const t0 = performance.now();
-      const ok = saveProjects(projects);
-      const primaryDurationMs = performance.now() - t0;
-      if (!ok) {
-        const mb = (getStorageUsageBytes() / 1024 / 1024).toFixed(1);
-        logger.warn('NOA', `Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
-        // Surface storage-full warning to user via custom event
-        window.dispatchEvent(new CustomEvent('noa:storage-full', {
-          detail: { usageMB: mb },
-        }));
-      }
-      if (isFeatureEnabled('OFFLINE_CACHE')) {
-        backupToIndexedDB(projects).catch(err => logger.warn('IndexedDB', 'Backup failed:', err));
-      }
-      if (ok) window.dispatchEvent(new CustomEvent('noa:auto-saved'));
-      // Firestore 클라우드 동기화 (feature-gated)
-      if (uid && isFeatureEnabled('CLOUD_SYNC')) {
-        debouncedSyncToFirestore(uid, projects);
-      }
-      // [M1.5.2] Shadow 쓰기 콜백 — Primary 성공 시에만, 모든 동기 경로 종료 후.
-      // 콜백은 void 반환 계약. 내부가 Promise 를 열어도 Primary 경로는 영향 없음.
-      // try/catch 로 콜백 throw 격리 → 어떤 관찰자도 저장 루프를 중단시키지 못함.
-      if (ok) {
-        const cb = onSaveCompleteRef.current;
-        if (cb) {
-          try {
-            cb(projects, primaryDurationMs);
-          } catch (err) {
-            logger.warn('NOA', 'onSaveComplete callback threw (isolated)', err);
-          }
-        }
+      const primaryWriteFn = primaryWriteFnRef.current;
+
+      if (primaryWriteFn) {
+        // ---- Path A: M1.5.5 Primary Writer 주입 경로 ----
+        // primaryWriteFn 은 자체적으로 mode 판정 + legacy fallback 을 내장.
+        // throw 없음 계약 — 실패도 WriteResult.primarySuccess=false 로 반환.
+        void primaryWriteFn(projects)
+          .then((result) => {
+            const primaryDurationMs = result.durationMs > 0
+              ? result.durationMs
+              : Math.max(0, performance.now() - t0);
+            handleSaveAftermath(
+              projects,
+              result.primarySuccess,
+              primaryDurationMs,
+              uid,
+              onSaveCompleteRef.current,
+            );
+          })
+          .catch((err) => {
+            // 계약 위반 (primaryWriteFn 이 throw) — legacy 동기 복귀.
+            logger.warn('NOA', 'primaryWriteFn threw (fallback to legacy)', err);
+            const ok = saveProjects(projects);
+            const primaryDurationMs = Math.max(0, performance.now() - t0);
+            handleSaveAftermath(
+              projects,
+              ok,
+              primaryDurationMs,
+              uid,
+              onSaveCompleteRef.current,
+            );
+          });
+      } else {
+        // ---- Path B: M1.5.2 기존 경로 — 100% 역호환 ----
+        const ok = saveProjects(projects);
+        const primaryDurationMs = performance.now() - t0;
+        handleSaveAftermath(
+          projects,
+          ok,
+          primaryDurationMs,
+          uid,
+          onSaveCompleteRef.current,
+        );
       }
     }, 500);
     return () => clearTimeout(timer);

@@ -130,6 +130,10 @@ export type {
   OperationMismatch,
   ReadinessCheck,
 } from './diff-analyzer';
+// M1.5.5 — Primary Writer 관련 타입은 hooks/usePrimaryWriter 에 위치.
+// save-engine 은 framework-agnostic 유지 — 'use client' 파일을 import 하지 않는다.
+// 서비스/테스트는 `import type { PrimaryMode, WriteResult } from '@/hooks/usePrimaryWriter'` 사용.
+
 // M1.5.4 — Promotion Controller + Audit
 export {
   evaluatePromotion,

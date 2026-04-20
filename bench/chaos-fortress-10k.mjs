@@ -1,23 +1,28 @@
 // ============================================================
-// PART 1 — M1.6 Chaos Fortress 10,000회 통합 내성 관문
+// PART 1 — M1.6 / M1.5.5 Chaos Fortress 10,000회 통합 내성 관문
 // ============================================================
 //
 // 목표: 10,000회 반복 × 20 FMEA 시나리오 랜덤 주입 × 0 data loss 검증.
-//       M1.5.5 (Primary 스왑) 착수 가능 여부를 결정하는 최종 관문.
+//       M1.6 에서 baseline 통과 확인 후, M1.5.5 에서 Primary 스왑
+//       (flag='on') 경로도 동일 기준(0 loss)을 만족하는지 재검증.
 //
 // 전제:
 //   - M1.1 Journal (IDB→LS→Memory 3-tier 폴백) 가동
 //   - M1.4 Backup Tier (Primary/Secondary/Tertiary 독립) 가동
 //   - M1.5.x Shadow (Primary 무간섭 쓰기) 가동
+//   - M1.5.5 Primary Writer: flag='on' 시 journal Primary + legacy Mirror,
+//                            journal 실패 시 legacy fallback 보장
 //   - 전체 save pipeline 계약: Primary 100% 성공 보장 + Data loss 0
 //
 // 실행:
-//   node bench/chaos-fortress-10k.mjs
+//   node bench/chaos-fortress-10k.mjs                               # baseline (off/shadow)
 //   node bench/chaos-fortress-10k.mjs --iters=5000 --seed=42
+//   CHAOS_FLAG_MODE=on node bench/chaos-fortress-10k.mjs            # M1.5.5 on-mode
+//   CHAOS_FLAG_MODE=on node bench/chaos-fortress-10k.mjs --seed=M1.5.5-on-canonical
 //
 // 산출:
-//   bench/chaos-fortress-10k-result.json  (원시 통계)
-//   bench/chaos-fortress-10k-report.md    (인간 가독 리포트)
+//   off/shadow: bench/chaos-fortress-10k-result.json + report.md
+//   on:         bench/chaos-fortress-10k-on-result.json + on-report.md
 //
 // 종료 코드:
 //   0 → PASS (data loss 0, violations 0)
@@ -89,8 +94,12 @@ function hashStringToInt(s) {
 // 각 tier는 독립. Secondary/Tertiary 실패는 Primary에 영향 주지 않는다.
 
 class StorageSimulator {
-  constructor(rng) {
+  constructor(rng, options = {}) {
     this.rng = rng;
+    // [M1.5.5] Primary 모드 — 'off' | 'shadow' | 'on'.
+    // 'on' 에서는 journal appendAtomic 을 먼저 시도, 실패 시 legacy(ls) 로 fallback.
+    // 'off'/'shadow' 는 기존 M1.6 동작 (legacy 가 Primary, 3-tier 폴백).
+    this.primaryMode = options.primaryMode ?? 'off';
     // tier별 상태
     this.idb = new Map();
     this.ls = new Map();
@@ -107,11 +116,16 @@ class StorageSimulator {
       encodingBomb: false,       // #16 encoding corruption
       payloadHuge: false,        // #17 memory overflow
       dataCleared: false,        // #20 browser-data-clear (after-state)
+      // [M1.5.5] Journal Primary 실패 주입 — 'on' 모드에서 legacy fallback 경로 검증용.
+      journalThrow: false,
     };
     // Tip pointer (마지막 성공 id)
     this.tipId = null;
-    // 각 tier 누적 쓰기 카운터
-    this.writes = { idb: 0, ls: 0, memory: 0 };
+    // 각 tier 누적 쓰기 카운터 (+ M1.5.5 journal-primary / legacy-mirror 분리)
+    this.writes = {
+      idb: 0, ls: 0, memory: 0,
+      journalPrimary: 0, legacyMirror: 0, legacyFallback: 0,
+    };
     // Write Queue 직렬화 시뮬레이터 (race condition 방어)
     this.queueBusy = false;
     // Leader 탭 (멀티 탭 조율) — true면 현재 탭이 writer
@@ -182,6 +196,67 @@ class StorageSimulator {
     }
   }
 
+  // ---- [M1.5.5] Primary Writer 라우팅 ----
+  // primaryMode 에 따라 Primary 경로를 선택:
+  //   'off' / 'shadow' → legacy 경로만 (기존 appendAtomic 과 동일)
+  //   'on'             → journal 우선 시도, 실패 시 legacy 로 fallback
+  //
+  // 계약:
+  //   - 어떤 모드에서도 Data Loss 0 (최소 1 tier 에 기록 또는 이전 tip 보존).
+  //   - on 모드 journal 실패는 legacy fallback 으로 즉시 복구 — degraded 표시.
+  async primaryWrite(id, payload) {
+    if (this.primaryMode !== 'on') {
+      // off / shadow → 기존 3-tier 경로.
+      return await this.appendAtomic(id, payload);
+    }
+
+    // on 모드 — journal Primary 먼저 시도.
+    // journalThrow 주입되었거나 atomic-abort 류 시나리오는 journal 실패로 귀결.
+    try {
+      if (this.flags.journalThrow) {
+        throw new Error('journal-primary-injected-failure');
+      }
+      // Journal 성공 경로 — IDB tier 에 기록.
+      if (this.flags.idbThrow || this.flags.atomicAbort) {
+        // atomic-abort / idb-corruption 에서는 journal 도 실패 → legacy fallback.
+        throw new Error(this.flags.atomicAbort ? 'atomic-abort-journal' : 'idb-journal-failure');
+      }
+      // 페이로드 변형 (encoding/크기)
+      let actualPayload = payload;
+      if (this.flags.encodingBomb) {
+        actualPayload = { ...payload, bombChars: '\uD83D\uDE00'.repeat(10) + '\u202Etest\u202C' };
+      }
+      if (this.flags.payloadHuge) {
+        // 대용량 페이로드는 journal 기록 시 IDB 용량 초과 위험 — 실패 처리.
+        throw new Error('payload-too-large-for-journal');
+      }
+      this.idb.set(id, { payload: actualPayload, ts: this.now(), source: 'journal-primary' });
+      this.writes.idb += 1;
+      this.writes.journalPrimary += 1;
+      this.tipId = id;
+
+      // 성공 후 legacy Mirror — background. 실패해도 Primary 결과 유지.
+      try {
+        if (!this.flags.lsQuota && !this.flags.dataCleared) {
+          this.ls.set(id, { payload: actualPayload, ts: this.now(), source: 'legacy-mirror' });
+          this.writes.ls += 1;
+          this.writes.legacyMirror += 1;
+        }
+      } catch {
+        /* mirror 실패 허용 */
+      }
+      return { ok: true, tier: 'indexeddb', tipId: id, mode: 'journal' };
+    } catch (_journalErr) {
+      // Journal 실패 → legacy fallback (기존 appendAtomic 경로 재사용).
+      const result = await this.appendAtomic(id, payload);
+      if (result.ok) {
+        this.writes.legacyFallback += 1;
+        return { ...result, mode: 'degraded' };
+      }
+      return result;
+    }
+  }
+
   // ---- 무결성 검증: 저장 후 즉시 read-back ----
   hasEntry(id) {
     // #20 전체 삭제 후엔 모든 tier 비워짐
@@ -212,7 +287,10 @@ class StorageSimulator {
     this.ls.clear();
     this.memory.clear();
     this.tipId = null;
-    this.writes = { idb: 0, ls: 0, memory: 0 };
+    this.writes = {
+      idb: 0, ls: 0, memory: 0,
+      journalPrimary: 0, legacyMirror: 0, legacyFallback: 0,
+    };
     this.resetFlags();
   }
 
@@ -370,10 +448,16 @@ function injectScenario(scenario, sim, rng) {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const parsed = { iters: 10_000, seed: null };
+  const parsed = { iters: 10_000, seed: null, primaryMode: 'off' };
   for (const a of args) {
     if (a.startsWith('--iters=')) parsed.iters = parseInt(a.split('=')[1], 10);
     else if (a.startsWith('--seed=')) parsed.seed = a.split('=')[1];
+    else if (a.startsWith('--mode=')) parsed.primaryMode = a.split('=')[1];
+  }
+  // [M1.5.5] 환경 변수 우선 — CHAOS_FLAG_MODE=on 으로 Primary 스왑 경로 검증.
+  const envMode = process.env.CHAOS_FLAG_MODE;
+  if (envMode === 'off' || envMode === 'shadow' || envMode === 'on') {
+    parsed.primaryMode = envMode;
   }
   if (!parsed.seed) parsed.seed = String(Date.now());
   return parsed;
@@ -404,26 +488,33 @@ function avg(arr) {
 }
 
 async function main() {
-  const { iters: ITERS, seed } = parseArgs();
+  const { iters: ITERS, seed, primaryMode } = parseArgs();
   const rng = createRng(seed);
-  const sim = new StorageSimulator(rng);
+  const sim = new StorageSimulator(rng, { primaryMode });
 
-  // 초기 seed 쓰기 — before state 확립
-  await sim.appendAtomic('seed-0', { ops: [{ op: 'init', value: 'seed' }] });
+  // 초기 seed 쓰기 — before state 확립 (primaryWrite 로 모드 적용)
+  await sim.primaryWrite('seed-0', { ops: [{ op: 'init', value: 'seed' }] });
   const initialTip = sim.tipId;
 
   const results = {
     iterations: ITERS,
     seed,
+    primaryMode,
     timestamp: new Date().toISOString(),
     scenarioBreakdown: {},
     concurrentFailures: 0,
     recoveryStats: {
       full: 0,            // IDB tier 성공
       journalOnly: 0,     // LS tier (IDB 실패 후)
-      degraded: 0,        // memory tier (최종 폴백)
+      degraded: 0,        // memory tier (최종 폴백) / M1.5.5: journal 실패 후 legacy fallback
       downgraded: 0,      // secondary/tertiary 실패 but primary OK
       noRecovery: 0,      // 아무 tier도 성공 못함 — FAIL
+    },
+    // [M1.5.5] 모드별 write 경로 분포
+    primaryWriteStats: {
+      journalPrimary: 0,  // flag=on + journal 성공
+      degradedFallback: 0, // flag=on + journal 실패 → legacy fallback
+      legacyDirect: 0,    // flag=off/shadow → legacy 바로
     },
     totalFailures: 0,
     totalDataLoss: 0,
@@ -456,6 +547,12 @@ async function main() {
     try {
       injectScenario(scenario, sim, rng);
       if (concurrent) injectScenario(concurrent, sim, rng);
+
+      // [M1.5.5] on-mode 전용 — 5% 확률로 journal-primary 실패 주입.
+      // legacy fallback 경로가 데이터 손실 없이 복구해야 함 (G5/G7).
+      if (primaryMode === 'on' && rng() < 0.05) {
+        sim.flags.journalThrow = true;
+      }
     } catch (err) {
       results.violations.push({
         iter: i, kind: 'injector-throw', scenario, concurrent,
@@ -463,12 +560,12 @@ async function main() {
       });
     }
 
-    // 저장 시도
+    // 저장 시도 (M1.5.5 Primary 경로 라우팅)
     const t0 = performance.now();
     let opResult;
     let success = false;
     try {
-      opResult = await sim.appendAtomic(id, payload);
+      opResult = await sim.primaryWrite(id, payload);
       success = opResult.ok === true;
     } catch (err) {
       // atomic-write-abort 등 의도된 실패 — data loss 검증만 중요
@@ -488,6 +585,11 @@ async function main() {
       else if (opResult.tier === 'localstorage') results.recoveryStats.journalOnly += 1;
       else if (opResult.tier === 'memory') results.recoveryStats.degraded += 1;
       entry.recovered += 1;
+
+      // [M1.5.5] primaryWrite 모드별 분포 집계
+      if (opResult.mode === 'journal') results.primaryWriteStats.journalPrimary += 1;
+      else if (opResult.mode === 'degraded') results.primaryWriteStats.degradedFallback += 1;
+      else results.primaryWriteStats.legacyDirect += 1;
     } else {
       results.totalFailures += 1;
     }
@@ -577,9 +679,11 @@ async function main() {
   const summary = {
     iterations: ITERS,
     seed: String(seed),
+    primaryMode,
     timestamp: results.timestamp,
     summary: {
       success,
+      primaryMode,
       totalDataLoss: results.totalDataLoss,
       totalFailures: results.totalFailures,
       violationsCount: results.violations.length,
@@ -591,6 +695,7 @@ async function main() {
       p99DurationMs: p99,
       totalMs: Math.round(totalMs),
     },
+    primaryWriteStats: results.primaryWriteStats,
     scenarioBreakdown: results.scenarioBreakdown,
     concurrentFailures: results.concurrentFailures,
     recoveryStats: results.recoveryStats,
@@ -602,24 +707,35 @@ async function main() {
     violationsSample: results.violations.slice(0, 20),
   };
 
-  writeFileSync('bench/chaos-fortress-10k-result.json', JSON.stringify(summary, null, 2), 'utf8');
+  // [M1.5.5] 모드별 산출물 파일 — on 은 별도 결과 파일로 기록.
+  const suffix = primaryMode === 'on' ? '-on' : '';
+  const resultPath = `bench/chaos-fortress-10k${suffix}-result.json`;
+  const reportPath = `bench/chaos-fortress-10k${suffix}-report.md`;
+  writeFileSync(resultPath, JSON.stringify(summary, null, 2), 'utf8');
 
   // Markdown 리포트
   const mdReport = buildMarkdownReport(summary);
-  writeFileSync('bench/chaos-fortress-10k-report.md', mdReport, 'utf8');
+  writeFileSync(reportPath, mdReport, 'utf8');
 
   process.stdout.write('\n');
-  console.log(`[chaos-fortress-10k] iterations=${ITERS} seed=${seed}`);
+  console.log(`[chaos-fortress-10k] primaryMode=${primaryMode} iterations=${ITERS} seed=${seed}`);
   console.log(`[chaos-fortress-10k] totalDataLoss=${summary.summary.totalDataLoss}`);
   console.log(`[chaos-fortress-10k] violations=${summary.summary.violationsCount}`);
   console.log(`[chaos-fortress-10k] avgDuration=${avgDur}ms p50=${p50} p95=${p95} p99=${p99}`);
   console.log(`[chaos-fortress-10k] totalMs=${Math.round(totalMs)}ms`);
   console.log(`[chaos-fortress-10k] scenarios exercised=${summary.coverage.totalScenariosExercised}/20`);
+  if (primaryMode === 'on') {
+    const pw = summary.primaryWriteStats;
+    console.log(`[chaos-fortress-10k] (on-mode) journalPrimary=${pw.journalPrimary} degradedFallback=${pw.degradedFallback} legacyDirect=${pw.legacyDirect}`);
+  }
   if (missingScenarios.length) console.error(`[chaos-fortress-10k] MISSING scenarios: ${missingScenarios.join(', ')}`);
   if (underCoveredScenarios.length) console.warn(`[chaos-fortress-10k] under-covered (<100): ${underCoveredScenarios.join(', ')}`);
 
   if (success) {
-    console.log(`[chaos-fortress-10k] PASS — 10K iterations × 0 data loss. M1.5.5 착수 가능.`);
+    const verdict = primaryMode === 'on'
+      ? 'PASS — 10K iterations × 0 data loss (on-mode). M1 종결 가능.'
+      : 'PASS — 10K iterations × 0 data loss. M1.5.5 착수 가능.';
+    console.log(`[chaos-fortress-10k] ${verdict}`);
     process.exit(0);
   } else {
     console.error(`[chaos-fortress-10k] FAIL — data loss ${summary.summary.totalDataLoss} or violations ${summary.summary.violationsCount}`);
@@ -635,10 +751,12 @@ function buildMarkdownReport(summary) {
   const s = summary.summary;
   const verdict = s.success ? 'PASS' : 'FAIL';
   const lines = [];
-  lines.push(`# M1.6 Chaos Fortress 10,000회 리포트`);
+  const phase = summary.primaryMode === 'on' ? 'M1.5.5 (Primary 스왑)' : 'M1.6 (Baseline)';
+  lines.push(`# ${phase} Chaos Fortress 10,000회 리포트`);
   lines.push('');
   lines.push(`**실행 시각:** ${summary.timestamp}`);
   lines.push(`**Seed:** \`${summary.seed}\``);
+  lines.push(`**Primary Mode:** \`${summary.primaryMode ?? 'off'}\``);
   lines.push(`**Iterations:** ${summary.iterations.toLocaleString()}`);
   lines.push(`**판정:** **${verdict}**`);
   lines.push('');
@@ -674,6 +792,21 @@ function buildMarkdownReport(summary) {
   lines.push(`| \`degraded\` (memory) | ${summary.recoveryStats.degraded} | LS까지 실패 → memory 최종 폴백 |`);
   lines.push(`| \`noRecovery\` | ${summary.recoveryStats.noRecovery} | 모든 tier 실패 (FAIL) |`);
   lines.push('');
+
+  if (summary.primaryMode === 'on' && summary.primaryWriteStats) {
+    const pw = summary.primaryWriteStats;
+    lines.push('## [M1.5.5] Primary Writer 경로 분포 (on-mode)');
+    lines.push('');
+    lines.push('| Path | Count | 의미 |');
+    lines.push('|------|------|------|');
+    lines.push(`| \`journalPrimary\` | ${pw.journalPrimary} | Journal 엔진이 Primary 로 성공 기록 |`);
+    lines.push(`| \`degradedFallback\` | ${pw.degradedFallback} | Journal 실패 → legacy fallback 성공 (0 loss) |`);
+    lines.push(`| \`legacyDirect\` | ${pw.legacyDirect} | 이 모드에서 예상치 못한 legacy 경로 (조사 필요) |`);
+    lines.push('');
+    lines.push('> journalPrimary + degradedFallback ≥ 99% 일 때 Primary 스왑 안정성 확보.');
+    lines.push('');
+  }
+
   lines.push('## 동시 실패 내성');
   lines.push('');
   lines.push(`2+ 시나리오 동시 주입: **${summary.concurrentFailures}** 회`);
@@ -718,7 +851,11 @@ function buildMarkdownReport(summary) {
   lines.push('');
   lines.push('---');
   lines.push('');
-  lines.push(`**M1.5.5 착수 가능 여부:** **${s.success && summary.coverage.missingScenarios.length === 0 ? 'YES' : 'NO'}**`);
+  if (summary.primaryMode === 'on') {
+    lines.push(`**M1 (AUTOSAVE_FORTRESS) 종결 가능 여부:** **${s.success && summary.coverage.missingScenarios.length === 0 ? 'YES' : 'NO'}**`);
+  } else {
+    lines.push(`**M1.5.5 착수 가능 여부:** **${s.success && summary.coverage.missingScenarios.length === 0 ? 'YES' : 'NO'}**`);
+  }
   lines.push('');
   return lines.join('\n');
 }
