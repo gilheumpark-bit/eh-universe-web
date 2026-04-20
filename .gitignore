@@ -153,3 +153,4 @@ venv/
 
 # TypeDoc API docs (regenerated locally)
 docs/api/
+.claude/
