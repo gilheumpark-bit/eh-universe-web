@@ -29,5 +29,31 @@ export {
 } from './beacon';
 export type { BeaconStatus, BeaconPayload, CrashEstimate, HeartbeatHandle } from './beacon';
 export { acquireLeaderController, isWebLocksSupported } from './leader-election';
+export type { LeaderController, LeaderInfo, LeaderRole } from './leader-election';
 export { WriterQueue, getDefaultWriterQueue } from './writer-queue';
 export { compressToBytes, decompressFromBytes, isCompressionStreamSupported } from './compression';
+// M1.3 — Multi-Tab Concurrency
+export {
+  TabSyncBus,
+  getDefaultTabSyncBus,
+  resetDefaultTabSyncBusForTests,
+} from './tab-sync';
+export type {
+  TabSyncEvent,
+  TabSyncEventType,
+  SaveCommittedPayload,
+  StateChangedPayload,
+  UserActionPayload,
+} from './tab-sync';
+export {
+  ConflictDetector,
+  getDefaultConflictDetector,
+  resetDefaultConflictDetectorForTests,
+  dispatchConflictAlert,
+} from './conflict-detector';
+export type {
+  ConflictLogEntry,
+  ConflictReason,
+  DetectSaveCommittedInput,
+  DetectPromotionInput,
+} from './conflict-detector';
