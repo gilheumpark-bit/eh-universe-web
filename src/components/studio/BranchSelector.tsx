@@ -177,10 +177,10 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
           bg-bg-tertiary/50 border border-border text-text-tertiary
           opacity-60 cursor-not-allowed ${className}`}
         title={L4(language, {
-          ko: '버전 관리 준비 중',
-          en: 'Version management not ready',
-          ja: 'バージョン管理準備中',
-          zh: '版本管理准备中',
+          ko: 'GitHub 연결 필요',
+          en: 'GitHub connection needed',
+          ja: 'GitHub接続が必要',
+          zh: '需要连接 GitHub',
         })}
       >
         <BookCopy className="w-3 h-3 shrink-0" />

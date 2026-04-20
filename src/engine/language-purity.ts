@@ -68,6 +68,18 @@ const DICT_MAP: Record<TargetLang, ContaminationDict> = {
   CN: CHINESE_CONTAMINATION_DICT,
 };
 
+/**
+ * 런타임에 특정 언어 사전이 비어있지 않은지 확인.
+ * JP/CN 은 샘플 수집 완료 전까지 빈 사전 — 이를 호출 측이 "검사 통과" 로 오인하지 않도록
+ * 사용 전 이 함수로 확인 권장.
+ */
+export function isPurityLanguageSupported(lang: TargetLang): boolean {
+  return Object.keys(DICT_MAP[lang]).length > 0;
+}
+
+// 세션당 1회만 경고 (로그 스팸 방지)
+const warnedUnsupportedLangs = new Set<TargetLang>();
+
 // 영어 단어 감지 — 2자 이상 라틴 알파벳 시퀀스. 숫자/기호 미포함.
 // Note: /g flag 는 purifyLanguage 내부에서 새 RegExp 로 재생성 (lastIndex 격리).
 const ENGLISH_WORD_PATTERN_SOURCE = '[A-Za-z][a-zA-Z]{1,}';
@@ -167,6 +179,17 @@ export function purifyLanguage(
   const customWhitelist = new Set<string>(options.customWhitelist ?? []);
 
   const dict = DICT_MAP[targetLang];
+
+  // 빈 사전 경고 — 런타임 1회만 (JP/CN 미지원 상태 명시).
+  // 호출 측이 replacements.length === 0 를 "깨끗함" 으로 오인하는 것을 방지.
+  if (Object.keys(dict).length === 0 && !warnedUnsupportedLangs.has(targetLang)) {
+    warnedUnsupportedLangs.add(targetLang);
+    logger.warn(
+      'language-purity',
+      `Empty dictionary for ${targetLang}: English words will surface as 'unresolved' only. Use isPurityLanguageSupported() to check before trusting cleanedText.`,
+    );
+  }
+
   const quoteRanges = preserveQuotes ? findQuoteRanges(text) : [];
   const matches = collectEnglishWords(text);
   const totalEnglishWords = matches.length;
