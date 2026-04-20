@@ -81,11 +81,16 @@ export default function StudioShell() {
     setForceDesktop(p.get('force') === 'desktop' || localStorage.getItem('noa_force_desktop') === '1');
   }, []);
 
-  // ── [M1.5.1] UI 마운트 훅 — 기능은 FEATURE_JOURNAL_ENGINE='off'면 모두 inert
-  // useAutoSave는 연결 금지 (M1.5.2 범위). 여기서는 복구/멀티탭 관찰만.
+  // ── [M1.5.1~M1.5.2] UI 마운트 훅 + Shadow 쓰기 어댑터 ──
+  // FEATURE_JOURNAL_ENGINE='off' 기본값에서 모두 inert (onPrimarySaveComplete 도 no-op).
+  // 'shadow' 로 전환 시에만 useProjectManager 저장 성공 → 저널 엔진 병렬 쓰기 활성.
+  // studioMounts 는 useProjectManager 보다 먼저 실행돼야 shadowWriter.onPrimarySaveComplete
+  // 를 useProjectManager 의 옵셔널 onSaveComplete 로 주입 가능.
   const studioMounts = useStudioMounts({ language });
 
-  const pm = useProjectManager(language);
+  const pm = useProjectManager(language, null, {
+    onSaveComplete: studioMounts.shadowWriter.onPrimarySaveComplete,
+  });
   const {
     projects, setProjects,
     currentProjectId, setCurrentProjectId,

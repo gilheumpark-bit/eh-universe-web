@@ -44,10 +44,38 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
 // ============================================================
 
 /**
+ * [M1.5.2] Primary 저장 완료 콜백. 옵셔널. 미주입이면 기존 동작과 완전 동일.
+ * 호출 시점: saveProjects(projects)가 true 반환 직후 (auto-save debounce 내부).
+ *
+ * 호출 규약:
+ *   - Primary 경로 성공 시에만 호출 (실패/미실행 시 호출하지 않음).
+ *   - payload 는 실제 저장된 projects 참조(불변 전제).
+ *   - durationMs 는 saveProjects 호출부터 반환까지의 wall-clock.
+ *   - 콜백은 void 반환 전제 — 내부가 Promise 를 열어도 Primary 경로는 기다리지 않음.
+ */
+export type ProjectSaveCompleteCallback = (
+  projects: Project[],
+  durationMs: number,
+) => void;
+
+export interface UseProjectManagerOptions {
+  /** [M1.5.2] Shadow 쓰기 등 외부 관찰자용 비간섭 콜백. */
+  onSaveComplete?: ProjectSaveCompleteCallback;
+}
+
+/**
  * Central project/session CRUD hook. Handles localStorage hydration, project creation,
  * session switching, IndexedDB backup/restore, and storage quota management.
  */
-export function useProjectManager(language: AppLanguage, uid: string | null = null) {
+export function useProjectManager(
+  language: AppLanguage,
+  uid: string | null = null,
+  options: UseProjectManagerOptions = {},
+) {
+  // [M1.5.2] 콜백 최신 참조 유지용 ref — 옵션 객체 identity 변화로 저장 effect가
+  // 재실행되는 일을 막는다. 콜백 자체는 호출 시점에 최신이 주입된다.
+  const onSaveCompleteRef = useRef(options.onSaveComplete);
+  onSaveCompleteRef.current = options.onSaveComplete;
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -124,7 +152,11 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
   useEffect(() => {
     if (!hydrated) return;
     const timer = setTimeout(() => {
+      // [M1.5.2] Primary 저장 wall-clock 측정 — Shadow 콜백에 전달용.
+      // saveProjects 자체는 기존 로직 그대로. 측정 overhead 는 performance.now() 2회 (< 10μs).
+      const t0 = performance.now();
       const ok = saveProjects(projects);
+      const primaryDurationMs = performance.now() - t0;
       if (!ok) {
         const mb = (getStorageUsageBytes() / 1024 / 1024).toFixed(1);
         logger.warn('NOA', `Storage full (${mb}MB). Consider exporting and clearing old sessions.`);
@@ -140,6 +172,19 @@ export function useProjectManager(language: AppLanguage, uid: string | null = nu
       // Firestore 클라우드 동기화 (feature-gated)
       if (uid && isFeatureEnabled('CLOUD_SYNC')) {
         debouncedSyncToFirestore(uid, projects);
+      }
+      // [M1.5.2] Shadow 쓰기 콜백 — Primary 성공 시에만, 모든 동기 경로 종료 후.
+      // 콜백은 void 반환 계약. 내부가 Promise 를 열어도 Primary 경로는 영향 없음.
+      // try/catch 로 콜백 throw 격리 → 어떤 관찰자도 저장 루프를 중단시키지 못함.
+      if (ok) {
+        const cb = onSaveCompleteRef.current;
+        if (cb) {
+          try {
+            cb(projects, primaryDurationMs);
+          } catch (err) {
+            logger.warn('NOA', 'onSaveComplete callback threw (isolated)', err);
+          }
+        }
       }
     }, 500);
     return () => clearTimeout(timer);
