@@ -1,23 +1,15 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { ArchiveSkeleton } from "@/components/SkeletonLoader";
-import ArchiveClient from "./ArchiveClient";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Archive — EH Universe",
-  description:
-    "200+ articles spanning 66 million years of verified SF universe. Explore the EH Universe archive.",
-  openGraph: {
-    title: "Archive — EH Universe",
-    description:
-      "200+ articles spanning 66 million years of verified SF universe.",
-  },
-};
+// [E 번들] ArchiveClient 지연 로드 — Initial client bundle 에서 분리.
+// metadata 는 archive/layout.tsx 로 이동 (Server Component 만 metadata export 가능).
+import dynamic from "next/dynamic";
+import { ArchiveSkeleton } from "@/components/SkeletonLoader";
+
+const ArchiveClient = dynamic(() => import("./ArchiveClient"), {
+  ssr: false,
+  loading: () => <ArchiveSkeleton />,
+});
 
 export default function ArchivePage() {
-  return (
-    <Suspense fallback={<ArchiveSkeleton />}>
-      <ArchiveClient />
-    </Suspense>
-  );
+  return <ArchiveClient />;
 }

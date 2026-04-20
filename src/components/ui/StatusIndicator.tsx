@@ -73,13 +73,14 @@ export function StatusBadge({ showStorage = false }: { showStorage?: boolean }) 
 
   return (
     <div className="flex items-center gap-2 text-[10px] font-mono text-text-tertiary">
+      {/* [a11y] 아이콘 가독성 — 10px → 14px. 비상호작용 표시 배지이므로 터치 타겟(44px)은 불필요. */}
       {isOffline ? (
-        <span className="flex items-center gap-1 text-accent-red"><WifiOff size={10} /> offline</span>
+        <span className="flex items-center gap-1 text-accent-red"><WifiOff size={14} /> offline</span>
       ) : (
-        <span className="flex items-center gap-1"><Wifi size={10} className="text-accent-green" /></span>
+        <span className="flex items-center gap-1"><Wifi size={14} className="text-accent-green" /></span>
       )}
       {showStorage && storageLabel && (
-        <span className="flex items-center gap-1"><HardDrive size={10} /> {storageLabel}</span>
+        <span className="flex items-center gap-1"><HardDrive size={14} /> {storageLabel}</span>
       )}
     </div>
   );
