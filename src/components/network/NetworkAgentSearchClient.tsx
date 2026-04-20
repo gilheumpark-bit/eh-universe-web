@@ -237,6 +237,7 @@ export function NetworkAgentSearchClient() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={isSearching}
+              maxLength={500}
               placeholder={L4(lang, { ko: "세계관, 설정, 사건에 대해 질문하세요...", en: "Ask about your universe, settings, and events...", ja: "世界観、設定、事件について質問してください...", zh: "请就世界观、设定、事件提问..." })}
               className="flex-1 bg-white/[0.02] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50 focus:bg-white/[0.04] transition-colors"
             />

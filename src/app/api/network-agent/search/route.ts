@@ -44,9 +44,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => null);
+    // 원시 본문 크기 제한 (DOS 방어): 8KB 초과 시 413 반환.
+    // vitals/error-report (10KB) 보다 타이트 — search query는 본질적으로 짧다.
+    const rawBody = await req.text();
+    if (rawBody.length > 8_000) {
+      return NextResponse.json(
+        { error: 'body_too_large' },
+        { status: 413, headers: cors },
+      );
+    }
+    let body: Record<string, unknown> | null;
+    try {
+      body = rawBody ? JSON.parse(rawBody) : null;
+    } catch {
+      body = null;
+    }
     if (!body || typeof body.query !== 'string') {
       return NextResponse.json({ error: 'Invalid query' }, { status: 400, headers: cors });
+    }
+
+    // query 문자열 자체도 500자 상한 — 검색어가 이보다 길면 잘못된 사용.
+    if (body.query.length > 500) {
+      return NextResponse.json(
+        { error: 'query_too_long' },
+        { status: 400, headers: cors },
+      );
     }
 
     const { query, planetId, onlyPublic, narrowDocumentType, translationProjectId } = body as {

@@ -201,6 +201,7 @@ export function PlanetEditClient({ planetId }: { planetId: string }) {
               value={tagsText}
               onChange={(e) => setTagsText(e.target.value)}
               placeholder="예: SF, 디스토피아, 시간여행"
+              maxLength={200}
               className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-accent-amber/50"
             />
           </label>
@@ -213,6 +214,7 @@ export function PlanetEditClient({ planetId }: { planetId: string }) {
               value={repTagsText}
               onChange={(e) => setRepTagsText(e.target.value)}
               placeholder="예: SF, 디스토피아"
+              maxLength={120}
               className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-accent-amber/50"
             />
           </label>
