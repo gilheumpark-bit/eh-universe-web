@@ -52,6 +52,9 @@ import {
   extractWorldSim,
   extractStyle,
 } from '@/lib/save-engine/payload-extractor';
+// [M1.7] Sentry opt-in + local event log (shadow 실패도 감사 대상).
+import { reportStorageEvent } from '@/lib/save-engine/sentry-integration';
+import { logEvent } from '@/lib/save-engine/local-event-log';
 
 /**
  * [M1.5.4] Journal 쓰기 실패 이벤트.
@@ -279,6 +282,38 @@ function dispatchJournalError(
       ts: Date.now(),
     };
     window.dispatchEvent(new CustomEvent(JOURNAL_ERROR_EVENT, { detail }));
+
+    // [M1.7] 관측 레이어 — local event log + Sentry (opt-in).
+    // 원문/해시 없이 operation + reason + correlationId 만 기록.
+    try {
+      logEvent({
+        category: 'error',
+        mode,
+        outcome: 'failure',
+        details: {
+          scope: 'shadow-write',
+          operation: String(operation).slice(0, 60),
+          correlationId: correlationId.slice(0, 80),
+          failureReason: reason.slice(0, 200),
+        },
+      });
+    } catch {
+      /* observe-only — 상위 흐름 무영향 */
+    }
+    try {
+      reportStorageEvent({
+        event: 'storage.shadow-failed',
+        mode,
+        severity: 'warning',
+        details: {
+          operation: String(operation).slice(0, 60),
+          correlationId: correlationId.slice(0, 80),
+          failureReason: reason.slice(0, 200),
+        },
+      });
+    } catch {
+      /* Sentry 비활성 또는 실패 — 흡수 */
+    }
   } catch {
     /* 이벤트 시스템 차단 환경 — 조용히 무시 */
   }

@@ -42,6 +42,11 @@ import type { Project } from '@/lib/studio-types';
 import { logger } from '@/lib/logger';
 import { JOURNAL_ERROR_EVENT, type JournalErrorEventDetail } from '@/hooks/useShadowProjectWriter';
 import type { ShadowOperation } from '@/lib/save-engine/shadow-logger';
+// [M1.7] 관측 — primary write log + local event log + Sentry opt-in.
+import { recordPrimaryWrite } from '@/lib/save-engine/primary-write-logger';
+import { logEvent } from '@/lib/save-engine/local-event-log';
+import { reportStorageEvent } from '@/lib/save-engine/sentry-integration';
+import { PRIMARY_WRITE_LOGGED_EVENT } from '@/hooks/usePrimaryWriterStats';
 
 /** Primary Writer 현재 모드. */
 export type PrimaryMode = 'legacy' | 'journal' | 'degraded';
@@ -143,12 +148,14 @@ export function usePrimaryWriter(options: UsePrimaryWriterOptions): PrimaryWrite
       // --------------------------------------------------------
       if (mode === 'legacy') {
         const ok = safeLegacySave(legacySaveFnRef.current, projects);
-        return {
+        const result: WriteResult = {
           mode: 'legacy',
           primarySuccess: ok,
           mirrorSuccess: true, // legacy 단일 — mirror 개념 없음, 중립 true.
           durationMs: Math.max(0, nowMs() - t0),
         };
+        observePrimaryWrite(result, ok ? undefined : 'legacy-save-returned-false');
+        return result;
       }
 
       // --------------------------------------------------------
@@ -163,13 +170,15 @@ export function usePrimaryWriter(options: UsePrimaryWriterOptions): PrimaryWrite
         // Mirror — 이벤트 루프 뒤로 분리. 실패해도 Primary 결과 유지.
         const mirrorPromise = scheduleLegacyMirror(legacySaveFnRef.current, projects);
 
-        return {
+        const result: WriteResult = {
           mode: 'journal',
           primarySuccess: true,
           mirrorSuccess: await mirrorPromise,
           journalEntryId: entryId,
           durationMs,
         };
+        observePrimaryWrite(result);
+        return result;
       } catch (err) {
         // --------------------------------------------------------
         // [Path 3] degraded — journal 실패 → legacy 즉시 복귀.
@@ -188,13 +197,15 @@ export function usePrimaryWriter(options: UsePrimaryWriterOptions): PrimaryWrite
           logger.warn('usePrimaryWriter', 'onDowngradeNeeded threw (isolated)', cbErr);
         }
 
-        return {
+        const result: WriteResult = {
           mode: 'degraded',
           // legacy 복귀 성공이면 사용자 관점 primary 성공. 실패면 false.
           primarySuccess: legacyOk,
           mirrorSuccess: legacyOk, // legacy 가 Primary 역할 대체
           durationMs,
         };
+        observePrimaryWrite(result, reason);
+        return result;
       }
     },
     [getCurrentMode],
@@ -336,4 +347,93 @@ function dispatchJournalFailure(reason: string): void {
   }
 }
 
-// IDENTITY_SEAL: PART-1..5 | role=primary-writer-hook | inputs=projects | outputs=WriteResult+mode
+// ============================================================
+// PART 6 — M1.7 Observation (primary-write-logger + event log + Sentry)
+// ============================================================
+//
+// observePrimaryWrite 는 WriteResult 를 3 stream 에 병렬 기록한다:
+//   (1) primary-write-logger IDB ring buffer — 경로 분포 집계.
+//   (2) local-event-log IDB 이벤트 스트림 — Audit Export 번들.
+//   (3) Sentry (opt-in) — 실패/다운그레이드만 송신, 해시/메타만.
+// 그리고 PRIMARY_WRITE_LOGGED_EVENT 를 dispatch 하여 Dashboard hook 이
+// 즉시 refresh 할 수 있게 한다.
+//
+// 모든 호출은 try/catch — 관측 실패가 상위 write 결과에 영향 0.
+
+function observePrimaryWrite(result: WriteResult, failureReason?: string): void {
+  // (1) primary-write-logger — ring buffer. fire-and-forget.
+  try {
+    void recordPrimaryWrite({
+      mode: result.mode,
+      primarySuccess: result.primarySuccess,
+      mirrorSuccess: result.mirrorSuccess,
+      durationMs: result.durationMs,
+      journalEntryId: result.journalEntryId,
+    });
+  } catch (err) {
+    logger.debug('usePrimaryWriter', 'recordPrimaryWrite failed (isolated)', err);
+  }
+
+  // (2) local-event-log — 저장 이벤트. 성공/실패 + 모드 태그.
+  try {
+    const category = failureReason ? (result.mode === 'degraded' ? 'downgrade' : 'error') : 'save';
+    const outcome: 'success' | 'failure' | 'degraded' = result.mode === 'degraded'
+      ? 'degraded'
+      : result.primarySuccess
+        ? 'success'
+        : 'failure';
+    const mode: 'off' | 'shadow' | 'on' = result.mode === 'journal'
+      ? 'on'
+      : result.mode === 'degraded'
+        ? 'on' // degraded 는 이전에 on 이던 경로의 복귀 결과
+        : (() => {
+            try { return getJournalEngineMode(); } catch { return 'off'; }
+          })();
+    logEvent({
+      category,
+      mode,
+      outcome,
+      details: {
+        writerMode: result.mode,
+        primarySuccess: result.primarySuccess,
+        mirrorSuccess: result.mirrorSuccess,
+        durationMs: Math.round(result.durationMs),
+        ...(failureReason ? { failureReason: failureReason.slice(0, 200) } : {}),
+      },
+    });
+  } catch (err) {
+    logger.debug('usePrimaryWriter', 'logEvent failed (isolated)', err);
+  }
+
+  // (3) Sentry — 실패 / 다운그레이드만. opt-in 기본 비활성.
+  try {
+    if (!result.primarySuccess || result.mode === 'degraded') {
+      reportStorageEvent({
+        event: result.mode === 'degraded'
+          ? 'storage.journal-degraded'
+          : 'storage.primary-failed',
+        mode: result.mode === 'journal' || result.mode === 'degraded' ? 'on' : 'off',
+        severity: result.primarySuccess ? 'warning' : 'error',
+        details: {
+          writerMode: result.mode,
+          mirrorSuccess: result.mirrorSuccess,
+          durationMs: Math.round(result.durationMs),
+          ...(failureReason ? { failureReason: failureReason.slice(0, 200) } : {}),
+        },
+      });
+    }
+  } catch (err) {
+    logger.debug('usePrimaryWriter', 'reportStorageEvent failed (isolated)', err);
+  }
+
+  // (4) Dashboard 즉시 갱신 이벤트.
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PRIMARY_WRITE_LOGGED_EVENT, { detail: { ts: Date.now() } }));
+    }
+  } catch {
+    /* 이벤트 시스템 차단 환경 — 조용히 무시 */
+  }
+}
+
+// IDENTITY_SEAL: PART-1..6 | role=primary-writer-hook | inputs=projects | outputs=WriteResult+mode+observation

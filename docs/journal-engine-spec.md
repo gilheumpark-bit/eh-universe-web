@@ -1214,6 +1214,128 @@ Day 7:   useAutoSave.ts + useProjectManager 통합 (+ e2e)
 ---
 
 # ============================================================
+# PART 13 — M1.7 관측/감사 레이어 (Storage Observatory)
+# ============================================================
+
+## 13.1 목표
+
+알파 배포 이후 실사용 데이터를 투명하게 추적하고, 저장 실패를 즉시 감지하며, 사용자가 자기 이력을 감사할 수 있도록 하는 **관측/감사 레이어**. 저장 경로에는 간섭 0 — 읽기 전용.
+
+## 13.2 구성 요소
+
+| 모듈 | 파일 | 역할 |
+|------|------|------|
+| `primary-write-logger` | `src/lib/save-engine/primary-write-logger.ts` | `usePrimaryWriter` 결과(mode/success/ms) 를 IDB 링 버퍼 1,000 에 영속 |
+| `local-event-log` | `src/lib/save-engine/local-event-log.ts` | save/recovery/promotion/downgrade/error 이벤트 500개 링 버퍼 + JSON export |
+| `sentry-integration` | `src/lib/save-engine/sentry-integration.ts` | opt-in Sentry 송신 (기본 비활성) |
+| `usePrimaryWriterStats` | `src/hooks/usePrimaryWriterStats.ts` | React 훅 — 10s 폴링 + 이벤트 기반 집계 |
+| `StorageObservatoryDashboard` | `src/components/studio/settings/StorageObservatoryDashboard.tsx` | Developer-탭 전용 통합 대시보드 (7 섹션) |
+| `AuditExportButton` | `src/components/studio/settings/AuditExportButton.tsx` | 4 스트림 통합 JSON 다운로드 |
+
+## 13.3 이벤트 스키마
+
+### StorageEvent (`local-event-log`)
+
+```typescript
+interface StorageEvent {
+  id: string;                         // ev-<time36>-<seq36>-<rand36>
+  ts: number;                         // Date.now
+  category: 'save' | 'recovery' | 'promotion' | 'downgrade' | 'error';
+  mode: 'off' | 'shadow' | 'on';      // 현재 JournalEngineMode
+  outcome: 'success' | 'failure' | 'degraded';
+  details: Record<string, unknown>;   // 해시/메타/개수/ms 만. 원문 금지.
+}
+```
+
+### PrimaryWriteLogEntry (`primary-write-logger`)
+
+```typescript
+interface PrimaryWriteLogEntry {
+  id: string;                         // pw-<time36>-<seq36>-<rand36>
+  ts: number;
+  mode: 'legacy' | 'journal' | 'degraded';
+  primarySuccess: boolean;
+  mirrorSuccess: boolean;
+  durationMs: number;
+  journalEntryId?: string;
+}
+```
+
+### AuditExportBundle (`AuditExportButton`)
+
+```typescript
+interface AuditExportBundle {
+  schemaVersion: 1;
+  exportedAt: number;
+  exportedAtIso: string;
+  app: { name: 'loreguard'; milestone: 'M1.7-observatory' };
+  streams: {
+    promotionAudit:  { ok, count, items, error? };
+    shadowLog:       { ok, count, items, error? };
+    localEventLog:   { ok, count, items, error? };
+    primaryWriteLog: { ok, count, items, error? };
+  };
+}
+```
+
+## 13.4 원문 보호 정책
+
+- `local-event-log.logEvent` 는 `details` 를 입력 단계에서 sanitize:
+  - 2KB 초과 문자열 → `[redacted:too-long]`
+  - 중첩 객체 → `[object]`
+  - 배열 → `[array:N]`
+  - 200자 초과 문자열 → 자르기 + 말줄임
+- `primary-write-logger` 는 모드/ms/entry id 같은 경로 메타만 저장 — 원본 불가능.
+- `sentry-integration.reportStorageEvent` 는 동일 sanitize 를 tag/extra 에 이중 적용.
+
+## 13.5 Sentry opt-in 플로우
+
+1. 기본 비활성 — `NEXT_PUBLIC_SENTRY_ENABLED` env 미정의 시 `isSentryEnabled() === false`.
+2. 비활성 상태 → `reportStorageEvent` 는 완전 no-op (captureMessage 호출 0).
+3. 빌드 타임에 `NEXT_PUBLIC_SENTRY_ENABLED=true` 주입 + `sentry.client.config.ts` 활성화 시 `window.Sentry` 전역 참조하여 송신.
+4. 송신 대상: `storage.primary-failed`, `storage.journal-degraded`, `storage.shadow-failed`.
+5. 실패는 `logger.debug` 만 남기고 상위에 전파 0.
+
+## 13.6 사용자 제보 절차
+
+1. 사용자 → Settings > Developer > Storage Observatory 진입.
+2. "감사 이력 내보내기" (Audit Export) 버튼 클릭.
+3. `loreguard-audit-<ISO>.json` 다운로드 — promotion + shadow + local + primary 4 스트림 통합.
+4. 번들은 해시/메타만 — 프로젝트 원문 미포함.
+5. 지원팀에 JSON 첨부 → 재현 불가능 이슈의 근본 원인 분석 지원.
+
+## 13.7 Dashboard 7 섹션
+
+1. **Mode Summary** — Engine Flag (off/shadow/on) + Primary Writer mode (legacy/journal/degraded) 카드 2개.
+2. **Shadow Diff** (재사용) — M1.5.0 일치율 대시보드 그대로 embed.
+3. **Primary Path Distribution** — 최근 1,000 쓰기의 journal/legacy/degraded 카운트 + 24h 비율 + recentWrites.
+4. **Backup Tier Status** (재사용) — M1.4 `BackupTiersView` embed.
+5. **Recovery History** — `local-event-log` 의 category=recovery 최근 20건.
+6. **Recent Save Failures** — `outcome=failure` 이벤트 타임라인 + 에러 메시지.
+7. **Audit Export** — `AuditExportButton` 단독 카드.
+
+탭 네비 + role=tablist + aria-selected + 44px 터치 타겟 준수.
+
+## 13.8 IndexedDB 스키마 버전
+
+`noa_shadow_v1` DB 의 version 업그레이드 이력:
+
+| Version | Added Store |
+|---------|-------------|
+| 1 | `shadow_log` (M1.5.0) |
+| 2 | `promotion_audit` (M1.5.4) |
+| 3 | `primary_write_log` (M1.7) |
+| 4 | `local_event_log` (M1.7) |
+
+모든 store 는 개별 모듈이 `onupgradeneeded` 에서 `if (!db.objectStoreNames.contains(...))` 가드로 멱등 생성.
+
+## 13.9 관측 손실 허용 정책
+
+- `record*`/`logEvent` 는 실패해도 상위에 throw 하지 않음 — `logger.warn` 만.
+- IDB 차단 환경(`Private mode`) → openDB 가 null 반환 → no-op.
+- 관측 손실 ≠ 데이터 손실. Primary 경로는 기존대로 유지.
+
+# ============================================================
 # END OF SPEC
 # ============================================================
 

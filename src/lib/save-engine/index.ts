@@ -159,3 +159,39 @@ export type {
   PromotionHistoryFilter,
   PromotionTrigger,
 } from './promotion-audit';
+// M1.7 — Storage Observatory (관측/감사)
+export {
+  recordPrimaryWrite,
+  getPrimaryWriteLog,
+  clearPrimaryWriteLog,
+  __resetPrimaryWriteLoggerForTests,
+} from './primary-write-logger';
+export type {
+  PrimaryWriteLogEntry,
+  PrimaryWriteLogFilter,
+} from './primary-write-logger';
+export {
+  logEvent,
+  getEventLog,
+  getEventLogSync,
+  exportEventLog,
+  clearEventLog,
+  __resetLocalEventLogForTests,
+} from './local-event-log';
+export type {
+  StorageEvent,
+  StorageEventCategory,
+  StorageEventOutcome,
+  EventFilter,
+} from './local-event-log';
+export {
+  isSentryEnabled,
+  reportStorageEvent,
+  setSentryClientForTests,
+  __resetSentryIntegrationForTests,
+  __setEnvEnabledForTests,
+} from './sentry-integration';
+export type {
+  StorageSentryEvent,
+  SentryClientLike,
+} from './sentry-integration';
