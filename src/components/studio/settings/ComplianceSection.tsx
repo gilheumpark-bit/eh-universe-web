@@ -10,18 +10,24 @@
 // - 플랫폼 AI 라벨 요구 안내
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
-import { AppLanguage } from '@/lib/studio-types';
+import React, { useEffect, useState, useMemo } from 'react';
+import { AppLanguage, SceneDirectionData, SceneDirectionDataV2 } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
-import { ChevronDown, ShieldCheck, Info } from 'lucide-react';
+import { ChevronDown, ShieldCheck, Info, Tag } from 'lucide-react';
 import {
   isDisclosureEnabled,
   setDisclosureEnabled,
 } from '@/lib/ai-usage-tracker';
+import {
+  buildEpisodeDisclosure,
+  type DisclosureGrade,
+} from '@/lib/ai-disclosure-generator';
 
 interface ComplianceSectionProps {
   language: AppLanguage;
+  /** 현재 작품의 활성 sceneDirection — 등급 미리보기 (선택) */
+  currentSceneDirection?: SceneDirectionData | SceneDirectionDataV2 | null;
 }
 
 const CUSTOM_TEXT_KEY = 'noa_ai_disclosure_custom';
@@ -31,9 +37,23 @@ const MAX_CUSTOM_LEN = 600;
 // PART 2 — Component
 // ============================================================
 
-const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language }) => {
+// M4 — 등급별 색상 (디자인 시스템 시맨틱 토큰)
+const GRADE_BADGE: Record<DisclosureGrade, string> = {
+  'human-authored': 'border-accent-blue/60 text-accent-blue bg-accent-blue/10',
+  'co-authored-human-led': 'border-accent-green/60 text-accent-green bg-accent-green/10',
+  'ai-assisted': 'border-accent-yellow/60 text-accent-yellow bg-accent-yellow/10',
+  'ai-generated': 'border-accent-red/60 text-accent-red bg-accent-red/10',
+};
+
+const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language, currentSceneDirection }) => {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [custom, setCustom] = useState<string>('');
+
+  // M4 — 현재 sceneDirection 기반 등급 미리보기 (메모이즈)
+  const disclosurePreview = useMemo(() => {
+    if (!currentSceneDirection) return null;
+    return buildEpisodeDisclosure(currentSceneDirection, language);
+  }, [currentSceneDirection, language]);
 
   // 최초 마운트 시 localStorage 값 hydrate
   useEffect(() => {
@@ -92,6 +112,43 @@ const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language }) => {
             })}
           </p>
         </div>
+
+        {/* M4 — 등급 미리보기 (sceneDirection 있을 때만) */}
+        {disclosurePreview && (
+          <div className="p-4 rounded-2xl border border-border space-y-3">
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-text-tertiary" />
+              <span className="text-[12px] font-bold text-text-secondary">
+                {L4(language, {
+                  ko: '현재 작품 AI 공동집필 등급',
+                  en: 'Current Work AI Co-Authorship Grade',
+                  ja: '現在の作品のAI共同執筆等級',
+                  zh: '当前作品 AI 协同创作等级',
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                role="status"
+                aria-label={`${L4(language, { ko: 'AI 공동집필 등급', en: 'AI co-authorship grade', ja: 'AI共同執筆等級', zh: 'AI 协同创作等级' })}: ${disclosurePreview.label}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold ${GRADE_BADGE[disclosurePreview.grade]}`}
+              >
+                {disclosurePreview.label}
+              </span>
+              <span className="text-[11px] text-text-tertiary">
+                {L4(language, { ko: '작가 비율', en: 'Author share', ja: '作家比率', zh: '作家占比' })}: <strong>{disclosurePreview.stats.userPct}%</strong>
+              </span>
+            </div>
+            <div className="text-[11px] text-text-tertiary leading-relaxed">
+              {L4(language, {
+                ko: `씬시트 ${disclosurePreview.stats.totalEntries}개 항목 기준. Export 시 자동으로 고지문이 첨부됩니다.`,
+                en: `Based on ${disclosurePreview.stats.totalEntries} scene-sheet entries. Disclosure auto-attached on export.`,
+                ja: `シーンシート${disclosurePreview.stats.totalEntries}項目基準。Export時に自動で開示文が添付されます。`,
+                zh: `基于场景表 ${disclosurePreview.stats.totalEntries} 项。导出时自动附加声明。`,
+              })}
+            </div>
+          </div>
+        )}
 
         {/* On/Off 토글 */}
         <div

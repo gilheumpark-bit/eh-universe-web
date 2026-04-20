@@ -350,3 +350,67 @@ describe('buildRetryHint', () => {
     expect(hint).toContain('시도 2');
   });
 });
+
+// ============================================================
+// M4 — Author-Lead Ratio adjustment
+// ============================================================
+
+describe('M4 author-lead ratio in evaluateQuality', () => {
+  it('applies +10 bonus when author-lead >= 80%', () => {
+    const thresholds = getDefaultThresholds('beginner');
+    const config = makeConfig({
+      sceneDirection: {
+        writerNotes: 'A',
+        plotStructure: 'B',
+        cliffhanger: { cliffType: 'shock', desc: 'C' },
+        hooks: [
+          { position: 'opening', hookType: 'shock', desc: 'D' },
+          { position: 'mid', hookType: 'cliff', desc: 'E' },
+        ],
+      },
+    });
+    const result = evaluateQuality(SAMPLE_TEXT, config, thresholds);
+    expect(result.authorLeadRatio).toBe(100);
+    expect(result.authorLeadAdjustment).toBe(10);
+  });
+
+  it('applies -10 penalty when author-lead < 30%', () => {
+    const thresholds = getDefaultThresholds('beginner');
+    const config = makeConfig({
+      sceneDirection: {
+        // 모두 ENGINE_DRAFT (V2)
+        writerNotes: { value: 'A', meta: { origin: 'ENGINE_DRAFT', createdAt: 0 } },
+        plotStructure: { value: 'B', meta: { origin: 'ENGINE_DRAFT', createdAt: 0 } },
+        cliffhanger: { value: { cliffType: 'shock', desc: 'C' }, meta: { origin: 'ENGINE_DRAFT', createdAt: 0 } },
+      } as unknown as StoryConfig['sceneDirection'],
+    });
+    const result = evaluateQuality(SAMPLE_TEXT, config, thresholds);
+    expect(result.authorLeadRatio).toBe(0);
+    expect(result.authorLeadAdjustment).toBe(-10);
+  });
+
+  it('returns 0 adjustment when no sceneDirection', () => {
+    const thresholds = getDefaultThresholds('beginner');
+    const result = evaluateQuality(SAMPLE_TEXT, makeConfig(), thresholds);
+    expect(result.authorLeadRatio).toBe(0);
+    expect(result.authorLeadAdjustment).toBe(0);
+  });
+
+  it('returns 0 adjustment in mid-range (30-79%)', () => {
+    const thresholds = getDefaultThresholds('beginner');
+    const config = makeConfig({
+      sceneDirection: {
+        // 50% USER, 50% ENGINE_DRAFT
+        writerNotes: 'A',
+        plotStructure: 'B',
+        cliffhanger: { value: { cliffType: 'shock', desc: 'C' }, meta: { origin: 'ENGINE_DRAFT', createdAt: 0 } },
+        hooks: [
+          { value: { position: 'opening', hookType: 'shock', desc: 'D' }, meta: { origin: 'ENGINE_DRAFT', createdAt: 0 } },
+        ],
+      } as unknown as StoryConfig['sceneDirection'],
+    });
+    const result = evaluateQuality(SAMPLE_TEXT, config, thresholds);
+    expect(result.authorLeadRatio).toBe(50);
+    expect(result.authorLeadAdjustment).toBe(0);
+  });
+});

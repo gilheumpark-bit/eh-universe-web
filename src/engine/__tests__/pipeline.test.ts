@@ -216,3 +216,110 @@ describe('M3 — Active items/skills filter', () => {
     expect(result).toContain('활성 스킬');
   });
 });
+
+// ============================================================
+// M4 — Origin tag injection tests
+// ============================================================
+
+describe('M4 origin tag injection', () => {
+  it('tags V1 (raw) sceneDirection fields as [USER]', () => {
+    const result = buildSystemInstruction(mockConfig, 'KO');
+    // V1 데이터 → 모두 [USER]로 자동 태깅
+    expect(result).toContain('[USER]');
+    expect(result).toContain('출처 태그 해석 규칙');
+  });
+
+  it('renders [TEMPLATE] tag for wrapped fields', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      sceneDirection: {
+        plotStructure: { value: 'three-act', meta: { origin: 'TEMPLATE', createdAt: 0, sourceReferenceId: 'preset-default' } },
+      } as unknown as StoryConfig['sceneDirection'],
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('[TEMPLATE:preset-default]');
+    expect(result).toContain('three-act');
+  });
+
+  it('renders [ENGINE_SUGGEST] tag', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      sceneDirection: {
+        hooks: [{ value: { position: 'opening', hookType: 'shock', desc: 'wow' }, meta: { origin: 'ENGINE_SUGGEST', createdAt: 0 } }],
+      } as unknown as StoryConfig['sceneDirection'],
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('[ENGINE_SUGGEST]');
+    expect(result).toContain('wow');
+  });
+
+  it('renders [ENGINE_DRAFT] tag with do-not-follow guidance', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      sceneDirection: {
+        cliffhanger: { value: { cliffType: 'shock', desc: '미확정' }, meta: { origin: 'ENGINE_DRAFT', createdAt: 0 } },
+      } as unknown as StoryConfig['sceneDirection'],
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('[ENGINE_DRAFT]');
+    expect(result).toContain('미확정');
+    expect(result).toContain('그대로 따라 쓰지 말고');
+  });
+
+  it('produces 4-language origin guide (EN)', () => {
+    const result = buildSystemInstruction(mockConfig, 'EN');
+    expect(result).toContain('Origin Tag Interpretation Rules');
+    expect(result).toContain('highest priority');
+  });
+
+  it('produces 4-language origin guide (JP)', () => {
+    const result = buildSystemInstruction(mockConfig, 'JP');
+    expect(result).toContain('出典タグの解釈ルール');
+  });
+
+  it('produces 4-language origin guide (CN)', () => {
+    const result = buildSystemInstruction(mockConfig, 'CN');
+    expect(result).toContain('来源标签解读规则');
+  });
+
+  it('skips guide when no scene direction content', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      sceneDirection: undefined,
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).not.toContain('출처 태그 해석 규칙');
+  });
+
+  it('mixes V1 (USER) + V2 (TEMPLATE) in same sceneDirection', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      sceneDirection: {
+        // V1 raw — auto USER
+        writerNotes: '작가 메모',
+        // V2 wrapped — explicit TEMPLATE
+        plotStructure: { value: 'kishōtenketsu', meta: { origin: 'TEMPLATE', createdAt: 0 } },
+      } as unknown as StoryConfig['sceneDirection'],
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('[USER]');
+    expect(result).toContain('[TEMPLATE]');
+    expect(result).toContain('작가 메모');
+    expect(result).toContain('kishōtenketsu');
+  });
+
+  it('preserves field values exactly under tag wrapping', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      sceneDirection: {
+        foreshadows: [
+          { value: { planted: '한서의 역명', payoff: '결말 회수', episode: 5, resolved: false }, meta: { origin: 'ENGINE_SUGGEST', createdAt: 0 } },
+        ],
+      } as unknown as StoryConfig['sceneDirection'],
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('한서의 역명');
+    expect(result).toContain('결말 회수');
+    expect(result).toContain('[ENGINE_SUGGEST]');
+  });
+});

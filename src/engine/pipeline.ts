@@ -15,7 +15,71 @@ import { buildShadowPrompt } from './shadow';
 import { logger } from '@/lib/logger';
 import { quickPurify, type TargetLang } from './language-purity';
 import { extractPreviousEpisodeSummary } from './previous-episode-extractor';
+import { unwrap, getOrigin } from '@/lib/origin-migration';
+import type { TaggedField, EntryOrigin } from '@/lib/studio-types';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
+
+// ============================================================
+// M4 — Origin tag rendering helpers
+// ============================================================
+//
+// Pipeline은 V1/V2 데이터를 모두 받는다.
+// V2는 TaggedValue로 래핑되어 있고, V1은 raw 값이다.
+// unwrapItem()으로 값만 꺼내고, originTag()로 [USER]/[TEMPLATE]/...
+// 태그 문자열을 만든다. 작가가 origin 시스템을 켜지 않은 경우(V1)
+// 모든 태그가 [USER]로 표시되므로 결과는 자연스럽다.
+// ============================================================
+
+const ORIGIN_TAG_LABELS: Record<EntryOrigin, string> = {
+  USER: '[USER]',
+  TEMPLATE: '[TEMPLATE]',
+  ENGINE_SUGGEST: '[ENGINE_SUGGEST]',
+  ENGINE_DRAFT: '[ENGINE_DRAFT]',
+};
+
+/** TaggedField 또는 raw 값에서 unwrap된 값 + 태그 문자열을 동시에 반환 */
+function describeField<T>(field: TaggedField<T> | T | undefined): { value: T | undefined; tag: string } {
+  if (field === undefined || field === null) return { value: undefined, tag: '' };
+  const value = unwrap(field as TaggedField<T>);
+  const meta = getOrigin(field as TaggedField<T>);
+  const refSuffix = meta.sourceReferenceId ? `:${meta.sourceReferenceId}` : '';
+  const tag = `${ORIGIN_TAG_LABELS[meta.origin].slice(0, -1)}${refSuffix}]`;
+  return { value, tag };
+}
+
+/**
+ * 씬시트 블록 상단에 출처 태그 가이드 주입.
+ * 엔진(AI)이 [USER] / [TEMPLATE] / [ENGINE_SUGGEST] / [ENGINE_DRAFT]를
+ * 어떤 우선순위로 다뤄야 하는지 명시한다.
+ *
+ * - 4언어 지원
+ * - 가이드 자체는 오리진 통계가 0 이상일 때만 추가 (의미 없는 노이즈 방지)
+ */
+function buildOriginGuide(language: AppLanguage): string {
+  const guides: Record<AppLanguage, string> = {
+    KO: `[출처 태그 해석 규칙]
+- [USER] 작가 직접 입력 — 우선 존중. 그대로 반영하라.
+- [TEMPLATE] 시스템 기본값 — 덮어쓸 수 있음. 문맥에 맞으면 활용.
+- [ENGINE_SUGGEST] 엔진 제안(작가 수락) — 참고 우선, 강요 금지.
+- [ENGINE_DRAFT] 엔진 미확정 초안 — 그대로 따라 쓰지 말고 작가 의도 추정.`,
+    EN: `[Origin Tag Interpretation Rules]
+- [USER] Direct author input — highest priority. Reflect verbatim.
+- [TEMPLATE] System defaults — may be overridden. Use if context fits.
+- [ENGINE_SUGGEST] Engine suggestion (author-accepted) — reference, do not enforce.
+- [ENGINE_DRAFT] Engine draft (unconfirmed) — do not follow blindly; infer author intent.`,
+    JP: `[出典タグの解釈ルール]
+- [USER] 作家直接入力 — 最優先。そのまま反映せよ。
+- [TEMPLATE] システム既定値 — 上書き可。文脈に合えば活用。
+- [ENGINE_SUGGEST] エンジン提案(作家承認) — 参考優先、強制禁止。
+- [ENGINE_DRAFT] エンジン未確定草案 — 鵜呑みにせず作家意図を推定。`,
+    CN: `[来源标签解读规则]
+- [USER] 作家直接输入 — 最高优先。照实反映。
+- [TEMPLATE] 系统默认值 — 可覆盖。若契合则使用。
+- [ENGINE_SUGGEST] 引擎建议（作家已采纳）— 参考为主，不可强制。
+- [ENGINE_DRAFT] 引擎未确定草案 — 切勿盲从，需推断作家意图。`,
+  };
+  return guides[language] ?? guides.KO;
+}
 
 // ============================================================
 // Dynamic System Instruction Builder
@@ -486,82 +550,155 @@ export function buildSystemInstruction(
     : '';
 
   // Scene Direction (연출 스튜디오) prompt injection
-  const sd = config.sceneDirection;
+  // M4: 각 필드에 [USER] / [TEMPLATE] / [ENGINE_SUGGEST] / [ENGINE_DRAFT] 태그 부여.
+  // V1 데이터(미래핑)는 USER로 자동 처리되어 자연스럽게 호환.
+  const sd = config.sceneDirection as typeof config.sceneDirection | undefined;
   let sceneDirectionBlock = '';
   if (sd) {
     const parts: string[] = [];
-    if (sd.goguma && sd.goguma.length > 0) {
+    // 가이드 라인 — 엔진이 4종 태그를 어떻게 다룰지 명시
+    let hasAnyContent = false;
+
+    const sdAny = sd as Record<string, unknown>;
+    type GogumaT = { type: 'goguma' | 'cider'; intensity: string; desc: string };
+    type HookT = { position: string; hookType: string; desc: string };
+    type EmoT = { emotion: string; intensity: number };
+    type DToneT = { character: string; tone: string; notes: string };
+    type DopT = { scale: string; device: string; desc: string };
+    type CliffT = { cliffType: string; desc: string };
+    type ForeT = { planted: string; payoff: string; episode: number; resolved: boolean };
+    type PaceT = { section: string; percent: number; desc: string };
+    type TenT = { position: number; level: number; label: string };
+    type CanonT = { character: string; rule: string };
+    type TransT = { fromScene: string; toScene: string; method: string };
+
+    const goguma = sdAny.goguma as TaggedField<GogumaT>[] | undefined;
+    if (goguma && goguma.length > 0) {
       parts.push(`[${t('pipeline.tensionRhythm')}]`);
-      sd.goguma.forEach(g => {
-        parts.push(`  - ${g.type === 'goguma' ? t('pipeline.goguma') : t('pipeline.cider')} (${g.intensity}): ${g.desc}`);
+      goguma.forEach(raw => {
+        const { value: g, tag } = describeField(raw);
+        if (!g) return;
+        parts.push(`  - ${tag} ${g.type === 'goguma' ? t('pipeline.goguma') : t('pipeline.cider')} (${g.intensity}): ${g.desc}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.hooks && sd.hooks.length > 0) {
+    const hooks = sdAny.hooks as TaggedField<HookT>[] | undefined;
+    if (hooks && hooks.length > 0) {
       parts.push(`[${t('pipeline.hookPlacement')}]`);
-      sd.hooks.forEach(h => {
-        parts.push(`  - ${h.position}: ${h.hookType} — ${h.desc}`);
+      hooks.forEach(raw => {
+        const { value: h, tag } = describeField(raw);
+        if (!h) return;
+        parts.push(`  - ${tag} ${h.position}: ${h.hookType} — ${h.desc}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.emotionTargets && sd.emotionTargets.length > 0) {
+    const emotionTargets = sdAny.emotionTargets as TaggedField<EmoT>[] | undefined;
+    if (emotionTargets && emotionTargets.length > 0) {
       parts.push(`[${t('pipeline.emotionTargets')}]`);
-      sd.emotionTargets.forEach(e => {
-        parts.push(`  - ${e.emotion}: ${t('pipeline.intensity')} ${e.intensity}%`);
+      emotionTargets.forEach(raw => {
+        const { value: e, tag } = describeField(raw);
+        if (!e) return;
+        parts.push(`  - ${tag} ${e.emotion}: ${t('pipeline.intensity')} ${e.intensity}%`);
+        hasAnyContent = true;
       });
     }
-    if (sd.dialogueTones && sd.dialogueTones.length > 0) {
+    const dialogueTones = sdAny.dialogueTones as TaggedField<DToneT>[] | undefined;
+    if (dialogueTones && dialogueTones.length > 0) {
       parts.push(`[${t('pipeline.dialogueToneRules')}]`);
-      sd.dialogueTones.forEach(d => {
-        parts.push(`  - ${d.character}: ${d.tone}${d.notes ? ` (${d.notes})` : ''}`);
+      dialogueTones.forEach(raw => {
+        const { value: d, tag } = describeField(raw);
+        if (!d) return;
+        parts.push(`  - ${tag} ${d.character}: ${d.tone}${d.notes ? ` (${d.notes})` : ''}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.dopamineDevices && sd.dopamineDevices.length > 0) {
+    const dopamineDevices = sdAny.dopamineDevices as TaggedField<DopT>[] | undefined;
+    if (dopamineDevices && dopamineDevices.length > 0) {
       parts.push(`[${t('pipeline.dopamineDevices')}]`);
-      sd.dopamineDevices.forEach(dp => {
-        parts.push(`  - [${dp.scale}] ${dp.device}: ${dp.desc}`);
+      dopamineDevices.forEach(raw => {
+        const { value: dp, tag } = describeField(raw);
+        if (!dp) return;
+        parts.push(`  - ${tag} [${dp.scale}] ${dp.device}: ${dp.desc}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.cliffhanger) {
-      parts.push(`[${t('pipeline.cliffhangerLabel')}] ${t('pipeline.cliffType')}: ${sd.cliffhanger.cliffType} — ${sd.cliffhanger.desc}`);
+    const cliffhangerRaw = sdAny.cliffhanger as TaggedField<CliffT> | undefined;
+    if (cliffhangerRaw) {
+      const { value: ch, tag } = describeField(cliffhangerRaw);
+      if (ch) {
+        parts.push(`[${t('pipeline.cliffhangerLabel')}] ${tag} ${t('pipeline.cliffType')}: ${ch.cliffType} — ${ch.desc}`);
+        hasAnyContent = true;
+      }
     }
-    if (sd.plotStructure) {
-      parts.push(`[${t('pipeline.plotStructure')}] ${sd.plotStructure}`);
+    const plotRaw = sdAny.plotStructure as TaggedField<string> | undefined;
+    if (plotRaw) {
+      const { value: ps, tag } = describeField(plotRaw);
+      if (ps) {
+        parts.push(`[${t('pipeline.plotStructure')}] ${tag} ${ps}`);
+        hasAnyContent = true;
+      }
     }
-    if (sd.foreshadows && sd.foreshadows.length > 0) {
+    const foreshadows = sdAny.foreshadows as TaggedField<ForeT>[] | undefined;
+    if (foreshadows && foreshadows.length > 0) {
       parts.push(`[${t('pipeline.foreshadowing')}]`);
-      sd.foreshadows.forEach(f => {
+      foreshadows.forEach(raw => {
+        const { value: f, tag } = describeField(raw);
+        if (!f) return;
         const status = f.resolved ? t('pipeline.resolved') : t('pipeline.pending');
-        parts.push(`  - EP${f.episode}: ${f.planted} → ${f.payoff} (${status})`);
+        parts.push(`  - ${tag} EP${f.episode}: ${f.planted} → ${f.payoff} (${status})`);
+        hasAnyContent = true;
       });
     }
-    if (sd.pacings && sd.pacings.length > 0) {
+    const pacings = sdAny.pacings as TaggedField<PaceT>[] | undefined;
+    if (pacings && pacings.length > 0) {
       parts.push(`[${t('pipeline.pacingSection')}]`);
-      sd.pacings.forEach(p => {
-        parts.push(`  - ${p.section}: ${p.percent}% — ${p.desc}`);
+      pacings.forEach(raw => {
+        const { value: p, tag } = describeField(raw);
+        if (!p) return;
+        parts.push(`  - ${tag} ${p.section}: ${p.percent}% — ${p.desc}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.tensionCurve && sd.tensionCurve.length > 0) {
+    const tensionArr = sdAny.tensionCurve as TaggedField<TenT>[] | undefined;
+    if (tensionArr && tensionArr.length > 0) {
       parts.push(`[${t('pipeline.tensionCurve')}]`);
-      sd.tensionCurve.forEach(tc => {
-        parts.push(`  - ${tc.label}: ${t('pipeline.position')} ${tc.position}%, ${t('pipeline.level')} ${tc.level}%`);
+      tensionArr.forEach(raw => {
+        const { value: tc, tag } = describeField(raw);
+        if (!tc) return;
+        parts.push(`  - ${tag} ${tc.label}: ${t('pipeline.position')} ${tc.position}%, ${t('pipeline.level')} ${tc.level}%`);
+        hasAnyContent = true;
       });
     }
-    if (sd.canonRules && sd.canonRules.length > 0) {
+    const canon = sdAny.canonRules as TaggedField<CanonT>[] | undefined;
+    if (canon && canon.length > 0) {
       parts.push(`[${t('pipeline.canonRules')}]`);
-      sd.canonRules.forEach(r => {
-        parts.push(`  - ${r.character}: ${r.rule}`);
+      canon.forEach(raw => {
+        const { value: r, tag } = describeField(raw);
+        if (!r) return;
+        parts.push(`  - ${tag} ${r.character}: ${r.rule}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.sceneTransitions && sd.sceneTransitions.length > 0) {
+    const transitions = sdAny.sceneTransitions as TaggedField<TransT>[] | undefined;
+    if (transitions && transitions.length > 0) {
       parts.push(`[${t('pipeline.sceneTransitions')}]`);
-      sd.sceneTransitions.forEach(tr => {
-        parts.push(`  - ${tr.fromScene} → ${tr.toScene}: ${tr.method}`);
+      transitions.forEach(raw => {
+        const { value: tr, tag } = describeField(raw);
+        if (!tr) return;
+        parts.push(`  - ${tag} ${tr.fromScene} → ${tr.toScene}: ${tr.method}`);
+        hasAnyContent = true;
       });
     }
-    if (sd.writerNotes) {
-      parts.push(`[${t('pipeline.writerNotes')}] ${sd.writerNotes}`);
+    const notesRaw = sdAny.writerNotes as TaggedField<string> | undefined;
+    if (notesRaw) {
+      const { value: wn, tag } = describeField(notesRaw);
+      if (wn) {
+        parts.push(`[${t('pipeline.writerNotes')}] ${tag} ${wn}`);
+        hasAnyContent = true;
+      }
     }
-    if (parts.length > 0) {
-      sceneDirectionBlock = '\n[SCENE DIRECTION — 연출 스튜디오]\n' + parts.join('\n');
+    if (parts.length > 0 && hasAnyContent) {
+      sceneDirectionBlock = '\n[SCENE DIRECTION — 연출 스튜디오]\n' + buildOriginGuide(language) + '\n' + parts.join('\n');
     }
   }
 

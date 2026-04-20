@@ -7,7 +7,36 @@
 import { generateEngineReport, calculateGrade } from './scoring';
 import { analyzeManuscript, calculateQualityTag } from './director';
 import { tensionCurve } from './models';
+import { calculateOriginStats } from '@/lib/origin-migration';
 import type { StoryConfig, QualityThresholds, QualityGateConfig, QualityGateResult, SkillLevel, AppLanguage } from '@/lib/studio-types';
+
+// ============================================================
+// M4 — Author-Lead Ratio adjustment
+// ============================================================
+// 씬시트의 origin 분포에서 작가 비율(userPct)을 뽑아 감독 점수에 가감.
+//   userPct >= 80 → +10 (작가 주도 보너스)
+//   userPct < 30 → -10 (엔진 의존 페널티)
+//   그 외       → 0
+//
+// 의도: 동일한 manuscript 품질이라도 "작가 주도가 강한 작품"에
+//      품질 게이트가 약간 후하게 반응 (Loreguard 작가 주도 철학 일관)
+// ============================================================
+
+const AUTHOR_LEAD_BONUS_THRESHOLD = 80;
+const AUTHOR_LEAD_PENALTY_THRESHOLD = 30;
+const AUTHOR_LEAD_BONUS = 10;
+const AUTHOR_LEAD_PENALTY = -10;
+
+function computeAuthorLeadAdjustment(config: StoryConfig): { ratio: number; adjustment: number } {
+  const sd = config.sceneDirection;
+  if (!sd) return { ratio: 0, adjustment: 0 };
+  const stats = calculateOriginStats(sd);
+  if (stats.totalEntries === 0) return { ratio: 0, adjustment: 0 };
+  const ratio = stats.userPct;
+  if (ratio >= AUTHOR_LEAD_BONUS_THRESHOLD) return { ratio, adjustment: AUTHOR_LEAD_BONUS };
+  if (ratio < AUTHOR_LEAD_PENALTY_THRESHOLD) return { ratio, adjustment: AUTHOR_LEAD_PENALTY };
+  return { ratio, adjustment: 0 };
+}
 
 /**
  * 언어별 텍스트 픽업 헬퍼.
@@ -139,12 +168,17 @@ export function evaluateQuality(
   const director = analyzeManuscript(text, config.publishPlatform);
   const tag = calculateQualityTag(director, config.narrativeIntensity ?? 'standard');
 
+  // M4 — Author-Lead 가중치 (씬시트 origin 분포 반영)
+  const { ratio: authorLeadRatio, adjustment: authorLeadAdjustment } = computeAuthorLeadAdjustment(config);
+  // 감독 점수에 가산값 적용 (0-100 클램프)
+  const adjustedDirectorScore = Math.max(0, Math.min(100, director.score + authorLeadAdjustment));
+
   // 3. Hard Logic — 차단 판정
   if (gradeNum < thresholdNum) {
     failReasons.push(`grade_below: ${grade} < ${thresholds.minGrade}`);
   }
-  if (director.score < thresholds.minDirectorScore) {
-    failReasons.push(`director_below: ${director.score} < ${thresholds.minDirectorScore}`);
+  if (adjustedDirectorScore < thresholds.minDirectorScore) {
+    failReasons.push(`director_below: ${adjustedDirectorScore} < ${thresholds.minDirectorScore}`);
   }
   if (report.eosScore < thresholds.minEOS) {
     failReasons.push(`eos_below: ${report.eosScore} < ${thresholds.minEOS}`);
@@ -173,9 +207,11 @@ export function evaluateQuality(
     attempt,
     failReasons,
     grade,
-    directorScore: director.score,
+    directorScore: adjustedDirectorScore,
     eosScore: report.eosScore,
     qualityTag: tag.tag,
+    authorLeadRatio,
+    authorLeadAdjustment,
   };
 }
 

@@ -15,6 +15,7 @@ import { setNarrativeDepth as narrativeDepthSetter } from '@/lib/noa/lora-swap';
 import ApiKeysSection from '@/components/studio/settings/ApiKeysSection';
 import { getFallbackPreference, setFallbackPreference } from '@/hooks/useSparkHealth';
 import { TermTooltip } from '@/components/ui/TermTooltip';
+import { isOriginBadgeVisible, setOriginBadgeVisible } from '@/components/studio/OriginBadge';
 
 interface AdvancedSectionProps {
   language: AppLanguage;
@@ -41,6 +42,12 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
   const persistByokFallback = (enabled: boolean) => {
     setByokFallbackState(enabled);
     setFallbackPreference(enabled);
+  };
+  // [M4] 출처 뱃지 항상 표시 토글 (기본 false — 초보 작가 노출 0)
+  const [originBadgeShown, setOriginBadgeShownState] = useState<boolean>(() => isOriginBadgeVisible());
+  const persistOriginBadgeShown = (enabled: boolean) => {
+    setOriginBadgeShownState(enabled);
+    setOriginBadgeVisible(enabled);
   };
 
   // ============================================================
@@ -212,6 +219,55 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
               >
                 <span
                   className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${byokFallback ? 'translate-x-5' : 'translate-x-0.5'}`}
+                />
+              </button>
+            </div>
+
+            {/* M4 — Origin Badge Always Visible (default off) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  <Shield className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
+                    {L4(language, {
+                      ko: '출처 뱃지 항상 표시',
+                      en: 'Always Show Origin Badges',
+                      ja: '出典バッジを常に表示',
+                      zh: '始终显示来源徽章',
+                    })}
+                    <span className="group relative">
+                      <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
+                        {L4(language, {
+                          ko: '씬시트 항목별 입력 출처(작가/기본/제안/초안)를 항상 표시',
+                          en: 'Always show input origin (Author/Preset/Hint/Draft) per scene-sheet item',
+                          ja: 'シーンシートの項目別入力出典(作家/既定/提案/草案)を常に表示',
+                          zh: '场景表项目级输入来源(作家/预设/建议/草案)始终显示',
+                        })}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: '기본 끔 — 켜면 14필드 옆에 작은 뱃지가 항상 보입니다',
+                      en: 'Default off — when on, small badges appear next to all 14 fields',
+                      ja: '既定オフ — オンにすると14項目に小さなバッジが常時表示',
+                      zh: '默认关闭 — 开启后14个字段旁始终显示小徽章',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={originBadgeShown}
+                onClick={() => persistOriginBadgeShown(!originBadgeShown)}
+                className={`relative w-11 h-6 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0 ${originBadgeShown ? 'bg-accent-green' : 'bg-bg-tertiary'}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${originBadgeShown ? 'translate-x-5' : 'translate-x-0.5'}`}
                 />
               </button>
             </div>

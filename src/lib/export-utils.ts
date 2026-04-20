@@ -17,6 +17,7 @@ import {
   filenamePrefix,
   epubAudience,
 } from './content-rating';
+import { buildEpisodeDisclosure } from './ai-disclosure-generator';
 
 /** Export 옵션 — 시그니처는 유지하고 선택 필드만 추가 */
 export interface ExportOptions {
@@ -60,6 +61,16 @@ function buildDisclosureFooter(session: ChatSession, opts?: ExportOptions): stri
   const rating = getEffectiveRating(session.id, session.config);
   const adult = buildAdultWarning(rating, lang);
   if (adult) text += (text ? '\n' : '\n---\n') + adult + '\n';
+
+  // M4 — AI 공동집필 등급 (sceneDirection 기반)
+  const sceneDir = session.config.sceneDirection;
+  if (sceneDir) {
+    const disclosure = buildEpisodeDisclosure(sceneDir, lang);
+    // 통계가 있는 경우만 첨부 (totalEntries === 0이면 의미 없음)
+    if (disclosure.stats.totalEntries > 0) {
+      text += disclosure.text;
+    }
+  }
 
   return text;
 }

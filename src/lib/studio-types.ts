@@ -79,7 +79,50 @@ export interface CharRelation {
   dynamicSpeechStyle?: string;
 }
 
-// Scene Sheet (연출 스튜디오) data
+// ============================================================
+// M4 — Responsibility Boundary Tags (NOA Core 3-Axis Patent)
+// ============================================================
+//
+// 책임 분계 태그(Origin Tag) 시스템.
+// 씬시트의 14+ 필드 각각에 "누가 이 값을 썼는가"를 기록한다.
+// - USER: 작가 직접 입력 (최상위 권위)
+// - TEMPLATE: GENRE_PRESETS 등 시스템 기본값
+// - ENGINE_SUGGEST: 엔진(에피소드 전이/AI) 제안 — 작가가 수락한 상태
+// - ENGINE_DRAFT: 엔진 초안 — 작가가 아직 확정하지 않은 상태
+//
+// 역호환 원칙: 래핑 안 된 V1 값은 unwrap()/migrateToV2()에서 USER 자동 태그.
+// V2 → V1 역방향 마이그레이션은 unwrap만 수행 (메타 폐기, 데이터 보존).
+// ============================================================
+
+/** 4종 책임 분계 태그 */
+export type EntryOrigin = 'USER' | 'TEMPLATE' | 'ENGINE_SUGGEST' | 'ENGINE_DRAFT';
+
+/** 변경 이력 1건 */
+export interface OriginEditEvent {
+  origin: EntryOrigin;
+  at: number;
+}
+
+/** TaggedField 메타데이터 — 출처/시간/이력/참조 */
+export interface OriginMetadata {
+  origin: EntryOrigin;
+  createdAt: number;
+  /** 편집 이력 — 가장 최근이 마지막. 메모리 절약 위해 최대 20개. */
+  editedBy?: OriginEditEvent[];
+  /** 프리셋/제안 ID 등 출처 ID (감사 추적용) */
+  sourceReferenceId?: string;
+}
+
+/** 임의 값 T를 메타와 함께 래핑한 형태 */
+export interface TaggedValue<T> {
+  value: T;
+  meta: OriginMetadata;
+}
+
+/** TaggedField — 래핑되었을 수도, 아닐 수도 있는 필드 (역호환) */
+export type TaggedField<T> = T | TaggedValue<T>;
+
+// Scene Sheet (연출 스튜디오) data — V1 (기존). 역호환 위해 유지.
 export interface SceneDirectionData {
   goguma?: { type: "goguma" | "cider"; intensity: string; desc: string; episode?: number }[];
   hooks?: { position: string; hookType: string; desc: string }[];
@@ -100,6 +143,30 @@ export interface SceneDirectionData {
   activeItems?: string[];
   /** 이번 화 활성 스킬 ID 목록 — 선택된 스킬만 프롬프트 주입(M3 — 동일 패턴) */
   activeSkills?: string[];
+}
+
+// Scene Sheet V2 — TaggedField 옵션 적용. _originVersion=2가 식별자.
+// V1과 동일한 키를 가지되, 값은 TaggedValue로 래핑될 수 있다.
+// pipeline/UI는 unwrap()을 거쳐 V1 형태로 사용한다.
+export interface SceneDirectionDataV2 {
+  goguma?: TaggedField<{ type: "goguma" | "cider"; intensity: string; desc: string; episode?: number }>[];
+  hooks?: TaggedField<{ position: string; hookType: string; desc: string }>[];
+  emotionTargets?: TaggedField<{ emotion: string; intensity: number; position?: number }>[];
+  dialogueTones?: TaggedField<{ character: string; tone: string; notes: string }>[];
+  dopamineDevices?: TaggedField<{ scale: string; device: string; desc: string; resolved?: boolean }>[];
+  cliffhanger?: TaggedField<{ cliffType: string; desc: string; episode?: number }>;
+  plotStructure?: TaggedField<string>;
+  foreshadows?: TaggedField<{ planted: string; payoff: string; episode: number; resolved: boolean }>[];
+  pacings?: TaggedField<{ section: string; percent: number; desc: string }>[];
+  tensionCurve?: TaggedField<{ position: number; level: number; label: string }>[];
+  canonRules?: TaggedField<{ character: string; rule: string }>[];
+  sceneTransitions?: TaggedField<{ fromScene: string; toScene: string; method: string }>[];
+  writerNotes?: TaggedField<string>;
+  activeCharacters?: TaggedField<string>[];
+  activeItems?: TaggedField<string>[];
+  activeSkills?: TaggedField<string>[];
+  /** V2 식별자 — 항상 2 */
+  _originVersion?: 2;
 }
 
 // Genre selection entry (multi-genre support)
@@ -617,6 +684,10 @@ export interface QualityGateResult {
   directorScore: number;
   eosScore: number;
   qualityTag: string;
+  /** M4 — 작가 주도 비율 (0-100). 씬시트 origin 통계 기반. */
+  authorLeadRatio?: number;
+  /** M4 — authorLead 가중치 보너스/페널티 (감독 점수 가산값) */
+  authorLeadAdjustment?: number;
 }
 
 // ② Proactive Suggestions
