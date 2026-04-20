@@ -6,6 +6,7 @@ import type { AppLanguage, ChatSession } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import WordCountBadge from '@/components/studio/WordCountBadge';
+import BackupNowButton from '@/components/studio/BackupNowButton';
 import { useSessionTimer, formatSessionTime, formatDailyTime } from '@/hooks/useSessionTimer';
 import { useSparkHealth } from '@/hooks/useSparkHealth';
 import { useStorageQuota, formatBytes } from '@/hooks/useStorageQuota';
@@ -24,6 +25,8 @@ interface StudioStatusBarProps {
   /** Character count at session start — for session delta display */
   sessionStartChars?: number;
   editorFontSize?: number;
+  /** [M1.5.1] BackupNowButton 대상 projectId. null이면 버튼은 비활성 경고. */
+  currentProjectId?: string | null;
 }
 
 const MODE_LABELS: Record<string, { ko: string; en: string }> = {
@@ -35,7 +38,7 @@ const MODE_LABELS: Record<string, { ko: string; en: string }> = {
 };
 
 export function StudioStatusBar({
-  editDraft, writingMode, activeTab, saveFlash, isSaving, isGenerating, language, currentSession, lastSaveTime, isDirty, sessionStartChars = 0, editorFontSize,
+  editDraft, writingMode, activeTab, saveFlash, isSaving, isGenerating, language, currentSession, lastSaveTime, isDirty, sessionStartChars = 0, editorFontSize, currentProjectId = null,
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
@@ -296,6 +299,13 @@ export function StudioStatusBar({
               BYOK
             </span>
           )}
+          <span className="text-border">|</span>
+          {/* [M1.5.1] BackupNowButton — flag off이어도 항상 표시, ZIP 다운로드 동작 */}
+          <BackupNowButton
+            language={language}
+            projectId={currentProjectId}
+            compact
+          />
           <span className="text-border">|</span>
           <span>ANS {ENGINE_VERSION}</span>
         </div>

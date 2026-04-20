@@ -44,7 +44,10 @@ const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: fa
 const StudioOverlayManager = dynamic(() => import('@/components/studio/StudioOverlayManager'), { ssr: false });
 const MobileStudioView = dynamic(() => import('@/components/studio/MobileStudioView'), { ssr: false });
 const RenameDialog = dynamic(() => import('@/components/studio/RenameDialog'), { ssr: false });
+const MultiTabBanner = dynamic(() => import('@/components/studio/MultiTabBanner'), { ssr: false });
+const StudioMountProviders = dynamic(() => import('@/components/studio/StudioMountProviders'), { ssr: false });
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useStudioMounts } from '@/hooks/useStudioMounts';
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
@@ -77,6 +80,10 @@ export default function StudioShell() {
     const p = new URLSearchParams(window.location.search);
     setForceDesktop(p.get('force') === 'desktop' || localStorage.getItem('noa_force_desktop') === '1');
   }, []);
+
+  // ── [M1.5.1] UI 마운트 훅 — 기능은 FEATURE_JOURNAL_ENGINE='off'면 모두 inert
+  // useAutoSave는 연결 금지 (M1.5.2 범위). 여기서는 복구/멀티탭 관찰만.
+  const studioMounts = useStudioMounts({ language });
 
   const pm = useProjectManager(language);
   const {
@@ -942,8 +949,21 @@ export default function StudioShell() {
     <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
     <StudioConfigProvider value={studioConfigValue}>
     <StudioUIProvider value={studioUIValue}>
+    <StudioMountProviders language={language}>
+    <div className="flex flex-col h-dvh overflow-hidden bg-bg-primary text-text-primary">
+    {/* [M1.5.1] MultiTabBanner — flag off에서는 훅 enabled:false → Banner 내부 조건으로 null */}
+    {studioMounts.journalActive && (
+      <MultiTabBanner
+        isLeader={studioMounts.multiTab.isLeader}
+        followerCount={studioMounts.multiTab.followerCount}
+        leaderTabId={studioMounts.multiTab.leaderTabId}
+        conflictCount={studioMounts.multiTab.conflicts.length}
+        language={language}
+        onRequestPromotion={studioMounts.multiTab.requestPromotion}
+      />
+    )}
     <div
-      className="flex h-dvh overflow-hidden bg-bg-primary text-text-primary"
+      className="flex flex-1 min-h-0 overflow-hidden"
       data-testid="studio-content"
     >
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />}
@@ -1089,6 +1109,8 @@ export default function StudioShell() {
         alertToast={alertToast} setAlertToast={setAlertToast}
       />
     </div>
+    </div>
+    </StudioMountProviders>
     </StudioUIProvider>
     </StudioConfigProvider>
     </ErrorBoundary>

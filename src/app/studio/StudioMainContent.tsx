@@ -564,6 +564,7 @@ export default function StudioMainContent({ children }: { children?: React.React
           currentSession={currentSession}
           sessionStartChars={sessionStartChars}
           editorFontSize={editorFontSize}
+          currentProjectId={currentProjectId}
         />
       )}
     </main>
