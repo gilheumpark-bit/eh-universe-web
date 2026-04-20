@@ -1,4 +1,11 @@
 
+// ============================================================
+// ChatMessage — 어시스턴트/유저 메시지 렌더 (M2.2 memo 적용)
+// ============================================================
+// [G] React.memo: WritingTabInline.AIMode 에서 messages.map(...) 로 N 회 렌더.
+//     동일 message 객체가 계속 주입되므로 얕은 비교로 충분.
+//     onRegenerate 는 부모에서 useCallback 으로 안정화되어 있음.
+
 import React from 'react';
 import dynamic from 'next/dynamic';
 // Copy action is handled by ActionBar (more discoverable); no standalone copy button needed
@@ -41,7 +48,7 @@ interface ChatMessageProps {
   searchMatchTotal?: number;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({
+const ChatMessageImpl: React.FC<ChatMessageProps> = ({
   message, language = 'KO', onRegenerate, onAutoFix, isCompact,
   hostedProviders = {}, assistantPersonaLine,
   searchMatchIndex, searchMatchTotal,
@@ -304,6 +311,32 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     </div>
   );
 };
+
+// ============================================================
+// PART 5 — Memo 비교 함수
+// ============================================================
+// [G] message.content / message.meta 변경 시에만 재렌더.
+// 기타 props(isCompact/hostedProviders/assistantPersonaLine 등)는 부모 레벨에서
+// 안정적으로 유지되므로 얕은 비교로 충분.
+function chatMessagePropsEqual(
+  prev: Readonly<ChatMessageProps>,
+  next: Readonly<ChatMessageProps>,
+): boolean {
+  return (
+    prev.message === next.message &&
+    prev.language === next.language &&
+    prev.isCompact === next.isCompact &&
+    prev.onRegenerate === next.onRegenerate &&
+    prev.onAutoFix === next.onAutoFix &&
+    prev.hostedProviders === next.hostedProviders &&
+    prev.assistantPersonaLine === next.assistantPersonaLine &&
+    prev.searchMatchIndex === next.searchMatchIndex &&
+    prev.searchMatchTotal === next.searchMatchTotal
+  );
+}
+
+const ChatMessage = React.memo(ChatMessageImpl, chatMessagePropsEqual);
+ChatMessage.displayName = 'ChatMessage';
 
 export default ChatMessage;
 

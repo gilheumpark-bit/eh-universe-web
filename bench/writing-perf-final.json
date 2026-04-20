@@ -1,0 +1,195 @@
+{
+  "generatedAt": "2026-04-20T05:06:31.178Z",
+  "node": "v24.14.1",
+  "os": "win32",
+  "milestone": "M2.2 final",
+  "groupA_reducer": [
+    {
+      "label": "A_SET_DRAG_OVER_100k",
+      "iterations": 100000,
+      "avgUs": 0.060338000000001696,
+      "p50Us": 0,
+      "p95Us": 0.09999999999976694,
+      "p99Us": 0.10000000000331966,
+      "maxUs": 193.40000000000046
+    },
+    {
+      "label": "A_TOGGLE_SPLIT_VIEW_100k",
+      "iterations": 100000,
+      "avgUs": 0.04840699999999557,
+      "p50Us": 0,
+      "p95Us": 0.10000000000331966,
+      "p99Us": 0.10000000000331966,
+      "maxUs": 74.2000000000047
+    },
+    {
+      "label": "A_PUSH_DRAFT_VERSION_10k",
+      "iterations": 10000,
+      "avgUs": 0.17673999999997533,
+      "p50Us": 0.10000000000331966,
+      "p95Us": 0.30000000000995897,
+      "p99Us": 0.9000000000014552,
+      "maxUs": 231.3000000000045
+    }
+  ],
+  "groupB_memo": [
+    {
+      "label": "B_FabControls_AREEQUAL_unchanged_100k",
+      "iterations": 100000,
+      "avgUs": 0.03563000000000756,
+      "p50Us": 0,
+      "p95Us": 0.10000000000331966,
+      "p99Us": 0.10000000000331966,
+      "maxUs": 16.70000000000016
+    },
+    {
+      "label": "B_FabControls_AREEQUAL_modeChange_100k",
+      "iterations": 100000,
+      "avgUs": 0.035475999999999744,
+      "p50Us": 0,
+      "p95Us": 0.10000000000331966,
+      "p99Us": 0.10000000000331966,
+      "maxUs": 28.800000000003934
+    },
+    {
+      "label": "B_ModeSwitch_AREEQUAL_unchanged_100k",
+      "iterations": 100000,
+      "avgUs": 0.038986999999984846,
+      "p50Us": 0,
+      "p95Us": 0.10000000000331966,
+      "p99Us": 0.10000000000331966,
+      "maxUs": 162.59999999999764
+    },
+    {
+      "label": "B_ModeSwitch_AREEQUAL_draftChange_100k",
+      "iterations": 100000,
+      "avgUs": 0.037183000000006246,
+      "p50Us": 0,
+      "p95Us": 0.10000000000331966,
+      "p99Us": 0.10000000000331966,
+      "maxUs": 194.79999999998654
+    }
+  ],
+  "groupC_bundle": {
+    "available": true,
+    "totalBytes": 19183359,
+    "totalKB": 18733.7,
+    "fileCount": 257,
+    "advancedChunks": [
+      {
+        "name": "0999hkhwciw9b.js",
+        "bytes": 4641,
+        "modes": [
+          "refine"
+        ]
+      },
+      {
+        "name": "0z4clcj5h-pgy.js",
+        "bytes": 2627,
+        "modes": [
+          "advanced"
+        ]
+      },
+      {
+        "name": "114cq3m96ty_l.js",
+        "bytes": 6649,
+        "modes": [
+          "canvas"
+        ]
+      }
+    ],
+    "advancedChunksTotalKB": 13.6,
+    "note": "Advanced chunks identified by file content search. Only the chunks exclusively containing advanced-mode code are counted; shared vendor chunks are excluded."
+  },
+  "comparison": {
+    "columns": [
+      "BeforeM2",
+      "AfterM2_1",
+      "AfterM2_2",
+      "target"
+    ],
+    "rows": [
+      {
+        "metric": "WritingTabInline.tsx lines",
+        "values": [
+          889,
+          552,
+          623,
+          "<700"
+        ]
+      },
+      {
+        "metric": "Writing partials count",
+        "values": [
+          7,
+          10,
+          11,
+          ">10"
+        ]
+      },
+      {
+        "metric": "Unique custom hooks in shell",
+        "values": [
+          19,
+          11,
+          11,
+          "8~12"
+        ]
+      },
+      {
+        "metric": "FAB visual tier",
+        "values": [
+          "bg-accent-blue primary",
+          "bg-accent-blue primary",
+          "secondary outline",
+          "secondary"
+        ]
+      },
+      {
+        "metric": "FAB label",
+        "values": [
+          "NOA 생성",
+          "NOA 생성",
+          "엔진 호출",
+          "작가주도"
+        ]
+      },
+      {
+        "metric": "sceneSheetEmpty guard",
+        "values": [
+          "none",
+          "prop ready",
+          "wired + toast",
+          "wired"
+        ]
+      },
+      {
+        "metric": "Canvas/Refine/Advanced bundling",
+        "values": [
+          "always",
+          "always",
+          "on-demand",
+          "on-demand"
+        ]
+      },
+      {
+        "metric": "ChatMessage memo",
+        "values": [
+          "no",
+          "no",
+          "yes (areEqual)",
+          "yes"
+        ]
+      },
+      {
+        "metric": "VersionDiff memo",
+        "values": [
+          "no",
+          "no",
+          "yes (areEqual)",
+          "yes"
+        ]
+      }
+    ]
+  }
+}

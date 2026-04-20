@@ -91,7 +91,7 @@ function getChangeSummary(pct: number, delta: number, lang: AppLanguage): string
 // PART 3 — Component
 // ============================================================
 
-const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, language, onSwitch, onRestore }) => {
+const VersionDiffImpl: React.FC<VersionDiffProps> = ({ versions, currentIndex, language, onSwitch, onRestore }) => {
   const [showDiff, setShowDiff] = useState(false);
   const [copied, setCopied] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState<number | null>(null);
@@ -231,5 +231,26 @@ const VersionDiff: React.FC<VersionDiffProps> = ({ versions, currentIndex, langu
     </div>
   );
 };
+
+// ============================================================
+// PART 4 — Memo 비교 (M2.2)
+// ============================================================
+// [G] draftVersions 배열 참조가 PUSH 때만 교체됨. 같은 참조면 스킵.
+//     currentIndex/onSwitch/onRestore 는 부모에서 안정적.
+function versionDiffPropsEqual(
+  prev: Readonly<VersionDiffProps>,
+  next: Readonly<VersionDiffProps>,
+): boolean {
+  return (
+    prev.versions === next.versions &&
+    prev.currentIndex === next.currentIndex &&
+    prev.language === next.language &&
+    prev.onSwitch === next.onSwitch &&
+    prev.onRestore === next.onRestore
+  );
+}
+
+const VersionDiff = React.memo(VersionDiffImpl, versionDiffPropsEqual);
+VersionDiff.displayName = 'VersionDiff';
 
 export default VersionDiff;

@@ -81,7 +81,7 @@ function useClickOutside(
 // PART 4 — ModeSwitch
 // ============================================================
 
-export function ModeSwitch(props: ModeSwitchProps): React.ReactElement {
+function ModeSwitchImpl(props: ModeSwitchProps): React.ReactElement {
   const {
     language, writingMode, setWritingMode,
     hasApiKey, setShowApiKeyModal,
@@ -451,5 +451,39 @@ export function ModeSwitch(props: ModeSwitchProps): React.ReactElement {
     </div>
   );
 }
+
+// ============================================================
+// PART 5 — Memo 비교 (M2.2)
+// ============================================================
+// [G] ModeSwitch 는 sticky toolbar 로 고정 위치 렌더되지만
+//     editDraft 타이핑 중 부모가 리렌더되면 toolbar도 함께 리렌더된다.
+//     얕은 비교로 실제 변경 없는 렌더를 스킵한다.
+//     undoStack 객체는 useUndoStack 에서 새 참조로 교체될 때만 관련 상태 변화.
+function modeSwitchPropsEqual(
+  prev: Readonly<ModeSwitchProps>,
+  next: Readonly<ModeSwitchProps>,
+): boolean {
+  return (
+    prev.language === next.language &&
+    prev.writingMode === next.writingMode &&
+    prev.setWritingMode === next.setWritingMode &&
+    prev.hasApiKey === next.hasApiKey &&
+    prev.setShowApiKeyModal === next.setShowApiKeyModal &&
+    prev.editDraft === next.editDraft &&
+    prev.setEditDraft === next.setEditDraft &&
+    prev.currentSession === next.currentSession &&
+    prev.advancedWritingMode === next.advancedWritingMode &&
+    prev.setAdvancedWritingMode === next.setAdvancedWritingMode &&
+    prev.undoStack === next.undoStack &&
+    prev.inlineCompletionEnabled === next.inlineCompletionEnabled &&
+    prev.toggleInlineCompletion === next.toggleInlineCompletion &&
+    prev.splitView === next.splitView &&
+    prev.setSplitView === next.setSplitView &&
+    prev.setActiveTab === next.setActiveTab
+  );
+}
+
+export const ModeSwitch = React.memo(ModeSwitchImpl, modeSwitchPropsEqual);
+ModeSwitch.displayName = 'ModeSwitch';
 
 export default ModeSwitch;

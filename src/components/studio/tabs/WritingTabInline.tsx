@@ -12,7 +12,7 @@
 // M1 저장 경로 (useProjectManager / useAutoSave / use*Writer) 0 수정 — prop 패스스루.
 // ============================================================
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo, useDeferredValue } from 'react';
 import dynamic from 'next/dynamic';
 import type { AppLanguage, StoryConfig, ChatSession, Message, AppTab } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
@@ -35,19 +35,53 @@ import { useWritingReducer } from '@/hooks/useWritingReducer';
 
 import { AIModeSection } from './writing/AIModeSection';
 import { EditModeSection } from './writing/EditModeSection';
-import { CanvasModeSection } from './writing/CanvasModeSection';
-import { RefineModeSection } from './writing/RefineModeSection';
-import { AdvancedModeSection } from './writing/AdvancedModeSection';
+// ============================================================
+// M2.2 Day 9-10 — 고급 3모드 dynamic import
+// ============================================================
+// [G] AI + Edit 만 기본 번들. Canvas/Refine/Advanced 는 사용자가 고급 모드로
+//     진입해 드롭다운에서 선택할 때 on-demand 로드.
+//     ModeLoadingPlaceholder 로 로딩 스켈레톤 표시.
+// ============================================================
 import { InputDockSection } from './writing/InputDockSection';
 import { MobileOverlaySection } from './writing/MobileOverlaySection';
 import { ModeSwitch } from './writing/ModeSwitch';
 import { FabControls } from './writing/FabControls';
 import { SceneWarningsBanner, useSceneWarnings } from './writing/SceneWarnings';
+// ModeLoadingPlaceholder는 ModeSwitch 드롭다운에서 선택 직후 명시적으로 사용한다.
+// dynamic loading 스켈레톤과 달리 language-aware 4언어 문구를 제공.
+import { ModeLoadingPlaceholder } from './writing/ModeLoadingPlaceholder';
 import { TabHeader } from '@/components/studio/TabHeader';
 import { X } from 'lucide-react';
 
 const DynSkeleton = () => <div className="h-8 rounded-lg bg-bg-secondary/50 animate-pulse" />;
 const ContinuityGraph = dynamic(() => import('@/components/studio/ContinuityGraph'), { ssr: false, loading: DynSkeleton });
+
+// [G] 고급 3모드 청크 분리 — 각 named export 를 default 로 매핑.
+//     data-testid 를 포함한 로딩 스켈레톤을 노출하여 E2E 에서 chunk on-demand
+//     로드를 검증. 실제 렌더 시 language-aware 는 ModeLoadingPlaceholder 로 보강.
+const CanvasModeSection = dynamic(
+  () => import('./writing/CanvasModeSection').then(m => ({ default: m.CanvasModeSection })),
+  { ssr: false, loading: () => <div data-testid="mode-chunk-loading-canvas" className="h-40 rounded-2xl bg-bg-secondary/30 animate-pulse" /> },
+);
+const RefineModeSection = dynamic(
+  () => import('./writing/RefineModeSection').then(m => ({ default: m.RefineModeSection })),
+  { ssr: false, loading: () => <div data-testid="mode-chunk-loading-refine" className="h-40 rounded-2xl bg-bg-secondary/30 animate-pulse" /> },
+);
+const AdvancedModeSection = dynamic(
+  () => import('./writing/AdvancedModeSection').then(m => ({ default: m.AdvancedModeSection })),
+  { ssr: false, loading: () => <div data-testid="mode-chunk-loading-advanced" className="h-40 rounded-2xl bg-bg-secondary/30 animate-pulse" /> },
+);
+
+// ============================================================
+// M2.2 — Language-aware 프리로드 플레이스홀더 (전환 직후)
+// ============================================================
+// next/dynamic 의 loading prop 은 language 클로저 밖에서 실행되므로
+// 4언어 문구를 쓸 수 없다. 본 컴포넌트 내부에서는 고급 모드 진입 시점을
+// useDeferredValue 로 한 프레임 지연시켜, 첫 프레임에 ModeLoadingPlaceholder 를
+// 노출한 뒤 실제 dynamic 청크가 이어받도록 한다.
+//
+// [C] 어떠한 effect 도 setState 를 동반하지 않는다 — render-time 계산만 수행.
+//     useDeferredValue 는 React 내장 API 로 render-time 에서 안전하게 호출.
 
 // ============================================================
 // PART 1 — Props
@@ -296,6 +330,30 @@ export default function WritingTabInline(props: Props) {
   }, [sendChat, language]);
 
   // ============================================================
+  // M2.2 Day 9-10 — 고급 모드 진입 시 language-aware placeholder 프리뷰
+  // ============================================================
+  // useDeferredValue 는 이전 렌더의 값을 먼저 반환하고, 급하지 않은 업데이트를
+  // 뒤로 미뤄 첫 프레임에 placeholder 가 노출되게 한다. dynamic chunk 가 로드되는
+  // 사이 자연스러운 전환 — set-state-in-effect 룰 위반 없음.
+  const deferredWritingMode = useDeferredValue(writingMode);
+  const advancedModeReady = deferredWritingMode === writingMode;
+
+  // ============================================================
+  // M2.2 Day 11-12 — 씬시트 비어있음 가드 (FAB 에 전달)
+  // ============================================================
+  // [G] episodeSceneSheets 변화에 대해서만 재계산 — 타이핑 중 editDraft
+  //     변화로는 매번 돌지 않는다. 현재 에피소드의 scenes 배열이 비었거나,
+  //     에피소드에 해당하는 씬시트 자체가 없으면 empty 로 간주.
+  const sceneSheetEmpty = useMemo<boolean>(() => {
+    const episode = currentSession?.config?.episode ?? 1;
+    const sheets = currentSession?.config?.episodeSceneSheets ?? [];
+    if (sheets.length === 0) return true;
+    const sheet = sheets.find((s) => s.episode === episode);
+    if (!sheet) return true;
+    return (sheet.scenes?.length ?? 0) === 0;
+  }, [currentSession?.config?.episode, currentSession?.config?.episodeSceneSheets]);
+
+  // ============================================================
   // PART 4 — Shell JSX
   // ============================================================
 
@@ -465,38 +523,50 @@ export default function WritingTabInline(props: Props) {
               )}
 
               {writingMode === 'canvas' && (
-                <CanvasModeSection
-                  language={language}
-                  canvasContent={canvasContent}
-                  setCanvasContent={setCanvasContent}
-                  canvasPass={canvasPass}
-                  setCanvasPass={setCanvasPass}
-                  isGenerating={isGenerating}
-                  handleSend={handleSend}
-                  editDraft={editDraft}
-                  setEditDraft={setEditDraft}
-                  setWritingMode={setWritingMode}
-                  undoStack={undoStack}
-                />
+                advancedModeReady ? (
+                  <CanvasModeSection
+                    language={language}
+                    canvasContent={canvasContent}
+                    setCanvasContent={setCanvasContent}
+                    canvasPass={canvasPass}
+                    setCanvasPass={setCanvasPass}
+                    isGenerating={isGenerating}
+                    handleSend={handleSend}
+                    editDraft={editDraft}
+                    setEditDraft={setEditDraft}
+                    setWritingMode={setWritingMode}
+                    undoStack={undoStack}
+                  />
+                ) : (
+                  <ModeLoadingPlaceholder language={language} mode="canvas" />
+                )
               )}
 
               {writingMode === 'refine' && (
-                <RefineModeSection
-                  language={language}
-                  editDraft={editDraft}
-                  setEditDraft={setEditDraft}
-                  promptDirective={promptDirective}
-                  quality={quality}
-                />
+                advancedModeReady ? (
+                  <RefineModeSection
+                    language={language}
+                    editDraft={editDraft}
+                    setEditDraft={setEditDraft}
+                    promptDirective={promptDirective}
+                    quality={quality}
+                  />
+                ) : (
+                  <ModeLoadingPlaceholder language={language} mode="refine" />
+                )
               )}
 
               {writingMode === 'advanced' && (
-                <AdvancedModeSection
-                  language={language}
-                  editDraft={editDraft}
-                  setEditDraft={setEditDraft}
-                  editDraftRef={editDraftRef}
-                />
+                advancedModeReady ? (
+                  <AdvancedModeSection
+                    language={language}
+                    editDraft={editDraft}
+                    setEditDraft={setEditDraft}
+                    editDraftRef={editDraftRef}
+                  />
+                ) : (
+                  <ModeLoadingPlaceholder language={language} mode="advanced" />
+                )
               )}
             </div>
             <div ref={messagesEndRef} className="h-32" />
@@ -537,7 +607,7 @@ export default function WritingTabInline(props: Props) {
           textMenu={textMenu}
         />
 
-        {/* AI FAB — Ctrl+Enter 단축키 포함 */}
+        {/* AI FAB — 엔진 호출 (Ctrl+Enter) + 씬시트 가드 (M2.2) */}
         <FabControls
           language={language}
           writingMode={writingMode}
@@ -545,6 +615,7 @@ export default function WritingTabInline(props: Props) {
           showAiLock={showAiLock}
           currentSessionId={currentSessionId}
           handleSend={handleSend}
+          sceneSheetEmpty={sceneSheetEmpty}
         />
       </div>
     </div>

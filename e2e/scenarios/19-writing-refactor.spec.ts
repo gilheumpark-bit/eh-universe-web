@@ -16,7 +16,7 @@
  *   - Mode toolbar buttons:   getByRole('button', { name: /집필\s*직접 타이핑/ })
  *   - AI mode toolbar:        getByRole('button', { name: /NOA 생성\s*노아가 다음/ })
  *   - Tier toggle:            getByRole('button', { name: /⚙ 고급 모드|Advanced Mode/ })
- *   - AI FAB:                 [aria-label="NOA 생성 시작"]
+ *   - AI FAB:                 [aria-label="엔진 호출"] (M2.2 relabel from "NOA 생성 시작")
  *   - Split view toggle:      button containing "분할 뷰" / "Split"
  */
 
@@ -93,9 +93,9 @@ test.describe('Scenario 19 — Writing refactor regression (M2)', () => {
     });
     await aiBtn.click();
 
-    // FAB rendered via extracted FabControls.
+    // FAB rendered via extracted FabControls. M2.2 relabeled aria to '엔진 호출'.
     const fab = page.locator(
-      '[aria-label="NOA 생성 시작"], [aria-label="Start NOA generation"]',
+      '[aria-label="엔진 호출"], [aria-label="Summon Engine"], [data-testid="noa-fab"]',
     );
     await expect(fab).toBeVisible({ timeout: 5_000 });
     await expect(fab).toHaveAttribute('title', /Ctrl\+Enter/);
