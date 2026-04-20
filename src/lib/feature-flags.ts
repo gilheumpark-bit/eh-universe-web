@@ -28,6 +28,8 @@ export interface FeatureFlags {
   GITHUB_ETAG_CACHE: boolean;
   /** ARI per-model 추적 + 상태 전환 이벤트 */
   ARI_ENHANCED: boolean;
+  /** Journal Engine (M1.1 AUTOSAVE_FORTRESS) — 기본 비활성, Phase 1.5에서 연결 후 활성화 */
+  FEATURE_JOURNAL_ENGINE: boolean;
 }
 
 // ============================================================
@@ -53,6 +55,12 @@ const FLAGS: FeatureFlags = {
   GITHUB_ETAG_CACHE: true,
   /** ARI per-model 추적 — 모델별 건강도 + circuit 이벤트, 기본 활성 */
   ARI_ENHANCED: true,
+  /**
+   * Journal Engine (M1.1 AUTOSAVE_FORTRESS Phase 1.1) — 기본 비활성.
+   * Phase 1.5에서 useProjectManager/StudioShell과 연결 후 활성화.
+   * flag off 상태에서는 저널 엔진이 완전히 우회되고 기존 경로만 동작.
+   */
+  FEATURE_JOURNAL_ENGINE: false,
 };
 
 /**

@@ -1,0 +1,19 @@
+{
+  "iters": 1000,
+  "losses": 0,
+  "lossSamples": [],
+  "tierCounts": {
+    "indexeddb": 0,
+    "localstorage": 694,
+    "memory": 306
+  },
+  "totalMs": 14286,
+  "durationStatsMs": {
+    "p50": 0.004,
+    "p95": 47.043,
+    "p99": 47.447,
+    "avg": 14.283
+  },
+  "success": true,
+  "ran_at": "2026-04-20T00:48:35.792Z"
+}
