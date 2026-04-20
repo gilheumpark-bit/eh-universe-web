@@ -32,7 +32,7 @@
 // ============================================================
 
 import { useCallback, useEffect, useRef } from 'react';
-import { isJournalEngineActive } from '@/lib/feature-flags';
+import { isJournalEngineActive, getJournalEngineMode } from '@/lib/feature-flags';
 import { canonicalJson, sha256, utf8Encode } from '@/lib/save-engine/hash';
 import { appendEntry } from '@/lib/save-engine/journal';
 import { compressToBytes } from '@/lib/save-engine/compression';
@@ -52,6 +52,22 @@ import {
   extractWorldSim,
   extractStyle,
 } from '@/lib/save-engine/payload-extractor';
+
+/**
+ * [M1.5.4] Journal 쓰기 실패 이벤트.
+ * 'on' 모드에서 journal append 가 throw 했을 때 dispatch.
+ * useJournalEngineMode 가 구독해 auto-downgrade 트리거로 사용.
+ * Shadow 모드에서도 관측 목적으로 dispatch (다운그레이드는 'on' 에서만).
+ */
+export const JOURNAL_ERROR_EVENT = 'noa:journal-error' as const;
+
+export interface JournalErrorEventDetail {
+  operation: ShadowOperation;
+  reason: string;
+  correlationId: string;
+  mode: 'shadow' | 'on';
+  ts: number;
+}
 
 export interface UseShadowProjectWriterOptions {
   /** 현재 활성 프로젝트 id — 관측용 (payload에 직접 반영 안 함, 로그 메타). */
@@ -230,11 +246,41 @@ async function runShadowWrite(
       operation,
     });
   } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
     logger.warn('shadow-write', 'runShadowWrite failed (isolated)', {
       correlationId,
       operation,
-      error: err instanceof Error ? err.message : String(err),
+      error: reason,
     });
+    // [M1.5.4] 'on'/'shadow' 모두 journal 쓰기 실패를 이벤트로 방송.
+    // useJournalEngineMode.reportJournalError 가 구독해 'on' 모드 auto-downgrade 트리거.
+    dispatchJournalError(operation, reason, correlationId);
+  }
+}
+
+/**
+ * [M1.5.4] Journal 쓰기 실패 이벤트 dispatch.
+ * SSR / 이벤트 API 없음 환경 방어, throw 없음.
+ */
+function dispatchJournalError(
+  operation: ShadowOperation,
+  reason: string,
+  correlationId: string,
+): void {
+  try {
+    if (typeof window === 'undefined') return;
+    const mode = getJournalEngineMode();
+    if (mode !== 'shadow' && mode !== 'on') return;
+    const detail: JournalErrorEventDetail = {
+      operation,
+      reason,
+      correlationId,
+      mode,
+      ts: Date.now(),
+    };
+    window.dispatchEvent(new CustomEvent(JOURNAL_ERROR_EVENT, { detail }));
+  } catch {
+    /* 이벤트 시스템 차단 환경 — 조용히 무시 */
   }
 }
 

@@ -159,6 +159,32 @@ export function isJournalEngineActive(): boolean {
   return mode === 'shadow' || mode === 'on';
 }
 
+/**
+ * [M1.5.4] 저널 엔진 모드 설정 — 수동/자동 승격 및 다운그레이드 진입점.
+ *
+ * localStorage('ff_FEATURE_JOURNAL_ENGINE') 에 mode 를 기록하고
+ * `noa:feature-flag-changed` 커스텀 이벤트를 dispatch 한다.
+ *
+ * [C] SSR / storage 차단 방어 — 실패 시 false 반환, throw 없음.
+ * [C] 유효하지 않은 mode 값은 거부 ('off'/'shadow'/'on' 이외).
+ * [G] localStorage 쓰기 1회 + dispatch 1회만.
+ */
+export function setJournalEngineMode(mode: JournalEngineMode): boolean {
+  if (!isJournalEngineMode(mode)) return false;
+  if (typeof window === 'undefined') return false;
+  try {
+    localStorage.setItem('ff_FEATURE_JOURNAL_ENGINE', mode);
+    window.dispatchEvent(
+      new CustomEvent('noa:feature-flag-changed', {
+        detail: { flag: 'FEATURE_JOURNAL_ENGINE', value: mode },
+      }),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ============================================================
 // PART 5 — Boolean flag resolver
 // ============================================================

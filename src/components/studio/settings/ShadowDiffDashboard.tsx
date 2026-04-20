@@ -14,15 +14,32 @@
 // [G] useShadowDiff 훅이 구독·주기갱신 담당. 이 컴포넌트는 순수 표시.
 // [K] ds-card-lg + 토큰 기반 색상. 불필요한 추상화 없음.
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
-import { Activity, AlertTriangle, CheckCircle2, RefreshCcw, Trash2, Clock } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  CheckCircle2,
+  Clock,
+  History,
+  RefreshCcw,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
 import { useShadowDiff } from '@/hooks/useShadowDiff';
+import { useJournalEngineMode } from '@/hooks/useJournalEngineMode';
 import {
   getJournalEngineMode,
   type JournalEngineMode,
 } from '@/lib/feature-flags';
+import {
+  getPromotionHistory,
+  type PromotionEvent,
+} from '@/lib/save-engine/promotion-audit';
+import type { PromotionStatus } from '@/lib/save-engine/promotion-controller';
 
 // ============================================================
 // PART 2 — Props
@@ -74,12 +91,395 @@ function ModeBadge({ language }: { language: AppLanguage }): React.ReactElement 
 }
 
 // ============================================================
+// PART 3.5 — (M1.5.4) Promotion Criteria Checklist
+// ============================================================
+
+interface PromotionCriteriaChecklistProps {
+  language: AppLanguage;
+  status: PromotionStatus | null;
+  currentMode: JournalEngineMode;
+  onPromote: () => Promise<void> | void;
+  onDowngrade: () => Promise<void> | void;
+  busy: boolean;
+  notice: string | null;
+}
+
+function PromotionCriteriaChecklist({
+  language,
+  status,
+  currentMode,
+  onPromote,
+  onDowngrade,
+  busy,
+  notice,
+}: PromotionCriteriaChecklistProps): React.ReactElement {
+  const labels = {
+    title: L4(language, {
+      ko: '승격 4-조건 체크리스트',
+      en: 'Promotion 4-Criteria Checklist',
+      ja: '昇格 4 条件チェックリスト',
+      zh: '晋升 4 项条件清单',
+    }),
+    sampleSize: L4(language, {
+      ko: '최소 표본',
+      en: 'Min sample size',
+      ja: '最小サンプル',
+      zh: '最小样本',
+    }),
+    observation: L4(language, {
+      ko: '최소 관찰 시간',
+      en: 'Min observation time',
+      ja: '最小観察時間',
+      zh: '最小观察时长',
+    }),
+    matchRate: L4(language, {
+      ko: '전체 일치율',
+      en: 'Overall match rate',
+      ja: '全体一致率',
+      zh: '总体一致率',
+    }),
+    regression: L4(language, {
+      ko: '최근 1h 회귀 없음',
+      en: 'No recent 1h regression',
+      ja: '最近1h の回帰なし',
+      zh: '近 1h 无回归',
+    }),
+    p95: L4(language, {
+      ko: '저널 쓰기 P95',
+      en: 'Journal write P95',
+      ja: 'ジャーナル書き込み P95',
+      zh: '日志写入 P95',
+    }),
+    promoteBtn: L4(language, {
+      ko: '지금 승격',
+      en: 'Promote Now',
+      ja: '今すぐ昇格',
+      zh: '立即晋升',
+    }),
+    downgradeBtn: L4(language, {
+      ko: 'Shadow 로 내리기',
+      en: 'Downgrade to Shadow',
+      ja: 'Shadow に戻す',
+      zh: '回退到 Shadow',
+    }),
+    loading: L4(language, {
+      ko: '처리 중…',
+      en: 'Processing…',
+      ja: '処理中…',
+      zh: '处理中…',
+    }),
+    empty: L4(language, {
+      ko: '평가 대기 중…',
+      en: 'Waiting for evaluation…',
+      ja: '評価待ち…',
+      zh: '等待评估…',
+    }),
+    blocked: L4(language, {
+      ko: '차단 사유',
+      en: 'Block reason',
+      ja: 'ブロック理由',
+      zh: '阻止原因',
+    }),
+  };
+
+  if (!status) {
+    return (
+      <div className="rounded-2xl border border-border bg-bg-secondary/20 p-4">
+        <h4 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-2 flex items-center gap-2">
+          <Activity className="w-3 h-3" />
+          {labels.title}
+        </h4>
+        <p className="text-[12px] text-text-tertiary">{labels.empty}</p>
+      </div>
+    );
+  }
+
+  const { criteriaChecks: c, metrics: m, criteria: cr, ready, blockedReason } = status;
+
+  const rows: Array<{ key: keyof typeof c; label: string; value: string; threshold: string }> = [
+    {
+      key: 'sampleSize',
+      label: labels.sampleSize,
+      value: String(m.sampleSize),
+      threshold: `≥ ${cr.minSampleSize}`,
+    },
+    {
+      key: 'observationTime',
+      label: labels.observation,
+      value: `${m.observationHours.toFixed(1)}h`,
+      threshold: `≥ ${cr.minObservationHours}h`,
+    },
+    {
+      key: 'matchRate',
+      label: labels.matchRate,
+      value: `${m.matchRate.toFixed(2)}%`,
+      threshold: `≥ ${cr.minMatchRate}%`,
+    },
+    {
+      key: 'recentRegression',
+      label: labels.regression,
+      value: `${m.recentRegressionPct.toFixed(2)}%p`,
+      threshold: `≤ ${cr.maxRecentRegressionPct}%p`,
+    },
+    {
+      key: 'p95Performance',
+      label: labels.p95,
+      value: `${m.p95JournalMs.toFixed(1)}ms`,
+      threshold: `≤ ${cr.maxP95JournalDurationMs}ms`,
+    },
+  ];
+
+  return (
+    <div
+      className={`rounded-2xl border p-4 space-y-3 ${
+        ready ? 'bg-accent-green/5 border-accent-green/30' : 'bg-bg-secondary/20 border-border'
+      }`}
+      role="region"
+      aria-label={labels.title}
+    >
+      <h4 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
+        <ArrowUpCircle className="w-3.5 h-3.5 text-accent-blue" />
+        {labels.title}
+      </h4>
+      <ul className="space-y-1.5">
+        {rows.map((row) => (
+          <li
+            key={row.key}
+            className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-bg-secondary/30 text-[11px]"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {c[row.key] ? (
+                <CheckCircle2
+                  className="w-4 h-4 text-accent-green shrink-0"
+                  aria-label="pass"
+                />
+              ) : (
+                <XCircle
+                  className="w-4 h-4 text-accent-red shrink-0"
+                  aria-label="fail"
+                />
+              )}
+              <span className="font-bold text-text-primary truncate">{row.label}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 tabular-nums">
+              <span className={`font-black ${c[row.key] ? 'text-accent-green' : 'text-accent-red'}`}>
+                {row.value}
+              </span>
+              <span className="text-text-tertiary">{row.threshold}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {!ready && blockedReason && (
+        <div className="text-[11px] text-text-tertiary px-2">
+          <span className="font-bold text-accent-amber">{labels.blocked}: </span>
+          <code className="text-accent-amber">{blockedReason}</code>
+        </div>
+      )}
+
+      {notice && (
+        <div
+          className="text-[11px] px-3 py-2 rounded-lg bg-accent-blue/10 text-accent-blue"
+          role="status"
+          aria-live="polite"
+        >
+          {notice}
+        </div>
+      )}
+
+      <div className="flex items-center justify-end gap-2 pt-1">
+        {currentMode === 'on' && (
+          <button
+            type="button"
+            onClick={() => void onDowngrade()}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-bg-tertiary text-text-tertiary hover:bg-accent-amber/20 hover:text-accent-amber transition-colors focus-visible:ring-2 focus-visible:ring-accent-amber/50 disabled:opacity-50"
+            aria-label={labels.downgradeBtn}
+          >
+            <ArrowDownCircle className="w-3 h-3" />
+            {labels.downgradeBtn}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void onPromote()}
+          disabled={busy || !ready || currentMode === 'on'}
+          className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-accent-green/50 ${
+            ready && currentMode !== 'on'
+              ? 'bg-accent-green/20 text-accent-green hover:bg-accent-green/30'
+              : 'bg-bg-tertiary text-text-tertiary cursor-not-allowed'
+          } disabled:opacity-50`}
+          aria-label={labels.promoteBtn}
+        >
+          <ArrowUpCircle className="w-3 h-3" />
+          {busy ? labels.loading : labels.promoteBtn}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PART 3.6 — (M1.5.4) Promotion History Panel
+// ============================================================
+
+interface PromotionHistoryPanelProps {
+  language: AppLanguage;
+  history: PromotionEvent[];
+}
+
+function PromotionHistoryPanel({
+  language,
+  history,
+}: PromotionHistoryPanelProps): React.ReactElement {
+  const title = L4(language, {
+    ko: '승격/다운그레이드 이력',
+    en: 'Promotion / Downgrade History',
+    ja: '昇格・ダウングレード履歴',
+    zh: '晋升 / 回退历史',
+  });
+  const empty = L4(language, {
+    ko: '기록 없음',
+    en: 'No history yet',
+    ja: '履歴なし',
+    zh: '暂无记录',
+  });
+
+  return (
+    <div className="rounded-2xl border border-border bg-bg-secondary/20 p-4 space-y-2">
+      <h4 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
+        <History className="w-3.5 h-3.5 text-accent-blue" />
+        {title}
+      </h4>
+      {history.length === 0 ? (
+        <p className="text-[12px] text-text-tertiary px-2 py-3 rounded-lg bg-bg-secondary/30">
+          {empty}
+        </p>
+      ) : (
+        <ul className="space-y-1 max-h-48 overflow-y-auto">
+          {history.map((ev) => {
+            const ts = new Date(ev.ts).toLocaleString();
+            const arrow =
+              ev.to === 'on' ? '→ on'
+              : ev.to === 'shadow' ? '→ shadow'
+              : '→ off';
+            const color =
+              ev.trigger === 'downgrade' ? 'text-accent-amber'
+              : ev.to === 'on' ? 'text-accent-green'
+              : 'text-text-primary';
+            return (
+              <li
+                key={ev.id}
+                className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-bg-secondary/30 text-[11px] tabular-nums"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-text-tertiary shrink-0">{ts}</span>
+                  <span className={`font-black shrink-0 ${color}`}>
+                    {ev.from} {arrow}
+                  </span>
+                  <span
+                    className="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-bg-tertiary text-text-tertiary shrink-0"
+                    aria-label={`trigger-${ev.trigger}`}
+                  >
+                    {ev.trigger}
+                  </span>
+                  <span className="text-text-tertiary truncate">{ev.reason}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // PART 4 — Main dashboard
 // ============================================================
 
 const ShadowDiffDashboard: React.FC<ShadowDiffDashboardProps> = ({ language }) => {
   const { report, readiness, refresh, clear, loading, lastRefreshedAt } = useShadowDiff();
+  const {
+    currentMode,
+    promotionStatus,
+    promoteNow,
+    downgradeNow,
+    refreshStatus,
+  } = useJournalEngineMode();
   const [confirmClear, setConfirmClear] = useState(false);
+  const [history, setHistory] = useState<PromotionEvent[]>([]);
+  const [promoteBusy, setPromoteBusy] = useState(false);
+  const [promoteNotice, setPromoteNotice] = useState<string | null>(null);
+
+  // [M1.5.4] promotion 이벤트 히스토리 로딩 (초기 + 승격/다운그레이드 후 갱신)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const list = await getPromotionHistory({ limit: 20 });
+        if (!cancelled) setHistory(list);
+      } catch {
+        /* noop */
+      }
+    };
+    void load();
+    if (typeof window === 'undefined') return () => { cancelled = true; };
+    const handler = () => { void load(); };
+    window.addEventListener('noa:feature-flag-changed', handler);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('noa:feature-flag-changed', handler);
+    };
+  }, []);
+
+  // [M1.5.4] 수동 승격
+  const handlePromote = async () => {
+    setPromoteBusy(true);
+    setPromoteNotice(null);
+    try {
+      // 최신 상태 재평가 후 결정
+      await refreshStatus();
+      const ok = await promoteNow();
+      if (ok) {
+        setPromoteNotice(
+          L4(language, {
+            ko: '승격 완료 — On 모드 활성',
+            en: 'Promoted — On mode active',
+            ja: '昇格完了 — On モード有効',
+            zh: '晋升完成 — On 模式激活',
+          }),
+        );
+        try {
+          const list = await getPromotionHistory({ limit: 20 });
+          setHistory(list);
+        } catch { /* noop */ }
+      } else {
+        setPromoteNotice(
+          L4(language, {
+            ko: '승격 차단 — 조건 미충족',
+            en: 'Promotion blocked — criteria not met',
+            ja: '昇格ブロック — 条件未達',
+            zh: '晋升被阻止 — 未满足条件',
+          }),
+        );
+      }
+    } finally {
+      setPromoteBusy(false);
+    }
+  };
+
+  // [M1.5.4] 수동 다운그레이드 (현재 on 일 때만)
+  const handleDowngrade = async () => {
+    const ok = await downgradeNow('manual-downgrade');
+    if (ok) {
+      try {
+        const list = await getPromotionHistory({ limit: 20 });
+        setHistory(list);
+      } catch { /* noop */ }
+    }
+  };
 
   // 일치율 색상 (95% 이하 빨강, 99.9% 이상 녹색)
   const rateColor = report
@@ -253,6 +653,24 @@ const ShadowDiffDashboard: React.FC<ShadowDiffDashboardProps> = ({ language }) =
           </div>
         </div>
       )}
+
+      {/* ========================================================== */}
+      {/* PART 7.5 — (M1.5.4) 승격 4-조건 체크리스트                  */}
+      {/* ========================================================== */}
+      <PromotionCriteriaChecklist
+        language={language}
+        status={promotionStatus}
+        currentMode={currentMode}
+        onPromote={handlePromote}
+        onDowngrade={handleDowngrade}
+        busy={promoteBusy}
+        notice={promoteNotice}
+      />
+
+      {/* ========================================================== */}
+      {/* PART 7.6 — (M1.5.4) Promotion 이력                           */}
+      {/* ========================================================== */}
+      <PromotionHistoryPanel language={language} history={history} />
 
       {/* ========================================================== */}
       {/* PART 8 — Unmatched operations Top-10                        */}

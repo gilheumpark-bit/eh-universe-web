@@ -130,3 +130,28 @@ export type {
   OperationMismatch,
   ReadinessCheck,
 } from './diff-analyzer';
+// M1.5.4 — Promotion Controller + Audit
+export {
+  evaluatePromotion,
+  shouldDowngrade,
+  DEFAULT_CRITERIA,
+  DEFAULT_DOWNGRADE_OPTIONS,
+} from './promotion-controller';
+export type {
+  PromotionCriteria,
+  PromotionMetrics,
+  PromotionStatus,
+  JournalError,
+  DowngradeOptions,
+} from './promotion-controller';
+export {
+  recordPromotion,
+  getPromotionHistory,
+  clearPromotionHistory,
+  __resetPromotionAuditForTests,
+} from './promotion-audit';
+export type {
+  PromotionEvent,
+  PromotionHistoryFilter,
+  PromotionTrigger,
+} from './promotion-audit';

@@ -10,6 +10,21 @@ import '@testing-library/jest-dom';
 jest.mock('@/hooks/useShadowDiff', () => ({
   useShadowDiff: jest.fn(),
 }));
+// useJournalEngineMode (M1.5.4) — 승격 UI 용 훅. 테스트에선 고정 스텁.
+jest.mock('@/hooks/useJournalEngineMode', () => ({
+  useJournalEngineMode: () => ({
+    currentMode: 'shadow',
+    promotionStatus: null,
+    promoteNow: jest.fn().mockResolvedValue(false),
+    downgradeNow: jest.fn().mockResolvedValue(true),
+    refreshStatus: jest.fn().mockResolvedValue(undefined),
+    reportJournalError: jest.fn(),
+  }),
+}));
+// getPromotionHistory (M1.5.4) — IDB 의존 회피
+jest.mock('@/lib/save-engine/promotion-audit', () => ({
+  getPromotionHistory: jest.fn().mockResolvedValue([]),
+}));
 
 import { useShadowDiff } from '@/hooks/useShadowDiff';
 import ShadowDiffDashboard from '../ShadowDiffDashboard';
