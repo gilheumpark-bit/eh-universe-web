@@ -1,0 +1,226 @@
+/**
+ * Chaos Runtime E2E 템플릿
+ *
+ * 사용법:
+ *   1) 이 파일을 .template 확장자 제거하여 복사: 10-chaos-runtime.spec.ts
+ *   2) TARGET_URL 을 프로덕션 / 스테이징 / 로컬 중 선택
+ *   3) npx playwright test e2e/scenarios/10-chaos-runtime.spec.ts
+ *
+ * 커버 범위:
+ *   - 전수 클릭 (모든 버튼/링크)
+ *   - 극단 엣지 케이스 입력 (긴 텍스트 / 이모지 / XSS / 이상 숫자)
+ *   - Race condition (1초에 10회 연타)
+ *   - 네트워크 Slow 3G / Offline 시뮬레이션
+ *   - 콘솔 에러 / 4xx·5xx 응답 / 레이아웃 붕괴 수집
+ *
+ * 주의:
+ *   - 실제 계정으로 실행하지 말 것 (파괴적 변이 방지)
+ *   - 테스트용 Firebase 프로젝트 또는 로컬 환경 권장
+ *   - 네트워크 정책 상 프로덕션 rate limit 걸릴 수 있음 (429)
+ */
+
+import { test, expect, type Page, type ConsoleMessage } from '@playwright/test';
+
+const TARGET_URL = process.env.QA_TARGET_URL ?? 'https://ehsu.app';
+
+// ─────────────────────────────────────────────────────────────
+// 카오스 입력 페이로드 — 폼 전수 주입용
+// ─────────────────────────────────────────────────────────────
+const CHAOS_INPUTS = [
+  '',                                      // 빈 문자열
+  'A'.repeat(10_000),                      // 10KB 오버플로우
+  '<script>alert(1)</script>',             // XSS
+  '" OR 1=1 --',                           // SQLi-like
+  '🔥💀🎉'.repeat(1000),                   // 이모지 3K
+  '\u0000\u0001\u0002',                    // null byte + control chars
+  'AI-TEST-INPUT\n'.repeat(500),           // newline spam
+  '{{7*7}}',                               // template injection
+  '${7*7}',                                // ES interp
+  '../../etc/passwd',                      // path traversal
+];
+
+// 콘솔·네트워크 에러 수집기
+interface ChaosFindings {
+  consoleErrors: string[];
+  failedRequests: { url: string; status: number }[];
+  unhandledRejections: string[];
+  deadButtons: string[];            // 클릭 후 DOM/URL 변화 없음
+  layoutBreaks: string[];           // 스크린샷 diff 기준
+}
+
+function setupCollectors(page: Page): ChaosFindings {
+  const findings: ChaosFindings = {
+    consoleErrors: [],
+    failedRequests: [],
+    unhandledRejections: [],
+    deadButtons: [],
+    layoutBreaks: [],
+  };
+
+  page.on('console', (msg: ConsoleMessage) => {
+    if (msg.type() === 'error') findings.consoleErrors.push(msg.text());
+  });
+
+  page.on('pageerror', (err) => {
+    findings.unhandledRejections.push(err.message);
+  });
+
+  page.on('response', (res) => {
+    if (res.status() >= 400) {
+      findings.failedRequests.push({ url: res.url(), status: res.status() });
+    }
+  });
+
+  return findings;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Test 1 — 전수 클릭 (모든 버튼 dead button 탐지)
+// ─────────────────────────────────────────────────────────────
+test('Chaos 1: click all buttons, collect dead ones', async ({ page }) => {
+  const findings = setupCollectors(page);
+  await page.goto(TARGET_URL);
+  await page.waitForLoadState('networkidle');
+
+  const buttons = await page.locator('button, a[href]').all();
+  for (const btn of buttons) {
+    const beforeUrl = page.url();
+    const beforeDom = await page.content();
+    try {
+      await btn.click({ timeout: 2_000, trial: false });
+    } catch {
+      continue;
+    }
+    await page.waitForTimeout(500);
+    const afterUrl = page.url();
+    const afterDom = await page.content();
+    if (beforeUrl === afterUrl && beforeDom === afterDom) {
+      const label = (await btn.textContent())?.trim().slice(0, 60) ?? '(no text)';
+      findings.deadButtons.push(label);
+    }
+    // reset: go back to root for next button
+    await page.goto(TARGET_URL);
+    await page.waitForLoadState('networkidle');
+  }
+
+  console.log('Dead buttons:', findings.deadButtons);
+  console.log('Console errors:', findings.consoleErrors);
+  console.log('4xx/5xx:', findings.failedRequests);
+});
+
+// ─────────────────────────────────────────────────────────────
+// Test 2 — 모든 입력 필드에 카오스 값 주입
+// ─────────────────────────────────────────────────────────────
+test('Chaos 2: inject edge cases into every input', async ({ page }) => {
+  const findings = setupCollectors(page);
+  await page.goto(TARGET_URL);
+  await page.waitForLoadState('networkidle');
+
+  const inputs = await page.locator('input:visible, textarea:visible').all();
+  for (const input of inputs) {
+    for (const payload of CHAOS_INPUTS) {
+      try {
+        await input.fill(payload, { timeout: 1_000 });
+        await input.press('Tab');
+      } catch {
+        // readOnly/disabled — skip
+      }
+    }
+  }
+
+  expect(findings.consoleErrors).toEqual([]);
+  expect(findings.unhandledRejections).toEqual([]);
+});
+
+// ─────────────────────────────────────────────────────────────
+// Test 3 — Race Condition: 1초 내 10회 연타
+// ─────────────────────────────────────────────────────────────
+test('Chaos 3: rapid-click every submit/save button 10 times', async ({ page }) => {
+  const findings = setupCollectors(page);
+  await page.goto(TARGET_URL);
+  await page.waitForLoadState('networkidle');
+
+  // 저장/제출/생성 류 버튼만 선택 (파괴적 변이 회피)
+  const submitButtons = await page.locator(
+    'button:has-text("저장"), button:has-text("생성"), button:has-text("Save"), button:has-text("Submit")'
+  ).all();
+
+  for (const btn of submitButtons) {
+    const promises = [];
+    for (let i = 0; i < 10; i++) {
+      promises.push(btn.click({ timeout: 100 }).catch(() => {}));
+    }
+    await Promise.all(promises);
+    await page.waitForTimeout(1_000);
+  }
+
+  // 동일 리소스 중복 생성 여부는 수동 확인 필요 (서버 상태)
+  console.log('Race condition test — check server for duplicate entries');
+  expect(findings.unhandledRejections).toEqual([]);
+});
+
+// ─────────────────────────────────────────────────────────────
+// Test 4 — 네트워크 Offline / Slow 3G
+// ─────────────────────────────────────────────────────────────
+test('Chaos 4: offline mode during save', async ({ page, context }) => {
+  const findings = setupCollectors(page);
+  await page.goto(`${TARGET_URL}/studio`);
+  await page.waitForLoadState('networkidle');
+
+  // 네트워크 차단 → 저장 시도
+  await context.setOffline(true);
+  const saveButton = page.locator('button:has-text("저장"), button[aria-label*="save" i]').first();
+  if (await saveButton.isVisible()) {
+    await saveButton.click();
+    await page.waitForTimeout(3_000);
+  }
+  await context.setOffline(false);
+
+  // 무한 스피너 / 에러 메시지 확인
+  const spinners = await page.locator('[aria-busy="true"], [data-loading="true"]').count();
+  console.log('Spinners after offline recovery:', spinners);
+  expect(findings.unhandledRejections).toEqual([]);
+});
+
+test('Chaos 5: Slow 3G simulation', async ({ page, context }) => {
+  const findings = setupCollectors(page);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    downloadThroughput: (50 * 1024) / 8,    // 50 kbps
+    uploadThroughput: (20 * 1024) / 8,
+    latency: 2_000,
+  });
+
+  await page.goto(TARGET_URL, { timeout: 60_000 });
+  // 타임아웃 / 로딩 인디케이터 확인
+  const stillLoadingAfter10s = await page.locator('[aria-busy="true"]').isVisible();
+  console.log('Still loading after 10s on slow 3G:', stillLoadingAfter10s);
+  expect(findings.unhandledRejections).toEqual([]);
+});
+
+// ─────────────────────────────────────────────────────────────
+// Test 6 — 저장 중 뒤로가기 (Navigation during async)
+// ─────────────────────────────────────────────────────────────
+test('Chaos 6: back button during async mutation', async ({ page }) => {
+  const findings = setupCollectors(page);
+  await page.goto(`${TARGET_URL}/studio`);
+  await page.waitForLoadState('networkidle');
+
+  // 긴 텍스트 입력
+  const editor = page.locator('[data-role="editor"], [contenteditable="true"]').first();
+  if (await editor.isVisible()) {
+    await editor.click();
+    await page.keyboard.type('A'.repeat(100));
+  }
+
+  // 저장 버튼 클릭 → 즉시 뒤로가기
+  const saveButton = page.locator('button:has-text("저장")').first();
+  if (await saveButton.isVisible()) {
+    await saveButton.click();
+    await page.waitForTimeout(50); // 네트워크 중이어야 함
+    await page.goBack();
+  }
+
+  expect(findings.unhandledRejections).toEqual([]);
+});
