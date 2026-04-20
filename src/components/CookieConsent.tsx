@@ -79,7 +79,8 @@ export default function CookieConsent() {
       <div className="flex flex-wrap gap-2 items-center">
         <button
           onClick={handleAccept}
-          className="bg-accent-blue text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[44px]"
+          style={{ color: '#ffffff' }}
+          className="bg-accent-blue px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[44px]"
         >
           {T({ ko: "동의", en: "Accept", ja: "同意", zh: "同意" })}
         </button>

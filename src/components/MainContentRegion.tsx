@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
  */
 export function MainContentRegion({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  // [C] skip link(#main-content) anchor. <main> 랜드마크는 페이지별로 보유 — 중첩 main 방지.
   return (
     <div id="main-content" key={pathname}>
       {children}

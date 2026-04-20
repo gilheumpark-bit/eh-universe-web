@@ -42,7 +42,7 @@ export default function SplashScreen({
   void toggleLang; // keep reference for UnifiedSettingsBar
 
   return (
-    <div className="relative min-h-dvh flex w-full items-center justify-center overflow-hidden eh-page-canvas">
+    <main className="relative min-h-dvh flex w-full items-center justify-center overflow-hidden eh-page-canvas">
       <div className="relative z-10 w-full max-w-lg mx-auto px-6 flex flex-col items-center gap-10">
 
         {/* Badge */}
@@ -50,7 +50,10 @@ export default function SplashScreen({
           className={`transition-opacity duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-bg-secondary/60 backdrop-blur-sm">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-amber/20 font-mono text-[8px] font-bold tracking-wider text-accent-amber">
+            <span
+              style={{ color: '#ffffff' }}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-amber font-mono text-[10px] font-bold tracking-wider"
+            >
               EH
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
@@ -87,7 +90,8 @@ export default function SplashScreen({
           {/* Primary CTA — above the fold, instant action */}
           <button
             onClick={onStudio}
-            className="mt-6 px-8 min-h-[48px] rounded-xl bg-accent-amber text-[#1a1a1a] font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-[transform,background-color,border-color,color] shadow-lg"
+            style={{ color: '#ffffff' }}
+            className="mt-6 px-8 min-h-[48px] rounded-xl bg-accent-amber font-bold text-sm tracking-wide hover:bg-accent-amber/90 active:scale-[0.98] transition-[transform,background-color,border-color,color] shadow-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent-amber"
           >
             {L4(lang, { ko: "바로 시작하기 →", en: "Start Now →", ja: "今すぐ始める →", zh: "立即开始 →" })}
           </button>
@@ -141,6 +145,6 @@ export default function SplashScreen({
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

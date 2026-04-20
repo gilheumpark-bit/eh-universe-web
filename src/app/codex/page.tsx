@@ -27,7 +27,8 @@ export default function CodexPage() {
   return (
     <>
       <Header />
-      <main className="pt-20 md:pt-24">
+      {/* [C] codex는 탭으로 rulebook/reference/docs 페이지를 임베드 — 내부 <main>이 존재하므로 외부는 <section>으로 중첩 main 회피 */}
+      <section className="pt-20 md:pt-24" aria-label="Codex 지식 허브">
         <div className="mx-auto max-w-6xl px-4 py-12">
           {/* Header */}
           <div className="mb-8">
@@ -71,7 +72,7 @@ export default function CodexPage() {
             {tab === "guide" && <GuideContent />}
           </div>
         </div>
-      </main>
+      </section>
     </>
   );
 }

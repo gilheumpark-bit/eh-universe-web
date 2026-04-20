@@ -510,6 +510,8 @@ function HomePageContent() {
     <>
       <Header stellarWhite={stellarWhite} />
 
+      {/* [C] <main> 랜드마크 — skip link 타겟은 상위 MainContentRegion#main-content 유지, 여기는 semantic main */}
+      <main>
       {/* HERO */}
       <section ref={heroRef} className="relative overflow-hidden pb-20 pt-28 md:pb-28 md:pt-32">
         <div className="site-shell relative z-10">
@@ -669,6 +671,7 @@ function HomePageContent() {
           </div>
         </div>
       </section>
+      </main>
 
       <footer className="px-4 pb-10">
         <div className="site-shell">
