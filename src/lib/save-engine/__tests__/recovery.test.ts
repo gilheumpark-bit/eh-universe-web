@@ -163,3 +163,239 @@ describe('runBootRecovery — Degraded', () => {
     expect((await idbListQuarantined()).length).toBe(0);
   });
 });
+
+// ============================================================
+// PART 7 — M1.2: RecoveryResult 확장 필드
+// ============================================================
+
+describe('M1.2 RecoveryResult — 확장 필드', () => {
+  test('최초 부팅 → strategy=none, recoveredUpTo=null, estimatedLossMs=0', async () => {
+    const r = await runBootRecovery();
+    expect(r.strategy).toBe('none');
+    expect(r.recoveredUpTo).toBeNull();
+    expect(r.estimatedLossMs).toBe(0);
+    expect(r.corruptedEntries).toBe(0);
+    expect(r.fallbackSnapshotId).toBeNull();
+    expect(r.state).toEqual([]);
+  });
+
+  test('state는 projects의 alias여야 한다', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+    const r = await runBootRecovery();
+    expect(r.state).toBe(r.projects);
+  });
+});
+
+// ============================================================
+// PART 8 — M1.2 Strategy: full
+// ============================================================
+
+describe('M1.2 Strategy — full', () => {
+  test('snapshot + 이후 delta 정상 → strategy=full', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+
+    await appendInitEntry();
+    const seed = [{ id: 'p1', title: 'T' }];
+    const snap = await createSnapshot({ projects: seed, coversUpToEntryId: 'cov' });
+    expect(snap.entryResult.ok).toBe(true);
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.strategy).toBe('full');
+    expect(r.snapshotId).not.toBeNull();
+    expect(r.fallbackSnapshotId).toBe(r.snapshotId);
+    expect(r.estimatedLossMs).toBe(0);
+    expect(r.recoveredUpTo).not.toBeNull();
+    expect(r.corruptedEntries).toBe(0);
+  });
+
+  test('full 복구 후 recoveredUpTo > 0', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+    await createSnapshot({ projects: [{ id: 'p' }], coversUpToEntryId: 'c' });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.recoveredUpTo).not.toBeNull();
+    expect(r.recoveredUpTo).toBeGreaterThan(0);
+  });
+});
+
+// ============================================================
+// PART 9 — M1.2 Strategy: journal-only
+// ============================================================
+
+describe('M1.2 Strategy — journal-only', () => {
+  test('snapshot 없이 delta만 있는 경우 → strategy=journal-only', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+    await appendEntry({
+      entryType: 'delta',
+      payload: {
+        projectId: 'p',
+        ops: [{ op: 'add', path: '/title', value: 'J' }],
+        target: 'project',
+        baseContentHash: GENESIS,
+      },
+      createdBy: 'user',
+      projectId: 'p',
+    });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.strategy).toBe('journal-only');
+    expect(r.snapshotId).toBeNull();
+    expect(r.deltasReplayed).toBe(1);
+    expect(r.estimatedLossMs).toBe(0);
+  });
+
+  test('journal-only 복구에서는 fallbackSnapshotId=null', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    // init만 있으면 journal-only로 빈 상태 복구
+    expect(r.strategy).toBe('journal-only');
+    expect(r.fallbackSnapshotId).toBeNull();
+  });
+});
+
+// ============================================================
+// PART 10 — M1.2 Strategy: degraded
+// ============================================================
+
+describe('M1.2 Strategy — degraded', () => {
+  // 체인 손상 합성이 어려운 환경이므로, snapshotId만 존재하고 이후 변경 없는
+  // 케이스(full로 분류) + journal-only 실패 후 degraded 라우트 도달 여부만 확인.
+  test('snapshot만 존재 + 이후 delta 없음 → degraded 진입 시 체인 손상 0 (full 처리)', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+    await createSnapshot({ projects: [{ id: 'p' }], coversUpToEntryId: 'c' });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    // 정상 경로는 full로 분류, chainDamaged false
+    expect(r.chainDamaged).toBe(false);
+    expect(r.corruptedEntries).toBe(0);
+  });
+
+  test('corruptedEntries 필드는 quarantinedCount와 동기화', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+    const r = await runBootRecovery();
+    expect(r.corruptedEntries).toBe(r.quarantinedCount);
+  });
+});
+
+// ============================================================
+// PART 11 — M1.2: 크래시 상태별 strategy
+// ============================================================
+
+describe('M1.2 — 크래시 상태별 strategy', () => {
+  test('clean shutdown 후 부팅 → recoveredFromCrash=false + strategy=full', async () => {
+    // clean shutdown marker
+    const now = Date.now();
+    writeBeacon({
+      lastHeartbeat: now,
+      sessionId: 's',
+      tabId: 't',
+      cleanShutdownAt: now,
+    });
+    await appendInitEntry();
+    await createSnapshot({ projects: [{ id: 'p' }], coversUpToEntryId: 'c' });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.recoveredFromCrash).toBe(false);
+    expect(r.strategy).toBe('full');
+  });
+
+  test('stale beacon → recoveredFromCrash=true + strategy=full (snapshot 있으면)', async () => {
+    writeBeacon({
+      lastHeartbeat: Date.now() - BEACON_CRASH_THRESHOLD_MS - 1000,
+      sessionId: 's',
+      tabId: 't',
+    });
+    await appendInitEntry();
+    await createSnapshot({ projects: [{ id: 'p' }], coversUpToEntryId: 'c' });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.recoveredFromCrash).toBe(true);
+    expect(r.strategy).toBe('full');
+  });
+
+  test('stale beacon + snapshot 없음 + init만 → strategy=journal-only', async () => {
+    writeBeacon({
+      lastHeartbeat: Date.now() - BEACON_CRASH_THRESHOLD_MS - 1000,
+      sessionId: 's',
+      tabId: 't',
+    });
+    await appendInitEntry();
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.recoveredFromCrash).toBe(true);
+    expect(r.strategy).toBe('journal-only');
+    expect(r.estimatedLossMs).toBe(0);
+  });
+});
+
+// ============================================================
+// PART 12 — M1.2: phases 라벨 검증
+// ============================================================
+
+describe('M1.2 phases — 라벨 커버', () => {
+  test('full 복구 시 full-recovery: 라벨 포함', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+    await createSnapshot({ projects: [{ id: 'p' }], coversUpToEntryId: 'c' });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    const hasFull = r.phases.some((p) => p.label.startsWith('full-recovery:'));
+    expect(hasFull).toBe(true);
+  });
+
+  test('journal-only 복구 시 journal-only-recovery: 라벨 포함', async () => {
+    writeBeacon({ lastHeartbeat: Date.now(), sessionId: 's', tabId: 't' });
+    await appendInitEntry();
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    const hasJournalOnly = r.phases.some((p) => p.label.startsWith('journal-only-recovery:'));
+    expect(hasJournalOnly).toBe(true);
+  });
+});

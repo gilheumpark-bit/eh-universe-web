@@ -16,7 +16,18 @@ export { performAtomicAppend, estimateEntrySize, toSaveMeta } from './atomic-wri
 export { routerAppendEntry, routerGetTip, routerListEntries, routerGetEntry, routerBootCleanup } from './storage-router';
 export { migrateLegacyProjects, hasLegacyProjects, isAlreadyMigrated, rollbackMigrationMarker } from './migration';
 export { runBootRecovery } from './recovery';
-export { readBeacon, writeBeacon, clearBeacon, estimateCrash, startHeartbeat } from './beacon';
+export {
+  readBeacon,
+  writeBeacon,
+  clearBeacon,
+  estimateCrash,
+  evaluateBeaconStatus,
+  markCleanShutdown,
+  startHeartbeat,
+  BEACON_CRASH_THRESHOLD_MS,
+  BEACON_HEARTBEAT_INTERVAL_MS,
+} from './beacon';
+export type { BeaconStatus, BeaconPayload, CrashEstimate, HeartbeatHandle } from './beacon';
 export { acquireLeaderController, isWebLocksSupported } from './leader-election';
 export { WriterQueue, getDefaultWriterQueue } from './writer-queue';
 export { compressToBytes, decompressFromBytes, isCompressionStreamSupported } from './compression';
