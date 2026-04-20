@@ -270,10 +270,10 @@ export default function MarketplacePanel({
     close:       L4(language, { ko: "닫기", en: "Close", ja: "閉じる", zh: "关闭" }),
     empty:       L4(language, { ko: "일치하는 플러그인이 없습니다.", en: "No matching plugins.", ja: "一致するプラグインがありません。", zh: "没有匹配的插件。" }),
     comingSoon:  L4(language, {
-      ko: "외부 플러그인 지원은 곧 제공됩니다. 현재는 내장 플러그인만 사용 가능합니다.",
-      en: "External plugin support is coming soon. Only bundled plugins are available today.",
-      ja: "外部プラグインのサポートは近日公開。現在はバンドル版のみ利用可能です。",
-      zh: "即将支持外部插件。目前仅提供内置插件。",
+      ko: "내장 샘플 플러그인 미리보기. 외부 플러그인 업로드·설치는 정식 릴리스에서 활성화됩니다.",
+      en: "Bundled sample plugins preview. External plugin upload/install activates at public release.",
+      ja: "バンドル版サンプルプラグインプレビュー。外部プラグインは正式リリースで有効化されます。",
+      zh: "内置示例插件预览。外部插件安装将在正式版本中启用。",
     }),
     installHeader: L4(language, {
       ko: "URL에서 설치 (베타)",

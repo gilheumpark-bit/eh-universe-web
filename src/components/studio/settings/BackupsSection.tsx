@@ -191,11 +191,11 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           <GitBranch className="w-4 h-4 text-text-tertiary" />
           {L4(language, { ko: '클라우드 백업 (GitHub)', en: 'Cloud Backup (GitHub)', ja: 'Cloud Backup (GitHub)', zh: 'Cloud Backup (GitHub)' })}
           <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-bg-tertiary text-text-tertiary font-bold uppercase tracking-wider">
-            {L4(language, { ko: '준비 중', en: 'Coming Soon', ja: 'Coming Soon', zh: 'Coming Soon' })}
+            {L4(language, { ko: '설정 필요', en: 'Setup needed', ja: '設定が必要', zh: '需要设置' })}
           </span>
         </h3>
         <p className="text-xs text-text-tertiary">
-          {L4(language, { ko: '원고를 GitHub에 백업하고 버전 관리할 수 있습니다. 곧 활성화됩니다.', en: 'Back up manuscripts to GitHub with version control. Coming soon.', ja: '原稿をGitHubにバックアップし、バージョン管理できます。まもなく有効化されます。', zh: '将稿件备份到 GitHub 并进行版本管理。即将启用。' })}
+          {L4(language, { ko: 'GitHub 백업을 켜려면 환경 변수 NEXT_PUBLIC_GITHUB_CLIENT_ID 등록이 필요합니다.', en: 'To enable GitHub backup, set NEXT_PUBLIC_GITHUB_CLIENT_ID in your environment.', ja: 'GitHubバックアップを有効にするにはNEXT_PUBLIC_GITHUB_CLIENT_IDを設定してください。', zh: '要启用 GitHub 备份，请设置环境变量 NEXT_PUBLIC_GITHUB_CLIENT_ID。' })}
         </p>
       </div>
     );

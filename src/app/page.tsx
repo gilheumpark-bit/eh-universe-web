@@ -315,11 +315,13 @@ function HomePageContent() {
 
   const translatorStudioHref = useMemo(() => getTranslatorStudioHref(), []);
 
+  // 심사·신규 방문자 설득용 숫자 — 엔지니어링 신뢰성 증명을 앞으로.
+  // M1 AUTOSAVE_FORTRESS 투자가 랜딩에서 직접 읽히도록 배치.
   const universeStats = [
-    { value: "10+", label: T({ ko: "장르 프리셋", en: "Genre presets", ja: "ジャンルプリセット", zh: "类型预设" }) },
-    { value: "99만", label: T({ ko: "RAG 문서", en: "RAG docs", ja: "RAG 文書", zh: "RAG 文档" }) },
+    { value: "3,230", label: T({ ko: "통과 테스트", en: "Tests passing", ja: "テスト通過", zh: "通过测试" }) },
+    { value: "10K×0", label: T({ ko: "데이터 유실 (10,000회 카오스)", en: "Data loss (10K chaos)", ja: "データ損失 (10,000回カオス)", zh: "数据丢失 (10K混沌)" }) },
     { value: "4", label: T({ ko: "지원 언어", en: "Languages", ja: "対応言語", zh: "支持语言" }) },
-    { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open license", ja: "オープンライセンス", zh: "开放许可" }) },
+    { value: "20/20", label: T({ ko: "장애 시나리오 방어 (FMEA)", en: "Failure modes defended", ja: "障害シナリオ防御", zh: "故障场景防御" }) },
   ];
 
   const universeHubs = useMemo(
@@ -329,7 +331,7 @@ function HomePageContent() {
       href: NOVEL_STUDIO_PATH,
       badge: "NS",
       color: "purple" as const,
-      title: T({ ko: "소설 스튜디오", en: "Novel Studio", ja: "小説スタジオ", zh: "小说工作室" }),
+      title: T({ ko: "소설 IDE", en: "Novel IDE", ja: "小説IDE", zh: "小说 IDE" }),
       desc: T({
         ko: "집필·문체·원고 워크스페이스. 문체는 스튜디오 안 문체 탭에서 이용합니다.",
         en: "Full NOA authoring workspace. Open the Style tab inside the studio for 문체 tools.",
@@ -531,7 +533,7 @@ function HomePageContent() {
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link href={NOVEL_STUDIO_PATH} prefetch className="premium-button">
-                    {T({ ko: "스튜디오 시작", en: "Start Studio", ja: "スタジオを始める", zh: "启动工作室" })}
+                    {T({ ko: "집필 IDE 시작", en: "Start IDE", ja: "IDEを始める", zh: "启动 IDE" })}
                   </Link>
                   {translatorStudioHref.startsWith("http") ? (
                     <a
