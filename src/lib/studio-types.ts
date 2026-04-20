@@ -96,6 +96,10 @@ export interface SceneDirectionData {
   writerNotes?: string;
   /** 이번 화 등장인물 — 선택된 캐릭터만 프롬프트에 풀 DNA 주입 */
   activeCharacters?: string[];
+  /** 이번 화 활성 아이템 ID 목록 — 선택된 아이템만 프롬프트 주입(M3 — 감사 구멍 #1 해결) */
+  activeItems?: string[];
+  /** 이번 화 활성 스킬 ID 목록 — 선택된 스킬만 프롬프트 주입(M3 — 동일 패턴) */
+  activeSkills?: string[];
 }
 
 // Genre selection entry (multi-genre support)

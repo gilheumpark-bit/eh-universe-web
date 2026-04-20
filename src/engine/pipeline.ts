@@ -14,6 +14,7 @@ import { GRAMMAR_PACKS } from '@/lib/grammar-packs';
 import { buildShadowPrompt } from './shadow';
 import { logger } from '@/lib/logger';
 import { quickPurify, type TargetLang } from './language-purity';
+import { extractPreviousEpisodeSummary } from './previous-episode-extractor';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
 // ============================================================
@@ -695,41 +696,60 @@ export function buildSystemInstruction(
     CN: `另外 ${n} 项`,
   });
 
+  // M3 — 감사 구멍 #1 해결: activeItems/activeSkills 설정 시 그것만 주입.
+  // 미설정 시 기존 최대 20개 폴백.
+  const activeItemIds = new Set(config.sceneDirection?.activeItems ?? []);
+  const activeSkillIds = new Set(config.sceneDirection?.activeSkills ?? []);
+
   const buildItemsBlock = (): string => {
     const items = config.items;
     if (!Array.isArray(items) || items.length === 0) return '';
-    const visible = items.slice(0, RESOURCE_LIMIT);
+    const filtered = activeItemIds.size > 0
+      ? items.filter(it => activeItemIds.has(it.id))
+      : items;
+    const visible = filtered.slice(0, RESOURCE_LIMIT);
+    if (visible.length === 0) return '';
     const lines = visible.map(it => {
       const name = it.name || '(unnamed)';
       const category = it.category || 'misc';
       const desc = (it.description || it.effect || '').trim();
       return `  - ${name} (${category})${desc ? `: ${desc}` : ''}`;
     });
-    if (items.length > RESOURCE_LIMIT) {
-      const extra = items.length - RESOURCE_LIMIT;
-      resourceTruncated.push({ kind: 'items', total: items.length, dropped: extra });
+    if (filtered.length > RESOURCE_LIMIT) {
+      const extra = filtered.length - RESOURCE_LIMIT;
+      resourceTruncated.push({ kind: 'items', total: filtered.length, dropped: extra });
       lines.push(`  - ${moreCountLabel(extra)}`);
     }
-    const header = pickLang(language, { KO: '등장 아이템', EN: 'Items', JP: '登場アイテム', CN: '登场物品' });
+    const headerKey = activeItemIds.size > 0
+      ? { KO: '활성 아이템 (이번 화)', EN: 'Active Items (this episode)', JP: 'アクティブアイテム (今話)', CN: '活跃物品 (本话)' }
+      : { KO: '등장 아이템', EN: 'Items', JP: '登場アイテム', CN: '登场物品' };
+    const header = pickLang(language, headerKey);
     return `\n[INVENTORY — ${header}]\n${lines.join('\n')}`;
   };
 
   const buildSkillsBlock = (): string => {
     const skills = config.skills;
     if (!Array.isArray(skills) || skills.length === 0) return '';
-    const visible = skills.slice(0, RESOURCE_LIMIT);
+    const filtered = activeSkillIds.size > 0
+      ? skills.filter(sk => activeSkillIds.has(sk.id))
+      : skills;
+    const visible = filtered.slice(0, RESOURCE_LIMIT);
+    if (visible.length === 0) return '';
     const lines = visible.map(sk => {
       const name = sk.name || '(unnamed)';
       const type = sk.type || 'active';
       const desc = (sk.description || '').trim();
       return `  - ${name} (${type})${desc ? `: ${desc}` : ''}`;
     });
-    if (skills.length > RESOURCE_LIMIT) {
-      const extra = skills.length - RESOURCE_LIMIT;
-      resourceTruncated.push({ kind: 'skills', total: skills.length, dropped: extra });
+    if (filtered.length > RESOURCE_LIMIT) {
+      const extra = filtered.length - RESOURCE_LIMIT;
+      resourceTruncated.push({ kind: 'skills', total: filtered.length, dropped: extra });
       lines.push(`  - ${moreCountLabel(extra)}`);
     }
-    const header = pickLang(language, { KO: '등장 스킬', EN: 'Skills', JP: '登場スキル', CN: '登场技能' });
+    const headerKey = activeSkillIds.size > 0
+      ? { KO: '활성 스킬 (이번 화)', EN: 'Active Skills (this episode)', JP: 'アクティブスキル (今話)', CN: '活跃技能 (本话)' }
+      : { KO: '등장 스킬', EN: 'Skills', JP: '登場スキル', CN: '登场技能' };
+    const header = pickLang(language, headerKey);
     return `\n[SKILL-SET — ${header}]\n${lines.join('\n')}`;
   };
 
@@ -1055,10 +1075,34 @@ export function buildUserPrompt(
   options?: {
     previousContent?: string;
     language?: AppLanguage;
+    /**
+     * 이전 화 자동 요약 비활성화. 기본 false (자동 주입 활성).
+     * 사용자가 명시적으로 previousContent를 줬을 때는 그것이 우선이라 의미 없음.
+     */
+    disableAutoPreviousEpisode?: boolean;
+    /** 자동 추출 모드 — 'summary'(기본) or 'tail' */
+    autoPreviousMode?: 'summary' | 'tail';
+    /** 자동 추출 최대 글자수 (기본 400) */
+    autoPreviousMaxChars?: number;
   }
 ): string {
   const language = options?.language ?? 'KO';
   const langName = LANG_NAMES[language];
+
+  // 1. 사용자 지정 previousContent 최우선
+  // 2. 없으면 manuscripts 자동 추출 (M3 — 감사 구멍 #2 해결)
+  let previousBlock = '';
+  if (options?.previousContent) {
+    previousBlock = `[RE-BRANCHING CONTEXT]\nPrevious version: ${options.previousContent}\n`;
+  } else if (!options?.disableAutoPreviousEpisode) {
+    const extracted = extractPreviousEpisodeSummary(config, {
+      mode: options?.autoPreviousMode ?? 'summary',
+      maxChars: options?.autoPreviousMaxChars ?? 400,
+    });
+    if (extracted.text) {
+      previousBlock = `[PREVIOUS EPISODE — Ep.${extracted.sourceEpisode} (${extracted.sourceType})]\n${extracted.text}\n\n`;
+    }
+  }
 
   return `[SYSTEM COMMAND: NARRATIVE GENERATION]
 - Target Language: ${langName}
@@ -1071,7 +1115,7 @@ export function buildUserPrompt(
 [MASTER SYNOPSIS]
 ${config.synopsis || 'No master synopsis provided.'}
 
-${options?.previousContent ? `[RE-BRANCHING CONTEXT]\nPrevious version: ${options.previousContent}\n` : ''}[CURRENT DRAFT/INSTRUCTION]
+${previousBlock}[CURRENT DRAFT/INSTRUCTION]
 ${draft}
 
 Please execute the high-density narrative generation in ${langName}.

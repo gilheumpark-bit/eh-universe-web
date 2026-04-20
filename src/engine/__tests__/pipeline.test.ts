@@ -113,4 +113,106 @@ describe('buildUserPrompt', () => {
     const result = buildUserPrompt(mockConfig, '폭발이 일어난다');
     expect(result).toContain('폭발이 일어난다');
   });
+
+  // M3 — 감사 구멍 #2 해결: 자동 이전 화 주입
+  it('M3 — 자동 이전 화 요약 주입 (manuscripts 있을 때)', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      episode: 5,
+      manuscripts: [{
+        episode: 4,
+        title: 'Ep 4',
+        content: '4화 본문',
+        charCount: 5,
+        lastUpdate: 0,
+        summary: '4화 요약: 주인공이 적과 마주침',
+      }],
+    };
+    const result = buildUserPrompt(cfg, '5화 시작');
+    expect(result).toContain('PREVIOUS EPISODE');
+    expect(result).toContain('4화 요약');
+  });
+
+  it('M3 — disableAutoPreviousEpisode 옵션 존중', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      episode: 5,
+      manuscripts: [{
+        episode: 4,
+        title: 'Ep 4',
+        content: '4화 본문',
+        charCount: 5,
+        lastUpdate: 0,
+        summary: '4화 요약',
+      }],
+    };
+    const result = buildUserPrompt(cfg, '5화 시작', { disableAutoPreviousEpisode: true });
+    expect(result).not.toContain('PREVIOUS EPISODE');
+  });
+
+  it('M3 — 사용자 previousContent 우선', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      episode: 5,
+      manuscripts: [{
+        episode: 4, title: 'E4', content: 'auto', charCount: 4, lastUpdate: 0, summary: 'auto-summary',
+      }],
+    };
+    const result = buildUserPrompt(cfg, 'draft', { previousContent: 'manual override' });
+    expect(result).toContain('RE-BRANCHING CONTEXT');
+    expect(result).toContain('manual override');
+    expect(result).not.toContain('auto-summary');
+  });
+});
+
+// M3 — 감사 구멍 #1 해결: 활성 아이템 필터
+describe('M3 — Active items/skills filter', () => {
+  it('activeItems 미설정 → 기존 폴백 (전체 노출)', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      items: [
+        { id: 'i1', name: 'Sword', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '' },
+        { id: 'i2', name: 'Shield', category: 'armor', rarity: 'common', description: '', effect: '', obtainedFrom: '' },
+      ],
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('Sword');
+    expect(result).toContain('Shield');
+  });
+
+  it('activeItems 설정 → 선택된 아이템만 노출', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      items: [
+        { id: 'i1', name: 'Sword', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '' },
+        { id: 'i2', name: 'Shield', category: 'armor', rarity: 'common', description: '', effect: '', obtainedFrom: '' },
+      ],
+      sceneDirection: {
+        ...mockConfig.sceneDirection,
+        activeItems: ['i1'],
+      },
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('Sword');
+    expect(result).not.toContain('Shield');
+    expect(result).toContain('활성 아이템');
+  });
+
+  it('activeSkills 설정 → 선택된 스킬만 노출', () => {
+    const cfg: StoryConfig = {
+      ...mockConfig,
+      skills: [
+        { id: 's1', name: 'Fireball', type: 'active', owner: '민아', description: '', cost: '', cooldown: '', rank: '' },
+        { id: 's2', name: 'Heal', type: 'active', owner: '민아', description: '', cost: '', cooldown: '', rank: '' },
+      ],
+      sceneDirection: {
+        ...mockConfig.sceneDirection,
+        activeSkills: ['s2'],
+      },
+    };
+    const result = buildSystemInstruction(cfg, 'KO');
+    expect(result).toContain('Heal');
+    expect(result).not.toContain('Fireball');
+    expect(result).toContain('활성 스킬');
+  });
 });

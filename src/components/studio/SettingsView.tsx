@@ -20,6 +20,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useUnifiedSettings } from '@/lib/UnifiedSettingsContext';
 import { useUserRoleSafe } from '@/contexts/UserRoleContext';
+import { useStudioConfig } from '@/contexts/StudioContext';
 import { TabHeader } from '@/components/studio/TabHeader';
 
 const WriterProfileCard = dynamic(() => import('@/components/studio/WriterProfileCard'), { ssr: false });
@@ -29,6 +30,8 @@ const AdvancedSection = dynamic(() => import('@/components/studio/settings/Advan
 const PluginsSection = dynamic(() => import('@/components/studio/settings/PluginsSection'), { ssr: false });
 const SessionSection = dynamic(() => import('@/components/studio/settings/SessionSection'), { ssr: false });
 const ComplianceSection = dynamic(() => import('@/components/studio/settings/ComplianceSection'), { ssr: false });
+// [M3] SeriesDNASection — 화별 씬시트 자동 분석 (로컬만)
+const SeriesDNASection = dynamic(() => import('@/components/studio/settings/SeriesDNASection'), { ssr: false });
 // [M1.7] ShadowDiffDashboard 는 이제 StorageObservatoryDashboard 내부에서 재사용됨.
 const StorageObservatoryDashboard = dynamic(() => import('@/components/studio/settings/StorageObservatoryDashboard'), { ssr: false });
 
@@ -260,6 +263,10 @@ function EasyTab({ language }: { language: AppLanguage }) {
 // ============================================================
 
 function WritingTab({ language }: { language: AppLanguage }) {
+  // [M3] 시리즈 DNA를 위해 config 접근
+  const { config } = useStudioConfig();
+  const episodeSceneSheets = config?.episodeSceneSheets ?? [];
+
   return (
     <div className="space-y-4">
       <AccordionGroup
@@ -272,6 +279,9 @@ function WritingTab({ language }: { language: AppLanguage }) {
 
       {/* 컴플라이언스 — AI 사용 고지 + 19+ 분기 */}
       <ComplianceSection language={language} />
+
+      {/* [M3] 시리즈 DNA — 화별 씬시트 자동 분석 (로컬만) */}
+      <SeriesDNASection language={language} episodeSceneSheets={episodeSceneSheets} />
     </div>
   );
 }

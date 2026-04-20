@@ -3,9 +3,9 @@
 // ============================================================
 // PART 1 — Imports, Types & Card Catalog
 // ============================================================
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { AppLanguage, StoryConfig } from '@/lib/studio-types';
+import { AppLanguage, StoryConfig, SceneDirectionData } from '@/lib/studio-types';
 import TabAssistant from '@/components/studio/TabAssistant';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
@@ -13,6 +13,13 @@ import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { BookOpen, TrendingUp, Palette, PenTool } from 'lucide-react';
 import type { FullDirectionData } from '@/components/studio/SceneSheet';
 import { TabHeader } from '@/components/studio/TabHeader';
+import SceneSheetPresetBar from '@/components/studio/SceneSheetPresetBar';
+import SavePresetDialog from '@/components/studio/SavePresetDialog';
+import ApplyPresetDialog from '@/components/studio/ApplyPresetDialog';
+import EpisodeTransitionPanel from '@/components/studio/EpisodeTransitionPanel';
+import ActiveItemSelector from '@/components/studio/ActiveItemSelector';
+import { useEpisodeTransition } from '@/hooks/useEpisodeTransition';
+import type { ScenePreset } from '@/lib/scene-preset-registry';
 
 const SceneSheet = dynamic(() => import('@/components/studio/SceneSheet'), {
   ssr: false,
@@ -119,6 +126,62 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
   const t = createT(language);
   const isKO = language === 'KO';
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+
+  // ============================================================
+  // PART 2.5 — M3 Preset / Transition state
+  // ============================================================
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [applyDialogPreset, setApplyDialogPreset] = useState<ScenePreset | null>(null);
+  const [presetRefreshKey, setPresetRefreshKey] = useState(0);
+
+  // 화별 directionSnapshot 매핑 — useEpisodeTransition 입력
+  const episodeSheetMap = useMemo<Record<number, SceneDirectionData>>(() => {
+    const map: Record<number, SceneDirectionData> = {};
+    for (const sheet of config.episodeSceneSheets ?? []) {
+      if (sheet.directionSnapshot) map[sheet.episode] = sheet.directionSnapshot;
+    }
+    // 현재 작업 중인 sceneDirection도 포함 (현재 화 기준)
+    if (config.sceneDirection && config.episode) {
+      map[config.episode] = config.sceneDirection;
+    }
+    return map;
+  }, [config.episodeSceneSheets, config.sceneDirection, config.episode]);
+
+  const transition = useEpisodeTransition({
+    currentEpisode: config.episode ?? 1,
+    episodeSceneSheets: episodeSheetMap,
+  });
+
+  const updateSceneDirection = useCallback((nextDirection: SceneDirectionData) => {
+    if (!currentSessionId) {
+      logger.warn('RulebookTab', 'updateSceneDirection skipped: no active session');
+      return;
+    }
+    updateCurrentSession({
+      config: {
+        ...(config || INITIAL_CONFIG),
+        sceneDirection: nextDirection,
+      },
+    });
+  }, [config, currentSessionId, updateCurrentSession]);
+
+  const handleApplyTransition = useCallback((suggestion: ReturnType<typeof useEpisodeTransition>['suggestions'][number]) => {
+    const partial = transition.apply(suggestion.id);
+    if (!partial) return;
+    updateSceneDirection({ ...(config.sceneDirection ?? {}), ...partial });
+  }, [transition, updateSceneDirection, config.sceneDirection]);
+
+  const handleApplyPreset = useCallback((merged: SceneDirectionData) => {
+    updateSceneDirection(merged);
+  }, [updateSceneDirection]);
+
+  const handleActiveItemChange = useCallback((next: { activeItems: string[]; activeSkills: string[] }) => {
+    updateSceneDirection({
+      ...(config.sceneDirection ?? {}),
+      activeItems: next.activeItems,
+      activeSkills: next.activeSkills,
+    });
+  }, [updateSceneDirection, config.sceneDirection]);
 
   /**
    * ensureSession — currentSessionId null 체크를 한 곳으로 모아
@@ -315,7 +378,70 @@ const RulebookTab: React.FC<RulebookTabProps> = ({
         {L4(language, { ko: '← 돌아가기', en: '← Back', ja: '← 戻る', zh: '← 返回' })}
       </button>
 
+      {/* M3 — 이전 화 연결 제안 패널 */}
+      <EpisodeTransitionPanel
+        language={language}
+        suggestions={transition.suggestions}
+        onApply={handleApplyTransition}
+        onDismiss={transition.dismiss}
+        onDismissAll={transition.dismissAll}
+      />
+
       <SceneSheet {...sceneSheetProps} initialTab={CARD_INITIAL_TABS[viewMode] || 'goguma'} />
+
+      {/* M3 — 활성 아이템/스킬 선택 (감사 구멍 #1 해결) */}
+      {((config.items?.length ?? 0) > 0 || (config.skills?.length ?? 0) > 0) && (
+        <details className="mt-4 rounded-xl border border-border bg-bg-secondary/40">
+          <summary className="cursor-pointer p-3 text-xs font-bold text-text-secondary hover:text-text-primary min-h-[44px] flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded-xl">
+            <span aria-hidden="true">🎒</span>
+            {L4(language, {
+              ko: '이번 화 활성 아이템/스킬',
+              en: 'Active items/skills for this episode',
+              ja: '今話のアクティブアイテム/スキル',
+              zh: '本话活跃物品/技能',
+            })}
+          </summary>
+          <div className="p-3">
+            <ActiveItemSelector
+              language={language}
+              items={config.items ?? []}
+              skills={config.skills ?? []}
+              activeItemIds={config.sceneDirection?.activeItems ?? []}
+              activeSkillIds={config.sceneDirection?.activeSkills ?? []}
+              onChange={handleActiveItemChange}
+            />
+          </div>
+        </details>
+      )}
+
+      {/* M3 — 프리셋 바 */}
+      <SceneSheetPresetBar
+        language={language}
+        currentGenre={config.genre?.toLowerCase()}
+        onSaveClick={() => setSaveDialogOpen(true)}
+        onApplyClick={(preset) => setApplyDialogPreset(preset)}
+        refreshKey={presetRefreshKey}
+      />
+
+      {/* M3 — 저장/적용 다이얼로그 */}
+      <SavePresetDialog
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        onSaved={() => setPresetRefreshKey(k => k + 1)}
+        language={language}
+        sceneDirection={config.sceneDirection ?? {}}
+        currentGenre={config.genre?.toLowerCase()}
+        currentEpisode={config.episode}
+        currentProject={config.title}
+      />
+      <ApplyPresetDialog
+        open={applyDialogPreset !== null}
+        onClose={() => setApplyDialogPreset(null)}
+        language={language}
+        preset={applyDialogPreset}
+        currentDirection={config.sceneDirection ?? {}}
+        onApply={handleApplyPreset}
+      />
 
       <div className="flex justify-end mt-4">
         <button
