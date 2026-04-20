@@ -1,0 +1,101 @@
+M7 Final Verification Run
+=========================
+Date: 2026-04-20
+Branch: feature/M7-hardening
+Target: v2.2.0-alpha
+
+-----------------------------------------
+[1] npx tsc --noEmit
+-----------------------------------------
+(no output — 0 errors)
+
+Result: PASS — 0 TypeScript errors.
+
+-----------------------------------------
+[2] npx jest
+-----------------------------------------
+Test Suites: 289 passed, 289 total
+Tests:       3217 passed, 3217 total
+Snapshots:   0 total
+Time:        12.333 s
+
+Result: PASS — all suites green.
+
+Delta vs M6 baseline: +2 suites, +17 tests
+  - src/lib/__tests__/env-sanity.test.ts (5)
+  - src/__tests__/alpha-smoke.test.ts (12)
+
+-----------------------------------------
+[3] npx next build
+-----------------------------------------
+Next.js 16.2.3 (Turbopack)
+Environments: .env.local
+Experiments: clientTraceMetadata, optimizePackageImports
+
+✓ Compiled successfully in 18.7s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 428ms
+  Running TypeScript ...
+  Finished TypeScript in 17.7s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/56) ...
+  Generating static pages using 7 workers (14/56)
+  Generating static pages using 7 workers (28/56)
+  Generating static pages using 7 workers (42/56)
+✓ Generating static pages using 7 workers (56/56) in 850ms
+  Finalizing page optimization ...
+
+Routes: 56 static (○) + 30 dynamic (ƒ) = 86 total
+Largest chunk: 0-tu_.d39ksih.js @ 853 KB (shared Monaco/Tiptap/AI-providers; matches M6 baseline)
+Total .next/static/chunks/: 20 MB
+
+Result: PASS — build succeeded with no error exits. No route exceeded baseline thresholds.
+
+-----------------------------------------
+[4] git diff --stat eac781b3..HEAD -- <fortress paths>
+-----------------------------------------
+Fortress paths audited:
+  src/lib/save-engine/
+  src/hooks/useAutoSave.ts
+  src/hooks/useRecovery.ts
+  src/hooks/useMultiTab.ts
+  src/hooks/useBackupTiers.ts
+  src/hooks/usePrimaryWriter.ts
+
+Diff output: (empty)
+
+Result: PASS — fortress zero-diff invariant satisfied.
+
+-----------------------------------------
+[5] TODO/FIXME/XXX sweep (src/**)
+-----------------------------------------
+Total markers: 81 (excluding IDENTITY_SEAL prefixes)
+
+Breakdown:
+  - Scanner rule strings (CLI/quill-engine regexes/descriptions): ~75
+    These are intentional — they are the rule catalog, not debt.
+  - Genuine refactor/deferred markers: 3
+    * components/studio/MarketplacePanel.tsx:105 — TODO wire real getters (skeleton, feature-flagged)
+    * components/studio/StudioSidebar.tsx:32 — TODO extract context providers (refactor note)
+    * components/studio/StudioStatusBar.tsx:45 — TODO extract to useTextStats hook (refactor note)
+  - Audit/testing hit-tracking in API routes: 3 (autopilot route quality gate)
+
+Severity tags (P0|P1): 0
+
+Result: PASS — no open P0/P1 TODOs. All genuine markers are non-blocking refactor notes or feature-flagged skeletons.
+
+-----------------------------------------
+Acceptance Gates Summary
+-----------------------------------------
+G1 Type check (0 errors)                : PASS
+G2 Jest all passing (>= 3,200)          : PASS (3217/3217)
+G3 Next build success                   : PASS
+G4 M1 Fortress zero-diff                : PASS (empty)
+G5 10 smoke tests pass                  : PASS (12/12)
+G6 Audit doc complete                   : PASS (docs/m7-hardening-audit.md)
+G7 Release notes complete               : PASS (docs/RELEASE-NOTES-v2.2.0-alpha.md)
+G8 Version bumped                       : PASS (package.json = 2.2.0-alpha)
+G9 CSP 5+ headers verified              : PASS (see audit §7)
+G10 Two commits clean                   : PENDING (awaiting commit)
+
+Verdict: SHIP.
