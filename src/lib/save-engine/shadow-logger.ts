@@ -28,10 +28,23 @@ import { logger } from '@/lib/logger';
 // PART 2 — Types
 // ============================================================
 
+// [M1.5.3] operation 태그 세분화 — 탭별 Shadow 쓰기 분리.
+// - save-project: 전체 projects[] 스냅샷 (backward compat, M1.5.2 기본)
+// - save-manuscript: Writing 탭 (episode manuscripts[])
+// - save-scene-direction: Rulebook/SceneSheet (sceneDirection + episodeSceneSheets)
+// - save-character: Character (characters[] + charRelations)
+// - save-world-sim: World/Planning (worldSimData + simulatorRef + world fields)
+// - save-style: Style (styleProfile)
+// - save-config: 일반 config 변경 (유지)
+// - save-session: 세션 레벨 메타 변경 (유지)
+// - delete-project / other: 기타
 export type ShadowOperation =
   | 'save-project'
   | 'save-manuscript'
   | 'save-scene-direction'
+  | 'save-character'
+  | 'save-world-sim'
+  | 'save-style'
   | 'save-config'
   | 'save-session'
   | 'delete-project'

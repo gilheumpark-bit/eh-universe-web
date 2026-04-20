@@ -1,10 +1,11 @@
 'use client';
 
 // ============================================================
-// useStudioMounts — M1.5.1~M1.5.2 StudioShell 마운트 래퍼 훅
+// useStudioMounts — M1.5.1~M1.5.3 StudioShell 마운트 래퍼 훅
 // ============================================================
 //
-// M1.1~M1.4 3 UI 컴포넌트 조건부 연결 + M1.5.2 Shadow 쓰기 어댑터 제공.
+// M1.1~M1.4 3 UI 컴포넌트 조건부 연결 + M1.5.2 Shadow 쓰기 어댑터 +
+// M1.5.3 탭별 다중 operation Shadow 쓰기 (sessionId forwarding).
 // FEATURE_JOURNAL_ENGINE='off' 기본값에서는 모든 훅 내부 로직이 비활성이며,
 // UI는 렌더되지만 동작하지 않는다 (Banner null, Dialog 열림 없음, Shadow 쓰기 0건).
 //
@@ -85,8 +86,9 @@ export function useStudioMounts(options: UseStudioMountsOptions): UseStudioMount
     enabled: active,
   });
 
-  // [M1.5.2] Shadow 쓰기 — flag 'shadow' 또는 'on' 일 때만 callback 내부에서 실제 쓰기.
-  // 'off' 에서는 onPrimarySaveComplete 호출 시에도 즉시 return (no-op).
+  // [M1.5.2/M1.5.3] Shadow 쓰기 — flag 'shadow' 또는 'on' 일 때만 callback 내부에서 실제 쓰기.
+  // 'off' 에서는 onPrimarySaveComplete* 호출 시에도 즉시 return (no-op).
+  // sessionId 는 탭별 payload 추출 기준 — useShadowProjectWriter 내부 ref 로 추적.
   const shadowWriter = useShadowProjectWriter({ projectId, sessionId });
 
   return useMemo<UseStudioMountsResult>(

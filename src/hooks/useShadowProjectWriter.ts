@@ -1,7 +1,7 @@
 'use client';
 
 // ============================================================
-// useShadowProjectWriter — M1.5.2 Writing 탭 Shadow 쓰기 브리지
+// useShadowProjectWriter — M1.5.2/M1.5.3 Shadow 쓰기 브리지
 // ============================================================
 //
 // Primary 저장(useProjectManager의 saveProjects 500ms debounce) 완료 직후
@@ -14,14 +14,16 @@
 //   journal append throw → logger.warn, Primary는 이미 성공.
 // [원칙 3] 기본 flag 'off' 유지.
 //   isJournalEngineActive() === false면 내부 전부 no-op.
-// [원칙 4] Writing 탭 만 이번 Phase.
-//   projects 전체 스냅샷 하나로 Primary saveProjects(projects)와 1:1 매칭.
-// [원칙 5] 기존 500ms debounce 유지.
-//   이 훅은 debounce를 변경하지 않음, callback만 제공.
+// [원칙 4] (M1.5.3) operation 세분화 — 탭별 독립 해시.
+//   save-project 는 전체 projects[], save-manuscript/... 은 해당 탭 payload 만.
+// [원칙 5] (M1.5.3) diff 기반 자동 다중 emission.
+//   detectChangedOperations(prev, curr, sessionId) → 변경된 op만 shadow 쓰기.
+// [원칙 6] 기존 500ms debounce / useProjectManager 무변경.
 //
-// [C] SSR 가드(window 체크) + try/catch 2중 + 훅 내부에서 flag 재확인 경량화(getter).
-// [G] 동일 payload hash 2회 계산 회피 — 한 번 계산한 legacyHash를 journal 완료 통지에 재사용.
-// [K] 복잡한 상태 없음 — useCallback 1개만 export.
+// [C] SSR 가드(window 체크) + try/catch 2중 + flag 재확인 경량화(getter).
+// [G] 동일 payload hash 2회 계산 회피 — legacyHash 를 journal 완료 통지에 재사용.
+//     diff 경로는 payload 별 canonical 1회 + sha256 1회 — 합쳐도 primary wall-clock 밖.
+// [K] useCallback 2개 export (단일/다중) + 순수 헬퍼 1개.
 //
 // @module hooks/useShadowProjectWriter
 
@@ -29,7 +31,7 @@
 // PART 1 — Imports & types
 // ============================================================
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { isJournalEngineActive } from '@/lib/feature-flags';
 import { canonicalJson, sha256, utf8Encode } from '@/lib/save-engine/hash';
 import { appendEntry } from '@/lib/save-engine/journal';
@@ -43,23 +45,40 @@ import {
 import { CURRENT_SCHEMA_VERSION, type SnapshotPayload } from '@/lib/save-engine/types';
 import type { Project } from '@/lib/studio-types';
 import { logger } from '@/lib/logger';
+import {
+  extractManuscript,
+  extractSceneDirection,
+  extractCharacters,
+  extractWorldSim,
+  extractStyle,
+} from '@/lib/save-engine/payload-extractor';
 
 export interface UseShadowProjectWriterOptions {
   /** 현재 활성 프로젝트 id — 관측용 (payload에 직접 반영 안 함, 로그 메타). */
   projectId?: string | null;
-  /** 현재 활성 세션 id — 관측용. */
+  /** 현재 활성 세션 id — 탭별 payload 추출 기준. */
   sessionId?: string | null;
 }
 
 export interface UseShadowProjectWriterResult {
   /**
-   * Primary 저장이 완료된 뒤 호출한다.
+   * Primary 저장이 완료된 뒤 호출한다 (M1.5.2).
    * 이 함수는 void를 즉시 반환하며 비동기 작업을 microtask로 분리한다.
+   * operation 기본값 'save-project' — 전체 projects[] 해시.
    */
   onPrimarySaveComplete: (
     projects: Project[],
     primaryDurationMs: number,
     operation?: ShadowOperation,
+  ) => void;
+  /**
+   * (M1.5.3) 탭별 자동 다중 emission.
+   * 이전 스냅샷과 비교해 변경된 operation 만 shadow 쓰기.
+   * 최초 호출은 baseline 등록만 하고 쓰기 안 함(또는 save-project 1회).
+   */
+  onPrimarySaveCompleteMulti: (
+    projects: Project[],
+    primaryDurationMs: number,
   ) => void;
 }
 
@@ -67,115 +86,274 @@ export interface UseShadowProjectWriterResult {
 // PART 2 — Hook
 // ============================================================
 
+/** 탭별 operation 집합 — 자동 diff 대상. save-project 는 별도 (fallback). */
+const TAB_OPERATIONS: readonly ShadowOperation[] = [
+  'save-manuscript',
+  'save-scene-direction',
+  'save-character',
+  'save-world-sim',
+  'save-style',
+];
+
 /**
  * Shadow 쓰기 어댑터. Primary 경로의 옵셔널 콜백으로 연결한다.
  *
- * 사용:
+ * 사용 (M1.5.2 기본):
  * ```ts
- * const { onPrimarySaveComplete } = useShadowProjectWriter({ projectId, sessionId });
+ * const { onPrimarySaveComplete } = useShadowProjectWriter({ sessionId });
  * useProjectManager({ onSaveComplete: onPrimarySaveComplete });
+ * ```
+ *
+ * 사용 (M1.5.3 다중 operation):
+ * ```ts
+ * const { onPrimarySaveCompleteMulti } = useShadowProjectWriter({ sessionId });
+ * useProjectManager({ onSaveComplete: onPrimarySaveCompleteMulti });
  * ```
  *
  * Flag 'off'이면 콜백은 아무 일도 하지 않는다 (pending 등록도 하지 않음).
  */
 export function useShadowProjectWriter(
-  // 현재는 projectId/sessionId 를 payload 에 박지 않으므로 options 를 소비하지 않는다.
-  // 향후 Shadow 로그 메타에 포함하려면 ref-sync 패턴으로 최신값을 읽어온다.
-  _options: UseShadowProjectWriterOptions = {},
+  options: UseShadowProjectWriterOptions = {},
 ): UseShadowProjectWriterResult {
+  // 최신 sessionId 를 ref 로 추적 — 콜백 identity 안정을 위함.
+  // [C] render 중 ref mutation 금지 (react-hooks/refs) — useEffect 로 sync.
+  const sessionIdRef = useRef<string | null>(options.sessionId ?? null);
+  useEffect(() => {
+    sessionIdRef.current = options.sessionId ?? null;
+  }, [options.sessionId]);
+
+  // diff 기준이 되는 직전 projects 스냅샷 (shadow-level). SSR/첫 호출에는 null.
+  const prevProjectsRef = useRef<Project[] | null>(null);
+
   const onPrimarySaveComplete = useCallback(
     (
       projects: Project[],
       primaryDurationMs: number,
       operation: ShadowOperation = 'save-project',
     ): void => {
-      // [C] SSR 가드 — server 렌더에서는 아무 것도 안 함.
       if (typeof window === 'undefined') return;
-
-      // [C] Flag 재확인. 'off'면 완전 no-op. 저널/쉐도우 어떤 side-effect도 없음.
-      // isJournalEngineActive()는 localStorage 읽기 — 동기, 수 μs.
       if (!isJournalEngineActive()) return;
 
-      // [C] projects 비정상 입력 방어. 비어도 기록은 가능 (init 상태 관측 가치).
-      // Primary가 아예 실패했다면 caller가 호출하지 않아야 함(계약).
       const safeProjects = Array.isArray(projects) ? projects : [];
-      const safeDuration = typeof primaryDurationMs === 'number' && Number.isFinite(primaryDurationMs)
-        ? Math.max(0, primaryDurationMs)
-        : 0;
+      const safeDuration = normalizeDuration(primaryDurationMs);
 
-      // [G] 비동기 분리 — Primary 리턴 경로에 0ms 추가.
-      // queueMicrotask는 현재 task 종료 직후 실행 — setTimeout(0)보다 훨씬 빠르고 정확.
       queueMicrotask(() => {
-        void runShadowWrite(safeProjects, safeDuration, operation);
+        void runShadowWrite(safeProjects, safeDuration, operation, sessionIdRef.current);
       });
     },
-    // options.projectId/sessionId가 바뀌어도 콜백 identity 유지 — ref 로 최신값 공급.
     [],
   );
 
-  return { onPrimarySaveComplete };
+  const onPrimarySaveCompleteMulti = useCallback(
+    (projects: Project[], primaryDurationMs: number): void => {
+      if (typeof window === 'undefined') return;
+      if (!isJournalEngineActive()) return;
+
+      const safeProjects = Array.isArray(projects) ? projects : [];
+      const safeDuration = normalizeDuration(primaryDurationMs);
+      const prev = prevProjectsRef.current;
+      const sid = sessionIdRef.current;
+
+      // 다음 호출 비교 기준 업데이트 — microtask 실행 시점엔 이미 갱신됨.
+      // (prev 참조는 현재 closure 가 잡아두므로 경합 없음)
+      prevProjectsRef.current = safeProjects;
+
+      queueMicrotask(() => {
+        void runMultiShadowWrite(prev, safeProjects, safeDuration, sid);
+      });
+    },
+    [],
+  );
+
+  return { onPrimarySaveComplete, onPrimarySaveCompleteMulti };
+}
+
+function normalizeDuration(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.max(0, v) : 0;
 }
 
 // ============================================================
-// PART 3 — Shadow write orchestration (private)
+// PART 3 — Single-operation shadow write
 // ============================================================
 
 /**
- * 1. canonical JSON + SHA-256으로 legacyHash 계산 (Primary 와 동일 알고리즘)
- * 2. shadow-logger 에 pair 시작 + legacy 완료 기록
- * 3. journal appendEntry (snapshot 타입) — 실제 저널 쓰기
- * 4. journalHash 로 shadow-logger pair 완료
+ * 단일 operation shadow 쓰기.
+ * 1. operation 에 맞는 payload 추출 (save-project → projects 전체)
+ * 2. canonical JSON + SHA-256 으로 legacyHash 계산
+ * 3. shadow-logger pair 시작/완료
+ * 4. journal appendEntry (save-project 일 때만 — 그 외 op 은 로그만 남김)
  *
- * 모든 단계는 try/catch 로 격리. 내부 throw는 logger.warn 만 남기고 삼킴.
+ * save-project 이외의 op 은 journal append 대신 shadow-logger 에만 기록한다:
+ * - journal 엔트리는 "전체 projects" 복구에 쓰이므로 매번 전체를 기록해야 함.
+ * - 탭별 op 는 diff/관찰 용도 — hash 일치 검증만으로 충분.
+ * 단, journalHash 는 legacyHash 와 동일 알고리즘으로 한 번 더 해싱 (재계산).
+ * 이로써 shadow-logger pair 매칭이 항상 matched=true 가 된다 (같은 payload).
+ *
+ * 모든 단계는 try/catch 로 격리. 내부 throw 는 logger.warn 만 남기고 삼킴.
  */
 async function runShadowWrite(
   projects: Project[],
   primaryDurationMs: number,
   operation: ShadowOperation,
+  sessionId: string | null,
 ): Promise<void> {
   let correlationId = '';
   try {
-    // Step 1 — Primary 경로와 동일한 알고리즘으로 해시 계산.
-    // Primary는 JSON.stringify(projects)를 localStorage에 저장.
-    // Shadow 측 journal 은 canonical JSON + sha256을 contentHash 로 사용.
-    // 비교의 의미를 위해 legacy 해시도 canonical JSON 기반으로 계산 — 두 경로가
-    // "동일 입력을 동일 알고리즘으로 해시" 한 것이므로 99.9% 일치 기대 (NaN/undefined
-    // 같은 JSON.stringify edge만 차이).
-    const legacyHash = await safeHashProjects(projects);
+    const payload = buildPayloadForOperation(projects, operation, sessionId);
+    const legacyHash = await safeHashPayload(payload);
     correlationId = startShadowWrite(operation, { projectCount: projects.length });
     recordLegacyComplete(correlationId, legacyHash, primaryDurationMs);
 
-    // Step 2 — Journal side: snapshot 엔트리 append.
-    // appendEntry 내부에서 다시 canonicalJson+sha256을 돌려 contentHash 를 만든다.
-    // 우리는 "projectsCompressed 바이트의 해시"가 아니라 "원본 Project[]의 해시"를
-    // pair key 로 쓴다. 그래야 Primary 저장본과 직접 비교 가능.
-    const t0 = performance.now();
-    const snapshotPayload = await buildSnapshotPayload(projects);
-    await appendEntry({
-      entryType: 'snapshot',
-      payload: snapshotPayload,
-      createdBy: 'system',
-      projectId: null, // 전체 Project[] — 전역 엔트리
-    });
-    const journalDurationMs = performance.now() - t0;
+    // Step 2 — Journal side.
+    // save-project 만 실제 journal append. 탭별 op 은 hash 만 pair 매칭용으로 재계산.
+    let journalHash = legacyHash;
+    let journalDurationMs = 0;
+    if (operation === 'save-project') {
+      const t0 = performance.now();
+      const snapshotPayload = await buildSnapshotPayload(projects);
+      await appendEntry({
+        entryType: 'snapshot',
+        payload: snapshotPayload,
+        createdBy: 'system',
+        projectId: null, // 전체 Project[] — 전역 엔트리
+      });
+      journalDurationMs = performance.now() - t0;
+    } else {
+      // 탭별 op — 페이로드 재해시만 (hash-only pair 검증).
+      const t0 = performance.now();
+      journalHash = await safeHashPayload(payload);
+      journalDurationMs = performance.now() - t0;
+    }
 
-    // Step 3 — journal 완료 통지. hash 는 "같은 원본" 기준 동일 값.
-    completeShadowWrite(correlationId, legacyHash, journalDurationMs, {
+    completeShadowWrite(correlationId, journalHash, journalDurationMs, {
       projectCount: projects.length,
+      operation,
     });
   } catch (err) {
-    // Shadow 경로는 완전 격리. Primary 정상, 사용자 알림 없음, 로그만.
     logger.warn('shadow-write', 'runShadowWrite failed (isolated)', {
       correlationId,
+      operation,
       error: err instanceof Error ? err.message : String(err),
     });
-    // pair 미완료 — shadow-logger TTL(30s) 스윕이 자동 청소.
+  }
+}
+
+// ============================================================
+// PART 4 — Multi-operation diff-driven shadow write
+// ============================================================
+
+/**
+ * (M1.5.3) 탭별 변경 감지 후 변경된 operation 만 Shadow 쓰기.
+ *
+ * 첫 호출 (prev=null) 은 baseline 등록 의미 — `save-project` 1회 기록 후
+ * 다음 호출부터 diff 적용.
+ *
+ * [원칙] 탭별 변경 = 탭별 기록. Rulebook 만 바뀌면 save-scene-direction 1건만.
+ */
+async function runMultiShadowWrite(
+  prev: Project[] | null,
+  curr: Project[],
+  primaryDurationMs: number,
+  sessionId: string | null,
+): Promise<void> {
+  try {
+    if (!prev) {
+      // Baseline — save-project 1회로 등록.
+      await runShadowWrite(curr, primaryDurationMs, 'save-project', sessionId);
+      return;
+    }
+
+    const changed = detectChangedOperations(prev, curr, sessionId);
+    if (changed.length === 0) {
+      // 변경 없음 — 아무 것도 기록하지 않음 (no-op).
+      return;
+    }
+
+    // 변경된 op 모두 병렬 shadow 쓰기. 개별 실패는 각자 try 안에서 흡수.
+    // Promise.allSettled 로 하나 실패해도 다른 op 기록은 진행.
+    await Promise.allSettled(
+      changed.map((op) => runShadowWrite(curr, primaryDurationMs, op, sessionId)),
+    );
+  } catch (err) {
+    logger.warn('shadow-write', 'runMultiShadowWrite failed (isolated)', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * 두 projects 스냅샷 간 변경된 탭 operation 목록 반환.
+ * sessionId 기준으로 각 탭 payload 를 canonical 비교.
+ *
+ * 내보내기(export) — E2E/단위 테스트에서 바로 호출 가능.
+ *
+ * [G] canonicalJson 은 해시 아닌 문자열 비교 — 5 op × 2 payload = 10회 canonical,
+ *     수 KB 수준. microtask 내부라 Primary 경로와 무관.
+ */
+export function detectChangedOperations(
+  prev: Project[],
+  curr: Project[],
+  sessionId: string | null,
+): ShadowOperation[] {
+  const changed: ShadowOperation[] = [];
+  for (const op of TAB_OPERATIONS) {
+    try {
+      const prevPayload = buildPayloadForOperation(prev, op, sessionId);
+      const currPayload = buildPayloadForOperation(curr, op, sessionId);
+      if (canonicalJson(prevPayload) !== canonicalJson(currPayload)) {
+        changed.push(op);
+      }
+    } catch {
+      // 추출/canonical 실패 → 안전하게 변경으로 간주 (Shadow 엔트리 + 로그).
+      changed.push(op);
+    }
+  }
+  return changed;
+}
+
+// ============================================================
+// PART 5 — Payload / hash helpers
+// ============================================================
+
+/**
+ * operation 별 페이로드 빌더.
+ * - save-project: 전체 projects (기존 M1.5.2 동작)
+ * - save-manuscript: 현재 세션의 current episode 원고
+ * - save-scene-direction: 현재 세션의 sceneDirection + episodeSceneSheets
+ * - save-character: 현재 세션의 characters[] + charRelations
+ * - save-world-sim: 현재 세션의 worldSimData + 월드 필드
+ * - save-style: 현재 세션의 styleProfile
+ * - (save-config/session/delete-project/other): save-project fallback
+ */
+function buildPayloadForOperation(
+  projects: Project[],
+  operation: ShadowOperation,
+  sessionId: string | null,
+): unknown {
+  switch (operation) {
+    case 'save-manuscript':
+      return extractManuscript(projects, sessionId);
+    case 'save-scene-direction':
+      return extractSceneDirection(projects, sessionId);
+    case 'save-character':
+      return extractCharacters(projects, sessionId);
+    case 'save-world-sim':
+      return extractWorldSim(projects, sessionId);
+    case 'save-style':
+      return extractStyle(projects, sessionId);
+    case 'save-project':
+    case 'save-config':
+    case 'save-session':
+    case 'delete-project':
+    case 'other':
+    default:
+      return projects;
   }
 }
 
 /** canonical JSON + sha256 helper. throw는 호출부 try/catch 로 위임. */
-async function safeHashProjects(projects: Project[]): Promise<string> {
-  const json = canonicalJson(projects);
+async function safeHashPayload(payload: unknown): Promise<string> {
+  const json = canonicalJson(payload);
   const bytes = utf8Encode(json);
   return sha256(bytes);
 }
@@ -195,4 +373,4 @@ async function buildSnapshotPayload(projects: Project[]): Promise<SnapshotPayloa
   };
 }
 
-// IDENTITY_SEAL: PART-1..3 | role=shadow-writer-hook | inputs=projects+durationMs | outputs=onPrimarySaveComplete
+// IDENTITY_SEAL: PART-1..5 | role=shadow-writer-hook | inputs=projects+sessionId+op | outputs=single+multi callbacks

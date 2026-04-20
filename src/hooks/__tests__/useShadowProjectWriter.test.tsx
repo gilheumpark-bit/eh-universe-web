@@ -325,4 +325,271 @@ describe('useShadowProjectWriter — 입력 방어', () => {
   });
 });
 
-// IDENTITY_SEAL: PART-1..6 | role=shadow-writer-tests | inputs=flag+projects | outputs=shadow log assertions
+// ============================================================
+// PART 7 — M1.5.3 operation 세분화 (save-manuscript/character/world/style/scene-direction)
+// ============================================================
+//
+// save-project 외 operation 은 journal append 를 건너뛰고 hash-only pair 매칭만 수행.
+// - extractor 가 올바른 payload 를 뽑는지
+// - 탭별 독립성 (Rulebook 편집이 Character 엔트리를 만들지 않음)
+// - diff-driven multi-op (onPrimarySaveCompleteMulti)
+
+import { detectChangedOperations } from '@/hooks/useShadowProjectWriter';
+import type { ShadowOperation } from '@/lib/save-engine/shadow-logger';
+
+function makeProjectsWithFields(overrides: {
+  manuscript?: string;
+  sceneNote?: string;
+  charName?: string;
+  worldPremise?: string;
+  styleDNA?: number[];
+} = {}): Project[] {
+  return [
+    {
+      id: 'p-a',
+      name: 'P1',
+      description: '',
+      genre: Genre.SF,
+      createdAt: 1,
+      lastUpdate: 1,
+      sessions: [
+        {
+          id: 's-a',
+          title: 'S1',
+          messages: [],
+          config: {
+            genre: Genre.SF,
+            povCharacter: '',
+            setting: '',
+            primaryEmotion: '',
+            episode: 1,
+            title: 'T',
+            totalEpisodes: 25,
+            guardrails: { min: 3000, max: 5000 },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            platform: 'MOBILE' as any,
+            characters: overrides.charName
+              ? [{
+                  id: 'c-1', name: overrides.charName, role: '', traits: '',
+                  appearance: '', dna: 0,
+                }]
+              : [],
+            manuscripts: [
+              {
+                episode: 1, title: 'Ep1',
+                content: overrides.manuscript ?? 'default-body',
+                charCount: 10, lastUpdate: 1,
+              },
+            ],
+            corePremise: overrides.worldPremise ?? '',
+            sceneDirection: overrides.sceneNote
+              ? { writerNotes: overrides.sceneNote }
+              : undefined,
+            styleProfile: overrides.styleDNA
+              ? {
+                  selectedDNA: overrides.styleDNA,
+                  sliders: {},
+                  checkedSF: [],
+                  checkedWeb: [],
+                }
+              : undefined,
+          },
+          lastUpdate: 1,
+        },
+      ],
+    },
+  ];
+}
+
+describe('useShadowProjectWriter — M1.5.3 operation 세분화', () => {
+  test('save-manuscript operation 명시 → 엔트리 operation=save-manuscript', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    result.current.onPrimarySaveComplete(
+      makeProjectsWithFields({ manuscript: 'body-X' }),
+      5,
+      'save-manuscript',
+    );
+    await flush(300);
+
+    const log = await getShadowLog();
+    expect(log.length).toBe(1);
+    expect(log[0].operation).toBe('save-manuscript');
+    expect(log[0].matched).toBe(true);
+    // save-manuscript 는 journal append 하지 않음 — appendEntry 호출 안 함.
+    expect(appendEntrySpy).not.toHaveBeenCalled();
+  });
+
+  test('save-character/save-world-sim/save-style 도 appendEntry 미호출', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    const ops: ShadowOperation[] = ['save-character', 'save-world-sim', 'save-style', 'save-scene-direction'];
+    for (const op of ops) {
+      result.current.onPrimarySaveComplete(makeProjectsWithFields(), 3, op);
+    }
+    await flush(400);
+
+    const log = await getShadowLog();
+    expect(log.length).toBe(4);
+    const seenOps = log.map((e) => e.operation).sort();
+    expect(seenOps).toEqual([...ops].sort());
+    expect(appendEntrySpy).not.toHaveBeenCalled();
+  });
+
+  test('save-project 는 여전히 appendEntry 호출 (backward compat)', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    result.current.onPrimarySaveComplete(makeProjectsWithFields(), 5);
+    await flush(300);
+
+    expect(appendEntrySpy).toHaveBeenCalledTimes(1);
+    const log = await getShadowLog();
+    expect(log[0].operation).toBe('save-project');
+  });
+});
+
+describe('useShadowProjectWriter — M1.5.3 detectChangedOperations', () => {
+  test('manuscript 만 변경 → save-manuscript 만 반환', () => {
+    const prev = makeProjectsWithFields({ manuscript: 'old' });
+    const curr = makeProjectsWithFields({ manuscript: 'new' });
+    expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-manuscript']);
+  });
+
+  test('캐릭터 이름 변경 → save-character 만', () => {
+    const prev = makeProjectsWithFields({ charName: 'Alice' });
+    const curr = makeProjectsWithFields({ charName: 'Bob' });
+    expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-character']);
+  });
+
+  test('Rulebook 편집 → save-scene-direction 만 (Character 불변)', () => {
+    const prev = makeProjectsWithFields({ sceneNote: 'n1', charName: 'Alice' });
+    const curr = makeProjectsWithFields({ sceneNote: 'n2', charName: 'Alice' });
+    expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-scene-direction']);
+  });
+
+  test('World premise 변경 → save-world-sim 만', () => {
+    const prev = makeProjectsWithFields({ worldPremise: 'v1' });
+    const curr = makeProjectsWithFields({ worldPremise: 'v2' });
+    expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-world-sim']);
+  });
+
+  test('Style 변경 → save-style 만', () => {
+    const prev = makeProjectsWithFields({ styleDNA: [0] });
+    const curr = makeProjectsWithFields({ styleDNA: [0, 1] });
+    expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-style']);
+  });
+
+  test('동일 payload → 빈 배열 (변경 없음)', () => {
+    const p1 = makeProjectsWithFields({ manuscript: 'same' });
+    const p2 = makeProjectsWithFields({ manuscript: 'same' });
+    expect(detectChangedOperations(p1, p2, 's-a')).toEqual([]);
+  });
+
+  test('여러 탭 동시 변경 → 해당 op 모두 반환', () => {
+    const prev = makeProjectsWithFields({ manuscript: 'old', sceneNote: 'old' });
+    const curr = makeProjectsWithFields({ manuscript: 'new', sceneNote: 'new' });
+    const ops = detectChangedOperations(prev, curr, 's-a');
+    expect(ops.sort()).toEqual(['save-manuscript', 'save-scene-direction']);
+  });
+});
+
+describe('useShadowProjectWriter — M1.5.3 onPrimarySaveCompleteMulti', () => {
+  test('첫 호출 → save-project 1건 (baseline)', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    result.current.onPrimarySaveCompleteMulti(makeProjectsWithFields(), 5);
+    await flush(300);
+
+    const log = await getShadowLog();
+    expect(log.length).toBe(1);
+    expect(log[0].operation).toBe('save-project');
+  });
+
+  test('두 번째 호출 — manuscript 변경 시 save-manuscript 1건', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    // baseline
+    result.current.onPrimarySaveCompleteMulti(
+      makeProjectsWithFields({ manuscript: 'v1' }),
+      5,
+    );
+    await flush(300);
+    // diff
+    result.current.onPrimarySaveCompleteMulti(
+      makeProjectsWithFields({ manuscript: 'v2' }),
+      6,
+    );
+    await flush(400);
+
+    const log = await getShadowLog();
+    const ops = log.map((e) => e.operation).sort();
+    expect(ops).toEqual(['save-manuscript', 'save-project']);
+  });
+
+  test('두 번째 호출 — 변경 없음 → 엔트리 추가 없음', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    const p = makeProjectsWithFields({ manuscript: 'same' });
+    result.current.onPrimarySaveCompleteMulti(p, 5);
+    await flush(300);
+    result.current.onPrimarySaveCompleteMulti(p, 5);
+    await flush(300);
+
+    const log = await getShadowLog();
+    expect(log.length).toBe(1); // baseline 1건만
+  });
+
+  test('Flag off 에서 multi 콜백 → 엔트리 0', async () => {
+    setFlag('off');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    result.current.onPrimarySaveCompleteMulti(makeProjectsWithFields(), 5);
+    result.current.onPrimarySaveCompleteMulti(
+      makeProjectsWithFields({ manuscript: 'v2' }),
+      5,
+    );
+    await flush(400);
+
+    expect((await getShadowLog()).length).toBe(0);
+    expect(appendEntrySpy).not.toHaveBeenCalled();
+  });
+
+  test('여러 탭 동시 변경 → 해당 op 모두 엔트리 추가', async () => {
+    setFlag('shadow');
+    const { result } = renderHook(() =>
+      useShadowProjectWriter({ sessionId: 's-a' }),
+    );
+    // baseline
+    result.current.onPrimarySaveCompleteMulti(
+      makeProjectsWithFields({ manuscript: 'old', charName: 'Alice' }),
+      5,
+    );
+    await flush(300);
+    // 두 탭 동시 변경
+    result.current.onPrimarySaveCompleteMulti(
+      makeProjectsWithFields({ manuscript: 'new', charName: 'Bob' }),
+      6,
+    );
+    await flush(500);
+
+    const log = await getShadowLog();
+    const ops = log.map((e) => e.operation).sort();
+    // save-project (baseline) + save-manuscript + save-character
+    expect(ops).toEqual(['save-character', 'save-manuscript', 'save-project']);
+  });
+});
+
+// IDENTITY_SEAL: PART-1..7 | role=shadow-writer-tests | inputs=flag+projects+ops | outputs=shadow log assertions
