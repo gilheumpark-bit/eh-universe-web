@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useRef, useState, useMemo, useEffect, type ChangeEvent } from 'react';
-import { Save, Download, Upload, FileStack, Send, Link2, Check } from 'lucide-react';
+import { Save, Download, Upload, FileStack, Send, Link2, Check, BookOpen } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { getAdapter, SUPPORTED_PLATFORMS, PLATFORM_LABELS, type PlatformId } from '@/lib/translation/platform-adapters';
 import { loadProjects, saveProjects } from '@/lib/project-migration';
+import { buildEpubFiles, type EpubChapter } from '@/lib/translation/epub-export';
+import type { PublishMetadata } from '@/lib/translation/publish-metadata';
+import { logger } from '@/lib/logger';
 import type { Project, ChatSession, TranslatedManuscriptEntry, AppLanguage } from '@/lib/studio-types';
 
 /** 번역 스튜디오·챕터 사이드바와 동일한 대표 보내기 5형식 */
@@ -374,6 +377,192 @@ function PlatformExportSection({
   );
 }
 
+// ============================================================
+// PART N — EPUB Export Section (책 형식으로 내보내기)
+// ============================================================
+// buildEpubFiles + JSZip 번들 → .epub 다운로드.
+// mimetype 엔트리만 STORE 압축, 나머지는 DEFLATE (EPUB 3 규격).
+function EpubExportSection({
+  chapters,
+  projectName,
+  to,
+  langKo,
+}: {
+  chapters: { name: string; content: string; result: string; isDone: boolean }[];
+  projectName: string;
+  to: string;
+  langKo: boolean;
+}) {
+  const [author, setAuthor] = useState<string>('');
+  const [status, setStatus] = useState<'idle' | 'exporting' | 'done' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string>('');
+
+  const completed = useMemo(
+    () => chapters.filter(c => (c.result || '').trim().length > 0),
+    [chapters],
+  );
+  const canExport = completed.length > 0;
+
+  const handleExport = async (): Promise<void> => {
+    if (!canExport) return;
+    setStatus('exporting');
+    setErrorMsg('');
+    try {
+      // 1) 완료 챕터 → EpubChapter[] 변환
+      const epubChapters: EpubChapter[] = completed.map((c, i) => ({
+        title: (c.name || '').trim() || (langKo ? `${i + 1}화` : `Chapter ${i + 1}`),
+        content: c.result,
+        episode: i + 1,
+      }));
+
+      // 2) 최소 PublishMetadata 구성 (AI 생성 메타는 선택 기능)
+      const fallbackTitle = langKo ? '무제' : 'Untitled';
+      const fallbackAuthor = langKo ? '미상' : 'Unknown';
+      const resolvedTitle = (projectName || '').trim() || fallbackTitle;
+      const resolvedAuthor = author.trim() || fallbackAuthor;
+      const meta: PublishMetadata = {
+        title: resolvedTitle,
+        titleTranslated: resolvedTitle,
+        author: resolvedAuthor,
+        authorRomanized: resolvedAuthor,
+        synopsis: '',
+        synopsisTranslated: '',
+        genre: [],
+        tags: [],
+        tagsTranslated: [],
+        targetLang: (to || 'en').toLowerCase(),
+      };
+
+      // 3) buildEpubFiles: 모든 EPUB 구조 문자열 맵 생성
+      const files = buildEpubFiles(epubChapters, meta);
+
+      // 4) JSZip 동적 import — 기존 full-backup.ts 와 동일 패턴
+      const JSZipMod = (await import('jszip' as string)) as {
+        default?: new () => JSZipInstance;
+      } & (new () => JSZipInstance);
+      const JSZipCtor = (JSZipMod as { default?: new () => JSZipInstance }).default ?? (JSZipMod as unknown as new () => JSZipInstance);
+      const zip = new JSZipCtor();
+
+      // mimetype은 반드시 STORE 압축 + 첫 엔트리 (EPUB 3 요구사항)
+      const mimetype = files['mimetype'];
+      if (typeof mimetype !== 'string') {
+        throw new Error('buildEpubFiles did not produce mimetype entry');
+      }
+      zip.file('mimetype', mimetype, { compression: 'STORE' });
+
+      // 나머지는 DEFLATE
+      for (const [path, content] of Object.entries(files)) {
+        if (path === 'mimetype') continue;
+        zip.file(path, content, { compression: 'DEFLATE' });
+      }
+
+      const blob = await zip.generateAsync({
+        type: 'blob',
+        mimeType: 'application/epub+zip',
+      });
+
+      // 5) 다운로드 트리거
+      const safeName = resolvedTitle.replace(/[\\/:*?"<>|]/g, '_').slice(0, 80);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName || 'translation'}.epub`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setStatus('done');
+      window.setTimeout(() => setStatus('idle'), 3000);
+    } catch (err) {
+      logger.warn('SaveBackupPanel', 'EPUB export failed', err);
+      setStatus('error');
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : langKo
+            ? 'EPUB 생성 중 오류 발생'
+            : 'EPUB generation failed',
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[10px] text-text-tertiary leading-relaxed">
+        {langKo
+          ? '번역 완료된 모든 회차를 한 권의 전자책(.epub)으로 묶어 내려받습니다. Amazon KDP · Apple Books · Kobo 등 국제 EPUB 표준(3.0) 호환.'
+          : 'Bundle all completed chapters into a single e-book (.epub). Compatible with Amazon KDP · Apple Books · Kobo (EPUB 3.0).'}
+      </p>
+
+      {/* 저자 입력 — 빈 값이면 "미상" */}
+      <label className="flex flex-col gap-1 text-[10px] text-text-tertiary">
+        <span className="font-mono uppercase tracking-wider">
+          {langKo ? '저자 (선택)' : 'Author (optional)'}
+        </span>
+        <input
+          type="text"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          placeholder={langKo ? '비워두면 "미상"' : 'Blank = "Unknown"'}
+          className="w-full bg-bg-primary border border-border rounded-md px-2 py-1.5 text-[12px] text-text-primary focus:border-accent-emerald outline-none"
+          maxLength={80}
+        />
+      </label>
+
+      {/* 요약 */}
+      <div className="rounded-md bg-white/[0.02] border border-white/5 p-2 text-[10px] space-y-0.5">
+        <div className="flex justify-between">
+          <span className="text-text-tertiary">{langKo ? '완료 회차' : 'Completed'}</span>
+          <span className="font-mono text-text-secondary">{completed.length}{langKo ? '개' : ''}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-text-tertiary">{langKo ? '언어' : 'Language'}</span>
+          <span className="font-mono text-text-secondary">{(to || 'en').toUpperCase()}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-text-tertiary">{langKo ? '제목' : 'Title'}</span>
+          <span className="font-mono text-text-secondary truncate ml-2 max-w-[180px]" title={projectName || '-'}>
+            {projectName || (langKo ? '(무제)' : '(Untitled)')}
+          </span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => { void handleExport(); }}
+        disabled={!canExport || status === 'exporting'}
+        className="w-full flex items-center justify-center gap-2 rounded-xl border border-accent-emerald/30 bg-accent-emerald/10 py-2.5 text-[11px] font-semibold text-accent-emerald transition-colors hover:bg-accent-emerald/20 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {status === 'exporting' ? (
+          <>{langKo ? '생성 중…' : 'Building…'}</>
+        ) : status === 'done' ? (
+          <><Check className="w-3.5 h-3.5" /> {langKo ? 'EPUB 저장 완료' : 'EPUB downloaded'}</>
+        ) : (
+          <><BookOpen className="w-3.5 h-3.5" /> {langKo ? `EPUB으로 내보내기 (${completed.length}회차)` : `Export as EPUB (${completed.length})`}</>
+        )}
+      </button>
+
+      {status === 'error' && errorMsg && (
+        <div className="text-[10px] text-accent-red bg-accent-red/5 border border-accent-red/20 rounded p-2">
+          {errorMsg}
+        </div>
+      )}
+      {!canExport && (
+        <p className="text-[10px] text-text-tertiary text-center italic">
+          {langKo ? '번역 완료된 회차가 없습니다.' : 'No completed translations.'}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// JSZip 인스턴스 최소 타입 (dynamic import 용)
+interface JSZipInstance {
+  file(path: string, content: string, options?: { compression?: 'STORE' | 'DEFLATE' }): void;
+  generateAsync(options: { type: 'blob'; mimeType?: string }): Promise<Blob>;
+}
+
 /**
  * 소설 스튜디오「EXPORT (5형식)」와 동일 — 번역 결과는 TXT/MD/JSON/HTML/CSV를 메인으로 둠.
  * 프로젝트 전체 이전용 JSON은 고급(접힘).
@@ -387,6 +576,7 @@ export function SaveBackupPanel() {
     chapters,
     from,
     to,
+    projectName,
     exportData,
     importData,
     importDocument,
@@ -485,6 +675,20 @@ export function SaveBackupPanel() {
           </summary>
           <div className="border-t border-white/5 px-3 py-3">
             <PlatformExportSection chapters={chapters} langKo={langKo} />
+          </div>
+        </details>
+
+        {/* EPUB 책 형식 내보내기 — Amazon KDP / Apple Books / Kobo 호환 */}
+        <details className="group rounded-xl border border-accent-emerald/25 bg-accent-emerald/[0.03] open:border-accent-emerald/35">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 select-none [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
+              <BookOpen className="h-3.5 w-3.5 text-accent-emerald opacity-80" />
+              {langKo ? 'EPUB 책으로 내보내기 (KDP·Apple Books 호환)' : 'Export as EPUB (KDP · Apple Books)'}
+            </span>
+            <span className="text-[9px] text-text-tertiary transition-transform group-open:rotate-180">▼</span>
+          </summary>
+          <div className="border-t border-white/5 px-3 py-3">
+            <EpubExportSection chapters={chapters} projectName={projectName} to={to} langKo={langKo} />
           </div>
         </details>
 
