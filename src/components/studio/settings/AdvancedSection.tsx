@@ -9,8 +9,9 @@ import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import {
-  ChevronDown, Zap, Monitor, Smartphone, Hash, Thermometer, BookOpen, HelpCircle, Shield,
+  ChevronDown, Zap, Monitor, Smartphone, Hash, Thermometer, BookOpen, HelpCircle, Shield, Sparkles,
 } from 'lucide-react';
+import type { DraftDetailMode } from '@/lib/feature-flags';
 import { setNarrativeDepth as narrativeDepthSetter } from '@/lib/noa/lora-swap';
 import ApiKeysSection from '@/components/studio/settings/ApiKeysSection';
 import { getFallbackPreference, setFallbackPreference } from '@/hooks/useSparkHealth';
@@ -48,6 +49,34 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
   const persistOriginBadgeShown = (enabled: boolean) => {
     setOriginBadgeShownState(enabled);
     setOriginBadgeVisible(enabled);
+  };
+
+  // [Task 4 Phase 3] Draft+Detail 실험 파이프라인 플래그 토글 — 기본 'off'.
+  // localStorage('noa_flag_draft_detail_v2') 에 'off'|'shadow'|'on' 저장.
+  // Settings 에서만 접근 — feature-flags.ts 기본값은 절대 바꾸지 않음.
+  const [draftDetailMode, setDraftDetailModeState] = useState<DraftDetailMode>(() => {
+    if (typeof window === 'undefined') return 'off';
+    try {
+      const raw = localStorage.getItem('noa_flag_draft_detail_v2');
+      if (raw === 'off' || raw === 'shadow' || raw === 'on') return raw;
+    } catch (err) {
+      logger.warn('AdvancedSection', 'read noa_flag_draft_detail_v2 failed', err);
+    }
+    return 'off';
+  });
+  const persistDraftDetailMode = (mode: DraftDetailMode) => {
+    setDraftDetailModeState(mode);
+    try {
+      localStorage.setItem('noa_flag_draft_detail_v2', mode);
+      // 같은 탭 내 버튼 컴포넌트가 재평가하도록 이벤트 발송.
+      window.dispatchEvent(
+        new CustomEvent('noa:feature-flag-changed', {
+          detail: { flag: 'FEATURE_DRAFT_DETAIL_V2', value: mode },
+        }),
+      );
+    } catch (err) {
+      logger.warn('AdvancedSection', 'save noa_flag_draft_detail_v2 failed', err);
+    }
   };
 
   // ============================================================
@@ -346,6 +375,82 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                   className="w-20 md:w-24 accent-purple-500 h-1.5 bg-bg-tertiary rounded-full appearance-none cursor-pointer"
                 />
                 <span className={`text-xs md:text-sm font-black w-7 md:w-8 text-right ${narrativeDepth < 0.5 || narrativeDepth > 2.0 ? 'text-accent-red' : 'text-accent-purple'}`}>{narrativeDepth.toFixed(1)}</span>
+              </div>
+            </div>
+
+            {/* ============================================================ */}
+            {/* PART 4 — Task 4 Draft+Detail 실험 파이프라인 (기본 'off')     */}
+            {/* ============================================================ */}
+            <div
+              className="p-4 md:p-6 rounded-3xl border border-transparent"
+              data-testid="advanced-draft-detail-toggle"
+            >
+              <div className="flex items-center gap-3 md:gap-4 min-w-0 mb-3">
+                <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
+                  <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs md:text-sm font-bold truncate">
+                    {L4(language, {
+                      ko: 'Draft + Detail 파이프라인 (실험)',
+                      en: 'Experimental: Draft + Detail',
+                      ja: 'Draft + Detail パイプライン (実験)',
+                      zh: 'Draft + Detail 流水线 (实验)',
+                    })}
+                  </div>
+                  <div className="text-[13px] text-text-tertiary hidden sm:block">
+                    {L4(language, {
+                      ko: '초안(4,000자) 생성 후 "AI 살 붙이기"를 작가가 선택하는 2-Pass 경로. 이 기능은 실험적입니다. 플래그 변경 시 새로고침 필요.',
+                      en: 'Two-pass path: draft (~4,000 chars) then author-initiated AI expansion. Experimental. Reload after changing flag.',
+                      ja: '下書き(4,000字)生成後、作家が「AIで肉付け」を選ぶ2-Passパス。実験的機能。フラグ変更後にリロードが必要。',
+                      zh: '先生成初稿(4,000字)，作家再选择「AI扩写」的两阶段路径。实验功能。更改标志后需刷新。',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div
+                role="radiogroup"
+                aria-label={L4(language, {
+                  ko: 'Draft+Detail 파이프라인 모드',
+                  en: 'Draft+Detail pipeline mode',
+                  ja: 'Draft+Detail パイプラインモード',
+                  zh: 'Draft+Detail 流水线模式',
+                })}
+                className="grid grid-cols-3 gap-2"
+              >
+                {([
+                  {
+                    val: 'off' as const,
+                    label: { ko: '끔 (기본)', en: 'Off (default)', ja: 'オフ (既定)', zh: '关闭 (默认)' },
+                  },
+                  {
+                    val: 'shadow' as const,
+                    label: { ko: 'Shadow (힌트만)', en: 'Shadow (prompt hints)', ja: 'Shadow (ヒントのみ)', zh: 'Shadow (仅提示)' },
+                  },
+                  {
+                    val: 'on' as const,
+                    label: { ko: '전면 활성', en: 'Full on', ja: '完全有効', zh: '完全开启' },
+                  },
+                ]).map((opt) => {
+                  const selected = draftDetailMode === opt.val;
+                  return (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      data-testid={`draft-detail-mode-${opt.val}`}
+                      onClick={() => persistDraftDetailMode(opt.val)}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue ${
+                        selected
+                          ? 'bg-accent-blue/20 border border-accent-blue/40 text-accent-blue'
+                          : 'bg-bg-secondary border border-border text-text-secondary hover:border-accent-blue/30'
+                      }`}
+                    >
+                      {L4(language, opt.label)}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
