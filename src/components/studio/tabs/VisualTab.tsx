@@ -178,7 +178,7 @@ function SceneGallery({
       {/* Mini Episode Timeline */}
       <div className="ds-card">
         <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-3">
-          {L4(lang, { ko: '에피소드 타임라인', en: 'Episode Timeline' })}
+          {L4(lang, { ko: '에피소드 타임라인', en: 'Episode Timeline', ja: 'エピソードタイムライン', zh: '剧集时间线' })}
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {timeline.map(([ep, imgs]) => (
@@ -190,7 +190,7 @@ function SceneGallery({
               }`}
             >
               <span className="text-[10px] font-bold text-text-secondary">
-                {ep === 0 ? L4(lang, { ko: '미배정', en: 'Unassigned' }) : `EP.${ep}`}
+                {ep === 0 ? L4(lang, { ko: '미배정', en: 'Unassigned', ja: '未割当', zh: '未分配' }) : `EP.${ep}`}
               </span>
               <div className="flex -space-x-1.5">
                 {imgs.slice(0, 3).map(img => (
@@ -224,7 +224,7 @@ function SceneGallery({
             onChange={e => setFilterEp(e.target.value === 'all' ? 'all' : Number(e.target.value))}
             className="bg-bg-secondary/80 border border-border rounded-lg px-3 py-1.5 text-[10px] text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 appearance-none pr-6 transition-colors"
           >
-            <option value="all">{L4(lang, { ko: '전체 에피소드', en: 'All Episodes' })}</option>
+            <option value="all">{L4(lang, { ko: '전체 에피소드', en: 'All Episodes', ja: '全エピソード', zh: '所有剧集' })}</option>
             {epOptions.map(ep => (
               <option key={ep} value={ep}>EP.{ep}</option>
             ))}
@@ -239,10 +239,10 @@ function SceneGallery({
               : 'bg-bg-secondary/50 border-border text-text-tertiary hover:text-text-secondary'
           }`}
         >
-          <Star className="w-3 h-3" /> {L4(lang, { ko: '즐겨찾기', en: 'Favorites' })}
+          <Star className="w-3 h-3" /> {L4(lang, { ko: '즐겨찾기', en: 'Favorites', ja: 'お気に入り', zh: '收藏' })}
         </button>
         <span className="text-[9px] text-text-tertiary ml-auto">
-          {filtered.length} / {allImages.length} {L4(lang, { ko: '이미지', en: 'images' })}
+          {filtered.length} / {allImages.length} {L4(lang, { ko: '이미지', en: 'images', ja: '画像', zh: '图片' })}
         </span>
       </div>
 
@@ -280,7 +280,7 @@ function SceneGallery({
                   onChange={e => assignEpisode(img.cardId, img.id, Number(e.target.value) || 0)}
                   className="flex-1 bg-bg-secondary/60 border border-border rounded px-1.5 py-0.5 text-[9px] text-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors"
                 >
-                  <option value="">{L4(lang, { ko: '에피소드 배정', en: 'Assign EP' })}</option>
+                  <option value="">{L4(lang, { ko: '에피소드 배정', en: 'Assign EP', ja: 'エピソード割当', zh: '分配剧集' })}</option>
                   {Array.from({ length: totalEpisodes }, (_, i) => i + 1).map(ep => (
                     <option key={ep} value={ep}>EP.{ep}</option>
                   ))}
@@ -639,7 +639,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
-            <ImageIcon className="w-3 h-3" /> {L4(lang, { ko: '편집기', en: 'Editor' })}
+            <ImageIcon className="w-3 h-3" /> {L4(lang, { ko: '편집기', en: 'Editor', ja: 'エディター', zh: '编辑器' })}
           </button>
           <button
             onClick={() => setActiveView('gallery')}
@@ -649,7 +649,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 : 'text-text-tertiary hover:text-text-secondary'
             }`}
           >
-            <Grid className="w-3 h-3" /> {L4(lang, { ko: '갤러리', en: 'Gallery' })}
+            <Grid className="w-3 h-3" /> {L4(lang, { ko: '갤러리', en: 'Gallery', ja: 'ギャラリー', zh: '图库' })}
             {totalImages > 0 && (
               <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-purple-600/30 text-[8px] text-purple-300">{totalImages}</span>
             )}
@@ -662,7 +662,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             NOI — Narrative Origin Imaging
           </div>
           <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mb-2">
-            {L4(lang, { ko: '분석 완료 회차', en: 'Analyzed Episodes' })}
+            {L4(lang, { ko: '분석 완료 회차', en: 'Analyzed Episodes', ja: '分析完了エピソード', zh: '已分析剧集' })}
           </div>
           {analyzedEpisodes.length === 0 ? (
             <p className="text-[11px] text-text-tertiary">
@@ -681,7 +681,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                 >
                   <span>EP.{ep}</span>
                   <span className="text-[9px] text-text-tertiary">
-                    {L4(lang, { ko: '카드 생성', en: 'Generate' })}
+                    {L4(lang, { ko: '카드 생성', en: 'Generate', ja: 'カード生成', zh: '生成卡片' })}
                   </span>
                 </button>
               ))}
@@ -693,7 +693,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
         <div className="ds-card">
           <div className="flex justify-between items-center mb-3">
             <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
-              {L4(lang, { ko: `카드 (${cards.length})`, en: `Cards (${cards.length})` })}
+              {L4(lang, { ko: `카드 (${cards.length})`, en: `Cards (${cards.length})`, ja: `カード (${cards.length})`, zh: `卡片 (${cards.length})` })}
             </span>
             <button onClick={addEmptyCard} className="text-text-tertiary hover:text-accent-blue transition-colors">
               <Plus className="w-4 h-4" />
@@ -729,7 +729,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
         {imageGenEnabled && (imgApiKey || hasDgxService) && cards.length > 0 && (
           <div className="ds-card space-y-2">
             <div className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
-              {L4(lang, { ko: '일괄 생성', en: 'Batch Generation' })}
+              {L4(lang, { ko: '일괄 생성', en: 'Batch Generation', ja: '一括生成', zh: '批量生成' })}
             </div>
             {batch.progress.running ? (
               <div className="space-y-3 p-3 rounded-xl bg-accent-purple/5 border border-accent-purple/20 backdrop-blur-sm">
@@ -760,7 +760,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                   onClick={batch.cancel}
                   className="w-full py-1.5 text-[10px] font-bold text-accent-red border border-accent-red/30 rounded-lg hover:bg-accent-red/10 transition-colors"
                 >
-                  {L4(lang, { ko: '중단', en: 'Cancel' })}
+                  {L4(lang, { ko: '중단', en: 'Cancel', ja: '中断', zh: '中断' })}
                 </button>
               </div>
             ) : (
@@ -800,7 +800,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
             className="w-full flex items-center justify-between text-[10px] font-black text-text-tertiary uppercase tracking-widest">
             <span className="flex items-center gap-1.5">
               <Settings className="w-3 h-3" />
-              {L4(lang, { ko: '이미지 생성 설정', en: 'Image Gen Settings' })}
+              {L4(lang, { ko: '이미지 생성 설정', en: 'Image Gen Settings', ja: '画像生成設定', zh: '图像生成设置' })}
             </span>
             <span>{showImgSettings ? '▲' : '▼'}</span>
           </button>
@@ -876,7 +876,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
                     spellCheck={false}
                     value={imgApiKey}
                     onChange={e => setImgApiKey(e.target.value)}
-                    placeholder={L4(lang, { ko: 'API 키 입력...', en: 'API Key...' })}
+                    placeholder={L4(lang, { ko: 'API 키 입력...', en: 'API Key...', ja: 'APIキーを入力...', zh: '输入 API 密钥...' })}
                     className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue"
                   />
                 </div>
@@ -884,7 +884,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
 
               <button onClick={saveImgSettings}
                 className="w-full py-2 bg-accent-purple/15 border border-accent-purple/30 rounded-lg text-[10px] font-bold text-accent-purple hover:bg-accent-purple/25 transition-colors">
-                {L4(lang, { ko: '저장', en: 'Save' })}
+                {L4(lang, { ko: '저장', en: 'Save', ja: '保存', zh: '保存' })}
               </button>
 
               {imgProvider === 'local-spark' && (
@@ -951,7 +951,7 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
               onClick={addEmptyCard}
               className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-blue/20 border border-accent-blue/30 text-accent-blue text-sm font-semibold hover:bg-accent-blue/30 transition-colors"
             >
-              <Plus className="w-4 h-4" /> {L4(lang, { ko: '빈 카드 만들기', en: 'Create Empty Card' })}
+              <Plus className="w-4 h-4" /> {L4(lang, { ko: '빈 카드 만들기', en: 'Create Empty Card', ja: '空カードを作成', zh: '创建空卡片' })}
             </button>
           </div>
         )}
