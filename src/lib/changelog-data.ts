@@ -29,6 +29,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.0-alpha.7',
+    date: '2026-04-21',
+    type: 'improvement',
+    scope: 'platform',
+    title: {
+      KO: '라이브 프리뷰 접근성 마감 — 토큰·랜드마크·터치타겟·4언어 메타',
+      EN: 'Live Preview A11y Polish — Tokens / Landmarks / Touch Targets / 4-lang Meta',
+      JP: 'ライブプレビュー アクセシビリティ仕上げ — トークン・ランドマーク・タッチターゲット・4言語メタ',
+      CN: '实时预览无障碍收尾 — 令牌 / 地标 / 触摸目标 / 4 语言元数据',
+    },
+    description: {
+      KO: 'axe 감사로 잡은 P1 전건 + Lighthouse 5페이지 감사 모든 실패 수리로 **5페이지 A11y 100/100** 달성. 라이트/다크 accent 토큰을 WCAG 4.5:1 기준으로 0.3단계 재밸런싱(amber #8a6a20→#6f5318, dark #b8955c→#caa572 등), UnifiedSettingsContext JS 인라인 오버라이드와 globals.css를 단일 소스로 동기화. 페이지별 <main>/<article>/<h1> 랜드마크 36곳 정돈(nested main 제거). MobileStudioView 섹션 헤딩을 h3→h2로 승격(heading-order WCAG 1.3.1). Header 로고·언어토글·Archive 아이콘·MobileDesktopOnlyGate 버튼의 WCAG 2.5.3(Label in Name) 위반 5건 수리 — aria-hidden으로 장식 요소 분리 + aria-label에 가시 텍스트 포함. 모바일 8항목 + 데스크톱 4항목 네비 min-h 44px 통일로 WCAG 2.1 AAA 터치타겟 달성. privacy/terms/copyright/ai-disclosure 4페이지에 generateMetadata 다국어(KO/EN/JP/CN) 추가. universeStats 숫자에 tabular-nums 적용. realtime-collab 사용자 색상 6종을 다크 토큰 시리즈에 맞춰 재지정.',
+      EN: 'Fixed every P1 from the axe audit plus all failing audits in a 5-page Lighthouse sweep — **5 pages now A11y 100/100**. Rebalanced light/dark accent tokens by 0.3 step to meet WCAG 4.5:1 (amber #8a6a20→#6f5318, dark #b8955c→#caa572, etc.) and synced the UnifiedSettingsContext JS inline override with globals.css as a single source. Cleaned per-page <main>/<article>/<h1> landmarks across 36 files (removed nested main). Promoted MobileStudioView section headings h3→h2 (heading-order WCAG 1.3.1). Fixed 5 WCAG 2.5.3 (Label in Name) violations on Header logo / language toggle / Archive icon / MobileDesktopOnlyGate button — decorative parts marked aria-hidden and aria-labels now contain visible text. Unified 8 mobile + 4 desktop nav items to min-h 44px for WCAG 2.1 AAA touch targets. Added 4-language generateMetadata (KO/EN/JP/CN) to privacy/terms/copyright/ai-disclosure. Applied tabular-nums to universeStats counters. Recolored 6 realtime-collab user swatches to match the dark token series.',
+      JP: 'axe監査のP1全件 + Lighthouse 5ページ監査の失敗を全て修正し**5ページ A11y 100/100**を達成。ライト/ダーク accent トークンをWCAG 4.5:1基準で0.3段階リバランス(amber #8a6a20→#6f5318、ダーク #b8955c→#caa572 等)、UnifiedSettingsContext JSインラインオーバーライドと globals.css を単一ソースに同期。ページ別 <main>/<article>/<h1> ランドマーク36箇所を整理(nested main 除去)。MobileStudioView セクション見出しを h3→h2 に昇格(heading-order WCAG 1.3.1)。Header ロゴ・言語トグル・Archive アイコン・MobileDesktopOnlyGate ボタンの WCAG 2.5.3(Label in Name)違反5件を修正 — 装飾部を aria-hidden で分離し aria-label に可視テキストを含める。モバイル8項目+デスクトップ4項目のナビ min-h を 44px に統一し WCAG 2.1 AAA タッチターゲットを達成。privacy/terms/copyright/ai-disclosure の4ページに generateMetadata の4言語(KO/EN/JP/CN)を追加。universeStats の数値に tabular-nums を適用。realtime-collab のユーザーカラー6色をダークトークンシリーズに合わせて再設定。',
+      CN: '修复 axe 审计的 P1 全件 + Lighthouse 5 页审计的所有失败，达成**5 页 A11y 100/100**。按 WCAG 4.5:1 标准以 0.3 步长重新平衡浅/暗 accent 令牌（amber #8a6a20→#6f5318、暗色 #b8955c→#caa572 等），将 UnifiedSettingsContext 的 JS 内联覆盖与 globals.css 同步为单一来源。整理 36 个文件的 <main>/<article>/<h1> 地标（移除嵌套 main）。将 MobileStudioView 区域标题从 h3→h2 提升（heading-order WCAG 1.3.1）。修复 Header 徽标 / 语言切换 / Archive 图标 / MobileDesktopOnlyGate 按钮的 WCAG 2.5.3（Label in Name）违规 5 处 — 装饰元素添加 aria-hidden，aria-label 包含可见文本。将移动端 8 项 + 桌面端 4 项导航 min-h 统一为 44px，达成 WCAG 2.1 AAA 触摸目标。为 privacy/terms/copyright/ai-disclosure 4 个页面添加 generateMetadata 4 语言（KO/EN/JP/CN）。在 universeStats 数字上应用 tabular-nums。根据暗色令牌系列重设 realtime-collab 6 个用户色。',
+    },
+  },
+  {
     version: '0.2.0-alpha.6',
     date: '2026-04-19',
     type: 'improvement',

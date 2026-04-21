@@ -268,6 +268,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
             className="group flex items-center gap-3 rounded-full pr-2"
           >
             <span
+              aria-hidden="true"
               className={`flex h-10 w-10 items-center justify-center rounded-full border font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] transition-transform group-hover:scale-[1.04] ${
                 stellarWhite
                   ? "border-amber-200/35 bg-amber-200/10 text-amber-200"
@@ -288,12 +289,13 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                   로어가드
                 </span>
                 {isTestEnvironment && (
-                  <span className="rounded-md border border-accent-red/30 bg-accent-red/10 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.18em] text-accent-red uppercase">
+                  <span aria-hidden="true" className="rounded-md border border-accent-red/30 bg-accent-red/10 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.18em] text-accent-red uppercase">
                     TEST
                   </span>
                 )}
               </span>
               <span
+                aria-hidden="true"
                 className={`hidden sm:inline font-[family-name:var(--font-mono)] text-[10px] tracking-[0.24em] uppercase ${
                   stellarWhite ? "text-stone-500" : "text-text-tertiary"
                 }`}
@@ -409,7 +411,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                   ? "border-amber-200/40 bg-amber-200/10 text-amber-200 hover:bg-amber-200/15"
                   : "border-accent-amber/20 bg-accent-amber/10 text-accent-amber hover:bg-accent-amber/15"
               }`}
-              aria-label="Toggle language"
+              aria-label={`${lang.toUpperCase()} — Toggle language`}
             >
               {lang.toUpperCase()}
             </button>
@@ -420,7 +422,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
             <button
               type="button"
               onClick={toggleLang}
-              aria-label="Toggle language"
+              aria-label={`${lang.toUpperCase()} — Toggle language`}
               className={`rounded-full border px-3 py-2 font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] ${
                 stellarWhite
                   ? "border-amber-200/40 bg-amber-200/10 text-amber-200"

@@ -284,7 +284,7 @@ export default function ArchiveClient() {
 
               <div className="relative z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent-amber/30 bg-accent-amber/10 mb-4">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-amber/20 font-mono text-[7px] font-bold text-accent-amber">EH</span>
+                  <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-amber/40 font-mono text-[7px] font-bold text-text-primary">EH</span>
                   <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-accent-amber font-bold">Universe Archive</span>
                 </div>
                 <h1 className="font-serif text-3xl md:text-4xl font-bold text-text-primary mb-3">
@@ -453,7 +453,7 @@ export default function ArchiveClient() {
                         className={`group flex items-center gap-4 p-4 rounded-xl border border-border/30 bg-bg-secondary/40 hover:bg-bg-secondary/80 hover:border-border/60 transition-colors hover-lift border-l-[3px] ${ls.border}`}
                       >
                         {/* 번호 */}
-                        <span className="w-6 text-center text-[10px] font-mono font-bold text-text-quaternary shrink-0">
+                        <span aria-hidden="true" className="w-6 text-center text-[10px] font-mono font-bold text-text-quaternary shrink-0">
                           {String(idx + 1).padStart(2, '0')}
                         </span>
 
@@ -468,7 +468,7 @@ export default function ArchiveClient() {
                         <BadgeLevel level={article.level} />
 
                         {/* 화살표 */}
-                        <span className="text-text-quaternary group-hover:text-text-secondary group-hover:translate-x-0.5 transition-[transform,background-color,border-color,color] text-xs shrink-0">
+                        <span aria-hidden="true" className="text-text-quaternary group-hover:text-text-secondary group-hover:translate-x-0.5 transition-[transform,background-color,border-color,color] text-xs shrink-0">
                           {'->'}
                         </span>
                       </Link>

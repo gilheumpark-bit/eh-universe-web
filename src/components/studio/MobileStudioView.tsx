@@ -111,9 +111,9 @@ function WorldMemoPanel({ language, store, setStore }: { language: AppLanguage; 
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 text-text-secondary">
         <Globe2 className="w-4 h-4 text-accent-blue" />
-        <h3 className="text-sm font-bold">
+        <h2 className="text-sm font-bold">
           {L4(language, { ko: '세계관 메모', en: 'World Memos', ja: '世界観メモ', zh: '世界观备忘' })}
-        </h3>
+        </h2>
       </div>
       <p className="text-xs text-text-tertiary">
         {L4(language, {
@@ -200,9 +200,9 @@ function CharacterSketchPanel({ language, store, setStore }: { language: AppLang
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 text-text-secondary">
         <Users className="w-4 h-4 text-accent-purple" />
-        <h3 className="text-sm font-bold">
+        <h2 className="text-sm font-bold">
           {L4(language, { ko: '캐릭터 스케치', en: 'Character Sketches', ja: 'キャラクタースケッチ', zh: '角色速写' })}
-        </h3>
+        </h2>
       </div>
       <p className="text-xs text-text-tertiary">
         {L4(language, {
@@ -298,9 +298,9 @@ function PlotBrainstormPanel({ language, store, setStore }: { language: AppLangu
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 text-text-secondary">
         <GitBranch className="w-4 h-4 text-accent-amber" />
-        <h3 className="text-sm font-bold">
+        <h2 className="text-sm font-bold">
           {L4(language, { ko: '플롯 브레인스토밍', en: 'Plot Brainstorming', ja: 'プロットブレスト', zh: '情节头脑风暴' })}
-        </h3>
+        </h2>
       </div>
       <p className="text-xs text-text-tertiary">
         {L4(language, {
@@ -413,9 +413,9 @@ function ManuscriptsPanel({ language }: { language: AppLanguage }) {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 text-text-secondary">
         <FileText className="w-4 h-4 text-accent-green" />
-        <h3 className="text-sm font-bold">
+        <h2 className="text-sm font-bold">
           {L4(language, { ko: '내 원고', en: 'My Manuscripts', ja: '原稿一覧', zh: '我的稿件' })}
-        </h3>
+        </h2>
       </div>
       <p className="text-xs text-text-tertiary">
         {L4(language, {
@@ -548,7 +548,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
             }}
             className="shrink-0 flex items-center gap-1 px-2.5 py-2 min-h-[44px] rounded-lg text-[11px] font-bold bg-bg-primary/60 border border-border text-text-secondary active:bg-bg-primary active:scale-95 transition-[transform,background-color,border-color,color]"
             title={L4(language, { ko: '데스크톱 모드로 강제 전환', en: 'Force desktop mode', ja: 'デスクトップモードに強制切替', zh: '强制切换到桌面模式' })}
-            aria-label={L4(language, { ko: '데스크톱 모드 전환', en: 'Switch to desktop', ja: 'デスクトップに切替', zh: '切换桌面' })}
+            aria-label={L4(language, { ko: 'PC 데스크톱 모드 전환', en: 'PC Switch to desktop', ja: 'PC デスクトップに切替', zh: 'PC 切换桌面' })}
           >
             <Monitor className="w-3.5 h-3.5" />
             PC

@@ -136,7 +136,8 @@ export default function MobileDesktopOnlyGate({
         <div className="w-full max-w-sm space-y-3">
           <button
             onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-accent-purple text-white font-bold text-sm rounded-xl active:scale-98 transition-transform min-h-[44px]"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-accent-purple font-bold text-sm rounded-xl active:scale-98 transition-transform min-h-[44px]"
+            style={{ color: '#fff' }}
           >
             <ExternalLink className="w-4 h-4" />
             {L4(lang, {
