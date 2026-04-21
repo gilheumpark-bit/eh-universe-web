@@ -242,15 +242,16 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
             ? "font-bold text-amber-200 underline decoration-amber-200/80 decoration-2 underline-offset-8"
             : "font-medium text-stone-400 hover:bg-white/5 hover:text-stone-200"
         }`
-      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
+      : `rounded-full border px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold"
             : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
         }`;
 
+  // [D] 도구 버튼 — WCAG 터치타겟 44px (탐색 버튼과 동일)
   const toolsBtnClass = stellarWhite
-    ? "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-stone-400 transition-colors hover:bg-white/5 hover:text-stone-200"
-    : "rounded-full border border-transparent px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-colors hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
+    ? "rounded-full border border-transparent px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-stone-400 transition-colors hover:bg-white/5 hover:text-stone-200"
+    : "rounded-full border border-transparent px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-colors hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
 
   return (
     <header
@@ -465,7 +466,8 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         <nav className="premium-panel-soft mt-3 rounded-[28px] border border-white/8 p-3" role="navigation" aria-label="Mobile navigation">
           {navItems.map((item) => {
             const active = isNavActive(item);
-            const cls = `block rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] transition-colors duration-150 ${
+            // [D] 모바일 메뉴 아이템 — WCAG 터치타겟 44px 보장 (block + min-h-[44px] flex items-center)
+            const cls = `flex items-center min-h-[44px] rounded-2xl px-4 py-3.5 font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] transition-colors duration-150 ${
               active
                 ? "bg-accent-amber/8 text-accent-amber font-bold border-l-2 border-accent-amber"
                 : "font-medium text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
@@ -500,7 +502,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className={`block rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.06em] transition-colors duration-150 ${
+                className={`flex items-center min-h-[44px] rounded-2xl px-4 py-3 font-[family-name:var(--font-mono)] text-xs font-medium tracking-[0.06em] transition-colors duration-150 ${
                   isExActive
                     ? "bg-accent-amber/8 text-accent-amber font-bold"
                     : "text-text-tertiary hover:bg-white/[0.04] hover:text-text-primary"

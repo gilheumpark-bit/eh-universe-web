@@ -140,7 +140,7 @@ export default function WristRestHint({
           width: 44px;
           height: 44px;
           border-radius: 50%;
-          border: 2px solid var(--color-accent-amber, #b8955c);
+          border: 2px solid var(--color-accent-amber, #caa572);
           animation: wrist-rotate 2.5s linear infinite;
         }
         @keyframes wrist-rotate {

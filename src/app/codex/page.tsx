@@ -78,26 +78,28 @@ export default function CodexPage() {
 }
 
 // Embedded versions that skip their own Header
+// [C] <article> 래퍼 — 임베드된 h1 시맨틱을 sectioning content 내부로 격리.
+//     HTML5: article 내 h1은 별도 outline. axe 다중 h1 경고 완화 + 시각 유지.
 function RulebookContent() {
   return (
-    <div className="[&>header]:hidden [&>main]:pt-0 [&_.mx-auto]:max-w-none [&_.px-4]:px-0 [&_.py-16]:py-0">
+    <article className="[&>header]:hidden [&>main]:pt-0 [&_.mx-auto]:max-w-none [&_.px-4]:px-0 [&_.py-16]:py-0" aria-label="EH Rulebook v1.0">
       <RulebookPage />
-    </div>
+    </article>
   );
 }
 
 function ReferenceContent() {
   return (
-    <div className="[&>header]:hidden [&>main]:pt-0 [&_.mx-auto]:max-w-none [&_.px-4]:px-0 [&_.py-16]:py-0">
+    <article className="[&>header]:hidden [&>main]:pt-0 [&_.mx-auto]:max-w-none [&_.px-4]:px-0 [&_.py-16]:py-0" aria-label="EH Open Reference">
       <ReferencePage />
-    </div>
+    </article>
   );
 }
 
 function GuideContent() {
   return (
-    <div className="[&>header]:hidden [&>main]:pt-0 [&_.mx-auto]:max-w-none [&_.px-4]:px-0 [&_.py-16]:py-0">
+    <article className="[&>header]:hidden [&>main]:pt-0 [&_.mx-auto]:max-w-none [&_.px-4]:px-0 [&_.py-16]:py-0" aria-label="NOA Studio User Guide">
       <DocsPage />
-    </div>
+    </article>
   );
 }

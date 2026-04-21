@@ -32,7 +32,8 @@ export interface CollabRoom {
   version: number;
 }
 
-const USER_COLORS = ['#4a8f78', '#8b6f56', '#6d7d8f', '#a85c52', '#b8955c', '#6b5ba3'];
+// [C] 다크 accent 토큰 동기화 (globals.css 다크 시리즈와 일치)
+const USER_COLORS = ['#6aaa90', '#a08573', '#8898ad', '#c4786d', '#caa572', '#7e6abf'];
 
 /** 협업 룸 ID 생성 */
 export function createRoomId(): string {

@@ -161,9 +161,9 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
                     fill="rgba(255,200,50,0.1)" rx="4" />
                 )}
                 <line x1={PAD.left + i * ERA_W} y1={PAD.top - 10} x2={PAD.left + i * ERA_W} y2={h - PAD.bottom}
-                  stroke={isSelected ? 'var(--color-accent-amber, #b8955c)' : 'var(--color-border, #2f2c26)'} strokeWidth={isSelected ? "1" : "0.5"} />
+                  stroke={isSelected ? 'var(--color-accent-amber, #caa572)' : 'var(--color-border, #2f2c26)'} strokeWidth={isSelected ? "1" : "0.5"} />
                 <text x={eraX(era)} y={PAD.top - 18}
-                  fill={isSelected ? 'var(--color-accent-amber, #b8955c)' : 'var(--color-text-secondary, #b5ac9d)'}
+                  fill={isSelected ? 'var(--color-accent-amber, #caa572)' : 'var(--color-text-secondary, #b5ac9d)'}
                   fontSize="9" textAnchor="middle" fontWeight="bold">
                   {era.length > 12 ? era.slice(0, 12) + '…' : era}
                 </text>
@@ -182,9 +182,9 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
               {currentEpisode != null && (
                 <g>
                   <rect x={PAD.left - 70} y={trackY(i) - 7} width={22} height={14} rx="4"
-                    fill="var(--color-accent-amber, #b8955c)" opacity="0.25" />
+                    fill="var(--color-accent-amber, #caa572)" opacity="0.25" />
                   <text x={PAD.left - 59} y={trackY(i) + 4} fontSize="7" textAnchor="middle"
-                    fill="var(--color-accent-amber, #b8955c)" fontWeight="bold">
+                    fill="var(--color-accent-amber, #caa572)" fontWeight="bold">
                     E{currentEpisode}
                   </text>
                 </g>
