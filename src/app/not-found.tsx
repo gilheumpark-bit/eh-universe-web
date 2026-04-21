@@ -14,12 +14,13 @@ export default function NotFound() {
       <Header />
       <main className="pt-14 flex-1 flex items-center justify-center">
         <div className="text-center px-4 py-20">
-          <p
+          {/* [C] h1 — SEO/스크린리더용 페이지 제목. 시각 스타일 유지 */}
+          <h1
             className="font-mono text-6xl font-bold tracking-tighter mb-4"
             style={{ color: "var(--color-accent-purple)" }}
           >
             404
-          </p>
+          </h1>
           <p className="font-mono text-sm text-text-tertiary tracking-wider uppercase mb-2">
             {T({ ko: "신호 유실", en: "SIGNAL LOST", ja: "信号消失", zh: "信号丢失" })}
           </p>

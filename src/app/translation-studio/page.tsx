@@ -86,7 +86,7 @@ export default function TranslationStudioPage() {
   const summaryLabel = DEMO_SUMMARY_LABEL[lang] ?? DEMO_SUMMARY_LABEL.ko;
 
   return (
-    <>
+    <main aria-label="Translation Studio">
       {hasVisited !== null && (
         <details
           open={hasVisited === false}
@@ -104,6 +104,6 @@ export default function TranslationStudioPage() {
         </details>
       )}
       <TranslatorStudioApp />
-    </>
+    </main>
   );
 }

@@ -195,7 +195,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
             ? "border-amber-200 font-bold text-amber-200"
             : "border-transparent font-medium text-stone-400 hover:bg-white/5 hover:text-stone-200"
         }`
-      : `rounded-full border px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
+      : `rounded-full border px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold border-b-2 border-b-accent-amber"
             : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
