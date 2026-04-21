@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, X, ChevronLeft } from 'lucide-react';
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
+import { CharacterRelationGraph } from '@/components/studio/CharacterRelationGraph';
 
 // ============================================================
 // WritingContextPanel — 집필 중 세계관/캐릭터 참조 슬라이드 패널
@@ -88,17 +89,30 @@ export function WritingContextPanel({ config, language }: Props) {
           <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
             {tab === 'chars' && (
               config.characters.length > 0 ? (
-                config.characters.map(c => (
-                  <div key={c.id} className="p-3 rounded-xl bg-bg-secondary/50 border border-border/50 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-text-primary">{c.name}</span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent-amber/10 text-accent-amber font-mono">{c.role}</span>
+                <>
+                  {/* 2026-04-21 [P2] 캐릭터 관계 그래프 — 2명 이상일 때 자동 노출 */}
+                  {config.characters.length >= 2 && (
+                    <div className="mb-3 p-3 rounded-xl bg-bg-secondary/30 border border-border/30">
+                      <CharacterRelationGraph
+                        characters={config.characters}
+                        relations={config.charRelations}
+                        language={language}
+                        size={232}
+                      />
                     </div>
-                    {c.desire && <p className="text-[11px] text-text-secondary"><span className="text-text-tertiary">{L4(language, { ko: '욕구:', en: 'Desire:', ja: '欲求:', zh: '欲望:' })}</span> {c.desire}</p>}
-                    {c.conflict && <p className="text-[11px] text-text-secondary"><span className="text-text-tertiary">{L4(language, { ko: '갈등:', en: 'Conflict:', ja: '葛藤:', zh: '冲突:' })}</span> {c.conflict}</p>}
-                    {c.changeArc && <p className="text-[11px] text-text-secondary"><span className="text-text-tertiary">{L4(language, { ko: '변화:', en: 'Arc:', ja: '変化:', zh: '变化:' })}</span> {c.changeArc}</p>}
-                  </div>
-                ))
+                  )}
+                  {config.characters.map(c => (
+                    <div key={c.id} className="p-3 rounded-xl bg-bg-secondary/50 border border-border/50 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-text-primary">{c.name}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent-amber/10 text-accent-amber font-mono">{c.role}</span>
+                      </div>
+                      {c.desire && <p className="text-[11px] text-text-secondary"><span className="text-text-tertiary">{L4(language, { ko: '욕구:', en: 'Desire:', ja: '欲求:', zh: '欲望:' })}</span> {c.desire}</p>}
+                      {c.conflict && <p className="text-[11px] text-text-secondary"><span className="text-text-tertiary">{L4(language, { ko: '갈등:', en: 'Conflict:', ja: '葛藤:', zh: '冲突:' })}</span> {c.conflict}</p>}
+                      {c.changeArc && <p className="text-[11px] text-text-secondary"><span className="text-text-tertiary">{L4(language, { ko: '변화:', en: 'Arc:', ja: '変化:', zh: '变化:' })}</span> {c.changeArc}</p>}
+                    </div>
+                  ))}
+                </>
               ) : (
                 <p className="text-xs text-text-tertiary text-center py-8 italic">
                   {L4(language, { ko: '등록된 캐릭터가 없습니다.', en: 'No characters registered.', ja: '登録されたキャラクターがありません。', zh: '暂无已登记角色。' })}
