@@ -7,7 +7,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Bot, User, Trash2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { AppLanguage, AppTab, StoryConfig } from '@/lib/studio-types';
-import { createT } from '@/lib/i18n';
+import { createT, L4 } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider, getActiveModel, hasDgxService } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
@@ -263,78 +263,79 @@ Evaluate text on 5 metrics:
 // PART 1.5 — Tab Presets (10 per tab)
 // ============================================================
 
-const TAB_PRESETS: Record<string, { ko: string; en: string }[]> = {
+// 2026-04-21 [i18n] ko/en + ja/zh 4언어 완전 지원 (60 prompt × 4 lang = 240 strings).
+const TAB_PRESETS: Record<string, { ko: string; en: string; ja: string; zh: string }[]> = {
   world: [
-    { ko: "현재 세계관 설정에 모순이 있는지 검토해줘", en: "Check my worldbuilding for contradictions" },
-    { ko: "이 세계의 경제 시스템을 설계해줘", en: "Design an economic system for this world" },
-    { ko: "마법/기술 체계의 비용-제한을 제안해줘", en: "Suggest costs and limits for the magic/tech system" },
-    { ko: "이 배경에서 가능한 종교/신앙 체계는?", en: "What religion/belief systems fit this setting?" },
-    { ko: "세계관 확장 가능한 미개척 영역을 제안해줘", en: "Suggest unexplored areas for worldbuilding expansion" },
-    { ko: "이 설정에서 발생할 수 있는 사회적 갈등은?", en: "What social conflicts could arise from this setting?" },
-    { ko: "독자가 이해하기 어려운 설정을 짚어줘", en: "Flag settings that might confuse readers" },
-    { ko: "역사적 사건 타임라인을 정리해줘", en: "Organize a historical event timeline" },
-    { ko: "이 세계의 일상생활은 어떤 모습일까?", en: "What does daily life look like in this world?" },
-    { ko: "다른 SF/판타지 작품과 차별화할 점을 제안해줘", en: "How can I differentiate from other SF/fantasy works?" },
+    { ko: "현재 세계관 설정에 모순이 있는지 검토해줘", en: "Check my worldbuilding for contradictions", ja: "現在の世界観設定に矛盾がないか検証して", zh: "审核当前世界观设定是否存在矛盾" },
+    { ko: "이 세계의 경제 시스템을 설계해줘", en: "Design an economic system for this world", ja: "この世界の経済システムを設計して", zh: "为这个世界设计经济系统" },
+    { ko: "마법/기술 체계의 비용-제한을 제안해줘", en: "Suggest costs and limits for the magic/tech system", ja: "魔法/技術体系のコストと制限を提案して", zh: "为魔法/技术体系提出成本与限制" },
+    { ko: "이 배경에서 가능한 종교/신앙 체계는?", en: "What religion/belief systems fit this setting?", ja: "この背景で考えられる宗教/信仰体系は?", zh: "此背景下可能的宗教/信仰体系?" },
+    { ko: "세계관 확장 가능한 미개척 영역을 제안해줘", en: "Suggest unexplored areas for worldbuilding expansion", ja: "世界観を拡張できる未開拓領域を提案して", zh: "建议可拓展世界观的未开发领域" },
+    { ko: "이 설정에서 발생할 수 있는 사회적 갈등은?", en: "What social conflicts could arise from this setting?", ja: "この設定で発生し得る社会的葛藤は?", zh: "此设定下可能产生的社会冲突?" },
+    { ko: "독자가 이해하기 어려운 설정을 짚어줘", en: "Flag settings that might confuse readers", ja: "読者が理解しづらい設定を指摘して", zh: "指出读者难以理解的设定" },
+    { ko: "역사적 사건 타임라인을 정리해줘", en: "Organize a historical event timeline", ja: "歴史的な出来事のタイムラインを整理して", zh: "整理历史事件的时间线" },
+    { ko: "이 세계의 일상생활은 어떤 모습일까?", en: "What does daily life look like in this world?", ja: "この世界の日常生活はどんな様子だろう?", zh: "这个世界的日常生活是什么样的?" },
+    { ko: "다른 SF/판타지 작품과 차별화할 점을 제안해줘", en: "How can I differentiate from other SF/fantasy works?", ja: "他のSF/ファンタジー作品との差別化点を提案して", zh: "建议与其他科幻/奇幻作品的差异化要点" },
   ],
   critique: [
-    { ko: "현재 세력 균형을 분석해줘", en: "Analyze the current power balance" },
-    { ko: "가장 불안정한 세력 관계는?", en: "Which faction relationship is most unstable?" },
-    { ko: "A 세력이 B를 공격하면 어떻게 될까?", en: "What happens if Faction A attacks Faction B?" },
-    { ko: "문명 간 경제 의존도를 평가해줘", en: "Evaluate economic interdependence between civilizations" },
-    { ko: "현재 균형이 깨질 트리거 3개를 찾아줘", en: "Find 3 triggers that could break the current balance" },
-    { ko: "시대 전환의 인과 체인을 분석해줘", en: "Analyze the cause-effect chain of the era transition" },
-    { ko: "약소 세력이 강대 세력을 이길 시나리오는?", en: "Scenario where a weak faction defeats a strong one?" },
-    { ko: "동맹이 깨질 수 있는 조건은?", en: "Under what conditions could the alliance break?" },
-    { ko: "장르 규칙과 시뮬레이터 데이터가 일치하는지 확인", en: "Check if genre rules match simulator data" },
-    { ko: "100년 후 이 세계는 어떤 모습일까?", en: "What does this world look like 100 years later?" },
+    { ko: "현재 세력 균형을 분석해줘", en: "Analyze the current power balance", ja: "現在の勢力バランスを分析して", zh: "分析当前势力平衡" },
+    { ko: "가장 불안정한 세력 관계는?", en: "Which faction relationship is most unstable?", ja: "最も不安定な勢力関係は?", zh: "最不稳定的势力关系是?" },
+    { ko: "A 세력이 B를 공격하면 어떻게 될까?", en: "What happens if Faction A attacks Faction B?", ja: "勢力Aが勢力Bを攻撃したらどうなる?", zh: "若 A 势力进攻 B 势力会如何?" },
+    { ko: "문명 간 경제 의존도를 평가해줘", en: "Evaluate economic interdependence between civilizations", ja: "文明間の経済依存度を評価して", zh: "评估各文明间的经济依存度" },
+    { ko: "현재 균형이 깨질 트리거 3개를 찾아줘", en: "Find 3 triggers that could break the current balance", ja: "現在の均衡を崩すトリガー3つを見つけて", zh: "找出可能打破当前平衡的 3 个触发点" },
+    { ko: "시대 전환의 인과 체인을 분석해줘", en: "Analyze the cause-effect chain of the era transition", ja: "時代転換の因果連鎖を分析して", zh: "分析时代转换的因果链" },
+    { ko: "약소 세력이 강대 세력을 이길 시나리오는?", en: "Scenario where a weak faction defeats a strong one?", ja: "弱小勢力が強大勢力を倒すシナリオは?", zh: "弱小势力击败强大势力的情节?" },
+    { ko: "동맹이 깨질 수 있는 조건은?", en: "Under what conditions could the alliance break?", ja: "同盟が崩れる可能性のある条件は?", zh: "同盟可能破裂的条件?" },
+    { ko: "장르 규칙과 시뮬레이터 데이터가 일치하는지 확인", en: "Check if genre rules match simulator data", ja: "ジャンルルールとシミュレーターデータが一致するか確認", zh: "检查类型规则与模拟器数据是否一致" },
+    { ko: "100년 후 이 세계는 어떤 모습일까?", en: "What does this world look like 100 years later?", ja: "100年後、この世界はどうなっているだろう?", zh: "百年之后这个世界将是何模样?" },
   ],
   characters: [
-    { ko: "이 캐릭터의 3층 성격을 분석해줘", en: "Analyze this character's 3-layer personality" },
-    { ko: "캐릭터별 대사 DNA를 정의해줘", en: "Define each character's dialogue DNA" },
-    { ko: "두 캐릭터 사이의 관계 동역학을 분석해줘", en: "Analyze the relationship dynamics between two characters" },
-    { ko: "이 캐릭터의 성장 아크를 설계해줘", en: "Design this character's growth arc" },
-    { ko: "캐릭터의 want vs need를 분리해줘", en: "Separate this character's want vs need" },
-    { ko: "이 캐릭터만의 말버릇/습관을 3개 만들어줘", en: "Create 3 unique speech habits for this character" },
-    { ko: "위기 상황에서 이 캐릭터는 어떻게 반응할까?", en: "How would this character react in a crisis?" },
-    { ko: "캐릭터 간 갈등 축을 정리해줘", en: "Map out the conflict axes between characters" },
-    { ko: "빌런/적대자의 동기를 더 입체적으로 만들어줘", en: "Make the villain/antagonist's motivation more dimensional" },
-    { ko: "새 조연 캐릭터를 제안해줘", en: "Suggest a new supporting character" },
+    { ko: "이 캐릭터의 3층 성격을 분석해줘", en: "Analyze this character's 3-layer personality", ja: "このキャラの3層の性格を分析して", zh: "分析这个角色的三层性格" },
+    { ko: "캐릭터별 대사 DNA를 정의해줘", en: "Define each character's dialogue DNA", ja: "キャラごとの台詞DNAを定義して", zh: "为每个角色定义台词 DNA" },
+    { ko: "두 캐릭터 사이의 관계 동역학을 분석해줘", en: "Analyze the relationship dynamics between two characters", ja: "二人のキャラの関係力学を分析して", zh: "分析两个角色之间的关系动力学" },
+    { ko: "이 캐릭터의 성장 아크를 설계해줘", en: "Design this character's growth arc", ja: "このキャラの成長アークを設計して", zh: "为这个角色设计成长弧线" },
+    { ko: "캐릭터의 want vs need를 분리해줘", en: "Separate this character's want vs need", ja: "キャラの「欲しいもの」と「必要なもの」を分離して", zh: "区分角色的「想要的」与「需要的」" },
+    { ko: "이 캐릭터만의 말버릇/습관을 3개 만들어줘", en: "Create 3 unique speech habits for this character", ja: "このキャラ独自の口癖や習慣を3つ作って", zh: "为这个角色创造 3 个独有的口头禅或习惯" },
+    { ko: "위기 상황에서 이 캐릭터는 어떻게 반응할까?", en: "How would this character react in a crisis?", ja: "危機的状況でこのキャラはどう反応する?", zh: "在危机情境下这个角色会如何反应?" },
+    { ko: "캐릭터 간 갈등 축을 정리해줘", en: "Map out the conflict axes between characters", ja: "キャラ間の対立軸を整理して", zh: "梳理角色之间的冲突轴" },
+    { ko: "빌런/적대자의 동기를 더 입체적으로 만들어줘", en: "Make the villain/antagonist's motivation more dimensional", ja: "悪役/敵対者の動機をより立体的にして", zh: "让反派/对手的动机更具立体感" },
+    { ko: "새 조연 캐릭터를 제안해줘", en: "Suggest a new supporting character", ja: "新しい脇役キャラを提案して", zh: "建议一个新的配角" },
   ],
   rulebook: [
-    { ko: "현재 장면의 텐션 스코어를 평가해줘", en: "Evaluate the tension score of the current scene" },
-    { ko: "오프닝 후크를 강화할 방법은?", en: "How can I strengthen the opening hook?" },
-    { ko: "고구마-사이다 밸런스를 분석해줘", en: "Analyze the frustration-relief balance" },
-    { ko: "클리프행어 아이디어를 3개 제안해줘", en: "Suggest 3 cliffhanger ideas" },
-    { ko: "이 장면에 넣을 도파민 장치를 추천해줘", en: "Recommend dopamine devices for this scene" },
-    { ko: "씬 비트를 카드로 정리해줘", en: "Organize scene beats into cards" },
-    { ko: "독자가 지루해질 구간을 찾아줘", en: "Find sections where readers might get bored" },
-    { ko: "감정 곡선이 단조로운 부분을 수정해줘", en: "Fix sections with flat emotional curves" },
-    { ko: "반전을 위한 복선을 어디에 깔아야 할까?", en: "Where should I plant foreshadowing for a twist?" },
-    { ko: "이 에피소드의 긴장 곡선을 설계해줘", en: "Design the tension curve for this episode" },
+    { ko: "현재 장면의 텐션 스코어를 평가해줘", en: "Evaluate the tension score of the current scene", ja: "現在のシーンのテンションスコアを評価して", zh: "评估当前场景的紧张度评分" },
+    { ko: "오프닝 후크를 강화할 방법은?", en: "How can I strengthen the opening hook?", ja: "オープニングフックを強化する方法は?", zh: "如何强化开场钩子?" },
+    { ko: "고구마-사이다 밸런스를 분석해줘", en: "Analyze the frustration-relief balance", ja: "もやもや感とスカッと感のバランスを分析して", zh: "分析郁闷感与爽快感的平衡" },
+    { ko: "클리프행어 아이디어를 3개 제안해줘", en: "Suggest 3 cliffhanger ideas", ja: "クリフハンガーのアイデアを3つ提案して", zh: "提出 3 个悬念结尾创意" },
+    { ko: "이 장면에 넣을 도파민 장치를 추천해줘", en: "Recommend dopamine devices for this scene", ja: "このシーンに入れるドーパミン装置を推薦して", zh: "为本场景推荐多巴胺装置" },
+    { ko: "씬 비트를 카드로 정리해줘", en: "Organize scene beats into cards", ja: "シーンビートをカードにまとめて", zh: "将场景节拍整理成卡片" },
+    { ko: "독자가 지루해질 구간을 찾아줘", en: "Find sections where readers might get bored", ja: "読者が退屈する区間を見つけて", zh: "找出读者可能感到无聊的段落" },
+    { ko: "감정 곡선이 단조로운 부분을 수정해줘", en: "Fix sections with flat emotional curves", ja: "感情曲線が単調な箇所を修正して", zh: "修正情感曲线单调的部分" },
+    { ko: "반전을 위한 복선을 어디에 깔아야 할까?", en: "Where should I plant foreshadowing for a twist?", ja: "反転のための伏線をどこに張るべき?", zh: "应在何处铺设反转的伏笔?" },
+    { ko: "이 에피소드의 긴장 곡선을 설계해줘", en: "Design the tension curve for this episode", ja: "このエピソードの緊張曲線を設計して", zh: "为本集设计紧张曲线" },
   ],
   style: [
-    { ko: "내 문장의 리듬을 분석해줘", en: "Analyze the rhythm of my sentences" },
-    { ko: "NOA 문체 증상이 있는지 체크해줘", en: "Check for NOA-style writing symptoms" },
-    { ko: "이 단락을 더 감각적으로 바꿔줘", en: "Rewrite this paragraph with more sensory detail" },
-    { ko: "반복되는 단어/표현을 찾아줘", en: "Find repeated words or expressions" },
-    { ko: "대화문의 캐릭터별 차별화를 평가해줘", en: "Evaluate dialogue differentiation per character" },
-    { ko: "묘사 밀도가 높은/낮은 구간을 찾아줘", en: "Find over-described and under-described sections" },
-    { ko: "서술 시점이 흔들리는 곳을 잡아줘", en: "Catch POV shifts or inconsistencies" },
-    { ko: "문장을 더 간결하게 압축하는 방법은?", en: "How can I compress sentences to be more concise?" },
-    { ko: "하드보일드 문체로 변환 연습을 해보자", en: "Let's practice converting to hardboiled style" },
-    { ko: "5가지 지표로 내 문체를 종합 평가해줘", en: "Give me a comprehensive 5-metric style evaluation" },
+    { ko: "내 문장의 리듬을 분석해줘", en: "Analyze the rhythm of my sentences", ja: "私の文章のリズムを分析して", zh: "分析我句子的节奏" },
+    { ko: "NOA 문체 증상이 있는지 체크해줘", en: "Check for NOA-style writing symptoms", ja: "NOA文体の症状がないかチェックして", zh: "检查是否存在 NOA 文风症状" },
+    { ko: "이 단락을 더 감각적으로 바꿔줘", en: "Rewrite this paragraph with more sensory detail", ja: "この段落をより感覚的に書き直して", zh: "将这段改写得更具感官细节" },
+    { ko: "반복되는 단어/표현을 찾아줘", en: "Find repeated words or expressions", ja: "繰り返し使われている単語/表現を探して", zh: "找出重复的词语或表达" },
+    { ko: "대화문의 캐릭터별 차별화를 평가해줘", en: "Evaluate dialogue differentiation per character", ja: "対話文のキャラ別差別化を評価して", zh: "评估对白中各角色的差异化" },
+    { ko: "묘사 밀도가 높은/낮은 구간을 찾아줘", en: "Find over-described and under-described sections", ja: "描写密度が高すぎる/低すぎる区間を見つけて", zh: "找出描写密度过高或过低的段落" },
+    { ko: "서술 시점이 흔들리는 곳을 잡아줘", en: "Catch POV shifts or inconsistencies", ja: "視点がぶれている箇所を捕まえて", zh: "捕捉视角摇摆或不一致之处" },
+    { ko: "문장을 더 간결하게 압축하는 방법은?", en: "How can I compress sentences to be more concise?", ja: "文章をより簡潔に圧縮する方法は?", zh: "如何将句子压缩得更简洁?" },
+    { ko: "하드보일드 문체로 변환 연습을 해보자", en: "Let's practice converting to hardboiled style", ja: "ハードボイルド文体への変換練習をしよう", zh: "练习将文体转换为硬汉派风格" },
+    { ko: "5가지 지표로 내 문체를 종합 평가해줘", en: "Give me a comprehensive 5-metric style evaluation", ja: "5つの指標で私の文体を総合評価して", zh: "用 5 项指标对我的文体进行综合评估" },
   ],
   writing: [
-    { ko: "다음 장면 전개를 세 가지 방향으로 제안해줘", en: "Suggest three directions to continue the next scene" },
-    { ko: "지금 대사의 말투를 캐릭터에 맞게 다듬어줘", en: "Polish the dialogue to match each character's voice" },
-    { ko: "이 구간의 템포가 느려지는 이유를 짚어줘", en: "Explain why this section feels slow in pacing" },
-    { ko: "클리프행어 후킹을 한 줄로 제안해줘", en: "Propose a one-line cliffhanger hook" },
-    { ko: "독자 시점에서 지금 감정선이 어떻게 느껴질지 말해줘", en: "How would readers feel about the emotional arc here?" },
-    { ko: "복선을 자연스럽게 심을 위치를 추천해줘", en: "Where should I plant foreshadowing more naturally?" },
-    { ko: "장면 목표(정보·감정·전환)를 한 줄로 정리해줘", en: "Summarize this scene's goal in one line (info/emotion/pivot)" },
-    { ko: "서술 시점이 흔들리는 문장이 있으면 짚어줘", en: "Flag any sentences where POV or narration wobbles" },
-    { ko: "이 대목을 더 몰입감 있게 바꾸는 한 문단 예시를 줘", en: "Give a sample paragraph that increases immersion here" },
-    { ko: "원고와 설정 사이에 어긋나는 점이 있으면 알려줘", en: "Flag any mismatch between the draft and established setting" },
+    { ko: "다음 장면 전개를 세 가지 방향으로 제안해줘", en: "Suggest three directions to continue the next scene", ja: "次のシーン展開を3方向で提案して", zh: "为下一场景的展开提出三种方向" },
+    { ko: "지금 대사의 말투를 캐릭터에 맞게 다듬어줘", en: "Polish the dialogue to match each character's voice", ja: "今の台詞の口調をキャラに合わせて整えて", zh: "调整当前台词的语气以契合角色" },
+    { ko: "이 구간의 템포가 느려지는 이유를 짚어줘", en: "Explain why this section feels slow in pacing", ja: "この区間のテンポが遅くなる理由を指摘して", zh: "指出本段节奏放缓的原因" },
+    { ko: "클리프행어 후킹을 한 줄로 제안해줘", en: "Propose a one-line cliffhanger hook", ja: "クリフハンガーのフックを一行で提案して", zh: "用一句话提出悬念钩子" },
+    { ko: "독자 시점에서 지금 감정선이 어떻게 느껴질지 말해줘", en: "How would readers feel about the emotional arc here?", ja: "読者視点で今の感情線はどう感じられるか教えて", zh: "从读者视角看当前的情感线会作何感受" },
+    { ko: "복선을 자연스럽게 심을 위치를 추천해줘", en: "Where should I plant foreshadowing more naturally?", ja: "伏線を自然に埋め込む位置を推薦して", zh: "推荐自然铺设伏笔的位置" },
+    { ko: "장면 목표(정보·감정·전환)를 한 줄로 정리해줘", en: "Summarize this scene's goal in one line (info/emotion/pivot)", ja: "シーン目標(情報/感情/転換)を一行で整理して", zh: "用一句话概括本场景目标(信息/情感/转折)" },
+    { ko: "서술 시점이 흔들리는 문장이 있으면 짚어줘", en: "Flag any sentences where POV or narration wobbles", ja: "視点がぶれている文があれば指摘して", zh: "若有视角摇摆的句子请指出" },
+    { ko: "이 대목을 더 몰입감 있게 바꾸는 한 문단 예시를 줘", en: "Give a sample paragraph that increases immersion here", ja: "この箇所を没入感あるものにする1段落の例を出して", zh: "给出让此处更具沉浸感的一段示例" },
+    { ko: "원고와 설정 사이에 어긋나는 점이 있으면 알려줘", en: "Flag any mismatch between the draft and established setting", ja: "原稿と設定の間にズレがあれば教えて", zh: "若稿件与设定之间存在不一致请指出" },
   ],
 };
 
@@ -610,15 +611,19 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
                 </p>
                 {TAB_PRESETS[tab] && (
                   <div className="flex flex-wrap gap-1.5 justify-center px-2">
-                    {TAB_PRESETS[tab].map((preset, i) => (
-                      <button
-                        key={i}
-                        onClick={() => { setInput(preset[lk]); }}
-                        className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-colors font-mono leading-tight"
-                      >
-                        {preset[lk]}
-                      </button>
-                    ))}
+                    {TAB_PRESETS[tab].map((preset, i) => {
+                      // 2026-04-21 [i18n] L4로 4언어 동적 선택 (이전엔 lk='ko'|'en' 만 지원)
+                      const label = L4(language, preset);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => { setInput(label); }}
+                          className="px-3 py-1.5 bg-bg-tertiary/50 border border-border rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/50 transition-colors font-mono leading-tight"
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
