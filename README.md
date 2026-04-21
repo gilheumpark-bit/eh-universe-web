@@ -11,7 +11,8 @@
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-2,331_passing-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-3,304_passing-22c55e?style=flat-square)
+![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
 ![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
@@ -151,7 +152,7 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 | 방식 | 설명 |
 |------|------|
 | **BYOK** | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio — API 키만 넣으면 동작 |
-| **자체 서버** | NVIDIA DGX Spark (GB10, 128GB) — Qwen 3.5-9B FP8 **듀얼 엔진** + Nginx LB + SSE 직결 스트리밍 (TTFT 0.13초, 18~20 tok/s) |
+| **자체 서버** | NVIDIA DGX Spark (GB10, 128GB) — Qwen 3.6-35B-A3B-FP8 MoE 단일 서빙 (vLLM 8001) + SSE 직결 스트리밍 |
 | **RAG** | ChromaDB 99만 문서 + 25 장르 작법 규칙 자동 조립 (`/api/rag/prompt`) |
 | **이미지** | Flux-Schnell FP8 (4-step, `/api/image/generate`) |
 
@@ -185,7 +186,7 @@ npm test         # 테스트
 |--------|------|
 | 프레임워크 | Next.js 16.2, React 19.2, TypeScript 5 |
 | 에디터 | Tiptap (소설) + Monaco (코드) + 인라인 자동완성 |
-| AI | 7개 프로바이더 + DGX Spark **Qwen 3.5-9B FP8 듀얼** (자체) |
+| AI | 7개 프로바이더 + DGX Spark **Qwen 3.6-35B-A3B-FP8 MoE** (자체) |
 | RAG | ChromaDB 99만 문서 + 25 장르 규칙 |
 | 집필 엔진 | ANS 10.0 — 품질 검사, 디렉터, 연속성, HFCP, 장르 프리셋 |
 | 코드 엔진 | 9팀 파이프라인 + Quill 224룰 |
@@ -199,12 +200,13 @@ npm test         # 테스트
 
 ---
 
-## 프로젝트 상태 (2026-04-19)
+## 프로젝트 상태 (2026-04-21)
 
 | 지표 | 값 |
 |------|----|
-| 테스트 | **2,331 passing** / 221 suites |
+| 테스트 | **3,304 passing** / 298 suites |
 | 타입 체크 | **0 errors** (strict) |
+| Lighthouse A11y | **100/100** × 5 페이지 (/, /studio, /translation-studio, /network, /archive) |
 | 보안 감사 | P0 6건 + P1 13건 수리 완료 |
 | 3루프 정밀 진단 | 850+ 파일 / 91 이슈 수리 |
 | 특허 | KIPO 2026-03-03 출원, PCT 진행 중 |
@@ -216,7 +218,7 @@ npm test         # 테스트
 
 | 문서 | 설명 |
 |------|------|
-| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.1.3) |
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.2.0-alpha.1) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
 | [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |

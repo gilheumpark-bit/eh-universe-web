@@ -3,6 +3,132 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0-alpha.1] — 2026-04-21
+
+### Fixed — Lighthouse 5페이지 전수 A11y 100/100 달성
+
+**3종 7건의 접근성 실패를 전수 수리해 `/`, `/studio`, `/translation-studio`, `/network`, `/archive` 5페이지가 Lighthouse Accessibility 100/100 만점.**
+
+#### `heading-order` (WCAG 1.3.1) × 5
+- `MobileStudioView`의 섹션 헤딩 h3 → h2 승격
+  (세계관 메모 / 캐릭터 스케치 / 플롯 브레인스토밍 / 내 원고)
+- 상단 h1 "로어가드 — 모바일 스케치" 다음 h2가 맞는 구조로 정규화
+
+#### `label-content-name-mismatch` (WCAG 2.5.3) × 5
+- Header 로고: EH 배지 / TEST 배지 / 서브타이틀 `aria-hidden="true"` 처리
+- Header 언어 토글 (데스크톱+모바일): `aria-label`에 현재 언어 코드 동적 포함
+  `"Toggle language"` → `"${lang.toUpperCase()} — Toggle language"`
+- Archive 기사 링크: 번호(01) · 화살표(->) 장식 요소 `aria-hidden` 처리
+
+#### `color-contrast` (WCAG 1.4.3) × 2
+- Archive "EH" 배지: `bg-accent-amber/20 text-accent-amber` → `bg-accent-amber/40 text-text-primary`
+  (1.85:1 → >7:1, WCAG AAA 통과)
+- MobileDesktopOnlyGate 공유 버튼: `text-white` 제거 + inline `color:#fff`
+  (light 모드 `.text-white` 오버라이드로 인한 1.85 대비 → 5.5 AA 통과)
+
+### Changed
+- `CHANGELOG.md`에 `v2.2.0-alpha.1` 항목 추가 (사용자 노출 + 릴리스 마킹)
+- `src/lib/changelog-data.ts` 동기화 (앱 내 `/changelog` 페이지 자동 반영)
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npx next build` → exit 0
+- Lighthouse `/ /studio /translation-studio /network /archive` → **A11y 100 × 5, fails 0**
+
+---
+
+## [2.2.0-alpha] — 2026-04-19 ~ 2026-04-20
+
+### Added — 알파 전수 리포지셔닝 (M1~M8 Milestones)
+
+**8개 마일스톤 태그 (`M1-M8-COMPLETE-2026-04-20`) 달성. 알파 배포 가능 상태 확정.**
+
+#### 라이브 프리뷰 접근성 마감 (2026-04-21)
+- axe 감사 P1 전건 수리
+- 라이트/다크 accent 토큰 WCAG 4.5:1 기준 0.3단계 재밸런싱
+  - light: amber #8a6a20→#6f5318 / red #c16258→#a04938 / green #2f9b83→#1a6e58 / purple #5b4b93→#4a3d7a / blue #4a6a8f→#3e5c7e
+  - dark: amber #b8955c→#caa572 / red #a85c52→#c4786d / green #4a8f78→#6aaa90 / purple #8b6f56→#a08573 / blue #6d7d8f→#8898ad
+- `UnifiedSettingsContext` JS 인라인 오버라이드와 `globals.css` 단일 소스 동기화
+- 페이지별 `<main>`/`<article>`/`<h1>` 랜드마크 36곳 정돈 (nested main 제거)
+- 모바일 8항목 + 데스크톱 4항목 네비 `min-h: 44px` 통일로 WCAG 2.1 AAA 터치타겟
+- `privacy/terms/copyright/ai-disclosure` 4페이지 `generateMetadata` 4언어(KO/EN/JP/CN) 추가
+- `universeStats` 숫자에 `tabular-nums` 적용
+- `realtime-collab` 사용자 색상 6종을 다크 토큰 시리즈에 맞춰 재지정
+- Codex 탭 임베드 `<div>` → `<article aria-label>` (h1 중복 경고 완화)
+
+#### AI 고지 stale 수리 (2026-04-20)
+- `privacy/ai-disclosure/terms` 3페이지 DGX 모델 표기 갱신
+  `Qwen 3.5-9B FP8 (8080/8081)` → `Qwen 3.6-35B-A3B-FP8 MoE (vLLM 8001)`
+- 4언어(ko/en/ja/zh) 일괄 업데이트
+- 허위 고지 방지 — AI 공시 의무 준수
+
+#### 라우트별 error boundary 확장
+- `src/app/archive/error.tsx` + `src/app/codex/error.tsx` 신규
+- 7개 라우트 일관성 (root / studio / translation-studio / code-studio / network / archive / codex)
+
+#### 번들 최적화 (2단계)
+- `/studio`: 1,709 KB → 644 KB (-62%)
+  - `StudioShell` dynamic ssr:false + `DirectorPanel` / `EngineDashboard` / `GlobalSearchPalette` / `ShortcutsModal` lazy
+- `/archive`: 700 KB → 645 KB (-7.9%)
+- `/network`: 724 KB → 668 KB (-7.7%)
+- 전 라우트 645~715 KB 구간으로 수렴 (심사 관점 일관성 확보)
+
+#### 인체공학 자가 진단 62→100점
+- `src/lib/ime-guard.ts` 신규 — 한글/일본어/중국어 조합 중 Tab 제안 보호
+- ProseMirror `max-width: 68ch` + `caret-color: amber`
+- `prefers-contrast: less` 블록 추가
+- StatusBar: 'DGX 128GB' / 'Qwen-32B' → '로컬 AI' / 'Local AI' (엔지니어 지표는 개발자 모드에서만)
+- `docs/design-principles.md` — 세 기둥(장기 체류·인체공학·작가가 주어) + R1~R8, R11
+
+#### Draft + Detail 2-stage 집필 플로우 (Phase 1~3, flag-gated)
+- `src/engine/pipeline-constants.ts` — `DRAFT_TARGET_CHARS` / `DETAIL_TARGET_CHARS` / 플랫폼별 `PLATFORM_DRAFT_OVERRIDE` 8개
+- `src/lib/feature-flags.ts` — `FEATURE_DRAFT_DETAIL_V2` (off/shadow/on 3-mode)
+- `DetailPassButton` + `DetailPassPreviewModal` — Accept/Edit/Reject 3-action, `useFocusTrap` WCAG 2.1 AA
+- Settings 고급 탭에서 opt-in
+
+#### DGX 인프라 전환 (2026-04-20)
+- vLLM 단일 서빙(8001) + Qwen 3.6-35B-A3B-FP8 MoE 128GB 최적화
+- `SPARK_GATEWAY_URL` / `VLLM_MODEL_ID` 환경변수 기반 구동
+- 레거시 9B 쌍포 + Nginx LB(8090) 구조 폐기
+- `stripEngineArtifacts` 강화 — Qwen 3.6-35B `<think></think>` / "Final Output:" 마커 5종 누출 패턴 대응
+
+#### 입력 방어 + API 본문 캡
+- `/api/network-agent/search` — 8KB body_too_large (413) + 500자 query_too_long (400)
+- `PlanetEditClient` tagsText/repTagsText `maxLength` 200/120 추가
+- `NetworkAgentSearchClient` query `maxLength=500` (서버 상한 일치)
+
+#### 번역 사전 JP/CN 시드
+- 각각 40 entries — `LANGUAGE_PURITY_SUPPORTED` → `{KO,EN,JP,CN}`
+- `IDENTITY_SEAL` 4-way 반영
+
+#### QA 인프라 (E2E Chaos)
+- `e2e/scenarios/10-chaos-runtime.spec.ts` — 6 시나리오 Playwright 템플릿
+  (전수 클릭 / 카오스 주입 / Race condition / Offline / Slow 3G / 저장 중 뒤로가기)
+
+#### 카테고리 리포지셔닝 (랜딩)
+- "소설 스튜디오" → "소설 IDE" (4언어)
+- 히어로 숫자 배지: "통과 테스트 3,230 / 10,000회 카오스 × 0 유실 / 언어 4 / FMEA 20/20 방어"
+- "준비 중" 유령 카피 2건 정직화
+
+### Changed
+- `ops-runbook.md` 신규 (1페이지, 7섹션) — SLA + 6 장애 시나리오 5분 대응 + 3-Tier 백업
+- `opengraph-image.tsx` alt / footer strip 집필 IDE 포지션으로 일관화
+- 테스트 2,331 → **3,304 passing** (298 suites) — E2E Chaos + Draft Detail + Detail Pass + 기타 신규 18+건 테스트
+- lighthouse / axe setup 추가 (`scripts/lighthouse-check.mjs`, `@axe-core/react` devDep)
+
+### Removed
+- `/api/spark-stream` Edge 프록시 (SSE 직결 전환으로 불필요)
+- `AIPhaseIndicator` (TTFT 0.13초로 단계 pill 불필요)
+- 레거시 routing 상수 (`SPARK_HEAVY_URL` / `ROLE_ENGINE_MAP` / `getModelForRole()` 등)
+
+### Verification
+- 테스트: **3,304 passing** / 298 suites
+- 타입: **0 errors** (strict)
+- Lighthouse A11y: **100/100** × 5 페이지
+- 마일스톤 태그: M1~M8-COMPLETE-2026-04-20, v2.2.0-alpha, v2.2.0-alpha.1
+
+---
+
 ## [2.1.3] — 2026-04-19
 
 ### Changed — UX 감사 S등급(951/1000) 진입

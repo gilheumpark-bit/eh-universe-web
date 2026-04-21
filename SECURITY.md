@@ -4,10 +4,10 @@
 
 | Version | Supported          |
 |---------|--------------------|
-| 1.3.x   | :white_check_mark: Full support |
-| 1.2.x   | :white_check_mark: Full support |
-| 1.0.x–1.1.x | :warning: Limited support (critical fixes only) |
-| < 1.0   | :x: Not supported  |
+| 2.2.x-alpha | :white_check_mark: Full support (current alpha) |
+| 2.1.x       | :white_check_mark: Full support |
+| 2.0.x       | :warning: Limited support (critical fixes only) |
+| < 2.0       | :x: Not supported  |
 
 ## Reporting a Vulnerability
 
