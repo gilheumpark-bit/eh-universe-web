@@ -83,7 +83,11 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
   const findingsToShow = showAll ? report.findings : report.findings.slice(0, 6);
 
   return (
-    <details className="group" open={report.findings.length > 0}>
+    <details
+      className="group rounded-md"
+      data-director-panel
+      open={report.findings.length > 0}
+    >
       <summary className="flex items-center justify-between cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">
         <span className="flex items-center gap-1.5">
           <Film className="w-3 h-3" /> {t('director.nodDirector')}

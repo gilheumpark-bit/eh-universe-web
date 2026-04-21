@@ -27,6 +27,7 @@ import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import type { NovelEditorHandle } from '@/components/studio/NovelEditor';
 import { useInlineCompletion } from '@/hooks/useInlineCompletion';
 import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
+import { VerificationReceipt } from '@/components/studio/VerificationReceipt';
 import { useQualityAnalysis } from '@/hooks/useQualityAnalysis';
 import { useContinuityCheck } from '@/hooks/useContinuityCheck';
 import { useUndoStack } from '@/hooks/useUndoStack';
@@ -615,6 +616,13 @@ export default function WritingTabInline(props: Props) {
           currentSessionId={currentSessionId}
           handleSend={handleSend}
           sceneSheetEmpty={sceneSheetEmpty}
+        />
+
+        {/* 2026-04-21: 생성 완료 수령증 토스트 — 작가 신뢰 + 몰입 보존 */}
+        <VerificationReceipt
+          directorReport={directorReport}
+          isGenerating={isGenerating}
+          language={language}
         />
       </div>
     </div>
