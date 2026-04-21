@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {
   Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
-  Code2, Languages, Globe, ImageIcon, Film, MoreHorizontal, Printer,
+  Languages, Globe, ImageIcon, Film, MoreHorizontal, Printer,
   ArrowUpToLine, ArrowDownToLine,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
@@ -219,15 +219,16 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [overflowOpen]);
 
-  // ── App 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) ──
+  // ── App 링크 아이콘 (UNIVERSE / TRANSLATE) ──
   // 번역: 창작→번역→출판 파이프라인의 "다음 단계". 현재 세션이 있으면 세션 ID 전달.
+  // 코드 스튜디오는 유니버스 내 도구(/tools)로 이동 (2026-04-21) — 집필 OS dock은
+  // 창작 파이프라인(세계관·번역) 중심으로 정돈. Code Studio는 /tools 에서 접근.
   const translationHref = currentSessionId
     ? `/translation-studio?from=${encodeURIComponent(currentSessionId)}`
     : '/translation-studio';
   const hasManuscript = (sessions.find(s => s.id === currentSessionId)?.config.manuscripts?.length ?? 0) > 0;
   const appLinks = [
     { href: '/archive', icon: Globe, label: L4(language, { ko: '유니버스', en: 'Universe', ja: 'ユニバース', zh: '宇宙' }), color: 'text-text-secondary' },
-    { href: '/code-studio', icon: Code2, label: L4(language, { ko: '코드', en: 'Code', ja: 'コード', zh: '代码' }), color: 'text-text-secondary' },
     // 번역은 파이프라인 "다음 단계" — 원고 있으면 앰버 강조, 없으면 일반
     { href: translationHref, icon: Languages, label: L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' }), color: hasManuscript ? 'text-accent-amber' : 'text-text-secondary' },
   ];
