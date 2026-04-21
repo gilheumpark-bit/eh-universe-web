@@ -28,6 +28,7 @@ import type { NovelEditorHandle } from '@/components/studio/NovelEditor';
 import { useInlineCompletion } from '@/hooks/useInlineCompletion';
 import { WritingContextPanel } from '@/components/studio/WritingContextPanel';
 import { VerificationReceipt } from '@/components/studio/VerificationReceipt';
+import { SceneMinimap } from '@/components/studio/SceneMinimap';
 import { useQualityAnalysis } from '@/hooks/useQualityAnalysis';
 import { useContinuityCheck } from '@/hooks/useContinuityCheck';
 import { useUndoStack } from '@/hooks/useUndoStack';
@@ -395,6 +396,13 @@ export default function WritingTabInline(props: Props) {
             splitView={splitView}
             setSplitView={setSplitView}
             setActiveTab={setActiveTab}
+          />
+
+          {/* 2026-04-21 [P2] 씬 타임라인 미니맵 — 작가 몰입 + 위치 인식 */}
+          <SceneMinimap
+            currentEpisode={currentSession.config.episode ?? 1}
+            episodeSceneSheets={currentSession.config.episodeSceneSheets}
+            language={language}
           />
 
           {/* Tab 자동완성 1회 힌트 */}
