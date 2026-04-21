@@ -31,15 +31,30 @@ export default function UnifiedSettingsBar() {
 
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
 
+  const authLabel = user
+    ? (user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out", ja: "ログアウト", zh: "登出" }))
+    : T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" });
+  const apiLabel = `API${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`;
+  const themeLabel = theme === "dark"
+    ? T({ ko: "밤", en: "Night", ja: "夜", zh: "夜" })
+    : T({ ko: "낮", en: "Day", ja: "昼", zh: "日" });
+  const langLabel = LANG_LABELS[lang];
+  const storageLabel = storageInfo ? `${storageInfo.used} / ${storageInfo.total}` : '';
+
   return (
     <>
-      <div className="flex items-center gap-2 justify-center">
+      {/* 2026-04-21: 아이콘 그룹 상단에 작은 eyebrow 라벨 추가 — 첫 방문자가 용도를 바로 인지하도록. */}
+      <p className="text-center text-[10px] font-mono uppercase tracking-[0.25em] text-text-tertiary mb-2">
+        {T({ ko: "빠른 설정", en: "Quick Settings", ja: "クイック設定", zh: "快速设置" })}
+      </p>
+      <div className="flex items-center gap-2 justify-center" role="group" aria-label={T({ ko: "빠른 설정", en: "Quick settings", ja: "クイック設定", zh: "快速设置" })}>
         {/* Auth — icon only */}
         {user ? (
           <button
             onClick={signOut}
             className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
-            title={user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out" })}
+            title={authLabel}
+            aria-label={authLabel}
           >
             {user.photoURL && /^https:\/\//.test(user.photoURL) ? (
               <Image src={user.photoURL} alt="" width={20} height={20} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
@@ -52,7 +67,8 @@ export default function UnifiedSettingsBar() {
             onClick={signInWithGoogle}
             disabled={authLoading}
             className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-colors"
-            title={T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" })}
+            title={authLabel}
+            aria-label={authLabel}
           >
             <User className="w-4 h-4" />
           </button>
@@ -62,11 +78,12 @@ export default function UnifiedSettingsBar() {
         <button
           onClick={() => setShowApiKeys(true)}
           className="relative inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-colors"
-          title={`API ${enabledSlots.length > 0 ? `(${enabledSlots.length})` : ''}`}
+          title={apiLabel}
+          aria-label={apiLabel}
         >
           <Key className="w-4 h-4" />
           {enabledSlots.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-accent-green text-[8px] font-bold text-white flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-accent-green text-[8px] font-bold text-white flex items-center justify-center" aria-hidden="true">
               {enabledSlots.length}
             </span>
           )}
@@ -76,7 +93,8 @@ export default function UnifiedSettingsBar() {
         <button
           onClick={toggleTheme}
           className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
-          title={theme === "dark" ? T({ ko: "밤", en: "Night" }) : T({ ko: "낮", en: "Day" })}
+          title={themeLabel}
+          aria-label={themeLabel}
         >
           {theme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </button>
@@ -85,7 +103,8 @@ export default function UnifiedSettingsBar() {
         <button
           onClick={toggleLang}
           className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
-          title={LANG_LABELS[lang]}
+          title={langLabel}
+          aria-label={langLabel}
         >
           <Globe className="w-4 h-4" />
         </button>
@@ -94,7 +113,8 @@ export default function UnifiedSettingsBar() {
         {storageInfo && (
           <div
             className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary transition-[transform,opacity,background-color,border-color,color]"
-            title={`${storageInfo.used} / ${storageInfo.total} (${storageInfo.percent}%)`}
+            title={`${storageLabel} (${storageInfo.percent}%)`}
+            aria-label={`${T({ ko: "저장소 사용량", en: "Storage used", ja: "ストレージ使用量", zh: "存储使用量" })}: ${storageLabel}`}
           >
             <HardDrive className="w-4 h-4" />
           </div>

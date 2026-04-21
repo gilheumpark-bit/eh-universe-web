@@ -296,9 +296,9 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
       {/* OS Top Menu Bar — 집필 세피아 톤 */}
       <div data-zen-hide className="fixed top-0 left-0 w-full h-10 bg-bg-secondary/90 backdrop-blur-xl border-b border-border z-[var(--z-tooltip)] flex items-center justify-between px-4 text-xs font-mono text-text-secondary">
         <div className="flex items-center gap-4">
-          <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors">
-            <Feather className="h-4 w-4 text-accent-amber" />
-            <span className="font-serif font-semibold tracking-wider">{language === 'KO' ? 'NOA 스튜디오' : language === 'JP' ? 'NOA スタジオ' : language === 'CN' ? 'NOA 工作室' : 'NOA Studio'}</span>
+          <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors shrink-0">
+            <Feather className="h-4 w-4 text-accent-amber shrink-0" />
+            <span className="font-serif font-semibold tracking-wider whitespace-nowrap">{language === 'KO' ? 'NOA 스튜디오' : language === 'JP' ? 'NOA スタジオ' : language === 'CN' ? 'NOA 工作室' : 'NOA Studio'}</span>
           </Link>
 
           <div className="flex items-center gap-2">

@@ -503,19 +503,22 @@ export function NetworkHomeClient() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/network/new" className="premium-button">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* 2026-04-21: 히어로 CTA를 2개로 압축 + 브랜드 amber 통일.
+                  NOA 검색은 필터 탭에서 접근, Google 로그인은 별도 inline 링크로 이동. */}
+              <Link href="/network/new" className="premium-button primary">
                 {L4(lang, { ko: "행성 등록하기", en: "Register a Planet", ja: "惑星を登録", zh: "登记星球" })}
               </Link>
               <a href="#board-posts" className="premium-button secondary">
                 {netT('latestLogs', lang)}
               </a>
-              <Link href="/network/agent" className="premium-button secondary border-accent-blue/30 text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20">
-                {L4(lang, { ko: "NOA 검색 어시스턴트", en: "NOA Search Assistant", ja: "NOA 検索アシスタント", zh: "NOA 搜索助手" })}
-              </Link>
               {!user ? (
-                <button type="button" onClick={() => void signInWithGoogle()} className="premium-button secondary">
-                  {L4(lang, { ko: "Google 로그인", en: "Sign In with Google", ja: "Googleログイン", zh: "Google登录" })}
+                <button
+                  type="button"
+                  onClick={() => void signInWithGoogle()}
+                  className="text-[11px] font-[family-name:var(--font-mono)] tracking-[0.14em] uppercase text-text-tertiary hover:text-accent-amber transition-colors underline-offset-4 hover:underline"
+                >
+                  {L4(lang, { ko: "Google로 로그인 →", en: "Sign In with Google →", ja: "Googleでログイン →", zh: "用 Google 登录 →" })}
                 </button>
               ) : null}
             </div>
@@ -543,6 +546,16 @@ export function NetworkHomeClient() {
                 <p className="mt-3 text-sm text-text-secondary">{item.body}</p>
               </div>
             ))}
+          </div>
+
+          {/* NOA 검색 어시스턴트 — 히어로 CTA에서 이동. 탐색 니즈 명확한 유저 대상 보조 링크. */}
+          <div className="mt-6 flex items-center justify-end">
+            <Link
+              href="/network/agent"
+              className="text-[11px] font-[family-name:var(--font-mono)] tracking-[0.14em] uppercase text-accent-blue hover:text-accent-amber transition-colors underline-offset-4 hover:underline"
+            >
+              {L4(lang, { ko: "NOA 검색 어시스턴트 →", en: "NOA Search Assistant →", ja: "NOA 検索アシスタント →", zh: "NOA 搜索助手 →" })}
+            </Link>
           </div>
         </section>
 

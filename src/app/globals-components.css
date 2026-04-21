@@ -500,6 +500,29 @@
   outline-offset: 3px;
 }
 
+/* Brand primary — amber on white text. 메인 CTA (Home/Network 등) 브랜드 통일. */
+.premium-button.primary {
+  border-color: var(--color-accent-amber);
+  background: var(--color-accent-amber);
+  color: #ffffff;
+}
+
+.premium-button.primary:hover {
+  border-color: var(--color-accent-amber);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.35),
+    0 4px 16px rgba(202, 165, 114, 0.25);
+}
+
+.premium-button.primary::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+}
+
 .premium-button.secondary {
   border-color: var(--color-border);
   background: var(--color-surface-soft);
