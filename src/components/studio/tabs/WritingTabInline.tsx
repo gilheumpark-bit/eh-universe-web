@@ -370,10 +370,9 @@ export default function WritingTabInline(props: Props) {
         })}
       />
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
-        {/* 참조 패널 — edit 모드에서만 */}
-        {writingMode === 'edit' && (
-          <WritingContextPanel config={currentSession.config} language={language} />
-        )}
+        {/* 참조 패널 — 2026-04-21: edit/ai 양쪽 노출 (세계관/인물 우측 슬라이드).
+            worldview 데이터 존재 시 기본 펼침 + localStorage로 상태 기억. */}
+        <WritingContextPanel config={currentSession.config} language={language} />
 
         {/* 소설 본문 영역 */}
         <div className="flex-1 flex flex-col min-w-0 relative h-full border-b lg:border-b-0 lg:border-r border-border/40">
