@@ -82,34 +82,41 @@ function scorePosts(
   });
 }
 
+// 2026-04-21 [i18n] 샘플 행성 3종에 ja/zh 추가 (네트워크 페이지 첫 인상)
 const SAMPLE_PLANETS = [
   {
     id: "sample-1",
     genre: "Sci-Fi",
-    name: { ko: "아르카디아-7", en: "Arcadia-7" },
+    name: { ko: "아르카디아-7", en: "Arcadia-7", ja: "アルカディア-7", zh: "阿尔卡迪亚-7" },
     summary: {
       ko: "GREEN 구역 외곽에 위치한 자원 행성. 최근 미확인 에너지 파동이 감지되었습니다.",
       en: "A resource planet on the edge of the GREEN zone. Unidentified energy waves recently detected.",
+      ja: "GREEN区域の外縁に位置する資源惑星。最近、未確認のエネルギー波が検知されました。",
+      zh: "位于 GREEN 区域外缘的资源行星。近期检测到未识别的能量波动。",
     },
     tags: ["GREEN", "Resource", "Anomaly"],
   },
   {
     id: "sample-2",
     genre: "Military",
-    name: { ko: "요새 헬리오스", en: "Fortress Helios" },
+    name: { ko: "요새 헬리오스", en: "Fortress Helios", ja: "要塞ヘリオス", zh: "要塞赫利俄斯" },
     summary: {
       ko: "BLUE 구역 방어선의 핵심 거점. 3개 함대가 주둔 중입니다.",
       en: "A key stronghold on the BLUE zone defense line. Three fleets are stationed here.",
+      ja: "BLUE区域防衛線の中核拠点。3つの艦隊が駐留中です。",
+      zh: "BLUE 区域防线的核心据点。三支舰队驻扎其中。",
     },
     tags: ["BLUE", "Defense", "Fleet"],
   },
   {
     id: "sample-3",
     genre: "Exploration",
-    name: { ko: "네뷸라 드리프트", en: "Nebula Drift" },
+    name: { ko: "네뷸라 드리프트", en: "Nebula Drift", ja: "ネビュラ・ドリフト", zh: "星云漂移" },
     summary: {
       ko: "YELLOW 구역 미탐사 성운 지대. 탐사 허가 대기 중입니다.",
       en: "An unexplored nebula zone in the YELLOW sector. Awaiting exploration clearance.",
+      ja: "YELLOW区域の未探査星雲帯。探査許可待ちです。",
+      zh: "YELLOW 区域未探索的星云带。等待探索许可中。",
     },
     tags: ["YELLOW", "Nebula", "Uncharted"],
   },
