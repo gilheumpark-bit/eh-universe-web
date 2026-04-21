@@ -4,25 +4,13 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { logger } from '@/lib/logger';
 
 // ============================================================
-// PART 1 - ENVIRONMENT DETECTION
+// PART 1 - ENVIRONMENT DETECTION (re-export from firebase-env.ts)
 // ============================================================
-
-/**
- * NEXT_PUBLIC_FIREBASE_ENV controls which Firebase project configuration is used.
- * - "production" (default): uses the production Firebase project
- * - "test" or "development": uses the test Firebase project (same project, "test_" collection prefix awareness)
- *
- * Set this in .env.local or Vercel environment variables.
- */
-const FIREBASE_ENV = (
-  typeof process !== 'undefined'
-    ? process.env.NEXT_PUBLIC_FIREBASE_ENV
-    : undefined
-) ?? 'production';
-
-export const isTestEnvironment = FIREBASE_ENV === 'test' || FIREBASE_ENV === 'development';
-
-// IDENTITY_SEAL: PART-1 | role=environment detection | inputs=env var | outputs=isTestEnvironment flag
+// 2026-04-21 [PERF] isTestEnvironment를 firebase-env.ts로 분리하여
+// Firebase SDK 무의존 import 가능하게 함. 후방 호환을 위해 재-export.
+// 신규 코드는 `@/lib/firebase-env`에서 직접 import 권장.
+import { isTestEnvironment } from './firebase-env';
+export { isTestEnvironment };
 
 // ============================================================
 // PART 2 - FIREBASE CONFIG AND INITIALIZATION
@@ -67,7 +55,7 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
     logger.warn('EH Universe', `Firebase config incomplete — missing: ${missing.join(', ')}. Auth features disabled.`);
   } else {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-    
+
     // Auth is no longer eagerly initialized to save bundle size
     db = getFirestore(app);
 

@@ -5,7 +5,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import { isTestEnvironment } from "@/lib/firebase";
+// 2026-04-21 [PERF] firebase-env에서 직접 import (Firebase SDK 100KB 비번들).
+import { isTestEnvironment } from "@/lib/firebase-env";
 import { TOOL_LINKS_HEADER_DROPDOWN } from "@/lib/tool-links";
 import { getTranslatorStudioHref, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";

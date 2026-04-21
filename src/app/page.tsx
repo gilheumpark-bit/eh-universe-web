@@ -84,9 +84,25 @@ function useHeroScrollShrink(
   }, [panelRef, enabled]);
 }
 
-import SplashScreen from "@/components/home/SplashScreen";
+import dynamic from "next/dynamic";
 import { getTranslatorStudioHref, NOVEL_STUDIO_PATH } from "@/lib/studio-entry-links";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+
+// 2026-04-21 [PERF] SplashScreen을 dynamic으로 분리 — 재방문자(30일 내)는 splash 스킵이라
+// 초기 번들에서 제외. 첫 방문자만 UnifiedSettingsBar + APIKeySlotManager까지 lazy 로드.
+// Bundle expect: / First Load JS ~55-80 KB 감소 예상.
+const SplashScreen = dynamic(() => import("@/components/home/SplashScreen"), {
+  ssr: false,
+  loading: () => (
+    <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
+      <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-300">
+        <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
+          EH
+        </div>
+      </div>
+    </div>
+  ),
+});
 
 function HomePageFallback() {
   return (
