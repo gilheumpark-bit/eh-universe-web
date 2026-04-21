@@ -539,21 +539,16 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         {/* 구분선 */}
         <div className="w-px h-10 bg-border/30 mx-1" />
 
-        {/* 앱 링크 아이콘 (UNIVERSE / CODE / TRANSLATE) */}
+        {/* 앱 링크 아이콘 (UNIVERSE / TRANSLATE) — 앵커 tier (Handle·Settings와 동일 크기) */}
         {appLinks.map(link => (
           <Link
             key={link.href}
             href={link.href}
-            className="relative flex flex-col items-center justify-center group transition-[transform,opacity,background-color,border-color,color] duration-200"
-            style={{ width: '56px', height: '56px' }}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30"
             title={link.label}
+            aria-label={link.label}
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center bg-transparent border border-transparent hover:bg-bg-tertiary/50 transition-colors duration-200">
-              <link.icon className={`w-6 h-6 ${link.color} opacity-70 group-hover:opacity-100 transition-opacity`} strokeWidth={1.8} />
-            </div>
-            <span className="text-[10px] sm:text-[11px] font-serif mt-1.5 tracking-wide text-text-tertiary group-hover:text-text-primary transition-colors">
-              {link.label}
-            </span>
+            <link.icon className={`w-6 h-6 ${link.color} hover:text-text-primary transition-colors`} strokeWidth={1.8} />
           </Link>
         ))}
 
