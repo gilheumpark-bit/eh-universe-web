@@ -175,7 +175,7 @@
   - `/v1/chat/completions` → **Nginx LB(8090)** least_conn → Engine A/B 자동 분산
   - `/api/rag/search`, `/api/rag/prompt` → RAG API(8082) — ChromaDB 99만 문서 + 25 장르 규칙
   - `/api/image/generate` → ComfyUI(8188) — Flux-Schnell FP8 (4-step)
-- **로컬 개발:** `http://192.168.219.100:8000/v1` (내부망)
+- **로컬 개발:** `http://<DGX-SERVER-IP>:8000/v1` (내부망 — 자기 환경 IP로 교체)
 - **샌드박스:** `/api/sandbox/execute` — Code Studio 격리 코드 검증
 
 ### SSE 스트리밍 (2026-04-17 직결 전환)

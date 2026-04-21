@@ -134,7 +134,7 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     id: "lmstudio",
     name: "LM Studio (Local)",
     color: "#2d5d8d",
-    placeholder: "http://192.168.219.102:1234",
+    placeholder: "http://localhost:1234",
     defaultModel: "openai/gpt-oss-20b",
     models: ["openai/gpt-oss-20b", "qwen/qwen3-30b-a3b-2507", "qwen/qwen3-14b", "local-model"],
     testPrompt: 'Say "OK" in one word.',

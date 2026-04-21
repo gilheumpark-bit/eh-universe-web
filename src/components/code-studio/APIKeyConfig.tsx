@@ -53,7 +53,7 @@ const PROVIDERS = [
   { id: "openai", name: "OpenAI", color: "#10a37f", placeholder: "sk-...", models: ["gpt-5.4", "gpt-5.4-mini", "gpt-4.1"] },
   { id: "anthropic", name: "Claude", color: "#d4a373", placeholder: "sk-ant-...", models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"] },
   { id: "groq", name: "Groq", color: "#f55036", placeholder: "gsk_...", models: ["llama-3.3-70b-versatile", "qwen-qwq-32b"] },
-  { id: "lmstudio", name: "LM Studio", color: "#2d5d8d", placeholder: "http://192.168.219.102:1234", models: ["openai/gpt-oss-20b", "qwen/qwen3-30b-a3b-2507", "qwen/qwen3-14b"] },
+  { id: "lmstudio", name: "LM Studio", color: "#2d5d8d", placeholder: "http://localhost:1234", models: ["openai/gpt-oss-20b", "qwen/qwen3-30b-a3b-2507", "qwen/qwen3-14b"] },
 ];
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=APIKeySlot,SlotRole,Props

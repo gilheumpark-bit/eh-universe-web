@@ -345,7 +345,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - `sparkService.ts`: `stream:false` → `stream:true` 전환 — 첫 토큰 30초→0.05초
 - SSE 실시간 파싱 + 프론트 SSE 즉시 포워딩 (zero-copy)
 - 청크 이어쓰기 유지 (4000토큰/청크, 최대 4연타 = 16K)
-- DGX 엔드포인트: `api.ehuniverse.com` (프로덕션) + `192.168.219.100:8000` (로컬)
+- DGX 엔드포인트: `api.ehuniverse.com` (프로덕션) + `<DGX-SERVER-IP>:8000` (로컬 내부망)
 
 ### Added — 집필 몰입도 시스템
 - 에디터 원고지 모드: `max-width: 65ch` + `text-indent: 1em` + `--editor-font-size` CSS 변수

@@ -12,7 +12,7 @@
  * ── 엔드포인트 우선순위 ──
  * 1. NEXT_PUBLIC_SPARK_GATEWAY_URL (명시) — 프로덕션 게이트웨이
  * 2. NEXT_PUBLIC_SPARK_SERVER_URL (명시) — 로컬 네트워크 직결
- * 3. 기본값: http://192.168.219.100:8001 (내부망 기본)
+ * 3. 기본값: http://localhost:8001 (로컬 vLLM)
  *
  * ── 이력 ──
  * - 이전: Engine A/B 쌍포(9B) + Nginx LB(8090) + https://api.ehuniverse.com 게이트웨이
@@ -28,11 +28,13 @@
 // PART 1 — 엔드포인트
 // ============================================================
 
-/** 단일 API 게이트웨이 — 모든 백엔드 서비스의 진입점 */
+/** 단일 API 게이트웨이 — 모든 백엔드 서비스의 진입점.
+ *  2026-04-21 [SECURITY] fallback default를 localhost로 변경 (이전엔 특정 내부 IP 노출).
+ *  실제 사용 시 NEXT_PUBLIC_SPARK_GATEWAY_URL 환경변수로 명시 필수. */
 export const SPARK_GATEWAY_URL =
   process.env.NEXT_PUBLIC_SPARK_GATEWAY_URL
   || process.env.NEXT_PUBLIC_SPARK_SERVER_URL
-  || 'http://192.168.219.100:8001';
+  || 'http://localhost:8001';
 
 /** RAG — 세계관 설정 검색 */
 export const SPARK_RAG_URL =

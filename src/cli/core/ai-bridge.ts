@@ -110,7 +110,9 @@ const PROVIDERS: Record<string, ProviderConfig> = {
     extractContent: (data: unknown) => data?.message?.content ?? '',
   },
   'lm-studio': {
-    baseUrl: 'http://192.168.219.102:1234/v1/chat/completions',
+    // 2026-04-21 [SECURITY] localhost로 fallback 변경 (이전엔 특정 내부 IP 노출).
+    // 실제 사용 시 process.env.LM_STUDIO_URL 등으로 override 필요.
+    baseUrl: process.env.LM_STUDIO_URL || 'http://localhost:1234/v1/chat/completions',
     authHeader: () => ({}), // LM Studio는 인증 불필요
     bodyBuilder: (opts, model) => ({
       model,
