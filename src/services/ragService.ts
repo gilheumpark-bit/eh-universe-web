@@ -11,10 +11,19 @@
 
 import { SPARK_RAG_URL } from '@/lib/dgx-models';
 import { logger } from '@/lib/logger';
+import { quickIPCheck } from '@/lib/ip-guard/scan';
 
 // ============================================================
 // PART 1 — 타입
 // ============================================================
+
+/**
+ * RAG 결과 IP 정제 모드.
+ *   - 'off'      : 스캔 안 함 (성능 중시, 레거시)
+ *   - 'annotate' : 모든 문서에 meta.ipRisk/ipScore/ipGrade 태깅만, 필터링 X (기본)
+ *   - 'strict'   : critical 브랜드·저작권 매칭 문서를 결과에서 제거
+ */
+export type RagSanitizeMode = 'off' | 'annotate' | 'strict';
 
 export interface RagSearchRequest {
   query: string;
@@ -24,6 +33,8 @@ export interface RagSearchRequest {
   project_id?: string;
   /** 메타 필터 (예: { type: 'translatedPair' }) — 서버 미지원 시 무시 */
   filters?: Record<string, unknown>;
+  /** IP 리스크 정제 모드 (기본 'annotate') */
+  sanitize?: RagSanitizeMode;
 }
 
 export interface RagDocument {
@@ -87,11 +98,43 @@ async function postJson<T>(path: string, body: unknown, opts?: RagRequestOpts): 
 // ============================================================
 
 /**
+ * RAG 결과 문서 IP 정제.
+ *
+ *   - 각 문서 content에 대해 brand-blocklist + suspicious pattern 빠른 스캔.
+ *   - 'annotate': meta.ipScore/ipGrade/ipRisk 부착 (기본)
+ *   - 'strict':   critical 매칭 있는 문서 제거
+ *
+ * RAG 오염(타사 소설 발췌·저작권 문구 포함 문서)이 프롬프트로 새어나가는
+ * 마지막 방어선. 서버 측 ingestion 필터가 있어도 클라이언트에서 한 번 더.
+ */
+export function sanitizeRagResults(
+  docs: RagDocument[],
+  mode: RagSanitizeMode = 'annotate',
+): RagDocument[] {
+  if (mode === 'off' || docs.length === 0) return docs;
+  const out: RagDocument[] = [];
+  for (const doc of docs) {
+    const scan = quickIPCheck(doc.content ?? '', { brandMinSeverity: 'critical' });
+    if (mode === 'strict' && scan.critical > 0) continue;
+    const nextMeta: Record<string, unknown> = { ...(doc.meta ?? {}) };
+    nextMeta.ipScore = scan.score;
+    nextMeta.ipGrade = scan.grade;
+    nextMeta.ipRisk = scan.critical > 0 ? 'high' : scan.score < 70 ? 'medium' : 'low';
+    out.push({ ...doc, meta: nextMeta });
+  }
+  return out;
+}
+
+/**
  * 단순 Top-K 검색 — 원본 문서 배열 반환.
  * 게이트웨이 경로: POST ${SPARK_RAG_URL}/search
+ *
+ * 2026-04-23: 결과에 IP 리스크 정제 레이어 추가 (기본 'annotate').
+ *   - 'strict' 모드는 critical 매칭 문서를 결과에서 제거 — 생성 경로용.
+ *   - 'annotate'는 meta에 ipRisk 태깅만 — 호출 측이 UI/필터 결정.
  */
 export async function ragSearch(req: RagSearchRequest, opts?: RagRequestOpts): Promise<RagDocument[]> {
-  const { query, top_k = 5, project_id, filters } = req;
+  const { query, top_k = 5, project_id, filters, sanitize = 'annotate' } = req;
   if (!query || !query.trim()) return [];
   try {
     // [C] undefined 필드 제외 — spread 조건부로 신규 필드 추가 (하위 호환)
@@ -99,12 +142,14 @@ export async function ragSearch(req: RagSearchRequest, opts?: RagRequestOpts): P
     if (project_id) body.project_id = project_id;
     if (filters && Object.keys(filters).length > 0) body.filters = filters;
     const data = await postJson<RagSearchResponse | RagDocument[]>('/search', body, opts);
-    if (Array.isArray(data)) return data;
+    let docs: RagDocument[];
+    if (Array.isArray(data)) docs = data;
     // 서버 정식 포맷: {query, results[]}
-    if (Array.isArray(data.results)) return data.results;
+    else if (Array.isArray(data.results)) docs = data.results;
     // 레거시/대체: {documents[]}
-    if (Array.isArray(data.documents)) return data.documents;
-    return [];
+    else if (Array.isArray(data.documents)) docs = data.documents;
+    else docs = [];
+    return sanitizeRagResults(docs, sanitize);
   } catch (err) {
     logger.warn('RAG', 'search failed', err);
     return [];

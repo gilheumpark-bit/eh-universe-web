@@ -12,6 +12,7 @@ import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { logger } from '@/lib/logger';
 import { getNetworkAgentCorsHeaders } from '@/lib/network-agent-cors';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { scanTextForIP } from '@/lib/ip-guard/scan';
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: getNetworkAgentCorsHeaders(req) });
@@ -57,6 +58,42 @@ export async function POST(req: NextRequest) {
         { error: 'translationProjectId is required when documentType is translation' },
         { status: 400, headers: cors },
       );
+    }
+
+    // [L1 IP Guard] RAG ingestion 단계 방어 — critical IP/저작권 매칭 시 거부.
+    // warning 이하는 로깅만 하고 통과 (작가 피드백용).
+    const ipScan = scanTextForIP(`${body.title}\n\n${body.content}`);
+    const criticalBrands = ipScan.brands.filter(b => b.entry.severity === 'critical');
+    const criticalPatterns = ipScan.patterns.filter(p => p.severity === 'critical');
+    if (criticalBrands.length > 0 || criticalPatterns.length > 0) {
+      logger.warn('network-agent/ingest', 'L1 IP guard blocked ingestion', {
+        userId,
+        documentId: body.documentId,
+        score: ipScan.score,
+        brands: criticalBrands.length,
+        patterns: criticalPatterns.length,
+      });
+      return NextResponse.json(
+        {
+          error: 'IP/brand violation detected — ingestion blocked',
+          score: ipScan.score,
+          grade: ipScan.grade,
+          summary: ipScan.summary,
+          recommendations: ipScan.recommendations,
+          brands: criticalBrands.map(b => ({ canonical: b.entry.canonical, matched: b.matched })),
+          patterns: criticalPatterns.map(p => ({ description: p.description, line: p.line })),
+        },
+        { status: 403, headers: cors },
+      );
+    }
+    if (ipScan.score < 70) {
+      // 작가에게 리포트만 남김 — 차단은 안 함
+      logger.warn('network-agent/ingest', 'L1 IP guard warning (score<70)', {
+        userId,
+        documentId: body.documentId,
+        score: ipScan.score,
+        grade: ipScan.grade,
+      });
     }
 
     const success = await ingestNetworkDocument({

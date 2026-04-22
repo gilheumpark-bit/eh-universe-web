@@ -1,11 +1,15 @@
 // ============================================================
 // Code Studio — Patent/IP Scanner
 // ============================================================
+// 2026-04-23 리팩토링: SUSPICIOUS_PATTERNS 중복 제거, `lib/ip-guard/scan.ts`의
+// 공용 스캐너(`scanTextForIP`)에 위임. License 감지는 코드 전용(SPDX·헤더) 로직이라
+// 이 파일에 유지. 기존 공개 API(`scanProject`, `IPReport`)는 하위 호환.
 
 import type { FileNode } from '../core/types';
+import { scanTextForIP } from '@/lib/ip-guard/scan';
 
 // ============================================================
-// PART 1 — Types
+// PART 1 — Types (공개 — 하위 호환)
 // ============================================================
 
 export interface LicenseInfo {
@@ -36,8 +40,10 @@ export interface IPReport {
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=LicenseInfo,CodePatternMatch,IPReport
 
 // ============================================================
-// PART 2 — License Detection
+// PART 2 — License Detection (코드 전용 — 유지)
 // ============================================================
+// SPDX·헤더 감지는 소스코드 특화 로직이라 `lib/ip-guard/scan.ts`(소설·RAG용)와
+// 별도로 둔다. 소설 본문엔 이런 패턴이 나올 일이 없음.
 
 const LICENSE_PATTERNS: Array<{ regex: RegExp; license: string; spdxId: string }> = [
   { regex: /MIT License/i, license: 'MIT', spdxId: 'MIT' },
@@ -74,17 +80,8 @@ function hasLicenseHeader(content: string): boolean {
 // IDENTITY_SEAL: PART-2 | role=license detection | inputs=file content | outputs=LicenseInfo
 
 // ============================================================
-// PART 3 — Code Pattern Scanning
+// PART 3 — File Tree Flatten
 // ============================================================
-
-const SUSPICIOUS_PATTERNS: Array<{ regex: RegExp; description: string; severity: CodePatternMatch['severity'] }> = [
-  { regex: /stackoverflow\.com/i, description: 'Stack Overflow reference detected', severity: 'info' },
-  { regex: /copied from|taken from|based on/i, description: 'Copy attribution comment', severity: 'warning' },
-  { regex: /TODO:\s*remove|HACK|FIXME:\s*license/i, description: 'IP-related TODO/FIXME', severity: 'warning' },
-  { regex: /all rights reserved/i, description: 'All rights reserved notice', severity: 'critical' },
-  { regex: /proprietary|confidential/i, description: 'Proprietary/confidential marker', severity: 'critical' },
-  { regex: /patent pending|patented/i, description: 'Patent reference', severity: 'critical' },
-];
 
 function flattenFiles(nodes: FileNode[], prefix = ''): Array<{ path: string; content: string }> {
   const out: Array<{ path: string; content: string }> = [];
@@ -96,7 +93,7 @@ function flattenFiles(nodes: FileNode[], prefix = ''): Array<{ path: string; con
   return out;
 }
 
-// IDENTITY_SEAL: PART-3 | role=pattern scanning | inputs=FileNode[] | outputs=CodePatternMatch[]
+// IDENTITY_SEAL: PART-3 | role=file-tree flatten | inputs=FileNode[] | outputs=flat file list
 
 // ============================================================
 // PART 4 — Report Generation
@@ -108,7 +105,7 @@ export function scanProject(files: FileNode[]): IPReport {
   const patterns: CodePatternMatch[] = [];
 
   for (const f of flat) {
-    // License detection
+    // License detection (코드 전용)
     const lic = detectLicense(f.content);
     if (lic || /license/i.test(f.path)) {
       licenses.push({
@@ -120,20 +117,17 @@ export function scanProject(files: FileNode[]): IPReport {
       });
     }
 
-    // Pattern scanning
-    const lines = f.content.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      for (const sp of SUSPICIOUS_PATTERNS) {
-        if (sp.regex.test(lines[i])) {
-          patterns.push({
-            file: f.path,
-            line: i + 1,
-            pattern: lines[i].trim().slice(0, 100),
-            description: sp.description,
-            severity: sp.severity,
-          });
-        }
-      }
+    // Pattern scanning — `lib/ip-guard/scan.ts`의 공용 스캐너에 위임
+    // (SUSPICIOUS_PATTERNS 중복 제거, 2026-04-23 리팩토링)
+    const ipResult = scanTextForIP(f.content);
+    for (const m of ipResult.patterns) {
+      patterns.push({
+        file: f.path,
+        line: m.line,
+        pattern: m.pattern,
+        description: m.description,
+        severity: m.severity,
+      });
     }
   }
 
