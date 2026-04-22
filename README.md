@@ -31,7 +31,7 @@
 - Tab 누르면 다음 문장 제안
 - 저장하면 GitHub에 자동 백업 (설정 1분 가이드 제공)
 - 에피소드마다 품질 등급 자동 채점
-- 99만 문서 RAG + 25 장르 규칙 자동 주입
+- 99만 문서 RAG (위키백과 CC BY-SA 라이선스 선별) + 25 장르 규칙 자동 주입
 
 ---
 
@@ -153,7 +153,7 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 |------|------|
 | **BYOK** | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio — API 키만 넣으면 동작 |
 | **자체 서버** | NVIDIA DGX Spark (GB10, 128GB) — Qwen 3.6-35B-A3B-FP8 MoE 단일 서빙 (vLLM 8001) + SSE 직결 스트리밍 |
-| **RAG** | ChromaDB 99만 문서 + 25 장르 작법 규칙 자동 조립 (`/api/rag/prompt`) |
+| **RAG** | ChromaDB 99만 문서 (위키백과 CC BY-SA 라이선스 선별) + 25 장르 작법 규칙 자동 조립 (`/api/rag/prompt`) |
 | **이미지** | Flux-Schnell FP8 (4-step, `/api/image/generate`) |
 
 모든 백엔드 트래픽은 단일 게이트웨이 `https://api.ehuniverse.com`로 통합 (Nginx LB least_conn 자동 분산).
@@ -187,7 +187,7 @@ npm test         # 테스트
 | 프레임워크 | Next.js 16.2, React 19.2, TypeScript 5 |
 | 에디터 | Tiptap (소설) + Monaco (코드) + 인라인 자동완성 |
 | AI | 7개 프로바이더 + DGX Spark **Qwen 3.6-35B-A3B-FP8 MoE** (자체) |
-| RAG | ChromaDB 99만 문서 + 25 장르 규칙 |
+| RAG | ChromaDB 99만 문서 (위키백과 CC BY-SA 라이선스 선별) + 25 장르 규칙 |
 | 집필 엔진 | ANS 10.0 — 품질 검사, 디렉터, 연속성, HFCP, 장르 프리셋 |
 | 코드 엔진 | 9팀 파이프라인 + Quill 224룰 |
 | 저장 | localStorage + IndexedDB + GitHub(Octokit) + Drive + Firestore |
@@ -237,10 +237,10 @@ npm test         # 테스트
 
 ## 알파 작가 모집
 
-**브릿G 장르문학 작가 50명 공동 창설자** 모집 중.
+**브릿G 장르문학 작가 50명 얼리 액세스 멤버** 모집 중.
 
-- 평생 50% 할인
-- 제품 크레딧 등재
+- 기간 한정 할인 (구체 조건 추후 공지)
+- 알파 기여자 명시
 - 해외 플랫폼 런칭 지원
 - 직통 피드백 채널
 
