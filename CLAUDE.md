@@ -160,40 +160,53 @@
 
 ---
 
-## [인프라 연동] DGX Spark 듀얼 엔진 + 단일 게이트웨이 (2026-04-17 동기화)
+## [인프라 연동] DGX Spark 35B MoE 단일 모델 (2026-04-23 갱신)
 
-**NVIDIA DGX GB10 (128GB VRAM)** 쌍포 구성 + Nginx LB 내부 분산.
+**NVIDIA DGX GB10 (128GB VRAM) 단일 장비** + vLLM 단일 엔진 구성.
+이전 Engine A/B 쌍포(9B) + Nginx LB(8090) + `https://api.ehuniverse.com` 게이트웨이 구조는 **폐기**.
 
 ### 모델
-- **Engine A (포트 8080):** `Qwen 3.5-9B FP8` — 메인 집필 / 캐릭터 대사
-- **Engine B (포트 8081):** `Qwen 3.5-9B FP8` — 번역 / 요약 / 보조
-- **모델 ID:** `/model` (vLLM `--served-model-name` 미지정, 로드 경로 그대로)
-- **공통 실측:** TTFT 0.13초, 18~20 tok/s
+- **vLLM 포트 8001:** `Qwen 3.6-35B-A3B-FP8 MoE` — 집필·번역·요약·보조 통합 단일
+- **모델 ID:** `qwen36` (vLLM `--served-model-name`)
+- **max_model_len:** 8192 tokens
+- **가속:** FlashInfer + N-Gram Speculative Decoding
+- **실측:** 40~50 tok/s, TTFT 0.05초
 
-### 백엔드 경로
-- **단일 게이트웨이:** `https://api.ehuniverse.com` — 모든 외부 트래픽 통합 진입
-  - `/v1/chat/completions` → **Nginx LB(8090)** least_conn → Engine A/B 자동 분산
-  - `/api/rag/search`, `/api/rag/prompt` → RAG API(8082) — ChromaDB 99만 문서 + 25 장르 규칙
-  - `/api/image/generate` → ComfyUI(8188) — Flux-Schnell FP8 (4-step)
-- **로컬 개발:** `http://<DGX-SERVER-IP>:8000/v1` (내부망 — 자기 환경 IP로 교체)
+### 변경 사유 (2026-04-20 전환)
+- 35B MoE 단일 모델이 쌍포 9B보다 품질 우위 (긴 컨텍스트 유지·장르 클리셰 탈피 등)
+- FlashInfer + Spec Decoding으로 속도도 9B 쌍포 대비 역전
+- **추론 전략 재수립:** Auditor 분리형 검증은 같은 vLLM 서버에 **low-temp self-critique 세션 추가 호출**로 구현. Engine B 개념 없음.
+
+### 엔드포인트
+- **DGX 서버:** `http://<DGX-IP>:8001/v1` — vLLM OpenAI 호환 엔드포인트 직결
+- **RAG API (포트 8082):** ChromaDB 99만 문서 + 25 장르 규칙 (`/api/rag/search`, `/api/rag/prompt`)
+- **ComfyUI (포트 8188):** Flux-Schnell FP8 이미지 생성 (`/api/image/generate`)
+- **우선순위:** `NEXT_PUBLIC_SPARK_GATEWAY_URL` → `NEXT_PUBLIC_SPARK_SERVER_URL` → `http://localhost:8001`
 - **샌드박스:** `/api/sandbox/execute` — Code Studio 격리 코드 검증
 
-### SSE 스트리밍 (2026-04-17 직결 전환)
-- **Cloudflare Tunnel 관통 성공:** 게이트웨이가 `: heartbeat` SSE 코멘트 선행 전송 +
-  aiohttp 스트리밍으로 520/502 우회. stream:true 진짜 passthrough.
-- **프론트엔드:** `src/services/sparkService.ts` — 브라우저·서버 모두 게이트웨이 직결.
-  SSE 파서가 `:` 코멘트 라인 스킵, `data: {...}` chunk를 즉시 렌더.
-- **폐기됨:** `/api/spark-stream` Vercel Edge 프록시 + non-stream 타자기 폴백 (Cloudflare 520 해결로 불필요)
+### Cloudflare Tunnel 상태
+- **차단 중:** 포트 직결이 여전히 불안정하여 게이트웨이 재구성 전까지 내부망(192.168.x.x) 직결로 운용
+- **SSE:** vLLM OpenAI 호환 엔드포인트가 `stream:true` 시 직접 SSE 송출 (프록시 레이어 불필요)
+- **폐기:** `/api/spark-stream` Vercel Edge 프록시 + non-stream 타자기 폴백
 
-### Qwen 추론 모델 아티팩트 처리
-- Qwen 3.5-9B는 답변 전 영어 "Thinking Process:" 분석 블록 출력 — 프롬프트만으로 완전 차단 불가
-- 클라이언트 `stripEngineArtifacts` (`src/engine/pipeline.ts`) 최종 필터:
-  - `<think></think>` 태그 블록 제거
-  - "Thinking Process:" / "Reasoning:" 선행 감지 → 첫 한글 문자까지 건너뛰기
-  - 시스템 프롬프트에 `/no_think` + NO_ENGLISH_THINKING_GUARD 자동 주입
+### Qwen 3.6-35B 추론 아티팩트 처리
+- 35B MoE도 답변 전 영어 "Thinking Process:" 누출 지속 확인 (2026-04-20 프로브)
+- 프롬프트만으로 완전 차단 불가 — 이중 방어:
+  1. **서버 주입 가드:** [src/lib/dgx-models.ts:79](src/lib/dgx-models.ts) `NO_ENGLISH_THINKING_GUARD` + `/no_think` 토큰, `buildSparkSystemPrompt()`가 모든 `streamSparkAI` 호출에 자동 주입
+  2. **클라이언트 필터:** [src/engine/pipeline.ts](src/engine/pipeline.ts) `stripEngineArtifacts`:
+     - `<think></think>` 태그 블록 제거
+     - "Thinking Process:" / "Reasoning:" 선행 감지 → 첫 한글 문자까지 건너뛰기
 
 ### 통신 구조
-- 스트리밍(글쓰기/번역): `streamSparkAI()` → `stream:true` → 게이트웨이 직결 SSE
-- 구조화 생성(캐릭터/아이템/스킬): `generateJsonViaSpark()` → `stream:false` → JSON 파싱
-- RAG 보강: `useStudioAI` → `ragBuildPrompt()` → 세계관+규칙 프롬프트 자동 조립
-- Vercel 배포 시 `SPARK_SERVER_URL` 환경 변수 우선, 없으면 `NEXT_PUBLIC_SPARK_GATEWAY_URL`
+- **스트리밍 (집필·번역):** `streamSparkAI()` ([src/services/sparkService.ts](src/services/sparkService.ts)) → `stream:true` → vLLM 직결 SSE
+- **구조화 생성 (캐릭터·아이템·스킬):** `generateJsonViaSpark()` → `stream:false` → JSON 파싱
+- **RAG 보강:** `useStudioAI` → `ragBuildPrompt()` → 세계관+규칙 프롬프트 자동 조립
+- **Vercel 배포:** `SPARK_SERVER_URL` 환경 변수 우선, 없으면 `NEXT_PUBLIC_SPARK_GATEWAY_URL`
+
+### AI 호출 엔트리 역할 정의 (2026-04-23 감사 결과)
+- **Studio 본문 집필:** [src/engine/pipeline.ts:387](src/engine/pipeline.ts) `buildSystemInstruction()` — 캐릭터 DNA Tier 1/2/3, actGuide, tensionCurve 주입
+- **Tab 자동완성:** [src/app/api/complete/route.ts:22](src/app/api/complete/route.ts) `buildSystemPrompt(language)` — 한/영 분기
+- **번역 6단계:** [src/lib/build-prompt.ts](src/lib/build-prompt.ts) `buildPrompt()` — stage별 온도 + 언어별 `/no_think` 가드 주입 (Phase 3 갱신)
+- **Network Agent 검색:** [src/lib/vertex-network-agent.ts:173](src/lib/vertex-network-agent.ts) `modelPromptSpec.preamble` — 집필 보조 + HSE 4대 권리 (Phase 2 갱신)
+- **Chat 채팅/분석:** [src/app/api/chat/route.ts:273](src/app/api/chat/route.ts) `buildSystemInstruction()` — PRISM 3등급 + LoRA 어댑터
+- **공통 레지스트리:** [src/lib/ai/writing-agent-registry.ts](src/lib/ai/writing-agent-registry.ts) — 집필판 AGENT 역할 정의 집중화 (Phase 4 신설)

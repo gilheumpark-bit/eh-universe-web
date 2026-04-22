@@ -25,6 +25,19 @@ function dialogueRuleNovel(to: string): string {
 `;
 }
 
+/**
+ * Qwen 3.6-35B MoE 추론 아티팩트 차단 가드 (번역 전용).
+ * vLLM `/no_think` 토큰 + <think> 태그·"Thinking Process:"·"Reasoning:" 누출 금지.
+ * 타깃 언어(`to`)에 따라 첫 문자 강제 — 언어-무관 가드. `NO_ENGLISH_THINKING_GUARD`
+ * (한글 소설 전용)와 충돌하지 않도록 번역 경로에서는 이 함수를 사용한다.
+ */
+function buildTranslationGuard(to: string): string {
+  return `/no_think
+[ABSOLUTE RULE — TRANSLATION]: Do NOT emit <think></think> blocks, "Thinking Process:", "Reasoning:", "Let me analyze", or any numbered analytical preamble in any language. Output ONLY the final text. The first character of your output MUST be a valid character of the target language: ${to}.
+
+`;
+}
+
 const DOMAIN_EXTRA: Record<string, string> = {
   legal:
     'DOMAIN LEGAL: Preserve defined terms, party names, article numbers, and citation formats. Do not paraphrase obligations or dates.',
@@ -54,8 +67,10 @@ export function buildPrompt(params: BuildPromptParams): string {
     domainPreset = 'general',
   } = params;
 
+  const guard = buildTranslationGuard(to);
+
   if (stage === 10) {
-    return `[SYSTEM: STORY BIBLE SUMMARIZER]
+    return `${guard}[SYSTEM: STORY BIBLE SUMMARIZER]
 You are updating the running Story Bible for a serialized novel translation workspace.
 <strict_directives>
 1. Output ONLY concise bullet points.
@@ -76,7 +91,7 @@ Output ONLY the summary points.`;
 
   const domainLine = DOMAIN_EXTRA[domainPreset] || '';
 
-  let baseInstructions = `[SYSTEM: DETERMINISTIC TRANSLATION ENGINE — MODE: ${mode === 'general' ? 'GENERAL ACCURACY' : 'NOVEL SPECIALIST'}]
+  let baseInstructions = `${guard}[SYSTEM: DETERMINISTIC TRANSLATION ENGINE — MODE: ${mode === 'general' ? 'GENERAL ACCURACY' : 'NOVEL SPECIALIST'}]
 You are a highly constrained, professional translation engine converting text from ${from} to ${to}.
 <strict_directives>
 1. NO YAP: Output ONLY the requested final text. NEVER output intros/outros like "Here is the translation" or "Understood".
