@@ -122,7 +122,9 @@ export interface TaggedValue<T> {
 /** TaggedField — 래핑되었을 수도, 아닐 수도 있는 필드 (역호환) */
 export type TaggedField<T> = T | TaggedValue<T>;
 
-// Scene Sheet (연출 스튜디오) data — V1 (기존). 역호환 위해 유지.
+// Scene Direction (작품 연출) data — V1 (기존). 역호환 위해 유지.
+// 주의: 이것은 **작품 전체 연출 공식**(고구마/사이다·훅·감정 곡선·클리프행어·복선 등).
+//       에피소드 단위 시나리오는 `EpisodeSceneSheet` (line 420~). 두 개념 구분 필요.
 export interface SceneDirectionData {
   goguma?: { type: "goguma" | "cider"; intensity: string; desc: string; episode?: number }[];
   hooks?: { position: string; hookType: string; desc: string }[];

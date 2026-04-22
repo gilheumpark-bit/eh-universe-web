@@ -550,7 +550,8 @@ export function buildSystemInstruction(
     }).join('\n')
     : '';
 
-  // Scene Direction (연출 스튜디오) prompt injection
+  // Scene Direction (작품 연출) prompt injection — 작품 전체 연출 공식(고구마/사이다·훅·감정·복선 등).
+  // 에피소드 단위 시나리오(`EpisodeSceneSheet`)와 구분. 이 블록은 전자(작품 연출)만 담당.
   // M4: 각 필드에 [USER] / [TEMPLATE] / [ENGINE_SUGGEST] / [ENGINE_DRAFT] 태그 부여.
   // V1 데이터(미래핑)는 USER로 자동 처리되어 자연스럽게 호환.
   const sd = config.sceneDirection as typeof config.sceneDirection | undefined;
@@ -699,7 +700,7 @@ export function buildSystemInstruction(
       }
     }
     if (parts.length > 0 && hasAnyContent) {
-      sceneDirectionBlock = '\n[SCENE DIRECTION — 연출 스튜디오]\n' + buildOriginGuide(language) + '\n' + parts.join('\n');
+      sceneDirectionBlock = '\n[SCENE DIRECTION — 작품 연출]\n' + buildOriginGuide(language) + '\n' + parts.join('\n');
     }
   }
 
