@@ -176,7 +176,9 @@ async function main() {
       rows.push(row);
     }
   } finally {
-    await chrome.kill().catch(() => {});
+    // [C] Windows: chrome.kill() 내부 rmSync(tmpdir) 가 EPERM 으로 sync throw 하는 경우가 있어
+    //     .catch() 로는 잡히지 않는다. try/catch 로 감싸서 리포트 쓰기를 보호한다.
+    try { await chrome.kill(); } catch { /* tmp dir cleanup race on Windows — OS 가 회수 */ }
   }
 
   if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });

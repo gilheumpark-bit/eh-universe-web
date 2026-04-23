@@ -156,3 +156,6 @@ docs/api/
 .claude/
 .tmp-*
 fix-*.mjs
+
+# Lighthouse local run output (매 실행 변동)
+docs/lighthouse-report.md
