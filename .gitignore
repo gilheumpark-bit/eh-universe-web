@@ -159,3 +159,6 @@ fix-*.mjs
 
 # Lighthouse local run output (매 실행 변동)
 docs/lighthouse-report.md
+
+# Playwright local run logs (루트 한정; e2e/ 디렉토리 소스는 제외 안 함)
+/e2e*.log

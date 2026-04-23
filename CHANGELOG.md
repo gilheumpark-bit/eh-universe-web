@@ -106,6 +106,20 @@ ESLint 품질 수리:
 ### Chore — Housekeeping
 - 루트 untracked 일회용 스크립트 `fix-eslint.mjs` 제거 + `.gitignore`에 `fix-*.mjs` 패턴 등록 (동종 임시 파일 자동 제외)
 
+### Ops — 로컬 실측 검증 (2026-04-24)
+
+- `scripts/project-integrity-scan.mjs` — exit 0, 신규 P0/P1 **0건** (이전 전수 감사 판정 재확인: TODO 16은 전부 검출기 regex / 의도적 skeleton / 원어민 검수 요청)
+- Lighthouse 3 URL 로컬 prod 실측 (`npm run lh:check`):
+  - `/`                    Perf 69 / A11y  96 / BP 96 / SEO 92
+  - `/studio`              Perf 70 / A11y 100 / BP 96 / SEO 58 (로그인 게이팅 영향 추정)
+  - `/translation-studio`  Perf 69 / A11y 100 / BP 96 / SEO 92
+  - Threshold 75 미달 (Perf 3개 + `/studio` SEO) → 별도 사이클 번들/LCP 과제
+- Playwright E2E (`npm run test:e2e`):
+  - Desktop chromium (workers=2): **142 passed / 7 skipped / 0 failed / 0 worker crash** (11.3분)
+  - Mobile device emulation: Windows `STATUS_ACCESS_VIOLATION` 로컬 한계 → CI(Ubuntu)에 위임 (`.github/workflows/ci.yml` 이미 chromium + mobile 전수 커버)
+- `scripts/lighthouse-check.mjs` Windows EPERM 내성 개선 — `finally` 의 `chrome.kill()` 내부 `rmSync(tmpdir)` sync throw 를 try/catch 로 흡수. 이전까지 3 URL 런이 끝난 뒤 리포트 쓰기 전에 crash 되던 문제 해결.
+- `.gitignore` 확장 — `docs/lighthouse-report.md` + `/e2e*.log` (로컬 런 산출물 자동 제외)
+
 ---
 
 ## [2.2.0-alpha.1] — 2026-04-21
