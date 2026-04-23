@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
-const _MAX_REQUEST_SIZE = 5_242_880; // 5MB body size limit for LLM proxy
+const MAX_REQUEST_SIZE = 5_242_880; // 5MB body size limit for LLM proxy
 
 /**
  * Validate that a hostname is a private/local network address.
@@ -124,6 +124,13 @@ export async function POST(req: NextRequest) {
       { error: 'Too many requests. Please wait a moment.' },
       { status: 429, headers: { 'Retry-After': String(Math.ceil(postRl.retryAfterMs / 1000)) } },
     );
+  }
+
+  // [보안] Content-Length 선행 체크 — 프롬프트 + history 가 비정상적으로 크면 401 대신 413.
+  // JSON parser 가 거대한 payload 를 풀기 전에 거절해서 메모리 고갈 경로를 차단.
+  const contentLength = parseInt(req.headers.get('content-length') || '0', 10);
+  if (contentLength > MAX_REQUEST_SIZE) {
+    return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
   }
 
   let body: Record<string, unknown>;

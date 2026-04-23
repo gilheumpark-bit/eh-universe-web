@@ -9,9 +9,6 @@ import { logger } from '@/lib/logger';
 import { apiLog } from '@/lib/api-logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
-const REQUEST_TIMEOUT = 10_000; // 10s timeout for error report ingestion
-void REQUEST_TIMEOUT;
-
 // [M9 P1-10] body size cap — public error reporter, 10KB cap prevents DOS via oversized payload.
 // Tightened from 16KB → 10KB to match vitals route (both are unauthenticated public beacons).
 // Real stack traces after source-map resolution fit under 10KB; overflow is likely abuse.

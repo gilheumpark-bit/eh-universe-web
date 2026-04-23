@@ -206,10 +206,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col">
-        {/* JSON-LD structured data — SoftwareApplication 스키마. 검색엔진 리치 스니펫용. */}
+        {/* JSON-LD structured data — SoftwareApplication 스키마. 검색엔진 리치 스니펫용.
+            [보안] JSON.stringify 결과에 '<' 가 포함되면 `</script>` 로 스크립트 블록이 조기 종료되는
+            XSS 경로가 생긴다. jsonLdSoftwareApplication 이 정적 상수라 현재는 무해하지만 표준 방어
+            (Next.js 공식 가이드와 동일) 를 미리 적용해둔다. `\u003c` 는 JSON 파서에서 정상 디코드. */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSoftwareApplication) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdSoftwareApplication)
+              .replace(/</g, '\\u003c')
+              .replace(/>/g, '\\u003e')
+              .replace(/&/g, '\\u0026'),
+          }}
         />
         {/* Skip navigation — multi-language */}
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline" lang="ko">본문으로 건너뛰기</a>
