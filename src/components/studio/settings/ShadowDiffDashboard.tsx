@@ -40,6 +40,7 @@ import {
   type PromotionEvent,
 } from '@/lib/save-engine/promotion-audit';
 import type { PromotionStatus } from '@/lib/save-engine/promotion-controller';
+import { PromotionHistoryPanel } from './ShadowPromotionHistoryPanel';
 
 // ============================================================
 // PART 2 — Props
@@ -320,80 +321,7 @@ function PromotionCriteriaChecklist({
   );
 }
 
-// ============================================================
-// PART 3.6 — (M1.5.4) Promotion History Panel
-// ============================================================
-
-interface PromotionHistoryPanelProps {
-  language: AppLanguage;
-  history: PromotionEvent[];
-}
-
-function PromotionHistoryPanel({
-  language,
-  history,
-}: PromotionHistoryPanelProps): React.ReactElement {
-  const title = L4(language, {
-    ko: '승격/다운그레이드 이력',
-    en: 'Promotion / Downgrade History',
-    ja: '昇格・ダウングレード履歴',
-    zh: '晋升 / 回退历史',
-  });
-  const empty = L4(language, {
-    ko: '기록 없음',
-    en: 'No history yet',
-    ja: '履歴なし',
-    zh: '暂无记录',
-  });
-
-  return (
-    <div className="rounded-2xl border border-border bg-bg-secondary/20 p-4 space-y-2">
-      <h4 className="text-[10px] font-black text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-        <History className="w-3.5 h-3.5 text-accent-blue" />
-        {title}
-      </h4>
-      {history.length === 0 ? (
-        <p className="text-[12px] text-text-tertiary px-2 py-3 rounded-lg bg-bg-secondary/30">
-          {empty}
-        </p>
-      ) : (
-        <ul className="space-y-1 max-h-48 overflow-y-auto">
-          {history.map((ev) => {
-            const ts = new Date(ev.ts).toLocaleString();
-            const arrow =
-              ev.to === 'on' ? '→ on'
-              : ev.to === 'shadow' ? '→ shadow'
-              : '→ off';
-            const color =
-              ev.trigger === 'downgrade' ? 'text-accent-amber'
-              : ev.to === 'on' ? 'text-accent-green'
-              : 'text-text-primary';
-            return (
-              <li
-                key={ev.id}
-                className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-bg-secondary/30 text-[11px] tabular-nums"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-text-tertiary shrink-0">{ts}</span>
-                  <span className={`font-black shrink-0 ${color}`}>
-                    {ev.from} {arrow}
-                  </span>
-                  <span
-                    className="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-bg-tertiary text-text-tertiary shrink-0"
-                    aria-label={`trigger-${ev.trigger}`}
-                  >
-                    {ev.trigger}
-                  </span>
-                  <span className="text-text-tertiary truncate">{ev.reason}</span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
+// PART 3.6 (Promotion History Panel) 은 ShadowPromotionHistoryPanel.tsx 로 분리됨 (2026-04-24).
 
 // ============================================================
 // PART 4 — Main dashboard
