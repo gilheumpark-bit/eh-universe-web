@@ -68,15 +68,23 @@ export default function AboutPage() {
                 {T({ ko: "라이선스", en: "License", ja: "ライセンス", zh: "许可证" })}
               </h2>
               <div className="space-y-3 text-text-secondary text-sm">
-                <div className="flex items-center gap-3">
-                  <span className="badge badge-allow">LICENSE</span>
-                  <span>CC-BY-NC-4.0 (Creative Commons Attribution-NonCommercial 4.0)</span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="badge badge-allow">SOFTWARE</span>
+                  <span>AGPL-3.0-or-later + Commercial (dual)</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="badge badge-allow">WORLD LORE</span>
+                  <span>CC-BY-NC-4.0</span>
                 </div>
                 <p>
                   {T({
-                    ko: "비상업적 목적의 사용, 공유, 변형이 자유롭습니다. 상업적 활용은 별도 협의가 필요합니다.",
-                    en: "Free to use, share, and modify for non-commercial purposes. Commercial use requires separate agreement.",
+                    ko: "소프트웨어(엔진·파이프라인·UI·CLI)는 AGPL-3.0 오픈소스 + Commercial 이중 트랙입니다. EH Universe 세계관 원본 자료(아카이브·코덱스·룰북)는 CC-BY-NC-4.0으로 별도 제공됩니다.",
+                    en: "Software (engine, pipelines, UI, CLI) is under AGPL-3.0 open-source + Commercial dual track. EH Universe world lore materials (Archive, Codex, Rulebook) are separately licensed under CC-BY-NC-4.0.",
                   })}
+                </p>
+                <p className="text-xs text-text-tertiary">
+                  {T({ ko: "상업 라이선스 문의: ", en: "Commercial license inquiries: " })}
+                  <a href="mailto:gilheumpark@gmail.com" className="text-accent-amber hover:underline">gilheumpark@gmail.com</a>
                 </p>
               </div>
             </section>
@@ -116,7 +124,7 @@ export default function AboutPage() {
                 { value: "109", label: T({ ko: "아카이브 문서", en: "Archive Docs" }) },
                 { value: "6", label: T({ ko: "세계관 카테고리", en: "World Categories" }) },
                 { value: "200K+", label: T({ ko: "관할 행성계", en: "Star Systems" }) },
-                { value: "CC-BY-NC", label: T({ ko: "오픈 라이선스", en: "Open License" }) },
+                { value: "DUAL", label: T({ ko: "AGPL + 상업", en: "AGPL + Commercial" }) },
               ].map(({ value, label }) => (
                 <div key={label} className="premium-panel-soft rounded-[16px] px-4 py-5 text-center border border-transparent hover:border-accent-purple/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-[transform,background-color,border-color,box-shadow,color] duration-200">
                   <div className="font-[--font-mono] text-xl font-black text-accent-purple mb-1">{value}</div>

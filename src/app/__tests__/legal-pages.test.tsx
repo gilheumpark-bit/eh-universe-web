@@ -68,10 +68,16 @@ describe('Terms Page', () => {
     expect(container.textContent).toContain('저작권');
   });
 
-  it('CC-BY-NC-4.0 라이선스 명시', () => {
+  it('CC-BY-NC-4.0 세계관 라이선스 명시', () => {
     const TermsPage = require('../terms/page').default;
     const { container } = render(<TermsPage />);
     expect(container.textContent).toContain('CC-BY-NC-4.0');
+  });
+
+  it('AGPL-3.0 소프트웨어 라이선스 명시 (dual license)', () => {
+    const TermsPage = require('../terms/page').default;
+    const { container } = render(<TermsPage />);
+    expect(container.textContent).toContain('AGPL-3.0');
   });
 
   it('대한민국 법률 준거 명시', () => {

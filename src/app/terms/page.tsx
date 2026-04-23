@@ -79,8 +79,16 @@ export default function TermsPage() {
           </p>
           <p>
             {T({
-              ko: "EH Universe 공식 세계관 원본 자료(아카이브·코덱스·룰북 등)는 CC-BY-NC-4.0으로 제공되며, 상업적 활용 시 별도 협의가 필요합니다.",
-              en: "Original EH Universe lore materials (Archive, Codex, Rulebook, etc.) are licensed under CC-BY-NC-4.0. Commercial use requires a separate agreement.",
+              ko: "Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 AGPL-3.0-or-later 오픈소스 라이선스와 별도 상업 라이선스(COMMERCIAL-LICENSE.md)의 이중 트랙으로 제공됩니다. 네트워크 서비스 제공 시 AGPL §13에 따라 전체 소스 공개 의무가 발생하며, 이를 원치 않는 경우 상업 라이선스가 필요합니다. (2026-04-24 커밋 414fe9ea 이전 릴리스는 CC-BY-NC-4.0 유지)",
+              en: "Loreguard software (engine, pipelines, UI, CLI) is offered under a dual license: AGPL-3.0-or-later for open-source use, or a separate Commercial License (COMMERCIAL-LICENSE.md) for closed-source / SaaS deployment. Network service provision triggers AGPL §13 source-disclosure obligations; organizations unable to comply require a commercial license. (Pre-414fe9ea releases remain under CC-BY-NC-4.0.)",
+              ja: "Loreguard ソフトウェアは AGPL-3.0 + Commercial のデュアル / Software is dual-licensed.",
+              zh: "Loreguard 软件采用 AGPL-3.0 + Commercial 双轨 / Software is dual-licensed.",
+            })}
+          </p>
+          <p>
+            {T({
+              ko: "EH Universe 공식 세계관 원본 자료(아카이브·코덱스·룰북 등)는 소프트웨어 라이선스와 분리되어 CC-BY-NC-4.0으로 제공되며, 상업적 활용 시 별도 협의가 필요합니다.",
+              en: "EH Universe official world-lore materials (Archive, Codex, Rulebook, etc.) are licensed separately from the software under CC-BY-NC-4.0. Commercial use requires a separate agreement.",
               ja: "EH Universe 公式世界観資料は CC-BY-NC-4.0 で提供され、商業利用には別途協議が必要です。/ Official lore is CC-BY-NC-4.0.",
               zh: "EH Universe 官方世界观原始资料采用 CC-BY-NC-4.0 许可，商业使用需另行协商。/ Official lore is CC-BY-NC-4.0.",
             })}

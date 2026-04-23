@@ -701,7 +701,7 @@ function HomePageContent() {
                 EH
               </span>
               <p className="font-[--font-mono] text-xs tracking-[0.16em] text-text-tertiary">
-                LOREGUARD · 로어가드 · CC-BY-NC-4.0
+                LOREGUARD · 로어가드 · AGPL-3.0 + Commercial
               </p>
             </div>
             <p className="font-document text-xs italic text-text-tertiary">

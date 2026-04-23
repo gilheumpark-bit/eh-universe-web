@@ -172,7 +172,16 @@ Fallback: JP/CN → EN → KO.
 
 ## 라이선스
 
-[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 비상업적 용도 무료.
+**Dual License** — 오픈소스 + 상업 2-트랙.
+
+| 트랙 | 라이선스 | 대상 |
+|------|----------|------|
+| 오픈소스 | [AGPL-3.0-or-later](LICENSE) | 개인/학술/소스 공개 SaaS |
+| 상업 | [Commercial](COMMERCIAL-LICENSE.md) | 클로즈드 SaaS / OEM / 퍼블리셔 / 엔터프라이즈 |
+
+세계관 원본(아카이브·코덱스·룰북)은 소프트웨어와 분리되어 [CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/)으로 유지. 이전 릴리스(커밋 `414fe9ea` 및 그 이전)는 CC-BY-NC-4.0 영구 권리 유지.
+
+문의: [gilheumpark@gmail.com](mailto:gilheumpark@gmail.com)
 
 <div align="center">
 

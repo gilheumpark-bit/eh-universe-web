@@ -91,7 +91,7 @@ npx playwright test
 
 ### Not Accepted
 - Changes to core EH Universe lore without author approval
-- Commercial use integrations (see LICENSE: CC BY-NC 4.0)
+- Commercial use integrations that bypass the dual-license model (see LICENSE: AGPL-3.0-or-later + COMMERCIAL-LICENSE.md)
 - Dependencies with incompatible licenses
 
 ## Reporting Bugs
@@ -102,7 +102,20 @@ Use the **Bug Report** issue template. Include:
 - Browser and OS information
 - Console errors (if any)
 
-## License
+## License & CLA
 
-By contributing, you agree that your contributions will be licensed under
-the [CC BY-NC 4.0](./LICENSE) license.
+By contributing to this repository, you agree that your contributions will be
+**dual-licensed** under both:
+
+1. [**GNU Affero General Public License v3.0 or later**](./LICENSE) — for the open-source track.
+2. [**EH Universe Commercial License**](./COMMERCIAL-LICENSE.md) — for the commercial track (operated by 박길흠 / EH Universe Project).
+
+This dual grant is required to maintain the project's dual-license business model
+(MongoDB pattern: AGPL open-source + Commercial).
+
+A formal **Contributor License Agreement (CLA)** will be required via
+[cla-assistant.io](https://cla-assistant.io/) once external contributions are opened.
+
+Prior (pre-`414fe9ea`) releases remain available under CC-BY-NC-4.0 for those
+who obtained them under that license; subsequent releases are governed by the
+dual license above.
