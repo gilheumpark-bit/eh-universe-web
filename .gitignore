@@ -162,3 +162,8 @@ docs/lighthouse-report.md
 
 # Playwright local run logs (루트 한정; e2e/ 디렉토리 소스는 제외 안 함)
 /e2e*.log
+
+# Private strategy docs (IR / pitch / §16 0차 — 절대 커밋 금지)
+IR_PITCH_STRATEGY.md
+IR_*.md
+PITCH_*.md

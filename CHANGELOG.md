@@ -7,7 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added — ARCS 응답 제어 시스템 기반 레이어 (하루 6 커밋)
 
-**EH Universe의 핵심 엔진 ARCS (AI Response Control System)의 오픈소스 표면부 완성.** Loreguard·Code Studio·Translation Studio가 공유하는 공통 기반 3 모듈 구축. 특허 10-2026-0038027 (KIPO 패스트트랙).
+**EH Universe의 핵심 엔진 ARCS (AI Response Control System)의 오픈소스 표면부 완성.** Loreguard·Code Studio·Translation Studio가 공유하는 공통 기반 3 모듈 구축.
 
 #### WRITING_AGENT_REGISTRY (1acaeb8a)
 - `src/lib/ai/writing-agent-registry.ts` 신설 — Code Studio 19-role `AGENT_REGISTRY` 패턴을 집필·번역·아카이브에 이식
@@ -105,6 +105,11 @@ ESLint 품질 수리:
 
 ### Chore — Housekeeping
 - 루트 untracked 일회용 스크립트 `fix-eslint.mjs` 제거 + `.gitignore`에 `fix-*.mjs` 패턴 등록 (동종 임시 파일 자동 제외)
+
+### Experimental — CS Quill CLI v0.1.0
+- `src/cli/bin/cs.ts` — Code Studio CLI 엔트리 (🦔 CS Quill — 코드 퀄리티 고슴도치)
+- 명령: `init` (프로젝트 온보딩), `generate` (SEAL 계약 병렬 코드 생성)
+- **상태**: 내부 실험용. `npm bin` 등록만 유지, 외부 배포·공개 문서화 전
 
 ### Ops — 로컬 실측 검증 (2026-04-24)
 
