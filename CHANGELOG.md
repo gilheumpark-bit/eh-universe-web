@@ -65,6 +65,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - 총 **+2,300 라인** 추가
 - 4 커밋 (ai refactor → ai registry → ip-guard → compliance) + 2 커밋 (i18n → legal)
 
+### Documentation — 24일 기준 최신본 문서 동기화 (2d273b77)
+
+- README `프로젝트 상태` 2026-04-21 → 2026-04-24 · **ARCS 레이어 지표 1줄 신설**
+- README CHANGELOG 링크 버전 v2.2.0-alpha.1 → v2.3.0-alpha
+- AGENTS.md 상단에 **2026-04-24 v2.3.0-alpha 섹션** 신설 (ARCS 레이어 · IP Guard L1-L5 테이블 · AI 호출 엔트리 감사 결과 · 네이밍 통합 · 법적 카피 정돈)
+- AGENTS.md AI 모델 테이블 DGX 라인 → **Qwen 3.6-35B-A3B-FP8 MoE 단일**
+- ARCHITECTURE.md 2.1.2 → 2.3.0-alpha (DGX 35B MoE · RAG Wikipedia CC BY-SA · ARCS 섹션 신설)
+
+### Fixed — 미연결·미구현·50%·스텁·에러 전수 감사 및 수리 (bcb622eb)
+
+**tracked 1,787 / src 1,586** 파일 전수 패턴 스캔 + 의심 파일 **개별 Read 판정 후 실수리 5건**:
+
+1. **미연결** — `TermTooltip` LangContext 미연결 → `language?: AppLanguage | string` prop + `L4()` 4언어 활성 (5 호출자 전파: TranslationPanel×4 / AdvancedSection×2 / SceneSheet×1)
+2. **문서-구현 불일치** — `novel-plugin-registry.ts:425` docstring → 실제 fail-closed 동작 명시 (signature 있을 때 valid=false 강제)
+3. **미연결** — `image-gen/route.ts` `referenceImageRequested` 주석 의도 → 응답 metadata 반영 (OpenAI / Stability / local-spark 3 provider, 호출자 `imageGenerationService.ts`는 `data.images`만 읽어 호환 유지)
+4. **dead state** — `StatusIndicator` storage state 미표시 → 제거 (StatusBadge 담당)
+5. **dead code** — `AdvancedPlanningSection` tier1/2/3 Pct/Unlocked + handleGuidedToggle + 미사용 imports 7건 제거
+
+ESLint 품질 수리:
+- `--fix` Unused disable directive 22건 자동 제거
+- exhaustive-deps 2 · jsx-a11y 5 (Dropdown useId+aria-controls · treeitem aria-selected · tab 의 잘못된 aria-pressed) · unused-expressions 2 · no-img-element 2 · no-unused-vars 28 전수 수리 또는 `_prefix`
+- **240 warn → 178** (CLI 레이어 any 144 + @ts-nocheck 34 잔존 — 배포 영향 없음, 별도 사이클)
+
+검증: TS 0 / ESLint 0 errors / jest 298 suites 3,304 tests pass / 회귀 0
+
+### Fixed — 옆 골목 점검 (30746c71)
+
+직진 점검(패턴 매칭 파일)이 놓친 부속 게이트 전수 실행:
+
+- `next build` 프로덕션 빌드 — 통과
+- `npm audit` — high 1 (`@xmldom/xmldom` XXE/DoS 4건) + moderate 2 (`uuid` buffer bounds + `@sentry/webpack-plugin` 전이) → `npm audit fix` (non-force) → **0 vulnerabilities**
+- `npm run check:size:ci` — `ShadowDiffDashboard.tsx` 811줄 **NEW VIOLATION** 발견 (이전 커밋 `b8fe2492` 에서 성장)
+  - PART 3.6 `PromotionHistoryPanel` → `ShadowPromotionHistoryPanel.tsx` 별도 모듈 추출
+  - 분리 후 738줄 (FAIL 임계 800 하회, **grandfather 리스트 증가 없이** 해결)
+- 역방향 의존 회귀 — image-gen / TermTooltip / StatusIndicator / AdvancedPlanningSection / novel-plugin-registry 호출자 전수 확인 → 파손 없음
+- `.husky` 비어있음 (pre-commit hook 미설치, hooks 통과 문제 없음)
+- 통합 스크립트 `verify:static` / `verify:build` / `verify` 인지 — 다음 사이클부터 개별 도구 대신 체인 사용
+
+### Chore — Housekeeping
+- 루트 untracked 일회용 스크립트 `fix-eslint.mjs` 제거 + `.gitignore`에 `fix-*.mjs` 패턴 등록 (동종 임시 파일 자동 제외)
+
 ---
 
 ## [2.2.0-alpha.1] — 2026-04-21

@@ -155,3 +155,4 @@ venv/
 docs/api/
 .claude/
 .tmp-*
+fix-*.mjs
