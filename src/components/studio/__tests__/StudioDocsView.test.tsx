@@ -32,7 +32,7 @@ jest.mock('@/lib/logger', () => ({
 
 // Component uses IntersectionObserver — ensured by jest.setup.components.js,
 // but redefine here for isolation.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 global.IntersectionObserver = class IntersectionObserver {
   observe = jest.fn();
   disconnect = jest.fn();

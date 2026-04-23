@@ -371,6 +371,7 @@ export function EditModeSection({
           aria-hidden={false}
         >
           <EditorMinimap
+            // eslint-disable-next-line react-hooks/refs
             editor={novelEditorRef.current?.getEditor?.() ?? null}
             text={editDraft}
             paragraphScores={quality.paragraphs?.map((p) => p.score)}

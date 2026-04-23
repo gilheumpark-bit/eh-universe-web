@@ -8,7 +8,6 @@ import {
   buildRenameRegex,
   escapeRegex,
   filterSessionsForScope,
-  type RenameOptions,
 } from '../rename-engine';
 import type { Project, ChatSession, StoryConfig } from '@/lib/studio-types';
 import { Genre } from '@/lib/studio-types';

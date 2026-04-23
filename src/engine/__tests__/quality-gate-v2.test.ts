@@ -88,7 +88,6 @@ describe('extractQualityMetrics', () => {
 describe('validateDraftPass', () => {
   test('3,500~5,500자 + 4~8문단 + 한글 100% → pass', () => {
     const base = buildHangulText(5, 10);
-    const text = padToLength(base, 4000);
     // padToLength 가 문단 구조를 망가뜨릴 수 있어 "문단 보존" 재검 필수:
     // base 를 그대로 쓰되 마지막 문단에 한글 패딩만 추가.
     const paras = base.split('\n\n');
@@ -107,7 +106,6 @@ describe('validateDraftPass', () => {
 
   test('3,000자 (너무 짧음) → fail', () => {
     const paras = buildHangulText(5, 10).split('\n\n');
-    const base = paras.join('\n\n');
     paras[paras.length - 1] += '그는 다시 생각에 잠겼다. '.repeat(300);
     const final = paras.join('\n\n').slice(0, 3000);
 
@@ -201,7 +199,7 @@ describe('validateDetailPass', () => {
 
     if (!r.ok) {
       // 실패 이유 로깅 — CI 재현성
-      // eslint-disable-next-line no-console
+       
       console.warn('validateDetailPass fail reasons:', r.reasons, r.metrics);
     }
     expect(r.ok).toBe(true);

@@ -523,7 +523,7 @@ export async function importFullBundle(file: File): Promise<ImportResult> {
         genre: (bundle.project.genre as any) ?? 'SF',
         createdAt: Date.now(),
         lastUpdate: Date.now(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         sessions: bundle.sessions.map(s => ({
           id: s.id,
           title: '',

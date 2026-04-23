@@ -18,7 +18,7 @@ jest.mock("@/components/studio/GenreReviewChat", () => ({
   default: () => <div data-testid="genre-review-mock">GenreReview</div>,
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { logger } = require("@/lib/logger");
 
 import HistoryTab from "../HistoryTab";

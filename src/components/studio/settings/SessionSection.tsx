@@ -133,6 +133,7 @@ const M6ErgoNestedGroup: React.FC<M6ErgoNestedGroupProps> = ({ language, ergo, s
   const [statsOpen, setStatsOpen] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setErgoOpen(readUIPref(UI_PREF_KEYS.sessionErgoOpen, false));
     setStatsOpen(readUIPref(UI_PREF_KEYS.sessionStatsOpen, false));
   }, []);
@@ -376,6 +377,7 @@ const SessionSection: React.FC<SessionSectionProps> = ({ language }) => {
   // M6 — 인체공학 토글 그룹
   const [ergo, setErgo] = useState<ErgonomicsSettings>(DEFAULT_ERGONOMICS_SETTINGS);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setErgo(loadErgonomicsSettings());
   }, []);
 

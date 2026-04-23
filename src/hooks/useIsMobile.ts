@@ -37,6 +37,7 @@ export function useIsMobile(breakpoint: number = 768): boolean {
       return false;
     };
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobile(detect());
 
     const onResize = () => setIsMobile(detect());

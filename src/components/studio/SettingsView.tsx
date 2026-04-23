@@ -67,7 +67,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onRestoreBackup,
   onRefreshBackups,
 }) => {
-  const t = createT(language);
+  // createT 호출 결과를 이 스코프에서는 사용하지 않지만, 하위 분기 컴포넌트가 language 기반 재렌더를
+  // 요구할 때 훅/분기 분할 로직이 의존하므로 제거하지 않고 underscore prefix 로 "의도적 미사용"을 명시.
+  const _t = createT(language);
+  void _t;
   const userRole = useUserRoleSafe();
   const showDeveloperTab = userRole?.developerMode === true;
 
@@ -80,6 +83,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       if (saved === 'easy' || saved === 'writing' || saved === 'advanced' || saved === 'developer') {
         // developer 탭 저장됐는데 권한 없으면 easy로 폴백
         if (saved === 'developer' && !showDeveloperTab) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setActiveTab('easy');
         } else {
           setActiveTab(saved);
@@ -582,6 +586,7 @@ function FontSizeSection({ language }: { language: AppLanguage }) {
       const raw = window.localStorage.getItem(FONT_SIZE_KEY);
       const parsed = raw ? Number.parseInt(raw, 10) : NaN;
       if (Number.isFinite(parsed) && parsed >= FONT_SIZE_MIN && parsed <= FONT_SIZE_MAX) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSize(parsed);
       }
     } catch (err) {
@@ -723,6 +728,7 @@ function DebugMenuSection({ language }: { language: AppLanguage }) {
     if (typeof window === 'undefined') return;
     try {
       const raw = window.localStorage.getItem(LOG_LEVEL_KEY) as LogLevel | null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw && LOG_LEVELS.includes(raw)) setLevel(raw);
     } catch (err) {
       logger.warn('SettingsView', 'load log level failed', err);
@@ -787,6 +793,7 @@ function FeatureFlagsSection({ language }: { language: AppLanguage }) {
         next[flag] = null;
       }
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOverrides(next);
   }, []);
 

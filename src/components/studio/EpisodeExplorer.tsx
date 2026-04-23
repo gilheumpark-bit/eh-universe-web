@@ -146,7 +146,7 @@ const VolumeNode = React.memo(function VolumeNode({
   const toggle = useCallback(() => setExpanded(v => !v), []);
 
   return (
-    <div className="mb-1" role="treeitem" aria-expanded={expanded} aria-label={group.title}>
+    <div className="mb-1" role="treeitem" aria-expanded={expanded} aria-selected={false} aria-label={group.title}>
       {/* Volume header */}
       <button
         onClick={toggle}

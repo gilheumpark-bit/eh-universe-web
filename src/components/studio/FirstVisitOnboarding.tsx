@@ -33,6 +33,7 @@ export default function FirstVisitOnboarding() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -45,6 +46,7 @@ export default function FirstVisitOnboarding() {
       /* private browsing — 그냥 표시하지 않음 */
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!seen) setVisible(true);
   }, [mounted, isMobile]);
 

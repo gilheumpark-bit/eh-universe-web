@@ -51,6 +51,7 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
     const vv = window.visualViewport;
     if (!vv) {
       // 폴백: visualViewport 미지원 (IE, 일부 브라우저) — 상태 업데이트 없음
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState((s) => ({ ...s, supported: false }));
       return;
     }

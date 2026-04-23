@@ -161,7 +161,7 @@ describe('generateDisclosureText — 4 languages', () => {
   });
 
   it('falls back to KO for unknown language', () => {
-    // @ts-expect-error
+    // @ts-expect-error - Fix later
     const text = generateDisclosureText('human-authored', makeStats(90), 'BOGUS');
     expect(text).toContain('작가 단독 집필');
   });

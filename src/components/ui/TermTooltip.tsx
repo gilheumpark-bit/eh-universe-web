@@ -8,6 +8,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { HelpCircle } from 'lucide-react';
+import type { AppLanguage } from '@/lib/studio-types';
+import { L4 } from '@/lib/i18n';
 
 interface TermTooltipProps {
   /** 사전 키. 사전에 없으면 children/term 그대로 렌더 (툴팁 없음). */
@@ -15,6 +17,14 @@ interface TermTooltipProps {
   /** 없으면 term이 기본 표시 텍스트가 됨. */
   children?: React.ReactNode;
   className?: string;
+  /**
+   * 설명 텍스트 언어. 생략 시 KO fallback (L4 기본 동작).
+   * 호출자가 컨텍스트에서 받아 넘기는 것을 권장 — 4언어 사전은 내장되어 있다.
+   * 타입을 느슨하게 둔 이유: L4() 자체가 AppLanguage | Lang | string 을 받고,
+   * 호출자마다 변수 이름이 `language`(대문자 KO) 또는 `lang`(소문자 ko)으로 갈려서
+   * 한쪽으로 고정하면 호출부가 캐스트를 남발해야 한다.
+   */
+  language?: AppLanguage | string;
 }
 
 // ============================================================
@@ -97,20 +107,17 @@ const TERM_DEFINITIONS: Record<string, { ko: string; en: string; ja: string; zh:
   },
 };
 
-type Lang = 'ko' | 'en' | 'ja' | 'zh';
-
 // ============================================================
 // PART 2 — 컴포넌트
 // ============================================================
 
-export function TermTooltip({ term, children, className = '' }: TermTooltipProps) {
+export function TermTooltip({ term, children, className = '', language }: TermTooltipProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
   const def = TERM_DEFINITIONS[term];
 
-  // TODO: 추후 LangContext 훅 연결 — 현재는 KO 고정 (다국어 사전은 이미 보유).
-  const lang: Lang = 'ko';
-  const explanation = def ? def[lang] ?? def.ko : '';
+  // 2026-04-24: language prop으로 4언어 활성화. 생략 시 L4가 KO fallback.
+  const explanation = def ? L4(language ?? 'KO', def) : '';
 
   // [C] Outside click / Escape — open일 때만 리스너 부착 (G: 불필요한 구독 제거).
   useEffect(() => {

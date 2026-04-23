@@ -121,7 +121,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
     charSubTab, setCharSubTab, setUxError,
     clearAllSessions, setShowApiKeyModal, versionedBackups, doRestoreVersionedBackup, refreshBackupList,
     writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef,
-    canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective, setPromptDirective,
+    canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective,
     isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix, generationTime, tokenUsage,
     messagesEndRef, searchQuery, filteredMessages, hasAiAccess, advancedSettings, setAdvancedSettings,
     showDashboard, rightPanelOpen, setRightPanelOpen, directorReport, hfcpState, handleNextEpisode,

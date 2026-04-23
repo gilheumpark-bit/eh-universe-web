@@ -512,6 +512,7 @@ export function EditorMinimap({
             style={{
               top: viewport.top,
               height: viewport.height,
+              // eslint-disable-next-line react-hooks/refs
               transition: reducedMotionRef.current ? 'none' : 'top 120ms ease-out',
             }}
           />

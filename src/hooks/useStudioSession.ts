@@ -89,7 +89,7 @@ export function useStudioSession({
       if (demoSession.messages.length > 0 && setWritingMode) setWritingMode('ai');
     });
     if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, [isKO, doCreateNewSession, updateCurrentSession, setActiveTab, setIsSidebarOpen, setWritingMode]);
+  }, [language, doCreateNewSession, updateCurrentSession, setActiveTab, setIsSidebarOpen, setWritingMode]);
 
   return {
     createNewSession,

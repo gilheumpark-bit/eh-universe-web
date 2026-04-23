@@ -101,7 +101,7 @@ function estimateWordCount(text: string | undefined | null): number {
   const trimmed = text.trim();
   if (!trimmed) return 0;
   // CJK detection: count characters if CJK-heavy
-  // eslint-disable-next-line no-misleading-character-class
+   
   const cjkMatches = trimmed.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/g);
   if (cjkMatches && cjkMatches.length > trimmed.length * 0.3) {
     return cjkMatches.length;
@@ -511,7 +511,7 @@ export default function OutlinePanel({
                         {filter === "both" && isOpen && relMessages.length > 0 && (
                           <ul className="ml-4 border-l border-border pl-2 space-y-0.5 my-1" role="group">
                             {relMessages.map(msg => (
-                              <li key={msg.messageId} role="treeitem">
+                              <li key={msg.messageId} role="treeitem" aria-selected={false}>
                                 <button
                                   type="button"
                                   onClick={() => handleMessageClick(msg.messageId)}

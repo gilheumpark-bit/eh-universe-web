@@ -57,6 +57,7 @@ const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language, current
 
   // 최초 마운트 시 localStorage 값 hydrate
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEnabled(isDisclosureEnabled());
     try {
       const raw = localStorage.getItem(CUSTOM_TEXT_KEY);

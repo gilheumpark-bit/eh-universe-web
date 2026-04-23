@@ -157,6 +157,7 @@ function HubGrid({
   useEffect(() => {
     try {
       const raw = localStorage.getItem('home_apps_expanded');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw === '1') setExpanded(true);
     } catch { /* private browsing */ }
   }, []);

@@ -6,8 +6,8 @@
 // 세계관 Tier 1/2/3 / 긴장도 곡선 / 가드레일 / PRISM / PRISM-MODE
 // ============================================================
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ChevronDown, ChevronUp, BarChart3, Shield, Info, CheckCircle2, Circle, Lock, Unlock, Layers, List } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, BarChart3, Shield, Info, CheckCircle2, Circle } from 'lucide-react';
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { PublishPlatform } from '@/lib/studio-types';
 import { L4, createT } from '@/lib/i18n';
@@ -34,38 +34,8 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
   const [showWorldTier2, setShowWorldTier2] = useState(false);
   const [showWorldTier3, setShowWorldTier3] = useState(false);
 
-  // Guided Mode state — localStorage 저장
-  const [guidedMode, setGuidedMode] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    try { return localStorage.getItem('noa_world_guided_mode') !== 'false'; } catch { return true; }
-  });
-
-  // Tier completion calculations
-  const tier1Fields = useMemo(() => [config.corePremise, config.powerStructure, config.currentConflict], [config.corePremise, config.powerStructure, config.currentConflict]);
-  const tier2Fields = useMemo(() => [config.worldHistory, config.socialSystem, config.economy, config.magicTechSystem, config.factionRelations, config.survivalEnvironment], [config.worldHistory, config.socialSystem, config.economy, config.magicTechSystem, config.factionRelations, config.survivalEnvironment]);
-  const tier3Fields = useMemo(() => [config.culture, config.religion, config.education, config.lawOrder, config.taboo, config.dailyLife, config.travelComm, config.truthVsBeliefs], [config.culture, config.religion, config.education, config.lawOrder, config.taboo, config.dailyLife, config.travelComm, config.truthVsBeliefs]);
-
-  const tier1Filled = tier1Fields.filter(v => v?.trim()).length;
-  const tier2Filled = tier2Fields.filter(v => (v as string | undefined)?.trim()).length;
-  const tier3Filled = tier3Fields.filter(v => (v as string | undefined)?.trim()).length;
-
-  const tier1Total = 3;
-  const tier2Total = 6;
-  const tier3Total = 8;
-
-  const tier1Pct = Math.round((tier1Filled / tier1Total) * 100);
-  const tier2Pct = Math.round((tier2Filled / tier2Total) * 100);
-  const tier3Pct = Math.round((tier3Filled / tier3Total) * 100);
-
-  // Guided Mode unlock conditions
-  const tier2Unlocked = tier1Filled >= 1;
-  const tier3Unlocked = tier2Filled >= 1;
-
-  const handleGuidedToggle = () => {
-    const next = !guidedMode;
-    setGuidedMode(next);
-    try { localStorage.setItem('noa_world_guided_mode', String(next)); } catch { /* quota/private */ }
-  };
+  // NOTE: tier filled/percent 표시와 Guided Mode 토글은 WorldBuildingGuide 내부에서
+  //       독립적으로 재계산한다. 과거 본 컴포넌트에도 존재했으나 UI 미사용이어서 제거(2026-04-24).
 
   return (
     <>

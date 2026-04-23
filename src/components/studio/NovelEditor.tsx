@@ -165,7 +165,7 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
         // [C] FileReader.onerror 추가 — 누락 시 실패한 drop이 silent hang으로 남음
         reader.onerror = () => {
           // 콘솔 경고만 — 사용자 알림은 상위에서 editor 에러 처리에 일임
-          // eslint-disable-next-line no-console
+           
           console.warn('[NovelEditor] FileReader failed to read dropped file:', file.name, reader.error);
         };
         reader.readAsText(file, 'UTF-8');

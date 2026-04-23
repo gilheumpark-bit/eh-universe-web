@@ -638,7 +638,7 @@ export default function SceneSheet({
             <div className="flex items-center gap-2">
               <span className="badge badge-amber mr-2">SCENE</span>
               {lang === 'ko' ? (
-                <><TermTooltip term="씬시트">씬시트</TermTooltip>{" — 장르 문법 설계"}</>
+                <><TermTooltip term="씬시트" language={languageProp ?? (lang === "ko" ? "KO" : "EN")}>씬시트</TermTooltip>{" — 장르 문법 설계"}</>
               ) : (
                 L4(lang, { ko: "씬시트 — 장르 문법 설계", en: "Scene Sheet — Genre Grammar Design", ja: "シーンシート — ジャンル文法の設計", zh: "场景表 — 类型文法设计" })
               )}

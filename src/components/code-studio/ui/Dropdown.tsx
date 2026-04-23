@@ -6,7 +6,7 @@
 // Replaces inline dropdown patterns across ModelSwitcher, SearchPanel, etc.
 // Uses z-dropdown token. Escape/Enter/Arrow key support.
 
-import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
+import { useId, useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 export interface DropdownOption {
@@ -47,6 +47,8 @@ export function Dropdown({
   const [focusIdx, setFocusIdx] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  // [a11y] combobox 필수 속성 aria-controls 타깃. listbox ul에 동일 id 부여.
+  const listboxId = useId();
 
   const selected = options.find((o) => o.value === value);
   const enabledOptions = options.filter((o) => !o.disabled);
@@ -131,6 +133,7 @@ export function Dropdown({
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-controls={listboxId}
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => { if (!disabled) { setOpen(!open); setFocusIdx(0); } }}
@@ -161,6 +164,7 @@ export function Dropdown({
       {open && (
         <ul
           ref={listRef}
+          id={listboxId}
           role="listbox"
           className="absolute left-0 right-0 mt-1 py-1
             bg-bg-secondary border border-border rounded-[var(--radius-md)]

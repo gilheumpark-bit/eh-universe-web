@@ -10,6 +10,7 @@ type HandleWorldSim = (d: Record<string, unknown>) => void;
 const lastProps: { handleWorldSimChange?: HandleWorldSim } = {};
 jest.mock("next/dynamic", () => () => {
   const MockWorldStudioView = (props: { handleWorldSimChange?: HandleWorldSim }) => {
+    // eslint-disable-next-line react-hooks/immutability
     lastProps.handleWorldSimChange = props.handleWorldSimChange;
     return <div data-testid="world-studio-mock">WorldStudio</div>;
   };
@@ -25,7 +26,7 @@ jest.mock("@/lib/logger", () => ({
   logger: { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() },
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { logger } = require("@/lib/logger");
 
 import WorldTab from "../WorldTab";

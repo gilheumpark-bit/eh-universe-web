@@ -51,6 +51,7 @@ function analyzeProject(): Suggestion[] {
 
   // ── Count source files and structure ──
   let totalFiles = 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 집계는 이뤄지나 현재 보고서에서는 미표시, 향후 stats 확장 예정
   let totalLines = 0;
   const dirStructure = new Set<string>();
   function scanStructure(dir: string): void {

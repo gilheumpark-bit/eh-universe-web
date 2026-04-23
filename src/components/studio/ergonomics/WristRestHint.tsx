@@ -57,6 +57,7 @@ export default function WristRestHint({
   // 설정 로드
   useEffect(() => {
     if (forceEnabled !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEnabled(forceEnabled);
       return;
     }
@@ -82,6 +83,7 @@ export default function WristRestHint({
   // active 시작 → 10초 후 show true, 20초 후 자동 hide
   useEffect(() => {
     if (!enabled || !active) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(false);
       return;
     }
@@ -98,6 +100,7 @@ export default function WristRestHint({
 
   // active false → 즉시 hide
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!active) setShow(false);
   }, [active]);
 

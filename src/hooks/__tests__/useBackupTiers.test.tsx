@@ -6,7 +6,6 @@ jest.mock('@/lib/save-engine/file-tier', () => ({
   backupNow: jest.fn(),
 }));
 
-import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 

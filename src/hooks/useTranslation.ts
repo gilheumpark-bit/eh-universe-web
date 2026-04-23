@@ -349,7 +349,6 @@ const CJK_REGEX = /[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]/;
 const KO_CHAR_REGEX = /[가-힣]/;
 const JP_KANA_KANJI_REGEX = /[一-龠ぁ-んァ-ン]/;
 const JP_HIRAGANA_KATAKANA_REGEX = /[\u3040-\u309F\u30A0-\u30FF]/;
-const JP_BOUNDARY_PUNCT_REGEX = /[。、！？「」『』,.!?\s]/;
 
 // 한국어 조사/어미 — target 뒤에 붙어도 매치 유효 (긴 것 우선 정렬).
 // 예: "그림자에서" (에서) 매치, "그림자가" (가) 매치, "그림자마을" (마) 비매치.

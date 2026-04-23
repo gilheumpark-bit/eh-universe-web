@@ -9,7 +9,7 @@ import { render, fireEvent } from "@testing-library/react";
 jest.mock("next/image", () => ({
   __esModule: true,
   default: (props: { src: string; alt?: string }) => {
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+     
     return React.createElement("img", props);
   },
 }));

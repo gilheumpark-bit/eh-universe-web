@@ -33,6 +33,7 @@ interface HarnessProps {
 function HarnessInner({ genreMode, refObj }: HarnessProps) {
   const v = useGenreLabel(genreMode);
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     refObj.current = v;
   });
   return null;

@@ -90,6 +90,7 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
     const savedAdv = safeGet(STORAGE.advancedWriting) === '1';
 
     if (savedRole && (VALID_ROLES as string[]).includes(savedRole)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRoleState(savedRole as UserRole);
     }
     if (savedTier && (VALID_TIERS as string[]).includes(savedTier)) {

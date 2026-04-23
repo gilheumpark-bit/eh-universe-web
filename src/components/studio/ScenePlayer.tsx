@@ -782,7 +782,8 @@ export default function ScenePlayer({
           {/* 캐릭터 이미지 (있으면) */}
           {characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ? (
             <div className="absolute bottom-32 left-8 transition-[transform,opacity,background-color,border-color,color] duration-500">
-              {/* 캐릭터 이미지 — 동적 URL(data URI / 원격) 모두 지원. lazy+async로 대역폭 절감. */}
+              {/* 캐릭터 이미지 — 동적 URL(data URI / 원격) 모두 지원. next/image는 data URI loader 우회 필요 → 의도적으로 <img> 유지. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ?? ''}
                 alt={currentBeat.speaker}

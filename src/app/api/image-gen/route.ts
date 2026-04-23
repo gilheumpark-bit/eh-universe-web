@@ -107,7 +107,17 @@ export async function POST(req: NextRequest) {
         revised_prompt: d.revised_prompt,
       }));
 
-      return NextResponse.json({ images });
+      return NextResponse.json({
+        images,
+        metadata: {
+          providerUsed: 'openai',
+          referenceImageRequested,
+          referenceImageApplied: false,
+          referenceImageNote: referenceImageRequested
+            ? 'referenceImageUrl ignored — DALL-E 3 endpoint is text-to-image only in this route.'
+            : undefined,
+        },
+      });
     }
 
     // ============================================================
@@ -153,7 +163,17 @@ export async function POST(req: NextRequest) {
         url: `data:image/png;base64,${a.base64}`,
       }));
 
-      return NextResponse.json({ images });
+      return NextResponse.json({
+        images,
+        metadata: {
+          providerUsed: 'stability',
+          referenceImageRequested,
+          referenceImageApplied: false,
+          referenceImageNote: referenceImageRequested
+            ? 'referenceImageUrl ignored — this route uses the text-to-image SDXL endpoint.'
+            : undefined,
+        },
+      });
     }
 
     // ============================================================
@@ -194,7 +214,17 @@ export async function POST(req: NextRequest) {
           )
         : [];
 
-      return NextResponse.json({ images });
+      return NextResponse.json({
+        images,
+        metadata: {
+          providerUsed: 'local-spark',
+          referenceImageRequested,
+          referenceImageApplied: false,
+          referenceImageNote: referenceImageRequested
+            ? 'referenceImageUrl ignored — ComfyUI proxy currently exposes text-to-image only.'
+            : undefined,
+        },
+      });
     }
 
     return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });

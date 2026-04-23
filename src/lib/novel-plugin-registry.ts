@@ -422,8 +422,11 @@ export const permissionEnforcer = new PermissionEnforcer();
  * `manifest.integrity.sha256` (when provided). Uses Web Crypto when
  * available, falling back to a pure-JS implementation for Node test envs.
  *
- * Signature verification is NOT implemented — a `TODO` is emitted when a
- * signature is present so the UI can display an "unsigned" warning chip.
+ * Signature verification is NOT implemented yet. Fail-closed behavior:
+ * when `manifest.integrity.signature` is present, the return forces
+ * `valid = false` and pushes `'signature-declared-but-unverifiable'`
+ * into `warnings`, so the marketplace cannot load signature-declared
+ * plugins until ed25519 verification ships.
  */
 export async function verifyPluginIntegrity(
   manifest: NovelPluginManifest,

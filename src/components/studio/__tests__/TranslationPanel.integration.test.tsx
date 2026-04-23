@@ -85,7 +85,7 @@ jest.mock('@/lib/noa/taint-tracker', () => ({
 // ============================================================
 
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TranslationPanel from '@/components/studio/TranslationPanel';
 import { StudioProvider, type StudioContextValue } from '@/app/studio/StudioContext';

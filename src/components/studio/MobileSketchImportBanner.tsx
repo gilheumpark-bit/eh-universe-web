@@ -150,6 +150,7 @@ export default function MobileSketchImportBanner() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -161,6 +162,7 @@ export default function MobileSketchImportBanner() {
     } catch { /* ignore */ }
     const store = readSketch();
     if (!store) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSummary(summarize(store));
   }, [mounted, isMobile]);
 

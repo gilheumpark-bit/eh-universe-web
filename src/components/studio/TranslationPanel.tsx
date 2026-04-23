@@ -494,11 +494,11 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <span className="text-sm font-medium text-text-primary">
               {isKO ? (
                 <>
-                  캐릭터 말투 검증 (<TermTooltip term="Voice Guard">Voice Guard</TermTooltip>) — 위반 {voiceViolations.length}건
+                  캐릭터 말투 검증 (<TermTooltip term="Voice Guard" language={language}>Voice Guard</TermTooltip>) — 위반 {voiceViolations.length}건
                 </>
               ) : (
                 <>
-                  Character <TermTooltip term="Voice Guard">Voice Guard</TermTooltip> — {voiceViolations.length} violations
+                  Character <TermTooltip term="Voice Guard" language={language}>Voice Guard</TermTooltip> — {voiceViolations.length} violations
                 </>
               )}
             </span>
@@ -530,10 +530,10 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
 
       {/* Scope Switch: 소설 / 일반 */}
       <div className="flex items-center gap-2 p-1 rounded-xl bg-black/30 border border-white/5 w-fit" role="tablist" aria-label={isKO ? '번역 범위 선택' : 'Translation scope'}>
-        <button onClick={() => setScope('novel')} role="tab" aria-selected={scope === 'novel'} aria-pressed={scope === 'novel'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+        <button onClick={() => setScope('novel')} role="tab" aria-selected={scope === 'novel'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'novel' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
           {isKO ? '소설 번역' : 'Novel'}
         </button>
-        <button onClick={() => setScope('general')} role="tab" aria-selected={scope === 'general'} aria-pressed={scope === 'general'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
+        <button onClick={() => setScope('general')} role="tab" aria-selected={scope === 'general'} className={`px-4 py-2 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wider transition-[background-color,border-color,box-shadow,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${scope === 'general' ? 'bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3)]' : 'text-text-tertiary hover:text-text-secondary'}`}>
           {isKO ? '일반 번역' : 'General'}
         </button>
       </div>
@@ -899,9 +899,9 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
             <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary">
               <Check className="h-3 w-3" />
               {isKO ? (
-                <><TermTooltip term="6축 점수">6축 점수</TermTooltip> 기준점</>
+                <><TermTooltip term="6축 점수" language={language}>6축 점수</TermTooltip> 기준점</>
               ) : (
-                <><TermTooltip term="6축 점수">6-Axis</TermTooltip> Threshold</>
+                <><TermTooltip term="6축 점수" language={language}>6-Axis</TermTooltip> Threshold</>
               )}
             </label>
             <div className="flex items-center gap-2">

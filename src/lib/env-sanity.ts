@@ -115,7 +115,7 @@ export async function checkEnvironmentAtBoot(): Promise<EnvironmentReport> {
   const report = await checkEnvironment();
   if (report.status === 'degraded') {
     try {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         '[env-sanity] Environment degraded:',
         report.missing.length ? `missing=${report.missing.join(',')}` : '',

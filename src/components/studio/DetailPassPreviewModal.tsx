@@ -119,6 +119,7 @@ const DetailPassPreviewModal: React.FC<DetailPassPreviewModalProps> = ({
 
   // expanded 가 새로 들어오면 edit 버퍼 동기화.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditedText(expanded);
     setIsEditing(false);
   }, [expanded, open]);

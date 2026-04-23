@@ -17,7 +17,7 @@
 
 // Node 18+ ReadableStream polyfill — jsdom jest env 에는 없음.
 // [확인 필요] Node 18.0.0 미만에서는 'node:stream/web' 미존재 (EH Universe 는 20+ 사용).
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { ReadableStream: NodeReadableStream } = require('node:stream/web');
 if (typeof (globalThis as { ReadableStream?: unknown }).ReadableStream === 'undefined') {
   (globalThis as { ReadableStream?: unknown }).ReadableStream = NodeReadableStream;

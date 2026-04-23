@@ -247,7 +247,11 @@ export default function StudioToasts({
             </p>
           </div>
           <button 
-            onClick={() => { setShowSyncReminder(false); user ? handleSync() : signInWithGoogle(); }}
+            onClick={() => {
+              setShowSyncReminder(false);
+              if (user) handleSync();
+              else signInWithGoogle();
+            }}
             className="shrink-0 px-3 py-1.5 bg-accent-blue/20 hover:bg-accent-blue/30 border border-accent-blue/30 text-accent-blue text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
           >
             <RefreshCw className="w-3 h-3" />

@@ -55,12 +55,8 @@ export interface SandboxedPlugin {
   terminate: () => void;
 }
 
-/** Envelope for every message going *into* the Worker. */
-interface InboundMessage {
-  type: 'init' | 'activate' | 'deactivate' | 'capability-response';
-  payload?: unknown;
-  requestId?: string;
-}
+// NOTE: InboundMessage (Worker 수신 엔벨로프) 타입 정의는 실제 핸들러가 payload를 unknown 으로
+//       그대로 받고 있어 현 시점에는 구조 강제가 필요 없음. 향후 schema 강화 시 복원 예정.
 
 /** Envelope for every message coming *out* of the Worker. */
 interface OutboundMessage {
@@ -501,7 +497,7 @@ export async function sha256Hex(input: string): Promise<string> {
 
 // --- Minimal SHA-256 (pure JS, for test environments only) ---
 // Source: public-domain pseudo-code translated to TS. Kept local and private.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ref: comment below
+ 
 type _unused = never; void 0 as _unused;
 
 function sha256HexFallback(message: string): string {

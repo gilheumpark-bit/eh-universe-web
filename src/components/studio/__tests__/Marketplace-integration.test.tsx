@@ -139,7 +139,7 @@ describe('Marketplace integration', () => {
 
   it('Install from URL → verify matching hash surfaces success state', async () => {
     // Dynamic import after mocks so MarketplacePanel sees the installed env.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const { default: MarketplacePanel } = require('@/components/studio/MarketplacePanel') as typeof import('@/components/studio/MarketplacePanel');
     // SHA-256("payload") = 239f59ed55e737c77147cf55ad0c1b030b6d7ee748a7426952f9b852d5a935e5
     const content = 'payload';
@@ -168,7 +168,7 @@ describe('Marketplace integration', () => {
   });
 
   it('Install from URL → hash mismatch rejects installation', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const { default: MarketplacePanel } = require('@/components/studio/MarketplacePanel') as typeof import('@/components/studio/MarketplacePanel');
     const originalFetch = global.fetch;
     (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({

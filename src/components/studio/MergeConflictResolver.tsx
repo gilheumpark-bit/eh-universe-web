@@ -159,6 +159,7 @@ const MergeConflictResolver: React.FC<MergeConflictResolverProps> = ({
     if (!open) return;
     try {
       const parsed = parseConflicts(content);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBlocks(parsed);
       const idx = conflictIndices(parsed);
       setCurrentIndex(idx.length > 0 ? idx[0] : -1);

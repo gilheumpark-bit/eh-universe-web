@@ -158,7 +158,7 @@ describe('OriginBadge bad input', () => {
   beforeEach(() => setOriginBadgeVisible(true));
 
   it('falls back to USER for invalid origin', () => {
-    // @ts-expect-error
+    // @ts-expect-error - Fix later
     render(<OriginBadge origin="BOGUS" language="KO" />);
     expect(screen.getByText('작가')).toBeInTheDocument();
   });

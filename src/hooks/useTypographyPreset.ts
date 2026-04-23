@@ -29,6 +29,7 @@ export function useTypographyPreset(): UseTypographyPresetReturn {
   // 마운트 시 localStorage 로드 + CSS 적용
   useEffect(() => {
     const loaded = loadTypographyPreset();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPresetState(loaded);
     applyTypography(loaded);
   }, []);

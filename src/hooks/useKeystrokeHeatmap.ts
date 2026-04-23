@@ -81,6 +81,7 @@ export function useKeystrokeHeatmap({
 
   useEffect(() => {
     if (!enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSnapshot(EMPTY_SNAPSHOT);
       return;
     }

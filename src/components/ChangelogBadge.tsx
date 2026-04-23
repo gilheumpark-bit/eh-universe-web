@@ -29,6 +29,7 @@ export default function ChangelogBadge({ className = "", dotOnly = false }: Prop
     if (typeof window === "undefined") return;
     try {
       const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnseen(hasUnseenEntries(lastSeen));
     } catch {
       // SSR / private browsing — default false

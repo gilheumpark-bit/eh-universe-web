@@ -165,7 +165,7 @@ export default function StudioShell() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = createT(language);
   const isKO = language === 'KO';
-  const { user, signInWithGoogle, signOut, isConfigured: authConfigured, accessToken, refreshAccessToken } = useAuth();
+  const { user, signInWithGoogle, accessToken, refreshAccessToken } = useAuth();
 
   const activeProviderId = getActiveProvider();
   const hasLocalApiKey = hydrated && (apiKeyVersion >= 0) && (!!getApiKey(activeProviderId) || hasStoredApiKey('lmstudio') || hasStoredApiKey('ollama'));
@@ -457,6 +457,9 @@ export default function StudioShell() {
     }, 2000);
     return () => clearTimeout(timer);
 
+    // currentSession/updateCurrentSession 의도적 제외 — 포함 시 세션 변경마다 timer 재스케줄되어 debounce 파괴.
+    // 위 setTimeout 본문은 currentSessionId 기반으로 최신 세션을 조회하므로 stale closure 위험 없음.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editDraft, writingMode, currentSessionId, hydrated]);
 
   // ── [저장 무결성] Ctrl+S 실제 flush — 기존 debounce 대기열을 즉시 강제 저장 ──
@@ -672,7 +675,7 @@ export default function StudioShell() {
   });
 
   const {
-    exportTXT, exportJSON, exportAllJSON, handleImportJSON,
+    exportTXT, exportJSON, exportAllJSON,
     handleImportTextFiles,
     handlePrint, handleExportEPUB, handleExportDOCX,
     exportProjectJSON, exportProjectManuscripts,

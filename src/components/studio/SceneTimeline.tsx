@@ -679,7 +679,7 @@ export default function SceneTimeline({
             collapsed={collapsedScenes.has(si)}
             onToggle={() => setCollapsedScenes((prev) => {
               const next = new Set(prev);
-              next.has(si) ? next.delete(si) : next.add(si);
+              if (next.has(si)) next.delete(si); else next.add(si);
               return next;
             })}
             selectedBeat={selectedBeat}

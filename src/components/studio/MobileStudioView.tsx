@@ -405,6 +405,7 @@ function ManuscriptsPanel({ language }: { language: AppLanguage }) {
   const [groups, setGroups] = useState<Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }>>([]);
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setGroups(loadStudioManuscripts()); }, []);
 
   const hasAny = groups.some(g => g.manuscripts.length > 0);
@@ -507,6 +508,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
   const kb = useVirtualKeyboard();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStore(loadStore());
   }, []);
 

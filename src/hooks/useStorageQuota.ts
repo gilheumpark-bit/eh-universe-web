@@ -147,6 +147,7 @@ export function useStorageQuota(options?: UseStorageQuotaOptions): {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!isStorageQuotaSupported()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState((prev) => ({ ...prev, supported: false }));
       return;
     }

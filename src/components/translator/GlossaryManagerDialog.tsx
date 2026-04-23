@@ -124,6 +124,7 @@ export function GlossaryManagerDialog({
   // Load on open
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEntries(loadLocalGlossary());
     setNewSource('');
     setNewTarget('');

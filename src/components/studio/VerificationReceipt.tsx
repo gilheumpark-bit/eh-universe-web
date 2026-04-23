@@ -70,6 +70,7 @@ export function VerificationReceipt({ directorReport, isGenerating, language }: 
     if (key === lastKeyRef.current) return; // 동일 report 재노출 방지
     lastKeyRef.current = key;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisible(true);
     if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
     dismissTimerRef.current = setTimeout(() => setVisible(false), 4500);

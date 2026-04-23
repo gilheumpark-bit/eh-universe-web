@@ -19,6 +19,7 @@ jest.mock("next/link", () => ({
 }));
 jest.mock("next/image", () => ({
   __esModule: true,
+  // eslint-disable-next-line @next/next/no-img-element
   default: (props: Record<string, unknown>) => <img alt="" {...props} />,
 }));
 jest.mock("@/lib/i18n", () => ({

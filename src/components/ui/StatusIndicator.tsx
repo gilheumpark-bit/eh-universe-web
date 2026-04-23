@@ -6,11 +6,11 @@
 
 import { useState, useEffect } from "react";
 import { Wifi, WifiOff, HardDrive } from "lucide-react";
+// HardDrive: StatusBadge 에서 사용. Wifi/WifiOff: 양쪽 모두 사용.
 
 export function StatusIndicator() {
+  // NOTE: storage percent/label 은 StatusBadge 쪽에서 담당. StatusIndicator 는 오프라인 토스트 전용.
   const [isOffline, setIsOffline] = useState(false);
-  const [storagePercent, setStoragePercent] = useState(0);
-  const [storageLabel, setStorageLabel] = useState('');
 
   useEffect(() => {
     const onOnline = () => setIsOffline(false);
@@ -20,21 +20,11 @@ export function StatusIndicator() {
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
 
-    // 스토리지 사용량
-    if (navigator.storage?.estimate) {
-      navigator.storage.estimate().then(({ usage = 0, quota = 0 }) => {
-        const pct = quota > 0 ? Math.round((usage / quota) * 100) : 0;
-        setStoragePercent(pct);
-        const mb = (usage / 1e6).toFixed(1);
-        setStorageLabel(`${mb} MB`);
-      }).catch(() => {});
-    }
-
     return () => {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
-  }, [setStoragePercent, setStorageLabel]);
+  }, []);
 
   // 오프라인일 때만 눈에 띄게 표시
   if (isOffline) {

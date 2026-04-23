@@ -265,9 +265,9 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
                     {language === 'KO' ? (
-                      <>DGX 다운 시 <TermTooltip term="BYOK">BYOK</TermTooltip> 자동 사용</>
+                      <>DGX 다운 시 <TermTooltip term="BYOK" language={language}>BYOK</TermTooltip> 자동 사용</>
                     ) : (
-                      <>Auto <TermTooltip term="BYOK">BYOK</TermTooltip> on DGX down</>
+                      <>Auto <TermTooltip term="BYOK" language={language}>BYOK</TermTooltip> on DGX down</>
                     )}
                     <span className="group relative">
                       <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />

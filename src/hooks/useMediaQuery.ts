@@ -33,6 +33,7 @@ export function useMediaQuery(query: string): boolean {
     }
 
     // 마운트 직후 현재 값으로 동기화
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMatches(mql.matches);
 
     const handleChange = (event: MediaQueryListEvent): void => {

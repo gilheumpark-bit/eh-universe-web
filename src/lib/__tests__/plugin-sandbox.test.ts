@@ -110,7 +110,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('1. loadPluginInSandbox creates a Worker from a blob: URL', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/plug.js', []);
 
@@ -127,7 +127,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('2. capability without declared permission returns undefined', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/p.js', []);
     await Promise.resolve();
@@ -149,7 +149,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('3. init timeout after 5s terminates the Worker', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/p.js', []);
 
@@ -161,7 +161,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('4. rate-limit breach terminates the Worker', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/p.js', []);
     await Promise.resolve();
@@ -176,7 +176,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('5. malformed message triggers terminate', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/p.js', []);
     await Promise.resolve();
@@ -189,7 +189,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('6. sha256Hex produces the correct SHA-256 for a known string', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     // SHA-256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
     const empty = await mod.sha256Hex('');
@@ -200,7 +200,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('7. postMessage after terminate is a safe no-op', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/p.js', []);
     await Promise.resolve();
@@ -218,7 +218,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('8. terminate is idempotent', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox('https://example.com/p.js', []);
     await Promise.resolve();
@@ -232,7 +232,7 @@ describe('plugin-sandbox', () => {
   });
 
   test('9. readManuscript with granted permission invokes host capability', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require('../plugin-sandbox') as typeof import('../plugin-sandbox');
     const promise = mod.loadPluginInSandbox(
       'https://example.com/p.js',
