@@ -200,7 +200,7 @@ npm test         # 테스트
 
 ---
 
-## 프로젝트 상태 (2026-04-21)
+## 프로젝트 상태 (2026-04-24)
 
 | 지표 | 값 |
 |------|----|
@@ -209,6 +209,7 @@ npm test         # 테스트
 | Lighthouse A11y | **100/100** × 5 페이지 (/, /studio, /translation-studio, /network, /archive) |
 | 보안 감사 | P0 6건 + P1 13건 수리 완료 |
 | 3루프 정밀 진단 | 850+ 파일 / 91 이슈 수리 |
+| ARCS 레이어 | 11-agent `WRITING_AGENT_REGISTRY` · IP Guard L1-L5 · Compliance 7축 채점 |
 | 특허 | KIPO 2026-03-03 출원, PCT 진행 중 |
 | 단계 | **알파** (브릿G 작가 모집 중) |
 
@@ -218,7 +219,7 @@ npm test         # 테스트
 
 | 문서 | 설명 |
 |------|------|
-| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.2.0-alpha.1) |
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.3.0-alpha) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
 | [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |

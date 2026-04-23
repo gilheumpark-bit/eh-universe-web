@@ -64,6 +64,65 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `lib/github-sync.ts` — GitHub Octokit CRUD 추상화
 - `lib/project-serializer.ts` — MD+YAML 프로젝트 직렬화
 
+## 2026-04-24 v2.3.0-alpha 업데이트
+
+### ARCS (AI Response Control System) 레이어
+집필판 AI 호출 엔트리·가드·컨텍스트 블록·사후 스캔·프롬프트 보정을 5개 모듈로 통합.
+
+- **WRITING_AGENT_REGISTRY** (`lib/ai/writing-agent-registry.ts`) — 11 에이전트 × 6 GuardId × 7 ContextBlockId 단일 레지스트리
+  - 에이전트: `studio-draft` / `studio-inline-completion` / `studio-inline-rewrite` / `studio-detail-pass` / `translator-stage-1~5` / `translator-story-bible` / `codex-structured-json` / `network-agent-archive`
+  - GuardId: `no-english-thinking-korean-novel` · `no-think-translation` · `no-yap-json` · `ip-brand-guard` · `prism-all-ages/teen-15/mature-18`
+  - ContextBlockId: `character-dna` · `world-book` · `scene-sheet` · `genre-rules` · `story-summary` · `glossary` · `continuity-notes`
+  - `buildAgentSystemPrompt(id, context)` + `auditRegistry()` 메타 유틸
+- **IP Guard L1-L5** (`lib/ip-guard/`) — 5계층 브랜드·저작권 방어
+  | 계층 | 모듈 | 시점 |
+  |------|------|------|
+  | L1 입력 차단 | `brand-blocklist.ts` + `scan.ts:scanTextForIP` | 사용자 입력 / 네트워크 ingest (403 차단) |
+  | L2 프롬프트 회피 | `compliance-axis-7.ts:buildIPAvoidanceDirective` | LLM 호출 전 prompt 주입 |
+  | L3 사후 유사도 | `ngram-similarity.ts` | 생성 후 n-gram Jaccard 의심 구간 탐지 |
+  | L4 개인 블록리스트 | `codex-blocklist.ts` | localStorage 작가별 CRUD |
+  | L5 RAG sanitize | `ragService.ts:sanitizeRagResults` | RAG 응답 `off`/`annotate`/`strict` 모드 |
+- **Compliance 7축 채점** (`lib/compliance/axes/`) — axis-1 세계관 · 2 캐릭터 · 3 연출 · 4 장르 · 5 씬시트 · 6 연속성 · 7 IP
+  - `orchestrator.ts:scoreAllAxes(ctx, options)` → 0~100 점수 + 가중 평균 + `applyDirectiveToPrompt()` 자동 보정 directive
+- **Codex 커스텀 블록리스트 UI** — 작가별 개인 금지어 등록 (브랜드/프랜차이즈/캐릭터/기타)
+- **patent-scanner 재정렬** (`code-studio/features/patent-scanner.ts`) — 중복 SUSPICIOUS_PATTERNS 제거, `scanTextForIP` 위임. 라이선스 감지만 코드 스튜디오 전용으로 유지.
+
+### AI 호출 엔트리 감사 결과 (2026-04-23)
+각 엔트리가 "자기 역할"을 알도록 시스템 프롬프트 주입을 일원화:
+- **Studio 본문 집필** — `engine/pipeline.ts:buildSystemInstruction()` — 캐릭터 DNA Tier 1/2/3 + actGuide + tensionCurve
+- **Tab 자동완성** — `api/complete/route.ts:buildSystemPrompt(language)` — 한/영 분기
+- **번역 6단계** — `lib/build-prompt.ts:buildPrompt()` — stage별 온도 + `buildTranslationGuard(to)` 언어별 `/no_think` 가드
+- **Network Agent 검색** — `lib/vertex-network-agent.ts:modelPromptSpec.preamble` — EH Universe 아카이브 에이전트 역할 + 5 응답 규칙 + HSE 4대 권리
+- **Chat 채팅·분석** — `api/chat/route.ts:buildSystemInstruction()` — PRISM 3등급 + LoRA 어댑터
+- **공통 레지스트리** — `lib/ai/writing-agent-registry.ts` — 집필판 역할 정의 집중화
+
+### 인프라 정비
+- **DGX 모델**: 9B 쌍포(Engine A/B) + Nginx LB(8090) → **Qwen 3.6-35B-A3B-FP8 MoE 단일** (vLLM 8001) 직결 SSE
+  - FlashInfer + N-Gram Speculative Decoding, 실측 40~50 tok/s, TTFT 0.05초
+  - 영어 "Thinking Process:" 누출 방어 이중: 서버 `NO_ENGLISH_THINKING_GUARD` + 클라이언트 `stripEngineArtifacts`
+- **RAG 출처 명시**: "99만 문서" → "**99만 문서 (위키백과 CC BY-SA 라이선스 선별)**" — README/SUPPORT/manifesto/ARCHITECTURE 4곳 동기화
+- **Network Agent preamble**: EH Universe 지식 아카이브 에이전트 역할 + 5 응답 규칙 + HSE 4대 권리 유지
+
+### 네이밍 통합
+"연출 스튜디오" 용어가 `SceneDirectionData`(작품 전체 연출)와 `EpisodeSceneSheet`(에피소드별 씬시트) 두 대상에 겹쳐 쓰이던 혼동 해소:
+- 4언어 통합: **"작품 연출"** (ko) / **"Work Direction"** (en) / **作品演出** (ja/zh)
+- 변경 파일: `studio-types.ts:125` 코멘트 + `engine/pipeline.ts:553/702` 프롬프트 헤더 + `translations-{ko,en,ja,zh}.ts`의 `rulebook` / `setupDirection` 키
+
+### 법적 카피 정돈 (공개 저장소)
+- "평생 50% 할인" → "기간 한정 할인 (구체 조건 추후 공지)"
+- "공동 창설자" → "얼리 액세스 멤버"
+- "제품 크레딧 등재" → "알파 기여자 명시"
+- 적용: README.md / SUPPORT.md / docs/manifesto.md (4언어 카피 블록)
+
+### 프로젝트 상태 (2026-04-24)
+- 테스트: **3,304 passing** / 298 suites / 0 실패
+- 타입: **0 errors** (strict)
+- Lighthouse A11y: **100/100** × 5 페이지
+- 보안: P0 6건 + P1 13건 수리 완료
+- 단계: **알파** (브릿G 장르문학 작가 50명 얼리 액세스 모집 중)
+
+---
+
 ## 2026-04-19 v2.1 업데이트
 
 ### 보안 감사 (커밋 3419e3a2)
@@ -277,4 +336,4 @@ P0 보안 이슈 (2026-04-06 수정 완료):
 | OpenAI | gpt-5.4 | 5.4-mini, 5.4-nano, 5.3-instant, 4.1, 4.1-mini, 4.1-nano |
 | Claude | claude-sonnet-4-6 | opus-4-6, haiku-4-5, opus-4-5, sonnet-4-5 |
 | Groq | llama-3.3-70b | llama-3.1-8b-instant, qwen-qwq-32b |
-| Ollama/LM Studio | local-model | DGX Spark 로컬: Gemma 4 26B/4B, EXAONE 32B |
+| Ollama/LM Studio | local-model | DGX Spark 자체: **Qwen 3.6-35B-A3B-FP8 MoE** (vLLM 8001, 집필·번역·요약·보조 통합 단일) |

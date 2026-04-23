@@ -3,6 +3,70 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.0-alpha] — 2026-04-23 ~ 2026-04-24
+
+### Added — ARCS 응답 제어 시스템 기반 레이어 (하루 6 커밋)
+
+**EH Universe의 핵심 엔진 ARCS (AI Response Control System)의 오픈소스 표면부 완성.** Loreguard·Code Studio·Translation Studio가 공유하는 공통 기반 3 모듈 구축. 특허 10-2026-0038027 (KIPO 패스트트랙).
+
+#### WRITING_AGENT_REGISTRY (1acaeb8a)
+- `src/lib/ai/writing-agent-registry.ts` 신설 — Code Studio 19-role `AGENT_REGISTRY` 패턴을 집필·번역·아카이브에 이식
+- **11 agent entries**: studio-draft · inline-completion · inline-rewrite · detail-pass · translator-stage-1~5 · story-bible · codex-structured-json · network-agent-archive
+- **6 GuardId**: no-english-thinking-korean-novel, no-think-translation, no-yap-json, **ip-brand-guard**, prism-ALL/T15/M18
+- **7 Context Block ID**: character-dna, world-book, scene-sheet, genre-rules, story-summary, glossary, continuity-notes
+- `buildAgentSystemPrompt(id, ctx)` 공용 빌더 + `auditRegistry()` 감사 유틸
+
+#### IP Guard L1~L5 (2c681ca3)
+- `src/lib/ip-guard/` 5 파일 신설
+- **L1 Ingestion Guard** — `network-agent/ingest`: critical IP 매칭 시 403 거부 + 상세 리포트
+- **L2 Retrieval Filter** — `ragService.sanitizeRagResults`: annotate/strict/off 3 모드
+- **L3 Prompt-time Brand Guard** — `ip-brand-guard` GuardId (집필 5 에이전트 자동 주입)
+- **L4 Output Post-Check** — `compliance-axis-7` + `buildIPAvoidanceDirective` 재생성 지시문
+- **L5 Cross-Corpus N-gram** — 한국어 문자 단위 Jaccard 유사도 (`ngram-similarity.ts`)
+- **80+ 브랜드 엔트리** (9 카테고리: US/JP/KR 엔터·KR 웹툰·웹소설·게임·테크·럭셔리·푸드·스포츠·영화)
+- **Codex 동적 블록리스트** — `localStorage` CRUD (`load/upsert/remove`)
+- **한국어 저작권 패턴** 지원 ("무단 전재 금지", ©/™/® 등)
+
+#### Compliance 7축 채점 엔진 (6798d38c)
+- `src/lib/compliance/` 8 파일 신설 (types + axes 1~7 + orchestrator)
+- **7축**: worldbook · character · direction(POV+tone) · genre · scene-sheet · continuity · IP
+- `scoreAllAxes(ctx, options)` + `applyDirectiveToPrompt` 재생성 루프 연동
+- 가중 평균 총점 + critical 축 자동 재시도 (strict-critical 모드)
+- MVP 정량 규칙 기반, LLM Auditor 확장 (같은 vLLM 8001 low-temp self-critique) 계획
+
+#### ARCS 인프라 갱신 (964610b8)
+- Engine A/B 쌍포(9B) + Nginx LB → **Qwen 3.6-35B-A3B-FP8 MoE 단일 (vLLM 8001)** 전환
+- FlashInfer + N-Gram Speculative Decoding 실측 40~50 tok/s, TTFT 0.05s
+- 번역 경로 `buildTranslationGuard(to)` 언어별 `/no_think` 가드 주입 (한글 소설 가드와 충돌 분리)
+- Network Agent `modelPromptSpec.preamble` — 집필 보조 역할 + HSE 4대 권리 유지
+
+### Changed — 네이밍·법적 카피 정리 (ca212047, 7438223d)
+- **"연출 스튜디오" → "작품 연출"** 4언어 통일 (ko/en/ja/zh i18n)
+- `SceneDirectionData` vs `EpisodeSceneSheet` 주석 정정 (작품 전체 연출 vs 에피소드 시나리오 구분)
+- **"평생 50% 할인" → "기간 한정 할인"** (계약법 모호성 제거)
+- **"공동 창설자" → "얼리 액세스 멤버"** (조합·회사 관계 오인 방지)
+- **"제품 크레딧 등재" → "알파 기여자 명시"** (영구 권리 약속 회피)
+- README·SUPPORT·manifesto 3파일 × 4언어 매트릭스 동시 반영
+- RAG 출처 명시: "ChromaDB 99만 문서 **(위키백과 CC BY-SA 라이선스 선별)**"
+
+### Security — IP/저작권 방어 전수 구조화
+- 브랜드 · 저작권 문구 · 표절 3축 자동 탐지
+- 재생성 루프 연동 (L4)으로 AI 출력에서 실존 IP 감지 시 자동 회피
+- `Codex` 작가별 동적 블록리스트로 장르·프로젝트 특화 방어 가능
+
+### Documentation
+- `ARCHITECTURE.md` 2.3.0-alpha 갱신 — DGX 단일 모델·ARCS 섹션·IP Guard·Compliance 7축 추가
+- `CLAUDE.md` 인프라 섹션 갱신 (35B MoE 단일 구조)
+- `docs/manifesto.md` v2.2 법적 표현 정리 완료
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- **13 신규 파일** + **6 수정 파일**
+- 총 **+2,300 라인** 추가
+- 4 커밋 (ai refactor → ai registry → ip-guard → compliance) + 2 커밋 (i18n → legal)
+
+---
+
 ## [2.2.0-alpha.1] — 2026-04-21
 
 ### Fixed — Lighthouse 5페이지 전수 A11y 100/100 달성

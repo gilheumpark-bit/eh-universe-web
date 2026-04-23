@@ -5,7 +5,7 @@
 EH Universe Web is a Next.js 16.2 single-app (App Router, Turbopack) deployed on Vercel ICN (ehsu.app).
 It hosts five applications under a single domain with shared auth, i18n, and design system infrastructure.
 
-**Version**: 2.1.2 (2026-04-17)
+**Version**: 2.3.0-alpha (2026-04-24)
 
 ## Applications
 
@@ -158,8 +158,8 @@ LUCIDE_MAP provides icon mappings for all 51 panels.
 - **BYOK + hosted**: Server env keys or user-provided keys
 - **Structured generation**: `/api/structured-generate` (provider-agnostic JSON schema output)
 - **ANS v10.0**: Adaptive Narrative System with tension curves, HFCP state tracking, genre presets
-- **DGX Spark (GB10, 128GB VRAM)**: Qwen 3.5-9B FP8 **dual engine** (A 8080 / B 8081) behind Nginx LB (8090, least_conn). Single gateway `https://api.ehuniverse.com` (Cloudflare Tunnel, SSE passthrough with `: heartbeat` lead). TTFT 0.13s, 18–20 tok/s
-- **RAG layer**: ChromaDB 990k docs + 25 genre rules auto-assembled via `/api/rag/prompt`
+- **DGX Spark (GB10, 128GB VRAM)**: Qwen 3.6-35B-A3B-FP8 MoE **single engine** (vLLM 8001). FlashInfer + N-Gram Speculative Decoding. TTFT 0.05s, 40–50 tok/s. Previous dual-9B + Nginx LB + api.ehuniverse.com gateway deprecated (2026-04-20).
+- **RAG layer**: ChromaDB 990k docs (Wikipedia CC BY-SA curated) + 25 genre rules auto-assembled via `/api/rag/prompt`. Client-side IP/brand sanitize on retrieval (see IP Guard below).
 - **Image layer**: Flux-Schnell FP8 4-step via `/api/image/generate` (ComfyUI 8188)
 - **NOA-PRISM v1.1**: Content rating and preservation/expansion control
 
@@ -200,3 +200,57 @@ Novel-specific AI translation — 1,408-line engine + 6,298-line UI.
 436-rule dual catalog: 224 bad patterns (anti-patterns, vulnerabilities) + 212 good patterns.
 Good pattern detector runs 40 regex rules. Context-aware, memoized for pipeline performance.
 Wired to both generation (prompt injection) and verification (scoring) stages.
+
+---
+
+## ARCS — AI Response Control System (2026-04-23 consolidation)
+
+ARCS is the foundational response-control layer shared across Loreguard, Code Studio, and Translation Studio.
+Three modules below (`WRITING_AGENT_REGISTRY`, `IP Guard L1~L5`, `Compliance 7 Axes`) form the open-source surface of ARCS.
+Patent 10-2026-0038027 (KIPO, filed 2026-03-03, fast-track review).
+
+### WRITING_AGENT_REGISTRY
+
+Central registry (`src/lib/ai/writing-agent-registry.ts`) for every AI entrypoint across Studio, Translation, and Archive modules — the counterpart of Code Studio's 19-role `AGENT_REGISTRY`.
+
+- **11 agent entries**: `studio-draft`, `studio-inline-completion`, `studio-inline-rewrite`, `studio-detail-pass`, `translator-stage-1-draft` ... `translator-stage-5-chief-editor`, `translator-story-bible`, `codex-structured-json`, `network-agent-archive`
+- **6 Guard IDs**: `no-english-thinking-korean-novel`, `no-think-translation`, `no-yap-json`, `ip-brand-guard`, `prism-all-ages` / `teen-15` / `mature-18`
+- **7 Context Block IDs**: `character-dna`, `world-book`, `scene-sheet`, `genre-rules`, `story-summary`, `glossary`, `continuity-notes`
+- **Builder**: `buildAgentSystemPrompt(id, ctx)` — role → duty → guards → context blocks → extra directives
+- **Meta util**: `auditRegistry()` — guards/blocks coverage statistics + missing-notes detection
+
+Migration strategy: existing `buildSystemInstruction()` (pipeline.ts), `buildPrompt()` (build-prompt.ts), and `complete/route.ts` builders are migrated to the registry incrementally.
+
+### IP Guard (L1 ~ L5)
+
+Five-layer defense against brand/copyright contamination in RAG and AI output (`src/lib/ip-guard/`).
+
+| Layer | Role | Implementation |
+|-------|------|----------------|
+| **L1 Ingestion Guard** | Block critical IP/copyright before ChromaDB ingest | `src/app/api/network-agent/ingest/route.ts` — 403 on critical match |
+| **L2 Retrieval Filter** | Annotate or strict-filter RAG results | `src/services/ragService.ts sanitizeRagResults` |
+| **L3 Prompt-time Guard** | Inject brand-avoidance directive via agent registry | `ip-brand-guard` GuardId |
+| **L4 Output Post-Check** | Score compliance axis-7 + auto regenerate | `src/lib/ip-guard/compliance-axis-7.ts` |
+| **L5 Cross-Corpus N-gram** | Character-level Jaccard for plagiarism detection | `src/lib/ip-guard/ngram-similarity.ts` |
+
+- **Static blocklist** (`brand-blocklist.ts`): 80+ entries across 9 categories (US/JP/KR entertainment, KR webtoon/webnovel, games, tech, luxury, food, sports/fashion, film/TV)
+- **Codex dynamic blocklist** (`codex-blocklist.ts`): per-project `localStorage` with `loadCodexBrandBlocklist` / `upsertCodexBrandEntry` / `removeCodexBrandEntry`
+- **Korean-aware patterns**: "무단 전재 금지", "© 2024", ™/® symbols, copyright notices
+
+### Compliance Scoring — 7 Axes (2026-04-23)
+
+Orchestrator (`src/lib/compliance/orchestrator.ts`) runs seven independent axes on AI-generated drafts and produces a regeneration directive for any failed axis.
+
+| # | Axis | Module |
+|---|------|--------|
+| 1 | Worldbook consistency | `axis-1-worldbook.ts` |
+| 2 | Character fidelity | `axis-2-character.ts` |
+| 3 | Direction compliance (POV + tone) | `axis-3-direction.ts` |
+| 4 | Genre rules | `axis-4-genre.ts` |
+| 5 | Scene sheet coverage | `axis-5-scene-sheet.ts` |
+| 6 | Continuity (prev-chapter delta) | `axis-6-continuity.ts` |
+| 7 | IP/brand violation | `axis-7-ip.ts` (wraps `ip-guard/compliance-axis-7`) |
+
+Each axis returns `{score, weight, passed, issues, recommendations}`. Default pass threshold **80 / 100**, strict-critical mode (any critical issue ⇒ fail). Orchestrator computes weighted total, generates `regenerationDirective`, and `applyDirectiveToPrompt()` folds it back into the next attempt.
+
+MVP uses rule-based quantitative scoring. LLM Auditor extension (same vLLM 8001, low-temp self-critique) planned for semantic consistency on axes 1 & 2.
