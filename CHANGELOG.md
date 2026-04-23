@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [2.3.0-alpha] — 2026-04-23 ~ 2026-04-24
 
+### Licensing — Dual License 전환 (BREAKING, 커밋 414fe9ea 이후)
+
+**`CC-BY-NC-4.0` → `AGPL-3.0-or-later` + Commercial 이중 트랙**으로 전환.
+
+- **오픈소스 트랙** `AGPL-3.0-or-later` — 개인/학술/소스 공개 SaaS 무료. 네트워크 서비스 제공 시 §13에 따라 전체 소스 공개 의무
+- **상업 트랙** `COMMERCIAL-LICENSE.md` — 클로즈드 SaaS, OEM, 퍼블리셔·엔터프라이즈 자가호스트 대상. 명시적 특허 grant + indemnification 포함
+- **특허 전략 결합** — 한국 특허 출원 (ARCS 관련)을 AGPL §11 + Commercial 명시 grant 이중 구조로 집행 가능
+- **비취소 조항** — 커밋 `414fe9ea` 이전 릴리스는 CC-BY-NC-4.0 영구 유지 (CC 비취소 원칙). 이후 커밋부터 dual 적용
+- `LICENSE` 교체 — AGPL-3.0 전문 + EH Universe 헤더 (dual notice, patent notice, prior license notice)
+- `COMMERCIAL-LICENSE.md` 신설 — 티어 (Indie / SMB / Enterprise / SaaS / Publisher) + CLA 계획 (cla-assistant.io)
+- `package.json` `"license": "AGPL-3.0-or-later"` · README 라이선스 섹션 + 뱃지 동기화
+
+**배경**: CC-BY-NC는 "NC(비상업)" 해석 모호 + 기업 법무팀 기피 + 특허 grant 조항 부재로 베타 확장 단계에 부적합. MongoDB(SSPL)·Sentry(FSL)·Elastic 선례 분석 후 **MongoDB 모델 (AGPL + Commercial)** 채택.
+
 ### Added — ARCS 응답 제어 시스템 기반 레이어 (하루 6 커밋)
 
 **EH Universe의 핵심 엔진 ARCS (AI Response Control System)의 오픈소스 표면부 완성.** Loreguard·Code Studio·Translation Studio가 공유하는 공통 기반 3 모듈 구축.

@@ -14,7 +14,7 @@
 ![Tests](https://img.shields.io/badge/tests-3,304_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
 ![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
-![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
+![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
 [Live](https://ehsu.app) · [Changelog](https://ehsu.app/changelog) · [Architecture](ARCHITECTURE.md) · [AI 고지](https://ehsu.app/ai-disclosure)
@@ -251,9 +251,20 @@ npm test         # 테스트
 
 ## 라이선스
 
-[CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) — 소스코드 및 창작 콘텐츠 전체 비상업적 용도 무료.
+**Dual License** — 오픈소스 + 상업 2-트랙.
 
-특허: KIPO 2026-03-03 출원, PCT 국제 출원 진행 중.
+| 트랙 | 라이선스 | 대상 |
+|------|----------|------|
+| 오픈소스 | [AGPL-3.0-or-later](LICENSE) | 개인/학술/소스 공개 SaaS |
+| 상업 | [Commercial License](COMMERCIAL-LICENSE.md) | 클로즈드 SaaS / OEM / 퍼블리셔 / 엔터프라이즈 자가호스트 |
+
+AGPL은 네트워크 서비스 제공 시 §13에 따라 전체 소스 공개 의무. 이 조항이 맞지 않으면 상업 라이선스 문의.
+
+**이전 릴리스** — 커밋 `414fe9ea` 및 그 이전은 CC-BY-NC-4.0 (비취소 권리 유지). 이후 커밋부터 AGPL/Commercial dual.
+
+**특허**: KIPO 출원 (Fast-Track) 진행 중. AGPL §11 적용, 상업 라이선스 구매자에겐 명시 grant + indemnification.
+
+문의: [gilheumpark@gmail.com](mailto:gilheumpark@gmail.com)
 
 <div align="center">
 
