@@ -139,6 +139,56 @@ ESLint 품질 수리:
 - `scripts/lighthouse-check.mjs` Windows EPERM 내성 개선 — `finally` 의 `chrome.kill()` 내부 `rmSync(tmpdir)` sync throw 를 try/catch 로 흡수. 이전까지 3 URL 런이 끝난 뒤 리포트 쓰기 전에 crash 되던 문제 해결.
 - `.gitignore` 확장 — `docs/lighthouse-report.md` + `/e2e*.log` (로컬 런 산출물 자동 제외)
 
+### Security — 외부 감사 2차 + defense-in-depth 일괄 수리 (6 커밋, 2026-04-24 후반)
+
+외부 리뷰어의 일반/고급 14+14 체크리스트 + Mythos 시각 attack chain 감사 결과로 식별된 22건 중 **16건 즉시 수리**. 잔여 6건 은 [`docs/unfixed-backlog.md`](docs/unfixed-backlog.md) 별도 추적.
+
+#### 1차 — Sentry · DGX · 버전 · robots (021161e4)
+- Sentry DSN 하드코딩 폴백 제거 (client/server/edge 3 config) — 미설정 시 자동 비활성
+- `sentry-scrub.ts` 신설 — PII scrubber (sk-/AIza/Bearer/email/card/private_key 6 정규식 + 4 헤더 키 redact)
+- `deploy-dgx.sh` — 듀얼 9B + FastAPI 프록시 폐기 → 35B MoE 단일 (vLLM :8001) 동기화
+- `uvicorn --reload` 프로덕션 플래그 제거
+- `SECURITY.md` 버전 정책 재작성 — 2.3.x-alpha + < 2.2-alpha 단일 규칙
+- `robots.ts` AI 크롤러 9 → 22개 (Meta-ExternalAgent · Applebot-Extended · Diffbot 등 2026-Q1 적극 크롤러)
+- code-studio CSP `frame-src http://localhost:*` — NODE_ENV 분기로 프로덕션 제거
+
+#### 2차 — Mythos attack chain 8건 일괄 차단 (5cf354d9)
+- **R1 CRITICAL** `firestore.rules` users/{uid} update 룰에 role/id 불변성 조항 — 자체 admin 승격 차단 (`isAdmin()` 의존 관리자 엔드포인트 전방위 방어)
+- **S1-share** expiresInHours 30일 캡 + content 200K chars + Content-Length 500KB 사전 게이트
+- **S1-SSRF** `validatePostFetchUrl(response.url)` 호출 연결 (이전 dead code) — DNS rebinding post-fetch 재검증
+- **S2-cron** PROD-only secret → 환경 무관 필수 (Preview 배포 노출 차단)
+- **S2-XFF** `getClientIp` x-vercel-forwarded-for 1순위 (Vercel 엣지 전용, 위조 불가) + self-host 폴백
+- **S2-EPUB** `zip-bomb-guard.ts` 신설 — ZIP EOCD 파서 (의존성 0) + 100MB 압축해제 캡
+- **S2-error** body.message/stack/source/url control char stripping (defense-in-depth)
+
+#### 3차 — 운영·CSP (bcc073c3 + 95654f6c)
+- `/status` 페이지 — `/api/health` 30초 폴링 + aria-live 상태 배지 (4언어)
+- `vercel.json` DR 리전 hnd1 추가 (icn1 + hnd1) + 스트리밍 라우트 개별 maxDuration (chat/translate 300s, complete/image-gen 180s, 기본 60s)
+- `docs/incident-response.md` 8 섹션 — S0~S3 심각도 + 롤백 절차 + SLI/SLO 초안
+- `docs/dgx-runbook.md` 8 섹션 — 35B MoE 배포·헬스·장애·Cloudflare Tunnel 상태
+- CSP `img-src 'https:'` 범용 허용 제거 → 명시 화이트리스트 (Google/Firebase/GitHub/Gravatar) + `CSP_EXTRA_IMG_SRC` env 확장
+- CSP connect-src 하드코딩 문자열 → 카테고리 배열 (AI provider 5 + Firebase 7 + CDN/monitor 3 + Sentry 1) + `CSP_EXTRA_CONNECT_SRC` env
+- A5 SRI integrity — 판정 "무의미" (layout.tsx 외부 `<script src="">` 없음)
+
+#### 4차 — Consent + CSRF 스캐폴드 (f1a611a3)
+- `src/lib/consent.ts` 신설 — 중앙 consent 상태 관리 (getConsent·hasAnalyticsConsent·setConsent) + `eh:consent-changed` 이벤트 버스
+- `CookieConsent.tsx` — 중앙 lib 위임, 수락 시 이벤트 dispatch
+- `sentry.client.config.ts` — `enabled` 3중 게이트 (DSN + prod + `hasClientAnalyticsConsent()`) — GDPR Art.7 실효
+- `src/lib/csrf.ts` 신설 — double-submit cookie 설계 + constant-time verify
+- `/api/csrf` 엔드포인트 — 토큰 발급 (SameSite: Strict + 24h) — 이후 라우트 enforce 단계적
+
+#### 5차 — DSAR + Stripe (c6a1ba38)
+- `/api/user/export` GDPR Art.15/20 · K-PIPA §35 — Origin + CSRF + Firebase ID token 3중 검증, 5/day rate, users/{uid} JSON 즉시 다운로드 + 추가 데이터 30일 SLA 메일 안내
+- `/api/user/delete` GDPR Art.17 · K-PIPA §36 — 3/day rate, `deletion_requests` 티켓 기록 + 30일 SLA, Firestore 실패 시에도 ticketId 반환 (이메일 fallback)
+- `/api/stripe/webhook` — stripe SDK 시그너처 검증 (raw body) + 6종 이벤트 dispatch + 구조화 로그. Firebase custom claim 실제 갱신은 firebase-admin SDK 통합 후속
+
+### Deferred — docs/unfixed-backlog.md 에서 추적 (6건)
+
+- **A** 법무 1건 — Legal content 변호사 리뷰 (외부 의존)
+- **B** 설계 선행 2건 — C1 CSP nonce (Next.js 16 middleware 연구) · W1 Firestore public 분리 (데이터 마이그)
+- **C** 별도 스프린트 4건 — Perf 75+ · A11y 100 · CLI strict · ShadowDiffDashboard 738→500
+- **D** 사용자 도메인 9건 — Sentry DSN · Stripe secret · CRON_SECRET scope · firebase-admin · CLA · 브릿G 모집 · 모두의창업 · PCT · feature flag
+
 ---
 
 ## [2.2.0-alpha.1] — 2026-04-21
