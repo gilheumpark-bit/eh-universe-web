@@ -134,8 +134,8 @@ export default function QuickStartModal({
     byokTitle: L4(language, {
       ko: "다른 키 있어요 (OpenAI / Claude 등)",
       en: "I have another key (OpenAI / Claude, etc.)",
-      ja: "他のキーを持っています (OpenAI / Claude 等)",
-      zh: "我有其他密钥 (OpenAI / Claude 等)",
+      ja: "他のキーを持っています (OpenAI",
+      zh: "我有其他密钥 (OpenAI",
     }),
     byokDesc: L4(language, {
       ko: "설정에서 키를 등록하세요.",

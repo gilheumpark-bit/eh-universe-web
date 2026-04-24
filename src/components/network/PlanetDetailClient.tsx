@@ -255,7 +255,7 @@ export function PlanetDetailClient({ planetId }: PlanetDetailClientProps) {
             <div className="flex flex-wrap gap-3">
               {([
                 ["logs", L4(lang, { ko: "최근 관측 로그", en: "Logs", ja: "最近の観測ログ", zh: "最近观测日志" })],
-                ["if", L4(lang, { ko: "IF / 분기 루트", en: "IF / Side Route", ja: "IF / Side Route", zh: "IF / Side Route" })],
+                ["if", L4(lang, { ko: "IF / 분기 루트", en: "IF / Side Route", ja: "IF", zh: "IF" })],
                 ["settlements", L4(lang, { ko: "정산 기록", en: "Settlements", ja: "Settlements", zh: "Settlements" })],
                 ["feedback", L4(lang, { ko: "피드백", en: "Feedback", ja: "Feedback", zh: "Feedback" })],
               ] as [DetailTab, string][]).map(([key, label]) => (

@@ -317,7 +317,7 @@ export function PipelinePanel({ result, onRun, onAbort, isRunning, lastRunTimest
       "size-density": L4(lang, { ko: "크기/밀도", en: "Size/Density", ja: "サイズ/密度", zh: "大小/密度"}),
       "asset-trace":  L4(lang, { ko: "자산 추적", en: "Asset Trace", ja: "アセット追跡", zh: "资产追踪"}),
       stability:      L4(lang, { ko: "안정성", en: "Stability", ja: "安定性", zh: "稳定性"}),
-      "release-ip":   L4(lang, { ko: "릴리스/IP", en: "Release/IP", ja: "リリース/IP", zh: "发布/IP"}),
+      "release-ip":   L4(lang, { ko: "릴리스/IP", en: "Release/IP", ja: "リリース", zh: "发布"}),
       governance:     L4(lang, { ko: "거버넌스", en: "Governance", ja: "ガバナンス", zh: "治理"}),
     };
     return labels[key] ?? TEAM_CONFIG[key]?.label ?? key;
