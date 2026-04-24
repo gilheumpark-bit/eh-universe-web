@@ -52,7 +52,7 @@ export default function AiDisclosurePage() {
               <li>Anthropic Claude (claude-sonnet-4-6 등)</li>
               <li>OpenAI (gpt-5.4 등)</li>
               <li>Groq (llama-3.3-70b 등)</li>
-              <li>{T({ ko: "Ollama / LM Studio 로컬 모델 (사용자 PC)", en: "Ollama / LM Studio local models (user device)", ja: "Ollama", zh: "Ollama" })}</li>
+              <li>{T({ ko: "Ollama / LM Studio 로컬 모델 (사용자 PC)", en: "Ollama / LM Studio local models (user device)", ja: "Ollama/LM Studio のローカルモデル (ユーザー端末)", zh: "Ollama/LM Studio 的本地模型 (用户设备)" })}</li>
             </ul>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function AiDisclosurePage() {
               zh: "Qwen: 由阿里巴巴公开数据集预训练 — 参见官方论文",
             })}
             <a href="https://qwenlm.github.io/" target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">qwenlm.github.io</a>
-            {T({ ko: " 참조", en: " for details", ja: "", zh: "" })}
+            {T({ ko: " 참조", en: " for details", ja: " を参照", zh: " 了解详情" })}
           </li>
           <li>
             Google Gemini — <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">ai.google.dev/gemini-api/terms</a>

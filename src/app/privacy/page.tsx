@@ -81,8 +81,8 @@ export default function PrivacyPage() {
           {T({
             ko: "국가 간 이전: 위 업체 다수가 미국 등 역외에 서버를 두고 있으며, 사용자가 서비스에 가입하는 것으로 개인정보의 국외 이전에 동의하는 것으로 간주됩니다. EU/EEA 이용자는 표준계약조항(SCC)이 적용됩니다.",
             en: "Cross-border transfer: Many providers host data in the US and other regions. By using the service you consent to cross-border transfer; EU/EEA users are covered by Standard Contractual Clauses (SCC).",
-            ja: "国外移転: 米国等へ移転、SCC適用(EU",
-            zh: "跨境传输: 可能传输至美国等地区，欧盟",
+            ja: "国外移転: 多くの事業者が米国等の域外にサーバーを置いており、サービス利用をもって個人情報の国外移転に同意したものとみなされます。EU/EEA の利用者には標準契約条項(SCC)が適用されます。",
+            zh: "跨境传输: 多数服务提供商的服务器位于美国等境外地区。使用本服务即视为同意个人信息的跨境传输。欧盟/EEA 用户适用标准合同条款(SCC)。",
           })}
         </p>
       </section>
@@ -136,8 +136,8 @@ export default function PrivacyPage() {
           {T({
             ko: "Firebase/Vercel은 미국 등 다국가에 분산 서버를 운영합니다. DGX 추론 서버는 대한민국에 위치합니다. 사용자가 BYOK로 연결한 AI 제공사의 데이터 위치는 각 제공사 정책에 따릅니다.",
             en: "Firebase/Vercel operate distributed servers including in the US. DGX inference servers are located in the Republic of Korea. BYOK AI provider data location follows each provider's policy.",
-            ja: "Firebase",
-            zh: "Firebase",
+            ja: "Firebase/Vercel は米国を含む複数地域で分散サーバーを運用しています。DGX 推論サーバーは大韓民国に所在します。BYOK で接続した AI 提供者のデータ所在地は各社ポリシーに従います。",
+            zh: "Firebase/Vercel 在美国等多国部署分布式服务器。DGX 推理服务器位于大韩民国。用户通过 BYOK 连接的 AI 提供商数据所在地遵循各自政策。",
           })}
         </p>
       </section>
