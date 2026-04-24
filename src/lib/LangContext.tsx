@@ -20,8 +20,12 @@ const LangContext = createContext<LangContextType>({
 });
 
 // Stable pure function — defined at module level to avoid hoisting issues
+// [2026-04-24] cookie 동기화 추가 — SSR 에서 `<html lang>` + metadata 초기 렌더에 사용.
+// localStorage 는 서버에서 읽을 수 없으므로 cookie 를 SSR→client 양방향 브리지로 활용.
 function applyLangToDOM(next: Lang): void {
   localStorage.setItem("eh-lang", next);
+  // 1 년 유효, SameSite=Lax (OAuth 리다이렉트 호환), HTTPS 환경에서는 Secure 추가 필요 시 서버에서 설정
+  document.cookie = `eh-lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
   document.documentElement.lang = next;
 }
 

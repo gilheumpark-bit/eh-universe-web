@@ -2,15 +2,65 @@
 // Dynamic Open Graph Image — Next.js 16 Metadata File Convention
 // Edge runtime: 콜드 스타트 단축, 소셜 플랫폼 크롤러 대응.
 // 1200x630 (Twitter/Facebook/LinkedIn 공통 권장 비율)
+// [2026-04-24] ?l= 쿼리로 4언어 variant 지원 (SEO·국외 공유 미리보기 현지화)
 // ============================================================
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Loreguard — 소설가를 위한 집필 IDE";
+export const alt = "Loreguard — AI IDE for Novelists";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OpengraphImage() {
+// ============================================================
+// PART 1 — Per-language copy
+// ============================================================
+
+type Lang = "ko" | "en" | "ja" | "zh";
+
+const TAGLINES: Record<Lang, { main: string; sub: string; footer: string; brand: string }> = {
+  ko: {
+    main: "소설가를 위한 AI IDE",
+    sub: "집필 · 검수 · 번역 · 출간을 하나의 워크스페이스에서",
+    footer: "집필 · 품질 · 번역 · 출간 · 망가지지 않는 인프라",
+    brand: "Loreguard · 로어가드",
+  },
+  en: {
+    main: "AI IDE for Novelists",
+    sub: "Write · Review · Translate · Publish — one workspace",
+    footer: "Writing · Quality · Translation · Publishing · Resilient Infra",
+    brand: "Loreguard by EH Universe",
+  },
+  ja: {
+    main: "小説家のための AI IDE",
+    sub: "執筆・検証・翻訳・出版をひとつのワークスペースで",
+    footer: "執筆 · 品質 · 翻訳 · 出版 · 壊れないインフラ",
+    brand: "Loreguard · ロアガード",
+  },
+  zh: {
+    main: "为小说家打造的 AI IDE",
+    sub: "创作、审校、翻译、出版 — 一体化工作室",
+    footer: "创作 · 质量 · 翻译 · 出版 · 可靠基础设施",
+    brand: "Loreguard · 洛尔加德",
+  },
+};
+
+function normalizeLang(raw: string | string[] | undefined): Lang {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v === "en" || v === "ja" || v === "zh") return v;
+  return "ko";
+}
+
+// ============================================================
+// PART 2 — Image renderer
+// ============================================================
+
+export default async function OpengraphImage(props: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = props.searchParams ? await props.searchParams : {};
+  const lang = normalizeLang(params.l);
+  const copy = TAGLINES[lang];
+
   return new ImageResponse(
     (
       <div
@@ -66,7 +116,7 @@ export default async function OpengraphImage() {
               textTransform: "uppercase",
             }}
           >
-            Loreguard · 로어가드
+            {copy.brand}
           </div>
         </div>
 
@@ -97,7 +147,7 @@ export default async function OpengraphImage() {
             display: "flex",
           }}
         >
-          소설가를 위한 AI IDE
+          {copy.main}
         </div>
 
         <div
@@ -108,7 +158,7 @@ export default async function OpengraphImage() {
             display: "flex",
           }}
         >
-          집필 · 검수 · 번역 · 출간을 하나의 워크스페이스에서
+          {copy.sub}
         </div>
 
         {/* Footer strip */}
@@ -123,7 +173,7 @@ export default async function OpengraphImage() {
             display: "flex",
           }}
         >
-          집필 · 품질 · 번역 · 출간 · 망가지지 않는 인프라
+          {copy.footer}
         </div>
       </div>
     ),
