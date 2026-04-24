@@ -8,14 +8,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { setConsent, shouldShowConsentBanner } from "@/lib/consent";
 
 // ============================================================
 // PART 2 — Cookie Consent Banner
 // GDPR + ePrivacy + K-PIPA 공통 충족
-// localStorage 'eh-cookie-consent' = 'accepted' | 'rejected' | null
+// 저장소: lib/consent.ts 중앙화. 버튼 → setConsent('accepted'|'rejected').
+// [A1 2026-04-24] Sentry/Analytics 는 이 값을 확인해 초기화 — 동의 없으면 init 안 됨.
 // ============================================================
-
-const STORAGE_KEY = "eh-cookie-consent";
 
 export default function CookieConsent() {
   const { lang } = useLang();
@@ -26,33 +26,23 @@ export default function CookieConsent() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) {
-        // 첫 방문 — 배너 표시 (800ms 지연: LCP 방해 방지)
-        const timer = setTimeout(() => setVisible(true), 800);
-        return () => clearTimeout(timer);
-      }
-    } catch {
-      // localStorage 접근 불가 (프라이빗 브라우징 등) — 배너 skip
+    // shouldShowConsentBanner() = 미결정 상태일 때만 true
+    if (shouldShowConsentBanner()) {
+      // 첫 방문 — 배너 표시 (800ms 지연: LCP 방해 방지)
+      const timer = setTimeout(() => setVisible(true), 800);
+      return () => clearTimeout(timer);
     }
   }, []);
 
   const handleAccept = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, "accepted");
-    } catch {
-      /* private browsing */
-    }
+    setConsent("accepted");
     setVisible(false);
+    // Sentry 등 consent-gated 모듈이 다음 로드에서 초기화되도록 안내.
+    // (SDK 는 런타임 재초기화 비권장 — 리로드 유도 대신 이벤트만 dispatch)
   };
 
   const handleReject = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, "rejected");
-    } catch {
-      /* private browsing */
-    }
+    setConsent("rejected");
     setVisible(false);
   };
 
