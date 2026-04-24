@@ -1,10 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "regions": ["icn1"],
+  "regions": ["icn1", "hnd1"],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/chat/**/*.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/translate/**/*.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/complete/**/*.ts": {
+      "maxDuration": 180
+    },
+    "src/app/api/image-gen/**/*.ts": {
+      "maxDuration": 180
     }
   }
 }
