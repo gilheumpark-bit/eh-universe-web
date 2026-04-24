@@ -72,10 +72,16 @@ const nextConfig: NextConfig = {
       "object-src 'none'",
       "base-uri 'self'",
     ].join('; ');
+    // code-studio 전용 CSP — webcontainer 지원 위해 unsafe-eval 허용.
+    // localhost:* frame-src 는 개발 환경에서만 허용 (프로덕션은 제거 — XSS/클릭재킹 표면 축소).
+    const allowLocalhostFrame = process.env.NODE_ENV !== 'production';
     const cspCodeStudio = cspBase
       .replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' 'unsafe-eval'")
       .replace("connect-src 'self'", "connect-src 'self' https://*.webcontainer.io wss://*.webcontainer.io")
-      .replace("frame-src 'self'", "frame-src 'self' https://*.webcontainer.io https://*.webcontainer.app http://localhost:*");
+      .replace(
+        "frame-src 'self'",
+        `frame-src 'self' https://*.webcontainer.io https://*.webcontainer.app${allowLocalhostFrame ? ' http://localhost:*' : ''}`
+      );
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

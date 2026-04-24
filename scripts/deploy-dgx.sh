@@ -1,76 +1,63 @@
 #!/bin/bash
 # ============================================================
-# EH Universe — DGX 서버 원클릭 배포 스크립트
+# EH Universe — DGX 서버 원클릭 배포 (35B MoE 단일, 2026-04-24 갱신)
 # ============================================================
-# DGX 서버에서 이 스크립트 실행:
+# 2026-04-20 아키텍처 전환:
+#   OLD: 9B 쌍포(Engine A/B) + Nginx LB(8090) + FastAPI 프록시(8000) — 폐기
+#   NEW: Qwen 3.6-35B-A3B-FP8 MoE 단일 (vLLM :8001, OpenAI 호환 SSE 직결)
+# 프록시 레이어 불필요 — vLLM 엔드포인트가 stream:true 시 직접 SSE 송출.
+# 동기화 기준: CLAUDE.md §인프라 연동 (2026-04-23 갱신본)
+# ============================================================
+#
+# 실행 (DGX 서버):
 #   curl -sSL https://raw.githubusercontent.com/gilheumpark-bit/eh-universe-web/master/scripts/deploy-dgx.sh | bash
-# 또는:
+#   # 또는
 #   bash scripts/deploy-dgx.sh
 # ============================================================
 
 set -euo pipefail
 
 echo "============================================================"
-echo " EH Universe — DGX 서버 배포"
+echo " EH Universe — DGX 35B MoE 단일 엔진 배포"
 echo "============================================================"
 
 # ── 1. 코드 동기화 ──
 REPO_DIR="${HOME}/eh-universe-web"
 if [ -d "${REPO_DIR}" ]; then
-  echo "[1/5] 기존 레포 업데이트..."
+  echo "[1/3] 기존 레포 업데이트..."
   cd "${REPO_DIR}"
   git fetch origin master
   git reset --hard origin/master
 else
-  echo "[1/5] 레포 클론..."
+  echo "[1/3] 레포 클론..."
   git clone https://github.com/gilheumpark-bit/eh-universe-web.git "${REPO_DIR}"
   cd "${REPO_DIR}"
 fi
 
-# ── 2. Python 의존성 ──
-echo "[2/5] Python 패키지 설치..."
-pip install -q fastapi uvicorn httpx pydantic 2>/dev/null || pip3 install -q fastapi uvicorn httpx pydantic
-
-# ── 3. 기존 프로세스 정리 ──
-echo "[3/5] 기존 프로세스 정리..."
+# ── 2. 기존 프로세스 정리 ──
+echo "[2/3] 기존 프로세스 정리..."
 pkill -f "vllm.entrypoints" 2>/dev/null || true
+# 2026-04-20 이전 듀얼 9B 엔진 + FastAPI 프록시(main:app) 잔재 정리
 pkill -f "main:app" 2>/dev/null || true
 sleep 2
 
-# ── 4. vLLM 듀얼 엔진 기동 ──
-echo "[4/5] vLLM 듀얼 엔진 시작..."
-echo "  Heavy (35B) → :8080"
-echo "  Fast  (0.8B) → :8081"
+# ── 3. vLLM 35B MoE 단일 엔진 기동 (:8001) ──
+echo "[3/3] Qwen 3.6-35B-A3B-FP8 MoE 시작 (vLLM :8001)..."
 chmod +x scripts/start_vllm.sh
-nohup bash scripts/start_vllm.sh both > /tmp/vllm-dual.log 2>&1 &
+# 'both' 인자 제거 — 듀얼 모드 폐기. start_vllm.sh 자체도 단일 기본값으로 갱신 필요 (별도 커밋).
+nohup bash scripts/start_vllm.sh > /tmp/vllm-35b.log 2>&1 &
 VLLM_PID=$!
 echo "  vLLM PID: ${VLLM_PID}"
 
-# vLLM 로딩 대기 (모델 로딩에 30~60초 소요)
-echo "  모델 로딩 대기 (최대 120초)..."
-for i in $(seq 1 120); do
-  if curl -s http://localhost:8080/v1/models >/dev/null 2>&1; then
-    echo "  Heavy Core 준비 완료! (${i}초)"
+# 모델 로딩 대기 (35B MoE 60~90초 소요)
+echo "  모델 로딩 대기 (최대 180초)..."
+for i in $(seq 1 180); do
+  if curl -s http://localhost:8001/v1/models >/dev/null 2>&1; then
+    echo "  35B MoE 준비 완료! (${i}초)"
     break
   fi
   sleep 1
 done
-
-for i in $(seq 1 60); do
-  if curl -s http://localhost:8081/v1/models >/dev/null 2>&1; then
-    echo "  Fast Core 준비 완료! (${i}초)"
-    break
-  fi
-  sleep 1
-done
-
-# ── 5. FastAPI 프록시 기동 ──
-echo "[5/5] FastAPI 프록시 서버 시작 (:8000)..."
-cd "${REPO_DIR}/ai-spark-server"
-nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload > /tmp/fastapi-proxy.log 2>&1 &
-PROXY_PID=$!
-echo "  Proxy PID: ${PROXY_PID}"
-sleep 3
 
 # ── 검증 ──
 echo ""
@@ -81,19 +68,22 @@ echo "============================================================"
 check_port() {
   local name=$1 port=$2
   if curl -s --connect-timeout 3 "http://localhost:${port}/" >/dev/null 2>&1; then
-    echo "  ✅ ${name} (:${port}) — OK"
+    echo "  OK ${name} (:${port})"
   else
-    echo "  ❌ ${name} (:${port}) — 응답 없음 (로그: /tmp/*.log)"
+    echo "  FAIL ${name} (:${port}) — 응답 없음 (로그: /tmp/vllm-35b.log)"
   fi
 }
 
-check_port "FastAPI Proxy" 8000
-check_port "Heavy Core (35B)" 8080
-check_port "Fast Core (0.8B)" 8081
-check_port "ComfyUI (FLUX)" 8188
+check_port "vLLM 35B MoE"   8001
+check_port "RAG API"         8082
+check_port "ComfyUI (FLUX)"  8188
 
 echo ""
-echo "로그 확인:"
-echo "  tail -f /tmp/vllm-dual.log"
-echo "  tail -f /tmp/fastapi-proxy.log"
+echo "SSE 스트리밍: vLLM OpenAI 호환 엔드포인트가 직접 송출 (별도 프록시 레이어 불필요)"
+echo "로그 확인:    tail -f /tmp/vllm-35b.log"
+echo ""
+echo "운영 메모:"
+echo "  - --reload 플래그 사용 금지 (프로덕션 무단 재시작·inotify 폴링 리스크)"
+echo "  - systemd 전환 예정 — /etc/systemd/system/vllm-35b.service"
+echo "  - Cloudflare Tunnel 차단 중 — 192.168 내부망 직결 운용 (CLAUDE.md:187-188)"
 echo "============================================================"

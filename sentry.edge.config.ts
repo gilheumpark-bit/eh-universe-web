@@ -1,12 +1,16 @@
 import * as Sentry from "@sentry/nextjs";
+import { scrubSentryEvent } from "./sentry-scrub";
 
-const DEFAULT_DSN = "https://6b8351f49a77ad3ea62ebf749f0193a9@o4511125585068032.ingest.us.sentry.io/4511125587099648";
-const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN || DEFAULT_DSN;
+// DSN — env 필수. 미설정 시 Sentry 비활성화 (하드코딩 폴백 제거, 2026-04-24)
+const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
 const tracesSampleRate = Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? "0.1");
 
 Sentry.init({
   dsn,
   tracesSampleRate,
   environment: process.env.NODE_ENV,
-  enabled: process.env.NODE_ENV === "production",
+  enabled: Boolean(dsn) && process.env.NODE_ENV === "production",
+  // Edge runtime PII / secret 치환 — API 키 / Bearer / 이메일 / 카드번호 등
+  beforeSend: scrubSentryEvent,
+  beforeBreadcrumb: (breadcrumb) => scrubSentryEvent(breadcrumb),
 });

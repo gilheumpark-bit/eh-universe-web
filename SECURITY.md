@@ -4,10 +4,9 @@
 
 | Version | Supported          |
 |---------|--------------------|
-| 2.2.x-alpha | :white_check_mark: Full support (current alpha) |
-| 2.1.x       | :white_check_mark: Full support |
-| 2.0.x       | :warning: Limited support (critical fixes only) |
-| < 2.0       | :x: Not supported  |
+| 2.3.x-alpha | :white_check_mark: Full support (current alpha) |
+| 2.2.x-alpha | :warning: Limited support (critical fixes only) |
+| < 2.2-alpha | :x: Not supported  |
 
 ## Reporting a Vulnerability
 
@@ -63,7 +62,7 @@ The following items are **not** considered vulnerabilities for this project:
 - Denial of Service (DoS) attacks against Vercel infrastructure
 - Content quality issues in AI-generated text
 - Browser extensions or plugins interfering with the application
-- Vulnerabilities in unsupported versions (< 1.0)
+- Vulnerabilities in unsupported versions (< 2.2-alpha)
 
 ## Responsible Disclosure Policy
 
