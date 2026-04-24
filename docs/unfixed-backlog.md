@@ -160,19 +160,49 @@
 ### D9. Feature flag 승격 판단
 **Examples**: `CLOUD_SYNC` (Firestore 동기화) 등 현재 비활성 플래그. 사용자 도메인 결정.
 
+### D10. EN 네이티브 카피에디터 발주 (외부 인간)
+**Background**: ja/zh 는 9.7 달성했으나 EN 은 8.0 에 머무름. 원본 언어라 fallback 패턴이 없고, 개선 경로가 "네이티브 영어권 교정자의 관용구·article·legal English 다듬기"뿐.
+**Scope**: terms · privacy · copyright · ai-disclosure 4 페이지 + landing
+**Estimate**: Fiverr legal-en 등급 $100~200, turnaround 3~5 일
+**Priority**: 베타 진입 전 권장 (알파에서는 이해도 통과로 충분).
+
+### D11. 라이브 배포 현지화 실측 검증
+**Trigger**: 최신 Vercel 빌드 (3f3d8d87 이후) 프로덕션 반영 완료 후
+**Tests**:
+- `https://developers.facebook.com/tools/debug/` — OG image 4 variant (?l=ko/en/ja/zh) 캐시 무효화 + preview 확인
+- `https://search.google.com/test/rich-results` — JSON-LD SoftwareApplication 스키마 통과
+- `https://www.google.com/search?hl=en&q=site:ehsu.app` — SERP 에 영어 메타 노출 확인
+- Screen reader (NVDA/VoiceOver) 로 `?lang=en` 페이지 접근 → html lang=en 적용 확인
+- Chrome DevTools > Application > Manifest — name "Loreguard" · lang "ko" 표시
+**Estimate**: 30 분 수동 QA
+**Priority**: Vercel 빌드 완료 직후 즉시 실행.
+
 ---
 
 ## Progress Tracking
 
-**수리 상태 (2026-04-24 기준)**:
+**수리 상태 (2026-04-24 최종, 커밋 3f3d8d87 기준)**:
 ```
-총 식별:           22 건 (외부 리뷰 14+14 + Mythos 8, 중복 제거)
-2026-04-24 수리:   16 건 (6 커밋: 021161e4 + 5cf354d9 + bcc073c3 + 95654f6c + f1a611a3 + c6a1ba38)
-이 백로그:          6 건 (A · B · C 각 카테고리 기록)
+총 식별 (초기):     22 건 (외부 리뷰 14+14 + Mythos 8, 중복 제거)
+2026-04-24 수리:   20 건 (10 커밋)
+                   · 6 커밋 (보안): 021161e4 + 5cf354d9 + bcc073c3 + 95654f6c + f1a611a3 + c6a1ba38
+                   · 4 커밋 (i18n·SSR): e952e624 + 571033b5 + 2faa1a64 + 3f3d8d87
+이 백로그 (미수리):  6 건 (A · B · C 각 카테고리)
 외부 의존:          1 건 (A1 변호사)
-사용자 도메인:      9 건 (D1~D9)
+사용자 도메인:      11 건 (D1~D11) — 오늘 세션 추가: D10 (EN native) + D11 (live deploy QA)
+
+총 커밋 수 (2026-04-24 단일 세션):
+  21 커밋 (2d273b77 → 3f3d8d87)
+  분야: docs · security · i18n · infra · license · ops · audit
 ```
+
+**오늘 세션 전수 영향 요약**:
+- 보안: Mythos 8 공격 체인 + 외부 감사 14+14 = 16 건 수리
+- 라이선스: CC-BY-NC → AGPL+Commercial dual 전환
+- i18n: ja/zh 9.7 달성 + SSR 4언어 메타 + sitemap hreflang + manifest rebrand
+- 인프라: /status · DR 리전 · runbook · consent · CSRF · DSAR · Stripe webhook
+- 문서: CHANGELOG 5 섹션 + unfixed-backlog.md 신설 + incident-response.md + dgx-runbook.md
 
 ---
 
-*IDENTITY_SEAL: unfixed-backlog | role=security-hardening-roadmap | snapshot=2026-04-24*
+*IDENTITY_SEAL: unfixed-backlog | role=security-hardening-roadmap | snapshot=2026-04-24-final*

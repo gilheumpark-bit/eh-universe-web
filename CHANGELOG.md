@@ -182,12 +182,43 @@ ESLint 품질 수리:
 - `/api/user/delete` GDPR Art.17 · K-PIPA §36 — 3/day rate, `deletion_requests` 티켓 기록 + 30일 SLA, Firestore 실패 시에도 ticketId 반환 (이메일 fallback)
 - `/api/stripe/webhook` — stripe SDK 시그너처 검증 (raw body) + 6종 이벤트 dispatch + 구조화 로그. Firebase custom claim 실제 갱신은 firebase-admin SDK 통합 후속
 
+### Localization — 4언어 네이티브 완성도 심층 + SSR 반영 (2026-04-24 후반, 4 커밋)
+
+AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보는 것" 양축 커버.
+
+#### ja/zh 네이티브 번역 심화 (e952e624 + 571033b5)
+- 16 파일 144 occurrences 스캔 → 9 파일 114 lines `/ English fallback` 접미 전수 제거
+- 법조문 (privacy · terms · copyright · ai-disclosure) ja/zh 풀 네이티브 완성
+- 2차 AI audit — perl regex `\s*\/\s*[A-Z]` 가 zero-whitespace 허용해 내부 슬래시 (EU/EEA · Firebase/Vercel · Ollama/LM Studio) 오매칭 → 8건 네이티브 복원
+- 점수: **ja 6.0 → 9.7 · zh 6.0 → 9.7** (한국+일본 가중 평균 9.46)
+
+#### "안 보는 것" SSR 4언어 반영 (2faa1a64)
+- `<html lang>` 하드코딩 → `detectServerLang()` (cookie 1순위 + Accept-Language 폴백) — 초기 SSR 부터 정확
+- `export const metadata` → `export async function generateMetadata()` — 4언어 × 7 필드 `META_COPY` 레코드 (title · description · og · twitter · alt · jsonLdDescription)
+- OG image `?l=` 쿼리 지원 — `TAGLINES` 4언어 네이티브, 외국 소셜 미리보기 현지화
+- JSON-LD description lang-aware (`buildJsonLd(lang)` 함수)
+- `LangContext` cookie 양방향 브리지 (localStorage + cookie 동기화 · 1년 max-age · SameSite=Lax)
+- skip-nav + noscript 4언어 분기
+- 영향: Google SERP 4언어 직접 노출 · Facebook/LinkedIn OG 4 variant · Screen reader 정확한 발음
+
+#### 추가 수리 — sitemap + manifest (3f3d8d87)
+- `sitemap.ts` hreflang alternates 추가 — 20 URL × 4 lang = **80 alternate 엔트리** (Google Search Console 권장 구조)
+- `manifest.webmanifest` 브랜드 갱신 — "NOA Studio" (stale) → "Loreguard — Writer-first Novel IDE" + `lang: ko` · `dir: ltr` · `scope: /` 표준 필드
+- PWA 설치 시 OS 에 정확한 브랜드·범주 표시
+
+#### 통과 확인 (수리 불필요)
+- `not-found.tsx` · `error.tsx` · `loading.tsx` — 4언어 네이티브 이미 완성
+- `robots.ts` — 22 bot 차단 최신 (상위 Security 섹션에서 수리됨)
+- Console logs — API 1건만, clean
+
 ### Deferred — docs/unfixed-backlog.md 에서 추적 (6건)
 
 - **A** 법무 1건 — Legal content 변호사 리뷰 (외부 의존)
 - **B** 설계 선행 2건 — C1 CSP nonce (Next.js 16 middleware 연구) · W1 Firestore public 분리 (데이터 마이그)
 - **C** 별도 스프린트 4건 — Perf 75+ · A11y 100 · CLI strict · ShadowDiffDashboard 738→500
 - **D** 사용자 도메인 9건 — Sentry DSN · Stripe secret · CRON_SECRET scope · firebase-admin · CLA · 브릿G 모집 · 모두의창업 · PCT · feature flag
+- **en 네이티브 QA** — EN 8.0 → 9.5+ 는 네이티브 카피에디터 발주 필요 (ja/zh 도 9.7 → 10 는 동일)
+- **라이브 배포 검증** — 최신 Vercel 빌드가 새 메타·sitemap·manifest 반영 완료 후 Facebook Sharing Debugger · Google Rich Results Test 로 현지화 실측
 
 ---
 
