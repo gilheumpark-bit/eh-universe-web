@@ -1,13 +1,16 @@
 {
-  "name": "NOA Studio — EH Universe",
-  "short_name": "NOA Studio",
-  "description": "AI-powered narrative engine for the EH Universe",
+  "name": "Loreguard — Writer-first Novel IDE",
+  "short_name": "Loreguard",
+  "description": "AI-powered novel writing IDE by EH Universe — write, review, translate, and publish in one workspace.",
+  "lang": "ko",
+  "dir": "ltr",
   "start_url": "/studio",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#7c3aed",
   "background_color": "#0a0a0a",
   "orientation": "any",
-  "categories": ["productivity", "entertainment", "education"],
+  "categories": ["productivity", "books", "education"],
   "display_override": ["window-controls-overlay", "standalone"],
   "file_handlers": [
     {
