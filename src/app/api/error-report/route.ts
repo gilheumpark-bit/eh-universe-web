@@ -47,16 +47,21 @@ export async function POST(req: NextRequest) {
     }
 
     const body = JSON.parse(raw);
+    // [S2-error-report, 2026-04-24] 로그 주입 defense-in-depth.
+    // apiLog 는 JSON.stringify 기반이라 \n 자동 이스케이프, 실제 주입은 불가.
+    // 단 입력단에서 control char 제거해 두면 다운스트림 텍스트 로거 사용 시에도 안전.
+    const clean = (s: unknown): string =>
+      String(s ?? '').replace(/[\r\n\t\v\f]+/g, ' ').replace(/[\x00-\x1F\x7F]/g, '');
     apiLog({
       level: 'error',
       event: 'client_error',
       route: '/api/error-report',
       ip,
-      error: String(body.message || '').slice(0, 200),
+      error: clean(body.message).slice(0, 200),
       meta: {
-        stack: String(body.stack || '').slice(0, 300),
-        source: String(body.source || ''),
-        page: String(body.url || ''),
+        stack: clean(body.stack).slice(0, 300),
+        source: clean(body.source).slice(0, 200),
+        page: clean(body.url).slice(0, 500),
       },
     });
 

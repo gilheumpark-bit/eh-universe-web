@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { assertUrlAllowedForFetch, rateLimitFetchUrl } from '@/lib/fetch-url-guard';
+import { assertUrlAllowedForFetch, rateLimitFetchUrl, validatePostFetchUrl } from '@/lib/fetch-url-guard';
+import { getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
@@ -10,8 +11,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'URL is required' }, { status: 400 });
   }
 
-  const forwarded = req.headers.get('x-forwarded-for');
-  const clientKey = forwarded?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  // [S2-XFF 방어] x-vercel-forwarded-for 우선 사용 (Vercel 엣지만 생성 — 클라이언트 위조 불가)
+  const clientKey = getClientIp(req.headers);
 
   const rl = rateLimitFetchUrl(clientKey);
   if (!rl.ok) {
@@ -37,6 +38,17 @@ export async function GET(req: NextRequest) {
       signal: AbortSignal.timeout(15000),
       redirect: 'follow',
     });
+
+    // [S1-SSRF 방어] DNS rebinding / redirect 후 사설 IP 재검증
+    // redirect: 'follow' 이므로 response.url 은 최종 URL. body 읽기 전 반드시 체크.
+    try {
+      validatePostFetchUrl(response.url);
+    } catch {
+      return NextResponse.json(
+        { error: '보안: 리다이렉트 결과가 사설/내부 주소로 해석됨 (SSRF 차단)' },
+        { status: 403 },
+      );
+    }
 
     if (!response.ok) {
       return NextResponse.json({ error: `외부 사이트 응답 오류 (${response.status})` }, { status: 502 });

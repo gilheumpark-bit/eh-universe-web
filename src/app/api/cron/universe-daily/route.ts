@@ -21,21 +21,16 @@ function stringField(fields: Record<string, { stringValue?: string }> | undefine
 
 export async function GET(req: Request) {
   try {
+    // [S2-Cron 방어, 2026-04-24] 환경 무관하게 secret 필수.
+    // 이전 로직은 NON-PROD + secret 미설정 시 무인증 통과 → Vercel Preview 배포 URL 에서 Gemini·Firestore 무제한 호출 가능.
     const authHeader = req.headers.get('authorization');
     const secret = process.env.CRON_SECRET?.trim();
-    if (process.env.NODE_ENV === 'production') {
-      if (!secret) {
-        return NextResponse.json({ error: 'Cron secret not configured' }, { status: 503 });
-      }
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      if (!safeCompare(token, secret)) {
-        return new NextResponse('Unauthorized', { status: 401 });
-      }
-    } else if (secret) {
-      const devToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      if (!safeCompare(devToken, secret)) {
-        return new NextResponse('Unauthorized', { status: 401 });
-      }
+    if (!secret) {
+      return NextResponse.json({ error: 'Cron secret not configured' }, { status: 503 });
+    }
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!safeCompare(token, secret)) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;

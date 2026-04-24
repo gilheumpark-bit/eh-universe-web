@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import mammoth from 'mammoth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { scanZipDecompressed } from '@/lib/zip-bomb-guard';
 
 export const dynamic = 'force-dynamic';
 // For multipart form body parsing, we do not need body parser false in Next.js App Router.
@@ -208,6 +209,21 @@ export async function POST(req: NextRequest) {
     } 
     // EPUB PARSING
     else if (fileName.endsWith('.epub')) {
+      // [S2-EPUB zip bomb 방어, 2026-04-24] 파싱 전 압축해제 총합 사전 검증.
+      // EPUB 정상 파일은 upload 한도(20MB) 대비 3~5배 압축해제가 일반적.
+      // 100MB 상한은 대형 삽화 EPUB 허용 + zip bomb 차단 균형점.
+      const EPUB_DECOMPRESSED_CAP = 100 * 1024 * 1024; // 100MB
+      const zipCheck = scanZipDecompressed(buffer, EPUB_DECOMPRESSED_CAP);
+      if (!zipCheck.ok) {
+        logger.warn('upload/epub', `zip-bomb guard rejected: ${zipCheck.reason}`, {
+          totalUncompressed: zipCheck.totalUncompressed,
+        });
+        return NextResponse.json(
+          { error: `EPUB 검증 실패: ${zipCheck.reason}` },
+          { status: 413 },
+        );
+      }
+
       const EPubModule = await import('epub2');
       const EPub = EPubModule.default || EPubModule;
       const fs = await import('fs');

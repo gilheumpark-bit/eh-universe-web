@@ -54,6 +54,12 @@ async function fetchFromFirestore(id: string): Promise<{ payload: unknown; expir
   return null;
 }
 
+// [S1-share 방어, 2026-04-24] 상한 — Firestore 스토리지 폭주·과금 폭탄 차단
+const MAX_CONTENT_LENGTH_BYTES = 500_000; // 500KB body (여유분 포함)
+const MAX_CONTENT_CHARS = 200_000;        // content 필드 200K chars
+const MAX_TITLE_CHARS = 500;
+const MAX_EXPIRES_HOURS = 720;            // 30 일 캡 (기본 72h)
+
 export async function POST(req: NextRequest) {
   try {
     lazyCleanup();
@@ -63,6 +69,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
     }
 
+    // [S1-share] body 크기 게이트 — parse 전 차단
+    const contentLengthHeader = parseInt(req.headers.get('content-length') || '0', 10);
+    if (contentLengthHeader > MAX_CONTENT_LENGTH_BYTES) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     const body = await req.json();
     const { type, title, content, meta, expiresInHours = 72 } = body;
 
@@ -70,9 +82,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'type and content required' }, { status: 400 });
     }
 
+    // [S1-share] content / title 길이 검증
+    if (typeof content === 'string' && content.length > MAX_CONTENT_CHARS) {
+      return NextResponse.json({ error: 'content too long (max 200K chars)' }, { status: 413 });
+    }
+    if (typeof title === 'string' && title.length > MAX_TITLE_CHARS) {
+      return NextResponse.json({ error: 'title too long (max 500 chars)' }, { status: 413 });
+    }
+
+    // [S1-share] expiresInHours 상한 30일 + 유효 숫자 강제
+    const hoursNum = Number(expiresInHours);
+    const cappedHours = Math.min(
+      Math.max(1, Number.isFinite(hoursNum) && hoursNum > 0 ? hoursNum : 72),
+      MAX_EXPIRES_HOURS,
+    );
+
     // [C] crypto.randomBytes(16) — Math.random 약한 ID 대신 128bit 엔트로피
     const id = `sh_${crypto.randomBytes(16).toString('base64url')}`;
-    const expiresAt = Date.now() + expiresInHours * 3600000;
+    const expiresAt = Date.now() + cappedHours * 3600000;
     const payload = { type, title, content, meta };
 
     // Firestore 영속화 시도

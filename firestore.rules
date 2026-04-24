@@ -109,9 +109,15 @@ service cloud.firestore {
         && request.auth.uid == uid
         && request.resource.data.id == uid
         && request.resource.data.role == "member";
+      // [R1 권한 상승 방어, 2026-04-24] role/id 불변성 조항 필수.
+      // 본인 update 허용하되 role·id 변경 금지, admin 만 예외.
       allow update: if signedIn()
         && (
-          request.auth.uid == uid
+          (
+            request.auth.uid == uid
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.id == resource.data.id
+          )
           || isAdmin()
         );
       allow delete: if isAdmin();

@@ -80,13 +80,30 @@ export const RATE_LIMITS = {
 
 /**
  * Extract client IP from NextRequest headers.
+ *
+ * [S2-XFF 방어, 2026-04-24] 우선순위:
+ *   1) x-vercel-forwarded-for — Vercel 엣지만 생성, 클라이언트 위조 불가 (Vercel 환경 한정)
+ *   2) x-real-ip — Vercel 엣지가 실제 client IP 로 덮어쓰기
+ *   3) x-forwarded-for — 일반 프록시 체인 (client 가 앞부분 위조 가능하나 Vercel 이 실제 IP prepend)
+ *   4) 'unknown' — fallback
+ *
+ * Vercel 프로덕션에선 1/2 가 정상 제공되므로 XFF 스푸핑 내성 확보.
+ * Self-host 또는 다른 reverse proxy 환경에선 1 이 없으므로 3 로 폴백 — defense-in-depth 유지.
  */
 export function getClientIp(headers: Headers): string {
-  return (
-    headers.get('x-real-ip') ||
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    'unknown'
-  );
+  const vercelFwd = headers.get('x-vercel-forwarded-for');
+  if (vercelFwd) {
+    const first = vercelFwd.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  const realIp = headers.get('x-real-ip');
+  if (realIp) return realIp;
+  const xff = headers.get('x-forwarded-for');
+  if (xff) {
+    const first = xff.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return 'unknown';
 }
 
 // IDENTITY_SEAL: PART-1 | role=shared rate limiter | inputs=ip,route,config | outputs=allowed,retryAfterMs
