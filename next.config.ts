@@ -60,14 +60,63 @@ const nextConfig: NextConfig = {
   // 보안 헤더: next.config.ts headers()로 적용 (middleware.ts는 Next.js 16 라우팅 충돌 위험)
   // proxy.ts는 참조용으로 유지. 실제 적용은 여기서.
   async headers() {
+    // ─── [W4] connect-src — AI providers + Firebase + Vercel + Sentry (env 확장 허용) ───
+    const connectSrcBase = [
+      "'self'",
+      // AI providers
+      'https://generativelanguage.googleapis.com',
+      'https://api.openai.com',
+      'https://api.anthropic.com',
+      'https://api.groq.com',
+      'https://api.mistral.ai',
+      // Firebase + Google APIs
+      'https://www.googleapis.com',
+      'https://securetoken.googleapis.com',
+      'https://identitytoolkit.googleapis.com',
+      'https://*.firebaseapp.com',
+      'https://firestore.googleapis.com',
+      'https://*.googleapis.com',
+      'https://apis.google.com',
+      // CDN + Vercel monitoring
+      'https://cdn.jsdelivr.net',
+      'https://va.vercel-scripts.com',
+      'https://vitals.vercel-insights.com',
+      // Sentry
+      'https://*.ingest.us.sentry.io',
+    ];
+    const extraConnect = (process.env.CSP_EXTRA_CONNECT_SRC ?? '')
+      .split(/[\s,]+/)
+      .filter(Boolean);
+    const connectSrc = [...connectSrcBase, ...extraConnect].join(' ');
+
+    // ─── [W3] img-src — 명시 화이트리스트, 프로덕션에선 `https:` 범용 허용 제거 ───
+    const imgSrcBase = [
+      "'self'",
+      'data:',
+      'blob:',
+      // Google OAuth 아바타 (lh3~lh6.googleusercontent.com 전체 포괄)
+      'https://*.googleusercontent.com',
+      // Firebase Storage + 호스팅
+      'https://firebasestorage.googleapis.com',
+      'https://storage.googleapis.com',
+      'https://*.firebaseapp.com',
+      // GitHub / Gravatar (프로필 이미지)
+      'https://avatars.githubusercontent.com',
+      'https://*.gravatar.com',
+    ];
+    // dev 편의: 프로덕션 외 환경에선 모든 HTTPS 허용 (BYOK · 플러그인 이미지 디버깅)
+    if (process.env.NODE_ENV !== 'production') imgSrcBase.push('https:');
+    const extraImg = (process.env.CSP_EXTRA_IMG_SRC ?? '').split(/[\s,]+/).filter(Boolean);
+    const imgSrc = [...imgSrcBase, ...extraImg].join(' ');
+
     const cspBase = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-      "img-src 'self' data: blob: https:",
+      `img-src ${imgSrc}`,
       "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://api.groq.com https://api.mistral.ai https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.firebaseapp.com https://apis.google.com https://cdn.jsdelivr.net https://firestore.googleapis.com https://*.googleapis.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.us.sentry.io",
+      `connect-src ${connectSrc}`,
       "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
       "object-src 'none'",
       "base-uri 'self'",
