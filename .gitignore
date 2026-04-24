@@ -167,3 +167,8 @@ docs/lighthouse-report.md
 IR_PITCH_STRATEGY.md
 IR_*.md
 PITCH_*.md
+
+# Internal team docs (do not commit)
+TEAM-ONBOARDING*
+INTERNAL*.md
+ONBOARDING*.md
