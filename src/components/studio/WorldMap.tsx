@@ -44,6 +44,8 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
   const [linkMode, setLinkMode] = useState(false);
   const [linkFrom, setLinkFrom] = useState<string | null>(null);
   const [linkType, setLinkType] = useState<TerritoryLink['type']>('border');
+  // [UX 2026-04-25] 방금 추가된 영역 시각 강조 — 외부 평가에서 "추가 후 무반응" 지적 대응
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const civNames = Array.from(new Set((simData.civs || []).map(c => c.name)));
@@ -79,6 +81,11 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       color: civColors[civNames[0]] || '#6b7280',
     };
     onChange({ territories: [...territories, newT] });
+    // [UX 2026-04-25] 시각 피드백 — 1.8초 highlight ring + SVG 캔버스로 스크롤
+    // 외부 코워크 평가 ("+ 영역 추가 후 무반응") 후속 수리
+    setHighlightId(id);
+    setTimeout(() => setHighlightId((cur) => (cur === id ? null : cur)), 1800);
+    setTimeout(() => svgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
   };
 
   const removeTerritory = (id: string) => {
@@ -241,6 +248,28 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
             </g>
           );
         })}
+
+        {/* [UX 2026-04-25] 방금 추가된 영역 강조 ring — SMIL 애니메이션, 1.5초 후 자동 소멸 */}
+        {highlightId && (() => {
+          const t = territories.find((tt) => tt.id === highlightId);
+          if (!t) return null;
+          return (
+            <circle
+              cx={t.x}
+              cy={t.y}
+              r={15}
+              fill="none"
+              stroke="rgba(255,220,100,0.95)"
+              strokeWidth={3}
+              pointerEvents="none"
+              aria-hidden="true"
+            >
+              <animate attributeName="r" from="15" to="55" dur="1.5s" fill="freeze" />
+              <animate attributeName="opacity" from="1" to="0" dur="1.5s" fill="freeze" />
+              <animate attributeName="stroke-width" from="3" to="0.5" dur="1.5s" fill="freeze" />
+            </circle>
+          );
+        })()}
 
         {/* Empty state */}
         {territories.length === 0 && (

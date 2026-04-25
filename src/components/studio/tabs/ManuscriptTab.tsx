@@ -170,36 +170,72 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
         <button
           onClick={() => setShowDashboard(!showDashboard)}
           className={toggleBtn(showDashboard, 'purple')}
+          title={L4(language, {
+            ko: '작가 대시보드 — 누적 글자수·집필 시간·일일 목표 통계',
+            en: 'Author dashboard — cumulative word count, writing time, daily goal stats',
+            ja: '作家ダッシュボード — 累計文字数・執筆時間・日次目標',
+            zh: '作者仪表板 — 累计字数、创作时间、每日目标',
+          })}
         >
           📊 {L4(language, { ko: '작가 대시보드', en: 'Author Dashboard', ja: '作家ダッシュボード', zh: '作者仪表板' })}
         </button>
         <button
           onClick={() => { setShowTranslation(!showTranslation); if (!showTranslation) setShowDashboard(false); }}
           className={toggleBtn(showTranslation, 'green')}
+          title={L4(language, {
+            ko: '번역 — 현재 원고를 Translation Studio 로 가져가 6축 채점 번역',
+            en: 'Translate — open this manuscript in Translation Studio (6-axis scored translation)',
+            ja: '翻訳 — 現在の原稿を Translation Studio で6軸スコアリング翻訳',
+            zh: '翻译 — 在 Translation Studio 中以 6 轴评分翻译当前原稿',
+          })}
         >
           <Languages className="w-3 h-3" /> {L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' })}
         </button>
         <button
           onClick={() => setShowShare(true)}
           className={simpleBtn('transition-colors')}
+          title={L4(language, {
+            ko: '네트워크 공유 — 작가 커뮤니티 (행성)에 발췌 게시',
+            en: 'Share — publish an excerpt to the writer community (Network)',
+            ja: 'ネットワーク共有 — 作家コミュニティ(惑星)に抜粋投稿',
+            zh: '网络分享 — 发布选段至作家社区(行星)',
+          })}
         >
           <Share2 className="w-3 h-3" /> {L4(language, { ko: '네트워크 공유', en: 'Share', ja: '共有', zh: '分享' })}
         </button>
         <button
           onClick={() => handleSceneMode('edit')}
           className={toggleBtn(sceneMode === 'edit', 'blue')}
+          title={L4(language, {
+            ko: '① 편집 — 텍스트 에디터 모드 (원고 직접 수정)',
+            en: '① Edit — text editor mode (direct manuscript editing)',
+            ja: '① 編集 — テキストエディタモード(原稿を直接編集)',
+            zh: '① 编辑 — 文本编辑器模式(直接修改原稿)',
+          })}
         >
           <PenLine className="w-3 h-3" /> {L4(language, { ko: '① 편집', en: '① Edit', ja: '① 編集', zh: '① 编辑' })}
         </button>
         <button
           onClick={() => handleSceneMode('radio')}
           className={toggleBtn(sceneMode === 'radio', 'purple')}
+          title={L4(language, {
+            ko: '② 라디오 — TTS 음성 재생 모드 (대사 읽기·검수용)',
+            en: '② Radio — TTS playback mode (read dialogue aloud for review)',
+            ja: '② ラジオ — TTS音声再生モード(セリフ読み上げ・検証用)',
+            zh: '② 电台 — TTS 语音播放模式(朗读对话便于审校)',
+          })}
         >
           <Headphones className="w-3 h-3" /> {L4(language, { ko: '② 라디오', en: '② Radio', ja: '② ラジオ', zh: '② 电台' })}
         </button>
         <button
           onClick={() => handleSceneMode('visual')}
           className={toggleBtn(sceneMode === 'visual', 'amber')}
+          title={L4(language, {
+            ko: '③ 비주얼 노벨 — 씬 단위 슬라이드 + 이미지 결합 미리보기 (HTML export 가능)',
+            en: '③ Visual Novel — scene-by-scene slides with image overlay (HTML exportable)',
+            ja: '③ ビジュアルノベル — シーンごとのスライド+画像合成プレビュー(HTML出力可)',
+            zh: '③ 视觉小说 — 按场景的幻灯片+图像叠加预览(可导出 HTML)',
+          })}
         >
           <Film className="w-3 h-3" /> {L4(language, { ko: '③ 비주얼 노벨', en: '③ Visual Novel', ja: '③ ビジュアルノベル', zh: '③ 视觉小说' })}
         </button>

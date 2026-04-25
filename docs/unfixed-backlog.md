@@ -166,6 +166,25 @@
 **Estimate**: Fiverr legal-en 등급 $100~200, turnaround 3~5 일
 **Priority**: 베타 진입 전 권장 (알파에서는 이해도 통과로 충분).
 
+### D12. Vercel Pro 플랜 업그레이드 판단
+**Background**: Hobby plan 단일 리전 강제 (icn1). Hobby plan 멀티 리전 시도 시 silent fail (2026-04-24 사고). DR 위해선 hnd1 (도쿄) 추가 필요.
+**Trigger**: 알파 작가 50명 안정 운영 + 베타 진입 단계
+**Cost**: $20/month (Pro plan)
+**Benefit**: hnd1 추가 / 더 긴 maxDuration / 동시 빌드 / 분석 데이터 보존
+**Priority**: 베타 직전.
+
+### D13. 모바일 viewport (360px / 414px) 자동 측정
+**Trigger**: 외부 코워크 평가 (2026-04-25) "모바일 압축 가능성" 지적
+**Scope**: 5 핵심 페이지 (`/`, `/studio`, `/network`, `/translation-studio`, `/code-studio`)
+**현재 상태**: 데스크탑 기준 설계, 모바일 자동 측정 없음
+**조치**:
+1. `e2e/scenarios/` 에 mobile-viewport.spec.ts 신설
+2. Playwright Pixel 5 / iPhone 13 emulation × 5 페이지 = 10 케이스
+3. 핵심 버튼·탭·메뉴 압축·overflow 자동 detect
+4. CI (Ubuntu) 만 실행 (Windows STATUS_ACCESS_VIOLATION 알려진 한계)
+**Estimate**: 2시간
+**Priority**: 베타 진입 전.
+
 ### D11. 라이브 배포 현지화 실측 검증
 **Trigger**: 최신 Vercel 빌드 (3f3d8d87 이후) 프로덕션 반영 완료 후
 **Tests**:

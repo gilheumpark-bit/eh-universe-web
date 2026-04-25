@@ -13,12 +13,13 @@ const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const WorldTab = dynamic(() => import('@/components/studio/tabs/WorldTab'), { ssr: false, loading: DynSkeleton });
 const CharacterTab = dynamic(() => import('@/components/studio/tabs/CharacterTab'), { ssr: false, loading: DynSkeleton });
 const SettingsView = dynamic(() => import('@/components/studio/SettingsView'), { ssr: false, loading: DynSkeleton });
-const StyleTab = dynamic(() => import('@/components/studio/tabs/StyleTab'), { ssr: false, loading: DynSkeleton });
+// [UX 2026-04-25] StyleTab/HistoryTab은 차트·레이더·이력 등 콘텐츠 양 큼 — 기본 120px 스켈레톤은 비어 보임 → 600/500px 로 확장
+const StyleTab = dynamic(() => import('@/components/studio/tabs/StyleTab'), { ssr: false, loading: () => <LoadingSkeleton height={600} /> });
 const ManuscriptTab = dynamic(() => import('@/components/studio/tabs/ManuscriptTab'), { ssr: false, loading: DynSkeleton });
 const _NetworkFeedWidget = dynamic(() => import('@/components/studio/NetworkFeedWidget'), { ssr: false, loading: DynSkeleton });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
 const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
-const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: DynSkeleton });
+const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: () => <LoadingSkeleton height={500} /> });
 const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
 const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
 
