@@ -11,7 +11,7 @@
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-3,304_passing-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-3,302_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
 ![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
@@ -204,7 +204,7 @@ npm test         # 테스트
 
 | 지표 | 값 |
 |------|----|
-| 테스트 | **3,304 passing** / 298 suites |
+| 테스트 | **3,302 passing** / 298 suites |
 | 타입 체크 | **0 errors** (strict) |
 | Lighthouse A11y | **100/100** × 5 페이지 (/, /studio, /translation-studio, /network, /archive) |
 | 보안 감사 | P0 6건 + P1 13건 수리 완료 |

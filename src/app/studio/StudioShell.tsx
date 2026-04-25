@@ -18,6 +18,7 @@ import MobileDrawer from '@/components/studio/MobileDrawer';
 import MobileSketchImportBanner from '@/components/studio/MobileSketchImportBanner';
 import FirstVisitOnboarding from '@/components/studio/FirstVisitOnboarding';
 import { useProjectManager } from '@/hooks/useProjectManager';
+import { useAutoVersionSnapshot } from '@/hooks/useAutoVersionSnapshot';
 import { saveProjects } from '@/lib/project-migration';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
@@ -109,6 +110,12 @@ export default function StudioShell() {
     updateCurrentSession, setConfig,
     versionedBackups, doRestoreVersionedBackup, refreshBackupList,
   } = pm;
+
+  // [auto version snapshot 2026-04-25] README "300자+ 변경 시 자동 스냅샷" 약속의 wiring.
+  // 이전: saveVersionedBackup() 함수만 있고 자동 트리거 0 — 사용자가 모름.
+  // 이후: 누적 char delta 300+ 도달 시 IndexedDB 에 자동 스냅샷 (5분 cooldown).
+  // 작가가 짧은 편집 (오타 수정 등)으로 스냅샷 폭주 안 함.
+  useAutoVersionSnapshot({ projects });
 
   const VALID_TABS: AppTab[] = ['world', 'writing', 'history', 'settings', 'characters', 'rulebook', 'style', 'manuscript', 'docs', 'visual'];
   const [activeTab, setActiveTabRaw] = useState<AppTab>(() => {

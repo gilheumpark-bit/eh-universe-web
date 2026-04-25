@@ -121,7 +121,7 @@ export default function AboutPage() {
 
             <div className="mt-12 border-t border-border pt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { value: "109", label: T({ ko: "아카이브 문서", en: "Archive Docs" }) },
+                { value: "165", label: T({ ko: "아카이브 문서", en: "Archive Docs" }) },
                 { value: "6", label: T({ ko: "세계관 카테고리", en: "World Categories" }) },
                 { value: "200K+", label: T({ ko: "관할 행성계", en: "Star Systems" }) },
                 { value: "DUAL", label: T({ ko: "AGPL + 상업", en: "AGPL + Commercial" }) },

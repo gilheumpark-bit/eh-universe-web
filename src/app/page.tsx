@@ -378,7 +378,7 @@ function HomePageContent() {
       badge: "AR",
       color: "amber" as const,
       title: T({ ko: "설정집 아카이브", en: "Lore Archive", ja: "設定集アーカイブ", zh: "设定集档案库" }),
-      desc: T({ ko: "6개 카테고리, 109개 설정 문서 + 64개 기밀 보고서.", en: "6 categories, 109 lore docs + 64 classified reports.", ja: "6カテゴリ、109の設定文書＋64の機密報告書。", zh: "6个分类，109篇设定文档 + 64份机密报告。" }),
+      desc: T({ ko: "8개 카테고리, 72 설정 문서 + 93 기밀 보고서 = 총 165개 아카이브.", en: "8 categories, 72 lore docs + 93 classified reports = 165 total archive docs.", ja: "8カテゴリ、設定文書72＋機密報告書93＝合計165アーカイブ。", zh: "8 个分类，72 篇设定文档 + 93 份机密报告 = 共 165 篇档案。" }),
       meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", ja: "世界観文書を探索", zh: "浏览世界观文档" }),
     },
     {
@@ -606,7 +606,7 @@ function HomePageContent() {
                   {T({ ko: "아카이브 카테고리", en: "Archive Categories", ja: "アーカイブカテゴリ", zh: "档案库类别" })}
                 </p>
                 <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-                  {T({ ko: "6개 분류, 109개 문서", en: "6 categories, 109 documents", ja: "6カテゴリ、109文書", zh: "6个分类，109个文档" })}
+                  {T({ ko: "8개 분류, 165개 문서", en: "8 categories, 165 documents", ja: "8カテゴリ、165文書", zh: "8个分类，165个文档" })}
                 </h2>
               </div>
               <Link href="/archive" className="font-[--font-mono] text-[11px] uppercase tracking-[0.16em] text-text-tertiary hover:text-accent-amber transition-colors">
