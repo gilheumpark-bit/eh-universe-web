@@ -1,9 +1,10 @@
 // ============================================================
 // PART 1 — Imports & Class Constants
 // ============================================================
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2, Plus } from 'lucide-react';
+import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2, Plus, Github } from 'lucide-react';
+import { useGitHubAutoSync, isGitHubAutoSyncEnabled } from '@/hooks/useGitHubAutoSync';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
@@ -80,6 +81,48 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   const [parsedScenes, setParsedScenes] = useState<ParsedScene[]>([]);
   const [showSceneProps, setShowSceneProps] = useState(false);
   const [editingSceneIdx, setEditingSceneIdx] = useState<number | null>(null);
+
+  // ============================================================
+  // PART 2.5 — GitHub 자동 동기화 (2026-04-25 신설)
+  // ============================================================
+  // README/landing 의 "GitHub 자동 백업" 약속 wiring.
+  // localStorage 'noa-github-autosync' 토글 + Settings → 백업 섹션에서 OAuth/PAT 연결.
+  // 연결됨 + 토글 on 시 manuscripts 변경 → 30초 debounce → episode 별 commit.
+  const [autoSyncOn, setAutoSyncOn] = useState<boolean>(() => isGitHubAutoSyncEnabled());
+  useEffect(() => {
+    const handler = () => setAutoSyncOn(isGitHubAutoSyncEnabled());
+    window.addEventListener('noa:github-autosync-changed', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('noa:github-autosync-changed', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
+  const ghAutoSync = useGitHubAutoSync({
+    enabled: autoSyncOn,
+    manuscripts: config.manuscripts ?? [],
+    projectTitle: config.title || 'Untitled',
+    debounceMs: 30_000,
+  });
+  const handleGitHubPush = useCallback(() => {
+    if (!ghAutoSync.connected) {
+      // 미연결 시: 사용자에게 설정 진입 안내 (StudioShell이 listen 가능)
+      try {
+        window.dispatchEvent(new CustomEvent('noa:open-settings', { detail: { section: 'backups' } }));
+      } catch { /* noop */ }
+      return;
+    }
+    void ghAutoSync.pushNow();
+  }, [ghAutoSync]);
+  const formatSyncTime = useCallback((ts: number | null): string => {
+    if (!ts) return '';
+    const diffSec = Math.floor((Date.now() - ts) / 1000);
+    if (diffSec < 60) return `${diffSec}초 전`;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}분 전`;
+    const diffHour = Math.floor(diffMin / 60);
+    return `${diffHour}시간 전`;
+  }, []);
 
   // ============================================================
   // PART 3 — Callbacks (scene parsing, export, episode add, prop edit)
@@ -202,6 +245,32 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           })}
         >
           <Share2 className="w-3 h-3" /> {L4(language, { ko: '네트워크 공유', en: 'Share', ja: '共有', zh: '分享' })}
+        </button>
+        {/* [GitHub 동기화 2026-04-25] 미연결 시 설정 진입 안내 / 연결 시 1클릭 푸시 + 마지막 sync 표시 */}
+        <button
+          onClick={handleGitHubPush}
+          className={toggleBtn(ghAutoSync.connected, 'blue')}
+          disabled={ghAutoSync.syncing}
+          title={
+            ghAutoSync.connected
+              ? L4(language, {
+                  ko: `GitHub 푸시 — 클릭 시 즉시 commit. ${autoSyncOn ? '자동 동기화 ON (30초 debounce).' : '자동 동기화 OFF (설정 → 백업에서 토글).'}${ghAutoSync.lastSyncAt ? ` 마지막: ${formatSyncTime(ghAutoSync.lastSyncAt)}` : ''}`,
+                  en: `GitHub push — click to commit now. ${autoSyncOn ? 'Auto-sync ON (30s debounce).' : 'Auto-sync OFF (toggle in Settings → Backup).'}${ghAutoSync.lastSyncAt ? ` Last: ${formatSyncTime(ghAutoSync.lastSyncAt)}` : ''}`,
+                  ja: `GitHub プッシュ — クリックで即時 commit。${autoSyncOn ? '自動同期 ON (30秒 debounce)' : '自動同期 OFF'}`,
+                  zh: `GitHub 推送 — 点击立即提交。${autoSyncOn ? '自动同步开启 (30秒 debounce)' : '自动同步关闭'}`,
+                })
+              : L4(language, {
+                  ko: 'GitHub 미연결 — 클릭 시 설정 → 백업 섹션 으로 이동. PAT 또는 OAuth 1분 설정.',
+                  en: 'GitHub not connected — click to open Settings → Backup. PAT or OAuth (1 min).',
+                  ja: 'GitHub未接続 — クリックで設定→バックアップへ',
+                  zh: 'GitHub 未连接 — 点击进入设置→备份',
+                })
+          }
+        >
+          <Github className="w-3 h-3" />
+          {ghAutoSync.connected
+            ? `↑ GitHub${ghAutoSync.lastSyncAt ? ` · ${formatSyncTime(ghAutoSync.lastSyncAt)}` : ''}${autoSyncOn ? ' · auto' : ''}`
+            : L4(language, { ko: 'GitHub 연결', en: 'Connect GitHub', ja: 'GitHub接続', zh: '连接 GitHub' })}
         </button>
         <button
           onClick={() => handleSceneMode('edit')}

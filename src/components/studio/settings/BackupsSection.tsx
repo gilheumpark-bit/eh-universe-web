@@ -16,6 +16,7 @@ import {
   Download, Archive, Upload,
 } from 'lucide-react';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
+import { isGitHubAutoSyncEnabled, setGitHubAutoSyncEnabled } from '@/hooks/useGitHubAutoSync';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import {
   exportFullBundle,
@@ -148,6 +149,11 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
   const ghEnabled = typeof window !== 'undefined' && isFeatureEnabled('GITHUB_SYNC');
   const gh = useGitHubSync();
   const [tokenInput, setTokenInput] = useState('');
+  // [GitHub autosync 2026-04-25] manuscripts 변경 → 30초 debounce → episode-{N}.md 자동 commit
+  const [autoSync, setAutoSync] = useState<boolean>(() => isGitHubAutoSyncEnabled());
+  useEffect(() => {
+    setGitHubAutoSyncEnabled(autoSync);
+  }, [autoSync]);
   const [connecting, setConnecting] = useState(false);
 
   // GitHub OAuth popup handler — with CSRF state parameter
@@ -257,6 +263,33 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
               {L4(language, { ko: '마지막 동기화', en: 'Last sync', ja: 'Last sync', zh: 'Last sync' })}: {new Date(gh.lastSyncAt).toLocaleString()}
             </div>
           )}
+
+          {/* [autosync toggle 2026-04-25] manuscripts 변경 시 자동 commit (30s debounce) */}
+          <div className="flex items-start justify-between gap-4 p-3 rounded-xl border border-border bg-bg-secondary/40">
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-text-primary">
+                {L4(language, { ko: '자동 동기화 (Auto-sync)', en: 'Auto-sync', ja: '自動同期', zh: '自动同步' })}
+              </div>
+              <div className="text-[10px] text-text-tertiary mt-1">
+                {L4(language, {
+                  ko: '원고 변경 시 30초 debounce 로 episode-{N}.md 에 자동 commit. 끄면 ManuscriptTab GitHub 버튼으로 수동 푸시.',
+                  en: 'Auto-commit episode-{N}.md on manuscript change (30s debounce). Off = manual push via Manuscript tab GitHub button.',
+                  ja: '原稿変更時30秒debounceで自動commit。OFFの場合はManuscriptタブのGitHubボタンで手動push。',
+                  zh: '原稿变更时 30 秒去抖自动 commit。关闭时使用 Manuscript 标签 GitHub 按钮手动推送。',
+                })}
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+              <input
+                type="checkbox"
+                checked={autoSync}
+                onChange={(e) => setAutoSync(e.target.checked)}
+                className="sr-only peer"
+                aria-label={L4(language, { ko: '자동 동기화 토글', en: 'Auto-sync toggle', ja: '自動同期トグル', zh: '自动同步开关' })}
+              />
+              <div className="w-11 h-6 bg-bg-tertiary rounded-full peer peer-focus:ring-2 peer-focus:ring-accent-blue/50 peer-checked:bg-green-600 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5" />
+            </label>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -278,6 +311,16 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           )}
           <p className="text-xs text-text-tertiary">
             {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 안전하게 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to safely back up manuscripts to a private repository.', ja: 'GitHubアクセストークン(PAT)を入力すると、原稿を非公開リポジトリに安全にバックアップできます。', zh: '输入 GitHub 访问令牌(PAT)后，可将稿件安全备份至私有仓库。' })}
+          </p>
+
+          {/* [UX 2026-04-25] 첫 사용자 멘탈 모델 보정 — "ID 어디 입력?" 헷갈림 차단 */}
+          <p className="text-[10px] text-text-tertiary bg-bg-secondary/40 border border-border rounded-lg px-3 py-2">
+            {L4(language, {
+              ko: 'ℹ GitHub 사용자명 (ID) 직접 입력은 없습니다 — 토큰에서 자동 추출됩니다. 토큰 1개만 입력하면 username + 저장소 목록 자동 인식.',
+              en: 'ℹ No separate GitHub username/ID input — auto-detected from the token. One token gives us your username and repo list.',
+              ja: 'ℹ GitHubユーザー名(ID)の直接入力はありません — トークンから自動抽出。トークン1つでusernameとリポジトリ一覧を自動認識。',
+              zh: 'ℹ 无需单独输入 GitHub 用户名(ID) — 从令牌自动提取。一个令牌即可识别用户名和仓库列表。',
+            })}
           </p>
 
           <GitHubPatGuide language={language} />
