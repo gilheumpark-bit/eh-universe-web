@@ -16,6 +16,7 @@ import {
 } from '@/engine/translation';
 import { runPublishAudit, applyAutoFix, runAIAudit, type PublishAuditReport, type PublishAuditFinding, type AICorrection } from '@/lib/translation/publish-audit';
 import { searchTM, type TMMatch } from '@/lib/translation/translation-memory';
+import { scoreToBand, bandModeColor } from '@/lib/translation/bands';
 import { BookOpen } from 'lucide-react';
 
 type AuditIssue = {
@@ -715,6 +716,22 @@ export function AuditPanel() {
                   <span className="text-[10px] text-text-tertiary uppercase tracking-wider">Overall</span>
                   <span className={`text-2xl font-bold font-mono ${scoreColor(aiOverall ?? 0)}`}>{aiOverall}</span>
                 </div>
+                {/* [41-band 2026-04-25] README.ko.md 약속의 UI 측 wiring — Overall 점수를 41-band 분류로 노출 */}
+                {(() => {
+                  const band = scoreToBand(aiOverall ?? 0);
+                  return (
+                    <div className="flex flex-col items-center" title={`Band ${band.display} · Mode ${band.mode}`}>
+                      <span className="text-[10px] text-text-tertiary uppercase tracking-wider">Band</span>
+                      <span
+                        className="text-xl font-bold font-mono"
+                        style={{ color: bandModeColor(band.mode) }}
+                      >
+                        {band.label}
+                      </span>
+                      <span className="text-[9px] text-text-tertiary font-mono">{band.display}</span>
+                    </div>
+                  );
+                })()}
                 <button
                   type="button"
                   onClick={handleRunAIScore}

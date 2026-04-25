@@ -41,3 +41,16 @@ export { buildEpubFiles, type EpubChapter } from './epub-export';
 
 // ── CAT Tool Compatibility (XLIFF/TMX/TBX) ──
 export { exportXLIFF, exportTMX, exportTBX, importXLIFF, importTMX, importTBX } from './xliff';
+
+// ── 41-band Quality Classification (2026-04-25) ──
+// README.ko.md "2-모드 × 41-밴드" 약속 지원. 호출처: AuditPanel + 향후 runChunkedTranslate 통합.
+export { scoreToBand, bandModeColor, bandPassed, allBands, BAND_COUNT, type BandResult, type BandMode } from './bands';
+
+// ── Auto-Regeneration Loop (2026-04-25) ──
+// README.ko.md "자동 재창조 — 점수 < 0.70 → temperature 상승 + 재생성 (최대 2회)" 약속 지원.
+// 호출 예시:
+//   const result = await translateWithAutoRegen(
+//     (temp) => requestTranslation({ ...payload, temperature: temp }),
+//     (text) => scoreTextWithLLM(text),
+//   );
+export { translateWithAutoRegen, type AutoRegenOptions, type AutoRegenAttempt, type AutoRegenResult } from './regeneration-loop';
