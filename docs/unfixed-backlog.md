@@ -173,17 +173,34 @@
 **Benefit**: hnd1 추가 / 더 긴 maxDuration / 동시 빌드 / 분석 데이터 보존
 **Priority**: 베타 직전.
 
-### D13. 모바일 viewport (360px / 414px) 자동 측정
+### D13. 모바일 viewport (360px / 414px) 자동 측정 — ✅ 2026-04-25 구현 완료
 **Trigger**: 외부 코워크 평가 (2026-04-25) "모바일 압축 가능성" 지적
-**Scope**: 5 핵심 페이지 (`/`, `/studio`, `/network`, `/translation-studio`, `/code-studio`)
-**현재 상태**: 데스크탑 기준 설계, 모바일 자동 측정 없음
+**Scope**: 5 핵심 공개 페이지 (`/`, `/about`, `/network`, `/codex`, `/changelog`)
+**구현**: `e2e/scenarios/23-mobile-viewport.spec.ts` 신설
+  · Pixel 5 + iPhone 13 emulation × 5 페이지 × 3 측정 = 30 케이스
+  · 측정 1: horizontal overflow 0 (가로 스크롤 없음)
+  · 측정 2: 페이지 title 정상 노출
+  · 측정 3: 터치 타깃 44px+ (WCAG AAA / Apple HIG, ≤2 작은 타깃 허용)
+**실행**: CI Ubuntu (Windows STATUS_ACCESS_VIOLATION 회피)
+**상태**: spec 작성 완료, CI 실행 결과는 다음 PR push 시 자동 검증.
+
+### D14. Lighthouse A11y `/` 96 → 100 (4점 갭) — 별도 audit 필요
+**Trigger**: 2026-04-19 1ae61b24 로컬 측정 + 2026-04-24 cowork 보고
+**현재 상태**: `/studio`·`/translation-studio` 100, `/` 96
+**Blocker**: 라이브 측정 없이 정확한 4점 원인 못 찾음
 **조치**:
-1. `e2e/scenarios/` 에 mobile-viewport.spec.ts 신설
-2. Playwright Pixel 5 / iPhone 13 emulation × 5 페이지 = 10 케이스
-3. 핵심 버튼·탭·메뉴 압축·overflow 자동 detect
-4. CI (Ubuntu) 만 실행 (Windows STATUS_ACCESS_VIOLATION 알려진 한계)
-**Estimate**: 2시간
+1. 로컬 `npm run lh:check` 실행 (port 3001)
+2. `docs/lighthouse-report.md` 의 `/` 페이지 audit JSON 분석
+3. 주요 의심: color contrast (text-tertiary on bg-secondary), aria-label 누락 (logo SVG), heading hierarchy
+4. 4점 원인 특정 후 1~3건 패치
+**Estimate**: 1시간
 **Priority**: 베타 진입 전.
+
+### D15. "17 챕터 가이드" 정정 — ✅ 2026-04-25 검증 완료
+**조사 결과**: 우리 README/AGENTS/landing 어디에도 "17 챕터" 표기 없음.
+StudioDocsView 실제 카운트: 12 core + 7 polish = **19 챕터 / 4언어**.
+"17 챕터"는 외부 cowork report 자체의 under-count.
+**조치**: 우리 카피 변경 불필요. cowork 보고가 stale.
 
 ### D11. 라이브 배포 현지화 실측 검증
 **Trigger**: 최신 Vercel 빌드 (3f3d8d87 이후) 프로덕션 반영 완료 후
