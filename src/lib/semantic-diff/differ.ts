@@ -98,7 +98,7 @@ function diffEmotion(before: string, after: string): SemanticAxisDiff {
   // 가장 큰 변화 emotion
   let primary = '';
   let primaryDelta = 0;
-  for (const [name, kw] of EMOTION_KW) {
+  for (const [name] of EMOTION_KW) {
     const d = Math.abs(afterProfile[name] - beforeProfile[name]);
     if (d > primaryDelta) {
       primaryDelta = d;

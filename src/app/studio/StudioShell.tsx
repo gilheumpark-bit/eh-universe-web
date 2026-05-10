@@ -692,6 +692,8 @@ export default function StudioShell() {
       return ok;
     };
     return () => { saveFlushRef.current = null; };
+    // setEditDraft 는 React 19 setState — identity 안정 + 직접 호출만. dep 추가 시 무한 effect 재등록.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setProjects]);
 
   // 저장 실패 토스트 — saveFailed 상태를 사용자에게 노출

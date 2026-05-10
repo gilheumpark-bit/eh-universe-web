@@ -124,7 +124,9 @@ function CmdItemRow({
 }) {
   const label = item.i18n?.[language] ?? item.label;
   return (
-    <li role="option">
+    // [a11y — 2026-05-10] role="option" 은 aria-selected 필수 (jsx-a11y/role-has-required-aria-props).
+    // 현 컴포넌트는 키보드 활성 상태 추적 없음 — 항상 false (시각적 hover 만 표시).
+    <li role="option" aria-selected={false}>
       <button
         type="button"
         onClick={onSelect}

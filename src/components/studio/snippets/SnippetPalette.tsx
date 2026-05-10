@@ -4,7 +4,7 @@
 // ============================================================
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X, Sparkles } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { searchSnippets, expandSnippet } from '@/lib/snippets/registry';
 import type { Snippet, SnippetCategory } from '@/lib/snippets/types';
 

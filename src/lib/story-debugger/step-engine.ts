@@ -10,7 +10,7 @@
 // ============================================================
 
 import type { EpisodeManuscript } from '@/lib/studio-types';
-import type { BreakpointLocation, StepKind, StoryFrame, WatchEntry, CharacterVariableState } from './types';
+import type { BreakpointLocation, StepKind, StoryFrame, WatchEntry } from './types';
 import { buildCharacterStateAt } from './state-snapshot';
 import { evaluateWatches } from './watch-engine';
 import type { Character } from '@/lib/studio-types';

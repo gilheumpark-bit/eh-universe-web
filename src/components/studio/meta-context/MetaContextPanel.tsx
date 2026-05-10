@@ -121,14 +121,14 @@ function ConflictsBlock({ conflicts, isKO }: { conflicts: MetaConflict[]; isKO: 
 
 function DefinitionsBlock({
   current,
-  isKO,
+  isKO: _isKO,  // [unused — kind label 한국어 고정 (KIND_LABEL_KO), 향후 EN 분기 시 활용]
 }: {
   current: MetaSnapshot['current'];
   isKO: boolean;
 }) {
   // kind 별 그룹
   const grouped: Record<string, Array<{ key: string; value: string; scope?: string }>> = {};
-  for (const [k, def] of Object.entries(current)) {
+  for (const [, def] of Object.entries(current)) {
     const label = KIND_LABEL_KO[def.kind] ?? def.kind;
     if (!grouped[label]) grouped[label] = [];
     grouped[label].push({ key: def.key, value: def.value, scope: def.scope });

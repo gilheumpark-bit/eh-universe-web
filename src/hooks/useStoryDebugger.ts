@@ -24,7 +24,7 @@ import {
   removeBreakpoint,
   toggleBreakpoint,
 } from '@/lib/story-debugger/breakpoint';
-import { nextLocation, buildFrameAt } from '@/lib/story-debugger/step-engine';
+import { nextLocation } from '@/lib/story-debugger/step-engine';
 import { buildCallHierarchy } from '@/lib/story-debugger/call-hierarchy';
 // [후속 A-3 — 2026-05-07] StateSnapshot cache — step 시 재계산 회피.
 import { useStateSnapshotCache } from '@/hooks/useStateSnapshotCache';
@@ -122,7 +122,9 @@ export function useStoryDebugger(opts: UseStoryDebuggerOptions): UseStoryDebugge
       };
       setFrame(f);
     },
-    [characters, episodes, watches, snapshotCache],
+    // [G] characters 자체는 직접 참조 X (snapshotCache 가 캡슐화).
+    // snapshotCache 가 hash invalidation 으로 characters 변경 자동 감지.
+    [episodes, watches, snapshotCache],
   );
 
   const start = useCallback(

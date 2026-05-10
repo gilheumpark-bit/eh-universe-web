@@ -4,7 +4,7 @@
 // PART 1 — Imports & Types
 // ============================================================
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2, Shield, ShieldCheck } from 'lucide-react';
+import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2, Shield } from 'lucide-react';
 import type { NCGReport, NCTReport } from '@/lib/translation/ncg-nct';
 import { useTranslator } from '../core/TranslatorContext';
 import { scoreTranslation } from '@/hooks/useTranslation';

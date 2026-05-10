@@ -24,7 +24,6 @@ import {
   ArrowUpCircle,
   CheckCircle2,
   Clock,
-  History,
   RefreshCcw,
   Trash2,
   XCircle,

@@ -217,7 +217,7 @@ export function listKoreanGenres(): KoreanGenreProfile[] {
  *   Pacing: Fast scene transitions ...
  *   Cliffhangers: Boss appearance / Skill awakening ...
  */
-export function buildGenreHint(id: KoreanGenreId, lang: 'ko' | 'en' = 'en'): string {
+export function buildGenreHint(id: KoreanGenreId, _lang: 'ko' | 'en' = 'en'): string {
   const profile = getKoreanGenreProfile(id);
   if (id === 'generic') return '';
   const labelKo = profile.label.ko;

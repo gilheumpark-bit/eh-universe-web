@@ -178,6 +178,9 @@ export function EditModeSection({
   }, []);
   const breakpoints = React.useMemo(
     () => getBreakpointsForEpisode(currentEpisode),
+    // bpVersion 은 의도적 dep — 'noa:bp-toggle-request' event 발생 시 강제 재메모.
+    // body 안 직접 참조 X 그러나 invalidation trigger 로 필요.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentEpisode, bpVersion],
   );
 
@@ -433,7 +436,7 @@ export function EditModeSection({
           aria-hidden={false}
         >
           <EditorMinimap
-            // eslint-disable-next-line react-hooks/refs
+             
             editor={novelEditorRef.current?.getEditor?.() ?? null}
             text={editDraft}
             paragraphScores={quality.paragraphs?.map((p) => p.score)}

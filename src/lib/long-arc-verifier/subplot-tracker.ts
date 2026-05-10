@@ -14,7 +14,7 @@
 // ============================================================
 
 import type { EpisodeManuscript } from '@/lib/studio-types';
-import type { AxisResult, Violation, ForeshadowMarker } from './types';
+import type { AxisResult, Violation } from './types';
 
 const SUBPLOT_SETUP = [
   /\[서브플롯-([a-zA-Z0-9_\-가-힣一-龥ぁ-んァ-ン]{1,30})\]/g,

@@ -18,7 +18,7 @@
 // [K] CSS 0건 (HTML self-contained inline style)
 // ============================================================
 
-import type { VerifierReport, AxisResult, Violation, TensionTrajectory } from './types';
+import type { VerifierReport, TensionTrajectory } from './types';
 import { buildTensionTrajectory } from './tension-trajectory';
 import type { EpisodeManuscript } from '@/lib/studio-types';
 

@@ -20,7 +20,7 @@
 // [K] 새 컴포넌트로 격리 — BilateralEditor 0byte
 // ============================================================
 
-import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { Languages, Sparkles, Globe, ShieldCheck, AlignLeft } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import {
