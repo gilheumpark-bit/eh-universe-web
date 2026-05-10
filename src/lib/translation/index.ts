@@ -40,7 +40,7 @@ export { buildMetadataPrompt, parseMetadataResponse, toEpubMetadataXml, type Pub
 export { buildEpubFiles, type EpubChapter } from './epub-export';
 
 // ── CAT Tool Compatibility (XLIFF/TMX/TBX) ──
-export { exportXLIFF, exportTMX, exportTBX, importXLIFF, importTMX, importTBX } from './xliff';
+export { exportXLIFF, exportTMX, exportTBX, importXLIFF, importTMX, importTBX, exportDualXLIFF, type DualXliffSegment } from './xliff';
 
 // ── 41-band Quality Classification (2026-04-25) ──
 // README.ko.md "2-모드 × 41-밴드" 약속 지원. 호출처: AuditPanel + 향후 runChunkedTranslate 통합.
@@ -54,3 +54,136 @@ export { scoreToBand, bandModeColor, bandPassed, allBands, BAND_COUNT, type Band
 //     (text) => scoreTextWithLLM(text),
 //   );
 export { translateWithAutoRegen, type AutoRegenOptions, type AutoRegenAttempt, type AutoRegenResult } from './regeneration-loop';
+
+// ── Source Integrity (2026-05-08) — 1원칙: 원문 잘라먹기 방지 ──
+// LLM 이 prompt 를 어겼을 때 결정론적으로 잡아내는 안전망. 단락 수 / 단어 비율 / 누락 의심 검출.
+// 호출 예시:
+//   const report = runIntegrityCheck({ source, translation, srcLang: 'ko', tgtLang: 'en' });
+//   if (report.status === 'fail') { triggerRetranslate(); }
+export {
+  runIntegrityCheck,
+  verifyParagraphCount,
+  verifyWordRatio,
+  detectMissingSegments,
+  summarizeIntegrity,
+  type IntegrityReport,
+  type IntegrityIssue,
+  type IntegrityStatus,
+  type IntegrityCheckInput,
+  type SupportedLang,
+} from './source-integrity';
+
+// ── Dual Pipeline (2026-05-08) — 시장 분석 4차: Source-faithful + Market-ready 동시 출력 ──
+// Stage 1~3 공유 + Stage 4~5 분기 병렬 호출. 비용 1.4x.
+// 호출 예시:
+//   const result = await runDualTranslation({ text, from, to, translateFn });
+//   // result.faithful + result.market 두 결과 동시 반환
+export {
+  runDualTranslation,
+  type DualPipelineParams,
+  type DualPipelineResult,
+  type TranslateFn,
+} from './dual-pipeline';
+
+// ── Phase 2 Modules (2026-05-08) ──
+// 호칭 매트릭스 (Market track) — 캐릭터 관계 → 한국식 호칭 자동
+export {
+  suggestHonorific,
+  buildHonorificHint,
+  type CharacterRelation,
+  type HonorificSuggestion,
+  type RelationDistance,
+  type AgeRelation,
+  type Gender,
+} from './honorifics';
+
+// 회차 자동 분할 (Market track) — 5,500자 단위
+export {
+  splitIntoChapters,
+  summarizeSplit,
+  type ChapterSplit,
+  type SplitOptions,
+} from './chapter-splitter';
+
+// 한국 웹소설 장르 매트릭스 (Market track) — 8 장르 클리셰·어휘
+export {
+  getKoreanGenreProfile,
+  listKoreanGenres,
+  buildGenreHint,
+  type KoreanGenreId,
+  type KoreanGenreProfile,
+} from './korean-genre-matrix';
+
+// 세그먼트 채택 시스템 — 번역가 워크플로
+export {
+  buildSegments,
+  setSegmentAction,
+  finalizeSegments,
+  summarizeAdoption,
+  type AdoptionAction,
+  type TranslationSegmentAdoption,
+} from './segment-adoption';
+
+// 작가 sign-off — Faithful archive + Market publish 분리 승인
+export {
+  chapterSignoffStatus,
+  summarizeSignoff,
+  toggleSignoff,
+  isReadyForPublish,
+  type SignoffStatus,
+  type SignoffSummary,
+} from './author-signoff';
+
+// Glossary dual mapping helpers
+export { pickGlossaryTarget, buildGlossaryText } from './glossary-manager';
+
+// [1 — 2026-05-09] 언어 코드 정규화 유틸 (DRY) — 4개 모듈 중복 통합
+export { normalizeLang, type SupportedLang as NormalizedLang } from './lang-utils';
+
+// ── C 출판·인프라 (2026-05-08) ──
+export {
+  buildDocxBundle,
+  docxBundleToFiles,
+  type DocxChapterInput,
+  type DocxBuildOptions,
+  type DocxBundle,
+} from './docx-export';
+export {
+  detectSchemaVersion,
+  migrateChaptersToV2,
+  autoMigrateLocalStorage,
+  type ChapterSchemaVersion,
+  type MigrationResult,
+} from './schema-migration';
+export {
+  studioEpisodesToChapters,
+  chaptersToStudioEpisodes,
+  syncStoryBible,
+  type StudioEpisodeMinimal,
+  type BridgeImportResult,
+  type StoryBibleSyncInput,
+  type StoryBibleSyncOutput,
+} from './studio-bridge';
+export {
+  TRANSLATE_COMMAND,
+  VALIDATE_COMMAND,
+  PUBLISH_COMMAND,
+  ALL_TRANSLATION_COMMANDS,
+  buildCliHelpText,
+  type CliCommand,
+} from './cli-spec';
+
+// ── Phase 4 (2026-05-08) — NCG/NCT pipeline ──
+// IR 보고서 §"NCG/NCT" 본질 매핑.
+// NCG = 번역 전 게이트 (canon/glossary/IP guard) — block/warn/pass
+// NCT = 번역 후 검증 (integrity/glossary 일관성) — publish/review/reject
+export {
+  runNCG,
+  runNCT,
+  type NCGInput,
+  type NCGReport,
+  type NCGViolation,
+  type NCTInput,
+  type NCTReport,
+  type GateDecision,
+} from './ncg-nct';

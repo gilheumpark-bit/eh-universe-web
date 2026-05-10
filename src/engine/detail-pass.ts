@@ -22,6 +22,8 @@ import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { streamSparkAI } from '@/services/sparkService';
 import { MAX_TOKENS_BY_ROUTE } from './pipeline-constants';
 import { stripEngineArtifacts } from './pipeline';
+// [P-06 — 2026-05-10] 사후 검증 — 분량·새 캐릭터·새 고유명사 자동 검출.
+import { validateDetailPass, type DetailPassValidationResult } from './detail-pass-validator';
 
 // ============================================================
 // PART 1 — Public API types
@@ -59,6 +61,11 @@ export interface DetailPassResult {
    * 프롬프트/응답 문자열 길이에서 대략 추정 (1 token ≈ 1.5 char KR).
    */
   modelTokens: { prompt: number; completion: number };
+  /**
+   * [P-06 — 2026-05-10] 사후 검증 결과.
+   * 분량 한도 (~30%) / 새 캐릭터·고유명사 등장 검출. UI 가 warnings 를 토스트로 표시.
+   */
+  validation?: DetailPassValidationResult;
 }
 
 const DEFAULT_INCREMENT = 2000;
@@ -274,11 +281,15 @@ export async function runDetailPass(req: DetailPassRequest): Promise<DetailPassR
     completion: Math.round(expandedText.length / KR_CHARS_PER_TOKEN),
   };
 
+  // [P-06 — 2026-05-10] 사후 검증 자동 적용 — 호출 측이 결과에 따라 사용자 알림.
+  const validation = validateDetailPass(draftText, expandedText);
+
   return {
     expandedText,
     incrementChars,
     elapsedMs,
     modelTokens,
+    validation,
   };
 }
 

@@ -6,11 +6,41 @@
 
 import type { PublishMetadata } from './publish-metadata';
 
+/**
+ * EpubChapter — EPUB 한 챕터.
+ *
+ * [2026-05-08 — 시장 분석 4차] Dual track 지원:
+ *   contentFaithful: Source-faithful Translation
+ *   contentMarket:   Market-ready Localization
+ *   content:         legacy 단일 (호환). 미지정 시 contentMarket → contentFaithful 폴백.
+ */
 export interface EpubChapter {
   title: string;
   content: string;
+  /** [Dual] Source-faithful 본문 — 출판 시 별책 또는 부록 옵션. */
+  contentFaithful?: string;
+  /** [Dual] Market-ready 본문 — 출판 시 메인 옵션. */
+  contentMarket?: string;
   /** 에피소드 번호 */
   episode: number;
+}
+
+/**
+ * Dual EPUB Export — 두 트랙 별책 또는 합본.
+ * track === 'faithful' → 모든 chapter 의 contentFaithful 만 사용
+ * track === 'market'   → contentMarket 만 사용
+ * track === 'both'     → contentMarket 메인 + contentFaithful 부록 챕터 추가 (선택적 v2)
+ *
+ * 호출 시 contentFaithful 또는 contentMarket 미존재 chapter 는 legacy content 사용.
+ */
+export function selectEpubContent(
+  chapter: EpubChapter,
+  track: 'faithful' | 'market' | 'both' = 'market',
+): string {
+  if (track === 'faithful') return chapter.contentFaithful ?? chapter.content ?? '';
+  if (track === 'market') return chapter.contentMarket ?? chapter.content ?? '';
+  // 'both' — 기본은 market, faithful 은 별도 호출 또는 부록 처리
+  return chapter.contentMarket ?? chapter.content ?? '';
 }
 
 /** 간단한 EPUB XHTML 챕터 생성 */

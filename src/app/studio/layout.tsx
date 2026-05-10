@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "로어가드 스튜디오 · 소설 집필",
+  title: "로어가드 · 소설가의 IDE",
   description:
-    "로어가드(Loreguard) 소설 스튜디오 — NOA 엔진 기반 AI 창작, 세계관 일관성, 번역·출판까지 원스톱.",
+    "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. NOA 엔진 기반 AI 창작·세계관 일관성·번역·출판 원스톱.",
+  // [Alpha non-public — 2026-05-08] 알파 단계라 검색엔진 비공개. robots.txt + meta robots 이중 차단.
+  robots: { index: false, follow: false },
   openGraph: {
-    title: "로어가드 스튜디오 · 소설 집필",
+    title: "로어가드 · 소설가의 IDE",
     description:
-      "창작에서 번역·출판까지. 로어가드 집필 OS.",
+      "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설.",
   },
 };
 

@@ -87,7 +87,7 @@ export function StudioStatusBar({
       {/* P0-3: Mobile compact status bar — always visible */}
       <div
         data-zen-hide
-        className="flex md:hidden fixed bottom-0 left-0 w-full h-7 z-40 items-center justify-between px-3 bg-bg-secondary/90 backdrop-blur-sm border-t border-border/40 font-mono text-[11px] text-text-tertiary select-none"
+        className="flex md:hidden fixed bottom-0 left-0 w-full h-8 z-40 items-center justify-between px-3 bg-bg-secondary/95 backdrop-blur-sm border-t border-border/50 font-mono text-[12px] font-medium text-text-secondary select-none"
       >
         <span className={guardrailMin > 0 && stats.chars < guardrailMin ? 'text-accent-red' : stats.chars > guardrailMax ? 'text-accent-amber' : stats.chars >= guardrailMin ? 'text-accent-green' : 'text-text-tertiary'}>
           {stats.chars.toLocaleString()}{isKO ? '자' : 'ch'}
@@ -134,7 +134,7 @@ export function StudioStatusBar({
       {/* Desktop full status bar */}
       <div
         data-zen-hide
-        className="hidden md:flex fixed bottom-0 left-0 w-full h-7 z-40 items-center justify-between px-4 bg-bg-secondary/80 backdrop-blur-sm border-t border-border/40 font-mono text-[12px] text-text-tertiary select-none"
+        className="hidden md:flex fixed bottom-0 left-0 w-full h-8 z-40 items-center justify-between px-4 bg-bg-secondary/90 backdrop-blur-sm border-t border-border/50 font-mono text-[13px] font-medium text-text-secondary select-none"
       >
         {/* Left */}
         <div className="flex items-center gap-3">
@@ -283,8 +283,8 @@ export function StudioStatusBar({
               <AlertCircle className="w-2.5 h-2.5" />
               <span className="font-bold">
                 {activeEngine === 'byok' && canFallback
-                  ? (isKO ? '로컬 다운 — BYOK' : 'DGX down — BYOK')
-                  : (isKO ? '로컬 엔진 다운' : 'DGX down')}
+                  ? (isKO ? '로컬 AI 다운 — BYOK' : 'Local AI down — BYOK')
+                  : (isKO ? '로컬 AI 다운' : 'Local AI down')}
               </span>
             </span>
           ) : SPARK_SERVER_URL ? (

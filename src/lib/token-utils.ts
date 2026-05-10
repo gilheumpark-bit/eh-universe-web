@@ -2,7 +2,15 @@
 // Token estimation & context window management
 // ============================================================
 
-import type { ChatMsg } from './ai-providers';
+/**
+ * [2026-05-09] 순환 의존성 회피 — ai-providers.ts 가 본 모듈을 import 하므로
+ * ChatMsg 직접 import 하지 않고 minimal shape 사용 (consistency-tracker 패턴).
+ * ai-providers.ts 의 ChatMsg 와 동일 — 컴파일러 type 호환.
+ */
+interface ChatMsg {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 // Approximate token counts per character by language
 // Korean: ~2.0 tok/char (jamo decomposition), Japanese: ~1.3 tok/char (kanji+kana mix),

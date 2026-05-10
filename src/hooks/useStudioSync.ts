@@ -116,6 +116,14 @@ export function useStudioSync({
     }
   }, [setProjects]);
 
+  // [2026-05-09] noa:projects-updated 이벤트 listener — MobileSketchImportBanner 등 외부 import 후 자동 재로드.
+  // 기존 reloadFromStorage 재사용.
+  useEffect(() => {
+    const handler = () => reloadFromStorage();
+    window.addEventListener('noa:projects-updated', handler);
+    return () => window.removeEventListener('noa:projects-updated', handler);
+  }, [reloadFromStorage]);
+
   // 2-hour sync reminder
   const SYNC_REMINDER_MS = 2 * 60 * 60 * 1000;
   useEffect(() => {

@@ -27,8 +27,11 @@ export type TranslationTarget = 'EN' | 'JP' | 'CN' | 'KO';
  * 번역 모드: 두 가지 접근
  * MODE1 — 원문 보존형: 원문 구조와 형식을 최대한 유지하며 번역
  * MODE2 — 독자 경험형: 타겟 독자가 같은 감정을 느끼도록 재창조
+ *
+ * [2026-05-09] 정의는 ./scoring/bands 로 이전 — re-export (외부 import path 무영향).
  */
-export type TranslationMode = 'fidelity' | 'experience';
+export type { TranslationMode } from './scoring/bands';
+import type { TranslationMode } from './scoring/bands';
 
 /** 용어집 항목 */
 export interface GlossaryEntry {
@@ -118,36 +121,14 @@ export interface TranslationChunk {
   segments?: TranslatedSegment[];
 }
 
-/** MODE1 채점 — 원문 보존형 */
-export interface FidelityScoreDetail {
-  overall: number;
-  translationese: number;    // 번역투 (낮을수록 좋음)
-  fidelity: number;          // 원문 충실도
-  naturalness: number;       // 자연스러움
-  consistency: number;       // 용어 일관성
-}
-
-/** MODE2 채점 — 독자 경험형 (6축) */
-export interface ExperienceScoreDetail {
-  overall: number;
-  immersion: number;         // 독자 몰입도 — 멈추지 않고 읽히는가
-  emotionResonance: number;  // 감정 재현도 — 원문이 주는 감정이 살아있는가 (과잉도 감점)
-  culturalFit: number;       // 문화 적합도 — 타겟 독자에게 어색함이 없는가
-  consistency: number;       // 일관성 — 인명/용어/시점/톤
-  groundedness: number;      // 무근거 보강 없음 — 모든 요소가 원문에 근거하는가
-  voiceInvisibility: number; // 번역자 투명성 — 번역자의 문학적 목소리가 숨어있는가
-}
-
-/** 통합 채점 결과 (모드에 따라 내부 구조 다름) */
-export type ChunkScoreDetail = FidelityScoreDetail | ExperienceScoreDetail;
-
-/** 타입 가드 */
-export function isFidelityScore(s: ChunkScoreDetail): s is FidelityScoreDetail {
-  return 'translationese' in s;
-}
-export function isExperienceScore(s: ChunkScoreDetail): s is ExperienceScoreDetail {
-  return 'immersion' in s && 'groundedness' in s;
-}
+// 채점 type + 타입 가드 — engine/scoring/score-parser.ts 로 이전 (2026-05-09).
+// re-export — 외부 import path 무영향. translation.ts 내부 직접 사용 없음.
+export type {
+  ChunkScoreDetail,
+  FidelityScoreDetail,
+  ExperienceScoreDetail,
+} from './scoring/score-parser';
+export { isFidelityScore, isExperienceScore } from './scoring/score-parser';
 
 /** 번역 진행 상태 */
 export interface TranslationProgress {
@@ -180,20 +161,16 @@ export interface TranslatedEpisode {
   segments?: TranslatedSegment[];
 }
 
-// Band 상수 (양쪽 모드 공통)
-const BAND_MIN = 0.480;
-const BAND_MAX = 0.520;
-const BAND_DEFAULT = 0.500;
-const BAND_STEP = 0.001;
+// Band 상수 — engine/scoring/bands.ts 로 이전 (2026-05-09).
+// 본 파일 내부 prompt 빌더에서 BAND_DEFAULT 만 사용.
+import { BAND_DEFAULT } from './scoring/bands';
 
 // ============================================================
 // PART 2 — Band 클램핑 & 기본 설정
 // ============================================================
-
-export function clampBand(value: number): number {
-  const clamped = Math.max(BAND_MIN, Math.min(BAND_MAX, value));
-  return Math.round(clamped * 1000) / 1000;
-}
+// clampBand — engine/scoring/bands.ts 로 이전 (2026-05-09). re-export + internal use.
+import { clampBand } from './scoring/bands';
+export { clampBand };
 
 export function getDefaultConfig(mode: TranslationMode = 'fidelity'): TranslationConfig {
   return {
@@ -762,197 +739,20 @@ function splitSentences(paragraph: string): string[] {
 // ============================================================
 // PART 7 — 채점 프롬프트 (모드별 분기)
 // ============================================================
-
-export function buildScoringPrompt(
-  sourceText: string,
-  translatedText: string,
-  config: TranslationConfig
-): string {
-  const lang = langName(config.targetLang);
-
-  if (config.mode === 'fidelity') {
-    return buildFidelityScoringPrompt(sourceText, translatedText, config, lang);
-  }
-  return buildExperienceScoringPrompt(sourceText, translatedText, config, lang);
-}
-
-function buildFidelityScoringPrompt(
-  sourceText: string, translatedText: string,
-  config: TranslationConfig, lang: string
-): string {
-  return `You are a translation quality judge for Korean→${lang} fiction (SOURCE PRESERVATION mode).
-
-Score on 4 axes (0.00 to 1.00):
-
-1. **translationese** (LOWER is better): Does it smell like a translation?
-   0.00 = reads like native ${lang} prose. 1.00 = obviously machine-translated.
-
-2. **fidelity** (HIGHER is better): Does it preserve source meaning and structure?
-   Band level: ${config.band.toFixed(3)}.
-
-3. **naturalness** (HIGHER is better): Does it flow as natural ${lang} prose?
-
-4. **consistency** (HIGHER is better): Are glossary terms used correctly?
-   ${config.glossary.length > 0 ? config.glossary.map(g => `"${g.source}"→"${g.target}"`).join(', ') : 'No glossary — score 1.00.'}
-
-Respond ONLY with JSON:
-{"translationese": 0.00, "fidelity": 0.00, "naturalness": 0.00, "consistency": 0.00}
-
---- SOURCE ---
-${sourceText}
-
---- TRANSLATION ---
-${translatedText}`;
-}
-
-function buildExperienceScoringPrompt(
-  sourceText: string, translatedText: string,
-  config: TranslationConfig, lang: string
-): string {
-  return `You are a literary quality judge for Korean→${lang} fiction (READER EXPERIENCE mode).
-The goal is NOT literal accuracy — it is whether the ${lang} reader feels what the Korean reader felt.
-ALSO check for translator overreach: additions, dramatization, or literary polish not present in the source.
-
-Score on 6 axes (0.00 to 1.00):
-
-1. **immersion** (HIGHER is better): Can a ${lang} reader read this without pausing?
-   Does every sentence flow naturally? Would they ever think "this feels translated"?
-   0.00 = constantly breaks immersion. 1.00 = reads like original ${lang} fiction.
-
-2. **emotionResonance** (HIGHER is better): Does the translation produce the same emotional effect?
-   If the source is cold and detached, is the translation cold and detached?
-   If the source builds unease, does the translation build unease?
-   IMPORTANT: If the translation is MORE emotional than the source, score DOWN. Restraint must be preserved.
-   0.00 = emotional tone completely lost or distorted. 1.00 = identical emotional impact.
-
-3. **culturalFit** (HIGHER is better): Are there moments where a ${lang} reader would be confused or distracted by cultural context?
-   0.00 = full of unexplained cultural references. 1.00 = perfectly adapted for ${lang} readers.
-
-4. **consistency** (HIGHER is better): Are character names, terminology, tone, and point of view consistent?
-   ${config.glossary.length > 0 ? config.glossary.map(g => `"${g.source}"→"${g.target}"`).join(', ') : 'No glossary — score 1.00.'}
-
-5. **groundedness** (HIGHER is better): Does every word in the translation trace back to the source?
-   Check for: added time markers ("for years", "always"), emotional hedging ("somehow", "as if"),
-   interpretive additions ("or care", "for all she knew"), causal links not in source, atmospheric padding.
-   0.00 = many groundless additions. 1.00 = every element traces to source.
-
-6. **voiceInvisibility** (HIGHER is better): Is the translator's own literary voice invisible?
-   Check for: clever paradoxes the source doesn't have, aphoristic rewrites of plain statements,
-   rhetorical polish beyond the source's register, quotable sentences crafted from flat observations.
-   0.00 = translator's wit dominates. 1.00 = only the author's voice is present.
-
-Respond ONLY with JSON:
-{"immersion": 0.00, "emotionResonance": 0.00, "culturalFit": 0.00, "consistency": 0.00, "groundedness": 0.00, "voiceInvisibility": 0.00}
-
---- SOURCE ---
-${sourceText}
-
---- TRANSLATION ---
-${translatedText}`;
-}
+// buildScoringPrompt + 모드별 빌더 — engine/scoring/scoring-prompt.ts 로 이전 (2026-05-09).
+export { buildScoringPrompt } from './scoring/scoring-prompt';
 
 // ============================================================
 // PART 8 — 채점 파싱 (모드별)
 // ============================================================
-
-export function parseScoreResponse(raw: string, mode: TranslationMode): ChunkScoreDetail {
-  if (mode === 'fidelity') return parseFidelityScore(raw);
-  return parseExperienceScore(raw);
-}
-
-function parseFidelityScore(raw: string): FidelityScoreDetail {
-  const fallback: FidelityScoreDetail = {
-    overall: 0.5, translationese: 0.5, fidelity: 0.5, naturalness: 0.5, consistency: 1.0,
-  };
-  try {
-    const jsonMatch = raw.match(/\{[\s\S]*?\}/);
-    if (!jsonMatch) return fallback;
-    const p = JSON.parse(jsonMatch[0]);
-    const t = clamp01(p.translationese ?? 0.5);
-    const f = clamp01(p.fidelity ?? 0.5);
-    const n = clamp01(p.naturalness ?? 0.5);
-    const c = clamp01(p.consistency ?? 1.0);
-    // 종합: (1-번역투)*0.35 + 충실도*0.30 + 자연스러움*0.25 + 일관성*0.10
-    const overall = (1 - t) * 0.35 + f * 0.30 + n * 0.25 + c * 0.10;
-    return { overall: round3(overall), translationese: t, fidelity: f, naturalness: n, consistency: c };
-  } catch { return fallback; }
-}
-
-function parseExperienceScore(raw: string): ExperienceScoreDetail {
-  const fallback: ExperienceScoreDetail = {
-    overall: 0.5, immersion: 0.5, emotionResonance: 0.5, culturalFit: 0.5,
-    consistency: 1.0, groundedness: 0.5, voiceInvisibility: 0.5,
-  };
-  try {
-    const jsonMatch = raw.match(/\{[\s\S]*?\}/);
-    if (!jsonMatch) return fallback;
-    const p = JSON.parse(jsonMatch[0]);
-    const im = clamp01(p.immersion ?? 0.5);
-    const er = clamp01(p.emotionResonance ?? 0.5);
-    const cf = clamp01(p.culturalFit ?? 0.5);
-    const co = clamp01(p.consistency ?? 1.0);
-    const gr = clamp01(p.groundedness ?? 0.5);
-    const vi = clamp01(p.voiceInvisibility ?? 0.5);
-    // 6축 가중치: 몰입*0.22 + 감정재현*0.22 + 문화적합*0.16 + 일관성*0.10 + 무근거*0.15 + 투명성*0.15
-    const overall = im * 0.22 + er * 0.22 + cf * 0.16 + co * 0.10 + gr * 0.15 + vi * 0.15;
-    return {
-      overall: round3(overall), immersion: im, emotionResonance: er,
-      culturalFit: cf, consistency: co, groundedness: gr, voiceInvisibility: vi,
-    };
-  } catch { return fallback; }
-}
+// parseScoreResponse — engine/scoring/score-parser.ts 로 이전 (2026-05-09).
+export { parseScoreResponse } from './scoring/score-parser';
 
 // ============================================================
 // PART 9 — 재창조 프롬프트 (모드별)
 // ============================================================
-
-export function buildRecreatePrompt(
-  sourceText: string,
-  failedTranslation: string,
-  scoreDetail: ChunkScoreDetail,
-  attempt: number,
-  mode: TranslationMode
-): string {
-  const issues: string[] = [];
-
-  if (mode === 'fidelity' && isFidelityScore(scoreDetail)) {
-    if (scoreDetail.translationese > 0.4) issues.push('Reads like a translation (번역투). Rewrite to sound native.');
-    if (scoreDetail.fidelity < 0.6) issues.push('Strayed too far from source meaning or structure.');
-    if (scoreDetail.naturalness < 0.6) issues.push('Unnatural phrasing or rhythm.');
-    if (scoreDetail.consistency < 0.8) issues.push('Glossary terms inconsistent.');
-  } else if (mode === 'experience' && isExperienceScore(scoreDetail)) {
-    if (scoreDetail.immersion < 0.6) issues.push('Reader would pause — not immersive enough. Sounds translated.');
-    if (scoreDetail.emotionResonance < 0.6) issues.push('Emotional impact lost or distorted. The feeling doesn\'t match the source.');
-    if (scoreDetail.culturalFit < 0.6) issues.push('Cultural references confuse the target reader.');
-    if (scoreDetail.consistency < 0.8) issues.push('Names, terms, or tone inconsistent.');
-    if (scoreDetail.groundedness < 0.7) issues.push('Groundless additions detected: words/phrases/implications not in the source were inserted. Remove ALL added time markers, emotional hedging, interpretive additions, and atmospheric padding.');
-    if (scoreDetail.voiceInvisibility < 0.7) issues.push('Translator\'s literary voice is showing. Simplify crafted sentences back to the source\'s own register. The translator must be invisible.');
-  }
-
-  const strategy = attempt === 1
-    ? (mode === 'fidelity'
-        ? 'Take a completely different structural approach. If literal, try freer. If free, try closer.'
-        : 'Forget the previous attempt. Read the source again and ask: what does this scene FEEL like? Then write that feeling in the target language from scratch.')
-    : (mode === 'fidelity'
-        ? 'Reimagine sentence-by-sentence with fresh word choices and rhythm.'
-        : 'Imagine you are the original author, but you write in the target language. Write this scene as YOUR scene.');
-
-  return `The previous translation scored poorly. DO NOT repeat the same approach.
-
-[Issues]
-${issues.join('\n')}
-
-[Failed attempt]
-${failedTranslation}
-
-[New strategy]
-${strategy}
-
-Translate the source again with a DIFFERENT approach. Output ONLY the new translation.
-
---- SOURCE ---
-${sourceText}`;
-}
+// buildRecreatePrompt — engine/scoring/scoring-prompt.ts 로 이전 (2026-05-09).
+export { buildRecreatePrompt } from './scoring/scoring-prompt';
 
 // ============================================================
 // PART 10 — 유틸리티
@@ -963,54 +763,10 @@ function langName(lang: TranslationTarget): string {
   return names[lang];
 }
 
-function clamp01(v: number): number { return Math.max(0, Math.min(1, v)); }
 function round3(v: number): number { return Math.round(v * 1000) / 1000; }
 
-/** Band 밴드 라벨 — 4개 언어 네이티브 */
-const BAND_LABELS: Record<AppLanguage, { fidelity: string[]; experience: string[] }> = {
-  KO: {
-    fidelity: ['자연스러움 허용', '약간의 보정', '원문 유지 (기본)', '원문 고수', '직역'],
-    experience: ['적극 재창조', '능동 적응', '균형 재현 (기본)', '보수적 재현', '최소 재현'],
-  },
-  EN: {
-    fidelity: ['Naturalization allowed', 'Slight adjustment', 'Source-faithful (default)', 'Source-strict', 'Near-literal'],
-    experience: ['Full recreation', 'Active adaptation', 'Balanced recreation (default)', 'Conservative recreation', 'Minimal recreation'],
-  },
-  JP: {
-    fidelity: ['自然さを許容', 'わずかな補正', '原文維持 (基本)', '原文厳守', '直訳'],
-    experience: ['積極的再創造', '能動的適応', 'バランス再現 (基本)', '保守的再現', '最小限再現'],
-  },
-  CN: {
-    fidelity: ['允许自然化', '轻微调整', '忠于原文 (基本)', '严守原文', '直译'],
-    experience: ['全面再创作', '主动适应', '平衡再现 (基本)', '保守再现', '最小再现'],
-  },
-};
-
-/** Band 값 → 사용자 레이블 (모드별, 4개 언어) */
-export function bandLabel(band: number, mode: TranslationMode, language: AppLanguage): string {
-  const b = clampBand(band);
-  const delta = b - BAND_DEFAULT;
-  const L = BAND_LABELS[language] ?? BAND_LABELS.EN;
-  const labels = mode === 'fidelity' ? L.fidelity : L.experience;
-
-  // delta 범위 → 인덱스 매핑 (−0.012 미만 ~ 0.012 초과)
-  let idx = 2; // 기본(중간)
-  if (delta <= -0.012) idx = 0;
-  else if (delta <= -0.004) idx = 1;
-  else if (delta <= 0.004) idx = 2;
-  else if (delta <= 0.012) idx = 3;
-  else idx = 4;
-  return labels[idx];
-}
-
-/** Band 메타데이터 */
-export const BAND_META = {
-  min: BAND_MIN,
-  max: BAND_MAX,
-  default: BAND_DEFAULT,
-  step: BAND_STEP,
-  steps: Math.round((BAND_MAX - BAND_MIN) / BAND_STEP) + 1, // 41
-} as const;
+// BAND_LABELS + bandLabel + BAND_META — engine/scoring/bands.ts 로 이전 (2026-05-09).
+export { bandLabel, BAND_META } from './scoring/bands';
 
 /** 모드 설명 — 4개 언어 네이티브 */
 const MODE_DESCRIPTIONS: Record<AppLanguage, Record<TranslationMode, { title: string; desc: string }>> = {
@@ -1471,60 +1227,13 @@ function countSentences(text: string): number {
 // ============================================================
 // PART 19 — 축별 임계값 + 청크간 일관성 추적
 // ============================================================
-
-/** 축별 critical failure 감지 */
-export function hasCriticalAxisFailure(score: ChunkScoreDetail, mode: TranslationMode): boolean {
-  if (mode === 'fidelity' && isFidelityScore(score)) {
-    // 번역투가 너무 높으면 무조건 실패
-    if (score.translationese > 0.60) return true;
-    // 충실도가 너무 낮으면 무조건 실패
-    if (score.fidelity < 0.40) return true;
-    return false;
-  }
-  if (mode === 'experience' && isExperienceScore(score)) {
-    // 무근거 보강이 심하면 무조건 실패
-    if (score.groundedness < 0.45) return true;
-    // 번역자 투명성이 너무 낮으면 무조건 실패
-    if (score.voiceInvisibility < 0.45) return true;
-    // 몰입도가 바닥이면 무조건 실패
-    if (score.immersion < 0.40) return true;
-    return false;
-  }
-  return false;
-}
-
-/** 청크간 용어 일관성 추적기 */
-export interface ChunkConsistencyTracker {
-  termUsage: Map<string, string>;  // glossary.source → 실제 사용된 target
-  inconsistencies: string[];
-}
-
-export function createConsistencyTracker(): ChunkConsistencyTracker {
-  return { termUsage: new Map(), inconsistencies: [] };
-}
-
-/**
- * 청크 번역 완료 후 용어 일관성 추적 업데이트.
- * 이전 청크에서 쓴 용어와 다르게 번역되면 경고.
- */
-export function updateConsistencyTracker(
-  tracker: ChunkConsistencyTracker,
-  chunkIndex: number,
-  translatedText: string,
-  glossary: GlossaryEntry[],
-): void {
-  for (const entry of glossary) {
-    if (translatedText.includes(entry.target)) {
-      const prev = tracker.termUsage.get(entry.source);
-      if (prev && prev !== entry.target) {
-        tracker.inconsistencies.push(
-          `chunk[${chunkIndex}]: "${entry.source}" → "${entry.target}" (was "${prev}" in earlier chunk)`
-        );
-      }
-      tracker.termUsage.set(entry.source, entry.target);
-    }
-  }
-}
+// hasCriticalAxisFailure + ChunkConsistencyTracker — engine/scoring/consistency-tracker.ts 로 이전 (2026-05-09).
+export {
+  hasCriticalAxisFailure,
+  createConsistencyTracker,
+  updateConsistencyTracker,
+} from './scoring/consistency-tracker';
+export type { ChunkConsistencyTracker } from './scoring/consistency-tracker';
 
 // ============================================================
 // PART 20 — Voice Guard 통합 (Phase 4)

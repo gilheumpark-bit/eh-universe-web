@@ -69,11 +69,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### ARCS (AI Response Control System) 레이어
 집필판 AI 호출 엔트리·가드·컨텍스트 블록·사후 스캔·프롬프트 보정을 5개 모듈로 통합.
 
-- **WRITING_AGENT_REGISTRY** (`lib/ai/writing-agent-registry.ts`) — 11 에이전트 × 6 GuardId × 7 ContextBlockId 단일 레지스트리
+- **WRITING_AGENT_REGISTRY** (`lib/ai/writing-agent-registry.ts`) — 11 에이전트 × 6 GuardId × 11 ContextBlockId 단일 레지스트리 [2026-05-10 본문 통합 완료]
   - 에이전트: `studio-draft` / `studio-inline-completion` / `studio-inline-rewrite` / `studio-detail-pass` / `translator-stage-1~5` / `translator-story-bible` / `codex-structured-json` / `network-agent-archive`
-  - GuardId: `no-english-thinking-korean-novel` · `no-think-translation` · `no-yap-json` · `ip-brand-guard` · `prism-all-ages/teen-15/mature-18`
-  - ContextBlockId: `character-dna` · `world-book` · `scene-sheet` · `genre-rules` · `story-summary` · `glossary` · `continuity-notes`
-  - `buildAgentSystemPrompt(id, context)` + `auditRegistry()` 메타 유틸
+  - GuardId: `no-english-thinking-korean-novel` · `no-think-translation` · `no-yap-json` · `ip-brand-guard` · `archive-search-grounded` · `hse-4rights`
+  - ContextBlockId: `character-dna` · `world-book` · `scene-sheet` · `genre-rules` · `story-summary` · `glossary` · `continuity-notes` · `act-guide` · `style-dna` · `tension-curve` · `origin-guide`
+  - `buildAgentSystemPrompt(id, context)` + 4언어 LANG_DIRECTIVE 자동 주입 + `auditRegistry()` 메타 유틸
+  - 호출처 통합: `complete/route.ts` / `vertex-network-agent.ts` / `chat/route.ts` (PRISM via safety-registry) 완전 통합. `engine/pipeline.ts buildSystemInstruction` / `lib/build-prompt.ts buildPrompt` 는 `useAgentRegistry: true` opt-in 으로 호출처 (geminiService / dual-pipeline) 활성화. 단위 테스트 70/70 통과.
+- **SAFETY_REGISTRY** (`lib/ai/safety-registry.ts`) — PRISM 3등급 (all-ages / teen-15 / mature-18) 분리 모듈. `buildSafetyEnhancedPrompt(base, level)` + 4언어 라벨. 안전 정책과 역할 정의 직교 관리.
+- **codex-prompts/** (`lib/ai/codex-prompts/`) — 4 도메인 × 7 handler prompt 매트릭스 (한국 웹소설 / Western fantasy / 라노벨 / 선협). 각 도메인 prompt 는 그 언어로 직접 작성. UI: `components/codex/CodexDomainSelector` 로 사용자 도메인 override.
+- **lang-normalize** (`lib/ai/lang-normalize.ts`) — AppLanguage (KO/EN/JP/CN) ↔ AgentLanguage (ko/en/ja/zh) 양방향 변환 + 비표준 별칭 (kr/jp/cn/tw) 흡수.
 - **IP Guard L1-L5** (`lib/ip-guard/`) — 5계층 브랜드·저작권 방어
   | 계층 | 모듈 | 시점 |
   |------|------|------|

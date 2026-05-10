@@ -119,56 +119,56 @@ interface LocaleMeta {
 
 const META_COPY: Record<Lang, LocaleMeta> = {
   ko: {
-    title: "EH Universe · Loreguard — 작가 주도형 집필 IDE",
+    title: "EH Universe · Loreguard — 소설가의 IDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — 작가 주도형 집필 IDE. EH Universe 플래그십 제품. 집필·검수·번역·출판을 하나의 워크스페이스에서. 한국 웹소설의 해외 진출 OS.",
-    ogTitle: "EH Universe · Loreguard — 작가 주도형 집필 IDE",
+      "Loreguard — 소설가의 IDE. EH Universe 플래그십 제품. 코드처럼 검증되는 소설. 집필·검수·번역·출판을 하나의 워크스페이스에서.",
+    ogTitle: "EH Universe · Loreguard — 소설가의 IDE",
     ogDescription:
-      "Loreguard — EH Universe 플래그십. 작가가 쓰고, NOA가 돕는 집필 IDE. 창작·번역·출판을 하나의 파이프라인으로.",
-    twitterDescription: "EH Universe presents Loreguard. 작가가 쓰고, NOA가 돕는다.",
-    alt: "Loreguard — 한국 웹소설의 해외 진출 OS",
+      "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. 작가가 쓰고, NOA가 돕는 창작·번역·출판 파이프라인.",
+    twitterDescription: "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설.",
+    alt: "Loreguard — 소설가의 IDE",
     jsonLdDescription:
-      "Loreguard — 작가 주도형 집필 IDE. 집필·검수·번역·출간을 하나의 워크스페이스에서.",
+      "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. 집필·검수·번역·출간을 하나의 워크스페이스에서.",
   },
   en: {
-    title: "EH Universe · Loreguard — Writer-first Novel IDE",
+    title: "EH Universe · Loreguard — The IDE for Novelists",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — a writer-first novel IDE by EH Universe. Write, review, translate, and publish in a single workspace. The OS for Korean web novelists going global.",
-    ogTitle: "EH Universe · Loreguard — Writer-first Novel IDE",
+      "Loreguard — The IDE for Novelists by EH Universe. Novels, verified like code. Write, review, translate, and publish in a single workspace.",
+    ogTitle: "EH Universe · Loreguard — The IDE for Novelists",
     ogDescription:
-      "Loreguard by EH Universe. A writer-first IDE where NOA assists — creation, translation, and publishing in one pipeline.",
-    twitterDescription: "EH Universe presents Loreguard. Writers write; NOA assists.",
-    alt: "Loreguard — the OS for Korean web novelists going global",
+      "Loreguard — The IDE for Novelists. Novels, verified like code. Writers write; NOA assists across creation, translation, and publishing.",
+    twitterDescription: "Loreguard — The IDE for Novelists. Novels, verified like code.",
+    alt: "Loreguard — The IDE for Novelists",
     jsonLdDescription:
-      "Loreguard — a writer-first novel IDE. Write, review, translate, and publish in one workspace.",
+      "Loreguard — The IDE for Novelists. Novels, verified like code. Write, review, translate, and publish in one workspace.",
   },
   ja: {
-    title: "EH Universe · Loreguard — 作家主導型 執筆 IDE",
+    title: "EH Universe · Loreguard — 小説家のためのIDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — EH Universe が贈る作家主導型の執筆 IDE。執筆・検証・翻訳・出版をひとつのワークスペースで。韓国 Web 小説の海外展開を支える OS。",
-    ogTitle: "EH Universe · Loreguard — 作家主導型 執筆 IDE",
+      "Loreguard — 小説家のためのIDE。EH Universe フラッグシップ。コードのように検証される小説。執筆・検証・翻訳・出版をひとつのワークスペースで。",
+    ogTitle: "EH Universe · Loreguard — 小説家のためのIDE",
     ogDescription:
-      "Loreguard by EH Universe。作家が書き、NOA が助ける執筆 IDE。創作・翻訳・出版をひとつのパイプラインで。",
-    twitterDescription: "EH Universe presents Loreguard。作家が書き、NOA が助ける。",
-    alt: "Loreguard — 韓国 Web 小説の海外展開 OS",
+      "Loreguard — 小説家のためのIDE。コードのように検証される小説。作家が書き、NOA が助ける創作・翻訳・出版のパイプライン。",
+    twitterDescription: "Loreguard — 小説家のためのIDE。コードのように検証される小説。",
+    alt: "Loreguard — 小説家のためのIDE",
     jsonLdDescription:
-      "Loreguard — 作家主導型の執筆 IDE。執筆・検証・翻訳・出版をひとつのワークスペースで。",
+      "Loreguard — 小説家のためのIDE。コードのように検証される小説。執筆・検証・翻訳・出版をひとつのワークスペースで。",
   },
   zh: {
-    title: "EH Universe · Loreguard — 作家主导的小说 IDE",
+    title: "EH Universe · Loreguard — 小说家的 IDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — EH Universe 推出的作家主导型小说 IDE。在一个工作室中完成创作、审校、翻译与出版。韩国网文走向世界的 OS。",
-    ogTitle: "EH Universe · Loreguard — 作家主导的小说 IDE",
+      "Loreguard — 小说家的 IDE。EH Universe 旗舰产品。像代码一样被验证的小说。在一个工作室中完成创作、审校、翻译与出版。",
+    ogTitle: "EH Universe · Loreguard — 小说家的 IDE",
     ogDescription:
-      "Loreguard by EH Universe。作家写作，NOA 协助 — 创作、翻译、出版一体化。",
-    twitterDescription: "EH Universe 推出 Loreguard。作家创作，NOA 协助。",
-    alt: "Loreguard — 韩国网文走向世界的 OS",
+      "Loreguard — 小说家的 IDE。像代码一样被验证的小说。作家写作，NOA 协助 — 创作、翻译、出版一体化。",
+    twitterDescription: "Loreguard — 小说家的 IDE。像代码一样被验证的小说。",
+    alt: "Loreguard — 小说家的 IDE",
     jsonLdDescription:
-      "Loreguard — 作家主导的小说 IDE。在一个工作室完成创作、审校、翻译与出版。",
+      "Loreguard — 小说家的 IDE。像代码一样被验证的小说。在一个工作室完成创作、审校、翻译与出版。",
   },
 };
 
@@ -205,9 +205,11 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: "Loreguard",
     keywords: [
       "소설", "AI 소설", "집필", "번역", "웹소설", "IDE",
+      "소설가의 IDE", "The IDE for Novelists", "小説家のためのIDE", "小说家的 IDE",
+      "Novel IDE", "novelist IDE", "writer IDE",
       "Loreguard", "로어가드", "한국어 번역", "AI IDE",
       "Novel Studio", "Translation Studio", "NOA", "EH Universe",
-      "작가 주도형 집필 IDE", "집필 IDE", "writer-first",
+      "소설 IDE", "집필 IDE", "novelist-first",
     ],
     authors: [{ name: "박길흠", url: "https://github.com/gilheumpark-bit" }],
     creator: "박길흠",

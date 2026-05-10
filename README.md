@@ -4,9 +4,24 @@
 
 # 로어가드 스튜디오 (Loreguard Studio)
 
-**NOA 엔진 기반 AI 소설 집필 스튜디오**
+**소설가의 IDE — The IDE for Novelists**
+
+> 코드처럼 검증되는 소설. *Novels, verified like code.*
+
+| 한국어 | English | 日本語 | 中文 |
+|---|---|---|---|
+| **소설가의 IDE** | **The IDE for Novelists** | **小説家のためのIDE** | **小说家的 IDE** |
 
 글을 쓰면 NOA가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.
+
+**Translation Studio (Cross-border Novel IDE)** — 한 번의 호출로 **두 결과**를 받습니다:
+
+- **Source-faithful Translation** (원문 보존 — 작가 의도·고유명사·복선·문체)
+- **Market-ready Localization** (현지화 — 대사 리듬·호칭·장르 문법·시장 감각)
+
+> "원문은 지키고, 시장에는 맞춘다." · *Faithful where it matters. Localized where it counts.*
+
+한국 작가는 세계로 · 해외 작가는 한국·아시아로. **AI prepares · Translators elevate · Authors go global.**
 
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)

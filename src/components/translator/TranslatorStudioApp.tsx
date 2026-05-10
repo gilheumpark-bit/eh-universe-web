@@ -2,10 +2,12 @@
 
 import { TranslatorContext } from './core/TranslatorContext';
 import { TranslatorShell } from './TranslatorShell';
-import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, type Dispatch, type SetStateAction, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Key, BookOpen } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LangContext';
+// [G-13 mount — 2026-05-10] Translator 도 quota 자동 모니터 (StudioShell 와 별도 mount 필요).
+import { useStorageQuota } from '@/hooks/useStorageQuota';
 import { getApiKey, hasDgxService, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import type { AppLanguage } from '@/lib/studio-types';
 // APIKeySlotManager moved to TranslatorModals
@@ -20,6 +22,19 @@ import {
 import { useAppDialog } from '@/hooks/useAppDialog';
 import { TranslatorModals } from './TranslatorModals';
 import { GlossaryManagerDialog, type GlossaryDialogLang } from './GlossaryManagerDialog';
+// [P-07 mount — 2026-05-10] Story Bible bullet 표준화. LLM 출력 정규화로 UI 일관성 확보.
+import { processStoryBibleOutput } from '@/lib/translation/story-bible-normalizer';
+// [M-05 호출 측 통합 — 2026-05-10] Translator dual-pipeline 결과에도 PRISM 거절 감지 적용.
+import { checkAndExplainRejection } from '@/lib/ai/prism-rejection-detector';
+import { normalizeToAgentLang as normalizeRejLang } from '@/lib/ai/lang-normalize';
+// [G-07 — 2026-05-10] statusMsg 4언어 라벨 헬퍼.
+import {
+  statusLabel,
+  driftWarningLabel,
+  batchLabel,
+  chunkLabel,
+  dualStageLabel,
+} from './translator-status-labels';
 import {
   PROJECT_LIBRARY_KEY,
   MAX_LOCAL_PROJECTS,
@@ -43,6 +58,12 @@ import {
   splitTextIntoChunks,
 } from '@/lib/project-normalize';
 import { getGlossaryManager } from '@/lib/translation/glossary-manager';
+import { normalizeLang } from '@/lib/translation/lang-utils';
+import {
+  runPreflightNCG,
+  persistNCTReport,
+  dispatchNCGNCTUpdate,
+} from '@/lib/translation/ncg-nct-runner';
 import {
   buildProjectTranslationContext,
   loadLocalGlossary,
@@ -87,6 +108,8 @@ export default function TranslatorStudioApp() {
   const { loading: authLoading, userId, user: authUser, signInWithGoogle, signOut, getIdToken } = useAuth();
   const { lang } = useLang();
   const langKo = lang === 'ko';
+  // [G-13 — 2026-05-10] Translator 도 storage quota 자동 모니터 — critical 시 noa:alert.
+  useStorageQuota();
   const isAuthLoaded = !authLoading;
   const isHydrated = useRef(false);
   const chapterAsideRef = useRef<HTMLElement>(null);
@@ -157,6 +180,34 @@ export default function TranslatorStudioApp() {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chapters' | 'context'>('chapters');
   const [showExportOptions, setShowExportOptions] = useState(false);
+  // [Track-D Phase 1 D wiring — 2026-05-07] Auto-regen opt-in.
+  // 점수 < 0.70 시 temperature 상승 + 자동 재시도 (최대 2회).
+  // 비용 가드: 기본 OFF. chunk 당 추가 LLM 호출 발생.
+  const [autoRegenEnabled, setAutoRegenEnabled] = useState(false);
+  const [autoRegenAttempts, setAutoRegenAttempts] = useState<number | null>(null);
+  // [2026-05-08 — 시장 분석 4차 반영] 2개 출력 모델 — Source-faithful / Market-ready.
+  // 'faithful': 원문 보존 (작가 의도·고유명사·복선·문체) — 작가/번역가 검토용 기준 번역본.
+  // 'market':   현지화 (대사 리듬·호칭·장르 문법·시장 감각) — 출판 시장에 맞춘 독자 친화 번역본.
+  // 'default':  legacy 단일 chain (점진적으로 두 모드로 수렴 권장).
+  // localStorage 'noa_translator_outputMode' 로 사용자 마지막 선택 보존.
+  const [outputMode, setOutputModeState] = useState<'faithful' | 'market' | 'dual' | 'default'>(() => {
+    if (typeof window === 'undefined') return 'default';
+    try {
+      const saved = localStorage.getItem('noa_translator_outputMode');
+      if (saved === 'faithful' || saved === 'market' || saved === 'dual' || saved === 'default') return saved;
+    } catch { /* private mode */ }
+    return 'default';
+  });
+  const setOutputMode = useCallback<Dispatch<SetStateAction<'faithful' | 'market' | 'dual' | 'default'>>>(
+    (value) => {
+      setOutputModeState((prev) => {
+        const next = typeof value === 'function' ? value(prev) : value;
+        try { localStorage.setItem('noa_translator_outputMode', next); } catch { /* quota */ }
+        return next;
+      });
+    },
+    [],
+  );
   // [Glossary Dialog] open/close + entry count badge (updated on close)
   const [glossaryDialogOpen, setGlossaryDialogOpen] = useState(false);
   const [glossaryEntryCount, setGlossaryEntryCount] = useState(() => {
@@ -206,7 +257,7 @@ export default function TranslatorStudioApp() {
   useEffect(() => {
     if (driftWarnings.length === 0) return;
     const t = window.setTimeout(() => {
-      setStatusMsg(`DRIFT ${driftWarnings.length}건 감지 — 콘솔 확인`);
+      setStatusMsg(driftWarningLabel(lang, driftWarnings.length));
     }, 80);
     return () => window.clearTimeout(t);
   }, [driftWarnings]);
@@ -1023,7 +1074,7 @@ export default function TranslatorStudioApp() {
       provider;
 
     const requestId = ++storyBibleRequestCounter.current;
-    setStatusMsg('UPDATING STORY BIBLE');
+    setStatusMsg(statusLabel(lang, 'updating-story-bible'));
 
     try {
       const summary = await requestTranslation(
@@ -1041,7 +1092,10 @@ export default function TranslatorStudioApp() {
         )
       );
 
-      const mergedStoryBible = mergeStoryBible(storySummaryBase, summary);
+      // [P-07 mount — 2026-05-10] LLM 출력 bullet 표준화 (·/•/*/＊/–/—/− → -).
+      // CONFLICT CHECK 라인은 별도 추출 후 사용자 알림용 (현재는 단순 정규화).
+      const { normalized: normalizedSummary } = processStoryBibleOutput(summary);
+      const mergedStoryBible = mergeStoryBible(storySummaryBase, normalizedSummary);
 
       if (storyBibleRequestCounter.current === requestId) {
         setStorySummary(mergedStoryBible);
@@ -1065,7 +1119,7 @@ export default function TranslatorStudioApp() {
     if (now - lastPrimaryTranslateAt.current < 800) return;
     lastPrimaryTranslateAt.current = now;
     setLoading(true);
-    setStatusMsg('FAST DRAFT');
+    setStatusMsg(statusLabel(lang, 'fast-draft'));
     try {
       const enriched = await enrichPayloadWithPipeline(
         buildTranslationPayload({
@@ -1089,7 +1143,7 @@ export default function TranslatorStudioApp() {
       });
       setHistory((prev) => [{ source, result: translated, time: Date.now(), from, to }, ...prev.slice(0, 19)]);
       if (translationMode === 'novel' && mergedStoryBible !== storySummary) {
-        setStatusMsg('STORY BIBLE UPDATED');
+        setStatusMsg(statusLabel(lang, 'story-bible-updated'));
       }
     } catch (error) {
       await alert(error instanceof Error ? error.message : '번역 오류가 발생했습니다.');
@@ -1153,7 +1207,7 @@ export default function TranslatorStudioApp() {
       });
       setHistory((prev) => [{ source, result: currentResult, time: Date.now(), from, to }, ...prev.slice(0, 19)]);
       if (translationMode === 'novel' && mergedStoryBible !== storySummary) {
-        setStatusMsg('STORY BIBLE UPDATED');
+        setStatusMsg(statusLabel(lang, 'story-bible-updated'));
       }
     } catch (error) {
       await alert(error instanceof Error ? error.message : 'Deep Pipeline 중 오류가 발생했습니다.');
@@ -1166,7 +1220,7 @@ export default function TranslatorStudioApp() {
   const importUrl = async () => {
     if (!urlInput.trim()) return;
     setLoading(true);
-    setStatusMsg('FETCHING URL');
+    setStatusMsg(statusLabel(lang, 'fetching-url'));
     try {
       const res = await fetch(`/api/fetch-url?url=${encodeURIComponent(urlInput)}`);
       const data = await res.json();
@@ -1365,7 +1419,7 @@ export default function TranslatorStudioApp() {
     }
 
     setLoading(true);
-    setStatusMsg('IMPORTING FILES');
+    setStatusMsg(statusLabel(lang, 'importing-files'));
     try {
       const newChapters: ChapterEntry[] = [];
 
@@ -1452,7 +1506,7 @@ export default function TranslatorStudioApp() {
         }
         const freshGlossary = mgr.getPromptInjection();
 
-        setStatusMsg(`BATCH ${index + 1}/${chapters.length}${freshGlossary ? ` [GLOSSv${currentGlossaryVersion}]` : ''}`);
+        setStatusMsg(batchLabel(lang, index + 1, chapters.length, freshGlossary ? ` [GLOSSv${currentGlossaryVersion}]` : ''));
 
         try {
           const batchPayload = buildTranslationPayload(
@@ -1539,7 +1593,7 @@ export default function TranslatorStudioApp() {
     if (!result.trim()) return;
 
     setLoading(true);
-    setStatusMsg('FINAL POLISH');
+    setStatusMsg(statusLabel(lang, 'final-polish'));
     try {
       const refined = await requestTranslation(
         buildTranslationPayload({
@@ -1568,7 +1622,7 @@ export default function TranslatorStudioApp() {
     if (!result.trim()) return;
 
     setLoading(true);
-    setStatusMsg('BACK CHECK');
+    setStatusMsg(statusLabel(lang, 'back-check'));
     try {
       const reversed = await requestTranslation({
         text: result,
@@ -1595,7 +1649,7 @@ export default function TranslatorStudioApp() {
       return;
     }
     setLoading(true);
-    setStatusMsg('COMPARE B');
+    setStatusMsg(statusLabel(lang, 'compare-b'));
     try {
       const enrichedB = await enrichPayloadWithPipeline(
         buildTranslationPayload({
@@ -1632,8 +1686,15 @@ export default function TranslatorStudioApp() {
     setLoading(true);
     let acc = '';
     try {
+      let totalAutoRegenAttempts = 0;
+      // [Track-D Phase 1.1 Round 1-3 — 2026-05-07] Translation 활동 자동 누적.
+      // dynamic import 1회만 (chunks 루프 밖)으로 비용 최소화.
+      const cpModule = await import('@/lib/creative-process').catch(() => null);
+      const studioProjectId = typeof window !== 'undefined'
+        ? window.localStorage?.getItem('noa_studio_currentProjectId') ?? null
+        : null;
       for (let i = 0; i < chunks.length; i++) {
-        setStatusMsg(`CHUNK ${i + 1}/${chunks.length}`);
+        setStatusMsg(chunkLabel(lang, i + 1, chunks.length, autoRegenEnabled));
         // [Phase 1-7] 첫 청크에만 RAG 강화 — 같은 텍스트 분할 시 중복 호출 회피
         const chunkPayload = buildTranslationPayload({
           text: chunks[i],
@@ -1646,14 +1707,275 @@ export default function TranslatorStudioApp() {
         const enrichedChunk = i === 0
           ? await enrichPayloadWithPipeline(chunkPayload, source, activeChapterIndex)
           : chunkPayload;
-        const part = await requestTranslation(enrichedChunk);
+
+        let part: string;
+        if (autoRegenEnabled) {
+          // [Track-D Phase 1 D wiring] 점수 < 0.70 시 자동 재시도 (최대 2회)
+          // scoreFn 은 Phase 1 placeholder — Phase 2 에서 실제 LLM 채점으로 교체.
+          const cp = await import('@/lib/translation');
+          const result = await cp.translateWithAutoRegen(
+            async (temp: number) => {
+              return requestTranslation({ ...enrichedChunk, temperature: temp });
+            },
+            async (text: string) => {
+              // Phase 1 placeholder: length 비율 기반 단순 휴리스틱
+              // (실제 LLM 채점은 D17 백로그 — TranslatorStudioApp 41-band 통합 시점)
+              const sourceLen = chunks[i].length || 1;
+              const ratio = text.length / sourceLen;
+              return Math.min(1, Math.max(0.5, 1 - Math.abs(1 - ratio) * 0.3));
+            },
+            { initialTemperature: 0.5, maxRetries: 2, threshold: 0.7 },
+          );
+          part = result.text;
+          totalAutoRegenAttempts += result.attempts.length;
+        } else {
+          part = await requestTranslation(enrichedChunk);
+        }
+
         acc += (acc ? '\n\n' : '') + part;
         setResult(acc);
+
+        // [Round 1-3] chunk 별 translation source 기록 (Loreguard 작품 진행 중일 때만)
+        if (cpModule && studioProjectId) {
+          try {
+            const sourceHash = await cpModule.computeSha256Hex(part);
+            const sourceId = await cpModule.recordSource({
+              projectId: studioProjectId,
+              sourceType: 'ai_output',
+              label: `Translation chunk ${i + 1}/${chunks.length} (${from}→${to})`,
+              contentHash: sourceHash,
+              provider: provider || 'unknown',
+              model: provider || 'unknown',
+              visibility: 'private',
+            });
+            await cpModule.recordCreativeEvent({
+              projectId: studioProjectId,
+              targetType: 'manuscript',
+              targetId: `translate-${Date.now()}-${i}`,
+              eventType: 'create',
+              actorType: 'ai',
+              actorId: provider || 'unknown',
+              originType: 'AI_REWRITE',
+              beforeHash: null,
+              afterHash: sourceHash,
+              sourceId,
+              note: `chunk ${i + 1}/${chunks.length} (${from}→${to})${autoRegenEnabled ? ' [auto-regen]' : ''}`,
+            });
+          } catch { /* silent — 번역 본 흐름 차단 X */ }
+        }
       }
+      if (autoRegenEnabled) setAutoRegenAttempts(totalAutoRegenAttempts);
       recordEpisodeMemory(source, acc, activeChapterIndex);
       patchActiveChapter({ result: acc, isDone: true, stageProgress: 5 });
     } catch (error) {
       await alert(error instanceof Error ? error.message : '분할 번역 실패');
+    } finally {
+      setLoading(false);
+      setStatusMsg('');
+    }
+  };
+
+  // ============================================================
+  // [2026-05-08 — 시장 분석 4차 본질 구현] Dual translation 호출.
+  // outputMode === 'dual' 시 사용. Stage 1~3 공유 + Stage 4~5 병렬 호출.
+  // 결과: ChapterEntry.resultFaithful + resultMarket 동시 저장.
+  // ============================================================
+  const runDualTranslate = async () => {
+    if (!source.trim()) return;
+
+    // ============================================================
+    // [A.2 — NCG Pre-flight Gate] 번역 전 사전 게이트 — block 시 LLM 호출 회피.
+    // [2026-05-09] inline 60 LOC → ncg-nct-runner.runPreflightNCG 추출 (DRY + 단위 테스트 가능).
+    // ============================================================
+    const ncgPreflight = await runPreflightNCG({
+      source, from, to, track: 'dual', alert, confirm,
+    });
+    if (!ncgPreflight.proceed) return;
+
+    const ok = await confirm(
+      '듀얼 출력 모드 — Source-faithful + Market-ready 두 결과를 동시 생성합니다.\n\n비용: 단일 chain 대비 ~1.4배 (Stage 1~3 공유 + Stage 4~5 병렬). 계속할까요?',
+      '듀얼 번역'
+    );
+    if (!ok) return;
+    setLoading(true);
+    setStatusMsg(dualStageLabel(lang, 1));
+    try {
+      const dualMod = await import('@/lib/translation/dual-pipeline');
+      // [B.1 — 2026-05-08] dual-pipeline 은 prompt 를 직접 만들어 넘기므로
+      // requestTranslation 의 buildPrompt 재호출을 회피해야 함 (이중 wrap 방지).
+      // raw=true 옵션으로 buildPrompt 건너뛰고 prompt 그대로 LLM 에 송출.
+      const translateFn = async (prompt: string): Promise<string> => {
+        const payload = buildTranslationPayload({
+          text: prompt,
+          from,
+          to,
+          provider,
+          apiKey: getEffectiveApiKeyForProvider(provider),
+          mode: translationMode,
+          raw: true, // dual-pipeline 이 이미 buildPrompt 적용한 prompt — 재처리 X
+        });
+        return await requestTranslation(payload);
+      };
+
+      const dualResult = await dualMod.runDualTranslation({
+        text: source,
+        from,
+        to,
+        glossary: glossaryText,
+        characterProfiles,
+        storySummary,
+        context: worldContext,
+        translateFn,
+        verifyIntegrity: true,
+        // [P-03 데이터 연결 — 2026-05-10] tensionCurve 데이터 흐름 — translator 메타데이터에
+        // 텐션 곡선이 있으면 활용. 현재 chapter 메타에는 미보관 → undefined fallback.
+        // 향후 storyConfig.sceneDirection.tensionCurve 통합 시 자동 활성화.
+        tensionCurve: undefined,
+        onStage: (stage, track) => {
+          setStatusMsg(dualStageLabel(lang, stage, track));
+        },
+      });
+
+      // [M-05 호출 측 통합 — 2026-05-10] dual-pipeline 결과에 PRISM 거절 감지.
+      // faithful 또는 market 의 fullText 가 거절 패턴이면 noa:prism-rejection 디스패치.
+      const rejLang = normalizeRejLang(lang);
+      const checkRejection = (text: string | null): void => {
+        if (!text) return;
+        const friendly = checkAndExplainRejection(text, undefined, rejLang);
+        if (friendly && typeof window !== 'undefined') {
+          try {
+            window.dispatchEvent(new CustomEvent('noa:prism-rejection', {
+              detail: { message: friendly },
+            }));
+          } catch { /* silent */ }
+        }
+      };
+      checkRejection(dualResult.faithful);
+      checkRejection(dualResult.market);
+
+      // [P-05 mount — 2026-05-10] dual-pipeline 비용·시간을 statusMsg 에 표기.
+      // [M-03 — 2026-05-10] 4언어 라벨 (영어 hardcode 제거).
+      // [M-14 — 2026-05-10] dual-pipeline 부분 실패 명시 — faithful/market/both 분기.
+      const dualSeconds = Math.round(dualResult.durationMs / 100) / 10;
+      const dualHasFaithful = Boolean(dualResult.faithful);
+      const dualHasMarket = Boolean(dualResult.market);
+      const dualLabel = (() => {
+        // 양쪽 성공
+        if (dualHasFaithful && dualHasMarket) {
+          switch (lang) {
+            case 'en': return `DUAL DONE — ${dualResult.totalCalls} calls / ${dualSeconds}s`;
+            case 'ja': return `DUAL 完了 — ${dualResult.totalCalls} 呼び出し / ${dualSeconds}s`;
+            case 'zh': return `DUAL 完成 — ${dualResult.totalCalls} 次调用 / ${dualSeconds}s`;
+            default:   return `DUAL 완료 — ${dualResult.totalCalls} 회 호출 / ${dualSeconds}s`;
+          }
+        }
+        // 양쪽 실패
+        if (!dualHasFaithful && !dualHasMarket) {
+          const fErr = (dualResult.faithfulError || '').slice(0, 60);
+          const mErr = (dualResult.marketError || '').slice(0, 60);
+          switch (lang) {
+            case 'en': return `DUAL FAILED — Faithful: ${fErr || 'failed'} / Market: ${mErr || 'failed'}`;
+            case 'ja': return `DUAL 両方失敗 — Faithful: ${fErr || '失敗'} / Market: ${mErr || '失敗'}`;
+            case 'zh': return `DUAL 两侧失败 — Faithful: ${fErr || '失败'} / Market: ${mErr || '失败'}`;
+            default:   return `DUAL 양쪽 실패 — Faithful: ${fErr || '실패'} / Market: ${mErr || '실패'}`;
+          }
+        }
+        // Faithful 만 성공
+        if (dualHasFaithful && !dualHasMarket) {
+          const mErr = (dualResult.marketError || '').slice(0, 60);
+          switch (lang) {
+            case 'en': return `Faithful only — Market failed: ${mErr || 'unknown'}`;
+            case 'ja': return `Faithful のみ — Market 失敗: ${mErr || '不明'}`;
+            case 'zh': return `仅 Faithful — Market 失败: ${mErr || '未知'}`;
+            default:   return `Faithful 만 — Market 실패: ${mErr || '미상'}`;
+          }
+        }
+        // Market 만 성공
+        const fErr = (dualResult.faithfulError || '').slice(0, 60);
+        switch (lang) {
+          case 'en': return `Market only — Faithful failed: ${fErr || 'unknown'}`;
+          case 'ja': return `Market のみ — Faithful 失敗: ${fErr || '不明'}`;
+          case 'zh': return `仅 Market — Faithful 失败: ${fErr || '未知'}`;
+          default:   return `Market 만 — Faithful 실패: ${fErr || '미상'}`;
+        }
+      })();
+      setStatusMsg(dualLabel);
+
+      // ============================================================
+      // [A.3 — NCT Post-completion Test] 번역 후 사후 검증 + chapter dual 저장.
+      // [2026-05-09] persistNCTReport 헬퍼 사용 (localStorage 통일).
+      // ============================================================
+      let nctReport: import('@/lib/translation/ncg-nct').NCTReport | null = null;
+      try {
+        const ncgMod = await import('@/lib/translation/ncg-nct');
+        nctReport = ncgMod.runNCT({
+          source,
+          srcLang: normalizeLang(from),
+          tgtLang: normalizeLang(to),
+          faithful: dualResult.faithful ?? undefined,
+          market: dualResult.market ?? undefined,
+          glossary: [],
+        });
+        persistNCTReport(nctReport);
+      } catch { /* NCT silent */ }
+
+      // 결과 저장 — ChapterEntry.resultFaithful + resultMarket
+      patchActiveChapter({
+        result: dualResult.market ?? dualResult.faithful ?? '', // legacy 호환
+        resultFaithful: dualResult.faithful ?? undefined,
+        resultMarket: dualResult.market ?? undefined,
+        isDone: !!(dualResult.faithful && dualResult.market),
+        stageProgress: 5,
+        stageProgressFaithful: dualResult.faithful ? 5 : 0,
+        stageProgressMarket: dualResult.market ? 5 : 0,
+      });
+
+      // 창작 과정 확인서 dual 기록 (silent)
+      try {
+        const hookMod = await import('@/lib/translation/process-record-hooks');
+        await hookMod.recordDualTranslation(dualResult, {
+          chapterName: activeChapter?.name ?? `Chapter ${activeChapterIndex ?? 0}`,
+          chapterIndex: activeChapterIndex ?? 0,
+          fromLang: from,
+          toLang: to,
+          provider,
+        });
+        if (nctReport) {
+          await hookMod.recordNCTReport(nctReport, {
+            chapterName: activeChapter?.name ?? `Chapter ${activeChapterIndex ?? 0}`,
+            chapterIndex: activeChapterIndex ?? 0,
+          });
+        }
+      } catch { /* silent */ }
+
+      // UI 표시 — Market 우선 (legacy 호환), 사용자가 TripleEditor 에서 비교
+      if (dualResult.market) setResult(dualResult.market);
+      else if (dualResult.faithful) setResult(dualResult.faithful);
+
+      // 부분 실패 시 사용자 알림
+      if (dualResult.faithfulError || dualResult.marketError) {
+        const errs: string[] = [];
+        if (dualResult.faithfulError) errs.push(`Faithful: ${dualResult.faithfulError}`);
+        if (dualResult.marketError) errs.push(`Market: ${dualResult.marketError}`);
+        await alert(`듀얼 번역 부분 실패:\n${errs.join('\n')}`);
+      } else if (nctReport && nctReport.recommendation !== 'publish') {
+        // NCT 결과 안내 — review 또는 reject
+        const tag = nctReport.recommendation === 'reject' ? '⚠️ 거절' : '⚠️ 검토 필요';
+        const violations: string[] = [];
+        if (nctReport.faithful?.status !== 'pass') violations.push(`Faithful: ${nctReport.faithful?.status}`);
+        if (nctReport.market?.status !== 'pass') violations.push(`Market: ${nctReport.market?.status}`);
+        if (nctReport.glossaryMisses.length > 0) violations.push(`Glossary 누락 ${nctReport.glossaryMisses.length}건`);
+        // alert 대신 console + 결과 storage 만 (UI 노출 패널이 별도 표시)
+        logger.warn('NCT', tag, violations.join(' / '));
+      }
+
+      // localStorage 에 NCG/NCT change event dispatch — AuditPanel 갱신
+      // [2026-05-09] dispatchNCGNCTUpdate 헬퍼 사용 (event 이름 단일 출처).
+      dispatchNCGNCTUpdate();
+
+      recordEpisodeMemory(source, dualResult.market ?? dualResult.faithful ?? '', activeChapterIndex);
+    } catch (error) {
+      await alert(error instanceof Error ? error.message : '듀얼 번역 실패');
     } finally {
       setLoading(false);
       setStatusMsg('');
@@ -1742,6 +2064,11 @@ export default function TranslatorStudioApp() {
     showMobileDrawer, setShowMobileDrawer,
     mobileTab, setMobileTab,
     showExportOptions, setShowExportOptions,
+    // [Track-D Phase 1 P0-3] D wiring autoRegen 토글 + attempts 표시 노출
+    autoRegenEnabled, setAutoRegenEnabled,
+    autoRegenAttempts,
+    // [2026-05-08 — 시장 분석 4차] 2개 출력 모델 (Source-faithful / Market-ready)
+    outputMode, setOutputMode,
     worldContext, setWorldContext,
     characterProfiles, setCharacterProfiles,
     storySummary, setStorySummary,
@@ -1756,7 +2083,7 @@ export default function TranslatorStudioApp() {
     handleWorkspaceTabChange,
     patchChapterAtIndex, patchActiveChapter, openChapter,
     buildContinuityBundle, buildTranslationPayload, updateStoryBibleAfterTranslation,
-    translate, deepTranslate, runChunkedTranslate, runCompareB, analyzeStyle,
+    translate, deepTranslate, runChunkedTranslate, runDualTranslate, runCompareB, analyzeStyle,
     refineResult, backTranslate, batchTranslateAll, importDocument,
     exportData, importData, importUrl, downloadAllResults, handleChapterRemove,
     signInWithGoogle, signOut, getIdToken

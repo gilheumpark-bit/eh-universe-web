@@ -553,6 +553,126 @@ function EpubExportSection({
           {langKo ? '번역 완료된 회차가 없습니다.' : 'No completed translations.'}
         </p>
       )}
+
+      {/* [C.1 — 2026-05-08] DOCX export — dual track 지원 (편집사 제출용) */}
+      <DocxExportButton
+        chapters={chapters}
+        projectName={projectName}
+        author={author}
+        to={to}
+        langKo={langKo}
+      />
+    </div>
+  );
+}
+
+// [C.1 — 2026-05-08] DOCX export 버튼 — Faithful/Market/Both track.
+function DocxExportButton({
+  chapters,
+  projectName,
+  author,
+  to,
+  langKo,
+}: {
+  chapters: { name: string; content: string; result: string; resultFaithful?: string; resultMarket?: string; isDone: boolean }[];
+  projectName: string;
+  author: string;
+  to: string;
+  langKo: boolean;
+}) {
+  const [track, setTrack] = useState<'faithful' | 'market' | 'both'>('market');
+  const [status, setStatus] = useState<'idle' | 'exporting' | 'done' | 'error'>('idle');
+  const completed = useMemo(
+    () => chapters.filter((c) => (c.result || c.resultMarket || c.resultFaithful || '').trim().length > 0),
+    [chapters],
+  );
+  const canExport = completed.length > 0;
+
+  const handleExport = async (): Promise<void> => {
+    if (!canExport) return;
+    setStatus('exporting');
+    try {
+      const docxMod = await import('@/lib/translation/docx-export');
+      const docxChapters = completed.map((c, i) => ({
+        title: (c.name || '').trim() || (langKo ? `${i + 1}장` : `Chapter ${i + 1}`),
+        contentFaithful: c.resultFaithful,
+        contentMarket: c.resultMarket ?? c.result,
+        content: c.result,
+      }));
+      const fallbackTitle = langKo ? '무제' : 'Untitled';
+      const fallbackAuthor = langKo ? '미상' : 'Unknown';
+      const bundle = docxMod.buildDocxBundle(docxChapters, {
+        title: (projectName || '').trim() || fallbackTitle,
+        author: author.trim() || fallbackAuthor,
+        track,
+        lang: (to || 'en').toLowerCase(),
+      });
+      const files = docxMod.docxBundleToFiles(bundle);
+
+      // JSZip 동적 import
+      const JSZipMod = (await import('jszip' as string)) as {
+        default?: new () => JSZipInstance;
+      } & (new () => JSZipInstance);
+      const JSZipCtor = (JSZipMod as { default?: new () => JSZipInstance }).default ?? (JSZipMod as unknown as new () => JSZipInstance);
+      const zip = new JSZipCtor();
+      Object.entries(files).forEach(([path, content]) => zip.file(path, content, { compression: 'DEFLATE' }));
+      const blob = await zip.generateAsync({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+
+      const safeName = ((projectName || '').trim() || 'translation').replace(/[\\/:*?"<>|]/g, '_').slice(0, 80);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}-${track}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setStatus('done');
+      window.setTimeout(() => setStatus('idle'), 3000);
+    } catch (err) {
+      logger.warn('SaveBackupPanel', 'DOCX export failed', err);
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="space-y-2 mt-3 pt-3 border-t border-white/5">
+      <p className="text-[10px] text-text-tertiary leading-relaxed">
+        {langKo
+          ? 'DOCX (편집사·출판사 제출용). Faithful/Market/Both 트랙 선택 가능.'
+          : 'DOCX (for editor/publisher submission). Faithful/Market/Both tracks.'}
+      </p>
+      <div className="flex items-center gap-1">
+        {(['faithful', 'market', 'both'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTrack(t)}
+            className={`flex-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border transition-colors ${
+              track === t
+                ? 'bg-accent-purple/15 border-accent-purple/50 text-accent-purple'
+                : 'bg-white/[0.02] border-white/10 text-text-tertiary'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => { void handleExport(); }}
+        disabled={!canExport || status === 'exporting'}
+        className="w-full flex items-center justify-center gap-2 rounded-xl border border-accent-blue/30 bg-accent-blue/10 py-2 text-[11px] font-semibold text-accent-blue transition-colors hover:bg-accent-blue/20 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {status === 'exporting'
+          ? (langKo ? 'DOCX 생성 중…' : 'Building DOCX…')
+          : status === 'done'
+            ? (langKo ? 'DOCX 저장 완료' : 'DOCX downloaded')
+            : (langKo ? `DOCX으로 내보내기 — ${track}` : `Export as DOCX — ${track}`)}
+      </button>
     </div>
   );
 }

@@ -49,6 +49,7 @@ export function WindowTitleBar({ activeTab, language, focusMode, onToggleFocus }
       <button
         onClick={onToggleFocus}
         className="p-1 rounded hover:bg-bg-tertiary text-text-tertiary hover:text-text-primary transition-colors"
+        aria-label={focusMode ? (isKO ? '복원' : 'Restore') : (isKO ? '전체화면 — 집중 모드 진입' : 'Enter fullscreen / focus mode')}
         title={focusMode ? (isKO ? '복원' : 'Restore') : (isKO ? '전체화면' : 'Fullscreen')}
       >
         {focusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}

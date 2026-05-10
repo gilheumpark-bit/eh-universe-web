@@ -1,6 +1,6 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import type { ChatSession, StoryConfig, AppTab, AppLanguage, Project, Message, ProactiveSuggestion, PipelineStageResult, WritingMode } from '@/lib/studio-types';
+import type { ChatSession, StoryConfig, AppTab, AppLanguage, Project, Message, ProactiveSuggestion, PipelineStageResult, WritingMode, CharacterSubTab } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
@@ -22,6 +22,9 @@ const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { 
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: () => <LoadingSkeleton height={500} /> });
 const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
 const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
+// [2026-05-09] SceneSheetTab — 에피소드 씬시트 전용 진입점.
+// SceneSheet 컴포넌트 자체를 mount (RulebookTab/WritingTabInline 의 분산 mount 와 하위 호환).
+const SceneSheetTab = dynamic(() => import('@/components/studio/tabs/SceneSheetTab'), { ssr: false, loading: () => <LoadingSkeleton height={400} /> });
 
 type HostedAiAvailability = Record<string, boolean>;
 
@@ -46,8 +49,8 @@ interface StudioTabRouterProps {
   hostedProviders: HostedAiAvailability;
   showAiLock: boolean;
   setActiveTab: (tab: AppTab) => void;
-  charSubTab: 'characters' | 'items';
-  setCharSubTab: React.Dispatch<React.SetStateAction<'characters' | 'items'>>;
+  charSubTab: CharacterSubTab;
+  setCharSubTab: React.Dispatch<React.SetStateAction<CharacterSubTab>>;
   setUxError: (err: { error: unknown } | null) => void;
   clearAllSessions: () => void;
   setShowApiKeyModal: (v: boolean) => void;
@@ -176,7 +179,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
         <WritingTabInline
           language={language} currentSession={currentSession} currentSessionId={currentSessionId!}
           updateCurrentSession={updateCurrentSession} setConfig={setConfig}
-          writingMode={writingMode as 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced'} setWritingMode={setWritingMode}
+          writingMode={writingMode} setWritingMode={setWritingMode}
           editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
           canvasContent={canvasContent} setCanvasContent={setCanvasContent} canvasPass={canvasPass} setCanvasPass={setCanvasPass}
           promptDirective={promptDirective}
@@ -240,6 +243,11 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
       {activeTab === 'visual' && currentSession && config && (
         <SectionErrorBoundary sectionName="Visual">
         <VisualTab config={config} setConfig={setConfig} currentSession={currentSession} language={language} />
+        </SectionErrorBoundary>
+      )}
+      {activeTab === 'scene-sheet' && currentSession && config && (
+        <SectionErrorBoundary sectionName="SceneSheet">
+        <SceneSheetTab config={config} setConfig={setConfig} currentSession={currentSession} language={language} />
         </SectionErrorBoundary>
       )}
     </>

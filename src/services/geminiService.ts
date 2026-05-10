@@ -13,6 +13,23 @@ import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
 import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasDgxService, ChatMsg } from "../lib/ai-providers";
+// [Codex UI domain — 2026-05-10] 사용자가 명시 선택한 도메인을 모든 structured API 호출에 자동 첨부.
+import { getStoredCodexDomain } from "../lib/ai/codex-domain-storage";
+// [P-10 — 2026-05-10] studio-draft 에 PRISM 안전 가드 자동 적용.
+import { buildSafetyEnhancedPrompt, type PrismLevel } from "../lib/ai/safety-registry";
+// [M-05 호출 측 통합 — 2026-05-10] LLM 응답 받은 후 PRISM 거절 감지 + 친화 메시지 디스패치.
+import { checkAndExplainRejection } from "../lib/ai/prism-rejection-detector";
+import { toAgentLang } from "../lib/ai/lang-normalize";
+
+// [P-10 — 2026-05-10] StoryConfig.prismMode → PrismLevel 매핑.
+// 'OFF'/'FREE'/'CUSTOM' → undefined (가드 미적용)
+// 'ALL'→'all-ages' / 'T15'→'teen-15' / 'M18'→'mature-18'
+function mapStoryPrismMode(mode?: StoryConfig['prismMode']): PrismLevel | undefined {
+  if (mode === 'ALL') return 'all-ages';
+  if (mode === 'T15') return 'teen-15';
+  if (mode === 'M18') return 'mature-18';
+  return undefined;
+}
 
 /** 동기 getApiKey가 빈 문자열이면 비동기로 재시도 */
 async function getApiKeyFallback(providerId: 'gemini'): Promise<string> {
@@ -146,11 +163,14 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     ? (getApiKey(activeProvider) || undefined)
     : (getApiKey('gemini') || await getApiKeyFallback('gemini') || undefined);
 
+  // [Codex UI domain — 2026-05-10] localStorage 의 사용자 도메인 자동 첨부.
+  // null/undefined 면 서버 route.ts 의 validateDomain 이 자연 fallback (자동 매핑).
   const payload = JSON.stringify({
     ...body,
     provider,
     model,
     apiKey,
+    domain: getStoredCodexDomain(),
   });
 
   // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
@@ -229,7 +249,20 @@ export const generateStoryStream = async (
   const platform = options.platform ?? config.platform ?? PlatformType.MOBILE;
   const temperature = options.temperature ?? parseFloat(localStorage.getItem('noa_temperature') || '0.9');
 
-  const baseSystem = buildSystemInstruction(config, language, platform, config.simulatorRef?.ruleLevel);
+  // [I-02 본문 마이그레이션 — 2026-05-10] 레지스트리 base 활성화 — studio-draft 단일 소스 통합.
+  // buildSystemInstruction 본문은 그대로 (백워드 호환), 출력 시작에 buildAgentBaseStudioPrompt prepend.
+  const rawBase = buildSystemInstruction(
+    config,
+    language,
+    platform,
+    config.simulatorRef?.ruleLevel,
+    { useAgentRegistry: true },
+  );
+  // [P-10 — 2026-05-10] PRISM 안전 가드 자동 적용. dedup 자동 (buildSafetyEnhancedPrompt).
+  const prismLevel = mapStoryPrismMode(config.prismMode);
+  const baseSystem = prismLevel
+    ? buildSafetyEnhancedPrompt(rawBase, prismLevel)
+    : rawBase;
   const systemInstruction = options.storyBible
     ? `${baseSystem}\n\n${options.storyBible}`
     : baseSystem;
@@ -252,6 +285,21 @@ export const generateStoryStream = async (
       onChunk,
       model: options.model,
     });
+
+    // [M-05 호출 측 통합 — 2026-05-10] PRISM 거절 감지 + 친화 메시지 디스패치.
+    // LLM 이 mature-18 등급 콘텐츠를 거절하면 raw 응답 대신 사용자 친화 안내 토스트.
+    const friendlyRejectionMsg = checkAndExplainRejection(
+      fullContent,
+      prismLevel,
+      toAgentLang(language),
+    );
+    if (friendlyRejectionMsg && typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('noa:prism-rejection', {
+          detail: { message: friendlyRejectionMsg, level: prismLevel },
+        }));
+      } catch { /* silent */ }
+    }
 
     const { content, report } = postProcessResponse(fullContent, config, language, platform);
     return { content, report };

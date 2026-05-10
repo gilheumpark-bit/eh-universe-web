@@ -28,8 +28,19 @@ const ProvidersSection = dynamic(() => import('@/components/studio/settings/Prov
 const BackupsSection = dynamic(() => import('@/components/studio/settings/BackupsSection'), { ssr: false });
 const AdvancedSection = dynamic(() => import('@/components/studio/settings/AdvancedSection'), { ssr: false });
 const PluginsSection = dynamic(() => import('@/components/studio/settings/PluginsSection'), { ssr: false });
+// [Codex UI domain — 2026-05-10] 4 도메인 (KO 웹소설 / EN fantasy / JA 라노벨 / ZH 선협) 선택 dropdown
+const CodexDomainSelector = dynamic(() => import('@/components/codex/CodexDomainSelector'), { ssr: false });
+// [S-04 — 2026-05-10] IP·브랜드 차단 목록 가시화 (작가가 차단되는 IP 인지)
+const BrandGuardSection = dynamic(() => import('@/components/studio/settings/BrandGuardSection'), { ssr: false });
+import { toAgentLang } from '@/lib/ai/lang-normalize';
 const SessionSection = dynamic(() => import('@/components/studio/settings/SessionSection'), { ssr: false });
 const ComplianceSection = dynamic(() => import('@/components/studio/settings/ComplianceSection'), { ssr: false });
+// [Track-D Phase 1] 창작 과정 확인서 (Authorship Journal) 발급 섹션
+const CreativeProcessSection = dynamic(() => import('@/components/studio/settings/CreativeProcessSection'), { ssr: false });
+// [Phase A-2 — 2026-05-07] Loreguard LSP API 토큰 발급/리셋 (Phase F).
+const LSPTokenSection = dynamic(() => import('@/components/studio/settings/LSPTokenSection').then((m) => m.LSPTokenSection), { ssr: false });
+// [연결 #6 — 2026-05-07] Format on Save (D-4).
+const FormatOnSaveSection = dynamic(() => import('@/components/studio/settings/FormatOnSaveSection').then((m) => m.FormatOnSaveSection), { ssr: false });
 // [M3] SeriesDNASection — 화별 씬시트 자동 분석 (로컬만)
 const SeriesDNASection = dynamic(() => import('@/components/studio/settings/SeriesDNASection'), { ssr: false });
 // [M1.7] ShadowDiffDashboard 는 이제 StorageObservatoryDashboard 내부에서 재사용됨.
@@ -347,6 +358,26 @@ function AdvancedTab({
         hostedProviders={hostedProviders}
         onManageApiKey={onManageApiKey}
       />
+
+      {/* [Codex UI domain — 2026-05-10] 4 도메인 prompt 분기 선택 */}
+      <div className="my-4 px-4 py-4 border border-border bg-bg-primary">
+        <CodexDomainSelector language={toAgentLang(language)} />
+      </div>
+
+      {/* [S-04 — 2026-05-10] IP·브랜드 차단 목록 가시화 */}
+      <BrandGuardSection language={language} />
+
+      {/* [Track-D Phase 1] 창작 과정 확인서 (Authorship Journal) 발급 — 부가 가치 */}
+      <CreativeProcessSection language={language} />
+
+      {/* [Phase F — 2026-05-07] Loreguard LSP API 토큰 발급 — 외부 도구 통합 */}
+      <LSPTokenSection language={language} />
+
+      {/* [연결 #6 — 2026-05-07] Format on Save — D-4 wiring */}
+      {/* [후속 A-1] activeManuscript: 활성 episode 본문 — Format Now 대상.
+          Settings 진입 시 currentSession.config 가 자동 prop 으로 흐르지 X — 별도 lookup 필요.
+          최소 침습 — null 유지하되 useFormatOnSave Settings UI 가 manuscripts 전체 수신은 후속 작업. */}
+      <FormatOnSaveSection language={language} activeManuscript={null} />
 
       {/* 플러그인 마켓 */}
       <PluginsSection language={language} />

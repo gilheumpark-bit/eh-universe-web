@@ -32,12 +32,27 @@ interface UseStudioKeyboardOptions {
   disabled?: boolean;
 }
 
-/** Register global keyboard shortcuts for Studio (F1-F8 tabs, Ctrl combos, Escape). Respects disabled flag for modal states. */
+/**
+ * Register global keyboard shortcuts for Studio.
+ * - F1~F8: tab switch (legacy, retained for compatibility)
+ * - Ctrl+1~8: tab switch (writer-friendly — keeps hands on home row, avoids Fn+Fx on laptops)
+ * - Ctrl combos, Escape — preserved
+ * Respects disabled flag for modal states.
+ *
+ * 작가 친화 매핑 추가 — 4시간 연속 작업에서 펑션키 손목 외전 부담 제거.
+ * 노트북 사용자는 보통 Fn+Fx 양손 동작이 필요하지만 Ctrl+숫자는 한 손으로 가능.
+ */
 export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
   useEffect(() => {
+    // F1~F8 (legacy)
     const tabByFKey: Record<string, AppTab> = {
       F1: 'world', F2: 'characters', F3: 'rulebook', F4: 'writing',
       F5: 'style', F6: 'manuscript', F7: 'history', F8: 'settings',
+    };
+    // Ctrl+1~8 (writer-friendly, same target tabs)
+    const tabByDigitKey: Record<string, AppTab> = {
+      '1': 'world', '2': 'characters', '3': 'rulebook', '4': 'writing',
+      '5': 'style', '6': 'manuscript', '7': 'history', '8': 'settings',
     };
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
@@ -116,6 +131,12 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
         opts.onToggleSplitView?.();
         return;
       }
+      // Ctrl+1~8 — writer-friendly tab switch (without shift to avoid conflict with Ctrl+Shift+N)
+      if (ctrl && !shift && /^[1-8]$/.test(e.key)) {
+        const ctrlTab = tabByDigitKey[e.key];
+        if (ctrlTab) { e.preventDefault(); opts.onTabChange(ctrlTab); return; }
+      }
+      // F1~F8 — legacy, retained
       const targetTab = tabByFKey[e.key];
       if (targetTab) { e.preventDefault(); opts.onTabChange(targetTab); }
     };

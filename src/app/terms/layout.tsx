@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// [NEXT16-LAYOUT — 2026-05-10] LayoutProps 에서 searchParams 제거됨.
+import { detectServerLang } from "@/lib/i18n/server-lang";
 
 const TITLES = {
   ko: "이용약관",
@@ -14,15 +16,8 @@ const DESCRIPTIONS = {
   zh: "Loreguard 服务条款 — 用户权利、义务及免责范围。",
 } as const;
 
-type LangKey = keyof typeof TITLES;
-
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ lang?: string }>;
-}): Promise<Metadata> {
-  const params = await searchParams;
-  const lang: LangKey = (params?.lang && params.lang in TITLES ? params.lang : "ko") as LangKey;
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await detectServerLang();
   return {
     title: TITLES[lang],
     description: DESCRIPTIONS[lang],

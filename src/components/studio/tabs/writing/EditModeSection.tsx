@@ -14,6 +14,12 @@ import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { InlineActionPopup } from '@/components/studio/InlineActionPopup';
 import { safeReplaceRange } from '@/lib/rewrite-range';
+// [검수 wiring — 2026-05-07] Symbol Index 본문 hover/decoration 활성.
+import { useSymbolIndex } from '@/hooks/useSymbolIndex';
+// [후속 A-2 — 2026-05-07] BreakpointGutter wiring — 활성 episode BP 표시.
+import { getBreakpointsForEpisode } from '@/lib/story-debugger/breakpoint';
+// [정합 재조정 — 2026-05-07] IDE Settings — 사용자 토글 검사.
+import { useNovelIDESettings } from '@/hooks/useNovelIDESettings';
 import { NovelEditor } from '@/components/studio/NovelEditor';
 import type { NovelEditorSelection, NovelEditorHandle } from '@/components/studio/NovelEditor';
 import type { UndoStack } from '@/hooks/useUndoStack';
@@ -156,6 +162,57 @@ export function EditModeSection({
 
   // ---- 씬 경계 주석 — 에피소드 씬시트 기준 ----
   const currentEpisode = currentSession.config.episode ?? 1;
+  // [정합 재조정 — 2026-05-07] IDE Settings — 토글 검사
+  const { settings: ideSettings } = useNovelIDESettings();
+  // [검수 wiring — 2026-05-07] Symbol Index — NovelEditor decoration + hover 활성.
+  const symbolIndex = useSymbolIndex(currentSession.config, currentSession.config.manuscripts);
+  // [후속 A-2 — 2026-05-07] 활성 episode 의 BP — breakpoint store 에서 lookup.
+  // 'noa:bp-toggle-request' 이벤트로 갱신되며 NovelIDELauncher 가 add/toggle 함.
+  // bp store 변경 시 React state subscribe — 단순 카운터 trigger.
+  const [bpVersion, setBpVersion] = React.useState(0);
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => setBpVersion((v) => v + 1);
+    window.addEventListener('noa:bp-toggle-request', handler);
+    return () => window.removeEventListener('noa:bp-toggle-request', handler);
+  }, []);
+  const breakpoints = React.useMemo(
+    () => getBreakpointsForEpisode(currentEpisode),
+    [currentEpisode, bpVersion],
+  );
+
+  // [검증 루프 fix — 2026-05-08] 'noa:goto-reference' listener — ReferencesPanel 클릭 → caret 이동.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ episodeId?: number; charOffset?: number; surface?: string }>).detail;
+      if (!detail || typeof detail.episodeId !== 'number') return;
+      if (detail.episodeId !== currentEpisode) {
+        window.dispatchEvent(
+          new CustomEvent('noa:alert', {
+            detail: {
+              message: language === 'KO' ? `EP${detail.episodeId} 로 이동 후 다시 클릭` : `Switch to EP${detail.episodeId} first`,
+              variant: 'info',
+              duration: 3500,
+            },
+          }),
+        );
+        return;
+      }
+      const editor = novelEditorRef.current?.getEditor?.();
+      if (!editor) return;
+      try {
+        const docSize = editor.state.doc.content.size;
+        const target = typeof detail.charOffset === 'number' ? Math.min(detail.charOffset, Math.max(1, docSize - 1)) : 0;
+        editor.chain().focus().setTextSelection(target).run();
+      } catch {
+        /* editor not ready */
+      }
+    };
+    window.addEventListener('noa:goto-reference', handler as EventListener);
+    return () => window.removeEventListener('noa:goto-reference', handler as EventListener);
+  }, [currentEpisode, novelEditorRef, language]);
+
   const sceneCount = React.useMemo(() => {
     const sheets = currentSession.config.episodeSceneSheets ?? [];
     const sheet = sheets.find((s) => s.episode === currentEpisode);
@@ -316,6 +373,11 @@ export function EditModeSection({
             onSelectionChange={setNovelSelection}
             placeholder={L4(language, { ko: '여기에 이야기를 써 내려가세요... (TXT/MD 파일을 끌어다 놓을 수도 있어요)', en: 'Start writing here... (or drag & drop a TXT/MD file)', ja: 'ここから物語を書き始めてください...（TXT/MDファイルをドラッグ&ドロップできます）', zh: '在此开始书写你的故事...（也可以拖放 TXT/MD 文件）' })}
             className="w-full bg-[var(--color-surface-soft)] border border-border/50 rounded-2xl md:text-lg tracking-wide focus-within:border-accent-amber/40 focus-within:shadow-[0_0_32px_rgba(202,161,92,0.14)] transition-[box-shadow]"
+            language={language}
+            episodes={ideSettings.symbolHoverEnabled ? currentSession.config.manuscripts : undefined}
+            characters={ideSettings.symbolHoverEnabled ? currentSession.config.characters : undefined}
+            symbolIndex={ideSettings.symbolDecorationVisible ? symbolIndex : undefined}
+            breakpoints={ideSettings.bpGutterVisible ? breakpoints : undefined}
           />
         </div>
         <InlineActionPopup

@@ -13,6 +13,7 @@ import type { DirectorReport } from '@/engine/director';
 import { TRANSLATIONS } from '@/lib/studio-constants';
 import { createT, L4 } from '@/lib/i18n';
 import { useStudioUI } from '@/contexts/StudioContext';
+import { upsertSheet, removeSheet } from '@/lib/scene-sheet/helpers';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
@@ -338,19 +339,10 @@ export function StudioWritingAssistantPanel({
                   lang={language}
                   currentEpisode={currentSession.config.episode}
                   episodeSceneSheets={currentSession.config.episodeSceneSheets ?? []}
-                  onSave={(sheet) => {
-                    const existing = currentSession.config.episodeSceneSheets ?? [];
-                    const filtered = existing.filter(s => s.episode !== sheet.episode);
-                    setConfig({ ...currentSession.config, episodeSceneSheets: [...filtered, sheet].sort((a, b) => a.episode - b.episode) });
-                  }}
-                  onDelete={(ep) => {
-                    setConfig({ ...currentSession.config, episodeSceneSheets: (currentSession.config.episodeSceneSheets ?? []).filter(s => s.episode !== ep) });
-                  }}
-                  onUpdate={(sheet) => {
-                    const existing = currentSession.config.episodeSceneSheets ?? [];
-                    const filtered = existing.filter(s => s.episode !== sheet.episode);
-                    setConfig({ ...currentSession.config, episodeSceneSheets: [...filtered, sheet].sort((a, b) => a.episode - b.episode) });
-                  }}
+                  // [2026-05-09] setConfig 직접 호출 3회 → scene-sheet/helpers 사용 (DRY).
+                  onSave={(sheet) => setConfig(upsertSheet(currentSession.config, sheet))}
+                  onDelete={(ep) => setConfig(removeSheet(currentSession.config, ep))}
+                  onUpdate={(sheet) => setConfig(upsertSheet(currentSession.config, sheet))}
                 />
               </div>
             </details>

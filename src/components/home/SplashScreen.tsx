@@ -61,10 +61,10 @@ export default function SplashScreen({
             </span>
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-tertiary">
               {L4(lang, {
-                ko: '로어가드 · 집필 OS',
-                en: 'Loreguard · Writing OS',
-                ja: 'ローアガード · 執筆 OS',
-                zh: '洛尔加德 · 写作 OS',
+                ko: '로어가드 · 소설가의 IDE',
+                en: 'Loreguard · The IDE for Novelists',
+                ja: 'ローアガード · 小説家のためのIDE',
+                zh: '洛尔加德 · 小说家的 IDE',
               })}
             </span>
           </div>
@@ -84,10 +84,10 @@ export default function SplashScreen({
           </h1>
           <p className="mt-3 text-sm text-text-tertiary font-mono uppercase tracking-widest">
             {L4(lang, {
-              ko: "웹소설 집필 스튜디오",
-              en: "Web Novel Writing Studio",
-              ja: "ウェブ小説執筆スタジオ",
-              zh: "网络小说写作工作室",
+              ko: "코드처럼 검증되는 소설",
+              en: "Novels, verified like code.",
+              ja: "コードのように検証される小説",
+              zh: "像代码一样被验证的小说",
             })}
           </p>
           {/* Primary CTA — above the fold, instant action */}

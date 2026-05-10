@@ -74,6 +74,88 @@ function buildHFCPPrefix(hfcpResult: ReturnType<typeof processHFCPTurn>): string
   return raw ? `\n${raw}\n` : '';
 }
 
+/**
+ * [L4 — 2026-05-08] Meta-Context prefix — 위계·범위·카테고리 누적 + 자동 추출.
+ * settings.metaContextTrack === false 시 빈 string. 차단 X — 정보 only.
+ */
+async function buildMetaContextPrefix(
+  userInput: string,
+  language: import('@/lib/studio-types').AppLanguage,
+): Promise<string> {
+  try {
+    const settingsModule = await import('@/lib/novel-ide-settings/store');
+    const userSettings = settingsModule.loadSettings();
+    if (!userSettings.metaContextTrack) return '';
+
+    const extractorModule = await import('@/lib/meta-context/extractor');
+    const storeModule = await import('@/lib/meta-context/store');
+    const injectorModule = await import('@/lib/meta-context/prompt-injector');
+    const conflictModule = await import('@/lib/meta-context/conflict-detector');
+
+    const newDefs = extractorModule.extractMetaDefinitions(userInput, 0, Date.now());
+    storeModule.appendDefinitions(newDefs);
+
+    const snapshot = storeModule.getSnapshot();
+    conflictModule.detectAndNotify(snapshot, language);
+    const text = injectorModule.buildMetaContextModifier(snapshot, { language, charCap: 400 });
+    return text ? `\n${text}\n` : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * [L1 — 2026-05-08] Story Context prefix — 작품 누적 상태 → AI prompt 자동 주입.
+ * 검증과 생성 분리 해소. IDE Settings storyContextAware === false 시 빈 string.
+ * 호출 측이 await — handleSend / handleRegenerate 시 prompt 빌드 직전.
+ */
+async function buildStoryContextPrefix(
+  config: import('@/lib/studio-types').StoryConfig | null | undefined,
+  language: import('@/lib/studio-types').AppLanguage,
+): Promise<string> {
+  if (!config) return '';
+  try {
+    const settingsModule = await import('@/lib/novel-ide-settings/store');
+    const userSettings = settingsModule.loadSettings();
+    if (!userSettings.storyContextAware) return '';
+
+    const ctxModule = await import('@/engine/story-context');
+    const snapshot = ctxModule.collectStoryContext({
+      config,
+      episodes: config.manuscripts,
+    });
+    if (!snapshot) return '';
+    const text = ctxModule.buildStoryContextModifier(snapshot, { language, charCap: 500 });
+    return text ? `\n${text}\n` : '';
+  } catch {
+    // [C] dynamic import / context build 실패 — non-blocking
+    return '';
+  }
+}
+
+/**
+ * [L2 — 2026-05-08] Intent Memory prefix — 직전 N turn 작가 결정·의도 누적.
+ * settings.intentMemoryAware === false 시 빈 string.
+ */
+async function buildIntentMemoryPrefix(
+  messages: import('@/lib/studio-types').Message[] | null | undefined,
+  language: import('@/lib/studio-types').AppLanguage,
+): Promise<string> {
+  if (!messages || messages.length === 0) return '';
+  try {
+    const settingsModule = await import('@/lib/novel-ide-settings/store');
+    const userSettings = settingsModule.loadSettings();
+    if (!userSettings.intentMemoryAware) return '';
+
+    const intentModule = await import('@/engine/intent-memory');
+    const digest = intentModule.buildIntentDigest(messages, { language, recentN: 5, userOnly: true });
+    const text = intentModule.buildIntentMemoryModifier(digest, { language, charCap: 200 });
+    return text ? `\n${text}\n` : '';
+  } catch {
+    return '';
+  }
+}
+
 /** 출력 모드 라벨 — handleSend/handleRegenerate 공용 */
 const OUTPUT_MODE_LABELS: Record<string, string> = {
   'draft': '',
@@ -164,6 +246,15 @@ export function useStudioAI({
     generationLockRef.current = false;
   }, []);
 
+  // [2026-05-09] noa:ai-generating dispatch — isGenerating 변화 시 broadcast.
+  // WristRestHint 등 외부 리스너가 손목 휴식 안내 등 trigger 가능.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.dispatchEvent(new CustomEvent('noa:ai-generating', { detail: { active: isGenerating } }));
+    } catch { /* best-effort */ }
+  }, [isGenerating]);
+
   const handleCancel = useCallback(() => {
     abortControllerRef.current?.abort();
     generationLockRef.current = false;
@@ -193,6 +284,11 @@ export function useStudioAI({
     const directivePrefix = promptDirective ? `\n[작가 지침: ${promptDirective}]\n` : '';
     const outputModePrefix = buildOutputModePrefix(advancedOutputMode);
     const advancedPrefix = buildAdvancedPrefix(advancedSettings);
+    // [L1·L2·L4 — 2026-05-08] Multi-layer context prefixes (작품 / 의도 / 메타).
+    // dynamic import + non-blocking — 빌드 실패 시 빈 string.
+    const storyContextPrefix = await buildStoryContextPrefix(currentSession?.config, language);
+    const intentMemoryPrefix = await buildIntentMemoryPrefix(currentSession?.messages, language);
+    const metaContextPrefix = await buildMetaContextPrefix(text, language);
 
     const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: text, timestamp: Date.now(), meta: { hfcpMode: hfcpResult.mode, hfcpVerdict: hfcpResult.verdict, hfcpScore: hfcpResult.score } as Message['meta'] };
     const aiMsgId = `a-${Date.now()}`;
@@ -272,7 +368,7 @@ export function useStudioAI({
       };
       // 3.8 — Writer Profile 힌트를 프롬프트에 주입
       const profileHint = buildProfileHint(writerProfile, language);
-      const basePrompt = directivePrefix + outputModePrefix + advancedPrefix + hfcpPrefixWrapped + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
+      const basePrompt = directivePrefix + outputModePrefix + advancedPrefix + hfcpPrefixWrapped + storyContextPrefix + intentMemoryPrefix + metaContextPrefix + (profileHint ? `\n[Writer Profile] ${profileHint}\n` : '') + text;
       
       const { getDefaultGateConfig } = await import('@/engine/quality-gate');
       const gateConfig = getDefaultGateConfig(writerProfile.skillLevel);
@@ -414,6 +510,82 @@ export function useStudioAI({
           charsGenerated: finalContent.length,
         });
       } catch (err) { logger.warn('StudioAI', 'recordAIUsage failed', err); }
+
+      // [Track-D Phase 1 — 2026-05-07] 창작 과정 확인서용 CreativeEvent 자동 기록.
+      // dynamic import 로 의존성 그래프 격리 (creative-process 가 useStudioAI 의 종속성에서 빠짐).
+      // SSR-safe + 실패 시 silent (확인서는 부가 가치 — 메인 생성 흐름 차단 X).
+      try {
+        if (typeof window !== 'undefined') {
+          const projectId = window.localStorage?.getItem('noa_studio_currentProjectId');
+          if (projectId) {
+            const cp = await import('@/lib/creative-process');
+            const provider = hasDgxService() ? 'dgx-qwen' : getActiveProvider();
+            const afterHash = await cp.computeSha256Hex(finalContent);
+            const sourceId = await cp.recordSource({
+              projectId,
+              sourceType: 'ai_output',
+              label: `AI generation @ ${new Date().toISOString()}`,
+              contentHash: afterHash,
+              provider,
+              model: provider,
+              visibility: 'private',
+            });
+            await cp.recordCreativeEvent({
+              projectId,
+              episodeId: capturedConfig.episode ?? undefined,
+              targetType: 'manuscript',
+              targetId: aiMsgId,
+              eventType: 'create',
+              actorType: 'ai',
+              actorId: provider,
+              originType: 'AI_DRAFT',
+              beforeHash: null,
+              afterHash,
+              sourceId,
+            });
+          }
+        }
+      } catch (err) { logger.warn('StudioAI', 'creative-process logging failed (non-blocking)', err); }
+
+      // [Phase 1.2-3 — 2026-05-07] Anti-sycophancy 스캔.
+      // [정합 재조정 — 2026-05-07] 사상: "우리는 선생이 아니다."
+      // - 차단 X — 정보 only
+      // - settings.antiSycophancyAlerts === false 시 alert 발행 X
+      // - 메시지 톤다운: 명령조 → 정보형 ("감지됨" / "검토 가능")
+      try {
+        if (typeof window !== 'undefined' && finalContent) {
+          const settingsModule = await import('@/lib/novel-ide-settings/store');
+          const userSettings = settingsModule.loadSettings();
+          if (!userSettings.antiSycophancyAlerts) {
+            // [P3] 사용자가 끔 — 알림 0건
+          } else {
+            const tg = await import('@/lib/tone-guard/anti-sycophancy');
+            const langMap: Record<string, 'ko' | 'en' | 'ja' | 'zh'> = {
+              KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh',
+            };
+            const tgLang = langMap[language as string] ?? 'ko';
+            const scanResult = tg.scanForSycophancy(finalContent, tgLang);
+            if (tg.shouldBlockOutput(scanResult)) {
+              logger.warn('StudioAI', 'anti-sycophancy severity 3 detected', scanResult);
+              const alertMap: Record<string, string> = {
+                KO: 'AI 출력에 패턴 감지됨 (참고)',
+                EN: 'Pattern detected in AI output (info)',
+                JP: 'AI 出力にパターン検出 (情報)',
+                CN: 'AI 输出检测到模式 (信息)',
+              };
+              window.dispatchEvent(new CustomEvent('noa:alert', {
+                detail: {
+                  message: alertMap[language as string] || alertMap.KO,
+                  variant: 'info',
+                  duration: 4000,
+                },
+              }));
+            } else if (tg.shouldWarn(scanResult)) {
+              logger.warn('StudioAI', 'anti-sycophancy severity 2 detected', scanResult);
+            }
+          }
+        }
+      } catch (err) { logger.warn('StudioAI', 'anti-sycophancy scan failed (non-blocking)', err); }
 
       // Track generation time and approximate token usage
       const elapsedSec = Math.round((performance.now() - generationStartRef.current) / 100) / 10;
@@ -589,6 +761,15 @@ export function useStudioAI({
           genreSelections: capturedConfig2.worldSimData?.genreSelections || capturedConfig2.simulatorRef?.genreSelections,
         },
       };
+      // [L1·L2·L4 — 2026-05-08] Multi-layer context prefixes — regenerate 도 동등 주입.
+      // [검증 루프 fix — 2026-05-08] L2 intent + L4 meta 누락 → wiring.
+      // generateStoryStream 의 storyBible 옵션 재활용 — baseSystem 에 prepend.
+      const regenStoryContextPrefix = await buildStoryContextPrefix(capturedConfig2, language);
+      const regenIntentMemoryPrefix = await buildIntentMemoryPrefix(historyMessages, language);
+      const regenMetaContextPrefix = await buildMetaContextPrefix(userMsg.content, language);
+      const regenCombinedPrefix = [regenStoryContextPrefix, regenIntentMemoryPrefix, regenMetaContextPrefix]
+        .filter((s) => s && s.length > 0)
+        .join('\n');
       const result = await generateStoryStream(
         configForChat, userMsg.content,
         (chunk) => {
@@ -602,7 +783,15 @@ export function useStudioAI({
             return s;
           }));
         },
-        { language, signal: controller.signal, platform: capturedConfig2.platform, history: historyMessages, model: hasDgxService() ? VLLM_MODEL_ID : undefined, temperature: computeTemperature(getGenreTemperature(capturedConfig2.genre || ''), getNarrativeDepth(), getTemperatureOverride()) }
+        {
+          language,
+          signal: controller.signal,
+          platform: capturedConfig2.platform,
+          history: historyMessages,
+          storyBible: regenCombinedPrefix || undefined,
+          model: hasDgxService() ? VLLM_MODEL_ID : undefined,
+          temperature: computeTemperature(getGenreTemperature(capturedConfig2.genre || ''), getNarrativeDepth(), getTemperatureOverride()),
+        },
       );
 
       // Trademark/IP filter
@@ -624,6 +813,79 @@ export function useStudioAI({
           charsGenerated: finalContent.length,
         });
       } catch (err) { logger.warn('StudioAI', 'recordAIUsage (regenerate) failed', err); }
+
+      // [Track-D Phase 1.1 Round 1-1 — 2026-05-07] AI_REWRITE 자동 누적.
+      // handleSend 의 AI_DRAFT 와 대칭. dynamic import 로 의존성 격리.
+      try {
+        if (typeof window !== 'undefined') {
+          const projectId = window.localStorage?.getItem('noa_studio_currentProjectId');
+          if (projectId) {
+            const cp = await import('@/lib/creative-process');
+            const provider = hasDgxService() ? 'dgx-qwen' : getActiveProvider();
+            const afterHash = await cp.computeSha256Hex(finalContent);
+            const sourceId = await cp.recordSource({
+              projectId,
+              sourceType: 'ai_output',
+              label: `AI regenerate @ ${new Date().toISOString()}`,
+              contentHash: afterHash,
+              provider,
+              model: provider,
+              visibility: 'private',
+            });
+            await cp.recordCreativeEvent({
+              projectId,
+              episodeId: capturedConfig2.episode ?? undefined,
+              targetType: 'manuscript',
+              targetId: `regen-${Date.now()}`,
+              eventType: 'create',
+              actorType: 'ai',
+              actorId: provider,
+              originType: 'AI_REWRITE',
+              beforeHash: null,
+              afterHash,
+              sourceId,
+            });
+          }
+        }
+      } catch (err) { logger.warn('StudioAI', 'creative-process logging (regenerate) failed (non-blocking)', err); }
+
+      // [Phase 1.2-3 — 2026-05-07] Anti-sycophancy 스캔 (재생성 출력에도 적용).
+      // [정합 재조정 — 2026-05-07] 사상: "우리는 선생이 아니다."
+      // 차단 X / settings 토글 / 톤다운.
+      try {
+        if (typeof window !== 'undefined' && finalContent) {
+          const settingsModule = await import('@/lib/novel-ide-settings/store');
+          const userSettings = settingsModule.loadSettings();
+          if (!userSettings.antiSycophancyAlerts) {
+            // 사용자가 끔 — 알림 0건
+          } else {
+            const tg = await import('@/lib/tone-guard/anti-sycophancy');
+            const langMap: Record<string, 'ko' | 'en' | 'ja' | 'zh'> = {
+              KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh',
+            };
+            const tgLang = langMap[language as string] ?? 'ko';
+            const scanResult = tg.scanForSycophancy(finalContent, tgLang);
+            if (tg.shouldBlockOutput(scanResult)) {
+              logger.warn('StudioAI', 'anti-sycophancy severity 3 detected (regenerate)', scanResult);
+              const alertMap: Record<string, string> = {
+                KO: '재생성 출력에 패턴 감지됨 (참고)',
+                EN: 'Pattern detected in regenerated output (info)',
+                JP: '再生成出力にパターン検出 (情報)',
+                CN: '重新生成输出检测到模式 (信息)',
+              };
+              window.dispatchEvent(new CustomEvent('noa:alert', {
+                detail: {
+                  message: alertMap[language as string] || alertMap.KO,
+                  variant: 'info',
+                  duration: 4000,
+                },
+              }));
+            } else if (tg.shouldWarn(scanResult)) {
+              logger.warn('StudioAI', 'anti-sycophancy severity 2 detected (regenerate)', scanResult);
+            }
+          }
+        }
+      } catch (err) { logger.warn('StudioAI', 'anti-sycophancy scan (regenerate) failed (non-blocking)', err); }
 
       // Regenerate 품질 파이프라인 — handleSend와 동일하게 감독/품질태그 연결
       let dReport: DirectorReport = { findings: [], stats: {}, score: 100 };

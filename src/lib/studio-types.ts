@@ -19,10 +19,16 @@ export type ViewMode = 'mobile' | 'desktop';
 export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 export type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
 
-export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual';
+// [2026-05-09] 'scene-sheet' 추가 — 에피소드 씬시트 전용 진입점.
+// 이전: SceneSheet 가 RulebookTab + WritingTabInline 안에 분산 mount.
+// 수정: 별 탭 추가 (하위 호환 유지 — 기존 mount 위치 변경 X).
+export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual' | 'scene-sheet';
 
 // 세계관 스튜디오 서브탭
 export type WorldSubTab = 'design' | 'simulator' | 'analysis' | 'timeline' | 'map';
+
+// [2026-05-09] CharacterTab 서브탭 type — DRY (StudioContext / CharacterTab / StudioTabRouter 3곳 중복 제거).
+export type CharacterSubTab = 'characters' | 'items';
 
 export interface PclGuardrails {
   min: number;

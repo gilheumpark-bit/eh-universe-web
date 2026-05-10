@@ -12,19 +12,22 @@ import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { getFirstHostedProvider, resolveServerProviderKey } from '@/lib/server-ai';
 import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
+import { normalizeToAgentLang } from '@/lib/ai/lang-normalize';
 
 export const maxDuration = 15; // Quick timeout — completion must be fast
 
 // ============================================================
-// PART 2 — System Prompt
+// PART 2 — System Prompt (writing-agent-registry 위임)
 // ============================================================
-
-function buildSystemPrompt(language: string): string {
-  if (language === 'ko') {
-    return '당신은 소설 집필 도우미입니다. 이야기를 자연스럽게 이어서 1~2문장만 작성하세요. 기존 문체와 톤을 유지하세요. 오직 이어질 문장만 출력하세요. 설명, 주석, 따옴표 없이 순수 텍스트만.';
-  }
-  return 'You are a novel writing assistant. Continue the story naturally in 1-2 sentences. Match the existing style and tone. Output only the continuation text. No explanations, no quotes, no annotations.';
-}
+//
+// [2026-05-10 — I-02·I-05 마이그레이션] inline buildSystemPrompt 제거.
+// studio-inline-completion 레지스트리 정의 사용 → 4언어 자동 (ko/en/ja/zh).
+//
+// 변경 전: if (lang==='ko') { 한국어 } else { 영어 }   ← 한·영 2언어만
+// 변경 후: buildAgentSystemPrompt('studio-inline-completion', { language })
+//          → registry guards (no-english-thinking-korean-novel + ip-brand-guard)
+//          + LANG_DIRECTIVE 자동 주입 + character-dna context block 슬롯
 
 // ============================================================
 // PART 3 — Request Handler
@@ -75,15 +78,28 @@ export async function POST(req: NextRequest) {
 
   const genre = typeof body.genre === 'string' ? body.genre : undefined;
   const characters = Array.isArray(body.characters) ? (body.characters as string[]).slice(0, 10) : [];
-  const language = body.language === 'ko' ? 'ko' : 'en';
+  // [I-05 — 2026-05-10] 4언어 정규화 ('ko'|'en'|'ja'|'zh'). 비표준 별칭 흡수 ('kr','jp','cn' 등).
+  const language = normalizeToAgentLang(body.language);
   const maxTokens = Math.min(Number(body.maxTokens) || 100, 150);
 
-  // Build user message with context
-  let userContent = text.slice(-500);
-  if (genre) userContent = `[Genre: ${genre}]\n${userContent}`;
-  if (characters.length > 0) userContent = `[Characters: ${characters.join(', ')}]\n${userContent}`;
+  // Build user message — pure text (마지막 500자만 — Tab 컨텍스트).
+  // [P-02 — 2026-05-10] genre/characters 가 user message 에 inline 되던 패턴 폐기 →
+  // registry contextBlock 슬롯 (character-dna / genre-rules) 으로 단일 소스 통합.
+  const userContent = text.slice(-500);
+  const characterDnaBlock = characters.length > 0
+    ? `Active characters in this scene: ${characters.join(', ')}`
+    : undefined;
+  const genreRulesBlock = genre
+    ? `Target genre: ${genre}. Match its conventional rhythm and dialogue tone.`
+    : undefined;
 
-  const systemPrompt = buildSystemPrompt(language);
+  // [I-02 — 2026-05-10 + P-02] 레지스트리 호출로 통합. 4언어 + guards + contextBlock 슬롯 자동 적용.
+  // [autoTrim — 2026-05-10] critical token pressure 도달 시 자동 절삭 활성화.
+  const systemPrompt = buildAgentSystemPrompt('studio-inline-completion', {
+    language,
+    'character-dna': characterDnaBlock,
+    'genre-rules': genreRulesBlock,
+  }, { autoTrim: true });
   const messages = [{ role: 'user', content: userContent }];
 
   // ── Strategy 1: DGX Spark (fastest, no key needed) ──

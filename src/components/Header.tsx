@@ -301,7 +301,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                   stellarWhite ? "text-stone-500" : "text-text-tertiary"
                 }`}
               >
-                Loreguard · 집필 OS
+                Loreguard · Novel IDE
               </span>
             </span>
           </Link>

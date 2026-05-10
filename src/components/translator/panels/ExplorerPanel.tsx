@@ -14,6 +14,7 @@ export function ExplorerPanel() {
     setUrlInput,
     importUrl,
     loading,
+    langKo,
   } = useTranslator();
   const [searchQuery, setSearchQuery] = useState('');
   const [splitOpen, setSplitOpen] = useState(false);
@@ -168,13 +169,17 @@ export function ExplorerPanel() {
         <div className="px-2 py-1.5 flex items-center gap-2 group cursor-pointer transition-colors">
           <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-text-secondary transition-colors" />
           <Folder className="w-4 h-4 text-accent-amber opacity-80" />
-          <span className="text-[13px] font-medium text-text-secondary group-hover:text-text-primary">Chapters</span>
+          <span className="text-[13px] font-medium text-text-secondary group-hover:text-text-primary">
+            {langKo ? '챕터' : 'Chapters'}
+          </span>
         </div>
-        
+
         <div className="pl-6 flex flex-col gap-0.5 mt-1">
           {chapters.length === 0 ? (
             <div className="px-3 py-4 text-[12px] text-text-tertiary italic text-center bg-white/2 rounded-md border border-white/3">
-              No chapters loaded.<br/>Click &quot;New Chapter&quot; to begin.
+              {langKo
+                ? <>챕터가 없습니다.<br/>&quot;새 챕터&quot; 버튼으로 시작하세요.</>
+                : <>No chapters loaded.<br/>Click &quot;New Chapter&quot; to begin.</>}
             </div>
           ) : (
             filteredChapters.map((ch) => (
@@ -214,9 +219,10 @@ export function ExplorerPanel() {
           <button
             onClick={createNewChapter}
             className="flex items-center justify-center gap-1.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-[11px] font-medium transition-colors text-text-secondary"
+            aria-label={langKo ? '새 챕터' : 'New chapter'}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New</span>
+            <span>{langKo ? '새 챕터' : 'New'}</span>
           </button>
           <button
             onClick={() => setSplitOpen(o => !o)}

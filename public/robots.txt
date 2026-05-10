@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /studio
-Disallow: /api/
-
-Sitemap: https://eh-universe.com/sitemap.xml

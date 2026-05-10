@@ -352,14 +352,14 @@ export default function DocsPage() {
             <div className="flex-1 min-w-0">
               <div className="doc-header motion-rise motion-rise-delay-1 rounded-t-xl mb-0">
                 <span className="badge badge-classified mr-2">PUBLIC</span>
-                {T({ ko: "문서 등급: PUBLIC | 버전: 2.0 | NOA Studio 사용자 매뉴얼", en: "Document Level: PUBLIC | Version: 2.0 | NOA Studio User Manual" })}
+                {T({ ko: "문서 등급: PUBLIC | 버전: 2.0 | Loreguard 사용자 매뉴얼", en: "Document Level: PUBLIC | Version: 2.0 | Loreguard User Manual" })}
               </div>
               <div className="premium-panel motion-rise motion-rise-delay-2 rounded-b-3xl rounded-t-none border-t-0 p-8 sm:p-12">
                 <h1 className="site-title text-3xl font-bold tracking-tight mb-2">
-                  NOA STUDIO MANUAL
+                  LOREGUARD MANUAL
                 </h1>
                 <p className="text-text-tertiary text-sm font-serif mb-12">
-                  {T({ ko: "NOA 소설 집필 플랫폼 — 전체 기능 가이드", en: "NOA Novel Writing Platform \u2014 Complete Feature Guide" })}
+                  {T({ ko: "Loreguard — 소설가의 IDE — 전체 기능 가이드", en: "Loreguard \u2014 The IDE for Novelists \u2014 Complete Feature Guide" })}
                 </p>
 
                 {secs.map((s) => (
@@ -375,7 +375,7 @@ export default function DocsPage() {
 
                 <div className="mt-16 border-t border-border pt-6">
                   <p className="font-serif text-xs text-text-tertiary italic text-center">
-                    {T({ ko: "NOA Studio는 오픈소스 소설 집필 플랫폼입니다. GitHub에서 기여를 환영합니다.", en: "NOA Studio is an open-source novel writing platform. Contributions welcome on GitHub." })}
+                    {T({ ko: "Loreguard 는 오픈소스 소설 IDE 입니다. GitHub에서 기여를 환영합니다.", en: "Loreguard is an open-source novel IDE. Contributions welcome on GitHub." })}
                   </p>
                 </div>
               </div>

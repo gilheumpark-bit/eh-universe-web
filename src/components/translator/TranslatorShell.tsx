@@ -6,10 +6,11 @@ import { useTranslator } from './core/TranslatorContext';
 import { ActivityBar } from './features/ActivityBar';
 import { TranslatorPanelManager } from './TranslatorPanelManager';
 import { BilateralEditor } from './editor/BilateralEditor';
+import { TripleEditor } from './editor/TripleEditor';
 
 export function TranslatorShellInner() {
   const layout = useTranslatorLayout();
-  const { isZenMode } = useTranslator();
+  const { isZenMode, outputMode } = useTranslator();
 
   // Desktop Resize logic
   const isDraggingLeft = useRef(false);
@@ -99,10 +100,10 @@ export function TranslatorShellInner() {
       )}
 
       {/* 3. Center Area (Editing Region) */}
-      {/* 그라데이션 광원을 배경에 미세하게 추가하여 프리미엄 느낌 부여 */}
+      {/* [2026-05-08 시장 분석 4차] outputMode === 'dual' 시 TripleEditor (Source/Faithful/Market 3-pane). */}
       <div className="flex-1 flex flex-col min-w-0 z-10 basis-auto h-full relative">
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-amber-950/15 via-transparent to-transparent" />
-        <BilateralEditor />
+        {outputMode === 'dual' ? <TripleEditor /> : <BilateralEditor />}
       </div>
 
       {/* 4. Right Panel container */}

@@ -11,6 +11,17 @@ import {
   handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems, handleSkills, handleMagicSystems,
   StructuredTask, StoryHints, WorldContext, SceneTierContext
 } from '@/services/geminiStructuredTaskService';
+// [Codex UI domain — 2026-05-10] 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
+import type { CodexDomain } from '@/lib/ai/codex-prompts';
+
+const VALID_DOMAINS: readonly CodexDomain[] = [
+  'korean-webnovel', 'western-fantasy', 'japanese-lightnovel', 'chinese-xianxia',
+] as const;
+
+function validateDomain(value: unknown): CodexDomain | undefined {
+  if (typeof value !== 'string') return undefined;
+  return VALID_DOMAINS.includes(value as CodexDomain) ? (value as CodexDomain) : undefined;
+}
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -79,6 +90,7 @@ async function dispatchTask(
   apiKey: string,
   model: string,
   language: AppLanguage,
+  domain?: CodexDomain,
 ): Promise<{ ok: true; data: unknown } | { ok: false; response: NextResponse }> {
   switch (task) {
     case 'characters': {
@@ -86,46 +98,46 @@ async function dispatchTask(
       if (!config?.genre || !config?.synopsis) {
         return { ok: false, response: NextResponse.json({ error: 'Invalid character config' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleCharacters(apiKey, model, config, language, clampCount(body.count, 4), toStringArray(body.existingNames)) };
+      return { ok: true, data: await handleCharacters(apiKey, model, config, language, clampCount(body.count, 4), toStringArray(body.existingNames), domain) };
     }
     case 'items': {
       const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
       if (!config?.genre || !config?.synopsis) {
         return { ok: false, response: NextResponse.json({ error: 'Invalid items config' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleItems(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames)) };
+      return { ok: true, data: await handleItems(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames), domain) };
     }
     case 'skills': {
       const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
       if (!config?.genre || !config?.synopsis) {
         return { ok: false, response: NextResponse.json({ error: 'Invalid skills config' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleSkills(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames)) };
+      return { ok: true, data: await handleSkills(apiKey, model, config, language, clampCount(body.count, 3), toStringArray(body.existingNames), domain) };
     }
     case 'magicSystems': {
       const config = body.config as Pick<StoryConfig, 'genre' | 'synopsis'> | undefined;
       if (!config?.genre || !config?.synopsis) {
         return { ok: false, response: NextResponse.json({ error: 'Invalid magicSystems config' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleMagicSystems(apiKey, model, config, language, clampCount(body.count, 2), toStringArray(body.existingNames)) };
+      return { ok: true, data: await handleMagicSystems(apiKey, model, config, language, clampCount(body.count, 2), toStringArray(body.existingNames), domain) };
     }
     case 'worldDesign': {
       if (typeof body.genre !== 'string' || !body.genre.trim()) {
         return { ok: false, response: NextResponse.json({ error: 'Invalid genre' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleWorldDesign(apiKey, model, body.genre, language, body.hints as StoryHints | undefined) };
+      return { ok: true, data: await handleWorldDesign(apiKey, model, body.genre, language, body.hints as StoryHints | undefined, domain) };
     }
     case 'worldSim': {
       if (typeof body.synopsis !== 'string' || typeof body.genre !== 'string') {
         return { ok: false, response: NextResponse.json({ error: 'Invalid world simulator input' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleWorldSim(apiKey, model, body.synopsis, body.genre, language, body.worldContext as WorldContext | undefined) };
+      return { ok: true, data: await handleWorldSim(apiKey, model, body.synopsis, body.genre, language, body.worldContext as WorldContext | undefined, domain) };
     }
     case 'sceneDirection': {
       if (typeof body.synopsis !== 'string' || !Array.isArray(body.characters)) {
         return { ok: false, response: NextResponse.json({ error: 'Invalid scene direction input' }, { status: 400 }) };
       }
-      return { ok: true, data: await handleSceneDirection(apiKey, model, body.synopsis, toStringArray(body.characters), language, body.tierContext as SceneTierContext | undefined) };
+      return { ok: true, data: await handleSceneDirection(apiKey, model, body.synopsis, toStringArray(body.characters), language, body.tierContext as SceneTierContext | undefined, domain) };
     }
     default:
       return { ok: false, response: NextResponse.json({ error: 'Invalid task' }, { status: 400 }) };
@@ -190,8 +202,10 @@ export async function POST(req: NextRequest) {
     }
     const task = body.task;
 
+    // [Codex UI domain — 2026-05-10] body.domain (옵션) 으로 사용자가 도메인 명시 선택.
+    const domain = validateDomain(body.domain);
     const execution = await executeGeminiHostedFirst(body.apiKey, (effectiveApiKey) =>
-      dispatchTask(task, body, effectiveApiKey, getModel(body.model), getLanguage(body.language)),
+      dispatchTask(task, body, effectiveApiKey, getModel(body.model), getLanguage(body.language), domain),
     );
     if (!execution.result.ok) return execution.result.response;
     return NextResponse.json(execution.result.data);

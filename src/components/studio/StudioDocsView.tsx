@@ -236,7 +236,7 @@ export default function StudioDocsView({ lang }: Props) {
               v1.4.0
             </span>
             <h1 className="font-mono text-3xl font-black tracking-tight mb-1">
-              NOA Studio {t('docs.userGuide')}
+              Loreguard {t('docs.userGuide')}
             </h1>
             <p className="text-text-tertiary text-sm">{t('docs.subtitle')}</p>
           </div>

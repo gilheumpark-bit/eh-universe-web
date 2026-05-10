@@ -88,6 +88,17 @@ export interface TranslatorContextState {
   setMobileTab: Dispatch<SetStateAction<'chapters' | 'context'>>;
   showExportOptions: boolean;
   setShowExportOptions: Dispatch<SetStateAction<boolean>>;
+  // [Track-D Phase 1 P0-3] D wiring autoRegen 토글 + attempts 표시
+  autoRegenEnabled: boolean;
+  setAutoRegenEnabled: Dispatch<SetStateAction<boolean>>;
+  autoRegenAttempts: number | null;
+  // [2026-05-08 — 시장 분석 4차] 출력 모델
+  // 'faithful': 원문 보존 (작가 의도·고유명사·복선·문체) 단일 결과
+  // 'market':   현지화 (대사 리듬·호칭·장르 문법·시장 감각) 단일 결과
+  // 'dual':     [본질] 두 결과 동시 출력 — runDualTranslation 사용. UI 3-pane 비교.
+  // 'default':  legacy 단일 chain (점진적으로 두 모드로 수렴 권장)
+  outputMode: 'faithful' | 'market' | 'dual' | 'default';
+  setOutputMode: Dispatch<SetStateAction<'faithful' | 'market' | 'dual' | 'default'>>;
   worldContext: string;
   setWorldContext: Dispatch<SetStateAction<string>>;
   characterProfiles: string;
@@ -128,6 +139,8 @@ export interface TranslatorContextState {
   translate: () => Promise<void>;
   deepTranslate: () => Promise<void>;
   runChunkedTranslate: () => Promise<void>;
+  /** [2026-05-08 시장 분석 4차] Dual 출력 — Source-faithful + Market-ready 동시 생성. */
+  runDualTranslate: () => Promise<void>;
   runCompareB: () => Promise<void>;
   analyzeStyle: () => void;
   refineResult: () => Promise<void>;

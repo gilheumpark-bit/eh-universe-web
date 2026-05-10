@@ -69,6 +69,40 @@ export function useStudioImport({
       setWorldImportDone(raw);
       setTimeout(() => setWorldImportBanner(false), 5000);
       studioRouter.replace(`${pathname}?tab=world`, { scroll: false });
+
+      // [Track-D Phase 1 P0-5 Trigger 2 — 2026-05-07] EXTERNAL_IMPORT 자동 기록.
+      // dynamic import 로 격리. SSR-safe + 실패 시 silent.
+      // useEffect 콜백이 동기이므로 IIFE async 로 fire-and-forget.
+      void (async () => {
+        try {
+          if (typeof window === 'undefined') return;
+          const projectId = window.localStorage?.getItem('noa_studio_currentProjectId');
+          if (!projectId) return;
+          const cp = await import('@/lib/creative-process');
+          const contentJson = JSON.stringify(importedConfig);
+          const contentHash = await cp.computeSha256Hex(contentJson);
+          const sourceId = await cp.recordSource({
+            projectId,
+            sourceType: 'external_doc',
+            label: importedConfig.title || 'World Import',
+            contentHash,
+            url: window.location.href,
+            visibility: 'private',
+          });
+          await cp.recordCreativeEvent({
+            projectId,
+            targetType: 'world',
+            targetId: importedSessionId,
+            eventType: 'import',
+            actorType: 'human',
+            actorId: 'author',
+            originType: 'EXTERNAL_IMPORT',
+            beforeHash: null,
+            afterHash: contentHash,
+            sourceId,
+          });
+        } catch (cpErr) { logger.warn('StudioImport', 'creative-process logging failed (non-blocking)', cpErr); }
+      })();
     } catch (err) {
       logger.warn('StudioImport', 'worldImport parse failed', err);
       setAlertToast({ message: language === 'KO' ? '\\uC138\\uACC4\\uAD00 \\uB370\\uC774\\uD130\\uB97C \\uBD88\\uB7EC\\uC624\\uC9C0 \\uBABB\\uD588\\uC2B5\\uB2C8\\uB2E4. \\uB9C1\\uD06C\\uAC00 \\uC190\\uC0C1\\uB410\\uC744 \\uC218 \\uC788\\uC2B5\\uB2C8\\uB2E4.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });

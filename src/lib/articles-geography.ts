@@ -1,4 +1,4 @@
-import type { ArticleData } from "./articles";
+import type { ArticleData } from "./articles-types";
 
 // Auto-generated
 export default {

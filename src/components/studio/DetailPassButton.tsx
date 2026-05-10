@@ -22,6 +22,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Sparkles, Loader2, AlertCircle, Check } from 'lucide-react';
 import { runDetailPass, type DetailPassResult } from '@/engine/detail-pass';
+import type { DetailPassWarning } from '@/engine/detail-pass-validator';
 import { isDraftDetailActive } from '@/lib/feature-flags';
 import { L4 } from '@/lib/i18n';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
@@ -107,6 +108,8 @@ const DetailPassButton: React.FC<DetailPassButtonProps> = ({
 }) => {
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  // [P-06 mount — 2026-05-10] 사후 검증 warnings 표시.
+  const [warnings, setWarnings] = useState<DetailPassWarning[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   // 플래그 확인 — 'shadow' 또는 'on' 에서만 렌더.
@@ -151,6 +154,8 @@ const DetailPassButton: React.FC<DetailPassButtonProps> = ({
         apiKey,
       });
       setStatus('done');
+      // [P-06 mount — 2026-05-10] 사후 검증 결과 표시 (분량·새 캐릭터·새 고유명사).
+      setWarnings(result.validation?.warnings ?? []);
       onExpanded(result.expandedText, result);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'unknown';
@@ -190,33 +195,52 @@ const DetailPassButton: React.FC<DetailPassButtonProps> = ({
         : L4(language, LABEL_IDLE);
 
   return (
-    <button
-      type="button"
-      aria-label={L4(language, LABEL_IDLE)}
-      aria-busy={running}
-      aria-disabled={isDisabled}
-      disabled={isDisabled}
-      onClick={handleClick}
-      data-testid="detail-pass-button"
-      data-status={status}
-      title={running ? L4(language, ARIA_BUSY_HINT) : errorMsg || L4(language, LABEL_IDLE)}
-      className={[
-        'inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-colors',
-        'focus-visible:ring-2 focus-visible:ring-accent-blue',
-        'border border-border',
-        errored
-          ? 'bg-accent-red/10 text-accent-red border-accent-red/40'
-          : done
-            ? 'bg-accent-green/10 text-accent-green border-accent-green/40'
-            : running
-              ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/40'
-              : 'bg-bg-secondary text-text-primary hover:bg-accent-blue/10 hover:text-accent-blue',
-        isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-      ].join(' ')}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
+    <div className="inline-flex flex-col gap-1 items-start">
+      <button
+        type="button"
+        aria-label={L4(language, LABEL_IDLE)}
+        aria-busy={running}
+        aria-disabled={isDisabled}
+        disabled={isDisabled}
+        onClick={handleClick}
+        data-testid="detail-pass-button"
+        data-status={status}
+        title={running ? L4(language, ARIA_BUSY_HINT) : errorMsg || L4(language, LABEL_IDLE)}
+        className={[
+          'inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-colors',
+          'focus-visible:ring-2 focus-visible:ring-accent-blue',
+          'border border-border',
+          errored
+            ? 'bg-accent-red/10 text-accent-red border-accent-red/40'
+            : done
+              ? 'bg-accent-green/10 text-accent-green border-accent-green/40'
+              : running
+                ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/40'
+                : 'bg-bg-secondary text-text-primary hover:bg-accent-blue/10 hover:text-accent-blue',
+          isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+        ].join(' ')}
+      >
+        {icon}
+        <span>{label}</span>
+      </button>
+      {/* [P-06 mount — 2026-05-10] 사후 검증 warnings — 분량·새 캐릭터·새 고유명사 */}
+      {done && warnings.length > 0 && (
+        <ul
+          role="status"
+          aria-live="polite"
+          className="text-[11px] font-mono text-accent-amber mt-1 max-w-[280px] space-y-0.5"
+          data-testid="detail-pass-warnings"
+        >
+          {warnings.map((w) => (
+            <li key={w.kind} className="leading-tight">
+              <span aria-hidden="true">⚠ </span>
+              {w.message}
+              {w.detail && <span className="text-text-tertiary"> ({w.detail})</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 };
 

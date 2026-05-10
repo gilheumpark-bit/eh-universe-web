@@ -58,15 +58,8 @@ export default function FirstVisitOnboarding() {
     }
   }, []);
 
-  const handleStart = useCallback(() => {
-    markSeen();
-    setVisible(false);
-    try {
-      window.dispatchEvent(new CustomEvent('noa:open-quickstart'));
-    } catch {
-      /* ignore */
-    }
-  }, [markSeen]);
+  // handleStart 제거 (2026-05-08) — '첫 장면 써보기' CTA 폐기.
+  // OnboardingGuide의 쾌속 시작 카드가 동일 'noa:open-quickstart' 이벤트 발화 → 중복 제거.
 
   const handleDismiss = useCallback(() => {
     markSeen();
@@ -182,35 +175,50 @@ export default function FirstVisitOnboarding() {
                 </span>
               </span>
             </li>
+            {/* [M-16 — 2026-05-10] 신규 안전·증명 시스템 안내 */}
+            <li className="flex gap-3 items-start">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-amber/15 text-accent-amber font-bold text-[11px] flex items-center justify-center">4</span>
+              <span>
+                <strong className="font-semibold">
+                  {L4(lang, {
+                    ko: '안전·증명 시스템',
+                    en: 'Safety & verification',
+                    ja: '安全・証明システム',
+                    zh: '安全与证明系统',
+                  })}
+                </strong>
+                {' — '}
+                <span className="text-text-secondary">
+                  {L4(lang, {
+                    ko: 'PRISM 등급 자동 적용, 토큰·분량 자동 알림, 창작 과정 확인서 발급',
+                    en: 'Auto PRISM rating, token/length alerts, Authorship Journal',
+                    ja: 'PRISM 等級自動適用、トークン・分量自動通知、制作過程確認書発行',
+                    zh: 'PRISM 等级自动应用、Token/篇幅自动通知、创作过程确认书发行',
+                  })}
+                </span>
+              </span>
+            </li>
           </ul>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <button
-            type="button"
-            onClick={handleStart}
-            className="flex-1 flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 bg-accent-purple text-white text-sm font-bold rounded-xl hover:bg-accent-purple/90 focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors"
-          >
-            <Sparkles className="w-4 h-4" aria-hidden="true" />
-            {L4(lang, {
-              ko: '첫 장면 써보기',
-              en: 'Write first scene',
-              ja: '最初のシーンを書く',
-              zh: '撰写第一场景',
-            })}
-            {' →'}
-          </button>
+        {/* CTA 단순화 — '첫 장면 써보기' 제거 (OnboardingGuide 쾌속 시작 카드와 중복).
+            모달 닫으면 OnboardingGuide 3 카드 (쾌속/직접/데모) 노출 → 명확한 1차 결정.
+            handleStart 흐름은 OnboardingGuide의 쾌속 시작 카드가 동일 이벤트 dispatch. */}
+        <div className="flex flex-col gap-2 pt-2">
           <button
             type="button"
             onClick={handleDismiss}
-            className="min-h-[44px] px-4 py-3 bg-bg-secondary text-text-secondary text-sm font-medium rounded-xl border border-border hover:bg-bg-tertiary focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors"
+            style={{ color: '#ffffff' }}
+            className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 bg-accent-purple text-white text-sm font-bold rounded-xl hover:bg-accent-purple/90 focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors"
           >
+            <Sparkles className="w-4 h-4" aria-hidden="true" style={{ color: '#ffffff' }} />
             {L4(lang, {
-              ko: '둘러볼게요',
-              en: "I'll look around",
-              ja: '見て回ります',
-              zh: '我先看看',
+              ko: '시작하기',
+              en: 'Get started',
+              ja: '始める',
+              zh: '开始',
             })}
+            {' →'}
           </button>
         </div>
       </div>

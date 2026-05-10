@@ -695,3 +695,33 @@
 @media (min-width: 769px) and (max-width: 1024px) {
   .ss-ref-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   [Phase A-4 — 2026-05-07] Symbol Decoration — Phase B Symbol IDE
+   본문 내 캐릭터/지명/소품 underline + hover 트리거.
+============================================================ */
+.symbol-deco {
+  text-decoration: underline dotted rgba(141, 123, 195, 0.45);
+  text-underline-offset: 3px;
+  cursor: help;
+  transition: background-color 120ms ease, text-decoration-color 120ms ease;
+}
+.symbol-deco:hover {
+  background-color: rgba(141, 123, 195, 0.12);
+  text-decoration-color: rgba(141, 123, 195, 0.85);
+}
+
+/* [Phase A-5 — 2026-05-07] Breakpoint Gutter — Phase D Story Debugger */
+.bp-gutter-active {
+  position: relative;
+}
+.bp-gutter-active::before {
+  content: '●';
+  position: absolute;
+  left: -18px;
+  top: 0;
+  color: var(--color-accent-red, #ef4444);
+  font-size: 14px;
+  line-height: 1.5;
+  pointer-events: none;
+}

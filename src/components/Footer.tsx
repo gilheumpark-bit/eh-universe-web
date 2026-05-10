@@ -52,10 +52,10 @@ export default function Footer() {
             </div>
             <div className="text-xs text-text-tertiary">
               {T({
-                ko: `© ${year} EH Universe · 작가 주도형 집필 IDE`,
-                en: `© ${year} EH Universe · Writer-first Novel IDE`,
-                ja: `© ${year} EH Universe · 作家主導型執筆IDE`,
-                zh: `© ${year} EH Universe · 作家主导型写作 IDE`,
+                ko: `© ${year} EH Universe · 소설가의 IDE`,
+                en: `© ${year} EH Universe · The IDE for Novelists`,
+                ja: `© ${year} EH Universe · 小説家のためのIDE`,
+                zh: `© ${year} EH Universe · 小说家的 IDE`,
               })}
             </div>
           </div>

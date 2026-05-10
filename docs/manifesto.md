@@ -1,12 +1,25 @@
-# Loreguard Manifesto v2.1
+# Loreguard Manifesto v2.2
 
 > **외부 노출용 선언문 / 랜딩·피치·공고 카피 소스**
 > 내부 철학/정책은 `brand-philosophy.md` 참조.
 >
-> 버전: 2.1
-> 작성일: 2026-04-19
+> 버전: 2.2 (정체성 정렬 — Novel IDE 단일화 / 2026-05-07)
+> 작성일: 2026-04-19 (v2.1) → 2026-05-07 (v2.2)
 > 작성자: 박길흠 (Park Gilheum)
 > 저장 상태: **미반영** (로컬 문서, 코드 적용은 별도 판단)
+
+---
+
+## 🎯 정체성 (단일 표어 — byte-level 고정)
+
+| 한국어 | English | 日本語 | 中文 |
+|---|---|---|---|
+| **소설가의 IDE** | **The IDE for Novelists** | **小説家のためのIDE** | **小说家的 IDE** |
+
+부제: **코드처럼 검증되는 소설** / *Novels, verified like code.*
+
+> **버린 표현**: "AI 시대 작가 OS" / "집필 OS" / "writing operating system" / "작가용 도구"
+> **이유**: "OS"는 추상화의 추상화 — 사용자가 그 위에 무엇을 깔지 모름. "IDE"는 직관 — VS Code / IntelliJ / Logic Pro / Adobe 와 동일 카테고리 매핑. 부품(NovelEditor / EpisodeExplorer / BranchSelector / OutlinePanel / GlobalSearchPalette / EditorMinimap)은 이미 IDE 어휘로 전부 구축됨. 정체성만 흔들리고 있었음.
 
 ---
 

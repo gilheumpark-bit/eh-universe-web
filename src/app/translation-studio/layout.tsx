@@ -8,8 +8,11 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swa
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "로어가드 번역 스튜디오",
-  description: "로어가드(Loreguard) 번역 — 장편·챕터·용어 중심 번역 워크스페이스. 창작→번역→출판 파이프라인.",
+  title: "Fiction-native Translation Studio · 로어가드",
+  description:
+    "Fiction-native Translation Studio — 소설 전문 번역. 장편 IP 의 세계관·캐릭터·용어집·회차 맥락을 반영한 맥락 번역. 한국 작가는 세계로, 해외 작가는 한국·아시아로. AI prepares. Translators elevate. Authors go global.",
+  // [Alpha non-public — 2026-05-08] 알파 단계 검색엔진 비공개.
+  robots: { index: false, follow: false },
 };
 
 export default function TranslationStudioLayout({ children }: { children: React.ReactNode }) {

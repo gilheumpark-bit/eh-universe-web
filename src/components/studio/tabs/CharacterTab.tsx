@@ -2,7 +2,7 @@
 // PART 1 — Imports & Localized Message Constants
 // ============================================================
 import React, { useState } from 'react';
-import { AppLanguage, StoryConfig } from '@/lib/studio-types';
+import { AppLanguage, StoryConfig, CharacterSubTab } from '@/lib/studio-types';
 import ResourceView from '@/components/studio/ResourceView';
 import ItemStudioView from '@/components/studio/ItemStudioView';
 import TabAssistant from '@/components/studio/TabAssistant';
@@ -69,8 +69,8 @@ interface CharacterTabProps {
   language: AppLanguage;
   config: StoryConfig;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
-  charSubTab: 'characters' | 'items';
-  setCharSubTab: (tab: 'characters' | 'items') => void;
+  charSubTab: CharacterSubTab;
+  setCharSubTab: (tab: CharacterSubTab) => void;
   triggerSave: () => void;
   saveFlash: boolean;
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
@@ -111,6 +111,24 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
         ...prev,
         characters: [...prev.characters, ...generated],
       }));
+
+      // [Phase 1.2-5 — 2026-05-07] Character AI_DRAFT 직접 trigger.
+      // useCreativeProcessAutoTrigger 의 signature hash 비정밀 추적 보완.
+      // window.__creativeLogger 는 StudioShell 에서 mount.
+      // [Loop 1 fix — 2026-05-07] inline cast 제거 (types/creative-logger-global.d.ts 사용).
+      try {
+        if (generated.length > 0) {
+          const cl = typeof window !== 'undefined' ? window.__creativeLogger : undefined;
+          if (cl?.logAIDraft) {
+            void cl.logAIDraft({
+              targetType: 'character',
+              targetId: `chars-batch-${Date.now()}`,
+              afterContent: JSON.stringify(generated.map(c => ({ name: c.name, role: c.role }))),
+              promptLabel: `Auto-generate ${generated.length} characters`,
+            });
+          }
+        }
+      } catch { /* noop */ }
     } catch (err) {
       // [C] 에러 객체 방어 + [C] silent catch 방지 → logger.warn 로깅
       const detail = err instanceof Error ? err.message : '';

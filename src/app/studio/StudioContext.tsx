@@ -9,6 +9,7 @@ import { createContext, useContext, type ReactNode, type Dispatch, type SetState
 import type {
   ChatSession, StoryConfig, AppTab, AppLanguage, Message,
   Project, ProactiveSuggestion, PipelineStageResult, WritingMode,
+  CharacterSubTab,
 } from '@/lib/studio-types';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 import type { EngineReport } from '@/engine/types';
@@ -126,8 +127,8 @@ export interface StudioContextValue {
   setArchiveScope: Dispatch<SetStateAction<'project' | 'all'>>;
   archiveFilter: string;
   setArchiveFilter: Dispatch<SetStateAction<string>>;
-  charSubTab: 'characters' | 'items';
-  setCharSubTab: Dispatch<SetStateAction<'characters' | 'items'>>;
+  charSubTab: CharacterSubTab;
+  setCharSubTab: Dispatch<SetStateAction<CharacterSubTab>>;
   // Session management
   createNewSession: (tab?: AppTab) => void;
   createDemoSession: () => void;

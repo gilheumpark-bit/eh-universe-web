@@ -172,3 +172,26 @@ PITCH_*.md
 TEAM-ONBOARDING*
 INTERNAL*.md
 ONBOARDING*.md
+
+# Local evidence / capture artifacts (do not commit)
+_evidence_screenshots/
+_modoo_capture/
+.playwright-mcp/
+check-*.png
+ehuniverse-*.png
+studio-error.png
+
+# Local one-off scripts (do not commit)
+_capture_*.mjs
+_demo_*.mjs
+_modoo_*.mjs
+_build_*.py
+_patent_*.txt
+
+# Private business / strategy docs (do not commit publicly)
+docs/Loreguard_Business_*.md
+docs/Loreguard_Business_Copy.txt
+docs/Loreguard_External_Business_*.md
+docs/Loreguard_Startup_Application.md
+docs/1-pager.md
+docs/internal-frame/

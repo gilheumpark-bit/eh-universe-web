@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  // [M-04 — 2026-05-10] production 빌드 시 console.log/info/debug 자동 제거.
+  // error / warn 은 유지 — 실제 사용자 환경의 의도된 진단 정보 (logger 와 별개로 fallback).
+  // 의도된 사용자 노출 메시지는 logger.* 또는 setStatusMsg 로 통일.
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
+  },
   // React Compiler disabled — requires babel-plugin-react-compiler package
   // reactCompiler: true,
   images: {

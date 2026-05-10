@@ -18,10 +18,21 @@ export interface TranslationCharacter {
   };
 }
 
-/** 번역 용어집 항목 (locked 우선) */
+/**
+ * 번역 용어집 항목 (locked 우선).
+ *
+ * [2026-05-08 — 시장 분석 4차] Dual track 매핑:
+ *   target          — legacy 단일 매핑.
+ *   targetFaithful  — Source-faithful Translation (음차/원어 보존).
+ *   targetMarket    — Market-ready Localization (시장 친화 변형).
+ */
 export interface TranslationGlossaryEntry {
   source: string;
   target?: string;     // 이미 번역된 항목 (locked)
+  /** [Dual] Source-faithful 매핑. 미지정 시 target 사용. */
+  targetFaithful?: string;
+  /** [Dual] Market-ready 매핑. 미지정 시 target 사용. */
+  targetMarket?: string;
   category: 'character' | 'place' | 'item' | 'skill' | 'general';
   locked: boolean;
 }

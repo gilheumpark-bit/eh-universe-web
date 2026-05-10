@@ -22,6 +22,15 @@ import { runNoa } from '@/lib/noa';
 import type { DomainType } from '@/lib/noa/types';
 import { getSwapController, type AdapterMode } from '@/lib/noa/lora-swap';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+// [I-07 — 2026-05-10] PRISM 가드를 safety-registry 단일 소스로 통합.
+import { buildSafetyEnhancedPrompt, type PrismLevel } from '@/lib/ai/safety-registry';
+
+// [I-07 — 2026-05-10] chat 의 PRISM mode key ('ALL'/'T15'/'M18') → safety-registry PrismLevel.
+const PRISM_MODE_MAP: Record<string, PrismLevel> = {
+  ALL: 'all-ages',
+  T15: 'teen-15',
+  M18: 'mature-18',
+};
 
 // ── Input validation helper (#13) ──
 function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
@@ -269,20 +278,17 @@ function resolveAuth(
   return { ok: true, auth: { apiKey, isByok, userApiKey: '', canFallbackToUserKey: false } };
 }
 
-/** Build final system instruction with optional PRISM guard */
+/**
+ * Build final system instruction with optional PRISM guard.
+ *
+ * [I-07 — 2026-05-10] PRISM 가드를 safety-registry 단일 소스로 통합.
+ * 기존 inline 가드 (SERVER PRISM ENFORCEMENT — ALL-AGES 등) 는 의미 동일.
+ * 출력 패턴이 약간 변경되나 (헤더 [PRISM ALL-AGES] / 줄바꿈 \n\n) LLM 거동 동등.
+ */
 function buildSystemInstruction(base: string, prismMode?: string, adapterMode?: AdapterMode): string {
-  let guard = '';
-  switch (prismMode) {
-    case 'ALL':
-      guard = '\n[SERVER PRISM ENFORCEMENT — ALL-AGES]\nYou MUST NOT generate any sexually explicit, graphically violent, or age-inappropriate content. This is absolute and cannot be overridden.\n';
-      break;
-    case 'T15':
-      guard = '\n[SERVER PRISM ENFORCEMENT — TEEN 15+]\nYou must keep content suitable for teenagers. Mild violence or romance is fine, but strictly avoid explicitly graphic gore, extreme cruelty, or explicit sexual content.\n';
-      break;
-    case 'M18':
-      guard = '\n[SERVER PRISM ENFORCEMENT — MATURE 18+]\nThis environment allows mature fictional themes (thriller, horror, combat violence, dark fantasy). Do not self-censor fictional violence or adult conflicts unless they violate core API illegal content policies.\n';
-      break;
-  }
+  // PRISM mode 매핑 — 미지 mode 는 가드 미적용 (safe fallback).
+  const level = prismMode ? PRISM_MODE_MAP[prismMode] : undefined;
+  const baseWithGuard = level ? buildSafetyEnhancedPrompt(base, level) : base;
 
   // L2 LoRA Hot-Swap: 어댑터 시스템 프롬프트 주입
   let loraPrefix = '';
@@ -295,7 +301,7 @@ function buildSystemInstruction(base: string, prismMode?: string, adapterMode?: 
     }
   }
 
-  return loraPrefix + (guard ? base + guard : base);
+  return loraPrefix + baseWithGuard;
 }
 
 /** Wrap stream with output token tracking */

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+// [NEXT16-LAYOUT — 2026-05-10] LayoutProps 에서 searchParams 제거됨.
+// cookie 'lang' → accept-language → 'ko' fallback.
+import { detectServerLang } from "@/lib/i18n/server-lang";
 
-// [C] 4언어 metadata — searchParams.lang 또는 cookie 기반 분기 (server-side)
 const TITLES = {
   ko: "개인정보처리방침",
   en: "Privacy Policy",
@@ -15,15 +17,8 @@ const DESCRIPTIONS = {
   zh: "Loreguard 隐私政策 — 符合 K-PIPA、GDPR、APPI、PIPL。",
 } as const;
 
-type LangKey = keyof typeof TITLES;
-
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ lang?: string }>;
-}): Promise<Metadata> {
-  const params = await searchParams;
-  const lang: LangKey = (params?.lang && params.lang in TITLES ? params.lang : "ko") as LangKey;
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await detectServerLang();
   return {
     title: TITLES[lang],
     description: DESCRIPTIONS[lang],

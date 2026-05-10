@@ -5,6 +5,9 @@ import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2, Undo2 } fr
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
 import { L4 } from '@/lib/i18n';
 import type { AppLanguage } from '@/lib/studio-types';
+// [P-08 — 2026-05-10] studio-inline-rewrite 레지스트리 통합 — inline systemInstruction 폐기.
+import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
+import { normalizeToAgentLang } from '@/lib/ai/lang-normalize';
 
 // ============================================================
 // PART 1 — 타입
@@ -153,6 +156,37 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     };
   }, [textareaRef, checkSelection, editorSelection]);
 
+  // [2026-05-09] noa:trigger-inline-rewrite 외부 키보드/버튼 신호 수신.
+  // novel-keymap (Ctrl+Shift+R) + QualityGutter Fix 버튼 → popup 강제 표시.
+  // 동작: 현재 selection 즉시 시도 → 없으면 textarea cursor 주변 ±10자.
+  useEffect(() => {
+    const handler = () => {
+      // textareaRef 경로 (legacy)
+      if (textareaRef?.current) {
+        const ta = textareaRef.current;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        if (end > start && (end - start) >= 2) {
+          checkSelection();
+          return;
+        }
+        // 선택 영역 없음 → cursor 주변 ±10자 자동 선택
+        const cursor = start;
+        const fallbackStart = Math.max(0, cursor - 10);
+        const fallbackEnd = Math.min(ta.value.length, cursor + 10);
+        if (fallbackEnd > fallbackStart) {
+          ta.setSelectionRange(fallbackStart, fallbackEnd);
+          requestAnimationFrame(checkSelection);
+        }
+        return;
+      }
+      // editorSelection 경로 (Tiptap) — prop 기반이라 외부 신호로 강제 X.
+      // 미래 확장: editor.commands.selectAround() 등 추가 가능.
+    };
+    window.addEventListener('noa:trigger-inline-rewrite', handler);
+    return () => window.removeEventListener('noa:trigger-inline-rewrite', handler);
+  }, [textareaRef, checkSelection]);
+
   // 외부 클릭 시 닫기 (cleanup 보장)
   useEffect(() => {
     if (!popup.visible) return;
@@ -240,17 +274,29 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
-    // 시스템 지시문에도 스토리 컨텍스트 포함
-    const sysCtx = storyConfig?.genre
-      ? (isKO ? ` 현재 장르: ${storyConfig.genre}.` : ` Current genre: ${storyConfig.genre}.`)
-      : '';
+    // [P-08 — 2026-05-10] studio-inline-rewrite 레지스트리 정의 활용.
+    // role + duty + no-english-thinking + ip-brand-guard + character-dna + genre-rules 자동 조립.
+    // 4언어 자동 (LANG_DIRECTIVE) — isKO 분기 폐기.
+    const genreRulesBlock = storyConfig?.genre
+      ? `Current genre: ${storyConfig.genre}. Match its conventional rhythm and dialogue tone.`
+      : undefined;
+    const characterDnaBlock = storyConfig?.characters && storyConfig.characters.length > 0
+      ? storyConfig.characters.slice(0, 5).map(c => {
+          const speech = c.speechStyle ? ` (말투: ${c.speechStyle})` : '';
+          return `- ${c.name} [${c.role}]${speech}`;
+        }).join('\n')
+      : undefined;
+
+    const systemInstruction = buildAgentSystemPrompt('studio-inline-rewrite', {
+      language: normalizeToAgentLang(language),
+      'character-dna': characterDnaBlock,
+      'genre-rules': genreRulesBlock,
+    }, { autoTrim: true });
 
     try {
       let accumulated = '';
       await streamChat({
-        systemInstruction: isKO
-          ? `당신은 소설 편집자입니다.${sysCtx} 요청된 작업만 수행하고 결과만 출력하세요. 설명이나 메타 텍스트는 금지입니다. 원문의 문체와 분위기를 유지하세요.`
-          : `You are a novel editor.${sysCtx} Perform only the requested task and output only the result. No explanations or meta-text. Preserve the original style and atmosphere.`,
+        systemInstruction,
         messages: [{ role: 'user', content: prompt }],
         onChunk: (chunk) => { accumulated += chunk; setResult(accumulated); },
         signal: ctrl.signal,

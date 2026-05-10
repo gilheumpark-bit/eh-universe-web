@@ -45,10 +45,10 @@ export default function ToolsIndexPage() {
           </h1>
           <p className="text-text-secondary text-sm max-w-2xl mb-10 leading-relaxed">
             {L4(lang, {
-              ko: "소프트웨어 스튜디오와 세계관 참조 도구를 카테고리별로 정리했습니다. 집필 전체 흐름은 NOA 스튜디오에서 이용하세요.",
-              en: "Software studios and worldbuilding references are grouped by category. Use NOA Studio for the full authoring workflow.",
-              ja: "ソフトウェアスタジオと世界観リファレンスをカテゴリ別に整理しました。フル作成フローはNOAスタジオから。",
-              zh: "软件工作室与世界观参考工具按类别整理。完整创作流程请使用 NOA 工作室。",
+              ko: "소프트웨어 스튜디오와 세계관 참조 도구를 카테고리별로 정리했습니다. 집필 전체 흐름은 Loreguard 스튜디오에서 이용하세요.",
+              en: "Software studios and worldbuilding references are grouped by category. Use Loreguard Studio for the full authoring workflow.",
+              ja: "ソフトウェアスタジオと世界観リファレンスをカテゴリ別に整理しました。フル作成フローは Loreguard スタジオから。",
+              zh: "软件工作室与世界观参考工具按类别整理。完整创作流程请使用 Loreguard 工作室。",
             })}
           </p>
 
@@ -131,10 +131,10 @@ export default function ToolsIndexPage() {
               className="inline-flex items-center gap-2 text-sm font-bold text-accent-purple hover:text-accent-amber transition-colors"
             >
               {L4(lang, {
-                ko: "NOA 스튜디오로 이동",
-                en: "Open NOA Studio",
-                ja: "NOAスタジオへ",
-                zh: "打开 NOA 工作室",
+                ko: "Loreguard 스튜디오로 이동",
+                en: "Open Loreguard Studio",
+                ja: "Loreguard スタジオへ",
+                zh: "打开 Loreguard 工作室",
               })}
             </Link>
           </div>

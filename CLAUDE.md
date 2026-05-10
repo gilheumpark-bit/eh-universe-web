@@ -205,8 +205,11 @@
 
 ### AI 호출 엔트리 역할 정의 (2026-04-23 감사 결과)
 - **Studio 본문 집필:** [src/engine/pipeline.ts:387](src/engine/pipeline.ts) `buildSystemInstruction()` — 캐릭터 DNA Tier 1/2/3, actGuide, tensionCurve 주입
-- **Tab 자동완성:** [src/app/api/complete/route.ts:22](src/app/api/complete/route.ts) `buildSystemPrompt(language)` — 한/영 분기
-- **번역 6단계:** [src/lib/build-prompt.ts](src/lib/build-prompt.ts) `buildPrompt()` — stage별 온도 + 언어별 `/no_think` 가드 주입 (Phase 3 갱신)
-- **Network Agent 검색:** [src/lib/vertex-network-agent.ts:173](src/lib/vertex-network-agent.ts) `modelPromptSpec.preamble` — 집필 보조 + HSE 4대 권리 (Phase 2 갱신)
-- **Chat 채팅/분석:** [src/app/api/chat/route.ts:273](src/app/api/chat/route.ts) `buildSystemInstruction()` — PRISM 3등급 + LoRA 어댑터
-- **공통 레지스트리:** [src/lib/ai/writing-agent-registry.ts](src/lib/ai/writing-agent-registry.ts) — 집필판 AGENT 역할 정의 집중화 (Phase 4 신설)
+- **Tab 자동완성:** [src/app/api/complete/route.ts](src/app/api/complete/route.ts) — `buildAgentSystemPrompt('studio-inline-completion')` 통합 완료. 4언어 정규화 (`normalizeToAgentLang`).
+- **번역 6단계:** [src/lib/build-prompt.ts](src/lib/build-prompt.ts) `buildPrompt()` — stage별 온도 + `/no_think` 가드. `useAgentRegistry: true` opt-in 시 레지스트리 base prepend (dual-pipeline 활성화).
+- **Network Agent 검색:** [src/lib/vertex-network-agent.ts](src/lib/vertex-network-agent.ts) `modelPromptSpec.preamble` — `buildAgentSystemPrompt('network-agent-archive')` 단일 소스 통합 (HSE 4대 권리 + 5 응답 규칙은 가드로 등록).
+- **Chat 채팅/분석:** [src/app/api/chat/route.ts](src/app/api/chat/route.ts) `buildSystemInstruction()` — PRISM 가드를 `buildSafetyEnhancedPrompt` (safety-registry) 로 통합. LoRA 어댑터 별도 유지.
+- **공통 레지스트리:** [src/lib/ai/writing-agent-registry.ts](src/lib/ai/writing-agent-registry.ts) — 집필판 AGENT 역할 정의 집중화 (Phase 4 신설 → 2026-05-10 본문 통합 완료, 11 ContextBlock + 4언어 LANG_DIRECTIVE 자동 주입)
+- **PRISM 안전 가드:** [src/lib/ai/safety-registry.ts](src/lib/ai/safety-registry.ts) — 3등급 (all-ages/teen-15/mature-18) 분리. `buildSafetyEnhancedPrompt(base, level)` + 4언어 라벨.
+- **Codex 도메인 prompt:** [src/lib/ai/codex-prompts/](src/lib/ai/codex-prompts/) — 4 도메인 (KO 웹소설 / EN fantasy / JA 라노벨 / ZH 선협) × 7 handler 매트릭스. 각 도메인 그 언어로 직접 작성. UI: [src/components/codex/CodexDomainSelector.tsx](src/components/codex/CodexDomainSelector.tsx).
+- **언어 정규화:** [src/lib/ai/lang-normalize.ts](src/lib/ai/lang-normalize.ts) — AppLanguage ↔ AgentLanguage 양방향. 비표준 별칭 흡수.

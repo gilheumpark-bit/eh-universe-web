@@ -311,3 +311,31 @@ export function processHFCPTurn(state: HFCPState, userInput: string): {
 
   return { mode, verdict, nrg, score: state.score, promptModifier };
 }
+
+// ============================================================
+// PART 9: STORY CONTEXT-AWARE COMPOSITION (Layer 1 — 2026-05-08)
+// ============================================================
+//
+// HFCP 의 promptModifier (대화 톤) + Story Context (작품 맥락) 통합.
+// useStudioAI 가 호출 — chat / generate 양쪽 prompt 에 prepend.
+// 검증과 생성 분리 해소 → AI 가 "현재 작품 상태" 인지하고 응답.
+
+import { buildStoryContextModifier, type StoryContextSnapshot } from './story-context';
+import type { AppLanguage as AppLang } from '@/lib/studio-types';
+
+export function composePromptModifier(
+  hfcpModifier: string,
+  storyContext: StoryContextSnapshot | null | undefined,
+  language: AppLang,
+  options: { storyContextCharCap?: number } = {},
+): string {
+  const storyText = storyContext
+    ? buildStoryContextModifier(storyContext, {
+        language,
+        charCap: options.storyContextCharCap ?? 500,
+      })
+    : '';
+  return [hfcpModifier, storyText]
+    .filter((s) => s && s.length > 0)
+    .join('\n\n---\n\n');
+}

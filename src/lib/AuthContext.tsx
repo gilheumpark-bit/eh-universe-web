@@ -150,8 +150,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const resolvedAuth = await lazyFirebaseAuth();
     if (!resolvedAuth) return;
     setAccessToken(null);
-    const API_KEY_STORAGE_KEYS = ['noa_api_key', 'noa_openai_key', 'noa_claude_key', 'noa_groq_key', 'noa_mistral_key'];
-    API_KEY_STORAGE_KEYS.forEach(k => localStorage.removeItem(k));
+    // [M-09 / G-01 — 2026-05-10] BYOK 키 sign-out 시 다중 prefix 패턴 전체 삭제.
+    // localStorage + sessionStorage 양쪽 검사. 누락 키 prevention.
+    //
+    // 매칭 패턴:
+    //   - 'noa_*_key' (default — noa_api_key / noa_openai_key 등)
+    //   - 'noa_*key*' (noa_apikey 같은 비표준 변형)
+    //   - 'byok_*' (BYOK 별도 prefix)
+    //   - 'apikey_*' (legacy)
+    const isByokKey = (k: string): boolean => {
+      const lower = k.toLowerCase();
+      // noa_*_key 또는 noa_*key (key 가 끝 또는 어디든)
+      if (lower.startsWith('noa_') && lower.includes('key')) return true;
+      if (lower.startsWith('byok_')) return true;
+      if (lower.startsWith('apikey_')) return true;
+      return false;
+    };
+
+    const wipeStorage = (storage: Storage | null): void => {
+      if (!storage) return;
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < storage.length; i++) {
+          const k = storage.key(i);
+          if (k && isByokKey(k)) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach(k => storage.removeItem(k));
+      } catch {
+        // storage 사용 불가 환경 — silent
+      }
+    };
+
+    wipeStorage(typeof window !== 'undefined' ? window.localStorage : null);
+    wipeStorage(typeof window !== 'undefined' ? window.sessionStorage : null);
+
     const { signOut: firebaseSignOut } = await import('firebase/auth');
     await firebaseSignOut(resolvedAuth);
   };

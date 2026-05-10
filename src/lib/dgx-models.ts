@@ -82,10 +82,22 @@ export const NO_ENGLISH_THINKING_GUARD =
 /**
  * 집필 시스템 프롬프트 빌더. 기존 systemInstruction이 있으면 뒤에 guard 문장을
  * 덧붙이고, 없으면 기본 작가 지시사항 + guard를 반환.
+ *
+ * [I-08 — 2026-05-10] writing-agent-registry 통합 호환성 명시:
+ *   레지스트리의 'no-english-thinking-korean-novel' 가드도 동일한 '/no_think'
+ *   토큰으로 시작한다. 따라서 registry 빌더 출력을 existing 으로 받아도
+ *   아래 `base.includes('/no_think')` 분기에서 자동 dedup → 가드 중복 X.
+ *
+ *   안전한 통합 호출 패턴 (마이그레이션 후 권장):
+ *     buildSparkSystemPrompt(buildAgentSystemPrompt('studio-draft', ctx))
+ *
+ *   주의: 영어/일본어/중국어 집필 호출에는 NO_ENGLISH_THINKING_GUARD 가
+ *   "첫 문자는 반드시 한글" 을 강제하므로 사용 부적합. 그 경로에서는
+ *   레지스트리 'no-think-translation' (언어 무관) 또는 별도 분기 가드 사용.
  */
 export function buildSparkSystemPrompt(existing?: string): string {
   const base = existing?.trim() ?? "당신은 'EH Universe' 세계관을 집필하는 전문 웹소설 작가입니다.";
-  if (base.includes('/no_think')) return base; // 이미 포함
+  if (base.includes('/no_think')) return base; // 이미 포함 — registry 가드도 dedup 됨
   return `${base}\n\n${NO_ENGLISH_THINKING_GUARD}`;
 }
 

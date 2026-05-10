@@ -539,7 +539,7 @@ function HomePageContent() {
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div className="relative z-10 max-w-2xl">
                 <p className="site-kicker">
-                  {T({ ko: "Loreguard — 작가 주도형 집필 IDE", en: "Loreguard — Writer-first Novel IDE", ja: "Loreguard — 作家主導型執筆IDE", zh: "Loreguard — 作家主导型写作 IDE" })}
+                  {T({ ko: "Loreguard — 소설가의 IDE", en: "Loreguard — The IDE for Novelists", ja: "Loreguard — 小説家のためのIDE", zh: "Loreguard — 小说家的 IDE" })}
                 </p>
                 <h1 className="site-title mt-5 text-4xl font-bold leading-[0.94] sm:text-5xl md:text-7xl xl:text-[5.4rem]">
                   LOREGUARD

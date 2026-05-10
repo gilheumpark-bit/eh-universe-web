@@ -33,7 +33,7 @@ export function ChapterSidebar({
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h3 className="theme-kicker">Chapters</h3>
+            <h3 className="theme-kicker">챕터 / Chapters</h3>
             <label
               className="theme-pill cursor-pointer rounded-xl px-3 py-2 text-[10px] font-bold transition-colors hover:brightness-105"
               title="지원 형식: txt, md, epub, pdf, docx"

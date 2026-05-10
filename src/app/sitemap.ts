@@ -17,10 +17,10 @@ interface SimpleEntry {
   priority: number;
 }
 
-// 다국어 대응 entry — landing/legal/공개 페이지
+// 다국어 대응 entry — landing / legal / 공개 마케팅 페이지만.
+// [Alpha non-public — 2026-05-08] /studio /translation-studio /code-studio /network /welcome 제외 (robots.txt 정합).
 const MULTILANG_PATHS: SimpleEntry[] = [
   { path: '/',                  changeFrequency: 'weekly',  priority: 1.0 },
-  { path: '/welcome',           changeFrequency: 'monthly', priority: 0.7 },
   { path: '/about',             changeFrequency: 'monthly', priority: 0.5 },
   { path: '/privacy',           changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/terms',             changeFrequency: 'yearly',  priority: 0.3 },
@@ -31,8 +31,12 @@ const MULTILANG_PATHS: SimpleEntry[] = [
   { path: '/reference',         changeFrequency: 'monthly', priority: 0.6 },
   { path: '/rulebook',          changeFrequency: 'monthly', priority: 0.6 },
   { path: '/docs',              changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/network',           changeFrequency: 'daily',   priority: 0.8 },
-  { path: '/network/guidelines',changeFrequency: 'monthly', priority: 0.4 },
+  // [2026-05-09] 누락 5건 보강 — /tools 인덱스, /tools/style-studio, /changelog, /reports, /status
+  { path: '/tools',             changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/changelog',         changeFrequency: 'weekly',  priority: 0.5 },
+  { path: '/reports',           changeFrequency: 'monthly', priority: 0.4 },
+  { path: '/status',            changeFrequency: 'weekly',  priority: 0.4 },
+  { path: '/tools/style-studio', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/tools/soundtrack',  changeFrequency: 'monthly', priority: 0.5 },
   { path: '/tools/galaxy-map',  changeFrequency: 'monthly', priority: 0.5 },
   { path: '/tools/vessel',      changeFrequency: 'monthly', priority: 0.5 },

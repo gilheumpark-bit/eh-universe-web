@@ -22,6 +22,8 @@ import { runVerificationLoop, type VerificationResult } from "@/lib/code-studio/
 import { parseErrors } from "@/lib/code-studio/pipeline/error-parser";
 import { PANEL_REGISTRY, getPanelLabel, getGroupLabel, type RightPanel, type PanelGroup, type PanelDef } from "@/lib/code-studio/core/panel-registry";
 import { useSessionRestore, type SessionSnapshot } from "@/hooks/useSessionRestore";
+// [G-13 mount — 2026-05-10] Code Studio 도 storage quota 자동 모니터.
+import { useStorageQuota } from "@/hooks/useStorageQuota";
 import { useLang } from "@/lib/LangContext";
 import { TRANSLATIONS } from "@/lib/studio-translations";
 import { L4 } from "@/lib/i18n";
@@ -144,6 +146,8 @@ function CodeStudioShellInner() {
   const tcs = TRANSLATIONS[lang.toUpperCase() as AppLanguage]?.codeStudio ?? TRANSLATIONS.KO.codeStudio;
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  // [G-13 — 2026-05-10] Code Studio 도 storage quota 자동 모니터 — critical 시 noa:alert.
+  useStorageQuota();
   
   // Theme is applied globally by UnifiedSettingsProvider in layout.tsx
 

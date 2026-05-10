@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+// [NEXT16-LAYOUT — 2026-05-10] LayoutProps 에서 searchParams 제거됨.
+// cookie 'lang' → accept-language → 'ko' fallback.
+import { detectServerLang } from "@/lib/i18n/server-lang";
 
 const TITLES = {
   ko: "AI 고지",
@@ -14,15 +17,8 @@ const DESCRIPTIONS = {
   zh: "Loreguard 使用的 AI 模型、数据处理和 BYOK 政策透明披露。",
 } as const;
 
-type LangKey = keyof typeof TITLES;
-
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ lang?: string }>;
-}): Promise<Metadata> {
-  const params = await searchParams;
-  const lang: LangKey = (params?.lang && params.lang in TITLES ? params.lang : "ko") as LangKey;
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await detectServerLang();
   return {
     title: TITLES[lang],
     description: DESCRIPTIONS[lang],

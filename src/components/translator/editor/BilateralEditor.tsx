@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
-import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2, GitCompare, Sparkles } from 'lucide-react';
+import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2, GitCompare, Sparkles, CheckSquare, Stamp } from 'lucide-react';
 import { ContextMenu } from '@/components/code-studio/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
@@ -231,6 +231,8 @@ export function BilateralEditor() {
                 { id: 'actions' as const, icon: Zap, title: 'Translate / Pipeline' },
                 { id: 'chat' as const, icon: MessageSquare, title: 'Copilot' },
                 { id: 'audit' as const, icon: Shield, title: 'Quality audit' },
+                { id: 'adoption' as const, icon: CheckSquare, title: 'Segment Adoption (dual)' },
+                { id: 'signoff' as const, icon: Stamp, title: 'Author Sign-off' },
                 { id: 'reference' as const, icon: BookOpen, title: 'References' },
               ] as const
             ).map(({ id, icon: Icon, title }) => (

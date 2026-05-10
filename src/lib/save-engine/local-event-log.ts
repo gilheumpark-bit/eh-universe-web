@@ -440,7 +440,12 @@ export async function clearEventLog(): Promise<void> {
     memoryMirror = [];
     // hydrated 를 재설정해 다음 getEventLog 호출에서 IDB 재동기화되도록.
     hydrated = false;
-    await writeBundle([]);
+    // [2026-05-09] writeChain 끝까지 대기 후 clear — 이전 logEvent 비동기 IDB write 가
+    // clearEventLog 의 writeBundle([]) 을 덮어쓰는 race 방지 (전체 jest 실행 시 flaky 원인).
+    const prev = writeChain;
+    const next = prev.catch(() => { /* noop */ }).then(() => writeBundle([]));
+    writeChain = next;
+    await next;
   } catch (err) {
     logger.warn('local-event-log', 'clearEventLog threw', err);
   }

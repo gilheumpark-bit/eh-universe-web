@@ -169,7 +169,10 @@ export async function POST(req: NextRequest) {
 
     const clientKey = normalizeUserApiKey(rawApiKey);
     const finalModel = model || DEFAULT_MODELS[provider] || 'gemini-2.5-flash';
-    const prompt = buildPrompt(body);
+    // [B.1 — 2026-05-08] raw 옵션: dual-pipeline 이 buildPrompt 를 이미 적용한 prompt 를 보낼 때
+    // server-side 에서 buildPrompt 재호출을 건너뛴다 (이중 wrap 방지).
+    const isRaw = (body as { raw?: boolean }).raw === true;
+    const prompt = isRaw ? ((body as { text?: string }).text ?? '') : buildPrompt(body);
     const promptTokens = approxTokens(prompt);
     const dynamicTemperature = stage === 4 && mode === 'novel' ? 0.4 : 0.1;
     const dynamicTopP = stage === 4 && mode === 'novel' ? 0.95 : 0.9;

@@ -14,7 +14,7 @@
 
 import React, { useRef, useEffect, useCallback, useState, useMemo, useDeferredValue } from 'react';
 import dynamic from 'next/dynamic';
-import type { AppLanguage, StoryConfig, ChatSession, Message, AppTab } from '@/lib/studio-types';
+import type { AppLanguage, StoryConfig, ChatSession, Message, AppTab, WritingMode } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import type { DirectorReport } from '@/engine/director';
 import type { HFCPState } from '@/engine/hfcp';
@@ -95,8 +95,8 @@ interface Props {
   currentSessionId: string | null;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
-  writingMode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
-  setWritingMode: (mode: 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced') => void;
+  writingMode: WritingMode;
+  setWritingMode: (mode: WritingMode) => void;
   editDraft: string;
   setEditDraft: (val: string) => void;
   editDraftRef: React.RefObject<HTMLTextAreaElement | null>;

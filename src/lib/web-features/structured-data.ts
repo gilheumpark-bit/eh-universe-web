@@ -37,7 +37,7 @@ export function buildWebAppJsonLd(): object {
     '@type': 'WebApplication',
     name: '로어가드 (Loreguard)',
     alternateName: 'Loreguard · EH',
-    description: '창작에서 번역·출판까지 잇는 집필 OS. AI 소설 창작, 6축 번역 채점, 세계관 아카이브.',
+    description: 'Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. AI 소설 창작·6축 번역 채점·세계관 아카이브 통합.',
     url: 'https://eh-universe.com',
     applicationCategory: 'CreativeWork',
     operatingSystem: 'Web Browser',

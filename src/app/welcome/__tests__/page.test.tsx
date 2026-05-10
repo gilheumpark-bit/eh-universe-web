@@ -40,7 +40,10 @@ jest.mock('@/contexts/UserRoleContext', () => ({
 
 import WelcomePage from '../page';
 
-describe('/welcome onboarding (4장 + 역할 선택)', () => {
+describe('/welcome onboarding (5장 + 역할 선택)', () => {
+  // [Track-D Phase 1.1 Round 1-5 — 2026-05-07] 슬라이드 4 → 5
+  // 4번째 슬라이드 신규: 작업 정리 노트 (창작 과정 확인서) 안내
+  // 5번째 슬라이드 (이전 4번째): 역할 선택 카드
   beforeEach(() => {
     localStorage.clear();
     mockPush.mockClear();
@@ -73,11 +76,22 @@ describe('/welcome onboarding (4장 + 역할 선택)', () => {
     expect(getByText('다음')).toBeInTheDocument();
   });
 
-  it('4장 도달 시 역할 선택 카드 4종 노출 + 다음 버튼 사라짐', () => {
+  it('4장 도달 시 작업 정리 노트 안내 슬라이드 노출 + 다음 버튼 존재', () => {
+    const { container, getByText } = render(<WelcomePage />);
+    fireEvent.click(getByText('다음')); // → 2
+    fireEvent.click(getByText('다음')); // → 3
+    fireEvent.click(getByText('다음')); // → 4 (작업 정리 노트 안내)
+    expect(container.textContent).toContain('작업 과정은 자동으로 정리됩니다');
+    // Next 버튼 아직 존재 (5번째 = 역할 선택)
+    expect(getByText('다음')).toBeInTheDocument();
+  });
+
+  it('5장 도달 시 역할 선택 카드 4종 노출 + 다음 버튼 사라짐', () => {
     const { container, getByText, queryByText } = render(<WelcomePage />);
     fireEvent.click(getByText('다음')); // → 2
     fireEvent.click(getByText('다음')); // → 3
-    fireEvent.click(getByText('다음')); // → 4 (role slide)
+    fireEvent.click(getByText('다음')); // → 4 (작업 정리 노트)
+    fireEvent.click(getByText('다음')); // → 5 (role slide)
     expect(container.textContent).toContain('어떻게 사용하시나요');
     expect(getByText('소설가')).toBeInTheDocument();
     expect(getByText('번역가')).toBeInTheDocument();
@@ -92,6 +106,7 @@ describe('/welcome onboarding (4장 + 역할 선택)', () => {
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음'));
+    fireEvent.click(getByText('다음')); // → 5번째 슬라이드 (역할 선택)
     fireEvent.click(getByText('소설가'));
     expect(localStorage.getItem('eh-onboarded')).toBe('1');
     expect(mockSetRole).toHaveBeenCalledWith('writer');
@@ -103,6 +118,7 @@ describe('/welcome onboarding (4장 + 역할 선택)', () => {
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음'));
+    fireEvent.click(getByText('다음')); // → 5번째 슬라이드 (역할 선택)
     fireEvent.click(getByText('번역가'));
     expect(mockSetRole).toHaveBeenCalledWith('translator');
     expect(mockPush).toHaveBeenCalledWith('/translation-studio');
@@ -116,10 +132,10 @@ describe('/welcome onboarding (4장 + 역할 선택)', () => {
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 
-  it('Slide 인디케이터 4개 렌더링 + 클릭으로 특정 Slide 이동 가능', () => {
+  it('Slide 인디케이터 5개 렌더링 + 클릭으로 특정 Slide 이동 가능', () => {
     const { container } = render(<WelcomePage />);
     const indicators = container.querySelectorAll('[aria-label^="Slide"]');
-    expect(indicators).toHaveLength(4);
+    expect(indicators).toHaveLength(5);
     // 3번째 인디케이터 클릭
     fireEvent.click(indicators[2]);
     expect(container.textContent).toContain('같이 하세요');

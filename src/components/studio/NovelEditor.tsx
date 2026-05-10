@@ -3,15 +3,25 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import React, { useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useCallback, useRef, useImperativeHandle, useState, forwardRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { NovelKeymap } from '@/components/studio/extensions/novel-keymap';
 import { InlineCompletion } from '@/components/studio/extensions/inline-completion';
+// [Phase A-4 — 2026-05-07] Symbol Index 본문 데코레이션 (Phase B Symbol IDE).
+import { SymbolDecorationExtension } from '@/components/studio/extensions/symbol-decoration';
+// [Phase A-5 — 2026-05-07] Breakpoint Gutter (Phase D Story Debugger).
+import { BreakpointGutterExtension } from '@/components/studio/extensions/breakpoint-gutter';
+// [연결 #1 — 2026-05-07] Symbol hover quick info — symbolIndex + episodes 주입 시 활성.
+import { SymbolHoverCard } from '@/components/studio/symbol-ide/SymbolHoverCard';
+import { buildHoverInfo } from '@/lib/symbol-index/find-references';
+import type { HoverInfo } from '@/lib/symbol-index/types';
 import { L4 } from '@/lib/i18n';
-import type { AppLanguage } from '@/lib/studio-types';
+import type { AppLanguage, EpisodeManuscript, Character } from '@/lib/studio-types';
+import type { SymbolIndex } from '@/lib/symbol-index/types';
+import type { Breakpoint } from '@/lib/story-debugger/types';
 
 export interface NovelEditorSelection {
   from: number;
@@ -34,6 +44,14 @@ interface NovelEditorProps {
   className?: string;
   language?: AppLanguage;
   onSelectionChange?: (selection: NovelEditorSelection | null) => void;
+  /** [Phase A-4] Symbol Index — 주입 시 본문 underline + hover 트리거 */
+  symbolIndex?: SymbolIndex;
+  /** [연결 #1] 모든 episodes — Symbol Hover quick info 의 references count + 최근 화수 lookup */
+  episodes?: EpisodeManuscript[];
+  /** [연결 #1] 캐릭터 풀 — Symbol Hover speechSignature lookup */
+  characters?: Character[];
+  /** [Phase A-5] 현재 episode 의 breakpoints — 좌측 거터 표시 + 클릭 토글 */
+  breakpoints?: Breakpoint[];
   'data-zen-editor'?: boolean;
 }
 
@@ -42,13 +60,66 @@ interface NovelEditorProps {
 // ============================================================
 export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
   function NovelEditor(
-    { content, onChange, placeholder, readOnly = false, className, language, onSelectionChange, ...rest },
+    { content, onChange, placeholder, readOnly = false, className, language, onSelectionChange, symbolIndex, episodes, characters, breakpoints, ...rest },
     ref,
   ) {
     // Debounce timer for onChange
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Guard against external content → editor loops
     const suppressUpdateRef = useRef(false);
+
+    // [연결 #1 — 2026-05-07] Symbol hover state — .symbol-deco mouseover 시 표시.
+    const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
+    const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+    const hoverHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleSymbolMouseOver = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!symbolIndex) return;
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        const symbolEl = target.closest<HTMLElement>('.symbol-deco');
+        if (!symbolEl) return;
+        const symbolId = symbolEl.dataset.symbolId;
+        if (!symbolId) return;
+
+        // [G] 동일 symbol 위 hover 유지 시 hide timer 만 취소, 재계산 X
+        if (hoverHideTimerRef.current) {
+          clearTimeout(hoverHideTimerRef.current);
+          hoverHideTimerRef.current = null;
+        }
+        if (hoverInfo?.symbol.id === symbolId) {
+          return;
+        }
+
+        const info = buildHoverInfo(symbolId, episodes ?? [], symbolIndex, characters);
+        if (!info) return;
+        const rect = symbolEl.getBoundingClientRect();
+        setHoverInfo(info);
+        setHoverPos({ x: rect.left, y: rect.bottom + 6 });
+      },
+      [symbolIndex, episodes, characters, hoverInfo],
+    );
+
+    const handleSymbolMouseOut = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+      // [C] hovered 가 카드 또는 같은 symbol 안이면 닫지 않음 — relatedTarget 체크
+      const related = e.relatedTarget as Node | null;
+      if (related && (related as HTMLElement).closest?.('.symbol-deco, [role="tooltip"]')) {
+        return;
+      }
+      // [G] 짧은 grace period — 빠른 mouseout-mouseover 깜빡임 방지
+      if (hoverHideTimerRef.current) clearTimeout(hoverHideTimerRef.current);
+      hoverHideTimerRef.current = setTimeout(() => {
+        setHoverInfo(null);
+        setHoverPos(null);
+      }, 150);
+    }, []);
+
+    useEffect(() => {
+      return () => {
+        if (hoverHideTimerRef.current) clearTimeout(hoverHideTimerRef.current);
+      };
+    }, []);
 
     const editor = useEditor({
       extensions: [
@@ -75,6 +146,14 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
         CharacterCount,
         NovelKeymap,
         InlineCompletion,
+        // [Phase A-4 — 2026-05-07] Symbol Index 데코레이션 — symbolIndex 주입 시만 활성.
+        ...(symbolIndex
+          ? [SymbolDecorationExtension.configure({ index: symbolIndex, className: 'symbol-deco' })]
+          : []),
+        // [Phase A-5 — 2026-05-07] Breakpoint Gutter — breakpoints 주입 시만 활성.
+        ...(breakpoints
+          ? [BreakpointGutterExtension.configure({ breakpoints, gutterWidth: 24 })]
+          : []),
       ],
       editable: !readOnly,
       content: textToHtml(content),
@@ -144,6 +223,37 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
       };
     }, []);
 
+    // [연결 #3 — 2026-05-07] Snippet Palette 'noa:snippet-insert' listener — caret 위치 삽입.
+    // [연결 #4 — 2026-05-07] Multi-cursor 'noa:manuscript-replace' listener — 본문 전체 교체.
+    // [C] useEditor 호출 후로 위치 이동 — block-scoped 'editor' 의존성 보장.
+    useEffect(() => {
+      if (typeof window === 'undefined') return;
+
+      const insertHandler = (e: Event) => {
+        const detail = (e as CustomEvent<{ text: string }>).detail;
+        if (!detail?.text) return;
+        if (!editor || readOnly) return;
+        editor.chain().focus().insertContent(detail.text).run();
+      };
+
+      const replaceHandler = (e: Event) => {
+        const detail = (e as CustomEvent<{ newText: string }>).detail;
+        if (typeof detail?.newText !== 'string') return;
+        if (!editor || readOnly) return;
+        suppressUpdateRef.current = true;
+        editor.commands.setContent(textToHtml(detail.newText), { emitUpdate: false });
+        suppressUpdateRef.current = false;
+        onChange(detail.newText);
+      };
+
+      window.addEventListener('noa:snippet-insert', insertHandler as EventListener);
+      window.addEventListener('noa:manuscript-replace', replaceHandler as EventListener);
+      return () => {
+        window.removeEventListener('noa:snippet-insert', insertHandler as EventListener);
+        window.removeEventListener('noa:manuscript-replace', replaceHandler as EventListener);
+      };
+    }, [editor, readOnly, onChange]);
+
     // ============================================================
     // PART 4 — File drag-and-drop (.txt / .md)
     // ============================================================
@@ -183,9 +293,23 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
         className={`novel-editor-wrapper ${className ?? ''}`}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
+        onMouseOver={handleSymbolMouseOver}
+        onMouseOut={handleSymbolMouseOut}
         {...zenAttr}
       >
         <EditorContent editor={editor} />
+        {/* [연결 #1 — 2026-05-07] Symbol hover quick info — fixed 위치 floating */}
+        {hoverInfo && hoverPos && (
+          <SymbolHoverCard
+            hoverInfo={hoverInfo}
+            language={language ?? 'KO'}
+            position={hoverPos}
+            onClose={() => {
+              setHoverInfo(null);
+              setHoverPos(null);
+            }}
+          />
+        )}
         {/* scoped styles for ProseMirror element */}
         <style jsx global>{`
           .novel-editor-wrapper .ProseMirror {

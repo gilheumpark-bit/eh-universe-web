@@ -1,0 +1,44 @@
+{
+  "comment": "Loreguard CLI npm package — 별도 publish 시 참조 manifest. 본 파일은 빌드 스크립트로 생성될 dist/cli/package.json 의 source.",
+  "name": "@loreguard/cli",
+  "version": "0.1.0",
+  "description": "Loreguard CLI — 5-axis lint / Reader simulation / Symbol Index for novelists. The IDE for Novelists.",
+  "license": "MIT",
+  "author": "Loreguard",
+  "homepage": "https://ehsu.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loreguard/loreguard-web"
+  },
+  "keywords": [
+    "loreguard",
+    "novel-ide",
+    "novelist",
+    "lint",
+    "writing",
+    "manuscript",
+    "verification",
+    "story-check"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "loreguard": "dist/bin/loreguard.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.cli.json",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}

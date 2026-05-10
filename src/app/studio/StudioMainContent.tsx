@@ -172,15 +172,33 @@ export default function StudioMainContent({ children }: { children?: React.React
   const handleCommandAction = useCallback((actionId: string) => {
     switch (actionId) {
       case 'new-session': createNewSession(); break;
-      case 'export-txt': window.dispatchEvent(new Event('noa:export-txt')); break;
+      // [2026-05-09] export-txt/epub/switch-branch — StudioShell 에 listener 연결됨.
+      case 'export-txt':
+        window.dispatchEvent(new Event('noa:export-txt'));
+        break;
       case 'print': handlePrint(); break;
       case 'toggle-focus': setFocusMode(prev => !prev); break;
       case 'toggle-shortcuts': setShowShortcuts(prev => !prev); break;
       case 'save-now': triggerSave(); break;
       case 'open-settings': handleTabChange('settings'); break;
-      case 'switch-branch': window.dispatchEvent(new Event('noa:switch-branch')); break;
-      case 'export-epub': window.dispatchEvent(new Event('noa:export-epub')); break;
-      case 'translate-current': window.dispatchEvent(new Event('noa:translate-current')); break;
+      case 'switch-branch':
+        window.dispatchEvent(new Event('noa:switch-branch'));
+        break;
+      case 'export-epub':
+        window.dispatchEvent(new Event('noa:export-epub'));
+        break;
+      case 'translate-current': {
+        // [2026-05-09] Studio → Translation Studio handoff — 기존 URL query (?from=<sessionId>) 활용.
+        // TranslatorStudioApp.tsx:461-463 이 이미 ?from= 파라미터 hydrate 처리.
+        if (!currentSessionId) {
+          window.dispatchEvent(new CustomEvent('noa:alert', { detail: { msg: '활성 세션이 없습니다.', kind: 'warning' } }));
+          break;
+        }
+        window.dispatchEvent(new Event('noa:translate-current'));
+        // 새 탭 — 사용자 의식적 전환 + 작업 중단 X
+        window.open(`/translation-studio?from=${encodeURIComponent(currentSessionId)}`, '_blank', 'noopener');
+        break;
+      }
       case 'toggle-assistant': setRightPanelOpen(prev => !prev); break;
       case 'open-api-key': setShowApiKeyModal(true); break;
       case 'open-marketplace': {
@@ -206,6 +224,25 @@ export default function StudioMainContent({ children }: { children?: React.React
     window.addEventListener('noa:command-action', handler);
     return () => window.removeEventListener('noa:command-action', handler);
   }, [handleCommandAction]);
+
+  // [2026-05-09] noa:open-settings — ManuscriptTab 백업 alert 등 외부 트리거 수신.
+  // detail.section 으로 특정 section (backups/api/plugins...) 전달 가능.
+  useEffect(() => {
+    const handler = () => {
+      handleTabChange('settings');
+    };
+    window.addEventListener('noa:open-settings', handler);
+    return () => window.removeEventListener('noa:open-settings', handler);
+  }, [handleTabChange]);
+
+  // [2026-05-09] noa:new-episode — ManuscriptView 새 에피소드 버튼 등 외부 트리거 수신.
+  useEffect(() => {
+    const handler = () => {
+      createNewSession();
+    };
+    window.addEventListener('noa:new-episode', handler);
+    return () => window.removeEventListener('noa:new-episode', handler);
+  }, [createNewSession]);
 
   const paletteActions = useMemo<StudioAction[]>(() => [
     {
@@ -547,7 +584,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       {/* First-session keyboard shortcuts hint */}
       {shortcutsHintVisible && !focusMode && (
         <div className="flex items-center justify-center gap-4 px-4 py-1 bg-bg-secondary/60 border-t border-border/30 text-[10px] text-text-tertiary shrink-0">
-          <span>{L4(language, { ko: 'F5: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'F5: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus', ja: 'F5: 執筆 | Ctrl+K: 検索 | Ctrl+S: 保存 | F11: 集中モード', zh: 'F5: 写作 | Ctrl+K: 搜索 | Ctrl+S: 保存 | F11: 专注模式' })}</span>
+          <span>{L4(language, { ko: 'Ctrl+4: 집필 | Ctrl+K: 검색 | Ctrl+S: 저장 | F11: 집중모드', en: 'Ctrl+4: Write | Ctrl+K: Search | Ctrl+S: Save | F11: Focus', ja: 'Ctrl+4: 執筆 | Ctrl+K: 検索 | Ctrl+S: 保存 | F11: 集中モード', zh: 'Ctrl+4: 写作 | Ctrl+K: 搜索 | Ctrl+S: 保存 | F11: 专注模式' })}</span>
           <button onClick={dismissShortcutsHint} className="text-text-quaternary hover:text-text-secondary transition-colors px-1" aria-label="Dismiss">
             <X className="w-3 h-3" />
           </button>

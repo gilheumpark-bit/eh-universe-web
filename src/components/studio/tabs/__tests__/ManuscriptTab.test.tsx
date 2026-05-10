@@ -29,6 +29,29 @@ jest.mock('@/components/studio/ManuscriptView', () => ({
   default: () => <div data-testid="manuscript-view-mock" />,
 }));
 
+// [2026-05-09] octokit 8.x 는 ESM-only — Jest CommonJS 환경에서 import 불가.
+// github-sync 체인 (useGitHubAutoSync → useGitHubSync → github-sync) 모두 mock.
+jest.mock('octokit', () => ({ Octokit: class MockOctokit {} }));
+jest.mock('@/lib/github-sync', () => ({
+  __esModule: true,
+  isGitHubSyncEnabled: () => false,
+  pushManuscript: jest.fn(),
+  pullManuscript: jest.fn(),
+  default: {},
+}));
+jest.mock('@/hooks/useGitHubSync', () => ({
+  __esModule: true,
+  useGitHubSync: () => ({ status: 'idle', sync: jest.fn() }),
+  default: () => ({ status: 'idle', sync: jest.fn() }),
+}));
+jest.mock('@/hooks/useGitHubAutoSync', () => ({
+  __esModule: true,
+  useGitHubAutoSync: () => ({ status: 'idle' }),
+  isGitHubAutoSyncEnabled: () => false,
+  setGitHubAutoSyncEnabled: jest.fn(),
+  default: () => ({ status: 'idle' }),
+}));
+
 jest.mock('@/components/studio/AuthorDashboard', () => ({
   __esModule: true,
   default: () => <div data-testid="author-dashboard-mock" />,

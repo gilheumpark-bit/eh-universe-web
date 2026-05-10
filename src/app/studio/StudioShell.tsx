@@ -17,8 +17,16 @@ import MobileTabBar from '@/components/studio/MobileTabBar';
 import MobileDrawer from '@/components/studio/MobileDrawer';
 import MobileSketchImportBanner from '@/components/studio/MobileSketchImportBanner';
 import FirstVisitOnboarding from '@/components/studio/FirstVisitOnboarding';
+// [A.2 — 2026-05-08] 세션 스냅샷 + 마지막 작업 카드 — 인체공학 §"세션 간 복구"
+import { useSessionSnapshot } from '@/hooks/useSessionSnapshot';
+import { LastTaskCard } from '@/components/studio/LastTaskCard';
+// [A.3 — 2026-05-08] Cmd Palette — Ctrl+P 명령 진입점
+import { useCmdPalette } from '@/hooks/useCmdPalette';
+import { CmdPaletteOverlay } from '@/components/studio/CmdPaletteOverlay';
 import { useProjectManager } from '@/hooks/useProjectManager';
 import { useAutoVersionSnapshot } from '@/hooks/useAutoVersionSnapshot';
+import { useCreativeProcessAutoTrigger } from '@/hooks/useCreativeProcessAutoTrigger';
+import { useCreativeEventLogger } from '@/hooks/useCreativeEventLogger';
 import { saveProjects } from '@/lib/project-migration';
 import { useStudioUX } from '@/hooks/useStudioUX';
 import { useStudioSync } from '@/hooks/useStudioSync';
@@ -29,6 +37,15 @@ import { useStudioImport } from '@/hooks/useStudioImport';
 import { useStudioQuickStart } from '@/hooks/useStudioQuickStart';
 import { useStudioSessionActions } from '@/hooks/useStudioSessionActions';
 import { StudioConfigProvider, StudioUIProvider } from '@/contexts/StudioContext';
+// [P-01 mount — 2026-05-10] writing-agent-registry 의 token 압박 경고 토스트.
+import TokenBudgetToast from '@/components/studio/TokenBudgetToast';
+// [G-19 mount — 2026-05-10] autoTrim 의 contextBlock 절삭 알림 토스트.
+import ContextTrimmedToast from '@/components/studio/ContextTrimmedToast';
+// [M-05 호출 측 mount — 2026-05-10] PRISM 거절 감지 친화 메시지 토스트.
+import PrismRejectionToast from '@/components/studio/PrismRejectionToast';
+import { toAgentLang } from '@/lib/ai/lang-normalize';
+// [M-08 — 2026-05-10] localStorage / IndexedDB quota 자동 모니터 — critical 시 noa:alert 토스트.
+import { useStorageQuota } from '@/hooks/useStorageQuota';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
@@ -47,6 +64,12 @@ const MobileStudioView = dynamic(() => import('@/components/studio/MobileStudioV
 const RenameDialog = dynamic(() => import('@/components/studio/RenameDialog'), { ssr: false });
 const MultiTabBanner = dynamic(() => import('@/components/studio/MultiTabBanner'), { ssr: false });
 const StudioMountProviders = dynamic(() => import('@/components/studio/StudioMountProviders'), { ssr: false });
+// [Phase A-1 — 2026-05-07] Novel IDE Launcher (FAB) — 5 Phase 신규 패널 통합 진입.
+const NovelIDELauncher = dynamic(() => import('@/components/studio/novel-ide/NovelIDELauncher').then((m) => m.NovelIDELauncher), { ssr: false });
+// [후속 A-1 — 2026-05-07] Format on Save 자동 wiring.
+import { useFormatOnSave } from '@/hooks/useFormatOnSave';
+// [정합 재조정 — 2026-05-07] IDE Settings — formatOnSaveAutoApply 토글.
+import { useNovelIDESettings } from '@/hooks/useNovelIDESettings';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useStudioMounts } from '@/hooks/useStudioMounts';
 import { useEnvironmentSanity } from '@/hooks/useEnvironmentSanity';
@@ -72,6 +95,27 @@ export default function StudioShell() {
     const map: Record<string, AppLanguage> = { ko: 'KO', en: 'EN', ja: 'JP', zh: 'CN' };
     setLanguage(map[lang] || 'KO');
   }, [lang]);
+
+  // [A.2 — 2026-05-08] 세션 스냅샷 자동 + 마지막 작업 카드 (휴식 후 5초 이내 컨텍스트 복구)
+  const sessionSnapshot = useSessionSnapshot(pathname ?? undefined);
+
+  // [P0-1 — 2026-05-09 코드 실측 약점 보완] Cmd Palette 명령 등록.
+  // 기존: hook + overlay 만 mount 됐고 register() 호출 0 → 사용 불가.
+  // 수정: 8 핵심 명령 등록. handleTabChange (line ~767) 가 hoisting 안 되므로 ref 우회.
+  const cmdPalette = useCmdPalette();
+  const handleTabChangeRef = useRef<((tab: AppTab) => void) | null>(null);
+  useEffect(() => {
+    return cmdPalette.register([
+      { id: 'tab-world', label: language === 'KO' ? '세계관 (Ctrl+1)' : 'World (Ctrl+1)', shortcut: 'Ctrl+1', category: 'Navigation', action: () => handleTabChangeRef.current?.('world') },
+      { id: 'tab-characters', label: language === 'KO' ? '인물 (Ctrl+2)' : 'Characters (Ctrl+2)', shortcut: 'Ctrl+2', category: 'Navigation', action: () => handleTabChangeRef.current?.('characters') },
+      { id: 'tab-rulebook', label: language === 'KO' ? '룰북 (Ctrl+3)' : 'Rulebook (Ctrl+3)', shortcut: 'Ctrl+3', category: 'Navigation', action: () => handleTabChangeRef.current?.('rulebook') },
+      { id: 'tab-writing', label: language === 'KO' ? '집필 (Ctrl+4)' : 'Writing (Ctrl+4)', shortcut: 'Ctrl+4', category: 'Navigation', action: () => handleTabChangeRef.current?.('writing') },
+      { id: 'tab-style', label: language === 'KO' ? '문체 (Ctrl+5)' : 'Style (Ctrl+5)', shortcut: 'Ctrl+5', category: 'Navigation', action: () => handleTabChangeRef.current?.('style') },
+      { id: 'tab-manuscript', label: language === 'KO' ? '원고 (Ctrl+6)' : 'Manuscript (Ctrl+6)', shortcut: 'Ctrl+6', category: 'Navigation', action: () => handleTabChangeRef.current?.('manuscript') },
+      { id: 'tab-history', label: language === 'KO' ? '이력 (Ctrl+7)' : 'History (Ctrl+7)', shortcut: 'Ctrl+7', category: 'Navigation', action: () => handleTabChangeRef.current?.('history') },
+      { id: 'tab-settings', label: language === 'KO' ? '설정 (Ctrl+8)' : 'Settings (Ctrl+8)', shortcut: 'Ctrl+8', category: 'Navigation', action: () => handleTabChangeRef.current?.('settings') },
+    ]);
+  }, [cmdPalette, language]);
 
   // 모바일 감지 — 전체 PC UX 대신 경량 스케치 뷰로 교체
   // 사용자가 명시적으로 PC 뷰 강제 모드(?force=desktop)를 선택하면 우회 가능
@@ -113,9 +157,83 @@ export default function StudioShell() {
 
   // [auto version snapshot 2026-04-25] README "300자+ 변경 시 자동 스냅샷" 약속의 wiring.
   // 이전: saveVersionedBackup() 함수만 있고 자동 트리거 0 — 사용자가 모름.
-  // 이후: 누적 char delta 300+ 도달 시 IndexedDB 에 자동 스냅샷 (5분 cooldown).
+  // 이후: 누적 char delta 300+ 도달 시 IndexedDB 에 자동 스냅샷.
   // 작가가 짧은 편집 (오타 수정 등)으로 스냅샷 폭주 안 함.
-  useAutoVersionSnapshot({ projects });
+  // [Round 1-2 — 2026-05-07] cooldown 5분 → 1분 (작가 활동 정밀도 ↑, HUMAN_REVISION trigger 빈도 12배 ↑)
+  useAutoVersionSnapshot({ projects, cooldownMs: 60_000 });
+
+  // [M-08 — 2026-05-10] localStorage/IndexedDB quota 모니터 활성화.
+  // 70% warning / 90% critical → noa:alert 자동 디스패치 → StudioShell 의 alertToast 가 표시.
+  useStorageQuota();
+
+  // [Track-D Phase 1.1 Round 2-2 — 2026-05-07] Scene/Character/World 편집 자동 누적.
+  // useAutoVersionSnapshot 은 manuscripts/messages charDelta 만 추적 — 그 외 영역 보강.
+  useCreativeProcessAutoTrigger({ projects, currentProjectId });
+
+  // [Phase 1.2-4 — 2026-05-07] useCreativeEventLogger 활성화.
+  // useCreativeProcessAutoTrigger 는 signature hash 기반 비정밀 추적 (1분 cooldown).
+  // creativeLogger 는 Scene/Character handler 가 직접 호출하는 정밀 trigger 로 보완.
+  // 두 시스템은 상호보완 — auto-trigger 가 누락한 변경(같은 cooldown 내 2건+) 을 catch.
+  // window 에 mount 해 자식 컴포넌트가 props drilling 없이 호출 가능 (Phase 1.2-5 에서 활용).
+  // [Loop 1 fix — 2026-05-07] inline cast 제거 — types/creative-logger-global.d.ts 의 Window 확장 사용.
+  const creativeLogger = useCreativeEventLogger(currentProjectId);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__creativeLogger = creativeLogger;
+    return () => {
+      try {
+        delete window.__creativeLogger;
+      } catch { /* noop */ }
+    };
+  }, [creativeLogger]);
+
+  // [Track-D Phase 1 — 2026-05-07] CreativeProcessSection 이 read 할 수 있게
+  // currentProjectId 를 localStorage 에 mirror. Settings 탭이 별도 라우트로
+  // mount 되어도 작동하도록 격리 강도 ↑.
+  // P0-2: 같은 탭 내 프로젝트 전환 감지용 CustomEvent 동시 디스패치.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (currentProjectId) {
+        window.localStorage.setItem('noa_studio_currentProjectId', currentProjectId);
+      } else {
+        window.localStorage.removeItem('noa_studio_currentProjectId');
+      }
+      window.dispatchEvent(new CustomEvent('noa:project-switched', {
+        detail: { projectId: currentProjectId ?? null },
+      }));
+    } catch { /* noop */ }
+  }, [currentProjectId]);
+
+  // [Track-D Phase 1 P0-5 Trigger 3 — 2026-05-07] HUMAN_REVISION 자동 누적.
+  // useAutoVersionSnapshot 의 noa:version-snapshot-saved 이벤트 (5분 cooldown 보장) 에 piggyback.
+  // 별도 hash 비교 로직 X — 이미 useAutoVersionSnapshot 이 charDelta>=300 검증.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ totalChars: number; delta: number }>).detail;
+      if (!currentProjectId) return;
+      (async () => {
+        try {
+          const cp = await import('@/lib/creative-process');
+          await cp.recordCreativeEvent({
+            projectId: currentProjectId,
+            targetType: 'manuscript',
+            targetId: `auto-snapshot-${Date.now()}`,
+            eventType: 'edit',
+            actorType: 'human',
+            actorId: 'author',
+            originType: 'HUMAN_REVISION',
+            beforeHash: null,
+            afterHash: null, // 본문 SHA-256 은 cooldown 패턴상 생략 (5분당 1건만)
+            note: `auto-snapshot delta=${detail?.delta ?? 0} total=${detail?.totalChars ?? 0}`,
+          });
+        } catch { /* noop */ }
+      })();
+    };
+    window.addEventListener('noa:version-snapshot-saved', handler);
+    return () => window.removeEventListener('noa:version-snapshot-saved', handler);
+  }, [currentProjectId]);
 
   const VALID_TABS: AppTab[] = ['world', 'writing', 'history', 'settings', 'characters', 'rulebook', 'style', 'manuscript', 'docs', 'visual'];
   const [activeTab, setActiveTabRaw] = useState<AppTab>(() => {
@@ -486,6 +604,16 @@ export default function StudioShell() {
   projectsRefForFlush.current = projects;
   const editDraftRefForFlush = useRef(editDraft);
   editDraftRefForFlush.current = editDraft;
+
+  // [후속 A-1 — 2026-05-07] Format on Save — saveFlush 직전 draft 자동 정렬.
+  // [정합 재조정 — 2026-05-07] IDE Settings (formatOnSaveAutoApply) AND useFormatOnSave (rule level)
+  // 두 토글 AND — 마스터 ON + rule ON 일 때만 적용.
+  const formatOnSave = useFormatOnSave();
+  const { settings: ideSettings } = useNovelIDESettings();
+  const applyFormatRef = useRef(formatOnSave.applyFormat);
+  applyFormatRef.current = formatOnSave.applyFormat;
+  const formatEnabledRef = useRef(formatOnSave.settings.enabled && ideSettings.formatOnSaveAutoApply);
+  formatEnabledRef.current = formatOnSave.settings.enabled && ideSettings.formatOnSaveAutoApply;
   const currentSessionIdRefForFlush = useRef(currentSessionId);
   currentSessionIdRefForFlush.current = currentSessionId;
   const writingModeRefForFlush = useRef(writingMode);
@@ -494,9 +622,21 @@ export default function StudioShell() {
   useEffect(() => {
     saveFlushRef.current = () => {
       const sid = currentSessionIdRefForFlush.current;
-      const draft = editDraftRefForFlush.current;
+      let draft = editDraftRefForFlush.current;
       const mode = writingModeRefForFlush.current;
       const currentProjects = projectsRefForFlush.current;
+
+      // [후속 A-1 — 2026-05-07] Format on Save — settings.enabled 시 draft 자동 정렬.
+      // [C] format 결과가 원본과 다르면 setEditDraft 로 NovelEditor sync.
+      if (formatEnabledRef.current && draft && mode === 'edit') {
+        const formatted = applyFormatRef.current(draft);
+        if (formatted !== draft) {
+          draft = formatted;
+          editDraftRefForFlush.current = formatted;
+          // [G] setEditDraft 비동기 — 다음 렌더에 NovelEditor 본문 갱신
+          setEditDraft(formatted);
+        }
+      }
 
       // Step 1: editDraft 임시 저장 (synchronous). quota 초과 시 throw → triggerSave가 잡음.
       if (sid && draft) {
@@ -624,6 +764,8 @@ export default function StudioShell() {
     window.addEventListener('noa:open-quickstart', handler);
     return () => window.removeEventListener('noa:open-quickstart', handler);
   }, [openQuickStart]);
+  // [2026-05-09] command palette listener — export-txt/export-epub/switch-branch
+  // 는 exportTXT/handleExportEPUB destructure 이후 (line 817~) 등록 — 아래 별도 useEffect 참조.
 
   const prevFocusRef = useRef<Element | null>(null);
   const anyModalOpen = showApiKeyModal || showShortcuts || confirmState.open || saveSlotModalOpen || !!moveModal || showQuickStartModal || renameDialogOpen;
@@ -672,6 +814,11 @@ export default function StudioShell() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, writingMode, editDraft, language, showConfirm, closeConfirm, currentSessionId]);
 
+  // [P0-1 — 2026-05-09] handleTabChange 가 정의된 후 ref 채우기 — Cmd Palette 명령들이 ref.current 호출.
+  useEffect(() => {
+    handleTabChangeRef.current = handleTabChange;
+  }, [handleTabChange]);
+
   const {
     deleteSession, clearAllSessions, startRename, confirmRename,
     handleReorderSessions, handleVersionSwitch, handleTypoFix
@@ -697,6 +844,26 @@ export default function StudioShell() {
     !searchQuery || m.content.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
   const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
+
+  // [2026-05-09] command palette 명령 listener — exportTXT/handleExportEPUB destructure 이후 위치.
+  useEffect(() => {
+    const handleExportTxt = () => exportTXT();
+    const handleExportEpub = () => handleExportEPUB();
+    const handleSwitchBranch = () => {
+      setRightPanelOpen(true);
+      window.dispatchEvent(new CustomEvent('noa:alert', {
+        detail: { msg: '우측 패널의 평행우주 브랜치 섹션에서 브랜치를 선택할 수 있습니다.', kind: 'info' }
+      }));
+    };
+    window.addEventListener('noa:export-txt', handleExportTxt);
+    window.addEventListener('noa:export-epub', handleExportEpub);
+    window.addEventListener('noa:switch-branch', handleSwitchBranch);
+    return () => {
+      window.removeEventListener('noa:export-txt', handleExportTxt);
+      window.removeEventListener('noa:export-epub', handleExportEpub);
+      window.removeEventListener('noa:switch-branch', handleSwitchBranch);
+    };
+  }, [exportTXT, handleExportEPUB, setRightPanelOpen]);
 
 
 
@@ -951,8 +1118,8 @@ export default function StudioShell() {
           onDesktopCTA={() => {
             if (typeof navigator !== 'undefined' && navigator.share) {
               navigator.share({
-                title: '로어가드 집필 스튜디오',
-                text: '로어가드 (Loreguard) 소설 스튜디오 (데스크톱에서 열기)',
+                title: '로어가드 — 소설가의 IDE',
+                text: '로어가드 (Loreguard) — 소설가의 IDE / The IDE for Novelists (데스크톱에서 열기)',
                 url: typeof window !== 'undefined' ? `${window.location.origin}/studio` : '',
               }).catch(() => {/* user cancelled */});
             } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -1003,6 +1170,17 @@ export default function StudioShell() {
       <MobileSketchImportBanner />
 
       <FirstVisitOnboarding />
+
+      {/* [A.2 — 2026-05-08] 마지막 작업 카드 — 휴식 후 30초 floating */}
+      <LastTaskCard
+        snapshot={sessionSnapshot.lastSnapshot}
+        visible={sessionSnapshot.cardVisible}
+        onDismiss={sessionSnapshot.dismissCard}
+        language={language === 'KO' ? 'ko' : language === 'JP' ? 'ja' : language === 'CN' ? 'zh' : 'en'}
+      />
+
+      {/* [A.3 + P0-1 — 2026-05-09] Cmd Palette overlay — palette state 공유 (props 로 전달) */}
+      <CmdPaletteOverlay palette={cmdPalette} language={language === 'KO' ? 'ko' : language === 'JP' ? 'ja' : language === 'CN' ? 'zh' : 'en'} />
 
       <MobileDrawer
         open={mobileDrawerOpen}
@@ -1084,6 +1262,17 @@ export default function StudioShell() {
         </StudioMainContent>
       </StudioProvider>
 
+      {/* [Phase A-1 — 2026-05-07] Novel IDE Launcher (FAB + Drawer). */}
+      {/* [검증 루프 fix — 2026-05-08] messages 추가 — L3 Completion Gap 자체 trigger 활성. */}
+      <NovelIDELauncher
+        config={currentSession?.config ?? null}
+        episodes={currentSession?.config?.manuscripts ?? null}
+        projectId={currentProjectId ?? 'unknown'}
+        messages={currentSession?.messages ?? null}
+        language={language}
+      />
+
+
       <RenameDialog
         open={renameDialogOpen}
         projects={projects}
@@ -1131,6 +1320,12 @@ export default function StudioShell() {
       />
     </div>
     </div>
+    {/* [P-01 mount — 2026-05-10] 전역 token 압박 토스트 — 모든 buildAgentSystemPrompt 호출 자동 측정 */}
+    <TokenBudgetToast language={toAgentLang(language)} />
+    {/* [G-19 mount — 2026-05-10] 전역 context 자동 절삭 알림 — autoTrim 발생 시 어떤 block 이 제거됐는지 표시 */}
+    <ContextTrimmedToast language={toAgentLang(language)} />
+    {/* [M-05 호출 측 mount — 2026-05-10] PRISM 거절 감지 — LLM 거절 시 친화 안내 */}
+    <PrismRejectionToast language={toAgentLang(language)} />
     </StudioMountProviders>
     </StudioUIProvider>
     </StudioConfigProvider>

@@ -298,13 +298,21 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <div className="flex items-center gap-4">
           <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors shrink-0">
             <Feather className="h-4 w-4 text-accent-amber shrink-0" />
-            <span className="font-serif font-semibold tracking-wider whitespace-nowrap">{language === 'KO' ? 'NOA 스튜디오' : language === 'JP' ? 'NOA スタジオ' : language === 'CN' ? 'NOA 工作室' : 'NOA Studio'}</span>
+            <span className="font-serif font-semibold tracking-wider whitespace-nowrap">{language === 'KO' ? 'Loreguard 스튜디오' : language === 'JP' ? 'Loreguard スタジオ' : language === 'CN' ? 'Loreguard 工作室' : 'Loreguard Studio'}</span>
+            {/* SubtitleBadge — Plan A-7. Novel IDE 카테고리 시각 단서 (4시간+ 작업 사용자 정체성 단서). */}
+            <span
+              className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-[0.2em] bg-accent-purple/15 text-accent-purple border border-accent-purple/25"
+              aria-label={language === 'KO' ? '소설 IDE 카테고리' : 'Novel IDE category'}
+            >
+              {language === 'KO' ? '소설 IDE' : language === 'JP' ? '小説 IDE' : language === 'CN' ? '小说 IDE' : 'Novel IDE'}
+            </span>
           </Link>
 
           <div className="flex items-center gap-2">
             <select
               value={currentProjectId || ''}
               onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
+              aria-label={L4(language, { ko: '활성 작품 선택', en: 'Active project', ja: 'アクティブ作品', zh: '活动作品' })}
               className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer font-serif"
             >
               <option value="" disabled>{t('sidebar.activeProject')}</option>
@@ -312,7 +320,12 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 <option key={p.id} value={p.id} className="bg-bg-primary">{p.name}</option>
               ))}
             </select>
-            <button onClick={createNewProject} className="text-text-tertiary hover:text-accent-amber transition-colors" title={t('project.newProject')}>
+            <button
+              onClick={createNewProject}
+              aria-label={t('project.newProject')}
+              className="text-text-tertiary hover:text-accent-amber transition-colors"
+              title={t('project.newProject')}
+            >
               <Plus className="h-3 w-3" />
             </button>
           </div>
@@ -323,6 +336,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             <select
               value={currentSessionId || ''}
               onChange={e => setCurrentSessionId(e.target.value)}
+              aria-label={L4(language, { ko: '챕터 선택', en: 'Select chapter', ja: 'チャプター選択', zh: '选择章节' })}
               className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
             >
               <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter', ja: 'チャプター選択', zh: '选择章节' })}</option>
@@ -330,7 +344,12 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 <option key={s.id} value={s.id} className="bg-bg-primary">{s.title}</option>
               ))}
             </select>
-            <button onClick={createNewSession} className="text-text-tertiary hover:text-accent-amber transition-colors" title="New Chapter">
+            <button
+              onClick={createNewSession}
+              aria-label={L4(language, { ko: '새 챕터', en: 'New chapter', ja: '新規チャプター', zh: '新章节' })}
+              className="text-text-tertiary hover:text-accent-amber transition-colors"
+              title={L4(language, { ko: '새 챕터', en: 'New chapter', ja: '新規チャプター', zh: '新章节' })}
+            >
               <Plus className="h-3 w-3" />
             </button>
           </div>
@@ -361,10 +380,12 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
       </div>
 
       {/* OS Bottom Dock — 집필 앱 양피지 톤 */}
-      <div
+      <nav
         ref={dockRef}
         data-zen-hide
         data-dock-anchor={dockAnchor}
+        role="navigation"
+        aria-label={L4(language, { ko: '작품 작업 도크 — 세계관·인물·연출·집필·원고', en: 'Studio dock — World, Characters, Direction, Writing, Manuscript', ja: '作品ドック — 世界観・キャラ・演出・執筆・原稿', zh: '作品停靠栏 — 世界观·角色·演出·创作·原稿' })}
         className={`fixed z-[var(--z-tooltip)] flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-[28px] bg-bg-secondary/95 backdrop-blur-2xl border border-border shadow-panel ${!isDockDraggingState ? 'transition-[transform,opacity,background-color,border-color,color] duration-500' : ''}`}
         style={
           dockPos
@@ -559,9 +580,12 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsSystemMenuOpen(!isSystemMenuOpen)}
+            aria-label={L4(language, { ko: '시스템 메뉴 / 설정·내보내기·가져오기', en: 'System menu — settings, export, import', ja: 'システムメニュー — 設定・エクスポート・インポート', zh: '系统菜单 — 设置·导出·导入' })}
+            aria-expanded={isSystemMenuOpen}
+            aria-haspopup="menu"
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 text-text-secondary hover:text-text-primary transition-colors border border-transparent hover:border-border/30"
           >
-            <Settings className="w-6 h-6" />
+            <Settings className="w-6 h-6" aria-hidden="true" />
           </button>
 
           {isSystemMenuOpen && (
@@ -620,7 +644,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </nav>
     </>
   );
 };

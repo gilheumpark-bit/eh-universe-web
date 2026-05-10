@@ -13,6 +13,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       // 일반 검색엔진 — 공개 콘텐츠만 허용
+      // [2026-05-09] public/robots.txt 의 알파 비공개 정책 통합 (/network, /welcome 추가).
+      // public/robots.txt 는 충돌 해소 위해 삭제 (Next.js 16 동적 robots 우선).
       {
         userAgent: '*',
         allow: '/',
@@ -21,6 +23,8 @@ export default function robots(): MetadataRoute.Robots {
           '/studio/',
           '/translation-studio/',
           '/code-studio/',
+          '/network/',
+          '/welcome',
           '/preview/',
           '/_backup_2026-04-02/',
           '/_backup_theme_original/',

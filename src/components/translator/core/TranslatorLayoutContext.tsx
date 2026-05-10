@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export type LeftPanelType = 'explorer' | 'glossary' | 'history' | 'settings' | 'backup' | 'multilang' | null;
-export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | null;
+// [2026-05-08 시장 분석 4차 P0] adoption / signoff 추가 — dual workflow.
+export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | 'adoption' | 'signoff' | null;
 export type BottomPanelType = 'terminal' | 'problems' | null;
 
 interface TranslatorLayoutState {

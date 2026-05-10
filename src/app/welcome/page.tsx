@@ -7,7 +7,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Feather, Brain, Users, Compass } from "lucide-react";
+import { ChevronRight, Feather, Brain, Users, Compass, ScrollText } from "lucide-react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { confirmAge } from "@/lib/content-rating";
@@ -77,6 +77,25 @@ const SLIDES: Slide[] = [
     accent: "text-accent-green",
   },
   {
+    // [Track-D Phase 1.1 Round 1-5 — 2026-05-07] 작업 정리 노트 (창작 과정 확인서) 안내 슬라이드.
+    // 5차 §2 "장부는 뒤에서 자동" — 작가 의식 없이 누적되지만 발급은 명시 액션이라
+    // 첫 사용자에게 1회 안내 (Welcome 슬라이드 = 1회 노출 + Settings 깊은 곳 위치 인지).
+    icon: <ScrollText className="w-10 h-10 md:w-12 md:h-12" />,
+    heading: {
+      ko: "작업 과정은 자동으로 정리됩니다",
+      en: "Your work activity is logged automatically",
+      ja: "作業過程は自動で整理されます",
+      zh: "工作流程将自动记录",
+    },
+    body: {
+      ko: "작품을 쓰는 동안 같이 쓴 흐름·외부 자료·작가 수정이\n자동으로 누적됩니다. Settings → Advanced 에서\n언제든 작업 정리 노트를 발급할 수 있습니다.",
+      en: "Co-write activity, external imports, and your edits\naccumulate automatically. Issue a Work Notes anytime\nfrom Settings → Advanced.",
+      ja: "共同執筆の流れ・外部資料・修正が自動で蓄積されます。\nSettings → Advanced からいつでも作業ノートを\n発行できます。",
+      zh: "共同写作流程、外部资料、修改自动累积。\n可在 Settings → Advanced 随时发行作业笔记。",
+    },
+    accent: "text-accent-amber",
+  },
+  {
     icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />,
     heading: {
       ko: "어떻게 사용하시나요?",
@@ -90,7 +109,7 @@ const SLIDES: Slide[] = [
       ja: "選択に応じて最適な画面をお見せします。\n後で Settings から変更できます。",
       zh: "我们将根据您的选择呈现最佳界面。\n之后可在 Settings 中修改。",
     },
-    accent: "text-accent-amber",
+    accent: "text-accent-blue",
   },
 ];
 
@@ -227,9 +246,15 @@ export default function WelcomePage() {
   return (
     <main className="min-h-screen flex flex-col bg-bg-primary text-text-primary">
       {/* Header — skip button */}
+      {/* [Phase A — 2026-05-07] 정체성 표어 4언어 byte-level (소설가의 IDE / The IDE for Novelists) */}
       <div className="flex justify-between items-center p-4 md:p-6">
-        <div className="text-xs md:text-sm font-mono uppercase tracking-widest text-text-tertiary">
-          Loreguard
+        <div className="flex flex-col gap-0.5">
+          <div className="text-xs md:text-sm font-mono uppercase tracking-widest text-text-tertiary">
+            Loreguard
+          </div>
+          <div className="text-[10px] md:text-xs text-text-tertiary/70 font-medium tracking-tight">
+            {T({ ko: "소설가의 IDE", en: "The IDE for Novelists", ja: "小説家のためのIDE", zh: "小说家的 IDE" })}
+          </div>
         </div>
         <button
           onClick={handleSkip}

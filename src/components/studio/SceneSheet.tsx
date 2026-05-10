@@ -593,6 +593,24 @@ export default function SceneSheet({
       lastUpdate: Date.now(),
     };
     onSaveEpisodeSheet(sheet);
+
+    // [Phase 1.2-5 — 2026-05-07] SceneSheet 직접 trigger.
+    // useCreativeProcessAutoTrigger (signature hash, 1분 cooldown) 보완.
+    // window.__creativeLogger 는 StudioShell 에서 mount (Phase 1.2-4).
+    // 실패 silent — 부가 가치 (메인 저장 흐름 차단 X).
+    // [Loop 1 fix — 2026-05-07] inline cast 제거 (types/creative-logger-global.d.ts 사용).
+    try {
+      const cl = typeof window !== 'undefined' ? window.__creativeLogger : undefined;
+      if (cl?.logHumanEdit) {
+        void cl.logHumanEdit({
+          targetType: 'scene',
+          targetId: `scene-ep${ep}`,
+          episodeId: ep,
+          afterContent: JSON.stringify(sheet.directionSnapshot),
+          note: `Scene sheet save (preset=${activePreset ?? 'none'})`,
+        });
+      }
+    } catch { /* noop */ }
   }, [onSaveEpisodeSheet, currentEpisode, buildDirection, activePreset, lang]);
 
   /** AI auto-generate direction */

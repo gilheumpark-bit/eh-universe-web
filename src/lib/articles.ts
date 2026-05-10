@@ -1,11 +1,7 @@
-export type ArticleData = {
-  title: { ko: string; en: string; ja?: string; zh?: string };
-  level: string;
-  category: string;
-  content: { ko: string; en: string; ja?: string; zh?: string };
-  image?: string;
-  related?: string[];
-};
+// [2026-05-09] ArticleData type → articles-types.ts 로 이전 (순환 의존성 회피).
+// re-export — 외부 import path 무영향.
+export type { ArticleData } from "./articles-types";
+import type { ArticleData } from "./articles-types";
 
 import coreData from "./articles-core";
 import timelineData from "./articles-timeline";

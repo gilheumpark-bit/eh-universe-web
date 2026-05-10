@@ -3,8 +3,9 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import React, { useMemo, useState, useCallback } from 'react';
-import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2 } from 'lucide-react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2, Shield, ShieldCheck } from 'lucide-react';
+import type { NCGReport, NCTReport } from '@/lib/translation/ncg-nct';
 import { useTranslator } from '../core/TranslatorContext';
 import { scoreTranslation } from '@/hooks/useTranslation';
 import {
@@ -17,6 +18,10 @@ import {
 import { runPublishAudit, applyAutoFix, runAIAudit, type PublishAuditReport, type PublishAuditFinding, type AICorrection } from '@/lib/translation/publish-audit';
 import { searchTM, type TMMatch } from '@/lib/translation/translation-memory';
 import { scoreToBand, bandModeColor } from '@/lib/translation/bands';
+// [1원칙 fix — 2026-05-08] 원문 보존 결정론적 검증 (LLM 호출 없음)
+import { runIntegrityCheck, summarizeIntegrity, type IntegrityReport, type SupportedLang } from '@/lib/translation/source-integrity';
+// [Track-D Phase 1 P0-1] 외부 status 4언어 매핑 (한국어 하드코드 제거)
+import { mapInternalToExternalStatus, type InternalStatus } from '@/lib/creative-process';
 import { BookOpen } from 'lucide-react';
 
 type AuditIssue = {
@@ -578,13 +583,69 @@ function TMSuggestionsSection() {
 // ============================================================
 // PART 5 — AuditPanel (Main)
 // ============================================================
+/** 4언어 코드 → SupportedLang 매핑 (KO/EN/JP/CN/JA/ZH 호환). */
+function normalizeLang(code: string): SupportedLang {
+  const u = (code || '').toUpperCase();
+  if (u === 'KO' || u === 'KR') return 'ko';
+  if (u === 'JP' || u === 'JA' || u === 'JAPANESE') return 'ja';
+  if (u === 'CN' || u === 'ZH' || u === 'CHINESE') return 'zh';
+  return 'en';
+}
+
 export function AuditPanel() {
-  const { source, result, chapters, glossaryText, glossary, to } = useTranslator();
+  const { source, result, chapters, glossaryText, glossary, from, to, autoRegenEnabled, setAutoRegenEnabled, autoRegenAttempts, outputMode, setOutputMode } = useTranslator();
+
+  // [A.4 + B.4 — 2026-05-08] NCG/NCT 결과 실시간 표시. localStorage + CustomEvent + storage event 3중 갱신.
+  // race 보강: 1) mount 시 즉시 read, 2) CustomEvent 'noa:translator-ncg-nct-updated' listener, 3) storage event (다른 탭 동기화)
+  const [ncgReport, setNcgReport] = useState<NCGReport | null>(null);
+  const [nctReport, setNctReport] = useState<NCTReport | null>(null);
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        const ncgRaw = localStorage.getItem('noa_translator_lastNCG');
+        setNcgReport(ncgRaw ? (JSON.parse(ncgRaw) as NCGReport) : null);
+        const nctRaw = localStorage.getItem('noa_translator_lastNCT');
+        setNctReport(nctRaw ? (JSON.parse(nctRaw) as NCTReport) : null);
+      } catch { /* skip */ }
+    };
+    refresh();
+    const handler = () => refresh();
+    const storageHandler = (e: StorageEvent) => {
+      if (e.key === 'noa_translator_lastNCG' || e.key === 'noa_translator_lastNCT') refresh();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('noa:translator-ncg-nct-updated', handler);
+      window.addEventListener('storage', storageHandler);
+      // 추가 보강 — 60초 polling (CustomEvent 누락 대비, mount race)
+      const polling = setInterval(refresh, 60_000);
+      return () => {
+        window.removeEventListener('noa:translator-ncg-nct-updated', handler);
+        window.removeEventListener('storage', storageHandler);
+        clearInterval(polling);
+      };
+    }
+    return undefined;
+  }, []);
 
   const issues = useMemo(
     () => buildAuditIssues(source, result, chapters, glossaryText, glossary),
     [source, result, chapters, glossaryText, glossary]
   );
+
+  // [1원칙 fix — 2026-05-08] 원문 보존 결정론적 검증 — LLM 호출 없이 매 변경 시 자동 갱신
+  const integrityReport = useMemo<IntegrityReport | null>(() => {
+    if (source.trim().length < 10 || result.trim().length === 0) return null;
+    try {
+      return runIntegrityCheck({
+        source,
+        translation: result,
+        srcLang: normalizeLang(from || 'ko'),
+        tgtLang: normalizeLang(to || 'en'),
+      });
+    } catch {
+      return null;
+    }
+  }, [source, result, from, to]);
 
   const heuristicScore = useMemo(() => {
     let penalty = 0;
@@ -638,6 +699,21 @@ export function AuditPanel() {
             <span className="text-[13px] font-medium">Quality Audit</span>
           </div>
           <div className="flex gap-1.5 flex-wrap">
+            {/* [1원칙 fix — 2026-05-08] 원문 보존 배지 — 최우선 노출 (잘라먹기 방지) */}
+            {integrityReport && (
+              <span
+                className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border font-bold ${
+                  integrityReport.status === 'fail'
+                    ? 'bg-accent-red/15 border-accent-red/40 text-accent-red'
+                    : integrityReport.status === 'warn'
+                      ? 'bg-accent-amber/15 border-accent-amber/40 text-accent-amber'
+                      : 'bg-accent-green/15 border-accent-green/40 text-accent-green'
+                }`}
+                title="번역 1원칙: 원문을 잘라먹지 않는다 (결정론적 검증)"
+              >
+                <ShieldAlert className="w-3 h-3" /> 원문 {integrityReport.score}%
+              </span>
+            )}
             <span className="flex items-center gap-1 text-[11px] text-text-secondary bg-white/[0.03] px-2 py-0.5 rounded border border-white/10" title="원문·번역문·챕터·용어 휴리스틱 자동 점검">
               <CheckCircle className="w-3 h-3" /> 자동 {heuristicScore}%
             </span>
@@ -649,11 +725,153 @@ export function AuditPanel() {
           </div>
         </div>
         <p className="text-[10px] text-text-tertiary mt-2 leading-snug">
-          자동 점검은 길이·용어·숫자 같은 기계적 지표입니다. NOA 정밀 채점으로 4축(원문보존) 또는 6축(독자경험) 품질 분석을 실행할 수 있습니다.
+          <strong className="text-accent-green">원문 보존 (1원칙)</strong> 은 LLM 호출 없이 결정론적으로 단락·단어 수·누락 의심을 검증합니다. 자동 점검은 휴리스틱 지표, NOA 정밀 채점은 4/6축 품질 분석입니다.
         </p>
+        {/* [A.4 — 2026-05-08] NCG / NCT 결과 배지 — runDualTranslate 자동 호출 결과 시각 표시. */}
+        {(ncgReport || nctReport) && (
+          <div className="mt-3 pt-3 border-t border-white/5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Shield className="w-3 h-3 text-accent-blue" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+                NCG / NCT
+              </span>
+              <span className="text-[9px] text-text-tertiary italic">사전 게이트 + 사후 검증</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {/* NCG */}
+              <div className={`px-2 py-1.5 rounded border text-[10px] ${
+                ncgReport?.decision === 'block'
+                  ? 'bg-accent-red/10 border-accent-red/40 text-accent-red'
+                  : ncgReport?.decision === 'warn'
+                    ? 'bg-accent-amber/10 border-accent-amber/40 text-accent-amber'
+                    : ncgReport?.decision === 'pass'
+                      ? 'bg-accent-green/10 border-accent-green/40 text-accent-green'
+                      : 'bg-white/[0.02] border-white/10 text-text-tertiary'
+              }`}>
+                <div className="font-mono font-bold uppercase">NCG · {ncgReport?.decision ?? 'idle'}</div>
+                <div className="text-[9px] opacity-80 mt-0.5">
+                  {ncgReport?.violations.length ?? 0} 이슈 · 사전 게이트
+                </div>
+              </div>
+              {/* NCT */}
+              <div className={`px-2 py-1.5 rounded border text-[10px] ${
+                nctReport?.recommendation === 'reject'
+                  ? 'bg-accent-red/10 border-accent-red/40 text-accent-red'
+                  : nctReport?.recommendation === 'review'
+                    ? 'bg-accent-amber/10 border-accent-amber/40 text-accent-amber'
+                    : nctReport?.recommendation === 'publish'
+                      ? 'bg-accent-green/10 border-accent-green/40 text-accent-green'
+                      : 'bg-white/[0.02] border-white/10 text-text-tertiary'
+              }`}>
+                <div className="font-mono font-bold uppercase">NCT · {nctReport?.recommendation ?? 'idle'}</div>
+                <div className="text-[9px] opacity-80 mt-0.5">
+                  F:{nctReport?.faithful?.status ?? '—'} · M:{nctReport?.market?.status ?? '—'}
+                </div>
+              </div>
+            </div>
+            {nctReport?.glossaryMisses && nctReport.glossaryMisses.length > 0 && (
+              <p className="text-[9px] text-accent-amber mt-1.5">
+                Glossary 누락 {nctReport.glossaryMisses.length}건 — 검토 권장
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* [시장 분석 4차] 2개 출력 모델 토글 — Source-faithful / Market-ready / default */}
+        <div className="mt-3 pt-3 border-t border-white/5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <BookOpen className="w-3 h-3 text-accent-purple" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">출력 모드</span>
+            </div>
+            <span className="text-[9px] text-text-tertiary italic">원문은 지키고, 시장에는 맞춘다</span>
+          </div>
+          <div role="radiogroup" aria-label="번역 출력 모드" className="grid grid-cols-2 gap-1 mt-2">
+            {([
+              { id: 'dual' as const, label: '듀얼 출력 (권장)', en: 'Dual · F+M', desc: '두 결과 동시 — Source-faithful + Market-ready 병렬 (시장 분석 4차 본질)', highlight: true },
+              { id: 'faithful' as const, label: '원문 보존', en: 'Faithful', desc: '작가 의도·고유명사·복선·문체 유지 (단일 결과)' },
+              { id: 'market' as const, label: '현지화', en: 'Market', desc: '대사 리듬·호칭·장르 문법·시장 감각 (단일 결과)' },
+              { id: 'default' as const, label: '통합 (legacy)', en: 'Default', desc: '기존 5-stage chain' },
+            ]).map((m) => {
+              const active = outputMode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setOutputMode(m.id)}
+                  title={m.desc}
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded border transition-colors ${
+                    active
+                      ? m.highlight
+                        ? 'bg-accent-green/15 border-accent-green/50 text-accent-green ring-1 ring-accent-green/30'
+                        : 'bg-accent-purple/15 border-accent-purple/50 text-accent-purple'
+                      : m.highlight
+                        ? 'bg-accent-green/5 border-accent-green/20 text-accent-green/80 hover:bg-accent-green/10'
+                        : 'bg-white/[0.02] border-white/10 text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <span className="text-[11px] font-bold">{m.label}</span>
+                  <span className="text-[8px] font-mono uppercase tracking-wider opacity-70">{m.en}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pointer-events-auto">
+        {/* [1원칙 fix — 2026-05-08] 원문 보존 결정론적 검증 — 최우선 노출 */}
+        {integrityReport && integrityReport.status !== 'pass' && (
+          <section
+            className={`rounded-lg border p-3 ${
+              integrityReport.status === 'fail'
+                ? 'bg-accent-red/10 border-accent-red/40'
+                : 'bg-accent-amber/10 border-accent-amber/40'
+            }`}
+            aria-label="번역 1원칙 검증"
+          >
+            <header className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className={`w-4 h-4 ${integrityReport.status === 'fail' ? 'text-accent-red' : 'text-accent-amber'}`} />
+                <h3 className="text-[12px] font-bold text-text-primary">
+                  번역 1원칙 — 원문 보존 검증
+                </h3>
+              </div>
+              <span className={`text-[11px] font-mono font-bold ${integrityReport.status === 'fail' ? 'text-accent-red' : 'text-accent-amber'}`}>
+                {summarizeIntegrity(integrityReport, 'ko')}
+              </span>
+            </header>
+            <ul className="space-y-1.5">
+              {integrityReport.issues.map((iss, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-[11px]">
+                  {iss.severity === 'fail' ? (
+                    <AlertTriangle className="w-3 h-3 text-accent-red shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="w-3 h-3 text-accent-amber shrink-0 mt-0.5" />
+                  )}
+                  <span className="text-text-secondary leading-snug">{iss.message.ko}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-3 text-[10px] font-mono text-text-tertiary">
+              <span>원문 단락 {integrityReport.metrics.sourceParagraphs} → 번역 {integrityReport.metrics.translationParagraphs}</span>
+              <span>·</span>
+              <span>비율 {Math.round(integrityReport.metrics.wordRatio * 100)}%</span>
+            </div>
+          </section>
+        )}
+        {integrityReport && integrityReport.status === 'pass' && (
+          <section className="rounded-lg border border-accent-green/30 bg-accent-green/5 px-3 py-2 flex items-center gap-2 text-[11px]" aria-label="번역 1원칙 통과">
+            <CheckCircle className="w-3.5 h-3.5 text-accent-green shrink-0" />
+            <span className="text-accent-green font-medium">번역 1원칙 통과 — 원문 보존 100%</span>
+            <span className="text-text-tertiary font-mono ml-auto text-[10px]">
+              {integrityReport.metrics.sourceParagraphs} 단락 · 비율 {Math.round(integrityReport.metrics.wordRatio * 100)}%
+            </span>
+          </section>
+        )}
+
         {/* ── TM 매칭 (번역 메모리 유사 제안) ── */}
         <TMSuggestionsSection />
 
@@ -719,8 +937,16 @@ export function AuditPanel() {
                 {/* [41-band 2026-04-25] README.ko.md 약속의 UI 측 wiring — Overall 점수를 41-band 분류로 노출 */}
                 {(() => {
                   const band = scoreToBand(aiOverall ?? 0);
+                  // [Track-D Phase 1 P0-1 — 2026-05-07] 4언어 외부 status (한국어 하드코드 제거)
+                  // band.mode → InternalStatus 매핑 → mapInternalToExternalStatus 4언어 라벨
+                  const internalStatus: InternalStatus = band.mode === 'F' ? 'REVIEW_NEEDED'
+                    : band.mode === 'C' ? 'HUMAN_REVIEW_LOW'
+                    : 'READY';
+                  // 'to' 가 4언어 (ko/en/ja/zh) — TranslatorContext 에서 lowercase
+                  const certLang = (['ko', 'en', 'ja', 'zh'].includes(to as string) ? to : 'ko') as 'ko' | 'en' | 'ja' | 'zh';
+                  const externalStatusLabel = mapInternalToExternalStatus(internalStatus, certLang);
                   return (
-                    <div className="flex flex-col items-center" title={`Band ${band.display} · Mode ${band.mode}`}>
+                    <div className="flex flex-col items-center" title={`Band ${band.display} · Mode ${band.mode} · ${externalStatusLabel}`}>
                       <span className="text-[10px] text-text-tertiary uppercase tracking-wider">Band</span>
                       <span
                         className="text-xl font-bold font-mono"
@@ -729,6 +955,9 @@ export function AuditPanel() {
                         {band.label}
                       </span>
                       <span className="text-[9px] text-text-tertiary font-mono">{band.display}</span>
+                      <span className="text-[9px] text-text-tertiary mt-0.5" style={{ color: bandModeColor(band.mode), opacity: 0.85 }}>
+                        {externalStatusLabel}
+                      </span>
                     </div>
                   );
                 })()}
@@ -745,6 +974,36 @@ export function AuditPanel() {
               <p className="text-[9px] text-text-tertiary italic">
                 {scoreMode === 'fidelity' ? '원문 보존형 — 원문 구조·의미 보존 중심' : '독자 경험형 — 타겟 독자 몰입 중심'}
               </p>
+              {/* [Track-D Phase 1 P0-3 + Round 2-1 — 2026-05-07] 자동 재창조 토글 4언어 */}
+              <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.02] border border-white/5 mt-1.5">
+                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-text-tertiary">
+                  <input
+                    type="checkbox"
+                    checked={autoRegenEnabled}
+                    onChange={(e) => setAutoRegenEnabled(e.target.checked)}
+                    className="cursor-pointer"
+                  />
+                  <span>
+                    {to === 'en'
+                      ? 'Auto-retry (raise temperature on low score, up to 2)'
+                      : to === 'ja'
+                      ? '自動再試行(スコアが低い場合はtemperature上昇、最大2回)'
+                      : to === 'zh'
+                      ? '自动重试(分数低时提升 temperature,最多 2 次)'
+                      : '자동 재시도 (점수 낮으면 temperature 상승, 최대 2회)'}
+                  </span>
+                </label>
+                {autoRegenAttempts !== null && (
+                  <span className="text-[10px] text-accent-amber font-mono" title={
+                    to === 'en' ? 'Total attempts of last chunked translation'
+                    : to === 'ja' ? '最後の分割翻訳の総試行回数'
+                    : to === 'zh' ? '最后一次分块翻译的总尝试次数'
+                    : '마지막 분할 번역의 총 시도 횟수'
+                  }>
+                    attempts: {autoRegenAttempts}
+                  </span>
+                )}
+              </div>
             </>
           )}
         </div>

@@ -64,6 +64,17 @@ export function BoardPostNewClient() {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // [Round 2-4 — 2026-05-07] 작업 정리 노트 첨부 옵션 (창작 과정 확인서)
+  // localStorage `noa_studio_currentProjectId` 가 있을 때만 노출.
+  const [attachJournal, setAttachJournal] = useState(false);
+  const [attachJournalAvailable, setAttachJournalAvailable] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const pid = window.localStorage?.getItem('noa_studio_currentProjectId');
+      setAttachJournalAvailable(Boolean(pid && pid.length > 0));
+    } catch { /* private browsing */ }
+  }, []);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -110,11 +121,25 @@ export function BoardPostNewClient() {
     try {
       await ensureNetworkUserRecord({ uid: user.uid, displayName: user.displayName });
 
+      // [Round 2-4 — 2026-05-07] 확인서 첨부 옵션 — 본문 끝에 발급 링크 안내 마커 추가
+      // 게시글 본문 자체에 첨부하지 않고, 별도 마크업 블록 (작가 명시 동의)
+      let finalContent = trimmedContent;
+      if (attachJournal && attachJournalAvailable) {
+        const noticeMap = {
+          ko: '\n\n---\n\n📝 **작업 정리 노트**: 본 글은 Loreguard에서 작업한 과정 기록을 보유합니다. 작가 본인이 발급 가능 (Settings → Advanced → 작업 정리 노트). 법적 효력 없음.',
+          en: '\n\n---\n\n📝 **Authorship Journal**: This work has activity records in Loreguard. The author can issue them (Settings → Advanced → Work Notes). Not a legal certification.',
+          ja: '\n\n---\n\n📝 **作業ノート**: 本作品は Loreguard での作業記録を保有しています。作家本人が発行可能 (Settings → Advanced → 作業ノート)。法的効力なし。',
+          zh: '\n\n---\n\n📝 **作业笔记**: 本作品在 Loreguard 中保留有创作过程记录。可由作家本人发行 (Settings → Advanced → 作业笔记)。不具有法律效力。',
+        } as const;
+        const langKey = (['ko', 'en', 'ja', 'zh'].includes(lang as string) ? lang : 'ko') as keyof typeof noticeMap;
+        finalContent = trimmedContent + noticeMap[langKey];
+      }
+
       const post = await createBoardPost({
         authorId: user.uid,
         boardType,
         title: trimmedTitle,
-        content: trimmedContent,
+        content: finalContent,
         tags,
         planetId: planetId || undefined,
       });
@@ -125,7 +150,7 @@ export function BoardPostNewClient() {
     } finally {
       setSubmitting(false);
     }
-  }, [boardType, content, lang, planetId, router, tags, title, user]);
+  }, [attachJournal, attachJournalAvailable, boardType, content, lang, planetId, router, tags, title, user]);
 
   if (!user) {
     return (
@@ -244,6 +269,26 @@ export function BoardPostNewClient() {
               </label>
             )}
           </div>
+
+          {/* [Round 2-4 — 2026-05-07] 작업 정리 노트 첨부 옵션 (Loreguard 작품 진행 중일 때만 노출) */}
+          {attachJournalAvailable && (
+            <label className="mt-5 flex items-start gap-2 text-sm text-text-secondary cursor-pointer">
+              <input
+                type="checkbox"
+                checked={attachJournal}
+                onChange={(e) => setAttachJournal(e.target.checked)}
+                className="mt-0.5 cursor-pointer"
+              />
+              <span>
+                {L4(lang, {
+                  ko: '작업 정리 노트 보유 안내 첨부 (출판사·플랫폼 검토 시 본인 발급)',
+                  en: 'Attach Authorship Journal notice (issue yourself when reviewers ask)',
+                  ja: '作業ノート保有のお知らせを添付(レビュー時に本人発行)',
+                  zh: '附加作业笔记说明(审核时由本人发行)',
+                })}
+              </span>
+            </label>
+          )}
 
           {error ? <p className="mt-5 text-sm text-accent-red">{error}</p> : null}
 

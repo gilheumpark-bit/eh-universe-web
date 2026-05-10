@@ -18,7 +18,78 @@ import { extractPreviousEpisodeSummary } from './previous-episode-extractor';
 import { unwrap, getOrigin } from '@/lib/origin-migration';
 import type { TaggedField, EntryOrigin } from '@/lib/studio-types';
 import { getGenreSystemPrompt, type PromptLang } from './genre-prompts';
+// [I-02 — 2026-05-10 — Studio 마이그레이션 진입점] writing-agent-registry 통합 헬퍼.
+// buildSystemInstruction 본문은 800+ LOC + 30+ 테스트 의존이라 점진 전환 (다음 phase).
+// 호출 측은 buildAgentBaseStudioPrompt() 를 통해 레지스트리 base prompt 추출 가능.
+import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
+import { toAgentLang } from '@/lib/ai/lang-normalize';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
+
+// ============================================================
+// [I-02 — 2026-05-10] Studio Draft 레지스트리 통합 헬퍼
+// ============================================================
+//
+// studio-draft 레지스트리 정의에서 base prompt 만 추출.
+// 현재 buildSystemInstruction (line ~430~1240) 가 자체 조립하는 layer 와 정합:
+//   role + duty + no-english-thinking-korean-novel + ip-brand-guard + LANG_DIRECTIVE
+// 점진 마이그레이션 시 buildSystemInstruction 의 시작 부분을 이 출력으로 교체 예정.
+//
+// 회귀 보호: 본 phase 는 진입점만 — buildSystemInstruction 본문 미변경.
+// 호출 측 (geminiService 등) 이 명시적으로 사용 가능. 30+ 테스트 영향 0.
+//
+// 활성화 사용 예시 (다음 phase 마이그레이션 시 권장 패턴):
+//
+//   import { buildSystemInstruction, buildAgentBaseStudioPrompt } from '@/engine/pipeline';
+//   import { buildSparkSystemPrompt } from '@/lib/dgx-models';
+//
+//   const baseFromRegistry = buildAgentBaseStudioPrompt(language, {
+//     characterDna: dnaBlock,
+//     worldBook: worldBlock,
+//     sceneSheet: sceneBlock,
+//     // ...
+//   });
+//   const legacy = buildSystemInstruction(config, language, platform, ruleLevel);
+//   // dedup: 두 출력의 가드 ('/no_think') 중복은 buildSparkSystemPrompt 가 흡수
+//   const finalSystem = buildSparkSystemPrompt([baseFromRegistry, legacy].join('\n\n'));
+//
+// 위 패턴은 출력 prompt 의 시작이 레지스트리 정의로 통일되며, 기존 layer (act/dna/
+// tension/origin) 는 그대로 유지된다. 회귀 평가는 30+ 단위 테스트 fixture 비교 필요.
+//
+// ============================================================
+
+export function buildAgentBaseStudioPrompt(
+  language: AppLanguage,
+  context: {
+    characterDna?: string;
+    worldBook?: string;
+    sceneSheet?: string;
+    genreRules?: string;
+    storySummary?: string;
+    glossary?: string;
+    actGuide?: string;
+    styleDna?: string;
+    tensionCurve?: string;
+    originGuide?: string;
+  } = {},
+): string {
+  // [M-07 — 2026-05-10] autoTrim 활성화 — critical token pressure 도달 시
+  // CONTEXT_BLOCK_TRIM_ORDER 따라 우선순위 낮은 contextBlock 자동 제거.
+  // origin-guide → continuity-notes → tension-curve → story-summary → world-book → ... 순.
+  // CRITICAL (character-dna / scene-sheet / act-guide / style-dna) 은 마지막까지 유지.
+  return buildAgentSystemPrompt('studio-draft', {
+    language: toAgentLang(language),
+    'character-dna': context.characterDna,
+    'world-book': context.worldBook,
+    'scene-sheet': context.sceneSheet,
+    'genre-rules': context.genreRules,
+    'story-summary': context.storySummary,
+    'glossary': context.glossary,
+    'act-guide': context.actGuide,
+    'style-dna': context.styleDna,
+    'tension-curve': context.tensionCurve,
+    'origin-guide': context.originGuide,
+  }, { autoTrim: true });
+}
 
 // ============================================================
 // M4 — Origin tag rendering helpers
@@ -388,7 +459,8 @@ export function buildSystemInstruction(
   config: StoryConfig,
   language: AppLanguage,
   platform: PlatformType = PlatformType.MOBILE,
-  ruleLevel: number = 1
+  ruleLevel: number = 1,
+  options: { useAgentRegistry?: boolean } = {},
 ): string {
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
@@ -1212,6 +1284,11 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
     }));
   }
 
+  // [I-02 본문 마이그레이션 — 2026-05-10] 레지스트리 base prepend (옵션).
+  // 가드 중복은 호출 측 buildSparkSystemPrompt 가 자동 dedup.
+  if (options.useAgentRegistry) {
+    return buildAgentBaseStudioPrompt(language) + '\n\n' + finalSystemPrompt;
+  }
   return finalSystemPrompt;
 }
 

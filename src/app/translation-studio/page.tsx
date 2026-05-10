@@ -86,8 +86,82 @@ export default function TranslationStudioPage() {
   // hasVisited === true: 재방문 → closed, 필요 시 수동 확장
   const summaryLabel = DEMO_SUMMARY_LABEL[lang] ?? DEMO_SUMMARY_LABEL.ko;
 
+  // [Tier 1 fix — 2026-05-08] Fiction-native Translation Studio 카피 4언어 — 시장 분석 2차/3차/4차 반영
+  // 4차: "Source-faithful + Market-ready 2개 출력" — "원문은 지키고, 시장에는 맞춘다."
+  const HEADER_COPY = {
+    ko: {
+      eyebrow: 'FICTION-NATIVE TRANSLATION STUDIO · CROSS-BORDER NOVEL IDE',
+      title: '소설 전문 번역 스튜디오',
+      sub: '문장이 아니라 작품을 번역합니다. 세계관·캐릭터·용어집·회차 맥락을 한 번에.',
+      dualOutput: '원문 보존 번역 + 현지화 번역 — 두 결과를 함께 받습니다',
+      dualSlogan: '원문은 지키고, 시장에는 맞춘다.',
+      bidir: '한국 작가는 세계로 · 해외 작가는 한국·아시아로',
+      philosophy: 'AI prepares · Translators elevate · Authors go global',
+    },
+    en: {
+      eyebrow: 'FICTION-NATIVE TRANSLATION STUDIO · CROSS-BORDER NOVEL IDE',
+      title: 'Fiction-native Translation Studio',
+      sub: 'Not text translation. Fiction localization with story context preserved.',
+      dualOutput: 'Source-faithful Translation + Market-ready Localization — get both',
+      dualSlogan: 'Faithful where it matters. Localized where it counts.',
+      bidir: 'Korean writers → world · Global writers → Korea & Asia',
+      philosophy: 'AI prepares · Translators elevate · Authors go global',
+    },
+    ja: {
+      eyebrow: 'FICTION-NATIVE TRANSLATION STUDIO · CROSS-BORDER NOVEL IDE',
+      title: '小説専門 翻訳スタジオ',
+      sub: '文章ではなく作品を翻訳。世界観・キャラ・用語集・話数文脈を一括反映。',
+      dualOutput: '原文保存翻訳 + 現地化翻訳 — 2 つの結果を同時に',
+      dualSlogan: '原文は守り、市場には合わせる。',
+      bidir: '韓国の作家は世界へ · 海外の作家は韓国・アジアへ',
+      philosophy: 'AI prepares · Translators elevate · Authors go global',
+    },
+    zh: {
+      eyebrow: 'FICTION-NATIVE TRANSLATION STUDIO · CROSS-BORDER NOVEL IDE',
+      title: '小说专业翻译工作室',
+      sub: '不是句子翻译,而是作品翻译。世界观、角色、术语、章节脉络全部融入。',
+      dualOutput: '原文保留翻译 + 本地化翻译 — 同时输出两个结果',
+      dualSlogan: '守住原文,贴合市场。',
+      bidir: '韩国作家走向世界 · 海外作家进入韩国与亚洲',
+      philosophy: 'AI prepares · Translators elevate · Authors go global',
+    },
+  } as const;
+  const copy = HEADER_COPY[(lang as keyof typeof HEADER_COPY)] ?? HEADER_COPY.ko;
+
   return (
-    <main aria-label="Translation Studio">
+    <main aria-label="Fiction-native Translation Studio · Cross-border Novel IDE">
+      {/* [Tier 1 fix — 2026-05-08] Fiction-native 헤더 카피 — 시장 분석 2차/3차 양방향 메시지 */}
+      <header className="max-w-3xl mx-auto px-4 pt-6 pb-2">
+        <p className="font-mono text-[9px] tracking-[0.22em] text-accent-purple uppercase mb-2">
+          {copy.eyebrow}
+        </p>
+        <h1 className="font-serif text-2xl md:text-3xl font-bold text-text-primary leading-tight">
+          {copy.title}
+          <span
+            className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-[0.2em] bg-accent-purple/15 text-accent-purple border border-accent-purple/25 align-middle"
+            aria-label="Cross-border Novel IDE 카테고리"
+          >
+            Novel IDE
+          </span>
+        </h1>
+        <p className="text-[13px] text-text-secondary leading-relaxed mt-1.5">{copy.sub}</p>
+        {/* [시장 분석 4차] 2개 출력 모델 명시 — 원문 보존 + 현지화 동시 제공 */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px]">
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-green/10 border border-accent-green/30 text-accent-green font-bold">
+            <span className="font-mono">FAITHFUL</span>
+            <span className="text-accent-green/70">+</span>
+            <span className="font-mono">MARKET</span>
+          </span>
+          <span className="text-text-secondary font-medium">{copy.dualOutput}</span>
+        </div>
+        <p className="text-[12px] text-accent-purple/90 italic mt-1">&ldquo;{copy.dualSlogan}&rdquo;</p>
+        <div className="flex flex-wrap items-center gap-2 mt-2 text-[11px]">
+          <span className="text-text-tertiary">{copy.bidir}</span>
+          <span className="text-text-tertiary/40">·</span>
+          <span className="font-mono text-accent-amber/90 uppercase tracking-wider">{copy.philosophy}</span>
+        </div>
+      </header>
+
       {hasVisited !== null && (
         <details
           open={hasVisited === false}

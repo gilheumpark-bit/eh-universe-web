@@ -96,8 +96,30 @@ export function useStudioExport({
   const showExportToast = useCallback((format: string) => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('noa:export-done', { detail: { format } }));
+
+      // [Track-D Phase 1.1 Round 1-4 — 2026-05-07] 첫 export 시 1회 확인서 안내.
+      // localStorage flag 로 1회만. 이후 사용자 자율 발견.
+      try {
+        const HINTED_KEY = 'noa_cp_export_hint_shown_v1';
+        if (!window.localStorage?.getItem(HINTED_KEY)) {
+          window.localStorage?.setItem(HINTED_KEY, '1');
+          // 1.5초 후 (export-done toast 보고 난 뒤) 안내 alert
+          setTimeout(() => {
+            const messages: Record<string, string> = {
+              KO: '내보내기 완료. Settings → Advanced → 작업 정리 노트에서 창작 과정 확인서도 발급할 수 있습니다.',
+              EN: 'Export complete. You can also issue an Authorship Journal in Settings → Advanced → Work Notes.',
+              JP: 'エクスポート完了。Settings → Advanced → 作業ノートから制作過程確認書も発行できます。',
+              CN: '导出完成。可在 Settings → Advanced → 作业笔记中发行创作过程确认书。',
+            };
+            const msg = messages[language] || messages.KO;
+            window.dispatchEvent(new CustomEvent('noa:alert', {
+              detail: { message: msg, variant: 'info', duration: 6000 },
+            }));
+          }, 1500);
+        }
+      } catch { /* private browsing */ }
     }
-  }, []);
+  }, [language]);
 
   // Export session as TXT
   const exportTXT = useCallback(() => {

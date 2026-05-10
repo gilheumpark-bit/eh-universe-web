@@ -25,7 +25,7 @@ export default function ToolNav({ toolName, relatedTools, isKO = true }: Props) 
       <div className="flex items-center gap-2 text-[10px]">
         <Link href="/studio" className="flex items-center gap-1 text-text-tertiary hover:text-white transition-colors">
           <ChevronLeft className="w-3 h-3" />
-          {isKO ? 'NOA 스튜디오' : 'NOA Studio'}
+          {isKO ? 'Loreguard 스튜디오' : 'Loreguard Studio'}
         </Link>
         <span className="text-text-tertiary/50">/</span>
         <Link href="/tools" className="text-text-tertiary hover:text-white transition-colors">

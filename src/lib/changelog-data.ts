@@ -29,6 +29,42 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.0-alpha.2',
+    date: '2026-05-10',
+    type: 'security',
+    scope: 'platform',
+    title: {
+      KO: '알파 출시 감사 — 사용자 안전·데이터 무결성·AI 가드 강화',
+      EN: 'Alpha Audit — User Safety + Data Integrity + AI Guard Hardening',
+      JP: 'アルファ監査 — ユーザー安全・データ整合性・AI ガード強化',
+      CN: '阿尔法审计 — 用户安全 + 数据完整性 + AI 防护强化',
+    },
+    description: {
+      KO: '알파 직전 종합 감사 — 12/17 MUST 처리. ① ATTESTATION 디스클레이머 강도 (v1.0.0 → v1.1.0, ko/ja 사법 절차 증거 부정 명시) ② BYOK 키 sign-out 시 prefix 기반 전체 삭제 ③ creative-process append-only 자동 검증 ④ localStorage/IndexedDB quota 자동 모니터 ⑤ PRISM 거절 친화 메시지 4언어 ⑥ detail-pass false positive 보강 (한국 성씨 200대 + 일반 명사 stoplist + 조사·호칭 trim) ⑦ dual-pipeline 부분 실패 4언어 표기 ⑧ check:user-exposure 자동 grep (외부 status / 마이그레이션 마커 / 개발자 용어) ⑨ production console.log 자동 제거 ⑩ token-meter critical 시 contextBlock 자동 절삭 (11 단계 우선순위) ⑪ FirstVisitOnboarding 4번째 슬라이드 (안전·증명 시스템). 단위 테스트 26 신규 + 회귀 0건. type-check 0 errors. 격리 §1 8 파일 0byte.',
+      EN: 'Comprehensive pre-alpha audit — 12/17 MUST processed. ① ATTESTATION disclaimer strengthened (v1.0.0 → v1.1.0, ko/ja explicitly negate judicial evidence) ② BYOK key prefix-based wipe on sign-out ③ creative-process append-only automated audit ④ localStorage/IndexedDB quota auto-monitor ⑤ PRISM rejection friendly message in 4 langs ⑥ detail-pass false positive guard (200+ Korean surnames + common-noun stoplist + particle/honorific trim) ⑦ dual-pipeline partial failure labeled in 4 langs ⑧ check:user-exposure automated grep (external status / migration markers / dev terms) ⑨ production console.log auto-stripped ⑩ token-meter auto-trims contextBlocks at critical (11-tier priority) ⑪ FirstVisitOnboarding 4th slide (safety & verification system). 26 new unit tests + zero regression. type-check 0 errors. Isolation §1: 8 files unchanged at byte-level.',
+      JP: 'アルファ直前の総合監査 — 12/17 MUST 処理。① ATTESTATION 免責文の強度補強 (v1.0.0 → v1.1.0、ko/ja で司法手続証拠否定を明記) ② BYOK キー sign-out 時 prefix 一括削除 ③ creative-process append-only 自動検証 ④ localStorage/IndexedDB quota 自動監視 ⑤ PRISM 拒否時のユーザー親和メッセージ 4言語 ⑥ detail-pass false positive 補強 ⑦ dual-pipeline 部分失敗の 4言語表記 ⑧ check:user-exposure 自動 grep ⑨ production console.log 自動削除 ⑩ token-meter critical 時に contextBlock 自動絞り込み ⑪ FirstVisitOnboarding 4 枚目スライド追加。単体テスト 26 新規 + 回帰 0 件。',
+      CN: 'Alpha 前夕综合审计 — 处理 12/17 MUST。① ATTESTATION 免责声明强度增强 (v1.0.0 → v1.1.0, ko/ja 明确否定司法程序证据) ② BYOK 密钥退出时基于前缀的全量删除 ③ creative-process 仅追加策略自动审计 ④ localStorage/IndexedDB quota 自动监控 ⑤ PRISM 拒绝时友好提示 4 语言 ⑥ detail-pass 假阳性强化 ⑦ dual-pipeline 部分失败的 4 语言标记 ⑧ check:user-exposure 自动 grep ⑨ production console.log 自动剥离 ⑩ token-meter critical 时自动收缩 contextBlock ⑪ FirstVisitOnboarding 第 4 张幻灯片。新增单元测试 26 + 回归 0。',
+    },
+  },
+  {
+    version: '0.3.0-alpha.1',
+    date: '2026-05-08',
+    type: 'feature',
+    scope: 'translation',
+    title: {
+      KO: 'Cross-border Novel IDE — 듀얼 출력 시스템 (Source-faithful + Market-ready)',
+      EN: 'Cross-border Novel IDE — Dual Output (Source-faithful + Market-ready)',
+      JP: 'Cross-border Novel IDE — デュアル出力 (Source-faithful + Market-ready)',
+      CN: 'Cross-border Novel IDE — 双重输出（Source-faithful + Market-ready）',
+    },
+    description: {
+      KO: '시장 분석 4차 본질 반영 — Translation Studio가 매 번역마다 두 결과를 동시 생성. **Source-faithful Translation** (작가 의도·고유명사·복선·문체 보존) + **Market-ready Localization** (대사 리듬·호칭·장르 문법·시장 감각). Stage 1~3 공유 + Stage 4~5 병렬 (비용 1.4x). 신설 21 모듈: dual-pipeline / honorifics / chapter-splitter / korean-genre-matrix / segment-adoption / author-signoff / ncg-nct / process-record-hooks / docx-export / schema-migration / studio-bridge / cli-spec / TripleEditor / SegmentAdoptionPanel / SignoffPanel / KoreanGenrePicker + LSP 3 endpoint (translate-quality / glossary-validate / honorific-check). Studio 인체공학 — useSessionSnapshot / LastTaskCard / useCmdPalette. 1원칙(원문 잘라먹기 방지) faithful 엄격 / market 완화 차등 적용. 알파 비공개 강화 — robots.txt + meta noindex 5앱 모두 차단.',
+      EN: 'Implements market analysis v4 essential — Translation Studio now produces two results per translation. **Source-faithful Translation** (preserves author intent, names, foreshadowing, voice) + **Market-ready Localization** (dialogue rhythm, honorifics, genre fit, market feel). Stage 1~3 shared + Stage 4~5 parallel (1.4x cost). 21 new modules: dual-pipeline / honorifics / chapter-splitter / korean-genre-matrix / segment-adoption / author-signoff / ncg-nct / process-record-hooks / docx-export / schema-migration / studio-bridge / cli-spec / TripleEditor / SegmentAdoptionPanel / SignoffPanel / KoreanGenrePicker + 3 LSP endpoints (translate-quality / glossary-validate / honorific-check). Studio ergonomics — useSessionSnapshot / LastTaskCard / useCmdPalette. Rule #1 (no source truncation) applied differentially: faithful strict / market relaxed. Alpha non-public hardening — robots.txt + meta noindex on all 5 apps.',
+      JP: '市場分析 4 次本質を実装 — Translation Studio が翻訳ごとに 2 つの結果を同時生成。**Source-faithful Translation** (作家意図・固有名詞・複線・文体保存) + **Market-ready Localization** (台詞リズム・呼称・ジャンル文法・市場感覚)。Stage 1~3 共有 + Stage 4~5 並列 (コスト 1.4x)。新設 21 モジュール、LSP 3 エンドポイント、Studio エルゴノミクス。Rule #1 (原文切り捨て防止) faithful 厳格 / market 緩和。アルファ非公開強化。',
+      CN: '实现市场分析 4 次本质 — Translation Studio 每次翻译同时生成两个结果。**Source-faithful Translation**（保留作者意图、专有名词、伏笔、文风）+ **Market-ready Localization**（对话节奏、称呼、类型语法、市场感觉）。Stage 1~3 共享 + Stage 4~5 并行（成本 1.4x）。新增 21 模块，3 LSP 端点，Studio 人体工学。Rule #1（防止原文截断）faithful 严格 / market 宽松。Alpha 非公开强化。',
+    },
+  },
+  {
     version: '0.2.0-alpha.7',
     date: '2026-04-21',
     type: 'improvement',

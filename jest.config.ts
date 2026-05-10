@@ -32,6 +32,8 @@ const config: Config = {
       },
       testMatch: ['**/__tests__/**/*.test.tsx'],
       setupFiles: ['<rootDir>/jest.setup.components.js'],
+      // [2026-05-10] @testing-library/jest-dom matchers — expect 정의 후 시점에 등록.
+      setupFilesAfterEach: ['<rootDir>/jest.setup.matchers.js'],
       testEnvironmentOptions: {
         url: 'http://localhost/',
       },

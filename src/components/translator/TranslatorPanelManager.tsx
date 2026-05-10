@@ -29,6 +29,9 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
       case 'chat': return <PI.ChatPanel />;
       case 'audit': return <PI.AuditPanel />;
       case 'reference': return <PI.ReferencePanel />;
+      // [2026-05-08 시장 분석 4차 P0] dual workflow 패널.
+      case 'adoption': return <PI.SegmentAdoptionPanel />;
+      case 'signoff': return <PI.SignoffPanel />;
       default: return null;
     }
   };

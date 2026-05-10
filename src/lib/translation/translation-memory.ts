@@ -10,9 +10,26 @@ import { ragSearch, type RagDocument } from '@/services/ragService';
 const TM_STORAGE_KEY = 'eh-translation-memory';
 const MAX_TM_ENTRIES = 5000;
 
+/**
+ * TMEntry — Translation Memory 한 항목.
+ *
+ * [2026-05-08 — 시장 분석 4차] Dual track 지원:
+ *   target          legacy 단일 (default).
+ *   targetFaithful  Source-faithful 매핑.
+ *   targetMarket    Market-ready 매핑.
+ *   trackMode       이 entry 의 의도 ('faithful' | 'market' | 'default').
+ *
+ * 호환성: 기존 entry 는 trackMode=undefined → 'default' 로 취급.
+ */
 export interface TMEntry {
   source: string;
   target: string;
+  /** [Dual] Source-faithful 매핑. 미지정 시 target 사용. */
+  targetFaithful?: string;
+  /** [Dual] Market-ready 매핑. 미지정 시 target 사용. */
+  targetMarket?: string;
+  /** [Dual] entry 의 track 의도. 'faithful'/'market'/'default'. */
+  trackMode?: 'faithful' | 'market' | 'default';
   sourceLang: string;
   targetLang: string;
   domain?: string;
@@ -140,8 +157,20 @@ export function addBatchToTM(
   saveTM(entries);
 }
 
-/** 소스 문장에 대한 TM 매치 검색 (trigram 프리필터 → Jaro-Winkler 정밀 비교) */
-export function searchTM(source: string, targetLang: string, threshold: number = 0.7): TMMatch[] {
+/**
+ * 소스 문장에 대한 TM 매치 검색 (trigram 프리필터 → Jaro-Winkler 정밀 비교).
+ *
+ * [2026-05-08 시장 분석 4차] trackMode 옵션 추가:
+ *   undefined / 'default' — 기존 동작 (모든 entry 검색)
+ *   'faithful' — entry.trackMode 가 'faithful' 또는 정의되지 않은 것만 (default 호환)
+ *   'market'   — entry.trackMode 가 'market' 또는 정의되지 않은 것만
+ */
+export function searchTM(
+  source: string,
+  targetLang: string,
+  threshold: number = 0.7,
+  trackMode?: 'faithful' | 'market' | 'default',
+): TMMatch[] {
   const { entries, index } = getCachedTM();
   const matches: TMMatch[] = [];
 
@@ -158,6 +187,12 @@ export function searchTM(source: string, targetLang: string, threshold: number =
   for (const i of candidateSet) {
     const entry = entries[i];
     if (entry.targetLang !== targetLang) continue;
+
+    // trackMode 필터 — entry.trackMode 가 명시적으로 다른 track 이면 제외
+    if (trackMode && trackMode !== 'default') {
+      const entryTrack = entry.trackMode ?? 'default';
+      if (entryTrack !== 'default' && entryTrack !== trackMode) continue;
+    }
 
     if (entry.source === source) {
       matches.push({ entry, similarity: 1.0, type: 'exact' });

@@ -11,7 +11,20 @@ import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 
 const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
   {
-    label: 'Navigation',
+    label: 'Navigation — 작가 친화 / Writer-friendly',
+    shortcuts: [
+      ['Ctrl+1', t('shortcuts.worldDesign')],
+      ['Ctrl+2', t('shortcuts.worldSimulator')],
+      ['Ctrl+3', t('shortcuts.characterStudio')],
+      ['Ctrl+4', t('shortcuts.rulebook')],
+      ['Ctrl+5', t('shortcuts.writingStudio')],
+      ['Ctrl+6', t('shortcuts.styleStudio')],
+      ['Ctrl+7', t('shortcuts.manuscript')],
+      ['Ctrl+8', t('shortcuts.archive')],
+    ],
+  },
+  {
+    label: 'Navigation — 펑션키 (legacy) / Function keys',
     shortcuts: [
       ['F1', t('shortcuts.worldDesign')],
       ['F2', t('shortcuts.worldSimulator')],

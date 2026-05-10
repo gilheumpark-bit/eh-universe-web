@@ -55,13 +55,23 @@ const SHORTCUTS: readonly Shortcut[] = [
     },
   },
   {
+    keys: "Ctrl+1 ~ Ctrl+8",
+    group: "nav",
+    description: {
+      ko: "탭 전환 — 작가 친화 (세계/캐릭터/규칙/집필/스타일/원고/이력/설정)",
+      en: "Switch tabs — writer-friendly (World/Characters/Rules/Writing/Style/Manuscript/History/Settings)",
+      ja: "タブ切替 — 作家向け (世界観/キャラ/規則/執筆/文体/原稿/履歴/設定)",
+      zh: "切换标签 — 作家友好 (世界/角色/规则/创作/文体/稿件/历史/设置)",
+    },
+  },
+  {
     keys: "F1 ~ F8",
     group: "nav",
     description: {
-      ko: "탭 전환 (세계/캐릭터/규칙/집필/스타일/원고/이력/설정)",
-      en: "Switch tabs (World/Characters/Rules/Writing/Style/Manuscript/History/Settings)",
-      ja: "タブ切替 (世界観/キャラ/規則/執筆/文体/原稿/履歴/設定)",
-      zh: "切换标签 (世界/角色/规则/创作/文体/稿件/历史/设置)",
+      ko: "탭 전환 — 펑션키 (Ctrl+1~8과 동일)",
+      en: "Switch tabs — function keys (same as Ctrl+1~8)",
+      ja: "タブ切替 — ファンクションキー (Ctrl+1~8と同じ)",
+      zh: "切换标签 — 功能键 (与 Ctrl+1~8 相同)",
     },
   },
   {

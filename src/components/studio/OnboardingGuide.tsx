@@ -38,7 +38,7 @@ const LABELS: Record<AppLanguage, {
   skip: string;
 }> = {
   KO: {
-    eyebrow: "NOA STUDIO",
+    eyebrow: "LOREGUARD",
     title: "어떻게 시작할까요?",
     subtitle: "세계관 설계부터 집필까지, 원하는 방식으로 시작하세요.",
     quickStart: "쾌속 시작",
@@ -51,7 +51,7 @@ const LABELS: Record<AppLanguage, {
     skip: "건너뛰기",
   },
   EN: {
-    eyebrow: "NOA STUDIO",
+    eyebrow: "LOREGUARD",
     title: "How would you like to start?",
     subtitle: "From world design to writing — choose your path.",
     quickStart: "Quick Start",
@@ -64,7 +64,7 @@ const LABELS: Record<AppLanguage, {
     skip: "Skip",
   },
   JP: {
-    eyebrow: "NOA STUDIO",
+    eyebrow: "LOREGUARD",
     title: "どのように始めますか？",
     subtitle: "世界観設計から執筆まで、お好みの方法で始めましょう。",
     quickStart: "クイックスタート",
@@ -77,7 +77,7 @@ const LABELS: Record<AppLanguage, {
     skip: "スキップ",
   },
   CN: {
-    eyebrow: "NOA STUDIO",
+    eyebrow: "LOREGUARD",
     title: "您想如何开始？",
     subtitle: "从世界观设计到写作，选择您的方式。",
     quickStart: "快速开始",
