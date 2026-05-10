@@ -3,15 +3,12 @@
 import { useState, useEffect } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import { LogIn, Globe, Languages, Code2 } from "lucide-react";
+import { LogIn } from "lucide-react";
 import UnifiedSettingsBar from "@/components/home/UnifiedSettingsBar";
 import { useAuth } from "@/lib/AuthContext";
 
 export default function SplashScreen({
-  onUniverse,
   onStudio,
-  onCodeStudio,
-  onTranslationStudio,
 }: {
   onUniverse: () => void;
   onStudio: () => void;
@@ -101,39 +98,6 @@ export default function SplashScreen({
           >
             {L4(lang, { ko: "바로 시작하기 →", en: "Start Now →", ja: "今すぐ始める →", zh: "立即开始 →" })}
           </button>
-
-          {/* [Nav fix — 2026-05-10] Secondary CTAs — Universe / Translation Studio / Code Studio.
-              이전: SplashScreen 가 onStudio 만 노출 → 사용자가 splash 에 갇혀 다른 앱 진입 X.
-              현재: 4개 핵심 앱 모두 splash 에서 직접 진입 가능. */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={onUniverse}
-              className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border border-border bg-bg-secondary/70 hover:bg-bg-secondary text-text-secondary hover:text-text-primary text-xs font-medium active:scale-[0.98] transition-[transform,background-color,border-color,color]"
-              aria-label={L4(lang, { ko: "유니버스 (아카이브)", en: "Universe (Archive)", ja: "ユニバース (アーカイブ)", zh: "宇宙 (档案)" })}
-            >
-              <Globe className="w-3.5 h-3.5" aria-hidden="true" />
-              {L4(lang, { ko: "유니버스", en: "Universe", ja: "ユニバース", zh: "宇宙" })}
-            </button>
-            <button
-              type="button"
-              onClick={onTranslationStudio}
-              className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border border-border bg-bg-secondary/70 hover:bg-bg-secondary text-text-secondary hover:text-text-primary text-xs font-medium active:scale-[0.98] transition-[transform,background-color,border-color,color]"
-              aria-label={L4(lang, { ko: "번역 스튜디오", en: "Translation Studio", ja: "翻訳スタジオ", zh: "翻译工作室" })}
-            >
-              <Languages className="w-3.5 h-3.5" aria-hidden="true" />
-              {L4(lang, { ko: "번역", en: "Translate", ja: "翻訳", zh: "翻译" })}
-            </button>
-            <button
-              type="button"
-              onClick={onCodeStudio}
-              className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border border-border bg-bg-secondary/70 hover:bg-bg-secondary text-text-secondary hover:text-text-primary text-xs font-medium active:scale-[0.98] transition-[transform,background-color,border-color,color]"
-              aria-label={L4(lang, { ko: "코드 스튜디오", en: "Code Studio", ja: "コードスタジオ", zh: "代码工作室" })}
-            >
-              <Code2 className="w-3.5 h-3.5" aria-hidden="true" />
-              {L4(lang, { ko: "코드", en: "Code", ja: "コード", zh: "代码" })}
-            </button>
-          </div>
 
           {/* 로그인 CTA — 비로그인 사용자에게만 명시 노출 (auth 확인 전 FOUC 방지) */}
           {mounted && authConfigured && !user && !authLoading && (

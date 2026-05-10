@@ -5,6 +5,7 @@
 // ============================================================
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
@@ -99,6 +100,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   language, setLanguage,
 }) => {
   const t = createT(language);
+  const router = useRouter();
   const [hoveredTab, setHoveredTab] = useState<AppTab | null>(null);
   const [isSystemMenuOpen, setIsSystemMenuOpen] = useState(false);
   const textFileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -560,17 +562,30 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         {/* 구분선 */}
         <div className="w-px h-10 bg-border/30 mx-1" />
 
-        {/* 앱 링크 아이콘 (UNIVERSE / TRANSLATE) — 앵커 tier (Handle·Settings와 동일 크기) */}
+        {/* 앱 링크 아이콘 (UNIVERSE / TRANSLATE) — 앵커 tier (Handle·Settings와 동일 크기)
+            [Nav fix — 2026-05-10] Link → button + router.push 명시 호출.
+            기존 Next.js Link 가 dock 의 dragging/touch handler 와 hydration 시점에 충돌해
+            click 이 navigate 까지 가지 않는 사례 보고. button + onClick 으로 보장.
+            저장 가능한 변경 (currentSessionId) → 새 탭 전환 시 손실 방지를 위해 동일 탭 내 router.push. */}
         {appLinks.map(link => (
-          <Link
+          <button
             key={link.href}
-            href={link.href}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30"
+            type="button"
+            onClick={(e) => {
+              // 드래그 중이면 navigate 차단 (마우스 드래그 종료 후 click 발생 방지)
+              if (isDockDragging.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              router.push(link.href);
+            }}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30 cursor-pointer"
             title={link.label}
             aria-label={link.label}
           >
-            <link.icon className={`w-6 h-6 ${link.color} hover:text-text-primary transition-colors`} strokeWidth={1.8} />
-          </Link>
+            <link.icon className={`w-6 h-6 ${link.color} hover:text-text-primary transition-colors pointer-events-none`} strokeWidth={1.8} />
+          </button>
         ))}
 
         {/* 구분선 */}
