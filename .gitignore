@@ -167,6 +167,17 @@ docs/lighthouse-report.md
 IR_PITCH_STRATEGY.md
 IR_*.md
 PITCH_*.md
+# [2026-05-10 audit] case-insensitive + 하이픈 변종 + INTERNAL audit 문서
+[Pp]itch-deck-*.md
+[Pp]itch_deck_*.md
+docs/[Pp]itch-deck-*.md
+docs/competitive-analysis.md
+docs/competitor-analysis.md
+docs/brand-hierarchy.md
+docs/m[0-9]-audit-*.md
+docs/m[0-9]-hardening-audit.md
+docs/m[0-9]-ux-balance-audit.md
+docs/m[0-9]-final-verification.txt
 
 # Internal team docs (do not commit)
 TEAM-ONBOARDING*
