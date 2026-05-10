@@ -39,6 +39,18 @@ export const VISUAL_TOKENS = {
     /** Hairline border */
     outlineLight: '#E1E1E1',
     outlineMid: '#C4C7C7',
+    /** Text scale — Tailwind grey 매칭 (다크 → 라이트) */
+    textPrimary: '#1A1A1A',     // 본문
+    textSecondary: '#6B7280',   // 보조 (slate-500)
+    textTertiary: '#9CA3AF',    // 라벨·디스클레이머 (slate-400)
+    textMuted: '#94A3B8',       // 시스템 actor (slate-400)
+    /** Origin Track / forensic 보조 색상 */
+    successGreen: '#16A34A',    // 협업자 / verified status
+    dangerRed: '#B91C1C',       // narrative drift 위험
+    warningAmber: '#FEF2F2',    // 경고 배경
+    warningBorder: '#FCA5A5',   // 경고 테두리
+    warningText: '#991B1B',     // 경고 텍스트
+    aiRewriteGray: '#9CA3AF',   // AI rewrite (정제)
   },
   typography: {
     displayLg: { family: "'Newsreader', 'Noto Serif KR', 'Noto Serif JP', 'Noto Serif SC', Georgia, serif", size: '48px', weight: 600, line: 1.1, tracking: '-0.02em' },

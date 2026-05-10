@@ -116,12 +116,25 @@ export interface TokenPressureEventDetail {
 /**
  * TokenMeasurement 결과를 noa:token-budget-* CustomEvent 로 디스패치.
  * 서버 사이드에서는 silent (window 미정의).
+ *
+ * [F-04 — 2026-05-10] 'warn' → 'warning' 매핑 — engine/pipeline.ts 와
+ * useStudioUX / TokenBudgetToast / StudioToasts listener 가 모두
+ * `noa:token-budget-warning` 사용. 이전에는 `noa:token-budget-warn` 으로
+ * 디스패치하여 listener 미도달 (silent fail).
  */
+const PRESSURE_LEVEL_TO_EVENT_SUFFIX: Record<'info' | 'warn' | 'critical', string> = {
+  info: 'info',
+  warn: 'warning',
+  critical: 'critical',
+};
+
 export function dispatchTokenPressure(detail: TokenPressureEventDetail): void {
   if (typeof window === 'undefined') return;
   const level = detail.measurement.pressureLevel;
   if (level === 'safe') return;
-  const eventName = `noa:token-budget-${level}`;
+  const suffix = PRESSURE_LEVEL_TO_EVENT_SUFFIX[level];
+  if (!suffix) return;
+  const eventName = `noa:token-budget-${suffix}`;
   try {
     window.dispatchEvent(new CustomEvent(eventName, { detail }));
   } catch {

@@ -1,7 +1,11 @@
 # Loreguard — Novel IDE 핸드북
 
-> **2026-05-07 기준 / 팀원·외부 사용자용 종합 설명서**
+> **2026-05-10 기준 / 팀원·외부 사용자용 종합 설명서**
 > 정체성 / 기능 / 단축키 / 작동 원리 / 코드 위치 / 격리 정책 / 외부 통합 / 트러블슈팅 모두 포함.
+>
+> v2.3 — Visual Charter v1.0 (창작 과정 확인서) + ARCS 레이어 + Codex 4-domain 반영.
+>
+> **Canonical**: `docs/novel-ide/handbook.md` (이 파일 — repo 통합 완료 2026-05-10).
 
 ---
 
@@ -21,6 +25,8 @@
 - 음악 → Logic Pro (Apple, 2002)
 - 영상 → Final Cut Pro (Apple, 2003)
 - **소설 → Loreguard (2026)** ★
+
+부가 가치 (2026-05-10 신설): **창작 과정 확인서 (Authorship Journal)** — Visual Charter v1.0 / Modern Institutionalism / Sharp 0px / Newsreader serif / Gold #D4AF37 Witness Seal.
 
 ---
 
@@ -64,6 +70,10 @@ Ctrl+Shift+S     Snippet Palette (25 빌트인 + 사용자)
 # Multi-cursor (D-3)
 Ctrl+D           Find/Replace Bar (활성 episode 본문)
 
+# 창작 과정 확인서 (Visual Charter v1.0 — 2026-05-10 신설)
+Settings → Advanced → "작업 정리 노트"
+                  발급 버튼 → HTML/Markdown 다운로드
+
 # 기타
 Esc              모달·패널 닫기
 ```
@@ -96,6 +106,12 @@ Esc              모달·패널 닫기
 - Snippets — 25 빌트인 + 사용자
 - Multi-cursor — 일괄 치환
 - Format on Save — 자동 정렬 7 룰
+
+추가 (Visual Charter v1.0 — 2026-05-10):
+- **창작 과정 확인서 (Authorship Journal)** — 작업 흔적 자동 누적 → 명시 발급
+- **HCI (Human Control Index)** — 0~100% 단일 숫자 + 3축 보조 분석
+- **Witness Seal** — `LG-{YY}{MM}-{serial}-{hash4}` 일련번호 + Gold #D4AF37 봉인 SVG
+- **3 view × 4언어 = 12 발급 케이스** (public/publisher/private + ko/en/ja/zh)
 
 ---
 
@@ -680,14 +696,14 @@ src/components/studio/multi-cursor/
 |---|---|---|
 | collapse-blank-lines | 빈 줄 3+ → 2개 압축 | ON |
 | trim-trailing | 줄 끝 공백 제거 | ON |
-| normalize-double-quotes | `“”＂` → `"` | ON |
-| normalize-single-quotes | `‘’＇` → `'` | OFF (줄임말 충돌) |
+| normalize-double-quotes | `"〞＂` → `"` | ON |
+| normalize-single-quotes | `'〞＇` → `'` | OFF (줄임말 충돌) |
 | normalize-ellipsis | `...` → `…` | ON |
 | normalize-arrows | `-->` → `→` | ON |
 | dialogue-line-break | 대사 단락 분리 | OFF (스타일 차이) |
 
 추가 옵션:
-- quoteStyle: `straight` (`"..."` 기본) / `curly` (`“...”`)
+- quoteStyle: `straight` (`"..."` 기본) / `curly` (`"..."`)
 - ellipsisStyle: `ellipsis` (`…` 기본) / `dots` (`...`)
 
 ### 13.3 진입 방법
@@ -779,6 +795,8 @@ NovelIDELauncher 안에서 모든 단축키 등록:
 | `noa:bp-toggle-request` | breakpoint-gutter Tiptap | NovelIDELauncher → useStoryDebugger |
 | `noa:snippet-insert` | NovelIDELauncher | NovelEditor listener |
 | `noa:manuscript-replace` | MultiCursorBar / FormatOnSaveSection | NovelEditor listener |
+| `noa:creative-event-captured` | event-recorder | CreativeProcessSection (5초 throttle refetch) |
+| `noa:prism-rejection` | geminiService / dual-pipeline | PrismRejectionToast |
 | `noa:alert` | 다수 | 글로벌 toast |
 
 ### 14.5 코드 위치
@@ -792,14 +810,293 @@ src/app/studio/StudioShell.tsx    +5 줄 mount
 
 ---
 
-## 15. CLI — 외부 워크플로우
+## 15. **창작 과정 확인서 (Visual Charter v1.0)** — 2026-05-10 신설
 
 ### 15.1 카테고리 정합
+
+부가 가치 — 메인 5앱 정체성 0byte 변경. **장부는 뒤에서 자동 누적, 발급은 작가 명시 액션.**
+
+| 축 | 위치 | 트리거 | 사용자 의식 |
+|---|---|---|---|
+| **자동 (Automation)** | `lib/creative-process/` + `useCreativeEventLogger` | 키 입력·AI 호출·외부 편입·시그니처 변경 | **0** |
+| **편의성 (Convenience)** | `CreativeProcessSection.tsx` (Settings → Advanced) | 명시적 클릭 (발급·view·형식) | **100%** |
+
+### 15.2 사상 정합 (Modern Institutionalism)
+
+- **Sharp 0px corners** — VS Code/Notion 둥근 SaaS 트렌드 거부, 법정 격식 (Witness Seal 만 50%)
+- **Newsreader serif** 헤드 + **Public Sans** 본문 + **Inter** mono 데이터 — 책 표지 + 법률 헤더 무게
+- **Accent Gold #D4AF37** — Witness Seal 전용 토큰
+- **Royal Blue #4169E1** — verified status 보조 액센트
+- **Document Shadow** — 책상 위 종이 메타포
+- **외부 link 0건** — 모든 폰트·SVG·이미지 inline (offline 발급 보장)
+
+### 15.3 발급 형식 — `LG-{YY}{MM}-{serial}-{hash4}`
+
+예: `LG-2605-0042-A8F5` = 2026년 5월 42번째 발급 + manuscriptHash 첫 4자.
+
+- IDB transaction 기반 monthly serial counter (race condition 방지)
+- SSR / IDB 미지원 환경 — `Date.now() % 10000` fallback
+- hash4 미만 padding `0` — `'a'` → `'A000'`
+
+### 15.4 HCI (Human Control Index)
+
+**0~100% 단일 숫자** + 3축 보조 분석. 9 Origin 가중치:
+
+| Origin | 가중치 | 분류 |
+|---|---|---|
+| HUMAN_DRAFT | 1.0 | 작가 직접 |
+| HUMAN_REVISION | 1.0 | 작가 직접 |
+| AI_SUGGESTION | 0.7 | 작가 채택 |
+| COLLABORATOR_INPUT | 0.7 | 협업자 |
+| AI_REWRITE | 0.5 | 작가 원문 base |
+| EXTERNAL_IMPORT | 0.5 | 외부 base |
+| TEMPLATE_SEED | 0.5 | 시스템 base |
+| AI_DRAFT | 0.0 | AI 단독 |
+| SYSTEM_GENERATED | 0.0 | 시스템 자동 |
+
+3축:
+- **Author Intent**: HUMAN_DRAFT 비율 (≥30% verified / ≥10% partial / 그 외 unverified)
+- **Manual Edit Density**: HUMAN_REVISION + AI_REWRITE 비율 (≥40% high / ≥15% medium / 그 외 low)
+- **Narrative Logic**: 이벤트 누적 (≥50 validated / ≥10 pending / 그 외 incomplete)
+
+### 15.5 9 Origin → 3 외부 카테고리 (도넛 차트)
+
+| 외부 | 매핑 |
+|---|---|
+| **human_input** | HUMAN_DRAFT + EXTERNAL_IMPORT + TEMPLATE_SEED + COLLABORATOR_INPUT |
+| **refinement** | HUMAN_REVISION + AI_REWRITE |
+| **ai_suggestion** | AI_SUGGESTION + AI_DRAFT + SYSTEM_GENERATED |
+
+도넛 SVG: Charcoal #1A1A1A / Gold #D4AF37 / Outline #C4C7C7 트라이어드 + dasharray 회전.
+
+### 15.6 4언어 byte-level 텍스트
+
+**금지어 (외부 노출 검증)**: `assertNoForbiddenWords`:
+- ko: 보증 / 인증 / 증명 / 효력 / 판정
+- en: certified / verified / attested / judicial / evidence
+- ja: 保証 / 認証 / 証明 / 判定
+- zh: 保证 / 认证 / 证明 / 判定
+
+**ATTESTATION OF GENESIS** (4언어 byte-level 고정 — 변경 시 변호사 재감수 + Major bump):
+- ko: "Lore Guard Integrity Core" + "작가의 직접적인 통제"
+- en: "author's direct control" + "manually validated"
+- ja: "直接的な管理下" + "Lore Guard Integrity Core"
+- zh: "直接控制下" + "Lore Guard Integrity Core"
+
+**SIGNATURE_DISCLAIMER** (4언어):
+- ko: "이 문서는 작업 과정의 기록이며, 저작권 보증은 아닙니다."
+- en: "This is a record of process, not a guarantee of copyright."
+- ja: "本書は作業過程の記録であり、著作権の保証ではありません。"
+- zh: "本文件为工作过程记录,不构成著作权保证。"
+
+### 15.7 4 view × 4언어 = 16 발급 케이스
+
+| view | 노출 정보 | 사용처 |
+|---|---|---|
+| **public** | 생성 시각·해시·AI Assist 여부·타임라인 요약 | 누구나 |
+| **publisher** | + 세계관 기준선·캐릭터 list·외부 편입 label+시각·timeline | 출판사·플랫폼 |
+| **private** | + 모든 row (rejected AI 제안·작가 메모) | 작가 본인만 |
+| **legal** | + 메타데이터·hash 강조 (분쟁 대응 자료) | 분쟁 대응 |
+
+### 15.8 stitch_lore_guard 4 화면 (`_1` ~ `_4`)
+
+| 화면 | 컴포넌트 | 역할 |
+|---|---|---|
+| `_1` | `SubmissionPackageBuilder.tsx` | 4 artifact bundle 발급 위저드 (제출 묶음) |
+| `_2` | `CreativeContributionInspector.tsx` | Chapter Detail — Origin Track + Context + Witness Log |
+| `_3` | `CreativeProcessSection.tsx` (기존) | Certificate 본체 — Settings Advanced 탭 |
+| `_4` | `ProvenanceReport.tsx` | 출처 보고서 — 3축 + Active Actors + Chronology + Ledger |
+
+### 15.9 `_1` Submission Package Builder
+
+**4 Distribution Profile**:
+
+| Profile | view | source-bundle | 보관 | 사용처 |
+|---|---|---|---|---|
+| `legal-deposit` | legal (forced) | ✓ | 70년 | 저작권 등록·법적 보관 |
+| `publisher` | publisher | ✓ | 10년 | 출판사 제출 |
+| `platform` | public | ✗ | 5년 | 네이버·카카오·아마존 등 |
+| `private-archive` | private | ✓ | 100년 | 작가 개인 보관 |
+
+**4 Artifact**:
+1. **manuscript-md** — 본문 markdown (제목 + 작가 + 에피소드 N개)
+2. **process-certificate** — 창작 과정 확인서 (HTML or Markdown)
+3. **source-bundle** — SourceRecord 묶음 + sourceId 연결 events (private bundle 만)
+4. **digital-signature** — manuscriptHash + timelineHash + sourceSummaryHash + sealNumber + 발급시각 (JSON)
+
+### 15.10 `_2` Contribution Inspector
+
+Chapter 단위 우측 패널 (~360px max-width, compact 모드 280px):
+
+```
+[Header — ScrollText icon + Contribution Inspector + ATTESTATION OF GENESIS]
+[Chapter Title]
+[Donut SVG 96×96 + Human/Refinement/AI 3 row]
+[HCI 단일 숫자 48px + 3축 (Intent/Density/Logic)]
+[Origin Track — 60 bars timeline]
+[Context Inspector — events/worldTier/sceneCount/activeCharacters]
+[Witness Log — recent 5 events (publisher+ only)]
+```
+
+### 15.11 `_4` Provenance Report
+
+**3축 점수** (forensic):
+- **Core Integrity** (higher-better): 작가 직접 통제 비율 (HUMAN_DRAFT + HUMAN_REVISION)
+- **Narrative Drift** (lower-better): AI 자동 변경 비율 (AI_DRAFT + AI_REWRITE)
+- **Control Density** (higher-better): 작가 명시 결정 빈도 (accept + reject)
+
+**Active Actor Profiles**: actor 별 (human/ai-model/system/collaborator) 이벤트 수·비율·최근 활동 시각.
+**Chronology**: 일자별 stack chart (최근 12일).
+**Cryptographic Ledger**: manuscriptHash + timelineHash + sourceSummaryHash + sealNumber 표.
+
+### 15.12 코드 위치
+
+```
+src/lib/creative-process/                    Visual Charter v1.0 모듈 14개
+├── types.ts                                 9 Origin + ProcessCertificate + sealNumber
+├── origin-adapter.ts                        EntryOrigin → CreativeOriginType 단방향
+├── visual-tokens.ts                         디자인 토큰 + buildCSSVarsString + buildCertificateBaseCSS
+├── hci-calculator.ts                        computeHCIDetail + categorizeOriginSummary + 4언어 라벨
+├── attestation-text.ts                      ATTESTATION_OF_GENESIS_4LANG byte-level + LABELS
+├── seal-issuer.ts                           issueWitnessSeal + buildWitnessSealSVG + buildOriginDonutSVG
+├── qr-renderer.ts                           generateQRDataUrl (qrcode 패키지 dynamic import) + buildPlaceholder
+├── limitation-text.ts                       LIMITATION_TEXT_4LANG + assertNoForbiddenWords
+├── external-status-mapper.ts                내부 6 → 외부 5 라벨 매핑
+├── event-recorder.ts                        recordCreativeEvent + listCreativeEvents + IDB
+├── source-recorder.ts                       recordSource + computeSha256Hex (Web Crypto)
+├── idb-store.ts                             단일 IDB connection (3 stores)
+├── report-builder.ts                        10 섹션 + HCI + sealNumber + ATTESTATION 통합
+├── html-renderer.ts                         self-contained HTML + 7 helper builder
+├── markdown-renderer.ts                     Visual Charter blocks (ATTESTATION/Seal/HCI/Origin/Sessions/Sig)
+├── submission-package.ts                    `_1` 4 artifact bundle + 4 distribution profile
+├── provenance-analyzer.ts                   `_4` 3축 + Actor + Chronology + Ledger
+├── index.ts                                 통합 export
+└── __tests__/                               15 suite / 141 test pass
+
+src/components/studio/
+├── CreativeContributionInspector.tsx        `_2` Contribution Inspector
+├── SubmissionPackageBuilder.tsx             `_1` Submission Package wizard
+└── ProvenanceReport.tsx                     `_4` Provenance Report
+
+src/components/studio/settings/
+└── CreativeProcessSection.tsx               `_3` Settings Advanced 탭 발급 UI
+
+src/hooks/
+└── useCreativeEventLogger.ts                4 mark helper (logHumanEdit/logAIDraft/logAcceptAI/logExternalImport)
+```
+
+### 15.13 발급 흐름
+
+```
+1. Settings → Advanced → "작업 정리 노트"
+2. 누적 통계 4 박스 표시 (AI assist / 외부 편입 / 작가 수정 / 총 이벤트)
+3. View dropdown (public/publisher/private) — 기본 private
+4. 형식 라디오 (HTML/Markdown) — 기본 HTML
+5. 발급 버튼 → buildCertificate → renderer → triggerDownload → IDB save
+6. 발급 이력 (최근 5건) — clipboard copy 가능
+```
+
+### 15.14 검증
+
+```bash
+# 4언어 디스클레이머 byte-level grep
+grep -F "이 문서는 법적 효력을" src/lib/creative-process/limitation-text.ts  # 1+
+
+# 외부 status 단어 노출 X grep
+grep -E "READY|EXPORT_BLOCKED|REVIEW_NEEDED|SOURCE_MISSING|HUMAN_REVIEW_LOW|LOG_GAP" \
+  src/lib/creative-process/{html,markdown}-renderer.ts  # 0
+
+# 단위 테스트
+npx jest src/lib/creative-process  # 15 suite / 141 test pass
+
+# 격리 §1
+git diff --name-only HEAD~..HEAD -- <8 절대 금지 파일>  # empty
+```
+
+---
+
+## 16. ARCS (AI Response Control System) 레이어 — 2026-04-24 신설
+
+집필판 AI 호출 엔트리·가드·컨텍스트 블록·사후 스캔·프롬프트 보정 5 모듈 통합.
+
+### 16.1 5 모듈
+
+| 모듈 | 위치 | 역할 |
+|---|---|---|
+| **WRITING_AGENT_REGISTRY** | `lib/ai/writing-agent-registry.ts` | 11 에이전트 × 6 GuardId × 11 ContextBlockId 단일 레지스트리 |
+| **SAFETY_REGISTRY** | `lib/ai/safety-registry.ts` | PRISM 3등급 (all-ages / teen-15 / mature-18) |
+| **codex-prompts/** | `lib/ai/codex-prompts/` | 4 도메인 × 7 handler prompt 매트릭스 |
+| **lang-normalize** | `lib/ai/lang-normalize.ts` | AppLanguage ↔ AgentLanguage 양방향 + 별칭 흡수 |
+| **IP Guard L1-L5** | `lib/ip-guard/` | 5계층 브랜드·저작권 방어 (입력 차단 → 사후 유사도) |
+
+### 16.2 11 에이전트 (autoTrim 5/5 활성)
+
+- `studio-draft` — Studio 본문 집필 (캐릭터 DNA + actGuide + tensionCurve)
+- `studio-inline-completion` — Tab 자동완성
+- `studio-inline-rewrite` — InlineActionPopup
+- `studio-detail-pass` — 디테일 패스
+- `translator-stage-1~5` — 번역 6단계
+- `translator-story-bible` — Story Bible
+- `codex-structured-json` — Codex JSON 생성
+- `network-agent-archive` — Network 검색 (HSE 4대 권리 + 5 응답 규칙)
+
+### 16.3 4 도메인 codex-prompts 매트릭스
+
+| 도메인 | 시장 | 라벨 |
+|---|---|---|
+| **kr-webnovel** | 한국 웹소설 | 회빙환 / 현판 / 로판 / 사이다 |
+| **en-fantasy** | Western fantasy | Tolkien / Sanderson / GRRM |
+| **ja-lightnovel** | 라노벨 | 異世界 / 学園 / 恋愛 / バトル |
+| **zh-xianxia** | 선협 | 修仙 / 玄幻 / 仙侠 / 武侠 |
+
+각 도메인 prompt 는 그 언어로 직접 작성. UI: `components/codex/CodexDomainSelector.tsx`.
+
+### 16.4 PRISM Safety 3등급
+
+| 등급 | 라벨 | 적용 |
+|---|---|---|
+| **all-ages** | 전체이용가 | 기본 |
+| **teen-15** | 15세 이상 | 작가 명시 |
+| **mature-18** | 19세 이상 | 자가 선언 |
+
+`buildSafetyEnhancedPrompt(base, level)` — 4언어 라벨 + LoRA 어댑터 별도 유지.
+
+PRISM rejection 감지: `noa:prism-rejection` event → `PrismRejectionToast` 사용자 안내.
+
+### 16.5 IP Guard L1-L5
+
+| 계층 | 모듈 | 시점 |
+|---|---|---|
+| L1 입력 차단 | `brand-blocklist.ts` + `scan.ts:scanTextForIP` | 사용자 입력 / 네트워크 ingest (403 차단) |
+| L2 프롬프트 회피 | `compliance-axis-7.ts:buildIPAvoidanceDirective` | LLM 호출 전 prompt 주입 |
+| L3 사후 유사도 | `ngram-similarity.ts` | 생성 후 n-gram Jaccard 의심 구간 탐지 |
+| L4 개인 블록리스트 | `codex-blocklist.ts` | localStorage 작가별 CRUD |
+| L5 RAG sanitize | `ragService.ts:sanitizeRagResults` | RAG 응답 `off`/`annotate`/`strict` 모드 |
+
+### 16.6 Compliance 7축 채점
+
+`lib/compliance/axes/orchestrator.ts:scoreAllAxes(ctx, options)` → 0~100 점수 + 가중 평균 + `applyDirectiveToPrompt()` 자동 보정.
+
+| 축 | 검증 |
+|---|---|
+| axis-1 | 세계관 |
+| axis-2 | 캐릭터 |
+| axis-3 | 연출 |
+| axis-4 | 장르 |
+| axis-5 | 씬시트 |
+| axis-6 | 연속성 |
+| axis-7 | IP 회피 |
+
+---
+
+## 17. CLI — 외부 워크플로우
+
+### 17.1 카테고리 정합
 
 작가가 vim/emacs/Obsidian 등 자기 도구로 markdown 작성 → 터미널에서 `npx loreguard` 호출.
 Loreguard 가 본진, CLI 는 호출자.
 
-### 15.2 3 Subcommands
+### 17.2 3 Subcommands
 
 ```bash
 # 5축 검증
@@ -812,7 +1109,7 @@ npx loreguard simulate manuscript.md
 npx loreguard symbols manuscript.md --config=story.json
 ```
 
-### 15.3 공통 옵션
+### 17.3 공통 옵션
 
 ```
 --token <token>        LSP API 토큰 (env: LOREGUARD_LSP_TOKEN)
@@ -821,7 +1118,7 @@ npx loreguard symbols manuscript.md --config=story.json
 --config <path>        Story config (symbols only)
 ```
 
-### 15.4 manuscript.md 형식
+### 17.4 manuscript.md 형식
 
 ```markdown
 # EP1
@@ -833,7 +1130,7 @@ npx loreguard symbols manuscript.md --config=story.json
 
 `# EP{n}` 또는 `# Episode {n}` 헤더로 분할. 헤더 없으면 전체 = EP1.
 
-### 15.5 출력 예 (lint)
+### 17.5 출력 예 (lint)
 
 ```
 Loreguard LSP Lint
@@ -852,11 +1149,11 @@ Top violations:
   [WARNING] foreshadow-unresolved (EP2) — Foreshadow [검은검] unresolved...
 ```
 
-### 15.6 npm publish 가이드
+### 17.6 npm publish 가이드
 
 `docs/novel-ide/cli-publish-guide.md` 참조. 별도 `@loreguard/cli` 패키지 publish 시점에 사용.
 
-### 15.7 코드 위치
+### 17.7 코드 위치
 
 ```
 src/cli/bin/loreguard.ts                  CLI entry (3 subcommand 라우팅)
@@ -870,13 +1167,13 @@ docs/novel-ide/cli-publish-guide.md       publish 절차
 
 ---
 
-## 16. GitHub Action
+## 18. GitHub Action
 
-### 16.1 사용 시나리오
+### 18.1 사용 시나리오
 
 작가가 GitHub repo 로 원고 관리 → PR 생성 시 자동 lint → 임계 미달 시 PR 차단.
 
-### 16.2 사용 예
+### 18.2 사용 예
 
 `.github/workflows/loreguard.yml`:
 ```yaml
@@ -896,7 +1193,7 @@ jobs:
           fail-on-block: 'true'
 ```
 
-### 16.3 Inputs
+### 18.3 Inputs
 
 | input | 기본 | 설명 |
 |---|---|---|
@@ -906,12 +1203,12 @@ jobs:
 | `threshold` | `70` | 임계 점수 (미달 시 fail) |
 | `fail-on-block` | `true` | Reader Sim block 시 fail |
 
-### 16.4 Outputs
+### 18.4 Outputs
 
 - `overall-score` — 0~100
 - `total-violations` — 위반 수
 
-### 16.5 코드 위치
+### 18.5 코드 위치
 
 ```
 .github/actions/loreguard-lint/action.yml   composite action
@@ -919,13 +1216,13 @@ jobs:
 
 ---
 
-## 17. Pre-commit Hook
+## 19. Pre-commit Hook
 
-### 17.1 사용 시나리오
+### 19.1 사용 시나리오
 
 작가가 git commit 시 자동 5축 검증. 임계 미달 시 commit 차단.
 
-### 17.2 Setup
+### 19.2 Setup
 
 ```bash
 # 옵션 1: 직접 hook
@@ -941,7 +1238,7 @@ chmod +x .git/hooks/pre-commit
 }
 ```
 
-### 17.3 환경변수
+### 19.3 환경변수
 
 ```bash
 export LOREGUARD_LSP_TOKEN=lg_lsp_xxxx
@@ -949,13 +1246,13 @@ export LOREGUARD_THRESHOLD=70             # default 70
 export LOREGUARD_MANUSCRIPT=manuscript.md  # default manuscript.md
 ```
 
-### 17.4 우회
+### 19.4 우회
 
 ```bash
 git commit --no-verify
 ```
 
-### 17.5 코드 위치
+### 19.5 코드 위치
 
 ```
 scripts/loreguard-pre-commit.sh
@@ -963,11 +1260,11 @@ scripts/loreguard-pre-commit.sh
 
 ---
 
-## 18. 격리 정책
+## 20. 격리 정책
 
-### 18.1 절대 금지 (0byte 변경)
+### 20.1 절대 금지 (0byte 변경) — **8개**
 
-다음 6개 파일은 **모든 Phase 작업에서 0byte 변경**:
+다음 8개 파일은 **모든 Phase 작업에서 0byte 변경** (2026-05-10 갱신: creative-process 추가 격리 항목 포함):
 
 ```
 src/lib/studio-types.ts
@@ -976,6 +1273,9 @@ src/components/studio/ManuscriptView.tsx
 src/components/studio/OriginBadge.tsx
 src/lib/origin-migration.ts
 src/components/studio/settings/AuditExportButton.tsx
+src/lib/markdown-serializer.ts
+src/lib/project-serializer.ts
+src/hooks/useOriginTracker.ts
 ```
 
 검증:
@@ -986,23 +1286,26 @@ git diff --name-only HEAD~..HEAD -- \
   src/components/studio/ManuscriptView.tsx \
   src/components/studio/OriginBadge.tsx \
   src/lib/origin-migration.ts \
-  src/components/studio/settings/AuditExportButton.tsx
+  src/components/studio/settings/AuditExportButton.tsx \
+  src/lib/markdown-serializer.ts \
+  src/lib/project-serializer.ts \
+  src/hooks/useOriginTracker.ts
 # → empty 면 격리 OK
 ```
 
-### 18.2 수정 (최소 침습)
+### 20.2 수정 (최소 침습)
 
 | 파일 | 변경량 |
 |---|---|
-| `src/app/studio/StudioShell.tsx` | +5 줄 (NovelIDELauncher mount + Format on Save wiring) |
-| `src/components/studio/SettingsView.tsx` | +5 줄 (LSPTokenSection + FormatOnSaveSection mount) |
+| `src/app/studio/StudioShell.tsx` | +6 줄 (NovelIDELauncher mount + Format on Save wiring + useCreativeEventLogger) |
+| `src/components/studio/SettingsView.tsx` | +6 줄 (LSPTokenSection + FormatOnSaveSection + CreativeProcessSection mount) |
 | `src/components/studio/NovelEditor.tsx` | +60 줄 (hover + decoration extensions + listener) |
 | `src/components/studio/tabs/writing/EditModeSection.tsx` | +15 줄 (symbolIndex / breakpoints 주입) |
 
-### 18.3 의존성 그래프
+### 20.3 의존성 그래프
 
 ```
-모든 신규 lib (symbol-index / long-arc / debugger / reader-sim / lsp / semantic-diff / snippets / multi-cursor / format-on-save)
+모든 신규 lib (symbol-index / long-arc / debugger / reader-sim / lsp / semantic-diff / snippets / multi-cursor / format-on-save / creative-process)
    ↓ (단방향, 역방향 0)
 save-engine / studio-types
 
@@ -1013,28 +1316,37 @@ save-engine / studio-types
 API routes (lsp/* + integration/*)
    ↓
 신규 lib + lsp/auth
+
+creative-process 편의성 layer (CreativeProcessSection / `_1` / `_2` / `_4`)
+   ↓ (read-only)
+creative-process 자동 layer (event-recorder / source-recorder / IDB)
+   ↓ (X 역방향)
+편의성 ⊥ 자동 분리 (madge --circular = 0)
 ```
 
 검증:
 ```bash
-npx madge --circular src/lib/symbol-index src/lib/long-arc-verifier ...
+npx madge --circular src/lib/symbol-index src/lib/long-arc-verifier src/lib/creative-process ...
 # → circular 0
 ```
 
 ---
 
-## 19. 검증 / 테스트
+## 21. 검증 / 테스트
 
-### 19.1 자동 검증 (Phase G)
+### 21.1 자동 검증 (Phase G)
 
 | 게이트 | 명령 | 통과 기준 |
 |---|---|---|
-| 격리 | `git diff --name-only HEAD~..HEAD -- <6 files>` | empty |
-| 타입 | `npx tsc --noEmit` | Novel IDE 모듈 0 errors |
-| 테스트 | `npx jest src/lib/{symbol-index,long-arc-verifier,...}` | 16/16 suite, 95/95 test pass |
+| 격리 | `git diff --name-only HEAD~..HEAD -- <8 files>` | empty |
+| 타입 | `npx tsc --noEmit` | 0 errors (strict) |
+| 테스트 | `npx jest` | 3763/3772 pass (99.76%) |
+| Creative Process | `npx jest src/lib/creative-process` | 15 suite / 141 test pass |
 | 4언어 grep | `grep -F "소설가의 IDE" README.md docs/manifesto.md` | 2+ match |
+| 디스클레이머 byte-level | `grep -F "이 문서는 법적 효력을" limitation-text.ts` | 1+ match |
+| 외부 status 단어 노출 X | `grep -E "READY\|EXPORT_BLOCKED..." html,markdown-renderer.ts` | 0 match |
 
-### 19.2 수동 검증 시나리오
+### 21.2 수동 검증 시나리오
 
 샘플 100화 프로젝트 1개로:
 
@@ -1045,46 +1357,42 @@ npx madge --circular src/lib/symbol-index src/lib/long-arc-verifier ...
 5. **Phase E**: Reader 탭 → 재실행 → PersonaSelector dropdown → DropoutHeatmap 확인
 6. **Phase F**: Settings → LSPTokenSection 발급 → curl `/api/lsp/lint`
 7. **D-1~4**: Diff 탭 / Ctrl+Shift+S / Ctrl+D / Settings Format on Save Format Now
+8. **창작 과정 확인서 (Visual Charter v1.0)**: Settings → Advanced → "작업 정리 노트" → 발급 → 3 view × 4언어 = 12 케이스 + Witness Seal SVG + HCI 단일 숫자 + Origin Donut
 
-### 19.3 jest 테스트 파일 (16 suite)
+### 21.3 jest 테스트 파일 (확장)
 
 ```
-src/lib/symbol-index/__tests__/
-├── builder.test.ts                 6 케이스
-├── scanner.test.ts                 6 케이스
-└── find-references.test.ts         9 케이스
+src/lib/symbol-index/__tests__/                        21 케이스
+src/lib/long-arc-verifier/__tests__/                   19 케이스
+src/lib/story-debugger/__tests__/                      17 케이스
+src/lib/reader-sim/__tests__/                          7 케이스
+src/lib/semantic-diff/__tests__/                       5 케이스
+src/lib/multi-cursor/__tests__/                        9 케이스
+src/lib/format-on-save/__tests__/                      11 케이스
+src/app/api/lsp/__tests__/                             3 케이스
 
-src/lib/long-arc-verifier/__tests__/
-├── plot-drift.test.ts              5 케이스
-├── character-arc.test.ts           4 케이스
-├── foreshadow.test.ts              5 케이스
-└── orchestrator.test.ts            5 케이스
-
-src/lib/story-debugger/__tests__/
-├── breakpoint.test.ts              5 케이스
-├── state-snapshot.test.ts          5 케이스
-└── step-engine.test.ts             7 케이스
-
-src/lib/reader-sim/__tests__/
-├── dropout-predictor.test.ts       4 케이스
-└── engagement-profiler.test.ts     3 케이스
-
-src/lib/semantic-diff/__tests__/
-└── differ.test.ts                  5 케이스
-
-src/lib/multi-cursor/__tests__/
-└── find-occurrences.test.ts        9 케이스
-
-src/lib/format-on-save/__tests__/
-└── rules.test.ts                   11 케이스
-
-src/app/api/lsp/__tests__/
-└── lint.test.ts                    3 케이스
+# Creative Process (Visual Charter v1.0 — 2026-05-10 신설)
+src/lib/creative-process/__tests__/
+├── origin-adapter.test.ts                             6 케이스
+├── report-builder.test.ts                             4 케이스
+├── html-renderer.test.ts                              3 케이스
+├── markdown-renderer.test.ts                          2 케이스
+├── event-recorder.test.ts                             3 케이스
+├── external-status-mapper.test.ts                     1 케이스
+├── visual-tokens.test.ts                              10 케이스
+├── hci-calculator.test.ts                             16 케이스
+├── attestation-text.test.ts                           10 케이스
+├── seal-issuer.test.ts                                12 케이스
+├── qr-renderer.test.ts                                12 케이스
+├── submission-package.test.ts                         14 케이스
+└── provenance-analyzer.test.ts                        9 케이스
+                                                       ─────────
+                                                       Total 141
 ```
 
 ---
 
-## 20. 트러블슈팅
+## 22. 트러블슈팅
 
 ### Q1. F12 누르면 브라우저 DevTools 가 열려요
 A. 본문 텍스트가 선택된 상태에서만 `useGoToDefinition` 이 preventDefault. 그 외엔 DevTools 우선.
@@ -1116,13 +1424,29 @@ A. 한글 ID 매칭 정규식 `[a-zA-Z0-9_\-가-힣一-龥ぁ-んァ-ン]{1,30}`
 ### Q10. CLI `loreguard --help` not found
 A. `npm install -g @loreguard/cli` 필요. 또는 repo 내부에서 `npx tsx src/cli/bin/loreguard.ts`.
 
+### Q11. 창작 과정 확인서 발급 시 "EMPTY_MANUSCRIPT" 에러
+A. 원고 본문이 0자 또는 빈 SHA-256 (`e3b0c44...`) 일 때 차단. 최소 1 문장 이상 작성 후 재시도.
+
+### Q12. 발급 시 "FORBIDDEN_WORD" 에러
+A. 외부 노출 row 에 4언어 금지어 (보증·인증·증명·certified·verified·attested·保証·保证 등) 포함. 작품명·캐릭터명 점검.
+
+### Q13. Witness Seal 일련번호 중복
+A. IDB transaction 으로 month-prefix 카운터 atomic 보장. SSR 환경 또는 IDB 미지원 시 timestamp ms fallback (충돌 가능성 매우 낮음).
+
+### Q14. QR 코드가 placeholder SVG 로만 표시
+A. `qrcode` npm 패키지 미설치 환경 — dynamic import 실패 시 자동 fallback. 정식 PNG 발급 원하면 `npm install qrcode @types/qrcode`.
+
+### Q15. PRISM rejection 으로 AI 응답 차단됨
+A. 19+ 콘텐츠 시도 시 `noa:prism-rejection` event → toast. Settings → Advanced → "콘텐츠 등급" 변경 또는 표현 완화.
+
 ---
 
-## 21. 사용자 시나리오 — 80화 작가 하루
+## 23. 사용자 시나리오 — 80화 작가 하루
 
 ```
 09:00  Studio 진입 → EP78 작성 시작
        NovelEditor 본문에 김준 / 박서연 등장 → underline 자동 표시
+       (자동 누적: HUMAN_DRAFT 이벤트 IDB append)
 
 10:30  "박서연이 어디서 마지막 등장했더라?"
        → 본문 박서연 더블클릭 → Shift+F12
@@ -1132,6 +1456,7 @@ A. `npm install -g @loreguard/cli` 필요. 또는 repo 내부에서 `npx tsx src
 11:00  Ctrl+S 저장
        → Format on Save 자동 — 빈 줄 / trailing whitespace / 따옴표 정규화
        → editDraft 갱신
+       → noa:creative-event-captured event → CreativeProcessSection 통계 refetch
 
 11:30  Long-Arc 탭 → "재검증"
        → 종합 점수 84
@@ -1154,20 +1479,33 @@ A. `npm install -g @loreguard/cli` 필요. 또는 repo 내부에서 `npx tsx src
        → primaryAxis: tension (+45%)
        → 만족 → 진행
 
+17:00  Settings → Advanced → "작업 정리 노트"
+       → AI 보조 12회 / 외부 편입 0 / 작가 수정 78 / 총 이벤트 142
+       → View: publisher / 형식: HTML / 발급
+       → loreguard-authorship-journal-{slug}-2026-05-10T17-00-00.html 다운로드
+       → HCI 67.4 / Witness Seal LG-2605-0042-A8F5 확인
+
 18:00  git commit
        → pre-commit hook 자동 → loreguard lint
        → 점수 84 ≥ 70 → 통과 → push
 
 19:00  GitHub Actions 자동 → loreguard-lint composite action
        → 점수 84 → PR 통과 → merge
+
+20:00  출판사 제출 — Submission Package Builder (`_1`)
+       → Profile: publisher / 받는 곳: 문학동네
+       → 4 artifacts: manuscript.md + journal.html + source-bundle.json + signature.json
+       → "전체 다운로드" → ZIP 처리 후 출판사 메일 첨부
 ```
 
 ---
 
-## 22. 다음 단계 백로그
+## 24. 다음 단계 백로그
 
 ### 코드 백로그 (의도된 미구현)
 - `embedding-cache.ts` LLM 임베딩 통합 (Phase 2)
+- `qrcode` npm 패키지 정식 설치 (현재 dynamic import + placeholder fallback)
+- `legal` view Phase 2 본격 구현 (분쟁 대응 자료 추가 메타데이터)
 
 ### Phase 2~5 로드맵
 - Phase 2: Reader Sim 4 시장 페르소나 (KO/EN/JP/ZH)
@@ -1175,11 +1513,24 @@ A. `npm install -g @loreguard/cli` 필요. 또는 repo 내부에서 `npx tsx src
 - Phase 4: Story Debugger 시간 역행 (이전 화 변경시 후속 화 자동 영향 추적)
 - Phase 5: 평행우주 의미 머지 (Semantic Merge — D-1 활용)
 
+### Visual Charter v1.0 후속 (2026-05-10+)
+- Phase 2 — 사이드 패널 추가 (CreativeContributionInspector mount, 기본 접힘)
+- Phase 3 — Origin 9종 OriginBadge 확장 (자동 누적 강화)
+- Phase 4 — 제출 패키지 ZIP 묶음 export (현재 개별 다운로드)
+- Phase 5 — 외부 조회 링크 (Public/Publisher/Legal/Private View URL)
+
+### LearningGuard fork (별도 repo, 2026-05-07 사전 조사 완료)
+- 4 view: learner / parent / school / admission
+- 어휘 치환 12 매핑 (소설판 → 학습판) + 4언어 launch
+- 8 학습용 절대 금지 파일 0byte
+- limitation-text 신규 작성 (개인정보보호법·교육법)
+
 ### 외부 절차
 - npm `@loreguard/cli` publish (publisher account 발급 후)
 - GitHub `loreguard/lint-action` marketplace 등록
 - 출판사 1~3개 파일럿 통합
 - 번역사 5명 파일럿
+- 변호사 1회 감수 (시드 자금 후 — ATTESTATION 4언어 byte-level)
 - "Novel IDE" Wikipedia 카테고리 신청
 - KAIST/이화여대 문창과 학회 발표
 
@@ -1189,31 +1540,36 @@ A. `npm install -g @loreguard/cli` 필요. 또는 repo 내부에서 `npx tsx src
 
 ---
 
-## 23. 통계 요약 (2026-05-07)
+## 25. 통계 요약 (2026-05-10)
 
 | 항목 | 수치 |
 |---|---|
-| **신규 파일** | ~110 |
-| **변경 파일** | ~25 (정체성 카피 + mount + wiring) |
-| **6 절대 금지 파일** | 0byte 유지 ✓ |
-| **타입 errors** | 0 (Novel IDE 모듈) |
-| **테스트** | 16 suite / 95 test pass |
-| **신규 lib 디렉토리** | 9 (symbol-index / long-arc-verifier / story-debugger / reader-sim / lsp / semantic-diff / snippets / multi-cursor / format-on-save) |
-| **신규 hook** | 9 |
+| **신규 파일** | ~125 |
+| **변경 파일** | ~30 (정체성 카피 + mount + wiring + Visual Charter) |
+| **8 절대 금지 파일** | 0byte 유지 ✓ |
+| **타입 errors** | 0 (strict) |
+| **테스트** | 3763/3772 pass (99.76%) |
+| **Creative Process 테스트** | 15 suite / 141 test pass |
+| **신규 lib 디렉토리** | 10 (symbol-index / long-arc-verifier / story-debugger / reader-sim / lsp / semantic-diff / snippets / multi-cursor / format-on-save / **creative-process**) |
+| **신규 hook** | 10 |
 | **신규 API endpoint** | 5 (auth / lint / symbols / diagnostics / publisher-mock) |
-| **신규 component 디렉토리** | 8 (symbol-ide / long-arc / debugger / reader-sim / semantic-diff / snippets / multi-cursor / novel-ide) |
+| **신규 component 디렉토리** | 9 (symbol-ide / long-arc / debugger / reader-sim / semantic-diff / snippets / multi-cursor / novel-ide / **creative-process 3종 컴포넌트**) |
 | **CLI subcommand** | 3 (lint / simulate / symbols) |
 | **GitHub Action** | 1 (loreguard-lint composite) |
 | **16 IDE 가치 매트릭스** | 46% → 95%+ |
 | **카테고리 모순** | 0 (VS Code/IntelliJ 폐기) |
+| **ARCS 11 에이전트 autoTrim** | 5/5 활성 |
+| **PRISM 3등급** | all-ages / teen-15 / mature-18 분리 |
+| **Codex 4 도메인** | KO 웹소설 / EN fantasy / JA 라노벨 / ZH 선협 |
+| **Visual Charter v1.0** | 14 모듈 + 3 컴포넌트 (`_1` `_2` `_4`) |
 
 ---
 
-## 24. 참조 문서
+## 26. 참조 문서
 
 | 문서 | 위치 |
 |---|---|
-| **본 핸드북** | `docs/novel-ide/handbook.md` |
+| **본 핸드북** | `handbook.md` (이 파일) |
 | Symbol IDE 사용자 가이드 | `docs/novel-ide/symbol-ide.md` |
 | LSP 사양 | `docs/novel-ide/lsp-spec.md` |
 | 외부 통합 가이드 | `docs/novel-ide/external-integration.md` |
@@ -1222,16 +1578,21 @@ A. `npm install -g @loreguard/cli` 필요. 또는 repo 내부에서 `npx tsx src
 | Manifesto v2.2 | `docs/manifesto.md` |
 | 카테고리 선언 v1.1 | `docs/category-declaration.md` |
 | 브랜드 철학 | `docs/brand-philosophy.md` |
-| Plan 파일 (전체 100항목) | `~/.claude/plans/rosy-jumping-book.md` |
+| 창작 과정 확인서 설계 | `13_과정_확인서_설계_LearningGuard.md` |
+| Visual Charter 디자인 | `stitch_lore_guard/_1.html` ~ `_4.html` |
+| Plan 파일 (Track-D 100항목) | `~/.claude/plans/rosy-jumping-book.md` |
 
 ---
 
-## 25. Contact / 문의
+## 27. Contact / 문의
 
 이 핸드북이 다루지 못한 영역은:
 - **버그 리포트**: GitHub Issues
-- **기능 제안**: 백로그 (§22)
+- **기능 제안**: 백로그 (§24)
 - **사상 / 카테고리**: `docs/manifesto.md` v2.2 → `brand-philosophy.md` Part 13
+- **창작 과정 확인서 텍스트 변경**: 변호사 재감수 + ATTESTATION_VERSION Major bump 필요
 
 > **Loreguard — 소설가의 IDE.**
 > *Novels, verified like code.*
+>
+> *부가 가치: 작업 흔적의 자동 누적 + 명시 발급. 보증 X 기록 O.*

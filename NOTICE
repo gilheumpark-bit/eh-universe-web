@@ -1,0 +1,107 @@
+EH Universe / Loreguard Studio
+Copyright (C) 2024-2026 박길흠 (Park Gilheum) / gilheumpark-bit
+EH Universe Project / Loreguard Studio
+
+================================================================================
+This product includes software developed by third parties listed below.
+Their licenses are bundled in node_modules/<package>/LICENSE upon install.
+================================================================================
+
+## Framework / Runtime
+
+- Next.js (MIT License)                    https://github.com/vercel/next.js
+- React / React DOM (MIT License)          https://github.com/facebook/react
+- TypeScript (Apache-2.0)                  https://github.com/microsoft/TypeScript
+
+## UI / Editor / Visualization
+
+- Tiptap (MIT License)                     https://github.com/ueberdolph/tiptap
+- Lucide Icons (ISC License)               https://github.com/lucide-icons/lucide
+- Tailwind CSS (MIT License)               https://github.com/tailwindlabs/tailwindcss
+- react-markdown (MIT License)             https://github.com/remarkjs/react-markdown
+
+## Data / Storage / Auth
+
+- Firebase / firebase-admin (Apache-2.0)   https://github.com/firebase/firebase-js-sdk
+- fake-indexeddb (Apache-2.0)              https://github.com/dumbmatter/fakeIndexedDB
+- Octokit (MIT License)                    https://github.com/octokit/octokit.js
+
+## AI / Translation Stack
+
+- OpenAI Node SDK (Apache-2.0)             https://github.com/openai/openai-node
+- @anthropic-ai/sdk (MIT License)          https://github.com/anthropics/anthropic-sdk-typescript
+- @google/generative-ai (Apache-2.0)       https://github.com/google/generative-ai-js
+- groq-sdk (Apache-2.0)                    https://github.com/groq/groq-typescript
+
+## Testing
+
+- Jest (MIT License)                       https://github.com/jestjs/jest
+- @testing-library/react (MIT License)     https://github.com/testing-library/react-testing-library
+- @testing-library/jest-dom (MIT License)  https://github.com/testing-library/jest-dom
+- Playwright (Apache-2.0)                  https://github.com/microsoft/playwright
+
+## Build / Tooling
+
+- ESLint (MIT License)                     https://github.com/eslint/eslint
+- @typescript-eslint/* (MIT License)       https://github.com/typescript-eslint/typescript-eslint
+- PostCSS (MIT License)                    https://github.com/postcss/postcss
+- SWC (Apache-2.0)                         https://github.com/swc-project/swc
+
+## Optional / Lazy-Loaded
+
+- qrcode (MIT License)                     https://github.com/soldair/node-qrcode
+  — Dynamically imported in src/lib/creative-process/qr-renderer.ts.
+    Falls back to inline SVG placeholder if not installed.
+
+================================================================================
+## Self-Hosted AI Models
+
+- Qwen 3.6-35B-A3B-FP8 MoE
+  License: Apache-2.0 (Alibaba Cloud)
+  Used via vLLM OpenAI-compatible endpoint on DGX GB10.
+  https://huggingface.co/Qwen
+
+- Flux-Schnell FP8 (image generation)
+  License: FLUX.1 [schnell] License (Apache-2.0 model weights)
+  Used via ComfyUI on DGX GB10.
+
+================================================================================
+## Datasets / Knowledge Sources
+
+- Wikipedia content (CC BY-SA 4.0)
+  Selected entries — 990,000+ documents indexed via ChromaDB
+  for RAG (Retrieval Augmented Generation).
+  Attribution: https://en.wikipedia.org/wiki/Wikipedia:Copyrights
+
+- Genre rules (Loreguard original)
+  25 genre rule sets — author-authored, dual-licensed under
+  AGPL-3.0-or-later / EH Universe Commercial.
+
+================================================================================
+## Korean Patent
+
+Korean patent application No. 10-2026-0038027 (KIPO Fast-Track) —
+ARCS (AI Response Control System), IP Guard L1-L5 layered defense,
+Compliance 7-axis scoring.
+
+  - AGPL recipients: AGPL-3.0 §11 patent retaliation terms apply.
+  - Commercial recipients: see COMMERCIAL-LICENSE.md.
+
+================================================================================
+## Brand / Trademark
+
+"Loreguard", "Lore Guard", "Lore Guard Integrity Core", "Witness Seal",
+"ATTESTATION OF GENESIS", "Authorship Journal", "Novel IDE",
+"Code Studio (Loreguard)" — pending or registered marks of EH Universe Project.
+
+================================================================================
+## Contact
+
+- General: gilheumpark@gmail.com
+- Security disclosures: security@eh-universe.dev
+- Commercial licensing: gilheumpark@gmail.com (subject: [COMMERCIAL])
+- Patent inquiries: gilheumpark@gmail.com (subject: [PATENT])
+
+================================================================================
+NOTICE last updated: 2026-05-10 — Loreguard v2.3.0-alpha-prep
+For changes, see CHANGELOG.md and git history of this file.

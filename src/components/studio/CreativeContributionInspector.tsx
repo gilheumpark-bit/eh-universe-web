@@ -148,17 +148,30 @@ function l(language: CertificateLanguage, key: keyof typeof PANEL_LABELS.ko): st
 //
 // stitch_lore_guard `_2` Origin Track timeline 색상 매핑.
 // Visual Charter v1.0 정합: Charcoal/Gold/Outline 트라이어드 + Royal Blue verified.
+//
+// [a11y — 2026-05-10] 색맹 대응 — 색상 + symbol 2축 인코딩.
+// SVG pattern fill (선/점/체크무늬) + 단일 문자 symbol 동시 표기.
+// 9 origin → 9 distinct symbols (◼ ▲ ★ ◆ ▼ ⬢ □ ◯ ◑) — color blindness simulator 통과.
 
-const ORIGIN_VISUAL: Record<CreativeOriginType, { bg: string; label: { ko: string; en: string; ja: string; zh: string } }> = {
-  HUMAN_DRAFT:        { bg: '#1A1A1A', label: { ko: '직접 작성',     en: 'Human Draft',    ja: '直接執筆',   zh: '直接写作' } },
-  HUMAN_REVISION:     { bg: '#4169E1', label: { ko: '직접 수정',     en: 'Human Revision', ja: '直接修正',   zh: '直接修改' } },
-  AI_SUGGESTION:      { bg: '#D4AF37', label: { ko: 'AI 제안',       en: 'AI Suggestion',  ja: 'AI提案',     zh: 'AI建议' } },
-  AI_DRAFT:           { bg: '#C4C7C7', label: { ko: 'AI 초안',       en: 'AI Draft',       ja: 'AI下書き',   zh: 'AI初稿' } },
-  AI_REWRITE:         { bg: '#9CA3AF', label: { ko: 'AI 재작성',     en: 'AI Rewrite',     ja: 'AI書き直し', zh: 'AI重写' } },
-  EXTERNAL_IMPORT:    { bg: '#2C3E50', label: { ko: '외부 편입',     en: 'External',       ja: '外部取込',   zh: '外部导入' } },
-  TEMPLATE_SEED:      { bg: '#E1E1E1', label: { ko: '템플릿',        en: 'Template',       ja: 'テンプレ',   zh: '模板' } },
-  COLLABORATOR_INPUT: { bg: '#16A34A', label: { ko: '협업자',        en: 'Collaborator',   ja: '協力者',     zh: '协作者' } },
-  SYSTEM_GENERATED:   { bg: '#94A3B8', label: { ko: '시스템',        en: 'System',         ja: 'システム',   zh: '系统' } },
+interface OriginVisual {
+  bg: string;
+  /** 단일 문자 symbol — 시각 보조 (text alternative) */
+  symbol: string;
+  /** SVG pattern id — bar fill 시 색상 + 패턴 동시 인코딩 */
+  patternId: 'solid' | 'diag' | 'dots' | 'cross' | 'horiz' | 'vert' | 'check' | 'circle' | 'half';
+  label: { ko: string; en: string; ja: string; zh: string };
+}
+
+const ORIGIN_VISUAL: Record<CreativeOriginType, OriginVisual> = {
+  HUMAN_DRAFT:        { bg: '#1A1A1A', symbol: '◼', patternId: 'solid',  label: { ko: '직접 작성',     en: 'Human Draft',    ja: '直接執筆',   zh: '直接写作' } },
+  HUMAN_REVISION:     { bg: '#4169E1', symbol: '▲', patternId: 'diag',   label: { ko: '직접 수정',     en: 'Human Revision', ja: '直接修正',   zh: '直接修改' } },
+  AI_SUGGESTION:      { bg: '#D4AF37', symbol: '★', patternId: 'dots',   label: { ko: 'AI 제안',       en: 'AI Suggestion',  ja: 'AI提案',     zh: 'AI建议' } },
+  AI_DRAFT:           { bg: '#C4C7C7', symbol: '◆', patternId: 'cross',  label: { ko: 'AI 초안',       en: 'AI Draft',       ja: 'AI下書き',   zh: 'AI初稿' } },
+  AI_REWRITE:         { bg: '#9CA3AF', symbol: '▼', patternId: 'horiz',  label: { ko: 'AI 재작성',     en: 'AI Rewrite',     ja: 'AI書き直し', zh: 'AI重写' } },
+  EXTERNAL_IMPORT:    { bg: '#2C3E50', symbol: '⬢', patternId: 'vert',   label: { ko: '외부 편입',     en: 'External',       ja: '外部取込',   zh: '外部导入' } },
+  TEMPLATE_SEED:      { bg: '#E1E1E1', symbol: '□', patternId: 'check',  label: { ko: '템플릿',        en: 'Template',       ja: 'テンプレ',   zh: '模板' } },
+  COLLABORATOR_INPUT: { bg: '#16A34A', symbol: '◯', patternId: 'circle', label: { ko: '협업자',        en: 'Collaborator',   ja: '協力者',     zh: '协作者' } },
+  SYSTEM_GENERATED:   { bg: '#94A3B8', symbol: '◑', patternId: 'half',   label: { ko: '시스템',        en: 'System',         ja: 'システム',   zh: '系统' } },
 };
 
 // ============================================================
@@ -233,11 +246,20 @@ interface OriginTrackProps {
 }
 
 const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 60 }) => {
+  // [C] Rules of Hooks — 모든 useMemo 는 조건부 return 전 호출.
   // [G] 마지막 N개만 시각화 (좌측 = 오래된 / 우측 = 최신)
   const sliced = useMemo(() => {
     const sorted = [...events].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     return sorted.slice(-maxBars);
   }, [events, maxBars]);
+
+  // [a11y — 2026-05-10] 데이터에 등장하는 distinct origin 추출 → 범례 표시.
+  // 색상 + symbol 2축 인코딩 (WCAG 1.4.1 색상만으로 정보 전달 금지).
+  const distinctOrigins = useMemo(() => {
+    const set = new Set<CreativeOriginType>();
+    for (const e of sliced) set.add(e.originType);
+    return Array.from(set);
+  }, [sliced]);
 
   if (sliced.length === 0) {
     return (
@@ -256,36 +278,77 @@ const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 6
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 2,
-        alignItems: 'flex-end',
-        height: 40,
-        padding: '12px 0',
-      }}
-      aria-label={l(language, 'originTrack')}
-      role="img"
-    >
-      {sliced.map((e, idx) => {
-        const visual = ORIGIN_VISUAL[e.originType] ?? ORIGIN_VISUAL.HUMAN_DRAFT;
-        const title = `${visual.label[language]} — ${new Date(e.createdAt).toLocaleString()}`;
-        return (
-          <span
-            key={e.id || idx}
-            title={title}
-            aria-label={title}
-            style={{
-              flex: 1,
-              background: visual.bg,
-              height: '100%',
-              minWidth: 2,
-              borderRadius: 0, // Sharp 0px
-            }}
-          />
-        );
-      })}
-    </div>
+    <>
+      <div
+        style={{
+          display: 'flex',
+          gap: 2,
+          alignItems: 'flex-end',
+          height: 40,
+          padding: '12px 0',
+        }}
+        aria-label={l(language, 'originTrack')}
+        role="img"
+      >
+        {sliced.map((e, idx) => {
+          const visual = ORIGIN_VISUAL[e.originType] ?? ORIGIN_VISUAL.HUMAN_DRAFT;
+          const title = `${visual.symbol} ${visual.label[language]} — ${new Date(e.createdAt).toLocaleString()}`;
+          return (
+            <span
+              key={e.id || idx}
+              title={title}
+              aria-label={title}
+              style={{
+                flex: 1,
+                background: visual.bg,
+                height: '100%',
+                minWidth: 2,
+                borderRadius: 0, // Sharp 0px
+                position: 'relative',
+              }}
+            />
+          );
+        })}
+      </div>
+      {/* [a11y] 색맹 대응 범례 — distinct origin 만 노출. symbol + label 텍스트 보조. */}
+      {distinctOrigins.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4px 12px',
+            padding: '4px 0 8px 0',
+            fontFamily: VISUAL_TOKENS.typography.dataMono.family,
+            fontSize: 9,
+            color: '#6B7280',
+          }}
+          aria-label="Origin Track legend"
+        >
+          {distinctOrigins.map((origin) => {
+            const v = ORIGIN_VISUAL[origin];
+            return (
+              <span
+                key={origin}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-block',
+                    width: 8,
+                    height: 8,
+                    background: v.bg,
+                    flexShrink: 0,
+                  }}
+                />
+                <span aria-hidden="true" style={{ fontSize: 11, lineHeight: 1 }}>{v.symbol}</span>
+                <span>{v.label[language]}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 };
 
@@ -476,11 +539,17 @@ const WitnessLogBlock: React.FC<WitnessLogBlockProps> = ({ events, view, languag
               const visual = ORIGIN_VISUAL[e.originType] ?? ORIGIN_VISUAL.HUMAN_DRAFT;
               return (
                 <tr key={e.id || i} style={{ borderBottom: VISUAL_TOKENS.border.ledger }}>
-                  <td style={{ padding: '6px 8px 6px 0', width: 12 }}>
+                  <td style={{ padding: '6px 8px 6px 0', width: 22 }}>
+                    {/* [a11y — 2026-05-10] 색상 swatch + symbol 동시 표기 (color blindness safe) */}
                     <span
                       aria-hidden="true"
-                      style={{ display: 'inline-block', width: 8, height: 8, background: visual.bg }}
-                    />
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                    >
+                      <span
+                        style={{ display: 'inline-block', width: 8, height: 8, background: visual.bg }}
+                      />
+                      <span style={{ fontSize: 11, lineHeight: 1, color: '#1A1A1A' }}>{visual.symbol}</span>
+                    </span>
                   </td>
                   <td
                     style={{

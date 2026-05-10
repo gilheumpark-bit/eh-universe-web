@@ -153,3 +153,13 @@ export {
   type ProvenanceLedgerRow,
   type AnalyzeProvenanceInput,
 } from './provenance-analyzer';
+
+// ── HCI Label Migration (`Verified` → `Strong` retroactive 안내) ──
+export {
+  scanHCILabelMigration,
+  dispatchMigrationNotice,
+  markNotified as markHCILabelMigrationNotified,
+  MIGRATION_NOTICE_TEXT_4LANG,
+  HCI_FORBIDDEN_EN_LABELS,
+  type HCILabelMigrationResult,
+} from './hci-label-migration';

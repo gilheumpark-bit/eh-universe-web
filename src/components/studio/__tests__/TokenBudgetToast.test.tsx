@@ -9,7 +9,10 @@ import { render, screen, act, fireEvent } from '@testing-library/react';
 import TokenBudgetToast from '../TokenBudgetToast';
 
 function dispatchTokenEvent(level: 'warn' | 'critical', detail: Record<string, unknown> = {}) {
-  const event = new CustomEvent(`noa:token-budget-${level}`, {
+  // [F-04 — 2026-05-10] event suffix 정합 — 'warn' → 'warning', 'critical' 그대로.
+  // token-meter.ts dispatchTokenPressure 와 동일 매핑.
+  const suffix = level === 'warn' ? 'warning' : 'critical';
+  const event = new CustomEvent(`noa:token-budget-${suffix}`, {
     detail: {
       agentId: detail.agentId ?? 'studio-draft',
       measurement: {

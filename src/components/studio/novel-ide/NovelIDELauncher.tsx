@@ -23,8 +23,9 @@
 // ============================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Code2, X, GitBranch, Bug, Users, ListTree, Settings2, ShieldCheck } from 'lucide-react';
+import { Code2, X, GitBranch, Bug, Users, ListTree, Settings2, ShieldCheck, ScrollText, Send } from 'lucide-react';
 import type { StoryConfig, EpisodeManuscript, Message } from '@/lib/studio-types';
+import type { CreativeEvent } from '@/lib/creative-process/types';
 
 // 패널 dynamic import — 초기 번들 부담 회피
 import dynamic from 'next/dynamic';
@@ -98,6 +99,19 @@ const MetaContextPanel = dynamic(
   () => import('@/components/studio/meta-context/MetaContextPanel').then((m) => m.MetaContextPanel),
   { ssr: false },
 );
+// [Visual Charter v1.0 — 2026-05-10] `_2` Contribution Inspector + `_4` Provenance Report + `_1` Submission Package.
+const CreativeContributionInspector = dynamic(
+  () => import('@/components/studio/CreativeContributionInspector').then((m) => m.default),
+  { ssr: false },
+);
+const ProvenanceReport = dynamic(
+  () => import('@/components/studio/ProvenanceReport').then((m) => m.default),
+  { ssr: false },
+);
+const SubmissionPackageBuilder = dynamic(
+  () => import('@/components/studio/SubmissionPackageBuilder').then((m) => m.default),
+  { ssr: false },
+);
 
 // hooks
 import { useSymbolIndex } from '@/hooks/useSymbolIndex';
@@ -112,7 +126,8 @@ import { findReferences } from '@/lib/symbol-index/find-references';
 import { buildTensionTrajectory } from '@/lib/long-arc-verifier/tension-trajectory';
 import type { FindReferencesResult } from '@/lib/symbol-index/types';
 
-type LauncherTab = 'outline' | 'long-arc' | 'debugger' | 'reader-sim' | 'diff' | 'defense' | 'settings';
+type LauncherTab = 'outline' | 'long-arc' | 'debugger' | 'reader-sim' | 'diff' | 'defense' | 'journal' | 'settings';
+type JournalView = 'inspector' | 'provenance';
 
 // ============================================================
 // PART 2 — Component
@@ -144,6 +159,10 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
   // [검수 wiring] Symbol Quick Jump (Ctrl+T) + Find All References (Shift+F12) 상태.
   const [quickJumpOpen, setQuickJumpOpen] = useState(false);
   const [refsResult, setRefsResult] = useState<FindReferencesResult | null>(null);
+  // [Visual Charter v1.0 — 2026-05-10] Journal 탭 sub-view + Submission modal 토글
+  const [journalView, setJournalView] = useState<JournalView>('inspector');
+  const [submissionOpen, setSubmissionOpen] = useState(false);
+  const [creativeEvents, setCreativeEvents] = useState<CreativeEvent[]>([]);
   const isKO = language === 'KO';
 
   // [정합 재조정] IDE Settings — autoTrigger 토글
@@ -293,8 +312,38 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
     { id: 'reader-sim', label: isKO ? '독자' : 'Reader', icon: Users },
     { id: 'diff', label: isKO ? '의미 비교' : 'Diff', icon: GitBranch },
     { id: 'defense', label: isKO ? '방어' : 'Defense', icon: ShieldCheck },
+    { id: 'journal', label: isKO ? '확인서' : 'Journal', icon: ScrollText },
     { id: 'settings', label: isKO ? '설정' : 'Settings', icon: Settings2 },
   ];
+
+  // [Visual Charter v1.0 — 2026-05-10] Journal 탭 활성 시 creative events 로드 (5초 throttle).
+  useEffect(() => {
+    if (!open || tab !== 'journal' || !projectId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { listCreativeEvents } = await import('@/lib/creative-process/event-recorder');
+        const evts = await listCreativeEvents({ projectId, limit: 500 });
+        if (!cancelled) setCreativeEvents(evts);
+      } catch {
+        if (!cancelled) setCreativeEvents([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, tab, projectId]);
+
+  // CertificateLanguage 매핑 (KO → ko 등)
+  const certLang = ((): 'ko' | 'en' | 'ja' | 'zh' => {
+    switch (language) {
+      case 'KO': return 'ko';
+      case 'EN': return 'en';
+      case 'JP': return 'ja';
+      case 'CN': return 'zh';
+      default: return 'ko';
+    }
+  })();
 
   // [연결 #5] Semantic Diff result — useMemo 로 캐시
   const semanticDiffResult = React.useMemo(() => {
@@ -477,6 +526,66 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
                   <MetaContextPanel language={language} />
                 </div>
               )}
+              {/* [Visual Charter v1.0 — 2026-05-10] Journal 탭 — `_2` Inspector + `_4` Provenance + `_1` Submission */}
+              {tab === 'journal' && (
+                <div className="space-y-3 h-full overflow-y-auto">
+                  {/* sub-view 토글 + Submission 버튼 */}
+                  <div className="flex items-center gap-2 p-2 border border-border bg-bg-secondary/50">
+                    <button
+                      type="button"
+                      onClick={() => setJournalView('inspector')}
+                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border ${
+                        journalView === 'inspector'
+                          ? 'border-text-primary bg-bg-primary text-text-primary'
+                          : 'border-border bg-transparent text-text-tertiary hover:text-text-primary'
+                      }`}
+                    >
+                      {isKO ? '기여도' : 'Inspector'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setJournalView('provenance')}
+                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border ${
+                        journalView === 'provenance'
+                          ? 'border-text-primary bg-bg-primary text-text-primary'
+                          : 'border-border bg-transparent text-text-tertiary hover:text-text-primary'
+                      }`}
+                    >
+                      {isKO ? '출처 보고서' : 'Provenance'}
+                    </button>
+                    <span className="flex-1" />
+                    <button
+                      type="button"
+                      onClick={() => setSubmissionOpen(true)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase tracking-wider border border-text-primary bg-text-primary text-bg-primary hover:opacity-90"
+                    >
+                      <Send className="w-3 h-3" aria-hidden="true" />
+                      {isKO ? '제출 묶음' : 'Submit'}
+                    </button>
+                  </div>
+
+                  {/* sub-view 본문 */}
+                  {journalView === 'inspector' && (
+                    <CreativeContributionInspector
+                      events={creativeEvents}
+                      language={certLang}
+                      view="private"
+                      contextMeta={{
+                        sceneCount: episodes?.length,
+                        activeCharacters: config?.characters?.map((c) => c.name).slice(0, 8),
+                      }}
+                      compact
+                    />
+                  )}
+                  {journalView === 'provenance' && (
+                    <ProvenanceReport
+                      events={creativeEvents}
+                      language={certLang}
+                      workTitle={config?.synopsis?.slice(0, 40) ?? undefined}
+                    />
+                  )}
+                </div>
+              )}
               {tab === 'settings' && <NovelIDESettingsPanel language={language} />}
             </div>
 
@@ -521,6 +630,31 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
         onClose={() => setQuickJumpOpen(false)}
         language={language}
       />
+
+      {/* [Visual Charter v1.0 — 2026-05-10] `_1` Submission Package modal */}
+      {submissionOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 backdrop-blur-sm p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label={isKO ? '제출 묶음 발급' : 'Submission Package'}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSubmissionOpen(false);
+          }}
+        >
+          <div className="w-full max-w-3xl my-8 relative">
+            <button
+              type="button"
+              onClick={() => setSubmissionOpen(false)}
+              className="absolute -top-3 -right-3 z-10 w-9 h-9 inline-flex items-center justify-center bg-text-primary text-bg-primary hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent-blue"
+              aria-label={isKO ? '닫기' : 'Close'}
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <SubmissionPackageBuilder language={language} projectIdOverride={projectId} />
+          </div>
+        </div>
+      )}
     </>
   );
 };
