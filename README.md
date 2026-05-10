@@ -26,10 +26,11 @@
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-3,302_passing-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-3,772_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
 ![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
+![Patent](https://img.shields.io/badge/KIPO-10--2026--0038027-d4af37?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
 [Live](https://ehsu.app) · [Changelog](https://ehsu.app/changelog) · [Architecture](ARCHITECTURE.md) · [AI 고지](https://ehsu.app/ai-disclosure)
@@ -78,6 +79,23 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 ---
 
 ## 핵심 기능
+
+### 0. 창작 과정 확인서 (Authorship Journal — Visual Charter v1.0, 2026-05-10)
+
+> **AI 시대 작가의 작업 흔적 자동 누적 + 명시 발급**. 출판사·플랫폼 제출 시 "어떻게 만들었는가" 노트 첨부.
+
+| 컴포넌트 | 화면 | 역할 |
+|---|---|---|
+| `_1` Submission Package | 제출 묶음 | 4 artifact bundle (manuscript / cert / source / signature) × 4 distribution profile |
+| `_2` Contribution Inspector | 기여도 분석 | Chapter 단위 Origin Track + HCI + Context + Witness Log |
+| `_3` Issue Form | 발급 UI | Settings → Advanced → "작업 정리 노트" 발급 |
+| `_4` Provenance Report | 출처 보고서 | 3축 (Core Integrity / Narrative Drift / Control Density) + Active Actors + Chronology + Cryptographic Ledger |
+
+**디자인 사상**: Modern Institutionalism — Sharp 0px corners (Witness Seal 만 50%) · Newsreader serif 헤드 · Public Sans 본문 · Inter mono 데이터 · Accent Gold #D4AF37 봉인 · Royal Blue #4169E1 verified status · 외부 link 0건.
+
+**HCI (Human Control Index)**: 0~100% 단일 숫자 + 3축 (Author Intent / Manual Edit Density / Narrative Logic) + 9 Origin 가중치.
+
+**4언어 byte-level**: LIMITATION_TEXT_4LANG / ATTESTATION_OF_GENESIS_4LANG / SIGNATURE_DISCLAIMER_4LANG — 변경 시 변호사 재감수 + Major bump.
 
 ### 1. 글쓰기
 
@@ -215,18 +233,20 @@ npm test         # 테스트
 
 ---
 
-## 프로젝트 상태 (2026-04-24)
+## 프로젝트 상태 (2026-05-10)
 
 | 지표 | 값 |
 |------|----|
-| 테스트 | **3,302 passing** / 298 suites |
+| 테스트 | **3,772 passing** / 350 suites (100% pass) |
 | 타입 체크 | **0 errors** (strict) |
-| Lighthouse A11y | **100/100** × 5 페이지 (/, /studio, /translation-studio, /network, /archive) |
-| 보안 감사 | P0 6건 + P1 13건 수리 완료 |
-| 3루프 정밀 진단 | 850+ 파일 / 91 이슈 수리 |
-| ARCS 레이어 | 11-agent `WRITING_AGENT_REGISTRY` · IP Guard L1-L5 · Compliance 7축 채점 |
-| 특허 | KIPO 2026-03-03 출원, PCT 진행 중 |
-| 단계 | **알파** (브릿G 작가 모집 중) |
+| ESLint | **exit=0** (0 errors / 0 warnings) |
+| Lighthouse A11y | **100/100** × 5 페이지 |
+| 보안 감사 | P0 6건 + P1 13건 + 2026-05-10 INTERNAL 7건 수리 완료 |
+| ARCS 레이어 | 11-agent `WRITING_AGENT_REGISTRY` · IP Guard L1-L5 · Compliance 7축 |
+| Visual Charter v1.0 | 창작 과정 확인서 4 화면 (`_1`/`_2`/`_3`/`_4`) + HCI + Witness Seal |
+| Novel IDE 16가치 | 매트릭스 46% → **95%+** (Phase B-F 완성) |
+| 특허 | **KIPO 10-2026-0038027** 출원 (Fast-Track) |
+| 단계 | **알파** (Phase 1 quality push 완료, P2 진행 중) |
 
 ---
 
@@ -234,12 +254,19 @@ npm test         # 테스트
 
 | 문서 | 설명 |
 |------|------|
-| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 (v2.3.0-alpha) |
+| [CHANGELOG.md](CHANGELOG.md) | 버전 히스토리 |
+| [ROADMAP.md](ROADMAP.md) | 공개 로드맵 (14축 목표 + Phase 2-4) |
+| [GOVERNANCE.md](GOVERNANCE.md) | 거버넌스 (1인 메인테이너 + CLA + 의사결정) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 시스템 아키텍처 |
 | [AGENTS.md](AGENTS.md) | 에이전트 가이드 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 기여 가이드 |
-| [SECURITY.md](SECURITY.md) | 보안 정책 |
-| [RUNBOOK.md](RUNBOOK.md) | 운영 런북 |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | 행동 강령 |
+| [SECURITY.md](SECURITY.md) | 보안 정책 (security@eh-universe.dev) |
+| [SUPPORT.md](SUPPORT.md) | 지원 채널 |
+| [NOTICE](NOTICE) | Third-party attribution |
+| [LICENSE](LICENSE) / [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) | Dual License (AGPL + Commercial) |
+| [docs/novel-ide/handbook.md](docs/novel-ide/handbook.md) | Novel IDE 종합 핸드북 (단축키 / 기능 / 코드 위치) |
+| [docs/novel-ide/lsp-spec.md](docs/novel-ide/lsp-spec.md) | Loreguard LSP API 사양 |
 
 ### 법적 문서 (배포 사이트)
 

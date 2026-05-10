@@ -1,0 +1,20 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability (private channel)
+    url: mailto:security@eh-universe.dev
+    about: Exploitable vulnerabilities — DO NOT file public issue. Email security@eh-universe.dev for 48h acknowledgment.
+  - name: Commercial licensing inquiry
+    url: mailto:gilheumpark@gmail.com
+    about: For commercial track (closed-source SaaS / OEM / publisher / enterprise self-host). See COMMERCIAL-LICENSE.md.
+  - name: Alpha writer enrollment
+    url: mailto:gilheumpark@gmail.com
+    about: Brigge.naver Korean genre fiction writers — 50명 early access. Subject 라인 [ALPHA].
+  - name: KIPO patent inquiry
+    url: mailto:gilheumpark@gmail.com
+    about: Patent licensing or scope questions (KIPO 10-2026-0038027 — ARCS / IP Guard / Compliance 7-axis).
+  - name: Public roadmap
+    url: https://github.com/gilheumpark-bit/eh-universe-web/blob/master/ROADMAP.md
+    about: Phase 2-5 + 14축 등급제 + alpha → beta → GA → SSS 일정.
+  - name: Governance / RFC 절차
+    url: https://github.com/gilheumpark-bit/eh-universe-web/blob/master/GOVERNANCE.md
+    about: 의사결정 모델 / CLA / 데이터 정책 / KIPO 특허 grant 명시.

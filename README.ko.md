@@ -11,9 +11,11 @@
 [![English](https://img.shields.io/badge/lang-English-blue?style=flat-square)](README.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-2,331_passing-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-3,772_passing-22c55e?style=flat-square)
+![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
 ![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
-![License](https://img.shields.io/badge/CC--BY--NC--4.0-blue?style=flat-square)
+![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
+![Patent](https://img.shields.io/badge/KIPO-10--2026--0038027-d4af37?style=flat-square)
 
 [라이브](https://ehsu.app) · [문서](#문서) · [기여 가이드](CONTRIBUTING.md)
 

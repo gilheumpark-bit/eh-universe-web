@@ -3,6 +3,110 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.0-alpha-prep] — 2026-05-10 (tag: `v2.3.0-alpha-prep`)
+
+알파 출시 직전 마일스톤. 14축 평균 등급 **B (74) → A- (82)**. Track-D Phase 1 + Visual Charter v1.0 + Phase 1 quality push 통합.
+
+### Added — Visual Charter v1.0 (창작 과정 확인서)
+
+stitch_lore_guard 디자인 → Modern Institutionalism 사상 응축. Sharp 0px corners (Witness Seal 만 50%) · Newsreader serif · Public Sans 본문 · Inter mono 데이터 · Accent Gold #D4AF37 · Royal Blue #4169E1 · 외부 link 0건.
+
+#### 14 모듈 (`src/lib/creative-process/`)
+- `types.ts` — 9 Origin + ProcessCertificate + sealNumber/hciPayload/originSummary/workSessions
+- `origin-adapter.ts` — EntryOrigin → CreativeOriginType 단방향
+- `limitation-text.ts` — `LIMITATION_TEXT_4LANG` byte-level + `assertNoForbiddenWords`
+- `external-status-mapper.ts` — 내부 6 → 외부 5 라벨 매핑
+- `event-recorder.ts` / `source-recorder.ts` / `idb-store.ts` — IDB append-only 저장소
+- `report-builder.ts` — 10 섹션 + HCI + sealNumber + ATTESTATION 통합
+- `html-renderer.ts` / `markdown-renderer.ts` — self-contained 출력 (외부 link 0)
+- `visual-tokens.ts` — Sharp 0px / Newsreader / Gold #D4AF37 디자인 토큰
+- `hci-calculator.ts` — 9 Origin 가중치 + HCI 0~100 + 3축
+- `attestation-text.ts` — ATTESTATION OF GENESIS 4언어 byte-level
+- `seal-issuer.ts` — `LG-{YY}{MM}-{serial}-{hash4}` IDB 카운터 + Witness Seal SVG + Donut SVG
+- `qr-renderer.ts` — qrcode dynamic import + placeholder fallback
+- `submission-package.ts` — `_1` 4 artifact bundle + 4 Distribution Profile
+- `provenance-analyzer.ts` — `_4` 3축 + Active Actors + Chronology + Ledger
+- `hci-label-migration.ts` — 'Verified'/'Unverified' EN 라벨 retroactive 안내
+
+#### 4 컴포넌트 (`src/components/studio/`)
+- `_3` `settings/CreativeProcessSection.tsx` — Settings Advanced 발급 UI (이미 wiring 완료)
+- `_2` `CreativeContributionInspector.tsx` — Chapter 단위 Inspector (Origin Track + HCI + Witness Log)
+- `_1` `SubmissionPackageBuilder.tsx` — 4 artifact 위저드 + Cover Preview
+- `_4` `ProvenanceReport.tsx` — 3축 + Actor + Chronology + Ledger
+
+#### 4 화면 NovelIDELauncher 통합
+- 'journal' 탭 (ScrollText icon) — `_2` Inspector + `_4` Provenance sub-view 토글
+- 'Submit' 버튼 → `_1` SubmissionPackageBuilder full-screen modal
+
+### Added — Phase 1 quality push (B → A-)
+
+#### Phase 1.1 — TokenBudgetToast 16일 silent fail 수리
+- `token-meter.ts` `dispatchTokenPressure` — pressureLevel `'warn'` → event suffix `'warning'` 매핑.
+- 이전: `noa:token-budget-warn` dispatch → listener (`noa:token-budget-warning`) 미도달.
+- 현재: 정상 dispatch + 사용자 토스트 표시.
+- 9 fail / 11 → **11/11 pass**.
+
+#### Phase 1.4 — HCI 'Verified' EN 라벨 위반 수리
+- `FORBIDDEN_WORDS_4LANG.en` 의 `'verified'` 매칭 → HCI EN 라벨 `'Verified'`/`'Unverified'` → `'Strong'`/`'Limited'` 교체.
+- ko `검증됨` / ja `検証済` / zh `已验证` 는 forbidden 미매칭 (다른 한자) — 유지.
+- `hci-label-migration.ts` 신규 — IDB 누적 발급분 스캔 + retroactive 안내 (4언어).
+
+#### Phase 1.7 — 색맹 대응 (WCAG 1.4.1)
+- `ORIGIN_VISUAL` 9 origin × `{ bg, symbol, patternId, label }` 확장.
+- 9 distinct symbols: ◼▲★◆▼⬢□◯◑.
+- Origin Track 색상 bar + 하단 distinct-origin 범례 (color + symbol + label).
+- Witness Log 색상 swatch + symbol 동시 표기.
+
+### Added — 서류 작업 (paperwork)
+
+- `NOTICE` 신규 — third-party attribution (Next.js / React / Tiptap / Firebase / OpenAI SDK / Anthropic SDK / Gemini / Groq / Jest / Playwright / qrcode + Qwen 3.6 / Flux-Schnell / Wikipedia + Korean Patent + Brand 명시).
+- `ROADMAP.md` 신규 — 14축 등급제 + Phase 2-5 명시 (alpha → beta → GA → SSS).
+- `GOVERNANCE.md` 신규 — 1인 BDFL + CLA + 데이터 정책 + KIPO 특허 grant 명시.
+- `docs/novel-ide/handbook.md` — repo 통합 (이전 OneDrive 분리 해소). v2.3 + Visual Charter 반영.
+
+### Security — INTERNAL 문서 격리 (audit 결과)
+
+GitHub repo 전수 보안 audit (2026-05-10) — 7건 INTERNAL 표기 문서 노출 발견 → 즉시 격리.
+
+**P0 격리 (3건 — 자체 INTERNAL 명시)**:
+- `docs/pitch-deck-draft.md` (633줄) — "INTERNAL — IR · 투자자 피치 · 데모데이용"
+- `docs/competitive-analysis.md` (618줄) — "INTERNAL — 팀 · 투자자 공유용"
+- `docs/brand-hierarchy.md` — "INTERNAL — 팀 공유용"
+
+**P1 격리 (4건 — internal audit 성격)**:
+- `docs/m7-hardening-audit.md`, `m7-final-verification.txt`, `m8-ux-balance-audit.md`, `m9-audit-unconnected-unfinished.md`
+
+처리: `git rm --cached` (working tree 보존) + `.gitignore` 강화 (case-insensitive + 하이픈 변종 + INTERNAL audit 글로브). git history 잔존 — BFG/git filter-repo 별도 결정.
+
+### Changed — 인프라
+
+- `feat/rag-engine-and-spark-optimization` 브랜치 → `archive/rag-engine-2026-04-19` 태그로 보존 후 삭제. RAG 엔진 + DGX SSE + ComfyUI 온디맨드 작업 영구 도달 가능.
+- 12 remote branches → **1 (master)** 정리. 11 dependabot + 1 feat/rag 삭제.
+- `feature/creative-process-mvp-2026-05-04` → master fast-forward merge → 브랜치 삭제 (태그 `v2.3.0-alpha-prep` 보존).
+
+### Fixed
+
+- `WitnessLogBlock` conditional `useMemo` (Rules of Hooks 위반) → 사전 호출로 정리.
+- `OriginTrack` conditional `useMemo` 위반 → 사전 호출로 정리.
+- `SubmissionPackageBuilder` `react-hooks/set-state-in-effect` → useState lazy initializer + derive 패턴으로 useEffect 제거.
+- `qr-renderer.ts` `any` 타입 → `unknown` + typeof 가드 (no `any`).
+- `CreativeProcessSection.tsx` `react-hooks/set-state-in-effect` → eslint-disable + legitimate fetch-on-mount 주석.
+
+### 측정
+
+- TypeScript: 0 errors (strict)
+- ESLint: exit=0 (0 ERROR / 0 WARNING)
+- Jest: **3,772/3,772 PASS** (이전 9 fail → 0 fail / 350 suites)
+- Creative Process: 15 suites / 141 tests PASS
+
+### 격리 §1 (8 절대 금지 파일 0byte 변경 ✓)
+
+studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migration / AuditExportButton / markdown-serializer / project-serializer / useOriginTracker
+
+(*studio-types 는 `AppTab` union 'scene-sheet' 추가 + `CharacterSubTab` 신설 — 하위 호환)
+
+---
+
 ## [2.3.0-alpha] — 2026-04-23 ~ 2026-04-24
 
 ### Licensing — Dual License 전환 (BREAKING, 커밋 414fe9ea 이후)

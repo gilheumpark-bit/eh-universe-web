@@ -1,9 +1,42 @@
+# CODEOWNERS — Loreguard / EH Universe
+# Reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Updated: 2026-05-10
+
 # Default owner for all files
-* @sung4
+* @gilheumpark-bit
 
 # Security-critical paths — require explicit review
-firestore.rules @sung4
-.github/workflows/ @sung4
-src/app/api/ @sung4
-src/lib/server-ai.ts @sung4
-src/lib/firebase.ts @sung4
+firestore.rules @gilheumpark-bit
+.github/workflows/ @gilheumpark-bit
+src/app/api/ @gilheumpark-bit
+src/lib/server-ai.ts @gilheumpark-bit
+src/lib/firebase.ts @gilheumpark-bit
+src/lib/security-gate.ts @gilheumpark-bit
+src/lib/ip-guard/ @gilheumpark-bit
+
+# 격리 §1 — 8 절대 금지 파일 (변경 시 BDFL 승인 필수, 0byte 원칙)
+src/lib/studio-types.ts @gilheumpark-bit
+src/lib/save-engine/ @gilheumpark-bit
+src/lib/origin-migration.ts @gilheumpark-bit
+src/lib/markdown-serializer.ts @gilheumpark-bit
+src/lib/project-serializer.ts @gilheumpark-bit
+src/components/studio/ManuscriptView.tsx @gilheumpark-bit
+src/components/studio/OriginBadge.tsx @gilheumpark-bit
+src/components/studio/settings/AuditExportButton.tsx @gilheumpark-bit
+src/hooks/useOriginTracker.ts @gilheumpark-bit
+
+# 라이선스·법무·거버넌스 (NOTICE 포함) — 변경 시 변호사 검토 필요
+LICENSE @gilheumpark-bit
+COMMERCIAL-LICENSE.md @gilheumpark-bit
+NOTICE @gilheumpark-bit
+GOVERNANCE.md @gilheumpark-bit
+ROADMAP.md @gilheumpark-bit
+
+# 4언어 byte-level 법적 텍스트 — 변경 시 변호사 재감수 + Major bump
+src/lib/creative-process/limitation-text.ts @gilheumpark-bit
+src/lib/creative-process/attestation-text.ts @gilheumpark-bit
+
+# ARCS 레이어 (특허 KIPO 10-2026-0038027 대상)
+src/lib/ai/writing-agent-registry.ts @gilheumpark-bit
+src/lib/ai/safety-registry.ts @gilheumpark-bit
+src/lib/compliance/ @gilheumpark-bit
