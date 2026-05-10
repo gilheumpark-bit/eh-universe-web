@@ -3,6 +3,19 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.0-alpha] — 2026-05-10 (tag: `v2.3.0-alpha`)
+
+알파 본 릴리즈. 14축 평균 등급 **B (74) → A- (82)**. Track-D Phase 1 + Visual Charter v1.0 + Phase 1 quality push 통합 + paperwork (license/governance/release) 정비 완료.
+
+### Added — paperwork / release hygiene (2026-05-10 finalize)
+
+- `docs/RELEASE-NOTES-v2.3.0-alpha.md` 신규 — 본 릴리즈 노트 (v2.2.0-alpha 형식 계승).
+- INTERNAL legacy guide 격리 — `NARRATIVE_SENTINEL.md` (영업비밀 / Triple Logic Core), `GEMINI.md` (NOA v1.2 stale, v2.1 통합), `VERIFY_PROMPT.md` (1,600 → 3,772 tests stale). `git rm --cached` + `.gitignore` + EH 부모 폴더 이관.
+- `docs/lsp-spec.md` → `docs/novel-ide/lsp-spec.md` canonical path 이동 (4개 ref 일관화).
+- `GEMINI.md` 참조 4개 파일 정리 (AGENTS.md / architecture-spec.ts / eh-translator-nte-5-enhancements.md / eh-universe-baseline-checklist.md) → `AGENTS.md` 단일 진실 명시.
+
+---
+
 ## [2.3.0-alpha-prep] — 2026-05-10 (tag: `v2.3.0-alpha-prep`)
 
 알파 출시 직전 마일스톤. 14축 평균 등급 **B (74) → A- (82)**. Track-D Phase 1 + Visual Charter v1.0 + Phase 1 quality push 통합.
