@@ -14,7 +14,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## EH Universe — Agent Instructions (human + AI)
 
-- **NOA Rules v1.2 + 프로젝트 규칙(전체)**: 저장소 루트의 `GEMINI.md`
+- **NOA Stack v2.1 + 프로젝트 규칙(전체)**: 본 `AGENTS.md` + 루트 `CLAUDE.md` (GEMINI.md 는 v2.1 통합 후 격리됨 — 2026-05-10)
 - **에이전트 요약 스킬**: `.agents/skills/eh-universe-guideline/SKILL.md`
 - **보안 헤더**: `next.config.ts` headers()로 적용 완료 (proxy.ts는 참조용)
 - **Code Studio 시스템 지시문**: `src/lib/code-studio/core/architecture-spec.ts`의 `CODE_STUDIO_ARCHITECTURE_APPENDIX`

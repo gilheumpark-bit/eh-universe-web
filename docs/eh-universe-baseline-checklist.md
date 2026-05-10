@@ -8,7 +8,7 @@ PR·릴리스·주요 기능 추가 전에 **최소한** 확인하는 기본 리
 
 ## 1. 레포 규칙 · 품질 (항상)
 
-- [ ] [`GEMINI.md`](../GEMINI.md) / [`AGENTS.md`](../AGENTS.md)와 충돌 시 **GEMINI 우선**
+- [ ] [`AGENTS.md`](../AGENTS.md) / [`CLAUDE.md`](../CLAUDE.md) 단일 진실 (NOA Stack v2.1 — 2026-05-10 GEMINI.md 격리)
 - [ ] `console.*` 대신 [`@/lib/logger`](../src/lib/logger.ts) (예외: 명시된 스크립트만)
 - [ ] 보안 헤더는 [`src/proxy.ts`](../src/proxy.ts)에서 통합 — **`middleware.ts` 중복 추가 금지** (Next 16 빌드 충돌 방지)
 - [ ] Code Studio·패널 등록은 **레지스트리** 경유 — 하드코딩 금지 ([`panel-registry`](../src/lib/code-studio/core/panel-registry.ts) 등)

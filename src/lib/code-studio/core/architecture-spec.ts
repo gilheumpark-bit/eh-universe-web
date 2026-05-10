@@ -1,7 +1,7 @@
 // ============================================================
 // PART 1 — LLM / agent system instruction appendix
 // ============================================================
-// Appended to Code Studio multi-agent prompts. Mirrors GEMINI.md Code Studio rules.
+// Appended to Code Studio multi-agent prompts. Mirrors AGENTS.md / CLAUDE.md Code Studio rules.
 
 import { PIPELINE_TEAM_STAGES } from '@/lib/code-studio/core/pipeline-execution-model';
 
@@ -11,7 +11,7 @@ const TEAM_LINE = PIPELINE_TEAM_STAGES.map(
 
 /**
  * Non-negotiable project rules for generated / edited code in this repository.
- * Keep in sync with repository root GEMINI.md (Code Studio section).
+ * Keep in sync with repository root AGENTS.md / CLAUDE.md (Code Studio section, NOA Stack v2.1).
  */
 export const CODE_STUDIO_ARCHITECTURE_APPENDIX = `
 ## EH Universe — Code Studio architecture (mandatory)

@@ -184,6 +184,14 @@ TEAM-ONBOARDING*
 INTERNAL*.md
 ONBOARDING*.md
 
+# Repo-internal legacy guides (superseded — moved to EH parent folder 2026-05-10)
+# Reason: NOA Rules v1.2 (GEMINI.md) → integrated into AGENTS.md/CLAUDE.md (NOA Stack v2.1).
+#         NARRATIVE_SENTINEL.md = trade-secret IP (Triple Logic Core / Hard·Soft·Meta Logic).
+#         VERIFY_PROMPT.md = stale (claims 1,600 tests; current is 3,772).
+NARRATIVE_SENTINEL.md
+GEMINI.md
+VERIFY_PROMPT.md
+
 # Local evidence / capture artifacts (do not commit)
 _evidence_screenshots/
 _modoo_capture/

@@ -1,6 +1,6 @@
 # EH Translator (NTE) — 5대 고도화 설계서
 
-동일 템플릿으로 5개 항목을 정의한다. 레포 루트 [`AGENTS.md`](../AGENTS.md), [`GEMINI.md`](../GEMINI.md)와 충돌 시 `GEMINI.md` 우선.
+동일 템플릿으로 5개 항목을 정의한다. 레포 루트 [`AGENTS.md`](../AGENTS.md) 단일 진실 (NOA Stack v2.1 — 2026-05-10 통합).
 
 ---
 
