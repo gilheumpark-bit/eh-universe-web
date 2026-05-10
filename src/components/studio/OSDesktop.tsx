@@ -11,7 +11,6 @@ import {
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
   Languages, Globe, ImageIcon, Film, MoreHorizontal, Printer,
   ArrowUpToLine, ArrowDownToLine,
-  Code2,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -222,10 +221,11 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [overflowOpen]);
 
-  // ── App 링크 아이콘 (UNIVERSE / TRANSLATE / CODE) ──
+  // ── App 링크 아이콘 (UNIVERSE / TRANSLATE) ──
   // 번역: 창작→번역→출판 파이프라인의 "다음 단계". 현재 세션이 있으면 세션 ID 전달.
-  // [Nav fix — 2026-05-10] Code Studio 도 dock 에 직접 진입점 (이전 /tools 경유 폐기).
-  // 사용자 요청 — 5앱 중 4개 (유니버스/번역/코드 + 현 스튜디오) 모두 dock 에서 1-click.
+  // 코드 스튜디오는 의도적 dock 숨김 (2026-04-21 결정 + 2026-05-10 재확인) —
+  // 집필 OS dock 은 창작 파이프라인 (세계관·번역) 중심으로 정돈. Code Studio 는
+  // /tools 또는 Header 'CODE' 탭으로 접근. dock 에 Code 추가 X.
   const translationHref = currentSessionId
     ? `/translation-studio?from=${encodeURIComponent(currentSessionId)}`
     : '/translation-studio';
@@ -234,8 +234,6 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
     { href: '/archive', icon: Globe, label: L4(language, { ko: '유니버스', en: 'Universe', ja: 'ユニバース', zh: '宇宙' }), color: 'text-text-secondary' },
     // 번역은 파이프라인 "다음 단계" — 원고 있으면 앰버 강조, 없으면 일반
     { href: translationHref, icon: Languages, label: L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' }), color: hasManuscript ? 'text-accent-amber' : 'text-text-secondary' },
-    // 코드 스튜디오 — 5앱 형제 (검증형 코드 IDE)
-    { href: '/code-studio', icon: Code2, label: L4(language, { ko: '코드', en: 'Code', ja: 'コード', zh: '代码' }), color: 'text-text-secondary' },
   ];
 
   // ── Drag-and-drop reorder ──
