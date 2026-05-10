@@ -102,7 +102,7 @@ export function useSessionSnapshot(pathname?: string): UseSessionSnapshotResult 
       // [legitimate read-on-mount] localStorage parse 후 state sync.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLastSnapshot(parsed);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setSnapshot(parsed);
 
       if (isReturnSession && (parsed.pathname === pathname || !parsed.pathname)) {

@@ -126,7 +126,7 @@ export function TranslationActionDock() {
     } catch (e) {
       // logger pattern
       if (typeof window !== 'undefined' && (window as { __DEV__?: boolean }).__DEV__) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[studio-export] failed', e);
       }
     }
@@ -147,7 +147,7 @@ export function TranslationActionDock() {
     } catch (e) {
       // logger.warn 패턴 차용 (실제 logger import 가 무거우므로 간단 처리)
       if (typeof window !== 'undefined' && (window as { __DEV__?: boolean }).__DEV__) {
-        // eslint-disable-next-line no-console
+         
         console.warn('[chapter-splitter] failed', e);
       }
     }
@@ -211,7 +211,7 @@ export function TranslationActionDock() {
             }
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
+           
           console.warn('[studio-import] projects parse failed', e);
         }
       }
@@ -258,7 +258,7 @@ export function TranslationActionDock() {
           : `Imported ${importedChapters.length} episodes from Studio.${bibleStatus}`,
       );
     } catch (e) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[studio-bridge] failed', e);
       window.alert(lang === 'ko' ? 'Studio import 실패' : 'Studio import failed');
     }

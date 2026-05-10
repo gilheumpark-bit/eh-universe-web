@@ -100,7 +100,7 @@ async function main(): Promise<void> {
   }
 
   if (!args.filePath) {
-    // eslint-disable-next-line no-console
+     
     console.error('Error: file path required');
     printHelp();
     process.exit(1);
@@ -133,14 +133,14 @@ async function main(): Promise<void> {
 
       console.log(args.format === 'json' ? JSON.stringify(r, null, 2) : formatSymbolsResult(r));
     } else {
-      // eslint-disable-next-line no-console
+       
       console.error(`Unknown command: ${args.command}`);
       printHelp();
       process.exit(1);
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown';
-    // eslint-disable-next-line no-console
+     
     console.error(`Error: ${msg}`);
     process.exit(1);
   }

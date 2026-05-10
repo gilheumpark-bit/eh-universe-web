@@ -49,7 +49,7 @@ export const SnippetPalette: React.FC<SnippetPaletteProps> = ({
       // [legitimate reset-on-open] 모달 열릴 때 입력 초기화 + focus.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery('');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setActiveIdx(0);
       requestAnimationFrame(() => inputRef.current?.focus());
     }

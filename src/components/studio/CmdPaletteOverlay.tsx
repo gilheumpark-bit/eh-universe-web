@@ -31,7 +31,7 @@ export function CmdPaletteOverlay({ palette, language = 'ko' }: CmdPaletteOverla
   // open 시 input focus
   useEffect(() => {
     if (palette.open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
