@@ -260,7 +260,7 @@ export default function TranslatorStudioApp() {
       setStatusMsg(driftWarningLabel(lang, driftWarnings.length));
     }, 80);
     return () => window.clearTimeout(t);
-  }, [driftWarnings]);
+  }, [driftWarnings, lang]);
 
   // [Phase 1-7] projectContext 디버그 신호 — 향후 UI 패널 연결 대기
   useEffect(() => {

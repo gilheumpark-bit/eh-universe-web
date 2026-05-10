@@ -30,6 +30,8 @@ export const MetaContextPanel: React.FC<MetaContextPanelProps> = ({ language = '
   const refresh = () => setSnapshot(getSnapshot());
 
   useEffect(() => {
+    // [legitimate fetch-on-mount] meta-context snapshot 초기 read + event listener.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
     if (typeof window === 'undefined') return;
     const onUpdate = () => refresh();

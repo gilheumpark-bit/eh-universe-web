@@ -168,7 +168,7 @@ export function TranslationActionDock() {
 
       // [정확한 키] noa_projects_v2 — Studio 의 모든 projects 통합 저장.
       const projectsRaw = window.localStorage.getItem('noa_projects_v2');
-      let episodes: Array<{ title: string; content: string; episodeNumber?: number }> = [];
+      const episodes: Array<{ title: string; content: string; episodeNumber?: number }> = [];
       // [D.2 — 2026-05-09] syncStoryBible 통합 — Studio worldbook + characters + glossary 자동 추출.
       let bibleInput: import('@/lib/translation/studio-bridge').StoryBibleSyncInput = {};
       if (projectsRaw) {

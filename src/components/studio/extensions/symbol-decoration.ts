@@ -108,6 +108,8 @@ export const SymbolDecorationExtension = Extension.create<SymbolDecorationOption
   },
 
   addProseMirrorPlugins() {
+    // [Tiptap pattern] this 캡처 필수 — Plugin 콜백 안에서 this.options.{index,className} 접근.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const ext = this;
     return [
       new Plugin<DecorationSet>({

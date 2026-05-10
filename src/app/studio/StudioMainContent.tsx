@@ -214,7 +214,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       }
       default: break;
     }
-  }, [createNewSession, handlePrint, setFocusMode, setShowShortcuts, triggerSave, handleTabChange, setRightPanelOpen, setShowApiKeyModal]);
+  }, [createNewSession, handlePrint, setFocusMode, setShowShortcuts, triggerSave, handleTabChange, setRightPanelOpen, setShowApiKeyModal, currentSessionId]);
 
   useEffect(() => {
     const handler = (e: Event) => {

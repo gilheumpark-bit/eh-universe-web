@@ -77,6 +77,9 @@ export const BreakpointGutterExtension = Extension.create<BreakpointGutterOption
   },
 
   addProseMirrorPlugins() {
+    // [Tiptap pattern] this 캡처 필수 — addProseMirrorPlugins 는 일반 함수 (this 컨텍스트 필요).
+    // Plugin 콜백 안에서 this.options 접근하기 위함. 화살표 함수 변환 불가.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const ext = this;
     return [
       new Plugin<DecorationSet>({

@@ -68,7 +68,10 @@ export const SymbolQuickJumpModal: React.FC<SymbolQuickJumpModalProps> = ({
   // 모달 열릴 때 input focus, 쿼리 초기화
   useEffect(() => {
     if (open) {
+      // [legitimate reset-on-open] 모달 open 시 입력 초기화 + focus.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery('');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveIdx(0);
       // [C] requestAnimationFrame 으로 DOM 마운트 후 focus
       requestAnimationFrame(() => inputRef.current?.focus());

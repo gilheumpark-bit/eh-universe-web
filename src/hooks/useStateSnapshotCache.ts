@@ -4,7 +4,7 @@
 // hash 변경 시 무효화. IndexedDB 저장은 옵션.
 // ============================================================
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Character, EpisodeManuscript } from '@/lib/studio-types';
 import type { CharacterVariableState, BreakpointLocation } from '@/lib/story-debugger/types';
 import { buildCharacterStateAt } from '@/lib/story-debugger/state-snapshot';
@@ -28,10 +28,14 @@ export function useStateSnapshotCache(
 
   // hash 변경 시 cache invalidate
   const currentHash = useMemo(() => manuscriptHash(episodes ?? undefined), [episodes]);
-  if (currentHash !== hashRef.current) {
-    cacheRef.current.clear();
-    hashRef.current = currentHash;
-  }
+  // [P0 fix — 2026-05-10] React 19 'refs-during-render' 위반 → useEffect 로 이동.
+  // hash 변경 시 다음 commit 에 cache 클리어 — 1 render 지연 발생하나 stale read 회피.
+  useEffect(() => {
+    if (currentHash !== hashRef.current) {
+      cacheRef.current.clear();
+      hashRef.current = currentHash;
+    }
+  }, [currentHash]);
 
   const getStateAt = (loc: BreakpointLocation): CharacterVariableState[] => {
     const key = `${loc.episodeId}:${loc.paragraphIdx}`;

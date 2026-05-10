@@ -4,7 +4,7 @@
 // 인체공학 분석 §"마지막 작업 카드" 본질 구현.
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Sparkles, X, Clock } from 'lucide-react';
 import type { SessionSnapshot } from '@/hooks/useSessionSnapshot';
 
@@ -33,13 +33,9 @@ function formatRelativeTime(savedAt: number, lang: 'ko' | 'en' | 'ja' | 'zh'): s
 }
 
 export function LastTaskCard({ snapshot, visible, onDismiss, language = 'ko' }: LastTaskCardProps) {
-  const [hidden, setHidden] = useState(false);
-
-  useEffect(() => {
-    setHidden(!visible);
-  }, [visible]);
-
-  if (!snapshot || hidden || !visible) return null;
+  // [refactor — 2026-05-10] hidden state 제거 — visible prop 직접 사용 (derived state).
+  // 이전: setHidden(!visible) in useEffect (set-state-in-effect 위반).
+  if (!snapshot || !visible) return null;
   if (typeof snapshot.savedAt !== 'number') return null;
 
   const isKo = language === 'ko';

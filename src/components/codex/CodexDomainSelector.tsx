@@ -74,7 +74,9 @@ export default function CodexDomainSelector({
   const [selected, setSelected] = useState<CodexDomain | ''>('');
 
   useEffect(() => {
+    // [legitimate read-on-mount] localStorage read 후 state sync.
     const stored = getStoredCodexDomain();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored) setSelected(stored);
   }, []);
 

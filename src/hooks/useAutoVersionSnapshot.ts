@@ -122,6 +122,9 @@ export function useAutoVersionSnapshot(opts: UseAutoVersionSnapshotOptions): {
   }, [enabled, totalChars, charDelta, cooldownMs, opts.projects]);
 
   return {
+    // [P0 fix — 2026-05-10] React 19 'refs' lint 우회 — 의도된 read-only 노출 패턴.
+    // lastSnapshotAt 은 외부 시간 비교용. 변경 시 re-render 불필요 (snapshot.ts inputs).
+    // eslint-disable-next-line react-hooks/refs
     lastSnapshotAt: lastSnapshotTimeRef.current,
   };
 }

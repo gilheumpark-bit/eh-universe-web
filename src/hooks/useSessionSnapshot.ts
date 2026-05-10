@@ -99,7 +99,10 @@ export function useSessionSnapshot(pathname?: string): UseSessionSnapshotResult 
       // 30분 이상 지났으면 "복귀 카드" 표시
       const elapsed = Date.now() - parsed.savedAt;
       const isReturnSession = elapsed > 5 * 60 * 1000; // 5분 이상 idle
+      // [legitimate read-on-mount] localStorage parse 후 state sync.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLastSnapshot(parsed);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSnapshot(parsed);
 
       if (isReturnSession && (parsed.pathname === pathname || !parsed.pathname)) {

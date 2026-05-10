@@ -307,7 +307,7 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
     } finally {
       setLoading(false);
     }
-  }, [popup.selectedText, popup.selStart, popup.selEnd, isKO, storyConfig, fullTextProp, textareaRef]);
+  }, [popup.selectedText, popup.selStart, popup.selEnd, isKO, storyConfig, fullTextProp, textareaRef, language]);
 
   const applyResult = useCallback(() => {
     if (!result) return;

@@ -223,6 +223,8 @@ export function useStoryDebugger(opts: UseStoryDebuggerOptions): UseStoryDebugge
 
   // watches 변경 시 frame 재계산
   useEffect(() => {
+    // [legitimate sync] watches/location 변경 시 frame 재계산 (외부 데이터 동기화).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (currentLocation) computeFrame(currentLocation);
   }, [watches, currentLocation, computeFrame]);
 

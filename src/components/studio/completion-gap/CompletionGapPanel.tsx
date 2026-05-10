@@ -66,7 +66,9 @@ export const CompletionGapPanel: React.FC<CompletionGapPanelProps> = ({
   };
 
   useEffect(() => {
+    // [legitimate cleanup] settings 비활성 시 stale 리포트 클리어.
     if (!settings.completionGapDetect) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInternalReport(null);
     }
   }, [settings.completionGapDetect]);
