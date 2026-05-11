@@ -1,0 +1,119 @@
+name: Isolation §1 Check
+
+# Enforces the 8 absolute forbidden files at 0-byte diff per PR.
+# Also enforces twentyone-modules/* trade-secret separation:
+#   - No rule pack data hardcoded in AGPL distribution
+#   - No import from studio-types.ts back to twentyone-modules/* (circular guard)
+#
+# Triggered on every push to master and every PR.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  isolation-section-1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Determine base commit
+        id: base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "sha=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=HEAD~1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 8 absolute forbidden files — 0byte diff
+        run: |
+          set -e
+          FILES=(
+            "src/lib/studio-types.ts"
+            "src/components/studio/ManuscriptView.tsx"
+            "src/components/studio/OriginBadge.tsx"
+            "src/lib/origin-migration.ts"
+            "src/components/studio/settings/AuditExportButton.tsx"
+            "src/lib/markdown-serializer.ts"
+            "src/lib/project-serializer.ts"
+            "src/hooks/useOriginTracker.ts"
+          )
+          BASE="${{ steps.base.outputs.sha }}"
+          VIOLATIONS=()
+          for f in "${FILES[@]}"; do
+            if [ -f "$f" ] && ! git diff --quiet "$BASE"..HEAD -- "$f"; then
+              VIOLATIONS+=("$f")
+            fi
+          done
+          # save-engine directory wildcard
+          if git diff --name-only "$BASE"..HEAD | grep -q '^src/lib/save-engine/'; then
+            VIOLATIONS+=("src/lib/save-engine/* (any file)")
+          fi
+          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+            echo "❌ Isolation §1 VIOLATION — these absolute-forbidden files changed:"
+            printf '   - %s\n' "${VIOLATIONS[@]}"
+            echo ""
+            echo "These files are pinned at 0-byte diff per Loreguard governance."
+            echo "If the change is intentional, add the file paths to .github/CODEOWNERS"
+            echo "and request explicit BDFL approval per GOVERNANCE.md §2."
+            exit 1
+          fi
+          echo "✅ 8 forbidden files unchanged"
+
+  twentyone-modules-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: No rule pack data hardcoded in AGPL distribution
+        run: |
+          set -e
+          # The 4-language webnovel module rule pack is trade-secret (CC-BY-NC-4.0).
+          # Filenames must never appear in code/docs distributed under AGPL.
+          if grep -r -E '21종\.md|webnovel_module_(EN|JP|ZH)|한국웹소설_21종모듈' \
+              --include='*.ts' --include='*.tsx' --include='*.md' \
+              src/ docs/ 2>/dev/null; then
+            echo "❌ Trade-secret asset filename referenced in distributed code/docs"
+            exit 1
+          fi
+          echo "✅ No trade-secret asset filenames in distributed sources"
+
+      - name: No rule pack DATA hardcoded in twentyone-modules
+        run: |
+          set -e
+          # twentyone-modules/*.ts may declare TypeScript interfaces only.
+          # Concrete platform / beat / forbidden-code DATA must load via commercial license.
+          if grep -E 'RULE_PACK_DATA\s*=|PLATFORM_RULES_18\s*=|BEAT_SEEDS_4LANG\s*=' \
+              src/lib/twentyone-modules/*.ts 2>/dev/null; then
+            echo "❌ Concrete rule pack data found in twentyone-modules/*.ts"
+            echo "   Rule pack data is commercial-license-only and must NOT ship in AGPL build."
+            exit 1
+          fi
+          echo "✅ twentyone-modules contains interfaces only — no rule pack data"
+
+      - name: Single-direction import (twentyone-modules → studio-types only)
+        run: |
+          set -e
+          # studio-types.ts must NOT import from twentyone-modules (circular guard).
+          if grep -E "from\s+['\"]@?/?(\.\.?/)*lib/twentyone-modules" \
+              src/lib/studio-types.ts 2>/dev/null; then
+            echo "❌ Circular import — studio-types.ts imports from twentyone-modules"
+            exit 1
+          fi
+          echo "✅ Single-direction import preserved"
+
+      - name: Forbidden text in 4-language LIMITATION/ATTESTATION constants
+        run: |
+          set -e
+          # Byte-level fixture for 4-language legal text — already enforced elsewhere,
+          # but re-verified here so isolation check is the single PR-blocking gate.
+          if [ -f "src/lib/creative-process/limitation-text.ts" ]; then
+            grep -F "이 문서는 법적 효력을" src/lib/creative-process/limitation-text.ts > /dev/null \
+              || { echo "❌ KO LIMITATION_TEXT byte-level fixture missing"; exit 1; }
+          fi
+          echo "✅ Legal text byte-level fixtures intact"
