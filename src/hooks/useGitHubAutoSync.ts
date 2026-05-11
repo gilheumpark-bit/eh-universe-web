@@ -12,7 +12,7 @@
 // 현재 상태: ManuscriptTab + BackupsSection 토글 → 이 hook 으로 자동 commit 트리거.
 // ============================================================
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useGitHubSync } from './useGitHubSync';
 import { logger } from '@/lib/logger';
 
@@ -127,13 +127,14 @@ export function useGitHubAutoSync(opts: UseGitHubAutoSyncOptions): UseGitHubAuto
     };
   }, [opts.enabled, gh.connected, opts.manuscripts, debounceMs, pushManuscripts]);
 
-  return {
+  // [R-01 root fix — 2026-05-12] return useMemo 안정화.
+  return useMemo<UseGitHubAutoSyncReturn>(() => ({
     syncing: gh.syncing,
     lastSyncAt: gh.lastSyncAt,
     error: gh.error,
     pushNow: pushManuscripts,
     connected: gh.connected,
-  };
+  }), [gh.syncing, gh.lastSyncAt, gh.error, pushManuscripts, gh.connected]);
 }
 
 // IDENTITY_SEAL: useGitHubAutoSync | role=auto-commit-debounce | inputs=manuscripts+enabled | outputs=lastSyncAt+pushNow

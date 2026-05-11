@@ -427,7 +427,9 @@ export function useSessionTimer({
     return Math.max(0, Math.min(1, ratio));
   }, [totalChars, config.dailyGoalChars]);
 
-  const state: SessionState = {
+  // [R-01 root fix — 2026-05-12] state / return 모두 useMemo 안정화.
+  // StrictMode 더블 호출 + caller 의 deps churn 결합으로 인한 무한루프 차단.
+  const state = useMemo<SessionState>(() => ({
     startedAt,
     elapsed,
     elapsedSinceBreak,
@@ -436,9 +438,9 @@ export function useSessionTimer({
     pomodoroPhase,
     pomodoroRemaining,
     pomodoroCycle,
-  };
+  }), [startedAt, elapsed, elapsedSinceBreak, dailyMs, breakCount, pomodoroPhase, pomodoroRemaining, pomodoroCycle]);
 
-  return {
+  return useMemo<UseSessionTimerReturn>(() => ({
     state,
     config,
     setConfig,
@@ -448,7 +450,7 @@ export function useSessionTimer({
     progress,
     restAlertDue,
     dismissRestAlert,
-  };
+  }), [state, config, setConfig, startPomodoro, stopPomodoro, resetDaily, progress, restAlertDue, dismissRestAlert]);
 }
 
 // ============================================================

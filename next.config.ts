@@ -39,10 +39,12 @@ const nextConfig: NextConfig = {
   },
   // React Compiler disabled — requires babel-plugin-react-compiler package
   // reactCompiler: true,
-  // [R-01 dev artifact bisect — 2026-05-12] dev-only StrictMode 더블 호출이 inline-object
-  // hook 패턴과 결합해 "Max update depth" 156~472× 발생. prod 영향 0이지만 dev experience
-  // 회복을 위해 임시 disable. 정합성 fix 후 재활성 권장.
-  reactStrictMode: false,
+  // [R-01 root fix — 2026-05-12] 8 hook return useMemo 안정화 완료 후 StrictMode 재활성.
+  // 이전 issue: dev-only StrictMode 더블 호출 + inline-object hook return → Max update depth.
+  // Fix: useCmdPalette / useCreativeEventLogger / useStorageQuota / useSessionTimer /
+  //      useAutoVersionSnapshot / useGitHubAutoSync / useGitHubSync / useSparkHealth
+  //      모두 return 객체를 useMemo 로 안정화.
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {

@@ -14,7 +14,7 @@
 // - SSR 안전(typeof window/navigator 가드)
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { checkSparkHealth, SPARK_SERVER_URL } from '@/services/sparkService';
 import { logger } from '@/lib/logger';
 
@@ -251,10 +251,11 @@ export function useSparkHealth(options?: UseSparkHealthOptions): {
     activeEngine = 'dgx';
   }
 
-  return {
+  // [R-01 root fix — 2026-05-12] return useMemo 안정화.
+  return useMemo(() => ({
     state,
     canFallback: byokAvailable,
     activeEngine,
     refresh: performCheck,
-  };
+  }), [state, byokAvailable, activeEngine, performCheck]);
 }

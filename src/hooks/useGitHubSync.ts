@@ -4,7 +4,7 @@
 // PART 1 — Types & Constants
 // ============================================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import type { GitHubSyncConfig, GitHubFile, GitHubFileEntry, GitHubRepo } from '@/lib/github-sync';
 import {
@@ -325,7 +325,9 @@ export function useGitHubSync(): UseGitHubSyncReturn {
     [config?.token, selectRepo],
   );
 
-  return {
+  // [R-01 root fix — 2026-05-12] return useMemo 안정화 — caller (useGitHubAutoSync 등)
+  // 의 deps churn 차단. 모든 callback 은 useCallback 이므로 deps 안정.
+  return useMemo<UseGitHubSyncReturn>(() => ({
     connected,
     config,
     syncing,
@@ -343,7 +345,7 @@ export function useGitHubSync(): UseGitHubSyncReturn {
     switchBranch: switchBranchFn,
     createBranchFromCurrent,
     getBranches,
-  };
+  }), [connected, config, syncing, lastSyncAt, error, repos, connect, selectRepo, disconnect, saveFile, loadFile, listEpisodes, checkConflict, createNewRepo, switchBranchFn, createBranchFromCurrent, getBranches]);
 }
 
 // IDENTITY_SEAL: PART-4 | role=useGitHubSync | inputs=user actions | outputs=sync state+file+branch ops

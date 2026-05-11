@@ -121,12 +121,13 @@ export function useAutoVersionSnapshot(opts: UseAutoVersionSnapshotOptions): {
     }
   }, [enabled, totalChars, charDelta, cooldownMs, opts.projects]);
 
-  return {
+  // [R-01 root fix — 2026-05-12] return useMemo 안정화 — caller 가 deps 에 두어도 안전.
+  return useMemo(() => ({
     // [P0 fix — 2026-05-10] React 19 'refs' lint 우회 — 의도된 read-only 노출 패턴.
     // lastSnapshotAt 은 외부 시간 비교용. 변경 시 re-render 불필요 (snapshot.ts inputs).
     // eslint-disable-next-line react-hooks/refs
     lastSnapshotAt: lastSnapshotTimeRef.current,
-  };
+  }), []);
 }
 
 // IDENTITY_SEAL: useAutoVersionSnapshot | role=300-char-auto-backup | inputs=projects+enabled | outputs=lastSnapshotAt
