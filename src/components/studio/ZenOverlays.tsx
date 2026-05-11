@@ -16,6 +16,7 @@
 // [K] CSS 외장 — TS는 마운트 / 토글 / 데이터 바인딩만
 
 import React, { memo, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
@@ -62,6 +63,17 @@ function useZenToast(active: boolean): boolean {
 
 function ZenOverlaysInner({ active, language, chapter, session, today, words }: ZenOverlaysProps) {
   const showToast = useZenToast(active);
+
+  // [R7-B fix — 2026-05-12] SSR-safe portal mount target.
+  // Tailwind CSS 4 @layer cascade + #main-content 자손 위치가 inline opacity 조차
+  // override (root cause 미특정). createPortal로 body 직계로 이동 → cascade 영향 0.
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   // 글자 수 포맷팅 — 한국어 locale 천 단위 콤마.
   const wordsLabel = typeof words === 'number'
@@ -112,9 +124,12 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
   const labelStyle: React.CSSProperties = { color: 'var(--color-text-tertiary, #948a7c)' };
   const valStyle: React.CSSProperties = { color: 'var(--color-text-secondary, #b5ac9d)' };
 
-  return (
+  // SSR / 초기 mount 전엔 nothing render — portal target 확보 후 mount.
+  if (!portalTarget) return null;
+
+  return createPortal((
     <>
-      {/* ZenToast — Zen 진입 시 2.2s 상단 중앙. 100% inline (Tailwind @layer 충돌 회피). */}
+      {/* ZenToast — Zen 진입 시 2.2s 상단 중앙. 100% inline + body 직계 portal. */}
       <div
         role="status"
         aria-live="polite"
@@ -179,7 +194,7 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
         </div>
       </div>
     </>
-  );
+  ), portalTarget);
 }
 
 export const ZenOverlays = memo(ZenOverlaysInner);
