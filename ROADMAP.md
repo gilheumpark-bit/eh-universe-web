@@ -102,16 +102,21 @@
 
 ---
 
-## 4 제품 fork 표준 (Loreguard 의 도메인 확장)
+## 5 제품 fork 표준 (Loreguard 의 도메인 확장)
 
-Loreguard 가 fork 표준. 어휘 치환만으로 4 도메인 확장.
+Loreguard 가 fork 표준. 어휘 치환 (또는 subtraction) 으로 5 도메인 확장.
 
-| 제품 | 사용자 | 슬로건 | 상태 |
-|---|---|---|---|
-| **Loreguard** ★ | 작가 | 같이 쓰기 / Co-Write | 알파 (본 repo) |
-| LearningGuard | 학습자 (대학생 + 초중고) | 같이 풀기 / Co-Solve | Phase 3 fork 예정 |
-| ESVA | 엔지니어 | 같이 검토 / Co-Review | Phase 4-5 검토 |
-| Code Studio | 개발자 | 같이 코딩 / Co-Code | 본 repo 일부 (`/code-studio`) |
+| 제품 | 사용자 | 시장 | 슬로건 | 상태 |
+|---|---|---|---|---|
+| **Loreguard** ★ | 작가 | 하라 (제작) | 같이 쓰기 / Co-Write | 알파 (본 repo) |
+| LearningGuard | 학습자 (대학생 + 초중고) | 학습 | 같이 풀기 / Co-Solve | Phase 3 fork 예정 |
+| ESVA | 엔지니어 | 검토 | 같이 검토 / Co-Review | Phase 4-5 검토 |
+| Code Studio | 개발자 | 개발 | 같이 코딩 / Co-Code | 본 repo 일부 (`/code-studio`) |
+| **EasyWrite** ★ | 취미·입문 작가 | **해줘 (소비)** | AI가 써줘 / Write-for-Me | Phase 6 fork (2027) — subtraction + 21모듈 풀 강제 |
+
+`EasyWrite` 는 **subtraction fork** — 추가가 아닌 제거로 정의. Loreguard 의 발급 인증서·HCI·Origin tagging·5 집필 모드를 제거하고, 그 대신 21모듈을 풀로 강제 가동시켜 AI 가 도망갈 자유를 schema-level 로 차단한다. 핵심 알고리즘: **Multi-Entity Ingest** (외부 텍스트 → 21모듈 schema 강제 매핑, 사용자 통찰 — 2026-05-11).
+
+자세한 계획서: `EH/EasyWrite/PLAN.md` (영업비밀 — CC-BY-NC-4.0, repo 외부 보관).
 
 ---
 
