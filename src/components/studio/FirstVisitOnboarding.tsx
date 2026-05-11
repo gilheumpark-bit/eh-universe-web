@@ -68,12 +68,15 @@ export default function FirstVisitOnboarding() {
 
   if (!mounted || isMobile || !visible) return null;
 
+  // [Doc 1 Studio P1 — 2026-05-12] 백드롭 약화 — 이전 backdrop-blur-sm + bg-black/40 가 IDE 뒤를
+  // 거의 안개로 가려 컨텍스트 소실. 권장: rgba(17,16,14,.55) + blur(12px). IDE 구조 가시.
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="fvo-title"
-      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 animate-in fade-in duration-300"
+      style={{ backgroundColor: 'rgba(17, 16, 14, 0.55)', backdropFilter: 'blur(12px)' }}
     >
       <div
         className="relative w-full max-w-lg rounded-3xl bg-bg-elevated border border-border shadow-2xl p-6 md:p-8 space-y-5 animate-in zoom-in-95 duration-300"

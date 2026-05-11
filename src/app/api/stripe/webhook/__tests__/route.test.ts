@@ -2,13 +2,13 @@
  * /api/stripe/webhook route.test.ts (2026-05-12 — Doc 3 ⑦ T-05 / F-test)
  *
  * Payment integrity 핵심 — Stripe webhook signature 검증 + event dispatch.
- * Stripe SDK 부분 mock + next/server FakeNextResponse (gate-checks.test.ts 패턴).
+ * Stripe SDK 부분 mock + next/server StripeWhFakeResponse (gate-checks.test.ts 패턴).
  */
 
 // ============================================================
 // PART 1 — next/server fake classes (gate-checks.test.ts와 동일 패턴)
 // ============================================================
-class FakeNextRequest {
+class StripeWhFakeRequest {
   headers: Headers;
   private _body: string | null;
   constructor(init?: { headers?: Record<string, string>; body?: string }) {
@@ -18,7 +18,7 @@ class FakeNextRequest {
   async text() { return this._body ?? ''; }
   async json() { return JSON.parse(this._body ?? '{}'); }
 }
-class FakeNextResponse {
+class StripeWhFakeResponse {
   _body: unknown;
   _status: number;
   get status() { return this._status; }
@@ -28,12 +28,12 @@ class FakeNextResponse {
   }
   async json() { return this._body; }
   static json(body: unknown, opts?: { status?: number; headers?: Record<string, string> }) {
-    return new FakeNextResponse(body, opts?.status ?? 200);
+    return new StripeWhFakeResponse(body, opts?.status ?? 200);
   }
 }
 jest.mock('next/server', () => ({
-  NextRequest: FakeNextRequest,
-  NextResponse: FakeNextResponse,
+  NextRequest: StripeWhFakeRequest,
+  NextResponse: StripeWhFakeResponse,
 }));
 
 // Stripe SDK mock — constructEvent를 제어 가능하게.
@@ -50,15 +50,18 @@ jest.mock('@/lib/api-logger', () => ({
   apiLog: (...args: unknown[]) => mockApiLog(...args),
 }));
 
-// Helper — minimal NextRequest stub
+// Helper — minimal NextRequest stub.
+// next/server를 jest.mock으로 대체했으므로 런타임 NextRequest는 StripeWhFakeRequest.
+// TS는 별도 — 'unknown as NextRequest' cast로 우회 (jest mock과 type system 분리).
+type AnyNextRequest = Parameters<(typeof import('../route'))['POST']>[0];
 function makeRequest(opts: {
   body?: string;
   signature?: string | null;
-}): FakeNextRequest {
-  return new FakeNextRequest({
+}): AnyNextRequest {
+  return new StripeWhFakeRequest({
     headers: opts.signature ? { 'stripe-signature': opts.signature } : undefined,
     body: opts.body ?? '',
-  });
+  }) as unknown as AnyNextRequest;
 }
 
 describe('/api/stripe/webhook POST — env gate', () => {
@@ -78,7 +81,7 @@ describe('/api/stripe/webhook POST — env gate', () => {
     delete process.env.STRIPE_SECRET_KEY;
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
     const { POST } = await import('../route');
-    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]);
+    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]) as unknown as { status: number; json(): Promise<{ error?: string; received?: boolean; eventId?: string }>; };
     expect(res.status).toBe(503);
     const json = await res.json();
     expect(json.error).toMatch(/not configured/i);
@@ -92,7 +95,7 @@ describe('/api/stripe/webhook POST — env gate', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     delete process.env.STRIPE_WEBHOOK_SECRET;
     const { POST } = await import('../route');
-    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]);
+    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]) as unknown as { status: number; json(): Promise<{ error?: string; received?: boolean; eventId?: string }>; };
     expect(res.status).toBe(503);
   });
 
@@ -100,7 +103,7 @@ describe('/api/stripe/webhook POST — env gate', () => {
     process.env.STRIPE_SECRET_KEY = '   ';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
     const { POST } = await import('../route');
-    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]);
+    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]) as unknown as { status: number; json(): Promise<{ error?: string; received?: boolean; eventId?: string }>; };
     expect(res.status).toBe(503);
   });
 });
@@ -283,7 +286,7 @@ describe('/api/stripe/webhook POST — contract guarantees', () => {
       data: { object: {} },
     });
     const { POST } = await import('../route');
-    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]);
+    const res = await POST(makeRequest({ body: '{}', signature: 'sig' }) as unknown as Parameters<typeof POST>[0]) as unknown as { status: number; json(): Promise<{ error?: string; received?: boolean; eventId?: string }>; };
     expect(res.status).toBe(200);
   });
 
