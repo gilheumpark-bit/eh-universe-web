@@ -5,6 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logger';
 import { apiLog } from '@/lib/api-logger';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -52,18 +53,32 @@ export async function POST(req: NextRequest) {
     // 단 입력단에서 control char 제거해 두면 다운스트림 텍스트 로거 사용 시에도 안전.
     const clean = (s: unknown): string =>
       String(s ?? '').replace(/[\r\n\t\v\f]+/g, ' ').replace(/[\x00-\x1F\x7F]/g, '');
+    const message = clean(body.message).slice(0, 200);
+    const stack = clean(body.stack).slice(0, 300);
+    const source = clean(body.source).slice(0, 200);
+    const page = clean(body.url).slice(0, 500);
+
     apiLog({
       level: 'error',
       event: 'client_error',
       route: '/api/error-report',
       ip,
-      error: clean(body.message).slice(0, 200),
-      meta: {
-        stack: clean(body.stack).slice(0, 300),
-        source: clean(body.source).slice(0, 200),
-        page: clean(body.url).slice(0, 500),
-      },
+      error: message,
+      meta: { stack, source, page },
     });
+
+    // [O-01 fix — 2026-05-12] Sentry 전송 — 이전엔 stdout 만으로 끝나 클라이언트 에러 알람이
+    // 영원히 발화 안 했음. Sentry.init 의 enabled 가드가 prod+DSN 일 때만 실제 전송하므로
+    // 개발/DSN 미설정 환경은 자동으로 no-op.
+    try {
+      Sentry.captureMessage(message || 'client_error', {
+        level: 'error',
+        tags: { route: '/api/error-report', source: 'client_beacon' },
+        extra: { stack, source, page, ip },
+      });
+    } catch (sentryErr) {
+      logger.warn('API:error-report', 'Sentry.captureMessage failed', sentryErr);
+    }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

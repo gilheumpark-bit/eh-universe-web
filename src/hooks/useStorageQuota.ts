@@ -91,7 +91,10 @@ export function useStorageQuota(options?: UseStorageQuotaOptions): {
   const measure = useCallback(async () => {
     if (typeof navigator === 'undefined') return;
     if (!isStorageQuotaSupported()) {
-      setState((prev) => ({ ...prev, supported: false, lastCheck: Date.now(), level: 'unknown' }));
+      // [R-01 fix candidate — 2026-05-12] supported=false 케이스에서 매번 새 lastCheck 로 setState 하면
+      // state ref 가 매 측정마다 새 객체 → state 를 deps 에 넣은 caller 가 re-render → measure 재호출 →
+      // 재진입 무한루프 위험. 이미 supported=false 인 상태면 setState skip (no-op).
+      setState((prev) => prev.supported === false && prev.level === 'unknown' ? prev : { ...prev, supported: false, lastCheck: Date.now(), level: 'unknown' });
       return;
     }
     try {
@@ -147,8 +150,9 @@ export function useStorageQuota(options?: UseStorageQuotaOptions): {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!isStorageQuotaSupported()) {
+      // [R-01 fix — 2026-05-12] state ref 변경 가드 — 이미 supported=false 면 setState skip.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setState((prev) => ({ ...prev, supported: false }));
+      setState((prev) => prev.supported === false ? prev : { ...prev, supported: false });
       return;
     }
 

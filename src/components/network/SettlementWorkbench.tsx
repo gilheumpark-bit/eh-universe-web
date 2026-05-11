@@ -50,15 +50,30 @@ export function SettlementWorkbench() {
           displayName: user.displayName,
         });
 
-        const [record, latestPosts, latestSettlements] = await Promise.all([
-          getNetworkUserRecord(user.uid),
+        // [S-01 fix — 2026-05-12] viewerRecord 권한 먼저 확인.
+        // 이전: 비-mod 도 posts/settlements 풀 패치 후 submit 만 차단 → admin 자료 누설.
+        // 변경: canCreateSettlement(record) 가 false 면 추가 fetch 자체 skip — 데이터 노출 0.
+        const record = await getNetworkUserRecord(user.uid);
+        if (!cancelled) {
+          setViewerRecord(record);
+        }
+        if (!canCreateSettlement(record)) {
+          if (!cancelled) {
+            setPosts([]);
+            setSettlements([]);
+            setPlanetMap({});
+            setSelectedPostId('');
+          }
+          return;
+        }
+
+        const [latestPosts, latestSettlements] = await Promise.all([
           listLatestPosts(20, "log"),
           listLatestSettlements(10),
         ]);
         const planets = await getPlanetsByIds(latestPosts.map((post) => post.planetId));
 
         if (!cancelled) {
-          setViewerRecord(record);
           setPosts(latestPosts);
           setSettlements(latestSettlements);
           setPlanetMap(

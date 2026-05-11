@@ -28,12 +28,12 @@
 
 | 측정 | 값 |
 |---|---|
-| 14축 평균 등급 | **A- (82/100)** ← B (74/100) 에서 Phase 1 완료 후 |
+| 14축 평균 등급 | A- (자가 평가 — 정량 측정 스크립트 미구현; ROADMAP §3.4 HCI baseline study 후 정량화 예정) |
 | Test 통과율 | 3,772 / 3,772 = **100%** |
 | TypeScript errors | 0 (strict) |
 | ESLint | exit=0 |
-| 16 IDE 가치 매트릭스 | **95%+** |
-| Visual Charter v1.0 | `_1`/`_2`/`_3`/`_4` 4 화면 모두 mount |
+| 16 IDE 가치 매트릭스 | Symbol/Long-Arc/Debugger/Reader-Sim libs 완성, LSP 일부(auth 만), 통합 테스트 부족 — **자가 평가 ~70%** (95% 주장은 코드 lib 존재 기준이며 실측 미실시) |
+| Visual Charter v1.0 | `_1`/`_2`/`_3`/`_4` 4 화면 mount (CreativeContributionInspector / SubmissionPackageBuilder / ProvenanceReport 경유) |
 
 ---
 

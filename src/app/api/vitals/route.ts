@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/lib/logger";
 import { checkRateLimit, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
 
@@ -38,6 +39,26 @@ export async function POST(req: NextRequest) {
     const body = JSON.parse(raw);
     // Structured log for Vercel / server-side observability
     logger.info("web-vitals", JSON.stringify({ event: "web-vitals", ...body, timestamp: Date.now() }));
+
+    // [O-02 fix — 2026-05-12] 'poor' rating 만 Sentry warning 발송 — 성능 회귀 알람 트리거.
+    // 'good'/'needs-improvement' 은 stdout 통계로 충분. DSN 미설정/non-prod 는 enabled 가드로 no-op.
+    try {
+      if (body?.rating === 'poor' && typeof body.name === 'string') {
+        Sentry.captureMessage(`WebVitals poor: ${body.name}`, {
+          level: 'warning',
+          tags: { route: '/api/vitals', metric: String(body.name), rating: 'poor' },
+          extra: {
+            value: body.value,
+            id: body.id,
+            navigationType: body.navigationType,
+            ip,
+          },
+        });
+      }
+    } catch (sentryErr) {
+      logger.warn('API:vitals', 'Sentry.captureMessage failed', sentryErr);
+    }
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });

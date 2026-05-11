@@ -118,11 +118,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - "제품 크레딧 등재" → "알파 기여자 명시"
 - 적용: README.md / SUPPORT.md / docs/manifesto.md (4언어 카피 블록)
 
-### 프로젝트 상태 (2026-04-24)
-- 테스트: **3,304 passing** / 298 suites / 0 실패
+### 프로젝트 상태 (2026-05-12 최신 — 이전 2026-04-24 stale 정정)
+- 테스트: **3,772 passing** / 350 suites / 0 실패 (이전 3,304 표기는 stale — README.md 와 일치)
 - 타입: **0 errors** (strict)
-- Lighthouse A11y: **100/100** × 5 페이지
-- 보안: P0 6건 + P1 13건 수리 완료
+- Lighthouse A11y: `/` 96 · `/studio` 100 · `/translation-studio` 100 — **3 페이지 측정** (이전 "5 페이지 100/100" 주장 정정. 나머지 2 페이지 측정은 ROADMAP §2.1 일정)
+- 보안: P0 6건 + P1 13건 + 2026-05-10 INTERNAL 7건 + 2026-05-12 bug-hunt R/B/O/S 6건 수리 진행
 - 단계: **알파** (브릿G 장르문학 작가 50명 얼리 액세스 모집 중)
 
 ---

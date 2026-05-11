@@ -60,7 +60,16 @@ export type ContextBlockId =
   | 'act-guide'            // 5 act × 4언어 가이드라인 (도입/상승/중반전환/하강위기/절정)
   | 'style-dna'            // SLIDER s1~s4 + DNA_NAMES (Hard SF/웹소설/문학적/멀티장르)
   | 'tension-curve'        // tensionCurve 데이터
-  | 'origin-guide';        // [USER]/[TEMPLATE]/[ENGINE_*] 4언어 해석 규칙
+  | 'origin-guide'         // [USER]/[TEMPLATE]/[ENGINE_*] 4언어 해석 규칙
+  // [B-01 fix — 2026-05-12] 21-module fusion 6 IDs.
+  // twentyone-modules/registry.ts 가 이 6 ID 를 context_block_id 로 참조 중 — 누락 시 buildAgentSystemPrompt
+  // 가 silently drop 함. 슬롯은 AgentContext 에도 추가됨.
+  | 'ending-lock'          // M2 결말 잠금: final_image / must_payoffs / banned_reversals
+  | 'timeline-graph'       // M5 타임라인: in-world events / causal chains
+  | 'info-release-table'   // M6 정보 공개표: 3-track (reader/protagonist/public) reveal
+  | 'beat-bank'            // M11 비트 뱅크: trigger-style motif library
+  | 'foreshadow-pair'      // M12 복선 추적: setup/payoff/false-lead status
+  | 'platform-profile';    // M18 플랫폼 어댑터: 18-platform conformance profile
 
 export interface AgentDefinition {
   readonly id: string;
@@ -102,6 +111,13 @@ export interface AgentContext {
   'style-dna'?: string;
   'tension-curve'?: string;
   'origin-guide'?: string;
+  // [B-01 fix — 2026-05-12] 21-module fusion 6 슬롯 (registry.ts 참조 매칭)
+  'ending-lock'?: string;
+  'timeline-graph'?: string;
+  'info-release-table'?: string;
+  'beat-bank'?: string;
+  'foreshadow-pair'?: string;
+  'platform-profile'?: string;
   /** 호출 측이 추가 문구를 덧붙일 수 있는 확장 슬롯 */
   extraDirectives?: string;
 }

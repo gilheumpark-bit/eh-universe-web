@@ -141,5 +141,11 @@ export function useCmdPalette(): UseCmdPaletteResult {
       .map(({ item }) => item);
   }, [items, query]);
 
-  return { open, setOpen, query, setQuery, items, filtered, register };
+  // [R-01 fix — 2026-05-12] return 객체 안정화 — caller 가 deps 에 cmdPalette 통째를 넣을 때
+  // 매 렌더 새 ref 로 발산하지 않도록 useMemo. setOpen/setQuery 는 React state setter 라 stable,
+  // register 는 useCallback([]) 라 stable, open/query/items/filtered 만 deps 로 충분.
+  return useMemo(
+    () => ({ open, setOpen, query, setQuery, items, filtered, register }),
+    [open, query, items, filtered, register],
+  );
 }

@@ -18,8 +18,16 @@ const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const tracesSampleRate = Number(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? "0.1");
 const consented = hasClientAnalyticsConsent();
 
+// [A10 fix — 2026-05-12] release tag — 클라이언트 측에는 NEXT_PUBLIC_BUILD_SHA 만 노출 가능.
+// 빌드 타임에 Vercel/GitHub Actions 가 주입 (vercel.json env 또는 ci.yml).
+const release =
+  process.env.NEXT_PUBLIC_SENTRY_RELEASE ||
+  process.env.NEXT_PUBLIC_BUILD_SHA ||
+  undefined;
+
 Sentry.init({
   dsn,
+  release,
   tracesSampleRate,
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,

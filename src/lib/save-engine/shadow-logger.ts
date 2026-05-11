@@ -130,7 +130,10 @@ function sweepExpired(now: number): void {
 //      모두 단일 get/put으로 끝나 N+1 제거.
 
 const DB_NAME = 'noa_shadow_v1';
-const DB_VERSION = 1;
+// [R-02 fix 2026-05-12] v1→v4: primary-write-logger 가 같은 DB 를 v3 까지 사용 + 사용자 브라우저에
+// 이미 v4 가 존재할 수 있어 v1 요청 시 VersionError 로 영구 비활성화됨. 모든 store 생성을
+// idempotent 가드(`if (!objectStoreNames.contains)`)로 처리하므로 v4 jump 안전.
+const DB_VERSION = 4;
 const STORE = 'shadow_log';
 const BUNDLE_KEY = 'log_bundle';
 const MAX_ENTRIES = 1000;

@@ -240,7 +240,7 @@ npm test         # 테스트
 | 테스트 | **3,772 passing** / 350 suites (100% pass) |
 | 타입 체크 | **0 errors** (strict) |
 | ESLint | **exit=0** (0 errors / 0 warnings) |
-| Lighthouse A11y | **100/100** × 5 페이지 |
+| Lighthouse A11y | `/studio` · `/translation-studio` 100/100, `/` 96/100 — **3 페이지 측정** (5 페이지 확장 일정: ROADMAP §2.1) |
 | 보안 감사 | P0 6건 + P1 13건 + 2026-05-10 INTERNAL 7건 수리 완료 |
 | ARCS 레이어 | 11-agent `WRITING_AGENT_REGISTRY` · IP Guard L1-L5 · Compliance 7축 |
 | Visual Charter v1.0 | 창작 과정 확인서 4 화면 (`_1`/`_2`/`_3`/`_4`) + HCI + Witness Seal |

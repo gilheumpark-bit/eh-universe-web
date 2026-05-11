@@ -12,7 +12,7 @@
 //   - 13차 §6 자동 발급·전송 5중 자동화의 첫 단계
 // ============================================================
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { logger } from '@/lib/logger';
 import {
   recordCreativeEvent,
@@ -265,22 +265,26 @@ export function useCreativeEventLogger(
     [projectId],
   );
 
-  // projectId null 시 모두 no-op
-  if (!projectId) {
+  // [R-01 fix — 2026-05-12] 이전엔 매 render 새 inline object 반환 → caller 가 deps 에 두면
+  // 매번 ref churn 으로 effect 재실행 무한루프. useMemo 로 안정화.
+  // projectId null 시 noOp 객체, 있으면 5 callback 객체. callbacks 자체는 useCallback([projectId])
+  // 라 stable 이므로 dep churn 없음.
+  return useMemo<CreativeEventLogger>(() => {
+    if (!projectId) {
+      return {
+        logHumanEdit: noOp,
+        logAIDraft: noOp,
+        logAcceptAI: noOp,
+        logExternalImport: noOp,
+        logTemplateSeed: noOp,
+      };
+    }
     return {
-      logHumanEdit: noOp,
-      logAIDraft: noOp,
-      logAcceptAI: noOp,
-      logExternalImport: noOp,
-      logTemplateSeed: noOp,
+      logHumanEdit,
+      logAIDraft,
+      logAcceptAI,
+      logExternalImport,
+      logTemplateSeed,
     };
-  }
-
-  return {
-    logHumanEdit,
-    logAIDraft,
-    logAcceptAI,
-    logExternalImport,
-    logTemplateSeed,
-  };
+  }, [projectId, noOp, logHumanEdit, logAIDraft, logAcceptAI, logExternalImport, logTemplateSeed]);
 }

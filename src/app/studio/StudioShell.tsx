@@ -104,8 +104,12 @@ export default function StudioShell() {
   // 수정: 8 핵심 명령 등록. handleTabChange (line ~767) 가 hoisting 안 되므로 ref 우회.
   const cmdPalette = useCmdPalette();
   const handleTabChangeRef = useRef<((tab: AppTab) => void) | null>(null);
+  // [R-01 fix — 2026-05-12] 이전엔 deps 에 cmdPalette 객체 통째 → useCmdPalette 가 매 렌더 새 객체 ref
+  // 반환 → deps churn → effect cleanup + re-register 무한 (Maximum update depth 156×). register 함수만
+  // 의존하도록 좁힘 — register 는 useCallback([]) 이라 stable.
+  const cmdRegister = cmdPalette.register;
   useEffect(() => {
-    return cmdPalette.register([
+    return cmdRegister([
       { id: 'tab-world', label: language === 'KO' ? '세계관 (Ctrl+1)' : 'World (Ctrl+1)', shortcut: 'Ctrl+1', category: 'Navigation', action: () => handleTabChangeRef.current?.('world') },
       { id: 'tab-characters', label: language === 'KO' ? '인물 (Ctrl+2)' : 'Characters (Ctrl+2)', shortcut: 'Ctrl+2', category: 'Navigation', action: () => handleTabChangeRef.current?.('characters') },
       { id: 'tab-rulebook', label: language === 'KO' ? '룰북 (Ctrl+3)' : 'Rulebook (Ctrl+3)', shortcut: 'Ctrl+3', category: 'Navigation', action: () => handleTabChangeRef.current?.('rulebook') },
@@ -115,7 +119,7 @@ export default function StudioShell() {
       { id: 'tab-history', label: language === 'KO' ? '이력 (Ctrl+7)' : 'History (Ctrl+7)', shortcut: 'Ctrl+7', category: 'Navigation', action: () => handleTabChangeRef.current?.('history') },
       { id: 'tab-settings', label: language === 'KO' ? '설정 (Ctrl+8)' : 'Settings (Ctrl+8)', shortcut: 'Ctrl+8', category: 'Navigation', action: () => handleTabChangeRef.current?.('settings') },
     ]);
-  }, [cmdPalette, language]);
+  }, [cmdRegister, language]);
 
   // 모바일 감지 — 전체 PC UX 대신 경량 스케치 뷰로 교체
   // 사용자가 명시적으로 PC 뷰 강제 모드(?force=desktop)를 선택하면 우회 가능

@@ -59,7 +59,10 @@ export interface PrimaryWriteLogFilter {
 // ============================================================
 
 const DB_NAME = 'noa_shadow_v1';
-const DB_VERSION = 3; // v1: shadow_log / v2: +promotion_audit / v3: +primary_write_log
+// [R-02 fix 2026-05-12] v3→v4: 사용자 브라우저에 v4 가 존재 (promotion-controller 등 다른 모듈이
+// v4 까지 올려둔 경우) → v3 요청 시 VersionError 로 영구 비활성화. 모든 store 생성이 idempotent
+// 가드(`if (!objectStoreNames.contains)`)로 되어 있어 v4 jump 안전.
+const DB_VERSION = 4; // v1: shadow_log / v2: +promotion_audit / v3: +primary_write_log / v4: reserved
 const SHADOW_STORE = 'shadow_log';
 const AUDIT_STORE = 'promotion_audit';
 const STORE = 'primary_write_log';
