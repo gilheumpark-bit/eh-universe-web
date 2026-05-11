@@ -19,6 +19,12 @@ const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioVie
   ),
 });
 
+// [2026-05-11] M2 Ending Lock — Feature-flag gated; hidden when tier='off' (alpha default).
+const EndingLockSection = dynamic(
+  () => import('@/components/studio/world/EndingLockSection').then((m) => m.EndingLockSection),
+  { ssr: false },
+);
+
 interface WorldTabProps {
   language: AppLanguage;
   config: StoryConfig;
@@ -185,6 +191,9 @@ const WorldTab: React.FC<WorldTabProps> = ({
         }
       }}
     />
+    {currentSessionId && (
+      <EndingLockSection workId={currentSessionId} language={language} />
+    )}
     </>
   );
 };

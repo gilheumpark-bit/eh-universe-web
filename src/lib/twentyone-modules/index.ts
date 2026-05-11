@@ -144,3 +144,49 @@ export {
 } from './platform-adapter';
 
 export type { ValidationError, FitnessInput } from './platform-adapter';
+
+// IDB store (v1 — 9 stores for the 21-Module Authoring System).
+export {
+  openTwentyOneModulesDB,
+  STORE_ENDING_LOCKS,
+  STORE_GLOSSARY_ENTRIES,
+  STORE_TIMELINE_EVENTS,
+  STORE_INFO_RELEASE_ROWS,
+  STORE_SPEECH_PROFILES,
+  STORE_RELATION_EDGES,
+  STORE_BEATS,
+  STORE_FORESHADOW_THREADS,
+  STORE_PLATFORM_PROFILES,
+  _resetCachedDB,
+} from './idb-store';
+
+export type { StoreName } from './idb-store';
+
+// M2 IDB CRUD (ending-lock-store).
+export {
+  saveEndingLock,
+  getEndingLock,
+  listEndingLocksByWork,
+  getActiveEndingLock,
+  removeEndingLock,
+} from './ending-lock-store';
+
+// M4 IDB CRUD (glossary-store).
+export {
+  saveGlossaryEntry,
+  getGlossaryEntry,
+  listGlossaryByWork,
+  listCandidates,
+  listApprovedGlossary,
+  removeGlossaryEntry,
+} from './glossary-store';
+
+// M18 IDB CRUD (platform-profile-store).
+export {
+  cachePlatformProfile,
+  getPlatformProfile,
+  listProfilesByMarket,
+  listAllProfiles,
+  removePlatformProfile,
+  hasAnyPlatformProfile,
+} from './platform-profile-store';
