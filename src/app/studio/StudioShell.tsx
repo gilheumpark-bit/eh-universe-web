@@ -47,6 +47,8 @@ import { toAgentLang } from '@/lib/ai/lang-normalize';
 // [M-08 — 2026-05-10] localStorage / IndexedDB quota 자동 모니터 — critical 시 noa:alert 토스트.
 import { useStorageQuota } from '@/hooks/useStorageQuota';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
+// [Doc 4 dir 01 P0 + Doc 5 — 2026-05-12] Zen 모드 보조 UI (4 모서리 잔향 + Toast)
+import { ZenOverlays } from '@/components/studio/ZenOverlays';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
@@ -318,6 +320,19 @@ export default function StudioShell() {
   const themeLevel = theme === 'dark' ? 0 : 1;
 
   const [focusMode, setFocusMode] = useState(false);
+  // [Doc 4 dir 01 P0 + Doc 5 — 2026-05-12] Zen 모드 state.
+  // Ctrl+Shift+F 토글. body[data-zen=true] 마커 → globals.css CSS 룰로 sidebar/inspector/toolbar fade.
+  // 인지 부하 41점 bad 해결 (Doc 3 ④). VS Code Zen Mode 패턴.
+  const [zenMode, setZenMode] = useState(false);
+  // body data-zen attribute 동기화 — CSS 룰의 진입점.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.dataset.zen = String(zenMode);
+    return () => {
+      // unmount 시 cleanup — Studio 떠나면 dock entry 등 다시 보여야.
+      delete document.body.dataset.zen;
+    };
+  }, [zenMode]);
   const [editorFontSize, setEditorFontSize] = useState(16);
   const sessionStartCharsRef = useRef<number | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -900,7 +915,13 @@ export default function StudioShell() {
       setConfig({ ...currentSession.config, episode: nextEp });
     },
     onToggleAssistant: () => setRightPanelOpen(prev => !prev),
+    // [Doc 4 dir 01 P0 + Doc 5 — 2026-05-12] Zen 모드 단축키 3종.
+    onToggleZen: () => setZenMode(prev => !prev),
+    onToggleSidebar: () => setIsSidebarOpen(prev => !prev),
+    onToggleInspector: () => setRightPanelOpen(prev => !prev),
     onEscape: () => {
+      // [Doc 5 — 2026-05-12] Esc — Zen 모드 우선 종료 (다른 modal 검사 전).
+      if (zenMode) { setZenMode(false); return; }
       if (showShortcuts) { setShowShortcuts(false); return; }
       if (showApiKeyModal) { setShowApiKeyModal(false); return; }
       if (confirmState.open) { closeConfirm(); return; }
@@ -1217,6 +1238,17 @@ export default function StudioShell() {
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         </button>
       )}
+
+      {/* [Doc 5 — 2026-05-12] Zen Mode 보조 UI — body[data-zen=true] 활성 시 4 모서리 라벨 + 진입 Toast.
+          ZenOverlays 자체는 항상 마운트, CSS opacity로만 노출 토글 — flash 방지. */}
+      <ZenOverlays
+        active={zenMode}
+        language={language}
+        chapter={currentSession?.title || undefined}
+        words={typeof currentSession?.config?.manuscripts?.[0]?.content === 'string'
+          ? currentSession.config.manuscripts[0].content.replace(/\s/g, '').length
+          : undefined}
+      />
 
       <OSDesktop
         isSidebarOpen={isSidebarOpen}

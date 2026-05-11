@@ -28,6 +28,13 @@ interface UseStudioKeyboardOptions {
   onFontSizeDown?: () => void;
   /** Ctrl+\ — toggle split view (reference/chat right-pane) */
   onToggleSplitView?: () => void;
+  /** [Doc 4 dir 01 + Doc 5 — 2026-05-12] Ctrl+Shift+F — Zen 모드 토글.
+      sidebar / inspector / topbar / toolbar 페이드아웃 + 본문 폭 강제 + 4 모서리 잔향. */
+  onToggleZen?: () => void;
+  /** [Doc 5 — 2026-05-12] Ctrl+B — sidebar 토글 (Zen 모드에서 잠시 부름). */
+  onToggleSidebar?: () => void;
+  /** [Doc 5 — 2026-05-12] Ctrl+J — inspector 토글. */
+  onToggleInspector?: () => void;
   /** When true, suppress all shortcuts (e.g. modal is open) */
   disabled?: boolean;
 }
@@ -129,6 +136,26 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
       if (ctrl && !shift && (e.key === '\\' || e.code === 'Backslash')) {
         e.preventDefault();
         opts.onToggleSplitView?.();
+        return;
+      }
+      // [Doc 4 dir 01 + Doc 5 — 2026-05-12] Ctrl+Shift+F — Zen 모드 토글.
+      // 인지 부하 41점 bad 해결. sidebar/inspector/topbar/toolbar fade + 본문 폭 강제.
+      if (ctrl && shift && (e.key === 'F' || e.key === 'f')) {
+        e.preventDefault();
+        opts.onToggleZen?.();
+        return;
+      }
+      // [Doc 5 — 2026-05-12] Ctrl+B — sidebar 토글 (Zen 모드에서 잠시 부름).
+      // Ctrl+Shift+B는 다른 단축키와 충돌 가능성 검토. Shift 없이 ctrl+b만.
+      if (ctrl && !shift && e.key === 'b' && !isInInput) {
+        e.preventDefault();
+        opts.onToggleSidebar?.();
+        return;
+      }
+      // [Doc 5 — 2026-05-12] Ctrl+J — inspector 토글.
+      if (ctrl && !shift && e.key === 'j' && !isInInput) {
+        e.preventDefault();
+        opts.onToggleInspector?.();
         return;
       }
       // Ctrl+1~8 — writer-friendly tab switch (without shift to avoid conflict with Ctrl+Shift+N)
