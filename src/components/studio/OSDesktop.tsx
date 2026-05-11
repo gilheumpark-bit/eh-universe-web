@@ -569,37 +569,27 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             click 이 navigate 까지 가지 않는 사례 보고. button + onClick 으로 보장.
             저장 가능한 변경 (currentSessionId) → 새 탭 전환 시 손실 방지를 위해 동일 탭 내 router.push. */}
         {appLinks.map(link => (
-          <button
+          // [2026-05-11 fix #2] router.push silent-fail 확인됨 ("클릭만 되고 안 들어가짐") →
+          // raw <a href> + browser native navigation 으로 회귀. Studio ↔ Archive / Translation
+          // 은 어차피 다른 앱 경계이므로 SPA client navigation 의미 낮음 (다른 RSC tree).
+          // 드래그 중에는 preventDefault 로 차단. onMouseDown stopPropagation 로 dock 핸들 race 차단.
+          <a
             key={link.href}
-            type="button"
-            // [2026-05-11 hardening — dock 진입점 막힘 재발 방지]
-            // 1. onMouseDown stopPropagation: dock handle 의 mousedown 으로 isDockDragging=true 가
-            //    잘못 set 되는 race 차단 (button 영역은 드래그 영역 아님)
-            // 2. router.push 실패 시 window.location.assign fallback — Next.js navigation 이 모종의
-            //    이유 (route guards / middleware / suspense boundary) 로 안 가는 경우 강제 이동
+            href={link.href}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => {
-              // 드래그 중이면 navigate 차단 (마우스 드래그 종료 후 click 발생 방지)
               if (isDockDragging.current) {
                 e.preventDefault();
                 e.stopPropagation();
-                return;
               }
-              try {
-                router.push(link.href);
-              } catch {
-                // Fallback: full page navigation
-                if (typeof window !== 'undefined') {
-                  window.location.assign(link.href);
-                }
-              }
+              // 평소엔 a 의 default browser navigation 으로 진입 (가장 robust)
             }}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30 cursor-pointer"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30 cursor-pointer no-underline"
             title={link.label}
             aria-label={link.label}
           >
             <link.icon className={`w-6 h-6 ${link.color} hover:text-text-primary transition-colors pointer-events-none`} strokeWidth={1.8} />
-          </button>
+          </a>
         ))}
 
         {/* 구분선 */}
