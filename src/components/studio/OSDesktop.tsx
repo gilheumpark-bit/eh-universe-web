@@ -572,6 +572,12 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           <button
             key={link.href}
             type="button"
+            // [2026-05-11 hardening — dock 진입점 막힘 재발 방지]
+            // 1. onMouseDown stopPropagation: dock handle 의 mousedown 으로 isDockDragging=true 가
+            //    잘못 set 되는 race 차단 (button 영역은 드래그 영역 아님)
+            // 2. router.push 실패 시 window.location.assign fallback — Next.js navigation 이 모종의
+            //    이유 (route guards / middleware / suspense boundary) 로 안 가는 경우 강제 이동
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               // 드래그 중이면 navigate 차단 (마우스 드래그 종료 후 click 발생 방지)
               if (isDockDragging.current) {
@@ -579,7 +585,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                 e.stopPropagation();
                 return;
               }
-              router.push(link.href);
+              try {
+                router.push(link.href);
+              } catch {
+                // Fallback: full page navigation
+                if (typeof window !== 'undefined') {
+                  window.location.assign(link.href);
+                }
+              }
             }}
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30 cursor-pointer"
             title={link.label}
