@@ -96,3 +96,51 @@ export type {
   ModuleRegistryEntry,
   RegistryAudit,
 } from './registry';
+
+// Severity router (Compliance 16-hook result routing).
+export {
+  groupBySeverity,
+  hasWarnedThisSession,
+  markWarned,
+  clearWarningDedup,
+  batchInfo,
+  infoBufferSize,
+  resetInfoBatch,
+  dispatchFindings,
+} from './severity-router';
+
+export type { Severity, ComplianceFinding, SeverityGroupResult } from './severity-router';
+
+// M2 — Ending Lock.
+export {
+  createEndingLock,
+  verifyEndingLock,
+  computeEndingLockHash,
+  runEndingMatchCheck,
+} from './ending-lock';
+
+export type { CreateEndingLockInput, EndingMatchCheckInput } from './ending-lock';
+
+// M4 — Glossary Index.
+export {
+  createGlossaryEntry,
+  findCollisions,
+  approveCandidate,
+  runGlossarySurfaceFormCheck,
+  extractCandidates,
+} from './glossary-extractor';
+
+export type {
+  CreateGlossaryEntryInput,
+  Collision,
+  GlossarySurfaceFormCheckInput,
+} from './glossary-extractor';
+
+// M18 — Platform Adapter (interface only — commercial license grants rule pack).
+export {
+  validatePlatformProfile,
+  computePlatformFitness,
+  runPlatformRatingCheck,
+} from './platform-adapter';
+
+export type { ValidationError, FitnessInput } from './platform-adapter';

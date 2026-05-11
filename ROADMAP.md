@@ -8,7 +8,23 @@
 
 ---
 
-## 현재 상태 — Alpha (v2.3.0-alpha, 2026-05-10)
+## 현재 상태 — Alpha (v2.3.0-alpha, 2026-05-10) + Phase 2 진행 중
+
+### 2026-05-11 진행 (post-v2.3.0-alpha-release)
+
+| 작업 | 상태 |
+|---|---|
+| Bug Hunt M01/M02 — coverage gate 일치 + LUCIDE Receipt | ✓ commit `b564291d` |
+| Phase 2 Step 1 — 21모듈 types + registry + 격리 CI + 매핑 whitepaper | ✓ commit `089b3c50` |
+| Phase 2 Step 2-4 (lib only) — M2 ending-lock + M4 glossary-extractor + M18 platform-adapter | ✓ 본 commit |
+| Phase 2 Step 5 — Feature Flag hook (useTwentyOneModuleFlag) | ✓ 본 commit |
+| Phase 2 Step 6 — Severity router (Compliance 16-axis dispatch) | ✓ 본 commit |
+| Phase 2 Step 7 — UserRole → tier mapping (defaultTierForRole 함수) | ✓ 본 commit |
+| Phase 2 UI 통합 (WorldTab EndingLockSection / Settings PlatformProfile) | ⏳ 다음 사이클 |
+| Phase 2 IDB store 통합 (loreguard_21modules 신규 DB) | ⏳ 다음 사이클 |
+| Phase 3 — 강화 3 (M8/M9/M12) + 격차 3 (M5/M6/M11) | ⏳ 다음 사이클 |
+| Phase 4 — M18 commercial rule pack + LSP 통합 | ⏳ Phase 3 종료 후 |
+
 
 | 측정 | 값 |
 |---|---|
