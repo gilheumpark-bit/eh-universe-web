@@ -39,6 +39,10 @@ const nextConfig: NextConfig = {
   },
   // React Compiler disabled — requires babel-plugin-react-compiler package
   // reactCompiler: true,
+  // [R-01 dev artifact bisect — 2026-05-12] dev-only StrictMode 더블 호출이 inline-object
+  // hook 패턴과 결합해 "Max update depth" 156~472× 발생. prod 영향 0이지만 dev experience
+  // 회복을 위해 임시 disable. 정합성 fix 후 재활성 권장.
+  reactStrictMode: false,
   images: {
     remotePatterns: [
       {
