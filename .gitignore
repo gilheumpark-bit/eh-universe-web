@@ -214,3 +214,6 @@ docs/Loreguard_External_Business_*.md
 docs/Loreguard_Startup_Application.md
 docs/1-pager.md
 docs/internal-frame/
+
+# Bug Hunter session state (local)
+.bug-hunter/

@@ -44,7 +44,9 @@ jobs:
         run: npx jest --testPathPatterns="verification|composer-state|panel-registry|rate-limit|safe-fix|logger|server-ai" --no-coverage
 
       - name: Run tests with coverage
-        run: npx jest --coverage --coverageThreshold='{"global":{"branches":15,"functions":15,"lines":20,"statements":20}}'
+        # Coverage threshold: single source of truth in jest.config.ts (30/30/40/40 global).
+        # Removed inline override (was 15/15/20/20) to keep CI ↔ local in sync — 2026-05-11.
+        run: npx jest --coverage
 
       - name: Upload coverage report
         if: always()

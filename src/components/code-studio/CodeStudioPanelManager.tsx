@@ -17,7 +17,7 @@ import {
   Network, GitMerge, GitFork, Database, GraduationCap,
   FolderKanban, Keyboard, Key, ShieldCheck, GitCompareArrows,
   BookA, Boxes, BookOpen, Code2, PenTool, Hash, Clock, Zap,
-  GitCompare,
+  GitCompare, Receipt,
 } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 import type { FileNode, OpenFile } from "@/lib/code-studio/core/types";
@@ -49,7 +49,7 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   Network, GitMerge, GitFork, Database, GraduationCap,
   FolderKanban, Keyboard, Key, ShieldCheck, GitCompareArrows,
   BookA, Boxes, BookOpen, Code2, PenTool, Hash, Clock, Zap,
-  GitCompare,
+  GitCompare, Receipt,
 };
 
 interface PipelineStage {

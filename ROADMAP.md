@@ -27,7 +27,7 @@
 
 | # | 작업 | 영향 축 | Done 기준 |
 |---|---|---|---|
-| 2.1 | Lighthouse + Bundle Analyzer baseline | Performance | 5 페이지 측정 + bundle 분석 리포트 |
+| 2.1 | Lighthouse + Bundle Analyzer + Jest coverage threshold graduation baseline | Performance / Test | 5 페이지 측정 + bundle 분석 리포트 + coverage 15/15/20/20 (현재) → 30/30/40/40 (Phase 2 종료) → 50/50/60/60 (Phase 3) 점진 강화 |
 | 2.2 | e2e 4 시나리오 (`_1`/`_2`/`_3`/`_4` 발급 흐름) | Test/QA | Playwright 통과 |
 | 2.3 | Cloudflare Tunnel 또는 Tailscale 복구 | DevOps | DGX 외부 노출 안전 |
 | 2.4 | Sentry 통합 + 4 핵심 경로 instrumentation | DevOps | error tracking 활성 |
