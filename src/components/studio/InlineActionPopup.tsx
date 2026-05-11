@@ -401,20 +401,36 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
           )}
           {result && (
             <>
-              <p className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto">{result}</p>
+              {/* [Doc 3 인물/집필 P0 + Doc 4 dir 02 — 2026-05-12] NOA · 제안 라벨 + ghost 시각화.
+                  결과 텍스트는 점선 underline amber로 "제안 상태" 명시. 작가가 ⏎ 채택하기 전엔 commit 아님. */}
+              <div className="text-[9px] font-mono uppercase tracking-widest text-accent-amber mb-1.5 flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-accent-amber" aria-hidden="true" />
+                {isKO ? 'NOA · 제안' : 'NOA · Suggestion'}
+              </div>
+              <p
+                className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto"
+                style={{ borderBottom: '1px dashed var(--color-accent-amber)', paddingBottom: '4px' }}
+              >
+                {result}
+              </p>
               <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
+                {/* [Doc 4 dir 02 — 2026-05-12] "적용" → "채택", "취소" → "폐기".
+                    작가가 주어. NOA의 출력은 제안, 작가의 행동은 결정. amber CTA (보라 폐기). */}
                 <button
                   onClick={applyResult}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-purple text-white text-[11px] font-bold hover:bg-accent-purple/80 transition-colors"
+                  style={{ color: '#1a1410' }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-amber text-[#1a1410] text-[11px] font-bold hover:bg-accent-amber/90 transition-colors"
+                  title={isKO ? '⏎ 채택' : '⏎ Accept'}
                 >
                   <Check className="w-3 h-3" />
-                  {isKO ? '적용' : 'Apply'}
+                  {isKO ? '채택' : 'Accept'}
                 </button>
                 <button
                   onClick={() => { setResult(null); abortRef.current?.abort(); }}
                   className="px-3 py-1.5 rounded-lg text-text-tertiary text-[11px] font-bold hover:bg-bg-secondary transition-colors"
+                  title={isKO ? 'esc 폐기' : 'esc Discard'}
                 >
-                  {isKO ? '취소' : 'Cancel'}
+                  {isKO ? '폐기' : 'Discard'}
                 </button>
                 {lastApplied && (
                   <button
