@@ -49,6 +49,8 @@ import { useStorageQuota } from '@/hooks/useStorageQuota';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 // [Doc 4 dir 01 P0 + Doc 5 — 2026-05-12] Zen 모드 보조 UI (4 모서리 잔향 + Toast)
 import { ZenOverlays } from '@/components/studio/ZenOverlays';
+// [Doc 5 — 2026-05-12] Zen Tweaks panel (FAB ⚙ — 본문 크기/행간/폭/드롭캡/심볼/배경)
+import { ZenTweaksPanel } from '@/components/studio/ZenTweaksPanel';
 import { useStudioAI } from '@/hooks/useStudioAI';
 import { useStudioExport } from '@/hooks/useStudioExport';
 import { setDriveEncryptionKey } from '@/services/driveService';
@@ -1249,6 +1251,10 @@ export default function StudioShell() {
           ? currentSession.config.manuscripts[0].content.replace(/\s/g, '').length
           : undefined}
       />
+
+      {/* [Doc 5 — 2026-05-12] Zen Tweaks panel — Zen 모드 활성 시만 FAB ⚙ 노출.
+          본문 크기/행간/본문 폭/드롭 캡/심볼/배경 3-mode 사용자 조정 + localStorage 영속. */}
+      <ZenTweaksPanel language={language} zenActive={zenMode} />
 
       <OSDesktop
         isSidebarOpen={isSidebarOpen}
