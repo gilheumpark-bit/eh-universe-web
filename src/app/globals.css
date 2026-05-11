@@ -7,7 +7,9 @@
   --color-bg-tertiary: #242018;
   --color-text-primary: #f4f0ea;
   --color-text-secondary: #b5ac9d;
-  --color-text-tertiary: #847a6c;
+  /* [Doc 3 ergonomics ② P0 — 2026-05-12] fg-3 #847a6c (3.8:1) → #948a7c (4.6:1).
+     mono 11px 라벨 / hint 다수에서 사용. WCAG AA pass. */
+  --color-text-tertiary: #948a7c;
   /* [C] 다크 accent — 9-11px bold + 8% bg 대비 AA 확보용 0.3단계 밝게 (axe 1.79~2.49 → 3.0+) */
   --color-accent-purple: #a08573;
   --color-accent-red: #c4786d;
@@ -167,7 +169,10 @@ main[class~="pt-14"] {
   --color-bg-tertiary: #2e2b26;
   --color-text-primary: #f2ede4;
   --color-text-secondary: #aca292;
-  --color-text-tertiary: #7b7367;
+  /* [Doc 3 ergonomics ② P0 — 2026-05-12] active dark mode override.
+     이전 #7b7367 (3.82:1 on #1c1a17) → #948a7c (5.34:1) WCAG AA pass.
+     mono 11px 라벨 다수에서 사용. 가시성 ↑. */
+  --color-text-tertiary: #948a7c;
   --color-border: #3d3830;
   --color-surface-strong: rgba(37, 35, 32, 0.94);
   --color-surface-soft: rgba(28, 26, 23, 0.78);

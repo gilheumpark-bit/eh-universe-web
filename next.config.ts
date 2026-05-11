@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
   //      useAutoVersionSnapshot / useGitHubAutoSync / useGitHubSync / useSparkHealth
   //      모두 return 객체를 useMemo 로 안정화.
   reactStrictMode: true,
+  // [Doc 1 Home P0 — 2026-05-12] Next.js dev indicator (좌하단 "N · 1 Issue" 빨간 배지) prod 비노출.
+  // dev 환경에서는 유용하지만 production preview/staging URL에서 일반 방문자에게 "사이트 망가짐" 신호.
+  devIndicators: {
+    position: 'bottom-right', // 사용자 시야 좌하단에서 떨어뜨림 (dev 한정)
+  },
   images: {
     remotePatterns: [
       {

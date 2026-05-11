@@ -98,25 +98,14 @@ export default function CodeStudioPage() {
               </span>
             ))}
           </p>
+          {/* [Doc 1 Code Studio P0 — 2026-05-12] CTA 위계 반전 + 화살표 종결.
+              본문이 "Studio를 이용하세요"라 안내하므로 권장 경로 = Studio primary, 개발자 모드 = ghost.
+              이전: 개발자 모드 primary blue / Studio secondary tertiary → 카피와 시각 위계 모순.
+              순서도 권장 경로(Studio)를 먼저. */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                userRole?.setDeveloperMode(true);
-                setBypassRoleGate(true);
-              }}
-              className="px-5 py-2.5 bg-accent-blue text-white rounded-lg font-medium hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[44px]"
-            >
-              {L4(lang, {
-                ko: '개발자 모드로 계속',
-                en: 'Continue as Developer',
-                ja: '開発者モードで続ける',
-                zh: '以开发者模式继续',
-              })}
-            </button>
             <Link
               href="/studio"
-              className="px-5 py-2.5 bg-bg-tertiary text-text-primary rounded-lg font-medium hover:bg-bg-quaternary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[44px] inline-flex items-center justify-center"
+              className="px-5 py-2.5 bg-accent-amber text-[#1a1410] rounded-lg font-semibold hover:bg-accent-amber/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[44px] inline-flex items-center justify-center gap-2"
             >
               {L4(lang, {
                 ko: 'Studio로 이동',
@@ -124,7 +113,24 @@ export default function CodeStudioPage() {
                 ja: 'Studio へ移動',
                 zh: '前往 Studio',
               })}
+              <span aria-hidden="true">→</span>
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                userRole?.setDeveloperMode(true);
+                setBypassRoleGate(true);
+              }}
+              className="px-5 py-2.5 bg-bg-tertiary text-text-primary rounded-lg font-medium hover:bg-bg-quaternary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[44px] inline-flex items-center justify-center gap-2"
+            >
+              {L4(lang, {
+                ko: '개발자 모드로 계속',
+                en: 'Continue as Developer',
+                ja: '開発者モードで続ける',
+                zh: '以开发者模式继续',
+              })}
+              <span aria-hidden="true">→</span>
+            </button>
           </div>
         </div>
       </main>

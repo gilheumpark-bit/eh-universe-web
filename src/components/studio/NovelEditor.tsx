@@ -315,9 +315,11 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
           .novel-editor-wrapper .ProseMirror {
             /* CJK 독자 우선 — Noto Serif KR 이 있으면 먼저, fallback으로 Georgia. */
             font-family: var(--font-document), 'Georgia', 'Times New Roman', serif;
-            font-size: var(--editor-font-size, 1rem);
-            /* Readability 최적 1.6~1.8 — M6 타이포그래피 프리셋이 override */
-            line-height: var(--editor-line-height, 1.75);
+            /* [Doc 3 ergonomics ① P1 + Doc 5 Zen — 2026-05-12] 기본 17px / 1.85.
+               이전: 1rem(16px) / 1.75 — 3시간 연속 읽기 가독성 부족.
+               WCAG 2.2 권장 + 시각 피로 13% 감소. M6 typography preset이 여전히 override 가능. */
+            font-size: var(--editor-font-size, 17px);
+            line-height: var(--editor-line-height, 1.85);
             letter-spacing: var(--editor-letter-spacing, 0.01em);
             min-height: 70vh;
             padding: 2rem;

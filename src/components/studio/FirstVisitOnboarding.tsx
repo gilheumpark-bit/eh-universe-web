@@ -88,8 +88,10 @@ export default function FirstVisitOnboarding() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-accent-purple/15 flex items-center justify-center shrink-0">
-            <Sparkles className="w-5 h-5 text-accent-purple" aria-hidden="true" />
+          {/* [Doc 1 Studio P0 — 2026-05-12] 보라 → amber 단일 액센트.
+              디자인 시스템 v8.0: "diagonal purple→blue UI gradients / SF glow explicitly banned". */}
+          <div className="w-11 h-11 rounded-2xl bg-accent-amber/15 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-accent-amber" aria-hidden="true" />
           </div>
           <div className="min-w-0">
             <h2
@@ -125,7 +127,7 @@ export default function FirstVisitOnboarding() {
           </p>
           <ul className="space-y-2.5 text-sm text-text-primary">
             <li className="flex gap-3 items-start">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-purple/15 text-accent-purple font-bold text-[11px] flex items-center justify-center">1</span>
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-amber/15 text-accent-amber font-bold text-[11px] flex items-center justify-center">1</span>
               <span>
                 <strong className="font-semibold">
                   {L4(lang, { ko: '첫 장면 쓰기', en: 'Write your first scene', ja: '最初のシーンを書く', zh: '撰写第一场景' })}
@@ -142,7 +144,7 @@ export default function FirstVisitOnboarding() {
               </span>
             </li>
             <li className="flex gap-3 items-start">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-purple/15 text-accent-purple font-bold text-[11px] flex items-center justify-center">2</span>
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-amber/15 text-accent-amber font-bold text-[11px] flex items-center justify-center">2</span>
               <span>
                 <strong className="font-semibold">
                   {L4(lang, { ko: '캐릭터 만들기', en: 'Create characters', ja: 'キャラクターを作る', zh: '创建角色' })}
@@ -159,7 +161,7 @@ export default function FirstVisitOnboarding() {
               </span>
             </li>
             <li className="flex gap-3 items-start">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-purple/15 text-accent-purple font-bold text-[11px] flex items-center justify-center">3</span>
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent-amber/15 text-accent-amber font-bold text-[11px] flex items-center justify-center">3</span>
               <span>
                 <strong className="font-semibold">
                   {L4(lang, { ko: '세계관 설계', en: 'Design your world', ja: '世界観を設計', zh: '设计世界观' })}
@@ -205,13 +207,15 @@ export default function FirstVisitOnboarding() {
             모달 닫으면 OnboardingGuide 3 카드 (쾌속/직접/데모) 노출 → 명확한 1차 결정.
             handleStart 흐름은 OnboardingGuide의 쾌속 시작 카드가 동일 이벤트 dispatch. */}
         <div className="flex flex-col gap-2 pt-2">
+          {/* [Doc 1 Studio P0 — 2026-05-12] CTA bg-accent-purple → bg-accent-amber.
+              Doc evidence_03_studio: 보라 CTA가 ds 룰 "amber 단일 액센트" 위반의 핵심. */}
           <button
             type="button"
             onClick={handleDismiss}
-            style={{ color: '#ffffff' }}
-            className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 bg-accent-purple text-white text-sm font-bold rounded-xl hover:bg-accent-purple/90 focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors"
+            style={{ color: '#1a1410' }}
+            className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 bg-accent-amber text-[#1a1410] text-sm font-bold rounded-xl hover:bg-accent-amber/90 focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors"
           >
-            <Sparkles className="w-4 h-4" aria-hidden="true" style={{ color: '#ffffff' }} />
+            <Sparkles className="w-4 h-4" aria-hidden="true" style={{ color: '#1a1410' }} />
             {L4(lang, {
               ko: '시작하기',
               en: 'Get started',
