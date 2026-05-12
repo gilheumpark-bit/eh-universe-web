@@ -57,6 +57,8 @@ try {
 }
 
 function tryReadFileSync(filePath: string): string | undefined {
+  // [QA fix 2026-05-12] Client browser bundle 에서 `require('fs')` Module not found warning.
+  if (typeof window !== 'undefined') return undefined;
   if (typeof process === 'undefined') return undefined;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -67,6 +69,9 @@ function tryReadFileSync(filePath: string): string | undefined {
 }
 
 function tryFileExists(filePath: string): boolean {
+  // [QA fix 2026-05-12] Client browser bundle 에서 `require('fs')` Module not found warning.
+  // typeof window check를 추가하여 client bundle 시 require 호출 자체 skip.
+  if (typeof window !== 'undefined') return false;
   if (typeof process === 'undefined') return false;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -518,7 +523,10 @@ function runTypMorphDetectors(code: string, fileName: string): EngineFinding[] {
     const sf = project.createSourceFile(fileName, code);
 
     // Try loading detectors — optional dependency
+    // [QA fix 2026-05-12] Client browser bundle 에서 './detectors' Module not found warning.
+    // typeof window check 추가하여 client bundle 시 require 호출 skip.
     try {
+      if (typeof window !== 'undefined') throw new Error('skip-on-client');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { loadAllDetectors } = require('./detectors');
       const registry = loadAllDetectors() as { getDetectors: () => Array<{ ruleId: string; detect: (sf: unknown) => Array<{ line: number; message: string }> }> };

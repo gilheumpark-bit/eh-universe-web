@@ -128,7 +128,9 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
   // SSR / 초기 mount 전엔 nothing render — portal target 확보 후 mount.
   if (!portalTarget) return null;
 
-  return createPortal((
+  // [QA fix 2026-05-12] SWC parser가 inline JSX fragment + createPortal 패턴에서
+  // "Expected ',' got ';'" 오해석하는 회귀 — fragment를 변수로 추출하여 우회.
+  const portalContent = (
     <>
       {/* ZenToast — Zen 진입 시 2.2s 상단 중앙. 100% inline + body 직계 portal. */}
       <div
@@ -195,7 +197,8 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
         </div>
       </div>
     </>
-  ), portalTarget);
+  );
+  return createPortal(portalContent, portalTarget);
 }
 
 export const ZenOverlays = memo(ZenOverlaysInner);
