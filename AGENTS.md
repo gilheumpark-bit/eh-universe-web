@@ -79,13 +79,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **codex-prompts/** (`lib/ai/codex-prompts/`) — 4 도메인 × 7 handler prompt 매트릭스 (한국 웹소설 / Western fantasy / 라노벨 / 선협). 각 도메인 prompt 는 그 언어로 직접 작성. UI: `components/codex/CodexDomainSelector` 로 사용자 도메인 override.
 - **lang-normalize** (`lib/ai/lang-normalize.ts`) — AppLanguage (KO/EN/JP/CN) ↔ AgentLanguage (ko/en/ja/zh) 양방향 변환 + 비표준 별칭 (kr/jp/cn/tw) 흡수.
 - **IP Guard L1-L5** (`lib/ip-guard/`) — 5계층 브랜드·저작권 방어
-  | 계층 | 모듈 | 시점 |
-  |------|------|------|
-  | L1 입력 차단 | `brand-blocklist.ts` + `scan.ts:scanTextForIP` | 사용자 입력 / 네트워크 ingest (403 차단) |
-  | L2 프롬프트 회피 | `compliance-axis-7.ts:buildIPAvoidanceDirective` | LLM 호출 전 prompt 주입 |
-  | L3 사후 유사도 | `ngram-similarity.ts` | 생성 후 n-gram Jaccard 의심 구간 탐지 |
-  | L4 개인 블록리스트 | `codex-blocklist.ts` | localStorage 작가별 CRUD |
-  | L5 RAG sanitize | `ragService.ts:sanitizeRagResults` | RAG 응답 `off`/`annotate`/`strict` 모드 |
+  | 계층 | 모듈 | 시점 | 상태 |
+  |------|------|------|------|
+  | L1 입력 차단 | `brand-blocklist.ts` + `scan.ts:scanTextForIP` | 사용자 입력 / 네트워크 ingest (403 차단) | ✅ wired |
+  | L2 프롬프트 회피 | `compliance-axis-7.ts:buildIPAvoidanceDirective` | LLM 호출 전 prompt 주입 | ✅ wired |
+  | L3 사후 유사도 | `ngram-similarity.ts` | 생성 후 n-gram Jaccard 의심 구간 탐지 | ✅ wired via `axis-7-ip.ts` (작가가 `ctx.referenceCorpus` 등록 시 활성, 2026-05-12 audit fix) |
+  | L4 개인 블록리스트 | `codex-blocklist.ts` | localStorage 작가별 CRUD | ⚠️ localStorage only — 다기기 sync 미구현 (Firestore 통합 follow-up) |
+  | L5 RAG sanitize | `ragService.ts:sanitizeRagResults` | RAG 응답 `off`/`annotate`/`strict` 모드 | ✅ wired |
 - **Compliance 7축 채점** (`lib/compliance/axes/`) — axis-1 세계관 · 2 캐릭터 · 3 연출 · 4 장르 · 5 씬시트 · 6 연속성 · 7 IP
   - `orchestrator.ts:scoreAllAxes(ctx, options)` → 0~100 점수 + 가중 평균 + `applyDirectiveToPrompt()` 자동 보정 directive
 - **Codex 커스텀 블록리스트 UI** — 작가별 개인 금지어 등록 (브랜드/프랜차이즈/캐릭터/기타)

@@ -52,6 +52,15 @@ export interface AxisContext {
   readonly sceneSheet?: SceneSheetCtx;
   readonly genre?: GenreRuleCtx;
   readonly previousChapter?: string;
+  /**
+   * [L3 IP guard wiring — 2026-05-12 audit Round 5 fix]
+   * 작가가 등록한 비교 코퍼스 (자기가 자주 참고하는 타사 웹소설 발췌본 등).
+   * axis-7에서 ngram-similarity로 의심 표절 구간 탐지.
+   * 없으면 ngram 검사 skip — 기존 axes 영향 0.
+   */
+  readonly referenceCorpus?: readonly { readonly id: string; readonly text: string }[];
+  /** ngram detection threshold (기본 0.3) — Doc 권장값 */
+  readonly ngramThreshold?: number;
 }
 
 // ============================================================

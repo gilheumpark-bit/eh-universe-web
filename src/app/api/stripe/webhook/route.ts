@@ -3,8 +3,15 @@
 // ============================================================
 // [A4 2026-04-24] Stripe 결제 이벤트 수신 + 시그너처 검증 + 구조화 로깅.
 //
+// ⚠️ REVENUE PATH 미완 (2026-05-12 audit Round 5 MISLEADING #2)
+//   - 현재: signature 검증 + apiLog 만. Firestore claim 갱신 0.
+//   - `firebase-id-token.ts:19`이 `payload.stripeRole === 'pro'` 를 읽지만
+//     이 claim을 **set 하는 코드가 어디에도 없음**.
+//   - 결제 완료 → Pro tier 활성 안 됨 (silent failure).
+//   - 해결: firebase-admin SDK 통합 후 setCustomUserClaims 호출 (TODO L98).
+//   - 단기 mitigation: 결제 안내에 "Pro tier wiring 완료 전" 명시 권장.
+//
 // 현재 범위: 시그너처 검증 + 주요 이벤트 dispatch + apiLog.
-// 후속 (firebase-admin SDK 통합 후): Firebase custom claim `stripeRole` 갱신.
 //
 // 설정 가이드:
 //   1) Stripe Dashboard → Webhooks → Endpoint 추가
