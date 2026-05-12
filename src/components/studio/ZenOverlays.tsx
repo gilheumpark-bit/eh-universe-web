@@ -46,6 +46,7 @@ function useZenToast(active: boolean): boolean {
   const [show, setShow] = useState(false);
   useEffect(() => {
     if (!active) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(false);
       return;
     }

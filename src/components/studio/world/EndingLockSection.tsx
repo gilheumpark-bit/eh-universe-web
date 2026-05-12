@@ -65,6 +65,9 @@ export function EndingLockSection({ workId, language }: EndingLockSectionProps) 
   useEffect(() => {
     if (!workId) return;
     if (typeof window === "undefined") return;
+    // [G] effect 진입 직후 비동기 fetch + status 표시.
+    // React 19 `react-hooks/set-state-in-effect` 룰 의도적 우회 — async fetch + UI loading state 동기화 패턴.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus("loading");
     getActiveEndingLock(workId)
       .then((lock) => {
