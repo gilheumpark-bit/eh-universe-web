@@ -101,7 +101,9 @@ const TIERS: Tier[] = [
   {
     id: "pro",
     name: { ko: "Pro", en: "Pro", ja: "Pro", zh: "Pro" },
-    price: { alpha: "추후 공정", ga: "TBD" },
+    // [Round 4 audit fix — 2026-05-12] typo: "추후 공정" (process) → "추후 공지" (notice).
+    // Indie tier(L63)와 동일 정정. 알파 사용자 노출되는 paid conversion page.
+    price: { alpha: "추후 공지", ga: "TBD" },
     features: {
       ko: [
         "Indie 모든 기능",
