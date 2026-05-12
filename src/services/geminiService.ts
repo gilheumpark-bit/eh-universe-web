@@ -83,8 +83,9 @@ if (typeof globalThis !== 'undefined') {
 
 /**
  * Phase 3A: task별 DGX 모델 라우팅.
- * Nginx LB가 Engine A/B 자동 분산. 단일 모델만 서빙하므로 task와 무관하게 동일 ID 반환.
+ * 2026-04-20 vLLM 8001 단일 직결 (35B MoE). task와 무관하게 동일 ID 반환.
  * 시그니처 유지(호출처 변경 방지).
+ * 2026-05-12 audit: stale "Nginx LB Engine A/B" comment 정정.
  */
 function getDgxModelForTask(_task: string): string {
   return VLLM_MODEL_ID;

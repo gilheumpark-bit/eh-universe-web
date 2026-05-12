@@ -4,6 +4,14 @@
 // Components should import from this hook instead of directly
 // from '@/lib/ai-providers' to maintain the layer boundary:
 //   components/ -> hooks/ -> lib/
+//
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0.
+//    75+ components currently import `@/lib/ai-providers` directly,
+//    bypassing this bridge. Layer boundary NOT enforced anywhere.
+//    Bridge retained for future migration; consider:
+//    (a) Codemod 75+ direct imports → useAIProvider, OR
+//    (b) Delete this file and update docs to reflect reality.
+//    Until then, this file serves only as a placeholder.
 // ============================================================
 
 // --- Re-export types ---

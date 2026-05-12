@@ -19,8 +19,8 @@
 + multi-agent-judgment-v2 (리웍 Builder/Critic)
 
 ## ARI + Scope Policy
-- ARI Circuit Breaker: 모든 AI 호출에 적용 (EMA 감점, 자동 failover)
-- Scope Policy: Global > Workspace > Module 정책 우선순위
+- ARI Circuit Breaker: 모든 AI 호출에 적용 (EMA 감점, 자동 failover) — `lib/code-studio/ai/ari-engine.ts` wired ✅
+- Scope Policy: Global > Workspace > Module 정책 우선순위 — ⚠️ 2026-05-12 audit: `lib/code-studio/core/scope-policy.ts` 모듈 prod callers 0. design doc 흔적, 실제 enforcement 미구현 follow-up.
 
 ---
 

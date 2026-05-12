@@ -1,5 +1,7 @@
 "use client";
 
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0. Hook never imported outside tests.
+// Note: ZenTweaksPanel (2026-05-12) has its own typography state — this hook may be redundant.
 // ============================================================
 // useTypographyPreset — 에디터 타이포 프리셋 훅
 // ============================================================

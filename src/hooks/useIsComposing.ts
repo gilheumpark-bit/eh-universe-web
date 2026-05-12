@@ -1,3 +1,5 @@
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0. Hook never imported outside tests.
+// Candidate for removal or wiring into NovelEditor IME-aware autocomplete.
 // ============================================================
 // PART 1 — useIsComposing (React hook wrapper)
 // ============================================================

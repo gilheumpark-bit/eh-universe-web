@@ -88,6 +88,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   | L5 RAG sanitize | `ragService.ts:sanitizeRagResults` | RAG 응답 `off`/`annotate`/`strict` 모드 | ✅ wired |
 - **Compliance 7축 채점** (`lib/compliance/axes/`) — axis-1 세계관 · 2 캐릭터 · 3 연출 · 4 장르 · 5 씬시트 · 6 연속성 · 7 IP
   - `orchestrator.ts:scoreAllAxes(ctx, options)` → 0~100 점수 + 가중 평균 + `applyDirectiveToPrompt()` 자동 보정 directive
+  - ⚠️ **2026-05-12 audit Round 6: production wiring 부재** — `scoreAllAxes` 가 unit test 외 prod callers 0건. 9 파일 (orchestrator + 7 axes + types) 전체가 `engine/pipeline.ts` 또는 생성 경로에서 호출되지 않음. axis-7-ip 의 ngram-similarity wiring (Round 5)도 dead parent 에 attach. follow-up: post-generation hook을 `useStudioAI` 또는 `engine/pipeline.ts:runQualityGate` 와 통합해야 함.
 - **Codex 커스텀 블록리스트 UI** — 작가별 개인 금지어 등록 (브랜드/프랜차이즈/캐릭터/기타)
 - **patent-scanner 재정렬** (`code-studio/features/patent-scanner.ts`) — 중복 SUSPICIOUS_PATTERNS 제거, `scanTextForIP` 위임. 라이선스 감지만 코드 스튜디오 전용으로 유지.
 
@@ -288,6 +289,7 @@ Loreguard는 "하라 시장"(제작 도구)의 카테고리 창시자.
   1. simulation → 2. generation → 3. validation (blocking) → 4. size-density →
   5. asset-trace → 6. stability → 7. release-ip (blocking) → 8. governance → 9. quill
   - blocking 단계(validation/release-ip) 실패 시 다음 스테이지 차단
+  - ⚠️ 2026-05-12 audit: `runFullPipeline` (FULL_TEAMS 9-stage 일괄 실행 함수) prod callers = 0. 실제 production은 `runStaticPipeline` 또는 `pipeline-teams.ts`의 개별 team 함수 직접 호출. 9-stage 통합 실행은 follow-up wiring 필요.
 - **에이전트 역할** (`types/code-studio-agent.ts` `AGENT_REGISTRY`): 19개 role (team-leader, frontend-lead, backend-lead, domain-analyst, state-designer, css-layout, interaction-motion, core-engine, api-binding, overflow-guard, security-auth, memory-cache, render-optimizer, deadcode-scanner, coding-convention, stress-tester, dependency-linker, progressive-repair, snapshot-manager)
 - **Quill Engine**: 224룰 카탈로그 검증 (4-layer: pre-filter → AST → TypeChecker → esquery)
 - **파이프라인 모듈** (2026-04-17 동기화):
@@ -295,7 +297,7 @@ Loreguard는 "하라 시장"(제작 도구)의 카테고리 창시자.
   - `pipeline/apply-guard.ts` — diff-guard 래퍼, `handleApplyCode`에서 MULTI_FILE_AGENT flag로 호출
   - `pipeline/design-transpiler.ts` — 외부 AI 코드 보안 필터 (연결 대기)
   - `ai/intent-parser.ts` — 결정론적 의도→제약 변환, `agents.ts:runSingleAgent`에서 MULTI_FILE_AGENT flag로 프롬프트 주입
-  - `ai/calc-protocol.ts` — SCAN→VALIDATE→ROUTE→PLAN 4단계 프롬프트 프로토콜 (헬퍼 정의)
+  - ~~`ai/calc-protocol.ts` — SCAN→VALIDATE→ROUTE→PLAN 4단계 프롬프트 프로토콜~~ **[2026-05-12 audit: phantom — 파일 실제 존재 X. design doc 흔적, 코드 미구현]**
   - `ai/tier-registry.ts` — 4-Tier (Auditor/Composer/Patcher/Predictor) 오케스트레이션, MULTI_FILE_AGENT flag로 temperature/systemPrompt 분기
   - `core/snapshot-manager.ts` — IndexedDB 스냅샷, `runAgentPipeline`의 progressive-repair 전에 자동 생성 + 실패 시 rollbackSnapshotId 노출
 - **AuditInvoice.tsx** — `panel-registry.ts`의 `audit-invoice` 패널로 등록, 활성 파일 기반 intent-parser 실시간 분석 렌더

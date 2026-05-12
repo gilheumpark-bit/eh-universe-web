@@ -1,3 +1,6 @@
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0 outside tests.
+// useIsMobile.ts (different file) is used by 6 components instead — possible accidental duplication.
+// Candidate for unification with useIsMobile or removal.
 // ============================================================
 // useMediaQuery — CSS 미디어 쿼리 매칭 React 훅
 // ============================================================

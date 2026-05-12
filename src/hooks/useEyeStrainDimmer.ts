@@ -1,5 +1,7 @@
 "use client";
 
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0. globals.css comment only.
+// Candidate for removal or wiring into StudioShell session timer.
 // ============================================================
 // useEyeStrainDimmer — 장시간 세션 자동 다이머 훅
 // ============================================================

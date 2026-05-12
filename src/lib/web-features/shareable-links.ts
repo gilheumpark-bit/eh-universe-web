@@ -78,9 +78,9 @@ export async function resolveShareLink(type: ShareType, hashOrId: string): Promi
     } catch { return null; }
   }
 
-  // 서버 기반
+  // 서버 기반 — route.ts GET handler가 ?id= query 파라미터 사용 (2026-05-12 audit fix: path segment → query)
   try {
-    const res = await fetch(`/api/share/${hashOrId}`);
+    const res = await fetch(`/api/share?id=${encodeURIComponent(hashOrId)}`);
     if (res.ok) return await res.json();
   } catch { /* */ }
   return null;

@@ -37,6 +37,8 @@ const SessionSection = dynamic(() => import('@/components/studio/settings/Sessio
 const ComplianceSection = dynamic(() => import('@/components/studio/settings/ComplianceSection'), { ssr: false });
 // [Track-D Phase 1] 창작 과정 확인서 (Authorship Journal) 발급 섹션
 const CreativeProcessSection = dynamic(() => import('@/components/studio/settings/CreativeProcessSection'), { ssr: false });
+// [2026-05-12 audit Round 6] GDPR / K-PIPA DSAR UI (export + delete + CSRF chain)
+const PrivacySection = dynamic(() => import('@/components/studio/settings/PrivacySection'), { ssr: false });
 // [Phase A-2 — 2026-05-07] Loreguard LSP API 토큰 발급/리셋 (Phase F).
 const LSPTokenSection = dynamic(() => import('@/components/studio/settings/LSPTokenSection').then((m) => m.LSPTokenSection), { ssr: false });
 // [연결 #6 — 2026-05-07] Format on Save (D-4).
@@ -369,6 +371,9 @@ function AdvancedTab({
 
       {/* [Track-D Phase 1] 창작 과정 확인서 (Authorship Journal) 발급 — 부가 가치 */}
       <CreativeProcessSection language={language} />
+
+      {/* [2026-05-12 audit Round 6] GDPR Art.15/17/20 + K-PIPA §35/36 DSAR UI */}
+      <PrivacySection language={language} />
 
       {/* [Phase F — 2026-05-07] Loreguard LSP API 토큰 발급 — 외부 도구 통합 */}
       <LSPTokenSection language={language} />

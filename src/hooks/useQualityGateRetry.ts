@@ -1,5 +1,8 @@
 'use client';
 
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0. Hook never imported outside tests.
+// Quality gate retry logic exists but is not wired into useStudioAI. Candidate for wiring.
+
 import { useState, useCallback, useRef } from 'react';
 import { evaluateQuality, buildRetryHint, getDefaultGateConfig } from '@/engine/quality-gate';
 import type { StoryConfig, SkillLevel, AppLanguage } from '@/lib/studio-types';

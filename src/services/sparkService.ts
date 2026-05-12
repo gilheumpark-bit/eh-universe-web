@@ -9,8 +9,9 @@ import { SPARK_GATEWAY_URL, buildSparkSystemPrompt, VLLM_MODEL_ID } from '@/lib/
 export const SPARK_SERVER_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
 
 /**
- * 서버 URL 결정 — Nginx LB(8090)가 Engine A/B 자동 분산하므로
- * 게이트웨이 단일 URL로 일원화.
+ * 서버 URL 결정 — vLLM 8001 직결 (Qwen 3.6-35B-A3B-FP8 MoE 단일 모델).
+ * 2026-04-20 이전 Nginx LB(8090) + Engine A/B(9B) 쌍포 구조는 폐기됨.
+ * 2026-05-12 audit: stale comment 정정 — 현재 단일 직결 SSE만 사용.
  */
 function resolveServerUrl(): string {
   return SPARK_SERVER_URL || SPARK_GATEWAY_URL;
@@ -119,7 +120,7 @@ export async function streamSparkAI(
     async start(controller) {
       try {
         let fullContent = '';
-        // Qwen 3.5-9B 추론형 모델의 영어 Thinking Process 출력 차단 guard 자동 삽입
+        // Qwen 3.6-35B MoE 추론형 모델의 영어 Thinking Process 출력 차단 guard 자동 삽입
         const guardedSystem = buildSparkSystemPrompt(system);
         const chatMessages = [{ role: 'system', content: guardedSystem }, ...messages];
 
@@ -183,7 +184,7 @@ async function streamOneRequest(
     if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
 
     try {
-      // Nginx LB가 Engine A/B 자동 분산. role 힌트는 더 이상 불필요.
+      // vLLM 8001 단일 직결 (35B MoE). role 힌트 불필요.
       const requestBody: Record<string, unknown> = {
         model: VLLM_MODEL_ID,
         messages,

@@ -1,5 +1,7 @@
 "use client";
 
+// ⚠️ 2026-05-12 audit Round 6: production callers = 0. Hook never imported outside tests.
+// Candidate for removal or wiring into Studio session analytics.
 // ============================================================
 // useKeystrokeHeatmap — 에디터 KPM 수집 + 주기적 스냅샷
 // ============================================================
