@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
+import MaintenanceBanner from "@/components/MaintenanceBanner";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
@@ -526,6 +527,9 @@ function HomePageContent() {
   const homeInner = (
     <>
       <Header stellarWhite={stellarWhite} />
+
+      {/* [2026-05-16] 점검중 배너 — 본심 대비 알파 시각 시그널. NEXT_PUBLIC_MAINTENANCE_MODE='false' 로 OFF */}
+      <MaintenanceBanner />
 
       {/* [C] <main> 랜드마크 — skip link 타겟은 상위 MainContentRegion#main-content 유지, 여기는 semantic main */}
       <main>
