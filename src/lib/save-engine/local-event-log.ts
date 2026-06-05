@@ -21,6 +21,7 @@
 
 import { logger } from '@/lib/logger';
 import type { JournalEngineMode } from '@/lib/feature-flags';
+import { SHADOW_DB_NAME, SHADOW_DB_VERSION, ensureShadowStores } from './shadow-db-schema';
 
 // ============================================================
 // PART 2 — Types
@@ -69,12 +70,11 @@ export interface EventFilter {
 // PART 3 — IndexedDB (noa_shadow_v1 v4)
 // ============================================================
 
-const DB_NAME = 'noa_shadow_v1';
-const DB_VERSION = 4; // shadow_log(v1) / promotion_audit(v2) / primary_write_log(v3) / local_event_log(v4)
+// [N-01 fix 2026-06-03] DB 이름·버전·store 생성을 shadow-db-schema (SSOT)로 일원화.
+// (이 모듈은 기존에도 4 store 전부 생성 — 이제 4개 모듈이 동일 ensureShadowStores 를 공유해 drift 차단.)
+const DB_NAME = SHADOW_DB_NAME;
+const DB_VERSION = SHADOW_DB_VERSION;
 const STORE = 'local_event_log';
-const SHADOW_STORE = 'shadow_log';
-const AUDIT_STORE = 'promotion_audit';
-const PRIMARY_STORE = 'primary_write_log';
 const BUNDLE_KEY = 'event_bundle';
 const MAX_ENTRIES = 500;
 
@@ -103,20 +103,8 @@ function openDB(): Promise<IDBDatabase | null> {
     try {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
-        const db = req.result;
-        // 모든 선행 store 안전 보장.
-        if (!db.objectStoreNames.contains(SHADOW_STORE)) {
-          db.createObjectStore(SHADOW_STORE, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(AUDIT_STORE)) {
-          db.createObjectStore(AUDIT_STORE, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(PRIMARY_STORE)) {
-          db.createObjectStore(PRIMARY_STORE, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(STORE)) {
-          db.createObjectStore(STORE, { keyPath: 'id' });
-        }
+        // [N-01] 전체 canonical store 를 생성 — 초기화 순서 무관하게 누락 없음.
+        ensureShadowStores(req.result);
       };
       req.onsuccess = () => {
         cachedDb = req.result;

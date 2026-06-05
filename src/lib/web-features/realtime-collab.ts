@@ -122,6 +122,10 @@ export interface RemoteCollabConnection {
 
 /** 내부 원격 연결 상태 */
 let _remoteConnection: EventSource | null = null;
+/** [P-01] 재연결 취소 플래그 — disconnectRemote 호출 시 set, 예약된 재연결을 무력화. */
+let _remoteCancelled = false;
+/** [P-01] 예약된 재연결 타이머 — 단일 추적으로 중복 예약·누수 방지. */
+let _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** 원격 CRDT op 적용 (SSE crdt-op 이벤트 핸들러) */
 function applyRemoteOperation(op: CollabEdit): void {
@@ -146,6 +150,18 @@ function updatePresence(presence: { userId: string; status: string }): void {
  */
 export async function connectRemote(serverUrl: string): Promise<EventSource | null> {
   if (typeof EventSource === 'undefined') return null;
+  // [P-01] 새 연결 의도 — 명시적 disconnect 이후에도 재연결 가능하도록 취소 플래그 해제.
+  _remoteCancelled = false;
+  // [P-01] 직전에 예약된 재연결을 취소 (수동 재연결이 backoff 와 겹쳐 중복 연결되는 것 방지).
+  if (_reconnectTimer !== null) {
+    clearTimeout(_reconnectTimer);
+    _reconnectTimer = null;
+  }
+  // [P-01] 직전 연결이 살아 있으면 닫고 교체 — _remoteConnection 미추적 누수 차단.
+  if (_remoteConnection) {
+    try { _remoteConnection.close(); } catch { /* noop */ }
+    _remoteConnection = null;
+  }
   try {
     const es = new EventSource(serverUrl, { withCredentials: true });
     es.addEventListener('crdt-op', (event) => {
@@ -167,7 +183,16 @@ export async function connectRemote(serverUrl: string): Promise<EventSource | nu
       } catch { /* 파싱 실패 무시 */ }
     });
     es.onerror = () => {
-      setTimeout(() => { void connectRemote(serverUrl); }, 5000);
+      // [P-01] 실패한 연결을 즉시 닫아 native 자동 재연결 + 연결 누수 차단.
+      try { es.close(); } catch { /* noop */ }
+      if (_remoteConnection === es) _remoteConnection = null;
+      // 취소됐거나 이미 재연결이 예약돼 있으면 중복 예약 안 함 (재연결 폭주 차단).
+      if (_remoteCancelled || _reconnectTimer !== null) return;
+      _reconnectTimer = setTimeout(() => {
+        _reconnectTimer = null;
+        if (_remoteCancelled) return;
+        void connectRemote(serverUrl);
+      }, 5000);
     };
     _remoteConnection = es;
     return es;
@@ -176,10 +201,16 @@ export async function connectRemote(serverUrl: string): Promise<EventSource | nu
   }
 }
 
-/** 원격 SSE 연결 종료 */
+/** 원격 SSE 연결 종료. 예약된 재연결도 취소. */
 export function disconnectRemote(): void {
+  // [P-01] 취소 플래그 set + 예약 타이머 clear — onerror 가 남긴 재연결도 무력화.
+  _remoteCancelled = true;
+  if (_reconnectTimer !== null) {
+    clearTimeout(_reconnectTimer);
+    _reconnectTimer = null;
+  }
   if (_remoteConnection) {
-    _remoteConnection.close();
+    try { _remoteConnection.close(); } catch { /* noop */ }
     _remoteConnection = null;
   }
 }

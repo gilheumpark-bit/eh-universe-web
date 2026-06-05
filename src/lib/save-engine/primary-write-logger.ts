@@ -24,6 +24,7 @@
 
 import { logger } from '@/lib/logger';
 import type { PrimaryMode } from '@/hooks/usePrimaryWriter';
+import { SHADOW_DB_NAME, SHADOW_DB_VERSION, ensureShadowStores } from './shadow-db-schema';
 
 // ============================================================
 // PART 2 — Types
@@ -58,13 +59,12 @@ export interface PrimaryWriteLogFilter {
 // PART 3 — IndexedDB (noa_shadow_v1 v3 — primary_write_log store)
 // ============================================================
 
-const DB_NAME = 'noa_shadow_v1';
-// [R-02 fix 2026-05-12] v3→v4: 사용자 브라우저에 v4 가 존재 (promotion-controller 등 다른 모듈이
-// v4 까지 올려둔 경우) → v3 요청 시 VersionError 로 영구 비활성화. 모든 store 생성이 idempotent
-// 가드(`if (!objectStoreNames.contains)`)로 되어 있어 v4 jump 안전.
-const DB_VERSION = 4; // v1: shadow_log / v2: +promotion_audit / v3: +primary_write_log / v4: reserved
-const SHADOW_STORE = 'shadow_log';
-const AUDIT_STORE = 'promotion_audit';
+// [N-01 fix 2026-06-03] DB 이름·버전·store 생성을 shadow-db-schema (SSOT)로 일원화.
+// 이전: onupgradeneeded 가 shadow_log/promotion_audit/primary_write_log 3개만 생성 →
+// local_event_log 누락. primary-write-logger 가 v4 업그레이드를 먼저 점유하면 local-event-log 가
+// 자기 store 를 못 얻는 레이스. 이제 ensureShadowStores 로 4개 전부 생성.
+const DB_NAME = SHADOW_DB_NAME;
+const DB_VERSION = SHADOW_DB_VERSION;
 const STORE = 'primary_write_log';
 const BUNDLE_KEY = 'primary_bundle';
 const MAX_ENTRIES = 1000;
@@ -94,17 +94,8 @@ function openDB(): Promise<IDBDatabase | null> {
     try {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
-        const db = req.result;
-        // v1~v3 동시 안전 upgrade — 존재하지 않는 store 만 생성.
-        if (!db.objectStoreNames.contains(SHADOW_STORE)) {
-          db.createObjectStore(SHADOW_STORE, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(AUDIT_STORE)) {
-          db.createObjectStore(AUDIT_STORE, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(STORE)) {
-          db.createObjectStore(STORE, { keyPath: 'id' });
-        }
+        // [N-01] 전체 canonical store 를 생성 — 초기화 순서 무관하게 누락 없음.
+        ensureShadowStores(req.result);
       };
       req.onsuccess = () => {
         cachedDb = req.result;

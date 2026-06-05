@@ -333,6 +333,25 @@ html[data-theme-changing]::after {
   100% { transform: translateX(400%); }
 }
 
+/* ============================================================
+   Toast Auto-dismiss Drain (P-06 — 33Hz JS setInterval 대체)
+   진행바를 scaleX 1→0 으로 compositor 에서만 애니메이션 (layout 0, React 리렌더 0).
+   animation-duration 은 토스트별로 인라인 style 로 주입.
+   ============================================================ */
+@keyframes toast-drain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.toast-drain-bar {
+  transform-origin: left;
+  animation-name: toast-drain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-drain-bar { animation: none; transform: scaleX(1); }
+}
+
 @keyframes glitch {
   0% { text-shadow: 2px 0 var(--color-accent-amber), -2px 0 var(--color-accent-red); }
   25% { text-shadow: -2px 0 var(--color-accent-amber), 2px 0 var(--color-accent-red); }

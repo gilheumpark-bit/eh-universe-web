@@ -23,6 +23,7 @@
 // [K] 로직은 3 섹션 — pending 관리 / 영속 / 조회
 
 import { logger } from '@/lib/logger';
+import { SHADOW_DB_NAME, SHADOW_DB_VERSION, ensureShadowStores } from './shadow-db-schema';
 
 // ============================================================
 // PART 2 — Types
@@ -129,11 +130,11 @@ function sweepExpired(now: number): void {
 //      단일 bundle put이 10~200KB 수준 — IndexedDB 성능에 무영향, (3) read/write
 //      모두 단일 get/put으로 끝나 N+1 제거.
 
-const DB_NAME = 'noa_shadow_v1';
-// [R-02 fix 2026-05-12] v1→v4: primary-write-logger 가 같은 DB 를 v3 까지 사용 + 사용자 브라우저에
-// 이미 v4 가 존재할 수 있어 v1 요청 시 VersionError 로 영구 비활성화됨. 모든 store 생성을
-// idempotent 가드(`if (!objectStoreNames.contains)`)로 처리하므로 v4 jump 안전.
-const DB_VERSION = 4;
+// [N-01 fix 2026-06-03] DB 이름·버전·store 생성을 shadow-db-schema (SSOT)로 일원화.
+// 이전: 개별 DB_VERSION=4 + onupgradeneeded 가 shadow_log 1개만 생성 → 신규 브라우저에서
+// shadow-logger 가 v4 업그레이드를 먼저 점유하면 나머지 3 store 가 영영 안 생기는 레이스.
+const DB_NAME = SHADOW_DB_NAME;
+const DB_VERSION = SHADOW_DB_VERSION;
 const STORE = 'shadow_log';
 const BUNDLE_KEY = 'log_bundle';
 const MAX_ENTRIES = 1000;
@@ -163,10 +164,8 @@ function openShadowDB(): Promise<IDBDatabase | null> {
     try {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(STORE)) {
-          db.createObjectStore(STORE, { keyPath: 'id' });
-        }
+        // [N-01] 전체 canonical store 를 생성 — 어느 모듈이 먼저 업그레이드해도 누락 없음.
+        ensureShadowStores(req.result);
       };
       req.onsuccess = () => {
         cachedDb = req.result;

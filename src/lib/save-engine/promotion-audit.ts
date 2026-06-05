@@ -25,6 +25,7 @@
 import { logger } from '@/lib/logger';
 import type { JournalEngineMode } from '@/lib/feature-flags';
 import type { PromotionMetrics } from './promotion-controller';
+import { SHADOW_DB_NAME, SHADOW_DB_VERSION, ensureShadowStores } from './shadow-db-schema';
 
 // ============================================================
 // PART 2 — Types
@@ -62,9 +63,11 @@ export interface PromotionHistoryFilter {
 // PART 3 — IndexedDB (noa_shadow_v1 v2 — 'promotion_audit' store)
 // ============================================================
 
-const DB_NAME = 'noa_shadow_v1';
-const DB_VERSION = 2; // shadow_log(v1) → shadow_log+promotion_audit(v2)
-const SHADOW_STORE = 'shadow_log';
+// [N-01 fix 2026-06-03] v2→SHADOW_DB_VERSION(4) + 전체 store 생성으로 통일.
+// 이전 위험: DB_VERSION=2 로 머물러, 다른 모듈이 이미 v4 로 올린 DB 를 v2 로 여는 순간
+// VersionError 발생 → promotion-audit 영구 비활성화 (R-02 가 이 모듈엔 미반영이었음).
+const DB_NAME = SHADOW_DB_NAME;
+const DB_VERSION = SHADOW_DB_VERSION;
 const AUDIT_STORE = 'promotion_audit';
 const BUNDLE_KEY = 'audit_bundle';
 const MAX_ENTRIES = 200;
@@ -94,14 +97,8 @@ function openAuditDB(): Promise<IDBDatabase | null> {
     try {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
-        const db = req.result;
-        // v1 → v2: shadow_log 유지 + promotion_audit 신규
-        if (!db.objectStoreNames.contains(SHADOW_STORE)) {
-          db.createObjectStore(SHADOW_STORE, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(AUDIT_STORE)) {
-          db.createObjectStore(AUDIT_STORE, { keyPath: 'id' });
-        }
+        // [N-01] 전체 canonical store 를 생성 — 초기화 순서 무관하게 누락 없음.
+        ensureShadowStores(req.result);
       };
       req.onsuccess = () => {
         cachedDb = req.result;

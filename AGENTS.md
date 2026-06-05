@@ -120,10 +120,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 적용: README.md / SUPPORT.md / docs/manifesto.md (4언어 카피 블록)
 
 ### 프로젝트 상태 (2026-05-12 최신 — 이전 2026-04-24 stale 정정)
-- 테스트: **3,772 passing** / 350 suites / 0 실패 (이전 3,304 표기는 stale — README.md 와 일치)
+- 테스트: **3,912 passing** / 360 suites (2026-06-03 `npx jest` 실측). 4건 사전 실패(WorldTab×3 · useJournalEngineMode×1 — repair 무관, 별도 follow-up). 이전 "3,772/350"·"3,304" stale → 정정
 - 타입: **0 errors** (strict)
 - Lighthouse A11y: `/` 96 · `/studio` 100 · `/translation-studio` 100 — **3 페이지 측정** (이전 "5 페이지 100/100" 주장 정정. 나머지 2 페이지 측정은 ROADMAP §2.1 일정)
-- 보안: P0 6건 + P1 13건 + 2026-05-10 INTERNAL 7건 + 2026-05-12 bug-hunt R/B/O/S 6건 수리 진행
+- 보안: P0 6건 + P1 13건 + 2026-05-10 INTERNAL 7건 + 2026-05-12 bug-hunt R/B/O/S 6건 수리 + **2026-06-03 정밀 진단 Round 7: N-01(공유 DB store 레이스)·P-01(SSE 재연결 누수)·P-06(토스트 33Hz) 수리, S-02(nonce CSP) 전용 패스 보류**
 - 단계: **알파** (브릿G 장르문학 작가 50명 얼리 액세스 모집 중)
 
 ---

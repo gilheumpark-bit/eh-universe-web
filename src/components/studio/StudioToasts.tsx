@@ -36,16 +36,17 @@ interface StudioToastsProps {
 }
 
 // Premium Toast Card Component
-function ToastCard({ 
-  children, 
+function ToastCard({
+  children,
   variant = 'info',
   onClose,
-  progress,
-}: { 
-  children: React.ReactNode; 
+  autoDismissMs,
+}: {
+  children: React.ReactNode;
   variant?: 'info' | 'success' | 'warning' | 'error';
   onClose?: () => void;
-  progress?: number;
+  /** 설정 시 하단 진행바가 CSS 애니메이션으로 autoDismissMs 동안 drain (P-06 — JS 인터벌 제거). */
+  autoDismissMs?: number;
 }) {
   const variants = {
     info: {
@@ -98,11 +99,11 @@ function ToastCard({
           </button>
         )}
       </div>
-      {progress !== undefined && (
+      {autoDismissMs !== undefined && (
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
-          <div 
-            className={`h-full ${v.progress} transition-[transform,opacity,background-color,border-color,color] duration-100`} 
-            style={{ width: `${progress}%`, opacity: 0.6 }}
+          <div
+            className={`h-full w-full ${v.progress} toast-drain-bar`}
+            style={{ opacity: 0.6, animationDuration: `${autoDismissMs}ms` }}
           />
         </div>
       )}
@@ -116,34 +117,22 @@ function AutoDismissToast({
   duration = 4000,
   onDismiss,
   variant,
-}: { 
+}: {
   children: React.ReactNode;
   duration?: number;
   onDismiss: () => void;
   variant?: 'info' | 'success' | 'warning' | 'error';
 }) {
-  const [progress, setProgress] = useState(100);
-  const [visible, setVisible] = useState(true);
-
+  // [P-06 fix 2026-06-03] 진행바는 CSS 애니메이션(toast-drain)이 그린다 —
+  // 기존 30ms setInterval + setProgress(≈33Hz 리렌더, 토스트 떠 있는 내내) 제거.
+  // 수명은 단일 setTimeout 으로만 관리: duration 경과 시 onDismiss → 부모가 언마운트.
   useEffect(() => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - start;
-      const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
-      setProgress(remaining);
-      if (remaining <= 0) {
-        clearInterval(interval);
-        setVisible(false);
-        setTimeout(onDismiss, 300);
-      }
-    }, 30);
-    return () => clearInterval(interval);
+    const timer = setTimeout(onDismiss, duration);
+    return () => clearTimeout(timer);
   }, [duration, onDismiss]);
 
-  if (!visible) return null;
-
   return (
-    <ToastCard variant={variant} onClose={onDismiss} progress={progress}>
+    <ToastCard variant={variant} onClose={onDismiss} autoDismissMs={duration}>
       {children}
     </ToastCard>
   );

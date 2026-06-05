@@ -26,7 +26,7 @@
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-3,772_passing-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-3,912_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
 ![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
@@ -237,7 +237,7 @@ npm test         # 테스트
 
 | 지표 | 값 |
 |------|----|
-| 테스트 | **3,772 passing** / 350 suites (100% pass) |
+| 테스트 | **3,912 passing** / 360 suites (2026-06-03 실측, 4건 사전 실패 follow-up 중) |
 | 타입 체크 | **0 errors** (strict) |
 | ESLint | **exit=0** (0 errors / 0 warnings) |
 | Lighthouse A11y | `/studio` · `/translation-studio` 100/100, `/` 96/100 — **3 페이지 측정** (5 페이지 확장 일정: ROADMAP §2.1) |
