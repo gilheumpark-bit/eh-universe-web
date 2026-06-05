@@ -9,13 +9,19 @@ import { render, act } from "@testing-library/react";
 type HandleWorldSim = (d: Record<string, unknown>) => void;
 const lastProps: { handleWorldSimChange?: HandleWorldSim } = {};
 jest.mock("next/dynamic", () => () => {
-  const MockWorldStudioView = (props: { handleWorldSimChange?: HandleWorldSim }) => {
-    // eslint-disable-next-line react-hooks/immutability
-    lastProps.handleWorldSimChange = props.handleWorldSimChange;
-    return <div data-testid="world-studio-mock">WorldStudio</div>;
+  // [2026-06-06 fix] WorldTab 은 dynamic() 을 2번 호출한다 (WorldStudioView + EndingLockSection).
+  // 둘 다 같은 스텁이 되므로 handleWorldSimChange prop 유무로 분기 — 그렇지 않으면
+  // 나중 렌더(EndingLockSection)가 world-studio-mock testid·lastProps 를 덮어써 다중 매칭·캡처 실패.
+  const MockDynamic = (props: { handleWorldSimChange?: HandleWorldSim }) => {
+    if (props.handleWorldSimChange !== undefined) {
+      // eslint-disable-next-line react-hooks/immutability
+      lastProps.handleWorldSimChange = props.handleWorldSimChange;
+      return <div data-testid="world-studio-mock">WorldStudio</div>;
+    }
+    return <div data-testid="ending-lock-mock">EndingLock</div>;
   };
-  MockWorldStudioView.displayName = "MockWorldStudioView";
-  return MockWorldStudioView;
+  MockDynamic.displayName = "MockDynamic";
+  return MockDynamic;
 });
 
 jest.mock("@/lib/LangContext", () => ({ useLang: () => ({ lang: "ko" }) }));
