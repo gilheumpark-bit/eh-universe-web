@@ -50,6 +50,14 @@ jest.mock('@/lib/api-logger', () => ({
   apiLog: (...args: unknown[]) => mockApiLog(...args),
 }));
 
+// [revenue path] claim setter mock — 결제 상태 → stripeRole 동기화 검증용.
+const mockSetClaim = jest.fn();
+const mockClearClaim = jest.fn();
+jest.mock('@/lib/firebase-auth-admin-rest', () => ({
+  setStripeRoleClaim: (...a: unknown[]) => mockSetClaim(...a),
+  clearStripeRoleClaim: (...a: unknown[]) => mockClearClaim(...a),
+}));
+
 // Helper — minimal NextRequest stub.
 // next/server를 jest.mock으로 대체했으므로 런타임 NextRequest는 StripeWhFakeRequest.
 // TS는 별도 — 'unknown as NextRequest' cast로 우회 (jest mock과 type system 분리).
@@ -307,5 +315,78 @@ describe('/api/stripe/webhook POST — contract guarantees', () => {
     const { POST } = await import('../route');
     await POST(makeRequest({ body: '{"id":"raw-payload"}', signature: 'sig' }));
     expect(mockConstructEvent).toHaveBeenCalled();
+  });
+});
+
+describe('/api/stripe/webhook POST — revenue path claim sync', () => {
+  let originalEnv: typeof process.env;
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    process.env.STRIPE_SECRET_KEY = 'sk_test_valid_key';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_valid';
+    jest.clearAllMocks();
+    mockConstructEvent.mockReset();
+    mockSetClaim.mockResolvedValue({ ok: true });
+    mockClearClaim.mockResolvedValue({ ok: true });
+  });
+  afterEach(() => { process.env = originalEnv; });
+
+  it('checkout.session.completed + client_reference_id → setStripeRoleClaim(uid)', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_co', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-123' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockSetClaim).toHaveBeenCalledWith('uid-123');
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_claim_synced' }),
+    );
+  });
+
+  it('client_reference_id 없으면 claim 미호출', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_co2', created: 1, livemode: false,
+      data: { object: {} },
+    });
+    const { POST } = await import('../route');
+    await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(mockSetClaim).not.toHaveBeenCalled();
+  });
+
+  it('subscription.deleted + metadata.firebaseUid → clearStripeRoleClaim(uid)', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted', id: 'evt_del', created: 1, livemode: false,
+      data: { object: { status: 'canceled', metadata: { firebaseUid: 'uid-9' } } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockClearClaim).toHaveBeenCalledWith('uid-9');
+  });
+
+  it('subscription.updated active → setStripeRoleClaim', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'customer.subscription.updated', id: 'evt_up', created: 1, livemode: false,
+      data: { object: { status: 'active', metadata: { firebaseUid: 'uid-a' } } },
+    });
+    const { POST } = await import('../route');
+    await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(mockSetClaim).toHaveBeenCalledWith('uid-a');
+  });
+
+  it('claim setter 실패해도 webhook 200 (fail-safe)', async () => {
+    mockSetClaim.mockResolvedValue({ ok: false, error: 'no_service_account' });
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_fs', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-x' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_claim_sync_failed' }),
+    );
   });
 });

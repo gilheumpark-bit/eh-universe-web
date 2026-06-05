@@ -30,7 +30,12 @@ export function sanitizeStripeReturnBase(raw: string | undefined): string {
   }
 }
 
-export const getStripeSession = async (priceId: string, customerId?: string, returnUrl?: string) => {
+export const getStripeSession = async (
+  priceId: string,
+  customerId?: string,
+  returnUrl?: string,
+  firebaseUid?: string,
+) => {
   if (!stripe) throw new Error('Stripe is not configured');
   const base = sanitizeStripeReturnBase(returnUrl);
   return stripe.checkout.sessions.create({
@@ -40,5 +45,10 @@ export const getStripeSession = async (priceId: string, customerId?: string, ret
     success_url: `${base}/?success=true`,
     cancel_url: `${base}/?cancel=true`,
     customer: customerId,
+    // [revenue path 2026-06-06] Firebase uid 를 결제 세션에 심어 webhook 이 결제↔유저 매핑한다.
+    // client_reference_id → checkout.session.completed 에서, subscription metadata → subscription.* 에서 회수.
+    ...(firebaseUid
+      ? { client_reference_id: firebaseUid, subscription_data: { metadata: { firebaseUid } } }
+      : {}),
   });
 };

@@ -3,13 +3,12 @@
 // ============================================================
 // [A4 2026-04-24] Stripe 결제 이벤트 수신 + 시그너처 검증 + 구조화 로깅.
 //
-// ⚠️ REVENUE PATH 미완 (2026-05-12 audit Round 5 MISLEADING #2)
-//   - 현재: signature 검증 + apiLog 만. Firestore claim 갱신 0.
-//   - `firebase-id-token.ts:19`이 `payload.stripeRole === 'pro'` 를 읽지만
-//     이 claim을 **set 하는 코드가 어디에도 없음**.
-//   - 결제 완료 → Pro tier 활성 안 됨 (silent failure).
-//   - 해결: firebase-admin SDK 통합 후 setCustomUserClaims 호출 (TODO L98).
-//   - 단기 mitigation: 결제 안내에 "Pro tier wiring 완료 전" 명시 권장.
+// [REVENUE PATH 2026-06-06 wired] checkout.session.completed → setStripeRoleClaim(uid) 배선 완료.
+//   - uid: checkout 시 client_reference_id / subscription metadata 에 심은 신뢰값(인증된 auth.uid).
+//   - claim set: firebase-auth-admin-rest.ts (Identity Toolkit accounts:update + service-account JWT).
+//   - subscription.deleted → clearStripeRoleClaim. 모든 claim 동기화 fail-safe (실패해도 webhook 200).
+//   ⚠️ 활성 조건(사용자 config): VERTEX_AI_CREDENTIALS service account 에 **Firebase Authentication Admin**
+//      역할 부여 + Identity Toolkit 엔드포인트/스코프 런타임 검증. claim 은 다음 ID token refresh 시 전파.
 //
 // 현재 범위: 시그너처 검증 + 주요 이벤트 dispatch + apiLog.
 //
@@ -24,9 +23,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { apiLog } from '@/lib/api-logger';
+import { setStripeRoleClaim, clearStripeRoleClaim } from '@/lib/firebase-auth-admin-rest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/** stripeRole claim 동기화 + 결과 로그. claim setter 가 fail-safe 라 throw 없음. */
+async function applyStripeRoleClaim(uid: string, action: 'set' | 'clear', eventId: string): Promise<void> {
+  const result = action === 'set' ? await setStripeRoleClaim(uid) : await clearStripeRoleClaim(uid);
+  apiLog({
+    level: result.ok ? 'info' : 'warn',
+    event: result.ok ? 'stripe_claim_synced' : 'stripe_claim_sync_failed',
+    route: '/api/stripe/webhook',
+    meta: result.ok ? { action, eventId } : { action, eventId, error: result.error },
+  });
+}
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
@@ -83,36 +94,56 @@ export async function POST(req: NextRequest) {
   //   - invoice.paid                    → 정기 결제 성공 (기록용)
   //   - invoice.payment_failed          → 결제 실패 (retry 알림 대상)
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-    case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-    case 'customer.subscription.deleted':
-    case 'invoice.paid':
-    case 'invoice.payment_failed': {
-      apiLog({
-        level: event.type === 'invoice.payment_failed' ? 'warn' : 'info',
-        event: `stripe_${event.type.replace(/\./g, '_')}`,
-        route: '/api/stripe/webhook',
-        meta: {
-          type: event.type,
-          id: event.id,
-          created: event.created,
-          livemode: event.livemode,
+  const KNOWN_EVENTS = [
+    'checkout.session.completed',
+    'customer.subscription.created',
+    'customer.subscription.updated',
+    'customer.subscription.deleted',
+    'invoice.paid',
+    'invoice.payment_failed',
+  ];
+  apiLog(
+    KNOWN_EVENTS.includes(event.type)
+      ? {
+          level: event.type === 'invoice.payment_failed' ? 'warn' : 'info',
+          event: `stripe_${event.type.replace(/\./g, '_')}`,
+          route: '/api/stripe/webhook',
+          meta: { type: event.type, id: event.id, created: event.created, livemode: event.livemode },
+        }
+      : {
+          level: 'info',
+          event: 'stripe_unhandled_event',
+          route: '/api/stripe/webhook',
+          meta: { type: event.type, id: event.id },
         },
-      });
-      // [TODO firebase-admin 통합] 여기서 event.data.object 에서 customer id / subscription id 추출 후
-      // Firebase admin.auth().setCustomUserClaims(uid, { stripeRole: 'pro' }) 호출.
-      break;
+  );
+
+  // [revenue path 2026-06-06] 결제 상태 → Firebase stripeRole claim 동기화. fail-safe (실패해도 200).
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const uid = typeof session.client_reference_id === 'string' ? session.client_reference_id : '';
+      if (uid) await applyStripeRoleClaim(uid, 'set', event.id);
+    } else if (
+      event.type === 'customer.subscription.created' ||
+      event.type === 'customer.subscription.updated'
+    ) {
+      const sub = event.data.object as Stripe.Subscription;
+      const uid = typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
+      const active = sub.status === 'active' || sub.status === 'trialing';
+      if (uid) await applyStripeRoleClaim(uid, active ? 'set' : 'clear', event.id);
+    } else if (event.type === 'customer.subscription.deleted') {
+      const sub = event.data.object as Stripe.Subscription;
+      const uid = typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
+      if (uid) await applyStripeRoleClaim(uid, 'clear', event.id);
     }
-    default: {
-      apiLog({
-        level: 'info',
-        event: 'stripe_unhandled_event',
-        route: '/api/stripe/webhook',
-        meta: { type: event.type, id: event.id },
-      });
-    }
+  } catch (err) {
+    apiLog({
+      level: 'error',
+      event: 'stripe_claim_sync_threw',
+      route: '/api/stripe/webhook',
+      error: err instanceof Error ? err.message : 'unknown',
+    });
   }
 
   // [C] 200 반환 필수 — Stripe 는 non-2xx 를 재전송 시도. 처리 완료 신호.

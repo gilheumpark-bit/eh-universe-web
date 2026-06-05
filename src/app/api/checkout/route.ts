@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     // returnUrl을 sanitizeStripeReturnBase로 검증 — 오픈 리다이렉트 방지
     const rawReturnUrl = typeof body.returnUrl === 'string' ? body.returnUrl : undefined;
-    const session = await getStripeSession(priceId, undefined, rawReturnUrl);
+    // [revenue path] 인증된 auth.uid 를 결제 세션에 심어 webhook 이 결제 후 stripeRole claim 부여.
+    const session = await getStripeSession(priceId, undefined, rawReturnUrl, auth.uid);
     if (!session.url) {
       return NextResponse.json({ error: 'Checkout 세션을 만들 수 없습니다.' }, { status: 500 });
     }
