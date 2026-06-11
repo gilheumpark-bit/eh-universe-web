@@ -957,6 +957,11 @@ export default function TabTranslate() {
       if (!hasManuscript) return null;
       const translatedContent = ordered.map((x) => x.txt as string).join("\n\n");
       const tc = prev.translationConfig;
+      const prevEntry = idx >= 0 ? list[idx] : undefined;
+      // 사인오프 보존 계약(studio-types.ts:438-440): 내용 변경 시에만 재승인 필요(리셋).
+      // 회차 이동 등 내용 무변경 upsert 에서는 작가 사인오프(faithful/market/approvedAt)를
+      // 그대로 보존한다 — 순수 네비게이션이 영속 사인오프를 조용히 취소하는 회귀 차단.
+      const contentChanged = !prevEntry || prevEntry.translatedContent !== translatedContent;
       const entry: TranslatedManuscriptEntry = {
         episode: activeManuscript.episode,
         sourceLang: "KO",
@@ -968,7 +973,12 @@ export default function TabTranslate() {
         avgScore: score ?? 0,
         band: tc?.band ?? 0.5,
         glossarySnapshot: (tc?.glossary ?? glossary).map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
-        lastUpdate: Date.now(),
+        // 내용 변경 없으면 기존 lastUpdate 유지(매 이동마다 교체 방지), 변경 시에만 갱신.
+        lastUpdate: contentChanged ? Date.now() : prevEntry!.lastUpdate,
+        // 내용 변경 시 계약대로 사인오프 리셋(undefined), 무변경 시 보존.
+        faithfulApproved: contentChanged ? undefined : prevEntry!.faithfulApproved,
+        marketApproved: contentChanged ? undefined : prevEntry!.marketApproved,
+        approvedAt: contentChanged ? undefined : prevEntry!.approvedAt,
       };
       return idx >= 0 ? list.map((e, i) => (i === idx ? entry : e)) : [...list, entry];
     },
@@ -994,41 +1004,79 @@ export default function TabTranslate() {
     (episode: number) => {
       if (episode === config?.episode) return;
       const nextEp = Math.floor(episode);
-      // 단일 updater: pending(확정) 번역 영속화 + episode 변경을 한 번에 처리.
-      // (setConfig 가 함수형 updater 를 stale-closure config 에 즉시 평가 후 config 를 통째
-      //  교체하는 래퍼이므로, persist 와 episode 를 2회로 나누면 뒤 write 가 앞 write 를
-      //  클로버해 번역 저장이 유실됨 — StudioShell.saveCurrentEpisodeDraft 와 동일한 합본 패턴.)
-      setConfig((prev: StoryConfig) => {
-        const nextTM = computeTranslatedManuscripts(prev);
-        const base = nextTM === null ? prev : { ...prev, translatedManuscripts: nextTM };
-        return base.episode === nextEp ? base : { ...base, episode: nextEp };
-      });
+      // [3-tier 수리 2026-06-11] 회차 전환은 episode 변경만 — 번역 재영속 호출 금지.
+      // 사유: 모든 실제 번역 편집(applyExternalResult/acceptSuggestion/handleTranslateAll/
+      //   handleRevert)이 이미 즉시 persistTranslations 로 영속한다. 따라서 전환 시점에
+      //   미영속 'pending' 번역은 없다. 이전 구현은 전환 직전 computeTranslatedManuscripts 로
+      //   재영속했으나, restore effect 의 비멱등 재분해(multi-sentence 세그먼트 꼬리 유실)로
+      //   ① contentChanged 오탐 → 영속 작가 사인오프(faithful/market/approvedAt) 조용히 취소,
+      //   ② lossy 버퍼로 stored 본문 truncate 의 두 HIGH 데이터무결성 회귀를 유발했다
+      //   (독립 7-리뷰어 적발). episode 단일 변경으로 두 회귀를 모두 제거.
+      setConfig((prev: StoryConfig) =>
+        prev.episode === nextEp ? prev : { ...prev, episode: nextEp },
+      );
     },
-    [config, computeTranslatedManuscripts, setConfig],
+    [config, setConfig],
   );
 
   // ── 복원: config.translatedManuscripts → 로컬 번역 버퍼 (회차/언어 전환 시 1회) ──
   // best-effort: 저장된 translatedContent 를 동일 문장 분해기로 재분해 후 세그먼트에 1:1 매핑.
+  // segId 는 splitIntoSegments 에서 위치 기반(s0,s1,…)이라 회차마다 동일 인덱스가 충돌한다.
+  // 따라서 머지(...prev) 가 아니라 회차 경계에서 *현재 lang/현재 회차 세그먼트* 키를 전량
+  // 제거(strip)한 뒤 stored 로만 재구성한다 — 이전 회차의 잔존 버퍼가 신규 회차로 누수되어
+  // computeTranslatedManuscripts 가 엉뚱한 회차 엔트리로 영속하는 교차오염을 차단(replace 시맨틱).
   useEffect(() => {
     if (!activeManuscript) return;
     const target = LANG_TO_TARGET[lang];
+    const prefix = lang + ":";
+    // 현재 회차 세그먼트가 소유한 키 집합 — 이 키들만 회차 경계에서 strip 대상.
+    const ownTransKeys = new Set(segments.map((seg) => prefix + seg.id));
+    const ownStatusKeys = new Set(segments.map((seg) => seg.id));
+    const stripTrans = (prev: Record<string, string>): Record<string, string> => {
+      const next: Record<string, string> = {};
+      for (const k of Object.keys(prev)) if (!ownTransKeys.has(k)) next[k] = prev[k];
+      return next;
+    };
+    const stripStatus = (prev: Record<string, SegStatus>): Record<string, SegStatus> => {
+      const next: Record<string, SegStatus> = {};
+      for (const k of Object.keys(prev)) if (!ownStatusKeys.has(k)) next[k] = prev[k];
+      return next;
+    };
     const stored = (config?.translatedManuscripts ?? []).find(
       (e) => e.episode === activeManuscript.episode && e.targetLang === target,
     );
-    if (!stored || !stored.translatedContent) return;
+    if (!stored || !stored.translatedContent) {
+      // 저장된 번역 없음 — 이전 회차 버퍼 잔존 차단을 위해 현재 회차 키만 비운다.
+      setTranslations((prev) => stripTrans(prev));
+      setStatuses((prev) => stripStatus(prev));
+      setAvgScore(null);
+      return;
+    }
     const pieces = splitIntoSegments(stored.translatedContent);
     const t: Record<string, string> = {};
     const s: Record<string, SegStatus> = {};
+    // [3-tier 수리 2026-06-11] 비멱등 재분해 꼬리 유실 방지: splitIntoSegments 왕복은 멱등이
+    //   아니라(multi-sentence·대사 세그먼트는 더 많은 조각으로 재분해됨) 위치 1:1 매핑 시
+    //   pieces[N..] 초과분이 드롭돼 stored 본문 일부가 버퍼에서 사라졌다. 마지막 세그먼트가
+    //   잔여 조각을 전부 흡수해 본문 손실을 차단(편집 후 재영속 시 stored truncate 방지).
+    const lastIdx = segments.length - 1;
     segments.forEach((seg, i) => {
-      const txt = pieces[i]?.ko;
+      const txt =
+        i === lastIdx
+          ? pieces
+              .slice(i)
+              .map((p) => p.ko)
+              .filter(Boolean)
+              .join(" ")
+          : pieces[i]?.ko;
       if (txt) {
-        t[lang + ":" + seg.id] = txt;
+        t[prefix + seg.id] = txt;
         s[seg.id] = "done";
       }
     });
-    if (Object.keys(t).length === 0) return;
-    setTranslations((prev) => ({ ...prev, ...t }));
-    setStatuses((prev) => ({ ...prev, ...s }));
+    // strip 후 stored 로 재구성(replace) — 잔존 키 누수 차단.
+    setTranslations((prev) => ({ ...stripTrans(prev), ...t }));
+    setStatuses((prev) => ({ ...stripStatus(prev), ...s }));
     setAvgScore(stored.avgScore);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeManuscript?.episode, lang]);
