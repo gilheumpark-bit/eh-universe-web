@@ -377,11 +377,16 @@ async function crossCheckRegistry(
     mismatch = true;
   } else {
     try {
+      // v2 payload — register/route.ts 와 *동일 필드*로 재계산해야 일치한다.
+      // uid·visibility·issuerType 누락 시 register 와 다른 bytes → 항상 fail (high #15).
       const expected = await computeRegistryHmac(secret, {
         certId: entry.certId,
         certHash: entry.certHash,
         chainTipHash: entry.chainTipHash,
         registeredAt: entry.registeredAt,
+        uid: entry.authorUid,
+        visibility: entry.visibility,
+        issuerType: entry.issuerType,
       });
       if (timingSafeEqualHex(expected, entry.hmac)) {
         hmacStatus = 'pass';

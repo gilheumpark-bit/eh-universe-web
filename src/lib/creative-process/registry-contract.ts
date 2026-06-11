@@ -17,8 +17,12 @@
 //   issuerType      stringValue    (선택 — CertificateIssuerType)
 //   githubRepo      stringValue    (선택 — 'owner/repo' 공개 앵커 저장소)
 //   githubCommitSha stringValue    (선택 — GitHub 앵커 commit SHA)
-//   hmac            stringValue    (선택 — computeRegistryHmac() hex.
+//   hmac            stringValue    (선택 — computeRegistryHmac() hex (v2 payload).
+//                                   등록기(register/route.ts)가 이 필드명으로 기록,
+//                                   검증기(verify/route.ts)가 이 필드명으로 재계산 대조.
+//                                   필드명 불일치 시 변조 검출이 항상 실패한다 (high #15).
 //                                   키 = 서버 env CP_REGISTRY_HMAC_SECRET — 절대 로그·응답 노출 금지)
+//   signatureAlgo   stringValue    (선택 — 'hmac-sha256-v2' 표식, 정보용)
 //
 // ⚠ 레지스트리는 원고·콘텐츠를 일절 저장하지 않는다 — 해시·메타만.
 // ⚠ 정직 한계 (모든 verify 표면 의무 표기): 인간 작성 자체는 증명 불가 —
@@ -49,6 +53,8 @@ export interface CertRegistryEntry {
   certHash: string;
   chainTipHash?: string;
   registeredAt: string;
+  /** 등록한 작가의 검증된 uid (Firestore 필드 authorUid). HMAC v2 재계산에 필수. */
+  authorUid?: string;
   visibility?: string;
   issuerType?: string;
   githubRepo?: string;
@@ -103,28 +109,47 @@ export async function computeCertHash(cert: Partial<ProcessCertificate>): Promis
 // ============================================================
 
 /**
- * 레지스트리 엔트리 HMAC payload v1 — 레지스트리 자체 변조 검출용.
- * 등록 시 서버 secret 으로 서명, 검증 시 재계산 대조.
+ * 레지스트리 엔트리 HMAC 입력 — 등록기·검증기 공용 단일 타입.
+ * 등록(register/route.ts)과 검증(verify/route.ts)이 *반드시 동일한 필드·동일한
+ * payload*로 서명/재계산해야 변조 검출이 작동한다. 한쪽만 필드를 바꾸면
+ * HMAC 이 항상 불일치 → 변조 검출 무력화 (high #15 회귀 원천).
  */
-export function buildRegistryHmacPayload(entry: {
+export interface RegistryHmacInput {
   certId: string;
   certHash: string;
   chainTipHash?: string;
   registeredAt: string;
-}): string {
+  /** 검증된 토큰의 uid — body 값 불수용 (register 가 auth.uid 로 박음). */
+  uid?: string;
+  visibility?: string;
+  issuerType?: string;
+}
+
+/**
+ * 레지스트리 엔트리 HMAC payload v2 — 레지스트리 자체 변조 검출용.
+ * 등록 시 서버 secret 으로 서명, 검증 시 재계산 대조.
+ *
+ * v2: uid·visibility·issuerType 을 서명 범위에 포함 (앵커 무결성 확장).
+ * 누락 필드는 빈 슬롯('')으로 정규화 → undefined/'' 동일 처리 (안정).
+ * ⚠ 필드 추가/순서 변경 = HMAC 호환성 파괴 → 반드시 'cp-registry-v3' prefix 로 분기.
+ */
+export function buildRegistryHmacPayload(entry: RegistryHmacInput): string {
   return [
-    'cp-registry-v1',
+    'cp-registry-v2',
     entry.certId,
     entry.certHash,
     entry.chainTipHash ?? '',
     entry.registeredAt,
+    entry.uid ?? '',
+    entry.visibility ?? '',
+    entry.issuerType ?? '',
   ].join('\n');
 }
 
 /** HMAC-SHA256 hex (소문자). secret 은 호출 측 env 에서만 — 절대 로그 금지. */
 export async function computeRegistryHmac(
   secret: string,
-  entry: { certId: string; certHash: string; chainTipHash?: string; registeredAt: string },
+  entry: RegistryHmacInput,
 ): Promise<string> {
   const subtle = getSubtle();
   const keyBytes = utf8Encode(secret);
@@ -185,6 +210,8 @@ export function parseRegistryDocument(doc: unknown): CertRegistryEntry | null {
   const entry: CertRegistryEntry = { certId, certHash, registeredAt };
   const sealNumber = s('sealNumber');
   if (sealNumber) entry.sealNumber = sealNumber;
+  const authorUid = s('authorUid');
+  if (authorUid) entry.authorUid = authorUid;
   const chainTipHash = s('chainTipHash');
   if (chainTipHash) entry.chainTipHash = chainTipHash;
   const visibility = s('visibility');
@@ -202,5 +229,5 @@ export function parseRegistryDocument(doc: unknown): CertRegistryEntry | null {
 
 // IDENTITY_SEAL: PART-1 | role=registry schema contract | inputs=none | outputs=constants,types
 // IDENTITY_SEAL: PART-2 | role=canonical cert hash v1 | inputs=cert | outputs=sha256 hex
-// IDENTITY_SEAL: PART-3 | role=registry HMAC v1 | inputs=secret,entry | outputs=hmac hex
+// IDENTITY_SEAL: PART-3 | role=registry HMAC v2 (uid,visibility,issuerType incl.) | inputs=secret,entry | outputs=hmac hex
 // IDENTITY_SEAL: PART-4 | role=firestore doc parser | inputs=REST doc | outputs=CertRegistryEntry|null

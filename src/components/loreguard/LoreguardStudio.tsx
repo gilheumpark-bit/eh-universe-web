@@ -22,8 +22,10 @@
    - 진입점 2곳: 검색 팔레트 Action(우선) + 설정 슬라이드오버 헤더 버튼.
    =========================================================== */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import LoreguardShell, { type LoreguardTabId } from "./LoreguardShell";
 import { LoreguardTabProvider } from "./LoreguardTabContext";
 import ToastHost from "./ToastHost";
@@ -113,6 +115,14 @@ export default function LoreguardStudio() {
 
   // 설정 패널 (구 SettingsView 재사용) — 헤더 ⚙ 버튼으로 오픈
   const [showSettings, setShowSettings] = useState(false);
+
+  // 설정 슬라이드오버 모달 a11y — focus trap (Tab 가둠·초기 포커스·이전 focus 복원) +
+  // 배경 스크롤 차단. 형제 패널(RevisionPanel 등) 동일 패턴.
+  // onEscape 생략: 매 렌더 새 arrow identity 가 effect 를 재실행시켜 rAF 가 포커스를
+  // 빼앗는 회귀 차단. Escape 는 아래 별도 window keydown 핸들러가 담당.
+  const settingsRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(settingsRef, showSettings);
+  useBodyScrollLock(showSettings);
 
   // [F3] 온보딩 — 첫 방문(noa-lg-onboarded 부재) 시 1회 표시. 트리는 dynamic(ssr:false)
   // 마운트라 lazy init 에서 localStorage 직접 읽기 안전 (셸 테마 패턴과 동일).
@@ -408,6 +418,7 @@ export default function LoreguardStudio() {
             aria-hidden="true"
           />
           <div
+            ref={settingsRef}
             role="dialog"
             aria-modal="true"
             aria-label="설정"

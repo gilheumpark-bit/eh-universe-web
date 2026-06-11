@@ -86,19 +86,35 @@ function matchDangerPatterns(
   return { extraPenalty, burnLabels };
 }
 
+// [high #10 — 보안 신호 / 가용성 배수 분리]
+// 도메인(creative ×0.1)·출처(tier1 ×0.3) 완화 배수는 *사실성·할루시네이션 리스크*에만
+// 적용한다. Trinity VETO·prompt injection·SQL/RCE 같은 보안성 신호는 완화 배수로 깎이면
+// 안 되므로(인젝션이 creative/tier1 으로 위장해 통과하는 우회) 배수 미적용 하드 가산으로
+// 분리한다. SECURITY_VETO_FLOOR — Black 등급 하한(80) *초과* 로 하드 플로어. resolveNoaGrade
+// 는 `score > floor && score <= ceiling` 경계라 정확히 80 은 DeepRed-3 에 걸린다(둘 다 BLOCK
+// 이지만 모호 경계 회피 위해 80 초과 = Black 확정). VETO 면 어떤 완화 배수로도 BLOCK 미만으로
+// 내려갈 수 없게 고정한다.
+const SECURITY_VETO_FLOOR = 80.01;
+
 export function runJudgment(
   trinityScore: number,
   domain: DomainType,
   sourceTier: SourceTier,
-  inputText?: string
+  inputText?: string,
+  // [high #10] Trinity 최종 투표 — VETO 면 보안 신호로 간주, 완화 배수 미적용 하드 경로.
+  // 미전달(undefined) 시 기존 점수 흐름 완전 보존 (회귀 0).
+  trinityVote?: "PASS" | "HOLD" | "VETO"
 ): JudgmentResult {
   const domainMult = getDomainMultiplier(domain);
   const sourceMult = getSourceMultiplier(sourceTier);
 
-  // 기본 리스크 점수 (0~100)
+  // 기본 리스크 점수 (0~100) — 완화 배수는 사실성/할루 리스크에만 적용
   let adjustedRisk = trinityScore * 100 * domainMult * sourceMult;
 
   // v35 패턴 매칭: 위험 표현 탐지 시 리스크 가산
+  // [high #10] 패턴 가산은 *배수 미적용 하드 가산* (이미 raw add) — 인젝션/SQL/RCE 등
+  // 보안 신호가 출처/도메인 배수로 완화되지 않도록 보존. creative 면제(matchDangerPatterns
+  // 내부)는 정당 창작 면제로 유지 — PRISM 등급 연동.
   const burnLabels: string[] = [];
   if (inputText) {
     const { extraPenalty, burnLabels: labels } = matchDangerPatterns(inputText, domain);
@@ -107,6 +123,15 @@ export function runJudgment(
   } else if (trinityScore > 0.8) {
     // 입력 텍스트가 없더라도 Trinity 점수가 높으면 기본 경고 추가
     burnLabels.push("추론 위험군");
+  }
+
+  // [high #10 — 보안 VETO 하드 플로어]
+  // Trinity 가 VETO 를 낸 경우 = 안전성 위반 확정 신호. 완화 배수(creative ×0.1·tier1 ×0.3)로
+  // adjustedRisk 가 깎여 저위험 등급으로 통과하는 것을 차단하기 위해, 최종 점수를 Black 하한
+  // 이상으로 하드 플로어한다. 가산 방향 전용(기존 점수가 더 높으면 그대로 유지) — 위험 하향 없음.
+  if (trinityVote === "VETO") {
+    adjustedRisk = Math.max(adjustedRisk, SECURITY_VETO_FLOOR);
+    burnLabels.push("Trinity VETO(보안 차단)");
   }
 
   // 100점 상한 제거 불가 (27단계 등급 범위를 위해 0~100 유지)

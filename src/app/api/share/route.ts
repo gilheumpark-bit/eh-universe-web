@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { firestoreCreateDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
+import { firestoreCreateDocument, firestoreGetDocument } from '@/lib/firestore-service-rest';
 
 // In-memory fallback (Firestore 미설정 시)
 const store = new Map<string, { payload: unknown; expiresAt: number }>();
@@ -25,12 +25,13 @@ const COLLECTION = 'shares';
 async function persistToFirestore(id: string, payload: unknown, expiresAt: number): Promise<boolean> {
   if (!PROJECT_ID) return false;
   try {
+    // documentId=id 고정 — 단건 path get 과 대칭(write-once). #18: list 선형스캔 폐기.
     const res = await firestoreCreateDocument(PROJECT_ID, COLLECTION, {
       id: { stringValue: id },
       payload: { stringValue: JSON.stringify(payload) },
       expiresAt: { integerValue: String(expiresAt) },
       createdAt: { timestampValue: new Date().toISOString() },
-    });
+    }, { documentId: id });
     return res.ok;
   } catch {
     return false;
@@ -40,16 +41,13 @@ async function persistToFirestore(id: string, payload: unknown, expiresAt: numbe
 async function fetchFromFirestore(id: string): Promise<{ payload: unknown; expiresAt: number } | null> {
   if (!PROJECT_ID) return null;
   try {
-    const res = await firestoreListDocuments(PROJECT_ID, COLLECTION, { pageSize: 100 });
+    // #18: shares/{id} 단건 조회 — 앞쪽 100개만 스캔하던 비결정 404 제거.
+    const res = await firestoreGetDocument(PROJECT_ID, `${COLLECTION}/${id}`);
     if (!res.ok) return null;
-    for (const doc of res.documents) {
-      const d = doc as { fields?: { id?: { stringValue?: string }; payload?: { stringValue?: string }; expiresAt?: { integerValue?: string } } };
-      if (d.fields?.id?.stringValue === id) {
-        const payloadStr = d.fields.payload?.stringValue || '{}';
-        const expiresAtStr = d.fields.expiresAt?.integerValue || '0';
-        return { payload: JSON.parse(payloadStr), expiresAt: Number(expiresAtStr) };
-      }
-    }
+    const fields = res.fields as { payload?: { stringValue?: string }; expiresAt?: { integerValue?: string } };
+    const payloadStr = fields.payload?.stringValue || '{}';
+    const expiresAtStr = fields.expiresAt?.integerValue || '0';
+    return { payload: JSON.parse(payloadStr), expiresAt: Number(expiresAtStr) };
   } catch { /* fallback */ }
   return null;
 }
@@ -129,9 +127,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// 발급 ID 형식: sh_ + base64url. 단건 조회로 전환되면서 id 가 Firestore 문서 path
+// 세그먼트로 직접 들어가므로 '/'·'..' 등 path 주입(IDOR/traversal)을 형식 검증으로 차단.
+const SHARE_ID_RE = /^sh_[A-Za-z0-9_-]{1,64}$/;
+
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+  if (!SHARE_ID_RE.test(id)) {
+    return NextResponse.json({ error: 'Not found or expired' }, { status: 404 });
+  }
 
   // In-memory 우선 조회 (hot path)
   let entry = store.get(id);

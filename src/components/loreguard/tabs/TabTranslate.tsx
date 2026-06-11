@@ -1091,8 +1091,19 @@ export default function TabTranslate() {
       const pieces = splitIntoSegments(text);
       const t: Record<string, string> = {};
       const s: Record<string, SegStatus> = {};
+      // [3-tier 수리 2026-06-11] restore effect 와 동일한 꼬리 흡수 — splitIntoSegments 왕복은
+      //   비멱등이라 multi-sentence 세그먼트가 더 많은 조각으로 재분해된다. 마지막 세그먼트가
+      //   잔여 조각을 흡수해 초과분 truncate(본문 유실) 차단.
+      const lastIdx = segments.length - 1;
       segments.forEach((seg, i) => {
-        const txt = pieces[i]?.ko;
+        const txt =
+          i === lastIdx
+            ? pieces
+                .slice(i)
+                .map((pp) => pp.ko)
+                .filter(Boolean)
+                .join(" ")
+            : pieces[i]?.ko;
         if (txt) {
           t[lang + ":" + seg.id] = txt;
           s[seg.id] = "done";
@@ -1262,8 +1273,17 @@ export default function TabTranslate() {
       const lines = splitIntoSegments(r.translatedText);
       const next: Record<string, string> = {};
       const nextStatus: Record<string, SegStatus> = {};
+      // [3-tier 수리 2026-06-11] 마지막 세그먼트 꼬리 흡수 — 비멱등 재분해 초과분 truncate 차단.
+      const lastIdx = segments.length - 1;
       segments.forEach((seg, i) => {
-        const txt = lines[i]?.ko ?? "";
+        const txt =
+          i === lastIdx
+            ? lines
+                .slice(i)
+                .map((pp) => pp.ko)
+                .filter(Boolean)
+                .join(" ")
+            : (lines[i]?.ko ?? "");
         if (txt) {
           next[lang + ":" + seg.id] = txt;
           nextStatus[seg.id] = "done";

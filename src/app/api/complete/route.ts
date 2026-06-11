@@ -35,6 +35,33 @@ export const maxDuration = 15; // Quick timeout — completion must be fast
 // PART 3 — Request Handler
 // ============================================================
 
+/** Read an SSE ReadableStream to a single trimmed completion string (non-streaming). */
+async function drainStream(stream: ReadableStream): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    for (const line of chunk.split('\n')) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) fullText += content;
+        } catch {
+          // Non-JSON data line, might be raw text
+          if (data && data !== '[DONE]') fullText += data;
+        }
+      }
+    }
+  }
+  return fullText.trim();
+}
+
 export async function POST(req: NextRequest) {
   // Rate limit: completion requests are frequent, limit tightly
   const ip = getClientIp(req.headers);
@@ -66,9 +93,16 @@ export async function POST(req: NextRequest) {
       firebaseVerified = Boolean(verified);
     } catch { /* verification module load failed — deny */ }
   }
-  // BYOK: 제공자 키 형식 검사 (sk-xxx / AIza... / gsk_... 등 최소 패턴)
+  // BYOK: 제공자 키 형식 검사 (sk-xxx / AIza... / gsk_... 등 최소 패턴) +
+  // 키 prefix → 제공자 매핑. chat/structured-generate 정책과 동일하게,
+  // BYOK 경로는 호스팅 서버 자원(DGX Spark·env 키)을 쓰지 않고 *유저 자기 키*로 생성한다.
+  // (정규식 통과만으로 호스팅 크레딧을 소모하던 #17 인증 우회 차단.)
   const byokKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
-  const hasByok = /^(sk-[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|gsk_[A-Za-z0-9_-]{20,})$/.test(byokKey);
+  let byokProvider: 'openai' | 'gemini' | 'groq' | null = null;
+  if (/^AIza[A-Za-z0-9_-]{30,}$/.test(byokKey)) byokProvider = 'gemini';
+  else if (/^gsk_[A-Za-z0-9_-]{20,}$/.test(byokKey)) byokProvider = 'groq';
+  else if (/^sk-[A-Za-z0-9_-]{20,}$/.test(byokKey)) byokProvider = 'openai';
+  const hasByok = byokProvider !== null;
   if (!firebaseVerified && !hasByok) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
@@ -120,7 +154,41 @@ export async function POST(req: NextRequest) {
   }, { autoTrim: true });
   const messages = [{ role: 'user', content: userContent }];
 
-  // ── Strategy 1: DGX Spark (fastest, no key needed) ──
+  const FAST_MODELS: Record<string, string> = {
+    gemini: 'gemini-2.5-flash-lite',
+    openai: 'gpt-4.1-nano',
+    claude: 'claude-haiku-4-5',
+    groq: 'llama-3.1-8b-instant',
+    mistral: 'mistral-small-latest',
+  };
+
+  // ── Strategy 0: BYOK — 유저 자기 키로 생성 (호스팅 자원 미사용·자기 과금) ──
+  // firebaseVerified 가 아닌 BYOK 단독 인증이면 서버 env 키·DGX Spark 를 쓰지 않는다.
+  // (#17: 가짜 키 정규식 통과 → 호스팅 크레딧 무제한 소모 차단)
+  if (hasByok && !firebaseVerified && byokProvider) {
+    const byokModel = FAST_MODELS[byokProvider] ?? 'gemini-2.5-flash-lite';
+    try {
+      const result = await dispatchStream(
+        byokProvider, byokKey, byokModel,
+        systemPrompt, messages,
+        0.7, maxTokens,
+      );
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: 502 });
+      }
+      const completion = await drainStream(result.stream);
+      if (!completion) {
+        return NextResponse.json({ error: 'Empty completion' }, { status: 502 });
+      }
+      // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
+      return NextResponse.json({ completion: filterOutputIp(completion, '/api/complete').output });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+  }
+
+  // ── Strategy 1: DGX Spark (fastest, no key needed) — 호스팅 자원, 인증 유저만 ──
   if (SPARK_SERVER_URL) {
     try {
       const sparkRes = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
@@ -163,13 +231,6 @@ export async function POST(req: NextRequest) {
   }
 
   // Use the cheapest/fastest model per provider
-  const FAST_MODELS: Record<string, string> = {
-    gemini: 'gemini-2.5-flash-lite',
-    openai: 'gpt-4.1-nano',
-    claude: 'claude-haiku-4-5',
-    groq: 'llama-3.1-8b-instant',
-    mistral: 'mistral-small-latest',
-  };
   const model = FAST_MODELS[hostedProvider] ?? 'gemini-2.5-flash-lite';
 
   try {
@@ -182,32 +243,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 502 });
     }
 
-    // Read the full stream to string (non-streaming for completion)
-    const reader = result.stream.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      // Parse SSE data lines
-      for (const line of chunk.split('\n')) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) fullText += content;
-          } catch {
-            // Non-JSON data line, might be raw text
-            if (data && data !== '[DONE]') fullText += data;
-          }
-        }
-      }
-    }
-
-    const completion = fullText.trim();
+    const completion = await drainStream(result.stream);
     if (!completion) {
       return NextResponse.json({ error: 'Empty completion' }, { status: 502 });
     }

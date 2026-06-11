@@ -241,7 +241,15 @@ export async function runNoa(
   // [P0-wire (1) — 특허 수학식 1 첫째 항: 패턴 위험도 결선]
   // sanitize 된 입력 텍스트를 4번째 인자로 전달 → DANGER_PATTERNS(도메인별 가산점)
   // 매칭이 라이브 실행된다. 가산 전용 (extraPenalty ≥ 0) — 기존 점수 대비 위험 하향 없음.
-  const judgment = runJudgment(contextualScore, domain, sourceTier, sanitized.sanitized);
+  // [high #10 — 보안 신호/가용성 배수 분리] Trinity 최종 투표를 5번째 인자로 전달 →
+  // VETO 면 judgment 가 완화 배수(creative ×0.1·tier1 ×0.3) 미적용 하드 플로어를 적용.
+  const judgment = runJudgment(
+    contextualScore,
+    domain,
+    sourceTier,
+    sanitized.sanitized,
+    trinity.finalVote
+  );
   layerDurations.judgment = performance.now() - t4;
 
   // --- Layer 5: Availability ---
@@ -252,9 +260,22 @@ export async function runNoa(
 
   // --- Layer 6: Tactical ---
   const t6 = performance.now();
-  const tactical = selectTacticalPath(judgment.grade, availability);
+  let tactical = selectTacticalPath(judgment.grade, availability);
 
-  // 예산 소진
+  // [critical #2 — Trinity VETO 하드 차단 (가용성 배수 무관)]
+  // Trinity 가 VETO(보안 위반 확정)를 낸 경우, 도메인(creative ×0.1)·출처(tier1 ×0.3) 완화
+  // 배수로 등급이 깎여 BLOCK 미만 경로가 선택됐더라도 강제 BLOCK 으로 오버라이드한다.
+  // 보안 신호는 가용성 배수로 완화 불가하도록 하드 경로 — fail-secure.
+  if (trinity.finalVote === "VETO" && tactical.selectedPath !== "BLOCK") {
+    tactical = {
+      selectedPath: "BLOCK",
+      config: fullConfig.tacticalConfigs.BLOCK,
+      reason: `TRINITY_VETO_HARD_BLOCK(${trinity.consensusDetail})`,
+      tokenBudget: fullConfig.tacticalConfigs.BLOCK.tokenBudget,
+    };
+  }
+
+  // 예산 소진 (기존 정상 흐름 보존 — availability 허용 시 소진)
   if (availability.allowed) {
     riskBudgetManager!.consume(riskCost);
   }
@@ -262,6 +283,7 @@ export async function runNoa(
 
   // --- Layer 7: Audit ---
   const t7 = performance.now();
+  // [critical #2] BLOCK 경로 = 거부. Trinity VETO 오버라이드 포함.
   const allowed = tactical.selectedPath !== "BLOCK";
 
   // Record in audit-report for dashboard/reporting

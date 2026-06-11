@@ -224,9 +224,27 @@ export async function POST(req: NextRequest) {
     if (duplicate) {
       // 중복 이벤트 — side effect 전부 skip (이미 1회 처리됨).
     } else if (event.type === 'checkout.session.completed') {
+      // [#13 fix] payment_status 검사 없이 client_reference_id 만으로 pro 부여하면
+      // unpaid/pending 세션도 pro 가 됨. 실제 결제 완료('paid') + 세션 'complete' 일 때만 set.
+      // no_payment_required/unpaid 는 보류 — 정기 결제 활성은 invoice.paid 또는
+      // subscription status(active/trialing) 단일 소스에서 부여됨.
       const session = event.data.object as Stripe.Checkout.Session;
       const uid = typeof session.client_reference_id === 'string' ? session.client_reference_id : '';
-      if (uid) await applyStripeRoleClaim(uid, 'set', event.id);
+      const paid = session.payment_status === 'paid' && session.status === 'complete';
+      if (uid && paid) {
+        await applyStripeRoleClaim(uid, 'set', event.id);
+      } else if (uid) {
+        apiLog({
+          level: 'info',
+          event: 'stripe_checkout_unpaid_skipped',
+          route: '/api/stripe/webhook',
+          meta: {
+            id: event.id,
+            payment_status: session.payment_status,
+            status: session.status,
+          },
+        });
+      }
     } else if (
       event.type === 'customer.subscription.created' ||
       event.type === 'customer.subscription.updated'
@@ -240,18 +258,34 @@ export async function POST(req: NextRequest) {
       const uid = typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
       if (uid) await applyStripeRoleClaim(uid, 'clear', event.id);
     } else if (event.type === 'charge.refunded') {
-      // [H1 stripe-ready] 환불 → 구독 다운그레이드 (stripeRole 제거).
+      // [#14 fix] 부분 환불(amount_refunded < amount)에도 무조건 강등하면 소액 환불로
+      // 정당한 구독이 끊김. 전액 환불(amount_refunded >= amount)일 때만 clear,
+      // 부분 환불은 로그만 남기고 권한 유지. 강등의 권위 소스는 여전히
+      // customer.subscription.deleted/updated(status) — 여기는 전액 환불 보조 경로.
       const charge = event.data.object as Stripe.Charge;
-      const uid = await resolveUidFromCharge(stripe, charge);
-      if (uid) {
-        await applyStripeRoleClaim(uid, 'clear', event.id);
-      } else {
+      const amount = typeof charge.amount === 'number' ? charge.amount : 0;
+      const refunded = typeof charge.amount_refunded === 'number' ? charge.amount_refunded : 0;
+      // amount<=0 (비정상/제로 charge) 은 부분환불 판정 불가 → 강등 보류(fail-secure: 권한 유지).
+      const fullRefund = amount > 0 && refunded >= amount;
+      if (!fullRefund) {
         apiLog({
-          level: 'warn',
-          event: 'stripe_refund_uid_unresolved',
+          level: 'info',
+          event: 'stripe_partial_refund_no_downgrade',
           route: '/api/stripe/webhook',
-          meta: { id: event.id },
+          meta: { id: event.id, amount, amount_refunded: refunded },
         });
+      } else {
+        const uid = await resolveUidFromCharge(stripe, charge);
+        if (uid) {
+          await applyStripeRoleClaim(uid, 'clear', event.id);
+        } else {
+          apiLog({
+            level: 'warn',
+            event: 'stripe_refund_uid_unresolved',
+            route: '/api/stripe/webhook',
+            meta: { id: event.id },
+          });
+        }
       }
     }
   } catch (err) {

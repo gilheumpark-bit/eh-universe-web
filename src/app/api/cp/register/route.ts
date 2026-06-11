@@ -28,10 +28,13 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
+import {
+  CP_REGISTRY_COLLECTION,
+  computeRegistryHmac,
+} from '@/lib/creative-process/registry-contract';
 import { apiLog } from '@/lib/api-logger';
 import { logger } from '@/lib/logger';
 
@@ -183,41 +186,48 @@ export async function POST(req: NextRequest) {
   }
 
   // --- 서버 시각 = 앵커 시점 (클라이언트 주장 시각 불수용) ---
-  const generatedAt = new Date().toISOString();
+  //     필드명 = registeredAt: parseRegistryDocument() 가 읽는 필수 필드와 일치해야
+  //     검증기가 엔트리를 파싱할 수 있다 (불일치 시 모든 cert 가 cert_not_registered).
+  const registeredAt = new Date().toISOString();
 
-  // --- HMAC-SHA256 서명 — 결정론 canonical 문자열 (버전 prefix → 향후 키/포맷 회전 대비) ---
-  const canonical = [
-    'v1',
-    input.certId,
-    input.projectId,
-    input.certHash,
-    input.chainTipHash ?? '',
-    generatedAt,
-    input.visibility,
-    auth.uid,
-    input.issuerType,
-    input.githubCommitSha ?? '',
-  ].join('|');
-  const registrySignature = createHmac('sha256', hmacSecret).update(canonical).digest('hex');
+  // --- HMAC-SHA256 서명 — 등록기·검증기 공용 단일 함수 (registry-contract.ts) ---
+  //     register 와 verify 가 *동일 함수·동일 payload(v2)·동일 필드명(hmac)* 사용해야
+  //     변조 검출이 작동한다. 한쪽만 바꾸면 HMAC 항상 불일치 → 검출 무력화 (high #15).
+  const hmac = await computeRegistryHmac(hmacSecret, {
+    certId: input.certId,
+    certHash: input.certHash,
+    chainTipHash: input.chainTipHash ?? undefined,
+    registeredAt,
+    uid: auth.uid,
+    visibility: input.visibility,
+    issuerType: input.issuerType,
+  });
 
   // --- Firestore 저장 (메타데이터만 — 콘텐츠 필드 0) ---
+  //     필드명은 parseRegistryDocument() 가 읽는 이름과 1:1 정렬:
+  //     certId·certHash·registeredAt·chainTipHash·visibility·issuerType·githubCommitSha·hmac.
   const fields: Record<string, { stringValue?: string; timestampValue?: string }> = {
     certId: { stringValue: input.certId },
     projectId: { stringValue: input.projectId },
     certHash: { stringValue: input.certHash },
-    generatedAt: { timestampValue: generatedAt },
+    // ⚠ stringValue (NOT timestampValue): HMAC(L191,196-204) 는 raw ISO 문자열로 서명한다.
+    //    Firestore timestampValue 는 RFC3339 정규화(.000Z→Z, .120Z→.12Z)로 byte 를 바꾸므로
+    //    검증기 read-back(parseRegistryDocument L207) 시 서명 bytes 와 불일치 → 무변조 cert 가
+    //    HMAC mismatch(false-positive 변조 판정·fail-closed). stringValue 로 저장하면 정확한
+    //    bytes 가 보존되어 parseRegistryDocument 의 stringValue fallback 이 동일 문자열을 돌려준다.
+    registeredAt: { stringValue: registeredAt },
     visibility: { stringValue: input.visibility },
     authorUid: { stringValue: auth.uid }, // 검증된 토큰의 uid — body 값 불수용
     issuerType: { stringValue: input.issuerType },
-    registrySignature: { stringValue: registrySignature },
-    signatureAlgo: { stringValue: 'hmac-sha256-v1' },
+    hmac: { stringValue: hmac },
+    signatureAlgo: { stringValue: 'hmac-sha256-v2' },
   };
   if (input.chainTipHash) fields.chainTipHash = { stringValue: input.chainTipHash };
   if (input.githubCommitSha) fields.githubCommitSha = { stringValue: input.githubCommitSha };
 
   let created: Awaited<ReturnType<typeof firestoreCreateDocument>>;
   try {
-    created = await firestoreCreateDocument(fbProjectId, 'certificates', fields, {
+    created = await firestoreCreateDocument(fbProjectId, CP_REGISTRY_COLLECTION, fields, {
       documentId: input.certId,
     });
   } catch (err) {
@@ -272,9 +282,9 @@ export async function POST(req: NextRequest) {
     {
       ok: true,
       certId: input.certId,
-      registeredAt: generatedAt,
-      signatureAlgo: 'hmac-sha256-v1',
-      registrySignature,
+      registeredAt,
+      signatureAlgo: 'hmac-sha256-v2',
+      registrySignature: hmac,
       stored_fields: Object.keys(fields),
       privacy_note_ko:
         '메타데이터만 저장되었습니다 (원고 본문 0byte). 삭제 요청은 /api/user/delete 또는 관리자 문의.',

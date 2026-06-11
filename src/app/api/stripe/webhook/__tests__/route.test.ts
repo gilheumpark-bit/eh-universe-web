@@ -345,7 +345,7 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
   it('checkout.session.completed + client_reference_id → setStripeRoleClaim(uid)', async () => {
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_co', created: 1, livemode: false,
-      data: { object: { client_reference_id: 'uid-123' } },
+      data: { object: { client_reference_id: 'uid-123', payment_status: 'paid', status: 'complete' } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -360,6 +360,41 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_co2', created: 1, livemode: false,
       data: { object: {} },
+    });
+    const { POST } = await import('../route');
+    await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(mockSetClaim).not.toHaveBeenCalled();
+  });
+
+  // [#13 fix] unpaid/pending 세션은 client_reference_id 가 있어도 pro 미부여.
+  it('checkout.session.completed payment_status=unpaid → claim 미부여 + skip 로그', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_unpaid', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-unpaid', payment_status: 'unpaid', status: 'complete' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockSetClaim).not.toHaveBeenCalled();
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_checkout_unpaid_skipped' }),
+    );
+  });
+
+  it('checkout.session.completed no_payment_required → claim 미부여', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_npr', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-npr', payment_status: 'no_payment_required', status: 'complete' } },
+    });
+    const { POST } = await import('../route');
+    await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(mockSetClaim).not.toHaveBeenCalled();
+  });
+
+  it('checkout.session.completed paid 인데 status!=complete → claim 미부여', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_incomplete', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-inc', payment_status: 'paid', status: 'open' } },
     });
     const { POST } = await import('../route');
     await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -391,7 +426,7 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     mockSetClaim.mockResolvedValue({ ok: false, error: 'no_service_account' });
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_fs', created: 1, livemode: false,
-      data: { object: { client_reference_id: 'uid-x' } },
+      data: { object: { client_reference_id: 'uid-x', payment_status: 'paid', status: 'complete' } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -424,7 +459,7 @@ describe('/api/stripe/webhook POST — idempotency (event.id dedupe)', () => {
     mockCreateDoc.mockResolvedValue({ ok: true });
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_idem_1', created: 1, livemode: false,
-      data: { object: { client_reference_id: 'uid-i1' } },
+      data: { object: { client_reference_id: 'uid-i1', payment_status: 'paid', status: 'complete' } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -460,7 +495,7 @@ describe('/api/stripe/webhook POST — idempotency (event.id dedupe)', () => {
     mockCreateDoc.mockResolvedValue({ ok: false, error: 'no_service_account' });
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_idem_open', created: 1, livemode: false,
-      data: { object: { client_reference_id: 'uid-i3' } },
+      data: { object: { client_reference_id: 'uid-i3', payment_status: 'paid', status: 'complete' } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -503,7 +538,7 @@ describe('/api/stripe/webhook POST — charge.refunded → 구독 다운그레�
     mockSubRetrieve.mockResolvedValue({ metadata: { firebaseUid: 'uid-refund' } });
     mockConstructEvent.mockReturnValue({
       type: 'charge.refunded', id: 'evt_refund', created: 1, livemode: false,
-      data: { object: { invoice: 'in_ref_1' } },
+      data: { object: { invoice: 'in_ref_1', amount: 1000, amount_refunded: 1000 } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -520,7 +555,7 @@ describe('/api/stripe/webhook POST — charge.refunded → 구독 다운그레�
     mockSubRetrieve.mockResolvedValue({ metadata: { firebaseUid: 'uid-refund-2' } });
     mockConstructEvent.mockReturnValue({
       type: 'charge.refunded', id: 'evt_refund_2', created: 1, livemode: false,
-      data: { object: { invoice: 'in_ref_2' } },
+      data: { object: { invoice: 'in_ref_2', amount: 1000, amount_refunded: 1000 } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -528,10 +563,51 @@ describe('/api/stripe/webhook POST — charge.refunded → 구독 다운그레�
     expect(mockClearClaim).toHaveBeenCalledWith('uid-refund-2');
   });
 
+  // [#14 fix] 부분 환불은 강등하지 않음 — 권한 유지 + 로그만.
+  it('부분 환불 (amount_refunded < amount) → clearClaim 미호출 + 권한 유지 + 200', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_partial', created: 1, livemode: false,
+      data: { object: { invoice: 'in_partial', amount: 1000, amount_refunded: 300 } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockClearClaim).not.toHaveBeenCalled();
+    // 부분 환불은 uid 역추적조차 하지 않음 (불필요한 Stripe API 호출 회피).
+    expect(mockInvoiceRetrieve).not.toHaveBeenCalled();
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_partial_refund_no_downgrade' }),
+    );
+  });
+
+  it('amount 비정상 (0) → 강등 보류 (fail-secure, 권한 유지)', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_zero', created: 1, livemode: false,
+      data: { object: { invoice: 'in_zero', amount: 0, amount_refunded: 0 } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockClearClaim).not.toHaveBeenCalled();
+  });
+
+  it('전액 환불 (amount_refunded == amount) → clearClaim 호출 (다운그레이드)', async () => {
+    mockInvoiceRetrieve.mockResolvedValue({ subscription: 'sub_full' });
+    mockSubRetrieve.mockResolvedValue({ metadata: { firebaseUid: 'uid-full' } });
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_full', created: 1, livemode: false,
+      data: { object: { invoice: 'in_full', amount: 1000, amount_refunded: 1000 } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockClearClaim).toHaveBeenCalledWith('uid-full');
+  });
+
   it('uid 역추적 실패 (invoice 없음) → claim 미호출 + warn 로그 + 200 유지', async () => {
     mockConstructEvent.mockReturnValue({
       type: 'charge.refunded', id: 'evt_refund_nouid', created: 1, livemode: false,
-      data: { object: {} },
+      data: { object: { amount: 1000, amount_refunded: 1000 } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
@@ -546,7 +622,7 @@ describe('/api/stripe/webhook POST — charge.refunded → 구독 다운그레�
     mockInvoiceRetrieve.mockRejectedValue(new Error('stripe api down'));
     mockConstructEvent.mockReturnValue({
       type: 'charge.refunded', id: 'evt_refund_err', created: 1, livemode: false,
-      data: { object: { invoice: 'in_err' } },
+      data: { object: { invoice: 'in_err', amount: 1000, amount_refunded: 1000 } },
     });
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));

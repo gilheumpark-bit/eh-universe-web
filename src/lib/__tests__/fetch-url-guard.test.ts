@@ -97,11 +97,10 @@ describe('fetch-url-guard · DNS rebinding (P12 루프3 — 2026-06-08)', () => 
     expect(() => validatePostFetchUrl('https://192.168.1.10/secret')).toThrow(/SSRF/);
   });
 
-  it('IPv6 사설 fc00::/7 (ULA) — known gap: bracketed form 미차단 (follow-up: hostname strip brackets)', () => {
-    // URL parse 가 hostname 을 '[fc00::1]' 로 반환 → 현재 PRIVATE_IP_PATTERNS /^fc00:/ 매칭 실패.
-    // post-fetch 가드의 IPv6 사설 차단은 hostname [...] 제거 보강이 필요한 follow-up 영역.
-    // 본 테스트는 현재 거동 명세 (회귀 알람) — 차단되도록 변경 시 본 expectation 도 수정.
-    expect(() => validatePostFetchUrl('http://[fc00::1]/')).not.toThrow();
+  it('IPv6 사설 fc00::/7 (ULA) — bracketed form 도 차단 (W1-ssrf: hostname 정규화)', () => {
+    // 이전: URL.hostname 이 '[fc00::1]' → /^fc00:/ 미매칭으로 통과 (SSRF gap).
+    // 수정: normalizeHost 가 대괄호 제거 후 ULA 범위 차단. post-fetch 도 동일 정규화.
+    expect(() => validatePostFetchUrl('http://[fc00::1]/')).toThrow(/SSRF/);
   });
 
   it('IPv6 loopback [::1] → blocked (현재 거동)', () => {
@@ -125,6 +124,57 @@ describe('fetch-url-guard · DNS rebinding (P12 루프3 — 2026-06-08)', () => 
     // 동일 도메인이 DNS 변조로 redirect 되어 사설로 가면 post-fetch 가 잡아야 함.
     // (네트워크 stack 단에서 actual resolve 가 사설로 가도 final URL 검사로 일관.)
     expect(() => validatePostFetchUrl('http://127.0.0.1/leak')).toThrow(/SSRF/);
+  });
+});
+
+describe('fetch-url-guard · IPv6 SSRF 우회 차단 (W1-ssrf — 2026-06-11)', () => {
+  // pre-fetch: assertUrlAllowedForFetch 가 fetch 전에 모든 IPv6 리터럴/사설을 차단해야 함.
+  it('[::1] (IPv6 loopback) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[::1]/').ok).toBe(false);
+  });
+  it('[fc00::1] (ULA fc00::/7) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[fc00::1]/').ok).toBe(false);
+  });
+  it('[fd00::2] (ULA fd00) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[fd00::2]/').ok).toBe(false);
+  });
+  it('[fe80::1] (link-local fe80::/10) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[fe80::1]/').ok).toBe(false);
+  });
+  it('[::ffff:127.0.0.1] (IPv4-mapped → loopback) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[::ffff:127.0.0.1]/').ok).toBe(false);
+  });
+  it('[::ffff:10.0.0.1] (IPv4-mapped → RFC1918) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[::ffff:10.0.0.1]/').ok).toBe(false);
+  });
+  it('[::ffff:169.254.169.254] (IPv4-mapped → cloud metadata) → pre-fetch blocked', () => {
+    expect(assertUrlAllowedForFetch('http://[::ffff:169.254.169.254]/').ok).toBe(false);
+  });
+  it('[2606:4700:4700::1111] (공인 IPv6) → 정책상 raw IPv6 리터럴 차단', () => {
+    // 본 프록시는 공인 호스트명 fetch 가 목적 — raw IPv6 리터럴은 allowlist 정책상 거부.
+    expect(assertUrlAllowedForFetch('http://[2606:4700:4700::1111]/').ok).toBe(false);
+  });
+  it('대문자 [FC00::1] → 정규화 후 차단', () => {
+    expect(assertUrlAllowedForFetch('http://[FC00::1]/').ok).toBe(false);
+  });
+
+  // post-fetch: redirect 결과가 IPv6 사설/매핑이면 동일 정규화로 차단.
+  it('post-fetch [fc00::1] → throw', () => {
+    expect(() => validatePostFetchUrl('http://[fc00::1]/')).toThrow(/SSRF/);
+  });
+  it('post-fetch [::ffff:127.0.0.1] → throw', () => {
+    expect(() => validatePostFetchUrl('http://[::ffff:127.0.0.1]/')).toThrow(/SSRF/);
+  });
+  it('post-fetch [::1] → throw', () => {
+    expect(() => validatePostFetchUrl('http://[::1]/')).toThrow(/SSRF/);
+  });
+
+  // 정상 외부 URL 흐름 보존 (회귀 방지).
+  it('정상 https 외부 URL → pre-fetch 통과', () => {
+    expect(assertUrlAllowedForFetch('https://example.com/path').ok).toBe(true);
+  });
+  it('정상 https 외부 URL → post-fetch 통과', () => {
+    expect(() => validatePostFetchUrl('https://example.com/path')).not.toThrow();
   });
 });
 
