@@ -11,16 +11,14 @@ import { L4 } from "@/lib/i18n";
 
 /**
  * 앱(몰입) 경로 — 이곳에서는 Footer 미렌더.
- * 집필·번역·코드 스튜디오는 상태바(fixed bottom-0)를 사용하므로
+ * 집필·번역 스튜디오는 상태바(fixed bottom-0)를 사용하므로
  * 법적 링크 푸터가 시각적으로 충돌·몰입 방해를 일으킨다.
- * 공개 페이지(/, /archive, /privacy …)는 그대로 Footer 노출.
+ * 공개 페이지(/, /privacy …)는 그대로 Footer 노출.
  */
 const APP_ROUTE_PREFIXES: readonly string[] = [
   "/studio",
   "/translation-studio",
-  "/code-studio",
   "/welcome",
-  "/network",
 ];
 
 // ============================================================

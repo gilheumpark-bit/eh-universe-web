@@ -19,13 +19,42 @@
  * [K] 간결성: 단일 컴포넌트 + 4언어 라벨
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CodexDomain } from '@/lib/ai/codex-prompts';
+import type { AppLanguage } from '@/lib/studio-types';
 import {
   getStoredCodexDomain,
   setStoredCodexDomain,
   ALL_CODEX_DOMAINS,
+  CODEX_DOMAIN_STORAGE_KEY,
 } from '@/lib/ai/codex-domain-storage';
+
+// ============================================================
+// PART 0 — Language → Default Domain (auto-select helper, 2026-06-07)
+// ============================================================
+
+/**
+ * AppLanguage → 기본 CodexDomain 매핑.
+ * Codex 진입 시 사용자 명시 override 가 localStorage 에 없을 때
+ * 작품 언어 기반으로 자동 선택 (rank 15).
+ *
+ * KO → 'korean-webnovel'
+ * EN → 'western-fantasy'
+ * JP → 'japanese-lightnovel'
+ * CN → 'chinese-xianxia'
+ *
+ * codex-prompts/types.ts 의 defaultDomainFor 와 동일 매핑이나,
+ * UI 레이어에서 즉시 사용 가능하도록 컴포넌트 모듈에서도 export.
+ */
+export function defaultDomainForLanguage(lang: AppLanguage): CodexDomain {
+  switch (lang) {
+    case 'KO': return 'korean-webnovel';
+    case 'EN': return 'western-fantasy';
+    case 'JP': return 'japanese-lightnovel';
+    case 'CN': return 'chinese-xianxia';
+    default: return 'korean-webnovel';
+  }
+}
 
 // ============================================================
 // PART 1 — 4언어 라벨
@@ -73,11 +102,43 @@ export default function CodexDomainSelector({
 }: Props) {
   const [selected, setSelected] = useState<CodexDomain | ''>('');
 
+  // [P7 풀점검 루프 3] CustomEvent 에 latestVersion 타임스탬프 부착 → stale 이벤트 무시.
+  // 빠른 토글 (T1→T2→T3) 시 listener 큐에서 늦게 도착한 T1 이벤트가 최신 T3 상태를
+  // 덮어쓰는 race 방어. version 단조 증가 비교만 통과시킴.
+  const latestVersionRef = useRef<number>(0);
+
+  // [priority 14 — 2026-06-08] storage + CustomEvent listener 를 단일 useEffect 로 통합.
+  // [P7 풀점검 루프 3] version 비교로 stale dispatch 폐기.
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     // [legitimate read-on-mount] localStorage read 후 state sync.
     const stored = getStoredCodexDomain();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read-on-mount: 로컬스토리지 값으로 초기 동기화
     if (stored) setSelected(stored);
+
+    // 다른 탭/창 동기화 — 표준 storage 이벤트.
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== CODEX_DOMAIN_STORAGE_KEY) return;
+      const next = getStoredCodexDomain();
+      setSelected(next ?? '');
+    };
+    // 같은 탭 내 다른 마운트(Settings, Codex 헤더 등) 동기화 — CustomEvent broadcast.
+    // setStoredCodexDomain 호출처가 dispatchEvent('codex-domain-changed', {detail:{domain, version}}) 발화.
+    // [P7] version 비교로 stale 이벤트 폐기.
+    const handleSameTab = (e: Event) => {
+      const detail = (e as CustomEvent<{ domain: CodexDomain | null; version?: number }>).detail;
+      const version = typeof detail?.version === 'number' ? detail.version : 0;
+      if (version < latestVersionRef.current) return;
+      latestVersionRef.current = version;
+      setSelected(detail?.domain ?? '');
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('codex-domain-changed', handleSameTab);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('codex-domain-changed', handleSameTab);
+    };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -85,6 +146,15 @@ export default function CodexDomainSelector({
     setSelected(value);
     const domain = value === '' ? null : value;
     setStoredCodexDomain(domain);
+    // [Codex multi-mount sync — 2026-06-07] 같은 탭 broadcast
+    // [P7 풀점검 루프 3] version 타임스탬프 부착 → 다른 selector 들이 stale 이벤트 폐기 가능.
+    if (typeof window !== 'undefined') {
+      const version = Date.now();
+      latestVersionRef.current = version;
+      window.dispatchEvent(
+        new CustomEvent('codex-domain-changed', { detail: { domain, version } }),
+      );
+    }
     onChange?.(domain);
   };
 

@@ -1,0 +1,96 @@
+# ============================================================
+# [루프 4 P1 — 2026-06-08] claude3 외부 표준 compliance audit
+# _a11y: WCAG 2.1 AA · axe-core 5+ 핵심 페이지 스캔
+# _performance: Lighthouse CI LCP/INP/CLS 임계치 검증
+#
+# Strategy:
+#   - PR + master push 시 실행 (informational — 5-page 측정 일정 ROADMAP §2.1 계획)
+#   - axe-core: critical/serious violation 발견 시 PR 코멘트 (block 아님 — 초기 단계)
+#   - lighthouse: SCORE_THRESHOLD 75 (lighthouse-check.mjs 기본값) 미만 시 fail
+# ============================================================
+name: A11y + Lighthouse Compliance Audit
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    # informational — 단계적 강제. 본격 commercial 직전 fail-fast 로 승격.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        run: npm run build
+        env:
+          # build 가 외부 서비스 호출하지 않도록 stub.
+          NEXT_PUBLIC_SPARK_GATEWAY_URL: 'http://localhost:8001'
+
+      - name: Start server
+        run: npm run start:e2e &
+        env:
+          PORT: 3005
+
+      - name: Wait for server ready
+        run: npx wait-on http://localhost:3005 -t 60000 || (echo "server not ready" && exit 1)
+
+      # ============================================================
+      # _a11y — axe-core 5+ 페이지 스캔 (WCAG 2.1 AA · 50 SC · POUR 4 원칙)
+      # ============================================================
+      - name: Run axe-core a11y scan (5 core pages)
+        run: |
+          npm install --no-save @axe-core/cli@4
+          mkdir -p .a11y-reports
+          PAGES=("/" "/studio" "/code-studio" "/codex" "/translation-studio")
+          FAIL=0
+          for page in "${PAGES[@]}"; do
+            SAFE=$(echo "$page" | sed 's|/|_|g; s|^_|root|')
+            echo "Scanning http://localhost:3005$page"
+            npx axe "http://localhost:3005$page" \
+              --tags wcag2a,wcag2aa,wcag21a,wcag21aa \
+              --save ".a11y-reports/axe-$SAFE.json" \
+              --exit || FAIL=1
+          done
+          echo "## A11y axe-core scan (5 pages)" >> $GITHUB_STEP_SUMMARY
+          ls -la .a11y-reports/ >> $GITHUB_STEP_SUMMARY || true
+          exit $FAIL
+        continue-on-error: true
+
+      - name: Upload axe reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: axe-reports
+          path: .a11y-reports/
+          retention-days: 14
+
+      # ============================================================
+      # _performance — Lighthouse CI (LCP ≤ 2.5s · INP ≤ 200ms · CLS ≤ 0.1)
+      # SCORE_THRESHOLD 75 = lighthouse-check.mjs 기본값.
+      # ============================================================
+      - name: Run Lighthouse (5 pages)
+        run: npm run lh:check
+        env:
+          LIGHTHOUSE_URLS: 'http://localhost:3005/,http://localhost:3005/studio,http://localhost:3005/code-studio,http://localhost:3005/codex,http://localhost:3005/translation-studio'
+        continue-on-error: true
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-report
+          path: docs/lighthouse-report.md
+          retention-days: 14

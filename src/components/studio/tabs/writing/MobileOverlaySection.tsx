@@ -10,7 +10,7 @@ import type { AppLanguage, StoryConfig, ChatSession, Message, AppTab, ProactiveS
 import type { DirectorReport } from '@/engine/director';
 import type { HFCPState } from '@/engine/hfcp';
 import { L4 } from '@/lib/i18n';
-import { ContextMenu } from '@/components/code-studio/ContextMenu';
+import { ContextMenu } from '@/components/ui/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { SplitPanelTabs } from './SplitPanelTabs';
 

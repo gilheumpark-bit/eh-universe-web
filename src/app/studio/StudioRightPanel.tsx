@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { ChatSession, AppTab, AppLanguage, ProactiveSuggestion, PipelineStageResult } from '@/lib/studio-types';
 import { logger } from '@/lib/logger';
@@ -463,3 +463,181 @@ export function StudioWritingAssistantPanel({
 }
 
 // IDENTITY_SEAL: PART-4 | role=writing-assistant-panel | inputs=session,config,ai-state | outputs=JSX
+
+// ============================================================
+// PART 5 — RightPanelResizer (우측 패널 드래그 리사이즈)
+//
+// 대상 = loreguard 새 셸의 집필 우측 패널(.eh-app .wr-panel). TabWriting.tsx 는
+// QB owner 라 수정 금지 → 폭은 loreguard.css 에서 var(--lg-rpanel-w) 로 변경했고,
+// 이 컴포넌트가 그 변수를 .eh-app 루트에 주입한다(자체 mount·StudioShell children 분기).
+//
+// 자체 구현 (라이브러리 추가 없음):
+//   - pointerdown → setPointerCapture → pointermove 로 clamp(280~640) 폭 계산
+//   - 폭은 noa-lg-rpanel-w 에 영속 (lazy init — 첫 렌더부터 적용, FOUC 없음)
+//   - 핸들 = role=separator 고정 위치 바 (left = 100vw − panelWidth) — .wr-panel 좌측 경계
+//   - 키보드 리사이즈: ←/→ ±16px, Home/End = min/max (aria-valuenow/min/max·orientation)
+//   - .wr-panel 미존재 탭(세계관·캐릭터 등)에서는 핸들 미표시 (MutationObserver 로 추적)
+//   - 기존 Ctrl+\ 토글(구 셸 rightPanelOpen)·새 셸 레이아웃 무접촉 — 폭 변수만 건드림
+//
+// 안전: 모든 리스너/observer/RAF cleanup. SSR 무해(effect 내부에서만 DOM 접근).
+// ============================================================
+
+const RPANEL_MIN = 280;
+const RPANEL_MAX = 640;
+const RPANEL_DEFAULT = 360;
+const RPANEL_STORAGE_KEY = 'noa-lg-rpanel-w';
+const RPANEL_KEY_STEP = 16;
+const RPANEL_HEADER_OFFSET = 62; // .eh-header 높이 (loreguard.css PART 3)
+
+/** clamp + 정수화 — 저장/적용 단일 경로 */
+function clampRpanelWidth(px: number): number {
+  if (!Number.isFinite(px)) return RPANEL_DEFAULT;
+  return Math.round(Math.min(RPANEL_MAX, Math.max(RPANEL_MIN, px)));
+}
+
+/** 저장 폭 로드 (storage 불가/파싱 실패 = 기본 360 — 기존 픽셀 보존) */
+function readRpanelWidth(): number {
+  if (typeof window === 'undefined') return RPANEL_DEFAULT;
+  try {
+    const raw = window.localStorage.getItem(RPANEL_STORAGE_KEY);
+    if (!raw) return RPANEL_DEFAULT;
+    const n = Number.parseInt(raw, 10);
+    return Number.isNaN(n) ? RPANEL_DEFAULT : clampRpanelWidth(n);
+  } catch {
+    return RPANEL_DEFAULT;
+  }
+}
+
+export interface RightPanelResizerProps {
+  /** L4 4-언어 라벨용 (aria-label). 미지정 시 KO. */
+  language?: AppLanguage;
+}
+
+/**
+ * RightPanelResizer — 집필 우측 패널(.wr-panel) 드래그/키보드 리사이즈 핸들.
+ * 자체 mount(StudioShell children 분기). .wr-panel 이 있는 탭에서만 핸들 표시.
+ */
+export function RightPanelResizer({ language = 'KO' }: RightPanelResizerProps) {
+  // 폭 — lazy init 으로 첫 렌더부터 적용 (FOUC 방지)
+  const [width, setWidth] = useState<number>(readRpanelWidth);
+  // .wr-panel 존재 여부 (탭별 — 없으면 핸들 숨김)
+  const [panelPresent, setPanelPresent] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const gripRef = useRef<HTMLButtonElement | null>(null);
+  const ehAppRef = useRef<HTMLElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  // .eh-app 루트에 --lg-rpanel-w 주입 (loreguard.css .wr-panel 이 소비) + 저장
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const ehApp = (ehAppRef.current ??= document.querySelector<HTMLElement>('.eh-app'));
+    if (ehApp) ehApp.style.setProperty('--lg-rpanel-w', `${width}px`);
+    try {
+      window.localStorage.setItem(RPANEL_STORAGE_KEY, String(width));
+    } catch {
+      /* quota / private — 세션 내 상태만 유지 */
+    }
+  }, [width]);
+
+  // .wr-panel mount/unmount 추적 (탭 전환 시 핸들 표시/숨김) + .eh-app 캐시 무효화
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const check = () => {
+      ehAppRef.current = document.querySelector<HTMLElement>('.eh-app');
+      const present = !!document.querySelector('.eh-app .wr-panel');
+      setPanelPresent(present);
+      // 새로 mount 된 .eh-app 에도 현재 폭 즉시 반영
+      if (ehAppRef.current) ehAppRef.current.style.setProperty('--lg-rpanel-w', `${readRpanelWidth()}px`);
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  // 드래그 중 body 마커 (텍스트 선택·iframe pointer 차단)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (dragging) document.body.dataset.lgResizing = '1';
+    else delete document.body.dataset.lgResizing;
+    return () => { if (typeof document !== 'undefined') delete document.body.dataset.lgResizing; };
+  }, [dragging]);
+
+  // unmount 시 RAF 취소
+  useEffect(() => () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); }, []);
+
+  // 포인터 좌표 → 폭 (패널 우측 모서리 = 뷰포트 우단 고정 가정). rAF 코얼레싱.
+  const applyFromClientX = useCallback((clientX: number) => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const next = clampRpanelWidth(window.innerWidth - clientX);
+      setWidth(next);
+    });
+  }, []);
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return; // 주 버튼만
+    e.preventDefault();
+    setDragging(true);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* 미지원 — capture 없이 진행 */ }
+  }, []);
+
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    applyFromClientX(e.clientX);
+  }, [dragging, applyFromClientX]);
+
+  const endDrag = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragging) return;
+    setDragging(false);
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ }
+  }, [dragging]);
+
+  // 키보드 리사이즈 — ← 넓힘 / → 좁힘 (패널이 우측이라 직관 일치), Home/End = max/min
+  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
+    let next: number | null = null;
+    switch (e.key) {
+      case 'ArrowLeft': next = width + RPANEL_KEY_STEP; break;
+      case 'ArrowRight': next = width - RPANEL_KEY_STEP; break;
+      case 'Home': next = RPANEL_MAX; break;
+      case 'End': next = RPANEL_MIN; break;
+      default: return;
+    }
+    e.preventDefault();
+    setWidth(clampRpanelWidth(next));
+  }, [width]);
+
+  if (!panelPresent) return null;
+
+  const label = L4(language, {
+    ko: '우측 패널 너비 조절',
+    en: 'Resize right panel',
+    ja: '右パネルの幅を調整',
+    zh: '调整右面板宽度',
+  });
+
+  return (
+    <button
+      ref={gripRef}
+      type="button"
+      className="lg-rpanel-grip"
+      style={{ left: `calc(100vw - ${width}px)`, top: RPANEL_HEADER_OFFSET }}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={label}
+      aria-valuenow={width}
+      aria-valuemin={RPANEL_MIN}
+      aria-valuemax={RPANEL_MAX}
+      data-dragging={dragging ? '1' : '0'}
+      tabIndex={0}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
+// IDENTITY_SEAL: PART-5 | role=right-panel-resizer | inputs=DOM(.wr-panel),localStorage | outputs=CSS-var+JSX

@@ -22,6 +22,7 @@ import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { runBootRecovery, type RecoveryResult } from '@/lib/save-engine/recovery';
+import { startHeartbeat } from '@/lib/save-engine/beacon';
 import {
   useRecoveryContext,
   type RecoveryContextValue,
@@ -139,6 +140,27 @@ export function useRecovery(options: UseRecoveryOptions = {}): UseRecoveryResult
     executedRef.current = true;
     void executeRecovery();
   }, [enabled, executeRecovery]);
+
+  // [G2-fix 2026-06-11] beacon 하트비트 수명주기 결선.
+  // startHeartbeat/markCleanShutdown 의 앱 측 호출자가 0이라(선재 결함)
+  // 하트비트·클린종료 마커가 전혀 기록되지 않았고, 한 번 crash 로 판정되면
+  // estimateCrash 가 매 부팅 stale beacon + cleanShutdownAt 부재 → 'crashed' 를
+  // 반복해 RecoveryDialog 가 무한 재출현했다 (런타임 게이트 실측).
+  // startHeartbeat 가 주기 기록 + visibilitychange/pagehide/beforeunload 클린마커를
+  // 자체 관리하고, stop() 도 명시적 정상 종료로 클린마커를 기록한다 (beacon.ts PART 5).
+  useEffect(() => {
+    if (!enabled) return;
+    if (typeof window === 'undefined') return;
+    const tabId = `lg-${Math.random().toString(36).slice(2, 10)}`;
+    const handle = startHeartbeat('studio-boot', tabId);
+    return () => {
+      try {
+        handle.stop(); // stop = clean shutdown 마커 포함
+      } catch (err) {
+        logger.warn('useRecovery', 'heartbeat stop 실패', err);
+      }
+    };
+  }, [enabled]);
 
   const runBootRecoveryManually = useCallback(async (): Promise<RecoveryResult | null> => {
     executedRef.current = true;

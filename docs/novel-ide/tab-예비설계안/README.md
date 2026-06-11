@@ -18,6 +18,8 @@
 **검토 산출물 (자기감사)**: [`_검토_정합_정밀성.md`](_검토_정합_정밀성.md) · [`_연계성_점검.md`](_연계성_점검.md).
 
 > ⚠️ **[2026-06-03 연계성 점검 — 최우선 정정]** 본 세트는 greenfield(신규 스키마·신규 store·신규 provenance)로 작성됐으나, 기존 Studio가 개념의 **~70-80%를 이미 구현** (M4 Origin Tag `TaggedField`/`EntryOrigin` · `CharRelation` · `SceneDirectionDataV2` · `ProactiveSuggestion` · `QualityGate` · 11 AppTab). **재framing 필수: "신규 생성" → "기존에 sidecar + 어댑터 융합".** 코어 진실원 = 기존 `Project`, provenance = 기존 M4 재사용, 저장 = `useProjectManager`/`usePrimaryWriter` hook. 상세 [`_연계성_점검.md`](_연계성_점검.md).
+>
+> ✅ **[2026-06-06 스키마 reconcile 적용]** 00·01·02 스키마에 잔존하던 평행 provenance(`lockHistory: LockEvent[]`/`locked`)를 M4 `TaggedField`/`OriginMetadata.editedBy[]`로 치환 완료, 00 "SSOT=entries"→"Project sidecar(코어=Project / 신규 로어=sidecar / 인덱스=derived)" 재framing 완료. `_검토_정합_정밀성.md` **C6(P1)** 참조. → 파일럿(00) Phase 0 코드 착수 선결조건 해소.
 
 ## 핵심 발견 (분석 종합)
 

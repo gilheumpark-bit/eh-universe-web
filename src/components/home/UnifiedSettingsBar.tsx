@@ -112,6 +112,7 @@ export default function UnifiedSettingsBar() {
         {/* Storage — compact */}
         {storageInfo && (
           <div
+            role="img"
             className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary transition-[transform,opacity,background-color,border-color,color]"
             title={`${storageLabel} (${storageInfo.percent}%)`}
             aria-label={`${T({ ko: "저장소 사용량", en: "Storage used", ja: "ストレージ使用量", zh: "存储使用量" })}: ${storageLabel}`}

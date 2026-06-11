@@ -24,6 +24,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { apiLog } from '@/lib/api-logger';
 import { setStripeRoleClaim, clearStripeRoleClaim } from '@/lib/firebase-auth-admin-rest';
+import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,83 @@ async function applyStripeRoleClaim(uid: string, action: 'set' | 'clear', eventI
     route: '/api/stripe/webhook',
     meta: result.ok ? { action, eventId } : { action, eventId, error: result.error },
   });
+}
+
+// ============================================================
+// PART 1.5 — Idempotency (Stripe event.id 기준 중복 차단)
+// ============================================================
+//
+// [H1 stripe-ready] Stripe 는 webhook 을 at-least-once 로 전송 (retry·중복 가능).
+// event.id 를 documentId 로 Firestore `stripe_processed_events` 에 create —
+// 이미 존재하면 409 ALREADY_EXISTS → duplicate 판정 → side effect skip.
+// 정리: expiresAt 필드에 +30일 timestamp 기록. Firestore 콘솔에서 해당 필드에
+// TTL 정책을 1회 설정하면 자동 삭제 (서버 코드 추가 불필요).
+// fail-open: dedupe 저장 불가(SA 미설정·timeout) 시 처리 진행 — claim set/clear 는
+// 멱등 연산이라 중복 재처리가 안전하고, 결제 이벤트 유실이 더 치명적.
+
+const DEDUPE_COLLECTION = 'stripe_processed_events';
+const DEDUPE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30일
+
+/** side effect(claim 갱신) 있는 이벤트만 dedupe — 로그-only 이벤트는 쓰기 비용 절약. */
+const SIDE_EFFECT_EVENTS = new Set([
+  'checkout.session.completed',
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+  'charge.refunded',
+]);
+
+async function markEventProcessed(eventId: string): Promise<'first' | 'duplicate' | 'unavailable'> {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  if (!projectId || !eventId) return 'unavailable';
+  try {
+    const now = new Date();
+    // firestore-service-rest 의 fetch 에는 자체 timeout 이 없음 — webhook hang 방지 5초 race.
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('dedupe timeout')), 5_000);
+    });
+    const r = await Promise.race([
+      firestoreCreateDocument(
+        projectId,
+        DEDUPE_COLLECTION,
+        {
+          eventId: { stringValue: eventId },
+          processedAt: { timestampValue: now.toISOString() },
+          expiresAt: { timestampValue: new Date(now.getTime() + DEDUPE_TTL_MS).toISOString() },
+        },
+        { documentId: eventId },
+      ),
+      timeout,
+    ]);
+    if (r.ok) return 'first';
+    return r.error === 'http_409' ? 'duplicate' : 'unavailable';
+  } catch {
+    return 'unavailable';
+  }
+}
+
+// ============================================================
+// PART 1.6 — Refund → uid 역추적 (charge.refunded)
+// ============================================================
+//
+// [H1 stripe-ready] charge 자체에는 firebaseUid metadata 가 없음 —
+// charge.invoice → invoice.subscription (구 API) 또는
+// invoice.parent.subscription_details.subscription (2025 basil+) → subscription.metadata.firebaseUid.
+// 전부 fail-safe: 역추적 실패 시 '' 반환 (로그만, webhook 200 유지).
+
+async function resolveUidFromCharge(stripe: Stripe, charge: Stripe.Charge): Promise<string> {
+  const invoiceRef = (charge as unknown as { invoice?: unknown }).invoice;
+  const invoiceId = typeof invoiceRef === 'string' ? invoiceRef : '';
+  if (!invoiceId) return '';
+  const invoice = (await stripe.invoices.retrieve(invoiceId)) as unknown as {
+    subscription?: unknown;
+    parent?: { subscription_details?: { subscription?: unknown } };
+  };
+  const subRef = invoice.subscription ?? invoice.parent?.subscription_details?.subscription;
+  const subId = typeof subRef === 'string' ? subRef : '';
+  if (!subId) return '';
+  const sub = await stripe.subscriptions.retrieve(subId);
+  return typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
 }
 
 export async function POST(req: NextRequest) {
@@ -101,6 +179,7 @@ export async function POST(req: NextRequest) {
     'customer.subscription.deleted',
     'invoice.paid',
     'invoice.payment_failed',
+    'charge.refunded',
   ];
   apiLog(
     KNOWN_EVENTS.includes(event.type)
@@ -118,9 +197,33 @@ export async function POST(req: NextRequest) {
         },
   );
 
+  // [H1 stripe-ready] 멱등성 — side effect 이벤트는 event.id 로 1회만 처리.
+  let duplicate = false;
+  if (SIDE_EFFECT_EVENTS.has(event.type)) {
+    const mark = await markEventProcessed(event.id);
+    if (mark === 'duplicate') {
+      duplicate = true;
+      apiLog({
+        level: 'info',
+        event: 'stripe_event_duplicate_skipped',
+        route: '/api/stripe/webhook',
+        meta: { type: event.type, id: event.id },
+      });
+    } else if (mark === 'unavailable') {
+      apiLog({
+        level: 'warn',
+        event: 'stripe_event_dedupe_unavailable',
+        route: '/api/stripe/webhook',
+        meta: { type: event.type, id: event.id },
+      });
+    }
+  }
+
   // [revenue path 2026-06-06] 결제 상태 → Firebase stripeRole claim 동기화. fail-safe (실패해도 200).
   try {
-    if (event.type === 'checkout.session.completed') {
+    if (duplicate) {
+      // 중복 이벤트 — side effect 전부 skip (이미 1회 처리됨).
+    } else if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const uid = typeof session.client_reference_id === 'string' ? session.client_reference_id : '';
       if (uid) await applyStripeRoleClaim(uid, 'set', event.id);
@@ -136,6 +239,20 @@ export async function POST(req: NextRequest) {
       const sub = event.data.object as Stripe.Subscription;
       const uid = typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
       if (uid) await applyStripeRoleClaim(uid, 'clear', event.id);
+    } else if (event.type === 'charge.refunded') {
+      // [H1 stripe-ready] 환불 → 구독 다운그레이드 (stripeRole 제거).
+      const charge = event.data.object as Stripe.Charge;
+      const uid = await resolveUidFromCharge(stripe, charge);
+      if (uid) {
+        await applyStripeRoleClaim(uid, 'clear', event.id);
+      } else {
+        apiLog({
+          level: 'warn',
+          event: 'stripe_refund_uid_unresolved',
+          route: '/api/stripe/webhook',
+          meta: { id: event.id },
+        });
+      }
     }
   } catch (err) {
     apiLog({
@@ -147,7 +264,7 @@ export async function POST(req: NextRequest) {
   }
 
   // [C] 200 반환 필수 — Stripe 는 non-2xx 를 재전송 시도. 처리 완료 신호.
-  return NextResponse.json({ received: true, eventId: event.id });
+  return NextResponse.json({ received: true, eventId: event.id, ...(duplicate ? { duplicate: true } : {}) });
 }
 
 // IDENTITY_SEAL: stripe-webhook | role=payment-event-ingestion | inputs=raw+signature | outputs=200|400|503

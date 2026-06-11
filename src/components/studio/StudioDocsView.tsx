@@ -170,14 +170,36 @@ const CN_POLISH: DocSection[] = [
 ];
 
 // ============================================================
+// PART 9.5 — Glossary (Project / Work / Manuscript / Session) — [priority 12 — 2026-06-08]
+// ============================================================
+// 신입 작가가 동의어인지 다른 개념인지 즉시 답을 얻도록 단일 계층 정의.
+// studio-types.ts 는 절대금지 8 파일 — 별도 type alias 생성 대신 docs 에 명시.
+
+const KO_GLOSSARY: DocSection[] = [
+  { id: "glossary", title: "20. 용어 정의 (Project / Work / Manuscript / Session)", content: "단어 혼동 정리 — 모두 다른 개념입니다.\n\n계층 구조:\nProject (최상위) > Work (작품 = 편집 세션) > Manuscript (본문 텍스트)\n\n각 용어 정의:\n\n• Project: 작가가 보유한 모든 작품의 컨테이너.\n  - 한 작가는 여러 Project 보유 가능 (장르별 분리·연재물 분리 등).\n  - GitHub 동기화 시 1 Project = 1 Repository.\n  - 예: '2026 카카오 공모전 Project', '연재용 Project'.\n\n• Work: Project 안의 단일 작품 (= 현재 편집 중인 ChatSession).\n  - 한 Project 에 여러 Work 가능 (예: 본편 + 외전).\n  - 세계관·캐릭터·설정은 Work 단위로 묶임.\n  - 코드 상으로는 'session' / 'ChatSession' 으로 표기되기도 함 (legacy).\n\n• Manuscript: Work 의 실제 본문 텍스트 (.md 파일).\n  - 에피소드 (= Scene) 단위로 분할.\n  - 자동 저장 단위.\n  - 내보내기 (EPUB/DOCX/TXT) 의 입력.\n\n• Session: 1회 집필 세션 (UI 용어, 30분 ~ 수 시간).\n  - 포모도로 타이머·일일 목표 단위.\n  - 코드의 ChatSession 과 혼동 주의 — UI 의 session 은 시간 단위.\n\n예시:\n  나의 Project '판타지 연재' 안의 Work '용기사 1부' 의 Manuscript 17화를\n  오늘 Session 으로 5,200자 집필했다.\n\n호환 매핑 (legacy 용어):\n  - 'project' (코드) ≈ Project (UX)\n  - 'session' / 'ChatSession' (코드) ≈ Work (UX)\n  - 'episode' (UI) ≈ Scene file (.md, Manuscript 단위)" },
+];
+
+const EN_GLOSSARY: DocSection[] = [
+  { id: "glossary", title: "20. Glossary (Project / Work / Manuscript / Session)", content: "Clarification of overlapping terms — each is distinct.\n\nHierarchy:\nProject (top) > Work (= current editing session) > Manuscript (body text)\n\nDefinitions:\n\n• Project: Container for all works an author owns.\n  - One author may own multiple Projects (per genre, per series, etc.).\n  - With GitHub sync: 1 Project = 1 Repository.\n  - Example: 'Kakao Contest 2026 Project', 'Serialization Project'.\n\n• Work: A single work inside a Project (= the currently edited ChatSession).\n  - Multiple Works per Project allowed (e.g., main story + side story).\n  - Worldbuilding, characters, and settings are bound to a Work.\n  - In code: sometimes called 'session' / 'ChatSession' (legacy).\n\n• Manuscript: The actual body text of a Work (.md file).\n  - Split per episode (= Scene).\n  - Unit of auto-save.\n  - Input for export (EPUB/DOCX/TXT).\n\n• Session: A single writing session (UI term, 30 min ~ several hours).\n  - Unit of Pomodoro timer & daily goal.\n  - Do not confuse with code's ChatSession — UI 'session' is time-based.\n\nExample:\n  In my Project 'Fantasy Serial', I wrote 5,200 characters of episode 17\n  in the Work 'Dragon Knight Part 1' during today's Session.\n\nLegacy mapping:\n  - 'project' (code) ≈ Project (UX)\n  - 'session' / 'ChatSession' (code) ≈ Work (UX)\n  - 'episode' (UI) ≈ Scene file (.md, Manuscript unit)" },
+];
+
+const JP_GLOSSARY: DocSection[] = [
+  { id: "glossary", title: "20. 用語定義 (Project / Work / Manuscript / Session)", content: "重複しがちな用語の整理 — それぞれ別概念です。\n\n階層構造:\nProject (最上位) > Work (現在編集中の作品) > Manuscript (本文テキスト)\n\n各用語の定義:\n\n• Project: 作家が保有する全作品のコンテナ。\n  - 1 作家が複数 Project を保有可能 (ジャンル別・連載別など)。\n  - GitHub 同期時は 1 Project = 1 Repository。\n  - 例:「2026 カカオ公募 Project」「連載用 Project」。\n\n• Work: Project 内の単一作品 (= 現在編集中の ChatSession)。\n  - 1 Project に複数 Work 可能 (本編+外伝など)。\n  - 世界観・キャラクター・設定は Work 単位でまとまる。\n  - コード上は 'session' / 'ChatSession' と表記される場合あり (legacy)。\n\n• Manuscript: Work の実際の本文テキスト (.md ファイル)。\n  - エピソード (= Scene) 単位で分割。\n  - 自動保存の単位。\n  - エクスポート (EPUB/DOCX/TXT) の入力。\n\n• Session: 1 回の執筆セッション (UI 用語、30分〜数時間)。\n  - ポモドーロタイマー・日次目標の単位。\n  - コードの ChatSession と混同注意 — UI の session は時間単位。\n\n例:\n  自分の Project「ファンタジー連載」の Work「竜の騎士 第1部」の\n  Manuscript 17 話を、今日の Session で 5,200 字執筆した。\n\nレガシー対応:\n  - 'project' (コード) ≈ Project (UX)\n  - 'session' / 'ChatSession' (コード) ≈ Work (UX)\n  - 'episode' (UI) ≈ Scene file (.md, Manuscript 単位)" },
+];
+
+const CN_GLOSSARY: DocSection[] = [
+  { id: "glossary", title: "20. 术语定义 (Project / Work / Manuscript / Session)", content: "易混淆术语整理 — 各为不同概念。\n\n层级结构:\nProject (顶层) > Work (当前编辑的作品) > Manuscript (正文文本)\n\n各术语定义:\n\n• Project: 作家拥有的全部作品的容器。\n  - 一位作家可拥有多个 Project (按类型/连载分别管理)。\n  - GitHub 同步时 1 Project = 1 Repository。\n  - 示例:「2026 Kakao 征文 Project」「连载 Project」。\n\n• Work: Project 中的单个作品 (= 当前编辑的 ChatSession)。\n  - 1 个 Project 可包含多个 Work (正篇+外传等)。\n  - 世界观、角色、设定按 Work 单位绑定。\n  - 代码中有时记作 'session' / 'ChatSession' (legacy)。\n\n• Manuscript: Work 的实际正文文本 (.md 文件)。\n  - 按集数 (= Scene) 分割。\n  - 自动保存的单位。\n  - 导出 (EPUB/DOCX/TXT) 的输入。\n\n• Session: 单次写作会话 (UI 术语,30分钟~数小时)。\n  - 番茄钟计时器·每日目标的单位。\n  - 注意与代码的 ChatSession 区分 — UI 的 session 是时间单位。\n\n示例:\n  我的 Project「奇幻连载」中 Work「龙骑士 第一部」的\n  Manuscript 第17集,今天 Session 写了 5,200 字。\n\n旧版映射:\n  - 'project' (代码) ≈ Project (UX)\n  - 'session' / 'ChatSession' (代码) ≈ Work (UX)\n  - 'episode' (UI) ≈ Scene file (.md, Manuscript 单位)" },
+];
+
+// ============================================================
 // PART 10 — Section assembly per language
 // ============================================================
 
 const SECTIONS: Record<AppLanguage, DocSection[]> = {
-  KO: [...KO_SECTIONS, ...KO_POLISH],
-  EN: [...EN_SECTIONS, ...EN_POLISH],
-  JP: [...JP_SECTIONS, ...JP_POLISH],
-  CN: [...CN_SECTIONS, ...CN_POLISH],
+  KO: [...KO_SECTIONS, ...KO_POLISH, ...KO_GLOSSARY],
+  EN: [...EN_SECTIONS, ...EN_POLISH, ...EN_GLOSSARY],
+  JP: [...JP_SECTIONS, ...JP_POLISH, ...JP_GLOSSARY],
+  CN: [...CN_SECTIONS, ...CN_POLISH, ...CN_GLOSSARY],
 };
 
 // ============================================================

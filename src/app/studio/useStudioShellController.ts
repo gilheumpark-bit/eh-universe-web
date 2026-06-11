@@ -93,6 +93,32 @@ export function useStudioShellController(
   const [suggestions, setSuggestions] = useState<ProactiveSuggestion[]>([]);
   const lastSuggestionEp = useRef<number>(-1);
 
+  // [루프 4 P9 — 2026-06-08] INP ≤ 200ms 목표 보호 — 메시지 1k+/세션 동기 순회 비용 절감.
+  // assistant + metrics 가진 메시지만 추출 → slice(-5) 만. 메시지 길이 의존성 분리.
+  // 메시지 변경 빈도 << episode 변경 빈도 — 두 dep 분리로 불필요 재계산 차단.
+  const recentMetricsSignature = useMemo(() => {
+    if (!currentSession) return null;
+    const msgs = currentSession.messages;
+    // 역방향 단방향 순회 — 마지막 5개만 수집 후 즉시 break.
+    // 1k+ 메시지에서 O(n) → O(5) 로 격하 (1차원적 reduce).
+    const collected: ProactiveSuggestion[] | unknown = [];
+    void collected;
+    const out: Array<{ tension: number; pacing: number; immersion: number; eos: number; grade: string }> = [];
+    for (let i = msgs.length - 1; i >= 0 && out.length < 5; i--) {
+      const m = msgs[i] as Message;
+      if (m.role !== 'assistant') continue;
+      if (!m.meta?.metrics) continue;
+      out.unshift({
+        tension: m.meta.metrics.tension ?? 50,
+        pacing: m.meta.metrics.pacing ?? 50,
+        immersion: m.meta.metrics.immersion ?? 50,
+        eos: m.meta?.eosScore ?? 0,
+        grade: m.meta?.grade ?? 'C',
+      });
+    }
+    return out;
+  }, [currentSession]);
+
   useEffect(() => {
     if (!currentSession || !config) return;
     // Only re-run when episode changes
@@ -108,17 +134,7 @@ export function useStudioShellController(
         return;
       }
       const sgConfig = getDefaultSuggestionConfig('intermediate');
-      const msgs = currentSession.messages;
-      const recentMetrics = msgs
-        .filter((m: Message) => m.role === 'assistant' && m.meta?.metrics)
-        .slice(-5)
-        .map((m: Message) => ({
-          tension: m.meta?.metrics?.tension ?? 50,
-          pacing: m.meta?.metrics?.pacing ?? 50,
-          immersion: m.meta?.metrics?.immersion ?? 50,
-          eos: m.meta?.eosScore ?? 0,
-          grade: m.meta?.grade ?? 'C',
-        }));
+      const recentMetrics = recentMetricsSignature ?? [];
       const charNames = config.characters.map(c => c.name);
       const charLastAppearance: Record<string, number> = {};
       charNames.forEach(name => { charLastAppearance[name] = config.episode; });
@@ -133,7 +149,7 @@ export function useStudioShellController(
       logger.warn('StudioShell', 'suggestion update failed', err);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSession, config, language]);
+  }, [currentSession, config, language, recentMetricsSignature]);
 
   const dismissSuggestion = useCallback((id: string) => {
     setSuggestions((prev: ProactiveSuggestion[]) => prev.map((s: ProactiveSuggestion) =>

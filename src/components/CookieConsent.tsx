@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { setConsent, shouldShowConsentBanner } from "@/lib/consent";
@@ -22,6 +23,12 @@ export default function CookieConsent() {
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  // [Z1d 2026-06-11] /studio 가림 해소 — 집필 탭 AI 생성바(wd-input)가 화면 하단 중앙에
+  // 위치하는데, 풀-와이드 bottom:0 배너(z-9998)가 이를 덮어 생성바 사용이 막혔다.
+  // /studio 에서만 우하단 컴팩트 카드로 전환 (AI 생성바는 센터 컬럼 — 비가림).
+  // 동의 흐름·카피·버튼·setConsent 경로는 완전 동일 — 포지셔닝/레이아웃만 분기.
+  const pathname = usePathname();
+  const isStudio = pathname === "/studio" || pathname?.startsWith("/studio/");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -52,15 +59,27 @@ export default function CookieConsent() {
   // 이전: 4/4 surface 동일 우하단 카드 영구 노출 (Doc 1 Global P0). 보라 라벨 + blue CTA (시스템 위반).
   // 새 흐름: bottom:0 left:0 right:0 single-line. amber 단일 CTA. "필수만" ghost. "자세히" link.
   // GDPR + ePrivacy + K-PIPA 충족: setConsent 동작 유지, 다국어 카피 유지.
+  // [Z1d] /studio 만 예외 — 우하단 컴팩트 카드 (AI 생성바 비가림). Doc 1 P0 의 문제
+  // (영구 노출·보라/blue 위반)는 재발 X: 동의/거절 즉시 소멸 + amber CTA 동일.
   return (
     <div
       role="dialog"
       aria-modal="false"
       aria-label={T({ ko: "쿠키 동의", en: "Cookie Consent", ja: "Cookie同意", zh: "Cookie 同意" })}
-      className="fixed bottom-0 left-0 right-0 z-[9998] bg-bg-primary/95 backdrop-blur-md border-t border-border px-4 py-2 md:py-2.5"
+      className={
+        isStudio
+          ? "fixed bottom-4 right-4 z-[9998] w-[calc(100vw-2rem)] max-w-sm bg-bg-primary/95 backdrop-blur-md border border-border rounded-xl shadow-xl px-4 py-3"
+          : "fixed bottom-0 left-0 right-0 z-[9998] bg-bg-primary/95 backdrop-blur-md border-t border-border px-4 py-2 md:py-2.5"
+      }
       style={{ zIndex: 9998 }}
     >
-      <div className="max-w-7xl mx-auto flex items-center gap-3 md:gap-4 flex-wrap md:flex-nowrap">
+      <div
+        className={
+          isStudio
+            ? "flex items-start gap-3 flex-wrap"
+            : "max-w-7xl mx-auto flex items-center gap-3 md:gap-4 flex-wrap md:flex-nowrap"
+        }
+      >
         <span className="text-[10px] font-mono uppercase tracking-widest text-accent-amber shrink-0">
           {T({ ko: "Cookies", en: "Cookies", ja: "Cookie", zh: "Cookie" })}
         </span>

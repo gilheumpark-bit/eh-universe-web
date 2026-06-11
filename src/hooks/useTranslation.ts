@@ -5,6 +5,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
+import { checkBlockedJson } from '@/lib/noa/block-notice';
 import { recordAIUsage } from '@/lib/ai-usage-tracker';
 import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
 import { getTierLimits, type UserTier } from '@/lib/tier-gate';
@@ -261,6 +263,9 @@ export async function scoreTranslation(
     });
     if (resp.ok) {
       const data = await resp.json();
+      // [N4] 차단 계약 {blocked, reason, gradeRequired} → toast 고지 후 에러로 표면화
+      const blockedMsg = checkBlockedJson(data, 'translation-score');
+      if (blockedMsg) throw new Error(blockedMsg);
       const raw = typeof data === 'string' ? data : JSON.stringify(data);
       const primaryScore = parseScoreResponse(raw, config.mode);
 

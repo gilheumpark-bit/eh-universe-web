@@ -36,13 +36,23 @@ jest.mock('next/server', () => ({
   NextResponse: StripeWhFakeResponse,
 }));
 
-// Stripe SDK mock — constructEvent를 제어 가능하게.
+// Stripe SDK mock — constructEvent를 제어 가능하게. (+ refund 역추적용 retrieve)
 const mockConstructEvent = jest.fn();
+const mockInvoiceRetrieve = jest.fn();
+const mockSubRetrieve = jest.fn();
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     webhooks: { constructEvent: mockConstructEvent },
+    invoices: { retrieve: mockInvoiceRetrieve },
+    subscriptions: { retrieve: mockSubRetrieve },
   }));
 });
+
+// [H1 stripe-ready] Firestore dedupe mock — processed_events create 제어.
+const mockCreateDoc = jest.fn();
+jest.mock('@/lib/firestore-service-rest', () => ({
+  firestoreCreateDocument: (...a: unknown[]) => mockCreateDoc(...a),
+}));
 
 // apiLog 캡처 — 호출 검증용.
 const mockApiLog = jest.fn();
@@ -328,6 +338,7 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     mockConstructEvent.mockReset();
     mockSetClaim.mockResolvedValue({ ok: true });
     mockClearClaim.mockResolvedValue({ ok: true });
+    mockCreateDoc.mockResolvedValue({ ok: true });
   });
   afterEach(() => { process.env = originalEnv; });
 
@@ -387,6 +398,161 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     expect(res.status).toBe(200);
     expect(mockApiLog).toHaveBeenCalledWith(
       expect.objectContaining({ event: 'stripe_claim_sync_failed' }),
+    );
+  });
+});
+
+// ============================================================
+// [H1 stripe-ready] idempotency (processed_events) + refund downgrade
+// ============================================================
+
+describe('/api/stripe/webhook POST — idempotency (event.id dedupe)', () => {
+  let originalEnv: typeof process.env;
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    process.env.STRIPE_SECRET_KEY = 'sk_test_valid_key';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_valid';
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-proj';
+    jest.clearAllMocks();
+    mockConstructEvent.mockReset();
+    mockSetClaim.mockResolvedValue({ ok: true });
+    mockClearClaim.mockResolvedValue({ ok: true });
+  });
+  afterEach(() => { process.env = originalEnv; });
+
+  it('첫 이벤트 → processed_events 문서 생성 (documentId=event.id) + claim 진행', async () => {
+    mockCreateDoc.mockResolvedValue({ ok: true });
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_idem_1', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-i1' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockCreateDoc).toHaveBeenCalledWith(
+      'test-proj',
+      'stripe_processed_events',
+      expect.objectContaining({ eventId: { stringValue: 'evt_idem_1' } }),
+      { documentId: 'evt_idem_1' },
+    );
+    expect(mockSetClaim).toHaveBeenCalledWith('uid-i1');
+  });
+
+  it('중복 이벤트 (409 ALREADY_EXISTS) → claim 미호출 + duplicate:true + 200', async () => {
+    mockCreateDoc.mockResolvedValue({ ok: false, error: 'http_409' });
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_idem_dup', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-i2' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    const json = await res.json() as { received?: boolean; duplicate?: boolean };
+    expect(json.received).toBe(true);
+    expect(json.duplicate).toBe(true);
+    expect(mockSetClaim).not.toHaveBeenCalled();
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_event_duplicate_skipped' }),
+    );
+  });
+
+  it('dedupe 저장 불가 (SA 미설정 등) → fail-open: claim 진행 + warn 로그', async () => {
+    mockCreateDoc.mockResolvedValue({ ok: false, error: 'no_service_account' });
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_idem_open', created: 1, livemode: false,
+      data: { object: { client_reference_id: 'uid-i3' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockSetClaim).toHaveBeenCalledWith('uid-i3');
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_event_dedupe_unavailable' }),
+    );
+  });
+
+  it('로그-only 이벤트 (invoice.paid) 는 dedupe 쓰기 안 함', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'invoice.paid', id: 'evt_log_only', created: 1, livemode: false,
+      data: { object: {} },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockCreateDoc).not.toHaveBeenCalled();
+  });
+});
+
+describe('/api/stripe/webhook POST — charge.refunded → 구독 다운그레이드', () => {
+  let originalEnv: typeof process.env;
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    process.env.STRIPE_SECRET_KEY = 'sk_test_valid_key';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_valid';
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-proj';
+    jest.clearAllMocks();
+    mockConstructEvent.mockReset();
+    mockSetClaim.mockResolvedValue({ ok: true });
+    mockClearClaim.mockResolvedValue({ ok: true });
+    mockCreateDoc.mockResolvedValue({ ok: true });
+  });
+  afterEach(() => { process.env = originalEnv; });
+
+  it('charge.invoice → invoice.subscription → metadata.firebaseUid → clearStripeRoleClaim', async () => {
+    mockInvoiceRetrieve.mockResolvedValue({ subscription: 'sub_ref_1' });
+    mockSubRetrieve.mockResolvedValue({ metadata: { firebaseUid: 'uid-refund' } });
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_refund', created: 1, livemode: false,
+      data: { object: { invoice: 'in_ref_1' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockInvoiceRetrieve).toHaveBeenCalledWith('in_ref_1');
+    expect(mockSubRetrieve).toHaveBeenCalledWith('sub_ref_1');
+    expect(mockClearClaim).toHaveBeenCalledWith('uid-refund');
+  });
+
+  it('basil API shape (invoice.parent.subscription_details) 도 역추적', async () => {
+    mockInvoiceRetrieve.mockResolvedValue({
+      parent: { subscription_details: { subscription: 'sub_ref_2' } },
+    });
+    mockSubRetrieve.mockResolvedValue({ metadata: { firebaseUid: 'uid-refund-2' } });
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_refund_2', created: 1, livemode: false,
+      data: { object: { invoice: 'in_ref_2' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockClearClaim).toHaveBeenCalledWith('uid-refund-2');
+  });
+
+  it('uid 역추적 실패 (invoice 없음) → claim 미호출 + warn 로그 + 200 유지', async () => {
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_refund_nouid', created: 1, livemode: false,
+      data: { object: {} },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockClearClaim).not.toHaveBeenCalled();
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_refund_uid_unresolved' }),
+    );
+  });
+
+  it('retrieve throw 해도 webhook 200 (fail-safe)', async () => {
+    mockInvoiceRetrieve.mockRejectedValue(new Error('stripe api down'));
+    mockConstructEvent.mockReturnValue({
+      type: 'charge.refunded', id: 'evt_refund_err', created: 1, livemode: false,
+      data: { object: { invoice: 'in_err' } },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+    expect(res.status).toBe(200);
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_claim_sync_threw' }),
     );
   });
 });

@@ -131,7 +131,38 @@ export interface CreativeEvent {
   appVersion: string;
   /** 작가 메모 (선택, 비공개) */
   note?: string;
+
+  // ============================================================
+  // [s81-hash-chain — additive·optional] per-event hash chain.
+  // 구 이벤트 (chain 도입 前) 는 세 필드 모두 undefined — 여전히 유효.
+  // ============================================================
+
+  /** 창작 단계 (9 stage 중 1, 선택) */
+  stage?: CreativeStage;
+  /**
+   * 직전 이벤트의 eventHash (같은 projectId 체인).
+   * null = genesis (체인 첫 이벤트, 또는 직전 이벤트가 legacy 무해시).
+   * undefined = legacy 이벤트 (chain 도입 前 기록).
+   */
+  parentEventHash?: string | null;
+  /**
+   * 본 이벤트 해시 — SHA-256(canonicalJson(event − eventHash)) hex 64자.
+   * parentEventHash 포함하여 계산 → 체인 위변조 검출 가능.
+   */
+  eventHash?: string;
 }
+
+/** 창작 단계 (s81 — 이벤트 stage 태그, 선택) */
+export type CreativeStage =
+  | 'world'
+  | 'character'
+  | 'plot'
+  | 'scene-sheet'
+  | 'direction'
+  | 'writing'
+  | 'revision'
+  | 'publish'
+  | 'translate';
 
 // ============================================================
 // PART 3 — SourceRecord (외부 텍스트·AI 출력 출처 기록)
@@ -361,6 +392,23 @@ export interface ProcessCertificate {
   originSummary?: OriginSummaryPayload;
   /** Work Sessions — 작업 시점 list (UI 시점 표시용). */
   workSessions?: WorkSessionEntry[];
+  /**
+   * [s81-hash-chain — additive·optional] 발급 시점 이벤트 체인 tip 해시
+   * (해당 projectId 의 마지막 hashed 이벤트의 eventHash).
+   * 확인서가 체인 tip 을 anchoring → 발급 이후 체인 조작 검출 가능.
+   * undefined = hashed 이벤트 0건 (legacy-only 프로젝트).
+   */
+  chainTipHash?: string;
+
+  /**
+   * [D2-github-mirror — additive·optional] 확인서 GitHub 미러 commit SHA.
+   * 발급 직후 cp-certs/{certId}.json 커밋 성공 시 보존 — commit 시각이
+   * 제3자(GitHub) 타임스탬프 앵커가 된다.
+   * 정직 표기: 인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
+   * 미러 파일 본문에는 본 필드 부재 (그 커밋이 파일 생성 자체 — 자기참조 불가).
+   * undefined = 미러 옵트인 안 함 / 미러 실패 (발급 자체는 유효).
+   */
+  githubCommitSha?: string;
 }
 
 // ============================================================

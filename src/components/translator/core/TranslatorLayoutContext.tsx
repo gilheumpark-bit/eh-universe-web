@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 
 export type LeftPanelType = 'explorer' | 'glossary' | 'history' | 'settings' | 'backup' | 'multilang' | null;
 // [2026-05-08 시장 분석 4차 P0] adoption / signoff 추가 — dual workflow.
@@ -74,25 +74,36 @@ export function TranslatorLayoutProvider({ children }: { children: ReactNode }) 
     return () => clearTimeout(timeout);
   }, [loaded, leftSidebarWidth, rightSidebarWidth, activeLeftPanel, activeRightPanel, activeBottomPanel, isBilateralVertical, editorSplitRatio]);
 
+  // [수리 L1 — 2026-06-07] rank 4 adversarial: context value 가 매 렌더 새 객체로 생성되어
+  // consumer (TranslatorShell.panelBindings 등) 의 useMemo[layout] 가 churn → useRegisterActions
+  // 가 매 렌더 unregister/re-register. useState setter 는 stable 이므로 state 값만 deps 로 충분.
+  const value = useMemo<TranslatorLayoutState>(() => ({
+    leftSidebarWidth,
+    rightSidebarWidth,
+    activeLeftPanel,
+    activeRightPanel,
+    activeBottomPanel,
+    isBilateralVertical,
+    editorSplitRatio,
+    setLeftSidebarWidth,
+    setRightSidebarWidth,
+    setActiveLeftPanel,
+    setActiveRightPanel,
+    setActiveBottomPanel,
+    setIsBilateralVertical,
+    setEditorSplitRatio,
+  }), [
+    leftSidebarWidth,
+    rightSidebarWidth,
+    activeLeftPanel,
+    activeRightPanel,
+    activeBottomPanel,
+    isBilateralVertical,
+    editorSplitRatio,
+  ]);
+
   return (
-    <TranslatorLayoutContext.Provider
-      value={{
-        leftSidebarWidth,
-        rightSidebarWidth,
-        activeLeftPanel,
-        activeRightPanel,
-        activeBottomPanel,
-        isBilateralVertical,
-        editorSplitRatio,
-        setLeftSidebarWidth,
-        setRightSidebarWidth,
-        setActiveLeftPanel,
-        setActiveRightPanel,
-        setActiveBottomPanel,
-        setIsBilateralVertical,
-        setEditorSplitRatio,
-      }}
-    >
+    <TranslatorLayoutContext.Provider value={value}>
       {children}
     </TranslatorLayoutContext.Provider>
   );

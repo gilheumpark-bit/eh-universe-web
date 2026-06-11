@@ -27,9 +27,19 @@ const PATTERNS: Array<[RegExp, string]> = [
 // 민감 헤더/쿠키 키 전체 치환
 const SENSITIVE_KEYS = /^(authorization|cookie|set-cookie|x-api-key|x-auth-token|x-firebase-appcheck)$/i;
 
+// [H2 2026-06-11] 원고 본문 키 — 사용자 창작물(원고 텍스트)이 breadcrumb/extra 에
+// 실리는 것을 차단. 키 이름 기반 전체 치환 (값 내용과 무관하게 드랍).
+const MANUSCRIPT_KEYS =
+  /^(content|text|body|manuscript|draft|prose|markdown|paragraphs?|chapter_?text|scene_?text|full_?text|episode_?text)$/i;
+
+// [H2 2026-06-11] 장문 문자열 상한 — 키 이름을 우회한 원고/대용량 텍스트 유출 방어.
+// 에러 메시지·breadcrumb message 등 정상 진단 문자열은 이 길이를 넘지 않음.
+const MAX_STRING_LEN = 500;
+
 function scrubString(input: string): string {
   let out = input;
   for (const [re, to] of PATTERNS) out = out.replace(re, to);
+  if (out.length > MAX_STRING_LEN) out = out.slice(0, MAX_STRING_LEN) + '…[TRUNCATED]';
   return out;
 }
 
@@ -48,6 +58,11 @@ function walk(node: unknown): unknown {
     for (const k of Object.keys(obj)) {
       if (SENSITIVE_KEYS.test(k)) {
         obj[k] = '[REDACTED]';
+        continue;
+      }
+      // 원고 본문 키 — 문자열/배열/객체 무관 전체 드랍 (창작물 유출 차단)
+      if (MANUSCRIPT_KEYS.test(k) && obj[k] != null && typeof obj[k] !== 'number' && typeof obj[k] !== 'boolean') {
+        obj[k] = '[REDACTED_MANUSCRIPT]';
         continue;
       }
       obj[k] = walk(obj[k]);

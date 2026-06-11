@@ -78,13 +78,8 @@ jest.mock('@/lib/rate-limit', () => ({
   getClientIp: () => '127.0.0.1',
 }));
 
-// vertex-app-builder is imported by agent-search handlers — stub to avoid real Google SDK load.
-jest.mock('@/lib/vertex-app-builder', () => ({
-  isAgentBuilderConfigured: () => true,
-  searchAgentBuilder: async () => ({ results: [], summary: '', totalSize: 0 }),
-  converseAgentBuilder: async () => ({ reply: '', conversationId: '', references: [] }),
-  getAgentBuilderStatus: () => ({ universe: false, novel: false, code: false }),
-}));
+// [2026-06-06] vertex-app-builder 제거됨 (구글 AI 삭제) — agent-search 라우트는
+// 더 이상 Google SDK를 import하지 않으므로 stub 불필요.
 
 // api-logger — silence in tests.
 jest.mock('@/lib/api-logger', () => ({

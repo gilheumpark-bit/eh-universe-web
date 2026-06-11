@@ -6,8 +6,11 @@ import { truncateMessages, getMaxOutputTokens } from './token-utils';
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
-import { ariManager } from '@/lib/code-studio/ai/ari-engine';
+import { ariManager } from '@/lib/ai/ari-engine';
 import { isFeatureEnabled } from '@/lib/feature-flags';
+// [N4 — 2026-06-11] NOA 차단 고지 의무 — 차단 응답 {blocked, reason, gradeRequired} 수신 시
+// noa:toast + noa:block-notice 발화 (사일런트 차단 금지). NoaBlockedError 로 호출 측 인라인 표시.
+import { isBlockedPayload, notifyNoaBlock, NoaBlockedError } from '@/lib/noa/block-notice';
 
 /** Provider ID key tuple — single source of truth for all provider keys */
 const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
@@ -293,12 +296,18 @@ function _xorMask(): number[] {
 }
 
 function _generateSalt(): Uint8Array {
+  // [P16 풀점검 루프 3] CSPRNG 강제 — Math.random() fallback 제거.
+  // Web Crypto / Node Crypto 둘 다 사용 불가한 환경은 보안 임계 — 명시적 throw.
+  // Node 19+ globalThis.crypto, 모던 브라우저 window.crypto 모두 표준 노출.
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     return crypto.getRandomValues(new Uint8Array(_SALT_LENGTH));
   }
-  const salt = new Uint8Array(_SALT_LENGTH);
-  for (let i = 0; i < _SALT_LENGTH; i++) salt[i] = Math.floor(Math.random() * 256);
-  return salt;
+  // 환경에 CSPRNG 없음 — Math.random() 은 암호 용도 부적합. 명시적 실패.
+  throw new Error(
+    '[ai-providers] CSPRNG unavailable (crypto.getRandomValues missing). ' +
+    'Math.random() fallback is insecure and has been removed. ' +
+    'Ensure runtime exposes Web Crypto or upgrade Node >= 19.',
+  );
 }
 
 /** Synchronous v3 fallback (Salt + XOR) — used when SubtleCrypto unavailable */
@@ -763,6 +772,8 @@ async function streamViaProxy(
         } else {
           errMsg = `🛑 NOA 보안 필터: ${reason === 'TRINITY_BLOCK' ? '안전 검사에서 차단되었습니다' : reason === 'BUDGET_EXCEEDED' ? '일일 사용 한도에 도달했습니다' : reason}`;
         }
+        // [N4] 403 레거시 NOA 차단도 고지 의무 적용 — toast + 카드 (사일런트 차단 금지)
+        notifyNoaBlock({ blocked: true, reason: errMsg, gradeRequired: null }, 'chat');
       } else if (res.status === 429) {
         const retryAfter = res.headers.get('retry-after');
         errMsg = retryAfter
@@ -778,6 +789,18 @@ async function streamViaProxy(
       }
     } catch { /* [의도적 무시] errData JSON 파싱 실패 시 원래 errMsg 유지 */ }
     throw new Error(errMsg);
+  }
+
+  // [N4 — 2026-06-11] 서버 게이트 차단 계약 (HTTP 200 + JSON {blocked, reason, gradeRequired}).
+  // 정상 응답은 text/event-stream — JSON 본문이면 차단 payload 검사 후 고지 + 중단.
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    const blockedJson: unknown = await res.json().catch(() => null);
+    if (isBlockedPayload(blockedJson)) {
+      const noticeMsg = notifyNoaBlock(blockedJson, 'chat');
+      throw new NoaBlockedError(noticeMsg, blockedJson, 'chat');
+    }
+    throw new Error('Unexpected non-stream response from /api/chat');
   }
 
   const reader = res.body?.getReader();

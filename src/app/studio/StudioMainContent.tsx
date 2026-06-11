@@ -23,6 +23,10 @@ import { WindowTitleBar } from '@/components/studio/WindowTitleBar';
 import { StudioStatusBar } from '@/components/studio/StudioStatusBar';
 import { NovelBreadcrumb, type NovelBreadcrumbTarget } from '@/components/studio/NovelBreadcrumb';
 import { useStudio } from './StudioContext';
+// [rank 11 — 2026-06-07] WritingTab 60+ props → 5 props. Writing 탭 마운트 시점에만
+// WritingProvider 로 감싸 prop drilling 을 차단한다. StudioTabRouter 는 backward-compat
+// 으로 props 도 그대로 받는다 — 후속 PR 에서 props 인터페이스를 슬림화.
+import { WritingProvider, type WritingContextValue } from './WritingContext';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
 import { getFile, getTree } from '@/lib/github-sync';
 import { repoFilesToConfig, extractWriterProfile } from '@/lib/project-serializer';
@@ -33,6 +37,8 @@ const OnboardingGuide = dynamic(() => import('@/components/studio/OnboardingGuid
 const EpisodeExplorer = dynamic(() => import('@/components/studio/EpisodeExplorer'), { ssr: false });
 // [E 번들] 조건부 렌더 컴포넌트들 — 전부 특정 플래그 true 일 때만 렌더. initial 로드 불필요.
 const EngineDashboard = dynamic(() => import('@/components/studio/EngineDashboard'), { ssr: false, loading: DynSkeleton });
+// [Batch 3 rank 5 — 2026-06-07] WriterToolbox 18 모듈 사이드바.
+const WriterToolbox = dynamic(() => import('@/components/studio/WriterToolbox'), { ssr: false, loading: DynSkeleton });
 const GlobalSearchPalette = dynamic(() => import('@/components/studio/GlobalSearchPalette'), { ssr: false, loading: DynSkeleton });
 const ShortcutsModal = dynamic(() => import('@/components/studio/StudioModals').then(m => ({ default: m.ShortcutsModal })), { ssr: false, loading: DynSkeleton });
 
@@ -63,6 +69,7 @@ export default function StudioMainContent({ children }: { children?: React.React
     handleVersionSwitch, handleTypoFix, hfcpState,
     input, setInput,
     showDashboard, setShowDashboard: _setShowDashboard,
+    showToolbox, setShowToolbox,
     rightPanelOpen, setRightPanelOpen,
     showAiLock, hasAiAccess, aiCapabilitiesLoaded,
     bannerDismissed, setBannerDismissed,
@@ -347,6 +354,94 @@ export default function StudioMainContent({ children }: { children?: React.React
     },
   ], [language, handleCommandAction]);
 
+  // ============================================================
+  // PART 2.6 — WritingContext value (rank 11)
+  // ============================================================
+  // [G] currentSession === null 인 경우엔 WritingProvider 를 마운트하지 않는다.
+  //     아래 useMemo 는 sessions/세션이 살아있을 때만 의미가 있다.
+  // [C] setSuggestions / setRightPanelOpen / setCanvasPass 등 SetStateAction setter 는
+  //     WritingContextValue 의 signature 와 1:1 호환 (Dispatch<SetStateAction<T>> ⊂ (v|fn)=>void).
+  // [K] hostedProviders 는 Record<string, boolean> → Partial<Record<string,boolean>> 호환.
+  // [Studio 무한 루프 수리 — 2026-06-08] setAdvancedOutputMode 를 useCallback 으로 안정화.
+  // useMemo 내부 inline 화살표 함수는 매 호출마다 새 reference 생성 → writingCtx churn 위험.
+  const setAdvancedOutputMode = useCallback((m: string) => {
+    setAdvancedSettings((prev) => ({ ...prev, outputMode: m as typeof prev.outputMode }));
+  }, [setAdvancedSettings]);
+
+  const writingCtx = useMemo<WritingContextValue | null>(() => {
+    if (!currentSession) return null;
+    return {
+      // 식별 / 세션
+      language,
+      currentSession,
+      currentSessionId,
+      updateCurrentSession,
+      setConfig,
+      // Writing mode + draft
+      writingMode,
+      setWritingMode,
+      editDraft,
+      setEditDraft,
+      editDraftRef,
+      // Canvas / Prompt
+      canvasContent,
+      setCanvasContent,
+      canvasPass,
+      setCanvasPass,
+      promptDirective,
+      // AI 호출
+      isGenerating,
+      lastReport,
+      handleSend: doHandleSend,
+      handleCancel,
+      handleRegenerate,
+      handleVersionSwitch,
+      handleTypoFix,
+      directorReport,
+      hfcpState,
+      handleNextEpisode,
+      // 입력 / 검색 / 필터
+      input,
+      setInput,
+      searchQuery,
+      filteredMessages,
+      messagesEndRef,
+      // API 접근
+      hasApiKey: hasAiAccess,
+      setShowApiKeyModal,
+      showAiLock,
+      hostedProviders,
+      // 고급 설정
+      advancedSettings,
+      setAdvancedSettings,
+      advancedOutputMode: advancedSettings.outputMode,
+      setAdvancedOutputMode,
+      // 레이아웃 / 패널
+      showDashboard,
+      rightPanelOpen,
+      setRightPanelOpen,
+      writingColumnShell,
+      // 외부 patch
+      setActiveTab,
+      saveFlash,
+      triggerSave,
+      suggestions,
+      setSuggestions,
+      pipelineResult,
+    };
+  }, [
+    language, currentSession, currentSessionId, updateCurrentSession, setConfig,
+    writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef,
+    canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective,
+    isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate,
+    handleVersionSwitch, handleTypoFix, directorReport, hfcpState, handleNextEpisode,
+    input, setInput, searchQuery, filteredMessages, messagesEndRef,
+    hasAiAccess, setShowApiKeyModal, showAiLock, hostedProviders,
+    advancedSettings, setAdvancedSettings, setAdvancedOutputMode,
+    showDashboard, rightPanelOpen, setRightPanelOpen, writingColumnShell,
+    setActiveTab, saveFlash, triggerSave, suggestions, setSuggestions, pipelineResult,
+  ]);
+
   return (
     <main className={`flex-1 flex flex-col relative bg-bg-primary text-text-primary overflow-hidden${focusMode ? '' : ' pt-10'} ${focusMode ? '' : 'md:m-2 md:rounded-xl md:border md:border-border/40 md:shadow-[0_4px_32px_rgba(0,0,0,0.15)]'}`}>
       {/* 오프라인 배너 */}
@@ -540,6 +635,42 @@ export default function StudioMainContent({ children }: { children?: React.React
               </div>
             </div>
           ) : (
+              // [rank 11 — 2026-06-07] WritingProvider 는 currentSession 이 있을 때만 마운트.
+              // null 분기에서는 그냥 StudioTabRouter 만 — useWriting() 은 writing 탭 안에서만 호출되므로 안전.
+              writingCtx ? (
+                <WritingProvider value={writingCtx}>
+                  <StudioTabRouter
+                    activeTab={activeTab} language={language} currentSession={currentSession}
+                    currentSessionId={currentSessionId} config={currentSession?.config || null}
+                    setConfig={setConfig} updateCurrentSession={updateCurrentSession}
+                    triggerSave={triggerSave} saveFlash={saveFlash} hostedProviders={hostedProviders}
+                    showAiLock={showAiLock} setActiveTab={setActiveTab} charSubTab={charSubTab}
+                    setCharSubTab={setCharSubTab} setUxError={setUxError} clearAllSessions={clearAllSessions}
+                    setShowApiKeyModal={setShowApiKeyModal} versionedBackups={versionedBackups}
+                    doRestoreVersionedBackup={doRestoreVersionedBackup} refreshBackupList={refreshBackupList}
+                    writingMode={writingMode} setWritingMode={setWritingMode} editDraft={editDraft}
+                    setEditDraft={setEditDraft} editDraftRef={editDraftRef} canvasContent={canvasContent}
+                    setCanvasContent={setCanvasContent} canvasPass={canvasPass} setCanvasPass={setCanvasPass}
+                    promptDirective={promptDirective} setPromptDirective={setPromptDirective}
+                    isGenerating={isGenerating} lastReport={lastReport} doHandleSend={doHandleSend}
+                    handleCancel={handleCancel} handleRegenerate={handleRegenerate} handleVersionSwitch={handleVersionSwitch}
+                    handleTypoFix={handleTypoFix} messagesEndRef={messagesEndRef} searchQuery={searchQuery}
+                    filteredMessages={filteredMessages} hasAiAccess={hasAiAccess} advancedSettings={advancedSettings}
+                    setAdvancedSettings={setAdvancedSettings} showDashboard={showDashboard}
+                    rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
+                    directorReport={directorReport} hfcpState={hfcpState} handleNextEpisode={handleNextEpisode}
+                    writingColumnShell={writingColumnShell} input={input} setInput={setInput}
+                    archiveScope={archiveScope} setArchiveScope={setArchiveScope} archiveFilter={archiveFilter}
+                    setArchiveFilter={setArchiveFilter} projects={projects} sessions={sessions}
+                    currentProject={currentProject} currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId}
+                    setCurrentSessionId={setCurrentSessionId} startRename={startRename}
+                    renamingSessionId={renamingSessionId} setRenamingSessionId={setRenamingSessionId}
+                    renameValue={renameValue} setRenameValue={setRenameValue} confirmRename={confirmRename}
+                    moveSessionToProject={moveSessionToProject} handlePrint={handlePrint} deleteSession={deleteSession}
+                    suggestions={suggestions} setSuggestions={setSuggestions} pipelineResult={pipelineResult}
+                  />
+                </WritingProvider>
+              ) : (
               <StudioTabRouter
                 activeTab={activeTab} language={language} currentSession={currentSession}
                 currentSessionId={currentSessionId} config={currentSession?.config || null}
@@ -570,11 +701,18 @@ export default function StudioMainContent({ children }: { children?: React.React
                 moveSessionToProject={moveSessionToProject} handlePrint={handlePrint} deleteSession={deleteSession}
                 suggestions={suggestions} setSuggestions={setSuggestions} pipelineResult={pipelineResult}
               />
+              )
           )}
         </div>
 
         {showDashboard && activeTab === 'writing' && currentSession && !showAiLock && (
           <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
+        )}
+
+        {/* [Batch 3 rank 5 — 2026-06-07] WriterToolbox 18 모듈 사이드바.
+            ACTION_CATALOG 'studio:toolbox-open' 토글. writing 탭 + Provider 있을 때만 노출. */}
+        {showToolbox && activeTab === 'writing' && currentSession && !showAiLock && (
+          <WriterToolbox manuscript={editDraft} onClose={() => setShowToolbox(false)} />
         )}
 
         {/* Right panel slots (injected from parent) */}

@@ -23,6 +23,15 @@ import { getGenreSystemPrompt, type PromptLang } from './genre-prompts';
 // 호출 측은 buildAgentBaseStudioPrompt() 를 통해 레지스트리 base prompt 추출 가능.
 import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
 import { toAgentLang } from '@/lib/ai/lang-normalize';
+// [N1-noa-identity — 2026-06-11] 단일 노아 화자 정본 — studio-constants.SYSTEM_INSTRUCTION
+// 와 2벌이던 화자 2줄·ENGINE LOGIC·OUTPUT RULES 를 noa-identity 로 단일화하고,
+// 모든 생성 경로(레거시/레지스트리)의 시스템 프롬프트 최상단에 노아 헤더를 주입한다.
+import {
+  buildNoaSystemHeader,
+  NOA_ENGINE_PREAMBLE,
+  NOA_ENGINE_LOGIC,
+  buildNoaOutputRules,
+} from '@/lib/ai/noa-identity';
 export { buildPublishPlatformBlock, buildPrismBlock, buildPrismModeBlock };
 
 // ============================================================
@@ -175,31 +184,31 @@ function pickLang(language: AppLanguage, dict: Partial<Record<AppLanguage, strin
 
 const ACT_GUIDELINES: Record<number, Record<AppLanguage, string>> = {
   1: {
-    KO: '도입부입니다. 세계와 인물을 자연스럽게 소개하고, 일상→균열의 흐름을 만드세요. 정보를 서사에 녹이세요.',
+    KO: '도입부입니다. 세계와 인물을 자연스럽게 소개하고, 일상→균열의 흐름을 만드십시오. 정보를 서사에 녹이십시오.',
     EN: 'This is the setup. Introduce the world and characters naturally. Create a flow from normalcy to disruption. Weave exposition into narrative.',
     JP: '導入部です。世界と人物を自然に紹介し、日常→亀裂の流れを作ってください。情報を物語に溶け込ませてください。',
     CN: '这是开篇。自然地介绍世界和人物，创造从日常到裂变的流程。将信息融入叙事中。',
   },
   2: {
-    KO: '상승 구간입니다. 갈등을 심화시키고, 캐릭터에게 선택을 강요하세요. 서브플롯을 엮으세요.',
+    KO: '상승 구간입니다. 갈등을 심화시키고, 캐릭터에게 선택을 강요하십시오. 서브플롯을 엮으십시오.',
     EN: 'Rising action. Deepen conflicts, force characters into choices. Weave in subplots.',
     JP: '上昇局面です。葛藤を深め、キャラクターに選択を迫ってください。サブプロットを織り込んでください。',
     CN: '上升阶段。深化冲突，迫使角色做出选择。编织副线情节。',
   },
   3: {
-    KO: '중반 전환점입니다. 반전이나 정보 공개로 이야기의 방향을 틀어주세요. 독자의 기대를 배신하세요.',
+    KO: '중반 전환점입니다. 반전이나 정보 공개로 이야기의 방향을 틀어 주십시오. 독자의 기대를 배신하십시오.',
     EN: 'Midpoint pivot. Use a twist or revelation to shift the story direction. Subvert reader expectations.',
     JP: '中盤の転換点です。反転や情報公開で物語の方向を変えてください。読者の期待を裏切ってください。',
     CN: '中段转折点。用反转或信息揭露改变故事方向。颠覆读者期待。',
   },
   4: {
-    KO: '하강/위기 구간입니다. 상황을 최악으로 몰아가세요. 캐릭터의 내면 갈등이 외부 갈등과 충돌해야 합니다.',
+    KO: '하강/위기 구간입니다. 상황을 최악으로 몰아가십시오. 캐릭터의 내면 갈등이 외부 갈등과 충돌해야 합니다.',
     EN: 'Falling action / crisis. Push things to their worst. Internal conflicts must collide with external ones.',
     JP: '下降・危機局面です。状況を最悪に追い込んでください。キャラクターの内面の葛藤が外部の葛藤と衝突しなければなりません。',
     CN: '下降/危机阶段。将局势推向最坏。角色的内心冲突必须与外部冲突碰撞。',
   },
   5: {
-    KO: '절정입니다. 모든 실마리를 수렴시키고, 캐릭터의 최종 선택을 묘사하세요. 감정의 밀도를 극대화하세요.',
+    KO: '절정입니다. 모든 실마리를 수렴시키고, 캐릭터의 최종 선택을 묘사하십시오. 감정의 밀도를 극대화하십시오.',
     EN: 'Climax. Converge all threads. Depict the character\'s ultimate choice. Maximize emotional density.',
     JP: 'クライマックスです。すべての伏線を収束させ、キャラクターの最終選択を描いてください。感情の密度を最大化してください。',
     CN: '高潮部分。收束所有线索，描绘角色的最终选择。将情感密度最大化。',
@@ -1113,6 +1122,10 @@ ${gpEpLenLabel}: ${gp.episodeLength.min.toLocaleString()}~${gp.episodeLength.max
   }
 
   // Style DNA injection
+  // [I-10 라우팅 — 2026-06-10] useAgentRegistry 경로에서는 inline 보간 대신
+  // buildAgentBaseStudioPrompt 의 'style-dna' contextBlock 으로 전달 —
+  // M-07 CONTEXT_BLOCK_TRIM_ORDER 토큰 절삭 대상이 된다 (CRITICAL 최후순위 — 사실상 항상 유지).
+  // 레거시 경로(options 미지정 — pipeline.test 30+)는 기존 inline 출력 그대로 (회귀 0).
   const styleDnaBlock = buildStyleDNA(config.styleProfile, language);
 
   // NOA-PRISM v1.1 injection
@@ -1152,16 +1165,11 @@ ${gpEpLenLabel}: ${gp.episodeLength.min.toLocaleString()}~${gp.episodeLength.max
   // EH v1.4 rules injection
   const ehRules = buildEHRules(ruleLevel, language);
 
-  const systemPromptText = `당신은 "NOA 소설 스튜디오"의 핵심 엔진 [ANS 10.0]입니다.
-당신은 'Project EH'의 세계관 물리 법칙을 준수하며 작가와 협업하여 소설을 집필합니다.
+  const systemPromptText = `${NOA_ENGINE_PREAMBLE}
 
 [ENGINE VERSION: ANS 10.0 — Nexus Controller Pipeline]
 
-[ENGINE LOGIC: PROJECT EH CORE DEVICES]
-1. 데이터 동기화 (QFR): 소환/이동은 물리적 복제입니다. 렌더링 지연이나 데이터 손상을 서사의 긴장감으로 활용하십시오.
-2. 인과율 금융 (CRL): 마법은 세계의 법칙을 시스템으로부터 '대출'받는 행위입니다. 남용 시 영혼의 신용 등급(EH)이 하락하며 파멸에 이릅니다.
-3. 개체 최적화 (HPP): 레벨업은 시스템의 '자산 가치 업데이트'입니다. 과도한 오버클럭은 데이터 과부하 부작용을 일으킵니다.
-4. 최종 정산 (Audit): 죽음은 '회계적 제명'이자 '부실 자산 상각'입니다. 존재 근거가 지워지는 소멸로 묘사하십시오.
+${NOA_ENGINE_LOGIC}
 
 [CURRENT NARRATIVE POSITION]
 - Episode: ${config.episode} / ${totalEpisodes}
@@ -1185,7 +1193,7 @@ ${simulatorBlock}
 ${worldTierBlock}
 ${itemsBlock}${skillsBlock}${magicSystemsBlock}${grammarPackBlock}${shadowBlock}
 ${subGenreBlock}
-${styleDnaBlock}
+${options.useAgentRegistry ? '' : styleDnaBlock}
 ${prismBlock}
 ${prismModeBlock}
 ${langPackBlock}
@@ -1225,18 +1233,7 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
 6. ${t('pipeline.formattingRule6')}
 7. ${t('pipeline.formattingRule7')}
 
-[OUTPUT RULES]
-- 반드시 유저가 선택한 [Target Language: ${LANG_NAMES[language]}]를 엄격히 준수하십시오.
-- 서사는 4개의 파트로 나누어 출력하되, 문장마다 공학적 연산을 거쳐 치환된 독자용 언어로 묘사하십시오.
-- 마지막에 반드시 아래 형식의 분석 리포트를 JSON으로 포함하십시오:
-\`\`\`json
-{
-  "grade": "S~F",
-  "metrics": { "tension": 0-100, "pacing": 0-100, "immersion": 0-100 },
-  "active_eh_layer": "가동된 EH 핵심 장치명",
-  "critique": "해당 언어로 작성된 상세 비평"
-}
-\`\`\``;
+${buildNoaOutputRules(LANG_NAMES[language])}`;
 
   // M5 — Genre Translation Layer: 장르 모드 프롬프트 추가분을 기존 프롬프트 뒤에 append.
   // novel 모드는 빈 문자열이므로 no-op; webtoon/drama/game만 포맷 지시 블록을 붙인다.
@@ -1247,7 +1244,10 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
     config.genreMode ?? 'novel',
     appLangToPromptLang[language] ?? 'ko',
   );
-  const finalSystemPrompt = systemPromptText + genreAddendum;
+  // [N1-noa-identity] 단일 노아 화자 헤더 — 두 return 경로(레거시/레지스트리)
+  // 모두 시스템 프롬프트 "최상단"에 위치해야 하므로 여기서 만들고 반환 직전에 prepend.
+  const noaHeader = buildNoaSystemHeader();
+  const finalSystemPrompt = noaHeader + '\n\n' + systemPromptText + genreAddendum;
 
   // 토큰 버짓 감사 — CJK/영문 혼합 추정 + 클라이언트/서버 양쪽 지원
   const sysLen = finalSystemPrompt.length;
@@ -1286,8 +1286,15 @@ ${config.narrativeIntensity === 'iron' ? `[NARRATIVE INTENSITY: IRON — 서사 
 
   // [I-02 본문 마이그레이션 — 2026-05-10] 레지스트리 base prepend (옵션).
   // 가드 중복은 호출 측 buildSparkSystemPrompt 가 자동 dedup.
+  // [I-10 라우팅 — 2026-06-10] style-dna 는 위 systemPromptText 분기에서 inline 제거 후
+  // 여기 contextBlock 으로 단일 주입 (내용 동일·위치만 registry base 로 이동·중복 0).
+  // act-guide/tension-curve 는 [ACT-SPECIFIC DIRECTIVE]/[CURRENT NARRATIVE POSITION] 등
+  // 레거시 본문 구조에 얽혀 있어 본 phase 미이동 (registry contextBlocks 정의에는 등록 완료).
   if (options.useAgentRegistry) {
-    return buildAgentBaseStudioPrompt(language) + '\n\n' + finalSystemPrompt;
+    // [N1-noa-identity] 노아 헤더가 registry base 보다 먼저 — 화자 선언이 항상 프롬프트 1순위.
+    return noaHeader + '\n\n'
+      + buildAgentBaseStudioPrompt(language, { styleDna: styleDnaBlock })
+      + '\n\n' + systemPromptText + genreAddendum;
   }
   return finalSystemPrompt;
 }

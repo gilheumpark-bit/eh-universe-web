@@ -29,6 +29,9 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  // [2026-06-06] 데스크톱(Electron) standalone 패키징용. env gate라 Vercel/기본 빌드 무영향.
+  // BUILD_STANDALONE=true 시에만 .next/standalone/server.js(self-contained) 생성 → electron-builder 동봉.
+  output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
   // [M-04 — 2026-05-10] production 빌드 시 console.log/info/debug 자동 제거.
   // error / warn 은 유지 — 실제 사용자 환경의 의도된 진단 정보 (logger 와 별개로 fallback).
   // 의도된 사용자 노출 메시지는 logger.* 또는 setStatusMsg 로 통일.
@@ -82,6 +85,12 @@ const nextConfig: NextConfig = {
     // ─── [W4] connect-src — AI providers + Firebase + Vercel + Sentry (env 확장 허용) ───
     const connectSrcBase = [
       "'self'",
+      // 로컬 AI (Ollama·vLLM·LM Studio·llama.cpp) — 데스크톱/자체호스팅 로컬 추론.
+      // https 웹 배포에선 mixed-content로 http://localhost 가 브라우저 차단되므로 신규 표면 없음.
+      // 데스크톱(http)에선 로컬-AI-우선 설계 동작. LAN/DGX IP 는 CSP_EXTRA_CONNECT_SRC env 로 추가.
+      'http://localhost:*', 'https://localhost:*',
+      'http://127.0.0.1:*', 'https://127.0.0.1:*',
+      'ws://localhost:*', 'ws://127.0.0.1:*',
       // AI providers
       'https://generativelanguage.googleapis.com',
       'https://api.openai.com',
@@ -128,9 +137,13 @@ const nextConfig: NextConfig = {
     const extraImg = (process.env.CSP_EXTRA_IMG_SRC ?? '').split(/[\s,]+/).filter(Boolean);
     const imgSrc = [...imgSrcBase, ...extraImg].join(' ');
 
-    const cspBase = [
+    // dev 편의: webpack/React dev 는 eval() 을 요구 (HMR·eval-source-map·React 디버그 콜스택).
+    // 엄격 CSP 가 이를 막으면 dev 에서 /studio(dynamic ssr:false) 백지 + 홈 히어로 미렌더 + 전 페이지 콘솔 에러.
+    // 프로덕션은 eval 불필요 → 그대로 제거 (XSS 표면 축소). img-src `https:` dev-relax 와 동일 패턴.
+    const devEval = process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : '';
+    const cspBaseRaw = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live",
+      `script-src 'self' 'unsafe-inline'${devEval} https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       `img-src ${imgSrc}`,
       "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
@@ -140,12 +153,20 @@ const nextConfig: NextConfig = {
       "object-src 'none'",
       "base-uri 'self'",
     ].join('; ');
+    // 결정적 로컬 AI 허용 — Turbopack 캐시/quirk 로 connectSrcBase 에서 localhost 가 누락되어도 강제 보장.
+    // (Ollama/vLLM/LM Studio 데스크톱 직결. https 웹은 mixed-content 로 브라우저가 별도 차단.)
+    const LOCAL_AI = "http://localhost:* https://localhost:* http://127.0.0.1:* https://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*";
+    const cspBase = cspBaseRaw.includes('http://localhost:*')
+      ? cspBaseRaw
+      : cspBaseRaw.replace(/(connect-src 'self')/, `$1 ${LOCAL_AI}`);
     // code-studio 전용 CSP — webcontainer 지원 위해 unsafe-eval 허용.
     // localhost:* frame-src 는 개발 환경에서만 허용 (프로덕션은 제거 — XSS/클릭재킹 표면 축소).
     const allowLocalhostFrame = process.env.NODE_ENV !== 'production';
     const cspCodeStudio = cspBase
-      .replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-      .replace("connect-src 'self'", "connect-src 'self' https://*.webcontainer.io wss://*.webcontainer.io")
+      // dev 에선 cspBase 에 이미 'unsafe-eval' 이 있으므로 중복 추가 방지 (negative lookahead)
+      .replace(/script-src 'self' 'unsafe-inline'(?! 'unsafe-eval')/, "script-src 'self' 'unsafe-inline' 'unsafe-eval'")
+      // connect-src 'self' 다음에 LOCAL_AI 가 이미 있을 수 있으므로 첫 'self' 직후에 webcontainer 추가
+      .replace(/(connect-src 'self')([^;]*)/, `$1$2 https://*.webcontainer.io wss://*.webcontainer.io`)
       .replace(
         "frame-src 'self'",
         `frame-src 'self' https://*.webcontainer.io https://*.webcontainer.app${allowLocalhostFrame ? ' http://localhost:*' : ''}`

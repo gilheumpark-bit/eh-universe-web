@@ -5,6 +5,8 @@ import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { generateJsonGemini } from '@/services/aiProvidersStructured';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, wrapStreamWithIpAudit } from '@/lib/noa/server-gate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,6 +75,21 @@ export async function POST(req: NextRequest) {
       if (!verified) {
         return NextResponse.json({ error: 'Authentication required for hosted credits (6-9 Gemini calls per request)' }, { status: 401 });
       }
+    }
+
+    // [N2] NOA 서버 게이트 — 입력 판정 (AI 호출 전 차단·비용 절약 — 본 라우트는 6-9회 Gemini 호출).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const prismGrade = typeof body?.prismMode === 'string' ? body.prismMode : undefined;
+    const gate = await applyNoaGate({
+      prompt,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : 'general', // 등급 미전달 시 기본: 코드 작업 프롬프트 — general 가중
+      sourceTier: clientApiKey ? 1 : 2,
+      route: '/api/code/autopilot',
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
     }
 
     const encoder = new TextEncoder();
@@ -281,7 +298,9 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return new NextResponse(stream, {
+    // [N2] 출력 IP 검사 — SSE 청크 누적 후 완료 시점 검사. 검출 시 noa.ipNotice 이벤트 1개 +
+    // warn 로그 (chat 라우트와 동일 패턴 — 기존 SSE 파서는 type 없는 이벤트를 안전하게 무시).
+    return new NextResponse(wrapStreamWithIpAudit(stream, { route: '/api/code/autopilot', ip }), {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',

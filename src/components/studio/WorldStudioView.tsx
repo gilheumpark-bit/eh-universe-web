@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useState, useCallback } from 'react';
-import { Compass, Cpu, Search, Clock, Map, X, Check, Globe, MapPin, Wand2 } from 'lucide-react';
+import { Compass, Cpu, Search, Clock, Map, X, Check, Globe, MapPin, Wand2, Sparkles, ChevronDown, Network } from 'lucide-react';
 import type { AppLanguage, WorldSubTab, StoryConfig } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
 import PlanningView from './PlanningView';
@@ -15,6 +15,8 @@ import WorldAnalysisView from './WorldAnalysisView';
 import WorldTimeline from './WorldTimeline';
 import WorldMap from './WorldMap';
 import { EmptyState } from '@/components/ui/EmptyState';
+import WorldFactChatFill from './world/WorldFactChatFill';
+import WorldGraphEditor from './world/WorldGraphEditor';
 
 // WorldSimulator uses dynamic import to avoid circular deps
 import dynamic from 'next/dynamic';
@@ -82,6 +84,8 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
 }) => {
   const [subTab, setSubTab] = useState<WorldSubTab>('design');
   const [selectedEra, setSelectedEra] = useState<string | null>(null);
+  const [showChatFill, setShowChatFill] = useState(false);
+  const [showGraphEditor, setShowGraphEditor] = useState(false);
   const t = createT(language);
   const labels = SUB_TABS[language];
 
@@ -154,6 +158,43 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               </div>
             </div>
           )}
+
+          {/* [2026-06-06 worldgraph Phase 1] 채팅 → AI가 WorldFact 양식 채움 → 사람 검토·커밋 */}
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowChatFill((v) => !v)}
+              aria-expanded={showChatFill}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent-amber/40 bg-bg-secondary/60 px-4 text-sm font-semibold text-accent-amber transition-colors hover:bg-accent-amber/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              <Sparkles className="h-4 w-4" aria-hidden /> 채팅으로 세계관 fact 만들기
+              <ChevronDown className={`h-4 w-4 transition-transform ${showChatFill ? 'rotate-180' : ''}`} aria-hidden />
+            </button>
+            {showChatFill && (
+              <div className="pt-3">
+                <WorldFactChatFill workId={config.title || undefined} />
+              </div>
+            )}
+          </div>
+
+          {/* [Batch 3 rank 3 — 2026-06-07] worldgraph 인터랙티브 그래프 에디터 */}
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowGraphEditor((v) => !v)}
+              aria-expanded={showGraphEditor}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent-amber/40 bg-bg-secondary/60 px-4 text-sm font-semibold text-accent-amber transition-colors hover:bg-accent-amber/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+              data-testid="worldgraph-toggle"
+            >
+              <Network className="h-4 w-4" aria-hidden /> 세계관 그래프 에디터
+              <ChevronDown className={`h-4 w-4 transition-transform ${showGraphEditor ? 'rotate-180' : ''}`} aria-hidden />
+            </button>
+            {showGraphEditor && (
+              <div className="pt-3">
+                <WorldGraphEditor workId={config.title || undefined} />
+              </div>
+            )}
+          </div>
 
           {/* Empty state — 제목/시놉시스 미입력 시 공용 EmptyState 패널로 안내 */}
           {!config.title && !config.synopsis && (

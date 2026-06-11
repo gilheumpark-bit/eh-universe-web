@@ -15,8 +15,11 @@ import { logger } from '@/lib/logger';
 import {
   User, Shield, Trash2, Settings,
   ChevronRight, ChevronDown, Zap, Bell, BookOpen, Sparkles, Eye,
-  Sun, Moon, Languages, Type, Code2, FlaskConical, Bug,
+  Sun, Moon, Languages, Type, Code2, FlaskConical, Bug, MonitorDown,
 } from 'lucide-react';
+// [Z1c-mid-ports] PWA 설치 — 기존 lib/web-features/pwa-install 재사용.
+// 전역 initInstallPrompt() 는 WebFeaturesInit(layout)이 이미 실행 — 여기는 표면 UI만.
+import { canInstall, isInstalled, showInstallPrompt, onInstallStateChange } from '@/lib/web-features/pwa-install';
 import dynamic from 'next/dynamic';
 import { useUnifiedSettings } from '@/lib/UnifiedSettingsContext';
 import { useUserRoleSafe } from '@/contexts/UserRoleContext';
@@ -269,9 +272,92 @@ function EasyTab({ language }: { language: AppLanguage }) {
         <FontSizeSection language={language} />
       </AccordionGroup>
 
+      {/* [Z1c-mid-ports] 앱 설치 (PWA) — capability 미지원 브라우저는 섹션 통째 미렌더 */}
+      <InstallAppSection language={language} />
+
       {/* 세션 타이머 (F1) */}
       <SessionSection language={language} />
     </div>
+  );
+}
+
+// ============================================================
+// PART 3.5 — [Z1c-mid-ports] 앱 설치 (PWA) 섹션
+// ============================================================
+// 기존 lib/web-features/pwa-install 재사용 (전역 initInstallPrompt 는 WebFeaturesInit
+// 가 layout 에서 이미 실행 — 여기는 표면 UI만). capability 감지:
+//   - beforeinstallprompt 미발화 + 미설치 → 통째 미렌더 (미지원 브라우저 무동작)
+//   - standalone 실행 중 → "설치됨" 상태 표시만 (버튼 X)
+// 설치 강제·자동 프롬프트 없음 — 사용자가 버튼을 눌러야만 showInstallPrompt.
+
+function InstallAppSection({ language }: { language: AppLanguage }) {
+  // lazy init 1회 감지 (isInstalled/canInstall 은 SSR 안전 가드 내장 — SettingsView 는
+  // dynamic ssr:false mount 라 hydration 불일치 없음). 이후 변화는 이벤트 구독으로만 갱신.
+  const [state, setState] = useState<'unavailable' | 'installable' | 'installed'>(() =>
+    isInstalled() ? 'installed' : canInstall() ? 'installable' : 'unavailable',
+  );
+  const [outcome, setOutcome] = useState<'accepted' | 'dismissed' | null>(null);
+
+  useEffect(() => {
+    const compute = () =>
+      setState(isInstalled() ? 'installed' : canInstall() ? 'installable' : 'unavailable');
+    // mount 이후 도착하는 beforeinstallprompt 흡수 — preventDefault/보관은 전역 init 담당,
+    // 여기는 상태 재계산 플래그만 (이중 보관 없음).
+    const onBip = () => compute();
+    window.addEventListener('beforeinstallprompt', onBip);
+    const offChange = onInstallStateChange((installed) =>
+      setState(installed ? 'installed' : canInstall() ? 'installable' : 'unavailable'),
+    );
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBip);
+      offChange();
+    };
+  }, []);
+
+  // 미지원 + 결과 표시할 것도 없음 → 무동작 (렌더 0)
+  if (state === 'unavailable' && !outcome) return null;
+
+  return (
+    <AccordionGroup
+      icon={<MonitorDown className="w-4 h-4 text-accent-green shrink-0" />}
+      title={L4(language, { ko: '앱 설치', en: 'Install App', ja: 'アプリのインストール', zh: '安装应用' })}
+    >
+      <SettingCard
+        icon={<MonitorDown className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" />}
+        title={
+          state === 'installed'
+            ? L4(language, { ko: '설치됨 — 앱 모드 실행 중', en: 'Installed — running in app mode', ja: 'インストール済み — アプリモードで実行中', zh: '已安装 — 正以应用模式运行' })
+            : L4(language, { ko: '로어가드를 앱으로 설치 (PWA)', en: 'Install Loreguard as an app (PWA)', ja: 'ロアガードをアプリとしてインストール (PWA)', zh: '将 Loreguard 安装为应用 (PWA)' })
+        }
+        description={
+          state === 'installed'
+            ? undefined
+            : L4(language, { ko: '브라우저의 설치 프롬프트를 띄웁니다 — 강제 설치 없음', en: 'Opens the browser install prompt — never forced', ja: 'ブラウザのインストールプロンプトを表示 — 強制なし', zh: '弹出浏览器安装提示 — 不强制' })
+        }
+      >
+        {state === 'installable' && (
+          <button
+            type="button"
+            onClick={() => {
+              void showInstallPrompt().then((result) => {
+                if (result !== 'unavailable') setOutcome(result);
+                setState(isInstalled() ? 'installed' : canInstall() ? 'installable' : 'unavailable');
+              });
+            }}
+            className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-accent-blue text-white hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+          >
+            {L4(language, { ko: '설치', en: 'Install', ja: 'インストール', zh: '安装' })}
+          </button>
+        )}
+      </SettingCard>
+      {outcome && state !== 'installed' && (
+        <p className="text-[12px] text-text-tertiary px-1" role="status">
+          {outcome === 'accepted'
+            ? L4(language, { ko: '설치를 수락했습니다 — 브라우저가 설치를 마무리합니다.', en: 'Install accepted — the browser is finishing the installation.', ja: 'インストールを承認しました — ブラウザが処理を完了します。', zh: '已接受安装 — 浏览器正在完成安装。' })
+            : L4(language, { ko: '설치 프롬프트를 닫았습니다 — 언제든 다시 시도할 수 있습니다.', en: 'Install prompt dismissed — you can try again anytime.', ja: 'プロンプトを閉じました — いつでも再試行できます。', zh: '已关闭安装提示 — 可随时重试。' })}
+        </p>
+      )}
+    </AccordionGroup>
   );
 }
 

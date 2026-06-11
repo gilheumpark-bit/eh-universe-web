@@ -5,6 +5,8 @@
 // ============================================================
 
 import { logger } from '@/lib/logger';
+// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
+import { checkBlockedJson } from '@/lib/noa/block-notice';
 
 // ============================================================
 // PART 1 — Types
@@ -39,6 +41,17 @@ export interface PublishAuditReport {
     dialogueRatio: number;     // 0~1
   };
   overallScore: number;        // 0~100
+}
+
+/**
+ * [X4 — 품질 하네스] runPublishAudit additive 옵션 — 미지정 시 기존 동작과 동일.
+ * 하네스(quality-harness.ts)의 checks/weights 를 받는 통로.
+ */
+export interface PublishAuditOptions {
+  /** 활성 카테고리 — 미지정 또는 빈 배열이면 전체 카테고리 검사 (방어적 기본) */
+  enabledCategories?: AuditCategory[];
+  /** 카테고리별 penalty 배수 — 미지정 카테고리는 1. 음수/비정상 값은 1로 방어. */
+  categoryWeights?: Partial<Record<AuditCategory, number>>;
 }
 
 // ============================================================
@@ -256,20 +269,29 @@ function computeStats(text: string): PublishAuditReport['stats'] {
   };
 }
 
-function computeScore(findings: PublishAuditFinding[]): number {
+function computeScore(
+  findings: PublishAuditFinding[],
+  categoryWeights?: Partial<Record<AuditCategory, number>>,
+): number {
   let penalty = 0;
   for (const f of findings) {
-    if (f.severity === 'high') penalty += 12;
-    else if (f.severity === 'medium') penalty += 6;
-    else if (f.severity === 'low') penalty += 2;
+    let base = 0;
+    if (f.severity === 'high') base = 12;
+    else if (f.severity === 'medium') base = 6;
+    else if (f.severity === 'low') base = 2;
+    // [X4] 카테고리 가중 — 미지정/비정상(음수·NaN·Infinity) 값은 1로 방어
+    const w = categoryWeights?.[f.category];
+    const weight = typeof w === 'number' && Number.isFinite(w) && w >= 0 ? w : 1;
+    penalty += base * weight;
   }
-  return Math.max(0, Math.min(100, 100 - penalty));
+  // 가중이 소수일 수 있으므로 반올림 (옵션 미지정 시 정수 연산 — 기존 결과와 동일)
+  return Math.max(0, Math.min(100, Math.round(100 - penalty)));
 }
 
 // ============================================================
 // PART 9 — Main: runPublishAudit
 // ============================================================
-export function runPublishAudit(text: string): PublishAuditReport {
+export function runPublishAudit(text: string, options?: PublishAuditOptions): PublishAuditReport {
   if (!text || text.trim().length === 0) {
     return {
       findings: [],
@@ -277,7 +299,7 @@ export function runPublishAudit(text: string): PublishAuditReport {
       overallScore: 0,
     };
   }
-  const findings: PublishAuditFinding[] = [
+  let findings: PublishAuditFinding[] = [
     ...checkDuplicatePunctuation(text),
     ...checkFullWidthMix(text),
     ...checkCommonSpelling(text),
@@ -285,10 +307,15 @@ export function runPublishAudit(text: string): PublishAuditReport {
     ...checkStructure(text),
     ...checkCompleteness(text),
   ];
+  // [X4 — 품질 하네스] 활성 카테고리 필터 — 빈 배열은 "필터 없음"으로 방어 (전 검사 비활성 사고 차단)
+  const enabled = options?.enabledCategories;
+  if (enabled && enabled.length > 0) {
+    findings = findings.filter((f) => enabled.includes(f.category));
+  }
   return {
     findings,
     stats: computeStats(text),
-    overallScore: computeScore(findings),
+    overallScore: computeScore(findings, options?.categoryWeights),
   };
 }
 
@@ -362,6 +389,8 @@ ${text.slice(0, 4000)}`;
     });
     if (!res.ok) return [];
     const data = await res.json();
+    // [N4] 차단 계약 수신 시 toast/카드 고지 후 빈 결과 (사일런트 차단 금지 — 고지는 발생)
+    if (checkBlockedJson(data, 'publish-audit')) return [];
     const raw = typeof data === 'string' ? data : JSON.stringify(data);
     const parsed = JSON.parse(raw);
     const items = Array.isArray(parsed?.corrections) ? parsed.corrections : [];

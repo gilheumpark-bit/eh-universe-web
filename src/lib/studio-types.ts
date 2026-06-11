@@ -1,4 +1,6 @@
 import { EngineReport, PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
+// [X4 — 품질 하네스] type-only import — 런타임 의존 0 (컴파일 시 소거)
+import type { QualityHarness } from './creative/quality-harness';
 
 export enum Genre {
   SF = "SF",
@@ -200,6 +202,20 @@ export interface WorldSimData {
   _latestUpdates?: string[];
 }
 
+// [Z2b — 2026-06-11] 세계관 연표 항목 (loreguard TabWorld 타임라인 서브뷰).
+// 구 셸 grep 결과: 연도 기반 연표 config 키 부재 (구 셸 WorldTimeline.tsx 는
+// worldSimData.civs/transitions "시대" 기반·연도·사건·인물 구조 없음) → additive 신설.
+// 미지정 시 기존 데이터 영향 0 (옵션 키 — 역호환).
+export interface WorldTimelineEntry {
+  id: string;
+  /** 연도/시점 표기 — 자유 서식 ("1024", "BC 300", "현 시점 3년 전"). 정렬은 선두 숫자 추출. */
+  year: string;
+  /** 사건 내용 */
+  event: string;
+  /** 관련 인물 이름 목록 — config.characters 와 이름 문자열로 느슨 연결 (id 강결합 X) */
+  people?: string[];
+}
+
 // World Simulator reference flags
 export interface SimulatorRef {
   worldConsistency?: boolean;
@@ -291,6 +307,13 @@ export interface StoryConfig {
   guardrails: PclGuardrails;
   characters: Character[];
   charRelations?: CharRelation[];
+  /** [X1-xyflow 2026-06-11] 관계도 노드 위치 (character.id → 캔버스 좌표).
+   *  TabCharacter "관계도" 뷰에서 드래그 시 디바운스 저장 (additive — 미지정 시 원형 자동 배치). */
+  charGraphLayout?: Record<string, { x: number; y: number }>;
+  /** [Z2b — 2026-06-11] 세계관 연표 (loreguard TabWorld 타임라인 서브뷰) — additive 신설.
+   *  구 셸 호환 grep 완료: 연도 기반 키 부재 → 신규 키. 구 셸 시대 기반 타임라인
+   *  (worldSimData.civs/transitions)과 별개·공존. */
+  worldTimeline?: WorldTimelineEntry[];
   platform: PlatformType;
   publishPlatform?: PublishPlatform;
   // 세계관 1단계 뼈대 (3-tier framework)
@@ -366,6 +389,8 @@ export interface StoryConfig {
     glossary: { source: string; target: string; context?: string; locked: boolean }[];
   };
   translatedManuscripts?: TranslatedManuscriptEntry[];
+  /** [X4] 프로젝트 맞춤 품질 하네스 — 출고 검수에 적용 (additive·재방문 시 load·setConfig 영속) */
+  qualityHarness?: QualityHarness;
 }
 
 /** 작가 수정 내역 (AI 초안 → 작가 수정) */
@@ -410,6 +435,15 @@ export interface TranslatedManuscriptEntry {
   band: number;                     // 사용된 band 값 (0.480~0.520)
   glossarySnapshot?: { source: string; target: string; locked: boolean }[];
   lastUpdate: number;
+  // [C-translate-panels 2026-06-10] 작가 sign-off (author-signoff.ts boolean 흐름) — 회차×언어 단위 영속.
+  // TabTranslate.persistTranslations 가 entry 를 새로 쓰면 (재번역·세그먼트 추가 확정) 이 필드는
+  // 의도적으로 초기화된다 — 내용 변경 = 재승인 필요. (30조건 검증기는 후속 — #14)
+  /** Faithful track (저작권 archive) 작가 승인 */
+  faithfulApproved?: boolean;
+  /** Market track (출판본) 작가 승인 */
+  marketApproved?: boolean;
+  /** 마지막 승인 시각 (Unix ms) */
+  approvedAt?: number;
 }
 
 // Episode scene sheet entry (per-scene row in the table)

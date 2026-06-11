@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports
 // ============================================================
-import { useState, useRef, useEffect, useCallback, useReducer } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { AppLanguage, AppTab, Project, WritingMode } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
@@ -16,13 +16,18 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MobileTabBar from '@/components/studio/MobileTabBar';
 import MobileDrawer from '@/components/studio/MobileDrawer';
 import MobileSketchImportBanner from '@/components/studio/MobileSketchImportBanner';
-import FirstVisitOnboarding from '@/components/studio/FirstVisitOnboarding';
 // [A.2 — 2026-05-08] 세션 스냅샷 + 마지막 작업 카드 — 인체공학 §"세션 간 복구"
 import { useSessionSnapshot } from '@/hooks/useSessionSnapshot';
 import { LastTaskCard } from '@/components/studio/LastTaskCard';
 // [A.3 — 2026-05-08] Cmd Palette — Ctrl+P 명령 진입점
 import { useCmdPalette } from '@/hooks/useCmdPalette';
 import { CmdPaletteOverlay } from '@/components/studio/CmdPaletteOverlay';
+// [Batch 1 rank 2 — 2026-06-07] action-registry 통합 — cmdRegister 분산 등록을
+// useRegisterActions hook 으로 일원화. ACTION_CATALOG 의 'studio:*' 액션만 노출.
+import { useRegisterActions } from '@/lib/actions/use-register-actions';
+// [풀점검 priority 4 — 2026-06-08] ADR-0003 SSOT — Ctrl+1~8 탭 전환을 keyboard-manager 로 이관.
+// useStudioKeyboard 의 legacy window.addEventListener 블록은 동일 키 중복 등록 차단을 위해 비활성.
+import { useKeyBinding } from '@/lib/keyboard/keyboard-manager';
 import { useProjectManager } from '@/hooks/useProjectManager';
 import { useAutoVersionSnapshot } from '@/hooks/useAutoVersionSnapshot';
 import { useCreativeProcessAutoTrigger } from '@/hooks/useCreativeProcessAutoTrigger';
@@ -43,6 +48,8 @@ import TokenBudgetToast from '@/components/studio/TokenBudgetToast';
 import ContextTrimmedToast from '@/components/studio/ContextTrimmedToast';
 // [M-05 호출 측 mount — 2026-05-10] PRISM 거절 감지 친화 메시지 토스트.
 import PrismRejectionToast from '@/components/studio/PrismRejectionToast';
+// [N4 mount — 2026-06-11] NOA 정책 차단 고지 카드 — 사일런트 차단 금지 (noa:block-notice 수신)
+import NoaBlockNoticeCard from '@/components/studio/NoaBlockNoticeCard';
 import { toAgentLang } from '@/lib/ai/lang-normalize';
 // [M-08 — 2026-05-10] localStorage / IndexedDB quota 자동 모니터 — critical 시 noa:alert 토스트.
 import { useStorageQuota } from '@/hooks/useStorageQuota';
@@ -60,6 +67,9 @@ import { useUnsavedWarning } from '@/components/studio/UXHelpers';
 import { getApiKey, getActiveProvider, hasStoredApiKey, hasDgxService as hasDgxServiceFn, setServerDgxCache, type ProviderId } from '@/lib/ai-providers';
 import dynamic from 'next/dynamic';
 // StudioSaveSlotPanel removed
+// [QC-outline-resize] 집필 우측 패널(.wr-panel) 드래그 리사이즈 핸들 — 자체 mount(children 분기).
+//   TabWriting(QB owner) 무수정: loreguard.css 의 var(--lg-rpanel-w) 를 이 컴포넌트가 주입한다.
+import { RightPanelResizer } from './StudioRightPanel';
 import { useStudioShellController } from './useStudioShellController';
 const OSDesktop = dynamic(() => import('@/components/studio/OSDesktop'), { ssr: false });
 const StudioMainContent = dynamic(() => import('./StudioMainContent'), { ssr: false });
@@ -68,6 +78,11 @@ const MobileStudioView = dynamic(() => import('@/components/studio/MobileStudioV
 const RenameDialog = dynamic(() => import('@/components/studio/RenameDialog'), { ssr: false });
 const MultiTabBanner = dynamic(() => import('@/components/studio/MultiTabBanner'), { ssr: false });
 const StudioMountProviders = dynamic(() => import('@/components/studio/StudioMountProviders'), { ssr: false });
+// [G2-recovery 2026-06-11] 새 6탭 셸용 복구 패리티 mount (MultiTabBanner fixed 오버레이 호스트).
+const RecoveryMounts = dynamic(() => import('@/components/loreguard/RecoveryMounts'), { ssr: false });
+// [Z1c-mid-ports] 메모 보드 slide-over — 'loreguard:open-memo' 수신 (발신 = 새 셸 검색 팔레트 Action).
+// 탭 무관 전역 패널이라 children 분기(셸 형제)에 mount — TabWriting mount 시 타 탭에서 이벤트 유실.
+const MemoPanel = dynamic(() => import('@/components/loreguard/MemoPanel'), { ssr: false });
 // [Phase A-1 — 2026-05-07] Novel IDE Launcher (FAB) — 5 Phase 신규 패널 통합 진입.
 const NovelIDELauncher = dynamic(() => import('@/components/studio/novel-ide/NovelIDELauncher').then((m) => m.NovelIDELauncher), { ssr: false });
 // [후속 A-1 — 2026-05-07] Format on Save 자동 wiring.
@@ -77,6 +92,12 @@ import { useNovelIDESettings } from '@/hooks/useNovelIDESettings';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useStudioMounts } from '@/hooks/useStudioMounts';
 import { useEnvironmentSanity } from '@/hooks/useEnvironmentSanity';
+// [rank 19 — 2026-06-07] ModalProvider + Bridge — 분산 modal useState 통합 1단계.
+// 우선 'studio:api-keys' / 'studio:save-slot' 두 modal 만 ModalProvider 로 이관.
+// (legacy showApiKeyModal/saveSlotModalOpen 은 Provider state 의 derived getter 로 교체.)
+// confirmState/moveModal/renameDialogOpen 은 follow-up 에서 점진 이관 — 회귀 위험 최소화.
+import { ModalProvider } from '@/lib/modals/modal-manager';
+const StudioModalBridge = dynamic(() => import('@/components/studio/StudioModalBridge'), { ssr: false });
 
 type HostedAiAvailability = Partial<Record<ProviderId, boolean>>;
 const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistral'];
@@ -84,9 +105,51 @@ const PROVIDER_IDS: ProviderId[] = ['gemini', 'openai', 'claude', 'groq', 'mistr
 // IDENTITY_SEAL: PART-1 | role=imports | inputs=none | outputs=types+hooks+components
 
 // ============================================================
+// PART 1.5 — [shell-flush — 2026-06-10] editDraft → manuscripts 단일 머지 헬퍼
+// ============================================================
+// Ctrl+S saveFlush(Step 2)와 pendingDraftRef flush가 이 함수 하나를 공유한다 —
+// 머지 코드 분기 금지 (S1 data-safety). 순수 함수: 입력 불변, 새 projects 배열 반환.
+// sid 세션을 전 프로젝트에서 탐색 (setSessions는 currentProjectId 한정이라 세션 이동/
+// 프로젝트 교차 케이스를 못 다룸 — flatMap 탐색이 안전한 superset).
+// 세션 미발견 시 입력 배열을 그대로 반환 — 호출부는 reference 비교로 no-op 판별.
+function mergeDraftIntoProjects(
+  currentProjects: Project[],
+  sid: string,
+  draft: string,
+  episodeOverride?: number,
+): Project[] {
+  const sess = currentProjects
+    .flatMap(p => p.sessions.map(s => ({ p, s })))
+    .find(x => x.s.id === sid);
+  if (!sess) return currentProjects;
+  // episodeOverride: pending flush가 "입력 당시" episode로 기록할 때 사용 (회차 전환 후에도 원래 자리).
+  const episode = episodeOverride ?? sess.s.config?.episode ?? 1;
+  const prevArr = sess.s.config.manuscripts ?? [];
+  const idx = prevArr.findIndex(m => m.episode === episode);
+  const title = sess.s.config.title || `Episode ${episode}`;
+  const now = Date.now();
+  const nextEntry = idx >= 0
+    ? { ...prevArr[idx], content: draft, charCount: draft.length, lastUpdate: now }
+    : { episode, title, content: draft, charCount: draft.length, lastUpdate: now };
+  const nextArr = idx >= 0
+    ? prevArr.map((m, i) => i === idx ? nextEntry : m)
+    : [...prevArr, nextEntry];
+  const nextSession = {
+    ...sess.s,
+    config: { ...sess.s.config, manuscripts: nextArr },
+    lastUpdate: now,
+  };
+  return currentProjects.map(p =>
+    p.id === sess.p.id
+      ? { ...p, sessions: p.sessions.map(s => s.id === sid ? nextSession : s), lastUpdate: now }
+      : p,
+  );
+}
+
+// ============================================================
 // PART 2 — State Management & Hooks
 // ============================================================
-export default function StudioShell() {
+export default function StudioShell({ children }: { children?: React.ReactNode } = {}) {
   const { lang } = useLang();
   const studioRouter = useRouter();
   const pathname = usePathname();
@@ -104,26 +167,18 @@ export default function StudioShell() {
   const sessionSnapshot = useSessionSnapshot(pathname ?? undefined);
 
   // [P0-1 — 2026-05-09 코드 실측 약점 보완] Cmd Palette 명령 등록.
-  // 기존: hook + overlay 만 mount 됐고 register() 호출 0 → 사용 불가.
-  // 수정: 8 핵심 명령 등록. handleTabChange (line ~767) 가 hoisting 안 되므로 ref 우회.
+  // [Batch 1 rank 2 — 2026-06-07] 분산 cmdRegister loop → useRegisterActions 로 통합.
+  // 이전: 인라인 8 항목 useEffect 등록 (라벨 하드코딩 · i18n 2언어).
+  // 이후: ACTION_CATALOG (KO/EN/JA/ZH 4언어) 의 source-of-truth + AI 액션 2종 추가.
+  // handleTabChangeRef + AI bindings 은 본문 후반에서 정의 (handleTabChange · handleSend ·
+  // setWritingMode 가 useStudioWritingMode/useStudioAI 호출 이후라 hoisting 불가).
   const cmdPalette = useCmdPalette();
-  const handleTabChangeRef = useRef<((tab: AppTab) => void) | null>(null);
-  // [R-01 fix — 2026-05-12] 이전엔 deps 에 cmdPalette 객체 통째 → useCmdPalette 가 매 렌더 새 객체 ref
-  // 반환 → deps churn → effect cleanup + re-register 무한 (Maximum update depth 156×). register 함수만
-  // 의존하도록 좁힘 — register 는 useCallback([]) 이라 stable.
-  const cmdRegister = cmdPalette.register;
-  useEffect(() => {
-    return cmdRegister([
-      { id: 'tab-world', label: language === 'KO' ? '세계관 (Ctrl+1)' : 'World (Ctrl+1)', shortcut: 'Ctrl+1', category: 'Navigation', action: () => handleTabChangeRef.current?.('world') },
-      { id: 'tab-characters', label: language === 'KO' ? '인물 (Ctrl+2)' : 'Characters (Ctrl+2)', shortcut: 'Ctrl+2', category: 'Navigation', action: () => handleTabChangeRef.current?.('characters') },
-      { id: 'tab-rulebook', label: language === 'KO' ? '룰북 (Ctrl+3)' : 'Rulebook (Ctrl+3)', shortcut: 'Ctrl+3', category: 'Navigation', action: () => handleTabChangeRef.current?.('rulebook') },
-      { id: 'tab-writing', label: language === 'KO' ? '집필 (Ctrl+4)' : 'Writing (Ctrl+4)', shortcut: 'Ctrl+4', category: 'Navigation', action: () => handleTabChangeRef.current?.('writing') },
-      { id: 'tab-style', label: language === 'KO' ? '문체 (Ctrl+5)' : 'Style (Ctrl+5)', shortcut: 'Ctrl+5', category: 'Navigation', action: () => handleTabChangeRef.current?.('style') },
-      { id: 'tab-manuscript', label: language === 'KO' ? '원고 (Ctrl+6)' : 'Manuscript (Ctrl+6)', shortcut: 'Ctrl+6', category: 'Navigation', action: () => handleTabChangeRef.current?.('manuscript') },
-      { id: 'tab-history', label: language === 'KO' ? '이력 (Ctrl+7)' : 'History (Ctrl+7)', shortcut: 'Ctrl+7', category: 'Navigation', action: () => handleTabChangeRef.current?.('history') },
-      { id: 'tab-settings', label: language === 'KO' ? '설정 (Ctrl+8)' : 'Settings (Ctrl+8)', shortcut: 'Ctrl+8', category: 'Navigation', action: () => handleTabChangeRef.current?.('settings') },
-    ]);
-  }, [cmdRegister, language]);
+  // [priority 9 — 2026-06-08] no-op fallback 으로 초기화. useRegisterActions 가 마운트 직후
+  // 발화할 수 있는 race 에서 .current?.() 의 optional chaining 외에 추가 안전망.
+  // bindings 객체 reference 는 변하지 않아 useMemo deps 영향 없음 (ref.current 만 mutate).
+  const handleTabChangeRef = useRef<(tab: AppTab) => void>(() => {});
+  const handleAiGenerateRef = useRef<() => void>(() => {});
+  const handleAiRefineRef = useRef<() => void>(() => {});
 
   // 모바일 감지 — 전체 PC UX 대신 경량 스케치 뷰로 교체
   // 사용자가 명시적으로 PC 뷰 강제 모드(?force=desktop)를 선택하면 우회 가능
@@ -134,6 +189,28 @@ export default function StudioShell() {
     const p = new URLSearchParams(window.location.search);
     setForceDesktop(p.get('force') === 'desktop' || localStorage.getItem('noa_force_desktop') === '1');
   }, []);
+
+  // [풀점검 priority 9 — 2026-06-08] ADR-0003 mitigation — Ctrl+P 가 브라우저 인쇄 대신
+  // Command Palette 를 연다는 안내를 첫 /studio 방문 시 1회만 노출.
+  // localStorage 'noa_studio_ctrl_p_warned' = '1' 후 재노출 안 함.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (localStorage.getItem('noa_studio_ctrl_p_warned') === '1') return;
+      const msg = language === 'KO'
+        ? 'Ctrl+P 는 명령 팔레트를 엽니다. 브라우저 인쇄는 Ctrl+Alt+P (Win) 또는 Cmd+Opt+P (Mac).'
+        : language === 'JP'
+          ? 'Ctrl+P はコマンドパレットを開きます。ブラウザ印刷は Ctrl+Alt+P / Cmd+Opt+P。'
+          : language === 'CN'
+            ? 'Ctrl+P 打开命令面板。浏览器打印请按 Ctrl+Alt+P / Cmd+Opt+P。'
+            : 'Ctrl+P opens Command Palette. For browser print use Ctrl+Alt+P (Win) or Cmd+Opt+P (Mac).';
+      // 최초 마운트에서 살짝 지연 — 다른 부팅 토스트와 충돌 회피
+      // [P15 루프3 — 2026-06-08] 동일 파일에 'const t = createT(...)' 존재 (line 327) → shadowing 회피 위해 의미 부여.
+      const warningTimeout = setTimeout(() => showAlert(msg), 1200);
+      localStorage.setItem('noa_studio_ctrl_p_warned', '1');
+      return () => clearTimeout(warningTimeout);
+    } catch { /* quota / SSR */ }
+  }, [language]);
 
   // ── [M1.5.1~M1.5.5] UI 마운트 훅 + Shadow 쓰기 + Primary Writer ──
   // FEATURE_JOURNAL_ENGINE 기본값 'shadow' (M9 P1-5 승격): legacy Primary + Shadow 병렬 관찰.
@@ -216,8 +293,16 @@ export default function StudioShell() {
   // [Track-D Phase 1 P0-5 Trigger 3 — 2026-05-07] HUMAN_REVISION 자동 누적.
   // useAutoVersionSnapshot 의 noa:version-snapshot-saved 이벤트 (5분 cooldown 보장) 에 piggyback.
   // 별도 hash 비교 로직 X — 이미 useAutoVersionSnapshot 이 charDelta>=300 검증.
+  // [S2 dedup gate — 2026-06-10] children(새 6탭 셸) 모드에서는 TabWriting PART 3.5 가
+  // 본문 인간 편집을 세밀 granularity(≥20자/800ms idle·IME-safe)로 직접 logHumanEdit 한다.
+  // 같은 편집이 이 listener 의 스냅샷 granularity(≥300자/5분·messages 포함 — AI 대화 증가분까지
+  // weight 1.0 HUMAN_REVISION 으로 오계상)로 또 찍히면 확인서 HCI 가 이중 계상·인플레이션.
+  // → 한 인간 편집 = 한 granularity 1회 원칙: children 모드에서 이 listener 미등록.
+  //   (useAutoVersionSnapshot 의 IndexedDB 백업 자체는 양 모드 계속 동작 — 기록 piggyback 만 분리.
+  //    구 셸(비-children)은 TabWriting 미마운트라 기존 경로 그대로 유지 — 회귀 0.)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (children) return;
     const handler = (ev: Event) => {
       const detail = (ev as CustomEvent<{ totalChars: number; delta: number }>).detail;
       if (!currentProjectId) return;
@@ -241,7 +326,7 @@ export default function StudioShell() {
     };
     window.addEventListener('noa:version-snapshot-saved', handler);
     return () => window.removeEventListener('noa:version-snapshot-saved', handler);
-  }, [currentProjectId]);
+  }, [currentProjectId, children]);
 
   const VALID_TABS: AppTab[] = ['world', 'writing', 'history', 'settings', 'characters', 'rulebook', 'style', 'manuscript', 'docs', 'visual'];
   const [activeTab, setActiveTabRaw] = useState<AppTab>(() => {
@@ -290,6 +375,9 @@ export default function StudioShell() {
   }, []);
   const [bannerDismissed, setBannerDismissed] = useState(true);
   const [showDashboard, setShowDashboard] = useState(false);
+  // [Batch 3 rank 5 — 2026-06-07] WriterToolbox 18 모듈 사이드바 토글 상태.
+  // ACTION_CATALOG 'studio:toolbox-open' 및 StudioMainContent 에서 소비.
+  const [showToolbox, setShowToolbox] = useState(false);
   const [hostedProviders, setHostedProviders] = useState<HostedAiAvailability>({});
   const [aiCapabilitiesLoaded, setAiCapabilitiesLoaded] = useState(false);
   const [dgxReady, setDgxReady] = useState(false);
@@ -408,7 +496,18 @@ export default function StudioShell() {
 
   const [alertToast, setAlertToast] = useState<{ message: string; variant: string } | null>(null);
   const { suggestions, setSuggestions } = useStudioShellController(currentSession || null, language);
-  const [pipelineResult, setPipelineResult] = useState<{ stages: import('@/lib/studio-types').PipelineStageResult[]; finalStatus: 'completed' | 'failed' | 'partial' | 'running' } | null>(null);
+  // [priority 3 — 2026-06-08] 명시적 호환 타입.
+  // useStudioAI 는 PipelineExecution 을 전달 (id/totalDuration 포함, finalStatus union 좁음).
+  // useStudioQuickStart 는 'running' 임시 상태 + stages-only 객체 전달.
+  // 양쪽 superset 으로 ShellPipelineSnapshot 타입 정의 → `as any` 캐스팅 제거.
+  type ShellPipelineSnapshot = {
+    id?: string;
+    stages: import('@/lib/studio-types').PipelineStageResult[];
+    totalDuration?: number;
+    finalStatus: 'completed' | 'failed' | 'partial' | 'running';
+    blockedAt?: string;
+  };
+  const [pipelineResult, setPipelineResult] = useState<ShellPipelineSnapshot | null>(null);
 
   useEffect(() => {
     // [C] cleanup: 언마운트 시 토스트 타이머 취소 (setState-on-unmount 방지)
@@ -576,13 +675,74 @@ export default function StudioShell() {
 
   }, [currentSession, currentSessionId, hydrated]);
 
+  // ── [shell-flush — 2026-06-10] debounce 대기 초안 보전 장치 ──
+  // 사실 관계: 아래 debounce effect의 cleanup은 clearTimeout만 수행 → unmount/세션·회차·탭
+  // 전환 시 마지막 <2초 입력이 머지되지 못하고 유실됐다 (S1 data-loss).
+  // pendingDraftRef = 타이머가 머지하려던 스냅샷 (sessionId·episode 동반 — 전환 후 flush해도
+  // "원래 자리"에 기록). flushPendingDraftRef = 즉시 머지 실행기 (render-time 재바인딩, 아래
+  // projectsRefForFlush 옆에서 주입 — effect/cleanup은 ref로만 호출해 stale closure 0).
+  const pendingDraftRef = useRef<{ editDraft: string; episode: number; sessionId: string } | null>(null);
+  const flushPendingDraftRef = useRef<() => boolean>(() => true);
+
+  // (4)(5) 세션/회차 전환 직전 flush — pending이 자기 sessionId·episode로 머지되므로 전환 뒤에
+  // 호출돼도 이전 자리에 정확히 기록된다. ⚠ debounce effect보다 먼저 정의 — 같은 commit에서
+  // debounce effect가 pending을 새 세션 스냅샷으로 덮기 전에 실행되어야 함 (effect 정의 순서 의존).
+  const prevDraftTargetRef = useRef<string | null>(null);
+  const episodeForFlush = currentSession?.config?.episode ?? null;
+  useEffect(() => {
+    const target = `${currentSessionId ?? ''}::${episodeForFlush ?? ''}`;
+    const prev = prevDraftTargetRef.current;
+    prevDraftTargetRef.current = target;
+    if (prev !== null && prev !== target) {
+      flushPendingDraftRef.current();
+    }
+  }, [currentSessionId, episodeForFlush]);
+
+  // (3) unmount flush — StudioShell 이탈(라우트 전환 등) 시 마지막 <2초 입력 보전.
+  // saveProjects 직접 호출 경로라 unmount 후에도 localStorage 영속 보장
+  // (setSessions 경로는 500ms debounce save가 unmount로 끊겨 유실됨).
+  useEffect(() => {
+    return () => { flushPendingDraftRef.current(); };
+  }, []);
+
+  // ── [S4 회차 재적재 — 2026-06-10] 같은 세션 내 episode 변경 시 editDraft 교체 ──
+  // 게이트 실측 결함: flush(저장 절반)만 있고 재적재 절반이 없어, 회차 전환 후 에디터에
+  // 직전 회차 본문이 잔존 → debounce가 새 회차 원고를 그 텍스트로 덮어쓰는 오염 발생.
+  // 위 (4)(5) flush effect 가 직전 회차 pending 을 자기 자리(episodeOverride)로 먼저 보전
+  // (effect 정의 순서 의존) → 본 effect 가 새 회차 원고(없으면 '')를 적재.
+  // 세션 변경은 useStudioWritingMode 의 per-session draft 복원이 담당 — 같은 세션만 처리.
+  const prevEpisodeLoadRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${currentSessionId ?? ''}::${episodeForFlush ?? ''}`;
+    const prev = prevEpisodeLoadRef.current;
+    prevEpisodeLoadRef.current = key;
+    if (prev === null || prev === key) return;
+    const prevSid = prev.split('::')[0];
+    if (prevSid !== (currentSessionId ?? '')) return; // 세션 변경 — 세션 복원 경로에 위임
+    const ep = episodeForFlush ?? 1;
+    const content = currentSession?.config?.manuscripts?.find((m) => m.episode === ep)?.content ?? '';
+    setEditDraft(content);
+    // currentSession 의도적 제외 — episode 전환 시점의 1회 적재만 수행 (deps 포함 시 매 세션
+    // 객체 갱신마다 재적재되어 입력을 덮어씀). closure 는 episode 변경 re-run 으로 충분히 신선.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSessionId, episodeForFlush]);
+
   // editDraft → manuscripts 자동 전이 (수동 편집 내용이 EPUB/DOCX/JSON 내보내기에 반영되도록)
   // 2초 debounce로 config.manuscripts[episode].content 업데이트
   useEffect(() => {
-    if (!hydrated || !currentSessionId || !editDraft) return;
+    if (!hydrated || !currentSessionId) return;
+    if (!editDraft) {
+      // [shell-flush] 초안이 명시적으로 비워짐(폐기) — 같은 세션의 pending은 stale.
+      // 유지하면 이후 flush가 폐기된 텍스트를 manuscripts에 부활시킴 → 파기.
+      if (pendingDraftRef.current?.sessionId === currentSessionId) pendingDraftRef.current = null;
+      return;
+    }
     if (writingMode !== 'edit') return;
     if (!currentSession) return;
     const episode = currentSession.config?.episode ?? 1;
+    // [shell-flush] 타이머가 머지할 스냅샷을 ref에 동반 보관 — cleanup(clearTimeout)으로
+    // 타이머가 사라져도 unmount/전환 flush가 같은 내용을 같은 자리에 머지할 수 있게.
+    pendingDraftRef.current = { editDraft, episode, sessionId: currentSessionId };
     const timer = setTimeout(() => {
       const prevArr = currentSession.config.manuscripts ?? [];
       const idx = prevArr.findIndex(m => m.episode === episode);
@@ -600,17 +760,24 @@ export default function StudioShell() {
           manuscripts: nextArr,
         },
       });
+      // [shell-flush] debounce가 직접 머지 완료 — pending 해소 (발화한 타이머는 항상 최신
+      // 스냅샷의 것: 더 새 입력이 있었다면 effect 재실행이 이 타이머를 clear했음).
+      pendingDraftRef.current = null;
     }, 2000);
     return () => clearTimeout(timer);
 
     // currentSession/updateCurrentSession 의도적 제외 — 포함 시 세션 변경마다 timer 재스케줄되어 debounce 파괴.
-    // 위 setTimeout 본문은 currentSessionId 기반으로 최신 세션을 조회하므로 stale closure 위험 없음.
+    // ⚠ setTimeout 본문은 "이 effect가 실행된 render의" currentSession 클로저 스냅샷을 읽는다
+    // (currentSessionId로 최신 세션 재조회 X — 과거 주석은 부정확했음). 2초 내 외부 config 변경과
+    // 경합 가능하며, cleanup으로 끊긴 마지막 입력은 위 pendingDraftRef flush 경로가 보전한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editDraft, writingMode, currentSessionId, hydrated]);
 
   // ── [저장 무결성] Ctrl+S 실제 flush — 기존 debounce 대기열을 즉시 강제 저장 ──
   //
   // 수행 순서 (실패 시 false 반환):
+  //   0. [shell-flush] flushPendingDraft() 선실행 — 다른 세션/회차를 향한 debounce pending을
+  //      먼저 자기 자리에 머지 (projectsRefForFlush 동기 갱신 → 아래 Step 2가 결과를 본다)
   //   1. editDraft → noa_editdraft_<sid> localStorage 즉시 기록
   //   2. editDraft 내용을 현재 세션의 manuscripts에 머지 (writing/edit 모드 한정)
   //   3. 머지된 projects 배열을 직접 saveProjects() 호출 — 500ms debounce 우회
@@ -625,6 +792,36 @@ export default function StudioShell() {
   projectsRefForFlush.current = projects;
   const editDraftRefForFlush = useRef(editDraft);
   editDraftRefForFlush.current = editDraft;
+
+  // [shell-flush — 2026-06-10] (2) flushPendingDraft 주입 — render-time 재바인딩
+  // (projectsRefForFlush 패턴과 동일). debounce 대기 중인 pending 스냅샷을 즉시 머지한다.
+  // 머지 로직 = mergeDraftIntoProjects (saveFlush Step 2와 단일 구현 공유).
+  // saveFlushRef.current?.() 직접 재사용 불가 사유: saveFlush는 "현재" 세션·editDraft refs를
+  // 읽으므로 전환 후 호출 시 이전 세션의 pending을 못 본다 — pending 스냅샷 전용 실행기 필요.
+  // 반환 false = saveProjects quota 실패 (pending 유지 — 다음 flush 기회에 재시도).
+  flushPendingDraftRef.current = () => {
+    const pending = pendingDraftRef.current;
+    if (!pending) return true; // 대기 없음 — no-op 성공
+    const currentProjects = projectsRefForFlush.current;
+    const nextProjects = mergeDraftIntoProjects(
+      currentProjects, pending.sessionId, pending.editDraft, pending.episode,
+    );
+    if (nextProjects === currentProjects) {
+      // 세션이 이미 삭제됨 — 머지 대상 없음, pending 파기
+      pendingDraftRef.current = null;
+      return true;
+    }
+    // saveProjects 직접 호출 — 500ms debounce 우회 (saveFlush Step 3과 동일).
+    // QuotaExceededError는 saveProjects 내부 처리 후 false 반환 (throw 아님).
+    const ok = saveProjects(nextProjects);
+    if (ok) {
+      setProjects(nextProjects);
+      // 동기 후속 호출(Ctrl+S 체인 등)이 머지 결과를 보도록 ref 즉시 정합 — 다음 render가 재동기.
+      projectsRefForFlush.current = nextProjects;
+      pendingDraftRef.current = null;
+    }
+    return ok;
+  };
 
   // [후속 A-1 — 2026-05-07] Format on Save — saveFlush 직전 draft 자동 정렬.
   // [정합 재조정 — 2026-05-07] IDE Settings (formatOnSaveAutoApply) AND useFormatOnSave (rule level)
@@ -642,6 +839,11 @@ export default function StudioShell() {
 
   useEffect(() => {
     saveFlushRef.current = () => {
+      // Step 0 [shell-flush]: debounce pending 선머지 — pending은 자기 sessionId·episode를
+      // 향하므로 (세션/회차 전환 직후 Ctrl+S 케이스) 아래 "현재 세션" 머지가 덮어쓰기 전에
+      // 자기 자리에 기록. 성공 시 projectsRefForFlush.current가 동기 갱신되어 아래가 결과를 봄.
+      flushPendingDraftRef.current();
+
       const sid = currentSessionIdRefForFlush.current;
       let draft = editDraftRefForFlush.current;
       const mode = writingModeRefForFlush.current;
@@ -670,34 +872,11 @@ export default function StudioShell() {
       }
 
       // Step 2: editDraft → manuscripts 머지 (writing/edit 모드 + 활성 세션 있을 때만)
+      // [shell-flush] 머지 본체는 mergeDraftIntoProjects 헬퍼로 단일화 (pending flush와 공유) —
+      // 동작 동일: 전 프로젝트에서 sid 탐색, 세션의 현재 episode 슬롯에 머지, 미발견 시 no-op.
       let nextProjects = currentProjects;
       if (sid && draft && mode === 'edit') {
-        const sess = currentProjects
-          .flatMap(p => p.sessions.map(s => ({ p, s })))
-          .find(x => x.s.id === sid);
-        if (sess) {
-          const episode = sess.s.config?.episode ?? 1;
-          const prevArr = sess.s.config.manuscripts ?? [];
-          const idx = prevArr.findIndex(m => m.episode === episode);
-          const title = sess.s.config.title || `Episode ${episode}`;
-          const now = Date.now();
-          const nextEntry = idx >= 0
-            ? { ...prevArr[idx], content: draft, charCount: draft.length, lastUpdate: now }
-            : { episode, title, content: draft, charCount: draft.length, lastUpdate: now };
-          const nextArr = idx >= 0
-            ? prevArr.map((m, i) => i === idx ? nextEntry : m)
-            : [...prevArr, nextEntry];
-          const nextSession = {
-            ...sess.s,
-            config: { ...sess.s.config, manuscripts: nextArr },
-            lastUpdate: now,
-          };
-          nextProjects = currentProjects.map(p =>
-            p.id === sess.p.id
-              ? { ...p, sessions: p.sessions.map(s => s.id === sid ? nextSession : s), lastUpdate: now }
-              : p,
-          );
-        }
+        nextProjects = mergeDraftIntoProjects(currentProjects, sid, draft);
       }
 
       // Step 3: saveProjects 직접 호출 — 500ms debounce 우회
@@ -773,15 +952,15 @@ export default function StudioShell() {
     advancedOutputMode: advancedSettings.outputMode,
     advancedSettings,
     onSuggestionsUpdate: (newSugs) => setSuggestions(prev => [...newSugs, ...prev.filter(s => s.dismissed)]),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onPipelineUpdate: setPipelineResult as any,
+    // [priority 3 — 2026-06-08] PipelineExecution ⊂ ShellPipelineSnapshot — 안전한 widening.
+    onPipelineUpdate: (exec) => setPipelineResult(exec),
   });
 
   const { showQuickStartModal, setShowQuickStartModal, isQuickGenerating, handleQuickStart, openQuickStart } = useStudioQuickStart({
     language, showQuickStartLock, setShowApiKeyModal, currentProjectId, createNewProject, setProjects, setCurrentSessionId, setActiveTab, setPipelineResult, setUxError, doHandleSend, currentSessionId, currentSession
   });
 
-  // [First-visit 온보딩] FirstVisitOnboarding → QuickStart 모달 연결
+  // [First-visit 온보딩] 외부 QuickStart 이벤트 → QuickStart 모달 연결
   useEffect(() => {
     const handler = () => openQuickStart();
     window.addEventListener('noa:open-quickstart', handler);
@@ -814,7 +993,12 @@ export default function StudioShell() {
     if (editDraft && editDraft.trim() && currentSessionId) {
       try { localStorage.setItem(`noa_editdraft_${currentSessionId}`, editDraft); } catch { /* quota/private */ }
     }
-    if (tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
+    // [shell-flush] (4) 전환 전 debounce pending 강제 머지 — 마지막 <2초 입력 보전.
+    // 성공(또는 대기 없음) 시 "미저장" 상태가 실제로 존재하지 않으므로 경고 다이얼로그 불필요.
+    const flushed = flushPendingDraftRef.current();
+    if (!flushed && tab !== activeTab && activeTab === 'writing' && writingMode === 'edit' && editDraft.trim()) {
+      // [shell-flush] (6) flush 실패(quota 등)일 때만 경고 — 기존 문구 "저장되지 않았습니다"가
+      // 이제 사실과 일치 (이전에는 debounce가 이미 저장한 상태에서도 떠서 오도).
       showConfirm({
         title: t('confirm.unsavedEdits'),
         message: t('confirm.unsavedEditsMsg'),
@@ -823,7 +1007,8 @@ export default function StudioShell() {
         cancelLabel: t('confirm.keepEditing'),
         onConfirm: () => {
           closeConfirm();
-          setEditDraft('');
+          // [shell-flush] setEditDraft('') 제거 — flush 실패 상태에서 초안 메모리까지 파기하면
+          // (localStorage도 같은 quota로 실패했을 가능성) 실제 데이터 손실 (S1). 초안은 유지.
           setActiveTab(tab);
           scrollReset();
           if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -841,6 +1026,50 @@ export default function StudioShell() {
   useEffect(() => {
     handleTabChangeRef.current = handleTabChange;
   }, [handleTabChange]);
+
+  // [Batch 1 rank 2 — 2026-06-07] Ctrl+P 팔레트에 ACTION_CATALOG 의 studio:* 액션 일괄 등록.
+  // bindings 는 ref 만 호출 → 객체 reference 자체가 매 렌더 stable (useMemo deps 빈 배열 OK).
+  // handleTabChangeRef / handleAiGenerateRef / handleAiRefineRef 는 본문 후반 useEffect 에서 채움.
+  const studioActionBindings = useMemo(() => ({
+    // [priority 9 — 2026-06-08] ref 가 no-op 함수로 초기화되어 .current 호출은 안전.
+    // optional chaining 유지로 향후 ref 타입이 nullable 로 회귀해도 방어.
+    'studio:tab-world':      () => handleTabChangeRef.current?.('world'),
+    'studio:tab-characters': () => handleTabChangeRef.current?.('characters'),
+    'studio:tab-rulebook':   () => handleTabChangeRef.current?.('rulebook'),
+    'studio:tab-writing':    () => handleTabChangeRef.current?.('writing'),
+    'studio:tab-style':      () => handleTabChangeRef.current?.('style'),
+    'studio:tab-manuscript': () => handleTabChangeRef.current?.('manuscript'),
+    'studio:tab-history':    () => handleTabChangeRef.current?.('history'),
+    'studio:tab-settings':   () => handleTabChangeRef.current?.('settings'),
+    'studio:ai-generate':    () => handleAiGenerateRef.current?.(),
+    'studio:ai-refine':      () => handleAiRefineRef.current?.(),
+    // [Batch 3 rank 5 — 2026-06-07] WriterToolbox 토글. setShowToolbox 는 setState 라 stable.
+    'studio:toolbox-open':   () => setShowToolbox((prev) => !prev),
+  }), []);
+  // [R-01 fix — 2026-05-12 유지] palette 객체는 useCmdPalette 가 useMemo 안정화하지만
+  // useRegisterActions 내부에서 register 함수만 ref 로 잡으므로 안전.
+  useRegisterActions({
+    palette: cmdPalette,
+    bindings: studioActionBindings,
+    lang: language === 'KO' ? 'ko' : language === 'JP' ? 'ja' : language === 'CN' ? 'zh' : 'en',
+  });
+
+  // [풀점검 priority 4 — 2026-06-08] ADR-0003 SSOT — Studio Ctrl+1~8 탭 전환을
+  // keyboard-manager 에 단일 등록. ACTION_CATALOG 의 shortcut hint 와 실제 dispatch 일치.
+  // useStudioKeyboard 의 동일 키 블록은 중복 dispatch 회피용으로 비활성됨.
+  // [Phase 2 브리지] children(새 6탭 셸) 모드에서는 구 AppTab 전환이 무의미 →
+  // 새 셸 탭 순서(world/character/plot/direction/writing/translate)로 CustomEvent 위임.
+  // keyboard-manager 가 capture phase 에서 preventDefault+stopPropagation 하므로
+  // 이 핸들러가 새 셸 단축키의 단일 진입점이다 (LoreguardStudio 가 이벤트 수신).
+  const lgTab = (id: string) => window.dispatchEvent(new CustomEvent('loreguard:tab', { detail: id }));
+  useKeyBinding({ keys: 'ctrl+1', area: 'studio', handler: () => children ? lgTab('world')     : setActiveTab('world'),       description: 'World tab' });
+  useKeyBinding({ keys: 'ctrl+2', area: 'studio', handler: () => children ? lgTab('character') : setActiveTab('characters'),  description: 'Characters tab' });
+  useKeyBinding({ keys: 'ctrl+3', area: 'studio', handler: () => children ? lgTab('plot')      : setActiveTab('rulebook'),    description: 'Plot/Rulebook tab' });
+  useKeyBinding({ keys: 'ctrl+4', area: 'studio', handler: () => children ? lgTab('direction') : setActiveTab('writing'),     description: 'Direction/Writing tab' });
+  useKeyBinding({ keys: 'ctrl+5', area: 'studio', handler: () => children ? lgTab('writing')   : setActiveTab('style'),       description: 'Writing/Style tab' });
+  useKeyBinding({ keys: 'ctrl+6', area: 'studio', handler: () => children ? lgTab('translate') : setActiveTab('manuscript'),  description: 'Translate/Manuscript tab' });
+  useKeyBinding({ keys: 'ctrl+7', area: 'studio', handler: () => { if (!children) setActiveTab('history'); },                 description: 'History tab' });
+  useKeyBinding({ keys: 'ctrl+8', area: 'studio', handler: () => children ? window.dispatchEvent(new CustomEvent('loreguard:open-settings')) : setActiveTab('settings'), description: 'Settings' });
 
   const {
     deleteSession, clearAllSessions, startRename, confirmRename,
@@ -869,7 +1098,10 @@ export default function StudioShell() {
   const searchMatchesEditDraft = searchQuery && editDraft && editDraft.toLowerCase().includes(searchQuery.toLowerCase());
 
   // [2026-05-09] command palette 명령 listener — exportTXT/handleExportEPUB destructure 이후 위치.
+  // [오배선 가드 2026-06-10] children(새 셸) 모드: 새 셸 export 는 'loreguard:open-export' 단일 경로.
+  // 구 noa:export-* 리스너를 children 모드에서도 살려두면 잔존 디스패처 발생 시 이중 export 위험 → 미등록.
   useEffect(() => {
+    if (children) return;
     const handleExportTxt = () => exportTXT();
     const handleExportEpub = () => handleExportEPUB();
     const handleSwitchBranch = () => {
@@ -886,7 +1118,8 @@ export default function StudioShell() {
       window.removeEventListener('noa:export-epub', handleExportEpub);
       window.removeEventListener('noa:switch-branch', handleSwitchBranch);
     };
-  }, [exportTXT, handleExportEPUB, setRightPanelOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [children, exportTXT, handleExportEPUB, setRightPanelOpen]);
 
 
 
@@ -957,6 +1190,24 @@ export default function StudioShell() {
   const handleSend = useCallback((customPrompt?: string) => {
     doHandleSend(customPrompt, input, () => setInput(''));
   }, [doHandleSend, input]);
+
+  // [Batch 1 rank 2 — 2026-06-07] AI 액션 ref 채우기 — Ctrl+P 팔레트의 'studio:ai-generate'/
+  // 'studio:ai-refine' 에서 호출. handleSend / setWritingMode 가 정의된 후라 안전.
+  // - ai-generate: 비어있는 customPrompt 로 handleSend → useStudioAI 가 input/세션 기반 자동 처리
+  // - ai-refine: writing mode 를 refine 으로 전환 + writing 탭 활성. 이미 refine 모드면 다시
+  //   doHandleSend 호출 (canvasPass next 가 useStudioAI 내부에서 결정됨).
+  useEffect(() => {
+    handleAiGenerateRef.current = () => {
+      handleTabChangeRef.current?.('writing');
+      setWritingMode('ai');
+      // input 비어있어도 doHandleSend 가 세션 컨텍스트로 진행 (canvas mode 시는 canvasPass 단계 자동)
+      void handleSend();
+    };
+    handleAiRefineRef.current = () => {
+      handleTabChangeRef.current?.('writing');
+      setWritingMode('refine');
+    };
+  }, [handleSend, setWritingMode]);
 
   // ── handleNextEpisode 내부 헬퍼 분리 ──
 
@@ -1092,6 +1343,8 @@ export default function StudioShell() {
     input, setInput,
     // Display state
     showDashboard, setShowDashboard,
+    // [Batch 3 rank 5 — 2026-06-07] WriterToolbox 18 모듈 사이드바 토글.
+    showToolbox, setShowToolbox,
     rightPanelOpen, setRightPanelOpen,
     showAiLock, hasAiAccess, aiCapabilitiesLoaded,
     bannerDismissed, setBannerDismissed,
@@ -1137,6 +1390,83 @@ export default function StudioShell() {
   // PART 5 — Render
   // ============================================================
 
+  // ============================================================
+  // [Phase 2 브리지 — 2026-06-10] children-slot 헤드리스 마운트.
+  // children(새 LoreguardStudio 6탭 셸)이 주입되면 옛 chrome(OSDesktop·사이드바·
+  // MobileTabBar·MobileStudioView) 대신, 동일한 real provider envelope 안에서
+  // children 을 렌더한다. 훅 본문/value 조립은 그대로 재사용 → 단일 진실원천·데이터
+  // 유실 위험 0. 전역 chrome(API key modal·alert/token 토스트)은 새 셸도 공유.
+  // 새 셸은 자체 반응형을 가지므로 모바일 early-return 보다 우선한다.
+  // ============================================================
+  if (children) {
+    return (
+      <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
+      <StudioConfigProvider value={studioConfigValue}>
+      <StudioUIProvider value={studioUIValue}>
+      {/* [G2-recovery 2026-06-11] bootRecoveryResult — 본문 useStudioMounts 의 복구 결과를
+          Provider 내부로 전달해 크래시/체인 손상 시 RecoveryDialog 가 실제로 열리게 결선
+          (runBootRecovery 재실행 없이 단일 인스턴스 재사용). */}
+      <StudioMountProviders language={language} bootRecoveryResult={studioMounts.recovery.result}>
+      <ModalProvider>
+        <StudioProvider value={studioContextValue}>
+          {children}
+          {/* [G2-recovery 2026-06-11] 새 셸 멀티탭 패리티 — 구 셸 1480행 MultiTabBanner 의
+              children-분기 대응. .eh-app(height:100%) 레이아웃을 밀지 않도록 fixed 오버레이.
+              tab-sync 데이터는 본문 단일 useMultiTab 인스턴스 재사용 (이중 acquire 금지). */}
+          {studioMounts.journalActive && (
+            <RecoveryMounts multiTab={studioMounts.multiTab} language={language} />
+          )}
+          {/* [Z1c-mid-ports] 메모 보드 — 미오픈 시 null 렌더 (이벤트 수신 대기만) */}
+          <MemoPanel language={language} />
+          {/* [QC-outline-resize] 집필 우측 패널(.wr-panel) 드래그 리사이즈 핸들 —
+              .wr-panel 이 있는 집필 탭에서만 핸들 표시(MutationObserver), 그 외 탭은 null 렌더. */}
+          <RightPanelResizer language={language} />
+          {/* 전역 chrome 재사용 — API key modal·quick start·confirm·move·save-slot·alert */}
+          <StudioOverlayManager
+            language={language}
+            isKO={isKO}
+            showQuickStartModal={showQuickStartModal} setShowQuickStartModal={setShowQuickStartModal}
+            handleQuickStart={handleQuickStart} isQuickGenerating={isQuickGenerating}
+            showApiKeyModal={showApiKeyModal} setShowApiKeyModal={setShowApiKeyModal}
+            setApiKeyVersion={setApiKeyVersion}
+            confirmState={confirmState} closeConfirm={closeConfirm}
+            moveModal={moveModal} setMoveModal={setMoveModal} moveSessionToProject={moveSessionToProject}
+            saveSlotModalOpen={saveSlotModalOpen} setSaveSlotModalOpen={setSaveSlotModalOpen}
+            activeTab={activeTab} currentSession={currentSession} updateCurrentSession={updateCurrentSession} triggerSave={triggerSave}
+            showSyncReminder={showSyncReminder} setShowSyncReminder={setShowSyncReminder}
+            user={user} lastSyncTime={lastSyncTime} handleSync={handleSync} signInWithGoogle={signInWithGoogle}
+            storageFull={storageFull} setStorageFull={setStorageFull} exportAllJSON={exportAllJSON}
+            fallbackNotice={fallbackNotice} setFallbackNotice={setFallbackNotice}
+            exportDoneFormat={exportDoneFormat} setExportDoneFormat={setExportDoneFormat}
+            worldImportBanner={worldImportBanner} setWorldImportBanner={setWorldImportBanner}
+            uxError={uxError} setUxError={setUxError}
+            alertToast={alertToast} setAlertToast={setAlertToast}
+          />
+          <StudioModalBridge
+            language={language}
+            activeTab={activeTab}
+            currentSession={currentSession}
+            updateCurrentSession={updateCurrentSession}
+            triggerSave={triggerSave}
+            apiKeyOpen={showApiKeyModal}
+            setApiKeyOpen={setShowApiKeyModal}
+            onApiKeyChange={() => setApiKeyVersion(v => v + 1)}
+            saveSlotOpen={saveSlotModalOpen}
+            setSaveSlotOpen={setSaveSlotModalOpen}
+          />
+        </StudioProvider>
+        <TokenBudgetToast language={toAgentLang(language)} />
+        <ContextTrimmedToast language={toAgentLang(language)} />
+        <PrismRejectionToast language={toAgentLang(language)} />
+        <NoaBlockNoticeCard language={toAgentLang(language)} />
+      </ModalProvider>
+      </StudioMountProviders>
+      </StudioUIProvider>
+      </StudioConfigProvider>
+      </ErrorBoundary>
+    );
+  }
+
   // 모바일 전용 스케치 뷰 — PC급 스튜디오 대체
   // 데스크톱 강제 모드(?force=desktop 또는 localStorage noa_force_desktop)면 우회
   if (isMobile && !forceDesktop && hydrated) {
@@ -1166,7 +1496,11 @@ export default function StudioShell() {
     <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
     <StudioConfigProvider value={studioConfigValue}>
     <StudioUIProvider value={studioUIValue}>
-    <StudioMountProviders language={language}>
+    {/* [G2-recovery 2026-06-11] children 분기와 동일 결선 — 크래시 시 RecoveryDialog 오픈. */}
+    <StudioMountProviders language={language} bootRecoveryResult={studioMounts.recovery.result}>
+    {/* [rank 19 — 2026-06-07] ModalProvider — 분산 modal useState (api-keys/save-slot 우선) 통합.
+        keyboard-manager 와 자동 연동 → modal 열림 시 단축키 suppress. */}
+    <ModalProvider>
     <div className="flex flex-col h-dvh overflow-hidden bg-bg-primary text-text-primary">
     {/* [M1.5.1] MultiTabBanner — flag off에서는 훅 enabled:false → Banner 내부 조건으로 null */}
     {studioMounts.journalActive && (
@@ -1197,8 +1531,6 @@ export default function StudioShell() {
       <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} language={language} mode={studioMode} />
 
       <MobileSketchImportBanner />
-
-      <FirstVisitOnboarding />
 
       {/* [A.2 — 2026-05-08] 마지막 작업 카드 — 휴식 후 30초 floating */}
       <LastTaskCard
@@ -1362,6 +1694,19 @@ export default function StudioShell() {
         uxError={uxError} setUxError={setUxError}
         alertToast={alertToast} setAlertToast={setAlertToast}
       />
+      {/* [rank 19 — 2026-06-07] ModalProvider 경로의 modal — api-keys / save-slot 두 종. */}
+      <StudioModalBridge
+        language={language}
+        activeTab={activeTab}
+        currentSession={currentSession}
+        updateCurrentSession={updateCurrentSession}
+        triggerSave={triggerSave}
+        apiKeyOpen={showApiKeyModal}
+        setApiKeyOpen={setShowApiKeyModal}
+        onApiKeyChange={() => setApiKeyVersion(v => v + 1)}
+        saveSlotOpen={saveSlotModalOpen}
+        setSaveSlotOpen={setSaveSlotModalOpen}
+      />
     </div>
     </div>
     {/* [P-01 mount — 2026-05-10] 전역 token 압박 토스트 — 모든 buildAgentSystemPrompt 호출 자동 측정 */}
@@ -1370,6 +1715,9 @@ export default function StudioShell() {
     <ContextTrimmedToast language={toAgentLang(language)} />
     {/* [M-05 호출 측 mount — 2026-05-10] PRISM 거절 감지 — LLM 거절 시 친화 안내 */}
     <PrismRejectionToast language={toAgentLang(language)} />
+    {/* [N4 mount — 2026-06-11] NOA 정책 차단 고지 카드 — BLOCK 시 사유 + 해결 경로 (사일런트 차단 금지) */}
+    <NoaBlockNoticeCard language={toAgentLang(language)} />
+    </ModalProvider>
     </StudioMountProviders>
     </StudioUIProvider>
     </StudioConfigProvider>

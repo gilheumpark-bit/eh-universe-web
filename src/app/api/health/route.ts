@@ -15,14 +15,8 @@ export async function GET() {
   const checks: Record<string, 'ok' | 'warn' | 'fail'> = {};
 
   // 1. Server-side AI provider keys availability
-  const hasGeminiServer = Boolean(
-    process.env.GEMINI_API_KEY
-    || (
-      process.env.USE_VERTEX_AI === 'true'
-      && (process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT)
-      && (process.env.VERTEX_AI_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS)
-    ),
-  );
+  // [2026-06-06] Vertex AI 경로 제거 — GEMINI_API_KEY(호스팅) 단독.
+  const hasGeminiServer = Boolean(process.env.GEMINI_API_KEY);
   const providers = ['OPENAI_API_KEY', 'CLAUDE_API_KEY', 'GROQ_API_KEY', 'MISTRAL_API_KEY'];
   let keyCount = hasGeminiServer ? 1 : 0;
   for (const key of providers) {
@@ -50,6 +44,7 @@ export async function GET() {
   // Return minimal health status — no provider/infrastructure details
   return NextResponse.json({
     status,
+    version: process.env.NEXT_PUBLIC_APP_VERSION || 'unknown',
     timestamp: Date.now(),
   }, {
     status: hasFail ? 503 : 200,

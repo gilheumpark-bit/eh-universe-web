@@ -20,6 +20,8 @@ import {
   episodeFilePath,
 } from '@/lib/markdown-serializer';
 import type { TranslatedManuscriptEntry, AppLanguage } from '@/lib/studio-types';
+// [X2 — 2026-06-11] /api/translate 200+{blocked} 차단 계약 고지 (사일런트 차단 금지).
+import { checkBlockedJson } from '@/lib/noa/block-notice';
 
 type BatchLang = 'EN' | 'JP' | 'CN';
 
@@ -81,6 +83,20 @@ async function streamTranslateOneLang(
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
+  }
+  // [X2] 200 + JSON: NOA 차단 계약({blocked, reason}) 또는 비스트림 결과 —
+  // JSON 본문을 번역 텍스트로 리터럴 덤프하지 않는다 (사일런트 차단 금지)
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const data: unknown = await res.json().catch(() => null);
+    const blockedMsg = checkBlockedJson(data, 'multilang-batch');
+    if (blockedMsg) throw new Error(blockedMsg);
+    const result = (data as { result?: string } | null)?.result;
+    if (typeof result === 'string') {
+      onChunk(result, result.length);
+      return result;
+    }
+    throw new Error('Unexpected JSON response');
   }
   const reader = res.body?.getReader();
   if (!reader) throw new Error('No response body');

@@ -151,26 +151,12 @@ function SubcategoryBadge({
 // PART 3 — Tab Navigation (shared with Archive)
 // ============================================================
 
+// [2026-06-10 결정] /archive 라우트 미구현 → 아카이브 탭 링크 제거 (66× 404 차단).
+// 데이터(src/data/reports·articles-*)는 보존 — 라우트 재도입 시 탭 복원.
 function ArchiveReportsTabs({ active }: { active: "archive" | "reports" }) {
   const { lang } = useLang();
   return (
     <div className="flex gap-2 mb-6">
-      <Link
-        href="/archive"
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
-          active === "archive"
-            ? "bg-accent-amber/15 border border-accent-amber/30 text-accent-amber"
-            : "border text-text-tertiary hover:text-text-secondary hover:border-white/12"
-        }`}
-      >
-        <span aria-hidden="true">📁</span>
-        {L4(lang, {
-          ko: "아카이브",
-          en: "Archive",
-          ja: "アーカイブ",
-          zh: "档案",
-        })}
-      </Link>
       <Link
         href="/reports"
         className={`flex items-center gap-2 rounded-full px-5 py-2.5 font-mono text-xs font-medium tracking-[0.14em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
@@ -318,16 +304,17 @@ export default function ReportsClient() {
 
               {/* Report list */}
               <div className="space-y-2.5">
+                {/* [2026-06-10 결정] /archive/{slug} 상세 라우트 미구현 → 행을 비내비게이션으로 전환
+                    (66× 404 차단·데이터 보존). 상세 라우트 도입 시 Link 복원. */}
                 {filtered.map((report) => {
                   const isClassified = report.level === "CLASSIFIED";
                   return (
-                    <Link
+                    <div
                       key={report.slug}
-                      href={`/archive/${report.slug}`}
                       className={`group flex items-center justify-between gap-3 rounded-2xl p-4 transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                         isClassified
-                          ? "border border-accent-red/12 bg-accent-red/5 hover:border-accent-red/25 hover:bg-accent-red/10 hover:-translate-y-0.5"
-                          : "premium-link-card card-glow"
+                          ? "border border-accent-red/12 bg-accent-red/5"
+                          : "premium-link-card"
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -335,18 +322,12 @@ export default function ReportsClient() {
                           subcategory={report.subcategory}
                           lang={lang}
                         />
-                        <span
-                          className={`text-sm truncate transition-colors ${
-                            isClassified
-                              ? "text-text-primary group-hover:text-accent-red"
-                              : "text-text-primary group-hover:text-accent-purple"
-                          }`}
-                        >
+                        <span className="text-sm truncate text-text-primary">
                           {L2(report.title, lang)}
                         </span>
                       </div>
                       <BadgeLevel level={report.level} />
-                    </Link>
+                    </div>
                   );
                 })}
                 {filtered.length === 0 && (

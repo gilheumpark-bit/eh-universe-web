@@ -94,3 +94,68 @@ describe('saveProjects', () => {
     expect(loaded[0].sessions[0].title).toBe('Test Novel');
   });
 });
+
+// [QA-robustness (4)] QuotaExceededError 구분 + 사용자 고지 (침묵 false 금지).
+describe('saveProjects — QuotaExceededError 고지', () => {
+  const projects = [{ id: 'p1', name: 'T', description: '', genre: Genre.SF, createdAt: 1, lastUpdate: 1, sessions: [] }];
+
+  function makeQuotaError(): DOMException {
+    // jsdom 환경: DOMException 생성자 사용 (name='QuotaExceededError').
+    return new DOMException('quota', 'QuotaExceededError');
+  }
+
+  it('정리 후에도 quota 초과면 noa:toast(error) 발화 + false 반환', () => {
+    // setItem 은 항상 QuotaExceededError throw (정리 후 재시도도 실패).
+    Object.defineProperty(global, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] ?? null,
+        setItem: () => { throw makeQuotaError(); },
+        removeItem: (k: string) => { delete store[k]; },
+        get length() { return Object.keys(store).length; },
+        key: (i: number) => Object.keys(store)[i] ?? null,
+      },
+      writable: true,
+    });
+
+    const toastSpy = jest.fn();
+    window.addEventListener('noa:toast', toastSpy);
+
+    const ok = saveProjects(projects);
+
+    expect(ok).toBe(false);
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    const detail = (toastSpy.mock.calls[0][0] as CustomEvent).detail;
+    expect(detail.variant).toBe('error');
+    expect(detail.message).toMatch(/저장 공간|내보내기/);
+
+    window.removeEventListener('noa:toast', toastSpy);
+  });
+
+  it('재시도(정리 후)에서 성공하면 toast 없이 true 반환', () => {
+    let calls = 0;
+    Object.defineProperty(global, 'localStorage', {
+      value: {
+        getItem: (k: string) => store[k] ?? null,
+        setItem: (k: string, v: string) => {
+          calls += 1;
+          if (calls === 1) throw makeQuotaError(); // 1차 실패
+          store[k] = v;                            // 정리 후 2차 성공
+        },
+        removeItem: (k: string) => { delete store[k]; },
+        get length() { return Object.keys(store).length; },
+        key: (i: number) => Object.keys(store)[i] ?? null,
+      },
+      writable: true,
+    });
+
+    const toastSpy = jest.fn();
+    window.addEventListener('noa:toast', toastSpy);
+
+    const ok = saveProjects(projects);
+
+    expect(ok).toBe(true);
+    expect(toastSpy).not.toHaveBeenCalled(); // 성공 시 고지 없음
+
+    window.removeEventListener('noa:toast', toastSpy);
+  });
+});

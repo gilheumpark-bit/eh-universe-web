@@ -160,7 +160,7 @@ const ROLE_OPTIONS: RoleOption[] = [
       ja: "大量翻訳/チーム",
       zh: "批量翻译/团队",
     },
-    route: "/network",
+    route: "/translation-studio",
   },
   {
     role: "explorer",

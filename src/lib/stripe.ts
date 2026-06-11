@@ -42,8 +42,9 @@ export const getStripeSession = async (
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${base}/?success=true`,
-    cancel_url: `${base}/?cancel=true`,
+    // [H1 stripe-ready] 전용 리다이렉트 페이지 — success 페이지에서 ID token force-refresh (stripeRole claim 전파).
+    success_url: `${base}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${base}/payment/cancel`,
     customer: customerId,
     // [revenue path 2026-06-06] Firebase uid 를 결제 세션에 심어 webhook 이 결제↔유저 매핑한다.
     // client_reference_id → checkout.session.completed 에서, subscription metadata → subscription.* 에서 회수.

@@ -17,6 +17,7 @@ import type {
   NoaConfig,
   AuditEntry,
   AuditManager,
+  TrinityWeights,
 } from "./types";
 
 import { createDefaultNoaConfig } from "./config";
@@ -48,6 +49,53 @@ function ensureManagers(config: NoaConfig) {
 export function getAuditManager(config: NoaConfig): AuditManager {
   ensureManagers(config);
   return auditManager!;
+}
+
+// ============================================================
+// Multi-turn Context Score (특허 청구 1·8·효과 29)
+// ============================================================
+
+// [특허 정합] 청구 1·8 — "멀티턴 누적 맥락 반영". 특허에 구체 수치 미명시 →
+// 수치 발명 금지 원칙에 따라 보수적 기본값 + 근거 주석:
+//  - HISTORY_WINDOW = 5      : 최근 N개만 반영 (요청 명세 "보수적 5")
+//  - HISTORY_DECAY  = 0.5    : 감쇠 가중 0.5^d (d=1 최신) — 최신일수록 높게, 기하 감쇠
+//  - HISTORY_CONTRIBUTION_CAP = 0.5 : 합산 기여 상한 — 누적 맥락만으로 Trinity
+//    HOLD 경계(0.35)는 넘을 수 있되, 단독 VETO(0.75)는 현재 입력 위험 동반 시에만.
+export const HISTORY_WINDOW = 5;
+export const HISTORY_DECAY = 0.5;
+export const HISTORY_CONTRIBUTION_CAP = 0.5;
+
+/**
+ * 멀티턴 누적 맥락 점수 합성 — 특허 청구 1·8·효과 29.
+ *
+ * contextual = min(1, single + min(CAP, Σ trinity(history_d) × DECAY^d))
+ * 반환 = max(single, contextual)
+ *
+ * 안전성 불변식 (게이트 보수성):
+ *  - boost ≥ 0 (가산 전용) → 맥락이 단일 입력 점수를 깎는 방향 불가
+ *  - history 빈값/공백 항목은 기여 0 (skip)
+ *
+ * @param singleScore - 현재 입력 단독 Trinity 가중 점수 (0~1)
+ * @param conversationHistory - 직전 사용자 발화 이력 (과거 → 최신 순, 배열 끝 = 최신)
+ * @param weights - Trinity 가중치
+ */
+export function composeContextualTrinityScore(
+  singleScore: number,
+  conversationHistory: readonly string[],
+  weights: TrinityWeights
+): number {
+  const recent = conversationHistory.slice(-HISTORY_WINDOW);
+  let boost = 0;
+  for (let d = 1; d <= recent.length; d++) {
+    const msg = recent[recent.length - d]; // d=1 → 최신
+    if (!msg || msg.trim().length === 0) continue; // 빈값 엣지: 기여 0
+    const hScore = runTrinity(sanitizeInput(msg).sanitized, weights).weightedScore;
+    boost += hScore * Math.pow(HISTORY_DECAY, d);
+  }
+  boost = Math.min(boost, HISTORY_CONTRIBUTION_CAP);
+  const contextual = Math.min(1, singleScore + boost);
+  // 명세 보장: max(single, contextual) — 구조상 boost ≥ 0 이지만 명시 max 로 불변식 고정
+  return Math.max(singleScore, contextual);
 }
 
 // ============================================================
@@ -102,8 +150,15 @@ export async function runNoa(
   const fastTrack = runFastTrack(sanitized.sanitized);
   layerDurations.fastTrack = performance.now() - t2;
 
+  // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 맥락 반영]
+  // 유효 history 존재 시 Fast PASS 단락(short-circuit)을 금지하고 Trinity 까지 진행 —
+  // "안녕" 등 단건 안전 인사로 누적 맥락 평가를 우회하는 맥락 분산 공격 차단.
+  // 미전달/빈 history → 기존 단락 유지 (회귀 0). Fast BLOCK 단락은 그대로 유지 (보수성 유지 — 위험 하향 없음).
+  const hasHistory =
+    input.conversationHistory?.some((m) => m.trim().length > 0) ?? false;
+
   // Fast PASS → 바로 허용
-  if (fastTrack.verdict === "PASS") {
+  if (fastTrack.verdict === "PASS" && !hasHistory) {
     const ta1 = performance.now();
     // Record in audit-report for dashboard/reporting
     recordAuditEntry({
@@ -166,13 +221,27 @@ export async function runNoa(
   // --- Layer 3: Trinity ---
   const t3 = performance.now();
   const trinity = runTrinity(sanitized.sanitized, fullConfig.trinityWeights);
+
+  // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 누적 맥락 점수]
+  // 단일 입력 Trinity 점수에 history 감쇠 가중 기여를 가산 — max(single, contextual)
+  // 보장 (맥락이 위험을 깎는 방향 금지). hasHistory=false → trinity.weightedScore 그대로 (회귀 0).
+  const contextualScore = hasHistory
+    ? composeContextualTrinityScore(
+        trinity.weightedScore,
+        input.conversationHistory!,
+        fullConfig.trinityWeights
+      )
+    : trinity.weightedScore;
   layerDurations.trinity = performance.now() - t3;
 
   // --- Layer 4: Judgment ---
   const t4 = performance.now();
   const domain = input.domain ?? "general";
   const sourceTier = input.sourceTier ?? 2;
-  const judgment = runJudgment(trinity.weightedScore, domain, sourceTier);
+  // [P0-wire (1) — 특허 수학식 1 첫째 항: 패턴 위험도 결선]
+  // sanitize 된 입력 텍스트를 4번째 인자로 전달 → DANGER_PATTERNS(도메인별 가산점)
+  // 매칭이 라이브 실행된다. 가산 전용 (extraPenalty ≥ 0) — 기존 점수 대비 위험 하향 없음.
+  const judgment = runJudgment(contextualScore, domain, sourceTier, sanitized.sanitized);
   layerDurations.judgment = performance.now() - t4;
 
   // --- Layer 5: Availability ---
@@ -272,7 +341,7 @@ export type {
   TrinityVote,
   TrinityResult,
   EgoResult,
-  GradeEntry,
+  NoaGradeEntry,
   DomainType,
   SourceTier,
   TacticalPath,

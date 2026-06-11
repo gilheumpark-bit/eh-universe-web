@@ -24,6 +24,11 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
+      - name: License summary (claude3 _dependencies)
+        # 의존성 라이선스 가시화. 강한 copyleft(GPL/AGPL-only) 유입 감시 — THIRD_PARTY_NOTICES.md 참조.
+        # informational (dual-license 오탐 회피). 실패해도 CI 차단 X.
+        run: npx --yes license-checker --production --summary || true
+
       - name: Null byte scan
         run: |
           BAD=$(find src -name '*.ts' -o -name '*.tsx' | xargs grep -Pl '\x00' 2>/dev/null || true)
@@ -47,6 +52,31 @@ jobs:
         # Coverage threshold: single source of truth in jest.config.ts (30/30/40/40 global).
         # Removed inline override (was 15/15/20/20) to keep CI ↔ local in sync — 2026-05-11.
         run: npx jest --coverage
+
+      # ============================================================
+      # [루프 4 P1 — 2026-06-08] claude3 외부 표준 compliance audit
+      # _testing: Test Pyramid 70/20/10 비율 자동 산출.
+      # unit (__tests__) / integration (integration|e2e in path) / e2e (playwright) 카운트.
+      # 위반 시 경고 only (informational) — 단계적 강제로 점진 이행.
+      # ============================================================
+      - name: Test Pyramid 70/20/10 audit (informational)
+        run: |
+          UNIT=$(find src -path '*__tests__*' -name '*.test.ts' -o -path '*__tests__*' -name '*.test.tsx' | wc -l)
+          INTEG=$(find src -path '*integration*' -name '*.test.ts' | wc -l)
+          E2E=$(find e2e -name '*.spec.ts' 2>/dev/null | wc -l)
+          TOTAL=$((UNIT + INTEG + E2E))
+          echo "## Test Pyramid Audit (claude3 _testing 70/20/10)" >> $GITHUB_STEP_SUMMARY
+          echo "| Tier | Count | Target | Actual % |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------:|-------:|---------:|" >> $GITHUB_STEP_SUMMARY
+          if [ $TOTAL -gt 0 ]; then
+            UPCT=$((UNIT*100/TOTAL))
+            IPCT=$((INTEG*100/TOTAL))
+            EPCT=$((E2E*100/TOTAL))
+            echo "| Unit | $UNIT | 70% | $UPCT% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Integration | $INTEG | 20% | $IPCT% |" >> $GITHUB_STEP_SUMMARY
+            echo "| E2E | $E2E | 10% | $EPCT% |" >> $GITHUB_STEP_SUMMARY
+            echo "Total: $TOTAL test files"
+          fi
 
       - name: Upload coverage report
         if: always()

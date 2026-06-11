@@ -76,6 +76,12 @@ export async function streamGemini(
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.content }],
   }));
+
+  // [QA-robustness (1)] 클라이언트 중단(stream.cancel) 시 업스트림 genai 호출을 abort 해
+  // 토큰/컴퓨트 낭비를 끊는다. timeout(120s)도 같은 컨트롤러로 통합 — 둘 중 먼저 발생한 쪽이 abort.
+  const controllerAbort = new AbortController();
+  const timeoutId = setTimeout(() => controllerAbort.abort(new Error('Gemini stream timeout')), 120_000);
+
   const stream = await ai.models.generateContentStream({
     model,
     contents,
@@ -83,7 +89,7 @@ export async function streamGemini(
       systemInstruction: system,
       temperature,
       topP: 0.95,
-      abortSignal: AbortSignal.timeout(120_000),
+      abortSignal: controllerAbort.signal,
     },
   });
 
@@ -111,7 +117,21 @@ export async function streamGemini(
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
       } catch (error) {
-        controller.error(error);
+        // cancel()로 abort 된 경우(소비자가 이미 떠남)는 정상 종료로 취급 — 노이즈 에러 억제.
+        if (controllerAbort.signal.aborted) {
+          try { controller.close(); } catch { /* already closed/errored */ }
+        } else {
+          controller.error(error);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    },
+    // [QA-robustness (1)] 소비자가 스트림을 취소하면 업스트림 generator 를 abort 해 finalize.
+    cancel(reason) {
+      clearTimeout(timeoutId);
+      if (!controllerAbort.signal.aborted) {
+        controllerAbort.abort(reason instanceof Error ? reason : new Error(String(reason ?? 'stream cancelled')));
       }
     },
   });

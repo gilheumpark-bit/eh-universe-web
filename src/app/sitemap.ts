@@ -18,7 +18,7 @@ interface SimpleEntry {
 }
 
 // 다국어 대응 entry — landing / legal / 공개 마케팅 페이지만.
-// [Alpha non-public — 2026-05-08] /studio /translation-studio /code-studio /network /welcome 제외 (robots.txt 정합).
+// [Alpha non-public — 2026-05-08] /studio /translation-studio /welcome 제외 (robots.txt 정합).
 const MULTILANG_PATHS: SimpleEntry[] = [
   { path: '/',                  changeFrequency: 'weekly',  priority: 1.0 },
   { path: '/about',             changeFrequency: 'monthly', priority: 0.5 },
@@ -27,7 +27,6 @@ const MULTILANG_PATHS: SimpleEntry[] = [
   { path: '/copyright',         changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/ai-disclosure',     changeFrequency: 'monthly', priority: 0.5 },
   { path: '/codex',             changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/archive',           changeFrequency: 'weekly',  priority: 0.7 },
   { path: '/reference',         changeFrequency: 'monthly', priority: 0.6 },
   { path: '/rulebook',          changeFrequency: 'monthly', priority: 0.6 },
   { path: '/docs',              changeFrequency: 'monthly', priority: 0.6 },

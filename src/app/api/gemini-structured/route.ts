@@ -7,6 +7,8 @@ import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-gena
 import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterJsonIp } from '@/lib/noa/server-gate';
 import {
   handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems, handleSkills, handleMagicSystems,
   StructuredTask, StoryHints, WorldContext, SceneTierContext
@@ -202,13 +204,36 @@ export async function POST(req: NextRequest) {
     }
     const task = body.task;
 
+    // [N2] NOA 서버 게이트 — 입력 판정 (사용자 텍스트: synopsis·genre·characters. AI 호출 전 차단).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const cfg = (body.config && typeof body.config === 'object' ? body.config : undefined) as
+      | { genre?: unknown; synopsis?: unknown }
+      | undefined;
+    const gateText = [cfg?.genre, cfg?.synopsis, body.genre, body.synopsis, ...toStringArray(body.characters)]
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      .join('\n');
+    const prismGrade = typeof body.prismMode === 'string' ? body.prismMode : undefined;
+    const gate = await applyNoaGate({
+      prompt: gateText,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 스튜디오 구조화 생성 — creative 가중
+      sourceTier: userApiKey ? 1 : 2,
+      route: '/api/gemini-structured',
+      language: getLanguage(body.language),
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
     // [Codex UI domain — 2026-05-10] body.domain (옵션) 으로 사용자가 도메인 명시 선택.
     const domain = validateDomain(body.domain);
     const execution = await executeGeminiHostedFirst(body.apiKey, (effectiveApiKey) =>
       dispatchTask(task, body, effectiveApiKey, getModel(body.model), getLanguage(body.language), domain),
     );
     if (!execution.result.ok) return execution.result.response;
-    return NextResponse.json(execution.result.data);
+    // [N2] 출력 IP 필터 — JSON 안전 치환 (치환이 JSON 을 깨면 fail-open: 원본 반환 + 로깅)
+    return NextResponse.json(filterJsonIp(execution.result.data, '/api/gemini-structured').value);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:gemini-structured', error instanceof Error ? error.message : error);

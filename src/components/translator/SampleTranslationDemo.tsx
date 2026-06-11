@@ -329,7 +329,7 @@ function ScoreCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="p-2 bg-bg-primary border border-border rounded text-center">
       <div className="text-[10px] text-text-tertiary uppercase tracking-wider">{label}</div>
-      <div className={`text-lg font-bold ${color}`} aria-label={`${label} ${safe.toFixed(2)}`}>
+      <div role="img" className={`text-lg font-bold ${color}`} aria-label={`${label} ${safe.toFixed(2)}`}>
         {safe.toFixed(2)}
       </div>
     </div>

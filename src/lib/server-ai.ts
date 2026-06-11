@@ -18,17 +18,8 @@ const SERVER_PROVIDERS = Object.keys(SERVER_ENV_KEYS) as ServerProviderId[];
 const LOCAL_PROVIDERS: ReadonlySet<ServerProviderId> = new Set(['ollama', 'lmstudio']);
 
 function hasGeminiServerCredentials(): boolean {
-  return Boolean(
-    process.env.GEMINI_API_KEY?.trim()
-    || (
-      process.env.USE_VERTEX_AI === 'true'
-      && (process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT)
-      && (
-        process.env.VERTEX_AI_CREDENTIALS?.trim()
-        || process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()
-      )
-    ),
-  );
+  // [2026-06-06] Vertex AI 경로 제거 — GEMINI_API_KEY(호스팅) 단독.
+  return Boolean(process.env.GEMINI_API_KEY?.trim());
 }
 
 export function isServerProviderId(value: unknown): value is ServerProviderId {

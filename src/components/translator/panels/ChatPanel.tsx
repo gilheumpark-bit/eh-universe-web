@@ -5,6 +5,8 @@ import { MessageSquare, Send, Sparkles } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { PROVIDERS as AI_PROVIDER_DEFS } from '@/lib/ai-providers';
 import { isServerProviderId, type ServerProviderId } from '@/lib/server-ai';
+// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
+import { checkBlockedJson, checkBlockedLegacy403 } from '@/lib/noa/block-notice';
 import { logger } from '@/lib/logger';
 
 type ChatMsg = { id: number; role: 'user' | 'assistant'; text: string };
@@ -177,15 +179,27 @@ export function ChatPanel() {
         });
 
         if (!res.ok) {
+          // [N4] 레거시 403 NOA 차단도 고지 의무 — toast/카드 발화 + errorLine 사용자 문구
+          // (TRINITY_BLOCK 등 내부 코드 그대로 노출 금지 — 사일런트 차단 금지)
           let errMsg = `HTTP ${res.status}`;
           try {
             const errData = (await res.json()) as { error?: string; noa?: { reason?: string } };
-            if (errData.noa?.reason) errMsg = errData.noa.reason;
+            const blockedMsg = checkBlockedLegacy403(errData, 'translator-chat', langKo ? 'ko' : 'en');
+            if (blockedMsg) errMsg = blockedMsg;
             else if (errData.error) errMsg = errData.error;
           } catch {
             /* ignore */
           }
           throw new Error(errMsg);
+        }
+
+        // [N4] 서버 게이트 차단 계약 (HTTP 200 + JSON {blocked, reason, gradeRequired})
+        // → toast/카드 고지 + errorLine 인라인 표시 (정상 응답은 text/event-stream)
+        const blockedCt = res.headers.get('content-type') ?? '';
+        if (blockedCt.includes('application/json')) {
+          const blockedJson: unknown = await res.json().catch(() => null);
+          const blockedMsg = checkBlockedJson(blockedJson, 'translator-chat');
+          throw new Error(blockedMsg ?? 'Unexpected non-stream response');
         }
 
         const reader = res.body?.getReader();

@@ -14,6 +14,8 @@ import { dispatchStream } from '@/services/aiProviders';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
 import { normalizeToAgentLang } from '@/lib/ai/lang-normalize';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
 
 export const maxDuration = 15; // Quick timeout — completion must be fast
 
@@ -85,6 +87,22 @@ export async function POST(req: NextRequest) {
   // Build user message — pure text (마지막 500자만 — Tab 컨텍스트).
   // [P-02 — 2026-05-10] genre/characters 가 user message 에 inline 되던 패턴 폐기 →
   // registry contextBlock 슬롯 (character-dna / genre-rules) 으로 단일 소스 통합.
+  // [N2] NOA 서버 게이트 — 입력 판정 (AI 호출 전 차단·비용 절약).
+  // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+  const prismGrade = typeof body.prismMode === 'string' ? body.prismMode : undefined;
+  const gate = await applyNoaGate({
+    prompt: text,
+    grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+    domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 소설 에디터 — creative 가중
+    sourceTier: hasByok ? 1 : 2,
+    route: '/api/complete',
+    language,
+    ip,
+  });
+  if (gate.blocked) {
+    return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+  }
+
   const userContent = text.slice(-500);
   const characterDnaBlock = characters.length > 0
     ? `Active characters in this scene: ${characters.join(', ')}`
@@ -124,7 +142,8 @@ export async function POST(req: NextRequest) {
         const data = await sparkRes.json() as { choices?: Array<{ message?: { content?: string } }> };
         const completion = data.choices?.[0]?.message?.content?.trim();
         if (completion) {
-          return NextResponse.json({ completion });
+          // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
+          return NextResponse.json({ completion: filterOutputIp(completion, '/api/complete').output });
         }
       }
     } catch {
@@ -193,7 +212,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Empty completion' }, { status: 502 });
     }
 
-    return NextResponse.json({ completion });
+    // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
+    return NextResponse.json({ completion: filterOutputIp(completion, '/api/complete').output });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: msg }, { status: 500 });

@@ -1,3 +1,59 @@
+## Notation 표준 — Issue Code (P19 루프3 — 2026-06-08)
+
+코드 주석·ADR·이슈 트래킹의 식별자 표기를 단일 표준으로 통합. 점진 마이그레이션 (새 PR 부터 강제, 기존 주석은 자연 노출 시점에 갱신).
+
+**형식:** `[ISSUE-CODE priority-LEVEL YYYY-MM-DD]`
+
+| 필드 | 정의 |
+|------|------|
+| ISSUE-CODE | 카테고리 prefix + 번호. 아래 표 참조. |
+| priority-LEVEL | `critical` / `high` / `medium` / `low` 중 1. 또는 `P0..P9` 수치. |
+| YYYY-MM-DD | 진단/수리 일자. ISO 8601 단축. |
+
+**ISSUE-CODE prefix 표:**
+
+| Prefix | 도메인 | 예시 |
+|--------|--------|------|
+| `P0..P9` | Production readiness (range: per-loop) | `[P3 priority-high 2026-06-08]` |
+| `S1..S9` | Security | `[S2-XFF 2026-04-24]` (XFF 스푸핑 방어) |
+| `N1..N9` | Network / Distributed | `[N-01 2026-06-03]` (공유 DB store 레이스) |
+| `M1..M9` | Mobile / Touch | `[M-01 2026-05-10]` (44px 터치 타겟) |
+| `O1..O9` | Observability | `[O-01 2026-06-08]` (trace_id 전파) |
+| `A1..A9` | Accessibility (WCAG) | `[A-03 2026-06-08]` (focus trap) |
+| `L1..L9` | Legal / Compliance | `[L-02 2026-06-08]` (AGPL header) |
+| `I1..I9` | i18n | `[I-07 2026-05-10]` (safety-registry) |
+
+**Loop 표기:** `루프 N` (1/2/3...) 를 priority 옆에 병기. 예: `[P3 루프3/senior-architect 2026-06-08]`.
+
+**예시 (기존 → 신규 점진 마이그레이션):**
+```
+# 기존 (혼용)
+[Doc 1 Studio P0 — 2026-05-12]
+[priority 8 — 2026-06-08]
+[루프 2 P4 — 2026-06-08]
+
+# 신규 (통합)
+[P0 doc1-studio 2026-05-12]
+[P8 루프3 2026-06-08]
+[P4 루프2/senior-architect 2026-06-08]
+```
+
+**규칙:**
+- 기존 주석은 마이그레이션 강제 X (해당 라인 편집 시 자연 갱신).
+- 새 주석은 표준 형식 강제. 코드 리뷰 시 1차 점검 항목.
+- ADR 본문은 `Loop: 루프 N / P_n` 헤더 별도 명시.
+
+## Naming 표준 — 단일 글자 변수 금지 (P15 루프3 — 2026-06-08)
+
+`t = createT(...)` 같은 단일 글자 변수는 같은 파일에서 다른 의미 (`t = setTimeout(...)`) 와 충돌 가능. 다음 규칙 강제:
+
+- 단일 글자 변수 사용 금지 (예외: 1줄 람다의 인덱스 `i`, 좌표 `x`/`y`).
+- `createT` 결과 → `translator` 또는 `i18nFn`.
+- `setTimeout` 반환 → `warningTimeout` / `dismissTimeout` 등 의미 부여.
+- `new URLSearchParams` → `searchParams`.
+
+신규 PR 부터 강제. 기존 코드는 자연 노출 시점에 점진 정리.
+
 ## 판단 체계 (Judgment Framework) — NOA Unified Stack v2.1
 9개 스킬 단일 파이프라인 (noa-unified-anti-sycophancy-stack v2.1):
 - 신규 코드: `/first-production-judgment` (4-GATE: Intent→Contract→Minimal→Simulation)

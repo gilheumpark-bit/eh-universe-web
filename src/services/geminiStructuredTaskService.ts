@@ -8,6 +8,14 @@ import { VLLM_MODEL_ID, SPARK_GATEWAY_URL } from '@/lib/dgx-models';
 // 각 도메인 prompt 는 그 언어로 직접 작성 (사용자 결정: 각 나라 문법 훼손 X).
 // [Codex UI — 2026-05-10] domainOverride 로 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
 import { getDomainPrompts, type CodexDomain } from '@/lib/ai/codex-prompts';
+// [character-guard — 2026-06-10] /api/gemini-structured 캐릭터 생성 경로에 ip-brand-guard 서버측 주입.
+// writing-agent-registry 는 서버 안전 (의존: token-meter 뿐 — window 접근은 전부 typeof guard,
+// 'use client' 없음 — src/app/api/complete/route.ts 서버 import 선례). 가드 문자열 단일 소스 유지.
+// 스코프: characters 만 — worldDesign/worldSim 은 별도 builder(buildWorldDesignPrompt/buildWorldSimPrompt)
+// 라 본 주입 지점을 공유하지 않음 (동일 builder 아님 → 미적용·필요 시 별건).
+// 주의: ip-brand-guard 는 출력 형식 비강제 (JSON responseSchema 와 무충돌) — prose 강제 가드
+// (no-english-thinking-korean-novel) 는 구조화-JSON 경로에 주입 금지.
+import { GUARDS } from '@/lib/ai/writing-agent-registry';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = {
@@ -114,12 +122,14 @@ export async function generateJson<T>(apiKey: string, model: string, prompt: str
 export async function handleCharacters(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 4, existingNames: string[] = [], domainOverride?: CodexDomain) {
   // [I-06 — 2026-05-10] 도메인 분기 prompt — 영어 범용 + LANGUAGE_NAMES override 패턴 폐기.
   // role enum 도 한국 웹소설 정형 (protagonist/antagonist/ally/rival/mentor/regressor/extra) 으로 확장.
-  const prompt = getDomainPrompts(language, domainOverride).buildCharactersPrompt({
+  // [character-guard — 2026-06-10] ip-brand-guard prepend — 실존 상표·타 작가 IP 캐릭터명 생성 차단.
+  // Gemini·DGX Spark 폴백 양쪽 모두 동일 prompt 사용 → 단일 주입 지점으로 두 경로 커버.
+  const prompt = `${GUARDS['ip-brand-guard']}\n\n${getDomainPrompts(language, domainOverride).buildCharactersPrompt({
     genre: config.genre,
     synopsis: config.synopsis ?? '',
     count,
     existingNames,
-  });
+  })}`;
   return generateJson<unknown[]>(apiKey, model, prompt, {
     type: Type.ARRAY,
     items: {

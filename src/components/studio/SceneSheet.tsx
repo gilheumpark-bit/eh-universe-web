@@ -11,6 +11,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TermTooltip } from "@/components/ui/TermTooltip";
 import { useGenreLabel } from "@/hooks/useGenreLabel";
 import GenreModeSelector from "@/components/studio/GenreModeSelector";
+// [s82-stage-coverage] 명시 기록 직후 auto-trigger 이중 계상 억제 (HCI 무결성)
+import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
 import type { GenreMode } from "@/lib/genre-labels";
 
 // ============================================================
@@ -608,7 +610,13 @@ export default function SceneSheet({
           episodeId: ep,
           afterContent: JSON.stringify(sheet.directionSnapshot),
           note: `Scene sheet save (preset=${activePreset ?? 'none'})`,
+          // [s82-stage-coverage] stage 는 별도 optional 필드 — targetType 에
+          // 'scene-sheet' 박는 것 금지 (union 외 값 = tsc fail·s81 공격 벡터).
+          stage: 'scene-sheet',
         });
+        // [s82] 같은 setConfig 변경이 useCreativeProcessAutoTrigger 의
+        // scenesHash diff 로 HUMAN_REVISION 1건 더 찍히는 이중 계상 억제.
+        markExplicitCreativeLog('scene');
       }
     } catch { /* noop */ }
   }, [onSaveEpisodeSheet, currentEpisode, buildDirection, activePreset, lang]);
@@ -632,6 +640,22 @@ export default function SceneSheet({
       if (result.dopamineDevices?.length) setDopamines(result.dopamineDevices.map((dp: { scale?: string; device: string; desc: string }, i: number) => ({ id: `ai-dp-${ts}-${i}`, scale: (dp.scale || "medium") as "micro" | "medium" | "macro", device: dp.device, desc: dp.desc, resolved: false })));
       if (result.pacings?.length) setPacings(result.pacings.map((p: { section: string; percent?: number; desc: string }, i: number) => ({ id: `ai-p-${ts}-${i}`, section: p.section, percent: p.percent || 25, desc: p.desc })));
       if (result.tensionCurve?.length) setTensionPoints(result.tensionCurve.map((t: { position: number; level: number; label: string }, i: number) => ({ id: `ai-t-${ts}-${i}`, position: t.position, level: t.level, label: t.label })));
+
+      // [s82-stage-coverage] 연출 AI 초안 = AI_DRAFT 귀속 (인간 1.0 오귀속 금지).
+      // 로컬 state 만 갱신 (config X) → auto-trigger 미발화 → markExplicit 불필요.
+      // CharacterTab.tsx:119-131 null-safe 패턴 — fire-and-forget·실패 비차단.
+      try {
+        const cl = typeof window !== 'undefined' ? window.__creativeLogger : undefined;
+        if (cl?.logAIDraft) {
+          void cl.logAIDraft({
+            targetType: 'scene',
+            targetId: `direction-ai-${ts}`,
+            afterContent: JSON.stringify(result),
+            promptLabel: 'AI scene direction generate',
+            stage: 'direction',
+          });
+        }
+      } catch { /* noop */ }
     } catch { showAlert(tl("sceneSheet.aiFailed")); }
   }, [lang, languageProp, synopsis, characterNames, tierContext, tl]);
 

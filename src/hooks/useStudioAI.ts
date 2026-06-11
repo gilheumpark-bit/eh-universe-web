@@ -65,6 +65,18 @@ interface UseStudioAIParams {
 // PART 1-B — 순수 헬퍼 함수
 // ============================================================
 
+/**
+ * [P5 low/functional 2026-06-09] 생성 실패 시 retry 버튼 노출 여부.
+ * StudioError.retryable 을 1차 신뢰하되, UNKNOWN(분류 실패한 일시적 서버/네트워크 오류)
+ * 도 생성 컨텍스트에선 재시도 가능으로 본다 — 생성 호출은 본질적으로 idempotent 하게 재실행 가능.
+ * 단 CONTENT_TOO_LARGE / FREE_TIER_LIMIT / PARSE_FAILED 등 재시도해도 동일 실패할 코드는 제외.
+ * 이로써 사용자는 '버튼이 고장났나'가 아니라 명확한 메시지 + 재시도 액션을 받는다.
+ */
+function isGenerationRetryable(err: import('@/lib/errors').StudioError): boolean {
+  if (err.retryable) return true;
+  return err.code === StudioErrorCode.UNKNOWN;
+}
+
 /** HFCP 결과를 프롬프트 prefix 문자열로 변환 */
 function buildHFCPPrefix(hfcpResult: ReturnType<typeof processHFCPTurn>): string {
   const raw = [
@@ -501,6 +513,22 @@ export function useStudioAI({
       incrementGenerationCount();
       setDirectorReport(dReport);
 
+      // [rank 17 — 2026-06-07] work-note journal 누적 (Network 인라인 표시용)
+      // dynamic import — work-note 가 useStudioAI 의 정적 의존에서 빠짐. silent fallback.
+      try {
+        if (typeof window !== 'undefined') {
+          const projectId = window.localStorage?.getItem('noa_studio_currentProjectId');
+          if (projectId) {
+            const wn = await import('@/lib/creative/work-note');
+            // 본문 생성 = draft 1건 누적. 퇴고/구상 hook 은 별도 위치에서.
+            wn.attachJournal(projectId, 'draft', Date.now());
+            window.dispatchEvent(new CustomEvent('noa:work-note-journal-updated', {
+              detail: { workId: projectId, kind: 'draft' },
+            }));
+          }
+        }
+      } catch (err) { logger.warn('StudioAI', 'attachJournal failed', err); }
+
       // AI 사용 메타데이터 기록 — Export 시 고지문 생성에 사용 (ai-usage-tracker)
       try {
         const activeProv = hasDgxService() ? 'dgx-qwen' : getActiveProvider();
@@ -704,7 +732,8 @@ export function useStudioAI({
           setShowApiKeyModal(true);
         } else {
           logger.error('StudioAI', classified);
-          setUxError({ error: classified, retry: classified.retryable ? () => handleSend(text, undefined, undefined) : undefined });
+          // [P5 2026-06-09] 생성 실패 — 친화 메시지(ErrorToast 가 code→4언어 변환) + 일시적 오류 재시도.
+          setUxError({ error: classified, retry: isGenerationRetryable(classified) ? () => handleSend(text, undefined, undefined) : undefined });
         }
       }
     } finally {
@@ -942,15 +971,20 @@ export function useStudioAI({
       if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
       else {
         const classified = classifyAsStudioError(error);
-        logger.error('StudioAI', classified);
-        setUxError({ error: classified, retry: classified.retryable ? () => handleRegenerate(assistantMsgId) : undefined });
+        // [P5 2026-06-09] handleSend 와 대칭 — 키 오류는 모달, 그 외는 친화 메시지 + 일시적 오류 재시도.
+        if (classified.code === StudioErrorCode.KEY_MISSING || classified.code === StudioErrorCode.KEY_INVALID) {
+          setShowApiKeyModal(true);
+        } else {
+          logger.error('StudioAI', classified);
+          setUxError({ error: classified, retry: isGenerationRetryable(classified) ? () => handleRegenerate(assistantMsgId) : undefined });
+        }
       }
     } finally {
       generationLockRef.current = false;
       setIsGenerating(false);
       abortControllerRef.current = null;
     }
-  }, [isGenerating, currentSessionId, currentSession, language, setSessions, setUxError]);
+  }, [isGenerating, currentSessionId, currentSession, language, setSessions, setUxError, setShowApiKeyModal]);
 
   return {
     isGenerating,

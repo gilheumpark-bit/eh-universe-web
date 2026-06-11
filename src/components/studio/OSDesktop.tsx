@@ -5,7 +5,6 @@
 // ============================================================
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Plus, ScrollText, UserCircle, Feather, Type, Clock,
   Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
@@ -100,9 +99,9 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   language, setLanguage,
 }) => {
   const t = createT(language);
-  const router = useRouter();
   const [hoveredTab, setHoveredTab] = useState<AppTab | null>(null);
   const [isSystemMenuOpen, setIsSystemMenuOpen] = useState(false);
+  const [dockToolsVisible, setDockToolsVisible] = useState(false);
   const textFileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // ── Dock position (free-move) ──
@@ -398,38 +397,40 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               : { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', left: '50%', transform: 'translateX(-50%)' }
         }
       >
-        {/* 앵커 토글 — 상단/하단 전환 */}
-        <button
-          type="button"
-          onClick={toggleDockAnchor}
-          className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-1 shrink-0 group/anchor"
-          title={L4(language, {
-            ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
-            en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
-            ja: dockAnchor === 'top' ? '下部へ移動' : '上部へ移動',
-            zh: dockAnchor === 'top' ? '移至底部' : '移至顶部',
-          })}
-          aria-label={L4(language, {
-            ko: dockAnchor === 'top' ? '독을 하단으로' : '독을 상단으로',
-            en: dockAnchor === 'top' ? 'Dock to bottom' : 'Dock to top',
-            ja: dockAnchor === 'top' ? 'ドックを下部に' : 'ドックを上部に',
-            zh: dockAnchor === 'top' ? '停靠到底部' : '停靠到顶部',
-          })}
-        >
-          {dockAnchor === 'top'
-            ? <ArrowDownToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />
-            : <ArrowUpToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />}
-        </button>
+        {dockToolsVisible && (
+          <>
+            <button
+              type="button"
+              onClick={toggleDockAnchor}
+              className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-1 shrink-0 group/anchor"
+              title={L4(language, {
+                ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
+                en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
+                ja: dockAnchor === 'top' ? '下部へ移動' : '上部へ移動',
+                zh: dockAnchor === 'top' ? '移至底部' : '移至顶部',
+              })}
+              aria-label={L4(language, {
+                ko: dockAnchor === 'top' ? '독을 하단으로' : '독을 상단으로',
+                en: dockAnchor === 'top' ? 'Dock to bottom' : 'Dock to top',
+                ja: dockAnchor === 'top' ? 'ドックを下部に' : 'ドックを上部に',
+                zh: dockAnchor === 'top' ? '停靠到底部' : '停靠到顶部',
+              })}
+            >
+              {dockAnchor === 'top'
+                ? <ArrowDownToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />
+                : <ArrowUpToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />}
+            </button>
 
-        {/* Move Handle — 자유 이동 */}
-        <div
-          onMouseDown={handleDockMoveStart}
-          onDoubleClick={handleDockReset}
-          className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
-          title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
-        >
-          <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
-        </div>
+            <div
+              onMouseDown={handleDockMoveStart}
+              onDoubleClick={handleDockReset}
+              className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
+              title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
+            >
+              <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
+            </div>
+          </>
+        )}
 
         {/* 소설 탭 아이콘 — Primary 5개 + 활성 overflow 탭 */}
         {orderedDockItems
@@ -563,38 +564,6 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         {/* 구분선 */}
         <div className="w-px h-10 bg-border/30 mx-1" />
 
-        {/* 앱 링크 아이콘 (UNIVERSE / TRANSLATE) — 앵커 tier (Handle·Settings와 동일 크기)
-            [Nav fix — 2026-05-10] Link → button + router.push 명시 호출.
-            기존 Next.js Link 가 dock 의 dragging/touch handler 와 hydration 시점에 충돌해
-            click 이 navigate 까지 가지 않는 사례 보고. button + onClick 으로 보장.
-            저장 가능한 변경 (currentSessionId) → 새 탭 전환 시 손실 방지를 위해 동일 탭 내 router.push. */}
-        {appLinks.map(link => (
-          // [2026-05-11 fix #2] router.push silent-fail 확인됨 ("클릭만 되고 안 들어가짐") →
-          // raw <a href> + browser native navigation 으로 회귀. Studio ↔ Archive / Translation
-          // 은 어차피 다른 앱 경계이므로 SPA client navigation 의미 낮음 (다른 RSC tree).
-          // 드래그 중에는 preventDefault 로 차단. onMouseDown stopPropagation 로 dock 핸들 race 차단.
-          <a
-            key={link.href}
-            href={link.href}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              if (isDockDragging.current) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-              // 평소엔 a 의 default browser navigation 으로 진입 (가장 robust)
-            }}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30 cursor-pointer no-underline"
-            title={link.label}
-            aria-label={link.label}
-          >
-            <link.icon className={`w-6 h-6 ${link.color} hover:text-text-primary transition-colors pointer-events-none`} strokeWidth={1.8} />
-          </a>
-        ))}
-
-        {/* 구분선 */}
-        <div className="w-px h-10 bg-border/30 mx-1" />
-
         {/* Settings */}
         <div className="relative">
           <button
@@ -608,9 +577,53 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           </button>
 
           {isSystemMenuOpen && (
-            <div className={`absolute right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[var(--z-dropdown)] ${dockAnchor === 'top' ? 'top-16' : 'bottom-16'}`}>
+            <div className={`absolute right-0 max-h-[min(72vh,520px)] w-72 overflow-y-auto bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-lg p-2 shadow-lg flex flex-col gap-1 z-[var(--z-dropdown)] ${dockAnchor === 'top' ? 'top-16' : 'bottom-16'}`}>
               <button onClick={() => { setIsSystemMenuOpen(false); handleTabChange('settings'); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
                 <Settings className="w-4 h-4" /> {t('sidebar.settings')}
+              </button>
+              <div className="h-px bg-border/30 my-1" />
+              <div className="px-3 py-1.5 text-[10px] font-black text-text-tertiary uppercase tracking-widest font-serif">
+                <Globe className="w-3 h-3 inline mr-1.5" />
+                {L4(language, { ko: '이동', en: 'Go to', ja: '移動', zh: '前往' })}
+              </div>
+              {appLinks.map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors no-underline"
+                  onClick={() => setIsSystemMenuOpen(false)}
+                >
+                  <link.icon className={`w-4 h-4 ${link.color}`} strokeWidth={1.8} />
+                  {link.label}
+                </a>
+              ))}
+              <div className="h-px bg-border/30 my-1" />
+              <div className="px-3 py-1.5 text-[10px] font-black text-text-tertiary uppercase tracking-widest font-serif">
+                <Move className="w-3 h-3 inline mr-1.5" />
+                {L4(language, { ko: '독', en: 'Dock', ja: 'ドック', zh: '停靠栏' })}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setDockToolsVisible(prev => !prev); setIsSystemMenuOpen(false); }}
+                className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors"
+              >
+                <GripVertical className="w-4 h-4" />
+                {dockToolsVisible
+                  ? L4(language, { ko: '위치 편집 숨기기', en: 'Hide position tools', ja: '位置編集を隠す', zh: '隐藏位置工具' })
+                  : L4(language, { ko: '위치 편집 켜기', en: 'Show position tools', ja: '位置編集を表示', zh: '显示位置工具' })}
+              </button>
+              <button
+                type="button"
+                onClick={() => { toggleDockAnchor(); setIsSystemMenuOpen(false); }}
+                className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors"
+              >
+                {dockAnchor === 'top' ? <ArrowDownToLine className="w-4 h-4" /> : <ArrowUpToLine className="w-4 h-4" />}
+                {L4(language, {
+                  ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
+                  en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
+                  ja: dockAnchor === 'top' ? '下部へ移動' : '上部へ移動',
+                  zh: dockAnchor === 'top' ? '移至底部' : '移至顶部',
+                })}
               </button>
               <button
                 onClick={() => { setIsSystemMenuOpen(false); handleDockReset(); }}

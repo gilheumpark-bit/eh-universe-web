@@ -20,7 +20,7 @@
 // PART 1 — Imports
 // ============================================================
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import {
   RecoveryProvider,
@@ -53,6 +53,17 @@ export interface StudioMountProvidersProps {
     decision: RecoveryDecision,
     result: RecoveryResult | null,
   ) => void;
+  /**
+   * [G2-recovery 2026-06-11] 부팅 복구 결과 — Provider 내부로 전달해
+   * 크래시/체인 손상 시 RecoveryDialog 를 연다.
+   *
+   * 배경: useStudioMounts→useRecovery 는 StudioShell 본문(이 Provider 위)에서
+   * 실행되므로 그 안의 ctx.openRecoveryDialog 는 기본값 no-op — Dialog 가
+   * 설계 의도(M1.2 Step 9)와 달리 열리지 않았다. runBootRecovery 는 멱등이
+   * 아니라(recovery-marker append·quarantine 쓰기) 재실행 금지 → 기존 1회
+   * 실행 결과를 prop 으로 받아 Provider 내부에서만 결선한다.
+   */
+  bootRecoveryResult?: RecoveryResult | null;
   children: React.ReactNode;
 }
 
@@ -100,6 +111,36 @@ const RecoveryDialogHost: React.FC<RecoveryDialogHostProps> = ({ language }) => 
 };
 
 // ============================================================
+// PART 3.5 — Boot result bridge (Provider 내부 — [G2-recovery 2026-06-11])
+// ============================================================
+
+interface RecoveryBootBridgeProps {
+  result: RecoveryResult | null | undefined;
+}
+
+/**
+ * 부팅 복구 결과를 실제 Provider 컨텍스트에 결선. Dialog 표시 조건은
+ * useRecovery 와 동일 (recoveredFromCrash || chainDamaged).
+ * - 동일 result 객체 1회만 처리 (ref 가드) → 사용자가 닫은 뒤 재오픈 금지.
+ * - result null/미전달·정상 부팅(strategy none)·flag off 에서는 완전 무동작.
+ */
+const RecoveryBootBridge: React.FC<RecoveryBootBridgeProps> = ({ result }) => {
+  const { openRecoveryDialog } = useRecoveryContext();
+  const handledRef = useRef<RecoveryResult | null>(null);
+
+  useEffect(() => {
+    if (!result) return;
+    if (handledRef.current === result) return;
+    handledRef.current = result;
+    if (result.recoveredFromCrash || result.chainDamaged) {
+      openRecoveryDialog(result);
+    }
+  }, [result, openRecoveryDialog]);
+
+  return null;
+};
+
+// ============================================================
 // PART 4 — Public component
 // ============================================================
 
@@ -110,11 +151,13 @@ const RecoveryDialogHost: React.FC<RecoveryDialogHostProps> = ({ language }) => 
 export const StudioMountProviders: React.FC<StudioMountProvidersProps> = ({
   language,
   onRecoveryDecision,
+  bootRecoveryResult,
   children,
 }) => {
   return (
     <RecoveryProvider onDecision={onRecoveryDecision}>
       {children}
+      <RecoveryBootBridge result={bootRecoveryResult} />
       <RecoveryDialogHost language={language} />
     </RecoveryProvider>
   );
@@ -122,4 +165,4 @@ export const StudioMountProviders: React.FC<StudioMountProvidersProps> = ({
 
 export default StudioMountProviders;
 
-// IDENTITY_SEAL: PART-1..4 | role=mount-providers | inputs=language+onDecision | outputs=JSX(provider+dialog)
+// IDENTITY_SEAL: PART-1..4(+3.5 boot-bridge) | role=mount-providers | inputs=language+onDecision+bootRecoveryResult | outputs=JSX(provider+dialog)

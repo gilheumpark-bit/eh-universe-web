@@ -260,6 +260,24 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Certificates — 창작 과정 확인서 원본 레지스트리 (D3-registry).
+    // 메타데이터만 저장 (원고·콘텐츠 0byte — PIPA 최소 수집).
+    // write-once: create 이후 작가 본인도 수정·삭제 불가 (앵커 무결성) — admin 만 예외.
+    // 정직 한계: 인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
+    match /certificates/{certId} {
+      // read: 공개(visibility=="public") 누구나, 그 외 소유자/관리자만
+      allow read: if resource.data.visibility == "public"
+        || (signedIn() && request.auth.uid == resource.data.authorUid)
+        || isAdmin();
+      // create: 클라이언트 직접쓰기 전면 차단 — 단일 writer = /api/cp/register
+      // (서비스계정 REST, rules 우회 경로). client create 를 열어두면
+      // registrySignature/signatureAlgo 없는 위조 문서 생성 + 정당한 certId
+      // 선점(write-once 409 스쿼팅/DoS)으로 HMAC 무결성 모델이 우회된다.
+      allow create: if false;
+      // write-once 강제 — update/delete 는 admin 만
+      allow update, delete: if isAdmin();
+    }
+
     // IDENTITY_SEAL: PART-2 | role=collection policies | inputs=request and resource data | outputs=allow or deny
   }
 }

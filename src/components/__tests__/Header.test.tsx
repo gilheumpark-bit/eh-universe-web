@@ -69,10 +69,9 @@ describe('Header', () => {
   it('renders main navigation links (desktop + mobile)', () => {
     render(<Header />);
     // getAllByText because links appear in both desktop and mobile nav
+    // [디자인 피벗 2026-06-09] NETWORK·CODE 영역 삭제 — STUDIO 중심 단순화.
     expect(screen.getAllByText('HOME').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('NETWORK').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('STUDIO').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('CODE').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the language toggle button', () => {

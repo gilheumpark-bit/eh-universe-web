@@ -1,11 +1,10 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
-import { APIKeySlotManager } from '@/components/home/APIKeySlotManager';
+// [rank 19 — 2026-06-07] APIKeySlotManager / SaveSlotModal / INITIAL_CONFIG 는 StudioModalBridge 로 이관.
 import { ConfirmModal } from '@/components/studio/UXHelpers';
-import { MoveSessionModal, SaveSlotModal } from '@/components/studio/StudioModals';
+import { MoveSessionModal } from '@/components/studio/StudioModals';
 import StudioToasts from '@/components/studio/StudioToasts';
-import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import type { ChatSession, AppTab, AppLanguage, Genre, Project } from '@/lib/studio-types';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
@@ -68,18 +67,16 @@ export default function StudioOverlayManager({
   alertToast, setAlertToast
 }: StudioOverlayManagerProps) {
   // Modal stacking guard: only render the highest-priority active modal.
-  // Priority order: ConfirmModal > QuickStartModal > ApiKeyModal > SaveSlotModal > MoveSessionModal
+  // [rank 19 — 2026-06-07] apikey/saveslot 은 StudioModalBridge 가 ModalProvider 경로로
+  // 렌더 — OverlayManager 에서는 분기에서 제외. 다른 priority 는 그대로 유지.
+  // Priority order: ConfirmModal > QuickStartModal > MoveSessionModal
   const activeModalKey = confirmState.open
     ? 'confirm'
     : showQuickStartModal
       ? 'quickstart'
-      : showApiKeyModal
-        ? 'apikey'
-        : saveSlotModalOpen
-          ? 'saveslot'
-          : moveModal
-            ? 'move'
-            : null;
+      : moveModal
+        ? 'move'
+        : null;
 
   return (
     <>
@@ -97,11 +94,7 @@ export default function StudioOverlayManager({
         />
       )}
 
-      {activeModalKey === 'apikey' && (
-        <APIKeySlotManager
-          onClose={() => { setShowApiKeyModal(false); setApiKeyVersion(v => v + 1); }}
-        />
-      )}
+      {/* [rank 19 — 2026-06-07] apikey/saveslot 은 StudioModalBridge 로 이관 — 여기서는 미렌더. */}
 
       {activeModalKey === 'confirm' && (
         <ConfirmModal
@@ -117,13 +110,6 @@ export default function StudioOverlayManager({
       )}
 
       {activeModalKey === 'move' && moveModal && <MoveSessionModal data={moveModal} language={language} onMove={moveSessionToProject} onClose={() => setMoveModal(null)} />}
-
-      {activeModalKey === 'saveslot' && <SaveSlotModal language={language} activeTab={activeTab} config={currentSession?.config}
-        onSave={(slot) => {
-          updateCurrentSession({ config: { ...(currentSession?.config || INITIAL_CONFIG), savedSlots: [...(currentSession?.config?.savedSlots || []), slot] } });
-          triggerSave();
-        }}
-        onClose={() => setSaveSlotModalOpen(false)} />}
 
       <StudioToasts
         language={language} isKO={isKO}

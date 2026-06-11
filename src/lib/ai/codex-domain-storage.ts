@@ -21,6 +21,12 @@ import type { CodexDomain } from './codex-prompts';
 
 const STORAGE_KEY = 'loreguard.codex.domain';
 
+/**
+ * 다중 마운트 동기화용 storage key export.
+ * CodexDomainSelector 등 외부 컴포넌트가 'storage' 이벤트 필터링 시 사용.
+ */
+export const CODEX_DOMAIN_STORAGE_KEY = STORAGE_KEY;
+
 const VALID_DOMAINS: readonly CodexDomain[] = [
   'korean-webnovel', 'western-fantasy', 'japanese-lightnovel', 'chinese-xianxia',
 ] as const;

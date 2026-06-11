@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { useTranslator } from '../core/TranslatorContext';
 import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import { ArrowLeftRight, Settings2, Focus, AlignLeft, Zap, MessageSquare, Shield, BookOpen, HardDrive, Play, Loader2, GitCompare, Sparkles, CheckSquare, Stamp } from 'lucide-react';
-import { ContextMenu } from '@/components/code-studio/ContextMenu';
+import { ContextMenu } from '@/components/ui/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { highlightGlossaryTerms } from '../panels/GlossaryPanel';

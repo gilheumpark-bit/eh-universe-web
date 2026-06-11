@@ -36,6 +36,16 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/ban-ts-comment": "warn",
     },
   },
+  // 테스트 파일은 React 컴포넌트가 아니라 모듈 스코프 mock 을 beforeEach 에서 재할당하고
+  // 테스트가 제어하는 effect 에서 setState 를 호출한다 — react-hooks 의 globals/
+  // set-state-in-effect 규칙은 프로덕션 컴포넌트 대상이므로 테스트에는 부적용. (CI 게이트 정상화)
+  {
+    files: ["src/**/__tests__/**", "src/**/*.test.{ts,tsx}"],
+    rules: {
+      "react-hooks/globals": "off",
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

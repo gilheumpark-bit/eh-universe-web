@@ -19,6 +19,7 @@ import {
   recordSource,
   computeSha256Hex,
   type CreativeOriginType,
+  type CreativeStage,
 } from '@/lib/creative-process';
 
 // ============================================================
@@ -34,6 +35,8 @@ export interface CreativeEventLogger {
     beforeContent?: string;
     afterContent: string;
     note?: string;
+    /** [s82-stage-coverage] 창작 단계 태그 (additive·optional — 구 caller 무회귀) */
+    stage?: CreativeStage;
   }) => Promise<string | null>;
 
   /** AI 초안 생성 (AI_DRAFT) */
@@ -45,6 +48,8 @@ export interface CreativeEventLogger {
     provider?: string;
     model?: string;
     promptLabel?: string;
+    /** [s82-stage-coverage] 창작 단계 태그 (additive·optional) */
+    stage?: CreativeStage;
   }) => Promise<string | null>;
 
   /** AI 제안 작가 채택 (AI_SUGGESTION + accept event) */
@@ -55,6 +60,8 @@ export interface CreativeEventLogger {
     afterContent: string;
     provider?: string;
     model?: string;
+    /** [s82-stage-coverage] 창작 단계 태그 (additive·optional) */
+    stage?: CreativeStage;
   }) => Promise<string | null>;
 
   /** 외부 텍스트 편입 (EXTERNAL_IMPORT + import event) */
@@ -112,7 +119,7 @@ export function useCreativeEventLogger(
   const noOp = useCallback(async () => null, []);
 
   const logHumanEdit = useCallback<CreativeEventLogger['logHumanEdit']>(
-    async ({ targetType, targetId, episodeId, beforeContent, afterContent, note }) => {
+    async ({ targetType, targetId, episodeId, beforeContent, afterContent, note, stage }) => {
       if (!projectId) return null;
       try {
         const beforeHash = beforeContent ? await computeSha256Hex(beforeContent) : null;
@@ -129,6 +136,7 @@ export function useCreativeEventLogger(
           beforeHash,
           afterHash,
           note,
+          stage,
         });
         return id;
       } catch (err) {
@@ -140,7 +148,7 @@ export function useCreativeEventLogger(
   );
 
   const logAIDraft = useCallback<CreativeEventLogger['logAIDraft']>(
-    async ({ targetType, targetId, episodeId, afterContent, provider, model, promptLabel }) => {
+    async ({ targetType, targetId, episodeId, afterContent, provider, model, promptLabel, stage }) => {
       if (!projectId) return null;
       try {
         const afterHash = await computeSha256Hex(afterContent);
@@ -166,6 +174,7 @@ export function useCreativeEventLogger(
           beforeHash: null,
           afterHash,
           sourceId,
+          stage,
         });
         return id;
       } catch (err) {
@@ -177,7 +186,7 @@ export function useCreativeEventLogger(
   );
 
   const logAcceptAI = useCallback<CreativeEventLogger['logAcceptAI']>(
-    async ({ targetType, targetId, episodeId, afterContent, provider, model }) => {
+    async ({ targetType, targetId, episodeId, afterContent, provider, model, stage }) => {
       if (!projectId) return null;
       try {
         const afterHash = await computeSha256Hex(afterContent);
@@ -193,6 +202,7 @@ export function useCreativeEventLogger(
           beforeHash: null,
           afterHash,
           note: `Accepted AI suggestion (${provider || 'unknown'}/${model || 'unknown'})`,
+          stage,
         });
         return id;
       } catch (err) {

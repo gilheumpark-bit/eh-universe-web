@@ -8,6 +8,8 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
+// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
+import { checkBlockedJson, checkBlockedLegacy403 } from "@/lib/noa/block-notice";
 import StylePreview, { applyStyleTransform } from "./StylePreview";
 
 const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
@@ -557,7 +559,28 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
       });
 
       if (!res.ok) {
-        setResultText(en ? "API error. Please try again." : "API 오류가 발생했습니다. 다시 시도해주세요.");
+        // [N4] 레거시 403 NOA 차단 (HTTP 403 + { error, noa:{reason} })도 고지 의무 —
+        // toast/카드 발화 + 결과 영역 인라인 사유 (사일런트 차단 금지)
+        let inlineMsg: string | null = null;
+        try {
+          const errData: unknown = await res.json();
+          inlineMsg = checkBlockedLegacy403(errData, "style-studio", en ? "en" : "ko");
+          if (!inlineMsg) {
+            const plainError = (errData as { error?: unknown })?.error;
+            if (typeof plainError === "string" && plainError) inlineMsg = plainError;
+          }
+        } catch { /* 본문 비-JSON — 일반 오류 문구 유지 */ }
+        setResultText(inlineMsg ?? (en ? "API error. Please try again." : "API 오류가 발생했습니다. 다시 시도해주세요."));
+        return;
+      }
+
+      // [N4] 서버 게이트 차단 계약 (HTTP 200 + JSON {blocked, reason, gradeRequired})
+      // → toast/카드 고지 + 결과 영역 인라인 표시 (정상 응답은 text/event-stream)
+      const blockedCt = res.headers.get("content-type") ?? "";
+      if (blockedCt.includes("application/json")) {
+        const blockedJson: unknown = await res.json().catch(() => null);
+        const blockedMsg = checkBlockedJson(blockedJson, "style-studio", en ? "en" : "ko");
+        setResultText(blockedMsg ?? (en ? "API error. Please try again." : "API 오류가 발생했습니다. 다시 시도해주세요."));
         return;
       }
 

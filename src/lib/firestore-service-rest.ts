@@ -25,6 +25,43 @@ async function getAccessToken(): Promise<string | null> {
   return typeof t === "string" ? t : t?.token ?? null;
 }
 
+/**
+ * Firestore REST v1 — get a single document by path (GET).
+ *
+ * fail-safe: service account 미설정 → no_service_account, 404 → not_found,
+ * 기타 HTTP/네트워크 오류 → http_xxx / fetch_failed. throw 없음.
+ * 호출자(예: stripeRole desync grace 읽기)는 실패를 침묵 폴백 신호로 사용한다.
+ */
+export async function firestoreGetDocument(
+  projectId: string,
+  documentPath: string,
+  options?: { timeoutMs?: number },
+): Promise<{ ok: true; fields: Record<string, unknown> } | { ok: false; error: string }> {
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: "no_service_account" };
+
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${documentPath}`;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(options?.timeoutMs ?? 4_000),
+    });
+    if (res.status === 404) return { ok: false, error: "not_found" };
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      logger.warn("firestore-service-rest/get", { status: res.status, detail: text.slice(0, 200) });
+      return { ok: false, error: `http_${res.status}` };
+    }
+    const data = (await res.json()) as { fields?: Record<string, unknown> };
+    return { ok: true, fields: data.fields ?? {} };
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    const error = name === "AbortError" || name === "TimeoutError" ? "timeout" : "fetch_failed";
+    logger.warn("firestore-service-rest/get", { err: name || String(err), error });
+    return { ok: false, error };
+  }
+}
+
 /** Firestore REST v1 — list documents (GET). */
 export async function firestoreListDocuments(
   projectId: string,
@@ -48,17 +85,26 @@ export async function firestoreListDocuments(
   return { ok: true, documents: data.documents ?? [] };
 }
 
-/** Firestore REST v1 — create document with auto id under collection. */
+/**
+ * Firestore REST v1 — create document under collection.
+ *
+ * @param options.documentId 명시적 문서 ID (write-once 레지스트리 등 path 고정 필요 시).
+ *   생략 시 기존 동작 유지 (`daily_${Date.now()}` — 기존 호출처 무변경).
+ *   이미 존재하는 ID 로 create 시 Firestore 가 409 ALREADY_EXISTS → `http_409` 반환
+ *   (호출자가 중복 등록으로 매핑 가능).
+ */
 export async function firestoreCreateDocument(
   projectId: string,
   collectionId: string,
   fields: Record<string, { stringValue?: string; integerValue?: string; timestampValue?: string }>,
+  options?: { documentId?: string },
 ): Promise<{ ok: true; name?: string } | { ok: false; error: string }> {
   const token = await getAccessToken();
   if (!token) return { ok: false, error: "no_service_account" };
 
+  const docId = options?.documentId ?? `daily_${Date.now()}`;
   const parent = `projects/${projectId}/databases/(default)/documents/${collectionId}`;
-  const url = `https://firestore.googleapis.com/v1/${parent}?documentId=${encodeURIComponent(`daily_${Date.now()}`)}`;
+  const url = `https://firestore.googleapis.com/v1/${parent}?documentId=${encodeURIComponent(docId)}`;
   const res = await fetch(url, {
     method: "POST",
     headers: {

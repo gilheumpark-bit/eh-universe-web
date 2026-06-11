@@ -6,7 +6,7 @@ import type { EngineReport } from '@/engine/types';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import { createT, L4 } from '@/lib/i18n';
 import { TRANSLATIONS } from '@/lib/studio-translations';
-import { ContextMenu } from '@/components/code-studio/ContextMenu';
+import { ContextMenu } from '@/components/ui/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
 import { TabHeader } from '@/components/studio/TabHeader';

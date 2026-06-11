@@ -17,6 +17,8 @@ import type { AppLanguage } from '@/lib/studio-types';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { dispatchStructuredGeneration } from '@/services/aiProvidersStructured';
 import { validateConstrainedOutput, type ConstraintSchema } from '@/lib/noa/constrained-decoder';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterJsonIp } from '@/lib/noa/server-gate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -173,6 +175,22 @@ export async function POST(req: NextRequest) {
     const validated = validateInput(body);
     if (!validated.ok) return validated.response;
 
+    // [N2] NOA 서버 게이트 — 입력 판정 (AI 호출 전 차단·비용 절약).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const prismGrade = typeof body.prismMode === 'string' ? body.prismMode : undefined;
+    const gate = await applyNoaGate({
+      prompt: validated.input.prompt,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 스튜디오 구조화 생성 — creative 가중
+      sourceTier: validated.input.clientApiKey ? 1 : 2,
+      route: '/api/structured-generate',
+      language: validated.input.language,
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
     const dispatched = validated.input.provider === 'gemini'
       ? (await executeGeminiHostedFirst(validated.input.clientApiKey, (effectiveApiKey) =>
           dispatchStructuredGeneration(
@@ -225,7 +243,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(result);
+    // [N2] 출력 IP 필터 — JSON 안전 치환 (치환이 JSON 을 깨면 fail-open: 원본 반환 + 로깅)
+    const ipFiltered = filterJsonIp(result, '/api/structured-generate');
+    return NextResponse.json(ipFiltered.value);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:structured-generate', error instanceof Error ? error.message : error);

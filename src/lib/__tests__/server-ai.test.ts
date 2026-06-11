@@ -140,11 +140,17 @@ describe('hasServerProviderCredentials', () => {
     return require('@/lib/server-ai') as typeof import('@/lib/server-ai');
   }
 
-  it('returns true for Gemini when Vertex AI env is configured', () => {
+  it('returns false for Gemini when only Vertex AI env is set (Vertex removed)', () => {
     delete process.env.GEMINI_API_KEY;
     process.env.USE_VERTEX_AI = 'true';
     process.env.GCP_PROJECT_ID = 'eh-universe';
     process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
+    const { hasServerProviderCredentials } = loadModule();
+    expect(hasServerProviderCredentials('gemini')).toBe(false);
+  });
+
+  it('returns true for Gemini when GEMINI_API_KEY is set (hosting)', () => {
+    process.env.GEMINI_API_KEY = 'gem-key';
     const { hasServerProviderCredentials } = loadModule();
     expect(hasServerProviderCredentials('gemini')).toBe(true);
   });
@@ -239,14 +245,14 @@ describe('getHostedProviderAvailability', () => {
     );
   });
 
-  it('marks Gemini as hosted when Vertex AI env is configured', () => {
+  it('does NOT mark Gemini as hosted from Vertex AI env (Vertex removed)', () => {
     delete process.env.GEMINI_API_KEY;
     process.env.USE_VERTEX_AI = 'true';
     process.env.GCP_PROJECT_ID = 'eh-universe';
     process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
-    expect(result.gemini).toBe(true);
+    expect(result.gemini).toBe(false);
   });
 });
 
@@ -330,7 +336,7 @@ describe('getFirstHostedProvider', () => {
     expect(getFirstHostedProvider()).toBe('ollama');
   });
 
-  it('returns Gemini first when Vertex AI is the only hosted config', () => {
+  it('returns null when only Vertex AI env is set (Vertex removed)', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
@@ -342,6 +348,6 @@ describe('getFirstHostedProvider', () => {
     process.env.GCP_PROJECT_ID = 'eh-universe';
     process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
     const { getFirstHostedProvider } = loadModule();
-    expect(getFirstHostedProvider()).toBe('gemini');
+    expect(getFirstHostedProvider()).toBeNull();
   });
 });

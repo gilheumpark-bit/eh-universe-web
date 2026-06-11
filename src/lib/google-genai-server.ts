@@ -1,55 +1,17 @@
-import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
+// ============================================================
+// BYOK Gemini 서버 헬퍼 — 사용자 API 키(우선) 또는 호스팅 GEMINI_API_KEY.
+// [2026-06-06] Vertex AI / Discovery Engine 경로 제거 (구글 AI 삭제, BYOK 유지).
+//   - 제거: isVertexAiEnabled / hasVertexAiServerCredentials / vertexai 클라이언트 분기
+//   - 유지: 사용자 키(BYOK) · GEMINI_API_KEY 호스팅 · DGX Spark 폴백
+// ============================================================
 
-type ServiceAccountCredentials = {
-  type?: string;
-  project_id?: string;
-  private_key_id?: string;
-  private_key?: string;
-  client_email?: string;
-  client_id?: string;
-  token_uri?: string;
-};
+import { GoogleGenAI } from '@google/genai';
 
-const CLOUD_PLATFORM_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const GEMINI_ALLOCATION_ERROR_PATTERN = /(?:429|resource[_\s-]?exhausted|quota|rate.?limit|too many requests|usage limit)/i;
 
-export function isVertexAiEnabled(): boolean {
-  return process.env.USE_VERTEX_AI === 'true';
-}
-
-export function getVertexProjectId(): string | undefined {
-  return process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
-}
-
-export function getVertexLocation(): string {
-  return process.env.GCP_LOCATION || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-}
-
-function parseVertexCredentials(): ServiceAccountCredentials | undefined {
-  const raw = process.env.VERTEX_AI_CREDENTIALS?.trim();
-  if (!raw) return undefined;
-
-  try {
-    return JSON.parse(raw) as ServiceAccountCredentials;
-  } catch {
-    throw new Error('Invalid VERTEX_AI_CREDENTIALS JSON');
-  }
-}
-
-export function hasVertexAiServerCredentials(): boolean {
-  const project = getVertexProjectId();
-  return Boolean(
-    isVertexAiEnabled()
-    && project
-    && (
-      process.env.VERTEX_AI_CREDENTIALS?.trim()
-      || process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()
-    ),
-  );
-}
-
+/** 호스팅 Gemini 자격 보유 여부 — GEMINI_API_KEY 단독 (Vertex 제거). */
 export function hasGeminiServerCredentials(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY?.trim() || hasVertexAiServerCredentials());
+  return Boolean(process.env.GEMINI_API_KEY?.trim());
 }
 
 export function normalizeUserApiKey(value: unknown): string {
@@ -65,7 +27,7 @@ export type GeminiExecutionMode = 'hosted' | 'byok';
 
 /**
  * BYOK 우선 정책: 유저 키가 있으면 유저 키 먼저.
- * 유저 키 없을 때만 호스팅 키 사용.
+ * 유저 키 없을 때만 호스팅 키(GEMINI_API_KEY) 또는 DGX Spark 폴백.
  */
 export async function executeGeminiHostedFirst<T>(
   clientApiKey: unknown,
@@ -96,31 +58,14 @@ export async function executeGeminiHostedFirst<T>(
   throw new Error('No API key available');
 }
 
+/**
+ * Gemini 클라이언트 생성 — 명시 키(BYOK) 우선, 없으면 GEMINI_API_KEY 호스팅.
+ * Vertex AI(서비스 계정) 경로는 제거됨.
+ */
 export function createServerGeminiClient(apiKey?: string): GoogleGenAI {
   const explicitApiKey = apiKey?.trim();
   if (explicitApiKey) {
     return new GoogleGenAI({ apiKey: explicitApiKey });
-  }
-
-  if (hasVertexAiServerCredentials()) {
-    const project = getVertexProjectId();
-    const credentials = parseVertexCredentials();
-    const options: GoogleGenAIOptions = {
-      vertexai: true,
-      project,
-      location: getVertexLocation(),
-      apiVersion: 'v1',
-    };
-
-    if (credentials) {
-      options.googleAuthOptions = {
-        credentials,
-        projectId: credentials.project_id || project,
-        scopes: [CLOUD_PLATFORM_SCOPE],
-      };
-    }
-
-    return new GoogleGenAI(options);
   }
 
   const envApiKey = process.env.GEMINI_API_KEY?.trim();

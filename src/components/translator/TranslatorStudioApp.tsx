@@ -26,6 +26,8 @@ import { GlossaryManagerDialog, type GlossaryDialogLang } from './GlossaryManage
 import { processStoryBibleOutput } from '@/lib/translation/story-bible-normalizer';
 // [M-05 호출 측 통합 — 2026-05-10] Translator dual-pipeline 결과에도 PRISM 거절 감지 적용.
 import { checkAndExplainRejection } from '@/lib/ai/prism-rejection-detector';
+// [X2 — 2026-06-11] /api/translate 200+{blocked} 차단 계약 고지 (사일런트 차단 금지).
+import { checkBlockedJson } from '@/lib/noa/block-notice';
 import { normalizeToAgentLang as normalizeRejLang } from '@/lib/ai/lang-normalize';
 // [G-07 — 2026-05-10] statusMsg 4언어 라벨 헬퍼.
 import {
@@ -869,6 +871,9 @@ export default function TranslatorStudioApp() {
 
     if (contentType.includes('application/json')) {
       const data = (await res.json()) as { result?: string };
+      // [X2] NOA 차단 계약 (200 + {blocked, reason}) — 빈 결과 대신 고지 (사일런트 차단 금지)
+      const blockedMsg = checkBlockedJson(data, 'translator-studio');
+      if (blockedMsg) throw new Error(blockedMsg);
       return data.result || '';
     }
 

@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { isFeatureEnabledServer } from '@/lib/feature-flags';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
 
 const MAX_REQUEST_BYTES = 1_048_576;
 
@@ -72,12 +74,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // [N2] NOA 서버 게이트 — 입력 판정 (이미지 prompt + negativePrompt 모두 사용자 입력. AI 호출 전 차단).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const prismGrade = typeof body.prismMode === 'string' ? body.prismMode : undefined;
+    const gateText = [prompt, negativePrompt]
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      .join('\n');
+    const gate = await applyNoaGate({
+      prompt: gateText,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 일러스트 생성 — creative 가중
+      sourceTier: apiKey ? 1 : 2,
+      route: '/api/image-gen',
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
     // ============================================================
     // OpenAI DALL-E 3
     // ============================================================
     if (provider === 'openai') {
       const size = getDalleSize(width, height);
-      const res = await fetch('https://api.openai.com/v1/images/generations', {
+      // [P14 풀점검 루프 3] fetchWithRetry — 5xx/429/timeout 만 재시도 (4xx 즉시 반환).
+      const res = await fetchWithRetry('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -102,9 +123,13 @@ export async function POST(req: NextRequest) {
       }
 
       const data = await res.json();
+      // [N2] 출력 IP 필터 — revised_prompt 는 사용자에게 노출되는 AI 텍스트 (fail-open).
+      // 이미지 픽셀 자체는 텍스트 필터 적용 불가 — 정직 보고: 입력 게이트로만 방어.
       const images = (data.data || []).map((d: { url: string; revised_prompt?: string }) => ({
         url: d.url,
-        revised_prompt: d.revised_prompt,
+        revised_prompt: d.revised_prompt
+          ? filterOutputIp(d.revised_prompt, '/api/image-gen').output
+          : d.revised_prompt,
       }));
 
       return NextResponse.json({
@@ -140,7 +165,8 @@ export async function POST(req: NextRequest) {
         payload.seed = Number(seed);
       }
 
-      const res = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
+      // [P14 풀점검 루프 3] fetchWithRetry
+      const res = await fetchWithRetry('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -185,7 +211,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'DGX Spark server not configured' }, { status: 503 });
       }
 
-      const res = await fetch(`${sparkUrl}/api/image/generate`, {
+      // [P14 풀점검 루프 3] DGX 도 transient 실패 재시도. 단 timeout 이 180s 라
+      // 재시도 횟수는 1로 제한 (총 2 시도) — 누적 시간 폭주 방지.
+      const res = await fetchWithRetry(`${sparkUrl}/api/image/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -195,7 +223,7 @@ export async function POST(req: NextRequest) {
           seed: seed ?? Math.floor(Math.random() * 2147483647),
         }),
         signal: AbortSignal.timeout(180_000), // FLUX.1 8K — 최대 180초
-      });
+      }, { maxRetries: 1, baseDelayMs: 2000 });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -231,6 +259,15 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     logger.error('API:image-gen', e instanceof Error ? e.message : e);
     const msg = e instanceof Error ? e.message : 'Internal server error';
+    // [P14 풀점검 루프 3] AbortError (timeout) → 504 Gateway Timeout.
+    // 그 외 (네트워크/예외) → 500. provider 정보 유출 방지를 위해 sanitize.
+    const errName = (e as { name?: string } | null)?.name ?? '';
+    if (errName === 'AbortError' || errName === 'TimeoutError') {
+      return NextResponse.json(
+        { error: 'Upstream provider timeout — please retry' },
+        { status: 504 },
+      );
+    }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
@@ -244,6 +281,48 @@ function getDalleSize(w?: number, h?: number): string {
   if (w && h && w > h * 1.3) return '1792x1024';
   if (h && w && h > w * 1.3) return '1024x1792';
   return '1024x1024';
+}
+
+/**
+ * [P14 풀점검 루프 3] 외부 provider 호출 재시도 래퍼.
+ * 5xx / 429 / timeout (AbortError) / 네트워크 에러만 재시도. 4xx 는 즉시 반환.
+ * 지수 백오프 + 50% 지터. 기본 2회 재시도 (총 3회 시도).
+ *
+ * Next.js route.ts 는 GET/POST 등만 export 허용 — 헬퍼는 module-scope 함수로 유지.
+ */
+async function fetchWithRetry(
+  input: string,
+  init: RequestInit,
+  options: { maxRetries?: number; baseDelayMs?: number } = {},
+): Promise<Response> {
+  const maxRetries = options.maxRetries ?? 2;
+  const baseDelay = options.baseDelayMs ?? 500;
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      const res = await fetch(input, init);
+      // 5xx / 429 만 재시도. 그 외 4xx 는 즉시 반환.
+      if (res.status >= 500 || res.status === 429) {
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+      // AbortError (timeout) 또는 네트워크 에러 → 재시도
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt) * (0.75 + Math.random() * 0.5);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+    }
+  }
+  // 모든 재시도 실패 → 마지막 에러 throw (caller 가 504 변환)
+  throw lastError ?? new Error('fetchWithRetry: all attempts failed');
 }
 
 function clampSize(val: number, min: number, max: number): number {

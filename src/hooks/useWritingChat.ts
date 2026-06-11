@@ -1,7 +1,15 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Message, AppLanguage } from '@/lib/studio-types';
 import { streamChat, type ChatMsg } from '@/lib/ai-providers';
+import { applyMemoryPolicy, clearStoredSummary } from '@/lib/ai/chat-memory-policy';
+import { NoaBlockedError } from '@/lib/noa/block-notice';
 import { logger } from '@/lib/logger';
+
+/**
+ * [N3-memory-hybrid] 집필 탭 채팅 = heavy 정책 (full 이력 + 장기 요약 1블록).
+ * TabAssistant 'writing' 탭과는 별도 대화이므로 요약 store 키 분리.
+ */
+const WRITING_CHAT_TAB = 'writing-chat';
 
 interface NovelContext {
   genre?: string;
@@ -76,13 +84,18 @@ export function useWritingChat(novelContext?: NovelContext) {
     abortControllerRef.current = new AbortController();
 
     try {
-      const history: ChatMsg[] = chatMessagesRef.current
-        .slice(-10)
-        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      // [N3-memory-hybrid] slice(-10) → 탭 차등 정책 모듈 경유.
+      // heavy(집필) = full 이력 + 요약 블록(system에 부착 — truncateMessages 최후 안전망과 충돌 X).
+      const memory = applyMemoryPolicy(
+        WRITING_CHAT_TAB,
+        chatMessagesRef.current.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        language,
+      );
+      const history: ChatMsg[] = [...memory.messages];
       history.push({ role: 'user', content: text });
 
       await streamChat({
-        systemInstruction: buildWritingChatSystem(language, novelContext),
+        systemInstruction: buildWritingChatSystem(language, novelContext) + memory.summaryBlock,
         messages: history,
         temperature: 0.7,
         signal: abortControllerRef.current.signal,
@@ -100,6 +113,16 @@ export function useWritingChat(novelContext?: NovelContext) {
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         logger.warn('Writing chat aborted');
+      } else if (err instanceof NoaBlockedError) {
+        // [N4 — 2026-06-11] NOA 정책 차단 — 사유 + 해결 경로를 채팅에 인라인 고지 (사일런트 차단 금지)
+        logger.warn('Writing chat blocked by NOA policy:', err.message);
+        setChatMessages(prev =>
+          prev.map(m =>
+            m.id === assistantMsgId && !m.content
+              ? { ...m, content: `🛡 ${err.message}` }
+              : m
+          )
+        );
       } else {
         logger.error('Writing chat error:', err);
         setChatMessages(prev =>
@@ -125,6 +148,8 @@ export function useWritingChat(novelContext?: NovelContext) {
 
   const clearChat = useCallback(() => {
     setChatMessages([]);
+    // [N3-memory-hybrid] 이전 대화 요약이 새 대화로 누수되지 않게 함께 삭제
+    clearStoredSummary(WRITING_CHAT_TAB);
     abortChat();
   }, [abortChat]);
 

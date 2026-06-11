@@ -14,6 +14,7 @@ export type {
   CreativeEventType,
   CreativeActorType,
   CreativeEvent,
+  CreativeStage,
   SourceRecordType,
   SourceVisibility,
   SourceRecord,
@@ -56,9 +57,19 @@ export {
   recordCreativeEvent,
   listCreativeEvents,
   countCreativeEvents,
+  computeEventHash,
   CREATIVE_EVENT_CAPTURED,
   type ListEventsFilter,
 } from './event-recorder';
+
+// ── Chain Verify ([s81-hash-chain]) ──
+export {
+  verifyCreativeChain,
+  verifyEventChain,
+  extractChainTipHash,
+  sortEventsForChain,
+  type ChainVerifyResult,
+} from './chain-verify';
 
 // ── Source Recorder ──
 export {

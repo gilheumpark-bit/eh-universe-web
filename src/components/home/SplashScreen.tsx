@@ -7,12 +7,17 @@ import { LogIn } from "lucide-react";
 import UnifiedSettingsBar from "@/components/home/UnifiedSettingsBar";
 import { useAuth } from "@/lib/AuthContext";
 
+// [priority 4 — 2026-06-08] Onboarding sequence note:
+// 현재 흐름: SplashScreen → /studio → (FirstVisitOnboarding hint) → (옵션) OnboardingGuide.
+// QuickStartModal 은 /studio 내부에서 noa:open-quickstart 이벤트로 호출.
+// 4-flow 통합은 routing 변경 + 컴포넌트 합치기 필요 — 별도 ADR-0005 작성 시 단행.
+// 여기서는 진입점 가시성만 보강 (Primary CTA + 부가 안내).
+
 export default function SplashScreen({
   onStudio,
 }: {
   onUniverse: () => void;
   onStudio: () => void;
-  onCodeStudio: () => void;
   onTranslationStudio: () => void;
 }) {
   const { lang: contextLang, toggleLang } = useLang();

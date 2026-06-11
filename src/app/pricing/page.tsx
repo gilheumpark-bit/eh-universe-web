@@ -4,8 +4,18 @@
 // PART 1 — Imports & Setup
 // ============================================================
 
+import { useState } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { useAuth } from "@/lib/AuthContext";
+
+// [H1 stripe-ready] 실가격 env (빌드 시 인라인) — 주입 시 placeholder("추후 공지") 대신
+// 실가격 렌더 + Stripe checkout 버튼 활성. 부재 시 기존 mailto CTA 유지.
+// 예: NEXT_PUBLIC_PRICE_INDIE="$8/mo", NEXT_PUBLIC_PRICE_PRO="$20/mo"
+const ENV_PRICE: Record<string, string | undefined> = {
+  indie: process.env.NEXT_PUBLIC_PRICE_INDIE,
+  pro: process.env.NEXT_PUBLIC_PRICE_PRO,
+};
 
 // ============================================================
 // PART 2 — Pricing tiers (placeholder — 정식 출시 시 Stripe 통합)
@@ -190,6 +200,72 @@ export default function PricingPage() {
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; ja: string; zh: string }) => L4(lang, v);
 
+  // [H1 stripe-ready] pricing 버튼 → 로그인 확인 → /api/checkout 세션 생성 → Stripe redirect.
+  const { user, signInWithGoogle, getIdToken } = useAuth();
+  const [busyTier, setBusyTier] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const startCheckout = async (tierId: string) => {
+    if (busyTier) return;
+    setBusyTier(tierId);
+    setCheckoutError(null);
+    try {
+      // 로그인 확인 — 미로그인 시 Google 로그인 (popup/redirect) 후 토큰 재시도.
+      if (!user) {
+        await signInWithGoogle();
+      }
+      const token = await getIdToken();
+      if (!token) {
+        setCheckoutError(
+          T({
+            ko: "결제 진행에는 로그인이 필요합니다.",
+            en: "Sign-in is required for checkout.",
+            ja: "決済にはログインが必要です。",
+            zh: "结账需要登录。",
+          }),
+        );
+        return;
+      }
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tier: tierId, returnUrl: window.location.origin }),
+      });
+      const data: { url?: string; error?: string } = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        setCheckoutError(
+          res.status === 503 || res.status === 501
+            ? T({
+                ko: "결제가 아직 활성화되지 않았습니다. 정식 출시 시 안내드립니다.",
+                en: "Checkout is not yet enabled. We will announce at GA.",
+                ja: "決済はまだ有効化されていません。正式リリース時にご案内します。",
+                zh: "结账尚未启用。正式发布时将另行通知。",
+              })
+            : data.error ||
+                T({
+                  ko: "결제 세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.",
+                  en: "Failed to create a checkout session. Please try again shortly.",
+                  ja: "決済セッションの作成に失敗しました。しばらくして再試行してください。",
+                  zh: "创建结账会话失败。请稍后重试。",
+                }),
+        );
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setCheckoutError(
+        T({
+          ko: "네트워크 오류 — 잠시 후 다시 시도해주세요.",
+          en: "Network error — please try again shortly.",
+          ja: "ネットワークエラー — しばらくして再試行してください。",
+          zh: "网络错误 — 请稍后重试。",
+        }),
+      );
+    } finally {
+      setBusyTier(null);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-bg-primary text-text-primary px-6 py-12 md:py-16">
       <div className="max-w-6xl mx-auto">
@@ -244,12 +320,16 @@ export default function PricingPage() {
               )}
               <h2 className="text-xl font-serif font-semibold mb-1">{T(tier.name)}</h2>
               <div className="font-mono text-sm text-text-tertiary mb-4">
+                {/* [H1 stripe-ready] env 실가격 있으면 실가격, 없으면 placeholder("추후 공지") */}
                 <span className="text-2xl font-bold text-text-primary">
-                  {tier.price.alpha}
+                  {ENV_PRICE[tier.id]?.trim() || tier.price.alpha}
                 </span>
-                <span className="ml-2">/ alpha</span>
+                {ENV_PRICE[tier.id]?.trim() ? null : <span className="ml-2">/ alpha</span>}
                 <div className="text-[10px] mt-1">
-                  GA: <span className="text-text-secondary">{tier.price.ga}</span>
+                  GA:{" "}
+                  <span className="text-text-secondary">
+                    {ENV_PRICE[tier.id]?.trim() || tier.price.ga}
+                  </span>
                 </div>
               </div>
               <ul className="flex-1 space-y-2 mb-6 text-sm text-text-secondary">
@@ -260,25 +340,53 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={
-                  tier.id === "free"
-                    ? "/welcome"
-                    : tier.id === "publisher"
-                    ? "mailto:gilheumpark@gmail.com?subject=%5BCOMMERCIAL%5D"
-                    : "mailto:gilheumpark@gmail.com?subject=%5BALPHA%5D"
-                }
-                className={`block text-center px-4 py-2.5 text-sm font-bold uppercase tracking-wider ${
-                  tier.highlight
-                    ? "bg-accent-blue text-bg-primary hover:opacity-90"
-                    : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
-                } transition-colors`}
-              >
-                {T(tier.cta)}
-              </a>
+              {ENV_PRICE[tier.id]?.trim() ? (
+                /* [H1 stripe-ready] 실가격 주입 시 — Stripe checkout 버튼 (로그인 확인 → 세션 생성 → redirect) */
+                <button
+                  type="button"
+                  onClick={() => startCheckout(tier.id)}
+                  disabled={busyTier !== null}
+                  className={`block w-full text-center px-4 py-2.5 text-sm font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-wait ${
+                    tier.highlight
+                      ? "bg-accent-blue text-bg-primary hover:opacity-90"
+                      : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
+                  } transition-colors`}
+                >
+                  {busyTier === tier.id
+                    ? T({ ko: "이동 중…", en: "Redirecting…", ja: "移動中…", zh: "跳转中…" })
+                    : T({ ko: "구독 시작", en: "Subscribe", ja: "購読開始", zh: "开始订阅" })}
+                </button>
+              ) : (
+                <a
+                  href={
+                    tier.id === "free"
+                      ? "/welcome"
+                      : tier.id === "publisher"
+                      ? "mailto:gilheumpark@gmail.com?subject=%5BCOMMERCIAL%5D"
+                      : "mailto:gilheumpark@gmail.com?subject=%5BALPHA%5D"
+                  }
+                  className={`block text-center px-4 py-2.5 text-sm font-bold uppercase tracking-wider ${
+                    tier.highlight
+                      ? "bg-accent-blue text-bg-primary hover:opacity-90"
+                      : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
+                  } transition-colors`}
+                >
+                  {T(tier.cta)}
+                </a>
+              )}
             </article>
           ))}
         </div>
+
+        {/* [H1 stripe-ready] checkout 오류 — 비침묵 표면화 */}
+        {checkoutError && (
+          <div
+            role="alert"
+            className="mb-12 mx-auto max-w-3xl px-6 py-4 border border-accent-amber/60 bg-accent-amber/10 text-sm text-accent-amber"
+          >
+            {checkoutError}
+          </div>
+        )}
 
         {/* FAQ */}
         <section className="max-w-3xl mx-auto space-y-6 text-sm">

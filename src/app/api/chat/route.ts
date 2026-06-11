@@ -17,8 +17,15 @@ import { dispatchStream } from '@/services/aiProviders';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+// [QA-robustness (2)] RETRYABLE/TERMINAL 분류 + bounded backoff-with-jitter (단일 소스).
+import { retryWithBackoff } from '@/lib/retry-classify';
+// [P1 루프3 — 2026-06-08] server-ai-init module-eval 1회: UPSTASH_REDIS_REST_URL/_TOKEN 있으면
+//   rate-limit backend 를 Upstash 로 자동 교체. ADR-0011 정식 boot path.
+import '@/lib/server-ai-init';
 import { isFeatureEnabledServer } from '@/lib/feature-flags';
 import { runNoa } from '@/lib/noa';
+// [N2 — 2026-06-11] 출력 IP 필터: 스트리밍은 소급 수정 불가 → 청크 누적 후 완료 시점 검사+고지 방식
+import { wrapStreamWithIpAudit } from '@/lib/noa/server-gate';
 import type { DomainType } from '@/lib/noa/types';
 import { getSwapController, type AdapterMode } from '@/lib/noa/lora-swap';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
@@ -336,6 +343,23 @@ function errorToStatus(raw: string): number {
   return 500;
 }
 
+type DispatchResult = Awaited<ReturnType<typeof dispatchStream>>;
+
+/**
+ * [QA-robustness (2)] dispatchStream 을 bounded backoff-with-jitter 로 감싼다.
+ * RETRYABLE(429/5xx/network) 만 재시도, TERMINAL(4xx)·성공은 즉시 반환 — 기존 흐름 무파괴.
+ * 상한·분류·백오프 로직은 @/lib/retry-classify 단일 소스 (테스트 가능).
+ */
+async function dispatchStreamWithRetry(
+  ...args: Parameters<typeof dispatchStream>
+): Promise<DispatchResult> {
+  return retryWithBackoff(
+    () => dispatchStream(...args),
+    (r) => !r.ok,
+    (r) => (r.ok ? '' : r.error),
+  );
+}
+
 // ============================================================
 // PART 6: POST HANDLER (thin orchestrator)
 // ============================================================
@@ -382,6 +406,11 @@ export async function POST(req: NextRequest) {
 
     // L2 LoRA: 도메인 기반 어댑터 선택 — isChatMode(코드/분석)=LEFT_BRAIN, 소설=RIGHT_BRAIN
     const adapterMode: AdapterMode | undefined = isChatMode ? 'LEFT_BRAIN' : 'RIGHT_BRAIN';
+    // [M-07 검증 — 2026-06-10] 이 route 는 buildAgentSystemPrompt 를 직접 호출하지 않는다.
+    // systemInstruction 은 클라이언트에서 이미 빌드되어 도착한다 — studio-draft 경로는
+    // engine/pipeline.ts buildAgentBaseStudioPrompt 가 { autoTrim: true } (M-07 활성) 로 호출하고,
+    // 절삭 발생 시 noa:context-trimmed 토스트는 클라이언트 ContextTrimmedToast 가 표시한다.
+    // 서버에서 재절삭 금지 (이중 절삭 — window 부재로 사용자 알림도 불가).
     const finalSystem = buildSystemInstruction(systemInstruction, prismMode, adapterMode);
 
     // ── Layer 1: Pre-inference NOA Security Gate ──
@@ -389,10 +418,20 @@ export async function POST(req: NextRequest) {
     if (prismMode === 'ALL') targetDomain = 'education';
     else if (prismMode === 'T15' && !isChatMode) targetDomain = 'general';
 
+    // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 누적 맥락]
+    // 클라 messages 에서 직전 user 발화들 추출 (마지막 user 메시지 = 현재 입력 → 제외).
+    // text 는 기존대로 전체 대화 합산 유지 (회귀 0) — history 는 감쇠 가중 보조 신호로
+    // runNoa 내부에서 가산 전용 반영 (max(single, contextual) — 위험 하향 불가).
+    const priorUserMessages = messages
+      .filter((m: { role: string; content: string }) => m.role === 'user')
+      .map((m: { content: string }) => m.content ?? '')
+      .slice(0, -1);
+
     const noaResult = await runNoa({
       text: (systemInstruction || '') + '\n' + messages.map(m => m.content).join('\n'),
       domain: targetDomain,
       sourceTier: auth.isByok ? 1 : ((userTier as UserTier) === 'pro' ? 1 : 2), // BYOK=자기 키이므로 1등급 완화, 호스팅=2등급 표준
+      conversationHistory: priorUserMessages, // 0개·1개(user 단건)면 [] → 기존 동작과 동일
     });
 
     if (!noaResult.allowed) {
@@ -412,11 +451,14 @@ export async function POST(req: NextRequest) {
           reason: noaResult.tactical.reason,
           auditId: noaResult.auditEntry.id
         }
-      }, { 
+      }, {
         status: 403,
         headers: { 'X-Noa-Audit-Id': noaResult.auditEntry.id }
       });
     }
+
+    // [N2] 게이트 지연 측정 — 서버 로그 1줄(ms)
+    apiLog({ level: 'info', event: 'noa_gate', route: '/api/chat', ip, requestId, durationMs: noaResult.totalDurationMs, meta: { blocked: false } });
 
     // Security Gate: server-side pre-flight scan (strict mode)
     if (isFeatureEnabledServer('SECURITY_GATE')) {
@@ -429,7 +471,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    // [QA-robustness (2)] RETRYABLE(429/5xx/network) 만 bounded backoff-with-jitter (≤3회).
+    // TERMINAL(4xx) 는 즉시 반환 — 과도 재시도로 인한 비용 폭증 차단 (상한 엄수).
+    let dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
     if (
       !dispatched.ok
       && provider === 'gemini'
@@ -438,14 +482,20 @@ export async function POST(req: NextRequest) {
       && isGeminiAllocationExhaustedError(dispatched.error)
     ) {
       auth = { apiKey: auth.userApiKey, isByok: true, userApiKey: auth.userApiKey, canFallbackToUserKey: false };
-      dispatched = await dispatchStream(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+      dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
     }
     // DGX Spark 폴백: 모든 프로바이더 실패 시 DGX 서버로 재시도
     if (!dispatched.ok && SPARK_SERVER_URL) {
       apiLog({ level: 'info', event: 'dgx_fallback', route: '/api/chat', ip, requestId, meta: { originalError: dispatched.error } });
-      dispatched = await dispatchStream('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+      dispatched = await dispatchStreamWithRetry('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
     }
-    if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
+    if (!dispatched.ok) {
+      // [QA-robustness (2)] rate/budget hit 은 Retry-After 헤더로 클라이언트 백오프 유도.
+      const status = errorToStatus(dispatched.error);
+      const headers: Record<string, string> = { 'X-Request-Id': requestId };
+      if (status === 429) headers['Retry-After'] = '60';
+      return NextResponse.json({ error: dispatched.error, requestId }, { status, headers });
+    }
 
     const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
     if (!auth.isByok) recordTokenUsage(ip, inputEstimate);
@@ -453,8 +503,11 @@ export async function POST(req: NextRequest) {
     apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider, model, requestId, durationMs: timer.elapsed() });
 
     const trackingStream = wrapStreamWithTracking(dispatched.stream, ip, !auth.isByok);
+    // [N2] 출력 IP 검사 — 이미 흘러간 청크는 소급 수정 불가하므로 누적 후 완료 시점 검사.
+    // 검출 시 스트림 말미에 noa.ipNotice SSE 이벤트 1개 + warn 로그 (사일런트 차단 금지·N4 고지).
+    const ipAuditedStream = wrapStreamWithIpAudit(trackingStream, { route: '/api/chat', ip, requestId });
 
-    return new NextResponse(trackingStream, {
+    return new NextResponse(ipAuditedStream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',

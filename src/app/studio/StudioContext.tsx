@@ -92,6 +92,9 @@ export interface StudioContextValue {
   // Display
   showDashboard: boolean;
   setShowDashboard: Dispatch<SetStateAction<boolean>>;
+  // [Batch 3 rank 5 — 2026-06-07] WriterToolbox 18 모듈 사이드바.
+  showToolbox: boolean;
+  setShowToolbox: Dispatch<SetStateAction<boolean>>;
   rightPanelOpen: boolean;
   setRightPanelOpen: Dispatch<SetStateAction<boolean>>;
   showAiLock: boolean;
@@ -106,7 +109,9 @@ export interface StudioContextValue {
   // Save
   saveFlash: boolean;
   lastSaveTime: number | null;
-  triggerSave: () => void;
+  // [F2] 실제 구현(useStudioUX.triggerSave)은 성공 여부를 resolve 하는 async —
+  // 스테일했던 `() => void` 선언을 실 시그니처로 정정 (StudioShell:1128 도 .then 사용).
+  triggerSave: () => Promise<boolean>;
   // UX
   setUxError: (err: { error: unknown } | null) => void;
   messagesEndRef: RefObject<HTMLDivElement | null>;

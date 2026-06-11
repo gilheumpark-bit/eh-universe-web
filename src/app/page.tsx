@@ -87,7 +87,6 @@ function useHeroScrollShrink(
 
 import dynamic from "next/dynamic";
 import { getTranslatorStudioHref, NOVEL_STUDIO_PATH } from "@/lib/studio-entry-links";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 // 2026-04-21 [PERF] SplashScreen을 dynamic으로 분리 — 재방문자(30일 내)는 splash 스킵이라
 // 초기 번들에서 제외. 첫 방문자만 UnifiedSettingsBar + APIKeySlotManager까지 lazy 로드.
@@ -178,12 +177,22 @@ function HubGrid({
   const heroSecondary = hubs.find(h => h.badge === 'TR');
   const rest = hubs.filter(h => h.badge !== 'NS' && h.badge !== 'TR');
 
+  // [priority 1 — 2026-06-08] START HERE badge label (4언어).
+  // 신입 작가가 "어디서 시작?"에 즉시 답하도록 NS 카드에 단일 신호 부착.
+  const startHereLabel = T({
+    ko: '여기서 시작',
+    en: 'START HERE',
+    ja: 'ここから始める',
+    zh: '从这里开始',
+  });
+
   const renderCard = (hub: HubItem, variant: 'hero-primary' | 'hero-secondary' | 'rest') => {
     const c = colorMap[hub.color];
     const isExternal = Boolean(hub.external || hub.href.startsWith('http'));
+    const isPrimary = variant === 'hero-primary';
     const sizeCls =
       variant === 'hero-primary'
-        ? 'md:col-span-2 md:row-span-2 p-8 md:p-10 min-h-[220px]'
+        ? 'md:col-span-2 md:row-span-2 p-8 md:p-10 min-h-[220px] ring-2 ring-accent-amber/50 ring-offset-2 ring-offset-bg-primary'
         : variant === 'hero-secondary'
           ? 'md:col-span-2 p-6 md:p-8 min-h-[180px]'
           : 'p-6';
@@ -205,6 +214,15 @@ function HubGrid({
         <div className="pointer-events-none absolute inset-0">
           <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
         </div>
+        {/* [priority 1 — 2026-06-08] START HERE 배지 — primary hub 한 곳에만 부착. */}
+        {isPrimary && (
+          <span
+            className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-accent-amber text-white font-[--font-mono] text-[10px] font-bold tracking-[0.16em] uppercase shadow-md"
+            aria-label={startHereLabel}
+          >
+            {startHereLabel}
+          </span>
+        )}
         <span className={`flex items-center justify-center rounded-full border ${c.border} ${c.bg} font-[--font-mono] tracking-[0.14em] ${c.text} ${badgeCls}`}>
           {hub.badge}
         </span>
@@ -214,8 +232,9 @@ function HubGrid({
           </h3>
           <p className={`mt-2 ${variant === 'hero-primary' ? 'text-base leading-8' : 'text-sm leading-7'} text-text-secondary`}>{hub.desc}</p>
         </div>
-        <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
-          {hub.meta} →
+        <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText} inline-flex items-center gap-1`}>
+          {hub.meta}
+          <span aria-hidden="true">→</span>
         </div>
       </>
     );
@@ -242,6 +261,15 @@ function HubGrid({
         <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
           {T({ ko: "지금 시작하세요", en: "Start now", ja: "今すぐ始める", zh: "立即开始" })}
         </h2>
+        {/* [priority 1 — 2026-06-08] 신입 작가용 명확한 진입 안내. */}
+        <p className="mt-3 text-sm text-text-secondary max-w-2xl">
+          {T({
+            ko: "모든 작업은 스튜디오에서 시작합니다. 번역·출판은 그 다음입니다.",
+            en: "All workflows begin in the Studio. Translate and publish later.",
+            ja: "すべての作業はスタジオから始まります。翻訳・出版はその後です。",
+            zh: "所有工作流程都从工作室开始。翻译和出版稍后进行。",
+          })}
+        </p>
       </div>
 
       {/* Hero: Studio (primary, 크게) + Translation (secondary) */}
@@ -286,7 +314,6 @@ function HomePageContent() {
   const { lang } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const flags = useFeatureFlags();
   const stellarWhite = searchParams.get("skin") === "white";
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
@@ -372,16 +399,6 @@ function HomePageContent() {
       meta: T({ ko: "번역 열기", en: "Open translation", ja: "翻訳へ", zh: "打开翻译" }),
       external: translatorStudioHref.startsWith("http"),
     },
-    // [v2.2.0-alpha] Code Studio는 홈 카드에서 비노출 — 주 네비·푸터에서도 숨김.
-    // `/code-studio` 라우트는 유지 (URL 직접 접근 가능). 개발자 role에서만 Header 노출.
-    {
-      href: "/archive",
-      badge: "AR",
-      color: "amber" as const,
-      title: T({ ko: "설정집 아카이브", en: "Lore Archive", ja: "設定集アーカイブ", zh: "设定集档案库" }),
-      desc: T({ ko: "8개 카테고리, 72 설정 문서 + 93 기밀 보고서 = 총 165개 아카이브.", en: "8 categories, 72 lore docs + 93 classified reports = 165 total archive docs.", ja: "8カテゴリ、設定文書72＋機密報告書93＝合計165アーカイブ。", zh: "8 个分类，72 篇设定文档 + 93 份机密报告 = 共 165 篇档案。" }),
-      meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", ja: "世界観文書を探索", zh: "浏览世界观文档" }),
-    },
     {
       href: "/reports",
       badge: "RP",
@@ -389,14 +406,6 @@ function HomePageContent() {
       title: T({ ko: "기밀 보고서", en: "Classified Reports", ja: "機密報告書", zh: "机密报告" }),
       desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 64 classified documents.", ja: "人物ファイル、事件報告、技術仕様、制度規定 — 64の機密文書。", zh: "人物档案、事件报告、技术规格、制度规定 — 64份机密文件。" }),
       meta: T({ ko: "보고서 열기", en: "Open reports", ja: "報告書を開く", zh: "打开报告" }),
-    },
-    {
-      href: "/network",
-      badge: "NW",
-      color: "blue" as const,
-      title: T({ ko: "작가 네트워크", en: "Writer Network", ja: "作家ネットワーク", zh: "作家网络" }),
-      desc: T({ ko: "세계관을 기반으로 연결된 작가들의 행성 시스템. 로그와 게시글을 탐색합니다.", en: "A planet-based network of writers connected through shared worldbuilding. Browse logs and posts.", ja: "世界観を基盤に繋がった作家たちの惑星システム。ログと投稿を探索します。", zh: "基于世界观连接的作家行星系统。浏览日志和帖子。" }),
-      meta: T({ ko: "네트워크 진입", en: "Enter network", ja: "ネットワークへ", zh: "进入网络" }),
     },
     {
       href: "/codex",
@@ -431,22 +440,10 @@ function HomePageContent() {
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", ja: "GitHubを開く", zh: "打开GitHub" }),
     },
   ];
-    return hubs.filter((h) => {
-      if (!flags.NETWORK_COMMUNITY && h.href === "/network") return false;
-      return true;
-    });
+    return hubs;
     },
-    [translatorStudioHref, T, flags.NETWORK_COMMUNITY],
+    [translatorStudioHref, T],
   );
-
-  const categories = [
-    { id: "CORE", label: T({ ko: "핵심 법칙", en: "Core Laws", ja: "核心法則", zh: "核心法则" }), count: 5 },
-    { id: "TIMELINE", label: T({ ko: "타임라인", en: "Timeline", ja: "タイムライン", zh: "时间线" }), count: 6 },
-    { id: "FACTIONS", label: T({ ko: "세력", en: "Factions", ja: "勢力", zh: "派系" }), count: 9 },
-    { id: "MILITARY", label: T({ ko: "군사", en: "Military", ja: "軍事", zh: "军事" }), count: 7 },
-    { id: "GEOGRAPHY", label: T({ ko: "지리", en: "Geography", ja: "地理", zh: "地理" }), count: 9 },
-    { id: "TECHNOLOGY", label: T({ ko: "기술", en: "Technology", ja: "技術", zh: "技术" }), count: 5 },
-  ];
 
   const colorMap = {
     amber: { border: "border-accent-amber/20", bg: "bg-accent-amber/10", text: "text-accent-amber", hoverText: "group-hover:text-accent-amber", glow: "bg-accent-amber/8" },
@@ -458,14 +455,13 @@ function HomePageContent() {
   const heroRef = useFadeIn<HTMLElement>();
   const heroPanelRef = useRef<HTMLDivElement>(null);
   useHeroScrollShrink(heroPanelRef, splashState === "hide");
-  const catRef = useFadeIn<HTMLElement>();
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
 
   // SSR → hydration 전까지 구조적 스켈레톤 표시 (검은 화면 방지)
   if (splashState === "loading") {
     return (
-      <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="Loading">
+      <div role="status" className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="Loading">
         {/* Skeleton header */}
         <div className="h-14 border-b border-border/20 bg-bg-secondary/30 animate-pulse" />
         {/* Skeleton hero */}
@@ -506,10 +502,6 @@ function HomePageContent() {
           // [30일 재방문자 스킵] 스튜디오 진입도 "본 것"으로 간주해 타임스탬프 기록.
           markSplashSeen();
           router.push("/studio");
-        }}
-        onCodeStudio={() => {
-          markSplashSeen();
-          router.push("/code-studio");
         }}
         onTranslationStudio={() => {
           markSplashSeen();
@@ -572,12 +564,6 @@ function HomePageContent() {
                       {T({ ko: "번역 스튜디오", en: "Translation", ja: "翻訳", zh: "翻译" })}
                     </Link>
                   )}
-                  <Link href="/archive" prefetch className="premium-button secondary">
-                    {T({ ko: "아카이브", en: "Archive", ja: "アーカイブ", zh: "档案库" })}
-                  </Link>
-                  <Link href="/network" prefetch className="premium-button secondary">
-                    {T({ ko: "네트워크", en: "Network", ja: "ネットワーク", zh: "网络" })}
-                  </Link>
                 </div>
               </div>
 
@@ -600,45 +586,46 @@ function HomePageContent() {
         </div>
       </section>
 
-      {/* CATEGORY GRID */}
-      <section ref={catRef} className="section-divider py-20">
-        <div className="site-shell">
-          <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="site-kicker">
-                  {T({ ko: "아카이브 카테고리", en: "Archive Categories", ja: "アーカイブカテゴリ", zh: "档案库类别" })}
-                </p>
-                <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-                  {T({ ko: "8개 분류, 165개 문서", en: "8 categories, 165 documents", ja: "8カテゴリ、165文書", zh: "8个分类，165个文档" })}
-                </h2>
-              </div>
-              <Link href="/archive" className="font-[--font-mono] text-[11px] uppercase tracking-[0.16em] text-text-tertiary hover:text-accent-amber transition-colors">
-                {T({ ko: "전체 보기 →", en: "View all →", ja: "全て見る →", zh: "查看全部 →" })}
-              </Link>
-            </div>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((cat) => (
-                <Link key={cat.id} href={`/archive?cat=${cat.id}`} className="premium-link-card group flex items-center justify-between p-5">
-                  <div>
-                    <p className="font-[--font-mono] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{cat.id}</p>
-                    <h3 className="mt-1 font-[--font-mono] text-sm font-semibold uppercase tracking-widest text-text-primary transition-colors group-hover:text-accent-amber">
-                      {cat.label}
-                    </h3>
-                  </div>
-                  <span className="font-display text-2xl font-bold text-text-tertiary group-hover:text-accent-amber transition-colors">
-                    {cat.count}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* HUB GRID — Hero(Studio primary + Translation secondary) + collapsed rest */}
       <section ref={hubRef} className="section-divider py-20">
         <HubGrid hubs={universeHubs} colorMap={colorMap} lang={lang} T={T} />
+
+        {/* [P7+P21 루프2 — 2026-06-08] Capability matrix — Novel/Translation 이 모바일·데스크톱
+            각각 어떻게 동작하는지 명시. iPad 작가가 진입 시 일관된 기대치 형성. */}
+        <div className="site-shell mt-10">
+          <div className="rounded-2xl border border-border/30 bg-bg-elevated/40 px-5 py-4 text-xs text-text-secondary md:text-sm">
+            <p className="font-semibold text-text-primary mb-2">
+              {T({
+                ko: '기기 호환 안내',
+                en: 'Device compatibility',
+                ja: 'デバイス互換性',
+                zh: '设备兼容性',
+              })}
+            </p>
+            <ul className="space-y-1.5">
+              <li>
+                <span className="inline-block min-w-[120px] font-mono text-accent-purple">Novel IDE</span>
+                {' — '}
+                {T({
+                  ko: '모바일 가능 (가벼운 편집기) · 데스크톱 권장 (전체 기능)',
+                  en: 'Mobile OK (lite editor) · Desktop recommended (full IDE)',
+                  ja: 'モバイル可 (簡易) · デスクトップ推奨 (全機能)',
+                  zh: '移动端可用 (轻量) · 桌面端推荐 (完整功能)',
+                })}
+              </li>
+              <li>
+                <span className="inline-block min-w-[120px] font-mono text-accent-green">Translation</span>
+                {' — '}
+                {T({
+                  ko: '데스크톱 전용 (Monaco 에디터). 모바일 작가는 데모만 체험 가능.',
+                  en: 'Desktop only (Monaco editor). Mobile users see demo only.',
+                  ja: 'デスクトップ専用 (Monaco)。モバイルはデモのみ。',
+                  zh: '仅桌面端 (Monaco)。移动端仅可体验演示。',
+                })}
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       {/* CATEGORY DECLARATION — "해줘 vs 하라" (SEO below-fold) */}

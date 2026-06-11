@@ -83,7 +83,7 @@ export function SettingsPanel() {
             <Key className="w-3.5 h-3.5" />
             {langKo ? 'API 키 패널 열기' : 'Open API key panel'}
           </button>
-          <p className="text-[10px] text-text-tertiary">
+          <p className="text-[11px] text-text-tertiary">
             {aiCapabilitiesLoaded
               ? langKo
                 ? `노아 준비: 호스팅 Gemini ${hostedGemini ? 'ON' : 'OFF'}`
@@ -96,7 +96,7 @@ export function SettingsPanel() {
           <h3 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">
             {langKo ? 'DeepSeek (번역 전용)' : 'DeepSeek (translator)'}
           </h3>
-          <p className="text-[10px] text-text-tertiary leading-relaxed">
+          <p className="text-[11px] text-text-tertiary leading-relaxed">
             {langKo
               ? '엔진에서 DeepSeek을 쓸 때만 필요합니다. 위 BYOK 목록에 없는 별도 키입니다.'
               : 'Only when the engine is DeepSeek. Separate from the shared BYOK list.'}
@@ -238,7 +238,7 @@ export function SettingsPanel() {
             <Download className="w-3 h-3" />
             {langKo ? '백업 / 복원' : 'Backup / Restore'}
           </h3>
-          <p className="text-[10px] text-text-tertiary leading-relaxed">
+          <p className="text-[11px] text-text-tertiary leading-relaxed">
             {langKo
               ? 'JSON·일괄보내기·문서 가져오기는「저장·백업」패널에 모여 있습니다. 왼쪽 디스크 아이콘으로 바로 열 수 있습니다.'
               : 'JSON export, batch download, and document import are grouped in Save & backup (left hard-drive icon).'}

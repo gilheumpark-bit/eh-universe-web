@@ -11,6 +11,8 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { generateCharacters } from '@/services/geminiService';
 import { activeSupportsStructured } from '@/lib/ai-providers';
 import { logger } from '@/lib/logger';
+// [s82-stage-coverage] 명시 기록 직후 auto-trigger 이중 계상 억제 (HCI 무결성)
+import { markExplicitCreativeLog } from '@/hooks/useCreativeProcessAutoTrigger';
 import { TabHeader } from '@/components/studio/TabHeader';
 
 /** 다국어 에러/프리픽스 메시지 — 재렌더마다 재생성되지 않도록 모듈 상수로 추출 */
@@ -125,7 +127,10 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
               targetId: `chars-batch-${Date.now()}`,
               afterContent: JSON.stringify(generated.map(c => ({ name: c.name, role: c.role }))),
               promptLabel: `Auto-generate ${generated.length} characters`,
+              stage: 'character', // [s82-stage-coverage]
             });
+            // [s82] 같은 setConfig 변경의 auto-trigger charactersHash 이중 계상 억제
+            markExplicitCreativeLog('character');
           }
         }
       } catch { /* noop */ }

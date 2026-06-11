@@ -122,7 +122,9 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
       // Ctrl+N (without shift) — new session
       if (ctrl && !shift && e.key === 'n') { e.preventDefault(); opts.onNewSession(); }
       if (e.key === 'F11') { e.preventDefault(); opts.onToggleFocus(); }
-      if (e.key === 'F12') { e.preventDefault(); opts.onToggleShortcuts(); }
+      // [priority 6 — 2026-06-08] F1 표준 + F12 legacy alias 유지.
+      // F12 는 브라우저 DevTools 와 충돌하지만 기존 사용자 머슬메모리 보호 차원에서 유지.
+      if (e.key === 'F1' || e.key === 'F12') { e.preventDefault(); opts.onToggleShortcuts(); }
       if (ctrl && e.key === '/') {
         e.preventDefault();
         // Ctrl+/ toggles assistant if handler provided, otherwise shortcuts modal
@@ -158,11 +160,10 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
         opts.onToggleInspector?.();
         return;
       }
-      // Ctrl+1~8 — writer-friendly tab switch (without shift to avoid conflict with Ctrl+Shift+N)
-      if (ctrl && !shift && /^[1-8]$/.test(e.key)) {
-        const ctrlTab = tabByDigitKey[e.key];
-        if (ctrlTab) { e.preventDefault(); opts.onTabChange(ctrlTab); return; }
-      }
+      // [풀점검 priority 4 — 2026-06-08] Ctrl+1~8 는 StudioShell 의 useKeyBinding 으로 이관됨.
+      // 동일 키 중복 dispatch 회피 — 본 블록은 의도적으로 비활성.
+      // (tabByDigitKey 상수는 ACTION_CATALOG shortcut hint 와의 매핑 참조용으로 유지)
+      void tabByDigitKey;
       // F1~F8 — legacy, retained
       const targetTab = tabByFKey[e.key];
       if (targetTab) { e.preventDefault(); opts.onTabChange(targetTab); }

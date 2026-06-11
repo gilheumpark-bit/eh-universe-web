@@ -1,16 +1,92 @@
 'use client';
 
-import React, { useRef, useCallback, useEffect } from 'react';
-import { useTranslatorLayout, TranslatorLayoutProvider } from './core/TranslatorLayoutContext';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
+import { useTranslatorLayout, TranslatorLayoutProvider, type LeftPanelType, type RightPanelType } from './core/TranslatorLayoutContext';
 import { useTranslator } from './core/TranslatorContext';
 import { ActivityBar } from './features/ActivityBar';
 import { TranslatorPanelManager } from './TranslatorPanelManager';
 import { BilateralEditor } from './editor/BilateralEditor';
 import { TripleEditor } from './editor/TripleEditor';
+// [Batch 1 rank 4 — 2026-06-07] Cmd+K 패널 팔레트 시공.
+// ActivityBar 클릭은 유지 (호환), Cmd+K 단축키로 12 패널 검색·이동 추가.
+import { useCmdPalette } from '@/hooks/useCmdPalette';
+import { CmdPaletteOverlay } from '@/components/studio/CmdPaletteOverlay';
+import { useRegisterActions } from '@/lib/actions/use-register-actions';
+import { useKeyBinding } from '@/lib/keyboard/keyboard-manager';
+import { useLang } from '@/lib/LangContext';
+// [priority 5 — 2026-06-08] cast 우회 제거 — panel-registry 의 LEFT_PANELS/RIGHT_PANELS 를
+// SSOT 로 사용해 binding 을 동적 생성. registry 변경 시 silent breakage 차단.
+import { LEFT_PANELS, RIGHT_PANELS } from './core/panel-registry';
+// [X2 — 2026-06-11] noa:toast/noa:alert 수신 호스트 — 번역 스튜디오에도 마운트 (NOA 고지 의무).
+import ToastHost from '@/components/loreguard/ToastHost';
+
+/**
+ * panel-registry 의 panel id 와 ACTION_CATALOG 의 action id 매핑.
+ * registry 에 새 panel 추가 시 이 map 만 갱신하면 binding 자동 등록.
+ * (역방향 lookup 으로 cast 제거 + 미정의 panel 즉시 컴파일 에러)
+ */
+const LEFT_PANEL_ACTION_MAP: Readonly<Record<NonNullable<LeftPanelType>, string>> = Object.freeze({
+  explorer: 'translate:open-explorer',
+  glossary: 'translate:open-glossary',
+  history: 'translate:open-history',
+  multilang: 'translate:open-multilang',
+  backup: 'translate:open-backup',
+  settings: 'translate:open-settings',
+});
+
+const RIGHT_PANEL_ACTION_MAP: Readonly<Record<NonNullable<RightPanelType>, string>> = Object.freeze({
+  actions: 'translate:open-actions',
+  chat: 'translate:open-chat',
+  audit: 'translate:open-audit',
+  reference: 'translate:open-reference',
+  adoption: 'translate:open-adoption',
+  signoff: 'translate:open-signoff',
+});
 
 export function TranslatorShellInner() {
   const layout = useTranslatorLayout();
   const { isZenMode, outputMode } = useTranslator();
+  const { lang } = useLang();
+
+  // ─── Cmd+K 패널 팔레트 ────────────────────────────────────────
+  // [Batch 1 rank 4 — 2026-06-07] ADR-0003 4-way 키 표준: Translation Studio = Cmd+K.
+  // useCmdPalette 의 내부 Ctrl+P 트리거는 disableInternalShortcut 로 꺼두고,
+  // keyboard-manager 의 area: 'translation-studio' 가드로 Cmd+K (= Ctrl+K on Windows) 만 활성.
+  const palette = useCmdPalette({ disableInternalShortcut: true });
+  // [풀점검 priority 7 — 2026-06-08] cross-platform 표기 통일 — 'cmd+k' → 'ctrl+k'.
+  // keyboard-manager.matchesCombo 가 ctrl/meta 동등 처리하므로 Win+Mac 모두 호환.
+  // ID 와 핸들러 동작은 불변 — 회귀 없음.
+  useKeyBinding({
+    keys: 'ctrl+k',
+    area: 'translation-studio',
+    handler: () => palette.setOpen(true),
+    description: 'Open panel palette (Translation Studio)',
+    id: 'translator-cmd-k-palette',
+  });
+
+  // 12 패널 액션 바인딩 — 좌 6 + 우 6. ActivityBar 와 동일 동작 (setActiveLeftPanel/Right).
+  // 같은 패널 재선택 시 토글 닫힘 → 팔레트는 "열기" 의도라 toggle 안 함 (다시 열기 명확).
+  // [priority 5 — 2026-06-08] panel-registry SSOT 에서 동적 생성. 하드코딩 cast 제거.
+  // registry 에 panel 추가 시 LEFT/RIGHT_PANEL_ACTION_MAP 갱신만 필요 (컴파일 타임 검증).
+  const panelBindings = useMemo<Record<string, () => void>>(() => {
+    const bindings: Record<string, () => void> = {};
+    // Left — panel-registry 의 모든 id 순회. action map 으로 id → action 변환.
+    for (const id of Object.keys(LEFT_PANELS)) {
+      const actionId = LEFT_PANEL_ACTION_MAP[id as NonNullable<LeftPanelType>];
+      if (!actionId) continue; // map 누락 — silent skip (registry 추가 시 map 보충 alarm)
+      const panelType = id as NonNullable<LeftPanelType>;
+      bindings[actionId] = () => layout.setActiveLeftPanel(panelType);
+    }
+    // Right — 동일 패턴.
+    for (const id of Object.keys(RIGHT_PANELS)) {
+      const actionId = RIGHT_PANEL_ACTION_MAP[id as NonNullable<RightPanelType>];
+      if (!actionId) continue;
+      const panelType = id as NonNullable<RightPanelType>;
+      bindings[actionId] = () => layout.setActiveRightPanel(panelType);
+    }
+    return bindings;
+  }, [layout]);
+  useRegisterActions({ palette, bindings: panelBindings, lang });
 
   // Desktop Resize logic
   const isDraggingLeft = useRef(false);
@@ -132,6 +208,14 @@ export function TranslatorShellInner() {
       )}
 
       {/* Mobile Space - Not needed right now, fallback */}
+
+      {/* [Batch 1 rank 4 — 2026-06-07] Cmd+K 패널 팔레트 overlay */}
+      <CmdPaletteOverlay palette={palette} language={lang} />
+
+      {/* [X2 — 2026-06-11] noa:toast/noa:alert 전역 수신 — 번역 스튜디오 트리에는 기존에
+          ToastHost 가 없어 notifyNoaBlock 의 toast 채널이 무음이었다 (LoreguardStudio 전용 마운트).
+          ToastHost 루트가 .eh-app 자체 스코프 + loreguard.css 전역 import 라 이식 안전. */}
+      <ToastHost language={lang.toUpperCase()} />
     </div>
   );
 }

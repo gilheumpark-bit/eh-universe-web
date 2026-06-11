@@ -145,12 +145,32 @@ export function saveProjects(projects: Project[]): boolean {
         return true;
       } catch (retryErr) {
         logger.error('NOA', 'localStorage write failed after cleanup:', retryErr);
+        // [QA-robustness (4)] 정리 후에도 quota 초과 — 침묵 false(원고 유실) 대신 사용자 고지.
+        // 전면 tiered eviction 은 범위 외 — 부족 사실 + 내보내기 권유 toast 만 발화.
+        notifyStorageQuotaToast();
         return false;
       }
     }
     logger.error('NOA', 'localStorage write failed:', e);
     return false;
   }
+}
+
+/**
+ * [QA-robustness (4)] 저장 공간 부족 사용자 고지 — noa:toast (ToastHost 계약).
+ * SSR/이벤트 차단 환경에서는 조용히 no-op (호출자 흐름 방해 금지).
+ */
+function notifyStorageQuotaToast(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent('noa:toast', {
+      detail: {
+        message: '저장 공간이 부족해 저장하지 못했습니다. 작품을 내보내기(백업)한 뒤 오래된 회차를 정리해 주세요.',
+        variant: 'error',
+        duration: 8000,
+      },
+    }));
+  } catch { /* window/이벤트 차단 (SSR) */ }
 }
 
 /**

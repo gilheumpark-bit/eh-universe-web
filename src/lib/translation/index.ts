@@ -125,13 +125,19 @@ export {
 } from './segment-adoption';
 
 // 작가 sign-off — Faithful archive + Market publish 분리 승인
+// [Z1a-4 2026-06-11] validateSignoffReadiness — 기계 검증 조건 분리 readiness
 export {
   chapterSignoffStatus,
   summarizeSignoff,
   toggleSignoff,
   isReadyForPublish,
+  validateSignoffReadiness,
   type SignoffStatus,
   type SignoffSummary,
+  type SignoffCondition,
+  type SignoffConditionId,
+  type SignoffReadiness,
+  type SignoffReadinessInput,
 } from './author-signoff';
 
 // Glossary dual mapping helpers
@@ -187,3 +193,23 @@ export {
   type NCTReport,
   type GateDecision,
 } from './ncg-nct';
+
+// ── Z1a (2026-06-11) — 번역 잔여 5건 (claude2 정합) ──
+// (1) 4버전 누진 현지화: dual-pipeline improveLevel (직접 import — 순환 회피)
+// (3) Catastrophic 게이트 — 결정론적 차단 + 사유
+export {
+  runCatastrophicCheck,
+  DEFAULT_CATASTROPHIC_THRESHOLDS,
+  type CatastrophicCheckInput,
+  type CatastrophicReport,
+  type CatastrophicReason,
+  type CatastrophicThresholds,
+  type TranslationQaAudit,
+} from './ncg-nct';
+// (5) 번역투/AI티 린트 — KO→EN additive 경고
+export {
+  lintTranslationese,
+  type TranslationeseHit,
+  type TranslationeseKind,
+  type TranslationeseLintResult,
+} from './translationese-lint';

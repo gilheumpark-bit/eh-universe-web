@@ -65,11 +65,13 @@ export default function MaintenanceBanner() {
   useEffect(() => {
     // [C] env flag — 'false' 명시 시에만 차단. 기본 ON
     if (process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'false') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: 마운트 후 env/세션 반영(hydration mismatch 방어)
       setVisible(false);
       return;
     }
     try {
       const dismissed = sessionStorage.getItem(DISMISS_KEY) === '1';
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe: sessionStorage 는 클라에서만 읽힘
       setVisible(!dismissed);
     } catch (err) {
       logger.warn('MaintenanceBanner', 'sessionStorage read failed', err);

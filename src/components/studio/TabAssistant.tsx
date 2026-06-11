@@ -11,8 +11,11 @@ import { createT, L4 } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider, getActiveModel, hasDgxService } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
+import { applyMemoryPolicy, clearStoredSummary } from '@/lib/ai/chat-memory-policy';
 import { classifyError } from './UXHelpers';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
+// [N1-noa-identity — 2026-06-11] 단일 노아 화자 정본 — 탭 전문성은 역할 모드 슬롯으로 유지.
+import { buildNoaSystemHeader } from '@/lib/ai/noa-identity';
 
 interface TabMessage {
   id: string;
@@ -33,7 +36,7 @@ const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; sy
     ko: 'NOL — Narrative Origin Lore',
     en: 'NOL — Narrative Origin Lore',
     temperature: 0.7,
-    systemKo: `당신은 소설 세계관 설계 전문가입니다.
+    systemKo: `${buildNoaSystemHeader('소설 세계관 설계 전문가')}
 
 [전문 영역]
 - 지리·역사·정치 체계 설계 및 내적 일관성 검증
@@ -42,7 +45,7 @@ const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; sy
 - 기존 설정 간 모순 탐지 및 해결안 제시
 
 [분석 프레임워크]
-설정을 검토할 때 다음 5가지 축으로 평가하세요:
+설정을 검토할 때 다음 5가지 축으로 평가하십시오:
 1. 내적 일관성: 규칙끼리 모순이 없는가?
 2. 서사 기능성: 이 설정이 갈등/긴장을 만들어내는가?
 3. 확장 가능성: 후속 스토리에서 활용할 여지가 있는가?
@@ -53,7 +56,7 @@ const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; sy
 - 모순을 발견하면 즉시 지적하고 2가지 이상 해결안 제시
 - "~하면 어떨까요?" 식 제안 형태로 답변
 - 구체적 예시를 반드시 포함
-- 한국어로 답하세요`,
+- 한국어로 답하십시오`,
     systemEn: `You are a fiction worldbuilding specialist.
 
 [Expertise]
@@ -79,7 +82,7 @@ Evaluate settings on 5 axes:
     ko: 'NOS — Narrative Origin Simulator',
     en: 'NOS — Narrative Origin Simulator',
     temperature: 0.5,
-    systemKo: `당신은 세계관 시뮬레이션 분석가입니다.
+    systemKo: `${buildNoaSystemHeader('세계관 시뮬레이션 분석가')}
 
 [전문 영역]
 - 문명/세력 간 힘의 균형 계산 (군사, 경제, 문화 영향력)
@@ -96,7 +99,7 @@ Evaluate settings on 5 axes:
 [출력 규칙]
 - 수치/비율로 표현 가능한 건 수치로 제시
 - "만약 X 세력이 Y를 하면?" 식 시나리오 제안
-- 한국어로 답하세요`,
+- 한국어로 답하십시오`,
     systemEn: `You are a world simulation analyst.
 
 [Expertise]
@@ -119,7 +122,7 @@ Evaluate settings on 5 axes:
     ko: 'NOC — Narrative Origin Character',
     en: 'NOC — Narrative Origin Character',
     temperature: 0.8,
-    systemKo: `당신은 소설 캐릭터 심리 분석 전문가입니다.
+    systemKo: `${buildNoaSystemHeader('소설 캐릭터 심리 분석 전문가')}
 
 [전문 영역]
 - 성격 다면성 분석: 표면 성격 vs 내면 욕구 vs 무의식적 두려움
@@ -139,7 +142,7 @@ Evaluate settings on 5 axes:
 - 캐릭터의 대사 예시를 반드시 포함 (최소 2개)
 - "이 캐릭터라면 이 상황에서 ~할 것" 식 시뮬레이션
 - 관계 분석 시 양방향 감정을 모두 서술
-- 한국어로 답하세요`,
+- 한국어로 답하십시오`,
     systemEn: `You are a fiction character psychology specialist.
 
 [Expertise]
@@ -164,7 +167,7 @@ Evaluate settings on 5 axes:
     ko: 'NOP — Narrative Origin Producer',
     en: 'NOP — Narrative Origin Producer',
     temperature: 0.7,
-    systemKo: `당신은 소설 장면 연출 전문 편집자입니다.
+    systemKo: `${buildNoaSystemHeader('소설 장면 연출 전문 편집자')}
 
 [전문 영역]
 - 씬 비트 분석: 각 장면의 목적(정보·감정·전환·충격) 판별
@@ -182,7 +185,7 @@ Evaluate settings on 5 axes:
 [출력 규칙]
 - 텐션 점수를 수치로 제시 (예: "현재 텐션 7/10, 여기서 4로 떨어뜨린 후 9로 올려야 합니다")
 - 구체적 연출 기법 제안 (예: "여기에 1인칭 내면 독백 2줄 삽입하면 텐션 +2")
-- 한국어로 답하세요`,
+- 한국어로 답하십시오`,
     systemEn: `You are a fiction scene direction editor.
 
 [Expertise]
@@ -206,7 +209,7 @@ Evaluate settings on 5 axes:
     ko: 'NOE — Narrative Origin Expression',
     en: 'NOE — Narrative Origin Expression',
     temperature: 0.6,
-    systemKo: `당신은 소설 문체 분석 전문가입니다.
+    systemKo: `${buildNoaSystemHeader('소설 문체 분석 전문가')}
 
 [전문 영역]
 - 문장 리듬 분석: 장단 교차, 호흡 패턴, 리듬감 평가
@@ -227,7 +230,7 @@ Evaluate settings on 5 axes:
 - 분석 시 반드시 5가지 지표 점수 제시
 - 문제 문장을 인용하고 개선안을 바로 옆에 제시
 - "이 문장을 ~로 바꾸면" 식 구체적 대안
-- 한국어로 답하세요`,
+- 한국어로 답하십시오`,
     systemEn: `You are a fiction writing style analyst.
 
 [Expertise]
@@ -254,7 +257,9 @@ Evaluate text on 5 metrics:
     ko: 'NOW — Narrative Origin Writer',
     en: 'NOW — Narrative Origin Writer',
     temperature: 0.85,
-    systemKo: `당신은 소설 집필 파트너(NOW)입니다. 작가의 의도를 존중하고 장면·대사·서사 전개를 돕습니다. 구체적이고 실행 가능한 제안을 하세요. 한국어로 답하세요.`,
+    systemKo: `${buildNoaSystemHeader('소설 집필 파트너(NOW)')}
+
+작가의 의도를 존중하고 장면·대사·서사 전개를 도우십시오. 구체적이고 실행 가능한 제안을 하십시오. 한국어로 답하십시오.`,
     systemEn: `You are NOW, a fiction writing partner. Respect the author's intent; help with scenes, dialogue, and pacing. Give concrete, actionable suggestions.`,
   },
 };
@@ -522,11 +527,16 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const systemPrompt = (lk === 'ko' ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab);
-    const recentMsgs: ChatMsg[] = messages.slice(-HISTORY_LIMITS.CHAT_API).map(m => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }));
+    // [N3-memory-hybrid] slice(-HISTORY_LIMITS.CHAT_API) → 탭 차등 정책 모듈 경유.
+    // heavy(world·rulebook·writing)=full+요약 / light(기타)=최근 20+이전 구간 요약 1블록.
+    // 요약 블록은 system에 부착 — 아래 truncateMessages(최후 안전망)는 messages만 자르므로 충돌 X.
+    const memory = applyMemoryPolicy(
+      tab,
+      messages.map(m => ({ role: m.role, content: m.content })),
+      language,
+    );
+    const systemPrompt = (lk === 'ko' ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab) + memory.summaryBlock;
+    const recentMsgs: ChatMsg[] = [...memory.messages];
     const model = getActiveModel();
     const { messages: trimmedHistory } = truncateMessages(systemPrompt, recentMsgs, model);
     const chatHistory: ChatMsg[] = [...trimmedHistory, { role: 'user', content: text }];
@@ -568,6 +578,8 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
   const clearChat = () => {
     setMessages([]);
     localStorage.removeItem(`${STORAGE_PREFIX}${tab}`);
+    // [N3-memory-hybrid] 이전 대화 요약도 함께 삭제 — 새 대화 누수 방지
+    clearStoredSummary(tab);
   };
 
   if (!ctx) return null;

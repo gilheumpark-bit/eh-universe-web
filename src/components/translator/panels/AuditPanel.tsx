@@ -4,9 +4,17 @@
 // PART 1 — Imports & Types
 // ============================================================
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2, Shield } from 'lucide-react';
+import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Sparkles, Loader2, ListChecks, Wand2, Shield, Layers } from 'lucide-react';
 import type { NCGReport, NCTReport } from '@/lib/translation/ncg-nct';
 import { useTranslator } from '../core/TranslatorContext';
+// [creative:quality-checklist rank 7] 5 도메인 (세계관·캐릭터·씬·연출·집필) 완성도 통합
+import {
+  CHECKLISTS,
+  evaluateChecklist,
+  checklistCompleteness,
+  type Domain,
+  type ChecklistItem,
+} from '@/lib/creative/quality-checklist';
 import { scoreTranslation } from '@/hooks/useTranslation';
 import {
   getDefaultConfig,
@@ -272,7 +280,7 @@ function PublishAuditSection() {
   return (
     <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-text-secondary">
+        <div className="flex items-center gap-2 text-text-secondary">
           <ListChecks className="w-3.5 h-3.5 text-accent-green" />
           <span className="text-[12px] font-medium">출판 검수</span>
           <span className="text-[9px] text-text-tertiary">무료 · 로컬</span>
@@ -289,7 +297,7 @@ function PublishAuditSection() {
           type="button"
           onClick={handleRun}
           disabled={!canRun}
-          className="w-full min-h-[36px] rounded-md bg-accent-green/15 hover:bg-accent-green/25 text-accent-green border border-accent-green/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full min-h-[36px] rounded-md bg-accent-green/15 hover:bg-accent-green/25 text-accent-green border border-accent-green/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           title="맞춤법·띄어쓰기·문장부호·구조 자체 검수 실행 (외부 API 없음)"
         >
           {canRun ? '검수 실행' : '번역문 10자 이상 필요'}
@@ -355,7 +363,7 @@ function PublishAuditSection() {
             <button
               type="button"
               onClick={handleRun}
-              className="flex-1 min-h-[32px] rounded-md bg-white/5 hover:bg-white/10 text-text-secondary border border-white/10 text-[11px] font-medium transition-colors"
+              className="flex-1 min-h-[32px] rounded-md bg-white/5 hover:bg-white/10 text-text-secondary border border-white/10 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             >
               재검수
             </button>
@@ -363,7 +371,7 @@ function PublishAuditSection() {
               <button
                 type="button"
                 onClick={handleAutoFix}
-                className="flex-1 min-h-[32px] rounded-md bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple border border-accent-purple/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1"
+                className="flex-1 min-h-[32px] rounded-md bg-accent-purple/15 hover:bg-accent-purple/25 text-accent-purple border border-accent-purple/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 title="중복 문장부호·전각/반각 혼용 등 안전한 항목만 자동 수정"
               >
                 <Wand2 className="w-3 h-3" />
@@ -384,7 +392,7 @@ function PublishAuditSection() {
       {canRun && (
         <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-text-secondary">
+            <div className="flex items-center gap-2 text-text-secondary">
               <Sparkles className="w-3 h-3 text-accent-purple" />
               <span className="text-[10px] font-medium">NOA 교정 (선택)</span>
               <span className="text-[9px] text-text-tertiary">· API 키 소모</span>
@@ -398,7 +406,7 @@ function PublishAuditSection() {
             <button
               type="button"
               onClick={handleRunAI}
-              className="w-full min-h-[28px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/25 text-[11px] font-medium transition-colors"
+              className="w-full min-h-[28px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/25 text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               title={`${provider}로 1회 호출 — 맞춤법·띄어쓰기·어색한 표현 제안`}
             >
               NOA 교정 제안 실행
@@ -425,7 +433,7 @@ function PublishAuditSection() {
                 const sevColor = sev === 'high' ? 'text-accent-red' : sev === 'medium' ? 'text-accent-amber' : 'text-accent-indigo';
                 return (
                   <div key={i} className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-[9px] px-1 py-0.5 rounded border font-mono uppercase ${sevColor}`}>
                         {sev}
                       </span>
@@ -440,7 +448,7 @@ function PublishAuditSection() {
                     <button
                       type="button"
                       onClick={() => handleApplyAICorrection(c)}
-                      className="w-full mt-1 text-[10px] py-1 rounded bg-accent-green/10 hover:bg-accent-green/20 text-accent-green border border-accent-green/25 font-medium transition-colors"
+                      className="w-full mt-1 text-[10px] py-1 rounded bg-accent-green/10 hover:bg-accent-green/20 text-accent-green border border-accent-green/25 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                     >
                       이 교정 적용
                     </button>
@@ -450,7 +458,7 @@ function PublishAuditSection() {
               <button
                 type="button"
                 onClick={handleRunAI}
-                className="w-full text-[10px] py-1 rounded bg-white/5 hover:bg-white/10 text-text-tertiary border border-white/10 transition-colors"
+                className="w-full text-[10px] py-1 rounded bg-white/5 hover:bg-white/10 text-text-tertiary border border-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               >
                 NOA 재검수
               </button>
@@ -521,9 +529,9 @@ function TMSuggestionsSection() {
       <button
         type="button"
         onClick={() => setCollapsed(c => !c)}
-        className="w-full flex items-center justify-between gap-2 text-text-secondary hover:text-text-primary transition-colors"
+        className="w-full flex items-center justify-between gap-2 text-text-secondary hover:text-text-primary transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <BookOpen className="w-3.5 h-3.5 text-accent-indigo" />
           <span className="text-[12px] font-medium">번역 메모리 매칭</span>
           <span className="text-[10px] text-accent-indigo bg-accent-indigo/10 px-1.5 py-0.5 rounded">{matches.length}</span>
@@ -552,7 +560,7 @@ function TMSuggestionsSection() {
                     type="button"
                     onClick={() => handleAddToGlossary(m)}
                     disabled={justAdded || inGlossary}
-                    className={`ml-auto text-[9px] px-1.5 py-0.5 rounded border font-mono transition-colors ${
+                    className={`ml-auto text-[9px] px-1.5 py-0.5 rounded border font-mono transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
                       justAdded || inGlossary
                         ? 'border-accent-green/30 bg-accent-green/10 text-accent-green cursor-default'
                         : 'border-accent-indigo/30 bg-accent-indigo/5 text-accent-indigo hover:bg-accent-indigo/15'
@@ -581,6 +589,267 @@ function TMSuggestionsSection() {
 }
 
 // ============================================================
+// PART 4c — Creative 5-Domain Checklist (creative:quality-checklist)
+// 번역 컨텍스트(원문·번역·세계관·캐릭터·줄거리·용어·챕터)에서
+// 결정론적 휴리스틱으로 "충족된" 체크 항목 id 를 추론한 뒤
+// checklistCompleteness() 로 5 도메인 완성도를 도출한다. LLM 호출 0.
+// ============================================================
+
+interface ChecklistContext {
+  source: string;
+  result: string;
+  worldContext: string;
+  characterProfiles: string;
+  storySummary: string;
+  glossary: Record<string, string>;
+  chaptersCount: number;
+  completedChapters: number;
+}
+
+/**
+ * 텍스트에 키워드 중 하나라도 포함되면 true. case-insensitive, 빈 입력 안전.
+ */
+function hasAny(text: string, keywords: ReadonlyArray<string>): boolean {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  return keywords.some((k) => k && lower.includes(k.toLowerCase()));
+}
+
+/**
+ * 번역 컨텍스트에서 충족된 ChecklistItem id 목록을 도메인별로 도출.
+ * 모두 결정론적(LLM 호출 0). 키워드/길이/카운트 기반.
+ */
+function inferPresentIds(ctx: ChecklistContext): Readonly<Record<Domain, string[]>> {
+  const world = ctx.worldContext ?? '';
+  const chars = ctx.characterProfiles ?? '';
+  const story = ctx.storySummary ?? '';
+  const src = ctx.source ?? '';
+  const res = ctx.result ?? '';
+  const glossaryCount = Object.keys(ctx.glossary ?? {}).length;
+
+  // ── world (세계관) ──
+  const worldIds: string[] = [];
+  if (world.trim().length >= 40 || story.trim().length >= 40) worldIds.push('world-premise');
+  if (hasAny(world, ['규칙', '제약', 'rule', 'system', '시스템', '법칙', '능력', '마법', '권능'])) worldIds.push('world-rules');
+  if (hasAny(world, ['지도', '지리', '대륙', '왕국', '제국', '세력', 'kingdom', 'empire', 'map', 'region'])) worldIds.push('world-geography');
+  if (hasAny(world, ['역사', '연대기', '왕조', '전쟁', '건국', 'history', 'chronicle', 'era'])) worldIds.push('world-history');
+  if (hasAny(world, ['톤', '분위기', '느낌', 'tone', 'mood', 'atmosphere']) || world.trim().length >= 200) worldIds.push('world-tone');
+
+  // ── character (캐릭터) ──
+  const charIds: string[] = [];
+  if (hasAny(chars, ['목표', '욕망', '원하', 'goal', 'want', 'desire', 'motivation'])) charIds.push('char-goal');
+  if (hasAny(chars, ['결함', '약점', '한계', 'flaw', 'weakness', 'fear'])) charIds.push('char-flaw');
+  if (hasAny(chars, ['성장', '변화', '아크', 'arc', 'growth', 'change'])) charIds.push('char-arc');
+  if (hasAny(chars, ['말투', '목소리', '어조', 'voice', 'speech', 'tone'])) charIds.push('char-voice');
+  if (hasAny(chars, ['관계', '친구', '적', '연인', 'relation', 'friend', 'enemy', 'rival']) || chars.split(/\n/).filter((l) => l.trim()).length >= 2) charIds.push('char-relations');
+
+  // ── scene (씬) ──
+  const sceneIds: string[] = [];
+  if (hasAny(story, ['목표', '얻', 'goal', 'achieve']) || hasAny(src, ['목표', '결심', '얻으'])) sceneIds.push('scene-goal');
+  if (hasAny(story, ['갈등', '대립', '장애', 'conflict', 'obstacle', 'fight']) || hasAny(src, ['갈등', '맞서', '싸'])) sceneIds.push('scene-conflict');
+  if (hasAny(story, ['전환', '반전', 'turn', 'twist', 'reveal']) || hasAny(src, ['그러나', '하지만', '갑자기'])) sceneIds.push('scene-turn');
+  if (hasAny(story, ['배경', '장소', '시간', 'setting', 'place', 'where']) || hasAny(src, ['에서', '에는'])) sceneIds.push('scene-setting');
+  // 첫 200자 안에 의문/대사/충격적 단어가 있으면 도입 훅으로 간주
+  if (src.length >= 50 && /[?!]|[「『"]/.test(src.slice(0, 200))) sceneIds.push('scene-hook');
+
+  // ── direction (연출) ──
+  const dirIds: string[] = [];
+  // 카메라 거리·시점: 1인칭/3인칭 마커 검출
+  if (hasAny(res, ['나는', '내가', '내 ', 'I ', "I'", 'my ']) || hasAny(res, ['그는', '그녀', 'he ', 'she ', 'they '])) dirIds.push('dir-camera');
+  // 페이싱: 문장 평균 길이
+  if (res.length >= 100) {
+    const sentences = res.split(/[.!?。!?…]+/).filter((s) => s.trim().length > 0);
+    const avg = sentences.length > 0 ? res.length / sentences.length : 0;
+    if (avg > 0 && avg < 120) dirIds.push('dir-pacing');
+  }
+  // 오감 묘사
+  if (hasAny(res, ['보았', '보였', '들렸', '향', '냄새', '느꼈', '맛', 'see', 'saw', 'heard', 'smell', 'taste', 'felt', 'touch'])) dirIds.push('dir-senses');
+  // 긴장 곡선: 감탄/물음/대사 비중
+  if (res.length >= 100) {
+    const tensionMarkers = (res.match(/[!?！?]/g) ?? []).length;
+    if (tensionMarkers >= 2) dirIds.push('dir-tension');
+  }
+
+  // ── writing (집필) ──
+  const writeIds: string[] = [];
+  // POV 일관성: 1인칭과 3인칭이 동시에 강하게 섞이지 않으면 일관 간주
+  if (res.length >= 100) {
+    const first = (res.match(/\b(I|me|my|나는|내가)\b/g) ?? []).length;
+    const third = (res.match(/\b(he|she|they|그는|그녀)\b/g) ?? []).length;
+    if (first === 0 || third === 0 || Math.abs(first - third) > Math.max(first, third) * 0.4) writeIds.push('write-pov');
+  }
+  // Show vs Tell: 묘사 동사가 어느 정도 있으면 통과
+  if (hasAny(res, ['보았', '들렸', '느꼈', 'saw', 'heard', 'felt', 'noticed']) && res.length >= 200) writeIds.push('write-show');
+  // 대사 비율: 인용 부호 카운트
+  if (res.length >= 100) {
+    const quotes = (res.match(/["「『""]/g) ?? []).length;
+    if (quotes >= 2) writeIds.push('write-dialogue');
+  }
+  // 반복어 점검: 동일 단어 4회+ 반복이 없으면 통과 (역설계)
+  if (res.length >= 200) {
+    const words = res.split(/\s+/).filter((w) => w.length >= 3);
+    const freq = new Map<string, number>();
+    for (const w of words) freq.set(w, (freq.get(w) ?? 0) + 1);
+    const worst = Math.max(0, ...Array.from(freq.values()));
+    if (worst < 8) writeIds.push('write-repetition');
+  }
+  // 클리프행어: 마지막 문장에 의문/충격/말줄임
+  if (res.length >= 50) {
+    const tail = res.slice(-100);
+    if (/[?!…]|\.\.\.|[??！。]$/.test(tail)) writeIds.push('write-cliffhanger');
+  }
+
+  // 용어집이 있고 챕터 진행도가 있으면 일관성 보너스 (글로벌 영향: 캐릭터 voice + writing 대사)
+  if (glossaryCount >= 3 && ctx.completedChapters >= 1) {
+    if (!charIds.includes('char-voice')) charIds.push('char-voice');
+  }
+
+  return {
+    world: worldIds,
+    character: charIds,
+    scene: sceneIds,
+    direction: dirIds,
+    writing: writeIds,
+  };
+}
+
+const DOMAIN_META: Record<Domain, { label: string; emoji: string; color: string }> = {
+  world: { label: '세계관', emoji: '🌍', color: 'accent-blue' },
+  character: { label: '캐릭터', emoji: '👤', color: 'accent-purple' },
+  scene: { label: '씬', emoji: '🎬', color: 'accent-amber' },
+  direction: { label: '연출', emoji: '🎭', color: 'accent-indigo' },
+  writing: { label: '집필', emoji: '✍️', color: 'accent-green' },
+};
+
+const DOMAIN_ORDER: ReadonlyArray<Domain> = ['world', 'character', 'scene', 'direction', 'writing'];
+
+function CreativeChecklistSection({ ctx }: { ctx: ChecklistContext }) {
+  const [expanded, setExpanded] = useState<Set<Domain>>(new Set());
+
+  const results = useMemo(() => {
+    const present = inferPresentIds(ctx);
+    return DOMAIN_ORDER.map((d) => {
+      const presentIds = present[d];
+      const evalResult = evaluateChecklist(d, presentIds);
+      const completeness = checklistCompleteness(d, presentIds);
+      return { domain: d, presentIds, ...evalResult, completeness };
+    });
+  }, [ctx]);
+
+  const overall = useMemo(() => {
+    if (results.length === 0) return 0;
+    const sum = results.reduce((acc, r) => acc + r.completeness, 0);
+    return Math.round(sum / results.length);
+  }, [results]);
+
+  const toggle = useCallback((d: Domain) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(d)) next.delete(d);
+      else next.add(d);
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 text-text-secondary">
+          <Layers className="w-3.5 h-3.5 text-accent-purple" />
+          <span className="text-[12px] font-medium">5 도메인 완성도</span>
+          <span className="text-[9px] text-text-tertiary">결정론적 · 휴리스틱</span>
+        </div>
+        <span className={`text-[11px] font-mono font-bold ${scoreColor(overall)}`}>
+          평균 {overall}%
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2">
+        {results.map((r) => {
+          const meta = DOMAIN_META[r.domain];
+          const items: ReadonlyArray<ChecklistItem> = CHECKLISTS[r.domain];
+          const presentSet = new Set(r.presentIds);
+          const isOpen = expanded.has(r.domain);
+          return (
+            <div
+              key={r.domain}
+              className="rounded border border-white/10 bg-white/[0.02] p-2 space-y-1.5"
+            >
+              <button
+                type="button"
+                onClick={() => toggle(r.domain)}
+                aria-expanded={isOpen}
+                className="w-full flex items-center justify-between gap-2 text-left rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[13px]" aria-hidden>{meta.emoji}</span>
+                  <span className="text-[11px] font-medium text-text-primary truncate">{meta.label}</span>
+                  <span className="text-[9px] text-text-tertiary font-mono">
+                    {r.passed}/{r.total}
+                  </span>
+                  {r.missing.length > 0 && (
+                    <span
+                      className="text-[9px] text-accent-amber font-mono"
+                      title={`필수 ${r.missing.length}개 누락`}
+                    >
+                      필수↓{r.missing.length}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[12px] font-mono font-bold ${scoreColor(r.completeness)}`}>
+                    {r.completeness}%
+                  </span>
+                  <span className={`text-[9px] text-text-tertiary transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
+                </div>
+              </button>
+              <div className="h-1.5 rounded-full bg-white/5 overflow-hidden" aria-hidden>
+                <div
+                  className={`h-full ${scoreBarColor(r.completeness)} transition-[width] duration-500`}
+                  style={{ width: `${r.completeness}%` }}
+                />
+              </div>
+              {isOpen && (
+                <ul className="space-y-0.5 pt-1">
+                  {items.map((it) => {
+                    const passed = presentSet.has(it.id);
+                    return (
+                      <li
+                        key={it.id}
+                        className="flex items-center gap-2 text-[10px]"
+                      >
+                        {passed ? (
+                          <CheckCircle className="w-3 h-3 text-accent-green shrink-0" aria-label="충족" />
+                        ) : (
+                          <AlertTriangle
+                            className={`w-3 h-3 shrink-0 ${it.required ? 'text-accent-amber' : 'text-text-tertiary'}`}
+                            aria-label={it.required ? '필수 누락' : '권장 누락'}
+                          />
+                        )}
+                        <span className={passed ? 'text-text-secondary' : 'text-text-tertiary'}>
+                          {it.label}
+                        </span>
+                        {it.required && !passed && (
+                          <span className="text-[8px] text-accent-amber font-mono uppercase ml-auto">필수</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[9px] text-text-tertiary italic">
+        원문·번역문·세계관·캐릭터·줄거리·용어집에서 결정론적으로 추론. LLM 호출 없음.
+      </p>
+    </div>
+  );
+}
+
+// ============================================================
 // PART 5 — AuditPanel (Main)
 // ============================================================
 /** 4언어 코드 → SupportedLang 매핑 (KO/EN/JP/CN/JA/ZH 호환). */
@@ -593,7 +862,25 @@ function normalizeLang(code: string): SupportedLang {
 }
 
 export function AuditPanel() {
-  const { source, result, chapters, glossaryText, glossary, from, to, autoRegenEnabled, setAutoRegenEnabled, autoRegenAttempts, outputMode, setOutputMode } = useTranslator();
+  const {
+    source,
+    result,
+    chapters,
+    glossaryText,
+    glossary,
+    from,
+    to,
+    autoRegenEnabled,
+    setAutoRegenEnabled,
+    autoRegenAttempts,
+    outputMode,
+    setOutputMode,
+    // [creative:quality-checklist rank 7] 5 도메인 추론 컨텍스트
+    worldContext,
+    characterProfiles,
+    storySummary,
+    completedChapters,
+  } = useTranslator();
 
   // [A.4 + B.4 — 2026-05-08] NCG/NCT 결과 실시간 표시. localStorage + CustomEvent + storage event 3중 갱신.
   // race 보강: 1) mount 시 즉시 read, 2) CustomEvent 'noa:translator-ncg-nct-updated' listener, 3) storage event (다른 탭 동기화)
@@ -689,6 +976,21 @@ export function AuditPanel() {
   const axes = aiScore ? buildAxesFromScore(aiScore) : [];
   const aiOverall = aiScore ? Math.round(aiScore.overall) : null;
 
+  // [creative:quality-checklist rank 7] 5 도메인 컨텍스트 — 매 변경 시 재추론
+  const checklistCtx = useMemo<ChecklistContext>(
+    () => ({
+      source,
+      result,
+      worldContext: worldContext ?? '',
+      characterProfiles: characterProfiles ?? '',
+      storySummary: storySummary ?? '',
+      glossary: glossary ?? {},
+      chaptersCount: chapters?.length ?? 0,
+      completedChapters: completedChapters ?? 0,
+    }),
+    [source, result, worldContext, characterProfiles, storySummary, glossary, chapters, completedChapters],
+  );
+
   return (
     <div className="flex h-full flex-col font-sans">
       {/* ── Header ── */}
@@ -698,7 +1000,7 @@ export function AuditPanel() {
             <Activity className="w-4 h-4 text-accent-green" />
             <span className="text-[13px] font-medium">Quality Audit</span>
           </div>
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex gap-2 flex-wrap">
             {/* [1원칙 fix — 2026-05-08] 원문 보존 배지 — 최우선 노출 (잘라먹기 방지) */}
             {integrityReport && (
               <span
@@ -724,13 +1026,13 @@ export function AuditPanel() {
             )}
           </div>
         </div>
-        <p className="text-[10px] text-text-tertiary mt-2 leading-snug">
+        <p className="text-[11px] text-text-tertiary mt-2 leading-snug">
           <strong className="text-accent-green">원문 보존 (1원칙)</strong> 은 LLM 호출 없이 결정론적으로 단락·단어 수·누락 의심을 검증합니다. 자동 점검은 휴리스틱 지표, NOA 정밀 채점은 4/6축 품질 분석입니다.
         </p>
         {/* [A.4 — 2026-05-08] NCG / NCT 결과 배지 — runDualTranslate 자동 호출 결과 시각 표시. */}
         {(ncgReport || nctReport) && (
           <div className="mt-3 pt-3 border-t border-white/5">
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center gap-2 mb-2">
               <Shield className="w-3 h-3 text-accent-blue" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                 NCG / NCT
@@ -780,7 +1082,7 @@ export function AuditPanel() {
         {/* [시장 분석 4차] 2개 출력 모델 토글 — Source-faithful / Market-ready / default */}
         <div className="mt-3 pt-3 border-t border-white/5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <BookOpen className="w-3 h-3 text-accent-purple" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">출력 모드</span>
             </div>
@@ -802,7 +1104,7 @@ export function AuditPanel() {
                   aria-checked={active}
                   onClick={() => setOutputMode(m.id)}
                   title={m.desc}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded border transition-colors ${
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
                     active
                       ? m.highlight
                         ? 'bg-accent-green/15 border-accent-green/50 text-accent-green ring-1 ring-accent-green/30'
@@ -875,13 +1177,16 @@ export function AuditPanel() {
         {/* ── TM 매칭 (번역 메모리 유사 제안) ── */}
         <TMSuggestionsSection />
 
+        {/* ── 5 도메인 완성도 (creative:quality-checklist) ── */}
+        <CreativeChecklistSection ctx={checklistCtx} />
+
         {/* ── 출판 검수 (로컬 규칙, 무료) ── */}
         <PublishAuditSection />
 
         {/* ── AI 4/6축 정밀 채점 섹션 ── */}
         <div className="rounded-lg bg-white/[0.02] border border-white/10 p-3 space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 text-text-secondary">
+            <div className="flex items-center gap-2 text-text-secondary">
               <Sparkles className="w-3.5 h-3.5 text-accent-amber" />
               <span className="text-[12px] font-medium">NOA 정밀 채점</span>
             </div>
@@ -889,13 +1194,13 @@ export function AuditPanel() {
               <button
                 type="button"
                 onClick={() => setScoreMode('fidelity')}
-                className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${scoreMode === 'fidelity' ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber' : 'border-white/10 text-text-tertiary hover:text-text-secondary'}`}
+                className={`text-[10px] px-2 py-0.5 rounded border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${scoreMode === 'fidelity' ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber' : 'border-white/10 text-text-tertiary hover:text-text-secondary'}`}
                 title="원문 보존형 4축 — 정확성·자연스러움·완성도·포맷"
               >4축</button>
               <button
                 type="button"
                 onClick={() => setScoreMode('experience')}
-                className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${scoreMode === 'experience' ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber' : 'border-white/10 text-text-tertiary hover:text-text-secondary'}`}
+                className={`text-[10px] px-2 py-0.5 rounded border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${scoreMode === 'experience' ? 'border-accent-amber/40 bg-accent-amber/10 text-accent-amber' : 'border-white/10 text-text-tertiary hover:text-text-secondary'}`}
                 title="독자 경험형 6축 — 몰입·감정·문화·일관·근거·투명"
               >6축</button>
             </div>
@@ -906,7 +1211,7 @@ export function AuditPanel() {
               type="button"
               onClick={handleRunAIScore}
               disabled={!canScore}
-              className="w-full min-h-[36px] rounded-md bg-accent-amber/15 hover:bg-accent-amber/25 text-accent-amber border border-accent-amber/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full min-h-[36px] rounded-md bg-accent-amber/15 hover:bg-accent-amber/25 text-accent-amber border border-accent-amber/30 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
               title={canScore ? '현재 원문·번역문을 NOA로 정밀 채점' : '원문/번역문이 20자 이상일 때 실행 가능'}
             >
               {canScore ? `NOA ${scoreMode === 'fidelity' ? '4축' : '6축'} 채점 실행` : '원문/번역문 20자 이상 필요'}
@@ -964,7 +1269,7 @@ export function AuditPanel() {
                 <button
                   type="button"
                   onClick={handleRunAIScore}
-                  className="text-[10px] text-text-tertiary hover:text-accent-amber transition-colors underline underline-offset-2"
+                  className="text-[10px] text-text-tertiary hover:text-accent-amber transition-colors underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                   title="현재 설정으로 재채점"
                 >재채점</button>
               </div>

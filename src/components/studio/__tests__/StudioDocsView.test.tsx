@@ -108,11 +108,13 @@ describe('StudioDocsView', () => {
 
   it('renders TOC navigation links for each section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
-    // 12 core + 7 polish = 19 anchor links in TOC
+    // [priority 12 — 2026-06-08] 12 core + 7 polish + 1 glossary = 20 anchor links in TOC
     const anchors = container.querySelectorAll('nav a[href^="#doc-"]');
-    expect(anchors.length).toBe(19);
+    expect(anchors.length).toBe(20);
     // First anchor points to #doc-start
     expect(anchors[0].getAttribute('href')).toBe('#doc-start');
+    // [priority 12 — 2026-06-08] glossary anchor — Project/Work/Manuscript 계층 정의.
+    expect(anchors[anchors.length - 1].getAttribute('href')).toBe('#doc-glossary');
   });
 
   it('registers IntersectionObserver for scroll tracking', () => {

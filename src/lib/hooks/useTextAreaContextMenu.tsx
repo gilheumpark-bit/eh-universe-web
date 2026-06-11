@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Copy, ClipboardPaste, Scissors, TextSelect } from "lucide-react";
-import type { ContextMenuItem } from "@/components/code-studio/ContextMenu";
+import type { ContextMenuItem } from "@/components/ui/ContextMenu";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 

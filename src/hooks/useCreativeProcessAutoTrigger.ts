@@ -28,6 +28,31 @@ import { logger } from '@/lib/logger';
 
 const COOLDOWN_MS = 60_000; // 1분 cooldown
 
+// ── [s82-stage-coverage 2026-06-10] 명시적 로깅 경로 dedup ──
+// Tab(World/Character/Plot/Direction) 이 채택/저장 시 logAcceptAI/logHumanEdit 를
+// 직접 기록하면 같은 setConfig 변경이 본 hook 의 signature diff 로도 잡혀
+// HUMAN_REVISION 이 1건 더 찍힌다 (AI 채택을 인간 1.0 으로 오귀속 — HCI 무결성 위반).
+// → 명시 기록 직후 markExplicitCreativeLog(area) 호출 → cooldown 윈도우 내
+//   동일 영역 auto-trigger fire 억제 (signature baseline 은 정상 전진).
+const explicitLogAt: Record<'character' | 'world' | 'scene', number> = {
+  character: 0,
+  world: 0,
+  scene: 0,
+};
+
+/**
+ * 명시적 creative-event 기록 직후 호출 — 같은 변경의 auto-trigger 이중 계상 억제.
+ *
+ * [문서화된 트레이드오프] 억제는 영역 단위 + 60s(COOLDOWN_MS) 윈도우:
+ * 명시 기록 후 60s 내 같은 영역의 *별개* 변경(예: world 명시 채택 직후 작가가
+ * worldSim 을 또 손으로 고침)도 auto-detect 가 억제된다. 이중 계상(AI 채택의
+ * 인간 1.0 오귀속)이 누락보다 HCI 무결성 비용이 크므로 의도된 보수적 동작 —
+ * 그 변경은 다음 signature diff (cooldown 만료 후) 에서 정상 잡힌다.
+ */
+export function markExplicitCreativeLog(area: 'character' | 'world' | 'scene'): void {
+  explicitLogAt[area] = Date.now();
+}
+
 interface SignatureSnapshot {
   charactersHash: string;
   worldHash: string;
@@ -133,6 +158,11 @@ export function useCreativeProcessAutoTrigger(
 
     for (const { field, targetType } of changes) {
       if (newSig[field] !== lastSigRef.current[field]) {
+        // [s82] 명시적 로깅 경로가 방금 같은 영역을 기록 → auto fire 억제 (이중 계상 차단)
+        if (now - explicitLogAt[targetType] < COOLDOWN_MS) {
+          lastFireRef.current[field] = now;
+          continue;
+        }
         const elapsed = now - lastFireRef.current[field];
         if (elapsed >= COOLDOWN_MS) {
           // fire-and-forget — 본 흐름 차단 X

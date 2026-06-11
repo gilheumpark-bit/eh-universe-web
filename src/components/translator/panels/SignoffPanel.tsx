@@ -2,10 +2,27 @@
 // ============================================================
 // SignoffPanel — 작가 sign-off (Faithful archive + Market publish 분리 승인)
 // 시장 분석 4차 §8 §11.
+//
+// [Batch 4 / rank 13 — 2026-06-07] work-receipt 자동 생성:
+//   - DID:     실행된 stage 목록 (예: [DID] Stage 1+4)
+//   - SKIPPED: 생략한 항목 (Faithful 미승인 · Market 미작업 · 미실행 stage)
+//   - METRICS: 자수 + 실행 stage 개수
+// 승인 시 buildSignoffReceipt → localStorage 영속 (recordSignoffReceipt).
 // ============================================================
 
-import React, { useMemo } from 'react';
-import { ShieldCheck, Globe, Stamp, FileBadge2, BookCheck } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  ShieldCheck,
+  Globe,
+  Stamp,
+  FileBadge2,
+  BookCheck,
+  ChevronDown,
+  ChevronRight,
+  CircleCheck,
+  CircleX,
+  Hash,
+} from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import {
   summarizeSignoff,
@@ -13,29 +30,67 @@ import {
   isReadyForPublish,
   chapterSignoffStatus,
 } from '@/lib/translation/author-signoff';
+import {
+  buildSignoffReceipt,
+  recordSignoffReceipt,
+  type SignoffTrack,
+} from '@/lib/translation/signoff-receipt';
+import { buildReceipt } from '@/lib/creative/work-receipt';
 
 export function SignoffPanel() {
   const { chapters, patchChapterAtIndex, langKo } = useTranslator();
   const summary = useMemo(() => summarizeSignoff(chapters), [chapters]);
+  // 영수증 패널 펼침 상태 — chapterIndex × track
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const persistReceipt = useCallback(
+    (chapterIndex: number, track: SignoffTrack) => {
+      const ch = chapters[chapterIndex];
+      if (!ch) return;
+      try {
+        recordSignoffReceipt({
+          id: `sig-${chapterIndex}-${track}-${Date.now()}`,
+          at: Date.now(),
+          chapter: ch,
+          chapterIndex,
+          track,
+        });
+      } catch {
+        // localStorage quota / private mode — silent
+      }
+    },
+    [chapters],
+  );
 
   const flipFaithful = (i: number) => {
     const ch = chapters[i];
     if (!ch) return;
-    const next = toggleSignoff(ch, 'faithful', !ch.faithfulApproved);
+    const nextApproved = !ch.faithfulApproved;
+    const next = toggleSignoff(ch, 'faithful', nextApproved);
     patchChapterAtIndex(i, next);
     // 창작 과정 확인서 hook (silent)
     import('@/lib/translation/process-record-hooks').then((m) => {
       m.recordAuthorSignoff({ chapterName: ch.name, chapterIndex: i, track: 'faithful' });
     }).catch(() => undefined);
+    // 승인 시에만 영수증 영속 (취소 시 기존 기록 유지)
+    if (nextApproved) persistReceipt(i, 'faithful');
   };
+
   const flipMarket = (i: number) => {
     const ch = chapters[i];
     if (!ch) return;
-    const next = toggleSignoff(ch, 'market', !ch.marketApproved);
+    const nextApproved = !ch.marketApproved;
+    const next = toggleSignoff(ch, 'market', nextApproved);
     patchChapterAtIndex(i, next);
     import('@/lib/translation/process-record-hooks').then((m) => {
       m.recordAuthorSignoff({ chapterName: ch.name, chapterIndex: i, track: 'market' });
     }).catch(() => undefined);
+    if (nextApproved) persistReceipt(i, 'market');
+  };
+
+  const toggleExpand = (i: number, track: SignoffTrack) => {
+    const key = `${i}:${track}`;
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const faithfulPublishReady = isReadyForPublish(chapters, 'faithful');
@@ -44,11 +99,11 @@ export function SignoffPanel() {
   return (
     <section className="flex flex-col h-full min-h-0">
       <header className="px-3 py-2 border-b border-border bg-bg-secondary/60 shrink-0">
-        <h3 className="text-sm font-bold text-text-primary flex items-center gap-1.5">
+        <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
           <Stamp className="w-4 h-4 text-accent-purple" />
           {langKo ? '작가 sign-off' : 'Author Sign-off'}
         </h3>
-        <p className="text-[10px] text-text-tertiary mt-0.5">
+        <p className="text-[11px] text-text-tertiary mt-0.5">
           {langKo
             ? 'Faithful = 저작권 archive, Market = 출판본'
             : 'Faithful = archive, Market = publish'}
@@ -83,7 +138,13 @@ export function SignoffPanel() {
         </div>
       </header>
       <div className="flex-1 overflow-y-auto divide-y divide-border">
-        {chapters.map((ch, i) => (
+        {chapters.length === 0 ? (
+          <div className="p-6 text-center text-xs text-text-tertiary">
+            {langKo
+              ? '사인오프할 회차가 없습니다. 챕터를 먼저 불러오거나 만든 뒤 번역을 실행하세요.'
+              : 'No chapters to sign off. Add or import chapters and run a translation first.'}
+          </div>
+        ) : chapters.map((ch, i) => (
           <ChapterRow
             key={i}
             index={i}
@@ -95,6 +156,11 @@ export function SignoffPanel() {
             hasMarket={!!ch.resultMarket}
             onFlipF={() => flipFaithful(i)}
             onFlipM={() => flipMarket(i)}
+            onToggleReceiptF={() => toggleExpand(i, 'faithful')}
+            onToggleReceiptM={() => toggleExpand(i, 'market')}
+            faithfulExpanded={!!expanded[`${i}:faithful`]}
+            marketExpanded={!!expanded[`${i}:market`]}
+            chapter={ch}
             langKo={langKo}
           />
         ))}
@@ -112,6 +178,102 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
   );
 }
 
+// ============================================================
+// ReceiptDetail — DID/SKIPPED/METRICS 3 섹션 (영수증 펼침 UI)
+// ============================================================
+function ReceiptDetail({
+  chapter,
+  track,
+  langKo,
+}: {
+  chapter: import('@/types/translator').ChapterEntry;
+  track: SignoffTrack;
+  langKo: boolean;
+}) {
+  const receipt = useMemo(() => buildSignoffReceipt(chapter, track), [chapter, track]);
+  const formatted = useMemo(() => buildReceipt(receipt), [receipt]);
+  const trackColor = track === 'faithful' ? 'text-accent-green' : 'text-accent-amber';
+  const trackLabel = track === 'faithful' ? 'Faithful' : 'Market';
+
+  return (
+    <div className="mt-2 px-3 py-2 bg-bg-secondary/30 border border-border rounded text-[11px] space-y-2">
+      <div className={`font-bold text-[10px] uppercase tracking-wider ${trackColor}`}>
+        {trackLabel} {langKo ? '영수증' : 'Receipt'}
+      </div>
+
+      {/* DID 섹션 */}
+      <div>
+        <div className="flex items-center gap-1 text-[10px] text-accent-green font-bold uppercase tracking-wider mb-1">
+          <CircleCheck className="w-3 h-3" />
+          <span>DID ({receipt.did.length})</span>
+        </div>
+        {receipt.did.length === 0 ? (
+          <div className="text-text-tertiary text-[10px] pl-4">{langKo ? '(기록 없음)' : '(empty)'}</div>
+        ) : (
+          <ul className="pl-4 space-y-0.5">
+            {receipt.did.map((d, idx) => (
+              <li key={idx} className="text-text-primary text-[11px]">
+                <span className="text-accent-green mr-1">✓</span>
+                <span className="font-medium">{d.action}</span>
+                <span className="text-text-tertiary"> — {d.evidence}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* SKIPPED 섹션 */}
+      <div>
+        <div className="flex items-center gap-1 text-[10px] text-accent-amber font-bold uppercase tracking-wider mb-1">
+          <CircleX className="w-3 h-3" />
+          <span>SKIPPED ({receipt.skipped.length})</span>
+        </div>
+        {receipt.skipped.length === 0 ? (
+          <div className="text-text-tertiary text-[10px] pl-4">{langKo ? '(없음)' : '(none)'}</div>
+        ) : (
+          <ul className="pl-4 space-y-0.5">
+            {receipt.skipped.map((s, idx) => (
+              <li key={idx} className="text-text-primary text-[11px]">
+                <span className="text-accent-amber mr-1">✗</span>
+                <span className="font-medium">{s.action}</span>
+                <span className="text-text-tertiary"> — {s.reason}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* METRICS 섹션 */}
+      <div>
+        <div className="flex items-center gap-1 text-[10px] text-accent-purple font-bold uppercase tracking-wider mb-1">
+          <Hash className="w-3 h-3" />
+          <span>METRICS</span>
+        </div>
+        <ul className="pl-4 space-y-0.5">
+          <li className="text-text-primary text-[11px]">
+            <span className="text-text-tertiary">{langKo ? '자수: ' : 'Chars: '}</span>
+            <span className="font-mono">{receipt.metrics?.chars?.toLocaleString() ?? 0}{langKo ? '자' : ''}</span>
+          </li>
+          <li className="text-text-primary text-[11px]">
+            <span className="text-text-tertiary">{langKo ? '실행 stage: ' : 'Stages: '}</span>
+            <span className="font-mono">{receipt.metrics?.keyInfo ?? 0}/5</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* raw 텍스트 (복사용 — sr-only 가까운 micro hint) */}
+      <details className="text-[9px] text-text-tertiary">
+        <summary className="cursor-pointer hover:text-text-secondary transition-colors">
+          {langKo ? '원본 포맷 보기' : 'Raw format'}
+        </summary>
+        <pre className="mt-1 p-2 bg-bg-tertiary rounded font-mono text-[9px] whitespace-pre-wrap break-all">
+          {formatted}
+        </pre>
+      </details>
+    </div>
+  );
+}
+
 function ChapterRow({
   index,
   name,
@@ -122,6 +284,11 @@ function ChapterRow({
   hasMarket,
   onFlipF,
   onFlipM,
+  onToggleReceiptF,
+  onToggleReceiptM,
+  faithfulExpanded,
+  marketExpanded,
+  chapter,
   langKo,
 }: {
   index: number;
@@ -133,51 +300,84 @@ function ChapterRow({
   hasMarket: boolean;
   onFlipF: () => void;
   onFlipM: () => void;
+  onToggleReceiptF: () => void;
+  onToggleReceiptM: () => void;
+  faithfulExpanded: boolean;
+  marketExpanded: boolean;
+  chapter: import('@/types/translator').ChapterEntry;
   langKo: boolean;
 }) {
   return (
-    <div className="px-3 py-2 flex items-center gap-2">
-      <span className="font-mono text-[10px] text-text-tertiary w-8">#{index + 1}</span>
-      <span className="flex-1 truncate text-[12px] text-text-primary">{name}</span>
-      <button
-        type="button"
-        disabled={!hasFaithful}
-        onClick={onFlipF}
-        title={langKo ? 'Faithful 승인 (저작권 archive)' : 'Approve Faithful (archive)'}
-        className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors disabled:opacity-30 ${
-          faithful
-            ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
-            : 'bg-white/[0.02] border-white/10 text-text-tertiary hover:text-accent-green'
-        }`}
-      >
-        <ShieldCheck className="w-3 h-3" />
-        F
-      </button>
-      <button
-        type="button"
-        disabled={!hasMarket}
-        onClick={onFlipM}
-        title={langKo ? 'Market 승인 (출판)' : 'Approve Market (publish)'}
-        className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors disabled:opacity-30 ${
-          market
-            ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
-            : 'bg-white/[0.02] border-white/10 text-text-tertiary hover:text-accent-amber'
-        }`}
-      >
-        <Globe className="w-3 h-3" />
-        M
-      </button>
-      <span
-        className={`text-[9px] font-mono uppercase ${
-          status === 'fully-approved'
-            ? 'text-accent-purple'
-            : status === 'partial'
-              ? 'text-accent-amber'
-              : 'text-text-tertiary'
-        }`}
-      >
-        {status}
-      </span>
+    <div className="px-3 py-2 flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[10px] text-text-tertiary w-8">#{index + 1}</span>
+        <span className="flex-1 truncate text-[12px] text-text-primary">{name}</span>
+        <button
+          type="button"
+          onClick={onToggleReceiptF}
+          disabled={!hasFaithful}
+          aria-expanded={faithfulExpanded}
+          aria-label={langKo ? 'Faithful 영수증 보기' : 'View Faithful receipt'}
+          className="p-0.5 text-text-tertiary hover:text-accent-green disabled:opacity-30 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+        >
+          {faithfulExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        </button>
+        <button
+          type="button"
+          disabled={!hasFaithful}
+          onClick={onFlipF}
+          title={langKo ? 'Faithful 승인 (저작권 archive)' : 'Approve Faithful (archive)'}
+          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors disabled:opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
+            faithful
+              ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
+              : 'bg-white/[0.02] border-white/10 text-text-tertiary hover:text-accent-green'
+          }`}
+        >
+          <ShieldCheck className="w-3 h-3" />
+          F
+        </button>
+        <button
+          type="button"
+          onClick={onToggleReceiptM}
+          disabled={!hasMarket}
+          aria-expanded={marketExpanded}
+          aria-label={langKo ? 'Market 영수증 보기' : 'View Market receipt'}
+          className="p-0.5 text-text-tertiary hover:text-accent-amber disabled:opacity-30 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+        >
+          {marketExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        </button>
+        <button
+          type="button"
+          disabled={!hasMarket}
+          onClick={onFlipM}
+          title={langKo ? 'Market 승인 (출판)' : 'Approve Market (publish)'}
+          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors disabled:opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
+            market
+              ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
+              : 'bg-white/[0.02] border-white/10 text-text-tertiary hover:text-accent-amber'
+          }`}
+        >
+          <Globe className="w-3 h-3" />
+          M
+        </button>
+        <span
+          className={`text-[9px] font-mono uppercase ${
+            status === 'fully-approved'
+              ? 'text-accent-purple'
+              : status === 'partial'
+                ? 'text-accent-amber'
+                : 'text-text-tertiary'
+          }`}
+        >
+          {status}
+        </span>
+      </div>
+      {faithfulExpanded && hasFaithful && (
+        <ReceiptDetail chapter={chapter} track="faithful" langKo={langKo} />
+      )}
+      {marketExpanded && hasMarket && (
+        <ReceiptDetail chapter={chapter} track="market" langKo={langKo} />
+      )}
     </div>
   );
 }

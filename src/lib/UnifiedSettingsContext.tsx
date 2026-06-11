@@ -147,22 +147,24 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("noa_theme_level", theme === "dark" ? "0" : "1");
     const root = document.documentElement;
     if (theme === "light") {
+      // [디자인 피벗 2026-06-09] indigo SaaS — globals.css [data-theme="light"] 와 1:1 동기화.
+      // Tailwind4 가 @theme oklch 를 inline 하므로 이 JS 가 런타임 실제 값. CSS 와 반드시 일치.
       const vars: Record<string, string> = {
-        "--color-bg-primary": "#FAFAF8",
-        "--color-bg-secondary": "#F0F0EC",
-        "--color-bg-tertiary": "#E4E4E0",
-        "--color-text-primary": "#111111",
-        "--color-text-secondary": "#333333",
-        "--color-text-tertiary": "#555550",
-        "--color-border": "#CDCDC5",
-        // [C] 라이트 accent — globals.css와 동기화 (AA 5+ 확보)
-        "--color-accent-purple": "#4a3d7a",
-        "--color-accent-amber": "#6f5318",
-        "--color-accent-red": "#a04938",
-        "--color-accent-green": "#1a6e58",
-        "--color-accent-blue": "#3e5c7e",
-        "--color-surface-strong": "rgba(250,250,248,0.97)",
-        "--color-surface-soft": "rgba(240,240,236,0.88)",
+        "--color-bg-primary": "#eef0f8",
+        "--color-bg-secondary": "#ffffff",
+        "--color-bg-tertiary": "#f5f6fb",
+        "--color-text-primary": "#1f2433",
+        "--color-text-secondary": "#5b6273",
+        "--color-text-tertiary": "#5f6675",
+        "--color-border": "#e6e8f1",
+        // indigo primary + AA 보정 pill accents (양쪽 AA pass)
+        "--color-accent-purple": "#6a4fbf",
+        "--color-accent-amber": "#4f5fe0",
+        "--color-accent-red": "#c0453c",
+        "--color-accent-green": "#1f8a5b",
+        "--color-accent-blue": "#4f6bf6",
+        "--color-surface-strong": "rgba(255,255,255,0.97)",
+        "--color-surface-soft": "rgba(245,246,251,0.9)",
       };
       for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
     } else {

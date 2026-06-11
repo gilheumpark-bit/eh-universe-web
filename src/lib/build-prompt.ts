@@ -48,6 +48,20 @@ const STAGE_TO_AGENT_ID: Record<number, AgentId> = {
 };
 
 /**
+ * [G4 registry flag — 2026-06-11] 번역 레지스트리 기본 활성 스위치.
+ * NEXT_PUBLIC_TRANSLATOR_REGISTRY = 'off' | 'false' | '0' → 비활성 (legacy prompt 복귀).
+ * 미설정 또는 그 외 값 → 활성 (기본 on).
+ * 호출 측이 params.useAgentRegistry 를 명시하면 그 값이 env 보다 우선.
+ * 출력 회귀 발견 시 env 한 줄 ('off') 로 즉시 롤백 가능 — 코드 수정 불필요.
+ * 주의: stage 가 undefined 인 호출 (단순 분석/직번역 경로) 은 registry 매핑이
+ * 없어 본 플래그와 무관하게 기존 동작 그대로다.
+ */
+export function isTranslatorRegistryEnabled(): boolean {
+  const v = (process.env.NEXT_PUBLIC_TRANSLATOR_REGISTRY ?? '').trim().toLowerCase();
+  return v !== 'off' && v !== 'false' && v !== '0';
+}
+
+/**
  * stage 번호 → 레지스트리 base prompt. 미지정 stage 는 null.
  * 호출 측이 자체 baseInstructions 앞에 prepend 하는 용도.
  *
@@ -132,8 +146,10 @@ export type BuildPromptParams = {
    * [I-02 본문 마이그레이션 — 2026-05-10] 레지스트리 base prompt 활성화.
    *   true: buildAgentBasePromptForStage(stage, ...) 출력을 baseInstructions
    *         시작에 prepend. 기존 buildTranslationGuard 는 skip (가드 중복 방지).
-   *   false (기본): 기존 동작 그대로 — 백워드 호환, 단위 테스트 영향 0.
-   * 호출 측 (dual-pipeline 등) 이 명시적 활성화로 단일 소스 통합.
+   *   false: 기존 legacy prompt 그대로.
+   * [G4 — 2026-06-11] 미지정 시 기본값이 false → isTranslatorRegistryEnabled()
+   * (env NEXT_PUBLIC_TRANSLATOR_REGISTRY 기본 on·'off'/'false'/'0' 으로 차단) 로 변경.
+   * 호출 측 (dual-pipeline 등) 명시값이 항상 env 보다 우선.
    */
   useAgentRegistry?: boolean;
   /**
@@ -193,7 +209,8 @@ export function buildPrompt(params: BuildPromptParams): string {
     outputMode = 'default',
     honorificHint,
     genreHint,
-    useAgentRegistry = false,
+    // [G4 — 2026-06-11] 기본값: env 스위치 (기본 on). 명시 전달 시 그 값 우선.
+    useAgentRegistry = isTranslatorRegistryEnabled(),
   } = params;
 
   // [I-02 본문 마이그레이션 — 2026-05-10] 레지스트리 base 활성화 시 가드는 skip — registryBase 가 가드 포함.
@@ -207,7 +224,10 @@ export function buildPrompt(params: BuildPromptParams): string {
   const guard = registryBase ? '' : buildTranslationGuard(to);
 
   if (stage === 10) {
-    return `${guard}[SYSTEM: STORY BIBLE SUMMARIZER]
+    // [G4 — 2026-06-11] registry 활성 시 base prepend. 기존 코드는 guard 만 '' 로
+    // 비우고 registryBase 를 어디에도 넣지 않아 (early return 이 prepend 블록보다
+    // 앞) 가드가 통째로 소실되는 잠복 버그 — 기본 on 전환과 함께 수정.
+    return `${registryBase ? registryBase + '\n\n' : guard}[SYSTEM: STORY BIBLE SUMMARIZER]
 You are updating the running Story Bible for a serialized novel translation workspace.
 <strict_directives>
 1. Output ONLY concise bullet points.

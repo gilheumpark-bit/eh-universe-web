@@ -690,7 +690,7 @@ export default function NekaSoundPage() {
           {/* Footer */}
           <div className="mt-8 text-center">
             <Link
-              href="/archive/neka-language"
+              href="/tools"
               aria-label={en ? "Back to Neka language article" : "네카 언어 문서로 돌아가기"}
               className="font-mono text-xs text-accent-purple hover:underline tracking-wider"
             >

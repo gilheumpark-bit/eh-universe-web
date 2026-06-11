@@ -8,6 +8,8 @@ import { createServerGeminiClient, executeGeminiHostedFirst, normalizeUserApiKey
 import { hasServerProviderCredentials } from '@/lib/server-ai';
 import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterJsonIp } from '@/lib/noa/server-gate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -400,6 +402,23 @@ export async function POST(req: NextRequest) {
 
     const language = getLanguage(body.language);
     const model = getModel(body.model);
+
+    // [N2] NOA 서버 게이트 — 입력 판정 (AI 호출 전 차단·비용 절약).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const prismGrade = typeof body.prismMode === 'string' ? body.prismMode : undefined;
+    const gate = await applyNoaGate({
+      prompt: content,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 원고 분석 — creative 가중
+      sourceTier: userApiKey ? 1 : 2,
+      route: '/api/analyze-chapter',
+      language,
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
     const prompt1 = buildAnalysisPromptPart1(content, language);
     const prompt2 = buildAnalysisPromptPart2(content, language);
 
@@ -452,7 +471,8 @@ export async function POST(req: NextRequest) {
       }));
     }
 
-    return NextResponse.json(result);
+    // [N2] 출력 IP 필터 — JSON 안전 치환 (치환이 JSON 을 깨면 fail-open: 원본 반환 + 로깅)
+    return NextResponse.json(filterJsonIp(result, '/api/analyze-chapter').value);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:analyze-chapter', error instanceof Error ? error.message : error);

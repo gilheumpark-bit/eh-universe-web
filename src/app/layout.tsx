@@ -3,6 +3,8 @@ import { cookies, headers } from "next/headers";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import { UserRoleProvider } from "@/contexts/UserRoleContext";
+import { RootErrorBoundary } from "@/components/RootErrorBoundary";
+import SwRegister from "./sw-register";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import WebFeaturesInit from "@/components/WebFeaturesInit";
 import A11yCheckInit from "@/components/A11yCheckInit";
@@ -10,6 +12,7 @@ import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import ApiKeyHydrator from "@/components/ApiKeyHydrator";
+import GlobalShortcuts from "@/components/GlobalShortcuts";
 import { MainContentRegion } from "@/components/MainContentRegion";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
@@ -30,6 +33,8 @@ import "./globals-components.css";
 import "./globals-studio.css";
 import "./globals-animations.css";
 import "./globals-utilities.css";
+// [디자인 피벗 2026-06-09] Loreguard 셸 + 6탭 포팅 CSS (.eh-app 스코프 격리).
+import "./loreguard.css";
 
 /** Fewer weights = fewer font files and faster first paint (see build-performance-report.txt).
  *  홈/허브는 Plex 2패밀리만 preload. display/serif 계열은 preload: false로 실제 사용 시 lazy. */
@@ -359,6 +364,11 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* [디자인 피벗 2026-06-09] Pretendard — indigo SaaS 본문 폰트 (한글 작가 친숙). */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+        />
       </head>
       <body className="min-h-full flex flex-col">
         {/* JSON-LD structured data — SoftwareApplication 스키마. 검색엔진 리치 스니펫용.
@@ -390,24 +400,36 @@ export default async function RootLayout({
             <p>This site requires JavaScript. Please enable JavaScript in your browser settings.</p>
           </div>
         </noscript>
-        <AuthProvider>
-          <LangProvider>
-            <UnifiedSettingsProvider>
-              <UserRoleProvider>
-                <MainContentRegion>{children}</MainContentRegion>
-                <Footer />
-                <CookieConsent />
-                <TermsUpdateBanner />
-              </UserRoleProvider>
-            </UnifiedSettingsProvider>
-          </LangProvider>
-        </AuthProvider>
+        {/* [P17 루프2 — 2026-06-08] Provider 마운트 순서 — ADR-0002 참조.
+            outer → inner: Auth → Lang → UnifiedSettings → UserRole.
+            의존성: UnifiedSettings → Lang (i18n 라벨), UserRole → Auth (claims).
+            실패 모드: 각 provider 가 graceful degrade (자세히 ADR-0002 §3). */}
+        {/* [P8 루프3 — 2026-06-08] RootErrorBoundary — Provider tree throw 시 graceful fallback.
+            한 Provider 실패가 전체 앱 crash 로 번지지 않도록 외곽 wrap. componentDidCatch
+            logger.error 로 structured emission. ADR-0008 (Error Recovery) 보강. */}
+        <RootErrorBoundary treeId="root">
+          <AuthProvider>
+            <LangProvider>
+              <UnifiedSettingsProvider>
+                <UserRoleProvider>
+                  <MainContentRegion>{children}</MainContentRegion>
+                  <Footer />
+                  <CookieConsent />
+                  <TermsUpdateBanner />
+                </UserRoleProvider>
+              </UnifiedSettingsProvider>
+            </LangProvider>
+          </AuthProvider>
+        </RootErrorBoundary>
         <ErrorReporterInit />
         <WebFeaturesInit />
         <A11yCheckInit />
         <ApiKeyHydrator />
+        <GlobalShortcuts />
         <StatusIndicator />
         <DeferredClientMetrics />
+        {/* [P9 루프3 — 2026-06-08] PWA service worker registration (prod only). */}
+        <SwRegister />
       </body>
     </html>
   );

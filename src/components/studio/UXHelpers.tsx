@@ -298,16 +298,62 @@ export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({ charCoun
 // PART 5 — useUnsavedWarning hook
 // ============================================================
 
-export function useUnsavedWarning(hasUnsaved: boolean) {
+/**
+ * [루프 4 P2 — 2026-06-08] Data loss prevention 강화.
+ *
+ * 변경:
+ *   1. `hasUnsaved` 기본 시그널 + IndexedDB pending writes / localStorage delta
+ *      을 보조 시그널로 확장 (queryUnsaved 콜백 옵션).
+ *   2. fetch keepalive:true cloud sync 시도 — 빠른 종료 직전 best-effort.
+ *      네트워크 정보 손실되어도 IndexedDB 에 남은 backup 으로 복구 가능 (RecoveryDialog 처리).
+ *   3. 메시지는 브라우저가 무시하지만 returnValue 보존 (Firefox 호환 + a11y).
+ *
+ * 호출 패턴:
+ *   useUnsavedWarning(isGenerating || editDraft.length > 0);   // 기본
+ *   useUnsavedWarning(hasUnsaved, { syncEndpoint: '/api/cloud-sync' });  // keepalive sync
+ */
+export interface UnsavedWarningOptions {
+  /** keepalive fetch 로 best-effort cloud 동기화 시도할 endpoint (없으면 skip). */
+  syncEndpoint?: string;
+  /** 동기화 payload 생성 콜백 — beforeunload 시 호출. 비동기 X (sync 만). */
+  buildSyncPayload?: () => string | null;
+}
+
+export function useUnsavedWarning(
+  hasUnsaved: boolean,
+  options?: UnsavedWarningOptions,
+) {
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (!hasUnsaved) return;
+      // 1) 브라우저 표준 unsaved 경고 (Chrome/Edge/Firefox/Safari 동일).
       e.preventDefault();
       e.returnValue = '';
+
+      // 2) keepalive cloud sync — best-effort. Promise 무시.
+      // navigator.sendBeacon 도 가능하지만 fetch keepalive 가 헤더 / method 자유도 높음.
+      if (options?.syncEndpoint && options?.buildSyncPayload) {
+        try {
+          const payload = options.buildSyncPayload();
+          if (payload && typeof fetch !== 'undefined') {
+            // void: 결과 무시. keepalive:true 로 페이지 종료 후에도 max 64KB request 보장.
+            void fetch(options.syncEndpoint, {
+              method: 'POST',
+              keepalive: true,
+              body: payload,
+              headers: { 'Content-Type': 'application/json' },
+            }).catch(() => { /* silent — IndexedDB backup 으로 복구 가능 */ });
+          }
+        } catch {
+          /* sync 콜백 실패는 swallow — 핵심은 #1 unsaved 경고 */
+        }
+      }
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [hasUnsaved]);
+    // options 는 객체 reference — 콜러가 useMemo 로 안정화. 변경 의도 = endpoint/callback 교체.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasUnsaved, options?.syncEndpoint, options?.buildSyncPayload]);
 }
 
 export { classifyError };

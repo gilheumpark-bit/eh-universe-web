@@ -11,9 +11,10 @@
 | 문서 | 내용 | 상태 |
 |---|---|---|
 | `00-MASTER` (이 문서) | 융합 원칙 + 통합 표면 + 완전성 구조 + 채움 방법론 | 작성중 |
-| `01-통합표면.md` | 기존 앱 "into what" 전수 인벤토리 (데이터·탭·저장·AI·증명·번역·격리) | 예정 |
-| `02-창작융합.md` | claude `_도구`/`novel_knowledge` 모듈 → 앱 seam 전수 매핑 | 예정 |
-| `03-번역융합.md` | claude2 `_도구`/`_사상`/template → Translation Studio seam 전수 | 예정 |
+| `01-통합표면.md` | 기존 앱 "into what" 전수 인벤토리 (데이터·탭·저장·AI·증명·번역·격리) | 예정 (본 MASTER §2가 요약 보유) |
+| `02-창작융합.md` | claude `_도구`/`_사상` 모듈 → 앱 seam 전수 매핑 | **✅ 작성(177행, 2026-06-06)** + `_검증_표본.md` |
+| `03-번역융합.md` | claude2 `_도구`/`_사상`/template → Translation Studio seam 전수 | **✅ 작성(195행, 2026-06-06)** + `_검증_표본.md` |
+| `08-디자인시스템-신규surface.md` | chat→form·QA패널·Violation핀·worldgraph·부담모드 → Design System v8.0 | **✅ 작성(2026-06-06, 검토 권고 #4)** |
 | `04-증명spine.md` | M4 Origin + 창작과정확인서 + sign-off + 영수증 통합 (moat·0순위) | 예정 |
 | `05-인터뷰엔진.md` | chat→form 3입구 × 부담모드 × QA 감사원 × 사람 커밋 | 예정 |
 | `06-로컬ingest.md` | FS 접근 + 창작/번역 지침 parse → rule/template registry | 예정 |

@@ -24,6 +24,7 @@ import type {
 } from './types';
 import { CERTIFICATE_LABELS } from './types';
 import { listCreativeEvents } from './event-recorder';
+import { extractChainTipHash } from './chain-verify';
 import { listSources } from './source-recorder';
 import { computeSha256Hex } from './source-recorder';
 import { LIMITATION_TEXT_4LANG, LIMITATION_TEXT_VERSION, assertNoForbiddenWords } from './limitation-text';
@@ -672,6 +673,8 @@ export async function buildCertificate(
     attestationStatement,
     originSummary: originSummaryPct,
     workSessions,
+    // [s81-hash-chain] 발급 시점 체인 tip anchoring (hashed 이벤트 0건이면 undefined)
+    chainTipHash: extractChainTipHash(events),
   };
 
   return { cert, sections };

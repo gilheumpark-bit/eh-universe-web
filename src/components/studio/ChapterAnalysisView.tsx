@@ -4,6 +4,8 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
 import { getApiKey } from "@/lib/ai-providers";
 import { showAlert } from "@/lib/show-alert";
+// [X2 — 2026-06-11] /api/analyze-chapter 200+{blocked} 차단 계약 고지 (사일런트 차단 금지).
+import { checkBlockedJson } from "@/lib/noa/block-notice";
 import type {
   AppLanguage,
   ChapterAnalysis,
@@ -264,6 +266,17 @@ export default function ChapterAnalysisView({
       if (!res.ok) throw new Error("Analysis failed");
 
       const data = await res.json();
+
+      // [X2] NOA 차단 계약 (200 + {blocked, reason}) — 필드 침묵 대신 고지 (사일런트 차단 금지)
+      const blockedMsg = checkBlockedJson(
+        data,
+        'chapter-analysis',
+        language === 'KO' ? 'ko' : language === 'JP' ? 'ja' : language === 'CN' ? 'zh' : 'en',
+      );
+      if (blockedMsg) {
+        showAlert(blockedMsg, 'error');
+        return;
+      }
 
       if (data.characterState) setCharacters(data.characterState);
       if (data.backgroundState) setBackground(data.backgroundState);

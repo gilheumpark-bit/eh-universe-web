@@ -9,10 +9,8 @@ import { L4 } from "@/lib/i18n";
 import { isTestEnvironment } from "@/lib/firebase-env";
 import { TOOL_LINKS_HEADER_DROPDOWN } from "@/lib/tool-links";
 import { getTranslatorStudioHref, TRANSLATION_STUDIO_PATH } from "@/lib/studio-entry-links";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
-import { useCanAccessCodeStudio } from "@/contexts/UserRoleContext";
 
-type NavKey = "home" | "network" | "studio" | "translate" | "code";
+type NavKey = "home" | "studio" | "translate";
 
 type NavEntry = {
   key: NavKey;
@@ -30,8 +28,6 @@ function usePrimaryNavActive(
     switch (item.key) {
       case "home":
         return pathname === "/";
-      case "network":
-        return pathname.startsWith("/network");
       case "studio":
         return pathname.startsWith("/studio") && tab !== "manuscript";
       case "translate":
@@ -40,8 +36,6 @@ function usePrimaryNavActive(
           pathname.startsWith(TRANSLATION_STUDIO_PATH) ||
           (pathname.startsWith("/studio") && tab === "manuscript")
         );
-      case "code":
-        return pathname.startsWith("/code-studio");
       default:
         return false;
     }
@@ -61,15 +55,10 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const translatorHref = useMemo(() => getTranslatorStudioHref(), []);
   const translatorExternal = translatorHref.startsWith("http");
-  const flags = useFeatureFlags();
-  // 역할 기반 가드 — developer role 또는 developerMode가 아니면 Code 탭 숨김.
-  // Provider 미마운트 환경(테스트/SSR)에서도 false 반환되어 안전.
-  const canAccessCodeStudio = useCanAccessCodeStudio();
 
   const navItems = useMemo((): NavEntry[] => {
     const all: NavEntry[] = [
       { key: "home", href: "/", label: L4(lang, { ko: "홈", en: "HOME", ja: "ホーム", zh: "首页" }) },
-      { key: "network", href: "/network", label: L4(lang, { ko: "네트워크", en: "NETWORK", ja: "ネットワーク", zh: "网络" }) },
       { key: "studio", href: "/studio", label: L4(lang, { ko: "스튜디오", en: "STUDIO", ja: "スタジオ", zh: "工作室" }) },
       {
         key: "translate",
@@ -77,22 +66,14 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         label: L4(lang, { ko: "번역", en: "TRANS", ja: "翻訳", zh: "翻译" }),
         external: translatorExternal,
       },
-      { key: "code", href: "/code-studio", label: L4(lang, { ko: "코드", en: "CODE", ja: "コード", zh: "代码" }) },
     ];
-    return all.filter((item) => {
-      if (item.key === "network" && !flags.NETWORK_COMMUNITY) return false;
-      if (item.key === "code" && !flags.CODE_STUDIO) return false;
-      // 코드 탭은 개발자 role/developerMode일 때만 노출 — 일반 사용자에게는 숨김.
-      if (item.key === "code" && !canAccessCodeStudio) return false;
-      return true;
-    });
-  }, [lang, translatorHref, translatorExternal, flags.NETWORK_COMMUNITY, flags.CODE_STUDIO, canAccessCodeStudio]);
+    return all;
+  }, [lang, translatorHref, translatorExternal]);
 
   const isNavActive = usePrimaryNavActive(pathname, searchParams);
 
   const exploreItems = useMemo(
     () => [
-      { href: "/archive", label: L4(lang, { ko: "아카이브", en: "ARCHIVE", ja: "アーカイブ", zh: "档案" }) },
       { href: "/reports", label: L4(lang, { ko: "보고서", en: "REPORTS", ja: "報告書", zh: "报告书" }) },
       { href: "/codex", label: L4(lang, { ko: "코덱스", en: "CODEX", ja: "コーデックス", zh: "索引" }) },
       { href: "/rulebook", label: L4(lang, { ko: "룰북", en: "RULEBOOK", ja: "ルールブック", zh: "设定手册" }) },
@@ -309,7 +290,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
           {/* Desktop nav */}
           <nav className="hidden flex-wrap items-center justify-end gap-1.5 lg:gap-2 md:flex" role="navigation" aria-label="Main navigation">
             {navItems.map(renderDesktopNavItem)}
-            {/* Explore dropdown (아카이브/보고서/코덱스) */}
+            {/* Explore dropdown (보고서/코덱스/룰북/레퍼런스) */}
             <div className="relative" onMouseEnter={() => setExploreOpen(true)} onMouseLeave={closeExploreMenu}>
               <button
                 type="button"
@@ -329,7 +310,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 aria-expanded={exploreOpen}
                 aria-haspopup="menu"
                 aria-label="Explore menu"
-                className={exploreBtnClass(["/archive", "/reports", "/codex"].some((p) => pathname.startsWith(p)))}
+                className={exploreBtnClass(["/reports", "/codex"].some((p) => pathname.startsWith(p)))}
               >
                 {L4(lang, { ko: "탐색", en: "EXPLORE", ja: "探索", zh: "探索" })}
               </button>

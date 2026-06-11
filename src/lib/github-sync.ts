@@ -74,6 +74,9 @@ export async function getFile(
 /**
  * Create or update a file.
  * If `sha` is provided, performs an update. Otherwise creates a new file.
+ *
+ * Returns the content blob sha (기존 호출자 호환) + the commit sha
+ * ([D2-github-mirror] additive — 확인서 외부 타임스탬프 앵커용).
  */
 export async function putFile(
   config: GitHubSyncConfig,
@@ -81,7 +84,7 @@ export async function putFile(
   content: string,
   sha?: string,
   message?: string,
-): Promise<{ sha: string }> {
+): Promise<{ sha: string; commitSha?: string }> {
   const octokit = createOctokit(config.token);
   const commitMessage =
     message ?? (sha ? `Update ${path}` : `Create ${path}`);
@@ -96,7 +99,7 @@ export async function putFile(
     ...(sha ? { sha } : {}),
   });
 
-  return { sha: res.data.content?.sha ?? '' };
+  return { sha: res.data.content?.sha ?? '', commitSha: res.data.commit?.sha };
 }
 
 /**

@@ -48,7 +48,12 @@ async function getAccessToken(): Promise<string | null> {
       key: creds.private_key,
       scopes: [IDENTITY_TOOLKIT_SCOPE],
     });
-    const t = await client.getAccessToken();
+    // [P15 풀점검 루프 3] JWT access token 발급도 5초 timeout race.
+    // Google Auth 라이브러리는 자체 timeout 이 없어 webhook 지연·hang 발생 가능.
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('getAccessToken timeout')), 5_000);
+    });
+    const t = await Promise.race([client.getAccessToken(), timeoutPromise]);
     return typeof t === 'string' ? t : t?.token ?? null;
   } catch (err) {
     logger.warn('firebase-auth-admin-rest', 'getAccessToken failed', err);
@@ -75,22 +80,45 @@ async function setCustomClaims(uid: string, claims: Record<string, unknown>): Pr
   if (!token) return { ok: false, error: 'no_service_account' };
 
   const url = `https://identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:update`;
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ localId: uid, customAttributes: JSON.stringify(claims) }),
-    });
-    if (!res.ok) {
+
+  // [P15 풀점검 루프 3] fetch 5초 timeout + 지수 백오프 최대 2회 재시도.
+  // 5xx / 네트워크 오류만 재시도. 4xx 는 즉시 실패 (invalid uid 등).
+  const MAX_RETRIES = 2;
+  const BASE_DELAY = 300;
+  let lastError: string = 'unknown';
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localId: uid, customAttributes: JSON.stringify(claims) }),
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (res.ok) return { ok: true };
+
       const detail = await res.text().catch(() => '');
-      logger.warn('firebase-auth-admin-rest', 'accounts:update failed', { status: res.status, detail: detail.slice(0, 200) });
-      return { ok: false, error: `http_${res.status}` };
+      logger.warn('firebase-auth-admin-rest', 'accounts:update failed', { status: res.status, detail: detail.slice(0, 200), attempt });
+      lastError = `http_${res.status}`;
+
+      // 4xx 는 재시도 무의미 — 즉시 실패
+      if (res.status >= 400 && res.status < 500) {
+        return { ok: false, error: lastError };
+      }
+      // 5xx 는 재시도
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, BASE_DELAY * Math.pow(2, attempt)));
+      }
+    } catch (err) {
+      const errName = (err as { name?: string } | null)?.name ?? '';
+      lastError = errName === 'AbortError' || errName === 'TimeoutError' ? 'timeout' : 'fetch_failed';
+      logger.warn('firebase-auth-admin-rest', 'accounts:update threw', { err, attempt });
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, BASE_DELAY * Math.pow(2, attempt)));
+      }
     }
-    return { ok: true };
-  } catch (err) {
-    logger.warn('firebase-auth-admin-rest', 'accounts:update threw', err);
-    return { ok: false, error: 'fetch_failed' };
   }
+  return { ok: false, error: lastError };
 }
 
 /** 결제 성공 → Pro 부여. */

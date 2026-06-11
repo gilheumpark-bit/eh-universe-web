@@ -24,6 +24,8 @@ import { SPARK_SERVER_URL, streamSparkAI } from '@/services/sparkService';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { logger } from '@/lib/logger';
 import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterOutputIp, wrapStreamWithIpAudit } from '@/lib/noa/server-gate';
 
 export const runtime = 'nodejs';
 
@@ -73,8 +75,9 @@ async function runGeminiViaGoogleGenAI(params: {
   promptTokens: number;
   stage: number;
   mode: 'novel' | 'general';
+  ip?: string;
 }): Promise<Response> {
-  const { finalModel, prompt, promptTokens, stage, mode } = params;
+  const { finalModel, prompt, promptTokens, stage, mode, ip } = params;
   const dynamicTemperature = stage === 4 && mode === 'novel' ? 0.4 : 0.1;
   const dynamicTopP = stage === 4 && mode === 'novel' ? 0.95 : 0.9;
 
@@ -91,8 +94,9 @@ async function runGeminiViaGoogleGenAI(params: {
       },
     });
     const text = response.text ?? '';
+    // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
     return NextResponse.json(
-      { result: text, stage, approxPromptTokens: promptTokens },
+      { result: filterOutputIp(text, '/api/translate').output, stage, approxPromptTokens: promptTokens },
       { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
     );
   }
@@ -122,7 +126,8 @@ async function runGeminiViaGoogleGenAI(params: {
     },
   });
 
-  return new Response(readable, {
+  // [N2] plain-text 스트림 IP 검사 — notice 주입 시 본문 오염 → 검출 시 로깅만 (format: 'text')
+  return new Response(wrapStreamWithIpAudit(readable, { route: '/api/translate', ip, format: 'text' }), {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'X-Approx-Prompt-Tokens': String(promptTokens),
@@ -177,6 +182,23 @@ export async function POST(req: NextRequest) {
     const dynamicTemperature = stage === 4 && mode === 'novel' ? 0.4 : 0.1;
     const dynamicTopP = stage === 4 && mode === 'novel' ? 0.95 : 0.9;
 
+    // [N2] NOA 서버 게이트 — 입력 판정 (AI 호출 전 차단·비용 절약).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const rawPrismMode = (body as { prismMode?: unknown }).prismMode;
+    const prismGrade = typeof rawPrismMode === 'string' ? rawPrismMode : undefined;
+    const gate = await applyNoaGate({
+      prompt,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : (mode === 'novel' ? 'creative' : 'general'), // 등급 미전달 시: 소설 번역 — creative 가중
+      sourceTier: clientKey ? 1 : 2,
+      route: '/api/translate',
+      language: body.to, // 차단 사유 언어 — 번역 목표 언어 기준 (en* → 영어)
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
     if (provider === 'gemini') {
       const resolvedSdkKey = resolveServerProviderKey('gemini', clientKey) || '';
 
@@ -222,6 +244,7 @@ export async function POST(req: NextRequest) {
           promptTokens,
           stage,
           mode,
+          ip,
         });
       }
 
@@ -249,8 +272,9 @@ export async function POST(req: NextRequest) {
               } catch { /* skip */ }
             }
           }
+          // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json(
-            { result: fullText, stage, approxPromptTokens: promptTokens },
+            { result: filterOutputIp(fullText, '/api/translate').output, stage, approxPromptTokens: promptTokens },
             { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
           );
         } catch (e) {
@@ -300,8 +324,9 @@ export async function POST(req: NextRequest) {
               } catch { /* skip */ }
             }
           }
+          // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json(
-            { result: fullText, stage, approxPromptTokens: promptTokens },
+            { result: filterOutputIp(fullText, '/api/translate').output, stage, approxPromptTokens: promptTokens },
             { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
           );
         } catch (e) {
@@ -350,8 +375,9 @@ export async function POST(req: NextRequest) {
         temperature: dynamicTemperature,
         topP: dynamicTopP,
       });
+      // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
       return NextResponse.json(
-        { result: text, stage, approxPromptTokens: promptTokens },
+        { result: filterOutputIp(text, '/api/translate').output, stage, approxPromptTokens: promptTokens },
         { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
       );
     }
@@ -365,6 +391,13 @@ export async function POST(req: NextRequest) {
 
     const res = resultStream.toTextStreamResponse();
     res.headers.set('X-Approx-Prompt-Tokens', String(promptTokens));
+    // [N2] plain-text 스트림 IP 검사 — notice 주입 시 본문 오염 → 검출 시 로깅만 (format: 'text')
+    if (res.body) {
+      return new Response(
+        wrapStreamWithIpAudit(res.body, { route: '/api/translate', ip, format: 'text' }),
+        { headers: res.headers },
+      );
+    }
     return res;
   } catch (err: unknown) {
     logger.error('api/translate', 'Translation error', err);

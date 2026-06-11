@@ -82,7 +82,7 @@ export function utf8Encode(text: string): Uint8Array {
  * Node 16+/jsdom 테스트: globalThis.crypto 비어있을 때 node:crypto.webcrypto.subtle 폴백.
  */
 let cachedSubtle: SubtleCrypto | null = null;
-function getSubtle(): SubtleCrypto {
+export function getSubtle(): SubtleCrypto {
   if (cachedSubtle) return cachedSubtle;
 
   const g = globalThis as unknown as { crypto?: Crypto };
