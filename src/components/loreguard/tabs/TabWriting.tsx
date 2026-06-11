@@ -524,11 +524,118 @@ const ContextRefCard = memo(function ContextRefCard({
         details: "",
       },
     ];
+    // ⓓ 연출 — pipeline sceneDirectionBlock 과 동일 truthy/내용 조건으로 요약(실제 주입분만)
+    const sd = config.sceneDirection;
+    const directionLabel = L4(language, { ko: "연출", en: "Direction" });
+    const directionItems: ContextItem[] = [];
+    if (sd) {
+      if (sd.hooks?.length) {
+        directionItems.push({
+          tab: "direction",
+          label: directionLabel,
+          fact: L4(language, { ko: `훅 ${sd.hooks.length}개`, en: `Hooks ${sd.hooks.length}` }),
+          details: "",
+        });
+      }
+      if (sd.emotionTargets?.length) {
+        directionItems.push({
+          tab: "direction",
+          label: directionLabel,
+          fact: L4(language, {
+            ko: `감정 타깃 ${sd.emotionTargets.length}개`,
+            en: `Emotion targets ${sd.emotionTargets.length}`,
+          }),
+          details: sd.emotionTargets.map((e) => `${e.emotion} ${e.intensity}%`).join(", "),
+        });
+      }
+      if (sd.activeCharacters?.length) {
+        directionItems.push({
+          tab: "direction",
+          label: directionLabel,
+          fact: L4(language, {
+            ko: `이번 화 등장 ${sd.activeCharacters.length}명`,
+            en: `Active characters ${sd.activeCharacters.length}`,
+          }),
+          details: sd.activeCharacters.join(", "),
+        });
+      }
+      if (sd.cliffhanger?.cliffType) {
+        directionItems.push({
+          tab: "direction",
+          label: directionLabel,
+          fact: L4(language, { ko: "클리프행어", en: "Cliffhanger" }),
+          details: `${sd.cliffhanger.cliffType}${sd.cliffhanger.desc ? ` — ${sd.cliffhanger.desc}` : ""}`,
+        });
+      }
+      if (sd.foreshadows?.length) {
+        directionItems.push({
+          tab: "direction",
+          label: directionLabel,
+          fact: L4(language, {
+            ko: `복선 ${sd.foreshadows.length}개`,
+            en: `Foreshadows ${sd.foreshadows.length}`,
+          }),
+          details: "",
+        });
+      }
+      if (sd.writerNotes) {
+        directionItems.push({
+          tab: "direction",
+          label: directionLabel,
+          fact: L4(language, { ko: "작가 메모", en: "Writer notes" }),
+          details: sd.writerNotes,
+        });
+      }
+    }
+    // ⓔ 씬시트 — pipeline episodeSceneSheetBlock 과 동일하게 '현재 회차' 시트만 요약
+    const sheetLabel = L4(language, { ko: "씬시트", en: "Scene sheet" });
+    const sceneItems: ContextItem[] = [];
+    const currentSheet = (config.episodeSceneSheets ?? []).find((s) => s.episode === config.episode);
+    if (currentSheet) {
+      if (currentSheet.title) {
+        sceneItems.push({
+          tab: "scenesheet",
+          label: sheetLabel,
+          fact: L4(language, { ko: "제목", en: "Title" }),
+          details: currentSheet.title,
+        });
+      }
+      if (currentSheet.arc) {
+        sceneItems.push({
+          tab: "scenesheet",
+          label: sheetLabel,
+          fact: L4(language, { ko: "아크", en: "Arc" }),
+          details: currentSheet.arc,
+        });
+      }
+      const sceneCount = currentSheet.scenes?.length ?? 0;
+      if (sceneCount > 0) {
+        sceneItems.push({
+          tab: "scenesheet",
+          label: sheetLabel,
+          fact: L4(language, { ko: `씬 ${sceneCount}개`, en: `${sceneCount} scenes` }),
+          details: (currentSheet.scenes ?? [])
+            .slice(0, 10)
+            .map((sc) => `[${sc.sceneId}] ${sc.sceneName || ""}`.trim())
+            .join(" / "),
+        });
+      }
+    }
+    const sceneSheetTotal = (config.episodeSceneSheets ?? []).length;
     return {
       worldCount: worldItems.length,
       injectedCharCount: injectedChars.length,
       totalCharCount: chars.length,
-      preview: buildContextBlock([...worldItems, ...charItems, ...episodeItems]),
+      directionCount: directionItems.length,
+      sceneSheetMatched: currentSheet ? 1 : 0,
+      sceneSheetTotal,
+      preview: buildContextBlock([
+        ...worldItems,
+        ...charItems,
+        ...episodeItems,
+        ...directionItems,
+        ...sceneItems,
+      ]),
     };
   }, [config, language]);
 
@@ -578,6 +685,30 @@ const ContextRefCard = memo(function ContextRefCard({
           {config.totalEpisodes ? ` / ${config.totalEpisodes}` : ""}
         </b>
       </div>
+      <div className="wr-srow">
+        <span className="rdot blue" />
+        {L4(language, { ko: "연출", en: "Direction" })}
+        <b style={{ marginLeft: "auto" }}>
+          {ctx.directionCount > 0
+            ? L4(language, {
+                ko: `${ctx.directionCount}항목 주입`,
+                en: `${ctx.directionCount} injected`,
+              })
+            : L4(language, { ko: "미주입", en: "None" })}
+        </b>
+      </div>
+      <div className="wr-srow">
+        <span className="rdot blue" />
+        {L4(language, { ko: "씬시트", en: "Scene sheet" })}
+        <b style={{ marginLeft: "auto" }}>
+          {ctx.sceneSheetMatched > 0
+            ? L4(language, {
+                ko: `현 회차 주입 (총 ${ctx.sceneSheetTotal}화 보유)`,
+                en: `Current ep. injected (of ${ctx.sceneSheetTotal})`,
+              })
+            : L4(language, { ko: "현 회차 없음", en: "None for this ep." })}
+        </b>
+      </div>
       {open && (
         <>
           <pre
@@ -599,8 +730,8 @@ const ContextRefCard = memo(function ContextRefCard({
           {/* 정직 표기 — 이 카드는 주입 '소스 요약'. Story Bible·이전 회차 요약은 생성 시점에 추가 주입 */}
           <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
             {L4(language, {
-              ko: "주입 소스 요약 — 프롬프트 원문 아님 · Story Bible·이전 회차 요약은 생성 시점 추가",
-              en: "Source summary — not the literal prompt · Story Bible and prior-episode recap are added at generation time",
+              ko: "주입 소스 요약 (세계관·캐릭터·회차·연출·씬시트) — 프롬프트 원문 아님 · Story Bible·이전 회차 요약은 생성 시점 추가",
+              en: "Source summary (world, characters, episode, direction, scene sheet) — not the literal prompt · Story Bible and prior-episode recap are added at generation time",
             })}
           </div>
         </>

@@ -450,6 +450,39 @@ describe('estimate*FromConfig — 휴리스틱 추정 (실측 아님)', () => {
     expect(seasoned.parts.seasonArc).toBeGreaterThan(single.parts.seasonArc);
   });
 
+  // episodeState 반쪽 배선 수리: write 경로 부재 → manuscript 본문 존재로 보너스 유도
+  it('웹툰: 실제 본문 manuscript 존재 시 episodeState 없이도 episodeCliff 상승 (유도 보너스)', () => {
+    const developed = estimateWebtoonFitFromConfig(
+      baseConfig({
+        manuscripts: [
+          { episode: 1, title: '1화', content: '본문 내용', charCount: 4, lastUpdate: 0 },
+        ],
+      }),
+    );
+    const empty = estimateWebtoonFitFromConfig(baseConfig());
+    expect(developed.parts.episodeCliff).toBeGreaterThan(empty.parts.episodeCliff);
+  });
+
+  it('웹툰: 빈 content manuscript 는 회차 개발로 보지 않음 (유도 신호 엄격)', () => {
+    const blank = estimateWebtoonFitFromConfig(
+      baseConfig({
+        manuscripts: [{ episode: 1, title: '1화', content: '   ', charCount: 0, lastUpdate: 0 }],
+      }),
+    );
+    expect(blank.basis.some((b) => b.includes('회차 개발 진행'))).toBe(false);
+  });
+
+  it('영상: 실제 본문 manuscript 존재 시 episodeState 없이도 seasonArc 유도 보너스 발화', () => {
+    const developed = estimateDramaFitFromConfig(
+      baseConfig({
+        manuscripts: [
+          { episode: 1, title: '1화', content: '본문 내용', charCount: 4, lastUpdate: 0 },
+        ],
+      }),
+    );
+    expect(developed.basis.some((b) => b.includes('회차 개발 진행'))).toBe(true);
+  });
+
   it('해외: 번역 설정 존재 시 translationEase 상승', () => {
     const withTr = estimateGlobalAppealFromConfig(
       baseConfig({

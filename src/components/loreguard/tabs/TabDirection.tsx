@@ -178,6 +178,46 @@ interface DirectionAiSuggestion {
   emotionPoint: string;
 }
 
+// ---- [world-context] 세계관 필드 → 연출 프롬프트 주입 ----
+// TabWorld 의 WORLD_FIELDS(17) · pipeline.ts worldTierBlock 패턴 참조. corePremise 는
+// buildStorySummaryBlock(system) 에 이미 실리므로 여기서 제외(중복 회피). synopsis 도
+// buildDirectionPrompt user 블록에 이미 실림 → 여기 미포함. 나머지 16 worldField 만
+// 라벨:값으로, 값 있는 필드만, 필드당 truncate 후 "세계관 컨텍스트" 섹션 1개로 합성.
+const WORLD_CONTEXT_FIELDS: { key: keyof StoryConfig; label: string }[] = [
+  { key: "powerStructure", label: "권력 구조" },
+  { key: "currentConflict", label: "현재 갈등" },
+  { key: "worldHistory", label: "역사" },
+  { key: "socialSystem", label: "사회 시스템" },
+  { key: "economy", label: "경제와 생활" },
+  { key: "magicTechSystem", label: "마법 / 기술 체계" },
+  { key: "factionRelations", label: "종족 / 세력 관계" },
+  { key: "survivalEnvironment", label: "생존 환경" },
+  { key: "culture", label: "문화" },
+  { key: "religion", label: "종교와 신화" },
+  { key: "education", label: "교육/지식 전달" },
+  { key: "lawOrder", label: "법과 질서" },
+  { key: "taboo", label: "금기와 규범" },
+  { key: "dailyLife", label: "평범한 사람의 하루" },
+  { key: "travelComm", label: "이동/통신 속도" },
+  { key: "truthVsBeliefs", label: "믿음 vs 진실" },
+];
+
+const WORLD_FIELD_MAX = 400; // 필드당 토큰 상한 — 초과분 truncate (전체 프롬프트 비대 방지)
+
+/** 값이 채워진 세계관 필드만 "라벨: 값" 줄로 (없으면 빈 문자열 — 호출부에서 섹션 자체 스킵). */
+function buildWorldContextLines(config: StoryConfig): string {
+  const lines: string[] = [];
+  for (const { key, label } of WORLD_CONTEXT_FIELDS) {
+    const raw = config[key];
+    if (typeof raw !== "string") continue;
+    const v = raw.trim();
+    if (!v) continue;
+    const truncated = v.length > WORLD_FIELD_MAX ? `${v.slice(0, WORLD_FIELD_MAX)}…` : v;
+    lines.push(`- ${label}: ${truncated}`);
+  }
+  return lines.join("\n");
+}
+
 /** structured-generate 의 schema 파라미터 (JSON Schema — 라우트 기존 계약). */
 const DIRECTION_AI_SCHEMA = {
   type: "object" as const,
@@ -216,6 +256,9 @@ function buildDirectionPrompt(
         .join("\n")
     : "(아직 등록된 씬 없음 — 회차 도입부터 제안)";
 
+  // 채워진 세계관 필드(corePremise·synopsis 제외 — 위에서 이미 주입) → 별도 섹션.
+  const worldContext = buildWorldContextLines(config);
+
   return `당신은 웹소설/웹툰 연출 감독입니다. 아래 작품·회차 정보를 바탕으로 이 회차에 추가할 연출 샷(씬) 3개를 제안하십시오.
 
 작품 정보:
@@ -223,7 +266,7 @@ function buildDirectionPrompt(
 - 장르: ${String(config.genre) || "(미정)"}
 - 주요 정서(톤): ${config.primaryEmotion || "(미정)"}
 ${config.synopsis ? `- 시놉시스: ${config.synopsis.slice(0, 1500)}` : ""}
-
+${worldContext ? `\n세계관 컨텍스트 (연출은 이 설정과 모순되지 않아야 합니다):\n${worldContext}\n` : ""}
 현재 회차: ${episode}화${episodeTitle ? ` · ${episodeTitle}` : ""}
 기존 씬 목록:
 ${sceneLines}

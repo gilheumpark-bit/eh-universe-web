@@ -255,6 +255,7 @@ function TranslateRail({
   onLayout,
   chapters,
   activeManuscriptEp,
+  onSelectChapter,
 }: {
   lang: LangKey;
   onLang: (k: LangKey) => void;
@@ -263,6 +264,7 @@ function TranslateRail({
   onLayout: (m: LayoutMode) => void;
   chapters: { episode: number; title: string; words: number }[];
   activeManuscriptEp: number | null;
+  onSelectChapter: (episode: number) => void;
 }) {
   return (
     // [A-01 priority-high 2026-06-09] 2개 aside 구분 — unique aria-label.
@@ -324,7 +326,21 @@ function TranslateRail({
           chapters.map((c) => {
             const active = c.episode === activeManuscriptEp;
             return (
-              <div key={c.episode} className={"chap" + (active ? " on" : "")}>
+              <div
+                key={c.episode}
+                className={"chap" + (active ? " on" : "")}
+                role="button"
+                tabIndex={0}
+                aria-current={active ? "true" : undefined}
+                aria-label={`${c.episode}화 ${c.title} 회차로 전환`}
+                onClick={() => onSelectChapter(c.episode)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectChapter(c.episode);
+                  }
+                }}
+              >
                 <span className="chap-n">{String(c.episode).padStart(2, "0")}</span>
                 <span className="chap-t">{c.title}</span>
                 {active ? (
@@ -910,9 +926,16 @@ export default function TabTranslate() {
   // ── 번역 결과 영속화: config.translatedManuscripts upsert (setConfig → IndexedDB+Firestore) ──
   // 확정(done) 세그먼트를 순서대로 결합해 (회차 + 대상언어) 단위 엔트리로 저장.
   // 로컬 state 만의 데이터 유실(새로고침·탭 전환·세션 변경 시)을 차단한다.
-  const persistTranslations = useCallback(
-    (override?: { translations?: Record<string, string>; statuses?: Record<string, SegStatus>; avgScore?: number | null }) => {
-      if (!activeManuscript) return;
+  // translatedManuscripts upsert 산출(순수) — `prev` 기준 다음 목록을 계산.
+  // 반환 null = 변경 없음(엔트리 미존재 시 제거 불필요 / 고아 회차 등). persistTranslations 와
+  // handleSelectChapter 가 동일 로직을 공유해, 회차 전환 시 단일 setConfig updater 안에서
+  // 번역 영속화 + episode 변경을 함께 처리(stale-closure 2회 write 클로버 방지)하기 위함.
+  const computeTranslatedManuscripts = useCallback(
+    (
+      prev: StoryConfig,
+      override?: { translations?: Record<string, string>; statuses?: Record<string, SegStatus>; avgScore?: number | null },
+    ): TranslatedManuscriptEntry[] | null => {
+      if (!activeManuscript) return null;
       const trans = override?.translations ?? translations;
       const stat = override?.statuses ?? statuses;
       const score = override?.avgScore ?? avgScore;
@@ -921,34 +944,67 @@ export default function TabTranslate() {
         .map((s) => ({ id: s.id, txt: trans[prefix + s.id] }))
         .filter((x) => !!x.txt && stat[x.id] === "done");
       const target = LANG_TO_TARGET[lang];
+      const list = prev.translatedManuscripts ?? [];
+      const idx = list.findIndex((e) => e.episode === activeManuscript.episode && e.targetLang === target);
+      if (ordered.length === 0) {
+        // 확정 세그먼트가 없으면(되돌리기 등) 기존 엔트리 제거
+        if (idx < 0) return null;
+        return list.filter((_, i) => i !== idx);
+      }
+      // 고아 번역 차단: 해당 회차의 원고(manuscript)가 실제 존재할 때만 upsert.
+      // (원고 없는 회차에 번역본만 남는 고아 엔트리 방지 — 회차 삭제/전환 레이스 등.)
+      const hasManuscript = (prev.manuscripts ?? []).some((m) => m.episode === activeManuscript.episode);
+      if (!hasManuscript) return null;
+      const translatedContent = ordered.map((x) => x.txt as string).join("\n\n");
+      const tc = prev.translationConfig;
+      const entry: TranslatedManuscriptEntry = {
+        episode: activeManuscript.episode,
+        sourceLang: "KO",
+        targetLang: target,
+        mode: tc?.mode ?? "fidelity",
+        translatedTitle: activeManuscript.title ?? "",
+        translatedContent,
+        charCount: translatedContent.length,
+        avgScore: score ?? 0,
+        band: tc?.band ?? 0.5,
+        glossarySnapshot: (tc?.glossary ?? glossary).map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
+        lastUpdate: Date.now(),
+      };
+      return idx >= 0 ? list.map((e, i) => (i === idx ? entry : e)) : [...list, entry];
+    },
+    [activeManuscript, translations, statuses, avgScore, lang, segments, glossary],
+  );
+
+  const persistTranslations = useCallback(
+    (override?: { translations?: Record<string, string>; statuses?: Record<string, SegStatus>; avgScore?: number | null }) => {
+      if (!activeManuscript) return;
       setConfig((prev: StoryConfig) => {
-        const list = prev.translatedManuscripts ?? [];
-        const idx = list.findIndex((e) => e.episode === activeManuscript.episode && e.targetLang === target);
-        if (ordered.length === 0) {
-          // 확정 세그먼트가 없으면(되돌리기 등) 기존 엔트리 제거
-          if (idx < 0) return prev;
-          return { ...prev, translatedManuscripts: list.filter((_, i) => i !== idx) };
-        }
-        const translatedContent = ordered.map((x) => x.txt as string).join("\n\n");
-        const tc = prev.translationConfig;
-        const entry: TranslatedManuscriptEntry = {
-          episode: activeManuscript.episode,
-          sourceLang: "KO",
-          targetLang: target,
-          mode: tc?.mode ?? "fidelity",
-          translatedTitle: activeManuscript.title ?? "",
-          translatedContent,
-          charCount: translatedContent.length,
-          avgScore: score ?? 0,
-          band: tc?.band ?? 0.5,
-          glossarySnapshot: (tc?.glossary ?? glossary).map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
-          lastUpdate: Date.now(),
-        };
-        const nextList = idx >= 0 ? list.map((e, i) => (i === idx ? entry : e)) : [...list, entry];
-        return { ...prev, translatedManuscripts: nextList };
+        const nextTM = computeTranslatedManuscripts(prev, override);
+        if (nextTM === null) return prev;
+        return { ...prev, translatedManuscripts: nextTM };
       });
     },
-    [activeManuscript, translations, statuses, avgScore, lang, segments, glossary, setConfig],
+    [activeManuscript, computeTranslatedManuscripts, setConfig],
+  );
+
+  // ── 회차 전환 (rail chapter 클릭) ───────────────────────
+  // 전환 직전 현재 회차의 진행 중(확정) 번역을 먼저 영속화 → 데이터 유실 방지.
+  // 회차 이동 경로 재사용: TabWriting goPrev/goNext 와 동일한 setConfig episode 패턴.
+  const handleSelectChapter = useCallback(
+    (episode: number) => {
+      if (episode === config?.episode) return;
+      const nextEp = Math.floor(episode);
+      // 단일 updater: pending(확정) 번역 영속화 + episode 변경을 한 번에 처리.
+      // (setConfig 가 함수형 updater 를 stale-closure config 에 즉시 평가 후 config 를 통째
+      //  교체하는 래퍼이므로, persist 와 episode 를 2회로 나누면 뒤 write 가 앞 write 를
+      //  클로버해 번역 저장이 유실됨 — StudioShell.saveCurrentEpisodeDraft 와 동일한 합본 패턴.)
+      setConfig((prev: StoryConfig) => {
+        const nextTM = computeTranslatedManuscripts(prev);
+        const base = nextTM === null ? prev : { ...prev, translatedManuscripts: nextTM };
+        return base.episode === nextEp ? base : { ...base, episode: nextEp };
+      });
+    },
+    [config, computeTranslatedManuscripts, setConfig],
   );
 
   // ── 복원: config.translatedManuscripts → 로컬 번역 버퍼 (회차/언어 전환 시 1회) ──
@@ -1329,6 +1385,7 @@ export default function TabTranslate() {
         onLayout={setLayout}
         chapters={chapters}
         activeManuscriptEp={activeManuscript.episode}
+        onSelectChapter={handleSelectChapter}
       />
 
       <div className="tx-center">

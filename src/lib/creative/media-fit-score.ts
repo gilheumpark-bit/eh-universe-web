@@ -233,6 +233,25 @@ function listLen(v: unknown): number {
 }
 
 /**
+ * 회차 개발 상태 유도 신호: 실제 본문(content)이 있는 manuscript 가 1개 이상인가.
+ *
+ * [episodeState 반쪽 배선 수리 · 검증일 2026-06-11]
+ *   studio-types.ts:339 의 StoryConfig.episodeState 는 선언·read(여기 481·650) 는 있으나
+ *   src 전체에 *write 경로 0건* — 항상 undefined 라 `!!c.episodeState` 보너스는 영구 미발화
+ *   (= 해당 매체 점수에서 보너스만큼 죽은 손실). EpisodeState 자체는 engine/types.ts 의
+ *   에피소드 진행 상태(OPEN/TRANSITION_ONLY/STOP) enum 으로, 표현하려던 의미는
+ *   "회차가 실제로 개발/진행되었는가"다. 그 의미를 *영속되는 가용 신호*인 manuscripts
+ *   (작가가 채운 회차 본문 · useStudioAI/useTranslation 등에서 write)에서 파생한다.
+ *   별도 쓰기 경로·UI 신설 없이 기존 신호로 동일 의도를 복원 — 점수 의미 변화 없음
+ *   (오히려 '본문이 실제 존재'는 episodeState 보다 강한 진행 증거). 빈 content 회차는
+ *   진행으로 보지 않는다.
+ */
+function hasDevelopedEpisode(c: Partial<StoryConfig>): boolean {
+  const ms = c.manuscripts;
+  return Array.isArray(ms) && ms.some((m) => hasText(m?.content));
+}
+
+/**
  * 공통 가중 합산: 각 축 clamp → (safe * weight)/100 기여 합산 → 소수 1자리.
  * 가중치 합이 100이므로 결과는 0~100.
  */
@@ -478,7 +497,8 @@ export function estimateWebtoonFitFromConfig(
 
   const episodeCliff = clampScore(
     30 +
-      bonus(!!c.episodeState, 20, '에피소드 상태 추적', basis) +
+      // episodeState write 경로 부재(영구 undefined) → 동일 의도를 manuscript 본문 존재로 유도
+      bonus(!!c.episodeState || hasDevelopedEpisode(c), 20, '회차 개발 진행(episodeState 또는 본문)', basis) +
       bonus(listLen(c.manuscripts) > 0, 20, '원고 존재', basis) +
       bonus((c.totalEpisodes ?? 0) >= 10, 15, '10화 이상 설계', basis),
   );
@@ -647,7 +667,8 @@ export function estimateDramaFitFromConfig(
     25 +
       arcBonus +
       bonus(hasText(c.synopsis), 15, '시놉시스', basis) +
-      bonus(!!c.episodeState, 10, '에피소드 상태 추적', basis),
+      // episodeState write 경로 부재(영구 undefined) → 동일 의도를 manuscript 본문 존재로 유도
+      bonus(!!c.episodeState || hasDevelopedEpisode(c), 10, '회차 개발 진행(episodeState 또는 본문)', basis),
   );
 
   const visualSetPieces = clampScore(
