@@ -217,3 +217,5 @@ docs/internal-frame/
 
 # Bug Hunter session state (local)
 .bug-hunter/
+
+.wf/

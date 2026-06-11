@@ -435,6 +435,13 @@ export interface TranslatedManuscriptEntry {
   band: number;                     // 사용된 band 값 (0.480~0.520)
   glossarySnapshot?: { source: string; target: string; locked: boolean }[];
   lastUpdate: number;
+  // [W2-translate 2026-06-11] 세그먼트 경계 영속 (멱등 복원용 — additive·optional).
+  // translatedContent 는 확정 세그먼트 txt 를 "\n\n" 으로 결합한 값이다. 복원 시 비멱등
+  // 재분해(splitIntoSegments)로 multi-sentence 세그먼트가 더 많은 조각으로 쪼개지는 왕복
+  // 오염을 차단하기 위해, 결합에 사용한 세그먼트 id + 길이를 그대로 보존한다. 존재하면
+  // 복원기가 길이 기준으로 정확히 1:1 슬라이스 → 왕복 멱등. 부재(레거시)면 기존 best-effort
+  // 재분해 fallback. 사인오프/내용 동등성에는 영향 없음 (순수 복원 보조 메타).
+  segmentBoundaries?: { id: string; len: number }[];
   // [C-translate-panels 2026-06-10] 작가 sign-off (author-signoff.ts boolean 흐름) — 회차×언어 단위 영속.
   // TabTranslate.persistTranslations 가 entry 를 새로 쓰면 (재번역·세그먼트 추가 확정) 이 필드는
   // 의도적으로 초기화된다 — 내용 변경 = 재승인 필요. (30조건 검증기는 후속 — #14)
@@ -460,6 +467,12 @@ export interface EpisodeSceneEntry {
 
 // Episode scene sheet (per-episode scene table)
 export interface EpisodeSceneSheet {
+  /**
+   * 안정 고유 id (crypto.randomUUID). React key·reconciliation 전용.
+   * episode 는 사용자 편집/재정렬로 충돌·변동 가능하므로 별도 stable id 를 둔다.
+   * Optional + 하위호환: 구 데이터(id 없음)는 소비측에서 fallback 키로 보강한다.
+   */
+  id?: string;
   episode: number;
   title: string;
   arc?: string;

@@ -2,7 +2,18 @@
 // PART 1 — ULID tests (Spec 2.2.1)
 // ============================================================
 
-import { ulid, tickLocal, recvRemote, compareHLC, isConcurrent, zeroHLC, getNodeId } from '@/lib/save-engine/hlc';
+import {
+  ulid,
+  tickLocal,
+  recvRemote,
+  compareHLC,
+  isConcurrent,
+  zeroHLC,
+  getNodeId,
+  sortEntriesByHLC,
+  isAfterByHLC,
+} from '@/lib/save-engine/hlc';
+import type { HLC } from '@/lib/save-engine/types';
 
 describe('ulid', () => {
   test('26자 고정 길이', () => {
@@ -161,5 +172,91 @@ describe('getNodeId', () => {
     const second = getNodeId();
     expect(first).toBe(second);
     expect(first).toHaveLength(26);
+  });
+});
+
+// ============================================================
+// PART 6 — sortEntriesByHLC / isAfterByHLC (critical #3 정렬 수정)
+// ============================================================
+
+interface ClockedEntry {
+  id: string;
+  clock: HLC;
+}
+
+function mk(id: string, physical: number, logical: number, nodeId = 'A'): ClockedEntry {
+  return { id, clock: { physical, logical, nodeId } };
+}
+
+describe('sortEntriesByHLC', () => {
+  test('같은 physical ms 안에서 id 사전순이 HLC 역순이어도 인과 순서로 정렬', () => {
+    // 부모(logical 0) → 자식(logical 1) → 손주(logical 2). 같은 physical.
+    // id는 일부러 역순(zzz > mmm > aaa)으로 부여 — ULID 랜덤 suffix 역전 재현.
+    const parent = mk('zzz', 1000, 0);
+    const child = mk('mmm', 1000, 1);
+    const grandchild = mk('aaa', 1000, 2);
+    // 스토리지가 id 사전순으로 돌려준 상태(= 인과 역순)
+    const idSorted = [grandchild, child, parent]; // aaa < mmm < zzz
+    const causal = sortEntriesByHLC(idSorted);
+    expect(causal.map((e) => e.clock.logical)).toEqual([0, 1, 2]);
+    expect(causal).toEqual([parent, child, grandchild]);
+  });
+
+  test('physical이 다르면 physical 우선', () => {
+    const a = mk('x', 1000, 5);
+    const b = mk('y', 2000, 0);
+    const c = mk('z', 1500, 9);
+    expect(sortEntriesByHLC([b, c, a])).toEqual([a, c, b]);
+  });
+
+  test('완전 동일 clock(tie)은 id 사전순으로 결정적 정렬', () => {
+    const a = mk('id-a', 1000, 0, 'A');
+    const b = mk('id-b', 1000, 0, 'A');
+    // nodeId도 동일 → compareHLC tie → id 사전순(id-a < id-b)
+    expect(sortEntriesByHLC([b, a])).toEqual([a, b]);
+  });
+
+  test('원본 배열을 변형하지 않음(순수)', () => {
+    const a = mk('a', 1000, 1);
+    const b = mk('b', 1000, 0);
+    const input = [a, b];
+    const snapshot = [...input];
+    sortEntriesByHLC(input);
+    expect(input).toEqual(snapshot);
+  });
+
+  test('빈 배열·단일 요소 안전', () => {
+    expect(sortEntriesByHLC([])).toEqual([]);
+    const one = mk('a', 1, 0);
+    expect(sortEntriesByHLC([one])).toEqual([one]);
+  });
+});
+
+describe('isAfterByHLC', () => {
+  test('같은 ms에서 logical이 더 크면 after=true (id 사전순 역전과 무관)', () => {
+    const pivot = mk('zzz', 1000, 0); // id는 더 크지만 logical은 더 작음
+    const later = mk('aaa', 1000, 1); // id는 더 작지만 logical은 더 큼
+    // id 비교(e.id > pivot.id)라면 'aaa' > 'zzz' = false (오분류).
+    // HLC 비교라면 logical 1 > 0 → true (정답).
+    expect(isAfterByHLC(later, pivot)).toBe(true);
+    expect(isAfterByHLC(pivot, later)).toBe(false);
+  });
+
+  test('physical이 더 크면 after=true', () => {
+    const pivot = mk('m', 1000, 9);
+    const later = mk('a', 2000, 0);
+    expect(isAfterByHLC(later, pivot)).toBe(true);
+  });
+
+  test('완전 동일 clock(tie)은 id 사전순으로 분리', () => {
+    const pivot = mk('id-a', 1000, 0, 'A');
+    const same = mk('id-b', 1000, 0, 'A');
+    expect(isAfterByHLC(same, pivot)).toBe(true); // id-b > id-a
+    expect(isAfterByHLC(pivot, same)).toBe(false);
+  });
+
+  test('자기 자신은 after=false', () => {
+    const e = mk('id-a', 1000, 0, 'A');
+    expect(isAfterByHLC(e, e)).toBe(false);
   });
 });

@@ -18,7 +18,7 @@
    - 실 점수: 번역 결과 avgScore 만 표기.
    =========================================================== */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Languages,
   Chevron,
@@ -86,7 +86,7 @@ type LangKey = "en" | "ja" | "zh";
 type SegStatus = "done" | "review" | "pending";
 type LayoutMode = "split" | "inline";
 
-interface Segment {
+export interface Segment {
   id: string;
   kind?: "heading" | "dialogue";
   ko: string; // 원문 (한국어)
@@ -118,7 +118,8 @@ const REWRITE_CHIPS = ["더 자연스럽게", "직역에 가깝게", "문장 길
 
 // 문장 단위 분해 — 원문 manuscript.content → Segment[].
 // 한국어 종결부호(. ! ? … " ") + 줄바꿈 기준 split. 대사("…") heading(숫자 prefix) 식별.
-function splitIntoSegments(content: string): Segment[] {
+// export: 회귀 테스트(왕복 비멱등 재현) 전용.
+export function splitIntoSegments(content: string): Segment[] {
   if (!content || !content.trim()) return [];
   const out: Segment[] = [];
   // 줄 단위로 먼저 나누고, 각 줄을 문장부호로 재분해
@@ -142,6 +143,116 @@ function splitIntoSegments(content: string): Segment[] {
     }
   }
   return out;
+}
+
+// ── [W2-translate 2026-06-11] 저장 본문 → 세그먼트 버퍼 매핑 (멱등 우선) ──
+// stored.translatedContent 는 확정 세그먼트 txt 를 "\n\n" 으로 결합한 값이다.
+// segmentBoundaries(결합에 쓴 id+len)가 있으면 길이 기준 정확 슬라이스 → 왕복 멱등
+// (splitIntoSegments 비멱등 재분해로 multi-sentence 세그먼트가 더 쪼개지는 오염을 차단).
+// boundaries 부재(레거시)·불일치 시 기존 best-effort 위치 매핑 + 꼬리 흡수 fallback.
+// segIds = 현재 회차 세그먼트 id 순서. 반환: { [segId]: translatedText } (확정분만).
+// export: 회귀 테스트(round-trip 멱등) 전용 — 컴포넌트 렌더 없이 순수 검증.
+export const SEG_JOIN = "\n\n";
+export function mapStoredToSegments(
+  storedContent: string,
+  boundaries: { id: string; len: number }[] | undefined,
+  segIds: string[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!storedContent) return out;
+  const segIdSet = new Set(segIds);
+  // 1) 멱등 경로 — boundaries 가 현재 세그먼트와 정합하면 길이로 정확 복원.
+  if (boundaries && boundaries.length > 0) {
+    const expectedLen =
+      boundaries.reduce((sum, b) => sum + b.len, 0) + SEG_JOIN.length * (boundaries.length - 1);
+    const allKnown = boundaries.every((b) => segIdSet.has(b.id));
+    if (allKnown && expectedLen === storedContent.length) {
+      let cursor = 0;
+      for (let i = 0; i < boundaries.length; i++) {
+        const b = boundaries[i];
+        const txt = storedContent.slice(cursor, cursor + b.len);
+        if (txt) out[b.id] = txt;
+        cursor += b.len + SEG_JOIN.length; // 다음 조각 앞 구분자 스킵
+      }
+      return out;
+    }
+    // boundaries 가 있으나 불일치 — 본문 신뢰 우선으로 fallback 진입 (truncate 방지).
+  }
+  // 2) Fallback — 위치 기반 splitIntoSegments + 마지막 세그먼트 꼬리 흡수(초과분 보존).
+  const pieces = splitIntoSegments(storedContent);
+  const lastIdx = segIds.length - 1;
+  segIds.forEach((id, i) => {
+    const txt =
+      i === lastIdx
+        ? pieces
+            .slice(i)
+            .map((p) => p.ko)
+            .filter(Boolean)
+            .join(" ")
+        : pieces[i]?.ko;
+    if (txt) out[id] = txt;
+  });
+  return out;
+}
+
+// ── [W2-translate 2026-06-11] 번역 엔트리 upsert 순수 코어 (사인오프 dirty 게이트) ──
+// computeTranslatedManuscripts 의 의사결정 본체를 순수 함수로 분리 — 컴포넌트 closure
+// (activeManuscript/segments/glossary 등)는 인자로 주입. 사인오프 리셋은 *명시적 편집
+// 플래그(dirty)* 로만 발동(구 비멱등 직렬화 비교 제거). 회귀 테스트가 렌더 없이 검증한다.
+// 반환 null = 변경 없음(엔트리 미존재 제거 불필요 / 고아 회차). 그 외 = 다음 목록.
+export function upsertTranslatedEntry(args: {
+  prev: StoryConfig;
+  episode: number;
+  title: string;
+  targetLang: "EN" | "JP" | "CN";
+  /** 확정(done) 세그먼트를 원문 순서대로 — { id, txt }. */
+  ordered: { id: string; txt: string }[];
+  avgScore: number | null;
+  glossary: { source: string; target: string; locked?: boolean }[];
+  /** 실제 사용자 편집 액션 여부 — true 일 때만 기존 엔트리 사인오프 리셋. */
+  dirty: boolean;
+  /** lastUpdate 주입(테스트 결정성) — 기본 Date.now(). */
+  now?: number;
+}): TranslatedManuscriptEntry[] | null {
+  const { prev, episode, title, targetLang, ordered, avgScore, glossary, dirty } = args;
+  const list = prev.translatedManuscripts ?? [];
+  const idx = list.findIndex((e) => e.episode === episode && e.targetLang === targetLang);
+  if (ordered.length === 0) {
+    // 확정 세그먼트가 없으면(되돌리기 등) 기존 엔트리 제거.
+    if (idx < 0) return null;
+    return list.filter((_, i) => i !== idx);
+  }
+  // 고아 번역 차단: 해당 회차의 원고(manuscript)가 실제 존재할 때만 upsert.
+  const hasManuscript = (prev.manuscripts ?? []).some((m) => m.episode === episode);
+  if (!hasManuscript) return null;
+  const translatedContent = ordered.map((x) => x.txt).join(SEG_JOIN);
+  const segmentBoundaries = ordered.map((x) => ({ id: x.id, len: x.txt.length }));
+  const tc = prev.translationConfig;
+  const prevEntry = idx >= 0 ? list[idx] : undefined;
+  // [W2-translate·깊은 수정] 사인오프 리셋 = 명시적 편집(dirty)일 때만. 신규 엔트리는
+  // 보존할 사인오프가 없어 트리거 무관. 저장·복원·네비게이션(dirty=false)은 항상 보존 —
+  // 구 비멱등 직렬화 비교(prevEntry.translatedContent !== translatedContent)가 복원 왕복마다
+  // 만들던 사인오프 거짓 리셋 + 본문 점진 오염을 제거.
+  const resetSignoff = !prevEntry || dirty === true;
+  const now = args.now ?? Date.now();
+  const entry: TranslatedManuscriptEntry = {
+    episode,
+    sourceLang: "KO",
+    targetLang,
+    mode: tc?.mode ?? "fidelity",
+    translatedTitle: title,
+    translatedContent,
+    charCount: translatedContent.length,
+    avgScore: avgScore ?? 0,
+    band: tc?.band ?? 0.5,
+    glossarySnapshot: (tc?.glossary ?? glossary).map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
+    segmentBoundaries,
+    lastUpdate: resetSignoff ? now : prevEntry!.lastUpdate,
+    faithfulApproved: resetSignoff ? undefined : prevEntry!.faithfulApproved,
+    marketApproved: resetSignoff ? undefined : prevEntry!.marketApproved,
+    approvedAt: resetSignoff ? undefined : prevEntry!.approvedAt,
+  };
+  return idx >= 0 ? list.map((e, i) => (i === idx ? entry : e)) : [...list, entry];
 }
 
 // ============================================================
@@ -933,7 +1044,13 @@ export default function TabTranslate() {
   const computeTranslatedManuscripts = useCallback(
     (
       prev: StoryConfig,
-      override?: { translations?: Record<string, string>; statuses?: Record<string, SegStatus>; avgScore?: number | null },
+      override?: {
+        translations?: Record<string, string>;
+        statuses?: Record<string, SegStatus>;
+        avgScore?: number | null;
+        /** [W2-translate 2026-06-11] 명시적 사용자 편집 플래그 — true 일 때만 사인오프 리셋. */
+        dirty?: boolean;
+      },
     ): TranslatedManuscriptEntry[] | null => {
       if (!activeManuscript) return null;
       const trans = override?.translations ?? translations;
@@ -942,51 +1059,30 @@ export default function TabTranslate() {
       const prefix = lang + ":";
       const ordered = segments
         .map((s) => ({ id: s.id, txt: trans[prefix + s.id] }))
-        .filter((x) => !!x.txt && stat[x.id] === "done");
-      const target = LANG_TO_TARGET[lang];
-      const list = prev.translatedManuscripts ?? [];
-      const idx = list.findIndex((e) => e.episode === activeManuscript.episode && e.targetLang === target);
-      if (ordered.length === 0) {
-        // 확정 세그먼트가 없으면(되돌리기 등) 기존 엔트리 제거
-        if (idx < 0) return null;
-        return list.filter((_, i) => i !== idx);
-      }
-      // 고아 번역 차단: 해당 회차의 원고(manuscript)가 실제 존재할 때만 upsert.
-      // (원고 없는 회차에 번역본만 남는 고아 엔트리 방지 — 회차 삭제/전환 레이스 등.)
-      const hasManuscript = (prev.manuscripts ?? []).some((m) => m.episode === activeManuscript.episode);
-      if (!hasManuscript) return null;
-      const translatedContent = ordered.map((x) => x.txt as string).join("\n\n");
-      const tc = prev.translationConfig;
-      const prevEntry = idx >= 0 ? list[idx] : undefined;
-      // 사인오프 보존 계약(studio-types.ts:438-440): 내용 변경 시에만 재승인 필요(리셋).
-      // 회차 이동 등 내용 무변경 upsert 에서는 작가 사인오프(faithful/market/approvedAt)를
-      // 그대로 보존한다 — 순수 네비게이션이 영속 사인오프를 조용히 취소하는 회귀 차단.
-      const contentChanged = !prevEntry || prevEntry.translatedContent !== translatedContent;
-      const entry: TranslatedManuscriptEntry = {
+        .filter((x): x is { id: string; txt: string } => !!x.txt && stat[x.id] === "done");
+      // 순수 코어로 위임 — 사인오프 리셋은 명시적 편집(dirty)일 때만(비멱등 비교 제거).
+      return upsertTranslatedEntry({
+        prev,
         episode: activeManuscript.episode,
-        sourceLang: "KO",
-        targetLang: target,
-        mode: tc?.mode ?? "fidelity",
-        translatedTitle: activeManuscript.title ?? "",
-        translatedContent,
-        charCount: translatedContent.length,
-        avgScore: score ?? 0,
-        band: tc?.band ?? 0.5,
-        glossarySnapshot: (tc?.glossary ?? glossary).map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
-        // 내용 변경 없으면 기존 lastUpdate 유지(매 이동마다 교체 방지), 변경 시에만 갱신.
-        lastUpdate: contentChanged ? Date.now() : prevEntry!.lastUpdate,
-        // 내용 변경 시 계약대로 사인오프 리셋(undefined), 무변경 시 보존.
-        faithfulApproved: contentChanged ? undefined : prevEntry!.faithfulApproved,
-        marketApproved: contentChanged ? undefined : prevEntry!.marketApproved,
-        approvedAt: contentChanged ? undefined : prevEntry!.approvedAt,
-      };
-      return idx >= 0 ? list.map((e, i) => (i === idx ? entry : e)) : [...list, entry];
+        title: activeManuscript.title ?? "",
+        targetLang: LANG_TO_TARGET[lang],
+        ordered,
+        avgScore: score,
+        glossary,
+        dirty: override?.dirty === true,
+      });
     },
     [activeManuscript, translations, statuses, avgScore, lang, segments, glossary],
   );
 
   const persistTranslations = useCallback(
-    (override?: { translations?: Record<string, string>; statuses?: Record<string, SegStatus>; avgScore?: number | null }) => {
+    (override?: {
+      translations?: Record<string, string>;
+      statuses?: Record<string, SegStatus>;
+      avgScore?: number | null;
+      /** [W2-translate 2026-06-11] 실제 편집 액션만 true — 사인오프 리셋 게이트. */
+      dirty?: boolean;
+    }) => {
       if (!activeManuscript) return;
       setConfig((prev: StoryConfig) => {
         const nextTM = computeTranslatedManuscripts(prev, override);
@@ -1052,28 +1148,18 @@ export default function TabTranslate() {
       setAvgScore(null);
       return;
     }
-    const pieces = splitIntoSegments(stored.translatedContent);
+    // [W2-translate 2026-06-11] 멱등 복원: segmentBoundaries 있으면 길이 슬라이스(왕복 멱등),
+    //   부재(레거시)·불일치 시 위치 매핑+꼬리 흡수 fallback. 비멱등 재분해 본문 오염 차단.
+    const mapped = mapStoredToSegments(stored.translatedContent, stored.segmentBoundaries, segments.map((seg) => seg.id));
     const t: Record<string, string> = {};
     const s: Record<string, SegStatus> = {};
-    // [3-tier 수리 2026-06-11] 비멱등 재분해 꼬리 유실 방지: splitIntoSegments 왕복은 멱등이
-    //   아니라(multi-sentence·대사 세그먼트는 더 많은 조각으로 재분해됨) 위치 1:1 매핑 시
-    //   pieces[N..] 초과분이 드롭돼 stored 본문 일부가 버퍼에서 사라졌다. 마지막 세그먼트가
-    //   잔여 조각을 전부 흡수해 본문 손실을 차단(편집 후 재영속 시 stored truncate 방지).
-    const lastIdx = segments.length - 1;
-    segments.forEach((seg, i) => {
-      const txt =
-        i === lastIdx
-          ? pieces
-              .slice(i)
-              .map((p) => p.ko)
-              .filter(Boolean)
-              .join(" ")
-          : pieces[i]?.ko;
+    for (const seg of segments) {
+      const txt = mapped[seg.id];
       if (txt) {
         t[prefix + seg.id] = txt;
         s[seg.id] = "done";
       }
-    });
+    }
     // strip 후 stored 로 재구성(replace) — 잔존 키 누수 차단.
     setTranslations((prev) => ({ ...stripTrans(prev), ...t }));
     setStatuses((prev) => ({ ...stripStatus(prev), ...s }));
@@ -1088,33 +1174,24 @@ export default function TabTranslate() {
   const applyExternalResult = useCallback(
     (text: string) => {
       if (!text || !text.trim()) return;
-      const pieces = splitIntoSegments(text);
+      // 외부 텍스트는 stored boundaries 가 없으므로 위치 매핑+꼬리 흡수(fallback) — 복원기와 동일.
+      const mapped = mapStoredToSegments(text, undefined, segments.map((seg) => seg.id));
       const t: Record<string, string> = {};
       const s: Record<string, SegStatus> = {};
-      // [3-tier 수리 2026-06-11] restore effect 와 동일한 꼬리 흡수 — splitIntoSegments 왕복은
-      //   비멱등이라 multi-sentence 세그먼트가 더 많은 조각으로 재분해된다. 마지막 세그먼트가
-      //   잔여 조각을 흡수해 초과분 truncate(본문 유실) 차단.
-      const lastIdx = segments.length - 1;
-      segments.forEach((seg, i) => {
-        const txt =
-          i === lastIdx
-            ? pieces
-                .slice(i)
-                .map((pp) => pp.ko)
-                .filter(Boolean)
-                .join(" ")
-            : pieces[i]?.ko;
+      for (const seg of segments) {
+        const txt = mapped[seg.id];
         if (txt) {
           t[lang + ":" + seg.id] = txt;
           s[seg.id] = "done";
         }
-      });
+      }
       if (Object.keys(t).length === 0) return;
       const nextTrans = { ...translations, ...t };
       const nextStatuses: Record<string, SegStatus> = { ...statuses, ...s };
       setTranslations(nextTrans);
       setStatuses(nextStatuses);
-      persistTranslations({ translations: nextTrans, statuses: nextStatuses });
+      // [W2-translate] 외부 패널 결과 적용 = 실제 편집 → dirty (사인오프 재승인 필요).
+      persistTranslations({ translations: nextTrans, statuses: nextStatuses, dirty: true });
     },
     [segments, lang, translations, statuses, persistTranslations],
   );
@@ -1222,7 +1299,8 @@ export default function TabTranslate() {
         return next;
       });
       setStatuses(nextStatuses);
-      persistTranslations({ translations: nextTrans, statuses: nextStatuses });
+      // [W2-translate] 제안 수락 = 실제 편집(신규 확정) → dirty (사인오프 재승인 필요).
+      persistTranslations({ translations: nextTrans, statuses: nextStatuses, dirty: true });
       // [s82] 세그먼트 확정 = AI 번역 작가 수락 → AI_SUGGESTION 귀속.
       // 'translate' 구분은 logAcceptAI 에 note 입력이 없어 targetId prefix 로 전달 (정직).
       if (txt) {
@@ -1269,33 +1347,26 @@ export default function TabTranslate() {
     const results = await translateBatch([activeManuscript], partial);
     const r = results[0];
     if (r && r.translatedText) {
-      // 회차 전체 번역문을 세그먼트 수만큼 분배 (문장 분해 후 1:1 매핑 best-effort)
-      const lines = splitIntoSegments(r.translatedText);
+      // 회차 전체 번역문을 세그먼트 수만큼 분배 (외부 텍스트 — 위치 매핑+꼬리 흡수 fallback).
+      const mapped = mapStoredToSegments(r.translatedText, undefined, segments.map((seg) => seg.id));
       const next: Record<string, string> = {};
       const nextStatus: Record<string, SegStatus> = {};
-      // [3-tier 수리 2026-06-11] 마지막 세그먼트 꼬리 흡수 — 비멱등 재분해 초과분 truncate 차단.
-      const lastIdx = segments.length - 1;
-      segments.forEach((seg, i) => {
-        const txt =
-          i === lastIdx
-            ? lines
-                .slice(i)
-                .map((pp) => pp.ko)
-                .filter(Boolean)
-                .join(" ")
-            : (lines[i]?.ko ?? "");
+      for (const seg of segments) {
+        const txt = mapped[seg.id];
         if (txt) {
           next[lang + ":" + seg.id] = txt;
           nextStatus[seg.id] = "done";
         }
-      });
+      }
       setTranslations((prev) => ({ ...prev, ...next }));
       setStatuses((prev) => ({ ...prev, ...nextStatus }));
       setAvgScore(r.avgScore);
+      // [W2-translate] 일괄 번역 = 실제 편집(회차 전량 재확정) → dirty (사인오프 재승인 필요).
       persistTranslations({
         translations: { ...translations, ...next },
         statuses: { ...statuses, ...nextStatus },
         avgScore: r.avgScore,
+        dirty: true,
       });
       // [s82] 일괄 번역 적용 = 회차당 1건 배치 기록 (세그먼트별 스팸 방지 — 문서화된 선택)
       fireCpLog(
@@ -1394,19 +1465,23 @@ export default function TabTranslate() {
     w.document.close();
   }, [segments, translations, suggestions, lang, activeManuscript, currentSession]);
 
-  // 되돌리기 — 현재 언어의 번역/제안/상태 초기화 (확정 전 작업 폐기)
+  // 되돌리기 — 현재 언어의 번역/제안/상태 초기화 (확정 작업 폐기)
   const handleRevert = useCallback(() => {
     const prefix = lang + ":";
     const strip = (o: Record<string, string>) => Object.fromEntries(Object.entries(o).filter(([k]) => !k.startsWith(prefix)));
-    setTranslations((prev) => strip(prev));
+    // [W2-translate 2026-06-11] 비동기 setState 전에 폐기 후 버퍼를 명시 계산해 override 로
+    //   영속에 전달 — functional setState 클로저는 persist 시점에 아직 반영 전이라 직접 계산.
+    const nextTrans = strip(translations);
+    const nextStatuses: Record<string, SegStatus> = {};
+    for (const seg of segments) nextStatuses[seg.id] = "pending";
+    setTranslations(nextTrans);
     setSuggestions((prev) => strip(prev));
-    setStatuses((prev) => {
-      const next: Record<string, SegStatus> = {};
-      for (const seg of segments) next[seg.id] = "pending";
-      return next;
-    });
+    setStatuses(nextStatuses);
     setAvgScore(null);
-  }, [lang, segments]);
+    // 되돌리기 = 실제 편집(확정 폐기) → dirty. 확정 세그먼트 0 → 저장된 엔트리 제거
+    // (사인오프 포함) — 폐기 의미와 일치. 영속 entry 가 없으면 no-op(computeTM null).
+    persistTranslations({ translations: nextTrans, statuses: nextStatuses, avgScore: null, dirty: true });
+  }, [lang, segments, translations, persistTranslations]);
 
   const handleSave = useCallback(() => {
     persistTranslations();

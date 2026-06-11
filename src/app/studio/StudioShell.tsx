@@ -744,21 +744,24 @@ export default function StudioShell({ children }: { children?: React.ReactNode }
     // 타이머가 사라져도 unmount/전환 flush가 같은 내용을 같은 자리에 머지할 수 있게.
     pendingDraftRef.current = { editDraft, episode, sessionId: currentSessionId };
     const timer = setTimeout(() => {
-      const prevArr = currentSession.config.manuscripts ?? [];
-      const idx = prevArr.findIndex(m => m.episode === episode);
-      const title = currentSession.config.title || `Episode ${episode}`;
+      // [W2-shell #7] 2초 뒤 발화 시점에 prev.manuscripts 를 React state 에서 직접 읽는다.
+      // 기존: stale currentSession.config.manuscripts(이 effect 실행 render 스냅샷)를 통째로
+      // updateCurrentSession 으로 대입 → 같은 세션의 다른 episode 를 AI writer 가 그 사이 쓰면
+      // OLD manuscripts 기반으로 덮어써 유실. setConfig(prev=>...) 는 prev 가 항상 최신 commit.
+      // 본문(content)이 아닌 manuscripts 머지만 setConfig 로 옮기고, 그 외 config 필드는
+      // prev 를 그대로 유지해 (episode/title 등) 동시 변경과 경합하지 않는다.
       const now = Date.now();
-      const nextEntry = idx >= 0
-        ? { ...prevArr[idx], content: editDraft, charCount: editDraft.length, lastUpdate: now }
-        : { episode, title, content: editDraft, charCount: editDraft.length, lastUpdate: now };
-      const nextArr = idx >= 0
-        ? prevArr.map((m, i) => i === idx ? nextEntry : m)
-        : [...prevArr, nextEntry];
-      updateCurrentSession({
-        config: {
-          ...currentSession.config,
-          manuscripts: nextArr,
-        },
+      setConfig(prev => {
+        const prevArr = prev.manuscripts ?? [];
+        const idx = prevArr.findIndex(m => m.episode === episode);
+        const title = prev.title || `Episode ${episode}`;
+        const nextEntry = idx >= 0
+          ? { ...prevArr[idx], content: editDraft, charCount: editDraft.length, lastUpdate: now }
+          : { episode, title, content: editDraft, charCount: editDraft.length, lastUpdate: now };
+        const nextArr = idx >= 0
+          ? prevArr.map((m, i) => i === idx ? nextEntry : m)
+          : [...prevArr, nextEntry];
+        return { ...prev, manuscripts: nextArr };
       });
       // [shell-flush] debounce가 직접 머지 완료 — pending 해소 (발화한 타이머는 항상 최신
       // 스냅샷의 것: 더 새 입력이 있었다면 effect 재실행이 이 타이머를 clear했음).
@@ -766,10 +769,12 @@ export default function StudioShell({ children }: { children?: React.ReactNode }
     }, 2000);
     return () => clearTimeout(timer);
 
-    // currentSession/updateCurrentSession 의도적 제외 — 포함 시 세션 변경마다 timer 재스케줄되어 debounce 파괴.
-    // ⚠ setTimeout 본문은 "이 effect가 실행된 render의" currentSession 클로저 스냅샷을 읽는다
-    // (currentSessionId로 최신 세션 재조회 X — 과거 주석은 부정확했음). 2초 내 외부 config 변경과
-    // 경합 가능하며, cleanup으로 끊긴 마지막 입력은 위 pendingDraftRef flush 경로가 보전한다.
+    // currentSession/setConfig 의도적 제외 — 포함 시 세션 변경마다 timer 재스케줄되어 debounce 파괴.
+    // ⚠ [W2-shell #7] setTimeout 본문의 manuscripts 머지는 setConfig(prev=>...) 로 React state 의
+    // 최신 commit(prev)을 읽는다 — 더 이상 stale currentSession.config 스냅샷을 통째로 덮지 않으므로
+    // 같은 세션 내 동시 AI writer 의 다른 episode 변경과 경합하지 않는다. 클로저에서 읽는 값은
+    // editDraft(dep) + episode(스케줄 시점 회차, pendingDraftRef 와 동일)뿐. cleanup 으로 끊긴
+    // 마지막 입력은 위 pendingDraftRef flush 경로(mergeDraftIntoProjects, 최신 projects 기준)가 보전한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editDraft, writingMode, currentSessionId, hydrated]);
 
@@ -1253,9 +1258,14 @@ export default function StudioShell({ children }: { children?: React.ReactNode }
         const summary = await generateEpisodeSummary(draftContent, lang);
         if (!summary) return;
         setConfig(prev => {
-          const ms2 = [...(prev.manuscripts || [])];
-          const target = ms2.find(m => m.episode === ep);
-          if (target) target.summary = summary;
+          // [W2-shell #8] in-place 변이(target.summary=) 제거 — [...prev.manuscripts] 는 얕은
+          // 복사라 원소 참조를 공유, target 을 직접 변이하면 commit 된 manuscript 객체를
+          // immutability 계약 위반으로 오염(다른 참조에 부수효과·re-render 누락 위험)했다.
+          // map 으로 해당 episode 만 새 객체로 교체 → 그 외 필드(detailedSummary·corrections 등)
+          // 보존. setConfig(prev=>...) 루트와 정합 (최신 manuscripts 기준).
+          const ms2 = (prev.manuscripts || []).map(m =>
+            m.episode === ep ? { ...m, summary } : m,
+          );
           return { ...prev, manuscripts: ms2 };
         });
         showAlert(

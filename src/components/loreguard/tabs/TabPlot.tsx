@@ -135,6 +135,21 @@ const FLOW_COL_W = 260;
 const FLOW_SCENE_Y0 = 120;
 const FLOW_SCENE_GAP = 86;
 
+// [W2-plot #9] 안정 고유 id 생성 — React key·reconciliation 전용.
+// episode 는 사용자 편집/삭제/재정렬·동시 클릭으로 충돌·변동 가능하므로
+// 비트의 정체성은 별도 stable id 로 고정한다 (key 충돌 → 편집/삭제 교차적용 차단).
+// crypto 미가용(구형/일부 SSR) 환경 fallback — 충돌 가능성 무시 가능 수준의 랜덤.
+function genSheetId(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch {
+    /* fall through to fallback */
+  }
+  return `beat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 // EpisodeSceneSheet → 비트 카드 표시용 1줄 설명
 function beatDesc(sheet: EpisodeSceneSheet): string {
   const parts: string[] = [];
@@ -408,6 +423,43 @@ export default function TabPlot() {
     [config?.episodeSceneSheets],
   );
 
+  // [W2-plot #9] 비트별 안정 고유 React key 산출.
+  //  1) sheet.id 존재 → 그대로 사용 (신규 비트·adopt·마이그레이션 완료분 — 항상 고유·안정).
+  //  2) 구 데이터(id 없음) → episode 기준 fallback key. ref 캐시라 재렌더·확장 토글에도
+  //     같은 비트는 동일 key 유지(React reconciliation 안정 → 편집/삭제 교차적용 차단).
+  //  3) episode 가 (버그 #9 의 잔존 데이터처럼) 중복돼도 key 는 절대 충돌하지 않도록,
+  //     동일 key 가 이미 쓰였으면 suffix 를 붙여 고유성을 보장한다 (correctness 우선).
+  // 영속 write 는 렌더에서 강제하지 않는다(부수효과 금지). 신규 비트는 addBeat/adopt 가
+  // 실제 id 를 영속하므로, 사용자가 만지는 비트는 자연히 stable id 로 수렴한다.
+  // 주의: 이 파일은 icons 모듈의 `Map` 컴포넌트를 import 하므로 전역 Map 이 가려진다.
+  // → 캐시는 plain object(Record) 로 둔다(전역 Map 생성자 미사용).
+  const legacyKeyRef = useRef<Record<number, string>>({});
+  const sheetKeys = useMemo<string[]>(() => {
+    const cache = legacyKeyRef.current;
+    const used = new Set<string>();
+    return sheets.map((sheet) => {
+      let key: string;
+      if (sheet.id) {
+        key = sheet.id;
+      } else {
+        let base = cache[sheet.episode];
+        if (!base) {
+          base = `legacy-${sheet.episode}-${genSheetId()}`;
+          cache[sheet.episode] = base;
+        }
+        key = base;
+      }
+      // 고유성 보강 — 동일 key 재출현 시(중복 id/중복 episode) suffix 부여.
+      if (used.has(key)) {
+        let n = 2;
+        while (used.has(`${key}#${n}`)) n += 1;
+        key = `${key}#${n}`;
+      }
+      used.add(key);
+      return key;
+    });
+  }, [sheets]);
+
   const toggleExpand = useCallback((episode: number) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -418,11 +470,19 @@ export default function TabPlot() {
   }, []);
 
   // 비트 추가 — episodeSceneSheets 에 새 시트 append (영속)
+  // [W2-plot #9] 충돌 방어: nextEp 는 prev(최신 commit) 기준 단조 증가로 산출하되,
+  // 동일 episode 가 이미 있으면(빠른 2회 클릭·stale 데이터) 빈 슬롯까지 bump 해
+  // episode 중복 생성을 차단한다(upsert/skip). stable id 는 그와 독립적으로 항상 부여
+  // → React key 충돌·편집/삭제 교차적용을 이중으로 막는다.
   const addBeat = useCallback(() => {
     setConfig((prev) => {
       const list = prev.episodeSceneSheets ?? [];
-      const nextEp = list.reduce((max, s) => Math.max(max, s.episode), 0) + 1;
+      const taken = new Set(list.map((s) => s.episode));
+      let nextEp = list.reduce((max, s) => Math.max(max, s.episode), 0) + 1;
+      // 단조 산출이 정상이라면 1회로 끝나지만, 중복 잔존 데이터 방어로 빈 슬롯 보장.
+      while (taken.has(nextEp)) nextEp += 1;
       const sheet: EpisodeSceneSheet = {
+        id: genSheetId(),
         episode: nextEp,
         title: `새 비트 ${nextEp}`,
         lastUpdate: Date.now(),
@@ -610,8 +670,12 @@ export default function TabPlot() {
             ),
           };
         }
-        const nextEp = list.reduce((max, s) => Math.max(max, s.episode), 0) + 1;
+        // [W2-plot #9] addBeat 와 동일 충돌 방어 — 빈 episode 슬롯 + stable id.
+        const taken = new Set(list.map((s) => s.episode));
+        let nextEp = list.reduce((max, s) => Math.max(max, s.episode), 0) + 1;
+        while (taken.has(nextEp)) nextEp += 1;
         const sheet: EpisodeSceneSheet = {
+          id: genSheetId(),
           episode: nextEp,
           title,
           arc: sg.summary || undefined,
@@ -999,7 +1063,10 @@ export default function TabPlot() {
             </div>
           ) : (
             sheets.map((sheet, i) => (
-              <div key={sheet.episode} className="pl-col">
+              // [W2-plot #9] key = 안정 고유 id(sheetKeys[i]) — episode 변동/중복과
+              // 무관하게 비트 정체성을 고정. 핸들러는 시스템 canonical 식별자인
+              // episode 기준 유지(renameBeat/removeBeat/toggleExpand 호환).
+              <div key={sheetKeys[i]} className="pl-col">
                 <BeatCard
                   sheet={sheet}
                   index={i}

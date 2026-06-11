@@ -518,12 +518,28 @@ export function useProjectManager(
   }, [currentSessionId, setSessions]);
 
   const setConfig = useCallback((newConfig: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => {
-    if (typeof newConfig === 'function') {
-      updateCurrentSession({ config: newConfig(currentSession?.config ?? INITIAL_CONFIG) });
-    } else {
-      updateCurrentSession({ config: newConfig });
-    }
-  }, [updateCurrentSession, currentSession?.config]);
+    // [W2-setconfig] 함수형 updater 를 React state 에 진짜 위임한다.
+    // 기존 구현은 `newConfig(currentSession?.config ?? INITIAL_CONFIG)` 처럼 클로저로
+    // 잡힌 직전 렌더의 config 를 즉시(eager) 평가했다 — 같은 tick 에 setConfig 가 2회
+    // 호출되거나 비동기 콜백에서 호출되면 두 번 다 같은 stale config 를 prev 로 받아
+    // 뒤 호출이 앞 호출을 덮어쓰는 lost update 가 발생했다.
+    // setSessions(prev => ...) 안에서 updater 를 실행하면 prev = 항상 최신 state.
+    // 하위호환: newConfig 가 객체면 그대로 대입, 함수면 위임 (양쪽 모두 지원).
+    // lastUpdate 갱신은 updateCurrentSession 동작을 그대로 보존한다.
+    // 현재 세션이 없을 땐 기존 updateCurrentSession 과 동일하게 no-op (state 미변경).
+    if (!currentSessionId) return;
+    setSessions(prev => prev.map(s =>
+      s.id === currentSessionId
+        ? {
+            ...s,
+            config: typeof newConfig === 'function'
+              ? newConfig(s.config ?? INITIAL_CONFIG)
+              : newConfig,
+            lastUpdate: Date.now(),
+          }
+        : s,
+    ));
+  }, [currentSessionId, setSessions]);
 
   // ============================================================
   // PART 6 — GitHub Sync (serialize config -> repo files)

@@ -134,3 +134,53 @@ export function compareHLC(a: HLC, b: HLC): -1 | 0 | 1 {
 export function isConcurrent(a: HLC, b: HLC): boolean {
   return a.physical === b.physical && a.logical === b.logical && a.nodeId !== b.nodeId;
 }
+
+// ============================================================
+// PART 6 — Entry ordering by HLC (stable)
+// ============================================================
+
+/** clock 필드를 가진 엔트리 형태 (JournalEntry 부분). */
+interface HasClock {
+  clock: HLC;
+  id: string;
+}
+
+/**
+ * 엔트리 배열을 인과 순서(HLC)로 안정 정렬.
+ *
+ * 왜 id(ULID) 정렬로 충분치 않은가:
+ * ULID의 16자 랜덤 suffix는 같은 physical ms 안에서 매 호출마다 새로 뽑힌다(hlc.ts:31-41).
+ * 그래서 같은 ms에 연속 append된 부모-자식 엔트리가 id 사전순으로는 역전될 수 있다.
+ * 체인 검증(verifyChain)·delta 재생은 "부모 먼저, 자식 나중" 순서에 의존하므로,
+ * id 정렬에만 기대면 같은 ms 역전 → parentHash 불일치 → 거짓 손상 판정 → 정상 엔트리
+ * quarantine → 데이터 손실로 번진다.
+ *
+ * compareHLC는 (physical, logical, nodeId) 튜플 순서라 같은 ms 단조성을 보장한다(logical 증가).
+ * 1차 키: compareHLC. tie(완전 동일 clock·이론상 단일 tab append에서는 없음)일 때만
+ * id 사전순을 보조 키로 써서 결정적(deterministic) 순서를 유지한다.
+ *
+ * 안정 정렬: 입력 인덱스를 마지막 tiebreaker로 보존해 동률 입력의 상대 순서를 깨지 않는다.
+ */
+export function sortEntriesByHLC<T extends HasClock>(entries: readonly T[]): T[] {
+  return entries
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) => {
+      const byClock = compareHLC(a.entry.clock, b.entry.clock);
+      if (byClock !== 0) return byClock;
+      if (a.entry.id !== b.entry.id) return a.entry.id < b.entry.id ? -1 : 1;
+      return a.index - b.index;
+    })
+    .map((wrapped) => wrapped.entry);
+}
+
+/**
+ * "기준 엔트리(예: snapshot) 이후"를 HLC 기준으로 판정.
+ * id 사전순 비교(e.id > pivot.id)는 같은 ms 역전 위험이 있으므로 clock 비교로 대체.
+ * 반환 true = entry가 pivot보다 인과적으로 뒤(= pivot 이후 적용된 변경).
+ */
+export function isAfterByHLC(entry: HasClock, pivot: HasClock): boolean {
+  const byClock = compareHLC(entry.clock, pivot.clock);
+  if (byClock !== 0) return byClock > 0;
+  // clock 완전 동일(이론상 단일 tab append에서는 발생 X) → id 사전순으로 결정적 분리.
+  return entry.id > pivot.id;
+}
