@@ -104,7 +104,7 @@
     "eslint-config-next": "16.2.1",
     "fake-indexeddb": "^6.2.5",
     "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
+    "jest-environment-jsdom": "^30.4.1",
     "lighthouse": "^13.1.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
