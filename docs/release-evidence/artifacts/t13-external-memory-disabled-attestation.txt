@@ -1,0 +1,32 @@
+{
+  "kind": "loreguard.disabled-attestation-artifact.v1",
+  "gate": "T13",
+  "generatedAt": "2026-06-20T08:38:37+09:00",
+  "inspectedRoots": [
+    "src/app/api/chat",
+    "src/app/api/complete",
+    "src/app/api/gemini-structured",
+    "src/app/api/structured-generate",
+    "src/app/studio",
+    "src/components/loreguard",
+    "src/components/studio",
+    "src/engine/auto-pipeline.ts",
+    "src/engine/context-builder.ts",
+    "src/engine/detail-pass.ts",
+    "src/engine/director.ts",
+    "src/engine/pipeline.ts",
+    "src/engine/proactive-suggestions.ts",
+    "src/engine/story-context.ts",
+    "src/engine/validator.ts",
+    "src/hooks",
+    "src/services/geminiService.ts",
+    "src/services/geminiStructuredTaskService.ts"
+  ],
+  "checks": {
+    "translationOnlyClaim": true,
+    "productBoundaryClaim": true,
+    "creativeRagFindingCount": 0
+  },
+  "findings": [],
+  "conclusion": "Loreguard Studio creative/writing paths do not import or call the legacy RAG client. RAG remains translation-only legacy support."
+}

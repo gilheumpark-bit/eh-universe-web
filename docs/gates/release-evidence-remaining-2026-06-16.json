@@ -1,0 +1,95 @@
+{
+  "kind": "loreguard.release-evidence-remaining.v1",
+  "generatedAt": "2026-06-16T22:16:31+09:00",
+  "evidenceRoot": "docs/release-evidence",
+  "overall": {
+    "verdict": "HOLD",
+    "requirementCount": 16,
+    "passCount": 0,
+    "holdCount": 16,
+    "evidenceFileCount": 0,
+    "malformedEvidenceFileCount": 0
+  },
+  "coreCommercialBlockers": {
+    "labelKo": "상용 마지막 큰 덩어리",
+    "requirementCount": 2,
+    "remainingCount": 2,
+    "passCount": 0,
+    "remainingArtifactTypeCount": 4,
+    "requirements": [
+      {
+        "id": "T2-live-stripe-billing",
+        "gate": "T2",
+        "verdict": "HOLD",
+        "title": "Live Stripe checkout/webhook/claim propagation replay",
+        "missingArtifactTypes": [
+          "live-stripe-replay",
+          "paid-session-e2e"
+        ],
+        "missingArtifactTypeLabelsKo": [
+          "Stripe 실제 결제·웹훅 재현 증거",
+          "유료 세션 권한 반영 전체 흐름 증거"
+        ],
+        "nextAction": "Attach live Stripe replay and paid-session e2e evidence for checkout/webhook/claim propagation.",
+        "nextActionKo": "Stripe 체크아웃, 웹훅, 유료 권한 반영, 확인서 크레딧 지급이 실제 테스트 경로에서 이어졌다는 증거를 첨부한다."
+      },
+      {
+        "id": "T11-signed-c2pa-external-chain",
+        "gate": "T11",
+        "verdict": "HOLD",
+        "title": "Signed C2PA Manifest Store and external provenance chain evidence",
+        "missingArtifactTypes": [
+          "signed-c2pa-manifest-store",
+          "external-provenance-chain"
+        ],
+        "missingArtifactTypeLabelsKo": [
+          "서명된 C2PA 매니페스트 저장소 증거",
+          "외부 출처 체인 조회 증거"
+        ],
+        "nextAction": "Attach signed C2PA Manifest Store and external provenance-chain evidence.",
+        "nextActionKo": "서명된 C2PA 매니페스트 저장소와 외부 출처 체인 조회가 통과했다는 증거를 첨부한다."
+      }
+    ],
+    "remainingArtifactTypes": [
+      {
+        "gate": "T2",
+        "requirementId": "T2-live-stripe-billing",
+        "artifactType": "live-stripe-replay",
+        "artifactLabelKo": "Stripe 실제 결제·웹훅 재현 증거",
+        "issues": [
+          "missing valid live-stripe-replay evidence for T2-live-stripe-billing"
+        ]
+      },
+      {
+        "gate": "T2",
+        "requirementId": "T2-live-stripe-billing",
+        "artifactType": "paid-session-e2e",
+        "artifactLabelKo": "유료 세션 권한 반영 전체 흐름 증거",
+        "issues": [
+          "missing valid paid-session-e2e evidence for T2-live-stripe-billing"
+        ]
+      },
+      {
+        "gate": "T11",
+        "requirementId": "T11-signed-c2pa-external-chain",
+        "artifactType": "signed-c2pa-manifest-store",
+        "artifactLabelKo": "서명된 C2PA 매니페스트 저장소 증거",
+        "issues": [
+          "missing valid signed-c2pa-manifest-store evidence for T11-signed-c2pa-external-chain"
+        ]
+      },
+      {
+        "gate": "T11",
+        "requirementId": "T11-signed-c2pa-external-chain",
+        "artifactType": "external-provenance-chain",
+        "artifactLabelKo": "외부 출처 체인 조회 증거",
+        "issues": [
+          "missing valid external-provenance-chain evidence for T11-signed-c2pa-external-chain"
+        ]
+      }
+    ]
+  },
+  "oneLineKo": "상용 핵심 막힘은 2개, 누락 증거 산출물은 4개입니다.",
+  "nextAnswerKo": "핵심 상용 막힘은 2개 남았습니다. 전체 release evidence HOLD는 16개입니다.",
+  "limitation": "이 요약은 release evidence 스캐너가 확인한 증거만 센다. 완료 판정은 완성된 증거 JSON과 첨부 산출물 해시가 gate:evidence를 통과할 때만 가능하다."
+}

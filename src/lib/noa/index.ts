@@ -1,0 +1,398 @@
+// ============================================================
+// NOA Security Framework v1.0 — Central Orchestrator
+// Ported from NOA Python Ecosystem (v27~v7080)
+// ============================================================
+//
+// 파이프라인 흐름:
+//   Input → Sanitize → FastTrack → Trinity → Judgment
+//         → Availability → Tactical → Audit → Result
+//
+// 현재 상태: 7계층 라이브 구현 완료 (v42.6).
+// FAST_TRACK, TRINITY, JUDGMENT, AVAILABILITY, TACTICAL, AUDIT 모든 레이어 작동 중.
+// ============================================================
+
+import type {
+  NoaInput,
+  NoaResult,
+  NoaConfig,
+  AuditEntry,
+  AuditManager,
+  TrinityWeights,
+} from "./types";
+
+import { createDefaultNoaConfig } from "./config";
+import { sanitizeInput } from "./sanitizer";
+import { runFastTrack } from "./fast-track";
+import { runTrinity } from "./trinity";
+import { runJudgment } from "./judgment";
+import { selectTacticalPath } from "./tactical";
+import { createAuditManager } from "./audit";
+import { createRiskBudgetManager } from "./availability";
+import { recordAuditEntry } from "./audit-report";
+
+// ============================================================
+// Singleton State (세션 수명)
+// ============================================================
+
+let auditManager: AuditManager | null = null;
+let riskBudgetManager: ReturnType<typeof createRiskBudgetManager> | null = null;
+
+function ensureManagers(config: NoaConfig) {
+  if (!auditManager) {
+    auditManager = createAuditManager(config.hmacSecret);
+  }
+  if (!riskBudgetManager) {
+    riskBudgetManager = createRiskBudgetManager(config.dailyRiskBudget);
+  }
+}
+
+export function getAuditManager(config: NoaConfig): AuditManager {
+  ensureManagers(config);
+  return auditManager!;
+}
+
+// ============================================================
+// Multi-turn Context Score (특허 청구 1·8·효과 29)
+// ============================================================
+
+// [특허 정합] 청구 1·8 — "멀티턴 누적 맥락 반영". 특허에 구체 수치 미명시 →
+// 수치 발명 금지 원칙에 따라 보수적 기본값 + 근거 주석:
+//  - HISTORY_WINDOW = 5      : 최근 N개만 반영 (요청 명세 "보수적 5")
+//  - HISTORY_DECAY  = 0.5    : 감쇠 가중 0.5^d (d=1 최신) — 최신일수록 높게, 기하 감쇠
+//  - HISTORY_CONTRIBUTION_CAP = 0.5 : 합산 기여 상한 — 누적 맥락만으로 Trinity
+//    HOLD 경계(0.35)는 넘을 수 있되, 단독 VETO(0.75)는 현재 입력 위험 동반 시에만.
+export const HISTORY_WINDOW = 5;
+export const HISTORY_DECAY = 0.5;
+export const HISTORY_CONTRIBUTION_CAP = 0.5;
+
+/**
+ * 멀티턴 누적 맥락 점수 합성 — 특허 청구 1·8·효과 29.
+ *
+ * contextual = min(1, single + min(CAP, Σ trinity(history_d) × DECAY^d))
+ * 반환 = max(single, contextual)
+ *
+ * 안전성 불변식 (게이트 보수성):
+ *  - boost ≥ 0 (가산 전용) → 맥락이 단일 입력 점수를 깎는 방향 불가
+ *  - history 빈값/공백 항목은 기여 0 (skip)
+ *
+ * @param singleScore - 현재 입력 단독 Trinity 가중 점수 (0~1)
+ * @param conversationHistory - 직전 사용자 발화 이력 (과거 → 최신 순, 배열 끝 = 최신)
+ * @param weights - Trinity 가중치
+ */
+export function composeContextualTrinityScore(
+  singleScore: number,
+  conversationHistory: readonly string[],
+  weights: TrinityWeights
+): number {
+  const recent = conversationHistory.slice(-HISTORY_WINDOW);
+  let boost = 0;
+  for (let d = 1; d <= recent.length; d++) {
+    const msg = recent[recent.length - d]; // d=1 → 최신
+    if (!msg || msg.trim().length === 0) continue; // 빈값 엣지: 기여 0
+    const hScore = runTrinity(sanitizeInput(msg).sanitized, weights).weightedScore;
+    boost += hScore * Math.pow(HISTORY_DECAY, d);
+  }
+  boost = Math.min(boost, HISTORY_CONTRIBUTION_CAP);
+  const contextual = Math.min(1, singleScore + boost);
+  // 명세 보장: max(single, contextual) — 구조상 boost ≥ 0 이지만 명시 max 로 불변식 고정
+  return Math.max(singleScore, contextual);
+}
+
+// ============================================================
+// Main Orchestrator
+// ============================================================
+
+/**
+ * NOA 보안 프레임워크 메인 진입점.
+ *
+ * 7개 레이어를 순차 실행하여 입력의 안전성을 판정한다:
+ * 1. Sanitizer — Zero-Width/자모/NFKC 정규화
+ * 2. Fast Track — 0ms 즉결 분류 (PASS/BLOCK/ESCALATE)
+ * 3. Trinity — Shield/Sword/Scale 3자 합의
+ * 4. Judgment — 27단계 등급 + 도메인 가중치
+ * 5. Availability — 일일 리스크 예산 확인
+ * 6. Tactical — 5개 전술 경로 선택
+ * 7. Audit — 해시 체인 기록
+ *
+ * @param input - 검사할 입력
+ * @param config - NOA 설정 (부분 오버라이드 가능)
+ * @returns NOA 판정 결과
+ */
+export async function runNoa(
+  input: NoaInput,
+  config?: Partial<NoaConfig>
+): Promise<NoaResult> {
+  const startTime = performance.now();
+  const fullConfig: NoaConfig = {
+    ...createDefaultNoaConfig(),
+    ...config,
+  };
+
+  ensureManagers(fullConfig);
+
+  const layerDurations = {
+    sanitize: 0,
+    fastTrack: 0,
+    trinity: 0,
+    judgment: 0,
+    availability: 0,
+    tactical: 0,
+    audit: 0,
+  };
+
+  // --- Layer 1: Sanitize ---
+  const t1 = performance.now();
+  const sanitized = sanitizeInput(input.text);
+  layerDurations.sanitize = performance.now() - t1;
+
+  // --- Layer 2: Fast Track ---
+  const t2 = performance.now();
+  const fastTrack = runFastTrack(sanitized.sanitized);
+  layerDurations.fastTrack = performance.now() - t2;
+
+  // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 맥락 반영]
+  // 유효 history 존재 시 Fast PASS 단락(short-circuit)을 금지하고 Trinity 까지 진행 —
+  // "안녕" 등 단건 안전 인사로 누적 맥락 평가를 우회하는 맥락 분산 공격 차단.
+  // 미전달/빈 history → 기존 단락 유지 (회귀 0). Fast BLOCK 단락은 그대로 유지 (보수성 유지 — 위험 하향 없음).
+  const hasHistory =
+    input.conversationHistory?.some((m) => m.trim().length > 0) ?? false;
+
+  // Fast PASS → 바로 허용
+  if (fastTrack.verdict === "PASS" && !hasHistory) {
+    const ta1 = performance.now();
+    // Record in audit-report for dashboard/reporting
+    recordAuditEntry({
+      timestamp: Date.now(),
+      input: input.text.slice(0, 200),
+      result: "allowed",
+      layer: "fast-track",
+      reason: "FAST_TRACK_PASS",
+      severity: "low",
+    });
+    const auditEntry = await auditManager!.append({
+      timestamp: Date.now(),
+      layer: "fast-track",
+      input: input.text.slice(0, 100),
+      output: "FAST_PASS",
+      verdict: "ALLOW",
+    });
+    layerDurations.audit = performance.now() - ta1;
+
+    return buildResult(true, sanitized.sanitized, fastTrack, null, null, {
+      selectedPath: "ALLOW",
+      config: fullConfig.tacticalConfigs.ALLOW,
+      reason: "FAST_TRACK_PASS",
+    }, auditEntry, {
+      allowed: true, budgetRemaining: riskBudgetManager!.getState().remaining,
+      hallucinationFlag: false, action: "proceed",
+    }, startTime, layerDurations);
+  }
+
+  // Fast BLOCK → 즉시 거부
+  if (fastTrack.verdict === "BLOCK") {
+    const ta2 = performance.now();
+    recordAuditEntry({
+      timestamp: Date.now(),
+      input: input.text.slice(0, 200),
+      result: "blocked",
+      layer: "fast-track",
+      reason: "FAST_TRACK_BLOCK",
+      severity: "high",
+    });
+    const auditEntry = await auditManager!.append({
+      timestamp: Date.now(),
+      layer: "fast-track",
+      input: input.text.slice(0, 100),
+      output: "FAST_BLOCK",
+      verdict: "BLOCK",
+    });
+    layerDurations.audit = performance.now() - ta2;
+
+    return buildResult(false, sanitized.sanitized, fastTrack, null, null, {
+      selectedPath: "BLOCK",
+      config: fullConfig.tacticalConfigs.BLOCK,
+      reason: "FAST_TRACK_BLOCK",
+    }, auditEntry, {
+      allowed: false, budgetRemaining: riskBudgetManager!.getState().remaining,
+      hallucinationFlag: false, action: "burn",
+    }, startTime, layerDurations);
+  }
+
+  // --- Layer 3: Trinity ---
+  const t3 = performance.now();
+  const trinity = runTrinity(sanitized.sanitized, fullConfig.trinityWeights);
+
+  // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 누적 맥락 점수]
+  // 단일 입력 Trinity 점수에 history 감쇠 가중 기여를 가산 — max(single, contextual)
+  // 보장 (맥락이 위험을 깎는 방향 금지). hasHistory=false → trinity.weightedScore 그대로 (회귀 0).
+  const contextualScore = hasHistory
+    ? composeContextualTrinityScore(
+        trinity.weightedScore,
+        input.conversationHistory!,
+        fullConfig.trinityWeights
+      )
+    : trinity.weightedScore;
+  layerDurations.trinity = performance.now() - t3;
+
+  // --- Layer 4: Judgment ---
+  const t4 = performance.now();
+  const domain = input.domain ?? "general";
+  const sourceTier = input.sourceTier ?? 2;
+  // [P0-wire (1) — 특허 수학식 1 첫째 항: 패턴 위험도 결선]
+  // sanitize 된 입력 텍스트를 4번째 인자로 전달 → DANGER_PATTERNS(도메인별 가산점)
+  // 매칭이 라이브 실행된다. 가산 전용 (extraPenalty ≥ 0) — 기존 점수 대비 위험 하향 없음.
+  // [high #10 — 보안 신호/가용성 배수 분리] Trinity 최종 투표를 5번째 인자로 전달 →
+  // VETO 면 judgment 가 완화 배수(creative ×0.1·tier1 ×0.3) 미적용 하드 플로어를 적용.
+  const judgment = runJudgment(
+    contextualScore,
+    domain,
+    sourceTier,
+    sanitized.sanitized,
+    trinity.finalVote
+  );
+  layerDurations.judgment = performance.now() - t4;
+
+  // --- Layer 5: Availability ---
+  const t5 = performance.now();
+  const riskCost = judgment.adjustedRisk / 10;
+  const availability = riskBudgetManager!.check(riskCost);
+  layerDurations.availability = performance.now() - t5;
+
+  // --- Layer 6: Tactical ---
+  const t6 = performance.now();
+  let tactical = selectTacticalPath(judgment.grade, availability);
+
+  // [critical #2 — Trinity VETO 하드 차단 (가용성 배수 무관)]
+  // Trinity 가 VETO(보안 위반 확정)를 낸 경우, 도메인(creative ×0.1)·출처(tier1 ×0.3) 완화
+  // 배수로 등급이 깎여 BLOCK 미만 경로가 선택됐더라도 강제 BLOCK 으로 오버라이드한다.
+  // 보안 신호는 가용성 배수로 완화 불가하도록 하드 경로 — fail-secure.
+  if (trinity.finalVote === "VETO" && tactical.selectedPath !== "BLOCK") {
+    tactical = {
+      selectedPath: "BLOCK",
+      config: fullConfig.tacticalConfigs.BLOCK,
+      reason: `TRINITY_VETO_HARD_BLOCK(${trinity.consensusDetail})`,
+      tokenBudget: fullConfig.tacticalConfigs.BLOCK.tokenBudget,
+    };
+  }
+
+  // 예산 소진 (기존 정상 흐름 보존 — availability 허용 시 소진)
+  if (availability.allowed) {
+    riskBudgetManager!.consume(riskCost);
+  }
+  layerDurations.tactical = performance.now() - t6;
+
+  // --- Layer 7: Audit ---
+  const t7 = performance.now();
+  // [critical #2] BLOCK 경로 = 거부. Trinity VETO 오버라이드 포함.
+  const allowed = tactical.selectedPath !== "BLOCK";
+
+  // Record in audit-report for dashboard/reporting
+  recordAuditEntry({
+    timestamp: Date.now(),
+    input: input.text.slice(0, 200),
+    result: allowed ? "allowed" : "blocked",
+    layer: "trinity",
+    reason: `${judgment.grade.label} → ${tactical.selectedPath}`,
+    severity: judgment.adjustedRisk > 0.7 ? "critical" : judgment.adjustedRisk > 0.5 ? "high" : judgment.adjustedRisk > 0.3 ? "medium" : "low",
+  });
+
+  const auditEntry = await auditManager!.append({
+    timestamp: Date.now(),
+    layer: "trinity",
+    input: input.text.slice(0, 100),
+    output: `${judgment.grade.label} → ${tactical.selectedPath}`,
+    verdict: allowed ? "ALLOW" : "BLOCK",
+  });
+  layerDurations.audit = performance.now() - t7;
+
+  return buildResult(
+    allowed, sanitized.sanitized, fastTrack, trinity, judgment,
+    tactical, auditEntry, availability, startTime, layerDurations
+  );
+}
+
+// ============================================================
+// Result Builder
+// ============================================================
+
+function buildResult(
+  allowed: boolean,
+  sanitizedText: string,
+  fastTrack: NoaResult["fastTrack"],
+  trinity: NoaResult["trinity"],
+  judgment: NoaResult["judgment"],
+  tactical: NoaResult["tactical"],
+  auditEntry: AuditEntry,
+  availability: NoaResult["availability"],
+  startTime: number,
+  layerDurations: NoaResult["layerDurations"]
+): NoaResult {
+  return {
+    allowed,
+    sanitizedText,
+    fastTrack,
+    trinity,
+    judgment,
+    tactical,
+    auditEntry,
+    availability,
+    totalDurationMs: Math.round(performance.now() - startTime),
+    layerDurations: {
+      sanitize: Math.round(layerDurations.sanitize * 100) / 100,
+      fastTrack: Math.round(layerDurations.fastTrack * 100) / 100,
+      trinity: Math.round(layerDurations.trinity * 100) / 100,
+      judgment: Math.round(layerDurations.judgment * 100) / 100,
+      availability: Math.round(layerDurations.availability * 100) / 100,
+      tactical: Math.round(layerDurations.tactical * 100) / 100,
+      audit: Math.round(layerDurations.audit * 100) / 100,
+    },
+  };
+}
+
+// ============================================================
+// Re-exports (convenience)
+// ============================================================
+
+export type {
+  NoaInput,
+  NoaResult,
+  NoaConfig,
+  NoaLayer,
+  FastTrackVerdict,
+  FastTrackResult,
+  TrinityVote,
+  TrinityResult,
+  EgoResult,
+  NoaGradeEntry,
+  DomainType,
+  SourceTier,
+  TacticalPath,
+  TacticalResult,
+  AuditEntry,
+  AuditVerification,
+  AvailabilityResult,
+  HallucinationCheck,
+} from "./types";
+
+export { createDefaultNoaConfig } from "./config";
+export { sanitizeInput } from "./sanitizer";
+export { runFastTrack } from "./fast-track";
+export { runTrinity } from "./trinity";
+export { runJudgment } from "./judgment";
+export { selectTacticalPath } from "./tactical";
+export { createAuditManager } from "./audit";
+export { createRiskBudgetManager } from "./availability";
+export { checkHallucination } from "./availability/hallucination";
+export { recordAuditEntry, generateAuditReport, getRecentThreats, formatAuditMarkdown, clearAuditLog } from "./audit-report";
+
+// ── NOA-SYS v2.1 Layers ──
+// L1: SVI Engine (Session Volatility Index — EMA 기반 인지 부하 추적)
+export { SVIEngine, getSVIEngine, type SVIResult, type SVIAction, type TelemetryTick } from "./svi-engine";
+// L3.1: Constrained Decoder (좌뇌 Guillotine — JSON Schema 강제)
+export { validateConstrainedOutput, buildConstrainedSystemPrompt, runConstrainedPipeline, MATH_CALCULATION_SCHEMA, NOVEL_GENERATION_SCHEMA, type GuillotineResult, type GuillotineVerdict, type ConstraintSchema } from "./constrained-decoder";
+// L4: Saga Transaction + Atomic HITL + HSM 서명 (원자적 승인)
+export { SagaOrchestrator, createAIWorkSaga, HSMSigner, AtomicHITLGate, type SagaStep, type SagaResult, type SagaStatus, type OrbitType, type OrbitPayload, type SignedEnvelope, type HITLResult } from "./saga-transaction";
+// L2: Taint Tracker (데이터 격리 — 도메인 간 오염 방지)
+export { TaintTracker, getTaintTracker, type TaintDomain, type TaintedData, type DecontaminatedData } from "./taint-tracker";
+// L2: LoRA Hot-Swap Controller (동적 어댑터 교체)
+export { SwapController, getSwapController, VRAMManager, ADAPTER_REGISTRY, type AdapterMode, type AdapterManifest, type SwapResult, type SwapStatus } from "./lora-swap";

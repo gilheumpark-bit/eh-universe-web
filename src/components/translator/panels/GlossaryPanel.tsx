@@ -1,0 +1,303 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { BookA, Search, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { useTranslator } from '../core/TranslatorContext';
+import { useWebFeatures } from '@/hooks/useWebFeatures';
+import { getGlossaryManager } from '@/lib/translation/glossary-manager';
+import { escapeHtml } from '@/lib/web-features';
+
+// ============================================================
+// EXPORTED UTILITIES FOR GLOSSARY HIGHLIGHTING
+// ============================================================
+
+/** Returns all glossary term strings from the current glossary manager snapshot. */
+export function getGlossaryTerms(): string[] {
+  const mgr = getGlossaryManager();
+  return Object.keys(mgr.toRecord());
+}
+
+/**
+ * Wraps matching glossary terms in the given text with <mark> tags.
+ * Returns an HTML-escaped string with <mark> wrappers around matches.
+ * Safe for dangerouslySetInnerHTML — both surrounding text and matched terms
+ * are HTML-escaped before being assembled, preventing XSS via user input.
+ * Terms are matched case-insensitively with longest-first priority.
+ */
+export function highlightGlossaryTerms(text: string, terms: string[]): string {
+  if (!text) return '';
+  if (!terms.length) return escapeHtml(text);
+
+  const sorted = [...terms].sort((a, b) => b.length - a.length);
+  const escapedPatterns = sorted.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const re = new RegExp(`(${escapedPatterns.join('|')})`, 'gi');
+
+  // Split the text into segments and HTML-escape every segment (matched and unmatched).
+  const parts: string[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(escapeHtml(text.slice(lastIndex, match.index)));
+    }
+    parts.push(
+      `<mark class="bg-accent-cyan/25 text-text-primary rounded-sm px-0.5">${escapeHtml(match[0])}</mark>`
+    );
+    lastIndex = match.index + match[0].length;
+    // Zero-width match guard: prevent infinite loop when a pattern matches empty string.
+    if (match.index === re.lastIndex) re.lastIndex++;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(escapeHtml(text.slice(lastIndex)));
+  }
+
+  return parts.join('');
+}
+
+export function GlossaryPanel() {
+  const { glossary, setGlossary: _setGlossary, source, langKo } = useTranslator();
+  const _web = useWebFeatures();
+  const [extracting, setExtracting] = useState(false);
+  const mgr = getGlossaryManager();
+  const [glossaryVersion, setGlossaryVersion] = useState(mgr.version);
+
+  // Subscribe to manager changes for version display
+  useEffect(() => {
+    return mgr.onChange((v) => setGlossaryVersion(v));
+  }, [mgr]);
+
+  // AI 용어 자동 추출
+  const _handleAutoExtract = useCallback(async () => {
+    if (!source?.trim() || extracting) return;
+    setExtracting(true);
+    try {
+      const { extractTermsRuleBased } = await import('@/lib/translation');
+      const candidates = extractTermsRuleBased(source);
+      // 기존 용어집에 없는 것만 추가 제안
+      const newTerms: Record<string, string> = {};
+      for (const c of candidates) {
+        if (!glossary[c.term]) newTerms[c.term] = '';
+      }
+      if (Object.keys(newTerms).length > 0) {
+        // Use manager for real-time propagation
+        mgr.merge(newTerms);
+      }
+    } catch { /* */ }
+    setExtracting(false);
+  }, [source, glossary, mgr, extracting]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newOriginal, setNewOriginal] = useState('');
+  const [newTranslation, setNewTranslation] = useState('');
+  const [newContext, setNewContext] = useState('');
+  const [newLocked, setNewLocked] = useState(false);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editOriginal, setEditOriginal] = useState('');
+  const [editTranslation, setEditTranslation] = useState('');
+
+  const handleAddTerm = () => {
+    const term = newOriginal.trim();
+    const translation = newTranslation.trim();
+    if (!term || !translation) return;
+    mgr.addTerm(term, translation);
+    setNewOriginal('');
+    setNewTranslation('');
+  };
+
+  const startEdit = (term: string) => {
+    setEditingKey(term);
+    setEditOriginal(term);
+    setEditTranslation(glossary[term] ?? '');
+  };
+
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setEditOriginal('');
+    setEditTranslation('');
+  };
+
+  const saveEdit = () => {
+    if (!editingKey) return;
+    const nextTerm = editOriginal.trim();
+    const nextTrans = editTranslation.trim();
+    if (!nextTerm || !nextTrans) return;
+    if (nextTerm !== editingKey) mgr.removeTerm(editingKey);
+    mgr.addTerm(nextTerm, nextTrans);
+    cancelEdit();
+  };
+
+  const handleRemoveTerm = (term: string) => {
+    mgr.removeTerm(term);
+    if (editingKey === term) cancelEdit();
+  };
+
+  const filteredTerms = Object.entries(glossary || {}).filter(([term, translation]) =>
+    term.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    translation.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="flex h-full flex-col font-sans">
+      <div className="p-4 shrink-0 border-b border-white/5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+          <input
+            type="text"
+            placeholder={langKo ? '용어집 검색...' : 'Search glossary...'}
+            aria-label={langKo ? '용어집 검색' : 'Search glossary'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 pointer-events-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 text-text-secondary">
+            <BookA className="w-4 h-4 text-accent-cyan" />
+            <span className="text-[13px] font-medium">
+              {langKo ? '용어집' : 'Terms Dictionary'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-text-tertiary border border-white/10">
+              {Object.keys(glossary || {}).length}
+            </span>
+            {glossaryVersion > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-cyan/10 text-accent-cyan/70 border border-accent-cyan/20">
+                v{glossaryVersion}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 relative">
+          {filteredTerms.length === 0 ? (
+            <div className="rounded-xl border border-border/60 bg-bg-primary/80 px-4 py-6 text-center shadow-sm flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan">
+                <BookA className="w-5 h-5" />
+              </div>
+              <span className="text-[13px] font-semibold text-text-primary">
+                {langKo ? '용어집이 비어 있습니다.' : 'Glossary is empty.'}
+              </span>
+              <span className="text-[11px] leading-relaxed text-text-secondary">
+                {langKo
+                  ? '아래에 원문·번역을 입력한 뒤 추가하세요.'
+                  : 'Add source and translated terms below.'}
+              </span>
+            </div>
+          ) : (
+            filteredTerms.map(([term, translation]) =>
+              editingKey === term ? (
+                <div
+                  key={term}
+                  className="flex flex-col gap-2 p-3 rounded-lg bg-white/8 border border-accent-cyan/30"
+                >
+                  <input
+                    value={editOriginal}
+                    onChange={(e) => setEditOriginal(e.target.value)}
+                    placeholder="원문 용어"
+                    className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
+                  />
+                  <input
+                    value={editTranslation}
+                    onChange={(e) => setEditTranslation(e.target.value)}
+                    placeholder="번역 용어"
+                    className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="min-h-[44px] flex items-center gap-1 px-3 rounded-md text-[11px] text-text-tertiary hover:bg-bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+                    >
+                      <X className="w-3.5 h-3.5" /> 취소
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      className="min-h-[44px] flex items-center gap-1 px-3 rounded-md text-[11px] bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25 hover:bg-accent-cyan/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+                    >
+                      <Check className="w-3.5 h-3.5" /> 저장
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  key={term}
+                  className="group relative flex flex-col gap-1 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors text-left"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-[14px] font-medium text-text-primary">{term}</span>
+                    <div className="flex items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(term)}
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md hover:bg-bg-secondary text-text-tertiary hover:text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+                        aria-label={langKo ? '용어 수정' : 'Edit term'}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTerm(term)}
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+                        aria-label={langKo ? '용어 삭제' : 'Remove term'}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <span className="text-[13px] text-accent-cyan/90">{translation}</span>
+                </div>
+              )
+            )
+          )}
+        </div>
+      </div>
+
+      <div className="p-3 shrink-0 border-t border-border/30 pointer-events-auto space-y-2">
+        <div className="grid grid-cols-1 gap-2">
+          <input
+            value={newOriginal}
+            onChange={(e) => setNewOriginal(e.target.value)}
+            placeholder="원문 용어"
+            className="w-full min-h-[44px] bg-bg-secondary border border-border/50 rounded-md px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
+          />
+          <input
+            value={newTranslation}
+            onChange={(e) => setNewTranslation(e.target.value)}
+            placeholder="번역 용어"
+            className="w-full min-h-[44px] bg-bg-secondary border border-border/50 rounded-md px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
+          />
+          <input
+            value={newContext}
+            onChange={(e) => setNewContext(e.target.value)}
+            placeholder="맥락 (예: 주인공 이름, 세계관 고유 용어)"
+            className="w-full min-h-[44px] bg-bg-secondary border border-border/50 rounded-md px-3 text-[11px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
+          />
+          <label className="relative flex min-h-[44px] items-center gap-2 text-[11px] text-text-secondary cursor-pointer px-1">
+            <input type="checkbox" checked={newLocked} onChange={(e) => setNewLocked(e.target.checked)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+            <span
+              aria-hidden
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                newLocked ? 'border-accent-cyan bg-accent-cyan text-white' : 'border-border bg-bg-primary'
+              }`}
+            >
+              {newLocked ? <Check className="h-3.5 w-3.5" /> : null}
+            </span>
+            <span>잠금 (번역 시 반드시 이 용어 사용)</span>
+          </label>
+        </div>
+        <button
+          type="button"
+          onClick={() => { handleAddTerm(); setNewContext(''); setNewLocked(false); }}
+          className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 rounded-md text-[12px] font-medium transition-colors text-accent-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>용어 추가</span>
+        </button>
+      </div>
+    </div>
+  );
+}

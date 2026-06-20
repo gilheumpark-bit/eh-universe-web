@@ -1,0 +1,70 @@
+{
+  "capturedAt": "2026-04-20",
+  "gitCommit": "9a1e1d9991249d4eb3cce44d2e2def73a7da30d7",
+  "gitBranch": "release/v2.2.0-alpha",
+  "appVersion": "2.1.3",
+  "measurementHost": {
+    "server": "next dev",
+    "port": 3099,
+    "note": "dev server (production build 미측정). baseline 재측정 시 동일 조건 유지 권장."
+  },
+  "lighthouse": {
+    "mode": "manual",
+    "reason": "lighthouse / chrome-launcher 미설치 (의존성 추가 금지 정책). bench/MANUAL-LIGHTHOUSE.md 참조.",
+    "device": "desktop",
+    "throttling": "simulated-4g",
+    "baseUrl": "http://127.0.0.1:3005",
+    "routes": ["/", "/studio", "/archive", "/network", "/translation-studio"],
+    "results": {
+      "home":        { "performance": null, "accessibility": null, "bestPractices": null, "seo": null },
+      "studio":      { "performance": null, "accessibility": null, "bestPractices": null, "seo": null },
+      "archive":     { "performance": null, "accessibility": null, "bestPractices": null, "seo": null },
+      "network":     { "performance": null, "accessibility": null, "bestPractices": null, "seo": null },
+      "translation": { "performance": null, "accessibility": null, "bestPractices": null, "seo": null }
+    },
+    "guide": "bench/MANUAL-LIGHTHOUSE.md"
+  },
+  "memory": {
+    "mode": "playwright-chromium",
+    "durationMin": 3,
+    "snapshotEveryMin": 1,
+    "typedChars": 41019,
+    "notes": [
+      "DURATION_MIN=3 스케일다운 (기본 30분, 권장 12시간 장기 시뮬).",
+      "dev 모드 /studio 진입 시 Tiptap 에디터 하이드레이션 지연으로 contenteditable 미확인 → body.dataset 폴백 사용.",
+      "결과적으로 메모리 증가 거의 없음(16.31MB 고정). 재측정 시 prod 빌드 + 30분+ 조건으로 재캡처 권장."
+    ],
+    "trend": {
+      "measurable": true,
+      "samples": 4,
+      "firstUsedMB": 16.31,
+      "lastUsedMB": 16.31,
+      "deltaMB": 0,
+      "growthMBPerHour": 0
+    }
+  },
+  "tabTraversal": {
+    "mode": "playwright-chromium",
+    "maxTabs": 400,
+    "perTabDelayMs": 25,
+    "results": {
+      "writing":   { "label": "집필 스튜디오", "focusableCount": 1,  "elapsedMs": 105,  "trapSuspected": false },
+      "rulebook":  { "label": "규칙서",       "focusableCount": 27, "elapsedMs": 899,  "trapSuspected": false },
+      "reference": { "label": "레퍼런스",     "focusableCount": 16, "elapsedMs": 557,  "trapSuspected": false },
+      "archive":   { "label": "아카이브",     "focusableCount": 45, "elapsedMs": 1527, "trapSuspected": false },
+      "codex":     { "label": "코덱스",       "focusableCount": 19, "elapsedMs": 649,  "trapSuspected": false },
+      "network":   { "label": "네트워크",     "focusableCount": 24, "elapsedMs": 806,  "trapSuspected": false }
+    },
+    "notes": [
+      "writing(/studio): focusable=1 — dev 모드 초기 스켈레톤 상태에서 Tiptap 에디터 미하이드레이션. prod 빌드 재측정 시 상승 예상.",
+      "revisited/trapSuspected 모두 0/false — 모든 라우트에서 Tab 순환 정상."
+    ]
+  },
+  "notes": [
+    "T-001: bench/lighthouse-capture.mjs + MANUAL-LIGHTHOUSE.md, bench/memory-12h-sim.mjs, bench/tab-traversal.mjs 작성 완료.",
+    "T-002: 실행 가능 2개(memory, tab) 자동 측정 완료. Lighthouse 는 수동 측정 가이드로 대체.",
+    "T-003: scripts/regression-check.mjs — 5% 임계값으로 비교. 사용법: node scripts/regression-check.mjs bench/baseline-2026-04-20.json",
+    "prod 빌드 재측정 TODO: npm run build && npx next start -p 3005 후 BASE_URL=http://127.0.0.1:3005 DURATION_MIN=30 SNAPSHOT_EVERY_MIN=10 재실행하여 baseline 갱신.",
+    "Lighthouse 자동화 전환 TODO: npm i -D lighthouse chrome-launcher 후 bench/lighthouse-capture.mjs 가 자동 감지."
+  ]
+}

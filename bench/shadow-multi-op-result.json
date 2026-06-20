@@ -1,0 +1,53 @@
+{
+  "iterations_per_op": 200,
+  "total_op_runs": 1000,
+  "project_fixture": {
+    "projects": 10,
+    "sessions_per_project": 5,
+    "episodes_per_session": 10,
+    "ops_per_cycle": 5
+  },
+  "ops": [
+    "save-manuscript",
+    "save-scene-direction",
+    "save-character",
+    "save-world-sim",
+    "save-style"
+  ],
+  "off": {
+    "p50": 1.021,
+    "p95": 1.776,
+    "p99": 5.838,
+    "avg": 1.133,
+    "samples": 200
+  },
+  "on": {
+    "primary": {
+      "p50": 0.981,
+      "p95": 1.396,
+      "p99": 2.134,
+      "avg": 1.021,
+      "samples": 200
+    },
+    "shadow": {
+      "p50": 0.072,
+      "p95": 0.168,
+      "p99": 2.317,
+      "avg": 0.114,
+      "samples": 200
+    }
+  },
+  "primary_delta_pct": {
+    "avg": -9.885,
+    "p95": -21.396,
+    "note": "positive=slower, negative=faster"
+  },
+  "acceptance": {
+    "target_max_primary_slowdown_pct": 5,
+    "primary_avg_within_budget": true,
+    "primary_p95_within_budget": true
+  },
+  "verdict": "PASS — 5-op Shadow Primary delta (-9.885% avg, -21.396% p95) within +5% budget",
+  "ran_at": "2026-04-20T03:16:05.546Z",
+  "node_version": "v24.14.1"
+}

@@ -1,0 +1,59 @@
+{
+  "name": "Loreguard — Creative Process IDE",
+  "short_name": "Loreguard",
+  "description": "Creative process IDE by EH Universe — direct Noah, keep process records, translate, and package releases in one workspace.",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "/studio",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#b8955c",
+  "background_color": "#11100e",
+  "orientation": "any",
+  "categories": ["productivity", "books", "education"],
+  "display_override": ["window-controls-overlay", "standalone"],
+  "file_handlers": [
+    {
+      "action": "/studio",
+      "accept": {
+        "text/plain": [".txt"],
+        "text/markdown": [".md", ".mdx"],
+        "application/json": [".json"],
+        "application/epub+zip": [".epub"]
+      }
+    },
+    {
+      "action": "/translation-studio",
+      "accept": {
+        "application/xliff+xml": [".xlf", ".xliff"],
+        "application/x-tmx+xml": [".tmx"],
+        "text/x-po": [".po"]
+      }
+    }
+  ],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "sha256_1kb": {
+    "p50": 0.019,
+    "p95": 0.047,
+    "p99": 0.057,
+    "avg": 0.025,
+    "samples": 200
+  },
+  "sha256_100kb": {
+    "p50": 0.062,
+    "p95": 0.124,
+    "p99": 0.247,
+    "avg": 0.071,
+    "samples": 100
+  },
+  "append_1_entry": {
+    "p50": 0.017,
+    "p95": 0.072,
+    "p99": 0.182,
+    "avg": 0.029,
+    "samples": 500
+  },
+  "replay_100_entries": {
+    "p50": 0.098,
+    "p95": 0.293,
+    "p99": 0.293,
+    "avg": 0.122,
+    "samples": 20
+  },
+  "boot_recovery": {
+    "p50": 0.273,
+    "p95": 0.347,
+    "p99": 0.347,
+    "avg": 0.27,
+    "samples": 10
+  },
+  "budgets": {
+    "append_p50_target_ms": 10,
+    "sha_1kb_p50_target_ms": 1,
+    "sha_100kb_p50_target_ms": 5,
+    "replay_100_p50_target_ms": 50,
+    "boot_p50_target_ms": 500
+  },
+  "ran_at": "2026-04-20T00:49:10.874Z"
+}

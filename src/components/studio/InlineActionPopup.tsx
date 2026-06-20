@@ -1,0 +1,457 @@
+"use client";
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2, Undo2 } from 'lucide-react';
+import { streamChat } from '@/lib/ai-providers';
+import { L4 } from '@/lib/i18n';
+import type { AppLanguage } from '@/lib/studio-types';
+// [P-08 — 2026-05-10] studio-inline-rewrite 레지스트리 통합 — inline systemInstruction 폐기.
+import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
+import { normalizeToAgentLang } from '@/lib/ai/lang-normalize';
+
+// ============================================================
+// PART 1 — 타입
+// ============================================================
+interface StoryContext {
+  genre?: string;
+  characters?: Array<{ name: string; role: string; speechStyle?: string }>;
+  tone?: string;
+  narrativeIntensity?: string;
+}
+
+/** Selection info from Tiptap NovelEditor */
+export interface EditorSelection {
+  from: number;
+  to: number;
+  text: string;
+  coords: { top: number; left: number; bottom: number } | null;
+}
+
+/** Range info forwarded to onReplace so callers can do range-based replacement
+ *  instead of string-search (which replaces the first match — P0 bug if the
+ *  same sentence appears multiple times in the manuscript). */
+export interface ReplaceRangeInfo {
+  /** Start offset in the source string. For Tiptap this is ProseMirror doc pos;
+   *  the caller validates & falls back to first-match if the range drifted. */
+  from: number;
+  /** End offset (exclusive). */
+  to: number;
+}
+
+interface InlineActionPopupProps {
+  /** Legacy textarea ref — ignored when editorSelection is provided */
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+  language: string;
+  /** Called when the user confirms a replacement.
+   *  `range` is optional but STRONGLY preferred — callers should use
+   *  range-based replacement and only fall back to string-search if the
+   *  slice no longer matches oldText. */
+  onReplace: (oldText: string, newText: string, range?: ReplaceRangeInfo) => void;
+  storyConfig?: StoryContext;
+  /** Full text from the editor — used to extract surrounding context */
+  fullText?: string;
+  /** Selection info pushed from Tiptap NovelEditor */
+  editorSelection?: EditorSelection | null;
+}
+
+interface PopupState {
+  visible: boolean;
+  x: number;
+  y: number;
+  selectedText: string;
+  selStart: number;
+  selEnd: number;
+}
+
+// ============================================================
+// PART 2 — 컴포넌트
+// ============================================================
+export function InlineActionPopup({ textareaRef, language, onReplace, storyConfig, fullText: fullTextProp, editorSelection }: InlineActionPopupProps) {
+  const isKO = language === 'KO';
+  const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selectedText: '', selStart: 0, selEnd: 0 });
+  const [result, setResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+  /** Tracks the last applied replacement so we can undo it */
+  const [lastApplied, setLastApplied] = useState<{ original: string; replacement: string } | null>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimeout.current) clearTimeout(hideTimeout.current);
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  // --- Tiptap path: react to editorSelection prop ---
+  useEffect(() => {
+    if (editorSelection === undefined) return; // not using Tiptap path
+    if (!editorSelection || editorSelection.text.length < 2) {
+      hideTimeout.current = setTimeout(() => {
+        setPopup(p => ({ ...p, visible: false }));
+        setResult(null);
+      }, 200);
+      return;
+    }
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
+    const coords = editorSelection.coords;
+    const x = coords ? coords.left : 200;
+    const y = coords ? coords.top - 48 : 100;
+    setPopup({
+      visible: true,
+      x: Math.max(80, x),
+      y: Math.max(40, y),
+      selectedText: editorSelection.text,
+      selStart: editorSelection.from,
+      selEnd: editorSelection.to,
+    });
+    setResult(null);
+  }, [editorSelection]);
+
+  // --- Legacy textarea path ---
+  const checkSelection = useCallback(() => {
+    if (editorSelection !== undefined) return;
+    const ta = textareaRef?.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const text = ta.value.slice(start, end).trim();
+
+    if (text.length < 2) {
+      hideTimeout.current = setTimeout(() => {
+        setPopup(p => ({ ...p, visible: false }));
+        setResult(null);
+      }, 200);
+      return;
+    }
+
+    const taRect = ta.getBoundingClientRect();
+    const linesBefore = ta.value.slice(0, start).split('\n').length - 1;
+    const lh = parseFloat(getComputedStyle(ta).lineHeight);
+    const lineHeight = isNaN(lh) || lh < 10 ? 28 : lh;
+    const paddingTop = parseInt(getComputedStyle(ta).paddingTop) || 0;
+    const y = taRect.top + paddingTop + (linesBefore * lineHeight) - ta.scrollTop - 48;
+    const x = taRect.left + Math.min(taRect.width / 2, 200);
+
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
+    setPopup({ visible: true, x: Math.max(80, x), y: Math.max(40, y), selectedText: text, selStart: start, selEnd: end });
+    setResult(null);
+  }, [textareaRef, editorSelection]);
+
+  // Legacy textarea selection listeners
+  useEffect(() => {
+    if (editorSelection !== undefined) return;
+    const ta = textareaRef?.current;
+    if (!ta) return;
+    const onMouseUp = () => requestAnimationFrame(checkSelection);
+    const onKeyUp = (e: KeyboardEvent) => { if (e.shiftKey || e.key === 'Shift') requestAnimationFrame(checkSelection); };
+    ta.addEventListener('mouseup', onMouseUp);
+    ta.addEventListener('keyup', onKeyUp);
+    return () => {
+      ta.removeEventListener('mouseup', onMouseUp);
+      ta.removeEventListener('keyup', onKeyUp);
+    };
+  }, [textareaRef, checkSelection, editorSelection]);
+
+  // [2026-05-09] noa:trigger-inline-rewrite 외부 키보드/버튼 신호 수신.
+  // novel-keymap (Ctrl+Shift+R) + QualityGutter Fix 버튼 → popup 강제 표시.
+  // 동작: 현재 selection 즉시 시도 → 없으면 textarea cursor 주변 ±10자.
+  useEffect(() => {
+    const handler = () => {
+      // textareaRef 경로 (legacy)
+      if (textareaRef?.current) {
+        const ta = textareaRef.current;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        if (end > start && (end - start) >= 2) {
+          checkSelection();
+          return;
+        }
+        // 선택 영역 없음 → cursor 주변 ±10자 자동 선택
+        const cursor = start;
+        const fallbackStart = Math.max(0, cursor - 10);
+        const fallbackEnd = Math.min(ta.value.length, cursor + 10);
+        if (fallbackEnd > fallbackStart) {
+          ta.setSelectionRange(fallbackStart, fallbackEnd);
+          requestAnimationFrame(checkSelection);
+        }
+        return;
+      }
+      // editorSelection 경로 (Tiptap) — prop 기반이라 외부 신호로 강제 X.
+      // 미래 확장: editor.commands.selectAround() 등 추가 가능.
+    };
+    window.addEventListener('noa:trigger-inline-rewrite', handler);
+    return () => window.removeEventListener('noa:trigger-inline-rewrite', handler);
+  }, [textareaRef, checkSelection]);
+
+  // 외부 클릭 시 닫기 (cleanup 보장)
+  useEffect(() => {
+    if (!popup.visible) return;
+    const onClick = (e: MouseEvent) => {
+      if (popupRef.current?.contains(e.target as Node)) return;
+      if (textareaRef?.current?.contains(e.target as Node)) return;
+      // For Tiptap: check if click is inside .novel-editor-wrapper
+      const target = e.target as HTMLElement;
+      if (target.closest?.('.novel-editor-wrapper')) return;
+      setPopup(p => ({ ...p, visible: false }));
+      setResult(null);
+      abortRef.current?.abort();
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [popup.visible, textareaRef]);
+
+  // ============================================================
+  // PART 3 — AI 호출 + 자동 교체
+  // ============================================================
+  const handleAction = useCallback(async (action: string) => {
+    // 주변 문맥 추출 (±200자)
+    const sourceText = fullTextProp ?? textareaRef?.current?.value ?? '';
+    const CONTEXT_RADIUS = 200;
+    const beforeText = sourceText.slice(Math.max(0, popup.selStart - CONTEXT_RADIUS), popup.selStart).trim();
+    const afterText = sourceText.slice(popup.selEnd, popup.selEnd + CONTEXT_RADIUS).trim();
+
+    // 스토리 컨텍스트 블록 구성
+    const ctxParts: string[] = [];
+    if (storyConfig?.genre) ctxParts.push(isKO ? `장르: ${storyConfig.genre}` : `Genre: ${storyConfig.genre}`);
+    if (storyConfig?.tone) ctxParts.push(isKO ? `톤: ${storyConfig.tone}` : `Tone: ${storyConfig.tone}`);
+    if (storyConfig?.narrativeIntensity) ctxParts.push(isKO ? `강도: ${storyConfig.narrativeIntensity}` : `Intensity: ${storyConfig.narrativeIntensity}`);
+    if (storyConfig?.characters?.length) {
+      const charList = storyConfig.characters.slice(0, 5).map(c => {
+        const parts = [c.name, c.role];
+        if (c.speechStyle) parts.push(c.speechStyle);
+        return parts.join('/');
+      }).join(', ');
+      ctxParts.push(isKO ? `등장인물: ${charList}` : `Characters: ${charList}`);
+    }
+    const contextBlock = ctxParts.length > 0
+      ? (isKO ? `[작품 설정] ${ctxParts.join(' | ')}\n\n` : `[Story Context] ${ctxParts.join(' | ')}\n\n`)
+      : '';
+
+    // 주변 문맥 블록
+    const surroundingBlock = (beforeText || afterText)
+      ? (isKO
+          ? `[주변 문맥]\n...${beforeText}<<<선택된 텍스트>>>${afterText}...\n\n`
+          : `[Surrounding]\n...${beforeText}<<<SELECTED>>>${afterText}...\n\n`)
+      : '';
+
+    const ctxAware = isKO
+      ? '장르의 분위기와 캐릭터 말투를 유지하면서 '
+      : 'While maintaining genre atmosphere and character voice, ';
+
+    const prompts: Record<string, string> = {
+      rewrite: isKO
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장을 리라이트해줘. 결과만 출력해. 설명 금지:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}rewrite this text. Output only the result, no explanation:\n\n${popup.selectedText}`,
+      expand: isKO
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장을 감각적 묘사로 확장해줘. 결과만 출력해:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}expand this text with sensory detail. Output only the result:\n\n${popup.selectedText}`,
+      compress: isKO
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장을 간결하게 축소해줘. 결과만 출력해:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}compress this text to be more concise. Output only the result:\n\n${popup.selectedText}`,
+      tone: isKO
+        ? `${contextBlock}${surroundingBlock}${ctxAware}다음 문장의 톤을 더 문학적으로 바꿔줘. 결과만 출력해:\n\n${popup.selectedText}`
+        : `${contextBlock}${surroundingBlock}${ctxAware}change the tone to be more literary. Output only the result:\n\n${popup.selectedText}`,
+    };
+
+    const prompt = prompts[action];
+    if (!prompt) return;
+
+    setLoading(true);
+    setResult(null);
+    setActiveAction(action);
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
+    // [P-08 — 2026-05-10] studio-inline-rewrite 레지스트리 정의 활용.
+    // role + duty + no-english-thinking + ip-brand-guard + character-dna + genre-rules 자동 조립.
+    // 4언어 자동 (LANG_DIRECTIVE) — isKO 분기 폐기.
+    const genreRulesBlock = storyConfig?.genre
+      ? `Current genre: ${storyConfig.genre}. Match its conventional rhythm and dialogue tone.`
+      : undefined;
+    const characterDnaBlock = storyConfig?.characters && storyConfig.characters.length > 0
+      ? storyConfig.characters.slice(0, 5).map(c => {
+          const speech = c.speechStyle ? ` (말투: ${c.speechStyle})` : '';
+          return `- ${c.name} [${c.role}]${speech}`;
+        }).join('\n')
+      : undefined;
+
+    const systemInstruction = buildAgentSystemPrompt('studio-inline-rewrite', {
+      language: normalizeToAgentLang(language),
+      'character-dna': characterDnaBlock,
+      'genre-rules': genreRulesBlock,
+    }, { autoTrim: true });
+
+    try {
+      let accumulated = '';
+      await streamChat({
+        systemInstruction,
+        messages: [{ role: 'user', content: prompt }],
+        onChunk: (chunk) => { accumulated += chunk; setResult(accumulated); },
+        signal: ctrl.signal,
+      });
+      setResult(accumulated.trim());
+    } catch {
+      if (!ctrl.signal.aborted) setResult(isKO ? '(생성 실패)' : '(Generation failed)');
+    } finally {
+      setLoading(false);
+    }
+  }, [popup.selectedText, popup.selStart, popup.selEnd, isKO, storyConfig, fullTextProp, textareaRef, language]);
+
+  const applyResult = useCallback(() => {
+    if (!result) return;
+    setLastApplied({ original: popup.selectedText, replacement: result });
+    // [C] Pass the selection range so the caller can replace the EXACT
+    // occurrence the user selected — not just the first string match.
+    // P0 fix: avoids wrong-location edits when the same sentence repeats.
+    onReplace(popup.selectedText, result, { from: popup.selStart, to: popup.selEnd });
+    setPopup(p => ({ ...p, visible: false }));
+    setResult(null);
+  }, [result, popup.selectedText, popup.selStart, popup.selEnd, onReplace]);
+
+  const handleUndo = useCallback(() => {
+    if (!lastApplied) return;
+    // Undo: no reliable range available (manuscript shifted after apply) →
+    // caller falls back to first-match of the replacement string.
+    onReplace(lastApplied.replacement, lastApplied.original);
+    setLastApplied(null);
+  }, [lastApplied, onReplace]);
+
+  if (!popup.visible) return null;
+
+  const lang = (language ?? 'KO') as AppLanguage;
+  const actions = [
+    { id: 'rewrite', icon: RefreshCw, label: L4(lang, { ko: '다시쓰기', en: 'Rewrite', ja: '書き直し', zh: '重写' }), color: 'text-accent-purple' },
+    { id: 'expand', icon: Expand, label: L4(lang, { ko: '확장', en: 'Expand', ja: '展開', zh: '扩展' }), color: 'text-accent-green' },
+    { id: 'compress', icon: Shrink, label: L4(lang, { ko: '축약', en: 'Compress', ja: '圧縮', zh: '压缩' }), color: 'text-accent-amber' },
+    { id: 'tone', icon: Palette, label: L4(lang, { ko: '문체', en: 'Style', ja: '文体', zh: '文风' }), color: 'text-accent-blue' },
+    { id: 'copy', icon: Copy, label: L4(lang, { ko: '복사', en: 'Copy', ja: 'コピー', zh: '复制' }), color: 'text-text-secondary' },
+  ];
+
+  // P0-4: Mobile bottom sheet vs desktop floating with viewport clamping
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const POPUP_WIDTH = 320;
+  const POPUP_HEIGHT = 160;
+  const MARGIN = 16;
+  const vpW = typeof window !== 'undefined' ? window.innerWidth : 800;
+  const vpH = typeof window !== 'undefined' ? window.innerHeight : 600;
+
+  const popupStyle: React.CSSProperties = isMobile
+    ? { position: 'fixed', bottom: 0, left: 0, right: 0, top: 'auto', transform: 'none' }
+    : {
+        left: Math.max(MARGIN, Math.min(popup.x, vpW - POPUP_WIDTH / 2 - MARGIN)),
+        top: Math.max(MARGIN, Math.min(popup.y, vpH - POPUP_HEIGHT - MARGIN)),
+        transform: 'translateX(-50%)',
+      };
+
+  return (
+    <div
+      ref={popupRef}
+      className={`fixed z-[var(--z-tooltip)] animate-in fade-in duration-200 ${isMobile ? 'slide-in-from-bottom-4 rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.4)]' : 'slide-in-from-bottom-2'}`}
+      style={popupStyle}
+    >
+      {/* Action buttons — icon + label vertically stacked */}
+      <div className={`flex items-center gap-0.5 px-1.5 py-1.5 bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)] ${isMobile ? 'rounded-t-2xl justify-around py-3 px-4' : 'rounded-xl'}`}>
+        {actions.map(a => {
+          const Icon = a.icon;
+          return (
+            <button
+              key={a.id}
+              onClick={() => a.id === 'copy' ? navigator.clipboard.writeText(popup.selectedText) : handleAction(a.id)}
+              disabled={loading}
+              className={`flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 rounded-lg text-[9px] font-bold ${a.color} hover:bg-bg-secondary transition-colors whitespace-nowrap disabled:opacity-40`}
+              title={a.label}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{a.label}</span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => { setPopup(p => ({ ...p, visible: false })); setResult(null); abortRef.current?.abort(); }}
+          className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors ml-0.5"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+
+      {/* Result preview + apply */}
+      {(loading || result) && (
+        <div className={`mt-1.5 bg-bg-primary/95 backdrop-blur-xl border border-border shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-3 ${isMobile ? 'rounded-none max-w-full' : 'max-w-md rounded-xl'}`}>
+          {loading && !result && (
+            <div className="flex items-center gap-2 text-[11px] text-text-tertiary">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              {activeAction === 'rewrite' ? (isKO ? '다시쓰기 중...' : 'Rewriting...')
+                : activeAction === 'expand' ? (isKO ? '확장 중...' : 'Expanding...')
+                : activeAction === 'compress' ? (isKO ? '축약 중...' : 'Condensing...')
+                : activeAction === 'tone' ? (isKO ? '문체 변환 중...' : 'Changing style...')
+                : (isKO ? '생성 중...' : 'Generating...')}
+            </div>
+          )}
+          {result && (
+            <>
+              {/* [Doc 3 인물/집필 P0 + Doc 4 dir 02 — 2026-05-12] NOA · 제안 라벨 + ghost 시각화.
+                  결과 텍스트는 점선 underline amber로 "제안 상태" 명시. 작가가 ⏎ 채택하기 전엔 commit 아님. */}
+              <div className="text-[9px] font-mono uppercase tracking-widest text-accent-amber mb-1.5 flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-accent-amber" aria-hidden="true" />
+                {isKO ? '노아 · 제안' : 'Noa · Suggestion'}
+              </div>
+              <p
+                className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto"
+                style={{ borderBottom: '1px dashed var(--color-accent-amber)', paddingBottom: '4px' }}
+              >
+                {result}
+              </p>
+              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
+                {/* [Doc 4 dir 02 — 2026-05-12] "적용" → "채택", "취소" → "폐기".
+                    작가가 주어. NOA의 출력은 제안, 작가의 행동은 결정. amber CTA (보라 폐기). */}
+                <button
+                  onClick={applyResult}
+                  style={{ color: '#1a1410' }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-amber text-[#1a1410] text-[11px] font-bold hover:bg-accent-amber/90 transition-colors"
+                  title={isKO ? '⏎ 채택' : '⏎ Accept'}
+                >
+                  <Check className="w-3 h-3" />
+                  {isKO ? '채택' : 'Accept'}
+                </button>
+                <button
+                  onClick={() => { setResult(null); abortRef.current?.abort(); }}
+                  className="px-3 py-1.5 rounded-lg text-text-tertiary text-[11px] font-bold hover:bg-bg-secondary transition-colors"
+                  title={isKO ? 'esc 폐기' : 'esc Discard'}
+                >
+                  {isKO ? '폐기' : 'Discard'}
+                </button>
+                {lastApplied && (
+                  <button
+                    onClick={handleUndo}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-accent-amber text-[11px] font-bold hover:bg-accent-amber/10 transition-colors"
+                    title={isKO ? '이전으로 되돌리기' : 'Undo last change'}
+                  >
+                    <Undo2 className="w-3 h-3" />
+                    {isKO ? '이전으로' : 'Undo'}
+                  </button>
+                )}
+                <span className="ml-auto text-[9px] text-text-tertiary">
+                  {result.length}{isKO ? '자' : 'ch'}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Selection info */}
+      {!result && !loading && (
+        <div className="text-center mt-0.5">
+          <span className="text-[9px] text-text-tertiary font-mono">
+            {popup.selectedText.length}{isKO ? '자 선택' : ' selected'}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}

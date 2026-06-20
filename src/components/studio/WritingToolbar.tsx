@@ -1,0 +1,463 @@
+'use client';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+
+// ============================================================
+// PART 1 — 타입 및 인터페이스
+// ============================================================
+interface WritingToolbarProps {
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  value: string;
+  onChange: (value: string) => void;
+  language?: string;
+  targetMin?: number;
+  targetMax?: number;
+}
+// IDENTITY_SEAL: PART-1 | role=타입 정의 | inputs=props | outputs=interface
+
+export interface TextSelectionRange {
+  start: number;
+  end: number;
+}
+
+export interface TextOperationResult {
+  text: string;
+  selection: TextSelectionRange;
+}
+
+function clampOffset(value: string, offset: number): number {
+  if (!Number.isFinite(offset)) return 0;
+  return Math.max(0, Math.min(Math.round(offset), value.length));
+}
+
+export function applyWrapToRange(
+  value: string,
+  selection: TextSelectionRange,
+  prefix: string,
+  suffix = prefix,
+): TextOperationResult {
+  const start = clampOffset(value, selection.start);
+  const end = Math.max(start, clampOffset(value, selection.end));
+  return {
+    text: `${value.slice(0, start)}${prefix}${value.slice(start, end)}${suffix}${value.slice(end)}`,
+    selection: {
+      start: start + prefix.length,
+      end: end + prefix.length,
+    },
+  };
+}
+
+export function applyInsertAt(value: string, offset: number, insert: string): TextOperationResult {
+  const position = clampOffset(value, offset);
+  const nextPosition = position + insert.length;
+  return {
+    text: `${value.slice(0, position)}${insert}${value.slice(position)}`,
+    selection: { start: nextPosition, end: nextPosition },
+  };
+}
+
+function selectedLineBounds(value: string, selection: TextSelectionRange): { start: number; end: number } {
+  const start = clampOffset(value, selection.start);
+  const rawEnd = Math.max(start, clampOffset(value, selection.end));
+  const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+  const adjustedEnd = rawEnd > start && value[rawEnd - 1] === '\n' ? rawEnd - 1 : rawEnd;
+  const nextBreak = value.indexOf('\n', adjustedEnd);
+  return {
+    start: lineStart,
+    end: nextBreak === -1 ? value.length : nextBreak,
+  };
+}
+
+export function applyIndentToLineRange(
+  value: string,
+  selection: TextSelectionRange,
+  direction: 'in' | 'out',
+): TextOperationResult {
+  const bounds = selectedLineBounds(value, selection);
+  const before = value.slice(0, bounds.start);
+  const target = value.slice(bounds.start, bounds.end);
+  const after = value.slice(bounds.end);
+  const lines = target.split('\n');
+  let deltaBeforeStart = 0;
+  let deltaBeforeEnd = 0;
+  let currentOffset = bounds.start;
+
+  const transformed = lines.map((line) => {
+    const lineStart = currentOffset;
+    const lineEnd = lineStart + line.length;
+    currentOffset = lineEnd + 1;
+
+    const changedLine = direction === 'in'
+      ? `  ${line}`
+      : line.replace(/^ {1,2}/, '');
+    const delta = changedLine.length - line.length;
+
+    if (lineStart < selection.start) deltaBeforeStart += delta;
+    if (lineStart < selection.end) deltaBeforeEnd += delta;
+    return changedLine;
+  });
+
+  const nextStart = Math.max(bounds.start, clampOffset(value, selection.start) + deltaBeforeStart);
+  const nextEnd = Math.max(nextStart, clampOffset(value, selection.end) + deltaBeforeEnd);
+  return {
+    text: `${before}${transformed.join('\n')}${after}`,
+    selection: { start: nextStart, end: nextEnd },
+  };
+}
+
+// ============================================================
+// PART 2 — 텍스트 조작 훅
+// ============================================================
+function useTextOps(
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>,
+  value: string,
+  onChange: (v: string) => void,
+) {
+  const wrapSelection = useCallback(
+    (prefix: string, suffix = prefix) => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const s = ta.selectionStart;
+      const e = ta.selectionEnd;
+      const selected = value.slice(s, e);
+      onChange(value.slice(0, s) + prefix + selected + suffix + value.slice(e));
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(s + prefix.length, e + prefix.length);
+      }, 0);
+    },
+    [value, onChange, textareaRef],
+  );
+
+  const addHeading = useCallback(
+    (level: 1 | 2 | 3) => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const pos = ta.selectionStart;
+      const lineStart = value.lastIndexOf('\n', pos - 1) + 1;
+      const lineEnd = value.indexOf('\n', pos);
+      const lineText = value.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+      const stripped = lineText.replace(/^#{1,6}\s*/, '');
+      const prefix = '#'.repeat(level) + ' ';
+      const tail = lineEnd === -1 ? '' : value.slice(lineEnd);
+      onChange(value.slice(0, lineStart) + prefix + stripped + tail);
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(
+          lineStart + prefix.length,
+          lineStart + prefix.length + stripped.length,
+        );
+      }, 0);
+    },
+    [value, onChange, textareaRef],
+  );
+
+  const adjustIndent = useCallback(
+    (direction: 'in' | 'out') => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const pos = ta.selectionStart;
+      const lineStart = value.lastIndexOf('\n', pos - 1) + 1;
+      if (direction === 'in') {
+        onChange(value.slice(0, lineStart) + '  ' + value.slice(lineStart));
+        setTimeout(() => { ta.focus(); ta.setSelectionRange(pos + 2, pos + 2); }, 0);
+      } else {
+        const lineText = value.slice(lineStart);
+        const spaces = lineText.match(/^ */)?.[0].length ?? 0;
+        if (spaces === 0) return;
+        const remove = Math.min(2, spaces);
+        onChange(value.slice(0, lineStart) + lineText.slice(remove));
+        const next = Math.max(lineStart, pos - remove);
+        setTimeout(() => { ta.focus(); ta.setSelectionRange(next, next); }, 0);
+      }
+    },
+    [value, onChange, textareaRef],
+  );
+
+  return { wrapSelection, addHeading, adjustIndent };
+}
+// IDENTITY_SEAL: PART-2 | role=텍스트 조작 | inputs=ref,value,onChange | outputs=wrapSelection,addHeading,adjustIndent
+
+// ============================================================
+// PART 3 — 찾기/바꾸기 훅
+// ============================================================
+function useFindReplace(
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>,
+  value: string,
+  onChange: (v: string) => void,
+) {
+  const [showFind, setShowFind] = useState(false);
+  // [M9 P1-11] findText is split into input state (`findInput`) and debounced search state (`findText`).
+  // - input state updates immediately for the controlled <input> (no typing lag).
+  // - `findText` commits after 150ms idle, which is what drives the O(n) scan in `matches`.
+  // - Enter key calls `flushFind()` to commit immediately (preserves existing "instant search" behavior).
+  // Rationale: for 100k+ char episodes, a synchronous scan per keystroke janks typing; 150ms debounce cuts
+  // worst-case scans by ~10x on sustained typing without any observable delay for normal users.
+  const [findInput, setFindInput] = useState('');
+  const [findText, setFindTextCommitted] = useState('');
+  const [replaceText, setReplaceText] = useState('');
+  const [matchIndex, setMatchIndex] = useState(0);
+
+  // [C] clearTimeout on unmount + input change — no stale timer leak.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current !== null) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setFindTextCommitted(findInput);
+      debounceRef.current = null;
+    }, 150);
+    return () => {
+      if (debounceRef.current !== null) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+    };
+  }, [findInput]);
+
+  // Enter-key fast-path: flush pending debounce and commit immediately.
+  const flushFind = useCallback(() => {
+    if (debounceRef.current !== null) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    setFindTextCommitted(findInput);
+  }, [findInput]);
+
+  const matches = useMemo(() => {
+    if (!findText) return [] as number[];
+    const result: number[] = [];
+    let i = 0;
+    while ((i = value.indexOf(findText, i)) !== -1) {
+      result.push(i);
+      i += findText.length;
+    }
+    return result;
+  }, [findText, value]);
+
+  // Clamp matchIndex without triggering a setState cascade
+  const clampedIndex = matches.length > 0 ? Math.min(matchIndex, matches.length - 1) : 0;
+
+  const navigateTo = useCallback(
+    (idx: number) => {
+      if (matches.length === 0) return;
+      const clamped = ((idx % matches.length) + matches.length) % matches.length;
+      setMatchIndex(clamped);
+      const pos = matches[clamped] ?? 0;
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      ta.setSelectionRange(pos, pos + findText.length);
+      const linesBefore = value.slice(0, pos).split('\n').length - 1;
+      const lineHeight = parseInt(getComputedStyle(ta).lineHeight) || 22;
+      ta.scrollTop = linesBefore * lineHeight - ta.clientHeight / 2;
+    },
+    [matches, findText, value, textareaRef],
+  );
+
+  const replaceOne = useCallback(() => {
+    if (!findText || matches.length === 0) return;
+    const pos = matches[clampedIndex] ?? matches[0];
+    onChange(value.slice(0, pos) + replaceText + value.slice(pos + findText.length));
+  // clampedIndex is derived from matchIndex + matches — list both to satisfy exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [findText, replaceText, matches, matchIndex, value, onChange]);
+
+  const replaceAll = useCallback(() => {
+    // [M9 P1-11] replaceAll flushes pending debounce so the user gets the input they see, not stale state.
+    const target = findInput || findText;
+    if (!target) return;
+    onChange(value.split(target).join(replaceText));
+    setMatchIndex(0);
+  }, [findInput, findText, replaceText, value, onChange]);
+
+  return {
+    showFind, setShowFind,
+    // findInput — controlled input binding (immediate); findText — debounced driver for search.
+    findInput, setFindInput,
+    findText,
+    flushFind,
+    replaceText, setReplaceText,
+    matchIndex: clampedIndex,
+    matches,
+    navigateTo, replaceOne, replaceAll,
+  };
+}
+// IDENTITY_SEAL: PART-3 | role=찾기/바꾸기 | inputs=ref,value,onChange | outputs=showFind,navigateTo,replaceOne,replaceAll
+
+// ============================================================
+// PART 4 — 통계 계산
+// ============================================================
+function useWritingStats(value: string) {
+  return useMemo(() => {
+    const chars = value.length;
+    const charsNoSpace = value.replace(/\s/g, '').length;
+    const words = value.trim() ? value.trim().split(/\s+/).length : 0;
+    const lines = value.split('\n').length;
+    const paras = value.split(/\n\s*\n/).filter(p => p.trim()).length;
+    return { chars, charsNoSpace, words, lines, paras };
+  }, [value]);
+}
+// IDENTITY_SEAL: PART-4 | role=통계 계산 | inputs=value | outputs=stats
+
+// ============================================================
+// PART 5 — 메인 컴포넌트
+// ============================================================
+export function WritingToolbar({ textareaRef, value, onChange, language, targetMin, targetMax }: WritingToolbarProps) {
+  const isKO = language === 'KO';
+  const { wrapSelection, adjustIndent } = useTextOps(textareaRef, value, onChange);
+
+  // Novel-friendly text insert: no raw markdown, visible section markers
+  const insertAtCursor = useCallback((text: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const pos = ta.selectionStart;
+    onChange(value.slice(0, pos) + text + value.slice(pos));
+    const newPos = pos + text.length;
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(newPos, newPos); }, 0);
+  }, [textareaRef, value, onChange]);
+  const {
+    showFind, setShowFind,
+    findInput, setFindInput,
+    findText,
+    flushFind,
+    replaceText, setReplaceText,
+    matchIndex, matches,
+    navigateTo, replaceOne, replaceAll,
+  } = useFindReplace(textareaRef, value, onChange);
+  const stats = useWritingStats(value);
+
+  const btn = 'p-1.5 rounded hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors select-none';
+  const divider = <div className="w-px h-4 bg-border shrink-0 mx-0.5" />;
+
+  return (
+    <div className="space-y-2">
+      {/* ── 툴바 ── */}
+      <div className="flex items-center gap-0.5 px-2 py-1 bg-bg-secondary border border-border rounded-lg flex-wrap gap-y-1">
+
+        {/* 서식 — 소설 작성용 (마크다운 기호 대신 가시적 구분자) */}
+        <button onClick={() => wrapSelection('「', '」')} title={isKO ? '강조 (괄호)' : 'Emphasis'} aria-label={isKO ? '강조 (괄호)' : 'Emphasis'} className={`${btn} text-xs font-black w-6 h-6 flex items-center justify-center`}>「」</button>
+        <button onClick={() => insertAtCursor('\n\n* * *\n\n')} title={isKO ? '장면 전환' : 'Scene Break'} aria-label={isKO ? '장면 전환' : 'Scene Break'} className={`${btn} text-[10px] font-black font-mono px-1.5`}>***</button>
+        <button onClick={() => insertAtCursor('\n\n────────────────\n\n')} title={isKO ? '구분선' : 'Divider'} aria-label={isKO ? '구분선' : 'Divider'} className={`${btn} text-[10px] font-mono px-1.5`}>──</button>
+
+        {divider}
+
+        {/* 들여쓰기 */}
+        <button onClick={() => adjustIndent('out')} title={isKO ? '내어쓰기' : 'Outdent'} aria-label={isKO ? '내어쓰기' : 'Outdent'} className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇤</button>
+        <button onClick={() => adjustIndent('in')} title={isKO ? '들여쓰기' : 'Indent'} aria-label={isKO ? '들여쓰기' : 'Indent'} className={`${btn} text-sm font-mono w-6 h-6 flex items-center justify-center`}>⇥</button>
+
+        {divider}
+
+        {/* 찾기/바꾸기 */}
+        <button
+          onClick={() => setShowFind(v => !v)}
+          title={isKO ? '찾기/바꾸기' : 'Find / Replace'}
+          aria-label={isKO ? '찾기/바꾸기' : 'Find / Replace'}
+          className={`${btn} text-[11px] w-6 h-6 flex items-center justify-center ${showFind ? 'text-accent-purple bg-accent-purple/15 rounded' : ''}`}
+        >🔍</button>
+
+        {/* 통계 */}
+        <div className="ml-auto flex items-center gap-2 text-[10px] text-text-tertiary font-mono flex-wrap">
+          <span title={isKO ? '공백 제외 글자수' : 'chars (no spaces)'}>
+            {stats.charsNoSpace.toLocaleString()}{isKO ? '자' : 'ch'}
+          </span>
+          <span className="text-border">|</span>
+          <span title={isKO ? '단어수' : 'words'}>
+            {stats.words.toLocaleString()}{isKO ? '어' : 'w'}
+          </span>
+          <span className="text-border">|</span>
+          <span title={isKO ? '줄수' : 'lines'}>{stats.lines}{isKO ? '줄' : 'L'}</span>
+          {stats.paras > 1 && (
+            <>
+              <span className="text-border">|</span>
+              <span title={isKO ? '단락수' : 'paragraphs'}>{stats.paras}{isKO ? '단락' : 'P'}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── 글자수 목표 프로그레스 ── */}
+      {targetMin != null && targetMin > 0 && (
+        <div className="px-2 py-1">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-bg-tertiary/50 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${
+                  stats.charsNoSpace >= targetMin ? 'bg-accent-green' : stats.charsNoSpace >= targetMin * 0.5 ? 'bg-accent-purple' : 'bg-border'
+                }`}
+                style={{ width: `${Math.min(100, (stats.charsNoSpace / (targetMax || targetMin)) * 100)}%` }}
+              />
+            </div>
+            <span className="text-[9px] font-mono text-text-tertiary shrink-0">
+              {stats.charsNoSpace.toLocaleString()} / {(targetMin).toLocaleString()}{targetMax ? `~${targetMax.toLocaleString()}` : ''}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── 찾기/바꾸기 바 ── */}
+      {showFind && (
+        <div className="flex flex-wrap gap-2 items-center px-3 py-2 bg-bg-secondary border border-border rounded-lg sticky top-0 z-10">
+          <span className="text-[10px] font-black text-text-tertiary font-mono uppercase tracking-widest shrink-0">
+            {isKO ? '찾기/바꾸기' : 'Find / Replace'}
+          </span>
+
+          <input
+            autoFocus
+            value={findInput}
+            onChange={e => { setFindInput(e.target.value); }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                // [M9 P1-11] Enter bypasses the 150ms debounce and searches immediately.
+                flushFind();
+                navigateTo(matchIndex + 1);
+              }
+            }}
+            placeholder={isKO ? '검색어' : 'Find...'}
+            className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors text-text-primary"
+          />
+
+          <input
+            value={replaceText}
+            onChange={e => setReplaceText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') replaceOne(); }}
+            placeholder={isKO ? '바꿀 내용' : 'Replace...'}
+            className="w-32 bg-bg-primary border border-border rounded px-2 py-1 text-[11px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors text-text-primary"
+          />
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigateTo(matchIndex - 1)}
+              disabled={matches.length === 0}
+              className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-mono font-bold hover:border-accent-purple disabled:opacity-30 transition-colors"
+              title={isKO ? '이전' : 'Previous'}
+            >↑</button>
+            <button
+              onClick={() => navigateTo(matchIndex + 1)}
+              disabled={matches.length === 0}
+              className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-mono font-bold hover:border-accent-purple disabled:opacity-30 transition-colors"
+              title={isKO ? '다음' : 'Next'}
+            >↓</button>
+            <button
+              onClick={replaceOne}
+              disabled={matches.length === 0}
+              className="px-2 py-1 bg-bg-primary border border-border rounded text-[10px] font-mono font-bold hover:border-accent-purple disabled:opacity-30 transition-colors"
+            >{isKO ? '바꾸기' : 'Replace'}</button>
+            <button
+              onClick={replaceAll}
+              disabled={!findInput}
+              className="px-2 py-1 bg-accent-purple/10 border border-accent-purple/30 rounded text-[10px] font-mono font-bold text-accent-purple hover:bg-accent-purple/20 disabled:opacity-30 transition-colors"
+            >{isKO ? '모두 바꾸기' : 'All'}</button>
+          </div>
+
+          {findText && (
+            <span className="text-[10px] font-mono text-text-tertiary">
+              {matches.length === 0
+                ? (isKO ? '결과 없음' : 'no match')
+                : `${matchIndex + 1} / ${matches.length}`}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+// IDENTITY_SEAL: PART-5 | role=WritingToolbar 컴포넌트 | inputs=textareaRef,value,onChange,language | outputs=JSX

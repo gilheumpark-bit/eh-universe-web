@@ -1,0 +1,44 @@
+{
+  "iterations": 1000,
+  "project_fixture": {
+    "projects": 10,
+    "sessions_per_project": 5,
+    "episodes_per_session": 10
+  },
+  "off": {
+    "p50": 1.011,
+    "p95": 1.871,
+    "p99": 3.556,
+    "avg": 1.14,
+    "samples": 1000
+  },
+  "on": {
+    "primary": {
+      "p50": 0.901,
+      "p95": 1.282,
+      "p99": 1.496,
+      "avg": 0.979,
+      "samples": 1000
+    },
+    "shadow": {
+      "p50": 3.565,
+      "p95": 5.224,
+      "p99": 7.371,
+      "avg": 3.866,
+      "samples": 1000
+    }
+  },
+  "primary_delta_pct": {
+    "avg": -14.123,
+    "p95": -31.48,
+    "note": "positive=slower, negative=faster"
+  },
+  "acceptance": {
+    "target_max_primary_slowdown_pct": 5,
+    "primary_avg_within_budget": true,
+    "primary_p95_within_budget": true
+  },
+  "verdict": "PASS — Primary wall-clock delta (-14.123% avg, -31.48% p95) within +5% budget",
+  "ran_at": "2026-04-20T03:00:29.702Z",
+  "node_version": "v24.14.1"
+}

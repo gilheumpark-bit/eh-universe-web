@@ -1,0 +1,197 @@
+// ============================================================
+// Public API — save-engine
+// ============================================================
+//
+// Phase 1.1 현재는 신규 엔진만 제공. 기존 경로(project-migration, indexeddb-backup,
+// useProjectManager)는 건드리지 않음. Phase 1.5에서 useAutoSave 훅과 useProjectManager 연결.
+
+export * from './types';
+export { ulid, tickLocal, recvRemote, compareHLC, isConcurrent, getNodeId, zeroHLC } from './hlc';
+export { sha256, canonicalJson, hashPayload, verifyChain } from './hash';
+export { computePatch, applyPatch, buildDelta, replayDeltas } from './delta';
+export { createSnapshot, restoreSnapshot, cleanupOldSnapshots, evaluateSnapshotTrigger, findLatestSnapshotEntry } from './snapshot';
+export { detectAnomaly, countCharacters, ANOMALY_RATIO_THRESHOLD, ANOMALY_PREV_MIN } from './anomaly-detector';
+export { appendEntry, appendInitEntry, readAllEntries, verifyJournal, getCurrentHLC } from './journal';
+export { performAtomicAppend, estimateEntrySize, toSaveMeta } from './atomic-write';
+export { routerAppendEntry, routerGetTip, routerListEntries, routerGetEntry, routerBootCleanup } from './storage-router';
+export { migrateLegacyProjects, hasLegacyProjects, isAlreadyMigrated, rollbackMigrationMarker } from './migration';
+export { runBootRecovery } from './recovery';
+export {
+  readBeacon,
+  writeBeacon,
+  clearBeacon,
+  estimateCrash,
+  evaluateBeaconStatus,
+  markCleanShutdown,
+  startHeartbeat,
+  BEACON_CRASH_THRESHOLD_MS,
+  BEACON_HEARTBEAT_INTERVAL_MS,
+} from './beacon';
+export type { BeaconStatus, BeaconPayload, CrashEstimate, HeartbeatHandle } from './beacon';
+export { acquireLeaderController, isWebLocksSupported } from './leader-election';
+export type { LeaderController, LeaderInfo, LeaderRole } from './leader-election';
+export { WriterQueue, getDefaultWriterQueue } from './writer-queue';
+export { compressToBytes, decompressFromBytes, isCompressionStreamSupported } from './compression';
+// M1.3 — Multi-Tab Concurrency
+export {
+  TabSyncBus,
+  getDefaultTabSyncBus,
+  resetDefaultTabSyncBusForTests,
+} from './tab-sync';
+export type {
+  TabSyncEvent,
+  TabSyncEventType,
+  SaveCommittedPayload,
+  StateChangedPayload,
+  UserActionPayload,
+} from './tab-sync';
+export {
+  ConflictDetector,
+  getDefaultConflictDetector,
+  resetDefaultConflictDetectorForTests,
+  dispatchConflictAlert,
+} from './conflict-detector';
+export type {
+  ConflictLogEntry,
+  ConflictReason,
+  DetectSaveCommittedInput,
+  DetectPromotionInput,
+} from './conflict-detector';
+// M1.4 — 3-Tier Backup Orchestrator
+export {
+  BackupOrchestrator,
+  getDefaultBackupOrchestrator,
+  resetDefaultBackupOrchestratorForTests,
+  TIER_STATUS_EVENT,
+} from './backup-tiers';
+export type {
+  BackupTier,
+  BackupTierState,
+  BackupTierStatus,
+  BackupTierError,
+  BackupTierHandler,
+  BackupTierListener,
+  RegisterTierOptions,
+} from './backup-tiers';
+export {
+  isMirrorAllowed,
+  pushSnapshot,
+  pullSnapshot,
+  createFirestoreMirrorHandler,
+  FIRESTORE_MIRROR_DEFAULTS,
+} from './firestore-mirror';
+export type {
+  MirrorSnapshot,
+  MirrorPushResult,
+  MirrorPullResult,
+  FirestoreMirrorOptions,
+  MirrorSnapshotProvider,
+} from './firestore-mirror';
+export {
+  generateBackup,
+  backupNow,
+  buildBackupFilename,
+  loadBackupHistory,
+  getNotificationPermission,
+  requestNotificationPermissionOnce,
+  computeBundlePreview,
+  createFileTierHandler,
+  FILE_TIER_DEFAULTS,
+} from './file-tier';
+export type {
+  FileBackupRecord,
+  FileBackupResult,
+  FileTierOptions,
+  ProjectIdProvider,
+  NotificationDecision,
+  BundlePreview,
+} from './file-tier';
+// M1.5.0 — Shadow Mode Logger + Diff Analyzer
+export {
+  startShadowWrite,
+  recordLegacyComplete,
+  completeShadowWrite,
+  getShadowLog,
+  getMatchRate,
+  clearShadowLog,
+} from './shadow-logger';
+export type {
+  ShadowLogEntry,
+  ShadowLogFilter,
+  ShadowOperation,
+} from './shadow-logger';
+export {
+  analyzeShadowLog,
+  isReadyForOnPromotion,
+  getUnmatchedOperations,
+} from './diff-analyzer';
+export type {
+  DiffAnalysisReport,
+  OperationMismatch,
+  ReadinessCheck,
+} from './diff-analyzer';
+// M1.5.5 — Primary Writer 관련 타입은 hooks/usePrimaryWriter 에 위치.
+// save-engine 은 framework-agnostic 유지 — 'use client' 파일을 import 하지 않는다.
+// 서비스/테스트는 `import type { PrimaryMode, WriteResult } from '@/hooks/usePrimaryWriter'` 사용.
+
+// M1.5.4 — Promotion Controller + Audit
+export {
+  evaluatePromotion,
+  shouldDowngrade,
+  DEFAULT_CRITERIA,
+  DEFAULT_DOWNGRADE_OPTIONS,
+} from './promotion-controller';
+export type {
+  PromotionCriteria,
+  PromotionMetrics,
+  PromotionStatus,
+  JournalError,
+  DowngradeOptions,
+} from './promotion-controller';
+export {
+  recordPromotion,
+  getPromotionHistory,
+  clearPromotionHistory,
+  __resetPromotionAuditForTests,
+} from './promotion-audit';
+export type {
+  PromotionEvent,
+  PromotionHistoryFilter,
+  PromotionTrigger,
+} from './promotion-audit';
+// M1.7 — Storage Observatory (관측/감사)
+export {
+  recordPrimaryWrite,
+  getPrimaryWriteLog,
+  clearPrimaryWriteLog,
+  __resetPrimaryWriteLoggerForTests,
+} from './primary-write-logger';
+export type {
+  PrimaryWriteLogEntry,
+  PrimaryWriteLogFilter,
+} from './primary-write-logger';
+export {
+  logEvent,
+  getEventLog,
+  getEventLogSync,
+  exportEventLog,
+  clearEventLog,
+  __resetLocalEventLogForTests,
+} from './local-event-log';
+export type {
+  StorageEvent,
+  StorageEventCategory,
+  StorageEventOutcome,
+  EventFilter,
+} from './local-event-log';
+export {
+  isSentryEnabled,
+  reportStorageEvent,
+  setSentryClientForTests,
+  __resetSentryIntegrationForTests,
+  __setEnvEnabledForTests,
+} from './sentry-integration';
+export type {
+  StorageSentryEvent,
+  SentryClientLike,
+} from './sentry-integration';

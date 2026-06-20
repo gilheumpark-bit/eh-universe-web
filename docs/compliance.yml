@@ -1,0 +1,73 @@
+version: 1
+last_updated: "2026-06-12"
+status: baseline
+owner: Loreguard
+scope:
+  product: Loreguard
+  active_routes:
+    - /studio
+    - /translation-studio
+    - /docs
+    - /verify
+  artifact_paths:
+    ai_disclosure_page: src/app/ai-disclosure/page.tsx
+    copyright_page: src/app/copyright/page.tsx
+    creative_process: src/lib/creative-process
+    c2pa_ready_manifest: src/lib/creative-process/c2pa-ready-manifest.ts
+    submission_package: src/lib/creative-process/submission-package.ts
+    ai_usage_tracker: src/lib/ai-usage-tracker.ts
+jurisdictions:
+  EU:
+    ai_act_article_50:
+      effective_date: "2026-08-02"
+      obligations:
+        - ai_generated_content_marking
+        - machine_readable_detection_metadata
+        - deepfake_labeling_when_applicable
+        - ai_generated_text_labeling_where_required
+      implementation:
+        ui:
+          - src/app/ai-disclosure/page.tsx
+        export:
+          - src/lib/creative-process/submission-package.ts
+          - src/lib/creative-process/c2pa-ready-manifest.ts
+        metadata:
+          - src/lib/creative-process/types.ts
+          - src/lib/creative-process/report-builder.ts
+        api:
+          - src/app/api/cp/register/route.ts
+          - src/app/api/cp/verify/[id]/route.ts
+      tests:
+        attached:
+          - src/lib/__tests__/compliance-policy.test.ts
+          - src/lib/creative-process/__tests__/regulatory-profile.test.ts
+          - e2e/loreguard-submission-package-export-verify.spec.ts
+      gate_status: PARTIAL
+      hold_reason: Executable policy-as-test coverage and browser export hash-manifest e2e evidence are attached; legal review remains HOLD.
+  KR:
+    ai_basic_law:
+      effective_date: "2026-01-22"
+      obligations:
+        - generative_ai_notice
+        - generated_output_label
+        - high_impact_ai_mapping_if_applicable
+      implementation:
+        ui:
+          - src/app/ai-disclosure/page.tsx
+        export:
+          - src/lib/creative-process/submission-package.ts
+        metadata:
+          - src/lib/creative-process/c2pa-ready-manifest.ts
+      tests:
+        attached:
+          - src/lib/__tests__/compliance-policy.test.ts
+          - src/lib/creative-process/__tests__/regulatory-profile.test.ts
+          - e2e/loreguard-submission-package-export-verify.spec.ts
+      gate_status: PARTIAL
+      hold_reason: 실행형 policy-as-test와 브라우저 출고 hash-manifest e2e 증거는 연결됨. 법령·시행령·고시·가이드라인별 세부 확인은 HOLD.
+release_gate:
+  pass_requires:
+    - all_required_obligations_mapped
+    - ui_export_api_metadata_paths_have_tests
+    - no_public_copy_uses_certification_or_guarantee_claims
+  current_verdict: HOLD

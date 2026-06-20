@@ -1,0 +1,27 @@
+{
+  "kind": "loreguard.release-evidence.v1",
+  "gate": "T10",
+  "requirementId": "T10-agent-runner-containment",
+  "environment": "disabled-attestation",
+  "artifactType": "agent-runner-disabled-attestation",
+  "generatedAt": "2026-06-20T08:38:37+09:00",
+  "source": "local-script://scripts/loreguard-release-disabled-attestations.mjs",
+  "summary": "Agent runner surfaces remain disabled in the current Loreguard product.",
+  "checks": [
+    {
+      "id": "agent-runner-disabled-attestation-real-run-check",
+      "status": "PASS",
+      "evidence": "Static repository inspection confirmed retired agent-search/network-agent routes return disabled or removed responses; attached artifact records inspected files."
+    }
+  ],
+  "hashes": [
+    {
+      "path": "docs/release-evidence/artifacts/t10-agent-runner-disabled-attestation.txt",
+      "sha256": "298b251fcab9e1cec1cb3c070c545b52633e3057f254aea03c77e3ef34331f59"
+    }
+  ],
+  "limitations": [
+    "Disabled-state attestation only. This does not replace staging, legal, provider, payment, or production evidence.",
+    "This evidence does not claim legal substitution, ownership determination, or complete protection."
+  ]
+}

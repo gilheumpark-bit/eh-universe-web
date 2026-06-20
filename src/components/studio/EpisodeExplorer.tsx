@@ -1,0 +1,444 @@
+"use client";
+
+// ============================================================
+// PART 1 — Imports & Types
+// ============================================================
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import {
+  FolderOpen, FileText, Plus, ChevronRight, ChevronDown,
+  Users, Globe, Clapperboard, X, GitBranch,
+} from 'lucide-react';
+import dynamic from 'next/dynamic';
+const ParallelUniversePanel = dynamic(() => import('./ParallelUniversePanel'), { ssr: false });
+import type { StoryConfig, AppLanguage, EpisodeManuscript } from '@/lib/studio-types';
+import { L4 } from '@/lib/i18n';
+import BranchSelector from './BranchSelector';
+
+interface EpisodeExplorerProps {
+  config: StoryConfig;
+  currentEpisode: number;
+  language: AppLanguage;
+  onSelectEpisode: (episode: number) => void;
+  onCreateEpisode?: () => void;
+  onCreateVolume?: () => void;
+  onClose?: () => void;
+  onNavigateTab?: (tab: string) => void;
+  /** Git branch data from useGitHubSync */
+  branches?: string[];
+  currentBranch?: string;
+  onSwitchBranch?: (branch: string) => void;
+  onCreateBranch?: (name: string) => void;
+  gitConnected?: boolean;
+  /** Load episode content for a specific branch (for diff view). */
+  onLoadBranchContent?: (branch: string, episode: number) => Promise<string>;
+  className?: string;
+}
+
+interface VolumeGroup {
+  volumeId: number;
+  title: string;
+  episodes: EpisodeManuscript[];
+}
+
+type EpisodeStatus = 'done' | 'writing' | 'draft';
+
+// ============================================================
+// PART 2 — Helpers
+// ============================================================
+
+function getEpisodeStatus(ms: EpisodeManuscript): EpisodeStatus {
+  if (ms.charCount >= 4000) return 'done';
+  if (ms.charCount >= 500) return 'writing';
+  return 'draft';
+}
+
+function statusIcon(status: EpisodeStatus): string {
+  if (status === 'done') return '\u2705';
+  if (status === 'writing') return '\u270D\uFE0F';
+  return '\uD83D\uDCDD';
+}
+
+function statusLabel(status: EpisodeStatus, lang: AppLanguage): string {
+  if (status === 'done') return L4(lang, { ko: '완료', en: 'Done', ja: '完了', zh: '完成' });
+  if (status === 'writing') return L4(lang, { ko: '집필 중', en: 'Writing', ja: '執筆中', zh: '写作中' });
+  return L4(lang, { ko: '초안', en: 'Draft', ja: '下書き', zh: '草稿' });
+}
+
+function truncate(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return text.slice(0, max) + '\u2026';
+}
+
+function formatCharCount(n: number): string {
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
+// ============================================================
+// PART 3 — Volume Tree Node
+// ============================================================
+
+interface EpisodeItemProps {
+  ms: EpisodeManuscript;
+  isActive: boolean;
+  language: AppLanguage;
+  onSelectEpisode: (ep: number) => void;
+}
+
+const EpisodeItem = React.memo(function EpisodeItem({ ms, isActive, language, onSelectEpisode }: EpisodeItemProps) {
+  const status = getEpisodeStatus(ms);
+  const handleClick = useCallback(() => onSelectEpisode(ms.episode), [onSelectEpisode, ms.episode]);
+
+  return (
+    <button
+      onClick={handleClick}
+      role="treeitem"
+      aria-selected={isActive}
+      aria-label={`${L4(language, { ko: `${ms.episode}화`, en: `Episode ${ms.episode}`, ja: `Episode ${ms.episode}`, zh: `Episode ${ms.episode}` })} — ${ms.title} — ${statusLabel(status, language)}`}
+      className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded-lg
+        transition-colors text-left min-h-[44px] group/ep
+        ${isActive
+          ? 'bg-accent-amber/10 border border-accent-amber/30 text-text-primary'
+          : 'text-text-secondary hover:bg-bg-tertiary/50 border border-transparent'
+        }`}
+      title={ms.detailedSummary ? `${ms.summary ?? ms.title}\n\n${ms.detailedSummary}` : (ms.summary ?? ms.title)}
+    >
+      <FileText className={`w-3.5 h-3.5 shrink-0 ${
+        isActive ? 'text-accent-amber' : 'text-text-tertiary'
+      }`} />
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-text-tertiary font-mono shrink-0">
+            {String(ms.episode).padStart(3, '0')}
+          </span>
+          <span className="text-xs font-serif truncate">
+            {truncate(ms.title, 18)}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <span
+          className="text-[10px]"
+          title={statusLabel(status, language)}
+        >
+          {statusIcon(status)}
+        </span>
+        <span className="text-[10px] text-text-tertiary font-mono">
+          {formatCharCount(ms.charCount)}
+        </span>
+      </div>
+    </button>
+  );
+});
+
+interface VolumeNodeProps {
+  group: VolumeGroup;
+  currentEpisode: number;
+  language: AppLanguage;
+  onSelectEpisode: (ep: number) => void;
+}
+
+const VolumeNode = React.memo(function VolumeNode({
+  group, currentEpisode, language, onSelectEpisode,
+}: VolumeNodeProps) {
+  const [expanded, setExpanded] = useState(true);
+  const toggle = useCallback(() => setExpanded(v => !v), []);
+
+  return (
+    <div className="mb-1" role="treeitem" aria-expanded={expanded} aria-selected={false} aria-label={group.title}>
+      {/* Volume header */}
+      <button
+        onClick={toggle}
+        className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded-lg
+          text-text-secondary hover:bg-bg-tertiary/60 transition-colors
+          text-left min-h-[44px]"
+        aria-label={`${group.title} — ${group.episodes.length} ${language === 'KO' ? '에피소드' : 'episodes'}`}
+      >
+        {expanded ? (
+          <ChevronDown className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
+        ) : (
+          <ChevronRight className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
+        )}
+        <FolderOpen className="w-4 h-4 shrink-0 text-accent-amber" />
+        <span className="text-xs font-serif font-medium truncate">
+          {group.title}
+        </span>
+        <span className="ml-auto text-[10px] text-text-tertiary shrink-0">
+          {group.episodes.length}
+        </span>
+      </button>
+
+      {/* Episode items */}
+      {expanded && (
+        <div className="ml-4 border-l border-border/40 pl-1" role="group">
+          {group.episodes.map(ms => (
+            <EpisodeItem
+              key={ms.episode}
+              ms={ms}
+              isActive={ms.episode === currentEpisode}
+              language={language}
+              onSelectEpisode={onSelectEpisode}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ============================================================
+// PART 4 — EpisodeExplorer Main Component
+// ============================================================
+
+const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
+  config,
+  currentEpisode,
+  language,
+  onSelectEpisode,
+  onCreateEpisode,
+  onCreateVolume,
+  onClose,
+  onNavigateTab,
+  branches,
+  currentBranch,
+  onSwitchBranch,
+  onCreateBranch,
+  gitConnected,
+  onLoadBranchContent,
+  className = '',
+}) => {
+  const [showUniverse, setShowUniverse] = useState(false);
+  const treeRef = useRef<HTMLDivElement>(null);
+
+  // Build volume groups from manuscripts
+  const volumeGroups = useMemo<VolumeGroup[]>(() => {
+    const manuscripts = config.manuscripts ?? [];
+    if (manuscripts.length === 0) return [];
+
+    const map = new Map<number, EpisodeManuscript[]>();
+    for (const ms of manuscripts) {
+      const vol = ms.volume ?? 1;
+      const arr = map.get(vol);
+      if (arr) { arr.push(ms); } else { map.set(vol, [ms]); }
+    }
+
+    const sorted = Array.from(map.entries()).sort(([a], [b]) => a - b);
+    return sorted.map(([volId, eps]) => ({
+      volumeId: volId,
+      title: L4(language, {
+        ko: `${volId}권`,
+        en: `Volume ${volId}`,
+        ja: `第${volId}巻`,
+        zh: `第${volId}卷`,
+      }),
+      episodes: eps.sort((a, b) => a.episode - b.episode),
+    }));
+  }, [config.manuscripts, language]);
+
+  // 키보드 내비게이션용 flat 목록 — volumeGroups 순서를 그대로 보존.
+  // [C] 빈 배열 가드: flatEpisodes.length === 0이면 Arrow 핸들러 no-op.
+  const flatEpisodes = useMemo<number[]>(() => {
+    const list: number[] = [];
+    for (const g of volumeGroups) {
+      for (const ep of g.episodes) list.push(ep.episode);
+    }
+    return list;
+  }, [volumeGroups]);
+
+  // ArrowUp/Down/Home/End — tree focus 시만 동작 (focus 안 잡힌 상태에서는 브라우저 기본 동작 보존).
+  const handleTreeKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (flatEpisodes.length === 0) return;
+    const idx = flatEpisodes.indexOf(currentEpisode);
+    // 현재 선택이 리스트에 없으면 첫 항목으로.
+    const safeIdx = idx < 0 ? 0 : idx;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = Math.min(safeIdx + 1, flatEpisodes.length - 1);
+      if (flatEpisodes[next] !== currentEpisode) onSelectEpisode(flatEpisodes[next]);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const next = Math.max(safeIdx - 1, 0);
+      if (flatEpisodes[next] !== currentEpisode) onSelectEpisode(flatEpisodes[next]);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      if (flatEpisodes[0] !== currentEpisode) onSelectEpisode(flatEpisodes[0]);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      const last = flatEpisodes[flatEpisodes.length - 1];
+      if (last !== currentEpisode) onSelectEpisode(last);
+    }
+  }, [flatEpisodes, currentEpisode, onSelectEpisode]);
+
+  // 선택 항목이 뷰포트 밖이면 스크롤 (needed 시에만 — block: 'nearest').
+  useEffect(() => {
+    const node = treeRef.current;
+    if (!node) return;
+    const selected = node.querySelector('[aria-selected="true"]');
+    if (selected && typeof (selected as HTMLElement).scrollIntoView === 'function') {
+      (selected as HTMLElement).scrollIntoView({ block: 'nearest' });
+    }
+  }, [currentEpisode]);
+
+  const quickLinks = useMemo(() => [
+    {
+      id: 'characters',
+      icon: Users,
+      label: L4(language, { ko: '인물', en: 'Characters', ja: 'キャラ', zh: '人物' }),
+    },
+    {
+      id: 'world',
+      icon: Globe,
+      label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }),
+    },
+    {
+      id: 'direction',
+      icon: Clapperboard,
+      label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }),
+    },
+  ], [language]);
+
+  return (
+    <div className={`flex flex-col h-full bg-bg-primary border-r border-border ${className}`}>
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border min-h-[44px]">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-xs font-serif font-semibold text-text-primary truncate">
+            {config.title || L4(language, { ko: '제목 없음', en: 'Untitled', ja: 'タイトルなし', zh: '无标题' })}
+          </span>
+          <BranchSelector
+            currentBranch={currentBranch ?? 'main'}
+            branches={branches ?? ['main']}
+            onSwitchBranch={onSwitchBranch ?? (() => {})}
+            onCreateBranch={onCreateBranch}
+            disabled={!gitConnected}
+            language={language}
+            className="mt-1"
+          />
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg
+              text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary
+              transition-colors shrink-0 ml-2"
+            title={L4(language, { ko: '닫기', en: 'Close', ja: '閉じる', zh: '关闭' })}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Tree */}
+      <div
+        ref={treeRef}
+        className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/50 rounded"
+        role="tree"
+        tabIndex={0}
+        onKeyDown={handleTreeKeyDown}
+        aria-label={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })}
+      >
+        {volumeGroups.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-text-tertiary">
+            <FileText className="w-8 h-8 mb-2 opacity-40" />
+            <span className="text-xs font-serif">
+              {L4(language, {
+                ko: '아직 원고가 없어요',
+                en: 'No manuscripts yet',
+                ja: 'まだ原稿がありません',
+                zh: '还没有稿件',
+              })}
+            </span>
+          </div>
+        ) : (
+          volumeGroups.map(group => (
+            <VolumeNode
+              key={group.volumeId}
+              group={group}
+              currentEpisode={currentEpisode}
+              language={language}
+              onSelectEpisode={onSelectEpisode}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-1 px-2 py-2 border-t border-border">
+        {onCreateEpisode && (
+          <button
+            onClick={onCreateEpisode}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg
+              text-xs font-serif text-text-secondary
+              hover:text-accent-amber hover:bg-accent-amber/10
+              transition-colors min-h-[44px] flex-1 justify-center
+              border border-border hover:border-accent-amber/30"
+            title={L4(language, { ko: '새 에피소드', en: 'New Episode', ja: '新しいエピソード', zh: '新章节' })}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{L4(language, { ko: '에피소드', en: 'Episode', ja: 'エピソード', zh: '章节' })}</span>
+          </button>
+        )}
+        {onCreateVolume && (
+          <button
+            onClick={onCreateVolume}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg
+              text-xs font-serif text-text-secondary
+              hover:text-accent-amber hover:bg-accent-amber/10
+              transition-colors min-h-[44px] flex-1 justify-center
+              border border-border hover:border-accent-amber/30"
+            title={L4(language, { ko: '새 권', en: 'New Volume', ja: 'New Volume', zh: 'New Volume' })}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{L4(language, { ko: '권', en: 'Volume', ja: '巻', zh: '卷' })}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Parallel Universe toggle */}
+      {gitConnected && (
+        <div className="px-2 py-1 border-t border-border">
+          <button
+            onClick={() => setShowUniverse(v => !v)}
+            className={`flex items-center gap-1.5 w-full px-2.5 py-1.5 rounded-lg text-xs font-serif transition-colors min-h-[44px] border ${showUniverse ? 'text-accent-purple bg-accent-purple/10 border-accent-purple/30' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary/50 border-border'}`}
+          >
+            <GitBranch className="w-3.5 h-3.5" />
+            {L4(language, { ko: '평행우주', en: 'Parallel Universe', ja: '並行宇宙', zh: '平行宇宙' })}
+          </button>
+          {showUniverse && (
+            <ParallelUniversePanel
+              branches={branches ?? ['main']}
+              currentBranch={currentBranch ?? 'main'}
+              episodes={(config.manuscripts ?? []).map(m => ({ episode: m.episode, title: m.title }))}
+              onSwitchBranch={onSwitchBranch ?? (() => {})}
+              onCreateBranch={(name, _ep) => onCreateBranch?.(name)}
+              language={language}
+              onLoadBranchContent={onLoadBranchContent}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Quick links */}
+      <div className="flex items-center gap-1 px-2 py-2 border-t border-border">
+        {quickLinks.map(link => (
+          <button
+            key={link.id}
+            onClick={() => onNavigateTab?.(link.id)}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-lg
+              text-[11px] font-serif text-text-tertiary
+              hover:text-text-primary hover:bg-bg-tertiary/50
+              transition-colors min-h-[44px] flex-1 justify-center"
+            title={link.label}
+          >
+            <link.icon className="w-3.5 h-3.5" />
+            <span>{link.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default EpisodeExplorer;

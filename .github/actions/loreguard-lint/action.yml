@@ -1,0 +1,100 @@
+# ============================================================
+# Loreguard Lint — GitHub Action
+#
+# 작가의 GitHub repo PR 또는 push 시 자동 5축 검증.
+# 카테고리 정합 ✓ — CI 단계에서 Loreguard CLI 호출 (외부→Loreguard 방향).
+#
+# Usage:
+#   - uses: ./.github/actions/loreguard-lint
+#     with:
+#       manuscript: 'manuscript.md'
+#       token: ${{ secrets.LOREGUARD_TOKEN }}
+#       threshold: 70
+# ============================================================
+
+name: 'Loreguard Lint'
+description: 'Verify novels like code — 5-axis lint via Loreguard LSP'
+author: 'Loreguard'
+
+inputs:
+  manuscript:
+    description: 'Path to manuscript markdown file'
+    required: true
+    default: 'manuscript.md'
+  token:
+    description: 'Loreguard LSP API token'
+    required: true
+  base-url:
+    description: 'Loreguard LSP base URL'
+    required: false
+    default: 'https://ehsu.app'
+  threshold:
+    description: 'Minimum overall score (PR fails below)'
+    required: false
+    default: '70'
+  fail-on-block:
+    description: 'Fail if Reader Sim recommends blocking push (3+ personas dropped). Default false — info only.'
+    required: false
+    default: 'false'
+
+outputs:
+  overall-score:
+    description: 'Overall verification score (0-100)'
+    value: ${{ steps.lint.outputs.score }}
+  total-violations:
+    description: 'Total violation count'
+    value: ${{ steps.lint.outputs.violations }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Loreguard CLI
+      shell: bash
+      run: npm install -g @loreguard/cli
+
+    - name: Run Lint
+      id: lint
+      shell: bash
+      env:
+        LOREGUARD_LSP_TOKEN: ${{ inputs.token }}
+        LOREGUARD_BASE_URL: ${{ inputs.base-url }}
+      run: |
+        result=$(loreguard lint "${{ inputs.manuscript }}" --format=json)
+        echo "$result" > lint-result.json
+        score=$(echo "$result" | grep -o '"overallScore":[0-9]*' | cut -d':' -f2)
+        violations=$(echo "$result" | grep -o '"totalViolations":[0-9]*' | cut -d':' -f2)
+        echo "score=$score" >> $GITHUB_OUTPUT
+        echo "violations=$violations" >> $GITHUB_OUTPUT
+        echo "✓ Lint score: $score / 100 (violations: $violations)"
+        if [ "$score" -lt "${{ inputs.threshold }}" ]; then
+          echo "❌ Score below threshold ${{ inputs.threshold }}"
+          exit 1
+        fi
+
+    - name: Run Reader Simulation (info only)
+      shell: bash
+      env:
+        LOREGUARD_LSP_TOKEN: ${{ inputs.token }}
+        LOREGUARD_BASE_URL: ${{ inputs.base-url }}
+      run: |
+        sim_result=$(loreguard simulate "${{ inputs.manuscript }}" --format=json)
+        block=$(echo "$sim_result" | grep -o '"blockPush":[a-z]*' | cut -d':' -f2)
+        if [ "$block" = "true" ]; then
+          if [ "${{ inputs.fail-on-block }}" = "true" ]; then
+            echo "❌ Reader Sim recommends blocking push (3+ personas dropped) — fail-on-block enabled"
+            exit 1
+          else
+            echo "ℹ Reader Sim: 3+ personas dropped (info only — set fail-on-block: 'true' to block)"
+          fi
+        else
+          echo "✓ Reader Sim passed"
+        fi
+
+branding:
+  icon: 'book-open'
+  color: 'purple'

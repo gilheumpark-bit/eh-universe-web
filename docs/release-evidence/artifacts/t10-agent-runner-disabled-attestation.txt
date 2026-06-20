@@ -1,0 +1,44 @@
+{
+  "kind": "loreguard.disabled-attestation-artifact.v1",
+  "gate": "T10",
+  "generatedAt": "2026-06-20T08:38:37+09:00",
+  "inspectedFiles": [
+    {
+      "file": "src/app/api/agent-search/route.ts",
+      "ok": true,
+      "missing": [],
+      "matched": [
+        "agent_search_disabled",
+        "{ status: 503 }"
+      ]
+    },
+    {
+      "file": "src/app/api/agent-search/status/route.ts",
+      "ok": true,
+      "missing": [],
+      "matched": [
+        "agent_search_disabled",
+        "{ status: 503 }"
+      ]
+    },
+    {
+      "file": "src/app/api/network-agent/search/route.ts",
+      "ok": true,
+      "missing": [],
+      "matched": [
+        "surface_removed",
+        "{ status: 410 }"
+      ]
+    },
+    {
+      "file": "src/app/api/network-agent/ingest/route.ts",
+      "ok": true,
+      "missing": [],
+      "matched": [
+        "surface_removed",
+        "{ status: 410 }"
+      ]
+    }
+  ],
+  "conclusion": "Retired agent-search and network-agent compatibility routes return disabled or removed responses and expose no active runner surface."
+}

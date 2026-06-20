@@ -1,0 +1,160 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  assertResolvedHostAllowedForFetch,
+  assertUrlAllowedForFetch,
+  rateLimitFetchUrl,
+  validatePostFetchUrl,
+} from '@/lib/fetch-url-guard';
+import { getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
+import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+
+async function requireFetchUrlAccess(req: NextRequest): Promise<NextResponse | null> {
+  if (process.env.NODE_ENV !== 'production') return null;
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: '로그인 후 URL 불러오기를 사용할 수 있습니다.' }, { status: 401 });
+  }
+  const token = authHeader.slice(7).trim();
+  const decoded = await verifyFirebaseIdToken(token);
+  if (!decoded) {
+    return NextResponse.json({ error: '로그인 정보가 확인되지 않았습니다.' }, { status: 401 });
+  }
+  return null;
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get('url');
+
+  if (!url) {
+    return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+  }
+
+  // [S2-XFF 방어] x-vercel-forwarded-for 우선 사용 (Vercel 엣지만 생성 — 클라이언트 위조 불가)
+  const clientKey = getClientIp(req.headers);
+
+  const rl = rateLimitFetchUrl(clientKey);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `요청이 너무 많습니다. ${rl.retryAfterSec}초 후 다시 시도하세요.` },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+    );
+  }
+
+  const authBlock = await requireFetchUrlAccess(req);
+  if (authBlock) return authBlock;
+
+  const allowed = assertUrlAllowedForFetch(url);
+  if (!allowed.ok) {
+    return NextResponse.json({ error: allowed.reason }, { status: 400 });
+  }
+
+  const resolved = await assertResolvedHostAllowedForFetch(allowed.href);
+  if (!resolved.ok) {
+    return NextResponse.json({ error: resolved.reason }, { status: 403 });
+  }
+
+  try {
+    const response = await fetch(allowed.href, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (compatible; EH-Translator/3.1; +https://github.com/gilheumpark-bit/eh-translator)',
+        Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko,en;q=0.9',
+      },
+      signal: AbortSignal.timeout(15000),
+      redirect: 'follow',
+    });
+
+    // [S1-SSRF 방어] DNS rebinding / redirect 후 사설 IP 재검증
+    // redirect: 'follow' 이므로 response.url 은 최종 URL. body 읽기 전 반드시 체크.
+    try {
+      validatePostFetchUrl(response.url);
+      const finalResolved = await assertResolvedHostAllowedForFetch(response.url);
+      if (!finalResolved.ok) {
+        return NextResponse.json(
+          { error: finalResolved.reason },
+          { status: 403 },
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { error: '보안: 리다이렉트 결과가 사설/내부 주소로 해석됨 (SSRF 차단)' },
+        { status: 403 },
+      );
+    }
+
+    if (!response.ok) {
+      return NextResponse.json({ error: `외부 사이트 응답 오류 (${response.status})` }, { status: 502 });
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    let rawText = '';
+
+    if (contentType.includes('text/plain')) {
+      rawText = await response.text();
+    } else {
+      const html = await response.text();
+
+      let cleaned = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+        .replace(/<header[\s\S]*?<\/header>/gi, '')
+        .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+        .replace(/<aside[\s\S]*?<\/aside>/gi, '');
+
+      cleaned = cleaned
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<\/tr>/gi, '\n');
+
+      cleaned = cleaned.replace(/<[^>]+>/g, '');
+
+      cleaned = cleaned
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&mdash;/g, '—')
+        .replace(/&ndash;/g, '–')
+        .replace(/&hellip;/g, '…');
+
+      rawText = cleaned
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line, i, arr) => line || (arr[i - 1] && arr[i - 1] !== ''))
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
+    if (!rawText) {
+      return NextResponse.json({ error: '본문 텍스트를 추출할 수 없습니다.' }, { status: 422 });
+    }
+
+    const MAX_CHARS = 50000;
+    const isTruncated = rawText.length > MAX_CHARS;
+    const text = isTruncated ? rawText.slice(0, MAX_CHARS) + '\n\n[... 내용이 너무 길어 잘렸습니다 ...]' : rawText;
+
+    return NextResponse.json({
+      text,
+      charCount: text.length,
+      truncated: isTruncated,
+      sourceUrl: url,
+    });
+  } catch (err: unknown) {
+    const e = err as { name?: string };
+    if (e.name === 'TimeoutError') {
+      return NextResponse.json({ error: '요청 시간 초과 (15초). 해당 사이트가 응답하지 않습니다.' }, { status: 504 });
+    }
+    logger.error('fetch-url', 'proxy fetch failed', err);
+    return NextResponse.json({ error: 'URL 본문을 읽는 중 오류가 발생했습니다.' }, { status: 500 });
+  }
+}

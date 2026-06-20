@@ -1,0 +1,258 @@
+import { Type } from '@google/genai';
+import { createServerGeminiClient, hasGeminiServerCredentials } from '@/lib/google-genai-server';
+import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
+import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
+// [I-06 — 2026-05-10] 4 도메인 분기 prompt builder. AppLanguage → 도메인 매핑.
+//   KO → 한국 웹소설 / EN → Western fantasy / JP → 라노벨 / CN → 선협
+// 각 도메인 prompt 는 그 언어로 직접 작성 (사용자 결정: 각 나라 문법 훼손 X).
+// [창작 도메인 — 2026-05-10] domainOverride 로 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
+import { getDomainPrompts, type CreativeDomain } from '@/lib/ai/creative-domain-prompts';
+// [character-guard — 2026-06-10] /api/gemini-structured 캐릭터 생성 경로에 ip-brand-guard 서버측 주입.
+// writing-agent-registry 는 서버 안전 (의존: token-meter 뿐 — window 접근은 전부 typeof guard,
+// 'use client' 없음 — src/app/api/complete/route.ts 서버 import 선례). 가드 문자열 단일 소스 유지.
+// 스코프: characters 만 — worldDesign/worldSim 은 별도 builder(buildWorldDesignPrompt/buildWorldSimPrompt)
+// 라 본 주입 지점을 공유하지 않음 (동일 builder 아님 → 미적용·필요 시 별건).
+// 주의: ip-brand-guard 는 출력 형식 비강제 (JSON responseSchema 와 무충돌) — prose 강제 가드
+// (no-english-thinking-korean-novel) 는 구조화-JSON 경로에 주입 금지.
+import { GUARDS } from '@/lib/ai/writing-agent-registry';
+
+export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
+export type StoryHints = {
+  title?: string; povCharacter?: string; setting?: string; primaryEmotion?: string; synopsis?: string;
+  subGenreTags?: string[]; narrativeIntensity?: string; totalEpisodes?: number; platform?: string;
+};
+export type WorldContext = { corePremise?: string; powerStructure?: string; currentConflict?: string; factionRelations?: string; };
+export type SceneTierContext = { charProfiles?: { name: string; desire?: string; conflict?: string; changeArc?: string; values?: string }[]; corePremise?: string; powerStructure?: string; currentConflict?: string; };
+
+const STRUCTURED_GENERATION_TIMEOUT_MS = 60_000;
+
+/** DGX 개발 API를 통한 JSON 생성 폴백 (자동 재시도 포함) */
+async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> {
+  const RETRYABLE = new Set([502, 503, 520, 521, 522, 523, 524]);
+  const MAX_RETRIES = 2;
+  const DELAYS = [1500, 3000];
+  const body = JSON.stringify({
+    model: VLLM_MODEL_ID,
+    messages: [
+      { role: 'system', content: 'You are a creative writing assistant. CRITICAL: Always respond with a single flat JSON object. Use EXACTLY the field names specified in the prompt (e.g. title, synopsis, corePremise). Do NOT nest fields or create your own structure. No markdown, no explanation, just JSON.' },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.8,
+    max_tokens: 4000, // 35B Heavy Core — 구조화 생성
+    stream: false,
+  });
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, DELAYS[attempt - 1]));
+
+    try {
+      const baseUrl = getDgxDeveloperApiBaseUrl();
+      const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'vercel-server',
+          'x-user-tier': 'free',
+        },
+        body,
+        signal: AbortSignal.timeout(58_000), // Vercel 60초 maxDuration — 응답 구성 여유 2초
+      });
+
+      if (RETRYABLE.has(res.status) && attempt < MAX_RETRIES) continue;
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        const isHtml = errText.trimStart().startsWith('<!') || errText.trimStart().startsWith('<html');
+        throw new Error(isHtml
+          ? `DGX 서버 연결 오류 (${res.status}). ${MAX_RETRIES + 1}회 시도 실패.`
+          : `DGX Spark error ${res.status}: ${errText.slice(0, 150)}`);
+      }
+
+      const data = await res.json();
+      const msg = data.choices?.[0]?.message;
+      const text = msg?.content || '';
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\[[\s\S]*\])/) || text.match(/(\{[\s\S]*\})/);
+      if (jsonMatch) {
+        try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }
+      }
+      try { return JSON.parse(text) as T; } catch {
+        throw new Error(`DGX Spark JSON 파싱 실패 — 응답: ${text.slice(0, 200)}`);
+      }
+    } catch (err) {
+      if (err instanceof TypeError && attempt < MAX_RETRIES) continue; // 네트워크 에러 재시도
+      throw err;
+    }
+  }
+  return fallback;
+}
+
+export async function generateJson<T>(apiKey: string, model: string, prompt: string, responseSchema: object, fallback: T): Promise<T> {
+  // Gemini 키도 없고 서버 자격증명도 없으면 명시 플래그 기반 DGX 개발 API만 허용
+  if (!apiKey && !hasGeminiServerCredentials() && isDgxDeveloperApiEnabled()) {
+    return generateJsonViaSpark(prompt, fallback);
+  }
+
+  const ai = createServerGeminiClient(apiKey);
+  const MAX_RETRIES = 2;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: { responseMimeType: 'application/json', responseSchema, abortSignal: AbortSignal.timeout(STRUCTURED_GENERATION_TIMEOUT_MS) },
+      });
+      try { return JSON.parse(response.text || JSON.stringify(fallback)) as T; } catch {
+        throw new Error(`Gemini JSON 파싱 실패 — 응답: ${(response.text || '').slice(0, 200)}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      const isRetryable = /500|502|503|504|INTERNAL|resource.*exhausted|deadline|overloaded/i.test(msg);
+      if (!isRetryable || attempt === MAX_RETRIES) {
+        // Gemini 실패 + DGX 개발 API 플래그가 켜진 경우에만 폴백
+        if (isDgxDeveloperApiEnabled()) return generateJsonViaSpark(prompt, fallback);
+        throw err;
+      }
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  return fallback;
+}
+
+export async function handleCharacters(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 4, existingNames: string[] = [], domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기 prompt — 영어 범용 + LANGUAGE_NAMES override 패턴 폐기.
+  // role enum 도 한국 웹소설 정형 (protagonist/antagonist/ally/rival/mentor/regressor/extra) 으로 확장.
+  // [character-guard — 2026-06-10] ip-brand-guard prepend — 실존 상표·타 작가 IP 캐릭터명 생성 차단.
+  // Gemini·DGX 개발 API 폴백 양쪽 모두 동일 prompt 사용 → 단일 주입 지점으로 두 경로 커버.
+  const prompt = `${GUARDS['ip-brand-guard']}\n\n${getDomainPrompts(language, domainOverride).buildCharactersPrompt({
+    genre: config.genre,
+    synopsis: config.synopsis ?? '',
+    count,
+    existingNames,
+  })}`;
+  return generateJson<unknown[]>(apiKey, model, prompt, {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        name: { type: Type.STRING }, role: { type: Type.STRING }, traits: { type: Type.STRING }, appearance: { type: Type.STRING },
+        dna: { type: Type.NUMBER }, desire: { type: Type.STRING }, deficiency: { type: Type.STRING }, conflict: { type: Type.STRING },
+        changeArc: { type: Type.STRING }, values: { type: Type.STRING },
+      },
+      required: ['name', 'role', 'traits', 'appearance', 'dna'],
+    },
+  }, []);
+}
+
+export async function handleItems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = [], domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기. KO 면 무협·헌터물 정형, ZH 면 仙侠·法宝 정형 등.
+  const prompt = getDomainPrompts(language, domainOverride).buildItemsPrompt({
+    genre: config.genre,
+    synopsis: config.synopsis ?? '',
+    count,
+    existingNames,
+  });
+  return generateJson<unknown[]>(apiKey, model, prompt, {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: { name: { type: Type.STRING }, category: { type: Type.STRING }, rarity: { type: Type.STRING }, description: { type: Type.STRING }, effect: { type: Type.STRING }, obtainedFrom: { type: Type.STRING }, worldConnection: { type: Type.STRING }, flavorText: { type: Type.STRING }, },
+      required: ['name', 'category', 'rarity', 'description', 'effect'],
+    },
+  }, []);
+}
+
+export async function handleSkills(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = [], domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기. KO/CN 무협의 무공 정형, JP 라노벨 필살기 정형 등.
+  const prompt = getDomainPrompts(language, domainOverride).buildSkillsPrompt({
+    genre: config.genre,
+    synopsis: config.synopsis ?? '',
+    count,
+    existingNames,
+  });
+  return generateJson<unknown[]>(apiKey, model, prompt, {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: { name: { type: Type.STRING }, type: { type: Type.STRING }, owner: { type: Type.STRING }, description: { type: Type.STRING }, cost: { type: Type.STRING }, cooldown: { type: Type.STRING }, rank: { type: Type.STRING } },
+      required: ['name', 'type', 'description'],
+    },
+  }, []);
+}
+
+export async function handleMagicSystems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 2, existingNames: string[] = [], domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기. ranks 가 KO 무협=화경/현경, CN 仙侠=炼气/筑基/金丹, JP=Sランク 등 도메인별 자연스럽게 출력.
+  const prompt = getDomainPrompts(language, domainOverride).buildMagicSystemsPrompt({
+    genre: config.genre,
+    synopsis: config.synopsis ?? '',
+    count,
+    existingNames,
+  });
+  return generateJson<unknown[]>(apiKey, model, prompt, {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: { name: { type: Type.STRING }, source: { type: Type.STRING }, rules: { type: Type.STRING }, limitations: { type: Type.STRING }, ranks: { type: Type.ARRAY, items: { type: Type.STRING } } },
+      required: ['name', 'source', 'rules', 'limitations', 'ranks'],
+    },
+  }, []);
+}
+
+export async function handleWorldDesign(apiKey: string, model: string, genre: string, language: AppLanguage, hints?: StoryHints, domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기. KO=한국 웹소설 정형 (회귀/헌터/무협), JP=異世界 정형 등.
+  const prompt = getDomainPrompts(language, domainOverride).buildWorldDesignPrompt({
+    genre,
+    hints,
+  });
+  return generateJson<Record<string, string>>(apiKey, model, prompt, {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING }, povCharacter: { type: Type.STRING }, setting: { type: Type.STRING }, primaryEmotion: { type: Type.STRING }, synopsis: { type: Type.STRING },
+      corePremise: { type: Type.STRING }, powerStructure: { type: Type.STRING }, currentConflict: { type: Type.STRING }, worldHistory: { type: Type.STRING }, socialSystem: { type: Type.STRING },
+      economy: { type: Type.STRING }, magicTechSystem: { type: Type.STRING }, factionRelations: { type: Type.STRING }, survivalEnvironment: { type: Type.STRING },
+      culture: { type: Type.STRING }, religion: { type: Type.STRING }, education: { type: Type.STRING }, lawOrder: { type: Type.STRING }, taboo: { type: Type.STRING }, dailyLife: { type: Type.STRING }, travelComm: { type: Type.STRING }, truthVsBeliefs: { type: Type.STRING },
+    },
+    required: ['title', 'povCharacter', 'setting', 'primaryEmotion', 'synopsis', 'corePremise', 'powerStructure', 'currentConflict'],
+  }, { title: '', povCharacter: '', setting: '', primaryEmotion: '', synopsis: '' });
+}
+
+export async function handleWorldSim(apiKey: string, model: string, synopsis: string, genre: string, language: AppLanguage, worldContext?: WorldContext, domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기. KO=정파/사파/문파 구도, JP=魔王軍/勇者 구도 등.
+  const prompt = getDomainPrompts(language, domainOverride).buildWorldSimPrompt({
+    synopsis,
+    genre,
+    worldContext,
+  });
+  return generateJson<{ civilizations: unknown[]; relations: unknown[] }>(apiKey, model, prompt, {
+    type: Type.OBJECT,
+    properties: {
+      civilizations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, era: { type: Type.STRING }, traits: { type: Type.ARRAY, items: { type: Type.STRING } }, }, required: ['name', 'era', 'traits'], }, },
+      relations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { from: { type: Type.STRING }, to: { type: Type.STRING }, type: { type: Type.STRING }, }, required: ['from', 'to', 'type'], }, },
+    },
+    required: ['civilizations', 'relations'],
+  }, { civilizations: [], relations: [] });
+}
+
+export async function handleSceneDirection(apiKey: string, model: string, synopsis: string, characters: string[], language: AppLanguage, tierContext?: SceneTierContext, domainOverride?: CreativeDomain) {
+  // [I-06 — 2026-05-10] 도메인 분기. KO=고구마/사이다 사이클, EN=midpoint reversal, JP=必殺技 발동, ZH=悟道 등.
+  const prompt = getDomainPrompts(language, domainOverride).buildSceneDirectionPrompt({
+    synopsis,
+    characters,
+    tierContext,
+  });
+  return generateJson<Record<string, unknown>>(apiKey, model, prompt, {
+    type: Type.OBJECT,
+    properties: {
+      hooks: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { position: { type: Type.STRING }, hookType: { type: Type.STRING }, desc: { type: Type.STRING }, }, required: ['position', 'hookType', 'desc'] }, },
+      goguma: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { type: { type: Type.STRING }, intensity: { type: Type.STRING }, desc: { type: Type.STRING }, }, required: ['type', 'intensity', 'desc'] }, },
+      cliffhanger: { type: Type.OBJECT, properties: { cliffType: { type: Type.STRING }, desc: { type: Type.STRING }, }, required: ['cliffType', 'desc'], },
+      emotionTargets: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { emotion: { type: Type.STRING }, intensity: { type: Type.NUMBER }, }, required: ['emotion', 'intensity'] }, },
+      dialogueTones: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { character: { type: Type.STRING }, tone: { type: Type.STRING }, }, required: ['character', 'tone'] }, },
+      foreshadows: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { planted: { type: Type.STRING }, payoff: { type: Type.STRING }, }, required: ['planted', 'payoff'] }, },
+      dopamineDevices: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { scale: { type: Type.STRING }, device: { type: Type.STRING }, desc: { type: Type.STRING }, }, required: ['scale', 'device', 'desc'] }, },
+      pacings: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { section: { type: Type.STRING }, percent: { type: Type.NUMBER }, desc: { type: Type.STRING }, }, required: ['section', 'percent', 'desc'] }, },
+      tensionCurve: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { position: { type: Type.NUMBER }, level: { type: Type.NUMBER }, label: { type: Type.STRING }, }, required: ['position', 'level', 'label'] }, },
+    },
+    required: ['hooks', 'goguma', 'cliffhanger', 'emotionTargets', 'dialogueTones'],
+  }, {});
+}

@@ -1,0 +1,49 @@
+// Loreguard release evidence template.
+// This .jsonc file is intentionally ignored by gate:evidence.
+// After a real run/sign-off, copy it to docs/release-evidence/*.json,
+// change kind to "loreguard.release-evidence.v1", set every check.status to "PASS",
+// replace placeholders, and attach concrete hashes or source links.
+// Requirement: T2-live-stripe-billing
+// Artifact type: live-stripe-replay
+{
+  "kind": "loreguard.release-evidence.v1.template",
+  "gate": "T2",
+  "requirementId": "T2-live-stripe-billing",
+  "environment": "staging",
+  "artifactType": "live-stripe-replay",
+  "generatedAt": "REPLACE_WITH_ISO_TIMESTAMP_AFTER_REAL_RUN",
+  "source": "REPLACE_WITH_RUN_URL_SIGNOFF_LOCATION_OR_EXTERNAL_ATTESTATION",
+  "summary": "Attach live Stripe replay and paid-session e2e evidence for checkout/webhook/claim propagation.",
+  "checks": [
+    {
+      "id": "stripe-checkout-completed-event",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    },
+    {
+      "id": "stripe-webhook-signature-verified",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    },
+    {
+      "id": "subscription-entitlement-upserted",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    },
+    {
+      "id": "release-credit-purchase-grant-applied",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    }
+  ],
+  "hashes": [
+    {
+      "path": "docs/release-evidence/artifacts/REPLACE_WITH_ATTACHED_ARTIFACT_FILENAME",
+      "sha256": "REPLACE_WITH_64_CHAR_SHA256_HEX_DIGEST"
+    }
+  ],
+  "limitations": [
+    "Template only. Do not rename to .json until real external/staging/live evidence has been attached.",
+    "This evidence must not claim certification, guarantee, complete defense, or legal substitution."
+  ]
+}

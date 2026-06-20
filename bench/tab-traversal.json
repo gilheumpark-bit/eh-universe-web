@@ -1,0 +1,152 @@
+{
+  "capturedAt": "2026-04-19T23:28:35.084Z",
+  "baseUrl": "http://127.0.0.1:3099",
+  "maxTabs": 400,
+  "perTabDelayMs": 25,
+  "targets": 6,
+  "errors": [],
+  "results": {
+    "writing": {
+      "label": "집필 스튜디오",
+      "url": "http://127.0.0.1:3099/studio",
+      "focusableCount": 1,
+      "totalTabPresses": 1,
+      "elapsedMs": 105,
+      "revisitedCount": 0,
+      "trapSuspected": false,
+      "sampleOrder": [
+        "a.sr-only.focus:not-sr-only.focus:absolute|본문으로 건너뛰기"
+      ]
+    },
+    "rulebook": {
+      "label": "규칙서",
+      "url": "http://127.0.0.1:3099/rulebook",
+      "focusableCount": 27,
+      "totalTabPresses": 27,
+      "elapsedMs": 899,
+      "revisitedCount": 0,
+      "trapSuspected": false,
+      "sampleOrder": [
+        "a.sr-only.focus:not-sr-only.focus:absolute|본문으로 건너뛰기",
+        "a.group.flex.items-center|로어가드 (Loreguard) — Home",
+        "a.rounded-full.border.px-3.5|홈",
+        "a.rounded-full.border.px-3.5|네트워크",
+        "a.rounded-full.border.px-3.5|스튜디오",
+        "a.rounded-full.border.px-3.5|번역",
+        "button.rounded-full.border.px-3.5|Explore menu",
+        "button.rounded-full.border.border-transparent|Tools menu",
+        "button.rounded-full.border.px-3.5|Toggle language",
+        "a.block.py-1.5.px-3|1. 개요",
+        "a.block.py-1.5.px-3|2. 핵심 원칙",
+        "a.block.py-1.5.px-3|3. 대가 구조",
+        "a.block.py-1.5.px-3|4. 설명 가능성 원칙",
+        "a.block.py-1.5.px-3|5. EH 시스템",
+        "a.block.py-1.5.px-3|6. EH 감소 등급"
+      ]
+    },
+    "reference": {
+      "label": "레퍼런스",
+      "url": "http://127.0.0.1:3099/reference",
+      "focusableCount": 16,
+      "totalTabPresses": 16,
+      "elapsedMs": 557,
+      "revisitedCount": 0,
+      "trapSuspected": false,
+      "sampleOrder": [
+        "a.sr-only.focus:not-sr-only.focus:absolute|본문으로 건너뛰기",
+        "a.group.flex.items-center|로어가드 (Loreguard) — Home",
+        "a.rounded-full.border.px-3.5|홈",
+        "a.rounded-full.border.px-3.5|네트워크",
+        "a.rounded-full.border.px-3.5|스튜디오",
+        "a.rounded-full.border.px-3.5|번역",
+        "button.rounded-full.border.px-3.5|Explore menu",
+        "button.rounded-full.border.border-transparent|Tools menu",
+        "button.rounded-full.border.px-3.5|Toggle language",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|개인정보처리방침",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|이용약관",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|저작권",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|AI 고지",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|소개",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|변경 이력"
+      ]
+    },
+    "archive": {
+      "label": "아카이브",
+      "url": "http://127.0.0.1:3099/archive",
+      "focusableCount": 45,
+      "totalTabPresses": 45,
+      "elapsedMs": 1527,
+      "revisitedCount": 0,
+      "trapSuspected": false,
+      "sampleOrder": [
+        "a.sr-only.focus:not-sr-only.focus:absolute|본문으로 건너뛰기",
+        "a.group.flex.items-center|로어가드 (Loreguard) — Home",
+        "a.rounded-full.border.px-3.5|홈",
+        "a.rounded-full.border.px-3.5|네트워크",
+        "a.rounded-full.border.px-3.5|스튜디오",
+        "a.rounded-full.border.px-3.5|번역",
+        "button.rounded-full.border.px-3.5|Explore menu",
+        "button.rounded-full.border.border-transparent|Tools menu",
+        "button.rounded-full.border.px-3.5|Toggle language",
+        "a.flex.items-center.gap-2|📁아카이브",
+        "a.flex.items-center.gap-2|📋보고서",
+        "input.w-full.px-4.py-2.5|",
+        "button.w-full.text-left.flex|🔬핵심14 문서",
+        "button.w-full.text-left.flex|🕰️연표7 문서",
+        "button.w-full.text-left.flex|⚔️세력12 문서"
+      ]
+    },
+    "codex": {
+      "label": "코덱스",
+      "url": "http://127.0.0.1:3099/codex",
+      "focusableCount": 19,
+      "totalTabPresses": 19,
+      "elapsedMs": 649,
+      "revisitedCount": 0,
+      "trapSuspected": false,
+      "sampleOrder": [
+        "a.sr-only.focus:not-sr-only.focus:absolute|본문으로 건너뛰기",
+        "a.group.flex.items-center|로어가드 (Loreguard) — Home",
+        "a.rounded-full.border.px-3.5|홈",
+        "a.rounded-full.border.px-3.5|네트워크",
+        "a.rounded-full.border.px-3.5|스튜디오",
+        "a.rounded-full.border.px-3.5|번역",
+        "button.rounded-full.border.px-3.5|Explore menu",
+        "button.rounded-full.border.border-transparent|Tools menu",
+        "button.rounded-full.border.px-3.5|Toggle language",
+        "button.shrink-0.px-4.sm:px-5|EH RULEBOOK",
+        "button.shrink-0.px-4.sm:px-5|REFERENCE",
+        "button.shrink-0.px-4.sm:px-5|GUIDE",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|개인정보처리방침",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|이용약관",
+        "a.text-text-secondary.hover:text-text-primary.hover:underline|저작권"
+      ]
+    },
+    "network": {
+      "label": "네트워크",
+      "url": "http://127.0.0.1:3099/network",
+      "focusableCount": 24,
+      "totalTabPresses": 24,
+      "elapsedMs": 806,
+      "revisitedCount": 0,
+      "trapSuspected": false,
+      "sampleOrder": [
+        "a.sr-only.focus:not-sr-only.focus:absolute|본문으로 건너뛰기",
+        "a.group.flex.items-center|로어가드 (Loreguard) — Home",
+        "a.rounded-full.border.px-3.5|홈",
+        "a.rounded-full.border.px-3.5|네트워크",
+        "a.rounded-full.border.px-3.5|스튜디오",
+        "a.rounded-full.border.px-3.5|번역",
+        "button.rounded-full.border.px-3.5|Explore menu",
+        "button.rounded-full.border.border-transparent|Tools menu",
+        "button.rounded-full.border.px-3.5|Toggle language",
+        "a.premium-button|행성 등록하기",
+        "a.premium-button.secondary|최신 로그 보기",
+        "a.premium-button.secondary.border-accent-blue/30|NOA 검색 어시스턴트",
+        "button.premium-button.secondary|Google 로그인",
+        "button.rounded-full.border.px-4|전체",
+        "button.rounded-full.border.px-4|행성 등록소"
+      ]
+    }
+  }
+}

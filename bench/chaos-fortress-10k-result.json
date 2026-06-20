@@ -1,0 +1,161 @@
+{
+  "iterations": 10000,
+  "seed": "M1.6-baseline-canonical",
+  "primaryMode": "off",
+  "timestamp": "2026-04-20T04:07:54.961Z",
+  "summary": {
+    "success": true,
+    "primaryMode": "off",
+    "totalDataLoss": 0,
+    "totalFailures": 586,
+    "violationsCount": 0,
+    "initialTip": "seed-0",
+    "finalTip": "ulid-0009999",
+    "avgDurationMs": 0.836,
+    "p50DurationMs": 0.001,
+    "p95DurationMs": 14.828,
+    "p99DurationMs": 15.558,
+    "totalMs": 8432
+  },
+  "primaryWriteStats": {
+    "journalPrimary": 0,
+    "degradedFallback": 0,
+    "legacyDirect": 9414
+  },
+  "scenarioBreakdown": {
+    "crash-browser": {
+      "count": 488,
+      "dataLoss": 0,
+      "recovered": 488,
+      "category": "hardware"
+    },
+    "crash-os-sigkill": {
+      "count": 520,
+      "dataLoss": 0,
+      "recovered": 516,
+      "category": "hardware"
+    },
+    "idb-corruption": {
+      "count": 506,
+      "dataLoss": 0,
+      "recovered": 499,
+      "category": "hardware"
+    },
+    "clock-reversal": {
+      "count": 491,
+      "dataLoss": 0,
+      "recovered": 491,
+      "category": "hardware"
+    },
+    "private-mode": {
+      "count": 491,
+      "dataLoss": 0,
+      "recovered": 488,
+      "category": "hardware"
+    },
+    "multi-tab-concurrent": {
+      "count": 496,
+      "dataLoss": 0,
+      "recovered": 491,
+      "category": "concurrency"
+    },
+    "multi-device-conflict": {
+      "count": 513,
+      "dataLoss": 0,
+      "recovered": 512,
+      "category": "concurrency"
+    },
+    "race-condition": {
+      "count": 505,
+      "dataLoss": 0,
+      "recovered": 502,
+      "category": "concurrency"
+    },
+    "tab-sleep-wake": {
+      "count": 500,
+      "dataLoss": 0,
+      "recovered": 499,
+      "category": "concurrency"
+    },
+    "firebase-quota": {
+      "count": 478,
+      "dataLoss": 0,
+      "recovered": 475,
+      "category": "network"
+    },
+    "offline-online": {
+      "count": 508,
+      "dataLoss": 0,
+      "recovered": 506,
+      "category": "network"
+    },
+    "slow-network": {
+      "count": 502,
+      "dataLoss": 0,
+      "recovered": 501,
+      "category": "network"
+    },
+    "partition-failure": {
+      "count": 469,
+      "dataLoss": 0,
+      "recovered": 466,
+      "category": "network"
+    },
+    "atomic-write-abort": {
+      "count": 531,
+      "dataLoss": 0,
+      "recovered": 0,
+      "category": "integrity"
+    },
+    "schema-migration-crash": {
+      "count": 507,
+      "dataLoss": 0,
+      "recovered": 505,
+      "category": "integrity"
+    },
+    "encoding-corruption": {
+      "count": 478,
+      "dataLoss": 0,
+      "recovered": 471,
+      "category": "integrity"
+    },
+    "memory-overflow": {
+      "count": 465,
+      "dataLoss": 0,
+      "recovered": 463,
+      "category": "integrity"
+    },
+    "bulk-delete": {
+      "count": 530,
+      "dataLoss": 0,
+      "recovered": 525,
+      "category": "user"
+    },
+    "unsaved-refresh": {
+      "count": 508,
+      "dataLoss": 0,
+      "recovered": 504,
+      "category": "user"
+    },
+    "browser-data-clear": {
+      "count": 514,
+      "dataLoss": 0,
+      "recovered": 512,
+      "category": "user"
+    }
+  },
+  "concurrentFailures": 1016,
+  "recoveryStats": {
+    "full": 7554,
+    "journalOnly": 1303,
+    "degraded": 557,
+    "downgraded": 0,
+    "noRecovery": 0
+  },
+  "coverage": {
+    "missingScenarios": [],
+    "underCoveredScenarios": [],
+    "totalScenariosExercised": 20
+  },
+  "violationsSample": []
+}
