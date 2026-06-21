@@ -71,8 +71,13 @@ function makeRequest(init?: {
   token?: string;
   adminSecret?: string;
   body?: Record<string, unknown>;
+  headers?: Record<string, string>;
 }): OperationRequest {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    origin: "https://app.example",
+    host: "app.example",
+    ...init?.headers,
+  };
   if (init?.token) headers.authorization = `Bearer ${init.token}`;
   if (init?.adminSecret) headers["x-loreguard-admin-secret"] = init.adminSecret;
   return new ReleaseCreditOperationFakeRequest({
@@ -137,6 +142,22 @@ afterEach(() => {
 });
 
 describe("/api/release-credit/operation", () => {
+  it("rejects cross-origin operation attempts before ledger work", async () => {
+    const fake = makeStore({ ok: false, error: "not_found", documentPath: "release_credit_ledgers/missing" });
+    setReleaseCreditLedgerStoreForTest(fake.store);
+
+    const { POST } = await import("../route");
+    const response = await POST(makeRequest({
+      token: "paid-token",
+      adminSecret: "admin-secret",
+      headers: { origin: "https://evil.example", host: "app.example" },
+      body: makeBody(),
+    })) as unknown as ReleaseCreditOperationFakeResponse;
+
+    expect(response.status).toBe(403);
+    expect(fake.load).not.toHaveBeenCalled();
+  });
+
   it("requires authentication before ledger work", async () => {
     const fake = makeStore({ ok: false, error: "not_found", documentPath: "release_credit_ledgers/missing" });
     setReleaseCreditLedgerStoreForTest(fake.store);

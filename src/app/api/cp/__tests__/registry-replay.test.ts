@@ -60,10 +60,12 @@ type FirestoreDoc = {
 
 const mockRegistryDocs: FirestoreDoc[] = [];
 const mockCreateDocument = jest.fn();
+const mockGetDocument = jest.fn();
 const mockListDocuments = jest.fn();
 
 jest.mock('@/lib/firestore-service-rest', () => ({
   firestoreCreateDocument: (...args: unknown[]) => mockCreateDocument(...args),
+  firestoreGetDocument: (...args: unknown[]) => mockGetDocument(...args),
   firestoreListDocuments: (...args: unknown[]) => mockListDocuments(...args),
 }));
 
@@ -136,7 +138,11 @@ type VerifyContext = Parameters<(typeof import('../verify/[id]/route'))['GET']>[
 
 function makeRegisterRequest(body: Record<string, unknown>): RegisterRequest {
   return new CpFakeRequest({
-    headers: { authorization: 'Bearer registry-replay-token' },
+    headers: {
+      authorization: 'Bearer registry-replay-token',
+      origin: 'http://localhost',
+      host: 'localhost',
+    },
     body: JSON.stringify(body),
   }) as unknown as RegisterRequest;
 }
@@ -185,6 +191,10 @@ beforeEach(() => {
       return { ok: true, name: doc.name };
     },
   );
+  mockGetDocument.mockImplementation(async (_projectId: string, documentPath: string) => {
+    const doc = mockRegistryDocs.find((candidate) => candidate.name.endsWith(`/documents/${documentPath}`));
+    return doc ? { ok: true, fields: doc.fields } : { ok: false, error: 'not_found' };
+  });
   mockListDocuments.mockResolvedValue({ ok: true, documents: mockRegistryDocs });
 });
 

@@ -1,6 +1,6 @@
 # Auth Matrix — API routes × CSRF/Auth/Rate-limit/Tier
 
-**Status**: Living doc (2026-06-15 — Hosted 모델 티어 제한/리딤/출고 크레딧/에이전트 상태 갱신).
+**Status**: Living doc (2026-06-21 — Backend 7축 점검: 공유 링크 인증화, 출고 크레딧 origin guard, metrics token gate 반영).
 **Owner**: gilheumpark.
 **Related**: ADR-0011 (rate-limit), `lib/firebase-id-token.ts`, `lib/verify-csrf.ts`.
 
@@ -11,7 +11,7 @@
 | **public** | 인증/CSRF 없이 접근 가능 | n/a (의도적 공개) |
 | **rate-limited** | `checkRateLimit()` 호출 필요 | 429 + Retry-After |
 | **authenticated** | `verifyFirebaseIdToken()` 통과 | 401 |
-| **csrf-verified** | `verifyCsrf()` 통과 (POST/PUT/PATCH/DELETE) | 403 |
+| **csrf-verified** | `verifyCsrf()` 또는 `checkSameOriginHeaders()` 통과 (POST/PUT/PATCH/DELETE) | 403 |
 | **tier-gated** | Stripe role / Firebase custom claim 매칭 | 402/403 |
 
 ## 매트릭스 (Matrix)
@@ -24,12 +24,12 @@
 | Route | Public | Rate-limited | Auth | CSRF | Tier | 비고 |
 |-------|:------:|:------------:|:----:|:----:|:----:|------|
 | `/api/chat` (POST) | ✗ | ✓ | ✓ | ✓ | by-claim/BYOK | Hosted 노아 대화. Free 일일 제공량, Pro 무제한, BYOK 제한 면제 |
-| `/api/checkout` (POST) | ✗ | ✓ | ✓ | ✗ | env-gated | Stripe 구독 checkout. Bearer 인증 + `FEATURE_STRIPE_CHECKOUT=on` |
-| `/api/release-credit/checkout` (POST) | ✗ | ✓ | ✓ | ✗ | env-gated | 확인서/출고 크레딧 단건 결제 세션. Bearer 인증 + `FEATURE_STRIPE_CHECKOUT=on` |
-| `/api/release-credit/debit` (POST) | ✗ | ✓ | ✓ | ✗ | by-subscription | 출고 크레딧 프로젝트 원장 차감 |
-| `/api/release-credit/operation` (POST) | ✗ | ✓ | ✓ | ✗ | by-subscription | 구매/환불/복구/재발급 원장 작업. 구매/환불/복구는 내부 secret 추가 필요 |
+| `/api/checkout` (POST) | ✗ | ✓ | ✓ | ✓ | env-gated | Stripe 구독 checkout. Bearer 인증 + `FEATURE_STRIPE_CHECKOUT=on` |
+| `/api/release-credit/checkout` (POST) | ✗ | ✓ | ✓ | ✓ | env-gated | 확인서/출고 크레딧 단건 결제 세션. Bearer 인증 + `FEATURE_STRIPE_CHECKOUT=on` |
+| `/api/release-credit/debit` (POST) | ✗ | ✓ | ✓ | ✓ | by-subscription | 출고 크레딧 프로젝트 원장 차감 |
+| `/api/release-credit/operation` (POST) | ✗ | ✓ | ✓ | ✓ | by-subscription | 구매/환불/복구/재발급 원장 작업. 구매/환불/복구는 내부 secret 추가 필요 |
 | `/api/upload` (POST) | ✗ | ✓ | ✓ | ✓ | — | 파일 업로드 |
-| `/api/share` (POST/PATCH) | ✗ | ✓ | ✓ | ✓ | — | 공개 링크 발급 |
+| `/api/share` (POST/PATCH) | ✗ | ✓ | ✓ | ✓ | — | 공개 링크 발급. 긴 콘텐츠 서버 저장은 로그인 사용자만 허용 |
 | `/api/complete` (POST) | ✗ | ✓ | ✓ | ✓ | by-claim/BYOK | Tab 이어쓰기. Hosted 제한, BYOK 제한 면제 |
 | `/api/image-gen` (POST) | ✗ | ✓ | ✓ | ✓ | by-claim/BYOK | 외부 provider는 BYOK 필수. `local-spark`는 Hosted 제한 |
 | `/api/network-agent/ingest` (POST) | ✗ | ✗ | ✗ | ✗ | — | retired 410; downstream work 없음 |
@@ -57,7 +57,7 @@
 | `/api/agent-search/status` (GET) | ✗ | ✗ | ✗ | — | disabled 503; downstream work 없음 |
 | `/api/cp/verify/[id]` (GET) | ✓ | ✓ | optional | — | creative-process 공개 검증 |
 | `/api/vitals` (POST) | ✓ | ✓ | optional | — | Web Vitals 수집 |
-| `/api/metrics` (GET) | ✓ | ✗ | ✗ | — | Prometheus scrape (gated by METRICS_ENABLED) |
+| `/api/metrics` (GET) | ✗ | ✗ | bearer-token | — | Prometheus scrape. `METRICS_ENABLED=on` + 운영 token gate |
 | `/api/cron/universe-daily` | ✗ | ✗ | header-secret | — | Vercel cron — `CRON_SECRET` |
 | `/api/fetch-url` (POST) | ✗ | ✓ | ✓ | ✓ | — | URL 페치 — strict |
 | `/api/github/token` (POST) | ✗ | ✓ | ✓ | ✓ | — | OAuth exchange |
@@ -67,8 +67,8 @@
 ## 회귀 방지 (Regression Guards)
 
 1. **컴파일타임**: `src/app/api/__tests__/auth-coverage.test.ts` —
-   모든 POST/PUT/PATCH/DELETE route 가 `verifyCsrf` import 강제 (Phase 1: advisory, Phase 2: block).
-2. **런타임**: `verifyCsrf` 미통과 시 403 응답 — `__tests__/gate-checks.test.ts` 와 동등 패턴.
+   모든 POST/PUT/PATCH/DELETE route 가 CSRF token 또는 same-origin guard 를 갖는지 추적 (Phase 1: advisory, Phase 2: block).
+2. **런타임**: CSRF token 또는 same-origin guard 미통과 시 403 응답 — `__tests__/gate-checks.test.ts` 와 동등 패턴.
 3. **lint**: ESLint 룰 `eh/api-csrf-required` (proposal — 추후 PR).
 
 ## 단계적 강제 (Phased Enforcement)
@@ -99,6 +99,7 @@
 ## 변경 이력
 
 - **2026-06-15**: `/api/release-credit/*` 단건 결제·차감·원장 작업 라우트 반영.
+- **2026-06-21**: `/api/share` 서버 저장 인증화, `/api/release-credit/*` same-origin guard, `/api/metrics` bearer token gate 반영.
 - **2026-06-19**: 제거된 `/api/code/autopilot` 기준 제거. 현재 Hosted 티어 제한 대상은 현행 노아/번역/분석/시각 시안 라우트 기준.
 - **2026-06-15**: `gemini-structured`, `image-gen local-spark`까지 Hosted 티어 제한 계약 확장.
 - **2026-06-15**: Hosted 노아 호출 5개 라우트의 by-claim/BYOK 티어 제한 계약 반영.

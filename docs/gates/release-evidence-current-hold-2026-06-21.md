@@ -8,7 +8,9 @@
 
 - 집필 생성 후 7축 기준선 점검이 `useStudioAI` 생성 루프에 연결되었다.
 - 권리/IP 개인 차단 목록은 로컬 저장, 선택적 Firebase 동기화, 7축 IP 점검 반영 구조가 생겼다.
-- `/api/metrics`는 `apiLog` 기반 요청 수, 상태, duration 집계를 노출한다.
+- `/api/metrics`는 `apiLog` 기반 요청 수, 상태, duration 집계를 노출하되 운영 환경에서는 `METRICS_BEARER_TOKEN` 없이는 fail-closed 된다.
+- 긴 공유 링크 서버 저장(`/api/share`)은 로그인 사용자 + same-origin 요청만 허용하도록 잠겼다.
+- 출고 크레딧 라우트(`/api/release-credit/*`)는 same-origin guard 와 구조화 로그를 추가했다.
 - 번역 현지화 판단 보고서는 대상 시장 독자 렌즈를 요약 문장과 데이터에 남긴다.
 
 ## HOLD 항목

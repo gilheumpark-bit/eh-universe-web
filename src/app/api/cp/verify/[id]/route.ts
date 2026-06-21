@@ -38,7 +38,7 @@ import {
   timingSafeEqualHex,
   type CertRegistryEntry,
 } from '@/lib/creative-process/registry-contract';
-import { firestoreListDocuments } from '@/lib/firestore-service-rest';
+import { firestoreGetDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
 import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -64,11 +64,11 @@ interface VerifyRouteParams {
 }
 
 // ============================================================
-// Registry lookup (Firestore — firestoreListDocuments 재사용)
+// Registry lookup (Firestore — certId direct get, sealNumber fallback scan)
 // ============================================================
 //
-// [alpha 한계 — /api/share 와 동일 list-scan 패턴] pageSize 300 내 스캔.
-// 레지스트리가 300건 초과 시 structured query 로 교체 필요 (S8 후속).
+// certId 는 cp/register 가 documentId 로 고정 저장하므로 direct get 으로 조회한다.
+// sealNumber 는 별도 인덱스 도입 전까지 제한된 fallback scan 을 유지한다.
 
 type RegistryLookup =
   | { status: 'unavailable' }
@@ -80,6 +80,13 @@ async function lookupRegistryEntry(idOrSeal: string): Promise<RegistryLookup> {
     process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
   if (!projectId) return { status: 'unavailable' };
   try {
+    const direct = await firestoreGetDocument(projectId, `${CP_REGISTRY_COLLECTION}/${idOrSeal}`);
+    if (direct.ok) {
+      const entry = parseRegistryDocument({ fields: direct.fields });
+      return entry ? { status: 'found', entry } : { status: 'unavailable' };
+    }
+    if (direct.error !== 'not_found') return { status: 'unavailable' };
+
     const res = await firestoreListDocuments(projectId, CP_REGISTRY_COLLECTION, { pageSize: 300 });
     if (!res.ok) return { status: 'unavailable' };
     for (const doc of res.documents) {

@@ -28,6 +28,19 @@ export interface ShareResult {
   expiresAt?: number;
 }
 
+async function getShareAuthHeader(): Promise<Record<string, string>> {
+  try {
+    const { lazyFirebaseAuth } = await import('@/lib/firebase');
+    const auth = await lazyFirebaseAuth();
+    const user = auth?.currentUser;
+    if (!user) return {};
+    const token = await user.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 /**
  * 공유 링크 생성.
  * 짧은 콘텐츠: URL 해시에 base64 인코딩 (서버 불필요)
@@ -45,9 +58,10 @@ export async function createShareLink(payload: SharePayload): Promise<ShareResul
 
   // 길면 서버에 임시 저장
   try {
+    const authHeader = await getShareAuthHeader();
     const res = await fetch('/api/share', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader },
       body: JSON.stringify({
         ...payload,
         expiresInHours: payload.expiresInHours || 72,

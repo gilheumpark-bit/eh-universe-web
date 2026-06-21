@@ -30,6 +30,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimitAsync, getClientIp } from '@/lib/rate-limit';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
 import { firestoreCreateDocument, type FirestoreFieldValue } from '@/lib/firestore-service-rest';
 import {
   CP_REGISTRY_COLLECTION,
@@ -138,6 +139,10 @@ function parseRegisterBody(raw: unknown): { input: RegisterInput; issues: string
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
+  const originCheck = checkSameOriginHeaders(req.headers);
+  if (!originCheck.ok) {
+    return NextResponse.json({ error: originCheck.error }, { status: 403 });
+  }
 
   // --- Rate limit (10/min per IP — 발급은 드문 행위) ---
   const rl = await checkRateLimitAsync(ip, '/api/cp/register', { windowMs: 60_000, maxRequests: 10 });

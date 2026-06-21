@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimitAsync, getClientIp } from "@/lib/rate-limit";
 import { verifyFirebaseIdToken } from "@/lib/firebase-id-token";
+import { checkSameOriginHeaders } from "@/lib/api-origin-guard";
+import { apiLog, createRequestTimer } from "@/lib/api-logger";
 import {
   applyReleaseCreditLedgerOperation,
   buildReleaseCreditDebitOperationFromPreview,
@@ -158,7 +160,13 @@ async function loadOrInitializeProjectLedger(input: {
 }
 
 export async function POST(req: NextRequest) {
+  const timer = createRequestTimer();
   const ip = getClientIp(req.headers);
+  const originCheck = checkSameOriginHeaders(req.headers);
+  if (!originCheck.ok) {
+    return NextResponse.json({ error: originCheck.error }, { status: 403 });
+  }
+
   const rateLimit = await checkRateLimitAsync(ip, "/api/release-credit/debit", {
     windowMs: 60_000,
     maxRequests: 12,
@@ -267,6 +275,23 @@ export async function POST(req: NextRequest) {
       { status },
     );
   }
+
+  apiLog({
+    level: "info",
+    event: "release_credit_debit_applied",
+    route: "/api/release-credit/debit",
+    ip,
+    status: 200,
+    durationMs: timer.elapsed(),
+    meta: {
+      uid: auth.uid,
+      projectId: input.projectId,
+      packageProfileId: input.packageProfileId,
+      certificateId: input.certificateId,
+      balance: result.snapshot.balance,
+      initialized: ledgerResult.initialized,
+    },
+  });
 
   return NextResponse.json({
     ok: true,

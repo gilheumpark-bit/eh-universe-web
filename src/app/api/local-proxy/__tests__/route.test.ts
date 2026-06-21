@@ -71,13 +71,18 @@ import { GET, POST } from "../route";
 function makeGetReq(baseUrl: string) {
   return new FakeNextRequest(
     `http://localhost:3000/api/local-proxy?baseUrl=${encodeURIComponent(baseUrl)}`,
+    { headers: { origin: "http://localhost:3000", host: "localhost:3000" } },
   ) as never;
 }
 
 function makePostReq(body: Record<string, unknown>) {
   return new FakeNextRequest("http://localhost:3000/api/local-proxy", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      origin: "http://localhost:3000",
+      host: "localhost:3000",
+    },
     body: JSON.stringify(body),
   }) as never;
 }
@@ -126,6 +131,16 @@ describe("local-proxy security", () => {
 
   it("rejects invalid IP ranges like 192.168.999.999", async () => {
     const res = await GET(makeGetReq("http://192.168.999.999:1234"));
+    expect(res.status).toBe(403);
+  });
+
+  it("requires an Origin header in development", async () => {
+    const res = await POST(new FakeNextRequest("http://localhost:3000/api/local-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", host: "localhost:3000" },
+      body: JSON.stringify({ baseUrl: "http://localhost:1234" }),
+    }) as never);
+
     expect(res.status).toBe(403);
   });
 
