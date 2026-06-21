@@ -16,6 +16,7 @@ jest.mock('@/lib/logger', () => ({
 
 jest.mock('@/services/driveService', () => ({
   syncAllProjects: jest.fn(),
+  setTokenRefresher: jest.fn(),
 }));
 
 import { syncAllProjects } from '@/services/driveService';
@@ -75,6 +76,7 @@ describe('useStudioSync', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
+    localStorage.clear();
   });
   afterEach(() => {
     jest.useRealTimers();
@@ -98,6 +100,7 @@ describe('useStudioSync', () => {
     expect(mockSyncAll).toHaveBeenCalledWith('token-123', params.projects);
     expect(params.setProjects).toHaveBeenCalledWith([]);
     expect(get().lastSyncTime).not.toBeNull();
+    expect(localStorage.getItem('noa_drive_last_sync')).toBeTruthy();
     cleanup();
   });
 

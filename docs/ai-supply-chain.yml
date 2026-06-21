@@ -1,0 +1,116 @@
+version: 1
+last_updated: "2026-06-12"
+status: baseline
+owner: Loreguard
+models:
+  - id: hosted-gemini-structured
+    provider: Google
+    model_source: src/services/geminiStructuredTaskService.ts
+    purpose:
+      - structured_generation
+      - creative_domain_objects
+    source_hash_artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    version_pin_status: HOLD
+    version_pin_reason: Source hash is captured; runtime provider/model selection must still be captured from release artifacts.
+  - id: story-stream-provider
+    provider: multi-provider
+    model_source:
+      - src/services/geminiService.ts
+      - src/lib/ai-providers.ts
+    purpose:
+      - story_generation
+      - assisted_writing
+    source_hash_artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    version_pin_status: HOLD
+    version_pin_reason: Source hash is captured; active model and fallback chain require release-time BOM export.
+  - id: dgx-spark-local
+    provider: local
+    model_source:
+      - src/lib/dgx-models.ts
+      - src/services/sparkService.ts
+    purpose:
+      - local_generation_fallback
+    source_hash_artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    version_pin_status: HOLD
+    version_pin_reason: Source hash is captured; local deployment model hash and runtime endpoint are environment-dependent.
+runtime_model_bom:
+  status: SOURCE_BOM_PARTIAL
+  artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+  evidence_field: runtimeModelBom.references
+  scope:
+    - source_literal_model_ids
+    - default_model_maps
+    - local_vllm_default_model_id
+  limitation: Source-level model references are captured; live provider aliases, deployed env overrides, endpoint model hashes, and provider-side version attestations remain HOLD.
+prompts:
+  - id: writing-agent-registry
+    owner: Loreguard
+    files:
+      - src/lib/ai/writing-agent-registry.ts
+    hash_status: PARTIAL
+    hash_artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    hash_reason: Repository prompt source hash is generated; eval diff remains HOLD.
+  - id: creative-domain-prompts
+    owner: Loreguard
+    files:
+      - src/lib/ai/creative-domain-prompts/ko.ts
+      - src/lib/ai/creative-domain-prompts/en.ts
+      - src/lib/ai/creative-domain-prompts/ja.ts
+      - src/lib/ai/creative-domain-prompts/zh.ts
+      - src/lib/ai/creative-domain-prompts/index.ts
+    hash_status: PARTIAL
+    hash_artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    hash_reason: Repository prompt source hash is generated; eval diff remains HOLD.
+rag:
+  corpora: []
+  gate_status: HOLD
+  hold_reason: No release RAG corpus manifest/index hash is attached.
+evals:
+  status: OFFLINE_EVAL_DIFF_ATTACHED
+  suite: docs/evals/loreguard-offline-eval-cases-2026-06-12.json
+  artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+  evidence_field: offlineEvalDiff
+  case_count: 20
+  failed_count: 0
+  coverage:
+    - core-regression-20
+    - prompt-drift-negative-cases
+    - creative-domain-output-contract
+    - writing-agent-guard-contract
+  gate_status: HOLD
+  hold_reason: Offline prompt/source eval diff is attached; live provider output eval remains required before release PASS.
+build:
+  package_lock: package-lock.json
+  lockfile_hash_artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+  sbom:
+    status: LOCKFILE_SBOM_ATTACHED
+    format: spdx-lite-json
+    artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    evidence_field: sbom
+    limitation: Lockfile-derived SBOM evidence is attached; live registry/license attestation remains outside this local scan.
+  provenance:
+    status: LOCAL_BUILD_PROVENANCE_ATTACHED
+    format: slsa-provenance-v1-lite
+    artifact: docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    evidence_field: buildProvenance
+    limitation: Local unsigned build provenance is attached; CI-signed SLSA provenance remains HOLD.
+  ci_workflow:
+    status: CI_WORKFLOW_ATTACHED
+    path: .github/workflows/loreguard-supply-chain.yml
+    artifact_name: loreguard-ai-supply-chain-baseline
+    evidence:
+      - node --check scripts/loreguard-supply-chain-scan.mjs
+      - npm run build
+      - npm run gate:supply-chain -- --write docs/gates/ai-supply-chain-baseline-2026-06-12.json
+    limitation: Workflow definition is attached; an actual GitHub Actions run artifact and signed SLSA provenance remain HOLD.
+  slsa_target: 2
+  gate_status: HOLD
+release_gate:
+  pass_requires:
+    - model_bom_has_versions_and_fallbacks
+    - prompt_hashes_are_generated
+    - rag_manifest_present_when_rag_is_enabled
+    - eval_diff_passes_for_model_prompt_index_changes
+    - sbom_and_build_provenance_attached
+  current_verdict: HOLD
+  hold_reason: Live provider attestation, live model-output eval, actual CI run artifact, and CI-signed provenance remain required before release PASS.

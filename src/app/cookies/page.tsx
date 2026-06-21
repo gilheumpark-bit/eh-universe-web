@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// 쿠키 정책 (claude3 _legal P1 필수 정책 페이지) — KO/EN/JA/ZH
+// 쿠키 정책 (claude3 _legal P1 필수 정책 페이지), KO/EN/JA/ZH
 // 본 앱은 로그인·언어·원고 저장 목적의 필수/기능 쿠키만 사용. 광고·추적 쿠키 X.
 // ============================================================
 
@@ -9,7 +9,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import LegalPageLayout from "@/components/legal/LegalPageLayout";
 
-const EFFECTIVE_DATE = "2026-06-06";
+const EFFECTIVE_DATE = "2026-06-15";
 
 export default function CookiesPage() {
   const { lang } = useLang();
@@ -40,10 +40,10 @@ export default function CookiesPage() {
           2. {T({ ko: "사용하는 쿠키 · 저장소", en: "Cookies & Storage We Use", ja: "使用するクッキー・ストレージ", zh: "我们使用的 Cookie 与存储" })}
         </h2>
         <ul className="list-disc pl-5 space-y-2 text-text-secondary text-sm leading-relaxed">
-          <li>{T({ ko: "필수(인증): 로그인 세션·Firebase Auth 토큰 — 로그인 상태 유지. 차단 시 로그인 불가.", en: "Essential (auth): login session · Firebase Auth tokens — keeps you signed in. Blocking these prevents login.", ja: "必須(認証): ログインセッション・Firebase Auth トークン。", zh: "必要(认证): 登录会话·Firebase Auth 令牌。" })}</li>
-          <li>{T({ ko: "기능(설정): 언어 선택·테마·작업 모드 — localStorage. 차단 시 매번 재설정.", en: "Functional (preferences): language · theme · work mode — localStorage. Blocking resets them each visit.", ja: "機能(設定): 言語・テーマ・作業モード。", zh: "功能(偏好): 语言·主题·工作模式。" })}</li>
-          <li>{T({ ko: "로컬 저장(원고): 원고·세계관·설정 — IndexedDB. 사용자 기기에만 저장(서버 전송 아님).", en: "Local storage (manuscripts): drafts · world-building · settings — IndexedDB. Stored on your device only (not sent to a server).", ja: "ローカル保存(原稿): 原稿・世界観・設定 — IndexedDB。端末のみ。", zh: "本地存储(原稿): 原稿·世界观·设置 — IndexedDB。仅存于您的设备。" })}</li>
-          <li>{T({ ko: "로컬 AI 설정: 로컬 AI 슬롯(엔드포인트·모델) — localStorage. 기기에만 저장.", en: "Local AI config: local-AI slots (endpoint · model) — localStorage, device only.", ja: "ローカルAI設定: スロット(エンドポイント・モデル) — localStorage。", zh: "本地 AI 配置: 槽位(端点·模型) — localStorage。" })}</li>
+          <li>{T({ ko: "필수(인증): 로그인 세션과 Firebase Auth 토큰을 사용해 로그인 상태를 유지합니다.", en: "Essential (auth): login session and Firebase Auth tokens keep you signed in.", ja: "必須(認証): ログインセッション・Firebase Auth トークン。", zh: "必要(认证): 登录会话·Firebase Auth 令牌。" })}</li>
+          <li>{T({ ko: "기능(설정): 언어 선택, 테마, 작업 모드를 localStorage에 저장합니다.", en: "Functional (preferences): language, theme, and work mode are stored in localStorage.", ja: "機能(設定): 言語・テーマ・作業モード。", zh: "功能(偏好): 语言·主题·工作模式。" })}</li>
+          <li>{T({ ko: "로컬 저장(원고): 원고, 세계관, 설정을 IndexedDB에 저장합니다. 기본 저장 위치는 사용자 기기입니다.", en: "Local storage (manuscripts): drafts, world-building, and settings are stored in IndexedDB on your device by default.", ja: "ローカル保存(原稿): 原稿・世界観・設定を IndexedDB に保存。端末のみ。", zh: "本地存储(原稿): 原稿、世界观、设置存于 IndexedDB。默认仅在您的设备。" })}</li>
+          <li>{T({ ko: "로컬 AI 설정: 로컬 AI 슬롯(엔드포인트·모델)을 localStorage에 저장합니다.", en: "Local AI config: local-AI slots, endpoints, and models are stored in localStorage.", ja: "ローカルAI設定: スロット(エンドポイント・モデル) を localStorage に保存。", zh: "本地 AI 配置: 槽位、端点与模型存于 localStorage。" })}</li>
         </ul>
       </section>
 
@@ -68,7 +68,7 @@ export default function CookiesPage() {
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
             ko: "쿠키 동의 배너에서 '필수만' 또는 '동의'를 선택할 수 있습니다. 브라우저 설정에서 쿠키·저장소를 삭제·차단할 수 있으나, 필수 쿠키 차단 시 로그인 등 일부 기능이 제한됩니다. 로컬 저장 원고는 브라우저 데이터 삭제 시 함께 삭제되므로, 중요 원고는 내보내기(JSON/EPUB/DOCX) 또는 로컬 폴더 저장을 권장합니다.",
-            en: "You may choose 'Essential only' or 'Accept' in the consent banner. You can delete or block cookies/storage in your browser settings, but blocking essential cookies limits features such as login. Locally stored manuscripts are deleted when you clear browser data — export (JSON/EPUB/DOCX) or save to a local folder for important work.",
+            en: "You may choose 'Essential only' or 'Accept' in the consent banner. You can delete or block cookies/storage in your browser settings, but blocking essential cookies limits features such as login. If you clear browser data, locally stored manuscripts are removed as well. Export (JSON/EPUB/DOCX) or save to a local folder for important work.",
             ja: "同意バナーで「必須のみ」または「同意」を選択できます。ブラウザ設定で削除・ブロック可能ですが、必須クッキーをブロックすると一部機能が制限されます。",
             zh: "可在同意横幅选择「仅必要」或「同意」。可在浏览器设置中删除或阻止，但阻止必要 Cookie 会限制登录等功能。",
           })}

@@ -73,7 +73,15 @@ describe('submission-package — DISTRIBUTION_PROFILES', () => {
 
 describe('submission-package — ARTIFACT_LABELS', () => {
   it('4 artifact × 4언어 모두 정의', () => {
-    const ids = ['manuscript-md', 'process-certificate', 'source-bundle', 'digital-signature'] as const;
+    const ids = [
+      'manuscript-md',
+      'public-certificate-card',
+      'process-certificate',
+      'source-bundle',
+      'core-copyright-package',
+      'release-credit-preview',
+      'digital-signature',
+    ] as const;
     for (const id of ids) {
       expect(ARTIFACT_LABELS[id].ko).toBeDefined();
       expect(ARTIFACT_LABELS[id].en).toBeDefined();
@@ -84,22 +92,36 @@ describe('submission-package — ARTIFACT_LABELS', () => {
 });
 
 describe('submission-package — buildSubmissionPackage', () => {
-  it('publisher profile → 4 artifacts (manuscript / cert / source / signature)', async () => {
+  it('publisher profile → 원고·확인서·서명·권리/IP 구성표를 포함한다', async () => {
     const pkg = await buildSubmissionPackage({ ...baseInput, profileId: 'publisher' });
     expect(pkg.profile.id).toBe('publisher');
     expect(pkg.view).toBe('publisher');
-    expect(pkg.artifacts.length).toBeGreaterThanOrEqual(3);
+    expect(pkg.artifacts.length).toBeGreaterThanOrEqual(4);
     const ids = pkg.artifacts.map((a) => a.id);
     expect(ids).toContain('manuscript-md');
+    expect(ids).toContain('public-certificate-card');
     expect(ids).toContain('process-certificate');
     expect(ids).toContain('digital-signature');
+    expect(ids).toContain('ip-pack-manifest');
   });
 
   it('platform profile → source-bundle 제외', async () => {
     const pkg = await buildSubmissionPackage({ ...baseInput, profileId: 'platform' });
     const ids = pkg.artifacts.map((a) => a.id);
     expect(ids).not.toContain('source-bundle');
+    expect(ids).toContain('public-certificate-card');
     expect(ids).toContain('process-certificate');
+  });
+
+  it('공개용 과정기록 카드는 본문 없이 축약 메타만 담는다', async () => {
+    const pkg = await buildSubmissionPackage({ ...baseInput, profileId: 'publisher' });
+    const card = pkg.artifacts.find((artifact) => artifact.id === 'public-certificate-card');
+    expect(card).toBeDefined();
+    expect(card!.filename).toMatch(/^public-process-card-/);
+    expect(card!.content).toContain('공개용 과정기록 카드');
+    expect(card!.content).toContain('Test Work');
+    expect(card!.content).not.toContain('첫 화 본문 내용입니다');
+    expect(card!.content).not.toContain(pkg.manuscriptHash);
   });
 
   it('legal-deposit profile → forced view legal', async () => {
@@ -124,6 +146,83 @@ describe('submission-package — buildSubmissionPackage', () => {
     // 64자 hex (실제 구현 시 SHA-256, 테스트 fallback 도 64자 padding)
     expect(typeof parsed.manuscriptHash).toBe('string');
     expect(parsed.manuscriptHash.length).toBe(64);
+  });
+
+  it('ip-pack-manifest JSON 파싱 가능 + 매체별 양식 상태 포함', async () => {
+    const pkg = await buildSubmissionPackage({
+      ...baseInput,
+      profileId: 'publisher',
+      ipPack: {
+        mediaFormGroups: [
+          {
+            titleKo: '영상 제안 요약',
+            purposeKo: '제작사가 로그라인, 시즌성, 장면성을 빠르게 판단하게 한다.',
+            filledCount: 4,
+            totalCount: 5,
+            fields: [
+              { labelKo: '시즌 로그라인', filled: true, sourceKo: '시놉시스·핵심 전제' },
+              { labelKo: '타깃 시청층', filled: true, sourceKo: '시장·플랫폼 설정' },
+              { labelKo: '시즌 수', filled: true, sourceKo: '목표 회차·시즌 구조' },
+              { labelKo: '주요 갈등', filled: true, sourceKo: '현재 갈등·사건 체인' },
+              { labelKo: '결말 포함 여부', filled: false, sourceKo: '입력 대기' },
+            ],
+          },
+        ],
+      },
+    });
+    const manifestArtifact = pkg.artifacts.find((artifact) => artifact.id === 'ip-pack-manifest');
+    expect(manifestArtifact).toBeDefined();
+    const parsed = JSON.parse(manifestArtifact!.content);
+    expect(parsed.kind).toBe('loreguard.ip-pack-manifest.v1');
+    expect(parsed.projectLedgerScope.projectId).toBe('proj-test-1');
+    expect(parsed.mediaFormGroups[0].titleKo).toBe('영상 제안 요약');
+    expect(parsed.mediaFormGroups[0].statusKo).toBe('보강 필요');
+    expect(parsed.artifacts.map((artifact: { id: string }) => artifact.id)).toContain('ip-pack-manifest');
+  });
+
+  it('패키지 조건 미리보기 JSON을 실제 차감 없이 포함한다', async () => {
+    const pkg = await buildSubmissionPackage({
+      ...baseInput,
+      profileId: 'publisher',
+      releaseCredit: {
+        planId: 'studio',
+        packageProfileId: 'external-submission',
+      },
+    });
+    const artifact = pkg.artifacts.find((item) => item.id === 'release-credit-preview');
+    expect(artifact).toBeDefined();
+    const parsed = JSON.parse(artifact!.content);
+    expect(parsed).toMatchObject({
+      kind: 'loreguard.release-credit-preview.v1',
+      packageProfileId: 'external-submission',
+      planId: 'studio',
+      product: expect.objectContaining({
+        labelKo: '완결 과정기록',
+        requiredCredits: 10,
+      }),
+      ledgerEventDraft: expect.objectContaining({
+        projectId: 'proj-test-1',
+        projectScoped: true,
+        checkedAt: '2026-06-14',
+      }),
+    });
+    expect(parsed.limitation).toContain('실제 결제');
+  });
+
+  it('코어 저작권 등록 준비 패키지를 선택 산출물로 포함한다', async () => {
+    const pkg = await buildSubmissionPackage({
+      ...baseInput,
+      profileId: 'publisher',
+      coreCopyrightPackage: {
+        filename: 'core-copyright-package-test.md',
+        content: '# 코어 저작권 등록 준비 패키지\n\n세계관 등록 기준본',
+      },
+    });
+    const artifact = pkg.artifacts.find((item) => item.id === 'core-copyright-package');
+    expect(artifact).toBeDefined();
+    expect(artifact!.filename).toBe('core-copyright-package-test.md');
+    expect(artifact!.content).toContain('세계관 등록 기준본');
+    expect(ARTIFACT_LABELS['core-copyright-package'].ko).toBe('코어 저작권 등록 준비 패키지');
   });
 
   it('totalSize = artifacts 합산', async () => {

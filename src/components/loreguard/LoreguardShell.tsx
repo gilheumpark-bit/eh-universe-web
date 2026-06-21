@@ -1,11 +1,11 @@
 "use client";
 
 /* ===========================================================
-   LoreguardShell — white header + 6 icon tabs + tools
+   LoreguardShell — white header + creation-first icon tabs + tools
    Source: /tmp/design2_handoff/2/project/shell.jsx (window.Shell.Header)
 
-   픽셀 재현: .eh-header(grid 260px/1fr/360px) + 브랜드(EH mark + 2줄 tagline)
-   + 중앙 6탭 nav(아이콘 + 라벨 + 번역 NEW 뱃지) + tools(동기화/검색/알림 3뱃지/
+   픽셀 재현: .eh-header(grid 260px/1fr/360px) + 브랜드(로어가드 mark + 2줄 tagline)
+   + 중앙 작업 nav(아이콘 + 라벨) + tools(동기화/검색/알림 3뱃지/
    도움말/프로젝트 칩). CSS 는 src/app/loreguard.css PART 3.
 
    상태: activeTab + onChange 는 부모(LoreguardStudio)가 소유. children 슬롯에
@@ -13,6 +13,7 @@
    =========================================================== */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   Globe,
   User,
@@ -20,6 +21,9 @@ import {
   Film,
   Pen,
   Languages,
+  Plus,
+  Wand,
+  Scroll,
   Sync,
   Search,
   Help,
@@ -38,35 +42,49 @@ import { Sun, Moon, Monitor, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { backupNow as runBackupNow } from "@/lib/save-engine/file-tier";
 import { logger } from "@/lib/logger";
+import { useLang, type Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/studio-types";
+import LayoutProfileMenu from "./LayoutProfileMenu";
 
 // ============================================================
 // PART 1 — Tab registry (id ↔ label ↔ icon)
 // ============================================================
 export type LoreguardTabId =
+  | "project"
   | "world"
   | "character"
   | "plot"
+  | "scene"
   | "direction"
   | "writing"
-  | "translate";
+  | "revision"
+  | "translate"
+  | "export";
 
 interface TabDef {
   id: LoreguardTabId;
-  label: string;
+  label: { ko: string; en: string; ja: string; zh: string };
   Icon: typeof Globe;
-  isNew?: boolean;
 }
 
 export const LOREGUARD_TABS: readonly TabDef[] = [
-  { id: "world", label: "세계관", Icon: Globe },
-  { id: "character", label: "캐릭터", Icon: User },
-  { id: "plot", label: "플롯", Icon: Branch },
-  { id: "direction", label: "연출", Icon: Film },
-  { id: "writing", label: "집필", Icon: Pen },
-  { id: "translate", label: "번역", Icon: Languages, isNew: true },
+  { id: "project", label: { ko: "프로젝트 생성", en: "Create Project", ja: "プロジェクト作成", zh: "创建项目" }, Icon: Plus },
+  { id: "world", label: { ko: "세계관 생성", en: "Worldbuilding", ja: "世界観作成", zh: "世界观生成" }, Icon: Globe },
+  { id: "character", label: { ko: "캐릭터·아이템", en: "Characters & Items", ja: "キャラクター・アイテム", zh: "角色与道具" }, Icon: User },
+  { id: "plot", label: { ko: "메인 시나리오", en: "Main Scenario", ja: "メインシナリオ", zh: "主线剧情" }, Icon: Branch },
+  { id: "scene", label: { ko: "씬시트", en: "Scene Sheet", ja: "シーンシート", zh: "场景表" }, Icon: Film },
+  { id: "direction", label: { ko: "연출", en: "Direction", ja: "演出", zh: "演出" }, Icon: Wand },
+  { id: "writing", label: { ko: "집필", en: "Writing", ja: "執筆", zh: "写作" }, Icon: Pen },
+  { id: "revision", label: { ko: "퇴고", en: "Revision", ja: "推敲", zh: "修订" }, Icon: Scroll },
+  { id: "translate", label: { ko: "번역·현지화", en: "Translation & Localization", ja: "翻訳・ローカライズ", zh: "翻译与本地化" }, Icon: Languages },
+  { id: "export", label: { ko: "출고", en: "Release", ja: "出稿", zh: "交付" }, Icon: Download },
 ] as const;
+
+export function getLoreguardTabLabel(id: LoreguardTabId, language: AppLanguage | Lang | string): string {
+  const tab = LOREGUARD_TABS.find((item) => item.id === id);
+  return tab ? L4(language, tab.label) : id;
+}
 
 // ============================================================
 // PART 1.5 — Theme (F1 dark toggle)
@@ -85,11 +103,18 @@ const THEME_CYCLE: Record<LoreguardThemePref, LoreguardThemePref> = {
   system: "light",
 };
 
-const THEME_LABEL: Record<LoreguardThemePref, string> = {
-  light: "라이트",
-  dark: "다크",
-  system: "시스템",
+const THEME_LABEL_TXT: Record<LoreguardThemePref, { ko: string; en: string; ja: string; zh: string }> = {
+  light: { ko: "라이트", en: "Light", ja: "ライト", zh: "浅色" },
+  dark: { ko: "다크", en: "Dark", ja: "ダーク", zh: "深色" },
+  system: { ko: "시스템", en: "System", ja: "システム", zh: "系统" },
 };
+
+const HEADER_LANGUAGE_OPTIONS: Array<{ id: Lang; label: string; title: string }> = [
+  { id: "ko", label: "KO", title: "한국어" },
+  { id: "en", label: "EN", title: "English" },
+  { id: "ja", label: "JP", title: "日本語" },
+  { id: "zh", label: "CN", title: "中文" },
+];
 
 function readStoredThemePref(): LoreguardThemePref {
   if (typeof window === "undefined") return "light";
@@ -151,12 +176,28 @@ interface LoreguardShellProps {
   synced?: boolean;
   /** 헤더 도구 실 핸들러 (검색 = 글로벌 검색 열기, 도움말 = 문서, 설정 = 설정 패널). */
   onSearch?: () => void;
+  onProjectSearch?: () => void;
   onHelp?: () => void;
   onSettings?: () => void;
   /** [G1] 즉시 백업 대상 projectId (구 StudioStatusBar 와 동일하게 currentProjectId). null = 경고 토스트. */
   projectId?: string | null;
   /** [G1] 헤더 라벨·토스트 4언어 (L4). */
   language?: AppLanguage;
+  /** 작품 장르 기반의 은은한 작업실 톤. */
+  genreTone?: string | null;
+}
+
+function normalizeGenreTone(raw?: string | null): string | undefined {
+  const key = String(raw ?? "").toLowerCase().replace(/[\s_]+/g, "-");
+  if (!key) return undefined;
+  if (key.includes("romance") || key.includes("rofan") || key.includes("love")) return "romance";
+  if (key.includes("wuxia") || key.includes("martial") || key.includes("murim")) return "wuxia";
+  if (key.includes("sf") || key.includes("sci") || key.includes("science")) return "sf";
+  if (key.includes("thriller") || key.includes("horror")) return "thriller";
+  if (key.includes("hunter") || key.includes("modern")) return "modern";
+  if (key.includes("light")) return "lightnovel";
+  if (key.includes("fantasy")) return "fantasy";
+  return "general";
 }
 
 export default function LoreguardShell({
@@ -167,11 +208,15 @@ export default function LoreguardShell({
   syncLabel = "저장 전",
   synced = false,
   onSearch,
+  onProjectSearch,
   onHelp,
   onSettings,
   projectId = null,
   language = "KO",
+  genreTone = null,
 }: LoreguardShellProps) {
+  const router = useRouter();
+  const { lang, setLangDirect } = useLang();
   // [F1] 테마 상태 — localStorage(noa-lg-theme) lazy init (첫 렌더 적용 = FOUC 방지).
   const [themePref, setThemePref] = useState<LoreguardThemePref>(readStoredThemePref);
   const [systemDark, setSystemDark] = useState<boolean>(readSystemPrefersDark);
@@ -201,10 +246,20 @@ export default function LoreguardShell({
   const resolvedTheme: "light" | "dark" =
     themePref === "system" ? (systemDark ? "dark" : "light") : themePref;
   const ThemeIcon = themePref === "light" ? Sun : themePref === "dark" ? Moon : Monitor;
+  const brandLabel = L4(language, { ko: "로어가드", en: "Loreguard", ja: "Loreguard", zh: "Loreguard" });
+  const brandHomeTitle = L4(language, {
+    ko: "메인으로 이동",
+    en: "Go to main page",
+    ja: "メインへ移動",
+    zh: "前往主页",
+  });
   const themeTitle =
-    `테마: ${THEME_LABEL[themePref]}` +
-    (themePref === "system" ? ` (현재 ${systemDark ? "다크" : "라이트"})` : "") +
-    ` — 클릭 시 ${THEME_LABEL[THEME_CYCLE[themePref]]}`;
+    L4(language, {
+      ko: `테마: ${THEME_LABEL_TXT[themePref].ko}${themePref === "system" ? ` (현재 ${systemDark ? "다크" : "라이트"})` : ""} - 클릭 시 ${THEME_LABEL_TXT[THEME_CYCLE[themePref]].ko}`,
+      en: `Theme: ${THEME_LABEL_TXT[themePref].en}${themePref === "system" ? ` (current ${systemDark ? "dark" : "light"})` : ""} - click for ${THEME_LABEL_TXT[THEME_CYCLE[themePref]].en}`,
+      ja: `テーマ: ${THEME_LABEL_TXT[themePref].ja}${themePref === "system" ? ` (現在 ${systemDark ? "ダーク" : "ライト"})` : ""} - クリックで ${THEME_LABEL_TXT[THEME_CYCLE[themePref]].ja}`,
+      zh: `主题：${THEME_LABEL_TXT[themePref].zh}${themePref === "system" ? `（当前${systemDark ? "深色" : "浅色"}）` : ""} - 点击切换到${THEME_LABEL_TXT[THEME_CYCLE[themePref]].zh}`,
+    });
 
   // ----------------------------------------------------------
   // [G1-a] 계정 상태 — 실 AuthContext 소비. 로그아웃 시 클릭 = 기존 Google
@@ -212,12 +267,22 @@ export default function LoreguardShell({
   // 계정 섹션(SettingsView EasyTab ProfileCard — 로그아웃 포함) 재사용.
   // Firebase 미설정도 동일 경로 — ProfileCard 게스트 카드가 안내 (신규 인증 UI X).
   // ----------------------------------------------------------
-  const { user, loading: authLoading, signInWithGoogle, isConfigured } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, isConfigured, error: authError } = useAuth();
   const accountEmail = user?.email?.trim() || user?.displayName?.trim() || "";
   const accountInitial = accountEmail.charAt(0).toUpperCase() || "?";
+  const signInLabel = L4(language, ACCOUNT_TXT.signIn);
   const accountTitle = user
     ? `${L4(language, ACCOUNT_TXT.account)}: ${accountEmail || "?"} — ${L4(language, ACCOUNT_TXT.manage)}`
-    : L4(language, ACCOUNT_TXT.signIn);
+    : authError
+      ? `${signInLabel} — ${authError}`
+      : signInLabel;
+  const lastAuthErrorToastRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!authError || lastAuthErrorToastRef.current === authError) return;
+    lastAuthErrorToastRef.current = authError;
+    dispatchHeaderToast(authError, "error");
+  }, [authError]);
 
   const handleAccountClick = () => {
     if (user || !isConfigured) {
@@ -296,35 +361,50 @@ export default function LoreguardShell({
     backupState === "success" ? "var(--c-green)" :
     backupState === "error" ? "var(--c-red)" :
     undefined;
+  const activePageTitle = getLoreguardTabLabel(active, language);
+  const normalizedGenreTone = normalizeGenreTone(genreTone);
 
   return (
-    <div className="eh-app" data-theme={resolvedTheme}>
+    <div className="eh-app" data-theme={resolvedTheme} data-genre-tone={normalizedGenreTone}>
       <header className="eh-header">
+        {active !== "project" && <h1 className="sr-only">로어가드 {activePageTitle}</h1>}
         {/* brand */}
-        <div className="eh-brand">
-          <div className="eh-mark">EH</div>
+        <button
+          type="button"
+          className="eh-brand"
+          aria-label={`${brandLabel} - ${brandHomeTitle}`}
+          title={brandHomeTitle}
+          onClick={() => router.push("/")}
+        >
+          <div className="eh-mark" aria-hidden="true">{brandLabel}</div>
           <div className="eh-tagline">
-            <span>당신의 이야기를</span>
-            <span>완성하는 모든 것</span>
+            <span>{L4(language, { ko: "작품을 정리하고", en: "Organize the work", ja: "作品を整理し", zh: "整理作品" })}</span>
+            <span>{L4(language, { ko: "출고까지 이어갑니다", en: "carry it to release", ja: "出稿までつなぐ", zh: "衔接到交付" })}</span>
           </div>
-        </div>
+        </button>
 
         {/* tabs */}
-        <nav className="eh-nav" aria-label="Loreguard 작업 탭">
-          {LOREGUARD_TABS.map((tab) => {
+        <nav
+          className="eh-nav"
+          aria-label={L4(language, { ko: "Loreguard 작업 탭", en: "Loreguard work tabs", ja: "Loreguard 作業タブ", zh: "Loreguard 工作标签" })}
+        >
+          {LOREGUARD_TABS.map((tab, index) => {
             const on = active === tab.id;
             const { Icon } = tab;
+            const label = L4(language, tab.label);
             return (
               <button
                 key={tab.id}
                 type="button"
                 className={"eh-tab" + (on ? " on" : "")}
+                aria-label={label}
                 aria-current={on ? "page" : undefined}
+                title={`${index + 1}. ${label}`}
                 onClick={() => onChange(tab.id)}
               >
+                <span className="eh-tab-num" aria-hidden="true">{index + 1}</span>
                 <Icon size={17} strokeWidth={on ? 1.9 : 1.6} aria-hidden="true" />
-                <span>{tab.label}</span>
-                {tab.isNew && <i className="eh-new">NEW</i>}
+                <span>{label}</span>
               </button>
             );
           })}
@@ -336,6 +416,33 @@ export default function LoreguardShell({
             <Sync size={15} aria-hidden="true" />
             <span>{syncLabel}</span>
           </div>
+          <div
+            className="eh-lang-switch"
+            role="group"
+            aria-label={L4(language, { ko: "화면 언어 전환", en: "Switch display language", ja: "表示言語を切り替え", zh: "切换界面语言" })}
+          >
+            {HEADER_LANGUAGE_OPTIONS.map((option) => {
+              const selected = lang === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={"eh-lang-seg" + (selected ? " on" : "")}
+                  aria-pressed={selected}
+                  title={L4(language, {
+                    ko: `화면 언어: ${option.title}`,
+                    en: `Display language: ${option.title}`,
+                    ja: `表示言語: ${option.title}`,
+                    zh: `界面语言：${option.title}`,
+                  })}
+                  onClick={() => setLangDirect(option.id)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <LayoutProfileMenu language={language} />
           {/* [G1-b] 즉시 백업 (ZIP 다운로드) — 동기화 라벨 옆, 구 BackupNowButton 패리티 */}
           <button
             type="button"
@@ -357,20 +464,48 @@ export default function LoreguardShell({
           <button type="button" className="eh-icbtn" title={themeTitle} aria-label={themeTitle} onClick={cycleTheme}>
             <ThemeIcon size={18} aria-hidden="true" />
           </button>
-          <button type="button" className="eh-icbtn" title="검색 (프로젝트·캐릭터·회차·본문)" aria-label="검색" onClick={onSearch}>
+          <button
+            type="button"
+            className="eh-icbtn"
+            title={L4(language, {
+              ko: "검색 (프로젝트·캐릭터·회차·본문)",
+              en: "Search projects, characters, episodes and drafts",
+              ja: "プロジェクト・キャラクター・回・本文を検索",
+              zh: "搜索项目、角色、章节和正文",
+            })}
+            aria-label={L4(language, { ko: "검색", en: "Search", ja: "検索", zh: "搜索" })}
+            onClick={onSearch}
+          >
             <Search size={18} aria-hidden="true" />
           </button>
-          <button type="button" className="eh-icbtn" title="도움말 (문서 열기)" aria-label="도움말" onClick={onHelp}>
+          <button
+            type="button"
+            className="eh-icbtn"
+            title={L4(language, { ko: "도움말 및 도구", en: "Help and tools", ja: "ヘルプとツール", zh: "帮助与工具" })}
+            aria-label={L4(language, { ko: "도움말 및 도구", en: "Help and tools", ja: "ヘルプとツール", zh: "帮助与工具" })}
+            onClick={onHelp}
+          >
             <Help size={18} aria-hidden="true" />
           </button>
-          <button type="button" className="eh-icbtn" title="설정 (API 키·백업·플러그인)" aria-label="설정" onClick={onSettings}>
+          <button
+            type="button"
+            className="eh-icbtn"
+            title={L4(language, {
+              ko: "환경 설정 (노아·저장·과정기록·출고)",
+              en: "Environment settings: Noa, saving, process records, release",
+              ja: "環境設定: Noa・保存・過程記録・出稿",
+              zh: "环境设置：Noa、保存、过程记录、交付",
+            })}
+            aria-label={L4(language, { ko: "환경 설정", en: "Environment settings", ja: "環境設定", zh: "环境设置" })}
+            onClick={onSettings}
+          >
             <Settings size={18} aria-hidden="true" />
           </button>
           {/* [G1-a] 계정 — 로그아웃: Google 로그인 / 로그인: 이메일 첫 글자 아바타 +
               클릭 시 설정 계정 섹션(기존 ProfileCard) */}
           <button
             type="button"
-            className="eh-icbtn"
+            className={"eh-icbtn eh-account-btn" + (!user ? " is-login" : "")}
             title={accountTitle}
             aria-label={accountTitle}
             onClick={handleAccountClick}
@@ -396,10 +531,19 @@ export default function LoreguardShell({
                 {accountInitial}
               </span>
             ) : (
-              <User size={18} aria-hidden="true" />
+              <>
+                <User size={18} aria-hidden="true" />
+                <span className="eh-account-text">{signInLabel}</span>
+              </>
             )}
           </button>
-          <button type="button" className="eh-proj" onClick={onSearch} title="프로젝트 검색·전환">
+          <button
+            type="button"
+            className="eh-proj"
+            onClick={onProjectSearch ?? onSearch}
+            aria-label={L4(language, { ko: "프로젝트 검색", en: "Project search", ja: "プロジェクト検索", zh: "项目搜索" })}
+            title={L4(language, { ko: "프로젝트 검색", en: "Project search", ja: "プロジェクト検索", zh: "项目搜索" })}
+          >
             <span className="eh-proj-dot" aria-hidden="true" />
             <span className="eh-proj-name">{projectName}</span>
             <Chevron size={14} aria-hidden="true" />
@@ -414,11 +558,8 @@ export default function LoreguardShell({
         {children}
       </main>
 
-      {/* [Z1d 2026-06-11] 협폭(<1180px) 안내 카드 — .eh-app 은 min-width 1180 데스크톱
-          전용이라 협폭에서 깨진 가로 오버플로만 보였다. loreguard.css PART 12 미디어쿼리가
-          1180px 미만에서 헤더·워크스페이스를 숨기고 이 카드만 표시 (display:none 숨김 =
-          React 상태·자동저장 유지 — 창 복원 시 그대로). 기능 약속 문구 없음 — 안내 전용.
-          1180px 이상에서는 display:none → 접근성 트리에서도 제외. */}
+      {/* 협폭 안내 카드 — 모바일 본문 차단 정책은 제거됨. 현재는 보존용 노드이며
+          loreguard.css PART 12에서 기본 미노출 처리한다. */}
       <div className="eh-narrow-notice" role="status">
         <div className="eh-narrow-card">
           <div className="eh-narrow-badge">LOREGUARD STUDIO</div>

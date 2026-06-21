@@ -2,7 +2,7 @@
 
 // ============================================================
 // UnifiedSettingsContext — 전체 스튜디오 공통 설정 통합 Provider
-// 테마(밤/낮), 언어, API 키 슬롯을 한 곳에서 관리
+// 테마(밤/낮), 언어, 연결 키 슬롯을 한 곳에서 관리
 // ============================================================
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
@@ -10,7 +10,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 // ── 테마 ──
 export type ThemeMode = "dark" | "light";
 
-// ── API 키 슬롯 (코드 스튜디오 기반) ──
+// ── 연결 키 슬롯 (내부 호환 기반) ──
 export type SlotRole = "default" | "coder" | "reviewer" | "tester" | "security" | "architect" | "debugger" | "documenter" | "custom";
 
 export interface APIKeySlot {
@@ -102,6 +102,10 @@ function migrateOldKeys(): APIKeySlot[] {
     gemini: { name: "Gemini", model: "gemini-2.5-flash" },
     openai: { name: "OpenAI", model: "gpt-4.1" },
     claude: { name: "Claude", model: "claude-sonnet-4-6" },
+    deepseek: { name: "DeepSeek", model: "deepseek-v4-flash" },
+    qwen: { name: "Qwen", model: "qwen3-max" },
+    minimax: { name: "MiniMax", model: "MiniMax-M2.7-highspeed" },
+    kimi: { name: "Kimi", model: "kimi-k2.6" },
     groq: { name: "Groq", model: "llama-3.3-70b-versatile" },
     mistral: { name: "Mistral", model: "mistral-large-latest" },
   };
@@ -155,14 +159,14 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
         "--color-bg-tertiary": "#f5f6fb",
         "--color-text-primary": "#1f2433",
         "--color-text-secondary": "#5b6273",
-        "--color-text-tertiary": "#5f6675",
+        "--color-text-tertiary": "#4f5665",
         "--color-border": "#e6e8f1",
         // indigo primary + AA 보정 pill accents (양쪽 AA pass)
         "--color-accent-purple": "#6a4fbf",
-        "--color-accent-amber": "#4f5fe0",
-        "--color-accent-red": "#c0453c",
+        "--color-accent-amber": "#3341c9",
+        "--color-accent-red": "#a52821",
         "--color-accent-green": "#1f8a5b",
-        "--color-accent-blue": "#4f6bf6",
+        "--color-accent-blue": "#1d4ed8",
         "--color-surface-strong": "rgba(255,255,255,0.97)",
         "--color-surface-soft": "rgba(245,246,251,0.9)",
       };
@@ -176,7 +180,7 @@ export function UnifiedSettingsProvider({ children }: { children: ReactNode }) {
         "--color-bg-tertiary": "#2e2b26",
         "--color-text-primary": "#f2ede4",
         "--color-text-secondary": "#aca292",
-        "--color-text-tertiary": "#7b7367",
+        "--color-text-tertiary": "#948a7c",
         "--color-border": "#3d3830",
         // [C] 다크 accent — globals.css @theme와 동기화 (axe 1.79~2.49 → 3.0+)
         "--color-accent-purple": "#a08573",
@@ -311,7 +315,7 @@ function syncToLegacyKeys(slots: APIKeySlot[]): void {
     // 동기 import — 이미 같은 번들에 포함되어 있으므로 circular dependency 아님
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { setApiKey, setActiveProvider, setActiveModel } = require('@/lib/ai-providers');
-    const providers = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
+    const providers = ["gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"] as const;
     let firstActiveProvider: string | null = null;
     let firstActiveModel: string | null = null;
     for (const pid of providers) {
@@ -333,7 +337,7 @@ function syncToLegacyKeys(slots: APIKeySlot[]): void {
   } catch {
     // 번들링 문제 시 폴백 — 비동기 import
     import('@/lib/ai-providers').then(({ setApiKey, setActiveProvider, setActiveModel }) => {
-      const providers = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
+      const providers = ["gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"] as const;
       let first: string | null = null;
       let firstModel: string | null = null;
       for (const pid of providers) {

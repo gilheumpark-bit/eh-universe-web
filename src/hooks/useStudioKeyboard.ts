@@ -53,12 +53,12 @@ export function useStudioKeyboard(opts: UseStudioKeyboardOptions) {
   useEffect(() => {
     // F1~F8 (legacy)
     const tabByFKey: Record<string, AppTab> = {
-      F1: 'world', F2: 'characters', F3: 'rulebook', F4: 'writing',
+      F1: 'world', F2: 'characters', F3: 'direction', F4: 'writing',
       F5: 'style', F6: 'manuscript', F7: 'history', F8: 'settings',
     };
     // Ctrl+1~8 (writer-friendly, same target tabs)
     const tabByDigitKey: Record<string, AppTab> = {
-      '1': 'world', '2': 'characters', '3': 'rulebook', '4': 'writing',
+      '1': 'world', '2': 'characters', '3': 'direction', '4': 'writing',
       '5': 'style', '6': 'manuscript', '7': 'history', '8': 'settings',
     };
     const handler = (e: KeyboardEvent) => {

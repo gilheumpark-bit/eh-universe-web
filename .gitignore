@@ -135,9 +135,6 @@ test2.out
 test3.out
 tmp/
 
-# CS Quill local receipts
-.cs/
-
 # Playwright results
 playwright-results.json
 
@@ -219,3 +216,10 @@ docs/internal-frame/
 .bug-hunter/
 
 .wf/
+
+# Codex / local agent scratch state
+.codex-run/
+.codex-remote-attachments/
+.cs/
+%ERR%
+%LOG%

@@ -142,7 +142,7 @@ function VersionedBackupList({
 }
 
 // ============================================================
-// PART 3 — GitHub Sync Section (OAuth + PAT onboarding)
+// PART 3 — GitHub Sync Section (PAT onboarding)
 // ============================================================
 
 function GitHubSyncSection({ language }: { language: AppLanguage }) {
@@ -156,40 +156,6 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
   }, [autoSync]);
   const [connecting, setConnecting] = useState(false);
 
-  // GitHub OAuth popup handler — with CSRF state parameter
-  const handleOAuthLogin = useCallback(() => {
-    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
-    if (!clientId) return;
-
-    // Generate random state for CSRF protection and store in cookie
-    const state = crypto.randomUUID();
-    document.cookie = `gh_oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
-
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo&state=${state}`;
-    const w = 600, h = 700;
-    const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-    window.open(authUrl, 'github-oauth', `width=${w},height=${h},left=${left},top=${top}`);
-  }, []);
-
-  // Listen for OAuth token from callback redirect hash
-  useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash;
-      if (hash.includes('github_token=')) {
-        const token = hash.split('github_token=')[1]?.split('&')[0];
-        if (token) {
-          gh.connect(token);
-          window.location.hash = '';
-        }
-      }
-    };
-    handleHash();
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, [gh]);
-
-  const hasOAuthClientId = typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
-
   if (!ghEnabled) {
     return (
       <div className="md:col-span-2 ds-card-lg opacity-60">
@@ -201,7 +167,7 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
           </span>
         </h3>
         <p className="text-xs text-text-tertiary">
-          {L4(language, { ko: 'GitHub 백업을 켜려면 환경 변수 NEXT_PUBLIC_GITHUB_CLIENT_ID 등록이 필요합니다.', en: 'To enable GitHub backup, set NEXT_PUBLIC_GITHUB_CLIENT_ID in your environment.', ja: 'GitHubバックアップを有効にするにはNEXT_PUBLIC_GITHUB_CLIENT_IDを設定してください。', zh: '要启用 GitHub 备份，请设置环境变量 NEXT_PUBLIC_GITHUB_CLIENT_ID。' })}
+          {L4(language, { ko: 'GitHub 백업 기능 플래그가 꺼져 있습니다.', en: 'GitHub backup is disabled by feature flag.', ja: 'GitHubバックアップの機能フラグが無効です。', zh: 'GitHub 备份功能开关已关闭。' })}
         </p>
       </div>
     );
@@ -293,22 +259,6 @@ function GitHubSyncSection({ language }: { language: AppLanguage }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {hasOAuthClientId && (
-            <button
-              onClick={handleOAuthLogin}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#24292f] hover:bg-[#2f363d] text-white text-xs font-bold rounded-xl transition-colors"
-            >
-              <GitBranch className="w-4 h-4" />
-              {L4(language, { ko: 'GitHub으로 로그인', en: 'Sign in with GitHub', ja: 'GitHubでログイン', zh: '使用 GitHub 登录' })}
-            </button>
-          )}
-          {hasOAuthClientId && (
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-[10px] text-text-tertiary font-mono uppercase">{L4(language, { ko: '또는 PAT 입력', en: 'or enter PAT', ja: 'またはPATを入力', zh: '或输入 PAT' })}</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-          )}
           <p className="text-xs text-text-tertiary">
             {L4(language, { ko: 'GitHub 접근 토큰(PAT)을 입력하면 원고를 비공개 저장소에 안전하게 백업할 수 있습니다.', en: 'Enter a GitHub Personal Access Token (PAT) to safely back up manuscripts to a private repository.', ja: 'GitHubアクセストークン(PAT)を入力すると、原稿を非公開リポジトリに安全にバックアップできます。', zh: '输入 GitHub 访问令牌(PAT)后，可将稿件安全备份至私有仓库。' })}
           </p>
@@ -479,30 +429,56 @@ function GitHubPatGuide({ language }: { language: AppLanguage }) {
 
 function GoogleDriveSection({ language }: { language: AppLanguage }) {
   const { user } = useAuth();
-  const [lastSync, setLastSync] = useState<number | null>(null);
+  const [lastSync, setLastSync] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem('noa_drive_last_sync');
+      if (!stored) return null;
+      const parsed = Number.parseInt(stored, 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    } catch (err) {
+      logger.warn('BackupsSection', 'read noa_drive_last_sync failed', err);
+      return null;
+    }
+  });
   const [syncing, setSyncing] = useState(false);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    let stored: string | null = null;
-    try { stored = typeof window !== 'undefined' ? localStorage.getItem('noa_drive_last_sync') : null; } catch (err) { logger.warn('BackupsSection', 'read noa_drive_last_sync failed', err); }
-    if (stored) setLastSync(parseInt(stored));
+    const handleCompleted = (event: Event) => {
+      const detail = (event as CustomEvent<{ time?: number }>).detail;
+      const time = typeof detail?.time === 'number' ? detail.time : Date.now();
+      setLastSync(time);
+      setSyncing(false);
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
+    const handleFailed = () => {
+      setSyncing(false);
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
+    window.addEventListener('noa:drive-sync-completed', handleCompleted);
+    window.addEventListener('noa:drive-sync-failed', handleFailed);
+    return () => {
+      window.removeEventListener('noa:drive-sync-completed', handleCompleted);
+      window.removeEventListener('noa:drive-sync-failed', handleFailed);
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    };
   }, []);
 
-  let hasToken = false;
-  let encActive = false;
-  try { hasToken = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_token'); } catch (err) { logger.warn('BackupsSection', 'read noa_drive_token failed', err); }
-  try { encActive = typeof window !== 'undefined' && !!localStorage.getItem('noa_drive_enc'); } catch (err) { logger.warn('BackupsSection', 'read noa_drive_enc failed', err); }
+  const encActive = Boolean(user?.uid);
 
   const handleManualSync = async () => {
+    if (!user) return;
     setSyncing(true);
-    try {
-      window.dispatchEvent(new CustomEvent('noa:drive-sync-requested'));
-      const now = Date.now();
-      setLastSync(now);
-      try { localStorage.setItem('noa_drive_last_sync', String(now)); } catch (err) { logger.warn('BackupsSection', 'save noa_drive_last_sync failed', err); }
-    } finally {
-      setTimeout(() => setSyncing(false), 2000);
-    }
+    window.dispatchEvent(new CustomEvent('noa:drive-sync-requested'));
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    fallbackTimerRef.current = setTimeout(() => setSyncing(false), 15000);
   };
 
   return (
@@ -514,8 +490,8 @@ function GoogleDriveSection({ language }: { language: AppLanguage }) {
       <div className="space-y-3">
         <div className="flex justify-between items-center bg-bg-secondary p-4 rounded-xl border border-border">
           <span className="text-xs text-text-secondary">{L4(language, { ko: '연결 상태', en: 'Connection', ja: '接続状態', zh: '连接状态' })}</span>
-          <span className={`text-xs font-black ${user && hasToken ? 'text-green-500' : 'text-text-tertiary'}`}>
-            {user && hasToken
+          <span className={`text-xs font-black ${user ? 'text-green-500' : 'text-text-tertiary'}`}>
+            {user
               ? L4(language, { ko: '연결됨', en: 'Connected', ja: '接続済み', zh: '已连接' })
               : L4(language, { ko: '미연결', en: 'Not Connected', ja: '未接続', zh: '未连接' })}
           </span>
@@ -691,7 +667,7 @@ function FullBundleSection({ language }: { language: AppLanguage }) {
     } catch (err) {
       logger.error('BackupsSection', 'importFullBundle failed', err);
       showAlert(L4(language, {
-        ko: '복원 중 오류 발생. 파일이 올바른지 확인하세요.',
+        ko: '복원하지 못했습니다. 파일이 올바른지 확인해 주세요.',
         en: 'Restore error. Check the file is valid.',
         ja: '復元エラー。ファイルを確認してください。',
         zh: '恢复出错。请检查文件是否有效。',

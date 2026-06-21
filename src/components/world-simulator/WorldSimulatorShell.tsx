@@ -128,7 +128,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
     { id: "timeline", ko: "타임라인", en: "Timeline" },
     { id: "map", ko: "세력 지도", en: "Territory Map" },
     { id: "validation", ko: "검증", en: "Validation" },
-    { id: "language", ko: "언어 생성", en: "Language" },
+    { id: "language", ko: "언어 설계", en: "Language Design" },
   ];
 
   // IDENTITY_SEAL: PART-2 | role=tab-definitions | inputs=none | outputs=VIEW_TABS
@@ -141,15 +141,15 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
     <div className="space-y-6">
       {/* Header */}
       <div className="doc-header rounded-t mb-0">
-        <span className="badge badge-blue mr-2">SIMULATOR</span>
-        {L4(lang, { ko: "세계관 시뮬레이터 — World Consistency Engine", en: "World Simulator — Consistency Engine", ja: "世界観シミュレーター — World Consistency Engine", zh: "世界观模拟器 — World Consistency Engine" })}
+        <span className="badge badge-blue mr-2">CHECK</span>
+        {L4(lang, { ko: "세계관 점검 — World Consistency Engine", en: "World Check — Consistency Engine", ja: "世界観点検 — World Consistency Engine", zh: "世界观检查 — World Consistency Engine" })}
       </div>
 
       <div className="border border-t-0 border-border rounded-b bg-bg-secondary p-4 sm:p-6 space-y-6">
         {/* Genre Leveling (always visible at top) */}
         <GenreLeveling lang={lang} selections={genreSelections} onToggle={handleGenreToggle} />
 
-        {/* EH Rule Level + Auto Generate */}
+        {/* EH Rule Level + Noa suggestions */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
@@ -188,12 +188,12 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             </div>
           </div>
 
-          {/* Generate Buttons */}
+          {/* Suggestion Buttons */}
           <div className="flex gap-2 shrink-0 relative">
-            {/* AI loading explanation */}
+            {/* Noa loading explanation */}
             {aiGenerating && (
               <div className="absolute -top-12 right-0 bg-bg-secondary border border-border rounded-lg px-3 py-2 text-[9px] text-text-secondary shadow-lg z-10 whitespace-nowrap">
-                {L4(lang, { ko: '세계관 시뮬레이터는 NOA가 세계의 변화를 예측합니다.', en: 'World Simulator uses NOA to predict world changes.', ja: '世界観シミュレーターはNOAが世界の変化を予測します。', zh: '世界观模拟器由NOA预测世界的变化。' })}
+                {L4(lang, { ko: '노아가 세계 변화 후보를 점검합니다.', en: 'Noa is checking candidate world changes.', ja: 'ノアが世界変化の候補を点検しています。', zh: '诺亚正在检查世界变化候选。' })}
               </div>
             )}
             <button onClick={() => setShowPresetMenu(v => !v)}
@@ -244,13 +244,13 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                   setRelations([]);
                 }
               } catch (err) {
-                logger.warn('WorldSimulator', 'auto generation failed', err);
-                showAlert(L4(lang, { ko: '\uC790\uB3D9 \uC0DD\uC131 \uC2E4\uD328. API \uD0A4\uB97C \uD655\uC778\uD558\uC138\uC694.', en: 'Generation failed. Check API key.', ja: 'Generation failed. Check API key.', zh: 'Generation failed. Check API key.' }));
+                logger.warn('WorldSimulator', 'suggestion failed', err);
+                showAlert(L4(lang, { ko: '제안을 준비하지 못했습니다. 연결 키를 확인해 주세요.', en: 'Suggestion failed. Check the connection key.', ja: '提案の準備に失敗しました。接続キーを確認してください。', zh: '建议准备失败。请检查连接密钥。' }));
               }
               finally { setAiGenerating(false); }
             }}
               className={`px-3 py-2 bg-accent-purple text-white rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] uppercase tracking-wider transition-opacity ${aiGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}>
-              {aiGenerating ? '\u23F3' : '\uD83E\uDD16'} {aiGenerating ? L4(lang, { ko: '생성 중...', en: 'Generating...', ja: '生成中...', zh: '生成中...' }) : L4(lang, { ko: '자동 생성', en: 'Auto Generate', ja: '自動生成', zh: '自动生成' })}
+              {aiGenerating ? '\u23F3' : '\uD83E\uDD16'} {aiGenerating ? L4(lang, { ko: '제안 준비 중...', en: 'Preparing...', ja: '準備中...', zh: '准备中...' }) : L4(lang, { ko: '노아 제안', en: 'Noa Suggestions', ja: 'Noa提案', zh: 'Noa建议' })}
             </button>
           </div>
         </div>
@@ -299,8 +299,8 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                 </div>
                 <div className="text-text-tertiary text-xs max-w-md mx-auto">
                   {L4(lang, {
-                    ko: `${genreSelections.length}개 장르 조합 — 문명 매핑, 타임라인, 검증 및 AI 집필에 반영됩니다.`,
-                    en: `${genreSelections.length} genre blend — applied to civilization mapping, timeline, validation, and AI writing.`,
+                    ko: `${genreSelections.length}개 장르 조합 — 문명 매핑, 타임라인, 점검 및 집필 기준에 반영됩니다.`,
+                    en: `${genreSelections.length} genre blend — applied to civilization mapping, timeline checks, and writing criteria.`,
                   })}
                 </div>
               </>
@@ -367,23 +367,23 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           </div>
         </div>
 
-        {/* AI Setup Guide — shown when no API key or DGX */}
+        {/* Setup Guide — shown before suggestions are available */}
         {civs.length === 0 && !aiGenerating && (
           <div className="rounded-xl border border-accent-purple/20 bg-accent-purple/5 p-5 text-center space-y-3">
             <div className="text-3xl">{'\uD83C\uDF0D'}</div>
             <h3 className="text-sm font-bold text-accent-purple">
-              {L4(lang, { ko: '세계관 시뮬레이터', en: 'World Simulator', ja: '世界観シミュレーター', zh: '世界观模拟器' })}
+              {L4(lang, { ko: '세계관 점검', en: 'World Check', ja: '世界観点検', zh: '世界观检查' })}
             </h3>
             <p className="text-xs text-text-secondary max-w-md mx-auto">
               {L4(lang, {
-                ko: 'NOA가 시놉시스를 분석하여 문명, 관계, 타임라인을 자동 생성합니다. 위에서 장르와 규칙 강도를 선택한 후 "자동 생성" 버튼을 눌러 시작하세요.',
-                en: 'NOA analyzes your synopsis to auto-generate civilizations, relations, and timelines. Select genres and rule intensity above, then click "Auto Generate" to start.',
+                ko: '노아가 시놉시스를 읽고 문명, 관계, 타임라인 후보를 제안합니다. 위에서 장르와 규칙 강도를 선택한 후 "노아 제안" 버튼을 눌러 시작하세요.',
+                en: 'Noa reads your synopsis and suggests candidate civilizations, relations, and timeline notes. Select genres and rule intensity above, then click "Noa Suggestions" to start.',
               })}
             </p>
             <p className="text-[10px] text-text-tertiary">
               {L4(lang, {
-                ko: '설정 > API 키에서 AI 키를 등록하면 자동 생성을 사용할 수 있습니다.',
-                en: 'Register an AI key in Settings > API Keys to enable auto-generation.',
+                ko: '환경 설정에서 연결 키를 등록하면 노아 제안을 사용할 수 있습니다.',
+                en: 'Register a connection key in Settings to enable Noa suggestions.',
               })}
             </p>
           </div>

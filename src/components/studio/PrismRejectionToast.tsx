@@ -31,10 +31,10 @@ interface ToastEntry {
 }
 
 const LABELS = {
-  ko: { title: 'AI 콘텐츠 거절 감지', dismiss: '닫기' },
-  en: { title: 'AI content declined', dismiss: 'Dismiss' },
-  ja: { title: 'AI コンテンツ拒否を検出', dismiss: '閉じる' },
-  zh: { title: '检测到 AI 内容拒绝', dismiss: '关闭' },
+  ko: { title: '노아 응답 거절 감지', dismiss: '닫기' },
+  en: { title: 'Noa response declined', dismiss: 'Dismiss' },
+  ja: { title: 'ノア応答の拒否を検出', dismiss: '閉じる' },
+  zh: { title: '检测到诺亚响应被拒', dismiss: '关闭' },
 } as const;
 
 interface Props {

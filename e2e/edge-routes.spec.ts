@@ -5,23 +5,16 @@ import { attachPageErrorCollector } from "./helpers/e2e-utils";
  * 동적·엣지 라우트: 500 없이 폴백 UI 또는 안내 화면 (읽기 전용 GET).
  */
 test.describe("Edge & dynamic routes", () => {
-  test("invalid planet id shows fallback, not 500", async ({ page }) => {
+  test("retired network dynamic route stays removed", async ({ page }) => {
     const res = await page.goto("/network/planets/unknown-planet-e2e-id");
-    expect(res?.status()).toBeLessThan(500);
-    await expect(
-      page.locator('a[href="/network"], a:has-text("Network"), a:has-text("네트워크")').first(),
-    ).toBeVisible({ timeout: 15000 });
+    expect(res?.status()).toBe(404);
   });
 
-  test("world share page without valid payload shows invalid state", async ({ page }) => {
+  test("retired world share route stays removed", async ({ page }) => {
     const { errors, detach } = attachPageErrorCollector(page);
     try {
       const res = await page.goto("/world/e2e-smoke-id");
-      expect(res?.status()).toBeLessThan(500);
-      await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
-      await expect(
-        page.getByText(/Invalid world data|유효하지 않은 세계관|无效的世界观|無効な世界観/i).first(),
-      ).toBeVisible({ timeout: 10000 });
+      expect(res?.status()).toBe(404);
       expect(errors).toEqual([]);
     } finally {
       detach();
@@ -44,12 +37,9 @@ test.describe("Edge & dynamic routes", () => {
     }
   });
 
-  test("archive missing slug returns graceful not-found or list", async ({ page }) => {
+  test("retired archive dynamic route stays removed", async ({ page }) => {
     const res = await page.goto("/archive/nonexistent-slug-e2e-xyz");
-    expect(res?.status()).toBeLessThan(500);
+    expect(res?.status()).toBe(404);
     await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
-    await expect(
-      page.getByText(/declassified|기밀 해제|尚未解密|Back to Archive|아카이브로/i).first(),
-    ).toBeVisible({ timeout: 15000 });
   });
 });

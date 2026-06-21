@@ -1,16 +1,19 @@
 // ============================================================
-// Image Generation API Route — Server-side proxy
+// Visual Generation API Route — disabled by default, internal/development opt-in only
 // ============================================================
 // Accepts POST { provider, prompt, negativePrompt, apiKey, width, height, n }
-// Supports: OpenAI DALL-E 3, Stability AI SDXL
-// BYOK mode: user-provided API key. No server fallback for image gen.
+// Supports: OpenAI GPT Image, Stability AI SDXL when IMAGE_GENERATION is explicitly enabled.
+// Connection-key mode: user-provided provider key. No server fallback.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import '@/lib/server-ai-init';
 import { isFeatureEnabledServer } from '@/lib/feature-flags';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 
 const MAX_REQUEST_BYTES = 1_048_576;
 
@@ -19,24 +22,20 @@ export const maxDuration = 180; // FLUX.1 이미지 생성 최대 180초
 export async function POST(req: NextRequest) {
   try {
     if (!isFeatureEnabledServer('IMAGE_GENERATION')) {
-      return NextResponse.json({ error: 'Image generation is disabled.' }, { status: 403 });
+      return NextResponse.json({ error: 'Visual endpoint is disabled.' }, { status: 403 });
     }
 
     // Origin 검증 — BYOK 포함 모든 요청에 적용
-    const origin = req.headers.get('origin');
-    const host = req.headers.get('host');
-    if (!origin) {
-      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-    }
-    if (host && new URL(origin).host !== host) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const originCheck = checkSameOriginHeaders(req.headers);
+    if (!originCheck.ok) {
+      return NextResponse.json({ error: originCheck.error }, { status: 403 });
     }
 
     const ip = getClientIp(req.headers);
-    const rl = sharedCheckRateLimit(ip, 'image-gen', RATE_LIMITS.imageGen);
+    const rl = await sharedCheckRateLimit(ip, 'image-gen', RATE_LIMITS.imageGen);
     if (!rl.allowed) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. Max 10 image generations per minute.' },
+        { error: 'Rate limit exceeded. Max 10 visual requests per minute.' },
         { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
       );
     }
@@ -50,28 +49,26 @@ export async function POST(req: NextRequest) {
     // referenceImageUrl은 현재 서버에서 파싱만 하고 무시 — 프로바이더별 img2img 지원 여부에 따라
     // 향후 분기 구현 예정. 사용자에게 오해가 없도록 응답에 metadata로 명시.
     const { provider, prompt, negativePrompt, apiKey, width, height, n, seed, referenceImageUrl } = body;
+    const providerApiKey = typeof apiKey === 'string' ? apiKey.trim() : '';
     const referenceImageRequested = typeof referenceImageUrl === 'string' && referenceImageUrl.length > 0;
 
     if (!provider || !prompt) {
       return NextResponse.json({ error: 'Missing required fields: provider, prompt' }, { status: 400 });
     }
 
-    // 인증 게이트 — local-spark(DGX 무료 경로)와 외부 provider 모두 인증 필수
-    // local-spark는 apiKey 없이도 실행 가능했던 이슈 방어
-    if (!apiKey) {
-      // Firebase JWT 검증 (BYOK 없을 때)
-      const authHeader = req.headers.get('authorization');
-      let verified = false;
-      if (authHeader?.startsWith('Bearer ')) {
-        try {
-          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
-          const token = authHeader.slice(7).trim();
-          verified = Boolean(await verifyFirebaseIdToken(token));
-        } catch { /* verification failed */ }
-      }
-      if (!verified) {
-        return NextResponse.json({ error: 'Authentication required (no apiKey, no valid JWT)' }, { status: 401 });
-      }
+    if ((provider === 'openai' || provider === 'stability') && !providerApiKey) {
+      return NextResponse.json({ error: '이 시각 시안 방식에는 연결 키가 필요합니다.' }, { status: 400 });
+    }
+
+    if (provider === 'local-spark') {
+      const tierGate = await enforceServerTierLimit({
+        headers: req.headers,
+        ip,
+        route: '/api/image-gen',
+        feature: 'image-generation',
+        hasByok: false,
+      });
+      if (!tierGate.ok) return tierGate.response;
     }
 
     // [N2] NOA 서버 게이트 — 입력 판정 (이미지 prompt + negativePrompt 모두 사용자 입력. AI 호출 전 차단).
@@ -84,7 +81,7 @@ export async function POST(req: NextRequest) {
       prompt: gateText,
       grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
       domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 일러스트 생성 — creative 가중
-      sourceTier: apiKey ? 1 : 2,
+      sourceTier: providerApiKey ? 1 : 2,
       route: '/api/image-gen',
       ip,
     });
@@ -93,31 +90,30 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================================
-    // OpenAI DALL-E 3
+    // OpenAI GPT Image
     // ============================================================
     if (provider === 'openai') {
-      const size = getDalleSize(width, height);
+      const size = getOpenAIImageSize(width, height);
       // [P14 풀점검 루프 3] fetchWithRetry — 5xx/429/timeout 만 재시도 (4xx 즉시 반환).
       const res = await fetchWithRetry('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${providerApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'dall-e-3',
+          model: 'gpt-image-2',
           prompt: negativePrompt ? `${prompt}\n\nAvoid: ${negativePrompt}` : prompt,
-          n: 1, // DALL-E 3 only supports n=1
+          n: Math.min(n || 1, 4),
           size,
-          quality: 'standard',
-          response_format: 'url',
+          quality: 'auto',
         }),
         signal: AbortSignal.timeout(55_000),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
-        // [C] provider 에러 sanitize — API 키/quota 정보 유출 방어
+        // [C] provider 에러 sanitize — 연결 키/quota 정보 유출 방어
         const safeMessage = sanitizeProviderError(err.error?.message, `OpenAI error: ${res.status}`);
         return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
@@ -125,8 +121,8 @@ export async function POST(req: NextRequest) {
       const data = await res.json();
       // [N2] 출력 IP 필터 — revised_prompt 는 사용자에게 노출되는 AI 텍스트 (fail-open).
       // 이미지 픽셀 자체는 텍스트 필터 적용 불가 — 정직 보고: 입력 게이트로만 방어.
-      const images = (data.data || []).map((d: { url: string; revised_prompt?: string }) => ({
-        url: d.url,
+      const images = (data.data || []).map((d: { url?: string; b64_json?: string; revised_prompt?: string }) => ({
+        url: d.url || (d.b64_json ? `data:image/png;base64,${d.b64_json}` : ''),
         revised_prompt: d.revised_prompt
           ? filterOutputIp(d.revised_prompt, '/api/image-gen').output
           : d.revised_prompt,
@@ -139,7 +135,7 @@ export async function POST(req: NextRequest) {
           referenceImageRequested,
           referenceImageApplied: false,
           referenceImageNote: referenceImageRequested
-            ? 'referenceImageUrl ignored — DALL-E 3 endpoint is text-to-image only in this route.'
+            ? 'referenceImageUrl ignored — this route uses OpenAI text-to-image generation only.'
             : undefined,
         },
       });
@@ -169,7 +165,7 @@ export async function POST(req: NextRequest) {
       const res = await fetchWithRetry('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${providerApiKey}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
@@ -179,7 +175,7 @@ export async function POST(req: NextRequest) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: res.statusText }));
-        // [C] provider 에러 sanitize — API 키/quota 정보 유출 방어
+        // [C] provider 에러 sanitize — 연결 키/quota 정보 유출 방어
         const safeMessage = sanitizeProviderError(err.message, `Stability error: ${res.status}`);
         return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
@@ -276,10 +272,10 @@ export async function POST(req: NextRequest) {
 // Helpers
 // ============================================================
 
-function getDalleSize(w?: number, h?: number): string {
-  // DALL-E 3 supports: 1024x1024, 1024x1792, 1792x1024
-  if (w && h && w > h * 1.3) return '1792x1024';
-  if (h && w && h > w * 1.3) return '1024x1792';
+function getOpenAIImageSize(w?: number, h?: number): string {
+  // GPT Image supports flexible sizes; keep this route on conservative presets.
+  if (w && h && w > h * 1.3) return '1536x1024';
+  if (h && w && h > w * 1.3) return '1024x1536';
   return '1024x1024';
 }
 

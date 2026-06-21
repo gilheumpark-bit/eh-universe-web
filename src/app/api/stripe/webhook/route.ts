@@ -25,6 +25,26 @@ import Stripe from 'stripe';
 import { apiLog } from '@/lib/api-logger';
 import { setStripeRoleClaim, clearStripeRoleClaim } from '@/lib/firebase-auth-admin-rest';
 import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
+import {
+  applyReleaseCreditLedgerOperation,
+  compactReleaseCreditScopeKey,
+  type ReleaseCreditLedgerOperation,
+} from '@/lib/billing/release-credit-ledger';
+import { getReleaseCreditLedgerStore } from '@/lib/billing/release-credit-ledger-store';
+import {
+  getSubscriptionEntitlementStore,
+  isPaidSubscriptionStatus,
+  normalizeStripeSubscriptionStatus,
+  resolvePlanIdFromStripeMetadata,
+  type SubscriptionEntitlementStatus,
+} from '@/lib/billing/subscription-entitlement-store';
+import {
+  getCertificateProduct,
+  RELEASE_PRODUCT_REQUIREMENTS,
+  type CertificateProductId,
+  type LoreguardPlanId,
+  type ReleaseEntitlementPlan,
+} from '@/lib/billing/loreguard-plans';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +57,188 @@ async function applyStripeRoleClaim(uid: string, action: 'set' | 'clear', eventI
     event: result.ok ? 'stripe_claim_synced' : 'stripe_claim_sync_failed',
     route: '/api/stripe/webhook',
     meta: result.ok ? { action, eventId } : { action, eventId, error: result.error },
+  });
+}
+
+function stripeObjectId(value: unknown): string | null {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object') {
+    const id = (value as { id?: unknown }).id;
+    return typeof id === 'string' ? id : null;
+  }
+  return null;
+}
+
+async function syncSubscriptionEntitlement(input: {
+  uid: string;
+  planId: LoreguardPlanId | null;
+  status: SubscriptionEntitlementStatus;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  eventId: string;
+}): Promise<void> {
+  if (!input.uid || !input.planId) {
+    apiLog({
+      level: 'warn',
+      event: 'stripe_subscription_entitlement_skipped',
+      route: '/api/stripe/webhook',
+      meta: {
+        eventId: input.eventId,
+        reason: !input.uid ? 'missing_uid' : 'missing_plan_id',
+      },
+    });
+    return;
+  }
+
+  const result = await getSubscriptionEntitlementStore().upsert({
+    uid: input.uid,
+    planId: input.planId,
+    status: input.status,
+    stripeCustomerId: input.stripeCustomerId,
+    stripeSubscriptionId: input.stripeSubscriptionId,
+    sourceEventId: input.eventId,
+    updatedAt: new Date().toISOString(),
+  });
+  apiLog({
+    level: result.ok ? 'info' : 'warn',
+    event: result.ok ? 'stripe_subscription_entitlement_synced' : 'stripe_subscription_entitlement_failed',
+    route: '/api/stripe/webhook',
+    meta: result.ok
+      ? { eventId: input.eventId, planId: input.planId, status: input.status }
+      : { eventId: input.eventId, planId: input.planId, status: input.status, error: result.error },
+  });
+}
+
+function metadataValue(metadata: Stripe.Metadata | null | undefined, key: string): string {
+  return typeof metadata?.[key] === 'string' ? metadata[key] : '';
+}
+
+function parseReleaseCreditPurchaseMetadata(
+  session: Stripe.Checkout.Session,
+): {
+  uid: string;
+  projectId: string;
+  periodKey: string;
+  productId: CertificateProductId;
+  packageProfileId: ReleaseEntitlementPlan['packageProfileId'];
+  creditAmount: number;
+  certificateId: string | null;
+} | null {
+  const metadata = session.metadata;
+  const uid = metadataValue(metadata, 'firebaseUid') || (typeof session.client_reference_id === 'string' ? session.client_reference_id : '');
+  const projectId = metadataValue(metadata, 'projectId');
+  const periodKey = metadataValue(metadata, 'periodKey');
+  const productId = metadataValue(metadata, 'loreguardProductId') as CertificateProductId;
+  const packageProfileId = metadataValue(metadata, 'loreguardPackageProfileId') as ReleaseEntitlementPlan['packageProfileId'];
+  const creditAmount = Number.parseInt(metadataValue(metadata, 'releaseCreditAmount'), 10);
+  const certificateId = metadataValue(metadata, 'certificateId') || null;
+
+  if (!uid || !projectId || !periodKey) return null;
+  if (!(productId in RELEASE_PRODUCT_REQUIREMENTS)) return null;
+  if (RELEASE_PRODUCT_REQUIREMENTS[productId].packageProfileId !== packageProfileId) return null;
+  if (!Number.isFinite(creditAmount) || creditAmount < 1) return null;
+  return { uid, projectId, periodKey, productId, packageProfileId, creditAmount, certificateId };
+}
+
+async function syncReleaseCreditPurchase(session: Stripe.Checkout.Session, eventId: string): Promise<void> {
+  const parsed = parseReleaseCreditPurchaseMetadata(session);
+  if (!parsed) {
+    apiLog({
+      level: 'warn',
+      event: 'stripe_release_credit_purchase_skipped',
+      route: '/api/stripe/webhook',
+      meta: { eventId, reason: 'invalid_metadata' },
+    });
+    return;
+  }
+
+  const ledgerStore = getReleaseCreditLedgerStore();
+  let loaded = await ledgerStore.load({
+    uid: parsed.uid,
+    periodKey: parsed.periodKey,
+    projectId: parsed.projectId,
+  });
+
+  if (!loaded.ok && loaded.error === 'not_found') {
+    const subscription = await getSubscriptionEntitlementStore().load(parsed.uid);
+    const planId = subscription.ok && isPaidSubscriptionStatus(subscription.snapshot.status)
+      ? subscription.snapshot.planId
+      : 'free';
+    const created = await ledgerStore.create({
+      uid: parsed.uid,
+      periodKey: parsed.periodKey,
+      projectId: parsed.projectId,
+      planId,
+    });
+    if (!created.ok && created.error !== 'conflict') {
+      apiLog({
+        level: 'warn',
+        event: 'stripe_release_credit_ledger_create_failed',
+        route: '/api/stripe/webhook',
+        meta: { eventId, error: created.error },
+      });
+      return;
+    }
+    loaded = await ledgerStore.load({
+      uid: parsed.uid,
+      periodKey: parsed.periodKey,
+      projectId: parsed.projectId,
+    });
+  }
+
+  if (!loaded.ok) {
+    apiLog({
+      level: 'warn',
+      event: 'stripe_release_credit_ledger_load_failed',
+      route: '/api/stripe/webhook',
+      meta: { eventId, error: loaded.error },
+    });
+    return;
+  }
+
+  const operation: ReleaseCreditLedgerOperation = {
+    kind: 'purchase-grant',
+    idempotencyKey: `release-credit-purchase:stripe:${eventId}`,
+    creditAmount: parsed.creditAmount,
+    projectId: compactReleaseCreditScopeKey(parsed.projectId, 'project-draft'),
+    planId: loaded.snapshot.planId,
+    packageProfileId: parsed.packageProfileId,
+    productId: parsed.productId,
+    certificateId: parsed.certificateId,
+    reasonKo: `${getCertificateProduct(parsed.productId).labelKo} 별도 구매 반영`,
+    createdAt: new Date().toISOString(),
+  };
+  const applied = applyReleaseCreditLedgerOperation(loaded.snapshot, operation);
+  if (applied.status === 'duplicate') {
+    apiLog({
+      level: 'info',
+      event: 'stripe_release_credit_purchase_duplicate',
+      route: '/api/stripe/webhook',
+      meta: { eventId },
+    });
+    return;
+  }
+  if (applied.status !== 'applied') {
+    apiLog({
+      level: 'warn',
+      event: 'stripe_release_credit_purchase_rejected',
+      route: '/api/stripe/webhook',
+      meta: { eventId, status: applied.status },
+    });
+    return;
+  }
+
+  const saved = await ledgerStore.save({
+    snapshot: applied.snapshot,
+    expectedUpdateTime: loaded.updateTime,
+  });
+  apiLog({
+    level: saved.ok ? 'info' : 'warn',
+    event: saved.ok ? 'stripe_release_credit_purchase_synced' : 'stripe_release_credit_purchase_save_failed',
+    route: '/api/stripe/webhook',
+    meta: saved.ok
+      ? { eventId, balance: applied.snapshot.balance, productId: parsed.productId }
+      : { eventId, error: saved.error },
   });
 }
 
@@ -231,7 +433,18 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session;
       const uid = typeof session.client_reference_id === 'string' ? session.client_reference_id : '';
       const paid = session.payment_status === 'paid' && session.status === 'complete';
-      if (uid && paid) {
+      const checkoutKind = metadataValue(session.metadata, 'loreguardCheckoutKind');
+      if (paid && checkoutKind === 'release_credit_purchase') {
+        await syncReleaseCreditPurchase(session, event.id);
+      } else if (uid && paid) {
+        await syncSubscriptionEntitlement({
+          uid,
+          planId: resolvePlanIdFromStripeMetadata(session.metadata),
+          status: 'active',
+          stripeCustomerId: stripeObjectId(session.customer),
+          stripeSubscriptionId: stripeObjectId(session.subscription),
+          eventId: event.id,
+        });
         await applyStripeRoleClaim(uid, 'set', event.id);
       } else if (uid) {
         apiLog({
@@ -252,11 +465,31 @@ export async function POST(req: NextRequest) {
       const sub = event.data.object as Stripe.Subscription;
       const uid = typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
       const active = sub.status === 'active' || sub.status === 'trialing';
-      if (uid) await applyStripeRoleClaim(uid, active ? 'set' : 'clear', event.id);
+      if (uid) {
+        await syncSubscriptionEntitlement({
+          uid,
+          planId: resolvePlanIdFromStripeMetadata(sub.metadata),
+          status: normalizeStripeSubscriptionStatus(sub.status),
+          stripeCustomerId: stripeObjectId(sub.customer),
+          stripeSubscriptionId: sub.id,
+          eventId: event.id,
+        });
+        await applyStripeRoleClaim(uid, active ? 'set' : 'clear', event.id);
+      }
     } else if (event.type === 'customer.subscription.deleted') {
       const sub = event.data.object as Stripe.Subscription;
       const uid = typeof sub.metadata?.firebaseUid === 'string' ? sub.metadata.firebaseUid : '';
-      if (uid) await applyStripeRoleClaim(uid, 'clear', event.id);
+      if (uid) {
+        await syncSubscriptionEntitlement({
+          uid,
+          planId: resolvePlanIdFromStripeMetadata(sub.metadata),
+          status: 'canceled',
+          stripeCustomerId: stripeObjectId(sub.customer),
+          stripeSubscriptionId: sub.id,
+          eventId: event.id,
+        });
+        await applyStripeRoleClaim(uid, 'clear', event.id);
+      }
     } else if (event.type === 'charge.refunded') {
       // [#14 fix] 부분 환불(amount_refunded < amount)에도 무조건 강등하면 소액 환불로
       // 정당한 구독이 끊김. 전액 환불(amount_refunded >= amount)일 때만 clear,

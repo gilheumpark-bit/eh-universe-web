@@ -10,8 +10,8 @@ import { type TranslatorBackgroundMode, WorkspaceTab } from '@/lib/translator-co
 export interface TranslatorContextState {
   workspaceTab: WorkspaceTab;
   setWorkspaceTab: Dispatch<SetStateAction<WorkspaceTab>>;
-  hostedGemini: boolean;
-  /** `/api/ai-capabilities` — 소설 스튜디오와 동일 BYOK/호스팅 플래그 */
+  hostedNoa: boolean;
+  /** `/api/ai-capabilities` — 로어가드 공통 연결 키/기본 운영 플래그 */
   hostedProviders: Partial<Record<ProviderId, boolean>>;
   aiCapabilitiesLoaded: boolean;
   openApiKeyModal: () => void;

@@ -9,10 +9,10 @@ const TITLES = {
 } as const;
 
 const DESCRIPTIONS = {
-  ko: "Loreguard 가격 — 알파 단계는 무료. 정식 출시 시 Indie / Pro / Publisher / Enterprise 4 tier.",
-  en: "Loreguard pricing — Free during alpha. Indie / Pro / Publisher / Enterprise tiers at GA.",
-  ja: "Loreguard 料金 — アルファは無料。正式リリース時に Indie / Pro / Publisher / Enterprise 4 tier。",
-  zh: "Loreguard 价格 — Alpha 期间免费。正式发布时 Indie / Pro / Publisher / Enterprise 4 tier。",
+  ko: "Loreguard 가격 안내. 창작 작업, 과정기록, 출고 패키지를 기준으로 나눈 이용 구조.",
+  en: "Loreguard pricing for creative work, process records, and release packages.",
+  ja: "Loreguard 料金案内。創作作業、過程記録、出稿パッケージを基準にした利用構成。",
+  zh: "Loreguard 价格说明。按创作工作、过程记录与出库包组织的使用结构。",
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {

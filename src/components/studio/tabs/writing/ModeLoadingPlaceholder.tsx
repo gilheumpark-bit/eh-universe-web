@@ -78,10 +78,10 @@ function getModeLabels(language: AppLanguage, mode: ModeLoadingPlaceholderProps[
           zh: '正在加载高级设置...',
         }),
         hint: L4(language, {
-          ko: 'temperature / top-p / 페널티',
-          en: 'temperature / top-p / penalties',
-          ja: 'temperature / top-p / ペナルティ',
-          zh: 'temperature / top-p / 惩罚',
+          ko: '표현 자유도 / 응답 범위 / 반복 억제',
+          en: 'expression range / response scope / repetition control',
+          ja: '表現の幅 / 応答範囲 / 反復抑制',
+          zh: '表达范围 / 响应范围 / 重复控制',
         }),
       };
     default: {

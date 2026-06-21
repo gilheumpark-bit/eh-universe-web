@@ -273,7 +273,7 @@ function matchesFilter(e: PromotionEvent, f: PromotionHistoryFilter): boolean {
   return true;
 }
 
-/** 감사 이력 전체 삭제 — Dashboard 개발자 도구용. */
+/** 감사 이력 전체 삭제 — Dashboard 내부 진단용. */
 export async function clearPromotionHistory(): Promise<void> {
   try {
     await writeBundle([]);

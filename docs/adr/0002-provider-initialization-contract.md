@@ -49,7 +49,7 @@
 
 | 컴포넌트 | 실패 시 동작 | 정당화 |
 |---|---|---|
-| AuthProvider | Firebase init 실패 → `user = null` 유지, 게이트 차단 | 인증 없이도 익명 페이지 (홈/codex) 접근 가능 |
+| AuthProvider | Firebase init 실패 → `user = null` 유지, 게이트 차단 | 인증 없이도 공개 페이지 접근 가능 |
 | LangProvider | cookie/header 모두 없음 → `ko` 폴백 | 80%+ 사용자가 한국어, 안전한 기본값 |
 | UnifiedSettingsProvider | localStorage 차단 → defaults | private mode 사용자 차단 회피 |
 | UserRoleProvider | claims 없음 → `writer` 기본 | 신규 사용자 가장 흔한 시나리오 |
@@ -67,8 +67,8 @@
 ### 5) 비결정 사항 (현재는 단순화 유지)
 
 - Provider 마운트 순서 type-level 강제 (Brand type 또는 `SafeProviderOrder`) — 현재 단순 7 provider 에서는 ADR + 코드 리뷰로 충분. provider 가 12+ 가 되면 재검토.
-- ModalProvider 는 page-level 마운트 (StudioShell / CodeStudioShell 내부) — layout.tsx 외부.
-- GradeProvider 는 Code Studio 전용 (page-level) — global 아님.
+- ModalProvider 는 page-level 마운트 (StudioShell 등 표면별 Shell 내부) — layout.tsx 외부.
+- GradeProvider 는 창작/검증 표면별로 필요할 때 page-level 마운트 — global 아님.
 
 ## Consequences
 

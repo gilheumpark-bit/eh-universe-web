@@ -18,9 +18,20 @@
  * [K] 간결성: 단일 ds-accordion + 4언어 라벨
  */
 
-import { useMemo, useState } from 'react';
-import { ChevronDown, ShieldCheck } from 'lucide-react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
+import { ChevronDown, Cloud, Download, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { BRAND_BLOCKLIST, type BrandCategory, type BrandSeverity } from '@/lib/ip-guard/brand-blocklist';
+import {
+  loadPersonalBlocklist,
+  pullPersonalBlocklistFromCloud,
+  pushPersonalBlocklistToCloud,
+  removePersonalBlocklistTerm,
+  savePersonalBlocklist,
+  upsertPersonalBlocklistTerm,
+  PERSONAL_BLOCKLIST_STORAGE_KEY,
+  type PersonalBlocklistEntry,
+} from '@/lib/ip-guard/personal-blocklist';
+import { useAuth } from '@/lib/AuthContext';
 import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
@@ -30,39 +41,91 @@ import type { AppLanguage } from '@/lib/studio-types';
 const SECTION_LABELS = {
   KO: {
     title: 'IP·브랜드 차단 목록',
-    desc: 'AI 가 본문 생성 시 자동 차단하는 실존 상표·프랜차이즈 list. 작가가 작품 내 이름 충돌 회피 참고용.',
+    desc: '본문 제안 과정에서 피해야 할 실존 상표·프랜차이즈 목록입니다. 작품 내 이름 충돌을 줄이는 참고용입니다.',
     total: '전체',
     byCategory: '카테고리별',
     bySeverity: '심각도별',
     sample: '예시',
-    moreNote: '추가 99 항목 list 는 lib/ip-guard/brand-blocklist.ts 참조.',
+    moreNote: '추가 항목은 앱 내부 기준 목록에 포함되어 있습니다.',
+    personalTitle: '작가 개인 차단 목록',
+    personalDesc: '이 작품에서 피하고 싶은 이름, 별칭, 경쟁작을 직접 추가합니다. 저장된 항목은 7축 권리/IP 점검에도 반영됩니다.',
+    termPlaceholder: '피할 이름',
+    aliasesPlaceholder: '별칭, 약칭',
+    add: '추가',
+    remove: '삭제',
+    cloudPush: '클라우드 저장',
+    cloudPull: '클라우드 불러오기',
+    localOnly: '로그인 전에는 이 기기에만 저장됩니다.',
+    emptyPersonal: '아직 개인 항목이 없습니다.',
+    syncSaved: '클라우드에 저장했습니다.',
+    syncLoaded: '클라우드 목록을 불러왔습니다.',
+    syncFailed: '동기화가 되지 않았습니다. 로컬 목록은 유지됩니다.',
   },
   EN: {
     title: 'IP & Brand Blocklist',
-    desc: 'List of real-world IPs auto-blocked during AI generation. Reference for avoiding name collisions in your work.',
+    desc: 'A reference list of real-world IPs and brands to avoid during manuscript suggestions, reducing name-collision risk in your work.',
     total: 'Total',
     byCategory: 'By category',
     bySeverity: 'By severity',
     sample: 'Sample',
-    moreNote: 'See lib/ip-guard/brand-blocklist.ts for the full list.',
+    moreNote: 'Additional entries are included in the app’s internal reference list.',
+    personalTitle: 'Personal Blocklist',
+    personalDesc: 'Add names, aliases, rival works, or risky terms you want this project to avoid. Saved entries are included in the 7-axis rights/IP check.',
+    termPlaceholder: 'Name to avoid',
+    aliasesPlaceholder: 'Aliases',
+    add: 'Add',
+    remove: 'Remove',
+    cloudPush: 'Save to cloud',
+    cloudPull: 'Load from cloud',
+    localOnly: 'Before sign-in, entries are stored on this device only.',
+    emptyPersonal: 'No personal entries yet.',
+    syncSaved: 'Saved to cloud.',
+    syncLoaded: 'Loaded from cloud.',
+    syncFailed: 'Sync did not complete. Local entries are kept.',
   },
   JP: {
     title: 'IP・ブランド遮断リスト',
-    desc: 'AI が本文生成時に自動遮断する実在 IP リスト。作家が作品内の名称衝突を避けるための参照用。',
+    desc: '本文提案時に避けたい実在IP・ブランドの参照リストです。作品内の名称衝突を減らすために使います。',
     total: '全体',
     byCategory: 'カテゴリー別',
     bySeverity: '重大度別',
     sample: '例示',
-    moreNote: '追加リストは lib/ip-guard/brand-blocklist.ts を参照。',
+    moreNote: '追加項目はアプリ内部の基準リストに含まれています。',
+    personalTitle: '作家個人の遮断リスト',
+    personalDesc: 'この作品で避けたい名称・別名・競合作品を追加します。保存した項目は7軸の権利/IP点検にも反映されます。',
+    termPlaceholder: '避けたい名称',
+    aliasesPlaceholder: '別名・略称',
+    add: '追加',
+    remove: '削除',
+    cloudPush: 'クラウド保存',
+    cloudPull: 'クラウド読込',
+    localOnly: 'ログイン前はこの端末にのみ保存されます。',
+    emptyPersonal: '個人項目はまだありません。',
+    syncSaved: 'クラウドに保存しました。',
+    syncLoaded: 'クラウドから読み込みました。',
+    syncFailed: '同期できませんでした。ローカル項目は保持されます。',
   },
   CN: {
     title: 'IP·品牌屏蔽列表',
-    desc: 'AI 生成正文时自动屏蔽的真实 IP 列表。作家避免作品内名称冲突的参考。',
+    desc: '正文建议过程中应避开的真实 IP 与品牌参考列表，用于降低作品内名称冲突风险。',
     total: '总数',
     byCategory: '按类别',
     bySeverity: '按严重度',
     sample: '示例',
-    moreNote: '完整列表请参阅 lib/ip-guard/brand-blocklist.ts。',
+    moreNote: '更多条目已包含在应用内部参考列表中。',
+    personalTitle: '作者个人屏蔽列表',
+    personalDesc: '添加本作品应避开的名称、别名、竞品或风险词。保存后会进入 7 轴权利/IP 检查。',
+    termPlaceholder: '要避开的名称',
+    aliasesPlaceholder: '别名、简称',
+    add: '添加',
+    remove: '删除',
+    cloudPush: '保存到云端',
+    cloudPull: '从云端读取',
+    localOnly: '登录前仅保存在本设备。',
+    emptyPersonal: '暂无个人条目。',
+    syncSaved: '已保存到云端。',
+    syncLoaded: '已从云端读取。',
+    syncFailed: '同步未完成。本地条目会保留。',
   },
 } as const;
 
@@ -85,6 +148,28 @@ const SEVERITY_LABELS: Record<BrandSeverity, Record<AppLanguage, string>> = {
   info: { KO: '정보', EN: 'Info', JP: '情報', CN: '信息' },
 };
 
+function subscribePersonalBlocklist(onStoreChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handleLocalChange = () => onStoreChange();
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === PERSONAL_BLOCKLIST_STORAGE_KEY) onStoreChange();
+  };
+  window.addEventListener('loreguard:personal-ip-blocklist-changed', handleLocalChange);
+  window.addEventListener('storage', handleStorage);
+  return () => {
+    window.removeEventListener('loreguard:personal-ip-blocklist-changed', handleLocalChange);
+    window.removeEventListener('storage', handleStorage);
+  };
+}
+
+function getPersonalBlocklistSnapshot(): PersonalBlocklistEntry[] {
+  return loadPersonalBlocklist();
+}
+
+function getPersonalBlocklistServerSnapshot(): PersonalBlocklistEntry[] {
+  return [];
+}
+
 // ============================================================
 // PART 2 — Component
 // ============================================================
@@ -94,7 +179,16 @@ interface Props {
 }
 
 export default function BrandGuardSection({ language }: Props) {
+  const { userId } = useAuth();
   const [open, setOpen] = useState(false);
+  const personalTerms = useSyncExternalStore(
+    subscribePersonalBlocklist,
+    getPersonalBlocklistSnapshot,
+    getPersonalBlocklistServerSnapshot,
+  );
+  const [termDraft, setTermDraft] = useState('');
+  const [aliasDraft, setAliasDraft] = useState('');
+  const [syncMessage, setSyncMessage] = useState('');
   const L = SECTION_LABELS[language];
 
   const stats = useMemo(() => {
@@ -110,6 +204,33 @@ export default function BrandGuardSection({ language }: Props) {
   const sample = useMemo(() => {
     return BRAND_BLOCKLIST.slice(0, 10).map(e => e.canonical);
   }, []);
+
+  const persistPersonalTerms = (entries: PersonalBlocklistEntry[]) => {
+    savePersonalBlocklist(entries);
+  };
+
+  const addPersonalTerm = () => {
+    const next = upsertPersonalBlocklistTerm(personalTerms, termDraft, aliasDraft);
+    persistPersonalTerms(next);
+    setTermDraft('');
+    setAliasDraft('');
+    setSyncMessage('');
+  };
+
+  const removePersonalTerm = (id: string) => {
+    persistPersonalTerms(removePersonalBlocklistTerm(personalTerms, id));
+    setSyncMessage('');
+  };
+
+  const pushToCloud = async () => {
+    const result = await pushPersonalBlocklistToCloud(userId, personalTerms);
+    setSyncMessage(result.ok ? L.syncSaved : L.syncFailed);
+  };
+
+  const pullFromCloud = async () => {
+    const result = await pullPersonalBlocklistFromCloud(userId);
+    setSyncMessage(result.ok ? L.syncLoaded : L.syncFailed);
+  };
 
   return (
     <details
@@ -159,6 +280,90 @@ export default function BrandGuardSection({ language }: Props) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* personal list */}
+        <div className="border border-border bg-bg-secondary p-3 space-y-3">
+          <div>
+            <div className="text-text-primary font-bold text-[11px]">{L.personalTitle}</div>
+            <p className="text-text-tertiary text-[10px] leading-relaxed mt-1">{L.personalDesc}</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+            <input
+              type="text"
+              value={termDraft}
+              onChange={(event) => setTermDraft(event.target.value)}
+              placeholder={L.termPlaceholder}
+              className="min-h-[44px] border border-border bg-bg-primary px-3 text-text-primary text-[12px] focus-visible:ring-2 focus-visible:ring-accent-blue"
+            />
+            <input
+              type="text"
+              value={aliasDraft}
+              onChange={(event) => setAliasDraft(event.target.value)}
+              placeholder={L.aliasesPlaceholder}
+              className="min-h-[44px] border border-border bg-bg-primary px-3 text-text-primary text-[12px] focus-visible:ring-2 focus-visible:ring-accent-blue"
+            />
+            <button
+              type="button"
+              onClick={addPersonalTerm}
+              disabled={!termDraft.trim()}
+              className="min-h-[44px] inline-flex items-center justify-center gap-2 border border-border bg-accent-blue px-3 text-[12px] font-bold text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {L.add}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={pushToCloud}
+              disabled={!userId}
+              className="min-h-[44px] inline-flex items-center gap-2 border border-border bg-bg-primary px-3 text-[11px] text-text-primary disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              <Cloud className="h-4 w-4" aria-hidden="true" />
+              {L.cloudPush}
+            </button>
+            <button
+              type="button"
+              onClick={pullFromCloud}
+              disabled={!userId}
+              className="min-h-[44px] inline-flex items-center gap-2 border border-border bg-bg-primary px-3 text-[11px] text-text-primary disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              {L.cloudPull}
+            </button>
+            <span className="text-[10px] text-text-tertiary">
+              {userId ? syncMessage : L.localOnly}
+            </span>
+          </div>
+          {personalTerms.length > 0 ? (
+            <div className="space-y-2">
+              {personalTerms.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex min-h-[44px] items-center justify-between gap-3 border border-border bg-bg-primary px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-[12px] font-bold text-text-primary">{entry.term}</div>
+                    <div className="truncate text-[10px] text-text-tertiary">
+                      {entry.aliases.length > 0 ? entry.aliases.join(' · ') : entry.severity}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePersonalTerm(entry.id)}
+                    className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-accent-red focus-visible:ring-2 focus-visible:ring-accent-blue"
+                    aria-label={`${L.remove}: ${entry.term}`}
+                    title={L.remove}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-text-tertiary">{L.emptyPersonal}</p>
+          )}
         </div>
 
         {/* sample list */}

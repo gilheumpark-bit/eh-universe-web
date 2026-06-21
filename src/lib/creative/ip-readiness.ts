@@ -316,13 +316,13 @@ function judgeG0(ev: ReadinessGateEvidence): Omit<ReadinessGateCheck, 'id' | 'na
   if (missing.length > 0) {
     return {
       status: 'FAIL',
-      reason: `원천성 산출물 부재: ${missing.join(', ')} — 인간 기여 로그 보강 필요`,
+      reason: `원천성 산출물 부재: ${missing.join(', ')} — 작가 기여 로그 보강 필요`,
     };
   }
   if (unknown.length > 0) {
     return {
       status: 'UNPROVEN',
-      reason: `원천성 증빙 미확인: ${unknown.join(', ')} — 점수 입력만으로 증명 불가, 인간 기여 로그 확인 필요`,
+      reason: `원천성 증빙 미확인: ${unknown.join(', ')} — 점수 입력만으로 증명 불가, 작가 기여 로그 확인 필요`,
     };
   }
   return { status: 'PASS', reason: null };

@@ -32,7 +32,6 @@ describe('TECHNIQUES', () => {
 
   it('불변: 동결되어 변형 시 값이 바뀌지 않는다', () => {
     expect(Object.isFrozen(TECHNIQUES)).toBe(true);
-    'use strict';
     try {
       // @ts-expect-error 의도적 동결 위반 시도
       TECHNIQUES.inversion = { label: 'X', description: 'X', example: 'X' };

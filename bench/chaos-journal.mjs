@@ -73,7 +73,6 @@ if (!globalThis.performance) globalThis.performance = { now: () => Date.now() };
 
 // 메모리 저장소 (최후 폴백)
 const memory = new Map();
-let tipId = null;
 
 async function chaosAppend(id, payload) {
   // 랜덤 실패 주입
@@ -88,7 +87,6 @@ async function chaosAppend(id, payload) {
       if (!globalThis.__ls_quota_mode) {
         globalThis.localStorage.setItem(`noa_journal_entry_${id}`, JSON.stringify(payload));
         globalThis.localStorage.setItem('noa_journal_tip', id);
-        tipId = id;
         return { tier: 'localstorage', ok: true };
       }
       throw new Error('ls-quota');
@@ -100,7 +98,6 @@ async function chaosAppend(id, payload) {
   }
   // 최종 폴백: memory
   memory.set(id, payload);
-  tipId = id;
   return { tier: 'memory', ok: true, error: lastError?.message };
 }
 

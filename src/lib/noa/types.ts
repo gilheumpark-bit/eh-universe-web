@@ -2,11 +2,9 @@
 // NOA Security Framework v1.0 — Type Definitions
 // Ported from NOA Python Ecosystem (v27~v7080)
 //
-// ADR-0004 (Grade namespace isolation):
-//   NOA risk grades use 'Noa*' prefix to avoid collision with:
-//     - CodeGrade (S|A|B|C|D|F) — src/lib/code-studio/grade/
-//     - Grade ('평작'|'성공'|...) — src/lib/creative/integrated-grade.ts
-//   Never alias 'NoaGradeLevel as GradeLevel' in importers — keep prefix explicit.
+// NOA risk grades use the 'Noa*' prefix to avoid collision with creative
+// Grade ('평작'|'성공'|...) from src/lib/creative/integrated-grade.ts.
+// Never alias 'NoaGradeLevel as GradeLevel' in importers — keep prefix explicit.
 // ============================================================
 
 // ============================================================

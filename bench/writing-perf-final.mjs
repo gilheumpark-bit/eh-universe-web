@@ -134,7 +134,6 @@ function modeSwitchPropsEqual(prev, next) {
 // 시뮬 props — 실제 환경 유사 크기.
 const sharedHandleSend = () => {};
 const sharedSetWritingMode = () => {};
-const sharedSetConfig = () => {};
 const sharedUndoStack = { undo: () => {}, redo: () => {}, canUndo: false, canRedo: false };
 const sharedSession = { id: 'x', messages: [], config: { genre: 'fantasy' } };
 

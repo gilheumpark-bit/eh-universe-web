@@ -71,8 +71,8 @@ const PANEL_LABELS = {
   ko: {
     panelTitle: '기여도 분석',
     chapterSummary: '챕터 요약',
-    humanPrimary: '인간 주도',
-    aiAssisted: 'AI 보조',
+    humanPrimary: '작가 주도',
+    aiAssisted: '노아 보조',
     refinementShare: '정제 비율',
     originTrack: 'Origin Track',
     contextInspector: '컨텍스트 인스펙터',
@@ -88,8 +88,8 @@ const PANEL_LABELS = {
   en: {
     panelTitle: 'Contribution Inspector',
     chapterSummary: 'Chapter Summary',
-    humanPrimary: 'Human Primary',
-    aiAssisted: 'AI Assisted',
+    humanPrimary: 'Author-led',
+    aiAssisted: 'NOA Assisted',
     refinementShare: 'Refinement',
     originTrack: 'Origin Track',
     contextInspector: 'Context Inspector',
@@ -105,8 +105,8 @@ const PANEL_LABELS = {
   ja: {
     panelTitle: '寄与分析',
     chapterSummary: 'チャプター要約',
-    humanPrimary: '人間主導',
-    aiAssisted: 'AI補助',
+    humanPrimary: '作者主導',
+    aiAssisted: 'NOA補助',
     refinementShare: '推敲比率',
     originTrack: 'Origin Track',
     contextInspector: 'コンテキスト',
@@ -122,8 +122,8 @@ const PANEL_LABELS = {
   zh: {
     panelTitle: '贡献分析',
     chapterSummary: '章节摘要',
-    humanPrimary: '人类主导',
-    aiAssisted: 'AI协助',
+    humanPrimary: '作者主导',
+    aiAssisted: 'NOA协助',
     refinementShare: '精修比率',
     originTrack: 'Origin Track',
     contextInspector: '上下文检视',
@@ -163,11 +163,11 @@ interface OriginVisual {
 }
 
 const ORIGIN_VISUAL: Record<CreativeOriginType, OriginVisual> = {
-  HUMAN_DRAFT:        { bg: '#1A1A1A', symbol: '◼', patternId: 'solid',  label: { ko: '직접 작성',     en: 'Human Draft',    ja: '直接執筆',   zh: '直接写作' } },
-  HUMAN_REVISION:     { bg: '#4169E1', symbol: '▲', patternId: 'diag',   label: { ko: '직접 수정',     en: 'Human Revision', ja: '直接修正',   zh: '直接修改' } },
-  AI_SUGGESTION:      { bg: '#D4AF37', symbol: '★', patternId: 'dots',   label: { ko: 'AI 제안',       en: 'AI Suggestion',  ja: 'AI提案',     zh: 'AI建议' } },
-  AI_DRAFT:           { bg: '#C4C7C7', symbol: '◆', patternId: 'cross',  label: { ko: 'AI 초안',       en: 'AI Draft',       ja: 'AI下書き',   zh: 'AI初稿' } },
-  AI_REWRITE:         { bg: '#9CA3AF', symbol: '▼', patternId: 'horiz',  label: { ko: 'AI 재작성',     en: 'AI Rewrite',     ja: 'AI書き直し', zh: 'AI重写' } },
+  HUMAN_DRAFT:        { bg: '#1A1A1A', symbol: '◼', patternId: 'solid',  label: { ko: '직접 작성',     en: 'Author Draft',    ja: '直接執筆',   zh: '直接写作' } },
+  HUMAN_REVISION:     { bg: '#4169E1', symbol: '▲', patternId: 'diag',   label: { ko: '직접 수정',     en: 'Author Revision', ja: '直接修正',   zh: '直接修改' } },
+  AI_SUGGESTION:      { bg: '#D4AF37', symbol: '★', patternId: 'dots',   label: { ko: '노아 제안',     en: 'Noa Suggestion', ja: 'ノア提案',     zh: '诺亚建议' } },
+  AI_DRAFT:           { bg: '#C4C7C7', symbol: '◆', patternId: 'cross',  label: { ko: '노아 초안',     en: 'Noa Draft',      ja: 'ノア下書き',   zh: '诺亚初稿' } },
+  AI_REWRITE:         { bg: '#9CA3AF', symbol: '▼', patternId: 'horiz',  label: { ko: '노아 재작성',   en: 'Noa Rewrite',    ja: 'ノア書き直し', zh: '诺亚重写' } },
   EXTERNAL_IMPORT:    { bg: '#2C3E50', symbol: '⬢', patternId: 'vert',   label: { ko: '외부 편입',     en: 'External',       ja: '外部取込',   zh: '外部导入' } },
   TEMPLATE_SEED:      { bg: '#E1E1E1', symbol: '□', patternId: 'check',  label: { ko: '템플릿',        en: 'Template',       ja: 'テンプレ',   zh: '模板' } },
   COLLABORATOR_INPUT: { bg: '#16A34A', symbol: '◯', patternId: 'circle', label: { ko: '협업자',        en: 'Collaborator',   ja: '協力者',     zh: '协作者' } },

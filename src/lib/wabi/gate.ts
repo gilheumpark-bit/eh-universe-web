@@ -1,0 +1,19 @@
+export type WabiDecision =
+  | 'ALLOW'
+  | 'ALLOW_MINIMAL'
+  | 'HOLD'
+  | 'BLOCK'
+  | 'SEAL';
+
+export type WabiReasonCode =
+  | 'HUMAN_APPROVED'
+  | 'REFERENCE_COMPLETE'
+  | 'NO_HUMAN_APPROVAL'
+  | 'MISSING_REFERENCE'
+  | 'AI_DECISION_ATTEMPT'
+  | 'IP_RISK'
+  | 'UNKNOWN_EXTERNAL_VERDICT'
+  | 'CHAIN_INVALID'
+  | 'EXPORT_POLICY_REQUIRED'
+  | 'PROJECT_SCOPE_REQUIRED'
+  | 'HIGH_RISK_CHANGE';

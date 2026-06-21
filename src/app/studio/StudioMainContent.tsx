@@ -30,6 +30,8 @@ import { WritingProvider, type WritingContextValue } from './WritingContext';
 import { useGitHubSync } from '@/hooks/useGitHubSync';
 import { getFile, getTree } from '@/lib/github-sync';
 import { repoFilesToConfig, extractWriterProfile } from '@/lib/project-serializer';
+import { buildProjectStoragePath } from '@/lib/loreguard/project-storage-layout';
+import { episodeFilePath } from '@/lib/markdown-serializer';
 import { saveProfile } from '@/engine/writer-profile';
 
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
@@ -81,7 +83,7 @@ export default function StudioMainContent({ children }: { children?: React.React
     apiBannerMessage, apiSetupLabel,
     language, isKO,
     sessionStartChars, editorFontSize,
-    archiveScope, setArchiveScope, archiveFilter, setArchiveFilter,
+    historyScope, setHistoryScope, historyFilter, setHistoryFilter,
     charSubTab, setCharSubTab,
     createNewSession, createDemoSession, openQuickStart,
     startRename, renamingSessionId, setRenamingSessionId,
@@ -125,7 +127,10 @@ export default function StudioMainContent({ children }: { children?: React.React
       if (!gh.config?.token || !gh.config.owner || !gh.config.repo) return;
       const branchConfig = { ...gh.config, branch };
       const tree = await getTree(branchConfig);
-      const yamlEntries = tree.filter(e => e.type === 'blob' && (e.path.endsWith('.yaml') || e.path.endsWith('.md')));
+      const yamlEntries = tree.filter(e =>
+        e.type === 'blob' &&
+        (e.path.endsWith('.yaml') || e.path.endsWith('.md') || e.path === '.noa/profile.json')
+      );
       const repoFiles: { path: string; content: string }[] = [];
       for (const entry of yamlEntries.slice(0, 100)) {
         const file = await getFile(branchConfig, entry.path);
@@ -154,12 +159,27 @@ export default function StudioMainContent({ children }: { children?: React.React
   const handleLoadBranchContent = useCallback(
     async (branch: string, episode: number): Promise<string> => {
       if (!gh.config?.token || !gh.config.owner || !gh.config.repo) return '';
-      const path = `volumes/ep-${String(episode).padStart(3, '0')}.md`;
+      const manuscript = currentSession?.config?.manuscripts?.find((entry) => entry.episode === episode);
+      const volume = manuscript?.volume ?? 1;
+      const candidatePaths = Array.from(new Set([
+        manuscript?.filePath,
+        buildProjectStoragePath({
+          projectId: currentProjectId,
+          kind: 'episodeManuscript',
+          episode,
+          extension: 'md',
+        }),
+        episodeFilePath(episode, volume),
+        `volumes/ep-${String(episode).padStart(3, '0')}.md`,
+      ].filter((path): path is string => Boolean(path))));
       const branchConfig = { ...gh.config, branch };
-      const file = await getFile(branchConfig, path);
-      return file?.content ?? '';
+      for (const path of candidatePaths) {
+        const file = await getFile(branchConfig, path);
+        if (file?.content) return file.content;
+      }
+      return '';
     },
-    [gh.config],
+    [currentProjectId, currentSession?.config?.manuscripts, gh.config],
   );
 
   // Breadcrumb navigation — Project > Episode > Scene
@@ -325,31 +345,31 @@ export default function StudioMainContent({ children }: { children?: React.React
     {
       id: 'translate-current',
       label: L4(language, { ko: '현재 에피소드 번역', en: 'Translate Current Episode', ja: '現在のエピソードを翻訳', zh: '翻译当前章节' }),
-      description: L4(language, { ko: '번역 스튜디오로 보내기', en: 'Send to Translation Studio', ja: '翻訳スタジオへ送信', zh: '发送至翻译工作室' }),
+      description: L4(language, { ko: '번역·현지화 작업실로 보내기', en: 'Send to Translation & Localization', ja: '翻訳・ローカライズへ送信', zh: '发送至翻译·本地化' }),
       keywords: ['translate', 'i18n', '번역'],
       handler: () => handleCommandAction('translate-current'),
     },
     {
       id: 'toggle-assistant',
-      label: L4(language, { ko: '어시스턴트 토글', en: 'Toggle Assistant', ja: 'アシスタントを切替', zh: '切换助手' }),
-      description: L4(language, { ko: '오른쪽 어시스턴트 패널 열기/닫기', en: 'Open/close right assistant panel', ja: '右アシスタントパネルを開閉', zh: '打开/关闭右侧助手面板' }),
+      label: L4(language, { ko: '노아 패널 토글', en: 'Toggle Noa panel', ja: 'ノアパネルを切替', zh: '切换诺亚面板' }),
+      description: L4(language, { ko: '오른쪽 노아 패널 열기/닫기', en: 'Open or close the right Noa panel', ja: '右側のノアパネルを開閉', zh: '打开或关闭右侧诺亚面板' }),
       shortcut: 'Ctrl+/',
       keywords: ['assistant', 'ai', 'panel', '어시스턴트'],
       handler: () => handleCommandAction('toggle-assistant'),
     },
     {
       id: 'open-api-key',
-      label: L4(language, { ko: 'API 키 설정', en: 'Configure API Key', ja: 'APIキー設定', zh: '配置API密钥' }),
-      description: L4(language, { ko: 'AI 공급자 키 관리 모달 열기', en: 'Open AI provider key manager', ja: 'AIプロバイダキー管理を開く', zh: '打开AI提供商密钥管理' }),
-      keywords: ['api', 'key', 'provider', '키'],
+      label: L4(language, { ko: '연결 키 등록', en: 'Configure Connection Key', ja: '接続キー設定', zh: '配置连接密钥' }),
+      description: L4(language, { ko: '모델 연결 키 관리 열기', en: 'Open connection key manager', ja: 'モデル接続キー管理を開く', zh: '打开模型连接密钥管理' }),
+      keywords: ['api', 'key', 'provider', '키', '연결'],
       handler: () => handleCommandAction('open-api-key'),
     },
     {
       id: 'open-marketplace',
-      label: L4(language, { ko: '플러그인 마켓플레이스', en: 'Plugin Marketplace', ja: 'プラグインマーケットプレイス', zh: '插件市场' }),
-      description: L4(language, { ko: '추가 기능 플러그인 탐색 및 활성화', en: 'Browse and enable plugin extras', ja: 'プラグインを参照して有効化', zh: '浏览并启用插件' }),
+      label: L4(language, { ko: '확장 기능', en: 'Extensions', ja: '拡張機能', zh: '扩展功能' }),
+      description: L4(language, { ko: '내장 보조 기능을 확인하고 켜기', en: 'Review and enable bundled extras', ja: '内蔵補助機能を確認して有効化', zh: '查看并启用内置辅助功能' }),
       shortcut: 'Ctrl+Shift+P',
-      keywords: ['plugin', 'marketplace', 'addon', 'extension', '플러그인', '마켓'],
+      keywords: ['extension', 'extensions', 'addon', '확장', '확장 기능'],
       handler: () => handleCommandAction('open-marketplace'),
     },
   ], [language, handleCommandAction]);
@@ -375,6 +395,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       language,
       currentSession,
       currentSessionId,
+      currentProjectId,
       updateCurrentSession,
       setConfig,
       // Writing mode + draft
@@ -430,7 +451,7 @@ export default function StudioMainContent({ children }: { children?: React.React
       pipelineResult,
     };
   }, [
-    language, currentSession, currentSessionId, updateCurrentSession, setConfig,
+    language, currentSession, currentSessionId, currentProjectId, updateCurrentSession, setConfig,
     writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef,
     canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective,
     isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate,
@@ -478,7 +499,7 @@ export default function StudioMainContent({ children }: { children?: React.React
           {/* Genre badge + ANS engine badge removed for cleaner header */}
           {/* Tool buttons */}
           <div className="flex items-center gap-1">
-            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })} aria-label="Episode Explorer">
+            <button onClick={() => setEpisodeExplorerOpen(prev => !prev)} className={`relative rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple min-w-[44px] min-h-[44px] flex items-center justify-center ${episodeExplorerOpen ? 'text-accent-amber bg-accent-amber/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={L4(language, { ko: '에피소드 탐색기', en: 'Episode Explorer', ja: 'エピソードエクスプローラー', zh: '章节浏览器' })} aria-label="Episode Explorer">
               <BookOpen className="w-4 h-4" />
               {currentSession?.config?.episode != null && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-accent-purple text-[8px] font-black text-white leading-none">
@@ -486,17 +507,17 @@ export default function StudioMainContent({ children }: { children?: React.React
                 </span>
               )}
             </button>
-            <button onClick={triggerSave} className={`p-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple ${saveFlash ? 'text-accent-green' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={isKO ? '저장 (Ctrl+S)' : 'Save (Ctrl+S)'} aria-label="Save"><Save className="w-4 h-4" /></button>
-            <button onClick={handlePrint} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={isKO ? '내보내기 (Ctrl+E)' : 'Export (Ctrl+E)'} aria-label="Export"><Download className="w-4 h-4" /></button>
-            <button onClick={() => setShowSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
-            <button onClick={() => setShowGlobalSearch(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><SearchCode className="w-4 h-4" /></button>
-            <button onClick={() => setFocusMode(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
+            <button onClick={triggerSave} className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple ${saveFlash ? 'text-accent-green bg-accent-green/10' : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary'}`} title={isKO ? '저장 (Ctrl+S)' : 'Save (Ctrl+S)'} aria-label="Save"><Save className="w-4 h-4" /></button>
+            <button onClick={handlePrint} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple" title={isKO ? '내보내기 (Ctrl+E)' : 'Export (Ctrl+E)'} aria-label="Export"><Download className="w-4 h-4" /></button>
+            <button onClick={() => setShowSearch(prev => !prev)} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple" title={`${t('ui.searchCtrlF')} (Ctrl+F)`} aria-label={t('ui.search')}><Search className="w-4 h-4" /></button>
+            <button onClick={() => setShowGlobalSearch(prev => !prev)} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple" title={`${isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'} (Ctrl+K)`} aria-label={isKO ? '\uC804\uCCB4 \uAC80\uC0C9' : 'Global Search'}><SearchCode className="w-4 h-4" /></button>
+            <button onClick={() => setFocusMode(prev => !prev)} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple" title={`${t('ui.focusMode')} (F11)`} aria-label={t('ui.focusModeLabel')}>{focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</button>
             {/* Premium Theme Controls - Brightness + Color */}
             <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-bg-secondary/40 border border-white/4">
               {/* Brightness Dial */}
               <button 
                 onClick={toggleTheme} 
-                className="group relative flex items-center justify-center w-8 h-8 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                className="group relative flex items-center justify-center w-11 h-11 rounded-full bg-linear-to-br from-bg-secondary to-bg-primary border border-white/10 hover:border-white/20 transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple/50"
                 title={isKO ? ['밤','낮'][themeLevel] : ['Night','Day'][themeLevel]}
                 aria-label={t('ui.toggleThemeLabel')}
               >
@@ -510,7 +531,7 @@ export default function StudioMainContent({ children }: { children?: React.React
               {/* Divider */}
             </div>
             <StatusBadge showStorage />
-            <button onClick={() => setShowShortcuts(prev => !prev)} className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
+            <button onClick={() => setShowShortcuts(prev => !prev)} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-bg-secondary rounded-lg text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple" title={`${isKO ? '\uD0A4\uBCF4\uB4DC \uB2E8\uCD95\uD0A4' : 'Keyboard Shortcuts'} (Ctrl+/)`} aria-label={t('ui.keyboardShortcuts')}><Keyboard className="w-4 h-4" /></button>
           </div>
         </div>
       </header>
@@ -602,22 +623,22 @@ export default function StudioMainContent({ children }: { children?: React.React
           </div>
         )}
         <div className="flex-1 overflow-y-auto pb-20 md:pb-0 min-h-0">
-          {/* API key banner */}
+          {/* Connection key banner */}
           {hydrated && aiCapabilitiesLoaded && !hasAiAccess && !bannerDismissed && (
             <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-accent-amber/10 border border-accent-amber/30 rounded-xl text-accent-amber text-xs">
               <Key className="w-4 h-4 shrink-0" />
               <span className="flex-1">{apiBannerMessage}</span>
-              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 px-3 py-1 bg-accent-amber/20 hover:bg-accent-amber/30 rounded-lg text-[10px] font-bold uppercase transition-colors">
+              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 min-h-[44px] px-3 py-2 bg-accent-amber/20 hover:bg-accent-amber/30 rounded-lg text-[10px] font-bold uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
                 {apiSetupLabel}
               </button>
-              <button onClick={() => { setBannerDismissed(true); try { localStorage.setItem('noa_api_banner_dismissed', '1'); } catch { /* quota/private */ } }} className="shrink-0 text-text-tertiary hover:text-text-primary transition-colors text-sm leading-none" aria-label="Dismiss">
+              <button onClick={() => { setBannerDismissed(true); try { localStorage.setItem('noa_api_banner_dismissed', '1'); } catch { /* quota/private */ } }} className="shrink-0 min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors text-sm leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue" aria-label={language === 'KO' ? '닫기' : 'Dismiss'}>
                 {'\u2715'}
               </button>
             </div>
           )}
 
           {/* No session selected — Onboarding */}
-          {!currentSessionId && !['settings', 'history', 'rulebook', 'style', 'docs'].includes(activeTab) ? (
+          {!currentSessionId && !['settings', 'history', 'direction', 'style', 'docs'].includes(activeTab) ? (
             <div className="h-full relative flex flex-col items-center justify-center text-center px-4 overflow-hidden z-1">
               <div className="absolute inset-0 z-0">
                 <Image src="/images/gate-infrastructure-visual.jpg" alt="" fill priority={true} className="object-cover opacity-20" style={{ maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)' }} />
@@ -660,8 +681,8 @@ export default function StudioMainContent({ children }: { children?: React.React
                     rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
                     directorReport={directorReport} hfcpState={hfcpState} handleNextEpisode={handleNextEpisode}
                     writingColumnShell={writingColumnShell} input={input} setInput={setInput}
-                    archiveScope={archiveScope} setArchiveScope={setArchiveScope} archiveFilter={archiveFilter}
-                    setArchiveFilter={setArchiveFilter} projects={projects} sessions={sessions}
+                    historyScope={historyScope} setHistoryScope={setHistoryScope} historyFilter={historyFilter}
+                    setHistoryFilter={setHistoryFilter} projects={projects} sessions={sessions}
                     currentProject={currentProject} currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId}
                     setCurrentSessionId={setCurrentSessionId} startRename={startRename}
                     renamingSessionId={renamingSessionId} setRenamingSessionId={setRenamingSessionId}
@@ -692,8 +713,8 @@ export default function StudioMainContent({ children }: { children?: React.React
                 rightPanelOpen={rightPanelOpen} setRightPanelOpen={setRightPanelOpen}
                 directorReport={directorReport} hfcpState={hfcpState} handleNextEpisode={handleNextEpisode}
                 writingColumnShell={writingColumnShell} input={input} setInput={setInput}
-                archiveScope={archiveScope} setArchiveScope={setArchiveScope} archiveFilter={archiveFilter}
-                setArchiveFilter={setArchiveFilter} projects={projects} sessions={sessions}
+                historyScope={historyScope} setHistoryScope={setHistoryScope} historyFilter={historyFilter}
+                setHistoryFilter={setHistoryFilter} projects={projects} sessions={sessions}
                 currentProject={currentProject} currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId}
                 setCurrentSessionId={setCurrentSessionId} startRename={startRename}
                 renamingSessionId={renamingSessionId} setRenamingSessionId={setRenamingSessionId}

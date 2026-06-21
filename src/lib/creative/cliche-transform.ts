@@ -16,7 +16,7 @@
  * - deconstruction: 해체 (클리셰의 전제·논리를 분해해 모순 노출)
  * - blending: 혼합 (이질적 장르·클리셰 결합)
  * - exaggeration: 과장 (극단까지 밀어붙여 풍자/낯설게)
- * - literalization: 직역화 (은유·관용구를 문자 그대로 구현)
+ * - literalization: 말맛 전환 (은유·관용구를 문자 그대로 구현)
  * - role-swap: 역할 교환 (전형적 배역을 뒤바꿈)
  * - recontextualize: 재맥락화 (같은 사건을 새 배경·시점에 이식)
  */
@@ -63,7 +63,7 @@ export const TECHNIQUES: Readonly<Record<TransformTechnique, TechniqueEntry>> = 
   deconstruction: Object.freeze({
     label: '해체',
     description: '클리셰의 숨은 전제와 논리를 분해해 그 모순·비용을 드러낸다.',
-    example: '회귀로 모든 걸 만회한다 → 회귀할 때마다 기억과 인간성이 깎여 나간다',
+    example: '회귀로 모든 걸 만회한다 → 회귀할 때마다 기억과 자기 통제가 깎여 나간다',
   }),
   blending: Object.freeze({
     label: '혼합',
@@ -76,7 +76,7 @@ export const TECHNIQUES: Readonly<Record<TransformTechnique, TechniqueEntry>> = 
     example: '먼치킨 주인공 → 너무 강해서 모든 갈등이 1초 만에 끝나 버리는 권태',
   }),
   literalization: Object.freeze({
-    label: '직역화',
+    label: '말맛 전환',
     description: '은유나 관용구를 문자 그대로 사건으로 구현해 낯설게 한다.',
     example: '"심장을 도둑맞았다"는 사랑 표현 → 실제로 심장을 적출당한 사건',
   }),

@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
 import type { WritingMode } from '@/lib/studio-types';
+import { sanitizeLoadedText } from '@/lib/project-sanitize';
 
 /** [P4 low/integration 2026-06-09] writingMode 세션별 영속 키 + 유효값 가드. */
 const WRITING_MODE_KEY = (sessionId: string) => `noa_writingmode_${sessionId}`;
@@ -49,9 +50,15 @@ export function useStudioWritingMode(currentSessionId: string | null, hydrated: 
   // hydration 후 localStorage에서 복원 — 의도적 setState
   useEffect(() => {
     if (!hydrated || !currentSessionId) return;
-    const saved = localStorage.getItem(`noa_editdraft_${currentSessionId}`);
+    const key = `noa_editdraft_${currentSessionId}`;
+    const saved = localStorage.getItem(key);
     if (saved !== null) {
-      setTimeout(() => setEditDraft(saved), 0);
+      const cleanSaved = sanitizeLoadedText(saved);
+      if (cleanSaved !== saved) {
+        if (cleanSaved) localStorage.setItem(key, cleanSaved);
+        else localStorage.removeItem(key);
+      }
+      setTimeout(() => setEditDraft(cleanSaved), 0);
     }
 
   }, [currentSessionId, hydrated]);
@@ -68,7 +75,7 @@ export function useStudioWritingMode(currentSessionId: string | null, hydrated: 
       setWritingMode(saved as WritingMode);
     } else {
       // 저장값 없음 — 세션 전환 시 이전 세션 모드가 누출되지 않도록 기본값 복귀.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 위 사유
+
       setWritingMode(DEFAULT_WRITING_MODE);
     }
 
@@ -84,7 +91,7 @@ export function useStudioWritingMode(currentSessionId: string | null, hydrated: 
     if (!currentSessionId || !hydrated) return;
     const key = `noa_editdraft_${currentSessionId}`;
     if (editDraft) {
-      localStorage.setItem(key, editDraft);
+      localStorage.setItem(key, sanitizeLoadedText(editDraft));
     } else {
       const timer = setTimeout(() => {
         if (!editDraft) localStorage.removeItem(key);

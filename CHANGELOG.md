@@ -142,7 +142,7 @@ studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migrat
 
 #### WRITING_AGENT_REGISTRY (1acaeb8a)
 - `src/lib/ai/writing-agent-registry.ts` 신설 — Code Studio 19-role `AGENT_REGISTRY` 패턴을 집필·번역·아카이브에 이식
-- **11 agent entries**: studio-draft · inline-completion · inline-rewrite · detail-pass · translator-stage-1~5 · story-bible · codex-structured-json · network-agent-archive
+- **Current agent entries**: studio-draft · inline-completion · inline-rewrite · detail-pass · translator-stage-1~5 · story-bible · codex-structured-json. 구 네트워크 검색 엔트리는 2026-06 현행 레지스트리에서 제거됨.
 - **6 GuardId**: no-english-thinking-korean-novel, no-think-translation, no-yap-json, **ip-brand-guard**, prism-ALL/T15/M18
 - **7 Context Block ID**: character-dna, world-book, scene-sheet, genre-rules, story-summary, glossary, continuity-notes
 - `buildAgentSystemPrompt(id, ctx)` 공용 빌더 + `auditRegistry()` 감사 유틸
@@ -178,7 +178,7 @@ studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migrat
 - **"공동 창설자" → "얼리 액세스 멤버"** (조합·회사 관계 오인 방지)
 - **"제품 크레딧 등재" → "알파 기여자 명시"** (영구 권리 약속 회피)
 - README·SUPPORT·manifesto 3파일 × 4언어 매트릭스 동시 반영
-- RAG 출처 명시: "ChromaDB 99만 문서 **(위키백과 CC BY-SA 라이선스 선별)**"
+- 구 외부 검색 출처 표기는 2026-06 기준 창작 집필 경로에서 제거됨. 8082 검색 사이드카는 번역 보강용 레거시 경로로 한정.
 
 ### Security — IP/저작권 방어 전수 구조화
 - 브랜드 · 저작권 문구 · 표절 3축 자동 탐지
@@ -217,7 +217,7 @@ studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migrat
 ESLint 품질 수리:
 - `--fix` Unused disable directive 22건 자동 제거
 - exhaustive-deps 2 · jsx-a11y 5 (Dropdown useId+aria-controls · treeitem aria-selected · tab 의 잘못된 aria-pressed) · unused-expressions 2 · no-img-element 2 · no-unused-vars 28 전수 수리 또는 `_prefix`
-- **240 warn → 178** (CLI 레이어 any 144 + @ts-nocheck 34 잔존 — 배포 영향 없음, 별도 사이클)
+- **240 warn -> 178** (구 실행 도구 예외 구역은 이후 제품 표면 정리 패스에서 제거)
 
 검증: TS 0 / ESLint 0 errors / jest 298 suites 3,304 tests pass / 회귀 0
 
@@ -236,11 +236,6 @@ ESLint 품질 수리:
 
 ### Chore — Housekeeping
 - 루트 untracked 일회용 스크립트 `fix-eslint.mjs` 제거 + `.gitignore`에 `fix-*.mjs` 패턴 등록 (동종 임시 파일 자동 제외)
-
-### Experimental — CS Quill CLI v0.1.0
-- `src/cli/bin/cs.ts` — Code Studio CLI 엔트리 (🦔 CS Quill — 코드 퀄리티 고슴도치)
-- 명령: `init` (프로젝트 온보딩), `generate` (SEAL 계약 병렬 코드 생성)
-- **상태**: 내부 실험용. `npm bin` 등록만 유지, 외부 배포·공개 문서화 전
 
 ### Ops — 로컬 실측 검증 (2026-04-24)
 
@@ -332,7 +327,7 @@ AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보
 
 - **A** 법무 1건 — Legal content 변호사 리뷰 (외부 의존)
 - **B** 설계 선행 2건 — C1 CSP nonce (Next.js 16 middleware 연구) · W1 Firestore public 분리 (데이터 마이그)
-- **C** 별도 스프린트 4건 — Perf 75+ · A11y 100 · CLI strict · ShadowDiffDashboard 738→500
+- **C** 별도 스프린트 4건 — Perf 75+ · A11y 100 · 구 실행 도구 문서 정리 · ShadowDiffDashboard 738→500
 - **D** 사용자 도메인 9건 — Sentry DSN · Stripe secret · CRON_SECRET scope · firebase-admin · CLA · 브릿G 모집 · 모두의창업 · PCT · feature flag
 - **en 네이티브 QA** — EN 8.0 → 9.5+ 는 네이티브 카피에디터 발주 필요 (ja/zh 도 9.7 → 10 는 동일)
 - **라이브 배포 검증** — 최신 Vercel 빌드가 새 메타·sitemap·manifest 반영 완료 후 Facebook Sharing Debugger · Google Rich Results Test 로 현지화 실측
@@ -511,7 +506,7 @@ AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보
 ### Changed — DGX 인프라 전환
 - **단일 게이트웨이 일원화**: 모든 백엔드 트래픽을 `https://api.ehuniverse.com`으로 통합
   - `/v1/chat/completions` → Nginx LB(8090) → Engine A/B 자동 분산
-  - `/api/rag/*`, `/api/image/generate` → RAG API / ComfyUI
+  - `/api/rag/*`, `/api/image/generate` → 레거시 검색 사이드카 / ComfyUI
 - **Qwen 3.5-9B FP8 듀얼 엔진 전환** — 기존 32B+1.5B Speculative Decoding 폐기
   - Engine A(8080): 메인 집필 / Engine B(8081): 번역·요약
   - TTFT 0.13초, 18-20 tok/s 실측
@@ -632,12 +627,6 @@ AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보
 - DGX Spark 14B 단일 모델 통합 (다중 모델 하이브리드 폐기)
 
 ## [2.0.0] - 2026-04-13
-
-### Added — Quill Engine Integration
-- 224-rule catalog ported from local-code-studio (16 categories, CWE mappings)
-- 4-layer verification engine (pre-filter → AST → TypeChecker → esquery)
-- Deep Verify: 5th-order logic bug detection
-- Pipeline upgraded: 8-team → 9-team (Quill non-blocking stage)
 
 ### Added — Scene Direction Overhaul
 - Inline DirectionReferencePanel: [연출] [인물] [참고] 3-tab split view

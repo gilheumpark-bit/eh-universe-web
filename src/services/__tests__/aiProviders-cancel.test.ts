@@ -8,6 +8,7 @@ if (typeof (globalThis as { ReadableStream?: unknown }).ReadableStream === 'unde
 
 // google-genai-server 모킹 — 실제 네트워크/SDK 없이 abortSignal 거동만 관찰.
 let capturedSignal: AbortSignal | undefined;
+let capturedMaxOutputTokens: number | undefined;
 let generatorFinalized = false;
 
 jest.mock('@/lib/google-genai-server', () => ({
@@ -17,6 +18,7 @@ jest.mock('@/lib/google-genai-server', () => ({
       // 무한 async generator 를 반환한다 (실제 SDK 의 abort 거동 모사).
       generateContentStream: async ({ config }: { config: { abortSignal?: AbortSignal } }) => {
         capturedSignal = config.abortSignal;
+        capturedMaxOutputTokens = (config as { maxOutputTokens?: number }).maxOutputTokens;
         async function* gen() {
           try {
             let i = 0;
@@ -50,6 +52,7 @@ import { streamGemini } from '../aiProviders';
 
 beforeEach(() => {
   capturedSignal = undefined;
+  capturedMaxOutputTokens = undefined;
   generatorFinalized = false;
 });
 
@@ -86,5 +89,14 @@ describe('streamGemini cancel()', () => {
     await reader.read(); // 시작
     // cancel 자체는 reject 하지 않아야 한다 (정상 종료 취급).
     await expect(reader.cancel('done')).resolves.toBeUndefined();
+  });
+});
+
+describe('streamGemini options', () => {
+  it('maxTokens를 Gemini maxOutputTokens로 전달한다', async () => {
+    await streamGemini('key', 'gemini-2.0', 'sys', [{ role: 'user', content: 'hi' }], 0.7, 123);
+
+    expect(capturedSignal).toBeInstanceOf(AbortSignal);
+    expect(capturedMaxOutputTokens).toBe(123);
   });
 });

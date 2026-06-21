@@ -6,7 +6,7 @@
  * 3가지 상태:
  *  - leader (단일 탭): 표시 없음 (null).
  *  - leader + followers (2+ 탭): 상단 피어 카운트 배너.
- *  - follower: 상단 읽기-전용 배너 + "이 탭을 Leader로" 버튼.
+ *  - follower: 상단 동기화 상태 배너 + "이 창에서 계속" 버튼.
  *
  * [C] role="status" + aria-live="polite" (UI 변화 스크린리더 고지)
  * [G] 메시지는 useMemo / 버튼 상태 변경 시에만 재렌더
@@ -50,10 +50,10 @@ function makeLabels(lang: AppLanguage | string) {
     // Leader + followers
     leaderWithFollowers: (n: number) =>
       L4(lang, {
-        ko: `다른 탭에서도 편집 중 (Follower ${n}개)`,
-        en: `Also editing in other tabs (${n} Follower${n === 1 ? '' : 's'})`,
-        ja: `他のタブでも編集中 (Follower ${n}個)`,
-        zh: `其他标签页也在编辑中 (${n} 个 Follower)`,
+        ko: `다른 창에서도 작업 중 (${n}개)`,
+        en: `Also working in other windows (${n})`,
+        ja: `他のウィンドウでも作業中 (${n}個)`,
+        zh: `其他窗口也在工作中 (${n} 个)`,
       }),
     leaderWithFollowersSubtitle: L4(lang, {
       ko: '이 탭이 저장을 담당합니다',
@@ -63,34 +63,34 @@ function makeLabels(lang: AppLanguage | string) {
     }),
     // Follower
     followerTitle: L4(lang, {
-      ko: '이 탭은 보기 전용',
-      en: 'This tab is view-only',
-      ja: 'このタブは閲覧のみ',
-      zh: '此标签页仅供查看',
+      ko: '다른 창에서 저장 중',
+      en: 'Saving in another window',
+      ja: '別のウィンドウで保存中',
+      zh: '正在其他窗口保存',
     }),
     followerSubtitle: L4(lang, {
-      ko: '편집은 다른 탭에서 진행 중입니다',
-      en: 'Editing is happening in another tab',
-      ja: '編集は他のタブで進行中です',
-      zh: '编辑正在其他标签页进行',
+      ko: '충돌을 막기 위해 저장 담당 창을 유지합니다',
+      en: 'Keeping one save window to avoid conflicts',
+      ja: '競合を防ぐため保存担当ウィンドウを維持します',
+      zh: '为避免冲突，将保留一个保存窗口',
     }),
     promoteBtn: L4(lang, {
-      ko: '이 탭을 Leader로',
-      en: 'Make this tab Leader',
-      ja: 'このタブをLeaderに',
-      zh: '将此标签页设为 Leader',
+      ko: '이 창에서 계속',
+      en: 'Continue here',
+      ja: 'このウィンドウで続ける',
+      zh: '在此窗口继续',
     }),
     promoting: L4(lang, {
-      ko: '승격 요청 중...',
-      en: 'Requesting promotion...',
-      ja: '昇格をリクエスト中...',
-      zh: '正在请求升级...',
+      ko: '전환 중...',
+      en: 'Switching...',
+      ja: '切り替え中...',
+      zh: '正在切换...',
     }),
     promoteFailed: L4(lang, {
-      ko: '승격 실패 — 다시 시도하세요',
-      en: 'Promotion failed — please retry',
-      ja: '昇格に失敗 — 再試行してください',
-      zh: '升级失败 — 请重试',
+      ko: '전환 실패 — 다시 시도하세요',
+      en: 'Switch failed — please retry',
+      ja: '切り替えに失敗 — 再試行してください',
+      zh: '切换失败 — 请重试',
     }),
     // Conflicts
     conflictBadge: (n: number) =>
@@ -108,22 +108,22 @@ function makeLabels(lang: AppLanguage | string) {
     }),
     // a11y
     promoteAriaHelp: L4(lang, {
-      ko: '현재 리더 탭에게 쓰기 권한 양도를 요청합니다. 2초 안에 응답하지 않으면 실패로 처리됩니다.',
-      en: 'Requests the current leader tab to transfer write access. Fails if no response within 2 seconds.',
-      ja: '現在のリーダータブに書き込み権限の譲渡をリクエストします。2秒以内に応答がない場合は失敗となります。',
-      zh: '请求当前的 Leader 标签页转移写入权限。2 秒内无响应则失败。',
+      ko: '현재 저장 담당 탭에게 쓰기 권한 양도를 요청합니다. 2초 안에 응답하지 않으면 실패로 처리됩니다.',
+      en: 'Requests the current primary tab to transfer write access. Fails if no response within 2 seconds.',
+      ja: '現在の主タブに書き込み権限の譲渡をリクエストします。2秒以内に応答がない場合は失敗となります。',
+      zh: '请求当前主标签页转移写入权限。2 秒内无响应则失败。',
     }),
     statusLabelFollower: L4(lang, {
-      ko: '멀티탭 상태: Follower',
-      en: 'Multi-tab status: Follower',
-      ja: 'マルチタブ状態: Follower',
-      zh: '多标签状态: Follower',
+      ko: '멀티창 상태: 저장 대기',
+      en: 'Multi-window status: save standby',
+      ja: 'マルチウィンドウ状態: 保存待機',
+      zh: '多窗口状态: 保存待机',
     }),
     statusLabelLeader: L4(lang, {
-      ko: '멀티탭 상태: Leader',
-      en: 'Multi-tab status: Leader',
-      ja: 'マルチタブ状態: Leader',
-      zh: '多标签状态: Leader',
+      ko: '멀티탭 상태: 저장 담당 탭',
+      en: 'Multi-tab status: primary tab',
+      ja: 'マルチタブ状態: 主タブ',
+      zh: '多标签状态: 主标签页',
     }),
   } as const;
 }

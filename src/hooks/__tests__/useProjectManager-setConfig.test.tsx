@@ -67,6 +67,190 @@ describe('useProjectManager.setConfig — 객체 형태 (하위호환)', () => {
 });
 
 // ============================================================
+// PART 2.5 — 다중 프로젝트 생성
+// ============================================================
+
+describe('useProjectManager.createNewProjectWithSession — 다중 프로젝트', () => {
+  test('첫 세션 생성도 고정 project-default/미분류가 아니라 새 작품 프로젝트로 만든다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewSession();
+    });
+
+    expect(result.current.projects).toHaveLength(1);
+    expect(result.current.currentProject?.id).toMatch(/^project-/);
+    expect(result.current.currentProject?.id).not.toBe('project-default');
+    expect(result.current.currentProject?.name).toBe('새 작품');
+    expect(result.current.currentSession?.title).toBe('새로운 소설');
+  });
+
+  test('프로젝트와 첫 세션을 원자적으로 만들고 기존 프로젝트를 보존한다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession({
+        projectName: 'QA-멀티-프로젝트-A',
+        sessionTitle: 'A 시작',
+      });
+    });
+    act(() => {
+      result.current.createNewProjectWithSession({
+        projectName: 'QA-멀티-프로젝트-B',
+        sessionTitle: 'B 시작',
+      });
+    });
+
+    expect(result.current.projects).toHaveLength(2);
+    expect(result.current.projects.map(project => project.name)).toEqual([
+      'QA-멀티-프로젝트-A',
+      'QA-멀티-프로젝트-B',
+    ]);
+    expect(result.current.projects.every(project => project.sessions.length === 1)).toBe(true);
+    expect(result.current.currentProject?.name).toBe('QA-멀티-프로젝트-B');
+    expect(result.current.currentSession?.title).toBe('B 시작');
+  });
+
+  test('기본 이름으로 여러 작품을 만들면 보관함에서 구분되게 번호를 붙인다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession();
+    });
+    act(() => {
+      result.current.createNewProjectWithSession();
+    });
+    act(() => {
+      result.current.createNewProjectWithSession();
+    });
+
+    expect(result.current.projects.map(project => project.name)).toEqual([
+      '새 작품',
+      '새 작품 2',
+      '새 작품 3',
+    ]);
+    expect(result.current.currentProject?.name).toBe('새 작품 3');
+  });
+
+  test('직접 입력한 작품명도 공백 정리와 중복 번호를 적용한다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: '  연재작  ' });
+    });
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: '연재작' });
+    });
+
+    expect(result.current.projects.map(project => project.name)).toEqual(['연재작', '연재작 2']);
+  });
+
+  test('작품 이름 변경은 공백 입력을 버리고 중복 이름에 번호를 붙인다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: '기존작' });
+    });
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: '변경대상' });
+    });
+
+    const targetProjectId = result.current.currentProjectId!;
+
+    act(() => {
+      result.current.renameProject(targetProjectId, '  기존작  ');
+    });
+
+    expect(result.current.currentProject?.name).toBe('기존작 2');
+
+    act(() => {
+      result.current.renameProject(targetProjectId, '   ');
+    });
+
+    expect(result.current.currentProject?.name).toBe('기존작 2');
+  });
+
+  test('현재 프로젝트를 삭제하면 남은 프로젝트의 첫 세션으로 이동한다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession({
+        projectName: 'QA-삭제-이전',
+        sessionTitle: '이전 회차',
+      });
+    });
+    act(() => {
+      result.current.createNewProjectWithSession({
+        projectName: 'QA-삭제-대상',
+        sessionTitle: '삭제 대상 회차',
+      });
+    });
+
+    const deletingProjectId = result.current.currentProjectId;
+    expect(result.current.currentProject?.name).toBe('QA-삭제-대상');
+
+    act(() => {
+      result.current.deleteProject(deletingProjectId!);
+    });
+
+    expect(result.current.projects.map(project => project.name)).toEqual(['QA-삭제-이전']);
+    expect(result.current.currentProject?.name).toBe('QA-삭제-이전');
+    expect(result.current.currentSession?.title).toBe('이전 회차');
+  });
+
+  test('가운데 프로젝트를 삭제하면 다음 이웃 프로젝트로 이동한다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: 'A', sessionTitle: 'A 회차' });
+    });
+    const firstProjectId = result.current.currentProjectId!;
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: 'B', sessionTitle: 'B 회차' });
+    });
+    const middleProjectId = result.current.currentProjectId!;
+    const middleSessionId = result.current.currentSessionId!;
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: 'C', sessionTitle: 'C 회차' });
+    });
+
+    act(() => {
+      result.current.setCurrentProjectId(middleProjectId);
+      result.current.setCurrentSessionId(middleSessionId);
+    });
+    act(() => {
+      result.current.deleteProject(middleProjectId);
+    });
+
+    expect(result.current.projects.map(project => project.name)).toEqual(['A', 'C']);
+    expect(result.current.currentProjectId).not.toBe(firstProjectId);
+    expect(result.current.currentProject?.name).toBe('C');
+    expect(result.current.currentSession?.title).toBe('C 회차');
+  });
+
+  test('현재 프로젝트 ID가 비어 있어도 새 회차는 보관함의 첫 작품에 붙는다', () => {
+    const { result } = renderHook(() => useProjectManager('KO'));
+
+    act(() => {
+      result.current.createNewProjectWithSession({ projectName: '보관함 작품', sessionTitle: '기존 회차' });
+    });
+    const projectId = result.current.currentProjectId!;
+
+    act(() => {
+      result.current.setCurrentProjectId(null);
+      result.current.setCurrentSessionId(null);
+    });
+    act(() => {
+      result.current.createNewSession();
+    });
+
+    expect(result.current.currentProjectId).toBe(projectId);
+    expect(result.current.currentProject?.sessions).toHaveLength(2);
+    expect(result.current.currentSession?.title).toBe('새로운 소설');
+  });
+});
+
+// ============================================================
 // PART 3 — 함수형 updater (prev 최신성)
 // ============================================================
 

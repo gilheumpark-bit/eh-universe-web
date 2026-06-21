@@ -10,7 +10,7 @@
 // [원칙 1] 순수 함수. 입력 projects 불변 — 읽기만.
 // [원칙 2] null-safe. 비정상 입력(빈 배열/미존재 id/누락 config) 에서 throw 없음.
 // [원칙 3] Canonical 비교 가능성. 반환값은 JSON.stringify/canonicalJson 가능 모양.
-// [원칙 4] 해시 독립성. Rulebook 편집이 Character 해시 바꾸지 않음.
+// [원칙 4] 해시 독립성. 연출 편집이 Character 해시 바꾸지 않음.
 // [원칙 5] 최소 복사. 가능한 한 참조 공유 (shadow 경로는 snapshot 이므로 OK).
 //
 // [C] 모든 옵셔널 필드 접근은 옵셔널 체인 + null 가드.
@@ -54,7 +54,7 @@ export interface SceneDirectionPayload {
   sessionId: string;
   /** config.sceneDirection — 없으면 null. */
   sceneDirection: SceneDirectionData | null;
-  /** config.episodeSceneSheets — 없으면 빈 배열. Rulebook/SceneSheet 를 함께 다룸. */
+  /** config.episodeSceneSheets — 없으면 빈 배열. Direction/SceneSheet 를 함께 다룸. */
   episodeSceneSheets: EpisodeSceneSheet[];
 }
 
@@ -158,7 +158,7 @@ export function extractManuscript(
 }
 
 /**
- * Rulebook/SceneSheet 탭 — sceneDirection + episodeSceneSheets.
+ * Direction/SceneSheet 탭 — sceneDirection + episodeSceneSheets.
  * 두 필드는 편집 UI 상 인접해 하나의 operation 으로 묶는다.
  */
 export function extractSceneDirection(

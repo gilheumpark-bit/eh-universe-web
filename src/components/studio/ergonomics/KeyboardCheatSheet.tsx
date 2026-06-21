@@ -5,7 +5,7 @@
 // ============================================================
 // '?' 키 (인풋 외부) 누르면 오픈. ESC로 닫기. focus trap 적용.
 // 단축키 표기는 useStudioKeyboard의 실제 바인딩과 정렬 (하드코딩 최소화).
-// 역할 그룹 4개: Navigation / Editing / AI / Writing.
+// 역할 그룹 4개: Navigation / Editing / Noa / Writing.
 //
 // 접근성:
 //  - role="dialog" + aria-modal="true" + aria-labelledby
@@ -78,8 +78,8 @@ const SHORTCUTS: readonly Shortcut[] = [
     keys: "Ctrl+/",
     group: "nav",
     description: {
-      ko: "어시스턴트 패널 토글",
-      en: "Toggle assistant panel",
+      ko: "노아 패널 토글",
+      en: "Toggle Noa panel",
       ja: "アシスタントパネル",
       zh: "切换助手面板",
     },
@@ -140,15 +140,15 @@ const SHORTCUTS: readonly Shortcut[] = [
       zh: "字号减小",
     },
   },
-  // AI
+  // Noa
   {
     keys: "Ctrl+Enter",
     group: "ai",
     description: {
-      ko: "AI 생성 실행 (FAB)",
-      en: "Run AI generation (FAB)",
-      ja: "AI生成実行 (FAB)",
-      zh: "运行 AI 生成 (FAB)",
+      ko: "노아 제안 실행 (FAB)",
+      en: "Run Noa suggestion (FAB)",
+      ja: "Noa 提案実行 (FAB)",
+      zh: "运行 Noa 建议 (FAB)",
     },
   },
   {
@@ -245,7 +245,7 @@ function groupLabel(
     case "edit":
       return L4(lang, { ko: "편집", en: "Editing", ja: "編集", zh: "编辑" });
     case "ai":
-      return L4(lang, { ko: "AI", en: "AI", ja: "AI", zh: "AI" });
+      return L4(lang, { ko: "노아", en: "Noa", ja: "ノア", zh: "诺亚" });
     case "writing":
       return L4(lang, { ko: "집필", en: "Writing", ja: "執筆", zh: "创作" });
   }

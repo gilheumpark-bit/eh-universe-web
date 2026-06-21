@@ -21,6 +21,7 @@ function makeStubValue(): WritingContextValue {
       id: "s1", title: "t", lastUpdate: 0, messages: [], config: {} as any,
     },
     currentSessionId: "s1",
+    currentProjectId: "project-1",
     updateCurrentSession: noop,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setConfig: noop as any,

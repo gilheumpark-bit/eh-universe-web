@@ -34,6 +34,61 @@ const AuthContext = createContext<AuthContextType>({
   getIdToken: async () => { throw new Error('AuthProvider not mounted'); },
 });
 
+type ToastVariant = 'success' | 'error' | 'info';
+
+function dispatchAuthToast(message: string, variant: ToastVariant = 'info', duration?: number): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('noa:toast', {
+    detail: { message, variant, duration },
+  }));
+}
+
+function recordAuthStage(stage: string, detail?: string): void {
+  if (typeof window === 'undefined') return;
+  const payload = {
+    stage,
+    detail: detail ?? '',
+    href: window.location.href,
+    at: new Date().toISOString(),
+  };
+  try {
+    window.sessionStorage.setItem('noa_google_login_last_stage', JSON.stringify(payload));
+  } catch {
+    // sessionStorage unavailable — login must still proceed.
+  }
+  window.dispatchEvent(new CustomEvent('noa:auth-stage', { detail: payload }));
+}
+
+function formatGoogleLoginError(err: unknown): string {
+  const code = (err as { code?: string })?.code ?? '';
+  const msg = (err as { message?: string })?.message ?? '';
+  if (code === 'auth/unauthorized-domain') {
+    return '현재 주소가 Google 로그인 허용 목록에 없습니다. Firebase Authorized domains에 이 주소를 추가해 주세요.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Google 로그인 연결이 끊겼습니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.';
+  }
+  if (code === 'auth/operation-not-supported-in-this-environment') {
+    return '현재 브라우저 환경에서 Google 로그인 이동을 시작하지 못했습니다. 일반 브라우저에서 다시 열어 주세요.';
+  }
+  return `Google 로그인 실패: ${code || msg || '알 수 없는 오류'}`;
+}
+
+function shouldTryPopupFirst(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function shouldFallbackToRedirect(err: unknown): boolean {
+  const code = (err as { code?: string })?.code ?? '';
+  return (
+    code === 'auth/popup-blocked' ||
+    code === 'auth/popup-closed-by-user' ||
+    code === 'auth/cancelled-popup-request' ||
+    code === 'auth/operation-not-supported-in-this-environment'
+  );
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,13 +106,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
-      import('firebase/auth').then(({ onAuthStateChanged, getRedirectResult }) => {
-        getRedirectResult(resolvedAuth).catch(() => {});
+      import('firebase/auth').then(({ onAuthStateChanged, getRedirectResult, GoogleAuthProvider }) => {
+        getRedirectResult(resolvedAuth)
+          .then((result) => {
+            if (!result) return;
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            setAccessToken(credential?.accessToken ?? null);
+            recordAuthStage('redirect-result-ok');
+          })
+          .catch((err: unknown) => {
+            const message = formatGoogleLoginError(err);
+            recordAuthStage('redirect-result-error', (err as { code?: string })?.code ?? message);
+            setError(message);
+          });
         unsubscribe = onAuthStateChanged(resolvedAuth, (u) => {
           setUser(u);
           setLoading(false);
           if (!u) setAccessToken(null);
         });
+      }).catch((err: unknown) => {
+        const message = formatGoogleLoginError(err);
+        recordAuthStage('auth-module-load-error', (err as { message?: string })?.message ?? message);
+        setError(message);
+        setLoading(false);
       });
     });
     return () => { if (unsubscribe) unsubscribe(); };
@@ -67,32 +138,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const resolvedAuth = await lazyFirebaseAuth();
     if (!resolvedAuth) {
       logger.error('Auth', 'Firebase auth is null — not initialized');
-      setError('Firebase가 초기화되지 않았습니다. 환경변수를 확인해주세요.');
+      const message = '로그인 설정을 찾지 못했습니다. .env.local의 공개 Firebase 설정을 확인해 주세요.';
+      recordAuthStage('missing-auth');
+      setError(message);
+      dispatchAuthToast(message, 'error', 8000);
       return;
     }
     logger.info('Auth', 'signInWithGoogle called');
     setError(null);
     try {
+      const startHref = typeof window !== 'undefined' ? window.location.href : '';
       const { signInWithPopup, signInWithRedirect, GoogleAuthProvider } = await import('firebase/auth');
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ 
-        prompt: 'select_account consent',
-        access_type: 'offline' 
-      });
-      provider.addScope('https://www.googleapis.com/auth/drive.file');
-      const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        await signInWithRedirect(resolvedAuth, provider);
-        return; 
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      if (shouldTryPopupFirst()) {
+        try {
+          recordAuthStage('popup-start');
+          dispatchAuthToast('Google 로그인 창을 여는 중입니다.', 'info', 2500);
+          const result = await signInWithPopup(resolvedAuth, provider);
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          setAccessToken(credential?.accessToken ?? null);
+          recordAuthStage('popup-result-ok');
+          dispatchAuthToast('Google 로그인 완료.', 'success', 3500);
+          return;
+        } catch (popupErr: unknown) {
+          if (!shouldFallbackToRedirect(popupErr)) throw popupErr;
+          recordAuthStage('popup-fallback-redirect', (popupErr as { code?: string })?.code);
+        }
       }
-      const result = await signInWithPopup(resolvedAuth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      setAccessToken(credential?.accessToken ?? null);
+
+      recordAuthStage('redirect-start');
+      dispatchAuthToast('Google 로그인 화면으로 이동 중입니다.', 'info', 2500);
+      if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
+        window.setTimeout(() => {
+          const stillOnSamePage = window.location.href === startHref;
+          if (!stillOnSamePage || resolvedAuth.currentUser) return;
+          const message = 'Google 로그인 화면이 열리지 않았습니다. 현재 앱 주소를 새로고침한 뒤 다시 눌러 주세요.';
+          recordAuthStage('redirect-no-navigation');
+          setError(message);
+          dispatchAuthToast(message, 'error', 9000);
+        }, 1800);
+      }
+      await signInWithRedirect(resolvedAuth, provider);
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? '';
       const msg = (err as { message?: string })?.message ?? '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
-      setError(`로그인 실패: ${code || msg}`);
+      const message = formatGoogleLoginError(err);
+      recordAuthStage('redirect-error', code || msg);
+      setError(message);
+      dispatchAuthToast(message, 'error', 9000);
       logger.error('Auth', 'signInWithGoogle error:', code, msg);
     }
   };

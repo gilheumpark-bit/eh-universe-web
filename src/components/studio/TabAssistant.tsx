@@ -11,7 +11,16 @@ import { createT, L4 } from '@/lib/i18n';
 import { streamChat, getApiKey, getActiveProvider, getActiveModel, hasDgxService } from '@/lib/ai-providers';
 import type { ChatMsg } from '@/lib/ai-providers';
 import { HISTORY_LIMITS, truncateMessages } from '@/lib/token-utils';
-import { applyMemoryPolicy, clearStoredSummary } from '@/lib/ai/chat-memory-policy';
+import {
+  applyMemoryPolicy,
+  buildProjectScopedMemoryKey,
+  clearStoredSummary,
+} from '@/lib/ai/chat-memory-policy';
+import {
+  buildNoaBehaviorDirective,
+  readNoaBehaviorPreferences,
+} from '@/lib/ai/noa-behavior-profile';
+import { getReasoningStageForTab } from '@/lib/ai-reasoning';
 import { classifyError } from './UXHelpers';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 // [N1-noa-identity — 2026-06-11] 단일 노아 화자 정본 — 탭 전문성은 역할 모드 슬롯으로 유지.
@@ -28,9 +37,10 @@ interface TabAssistantProps {
   language: AppLanguage;
   config: StoryConfig | null;
   hostedProviders?: Partial<Record<string, boolean>>;
+  currentProjectId?: string | null;
 }
 
-// TODO: Extract to lib/tab-assistant-prompts.ts
+// Refactor note: move prompt table to lib/tab-assistant-prompts.ts when edited next.
 const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; systemEn: string; temperature: number }> = {
   world: {
     ko: 'NOL — Narrative Origin Lore',
@@ -79,8 +89,8 @@ Evaluate settings on 5 axes:
 - Always include concrete examples`,
   },
   critique: {
-    ko: 'NOS — Narrative Origin Simulator',
-    en: 'NOS — Narrative Origin Simulator',
+    ko: 'NOS — Narrative Origin Systems',
+    en: 'NOS — Narrative Origin Systems',
     temperature: 0.5,
     systemKo: `${buildNoaSystemHeader('세계관 시뮬레이션 분석가')}
 
@@ -94,7 +104,7 @@ Evaluate settings on 5 axes:
 1. 세력 균형표: 각 문명의 강점/약점을 군사·경제·문화·기술 4축으로 평가
 2. 인과 체인: "A가 B를 하면 → C가 반응 → D가 변화" 식으로 연쇄 효과 추적
 3. 불안정 지점: 현재 균형이 깨질 수 있는 트리거 포인트 3개 이상 제시
-4. 장르 규칙 점검: 설정된 장르 규칙이 시뮬레이터 데이터와 일치하는지 확인
+4. 장르 규칙 점검: 설정된 장르 규칙이 세계관 점검 데이터와 일치하는지 확인
 
 [출력 규칙]
 - 수치/비율로 표현 가능한 건 수치로 제시
@@ -112,7 +122,7 @@ Evaluate settings on 5 axes:
 1. Power balance sheet: Rate each civilization on military, economy, culture, tech axes
 2. Causal chains: Track cascading effects "If A does B → C reacts → D changes"
 3. Instability points: Identify 3+ trigger points that could break current balance
-4. Genre rule check: Verify simulator data matches genre rules
+4. Genre rule check: Verify world-check data matches genre rules
 
 [Output Rules]
 - Use numbers/ratios when possible
@@ -163,7 +173,7 @@ Evaluate settings on 5 axes:
 - Simulate "In this situation, this character would..."
 - Describe both directions in relationship analysis`,
   },
-  rulebook: {
+  direction: {
     ko: 'NOP — Narrative Origin Producer',
     en: 'NOP — Narrative Origin Producer',
     temperature: 0.7,
@@ -224,7 +234,7 @@ Evaluate settings on 5 axes:
 2. 어휘 밀도 (1-10): 고유어/한자어/외래어 비율과 적절성
 3. 감각 밀도 (1-10): 오감 묘사의 분포와 강도
 4. 톤 일관성 (1-10): 서술자 목소리의 안정성
-5. 자연스러움 지수 (1-10): 기계적이거나 부자연스러운 연결어/표현 비율 (높을수록 좋음)
+5. 자연스러움 지수 (1-10): 딱딱하거나 부자연스러운 연결어/표현 비율 (높을수록 좋음)
 
 [출력 규칙]
 - 분석 시 반드시 5가지 지표 점수 제시
@@ -246,7 +256,7 @@ Evaluate text on 5 metrics:
 2. Vocabulary density (1-10): Native/literary/foreign word ratio
 3. Sensory density (1-10): Distribution and intensity of five-sense descriptions
 4. Tone consistency (1-10): Narrator voice stability
-5. AI-tone index (1-10): Ratio of unnatural AI connector words (lower is better)
+5. Mechanical-tone index (1-10): Ratio of unnatural connector words (lower is better)
 
 [Output Rules]
 - Always provide 5 metric scores in analysis
@@ -291,7 +301,7 @@ const TAB_PRESETS: Record<string, { ko: string; en: string; ja: string; zh: stri
     { ko: "시대 전환의 인과 체인을 분석해줘", en: "Analyze the cause-effect chain of the era transition", ja: "時代転換の因果連鎖を分析して", zh: "分析时代转换的因果链" },
     { ko: "약소 세력이 강대 세력을 이길 시나리오는?", en: "Scenario where a weak faction defeats a strong one?", ja: "弱小勢力が強大勢力を倒すシナリオは?", zh: "弱小势力击败强大势力的情节?" },
     { ko: "동맹이 깨질 수 있는 조건은?", en: "Under what conditions could the alliance break?", ja: "同盟が崩れる可能性のある条件は?", zh: "同盟可能破裂的条件?" },
-    { ko: "장르 규칙과 시뮬레이터 데이터가 일치하는지 확인", en: "Check if genre rules match simulator data", ja: "ジャンルルールとシミュレーターデータが一致するか確認", zh: "检查类型规则与模拟器数据是否一致" },
+    { ko: "장르 규칙과 세계관 점검 데이터가 일치하는지 확인", en: "Check if genre rules match world-check data", ja: "ジャンルルールと世界観点検データが一致するか確認", zh: "检查类型规则与世界观检查数据是否一致" },
     { ko: "100년 후 이 세계는 어떤 모습일까?", en: "What does this world look like 100 years later?", ja: "100年後、この世界はどうなっているだろう?", zh: "百年之后这个世界将是何模样?" },
   ],
   characters: [
@@ -306,7 +316,7 @@ const TAB_PRESETS: Record<string, { ko: string; en: string; ja: string; zh: stri
     { ko: "빌런/적대자의 동기를 더 입체적으로 만들어줘", en: "Make the villain/antagonist's motivation more dimensional", ja: "悪役/敵対者の動機をより立体的にして", zh: "让反派/对手的动机更具立体感" },
     { ko: "새 조연 캐릭터를 제안해줘", en: "Suggest a new supporting character", ja: "新しい脇役キャラを提案して", zh: "建议一个新的配角" },
   ],
-  rulebook: [
+  direction: [
     { ko: "현재 장면의 텐션 스코어를 평가해줘", en: "Evaluate the tension score of the current scene", ja: "現在のシーンのテンションスコアを評価して", zh: "评估当前场景的紧张度评分" },
     { ko: "오프닝 후크를 강화할 방법은?", en: "How can I strengthen the opening hook?", ja: "オープニングフックを強化する方法は?", zh: "如何强化开场钩子?" },
     { ko: "고구마-사이다 밸런스를 분석해줘", en: "Analyze the frustration-relief balance", ja: "もやもや感とスカッと感のバランスを分析して", zh: "分析郁闷感与爽快感的平衡" },
@@ -418,7 +428,7 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
       }
       break;
 
-    case 'rulebook':
+    case 'direction':
       if (config.synopsis) parts.push(`시놉시스: ${config.synopsis.slice(0, 200)}`);
       if (config.episode) parts.push(`현재 에피소드: ${config.episode}/${config.totalEpisodes}`);
       if (config.sceneDirection) {
@@ -471,34 +481,55 @@ function buildContextSummary(config: StoryConfig | null, tab: AppTab): string {
 
 const STORAGE_PREFIX = 'noa_tab_chat_';
 
-const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, hostedProviders = {} }) => {
+const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, hostedProviders = {}, currentProjectId = null }) => {
   const ctx = TAB_CONTEXT[tab];
   const lk: 'ko' | 'en' = (language === 'KO' || language === 'JP') ? 'ko' : 'en';
   const tl = createT(language);
   const backendLabel = useStudioBackendLabel(language, hostedProviders);
+  const scopedTab = buildProjectScopedMemoryKey(tab, currentProjectId);
+  const storageKey = `${STORAGE_PREFIX}${scopedTab}`;
 
   // Check AI access: local key OR hosted provider
-  // TODO: Ctrl+/ keyboard shortcut would be useful to toggle this assistant panel open/closed
+  // UX backlog: Ctrl+/ keyboard shortcut would be useful to toggle this assistant panel open/closed.
   const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()] || hasDgxService());
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
-      const stored = localStorage.getItem(`${STORAGE_PREFIX}${tab}`);
+      const stored = localStorage.getItem(storageKey);
       return stored ? JSON.parse(stored) : [];
     } catch { return []; }
   });
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
+  const [behaviorPreferences] = useState(() => readNoaBehaviorPreferences());
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const skipPersistRef = useRef(false);
+
+  // 프로젝트 전환 시 화면 메시지도 해당 프로젝트 저장분으로 교체한다.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      skipPersistRef.current = true;
+      setMessages(stored ? JSON.parse(stored) : []);
+    } catch {
+      skipPersistRef.current = true;
+      setMessages([]);
+    }
+  }, [storageKey]);
 
   // Persist messages
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(`${STORAGE_PREFIX}${tab}`, JSON.stringify(messages.slice(-HISTORY_LIMITS.STORAGE)));
-  }, [messages, tab]);
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false;
+      return;
+    }
+    localStorage.setItem(storageKey, JSON.stringify(messages.slice(-HISTORY_LIMITS.STORAGE)));
+  }, [messages, storageKey]);
 
   // Auto-scroll
   useEffect(() => {
@@ -528,14 +559,28 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
     abortRef.current = controller;
 
     // [N3-memory-hybrid] slice(-HISTORY_LIMITS.CHAT_API) → 탭 차등 정책 모듈 경유.
-    // heavy(world·rulebook·writing)=full+요약 / light(기타)=최근 20+이전 구간 요약 1블록.
+    // heavy(world·direction·writing)=full+요약 / light(기타)=최근 20+이전 구간 요약 1블록.
     // 요약 블록은 system에 부착 — 아래 truncateMessages(최후 안전망)는 messages만 자르므로 충돌 X.
     const memory = applyMemoryPolicy(
-      tab,
+      scopedTab,
       messages.map(m => ({ role: m.role, content: m.content })),
       language,
     );
-    const systemPrompt = (lk === 'ko' ? ctx.systemKo : ctx.systemEn) + buildContextSummary(config, tab) + memory.summaryBlock;
+    const behaviorDirective = buildNoaBehaviorDirective({
+      language,
+      responseStyle: behaviorPreferences.responseStyle,
+      proposalMode: behaviorPreferences.proposalMode,
+      conversationLevel: behaviorPreferences.conversationLevel,
+      projectId: currentProjectId,
+      tabKey: tab,
+      hasProjectBasis: Boolean(config),
+    });
+    const systemPrompt = [
+      lk === 'ko' ? ctx.systemKo : ctx.systemEn,
+      behaviorDirective,
+      buildContextSummary(config, tab),
+      memory.summaryBlock,
+    ].filter(Boolean).join('\n\n');
     const recentMsgs: ChatMsg[] = [...memory.messages];
     const model = getActiveModel();
     const { messages: trimmedHistory } = truncateMessages(systemPrompt, recentMsgs, model);
@@ -547,6 +592,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
         systemInstruction: systemPrompt,
         messages: chatHistory,
         temperature: ctx.temperature,
+        reasoningStage: getReasoningStageForTab(tab),
         signal: controller.signal,
         isChatMode: true,
         onChunk: (chunk) => {
@@ -568,7 +614,21 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [input, isStreaming, messages, config, tab, language, lk, ctx, tl, hasAiKey]);
+  }, [
+    input,
+    isStreaming,
+    messages,
+    config,
+    tab,
+    scopedTab,
+    language,
+    lk,
+    ctx,
+    tl,
+    hasAiKey,
+    behaviorPreferences,
+    currentProjectId,
+  ]);
 
   const handleCancel = () => {
     abortRef.current?.abort();
@@ -577,9 +637,9 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
 
   const clearChat = () => {
     setMessages([]);
-    localStorage.removeItem(`${STORAGE_PREFIX}${tab}`);
+    localStorage.removeItem(storageKey);
     // [N3-memory-hybrid] 이전 대화 요약도 함께 삭제 — 새 대화 누수 방지
-    clearStoredSummary(tab);
+    clearStoredSummary(scopedTab);
   };
 
   if (!ctx) return null;

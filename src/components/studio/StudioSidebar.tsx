@@ -7,29 +7,18 @@
 import { showAlert } from '@/lib/show-alert';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Zap, Plus, Globe, UserCircle, FileText, PenTool, Edit3, History,
-  Download, Upload, Cloud, Settings, X, BookOpen, Hash,
+  X, BookOpen, Hash,
 } from 'lucide-react';
 import { AppLanguage, AppTab, Project, ChatSession } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
-import { getStorageUsageBytes } from '@/lib/project-migration';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
+import StudioSidebarFooter, { type StudioSidebarConfirmOpts } from './StudioSidebarFooter';
 
-const PROJECT_EXPORT_FIVE: ProjectManuscriptFormat[] = ['txt', 'md', 'json', 'html', 'csv'];
+type ConfirmOpts = StudioSidebarConfirmOpts;
 
-type ConfirmOpts = {
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: 'danger' | 'warning' | 'info';
-  onConfirm: () => void;
-};
-
-// TODO: Extract into context providers for future refactor:
+// Refactor note: extract into context providers when this surface is split:
 // - UIState (isSidebarOpen, setIsSidebarOpen, focusMode)
 // - ProjectState (projects, currentProjectId, setCurrentProjectId, currentProject, createNewProject, renameProject, deleteProject)
 // - SessionState (sessions, currentSessionId, setCurrentSessionId, createNewSession, onReorderSessions)
@@ -82,6 +71,15 @@ interface StudioSidebarProps {
   onReorderSessions?: (fromIndex: number, toIndex: number) => void;
 }
 
+function latestProjectSessionId(project: Project | null | undefined): string | null {
+  if (!project?.sessions.length) return null;
+  let latest = project.sessions[0];
+  for (const session of project.sessions) {
+    if ((session.lastUpdate || 0) > (latest.lastUpdate || 0)) latest = session;
+  }
+  return latest.id;
+}
+
 // IDENTITY_SEAL: PART-0 | role=imports and types | inputs=none | outputs=StudioSidebarProps
 
 // ============================================================
@@ -130,12 +128,10 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
   closeConfirm,
   onReorderSessions,
 }) => {
-  const flags = useFeatureFlags();
   const t = createT(language);
   const [showSessionList, setShowSessionList] = useState(false);
   const [jumpValue, setJumpValue] = useState('');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const textFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
   const [lastClickedIdx, setLastClickedIdx] = useState<number | null>(null);
@@ -150,31 +146,19 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
 
   const projectManuscriptExportEnabled = (currentProject?.sessions?.length ?? 0) > 0;
 
-  const exportButtonClass =
-    'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-[transform,border-color,color,opacity] hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
-  const languageButtonClass =
-    'rounded-full border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-[background-color,border-color,color]';
   const lastSyncLabel = lastSyncTime
     ? new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
-  const canUseGoogleAuth = hydrated && authConfigured;
-  const storageUsageBytes = hydrated ? getStorageUsageBytes() : 0;
-  const storageUsageMb = storageUsageBytes / 1024 / 1024;
-  const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(null);
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.storage?.estimate) {
-      navigator.storage.estimate().then((est) => {
-        if (est.usage != null && est.quota != null) setStorageEstimate({ usage: est.usage, quota: est.quota });
-      });
-    }
-  }, []);
-  const quotaMb = storageEstimate ? storageEstimate.quota / 1024 / 1024 : 5;
-  const usageMb = storageEstimate ? storageEstimate.usage / 1024 / 1024 : storageUsageMb;
-  const storageUsagePct = Math.min(100, (usageMb / quotaMb) * 100);
-  const storageUsageColor = storageUsagePct > 80 ? 'bg-accent-red' : storageUsagePct > 50 ? 'bg-accent-amber' : 'bg-green-500';
 
   // Sessions in chronological order (ep #1 = first created)
   const orderedSessions = [...sessions].sort((a, b) => a.lastUpdate - b.lastUpdate);
+
+  function selectProject(projectId: string) {
+    const nextProjectId = projectId || null;
+    const nextProject = projects.find(project => project.id === nextProjectId) ?? null;
+    setCurrentProjectId(nextProjectId);
+    setCurrentSessionId(latestProjectSessionId(nextProject));
+  }
 
   function handleEpisodeJump() {
     const idx = parseInt(jumpValue, 10) - 1;
@@ -219,7 +203,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                     로어가드 스튜디오
                   </h1>
                   <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-text-tertiary">
-                    Loreguard · EH
+                    {language === 'KO' ? '로어가드' : 'Loreguard'}
                   </span>
                 </div>
               </Link>
@@ -254,7 +238,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                   <div className="flex items-center gap-2">
                     <select
                       value={currentProjectId || ''}
-                      onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
+                      onChange={e => selectProject(e.target.value)}
                       className="min-w-0 flex-1 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[12px] font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors hover:border-[rgba(202,161,92,0.2)]"
                     >
                       {projects.map(p => (
@@ -275,7 +259,18 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
                       <button
                         onClick={() => {
                           const name = window.prompt(t('project.renameProject'), currentProject.name);
-                          if (name) renameProject(currentProject.id, name);
+                          if (name === null) return;
+                          const cleanedName = name.replace(/\s+/g, ' ').trim();
+                          if (!cleanedName) {
+                            showAlert(L4(language, {
+                              ko: '작품명을 입력해 주세요.',
+                              en: 'Enter a work name.',
+                              ja: '作品名を入力してください。',
+                              zh: '请输入作品名。',
+                            }));
+                            return;
+                          }
+                          renameProject(currentProject.id, cleanedName);
                         }}
                         className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-text-secondary transition-[border-color,color] hover:border-[rgba(92,143,214,0.28)] hover:text-text-primary"
                       >
@@ -357,7 +352,7 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
               {([
                 { tab: 'world' as AppTab, icon: Globe, label: t('sidebar.worldStudio'), guided: true, color: 'amber', primary: true },
                 { tab: 'characters' as AppTab, icon: UserCircle, label: t('sidebar.characterStudio'), guided: true, color: 'purple', primary: true },
-                { tab: 'rulebook' as AppTab, icon: FileText, label: t('sidebar.rulebook'), guided: true, color: 'blue', primary: true },
+                { tab: 'direction' as AppTab, icon: FileText, label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }), guided: true, color: 'blue', primary: true },
                 { tab: 'writing' as AppTab, icon: PenTool, label: t('sidebar.writingMode'), guided: false, color: 'green', primary: true },
                 { tab: 'style' as AppTab, icon: Edit3, label: t('sidebar.styleStudio'), guided: false, color: 'amber', primary: false },
                 { tab: 'manuscript' as AppTab, icon: FileText, label: t('ui.manuscript'), guided: false, color: 'purple', primary: false },
@@ -695,215 +690,34 @@ const StudioSidebar: React.FC<StudioSidebarProps> = ({
             )}
           </div>
 
-          {/* IDENTITY_SEAL: PART-2 | role=nav (mode toggle, tabs, episode jump) | inputs=studioMode,sessions,activeTab | outputs=tab navigation, session jump */}
-
-          {/* ============================================================
-              PART 3 — FOOTER: exports, auth, sync, language, settings
-              ============================================================ */}
-          <div className="border-t border-white/8 px-4 py-2 space-y-2">
-            {/* Auth + Sync — GOOGLE_DRIVE_BACKUP 플래그 */}
-            {flags.GOOGLE_DRIVE_BACKUP && (
-            <div className="rounded-xl border border-white/8 bg-black/20 p-3">
-              {user ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(92,143,214,0.24)] bg-[rgba(92,143,214,0.12)] text-sm font-semibold text-accent-blue shrink-0">
-                    {user.photoURL ? (
-                      <Image src={user.photoURL} alt="" width={44} height={44} className="h-full w-full object-cover" />
-                    ) : (
-                      user.displayName?.[0] || '?'
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="site-kicker text-[0.56rem]">Google Drive</div>
-                    <div className="truncate text-sm font-medium text-text-primary">{user.displayName || user.email}</div>
-                  </div>
-                  <button
-                    onClick={() =>
-                      showConfirm({
-                        title: t('confirm.logout'),
-                        message: t('confirm.logoutMsg'),
-                        variant: 'warning',
-                        onConfirm: () => { closeConfirm(); signOut(); },
-                      })
-                    }
-                    className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary transition-[border-color,color] hover:border-accent-red/30 hover:text-accent-red shrink-0"
-                  >
-                    {t('confirm.logout')}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    if (!canUseGoogleAuth) {
-                      showAlert(t('confirm.firebaseRequired'));
-                      return;
-                    }
-                    signInWithGoogle();
-                  }}
-                  aria-disabled={!canUseGoogleAuth}
-                  className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-[transform,border-color,color,opacity] ${canUseGoogleAuth ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary' : 'cursor-not-allowed opacity-35'}`}
-                >
-                  <Cloud className="h-4 w-4" /> {t('auth.googleLogin')}
-                </button>
-              )}
-
-              {user && (
-                <>
-                  <button
-                    onClick={handleSync}
-                    disabled={syncStatus === 'syncing'}
-                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] transition-[transform,background-color,border-color,color] ${
-                      syncStatus === 'syncing'
-                        ? 'animate-pulse border-[rgba(92,143,214,0.28)] bg-[rgba(92,143,214,0.12)] text-accent-blue'
-                        : syncStatus === 'done'
-                        ? 'border-[rgba(92,214,143,0.28)] bg-[rgba(92,214,143,0.08)] text-green-400'
-                        : syncStatus === 'error'
-                        ? 'border-accent-red/30 bg-accent-red/8 text-accent-red'
-                        : 'border-white/8 bg-white/4 text-text-secondary hover:-translate-y-0.5 hover:border-[rgba(92,143,214,0.26)] hover:text-text-primary'
-                    }`}
-                  >
-                    {syncStatus === 'syncing'
-                      ? t('sync.syncing')
-                      : syncStatus === 'done'
-                      ? t('sync.syncDone')
-                      : syncStatus === 'error'
-                      ? t('sync.syncError')
-                      : t('sync.syncNow')}
-                  </button>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-text-tertiary">
-                    <span>{lastSyncLabel ? `Last sync ${lastSyncLabel}` : 'Not synced yet'}</span>
-                    <span
-                      className={
-                        syncStatus === 'error'
-                          ? 'text-accent-red'
-                          : syncStatus === 'done'
-                          ? 'text-accent-green'
-                          : ''
-                      }
-                    >
-                      {syncStatus.toUpperCase()}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-            )}
-
-            <details className="group">
-              <summary className="flex items-center justify-between cursor-pointer py-1.5 select-none">
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">
-                  {language === 'KO' ? '내보내기' : 'Export'}
-                </span>
-                <span className="text-[9px] text-text-tertiary group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-            <div className="space-y-2 pt-2">
-            {exportProjectManuscripts && (
-              <div className="rounded-xl border border-[rgba(202,161,92,0.22)] bg-[rgba(202,161,92,0.06)] p-2.5 space-y-2">
-                <div className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-primary">
-                  {language === 'KO' ? '보내기 · 대표 5형식 (전 회차 원고)' : 'Export · 5 formats (all episodes)'}
-                </div>
-                <p className="text-[9px] text-text-tertiary leading-snug">
-                  {language === 'KO'
-                    ? '번역 스튜디오와 같이 TXT·MD·JSON·HTML·CSV로 프로젝트 전체 회차를 한 파일로 받습니다.'
-                    : 'Same five formats as Translator Studio: one file for all episodes in this project.'}
-                </p>
-                <div className="grid grid-cols-5 gap-1">
-                  {PROJECT_EXPORT_FIVE.map((fmt) => (
-                    <button
-                      key={fmt}
-                      type="button"
-                      disabled={!projectManuscriptExportEnabled}
-                      onClick={() => exportProjectManuscripts(fmt)}
-                      className="rounded-lg border border-white/12 bg-black/35 py-2 text-[8px] font-black uppercase tracking-wide text-text-secondary transition-colors hover:border-[rgba(202,161,92,0.35)] hover:bg-[rgba(202,161,92,0.12)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-30"
-                      title={fmt.toUpperCase()}
-                    >
-                      {fmt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {/* Export buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={exportTXT} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> TXT
-              </button>
-              <button onClick={exportJSON} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> JSON
-              </button>
-              <button onClick={handleExportEPUB} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> EPUB
-              </button>
-              <button onClick={handleExportDOCX} disabled={!currentSessionId} className={exportButtonClass}>
-                <Download className="h-3.5 w-3.5" /> DOCX
-              </button>
-              <button onClick={exportAllJSON} className={exportButtonClass} title={language === 'KO' ? '전체 백업 (JSON)' : 'Full backup (JSON)'}>
-                <Download className="h-3.5 w-3.5" /> Backup
-              </button>
-              <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? 'JSON 가져오기' : 'Import JSON'}>
-                <Upload className="h-3.5 w-3.5" /> JSON / 백업
-              </button>
-              <button onClick={() => textFileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '소설 텍스트 가져오기' : 'Import text novel files'}>
-                <Upload className="h-3.5 w-3.5" /> 텍스트 소설
-              </button>
-              {exportProjectJSON && (
-                <button onClick={exportProjectJSON} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '프로젝트 설정 내보내기' : 'Export project config'}>
-                  <Download className="h-3.5 w-3.5" /> Config
-                </button>
-              )}
-              
-              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
-              <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />
-            </div>
-
-            </div>{/* end space-y-2 */}
-            </details>
-
-            {/* Language + Settings */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
-                {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
-                  <button
-                    key={l}
-                    onClick={() => setLanguage(l)}
-                    className={`${languageButtonClass} ${
-                      language === l
-                        ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-text-primary'
-                        : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
-                    }`}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                data-testid="tab-settings"
-                onClick={() => handleTabChange('settings')}
-                className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-[background-color,border-color,color] ${
-                  activeTab === 'settings'
-                    ? 'border-[rgba(202,161,92,0.3)] bg-[rgba(202,161,92,0.14)] text-text-primary'
-                    : 'border-white/8 bg-white/4 text-text-tertiary hover:border-white/12 hover:text-text-primary'
-                }`}
-                title={t('sidebar.settings')}
-              >
-                <Settings className="h-4.5 w-4.5" />
-              </button>
-            </div>
-
-            {/* Storage usage bar */}
-            <div className="mt-2">
-              <div className="mb-1 flex justify-between text-[9px] font-mono text-text-tertiary">
-                <span>{usageMb < 1024 ? `${usageMb.toFixed(1)} MB` : `${(usageMb / 1024).toFixed(1)} GB`} / {quotaMb < 1024 ? `${quotaMb.toFixed(0)} MB` : `${(quotaMb / 1024).toFixed(1)} GB`}</span>
-                {storageUsagePct > 60 && <span className="text-accent-amber">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
-              </div>
-              <div className="h-1 overflow-hidden rounded-full bg-white/8">
-                <div className={`h-full ${storageUsageColor} rounded-full transition-[width,background-color]`} style={{ width: `${storageUsagePct}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* IDENTITY_SEAL: PART-3 | role=footer (exports, auth, sync, language, settings) | inputs=user,syncStatus,language | outputs=UI actions */}
+          <StudioSidebarFooter
+            activeTab={activeTab}
+            authConfigured={authConfigured}
+            closeConfirm={closeConfirm}
+            currentSessionId={currentSessionId}
+            exportAllJSON={exportAllJSON}
+            exportJSON={exportJSON}
+            exportProjectJSON={exportProjectJSON}
+            exportProjectManuscripts={exportProjectManuscripts}
+            exportTXT={exportTXT}
+            fileInputRef={fileInputRef}
+            handleExportDOCX={handleExportDOCX}
+            handleExportEPUB={handleExportEPUB}
+            handleImportJSON={handleImportJSON}
+            handleImportTextFiles={handleImportTextFiles}
+            handleSync={handleSync}
+            handleTabChange={handleTabChange}
+            hydrated={hydrated}
+            language={language}
+            lastSyncLabel={lastSyncLabel}
+            projectManuscriptExportEnabled={projectManuscriptExportEnabled}
+            setLanguage={setLanguage}
+            showConfirm={showConfirm}
+            signInWithGoogle={signInWithGoogle}
+            signOut={signOut}
+            syncStatus={syncStatus}
+            user={user}
+          />
         </div>
       </div>
     </aside>

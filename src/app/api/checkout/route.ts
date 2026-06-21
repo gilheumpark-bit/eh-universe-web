@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeSession } from '@/lib/stripe';
 import { logger } from '@/lib/logger';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+import { resolveCheckoutPriceId } from '@/lib/billing/loreguard-plans';
 
 /**
  * Stripe Checkout for subscription (optional). Requires STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PRICE_ID in env.
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   // --- Rate limiting (10/min per IP) ---
   const ip = getClientIp(req.headers);
-  const rl = checkRateLimit(ip, '/api/checkout', RATE_LIMITS.imageGen);
+  const rl = await checkRateLimitAsync(ip, '/api/checkout', RATE_LIMITS.imageGen);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Rate limited' },
@@ -43,22 +44,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  // [H1 stripe-ready] tier별 서버 price env 우선 (STRIPE_PRICE_ID_INDIE / STRIPE_PRICE_ID_PRO),
-  // 단일 NEXT_PUBLIC_STRIPE_PRICE_ID 는 하위 호환 fallback. env 주입만으로 활성.
-  let body: { returnUrl?: unknown; tier?: unknown } = {};
+  // [H1 stripe-ready] plan별 서버 price env 우선, 단일 NEXT_PUBLIC_STRIPE_PRICE_ID 는 하위 호환 fallback.
+  let body: { returnUrl?: unknown; tier?: unknown; planId?: unknown } = {};
   try {
     body = await req.json();
   } catch {
     // 빈 body 허용 — fallback price 사용
   }
-  const tier = body.tier === 'pro' ? 'pro' : body.tier === 'indie' ? 'indie' : null;
-  const tierPriceId =
-    tier === 'pro'
-      ? process.env.STRIPE_PRICE_ID_PRO
-      : tier === 'indie'
-        ? process.env.STRIPE_PRICE_ID_INDIE
-        : undefined;
-  const priceId = tierPriceId?.trim() || process.env.NEXT_PUBLIC_STRIPE_PRICE_ID?.trim() || '';
+  const priceResolution = resolveCheckoutPriceId(body.planId ?? body.tier, process.env);
+  if (priceResolution.planId && !priceResolution.checkoutEligible) {
+    return NextResponse.json({ error: 'checkout_plan_not_supported' }, { status: 400 });
+  }
+  const priceId = priceResolution.priceId;
   if (!priceId) {
     return NextResponse.json({ error: 'Stripe 가격 ID가 설정되지 않았습니다.' }, { status: 501 });
   }
@@ -66,8 +63,14 @@ export async function POST(req: NextRequest) {
   try {
     // returnUrl을 sanitizeStripeReturnBase로 검증 — 오픈 리다이렉트 방지
     const rawReturnUrl = typeof body.returnUrl === 'string' ? body.returnUrl : undefined;
-    // [revenue path] 인증된 auth.uid 를 결제 세션에 심어 webhook 이 결제 후 stripeRole claim 부여.
-    const session = await getStripeSession(priceId, undefined, rawReturnUrl, auth.uid);
+    // [revenue path] 로그인된 auth.uid 를 결제 세션에 심어 webhook 이 결제 후 stripeRole claim 부여.
+    const session = await getStripeSession(
+      priceId,
+      undefined,
+      rawReturnUrl,
+      auth.uid,
+      priceResolution.planId,
+    );
     if (!session.url) {
       return NextResponse.json({ error: 'Checkout 세션을 만들 수 없습니다.' }, { status: 500 });
     }

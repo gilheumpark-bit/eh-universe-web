@@ -32,7 +32,7 @@
 export type CreativeOriginType =
   /** 작가 직접 작성한 초안 (AI 개입 0) */
   | 'HUMAN_DRAFT'
-  /** 작가 직접 수정·개작 (이미 존재하는 텍스트의 인간 개입) */
+  /** 작가 직접 수정·개작 (이미 존재하는 텍스트에 대한 작가 개입) */
   | 'HUMAN_REVISION'
   /** AI 제안 → 작가 채택 (수정 없이 그대로) */
   | 'AI_SUGGESTION'
@@ -226,7 +226,7 @@ export interface SourceRecord {
 /** 확인서 공개 보기 (Track-D 격리전략 §3.1.5 + 4차 정리 §3) */
 export type CertificateView =
   | 'public' // 누구나 — 생성 시각·해시·AI Assist 여부·타임라인 요약
-  | 'publisher' // 출판사·플랫폼 — 세계관 기준선·AI/인간 흐름·외부 편입
+  | 'publisher' // 출판사·플랫폼 — 세계관 기준선·노아/작가 흐름·외부 편입
   | 'legal' // 분쟁 대응 — 해시·diff·승인 로그·외부 가져오기
   | 'private'; // 작가 본인 — 전체 (폐기 아이디어·미공개 플롯 포함)
 
@@ -384,7 +384,7 @@ export interface ProcessCertificate {
 
   /** Witness Seal 일련번호 (LG-{YY}{MM}-{serial}-{hash4}) — 시각 봉인용. */
   sealNumber?: string;
-  /** HCI (Human Control Index) 결과 — 0~100 단일 숫자 + 3축 분석. */
+  /** HCI (Author Control Index) 결과 — 0~100 단일 숫자 + 3축 분석. */
   hciPayload?: HCIPayload;
   /** ATTESTATION OF GENESIS 텍스트 (4언어 중 발급 언어). */
   attestationStatement?: string;
@@ -404,7 +404,7 @@ export interface ProcessCertificate {
    * [D2-github-mirror — additive·optional] 확인서 GitHub 미러 commit SHA.
    * 발급 직후 cp-certs/{certId}.json 커밋 성공 시 보존 — commit 시각이
    * 제3자(GitHub) 타임스탬프 앵커가 된다.
-   * 정직 표기: 인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
+   * 정직 표기: 작성자가 직접 썼는지 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
    * 미러 파일 본문에는 본 필드 부재 (그 커밋이 파일 생성 자체 — 자기참조 불가).
    * undefined = 미러 옵트인 안 함 / 미러 실패 (발급 자체는 유효).
    */
@@ -425,7 +425,7 @@ export interface HCIPayload {
 }
 
 export interface OriginSummaryPayload {
-  /** 인간 입력 % (HUMAN_DRAFT + EXTERNAL_IMPORT + TEMPLATE_SEED + COLLABORATOR) */
+  /** 작가 입력 % (HUMAN_DRAFT + EXTERNAL_IMPORT + TEMPLATE_SEED + COLLABORATOR) */
   human_input: number;
   /** 정제 작업 % (HUMAN_REVISION + AI_REWRITE) */
   refinement: number;

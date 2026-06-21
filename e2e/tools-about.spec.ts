@@ -1,17 +1,12 @@
 /**
- * Smoke: /tools index, About anchors (Settings footer targets).
+ * Smoke: current support pages and retired /tools guard.
  */
 import { test, expect } from "@playwright/test";
 
-test.describe("Tools index & About anchors", () => {
-  test("/tools returns 200 and lists tool links", async ({ page }) => {
+test.describe("Support pages & retired tools guard", () => {
+  test("/tools stays retired", async ({ page }) => {
     const res = await page.goto("/tools");
-    expect(res?.ok()).toBeTruthy();
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15000 });
-    // Header also links to tools; scope to <main> for the tools index grid only.
-    const main = page.locator("main");
-    await expect(main.locator('a[href="/tools/galaxy-map"]')).toBeVisible({ timeout: 15000 });
-    await expect(main.locator('a[href="/tools/vessel"]')).toBeVisible({ timeout: 15000 });
+    expect(res?.status()).toBe(404);
   });
 
   test("/about exposes privacy and license sections", async ({ page }) => {
@@ -20,4 +15,13 @@ test.describe("Tools index & About anchors", () => {
     await expect(main.locator("#privacy").first()).toBeVisible({ timeout: 15000 });
     await expect(main.locator("#license").first()).toBeVisible();
   });
+
+  for (const path of ["/docs", "/privacy", "/terms"] as const) {
+    test(`GET ${path} renders current support surface`, async ({ page }) => {
+      const res = await page.goto(path, { waitUntil: "domcontentloaded", timeout: 45_000 });
+      expect(res, `no response for ${path}`).toBeTruthy();
+      expect(res!.status(), `${path} status`).toBeLessThan(400);
+      await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
+    });
+  }
 });

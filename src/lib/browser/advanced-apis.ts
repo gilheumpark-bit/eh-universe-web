@@ -185,9 +185,7 @@ export function addSpeculationRules(urls: string[]): void {
 export function preloadStudioRoutes(): void {
   addSpeculationRules([
     '/studio',
-    '/code-studio',
     '/translation-studio',
-    // '/archive' 제거 (2026-06-10) — 라우트 미구현·404 프리페치 방지
   ]);
 }
 

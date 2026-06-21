@@ -62,7 +62,7 @@ export function runWorldViolationAxis(
     };
   }
 
-  // 룰북 영역 5개에서 prohibition 추출
+  // 연출 기준 영역 5개에서 prohibition 추출
   const ruleFields: Array<[string, string | undefined]> = [
     ['magic', config.magicTechSystem],
     ['law', config.lawOrder],

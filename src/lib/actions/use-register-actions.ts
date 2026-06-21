@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react';
 import type { CmdItem, UseCmdPaletteResult } from '@/hooks/useCmdPalette';
 import type { AgentLanguage } from '@/lib/ai/writing-agent-registry';
+import { logger } from '@/lib/logger';
 import {
   getActionDef,
   resolveLabel,
@@ -49,7 +50,7 @@ export interface UseRegisterActionsOptions {
  *   수리: 효과 의존성을 bindings reference 가 아니라 *내용 서명* (정렬된 id 집합 + lang +
  *         enabled) 으로 교체. action 클로저는 bindingsRef 를 통해 최신값 호출 →
  *         id 집합이 그대로면 재등록 0, 호출자 안정성과 무관하게 루프 불가.
- *   미정의 ID → dev/test throw (마운트 시 노출), prod 는 console.error 후 skip.
+ *   미정의 ID → dev/test throw (마운트 시 노출), prod 는 logger.error 후 skip.
  */
 export function useRegisterActions(opts: UseRegisterActionsOptions): void {
   const { palette, bindings, lang = 'ko', enabled = true } = opts;
@@ -88,8 +89,7 @@ export function useRegisterActions(opts: UseRegisterActionsOptions): void {
       });
     } catch (err) {
       const isProd = process.env.NODE_ENV === 'production';
-      // eslint-disable-next-line no-console
-      console.error('[useRegisterActions] action id 누락 또는 registry 부정합:', err);
+      logger.error('useRegisterActions', 'action id 누락 또는 registry 부정합', err);
       if (!isProd) throw err; // dev/test: 마운트 시 즉시 노출.
       return; // production: palette 비워둠 (사용자 차단 회피).
     }

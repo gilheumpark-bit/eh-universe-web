@@ -1,6 +1,22 @@
 import { JWT } from "google-auth-library";
 import { logger } from "@/lib/logger";
 
+export type FirestoreFieldValue =
+  | { stringValue: string }
+  | { integerValue: string }
+  | { timestampValue: string }
+  | { booleanValue: boolean }
+  | { nullValue: "NULL_VALUE" }
+  | { mapValue: { fields?: Record<string, FirestoreFieldValue> } }
+  | { arrayValue: { values?: FirestoreFieldValue[] } };
+
+export interface FirestoreDocumentWithMeta {
+  fields: Record<string, unknown>;
+  name?: string;
+  createTime?: string;
+  updateTime?: string;
+}
+
 function parseServiceAccount(): { client_email: string; private_key: string } | null {
   const raw = process.env.VERTEX_AI_CREDENTIALS?.trim();
   if (!raw) return null;
@@ -32,11 +48,11 @@ async function getAccessToken(): Promise<string | null> {
  * 기타 HTTP/네트워크 오류 → http_xxx / fetch_failed. throw 없음.
  * 호출자(예: stripeRole desync grace 읽기)는 실패를 침묵 폴백 신호로 사용한다.
  */
-export async function firestoreGetDocument(
+export async function firestoreGetDocumentWithMeta(
   projectId: string,
   documentPath: string,
   options?: { timeoutMs?: number },
-): Promise<{ ok: true; fields: Record<string, unknown> } | { ok: false; error: string }> {
+): Promise<{ ok: true } & FirestoreDocumentWithMeta | { ok: false; error: string }> {
   const token = await getAccessToken();
   if (!token) return { ok: false, error: "no_service_account" };
 
@@ -52,14 +68,30 @@ export async function firestoreGetDocument(
       logger.warn("firestore-service-rest/get", { status: res.status, detail: text.slice(0, 200) });
       return { ok: false, error: `http_${res.status}` };
     }
-    const data = (await res.json()) as { fields?: Record<string, unknown> };
-    return { ok: true, fields: data.fields ?? {} };
+    const data = (await res.json()) as FirestoreDocumentWithMeta;
+    return {
+      ok: true,
+      name: data.name,
+      fields: data.fields ?? {},
+      createTime: data.createTime,
+      updateTime: data.updateTime,
+    };
   } catch (err) {
     const name = (err as { name?: string } | null)?.name ?? "";
     const error = name === "AbortError" || name === "TimeoutError" ? "timeout" : "fetch_failed";
     logger.warn("firestore-service-rest/get", { err: name || String(err), error });
     return { ok: false, error };
   }
+}
+
+export async function firestoreGetDocument(
+  projectId: string,
+  documentPath: string,
+  options?: { timeoutMs?: number },
+): Promise<{ ok: true; fields: Record<string, unknown> } | { ok: false; error: string }> {
+  const doc = await firestoreGetDocumentWithMeta(projectId, documentPath, options);
+  if (!doc.ok) return doc;
+  return { ok: true, fields: doc.fields };
 }
 
 /** Firestore REST v1 — list documents (GET). */
@@ -96,7 +128,7 @@ export async function firestoreListDocuments(
 export async function firestoreCreateDocument(
   projectId: string,
   collectionId: string,
-  fields: Record<string, { stringValue?: string; integerValue?: string; timestampValue?: string }>,
+  fields: Record<string, FirestoreFieldValue>,
   options?: { documentId?: string },
 ): Promise<{ ok: true; name?: string } | { ok: false; error: string }> {
   const token = await getAccessToken();
@@ -120,4 +152,58 @@ export async function firestoreCreateDocument(
   }
   const data = (await res.json()) as { name?: string };
   return { ok: true, name: data.name };
+}
+
+/**
+ * Firestore REST v1 — patch a document with an optional updateTime precondition.
+ *
+ * `currentUpdateTime`을 넘기면 같은 원장을 동시에 읽은 두 요청 중 늦게 온 저장은
+ * precondition 실패로 막힌다. 출고 크레딧 같은 차감형 데이터의 lost update 방지용.
+ */
+export async function firestorePatchDocument(
+  projectId: string,
+  documentPath: string,
+  fields: Record<string, FirestoreFieldValue>,
+  options?: {
+    currentUpdateTime?: string;
+    updateMask?: string[];
+    timeoutMs?: number;
+  },
+): Promise<{ ok: true; name?: string; updateTime?: string } | { ok: false; error: string }> {
+  const token = await getAccessToken();
+  if (!token) return { ok: false, error: "no_service_account" };
+
+  const params = new URLSearchParams();
+  for (const fieldPath of options?.updateMask ?? Object.keys(fields)) {
+    params.append("updateMask.fieldPaths", fieldPath);
+  }
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${documentPath}?${params}`;
+  const currentDocument = options?.currentUpdateTime
+    ? { updateTime: options.currentUpdateTime }
+    : { exists: true };
+
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(options?.timeoutMs ?? 4_000),
+      body: JSON.stringify({ fields, currentDocument }),
+    });
+    if (res.status === 404) return { ok: false, error: "not_found" };
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      logger.warn("firestore-service-rest/patch", { status: res.status, detail: text.slice(0, 200) });
+      return { ok: false, error: `http_${res.status}` };
+    }
+    const data = (await res.json()) as { name?: string; updateTime?: string };
+    return { ok: true, name: data.name, updateTime: data.updateTime };
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    const error = name === "AbortError" || name === "TimeoutError" ? "timeout" : "fetch_failed";
+    logger.warn("firestore-service-rest/patch", { err: name || String(err), error });
+    return { ok: false, error };
+  }
 }

@@ -85,7 +85,7 @@ export default function WordCountBadge({ text, isKO, testId = "word-count-badge"
     <span
       data-testid={testId}
       className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-purple/10 border border-accent-purple/30 text-accent-purple font-bold"
-      aria-label={isKO ? "플러그인 글자수" : "Plugin char count"}
+      aria-label={isKO ? "확장 기능 글자수" : "Extension character count"}
     >
       <Hash className="w-2.5 h-2.5" />
       <span>{chars.toLocaleString()}{isKO ? "자" : "ch"}</span>

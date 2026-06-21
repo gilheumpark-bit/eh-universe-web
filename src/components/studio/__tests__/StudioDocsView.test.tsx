@@ -148,7 +148,7 @@ describe('StudioDocsView', () => {
   it('renders Breadcrumbs section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
     expect(container.textContent).toMatch(/Breadcrumbs/);
-    expect(container.textContent).toMatch(/Project > Episode > Scene/);
+    expect(container.textContent).toMatch(/Library > Episode > Scene/);
   });
 
   it('renders Bulk Rename section', () => {
@@ -165,17 +165,45 @@ describe('StudioDocsView', () => {
     expect(container.textContent).toMatch(/red/);
   });
 
-  it('renders Work Profiler section', () => {
+  it('renders Work Analysis section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
-    expect(container.textContent).toMatch(/Work Profiler/);
+    expect(container.textContent).toMatch(/Work Analysis/);
     expect(container.textContent).toMatch(/Tension/);
     expect(container.textContent).toMatch(/Heatmap/);
   });
 
-  it('renders Plugin Marketplace section', () => {
+  it('renders Extensions section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
-    expect(container.textContent).toMatch(/Plugin Marketplace/);
-    expect(container.textContent).toMatch(/Canon Guard/);
+    expect(container.textContent).toMatch(/Extensions/);
+    expect(container.textContent).toMatch(/bundled studio extras/);
+  });
+
+  it('keeps visible docs copy free of retired and internal terms', () => {
+    const forbiddenVisibleCopy = [
+      /AI-generated/,
+      /AI generation/,
+      /NOA/,
+      /本地AI/,
+      /ChatSession/,
+      /legacy/i,
+      /Project \(top\)/,
+      /Project \(최상위\)/,
+      /Project \(最上位\)/,
+      /Project \(顶层\)/,
+      /Manuscript \(body text\)/,
+      /• Session:/,
+    ];
+
+    (['KO', 'EN', 'JP', 'CN'] as const).forEach(lng => {
+      const { container, unmount } = render(<StudioDocsView lang={lng} />);
+      const text = container.textContent ?? '';
+
+      forbiddenVisibleCopy.forEach(pattern => {
+        expect(text).not.toMatch(pattern);
+      });
+
+      unmount();
+    });
   });
 
   it('shows 7 new polish sections in TOC for every language', () => {

@@ -28,10 +28,10 @@ import { useBackupTiers } from '@/hooks/useBackupTiers';
 const TXT = {
   consentTitle: { ko: '클라우드 미러 동의', en: 'Cloud Mirror Consent', ja: 'クラウドミラー同意', zh: '云镜像同意' },
   consentDesc:  {
-    ko: '활성화 시 5분마다 변경된 부분만 Firestore에 백업됩니다. 무료 플랜 90% 도달 시 자동 일시중지.',
-    en: 'When enabled, only changed parts are backed up to Firestore every 5 minutes. Auto-pause at 90% of free quota.',
-    ja: '有効時、5分ごとに変更分のみFirestoreにバックアップ。無料枠90%到達で自動停止。',
-    zh: '启用时,每5分钟仅备份变更部分到Firestore。达到免费配额90%时自动暂停。',
+    ko: '활성화 시 5분마다 변경된 부분만 클라우드 저장소에 백업됩니다. 무료 플랜 90% 도달 시 자동 일시중지.',
+    en: 'When enabled, only changed parts are backed up to cloud storage every 5 minutes. Auto-pause at 90% of free quota.',
+    ja: '有効時、5分ごとに変更分のみクラウド保存へバックアップ。無料枠90%到達で自動停止。',
+    zh: '启用时,每5分钟仅将变更部分备份到云端存储。达到免费配额90%时自动暂停。',
   },
   consentCheck: { ko: '동의하고 활성화', en: 'I consent and enable', ja: '同意して有効化', zh: '同意并启用' },
   consentOn:    {

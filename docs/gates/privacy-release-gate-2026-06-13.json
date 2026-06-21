@@ -1,0 +1,62 @@
+{
+  "kind": "loreguard.privacy-release-gate.v1",
+  "generatedAt": "2026-06-13T23:10:52+09:00",
+  "verdict": "PASS",
+  "counts": {
+    "scannedFileCount": 1140,
+    "passCount": 8,
+    "holdCount": 0,
+    "failCount": 0
+  },
+  "checks": [
+    {
+      "id": "secret-literal-scan",
+      "status": "PASS",
+      "summary": "No common provider/API secret literals found in scanned production files.",
+      "detail": ""
+    },
+    {
+      "id": "secret-log-scan",
+      "status": "PASS",
+      "summary": "No direct secret-bearing logger lines found in scanned production files.",
+      "detail": ""
+    },
+    {
+      "id": "csp-connect-src",
+      "status": "PASS",
+      "summary": "CSP includes current provider hosts and baseline security directives.",
+      "detail": ""
+    },
+    {
+      "id": "public-certificate-boundary",
+      "status": "PASS",
+      "summary": "Reader public card exposes metadata only and keeps sensitive fields private.",
+      "detail": ""
+    },
+    {
+      "id": "verify-route-meta-only",
+      "status": "PASS",
+      "summary": "External lookup route returns registry metadata without manuscript or author-private fields.",
+      "detail": ""
+    },
+    {
+      "id": "stripe-webhook-boundary",
+      "status": "PASS",
+      "summary": "Stripe webhook uses raw body signature verification and event idempotency.",
+      "detail": ""
+    },
+    {
+      "id": "registry-write-boundary",
+      "status": "PASS",
+      "summary": "Registry write route stores metadata/hash fields with HMAC and write-once document ids.",
+      "detail": ""
+    },
+    {
+      "id": "package-gate-scripts",
+      "status": "PASS",
+      "summary": "Package scripts expose baseline, evidence, privacy, and release gates.",
+      "detail": ""
+    }
+  ],
+  "limitation": "Static privacy gate only. It does not replace hosted secrets review, legal review, Stripe dashboard review, or live registry replay evidence."
+}

@@ -101,6 +101,10 @@ interface RegisteredTier {
   timer: ReturnType<typeof setInterval> | null;
 }
 
+function reportScheduledTierError(tier: BackupTier, err: unknown): void {
+  logger.warn('save-engine:backup-tiers', `scheduled tier ${tier} execution failed`, err);
+}
+
 export class BackupOrchestrator {
   private tiers = new Map<BackupTier, RegisteredTier>();
   private listeners = new Set<BackupTierListener>();
@@ -177,7 +181,9 @@ export class BackupOrchestrator {
     }
 
     if (t.intervalMs > 0 && !t.timer) {
-      t.timer = setInterval(() => { this.executeTier(tier).catch(() => { /* swallowed */ }); }, t.intervalMs);
+      t.timer = setInterval(() => {
+        this.executeTier(tier).catch((err) => reportScheduledTierError(tier, err));
+      }, t.intervalMs);
     }
   }
 
@@ -275,7 +281,9 @@ export class BackupOrchestrator {
     this.emit(t.status);
     // intervalMs 있으면 timer 재기동
     if (t.intervalMs > 0 && t.handler) {
-      t.timer = setInterval(() => { this.executeTier(tier).catch(() => { /* swallowed */ }); }, t.intervalMs);
+      t.timer = setInterval(() => {
+        this.executeTier(tier).catch((err) => reportScheduledTierError(tier, err));
+      }, t.intervalMs);
     }
   }
 

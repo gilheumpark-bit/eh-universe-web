@@ -1,7 +1,7 @@
 {
-  "name": "Loreguard — Writer-first Novel IDE",
+  "name": "Loreguard — Creative Process IDE",
   "short_name": "Loreguard",
-  "description": "AI-powered novel writing IDE by EH Universe — write, review, translate, and publish in one workspace.",
+  "description": "Creative process IDE by EH Universe — direct Noah, keep process records, translate, and package releases in one workspace.",
   "lang": "ko",
   "dir": "ltr",
   "start_url": "/studio",
@@ -20,14 +20,6 @@
         "text/markdown": [".md", ".mdx"],
         "application/json": [".json"],
         "application/epub+zip": [".epub"]
-      }
-    },
-    {
-      "action": "/code-studio",
-      "accept": {
-        "text/javascript": [".js", ".jsx", ".ts", ".tsx"],
-        "text/html": [".html"],
-        "text/css": [".css"]
       }
     },
     {

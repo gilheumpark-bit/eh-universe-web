@@ -22,9 +22,9 @@ export function AdvancedModeSection({
   return (
     <div className="flex-1 space-y-4">
       <div className="bg-accent-red/5 border border-accent-red/20 rounded-xl p-4 md:p-6">
-        <h3 className="text-sm font-bold text-accent-red mb-2 flex items-center gap-2"><Settings2 className="w-4 h-4" /> {L4(language, { ko: '엔진 설정', en: 'Engine Settings', ja: 'エンジン設定', zh: '引擎设置' })}</h3>
-        <p className="text-sm md:text-xs text-text-secondary mb-1">{L4(language, { ko: '엔진 파라미터, 장르 프리셋, HFCP 설정을 직접 제어합니다.', en: 'Direct control over engine parameters, genre presets, and HFCP settings.', ja: 'エンジンパラメータ、ジャンルプリセット、HFCP設定を直接制御します。', zh: '直接控制引擎参数、类型预设与 HFCP 设置。' })}</p>
-        <p className="text-sm md:text-[13px] text-text-tertiary">{L4(language, { ko: '💡 경험 있는 사용자용: temperature, top-p, 장르 프리셋, 프롬프트 지시문을 직접 조정할 수 있습니다.', en: '💡 For experienced users: Adjust temperature, top-p, genre presets, and prompt directives.', ja: '💡 経験者向け: temperature, top-p, ジャンルプリセット, プロンプト指示を直接調整できます。', zh: '💡 面向进阶用户:可直接调整 temperature、top-p、类型预设与提示指令。' })}</p>
+        <h3 className="text-sm font-bold text-accent-red mb-2 flex items-center gap-2"><Settings2 className="w-4 h-4" /> {L4(language, { ko: '세부 설정', en: 'Advanced Settings', ja: '詳細設定', zh: '详细设置' })}</h3>
+        <p className="text-sm md:text-xs text-text-secondary mb-1">{L4(language, { ko: '표현 자유도, 장르 프리셋, 문장 지시문을 직접 조정합니다.', en: 'Adjust expression range, genre presets, and writing instructions.', ja: '表現の幅、ジャンルプリセット、文章指示を直接調整します。', zh: '直接调整表达范围、类型预设与写作指令。' })}</p>
+        <p className="text-sm md:text-[13px] text-text-tertiary">{L4(language, { ko: '경험 있는 사용자를 위한 화면입니다. 필요할 때만 열어도 됩니다.', en: 'For experienced users. Open this only when you need finer control.', ja: '経験者向けの画面です。必要なときだけ開いてください。', zh: '面向进阶用户。需要精细控制时再打开即可。' })}</p>
       </div>
       <textarea
         ref={editDraftRef}

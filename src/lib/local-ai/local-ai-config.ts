@@ -11,9 +11,9 @@
 export interface LocalAISlot {
   id: 1 | 2 | 3;
   label: string;
-  /** OpenAI 호환 base. 예: http://localhost:11434/v1 (Ollama) · http://localhost:8001/v1 (vLLM) */
+  /** OpenAI 호환 base. 예: http://localhost:11434/v1 (Ollama) · http://localhost:8000/v1 (vLLM) */
   baseUrl: string;
-  /** served-model-name. 예: qwen2.5:14b · qwen36 */
+  /** served-model-name. 예: qwen2.5:14b · Qwen/Qwen3.6-35B-A3B-FP8 */
   model: string;
   enabled: boolean;
 }

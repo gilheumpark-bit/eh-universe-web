@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
-import { useTranslatorLayout, TranslatorLayoutProvider, type LeftPanelType, type RightPanelType } from './core/TranslatorLayoutContext';
+import {
+  TRANSLATOR_LAYOUT_LIMITS,
+  useTranslatorLayout,
+  TranslatorLayoutProvider,
+  type LeftPanelType,
+  type RightPanelType,
+} from './core/TranslatorLayoutContext';
 import { useTranslator } from './core/TranslatorContext';
 import { ActivityBar } from './features/ActivityBar';
 import { TranslatorPanelManager } from './TranslatorPanelManager';
@@ -19,6 +25,7 @@ import { useLang } from '@/lib/LangContext';
 import { LEFT_PANELS, RIGHT_PANELS } from './core/panel-registry';
 // [X2 — 2026-06-11] noa:toast/noa:alert 수신 호스트 — 번역 스튜디오에도 마운트 (NOA 고지 의무).
 import ToastHost from '@/components/loreguard/ToastHost';
+import PaywallNoticeCard from '@/components/loreguard/PaywallNoticeCard';
 
 /**
  * panel-registry 의 panel id 와 ACTION_CATALOG 의 action id 매핑.
@@ -38,15 +45,26 @@ const RIGHT_PANEL_ACTION_MAP: Readonly<Record<NonNullable<RightPanelType>, strin
   actions: 'translate:open-actions',
   chat: 'translate:open-chat',
   audit: 'translate:open-audit',
+  localization: 'translate:open-localization',
   reference: 'translate:open-reference',
   adoption: 'translate:open-adoption',
   signoff: 'translate:open-signoff',
 });
 
+function clampPanelWidth(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
 export function TranslatorShellInner() {
   const layout = useTranslatorLayout();
   const { isZenMode, outputMode } = useTranslator();
   const { lang } = useLang();
+  const settingsPanelReadableWidth =
+    typeof window !== 'undefined' && window.innerWidth >= 2800 ? 420 : 360;
+  const effectiveLeftSidebarWidth =
+    layout.activeLeftPanel === 'settings'
+      ? Math.max(layout.leftSidebarWidth, settingsPanelReadableWidth)
+      : layout.leftSidebarWidth;
 
   // ─── Cmd+K 패널 팔레트 ────────────────────────────────────────
   // [Batch 1 rank 4 — 2026-06-07] ADR-0003 4-way 키 표준: Translation Studio = Cmd+K.
@@ -60,7 +78,7 @@ export function TranslatorShellInner() {
     keys: 'ctrl+k',
     area: 'translation-studio',
     handler: () => palette.setOpen(true),
-    description: 'Open panel palette (Translation Studio)',
+    description: '번역·현지화 패널 팔레트 열기',
     id: 'translator-cmd-k-palette',
   });
 
@@ -94,13 +112,35 @@ export function TranslatorShellInner() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      const activityBarWidth = isZenMode ? 0 : 54;
+      const minCenterWidth = Math.min(720, Math.max(420, window.innerWidth * 0.28));
       if (isDraggingLeft.current) {
-        // Activity bar is 54px wide, so left sidebar stops at that point
-        const newWidth = Math.max(200, Math.min(e.clientX - 54, window.innerWidth / 2));
+        const rightReserved = layout.activeRightPanel ? layout.rightSidebarWidth : 0;
+        const maxByCenter = window.innerWidth - activityBarWidth - rightReserved - minCenterWidth;
+        const maxByScreen = window.innerWidth * 0.72;
+        const maxWidth = Math.max(
+          TRANSLATOR_LAYOUT_LIMITS.leftMin,
+          Math.min(maxByCenter, maxByScreen),
+        );
+        const newWidth = clampPanelWidth(
+          e.clientX - activityBarWidth,
+          TRANSLATOR_LAYOUT_LIMITS.leftMin,
+          maxWidth,
+        );
         layout.setLeftSidebarWidth(newWidth);
       } else if (isDraggingRight.current) {
-        // Calculate based on window width
-        const newWidth = Math.max(250, Math.min(window.innerWidth - e.clientX, window.innerWidth / 2));
+        const leftReserved = layout.activeLeftPanel ? layout.leftSidebarWidth : 0;
+        const maxByCenter = window.innerWidth - activityBarWidth - leftReserved - minCenterWidth;
+        const maxByScreen = window.innerWidth * 0.72;
+        const maxWidth = Math.max(
+          TRANSLATOR_LAYOUT_LIMITS.rightMin,
+          Math.min(maxByCenter, maxByScreen),
+        );
+        const newWidth = clampPanelWidth(
+          window.innerWidth - e.clientX,
+          TRANSLATOR_LAYOUT_LIMITS.rightMin,
+          maxWidth,
+        );
         layout.setRightSidebarWidth(newWidth);
       }
     };
@@ -120,7 +160,7 @@ export function TranslatorShellInner() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [layout]);
+  }, [isZenMode, layout]);
 
   const onLeftDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -154,15 +194,17 @@ export function TranslatorShellInner() {
         <>
           {/* Mobile: overlay */}
           <div className="lg:hidden fixed inset-0 z-[var(--z-overlay)] flex">
-            <div className="w-[85vw] max-w-[360px] bg-bg-secondary border-r border-border shadow-2xl">
+            <div className="w-[92vw] max-w-[560px] bg-bg-secondary border-r border-border shadow-2xl">
               <TranslatorPanelManager region="left" />
             </div>
             <div className="flex-1 bg-black/40" onClick={() => layout.setActiveLeftPanel(null)} />
           </div>
           {/* Desktop: inline */}
           <div
-            className="hidden lg:flex shrink-0 z-90 relative border-r border-border bg-bg-secondary/60 backdrop-blur-2xl transition-[transform,opacity,background-color,border-color,color] duration-300 ease-out"
-            style={{ width: layout.leftSidebarWidth }}
+            className={`hidden lg:flex shrink-0 z-90 relative border-r border-border bg-bg-secondary/60 backdrop-blur-2xl transition-[transform,opacity,background-color,border-color,color] duration-300 ease-out ${
+              layout.activeLeftPanel === 'settings' ? 'translator-side-panel-settings' : ''
+            }`}
+            style={{ width: effectiveLeftSidebarWidth }}
           >
             <TranslatorPanelManager region="left" />
           </div>
@@ -178,7 +220,7 @@ export function TranslatorShellInner() {
       {/* 3. Center Area (Editing Region) */}
       {/* [2026-05-08 시장 분석 4차] outputMode === 'dual' 시 TripleEditor (Source/Faithful/Market 3-pane). */}
       <div className="flex-1 flex flex-col min-w-0 z-10 basis-auto h-full relative">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-amber-950/15 via-transparent to-transparent" />
+        <div className="absolute inset-0 pointer-events-none bg-transparent" />
         {outputMode === 'dual' ? <TripleEditor /> : <BilateralEditor />}
       </div>
 
@@ -188,7 +230,7 @@ export function TranslatorShellInner() {
           {/* Mobile: overlay */}
           <div className="lg:hidden fixed inset-0 z-[var(--z-overlay)] flex justify-end">
             <div className="flex-1 bg-black/40" onClick={() => layout.setActiveRightPanel(null)} />
-            <div className="w-[85vw] max-w-[400px] bg-bg-secondary border-l border-border shadow-2xl">
+            <div className="w-[92vw] max-w-[640px] bg-bg-secondary border-l border-border shadow-2xl">
               <TranslatorPanelManager region="right" />
             </div>
           </div>
@@ -216,6 +258,7 @@ export function TranslatorShellInner() {
           ToastHost 가 없어 notifyNoaBlock 의 toast 채널이 무음이었다 (LoreguardStudio 전용 마운트).
           ToastHost 루트가 .eh-app 자체 스코프 + loreguard.css 전역 import 라 이식 안전. */}
       <ToastHost language={lang.toUpperCase()} />
+      <PaywallNoticeCard language={lang.toUpperCase()} />
     </div>
   );
 }

@@ -149,7 +149,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
   const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // 설계/시뮬레이터 데이터 불러오기
+  // 설계/세계관 점검 데이터 불러오기
   const loadFromConfig = useCallback(() => {
     if (!config) return;
     const parts: string[] = [];
@@ -203,6 +203,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
         onChunk: (chunk: string) => { fullResponse += chunk; },
         systemInstruction: buildAnalysisPrompt(language),
         temperature: 0.3,
+        reasoningStage: 'world',
         signal: controller.signal,
       });
 
@@ -271,54 +272,52 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
     <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-10 space-y-8 animate-in fade-in duration-700 pb-32">
       {/* Header */}
       <div>
-        <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-amber-400 drop-shadow-[0_0_10px_rgba(255,200,50,0.3)]">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-normal text-text-primary">
           {t('worldAnalysis.title')}
         </h2>
-        <p className="text-text-tertiary text-[10px] font-bold tracking-widest uppercase">
-          WORLDBUILDING REVERSE ENGINEER
+        <p className="text-text-tertiary text-[12px] font-medium">
+          {language === 'KO' ? '세계관 메모를 읽고 구조·충돌·활용 지점을 정리합니다.' : 'Review world notes for structure, conflicts, and useful next steps.'}
         </p>
       </div>
 
       {/* Input */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,200,50,0.3)]">
+          <label className="text-[12px] font-semibold text-text-secondary">
             {t('worldAnalysis.inputLabel')}
           </label>
           {config && (
             <button
               onClick={loadFromConfig}
-              className="px-3 py-1.5 bg-[linear-gradient(45deg,rgba(255,200,50,0.1),transparent)] border border-[rgba(255,200,50,0.3)] rounded-lg text-xs font-bold text-amber-400 hover:bg-[rgba(255,200,50,0.2)] hover:border-[rgba(255,200,50,0.5)] hover:shadow-[0_0_15px_rgba(255,200,50,0.2)] transition-[background-color,border-color,box-shadow,color] font-mono"
+              className="min-h-[44px] rounded-md border border-border bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition-[background-color,border-color,color] hover:border-accent-blue/40 hover:bg-bg-tertiary hover:text-text-primary"
             >
-              📥 {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
+              {language === 'KO' ? '설계 데이터 불러오기' : language === 'JP' ? '設計データ読込' : language === 'CN' ? '加载设计数据' : 'Load Design Data'}
             </button>
           )}
         </div>
         <div className="relative group">
-          {/* Scanline overlay — dark mode only */}
-          <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[linear-gradient(rgba(255,200,50,0.03)_50%,transparent_50%)] bg-size-[100%_4px] mix-blend-screen opacity-50 z-10 transition-opacity group-focus-within:opacity-100 hidden dark:block [data-theme=dark]:block"></div>
           <textarea
-            className="w-full bg-bg-secondary border border-border rounded-2xl p-6 text-sm h-64 resize-none focus:border-accent-amber/60 focus:shadow-[0_0_20px_rgba(184,149,92,0.12)] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 font-serif leading-relaxed text-text-primary placeholder-text-tertiary relative z-20 backdrop-blur-md transition-[box-shadow]"
+            className="relative z-20 h-64 w-full resize-none rounded-lg border border-border bg-bg-secondary p-5 text-sm leading-relaxed text-text-primary outline-none transition-[border-color,box-shadow] placeholder-text-tertiary focus:border-accent-blue/50 focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             placeholder={t('worldAnalysis.inputPlaceholder')}
             value={inputText}
             onChange={e => setInputText(e.target.value)}
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-text-tertiary font-mono tracking-wider">
+          <span className="text-[11px] text-text-tertiary">
             {inputText.length.toLocaleString()}{t('worldAnalysis.chars')}
           </span>
           <div className="flex gap-2">
             {analyzing && (
               <button onClick={handleCancel}
-                className="px-4 py-2 bg-[rgba(255,100,50,0.1)] border border-[rgba(255,100,50,0.3)] text-orange-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[rgba(255,100,50,0.2)] transition-colors">
+                className="min-h-[44px] rounded-md border border-accent-red/30 bg-accent-red/10 px-4 text-[12px] font-semibold text-accent-red transition-colors hover:bg-accent-red/15">
                 {t('worldAnalysis.cancelBtn')}
               </button>
             )}
             <button
               onClick={handleAnalyze}
               disabled={analyzing || !inputText.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[linear-gradient(45deg,rgba(180,120,20,0.6),rgba(255,200,50,0.8))] border border-[rgba(255,220,100,0.6)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] transition-[transform,opacity] active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_15px_rgba(255,200,50,0.2)]"
+              className="flex min-h-[44px] items-center gap-2 rounded-md border border-accent-blue/45 bg-accent-blue px-5 text-[12px] font-semibold text-white transition-[background-color,opacity] hover:bg-accent-blue/90 disabled:cursor-not-allowed disabled:opacity-45"
             >
               {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               {analyzing ? t('worldAnalysis.analyzing') : t('worldAnalysis.analyze')}
@@ -329,7 +328,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-[rgba(255,50,50,0.1)] border border-[rgba(255,50,50,0.3)] rounded-xl text-accent-red text-xs font-bold drop-shadow-[0_0_5px_rgba(255,50,50,0.2)]">
+        <div className="rounded-lg border border-accent-red/30 bg-accent-red/10 p-4 text-xs font-semibold text-accent-red">
           {error}
         </div>
       )}
@@ -338,12 +337,12 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
       {result && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[rgba(255,200,50,0.8)] shadow-[0_0_8px_rgba(255,200,50,0.8)] animate-pulse" />
+            <h3 className="flex items-center gap-2 text-[12px] font-semibold text-text-secondary">
+              <span className="h-2 w-2 rounded-full bg-accent-blue" />
               {t('worldAnalysis.results')}
             </h3>
             <button onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(255,200,50,0.05)] border border-[rgba(255,200,50,0.2)] rounded-lg text-[9px] font-bold text-text-tertiary hover:text-amber-400 hover:bg-[rgba(255,200,50,0.1)] transition-colors">
+              className="flex min-h-[44px] items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3 text-[11px] font-semibold text-text-tertiary transition-colors hover:bg-bg-tertiary hover:text-text-primary">
               {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
               {copied ? t('worldAnalysis.copied') : t('worldAnalysis.copyAll')}
             </button>
@@ -356,40 +355,32 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
               const value = result[key];
               const isWarning = key === 'inconsistencies';
               
-              // Stellar Atlas Theme Card Variants
-              let cardBg = 'bg-[linear-gradient(135deg,rgba(255,200,50,0.05),rgba(0,0,0,0.4))]';
-              let cardBorder = 'border-[rgba(255,200,50,0.15)]';
-              let cardShadow = 'hover:shadow-[0_10px_30px_rgba(255,200,50,0.1),inset_0_0_15px_rgba(255,200,50,0.05)]';
-              let iconColor = 'text-amber-400';
-              let titleColor = 'text-amber-400';
+              let cardBg = 'bg-bg-secondary';
+              let cardBorder = 'border-border';
+              let iconColor = 'text-accent-blue';
+              let titleColor = 'text-text-primary';
 
               if (key === 'summary') {
-                cardBg = 'bg-[linear-gradient(135deg,rgba(255,200,50,0.1),rgba(255,150,0,0.05))]';
-                cardBorder = 'border-[rgba(255,200,50,0.4)]';
-                cardShadow = 'shadow-[0_10px_30px_rgba(255,200,50,0.1),inset_0_0_20px_rgba(255,200,50,0.05)]';
-                iconColor = 'text-amber-400 drop-shadow-[0_0_8px_rgba(255,200,50,0.8)]';
-                titleColor = 'text-amber-400 drop-shadow-[0_0_5px_rgba(255,200,50,0.5)]';
+                cardBg = 'bg-bg-primary';
+                cardBorder = 'border-accent-blue/25';
+                iconColor = 'text-accent-blue';
+                titleColor = 'text-text-primary';
               } else if (isWarning) {
-                cardBg = 'bg-[linear-gradient(135deg,rgba(255,50,50,0.05),rgba(0,0,0,0.4))]';
-                cardBorder = 'border-[rgba(255,50,50,0.3)]';
-                iconColor = 'text-accent-red drop-shadow-[0_0_5px_rgba(255,50,50,0.5)]';
+                cardBg = 'bg-accent-red/10';
+                cardBorder = 'border-accent-red/25';
+                iconColor = 'text-accent-red';
                 titleColor = 'text-accent-red';
-                cardShadow = 'hover:shadow-[0_10px_30px_rgba(255,50,50,0.1),inset_0_0_15px_rgba(255,50,50,0.05)]';
               }
 
               return (
                 <div key={key}
-                  className={`relative p-5 rounded-2xl border backdrop-blur-xl transition-[transform,opacity,background-color,border-color,color] duration-300 ${cardBg} ${cardBorder} ${cardShadow} ${key === 'summary' ? 'md:col-span-2' : ''} group overflow-hidden`}
+                  className={`group relative overflow-hidden rounded-lg border p-5 transition-[background-color,border-color,color] duration-200 ${cardBg} ${cardBorder} ${key === 'summary' ? 'md:col-span-2' : ''}`}
                 >
-                  <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[20px_20px] mix-blend-screen opacity-10"></div>
-                  <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
-                    <Icon className={`w-12 h-12 ${iconColor} opacity-20`} />
-                  </div>
                   <div className="relative z-10 flex items-center gap-2 mb-3">
                     <Icon className={`w-4 h-4 ${iconColor}`} />
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${titleColor}`}>{label}</span>
+                    <span className={`text-[12px] font-semibold ${titleColor}`}>{label}</span>
                   </div>
-                  <p className="relative z-10 text-sm leading-relaxed whitespace-pre-wrap text-text-primary font-serif">{value}</p>
+                  <p className="relative z-10 whitespace-pre-wrap text-sm leading-relaxed text-text-primary">{value}</p>
                 </div>
               );
             })}

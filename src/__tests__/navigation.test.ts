@@ -9,8 +9,9 @@ const PAGE_ROUTES: { route: string; modulePath: string }[] = [
   { route: '/', modulePath: '@/app/page' },
   { route: '/studio', modulePath: '@/app/studio/page' },
   { route: '/translation-studio', modulePath: '@/app/translation-studio/page' },
-  { route: '/codex', modulePath: '@/app/codex/page' },
-  { route: '/tools', modulePath: '@/app/tools/page' },
+  { route: '/docs', modulePath: '@/app/docs/page' },
+  { route: '/pricing', modulePath: '@/app/pricing/page' },
+  { route: '/verify', modulePath: '@/app/verify/page' },
 ];
 
 // Mock next/navigation since page modules use it

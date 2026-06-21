@@ -4,7 +4,9 @@
 // Environment sanity checks — M7 pre-alpha boot-time guard.
 // Validates browser APIs Loreguard depends on (IndexedDB, BroadcastChannel,
 // Web Locks, crypto.subtle) and that localStorage has reasonable headroom.
-// On any failure → console.warn + emit `noa:environment-degraded` event.
+// On any failure → logger.warn + emit `noa:environment-degraded` event.
+
+import { logger } from '@/lib/logger';
 
 export type EnvironmentStatus = 'ok' | 'degraded' | 'unknown';
 
@@ -115,12 +117,10 @@ export async function checkEnvironmentAtBoot(): Promise<EnvironmentReport> {
   const report = await checkEnvironment();
   if (report.status === 'degraded') {
     try {
-       
-      console.warn(
-        '[env-sanity] Environment degraded:',
-        report.missing.length ? `missing=${report.missing.join(',')}` : '',
-        report.warnings.length ? `warnings=${report.warnings.join(';')}` : '',
-      );
+      logger.warn('env-sanity', 'Environment degraded', {
+        missing: report.missing,
+        warnings: report.warnings,
+      });
     } catch {
       /* silent */
     }

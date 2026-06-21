@@ -1,6 +1,6 @@
 "use client";
 // ============================================================
-// SignoffPanel — 작가 sign-off (Faithful archive + Market publish 분리 승인)
+// SignoffPanel — 작가 승인 (원문 보존안 + 현지화안 분리 승인)
 // 시장 분석 4차 §8 §11.
 //
 // [Batch 4 / rank 13 — 2026-06-07] work-receipt 자동 생성:
@@ -101,18 +101,18 @@ export function SignoffPanel() {
       <header className="px-3 py-2 border-b border-border bg-bg-secondary/60 shrink-0">
         <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
           <Stamp className="w-4 h-4 text-accent-purple" />
-          {langKo ? '작가 sign-off' : 'Author Sign-off'}
+          {langKo ? '작가 승인' : 'Author Approval'}
         </h3>
         <p className="text-[11px] text-text-tertiary mt-0.5">
           {langKo
-            ? 'Faithful = 저작권 archive, Market = 출판본'
+            ? '보존안 = 권리 보관용, 현지화안 = 출고 검토용'
             : 'Faithful = archive, Market = publish'}
         </p>
         {/* 요약 */}
         <div className="mt-2 grid grid-cols-3 gap-1 text-center">
-          <Stat label="F" value={`${summary.faithfulApproved}/${summary.total}`} color="text-accent-green" />
-          <Stat label="M" value={`${summary.marketApproved}/${summary.total}`} color="text-accent-amber" />
-          <Stat label="ALL" value={`${summary.fullyApproved}/${summary.total}`} color="text-accent-purple" />
+          <Stat label={langKo ? '보존' : 'F'} value={`${summary.faithfulApproved}/${summary.total}`} color="text-accent-green" />
+          <Stat label={langKo ? '현지화' : 'M'} value={`${summary.marketApproved}/${summary.total}`} color="text-accent-amber" />
+          <Stat label={langKo ? '전체' : 'ALL'} value={`${summary.fullyApproved}/${summary.total}`} color="text-accent-purple" />
         </div>
         <div className="mt-2 flex items-center gap-2 text-[10px]">
           <span
@@ -123,7 +123,7 @@ export function SignoffPanel() {
             }`}
           >
             <FileBadge2 className="w-3 h-3" />
-            {langKo ? 'Faithful 완료' : 'Faithful ready'}
+            {langKo ? '보존안 완료' : 'Faithful ready'}
           </span>
           <span
             className={`flex items-center gap-1 px-2 py-1 rounded ${
@@ -133,7 +133,7 @@ export function SignoffPanel() {
             }`}
           >
             <BookCheck className="w-3 h-3" />
-            {langKo ? 'Market 출판 가능' : 'Market publishable'}
+            {langKo ? '현지화안 출고 가능' : 'Market publishable'}
           </span>
         </div>
       </header>
@@ -141,7 +141,7 @@ export function SignoffPanel() {
         {chapters.length === 0 ? (
           <div className="p-6 text-center text-xs text-text-tertiary">
             {langKo
-              ? '사인오프할 회차가 없습니다. 챕터를 먼저 불러오거나 만든 뒤 번역을 실행하세요.'
+              ? '승인할 회차가 없습니다. 회차를 먼저 불러오거나 만든 뒤 번역을 실행하세요.'
               : 'No chapters to sign off. Add or import chapters and run a translation first.'}
           </div>
         ) : chapters.map((ch, i) => (
@@ -193,19 +193,25 @@ function ReceiptDetail({
   const receipt = useMemo(() => buildSignoffReceipt(chapter, track), [chapter, track]);
   const formatted = useMemo(() => buildReceipt(receipt), [receipt]);
   const trackColor = track === 'faithful' ? 'text-accent-green' : 'text-accent-amber';
-  const trackLabel = track === 'faithful' ? 'Faithful' : 'Market';
+  const trackLabel = langKo
+    ? track === 'faithful'
+      ? '원문 보존안'
+      : '현지화안'
+    : track === 'faithful'
+      ? 'Faithful'
+      : 'Market';
 
   return (
     <div className="mt-2 px-3 py-2 bg-bg-secondary/30 border border-border rounded text-[11px] space-y-2">
       <div className={`font-bold text-[10px] uppercase tracking-wider ${trackColor}`}>
-        {trackLabel} {langKo ? '영수증' : 'Receipt'}
+        {trackLabel} {langKo ? '과정기록' : 'Receipt'}
       </div>
 
       {/* DID 섹션 */}
       <div>
         <div className="flex items-center gap-1 text-[10px] text-accent-green font-bold uppercase tracking-wider mb-1">
           <CircleCheck className="w-3 h-3" />
-          <span>DID ({receipt.did.length})</span>
+          <span>{langKo ? '수행 항목' : 'DID'} ({receipt.did.length})</span>
         </div>
         {receipt.did.length === 0 ? (
           <div className="text-text-tertiary text-[10px] pl-4">{langKo ? '(기록 없음)' : '(empty)'}</div>
@@ -226,7 +232,7 @@ function ReceiptDetail({
       <div>
         <div className="flex items-center gap-1 text-[10px] text-accent-amber font-bold uppercase tracking-wider mb-1">
           <CircleX className="w-3 h-3" />
-          <span>SKIPPED ({receipt.skipped.length})</span>
+          <span>{langKo ? '보류 항목' : 'SKIPPED'} ({receipt.skipped.length})</span>
         </div>
         {receipt.skipped.length === 0 ? (
           <div className="text-text-tertiary text-[10px] pl-4">{langKo ? '(없음)' : '(none)'}</div>
@@ -247,15 +253,15 @@ function ReceiptDetail({
       <div>
         <div className="flex items-center gap-1 text-[10px] text-accent-purple font-bold uppercase tracking-wider mb-1">
           <Hash className="w-3 h-3" />
-          <span>METRICS</span>
+          <span>{langKo ? '기록 정보' : 'Record info'}</span>
         </div>
         <ul className="pl-4 space-y-0.5">
           <li className="text-text-primary text-[11px]">
-            <span className="text-text-tertiary">{langKo ? '자수: ' : 'Chars: '}</span>
+            <span className="text-text-tertiary">{langKo ? '글자 수: ' : 'Characters: '}</span>
             <span className="font-mono">{receipt.metrics?.chars?.toLocaleString() ?? 0}{langKo ? '자' : ''}</span>
           </li>
           <li className="text-text-primary text-[11px]">
-            <span className="text-text-tertiary">{langKo ? '실행 stage: ' : 'Stages: '}</span>
+            <span className="text-text-tertiary">{langKo ? '확인 단계: ' : 'Review steps: '}</span>
             <span className="font-mono">{receipt.metrics?.keyInfo ?? 0}/5</span>
           </li>
         </ul>
@@ -264,7 +270,7 @@ function ReceiptDetail({
       {/* raw 텍스트 (복사용 — sr-only 가까운 micro hint) */}
       <details className="text-[9px] text-text-tertiary">
         <summary className="cursor-pointer hover:text-text-secondary transition-colors">
-          {langKo ? '원본 포맷 보기' : 'Raw format'}
+          {langKo ? '원본 포맷 보기' : 'Original format'}
         </summary>
         <pre className="mt-1 p-2 bg-bg-tertiary rounded font-mono text-[9px] whitespace-pre-wrap break-all">
           {formatted}
@@ -307,6 +313,13 @@ function ChapterRow({
   chapter: import('@/types/translator').ChapterEntry;
   langKo: boolean;
 }) {
+  const statusLabel =
+    status === 'fully-approved'
+      ? langKo ? '전체 승인' : 'fully approved'
+      : status === 'partial'
+        ? langKo ? '부분 승인' : 'partial'
+        : langKo ? '승인 대기' : 'unapproved';
+
   return (
     <div className="px-3 py-2 flex flex-col gap-1">
       <div className="flex items-center gap-2">
@@ -317,7 +330,7 @@ function ChapterRow({
           onClick={onToggleReceiptF}
           disabled={!hasFaithful}
           aria-expanded={faithfulExpanded}
-          aria-label={langKo ? 'Faithful 영수증 보기' : 'View Faithful receipt'}
+          aria-label={langKo ? '원문 보존안 과정기록 보기' : 'View Faithful receipt'}
           className="p-0.5 text-text-tertiary hover:text-accent-green disabled:opacity-30 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
         >
           {faithfulExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -326,7 +339,7 @@ function ChapterRow({
           type="button"
           disabled={!hasFaithful}
           onClick={onFlipF}
-          title={langKo ? 'Faithful 승인 (저작권 archive)' : 'Approve Faithful (archive)'}
+          title={langKo ? '원문 보존안 승인 (권리 보관용)' : 'Approve Faithful (archive)'}
           className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors disabled:opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
             faithful
               ? 'bg-accent-green/20 border-accent-green/50 text-accent-green'
@@ -334,14 +347,14 @@ function ChapterRow({
           }`}
         >
           <ShieldCheck className="w-3 h-3" />
-          F
+          {langKo ? '보존' : 'F'}
         </button>
         <button
           type="button"
           onClick={onToggleReceiptM}
           disabled={!hasMarket}
           aria-expanded={marketExpanded}
-          aria-label={langKo ? 'Market 영수증 보기' : 'View Market receipt'}
+          aria-label={langKo ? '현지화안 과정기록 보기' : 'View Market receipt'}
           className="p-0.5 text-text-tertiary hover:text-accent-amber disabled:opacity-30 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
         >
           {marketExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -350,7 +363,7 @@ function ChapterRow({
           type="button"
           disabled={!hasMarket}
           onClick={onFlipM}
-          title={langKo ? 'Market 승인 (출판)' : 'Approve Market (publish)'}
+          title={langKo ? '현지화안 승인 (출고 검토용)' : 'Approve Market (publish)'}
           className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors disabled:opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
             market
               ? 'bg-accent-amber/20 border-accent-amber/50 text-accent-amber'
@@ -358,7 +371,7 @@ function ChapterRow({
           }`}
         >
           <Globe className="w-3 h-3" />
-          M
+          {langKo ? '현지' : 'M'}
         </button>
         <span
           className={`text-[9px] font-mono uppercase ${
@@ -369,7 +382,7 @@ function ChapterRow({
                 : 'text-text-tertiary'
           }`}
         >
-          {status}
+          {statusLabel}
         </span>
       </div>
       {faithfulExpanded && hasFaithful && (

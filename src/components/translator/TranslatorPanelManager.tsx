@@ -28,6 +28,7 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
       case 'actions': return <TranslationActionDock />;
       case 'chat': return <PI.ChatPanel />;
       case 'audit': return <PI.AuditPanel />;
+      case 'localization': return <PI.LocalizationReviewPanel />;
       case 'reference': return <PI.ReferencePanel />;
       // [2026-05-08 시장 분석 4차 P0] dual workflow 패널.
       case 'adoption': return <PI.SegmentAdoptionPanel />;
@@ -41,6 +42,7 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
     : getRightPanelLabel(activePanel, lang.toUpperCase() as 'KO' | 'EN');
 
   const themeColorClass = region === 'left' ? 'text-accent-amber' : 'text-accent-purple';
+  const closeLabel = lang === 'ko' ? '패널 닫기' : 'Close panel';
 
   return (
     <div className={`flex h-full w-full flex-col bg-bg-secondary/60 backdrop-blur-3xl shadow-panel`}>
@@ -57,8 +59,9 @@ export function TranslatorPanelManager({ region }: { region: 'left' | 'right' })
             if (region === 'left') layout.setActiveLeftPanel(null);
             else layout.setActiveRightPanel(null);
           }}
-          className="group rounded-full p-1.5 transition-[transform,background-color,border-color,box-shadow,color] hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95"
-          title="Close Panel"
+          className="group inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-1.5 transition-[transform,background-color,border-color,box-shadow,color] hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 focus-visible:ring-2 focus-visible:ring-accent-blue"
+          title={closeLabel}
+          aria-label={closeLabel}
         >
           <X className="h-4 w-4 text-text-tertiary group-hover:text-text-primary transition-colors" />
         </button>

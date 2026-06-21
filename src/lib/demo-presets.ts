@@ -1,7 +1,7 @@
 // ============================================================
 // PART 1 — DEMO PRESET DATA
 // 3종 데모 프리셋: SYSTEM_HUNTER / NOA 힐링 SF / IF 승천
-// API 키 없이 체험 가능한 샘플 프로젝트
+// 연결 키 없이 체험 가능한 샘플 프로젝트
 // ============================================================
 
 import { Genre, type StoryConfig, type Character, type ChatSession } from './studio-types';

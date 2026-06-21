@@ -15,6 +15,8 @@
  *   - LLM Auditor 호출은 추후 옵션 추가 (현재 `scoreAllAxes`가 인터페이스만 제공)
  */
 
+import type { BrandEntry } from '@/lib/ip-guard/brand-blocklist';
+
 export type AxisId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type IssueSeverity = 'info' | 'warning' | 'critical';
 export type Pov = 'first' | 'third' | 'omniscient' | 'unknown';
@@ -61,6 +63,8 @@ export interface AxisContext {
   readonly referenceCorpus?: readonly { readonly id: string; readonly text: string }[];
   /** ngram detection threshold (기본 0.3) — Doc 권장값 */
   readonly ngramThreshold?: number;
+  /** 작가 개인 권리/IP 차단 목록 — L4 personal blocklist */
+  readonly personalBlocklist?: readonly BrandEntry[];
 }
 
 // ============================================================

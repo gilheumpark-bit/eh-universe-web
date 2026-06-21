@@ -2,14 +2,14 @@
 // PART 1 — Module Header
 // ============================================================
 //
-// translationese-lint.ts — [Z1a-5] KO→EN 번역투 + AI티 결정론적 린트.
+// translationese-lint.ts — [Z1a-5] KO→EN 어색한 표현 + 영문 습관 결정론적 린트.
 //
 // 검출 대상 (EN 번역 결과 텍스트):
-//   번역투 (translationese):
+//   어색한 표현 후보 (translationese):
 //     - name-repetition:   이름 반복 (대명사 대신 고유명사 과다 — KO 원문 습관 전이)
-//     - honorific-literal: 존칭 로마자 직역 (-nim/-ssi/hyung/oppa 등)
+//     - honorific-literal: 존칭 로마자 음차 (-nim/-ssi/hyung/oppa 등)
 //     - said-bookism:      과잉번역 대사 동사 (said → exclaimed/declared 류)
-//   AI티 (AI signature):
+//   어색한 영문 습관:
 //     - em-dash-overuse:   em-dash(—) 빈도 과다
 //     - smart-quotes:      curly quotes(“ ” ‘ ’) 잔존
 //
@@ -42,12 +42,12 @@ export interface TranslationeseHit {
   count: number;
   /** warn = 검토 권장 / info = 의도 가능 (faithful 보존 등) */
   severity: 'warn' | 'info';
-  message: { ko: string; en: string };
+  message: { ko: string; en: string; ja?: string; zh?: string };
 }
 
 export interface TranslationeseLintResult {
   hits: TranslationeseHit[];
-  /** 0~100 — 높을수록 번역투/AI티 농도 높음 (hit 단위 가중: warn 20 / info 5, 100 클램프) */
+  /** 0~100 — 높을수록 어색한 표현/영문 습관 농도 높음 (hit 단위 가중: warn 20 / info 5, 100 클램프) */
   score: number;
   metrics: { sentences: number; words: number };
 }
@@ -88,7 +88,7 @@ const COMMON_CAPITALIZED = new Set([
 ]);
 
 // ============================================================
-// PART 4 — 검출기 (번역투 3종)
+// PART 4 — 검출기 (어색한 표현 후보 3종)
 // ============================================================
 
 /**
@@ -110,8 +110,10 @@ function detectNameRepetition(text: string, sentences: string[]): Translationese
         count: total,
         severity: 'warn',
         message: {
-          ko: `"${name}" ${total}회 반복 (문장당 ${(total / sentences.length).toFixed(2)}) — 대명사 치환 검토 (번역투).`,
-          en: `"${name}" repeated ${total}x (${(total / sentences.length).toFixed(2)}/sentence) — consider pronouns (translationese).`,
+          ko: `"${name}"이 ${total}회 반복됩니다. 대명사나 호칭으로 줄일지 확인해 주세요.`,
+          en: `"${name}" appears ${total} times. Consider pronouns or natural forms of address.`,
+          ja: `"${name}" が${total}回繰り返されています。代名詞や自然な呼び方に置き換えるか確認してください。`,
+          zh: `"${name}" 出现了 ${total} 次。请确认是否可改用代词或更自然的称呼。`,
         },
       });
     }
@@ -119,7 +121,7 @@ function detectNameRepetition(text: string, sentences: string[]): Translationese
   return hits;
 }
 
-/** 존칭 로마자 직역 — faithful 트랙은 의도 보존 가능 → info. */
+/** 존칭 로마자 음차 — faithful 트랙은 의도 보존 가능 → info. */
 const HONORIFIC_PATTERNS: { label: string; regex: RegExp }[] = [
   { label: '-nim/-ssi suffix', regex: /\b[A-Za-z]+-(?:nim|ssi)\b/gi },
   {
@@ -139,8 +141,10 @@ function detectHonorificLiteral(text: string): TranslationeseHit[] {
         count,
         severity: 'info',
         message: {
-          ko: `로마자 존칭/호칭 ${count}회 (${label}) — Market 트랙이면 자연 호칭 검토 (faithful 의도 보존 가능).`,
-          en: `Romanized honorific ${count}x (${label}) — consider natural address for Market track (may be intentional for faithful).`,
+          ko: `로마자 호칭 ${count}회 (${label}) — 상업 번역이면 자연스러운 호칭으로 바꿀지 확인해 주세요. 원문 보존 모드에서는 의도일 수 있습니다.`,
+          en: `Romanized honorifics appear ${count} times (${label}). For market-facing translation, consider more natural address; faithful mode may keep them intentionally.`,
+          ja: `ローマ字の敬称・呼称が${count}回あります（${label}）。商業向け翻訳では自然な呼び方にするか確認してください。原文寄りの方針なら意図的に残せます。`,
+          zh: `罗马字敬称/称呼出现 ${count} 次（${label}）。面向商业发布时请确认是否改成更自然的称呼；忠实原文模式下也可能保留。`,
         },
       });
     }
@@ -166,14 +170,16 @@ function detectSaidBookism(text: string): TranslationeseHit[] {
     count: bookisms.length,
     severity: 'warn',
     message: {
-      ko: `과잉 대사 동사 ${bookisms.length}회 vs said/asked ${saidCount}회 — said+행동 비트 권장 (과잉번역).`,
-      en: `Said-bookisms ${bookisms.length}x vs said/asked ${saidCount}x — prefer said + action beats (over-translation).`,
+      ko: `대사 동사가 ${bookisms.length}회로 많습니다. 단순한 said/asked와 행동 묘사로 나눌지 확인해 주세요.`,
+      en: `Dialogue verbs appear heavy (${bookisms.length} uses). Consider simpler said/asked plus action beats.`,
+      ja: `会話タグの動詞が多めです（${bookisms.length}回）。said/asked と動作描写に分けるか確認してください。`,
+      zh: `对话动词偏多（${bookisms.length} 次）。请确认是否改用 said/asked 加动作描写。`,
     },
   }];
 }
 
 // ============================================================
-// PART 5 — 검출기 (AI티 2종)
+// PART 5 — 검출기 (어색한 영문 습관 2종)
 // ============================================================
 
 /** em-dash 과다 — 기준: 총 4회 이상 그리고 문장당 0.25 초과. */
@@ -188,8 +194,10 @@ function detectEmDashOveruse(text: string, sentenceCount: number): Translationes
     count,
     severity: 'warn',
     message: {
-      ko: `em-dash ${count}회 (문장당 ${density.toFixed(2)}) — AI 출력 특성. 쉼표/마침표 치환 검토.`,
-      en: `Em-dash ${count}x (${density.toFixed(2)}/sentence) — common AI signature. Consider commas/periods.`,
+      ko: `em dash가 ${count}회 보입니다. 쉼표, 마침표, 짧은 문장으로 나눌지 확인해 주세요.`,
+      en: `Em dashes appear ${count} times. Consider commas, periods, or shorter sentences.`,
+      ja: `em dash が${count}回あります。カンマ、ピリオド、短い文に分けるか確認してください。`,
+      zh: `em dash 出现 ${count} 次。请确认是否改用逗号、句号或拆成短句。`,
     },
   }];
 }
@@ -204,8 +212,10 @@ function detectSmartQuotes(text: string): TranslationeseHit[] {
     count,
     severity: 'info',
     message: {
-      ko: `곡선 따옴표 ${count}자 — 플랫폼 규격(직선 따옴표 요구) 확인 (의도된 조판일 수 있음).`,
-      en: `Curly quotes ${count} chars — verify platform style guide (may be intentional typesetting).`,
+      ko: `곡선 따옴표 ${count}자가 있습니다. 플랫폼이 직선 따옴표를 요구하는지 확인해 주세요.`,
+      en: `Curly quotes appear ${count} times. Check whether the platform requires straight quotes.`,
+      ja: `曲線引用符が${count}個あります。掲載先が直線引用符を求めるか確認してください。`,
+      zh: `弯引号出现 ${count} 个。请确认平台是否要求使用直引号。`,
     },
   }];
 }
@@ -215,7 +225,7 @@ function detectSmartQuotes(text: string): TranslationeseHit[] {
 // ============================================================
 
 /**
- * KO→EN 번역 결과의 번역투/AI티 린트.
+ * KO→EN 번역 결과의 어색한 표현/영문 습관 린트.
  *
  * @param text  EN 번역 결과 본문 (비문자열/빈 입력 안전)
  * @returns hits + score (0~100, 높을수록 농도 높음 — 경고용, 차단 아님)

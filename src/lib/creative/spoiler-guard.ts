@@ -261,6 +261,6 @@ export function canExposeInMedia(
     return decide(false, 'BLOCKED', `Internal — 공개 회차 ep${pub} 미도달 (현재 ep${cur}) → 차단 (§3.1)`);
   }
   // 회차 미상 Internal — 사양 자동 차단 대상(Restricted·Confidential) 아님.
-  // 허용하되 WARNING으로 회차 확인 요구 (§8 작가 확인 패턴).
+  // 허용하되 WARNING으로 회차 검토 요구 (§8 작가 확인 패턴).
   return decide(true, 'WARNING', 'Internal — 회차 미상, 공개 회차 도달 여부 확인 필요 (§1·§8)');
 }

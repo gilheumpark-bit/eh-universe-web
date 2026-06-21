@@ -128,14 +128,20 @@ export interface StudioContextValue {
   sessionStartChars?: number;
   editorFontSize?: number;
   // History
-  archiveScope: 'project' | 'all';
-  setArchiveScope: Dispatch<SetStateAction<'project' | 'all'>>;
-  archiveFilter: string;
-  setArchiveFilter: Dispatch<SetStateAction<string>>;
+  historyScope: 'project' | 'all';
+  setHistoryScope: Dispatch<SetStateAction<'project' | 'all'>>;
+  historyFilter: string;
+  setHistoryFilter: Dispatch<SetStateAction<string>>;
   charSubTab: CharacterSubTab;
   setCharSubTab: Dispatch<SetStateAction<CharacterSubTab>>;
   // Session management
   createNewSession: (tab?: AppTab) => void;
+  createNewProject: () => string;
+  createNewProjectWithSession: (options?: {
+    projectName?: string;
+    sessionTitle?: string;
+    config?: Partial<StoryConfig>;
+  }) => { projectId: string; sessionId: string };
   createDemoSession: () => void;
   openQuickStart: () => void;
   startRename: (sessionId: string, currentTitle: string) => void;
@@ -144,6 +150,8 @@ export interface StudioContextValue {
   renameValue: string;
   setRenameValue: (val: string) => void;
   confirmRename: () => void;
+  deleteProject: (projectId: string) => void;
+  renameProject: (projectId: string, newName: string) => void;
   moveSessionToProject: (sessionId: string, targetProjectId: string) => void;
   deleteSession: (sessionId: string) => void;
   handleNextEpisode: () => void;

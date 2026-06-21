@@ -14,7 +14,7 @@
  * Mobile 프로젝트는 동일하게 작동하므로 모든 브라우저에서 실행.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { test, expect } from '@playwright/test';
 import { primeStudio } from '../fixtures/studio-state';

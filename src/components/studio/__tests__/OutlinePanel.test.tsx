@@ -165,8 +165,8 @@ describe('OutlinePanel', () => {
     // Initially both visible — click "Messages" tab
     const msgTab = getByRole('tab', { name: /Messages/i });
     fireEvent.click(msgTab);
-    // Now should show NOA Messages header (persona unification v2.1.3)
-    expect(container.textContent).toMatch(/NOA Messages/i);
+    // Now should show Noa Messages header (persona unification v2.1.3)
+    expect(container.textContent).toMatch(/Noa Messages/i);
     // Click "Scenes" — scenes-only
     const sceneTab = getByRole('tab', { name: /^Scenes$/i });
     fireEvent.click(sceneTab);

@@ -4,7 +4,7 @@
 - Date: 2026-06-08
 - Deciders: 프로젝트 오너
 - Supersedes: 없음 (신규)
-- Related: ADR-0009 (Observability), `lib/code-studio/ai/ari-engine.ts` (ARI Circuit Breaker)
+- Related: ADR-0009 (Observability), provider retry and gateway failover policy
 
 ## Context
 
@@ -20,7 +20,7 @@
 claude3 _error-handling 표준 (이번 ADR 에서 우리 표준 정의) 대비:
 - 재시도 가능 (5xx, timeout, ECONNRESET) vs 불가 (4xx) 명시적 분기 → ❌
 - Webhook DLQ 전략 → ❌
-- Circuit breaker 통합 → ⚠️ ARI 일부만 적용
+- Circuit breaker 통합 → ⚠️ provider failover 일부만 적용
 - Idempotency key 강제 → ❌ (Stripe 만)
 
 ## Decision
@@ -60,14 +60,10 @@ claude3 _error-handling 표준 (이번 ADR 에서 우리 표준 정의) 대비:
 
 Stripe webhook signature 검증 실패 → 400 (위조 가능성, 재전송 X 합당).
 
-### 4) Circuit Breaker (ARI 통합)
-
-기존 ARI engine (`lib/code-studio/ai/ari-engine.ts`):
-- EMA 기반 score 추적
-- 자동 failover (DGX → BYOK)
+### 4) Circuit Breaker
 
 **확장 (Phase 2)**:
-- AI 외 외부 호출 (Firestore / GitHub / Stripe) 도 ARI 적용
+- AI 외 외부 호출 (Firestore / GitHub / Stripe) 도 circuit breaker 적용
 - Tripped state (≥3 consecutive 5xx) → 30s cooldown
 - Half-open: 1 probe 통과 시 closed 복귀
 
@@ -93,7 +89,7 @@ process.on('unhandledRejection', (reason) => {
 |---|---|
 | Authentication (Firebase admin) | `{ ok: false, reason }` — 호출자가 401 변환 |
 | Storage (Firestore) | 캐시 폴백 또는 빈 결과 + 토스트 |
-| AI 호출 | ARI failover → 폴백 모델 또는 graceful "잠시 후 재시도" |
+| AI 호출 | provider failover → 폴백 모델 또는 graceful "잠시 후 재시도" |
 | RAG | 빈 결과 + 명시 안내 |
 | Image gen | 폴백 placeholder + 재시도 버튼 |
 
@@ -102,7 +98,7 @@ process.on('unhandledRejection', (reason) => {
 ### Positive
 - 모든 비동기 경계의 에러 동작 예측 가능
 - DLQ 로 webhook 손실 0
-- ARI 확장으로 외부 의존 cascade 차단
+- Circuit breaker 확장으로 외부 의존 cascade 차단
 
 ### Negative
 - retry-policy.ts 신설 + 28 routes 마이그레이션 비용
@@ -110,8 +106,8 @@ process.on('unhandledRejection', (reason) => {
 - Test 추가 (재시도 + circuit breaker 시나리오)
 
 ### Mitigation
-- 단계별 도입 — Phase 1 (정의 + 글로벌 핸들러), Phase 2 (retry-policy + ARI 확장), Phase 3 (DLQ)
-- ARI 는 이미 wired — 기존 테스트 인프라 활용
+- 단계별 도입 — Phase 1 (정의 + 글로벌 핸들러), Phase 2 (retry-policy + circuit breaker 확장), Phase 3 (DLQ)
+- 기존 provider retry 테스트 인프라 활용
 
 ## Implementation Hooks (현재 commit 범위)
 

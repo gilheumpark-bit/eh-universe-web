@@ -7,6 +7,7 @@
 import { logger } from '@/lib/logger';
 // [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
 import { checkBlockedJson } from '@/lib/noa/block-notice';
+import { checkPaywallJson } from '@/lib/noa/paywall-notice';
 
 // ============================================================
 // PART 1 — Types
@@ -226,11 +227,11 @@ function checkStructure(text: string): PublishAuditFinding[] {
 function checkCompleteness(text: string): PublishAuditFinding[] {
   const findings: PublishAuditFinding[] = [];
   const placeholders = [
-    { pattern: /\bTODO\b/gi, name: 'TODO 표식' },
-    { pattern: /\bTBD\b/gi, name: 'TBD 표식' },
-    { pattern: /\bFIXME\b/gi, name: 'FIXME 표식' },
+    { pattern: /\bTODO\b/gi, name: '작업 메모 표식' },
+    { pattern: /\bTBD\b/gi, name: '확정 대기 표식' },
+    { pattern: /\bFIXME\b/gi, name: '수정 메모 표식' },
     { pattern: /\[\.\.\.?\]|\(\.\.\.?\)/g, name: '[...] 미완 표식' },
-    { pattern: /\?\?\?+/g, name: '??? 미완 표식' },
+    { pattern: /\?\?\?+/g, name: '물음표 미완 표식' },
   ];
   for (const { pattern, name } of placeholders) {
     const matches = [...text.matchAll(pattern)];
@@ -320,7 +321,7 @@ export function runPublishAudit(text: string, options?: PublishAuditOptions): Pu
 }
 
 // ============================================================
-// PART 10 — AI 맞춤법 검수 (선택적, 사용자 API 키 소모)
+// PART 10 — 맞춤법 검수 (선택적, 사용자 연결 키 소모)
 // ============================================================
 
 export interface AICorrection {
@@ -352,7 +353,7 @@ const AI_AUDIT_SCHEMA = {
 
 /**
  * AI를 통한 맞춤법·띄어쓰기·어색한 표현 검수.
- * /api/structured-generate 단일 호출 (사용자 API 키 1회 소모).
+ * /api/structured-generate 단일 호출 (사용자 연결 키 1회 소모).
  * 실패하면 빈 배열 반환 — 로컬 규칙 검수에 영향 없음.
  */
 export async function runAIAudit(
@@ -387,8 +388,11 @@ ${text.slice(0, 4000)}`;
         apiKey: apiKey || undefined,
       }),
     });
-    if (!res.ok) return [];
-    const data = await res.json();
+    const data: unknown = await res.json().catch(() => null);
+    if (!res.ok) {
+      checkPaywallJson(data);
+      return [];
+    }
     // [N4] 차단 계약 수신 시 toast/카드 고지 후 빈 결과 (사일런트 차단 금지 — 고지는 발생)
     if (checkBlockedJson(data, 'publish-audit')) return [];
     const raw = typeof data === 'string' ? data : JSON.stringify(data);

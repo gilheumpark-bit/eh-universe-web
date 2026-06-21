@@ -8,14 +8,12 @@
 //   - 네트워크 실패 시 /offline 페이지 반환 (page navigation 한정)
 // ============================================================
 
-const CACHE_NAME = 'noa-studio-v2';
+const CACHE_NAME = 'noa-studio-v3';
 const OFFLINE_URL = '/offline';
 const SHELL_URLS = [
   '/',
   '/studio',
-  '/code-studio',
   '/translation-studio',
-  '/codex',
   OFFLINE_URL,
 ];
 
@@ -28,7 +26,7 @@ self.addEventListener('install', (event) => {
       Promise.all(
         SHELL_URLS.map((url) =>
           cache.add(url).catch((err) => {
-            // eslint-disable-next-line no-console
+
             console.warn('[sw] precache failed:', url, err?.message ?? err);
           })
         )
@@ -55,6 +53,7 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET, API calls, and external requests
   if (event.request.method !== 'GET') return;
   if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname.startsWith('/__/auth/')) return;
   if (url.origin !== self.location.origin) return;
 
   // Static assets (JS, CSS, images): cache-first

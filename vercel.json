@@ -7,13 +7,13 @@
       "maxDuration": 60
     },
     "src/app/api/chat/**/*.ts": {
-      "maxDuration": 300
+      "maxDuration": 60
     },
     "src/app/api/translate/**/*.ts": {
-      "maxDuration": 300
+      "maxDuration": 60
     },
     "src/app/api/complete/**/*.ts": {
-      "maxDuration": 180
+      "maxDuration": 30
     },
     "src/app/api/image-gen/**/*.ts": {
       "maxDuration": 180

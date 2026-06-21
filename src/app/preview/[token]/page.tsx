@@ -1,12 +1,12 @@
 "use client";
 
 // ============================================================
-// /preview/[token] — 공유 비주얼 노벨 프리뷰 페이지
+// /preview/[token] — 공유 장면 미리보기 페이지
 // ============================================================
 // 서버 불필요. Firestore에서 직접 읽어 ScenePlayer 렌더.
 // 비밀번호 보호 + 만료 체크 + 피드백 수집.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Loader2, Lock, Clock, AlertTriangle, MessageSquare, Send, Headphones, Film } from "lucide-react";
@@ -16,6 +16,8 @@ import { generateVoiceMappings } from "@/engine/scene-parser";
 import type { VoiceMapping } from "@/engine/scene-parser";
 
 const ScenePlayer = dynamic(() => import("@/components/studio/ScenePlayer"), { ssr: false });
+const PREVIEW_LOAD_TIMEOUT_MS = 8000;
+const SHARE_TOKEN_PATTERN = /^[A-HJ-NP-Za-km-z2-9]{8}$/;
 
 // ============================================================
 // PART 1 — 상태 타입
@@ -25,6 +27,7 @@ type PageState =
   | { status: "loading" }
   | { status: "not-found" }
   | { status: "expired" }
+  | { status: "unavailable"; message: string }
   | { status: "password"; data: SharedSceneData }
   | { status: "ready"; data: SharedSceneData }
   | { status: "error"; message: string };
@@ -34,6 +37,30 @@ type PageState =
 // ============================================================
 // PART 2 — 피드백 패널
 // ============================================================
+
+function PreviewStateMessage({
+  icon,
+  tone = "info",
+  title,
+  message,
+}: {
+  icon: ReactNode;
+  tone?: "info" | "warn" | "danger";
+  title: string;
+  message: string;
+}) {
+  return (
+    <main className="lg-preview-state">
+      <section className="lg-preview-state-panel" aria-live="polite">
+        <div className="lg-preview-state-icon" data-tone={tone}>
+          {icon}
+        </div>
+        <h1>{title}</h1>
+        <p>{message}</p>
+      </section>
+    </main>
+  );
+}
 
 function FeedbackPanel({
   token,
@@ -162,15 +189,42 @@ export default function PreviewPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!token) { setState({ status: "not-found" }); return; }
+    if (!SHARE_TOKEN_PATTERN.test(token)) {
+      setState({
+        status: "unavailable",
+        message: "잘못된 공개 링크입니다. 원고 내용은 표시하지 않았습니다.",
+      });
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return;
+      setState({
+        status: "unavailable",
+        message: "만료되었거나 공개되지 않은 링크입니다. 원고 내용은 표시하지 않았습니다.",
+      });
+    }, PREVIEW_LOAD_TIMEOUT_MS);
 
     loadSharedScene(token)
       .then((data) => {
+        if (cancelled) return;
+        window.clearTimeout(timeoutId);
         if (!data) { setState({ status: "not-found" }); return; }
         if (data.expiresAt < Date.now()) { setState({ status: "expired" }); return; }
         if (data.password) { setState({ status: "password", data }); return; }
         setState({ status: "ready", data });
       })
-      .catch((err) => setState({ status: "error", message: (err as Error).message }));
+      .catch((err) => {
+        if (cancelled) return;
+        window.clearTimeout(timeoutId);
+        setState({ status: "error", message: (err as Error).message });
+      });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [token]);
 
   // 비밀번호 확인
@@ -186,50 +240,66 @@ export default function PreviewPage() {
   // 로딩
   if (state.status === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-accent-purple" />
-        <p className="text-sm text-text-secondary font-mono">로딩 중...</p>
-      </div>
+      <PreviewStateMessage
+        icon={<Loader2 className="h-6 w-6 animate-spin" />}
+        title="공개 미리보기를 확인하는 중입니다"
+        message="공개 여부를 확인하고 있습니다. 확인 전에는 원고 내용을 표시하지 않습니다."
+      />
     );
   }
 
   // 만료
   if (state.status === "expired") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-4">
-        <Clock className="h-10 w-10 text-accent-amber" />
-        <h1 className="text-lg font-semibold text-text-primary">링크가 만료되었습니다</h1>
-        <p className="text-sm text-text-secondary">작가에게 새 링크를 요청해주세요.</p>
-      </div>
+      <PreviewStateMessage
+        icon={<Clock className="h-6 w-6" />}
+        tone="warn"
+        title="링크가 만료되었습니다"
+        message="공개 시간이 지난 링크입니다. 원고 내용은 표시하지 않았습니다."
+      />
     );
   }
 
   // 없음
   if (state.status === "not-found") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-4">
-        <AlertTriangle className="h-10 w-10 text-accent-red" />
-        <h1 className="text-lg font-semibold text-text-primary">프리뷰를 찾을 수 없습니다</h1>
-        <p className="text-sm text-text-secondary">링크가 잘못되었거나 삭제되었습니다.</p>
-      </div>
+      <PreviewStateMessage
+        icon={<AlertTriangle className="h-6 w-6" />}
+        tone="danger"
+        title="공개 미리보기를 열 수 없습니다"
+        message="잘못된 링크이거나 아직 공개되지 않았습니다. 원고 내용은 표시하지 않았습니다."
+      />
+    );
+  }
+
+  // 접근 불가
+  if (state.status === "unavailable") {
+    return (
+      <PreviewStateMessage
+        icon={<AlertTriangle className="h-6 w-6" />}
+        tone="warn"
+        title="공개 미리보기를 확인하지 못했습니다"
+        message={state.message}
+      />
     );
   }
 
   // 에러
   if (state.status === "error") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-4">
-        <AlertTriangle className="h-10 w-10 text-accent-red" />
-        <h1 className="text-lg font-semibold text-text-primary">오류 발생</h1>
-        <p className="text-sm text-text-secondary">{state.message}</p>
-      </div>
+      <PreviewStateMessage
+        icon={<AlertTriangle className="h-6 w-6" />}
+        tone="danger"
+        title="미리보기 상태를 확인하지 못했습니다"
+        message={state.message}
+      />
     );
   }
 
   // 비밀번호
   if (state.status === "password") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-6">
+      <main className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-6">
         <Lock className="h-10 w-10 text-accent-purple" />
         <h1 className="text-lg font-semibold text-text-primary">비밀번호가 필요합니다</h1>
         <div className="flex gap-2">
@@ -249,7 +319,7 @@ export default function PreviewPage() {
             확인
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -277,7 +347,7 @@ export default function PreviewPage() {
   // 모드 선택 화면
   if (previewMode === 'select') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-8">
+      <main className="flex flex-col items-center justify-center min-h-screen bg-bg-primary gap-8">
         <div className="text-center space-y-2">
           <h1 className="text-xl font-display font-bold text-text-primary">{data.title}</h1>
           {data.authorName && <p className="text-sm text-text-secondary">by {data.authorName}</p>}
@@ -289,24 +359,24 @@ export default function PreviewPage() {
             className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-purple/10 border border-border/30 hover:border-accent-purple/40 rounded-2xl transition-colors group"
           >
             <Headphones className="h-10 w-10 text-accent-purple group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-mono text-text-primary">🎧 라디오 드라마</span>
-            <span className="text-[10px] text-text-tertiary">눈을 감고 들어보세요</span>
+            <span className="text-sm font-mono text-text-primary">🎧 음성 확인</span>
+            <span className="text-[10px] text-text-tertiary">대사 흐름을 들어보세요</span>
           </button>
           <button
             onClick={() => setPreviewMode('visual')}
             className="flex flex-col items-center gap-3 px-8 py-6 bg-bg-secondary hover:bg-accent-amber/10 border border-border/30 hover:border-accent-amber/40 rounded-2xl transition-colors group"
           >
             <Film className="h-10 w-10 text-accent-amber group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-mono text-text-primary">🎬 비주얼 노벨</span>
-            <span className="text-[10px] text-text-tertiary">그 세계에 들어가세요</span>
+            <span className="text-sm font-mono text-text-primary">🎬 시각 미리보기</span>
+            <span className="text-[10px] text-text-tertiary">장면 구성을 확인해 주세요</span>
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="h-screen w-screen bg-black">
+    <main className="h-screen w-screen bg-black">
       <ScenePlayer
         scenes={data.scenes}
         voiceMappings={voiceMappings}
@@ -327,7 +397,7 @@ export default function PreviewPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

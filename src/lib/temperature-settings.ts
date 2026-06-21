@@ -57,7 +57,8 @@ export function getTemperatureOverride(): number | undefined {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) return undefined;
     const parsed = parseFloat(raw);
-    return Number.isNaN(parsed) ? undefined : parsed;
+    if (Number.isNaN(parsed)) return undefined;
+    return Math.max(TEMP_MIN, Math.min(TEMP_MAX, parsed));
   } catch {
     // [C] Safari private mode 등 localStorage 접근 실패 방어
     return undefined;
@@ -77,7 +78,9 @@ export function setTemperatureOverride(value: number | undefined): boolean {
     if (value === undefined) {
       localStorage.removeItem(STORAGE_KEY);
     } else {
-      localStorage.setItem(STORAGE_KEY, String(value));
+      if (!Number.isFinite(value)) return false;
+      const clamped = Math.max(TEMP_MIN, Math.min(TEMP_MAX, value));
+      localStorage.setItem(STORAGE_KEY, String(clamped));
     }
     return true;
   } catch {

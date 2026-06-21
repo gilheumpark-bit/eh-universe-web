@@ -9,14 +9,14 @@ import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 // PART 1 — Shortcuts Modal (Premium Design)
 // ============================================================
 
-const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
+const SHORTCUT_GROUPS = (language: AppLanguage, t: ReturnType<typeof createT>) => [
   {
     label: 'Navigation — 작가 친화 / Writer-friendly',
     shortcuts: [
       ['Ctrl+1', t('shortcuts.worldDesign')],
       ['Ctrl+2', t('shortcuts.worldSimulator')],
       ['Ctrl+3', t('shortcuts.characterStudio')],
-      ['Ctrl+4', t('shortcuts.rulebook')],
+      ['Ctrl+4', L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' })],
       ['Ctrl+5', t('shortcuts.writingStudio')],
       ['Ctrl+6', t('shortcuts.styleStudio')],
       ['Ctrl+7', t('shortcuts.manuscript')],
@@ -24,12 +24,12 @@ const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
     ],
   },
   {
-    label: 'Navigation — 펑션키 (legacy) / Function keys',
+    label: L4(language, { ko: '네비게이션 — 펑션키', en: 'Navigation — Function keys', ja: 'ナビゲーション — ファンクションキー', zh: '导航 — 功能键' }),
     shortcuts: [
       ['F1', t('shortcuts.worldDesign')],
       ['F2', t('shortcuts.worldSimulator')],
       ['F3', t('shortcuts.characterStudio')],
-      ['F4', t('shortcuts.rulebook')],
+      ['F4', L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' })],
       ['F5', t('shortcuts.writingStudio')],
       ['F6', t('shortcuts.styleStudio')],
       ['F7', t('shortcuts.manuscript')],
@@ -64,7 +64,7 @@ const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
 
 export function ShortcutsModal({ language, onClose }: { language: AppLanguage; onClose: () => void }) {
   const t = createT(language);
-  const groups = SHORTCUT_GROUPS(t);
+  const groups = SHORTCUT_GROUPS(language, t);
   const isKO = language === 'KO';
 
   return (

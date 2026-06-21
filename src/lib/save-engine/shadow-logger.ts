@@ -32,7 +32,7 @@ import { SHADOW_DB_NAME, SHADOW_DB_VERSION, ensureShadowStores } from './shadow-
 // [M1.5.3] operation 태그 세분화 — 탭별 Shadow 쓰기 분리.
 // - save-project: 전체 projects[] 스냅샷 (backward compat, M1.5.2 기본)
 // - save-manuscript: Writing 탭 (episode manuscripts[])
-// - save-scene-direction: Rulebook/SceneSheet (sceneDirection + episodeSceneSheets)
+// - save-scene-direction: Direction/SceneSheet (sceneDirection + episodeSceneSheets)
 // - save-character: Character (characters[] + charRelations)
 // - save-world-sim: World/Planning (worldSimData + simulatorRef + world fields)
 // - save-style: Style (styleProfile)

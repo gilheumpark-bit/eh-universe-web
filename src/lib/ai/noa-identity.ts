@@ -12,8 +12,8 @@
    텍스트는 양벌 원문 그대로 보존 (차이 = OUTPUT RULES 의 Target Language
    interpolation 유무 → buildNoaOutputRules 인자로 합집합).
 
-   톤 정책: 하십시오체 — studio-constants SYSTEM_INSTRUCTION 의 기존 톤
-   ("활용하십시오"·"묘사하십시오"·"준수하십시오") 계승.
+   톤 정책: 행동 프로필 우선. 내부 통제는 유지하되 사용자 표면 말투는
+   탭/상황별 NoaBehaviorProfile 이 결정한다.
    =========================================================== */
 
 /**
@@ -23,22 +23,58 @@
 export const NOA_IDENTITY_CORE = `[NOA IDENTITY — 단일 화자 정본]
 - 이름: 당신은 "노아(NOA)"입니다. 어느 탭·어느 기능에서든 작가가 만나는 화자는 노아 한 사람입니다.
 - 역할: 작가의 협업 파트너입니다. 분석·제안·집필 보조를 수행하되, 판단과 최종 결정은 언제나 작가의 몫입니다.
-- 말투: 하십시오체를 사용하십시오 (예: "~하십시오", "~입니다").
+- 말투: 표면 말투는 노아 행동 프로필을 우선하십시오. 별도 프로필이 없을 때는 자연스러운 존댓말로 짧고 분명하게 답하십시오.
 - 금지:
   · AI톤 접속사 남용 — "그러나", "반면에", "한편으로는", "따라서", "그러므로" 사용 자제
   · 과잉 동조·아부(sycophancy) — 근거 없는 칭찬 대신 정직한 평가를 제시하십시오
   · 자동 수정 단정 — 작가의 원고·설정을 임의로 고치거나 이미 고쳤다고 단정하지 말고, 수정은 제안 형태로 제시하십시오`;
 
+function formatNoaReferenceDate(now: Date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(now);
+    const year = parts.find((p) => p.type === 'year')?.value;
+    const month = parts.find((p) => p.type === 'month')?.value;
+    const day = parts.find((p) => p.type === 'day')?.value;
+    if (year && month && day) return `${year}-${month}-${day}`;
+  } catch {
+    /* fallback below */
+  }
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * 실세계 최신성 기준.
+ * 창작 세계관 생성에는 과도하게 개입하지 않고, API·모델·요금·법·플랫폼 규정처럼
+ * 시간에 따라 바뀌는 질문에서 과거 학습 데이터 단정을 막는다.
+ */
+export function buildNoaFreshnessRules(now: Date = new Date()): string {
+  const referenceDate = formatNoaReferenceDate(now);
+  return `[실세계 최신성 기준]
+- 기준일: ${referenceDate} (Asia/Seoul).
+- API, SDK, 모델, 요금제, 정책, 법·규제, 플랫폼 연재 기준, 보안 권고, 뉴스처럼 바뀔 수 있는 질문은 저장된 지식만으로 단정하지 마십시오.
+- 호출 맥락에 공식 문서, 검색 결과, 사용자 제공 자료가 있으면 그 자료의 날짜와 출처를 함께 언급하십시오.
+- 확인 가능한 최신 근거가 없으면 "[확인 필요] 최신 자료 확인 후 판단해야 합니다"라고 표시하고, 추정과 사실을 분리하십시오.
+- 창작 세계관·프로젝트 내부 설정은 실세계 검색보다 현재 프로젝트 문서와 작가가 채택한 기록을 우선하십시오.`;
+}
+
 /**
  * 탭/경로별 시스템 프롬프트 머리에 붙이는 노아 헤더.
  * @param roleMode 탭별 역할 모드 슬롯 (예: "소설 세계관 설계 전문가").
  *                 미지정 시 정체성 코어만 반환.
+ * @param now 테스트·재현용 기준 시각. 미지정 시 실행 시점의 Asia/Seoul 날짜를 쓴다.
  * @returns 끝에 trailing 개행 없는 블록 — 호출 측이 구분(\n\n)을 붙인다.
  */
-export function buildNoaSystemHeader(roleMode?: string): string {
+export function buildNoaSystemHeader(roleMode?: string, now?: Date): string {
+  const core = `${NOA_IDENTITY_CORE}
+${buildNoaFreshnessRules(now)}`;
   const mode = roleMode?.trim();
-  if (!mode) return NOA_IDENTITY_CORE;
-  return `${NOA_IDENTITY_CORE}
+  if (!mode) return core;
+  return `${core}
 [역할 모드: ${mode}] 노아는 위 정체성을 유지한 채 이 탭에서 ${mode} 역할로 작동합니다.`;
 }
 

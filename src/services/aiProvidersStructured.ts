@@ -1,11 +1,15 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
-import { SPARK_SERVER_URL } from './sparkService';
+import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
   openai: 'https://api.openai.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/chat/completions',
+  qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+  minimax: 'https://api.minimax.io/v1/chat/completions',
+  kimi: 'https://api.moonshot.ai/v1/chat/completions',
   groq: 'https://api.groq.com/openai/v1/chat/completions',
   mistral: 'https://api.mistral.ai/v1/chat/completions',
-  spark: `${SPARK_SERVER_URL}/v1/chat/completions`,
+  spark: `${getDgxDeveloperApiBaseUrl()}/v1/chat/completions`,
 };
 const STRUCTURED_PROVIDER_TIMEOUT_MS = 60_000;
 
@@ -88,7 +92,7 @@ export async function generateJsonClaude(
     },
     signal: AbortSignal.timeout(STRUCTURED_PROVIDER_TIMEOUT_MS),
     body: JSON.stringify({
-      model: model || 'claude-sonnet-4-20250514',
+      model: model || 'claude-sonnet-4-6',
       max_tokens: 4096,
       tools: [tool],
       tool_choice: { type: 'tool', name: 'structured_output' },
@@ -151,8 +155,8 @@ export async function dispatchStructuredGeneration(
 ): Promise<{ ok: true; result: unknown } | { ok: false; error: string }> {
   try {
     if (provider === 'ollama' || provider === 'lmstudio') {
-      // DGX Spark 서버가 있으면 OpenAI 호환 경로로 폴백
-      if (SPARK_SERVER_URL) {
+      // DGX 개발 API 플래그가 켜진 경우에만 OpenAI 호환 경로로 폴백
+      if (isDgxDeveloperApiEnabled()) {
         const schemaHint = schema ? `\n\nRespond with JSON matching this schema:\n${JSON.stringify(schema, null, 2)}` : '';
         return { ok: true, result: await generateJsonOpenAICompat('spark', '', model, prompt + schemaHint, fallback) };
       }

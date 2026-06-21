@@ -1,8 +1,8 @@
 // ============================================================
-// HCI Calculator — Human Control Index 산출 + 4언어 보충 문구
+// HCI Calculator — Author Control Index 산출 + 4언어 보충 문구
 // ============================================================
 //
-// HCI = (Human-weighted events / total events) × 100
+// HCI = (Author-weighted events / total events) × 100
 // 0~100% 단일 숫자 — 마케팅 무기지만 동시에 양날성.
 //
 // 보충 문구 byte-level 4언어 — HCI 옆 필수 노출.
@@ -188,8 +188,8 @@ export const HCI_AXIS_LABELS = {
 // ============================================================
 
 export const ORIGIN_CATEGORY_LABELS = {
-  ko: { human_input: '인간 입력', refinement: '정제 작업', ai_suggestion: 'AI 제안' },
-  en: { human_input: 'Human Input', refinement: 'Refinement', ai_suggestion: 'AI Suggestion' },
-  ja: { human_input: '人間の入力', refinement: '推敲・修正', ai_suggestion: 'AIの提案' },
-  zh: { human_input: '人类输入', refinement: '精修', ai_suggestion: 'AI建议' },
+  ko: { human_input: '작가 입력', refinement: '정제 작업', ai_suggestion: '노아 제안' },
+  en: { human_input: 'Author Input', refinement: 'Refinement', ai_suggestion: 'NOA Suggestion' },
+  ja: { human_input: '作者入力', refinement: '推敲・修正', ai_suggestion: 'NOAの提案' },
+  zh: { human_input: '作者输入', refinement: '精修', ai_suggestion: 'NOA建议' },
 } as const;

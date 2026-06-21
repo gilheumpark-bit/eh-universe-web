@@ -56,7 +56,7 @@ const ApiKeysSection: React.FC<ApiKeysSectionProps> = ({ language, hostedProvide
           <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
           <div className="text-[13px] text-text-tertiary hidden sm:block">
             {t('settings.apiKeyDesc')}
-            <span className="ml-1 opacity-60">(API {L4(language, { ko: '키', en: 'Key', ja: 'Key', zh: 'Key' })})</span>
+            <span className="ml-1 opacity-60">({L4(language, { ko: '연결 키', en: 'Connection key', ja: '接続キー', zh: '连接密钥' })})</span>
           </div>
         </div>
       </div>

@@ -190,7 +190,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '한 문장 훅',
         '마지막 대사',
       ]),
-      sourceHint: 'StoryConfig(title·genre·totalEpisodes·synopsis)',
+      sourceHint: '작품명·장르·목표 회차·개요',
     },
     overview: {
       code: '00',
@@ -203,7 +203,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '핵심 후킹 5',
         '마지막 장면',
       ]),
-      sourceHint: 'StoryConfig(title·genre·platform·primaryEmotion·synopsis)',
+      sourceHint: '작품명·장르·연재 플랫폼·주요 감정·개요',
     },
     synopsis: {
       code: '01',
@@ -215,7 +215,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '결정적 대사',
         '작품이 도착하는 자리',
       ]),
-      sourceHint: 'StoryConfig(synopsis·characters)',
+      sourceHint: '개요·캐릭터 설정',
     },
     plotStructure: {
       code: '04',
@@ -228,7 +228,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '결말이 서는 이유',
         '구조 요약 도표',
       ]),
-      sourceHint: '아크/플롯 구조 데이터 (StoryConfig 자동 추출 불가 — 작가 작성 영역)',
+      sourceHint: '아크/플롯 구조 데이터 (자동 추출 불가 — 작가 작성 영역)',
     },
     themeTone: {
       code: '05',
@@ -239,9 +239,9 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '핵심 주제 1문장',
         '톤 구성비',
         '차별점',
-        '주인공 화법(voice DNA — 작가 영역)',
+        '주인공 화법(목소리 고정값 — 작가 영역)',
       ]),
-      sourceHint: 'StoryConfig(primaryEmotion·narrativeIntensity)',
+      sourceHint: '주요 감정·서사 강도',
     },
     keyScenes: {
       code: '12',
@@ -261,7 +261,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '핵심 세력 한눈에 표',
         '후반 배경(조율 공개)',
       ]),
-      sourceHint: 'StoryConfig 세계관 필드(corePremise·powerStructure 등)',
+      sourceHint: '세계관 필드(핵심 전제·권력 구조 등)',
     },
     characters: {
       code: '03',
@@ -273,7 +273,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '관계 한눈에 표',
         '적대 인물 기능',
       ]),
-      sourceHint: 'StoryConfig(povCharacter·characters·charRelations)',
+      sourceHint: '시점 인물·캐릭터·관계 설정',
     },
     glossary: {
       code: '11',
@@ -284,7 +284,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '분류별 용어 표 정리',
         '깊은 층위 용어(최소 정의)',
       ]),
-      sourceHint: 'StoryConfig(items·skills·magicSystems)',
+      sourceHint: '작품 설정의 아이템·기술·체계 항목',
     },
     visualGuide: {
       code: '08',
@@ -307,11 +307,11 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
       pendingSlots: Object.freeze([
         '타깃 독자',
         '시장 위치',
-        '비교작(~류 추정·정확도 한계 고지)',
+        '비교작 유형 추정·정확도 한계 고지',
         '차별점',
         '진입 장벽·리스크(정직)',
       ]),
-      sourceHint: 'StoryConfig(platform·publishPlatform·genre)',
+      sourceHint: '플랫폼·연재 플랫폼·장르',
     },
     episodeGuide: {
       code: '10',
@@ -324,7 +324,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
         '연재 호흡',
         '외전·사이드 스토리',
       ]),
-      sourceHint: 'StoryConfig(totalEpisodes·episode)',
+      sourceHint: '목표 회차·현재 회차',
     },
     ipExpansion: {
       code: '06',
@@ -333,7 +333,7 @@ export const IP_BIBLE_SECTION_META: Readonly<Record<IpBibleSectionKey, SectionMe
       spoiler: 'safe',
       pendingSlots: Object.freeze(['매체별 근거·과제', '확장의 토대', '요약 도식']),
       sourceHint:
-        '분석 scores(webtoonFit·gameFit·dramaFit·ipReadiness·industryScores)',
+        '분석 점수(웹툰화·게임화·영상화·자산화 준비도·업계 적합도)',
     },
   });
 
@@ -419,20 +419,20 @@ export const PACKAGE_SECTION_MAP: Readonly<
 /** 패키지 성격 한 줄 (Layer 50 정의 기반). */
 const PACKAGE_DESC: Readonly<Record<SubmissionPackageType, string>> = Object.freeze({
   A: '출판사 투고 — 한국 출판사 매뉴스크립트 표준: 서사 완성도(시놉·플롯)+설정 핵심+출판 시장성',
-  B: '영상화 제안 — TV Show Bible + 시즌 plan: 장면성·캐스팅·시즌 구조·비주얼',
+  B: '영상화 제안 — 영상 기획 바이블 + 시즌 계획: 장면성·캐스팅·시즌 구조·비주얼',
   C: '웹툰화 제안 — 콘티·콜백 기반: 키씬·비주얼·연재 호흡·설정 참조',
-  D: 'IP 라이선스 — Character Visual Bible + 권리/continuity 레퍼런스(세계관·인물·용어집)',
+  D: 'IP 라이선스 — 캐릭터 비주얼 바이블 + 권리/연속성 참조(세계관·인물·용어집)',
   E: '해외 진출 — 4언어 번역·글로벌 적합도: 보편 테마·시장·확장성',
 });
 
 /** 매핑 추정 한계 고지 (모든 패키지 note 공통 꼬리). */
 const MAPPING_HONESTY =
-  '섹션 선별 = 표준 문서 기반 자동 추정 (confidence 0.6) · 최종 구성 = 작가 결정 영역';
+  '섹션 선별 = 표준 문서 기반 자동 추정 (신뢰도 0.6) · 최종 구성 = 작가 결정 영역';
 
 /** 바이블 정직 고지. */
 export const IP_BIBLE_HONESTY_NOTE =
   '자동 조립 결과 — 입력에 존재하는 데이터만 반영 (미존재 = 빈 섹션·날조 0). ' +
-  '미기재 슬롯(pendingSlots) = 작가 작성 영역. ' +
+  '미기재 항목 = 작가 작성 영역. ' +
   MAPPING_HONESTY +
   '.';
 
@@ -563,7 +563,7 @@ function readinessLine(r: { score: number; tier?: string } | null | undefined): 
   const score = finiteNum(r.score);
   if (score === null) return null;
   const tier = text(r.tier);
-  return tier !== null ? `${score}/100 (tier ${tier})` : `${score}/100`;
+  return tier !== null ? `${score}/100 (등급 ${tier})` : `${score}/100`;
 }
 
 /** 산업별 score record → "출판 80 · 해외_번역 70". 유한값만. */

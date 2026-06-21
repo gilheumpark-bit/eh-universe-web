@@ -7,20 +7,14 @@
          (발신 = LoreguardStudio 검색 팔레트 Action '비주얼' + 설정 헤더 버튼 — 2 진입점).
    닫기: 닫기 버튼 / Escape / 오버레이 클릭 — MemoPanel 과 동일 slide-over 패턴.
 
-   구 셸 VisualTab(src/components/studio/tabs/VisualTab.tsx — 비주얼 카드·이미지
-   프롬프트·이미지 생성)의 가치 + Wave E previsual-slots.ts 엔진 연동:
+   구 셸 VisualTab(src/components/studio/tabs/VisualTab.tsx — 비주얼 카드·프롬프트)의
+   자료 정리 가치 + Wave E previsual-slots.ts 연동:
    - 비주얼 카드 → currentSession.config.visualPromptCards (구 탭과 동일 데이터).
      선택 카드의 최종 프롬프트/네거티브 = 기존 buildFinalVisualPrompt /
      buildNegativePrompt 재사용 + 복사 버튼.
-   - 이미지 생성 → 기존 image-gen 경로 재사용: services/imageGenerationService
-     generateImage (구 VisualTab 단건 생성과 동일 asset 형태·.slice(0,8) 상한).
-     provider/키는 구 VisualTab 이 영속한 동일 슬롯에서 읽기만 한다
-     ('noa-img-provider' localStorage · 'noa-img-apikey' sessionStorage —
-     VisualTab PART 6 비공개 헬퍼와 동일 키. export 리팩터링은 범위 외라 읽기
-     로직만 국소 재현). 키 없음 + DGX 없음 = 생성 버튼 대신 프롬프트 복사만
-     (정직 비활성 — 설정 UI 중복 구현 금지).
-     영속 = useStudio setConfig 함수형 업데이트 (stale config 방지).
-   - 슬롯 엔진 → buildPrevisualSlots (Wave E·순수 TS·생성 호출 0) — 이미지 32 /
+   - 이미지 생성은 제품 표면에서 제공하지 않는다. 이 패널은 외부 제작/디자인 전달용
+     프롬프트와 시각 슬롯을 정리하고 복사하는 용도다.
+   - 슬롯 정리 → buildPrevisualSlots (Wave E·순수 TS·생성 호출 0) — 이미지 32 /
      영상 51 / 음성 23 슬롯 명세 + 프롬프트 골격 표시·복사. scene 매핑은 실존
      필드만: subject ← 카드 subjectPrompt · setting ← 카드 backgroundPrompt ||
      config.setting · mood ← 카드 moodTags || config.primaryEmotion ·
@@ -37,7 +31,7 @@ import { useStudio } from "@/app/studio/StudioContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { L4 } from "@/lib/i18n";
-import { Copy, Img, Layers, Play, X } from "./icons";
+import { Copy, Img, Layers, X } from "./icons";
 import { buildFinalVisualPrompt, buildNegativePrompt } from "@/lib/visual-prompt";
 import {
   buildPrevisualSlots,
@@ -45,51 +39,151 @@ import {
   type SlotMedium,
 } from "@/lib/creative/previsual-slots";
 import {
-  generateImage,
-  type ImageGenProvider,
-} from "@/services/imageGenerationService";
-import { hasDgxService } from "@/lib/ai-providers";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+  localizeVisualPromptSkeleton,
+  visualMediumLabel,
+  visualShotTypeLabel,
+  visualSlotCategoryLabel,
+} from "@/lib/loreguard/output-localization";
 import { logger } from "@/lib/logger";
-import type { GeneratedVisualAsset, VisualPromptCard } from "@/lib/studio-types";
+import { DEFAULT_LEVELS } from "@/lib/visual-defaults";
+import type {
+  GeneratedVisualAsset,
+  VisualPromptCard,
+  VisualShotType,
+  VisualTargetUse,
+} from "@/lib/studio-types";
 
 // ============================================================
-// PART 1 — provider/키 읽기 (구 VisualTab PART 6 동일 슬롯 · 읽기 전용)
+// PART 1 — 비주얼 카드 정규화
 // ============================================================
-
-const VALID_PROVIDERS: readonly ImageGenProvider[] = ["openai", "stability", "local-spark"];
-
-/** 구 VisualTab 이 저장한 provider 선호 — 동일 키 'noa-img-provider' 읽기만. */
-function readSavedProvider(dgx: boolean): ImageGenProvider {
-  try {
-    const saved = window.localStorage.getItem("noa-img-provider");
-    if (saved && (VALID_PROVIDERS as readonly string[]).includes(saved)) {
-      return saved as ImageGenProvider;
-    }
-  } catch {
-    /* SSR/차단 스토리지 — 기본값 폴백 */
-  }
-  return dgx ? "local-spark" : "openai";
-}
-
-/** 구 VisualTab 이 저장한 BYOK 키 — 동일 키 'noa-img-apikey'(sessionStorage) 읽기만. */
-function readSavedApiKey(): string {
-  try {
-    return window.sessionStorage.getItem("noa-img-apikey") ?? "";
-  } catch {
-    return "";
-  }
-}
 
 const MEDIUMS: readonly SlotMedium[] = ["image", "video", "voice"];
+const VALID_SHOT_TYPES: readonly VisualShotType[] = [
+  "key_scene",
+  "character_focus",
+  "background_focus",
+  "cover",
+  "thumbnail",
+  "object_focus",
+];
+const VALID_TARGET_USES: readonly VisualTargetUse[] = [
+  "illustration",
+  "cover",
+  "thumbnail",
+  "character_sheet",
+  "concept_art",
+];
+const DEFAULT_NEGATIVE_PROMPT = "blurry, low quality, watermark, text, logo, cropped, deformed";
+
+function readString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function readPositiveNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function normalizeVisualLevel(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.max(0, Math.min(3, Math.round(value)));
+}
+
+function normalizeShotType(value: unknown): VisualShotType {
+  return typeof value === "string" && (VALID_SHOT_TYPES as readonly string[]).includes(value)
+    ? value as VisualShotType
+    : "key_scene";
+}
+
+function normalizeTargetUse(value: unknown): VisualTargetUse {
+  return typeof value === "string" && (VALID_TARGET_USES as readonly string[]).includes(value)
+    ? value as VisualTargetUse
+    : "illustration";
+}
+
+function normalizeGeneratedAssets(value: unknown, promptCardId: string): GeneratedVisualAsset[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const assets = value.flatMap((assetCandidate, index) => {
+    if (typeof assetCandidate !== "object" || assetCandidate === null) return [];
+    const asset = assetCandidate as Partial<GeneratedVisualAsset>;
+    const imageUrl = readString(asset.imageUrl).trim();
+    if (!imageUrl) return [];
+    const createdAt = readPositiveNumber(asset.createdAt, Date.now());
+    return [{
+      id: readString(asset.id).trim() || `${promptCardId}-asset-${index + 1}`,
+      promptCardId: readString(asset.promptCardId).trim() || promptCardId,
+      provider: readString(asset.provider).trim() || "unknown",
+      model: readString(asset.model).trim() || "unknown",
+      imageUrl,
+      promptSnapshot: readString(asset.promptSnapshot),
+      createdAt,
+      assignedEpisode: typeof asset.assignedEpisode === "number" ? asset.assignedEpisode : undefined,
+      favorite: typeof asset.favorite === "boolean" ? asset.favorite : undefined,
+      revisedPrompt: readString(asset.revisedPrompt) || undefined,
+    } satisfies GeneratedVisualAsset];
+  });
+  return assets.length > 0 ? assets : undefined;
+}
+
+function normalizeVisualPromptCard(cardCandidate: unknown, index: number): VisualPromptCard | null {
+  if (typeof cardCandidate !== "object" || cardCandidate === null) return null;
+  const card = cardCandidate as Partial<VisualPromptCard>;
+  const id = readString(card.id).trim() || `legacy-visual-card-${index + 1}`;
+  const episode = readPositiveNumber(card.episode, 1);
+  const createdAt = readPositiveNumber(card.createdAt, Date.now());
+  const updatedAt = readPositiveNumber(card.updatedAt, createdAt);
+  const levels = typeof card.levels === "object" && card.levels !== null ? card.levels : {};
+
+  return {
+    id,
+    episode,
+    analysisId: readString(card.analysisId) || undefined,
+    title: readString(card.title),
+    shotType: normalizeShotType(card.shotType),
+    targetUse: normalizeTargetUse(card.targetUse),
+    cameraShot: card.cameraShot,
+    selectedCharacters: readStringArray(card.selectedCharacters),
+    selectedObjects: readStringArray(card.selectedObjects),
+    levels: {
+      subjectFocus: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).subjectFocus, DEFAULT_LEVELS.subjectFocus),
+      backgroundDensity: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).backgroundDensity, DEFAULT_LEVELS.backgroundDensity),
+      sceneTension: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).sceneTension, DEFAULT_LEVELS.sceneTension),
+      emotionIntensity: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).emotionIntensity, DEFAULT_LEVELS.emotionIntensity),
+      compositionDrama: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).compositionDrama, DEFAULT_LEVELS.compositionDrama),
+      styleStrength: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).styleStrength, DEFAULT_LEVELS.styleStrength),
+      symbolismWeight: normalizeVisualLevel((levels as Partial<VisualPromptCard["levels"]>).symbolismWeight, DEFAULT_LEVELS.symbolismWeight),
+    },
+    subjectPrompt: readString(card.subjectPrompt),
+    backgroundPrompt: readString(card.backgroundPrompt),
+    scenePrompt: readString(card.scenePrompt),
+    compositionPrompt: readString(card.compositionPrompt),
+    lightingPrompt: readString(card.lightingPrompt),
+    stylePrompt: readString(card.stylePrompt),
+    negativePrompt: readString(card.negativePrompt) || DEFAULT_NEGATIVE_PROMPT,
+    moodTags: readStringArray(card.moodTags),
+    consistencyTags: readStringArray(card.consistencyTags),
+    sourceSummary: readString(card.sourceSummary) || undefined,
+    sourceTurningPoint: readString(card.sourceTurningPoint) || undefined,
+    sourceLocation: readString(card.sourceLocation) || undefined,
+    createdAt,
+    updatedAt,
+    generatedImages: normalizeGeneratedAssets(card.generatedImages, id),
+    seed: typeof card.seed === "number" ? card.seed : undefined,
+    referenceImageUrl: readString(card.referenceImageUrl) || undefined,
+  };
+}
 
 // ============================================================
 // PART 2 — 메인 컴포넌트
 // ============================================================
 
 export default function VisualPanel() {
-  const { currentSession, setConfig, language } = useStudio();
-  const { IMAGE_GENERATION: imageGenEnabled } = useFeatureFlags();
+  const { currentSession, language } = useStudio();
 
   const [open, setOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -103,21 +197,9 @@ export default function VisualPanel() {
   useFocusTrap(dialogRef, open);
   useBodyScrollLock(open);
 
-  // 이미지 생성 자원 — 오픈 시점에 1회 읽기 (패널 미오픈 = null 렌더라 window 안전)
-  const [dgx, setDgx] = useState(false);
-  const [provider, setProvider] = useState<ImageGenProvider>("openai");
-  const [apiKey, setApiKey] = useState("");
-  const [genBusyId, setGenBusyId] = useState<string | null>(null);
-  const [genError, setGenError] = useState<string | null>(null);
-
-  // ----- 오픈 이벤트 청취 — 열 때마다 provider/키 재읽기 (구 탭 설정 변경 흡수) -----
+  // ----- 오픈 이벤트 청취 -----
   useEffect(() => {
     const onOpen = () => {
-      const d = hasDgxService();
-      setDgx(d);
-      setProvider(readSavedProvider(d));
-      setApiKey(readSavedApiKey());
-      setGenError(null);
       setOpen(true);
     };
     window.addEventListener("loreguard:open-visual", onOpen);
@@ -135,14 +217,16 @@ export default function VisualPanel() {
   }, [open]);
 
   const config = currentSession?.config ?? null;
-  const cards = useMemo(() => config?.visualPromptCards ?? [], [config?.visualPromptCards]);
+  const rawVisualPromptCards = config?.visualPromptCards;
+  const cards = useMemo(() => {
+    if (!Array.isArray(rawVisualPromptCards)) return [];
+    return rawVisualPromptCards
+      .map((card, index) => normalizeVisualPromptCard(card, index))
+      .filter((card): card is VisualPromptCard => card !== null);
+  }, [rawVisualPromptCards]);
   const selectedCard = cards.find((c) => c.id === selectedCardId) ?? cards[0] ?? null;
 
-  // 생성 가능 여부 — local-spark 는 키 불필요(DGX 필요), BYOK 는 키 필요
-  const canGenerate =
-    imageGenEnabled && (provider === "local-spark" ? dgx : apiKey.length > 0);
-
-  // ----- Wave E 슬롯 엔진 (순수 — 생성 호출 0 · 실존 필드만 매핑) -----
+  // ----- 시각 슬롯 정리 (순수 — 생성 호출 0 · 실존 필드만 매핑) -----
   const slotResult = useMemo(() => {
     const scene: PrevisualSceneInput = {
       episode: config?.episode ?? null,
@@ -193,7 +277,7 @@ export default function VisualPanel() {
           new CustomEvent("noa:toast", {
             detail: {
               message: L4(language, {
-                ko: "복사 실패 — 브라우저 권한을 확인하세요",
+                ko: "복사하지 못했습니다. 브라우저 권한을 확인해 주세요",
                 en: "Copy failed — check browser permission",
                 ja: "コピー失敗 — ブラウザの権限を確認してください",
                 zh: "复制失败 — 请检查浏览器权限",
@@ -207,91 +291,11 @@ export default function VisualPanel() {
     [language],
   );
 
-  // ----- 이미지 생성 — 기존 generateImage 경로 재사용 (구 VisualTab 단건 생성 동형) -----
-  const handleGenerate = useCallback(
-    async (card: VisualPromptCard) => {
-      if (genBusyId || !canGenerate) return;
-      const prompt = buildFinalVisualPrompt(card);
-      if (!prompt.trim()) {
-        setGenError(
-          L4(language, {
-            ko: "프롬프트가 비어 있습니다 — 카드에 프롬프트를 먼저 채우세요.",
-            en: "Prompt is empty — fill the card prompts first.",
-            ja: "プロンプトが空です — 先にカードへ入力してください。",
-            zh: "提示词为空 — 请先填写卡片提示词。",
-          }),
-        );
-        return;
-      }
-      setGenBusyId(card.id);
-      setGenError(null);
-      try {
-        const result = await generateImage(provider, prompt, buildNegativePrompt(card), apiKey, { n: 1 });
-        if (result.error) {
-          setGenError(result.error.slice(0, 140));
-          return;
-        }
-        const img = result.images[0];
-        if (!img) {
-          setGenError(
-            L4(language, {
-              ko: "결과 이미지가 없습니다.",
-              en: "No image returned.",
-              ja: "画像が返されませんでした。",
-              zh: "未返回图片。",
-            }),
-          );
-          return;
-        }
-        const asset: GeneratedVisualAsset = {
-          id: `ga-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          promptCardId: card.id,
-          provider,
-          model: provider === "openai" ? "dall-e-3" : "sdxl",
-          imageUrl: img.url,
-          promptSnapshot: prompt,
-          createdAt: Date.now(),
-          assignedEpisode: card.episode,
-          revisedPrompt: img.revised_prompt,
-        };
-        // setConfig 함수형 업데이트 — 비동기 응답 시점의 stale config 덮어쓰기 방지
-        setConfig((prev) => ({
-          ...prev,
-          visualPromptCards: (prev.visualPromptCards ?? []).map((c) =>
-            c.id === card.id
-              ? { ...c, generatedImages: [asset, ...(c.generatedImages ?? [])].slice(0, 8) }
-              : c,
-          ),
-        }));
-        window.dispatchEvent(
-          new CustomEvent("noa:toast", {
-            detail: {
-              message: L4(language, { ko: "이미지 생성 완료", en: "Image generated", ja: "画像生成完了", zh: "图片生成完成" }),
-              variant: "success",
-            },
-          }),
-        );
-      } catch (err) {
-        logger.warn("VisualPanel", "generateImage failed", err);
-        setGenError(
-          L4(language, {
-            ko: "생성 실패 (네트워크) — 다시 시도하세요.",
-            en: "Generation failed (network) — try again.",
-            ja: "生成失敗（ネットワーク）— 再試行してください。",
-            zh: "生成失败（网络）— 请重试。",
-          }),
-        );
-      } finally {
-        setGenBusyId(null);
-      }
-    },
-    [genBusyId, canGenerate, provider, apiKey, setConfig, language],
-  );
-
   if (!open) return null;
 
   const finalPrompt = selectedCard ? buildFinalVisualPrompt(selectedCard) : "";
   const negativePrompt = selectedCard ? buildNegativePrompt(selectedCard) : "";
+  const displayPromptSkeleton = localizeVisualPromptSkeleton(language, plan.promptSkeleton);
 
   return (
     <div
@@ -385,10 +389,10 @@ export default function VisualPanel() {
                       }}
                     >
                       <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {c.title || `EP${c.episode} Card`}
+                        {c.title || `EP${c.episode} 비주얼 카드`}
                       </span>
                       <span style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: "auto", flexShrink: 0 }}>
-                        {c.shotType} · EP{c.episode}
+                        {visualShotTypeLabel(language, c.shotType)} · EP{c.episode}
                         {(c.generatedImages?.length ?? 0) > 0 && ` · ${c.generatedImages!.length}🖼`}
                       </span>
                     </button>
@@ -398,9 +402,9 @@ export default function VisualPanel() {
 
               {selectedCard && (
                 <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {/* 최종 프롬프트 + 복사 (기존 buildFinalVisualPrompt 재사용) */}
+                  {/* 시각 자료 메모 + 복사 (기존 buildFinalVisualPrompt 재사용) */}
                   <div style={{ fontSize: 11, fontWeight: 800, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em" }}>
-                    {L4(language, { ko: "최종 프롬프트", en: "Final prompt", ja: "最終プロンプト", zh: "最终提示词" })}
+                    {L4(language, { ko: "시각 자료 메모", en: "Visual brief", ja: "ビジュアル資料メモ", zh: "视觉资料备忘" })}
                   </div>
                   <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 11.5, color: "var(--ink-2)", background: "var(--card-2)", border: "1px solid var(--line)", borderRadius: 10, padding: 10, maxHeight: 120, overflowY: "auto" }}>
                     {finalPrompt || L4(language, { ko: "(비어 있음)", en: "(empty)", ja: "（空）", zh: "（空）" })}
@@ -413,7 +417,7 @@ export default function VisualPanel() {
                       onClick={() => void copyText(finalPrompt)}
                     >
                       <Copy size={13} />
-                      {L4(language, { ko: "프롬프트 복사", en: "Copy prompt", ja: "プロンプトをコピー", zh: "复制提示词" })}
+                      {L4(language, { ko: "자료 메모 복사", en: "Copy brief", ja: "資料メモをコピー", zh: "复制资料备忘" })}
                     </button>
                     <button
                       type="button"
@@ -421,54 +425,26 @@ export default function VisualPanel() {
                       onClick={() => void copyText(negativePrompt)}
                     >
                       <Copy size={13} />
-                      {L4(language, { ko: "네거티브 복사", en: "Copy negative", ja: "ネガティブをコピー", zh: "复制负面词" })}
+                      {L4(language, { ko: "제외 요소 복사", en: "Copy exclusions", ja: "除外要素をコピー", zh: "复制排除项" })}
                     </button>
-                    {canGenerate ? (
-                      <button
-                        type="button"
-                        className="mini-btn"
-                        disabled={genBusyId !== null || !finalPrompt.trim()}
-                        onClick={() => void handleGenerate(selectedCard)}
-                        aria-label={L4(language, { ko: "이미지 생성", en: "Generate image", ja: "画像生成", zh: "生成图片" })}
-                      >
-                        <Play size={13} />
-                        {genBusyId === selectedCard.id
-                          ? L4(language, { ko: "생성 중…", en: "Generating…", ja: "生成中…", zh: "生成中…" })
-                          : `${L4(language, { ko: "이미지 생성", en: "Generate", ja: "画像生成", zh: "生成图片" })} (${provider})`}
-                      </button>
-                    ) : (
-                      <span className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11, padding: 0 }}>
-                        {imageGenEnabled
-                          ? L4(language, {
-                              ko: "생성 키 없음 — 프롬프트를 복사해 외부 도구에서 사용하세요.",
-                              en: "No generation key — copy the prompt into an external tool.",
-                              ja: "生成キーなし — プロンプトをコピーして外部ツールで使用してください。",
-                              zh: "无生成密钥 — 请复制提示词到外部工具使用。",
-                            })
-                          : L4(language, {
-                              ko: "이미지 생성 기능이 비활성화되어 있습니다.",
-                              en: "Image generation is disabled.",
-                              ja: "画像生成機能は無効です。",
-                              zh: "图片生成功能已禁用。",
-                            })}
-                      </span>
-                    )}
+                    <span className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11, padding: 0 }}>
+                      {L4(language, {
+                        ko: "이 화면은 제작용 자료를 정리합니다. 이미지는 앱 안에서 만들지 않습니다.",
+                        en: "This panel prepares production notes. Images are not created inside the app.",
+                        ja: "この画面は制作資料を整理します。画像はアプリ内では作成しません。",
+                        zh: "此面板用于整理制作资料，不在应用内创建图片。",
+                      })}
+                    </span>
                   </div>
-                  {genError && (
-                    <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)" }}>
-                      <span className="rdot amber" />
-                      {genError}
-                    </div>
-                  )}
 
-                  {/* 생성 이미지 (읽기 — 관리/배정은 구 셸 비주얼 탭) */}
+                  {/* 첨부 이미지 (읽기 — 외부 제작 자료나 과거 카드에 남은 참고 이미지) */}
                   {(selectedCard.generatedImages?.length ?? 0) > 0 && (
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {selectedCard.generatedImages!.map((img) => (
                         <Image
                           key={img.id}
                           src={img.imageUrl}
-                          alt={selectedCard.title || `EP${selectedCard.episode} card image`}
+                          alt={selectedCard.title || `EP${selectedCard.episode} 비주얼 이미지`}
                           width={56}
                           height={56}
                           unoptimized
@@ -489,7 +465,7 @@ export default function VisualPanel() {
             <Layers size={15} />
             {L4(language, { ko: "매체 변환 슬롯", en: "Media slots", ja: "メディアスロット", zh: "媒体槽位" })}
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)", marginLeft: "auto" }}>
-              image 32 · video 51 · voice 23
+              {visualMediumLabel(language, "image")} 32 · {visualMediumLabel(language, "video")} 51 · {visualMediumLabel(language, "voice")} 23
             </span>
           </div>
 
@@ -502,7 +478,7 @@ export default function VisualPanel() {
                 aria-pressed={medium === m}
                 onClick={() => setMedium(m)}
               >
-                {m}
+                {visualMediumLabel(language, m)}
               </button>
             ))}
           </div>
@@ -524,8 +500,12 @@ export default function VisualPanel() {
               const filled = cat.slots.filter((s) => s.source !== "unfilled").length;
               return (
                 <li key={cat.category} className="wr-srow" style={{ padding: "2px 0", fontSize: 11.5 }}>
-                  <span style={{ fontWeight: 700, color: "var(--ink-1)" }}>{cat.category}</span>
-                  <span style={{ color: "var(--ink-3)" }}>Tier {cat.tier}</span>
+                  <span style={{ fontWeight: 700, color: "var(--ink-1)" }}>
+                    {visualSlotCategoryLabel(language, cat.category)}
+                  </span>
+                  <span style={{ color: "var(--ink-3)" }}>
+                    {L4(language, { ko: "묶음", en: "Group", ja: "グループ", zh: "分组" })} {cat.tier}
+                  </span>
                   <span style={{ marginLeft: "auto", color: "var(--ink-3)" }}>
                     {filled}/{cat.slots.length}
                   </span>
@@ -538,19 +518,19 @@ export default function VisualPanel() {
             {L4(language, { ko: "프롬프트 골격", en: "Prompt skeleton", ja: "プロンプト骨格", zh: "提示词骨架" })}
           </div>
           <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 11, color: "var(--ink-2)", background: "var(--card-2)", border: "1px solid var(--line)", borderRadius: 10, padding: 10, maxHeight: 160, overflowY: "auto" }}>
-            {plan.promptSkeleton}
+            {displayPromptSkeleton}
           </pre>
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
-            <button type="button" className="mini-btn" onClick={() => void copyText(plan.promptSkeleton)}>
+            <button type="button" className="mini-btn" onClick={() => void copyText(displayPromptSkeleton)}>
               <Copy size={13} />
               {L4(language, { ko: "골격 복사", en: "Copy skeleton", ja: "骨格をコピー", zh: "复制骨架" })}
             </button>
             <span style={{ fontSize: 10.5, color: "var(--ink-3)" }}>
               {L4(language, {
-                ko: `[슬롯] = 미채움 — 자동 추정 confidence ${slotResult.confidence} (엔진 표명)`,
-                en: `[slot] = unfilled — auto-inference confidence ${slotResult.confidence} (engine-stated)`,
-                ja: `[slot] = 未入力 — 自動推定 confidence ${slotResult.confidence}（エンジン表明）`,
-                zh: `[slot] = 未填 — 自动推断 confidence ${slotResult.confidence}（引擎声明）`,
+                ko: "[항목]은 아직 채우지 않은 시각 요소입니다.",
+                en: "[slot] marks a visual element that still needs author input.",
+                ja: "[slot] はまだ入力していない視覚要素です。",
+                zh: "[slot] 表示仍需作者补充的视觉元素。",
               })}
             </span>
           </div>

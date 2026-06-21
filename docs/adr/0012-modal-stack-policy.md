@@ -7,7 +7,7 @@
 
 ## Context
 
-`src/lib/modals/modal-manager.tsx` 는 5 영역 (Studio / Code Studio / Translation Studio / Network / Codex / Global) 공용 ModalContext. 현재 정책은 **단일 modal** — `openModal('a')` 호출 시 다른 modal 이미 열려있으면 dev console.warn + ignored, force 시 `replaceModal()` 사용.
+`src/lib/modals/modal-manager.tsx` 는 현재 표면(Studio / Translation Studio / Global) 공용 ModalContext. 현재 정책은 **단일 modal** — `openModal('a')` 호출 시 다른 modal 이미 열려있으면 dev console.warn + ignored, force 시 `replaceModal()` 사용.
 
 `keyboard-manager.ts` 는 `pushKeyboardModal(id)` / `popKeyboardModal(id)` 다중 modal 스택 API 를 이미 노출. 하지만 modal-manager 의 ModalState 자체는 단일 `id`만 보유 → 사실상 dead API.
 

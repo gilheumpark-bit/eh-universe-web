@@ -412,7 +412,7 @@ export default function TranslatePanels({
     [chapters],
   );
 
-  // ── provider / API 키 — 전역 단일 소스 (ai-providers) ──
+  // ── provider / 연결 키 — 전역 단일 소스 (ai-providers) ──
   const [provider] = useState<string>(() => getActiveProvider());
   const getEffectiveApiKeyForProvider = useCallback((providerId: string): string => {
     if (!(providerId in PROVIDERS)) return "";

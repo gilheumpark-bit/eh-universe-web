@@ -171,13 +171,13 @@ export {
   type StoryBibleSyncOutput,
 } from './studio-bridge';
 export {
-  TRANSLATE_COMMAND,
-  VALIDATE_COMMAND,
-  PUBLISH_COMMAND,
-  ALL_TRANSLATION_COMMANDS,
-  buildCliHelpText,
-  type CliCommand,
-} from './cli-spec';
+  TRANSLATE_WORKFLOW_COMMAND,
+  VALIDATE_WORKFLOW_COMMAND,
+  PACKAGE_WORKFLOW_COMMAND,
+  ALL_TRANSLATION_WORKFLOW_COMMANDS,
+  buildTranslationCommandHelpText,
+  type TranslationCommandSpec,
+} from './command-spec';
 
 // ── Phase 4 (2026-05-08) — NCG/NCT pipeline ──
 // IR 보고서 §"NCG/NCT" 본질 매핑.
@@ -206,10 +206,23 @@ export {
   type CatastrophicThresholds,
   type TranslationQaAudit,
 } from './ncg-nct';
-// (5) 번역투/AI티 린트 — KO→EN additive 경고
+// (5) 어색한 표현/영문 습관 린트 — KO→EN additive 경고
 export {
   lintTranslationese,
   type TranslationeseHit,
   type TranslationeseKind,
   type TranslationeseLintResult,
 } from './translationese-lint';
+
+// ── 번역 위험 보고 — 대상 언어를 모르는 사용자를 위한 한국어 요약 카드 ──
+export {
+  buildTranslationRiskReport,
+  type BuildTranslationRiskReportInput,
+  type TranslationBackSummary,
+  type TranslationGlossaryMiss,
+  type TranslationRiskCard,
+  type TranslationRiskCardId,
+  type TranslationRiskLevel,
+  type TranslationRiskReport,
+  type TranslationRiskStatus,
+} from './risk-report';

@@ -8,7 +8,7 @@
 //      (genre/grade/platform 변경 시 자동 재생성 — claude3 _하네스/ 매칭 룰의 축약판)
 //
 // 장르 프리셋: 기존 korean-genre-matrix.ts 재사용 (라벨·프로파일 — 산식 발명 X).
-// 검증 임계는 본 파일의 결정적 프리셋 테이블 — AI 자가 측정/날조 지표 아님.
+// 검증 임계는 본 파일의 결정적 프리셋 테이블 — 모델 자가 측정/날조 지표 아님.
 // 순수 TS. React/DOM/fetch 의존 0.
 // ============================================================
 
@@ -32,7 +32,7 @@ export interface HarnessCheck {
   /** 유일 식별자 (예: 'audit:spelling', 'ai-signature:max-score') */
   id: string;
   kind: HarnessCheckKind;
-  label: { ko: string; en: string };
+  label: { ko: string; en: string; ja?: string; zh?: string };
   enabled: boolean;
   /**
    * kind 별 임계/강도 (결정적 프리셋):
@@ -84,7 +84,7 @@ const GENRE_PACING: Record<KoreanGenreId, PacingGroup> = {
   generic: 'neutral',
 };
 
-/** 페이싱 그룹별 리듬/AI티/구조 프리셋 */
+/** 페이싱 그룹별 리듬/표현 습관/구조 프리셋 */
 const PACING_PRESET: Record<
   PacingGroup,
   { maxAvgLen: number; minBurstiness: number; aiSigMax: number; structureWeight: number }
@@ -203,7 +203,7 @@ export function buildHarness(input: HarnessInput, now: number = Date.now()): Qua
     completeness: platform !== 'NONE' ? 1.5 : 1, // 출고 대상 플랫폼 — 미완 표식 치명
   };
 
-  // ── checks: 출판감사 6 + AI티 1 + 리듬 2 + IP 필터 1 = 10종 ──
+  // ── checks: 출판감사 6 + 표현 습관 1 + 리듬 2 + IP 필터 1 = 10종 ──
   const checks: HarnessCheck[] = [
     ...AUDIT_CATEGORIES.map<HarnessCheck>((cat) => ({
       id: `audit:${cat}`,
@@ -214,7 +214,7 @@ export function buildHarness(input: HarnessInput, now: number = Date.now()): Qua
     {
       id: 'ai-signature:max-score',
       kind: 'ai-signature',
-      label: { ko: 'AI티 점수 상한', en: 'AI-signature score cap' },
+      label: { ko: '표현 습관 기준', en: 'Writing style limit', ja: '表現のクセ確認ライン', zh: '表达习惯检查线' },
       enabled: true,
       threshold: pacing.aiSigMax,
     },

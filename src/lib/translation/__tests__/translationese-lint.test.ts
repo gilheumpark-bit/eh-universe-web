@@ -1,5 +1,5 @@
 // ============================================================
-// translationese-lint — [Z1a-5] KO→EN 번역투 + AI티 결정론적 린트 검증.
+// translationese-lint — [Z1a-5] KO→EN 어색한 표현 + 영문 습관 결정론적 린트 검증.
 // ============================================================
 
 import { lintTranslationese } from '../translationese-lint';
@@ -21,7 +21,7 @@ describe('lintTranslationese — 입력 방어', () => {
   });
 });
 
-describe('번역투 — name-repetition (이름 반복)', () => {
+describe('어색한 표현 후보 — name-repetition (이름 반복)', () => {
   it('이름이 거의 매 문장 반복 (6회+·밀도 0.4+) → warn', () => {
     const text = [
       'Cheolsu opened the door.',
@@ -58,7 +58,7 @@ describe('번역투 — name-repetition (이름 반복)', () => {
   });
 });
 
-describe('번역투 — honorific-literal (존칭 로마자 직역)', () => {
+describe('어색한 표현 후보 — honorific-literal (존칭 로마자 음차)', () => {
   it('-nim / -ssi 잔존 → info', () => {
     const r = lintTranslationese('Welcome back, Kim-ssi. The chairman-nim is waiting.');
     const hit = r.hits.find((h) => h.kind === 'honorific-literal' && h.pattern.includes('-nim'));
@@ -75,7 +75,7 @@ describe('번역투 — honorific-literal (존칭 로마자 직역)', () => {
   });
 });
 
-describe('번역투 — said-bookism (과잉 대사 동사)', () => {
+describe('어색한 표현 후보 — said-bookism (과잉 대사 동사)', () => {
   it('bookism 3회+ 그리고 said/asked 초과 → warn', () => {
     const text =
       '"No," she exclaimed. "Why," he retorted. "Stop," she declared. "Fine," he interjected.';
@@ -97,7 +97,7 @@ describe('번역투 — said-bookism (과잉 대사 동사)', () => {
   });
 });
 
-describe('AI티 — em-dash-overuse', () => {
+describe('영문 습관 — em-dash-overuse', () => {
   it('em-dash 4회+ 그리고 문장당 0.25 초과 → warn', () => {
     const text =
       'He paused — briefly. She turned — slowly. They waited — silently. It ended — finally.';
@@ -113,7 +113,7 @@ describe('AI티 — em-dash-overuse', () => {
   });
 });
 
-describe('AI티 — smart-quotes', () => {
+describe('영문 습관 — smart-quotes', () => {
   it('곡선 따옴표 잔존 → info', () => {
     const hit = lintTranslationese('“Hello,” she said. ‘Hmm.’').hits.find((h) => h.kind === 'smart-quotes');
     expect(hit).toBeDefined();

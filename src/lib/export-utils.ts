@@ -3,7 +3,7 @@
 // ============================================================
 
 import { ChatSession, AppLanguage } from './studio-types';
-import { stripEngineArtifacts } from '@/engine/pipeline';
+import { stripEngineArtifactsBase } from '@/lib/engine-artifacts';
 import { showAlert } from './show-alert';
 import {
   getAIUsageForProject,
@@ -475,7 +475,7 @@ export function exportDOCX(session: ChatSession, opts?: ExportOptions): void {
         .flatMap(m => (m.content ?? '').split('\n'))
     : session.messages
         .filter(m => m.role === 'assistant')
-        .flatMap(m => stripEngineArtifacts(m.content).split('\n'));
+        .flatMap(m => stripEngineArtifactsBase(m.content).split('\n'));
 
   const paragraphs = sourceLines
     .map(line => buildDocxParagraph(line.trim()))

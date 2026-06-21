@@ -23,60 +23,68 @@ function withProvider(children: React.ReactElement) {
   return <StudioUIProvider value={mockUIValue}>{children}</StudioUIProvider>;
 }
 
-jest.mock('@/lib/studio-translations', () => ({
-  TRANSLATIONS: {
-    KO: {
-      resource: {
-        title: '캐릭터',
-        addCharacter: '캐릭터 추가',
-        nameLabel: '이름',
-        rolePlaceholder: '역할',
-        addBtn: '추가',
-        all: '전체',
-        generate: '생성',
-        generatingChars: '생성 중...',
-        noCharacters: '캐릭터 없음',
-        completionLabel: '완성도',
-        editMode: '편집',
-        deleteConfirm: '삭제?',
-        relationsTitle: '관계',
-        socialTitle: '소셜',
-        warningDuplicate: '중복',
-        warningMaxReached: '최대',
-      },
-      engine: {
-        roles: { hero: '주인공', villain: '빌런', ally: '조력자', extra: '엑스트라' },
-      },
+const mockStudioTranslations = {
+  KO: {
+    resource: {
+      title: '캐릭터',
+      addCharacter: '캐릭터 추가',
+      nameLabel: '이름',
+      rolePlaceholder: '역할',
+      addBtn: '추가',
+      all: '전체',
+      generate: '생성',
+      generatingChars: '생성 중...',
+      noCharacters: '캐릭터 없음',
+      completionLabel: '완성도',
+      editMode: '편집',
+      deleteConfirm: '삭제?',
+      relationsTitle: '관계',
+      socialTitle: '소셜',
+      warningDuplicate: '중복',
+      warningMaxReached: '최대',
     },
-    EN: {
-      resource: {
-        title: 'Characters',
-        addCharacter: 'Add Character',
-        nameLabel: 'Name',
-        rolePlaceholder: 'Role',
-        addBtn: 'Add',
-        all: 'All',
-        generate: 'Generate',
-        generatingChars: 'Generating...',
-        noCharacters: 'No characters',
-        completionLabel: 'Completion',
-        editMode: 'Edit',
-        deleteConfirm: 'Delete?',
-        relationsTitle: 'Relations',
-        socialTitle: 'Social',
-        warningDuplicate: 'Duplicate',
-        warningMaxReached: 'Max reached',
-      },
-      engine: {
-        roles: { hero: 'Hero', villain: 'Villain', ally: 'Ally', extra: 'Extra' },
-      },
+    engine: {
+      roles: { hero: '주인공', villain: '빌런', ally: '조력자', extra: '엑스트라' },
     },
   },
+  EN: {
+    resource: {
+      title: 'Characters',
+      addCharacter: 'Add Character',
+      nameLabel: 'Name',
+      rolePlaceholder: 'Role',
+      addBtn: 'Add',
+      all: 'All',
+      generate: 'Generate',
+      generatingChars: 'Generating...',
+      noCharacters: 'No characters',
+      completionLabel: 'Completion',
+      editMode: 'Edit',
+      deleteConfirm: 'Delete?',
+      relationsTitle: 'Relations',
+      socialTitle: 'Social',
+      warningDuplicate: 'Duplicate',
+      warningMaxReached: 'Max reached',
+    },
+    engine: {
+      roles: { hero: 'Hero', villain: 'Villain', ally: 'Ally', extra: 'Extra' },
+    },
+  },
+};
+
+jest.mock('@/lib/studio-translations', () => ({
+  TRANSLATIONS: mockStudioTranslations,
 }));
 
 jest.mock('@/lib/i18n', () => ({
   createT: () => (key: string, fallback?: string) => fallback ?? key,
   L4: (_lang: string, t: { ko: string }) => t.ko,
+  normalizeAppLanguage: (language?: string) => (
+    language === 'EN' || language === 'JA' || language === 'ZH' ? language : 'KO'
+  ),
+  getStudioTranslations: (language?: string) => (
+    mockStudioTranslations[language === 'EN' ? 'EN' : 'KO']
+  ),
 }));
 
 jest.mock('@/services/geminiService', () => ({

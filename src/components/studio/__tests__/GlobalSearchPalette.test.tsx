@@ -321,9 +321,9 @@ describe('GlobalSearchPalette', () => {
     expect(allTab.getAttribute('aria-selected')).toBe('true');
 
     fireEvent.keyDown(dialog, { key: 'Tab' });
-    // After one Tab, 'character' tab should be selected
-    const charTab = screen.getByRole('tab', { name: '캐릭터' });
-    expect(charTab.getAttribute('aria-selected')).toBe('true');
+    // After one Tab, the next filter tab should be selected.
+    const projectTab = screen.getByRole('tab', { name: '프로젝트' });
+    expect(projectTab.getAttribute('aria-selected')).toBe('true');
   });
 
   it('onExecuteAction fires when clicking an action row', () => {

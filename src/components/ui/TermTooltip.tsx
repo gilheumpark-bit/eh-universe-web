@@ -39,11 +39,11 @@ const TERM_DEFINITIONS: Record<string, { ko: string; en: string; ja: string; zh:
     ja: 'シーンの緊張・雰囲気・キャラクターを設計する構造化シート',
     zh: '用于设计场景紧张/氛围/角色的结构化表单',
   },
-  '6축 점수': {
-    ko: '번역 품질 6가지 관점: 몰입/감정/문화/일관/근거/화자투명',
-    en: '6-axis translation quality: immersion/emotion/cultural/consistency/grounded/voice',
-    ja: '翻訳品質6軸: 没入/感情/文化/一貫/根拠/話者透明',
-    zh: '翻译质量6轴: 沉浸/情感/文化/一致/根据/话者透明',
+  '품질 항목': {
+    ko: '번역 품질을 원문 보존과 독자 경험 관점으로 나눠 확인합니다',
+    en: 'Reviews translation quality through source preservation and reader experience',
+    ja: '原文保持と読者体験の観点で翻訳品質を確認します',
+    zh: '从原文保留与读者体验角度检查翻译质量',
   },
   'Voice Guard': {
     ko: '캐릭터 말투 위반을 자동 감지하는 검증 엔진',
@@ -52,28 +52,28 @@ const TERM_DEFINITIONS: Record<string, { ko: string; en: string; ja: string; zh:
     zh: '自动检测角色语气违规的验证引擎',
   },
   '품질 게이트': {
-    ko: 'AI 생성 결과의 품질 기준 미달 시 자동 재시도 시스템',
-    en: 'Auto-retry system when AI-generated quality falls below standards',
-    ja: 'AI生成結果の品質基準未達成時の自動再試行システム',
-    zh: 'AI生成结果质量不达标时的自动重试系统',
+    ko: '노아 제안의 품질 기준 미달 시 자동 재시도 시스템',
+    en: 'Auto-retry system when Noa suggestion quality falls below standards',
+    ja: 'Noa 提案の品質基準未達成時の自動再試行システム',
+    zh: 'Noa 建议质量不达标时的自动重试系统',
   },
   '평행우주': {
-    ko: 'Git 브랜치 기반 IF 전개 — 다른 선택으로 대체 시나리오 탐험',
-    en: 'Git branch-based IF exploration — alternative scenarios via different choices',
-    ja: 'Gitブランチベースのif展開 — 異なる選択で代替シナリオを探索',
-    zh: '基于Git分支的IF展开 — 通过不同选择探索替代场景',
+    ko: 'Git 브랜치 기반 IF 전개. 다른 선택으로 대체 시나리오 탐험',
+    en: 'Git branch-based IF exploration for alternate scenarios via different choices',
+    ja: 'Gitブランチベースのif展開。異なる選択で代替シナリオを探索',
+    zh: '基于Git分支的IF展开，通过不同选择探索替代场景',
   },
   'RAG': {
-    ko: '검색 증강 생성 — 세계관·캐릭터·과거 원고를 AI에 자동 주입',
-    en: 'Retrieval-Augmented Generation — auto-inject worldview/characters/past episodes into AI',
-    ja: 'RAG — 世界観・キャラクター・過去原稿をAIに自動注入',
-    zh: 'RAG — 世界观·角色·过往稿件自动注入AI',
+    ko: '검색 보강 — 현재 창작 집필 경로에는 자동 주입하지 않는 레거시 보조 방식',
+    en: 'Retrieval support — a legacy helper that is not auto-injected into the creative writing path',
+    ja: '検索補助 — 現在の創作執筆経路には自動注入されないレガシー補助方式',
+    zh: '检索辅助 — 当前不会自动注入创作写作路径的旧版辅助方式',
   },
-  'BYOK': {
-    ko: 'Bring Your Own Key — 사용자 자체 API 키 연결 (Gemini/Claude/OpenAI 등)',
-    en: 'Bring Your Own Key — connect your own API keys',
-    ja: 'BYOK — 自分のAPIキーを接続',
-    zh: 'BYOK — 连接自己的API密钥',
+  '연결 키': {
+    ko: '연결 키 — 사용자가 가진 모델 계정을 로어가드에 연결하는 방식',
+    en: 'Connection keys — connect your own model account to Loreguard',
+    ja: '接続キー — 自分のモデルアカウントをLoreguardに接続する方式',
+    zh: '连接密钥 — 将自己的模型账户连接到 Loreguard',
   },
   'Episode Memory': {
     ko: '장편 연재 시 용어/캐릭터 이름 일관성을 추적하는 메모리 그래프',
@@ -107,6 +107,15 @@ const TERM_DEFINITIONS: Record<string, { ko: string; en: string; ja: string; zh:
   },
 };
 
+const TERM_LABELS: Record<string, { ko: string; en: string; ja: string; zh: string }> = {
+  '연결 키': {
+    ko: '연결 키',
+    en: 'Connection keys',
+    ja: '接続キー',
+    zh: '连接密钥',
+  },
+};
+
 // ============================================================
 // PART 2 — 컴포넌트
 // ============================================================
@@ -118,6 +127,7 @@ export function TermTooltip({ term, children, className = '', language }: TermTo
 
   // 2026-04-24: language prop으로 4언어 활성화. 생략 시 L4가 KO fallback.
   const explanation = def ? L4(language ?? 'KO', def) : '';
+  const publicLabel = TERM_LABELS[term] ? L4(language ?? 'KO', TERM_LABELS[term]) : term;
 
   // [C] Outside click / Escape — open일 때만 리스너 부착 (G: 불필요한 구독 제거).
   useEffect(() => {
@@ -173,7 +183,7 @@ export function TermTooltip({ term, children, className = '', language }: TermTo
           className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-bg-primary border border-border rounded-lg shadow-lg text-sm text-text-primary whitespace-normal min-w-[200px] max-w-[320px]"
           style={{ zIndex: 'var(--z-tooltip, 600)' }}
         >
-          <strong className="block mb-1">{term}</strong>
+          <strong className="block mb-1">{publicLabel}</strong>
           {explanation}
         </span>
       )}

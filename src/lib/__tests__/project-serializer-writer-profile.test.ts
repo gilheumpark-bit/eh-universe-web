@@ -7,7 +7,7 @@ jest.mock('@/lib/logger', () => ({
   logger: { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() },
 }));
 
-import { extractWriterProfile } from '../project-serializer';
+import { extractWriterProfile, repoFilesToConfig } from '../project-serializer';
 import { createEmptyProfile } from '@/engine/writer-profile';
 import { logger } from '@/lib/logger';
 
@@ -76,5 +76,32 @@ describe('extractWriterProfile', () => {
     const result = extractWriterProfile(files);
     expect(result).not.toBeNull();
     expect(result?.skillLevel).toBe('beginner');
+  });
+});
+
+describe('repoFilesToConfig — project storage paths', () => {
+  it('GitHub 자동 백업의 projects/{id}/manuscripts 경로를 원고로 복원한다', () => {
+    const result = repoFilesToConfig([
+      {
+        path: 'projects/project-A/manuscripts/episode-007.md',
+        content: [
+          '---',
+          'id: ep-007',
+          'title: Episode Seven',
+          'episode: 7',
+          'charCount: 11',
+          '---',
+          'hello world',
+        ].join('\n'),
+      },
+    ]);
+
+    expect(result.manuscripts).toHaveLength(1);
+    expect(result.manuscripts?.[0]).toMatchObject({
+      episode: 7,
+      title: 'Episode Seven',
+      content: 'hello world',
+      filePath: 'projects/project-A/manuscripts/episode-007.md',
+    });
   });
 });

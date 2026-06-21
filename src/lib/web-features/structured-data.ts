@@ -1,7 +1,7 @@
 // ============================================================
 // Structured Data — JSON-LD for SEO
 // ============================================================
-// 검색 엔진에서 세계관 문서가 리치 결과로 표시되게
+// 검색 엔진에서 공개 Docs 문서가 리치 결과로 표시되게
 
 export function buildArticleJsonLd(article: {
   title: string;
@@ -19,7 +19,7 @@ export function buildArticleJsonLd(article: {
     articleSection: article.category,
     dateModified: article.dateModified,
     wordCount: article.wordCount,
-    url: `https://eh-universe.com/archive/${article.slug}`,
+    url: `https://eh-universe.com/docs/${article.slug}`,
     publisher: {
       '@type': 'Organization',
       name: 'EH',
@@ -37,7 +37,7 @@ export function buildWebAppJsonLd(): object {
     '@type': 'WebApplication',
     name: '로어가드 (Loreguard)',
     alternateName: 'Loreguard · EH',
-    description: 'Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. AI 소설 창작·6축 번역 채점·세계관 아카이브 통합.',
+    description: 'Loreguard는 프로젝트 생성, 세계관, 씬시트, 집필, 퇴고, 번역, 출고를 한 흐름으로 관리하는 창작 전문 IDE입니다.',
     url: 'https://eh-universe.com',
     applicationCategory: 'CreativeWork',
     operatingSystem: 'Web Browser',
@@ -47,10 +47,11 @@ export function buildWebAppJsonLd(): object {
       priceCurrency: 'USD',
     },
     featureList: [
-      'AI Novel Writing',
-      'AI Code Verification',
-      'AI Translation with 6-axis scoring',
-      'Worldbuilding Archive',
+      'Project creation',
+      'Worldbuilding canvas',
+      'Scene sheet workflow',
+      'Translation and localization',
+      'Release package',
     ],
   };
 }

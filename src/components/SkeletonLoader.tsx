@@ -26,12 +26,12 @@ interface SkeletonLoaderProps {
 /**
  * Premium skeleton with shimmer animation.
  * Variants control default sizing:
- * - text: single line placeholder
+ * - text: single line loading line
  * - card: card-sized block
  * - panel: tall panel block
  * - editor: wide editor area
  * - sidebar: narrow sidebar strip
- * - avatar: circular avatar placeholder
+ * - avatar: circular avatar loading mark
  * - button: button-sized rectangle
  * - badge: small badge/tag
  */
@@ -134,7 +134,7 @@ export function WritingModeSkeleton({ className = "" }: { className?: string }) 
 /** Studio page skeleton — sidebar + main editor area */
 export function StudioPageSkeleton() {
   return (
-    <div className="flex h-screen w-full bg-bg-primary">
+    <div className="flex h-screen w-full max-w-full overflow-hidden bg-bg-primary">
       {/* Sidebar */}
       <div className="hidden md:flex flex-col w-[260px] border-r border-white/[0.06] p-4 gap-3">
         <SkeletonLoader variant="text" width="60%" height={20} />
@@ -149,19 +149,19 @@ export function StudioPageSkeleton() {
         </div>
       </div>
       {/* Main editor area */}
-      <div className="flex-1 flex flex-col p-6 gap-4">
+      <div className="min-w-0 flex-1 flex flex-col overflow-hidden p-4 gap-4 sm:p-6">
         {/* Top toolbar */}
-        <div className="flex items-center gap-3">
-          <SkeletonLoader variant="text" width={180} height={32} className="rounded-lg" />
-          <SkeletonLoader variant="text" width={100} height={32} className="rounded-lg" />
-          <div className="flex-1" />
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <SkeletonLoader variant="text" width="min(40vw, 180px)" height={32} className="rounded-lg" />
+          <SkeletonLoader variant="text" width="min(22vw, 100px)" height={32} className="rounded-lg" />
+          <div className="min-w-0 flex-1" />
           <SkeletonLoader variant="text" width={32} height={32} className="rounded-full" />
           <SkeletonLoader variant="text" width={32} height={32} className="rounded-full" />
         </div>
         {/* Tab bar */}
-        <div className="flex gap-2">
+        <div className="flex min-w-0 flex-wrap gap-2 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonLoader key={i} variant="text" width={80} height={28} className="rounded-md" />
+            <SkeletonLoader key={i} variant="text" width="min(18vw, 80px)" height={28} className="rounded-md" />
           ))}
         </div>
         {/* Editor body */}
@@ -171,8 +171,8 @@ export function StudioPageSkeleton() {
   );
 }
 
-/** Code Studio skeleton — activity bar + editor + panel */
-export function CodeStudioSkeleton() {
+/** Internal tool skeleton — activity bar + editor + panel */
+export function InternalToolSkeleton() {
   return (
     <div className="flex h-screen w-full bg-bg-primary">
       {/* Activity bar */}
@@ -220,11 +220,11 @@ export function CodeStudioSkeleton() {
   );
 }
 
-/** Archive grid skeleton */
-export function ArchiveSkeleton() {
+/** Legacy grid skeleton */
+export function LegacyGridSkeleton() {
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* Header placeholder */}
+      {/* Header loading area */}
       <div className="h-14 border-b border-white/[0.06]" />
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Title */}
@@ -253,8 +253,8 @@ export function ArchiveSkeleton() {
   );
 }
 
-/** Network page skeleton */
-export function NetworkSkeleton() {
+/** Legacy community skeleton */
+export function LegacyCommunitySkeleton() {
   return (
     <div className="min-h-screen bg-bg-primary">
       <div className="h-14 border-b border-white/[0.06]" />
@@ -270,4 +270,4 @@ export function NetworkSkeleton() {
   );
 }
 
-// IDENTITY_SEAL: PART-2 | role=compound page skeletons | inputs=none | outputs=StudioPageSkeleton,CodeStudioSkeleton,ArchiveSkeleton,NetworkSkeleton
+// IDENTITY_SEAL: PART-2 | role=compound page skeletons | inputs=none | outputs=StudioPageSkeleton,InternalToolSkeleton,LegacyGridSkeleton,LegacyCommunitySkeleton

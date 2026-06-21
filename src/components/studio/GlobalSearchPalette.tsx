@@ -5,11 +5,11 @@
 // ============================================================
 
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
-import { Search, X, UserCircle, Globe, FileText, Type, Zap } from 'lucide-react';
-import type { StoryConfig, ChatSession, AppLanguage } from '@/lib/studio-types';
+import { Search, X, UserCircle, Globe, FileText, Type, Zap, FolderOpen } from 'lucide-react';
+import type { StoryConfig, ChatSession, AppLanguage, Project } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
-export type ResultType = 'character' | 'episode' | 'world' | 'text' | 'action';
+export type ResultType = 'project' | 'character' | 'episode' | 'world' | 'text' | 'action';
 export type FilterType = 'all' | ResultType;
 
 export interface StudioAction {
@@ -38,9 +38,11 @@ export interface GlobalSearchPaletteProps {
   query: string;
   setQuery: (q: string) => void;
   sessions: ChatSession[];
+  projects?: Project[];
   config: StoryConfig | null;
   language: AppLanguage;
   actions?: StudioAction[];
+  initialFilter?: FilterType;
   onSelect: (type: ResultType, id?: string, sessionId?: string) => void;
   onExecuteAction?: (actionId: string) => void;
   onClose: () => void;
@@ -114,22 +116,52 @@ function HighlightSnippet({
 
 interface BuildResultsInput {
   query: string;
+  projects: Project[];
   sessions: ChatSession[];
   config: StoryConfig | null;
   actions: StudioAction[];
   worldFieldLabels: { key: string; label: string }[];
+  projectText: { episodes: string; updated: string; noDescription: string };
 }
 
 /** Collect search hits across all categories. Caller applies filter/limit. */
 function buildResults({
   query,
+  projects,
   sessions,
   config,
   actions,
   worldFieldLabels,
+  projectText,
 }: BuildResultsInput): SearchResult[] {
   const q = query.toLowerCase().trim();
   const out: SearchResult[] = [];
+
+  // ── Projects (shown even with an empty query so "프로젝트 검색" opens a useful switcher)
+  for (const project of projects) {
+    const projectSessions = project.sessions ?? [];
+    const hay = [
+      project.name,
+      project.description,
+      String(project.genre ?? ''),
+      ...projectSessions.flatMap((session) => [session.title, session.config?.title].filter(Boolean)),
+    ]
+      .join(' ')
+      .toLowerCase();
+    if (!q || hay.includes(q)) {
+      const updated = project.lastUpdate
+        ? new Intl.DateTimeFormat(undefined, { month: '2-digit', day: '2-digit' }).format(new Date(project.lastUpdate))
+        : '-';
+      const detailBase = project.description?.trim() || projectText.noDescription;
+      out.push({
+        type: 'project',
+        label: project.name || 'Untitled project',
+        detail: `${projectSessions.length}${projectText.episodes} · ${projectText.updated} ${updated} · ${detailBase}`,
+        id: project.id,
+        sessionId: projectSessions[0]?.id,
+      });
+    }
+  }
 
   // ── Action category (always shown; matches if query empty or matches label/keyword)
   for (const a of actions) {
@@ -235,14 +267,14 @@ function buildResults({
 // ============================================================
 
 const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
-  query, setQuery, sessions, config, language,
-  actions = [],
+  query, setQuery, sessions, projects = [], config, language,
+  actions = [], initialFilter = 'all',
   onSelect, onExecuteAction, onClose,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 300);
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>(initialFilter);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -262,12 +294,18 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   const allResults = useMemo<SearchResult[]>(() => {
     return buildResults({
       query: debouncedQuery,
+      projects,
       sessions,
       config,
       actions,
       worldFieldLabels,
+      projectText: {
+        episodes: L4(language, { ko: '회차', en: ' episodes', ja: '話', zh: '章' }),
+        updated: L4(language, { ko: '수정', en: 'updated', ja: '更新', zh: '更新' }),
+        noDescription: L4(language, { ko: '설명 없음', en: 'No description', ja: '説明なし', zh: '无说明' }),
+      },
     });
-  }, [debouncedQuery, sessions, config, actions, worldFieldLabels]);
+  }, [debouncedQuery, projects, sessions, config, actions, worldFieldLabels, language]);
 
   const results = useMemo<SearchResult[]>(() => {
     const filtered = filter === 'all' ? allResults : allResults.filter(r => r.type === filter);
@@ -290,6 +328,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
 
   const filterTabs: { id: FilterType; label: string }[] = useMemo(() => [
     { id: 'all', label: L4(language, { ko: '전체', en: 'All', ja: '全て', zh: '全部' }) },
+    { id: 'project', label: L4(language, { ko: '프로젝트', en: 'Project', ja: 'プロジェクト', zh: '项目' }) },
     { id: 'character', label: L4(language, { ko: '캐릭터', en: 'Character', ja: 'キャラ', zh: '角色' }) },
     { id: 'episode', label: L4(language, { ko: '에피소드', en: 'Episode', ja: 'エピソード', zh: '章节' }) },
     { id: 'world', label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }) },
@@ -298,6 +337,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   ], [language]);
 
   const iconMap: Record<ResultType, React.ReactNode> = {
+    project: <FolderOpen className="w-4 h-4 text-accent-blue" />,
     character: <UserCircle className="w-4 h-4 text-accent-purple" />,
     episode: <FileText className="w-4 h-4 text-accent-green" />,
     world: <Globe className="w-4 h-4 text-amber-400" />,
@@ -306,6 +346,7 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   };
 
   const categoryLabel = useCallback((type: ResultType): string => {
+    if (type === 'project') return L4(language, { ko: '프로젝트', en: 'PROJECT', ja: 'プロジェクト', zh: '项目' });
     if (type === 'character') return L4(language, { ko: '캐릭터', en: 'CHAR', ja: 'キャラ', zh: '角色' });
     if (type === 'episode') return L4(language, { ko: '에피소드', en: 'EP', ja: 'エピソード', zh: '章节' });
     if (type === 'world') return L4(language, { ko: '세계관', en: 'WORLD', ja: '世界観', zh: '世界观' });
@@ -332,15 +373,18 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
       e.preventDefault();
       const r = results[effectiveIndex];
       if (r) executeResult(r);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose();
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      const order: FilterType[] = ['all', 'character', 'episode', 'world', 'text', 'action'];
+      const order: FilterType[] = ['all', 'project', 'character', 'episode', 'world', 'text', 'action'];
       const idx = order.indexOf(filter);
       const step = e.shiftKey ? order.length - 1 : 1;
       const next = order[(idx + step) % order.length];
       setFilter(next);
     }
-  }, [results, effectiveIndex, filter, executeResult]);
+  }, [results, effectiveIndex, filter, executeResult, onClose]);
 
   // Scroll selected item into view (guard against jsdom where scrollIntoView is absent)
   useEffect(() => {
@@ -352,10 +396,10 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   }, [effectiveIndex]);
 
   const placeholder = L4(language, {
-    ko: '검색 또는 명령… (Ctrl+K)',
-    en: 'Search or command… (Ctrl+K)',
-    ja: '検索またはコマンド… (Ctrl+K)',
-    zh: '搜索或命令… (Ctrl+K)',
+    ko: initialFilter === 'project' ? '프로젝트 검색 또는 전환…' : '프로젝트, 회차, 설정, 본문 검색… (Ctrl+K)',
+    en: initialFilter === 'project' ? 'Search or switch project…' : 'Search projects, episodes, settings, drafts… (Ctrl+K)',
+    ja: initialFilter === 'project' ? 'プロジェクト検索・切替…' : 'プロジェクト、回、設定、本文を検索… (Ctrl+K)',
+    zh: initialFilter === 'project' ? '搜索或切换项目…' : '搜索项目、章节、设置、正文… (Ctrl+K)',
   });
   const emptyLabel = L4(language, {
     ko: '검색 결과가 없습니다',
@@ -366,38 +410,38 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh]"
+      className="lg-search-root fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[15vh]"
       role="presentation"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-bg-secondary border border-border rounded-2xl shadow-2xl overflow-hidden"
+        className="lg-search-dialog w-full max-w-lg bg-bg-secondary border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
-        aria-label={L4(language, { ko: '전역 검색 팔레트', en: 'Global search palette', ja: 'グローバル検索', zh: '全局搜索' })}
+        aria-label={L4(language, { ko: initialFilter === 'project' ? '프로젝트 검색' : '검색', en: initialFilter === 'project' ? 'Project search' : 'Search', ja: initialFilter === 'project' ? 'プロジェクト検索' : '検索', zh: initialFilter === 'project' ? '项目搜索' : '搜索' })}
         data-modal
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-          <Search className="w-4 h-4 text-text-tertiary shrink-0" />
+        <div className="lg-search-head flex items-center gap-3 px-4 py-3 border-b border-border">
+          <Search className="lg-search-icon w-4 h-4 text-text-tertiary shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder={placeholder}
             aria-label={placeholder}
-            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder-text-tertiary text-ellipsis overflow-hidden"
+            className="lg-search-input flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-text-primary placeholder-text-tertiary text-ellipsis overflow-hidden"
           />
-          <button onClick={onClose} className="text-text-tertiary hover:text-text-primary" aria-label="Close">
+          <button onClick={onClose} className="lg-search-close inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary focus-visible:ring-2 focus-visible:ring-accent-blue" aria-label="Close">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Filter tabs */}
         <div
-          className="flex items-center gap-1 px-3 py-2 border-b border-border bg-bg-primary/30 overflow-x-auto"
+          className="lg-search-tabs flex items-center gap-1 px-3 py-2 border-b border-border bg-bg-primary/30 overflow-x-auto"
           role="tablist"
           aria-label={L4(language, { ko: '카테고리 필터', en: 'Category filter', ja: 'カテゴリーフィルター', zh: '类别过滤' })}
         >
@@ -410,9 +454,9 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
                 aria-selected={active}
                 data-tab={tab.id}
                 onClick={() => setFilter(tab.id)}
-                className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-colors shrink-0 ${
+                className={`lg-search-tab px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-colors shrink-0 ${
                   active
-                    ? 'bg-accent-blue/20 text-accent-blue'
+                    ? 'on bg-accent-blue/20 text-accent-blue'
                     : 'text-text-tertiary hover:text-text-primary hover:bg-white/[0.05]'
                 }`}
               >
@@ -423,9 +467,9 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
         </div>
 
         {/* Results */}
-        <div ref={listRef} className="max-h-80 overflow-y-auto" role="listbox">
+        <div ref={listRef} className="lg-search-list max-h-80 overflow-y-auto" role="listbox">
           {results.length === 0 && (
-            <div className="px-4 py-6 text-center text-text-tertiary text-sm">
+            <div className="lg-search-empty px-4 py-6 text-center text-text-tertiary text-sm">
               {emptyLabel}
             </div>
           )}
@@ -440,15 +484,15 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
                 aria-selected={selected}
                 onClick={() => executeResult(r)}
                 onMouseEnter={() => setSelectedIndex(i)}
-                className={`flex items-center gap-3 w-full px-4 py-3 text-left transition-colors border-b border-border/50 last:border-0 ${
-                  selected ? 'bg-accent-blue/10' : 'hover:bg-white/[0.06]'
+                className={`lg-search-result flex items-center gap-3 w-full px-4 py-3 text-left transition-colors border-b border-border/50 last:border-0 ${
+                  selected ? 'is-selected bg-accent-blue/10' : 'hover:bg-white/[0.06]'
                 }`}
               >
                 {iconMap[r.type]}
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-text-primary truncate">{r.label}</div>
+                  <div className="lg-search-result-title text-sm font-semibold text-text-primary truncate">{r.label}</div>
                   {r.type === 'text' && r.snippet ? (
-                    <div className="text-[11px] text-text-secondary truncate" data-testid="text-snippet">
+                    <div className="lg-search-result-detail text-[11px] text-text-secondary truncate" data-testid="text-snippet">
                       <HighlightSnippet
                         snippet={r.snippet}
                         start={r.matchStart ?? 0}
@@ -456,18 +500,18 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
                       />
                     </div>
                   ) : (
-                    <div className="text-[11px] text-text-tertiary truncate">{r.detail}</div>
+                    <div className="lg-search-result-detail text-[11px] text-text-tertiary truncate">{r.detail}</div>
                   )}
                 </div>
                 {r.type === 'action' && r.shortcut && (
                   <span
                     data-testid="action-shortcut"
-                    className="px-1.5 py-0.5 text-[9px] font-mono bg-white/[0.06] text-text-secondary rounded border border-border/50 shrink-0"
+                    className="lg-search-shortcut px-1.5 py-0.5 text-[9px] font-mono bg-white/[0.06] text-text-secondary rounded border border-border/50 shrink-0"
                   >
                     {r.shortcut}
                   </span>
                 )}
-                <span className="text-[9px] font-mono uppercase text-text-tertiary tracking-widest shrink-0">
+                <span className="lg-search-category text-[9px] font-mono uppercase text-text-tertiary tracking-widest shrink-0">
                   {categoryLabel(r.type)}
                 </span>
               </button>

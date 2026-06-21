@@ -19,8 +19,8 @@
 + multi-agent-judgment-v2 (리웍 Builder/Critic)
 
 ## ARI + Scope Policy
-- ARI Circuit Breaker: 모든 AI 호출에 적용 (EMA 감점, 자동 failover) — `lib/code-studio/ai/ari-engine.ts` wired ✅
-- Scope Policy: Global > Workspace > Module 정책 우선순위 — ⚠️ 2026-05-12 audit: `lib/code-studio/core/scope-policy.ts` 모듈 prod callers 0. design doc 흔적, 실제 enforcement 미구현 follow-up.
+- 현재 공개 제품 기준은 Loreguard Studio, Translation Studio, Docs, 공개·법적 문서다.
+- 구 실험 표면의 설계 문서와 경로는 현 제품 기준으로 사용하지 않는다.
 
 ---
 
@@ -160,17 +160,18 @@
 
 ---
 
-## [인프라 연동] DGX Spark 35B MoE 단일 모델 (2026-04-23 갱신)
+## [인프라 연동] Hosted 개발 API + DGX 개발 경로 (2026-06-19 정정)
 
-**NVIDIA DGX GB10 (128GB VRAM) 단일 장비** + vLLM 단일 엔진 구성.
+정식 운영 기본은 서버 측 개발 API 키가 설정된 Hosted provider다. DGX Spark는 로컬·개발·비상 검증용 OpenAI 호환 경로이며 메인 Hosted 엔진으로 설명하지 않는다.
 이전 Engine A/B 쌍포(9B) + Nginx LB(8090) + `https://api.ehuniverse.com` 게이트웨이 구조는 **폐기**.
+DGX 경로는 `FEATURE_DGX_DEV_API=on` / `ENABLE_DGX_DEV_API=on`일 때만 서버 라우트에서 키 없는 개발 API 경로로 허용한다.
 
-### 모델
+### DGX 개발 모델
 - **vLLM 포트 8001:** `Qwen 3.6-35B-A3B-FP8 MoE` — 집필·번역·요약·보조 통합 단일
 - **모델 ID:** `qwen36` (vLLM `--served-model-name`)
 - **max_model_len:** 8192 tokens
 - **가속:** FlashInfer + N-Gram Speculative Decoding
-- **실측:** 40~50 tok/s, TTFT 0.05초
+- **실측:** 40~50 tok/s, TTFT 0.05초. 내부 개발 메모이며 공개 운영 성능 약속으로 쓰지 않는다.
 
 ### 변경 사유 (2026-04-20 전환)
 - 35B MoE 단일 모델이 쌍포 9B보다 품질 우위 (긴 컨텍스트 유지·장르 클리셰 탈피 등)
@@ -178,11 +179,12 @@
 - **추론 전략 재수립:** Auditor 분리형 검증은 같은 vLLM 서버에 **low-temp self-critique 세션 추가 호출**로 구현. Engine B 개념 없음.
 
 ### 엔드포인트
-- **DGX 서버:** `http://<DGX-IP>:8001/v1` — vLLM OpenAI 호환 엔드포인트 직결
-- **RAG API (포트 8082):** ChromaDB 99만 문서 + 25 장르 규칙 (`/api/rag/search`, `/api/rag/prompt`)
+- **Hosted 개발 API:** 서버 측 `OPENAI_API_KEY`, `CLAUDE_API_KEY`, `DASHSCOPE_API_KEY`, `DEEPSEEK_API_KEY`, `MINIMAX_API_KEY`, `MOONSHOT_API_KEY` 등 운영 환경변수 기준.
+- **DGX 서버:** `http://<DGX-IP>:8000/v1` — 개발·로컬용 vLLM OpenAI 호환 엔드포인트
+- **Legacy retrieval sidecar (포트 8082):** Translation Studio 보강용 선택 경로. Loreguard Studio 창작/집필 경로에는 자동 주입하지 않는다.
 - **ComfyUI (포트 8188):** Flux-Schnell FP8 이미지 생성 (`/api/image/generate`)
-- **우선순위:** `NEXT_PUBLIC_SPARK_GATEWAY_URL` → `NEXT_PUBLIC_SPARK_SERVER_URL` → `http://localhost:8001`
-- **샌드박스:** `/api/sandbox/execute` — Code Studio 격리 코드 검증
+- **DGX 개발 우선순위:** `SPARK_SERVER_URL` → `NEXT_PUBLIC_SPARK_GATEWAY_URL` → `NEXT_PUBLIC_SPARK_SERVER_URL`
+- **샌드박스:** `/api/sandbox/execute` — 내부 격리 실행 호환 경로. 공개 제품 기능으로 문서화하지 않는다.
 
 ### Cloudflare Tunnel 상태
 - **차단 중:** 포트 직결이 여전히 불안정하여 게이트웨이 재구성 전까지 내부망(192.168.x.x) 직결로 운용
@@ -197,19 +199,19 @@
      - `<think></think>` 태그 블록 제거
      - "Thinking Process:" / "Reasoning:" 선행 감지 → 첫 한글 문자까지 건너뛰기
 
-### 통신 구조
+### DGX 개발 통신 구조
 - **스트리밍 (집필·번역):** `streamSparkAI()` ([src/services/sparkService.ts](src/services/sparkService.ts)) → `stream:true` → vLLM 직결 SSE
 - **구조화 생성 (캐릭터·아이템·스킬):** `generateJsonViaSpark()` → `stream:false` → JSON 파싱
-- **RAG 보강:** `useStudioAI` → `ragBuildPrompt()` → 세계관+규칙 프롬프트 자동 조립
-- **Vercel 배포:** `SPARK_SERVER_URL` 환경 변수 우선, 없으면 `NEXT_PUBLIC_SPARK_GATEWAY_URL`
+- **창작 외부 검색 주입:** 제거됨. `useStudioAI`는 외부 검색 보강 함수를 호출하지 않고, 작가가 명시한 참조 컨텍스트와 프로젝트 기준선만 사용한다.
+- **Vercel 배포:** Hosted 개발 API를 기본으로 사용한다. DGX는 명시 플래그 없이는 운영 Hosted 대체 경로로 쓰지 않는다.
 
 ### AI 호출 엔트리 역할 정의 (2026-04-23 감사 결과)
 - **Studio 본문 집필:** [src/engine/pipeline.ts:387](src/engine/pipeline.ts) `buildSystemInstruction()` — 캐릭터 DNA Tier 1/2/3, actGuide, tensionCurve 주입
 - **Tab 자동완성:** [src/app/api/complete/route.ts](src/app/api/complete/route.ts) — `buildAgentSystemPrompt('studio-inline-completion')` 통합 완료. 4언어 정규화 (`normalizeToAgentLang`).
 - **번역 6단계:** [src/lib/build-prompt.ts](src/lib/build-prompt.ts) `buildPrompt()` — stage별 온도 + `/no_think` 가드. `useAgentRegistry: true` opt-in 시 레지스트리 base prepend (dual-pipeline 활성화).
-- **Network Agent 검색:** [src/lib/vertex-network-agent.ts](src/lib/vertex-network-agent.ts) `modelPromptSpec.preamble` — `buildAgentSystemPrompt('network-agent-archive')` 단일 소스 통합 (HSE 4대 권리 + 5 응답 규칙은 가드로 등록).
+- **구 Network Agent 검색:** Discovery Engine 기반 검색/색인 경로는 비활성 호환 라우트로만 남긴다. 현행 `writing-agent-registry.ts`에는 구 네트워크 검색 에이전트와 검색 그라운딩 가드를 등록하지 않는다.
 - **Chat 채팅/분석:** [src/app/api/chat/route.ts](src/app/api/chat/route.ts) `buildSystemInstruction()` — PRISM 가드를 `buildSafetyEnhancedPrompt` (safety-registry) 로 통합. LoRA 어댑터 별도 유지.
 - **공통 레지스트리:** [src/lib/ai/writing-agent-registry.ts](src/lib/ai/writing-agent-registry.ts) — 집필판 AGENT 역할 정의 집중화 (Phase 4 신설 → 2026-05-10 본문 통합 완료, 11 ContextBlock + 4언어 LANG_DIRECTIVE 자동 주입)
 - **PRISM 안전 가드:** [src/lib/ai/safety-registry.ts](src/lib/ai/safety-registry.ts) — 3등급 (all-ages/teen-15/mature-18) 분리. `buildSafetyEnhancedPrompt(base, level)` + 4언어 라벨.
-- **Codex 도메인 prompt:** [src/lib/ai/codex-prompts/](src/lib/ai/codex-prompts/) — 4 도메인 (KO 웹소설 / EN fantasy / JA 라노벨 / ZH 선협) × 7 handler 매트릭스. 각 도메인 그 언어로 직접 작성. UI: [src/components/codex/CodexDomainSelector.tsx](src/components/codex/CodexDomainSelector.tsx).
+- **창작 도메인 prompt:** [src/lib/ai/creative-domain-prompts/](src/lib/ai/creative-domain-prompts/) — 4 도메인 (KO 웹소설 / EN fantasy / JA 라노벨 / ZH 선협) × 7 handler 매트릭스. 각 도메인 그 언어로 직접 작성.
 - **언어 정규화:** [src/lib/ai/lang-normalize.ts](src/lib/ai/lang-normalize.ts) — AppLanguage ↔ AgentLanguage 양방향. 비표준 별칭 흡수.

@@ -2,8 +2,8 @@
 // PART 0: API Route — Server-side AI proxy
 // ============================================================
 // Accepts POST { provider, model, systemInstruction, messages, temperature, apiKey? }
-// Gemini uses hosted server allocation first, then falls back to the user's key if quota is exhausted.
-// Other providers keep the existing BYOK-first behavior when a client key is present.
+// Hosted usage is backed by server-side developer API credentials.
+// DGX is a local/development fallback only when explicitly enabled.
 // Keys NEVER appear in client JS bundles.
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,12 +11,13 @@ export const maxDuration = 60; // Vercel API 대기 시간 60초 (DGX non-stream
 
 import { hasServerProviderCredentials, isServerProviderId, resolveServerProviderKey, type ServerProviderId } from '@/lib/server-ai';
 import { apiLog, createRequestTimer } from '@/lib/api-logger';
-import { getTierLimits } from '@/lib/tier-gate';
-import { isGeminiAllocationExhaustedError, normalizeUserApiKey } from '@/lib/google-genai-server';
+import { isWithinDailyLimit, type UserTier } from '@/lib/tier-gate';
+import { reserveTokenBudgetUpstash, type UpstashConfig } from '@/lib/rate-limit-upstash';
+import { normalizeUserApiKey } from '@/lib/google-genai-server';
 import { dispatchStream } from '@/services/aiProviders';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
-import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
+import { checkRateLimitAsync as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 // [QA-robustness (2)] RETRYABLE/TERMINAL 분류 + bounded backoff-with-jitter (단일 소스).
 import { retryWithBackoff } from '@/lib/retry-classify';
 // [P1 루프3 — 2026-06-08] server-ai-init module-eval 1회: UPSTASH_REDIS_REST_URL/_TOKEN 있으면
@@ -28,9 +29,11 @@ import { runNoa } from '@/lib/noa';
 import { wrapStreamWithIpAudit } from '@/lib/noa/server-gate';
 import type { DomainType } from '@/lib/noa/types';
 import { getSwapController, type AdapterMode } from '@/lib/noa/lora-swap';
-import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 // [I-07 — 2026-05-10] PRISM 가드를 safety-registry 단일 소스로 통합.
 import { buildSafetyEnhancedPrompt, type PrismLevel } from '@/lib/ai/safety-registry';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
+import { isReasoningLevel, type ReasoningLevel } from '@/lib/ai-reasoning';
 
 // [I-07 — 2026-05-10] chat 의 PRISM mode key ('ALL'/'T15'/'M18') → safety-registry PrismLevel.
 const PRISM_MODE_MAP: Record<string, PrismLevel> = {
@@ -41,11 +44,16 @@ const PRISM_MODE_MAP: Record<string, PrismLevel> = {
 
 // ── Input validation helper (#13) ──
 function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
-  if (!body?.provider || typeof body.provider !== 'string') return { valid: false, error: 'provider required' };
-  if (!body?.messages || !Array.isArray(body.messages) || body.messages.length === 0) return { valid: false, error: 'messages required' };
-  if (body.messages.length > 200) return { valid: false, error: 'max 200 messages' };
-  if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) return { valid: false, error: 'temperature 0-2' };
-  if (body.maxTokens !== undefined && (typeof body.maxTokens !== 'number' || body.maxTokens < 1 || body.maxTokens > 16384)) return { valid: false, error: 'maxTokens must be 1-16384' };
+  if (!body?.provider || typeof body.provider !== 'string') return { valid: false, error: '요청한 연결 방식이 없습니다.' };
+  if (!body?.messages || !Array.isArray(body.messages) || body.messages.length === 0) return { valid: false, error: '보낼 내용이 없습니다.' };
+  if (body.messages.length > 200) return { valid: false, error: '한 번에 보낼 수 있는 대화가 너무 많습니다.' };
+  if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) return { valid: false, error: '창의성 값은 0부터 2 사이여야 합니다.' };
+  if (body.maxTokens !== undefined && (typeof body.maxTokens !== 'number' || body.maxTokens < 1 || body.maxTokens > 16384)) return { valid: false, error: '응답 길이 값이 허용 범위를 벗어났습니다.' };
+  if (body.reasoning !== undefined) {
+    if (!body.reasoning || typeof body.reasoning !== 'object') return { valid: false, error: '작업 깊이 값이 올바르지 않습니다.' };
+    const level = (body.reasoning as { level?: unknown }).level;
+    if (!isReasoningLevel(level)) return { valid: false, error: '작업 깊이 값이 올바르지 않습니다.' };
+  }
   return { valid: true, data: body };
 }
 
@@ -56,27 +64,48 @@ const MAX_REQUEST_BYTES = 1_048_576; // 1MB
 
 // Per-IP daily token budget (output tokens). Prevents cost runaway.
 // BYOK requests are exempt (user pays their own).
-const DAILY_TOKEN_BUDGET_PER_IP = 500_000; // ~$7.50/day at GPT-4o rates
-const dailyTokenMap = new Map<string, { tokens: number; resetAt: number }>();
+const DAILY_TOKEN_BUDGET_PER_IP = 500_000; // conservative daily hosted-token guardrail
+const DAY_MS = 86_400_000;
+const dailyUsageMap = new Map<string, { used: number; resetAt: number }>();
 
-function checkTokenBudget(ip: string, isbyok: boolean): { allowed: boolean; remaining: number } {
-  if (isbyok) return { allowed: true, remaining: Infinity };
-  const now = Date.now();
-  const dayMs = 86_400_000;
-  const entry = dailyTokenMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    dailyTokenMap.set(ip, { tokens: 0, resetAt: now + dayMs });
-    return { allowed: true, remaining: DAILY_TOKEN_BUDGET_PER_IP };
-  }
-  if (entry.tokens >= DAILY_TOKEN_BUDGET_PER_IP) {
-    return { allowed: false, remaining: 0 };
-  }
-  return { allowed: true, remaining: DAILY_TOKEN_BUDGET_PER_IP - entry.tokens };
+function getUpstashBudgetConfig(): UpstashConfig | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  return url && token ? { url, token, prefix: 'chat-budget:', timeoutMs: 1500 } : null;
 }
 
-function recordTokenUsage(ip: string, tokens: number): void {
-  const entry = dailyTokenMap.get(ip);
-  if (entry) entry.tokens += tokens;
+function reserveDailyBudgetMemory(key: string, amount: number, limit: number): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const entry = dailyUsageMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    const used = Math.max(0, Math.floor(amount));
+    dailyUsageMap.set(key, { used, resetAt: now + DAY_MS });
+    return { allowed: used <= limit, remaining: Math.max(0, limit - used) };
+  }
+
+  const nextUsed = entry.used + Math.max(0, Math.floor(amount));
+  if (!isWithinDailyLimit(limit, entry.used) || nextUsed > limit) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  entry.used = nextUsed;
+  return { allowed: true, remaining: Math.max(0, limit - nextUsed) };
+}
+
+async function reserveDailyBudget(scope: string, principal: string, amount: number, limit: number): Promise<{ allowed: boolean; remaining: number }> {
+  if (limit === 0) return { allowed: true, remaining: Infinity };
+  const key = `${scope}:${principal}`;
+  const upstashConfig = getUpstashBudgetConfig();
+  if (upstashConfig) {
+    const result = await reserveTokenBudgetUpstash(upstashConfig, key, amount, limit, DAY_MS);
+    return { allowed: result.allowed, remaining: result.remaining };
+  }
+  return reserveDailyBudgetMemory(key, amount, limit);
+}
+
+async function recordTokenUsage(ip: string, tokens: number): Promise<void> {
+  if (tokens <= 0) return;
+  await reserveDailyBudget('tokens', `ip:${ip}`, tokens, DAILY_TOKEN_BUDGET_PER_IP);
 }
 
 // ============================================================
@@ -91,15 +120,10 @@ function recordTokenUsage(ip: string, tokens: number): void {
 
 /** CSRF origin check — returns error response or null if OK */
 function checkCsrf(req: NextRequest): NextResponse | null {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  if (!origin) {
-    return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-  }
-  if (host && new URL(origin).host !== host) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  return null;
+  const result = checkSameOriginHeaders(req.headers);
+  return result.ok
+    ? null
+    : NextResponse.json({ error: result.error }, { status: 403 });
 }
 
 /** Parse and size-guard the raw request body */
@@ -119,6 +143,7 @@ type ParsedChatFields = {
   provider: ServerProviderId; model: string; systemInstruction: string;
   messages: { role: string; content: string }[];
   temperature: number; clientKey?: string; maxTokens?: number;
+  reasoning?: ReasoningLevel;
   prismMode?: string;
   isChatMode?: boolean;
   /** true: 설정 화면「연결 테스트」— 호스팅 우회하고 전달된 BYOK만 사용 */
@@ -131,20 +156,21 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
   if (!validation.valid) {
     return { ok: false, response: NextResponse.json({ error: validation.error, requestId }, { status: 400 }) };
   }
-  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode, isChatMode, keyVerification } = validation.data as {
+  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, reasoning, prismMode, isChatMode, keyVerification } = validation.data as {
     provider: string; model?: string; systemInstruction?: string;
     messages: { role: string; content: string }[];
     temperature?: number; apiKey?: string; maxTokens?: number;
+    reasoning?: { level: ReasoningLevel };
     prismMode?: string; isChatMode?: boolean;
     keyVerification?: boolean;
   };
   if (!isServerProviderId(provider)) {
-    return { ok: false, response: NextResponse.json({ error: 'Invalid provider', requestId }, { status: 400 }) };
+    return { ok: false, response: NextResponse.json({ error: '지원하지 않는 연결 방식입니다.', requestId }, { status: 400 }) };
   }
   // After isServerProviderId guard, provider is narrowed to ServerProviderId
   const validProvider = provider as ServerProviderId;
   if (!model || typeof model !== 'string' || !/^[a-zA-Z0-9._\/-]+$/.test(model)) {
-    return { ok: false, response: NextResponse.json({ error: 'Invalid model', requestId }, { status: 400 }) };
+    return { ok: false, response: NextResponse.json({ error: '지원하지 않는 모델입니다.', requestId }, { status: 400 }) };
   }
   return {
     ok: true,
@@ -156,6 +182,7 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
       temperature,
       clientKey,
       maxTokens,
+      reasoning: reasoning?.level,
       prismMode,
       isChatMode,
       keyVerification: keyVerification === true,
@@ -170,34 +197,17 @@ type ResolvedAuth = {
   canFallbackToUserKey: boolean;
 };
 
-/** Auth gate: prefer hosted Gemini allocation, then fall back to BYOK when needed */
-export type UserTier = 'none' | 'free' | 'pro';
-
-/** Auth gate: handle user tiers, reject unauthenticated users without BYOK */
+/** Auth gate: server developer API credentials or a user connection key are required. */
 function resolveAuth(
   provider: ServerProviderId,
   clientKey: string | undefined,
-  ip: string,
   requestId: string,
-  userTier: UserTier,
   keyVerification: boolean,
 ): { ok: true; auth: ResolvedAuth } | { ok: false; response: NextResponse } {
   const userApiKey = normalizeUserApiKey(clientKey);
   const isByok = userApiKey.length > 0;
 
-  // DGX Spark 서버가 설정되어 있으면 키 없어도 허용 (서비스 제공 모드)
-  const hasDgxServer = !!SPARK_SERVER_URL;
-
-  // 비로그인 + 키 없음 + DGX 없음 → 차단
-  if (userTier === 'none' && !isByok && !hasDgxServer) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: '비로그인 사용자는 개인 API 키(수동 모드)를 설정해야 사용할 수 있습니다. 로그인 후 기본 무료 할당량을 이용하세요.', requestId },
-        { status: 401 }
-      )
-    };
-  }
+  const canUseDgxDevApi = isDgxDeveloperApiEnabled();
 
   /** 설정 창「연결 테스트」: 전달된 BYOK만 사용 (호스팅/일일 할당 경로 우회) */
   if (keyVerification && isByok) {
@@ -212,65 +222,42 @@ function resolveAuth(
     };
   }
 
-  // 티어별 기능 제한 적용 (OPEN_BETA=true면 모두 Pro급)
-  const _tierLimits = getTierLimits(userTier as 'none' | 'free' | 'pro');
-
-  const hostedGeminiEnabled = provider === 'gemini' && hasServerProviderCredentials('gemini');
-
   if (provider === 'gemini') {
-    if (!hostedGeminiEnabled && !isByok) {
+    if (!isByok) {
+      if (canUseDgxDevApi) {
+        return { ok: true, auth: { apiKey: '', isByok: false, userApiKey: '', canFallbackToUserKey: false } };
+      }
       return {
         ok: false,
         response: NextResponse.json(
-          { error: 'Gemini is not configured. Enter your own API key in Settings or configure server-side Vertex AI.', requestId },
+          {
+            error: 'connection_key_required',
+            message: '노아 제안을 쓰려면 연결 키가 필요합니다. 환경 설정에서 연결 키를 등록해 주세요.',
+            requestId,
+          },
           { status: 401 },
         ),
       };
-    }
-
-    if (hostedGeminiEnabled) {
-      // BYOK 우선 정책: 유저가 자기 키를 입력했으면 유저 키를 먼저 사용
-      if (isByok) {
-        return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };
-      }
-
-      // 유저 키 없는 경우에만 호스팅 키 사용
-      const budget = userTier === 'pro' ? { allowed: true, remaining: Infinity } : checkTokenBudget(ip, false);
-      if (!budget.allowed) {
-        return {
-          ok: false,
-          response: NextResponse.json(
-            { error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' },
-            { status: 429 },
-          ),
-        };
-      }
-
-      return { ok: true, auth: { apiKey: '', isByok: false, userApiKey: '', canFallbackToUserKey: false } };
     }
 
     return { ok: true, auth: { apiKey: userApiKey, isByok: true, userApiKey, canFallbackToUserKey: false } };
   }
 
   if (!isByok && !hasServerProviderCredentials(provider)) {
-    // DGX Spark 서버가 있으면 폴백 가능 → 허용 (dispatchStream에서 spark로 전환)
-    if (hasDgxServer) {
+    // DGX Spark is not a production Hosted substitute; keep it limited to local/dev API runs.
+    if (canUseDgxDevApi) {
       return { ok: true, auth: { apiKey: '', isByok: false, userApiKey: '', canFallbackToUserKey: false } };
     }
     return {
       ok: false,
       response: NextResponse.json(
-        { error: 'API key required. Please enter your own API key in Settings (BYOK mode).', requestId },
+        {
+          error: 'connection_key_required',
+          message: '노아 제안을 쓰려면 연결 키가 필요합니다. 환경 설정에서 연결 키를 등록해 주세요.',
+          requestId,
+        },
         { status: 401 },
       ),
-    };
-  }
-
-  const budget = (userTier === 'pro' || isByok) ? { allowed: true, remaining: Infinity } : checkTokenBudget(ip, false);
-  if (!budget.allowed) {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: 'Daily usage limit reached. Try again tomorrow or use your own API key.' }, { status: 429 }),
     };
   }
 
@@ -278,7 +265,10 @@ function resolveAuth(
   if (!apiKey) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'API key not configured. Set via BYOK or server environment variable.' }, { status: 401 }),
+      response: NextResponse.json({
+        error: 'connection_key_not_configured',
+        message: '연결 키를 확인하지 못했습니다. 환경 설정에서 다시 등록해 주세요.',
+      }, { status: 401 }),
     };
   }
 
@@ -320,9 +310,9 @@ function wrapStreamWithTracking(stream: ReadableStream, ip: string, shouldTrack:
       if (chunk instanceof Uint8Array) totalOutputChars += chunk.length;
       controller.enqueue(chunk);
     },
-    flush() {
+    async flush() {
       const outputEstimate = Math.ceil(totalOutputChars / 4);
-      if (outputEstimate > 0) recordTokenUsage(ip, outputEstimate);
+      if (outputEstimate > 0) await recordTokenUsage(ip, outputEstimate);
     },
   }));
 }
@@ -372,7 +362,7 @@ export async function POST(req: NextRequest) {
     const csrfErr = checkCsrf(req);
     if (csrfErr) return csrfErr;
 
-    const rl = sharedCheckRateLimit(ip, 'chat', RATE_LIMITS.chat);
+    const rl = await sharedCheckRateLimit(ip, 'chat', RATE_LIMITS.chat);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment.' },
@@ -385,24 +375,23 @@ export async function POST(req: NextRequest) {
 
     const extracted = extractChatFields(parsed.body, requestId);
     if (!extracted.ok) return extracted.response;
-    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode, isChatMode, keyVerification } = extracted.fields;
+    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, reasoning, prismMode, isChatMode, keyVerification } = extracted.fields;
 
-    let userTier: UserTier = 'none';
-    const authHeader = req.headers.get('Authorization') || '';
-    if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1]?.trim() ?? '';
-      // Firebase 토큰 검증 — custom claims에서 tier 판별 (hardcoded bypass 금지)
-      if (token) {
-        const verified = await verifyFirebaseIdToken(token);
-        if (verified) {
-          userTier = verified.tier === 'pro' ? 'pro' : 'free';
-        }
-      }
-    }
+    const userApiKey = normalizeUserApiKey(clientKey);
+    const tierGate = await enforceServerTierLimit({
+      headers: req.headers,
+      ip,
+      route: '/api/chat',
+      feature: 'chat',
+      hasByok: Boolean(userApiKey),
+      requestId,
+    });
+    if (!tierGate.ok) return tierGate.response;
+    const userTier: UserTier = tierGate.tier;
 
-    const authResult = resolveAuth(provider, clientKey, ip, requestId, userTier, Boolean(keyVerification));
+    const authResult = resolveAuth(provider, clientKey, requestId, Boolean(keyVerification));
     if (!authResult.ok) return authResult.response;
-    let auth = authResult.auth;
+    const auth = authResult.auth;
 
     // L2 LoRA: 도메인 기반 어댑터 선택 — isChatMode(코드/분석)=LEFT_BRAIN, 소설=RIGHT_BRAIN
     const adapterMode: AdapterMode | undefined = isChatMode ? 'LEFT_BRAIN' : 'RIGHT_BRAIN';
@@ -444,7 +433,8 @@ export async function POST(req: NextRequest) {
         meta: { reason: noaResult.tactical.reason } 
       });
       return NextResponse.json({
-        error: 'Security Policy Violation',
+        error: 'noa_request_blocked',
+        message: '요청을 처리할 수 없습니다.',
         noa: {
           grade: noaResult.judgment?.grade.label,
           path: noaResult.tactical.selectedPath,
@@ -471,23 +461,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
+    if (!auth.isByok) {
+      const inputBudget = await reserveDailyBudget('tokens', `ip:${ip}`, inputEstimate, DAILY_TOKEN_BUDGET_PER_IP);
+      if (!inputBudget.allowed) {
+        return NextResponse.json(
+          { error: '오늘 기본 제공량을 모두 사용했습니다. 내일 다시 시도하거나 연결 키를 등록해 주세요.', requestId },
+          { status: 429, headers: { 'X-Request-Id': requestId, 'Retry-After': '86400' } },
+        );
+      }
+    }
+
     // [QA-robustness (2)] RETRYABLE(429/5xx/network) 만 bounded backoff-with-jitter (≤3회).
     // TERMINAL(4xx) 는 즉시 반환 — 과도 재시도로 인한 비용 폭증 차단 (상한 엄수).
-    let dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
-    if (
-      !dispatched.ok
-      && provider === 'gemini'
-      && !auth.isByok
-      && auth.canFallbackToUserKey
-      && isGeminiAllocationExhaustedError(dispatched.error)
-    ) {
-      auth = { apiKey: auth.userApiKey, isByok: true, userApiKey: auth.userApiKey, canFallbackToUserKey: false };
-      dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
-    }
-    // DGX Spark 폴백: 모든 프로바이더 실패 시 DGX 서버로 재시도
-    if (!dispatched.ok && SPARK_SERVER_URL) {
+    let dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined, reasoning);
+    // DGX Spark fallback is allowed only for local/development API runs.
+    if (!dispatched.ok && isDgxDeveloperApiEnabled()) {
       apiLog({ level: 'info', event: 'dgx_fallback', route: '/api/chat', ip, requestId, meta: { originalError: dispatched.error } });
-      dispatched = await dispatchStreamWithRetry('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+      dispatched = await dispatchStreamWithRetry('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined, reasoning);
     }
     if (!dispatched.ok) {
       // [QA-robustness (2)] rate/budget hit 은 Retry-After 헤더로 클라이언트 백오프 유도.
@@ -496,9 +487,6 @@ export async function POST(req: NextRequest) {
       if (status === 429) headers['Retry-After'] = '60';
       return NextResponse.json({ error: dispatched.error, requestId }, { status, headers });
     }
-
-    const inputEstimate = Math.ceil(messages.reduce((a: number, m: { content: string }) => a + (m.content?.length ?? 0), 0) / 4);
-    if (!auth.isByok) recordTokenUsage(ip, inputEstimate);
 
     apiLog({ level: 'info', event: 'chat_stream_start', route: '/api/chat', ip, provider, model, requestId, durationMs: timer.elapsed() });
 

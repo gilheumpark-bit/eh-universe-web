@@ -24,7 +24,7 @@ import type {
 } from './types';
 import { CERTIFICATE_LABELS } from './types';
 import { listCreativeEvents } from './event-recorder';
-import { extractChainTipHash } from './chain-verify';
+import { sortEventsForChain, verifyEventChain } from './chain-verify';
 import { listSources } from './source-recorder';
 import { computeSha256Hex } from './source-recorder';
 import { LIMITATION_TEXT_4LANG, LIMITATION_TEXT_VERSION, assertNoForbiddenWords } from './limitation-text';
@@ -533,6 +533,15 @@ export async function buildCertificate(
   const events = await listCreativeEvents({ projectId });
   const sources = await listSources(projectId);
 
+  // 확인서는 과정기록 위에 서는 산출물이다. 발급 직전에 해시 체인을 검문해
+  // 위변조·중간 삽입·무해시 이벤트 끼워넣기를 통과시키지 않는다.
+  const chainVerification = await verifyEventChain(sortEventsForChain(events));
+  if (!chainVerification.valid) {
+    const broken = chainVerification.brokenAt;
+    const reason = broken ? `${broken.reason}:${broken.eventId}` : 'unknown';
+    throw new Error(`EVENT_CHAIN_INVALID — 과정기록 해시 체인이 손상되어 확인서를 발급할 수 없습니다. (${reason})`);
+  }
+
   // 2) 해시 계산 (병렬)
   const [manuscriptHash, timelineHash, sourceSummaryHash] = await Promise.all([
     computeManuscriptHash(input.episodes),
@@ -589,7 +598,8 @@ export async function buildCertificate(
   const verificationBaseUrl =
     (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SITE_URL) ||
     'https://eh-universe.com';
-  const verificationUrl = `${verificationBaseUrl.replace(/\/+$/, '')}/api/cp/verify/${certId}`;
+  const publicVerificationBaseUrl = `${verificationBaseUrl.replace(/\/+$/, '')}/verify`;
+  const verificationUrl = `${publicVerificationBaseUrl}/${certId}`;
 
   // 시간대 — IANA. 브라우저 환경 또는 server 환경에서 안전 추출.
   let timeZone: string | undefined;
@@ -611,7 +621,7 @@ export async function buildCertificate(
   const hciDetail = computeHCIDetail(events);
   const originSummaryPct = categorizeOriginSummary(hciDetail.byOrigin);
   const sealNumber = await issueWitnessSeal({ generatedAt, manuscriptHash });
-  const verificationQrDataUrl = await generateQRDataUrl(sealNumber, verificationBaseUrl);
+  const verificationQrDataUrl = await generateQRDataUrl(sealNumber, publicVerificationBaseUrl);
   const attestationStatement = ATTESTATION_OF_GENESIS_4LANG[language];
   // Work Sessions — events 시간순 + 의미 있는 시점 추출 (현재는 첫 / 중간 / 마지막)
   const workSessions = (() => {
@@ -674,7 +684,7 @@ export async function buildCertificate(
     originSummary: originSummaryPct,
     workSessions,
     // [s81-hash-chain] 발급 시점 체인 tip anchoring (hashed 이벤트 0건이면 undefined)
-    chainTipHash: extractChainTipHash(events),
+    chainTipHash: chainVerification.tipHash ?? undefined,
   };
 
   return { cert, sections };

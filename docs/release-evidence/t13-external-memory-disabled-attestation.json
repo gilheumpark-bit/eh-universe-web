@@ -1,0 +1,27 @@
+{
+  "kind": "loreguard.release-evidence.v1",
+  "gate": "T13",
+  "requirementId": "T13-vector-memory-isolation",
+  "environment": "disabled-attestation",
+  "artifactType": "external-memory-disabled-attestation",
+  "generatedAt": "2026-06-20T08:38:37+09:00",
+  "source": "local-script://scripts/loreguard-release-disabled-attestations.mjs",
+  "summary": "External memory/vector RAG is disabled for creative writing paths; legacy RAG remains translation-only support.",
+  "checks": [
+    {
+      "id": "external-memory-disabled-attestation-real-run-check",
+      "status": "PASS",
+      "evidence": "Static repository inspection confirmed creative/writing paths do not import or call the legacy RAG client; attached artifact records scanned roots."
+    }
+  ],
+  "hashes": [
+    {
+      "path": "docs/release-evidence/artifacts/t13-external-memory-disabled-attestation.txt",
+      "sha256": "3efc6410bda6c3119bfaadb3fae09b8eccfd56062e082c554b6f3237aecc3f22"
+    }
+  ],
+  "limitations": [
+    "Disabled-state attestation only. This does not replace staging, legal, provider, payment, or production evidence.",
+    "This evidence does not claim legal substitution, ownership determination, or complete protection."
+  ]
+}

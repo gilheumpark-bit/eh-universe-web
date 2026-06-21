@@ -8,7 +8,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const [q, setQ] = useState('');
   const [idx, setIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const all: CommandEntry[] = useMemo(() => listCommands(), [open]);
+  const all: CommandEntry[] = useMemo(() => (open ? listCommands() : []), [open]);
   const results = useMemo(() => (q.trim() ? searchCommands(q, all) : all), [q, all]);
 
   useEffect(() => {

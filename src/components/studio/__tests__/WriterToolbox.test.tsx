@@ -11,10 +11,10 @@ import WriterToolbox from '../WriterToolbox';
 const SAMPLE = '주인공은 회귀했다. 그리고 모든 것이 달라졌다. '.repeat(40);
 
 describe('WriterToolbox', () => {
-  it('렌더 — aside 컨테이너 + Toolbox 헤더', () => {
+  it('렌더 — aside 컨테이너 + 작가 보조함 헤더', () => {
     render(<WriterToolbox manuscript={SAMPLE} />);
-    expect(screen.getByLabelText(/작가 도구함/)).toBeInTheDocument();
-    expect(screen.getByText(/Toolbox/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/작가 보조함/)).toBeInTheDocument();
+    expect(screen.getByText(/작가 보조함/)).toBeInTheDocument();
     // "18 모듈" 은 헤더 + 푸터 카운터 2 곳에 노출 — getAllByText 사용.
     expect(screen.getAllByText(/18 모듈/).length).toBeGreaterThanOrEqual(1);
   });
@@ -94,14 +94,14 @@ describe('WriterToolbox', () => {
   it('onClose 콜백 — 닫기 버튼 노출 + 클릭', () => {
     const onClose = jest.fn();
     render(<WriterToolbox manuscript={SAMPLE} onClose={onClose} />);
-    const closeBtn = screen.getByLabelText(/Toolbox 닫기/);
+    const closeBtn = screen.getByLabelText(/작가 보조함 닫기/);
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('onClose 없음 — 닫기 버튼 미노출', () => {
     render(<WriterToolbox manuscript={SAMPLE} />);
-    expect(screen.queryByLabelText(/Toolbox 닫기/)).toBeNull();
+    expect(screen.queryByLabelText(/작가 보조함 닫기/)).toBeNull();
   });
 
   it('그룹 토글 — 펼침 후 다시 클릭 시 접힘', () => {

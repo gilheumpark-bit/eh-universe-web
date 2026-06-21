@@ -135,7 +135,7 @@ export function useStudioShellController(
       }
       const sgConfig = getDefaultSuggestionConfig('intermediate');
       const recentMetrics = recentMetricsSignature ?? [];
-      const charNames = config.characters.map(c => c.name);
+      const charNames = (config.characters ?? []).map(c => c.name);
       const charLastAppearance: Record<string, number> = {};
       charNames.forEach(name => { charLastAppearance[name] = config.episode; });
 

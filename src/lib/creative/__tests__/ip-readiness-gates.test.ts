@@ -187,7 +187,7 @@ describe('evaluateReadinessGates — 6 Gate(G0~G5) 판정기', () => {
   // G0 / G4 / G5 — 비점수 증빙 게이트
   // ============================================================
   describe('증빙 게이트 G0/G4/G5', () => {
-    it('G0: 4개 산출물 중 하나라도 false → FAIL + 사양 조치(인간 기여 로그 보강)', () => {
+    it('G0: 4개 산출물 중 하나라도 false → FAIL + 사양 조치(작가 기여 로그 보강)', () => {
       const r = evaluateReadinessGates(uniform(100), 100, {
         ...FULL_EVIDENCE,
         hasRevisionLog: false,
@@ -195,7 +195,7 @@ describe('evaluateReadinessGates — 6 Gate(G0~G5) 판정기', () => {
       const g0 = gateOf(r, 'G0');
       expect(g0.status).toBe('FAIL');
       expect(g0.reason).toContain('revision log');
-      expect(g0.reason).toContain('인간 기여 로그');
+      expect(g0.reason).toContain('작가 기여 로그');
       expect(r.gate).toBe<ReadinessGateId>('G0');
     });
 

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { X, Sparkles, Wand2, Loader2, BookOpen, Zap, ExternalLink, Key, Check } from "lucide-react";
 import { Genre, type AppLanguage } from "@/lib/studio-types";
 import { GENRE_LABELS } from "@/lib/studio-constants";
-import { createT, L4 } from "@/lib/i18n";
+import { createT, L4, normalizeAppLanguage } from "@/lib/i18n";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 // ============================================================
@@ -19,7 +19,7 @@ interface QuickStartModalProps {
   onClose: () => void;
   onStart: (genre: Genre, prompt: string) => Promise<void>;
   isGenerating: boolean;
-  /** "다른 키 있어요" 선택 시 APIKey 매니저 열기 */
+  /** 연결 키 설정 선택 시 키 매니저 열기 */
   onOpenApiKeys?: () => void;
 }
 
@@ -50,6 +50,8 @@ export default function QuickStartModal({
   const [selectedGenre, setSelectedGenre] = useState<Genre>(Genre.FANTASY);
   const [prompt, setPrompt] = useState("");
   const t = createT(language);
+  const appLanguage = normalizeAppLanguage(language);
+  const genreLabels = GENRE_LABELS[appLanguage] ?? GENRE_LABELS.KO;
   const trimmedPrompt = prompt.trim();
 
   // [C] WCAG 2.1 AA focus-trap — 모달 내부 Tab 순환 + Escape 닫기 + 이전 focus 복원.
@@ -65,7 +67,7 @@ export default function QuickStartModal({
     if (!trimmedPrompt || isGenerating) {
       return;
     }
-    // [C] provider별 분기 — byok은 키 매니저로, gemini 키 발급은 새 탭, dgx/gemini-ready는 정상 플로우
+    // [C] provider별 분기 — 키 설정은 매니저로, 자체 엔진/연결 키는 정상 플로우
     if (provider === "byok") {
       onOpenApiKeys?.();
       return;
@@ -73,9 +75,8 @@ export default function QuickStartModal({
     void onStart(selectedGenre, trimmedPrompt);
   };
 
-  const openGeminiKeyGuide = () => {
-    if (typeof window === "undefined") return;
-    window.open("https://aistudio.google.com/apikey", "_blank", "noopener,noreferrer");
+  const openConnectionKeySettings = () => {
+    onOpenApiKeys?.();
   };
 
   // ============================================================
@@ -84,19 +85,19 @@ export default function QuickStartModal({
 
   const L = {
     providerHeading: L4(language, {
-      ko: "당신의 작업 엔진을 선택하세요",
+      ko: "노아 연결 방식을 선택하세요",
       en: "Choose your work engine",
       ja: "作業エンジンを選択してください",
       zh: "选择您的工作引擎",
     }),
     dgxTitle: L4(language, {
-      ko: "로어가드 자체 엔진 (DGX Spark)",
-      en: "Loreguard Built-in Engine (DGX Spark)",
-      ja: "Loreguard 内蔵エンジン (DGX Spark)",
-      zh: "Loreguard 自建引擎 (DGX Spark)",
+      ko: "로어가드 기본 연결",
+      en: "Loreguard Built-in Engine",
+      ja: "Loreguard 内蔵エンジン",
+      zh: "Loreguard 自建引擎",
     }),
     dgxDesc: L4(language, {
-      ko: "키 없이 바로 시작. 자체 서버라 무료.",
+      ko: "연결 키 등록 없이 바로 시작할 수 있는 기본 경로입니다.",
       en: "No key needed. Free self-hosted server.",
       ja: "キー不要で即開始。自社サーバーなので無料。",
       zh: "无需密钥即可开始。自建服务器免费。",
@@ -108,40 +109,40 @@ export default function QuickStartModal({
       zh: "可用",
     }),
     dgxUnavailable: L4(language, {
-      ko: "현재 서버 미설정",
+      ko: "현재 준비 중",
       en: "Server not configured",
       ja: "サーバー未設定",
       zh: "服务器未配置",
     }),
     geminiTitle: L4(language, {
-      ko: "Gemini 무료 키 사용 (권장)",
-      en: "Use free Gemini API key (recommended)",
-      ja: "Gemini 無料キーを使用 (推奨)",
-      zh: "使用 Gemini 免费密钥 (推荐)",
+      ko: "등록한 연결 키 사용",
+      en: "Use a connection key",
+      ja: "登録済みの接続キーを使用",
+      zh: "使用已连接的密钥",
     }),
     geminiDesc: L4(language, {
-      ko: "1분 만에 무료로 시작. Google 계정만 있으면 됨.",
-      en: "Start free in 1 minute. Only a Google account needed.",
-      ja: "1分で無料開始。Googleアカウントがあれば十分。",
-      zh: "1分钟免费开始。只需 Google 账号。",
+      ko: "이미 연결한 모델 계정으로 노아 제안을 시작합니다.",
+      en: "Start Noa suggestions with a model account you already connected.",
+      ja: "接続済みのモデルアカウントでノア提案を開始します。",
+      zh: "使用已连接的模型账户开始诺亚建议。",
     }),
     geminiGuide: L4(language, {
-      ko: "키 발급 가이드",
-      en: "Get a key",
-      ja: "キー発行ガイド",
-      zh: "密钥申请指南",
+      ko: "연결 키 등록",
+      en: "Connection key settings",
+      ja: "接続キー設定",
+      zh: "连接密钥设置",
     }),
     byokTitle: L4(language, {
-      ko: "다른 키 있어요 (OpenAI / Claude 등)",
-      en: "I have another key (OpenAI / Claude, etc.)",
-      ja: "他のキーを持っています (OpenAI",
-      zh: "我有其他密钥 (OpenAI",
+      ko: "연결 키를 먼저 등록할게요",
+      en: "Set up connection keys first",
+      ja: "先に接続キーを登録します",
+      zh: "先设置连接密钥",
     }),
     byokDesc: L4(language, {
-      ko: "설정에서 키를 등록하세요.",
-      en: "Register your key in settings.",
-      ja: "設定でキーを登録してください。",
-      zh: "请在设置中注册密钥。",
+      ko: "환경 설정에서 모델 계정을 연결합니다.",
+      en: "Connect a model account in settings.",
+      ja: "設定でモデルアカウントを接続します。",
+      zh: "在设置中连接模型账户。",
     }),
     byokCta: L4(language, {
       ko: "설정 열기",
@@ -247,7 +248,7 @@ export default function QuickStartModal({
                 </div>
               </button>
 
-              {/* Gemini 옵션 */}
+              {/* 연결 키 옵션 */}
               <button
                 type="button"
                 role="radio"
@@ -269,12 +270,12 @@ export default function QuickStartModal({
                     <span
                       role="link"
                       tabIndex={provider === "gemini" ? 0 : -1}
-                      onClick={(e) => { e.stopPropagation(); openGeminiKeyGuide(); }}
+                      onClick={(e) => { e.stopPropagation(); openConnectionKeySettings(); }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
                           e.stopPropagation();
-                          openGeminiKeyGuide();
+                          openConnectionKeySettings();
                         }
                       }}
                       className="mt-2 inline-flex items-center gap-1 rounded-md bg-accent-purple/15 px-2 py-1 text-[11px] font-semibold text-accent-purple hover:bg-accent-purple/25 focus-visible:ring-2 focus-visible:ring-accent-blue/50 outline-none"
@@ -286,7 +287,7 @@ export default function QuickStartModal({
                 </div>
               </button>
 
-              {/* BYOK 옵션 */}
+              {/* 키 설정 옵션 */}
               <button
                 type="button"
                 role="radio"
@@ -325,7 +326,7 @@ export default function QuickStartModal({
                       : "border-border bg-bg-secondary text-text-secondary hover:border-text-tertiary"
                   }`}
                 >
-                  {GENRE_LABELS[language][genre]}
+                  {genreLabels[genre]}
                 </button>
               ))}
             </div>

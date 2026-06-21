@@ -286,7 +286,7 @@ function matchesFilter(e: PrimaryWriteLogEntry, f: PrimaryWriteLogFilter): boole
   return true;
 }
 
-/** 관측 로그 전체 삭제 — Dashboard 개발자 도구 / 테스트용. */
+/** 관측 로그 전체 삭제 — Dashboard 내부 진단 / 테스트용. */
 export async function clearPrimaryWriteLog(): Promise<void> {
   try {
     await writeBundle([]);

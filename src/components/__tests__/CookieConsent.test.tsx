@@ -3,6 +3,13 @@
  * localStorage 키: 'eh-cookie-consent' = 'accepted' | 'rejected'
  */
 
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { usePathname } from 'next/navigation';
+
+jest.mock('next/navigation', () => ({
+  usePathname: jest.fn(() => '/'),
+}));
+
 describe('CookieConsent module', () => {
   it('module loads without error', () => {
     expect(() => require('../CookieConsent')).not.toThrow();
@@ -38,5 +45,65 @@ describe('CookieConsent storage semantics', () => {
     localStorage.setItem(STORAGE_KEY, 'unknown');
     // 프로덕션 코드에서는 'accepted'/'rejected' 외 값이면 배너 재노출로 동작
     expect(localStorage.getItem(STORAGE_KEY)).toBe('unknown');
+  });
+});
+
+describe('CookieConsent work-surface placement', () => {
+  const mockedUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+
+  beforeEach(() => {
+    localStorage.clear();
+    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: 1024 });
+    mockedUsePathname.mockReturnValue('/');
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('스튜디오에서는 하단 패널을 가리지 않는 작업 화면 고지 클래스를 쓴다', () => {
+    mockedUsePathname.mockReturnValue('/studio');
+    jest.useFakeTimers();
+    const { default: CookieConsent } = require('../CookieConsent');
+
+    render(<CookieConsent />);
+    act(() => {
+      jest.advanceTimersByTime(801);
+    });
+
+    const dialog = screen.getByRole('dialog', { name: '쿠키 동의' });
+    expect(dialog).toHaveClass('lg-cookie-work-surface');
+    expect(dialog).not.toHaveClass('fixed');
+  });
+
+  it('번역실도 같은 작업 화면 고지 클래스를 쓴다', () => {
+    mockedUsePathname.mockReturnValue('/translation-studio');
+    jest.useFakeTimers();
+    const { default: CookieConsent } = require('../CookieConsent');
+
+    render(<CookieConsent />);
+    act(() => {
+      jest.advanceTimersByTime(801);
+    });
+
+    expect(screen.getByRole('dialog', { name: '쿠키 동의' })).toHaveClass('lg-cookie-work-surface');
+  });
+
+  it('좁은 모바일 폭에서도 인라인 배치값 없이 CSS 상태 바 배치를 따른다', async () => {
+    mockedUsePathname.mockReturnValue('/studio');
+    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: 390 });
+    jest.useFakeTimers();
+    const { default: CookieConsent } = require('../CookieConsent');
+
+    render(<CookieConsent />);
+    act(() => {
+      jest.advanceTimersByTime(801);
+    });
+
+    await waitFor(() => {
+      const dialog = screen.getByRole('dialog', { name: '쿠키 동의' });
+      expect(dialog).toHaveClass('lg-cookie-work-surface');
+      expect(dialog).not.toHaveAttribute('style');
+    });
   });
 });

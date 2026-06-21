@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// AIModeSection — NOA 생성 / 스트리밍 / 빈 상태 (구 PART 3)
+// AIModeSection — 노아 제안 / 스트리밍 / 빈 상태 (구 PART 3)
 // ============================================================
 
 import React from 'react';
@@ -53,27 +53,26 @@ export function AIModeSection({
         tokenUsage={tokenUsage}
         language={language}
       />
-      {/* Cinema Mode entry — after generation completes */}
+      {/* Manuscript preview entry — after a Noa response is ready */}
       {!isGenerating && currentSession.messages.length > 0 && currentSession.messages.some(m => m.role === 'assistant' && m.content) && (
         <div className="mx-3 flex flex-col sm:flex-row gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('manuscript')}
-            className="flex-1 flex items-center gap-3 px-4 py-3 min-h-[44px] bg-gradient-to-r from-accent-purple/5 to-accent-blue/5 border border-transparent rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-[box-shadow] group"
-            style={{ backgroundClip: 'padding-box', boxShadow: 'inset 0 0 0 1px rgba(139,92,246,0.25)' }}
+            className="flex-1 flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-lg border border-border bg-bg-secondary transition-[background-color,border-color,color] hover:border-accent-blue/35 hover:bg-bg-tertiary group"
           >
             <span className="text-lg">🎬</span>
             <div className="flex-1 text-left">
               <div className="text-sm md:text-[13px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
                 {L4(language, {
-                  ko: '시네마 모드',
-                  en: 'Cinema Mode',
-                  ja: 'シネマモード',
-                  zh: '电影模式',
+                  ko: '시각 미리보기',
+                  en: 'Visual Preview',
+                  ja: '視覚プレビュー',
+                  zh: '视觉预览',
                 })}
               </div>
               <div className="text-[11px] md:text-[9px] text-text-quaternary">
-                {L4(language, { ko: '비주얼 노벨 플레이어', en: 'Visual novel player', ja: 'ビジュアルノベル', zh: '视觉小说播放器' })}
+                {L4(language, { ko: '장면 슬라이드와 시안 확인', en: 'Review scene slides and visuals', ja: '場面スライドと視覚案を確認', zh: '检查场景幻灯片与视觉草案' })}
               </div>
             </div>
             <span className="text-[10px] font-bold text-accent-purple opacity-60 group-hover:opacity-100 transition-opacity">▶</span>
@@ -86,10 +85,10 @@ export function AIModeSection({
             <span className="text-lg">📻</span>
             <div className="text-left">
               <div className="text-sm md:text-[13px] font-bold text-text-secondary group-hover:text-text-primary transition-colors">
-                {L4(language, { ko: '라디오 모드', en: 'Radio Mode', ja: 'ラジオモード', zh: '广播模式' })}
+                {L4(language, { ko: '음성 확인', en: 'Audio Review', ja: '音声確認', zh: '语音检查' })}
               </div>
               <div className="text-[11px] md:text-[9px] text-text-quaternary">
-                {L4(language, { ko: '오디오 드라마 스타일', en: 'Audio drama style', ja: 'オーディオドラマ', zh: '广播剧风格' })}
+                {L4(language, { ko: '대사 흐름과 호흡 검수', en: 'Check dialogue flow and pacing', ja: 'セリフの流れと間を確認', zh: '检查对话节奏与停顿' })}
               </div>
             </div>
           </button>

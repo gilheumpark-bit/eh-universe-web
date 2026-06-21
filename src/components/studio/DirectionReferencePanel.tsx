@@ -75,9 +75,9 @@ function CharacterSelector({ config, language, setConfig }: { config: StoryConfi
           {isKO ? '이번 화 등장인물' : 'Episode Cast'}
         </span>
         <div className="flex gap-1">
-          <button onClick={selectAll} aria-label={isKO ? '전체 캐릭터 선택' : 'Select all characters'} className="text-[9px] text-accent-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">{isKO ? '전체' : 'All'}</button>
+          <button onClick={selectAll} aria-label={isKO ? '전체 캐릭터 선택' : 'Select all characters'} className="min-h-[44px] min-w-[44px] px-2 text-[9px] text-accent-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">{isKO ? '전체' : 'All'}</button>
           <span className="text-text-quaternary">|</span>
-          <button onClick={clearAll} aria-label={isKO ? '전체 선택 해제' : 'Clear all selections'} className="text-[9px] text-text-tertiary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">{isKO ? '해제' : 'Clear'}</button>
+          <button onClick={clearAll} aria-label={isKO ? '전체 선택 해제' : 'Clear all selections'} className="min-h-[44px] min-w-[44px] px-2 text-[9px] text-text-tertiary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">{isKO ? '해제' : 'Clear'}</button>
         </div>
       </div>
       <div className="space-y-1">
@@ -90,7 +90,7 @@ function CharacterSelector({ config, language, setConfig }: { config: StoryConfi
               onClick={() => toggle(c.name)}
               aria-pressed={checked}
               aria-label={isKO ? `${c.name} ${checked ? '선택 해제' : '선택'}` : `${checked ? 'Deselect' : 'Select'} ${c.name}`}
-              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+              className={`min-h-[44px] w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
                 checked
                   ? 'bg-accent-amber/10 border border-accent-amber/30'
                   : 'bg-bg-secondary/30 border border-transparent hover:border-border/50'
@@ -110,7 +110,7 @@ function CharacterSelector({ config, language, setConfig }: { config: StoryConfi
       <p className="text-[9px] text-text-quaternary mt-1">
         {isKO
           ? `선택: ${active.length}명 → 노아가 이 캐릭터의 성격 강도를 참조합니다`
-          : `Selected: ${active.length} → NOA will reference full personality for these characters`}
+          : `Selected: ${active.length} -> Noa will reference full personality for these characters`}
       </p>
     </div>
   );
@@ -160,7 +160,7 @@ function QuickDirectionPanel({ config, language, setConfig }: { config: StoryCon
               key={em}
               type="button"
               onClick={() => updateSD({ emotionTargets: [{ emotion: em, intensity: 70 }] })}
-              className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition-colors ${
+              className={`min-h-[44px] px-3 py-2 rounded-lg text-[10px] font-medium border transition-colors ${
                 sd.emotionTargets?.[0]?.emotion === em
                   ? 'bg-accent-purple/15 border-accent-purple/40 text-accent-purple'
                   : 'border-border/40 text-text-tertiary hover:text-text-secondary'
@@ -214,7 +214,7 @@ function QuickDirectionPanel({ config, language, setConfig }: { config: StoryCon
                 const current = sd.goguma || [];
                 updateSD({ goguma: [...current, { type: g.type, intensity: 'medium', desc: '' }] });
               }}
-              className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border border-border/40 text-text-secondary hover:bg-bg-secondary transition-colors`}
+              className="min-h-[44px] flex-1 px-2 py-2 rounded-lg text-[10px] font-medium border border-border/40 text-text-secondary hover:bg-bg-secondary transition-colors"
             >
               {g.label} +
             </button>
@@ -229,7 +229,7 @@ function QuickDirectionPanel({ config, language, setConfig }: { config: StoryCon
                 <button
                   onClick={() => updateSD({ goguma: sd.goguma?.filter((_, j) => j !== i) })}
                   aria-label={isKO ? `장면 장치 ${i + 1} 삭제` : `Delete scene device ${i + 1}`}
-                  className="text-accent-red/60 hover:text-accent-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
+                  className="min-h-[44px] min-w-[44px] text-accent-red/60 hover:text-accent-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
                 >×</button>
               </div>
             ))}
@@ -281,7 +281,7 @@ function QuickDirectionPanel({ config, language, setConfig }: { config: StoryCon
 }
 
 // ============================================================
-// PART 4 — 참고 패널 (세계관/시놉시스)
+// PART 4 — 참조 컨텍스트 (세계관/시놉시스)
 // ============================================================
 
 function ReferencePanel({ config, language }: { config: StoryConfig; language: AppLanguage }) {
@@ -333,13 +333,13 @@ export function DirectionReferencePanel({ config, language, setConfig, onClose, 
   return (
     <div className="flex flex-col h-full">
       {/* 헤더: 3탭 + 닫기 */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/50 shrink-0" role="tablist" aria-label={isKO ? '참고 패널 탭' : 'Reference panel tabs'}>
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-border/50 shrink-0" role="tablist" aria-label={isKO ? '참조 컨텍스트 탭' : 'Context panel tabs'}>
         <button
           onClick={() => setTab('direction')}
           role="tab"
           aria-selected={tab === 'direction'}
           aria-current={tab === 'direction' ? 'page' : undefined}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+          className={`min-h-[44px] flex items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
             tab === 'direction' ? 'bg-accent-amber/15 text-accent-amber' : 'text-text-tertiary hover:text-text-secondary'
           }`}
         >
@@ -351,7 +351,7 @@ export function DirectionReferencePanel({ config, language, setConfig, onClose, 
           role="tab"
           aria-selected={tab === 'characters'}
           aria-current={tab === 'characters' ? 'page' : undefined}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+          className={`min-h-[44px] flex items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
             tab === 'characters' ? 'bg-accent-blue/15 text-accent-blue' : 'text-text-tertiary hover:text-text-secondary'
           }`}
         >
@@ -366,7 +366,7 @@ export function DirectionReferencePanel({ config, language, setConfig, onClose, 
           role="tab"
           aria-selected={tab === 'reference'}
           aria-current={tab === 'reference' ? 'page' : undefined}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+          className={`min-h-[44px] flex items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
             tab === 'reference' ? 'bg-accent-purple/15 text-accent-purple' : 'text-text-tertiary hover:text-text-secondary'
           }`}
         >
@@ -374,7 +374,7 @@ export function DirectionReferencePanel({ config, language, setConfig, onClose, 
           {isKO ? '참고' : 'Ref'}
         </button>
         {!hideClose && (
-          <button onClick={onClose} aria-label={isKO ? '패널 닫기' : 'Close panel'} className="ml-auto p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
+          <button onClick={onClose} aria-label={isKO ? '패널 닫기' : 'Close panel'} className="ml-auto min-h-[44px] min-w-[44px] p-2 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
             <X className="w-4 h-4" />
           </button>
         )}

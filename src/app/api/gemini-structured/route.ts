@@ -5,24 +5,26 @@ import { logger } from '@/lib/logger';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
 import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterJsonIp } from '@/lib/noa/server-gate';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 import {
   handleCharacters, handleWorldDesign, handleWorldSim, handleSceneDirection, handleItems, handleSkills, handleMagicSystems,
   StructuredTask, StoryHints, WorldContext, SceneTierContext
 } from '@/services/geminiStructuredTaskService';
-// [Codex UI domain — 2026-05-10] 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
-import type { CodexDomain } from '@/lib/ai/codex-prompts';
+// [창작 도메인 — 2026-05-10] 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
+import type { CreativeDomain } from '@/lib/ai/creative-domain-prompts';
 
-const VALID_DOMAINS: readonly CodexDomain[] = [
+const VALID_DOMAINS: readonly CreativeDomain[] = [
   'korean-webnovel', 'western-fantasy', 'japanese-lightnovel', 'chinese-xianxia',
 ] as const;
 
-function validateDomain(value: unknown): CodexDomain | undefined {
+function validateDomain(value: unknown): CreativeDomain | undefined {
   if (typeof value !== 'string') return undefined;
-  return VALID_DOMAINS.includes(value as CodexDomain) ? (value as CodexDomain) : undefined;
+  return VALID_DOMAINS.includes(value as CreativeDomain) ? (value as CreativeDomain) : undefined;
 }
 
 export const runtime = 'nodejs';
@@ -50,16 +52,10 @@ function toStringArray(value: unknown): string[] {
 }
 
 function validateOrigin(req: NextRequest, _hasClientKey?: boolean): NextResponse | null {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  // Origin 검증 — BYOK 포함 모든 요청에 적용
-  if (!origin) {
-    return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-  }
-  if (host && new URL(origin).host !== host) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  return null;
+  const result = checkSameOriginHeaders(req.headers);
+  return result.ok
+    ? null
+    : NextResponse.json({ error: result.error }, { status: 403 });
 }
 
 async function parseRequest(req: NextRequest): Promise<Record<string, unknown>> {
@@ -92,7 +88,7 @@ async function dispatchTask(
   apiKey: string,
   model: string,
   language: AppLanguage,
-  domain?: CodexDomain,
+  domain?: CreativeDomain,
 ): Promise<{ ok: true; data: unknown } | { ok: false; response: NextResponse }> {
   switch (task) {
     case 'characters': {
@@ -160,7 +156,7 @@ function errorToStatus(message: string): number {
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(ip, 'gemini-structured', RATE_LIMITS.default);
+    const rl = await checkRateLimitAsync(ip, 'gemini-structured', RATE_LIMITS.default);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment.' },
@@ -173,30 +169,33 @@ export async function POST(req: NextRequest) {
     if (forbidden) return forbidden;
 
     const userApiKey = normalizeUserApiKey(body.apiKey);
-    if (!userApiKey && !hasServerProviderCredentials('gemini') && !SPARK_SERVER_URL) {
-      return NextResponse.json(
-        { error: 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.' },
-        { status: 401 },
-      );
-    }
 
-    // [C] 인증 게이트 — BYOK 없으면 Firebase JWT 필수 (호스팅 Gemini 크레딧 방어)
-    if (!userApiKey) {
-      const authHeader = req.headers.get('authorization');
-      let verified = false;
-      if (authHeader?.startsWith('Bearer ')) {
-        try {
-          const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
-          const token = authHeader.slice(7).trim();
-          verified = Boolean(await verifyFirebaseIdToken(token));
-        } catch { /* verification failed */ }
-      }
-      if (!verified) {
-        return NextResponse.json(
-          { error: 'Authentication required for hosted credits (or provide apiKey)' },
-          { status: 401 },
-        );
-      }
+    const tierGate = await enforceServerTierLimit({
+      headers: req.headers,
+      ip,
+      route: '/api/gemini-structured',
+      feature: 'structured-generate',
+      hasByok: Boolean(userApiKey),
+    });
+    if (!tierGate.ok) return tierGate.response;
+
+    if (!userApiKey && !hasServerProviderCredentials('gemini') && !isDgxDeveloperApiEnabled()) {
+      return NextResponse.json(
+        {
+          error: 'server_provider_unavailable',
+          message: '지금은 구조화 제안을 바로 사용할 수 없습니다. 환경 설정에서 연결 키를 등록해 주세요.',
+          paywall: {
+            reason: '운영 경로가 준비되지 않았고 연결 키도 확인되지 않았습니다.',
+            feature: '구조화 제안',
+            currentTier: tierGate.tier,
+            requiredTier: 'byok',
+            unlocksWith: ['연결 키 등록'],
+            pricingUrl: '/pricing',
+            settingsTarget: '환경 설정 > 노아 운영',
+          },
+        },
+        { status: 503 },
+      );
     }
 
     if (!validateTask(body.task)) {
@@ -226,7 +225,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
     }
 
-    // [Codex UI domain — 2026-05-10] body.domain (옵션) 으로 사용자가 도메인 명시 선택.
+    // [창작 도메인 — 2026-05-10] body.domain (옵션) 으로 사용자가 도메인 명시 선택.
     const domain = validateDomain(body.domain);
     const execution = await executeGeminiHostedFirst(body.apiKey, (effectiveApiKey) =>
       dispatchTask(task, body, effectiveApiKey, getModel(body.model), getLanguage(body.language), domain),

@@ -52,8 +52,8 @@ grep 기준 외부 네트워크 egress 전부 **optional·degrade**:
 
 ### A. AI 서빙: 모델 × 런타임 (P0 — 가장 중요)
 - 현 기본 모델 = **Qwen 3.6-35B-A3B-FP8 MoE** (DGX GB10 **128GB**). 일반 Linux 박스에서 **구동 불가**.
-- 앱은 OpenAI 호환이라 서버만 바꾸면 됨. **모델 ID 하드코딩이 문제**: `dgx-models.ts` `VLLM_MODEL_ID='qwen36'` — 로컬에서 다른 모델(예 Ollama `qwen2.5:14b`) 띄우면 served-model-name 불일치로 400. → **모델 ID 환경변수화 필수**.
-- RAG(ChromaDB 99만 문서·`:8082`)·이미지(ComfyUI Flux·`:8188`)는 **별도 사이드카 서비스**. 번들 X — 옵션(없으면 해당 기능만 비활성).
+- 앱은 OpenAI 호환이라 서버만 바꾸면 됨. 모델 ID는 `VLLM_MODEL_ID`/`NEXT_PUBLIC_VLLM_MODEL_ID` 환경변수로 조정한다.
+- Retrieval sidecar(`:8082`)는 Translation Studio 보강용 레거시 선택 경로다. Loreguard Studio 창작/집필 경로에는 자동 주입하지 않는다. 이미지(ComfyUI Flux·`:8188`)도 별도 사이드카 서비스이며 번들하지 않는다.
 
 ### B. Electron Linux 패키징: self-contained (P0)
 - 현 `main.js`는 sibling `eh-universe-web`의 `next start`를 **시스템 `node`로 spawn** → 배포본 아님(node·빌드·node_modules 필요).

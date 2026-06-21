@@ -1,11 +1,11 @@
 "use client";
 
 // ============================================================
-// PART 1 — ModeSwitch: 5-mode toolbar (집필/NOA 생성 + 고급 3모드)
+// PART 1 — ModeSwitch: 5-mode toolbar (집필/노아 제안 + 고급 3모드)
 // ============================================================
 //
 // 역할:
-//   - sticky 상단 툴바 — 모드 전환 + undo/redo + 자동완성 토글 + 시네마 바로가기
+//   - sticky 상단 툴바 — 모드 전환 + undo/redo + 자동완성 토글 + 미리보기 바로가기
 //   - Progressive Disclosure — advancedWritingMode OFF 시 기본 2모드만.
 //   - 고급 드롭다운은 ON 상태에서만 노출 (3단계/다듬기/고급).
 //   - writingMode가 고급 전용인데 OFF로 돌아가면 부모에서 edit로 안전 복귀.
@@ -50,7 +50,7 @@ export interface ModeSwitchProps {
   // Split view
   splitView: 'chat' | 'reference' | null;
   setSplitView: (v: 'chat' | 'reference' | null) => void;
-  // 시네마 모드 (원고 탭으로 전환)
+  // 원고 미리보기 (원고 탭으로 전환)
   setActiveTab: (tab: AppTab) => void;
 }
 
@@ -153,21 +153,21 @@ function ModeSwitchImpl(props: ModeSwitchProps): React.ReactElement {
               : 'border-border text-text-secondary hover:border-accent-purple/40'
           }`}
           title={L4(language, {
-            ko: '장면/사건을 입력하면 NOA가 소설 본문을 생성합니다. Enter로 전송.',
-            en: 'Describe a scene and NOA writes the novel text. Press Enter to send.',
-            ja: 'シーン/事件を入力するとNOAが小説本文を生成します。Enterで送信。',
-            zh: '输入场景/事件后 NOA 将生成小说正文。按 Enter 发送。',
+            ko: '장면/사건을 입력하면 노아가 이어 쓸 후보를 제안합니다. Enter로 전송.',
+            en: 'Describe a scene and Noa suggests a continuation. Press Enter to send.',
+            ja: 'シーン/事件を入力するとNoaが続きを提案します。Enterで送信。',
+            zh: '输入场景/事件后 Noa 会建议后续内容。按 Enter 发送。',
           })}
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span className="flex flex-col items-start leading-tight">
-            <span>{L4(language, { ko: 'NOA 생성', en: 'Generate', ja: 'NOA 生成', zh: 'NOA 生成' })}</span>
+            <span>{L4(language, { ko: '노아 제안', en: 'Noa suggestion', ja: 'Noa提案', zh: 'Noa 建议' })}</span>
             <span className="text-[9px] font-normal text-text-tertiary">
               {L4(language, {
-                ko: '노아가 다음 장면을 씁니다',
-                en: 'NOA writes the next scene',
-                ja: 'ノアが次のシーンを書きます',
-                zh: '诺亚将撰写下一个场景',
+                ko: '작가가 고를 후보를 준비합니다',
+                en: 'Prepare options for the author',
+                ja: '作者が選ぶ候補を用意します',
+                zh: '准备供作者选择的候选',
               })}
             </span>
           </span>
@@ -280,10 +280,10 @@ function ModeSwitchImpl(props: ModeSwitchProps): React.ReactElement {
                       onClick={() => { setWritingMode('advanced'); setAdvancedMenuOpen(false); }}
                       className="w-full flex items-center gap-2 px-3 py-3 text-[13px] font-bold text-text-secondary hover:bg-bg-secondary hover:text-accent-red transition-colors min-h-[44px]"
                       title={L4(language, {
-                        ko: 'temperature/top-p 직접 제어',
-                        en: 'Direct control of temperature/top-p',
-                        ja: 'Direct control of temperature/top-p',
-                        zh: 'Direct control of temperature/top-p',
+                        ko: '표현 자유도와 세부 설정 직접 조절',
+                        en: 'Fine control over expression and settings',
+                        ja: '表現の幅と詳細設定を調整',
+                        zh: '精细调整表达范围与设置',
                       })}
                     >
                       <Settings2 className="w-4 h-4 shrink-0" />
@@ -375,21 +375,21 @@ function ModeSwitchImpl(props: ModeSwitchProps): React.ReactElement {
           </button>
         )}
 
-        {/* ────── 시네마 모드 바로가기 (메시지 존재 시) ────── */}
+        {/* ────── 원고 미리보기 바로가기 (메시지 존재 시) ────── */}
         {currentSession.messages.some(m => m.role === 'assistant' && m.content) && (
           <button
             type="button"
             onClick={() => setActiveTab('manuscript')}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs font-bold text-text-secondary hover:border-accent-purple/40 hover:text-accent-purple transition-colors"
             title={L4(language, {
-              ko: '시네마 모드 — 원고 탭에서 비주얼 노벨/라디오 재생',
-              en: 'Cinema mode — Play as visual novel/radio in Manuscript tab',
-              ja: 'シネマモード — 原稿タブでビジュアルノベル/ラジオ再生',
-              zh: '电影模式 — 在稿件标签中播放视觉小说/广播',
+              ko: '미리보기 — 원고 탭에서 음성 확인/시각 미리보기',
+              en: 'Preview — audio review / visual preview in Manuscript tab',
+              ja: 'プレビュー — 原稿タブで音声確認/視覚プレビュー',
+              zh: '预览 — 在稿件标签中进行语音检查/视觉预览',
             })}
           >
             <span className="text-sm">🎬</span>
-            {L4(language, { ko: '시네마', en: 'Cinema', ja: 'シネマ', zh: '影院' })}
+            {L4(language, { ko: '미리보기', en: 'Preview', ja: 'プレビュー', zh: '预览' })}
           </button>
         )}
 

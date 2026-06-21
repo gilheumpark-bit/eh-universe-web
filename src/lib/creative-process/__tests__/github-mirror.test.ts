@@ -194,7 +194,7 @@ describe('github-mirror — mirrorEvents (per-event append-only)', () => {
       schema: string; notice: typeof ANCHOR_HONESTY_NOTICE; event: CreativeEvent;
     };
     expect(body.schema).toBe('cp-mirror/event@1');
-    expect(body.notice.ko).toContain('인간 작성 자체는 증명 불가');
+    expect(body.notice.ko).toContain('작성자가 직접 썼는지 자체는 증명 불가');
     expect(body.event.id).toBe('01A');
     expect(mockPutFile.mock.calls[0][2]).not.toContain(TOKEN);
 

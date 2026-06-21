@@ -114,7 +114,7 @@ test.describe('NOA Studio — Extended Flows', () => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
 
-    const pathsWithHeader = ['/archive', '/rulebook', '/reference', '/about'] as const;
+    const pathsWithHeader = ['/docs', '/pricing', '/status', '/about'] as const;
     for (const path of pathsWithHeader) {
       await page.goto(path, { waitUntil: 'domcontentloaded' });
       await expect(page.locator('[data-testid="home-header"]')).toBeVisible({ timeout: 15000 });

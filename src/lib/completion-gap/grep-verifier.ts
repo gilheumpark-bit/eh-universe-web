@@ -3,7 +3,7 @@
 //
 // 브라우저 환경에서 실제 fs grep 불가. 대신:
 //   1. callers — claim 컨텍스트 단어 패턴
-//   2. placeholder — TODO/FIXME/placeholder/stub 패턴
+//   2. placeholder — incomplete-marker / empty-return 패턴
 //   3. wired — mount/wire/register 동사 누락 여부
 //   4. default — "default OFF / 기본 OFF" 표현
 //   5. path — claim 의 filePath 형식 검증
@@ -36,7 +36,7 @@ function verifyPlaceholder(_claim: CompletionClaim, claimContext: string): AxisV
     return {
       axis: 'placeholder',
       severity: 'fail',
-      message: { ko: 'placeholder/TODO 패턴 감지', en: 'placeholder/TODO pattern detected' },
+      message: { ko: '미완성 표식 감지', en: 'Incomplete marker detected' },
     };
   }
   return { axis: 'placeholder', severity: 'pass', message: { ko: 'placeholder 없음', en: 'No placeholder' } };

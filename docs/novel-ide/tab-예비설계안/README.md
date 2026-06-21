@@ -1,7 +1,7 @@
 # 탭별 채팅→양식 예비설계안 (세트)
 
 > **상태: 예비설계안 · 전체 대기 (2026-06-03)** — 승인 전 **코드 착수 보류**.
-> 근거: `C:\Users\sung4\OneDrive\바탕 화면\claude` 작가 instruction 시스템(_도구/ 60+ 모듈 · novel_knowledge/ 장르지식 · projects/tunnel-yuju/ 실물 산출) 정밀 분석(2026-06-03, 5 도메인 병렬 추출 + 핵심 파일 직접 재검증).
+> 근거: `C:\Users\sung4\OneDrive\바탕 화면\claude` 작가 instruction 시스템(_도구/ 60+ 모듈 · novel_knowledge/ 외부 검토 코퍼스 · projects/tunnel-yuju/ 실물 산출) 정밀 분석(2026-06-03, 5 도메인 병렬 추출 + 핵심 파일 직접 재검증). `novel_knowledge`는 앱 자동 주입/RAG 입력원이 아니다.
 > 모델: **각 탭 = 채팅(발산 브레인스토밍) → AI가 양식(구조화 폼) 채움 → 사람이 검토·수정 → 사람이 커밋**. 끝은 없다(무한 확장). "종료"는 매 확장 단위의 **사람 커밋**. 과정 autosave / 확정은 사람.
 
 ## 문서 구성

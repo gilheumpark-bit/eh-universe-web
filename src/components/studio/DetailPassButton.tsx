@@ -4,7 +4,7 @@
 // DetailPassButton — Task 4 Phase 3 — Draft → Detail 확장 트리거
 // ============================================================
 //
-// Standalone 버튼 — 작가가 "AI 살 붙이기"를 명시적으로 요청할 때만 호출.
+// Standalone 버튼 — 작가가 "노아 살 붙이기"를 명시적으로 요청할 때만 호출.
 // FEATURE_DRAFT_DETAIL_V2 플래그가 'shadow' 또는 'on' 일 때만 렌더.
 // default 'off' 이므로 현 배포에서는 완전 비가시.
 //
@@ -47,7 +47,7 @@ export interface DetailPassButtonProps {
   onError?: (message: string) => void;
   /** DGX userId (선택) */
   userId?: string;
-  /** BYOK 키 (선택) */
+  /** 연결 키 (선택) */
   apiKey?: string;
 }
 
@@ -58,10 +58,10 @@ type Status = 'idle' | 'running' | 'done' | 'error';
 // ============================================================
 
 const LABEL_IDLE = {
-  ko: 'AI 살 붙이기',
-  en: 'AI Detail Pass',
-  ja: 'AI 肉付け',
-  zh: 'AI 细节扩写',
+  ko: '노아 살 붙이기',
+  en: 'Noa Detail Pass',
+  ja: 'ノア肉付け',
+  zh: '诺亚细节扩写',
 };
 
 const LABEL_RUNNING = {
@@ -86,10 +86,10 @@ const LABEL_ERROR = {
 };
 
 const ARIA_BUSY_HINT = {
-  ko: 'AI가 초안을 확장 중입니다',
-  en: 'AI is expanding the draft',
-  ja: 'AIが下書きを拡張中です',
-  zh: 'AI正在扩写初稿',
+  ko: '노아가 초안을 확장 중입니다',
+  en: 'Noa is expanding the draft',
+  ja: 'ノアが下書きを拡張中です',
+  zh: '诺亚正在扩写初稿',
 };
 
 // ============================================================

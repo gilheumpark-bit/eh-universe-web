@@ -139,6 +139,25 @@ describe('chain-verify — per-event hash chain', () => {
     expect(result.verifiedCount).toBe(2);
   });
 
+  it('hashed 체인 시작 뒤 무해시 이벤트 → brokenAt (legacy-after-hash-start) 검출', async () => {
+    await recordCreativeEvent(baseInput(0));
+    await recordCreativeEvent(baseInput(1));
+
+    const events = await getSorted();
+    const strippedTail: CreativeEvent = { ...events[1] };
+    delete (strippedTail as Partial<CreativeEvent>).parentEventHash;
+    delete (strippedTail as Partial<CreativeEvent>).eventHash;
+    await putRaw(strippedTail);
+
+    const result = await verifyCreativeChain(PROJECT);
+    expect(result.valid).toBe(false);
+    expect(result.brokenAt).toEqual({
+      eventId: strippedTail.id,
+      index: 1,
+      reason: 'legacy-after-hash-start',
+    });
+  });
+
   it('동시 rapid append → fork 없는 단일 체인 (직렬화 큐)', async () => {
     await Promise.all(Array.from({ length: 20 }, (_, i) => recordCreativeEvent(baseInput(i))));
 

@@ -1,0 +1,66 @@
+name: Loreguard AI Supply Chain
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/loreguard-supply-chain-scan.mjs'
+      - 'docs/ai-supply-chain.yml'
+      - 'docs/evals/**'
+      - 'src/lib/ai/**'
+      - 'src/lib/ai-providers.ts'
+      - 'src/lib/dgx-models.ts'
+      - 'src/services/**'
+  push:
+    branches: [master]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/loreguard-supply-chain-scan.mjs'
+      - 'docs/ai-supply-chain.yml'
+      - 'docs/evals/**'
+      - 'src/lib/ai/**'
+      - 'src/lib/ai-providers.ts'
+      - 'src/lib/dgx-models.ts'
+      - 'src/services/**'
+
+jobs:
+  supply-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate supply-chain scanner syntax
+        run: node --check scripts/loreguard-supply-chain-scan.mjs
+
+      - name: Build release artifact inputs
+        run: npm run build
+
+      - name: Generate AI supply-chain baseline
+        run: npm run gate:supply-chain -- --write docs/gates/ai-supply-chain-baseline-2026-06-12.json
+
+      - name: Upload AI supply-chain evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: loreguard-ai-supply-chain-baseline
+          path: |
+            docs/ai-supply-chain.yml
+            docs/evals/loreguard-offline-eval-cases-2026-06-12.json
+            docs/gates/ai-supply-chain-baseline-2026-06-12.json
+            package.json
+            package-lock.json
+          retention-days: 30

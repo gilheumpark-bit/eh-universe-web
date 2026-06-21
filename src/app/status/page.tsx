@@ -1,5 +1,5 @@
 // ============================================================
-// /status — Public status page
+// /status: Public status page
 // ============================================================
 // 외부 사용자·고객에게 서비스 상태를 공시.
 // /api/health 결과를 클라이언트에서 조회, 변경 시 자동 refresh.
@@ -12,20 +12,23 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 
 // ============================================================
-// PART 1 — Types
+// PART 1: Types
 // ============================================================
 
 type HealthStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
+type HealthMode = "operational" | "attention" | "incident";
 
 interface HealthPayload {
   status: HealthStatus;
+  mode?: HealthMode;
+  summaryKo?: string;
   timestamp: number;
 }
 
 const REFRESH_INTERVAL_MS = 30_000;
 
 // ============================================================
-// PART 2 — Page
+// PART 2: Page
 // ============================================================
 
 export default function StatusPage() {
@@ -64,8 +67,11 @@ export default function StatusPage() {
 
   const statusBadge = (() => {
     const s = health?.status ?? "unknown";
+    const mode = health?.mode;
     const color =
-      s === "healthy"
+      mode === "attention"
+        ? "bg-blue-500"
+        : s === "healthy"
         ? "bg-green-500"
         : s === "degraded"
           ? "bg-yellow-500"
@@ -76,6 +82,9 @@ export default function StatusPage() {
   })();
 
   const statusLabel = (() => {
+    if (health?.mode === "attention") {
+      return T({ ko: "운영 중 · 선택 연결 확인", en: "Operational · Setup attention", ja: "運用中 · 接続確認", zh: "运行中 · 连接确认" });
+    }
     switch (health?.status) {
       case "healthy":
         return T({ ko: "정상", en: "Operational", ja: "正常", zh: "正常" });
@@ -106,6 +115,18 @@ export default function StatusPage() {
           {statusBadge}
           <span className="text-lg font-semibold">{statusLabel}</span>
         </div>
+        {health?.summaryKo ? (
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+            {lang === "ko"
+              ? health.summaryKo
+              : T({
+                  ko: health.summaryKo,
+                  en: "Core pages are available. Optional model or external connection settings may need attention.",
+                  ja: "主要ページは利用できます。任意のモデルまたは外部接続設定の確認が必要な場合があります。",
+                  zh: "核心页面可用。可选模型或外部连接设置可能需要确认。",
+                })}
+          </p>
+        ) : null}
         {health?.timestamp ? (
           <p className="mt-2 text-sm text-text-tertiary">
             {T({ ko: "마지막 확인: ", en: "Last checked: ", ja: "最終確認: ", zh: "最后检查: " })}
@@ -120,10 +141,10 @@ export default function StatusPage() {
         ) : null}
         <p className="mt-4 text-xs text-text-tertiary">
           {T({
-            ko: "자동 새로고침 30초. 장애 시 공지는 GitHub Issues 를 참조하세요.",
-            en: "Auto-refresh every 30s. For incident announcements, see GitHub Issues.",
-            ja: "30秒ごと自動更新。障害通知は GitHub Issues を参照。",
-            zh: "每 30 秒自动刷新。故障公告请参考 GitHub Issues。",
+            ko: "자동 새로고침 30초. 선택 연결 확인과 실제 장애 공지는 분리해 표시합니다.",
+            en: "Auto-refresh every 30s. Setup attention and real incidents are shown separately.",
+            ja: "30秒ごと自動更新。接続確認と実障害は分けて表示します。",
+            zh: "每 30 秒自动刷新。连接确认与实际故障分开显示。",
           })}
         </p>
         {lastCheck > 0 ? (
@@ -143,18 +164,23 @@ export default function StatusPage() {
               href="https://github.com/gilheumpark-bit/eh-universe-web/issues"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-amber hover:underline"
+              className="inline-flex min-h-[44px] min-w-11 items-center rounded px-1 py-3 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+              style={{ minHeight: 44 }}
             >
               GitHub Issues
             </a>
-            {" — "}
+            {" · "}
             {T({ ko: "장애 공지 + 사용자 보고", en: "incident announcements + user reports" })}
           </li>
           <li>
-            <a href="mailto:gilheumpark@gmail.com" className="text-accent-amber hover:underline">
+            <a
+              href="mailto:gilheumpark@gmail.com"
+              className="inline-flex min-h-[44px] min-w-11 items-center rounded px-1 py-3 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+              style={{ minHeight: 44 }}
+            >
               gilheumpark@gmail.com
             </a>
-            {" — "}
+            {" · "}
             {T({ ko: "긴급 연락", en: "urgent contact" })}
           </li>
         </ul>

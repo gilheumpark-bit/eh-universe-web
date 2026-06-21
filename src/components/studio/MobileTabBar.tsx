@@ -18,7 +18,7 @@ interface MobileTabBarProps {
 }
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
-  { key: 'rulebook',   icon: FileText },
+  { key: 'direction',  icon: FileText },
   { key: 'style',      icon: Map },
   { key: 'visual',     icon: Zap },
   { key: 'history',    icon: History },
@@ -36,7 +36,7 @@ const PRIMARY_TABS: { key: AppTab | 'more'; icon: React.ElementType }[] = [
 const GUIDED_TABS: { key: AppTab; icon: React.ElementType }[] = [
   { key: 'world',      icon: Globe },
   { key: 'characters', icon: UserCircle },
-  { key: 'rulebook',   icon: FileText },
+  { key: 'direction',  icon: FileText },
   { key: 'settings',   icon: Settings },
 ];
 
@@ -55,7 +55,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
   const t = createT(language);
   const moreScrollRef = useRef<HTMLDivElement>(null);
 
-  // Prevent hydration mismatch by only rendering dynamic content after mount
+  // Prevent hydration mismatch by rendering stable server markup before mount.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
@@ -90,7 +90,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
     }
   }, []);
 
-  // Render placeholder on server to prevent hydration mismatch
+  // Render stable server markup to prevent hydration mismatch
   // Use fixed skeleton that doesn't depend on activeTab state
   if (!mounted) {
     return (

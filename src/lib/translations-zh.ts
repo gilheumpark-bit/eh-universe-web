@@ -7,13 +7,13 @@
 //  - 核心 UI 标签 (保存/取消/应用/撤销/关闭/搜索): 通用语一致
 //  - 全角叹号 (！) 与半角 ! 混用: 仅 3 处使用全角，未见半角混入
 //  - 量词 (个/次/本/条) 登场: 正常
-// TODO(zh-review): 以下建议母语审校 (非硬性错误)
+// Native review note (zh): 以下建议母语审校 (非硬性错误)
 //  - "ui.firstStoryPrompt": "准备好写你的第一个故事了吗？" —
 //      其他 UI 文案使用「您」，此处用「你」属设计选择 (更亲切)，建议统一风格
 //  - "ui.askAnything": "有什么可以帮您的吗？" —
 //      更自然可改为「有什么我可以帮您的？」
 //  - "ui.clearChat": "清空聊天" — 「清空对话」更自然
-//  - "rulebook.*": EH 规则手册正文 — 文学性翻译，部分表达建议意译
+//  - "direction.*": EH 作品演出标准 — 文学性翻译，部分表达建议意译
 //  - 助词「了」「的」「着」时态用法: 抽查未见明显错误，但长句较多建议复核
 // ============================================================
 const translations = {
@@ -24,11 +24,11 @@ const translations = {
     "noSessions": "未找到历史记录。",
     "masterBlueprint": "主蓝图",
     "worldBible": "世界观设计",
-    "worldSimulator": "世界观模拟器",
+    "worldSimulator": "世界观检查",
     "worldStudio": "世界观工作室",
     "worldAnalysis": "世界观分析",
     "characterStudio": "角色工作室",
-    "rulebook": "作品演出",
+    "direction": "作品演出",
     "production": "制作",
     "writingMode": "写作工作室",
     "styleStudio": "文体工作室",
@@ -129,7 +129,7 @@ const translations = {
   "resource": {
     "title": "实体数据库",
     "subtitle": "角色DNA",
-    "autoGen": "自动生成",
+    "autoGen": "诺亚建议",
     "creator": "角色创建器",
     "name": "姓名",
     "role": "角色",
@@ -183,13 +183,13 @@ const translations = {
     "noStory": "未选择小说",
     "noActiveNarrative": "无活跃叙事",
     "startPrompt": "设计已完成。输入场景描述或事件开始写作。",
-    "noArchive": "未找到档案。",
+    "noArchive": "未找到保存记录。",
     "nextChapter": "下一章",
     "plotTwist": "剧情反转",
     "nextChapterPrompt": "请写下一章。",
     "plotTwistPrompt": "请制造一个戏剧性的反转。",
-    "apiKeyTitle": "API密钥设置",
-    "apiKeyDesc": "请输入Gemini API密钥。",
+    "apiKeyTitle": "连接密钥设置",
+    "apiKeyDesc": "请输入模型连接密钥。",
     "apiKeySave": "保存",
     "apiKeyCancel": "取消",
     "apiKeyTest": "测试",
@@ -215,7 +215,7 @@ const translations = {
     "deleteAllMsg": "删除所有会话？此操作无法撤销。",
     "deleteAllConfirm": "全部删除",
     "logout": "退出登录",
-    "logoutMsg": "确定要退出登录吗？未保存的API密钥将被清除。",
+    "logoutMsg": "确定要退出登录吗？未保存的连接密钥将被清除。",
     "loadSlotMsg": "将被加载。当前设置将被覆盖。",
     "firebaseRequired": "需要Firebase配置。\n请在.env.local中设置NEXT_PUBLIC_FIREBASE_*环境变量。"
   },
@@ -237,19 +237,19 @@ const translations = {
     "foundInDraft": "✏️ 在草稿中找到",
     "keyboardShortcuts": "快捷键",
     "manuscript": "稿件管理",
-    "apiKeyBanner": "请设置API密钥以使用NOA功能。",
+    "apiKeyBanner": "请设置连接密钥以使用诺亚功能。",
     "apiKeySetUp": "设置",
     "workflowGuide": "世界观设计 → 角色创建 → 演出设置 → 写作 按顺序进行",
-    "noApiKeyGuide": "💡 无需API密钥也可进行世界观·角色·演出设计和手动编辑",
+    "noApiKeyGuide": "💡 无需连接密钥也可进行世界观·角色·演出设计和手动编辑",
     "saveSetting": "保存设置",
     "characters": "角色",
     "itemStudio": "物品工作室",
-    "apiKeyRequired": "需要API密钥",
+    "apiKeyRequired": "需要连接密钥",
     "storageFull": "存储空间不足。请导出并删除旧会话。",
     "close": "关闭",
-    "testApiKey": "测试API密钥",
-    "saveApiKey": "保存API密钥",
-    "deleteApiKey": "删除API密钥",
+    "testApiKey": "测试连接密钥",
+    "saveApiKey": "保存连接密钥",
+    "deleteApiKey": "删除连接密钥",
     "undo": "撤销",
     "generate": "生成",
     "skip": "跳过",
@@ -259,15 +259,15 @@ const translations = {
     "toggleThemeLabel": "切换主题",
     "firstStoryPrompt": "准备好写你的第一个故事了吗？",
     "setupManually": "✍️ 手动设置",
-    "workflowOverview": "世界观设计 → 角色 → 演出 → NOA写作 → EPUB导出",
+    "workflowOverview": "世界观设计 → 角色 → 演出 → 诺亚写作 → EPUB导出",
     "askAnything": "有什么可以帮您的吗？",
     "clearChat": "清空聊天"
   },
   "shortcuts": {
     "worldDesign": "世界观设计",
-    "worldSimulator": "世界观模拟器",
+    "worldSimulator": "世界观检查",
     "characterStudio": "角色工作室",
-    "rulebook": "设定手册",
+    "direction": "演出",
     "writingStudio": "写作工作室",
     "styleStudio": "文体工作室",
     "manuscript": "稿件管理",
@@ -283,32 +283,32 @@ const translations = {
     "newLine": "换行"
   },
   "writingMode": {
-    "draftGen": "草稿生成",
+    "draftGen": "草稿建议",
     "manualEdit": "手动编辑",
     "threeStep": "3步写作",
-    "auto30": "自动 30%",
+    "auto30": "30% 精炼",
     "advanced": "精密写作",
     "chars": "字",
     "directive": "指令",
     "directivePlaceholder": "提示指令（例：「硬汉派风格」「对话50%」「第一人称视角」）",
     "describeFirstScene": "在下方输入框描述第一个场景",
     "modePickerCaption": "写作模式",
-    "emptyStateManualHint": "若要不使用 NOA 直接撰写，请点击下方按钮或选择顶部的「手动编辑」。",
-    "noApiKeyStart": "不用API密钥开始：",
+    "emptyStateManualHint": "若要不使用 诺亚 直接撰写，请点击下方按钮或选择顶部的「手动编辑」。",
+    "noApiKeyStart": "不用连接密钥开始：",
     "startManualEdit": "以手动编辑模式开始",
     "inlineEditComplete": "[内联编辑完成]",
     "applyToManuscript": "💾 应用到稿件",
     "writeManuscript": "直接撰写稿件",
-    "writeManuscriptDesc": "无需NOA即可直接写作。在下方区域粘贴或输入文本。选择文本后也可使用NOA重写操作。",
+    "writeManuscriptDesc": "无需诺亚即可直接写作。在下方区域粘贴或输入文本。选择文本后也可使用诺亚重写操作。",
     "typeManuscript": "在此输入稿件...",
-    "editDescWithApi": "可直接编辑。拖选文本 → 使用NOA重写/扩展/压缩等操作。",
-    "editDescNoApi": "可直接编辑。（AI重写操作需要设置API密钥）",
+    "editDescWithApi": "可直接编辑。拖选文本 → 使用诺亚重写/扩展/压缩等操作。",
+    "editDescNoApi": "可直接编辑。（诺亚重写操作需要设置连接密钥）",
     "autoRefineComplete": "[AUTO 30% 精炼完成]",
-    "autoRefineGuide": "※ 开始分析 → NOA逐段分析弱点 → 单独/全部生成 → 选择性应用 → 反映到稿件",
-    "preciseGenerate": "精密生成",
+    "autoRefineGuide": "※ 开始分析 → 诺亚逐段分析弱点 → 单独/全部建议 → 选择性应用 → 反映到稿件",
+    "preciseGenerate": "精密建议",
     "preciseInstruction": "🎯 精密指令（配置的约束条件将自动应用）",
     "advancedGuide": "※ 场景目标·叙述约束·参考范围·固定规则将自动组合到提示中。",
-    "apiKeyPlaceholder": "🔒 NOA生成需要API密钥。请使用手动编辑模式(✏️)。",
+    "apiKeyPlaceholder": "🔒 诺亚建议需要连接密钥。请使用手动编辑模式(✏️)。",
     "openCanvas": "启动画布",
     "writingAiAssistant": "写作助手",
     "nowWriterBadge": "NOW — Narrative Origin Writer"
@@ -317,7 +317,7 @@ const translations = {
     "skeleton": "骨架",
     "emotion": "情感",
     "sensory": "描写",
-    "generating": "生成中...",
+    "generating": "准备中...",
     "customInstruction": "💡 自定义指令（例：「战斗场景加长」「对话语气柔和」「更改悬念」）",
     "send": "发送",
     "canvasPlaceholder": "3步骤画布 — 在上方发送自定义指令，或按顺序点击下方步骤按钮完成稿件。",
@@ -328,7 +328,7 @@ const translations = {
     "noPass2": "没有步骤2的结果。",
     "pullToCanvas": "拉取到画布",
     "saveManuscript": "保存稿件",
-    "canvasGuide": "※ 点击步骤 → 在NOA聊天中查看结果 → 📋 拉取到画布编辑 → 下一步",
+    "canvasGuide": "※ 点击步骤 → 在诺亚对话中查看结果 → 📋 拉取到画布编辑 → 下一步",
     "threePassComplete": "3遍完成"
   },
   "applied": {
@@ -339,7 +339,7 @@ const translations = {
     "synopsis": "大纲",
     "direction": "演出",
     "hook": "钩子",
-    "simulator": "模拟器",
+    "simulator": "检查",
     "consistency": "一致性",
     "relationsMap": "关系图",
     "timeline": "时间线",
@@ -391,11 +391,11 @@ const translations = {
     "askQuestions": "在下方输入框提问"
   },
   "hfcp": {
-    "engagement": "积极参与",
-    "normalFree": "自由对话",
-    "normalAnalysis": "分析模式",
-    "limited": "节制模式",
-    "silent": "沉默"
+    "engagement": "承接",
+    "normalFree": "自然",
+    "normalAnalysis": "结构整理",
+    "limited": "要点",
+    "silent": "待确认"
   },
   "syncReminder": {
     "lastSyncPrefix": "☁️ 最后同步: ",
@@ -417,9 +417,9 @@ const translations = {
     "写一个生死危机的场景",
     "以宁静的风景描写开始"
   ],
-  "rulebook": {
-    "title": "EH规则手册 v1.0",
-    "subtitle": "防止故事崩溃的叙事引擎",
+  "direction": {
+    "title": "Loreguard 运营框架",
+    "subtitle": "连接世界观、演出与过程记录的工作基准",
     "whatIsEH": {
       "title": "什么是EH？",
       "p1": "EH不是一本用来构建世界观的书。",
@@ -479,7 +479,7 @@ const translations = {
       }
     },
     "coreSentences": {
-      "title": "设定手册的3个核心语句",
+      "title": "演出基准的3个核心语句",
       "q1": "「EH系统不是让角色变强的装置。它是'让角色保持人性的限制'。」",
       "q2": "「通过这个测试的故事可能不有趣。但它不会是假的。」",
       "q3": "「EH引擎不会让读者哭泣。但它会让读者恐惧主角的下一个选择。」"
@@ -553,7 +553,7 @@ const translations = {
   "chapterAnalysis": {
     "title": "章节分析",
     "analyzing": "分析中...",
-    "aiAutoAnalyze": "NOA自动分析",
+    "aiAutoAnalyze": "诺亚分析",
     "exportPrompts": "导出提示词",
     "save": "保存",
     "close": "关闭",
@@ -627,7 +627,7 @@ const translations = {
     "skillsCount": "技能",
     "itemsCount": "物品",
     "presetNote": "※ 4大力量体系 + 角色技能包含",
-    "aiGenerate": "NOA生成",
+    "aiGenerate": "诺亚建议",
     "synopsisRequired": "请先编写故事梗概。",
     "tabItems": "物品图鉴",
     "tabSkills": "技能树",
@@ -706,7 +706,7 @@ const translations = {
     "skillTypeUltimate": "终极",
     "aiItemName1Hunter": "觉醒者之匕首",
     "aiItemName1Other": "魔法之剑",
-    "aiItemDesc": "NOA根据故事梗概生成的物品",
+    "aiItemDesc": "诺亚根据故事梗概建议的物品",
     "aiItemEffect1Hunter": "暴击率 +15%",
     "aiItemEffect1Other": "魔力增幅 20%",
     "aiItemObtained1": "第1话地牢奖励",
@@ -782,12 +782,12 @@ const translations = {
     "target": "目标",
     "charsPerEp": " 字符/集",
     "done": "完成",
-    "noManuscripts": "暂无稿件。在NOA模式下写作后点击\"收集\"。",
+    "noManuscripts": "暂无稿件。在诺亚模式下写作后点击\"收集\"。",
     "title": "标题",
     "cancel": "取消",
     "save": "保存",
-    "noAiSource": "无NOA原文可供比较。",
-    "aiVsCurrent": "NOA原文 ↔ 当前稿件",
+    "noAiSource": "无诺亚原文可供比较。",
+    "aiVsCurrent": "诺亚原文 ↔ 当前稿件",
     "lastUpdate": "最后修改",
     "deleteConfirm": "删除 EP.{ep} 稿件？",
     "untitled": "无题"
@@ -795,14 +795,14 @@ const translations = {
   "settings": {
     "settingsAccount": "设置与账户",
     "engineVersion": "引擎版本",
-    "aiModel": "NOA模型",
+    "aiModel": "诺亚模型",
     "latency": "延迟",
     "generalPreferences": "通用设置",
-    "apiKeyManagement": "AI服务连接",
-    "apiKeyDesc": "配置和管理您的AI服务密钥。",
-    "apiKeySet": "已设置",
-    "apiKeyPlatformOnly": "仅平台密钥",
-    "apiKeyNotSet": "未设置",
+    "apiKeyManagement": "诺亚连接",
+    "apiKeyDesc": "配置和管理连接密钥与运行路径。",
+    "apiKeySet": "已连接",
+    "apiKeyPlatformOnly": "基本运行",
+    "apiKeyNotSet": "需要连接",
     "notifications": "通知",
     "notificationsDesc": "引擎结算和系统更新通知",
     "resetData": "重置数据",
@@ -815,9 +815,9 @@ const translations = {
     "firebaseRequired": "需要Firebase配置。"
   },
   "uxHelpers": {
-    "apiKeyErrorTitle": "API密钥错误",
-    "apiKeyErrorMsg": "API密钥缺失或已过期。",
-    "apiKeyErrorAction": "在设置选项卡中检查您的API密钥",
+    "apiKeyErrorTitle": "连接密钥错误",
+    "apiKeyErrorMsg": "连接密钥缺失或已过期。",
+    "apiKeyErrorAction": "在设置选项卡中检查您的连接密钥",
     "rateLimitTitle": "速率限制",
     "rateLimitMsg": "API请求超限。请稍后重试。",
     "networkErrorTitle": "网络错误",
@@ -825,7 +825,7 @@ const translations = {
     "timeoutTitle": "超时",
     "timeoutMsg": "响应超时。请重试。",
     "parseErrorTitle": "解析错误",
-    "parseErrorMsg": "无法解析NOA响应。请重试。",
+    "parseErrorMsg": "无法解析诺亚响应。请重试。",
     "unknownErrorTitle": "错误",
     "unknownErrorMsg": "发生未知错误。",
     "retry": "重试",
@@ -847,13 +847,13 @@ const translations = {
     "editorPlaceholder": "拖拽选择文本 → 选择操作",
     "charCount": "字",
     "tip": "💡 选择文本 → 重写操作",
-    "apiKeyMissing": "⚠️ 未设置API密钥。\n请在设置标签页中输入您的密钥。"
+    "apiKeyMissing": "⚠️ 未设置连接密钥。\n请在设置标签页中输入您的密钥。"
   },
   "planningExtra": {
     "preset": "预设",
     "noPreset": "该类型无预设",
-    "aiGenerating": "NOA生成中...",
-    "aiGenerate": "NOA生成",
+    "aiGenerating": "正在准备诺亚建议...",
+    "aiGenerate": "诺亚建议",
     "publishPlatform": "发布平台",
     "none": "未选择",
     "target": "目标读者",
@@ -868,9 +868,9 @@ const translations = {
     "emotionPlaceholder": "恐惧、爱、愤怒...",
     "narrativeGuardrails": "叙事护栏",
     "worldFormulaSentence": "这个世界以\"{premise}\"为前提，是{genre}类型的背景，在{power}的权力结构中，围绕\"{conflict}\"的冲突展开。",
-    "apiKeyAlert": "请先设置API密钥。(设置 → API密钥)",
-    "aiFailed": "NOA生成失败。请检查API密钥。",
-    "prismTitle": "NOA-PRISM 品质控制",
+    "apiKeyAlert": "请先设置连接密钥。(设置 → 连接密钥)",
+    "aiFailed": "诺亚建议准备失败。请检查连接密钥。",
+    "prismTitle": "诺亚-PRISM 品质控制",
     "prismPreserve": "保留",
     "prismExpand": "扩展",
     "prism100": "保留",
@@ -881,13 +881,13 @@ const translations = {
     "prismPresetLabel": "预设",
     "prismModeTitle": "内容分级",
     "prismModeOff": "未设置",
-    "prismModeFree": "NOA 自主判断",
+    "prismModeFree": "诺亚 自主判断",
     "prismModeAll": "全年龄",
     "prismModeT15": "青少年 15+",
     "prismModeM18": "成人向 18+",
     "prismModeCustom": "自定义",
-    "prismModeOffDesc": "未声明 — 不会传递给 NOA 提示",
-    "prismModeFreeDesc": "无 NOA 约束 — 依赖所连接 AI 模型自身的安全指南 (模型差异大)",
+    "prismModeOffDesc": "未声明 — 不会传递给 诺亚 提示",
+    "prismModeFreeDesc": "无额外诺亚约束 — 依赖所连接模型自身的基准 (模型差异大)",
     "prismModeAllDesc": "全年龄向 — 无性内容、最小暴力、无粗话",
     "prismModeT15Desc": "青少年向 — 亲吻级恋爱、中度暴力、轻微粗话",
     "prismModeM18Desc": "成人向 — 露骨恋爱、图像化暴力、强烈粗话",
@@ -895,8 +895,8 @@ const translations = {
     "prismSexual": "性描写",
     "prismViolence": "暴力",
     "prismProfanity": "粗俗语言",
-    "ratingGuide": "此分级会记录在 NOA 提示、导出文件和 EPUB 元数据中。可作为平台(晋江/起点/纵横) 投稿时的分级声明证据。",
-    "ratingRecorded": "已记录 — NOA · 导出 · EPUB",
+    "ratingGuide": "此分级会记录在 诺亚 提示、导出文件和 EPUB 元数据中。可作为平台(晋江/起点/纵横) 投稿时的分级声明证据。",
+    "ratingRecorded": "已记录 — 诺亚 · 导出 · EPUB",
     "ratingNotRecorded": "未记录 — 选择分级后将记录"
   },
   "resourceExtra": {
@@ -929,17 +929,17 @@ const translations = {
     "results": "分析结果",
     "copied": "已复制",
     "copyAll": "全部复制",
-    "apiKeyAlert": "请先设置API密钥。(设置 → API密钥)",
+    "apiKeyAlert": "请先设置连接密钥。(设置 → 连接密钥)",
     "parseFailed": "无法解析分析结果。请重试。",
-    "analysisFailed": "分析失败。请检查API密钥。"
+    "analysisFailed": "分析失败。请检查连接密钥。"
   },
   "apiKeyModal": {
-    "title": "BYOK — API密钥管理",
-    "geminiRecommend": "推荐Gemini — 角色自动生成、结构化JSON输出等高级功能仅限Gemini。其他提供商可用于小说写作（流式传输）。",
+    "title": "连接密钥管理",
+    "geminiRecommend": "注册各模型连接密钥后，可用于Noa建议和写作辅助。",
     "modelSelect": "模型选择",
     "defaultModel": "默认",
-    "verified": "API密钥验证完成",
-    "invalid": "无效的API密钥",
+    "verified": "连接密钥验证完成",
+    "invalid": "无效的连接密钥",
     "test": "测试",
     "save": "保存",
     "delete": "删除",
@@ -947,21 +947,21 @@ const translations = {
     "notSet": "未设置"
   },
   "autoRefiner": {
-    "header": "AUTO 30% — NOA自动精炼",
+    "header": "30% 精炼 — 诺亚建议",
     "analyzeStart": "开始分析",
     "stop": "停止",
-    "generateAll": "全部生成",
+    "generateAll": "全部建议",
     "applyToMs": "应用到稿件",
-    "emptyState": "NOA逐段分析您的稿件，自动重写薄弱部分。",
+    "emptyState": "诺亚逐段检查您的稿件，并为薄弱部分建议精炼方向。",
     "parseFailed": "无法解析分析结果。",
     "noImprovements": "未发现需要改进的部分。稿件状态良好！",
-    "apiKeyMissing": "未设置API密钥。请在设置标签页中输入您的API密钥。"
+    "apiKeyMissing": "未设置连接密钥。请在设置中输入连接密钥。"
   },
   "tabAssistant": {
-    "apiKeyMissing": "⚠️ 未设置API密钥。\n\n请前往设置标签页 → API密钥输入。",
+    "apiKeyMissing": "⚠️ 未设置连接密钥。\n\n请前往设置输入连接密钥。",
     "askAnything": "向{name}提问任何问题。",
     "clearChat": "清除对话",
-    "apiKeyRequired": "🔒 需要先设置API密钥",
+    "apiKeyRequired": "🔒 需要先设置连接密钥",
     "askQuestion": "输入问题..."
   },
   "genreReview": {
@@ -975,7 +975,7 @@ const translations = {
   },
   "director": {
     "nodDirector": "演出反馈",
-    "autoAnalysis": "NOA响应后自动分析",
+    "autoAnalysis": "诺亚响应后分析",
     "noIssues": "无问题",
     "more": "条更多提示"
   },
@@ -984,16 +984,16 @@ const translations = {
     "applyFix": "应用修正"
   },
   "sceneSheet": {
-    "aiGenerate": "NOA生成",
+    "aiGenerate": "诺亚建议",
     "synopsisRequired": "请先编写大纲。",
-    "aiFailed": "NOA生成失败。请检查API密钥。",
+    "aiFailed": "诺亚建议准备失败。请检查连接密钥。",
     "beatSheet": "节拍表",
     "rhythmRules": "节奏规则",
     "readerReward": "读者奖励模式",
     "mustHave": "必备要素",
     "taboo": "禁忌",
     "episodeUnit": "集",
-    "worldSimRef": "世界观模拟器参考",
+    "worldSimRef": "世界观检查参考",
     "simRefDesc": "勾选的项目将在演出中被参考",
     "writerNotesPlaceholder": "自由写下本集想要的场景、台词、氛围、展开方向...",
     "chars": "字"
@@ -1123,15 +1123,15 @@ const translations = {
     "mustResolveDesc": "高潮弧 — 高优先"
   },
   "hfcpLabels": {
-    "engagement": "[HFCP模式：互动] 温暖且积极地回应。",
-    "normalFree": "[HFCP模式：正常] 自然地回应。",
-    "normalAnalysis": "[HFCP模式：分析] 以结构化和逻辑性回应。",
-    "limited": "[HFCP模式：限制] 简洁回应，仅包含要点。",
-    "silent": "[HFCP模式：沉默] 仅以提问回应。不直接回答。",
-    "nrgVariation": "[NRG：变奏] 使用与上次回答不同的结构。",
-    "nrgFrameShift": "[NRG：框架转换] 从完全不同的角度切入。",
-    "nrgPerspectiveShift": "[NRG：视角转换] 使用探索性/批判性视角。",
-    "nrgMetaAck": "[NRG：元确认] 承认重复并提供新角度。"
+    "engagement": "温和承接作者的主导，同时保留作者的决定权。",
+    "normalFree": "自然回答，只简短整理必要选项。",
+    "normalAnalysis": "使用结构和逻辑，但不要像政策说明一样生硬。",
+    "limited": "只保留要点，减少不必要的反向建议。",
+    "silent": "减少定论，只留下一个必要确认问题或暂缓理由。",
+    "nrgVariation": "用不同于此前的结构回答。",
+    "nrgFrameShift": "不要重复同一框架，换一个角度处理。",
+    "nrgPerspectiveShift": "切换为探索性或批评性视角。",
+    "nrgMetaAck": "遇到重复问题时，简短切换到新的角度。"
   },
   "archivePage": {
     "archiveLabel": "档案库",
@@ -1156,14 +1156,14 @@ const translations = {
     "step01Eyebrow": "STEP 01 · 第一次惊喜",
     "step01Title": "一行创意直达第一个场景",
     "step01Desc": "只需输入类型和一行创意，就能一次生成标题、核心人物和第一个场景草稿。",
-    "step01H1": "世界观种子自动生成",
+    "step01H1": "世界观种子建议",
     "step01H2": "核心人物草稿设定",
     "step01H3": "直接跳转到写作标签",
     "step01Cta": "打开快速开始",
     "step02Eyebrow": "STEP 02 · 打磨文字",
-    "step02Title": "从NOA草稿到您自己的文字",
-    "step02Desc": "在同一界面中切换NOA草稿、画布和手动编辑模式，按您想要的方式打磨文字。",
-    "step02H1": "NOA与手动写作自然并行",
+    "step02Title": "从诺亚草稿到您自己的文字",
+    "step02Desc": "在同一界面中切换诺亚草稿、画布和手动编辑模式，按您想要的方式打磨文字。",
+    "step02H1": "诺亚与手动写作自然并行",
     "step02H2": "包含画布和重写工具",
     "step02H3": "工作流在一个屏幕上完成",
     "step02Cta": "打开写作标签",
@@ -1190,7 +1190,7 @@ const translations = {
   "docs": {
     "contents": "目录",
     "userGuide": "用户指南",
-    "subtitle": "NOA小说创作工作台 — 全功能指南"
+    "subtitle": "诺亚小说创作工作台 — 全功能指南"
   },
   "errorBoundary": {
     "title": "出了点问题",
@@ -1201,7 +1201,7 @@ const translations = {
     "world": "世界",
     "characters": "角色",
     "writing": "写作",
-    "rulebook": "演出",
+    "direction": "演出",
     "more": "更多",
     "style": "文体",
     "manuscript": "稿件",
@@ -1215,14 +1215,14 @@ const translations = {
     "defaultEpisodes": "默认集数",
     "defaultEpisodesDesc": "新项目的默认总集数",
     "temperature": "创造性",
-    "temperatureDesc": "AI生成创意水平（低＝精确，高＝表现丰富）",
+    "temperatureDesc": "诺亚建议创意水平（低＝精确，高＝表现丰富）",
     "mobile": "移动端",
     "web": "网页端"
   },
   "apiKeyModalExtra": {
-    "hostedSubtitle": "基础NOA已就绪 · 随时添加个人密钥",
-    "hostedHelper": "基础Gemini已准备就绪，可以立即开始。添加个人密钥可直接管理模型选择和使用量。",
-    "byokSubtitle": "使用您自己的API密钥"
+    "hostedSubtitle": "基础诺亚已就绪 · 随时添加连接密钥",
+    "hostedHelper": "若基础运行尚未准备就绪，可添加连接密钥直接管理模型选择和使用量。",
+    "byokSubtitle": "使用连接密钥"
   },
   "advancedWritingExtra": {
     "goalConflict": "冲突升级",
@@ -1235,7 +1235,7 @@ const translations = {
     "goalPayoff": "伏笔回收",
     "goalAction": "动作/战斗",
     "goalCalm": "日常/喘息",
-    "modeDraft": "草稿生成",
+    "modeDraft": "草稿建议",
     "modeExpand": "场景扩展",
     "modeRewrite": "重写",
     "modeDialogueBoost": "对话强化",
@@ -1265,8 +1265,8 @@ const translations = {
     "lockBannedWords": "禁用词应用"
   },
   "system": {
-    "pipelineBlocked": "由于管道验证失败，NOA 生成已被阻止。",
-    "qualityGateRetry": "[质量门：自动重写尝试 {n}/{max}]",
+    "pipelineBlocked": "由于管道验证未通过，诺亚建议已暂时暂停。",
+    "qualityGateRetry": "[质量门：重写轮次 {n}/{max}]",
     "qualityGateFinalFail": "[质量门：最终尝试失败]",
     "contextTruncated": "[上下文过长，部分内容已省略]",
     "writerProfileLoaded": "作家档案已应用。",
@@ -1275,7 +1275,7 @@ const translations = {
     "suggestionReady": "建议已准备就绪。"
   },
   "codeStudio": {
-    "title": "代码工作室",
+    "title": "内部诊断",
     "aiChat": "对话",
     "pipeline": "流水线",
     "terminal": "终端",
@@ -1283,7 +1283,7 @@ const translations = {
     "settings": "设置",
     "problems": "问题",
     "deploy": "部署",
-    "subtitle": "NOA驱动开发环境",
+    "subtitle": "非公开实验与诊断环境",
     "newFile": "新建文件",
     "newFileDesc": "从零开始编码",
     "openDemo": "打开演示",
@@ -1294,7 +1294,7 @@ const translations = {
     "importDesc": "加载已有文件",
     "resumeProject": "恢复上次项目",
     "resumeProjectDesc": "继续之前的工作",
-    "loading": "正在加载代码工作室...",
+    "loading": "正在加载内部诊断...",
     "selectFile": "选择要编辑的文件",
     "demoLoaded": "演示项目已加载",
     "blankCreated": "已创建空白项目",
@@ -1351,12 +1351,12 @@ const translations = {
     "welcomeRecentFiles": "最近文件",
     "welcomeProTips": "提示",
     "welcomeTip1": "按 Ctrl+P 快速打开文件",
-    "welcomeTip2": "在聊天中使用 @文件名 引用文件",
+    "welcomeTip2": "在对话中使用 @文件名 引用文件",
     "welcomeTip3": "Ctrl+Shift+P 打开命令面板",
     "welcomeTip4": "输入 @ 搜索项目中的符号",
     "welcomeTip5": "F1–F8 切换已打开的标签",
-    "welcomeTip6": "Ctrl+I 触发 NOA 行内建议",
-    "welcomeTip7": "使用代理流水线进行多步代码生成",
+    "welcomeTip6": "Ctrl+I 触发 诺亚 行内建议",
+    "welcomeTip7": "使用工作流程进行多步创作辅助",
     "timeJustNow": "刚刚",
     "timeMinAgo": "{n} 分钟前",
     "timeHourAgo": "{n} 小时前",
@@ -1383,8 +1383,8 @@ const translations = {
     "world.description": "添加地点、事件和法则来设计你的世界。",
     "scene.title": "场景表是空的",
     "scene.description": "从场景概述开始。支持 10+ 类型预设。",
-    "codex.title": "尚未注册任何物品",
-    "codex.description": "添加装备、魔法和技能，打造丰富的世界。",
+    "items.title": "尚未注册任何物品",
+    "items.description": "添加装备、魔法和技能，打造丰富的世界。",
     "history.title": "没有保存的版本",
     "history.description": "修改 300 字以上时会自动创建快照。",
     "characters.title": "还没有角色",

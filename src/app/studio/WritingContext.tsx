@@ -38,6 +38,7 @@ export interface WritingContextValue {
   language: AppLanguage;
   currentSession: ChatSession;
   currentSessionId: string | null;
+  currentProjectId: string | null;
   updateCurrentSession: (patch: Partial<ChatSession>) => void;
   setConfig: Dispatch<SetStateAction<StoryConfig>>;
 

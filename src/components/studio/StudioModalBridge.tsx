@@ -43,7 +43,7 @@ export interface StudioModalBridgeProps {
   /** legacy: showApiKeyModal — true 면 'studio:api-keys' 열고, false 면 닫음. */
   apiKeyOpen: boolean;
   setApiKeyOpen: (v: boolean) => void;
-  /** API 키 변경 후 부모에 알림 (apiKeyVersion bump). */
+  /** 연결 키 변경 후 부모에 알림 (apiKeyVersion bump). */
   onApiKeyChange?: () => void;
 
   /** legacy: saveSlotModalOpen — true/false 양방향 sync. */

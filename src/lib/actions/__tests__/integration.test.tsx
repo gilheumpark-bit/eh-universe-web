@@ -102,7 +102,7 @@ describe('action-registry + keyboard-manager + modal-manager 통합', () => {
   });
 
   it('7) area 가드 — 다른 영역 pathname 이면 매칭 안 됨', () => {
-    setPath('/code-studio');
+    setPath('/docs');
     const handler = jest.fn();
     registerKeyBinding({ keys: 'ctrl+p', area: 'studio', handler });
     dispatchKey({ key: 'p', ctrl: true });

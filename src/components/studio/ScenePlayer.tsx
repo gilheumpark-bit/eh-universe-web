@@ -4,8 +4,8 @@
 // ScenePlayer — 3단계 프리뷰 시스템
 // ============================================================
 // Step 1: 편집 모드 → SceneTimeline (별도 컴포넌트)
-// Step 2: 라디오 드라마 → 어둠 + 음성 + 환경음 + 효과음 (상상)
-// Step 3: 비주얼 노벨 → 캐릭터 + 배경 + 음성 + 연출 (존재)
+// Step 2: 음성 확인 → 어둠 + 음성 + 환경음 + 효과음
+// Step 3: 시각 미리보기 → 캐릭터 + 배경 + 음성 + 연출
 
 import { useState, useCallback, useEffect, useRef, useMemo, type MutableRefObject } from "react";
 import {
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type {
   ParsedScene, SceneBeat, VoiceMapping, ParticleType,
-  TTSController, Emotion,
+  TTSController,
 } from "@/engine/scene-parser";
 import { createTTSController } from "@/engine/scene-parser";
 import { createAudioEngine, detectAmbient, detectSFX, getDominantEmotion } from "@/engine/scene-audio";
@@ -23,12 +23,13 @@ import type { AudioEngine } from "@/engine/scene-audio";
 import type { AppLanguage } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
+import { CharacterDisplay, getMoodFilter, getMoodGradient } from "@/components/studio/ScenePlayer.visuals";
 
 // ============================================================
 // PART 1 — Props & State Types
 // ============================================================
 
-/** 프리뷰 모드: radio(라디오 드라마) | visual(비주얼 노벨) */
+/** 프리뷰 모드: radio(음성 확인) | visual(시각 미리보기) */
 export type PreviewMode = 'radio' | 'visual';
 
 interface ScenePlayerProps {
@@ -55,39 +56,6 @@ interface PlaybackState {
 }
 
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=ScenePlayerProps,PlaybackState
-
-// ============================================================
-// PART 2 — 연출 이펙트 CSS
-// ============================================================
-
-function getMoodFilter(mood?: string): string {
-  switch (mood) {
-    case "dark": return "brightness(0.6) contrast(1.1)";
-    case "bright": return "brightness(1.1) saturate(1.2)";
-    case "rainy": return "brightness(0.7) saturate(0.8) hue-rotate(10deg)";
-    case "snowy": return "brightness(1.15) saturate(0.6)";
-    case "misty": return "brightness(0.85) contrast(0.85) blur(1px)";
-    case "eerie": return "brightness(0.5) saturate(0.4) hue-rotate(20deg)";
-    case "warm": return "brightness(1.05) saturate(1.1) sepia(0.15)";
-    case "cold": return "brightness(0.9) saturate(0.7) hue-rotate(-10deg)";
-    case "peaceful": return "brightness(1.05) saturate(1.1)";
-    default: return "none";
-  }
-}
-
-function getMoodGradient(mood?: string, timeOfDay?: string): string {
-  if (timeOfDay === "밤" || timeOfDay === "night") return "linear-gradient(180deg, #0a0e1a 0%, #1a1f3a 50%, #0d1220 100%)";
-  if (timeOfDay === "새벽" || timeOfDay === "dawn") return "linear-gradient(180deg, #1a1040 0%, #4a2060 30%, #d45050 70%, #f0a050 100%)";
-  if (timeOfDay === "저녁" || timeOfDay === "evening" || timeOfDay === "해질녘" || timeOfDay === "dusk") return "linear-gradient(180deg, #2a1a3a 0%, #c04040 40%, #f09040 80%, #f0d080 100%)";
-  switch (mood) {
-    case "dark": return "linear-gradient(180deg, #0a0a14 0%, #1a1a28 100%)";
-    case "eerie": return "linear-gradient(180deg, #0a1018 0%, #1a2030 100%)";
-    case "peaceful": return "linear-gradient(180deg, #1a2a3a 0%, #2a4a5a 50%, #3a6a7a 100%)";
-    default: return "linear-gradient(180deg, #0d1117 0%, #161b22 50%, #21262d 100%)";
-  }
-}
-
-// IDENTITY_SEAL: PART-2 | role=effects | inputs=mood,timeOfDay | outputs=CSS-filters,gradients
 
 // ============================================================
 // PART 3 — 파티클 렌더러
@@ -203,44 +171,6 @@ function TypingText({ text, speed = 40, onDone }: { text: string; speed?: number
 // IDENTITY_SEAL: PART-4 | role=typing-effect | inputs=text,speed | outputs=animated-text
 
 // ============================================================
-// PART 5 — 캐릭터 표시
-// ============================================================
-
-function getEmotionEmoji(emotion?: Emotion): string {
-  if (!emotion) return "😐";
-  const entries = Object.entries(emotion) as [keyof Emotion, number][];
-  const dominant = entries.sort((a, b) => b[1] - a[1])[0];
-  if (!dominant || dominant[1] < 0.2) return "😐"; // 평온
-  switch (dominant[0]) {
-    case "joy": return "😊";
-    case "sadness": return "😢";
-    case "anger": return "😠";
-    case "fear": return dominant[1] > 0.7 ? "😱" : "😨"; // 공포 강도별
-    case "surprise": return "😲";
-  }
-  // 복합 감정: 결의 = anger + joy, 혐오 = anger + sadness
-  const anger = emotion.anger ?? 0;
-  const joy = emotion.joy ?? 0;
-  const sadness = emotion.sadness ?? 0;
-  if (anger > 0.3 && joy > 0.3) return "😤"; // 결의
-  if (anger > 0.3 && sadness > 0.3) return "😒"; // 혐오
-  return "😐"; // 평온
-}
-
-function CharacterDisplay({ name, emotion, side }: { name: string; emotion?: Emotion; side: "left" | "right" }) {
-  return (
-    <div className={`absolute bottom-32 ${side === "left" ? "left-8" : "right-8"} flex flex-col items-center gap-1 transition-[transform,opacity,background-color,border-color,color] duration-300`}>
-      <div className="text-3xl">{getEmotionEmoji(emotion)}</div>
-      <div className="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
-        <span className="text-xs font-mono text-accent-purple">{name}</span>
-      </div>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-5 | role=character-display | inputs=name,emotion | outputs=character-avatar
-
-// ============================================================
 // PART 6 — 대사창
 // ============================================================
 
@@ -339,7 +269,7 @@ function useMemoryMonitor(
       // Track active audio contexts (check via BaseAudioContext count heuristic)
       const audioActive = audioRef.current ? 1 : 0;
       if (audioActive > 3 && !warnedRef.current.audio) {
-        console.warn("[ScenePlayer Memory] Active audio contexts:", audioActive, "> 3 threshold");
+        logger.warn("ScenePlayer Memory", "Active audio contexts over threshold", { audioActive, threshold: 3 });
         warnedRef.current.audio = true;
       }
 
@@ -350,7 +280,7 @@ function useMemoryMonitor(
         : particleType === "sparks" ? 50
         : 0;
       if (estimatedParticles > 1000 && !warnedRef.current.particles) {
-        console.warn("[ScenePlayer Memory] Particle count:", estimatedParticles, "> 1000 threshold");
+        logger.warn("ScenePlayer Memory", "Particle count over threshold", { estimatedParticles, threshold: 1000 });
         warnedRef.current.particles = true;
       }
     }, 5000);
@@ -643,7 +573,7 @@ export default function ScenePlayer({
     <div ref={containerRef} className={`relative w-full h-full overflow-hidden select-none ${sceneTransition === 'fade-out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} style={{ background: bgGradient }}>
       {/* 장면 전환 페이드 오버레이 */}
       <div key={fadeKey} className="absolute inset-0 bg-black pointer-events-none z-50 animate-[fadeOut_0.6s_ease-out_forwards]" />
-      {/* ── 라디오 모드: 어둠 + 최소 비주얼 ── */}
+      {/* ── 음성 확인 모드: 어둠 + 최소 비주얼 ── */}
       {isRadio && (
         <>
           <div className="absolute inset-0 bg-black" />
@@ -653,7 +583,7 @@ export default function ScenePlayer({
             <div className="absolute rounded-full border border-accent-purple/10" style={{ width: 200, height: 200 }} />
             <Headphones className="absolute h-8 w-8 text-accent-purple/40" />
           </div>
-          {/* 라디오 모드에서도 비트 텍스트 페이드인 */}
+          {/* 음성 확인 모드에서도 비트 텍스트 페이드인 */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-16">
             <p className={`text-center leading-loose transition-opacity duration-1000 max-w-xl ${
               currentBeat.type === 'dialogue' ? 'text-lg text-text-primary font-medium' :
@@ -670,7 +600,7 @@ export default function ScenePlayer({
         </>
       )}
 
-      {/* ── 비주얼 노벨 모드: 풀 비주얼 ── */}
+      {/* ── 시각 미리보기 모드: 풀 비주얼 ── */}
       {!isRadio && (
         <>
           {/* 배경 이미지 */}
@@ -814,7 +744,7 @@ export default function ScenePlayer({
         </div>
       </div>
 
-      {/* 대사창 (비주얼 모드), 라디오는 중앙 텍스트로 대체 */}
+      {/* 대사창 (시각 미리보기 모드), 음성 확인은 중앙 텍스트로 대체 */}
       {!isRadio && <DialogueBox
         beat={currentBeat}
         speed={state.speed}
@@ -826,7 +756,7 @@ export default function ScenePlayer({
         language={language}
       />}
 
-      {/* 라디오 모드 하단: 간단한 다음 버튼 */}
+      {/* 음성 확인 모드 하단: 간단한 다음 버튼 */}
       {isRadio && (
         <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-4">
           <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-40 transition-colors" aria-label="이전">
@@ -849,4 +779,4 @@ export default function ScenePlayer({
   );
 }
 
-// IDENTITY_SEAL: PART-7 | role=main-player | inputs=ScenePlayerProps | outputs=visual-novel-UI
+// IDENTITY_SEAL: PART-7 | role=main-player | inputs=ScenePlayerProps | outputs=scene-preview-UI

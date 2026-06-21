@@ -5,10 +5,17 @@
 // ============================================================
 
 import {
+  assertResolvedHostAllowedForFetch,
   assertUrlAllowedForFetch,
   validatePostFetchUrl,
   rateLimitFetchUrl,
 } from '@/lib/fetch-url-guard';
+
+jest.mock('node:dns/promises', () => ({
+  lookup: jest.fn(),
+}));
+
+const mockedLookup = require('node:dns/promises').lookup as jest.Mock;
 
 describe('fetch-url-guard · assertUrlAllowedForFetch (pre-fetch)', () => {
   it('public https URL → allowed', () => {
@@ -87,6 +94,28 @@ describe('fetch-url-guard · validatePostFetchUrl (DNS rebinding)', () => {
   });
   it('redirect → 169.254/16 link-local → throw', () => {
     expect(() => validatePostFetchUrl('http://169.254.169.254/metadata')).toThrow(/SSRF/);
+  });
+});
+
+describe('fetch-url-guard · resolved DNS guard', () => {
+  beforeEach(() => {
+    mockedLookup.mockReset();
+  });
+
+  it('blocks public hostname when DNS resolves to a private address', async () => {
+    mockedLookup.mockResolvedValue([{ address: '10.0.0.12', family: 4 }]);
+
+    const result = await assertResolvedHostAllowedForFetch('https://example.com/story');
+
+    expect(result.ok).toBe(false);
+  });
+
+  it('allows public hostname when DNS resolves to public addresses', async () => {
+    mockedLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
+
+    const result = await assertResolvedHostAllowedForFetch('https://example.com/story');
+
+    expect(result.ok).toBe(true);
   });
 });
 

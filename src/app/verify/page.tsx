@@ -1,11 +1,11 @@
 // ============================================================
-// /verify — 창작 과정 확인서 공개 검색·검증 페이지
+// /verify: 창작 과정 확인서 공개 검색·조회 페이지
 // ============================================================
-// 외부 검증자(출판사·심사기관·독자)가 certId 또는 봉인번호(LG-…)만으로
+// 외부 열람자(출판사·심사기관·독자)가 certId 또는 봉인번호(LG-...)만으로
 // 레지스트리 등록 여부 + 메타(발급일·공개범위·발급자·GitHub 앵커)를 확인.
 //
-// 원본 콘텐츠 표시·다운로드 절대 없음 — 레지스트리는 해시·메타만 보관.
-// 정직 한계 의무 표기: 인간 작성 자체는 증명 불가 — 앵커 시점 이후
+// 원본 콘텐츠 표시·다운로드 없음. 레지스트리는 해시·메타만 보관.
+// 조회 범위 의무 표기: 앵커 시점 이후
 // 무변조·존재만 증명.
 //
 // /status 페이지 패턴 재사용 (L4 i18n·badge·premium-panel-soft).
@@ -16,14 +16,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import type { PublicCertificateCardPayload } from "@/lib/creative-process/public-certificate-card";
 
 // ============================================================
-// PART 1 — Types & constants
+// PART 1: Types & constants
 // ============================================================
 
 /** API 측 ID_REGEX 와 동기 유지 (src/app/api/cp/verify/[id]/route.ts) */
 const ID_REGEX = /^[A-Za-z0-9_-]{8,64}$/;
-/** GitHub 링크 안전 가드 — 레지스트리 값 그대로 href 에 넣지 않음 */
+/** GitHub 링크 안전 가드: 레지스트리 값 그대로 href 에 넣지 않음 */
 const GITHUB_REPO_REGEX = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const GITHUB_SHA_REGEX = /^[0-9a-f]{7,40}$/i;
 
@@ -37,6 +38,7 @@ interface LookupMeta {
   issuer_type: string | null;
   github_repo: string | null;
   github_commit_sha: string | null;
+  public_card?: PublicCertificateCardPayload;
 }
 
 type LookupState =
@@ -47,7 +49,7 @@ type LookupState =
   | { kind: "error"; code: "format" | "rate_limited" | "unavailable" | "network" };
 
 // ============================================================
-// PART 2 — Page
+// PART 2: Page
 // ============================================================
 
 export default function VerifyPage() {
@@ -130,7 +132,7 @@ export default function VerifyPage() {
       case "private":
         return T({ ko: "비공개", en: "Private", ja: "非公開", zh: "私密" });
       default:
-        return v ?? "—";
+        return v ?? T({ ko: "없음", en: "None", ja: "なし", zh: "无" });
     }
   };
   const issuerLabel = (v: string | null) => {
@@ -144,7 +146,7 @@ export default function VerifyPage() {
       case "admission_token":
         return T({ ko: "외부 검증 토큰", en: "External verification token", ja: "外部検証トークン", zh: "外部验证令牌" });
       default:
-        return v ?? "—";
+        return v ?? T({ ko: "없음", en: "None", ja: "なし", zh: "无" });
     }
   };
 
@@ -155,7 +157,7 @@ export default function VerifyPage() {
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-full bg-green-500" aria-hidden="true" />
           <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-            {T({ ko: "PASS — 등록 확인", en: "PASS — Registered", ja: "PASS — 登録確認", zh: "PASS — 已登记" })}
+            {T({ ko: "PASS · 등록 확인", en: "PASS · Registered", ja: "PASS · 登録確認", zh: "PASS · 已登记" })}
           </span>
         </span>
       );
@@ -164,7 +166,7 @@ export default function VerifyPage() {
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden="true" />
           <span className="text-lg font-semibold text-red-600 dark:text-red-400">
-            {T({ ko: "FAIL — 미등록", en: "FAIL — Not registered", ja: "FAIL — 未登録", zh: "FAIL — 未登记" })}
+            {T({ ko: "FAIL · 미등록", en: "FAIL · Not registered", ja: "FAIL · 未登録", zh: "FAIL · 未登记" })}
           </span>
         </span>
       );
@@ -176,10 +178,10 @@ export default function VerifyPage() {
     switch (state.code) {
       case "format":
         return T({
-          ko: "ID 형식이 올바르지 않습니다 (영문·숫자·-·_ 8~64자, 예: LG-2605-0042-A8F5).",
-          en: "Invalid ID format (letters, digits, - and _, 8–64 chars; e.g. LG-2605-0042-A8F5).",
-          ja: "ID 形式が正しくありません（英数・-・_ 8〜64文字、例: LG-2605-0042-A8F5）。",
-          zh: "ID 格式不正确（字母、数字、- 和 _，8–64 个字符，例如 LG-2605-0042-A8F5）。",
+          ko: "ID 형식이 올바르지 않습니다. 영문·숫자·-·_ 조합 8-64자로 입력하세요. 예: LG-2605-0042-A8F5",
+          en: "Invalid ID format. Use letters, digits, - and _, 8-64 characters. Example: LG-2605-0042-A8F5",
+          ja: "ID形式が正しくありません。英数字・-・_ を使い、8-64文字で入力してください。例: LG-2605-0042-A8F5",
+          zh: "ID 格式不正确。请使用字母、数字、- 和 _，长度 8-64 个字符。例：LG-2605-0042-A8F5",
         });
       case "rate_limited":
         return T({
@@ -197,10 +199,10 @@ export default function VerifyPage() {
         });
       default:
         return T({
-          ko: "조회에 실패했습니다. 네트워크 상태를 확인하세요.",
-          en: "Lookup failed. Please check your network connection.",
-          ja: "照会に失敗しました。ネットワークを確認してください。",
-          zh: "查询失败。请检查网络连接。",
+          ko: "조회하지 못했습니다. 연결 상태를 확인해 주세요.",
+          en: "Lookup failed. Please check your connection.",
+          ja: "照会に失敗しました。接続状態を確認してください。",
+          zh: "查询失败。请检查连接状态。",
         });
     }
   })();
@@ -227,14 +229,14 @@ export default function VerifyPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-20">
-      <h1 className="mb-2 font-[--font-mono] text-xs uppercase tracking-widest text-text-tertiary">
-        {T({ ko: "확인서 검증", en: "Certificate Verification", ja: "確認書検証", zh: "确认书验证" })}
+      <h1 className="mb-2 font-[--font-mono] text-xs uppercase tracking-widest text-text-secondary">
+        {T({ ko: "확인서 조회", en: "Certificate Lookup", ja: "確認書照会", zh: "确认书查询" })}
       </h1>
       <h2 className="mb-8 text-3xl font-bold text-text-primary">
         {T({ ko: "창작 과정 확인서 조회", en: "Authorship Journal Lookup", ja: "制作過程確認書の照会", zh: "创作过程确认书查询" })}
       </h2>
 
-      {/* ── 검색 폼 ── */}
+      {/* 검색 폼 */}
       <section className="premium-panel-soft rounded-xl p-6">
         <form onSubmit={handleSubmit} noValidate>
           <label htmlFor="verify-id" className="block text-sm font-medium text-text-secondary mb-2">
@@ -255,7 +257,7 @@ export default function VerifyPage() {
               autoComplete="off"
               spellCheck={false}
               maxLength={64}
-              className="flex-1 rounded-lg border border-border-subtle bg-transparent px-3 py-2 font-[--font-mono] text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-amber"
+              className="flex-1 rounded-lg border border-border-subtle bg-transparent px-3 py-2 font-[--font-mono] text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent-amber"
             />
             <button
               type="submit"
@@ -264,7 +266,7 @@ export default function VerifyPage() {
             >
               {state.kind === "loading"
                 ? T({ ko: "조회 중…", en: "Looking up…", ja: "照会中…", zh: "查询中…" })
-                : T({ ko: "조회", en: "Verify", ja: "照会", zh: "查询" })}
+                : T({ ko: "조회", en: "Lookup", ja: "照会", zh: "查询" })}
             </button>
           </div>
         </form>
@@ -275,7 +277,7 @@ export default function VerifyPage() {
         ) : null}
       </section>
 
-      {/* ── 결과 ── */}
+      {/* 결과 */}
       <section aria-live="polite" aria-atomic="true">
         {state.kind === "pass" || state.kind === "fail" ? (
           <div className="premium-panel-soft mt-6 rounded-xl p-6">
@@ -283,47 +285,72 @@ export default function VerifyPage() {
             {state.kind === "pass" ? (
               <dl className="mt-4 space-y-3 text-sm">
                 <div>
-                  <dt className="text-text-tertiary">
+                  <dt className="text-text-secondary">
                     {T({ ko: "확인서 ID", en: "Certificate ID", ja: "確認書 ID", zh: "确认书 ID" })}
                   </dt>
                   <dd className="font-[--font-mono] break-all text-text-primary">{state.meta.cert_id}</dd>
                 </div>
                 {state.meta.seal_number ? (
                   <div>
-                    <dt className="text-text-tertiary">
+                    <dt className="text-text-secondary">
                       {T({ ko: "봉인번호", en: "Seal number", ja: "封印番号", zh: "封印编号" })}
                     </dt>
                     <dd className="font-[--font-mono] text-text-primary">{state.meta.seal_number}</dd>
                   </div>
                 ) : null}
                 <div>
-                  <dt className="text-text-tertiary">
+                  <dt className="text-text-secondary">
                     {T({ ko: "등록(앵커) 시각", en: "Registered (anchor) at", ja: "登録（アンカー）時刻", zh: "登记（锚定）时间" })}
                   </dt>
                   <dd className="text-text-primary">
                     {state.meta.registered_at
                       ? new Date(state.meta.registered_at).toLocaleString(lang)
-                      : "—"}
+                      : T({ ko: "없음", en: "None", ja: "なし", zh: "无" })}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-text-tertiary">
+                  <dt className="text-text-secondary">
                     {T({ ko: "공개 범위", en: "Visibility", ja: "公開範囲", zh: "公开范围" })}
                   </dt>
                   <dd className="text-text-primary">{visibilityLabel(state.meta.visibility)}</dd>
                 </div>
                 <div>
-                  <dt className="text-text-tertiary">
+                  <dt className="text-text-secondary">
                     {T({ ko: "발급자 유형", en: "Issuer type", ja: "発行者種別", zh: "发行者类型" })}
                   </dt>
                   <dd className="text-text-primary">{issuerLabel(state.meta.issuer_type)}</dd>
                 </div>
                 {githubLink ? (
                   <div>
-                    <dt className="text-text-tertiary">
+                    <dt className="text-text-secondary">
                       {T({ ko: "GitHub 앵커 커밋", en: "GitHub anchor commit", ja: "GitHub アンカーコミット", zh: "GitHub 锚定提交" })}
                     </dt>
                     <dd>{githubLink}</dd>
+                  </div>
+                ) : null}
+                {state.meta.public_card ? (
+                  <div className="rounded-lg border border-border-subtle bg-bg-secondary/40 p-4">
+                    <dt className="text-text-secondary">
+                      {T({ ko: "공개용 과정기록 카드", en: "Public process card", ja: "公開用プロセスカード", zh: "公开过程卡" })}
+                    </dt>
+                    <dd className="mt-2 space-y-2 text-text-primary">
+                      <p>
+                        {T({ ko: "기록 단계", en: "Record level", ja: "記録段階", zh: "记录阶段" })}:{" "}
+                        <b>{state.meta.public_card.display.recordLevelKo}</b>
+                      </p>
+                      <p className="break-all font-[--font-mono]">
+                        {T({ ko: "과정기록 해시 축약값", en: "Short record hash", ja: "記録ハッシュ短縮値", zh: "记录哈希缩略值" })}:{" "}
+                        {state.meta.public_card.display.shortRecordHash ?? T({ ko: "없음", en: "None", ja: "なし", zh: "无" })}
+                      </p>
+                      <p className="text-xs text-text-secondary">
+                        {T({
+                          ko: "원고 전문과 작업 원문은 이 카드에 포함되지 않습니다.",
+                          en: "Manuscript and work-log text are not included in this card.",
+                          ja: "原稿全文と作業原文はこのカードに含まれません。",
+                          zh: "本卡不包含原稿全文和工作原文。",
+                        })}
+                      </p>
+                    </dd>
                   </div>
                 ) : null}
               </dl>
@@ -341,17 +368,17 @@ export default function VerifyPage() {
         ) : null}
       </section>
 
-      {/* ── 정직 한계 + 프라이버시 (의무 표기 — 항상 표시) ── */}
-      <section className="mt-10 text-xs text-text-tertiary space-y-2">
+      {/* 조회 범위 + 프라이버시. 항상 표시 */}
+      <section className="mt-10 text-xs text-text-secondary space-y-2">
         <h3 className="font-[--font-mono] uppercase tracking-widest text-accent-purple">
-          {T({ ko: "검증의 한계", en: "Limitations", ja: "検証の限界", zh: "验证的局限" })}
+          {T({ ko: "조회 범위", en: "Lookup Scope", ja: "照会範囲", zh: "查询范围" })}
         </h3>
         <p>
           {T({
-            ko: "본 검증은 인간 작성 자체를 증명하지 않습니다 — 앵커(등록) 시점 이후의 무변조·존재만 증명합니다.",
-            en: "This verification does NOT prove human authorship — it only proves existence and non-tampering since the anchor (registration) time.",
-            ja: "この検証は人間による執筆そのものを証明しません — アンカー（登録）時点以降の非改ざん・存在のみを証明します。",
-            zh: "本验证不证明内容由人类撰写 — 仅证明自锚定（登记）时刻以来的存在性与未被篡改。",
+            ko: "이 페이지는 확인서 ID, 등록 시각, 공개 범위, 앵커 정보가 레지스트리 기록과 일치하는지 확인합니다.",
+            en: "This page checks whether the certificate ID, registration time, visibility, and anchor details match the registry record.",
+            ja: "このページでは、確認書ID、登録時刻、公開範囲、アンカー情報がレジストリ記録と一致するかを確認します。",
+            zh: "本页面用于确认确认书 ID、登记时间、公开范围和锚定信息是否与登记记录一致。",
           })}
         </p>
         <p>

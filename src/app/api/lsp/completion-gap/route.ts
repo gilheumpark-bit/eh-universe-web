@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { isValidTokenFormat, checkRateLimit } from '@/lib/lsp/auth';
+import { authorizeLspRequest, lspAuthHeaders } from '@/lib/lsp/auth';
 import { buildCompletionGapReport } from '@/lib/completion-gap/orchestrator';
 import type { Message } from '@/lib/studio-types';
 
@@ -16,14 +16,12 @@ interface CompletionGapRequest {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const auth = request.headers.get('authorization') ?? '';
-  const token = auth.replace(/^Bearer\s+/i, '').trim();
-  if (!isValidTokenFormat(token)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-  const rl = checkRateLimit(token);
-  if (!rl.allowed) {
-    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  const authResult = await authorizeLspRequest(request);
+  if (!authResult.ok) {
+    return NextResponse.json(
+      { error: authResult.error },
+      { status: authResult.status, headers: lspAuthHeaders(authResult) },
+    );
   }
 
   let body: CompletionGapRequest;
@@ -40,6 +38,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   const report = buildCompletionGapReport(body.messages, { recentN: body.recentN ?? 10 });
 
   return NextResponse.json(report, {
-    headers: { 'X-RateLimit-Remaining': String(rl.remaining) },
+    headers: { 'X-RateLimit-Remaining': String(authResult.remaining) },
   });
 }

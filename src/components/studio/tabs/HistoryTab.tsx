@@ -1,5 +1,5 @@
 // ============================================================
-// PART 1 — imports, types, props (Archive + session grid tab)
+// PART 1 — imports, types, props (history + session grid tab)
 // ============================================================
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
@@ -20,10 +20,10 @@ const WorkProfilerView = dynamic(
 
 interface HistoryTabProps {
   language: AppLanguage;
-  archiveScope: 'project' | 'all';
-  setArchiveScope: (scope: 'project' | 'all') => void;
-  archiveFilter: string;
-  setArchiveFilter: (filter: string) => void;
+  historyScope: 'project' | 'all';
+  setHistoryScope: (scope: 'project' | 'all') => void;
+  historyFilter: string;
+  setHistoryFilter: (filter: string) => void;
   projects: Project[];
   sessions: ChatSession[];
   currentProject: Project | null;
@@ -51,10 +51,10 @@ type EnrichedSession = ChatSession & { _projectName?: string; _projectId?: strin
 // ============================================================
 const HistoryTab: React.FC<HistoryTabProps> = ({
   language,
-  archiveScope,
-  setArchiveScope,
-  archiveFilter,
-  setArchiveFilter,
+  historyScope,
+  setHistoryScope,
+  historyFilter,
+  setHistoryFilter,
   projects,
   sessions,
   currentProject,
@@ -90,7 +90,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
 
   // [G] 파생 데이터 메모이제이션 — 이전: 렌더마다 flatMap/Set/sort 3회 반복
   const allSessions: EnrichedSession[] = useMemo(() => {
-    if (archiveScope === 'all') {
+    if (historyScope === 'all') {
       return projects.flatMap((p) =>
         (p.sessions ?? []).map((s) => ({ ...s, _projectName: p.name, _projectId: p.id })),
       );
@@ -100,7 +100,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
       _projectName: currentProject?.name,
       _projectId: currentProjectId ?? undefined,
     }));
-  }, [archiveScope, projects, sessions, currentProject, currentProjectId]);
+  }, [historyScope, projects, sessions, currentProject, currentProjectId]);
 
   const categories = useMemo(() => {
     const genres = Array.from(new Set(allSessions.map((s) => s.config.genre)));
@@ -120,12 +120,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
           const title = (s.title || s.config.genre || '').toLowerCase();
           if (!title.includes(q)) return false;
         }
-        if (archiveFilter === 'ALL') return true;
-        if (archiveFilter === 'WORLD') return (s.config.worldSimData?.civs?.length ?? 0) > 0;
-        return s.config.genre === archiveFilter;
+        if (historyFilter === 'ALL') return true;
+        if (historyFilter === 'WORLD') return (s.config.worldSimData?.civs?.length ?? 0) > 0;
+        return s.config.genre === historyFilter;
       })
       .sort((a, b) => b.lastUpdate - a.lastUpdate);
-  }, [allSessions, archiveFilter, searchQuery]);
+  }, [allSessions, historyFilter, searchQuery]);
 
   // [G] 카테고리별 카운트 — 카테고리당 O(n) filter 반복을 O(n) 한 패스로 축소
   const categoryCounts = useMemo(() => {
@@ -249,15 +249,15 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
       })}
     />
     <div className="p-4 md:p-10">
-      {/* Archive Header: scope toggle + category filter */}
+      {/* History header: scope toggle + category filter */}
       <div className="mb-6 space-y-3">
         {projects.length > 1 && (
           <div className="flex gap-1.5">
             <button
-              onClick={() => setArchiveScope('project')}
-              aria-pressed={archiveScope === 'project'}
+              onClick={() => setHistoryScope('project')}
+              aria-pressed={historyScope === 'project'}
               className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${
-                archiveScope === 'project'
+                historyScope === 'project'
                   ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'
               }`}
@@ -265,10 +265,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
               {t('archive.currentProject')}
             </button>
             <button
-              onClick={() => setArchiveScope('all')}
-              aria-pressed={archiveScope === 'all'}
+              onClick={() => setHistoryScope('all')}
+              aria-pressed={historyScope === 'all'}
               className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${
-                archiveScope === 'all'
+                historyScope === 'all'
                   ? 'bg-accent-purple/20 border-accent-purple/30 text-accent-purple'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'
               }`}
@@ -283,19 +283,19 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
             type="button"
             onClick={() => setProfilerOpen(true)}
             aria-label={L4(language, {
-              ko: '작품 프로파일러 열기',
-              en: 'Open work profiler',
-              ja: '作品プロファイラーを開く',
-              zh: '打开作品分析器',
+              ko: '작품 분석 열기',
+              en: 'Open work analysis',
+              ja: '作品分析を開く',
+              zh: '打开作品分析',
             })}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest font-mono border border-border bg-bg-secondary text-text-tertiary hover:text-accent-purple hover:border-accent-purple/40 focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors"
           >
             <BarChart3 className="w-3.5 h-3.5" />
             {L4(language, {
-              ko: '작품 프로파일러',
-              en: 'Work Profiler',
-              ja: '作品プロファイラー',
-              zh: '作品分析器',
+              ko: '작품 분석',
+              en: 'Work Analysis',
+              ja: '作品分析',
+              zh: '作品分析',
             })}
           </button>
         </div>
@@ -322,10 +322,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
           {categories.map((cat) => (
             <button
               key={cat.key}
-              onClick={() => setArchiveFilter(cat.key)}
-              aria-pressed={archiveFilter === cat.key}
+              onClick={() => setHistoryFilter(cat.key)}
+              aria-pressed={historyFilter === cat.key}
               className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest font-mono border transition-colors ${
-                archiveFilter === cat.key
+                historyFilter === cat.key
                   ? 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue'
                   : 'bg-bg-secondary border-border text-text-tertiary hover:text-text-primary'
               }`}
@@ -445,7 +445,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
                     {t('archive.worldLabel')} · {s.config.worldSimData!.civs!.length}
                   </span>
                 )}
-                {archiveScope === 'all' && s._projectName && (
+                {historyScope === 'all' && s._projectName && (
                   <span className="px-1.5 py-0.5 bg-purple-900/20 border border-purple-500/15 rounded text-[8px] font-bold text-purple-400/70 font-mono">
                     {s._projectName}
                   </span>
@@ -478,7 +478,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
         </div>
       )}
 
-      {/* Work Profiler Modal */}
+      {/* Work analysis modal */}
       {profilerOpen && (
         <div
           className="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/60 p-3 overflow-auto"
@@ -490,15 +490,15 @@ const HistoryTab: React.FC<HistoryTabProps> = ({
             role="dialog"
             aria-modal="true"
             aria-label={L4(language, {
-              ko: '작품 프로파일러',
-              en: 'Work Profiler',
-              ja: '作品プロファイラー',
-              zh: '作品分析器',
+              ko: '작품 분석',
+              en: 'Work Analysis',
+              ja: '作品分析',
+              zh: '作品分析',
             })}
             onClick={(e) => e.stopPropagation()}
           >
             <WorkProfilerView
-              sessions={archiveScope === 'all' ? projects.flatMap((p) => p.sessions ?? []) : sessions}
+              sessions={historyScope === 'all' ? projects.flatMap((p) => p.sessions ?? []) : sessions}
               characters={currentSession?.config?.characters}
               language={language}
               onEpisodeClick={(sid) => {

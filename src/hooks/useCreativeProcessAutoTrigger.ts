@@ -81,7 +81,6 @@ function computeSignatures(projects: Project[]): SignatureSnapshot {
         chars += JSON.stringify(c.characters ?? '') + '|';
         world += JSON.stringify({
           worldSimData: c.worldSimData ?? null,
-          rulebook: cfgAny['rulebook'] ?? null,
           corePremise: c.corePremise ?? '',
         }) + '|';
         scenes += JSON.stringify(cfgAny['episodeSceneSheets'] ?? cfgAny['sceneDirection'] ?? '') + '|';

@@ -70,7 +70,7 @@ async function loadPlaywright() {
  */
 async function snapshotMemory(page) {
   return page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const mem = performance && (performance).memory;
     if (!mem) return null;
     return {

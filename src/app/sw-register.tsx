@@ -11,11 +11,12 @@
 // 정책:
 //   - prod only (NODE_ENV !== 'development') — dev 에서 SW 캐싱 = HMR 방해.
 //   - 'serviceWorker' in navigator 가드.
-//   - 새 버전 감지 시 console.log (자동 reload 안 함 — 사용자 흐름 보호).
+//   - 새 버전 감지 시 logger.info (자동 reload 안 함 — 사용자 흐름 보호).
 //   - register 실패 → silent (production 사용자 영향 0).
 // ============================================================
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 // ============================================================
 // PART 2 — Component
@@ -43,8 +44,7 @@ export default function SwRegister(): null {
           installing.addEventListener('statechange', () => {
             if (installing.state === 'installed' && navigator.serviceWorker.controller) {
               // 새 버전이 대기 중. 사용자는 다음 새로고침 때 적용됨.
-              // eslint-disable-next-line no-console
-              console.info('[sw] new version available — reload to apply');
+              logger.info('sw-register', 'new version available — reload to apply');
             }
           });
         });

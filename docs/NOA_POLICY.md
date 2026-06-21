@@ -21,7 +21,7 @@
 | **BLOCK (차단 + 고지)** | ① Fast-Track 즉결 BLOCK (등급 무관 — 키워드 즉결, `fast-track/`) ② Tactical BLOCK (DeepRed/Black 등급·일일 리스크 예산 소진, `tactical/index.ts`) ③ 정책 매트릭스 BLOCK 셀 (§3) | 생성 중단 + toast/카드/인라인 고지 | 서버 audit 해시 체인 + `apiLog(noa_gate)` + 클라 `csl_noa_audit_log` |
 | **AUDIT_ONLY (통과 + 주의 기록)** | 정책 매트릭스 경계 셀 (§3) | 없음 (방해 0) | `recordPolicyAudit('AUDIT_ONLY')` → `csl_noa_audit_log` (severity: medium) |
 | **PASS (통과)** | 작품 등급 내 콘텐츠 | 없음 | runNoa 표준 평가 기록 (모든 평가는 항상 기록됨 — `index.ts` recordAuditEntry + auditManager) |
-| **출력 IP 검출 (기록만)** | 스트림 완료 후 상표/IP 매치 (`wrapStreamWithIpAudit`) | 스트림 안 깨짐 — SSE 스트림(`/api/chat`·`/api/code/autopilot`)은 말미 `noa.ipNotice` 이벤트 1개. **`format: 'text'` plain-text 스트림(`/api/translate`)은 인밴드 고지 X — 주입 시 번역 본문이 오염되므로 audit 로깅만** (설계 제약 — 정직 보고) | `apiLog(noa_ip_detected_post_stream)` |
+| **출력 IP 검출 (기록만)** | 스트림 완료 후 상표/IP 매치 (`wrapStreamWithIpAudit`) | 스트림 안 깨짐 — SSE 스트림(`/api/chat`)은 말미 `noa.ipNotice` 이벤트 1개. **`format: 'text'` plain-text 스트림(`/api/translate`)은 인밴드 고지 X — 주입 시 번역 본문이 오염되므로 audit 로깅만** (설계 제약 — 정직 보고) | `apiLog(noa_ip_detected_post_stream)` |
 
 ## 3. 등급 연동 표 (판정 × 작품 등급)
 
@@ -41,11 +41,10 @@ NOA 9 리스크 등급 (Platinum=최저 위험 → Black=최고 위험) × PRISM
   mature-18 가드도 "core API illegal content" 는 허용하지 않음, `safety-registry.ts`).
 - `decideBlockPolicy(noa등급, 작품등급)` / `decideFromNoaResult(runNoa결과, 작품등급)` 로 노출.
   NOA 하드 차단(allowed=false)은 정책으로 완화 불가 (보안 우선).
-- **서버 게이트 실행 지점** (`server-gate.ts` `applyNoaGate` — 적용 라우트 **8개 전부**):
+- **서버 게이트 실행 지점** (`server-gate.ts` `applyNoaGate` — 적용 라우트 **7개 전부**):
   ① `/api/complete` ② `/api/structured-generate` ③ `/api/gemini-structured`
   ④ `/api/analyze-chapter` ⑤ `/api/translate` ⑥ `/api/image-gen`
-  ⑦ `/api/code/autopilot` ⑧ `/api/cron/universe-daily` (서버 내부 cron — 사용자 표면 없음,
-  차단 시 `ok:false` + blocked 계약 로깅).
+  ⑦ `/api/cron/universe-daily` (서버 내부 cron — 사용자 표면 없음, 차단 시 `ok:false` + blocked 계약 로깅).
   runNoa 평가 후 `decideFromNoaResult(noaResult, workGrade)` 로 이 매트릭스를 **실제 차단 결정에
   적용**한다. `workGrade` 는 요청 `prismMode` 우선, 미전달 시 도메인 의미 정합 열
   (`education → all-ages` / `creative → mature-18` / 그 외 `teen-15`).
@@ -61,10 +60,10 @@ NOA 9 리스크 등급 (Platinum=최저 위험 → Black=최고 위험) × PRISM
 
 ## 4. 차단 응답 계약 (서버 → 클라이언트)
 
-### 4.1 표준 계약 — applyNoaGate 적용 8 라우트 전부
+### 4.1 표준 계약 — applyNoaGate 적용 7 라우트 전부
 
 `/api/complete` · `/api/structured-generate` · `/api/gemini-structured` · `/api/analyze-chapter` ·
-`/api/translate` · `/api/image-gen` · `/api/code/autopilot` · `/api/cron/universe-daily`
+`/api/translate` · `/api/image-gen` · `/api/cron/universe-daily`
 
 HTTP **200** + JSON (403 아님 — 클라가 고지 UI 를 띄울 수 있게):
 

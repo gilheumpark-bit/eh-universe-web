@@ -1,64 +1,34 @@
 "use client";
 
-/* ===========================================================
-   CpJournalPanel — 창작 과정 확인서 slide-over (S3)
-
-   오픈: window CustomEvent 'loreguard:open-cp'
-         (TabWriting 집필 헤더 '확인서' 버튼이 dispatch — TabWriting PART 3 openCp).
-   닫기: 닫기 버튼 / Escape / 오버레이 클릭 — TabWriting PART 4/5 와 동일 slide-over 패턴.
-
-   내용 (3 sub-view, .seg 토글 — 구 NovelIDELauncher journal 탭과 동일 컴포넌트·동일 props):
-   - 기여도   → CreativeContributionInspector (events, certLang, view 'private',
-                contextMeta { sceneCount, activeCharacters }, compact)
-   - 출처     → ProvenanceReport (events, certLang, workTitle = config.synopsis 40자)
-   - 투고 패키지 → SubmissionPackageBuilder (AppLanguage, projectIdOverride)
-   3종 모두 dynamic(ssr:false) + LoadingSkeleton + SubViewBoundary
-   (import 실패 시 무한 스켈레톤 금지 — 에러 메시지 + 다시 시도).
-
-   발급 (CreativeProcessSection PART 5.3 흐름 재사용):
-   buildCertificate → renderCertificateHtml + renderCertificateMarkdown →
-   buildCertificateFilename → HTML·MD 2파일 다운로드. 로딩·에러 표면화.
-   이벤트 0건 → 정직한 빈 상태 + 발급 비활성.
-   [D3-registry] 옵트인 체크박스 동의 시에만 /api/cp/register 호출 (Bearer 인증) —
-   메타데이터만 전송 (PIPA 최소 수집·원고 0byte). 등록 실패 ≠ 발급 실패 (분리 표면화).
-
-   데이터 출처 (실데이터 — 구 호출부와 동일 소스):
-   - events     → listCreativeEvents({ projectId: currentProjectId, limit: 500 })
-                  (NovelIDELauncher journal 탭과 동일 호출. projectId 는 useStudio
-                  currentProjectId — CreativeProcessSection 이 읽던 localStorage
-                  'noa_studio_currentProjectId' 의 source-of-truth)
-   - 발급 입력  → useStudio projects (CreativeProcessSection 의 'noa_projects_v2'
-                  raw read 와 동일 데이터의 live in-memory 본체) — 전 세션
-                  manuscripts 합산 + characters id-dedup + worldSimData.selectedGenre
-                  (구 호출부의 world.genre || worldSimData.genre raw cast 는 typed
-                  모델에 없는 필드 — 실존 typed 필드 selectedGenre 로 적응.
-                  world.rules ruleCount 도 typed 모델에 없어 생략 — 데이터 발명 금지)
-   - language   → useStudio language (AppLanguage) → CertificateLanguage 매핑
-                  (CreativeProcessSection toCertLang 와 동일 분기)
-
-   가드: currentSession null 이면 미렌더 — TabWriting 의 '확인서' 버튼도 early
-   return 뒤에만 렌더되므로 dispatch 경로와 gating 일치.
-   =========================================================== */
-
 import {
-  Component,
-  type ReactNode,
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
-import dynamic from "next/dynamic";
 import { useStudio } from "@/app/studio/StudioContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import LoadingSkeleton from "@/components/studio/LoadingSkeleton";
+import { useCreativeProcessTrackingPreference } from "@/hooks/useCreativeProcessTrackingPreference";
 import { L4 } from "@/lib/i18n";
 import { Check, Download, Scroll, Sync, X } from "@/components/loreguard/icons";
+import {
+  EVENTS_REFRESH_THROTTLE_MS,
+  toCertLang,
+  triggerDownload,
+  type CpView,
+  type IssueStatus,
+  type RegisterStatus,
+} from "@/components/loreguard/CpJournalPanel.helpers";
+import {
+  CreativeContributionInspector,
+  ProvenanceReport,
+  SubmissionPackageBuilder,
+  SubViewBoundary,
+} from "@/components/loreguard/CpJournalPanel.views";
 import type { AppLanguage } from "@/lib/studio-types";
 import type {
-  CertificateLanguage,
   CertificateView,
   CreativeEvent,
 } from "@/lib/creative-process/types";
@@ -73,101 +43,6 @@ import {
 import { canShare, canShareFiles, shareFile, shareText } from "@/lib/browser/web-share";
 
 // ============================================================
-// PART 1 — heavy sub-view dynamic imports (ssr:false + 스켈레톤)
-// ============================================================
-
-const CreativeContributionInspector = dynamic(
-  () => import("@/components/studio/CreativeContributionInspector").then((m) => m.default),
-  { ssr: false, loading: () => <LoadingSkeleton height={420} /> },
-);
-const ProvenanceReport = dynamic(
-  () => import("@/components/studio/ProvenanceReport").then((m) => m.default),
-  { ssr: false, loading: () => <LoadingSkeleton height={420} /> },
-);
-const SubmissionPackageBuilder = dynamic(
-  () => import("@/components/studio/SubmissionPackageBuilder").then((m) => m.default),
-  { ssr: false, loading: () => <LoadingSkeleton height={420} /> },
-);
-
-// ============================================================
-// PART 2 — SubViewBoundary (dynamic import 실패 표면화)
-//
-// next/dynamic 은 chunk 로드 실패 시 렌더 중 throw → 가장 가까운 error boundary
-// 로 전파된다. 여기서 잡지 않으면 탭 전체가 죽거나 (상위 boundary), loading
-// fallback 으로 오인될 수 있다 → 패널 내 국소 boundary 로 에러 메시지 + 재시도.
-// ============================================================
-
-class SubViewBoundary extends Component<
-  // S6 i18n — class component 는 hook 불가 → 부모가 번역 완료 문자열을 props 로 주입
-  { failMessage: string; retryLabel: string; children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError(): { failed: boolean } {
-    return { failed: true };
-  }
-
-  render() {
-    if (this.state.failed) {
-      return (
-        <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)" }}>
-          <span className="rdot amber" />
-          {this.props.failMessage}
-          <button
-            type="button"
-            className="mini-btn"
-            style={{ marginLeft: "auto" }}
-            onClick={() => this.setState({ failed: false })}
-          >
-            <Sync size={13} />
-            {this.props.retryLabel}
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-// ============================================================
-// PART 3 — 헬퍼 (CreativeProcessSection PART 2/3 동일 로직)
-// ============================================================
-
-/** AppLanguage('KO'|'EN'|'JP'|'CN') → CertificateLanguage('ko'|'en'|'ja'|'zh') */
-function toCertLang(lang: AppLanguage): CertificateLanguage {
-  switch (lang) {
-    case "KO": return "ko";
-    case "EN": return "en";
-    case "JP": return "ja";
-    case "CN": return "zh";
-    default: return "ko";
-  }
-}
-
-/** Blob 다운로드 (CreativeProcessSection triggerDownload 동일 — 실패는 throw → 호출부 표면화) */
-function triggerDownload(filename: string, content: string, mimeType: string): void {
-  if (typeof document === "undefined") return;
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-const EVENTS_REFRESH_THROTTLE_MS = 5000;
-
-type CpView = "inspector" | "provenance" | "submission";
-type IssueStatus = "idle" | "working" | "success" | "error";
-
-/** [D3-registry] 옵트인 레지스트리 등록 결과 — 발급 성공과 분리 표면화 (실패 비침묵) */
-type RegisterStatus = "idle" | "success" | "already" | "error";
-
-// ============================================================
 // PART 4 — 메인 컴포넌트
 // ============================================================
 
@@ -175,6 +50,7 @@ export default function CpJournalPanel() {
   const { currentSession, currentProjectId, projects, language } = useStudio();
   const { getIdToken } = useAuth();
   const certLang = toCertLang(language);
+  const [trackingEnabled, setTrackingEnabled] = useCreativeProcessTrackingPreference();
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<CpView>("inspector");
@@ -314,7 +190,7 @@ export default function CpJournalPanel() {
         episodes,
         worldSummary: worldGenre ? { genre: worldGenre } : undefined,
         characters: Array.from(charsSet.values()),
-        generatedBy: "loreguard@2.2.0-alpha.1",
+        generatedBy: "loreguard@certificate-service",
       });
 
       // HTML + MD 둘 다 발급
@@ -373,8 +249,24 @@ export default function CpJournalPanel() {
         });
       }
 
+      try {
+        await cp.saveProcessCertificate(result.cert);
+      } catch {
+        window.dispatchEvent(
+          new CustomEvent("noa:alert", {
+            detail: {
+              message: L4(language, {
+                ko: "발급본 저장 실패 — 다운로드 파일은 유지되지만 출고 화면 연결은 나중에 다시 시도해 주세요",
+                en: "Failed to save the issued record — downloads are available, but export linking may need another try",
+              }),
+              variant: "warning",
+            },
+          }),
+        );
+      }
+
       // [s82-stage-coverage] 발급 이벤트 기록 — logger 5 메서드 중 의미 일치 없음
-      // (logHumanEdit = HUMAN 1.0 오귀속·logExternalImport = 외부 편입 — 둘 다 부정직)
+      // (logHumanEdit = 작가 1.0 오귀속·logExternalImport = 외부 편입 — 둘 다 부정직)
       // → recordCreativeEvent 직접: actorType 'system' + SYSTEM_GENERATED (HCI weight 0
       //   — hci-calculator.ts 설계 의도와 일치: "시스템 자동·작가 의도 무관").
       //   afterHash = 발급 HTML SHA-256 (체인 무결성 — 발급물 위변조 검출 가능).
@@ -465,8 +357,8 @@ export default function CpJournalPanel() {
               detail =
                 errBody?.error === "registry_disabled"
                   ? L4(language, {
-                      ko: "레지스트리 미가동 (서버 미설정)",
-                      en: "Registry not enabled (server not configured)",
+                      ko: "공개 확인 기록을 사용할 수 없음",
+                      en: "Public confirmation record is unavailable",
                     })
                   : `HTTP ${res.status}${errBody?.error ? ` — ${errBody.error}` : ""}`;
             }
@@ -482,8 +374,8 @@ export default function CpJournalPanel() {
               outcome === "success"
                 ? {
                     message: L4(language, {
-                      ko: "검증 레지스트리 등록 완료 — 메타데이터만 저장. 인간 작성 자체는 증명 불가, 앵커 시점 이후 무변조·존재만 증명합니다.",
-                      en: "Registered to the verification registry — metadata only. Human authorship itself cannot be proven; only existence and non-tampering after the anchor time.",
+                      ko: "공개 확인 기록에 남겼습니다. 원고 본문은 저장하지 않고, 발급 시점 이후의 변경 여부를 확인하는 메타데이터만 보관합니다.",
+                      en: "Saved to the public confirmation record. The manuscript body is not stored; only metadata for later change checks is kept.",
                     }),
                     variant: "info",
                     duration: 8000,
@@ -491,15 +383,15 @@ export default function CpJournalPanel() {
                 : outcome === "already"
                   ? {
                       message: L4(language, {
-                        ko: "이미 등록된 확인서 ID — 기존 등록 유지 (write-once)",
-                        en: "This journal ID is already registered — existing entry kept (write-once)",
+                        ko: "이미 남긴 확인 기록입니다. 기존 기록을 유지합니다.",
+                        en: "This confirmation record already exists. The existing record was kept.",
                       }),
                       variant: "info",
                     }
                   : {
                       message: `${L4(language, {
-                        ko: "레지스트리 등록 실패 — 확인서는 정상 발급됨:",
-                        en: "Registry registration failed — journal was issued normally:",
+                        ko: "공개 확인 기록 저장 실패 — 확인서는 정상 발급됨:",
+                        en: "Public confirmation record failed — journal was issued normally:",
                       })} ${detail ?? ""}`,
                       variant: "warning",
                     },
@@ -523,8 +415,8 @@ export default function CpJournalPanel() {
   // ----- S6 i18n — SubViewBoundary 주입 문자열 (class component 라 props 주입) -----
   const boundaryFail = (label: string) =>
     L4(language, {
-      ko: `${label} 모듈을 불러오지 못했습니다 — 네트워크 확인 후 다시 시도하세요`,
-      en: `Failed to load the ${label} module — check your network and try again`,
+      ko: `${label} 모듈을 불러오지 못했습니다 — 연결 상태를 확인한 뒤 다시 시도하세요`,
+      en: `Failed to load the ${label} module — check your connection and try again`,
     });
   const retryLabel = L4(language, { ko: "다시 시도", en: "Retry" });
 
@@ -614,11 +506,45 @@ export default function CpJournalPanel() {
         {!eventsLoading && !eventsError && zeroEvents && (
           <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
             {L4(language, {
-              ko: "기록된 창작 이벤트가 없습니다 — 집필을 시작하면 자동으로 기록됩니다",
-              en: "No creative events recorded yet — they are logged automatically once you start writing",
+              ko: trackingEnabled
+                ? "기록된 창작 이벤트가 없습니다 — 집필을 시작하면 과정기록이 쌓입니다"
+                : "과정기록이 꺼져 있습니다 — 확인서가 필요할 때 지금부터 기록을 시작하세요",
+              en: trackingEnabled
+                ? "No creative events recorded yet — records will build as you write"
+                : "Process records are off — start recording when you need a journal",
             })}
           </div>
         )}
+
+        <div className="pcard">
+          <div className="pcard-h">
+            <Scroll size={15} />
+            {L4(language, { ko: "발급용 기록", en: "Journal records" })}
+            <span className={`pill ${trackingEnabled ? "green" : "gray"}`} style={{ marginLeft: "auto" }}>
+              {trackingEnabled
+                ? L4(language, { ko: "켜짐", en: "On" })
+                : L4(language, { ko: "꺼짐", en: "Off" })}
+            </span>
+          </div>
+          <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+            {L4(language, {
+              ko: "확인서에 넣을 작업 흐름은 작가가 켠 뒤부터 남깁니다. 끄면 일반 집필 도구처럼 동작합니다.",
+              en: "Work records are kept only after you turn this on. When off, the editor behaves like a regular writing tool.",
+            })}
+          </div>
+          <button
+            type="button"
+            className={trackingEnabled ? "mini-btn" : "btn primary"}
+            style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
+            role="switch"
+            aria-checked={trackingEnabled}
+            onClick={() => setTrackingEnabled(!trackingEnabled)}
+          >
+            {trackingEnabled
+              ? L4(language, { ko: "기록 끄기", en: "Stop recording" })
+              : L4(language, { ko: "지금부터 기록 시작", en: "Start recording now" })}
+          </button>
+        </div>
 
         {/* ① 확인서 발급 — buildCertificate → HTML+MD 다운로드 */}
         <div className="pcard">
@@ -666,7 +592,7 @@ export default function CpJournalPanel() {
             </select>
           </div>
           {/* [D3-registry] 옵트인 — 동의 시에만 /api/cp/register 호출. PIPA 정직 표기:
-              저장 항목 명시 + "인간 작성 증명 불가" 한계 고지 (과장 보증 금지) */}
+              저장 항목 명시 + "직접 작성 확인 불가" 한계 고지 (과장 문구 금지) */}
           <label
             className="wr-srow"
             style={{ gap: 8, alignItems: "flex-start", cursor: "pointer", marginTop: 8 }}
@@ -681,16 +607,16 @@ export default function CpJournalPanel() {
             />
             <span style={{ fontSize: 12, lineHeight: 1.5 }}>
               {L4(language, {
-                ko: "원본을 홈페이지 검증 레지스트리에 등록 — 메타데이터만 저장",
-                en: "Register the original to the site verification registry — metadata only",
+                ko: "원본 확인 기록 남기기 — 메타데이터만 저장",
+                en: "Leave an original confirmation record — metadata only",
               })}
               <span
                 id="cp-register-privacy"
                 style={{ display: "block", color: "var(--c-sub, #888)" }}
               >
                 {L4(language, {
-                  ko: "저장 항목: 확인서 ID·해시·발급 시각·공개 범위·계정 UID (원고 본문 0byte). 인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명. 로그인 필요.",
-                  en: "Stored: journal ID, hashes, issue time, visibility, account UID (0 bytes of manuscript). Human authorship itself cannot be proven — only existence and non-tampering after the anchor time. Sign-in required.",
+                  en: "Stored: journal ID, hashes, issue time, visibility, account UID (0 bytes of manuscript). It supports later change checks from the anchor time. Sign-in required.",
+                  ko: "저장 항목: 확인서 ID·해시·발급 시각·공개 범위·계정 UID (원고 본문 0byte). 앵커 시점 이후 변경 여부 확인에 쓰입니다. 로그인 필요.",
                 })}
               </span>
             </span>
@@ -773,8 +699,8 @@ export default function CpJournalPanel() {
             <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 6 }}>
               <span className="rdot green" />
               {registerStatus === "success"
-                ? L4(language, { ko: "레지스트리 등록 완료:", en: "Registered to registry:" })
-                : L4(language, { ko: "이미 등록됨 (write-once):", en: "Already registered (write-once):" })}{" "}
+                ? L4(language, { ko: "확인 기록 저장 완료:", en: "Confirmation record saved:" })
+                : L4(language, { ko: "이미 남긴 확인 기록:", en: "Confirmation record already exists:" })}{" "}
               <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                 {registerDetail}
               </span>
@@ -784,8 +710,8 @@ export default function CpJournalPanel() {
             <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)", marginTop: 6 }}>
               <span className="rdot amber" />
               {L4(language, {
-                ko: "레지스트리 등록 실패 (확인서는 정상 발급):",
-                en: "Registry registration failed (journal issued normally):",
+                ko: "확인 기록 저장 실패 (확인서는 정상 발급):",
+                en: "Confirmation record failed (journal issued normally):",
               })}{" "}
               {registerDetail}
             </div>

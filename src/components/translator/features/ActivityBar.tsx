@@ -16,6 +16,7 @@ const IconWrapper = ({ icon: Icon, title, isActive, onClick }: IconWrapperProps)
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       className={`group flex h-[48px] w-[50px] items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-300 relative cursor-pointer pointer-events-auto border-l-[3px] my-1 ${
         isActive
           ? 'border-accent-amber bg-linear-to-r from-accent-amber/10 to-transparent'
@@ -67,6 +68,7 @@ export function ActivityBar() {
         {/* Mobile menu toggle fallback (desktop hides usually) */}
         <button
           className="lg:hidden flex h-12 w-full items-center justify-center text-text-tertiary hover:text-text-primary pointer-events-auto transition-colors"
+          aria-label={lang === 'ko' ? '번역 패널 열기' : 'Open translation panel'}
           onClick={() => {
             layout.setActiveLeftPanel(layout.activeLeftPanel ? null : 'explorer');
           }}
@@ -77,21 +79,21 @@ export function ActivityBar() {
         <IconWrapper
           type="explorer"
           icon={Files}
-          title={lang === 'ko' ? '파일/챕터 (Explorer)' : 'Explorer'}
+          title={lang === 'ko' ? '파일·회차' : 'Explorer'}
           isActive={layout.activeLeftPanel === 'explorer'}
           onClick={() => handleToggle('explorer')}
         />
         <IconWrapper
           type="history"
           icon={History}
-          title={lang === 'ko' ? '번역 기록 (History)' : 'History'}
+          title={lang === 'ko' ? '번역 기록' : 'History'}
           isActive={layout.activeLeftPanel === 'history'}
           onClick={() => handleToggle('history')}
         />
         <IconWrapper
           type="glossary"
           icon={BookA}
-          title={lang === 'ko' ? '용어집 (Glossary)' : 'Glossary'}
+          title={lang === 'ko' ? '용어집' : 'Glossary'}
           isActive={layout.activeLeftPanel === 'glossary'}
           onClick={() => handleToggle('glossary')}
         />
@@ -116,7 +118,7 @@ export function ActivityBar() {
         <IconWrapper
           type="settings"
           icon={Settings}
-          title={lang === 'ko' ? '설정 (Settings)' : 'Settings'}
+          title={lang === 'ko' ? '환경 설정' : 'Settings'}
           isActive={layout.activeLeftPanel === 'settings'}
           onClick={() => handleToggle('settings')}
         />

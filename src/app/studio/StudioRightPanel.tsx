@@ -10,8 +10,7 @@ import { logger } from '@/lib/logger';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 
 import type { DirectorReport } from '@/engine/director';
-import { TRANSLATIONS } from '@/lib/studio-constants';
-import { createT, L4 } from '@/lib/i18n';
+import { createT, getStudioTranslations, L4, normalizeAppLanguage } from '@/lib/i18n';
 import { useStudioUI } from '@/contexts/StudioContext';
 import { upsertSheet, removeSheet } from '@/lib/scene-sheet/helpers';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
@@ -186,9 +185,10 @@ export function StudioWritingAssistantPanel({
   suggestions, setSuggestions,
   pipelineResult, hostedProviders,
 }: StudioWritingAssistantPanelProps) {
-  const t = createT(language);
-  const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
-  const backendLabel = useStudioBackendLabel(language, hostedProviders);
+  const appLanguage = normalizeAppLanguage(language);
+  const t = createT(appLanguage);
+  const tObj = getStudioTranslations(appLanguage);
+  const backendLabel = useStudioBackendLabel(appLanguage, hostedProviders);
   const [showOutline, setShowOutline] = useState(false);
 
   // Resolve current episode sheet (matches currentSession.config.episode)
@@ -265,7 +265,7 @@ export function StudioWritingAssistantPanel({
                 <OutlinePanel
                   currentSession={currentSession}
                   currentSceneSheet={currentEpisodeSheet}
-                  language={language}
+                  language={appLanguage}
                   onSceneClick={handleSceneClick}
                   onMessageClick={handleMessageClick}
                   className="w-full"
@@ -278,7 +278,7 @@ export function StudioWritingAssistantPanel({
           {currentSession.messages.length > 2 && (
             <div className="p-3 border-b border-border max-h-[40vh] overflow-y-auto">
               <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-mono mb-2">
-                {'\uD83D\uDCAC'} {language === 'KO' ? '\uB300\uD654 \uD788\uC2A4\uD1A0\uB9AC' : 'Chat History'} ({currentSession.messages.length - 2})
+                {'\uD83D\uDCAC'} {L4(appLanguage, { ko: '\uB300\uD654 \uD788\uC2A4\uD1A0\uB9AC', en: 'Chat History', ja: '\u4F1A\u8A71\u5C65\u6B74', zh: '\u5BF9\u8BDD\u5386\u53F2' })} ({currentSession.messages.length - 2})
               </div>
               <div className="space-y-2">
                 {currentSession.messages.slice(0, -2).map(msg => (
@@ -323,7 +323,7 @@ export function StudioWritingAssistantPanel({
                 {!currentSession.config.sceneDirection && (
                   <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
                     <p className="text-[12px] text-accent-amber">{t('panel.sceneWarning')}</p>
-                    <button onClick={() => setActiveTab('rulebook')} className="text-[12px] text-accent-purple hover:underline font-bold">
+                    <button onClick={() => setActiveTab('direction')} className="text-[12px] text-accent-purple hover:underline font-bold">
                       {'\u2192'} {t('panel.setupDirection')}
                     </button>
                   </div>
@@ -336,7 +336,7 @@ export function StudioWritingAssistantPanel({
               <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">{'\uD83D\uDCCB'} {t('panel.episodeScenes')} ({(currentSession.config.episodeSceneSheets ?? []).length})</summary>
               <div className="mt-1.5 pl-2 min-w-0">
                 <EpisodeScenePanel
-                  lang={language}
+                  lang={appLanguage}
                   currentEpisode={currentSession.config.episode}
                   episodeSceneSheets={currentSession.config.episodeSceneSheets ?? []}
                   // [2026-05-09] setConfig 직접 호출 3회 → scene-sheet/helpers 사용 (DRY).
@@ -371,14 +371,14 @@ export function StudioWritingAssistantPanel({
             </details>
 
             {/* Director feedback */}
-            <DirectorPanel report={directorReport} language={language} />
+            <DirectorPanel report={directorReport} language={appLanguage} />
 
             {/* Proactive suggestions */}
             {suggestions.length > 0 && (
               <SuggestionPanel
                 suggestions={suggestions}
                 onDismiss={(id) => setSuggestions(prev => prev.map(s => s.id === id ? { ...s, dismissed: true, dismissCount: s.dismissCount + 1 } : s))}
-                language={language}
+                language={appLanguage}
               />
             )}
 
@@ -387,7 +387,7 @@ export function StudioWritingAssistantPanel({
               <PipelineProgress
                 stages={pipelineResult.stages}
                 finalStatus={pipelineResult.finalStatus}
-                language={language}
+                language={appLanguage}
               />
             )}
 
@@ -408,7 +408,6 @@ export function StudioWritingAssistantPanel({
                   silent: t('hfcp.silent'),
                 } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict}
               </span>
-              <span className="text-[10px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
             </div>
           </div>
 
@@ -454,7 +453,7 @@ export function StudioWritingAssistantPanel({
 
           {/* NOW AI Chat */}
           <div className="p-4 border-t border-border">
-            <TabAssistant tab="writing" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
+            <TabAssistant tab="writing" language={appLanguage} config={currentSession.config} hostedProviders={hostedProviders} />
           </div>
         </div>
       )}
@@ -472,7 +471,7 @@ export function StudioWritingAssistantPanel({
 // 이 컴포넌트가 그 변수를 .eh-app 루트에 주입한다(자체 mount·StudioShell children 분기).
 //
 // 자체 구현 (라이브러리 추가 없음):
-//   - pointerdown → setPointerCapture → pointermove 로 clamp(280~640) 폭 계산
+//   - pointerdown → setPointerCapture → pointermove 로 뷰포트별 clamp 폭 계산
 //   - 폭은 noa-lg-rpanel-w 에 영속 (lazy init — 첫 렌더부터 적용, FOUC 없음)
 //   - 핸들 = role=separator 고정 위치 바 (left = 100vw − panelWidth) — .wr-panel 좌측 경계
 //   - 키보드 리사이즈: ←/→ ±16px, Home/End = min/max (aria-valuenow/min/max·orientation)
@@ -483,16 +482,25 @@ export function StudioWritingAssistantPanel({
 // ============================================================
 
 const RPANEL_MIN = 280;
-const RPANEL_MAX = 640;
+const RPANEL_MAX = 880;
 const RPANEL_DEFAULT = 360;
 const RPANEL_STORAGE_KEY = 'noa-lg-rpanel-w';
 const RPANEL_KEY_STEP = 16;
 const RPANEL_HEADER_OFFSET = 62; // .eh-header 높이 (loreguard.css PART 3)
 
+function getRpanelViewportMax(): number {
+  if (typeof window === 'undefined') return RPANEL_MAX;
+  const viewport = window.innerWidth;
+  if (viewport <= 1179) return RPANEL_MIN;
+  if (viewport <= 1440) return Math.min(520, Math.max(RPANEL_MIN, Math.floor(viewport * 0.4)));
+  if (viewport < 1920) return Math.min(720, Math.max(RPANEL_MIN, Math.floor(viewport * 0.38)));
+  return RPANEL_MAX;
+}
+
 /** clamp + 정수화 — 저장/적용 단일 경로 */
-function clampRpanelWidth(px: number): number {
+function clampRpanelWidth(px: number, maxWidth = getRpanelViewportMax()): number {
   if (!Number.isFinite(px)) return RPANEL_DEFAULT;
-  return Math.round(Math.min(RPANEL_MAX, Math.max(RPANEL_MIN, px)));
+  return Math.round(Math.min(maxWidth, Math.max(RPANEL_MIN, px)));
 }
 
 /** 저장 폭 로드 (storage 불가/파싱 실패 = 기본 360 — 기존 픽셀 보존) */
@@ -520,12 +528,25 @@ export interface RightPanelResizerProps {
 export function RightPanelResizer({ language = 'KO' }: RightPanelResizerProps) {
   // 폭 — lazy init 으로 첫 렌더부터 적용 (FOUC 방지)
   const [width, setWidth] = useState<number>(readRpanelWidth);
+  const [viewportMax, setViewportMax] = useState(RPANEL_MAX);
   // .wr-panel 존재 여부 (탭별 — 없으면 핸들 숨김)
   const [panelPresent, setPanelPresent] = useState(false);
   const [dragging, setDragging] = useState(false);
   const gripRef = useRef<HTMLButtonElement | null>(null);
   const ehAppRef = useRef<HTMLElement | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const updateViewportMax = () => {
+      const nextMax = getRpanelViewportMax();
+      setViewportMax(nextMax);
+      setWidth((current) => clampRpanelWidth(current, nextMax));
+    };
+    updateViewportMax();
+    window.addEventListener('resize', updateViewportMax);
+    return () => window.removeEventListener('resize', updateViewportMax);
+  }, []);
 
   // .eh-app 루트에 --lg-rpanel-w 주입 (loreguard.css .wr-panel 이 소비) + 저장
   useEffect(() => {
@@ -544,14 +565,15 @@ export function RightPanelResizer({ language = 'KO' }: RightPanelResizerProps) {
     if (typeof document === 'undefined') return;
     const check = () => {
       ehAppRef.current = document.querySelector<HTMLElement>('.eh-app');
-      const present = !!document.querySelector('.eh-app .wr-panel');
+      const panel = document.querySelector<HTMLElement>('.eh-app .wr-panel');
+      const present = !!panel && !panel.classList.contains('is-collapsed');
       setPanelPresent(present);
       // 새로 mount 된 .eh-app 에도 현재 폭 즉시 반영
       if (ehAppRef.current) ehAppRef.current.style.setProperty('--lg-rpanel-w', `${readRpanelWidth()}px`);
     };
     check();
     const observer = new MutationObserver(check);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
   }, []);
 
@@ -571,10 +593,10 @@ export function RightPanelResizer({ language = 'KO' }: RightPanelResizerProps) {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null;
-      const next = clampRpanelWidth(window.innerWidth - clientX);
+      const next = clampRpanelWidth(window.innerWidth - clientX, viewportMax);
       setWidth(next);
     });
-  }, []);
+  }, [viewportMax]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return; // 주 버튼만
@@ -600,13 +622,13 @@ export function RightPanelResizer({ language = 'KO' }: RightPanelResizerProps) {
     switch (e.key) {
       case 'ArrowLeft': next = width + RPANEL_KEY_STEP; break;
       case 'ArrowRight': next = width - RPANEL_KEY_STEP; break;
-      case 'Home': next = RPANEL_MAX; break;
+      case 'Home': next = viewportMax; break;
       case 'End': next = RPANEL_MIN; break;
       default: return;
     }
     e.preventDefault();
-    setWidth(clampRpanelWidth(next));
-  }, [width]);
+    setWidth(clampRpanelWidth(next, viewportMax));
+  }, [viewportMax, width]);
 
   if (!panelPresent) return null;
 
@@ -628,7 +650,7 @@ export function RightPanelResizer({ language = 'KO' }: RightPanelResizerProps) {
       aria-label={label}
       aria-valuenow={width}
       aria-valuemin={RPANEL_MIN}
-      aria-valuemax={RPANEL_MAX}
+      aria-valuemax={viewportMax}
       data-dragging={dragging ? '1' : '0'}
       tabIndex={0}
       onPointerDown={onPointerDown}

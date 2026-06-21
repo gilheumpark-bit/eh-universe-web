@@ -4,6 +4,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 import { IgnorePlugin } from "webpack";
 
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
+const firebaseAuthDomain = (
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "eh-universe.firebaseapp.com"
+)
+  .trim()
+  .replace(/^['"]|['"]$/g, "")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/.*$/, "");
 
 /**
  * Environment Variables:
@@ -48,11 +55,10 @@ const nextConfig: NextConfig = {
   //      useAutoVersionSnapshot / useGitHubAutoSync / useGitHubSync / useSparkHealth
   //      모두 return 객체를 useMemo 로 안정화.
   reactStrictMode: true,
-  // [Doc 1 Home P0 — 2026-05-12] Next.js dev indicator (좌하단 "N · 1 Issue" 빨간 배지) prod 비노출.
-  // dev 환경에서는 유용하지만 production preview/staging URL에서 일반 방문자에게 "사이트 망가짐" 신호.
-  devIndicators: {
-    position: 'bottom-right', // 사용자 시야 좌하단에서 떨어뜨림 (dev 한정)
-  },
+  // [QA-chief 2026-06-14] Next.js dev indicator hides app-level QA signals and overlaps
+  // floating studio controls during design review. Disable it; console/terminal keep dev errors.
+  devIndicators: false,
+  allowedDevOrigins: ['127.0.0.1'],
   images: {
     remotePatterns: [
       {
@@ -76,8 +82,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/games/:path*', destination: '/', permanent: false },
-      { source: '/code', destination: '/code-studio', permanent: true },
     ];
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/__/auth/:path*',
+          destination: `https://${firebaseAuthDomain}/__/auth/:path*`,
+        },
+      ],
+    };
   },
   // 보안 헤더: next.config.ts headers()로 적용 (middleware.ts는 Next.js 16 라우팅 충돌 위험)
   // proxy.ts는 참조용으로 유지. 실제 적용은 여기서.
@@ -97,6 +112,10 @@ const nextConfig: NextConfig = {
       'https://api.anthropic.com',
       'https://api.groq.com',
       'https://api.mistral.ai',
+      'https://api.deepseek.com',
+      'https://dashscope-intl.aliyuncs.com',
+      'https://api.minimax.io',
+      'https://api.moonshot.ai',
       // Firebase + Google APIs
       'https://www.googleapis.com',
       'https://securetoken.googleapis.com',
@@ -159,18 +178,6 @@ const nextConfig: NextConfig = {
     const cspBase = cspBaseRaw.includes('http://localhost:*')
       ? cspBaseRaw
       : cspBaseRaw.replace(/(connect-src 'self')/, `$1 ${LOCAL_AI}`);
-    // code-studio 전용 CSP — webcontainer 지원 위해 unsafe-eval 허용.
-    // localhost:* frame-src 는 개발 환경에서만 허용 (프로덕션은 제거 — XSS/클릭재킹 표면 축소).
-    const allowLocalhostFrame = process.env.NODE_ENV !== 'production';
-    const cspCodeStudio = cspBase
-      // dev 에선 cspBase 에 이미 'unsafe-eval' 이 있으므로 중복 추가 방지 (negative lookahead)
-      .replace(/script-src 'self' 'unsafe-inline'(?! 'unsafe-eval')/, "script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-      // connect-src 'self' 다음에 LOCAL_AI 가 이미 있을 수 있으므로 첫 'self' 직후에 webcontainer 추가
-      .replace(/(connect-src 'self')([^;]*)/, `$1$2 https://*.webcontainer.io wss://*.webcontainer.io`)
-      .replace(
-        "frame-src 'self'",
-        `frame-src 'self' https://*.webcontainer.io https://*.webcontainer.app${allowLocalhostFrame ? ' http://localhost:*' : ''}`
-      );
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -179,7 +186,7 @@ const nextConfig: NextConfig = {
     ];
     return [
       {
-        source: '/((?!code-studio).*)',
+        source: '/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: cspBase },
           { key: 'X-Frame-Options', value: 'DENY' },
@@ -187,13 +194,22 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Match /code-studio and /code-studio/* (both need COOP/COEP + unsafe-eval CSP)
-        source: '/code-studio/:path*',
+        source: '/__/auth/:path*',
         headers: [
-          { key: 'Content-Security-Policy', value: cspCodeStudio },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self' https://*.firebaseapp.com",
+              `script-src 'self' 'unsafe-inline'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https://*.googleusercontent.com https://*.firebaseapp.com",
+              "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseapp.com https://www.googleapis.com",
+              "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+            ].join('; '),
+          },
           ...securityHeaders,
         ],
       },
@@ -221,5 +237,9 @@ export default withSentryConfig(withBundleAnalyzer(nextConfig), {
   org: "gilheumpark",
   project: "eh-universe-web",
   widenClientFileUpload: true,
-  disableLogger: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });

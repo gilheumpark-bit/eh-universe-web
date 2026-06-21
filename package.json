@@ -19,6 +19,7 @@
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "check:user-exposure": "node scripts/check-user-exposure.mjs",
+    "check:local-secrets": "node scripts/check-local-secrets.mjs",
     "check:licenses": "license-checker --production --summary",
     "check:licenses:strict": "node scripts/check-licenses.mjs",
     "audit:i18n": "jest --testPathPatterns=\"action-registry.i18n\" --no-coverage",
@@ -38,15 +39,20 @@
     "verify:build": "npm run verify:static && npm run build",
     "verify": "npm run verify:build && npm run test:e2e",
     "integrity:scan": "node scripts/project-integrity-scan.mjs",
+    "gate:baseline": "node scripts/loreguard-gate-scan.mjs",
+    "gate:evidence:compose": "node scripts/loreguard-release-evidence-compose.mjs",
+    "gate:evidence": "node scripts/loreguard-release-evidence-scan.mjs",
+    "gate:evidence:answer": "node scripts/loreguard-release-evidence-scan.mjs --answer",
+    "gate:evidence:answer:json": "node scripts/loreguard-release-evidence-scan.mjs --answer --json",
+    "gate:evidence:remaining": "node scripts/loreguard-release-evidence-scan.mjs --remaining",
+    "gate:evidence:templates": "node scripts/loreguard-release-evidence-scan.mjs --write-templates docs/release-evidence/templates",
+    "gate:disabled-attestations": "node scripts/loreguard-release-disabled-attestations.mjs",
+    "gate:privacy": "node scripts/loreguard-privacy-gate-scan.mjs",
+    "gate:release": "npm run check:local-secrets && npm run gate:baseline -- --fail-on-hold && npm run gate:privacy -- --fail-on-hold && npm run gate:evidence -- --fail-on-hold",
     "check:size": "node scripts/check-file-size.mjs",
     "check:size:ci": "node scripts/check-file-size.mjs --ci",
     "docs:api": "typedoc",
-    "docs:api:watch": "typedoc --watch",
-    "cs": "ts-node --project tsconfig.cli.json src/cli/bin/cs.ts",
-    "cs:build": "tsc --project tsconfig.cli.json"
-  },
-  "bin": {
-    "cs": "./dist/cli/cli/bin/cs.js"
+    "docs:api:watch": "typedoc --watch"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.64",
@@ -65,6 +71,7 @@
     "@tiptap/pm": "^3.22.3",
     "@tiptap/react": "^3.22.3",
     "@tiptap/starter-kit": "^3.22.3",
+    "@types/qrcode": "^1.5.6",
     "@vercel/analytics": "^2.0.1",
     "@webcontainer/api": "^1.6.1",
     "@xterm/addon-fit": "^0.11.0",
@@ -83,6 +90,7 @@
     "next": "^16.2.3",
     "octokit": "^5.0.5",
     "pdf-parse": "^2.4.5",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
@@ -92,6 +100,7 @@
     "zustand": "^5.0.12"
   },
   "overrides": {
+    "@grpc/grpc-js": "^1.14.4",
     "dompurify": ">=3.3.2",
     "postcss": "^8.5.10"
   },

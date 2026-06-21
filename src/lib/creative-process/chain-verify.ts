@@ -7,9 +7,8 @@
 //   - 위조 이벤트 삽입 → 다음 이벤트의 parentEventHash 불일치
 //
 // Legacy 동작 (문서화):
-//   - chain 도입 前 이벤트 (eventHash 없음) 는 검증 skip.
-//   - 체인은 첫 hashed 이벤트부터 시작. hashed 이벤트의 parent 는
-//     "직전 이벤트의 eventHash ?? null" — 직전이 legacy 면 null (genesis 재시작).
+//   - chain 도입 前 이벤트 (eventHash 없음) 는 첫 hashed 이벤트 전까지만 skip.
+//   - 한 번 hashed 체인이 시작된 뒤 무해시 이벤트가 끼면 손상으로 본다.
 //   - event-recorder.ts getChainParentHash 와 동일 규칙 (정의 대칭).
 // ============================================================
 
@@ -26,7 +25,7 @@ export interface ChainVerifyResult {
     /** 정렬된 전체 이벤트 배열에서의 index */
     index: number;
     /** 깨진 사유 */
-    reason: 'hash-mismatch' | 'parent-mismatch';
+    reason: 'hash-mismatch' | 'parent-mismatch' | 'legacy-after-hash-start';
   };
   /** 검증한 hashed 이벤트 수 */
   verifiedCount: number;
@@ -65,7 +64,18 @@ export async function verifyEventChain(events: CreativeEvent[]): Promise<ChainVe
     const ev = events[i];
 
     if (ev.eventHash === undefined) {
-      // legacy 이벤트 — 검증 skip, 체인 parent 는 null 로 재시작
+      // legacy 이벤트 — 체인 도입 전 기록만 허용. hashed 체인이 시작된 뒤
+      // eventHash 가 빠진 이벤트는 tail hash 제거·중간 무해시 삽입으로 체인 앵커를
+      // 약화시킬 수 있으므로 손상으로 본다.
+      if (verifiedCount > 0) {
+        return {
+          valid: false,
+          brokenAt: { eventId: ev.id, index: i, reason: 'legacy-after-hash-start' },
+          verifiedCount,
+          legacyCount,
+          tipHash,
+        };
+      }
       legacyCount++;
       prevHash = null;
       continue;

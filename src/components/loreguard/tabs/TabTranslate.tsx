@@ -1,969 +1,49 @@
 "use client";
 
-/* ===========================================================
-   TabTranslate — 번역 (Translate) tab — Phase 3 실 엔진 연결
-   핸드오프: tab_translate.jsx + translate_editor.jsx + translate_side.jsx
-   3-pane: 256px 언어/장 레일(trail) / 이중언어 세그먼트 에디터 + 하단
-   AI 바(tx-center) / 344px 검수 패널(tpanel).
-   contract: default export, props 없음 → layout 상태는 컴포넌트 내부 소유.
-   CSS 는 src/app/loreguard.css 의 .eh-app 스코프 클래스 사용(인라인 <style> 금지).
-   아이콘은 @/components/loreguard/icons (lucide).
-
-   [WIRING 2026-06-10] mock data.js EHData 제거 → useStudio() 실 상태 연결.
-   - SEGMENTS: currentSession.config.manuscripts (활성 회차) 문장 분해 → 실 원문.
-   - 번역: useTranslation().translateEpisode (단일/세그먼트) — 실 AI 엔진, onProgress 스트리밍.
-   - GLOSSARY: config.translationConfig.glossary 읽기/쓰기 (setConfig → IndexedDB+Firestore).
-   - 내보내기: useStudioExport.exportProjectManuscripts / 저장: triggerSave / 미리보기·되돌리기 real.
-   - 제거된 가짜 지표: voice %, voice-grid, contamination, 검수 로그(엔진 출처 없음).
-   - 실 점수: 번역 결과 avgScore 만 표기.
-   =========================================================== */
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Languages,
-  Chevron,
-  ChevronR,
-  ChevronL,
-  Layers,
-  Book,
   Sparkle,
-  Check,
   X,
   Sync,
   Download,
   Eye,
-  Pin,
   Send,
   Lock,
+  Check,
 } from "@/components/loreguard/icons";
 import { useStudio } from "@/app/studio/StudioContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioExport } from "@/hooks/useStudioExport";
-// [C-translate-panels 2026-06-10] 구 번역 셸 3패널 (품질 감사·사인오프·세그먼트 채택)
-// slide-over — useStudio 어댑터 브리지 (구 컨텍스트 통째 마운트 X). 패널 자체는 dynamic.
 import TranslatePanels, { type TranslatePanelKind } from "@/components/loreguard/TranslatePanels";
 import type { EpisodeManuscript, StoryConfig, TranslatedManuscriptEntry } from "@/lib/studio-types";
 import type { TranslationProgress } from "@/engine/translation";
-// [Z1a-UI 2026-06-11] 결정적 품질 게이트 최소 진입점 — Catastrophic + 번역투/AI티 린트.
-// 순수 함수 (LLM 0) — 전량 번역 확정 시에만 산출 (부분 번역 오탐 방지).
+import { useLoreguardTab } from "@/components/loreguard/LoreguardTabContext";
 import { runCatastrophicCheck, type CatastrophicReport } from "@/lib/translation/ncg-nct";
 import { lintTranslationese, type TranslationeseLintResult } from "@/lib/translation/translationese-lint";
+import {
+  buildTranslationTrackComparison,
+} from "@/lib/translation/track-comparison";
+import {
+  buildTranslationRiskReport,
+} from "@/lib/translation/risk-report";
+import {
+  LANGS,
+  LANG_TO_TARGET,
+  REWRITE_CHIPS,
+  type LangKey,
+  type LayoutMode,
+  type SegStatus,
+} from "./TabTranslate.shared";
+import { TranslateRail } from "./TabTranslateRail";
+import { fireCpLog, getCreativeLogger } from "./TabTranslate.creative-log";
+import { EmptyState, TranslateEditor, TranslatePanel } from "./TabTranslate.sections";
+import { readTxPanelOpen, writeTxPanelOpen } from "./TabTranslate.panel-state";
 
-// ============================================================
-// PART 0.5 — [s82-stage-coverage] 창작 과정 기록 (TabWriting S2 패턴 축약)
-// ============================================================
-// 번역 확정 = AI 결과 작가 수락 → logAcceptAI(targetType 'manuscript').
-// 스팸 방지: per-세그먼트 명시 클릭(acceptSuggestion) 1건 + 일괄 번역
-// (handleTranslateAll) 은 회차당 1건 배치 기록 — 디바운스 불요 (둘 다 명시 액션).
-// fire-and-forget·실패 noa:alert 1회/60s. manuscripts 는 auto-trigger 의
-// signature 감시 대상이 아니므로 이중 카운트 없음.
-
-let cpAlertAt = 0;
-function surfaceCpLogFailure(): void {
-  const now = Date.now();
-  if (now - cpAlertAt < 60_000) return;
-  cpAlertAt = now;
-  try {
-    window.dispatchEvent(
-      new CustomEvent("noa:alert", {
-        detail: { message: "창작 과정 기록 실패 — 확인서 정확도에 영향", variant: "warning" },
-      }),
-    );
-  } catch { /* noop */ }
-}
-function fireCpLog(p: Promise<string | null> | null | undefined): void {
-  if (!p) { surfaceCpLogFailure(); return; }
-  p.then((id) => { if (id === null) surfaceCpLogFailure(); }).catch(() => surfaceCpLogFailure());
-}
-const getCreativeLogger = () =>
-  typeof window !== "undefined" ? window.__creativeLogger ?? null : null;
-
-// ============================================================
-// PART 1 — 타입 + 상수 (UI 전용 — mock 데이터 제거됨)
-// ============================================================
-
-type LangKey = "en" | "ja" | "zh";
-type SegStatus = "done" | "review" | "pending";
-type LayoutMode = "split" | "inline";
-
-export interface Segment {
-  id: string;
-  kind?: "heading" | "dialogue";
-  ko: string; // 원문 (한국어)
-  status: SegStatus;
-  terms: string[]; // glossary source 용어 중 이 세그먼트에 등장하는 것
-}
-
-interface LangMeta {
-  code: string;
-  label: string;
-  native: string;
-  flag: string;
-}
-
-// 엔진 targetLang 매핑 — UI LangKey ↔ TranslationConfig.targetLang
-const LANG_TO_TARGET: Record<LangKey, "EN" | "JP" | "CN"> = {
-  en: "EN",
-  ja: "JP",
-  zh: "CN",
-};
-
-const LANGS: Record<LangKey, LangMeta> = {
-  en: { code: "EN", label: "영어", native: "English", flag: "EN" },
-  ja: { code: "JA", label: "일본어", native: "日本語", flag: "日" },
-  zh: { code: "ZH", label: "중국어", native: "中文", flag: "中" },
-};
-
-const REWRITE_CHIPS = ["더 자연스럽게", "직역에 가깝게", "문장 길이 맞추기", "존대 유지"];
-
-// 문장 단위 분해 — 원문 manuscript.content → Segment[].
-// 한국어 종결부호(. ! ? … " ") + 줄바꿈 기준 split. 대사("…") heading(숫자 prefix) 식별.
-// export: 회귀 테스트(왕복 비멱등 재현) 전용.
-export function splitIntoSegments(content: string): Segment[] {
-  if (!content || !content.trim()) return [];
-  const out: Segment[] = [];
-  // 줄 단위로 먼저 나누고, 각 줄을 문장부호로 재분해
-  const lines = content.split(/\n+/).map((l) => l.trim()).filter(Boolean);
-  let idx = 0;
-  for (const line of lines) {
-    // 문장 분해: 종결부호 뒤에서 끊되 부호는 유지
-    const sentences = line.match(/[^.!?…。！？]+[.!?…。！？]*["”』」]?|[^.!?…。！？]+$/g) || [line];
-    for (const raw of sentences) {
-      const s = raw.trim();
-      if (!s) continue;
-      const isDialogue = /^["“『「]/.test(s);
-      const isHeading = /^\s*\d{1,3}[.\-:\s]/.test(s) && s.length < 40;
-      out.push({
-        id: "s" + idx++,
-        kind: isHeading ? "heading" : isDialogue ? "dialogue" : undefined,
-        ko: s,
-        status: "pending",
-        terms: [],
-      });
-    }
-  }
-  return out;
-}
-
-// ── [W2-translate 2026-06-11] 저장 본문 → 세그먼트 버퍼 매핑 (멱등 우선) ──
-// stored.translatedContent 는 확정 세그먼트 txt 를 "\n\n" 으로 결합한 값이다.
-// segmentBoundaries(결합에 쓴 id+len)가 있으면 길이 기준 정확 슬라이스 → 왕복 멱등
-// (splitIntoSegments 비멱등 재분해로 multi-sentence 세그먼트가 더 쪼개지는 오염을 차단).
-// boundaries 부재(레거시)·불일치 시 기존 best-effort 위치 매핑 + 꼬리 흡수 fallback.
-// segIds = 현재 회차 세그먼트 id 순서. 반환: { [segId]: translatedText } (확정분만).
-// export: 회귀 테스트(round-trip 멱등) 전용 — 컴포넌트 렌더 없이 순수 검증.
-export const SEG_JOIN = "\n\n";
-export function mapStoredToSegments(
-  storedContent: string,
-  boundaries: { id: string; len: number }[] | undefined,
-  segIds: string[],
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (!storedContent) return out;
-  const segIdSet = new Set(segIds);
-  // 1) 멱등 경로 — boundaries 가 현재 세그먼트와 정합하면 길이로 정확 복원.
-  if (boundaries && boundaries.length > 0) {
-    const expectedLen =
-      boundaries.reduce((sum, b) => sum + b.len, 0) + SEG_JOIN.length * (boundaries.length - 1);
-    const allKnown = boundaries.every((b) => segIdSet.has(b.id));
-    if (allKnown && expectedLen === storedContent.length) {
-      let cursor = 0;
-      for (let i = 0; i < boundaries.length; i++) {
-        const b = boundaries[i];
-        const txt = storedContent.slice(cursor, cursor + b.len);
-        if (txt) out[b.id] = txt;
-        cursor += b.len + SEG_JOIN.length; // 다음 조각 앞 구분자 스킵
-      }
-      return out;
-    }
-    // boundaries 가 있으나 불일치 — 본문 신뢰 우선으로 fallback 진입 (truncate 방지).
-  }
-  // 2) Fallback — 위치 기반 splitIntoSegments + 마지막 세그먼트 꼬리 흡수(초과분 보존).
-  const pieces = splitIntoSegments(storedContent);
-  const lastIdx = segIds.length - 1;
-  segIds.forEach((id, i) => {
-    const txt =
-      i === lastIdx
-        ? pieces
-            .slice(i)
-            .map((p) => p.ko)
-            .filter(Boolean)
-            .join(" ")
-        : pieces[i]?.ko;
-    if (txt) out[id] = txt;
-  });
-  return out;
-}
-
-// ── [W2-translate 2026-06-11] 번역 엔트리 upsert 순수 코어 (사인오프 dirty 게이트) ──
-// computeTranslatedManuscripts 의 의사결정 본체를 순수 함수로 분리 — 컴포넌트 closure
-// (activeManuscript/segments/glossary 등)는 인자로 주입. 사인오프 리셋은 *명시적 편집
-// 플래그(dirty)* 로만 발동(구 비멱등 직렬화 비교 제거). 회귀 테스트가 렌더 없이 검증한다.
-// 반환 null = 변경 없음(엔트리 미존재 제거 불필요 / 고아 회차). 그 외 = 다음 목록.
-export function upsertTranslatedEntry(args: {
-  prev: StoryConfig;
-  episode: number;
-  title: string;
-  targetLang: "EN" | "JP" | "CN";
-  /** 확정(done) 세그먼트를 원문 순서대로 — { id, txt }. */
-  ordered: { id: string; txt: string }[];
-  avgScore: number | null;
-  glossary: { source: string; target: string; locked?: boolean }[];
-  /** 실제 사용자 편집 액션 여부 — true 일 때만 기존 엔트리 사인오프 리셋. */
-  dirty: boolean;
-  /** lastUpdate 주입(테스트 결정성) — 기본 Date.now(). */
-  now?: number;
-}): TranslatedManuscriptEntry[] | null {
-  const { prev, episode, title, targetLang, ordered, avgScore, glossary, dirty } = args;
-  const list = prev.translatedManuscripts ?? [];
-  const idx = list.findIndex((e) => e.episode === episode && e.targetLang === targetLang);
-  if (ordered.length === 0) {
-    // 확정 세그먼트가 없으면(되돌리기 등) 기존 엔트리 제거.
-    if (idx < 0) return null;
-    return list.filter((_, i) => i !== idx);
-  }
-  // 고아 번역 차단: 해당 회차의 원고(manuscript)가 실제 존재할 때만 upsert.
-  const hasManuscript = (prev.manuscripts ?? []).some((m) => m.episode === episode);
-  if (!hasManuscript) return null;
-  const translatedContent = ordered.map((x) => x.txt).join(SEG_JOIN);
-  const segmentBoundaries = ordered.map((x) => ({ id: x.id, len: x.txt.length }));
-  const tc = prev.translationConfig;
-  const prevEntry = idx >= 0 ? list[idx] : undefined;
-  // [W2-translate·깊은 수정] 사인오프 리셋 = 명시적 편집(dirty)일 때만. 신규 엔트리는
-  // 보존할 사인오프가 없어 트리거 무관. 저장·복원·네비게이션(dirty=false)은 항상 보존 —
-  // 구 비멱등 직렬화 비교(prevEntry.translatedContent !== translatedContent)가 복원 왕복마다
-  // 만들던 사인오프 거짓 리셋 + 본문 점진 오염을 제거.
-  const resetSignoff = !prevEntry || dirty === true;
-  const now = args.now ?? Date.now();
-  const entry: TranslatedManuscriptEntry = {
-    episode,
-    sourceLang: "KO",
-    targetLang,
-    mode: tc?.mode ?? "fidelity",
-    translatedTitle: title,
-    translatedContent,
-    charCount: translatedContent.length,
-    avgScore: avgScore ?? 0,
-    band: tc?.band ?? 0.5,
-    glossarySnapshot: (tc?.glossary ?? glossary).map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
-    segmentBoundaries,
-    lastUpdate: resetSignoff ? now : prevEntry!.lastUpdate,
-    faithfulApproved: resetSignoff ? undefined : prevEntry!.faithfulApproved,
-    marketApproved: resetSignoff ? undefined : prevEntry!.marketApproved,
-    approvedAt: resetSignoff ? undefined : prevEntry!.approvedAt,
-  };
-  return idx >= 0 ? list.map((e, i) => (i === idx ? entry : e)) : [...list, entry];
-}
-
-// ============================================================
-// PART 1.5 — [G4-panel-collapse] 검수 패널(tpanel) 접힘 상태 영속
-// localStorage `noa-lg-tx-panel` — "0" = 접힘, 그 외/부재 = 펼침 (기본
-// 펼침 — 기존 사용자 경험 보존). TabWorld noa-lg-world-sections 패턴 동일:
-// 트리는 dynamic(ssr:false) — lazy init 안전. 쓰기 실패(quota 등)는 무시.
-// ============================================================
-
-const TX_PANEL_KEY = "noa-lg-tx-panel";
-
-function readTxPanelOpen(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return window.localStorage.getItem(TX_PANEL_KEY) !== "0";
-  } catch {
-    return true;
-  }
-}
-
-function writeTxPanelOpen(open: boolean): void {
-  try {
-    window.localStorage.setItem(TX_PANEL_KEY, open ? "1" : "0");
-  } catch {
-    /* quota/private mode — 세션 내 상태만 유지 */
-  }
-}
-
-// 활성 manuscript 선택 — config.manuscripts 중 config.episode 우선, 없으면 첫 회차.
-function pickActiveManuscript(config: StoryConfig | null): EpisodeManuscript | null {
-  const list = config?.manuscripts;
-  if (!list || list.length === 0) return null;
-  const byEpisode = list.find((m) => m.episode === config?.episode && m.content?.trim());
-  if (byEpisode) return byEpisode;
-  return list.find((m) => m.content?.trim()) ?? null;
-}
-
-// glossary source 용어가 원문에 등장하는지 — 세그먼트 terms 채움
-function termsInText(text: string, glossarySources: string[]): string[] {
-  if (!text || glossarySources.length === 0) return [];
-  return glossarySources.filter((src) => src && text.includes(src));
-}
-
-// ============================================================
-// PART 2 — 작은 프레젠테이션 빌딩 블록 (Bar / StatusDot)
-// ============================================================
-
-function Bar({ v, c }: { v: number; c?: string }) {
-  return (
-    <div className="tbar">
-      <span style={{ width: Math.max(0, Math.min(1, v)) * 100 + "%", background: c || "var(--grad-primary)" }} />
-    </div>
-  );
-}
-
-function StatusDot({ s }: { s: SegStatus }) {
-  const map: Record<SegStatus, [string, string]> = {
-    done: ["green", "완료"],
-    review: ["amber", "검수"],
-    pending: ["gray", "대기"],
-  };
-  const [c, label] = map[s] || map.pending;
-  return (
-    <span className={"seg-status " + c} title={label}>
-      <span className="sd" />
-      {label}
-    </span>
-  );
-}
-
-// 원문에서 용어 사전 단어를 하이라이트 span 으로 감싼다 (translate_editor.renderSource)
-function renderSource(seg: Segment, activeTerm: string | null) {
-  const text = seg.ko;
-  const terms = (seg.terms || []).slice().sort((a, b) => b.length - a.length);
-  if (!terms.length) return text;
-  let nodes: (string | React.ReactNode)[] = [text];
-  let key = 0;
-  for (const term of terms) {
-    const next: (string | React.ReactNode)[] = [];
-    for (const node of nodes) {
-      if (typeof node !== "string") {
-        next.push(node);
-        continue;
-      }
-      const parts = node.split(term);
-      parts.forEach((p, i) => {
-        if (p) next.push(p);
-        if (i < parts.length - 1) {
-          next.push(
-            <span key={"t" + key++} className={"gterm" + (activeTerm === term ? " hot" : "")}>
-              {term}
-            </span>,
-          );
-        }
-      });
-    }
-    nodes = next;
-  }
-  return nodes;
-}
-
-// ============================================================
-// PART 3 — LEFT RAIL (trail): 언어 쌍 / 회차 / 대조 보기 토글
-// ============================================================
-
-function TranslateRail({
-  lang,
-  onLang,
-  progress,
-  layout,
-  onLayout,
-  chapters,
-  activeManuscriptEp,
-  onSelectChapter,
-}: {
-  lang: LangKey;
-  onLang: (k: LangKey) => void;
-  progress: Record<LangKey, number>;
-  layout: LayoutMode;
-  onLayout: (m: LayoutMode) => void;
-  chapters: { episode: number; title: string; words: number }[];
-  activeManuscriptEp: number | null;
-  onSelectChapter: (episode: number) => void;
-}) {
-  return (
-    // [A-01 priority-high 2026-06-09] 2개 aside 구분 — unique aria-label.
-    <aside className="trail" aria-label="번역 세그먼트 목록">
-      <div className="trail-head">
-        <div className="trail-title">
-          <span className="trail-ic">
-            <Languages size={18} strokeWidth={1.6} />
-          </span>
-          <div>
-            <div className="trail-name">번역 모드</div>
-            <div className="trail-sub">원문을 지키며 옮깁니다</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="trail-sec">
-        <div className="trail-label">언어 쌍</div>
-        <div className="lang-from">
-          <span className="lang-chip ko">KR</span>
-          한국어
-          <span className="lang-from-tag">원본 · 고정</span>
-        </div>
-        <div className="lang-arrow">
-          <Chevron size={16} strokeWidth={1.6} />
-        </div>
-        <div className="lang-list">
-          {(Object.keys(LANGS) as LangKey[]).map((k) => {
-            const meta = LANGS[k];
-            const on = lang === k;
-            const p = progress[k];
-            return (
-              <button
-                key={k}
-                className={"lang-opt" + (on ? " on" : "")}
-                onClick={() => onLang(k)}
-              >
-                <span className={"lang-chip" + (on ? "" : " mute")}>{meta.flag}</span>
-                <div className="lang-opt-body">
-                  <div className="lang-opt-top">
-                    <span className="lang-opt-name">{meta.label}</span>
-                    <span className="lang-opt-pct">{Math.round(p * 100)}%</span>
-                  </div>
-                  <Bar v={p} />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="trail-sec">
-        <div className="trail-label">회차 · CHAPTER</div>
-        {chapters.length === 0 ? (
-          <div className="trail-sub" style={{ padding: "4px 0" }}>
-            원고가 없습니다
-          </div>
-        ) : (
-          chapters.map((c) => {
-            const active = c.episode === activeManuscriptEp;
-            return (
-              <div
-                key={c.episode}
-                className={"chap" + (active ? " on" : "")}
-                role="button"
-                tabIndex={0}
-                aria-current={active ? "true" : undefined}
-                aria-label={`${c.episode}화 ${c.title} 회차로 전환`}
-                onClick={() => onSelectChapter(c.episode)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectChapter(c.episode);
-                  }
-                }}
-              >
-                <span className="chap-n">{String(c.episode).padStart(2, "0")}</span>
-                <span className="chap-t">{c.title}</span>
-                {active ? (
-                  <span className="chap-dot" />
-                ) : (
-                  <span className="chap-w">{c.words.toLocaleString()}</span>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      <div className="trail-sec">
-        <div className="trail-label">대조 보기</div>
-        <div className="seg">
-          <button className={layout === "split" ? "on" : ""} onClick={() => onLayout("split")}>
-            좌우 분할
-          </button>
-          <button className={layout === "inline" ? "on" : ""} onClick={() => onLayout("inline")}>
-            인라인
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-// ============================================================
-// PART 4 — 세그먼트 에디터 보조 카드 (Suggestion / Confirm)
-// ============================================================
-
-function SuggestionCard({
-  text,
-  busy,
-  onAccept,
-  onReject,
-}: {
-  text: string;
-  busy: boolean;
-  onAccept: (e: React.MouseEvent) => void;
-  onReject: (e: React.MouseEvent) => void;
-}) {
-  if (!text) return null;
-  return (
-    <div className="sugg fade-up">
-      <div className="sugg-head">
-        <Sparkle size={15} strokeWidth={1.6} />
-        <span>NOA 번역 제안</span>
-        <span className="sugg-tag">대안</span>
-      </div>
-      <div className="sugg-text">{text}</div>
-      <div className="sugg-actions">
-        <button className="mini-btn ok" onClick={onAccept} disabled={busy}>
-          <Check size={14} strokeWidth={1.6} />
-          수락
-        </button>
-        <button className="mini-btn no" onClick={onReject} disabled={busy}>
-          <X size={14} strokeWidth={1.6} />
-          거절
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ConfirmBar({
-  busy,
-  onTranslate,
-}: {
-  busy: boolean;
-  onTranslate: (e: React.MouseEvent) => void;
-}) {
-  return (
-    <div className="confirm fade-up">
-      <span className="confirm-q">이 문단을 번역할까요?</span>
-      <div className="confirm-actions">
-        <button className="mini-btn ok" onClick={onTranslate} disabled={busy}>
-          <Sparkle size={14} strokeWidth={1.6} />
-          {busy ? "번역 중…" : "번역"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 5 — CENTER: bilingual segment 에디터 (split / inline)
-// ============================================================
-
-function TranslateEditor({
-  segments,
-  lang,
-  layout,
-  statuses,
-  translations,
-  suggestions,
-  selectedId,
-  onSelect,
-  activeTerm,
-  onTranslateSeg,
-  onAcceptSugg,
-  onRejectSugg,
-  busy,
-}: {
-  segments: Segment[];
-  lang: LangKey;
-  layout: LayoutMode;
-  statuses: Record<string, SegStatus>;
-  translations: Record<string, string>; // key `${lang}:${id}` -> text
-  suggestions: Record<string, string>; // key `${lang}:${id}` -> alt text
-  selectedId: string;
-  onSelect: (id: string) => void;
-  activeTerm: string | null;
-  onTranslateSeg: (id: string) => void;
-  onAcceptSugg: (id: string) => void;
-  onRejectSugg: (id: string) => void;
-  busy: boolean;
-}) {
-  return (
-    <section className="ed-wrap">
-      {layout === "split" && (
-        <div className="ed-toolbar">
-          <div className="ed-cols">
-            <span className="ed-col-label">
-              <span className="lang-chip ko">KR</span>
-              원문 · 한국어
-            </span>
-            <span className="ed-col-label tgt">
-              <span className="lang-chip">{LANGS[lang].flag}</span>
-              번역문 · {LANGS[lang].native}
-            </span>
-          </div>
-        </div>
-      )}
-      {layout === "inline" && (
-        <div className="ed-toolbar">
-          <span
-            className="ed-col-label tgt"
-            style={{ borderBottom: "1px solid var(--line)", paddingBottom: "12px" }}
-          >
-            <span className="lang-chip ko">KR</span>
-            <ChevronR size={13} strokeWidth={1.6} />
-            <span className="lang-chip">{LANGS[lang].flag}</span>
-            인라인 대조 · 한국어 → {LANGS[lang].native}
-          </span>
-        </div>
-      )}
-
-      <div className={"ed-body " + layout}>
-        {segments.map((seg) => {
-          const key = lang + ":" + seg.id;
-          const st = statuses[seg.id] || seg.status;
-          const sel = selectedId === seg.id;
-          const isHeading = seg.kind === "heading";
-          const tgt = translations[key] || "";
-          const sugg = suggestions[key] || "";
-          const showSugg = sel && !!sugg;
-          return (
-            <div
-              key={seg.id}
-              className={
-                "seg-row" +
-                (sel ? " sel" : "") +
-                (isHeading ? " heading" : "") +
-                (seg.kind === "dialogue" ? " dialogue" : "")
-              }
-              onClick={() => onSelect(seg.id)}
-            >
-              <div className="seg-src">{renderSource(seg, activeTerm)}</div>
-              <div className="seg-tgt">
-                <div className="seg-tgt-text">{tgt || <span style={{ color: "var(--ink-3)" }}>—</span>}</div>
-                {!isHeading && (
-                  <div className="seg-meta">
-                    <StatusDot s={st} />
-                  </div>
-                )}
-              </div>
-
-              {showSugg && (
-                <SuggestionCard
-                  text={sugg}
-                  busy={busy}
-                  onAccept={(e) => {
-                    e?.stopPropagation();
-                    onAcceptSugg(seg.id);
-                  }}
-                  onReject={(e) => {
-                    e?.stopPropagation();
-                    onRejectSugg(seg.id);
-                  }}
-                />
-              )}
-              {sel && !sugg && !isHeading && st !== "done" && (
-                <ConfirmBar
-                  busy={busy}
-                  onTranslate={(e) => {
-                    e?.stopPropagation();
-                    onTranslateSeg(seg.id);
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================
-// PART 6 — RIGHT PANEL (tpanel): 검수 패널 (실 데이터만)
-// ============================================================
-
-function TranslatePanel({
-  lang,
-  stats,
-  glossary,
-  activeTerm,
-  onTerm,
-  onAddGlossary,
-  onRemoveGlossary,
-  onOpenPanel,
-  open,
-  onToggle,
-  gate,
-}: {
-  lang: LangKey;
-  stats: { progress: number; done: number; total: number; avgScore: number | null };
-  glossary: { source: string; target: string; context?: string; locked: boolean }[];
-  activeTerm: string | null;
-  onTerm: (term: string | null) => void;
-  onAddGlossary: (source: string, target: string) => void;
-  onRemoveGlossary: (source: string) => void;
-  /** [C-translate-panels] 검수 도구 slide-over 오픈 (품질 감사·사인오프·채택) */
-  onOpenPanel: (kind: TranslatePanelKind) => void;
-  /** [G4-panel-collapse] 접힘 상태 — noa-lg-tx-panel 영속 (부모 소유) */
-  open: boolean;
-  onToggle: () => void;
-  /** [Z1a-UI] 결정적 품질 게이트 — 전량 확정 시에만 non-null */
-  gate: { cat: CatastrophicReport; lint: TranslationeseLintResult | null } | null;
-}) {
-  const meta = LANGS[lang];
-  const [newSrc, setNewSrc] = useState("");
-  const [newTgt, setNewTgt] = useState("");
-
-  const submitGlossary = () => {
-    const s = newSrc.trim();
-    const t = newTgt.trim();
-    if (!s || !t) return;
-    onAddGlossary(s, t);
-    setNewSrc("");
-    setNewTgt("");
-  };
-
-  // [G4-panel-collapse] 접힘 — 40px 스트립 + 펼치기 버튼만. hooks 뒤 분기라
-  // hook 순서 불변·newSrc/newTgt 입력값은 접었다 펴도 보존(언마운트 X).
-  if (!open) {
-    return (
-      <aside className="tpanel collapsed" id="lg-tx-panel" aria-label="번역 검수 패널 (접힘)">
-        <button
-          type="button"
-          className="tpanel-toggle"
-          aria-expanded={false}
-          aria-controls="lg-tx-panel"
-          aria-label="검수 패널 펼치기"
-          title="검수 패널 펼치기"
-          onClick={onToggle}
-        >
-          <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-        </button>
-        <span className="tpanel-vlabel" aria-hidden="true">
-          검수 패널
-        </span>
-      </aside>
-    );
-  }
-
-  return (
-    <aside className="tpanel" id="lg-tx-panel" aria-label="번역 검수 패널">
-      <div className="tpanel-head">
-        <span>검수 패널</span>
-        <div className="tpanel-tools">
-          <Pin size={15} strokeWidth={1.6} />
-          {/* [G4-panel-collapse] 장식 Chevron → 실 토글 버튼 (aria-expanded) */}
-          <button
-            type="button"
-            className="tpanel-toggle"
-            aria-expanded={true}
-            aria-controls="lg-tx-panel"
-            aria-label="검수 패널 접기"
-            title="검수 패널 접기"
-            onClick={onToggle}
-          >
-            <ChevronR size={15} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
-      {/* [C-translate-panels] 검수 도구 — 구 번역 셸 3패널 slide-over 토글 */}
-      <div className="pcard">
-        <div className="pcard-h">
-          <Eye size={15} strokeWidth={1.6} />
-          검수 도구
-        </div>
-        <div className="seg">
-          <button type="button" aria-haspopup="dialog" onClick={() => onOpenPanel("audit")}>
-            품질 감사
-          </button>
-          <button type="button" aria-haspopup="dialog" onClick={() => onOpenPanel("signoff")}>
-            사인오프
-          </button>
-          <button type="button" aria-haspopup="dialog" onClick={() => onOpenPanel("adoption")}>
-            채택
-          </button>
-        </div>
-      </div>
-
-      {/* 번역 상태 — 실 진행률 (번역 완료 세그먼트 / 전체) */}
-      <div className="pcard">
-        <div className="pcard-h">
-          <Layers size={15} strokeWidth={1.6} />
-          번역 상태
-        </div>
-        <div className="stat-row">
-          <span>대상 언어</span>
-          <b>
-            {meta.label} · {meta.native}
-          </b>
-        </div>
-        <div className="stat-big">
-          <span className="stat-pct">{Math.round(stats.progress * 100)}%</span>
-          <span className="stat-cap">완성도</span>
-        </div>
-        <Bar v={stats.progress} />
-        <div className="stat-foot">
-          번역 완료 {stats.done} / {stats.total} 문단
-          {stats.avgScore != null && (
-            <>
-              {" · "}품질 {Math.round(stats.avgScore * 100)}점
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* [Z1a-UI] 결정적 품질 게이트 — 전량 번역 확정 시에만 표시 (순수 함수·LLM 0) */}
-      {gate && (
-        <div className="pcard" role="status" aria-label="번역 품질 게이트 결과">
-          <div className="pcard-h">
-            <Check size={15} strokeWidth={1.6} />
-            품질 게이트
-            <span className={"pill " + (gate.cat.blocked ? "red" : "green")} style={{ marginLeft: "auto" }}>
-              {gate.cat.blocked ? "차단" : "통과"}
-            </span>
-          </div>
-          <div className="stat-row">
-            <span>치명 결함 (Catastrophic)</span>
-            <b>{gate.cat.blocked ? `${gate.cat.reasons.length}건` : "0건"}</b>
-          </div>
-          {gate.cat.reasons.map((r) => (
-            <div className="gloss-meta" key={r.kind}>
-              {r.message.ko}
-            </div>
-          ))}
-          {gate.lint && (
-            <>
-              <div className="stat-row">
-                <span>번역투·AI티 (EN)</span>
-                <b>{gate.lint.hits.length === 0 ? "깨끗" : `경고 ${gate.lint.hits.length}건`}</b>
-              </div>
-              {gate.lint.hits.slice(0, 3).map((h) => (
-                <div className="gloss-meta" key={h.kind + h.pattern}>
-                  {h.message.ko}
-                </div>
-              ))}
-            </>
-          )}
-          <div className="gloss-meta">휴리스틱 검사 — 경고는 차단이 아닌 검토 권장입니다.</div>
-        </div>
-      )}
-
-      {/* 용어 사전 — config.translationConfig.glossary 읽기/쓰기 */}
-      <div className="pcard">
-        <div className="pcard-h">
-          <Book size={15} strokeWidth={1.6} />
-          용어 사전
-          <span className="pill green" style={{ marginLeft: "auto" }}>
-            {glossary.length}건
-          </span>
-        </div>
-        <div className="gloss">
-          {glossary.length === 0 && (
-            <div className="gloss-meta" style={{ padding: "4px 0" }}>
-              등록된 용어가 없습니다. 아래에서 추가하세요.
-            </div>
-          )}
-          {glossary.map((g) => (
-            <div
-              key={g.source}
-              className={"gloss-row" + (activeTerm === g.source ? " on" : "")}
-              style={{ display: "flex", alignItems: "center" }}
-            >
-              <button
-                type="button"
-                className="gloss-body"
-                style={{ flex: 1, textAlign: "left", background: "none", border: "none", cursor: "pointer" }}
-                onClick={() => onTerm(activeTerm === g.source ? null : g.source)}
-              >
-                <div className="gloss-pair">
-                  {g.locked && <Lock size={11} strokeWidth={1.6} style={{ color: "var(--ink-3)" }} />}
-                  <span className="gloss-ko">{g.source}</span>
-                  <ChevronR size={11} strokeWidth={1.6} style={{ color: "var(--ink-3)" }} />
-                  <span className="gloss-tgt">{g.target || "—"}</span>
-                </div>
-                {g.context && <div className="gloss-meta">{g.context}</div>}
-              </button>
-              <button
-                type="button"
-                className="mini-btn no"
-                aria-label={`${g.source} 용어 삭제`}
-                title="삭제"
-                onClick={() => onRemoveGlossary(g.source)}
-                style={{ flex: "0 0 auto" }}
-              >
-                <X size={13} strokeWidth={1.6} />
-              </button>
-            </div>
-          ))}
-        </div>
-        {/* 용어 추가 폼 — setConfig 로 persist */}
-        <div className="gloss-add" style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
-          <input
-            className="tx-ai-input"
-            value={newSrc}
-            onChange={(e) => setNewSrc(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitGlossary()}
-            placeholder="원문 용어"
-            aria-label="원문 용어"
-            style={{ flex: 1, minWidth: 0 }}
-          />
-          <input
-            className="tx-ai-input"
-            value={newTgt}
-            onChange={(e) => setNewTgt(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitGlossary()}
-            placeholder="번역 용어"
-            aria-label="번역 용어"
-            style={{ flex: 1, minWidth: 0 }}
-          />
-          <button
-            type="button"
-            className="mini-btn ok"
-            onClick={submitGlossary}
-            aria-label="용어 추가"
-            title="용어 추가"
-            style={{ flex: "0 0 auto" }}
-          >
-            <Check size={14} strokeWidth={1.6} />
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-// ============================================================
-// PART 7 — 빈 상태 (원고/세션 없음)
-// ============================================================
-
-function EmptyState({ reason }: { reason: "no-session" | "no-manuscript" }) {
-  return (
-    <div className="tx-grid">
-      <aside className="trail" aria-label="번역 세그먼트 목록">
-        <div className="trail-head">
-          <div className="trail-title">
-            <span className="trail-ic">
-              <Languages size={18} strokeWidth={1.6} />
-            </span>
-            <div>
-              <div className="trail-name">번역 모드</div>
-              <div className="trail-sub">원문을 지키며 옮깁니다</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-      <div className="tx-center" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", maxWidth: 360, color: "var(--ink-2)" }}>
-          <Languages size={40} strokeWidth={1.2} style={{ color: "var(--ink-3)", marginBottom: 16 }} />
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: "var(--ink-1)" }}>
-            {reason === "no-session" ? "프로젝트가 없습니다" : "번역할 원고가 없습니다"}
-          </div>
-          <div style={{ fontSize: 13, lineHeight: 1.6 }}>
-            {reason === "no-session"
-              ? "왼쪽 사이드바에서 프로젝트를 만들거나 선택한 뒤, 원고를 작성하면 번역을 시작할 수 있습니다."
-              : "‘원고’ 탭에서 회차 본문을 작성하면 이 화면에서 문단별로 번역할 수 있습니다."}
-          </div>
-        </div>
-      </div>
-      <aside className="tpanel" aria-label="번역 검수 패널">
-        <div className="tpanel-head">
-          <span>검수 패널</span>
-        </div>
-      </aside>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 8 — orchestrator: 상태 소유 + 3-pane 조립 (tx-grid)
-// ============================================================
+export { SEG_JOIN, mapStoredToSegments, splitIntoSegments, upsertTranslatedEntry } from "./TabTranslate.logic";
+import { mapStoredToSegments, pickActiveManuscript, splitIntoSegments, termsInText, upsertTranslatedEntry } from "./TabTranslate.logic";
 
 export default function TabTranslate() {
+  const { setActiveTab: setLoreguardTab } = useLoreguardTab();
   const studio = useStudio();
   const {
     currentSession,
@@ -974,7 +54,6 @@ export default function TabTranslate() {
     setConfig,
     setCurrentSessionId,
     setCurrentProjectId,
-    setActiveTab,
     triggerSave,
     language,
     isKO,
@@ -984,7 +63,6 @@ export default function TabTranslate() {
 
   const config = currentSession?.config ?? null;
 
-  // ── 실 원고 → segments ──────────────────────────────────
   const activeManuscript = useMemo(() => pickActiveManuscript(config), [config]);
   const glossary = useMemo(() => config?.translationConfig?.glossary ?? [], [config]);
   const glossarySources = useMemo(() => glossary.map((g) => g.source).filter(Boolean), [glossary]);
@@ -994,7 +72,6 @@ export default function TabTranslate() {
     return segs.map((s) => ({ ...s, terms: termsInText(s.ko, glossarySources) }));
   }, [activeManuscript, glossarySources]);
 
-  // 회차 목록 (rail) — config.manuscripts 기반
   const chapters = useMemo(
     () =>
       (config?.manuscripts ?? [])
@@ -1004,16 +81,12 @@ export default function TabTranslate() {
     [config],
   );
 
-  // ── UI 상태 ─────────────────────────────────────────────
   const [lang, setLang] = useState<LangKey>("en");
   const [layout, setLayout] = useState<LayoutMode>("split");
   const [selectedId, setSelectedId] = useState<string>("");
   const [activeTerm, setActiveTerm] = useState<string | null>(null);
   const [aiText, setAiText] = useState("");
-  // [C-translate-panels] 검수 도구 slide-over (품질 감사·사인오프·채택) — null = 닫힘
   const [openPanel, setOpenPanel] = useState<TranslatePanelKind | null>(null);
-  // [G4-panel-collapse] 검수 패널 접힘/펴기 — noa-lg-tx-panel 영속.
-  // lazy init (트리는 dynamic ssr:false — LoreguardShell 테마와 동일 안전 규칙).
   const [panelOpen, setPanelOpen] = useState<boolean>(() => readTxPanelOpen());
   const togglePanel = useCallback(() => {
     setPanelOpen((prev) => {
@@ -1023,24 +96,15 @@ export default function TabTranslate() {
     });
   }, []);
 
-  // 번역 결과 / 제안 / 상태 — key `${lang}:${segId}`
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
   const [statuses, setStatuses] = useState<Record<string, SegStatus>>({});
   const [avgScore, setAvgScore] = useState<number | null>(null);
   const [progressLabel, setProgressLabel] = useState<string>("");
 
-  // 첫 세그먼트 자동 선택
   const firstId = segments[0]?.id ?? "";
   const effectiveSelected = selectedId && segments.some((s) => s.id === selectedId) ? selectedId : firstId;
 
-  // ── 번역 결과 영속화: config.translatedManuscripts upsert (setConfig → IndexedDB+Firestore) ──
-  // 확정(done) 세그먼트를 순서대로 결합해 (회차 + 대상언어) 단위 엔트리로 저장.
-  // 로컬 state 만의 데이터 유실(새로고침·탭 전환·세션 변경 시)을 차단한다.
-  // translatedManuscripts upsert 산출(순수) — `prev` 기준 다음 목록을 계산.
-  // 반환 null = 변경 없음(엔트리 미존재 시 제거 불필요 / 고아 회차 등). persistTranslations 와
-  // handleSelectChapter 가 동일 로직을 공유해, 회차 전환 시 단일 setConfig updater 안에서
-  // 번역 영속화 + episode 변경을 함께 처리(stale-closure 2회 write 클로버 방지)하기 위함.
   const computeTranslatedManuscripts = useCallback(
     (
       prev: StoryConfig,
@@ -1048,7 +112,6 @@ export default function TabTranslate() {
         translations?: Record<string, string>;
         statuses?: Record<string, SegStatus>;
         avgScore?: number | null;
-        /** [W2-translate 2026-06-11] 명시적 사용자 편집 플래그 — true 일 때만 사인오프 리셋. */
         dirty?: boolean;
       },
     ): TranslatedManuscriptEntry[] | null => {
@@ -1060,7 +123,6 @@ export default function TabTranslate() {
       const ordered = segments
         .map((s) => ({ id: s.id, txt: trans[prefix + s.id] }))
         .filter((x): x is { id: string; txt: string } => !!x.txt && stat[x.id] === "done");
-      // 순수 코어로 위임 — 사인오프 리셋은 명시적 편집(dirty)일 때만(비멱등 비교 제거).
       return upsertTranslatedEntry({
         prev,
         episode: activeManuscript.episode,
@@ -1080,7 +142,6 @@ export default function TabTranslate() {
       translations?: Record<string, string>;
       statuses?: Record<string, SegStatus>;
       avgScore?: number | null;
-      /** [W2-translate 2026-06-11] 실제 편집 액션만 true — 사인오프 리셋 게이트. */
       dirty?: boolean;
     }) => {
       if (!activeManuscript) return;
@@ -1093,9 +154,6 @@ export default function TabTranslate() {
     [activeManuscript, computeTranslatedManuscripts, setConfig],
   );
 
-  // ── 회차 전환 (rail chapter 클릭) ───────────────────────
-  // 전환 직전 현재 회차의 진행 중(확정) 번역을 먼저 영속화 → 데이터 유실 방지.
-  // 회차 이동 경로 재사용: TabWriting goPrev/goNext 와 동일한 setConfig episode 패턴.
   const handleSelectChapter = useCallback(
     (episode: number) => {
       if (episode === config?.episode) return;
@@ -1115,17 +173,10 @@ export default function TabTranslate() {
     [config, setConfig],
   );
 
-  // ── 복원: config.translatedManuscripts → 로컬 번역 버퍼 (회차/언어 전환 시 1회) ──
-  // best-effort: 저장된 translatedContent 를 동일 문장 분해기로 재분해 후 세그먼트에 1:1 매핑.
-  // segId 는 splitIntoSegments 에서 위치 기반(s0,s1,…)이라 회차마다 동일 인덱스가 충돌한다.
-  // 따라서 머지(...prev) 가 아니라 회차 경계에서 *현재 lang/현재 회차 세그먼트* 키를 전량
-  // 제거(strip)한 뒤 stored 로만 재구성한다 — 이전 회차의 잔존 버퍼가 신규 회차로 누수되어
-  // computeTranslatedManuscripts 가 엉뚱한 회차 엔트리로 영속하는 교차오염을 차단(replace 시맨틱).
   useEffect(() => {
     if (!activeManuscript) return;
     const target = LANG_TO_TARGET[lang];
     const prefix = lang + ":";
-    // 현재 회차 세그먼트가 소유한 키 집합 — 이 키들만 회차 경계에서 strip 대상.
     const ownTransKeys = new Set(segments.map((seg) => prefix + seg.id));
     const ownStatusKeys = new Set(segments.map((seg) => seg.id));
     const stripTrans = (prev: Record<string, string>): Record<string, string> => {
@@ -1205,9 +256,46 @@ export default function TabTranslate() {
       .join("\n\n");
   }, [segments, translations, lang]);
 
-  // ── [Z1a-UI] 결정적 품질 게이트 (최소 진입점) ────────────
-  // Catastrophic 게이트 (성별 대명사 격변·신규 고유명사 환각) + 번역투/AI티 린트(EN만).
-  // 전 세그먼트 확정(done) 시에만 산출 — 부분 번역에 대한 오탐 차단 (정직).
+  const activeTranslatedEntry = useMemo(
+    () =>
+      (config?.translatedManuscripts ?? []).find(
+        (entry) => entry.episode === activeManuscript?.episode && entry.targetLang === LANG_TO_TARGET[lang],
+      ) ?? null,
+    [activeManuscript?.episode, config?.translatedManuscripts, lang],
+  );
+
+  const trackComparison = useMemo(
+    () => {
+      if (!activeManuscript) return null;
+      return buildTranslationTrackComparison({
+        source: activeManuscript.content ?? "",
+        translation: liveResult,
+        targetLang: lang,
+        faithfulApproved: activeTranslatedEntry?.faithfulApproved,
+        marketApproved: activeTranslatedEntry?.marketApproved,
+      });
+    },
+    [activeManuscript, activeTranslatedEntry?.faithfulApproved, activeTranslatedEntry?.marketApproved, lang, liveResult],
+  );
+
+  const riskReport = useMemo(
+    () => {
+      if (!activeManuscript) return null;
+      return buildTranslationRiskReport({
+        source: activeManuscript.content ?? "",
+        translation: liveResult,
+        targetLang: lang,
+        glossary: glossary.map((g) => ({ source: g.source, target: g.target, locked: !!g.locked })),
+        faithfulApproved: activeTranslatedEntry?.faithfulApproved,
+        marketApproved: activeTranslatedEntry?.marketApproved,
+      });
+    },
+    [activeManuscript, activeTranslatedEntry?.faithfulApproved, activeTranslatedEntry?.marketApproved, glossary, lang, liveResult],
+  );
+
+  // ── [Z1a-UI] 결정적 품질 점검 (최소 진입점) ────────────
+  // Catastrophic 점검 (성별 대명사 변화·신규 고유명사 오삽입) + 어색한 표현 린트(EN만).
+  // 전 세그먼트 확정(done) 시에만 산출 — 부분 번역에 대한 오탐을 줄인다.
   // 주의: 세그먼트 결합(liveResult)은 문장 단위 \n\n 결합이라 문단 수가 원문보다
   // 많아짐 → 문단 손실(floor) 검사는 여기선 사실상 비활성 (전체 회차 검사는
   // 구 번역 셸 NCT 경로가 담당) — 본 카드의 핵심은 대명사/고유명사/린트.
@@ -1236,7 +324,7 @@ export default function TabTranslate() {
   // ── useTranslation 실 엔진 연결 ─────────────────────────
   const onProgress = useCallback((p: TranslationProgress) => {
     if (p.status === "translating") setProgressLabel("번역 중…");
-    else if (p.status === "scoring") setProgressLabel("품질 채점 중…");
+    else if (p.status === "scoring") setProgressLabel("품질 점검 중…");
     else if (p.status === "recreating") setProgressLabel(`재번역 중… (${p.recreateCount})`);
     else if (p.status === "done") setProgressLabel("");
     else if (p.status === "error") setProgressLabel("오류: " + (p.error ?? ""));
@@ -1434,7 +522,7 @@ export default function TabTranslate() {
     setCurrentProjectId,
     setSessions: () => {},
     setCurrentSessionId,
-    setActiveTab,
+    setActiveTab: () => {},
     isKO,
     language,
     writingMode,
@@ -1507,10 +595,49 @@ export default function TabTranslate() {
     zh: progressForLang("zh"),
   };
   const stats = { progress: liveProgress, done: doneCount, total, avgScore };
+  const lockedGlossaryCount = glossary.filter((term) => term.locked).length;
+  const txDecisionItems = [
+    {
+      label: "원문 보존",
+      value: total > 0 ? `${total}문단 기준` : "원고 대기",
+      Icon: Eye,
+    },
+    {
+      label: "용어 고정",
+      value: lockedGlossaryCount > 0 ? `${lockedGlossaryCount}/${glossary.length}개 고정` : `${glossary.length}개 용어`,
+      Icon: Lock,
+    },
+    {
+      label: "검수",
+      value: qualityGate ? "품질 게이트 준비" : "확정 후 점검",
+      Icon: Check,
+    },
+    {
+      label: "사인오프",
+      value: doneCount === total && total > 0 ? "내보내기 준비" : `${doneCount}/${total} 확정`,
+      Icon: Download,
+    },
+  ] as const;
 
   // ── 빈 상태 가드 ────────────────────────────────────────
-  if (!currentSession) return <EmptyState reason="no-session" />;
-  if (!activeManuscript || segments.length === 0) return <EmptyState reason="no-manuscript" />;
+  if (!currentSession) {
+    return (
+      <EmptyState
+        reason="no-session"
+        onGoProject={() => setLoreguardTab("project")}
+        onGoWriting={() => setLoreguardTab("writing")}
+      />
+    );
+  }
+  if (!activeManuscript || segments.length === 0) {
+    return (
+      <EmptyState
+        reason="no-manuscript"
+        onGoProject={() => setLoreguardTab("project")}
+        onGoWriting={() => setLoreguardTab("writing")}
+      />
+    );
+  }
 
   const bottomActions: [string, typeof Sync, () => void][] = [
     ["되돌리기", Sync, handleRevert],
@@ -1532,6 +659,20 @@ export default function TabTranslate() {
       />
 
       <div className="tx-center">
+        <div className="tx-decision-strip" aria-label="번역 품질 루프">
+          <div className="tx-decision-copy">
+            <span>번역 품질 루프</span>
+            <b>원문 보존 → 용어 고정 → 검수 → 사인오프</b>
+          </div>
+          {txDecisionItems.map(({ label, value, Icon }) => (
+            <div key={label} className="tx-decision-item">
+              <Icon size={14} aria-hidden="true" />
+              <span>{label}</span>
+              <b>{value}</b>
+            </div>
+          ))}
+        </div>
+
         <TranslateEditor
           segments={segments}
           lang={lang}
@@ -1573,7 +714,7 @@ export default function TabTranslate() {
                 onChange={(e) => setAiText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !isTranslating && handleAiSend()}
                 placeholder={
-                  progressLabel || "선택한 문단을 NOA에게 재번역 요청… (Enter)"
+                  progressLabel || "선택한 문단을 노아에게 재번역 요청… (Enter)"
                 }
                 disabled={isTranslating}
               />
@@ -1628,6 +769,7 @@ export default function TabTranslate() {
 
       <TranslatePanel
         lang={lang}
+        uiLanguage={language}
         stats={stats}
         glossary={glossary}
         activeTerm={activeTerm}
@@ -1638,6 +780,8 @@ export default function TabTranslate() {
         open={panelOpen}
         onToggle={togglePanel}
         gate={qualityGate}
+        trackComparison={trackComparison}
+        riskReport={riskReport}
       />
 
       {/* [C-translate-panels] 구 번역 셸 3패널 slide-over (fixed overlay) */}

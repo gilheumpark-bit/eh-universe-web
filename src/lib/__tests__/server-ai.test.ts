@@ -21,6 +21,10 @@ describe('isServerProviderId', () => {
     'gemini',
     'openai',
     'claude',
+    'deepseek',
+    'qwen',
+    'minimax',
+    'kimi',
     'groq',
     'mistral',
     'ollama',
@@ -77,10 +81,10 @@ describe('resolveServerProviderKey', () => {
     expect(resolveServerProviderKey('openai', '')).toBe('env-key');
   });
 
-  it('falls back to env key when client key is whitespace only', () => {
+  it('does not fall back to Gemini env key when client key is whitespace only', () => {
     process.env.GEMINI_API_KEY = 'gem-env';
     const { resolveServerProviderKey } = loadModule();
-    expect(resolveServerProviderKey('gemini', '   ')).toBe('gem-env');
+    expect(resolveServerProviderKey('gemini', '   ')).toBeUndefined();
   });
 
   it('falls back to env key when client key is undefined', () => {
@@ -149,10 +153,10 @@ describe('hasServerProviderCredentials', () => {
     expect(hasServerProviderCredentials('gemini')).toBe(false);
   });
 
-  it('returns true for Gemini when GEMINI_API_KEY is set (hosting)', () => {
+  it('returns false for Gemini even when GEMINI_API_KEY is set', () => {
     process.env.GEMINI_API_KEY = 'gem-key';
     const { hasServerProviderCredentials } = loadModule();
-    expect(hasServerProviderCredentials('gemini')).toBe(true);
+    expect(hasServerProviderCredentials('gemini')).toBe(false);
   });
 
   it('returns false for Gemini when neither API key nor Vertex AI is configured', () => {
@@ -192,6 +196,10 @@ describe('getHostedProviderAvailability', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -206,6 +214,10 @@ describe('getHostedProviderAvailability', () => {
       gemini: false,
       openai: false,
       claude: false,
+      deepseek: false,
+      qwen: false,
+      minimax: false,
+      kimi: false,
       groq: false,
       mistral: false,
       ollama: false,
@@ -217,6 +229,10 @@ describe('getHostedProviderAvailability', () => {
     delete process.env.GEMINI_API_KEY;
     process.env.OPENAI_API_KEY = 'ok';
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     process.env.GROQ_API_KEY = 'ok';
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -236,12 +252,12 @@ describe('getHostedProviderAvailability', () => {
     expect(result.lmstudio).toBe(false);
   });
 
-  it('includes all seven provider keys in the result', () => {
+  it('includes all provider keys in the result', () => {
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
     const keys = Object.keys(result).sort();
     expect(keys).toEqual(
-      ['claude', 'gemini', 'groq', 'lmstudio', 'mistral', 'ollama', 'openai'],
+      ['claude', 'deepseek', 'gemini', 'groq', 'kimi', 'lmstudio', 'minimax', 'mistral', 'ollama', 'openai', 'qwen'],
     );
   });
 
@@ -276,6 +292,10 @@ describe('getFirstHostedProvider', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -288,10 +308,14 @@ describe('getFirstHostedProvider', () => {
     expect(getFirstHostedProvider()).toBeNull();
   });
 
-  it('returns the first available provider (gemini is first in the list)', () => {
+  it('skips Gemini env and returns the first available non-Gemini provider', () => {
     process.env.GEMINI_API_KEY = 'gk';
     process.env.OPENAI_API_KEY = 'ok';
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -301,13 +325,17 @@ describe('getFirstHostedProvider', () => {
     delete process.env.VERTEX_AI_CREDENTIALS;
     delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getFirstHostedProvider } = loadModule();
-    expect(getFirstHostedProvider()).toBe('gemini');
+    expect(getFirstHostedProvider()).toBe('openai');
   });
 
   it('skips unavailable providers and returns the first available one', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     process.env.CLAUDE_API_KEY = 'ck';
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -324,6 +352,10 @@ describe('getFirstHostedProvider', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     process.env.OLLAMA_API_URL = 'http://localhost:11434';
@@ -340,6 +372,10 @@ describe('getFirstHostedProvider', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;

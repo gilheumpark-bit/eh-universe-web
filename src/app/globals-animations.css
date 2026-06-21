@@ -410,7 +410,7 @@ html[data-theme-changing]::after {
 @keyframes ss-pulse { 0%,100%{opacity:0.2} 50%{opacity:1} }
 
 /* ============================================================
-   Code Studio — Animation System
+   Internal Tool — Animation System
    ============================================================ */
 
 @keyframes cs-fade-in {

@@ -36,7 +36,8 @@ api-logger.ts 모듈이 자체적으로 "P11 blocking commercial scale" 라고 s
 
 **즉시 강제**:
 - 모든 신규 API route → `apiLog` + `createRequestTimer` 의무 사용
-- 28 기존 routes 단계적 마이그레이션 (priority: chat / image-gen / network-agent → 25 routes)
+- 기존 active API routes 단계적 마이그레이션 (priority: chat / image-gen / translate)
+- `network-agent` 계열은 은퇴 호환 라우트라 RED/SLO 계측 대상에서 제외하고 410 응답 회귀만 검증
 - structured log schema 단일화 → 모든 모듈 동일 필드 (`level`, `event`, `route`, `requestId`, `durationMs`, `meta`)
 
 **ESLint rule 추가** (선택, Phase 1 종료 시):
@@ -84,7 +85,6 @@ api-logger.ts 모듈이 자체적으로 "P11 blocking commercial scale" 라고 s
 | /api/chat (stream first token) | 800ms | 1% | 99.5% |
 | /api/image-gen | 30s | 2% | 99% |
 | /api/translate | 8s | 1% | 99.5% |
-| /api/network-agent/search | 3s | 1% | 99.5% |
 | /api/upload | 15s | 2% | 99% |
 | /api/health | 200ms | 0.1% | 99.9% |
 

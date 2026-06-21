@@ -35,7 +35,7 @@ export interface SymbolDefinition {
   name: string;
   /** 동의어 / 별칭 / 약칭 (예: "김준" → ["준", "김 작가", "the writer"]) */
   aliases: string[];
-  /** Symbol 정의 본문 — 캐릭터 traits, 룰북 내용, 소품 description 등 요약 */
+  /** Symbol 정의 본문 — 캐릭터 traits, 연출 기준, 소품 description 등 요약 */
   definition: string;
   /** 처음 등장한 에피소드 (선택) — concept/event 는 미설정 가능 */
   episodeId?: number;
@@ -45,8 +45,8 @@ export interface SymbolDefinition {
 
 /** Go to Definition 점프 좌표 */
 export interface SymbolJumpTarget {
-  /** 진입 탭 키 — 'characters' / 'world' / 'items' / 'skills' / 'rulebook' */
-  tab: 'characters' | 'world' | 'items' | 'skills' | 'rulebook';
+  /** 진입 탭 키 — 'characters' / 'world' / 'items' / 'skills' / 'direction' */
+  tab: 'characters' | 'world' | 'items' | 'skills' | 'direction';
   /** 탭 내 sub-id (선택) — 없으면 탭 첫 화면 */
   subId?: string;
 }

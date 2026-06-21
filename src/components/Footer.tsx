@@ -37,23 +37,23 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-border bg-bg-primary" role="contentinfo">
+    <footer className="mt-auto border-t border-[#d7dce6] bg-[#faf8f2]" role="contentinfo">
       <div className="site-shell py-8 md:py-10">
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* Brand */}
           <div className="flex flex-col gap-1">
-            <div className="font-bold text-text-primary text-sm tracking-tight">
+            <div className="font-bold text-[#202534] text-sm tracking-tight">
               Loreguard
-              <span className="text-text-tertiary font-normal ml-2">
+              <span className="text-[#4f5665] font-normal ml-2">
                 ({T({ ko: "로어가드", en: "Loreguard", ja: "ロアガード", zh: "守卷者" })})
               </span>
             </div>
-            <div className="text-xs text-text-tertiary">
+            <div className="text-xs text-[#4f5665]">
               {T({
-                ko: `© ${year} EH Universe · 소설가의 IDE`,
-                en: `© ${year} EH Universe · The IDE for Novelists`,
-                ja: `© ${year} EH Universe · 小説家のためのIDE`,
-                zh: `© ${year} EH Universe · 小说家的 IDE`,
+                ko: `© ${year} EH Universe · 창작 전문 IDE`,
+                en: `© ${year} EH Universe · Creative IDE`,
+                ja: `© ${year} EH Universe · 創作専門IDE`,
+                zh: `© ${year} EH Universe · 创作专业 IDE`,
               })}
             </div>
           </div>
@@ -65,43 +65,43 @@ export default function Footer() {
           >
             <Link
               href="/privacy"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "개인정보처리방침", en: "Privacy", ja: "プライバシー", zh: "隐私政策" })}
             </Link>
             <Link
               href="/terms"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "이용약관", en: "Terms", ja: "利用規約", zh: "服务条款" })}
             </Link>
             <Link
               href="/copyright"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "저작권", en: "Copyright", ja: "著作権", zh: "著作权" })}
             </Link>
             <Link
               href="/ai-disclosure"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "AI 고지", en: "AI Disclosure", ja: "AI告知", zh: "AI 告知" })}
             </Link>
             <Link
               href="/about"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "소개", en: "About", ja: "紹介", zh: "关于" })}
             </Link>
             <Link
               href="/changelog"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "변경 이력", en: "Changelog", ja: "変更履歴", zh: "更新日志" })}
             </Link>
             <a
               href="mailto:gilheumpark@gmail.com"
-              className="text-text-secondary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] inline-flex items-center"
+              className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "문의", en: "Contact", ja: "お問い合わせ", zh: "联系" })}
             </a>

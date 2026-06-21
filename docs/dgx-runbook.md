@@ -1,5 +1,7 @@
 # DGX Server Runbook — Loreguard AI Inference
 
+> Current role: local/development API and emergency verification path only. Loreguard Hosted production uses server-side developer API credentials as the default model path. Do not describe DGX as the main Hosted engine unless `FEATURE_DGX_DEV_API=on` / `ENABLE_DGX_DEV_API=on` is intentionally enabled for a controlled run.
+
 **Version**: 2026-04-24 (35B MoE 단일 전환 후)
 **Hardware**: NVIDIA DGX GB10 (128GB VRAM)
 **Model**: Qwen 3.6-35B-A3B-FP8 MoE
@@ -14,12 +16,12 @@
 ┌─────────────────────────────────────────────────────┐
 │  Vercel Edge (SaaS frontend)                        │
 │    ↓ SSE stream                                     │
-│  vLLM OpenAI-compat endpoint  @ http://<DGX>:8001   │
+│  vLLM OpenAI-compat endpoint  @ http://<DGX>:8000   │
 │    ↑                                                │
 │  Qwen 3.6-35B-A3B-FP8 MoE (FlashInfer + N-Gram SD)  │
 │                                                     │
 │  Adjacent services:                                 │
-│    RAG API       @ :8082  (ChromaDB 99만 문서)      │
+│    Retrieval     @ :8082  (Translation legacy)      │
 │    ComfyUI FLUX  @ :8188  (Flux-Schnell FP8)        │
 └─────────────────────────────────────────────────────┘
 ```
@@ -27,7 +29,7 @@
 Frontend priority (`src/lib/dgx-models.ts`):
 1. `NEXT_PUBLIC_SPARK_GATEWAY_URL`
 2. `NEXT_PUBLIC_SPARK_SERVER_URL`
-3. `http://localhost:8001` (dev only)
+3. `http://localhost:8000` (dev only)
 
 ---
 

@@ -49,10 +49,10 @@ describe("M2.2 memo comparators — FabControls", () => {
     sceneSheetEmpty: false,
   };
 
-  test("renders with label '엔진 호출' when prop sceneSheetEmpty=false", () => {
+  test("renders with label '노아 제안' when prop sceneSheetEmpty=false", () => {
     const { getByTestId } = render(<FabControls {...baseProps} />);
     const fab = getByTestId("noa-fab");
-    expect(fab).toHaveTextContent(/엔진 호출/);
+    expect(fab).toHaveTextContent(/노아 제안/);
     expect(fab).toHaveAttribute("data-scene-sheet-empty", "0");
   });
 
@@ -86,10 +86,10 @@ describe("M2.2 memo comparators — FabControls", () => {
     expect(container.querySelector("[data-testid='noa-fab']")).toBeNull();
   });
 
-  test("aria-label matches 엔진 호출 localized label", () => {
+  test("aria-label matches 노아 제안 localized label", () => {
     const { getByTestId } = render(<FabControls {...baseProps} />);
     const fab = getByTestId("noa-fab");
-    expect(fab).toHaveAttribute("aria-label", "엔진 호출");
+    expect(fab).toHaveAttribute("aria-label", "노아 제안");
   });
 
   test("title attribute conveys author-led philosophy", () => {

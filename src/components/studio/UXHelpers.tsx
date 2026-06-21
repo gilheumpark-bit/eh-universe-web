@@ -142,14 +142,14 @@ function classifyError(err: unknown, language: AppLanguage): ErrorInfo {
     return {
       type: 'server',
       title: L4(language, { ko: '서버 오류', en: 'Server Error', ja: 'サーバーエラー', zh: '服务器错误' }),
-      message: L4(language, { ko: '노아 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.', en: 'NOA server is temporarily unavailable. Please try again shortly.', ja: 'ノアサーバーが一時的に応答していません。しばらくしてから再試行してください。', zh: '诺亚服务器暂时无法响应，请稍后重试。' }),
+      message: L4(language, { ko: '노아가 잠시 응답하지 않습니다. 잠시 뒤 다시 시도해 주세요.', en: 'Noa server is temporarily unavailable. Please try again shortly.', ja: 'ノアサーバーが一時的に応答していません。しばらくしてから再試行してください。', zh: '诺亚服务器暂时无法响应，请稍后重试。' }),
     };
   }
   if (lower.includes('404') || lower.includes('not found')) {
     return {
       type: 'not_found',
       title: L4(language, { ko: '요청 경로 오류', en: 'Not Found', ja: 'リクエストパスエラー', zh: '请求路径错误' }),
-      message: L4(language, { ko: '요청한 API 경로를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요.', en: 'API endpoint not found. Please refresh and try again.', ja: 'リクエストしたAPIパスが見つかりません。ページを更新してから再試行してください。', zh: '找不到请求的API路径，请刷新页面后重试。' }),
+      message: L4(language, { ko: '요청을 처리할 경로를 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.', en: 'API endpoint not found. Please refresh and try again.', ja: 'リクエストしたAPIパスが見つかりません。ページを更新してから再試行してください。', zh: '找不到请求的API路径，请刷新页面后重试。' }),
     };
   }
   if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {

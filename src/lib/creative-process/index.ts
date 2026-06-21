@@ -3,8 +3,8 @@
 // ============================================================
 //
 // 사용처에서 `import { ... } from '@/lib/creative-process'` 형태로.
-// 5앱 본체 코드 (Studio/Translator/Network/Code/Universe) 는 본 모듈을
-// 통해서만 creative-process 기능에 접근. 격리 강도 ↑.
+// 현행 창작·번역·출고 표면은 본 모듈을 통해서만 creative-process 기능에 접근.
+// 구 표면명 대신 제품 역할 기준으로 경계를 둔다.
 // ============================================================
 
 // ── Types ──
@@ -90,6 +90,12 @@ export {
   type CertificateBuildOutput,
 } from './report-builder';
 
+export {
+  saveProcessCertificate,
+  listProcessCertificates,
+  getLatestProcessCertificate,
+} from './certificate-store';
+
 // ── HTML Renderer ──
 export {
   renderCertificateHtml,
@@ -152,6 +158,130 @@ export {
   type ArtifactDescriptor,
   type ArtifactId,
 } from './submission-package';
+
+export {
+  buildExportPackageProfilePlan,
+  EXPORT_PACKAGE_PROFILES,
+  listExportPackageProfiles,
+  type ExportPackageAudience,
+  type ExportPackagePlanStatus,
+  type ExportPackageProfile,
+  type ExportPackageProfileId,
+  type ExportPackageProfilePlan,
+  type ExportPackageProfilePlanItem,
+} from './export-package-profile';
+
+export {
+  buildCopyrightRegistrationPrep,
+  serializeCopyrightRegistrationPrepMarkdown,
+  type CopyrightPrepCheckItem,
+  type CopyrightPrepCheckStatus,
+  type CopyrightRegistrationDescriptionVariant,
+  type CopyrightRegistrationPrepInput,
+  type CopyrightRegistrationPrepPackage,
+  type CopyrightRegistrationVariantId,
+} from './copyright-registration-prep';
+
+export {
+  buildCoreCopyrightPackage,
+  serializeCoreCopyrightPackageMarkdown,
+  type CoreCopyrightCanonMatrixRow,
+  type CoreCopyrightChecklistItem,
+  type CoreCopyrightDeclarationField,
+  type CoreCopyrightDocument,
+  type CoreCopyrightDocumentId,
+  type CoreCopyrightOriginalityDeclaration,
+  type CoreCopyrightPackage,
+  type CoreCopyrightPackageInput,
+  type CoreCopyrightReadiness,
+  type CoreCopyrightStatus,
+} from './core-copyright-package';
+
+export {
+  buildRightsProposalAdvisor,
+  serializeRightsProposalAdvisorMarkdown,
+  type RightsProposalAdvisorInput,
+  type RightsProposalAdvisorResult,
+  type RightsProposalAxisId,
+  type RightsProposalAxisReview,
+  type RightsProposalAxisStatus,
+} from './rights-proposal-advisor';
+
+export {
+  buildCertificateOutputPlan,
+  CERTIFICATE_OUTPUT_PROFILES,
+  selectCertificateOutputProfile,
+  type CertificateOutputPlan,
+  type CertificateOutputProfile,
+  type CertificateOutputProfileId,
+  type CertificateOutputStatus,
+  type CertificateQrPolicy,
+} from './certificate-output-profile';
+
+export {
+  buildPublicCertificateCardPayload,
+  buildPublicCertificateLookupCardPayload,
+  getPublicRecordLevelKo,
+  serializePublicCertificateCardForUserKo,
+  type PublicCertificateCardPayload,
+} from './public-certificate-card';
+
+export {
+  normalizePublicVerificationUrl,
+} from './public-verification-url';
+
+export {
+  buildC2paReadyManifest,
+  buildC2paPreparationNote,
+  serializeC2paReadyManifest,
+  type C2paReadyAction,
+  type C2paReadyAssetInput,
+  type C2paReadyManifest,
+  type C2paReadyManifestInput,
+} from './c2pa-ready-manifest';
+
+export {
+  verifyC2paReadyRoundTrip,
+  type C2paReadyVerifyInput,
+  type C2paReadyVerifyIssue,
+  type C2paReadyVerifyIssueReason,
+  type C2paReadyVerifyResult,
+} from './c2pa-ready-manifest-verify';
+
+export {
+  buildCurrentStandardsAudit,
+  CURRENT_MARKET_STANDARDS,
+  CURRENT_MARKET_STANDARDS_CHECKED_AT,
+  CURRENT_MARKET_STANDARDS_EXPIRES_AT,
+  FONT_LICENSE_PROFILES,
+  getCurrentMarketStandard,
+  isMarketStandardStale,
+  listCurrentMarketStandards,
+  TRADEMARK_SEARCH_PROFILES,
+  type DatedSourceReference,
+  type EpisodeLengthTarget,
+  type FontLicenseProfile,
+  type MarketStandardId,
+  type MarketStandardProfile,
+  type RegionId,
+  type SourceCategory,
+  type StandardEvidenceLevel,
+  type StandardsAuditResult,
+  type TextUnit,
+  type TrademarkSearchProfile,
+} from './current-market-standards';
+
+export {
+  buildWorkReceiptCoverageAudit,
+  type WorkReceiptCoverageAudit,
+  type WorkReceiptCoverageEvidence,
+  type WorkReceiptCoverageExpectations,
+  type WorkReceiptCoverageInput,
+  type WorkReceiptCoverageItem,
+  type WorkReceiptCoverageKey,
+  type WorkReceiptCoverageOverallStatus,
+  type WorkReceiptCoverageStatus,
+} from './work-receipt-coverage';
 
 // ── Provenance Analyzer (`_4`) ──
 export {

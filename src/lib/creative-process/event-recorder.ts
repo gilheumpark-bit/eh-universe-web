@@ -9,7 +9,7 @@
 //
 // 보존 정책:
 //   - delete 이벤트도 store에 추가 (실 데이터 삭제 X)
-//   - Phase 1: 50,000건 이상 archive 정책 미정 (Phase 2)
+//   - Phase 1: 50,000건 이상 장기 보존 정책 미정 (Phase 2)
 // ============================================================
 
 import type { CreativeEvent } from './types';

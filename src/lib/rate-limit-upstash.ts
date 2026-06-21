@@ -18,6 +18,7 @@
 // ============================================================
 
 import type { RateLimitBackend, RateLimitConfig, RateLimitCheckResult } from './rate-limit';
+import { logger } from './logger';
 
 // ============================================================
 // PART 2 — Config types
@@ -112,8 +113,7 @@ export function createUpstashBackend(cfg: UpstashConfig): RateLimitBackend {
         // 운영에서 backend 변경 감지 (getRateLimitBackendName === 'upstash') 후
         // probe 별도로 alarm 거는 게 정석.
         if (process.env.NODE_ENV !== 'production') {
-          // eslint-disable-next-line no-console
-          console.warn('[rate-limit-upstash] check failed, fail-open:', (err as Error).message);
+          logger.warn('rate-limit-upstash', 'check failed, fail-open', (err as Error).message);
         }
         return { allowed: true, retryAfterMs: 0 };
       }
@@ -156,7 +156,7 @@ export async function reserveTokenBudgetUpstash(
     const currentRaw = getRes.result;
     const current = typeof currentRaw === 'string' ? parseInt(currentRaw, 10) || 0 : 0;
 
-    if (current >= limit) {
+    if (current >= limit || current + amt > limit) {
       // 이미 초과 — TTL 만 조회해서 reset 정확화.
       const [pttlRes] = await upstashPipeline(cfg, [['PTTL', redisKey]]);
       const pttl = typeof pttlRes.result === 'number' && pttlRes.result > 0 ? pttlRes.result : windowMsClamped;
@@ -175,8 +175,7 @@ export async function reserveTokenBudgetUpstash(
     return { allowed: true, used, remaining: Math.max(0, limit - used), resetMs: pttl };
   } catch (err) {
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.warn('[rate-limit-upstash] token budget failed, fail-open:', (err as Error).message);
+      logger.warn('rate-limit-upstash', 'token budget failed, fail-open', (err as Error).message);
     }
     // fail-open — 비용 폭주 방어보다 가용성 우선 (memory backend 가 lambda 단위 보호).
     return { allowed: true, used: 0, remaining: limit, resetMs: windowMsClamped };

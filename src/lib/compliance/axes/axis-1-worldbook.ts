@@ -2,7 +2,7 @@
  * 축 1: 세계관 사실 일치 (Worldbook Consistency).
  *
  * worldbook에 명시된 고유명사(인물·지명·특수 용어)가 초안에서 **정확한 표기**로
- * 나타나는지 검사한다. 작가 Codex의 entities 배열이 직접 주입되는 전제.
+ * 나타나는지 검사한다. 프로젝트 기준선의 entities 배열이 직접 주입되는 전제.
  *
  * MVP 한계:
  *   - exact match 기반. 변형·오탈자 허용 안 함.
@@ -28,7 +28,7 @@ export function scoreAxis1Worldbook(ctx: AxisContext): AxisResult {
       weight: AXIS_WEIGHT,
       passed: true,
       issues: [],
-      recommendations: ['worldbook 엔티티 미정의 — 채점 생략 (Codex 세계관 등록 권장).'],
+      recommendations: ['worldbook 엔티티 미정의 — 채점 생략 (세계관 기준선 등록 권장).'],
     };
   }
 

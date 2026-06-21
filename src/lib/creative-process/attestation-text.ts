@@ -1,9 +1,9 @@
 // ============================================================
-// Attestation Text — ATTESTATION OF GENESIS 4언어 byte-level + 서명 디스클레이머
+// Attestation Text — 창작 과정 진술 4언어 byte-level + 서명 디스클레이머
 // ============================================================
 //
-// stitch_lore_guard `_3` Certificate 본체 의 ATTESTATION OF GENESIS 영역.
-// "본 문서는 작가 직접 통제 + 시스템 검증" 진술.
+// stitch_lore_guard `_3` Certificate 본체 의 창작 과정 진술 영역.
+// "본 문서는 작가 직접 통제 + 시스템 기록" 진술.
 //
 // 변경 시 반드시:
 //   1. PR 리뷰 + 변호사 1회 재감수
@@ -12,7 +12,7 @@
 // ============================================================
 
 // ============================================================
-// PART 1 — ATTESTATION OF GENESIS 4언어
+// PART 1 — 창작 과정 진술 4언어
 // ============================================================
 
 export const ATTESTATION_OF_GENESIS_4LANG = {
@@ -27,7 +27,7 @@ export const ATTESTATION_OF_GENESIS_4LANG = {
 // ============================================================
 
 export const SIGNATURE_DISCLAIMER_4LANG = {
-  ko: '이 문서는 작업 과정의 기록이며, 저작권 보증은 아닙니다.',
+  ko: '이 문서는 작업 과정의 기록이며, 권리 판단을 대신하지 않습니다.',
   en: 'This is a record of process, not a guarantee of copyright.',
   ja: '本書は作業過程の記録であり、著作権の保証ではありません。',
   zh: '本文件为工作过程记录,不构成著作权保证。',
@@ -39,7 +39,7 @@ export const SIGNATURE_DISCLAIMER_4LANG = {
 
 export const ATTESTATION_LABELS = {
   ko: {
-    headerLabel: 'ATTESTATION OF GENESIS',
+    headerLabel: '창작 과정 진술',
     titleOfWork: '작품 제목',
     authorName: '작가명',
     serialNo: '발급 번호',
@@ -48,10 +48,12 @@ export const ATTESTATION_LABELS = {
     scanForProof: '암호 검증을 위해 스캔',
     workSessions: '작업 세션',
     originSummary: '출처 요약',
-    humanControlIndex: 'Human Control Index (HCI)',
+    humanControlIndex: '작가 통제 지수(HCI)',
+    processSeal: '과정기록 씰',
+    verificationUrl: '조회 링크',
   },
   en: {
-    headerLabel: 'ATTESTATION OF GENESIS',
+    headerLabel: 'CREATIVE PROCESS STATEMENT',
     titleOfWork: 'TITLE OF WORK',
     authorName: 'AUTHOR NAME',
     serialNo: 'SERIAL NO.',
@@ -60,10 +62,12 @@ export const ATTESTATION_LABELS = {
     scanForProof: 'SCAN FOR CRYPTOGRAPHIC PROOF',
     workSessions: 'WORK SESSIONS',
     originSummary: 'ORIGIN SUMMARY',
-    humanControlIndex: 'Human Control Index (HCI)',
+    humanControlIndex: 'Author Control Index (HCI)',
+    processSeal: 'PROCESS RECORD SEAL',
+    verificationUrl: 'VERIFICATION LINK',
   },
   ja: {
-    headerLabel: 'ATTESTATION OF GENESIS',
+    headerLabel: '創作過程の記述',
     titleOfWork: '作品タイトル',
     authorName: '作者名',
     serialNo: '発行番号',
@@ -72,10 +76,12 @@ export const ATTESTATION_LABELS = {
     scanForProof: '暗号検証用スキャン',
     workSessions: '作業セッション',
     originSummary: '出典要約',
-    humanControlIndex: 'Human Control Index (HCI)',
+    humanControlIndex: '作者統制指数(HCI)',
+    processSeal: '過程記録シール',
+    verificationUrl: '照会リンク',
   },
   zh: {
-    headerLabel: 'ATTESTATION OF GENESIS',
+    headerLabel: '创作过程陈述',
     titleOfWork: '作品标题',
     authorName: '作者姓名',
     serialNo: '发行编号',
@@ -84,7 +90,9 @@ export const ATTESTATION_LABELS = {
     scanForProof: '加密验证扫描',
     workSessions: '工作会话',
     originSummary: '来源摘要',
-    humanControlIndex: 'Human Control Index (HCI)',
+    humanControlIndex: '作者控制指数(HCI)',
+    processSeal: '过程记录印章',
+    verificationUrl: '查询链接',
   },
 } as const;
 

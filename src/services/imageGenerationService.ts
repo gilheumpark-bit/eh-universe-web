@@ -1,4 +1,5 @@
 import { isFeatureEnabled } from '@/lib/feature-flags';
+import { checkPaywallJson } from '@/lib/noa/paywall-notice';
 
 // ============================================================
 // PART 1 — Provider Interface & Types
@@ -31,7 +32,7 @@ export type ImageGenProvider = 'openai' | 'stability' | 'local-spark';
 // ============================================================
 
 /**
- * Generate images via server-side proxy route.
+ * Generate visual drafts via server-side proxy route.
  * The actual API call happens in /api/image-gen/route.ts.
  */
 export async function generateImage(
@@ -43,7 +44,7 @@ export async function generateImage(
   signal?: AbortSignal
 ): Promise<{ images: ImageGenResult[]; error?: string }> {
   if (typeof window !== 'undefined' && !isFeatureEnabled('IMAGE_GENERATION')) {
-    return { images: [], error: 'Image generation is disabled.' };
+    return { images: [], error: 'Visual endpoint is disabled.' };
   }
   try {
     const res = await fetch('/api/image-gen', {
@@ -65,6 +66,10 @@ export async function generateImage(
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
+      const paywallMessage = checkPaywallJson(err);
+      if (paywallMessage) {
+        return { images: [], error: paywallMessage };
+      }
       return { images: [], error: err.error || `HTTP ${res.status}` };
     }
 
@@ -102,9 +107,9 @@ export const IMAGE_PROVIDERS: {
   },
   {
     id: 'openai',
-    name: 'OpenAI DALL-E 3',
-    models: ['dall-e-3'],
-    maxSize: 1792,
+    name: 'OpenAI GPT Image',
+    models: ['gpt-image-2'],
+    maxSize: 2160,
   },
   {
     id: 'stability',

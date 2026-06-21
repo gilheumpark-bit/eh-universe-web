@@ -66,7 +66,7 @@ const LABELS: Record<AppLanguage, {
     deleteDesc: '계정과 관련된 모든 데이터를 영구 삭제합니다. 삭제 요청 후 30일 유예 기간이 있으며, 그 후 복구 불가능.',
     deleteButton: '계정 삭제 요청',
     confirmDelete: '정말로 계정을 삭제하시겠습니까?',
-    confirmDeleteWarning: '⚠️ 이 작업은 30일 유예 후 영구적입니다. 모든 작품·번역·아카이브가 삭제됩니다.',
+    confirmDeleteWarning: '⚠️ 이 작업은 30일 유예 후 영구적입니다. 모든 작품·번역·히스토리가 삭제됩니다.',
     cancel: '취소',
     proceedDelete: '삭제 진행',
     reasonLabel: '삭제 사유 (선택, 500자 이내)',

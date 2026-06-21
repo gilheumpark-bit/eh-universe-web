@@ -41,6 +41,7 @@ jest.mock('@/lib/firebase', () => ({
 }));
 
 import { getRemainingQuota } from '@/lib/firebase-quota-tracker';
+import { sha256 } from '../hash';
 
 const mockedQuota = getRemainingQuota as jest.MockedFunction<typeof getRemainingQuota>;
 
@@ -157,6 +158,8 @@ describe('pushSnapshot', () => {
     const result = await pushSnapshot(makeSnapshot('h2'), 'h1');
     expect(result.written).toBe(true);
     expect(setDoc).toHaveBeenCalledTimes(1);
+    const writtenData = setDoc.mock.calls[0]?.[1] as { payloadHash?: string };
+    expect(writtenData.payloadHash).toBe(await sha256(new Uint8Array([1, 2, 3])));
   });
 
   test('F8: quota 90%+ 도달 → blocked (writes-exceeded)', async () => {
@@ -177,6 +180,7 @@ describe('pushSnapshot', () => {
     const result = await pushSnapshot(makeSnapshot('h2'), 'h1');
     expect(result.blocked).toBe(true);
     expect(result.reason).toBe('quota-writes-exceeded');
+    expect(result.pauseUntil).toEqual(expect.any(Number));
     expect(setDoc).not.toHaveBeenCalled();
   });
 
@@ -232,10 +236,12 @@ describe('pullSnapshot', () => {
   test('F12: 원격 데이터 있음 → snapshot 반환', async () => {
     setFlags({ FEATURE_FIRESTORE_MIRROR: true, CLOUD_SYNC: true });
     const payload = new Uint8Array([1, 2, 3]);
+    const payloadHash = await sha256(payload);
     const getDoc = jest.fn().mockResolvedValue({
       exists: () => true,
       data: () => ({
         contentHash: 'remote-hash',
+        payloadHash,
         capturedAt: 1234,
         payload,
         journalVersion: 1,
@@ -251,6 +257,56 @@ describe('pullSnapshot', () => {
     expect(result.found).toBe(true);
     expect(result.snapshot?.contentHash).toBe('remote-hash');
     expect(result.snapshot?.payload).toBe(payload);
+    expect(result.snapshot?.payloadHash).toBe(payloadHash);
+  });
+
+  test('F13: Firestore Bytes 형태 payload도 정규화해서 반환', async () => {
+    setFlags({ FEATURE_FIRESTORE_MIRROR: true, CLOUD_SYNC: true });
+    const payload = new Uint8Array([7, 8, 9]);
+    const payloadHash = await sha256(payload);
+    const getDoc = jest.fn().mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        contentHash: 'remote-hash',
+        payloadHash,
+        capturedAt: 1234,
+        payload: { toUint8Array: () => payload },
+        journalVersion: 1,
+      }),
+    });
+    __setFirestoreForTests({
+      buildRef: () => 'ref',
+      setDoc: jest.fn(),
+      getDoc,
+    });
+
+    const result = await pullSnapshot('user-1', 'proj-1');
+    expect(result.found).toBe(true);
+    expect(result.snapshot?.payload).toEqual(payload);
+  });
+
+  test('F14: 원격 payloadHash 불일치 → snapshot 거부', async () => {
+    setFlags({ FEATURE_FIRESTORE_MIRROR: true, CLOUD_SYNC: true });
+    const getDoc = jest.fn().mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        contentHash: 'remote-hash',
+        payloadHash: 'bad-hash',
+        capturedAt: 1234,
+        payload: new Uint8Array([1, 2, 3]),
+        journalVersion: 1,
+      }),
+    });
+    __setFirestoreForTests({
+      buildRef: () => 'ref',
+      setDoc: jest.fn(),
+      getDoc,
+    });
+
+    const result = await pullSnapshot('user-1', 'proj-1');
+    expect(result.found).toBe(false);
+    expect(result.blocked).toBe(false);
+    expect(result.reason).toBe('payload-hash-mismatch');
   });
 });
 
@@ -259,7 +315,7 @@ describe('pullSnapshot', () => {
 // ============================================================
 
 describe('createFirestoreMirrorHandler', () => {
-  test('F13: provider null → no-op (no throw)', async () => {
+  test('F15: provider null → no-op (no throw)', async () => {
     setFlags({ FEATURE_FIRESTORE_MIRROR: true, CLOUD_SYNC: true });
     const setDoc = jest.fn();
     __setFirestoreForTests({
@@ -273,7 +329,7 @@ describe('createFirestoreMirrorHandler', () => {
     expect(setDoc).not.toHaveBeenCalled();
   });
 
-  test('F14: 첫 push 후 같은 해시 재호출 → skip', async () => {
+  test('F16: 첫 push 후 같은 해시 재호출 → skip', async () => {
     setFlags({ FEATURE_FIRESTORE_MIRROR: true, CLOUD_SYNC: true });
     const setDoc = jest.fn().mockResolvedValue(undefined);
     __setFirestoreForTests({
@@ -293,7 +349,7 @@ describe('createFirestoreMirrorHandler', () => {
     expect(setDoc).toHaveBeenCalledTimes(1); // 변경 없으니 setDoc 호출 안 됨
   });
 
-  test('F15: blocked → throw (orchestrator가 fail로 처리)', async () => {
+  test('F17: blocked → throw (orchestrator가 fail로 처리)', async () => {
     setFlags({ FEATURE_FIRESTORE_MIRROR: false });
     const { handler } = createFirestoreMirrorHandler(async () => makeSnapshot('h'));
     await expect(handler()).rejects.toThrow(/firestore-mirror blocked/);

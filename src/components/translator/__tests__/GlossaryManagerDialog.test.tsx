@@ -231,7 +231,7 @@ describe('GlossaryManagerDialog — interactions', () => {
   it('Export 버튼: entries 비어 있으면 disabled', () => {
     mockLoad.mockReturnValue([]);
     render(<GlossaryManagerDialog open={true} onClose={() => {}} />);
-    const exportBtn = screen.getByLabelText('JSON 내보내기');
+    const exportBtn = screen.getByLabelText('백업 내보내기');
     expect(exportBtn).toBeDisabled();
   });
 

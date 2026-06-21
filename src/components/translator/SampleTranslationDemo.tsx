@@ -2,7 +2,7 @@
 
 // ============================================================
 // SampleTranslationDemo — 30초 번역 체험 위젯
-// 가입 없이 즉시 번역 결과 + 6축 점수 확인 (하드코딩 샘플)
+// 가입 없이 즉시 번역 결과 + 품질 요약 확인 (하드코딩 샘플)
 // Translation Studio 랜딩 첫 방문자 이탈 방지
 // ============================================================
 
@@ -115,10 +115,10 @@ const I18N: Record<I18nKey, Record<Lang, string>> = {
     zh: '输入韩语句子 (最多 200 字)',
   },
   translate: {
-    ko: '번역 + 6축 점수 보기',
-    en: 'Translate + View 6-Axis Scores',
-    ja: '翻訳 + 6軸スコア表示',
-    zh: '翻译 + 查看 6 轴评分',
+    ko: '번역 + 품질 보기',
+    en: 'Translate + Quality View',
+    ja: '翻訳 + 品質表示',
+    zh: '翻译 + 查看质量',
   },
   translating: { ko: '번역 중...', en: 'Translating...', ja: '翻訳中...', zh: '翻译中...' },
   enLabel: { ko: 'EN', en: 'EN', ja: 'EN', zh: 'EN' },

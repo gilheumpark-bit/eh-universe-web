@@ -27,7 +27,7 @@
 //     미러 파일 내용·commit message·alert 메시지 어디에도 기록하지 않음.
 //
 // 정직 표기 (확인서/verify 표면 의무 문구):
-//   인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
+//   작성자가 직접 썼는지 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
 // ============================================================
 
 import type { GitHubSyncConfig } from '@/lib/github-sync';
@@ -59,8 +59,8 @@ const MAX_EVENTS_PER_FLUSH = 20;
  * GitHub commit 은 "앵커 시점 이후 무변조·그 시점에 존재했음"만 증명한다.
  */
 export const ANCHOR_HONESTY_NOTICE = {
-  ko: '인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명',
-  en: 'Human authorship itself cannot be proven — this anchor only proves existence at, and integrity since, the anchored time',
+  ko: '작성자가 직접 썼는지 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명',
+  en: 'Direct authorship itself cannot be proven — this anchor only proves existence at, and integrity since, the anchored time',
 } as const;
 
 /**

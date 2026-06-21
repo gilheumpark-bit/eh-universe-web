@@ -50,8 +50,14 @@ jest.mock('stripe', () => {
 
 // [H1 stripe-ready] Firestore dedupe mock — processed_events create 제어.
 const mockCreateDoc = jest.fn();
+const mockPatchDoc = jest.fn();
+const mockGetDoc = jest.fn();
+const mockGetDocWithMeta = jest.fn();
 jest.mock('@/lib/firestore-service-rest', () => ({
   firestoreCreateDocument: (...a: unknown[]) => mockCreateDoc(...a),
+  firestorePatchDocument: (...a: unknown[]) => mockPatchDoc(...a),
+  firestoreGetDocument: (...a: unknown[]) => mockGetDoc(...a),
+  firestoreGetDocumentWithMeta: (...a: unknown[]) => mockGetDocWithMeta(...a),
 }));
 
 // apiLog 캡처 — 호출 검증용.
@@ -67,6 +73,8 @@ jest.mock('@/lib/firebase-auth-admin-rest', () => ({
   setStripeRoleClaim: (...a: unknown[]) => mockSetClaim(...a),
   clearStripeRoleClaim: (...a: unknown[]) => mockClearClaim(...a),
 }));
+
+import { createReleaseCreditLedgerSnapshot } from '@/lib/billing/release-credit-ledger';
 
 // Helper — minimal NextRequest stub.
 // next/server를 jest.mock으로 대체했으므로 런타임 NextRequest는 StripeWhFakeRequest.
@@ -356,6 +364,116 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     );
   });
 
+  it('checkout.session.completed metadata.loreguardPlanId → subscription entitlement sync', async () => {
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-proj';
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed', id: 'evt_co_plan', created: 1, livemode: false,
+      data: {
+        object: {
+          client_reference_id: 'uid-plan',
+          payment_status: 'paid',
+          status: 'complete',
+          customer: 'cus_plan',
+          subscription: 'sub_plan',
+          metadata: { loreguardPlanId: 'studio' },
+        },
+      },
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+
+    expect(res.status).toBe(200);
+    expect(mockCreateDoc).toHaveBeenCalledWith(
+      'test-proj',
+      'subscriptions',
+      expect.objectContaining({
+        uid: { stringValue: 'uid-plan' },
+        planId: { stringValue: 'studio' },
+        status: { stringValue: 'active' },
+        stripeCustomerId: { stringValue: 'cus_plan' },
+        stripeSubscriptionId: { stringValue: 'sub_plan' },
+      }),
+      { documentId: 'uid-plan' },
+    );
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_subscription_entitlement_synced' }),
+    );
+  });
+
+  it('checkout.session.completed release_credit_purchase → ledger purchase grant sync', async () => {
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-proj';
+    const freeLedger = createReleaseCreditLedgerSnapshot({
+      userId: 'uid-buy',
+      planId: 'free',
+      periodKey: '2026-06',
+      projectId: 'project-alpha',
+      createdAt: '2026-06-15T00:00:00.000Z',
+    });
+    mockGetDoc.mockResolvedValue({ ok: false, error: 'not_found' });
+    mockGetDocWithMeta
+      .mockResolvedValueOnce({ ok: false, error: 'not_found' })
+      .mockResolvedValueOnce({
+        ok: true,
+        fields: { payloadJson: { stringValue: JSON.stringify(freeLedger) } },
+        updateTime: '2026-06-15T00:00:01.000Z',
+      });
+    mockPatchDoc.mockResolvedValue({ ok: true, updateTime: '2026-06-15T00:00:02.000Z' });
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      id: 'evt_release_credit_buy',
+      created: 1,
+      livemode: false,
+      data: {
+        object: {
+          client_reference_id: 'uid-buy',
+          payment_status: 'paid',
+          status: 'complete',
+          metadata: {
+            firebaseUid: 'uid-buy',
+            loreguardCheckoutKind: 'release_credit_purchase',
+            loreguardProductId: 'episode-c2pa',
+            loreguardPackageProfileId: 'public-reader',
+            releaseCreditAmount: '2',
+            projectId: 'project-alpha',
+            periodKey: '2026-06',
+            certificateId: 'CERT-BUY-001',
+          },
+        },
+      },
+    });
+
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+
+    expect(res.status).toBe(200);
+    expect(mockSetClaim).not.toHaveBeenCalled();
+    expect(mockCreateDoc).toHaveBeenCalledWith(
+      'test-proj',
+      'release_credit_ledgers',
+      expect.any(Object),
+      expect.objectContaining({ documentId: expect.stringMatching(/^ledger_/) }),
+    );
+    const ledgerPatch = mockPatchDoc.mock.calls.find((call) =>
+      typeof call[1] === 'string' && call[1].startsWith('release_credit_ledgers/'),
+    );
+    expect(ledgerPatch).toBeTruthy();
+    const payloadJson = (ledgerPatch?.[2] as { payloadJson?: { stringValue?: string } }).payloadJson?.stringValue ?? '{}';
+    const payload = JSON.parse(payloadJson) as { balance: number; entries: Array<{ kind: string; creditAmount: number; idempotencyKey: string }> };
+    expect(payload.balance).toBe(2);
+    expect(payload.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'purchase-grant',
+          creditAmount: 2,
+          idempotencyKey: 'release-credit-purchase:stripe:evt_release_credit_buy',
+        }),
+      ]),
+    );
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_release_credit_purchase_synced' }),
+    );
+  });
+
   it('client_reference_id 없으면 claim 미호출', async () => {
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_co2', created: 1, livemode: false,
@@ -420,6 +538,37 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     const { POST } = await import('../route');
     await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
     expect(mockSetClaim).toHaveBeenCalledWith('uid-a');
+  });
+
+  it('subscription.updated active + plan metadata → subscription entitlement sync', async () => {
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-proj';
+    mockConstructEvent.mockReturnValue({
+      type: 'customer.subscription.updated', id: 'evt_up_plan', created: 1, livemode: false,
+      data: {
+        object: {
+          id: 'sub_up_plan',
+          status: 'active',
+          customer: 'cus_up_plan',
+          metadata: { firebaseUid: 'uid-up-plan', loreguardPlanId: 'pro' },
+        },
+      },
+    });
+    const { POST } = await import('../route');
+    await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+
+    expect(mockCreateDoc).toHaveBeenCalledWith(
+      'test-proj',
+      'subscriptions',
+      expect.objectContaining({
+        uid: { stringValue: 'uid-up-plan' },
+        planId: { stringValue: 'pro' },
+        status: { stringValue: 'active' },
+        stripeCustomerId: { stringValue: 'cus_up_plan' },
+        stripeSubscriptionId: { stringValue: 'sub_up_plan' },
+      }),
+      { documentId: 'uid-up-plan' },
+    );
+    expect(mockSetClaim).toHaveBeenCalledWith('uid-up-plan');
   });
 
   it('claim setter 실패해도 webhook 200 (fail-safe)', async () => {

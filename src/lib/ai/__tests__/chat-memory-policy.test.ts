@@ -7,6 +7,7 @@
 import {
   getTabPolicy,
   getMemoryWindow,
+  buildProjectScopedMemoryKey,
   loadStoredSummary,
   clearStoredSummary,
   maybeScheduleSummary,
@@ -51,7 +52,7 @@ beforeEach(() => {
 // ============================================================
 
 describe('getTabPolicy', () => {
-  it.each(['writing', 'writing-chat', 'world', 'rulebook', 'plot'])(
+  it.each(['writing', 'writing-chat', 'world', 'direction', 'plot'])(
     'heavy 탭: %s → full (Infinity window)',
     (tab) => {
       const p = getTabPolicy(tab);
@@ -68,6 +69,13 @@ describe('getTabPolicy', () => {
       expect(p.windowSize).toBe(LIGHT_WINDOW_SIZE);
     },
   );
+
+  it('project scoped key도 원래 탭 정책을 유지한다', () => {
+    const scopedWriting = buildProjectScopedMemoryKey('writing-chat', 'project-A');
+    const scopedStyle = buildProjectScopedMemoryKey('style', 'project-A');
+    expect(getTabPolicy(scopedWriting).tier).toBe('heavy');
+    expect(getTabPolicy(scopedStyle).tier).toBe('light');
+  });
 });
 
 // ============================================================
@@ -159,6 +167,17 @@ describe('summary store', () => {
     );
     clearStoredSummary('world');
     expect(loadStoredSummary('world')).toBeNull();
+  });
+
+  it('프로젝트별 scoped summary는 서로 격리된다', () => {
+    const aKey = buildProjectScopedMemoryKey('world', 'project-A');
+    const bKey = buildProjectScopedMemoryKey('world', 'project-B');
+    window.localStorage.setItem(
+      `noa_chat_memory_summary_v1:${aKey}`,
+      JSON.stringify({ summary: 'A 세계관 요약', coveredTurns: 1, updatedAt: 1 }),
+    );
+    expect(loadStoredSummary(aKey)?.summary).toBe('A 세계관 요약');
+    expect(loadStoredSummary(bKey)).toBeNull();
   });
 });
 

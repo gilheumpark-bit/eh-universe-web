@@ -39,9 +39,9 @@ describe('attestation-text — ATTESTATION_OF_GENESIS 4언어 byte-level', () =>
 });
 
 describe('attestation-text — SIGNATURE_DISCLAIMER 4언어', () => {
-  it('ko — 작업 과정 기록 / 저작권 보증 X', () => {
+  it('ko — 작업 과정 기록 / 권리 판단 대체 X', () => {
     expect(SIGNATURE_DISCLAIMER_4LANG.ko).toContain('작업 과정의 기록');
-    expect(SIGNATURE_DISCLAIMER_4LANG.ko).toContain('저작권 보증');
+    expect(SIGNATURE_DISCLAIMER_4LANG.ko).toContain('권리 판단을 대신하지 않습니다');
   });
 
   it('en — record of process / not a guarantee', () => {
@@ -57,10 +57,11 @@ describe('attestation-text — SIGNATURE_DISCLAIMER 4언어', () => {
 });
 
 describe('attestation-text — ATTESTATION_LABELS', () => {
-  it('4언어 × 9 키 모두 정의', () => {
+  it('4언어 × 11 키 모두 정의', () => {
     const requiredKeys = [
       'headerLabel', 'titleOfWork', 'authorName', 'serialNo', 'dateIssued',
       'digitalSignature', 'scanForProof', 'workSessions', 'originSummary', 'humanControlIndex',
+      'processSeal', 'verificationUrl',
     ];
     for (const lang of ['ko', 'en', 'ja', 'zh'] as const) {
       for (const key of requiredKeys) {
@@ -69,17 +70,18 @@ describe('attestation-text — ATTESTATION_LABELS', () => {
     }
   });
 
-  it('headerLabel 모든 언어 동일 ("ATTESTATION OF GENESIS")', () => {
-    // 격식 라틴어 명칭 — 4언어 동일 권장
-    expect(ATTESTATION_LABELS.ko.headerLabel).toBe('ATTESTATION OF GENESIS');
-    expect(ATTESTATION_LABELS.en.headerLabel).toBe('ATTESTATION OF GENESIS');
-    expect(ATTESTATION_LABELS.ja.headerLabel).toBe('ATTESTATION OF GENESIS');
-    expect(ATTESTATION_LABELS.zh.headerLabel).toBe('ATTESTATION OF GENESIS');
+  it('headerLabel 은 각 사용자 언어로 제공한다', () => {
+    expect(ATTESTATION_LABELS.ko.headerLabel).toBe('창작 과정 진술');
+    expect(ATTESTATION_LABELS.en.headerLabel).toBe('CREATIVE PROCESS STATEMENT');
+    expect(ATTESTATION_LABELS.ja.headerLabel).toBe('創作過程の記述');
+    expect(ATTESTATION_LABELS.zh.headerLabel).toBe('创作过程陈述');
   });
 
-  it('humanControlIndex 4언어 동일 ("Human Control Index (HCI)")', () => {
-    expect(ATTESTATION_LABELS.ko.humanControlIndex).toContain('HCI');
-    expect(ATTESTATION_LABELS.en.humanControlIndex).toContain('HCI');
+  it('HCI 라벨은 각 사용자 언어를 우선한다', () => {
+    expect(ATTESTATION_LABELS.ko.humanControlIndex).toBe('작가 통제 지수(HCI)');
+    expect(ATTESTATION_LABELS.en.humanControlIndex).toContain('Author Control Index');
+    expect(ATTESTATION_LABELS.ja.humanControlIndex).toBe('作者統制指数(HCI)');
+    expect(ATTESTATION_LABELS.zh.humanControlIndex).toBe('作者控制指数(HCI)');
   });
 });
 

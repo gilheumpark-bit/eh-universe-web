@@ -1,6 +1,19 @@
-import { EngineReport, PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
+import { PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
 // [X4 — 품질 하네스] type-only import — 런타임 의존 0 (컴파일 시 소거)
 import type { QualityHarness } from './creative/quality-harness';
+import type { SavedSlot, VisualPromptCard } from './studio-types.runtime';
+import type {
+  AcceptedImportCandidateRecord,
+  ExternalCraftReferenceRecord,
+  ImportFileReportRecord,
+  MainScenarioStructure,
+  ProjectReleasePurpose,
+  ProjectRightsLedgerEntry,
+  ProjectRightsStatus,
+  ProjectTargetLanguage,
+  ProjectTargetMarket,
+  WorldFieldEvidenceRecord,
+} from './studio-project-types';
 
 export enum Genre {
   SF = "SF",
@@ -20,11 +33,13 @@ export type GenerationMode = 'cloud' | 'local';
 export type ViewMode = 'mobile' | 'desktop';
 export type AppLanguage = 'KO' | 'EN' | 'JP' | 'CN';
 export type WritingMode = 'ai' | 'edit' | 'canvas' | 'refine' | 'advanced';
+export type EpisodeLifecycleState = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'SIGNED_OFF' | 'SHIPPED';
+export type ShipmentStatus = 'draft' | 'ready' | 'shipped';
 
 // [2026-05-09] 'scene-sheet' 추가 — 에피소드 씬시트 전용 진입점.
-// 이전: SceneSheet 가 RulebookTab + WritingTabInline 안에 분산 mount.
+// 이전: SceneSheet 가 DirectionTab + WritingTabInline 안에 분산 mount.
 // 수정: 별 탭 추가 (하위 호환 유지 — 기존 mount 위치 변경 X).
-export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'rulebook' | 'style' | 'manuscript' | 'docs' | 'visual' | 'scene-sheet';
+export type AppTab = 'world' | 'writing' | 'history' | 'settings' | 'characters' | 'direction' | 'style' | 'manuscript' | 'docs' | 'visual' | 'scene-sheet';
 
 // 세계관 스튜디오 서브탭
 export type WorldSubTab = 'design' | 'simulator' | 'analysis' | 'timeline' | 'map';
@@ -36,6 +51,10 @@ export interface PclGuardrails {
   min: number;
   max: number;
 }
+
+export type CharacterDevelopmentTier = 'T0' | 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
+export type NarrativeInfoState = 'unknown' | 'rumor' | 'partial' | 'known' | 'secret' | 'false';
+export type AssetPotentialLevel = 'none' | 'low' | 'medium' | 'high' | 'premium';
 
 export interface Character {
   id: string;
@@ -61,12 +80,21 @@ export interface Character {
   currentProblem?: string; // 현재 문제
   // 3단계 디테일
   emotionStyle?: string;       // 감정 표현 방식
-  relationPattern?: string;    // 인간관계 패턴
+  relationPattern?: string;    // 관계 패턴
   symbol?: string;             // 상징 요소
   secret?: string;             // 비밀 요소
   externalPerception?: string; // 타인이 보는 인상
   // Social Register Pack
   socialProfile?: SocialProfile;
+  // Professional asset/workflow fields (Loreguard project pipeline)
+  developmentTier?: CharacterDevelopmentTier; // T0 seed -> T5 release/IP-ready
+  informationState?: NarrativeInfoState;      // reader/world knowledge state
+  publicKnowledge?: string;                   // what the public/world believes
+  privateTruth?: string;                      // hidden factual layer
+  relationAddress?: string;                   // address term / nickname rule
+  honorificRule?: string;                     // formal/informal speech rule
+  assetPotential?: AssetPotentialLevel;       // webtoon/drama/goods expansion potential
+  assetMemo?: string;                         // rights/IP packaging memo
 }
 
 export interface SocialProfile {
@@ -95,7 +123,7 @@ export interface CharRelation {
 // 씬시트의 14+ 필드 각각에 "누가 이 값을 썼는가"를 기록한다.
 // - USER: 작가 직접 입력 (최상위 권위)
 // - TEMPLATE: GENRE_PRESETS 등 시스템 기본값
-// - ENGINE_SUGGEST: 엔진(에피소드 전이/AI) 제안 — 작가가 수락한 상태
+// - ENGINE_SUGGEST: 엔진/노아 제안 — 작가가 수락한 상태
 // - ENGINE_DRAFT: 엔진 초안 — 작가가 아직 확정하지 않은 상태
 //
 // 역호환 원칙: 래핑 안 된 V1 값은 unwrap()/migrateToV2()에서 USER 자동 태그.
@@ -130,6 +158,16 @@ export interface TaggedValue<T> {
 /** TaggedField — 래핑되었을 수도, 아닐 수도 있는 필드 (역호환) */
 export type TaggedField<T> = T | TaggedValue<T>;
 
+export interface SceneProductionDirection {
+  miseEnScene?: string;
+  camera?: string;
+  lighting?: string;
+  sound?: string;
+  action?: string;
+  proseRhythm?: string;
+  updatedAt?: number;
+}
+
 // Scene Direction (작품 연출) data — V1 (기존). 역호환 위해 유지.
 // 주의: 이것은 **작품 전체 연출 공식**(고구마/사이다·훅·감정 곡선·클리프행어·복선 등).
 //       에피소드 단위 시나리오는 `EpisodeSceneSheet` (line 420~). 두 개념 구분 필요.
@@ -146,6 +184,7 @@ export interface SceneDirectionData {
   tensionCurve?: { position: number; level: number; label: string }[];
   canonRules?: { character: string; rule: string }[];
   sceneTransitions?: { fromScene: string; toScene: string; method: string }[];
+  productionDirection?: SceneProductionDirection;
   writerNotes?: string;
   /** 이번 화 등장인물 — 선택된 캐릭터만 프롬프트에 풀 DNA 주입 */
   activeCharacters?: string[];
@@ -171,6 +210,7 @@ export interface SceneDirectionDataV2 {
   tensionCurve?: TaggedField<{ position: number; level: number; label: string }>[];
   canonRules?: TaggedField<{ character: string; rule: string }>[];
   sceneTransitions?: TaggedField<{ fromScene: string; toScene: string; method: string }>[];
+  productionDirection?: TaggedField<SceneProductionDirection>;
   writerNotes?: TaggedField<string>;
   activeCharacters?: TaggedField<string>[];
   activeItems?: TaggedField<string>[];
@@ -273,7 +313,13 @@ export interface Item {
   durability?: string;       // 내구성과 수명
   evolution?: string;        // 성장/진화 여부
   maintenance?: string;      // 유지·수리 방식
+  // Professional asset/workflow fields
+  status?: ItemLifecycleStatus;
+  ipPotential?: AssetPotentialLevel;
+  rightsMemo?: string;
 }
+
+export type ItemLifecycleStatus = 'planned' | 'active' | 'lost' | 'sealed' | 'destroyed' | 'transferred';
 
 export interface Skill {
   id: string;
@@ -316,6 +362,26 @@ export interface StoryConfig {
   worldTimeline?: WorldTimelineEntry[];
   platform: PlatformType;
   publishPlatform?: PublishPlatform;
+  projectTargetLanguage?: ProjectTargetLanguage;
+  targetMarket?: ProjectTargetMarket;
+  releasePurpose?: ProjectReleasePurpose;
+  rightsStatus?: ProjectRightsStatus;
+  targetEpisodeLength?: string;
+  releaseCadence?: string;
+  /** 프로젝트 생성 단계의 권리/IP 메모. 기존 setting 문자열에도 요약 저장되지만 재진입 폼 복원을 위해 별도 보존한다. */
+  rightsNote?: string;
+  /** 출고·저작권 등록 준비용 작가 표시명. 필명 사용 시 공개 표기 기준으로 쓴다. */
+  authorDisplayName?: string;
+  /** 출고·저작권 등록 준비용 작가 실명. 필명 확인문 생성에만 사용한다. */
+  authorLegalName?: string;
+  /** 출고 탭 권리 원장. 미지정 항목은 현재 프로젝트 데이터에서 자동 조립한다. */
+  rightsLedger?: ProjectRightsLedgerEntry[];
+  /** 외부 작품은 원문/고유명사가 아니라 연출 기법 브릿지만 저장한다. */
+  externalCraftReferences?: ExternalCraftReferenceRecord[];
+  acceptedImportCandidates?: AcceptedImportCandidateRecord[];
+  importFileReports?: ImportFileReportRecord[];
+  worldFieldEvidence?: Record<string, WorldFieldEvidenceRecord>;
+  mainScenarioStructure?: MainScenarioStructure;
   // 세계관 1단계 뼈대 (3-tier framework)
   corePremise?: string;       // 현실과 다른 핵심 전제
   powerStructure?: string;    // 권력 구조
@@ -356,7 +422,7 @@ export interface StoryConfig {
   chapterAnalyses?: ChapterAnalysis[];
   grammarRegion?: 'KR' | 'US' | 'JP' | 'CN';
   shadowState?: import('@/engine/shadow').ShadowState;
-  /** Consumed by EpisodeScenePanel UI + injected into AI prompt by engine/pipeline.ts */
+  /** Consumed by EpisodeScenePanel UI + injected into engine prompt by engine/pipeline.ts */
   episodeSceneSheets?: EpisodeSceneSheet[];
   visualPromptCards?: VisualPromptCard[];
   // NOA-PRISM v1.1 — Writing Quality Control
@@ -371,7 +437,7 @@ export interface StoryConfig {
   };
   // Sub-genre tags (서브 장르 태그)
   subGenres?: string[];
-  useSubGenrePrompt?: boolean; // 서브장르 태그를 AI 프롬프트에 삽입할지 여부
+  useSubGenrePrompt?: boolean; // 서브장르 태그를 엔진 프롬프트에 삽입할지 여부
   // M5 — Genre Translation Layer (novel/webtoon/drama/game)
   // undefined 또는 누락 시 UI는 'novel'로 폴백. 작가가 명시적으로 전환해야 저장된다.
   // 전환은 UI-only — 숨김 필드 값은 저장소에 그대로 유지된다.
@@ -393,9 +459,9 @@ export interface StoryConfig {
   qualityHarness?: QualityHarness;
 }
 
-/** 작가 수정 내역 (AI 초안 → 작가 수정) */
+  /** 작가 수정 내역 (노아 초안 → 작가 수정) */
 export interface WriterCorrection {
-  original: string;    // AI가 쓴 원문 (최대 200자)
+  original: string;    // 노아 초안 원문 (최대 200자)
   revised: string;     // 작가가 고친 문장 (최대 200자)
   action: 'rewrite' | 'expand' | 'compress' | 'tone' | 'manual';
   timestamp: number;
@@ -408,9 +474,12 @@ export interface EpisodeManuscript {
   content: string;
   charCount: number;
   lastUpdate: number;
-  /** AI 자동 생성 요약 (2~3줄, 150자 이내) — Tier A context */
+  lifecycleState?: EpisodeLifecycleState;
+  lifecycleUpdatedAt?: number;
+  lifecycleReason?: string;
+  /** 노아 보조 요약 (2~3줄, 150자 이내) — Tier A context */
   summary?: string;
-  /** AI 자동 생성 상세 요약 (5~8줄, 500자 이내) — Tier B (N-2) context */
+  /** 노아 보조 상세 요약 (5~8줄, 500자 이내) — Tier B (N-2) context */
   detailedSummary?: string;
   /** 작가 수정 내역 — 인라인 리라이트 기록 (최대 20개/에피소드) */
   corrections?: WriterCorrection[];
@@ -460,6 +529,13 @@ export interface EpisodeSceneEntry {
   characters: string;
   tone: string;          // "감동", "긴장", "개그", "액션" etc.
   summary: string;
+  purpose?: string;
+  conflict?: string;
+  publicInfo?: string;
+  hiddenInfo?: string;
+  emotionCurve?: string;
+  rewardBeat?: string;
+  hookPoint?: string;
   keyDialogue: string;
   emotionPoint: string;
   nextScene: string;
@@ -564,262 +640,7 @@ export interface ChapterAnalysis {
   musicPromptPack: MusicPromptPack;
 }
 
-// ============================================================
-// NOI — Narrative Origin Imaging (비주얼 설계 엔진)
-// ============================================================
-
-export type VisualShotType = 'key_scene' | 'character_focus' | 'background_focus' | 'cover' | 'thumbnail' | 'object_focus';
-export type VisualTargetUse = 'illustration' | 'cover' | 'thumbnail' | 'character_sheet' | 'concept_art';
-export type CameraShot = 'close_up' | 'medium' | 'full_body' | 'wide' | 'over_shoulder' | 'top_down' | 'low_angle' | 'eye_level';
-
-export interface VisualLevelPack {
-  subjectFocus: number;       // 0-3
-  backgroundDensity: number;  // 0-3
-  sceneTension: number;       // 0-3
-  emotionIntensity: number;   // 0-3
-  compositionDrama: number;   // 0-3
-  styleStrength: number;      // 0-3
-  symbolismWeight: number;    // 0-3
-}
-
-export interface VisualPromptCard {
-  id: string;
-  episode: number;
-  analysisId?: string;
-  title: string;
-  shotType: VisualShotType;
-  targetUse: VisualTargetUse;
-  cameraShot?: CameraShot;
-  selectedCharacters: string[];
-  selectedObjects: string[];
-  levels: VisualLevelPack;
-  subjectPrompt: string;
-  backgroundPrompt: string;
-  scenePrompt: string;
-  compositionPrompt: string;
-  lightingPrompt: string;
-  stylePrompt: string;
-  negativePrompt: string;
-  moodTags: string[];
-  consistencyTags: string[];
-  sourceSummary?: string;
-  sourceTurningPoint?: string;
-  sourceLocation?: string;
-  createdAt: number;
-  updatedAt: number;
-  generatedImages?: GeneratedVisualAsset[];
-  seed?: number;
-  referenceImageUrl?: string;
-}
-
-export interface GeneratedVisualAsset {
-  id: string;
-  promptCardId: string;
-  provider: string;
-  model: string;
-  imageUrl: string;
-  promptSnapshot: string;
-  createdAt: number;
-  // Scene gallery extensions
-  assignedEpisode?: number;
-  favorite?: boolean;
-  revisedPrompt?: string;
-}
-
-export interface VisualPreset {
-  id: string;
-  name: string;
-  levels: VisualLevelPack;
-  defaultShotType?: VisualShotType;
-  defaultTargetUse?: VisualTargetUse;
-  tags?: string[];
-}
-
-export interface SavedSlot {
-  id: string;
-  name: string;
-  tab: string;
-  timestamp: number;
-  data: Partial<StoryConfig>;
-}
-
-export interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  imageUrl?: string;
-  versions?: string[];
-  currentVersionIndex?: number;
-  meta?: {
-    grade?: string;
-    eosScore?: number;
-    metrics?: {
-      tension: number;
-      pacing: number;
-      immersion: number;
-    };
-    critique?: string;
-    engineReport?: EngineReport;
-    hfcpMode?: string;
-    hfcpVerdict?: string;
-    hfcpScore?: number;
-    qualityTag?: '🟢' | '🟡' | '🔴';
-    qualityLabel?: string;
-    qualityFindings?: Array<{ kind: string; severity: number; message: string; lineNo?: number; excerpt?: string }>;
-  };
-  timestamp: number;
-}
-
-export interface EngineStatus {
-  activeLayer: string;
-  currentEngine: string;
-  processing: boolean;
-  progress: number;
-  eosScore: number;
-  tensionTarget: number;
-  actPosition: string;
-  byteSize: number;
-  platform: PlatformType;
-}
-
-// Chat session (moved from page.tsx for shared access)
-export interface ChatSession {
-  id: string;
-  title: string;
-  messages: Message[];
-  config: StoryConfig;
-  lastUpdate: number;
-}
-
-// Volume grouping for episode tree
-export interface Volume {
-  id: number;
-  title: string;
-  description?: string;
-}
-
-// Project (multi-project folder structure)
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  genre: Genre;
-  createdAt: number;
-  lastUpdate: number;
-  sessions: ChatSession[];
-  volumes?: Volume[];
-  currentBranch?: string;
-}
-
 export { PlatformType, EpisodeState, PublishPlatform } from '../engine/types';
 export type { EngineReport } from '../engine/types';
-
-// ============================================================
-// 3.8 자율 시스템 타입
-// ============================================================
-
-// ① Quality Gate Loop
-export interface QualityThresholds {
-  minGrade: string;
-  minDirectorScore: number;
-  minEOS: number;
-  minTensionAlignment: number;
-  maxAITonePercent: number;
-  blockOnRedTag: boolean;
-}
-
-export interface QualityGateConfig {
-  enabled: boolean;
-  maxRetries: number;
-  thresholds: QualityThresholds;
-  autoMode: 'full_auto' | 'confirm' | 'off';
-}
-
-export interface QualityGateResult {
-  passed: boolean;
-  attempt: number;
-  failReasons: string[];
-  grade: string;
-  directorScore: number;
-  eosScore: number;
-  qualityTag: string;
-  /** M4 — 작가 주도 비율 (0-100). 씬시트 origin 통계 기반. */
-  authorLeadRatio?: number;
-  /** M4 — authorLead 가중치 보너스/페널티 (감독 점수 가산값) */
-  authorLeadAdjustment?: number;
-}
-
-// ② Proactive Suggestions
-export type SuggestionCategory =
-  | 'character_drift' | 'world_inconsistency' | 'tension_mismatch'
-  | 'thread_overdue' | 'pacing_anomaly' | 'emotion_flat'
-  | 'ai_tone_creep' | 'hallucination_risk' | 'foreshadow_urgent';
-
-export type SuggestionPriority = 'critical' | 'warning' | 'info';
-
-export interface ProactiveSuggestion {
-  id: string;
-  category: SuggestionCategory;
-  priority: SuggestionPriority;
-  message: string;
-  actionHint: string;
-  episode: number;
-  dismissed: boolean;
-  dismissCount: number;
-}
-
-export interface SuggestionConfig {
-  enabled: boolean;
-  maxPerGeneration: number;
-  cooldownTurns: number;
-  suppressAfterDismiss: number;
-  categories: Partial<Record<SuggestionCategory, boolean>>;
-}
-
-// ③ Auto-Pipeline
-export type PipelineStage = 'world_check' | 'character_sync' | 'direction_setup' | 'generation';
-export type StageStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
-
-export interface PipelineStageResult {
-  stage: PipelineStage;
-  status: StageStatus;
-  duration: number;
-  score?: number;
-  warnings: string[];
-}
-
-export interface AutoPipelineConfig {
-  enabled: boolean;
-  stages: Record<PipelineStage, {
-    enabled: boolean;
-    passThreshold: number;
-    failAction: 'block' | 'warn' | 'skip';
-  }>;
-  qualityGateEnabled: boolean;
-}
-
-// ④ Writer Profile
-export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
-
-export interface WriterProfile {
-  id: string;
-  createdAt: number;
-  updatedAt: number;
-  episodeCount: number;
-  avgSentenceLength: number;
-  dialogueRatio: number;
-  emotionDensity: number;
-  avgEpisodeLength: number;
-  pacingPreference: number;
-  avgGrade: number;
-  avgDirectorScore: number;
-  avgEOS: number;
-  commonIssues: Record<string, number>;
-  avgAITone: number;
-  regenerateRate: number;
-  overrideRate: number;
-  skillLevel: SkillLevel;
-  levelConfidence: number;
-  /** 0-1, how often user accepts Tab inline completions */
-  completionAcceptRate: number;
-}
+export type * from './studio-project-types';
+export * from './studio-types.runtime';

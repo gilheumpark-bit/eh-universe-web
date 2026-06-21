@@ -63,9 +63,9 @@ export function buildRetryHint(manuscript: string): string {
   if (r.dialoguePct < 10 && r.chars >= 500) hints.push(`대사 ${r.dialoguePct}% — 대사 보강`);
   if (r.artifacts.length) hints.push(`출고 부적합 잔여: ${r.artifacts.join(', ')} — 제거`);
 
-  // AI 시그니처 (05_집필)
+  // 표현 습관 (05_집필)
   if (sig.score >= 40 && sig.hits.length) {
-    hints.push(`AI 시그니처 적중: ${sig.hits.slice(0, 3).map((h) => h.pattern).join(', ')} — 해당 표현 회피`);
+    hints.push(`어색한 표현 후보: ${sig.hits.slice(0, 3).map((h) => h.pattern).join(', ')} — 해당 표현은 줄이기`);
   }
 
   // 복선 5-state (05_집필 chg_156)

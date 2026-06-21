@@ -11,11 +11,14 @@ import { useEffect } from "react";
 export default function A11yCheckInit() {
   useEffect(() => {
     // dynamic import — 프로덕션 번들에 axe 코드가 포함되지 않도록 격리.
-    import("@/lib/a11y-check")
-      .then(({ initA11yCheck }) => initA11yCheck())
-      .catch(() => {
-        // dev 전용 기능 실패는 무시.
-      });
+    const timer = window.setTimeout(() => {
+      import("@/lib/a11y-check")
+        .then(({ initA11yCheck }) => initA11yCheck())
+        .catch(() => {
+          // dev 전용 기능 실패는 무시.
+        });
+    }, 3000);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return null;

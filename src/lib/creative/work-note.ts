@@ -115,13 +115,13 @@ export function summarizeNotes(notes: WorkNote[]): string {
 // PART 4 — attachJournal: 작품 단위 누적 (init/draft/refine)
 // ============================================================
 //
-// rank 17 — Network ↔ studio work-note 인라인 동기화.
+// rank 17 — Studio ↔ 과정기록 work-note 인라인 동기화.
 // 스토리지: localStorage `noa.creative.work-note.journal`
 // 구조: { [workId]: Array<{ kind: 'init'|'draft'|'refine', at: number }> }
 //
 // 사상:
 //  - studio 가 원고 생성/퇴고할 때마다 `attachJournal(workId, kind)` 호출
-//  - network UI 가 `summarizeJournalWeek(workId)` 로 "이번 주 N건" 조회
+//  - 과정기록 UI 가 `summarizeJournalWeek(workId)` 로 "이번 주 N건" 조회
 //  - 모든 timestamp(at) 은 호출자 주입. 모듈 내부 Date.now() 호출 0 (테스트 친화)
 //
 // [C] 안전성: SSR/private browsing 의 localStorage 미가용 모두 silent fallback

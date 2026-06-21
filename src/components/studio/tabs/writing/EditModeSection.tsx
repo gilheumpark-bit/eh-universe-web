@@ -257,7 +257,7 @@ export function EditModeSection({
         {editDraft.length === 0 && (
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-amber/5 border border-accent-amber/20 text-[13px] text-accent-amber">
             <PenLine className="w-4 h-4 shrink-0" />
-            <span>{L4(language, { ko: '직접 타이핑으로 집필합니다. 텍스트 선택 후 Ctrl+Shift+R로 NOA 리라이트를 사용할 수 있습니다.', en: 'Write by typing. Select text and press Ctrl+Shift+R for NOA inline rewrite.', ja: '直接タイピングで執筆します。テキスト選択後 Ctrl+Shift+R で NOA リライトを実行できます。', zh: '通过直接键入进行写作。选择文本后按 Ctrl+Shift+R 可使用 NOA 内联重写。' })}</span>
+            <span>{L4(language, { ko: '직접 타이핑으로 집필합니다. 텍스트 선택 후 Ctrl+Shift+R로 노아 리라이트를 사용할 수 있습니다.', en: 'Write by typing. Select text and press Ctrl+Shift+R for Noa inline rewrite.', ja: '直接タイピングで執筆します。テキスト選択後 Ctrl+Shift+R で ノア リライトを実行できます。', zh: '通过直接键入进行写作。选择文本后按 Ctrl+Shift+R 可使用 诺亚 内联重写。' })}</span>
           </div>
         )}
         <div className="flex items-center gap-2">

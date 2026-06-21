@@ -30,16 +30,16 @@ describe('ModalProvider 기본', () => {
     const fn = jest.fn();
     const { getByTestId } = render(<ModalProvider><TestConsumer onCtx={fn} /></ModalProvider>);
     const ctx = fn.mock.calls[0][0];
-    act(() => { ctx.openModal('code-studio:settings'); });
-    expect(getByTestId('open-id').textContent).toBe('code-studio:settings');
+    act(() => { ctx.openModal('studio:settings'); });
+    expect(getByTestId('open-id').textContent).toBe('studio:settings');
   });
 
   it('closeModal 호출 → null', () => {
     const fn = jest.fn();
     const { getByTestId } = render(<ModalProvider><TestConsumer onCtx={fn} /></ModalProvider>);
     const ctx = fn.mock.calls[0][0];
-    act(() => { ctx.openModal('code-studio:settings'); });
-    expect(getByTestId('open-id').textContent).toBe('code-studio:settings');
+    act(() => { ctx.openModal('studio:settings'); });
+    expect(getByTestId('open-id').textContent).toBe('studio:settings');
     act(() => { ctx.closeModal(); });
     expect(getByTestId('open-id').textContent).toBe('');
   });
@@ -49,9 +49,9 @@ describe('ModalProvider 기본', () => {
     const fn = jest.fn();
     const { getByTestId } = render(<ModalProvider><TestConsumer onCtx={fn} /></ModalProvider>);
     const ctx = fn.mock.calls[0][0];
-    act(() => { ctx.openModal('code-studio:settings'); });
+    act(() => { ctx.openModal('studio:settings'); });
     act(() => { ctx.openModal('studio:command-palette'); });
-    expect(getByTestId('open-id').textContent).toBe('code-studio:settings');
+    expect(getByTestId('open-id').textContent).toBe('studio:settings');
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
@@ -60,7 +60,7 @@ describe('ModalProvider 기본', () => {
     const fn = jest.fn();
     const { getByTestId } = render(<ModalProvider><TestConsumer onCtx={fn} /></ModalProvider>);
     const ctx = fn.mock.calls[0][0];
-    act(() => { ctx.openModal('code-studio:settings'); });
+    act(() => { ctx.openModal('studio:settings'); });
     act(() => { ctx.replaceModal('studio:command-palette'); });
     expect(getByTestId('open-id').textContent).toBe('studio:command-palette');
   });
@@ -77,9 +77,9 @@ describe('Provider 밖 호출 에러', () => {
 
 describe('keyboard-manager 연동', () => {
   it('modal 열리면 키 바인딩 자동 suppress', () => {
-    window.history.pushState({}, '', '/code-studio');
+    window.history.pushState({}, '', '/studio');
     const handler = jest.fn();
-    registerKeyBinding({ keys: 'ctrl+p', area: 'code-studio', handler });
+    registerKeyBinding({ keys: 'ctrl+p', area: 'studio', handler });
 
     const fn = jest.fn();
     render(<ModalProvider><TestConsumer onCtx={fn} /></ModalProvider>);
@@ -90,7 +90,7 @@ describe('keyboard-manager 연동', () => {
     expect(handler).toHaveBeenCalledTimes(1);
 
     // modal 열기 → 단축키 비활성
-    act(() => { ctx.openModal('code-studio:settings'); });
+    act(() => { ctx.openModal('studio:settings'); });
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', ctrlKey: true, cancelable: true, bubbles: true }));
     expect(handler).toHaveBeenCalledTimes(1); // 추가 호출 없음
 
@@ -102,13 +102,13 @@ describe('keyboard-manager 연동', () => {
 });
 
 describe('useModalOpen · useModalPayload', () => {
-  function ProbeOpen({ id, onChange }: { id: 'code-studio:settings'; onChange: (v: boolean) => void }) {
+  function ProbeOpen({ id, onChange }: { id: 'studio:settings'; onChange: (v: boolean) => void }) {
     const open = useModalOpen(id);
     React.useEffect(() => { onChange(open); }, [open, onChange]);
     return null;
   }
   function ProbePayload({ onLoad }: { onLoad: (p: unknown) => void }) {
-    const p = useModalPayload('code-studio:confirm');
+    const p = useModalPayload('studio:confirm');
     React.useEffect(() => { onLoad(p); }, [p, onLoad]);
     return null;
   }
@@ -118,11 +118,11 @@ describe('useModalOpen · useModalPayload', () => {
     render(
       <ModalProvider>
         <TestConsumer onCtx={fn} />
-        <ProbeOpen id="code-studio:settings" onChange={probe} />
+        <ProbeOpen id="studio:settings" onChange={probe} />
       </ModalProvider>
     );
     const ctx = fn.mock.calls[0][0];
-    act(() => { ctx.openModal('code-studio:settings'); });
+    act(() => { ctx.openModal('studio:settings'); });
     expect(probe.mock.calls.some((c) => c[0] === true)).toBe(true);
   });
   it('useModalPayload 타입 추출', () => {
@@ -135,7 +135,7 @@ describe('useModalOpen · useModalPayload', () => {
       </ModalProvider>
     );
     const ctx = fn.mock.calls[0][0];
-    act(() => { ctx.openModal('code-studio:confirm', { title: 'T', message: 'M', onConfirm: () => {} }); });
+    act(() => { ctx.openModal('studio:confirm', { title: 'T', message: 'M', onConfirm: () => {} }); });
     const found = probe.mock.calls.find((c) => c[0] && (c[0] as { title: string }).title === 'T');
     expect(found).toBeTruthy();
   });

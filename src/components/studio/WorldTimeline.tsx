@@ -107,8 +107,8 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
         </p>
         <p className="ds-empty-state-desc">
           {isKO
-            ? '시뮬레이터에서 문명을 추가하면 타임라인이 표기됩니다.'
-            : 'Add civilizations in the Simulator to initialize the timeline visualization.'}
+            ? '세계관 점검에서 문명을 추가하면 타임라인이 표기됩니다.'
+            : 'Add civilizations in World Check to initialize the timeline visualization.'}
         </p>
         <button
           onClick={() => onSelectEra?.('')}

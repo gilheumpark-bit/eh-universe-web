@@ -18,13 +18,13 @@ import { TabHeader } from '@/components/studio/TabHeader';
 /** 다국어 에러/프리픽스 메시지 — 재렌더마다 재생성되지 않도록 모듈 상수로 추출 */
 const L10N = {
   unsupported: {
-    KO: '현재 노아 엔진은 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.',
-    EN: "Current NOA engine doesn't support structured generation. Please use Gemini.",
-    JP: '現在のノアエンジンは構造化生成に対応していません。Geminiをご利用ください。',
-    CN: '当前诺亚引擎不支持结构化生成，请使用Gemini。',
+    KO: '현재 노아 운영 모드는 구조화 제안을 지원하지 않습니다. 지원 엔진 또는 연결 키를 확인해주세요.',
+    EN: 'The current Noa mode does not support structured suggestions. Check a supported engine or connection key.',
+    JP: '現在のNoa運用モードは構造化提案に対応していません。対応エンジンまたは接続キーを確認してください。',
+    CN: '当前 Noa 运行模式不支持结构化建议。请检查支持的引擎或连接密钥。',
   },
   needSynopsis: {
-    KO: '먼저 시놉시스를 작성해주세요.',
+    KO: '먼저 시놉시스를 적어 주세요.',
     EN: 'Please write the synopsis first.',
     JP: '先にあらすじを書いてください。',
     CN: '请先编写大纲。',
@@ -77,6 +77,7 @@ interface CharacterTabProps {
   saveFlash: boolean;
   setUxError: (err: { error: unknown; retry?: () => void } | null) => void;
   showAiLock?: boolean;
+  currentProjectId?: string | null;
   hostedProviders?: Record<string, boolean>;
 }
 
@@ -90,6 +91,7 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
   saveFlash,
   setUxError,
   showAiLock = false,
+  currentProjectId = null,
   hostedProviders = {},
 }) => {
   const t = createT(language);
@@ -240,7 +242,13 @@ const CharacterTab: React.FC<CharacterTabProps> = ({
 
       {!showAiLock && (
         <div className="max-w-[1400px] mx-auto px-4 pb-4">
-          <TabAssistant tab="characters" language={language} config={config} hostedProviders={hostedProviders} />
+          <TabAssistant
+            tab="characters"
+            language={language}
+            config={config}
+            currentProjectId={currentProjectId}
+            hostedProviders={hostedProviders}
+          />
         </div>
       )}
     </>

@@ -37,10 +37,10 @@ export interface TabMemoryPolicy {
  * - 'writing-chat' : useWritingChat 전용 네임스페이스 (TabAssistant 'writing'과 이력이
  *                    분리된 별도 대화이므로 요약 store 충돌 방지를 위해 키 분리)
  * - 'world'        : 세계관 (NOL)
- * - 'rulebook'     : 플롯·장면 연출 (NOP)
+ * - 'direction'    : 플롯·장면 연출 (NOP)
  * - 'plot'         : 플롯 별칭 (loreguard 계열 호환)
  */
-const HEAVY_TABS: ReadonlySet<string> = new Set(['writing', 'writing-chat', 'world', 'rulebook', 'plot']);
+const HEAVY_TABS: ReadonlySet<string> = new Set(['writing', 'writing-chat', 'world', 'direction', 'plot']);
 
 /** light 탭 sliding window 크기 */
 export const LIGHT_WINDOW_SIZE = 20;
@@ -48,9 +48,32 @@ export const LIGHT_WINDOW_SIZE = 20;
 /** 요약 디바운스 — 마지막 요약 이후 사용자 턴 10회 누적마다 1회만 호출 */
 export const SUMMARY_TURN_INTERVAL = 10;
 
+/** 프로젝트가 아직 정해지지 않은 화면의 임시 격리 범위. */
+const UNBOUND_PROJECT_SCOPE = 'no-project';
+
+function normalizeProjectScopeId(projectId?: string | null): string {
+  const safe = projectId?.trim();
+  return safe ? encodeURIComponent(safe) : UNBOUND_PROJECT_SCOPE;
+}
+
+function getPolicyTabName(tab: string): string {
+  if (!tab.startsWith('project:')) return tab;
+  const parts = tab.split(':');
+  return parts.length >= 3 ? parts.slice(2).join(':') : tab;
+}
+
+/**
+ * 노아 대화/요약 저장 키를 프로젝트 단위로 격리한다.
+ * 같은 탭이라도 프로젝트가 다르면 별도 요약 체인을 사용해야 한다.
+ */
+export function buildProjectScopedMemoryKey(baseTab: string, projectId?: string | null): string {
+  return `project:${normalizeProjectScopeId(projectId)}:${baseTab || 'unknown'}`;
+}
+
 /** 탭 → 메모리 정책. 미등록 탭은 light 기본. */
 export function getTabPolicy(tab: string): TabMemoryPolicy {
-  return HEAVY_TABS.has(tab)
+  const policyTab = getPolicyTabName(tab);
+  return HEAVY_TABS.has(policyTab)
     ? { tier: 'heavy', windowSize: Number.POSITIVE_INFINITY }
     : { tier: 'light', windowSize: LIGHT_WINDOW_SIZE };
 }

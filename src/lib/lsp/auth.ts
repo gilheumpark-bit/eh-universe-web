@@ -84,3 +84,77 @@ export function checkRateLimit(key: string): RateLimitResult {
 export function clearRateLimit(): void {
   rateLimitStore.clear();
 }
+
+export type LspAuthResult =
+  | { ok: true; token: string; remaining: number; resetAt: number }
+  | { ok: false; status: 401 | 429 | 503; error: string; retryAfterSec?: number; resetAt?: number };
+
+function configuredLspToken(): string {
+  return process.env.LOREGUARD_LSP_TOKEN?.trim() ?? '';
+}
+
+function configuredLspTokenHash(): string {
+  return process.env.LOREGUARD_LSP_TOKEN_HASH?.trim().toLowerCase() ?? '';
+}
+
+export function hasConfiguredLspTokenStore(): boolean {
+  return Boolean(configuredLspToken() || configuredLspTokenHash());
+}
+
+function extractLspToken(request: Request, queryParam?: string): string {
+  const auth = request.headers.get('authorization') ?? '';
+  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
+  if (bearer) return bearer;
+  if (!queryParam) return '';
+  try {
+    return new URL(request.url).searchParams.get(queryParam)?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export async function verifyLspToken(token: string): Promise<LspAuthResult> {
+  if (!isValidTokenFormat(token)) {
+    return { ok: false, status: 401, error: 'unauthorized' };
+  }
+
+  const directToken = configuredLspToken();
+  const tokenHash = configuredLspTokenHash();
+  const hasServerTokenStore = hasConfiguredLspTokenStore();
+
+  if (directToken && token !== directToken) {
+    return { ok: false, status: 401, error: 'unauthorized' };
+  }
+  if (tokenHash) {
+    const presentedHash = await hashToken(token);
+    if (presentedHash !== tokenHash) {
+      return { ok: false, status: 401, error: 'unauthorized' };
+    }
+  }
+  if (process.env.NODE_ENV === 'production' && !hasServerTokenStore) {
+    return { ok: false, status: 503, error: 'lsp_token_store_unconfigured' };
+  }
+
+  const rateKey = `lsp:${await hashToken(token)}`;
+  const rl = checkRateLimit(rateKey);
+  if (!rl.allowed) {
+    return {
+      ok: false,
+      status: 429,
+      error: 'rate_limited',
+      retryAfterSec: Math.ceil((rl.resetAt - Date.now()) / 1000),
+      resetAt: rl.resetAt,
+    };
+  }
+  return { ok: true, token, remaining: rl.remaining, resetAt: rl.resetAt };
+}
+
+export function lspAuthHeaders(result: Extract<LspAuthResult, { ok: false }>): Record<string, string> | undefined {
+  if (result.status !== 429 || !result.retryAfterSec) return undefined;
+  return { 'Retry-After': String(result.retryAfterSec) };
+}
+
+export async function authorizeLspRequest(request: Request, options: { queryTokenParam?: string } = {}): Promise<LspAuthResult> {
+  const token = extractLspToken(request, options.queryTokenParam);
+  return verifyLspToken(token);
+}

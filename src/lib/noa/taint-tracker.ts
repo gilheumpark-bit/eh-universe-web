@@ -106,7 +106,7 @@ export class TaintTracker {
       }
     }
 
-    // 자동 패턴 마스킹 (API 키, 이메일, 전화번호 등)
+    // 자동 패턴 마스킹 (연결 키, 이메일, 전화번호 등)
     const autoPatterns = [
       { pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, label: 'EMAIL' },
       { pattern: /\b(?:sk-|AIza|ghp_|xoxb-)[A-Za-z0-9_-]{20,}\b/g, label: 'API_KEY' },

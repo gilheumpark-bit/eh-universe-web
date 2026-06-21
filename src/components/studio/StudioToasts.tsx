@@ -193,10 +193,10 @@ function TranslateCtaToast() {
         </p>
         <p className="text-xs text-text-secondary">
           {L4(lang, {
-            ko: '번역 스튜디오로 바로 가시겠어요?',
-            en: 'Jump to Translation Studio?',
-            ja: '翻訳スタジオへ進みますか?',
-            zh: '前往翻译工作室?',
+            ko: '번역·현지화 작업실로 바로 가시겠어요?',
+            en: 'Jump to translation and localization?',
+            ja: '翻訳・ローカライズへ進みますか?',
+            zh: '前往翻译·本地化?',
           })}
         </p>
       </div>
@@ -205,7 +205,7 @@ function TranslateCtaToast() {
         onClick={() => setDetail(null)}
         className="shrink-0 px-3 py-2 min-h-[44px] bg-accent-amber/20 hover:bg-accent-amber/30 border border-accent-amber/30 text-accent-amber text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
       >
-        {L4(lang, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' })} →
+        {L4(lang, { ko: '열기', en: 'Open', ja: '開く', zh: '打开' })}
       </a>
     </AutoDismissToast>
   );
@@ -289,7 +289,7 @@ export default function StudioToasts({
         <AutoDismissToast variant="success" duration={4000} onDismiss={() => setWorldImportBanner(false)}>
           <Globe className="w-5 h-5 text-accent-green shrink-0" />
           <p className="flex-1 text-sm font-medium text-text-primary">
-            {isKO ? 'Network에서 세계관을 불러왔습니다' : 'World imported from Network'}
+            {isKO ? '불러온 세계관을 적용했습니다' : 'Imported world context applied'}
           </p>
         </AutoDismissToast>
       )}

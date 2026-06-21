@@ -1,7 +1,7 @@
 // ============================================================
-// Agent Builder 상태 API — 비활성 (Google Discovery Engine 제거)
+// Retired external search status API — disabled compatibility route
 // ============================================================
-// [2026-06-06] 구글 AI 삭제: Vertex AI Agent Builder 상태 경로 제거. 항상 503.
+// [2026-06-06] 구 외부 검색 상태 경로 제거. 항상 503.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';

@@ -1,6 +1,11 @@
 import Stripe from 'stripe';
+import type {
+  CertificateProductId,
+  LoreguardPlanId,
+  ReleaseEntitlementPlan,
+} from '@/lib/billing/loreguard-plans';
 
-// Stripe 초기화: 환경변수 없으면 null 반환 — placeholder 키 사용 금지
+// Stripe 초기화: 환경변수 없으면 null 반환 — 예시 키 사용 금지
 // apiVersion은 Stripe SDK 타입이 요구하는 버전 문자열.
 // 배포 시점에 Stripe SDK 패키지가 지원하는 최신 안정 버전을 사용 (빈 객체로 기본값에 위임).
 const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
@@ -35,9 +40,14 @@ export const getStripeSession = async (
   customerId?: string,
   returnUrl?: string,
   firebaseUid?: string,
+  planId?: LoreguardPlanId | null,
 ) => {
   if (!stripe) throw new Error('Stripe is not configured');
   const base = sanitizeStripeReturnBase(returnUrl);
+  const metadata = {
+    ...(firebaseUid ? { firebaseUid } : {}),
+    ...(planId ? { loreguardPlanId: planId } : {}),
+  };
   return stripe.checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
@@ -49,7 +59,43 @@ export const getStripeSession = async (
     // [revenue path 2026-06-06] Firebase uid 를 결제 세션에 심어 webhook 이 결제↔유저 매핑한다.
     // client_reference_id → checkout.session.completed 에서, subscription metadata → subscription.* 에서 회수.
     ...(firebaseUid
-      ? { client_reference_id: firebaseUid, subscription_data: { metadata: { firebaseUid } } }
+      ? { client_reference_id: firebaseUid, metadata, subscription_data: { metadata } }
       : {}),
+  });
+};
+
+export const getStripeReleaseCreditSession = async (input: {
+  priceId: string;
+  customerId?: string;
+  returnUrl?: string;
+  firebaseUid: string;
+  projectId: string;
+  periodKey: string;
+  productId: CertificateProductId;
+  packageProfileId: ReleaseEntitlementPlan['packageProfileId'];
+  creditAmount: number;
+  certificateId?: string | null;
+}) => {
+  if (!stripe) throw new Error('Stripe is not configured');
+  const base = sanitizeStripeReturnBase(input.returnUrl);
+  const metadata = {
+    firebaseUid: input.firebaseUid,
+    loreguardCheckoutKind: 'release_credit_purchase',
+    loreguardProductId: input.productId,
+    loreguardPackageProfileId: input.packageProfileId,
+    releaseCreditAmount: String(input.creditAmount),
+    projectId: input.projectId,
+    periodKey: input.periodKey,
+    ...(input.certificateId ? { certificateId: input.certificateId } : {}),
+  };
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    line_items: [{ price: input.priceId, quantity: 1 }],
+    success_url: `${base}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${base}/payment/cancel`,
+    customer: input.customerId,
+    client_reference_id: input.firebaseUid,
+    metadata,
   });
 };

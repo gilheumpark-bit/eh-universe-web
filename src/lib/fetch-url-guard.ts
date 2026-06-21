@@ -118,6 +118,37 @@ export function validatePostFetchUrl(responseUrl: string): void {
   }
 }
 
+export async function assertResolvedHostAllowedForFetch(
+  rawUrl: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const allowed = assertUrlAllowedForFetch(rawUrl);
+  if (!allowed.ok) {
+    return { ok: false, reason: allowed.reason };
+  }
+
+  const parsed = new URL(allowed.href);
+  const host = normalizeHost(parsed.hostname);
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || looksLikeIPv6(host)) {
+    return { ok: true };
+  }
+
+  try {
+    const { lookup } = await import('node:dns/promises');
+    const records = await lookup(host, { all: true, verbatim: true });
+    if (!records.length) {
+      return { ok: false, reason: '호스트 주소를 확인할 수 없습니다.' };
+    }
+    for (const record of records) {
+      if (isPrivateHost(record.address)) {
+        return { ok: false, reason: 'DNS 확인 결과 사설/로컬 주소로 연결되어 차단했습니다.' };
+      }
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: '호스트 주소를 확인할 수 없습니다.' };
+  }
+}
+
 const BLOCKED_HOSTNAMES = new Set([
   'localhost',
   '127.0.0.1',

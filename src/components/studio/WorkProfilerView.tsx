@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// WorkProfilerView.tsx — Whole-work profiler (tension / quality /
+// WorkProfilerView.tsx — Whole-work analysis (tension / quality /
 // characters / scene density) rendered as pure SVG + HTML, no chart
 // libraries. Consumes ChatSession[] through work-profiler-engine.
 // ============================================================
@@ -272,10 +272,10 @@ const WorkProfilerView: React.FC<WorkProfilerViewProps> = ({
   // Static label packs — no runtime i18n fetch.
   const L = {
     title: L4(language, {
-      ko: '작품 프로파일러',
-      en: 'Work Profiler',
-      ja: '作品プロファイラー',
-      zh: '作品分析器',
+      ko: '작품 분석',
+      en: 'Work Analysis',
+      ja: '作品分析',
+      zh: '作品分析',
     }),
     summary: L4(language, {
       ko: '요약',

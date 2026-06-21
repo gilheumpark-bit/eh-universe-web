@@ -72,7 +72,7 @@ export interface DualPipelineParams {
   /**
    * [Z1a-1 — 2026-06-11] 4버전 누진 현지화 레벨 (additive — claude2 정합).
    *   undefined: 기존 2트랙 동작 그대로 (기본값 — 회귀 0)
-   *   1: 직역 우선 — checklist 주입 없음 (직역 결과는 faithful track 이 담당)
+   *   1: 원문 밀착 우선 — checklist 주입 없음 (원문 밀착 결과는 faithful track 이 담당)
    *   2: 기본 현지화 — 기존 Market Stage 4 그대로 (주입 없음)
    *   3: Tier-1 15항목 checklist directive 를 Stage 4-Market prompt 에 주입
    *   4: Tier-1 + Tier-2 (30항목) 주입

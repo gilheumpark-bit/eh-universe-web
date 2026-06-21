@@ -231,7 +231,7 @@ ${rowsHtml}
   const attestationBlock = cert.attestationStatement
     ? buildAttestationBlock(cert.attestationStatement, labels)
     : '';
-  const sealBlock = cert.sealNumber ? buildSealBlock(cert.sealNumber) : '';
+  const sealBlock = cert.sealNumber ? buildSealBlock(cert.sealNumber, labels) : '';
   const hciBlock = cert.hciPayload
     ? buildHCIBlock(cert.hciPayload, language, labels)
     : '';
@@ -309,10 +309,13 @@ function buildAttestationBlock(
     </section>`;
 }
 
-function buildSealBlock(sealNumber: string): string {
+function buildSealBlock(
+  sealNumber: string,
+  labels: typeof ATTESTATION_LABELS[CertificateLanguage],
+): string {
   return `    <aside class="cert-seal cert-section" style="text-align: center;">
       ${buildWitnessSealSVG()}
-      <p class="label-caps" style="margin-top: 8px; color: var(--cert-color-accent-gold);">Witness Seal #${escapeHtml(sealNumber)}</p>
+      <p class="label-caps" style="margin-top: 8px; color: var(--cert-color-accent-gold);">${escapeHtml(labels.processSeal)} #${escapeHtml(sealNumber)}</p>
     </aside>`;
 }
 

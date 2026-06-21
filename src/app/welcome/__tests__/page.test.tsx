@@ -41,7 +41,7 @@ jest.mock('@/contexts/UserRoleContext', () => ({
 import WelcomePage from '../page';
 
 describe('/welcome onboarding (5장 + 역할 선택)', () => {
-  // [Track-D Phase 1.1 Round 1-5 — 2026-05-07] 슬라이드 4 → 5
+  // [Track-D Phase 1.1 Round 1-5 2026-05-07] 슬라이드 4 -> 5
   // 4번째 슬라이드 신규: 작업 정리 노트 (창작 과정 확인서) 안내
   // 5번째 슬라이드 (이전 4번째): 역할 선택 카드
   beforeEach(() => {
@@ -53,7 +53,7 @@ describe('/welcome onboarding (5장 + 역할 선택)', () => {
 
   it('첫 방문 시 Slide 1 렌더링', () => {
     const { container } = render(<WelcomePage />);
-    expect(container.textContent).toContain('AI가 쓰나요');
+    expect(container.textContent).toContain('노아가 대신 쓰나요');
   });
 
   it('이미 온보딩 완료한 사용자는 /studio로 리다이렉트', () => {
@@ -65,7 +65,7 @@ describe('/welcome onboarding (5장 + 역할 선택)', () => {
   it('다음 버튼 클릭 시 Slide 2로 이동', () => {
     const { container, getByText } = render(<WelcomePage />);
     fireEvent.click(getByText('다음'));
-    expect(container.textContent).toContain('훈련시킵니다');
+    expect(container.textContent).toContain('작가의 판단을 키웁니다');
   });
 
   it('3장까지 진행 시 Slide 3 + 다음 버튼 존재', () => {
@@ -107,6 +107,7 @@ describe('/welcome onboarding (5장 + 역할 선택)', () => {
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음')); // → 5번째 슬라이드 (역할 선택)
+    fireEvent.click(getByText('만 14세 이상입니다 (한국 청소년보호법 기준)'));
     fireEvent.click(getByText('소설가'));
     expect(localStorage.getItem('eh-onboarded')).toBe('1');
     expect(mockSetRole).toHaveBeenCalledWith('writer');
@@ -119,9 +120,23 @@ describe('/welcome onboarding (5장 + 역할 선택)', () => {
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음'));
     fireEvent.click(getByText('다음')); // → 5번째 슬라이드 (역할 선택)
+    fireEvent.click(getByText('만 14세 이상입니다 (한국 청소년보호법 기준)'));
     fireEvent.click(getByText('번역가'));
     expect(mockSetRole).toHaveBeenCalledWith('translator');
     expect(mockPush).toHaveBeenCalledWith('/translation-studio');
+  });
+
+  it('만 14세 체크 전에는 역할 카드가 이동하지 않음', () => {
+    const { getByText } = render(<WelcomePage />);
+    fireEvent.click(getByText('다음'));
+    fireEvent.click(getByText('다음'));
+    fireEvent.click(getByText('다음'));
+    fireEvent.click(getByText('다음')); // → 5번째 슬라이드
+
+    fireEvent.click(getByText('소설가'));
+    expect(localStorage.getItem('eh-onboarded')).toBeNull();
+    expect(mockSetRole).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('건너뛰기 버튼 → explorer role + localStorage 저장 + / 이동', () => {

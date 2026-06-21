@@ -494,8 +494,8 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
                   <div className="flex gap-1">
                     <button onClick={() => generateAIEvent(tr.fromEra, tr.toEra, i)}
                       className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold hover:bg-accent-purple/20 transition-colors"
-                      title={L4(lang, { ko: '템플릿에서 자동 생성', en: 'Auto-generate from templates', ja: 'テンプレートから自動生成', zh: '从模板自动生成' })}>
-                      {L4(lang, { ko: '자동', en: 'Auto', ja: 'Auto', zh: 'Auto' })}
+                      title={L4(lang, { ko: '템플릿에서 제안', en: 'Suggest from templates', ja: 'テンプレートから提案', zh: '从模板建议' })}>
+                      {L4(lang, { ko: '제안', en: 'Suggest', ja: '提案', zh: '建议' })}
                     </button>
                     <button onClick={() => removeTransition(i)} className="text-text-tertiary hover:text-accent-red text-xs">&#10005;</button>
                   </div>

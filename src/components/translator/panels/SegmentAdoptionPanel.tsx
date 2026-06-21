@@ -56,7 +56,7 @@ export function SegmentAdoptionPanel() {
   if (!active) {
     return (
       <div className="p-6 text-center text-xs text-text-tertiary">
-        {langKo ? '활성 챕터 없음' : 'No active chapter'}
+        {langKo ? '선택된 회차 없음' : 'No active chapter'}
       </div>
     );
   }
@@ -79,12 +79,12 @@ export function SegmentAdoptionPanel() {
           {langKo ? '세그먼트 채택' : 'Segment Adoption'}
         </h3>
         <p className="text-[10px] text-text-tertiary mt-0.5">
-          {langKo ? '단락별 Faithful / Market / 직접 편집' : 'Per-segment Faithful / Market / Manual'}
+          {langKo ? '단락별 보존안 / 현지화안 / 직접 편집' : 'Per-segment Faithful / Market / Manual'}
         </p>
         {/* 통계 */}
         <div className="mt-2 grid grid-cols-4 gap-1 text-center">
-          <Stat label={langKo ? 'F' : 'F'} value={stats.faithful} color="text-accent-green" />
-          <Stat label={langKo ? 'M' : 'M'} value={stats.market} color="text-accent-amber" />
+          <Stat label={langKo ? '보존' : 'F'} value={stats.faithful} color="text-accent-green" />
+          <Stat label={langKo ? '현지화' : 'M'} value={stats.market} color="text-accent-amber" />
           <Stat label={langKo ? '편집' : 'Edit'} value={stats.manual} color="text-accent-blue" />
           <Stat label={langKo ? '대기' : 'Pend'} value={stats.pending} color="text-text-tertiary" />
         </div>
@@ -155,7 +155,9 @@ function SegmentRow({
           >
             <div className="flex items-center gap-1 mb-0.5">
               <ShieldCheck className="w-3 h-3 text-accent-green" />
-              <span className="font-mono text-[9px] text-accent-green">FAITHFUL</span>
+              <span className="font-mono text-[9px] text-accent-green">
+                {langKo ? '보존안' : 'FAITHFUL'}
+              </span>
             </div>
             <span className="text-text-primary">{seg.faithful.slice(0, 120)}</span>
           </button>
@@ -172,7 +174,9 @@ function SegmentRow({
           >
             <div className="flex items-center gap-1 mb-0.5">
               <Globe className="w-3 h-3 text-accent-amber" />
-              <span className="font-mono text-[9px] text-accent-amber">MARKET</span>
+              <span className="font-mono text-[9px] text-accent-amber">
+                {langKo ? '현지화안' : 'MARKET'}
+              </span>
             </div>
             <span className="text-text-primary">{seg.market.slice(0, 120)}</span>
           </button>

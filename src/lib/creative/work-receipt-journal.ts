@@ -1,5 +1,5 @@
 // ============================================================
-// work-receipt-journal — Code Studio 감사 영수증 저널 (rank 12)
+// work-receipt-journal — 내부 감사 영수증 저널 (rank 12)
 // AuditInvoice / ReviewCenter 의 fix 결정 (승인 · 거절) 을 localStorage 에
 // 영속화한다. 새로고침 시 결정 이력 소실 방지.
 // React/DOM 의존 0 — 순수 TS. work-receipt.buildReceipt 와 결합되어
@@ -17,7 +17,7 @@ import type { WorkReceipt } from './work-receipt';
 export type ReceiptDecision = 'approved' | 'rejected';
 
 /**
- * Code Studio 감사 영수증 저널 1건.
+ * 내부 감사 영수증 저널 1건.
  * - id: UUID/random (호출자 주입)
  * - at: epoch ms (외부 주입 — 순수성 보존)
  * - fixId: ReviewCenter file/finding identifier (예: 파일명 또는 stagedFix key)
@@ -93,6 +93,9 @@ function normalizeReceipt(input: unknown): WorkReceipt {
   const out: WorkReceipt = { did, skipped };
   if (src.metrics && typeof src.metrics === 'object') {
     out.metrics = src.metrics as WorkReceipt['metrics'];
+  }
+  if (src.context && typeof src.context === 'object') {
+    out.context = src.context as WorkReceipt['context'];
   }
   return out;
 }
@@ -288,7 +291,13 @@ export function appendDecision(args: {
   decision: ReceiptDecision;
   reason: string;
   scoreDelta: number | null;
+  context?: WorkReceipt['context'];
+  metrics?: WorkReceipt['metrics'];
 }): ReceiptJournalEntry[] {
+  const receipt = buildDecisionReceipt(args.fixId, args.decision, args.reason, args.scoreDelta);
+  if (args.context) receipt.context = args.context;
+  if (args.metrics) receipt.metrics = { ...(receipt.metrics ?? {}), ...args.metrics };
+
   const entry: ReceiptJournalEntry = {
     id: args.id,
     at: args.at,
@@ -296,7 +305,7 @@ export function appendDecision(args: {
     decision: args.decision,
     reason: args.reason,
     scoreDelta: args.scoreDelta,
-    receipt: buildDecisionReceipt(args.fixId, args.decision, args.reason, args.scoreDelta),
+    receipt,
   };
 
   const MAX_RETRIES = 3;

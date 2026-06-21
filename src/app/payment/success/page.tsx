@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { lazyFirebaseAuth } from "@/lib/firebase";
+import { getNovelStudioHref } from "@/lib/studio-entry-links";
 
 type RefreshState = "pending" | "done" | "no-session";
 
@@ -19,6 +20,7 @@ export default function PaymentSuccessPage() {
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; ja: string; zh: string }) => L4(lang, v);
   const [refresh, setRefresh] = useState<RefreshState>("pending");
+  const studioHref = getNovelStudioHref("create");
 
   useEffect(() => {
     let cancelled = false;
@@ -71,7 +73,7 @@ export default function PaymentSuccessPage() {
         </p>
         <div className="flex justify-center gap-4 text-sm font-bold uppercase tracking-wider">
           <a
-            href="/studio"
+            href={studioHref}
             className="px-5 py-2.5 bg-accent-blue text-bg-primary hover:opacity-90 transition-opacity"
           >
             {T({ ko: "스튜디오로", en: "Go to Studio", ja: "スタジオへ", zh: "前往工作室" })}

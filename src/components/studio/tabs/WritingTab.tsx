@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Sparkles, PenTool, StopCircle, Send } from 'lucide-react';
 import { AppLanguage, AppTab, ChatSession, Message } from '@/lib/studio-types';
 import type { EngineReport } from '@/engine/types';
 import type { AdvancedWritingSettings } from '@/components/studio/AdvancedWritingPanel';
-import { createT, L4 } from '@/lib/i18n';
-import { TRANSLATIONS } from '@/lib/studio-translations';
+import { createT, getStudioTranslations, L4, normalizeAppLanguage } from '@/lib/i18n';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { useTextAreaContextMenu } from '@/lib/hooks/useTextAreaContextMenu';
 import { useSVIRecorder } from '@/hooks/useSVIRecorder';
@@ -77,10 +76,12 @@ const WritingTab: React.FC<WritingTabProps> = ({
   handleNextEpisode,
   hostedProviders = {},
 }: WritingTabProps) => {
-  const t = createT(language);
-  const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
-  const textMenu = useTextAreaContextMenu(language);
+  const appLanguage = normalizeAppLanguage(language);
+  const t = createT(appLanguage);
+  const tObj = getStudioTranslations(appLanguage);
+  const textMenu = useTextAreaContextMenu(appLanguage);
   const { handleSVIKeyDown } = useSVIRecorder();
+  const draftMessageSeqRef = useRef(0);
 
   // Progressive Disclosure — 기본은 AI/Edit 2모드만 노출 (Hick's Law)
   // advancedWritingMode가 켜져 있거나, 이미 고급 모드를 사용 중이거나,
@@ -90,17 +91,29 @@ const WritingTab: React.FC<WritingTabProps> = ({
   const [showMoreModes, setShowMoreModes] = useState(false);
   const isAdvancedModeActive = writingMode === 'canvas' || writingMode === 'refine' || writingMode === 'advanced';
   const showAllModes = advancedWritingMode || showMoreModes || isAdvancedModeActive;
-  const handleApplyEdit = React.useCallback(() => {
+  const nextMessageTimestamp = () => {
+    const lastTimestamp =
+      currentSession.messages.at(-1)?.timestamp ??
+      currentSession.lastUpdate ??
+      0;
+    draftMessageSeqRef.current += 1;
+    return Number.isFinite(lastTimestamp) ? Math.max(lastTimestamp + 1, draftMessageSeqRef.current) : draftMessageSeqRef.current;
+  };
+  const handleApplyEdit = () => {
     if (!editDraft.trim()) return;
-    const now = Date.now();
+    const now = nextMessageTimestamp();
     const editMsg: Message = { id: `edit-${now}`, role: 'assistant', content: editDraft, timestamp: now };
     updateCurrentSession({
-      messages: [...currentSession.messages, { id: `u-edit-${now + 1}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: now + 1 }, editMsg],
+      messages: [
+        ...currentSession.messages,
+        { id: `u-edit-${now + 1}`, role: 'user', content: t('writingMode.inlineEditComplete'), timestamp: now + 1 },
+        editMsg,
+      ],
       title: currentSession.messages.length === 0 ? editDraft.substring(0, 15) : currentSession.title,
     });
     if (hasApiKey) setWritingMode('ai');
     setEditDraft('');
-  }, [editDraft, currentSession, updateCurrentSession, t, hasApiKey, setWritingMode, setEditDraft]);
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -108,10 +121,10 @@ const WritingTab: React.FC<WritingTabProps> = ({
         icon="✍️"
         title={L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}
         description={L4(language, {
-          ko: '좌측 에디터에 글을 쓰세요. NOA 도움은 우측 하단 버튼 (Ctrl+Enter)',
-          en: 'Write on the left editor. Use the bottom-right button for NOA help (Ctrl+Enter)',
-          ja: '左側のエディタで執筆。右下のボタンでNOAサポート (Ctrl+Enter)',
-          zh: '在左侧编辑器中写作。右下角按钮启用 NOA 协助 (Ctrl+Enter)',
+          ko: '좌측 에디터에 글을 쓰세요. 노아 도움은 우측 하단 버튼 (Ctrl+Enter)',
+          en: 'Write on the left editor. Use the bottom-right button for Noa help (Ctrl+Enter)',
+          ja: '左側のエディタで執筆。右下のボタンでノアサポート (Ctrl+Enter)',
+          zh: '在左侧编辑器中写作。右下角按钮启用诺亚协助 (Ctrl+Enter)',
         })}
       />
       <div className="flex-1 flex overflow-hidden">
@@ -120,7 +133,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
             
             {/* Continuity Tracker Graph */}
             {(currentSession.messages.length > 0 || writingMode !== 'ai') && (
-              <ContinuityGraph language={language} config={currentSession.config} />
+              <ContinuityGraph language={appLanguage} config={currentSession.config} />
             )}
 
             {/* Applied Settings Summary — Premium Card */}
@@ -175,7 +188,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                   <button onClick={() => setActiveTab('characters')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-colors duration-200">
                     👥 {t('applied.editCharacters')}
                   </button>
-                  <button onClick={() => setActiveTab('rulebook')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-colors duration-200">
+                  <button onClick={() => setActiveTab('direction')} className="px-4 py-2 bg-bg-secondary hover:bg-accent-purple/10 border border-border hover:border-accent-purple/30 rounded-xl text-[11px] font-bold text-text-tertiary hover:text-accent-purple transition-colors duration-200">
                     🎬 {t('applied.editDirection')}
                   </button>
                 </div>
@@ -297,7 +310,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
                     📋 {t('writingMode.applyToManuscript')}
                   </button>
                   <span className="text-xs text-text-tertiary font-mono">
-                    {editDraft.length.toLocaleString()}{language === 'KO' ? '자' : ' chars'}
+                    {editDraft.length.toLocaleString()}{appLanguage === 'KO' ? '자' : ' chars'}
                   </span>
                 </div>
               )}
@@ -320,7 +333,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
 
             {writingMode === 'ai' && (
               <>
-                <EngineStatusBar language={language} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
+                <EngineStatusBar language={appLanguage} config={currentSession.config} report={lastReport} isGenerating={isGenerating} />
                 {currentSession.messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center text-center space-y-4">
                     <Sparkles className="w-14 h-14 text-accent-purple/20 mx-auto" />
@@ -334,12 +347,12 @@ const WritingTab: React.FC<WritingTabProps> = ({
                 ) : (
                   (searchQuery ? filteredMessages : currentSession.messages).map(msg => (
                     <div key={msg.id}>
-                      <ChatMessage message={msg} language={language} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} hostedProviders={hostedProviders} />
+                      <ChatMessage message={msg} language={appLanguage} onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined} hostedProviders={hostedProviders} />
                       {msg.role === 'assistant' && msg.versions && msg.versions.length > 1 && (
-                        <div className="ml-11 md:ml-12"><VersionDiff versions={msg.versions} currentIndex={msg.currentVersionIndex ?? msg.versions.length - 1} language={language} onSwitch={(idx) => handleVersionSwitch(msg.id, idx)} /></div>
+                        <div className="ml-11 md:ml-12"><VersionDiff versions={msg.versions} currentIndex={msg.currentVersionIndex ?? msg.versions.length - 1} language={appLanguage} onSwitch={(idx) => handleVersionSwitch(msg.id, idx)} /></div>
                       )}
                       {msg.role === 'assistant' && msg.content && (
-                        <div className="ml-11 md:ml-12"><TypoPanel text={msg.content} language={language} onApplyFix={(idx, orig, sug) => handleTypoFix(msg.id, idx, orig, sug)} /></div>
+                        <div className="ml-11 md:ml-12"><TypoPanel text={msg.content} language={appLanguage} onApplyFix={(idx, orig, sug) => handleTypoFix(msg.id, idx, orig, sug)} /></div>
                       )}
                     </div>
                   ))
@@ -356,14 +369,45 @@ const WritingTab: React.FC<WritingTabProps> = ({
                     <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} onContextMenu={textMenu.openMenu} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors font-mono resize-y" />
                   </div>
                 ) : (
-                  <InlineRewriter content={editDraft} language={language} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
+                  <InlineRewriter content={editDraft} language={appLanguage} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
                 )}
               </div>
             )}
 
             {writingMode === 'refine' && editDraft && (
-              <AutoRefiner content={editDraft} language={language} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''} | EP.${currentSession.config.episode}` : undefined} onApply={(newContent) => { setEditDraft(newContent); const editMsg: Message = { id: `refine-${Date.now()}`, role: 'assistant', content: newContent, timestamp: Date.now() }; updateCurrentSession({ messages: [...currentSession.messages, { id: `u-refine-${Date.now()}`, role: 'user', content: t('writingMode.autoRefineComplete'), timestamp: Date.now() }, editMsg] }); setWritingMode('ai'); }} />
-            )}
+                <AutoRefiner
+                  content={editDraft}
+                  language={appLanguage}
+                  context={
+                    currentSession.config.genre
+                      ? `${currentSession.config.genre} | ${currentSession.config.title || ''} | EP.${currentSession.config.episode}`
+                      : undefined
+                  }
+                  onApply={(newContent) => {
+                    const now = nextMessageTimestamp();
+                    setEditDraft(newContent);
+                    const editMsg: Message = {
+                      id: `refine-${now}`,
+                      role: "assistant",
+                      content: newContent,
+                      timestamp: now,
+                    };
+                    updateCurrentSession({
+                      messages: [
+                        ...currentSession.messages,
+                        {
+                          id: `u-refine-${now + 1}`,
+                          role: "user",
+                          content: t("writingMode.autoRefineComplete"),
+                          timestamp: now + 1,
+                        },
+                        editMsg,
+                      ],
+                    });
+                    setWritingMode("ai");
+                  }}
+                />
+              )}
 
             {writingMode === 'canvas' && (
               <div className="space-y-4">
@@ -378,7 +422,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
             
             {writingMode === 'advanced' && (
               <div className="space-y-4">
-                <AdvancedWritingPanel language={language} config={currentSession.config} settings={advancedSettings} onSettingsChange={setAdvancedSettings} />
+                <AdvancedWritingPanel language={appLanguage} config={currentSession.config} settings={advancedSettings} onSettingsChange={setAdvancedSettings} />
               </div>
             )}
           </div>
@@ -386,7 +430,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
 
         {/* Dashboards & Panels */}
         {showDashboard && writingMode === 'ai' && (
-          <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={language} />
+          <EngineDashboard config={currentSession.config} report={lastReport} isGenerating={isGenerating} language={appLanguage} />
         )}
 
         {/* Right aside panel removed — director/scenes accessible via tabs */}

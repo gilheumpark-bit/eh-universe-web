@@ -1,11 +1,10 @@
-/** 초기 화면 4탭 — 소설 스튜디오 원고 번역과 분리된 전문 번역 워크스페이스 구역 */
+/** 번역·현지화 작업실 구역 — 공개 표면은 Studio 9단계 흐름과 같은 용어를 쓴다. */
 export const WORKSPACE_TAB_STORAGE_KEY = 'eh_translator_workspace_tab';
-export type WorkspaceTab = 'translate' | 'chapters' | 'context' | 'network';
+export type WorkspaceTab = 'translate' | 'chapters' | 'context';
 export const WORKSPACE_TABS: { id: WorkspaceTab; ko: string; en: string }[] = [
-  { id: 'translate', ko: '번역', en: 'Translate' },
-  { id: 'chapters', ko: '챕터', en: 'Chapters' },
-  { id: 'context', ko: '맥락', en: 'Context' },
-  { id: 'network', ko: '네트워크', en: 'Network' },
+  { id: 'translate', ko: '번역·현지화', en: 'Translate' },
+  { id: 'chapters', ko: '회차', en: 'Chapters' },
+  { id: 'context', ko: '참조 컨텍스트', en: 'Context' },
 ];
 
 export const PROJECT_LIBRARY_KEY = 'eh_translator_project_library';
@@ -23,10 +22,10 @@ export const LANGUAGES = [
 ] as const;
 
 export const PROVIDERS = [
-  { id: 'openai', label: 'GPT-5.4 (OAI)', role: 'Ensemble Base' },
-  { id: 'claude', label: 'Claude Sonnet 4.6 (ANT)', role: 'Creative Refinement' },
-  { id: 'gemini', label: 'Gemini 2.5-Pro (GOOG)', role: 'Context Analyst' },
-  { id: 'deepseek', label: 'DEEPSEEK (DS)', role: 'Fast Draft' },
+  { id: 'openai', label: '정밀 번역 방식', role: '구조·의미 기준' },
+  { id: 'claude', label: '문체 다듬기 엔진', role: '문장 리듬 기준' },
+  { id: 'gemini', label: '맥락 점검 엔진', role: '설정·용어 기준' },
+  { id: 'deepseek', label: '쾌속 초안 엔진', role: '초벌 속도 기준' },
 ] as const;
 
 /** 번역 워크스페이스 배경 — 스튜디오 색상 테마(기본/밝은/베이지)와 동일 3종 */

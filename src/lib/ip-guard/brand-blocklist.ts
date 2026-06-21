@@ -1,13 +1,13 @@
 /**
- * Brand / IP Blocklist — 한국 웹소설 생성·RAG 방어용 정적 템플릿.
+ * Brand / IP Blocklist — 한국 웹소설 생성·외부 참조 방어용 정적 템플릿.
  *
  * 목적:
  *   작가가 AI 초안 생성 시 실수로 실존 IP(상표·프랜차이즈·캐릭터명)를 본문에
- *   쓰는 것을 선제 차단한다. RAG 문서가 오염되어 이런 이름을 주입해도
+ *   쓰는 것을 선제 차단한다. 외부 참조 문서가 오염되어 이런 이름을 주입해도
  *   후속 스캐너가 탐지·재생성하도록 뿌리를 제공한다.
  *
  * 이 파일의 위치는 **씨앗(seed)**.
- *   - 실제 운영은 Codex의 "금지 브랜드" 섹션 + 사용자 입력으로 확장되어야 한다.
+ *   - 실제 운영은 권리/IP 점검의 "금지 브랜드" 설정 + 사용자 입력으로 확장되어야 한다.
  *   - 여기 박힌 목록은 예시·베이스라인. 법적 책임 회피는 **작가·법무팀 확인 필수**.
  *
  * 확장 가이드:
@@ -242,7 +242,7 @@ export function blocklistSeverityStats(): Record<BrandSeverity, number> {
  */
 export function scanTextForBrands(text: string, customBlocklist?: readonly BrandEntry[]): BrandFlag[] {
   if (!text || !text.trim()) return [];
-  const blocklist = customBlocklist ?? BRAND_BLOCKLIST;
+  const blocklist = customBlocklist ? [...BRAND_BLOCKLIST, ...customBlocklist] : BRAND_BLOCKLIST;
   const lowerText = text.toLowerCase();
   const flags: BrandFlag[] = [];
 

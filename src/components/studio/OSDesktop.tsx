@@ -52,6 +52,15 @@ function saveDockOrder(order: AppTab[]) {
   try { localStorage.setItem(DOCK_STORAGE_KEY, JSON.stringify(order)); } catch { /* [의도적 무시] localStorage 쓰기 실패 (private mode 등) */ }
 }
 
+function latestProjectSessionId(project: Project | null | undefined): string | null {
+  if (!project?.sessions.length) return null;
+  let latest = project.sessions[0];
+  for (const session of project.sessions) {
+    if ((session.lastUpdate || 0) > (latest.lastUpdate || 0)) latest = session;
+  }
+  return latest.id;
+}
+
 interface OSDesktopProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
@@ -103,6 +112,13 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   const [isSystemMenuOpen, setIsSystemMenuOpen] = useState(false);
   const [dockToolsVisible, setDockToolsVisible] = useState(false);
   const textFileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const selectProject = (projectId: string) => {
+    const nextProjectId = projectId || null;
+    const nextProject = projects.find(project => project.id === nextProjectId) ?? null;
+    setCurrentProjectId(nextProjectId);
+    setCurrentSessionId(latestProjectSessionId(nextProject));
+  };
 
   // ── Dock position (free-move) ──
   const dockRef = useRef<HTMLDivElement | null>(null);
@@ -190,13 +206,13 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
 
   // ── Dock items (소설 탭) — 집필 앱 아이콘/색상 ──
   // Primary 5: 항상 표시 | Overflow 4: "더보기" 뒤에 숨김
-  const PRIMARY_TAB_IDS: AppTab[] = ['world' as AppTab, 'characters' as AppTab, 'rulebook' as AppTab, 'writing' as AppTab, 'manuscript' as AppTab];
+  const PRIMARY_TAB_IDS: AppTab[] = ['world' as AppTab, 'characters' as AppTab, 'direction' as AppTab, 'writing' as AppTab, 'manuscript' as AppTab];
   const OVERFLOW_TAB_IDS: AppTab[] = ['visual' as AppTab, 'style' as AppTab, 'history' as AppTab, 'docs' as AppTab];
 
   const allDockItems: DockItem[] = [
     { id: 'world' as AppTab, icon: ScrollText, label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }), color: 'text-text-secondary' },
     { id: 'characters' as AppTab, icon: UserCircle, label: L4(language, { ko: '인물', en: 'Characters', ja: '人物', zh: '人物' }), color: 'text-text-secondary' },
-    { id: 'rulebook' as AppTab, icon: Film, label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }), color: 'text-text-secondary' },
+    { id: 'direction' as AppTab, icon: Film, label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }), color: 'text-text-secondary' },
     { id: 'writing' as AppTab, icon: Feather, label: L4(language, { ko: '집필', en: 'Writing', ja: '執筆', zh: '写作' }), color: 'text-text-secondary' },
     { id: 'manuscript' as AppTab, icon: Library, label: L4(language, { ko: '원고', en: 'Manuscript', ja: '原稿', zh: '稿件' }), color: 'text-text-secondary' },
     { id: 'visual' as AppTab, icon: ImageIcon, label: L4(language, { ko: '이미지', en: 'Image', ja: '画像', zh: '图片' }), color: 'text-text-secondary' },
@@ -220,17 +236,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [overflowOpen]);
 
-  // ── App 링크 아이콘 (UNIVERSE / TRANSLATE) ──
+  // ── App 링크 아이콘 (TRANSLATE) ──
   // 번역: 창작→번역→출판 파이프라인의 "다음 단계". 현재 세션이 있으면 세션 ID 전달.
-  // 코드 스튜디오는 의도적 dock 숨김 (2026-04-21 결정 + 2026-05-10 재확인) —
-  // 집필 OS dock 은 창작 파이프라인 (세계관·번역) 중심으로 정돈. Code Studio 는
-  // /tools 또는 Header 'CODE' 탭으로 접근. dock 에 Code 추가 X.
+  // 집필 OS dock 은 현재 공개 표면인 집필·번역 흐름 중심으로 정돈.
   const translationHref = currentSessionId
     ? `/translation-studio?from=${encodeURIComponent(currentSessionId)}`
     : '/translation-studio';
   const hasManuscript = (sessions.find(s => s.id === currentSessionId)?.config.manuscripts?.length ?? 0) > 0;
   const appLinks = [
-    { href: '/archive', icon: Globe, label: L4(language, { ko: '유니버스', en: 'Universe', ja: 'ユニバース', zh: '宇宙' }), color: 'text-text-secondary' },
     // 번역은 파이프라인 "다음 단계" — 원고 있으면 앰버 강조, 없으면 일반
     { href: translationHref, icon: Languages, label: L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' }), color: hasManuscript ? 'text-accent-amber' : 'text-text-secondary' },
   ];
@@ -301,19 +314,19 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
           <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors shrink-0">
             <Feather className="h-4 w-4 text-accent-amber shrink-0" />
             <span className="font-serif font-semibold tracking-wider whitespace-nowrap">{language === 'KO' ? 'Loreguard 스튜디오' : language === 'JP' ? 'Loreguard スタジオ' : language === 'CN' ? 'Loreguard 工作室' : 'Loreguard Studio'}</span>
-            {/* SubtitleBadge — Plan A-7. Novel IDE 카테고리 시각 단서 (4시간+ 작업 사용자 정체성 단서). */}
+            {/* SubtitleBadge: 창작 전문 IDE 카테고리 시각 단서. */}
             <span
               className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-[0.2em] bg-accent-purple/15 text-accent-purple border border-accent-purple/25"
-              aria-label={language === 'KO' ? '소설 IDE 카테고리' : 'Novel IDE category'}
+              aria-label={language === 'KO' ? '창작 전문 IDE 카테고리' : 'Creative IDE category'}
             >
-              {language === 'KO' ? '소설 IDE' : language === 'JP' ? '小説 IDE' : language === 'CN' ? '小说 IDE' : 'Novel IDE'}
+              {language === 'KO' ? '창작 IDE' : language === 'JP' ? '創作 IDE' : language === 'CN' ? '创作 IDE' : 'Creative IDE'}
             </span>
           </Link>
 
           <div className="flex items-center gap-2">
             <select
               value={currentProjectId || ''}
-              onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
+              onChange={e => selectProject(e.target.value)}
               aria-label={L4(language, { ko: '활성 작품 선택', en: 'Active project', ja: 'アクティブ作品', zh: '活动作品' })}
               className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer font-serif"
             >
@@ -609,8 +622,8 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               >
                 <GripVertical className="w-4 h-4" />
                 {dockToolsVisible
-                  ? L4(language, { ko: '위치 편집 숨기기', en: 'Hide position tools', ja: '位置編集を隠す', zh: '隐藏位置工具' })
-                  : L4(language, { ko: '위치 편집 켜기', en: 'Show position tools', ja: '位置編集を表示', zh: '显示位置工具' })}
+                  ? L4(language, { ko: '위치 조절 숨기기', en: 'Hide position controls', ja: '位置調整を隠す', zh: '隐藏位置调节' })
+                  : L4(language, { ko: '위치 조절 켜기', en: 'Show position controls', ja: '位置調整を表示', zh: '显示位置调节' })}
               </button>
               <button
                 type="button"

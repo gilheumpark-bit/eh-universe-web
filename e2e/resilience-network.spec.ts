@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { attachPageErrorCollector } from "./helpers/e2e-utils";
 
-test.describe("Network resilience (read-only, no mutations)", () => {
+test.describe("App resilience (read-only, no mutations)", () => {
   test("about page loads when requests are artificially delayed", async ({ page, context }) => {
     await context.route("**/*", async (route) => {
       await new Promise((r) => setTimeout(r, 120));
@@ -14,13 +14,13 @@ test.describe("Network resilience (read-only, no mutations)", () => {
     });
   });
 
-  test("network hub stays interactive after going offline (no uncaught errors)", async ({
+  test("offline helper page stays inspectable after going offline (no uncaught errors)", async ({
     page,
     context,
   }) => {
     const { errors, detach } = attachPageErrorCollector(page);
     try {
-      await page.goto("/network", { waitUntil: "domcontentloaded", timeout: 45_000 });
+      await page.goto("/offline", { waitUntil: "domcontentloaded", timeout: 45_000 });
       await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
 
       await context.setOffline(true);

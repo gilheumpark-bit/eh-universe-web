@@ -27,26 +27,19 @@ describe('google-genai-server helpers', () => {
     expect(isGeminiAllocationExhaustedError(new Error('Gemini API 401: invalid credentials'))).toBe(false);
   });
 
-  it('uses hosted mode first when server credentials exist', async () => {
+  it('ignores server Gemini env when no user key or DGX fallback exists', async () => {
     process.env.GEMINI_API_KEY = 'server-key';
     const { executeGeminiHostedFirst } = loadModule();
 
-    const modes: string[] = [];
-    const execution = await executeGeminiHostedFirst('', async (_apiKey, mode) => {
-      modes.push(mode);
-      return 'ok';
-    });
-
-    expect(execution.mode).toBe('hosted');
-    expect(execution.result).toBe('ok');
-    expect(modes).toEqual(['hosted']);
+    await expect(
+      executeGeminiHostedFirst('', async () => 'ok'),
+    ).rejects.toThrow('Gemini connection key is not configured');
   });
 
-  it('falls back to the user key after a hosted quota exhaustion error', async () => {
+  it('uses the user key directly when provided', async () => {
     process.env.GEMINI_API_KEY = 'server-key';
     const { executeGeminiHostedFirst } = loadModule();
 
-    // BYOK-first policy: when user key is provided, it is used directly
     const calls: Array<{ apiKey: string; mode: string }> = [];
     const execution = await executeGeminiHostedFirst('user-key', async (apiKey, mode) => {
       calls.push({ apiKey, mode });

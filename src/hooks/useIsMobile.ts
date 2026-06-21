@@ -13,8 +13,12 @@ import { useState, useEffect } from 'react';
  * - resize 이벤트로 실시간 업데이트
  *
  * @param breakpoint - 모바일로 간주할 최대 width (기본 768px, Tailwind md)
+ * @param portraitCutoff - 세로 모드에서 강제 모바일 전환 가로값 (기본 1024px)
  */
-export function useIsMobile(breakpoint: number = 768): boolean {
+export function useIsMobile(
+  breakpoint: number = 768,
+  portraitCutoff: number = 1024,
+): boolean {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -26,12 +30,21 @@ export function useIsMobile(breakpoint: number = 768): boolean {
       // iPad 신형: UA에는 Mac처럼 나오지만 touch 지원 + 좁은 화면
       const isIPad = /iPad/i.test(ua) || (ua.includes('Macintosh') && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1);
       const narrowViewport = window.innerWidth < breakpoint;
+      const isPortrait = typeof window.matchMedia === 'function'
+        ? window.matchMedia('(orientation: portrait)').matches
+        : false;
+      const hasCoarsePointer = typeof window.matchMedia === 'function'
+        ? window.matchMedia('(pointer: coarse)').matches
+        : false;
+      const isPortraitCompact = isPortrait && window.innerWidth <= portraitCutoff;
       const touchDevice = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
       // 모바일 기기 UA → 무조건 모바일
       // iPad (태블릿) → narrow일 때만 모바일 취급
       // 그 외 데스크톱 + narrow 창 → 데스크톱 (콘텐츠 보이게)
       // 데스크톱 + touch (터치스크린 노트북) → 데스크톱
       if (uaMobile) return true;
+      if (isPortraitCompact) return true;
+      if (hasCoarsePointer && window.innerWidth <= portraitCutoff) return true;
       if (isIPad && narrowViewport) return true;
       if (narrowViewport && touchDevice && ua.toLowerCase().includes('mobile')) return true;
       return false;
@@ -43,7 +56,7 @@ export function useIsMobile(breakpoint: number = 768): boolean {
     const onResize = () => setIsMobile(detect());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, [breakpoint]);
+  }, [breakpoint, portraitCutoff]);
 
   return isMobile;
 }

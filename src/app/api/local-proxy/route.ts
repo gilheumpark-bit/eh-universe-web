@@ -6,9 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const MAX_REQUEST_SIZE = 5_242_880; // 5MB body size limit for LLM proxy
+const LOCAL_PROXY_UPSTREAM_ERROR = {
+  error: 'local_model_unavailable',
+  message: '로컬 모델 서버 응답을 처리하지 못했습니다. 주소와 모델 서버 상태를 확인해 주세요.',
+};
 
 /**
  * Validate that a hostname is a private/local network address.
@@ -74,7 +78,7 @@ export async function GET(req: NextRequest) {
   if (guardResult) return guardResult;
 
   const ip = getClientIp(req.headers);
-  const rl = checkRateLimit(ip, 'local-proxy', RATE_LIMITS.default);
+  const rl = await checkRateLimitAsync(ip, 'local-proxy', RATE_LIMITS.default);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please wait a moment.' },
@@ -102,8 +106,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data);
   } catch (err) {
     logger.error('API:local-proxy:GET', err instanceof Error ? err.message : err);
-    const msg = err instanceof Error ? err.message : 'proxy error';
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json(LOCAL_PROXY_UPSTREAM_ERROR, { status: 502 });
   }
 }
 
@@ -118,7 +121,7 @@ export async function POST(req: NextRequest) {
   if (postGuard) return postGuard;
 
   const postIp = getClientIp(req.headers);
-  const postRl = checkRateLimit(postIp, 'local-proxy', RATE_LIMITS.default);
+  const postRl = await checkRateLimitAsync(postIp, 'local-proxy', RATE_LIMITS.default);
   if (!postRl.allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please wait a moment.' },
@@ -161,8 +164,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => 'Unknown error');
-      return NextResponse.json({ error: errText }, { status: res.status });
+      await res.text().catch(() => '');
+      return NextResponse.json(LOCAL_PROXY_UPSTREAM_ERROR, { status: 502 });
     }
 
     // 스트리밍이면 그대로 전달
@@ -181,8 +184,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data);
   } catch (err) {
     logger.error('API:local-proxy:POST', err instanceof Error ? err.message : err);
-    const msg = err instanceof Error ? err.message : 'proxy error';
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json(LOCAL_PROXY_UPSTREAM_ERROR, { status: 502 });
   }
 }
 

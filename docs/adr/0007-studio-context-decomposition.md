@@ -3,7 +3,7 @@
 - Status: Proposed
 - Date: 2026-06-08
 - Deciders: 프로젝트 오너
-- Related: [0003 4-way 키 표준](0003-keymap-and-codex-domain-selector-mount.md)
+- Related: Studio keyboard and context decomposition policy
 
 ## Context
 

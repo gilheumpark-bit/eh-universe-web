@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// PART 1 — Imports
+// PART 1: Imports
 // ============================================================
 
 import { useEffect } from "react";
@@ -16,12 +16,13 @@ import {
   getLatestVersion,
   pickLocalized,
 } from "@/lib/changelog-data";
+import { getNovelStudioHref } from "@/lib/studio-entry-links";
 import type { AppLanguage } from "@/lib/studio-types";
 
 const LAST_SEEN_KEY = "noa_last_seen_version";
 
 // ============================================================
-// PART 2 — Helpers (pure — type → badge class / label)
+// PART 2: Helpers (pure: type to badge class / label)
 // ============================================================
 
 function typeBadgeClass(type: ChangelogType): string {
@@ -56,14 +57,41 @@ function langToAppLang(lang: string): AppLanguage {
   return "KO";
 }
 
+function publicChangelogText(value: string): string {
+  return value
+    .replace(/—|–/g, ":")
+    .replace(/Cross-border Novel IDE/g, "Cross-border Creative IDE")
+    .replace(/Novel IDE/g, "Creative IDE")
+    .replace(/알파/g, "출시 준비")
+    .replace(/Alpha/g, "Launch prep")
+    .replace(/alpha/g, "prep")
+    .replace(/출시 준비 출시 감사/g, "출시 준비 점검")
+    .replace(/출시 준비 직전 종합 감사/g, "출시 준비 종합 점검")
+    .replace(/ATTESTATION 디스클레이머 강도 \(v1\.0\.0 → v1\.1\.0, ko\/ja 사법 절차 증거 부정 명시\)/g, "확인서 문구 정리")
+    .replace(/ATTESTATION 문서 안내 강도 \(v1\.0\.0 → v1\.1\.0, ko\/ja 사법 절차 증거 부정 명시\)/g, "확인서 문구 정리")
+    .replace(/사법 절차 증거 부정 명시/g, "제출용 문구 정리")
+    .replace(/디스클레이머/g, "문서 안내")
+    .replace(/면책/g, "문서 안내")
+    .replace(/AI 가드/g, "노아 운영 가드")
+    .replace(/AI 사용/g, "노아 활용")
+    .replace(/AI 라벨/g, "노아 활용 라벨")
+    .replace(/AI 시대/g, "창작 도구 시대")
+    .replace(/AI/g, "노아");
+}
+
+function publicVersionLabel(value: string): string {
+  return value.replace(/-alpha\./g, " 준비 ");
+}
+
 // ============================================================
-// PART 3 — Page Component
+// PART 3: Page Component
 // ============================================================
 
 export default function ChangelogPage() {
   const { lang } = useLang();
   const appLang = langToAppLang(lang);
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
+  const studioHref = getNovelStudioHref("create");
 
   // 페이지 진입 = 사용자가 최신 내역을 본 것으로 간주. 배지 숨김 플래그 갱신.
   useEffect(() => {
@@ -113,7 +141,7 @@ export default function ChangelogPage() {
 
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="text-xs font-mono text-text-tertiary">
-                      {entry.version}
+                      {publicVersionLabel(entry.version)}
                     </span>
                     <span className="text-xs text-text-tertiary">·</span>
                     <time className="text-xs text-text-tertiary">{entry.date}</time>
@@ -132,10 +160,10 @@ export default function ChangelogPage() {
                   </div>
 
                   <h2 className="text-lg md:text-xl font-semibold text-text-primary leading-snug">
-                    {pickLocalized(entry, appLang, "title")}
+                    {publicChangelogText(pickLocalized(entry, appLang, "title"))}
                   </h2>
                   <p className="text-text-secondary mt-2 leading-relaxed">
-                    {pickLocalized(entry, appLang, "description")}
+                    {publicChangelogText(pickLocalized(entry, appLang, "description"))}
                   </p>
                 </li>
               ))}
@@ -144,8 +172,8 @@ export default function ChangelogPage() {
             {/* Footer navigation */}
             <div className="mt-16 pt-8 border-t border-border flex flex-wrap items-center justify-between gap-4 text-sm">
               <Link
-                href="/studio"
-                className="text-accent-blue hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5"
+                href={studioHref}
+                className="inline-flex min-h-11 items-center rounded px-1 text-accent-blue underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
               >
                 {T({
                   ko: "← 스튜디오로 돌아가기",
@@ -156,7 +184,7 @@ export default function ChangelogPage() {
               </Link>
               <Link
                 href="/about"
-                className="text-text-tertiary hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5"
+                className="inline-flex min-h-11 items-center rounded px-1 text-text-tertiary underline-offset-4 hover:text-text-primary hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
               >
                 {T({
                   ko: "소개 페이지",

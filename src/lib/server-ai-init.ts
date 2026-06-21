@@ -23,6 +23,7 @@
 
 import { setRateLimitBackend, getRateLimitBackendName } from './rate-limit';
 import { createUpstashBackend, type UpstashConfig } from './rate-limit-upstash';
+import { logger } from './logger';
 
 // ============================================================
 // PART 2 — Boot guard (module-eval once)
@@ -30,6 +31,16 @@ import { createUpstashBackend, type UpstashConfig } from './rate-limit-upstash';
 
 let booted = false;
 let bootResult: 'upstash' | 'memory' = 'memory';
+const PROD_MEMORY_WARNING_KEY = '__loreguardServerAiInitProdMemoryWarning__';
+
+function shouldLogProdMemoryWarning(): boolean {
+  const scope = globalThis as typeof globalThis & {
+    [PROD_MEMORY_WARNING_KEY]?: boolean;
+  };
+  if (scope[PROD_MEMORY_WARNING_KEY]) return false;
+  scope[PROD_MEMORY_WARNING_KEY] = true;
+  return true;
+}
 
 function bootRateLimit(): void {
   if (booted) return;
@@ -38,6 +49,10 @@ function bootRateLimit(): void {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   const isProd = process.env.NODE_ENV === 'production';
+  const isE2EServer = process.env.LOREGUARD_E2E === '1';
+  const isProductionBuild =
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.npm_lifecycle_event === 'build';
 
   if (url && token) {
     const cfg: UpstashConfig = {
@@ -52,11 +67,11 @@ function bootRateLimit(): void {
   }
 
   bootResult = 'memory';
-  if (isProd) {
+  if (isProd && !isE2EServer && !isProductionBuild && shouldLogProdMemoryWarning()) {
     // 운영에서 in-memory 면 분산 회피 가능 — 1회 경고. crash 는 X (graceful).
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[server-ai-init] PROD running with memory rate-limit backend. ' +
+    logger.warn(
+      'server-ai-init',
+      'PROD running with memory rate-limit backend. ' +
       'Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN to enable distributed enforcement.',
     );
   }

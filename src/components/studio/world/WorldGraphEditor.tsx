@@ -490,7 +490,7 @@ const WorldGraphEditor: React.FC<Props> = ({ workId, initialNodes, onChange }) =
           disabled={!chat.trim()}
           className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-accent-amber/40 bg-accent-amber/15 px-4 text-sm font-semibold text-accent-amber disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
         >
-          <Sparkles className="h-4 w-4" aria-hidden /> AI 채움
+          <Sparkles className="h-4 w-4" aria-hidden /> 노아 채움
         </button>
       </div>
 

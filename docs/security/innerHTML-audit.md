@@ -25,7 +25,6 @@ rg 'sanitize|DOMPurify' src --type tsx
 | 2 | `src/components/studio/SubmissionPackageBuilder.tsx` | 274 | **SAFE (constant)** | `sealSvg` 은 모듈 내부 inline SVG 상수, user input 없음. |
 | 3 | `src/components/studio/CreativeContributionInspector.tsx` | 203 | **SAFE (constant)** | `donutSvg` 도넛 SVG — viewBox + role="img" 포함, user input 없음. |
 | 4 | `src/components/studio/CreativeContributionInspector.tsx` | (2nd) | **SAFE (constant)** | 동일 패턴. |
-| 5 | `src/components/code-studio/ReviewBoard.tsx` | 61 | **SAFE (literal in prompt)** | "dangerouslySetInnerHTML" 문자열이 systemPrompt 문자열 안에 등장. 코드 실행 X. |
 | 6 | `src/components/translator/editor/BilateralEditor.tsx` | 301 | **SAFE (escaped)** | `sourceHighlightHtml` — `escapeHtml()` 후 `<mark>` wrapping 만. user input escape 통과. |
 | 7 | `src/components/translator/panels/GlossaryPanel.tsx` | (multiple) | **SAFE (escaped)** | line 21 모듈 헤더 — "Safe for dangerouslySetInnerHTML — both surrounding text and matched terms are HTML-escaped before being assembled" 명시. |
 | 8 | `src/components/translator/panels/__tests__/GlossaryPanel.test.tsx` | — | **TEST FIXTURE** | jest test 위장 입력 검증. production 영향 0. |

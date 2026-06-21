@@ -34,7 +34,7 @@ export default function WebFeaturesInit() {
       // 외부 링크 보안 강화 (noopener noreferrer)
       webFeatures.hardenExternalLinks();
 
-      // 개발자 도구 경고 (프로덕션)
+      // 내부 진단 경고 (프로덕션)
       webFeatures.devToolsWarning();
 
       // 모바일 Safe Area CSS 변수 설정

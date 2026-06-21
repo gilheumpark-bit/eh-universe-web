@@ -4,7 +4,7 @@
  * 번역 Stage 4 (Market track Cultural Immersion) 의 도메인 정형 hint 매트릭스.
  *
  * 배경:
- *   - codex-prompts/ 의 4 도메인 매트릭스는 Codex 객체 생성 전용
+ *   - creative-domain-prompts/ 의 4 도메인 매트릭스는 창작 구조화 생성 전용
  *   - 번역 시장에는 별도 정형 hint 필요 — 회차 끝 hook / 페이싱 / 클리셰
  *   - Stage 4 가 cultural immersion 핵심이나 현재 도메인 hint 미주입
  *

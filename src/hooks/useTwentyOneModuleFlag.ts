@@ -92,7 +92,7 @@ export function useTwentyOneModuleFlag(): UseTwentyOneModuleFlagResult {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && isValidTier(stored)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+
         setTierState(stored);
         setExplicit(true);
       } else {

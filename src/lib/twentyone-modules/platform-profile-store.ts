@@ -53,7 +53,7 @@ export async function removePlatformProfile(platformId: string): Promise<void> {
 
 /**
  * Check whether any commercial rule pack is loaded. Used by UI to render
- * "Commercial license required" placeholder when empty.
+ * "Commercial license required" fallback text when empty.
  */
 export async function hasAnyPlatformProfile(): Promise<boolean> {
   const all = await listAllProfiles();

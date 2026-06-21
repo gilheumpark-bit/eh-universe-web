@@ -10,11 +10,11 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 import { TERMS_UPDATED_AT } from "@/components/legal/TermsUpdateBanner";
 
 // ============================================================
-// PART 2 — Terms of Service Page (KO/EN + JA/ZH placeholder)
-// 섹션: 개요 → 계정 → 저작권 → AI 고지 → 금지 → 서비스 변경 → 면책 → 준거법 → 문의
+// PART 2 — Terms of Service Page (KO/EN + JA/ZH policy copy)
+// 섹션: 개요, 계정, 저작권, 노아 활용 고지, 사용 기준, 서비스 변경, 서비스 범위, 준거법, 문의
 // ============================================================
 
-const EFFECTIVE_DATE = "2026-04-18";
+const EFFECTIVE_DATE = "2026-06-15";
 const UPDATED_AT = TERMS_UPDATED_AT.slice(0, 10);
 
 export default function TermsPage() {
@@ -34,10 +34,10 @@ export default function TermsPage() {
         </h2>
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
-            ko: "로어가드(Loreguard)는 EH Universe가 운영하는 AI 기반 소설 집필·번역·출판 통합 플랫폼입니다. 서비스는 소설 스튜디오, 번역 스튜디오, 코드 스튜디오, 네트워크 커뮤니티로 구성되며, 개인 창작자와 소규모 팀을 주 대상으로 합니다.",
-            en: "Loreguard is an AI-powered novel writing, translation, and publishing platform operated by EH Universe. The service comprises Novel Studio, Translation Studio, Code Studio, and Network Community, targeting individual creators and small teams.",
-            ja: "Loreguardは EH Universe が運営する AI 駆動の小説執筆・翻訳・出版統合プラットフォームです。",
-            zh: "Loreguard 是 EH Universe 运营的 AI 驱动的小说创作、翻译、出版一体化平台。",
+            ko: "로어가드(Loreguard)는 EH Universe가 운영하는 창작 전문 IDE입니다. 서비스는 Studio와 번역·현지화 워크스페이스를 중심으로, 개인 창작자와 소규모 팀이 기획, 집필, 번역, 과정기록, 출고 패키지를 관리하도록 돕습니다.",
+            en: "Loreguard is a creative process IDE operated by EH Universe. The service centers on Studio and the translation/localization workspace, helping individual creators and small teams manage planning, writing, translation, process records, and release packages.",
+            ja: "Loreguardは EH Universe が運営する創作専門 IDE です。Studio と翻訳・ローカライズ作業領域を中心に、企画、執筆、翻訳、過程記録、出荷パッケージ管理を支援します。",
+            zh: "Loreguard 是 EH Universe 运营的创作专业 IDE。服务以 Studio 与翻译/本地化工作区为核心，帮助个人创作者和小团队管理企划、写作、翻译、过程记录与出库包。",
           })}
         </p>
       </section>
@@ -49,9 +49,9 @@ export default function TermsPage() {
         </h2>
         <ul className="list-disc pl-5 space-y-2 text-text-secondary text-sm leading-relaxed">
           <li>{T({ ko: "만 14세 미만은 보호자 동의 없이 계정을 생성할 수 없습니다.", en: "Users under 14 may not create an account without guardian consent.", ja: "14歳未満の方は保護者の同意なくアカウントを作成できません。", zh: "14 周岁以下未成年人未经监护人同意不得注册账户。" })}</li>
-          <li>{T({ ko: "계정 정보(비밀번호, API 키 등)의 보안 관리 책임은 사용자에게 있습니다.", en: "Users are responsible for securing account credentials (passwords, API keys, etc.).", ja: "アカウント情報(パスワード、APIキー等)の管理責任は利用者にあります。", zh: "账户信息(密码、API 密钥等)的安全管理由用户负责。" })}</li>
+          <li>{T({ ko: "비밀번호와 API 키는 사용자 계정 안에서 직접 관리합니다.", en: "Passwords and API keys are managed inside the user's own account.", ja: "パスワードとAPIキーは利用者のアカウント内で管理します。", zh: "密码与 API 密钥在用户自己的账户内管理。" })}</li>
           <li>{T({ ko: "하나의 자연인은 동시에 여러 계정을 운영할 수 없습니다.", en: "A single individual may not operate multiple simultaneous accounts.", ja: "同一自然人による複数アカウントの同時運用は禁止します。", zh: "同一自然人不得同时持有多个账户。" })}</li>
-          <li>{T({ ko: "계정 탈퇴는 언제든 가능하며, 본 약관 제8조(면책 조항)의 범위에서 데이터 내보내기를 지원합니다.", en: "You may delete your account at any time; data export is supported within the scope of the disclaimer in Section 8.", ja: "アカウント削除はいつでも可能で、第8条の免責範囲内でデータ出力をサポートします。", zh: "用户可随时注销账户，并在第 8 条免责范围内支持数据导出。" })}</li>
+          <li>{T({ ko: "계정 탈퇴는 언제든 가능하며, 탈퇴 전 데이터 내보내기를 지원합니다.", en: "You may delete your account at any time, and data export is available before deletion.", ja: "アカウント削除はいつでも可能で、削除前にデータ出力できます。", zh: "用户可随时注销账户，并可在注销前导出数据。" })}</li>
         </ul>
       </section>
 
@@ -79,16 +79,16 @@ export default function TermsPage() {
           </p>
           <p>
             {T({
-              ko: "Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 AGPL-3.0-or-later 오픈소스 라이선스와 별도 상업 라이선스(COMMERCIAL-LICENSE.md)의 이중 트랙으로 제공됩니다. 네트워크 서비스 제공 시 AGPL §13에 따라 전체 소스 공개 의무가 발생하며, 이를 원치 않는 경우 상업 라이선스가 필요합니다. (2026-04-24 커밋 414fe9ea 이전 릴리스는 CC-BY-NC-4.0 유지)",
-              en: "Loreguard software (engine, pipelines, UI, CLI) is offered under a dual license: AGPL-3.0-or-later for open-source use, or a separate Commercial License (COMMERCIAL-LICENSE.md) for closed-source / SaaS deployment. Network service provision triggers AGPL §13 source-disclosure obligations; organizations unable to comply require a commercial license. (Pre-414fe9ea releases remain under CC-BY-NC-4.0.)",
-              ja: "Loreguardソフトウェア(エンジン・パイプライン・UI・CLI)は、AGPL-3.0-or-laterオープンソースライセンスと別途商用ライセンス(COMMERCIAL-LICENSE.md)のデュアルトラックで提供されます。ネットワークサービス提供時はAGPL §13に従い全ソース公開義務が発生するため、これに同意できない場合は商用ライセンスが必要です。(2026-04-24 コミット414fe9ea 以前のリリースはCC-BY-NC-4.0を維持)",
-              zh: "Loreguard 软件(引擎、管道、UI、CLI)采用 AGPL-3.0-or-later 开源许可证与商业许可证(COMMERCIAL-LICENSE.md)的双轨许可。提供网络服务时，根据 AGPL §13 必须公开完整源码；如无法遵守，则需商业许可证。(2026-04-24 提交 414fe9ea 之前的版本仍适用 CC-BY-NC-4.0)",
+              ko: "Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 AGPL-3.0-or-later 오픈소스 라이선스와 별도 상업 라이선스(COMMERCIAL-LICENSE.md)의 이중 트랙으로 제공됩니다. SaaS 형태로 제공할 경우 AGPL §13에 따라 전체 소스 공개 의무가 발생하며, 이를 원치 않는 경우 상업 라이선스가 필요합니다. (2026-04-24 커밋 414fe9ea 이전 릴리스는 CC-BY-NC-4.0 유지)",
+              en: "Loreguard software (engine, pipelines, UI, CLI) is offered under a dual license: AGPL-3.0-or-later for open-source use, or a separate Commercial License (COMMERCIAL-LICENSE.md) for closed-source / SaaS deployment. SaaS deployment triggers AGPL §13 source-disclosure obligations; organizations unable to comply require a commercial license. (Pre-414fe9ea releases remain under CC-BY-NC-4.0.)",
+              ja: "Loreguardソフトウェア(エンジン・パイプライン・UI・CLI)は、AGPL-3.0-or-laterオープンソースライセンスと別途商用ライセンス(COMMERCIAL-LICENSE.md)のデュアルトラックで提供されます。SaaS として提供する場合は AGPL §13 に従い全ソース公開義務が発生するため、これに同意できない場合は商用ライセンスが必要です。(2026-04-24 コミット414fe9ea 以前のリリースはCC-BY-NC-4.0を維持)",
+              zh: "Loreguard 软件(引擎、管道、UI、CLI)采用 AGPL-3.0-or-later 开源许可证与商业许可证(COMMERCIAL-LICENSE.md)的双轨许可。以 SaaS 形式提供时，根据 AGPL §13 必须公开完整源码；如无法遵守，则需商业许可证。(2026-04-24 提交 414fe9ea 之前的版本仍适用 CC-BY-NC-4.0)",
             })}
           </p>
           <p>
             {T({
-              ko: "EH Universe 공식 세계관 원본 자료(아카이브·코덱스·룰북 등)는 소프트웨어 라이선스와 분리되어 CC-BY-NC-4.0으로 제공되며, 상업적 활용 시 별도 협의가 필요합니다.",
-              en: "EH Universe official world-lore materials (Archive, Codex, Rulebook, etc.) are licensed separately from the software under CC-BY-NC-4.0. Commercial use requires a separate agreement.",
+              ko: "EH Universe 공식 세계관 원본 자료는 소프트웨어 라이선스와 분리되어 CC-BY-NC-4.0으로 제공되며, 상업적 활용 시 별도 협의가 필요합니다.",
+              en: "EH Universe official world-lore source materials are licensed separately from the software under CC-BY-NC-4.0. Commercial use requires a separate agreement.",
               ja: "EH Universe 公式世界観資料は CC-BY-NC-4.0 で提供され、商業利用には別途協議が必要です。",
               zh: "EH Universe 官方世界观原始资料采用 CC-BY-NC-4.0 许可，商业使用需另行协商。",
             })}
@@ -96,26 +96,26 @@ export default function TermsPage() {
         </div>
       </section>
 
-      {/* 4. AI-generated content disclosure */}
+      {/* 4. Model-assisted content disclosure */}
       <section className="mb-10">
         <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
-          4. {T({ ko: "AI 생성 콘텐츠 고지", en: "AI-Generated Content Notice", ja: "AI生成コンテンツ告知", zh: "AI 生成内容告知" })}
+          4. {T({ ko: "노아 활용 안내", en: "Noa Usage Notice", ja: "Noa活用に関する案内", zh: "Noa 使用说明" })}
         </h2>
         <ul className="list-disc pl-5 space-y-2 text-text-secondary text-sm leading-relaxed">
-          <li>{T({ ko: "Loreguard는 Qwen 3.6-35B-A3B-FP8 MoE(DGX 로컬), Gemini, Claude, OpenAI, Groq 등 다수의 AI 모델을 사용합니다. 모델별 상세는 /ai-disclosure 참조.", en: "Loreguard uses multiple AI models including Qwen 3.6-35B-A3B-FP8 MoE (DGX local), Gemini, Claude, OpenAI, and Groq. See /ai-disclosure for details.", ja: "Loreguardは Qwen 3.6-35B-A3B-FP8 MoE(DGXローカル)、Gemini、Claude、OpenAI、Groq 等を使用します。詳細は /ai-disclosure。", zh: "Loreguard 使用包括 Qwen 3.6-35B-A3B-FP8 MoE(DGX 本地)、Gemini、Claude、OpenAI、Groq 在内的多种 AI 模型。详情见 /ai-disclosure。" })}</li>
-          <li>{T({ ko: "AI로 생성된 콘텐츠는 모델의 학습 데이터 분포에 기반하므로, 기존 작품과 우연한 유사성이 발생할 수 있습니다. 이에 대한 최종 확인·검수 책임은 사용자에게 있습니다.", en: "AI output reflects the training-data distribution and may coincidentally resemble existing works. The user is solely responsible for final verification and editorial review.", ja: "AI 生成結果は学習データに起因する偶発的類似の可能性があり、最終確認責任は利用者にあります。", zh: "AI 生成内容可能与既有作品出现偶然相似，最终核验责任由用户承担。" })}</li>
-          <li>{T({ ko: "상업 출판·플랫폼 게시 시 각 플랫폼(Amazon KDP, Royal Road, 카카오페이지 등)의 AI 콘텐츠 고지 규정 준수 의무는 사용자에게 있습니다.", en: "When publishing commercially or on third-party platforms (Amazon KDP, Royal Road, Kakao Page, etc.), the user must comply with each platform's AI-content disclosure rules.", ja: "商業出版・各プラットフォーム掲載時の AI コンテンツ告知義務は利用者にあります。", zh: "在平台发布(如 Amazon KDP、Royal Road、Kakao Page)时，遵守各平台 AI 告知规定由用户负责。" })}</li>
+          <li>{T({ ko: "Loreguard는 로어가드 운영 경로, 사용자가 등록한 연결 키, 사용자가 별도로 켠 로컬 실행 경로를 노아 기능에 연결할 수 있습니다. 모델별 상세는 /ai-disclosure에서 확인할 수 있습니다.", en: "Loreguard can connect Noa features to the Loreguard managed path, user-provided connection keys, and user-enabled local execution paths. Model details are available at /ai-disclosure.", ja: "Loreguard は運用経路、利用者が登録した接続キー、利用者が有効化したローカル実行経路を Noa 機能に接続できます。詳細は /ai-disclosure。", zh: "Loreguard 可将 Noa 功能连接到 Loreguard 托管路径、用户登记的连接密钥，以及用户启用的本地执行路径。详情见 /ai-disclosure。" })}</li>
+          <li>{T({ ko: "노아 제안은 작가가 선택하고 고치는 초안 자료입니다. 기존 작품과 유사해 보이는 부분은 게시 전 유사성 점검과 편집 검토를 권장합니다.", en: "Noa suggestions are draft material selected and edited by the author. If a passage resembles existing work, similarity checks and editorial review are recommended before publication.", ja: "Noa 提案は作者が選択・編集する草案です。既存作品に似た箇所は公開前の確認を推奨します。", zh: "Noa 建议是由作者选择并编辑的草稿材料。若内容与既有作品相似，建议发布前进行相似性检查与编辑审阅。" })}</li>
+          <li>{T({ ko: "상업 출판과 외부 플랫폼 게시 전에는 각 플랫폼의 고지 기준과 연재 규칙을 확인해 주세요.", en: "Before commercial publication or platform posting, review each platform's disclosure and serialization rules.", ja: "商業出版や外部掲載の前に、各プラットフォームの告知基準と連載規則をご確認ください。", zh: "商业出版或外部平台发布前，请确认各平台的披露标准与连载规则。" })}</li>
         </ul>
       </section>
 
       {/* 5. Prohibited conduct */}
       <section className="mb-10">
         <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
-          5. {T({ ko: "금지 행위", en: "Prohibited Conduct", ja: "禁止行為", zh: "禁止行为" })}
+          5. {T({ ko: "사용 기준", en: "Use Standards", ja: "利用基準", zh: "使用标准" })}
         </h2>
         <ul className="list-disc pl-5 space-y-2 text-text-secondary text-sm leading-relaxed">
           <li>{T({ ko: "타인의 저작권·상표권·초상권 등 지식재산권 침해", en: "Infringement of third-party IP rights (copyright, trademark, portrait rights, etc.)", ja: "第三者の知的財産権侵害", zh: "侵犯他人知识产权(著作权、商标、肖像权等)" })}</li>
-          <li>{T({ ko: "미성년자를 대상으로 한 성적 표현 콘텐츠(CSAM) 생성 — 무관용 영구정지", en: "Generation of sexual content involving minors (CSAM) — zero tolerance, permanent ban", ja: "未成年者を対象とした性的表現(CSAM)の生成 — 無寛容・永久停止", zh: "涉及未成年人的性化内容(CSAM)生成 — 零容忍、永久封禁" })}</li>
+          <li>{T({ ko: "미성년자를 대상으로 한 성적 표현 콘텐츠(CSAM) 생성. 확인 즉시 계정 이용이 중단됩니다.", en: "Generation of sexual content involving minors (CSAM). Confirmed cases result in immediate account suspension.", ja: "未成年者を対象とした性的表現(CSAM)の生成。確認時点で利用停止となります。", zh: "生成涉及未成年人的性化内容(CSAM)。确认后立即停止账户使用。" })}</li>
           <li>{T({ ko: "인종·성별·종교·국적 등에 대한 혐오 발언 및 차별 선동", en: "Hate speech and discriminatory incitement targeting race, gender, religion, nationality, etc.", ja: "差別・ヘイトスピーチ", zh: "仇恨言论与歧视煽动" })}</li>
           <li>{T({ ko: "실존 인물 명예훼손, 허위사실 유포, 딥페이크 악용", en: "Defamation of real persons, false-fact dissemination, deepfake abuse", ja: "実在人物の名誉毀損、虚偽流布、ディープフェイク悪用", zh: "对真实人物的诽谤、散布虚假事实、滥用深度伪造" })}</li>
           <li>{T({ ko: "악의적 리버스 엔지니어링, 자동화된 대량 요청, 서비스 인프라 공격", en: "Malicious reverse engineering, automated bulk requests, attacks on service infrastructure", ja: "悪意あるリバースエンジニアリング、自動大量リクエスト", zh: "恶意逆向工程、自动化批量请求、攻击服务基础设施" })}</li>
@@ -138,34 +138,34 @@ export default function TermsPage() {
         </h2>
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
-            ko: "Loreguard는 현재 알파 단계이며, 기능 추가·삭제·변경이 예고 없이 이루어질 수 있습니다. DGX 인프라 점검, AI 제공사 장애, 법령 변경 등 사유로 일시 중단될 수 있습니다. 영구적 서비스 종료 시 최소 30일 전 공지하고 JSON/EPUB/DOCX 데이터 내보내기를 지원합니다.",
-            en: "Loreguard is currently in alpha; features may be added, removed, or changed without notice. The service may be temporarily interrupted due to DGX maintenance, upstream AI-provider incidents, or legal changes. If the service permanently ends, we will give at least 30 days' notice and provide JSON/EPUB/DOCX data export.",
-            ja: "Loreguardはアルファ段階で、機能変更は予告なく行う場合があります。終了時は30日前告知・データ出力を提供。",
-            zh: "Loreguard 处于 Alpha 阶段，功能可能未经通知变更。永久终止时将提前 30 日公告并提供数据导出。",
+            ko: "기능은 운영 과정에서 추가, 개선, 정리될 수 있습니다. 모델 연결 장애, 로컬 실행 경로 점검, 법령 변경으로 일시 중단이 필요한 경우 서비스 내에서 안내합니다. 영구 종료가 필요한 경우 최소 30일 전 공지하고 JSON/EPUB/DOCX 데이터 내보내기를 지원합니다.",
+            en: "Features may be added, improved, or reorganized during operation. If model-provider incidents, local/development model maintenance, or legal changes require interruption, the service will provide notice. If permanent shutdown is required, we will give at least 30 days' notice and provide JSON/EPUB/DOCX export.",
+            ja: "機能は運用中に追加、改善、整理される場合があります。終了時は30日前告知とデータ出力を提供します。",
+            zh: "功能可能在运营过程中新增、改进或整理。若需永久终止，将提前 30 日公告并提供数据导出。",
           })}
         </p>
       </section>
 
-      {/* 7. Disclaimer */}
+      {/* 7. Service scope */}
       <section className="mb-10">
         <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
-          7. {T({ ko: "면책 조항", en: "Disclaimer", ja: "免責事項", zh: "免责声明" })}
+          7. {T({ ko: "서비스 범위", en: "Service Scope", ja: "サービス範囲", zh: "服务范围" })}
         </h2>
         <div className="space-y-3 text-text-secondary text-sm leading-relaxed">
           <p>
             {T({
-              ko: "서비스는 \"있는 그대로(AS IS)\" 제공됩니다. Loreguard는 상품성·특정목적 적합성·무결성에 대한 명시적·묵시적 보증을 제공하지 않습니다.",
-              en: 'The service is provided "AS IS" without express or implied warranties of merchantability, fitness for a particular purpose, or non-infringement.',
-              ja: "サービスは「現状のまま」で提供され、明示・黙示の保証はありません。",
-              zh: "服务按「现状」提供，不提供适销性、适用性或无侵权的明示或默示保证。",
+              ko: "Loreguard는 창작 과정을 돕는 작업 도구입니다. 작품의 최종 편집, 게시 여부, 외부 플랫폼 제출은 사용자의 결정으로 진행됩니다.",
+              en: "Loreguard is a working tool for the creative process. Final editing, publication decisions, and external platform submissions are made by the user.",
+              ja: "Loreguard は創作過程を支援する作業ツールです。最終編集、公開、外部提出は利用者の判断で進めます。",
+              zh: "Loreguard 是辅助创作过程的工作工具。最终编辑、发布决定与外部平台提交由用户决定。",
             })}
           </p>
           <p>
             {T({
-              ko: "다음 사항에 대해 Loreguard는 책임지지 않습니다: (a) AI 번역·생성 품질의 개별 기대치, (b) 사용자 부주의에 의한 데이터 손실, (c) 제3자 AI 제공사 API 장애, (d) 사용자 창작물의 상업적 성패.",
-              en: "Loreguard is not liable for: (a) individual expectations of AI translation/generation quality, (b) data loss caused by user negligence, (c) outages of third-party AI provider APIs, (d) the commercial success or failure of user works.",
-              ja: "(a)AI品質期待、(b)不注意によるデータ損失、(c)第三者API障害、(d)作品の商業的成否についてLoreguardは責任を負いません。",
-              zh: "对以下事项 Loreguard 不承担责任: (a) AI 质量预期, (b) 用户疏忽造成的数据丢失, (c) 第三方 API 故障, (d) 用户作品的商业表现。",
+              ko: "모델 제안 품질, 외부 제공사 장애, 사용자의 저장·게시 판단, 작품의 상업적 성과는 서비스가 직접 통제하지 않는 범위입니다.",
+              en: "Suggestion quality, third-party provider incidents, user storage or publication choices, and commercial performance of works are outside the service's direct control.",
+              ja: "提案品質、外部提供者の障害、保存・公開判断、作品の商業成果はサービスが直接管理しない範囲です。",
+              zh: "建议质量、第三方服务故障、用户保存或发布选择、作品商业表现属于服务无法直接控制的范围。",
             })}
           </p>
         </div>

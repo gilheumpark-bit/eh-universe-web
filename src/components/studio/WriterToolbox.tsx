@@ -27,6 +27,7 @@ import {
   ChevronDown, ChevronRight, Wrench,
 } from 'lucide-react';
 import { useWritingSafe } from '@/app/studio/WritingContext';
+import { logger } from '@/lib/logger';
 
 // ============================================================
 // PART 1 — 18 모듈 import (lib/creative/*)
@@ -164,16 +165,14 @@ function safeCall<T>(
     const result = fn();
     if (isValid && !isValid(result)) {
       if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
-        console.warn(`[WriterToolbox.safeCall] ${label ?? 'module'} returned invalid shape`);
+        logger.warn('WriterToolbox.safeCall', `${label ?? 'module'} returned invalid shape`);
       }
       return fallback;
     }
     return result;
   } catch (err) {
     if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.warn(`[WriterToolbox.safeCall] ${label ?? 'module'} failed:`, err);
+      logger.warn('WriterToolbox.safeCall', `${label ?? 'module'} failed`, err);
     }
     return fallback;
   }
@@ -358,13 +357,13 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
       // - 모바일 (<768px): w-full overlay 형태 (호출처에서 hidden md:flex 컨테이너 권장)
       // - 태블릿+ (md+): w-72 고정
       className="h-full w-full md:w-72 shrink-0 bg-bg-primary border-l border-border flex flex-col text-xs overflow-hidden"
-      aria-label="작가 도구함 (Writer Toolbox)"
+      aria-label="작가 보조함"
     >
       {/* Header */}
       <div className="p-4 border-b border-border bg-bg-secondary/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Wrench className="w-4 h-4 text-accent-blue" />
-          <span className="font-black tracking-wider uppercase text-text-primary">Toolbox</span>
+          <span className="font-black tracking-wider uppercase text-text-primary">작가 보조함</span>
           <span className="text-[9px] text-text-tertiary">18 모듈</span>
         </div>
         {onClose && (
@@ -372,7 +371,7 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
             type="button"
             onClick={onClose}
             className="text-text-tertiary hover:text-text-primary text-[10px]"
-            aria-label="Toolbox 닫기"
+            aria-label="작가 보조함 닫기"
           >
             닫기
           </button>
@@ -390,7 +389,7 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
                 글을 작성하면 18개 품질 모듈이 활성화됩니다.
               </p>
               <p className="text-[10px] text-text-tertiary leading-relaxed">
-                각 카드는 실시간 분석을 보여줍니다 — 결함, 등급, 캐릭터 완성도, 텐션, 복선, AI 시그니처 등.
+                각 카드는 실시간 분석을 보여줍니다 — 결함, 등급, 캐릭터 완성도, 텐션, 복선, 표현 습관 등.
               </p>
               <p className="text-[10px] text-text-tertiary leading-relaxed">
                 지금은 모든 지표가 <span className="font-mono text-text-secondary">0 · 미활성</span> 상태입니다.
@@ -442,10 +441,10 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
                       />
                       <ModuleCard
                         id="integrated-grade"
-                        title="통합등급 (6축)"
+                        title="통합등급"
                         metricLabel="등급"
                         metricValue={m.integratedGrade}
-                        detail="세계관·캐릭터·씬·연출·집필·퇴고 6축 가중 평균."
+                        detail="세계관·캐릭터·씬·연출·집필·퇴고 항목을 함께 본 종합 결과."
                       />
                       <ModuleCard
                         id="quality-checklist"
@@ -456,7 +455,7 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
                       />
                       <ModuleCard
                         id="scoring-system"
-                        title="3축 점수제"
+                        title="분량·밀도 점검"
                         metricLabel="분량"
                         metricValue={lengthLine}
                         detail={`세계관 ${m.worldScore}점 · 분량 적합도 계측.`}
@@ -491,7 +490,7 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
                         title="클리셰 변형 7기법"
                         metricLabel="제안"
                         metricValue={m.clicheSuggestionCount}
-                        detail="전복/해체/혼합/과장/직역화/역할교환/재맥락화 7기법."
+                        detail="전복/해체/혼합/과장/말맛 전환/역할교환/재맥락화 7기법."
                       />
                     </>
                   )}
@@ -556,10 +555,10 @@ const WriterToolbox: React.FC<WriterToolboxProps> = ({ manuscript: msOverride, o
                     <>
                       <ModuleCard
                         id="ai-signature-scan"
-                        title="AI 시그니처 스캔"
-                        metricLabel="양념"
+                        title="표현 습관 점검"
+                        metricLabel="어색함"
                         metricValue={`${m.aiSignatureScore}%`}
-                        detail="hedging/formulaic/tell/generic 4종 패턴 — 낮을수록 인간적."
+                        detail="모호한 어미, 상투 표현, 설명 과다, 밋밋한 종결을 함께 봅니다."
                       />
                       <ModuleCard
                         id="ip-readiness"

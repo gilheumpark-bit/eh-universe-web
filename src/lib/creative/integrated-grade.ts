@@ -3,12 +3,8 @@
 // 6축 점수(0~100)를 가중 합산해 단일 통합등급으로 환산하는 순수 함수.
 // React/DOM/fetch 의존 0. 절대금지 8파일 import 0. 자체 타입 정의.
 //
-// ADR-0004 (Grade namespace isolation):
-//   본 모듈의 Grade 타입('평작'|'성공'|'성공상위'|'대성공')은 **창작 도메인 전용**.
-//   다음과 혼동/별칭 금지:
-//     - CodeGrade (S|A|B|C|D|F) — src/lib/code-studio/grade/code-grade-types.ts
-//     - NoaGradeEntry (Platinum|Gold|...) — src/lib/noa/types.ts
-//   호출처는 본 모듈에서 직접 import 만 사용. `as Grade` 류 cross-namespace cast 금지.
+// 본 모듈의 Grade 타입('평작'|'성공'|'성공상위'|'대성공')은 창작 도메인 전용.
+// 호출처는 본 모듈에서 직접 import 만 사용. `as Grade` 류 cross-namespace cast 금지.
 // ============================================================
 
 // ============================================================

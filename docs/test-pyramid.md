@@ -34,14 +34,13 @@ Playwright 별도 — `playwright.config.ts`.
 ## 카테고리별 모범 예시
 
 ### Unit (가장 많아야 함)
-- `src/lib/code-studio/grade/__tests__/code-grade-score.test.ts` — 순수 함수.
 - `src/lib/__tests__/fetch-url-guard.test.ts` — SSRF 가드 boundary.
 - `src/lib/actions/__tests__/action-registry.test.ts` — 카탈로그 무결성.
 - `src/lib/actions/__tests__/action-registry.i18n.test.ts` — i18n 게이트 (P10 루프3 신규).
 
 ### Integration / Component (중간)
-- `src/components/__tests__/CodeStudioPanelManager.test.tsx` — panel registry + UI.
-- `src/components/__tests__/CodeStudioShell.test.tsx` — shell mount lifecycle.
+- Studio/Translation Studio component tests — panel registry + UI.
+- Shell mount lifecycle tests — surface별 layout mount 확인.
 - API route gate-checks — `src/app/api/__tests__/gate-checks.test.ts`.
 
 ### E2E (가장 적게)

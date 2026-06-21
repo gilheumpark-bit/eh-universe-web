@@ -16,24 +16,23 @@ const SettingsView = dynamic(() => import('@/components/studio/SettingsView'), {
 // [UX 2026-04-25] StyleTab/HistoryTab은 차트·레이더·이력 등 콘텐츠 양 큼 — 기본 120px 스켈레톤은 비어 보임 → 600/500px 로 확장
 const StyleTab = dynamic(() => import('@/components/studio/tabs/StyleTab'), { ssr: false, loading: () => <LoadingSkeleton height={600} /> });
 const ManuscriptTab = dynamic(() => import('@/components/studio/tabs/ManuscriptTab'), { ssr: false, loading: DynSkeleton });
-const _NetworkFeedWidget = dynamic(() => import('@/components/studio/NetworkFeedWidget'), { ssr: false, loading: DynSkeleton });
 const StudioDocsView = dynamic(() => import('@/components/studio/StudioDocsView'), { ssr: false, loading: DynSkeleton });
 const VisualTab = dynamic(() => import('@/components/studio/tabs/VisualTab'), { ssr: false, loading: DynSkeleton });
 const HistoryTab = dynamic(() => import('@/components/studio/tabs/HistoryTab'), { ssr: false, loading: () => <LoadingSkeleton height={500} /> });
-const RulebookTab = dynamic(() => import('@/components/studio/tabs/RulebookTab'), { ssr: false, loading: DynSkeleton });
+const DirectionTab = dynamic(() => import('@/components/studio/tabs/DirectionTab'), { ssr: false, loading: DynSkeleton });
 const WritingTabInline = dynamic(() => import('@/components/studio/tabs/WritingTabInline'), { ssr: false, loading: () => <LoadingSkeleton height={300} /> });
 // [2026-05-09] SceneSheetTab — 에피소드 씬시트 전용 진입점.
-// SceneSheet 컴포넌트 자체를 mount (RulebookTab/WritingTabInline 의 분산 mount 와 하위 호환).
+// SceneSheet 컴포넌트 자체를 mount (연출 탭/WritingTabInline 의 분산 mount 와 하위 호환).
 const SceneSheetTab = dynamic(() => import('@/components/studio/tabs/SceneSheetTab'), { ssr: false, loading: () => <LoadingSkeleton height={400} /> });
 
 type HostedAiAvailability = Record<string, boolean>;
 
-// TODO: Extract into context providers for future refactor:
+// Refactor note: extract into context providers when this router is split:
 // - UIState (activeTab, setActiveTab, charSubTab, setCharSubTab, showDashboard, rightPanelOpen, setRightPanelOpen, writingColumnShell)
 // - WritingState (writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef, canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective, setPromptDirective, input, setInput, advancedSettings, setAdvancedSettings)
 // - AIHandlers (isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix, hasAiAccess, hostedProviders, showAiLock, directorReport, hfcpState, suggestions, setSuggestions, pipelineResult)
 // - SessionConfig (currentSession, currentSessionId, config, setConfig, updateCurrentSession, triggerSave, saveFlash, language)
-// - ArchiveState (archiveScope, setArchiveScope, archiveFilter, setArchiveFilter, searchQuery, filteredMessages, messagesEndRef)
+// - HistoryState (historyScope, setHistoryScope, historyFilter, setHistoryFilter, searchQuery, filteredMessages, messagesEndRef)
 // - ProjectNav (projects, sessions, currentProject, currentProjectId, setCurrentProjectId, setCurrentSessionId, startRename, renamingSessionId, setRenamingSessionId, renameValue, setRenameValue, confirmRename, moveSessionToProject, deleteSession, handlePrint, handleNextEpisode)
 // - Modals (setUxError, clearAllSessions, setShowApiKeyModal, versionedBackups, doRestoreVersionedBackup, refreshBackupList)
 interface StudioTabRouterProps {
@@ -92,10 +91,10 @@ interface StudioTabRouterProps {
   writingColumnShell: string;
   input: string;
   setInput: (v: string) => void;
-  archiveScope: 'project' | 'all';
-  setArchiveScope: React.Dispatch<React.SetStateAction<'project' | 'all'>>;
-  archiveFilter: string;
-  setArchiveFilter: React.Dispatch<React.SetStateAction<string>>;
+  historyScope: 'project' | 'all';
+  setHistoryScope: React.Dispatch<React.SetStateAction<'project' | 'all'>>;
+  historyFilter: string;
+  setHistoryFilter: React.Dispatch<React.SetStateAction<string>>;
   projects: Project[];
   sessions: ChatSession[];
   currentProject: Project | null;
@@ -130,7 +129,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
     messagesEndRef, searchQuery, filteredMessages, hasAiAccess, advancedSettings, setAdvancedSettings,
     showDashboard, rightPanelOpen, setRightPanelOpen, directorReport, hfcpState, handleNextEpisode,
     writingColumnShell, input, setInput,
-    archiveScope, setArchiveScope, archiveFilter, setArchiveFilter, projects, sessions,
+    historyScope, setHistoryScope, historyFilter, setHistoryFilter, projects, sessions,
     currentProject, currentProjectId, setCurrentProjectId, setCurrentSessionId,
     startRename, renamingSessionId, setRenamingSessionId, renameValue, setRenameValue, confirmRename,
     moveSessionToProject, handlePrint, deleteSession,
@@ -145,9 +144,9 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           language={language} config={config} setConfig={setConfig}
           onStart={() => setActiveTab('writing')} onSave={triggerSave} saveFlash={saveFlash}
           updateCurrentSession={updateCurrentSession} currentSessionId={currentSessionId!}
+          currentProjectId={currentProjectId}
           hostedProviders={hostedProviders}
         />
-        {/* NetworkFeedWidget removed — distracting from writing focus */}
         </SectionErrorBoundary>
       )}
       {activeTab === 'characters' && currentSession && config && (
@@ -157,20 +156,22 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           charSubTab={charSubTab} setCharSubTab={setCharSubTab}
           triggerSave={triggerSave} saveFlash={saveFlash}
           setUxError={setUxError} showAiLock={showAiLock} hostedProviders={hostedProviders}
+          currentProjectId={currentProjectId}
         />
         </SectionErrorBoundary>
       )}
       {activeTab === 'settings' && (
         <SectionErrorBoundary sectionName="Settings">
-        <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} />
+        <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} currentSession={currentSession} />
         </SectionErrorBoundary>
       )}
-      {activeTab === 'rulebook' && currentSession && config && (
-        <SectionErrorBoundary sectionName="Rulebook">
-        <RulebookTab
+      {activeTab === 'direction' && currentSession && config && (
+        <SectionErrorBoundary sectionName="Direction">
+        <DirectionTab
           language={language} config={config} updateCurrentSession={updateCurrentSession}
           triggerSave={triggerSave} saveFlash={saveFlash} currentSessionId={currentSessionId!}
           showAiLock={showAiLock} hostedProviders={hostedProviders}
+          currentProjectId={currentProjectId}
         />
         </SectionErrorBoundary>
       )}
@@ -178,6 +179,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
         <SectionErrorBoundary sectionName="Writing" fallbackHeight={400}>
         <WritingTabInline
           language={language} currentSession={currentSession} currentSessionId={currentSessionId!}
+          currentProjectId={currentProjectId}
           updateCurrentSession={updateCurrentSession} setConfig={setConfig}
           writingMode={writingMode} setWritingMode={setWritingMode}
           editDraft={editDraft} setEditDraft={setEditDraft} editDraftRef={editDraftRef}
@@ -205,6 +207,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
           updateCurrentSession={updateCurrentSession}
           triggerSave={triggerSave} saveFlash={saveFlash}
           showAiLock={showAiLock} hostedProviders={hostedProviders}
+          currentProjectId={currentProjectId}
           messages={currentSession.messages}
         />
         </SectionErrorBoundary>
@@ -214,6 +217,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
         <ManuscriptTab
           language={language} config={config} setConfig={setConfig}
           messages={currentSession.messages}
+          currentProjectId={currentProjectId}
           onEditInStudio={(content: string) => { setEditDraft(content); setWritingMode('edit'); setActiveTab('writing'); }}
           onOpenVisual={() => setActiveTab('visual')}
         />
@@ -223,8 +227,8 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
         <SectionErrorBoundary sectionName="History">
         <HistoryTab
           language={language}
-          archiveScope={archiveScope} setArchiveScope={setArchiveScope}
-          archiveFilter={archiveFilter} setArchiveFilter={setArchiveFilter}
+          historyScope={historyScope} setHistoryScope={setHistoryScope}
+          historyFilter={historyFilter} setHistoryFilter={setHistoryFilter}
           projects={projects} sessions={sessions} currentProject={currentProject}
           currentProjectId={currentProjectId} setCurrentProjectId={setCurrentProjectId}
           currentSessionId={currentSessionId} setCurrentSessionId={setCurrentSessionId}

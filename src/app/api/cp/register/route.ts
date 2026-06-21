@@ -7,7 +7,7 @@
 // GitHub anchor sha). 원고 본문·콘텐츠 0byte — PIPA 최소 수집 원칙.
 //
 // 정직 한계 (verify 표면 의무 문구):
-//   인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
+//   작성자가 직접 썼는지 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명.
 //
 // 보안:
 //   - 인증 필수: Firebase Bearer (checkout/route.ts 패턴 재사용)
@@ -28,9 +28,9 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp } from '@/lib/rate-limit';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
-import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
+import { firestoreCreateDocument, type FirestoreFieldValue } from '@/lib/firestore-service-rest';
 import {
   CP_REGISTRY_COLLECTION,
   computeRegistryHmac,
@@ -58,9 +58,9 @@ const VISIBILITIES = ['public', 'publisher', 'legal', 'private'] as const;
 const ISSUER_TYPES = ['self', 'publisher', 'collaborator', 'admission_token'] as const;
 
 const HONESTY_NOTE_KO =
-  '인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명';
+  '작성자가 직접 썼는지 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명';
 const HONESTY_NOTE_EN =
-  'Human authorship itself cannot be proven — this registry only proves existence and non-tampering after the anchor time.';
+  'Direct authorship itself cannot be proven — this registry only proves existence and non-tampering after the anchor time.';
 
 interface RegisterInput {
   certId: string;
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   // --- Rate limit (10/min per IP — 발급은 드문 행위) ---
-  const rl = checkRateLimit(ip, '/api/cp/register', { windowMs: 60_000, maxRequests: 10 });
+  const rl = await checkRateLimitAsync(ip, '/api/cp/register', { windowMs: 60_000, maxRequests: 10 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'rate_limited' },
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
   // --- Firestore 저장 (메타데이터만 — 콘텐츠 필드 0) ---
   //     필드명은 parseRegistryDocument() 가 읽는 이름과 1:1 정렬:
   //     certId·certHash·registeredAt·chainTipHash·visibility·issuerType·githubCommitSha·hmac.
-  const fields: Record<string, { stringValue?: string; timestampValue?: string }> = {
+  const fields: Record<string, FirestoreFieldValue> = {
     certId: { stringValue: input.certId },
     projectId: { stringValue: input.projectId },
     certHash: { stringValue: input.certHash },

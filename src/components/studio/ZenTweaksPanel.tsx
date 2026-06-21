@@ -142,7 +142,7 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPortalTarget(document.body);
     const loaded = loadTweaks();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setTweaks(loaded);
     applyTweaks(loaded);
   }, []);
@@ -298,7 +298,7 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
     cursor: 'pointer',
   });
 
-  const toggleStyle = (on: boolean): React.CSSProperties => ({
+  const toggleStyle = (): React.CSSProperties => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -437,7 +437,7 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
           <div style={rowStyle}>
             <button
               type="button"
-              style={{ ...toggleStyle(tweaks.dropCap), background: 'transparent', border: 0, width: '100%', textAlign: 'left' }}
+              style={{ ...toggleStyle(), background: 'transparent', border: 0, width: '100%', textAlign: 'left' }}
               onClick={() => update('dropCap', !tweaks.dropCap)}
               aria-pressed={tweaks.dropCap}
             >
@@ -454,7 +454,7 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
           <div style={rowStyle}>
             <button
               type="button"
-              style={{ ...toggleStyle(tweaks.symbolDeco), background: 'transparent', border: 0, width: '100%', textAlign: 'left' }}
+              style={{ ...toggleStyle(), background: 'transparent', border: 0, width: '100%', textAlign: 'left' }}
               onClick={() => update('symbolDeco', !tweaks.symbolDeco)}
               aria-pressed={tweaks.symbolDeco}
             >

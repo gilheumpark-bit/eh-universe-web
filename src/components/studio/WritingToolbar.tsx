@@ -14,6 +14,96 @@ interface WritingToolbarProps {
 }
 // IDENTITY_SEAL: PART-1 | role=타입 정의 | inputs=props | outputs=interface
 
+export interface TextSelectionRange {
+  start: number;
+  end: number;
+}
+
+export interface TextOperationResult {
+  text: string;
+  selection: TextSelectionRange;
+}
+
+function clampOffset(value: string, offset: number): number {
+  if (!Number.isFinite(offset)) return 0;
+  return Math.max(0, Math.min(Math.round(offset), value.length));
+}
+
+export function applyWrapToRange(
+  value: string,
+  selection: TextSelectionRange,
+  prefix: string,
+  suffix = prefix,
+): TextOperationResult {
+  const start = clampOffset(value, selection.start);
+  const end = Math.max(start, clampOffset(value, selection.end));
+  return {
+    text: `${value.slice(0, start)}${prefix}${value.slice(start, end)}${suffix}${value.slice(end)}`,
+    selection: {
+      start: start + prefix.length,
+      end: end + prefix.length,
+    },
+  };
+}
+
+export function applyInsertAt(value: string, offset: number, insert: string): TextOperationResult {
+  const position = clampOffset(value, offset);
+  const nextPosition = position + insert.length;
+  return {
+    text: `${value.slice(0, position)}${insert}${value.slice(position)}`,
+    selection: { start: nextPosition, end: nextPosition },
+  };
+}
+
+function selectedLineBounds(value: string, selection: TextSelectionRange): { start: number; end: number } {
+  const start = clampOffset(value, selection.start);
+  const rawEnd = Math.max(start, clampOffset(value, selection.end));
+  const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+  const adjustedEnd = rawEnd > start && value[rawEnd - 1] === '\n' ? rawEnd - 1 : rawEnd;
+  const nextBreak = value.indexOf('\n', adjustedEnd);
+  return {
+    start: lineStart,
+    end: nextBreak === -1 ? value.length : nextBreak,
+  };
+}
+
+export function applyIndentToLineRange(
+  value: string,
+  selection: TextSelectionRange,
+  direction: 'in' | 'out',
+): TextOperationResult {
+  const bounds = selectedLineBounds(value, selection);
+  const before = value.slice(0, bounds.start);
+  const target = value.slice(bounds.start, bounds.end);
+  const after = value.slice(bounds.end);
+  const lines = target.split('\n');
+  let deltaBeforeStart = 0;
+  let deltaBeforeEnd = 0;
+  let currentOffset = bounds.start;
+
+  const transformed = lines.map((line) => {
+    const lineStart = currentOffset;
+    const lineEnd = lineStart + line.length;
+    currentOffset = lineEnd + 1;
+
+    const changedLine = direction === 'in'
+      ? `  ${line}`
+      : line.replace(/^ {1,2}/, '');
+    const delta = changedLine.length - line.length;
+
+    if (lineStart < selection.start) deltaBeforeStart += delta;
+    if (lineStart < selection.end) deltaBeforeEnd += delta;
+    return changedLine;
+  });
+
+  const nextStart = Math.max(bounds.start, clampOffset(value, selection.start) + deltaBeforeStart);
+  const nextEnd = Math.max(nextStart, clampOffset(value, selection.end) + deltaBeforeEnd);
+  return {
+    text: `${before}${transformed.join('\n')}${after}`,
+    selection: { start: nextStart, end: nextEnd },
+  };
+}
+
 // ============================================================
 // PART 2 — 텍스트 조작 훅
 // ============================================================

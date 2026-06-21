@@ -1,32 +1,33 @@
 // ============================================================
-// /api/cp/verify/[id] — 창작 과정 확인서 외부 검증 endpoint.
+// /api/cp/verify/[id]: 창작 과정 확인서 외부 검증 endpoint.
 // ============================================================
 //
-// LearningGuard 설계서 §2.3 매핑 — Cross-border Novel IDE 의 입출판사·외부
+// LearningGuard 설계서 §2.3 매핑. Cross-border Creative IDE 의 입출판사·외부
 // 검증자가 cert ID 만으로 무결성 1차 점검 가능하게 함.
 //
 // 정책 (alpha):
 //   - 본 endpoint 는 cert 데이터 자체를 보관하지 않는다 (privacy 보호)
 //   - cert ID 형식 검증 + 사용자 친화 instruction JSON 반환
-//   - GET ?lookup=true → Firestore 레지스트리에서 certId/봉인번호로 메타 조회
-//     (원본 콘텐츠 0 — 레지스트리는 해시·메타만 보관. 미등록 = cert_not_registered)
-//   - POST 시 cert JSON 첨부 → schema/hash 무결성 점검 + 레지스트리 대조
+//   - GET ?lookup=true: Firestore 레지스트리에서 certId/봉인번호로 메타 조회
+//     (원본 콘텐츠 0. 레지스트리는 해시·메타만 보관. 미등록 = cert_not_registered)
+//   - POST 시 cert JSON 첨부: schema/hash 무결성 점검 + 레지스트리 대조
 //     (certHash/chainTipHash 일치 + 레지스트리 엔트리 HMAC 검증) 후 결과 반환
 //
 // 보안:
 //   - GET/POST: 누구나 + rate-limit (IP 기준)
-//   - HMAC secret (CP_REGISTRY_HMAC_ENV) — 응답·로그에 절대 노출 금지
+//   - HMAC secret (CP_REGISTRY_HMAC_ENV)는 응답·로그에 노출하지 않는다
 //
-// 정직 한계 (의무 표기): 인간 작성 자체는 증명 불가 —
+// 정직 한계 (의무 표기): 작성자가 직접 썼는지 자체는 증명 불가.
 // 앵커(등록) 시점 이후 무변조·존재만 증명 (HONESTY_LIMITATION).
 //
-// [C] cert ID 형식 검증 — ULID / generateCertificateId / Witness Seal 번호 패턴
+// [C] cert ID 형식 검증. ULID / generateCertificateId / Witness Seal 번호 패턴
 // [G] 결정론적 (LLM 호출 0)
-// [K] 단일 책임 — 검증·instruction·레지스트리 대조만
+// [K] 단일 책임. 검증·instruction·레지스트리 대조만
 // ============================================================
 
 import { NextResponse } from 'next/server';
 import type { ProcessCertificate } from '@/lib/creative-process/types';
+import { buildPublicCertificateLookupCardPayload } from '@/lib/creative-process/public-certificate-card';
 import {
   CP_REGISTRY_COLLECTION,
   CP_REGISTRY_HMAC_ENV,
@@ -38,7 +39,7 @@ import {
   type CertRegistryEntry,
 } from '@/lib/creative-process/registry-contract';
 import { firestoreListDocuments } from '@/lib/firestore-service-rest';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -110,6 +111,11 @@ function registryMeta(entry: CertRegistryEntry) {
   };
 }
 
+function buildPublicVerificationUrl(requestUrl: string, certId: string): string {
+  const url = new URL(requestUrl);
+  return `${url.origin}/verify/${encodeURIComponent(certId)}`;
+}
+
 // ============================================================
 // GET — cert ID 받아 instruction 반환
 // ============================================================
@@ -120,7 +126,7 @@ export async function GET(
 ): Promise<NextResponse> {
   // [전체 검증 사이클 — 2026-05-09] rate-limit 누락 수리. 외부 누구나 호출 가능 endpoint.
   const ip = getClientIp(_request.headers);
-  const rl = checkRateLimit(ip, '/api/cp/verify', RATE_LIMITS.default);
+  const rl = await checkRateLimitAsync(ip, '/api/cp/verify', RATE_LIMITS.default);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'rate_limit_exceeded', retry_after_ms: rl.retryAfterMs },
@@ -166,9 +172,14 @@ export async function GET(
         { status: 404 },
       );
     }
+    const publicCard = buildPublicCertificateLookupCardPayload({
+      entry: found.entry,
+      verificationUrl: buildPublicVerificationUrl(_request.url, found.entry.certId),
+    });
     return NextResponse.json({
       registered: true,
       ...registryMeta(found.entry),
+      public_card: publicCard,
       honesty_note_ko: HONESTY_LIMITATION.ko,
       honesty_note_en: HONESTY_LIMITATION.en,
       privacy_note:
@@ -208,7 +219,7 @@ export async function POST(
 ): Promise<NextResponse> {
   // [전체 검증 사이클 — 2026-05-09] POST 도 rate-limit. payload 검증은 비용이 더 큼.
   const ip = getClientIp(request.headers);
-  const rl = checkRateLimit(ip, '/api/cp/verify-post', RATE_LIMITS.default);
+  const rl = await checkRateLimitAsync(ip, '/api/cp/verify-post', RATE_LIMITS.default);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'rate_limit_exceeded', retry_after_ms: rl.retryAfterMs },

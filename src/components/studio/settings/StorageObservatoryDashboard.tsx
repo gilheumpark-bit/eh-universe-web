@@ -109,24 +109,24 @@ function ModeSummarySection({ language, primaryMode }: ModeSummarySectionProps):
   }, []);
 
   const flagLabel = L4(language, {
-    ko: flag === 'on' ? '활성' : flag === 'shadow' ? 'Shadow' : '비활성',
-    en: flag === 'on' ? 'Active' : flag === 'shadow' ? 'Shadow' : 'Off',
-    ja: flag === 'on' ? '有効' : flag === 'shadow' ? 'Shadow' : '無効',
-    zh: flag === 'on' ? '活动' : flag === 'shadow' ? 'Shadow' : '已关闭',
+    ko: flag === 'on' ? '활성' : flag === 'shadow' ? '관찰 모드' : '비활성',
+    en: flag === 'on' ? 'Active' : flag === 'shadow' ? 'Observe mode' : 'Off',
+    ja: flag === 'on' ? '有効' : flag === 'shadow' ? '観察モード' : '無効',
+    zh: flag === 'on' ? '活动' : flag === 'shadow' ? '观察模式' : '已关闭',
   });
   const modeLabel = L4(language, {
-    ko: primaryMode === 'journal' ? 'Journal (Primary)'
-      : primaryMode === 'degraded' ? 'Degraded (legacy 복귀)'
-      : 'Legacy (Primary)',
-    en: primaryMode === 'journal' ? 'Journal (Primary)'
-      : primaryMode === 'degraded' ? 'Degraded (legacy fallback)'
-      : 'Legacy (Primary)',
-    ja: primaryMode === 'journal' ? 'Journal (Primary)'
-      : primaryMode === 'degraded' ? 'Degraded (legacy 復帰)'
-      : 'Legacy (Primary)',
-    zh: primaryMode === 'journal' ? 'Journal (Primary)'
-      : primaryMode === 'degraded' ? 'Degraded (回退到 legacy)'
-      : 'Legacy (Primary)',
+    ko: primaryMode === 'journal' ? '과정기록 경로'
+      : primaryMode === 'degraded' ? '복구 경로'
+      : '기존 저장 경로',
+    en: primaryMode === 'journal' ? 'Process-record path'
+      : primaryMode === 'degraded' ? 'Recovery path'
+      : 'Classic save path',
+    ja: primaryMode === 'journal' ? '過程記録ルート'
+      : primaryMode === 'degraded' ? '復旧ルート'
+      : '従来保存ルート',
+    zh: primaryMode === 'journal' ? '过程记录路径'
+      : primaryMode === 'degraded' ? '恢复路径'
+      : '旧版保存路径',
   });
 
   return (
@@ -192,21 +192,21 @@ function PrimaryDistributionSection({
   const rows: Array<{ key: PrimaryMode; label: string; count: number; pct: number; color: string }> = useMemo(() => [
     {
       key: 'journal',
-      label: L4(language, { ko: 'Journal Primary', en: 'Journal Primary', ja: 'Journal Primary', zh: 'Journal Primary' }),
+      label: L4(language, { ko: '과정기록 경로', en: 'Process-record path', ja: '過程記録ルート', zh: '过程记录路径' }),
       count: stats.journalPrimary,
       pct: stats.last24hBreakdown.journalPct,
       color: 'text-accent-green',
     },
     {
       key: 'legacy',
-      label: L4(language, { ko: 'Legacy Direct', en: 'Legacy Direct', ja: 'Legacy Direct', zh: 'Legacy Direct' }),
+      label: L4(language, { ko: '기존 저장 경로', en: 'Classic save path', ja: '従来保存ルート', zh: '旧版保存路径' }),
       count: stats.legacyDirect,
       pct: stats.last24hBreakdown.legacyPct,
       color: 'text-text-primary',
     },
     {
       key: 'degraded',
-      label: L4(language, { ko: 'Degraded Fallback', en: 'Degraded Fallback', ja: 'Degraded Fallback', zh: 'Degraded Fallback' }),
+      label: L4(language, { ko: '복구 경로', en: 'Recovery path', ja: '復旧ルート', zh: '恢复路径' }),
       count: stats.degradedFallback,
       pct: stats.last24hBreakdown.degradedPct,
       color: 'text-accent-red',

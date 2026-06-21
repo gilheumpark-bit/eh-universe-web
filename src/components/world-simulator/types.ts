@@ -233,7 +233,7 @@ export const GENRE_PHONEME_PRESETS: Record<string, { label: { ko: string; en: st
     ],
   },
   sf: {
-    label: { ko: "SF (기계적)", en: "SF (Mechanical)" },
+    label: { ko: "SF (기술형)", en: "SF (Technical)" },
     phonemes: [
       { symbol: "\u2227",  roman: "k",   type: "consonant", sigClass: "percussive", freq: 280, wave: "square" },
       { symbol: "\u223C",  roman: "t",   type: "consonant", sigClass: "percussive", freq: 310, wave: "square" },

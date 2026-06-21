@@ -2,7 +2,7 @@
  * WorldGraphEditor — 인터랙티브 그래프 에디터 (Batch 3 rank 3)
  * 검증 범위:
  *   1. 빈 상태 렌더 + 가이드 메시지
- *   2. chat → AI 채움 → 노드 추가 (localFillDraft 위임)
+ *   2. chat → 노아 채움 → 노드 추가 (localFillDraft 위임)
  *   3. validate() 결과 인라인 표시 (위반 카운트)
  *   4. deriveEdges — conflictsWith 양방향 중복 제거
  *   5. summarizeValidation — blocking 노드 카운트
@@ -127,14 +127,14 @@ describe('WorldGraphEditor — UI', () => {
     expect(getByText(/위 입력으로 세계관 fact 를 추가하세요/)).toBeInTheDocument();
   });
 
-  it('chat 입력 → AI 채움 버튼 → 노드 1개 추가', () => {
+  it('chat 입력 → 노아 채움 버튼 → 노드 1개 추가', () => {
     const { getByLabelText, getByText, container } = render(<WorldGraphEditor workId="w-add" />);
     const input = getByLabelText('세계관 fact 입력') as HTMLInputElement;
     act(() => {
       fireEvent.change(input, { target: { value: '마법은 마나를 소비한다' } });
     });
     act(() => {
-      fireEvent.click(getByText('AI 채움'));
+      fireEvent.click(getByText('노아 채움'));
     });
     // 노드 카운트 텍스트 — 1 노드
     expect(container.textContent).toMatch(/1 노드/);

@@ -32,6 +32,26 @@ export interface ReceiptMetrics {
   dialogueRatio?: number;
   /** 핵심 정보 수 (예: 회수된 복선·확정 설정 개수) */
   keyInfo?: number;
+  /** 보류/폐기된 후보 수 */
+  heldCount?: number;
+}
+
+export interface WorkReceiptContext {
+  taskId?: string;
+  role?: string;
+  actor?: string;
+  approvedBy?: string;
+  decision?: string;
+  skippedReason?: string;
+  sourceRefs?: Array<{
+    label: string;
+    hash?: string;
+  }>;
+  changedRange?: {
+    artifactId?: string;
+    afterChars?: number;
+    changedChars?: number;
+  };
 }
 
 /** 작업 영수증 입력. did/skipped 배열은 null/undefined 안전. metrics 선택. */
@@ -39,6 +59,7 @@ export interface WorkReceipt {
   did: ReceiptDid[];
   skipped: ReceiptSkipped[];
   metrics?: ReceiptMetrics;
+  context?: WorkReceiptContext;
 }
 
 // ============================================================
@@ -98,6 +119,11 @@ function buildMetricLines(metrics: ReceiptMetrics | null | undefined): string[] 
   const keyInfo = finiteOrNull(metrics.keyInfo);
   if (keyInfo !== null) {
     lines.push(`- 핵심 정보: ${Math.max(0, Math.round(keyInfo))}건`);
+  }
+
+  const heldCount = finiteOrNull(metrics.heldCount);
+  if (heldCount !== null) {
+    lines.push(`- 보류/폐기: ${Math.max(0, Math.round(heldCount))}건`);
   }
 
   return lines;

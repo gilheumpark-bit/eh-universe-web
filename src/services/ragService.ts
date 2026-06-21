@@ -1,8 +1,8 @@
 /**
- * RAG Service Client — DGX Spark 포트 8082
+ * Legacy Retrieval Service Client — DGX Spark 포트 8082
  *
- * 99만개 세계관 설정(Lore) 검색 + LLM 프롬프트 자동 조립.
- * 소설/대사 생성 LLM 호출 **직전**에 호출하여 환각(Hallucination) 차단.
+ * Translation Studio 보강 경로에서만 쓰는 선택형 검색 클라이언트.
+ * Loreguard Studio의 창작/집필 생성 경로에는 자동 주입하지 않는다.
  *
  * 엔드포인트:
  *   POST /search       → 단순 검색 (문서 배열)

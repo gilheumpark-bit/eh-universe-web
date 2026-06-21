@@ -39,8 +39,8 @@ const LABELS: Record<GlossaryDialogLang, Record<string, string>> = {
     addSource: '원문 단어',
     addTarget: '번역 (선택)',
     addButton: '추가',
-    exportButton: 'JSON 내보내기',
-    importButton: 'JSON 가져오기',
+    exportButton: '백업 내보내기',
+    importButton: '백업 가져오기',
     closeButton: '닫기',
     applyButton: '적용',
     deleteTitle: '삭제',
@@ -54,8 +54,8 @@ const LABELS: Record<GlossaryDialogLang, Record<string, string>> = {
     addSource: 'Source word',
     addTarget: 'Target (optional)',
     addButton: 'Add',
-    exportButton: 'Export JSON',
-    importButton: 'Import JSON',
+    exportButton: 'Export backup',
+    importButton: 'Import backup',
     closeButton: 'Close',
     applyButton: 'Apply',
     deleteTitle: 'Delete',
@@ -69,8 +69,8 @@ const LABELS: Record<GlossaryDialogLang, Record<string, string>> = {
     addSource: '原文単語',
     addTarget: '訳 (任意)',
     addButton: '追加',
-    exportButton: 'JSONエクスポート',
-    importButton: 'JSONインポート',
+    exportButton: 'バックアップを書き出す',
+    importButton: 'バックアップを読み込む',
     closeButton: '閉じる',
     applyButton: '適用',
     deleteTitle: '削除',
@@ -84,8 +84,8 @@ const LABELS: Record<GlossaryDialogLang, Record<string, string>> = {
     addSource: '原文词',
     addTarget: '译文 (可选)',
     addButton: '添加',
-    exportButton: 'JSON导出',
-    importButton: 'JSON导入',
+    exportButton: '导出备份',
+    importButton: '导入备份',
     closeButton: '关闭',
     applyButton: '应用',
     deleteTitle: '删除',
@@ -281,7 +281,7 @@ export function GlossaryManagerDialog({
             <button
               type="button"
               onClick={handleImportClick}
-              className="p-2 hover:bg-bg-secondary rounded transition text-text-secondary focus-visible:ring-2 focus-visible:ring-accent-blue"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-text-secondary transition hover:bg-bg-secondary focus-visible:ring-2 focus-visible:ring-accent-blue"
               aria-label={L.importButton}
               title={L.importButton}
             >
@@ -299,7 +299,7 @@ export function GlossaryManagerDialog({
             <button
               type="button"
               onClick={handleExport}
-              className="p-2 hover:bg-bg-secondary rounded transition text-text-secondary focus-visible:ring-2 focus-visible:ring-accent-blue disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-text-secondary transition hover:bg-bg-secondary focus-visible:ring-2 focus-visible:ring-accent-blue disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={L.exportButton}
               title={L.exportButton}
               disabled={entries.length === 0}
@@ -309,7 +309,7 @@ export function GlossaryManagerDialog({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 hover:bg-bg-secondary rounded transition text-text-secondary focus-visible:ring-2 focus-visible:ring-accent-blue"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-text-secondary transition hover:bg-bg-secondary focus-visible:ring-2 focus-visible:ring-accent-blue"
               aria-label={L.closeButton}
             >
               <X className="w-4 h-4" />

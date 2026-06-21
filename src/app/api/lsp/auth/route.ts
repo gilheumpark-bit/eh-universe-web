@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { generateLspToken, hashToken, isValidTokenFormat, checkRateLimit } from '@/lib/lsp/auth';
+import { generateLspToken, hashToken, checkRateLimit, lspAuthHeaders, verifyLspToken } from '@/lib/lsp/auth';
 
 export const runtime = 'nodejs';
 
@@ -24,6 +24,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      {
+        error: 'lsp_token_issuance_unavailable',
+        message: '운영 환경의 외부 도구 토큰은 서버 설정으로 발급해야 합니다.',
+      },
+      { status: 503 },
+    );
+  }
+
   const token = generateLspToken();
   const tokenHash = await hashToken(token);
   // 클라이언트가 토큰 본체 저장, 서버는 hash 만 알게 한다
@@ -39,8 +49,12 @@ export async function POST(request: Request): Promise<NextResponse> {
 export async function GET(request: Request): Promise<NextResponse> {
   const auth = request.headers.get('authorization') ?? '';
   const token = auth.replace(/^Bearer\s+/i, '').trim();
-  if (!isValidTokenFormat(token)) {
-    return NextResponse.json({ valid: false, error: 'invalid_format' }, { status: 401 });
+  const result = await verifyLspToken(token);
+  if (!result.ok) {
+    return NextResponse.json(
+      { valid: false, error: result.error },
+      { status: result.status, headers: lspAuthHeaders(result) },
+    );
   }
   const hash = await hashToken(token);
   return NextResponse.json({ valid: true, tokenHash: hash });

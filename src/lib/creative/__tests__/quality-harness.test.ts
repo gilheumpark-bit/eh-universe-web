@@ -38,7 +38,7 @@ describe('buildHarness — 장르별 하네스 차이', () => {
     expect(avgLenOf(hunter)).toBe(50);
     expect(avgLenOf(romantasy)).toBe(80);
 
-    // AI티 임계 — fast 30, slow 25
+    // 노아 흔적 임계 — fast 30, slow 25
     const aiSigOf = (h: QualityHarness) =>
       h.checks.find((c) => c.id === 'ai-signature:max-score')?.threshold;
     expect(aiSigOf(hunter)).toBe(30);
@@ -60,7 +60,7 @@ describe('buildHarness — 장르별 하네스 차이', () => {
     expect(romantasy.weights.completeness).toBe(1); // NONE
   });
 
-  it('검증 셋 = 출판감사 6 + AI티 1 + 리듬 2 + IP 1 = 10종, 가중 전부 양수', () => {
+  it('검증 셋 = 출판감사 6 + 노아 흔적 1 + 리듬 2 + IP 1 = 10종, 가중 전부 양수', () => {
     const h = buildHarness(HUNTER_INPUT, 1000);
     expect(h.checks).toHaveLength(10);
     expect(h.checks.every((c) => c.enabled)).toBe(true);

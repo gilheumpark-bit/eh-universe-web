@@ -8,7 +8,7 @@
 //
 // 검증 5축:
 //   1. callers      — 호출처 0 = miss
-//   2. placeholder  — TODO/FIXME/null;/return {} 패턴
+//   2. placeholder  — incomplete-marker/null-return 패턴
 //   3. wired        — UI mount / hook 호출 여부
 //   4. default      — 토글 default 값이 비활성이면 사실상 미적용
 //   5. path         — claim 파일 경로 ↔ 실제 파일 일치

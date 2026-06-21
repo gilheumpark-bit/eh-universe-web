@@ -28,6 +28,7 @@ export default function WritingTabContainer() {
       language={w.language}
       currentSession={w.currentSession}
       currentSessionId={w.currentSessionId}
+      currentProjectId={w.currentProjectId}
       updateCurrentSession={w.updateCurrentSession}
       setConfig={w.setConfig}
       writingMode={w.writingMode}

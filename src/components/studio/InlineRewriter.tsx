@@ -173,6 +173,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         systemInstruction: systemPrompt,
         messages,
         temperature: 0.85,
+        reasoningStage: 'detail',
         signal: controller.signal,
         onChunk: (chunk) => {
           result += chunk;

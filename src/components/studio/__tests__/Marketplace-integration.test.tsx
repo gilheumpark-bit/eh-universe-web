@@ -1,13 +1,13 @@
 /**
- * Marketplace-integration.test — cross-surface wiring for the Novel Studio
- * plugin marketplace.
+ * Marketplace-integration.test — cross-surface wiring for Studio extensions.
  *
  * Covers:
  *   1. Settings → PluginsSection CTA opens the Marketplace modal.
  *   2. Command-palette style 'open-marketplace' event opens the modal.
- *   3. Enabling a plugin via the registry surfaces an "active" badge.
- *   4. Active-count badge updates when plugins toggle.
- *   5. WordCountBadge renders only when its plugin is enabled.
+ *   3. Enabling a bundled extension surfaces an "active" badge.
+ *   4. Active-count badge updates when extensions toggle.
+ *   5. External URL installation controls stay absent from the product UI.
+ *   6. WordCountBadge renders only when its extension is enabled.
  */
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -137,63 +137,12 @@ describe('Marketplace integration', () => {
     });
   });
 
-  it('Install from URL → verify matching hash surfaces success state', async () => {
-    // Dynamic import after mocks so MarketplacePanel sees the installed env.
-     
+  it('does not expose external URL installation controls from the modal panel', async () => {
     const { default: MarketplacePanel } = require('@/components/studio/MarketplacePanel') as typeof import('@/components/studio/MarketplacePanel');
-    // SHA-256("payload") = 239f59ed55e737c77147cf55ad0c1b030b6d7ee748a7426952f9b852d5a935e5
-    const content = 'payload';
-    const expected = '239f59ed55e737c77147cf55ad0c1b030b6d7ee748a7426952f9b852d5a935e5';
-    const originalFetch = global.fetch;
-    (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: async () => content,
-    });
     render(<MarketplacePanel language="KO" />);
-    const urlInput = screen.getByTestId('marketplace-install-url') as HTMLInputElement;
-    const hashInput = screen.getByTestId('marketplace-install-hash') as HTMLInputElement;
-    fireEvent.change(urlInput, { target: { value: 'https://example.com/p.js' } });
-    fireEvent.change(hashInput, { target: { value: expected } });
-    await act(async () => {
-      fireEvent.click(screen.getByTestId('marketplace-install-verify'));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-    await waitFor(() => {
-      const msg = screen.getByTestId('marketplace-install-message');
-      expect(msg.textContent).toMatch(/SHA-256/);
-    });
-    (global as unknown as { fetch: typeof originalFetch }).fetch = originalFetch;
-  });
-
-  it('Install from URL → hash mismatch rejects installation', async () => {
-     
-    const { default: MarketplacePanel } = require('@/components/studio/MarketplacePanel') as typeof import('@/components/studio/MarketplacePanel');
-    const originalFetch = global.fetch;
-    (global as unknown as { fetch: jest.Mock }).fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: async () => 'some-content',
-    });
-    render(<MarketplacePanel language="KO" />);
-    const urlInput = screen.getByTestId('marketplace-install-url') as HTMLInputElement;
-    const hashInput = screen.getByTestId('marketplace-install-hash') as HTMLInputElement;
-    fireEvent.change(urlInput, { target: { value: 'https://example.com/p.js' } });
-    fireEvent.change(hashInput, { target: { value: 'deadbeef' } });
-    await act(async () => {
-      fireEvent.click(screen.getByTestId('marketplace-install-verify'));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-    await waitFor(() => {
-      const msg = screen.getByTestId('marketplace-install-message');
-      expect(msg.textContent).toMatch(/hash-mismatch|verification failed/i);
-    });
-    // Install button should remain disabled until verified.
-    const installBtn = screen.getByTestId('marketplace-install-confirm') as HTMLButtonElement;
-    expect(installBtn.disabled).toBe(true);
-    (global as unknown as { fetch: typeof originalFetch }).fetch = originalFetch;
+    expect(screen.queryByTestId('marketplace-install-url')).toBeNull();
+    expect(screen.queryByTestId('marketplace-install-hash')).toBeNull();
+    expect(screen.queryByTestId('marketplace-install-confirm')).toBeNull();
   });
 
   it('WordCountBadge renders only when its plugin is enabled', async () => {

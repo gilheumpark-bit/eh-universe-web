@@ -16,8 +16,8 @@ describe('ACTION_CATALOG 무결성', () => {
   });
   it('id 가 area prefix 패턴 따름', () => {
     for (const def of Object.values(ACTION_CATALOG)) {
-      // 'studio:', 'code:', 'translate:', 'codex:', 'network:', 'global:' 중 하나로 시작
-      expect(def.id).toMatch(/^(studio|code|translate|codex|network|global):/);
+      // 신버전 공개 표면: studio, translate, global 만 허용
+      expect(def.id).toMatch(/^(studio|translate|global):/);
     }
   });
   it('모든 entry 가 정의된 category 사용', () => {
@@ -55,8 +55,8 @@ describe('filterByArea', () => {
     expect(out.every((d) => d.area === 'studio' || d.area === 'global')).toBe(true);
   });
   it('global 제외 옵션', () => {
-    const out = filterByArea('codex', false);
-    expect(out.every((d) => d.area === 'codex')).toBe(true);
+    const out = filterByArea('translation-studio', false);
+    expect(out.every((d) => d.area === 'translation-studio')).toBe(true);
   });
 });
 

@@ -7,10 +7,12 @@
 
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { getNovelStudioHref } from "@/lib/studio-entry-links";
 
 export default function PaymentCancelPage() {
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; ja: string; zh: string }) => L4(lang, v);
+  const studioHref = getNovelStudioHref("create");
 
   return (
     <main className="min-h-screen bg-bg-primary text-text-primary px-6 py-16 flex items-center justify-center">
@@ -35,7 +37,7 @@ export default function PaymentCancelPage() {
             {T({ ko: "가격 안내로", en: "Back to Pricing", ja: "料金ページへ", zh: "返回价格页" })}
           </a>
           <a
-            href="/studio"
+            href={studioHref}
             className="px-5 py-2.5 border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary transition-colors"
           >
             {T({ ko: "스튜디오로", en: "Go to Studio", ja: "スタジオへ", zh: "前往工作室" })}

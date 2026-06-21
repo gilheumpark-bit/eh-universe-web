@@ -3,21 +3,24 @@
 // ============================================================
 // POST /api/complete
 // Lightweight, fast completion for Tab-autocomplete in the novel editor.
-// Prefers DGX Spark → then cheapest hosted provider.
+// Prefers Hosted developer API. DGX is local/development fallback only when explicitly enabled.
 // Max 100 tokens, low latency is priority.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
 import { getFirstHostedProvider, resolveServerProviderKey } from '@/lib/server-ai';
+import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 import { dispatchStream } from '@/services/aiProviders';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { buildAgentSystemPrompt } from '@/lib/ai/writing-agent-registry';
 import { normalizeToAgentLang } from '@/lib/ai/lang-normalize';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 
 export const maxDuration = 15; // Quick timeout — completion must be fast
+const COMPLETE_BODY_LIMIT_BYTES = 64 * 1024;
 
 // ============================================================
 // PART 2 — System Prompt (writing-agent-registry 위임)
@@ -62,10 +65,51 @@ async function drainStream(stream: ReadableStream): Promise<string> {
   return fullText.trim();
 }
 
+async function readCompleteJson(req: NextRequest): Promise<Record<string, unknown>> {
+  const contentLength = Number(req.headers.get('content-length') || '0');
+  if (Number.isFinite(contentLength) && contentLength > COMPLETE_BODY_LIMIT_BYTES) {
+    throw new Error('PAYLOAD_TOO_LARGE');
+  }
+
+  if (!req.body) {
+    return await req.json() as Record<string, unknown>;
+  }
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    totalBytes += value.byteLength;
+    if (totalBytes > COMPLETE_BODY_LIMIT_BYTES) {
+      try { await reader.cancel(); } catch { /* body already closed */ }
+      throw new Error('PAYLOAD_TOO_LARGE');
+    }
+    chunks.push(value);
+  }
+
+  const merged = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return JSON.parse(new TextDecoder().decode(merged)) as Record<string, unknown>;
+}
+
 export async function POST(req: NextRequest) {
+  const originCheck = checkSameOriginHeaders(req.headers);
+  if (!originCheck.ok) {
+    return NextResponse.json({ error: originCheck.error }, { status: 403 });
+  }
+
   // Rate limit: completion requests are frequent, limit tightly
   const ip = getClientIp(req.headers);
-  const rl = checkRateLimit(ip, 'complete', RATE_LIMITS.default);
+  const rl = await checkRateLimitAsync(ip, 'complete', RATE_LIMITS.default);
   if (!rl.allowed) {
     const retrySec = Math.ceil(rl.retryAfterMs / 1000);
     return NextResponse.json(
@@ -76,21 +120,24 @@ export async function POST(req: NextRequest) {
 
   let body: Record<string, unknown>;
   try {
-    body = await req.json() as Record<string, unknown>;
-  } catch {
+    body = await readCompleteJson(req);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'PAYLOAD_TOO_LARGE') {
+      return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
+    }
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   // Auth check — Firebase JWT 실검증 또는 BYOK 키 형식 검증
   const authHeader = req.headers.get('authorization');
-  let firebaseVerified = false;
+  let verifiedUser: Awaited<ReturnType<typeof import('@/lib/firebase-id-token').verifyFirebaseIdToken>> = null;
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7).trim();
     // 길이만 보던 기존 검증을 실제 JWT 검증으로 교체
     try {
       const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
       const verified = await verifyFirebaseIdToken(token);
-      firebaseVerified = Boolean(verified);
+      verifiedUser = verified;
     } catch { /* verification module load failed — deny */ }
   }
   // BYOK: 제공자 키 형식 검사 (sk-xxx / AIza... / gsk_... 등 최소 패턴) +
@@ -103,9 +150,6 @@ export async function POST(req: NextRequest) {
   else if (/^gsk_[A-Za-z0-9_-]{20,}$/.test(byokKey)) byokProvider = 'groq';
   else if (/^sk-[A-Za-z0-9_-]{20,}$/.test(byokKey)) byokProvider = 'openai';
   const hasByok = byokProvider !== null;
-  if (!firebaseVerified && !hasByok) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
 
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   if (text.length < 10) {
@@ -137,6 +181,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
   }
 
+  const tierGate = await enforceServerTierLimit({
+    headers: req.headers,
+    ip,
+    route: '/api/complete',
+    feature: 'inline-completion',
+    hasByok,
+    verifiedUser,
+  });
+  if (!tierGate.ok) return tierGate.response;
+
   const userContent = text.slice(-500);
   const characterDnaBlock = characters.length > 0
     ? `Active characters in this scene: ${characters.join(', ')}`
@@ -156,16 +210,15 @@ export async function POST(req: NextRequest) {
 
   const FAST_MODELS: Record<string, string> = {
     gemini: 'gemini-2.5-flash-lite',
-    openai: 'gpt-4.1-nano',
+    openai: 'gpt-5.4-nano',
     claude: 'claude-haiku-4-5',
     groq: 'llama-3.1-8b-instant',
-    mistral: 'mistral-small-latest',
+    mistral: 'mistral-small-2603',
   };
 
   // ── Strategy 0: BYOK — 유저 자기 키로 생성 (호스팅 자원 미사용·자기 과금) ──
-  // firebaseVerified 가 아닌 BYOK 단독 인증이면 서버 env 키·DGX Spark 를 쓰지 않는다.
-  // (#17: 가짜 키 정규식 통과 → 호스팅 크레딧 무제한 소모 차단)
-  if (hasByok && !firebaseVerified && byokProvider) {
+  // 로그인 여부와 무관하게 명시적 BYOK가 있으면 BYOK를 최우선 사용한다.
+  if (hasByok && byokProvider) {
     const byokModel = FAST_MODELS[byokProvider] ?? 'gemini-2.5-flash-lite';
     try {
       const result = await dispatchStream(
@@ -188,10 +241,46 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Strategy 1: DGX Spark (fastest, no key needed) — 호스팅 자원, 인증 유저만 ──
-  if (SPARK_SERVER_URL) {
+  // ── Strategy 1: Hosted developer API provider ──
+  const hostedProvider = getFirstHostedProvider();
+  if (hostedProvider) {
+    const apiKey = resolveServerProviderKey(hostedProvider) ?? '';
+    if (!apiKey) {
+      return NextResponse.json({ error: 'No connection key configured' }, { status: 503 });
+    }
+
+    const model = FAST_MODELS[hostedProvider] ?? 'gpt-5.4-nano';
+
     try {
-      const sparkRes = await fetch(`${SPARK_SERVER_URL}/v1/chat/completions`, {
+      const result = await dispatchStream(
+        hostedProvider, apiKey, model,
+        systemPrompt, messages,
+        0.7, maxTokens,
+      );
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: 502 });
+      }
+
+      const completion = await drainStream(result.stream);
+      if (!completion) {
+        return NextResponse.json({ error: 'Empty completion' }, { status: 502 });
+      }
+
+      // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
+      return NextResponse.json({ completion: filterOutputIp(completion, '/api/complete').output });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      if (!isDgxDeveloperApiEnabled()) {
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
+    }
+  }
+
+  // ── Strategy 2: DGX local/development API fallback only when explicitly enabled ──
+  if (isDgxDeveloperApiEnabled()) {
+    const dgxBaseUrl = getDgxDeveloperApiBaseUrl();
+    try {
+      const sparkRes = await fetch(`${dgxBaseUrl}/v1/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -210,48 +299,14 @@ export async function POST(req: NextRequest) {
         const data = await sparkRes.json() as { choices?: Array<{ message?: { content?: string } }> };
         const completion = data.choices?.[0]?.message?.content?.trim();
         if (completion) {
-          // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json({ completion: filterOutputIp(completion, '/api/complete').output });
         }
       }
-    } catch {
-      // Fall through to hosted provider
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
   }
 
-  // ── Strategy 2: Hosted provider (cheapest available) ──
-  const hostedProvider = getFirstHostedProvider();
-  if (!hostedProvider) {
-    return NextResponse.json({ error: 'No AI provider available' }, { status: 503 });
-  }
-
-  const apiKey = resolveServerProviderKey(hostedProvider) ?? '';
-  if (!apiKey) {
-    return NextResponse.json({ error: 'No API key configured' }, { status: 503 });
-  }
-
-  // Use the cheapest/fastest model per provider
-  const model = FAST_MODELS[hostedProvider] ?? 'gemini-2.5-flash-lite';
-
-  try {
-    const result = await dispatchStream(
-      hostedProvider, apiKey, model,
-      systemPrompt, messages,
-      0.7, maxTokens,
-    );
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: 502 });
-    }
-
-    const completion = await drainStream(result.stream);
-    if (!completion) {
-      return NextResponse.json({ error: 'Empty completion' }, { status: 502 });
-    }
-
-    // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
-    return NextResponse.json({ completion: filterOutputIp(completion, '/api/complete').output });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
+  return NextResponse.json({ error: 'No AI provider available' }, { status: 503 });
 }

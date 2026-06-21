@@ -48,8 +48,8 @@ export function WritingContextPanel({ config, language }: Props) {
         <button
           onClick={() => setOpen(true)}
           className="fixed right-0 top-1/2 -translate-y-1/2 z-30 w-8 h-20 bg-bg-secondary/80 backdrop-blur-sm border border-r-0 border-border rounded-l-xl flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors group"
-          title={L4(language, { ko: '참조 패널', en: 'Reference Panel', ja: '参照パネル', zh: '参考面板' })}
-          aria-label={L4(language, { ko: '세계관·인물 참조 패널 열기', en: 'Open world and cast reference panel', ja: '世界観・人物参照パネルを開く', zh: '打开世界观和角色参考面板' })}
+          title={L4(language, { ko: '참조 컨텍스트', en: 'Context Panel', ja: '参照コンテキスト', zh: '参考上下文' })}
+          aria-label={L4(language, { ko: '세계관·인물 참조 컨텍스트 열기', en: 'Open world and cast context panel', ja: '世界観・人物参照コンテキストを開く', zh: '打开世界观和角色参考上下文' })}
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         </button>

@@ -27,7 +27,7 @@ import { NextResponse } from 'next/server';
 // [P1 루프3 — 2026-06-08] readiness 가 boot path 도 보증 — chat route 미진입 환경에서도 import.
 import { getServerAiInitBackend } from '@/lib/server-ai-init';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // ============================================================
@@ -42,6 +42,13 @@ interface ProbeResult {
   detail?: string;
   /** Probe wall-clock ms. */
   ms: number;
+}
+
+interface ProbeSummary {
+  ok: number;
+  warn: number;
+  fail: number;
+  skip: number;
 }
 
 const PROBE_TIMEOUT_MS = 2000;
@@ -146,7 +153,21 @@ function probeStripe(): ProbeResult {
 
 const startedAt = Date.now();
 
-export async function GET() {
+function canViewReadinessDetails(request: Request): boolean {
+  const token = process.env.READINESS_DETAIL_TOKEN || process.env.LOREGUARD_READINESS_TOKEN;
+  if (!token) return false;
+  return request.headers.get('x-loreguard-readiness-token') === token;
+}
+
+function summarizeChecks(checks: Record<string, ProbeResult>): ProbeSummary {
+  const summary: ProbeSummary = { ok: 0, warn: 0, fail: 0, skip: 0 };
+  for (const check of Object.values(checks)) {
+    summary[check.status] += 1;
+  }
+  return summary;
+}
+
+export async function GET(request: Request) {
   const t0 = Date.now();
 
   // 병렬 probe (Promise.allSettled — 한 probe 실패가 다른 probe 차단 안 함)
@@ -172,14 +193,18 @@ export async function GET() {
   const probeMs = Date.now() - t0;
   const uptimeMs = Date.now() - startedAt;
 
+  const basePayload = {
+    status,
+    timestamp: Date.now(),
+    uptimeMs,
+    probeMs,
+  };
+  const payload = canViewReadinessDetails(request)
+    ? { ...basePayload, checks }
+    : { ...basePayload, summary: summarizeChecks(checks) };
+
   return NextResponse.json(
-    {
-      status,
-      timestamp: Date.now(),
-      uptimeMs,
-      probeMs,
-      checks,
-    },
+    payload,
     {
       status: hasFail ? 503 : 200,
       headers: { 'Cache-Control': 'no-store' },

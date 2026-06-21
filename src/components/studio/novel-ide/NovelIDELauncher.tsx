@@ -90,7 +90,7 @@ const NovelIDESettingsPanel = dynamic(
   () => import('@/components/studio/novel-ide/NovelIDESettingsPanel').then((m) => m.NovelIDESettingsPanel),
   { ssr: false },
 );
-// [L3·L4 — 2026-05-08] AI 맥락 이탈 방어 — Completion Gap + Meta-Context 패널.
+// [L3·L4 — 2026-05-08] 작품 맥락 이탈 점검 — Completion Gap + Meta-Context 패널.
 const CompletionGapPanel = dynamic(
   () => import('@/components/studio/completion-gap/CompletionGapPanel').then((m) => m.CompletionGapPanel),
   { ssr: false },
@@ -253,7 +253,13 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
         if (typeof window !== 'undefined') {
           window.dispatchEvent(
             new CustomEvent('noa:alert', {
-              detail: { message: isKO ? `Symbol "${selection}" 없음` : `Symbol "${selection}" not found`, variant: 'info', duration: 2500 },
+              detail: {
+                message: isKO
+                  ? `"${selection}"을 구조 항목에서 찾지 못했습니다`
+                  : `"${selection}" was not found in the structure map`,
+                variant: 'info',
+                duration: 2500,
+              },
             }),
           );
         }
@@ -306,14 +312,14 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
   }, [config, episodes, debugger_]);
 
   const tabs: Array<{ id: LauncherTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-    { id: 'outline', label: isKO ? 'Symbol' : 'Symbol', icon: ListTree },
-    { id: 'long-arc', label: isKO ? '맥락' : 'Long-Arc', icon: GitBranch },
-    { id: 'debugger', label: isKO ? '디버거' : 'Debugger', icon: Bug },
+    { id: 'outline', label: isKO ? '구조' : 'Structure', icon: ListTree },
+    { id: 'long-arc', label: isKO ? '장기 맥락' : 'Story Arc', icon: GitBranch },
+    { id: 'debugger', label: isKO ? '모순 점검' : 'Continuity', icon: Bug },
     { id: 'reader-sim', label: isKO ? '독자' : 'Reader', icon: Users },
-    { id: 'diff', label: isKO ? '의미 비교' : 'Diff', icon: GitBranch },
-    { id: 'defense', label: isKO ? '방어' : 'Defense', icon: ShieldCheck },
-    { id: 'journal', label: isKO ? '확인서' : 'Journal', icon: ScrollText },
-    { id: 'settings', label: isKO ? '설정' : 'Settings', icon: Settings2 },
+    { id: 'diff', label: isKO ? '의미 비교' : 'Meaning', icon: GitBranch },
+    { id: 'defense', label: isKO ? '맥락 보호' : 'Context Guard', icon: ShieldCheck },
+    { id: 'journal', label: isKO ? '과정기록' : 'Records', icon: ScrollText },
+    { id: 'settings', label: isKO ? '패널 설정' : 'Panel', icon: Settings2 },
   ];
 
   // [Visual Charter v1.0 — 2026-05-10] Journal 탭 활성 시 creative events 로드 (5초 throttle).
@@ -365,12 +371,12 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
           onClick={() => setOpen(true)}
           style={{ color: '#ffffff' }}
           className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-accent-purple hover:bg-accent-purple/80 text-white rounded-full shadow-2xl transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-accent-blue outline-none"
-          aria-label={isKO ? 'Novel IDE 도구 열기' : 'Open Novel IDE tools'}
+          aria-label={isKO ? '창작 보조 패널 열기' : 'Open creative support panel'}
           title="Ctrl+Shift+I"
         >
           <Code2 className="w-5 h-5" style={{ color: '#ffffff' }} />
           <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#ffffff' }}>
-            {isKO ? 'IDE' : 'IDE'}
+            {isKO ? '보조' : 'AUX'}
           </span>
         </button>
       )}
@@ -389,14 +395,14 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
           <aside
             className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[420px] lg:w-[500px] bg-bg-primary border-l border-border shadow-2xl flex flex-col"
             role="dialog"
-            aria-label={isKO ? '소설 IDE 도구' : 'Novel IDE Tools'}
+            aria-label={isKO ? '창작 보조 패널' : 'Creative support panel'}
           >
             {/* Header */}
             <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary">
               <div className="flex items-center gap-2">
                 <Code2 className="w-5 h-5 text-accent-purple" />
                 <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">
-                  {isKO ? '소설가의 IDE' : 'Novelist IDE'}
+                  {isKO ? '창작 보조' : 'Creative Assist'}
                 </h2>
               </div>
               <button
@@ -519,7 +525,7 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
                 />
               )}
               {/* [정합 재조정 — 2026-05-07] IDE Settings — 마스터 토글 (시각적 끄기 노출) */}
-              {/* [L3·L4 — 2026-05-08] AI 맥락 이탈 방어 — Defense 탭 */}
+              {/* [L3·L4 — 2026-05-08] 작품 맥락 이탈 점검 — Defense 탭 */}
               {tab === 'defense' && (
                 <div className="space-y-3 h-full overflow-y-auto">
                   <CompletionGapPanel messages={messages ?? undefined} language={language} />
@@ -594,7 +600,7 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
               <span>
                 Ctrl+Shift+I {isKO ? '토글' : 'toggle'} · Ctrl+Shift+S {isKO ? '스니펫' : 'snippet'} · Ctrl+D {isKO ? '치환' : 'find'}
               </span>
-              <span className="text-accent-purple">소설가의 IDE</span>
+              <span className="text-accent-purple">{isKO ? '창작 보조' : 'Creative Assist'}</span>
             </footer>
           </aside>
         </>

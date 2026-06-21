@@ -86,7 +86,12 @@ describe('getTemperatureOverride', () => {
 
   test('0 값도 유효한 숫자로 반환', () => {
     localStorage.setItem('noa_temperature', '0');
-    expect(getTemperatureOverride()).toBe(0);
+    expect(getTemperatureOverride()).toBe(0.1);
+  });
+
+  test('극단값은 저장소에서 읽을 때 안전 범위로 클램프', () => {
+    localStorage.setItem('noa_temperature', '99');
+    expect(getTemperatureOverride()).toBe(1.5);
   });
 });
 
@@ -121,5 +126,10 @@ describe('setTemperatureOverride', () => {
   test('저장 후 getTemperatureOverride로 round-trip 가능', () => {
     setTemperatureOverride(1.23);
     expect(getTemperatureOverride()).toBeCloseTo(1.23, 5);
+  });
+
+  test('저장 시 극단값은 안전 범위로 클램프', () => {
+    setTemperatureOverride(99);
+    expect(localStorage.getItem('noa_temperature')).toBe('1.5');
   });
 });

@@ -7,6 +7,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { logger } from "@/lib/logger";
 
 export default function GlobalError({
   error,
@@ -23,9 +24,7 @@ export default function GlobalError({
     } catch {
       /* 관측 실패는 fallback UI 에 영향 주지 않음 */
     }
-    if (typeof window !== "undefined") {
-      console.error("[global-error]", error);
-    }
+    logger.error("global-error", "Root error boundary caught", error);
   }, [error]);
 
   return (
@@ -55,7 +54,7 @@ export default function GlobalError({
               textTransform: "uppercase",
             }}
           >
-            Loreguard — System Fault
+            Loreguard · System Fault
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 16px" }}>
             치명적 오류 / Fatal Error

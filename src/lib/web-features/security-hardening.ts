@@ -2,6 +2,8 @@
 // Security Hardening — 클라이언트 사이드 보안 강화
 // ============================================================
 
+import { logger } from '@/lib/logger';
+
 /** 외부 링크에 rel="noopener noreferrer" 강제 적용 */
 export function hardenExternalLinks(): void {
   if (typeof document === 'undefined') return;
@@ -15,19 +17,10 @@ export function hardenExternalLinks(): void {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-/** 개발자 도구 경고 (프로덕션) */
+/** 내부 진단 경고 (프로덕션) */
 export function devToolsWarning(): void {
-  if (typeof console === 'undefined') return;
   if (process.env.NODE_ENV !== 'production') return;
-  // Intentional: styled console output for devtools scam protection banner
-  console.log(
-    '%c⚠️ EH Universe Security Warning',
-    'font-size: 20px; font-weight: bold; color: #ff6b6b;',
-  );
-  console.log(
-    '%cDo not paste any code or commands here. This is a browser feature for developers. If someone asked you to paste something here, it is likely a scam.',
-    'font-size: 14px; color: #ffa07a;',
-  );
+  logger.warn('security-hardening', 'Developer console safety notice: do not paste code or commands from untrusted sources.');
 }
 
 /** XSS-safe HTML 이스케이프 */

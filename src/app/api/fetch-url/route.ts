@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { assertUrlAllowedForFetch, rateLimitFetchUrl, validatePostFetchUrl } from '@/lib/fetch-url-guard';
+import {
+  assertResolvedHostAllowedForFetch,
+  assertUrlAllowedForFetch,
+  rateLimitFetchUrl,
+  validatePostFetchUrl,
+} from '@/lib/fetch-url-guard';
 import { getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+
+async function requireFetchUrlAccess(req: NextRequest): Promise<NextResponse | null> {
+  if (process.env.NODE_ENV !== 'production') return null;
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: '로그인 후 URL 불러오기를 사용할 수 있습니다.' }, { status: 401 });
+  }
+  const token = authHeader.slice(7).trim();
+  const decoded = await verifyFirebaseIdToken(token);
+  if (!decoded) {
+    return NextResponse.json({ error: '로그인 정보가 확인되지 않았습니다.' }, { status: 401 });
+  }
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -22,9 +42,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const authBlock = await requireFetchUrlAccess(req);
+  if (authBlock) return authBlock;
+
   const allowed = assertUrlAllowedForFetch(url);
   if (!allowed.ok) {
     return NextResponse.json({ error: allowed.reason }, { status: 400 });
+  }
+
+  const resolved = await assertResolvedHostAllowedForFetch(allowed.href);
+  if (!resolved.ok) {
+    return NextResponse.json({ error: resolved.reason }, { status: 403 });
   }
 
   try {
@@ -43,6 +71,13 @@ export async function GET(req: NextRequest) {
     // redirect: 'follow' 이므로 response.url 은 최종 URL. body 읽기 전 반드시 체크.
     try {
       validatePostFetchUrl(response.url);
+      const finalResolved = await assertResolvedHostAllowedForFetch(response.url);
+      if (!finalResolved.ok) {
+        return NextResponse.json(
+          { error: finalResolved.reason },
+          { status: 403 },
+        );
+      }
     } catch {
       return NextResponse.json(
         { error: '보안: 리다이렉트 결과가 사설/내부 주소로 해석됨 (SSRF 차단)' },

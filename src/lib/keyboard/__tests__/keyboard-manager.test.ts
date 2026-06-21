@@ -67,11 +67,7 @@ describe('isAreaMatch', () => {
   it('studio /studio 시작', () => {
     expect(isAreaMatch('studio', '/studio')).toBe(true);
     expect(isAreaMatch('studio', '/studio/abc')).toBe(true);
-    expect(isAreaMatch('studio', '/code-studio')).toBe(false);
-  });
-  it('code-studio /code-studio 시작', () => {
-    expect(isAreaMatch('code-studio', '/code-studio')).toBe(true);
-    expect(isAreaMatch('code-studio', '/studio')).toBe(false);
+    expect(isAreaMatch('studio', '/docs')).toBe(false);
   });
   it('translation-studio', () => {
     expect(isAreaMatch('translation-studio', '/translation-studio')).toBe(true);
@@ -93,7 +89,7 @@ describe('registerKeyBinding', () => {
     expect(fn).toHaveBeenCalledTimes(1); // 추가 호출 없음
   });
   it('영역 불일치 시 미작동', () => {
-    window.history.pushState({}, '', '/code-studio');
+    window.history.pushState({}, '', '/docs');
     const fn = jest.fn();
     registerKeyBinding({ keys: 'ctrl+p', area: 'studio', handler: fn });
     window.dispatchEvent(makeEvent({ key: 'p', ctrl: true }));
@@ -153,7 +149,7 @@ describe('registerKeyBinding', () => {
 describe('getAllBindings', () => {
   it('등록 목록 조회', () => {
     registerKeyBinding({ keys: 'ctrl+p', area: 'studio', handler: () => {} });
-    registerKeyBinding({ keys: 'ctrl+k', area: 'code-studio', handler: () => {} });
+    registerKeyBinding({ keys: 'ctrl+k', area: 'translation-studio', handler: () => {} });
     expect(getAllBindings()).toHaveLength(2);
   });
 });
@@ -183,27 +179,9 @@ describe('isAreaMatch — pathname startsWith edge cases', () => {
     expect(isAreaMatch('studio', '/studio-advanced')).toBe(true);
   });
 
-  it('code-studio /code-studio — 매치', () => {
-    expect(isAreaMatch('code-studio', '/code-studio')).toBe(true);
-    expect(isAreaMatch('code-studio', '/code-studio/file')).toBe(true);
-  });
-
-  it('code-studio /studio — 매치 안 됨 (prefix 분리)', () => {
-    expect(isAreaMatch('code-studio', '/studio')).toBe(false);
-  });
-
   it('translation-studio /translation-studio — 매치', () => {
     expect(isAreaMatch('translation-studio', '/translation-studio')).toBe(true);
     expect(isAreaMatch('translation-studio', '/translation-studio/draft')).toBe(true);
-  });
-
-  it('network /network/planet/1 — 매치', () => {
-    expect(isAreaMatch('network', '/network/planet/1')).toBe(true);
-  });
-
-  it('codex /codex — 매치', () => {
-    expect(isAreaMatch('codex', '/codex')).toBe(true);
-    expect(isAreaMatch('codex', '/codex/page/2')).toBe(true);
   });
 
   it('desktop /desktop — 매치', () => {

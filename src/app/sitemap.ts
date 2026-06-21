@@ -18,7 +18,6 @@ interface SimpleEntry {
 }
 
 // 다국어 대응 entry — landing / legal / 공개 마케팅 페이지만.
-// [Alpha non-public — 2026-05-08] /studio /translation-studio /welcome 제외 (robots.txt 정합).
 const MULTILANG_PATHS: SimpleEntry[] = [
   { path: '/',                  changeFrequency: 'weekly',  priority: 1.0 },
   { path: '/about',             changeFrequency: 'monthly', priority: 0.5 },
@@ -26,22 +25,13 @@ const MULTILANG_PATHS: SimpleEntry[] = [
   { path: '/terms',             changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/copyright',         changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/ai-disclosure',     changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/codex',             changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/reference',         changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/rulebook',          changeFrequency: 'monthly', priority: 0.6 },
   { path: '/docs',              changeFrequency: 'monthly', priority: 0.6 },
-  // [2026-05-09] 누락 5건 보강 — /tools 인덱스, /tools/style-studio, /changelog, /reports, /status
-  { path: '/tools',             changeFrequency: 'monthly', priority: 0.6 },
   { path: '/changelog',         changeFrequency: 'weekly',  priority: 0.5 },
-  { path: '/reports',           changeFrequency: 'monthly', priority: 0.4 },
+  { path: '/cookies',           changeFrequency: 'yearly',  priority: 0.3 },
+  { path: '/pricing',           changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/refund',            changeFrequency: 'yearly',  priority: 0.3 },
   { path: '/status',            changeFrequency: 'weekly',  priority: 0.4 },
-  { path: '/tools/style-studio', changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/tools/soundtrack',  changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/tools/galaxy-map',  changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/tools/vessel',      changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/tools/warp-gate',   changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/tools/noa-tower',   changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/tools/neka-sound',  changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/verify',            changeFrequency: 'monthly', priority: 0.5 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

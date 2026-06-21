@@ -57,7 +57,7 @@ export interface UseCmdPaletteResult {
 export interface UseCmdPaletteOptions {
   /**
    * 내부 Ctrl+P 단축키 비활성. true 면 caller 가 keyboard-manager 등으로 외부 트리거.
-   * Translation Studio (Cmd+K) / Code Studio (Ctrl+K) 등 4-way 키 표준에서 사용.
+   * Translation Studio와 Studio의 영역별 단축키 표준에서 사용.
    * 기본 false — 기존 Studio Ctrl+P 호출자 호환 유지.
    */
   disableInternalShortcut?: boolean;

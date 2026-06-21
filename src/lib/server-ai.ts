@@ -1,29 +1,32 @@
-// ============================================================
-// PART 1 — Server-side provider key helpers
-// ============================================================
+import {
+  SERVER_PROVIDER_IDS,
+  isServerProviderId,
+  type ServerProviderId,
+} from '@/lib/server-provider-shared';
 
-export type ServerProviderId = 'gemini' | 'openai' | 'claude' | 'groq' | 'mistral' | 'ollama' | 'lmstudio';
+export { isServerProviderId };
+export type { ServerProviderId };
 
 export const SERVER_ENV_KEYS: Record<ServerProviderId, string | undefined> = {
-  gemini: process.env.GEMINI_API_KEY,
+  gemini: undefined,
   openai: process.env.OPENAI_API_KEY,
   claude: process.env.CLAUDE_API_KEY,
+  deepseek: process.env.DEEPSEEK_API_KEY,
+  qwen: process.env.DASHSCOPE_API_KEY,
+  minimax: process.env.MINIMAX_API_KEY,
+  kimi: process.env.MOONSHOT_API_KEY,
   groq: process.env.GROQ_API_KEY,
   mistral: process.env.MISTRAL_API_KEY,
   ollama: process.env.OLLAMA_API_URL,     // e.g. http://localhost:11434
   lmstudio: process.env.LMSTUDIO_API_URL, // e.g. http://localhost:1234
 };
 
-const SERVER_PROVIDERS = Object.keys(SERVER_ENV_KEYS) as ServerProviderId[];
+const SERVER_PROVIDERS = SERVER_PROVIDER_IDS;
 const LOCAL_PROVIDERS: ReadonlySet<ServerProviderId> = new Set(['ollama', 'lmstudio']);
 
 function hasGeminiServerCredentials(): boolean {
-  // [2026-06-06] Vertex AI 경로 제거 — GEMINI_API_KEY(호스팅) 단독.
-  return Boolean(process.env.GEMINI_API_KEY?.trim());
-}
-
-export function isServerProviderId(value: unknown): value is ServerProviderId {
-  return typeof value === 'string' && SERVER_PROVIDERS.includes(value as ServerProviderId);
+  // [P1 hosted-gemini-off 2026-06-15] Gemini는 호스팅 제공에서 제외하고 사용자 연결 키로만 허용한다.
+  return false;
 }
 
 export function resolveServerProviderKey(

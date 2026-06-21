@@ -13,6 +13,11 @@
 //   - /api/error-report — 클라이언트 fetch (sentry 패턴, low-risk)
 //   - /api/vitals — Beacon API (Web Vitals reporting, low-risk)
 //   - /api/health, /api/readiness — health probe (GET only, defense-in-depth)
+//   - /api/lsp/* — 외부 도구용 Bearer 토큰 인증. 브라우저 쿠키 CSRF와 분리.
+//
+// 제거된 공개 표면:
+//   - /code, /code-studio, /codex, /reference, /reports, /rulebook, /tools, /world
+//   - /api/code/*, /api/network-agent/*, /api/npm-search
 //
 // 적용 외 경로:
 //   - GET / HEAD / OPTIONS — side-effect free, CSRF 불요
@@ -42,13 +47,60 @@ const CSRF_EXEMPT_PATHS: ReadonlySet<string> = new Set([
 
 const CSRF_EXEMPT_PREFIXES: readonly string[] = [
   '/api/cron/',
+  '/api/lsp/',
 ];
 
 const WRITE_METHODS: ReadonlySet<string> = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+const REMOVED_PAGE_EXACT_PATHS: ReadonlySet<string> = new Set([
+  '/code',
+  '/code-studio',
+  '/codex',
+  '/reference',
+  '/reports',
+  '/rulebook',
+  '/tools',
+  '/world',
+]);
+
+const REMOVED_PAGE_PREFIXES: readonly string[] = [
+  '/code-studio/',
+  '/codex/',
+  '/reference/',
+  '/reports/',
+  '/rulebook/',
+  '/tools/',
+  '/world/',
+];
+
+const REMOVED_API_PREFIXES: readonly string[] = [
+  '/api/code/',
+  '/api/network-agent/',
+];
+
+const REMOVED_API_EXACT_PATHS: ReadonlySet<string> = new Set([
+  '/api/npm-search',
+]);
+
 function isCsrfExempt(pathname: string): boolean {
   if (CSRF_EXEMPT_PATHS.has(pathname)) return true;
   for (const prefix of CSRF_EXEMPT_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function isRemovedPagePath(pathname: string): boolean {
+  if (REMOVED_PAGE_EXACT_PATHS.has(pathname)) return true;
+  for (const prefix of REMOVED_PAGE_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function isRemovedApiPath(pathname: string): boolean {
+  if (REMOVED_API_EXACT_PATHS.has(pathname)) return true;
+  for (const prefix of REMOVED_API_PREFIXES) {
     if (pathname.startsWith(prefix)) return true;
   }
   return false;
@@ -74,6 +126,17 @@ function verifyCsrfEdge(req: NextRequest): boolean {
   return timingSafeEqualString(cookieToken, headerToken);
 }
 
+function hasSameOriginHeader(req: NextRequest): boolean {
+  const origin = req.headers.get('origin');
+  const host = req.headers.get('host');
+  if (!origin || !host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 // ============================================================
 // PART 4 — Proxy entry point (Next 16 default export "proxy")
 // ============================================================
@@ -82,11 +145,26 @@ export function proxy(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
   const method = req.method.toUpperCase();
 
+  if (isRemovedApiPath(pathname)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'surface_removed',
+        message: 'This legacy API surface is no longer active in Loreguard.',
+      },
+      { status: 410 },
+    );
+  }
+
+  if (isRemovedPagePath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   if (!pathname.startsWith('/api/')) return NextResponse.next();
   if (!WRITE_METHODS.has(method)) return NextResponse.next();
   if (isCsrfExempt(pathname)) return NextResponse.next();
 
-  if (!verifyCsrfEdge(req)) {
+  if (!verifyCsrfEdge(req) && !hasSameOriginHeader(req)) {
     return NextResponse.json(
       {
         ok: false,
@@ -106,7 +184,24 @@ export function proxy(req: NextRequest): NextResponse {
 // ============================================================
 
 export const config = {
-  matcher: ['/api/:path*'],
+  matcher: [
+    '/api/:path*',
+    '/code',
+    '/code-studio',
+    '/code-studio/:path*',
+    '/codex',
+    '/codex/:path*',
+    '/reference',
+    '/reference/:path*',
+    '/reports',
+    '/reports/:path*',
+    '/rulebook',
+    '/rulebook/:path*',
+    '/tools',
+    '/tools/:path*',
+    '/world',
+    '/world/:path*',
+  ],
 };
 
 // IDENTITY_SEAL: proxy PART-1 | role=CSRF systematic enforcement | scope=/api/* writes

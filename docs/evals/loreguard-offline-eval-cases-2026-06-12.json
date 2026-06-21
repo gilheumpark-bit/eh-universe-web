@@ -1,0 +1,153 @@
+{
+  "kind": "loreguard.offline-eval-suite.v1",
+  "id": "loreguard-core-regression-20",
+  "version": "2026-06-12",
+  "scope": [
+    "prompt-drift-negative-cases",
+    "creative-domain-output-contract",
+    "writing-agent-guard-contract"
+  ],
+  "limitation": "Deterministic offline contract cases for prompt/source drift. This suite does not execute live provider model outputs.",
+  "cases": [
+    {
+      "id": "lg-eval-001-agent-registry-present",
+      "severity": "critical",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["WRITING_AGENT_REGISTRY", "buildAgentSystemPrompt", "auditRegistry"]
+    },
+    {
+      "id": "lg-eval-002-no-think-guards-present",
+      "severity": "critical",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["/no_think", "no-english-thinking-korean-novel", "no-think-translation"]
+    },
+    {
+      "id": "lg-eval-003-json-only-guard-present",
+      "severity": "high",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["no-yap-json", "JSON OUTPUT ONLY", "No markdown fences", "no commentary"]
+    },
+    {
+      "id": "lg-eval-004-ip-brand-guard-present",
+      "severity": "critical",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["ip-brand-guard", "실존 상표", "소유권·저작권 문구 출력 금지"]
+    },
+    {
+      "id": "lg-eval-005-proofread-no-auto-edit",
+      "severity": "critical",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["studio-proofread", "본문을 직접 고치지 않는 리포트 전용", "자동 편집 금지"]
+    },
+    {
+      "id": "lg-eval-006-context-blocks-preserved",
+      "severity": "high",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["act-guide", "style-dna", "tension-curve", "origin-guide"]
+    },
+    {
+      "id": "lg-eval-007-domain-types-contract",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/types.ts",
+      "assertion": "require-all",
+      "terms": ["CreativeDomainPrompts", "defaultDomainFor", "korean-webnovel", "western-fantasy", "japanese-lightnovel", "chinese-xianxia"]
+    },
+    {
+      "id": "lg-eval-008-domain-dispatcher-contract",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/index.ts",
+      "assertion": "require-all",
+      "terms": ["DOMAIN_PROMPTS", "getDomainPromptsByDomain", "getDomainPrompts"]
+    },
+    {
+      "id": "lg-eval-009-ko-json-array-contract",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/ko.ts",
+      "assertion": "require-all",
+      "terms": ["JSON 배열로만 출력", "설명·주석·markdown 코드 블록 금지"]
+    },
+    {
+      "id": "lg-eval-010-en-json-array-contract",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/en.ts",
+      "assertion": "require-all",
+      "terms": ["Output the JSON array only", "No prose, no markdown fences, no commentary"]
+    },
+    {
+      "id": "lg-eval-011-ja-json-array-contract",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/ja.ts",
+      "assertion": "require-all",
+      "terms": ["JSON 配列のみ出力", "説明・注釈・markdown コードブロック禁止"]
+    },
+    {
+      "id": "lg-eval-012-zh-json-array-contract",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/zh.ts",
+      "assertion": "require-all",
+      "terms": ["仅输出 JSON 数组", "禁止说明、注释、markdown 代码块"]
+    },
+    {
+      "id": "lg-eval-013-no-copyright-guarantee-claims",
+      "severity": "critical",
+      "target": "prompt-source-files",
+      "assertion": "forbid-any",
+      "terms": ["100% 저작권 보호", "완전 방어", "저작권을 보증", "copyright guarantee", "certify copyright ownership"]
+    },
+    {
+      "id": "lg-eval-014-no-ai-detection-claims",
+      "severity": "critical",
+      "target": "prompt-source-files",
+      "assertion": "forbid-any",
+      "terms": ["AI 판별", "AI detection guarantee", "prove AI-free", "표절 완전 방지"]
+    },
+    {
+      "id": "lg-eval-015-no-prompt-leakage-format",
+      "severity": "high",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["No markdown fences", "no commentary", "no explanation"]
+    },
+    {
+      "id": "lg-eval-016-agent-language-directives",
+      "severity": "high",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["TARGET LANGUAGE: Korean", "TARGET LANGUAGE: English", "TARGET LANGUAGE: Japanese", "TARGET LANGUAGE: Chinese"]
+    },
+    {
+      "id": "lg-eval-017-translation-think-block-denial",
+      "severity": "critical",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["ABSOLUTE RULE — TRANSLATION", "Do NOT emit <think></think> blocks", "Output ONLY the final translated text"]
+    },
+    {
+      "id": "lg-eval-018-structured-output-field-contract",
+      "severity": "high",
+      "target": "src/lib/ai/writing-agent-registry.ts",
+      "assertion": "require-all",
+      "terms": ["Use exactly the field names specified in the prompt", "single valid JSON object"]
+    },
+    {
+      "id": "lg-eval-019-domain-culture-contract",
+      "severity": "medium",
+      "target": "src/lib/ai/creative-domain-prompts/types.ts",
+      "assertion": "require-all",
+      "terms": ["각 나라 문법 훼손 X", "그 언어로 직접 작성"]
+    },
+    {
+      "id": "lg-eval-020-source-bom-links-prompts",
+      "severity": "high",
+      "target": "src/lib/ai/creative-domain-prompts/index.ts",
+      "assertion": "require-all",
+      "terms": ["KO_WEBNOVEL", "EN_FANTASY", "JA_LIGHTNOVEL", "ZH_XIANXIA"]
+    }
+  ]
+}

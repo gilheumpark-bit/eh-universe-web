@@ -10,9 +10,9 @@
 
    내용: 데스크톱 src/app/desktop/page.tsx MemoBoard(~93줄) 이식 — 즉흥
    아이디어 스크래치패드 (Muvel 4부 흡수 동일 사상). 신규 엔진 0:
-   - 영속  = localStorage 'noa-lg-memos' (프로젝트 무관 스크래치 — 아직
-     "설정"이 아닌 것들이라 세션 config 에 박지 않음. 데스크톱 키
-     'noa_desktop_memos_v1' 과는 별개 보드 — 자동 병합/마이그레이션 없음).
+   - 영속  = localStorage `noa-lg-memos:<projectId>` (프로젝트별 스크래치 —
+     아직 "설정"이 아닌 것들이라도 타 프로젝트로 넘어가지 않게 격리).
+     데스크톱 키 'noa_desktop_memos_v1' 과는 별개 보드 — 자동 병합/마이그레이션 없음.
    - 요약  = 기존 summarizeNotes(@/lib/creative/work-note) 재사용
      (데스크톱과 동일하게 메모 전부를 phase 'plan' 노트로 집계).
 
@@ -24,7 +24,7 @@
    가드: SSR 안전(typeof window) · quota 초과 silent · 깨진 JSON → 빈 배열.
    =========================================================== */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { L4 } from "@/lib/i18n";
@@ -34,7 +34,7 @@ import { reportError } from "@/components/ErrorBoundary";
 import type { AppLanguage } from "@/lib/studio-types";
 
 // ============================================================
-// PART 1 — 영속 (localStorage 'noa-lg-memos')
+// PART 1 — 영속 (localStorage `noa-lg-memos:<projectId>`)
 // ============================================================
 
 interface MemoCard {
@@ -43,7 +43,13 @@ interface MemoCard {
   at: number;
 }
 
-const MEMO_KEY = "noa-lg-memos";
+const MEMO_KEY_PREFIX = "noa-lg-memos";
+const UNBOUND_MEMO_SCOPE = "no-project";
+
+export function buildMemoStorageKey(projectId?: string | null): string {
+  const trimmed = projectId?.trim();
+  return `${MEMO_KEY_PREFIX}:${trimmed ? encodeURIComponent(trimmed) : UNBOUND_MEMO_SCOPE}`;
+}
 
 /** noa:toast 발화 (ToastHost 계약). SSR/이벤트 차단 시 no-op. */
 function memoToast(message: string, variant: "error" | "info" = "error"): void {
@@ -63,10 +69,10 @@ interface LoadMemosResult {
   parseError: boolean;  // JSON 파싱 자체 실패 (전체 로드 불가)
 }
 
-function loadMemos(): LoadMemosResult {
+function loadMemos(storageKey: string): LoadMemosResult {
   if (typeof window === "undefined") return { memos: [], droppedCount: 0, parseError: false };
   try {
-    const raw = window.localStorage.getItem(MEMO_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return { memos: [], droppedCount: 0, parseError: false };
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return { memos: [], droppedCount: 0, parseError: true };
@@ -88,10 +94,10 @@ function loadMemos(): LoadMemosResult {
 }
 
 /** @returns 저장 성공 여부 (false = quota/private 등으로 실패 → 호출자가 고지). */
-function saveMemos(memos: MemoCard[]): boolean {
+function saveMemos(storageKey: string, memos: MemoCard[]): boolean {
   if (typeof window === "undefined") return false;
   try {
-    window.localStorage.setItem(MEMO_KEY, JSON.stringify(memos));
+    window.localStorage.setItem(storageKey, JSON.stringify(memos));
     return true;
   } catch (err) {
     // quota/사파리 private — 세션 내 state 로는 유지되나, 영속 실패는 사용자에게 고지.
@@ -104,10 +110,17 @@ function saveMemos(memos: MemoCard[]): boolean {
 // PART 2 — 메인 컴포넌트
 // ============================================================
 
-export default function MemoPanel({ language }: { language: AppLanguage }) {
+export default function MemoPanel({
+  language,
+  projectId = null,
+}: {
+  language: AppLanguage;
+  projectId?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [memos, setMemos] = useState<MemoCard[]>([]);
   const [draft, setDraft] = useState("");
+  const memoStorageKey = useMemo(() => buildMemoStorageKey(projectId), [projectId]);
 
   // 모달 a11y — focus trap (Tab 가둠·이전 focus 복귀) + 배경 스크롤 차단 (OnboardingOverlay 패턴).
   const dialogRef = useRef<HTMLElement>(null);
@@ -117,13 +130,10 @@ export default function MemoPanel({ language }: { language: AppLanguage }) {
   useFocusTrap(dialogRef, open);
   useBodyScrollLock(open);
 
-  // ----- 오픈 이벤트 청취 — 열 때마다 재로드 (다른 탭/세션 변경 흡수) -----
-  useEffect(() => {
-    const onOpen = () => {
-      const { memos: loaded, droppedCount, parseError } = loadMemos();
+  const loadScopedMemos = useCallback(
+    () => {
+      const { memos: loaded, droppedCount, parseError } = loadMemos(memoStorageKey);
       setMemos(loaded);
-      setOpen(true);
-      // [QA-robustness (5)] 부분 손상/전체 손상은 별도 고지 (침묵 데이터 유실 금지).
       if (parseError) {
         memoToast(
           L4(language, {
@@ -144,10 +154,30 @@ export default function MemoPanel({ language }: { language: AppLanguage }) {
           "info",
         );
       }
-    };
-    window.addEventListener("loreguard:open-memo", onOpen);
-    return () => window.removeEventListener("loreguard:open-memo", onOpen);
-  }, [language]);
+    },
+    [language, memoStorageKey],
+  );
+
+  // ----- 오픈 이벤트 청취 — 열 때마다 재로드 (다른 탭/세션 변경 흡수) -----
+  const openMemoPanel = useCallback(() => {
+    setOpen(true);
+    queueMicrotask(() => {
+      loadScopedMemos();
+    });
+  }, [loadScopedMemos]);
+
+  useEffect(() => {
+    window.addEventListener("loreguard:open-memo", openMemoPanel);
+    return () => window.removeEventListener("loreguard:open-memo", openMemoPanel);
+  }, [openMemoPanel]);
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      loadScopedMemos();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [loadScopedMemos, open]);
 
   // ----- Escape 닫기 — 패널 오픈 중에만 청취 -----
   useEffect(() => {
@@ -164,7 +194,7 @@ export default function MemoPanel({ language }: { language: AppLanguage }) {
     if (!t) return;
     const next = [{ id: `${Date.now()}_${memos.length}`, text: t, at: Date.now() }, ...memos];
     setMemos(next);
-    if (!saveMemos(next)) {
+    if (!saveMemos(memoStorageKey, next)) {
       // [QA-robustness (5)] 영속 실패(quota/private) — 침묵 금지. state 는 유지되나 고지.
       memoToast(
         L4(language, {
@@ -181,7 +211,7 @@ export default function MemoPanel({ language }: { language: AppLanguage }) {
   const remove = (id: string) => {
     const next = memos.filter((m) => m.id !== id);
     setMemos(next);
-    if (!saveMemos(next)) {
+    if (!saveMemos(memoStorageKey, next)) {
       memoToast(
         L4(language, {
           ko: "메모 삭제를 저장하지 못했습니다 (저장 공간 부족).",

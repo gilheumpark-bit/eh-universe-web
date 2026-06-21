@@ -40,6 +40,7 @@ interface WorldTabProps {
   saveFlash: boolean;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   currentSessionId: string | null;
+  currentProjectId?: string | null;
   hostedProviders?: Record<string, boolean>;
 }
 
@@ -108,6 +109,7 @@ const WorldTab: React.FC<WorldTabProps> = ({
   saveFlash,
   updateCurrentSession,
   currentSessionId,
+  currentProjectId = null,
   hostedProviders = {},
 }) => {
   // [s82-stage-coverage] 마지막 명시 기록 시각 (throttle)
@@ -131,6 +133,7 @@ const WorldTab: React.FC<WorldTabProps> = ({
       onStart={onStart}
       onSave={onSave}
       saveFlash={saveFlash}
+      currentProjectId={currentProjectId}
       hostedProviders={hostedProviders}
       aria-label={L4(language, {
         ko: '세계관 스튜디오',

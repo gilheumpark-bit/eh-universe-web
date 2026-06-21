@@ -5,7 +5,7 @@
    [X3-heinrich-compression 2026-06-11]
 
    하인리히 300→29→1 (claude3 _도구/_하인리히_신호압축_결함피라미드.md):
-   · RevisionPanel 의 (a) 퇴고 이슈 / (b) AI 시그니처 / (d) QA 4감사관 raw 검출을
+   · RevisionPanel 의 (a) 퇴고 이슈 / (b) 표현 습관 / (d) QA 4감사관 raw 검출을
      클러스터·FMEA 우선순위로 압축 → vital-few (BLOCKER/WARN/NIT/KEEP·상한 29)
      + 1 verdict (PASS/HOLD/FAIL) 우선 표시.
    · raw 목록은 부모의 "전체 보기" 토글로 항상 접근 가능 (정보 은닉 아님) —
@@ -60,23 +60,56 @@ const ISSUE_FMEA: Record<RevisionIssueKind, { sev: number; det: number; conf: nu
 /** QA 감사관 severity → FMEA severity (high=4·mid=3·low=2 — 보수: 5 미부여). */
 const QA_SEV: Record<AuditSeverity, number> = { high: 4, mid: 3, low: 2 };
 
-/** AI 시그니처 kind 라벨 (압축 결정 표시용). */
-const SIG_KIND_LABEL: Record<SignatureKind, { ko: string; en: string }> = {
-  hedging: { ko: "AI 시그니처 — 회피 어미", en: "AI signature — hedging" },
-  formulaic: { ko: "AI 시그니처 — 상투 구문", en: "AI signature — formulaic" },
-  tell: { ko: "AI 시그니처 — 직접 서술", en: "AI signature — telling" },
-  generic: { ko: "AI 시그니처 — 무미 종결", en: "AI signature — generic" },
+/** 표현 습관 kind 라벨 (압축 결정 표시용). */
+const SIG_KIND_LABEL: Record<SignatureKind, { ko: string; en: string; ja: string; zh: string }> = {
+  hedging: {
+    ko: "어색한 표현 후보 — 모호한 어미",
+    en: "Awkward phrasing — hedging",
+    ja: "違和感のある表現 — ぼかした語尾",
+    zh: "生硬表达 — 含糊收尾",
+  },
+  formulaic: {
+    ko: "어색한 표현 후보 — 상투 표현",
+    en: "Awkward phrasing — stock phrase",
+    ja: "違和感のある表現 — 定型表現",
+    zh: "生硬表达 — 套话表达",
+  },
+  tell: {
+    ko: "어색한 표현 후보 — 설명 과다",
+    en: "Awkward phrasing — over-explaining",
+    ja: "違和感のある表現 — 説明過多",
+    zh: "生硬表达 — 解释偏多",
+  },
+  generic: {
+    ko: "어색한 표현 후보 — 밋밋한 종결",
+    en: "Awkward phrasing — flat ending",
+    ja: "違和感のある表現 — 平板な結び",
+    zh: "生硬表达 — 收尾偏平",
+  },
 };
 
-/** verdict 부가 설명 (사양 §3.2 의미 그대로 — PASS/HOLD/FAIL 용어는 원문 유지). */
+const VERDICT_LABEL: Record<string, { ko: string; en: string }> = {
+  PASS: { ko: "준비됨", en: "Ready" },
+  HOLD: { ko: "검토", en: "Review" },
+  FAIL: { ko: "재정리 필요", en: "Revise" },
+};
+
+/** verdict 부가 설명. */
 const VERDICT_DESC: Record<string, { ko: string; en: string }> = {
   PASS: { ko: "출고 가능 수준", en: "ready to publish" },
-  HOLD: { ko: "상위 항목 수정 후 재검", en: "fix top items, then recheck" },
-  FAIL: { ko: "구조 회귀 필요", en: "structural revision needed" },
+  HOLD: { ko: "먼저 볼 항목을 정리하세요", en: "review the top items first" },
+  FAIL: { ko: "큰 흐름부터 다시 정리 필요", en: "rework the main flow first" },
 };
 
 /** 등급 표시 순서 (BLOCKER 우선 — 사양 vital-few). */
 const GRADE_DISPLAY_ORDER: readonly DecisionGrade[] = ["BLOCKER", "WARN", "NIT", "KEEP"];
+
+const GRADE_LABEL: Record<DecisionGrade, { ko: string; en: string }> = {
+  BLOCKER: { ko: "중요", en: "Important" },
+  WARN: { ko: "확인", en: "Check" },
+  NIT: { ko: "참고", en: "Note" },
+  KEEP: { ko: "유지", en: "Keep" },
+};
 
 /**
  * (a)(b)(d) raw 검출 + 강점(KEEP·과교정 차단 §8) → RawFinding[]. 순수 변환.
@@ -87,7 +120,7 @@ function buildCompressionInput(args: {
   sigHits: SignatureHit[];
   sigScore: number;
   audit: AuditFinding[];
-  lang: (t: { ko: string; en: string }) => string;
+  lang: (t: { ko: string; en: string; ja?: string; zh?: string }) => string;
 }): RawFinding[] {
   const { metrics, issues, sigHits, sigScore, audit, lang } = args;
   const out: RawFinding[] = [];
@@ -114,7 +147,7 @@ function buildCompressionInput(args: {
     });
   }
 
-  // (b) AI 시그니처 — kind 단위 클러스터 (같은 글쓰기 습관 = 같은 root cause)
+  // (b) 표현 습관 — kind 단위 클러스터 (같은 글쓰기 습관 = 같은 root cause)
   const byKind = new Map<SignatureKind, number>();
   for (const h of sigHits) byKind.set(h.kind, (byKind.get(h.kind) ?? 0) + h.count);
   for (const [kind, count] of byKind) {
@@ -161,7 +194,12 @@ function buildCompressionInput(args: {
       out.push({
         source: "ai-signature",
         clusterKey: "keep:low-ai-signature",
-        label: lang({ ko: "AI 시그니처 희박 (인간적 문장 결)", en: "Low AI signature (human-like prose)" }),
+        label: lang({
+          ko: "표현 습관 안정적",
+          en: "Writing style looks clean",
+          ja: "表現のクセは安定",
+          zh: "表达习惯较稳定",
+        }),
         polarity: "strength",
         severity: 1,
         occurrence: 1,
@@ -261,29 +299,29 @@ export default function RevisionCompressionCard({
   return (
     <div className="pcard">
       <div className="pcard-h">
-        {L4(language, { ko: "신호 압축 (vital-few)", en: "Signal compression (vital-few)" })}
+        {L4(language, { ko: "핵심 퇴고 후보", en: "Key revision points" })}
         <span className="pill gray">{judgementLabel}</span>
         <button
           type="button"
           className="mini-btn"
           aria-pressed={showRaw}
           aria-label={L4(language, {
-            ko: showRaw ? "압축 보기로 전환" : "raw 검출 전체 보기로 전환",
-            en: showRaw ? "Switch to compressed view" : "Switch to full raw view",
+            ko: showRaw ? "핵심 보기로 전환" : "세부 후보 전체 보기로 전환",
+            en: showRaw ? "Switch to key view" : "Switch to full detail view",
           })}
           style={{ marginLeft: "auto" }}
           onClick={onToggleRaw}
         >
           {L4(language, {
-            ko: showRaw ? "압축 보기" : "전체 보기 (raw)",
-            en: showRaw ? "Compressed" : "Show raw",
+            ko: showRaw ? "핵심 보기" : "전체 보기",
+            en: showRaw ? "Key view" : "Show all",
           })}
         </button>
       </div>
       {/* 1 verdict + 등급 분포 (PASS/HOLD/FAIL·BLOCKER/WARN/NIT/KEEP — 사양 용어 그대로) */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-1)" }}>
-          {compression.verdict}
+          {L4(language, VERDICT_LABEL[compression.verdict] ?? { ko: compression.verdict, en: compression.verdict })}
         </span>
         <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
           {L4(language, VERDICT_DESC[compression.verdict])}
@@ -291,13 +329,13 @@ export default function RevisionCompressionCard({
       </div>
       <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 6 }}>
         {L4(language, {
-          ko: `압축: BLOCKER ${compression.counts.BLOCKER} / WARN ${compression.counts.WARN} / NIT ${compression.counts.NIT} / KEEP ${compression.counts.KEEP} (raw 신호 ${compression.rawCount}건 → 결정 ${compression.clusterCount}건)`,
-          en: `Compressed: BLOCKER ${compression.counts.BLOCKER} / WARN ${compression.counts.WARN} / NIT ${compression.counts.NIT} / KEEP ${compression.counts.KEEP} (${compression.rawCount} raw signals → ${compression.clusterCount} decisions)`,
+          ko: `중요 ${compression.counts.BLOCKER} / 확인 ${compression.counts.WARN} / 참고 ${compression.counts.NIT} / 유지 ${compression.counts.KEEP} · 먼저 볼 항목 ${compression.clusterCount}개, 전체 후보 ${compression.rawCount}개`,
+          en: `Important ${compression.counts.BLOCKER} / Check ${compression.counts.WARN} / Note ${compression.counts.NIT} / Keep ${compression.counts.KEEP} · ${compression.clusterCount} key points from ${compression.rawCount} total items`,
         })}
       </div>
       {compression.decisions.length === 0 ? (
         <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
-          {L4(language, { ko: "검출 신호 없음", en: "No signals detected" })}
+          {L4(language, { ko: "지금 바로 볼 후보는 없습니다", en: "No immediate findings" })}
         </div>
       ) : (
         <ul
@@ -308,20 +346,20 @@ export default function RevisionCompressionCard({
           ).map((d) => (
             <li key={d.clusterKey} className="wr-srow" style={{ alignItems: "flex-start" }}>
               <span className="pill gray" style={{ flexShrink: 0 }}>
-                {d.grade}
+                {L4(language, GRADE_LABEL[d.grade])}
               </span>
               <span>
                 {d.label}
                 {d.rawCount > 1 && (
                   <span style={{ color: "var(--ink-3)" }}>
                     {" "}
-                    {L4(language, { ko: `· 신호 ${d.rawCount}건 병합`, en: ` · ${d.rawCount} signals merged` })}
+                    {L4(language, { ko: `· 관련 항목 ${d.rawCount}건`, en: ` · ${d.rawCount} related items` })}
                   </span>
                 )}
                 {d.promoted && (
                   <span style={{ color: "var(--ink-3)" }}>
                     {" "}
-                    {L4(language, { ko: "· near-miss 누적 승격", en: " · promoted (near-miss)" })}
+                    {L4(language, { ko: "· 이전에도 반복됨", en: " · repeated from earlier checks" })}
                   </span>
                 )}
                 {d.judge && (
@@ -338,20 +376,20 @@ export default function RevisionCompressionCard({
       {compression.droppedByCap > 0 && (
         <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
           {L4(language, {
-            ko: `표시 상한(29) 초과로 ${compression.droppedByCap}건 생략 — "전체 보기 (raw)"에서 모든 검출을 볼 수 있습니다.`,
-            en: `${compression.droppedByCap} decisions beyond the cap (29) are hidden — use "Show raw" to see every finding.`,
+            ko: `화면 표시 상한을 넘어 ${compression.droppedByCap}건은 접어 두었습니다. 전체 보기에서 모두 확인할 수 있습니다.`,
+            en: `${compression.droppedByCap} items are folded because the list is long. Use Show all to see everything.`,
           })}
         </p>
       )}
       {/* near-miss 누적 — 무시된 경고 선행지표 (사양 §2·§9) */}
       {relevantNearMisses.length > 0 && (
         <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
-          {L4(language, { ko: "near-miss 누적(무시된 경고):", en: "Near-miss tally (ignored warnings):" })}{" "}
+          {L4(language, { ko: "반복해서 남은 후보:", en: "Repeated unresolved points:" })}{" "}
           {relevantNearMisses
             .map(
               (e) =>
                 `${e.label} ${L4(language, { ko: `${e.count}회`, en: `×${e.count}` })}${
-                  isNearMissPromoted(e) ? L4(language, { ko: " (승격)", en: " (promoted)" }) : ""
+                  isNearMissPromoted(e) ? L4(language, { ko: " (우선 확인)", en: " (check first)" }) : ""
                 }`,
             )
             .join(" · ")}

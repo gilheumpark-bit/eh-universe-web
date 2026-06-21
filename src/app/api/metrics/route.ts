@@ -1,5 +1,5 @@
 // ============================================================
-// [루프 4 P3 — 2026-06-08] /api/metrics — Prometheus 호환 endpoint stub
+// [루프 4 P3 — 2026-06-08] /api/metrics — Prometheus 호환 endpoint
 // ADR-0009 Phase 2 (RED Metrics) 진입점.
 //
 // 현재 상태: Phase 1 운영 통계만 노출 (build info, uptime).
@@ -18,11 +18,20 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
+import { snapshotRuntimeMetrics } from '@/lib/observability/runtime-metrics';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 let bootTime: number | null = null;
+
+function escapePromLabel(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+}
+
+function apiLabels(row: { route: string; event: string; status: string }): string {
+  return `route="${escapePromLabel(row.route)}",event="${escapePromLabel(row.event)}",status="${escapePromLabel(row.status)}"`;
+}
 
 export async function GET() {
   if (process.env.METRICS_ENABLED !== 'on') {
@@ -38,9 +47,19 @@ export async function GET() {
 
   if (bootTime === null) bootTime = Date.now();
   const uptimeMs = Date.now() - bootTime;
+  const snapshot = snapshotRuntimeMetrics();
+  const apiMetricLines = snapshot.api.flatMap((row) => {
+    const labels = apiLabels(row);
+    return [
+      `eh_api_requests_total{${labels}} ${row.count}`,
+      `eh_api_request_duration_ms_count{${labels}} ${row.durationCount}`,
+      `eh_api_request_duration_ms_sum{${labels}} ${row.durationSumMs}`,
+      `eh_api_request_duration_ms_p95{${labels}} ${row.durationP95Ms}`,
+    ];
+  });
 
-  // Prometheus exposition format — Phase 1 stub.
-  // Phase 2 시 PrometheusExporter 가 이 응답을 대체.
+  // Prometheus exposition format — alpha runtime counters.
+  // OTel exporter 전 단계에서도 RED(request/error/duration) 지표를 볼 수 있게 한다.
   const body = [
     '# HELP eh_app_info Build / runtime info',
     '# TYPE eh_app_info gauge',
@@ -52,7 +71,13 @@ export async function GET() {
     '',
     '# HELP eh_app_phase Observability ADR-0009 phase (1=logs, 2=metrics, 3=traces, 4=slo)',
     '# TYPE eh_app_phase gauge',
-    'eh_app_phase 1',
+    'eh_app_phase 2',
+    '',
+    '# HELP eh_api_requests_total API request count captured by apiLog',
+    '# TYPE eh_api_requests_total counter',
+    '# HELP eh_api_request_duration_ms API request duration captured by apiLog',
+    '# TYPE eh_api_request_duration_ms summary',
+    ...apiMetricLines,
     '',
   ].join('\n');
 

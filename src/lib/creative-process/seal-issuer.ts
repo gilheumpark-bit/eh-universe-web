@@ -162,7 +162,7 @@ export function buildWitnessSealSVG(): string {
 // ============================================================
 
 /**
- * 3 카테고리 (Human Input / Refinement / AI Suggestion) 도넛 SVG.
+ * 3 카테고리 (Author Input / Refinement / NOA Suggestion) 도넛 SVG.
  * 입력 % 합 100 가정. 합 ≠ 100 시 그대로 (시각만 영향).
  */
 export function buildOriginDonutSVG(humanPct: number, refinePct: number, aiPct: number): string {

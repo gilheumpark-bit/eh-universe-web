@@ -20,24 +20,29 @@ import {
   normalizeUserApiKey,
 } from '@/lib/google-genai-server';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
-import { SPARK_SERVER_URL, streamSparkAI } from '@/services/sparkService';
+import { streamSparkAI } from '@/services/sparkService';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 import { logger } from '@/lib/logger';
-import { checkRateLimit as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync as sharedCheckRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import '@/lib/server-ai-init';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterOutputIp, wrapStreamWithIpAudit } from '@/lib/noa/server-gate';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 
 export const runtime = 'nodejs';
 
 const DEFAULT_MODELS: Record<string, string> = {
   gemini: 'gemini-2.5-flash',
-  openai: 'gpt-4o',
-  claude: 'claude-3-5-sonnet-latest',
-  deepseek: 'deepseek-chat',
-  mistral: 'mistral-large-latest',
+  openai: 'gpt-5.4-mini',
+  claude: 'claude-sonnet-4-6',
+  deepseek: 'deepseek-v4-flash',
+  mistral: 'mistral-medium-3-5',
 };
 
 const ALLOWED_PROVIDERS = new Set(Object.keys(DEFAULT_MODELS));
+const GOOGLE_GENAI_TIMEOUT_MS = 55_000;
 
 function approxTokens(s: string): number {
   return Math.ceil(s.length / 4);
@@ -57,14 +62,14 @@ async function gateHostedIfNoByok(req: NextRequest, clientKey: string): Promise<
     return NextResponse.json(
       {
         error:
-          '호스티드 AI를 쓰려면 로그인하거나 설정에서 API 키(BYOK)를 입력하세요.',
+          '번역 보조를 쓰려면 로그인하거나 환경 설정에서 연결 키를 등록해 주세요.',
       },
       { status: 401 },
     );
   }
   const verified = await verifyFirebaseIdToken(token);
   if (!verified) {
-    return NextResponse.json({ error: '유효하지 않은 인증입니다.' }, { status: 401 });
+    return NextResponse.json({ error: '유효하지 않은 로그인 상태입니다.' }, { status: 401 });
   }
   return null;
 }
@@ -90,7 +95,7 @@ async function runGeminiViaGoogleGenAI(params: {
       config: {
         temperature: dynamicTemperature,
         topP: dynamicTopP,
-        abortSignal: AbortSignal.timeout(120_000),
+        abortSignal: AbortSignal.timeout(GOOGLE_GENAI_TIMEOUT_MS),
       },
     });
     const text = response.text ?? '';
@@ -107,7 +112,7 @@ async function runGeminiViaGoogleGenAI(params: {
     config: {
       temperature: dynamicTemperature,
       topP: dynamicTopP,
-      abortSignal: AbortSignal.timeout(120_000),
+      abortSignal: AbortSignal.timeout(GOOGLE_GENAI_TIMEOUT_MS),
     },
   });
 
@@ -137,21 +142,13 @@ async function runGeminiViaGoogleGenAI(params: {
 
 export async function POST(req: NextRequest) {
   try {
-    const origin = req.headers.get('origin');
-    const host = req.headers.get('host');
-    if (!origin) {
-      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-    }
-    try {
-      if (host && new URL(origin).host !== host) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const originCheck = checkSameOriginHeaders(req.headers);
+    if (!originCheck.ok) {
+      return NextResponse.json({ error: originCheck.error }, { status: 403 });
     }
 
     const ip = getClientIp(req.headers);
-    const rl = sharedCheckRateLimit(ip, 'translate', RATE_LIMITS.translate);
+    const rl = await sharedCheckRateLimit(ip, 'translate', RATE_LIMITS.translate);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' },
@@ -169,7 +166,7 @@ export async function POST(req: NextRequest) {
     const { provider = 'gemini', apiKey: rawApiKey, model, stage = 0, mode = 'novel' } = body;
 
     if (!ALLOWED_PROVIDERS.has(provider)) {
-      return NextResponse.json({ error: '지원하지 않는 번역 엔진입니다.' }, { status: 400 });
+      return NextResponse.json({ error: '지원하지 않는 번역 방식입니다.' }, { status: 400 });
     }
 
     const clientKey = normalizeUserApiKey(rawApiKey);
@@ -198,6 +195,15 @@ export async function POST(req: NextRequest) {
     if (gate.blocked) {
       return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
     }
+
+    const tierGate = await enforceServerTierLimit({
+      headers: req.headers,
+      ip,
+      route: '/api/translate',
+      feature: 'translation',
+      hasByok: Boolean(clientKey),
+    });
+    if (!tierGate.ok) return tierGate.response;
 
     if (provider === 'gemini') {
       const resolvedSdkKey = resolveServerProviderKey('gemini', clientKey) || '';
@@ -248,8 +254,8 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // DGX Spark 폴백: Gemini 서버 키도 없고 BYOK도 없을 때
-      if (SPARK_SERVER_URL) {
+      // DGX 개발 API 폴백: 명시 플래그가 켜진 로컬/개발 실행에서만 허용
+      if (isDgxDeveloperApiEnabled()) {
         try {
           const sparkStream = await streamSparkAI(
             VLLM_MODEL_ID, prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
@@ -267,7 +273,7 @@ export async function POST(req: NextRequest) {
               if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
               try {
                 const j = JSON.parse(line.slice(6));
-                const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.delta?.reasoning_content;
+                const delta = j.choices?.[0]?.delta?.content;
                 if (delta) fullText += delta;
               } catch { /* skip */ }
             }
@@ -279,14 +285,14 @@ export async function POST(req: NextRequest) {
           );
         } catch (e) {
           return NextResponse.json(
-            { error: `DGX Spark 번역 실패: ${e instanceof Error ? e.message : e}` },
+            { error: `번역 처리에 실패했습니다: ${e instanceof Error ? e.message : e}` },
             { status: 502 },
           );
         }
       }
 
       return NextResponse.json(
-        { error: '선택한 번역 엔진의 API 키가 설정되지 않았습니다.' },
+        { error: '선택한 번역 방식에 연결 키가 필요합니다.' },
         { status: 400 },
       );
     }
@@ -301,8 +307,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (!finalApiKey) {
-      // DGX Spark 폴백
-      if (SPARK_SERVER_URL) {
+      // DGX 개발 API 폴백: 명시 플래그가 켜진 로컬/개발 실행에서만 허용
+      if (isDgxDeveloperApiEnabled()) {
         try {
           const sparkStream = await streamSparkAI(
             VLLM_MODEL_ID, prompt, [{ role: 'user', content: prompt }], dynamicTemperature,
@@ -319,7 +325,7 @@ export async function POST(req: NextRequest) {
               if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
               try {
                 const j = JSON.parse(line.slice(6));
-                const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.delta?.reasoning_content;
+                const delta = j.choices?.[0]?.delta?.content;
                 if (delta) fullText += delta;
               } catch { /* skip */ }
             }
@@ -330,11 +336,11 @@ export async function POST(req: NextRequest) {
             { headers: { 'X-Approx-Prompt-Tokens': String(promptTokens) } },
           );
         } catch (e) {
-          return NextResponse.json({ error: `DGX Spark 번역 실패: ${e instanceof Error ? e.message : e}` }, { status: 502 });
+          return NextResponse.json({ error: `번역 처리에 실패했습니다: ${e instanceof Error ? e.message : e}` }, { status: 502 });
         }
       }
       return NextResponse.json(
-        { error: '선택한 번역 엔진의 API 키가 설정되지 않았습니다.' },
+        { error: '선택한 번역 방식에 연결 키가 필요합니다.' },
         { status: 400 },
       );
     }
@@ -365,7 +371,7 @@ export async function POST(req: NextRequest) {
         aiModel = createMistral({ apiKey: finalApiKey })(finalModel);
         break;
       default:
-        return NextResponse.json({ error: '지원하지 않는 번역 엔진입니다.' }, { status: 400 });
+        return NextResponse.json({ error: '지원하지 않는 번역 방식입니다.' }, { status: 400 });
     }
 
     if (stage === 10 || stage === 0) {
@@ -402,7 +408,7 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     logger.error('api/translate', 'Translation error', err);
     return NextResponse.json(
-      { error: '번역 처리 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' },
+      { error: '번역 처리 중 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요.' },
       { status: 500 },
     );
   }

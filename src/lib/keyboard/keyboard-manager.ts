@@ -1,6 +1,6 @@
 // ============================================================
-// keyboard-manager — 5 영역 공용 KeyboardRegistry (SharedSurgery-2)
-// useStudioKeyboard·useCodeStudioKeyboard·직접 window.keydown 3중 등록을 단일 dispatch로 통합.
+// keyboard-manager — 공용 KeyboardRegistry (SharedSurgery-2)
+// Studio 훅과 직접 window.keydown 등록을 단일 dispatch로 통합.
 // 영역(area) 가드 + modal-aware suppress + input-focus 자동 무시 + 우선순위.
 //
 // 의도:
@@ -12,6 +12,7 @@
 // ============================================================
 
 import { useEffect, useRef, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 // [P9 루프2 — 2026-06-08] normalizeKeystroke 는 keybinding-audit 에서 사용.
 // parseCombo 는 자체 inline normalize (option/cmd/meta 별칭 처리 + ctrl/meta 구분 보존).
 
@@ -62,10 +63,7 @@ import { useEffect, useRef, useCallback } from 'react';
 /** 키 바인딩 적용 영역. global 은 어디서나 작동. */
 export type KeyArea =
   | 'studio'
-  | 'code-studio'
   | 'translation-studio'
-  | 'network'
-  | 'codex'
   | 'desktop'
   | 'global';
 
@@ -103,7 +101,7 @@ interface ParsedCombo {
 }
 
 // ============================================================
-// PART 2 — Parser · Matcher (useCodeStudioKeyboard 에서 추출 · 검증된 로직)
+// PART 2 — Parser · Matcher
 // ============================================================
 
 export function parseCombo(keys: string): ParsedCombo {
@@ -161,10 +159,7 @@ export function matchesCombo(e: KeyboardEvent, combo: ParsedCombo): boolean {
 export function isAreaMatch(area: KeyArea, pathname: string): boolean {
   if (area === 'global') return true;
   if (area === 'studio') return pathname.startsWith('/studio');
-  if (area === 'code-studio') return pathname.startsWith('/code-studio');
   if (area === 'translation-studio') return pathname.startsWith('/translation-studio');
-  if (area === 'network') return pathname.startsWith('/network');
-  if (area === 'codex') return pathname.startsWith('/codex');
   if (area === 'desktop') return pathname.startsWith('/desktop');
   return false;
 }
@@ -249,24 +244,24 @@ function dispatch(e: KeyboardEvent): void {
     top.handler(e);
   } catch (err) {
     // [루프 4 P6 — 2026-06-08] silent suppression 해소.
-    //   dev: console.error 유지 (debug 표면).
+    //   dev: logger.error 유지 (debug 표면).
     //   production: noa:alert event + 구조화 로그 (Sentry/외부 observability 가 collect).
     if (process.env.NODE_ENV !== 'production') {
-      console.error('[keyboard-manager] handler threw', top.id, err);
+      logger.error('keyboard-manager', 'handler threw', { bindingId: top.id, error: err });
     }
     // 모든 환경에서 구조화 로그 1줄 — Vercel structured logs / Sentry 캡처용.
     try {
       const msg = err instanceof Error ? err.message : String(err);
-      // 직접 console.error JSON — api-logger import 없이도 작동.
-      console.error(JSON.stringify({
-        level: 'error',
-        event: 'keyboard-manager.handler-threw',
-        binding_id: top.id ?? '(anonymous)',
-        binding_keys: top.keys,
-        binding_area: top.area,
-        error: msg,
-        timestamp: new Date().toISOString(),
-      }));
+      logger.error({
+        component: 'keyboard-manager',
+        event: 'handler_threw',
+        meta: {
+          binding_id: top.id ?? '(anonymous)',
+          binding_keys: top.keys,
+          binding_area: top.area,
+          error: msg,
+        },
+      });
     } catch { /* never throw inside catch */ }
     // 사용자 가시 토스트 — production 에서도 발화. noa:alert 리스너 (page.tsx) 가 표시.
     if (typeof window !== 'undefined') {

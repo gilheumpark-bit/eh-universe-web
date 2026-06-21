@@ -2,9 +2,11 @@
  * StudioSidebar — renders sidebar sections (smoke test with minimal props)
  */
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import StudioSidebar from "../studio/StudioSidebar";
+import { showAlert } from "@/lib/show-alert";
+import { Genre } from "@/lib/studio-types";
 
 // Mock heavy deps
 jest.mock("next/link", () => ({
@@ -96,5 +98,99 @@ describe("StudioSidebar", () => {
     const _homeLink = screen.queryByText("EH");
     // Even if not found by text, the component should render
     expect(document.body.innerHTML.length).toBeGreaterThan(0);
+  });
+
+  it("selects the latest session when switching projects", () => {
+    const setCurrentProjectId = jest.fn();
+    const setCurrentSessionId = jest.fn();
+    render(
+      <StudioSidebar
+        {...baseProps}
+        projects={[
+          {
+            id: "project-a",
+            name: "Alpha",
+            description: "",
+            genre: Genre.SF,
+            createdAt: 1,
+            lastUpdate: 1,
+            sessions: [
+              { id: "session-a", title: "A", messages: [], config: {} as never, lastUpdate: 1 },
+            ],
+          },
+          {
+            id: "project-b",
+            name: "Beta",
+            description: "",
+            genre: Genre.SF,
+            createdAt: 2,
+            lastUpdate: 20,
+            sessions: [
+              { id: "session-b-old", title: "B old", messages: [], config: {} as never, lastUpdate: 10 },
+              { id: "session-b-new", title: "B new", messages: [], config: {} as never, lastUpdate: 30 },
+            ],
+          },
+        ]}
+        currentProjectId="project-a"
+        currentProject={{
+          id: "project-a",
+          name: "Alpha",
+          description: "",
+          genre: Genre.SF,
+          createdAt: 1,
+          lastUpdate: 1,
+          sessions: [],
+        }}
+        setCurrentProjectId={setCurrentProjectId}
+        setCurrentSessionId={setCurrentSessionId}
+      />,
+    );
+
+    fireEvent.change(screen.getByDisplayValue("Alpha (1)"), {
+      target: { value: "project-b" },
+    });
+
+    expect(setCurrentProjectId).toHaveBeenCalledWith("project-b");
+    expect(setCurrentSessionId).toHaveBeenCalledWith("session-b-new");
+  });
+
+  it("does not rename a project to a blank name", () => {
+    const renameProject = jest.fn();
+    const promptSpy = jest.spyOn(window, "prompt").mockReturnValue("   ");
+
+    render(
+      <StudioSidebar
+        {...baseProps}
+        projects={[
+          {
+            id: "project-a",
+            name: "Alpha",
+            description: "",
+            genre: Genre.SF,
+            createdAt: 1,
+            lastUpdate: 1,
+            sessions: [],
+          },
+        ]}
+        currentProjectId="project-a"
+        currentProject={{
+          id: "project-a",
+          name: "Alpha",
+          description: "",
+          genre: Genre.SF,
+          createdAt: 1,
+          lastUpdate: 1,
+          sessions: [],
+        }}
+        renameProject={renameProject}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("project.renameProject"));
+
+    expect(renameProject).not.toHaveBeenCalled();
+    expect(showAlert).toHaveBeenCalledWith("작품명을 입력해 주세요.");
+
+    promptSpy.mockRestore();
   });
 });

@@ -215,6 +215,26 @@ export function configToRepoFiles(
 // PART 5 — Repo Files -> Config (Deserialize)
 // ============================================================
 
+function normalizeRepoPath(path: string): string {
+  return path.replace(/\\/g, '/');
+}
+
+function isOriginalManuscriptPath(path: string): boolean {
+  const normalized = normalizeRepoPath(path);
+  return (
+    normalized.startsWith('volumes/') ||
+    /^projects\/[^/]+\/manuscripts\/episode-\d+\.md$/i.test(normalized)
+  );
+}
+
+function isTranslatedManuscriptPath(path: string): boolean {
+  const normalized = normalizeRepoPath(path);
+  return (
+    normalized.startsWith('translations/') ||
+    /^projects\/[^/]+\/translations\/[^/]+\/episode-\d+\.md$/i.test(normalized)
+  );
+}
+
 /**
  * Deserialize repo files back into a partial StoryConfig.
  * Handles missing files gracefully — only populates fields for files found.
@@ -293,7 +313,7 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
   // --- volumes/vol-XX/ep-XXX.md (원본) ---
   const manuscripts: EpisodeManuscript[] = [];
   for (const [path, content] of fileMap) {
-    if (path.startsWith('volumes/') && path.endsWith('.md')) {
+    if (path.endsWith('.md') && isOriginalManuscriptPath(path)) {
       const ms = markdownToEpisode(content, path);
       manuscripts.push(ms);
     }
@@ -306,7 +326,7 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
   // --- translations/<lang>/volumes/vol-XX/ep-XXX.md (번역본) ---
   const translations: TranslatedManuscriptEntry[] = [];
   for (const [path, content] of fileMap) {
-    if (path.startsWith('translations/') && path.endsWith('.md')) {
+    if (path.endsWith('.md') && isTranslatedManuscriptPath(path)) {
       const t = markdownToTranslatedManuscript(content, path);
       if (t) translations.push(t);
     }

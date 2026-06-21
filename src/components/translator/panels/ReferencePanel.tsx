@@ -144,10 +144,11 @@ export function ReferencePanel() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
           <input
             type="text"
-            placeholder={langKo ? '참고자료·메모 검색...' : 'Search references & notes...'}
+            placeholder={langKo ? '자료 링크·메모 검색...' : 'Search source links & notes...'}
+            aria-label={langKo ? '자료 링크와 메모 검색' : 'Search source links and notes'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50 focus:ring-1 focus:ring-accent-amber/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
+            className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
           />
         </div>
         {query && (
@@ -159,7 +160,7 @@ export function ReferencePanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pointer-events-auto">
-        {/* ── Story Note (챕터별 편집 가능) ── */}
+        {/* ── Story Note (회차별 편집 가능) ── */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 text-text-secondary">
@@ -187,33 +188,33 @@ export function ReferencePanel() {
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value)}
               placeholder={langKo
-                ? '이 챕터의 세계관 설정·캐릭터·용어 힌트를 적어두세요. NOA 번역 시 자동 참조됩니다.'
-                : 'Notes on world-setting, characters, terminology for this chapter. Used as NOA translation context.'}
+                ? '이 회차의 세계관 설정·캐릭터·용어 힌트를 적어두세요. 노아가 번역할 때 참고합니다.'
+                : 'Notes on world-setting, characters, and terminology for this chapter. Used as Noa translation context.'}
               className={`w-full min-h-[120px] max-h-[300px] p-3 rounded-lg bg-white/5 border text-[13px] text-text-secondary leading-relaxed resize-y focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-amber/50 transition-colors ${
                 query && !noteMatchesQuery ? 'border-white/10 opacity-50' : 'border-white/10'
               } ${query && noteMatchHits > 0 ? 'border-accent-amber/30' : ''}`}
             />
           ) : (
             <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-[13px] text-text-tertiary italic">
-              {langKo ? '챕터를 선택하면 메모를 편집할 수 있습니다.' : 'Select a chapter to edit notes.'}
+              {langKo ? '회차를 선택하면 메모를 편집할 수 있습니다.' : 'Select a chapter to edit notes.'}
             </div>
           )}
         </div>
 
-        {/* ── External References (링크 CRUD) ── */}
+        {/* ── Source links (local browser list) ── */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 text-text-secondary">
               <FileSearch className="w-4 h-4 text-accent-amber" />
               <span className="text-[13px] font-medium">
-                {langKo ? '외부 참고 링크' : 'External References'}
+                {langKo ? '자료 링크' : 'Source links'}
               </span>
               <span className="text-[10px] text-text-tertiary font-mono">({refs.length})</span>
             </div>
             <button
               type="button"
               onClick={() => setAddOpen(o => !o)}
-              className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border transition-colors ${
+              className={`min-h-[44px] flex items-center gap-1 text-[11px] px-3 rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
                 addOpen
                   ? 'bg-accent-amber/15 border-accent-amber/40 text-accent-amber'
                   : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-secondary'
@@ -231,29 +232,29 @@ export function ReferencePanel() {
                 type="text"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder={langKo ? '제목 (예: Wikipedia 캐릭터 아키타입)' : 'Title (e.g. Wikipedia Character Archetypes)'}
-                className="w-full bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-amber/50"
+                placeholder={langKo ? '제목 (예: 캐릭터 유형 자료)' : 'Title (e.g. character archetype notes)'}
+                className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50"
               />
               <input
                 type="url"
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 placeholder="https://..."
-                className="w-full bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-amber/50"
+                className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-amber/50"
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleAddRef}
                   disabled={!newTitle.trim() || !newUrl.trim()}
-                  className="flex-1 py-1.5 rounded-md bg-accent-amber/20 hover:bg-accent-amber/30 text-accent-amber border border-accent-amber/40 text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 min-h-[44px] rounded-md bg-accent-amber/20 hover:bg-accent-amber/30 text-accent-amber border border-accent-amber/40 text-[11px] font-bold disabled:bg-bg-tertiary disabled:text-text-quaternary disabled:opacity-100 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 >
                   {langKo ? '추가' : 'Add'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setAddOpen(false); setNewTitle(''); setNewUrl(''); }}
-                  className="px-3 py-1.5 rounded-md bg-white/5 text-text-tertiary text-[11px] hover:bg-white/10 transition-colors"
+                  className="min-h-[44px] px-3 rounded-md bg-white/5 text-text-tertiary text-[11px] hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 >
                   {langKo ? '취소' : 'Cancel'}
                 </button>
@@ -263,11 +264,20 @@ export function ReferencePanel() {
 
           {/* 링크 목록 */}
           {filteredRefs.length === 0 ? (
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/10 text-[11px] text-text-tertiary text-center italic">
-              {query
-                ? (langKo ? '검색 결과가 없습니다.' : 'No results.')
-                : (langKo ? '참고 링크를 추가하세요 (위키피디아, 번역 가이드 등)' : 'Add reference links (Wikipedia, glossary guides, etc.)')
-              }
+            <div className="rounded-xl border border-border/60 bg-bg-primary/80 px-4 py-6 text-center shadow-sm">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg border border-accent-amber/25 bg-accent-amber/10 text-accent-amber">
+                <FileSearch className="h-5 w-5" />
+              </div>
+              <p className="mt-3 text-[13px] font-semibold text-text-primary">
+                {query
+                  ? (langKo ? '맞는 자료 링크가 없습니다.' : 'No matching source links.')
+                  : (langKo ? '자료 링크가 비어 있습니다.' : 'No source links yet.')}
+              </p>
+              <p className="mx-auto mt-1 max-w-[240px] text-[11px] leading-relaxed text-text-secondary">
+                {query
+                  ? (langKo ? '검색어를 줄이거나 새 자료 링크를 추가하세요.' : 'Try a broader search or add a source link.')
+                  : (langKo ? '자료 출처, 용어 기준, 플랫폼 가이드를 한곳에 묶어둘 수 있습니다.' : 'Collect sources, glossary rules, and platform guides here.')}
+              </p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -288,9 +298,9 @@ export function ReferencePanel() {
                   <button
                     type="button"
                     onClick={() => handleRemoveRef(ref.id)}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent-red/20 text-accent-red transition-[opacity,background-color]"
+                    className="shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center opacity-70 group-hover:opacity-100 focus-visible:opacity-100 rounded-md hover:bg-accent-red/20 text-accent-red transition-[opacity,background-color]"
                     title={langKo ? '삭제' : 'Delete'}
-                    aria-label={langKo ? '참고 링크 삭제' : 'Delete reference'}
+                    aria-label={langKo ? '자료 링크 삭제' : 'Delete source link'}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -302,8 +312,8 @@ export function ReferencePanel() {
 
         <p className="text-[9px] text-text-tertiary italic text-center pt-2 border-t border-white/5">
           {langKo
-            ? '세계관 메모는 각 챕터에 저장 · 외부 링크는 이 브라우저에 저장'
-            : 'World notes saved per-chapter · external links saved in this browser'}
+            ? '세계관 메모는 각 회차에 저장 · 자료 링크는 이 브라우저에 저장'
+            : 'World notes saved per-chapter · source links saved in this browser'}
         </p>
       </div>
     </div>

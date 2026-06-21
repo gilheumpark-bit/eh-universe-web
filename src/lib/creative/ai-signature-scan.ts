@@ -1,8 +1,8 @@
 // ============================================================
-// ai-signature-scan — AI 시그니처/양념 검출 (창작 지침 05_집필 baseline 108 축약)
+// ai-signature-scan — 어색한 표현 습관/양념 표현 검출 (창작 지침 05_집필 baseline 108 축약)
 // 순수 함수. React/DOM/fetch 의존 0. 절대금지 8파일 import 0. 자체 타입 정의.
 // AI가 흔히 남기는 4종 패턴(hedging/formulaic/tell/generic)을 한국어 정규식으로 탐지.
-// score 0~100 — 낮을수록 인간적(시그니처 적음), 높을수록 AI 양념 과다.
+// score 0~100 — 낮을수록 자연스러움(시그니처 적음), 높을수록 노아 흔적 과다.
 // ============================================================
 
 // ============================================================
@@ -26,7 +26,7 @@ export interface SignatureHit {
 export interface SignatureScanResult {
   /** 적중한 패턴 목록(count 내림차순) */
   hits: SignatureHit[];
-  /** 0~100 — 낮을수록 인간적 */
+  /** 0~100 — 낮을수록 자연스러움 */
   score: number;
 }
 
@@ -89,9 +89,9 @@ function densityScore(totalHits: number, text: string): number {
 // ============================================================
 
 /**
- * 본문에서 AI 시그니처 패턴을 스캔한다.
+ * 본문에서 어색한 표현 습관 패턴을 스캔한다.
  * @param text 검사 대상 본문(빈 문자열/공백 안전)
- * @returns hits(적중 패턴, count 내림차순) + score(0~100, 낮을수록 인간적)
+ * @returns hits(적중 패턴, count 내림차순) + score(0~100, 낮을수록 자연스러움)
  */
 export function scanAISignature(text: string): SignatureScanResult {
   // 입력 방어: null/undefined/비문자열 → 빈 결과

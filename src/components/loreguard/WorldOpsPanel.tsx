@@ -1,37 +1,5 @@
 "use client";
 
-/* ===========================================================
-   WorldOpsPanel — 세계관 도구 slide-over (Z2b-world-sim-timeline)
-
-   TabWorld 좌측 레일 버튼(시뮬레이션/타임라인/지도)으로 오픈.
-   닫기: 닫기 버튼 / Escape / 오버레이 클릭 — MemoPanel·RevisionPanel 과
-   동일 slide-over 패턴 (리스너 전부 cleanup).
-
-   3 서브뷰 (구 셸 자산 실존 확인 후 재사용 — 날조 0):
-   (a) 시뮬레이션 — 시나리오 입력("이 설정에서 X가 일어나면?") →
-       기존 structured world-sim 경로 재사용: generateWorldSim(geminiService)
-       → fetchStructuredGemini → /api/gemini-structured (task:'worldSim'
-       → handleWorldSim → buildWorldSimPrompt). 결과 = 문명·관계 카드 +
-       파급(기존 worldSimData 대비 결정적 diff)·모순(결과 내부 결정적
-       정합 검사) — AI 점수 날조 X. 전체에 "판단용 참고" 라벨·자동 적용 X.
-       (구 셸 TabAssistant 'critique' NOS 컨텍스트는 프롬프트 기반 채팅
-       경로 — 본 패널은 스펙 지정대로 structured 경로 사용.)
-   (b) 타임라인 — config.worldTimeline (additive 신설·grep 결과 연도 기반
-       기존 키 부재) CRUD + 시간순 단순 세로 시각화 (xyflow 불필요).
-       구 셸 시대 기반 문명 타임라인(WorldTimeline.tsx·worldSimData 기반)은
-       데이터 있을 때 하단에 그대로 이식 마운트 (기존 키 호환 유지).
-   (c) 지도 — 구 셸 WorldMap.tsx 실존 확인 → 그대로 이식 마운트
-       (simData=config.worldSimData·onChange → setConfig 병합 — 구 셸
-       WorldStudioView 와 동일 배선·territories/territoryLinks 키 호환).
-       worldgraph 어댑터 fallback("지역 보드")은 불필요 — 실물이 존재.
-
-   영속: 전부 setConfig → currentSession.config (IndexedDB+Firestore).
-   토큰: MemoPanel 패턴 — 루트 .eh-app 직접 부여 (StudioShell children
-   분기 mount 대비)·다크는 data-theme 토큰 연쇄. 신규 CSS 0 (기존
-   pcard/pill/btn/seg/eh-icbtn + inline). WorldMap/WorldTimeline 은
-   studio Tailwind 토큰 사용 — ItemStudioView(TabCharacter) 선례와 동일.
-   =========================================================== */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStudio } from "@/app/studio/StudioContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -55,6 +23,16 @@ import WorldTimeline from "@/components/studio/WorldTimeline";
 import WorldMap from "@/components/studio/WorldMap";
 import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
 import type { StoryConfig, WorldTimelineEntry, AppLanguage } from "@/lib/studio-types";
+import {
+  computeConflicts,
+  computeRipples,
+  splitPeople,
+  yearSortKey,
+  type SimCiv,
+  type SimRel,
+  type SimResult,
+  type WorldOpsView,
+} from "./WorldOpsPanel.helpers";
 
 // ============================================================
 // PART 0.5 — [s82-stage-coverage] 창작 과정 기록 (TabWorld 동일 패턴 축약)
@@ -85,140 +63,15 @@ const getCreativeLogger = () =>
   typeof window !== "undefined" ? window.__creativeLogger ?? null : null;
 
 // ============================================================
-// PART 1 — Types & 결정적 분석 헬퍼 (AI 점수 날조 X — diff/정합 검사만)
+// PART 1 — Types & 결정적 분석 헬퍼 (점수 날조 X — diff/정합 검사만)
 // ============================================================
 
-export type WorldOpsView = "sim" | "timeline" | "map";
+export type { WorldOpsView } from "./WorldOpsPanel.helpers";
 
 interface WorldOpsPanelProps {
   /** 오픈 시 초기 서브뷰 — 내부 seg 로 전환 가능 */
   initialView: WorldOpsView;
   onClose: () => void;
-}
-
-interface SimCiv { name: string; era: string; traits: string[] }
-interface SimRel { from: string; to: string; type: string }
-interface SimResult { scenario: string; civs: SimCiv[]; rels: SimRel[] }
-
-/** 파급 분석 — 시나리오 결과 vs 등록된 worldSimData 의 결정적 diff. */
-interface RippleFinding { tone: "blue" | "amber"; text: string }
-/** 모순 검출 — 결과 내부의 결정적 정합 위반. */
-interface ConflictFinding { text: string }
-
-function computeRipples(
-  result: SimResult,
-  worldSimData: StoryConfig["worldSimData"],
-  language: AppLanguage,
-): { findings: RippleFinding[]; hasBaseline: boolean } {
-  const existingCivs = worldSimData?.civs ?? [];
-  const existingRels = worldSimData?.relations ?? [];
-  const hasBaseline = existingCivs.length > 0 || existingRels.length > 0;
-  if (!hasBaseline) return { findings: [], hasBaseline };
-
-  const findings: RippleFinding[] = [];
-  const civNames = new Set(existingCivs.map((c) => c.name.trim()));
-  const relMap = new Map<string, string>(
-    existingRels.map((r) => [`${r.fromName.trim()}→${r.toName.trim()}`, r.type]),
-  );
-
-  for (const c of result.civs) {
-    if (!civNames.has(c.name.trim())) {
-      findings.push({
-        tone: "blue",
-        text: L4(language, {
-          ko: `신규 세력 등장: ${c.name} (${c.era})`,
-          en: `New faction appears: ${c.name} (${c.era})`,
-          ja: `新勢力の登場: ${c.name} (${c.era})`,
-          zh: `新势力出现: ${c.name} (${c.era})`,
-        }),
-      });
-    }
-  }
-  for (const r of result.rels) {
-    const key = `${r.from.trim()}→${r.to.trim()}`;
-    const prev = relMap.get(key);
-    if (prev !== undefined && prev !== r.type) {
-      findings.push({
-        tone: "amber",
-        text: L4(language, {
-          ko: `관계 변화: ${r.from}→${r.to} — 기존 "${prev}" → 시나리오 후 "${r.type}"`,
-          en: `Relation shift: ${r.from}→${r.to} — "${prev}" → "${r.type}"`,
-          ja: `関係の変化: ${r.from}→${r.to} — 既存「${prev}」→「${r.type}」`,
-          zh: `关系变化: ${r.from}→${r.to} — 原"${prev}" → "${r.type}"`,
-        }),
-      });
-    } else if (prev === undefined) {
-      findings.push({
-        tone: "blue",
-        text: L4(language, {
-          ko: `신규 관계: ${r.from}→${r.to} (${r.type})`,
-          en: `New relation: ${r.from}→${r.to} (${r.type})`,
-          ja: `新しい関係: ${r.from}→${r.to} (${r.type})`,
-          zh: `新关系: ${r.from}→${r.to} (${r.type})`,
-        }),
-      });
-    }
-  }
-  return { findings, hasBaseline };
-}
-
-function computeConflicts(result: SimResult, language: AppLanguage): ConflictFinding[] {
-  const findings: ConflictFinding[] = [];
-  const names = new Set(result.civs.map((c) => c.name.trim()));
-  // 1) 결과 관계가 결과 문명 목록에 없는 세력을 참조 (내부 불일치)
-  for (const r of result.rels) {
-    for (const end of [r.from, r.to]) {
-      if (!names.has(end.trim())) {
-        findings.push({
-          text: L4(language, {
-            ko: `관계 "${r.from}→${r.to}: ${r.type}" 가 문명 목록에 없는 세력 "${end}" 를 참조`,
-            en: `Relation "${r.from}→${r.to}: ${r.type}" references unknown faction "${end}"`,
-            ja: `関係「${r.from}→${r.to}: ${r.type}」が文明一覧にない勢力「${end}」を参照`,
-            zh: `关系"${r.from}→${r.to}: ${r.type}"引用了文明列表外的势力"${end}"`,
-          }),
-        });
-      }
-    }
-  }
-  // 2) 동일 세력쌍에 상충 관계 중복 (같은 from→to 에 서로 다른 type 2개+)
-  const pairTypes = new Map<string, Set<string>>();
-  for (const r of result.rels) {
-    const key = `${r.from.trim()}→${r.to.trim()}`;
-    const set = pairTypes.get(key) ?? new Set<string>();
-    set.add(r.type);
-    pairTypes.set(key, set);
-  }
-  for (const [key, types] of pairTypes) {
-    if (types.size > 1) {
-      findings.push({
-        text: L4(language, {
-          ko: `동일 세력쌍 ${key} 에 상충 관계 ${types.size}건: ${Array.from(types).join(" vs ")}`,
-          en: `Conflicting relations for ${key}: ${Array.from(types).join(" vs ")}`,
-          ja: `同一勢力ペア ${key} に矛盾する関係: ${Array.from(types).join(" vs ")}`,
-          zh: `同一势力对 ${key} 存在冲突关系: ${Array.from(types).join(" vs ")}`,
-        }),
-      });
-    }
-  }
-  return findings;
-}
-
-/** 연표 정렬 키 — 선두 숫자(음수 포함) 추출. 숫자 없으면 마지막(입력 순서 유지). */
-function yearSortKey(year: string): number {
-  const m = year.match(/-?\d+/);
-  return m ? parseInt(m[0], 10) : Number.POSITIVE_INFINITY;
-}
-
-function splitPeople(raw: string): string[] {
-  const seen = new Set<string>();
-  return raw
-    .split(/[,，]/)
-    .map((s) => s.trim())
-    .filter((s) => {
-      if (!s || seen.has(s)) return false;
-      seen.add(s);
-      return true;
-    });
 }
 
 // ============================================================
@@ -247,17 +100,17 @@ function SimView({ config, language }: { config: StoryConfig; language: AppLangu
     if (!hasAiAccess) { setShowApiKeyModal(true); return; }
     if (!activeSupportsStructured()) {
       setMsg(L4(language, {
-        ko: "현재 엔진은 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.",
-        en: "Current engine doesn't support structured generation. Please use Gemini.",
-        ja: "現在のエンジンは構造化生成に対応していません。Geminiをご利用ください。",
-        zh: "当前引擎不支持结构化生成。请使用 Gemini。",
+        ko: "현재 설정에서는 구조화 제안을 사용할 수 없습니다. 연결 키나 실행 경로를 확인해 주세요.",
+        en: "The current Noa mode does not support structured suggestions. Check a supported engine or connection key.",
+        ja: "現在のNoa運用モードは構造化提案に対応していません。対応エンジンまたは接続キーを確認してください。",
+        zh: "当前 Noa 运行模式不支持结构化建议。请检查支持的引擎或连接密钥。",
       }));
       return;
     }
     const base = (config.synopsis ?? "").trim() || (config.corePremise ?? "").trim();
     if (!base) {
       setMsg(L4(language, {
-        ko: "먼저 시놉시스 또는 핵심 전제를 작성해주세요 (우측 보드 → 핵심 전제).",
+        ko: "먼저 시놉시스나 핵심 전제를 적어 주세요. (우측 보드 → 핵심 전제)",
         en: "Write a synopsis or core premise first (board → Core Premise).",
         ja: "先にシノプシスまたは核心前提を作成してください。",
         zh: "请先撰写故事梗概或核心前提。",
@@ -288,10 +141,10 @@ function SimView({ config, language }: { config: StoryConfig; language: AppLangu
       const gated = res as unknown as { blocked?: boolean; reason?: string };
       if (gated?.blocked) {
         setMsg(L4(language, {
-          ko: `NOA 보안 차단: ${gated.reason ?? ""}`,
-          en: `Blocked by NOA gate: ${gated.reason ?? ""}`,
-          ja: `NOAゲートによりブロック: ${gated.reason ?? ""}`,
-          zh: `被 NOA 安全网关拦截: ${gated.reason ?? ""}`,
+          ko: `노아 요청 보류: ${gated.reason ?? ""}`,
+          en: `Noa request held: ${gated.reason ?? ""}`,
+          ja: `ノアのリクエスト保留: ${gated.reason ?? ""}`,
+          zh: `诺亚请求暂缓: ${gated.reason ?? ""}`,
         }));
         return;
       }
@@ -303,7 +156,7 @@ function SimView({ config, language }: { config: StoryConfig; language: AppLangu
           !!r && typeof r.from === "string" && typeof r.to === "string" && typeof r.type === "string");
       if (civs.length === 0 && rels.length === 0) {
         setMsg(L4(language, {
-          ko: "결과가 비어 있습니다. 시나리오를 더 구체적으로 적고 다시 시도해주세요.",
+          ko: "결과가 비어 있습니다. 시나리오를 조금 더 구체적으로 적고 다시 시도해 주세요.",
           en: "Empty result. Make the scenario more specific and retry.",
           ja: "結果が空です。シナリオをより具体的にして再試行してください。",
           zh: "结果为空。请把情景写得更具体后重试。",
@@ -327,7 +180,7 @@ function SimView({ config, language }: { config: StoryConfig; language: AppLangu
           <Play size={15} />
           {L4(language, { ko: "가정 시나리오", en: "What-if scenario", ja: "仮定シナリオ", zh: "假设情景" })}
           <span className="pill amber" style={{ marginLeft: "auto" }}>
-            {L4(language, { ko: "판단용 참고 — 자동 적용 안 됨", en: "For judgment only — not auto-applied", ja: "判断用 — 自動適用なし", zh: "仅供判断 — 不会自动应用" })}
+            {L4(language, { ko: "검토 참고 — 자동 적용 안 됨", en: "Review aid — not auto-applied", ja: "検討参考 — 自動適用なし", zh: "供复核参考 — 不会自动应用" })}
           </span>
         </div>
         <textarea
@@ -374,13 +227,13 @@ function SimView({ config, language }: { config: StoryConfig; language: AppLangu
 
       {result && (
         <>
-          {/* 문명·세력 카드 — AI 결과 그대로 (판단용) */}
+          {/* 문명·세력 카드 — 노아 후보 그대로 (판단용) */}
           <div className="pcard">
             <div className="pcard-h">
               <Globe size={15} />
               {L4(language, { ko: "시나리오 이후 문명·세력", en: "Factions after scenario", ja: "シナリオ後の文明・勢力", zh: "情景后的文明·势力" })}
               <span className="pill gray" style={{ marginLeft: "auto" }}>
-                {L4(language, { ko: "AI 추정", en: "AI estimate", ja: "AI推定", zh: "AI 推断" })}
+                {L4(language, { ko: "노아 추정", en: "Noa estimate", ja: "ノア推定", zh: "诺亚推断" })}
               </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8 }}>

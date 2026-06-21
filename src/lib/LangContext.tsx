@@ -39,13 +39,21 @@ function detectLang(): Lang {
   return "ko";
 }
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  // Initialize with detected language immediately on client.
-  // SSR will use "ko", client will correct on first render via useState initializer.
-  const [lang, setLang] = useState<Lang>(() => {
-    if (typeof window === "undefined") return "ko";
-    return detectLang();
-  });
+export function LangProvider({ children, initialLang = "ko" }: { children: ReactNode; initialLang?: Lang }) {
+  // [A1 priority-high 2026-06-13] 서버가 렌더한 언어와 hydration 첫 렌더 언어를 맞춘다.
+  // localStorage/navigator 감지는 mount 이후 보정해 React 418 텍스트 mismatch를 막는다.
+  const [lang, setLang] = useState<Lang>(initialLang);
+
+  useEffect(() => {
+    const detected = detectLang();
+    if (detected !== lang) {
+
+      setLang(detected);
+      document.documentElement.lang = detected;
+    }
+    // 최초 mount 보정 전용. lang 변경 동기화는 아래 effect가 담당한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync DOM lang attribute when lang changes
   useEffect(() => {

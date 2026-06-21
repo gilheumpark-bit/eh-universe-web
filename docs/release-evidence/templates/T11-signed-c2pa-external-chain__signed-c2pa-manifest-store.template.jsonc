@@ -1,0 +1,44 @@
+// Loreguard release evidence template.
+// This .jsonc file is intentionally ignored by gate:evidence.
+// After a real run/sign-off, copy it to docs/release-evidence/*.json,
+// change kind to "loreguard.release-evidence.v1", set every check.status to "PASS",
+// replace placeholders, and attach concrete hashes or source links.
+// Requirement: T11-signed-c2pa-external-chain
+// Artifact type: signed-c2pa-manifest-store
+{
+  "kind": "loreguard.release-evidence.v1.template",
+  "gate": "T11",
+  "requirementId": "T11-signed-c2pa-external-chain",
+  "environment": "staging",
+  "artifactType": "signed-c2pa-manifest-store",
+  "generatedAt": "REPLACE_WITH_ISO_TIMESTAMP_AFTER_REAL_RUN",
+  "source": "REPLACE_WITH_RUN_URL_SIGNOFF_LOCATION_OR_EXTERNAL_ATTESTATION",
+  "summary": "Attach signed C2PA Manifest Store and external provenance-chain evidence.",
+  "checks": [
+    {
+      "id": "c2pa-manifest-store-signed",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    },
+    {
+      "id": "c2pa-manifest-store-verifier-pass",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    },
+    {
+      "id": "c2pa-asset-hash-binding",
+      "status": "HOLD",
+      "evidence": "REPLACE_WITH_SPECIFIC_RUNTIME_TRACE_ARTIFACT_OR_SIGNOFF_EVIDENCE"
+    }
+  ],
+  "hashes": [
+    {
+      "path": "docs/release-evidence/artifacts/REPLACE_WITH_ATTACHED_ARTIFACT_FILENAME",
+      "sha256": "REPLACE_WITH_64_CHAR_SHA256_HEX_DIGEST"
+    }
+  ],
+  "limitations": [
+    "Template only. Do not rename to .json until real external/staging/live evidence has been attached.",
+    "This evidence must not claim certification, guarantee, complete defense, or legal substitution."
+  ]
+}

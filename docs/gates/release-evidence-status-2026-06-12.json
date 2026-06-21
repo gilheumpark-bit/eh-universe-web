@@ -1,0 +1,665 @@
+{
+  "kind": "loreguard.release-evidence-status.v1",
+  "generatedAt": "2026-06-20T08:39:39+09:00",
+  "evidenceRoot": "docs/release-evidence",
+  "verdict": "HOLD",
+  "counts": {
+    "requirementCount": 16,
+    "passCount": 2,
+    "holdCount": 14,
+    "evidenceFileCount": 2,
+    "malformedEvidenceFileCount": 0
+  },
+  "requirements": [
+    {
+      "id": "T0-deployed-destructive-workflow",
+      "gate": "T0",
+      "title": "Deployed/staging destructive workflow replay for real project payloads",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "staging-destructive-workflow-replay"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "staging-destructive-workflow-replay",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid staging-destructive-workflow-replay evidence for T0-deployed-destructive-workflow"
+          ]
+        }
+      ],
+      "nextAction": "Attach deployed/staging destructive workflow replay evidence for real project payloads.",
+      "nextActionKo": "Attach deployed/staging destructive workflow replay evidence for real project payloads."
+    },
+    {
+      "id": "T1-live-external-registry",
+      "gate": "T1",
+      "title": "Live external registry replay for creative process certificate lookup",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production",
+        "external-provider"
+      ],
+      "requiredArtifactTypes": [
+        "external-registry-replay"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "external-registry-replay",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid external-registry-replay evidence for T1-live-external-registry"
+          ]
+        }
+      ],
+      "nextAction": "Attach live external registry replay evidence for creative process certificate lookup.",
+      "nextActionKo": "Attach live external registry replay evidence for creative process certificate lookup."
+    },
+    {
+      "id": "T2-live-stripe-billing",
+      "gate": "T2",
+      "title": "Live Stripe checkout/webhook/claim propagation replay",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production",
+        "external-provider"
+      ],
+      "requiredArtifactTypes": [
+        "live-stripe-replay",
+        "paid-session-e2e"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "live-stripe-replay",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid live-stripe-replay evidence for T2-live-stripe-billing"
+          ]
+        },
+        {
+          "artifactType": "paid-session-e2e",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid paid-session-e2e evidence for T2-live-stripe-billing"
+          ]
+        }
+      ],
+      "nextAction": "Attach live Stripe replay and paid-session e2e evidence for checkout/webhook/claim propagation.",
+      "nextActionKo": "Stripe 체크아웃, 웹훅, 유료 권한 반영, 확인서 크레딧 지급이 실제 테스트 경로에서 이어졌다는 증거를 첨부한다."
+    },
+    {
+      "id": "T3-deployed-adversarial-http",
+      "gate": "T3",
+      "title": "Deployed/staging adversarial HTTP replay against LLM-facing API routes",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "deployed-adversarial-http-replay"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "deployed-adversarial-http-replay",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid deployed-adversarial-http-replay evidence for T3-deployed-adversarial-http"
+          ]
+        }
+      ],
+      "nextAction": "Run deployed/staging adversarial HTTP replay against LLM-facing API routes.",
+      "nextActionKo": "Run deployed/staging adversarial HTTP replay against LLM-facing API routes."
+    },
+    {
+      "id": "T4-deployed-load-replay",
+      "gate": "T4",
+      "title": "Deployed multi-worker/load replay for collaborative writing and process-record issuance",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "deployed-multi-worker-load-replay"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "deployed-multi-worker-load-replay",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid deployed-multi-worker-load-replay evidence for T4-deployed-load-replay"
+          ]
+        }
+      ],
+      "nextAction": "Run deployed multi-worker/load replay for collaborative writing and process-record issuance paths.",
+      "nextActionKo": "Run deployed multi-worker/load replay for collaborative writing and process-record issuance paths."
+    },
+    {
+      "id": "T5-live-destructive-rehearsal",
+      "gate": "T5",
+      "title": "Live/staging destructive workflow rehearsal with backup export and verified restore",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "destructive-workflow-rehearsal",
+        "backup-restore-verification"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "destructive-workflow-rehearsal",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid destructive-workflow-rehearsal evidence for T5-live-destructive-rehearsal"
+          ]
+        },
+        {
+          "artifactType": "backup-restore-verification",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid backup-restore-verification evidence for T5-live-destructive-rehearsal"
+          ]
+        }
+      ],
+      "nextAction": "Run live/staging destructive workflow rehearsal with backup export and verified restore evidence.",
+      "nextActionKo": "Run live/staging destructive workflow rehearsal with backup export and verified restore evidence."
+    },
+    {
+      "id": "T6-live-release-gate-ci",
+      "gate": "T6",
+      "title": "Live GitHub Actions release-gate run evidence",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "external-ci"
+      ],
+      "requiredArtifactTypes": [
+        "github-actions-release-gate-run"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "github-actions-release-gate-run",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid github-actions-release-gate-run evidence for T6-live-release-gate-ci"
+          ]
+        }
+      ],
+      "nextAction": "Attach live GitHub Actions release-gate run evidence before treating gates as deploy blockers.",
+      "nextActionKo": "Attach live GitHub Actions release-gate run evidence before treating gates as deploy blockers."
+    },
+    {
+      "id": "T7-live-browser-recovery",
+      "gate": "T7",
+      "title": "Live/staging browser kill/reload replay against the writing IDE surface",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "live-browser-kill-reload-replay"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "live-browser-kill-reload-replay",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid live-browser-kill-reload-replay evidence for T7-live-browser-recovery"
+          ]
+        }
+      ],
+      "nextAction": "Attach live/staging browser kill/reload evidence against the writing IDE surface.",
+      "nextActionKo": "Attach live/staging browser kill/reload evidence against the writing IDE surface."
+    },
+    {
+      "id": "T8-live-observability",
+      "gate": "T8",
+      "title": "Live alert routing and SLO evidence",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "alert-routing-evidence",
+        "slo-evidence"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "alert-routing-evidence",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid alert-routing-evidence evidence for T8-live-observability"
+          ]
+        },
+        {
+          "artifactType": "slo-evidence",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid slo-evidence evidence for T8-live-observability"
+          ]
+        }
+      ],
+      "nextAction": "Attach live alert routing and SLO evidence from staging/production.",
+      "nextActionKo": "Attach live alert routing and SLO evidence from staging/production."
+    },
+    {
+      "id": "T9-qualified-legal-regulatory",
+      "gate": "T9",
+      "title": "Qualified legal/regulatory review and jurisdiction-specific release notes",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "legal-review"
+      ],
+      "requiredArtifactTypes": [
+        "legal-regulatory-signoff",
+        "jurisdiction-release-notes"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "legal-regulatory-signoff",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid legal-regulatory-signoff evidence for T9-qualified-legal-regulatory"
+          ]
+        },
+        {
+          "artifactType": "jurisdiction-release-notes",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid jurisdiction-release-notes evidence for T9-qualified-legal-regulatory"
+          ]
+        }
+      ],
+      "nextAction": "Attach qualified legal review/sign-off and jurisdiction-specific release notes before public launch.",
+      "nextActionKo": "Attach qualified legal review/sign-off and jurisdiction-specific release notes before public launch."
+    },
+    {
+      "id": "T10-agent-runner-containment",
+      "gate": "T10",
+      "title": "Agent runner disabled attestation or active runner denial traces",
+      "verdict": "PASS",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "disabled-attestation",
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "agent-runner-disabled-attestation"
+      ],
+      "alternativeArtifactGroups": [
+        [
+          "active-agent-runner-denial-trace"
+        ]
+      ],
+      "alternativeArtifactTypes": [
+        "active-agent-runner-denial-trace"
+      ],
+      "artifactTypes": [
+        {
+          "artifactType": "agent-runner-disabled-attestation",
+          "verdict": "PASS",
+          "evidenceFiles": [
+            {
+              "file": "docs/release-evidence/t10-agent-runner-disabled-attestation.json",
+              "sha256": "81f03c9c4a92468d03cac84a0e24bdec8aa6ef17a0c83803766cb8323669865f",
+              "environment": "disabled-attestation",
+              "source": "local-script://scripts/loreguard-release-disabled-attestations.mjs",
+              "generatedAt": "2026-06-20T08:38:37+09:00"
+            }
+          ],
+          "issues": []
+        }
+      ],
+      "nextAction": "No release-evidence action required for this gate.",
+      "nextActionKo": "이 게이트는 추가 release evidence 조치가 필요하지 않다."
+    },
+    {
+      "id": "T11-signed-c2pa-external-chain",
+      "gate": "T11",
+      "title": "Signed C2PA Manifest Store and external provenance chain evidence",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production",
+        "external-provider"
+      ],
+      "requiredArtifactTypes": [
+        "signed-c2pa-manifest-store",
+        "external-provenance-chain"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "signed-c2pa-manifest-store",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid signed-c2pa-manifest-store evidence for T11-signed-c2pa-external-chain"
+          ]
+        },
+        {
+          "artifactType": "external-provenance-chain",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid external-provenance-chain evidence for T11-signed-c2pa-external-chain"
+          ]
+        }
+      ],
+      "nextAction": "Attach signed C2PA Manifest Store and external provenance-chain evidence.",
+      "nextActionKo": "서명된 C2PA 매니페스트 저장소와 외부 출처 체인 조회가 통과했다는 증거를 첨부한다."
+    },
+    {
+      "id": "T12-live-ai-supply-chain",
+      "gate": "T12",
+      "title": "Live provider attestation, live model-output eval, CI run artifact, and CI-signed provenance",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "external-provider",
+        "external-ci",
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "provider-model-attestation",
+        "live-model-output-eval",
+        "ci-run-artifact",
+        "ci-signed-provenance"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "provider-model-attestation",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid provider-model-attestation evidence for T12-live-ai-supply-chain"
+          ]
+        },
+        {
+          "artifactType": "live-model-output-eval",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid live-model-output-eval evidence for T12-live-ai-supply-chain"
+          ]
+        },
+        {
+          "artifactType": "ci-run-artifact",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid ci-run-artifact evidence for T12-live-ai-supply-chain"
+          ]
+        },
+        {
+          "artifactType": "ci-signed-provenance",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid ci-signed-provenance evidence for T12-live-ai-supply-chain"
+          ]
+        }
+      ],
+      "nextAction": "Attach live provider model attestation, live model-output eval, actual CI run artifact, and CI-signed provenance.",
+      "nextActionKo": "Attach live provider model attestation, live model-output eval, actual CI run artifact, and CI-signed provenance."
+    },
+    {
+      "id": "T13-vector-memory-isolation",
+      "gate": "T13",
+      "title": "Live vector DB tenant-isolation/stale-invalidation replay or disabled external-memory attestation",
+      "verdict": "PASS",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "disabled-attestation",
+        "staging",
+        "production",
+        "external-provider"
+      ],
+      "requiredArtifactTypes": [
+        "external-memory-disabled-attestation"
+      ],
+      "alternativeArtifactGroups": [
+        [
+          "vector-db-tenant-isolation-replay",
+          "stale-vector-invalidation-replay"
+        ]
+      ],
+      "alternativeArtifactTypes": [
+        "vector-db-tenant-isolation-replay",
+        "stale-vector-invalidation-replay"
+      ],
+      "artifactTypes": [
+        {
+          "artifactType": "external-memory-disabled-attestation",
+          "verdict": "PASS",
+          "evidenceFiles": [
+            {
+              "file": "docs/release-evidence/t13-external-memory-disabled-attestation.json",
+              "sha256": "893dccd469d97b53b98898d215b50e5e21055f4b8dd7092f837057bbb5f0be15",
+              "environment": "disabled-attestation",
+              "source": "local-script://scripts/loreguard-release-disabled-attestations.mjs",
+              "generatedAt": "2026-06-20T08:38:37+09:00"
+            }
+          ],
+          "issues": []
+        }
+      ],
+      "nextAction": "No release-evidence action required for this gate.",
+      "nextActionKo": "이 게이트는 추가 release evidence 조치가 필요하지 않다."
+    },
+    {
+      "id": "T14-legal-review-compliance",
+      "gate": "T14",
+      "title": "Legal-review sign-off for compliance policy and export language",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "legal-review"
+      ],
+      "requiredArtifactTypes": [
+        "legal-review-signoff"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "legal-review-signoff",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid legal-review-signoff evidence for T14-legal-review-compliance"
+          ]
+        }
+      ],
+      "nextAction": "Add legal-review sign-off to docs/compliance.yml.",
+      "nextActionKo": "Add legal-review sign-off to docs/compliance.yml."
+    },
+    {
+      "id": "T15-live-author-session",
+      "gate": "T15",
+      "title": "Live/staging author-session run artifact from a deployed writing session",
+      "verdict": "HOLD",
+      "acceptanceMode": "required",
+      "allowedEnvironments": [
+        "staging",
+        "production"
+      ],
+      "requiredArtifactTypes": [
+        "live-author-session-run-artifact"
+      ],
+      "alternativeArtifactGroups": [],
+      "alternativeArtifactTypes": [],
+      "artifactTypes": [
+        {
+          "artifactType": "live-author-session-run-artifact",
+          "verdict": "HOLD",
+          "evidenceFiles": [],
+          "issues": [
+            "missing valid live-author-session-run-artifact evidence for T15-live-author-session"
+          ]
+        }
+      ],
+      "nextAction": "Attach live/staging author-session run artifact from a deployed writing session.",
+      "nextActionKo": "Attach live/staging author-session run artifact from a deployed writing session."
+    }
+  ],
+  "evidenceFiles": [
+    {
+      "file": "docs/release-evidence/t10-agent-runner-disabled-attestation.json",
+      "sha256": "81f03c9c4a92468d03cac84a0e24bdec8aa6ef17a0c83803766cb8323669865f",
+      "valid": true,
+      "gate": "T10",
+      "requirementId": "T10-agent-runner-containment",
+      "artifactType": "agent-runner-disabled-attestation",
+      "environment": "disabled-attestation",
+      "source": "local-script://scripts/loreguard-release-disabled-attestations.mjs",
+      "generatedAt": "2026-06-20T08:38:37+09:00",
+      "issues": []
+    },
+    {
+      "file": "docs/release-evidence/t13-external-memory-disabled-attestation.json",
+      "sha256": "893dccd469d97b53b98898d215b50e5e21055f4b8dd7092f837057bbb5f0be15",
+      "valid": true,
+      "gate": "T13",
+      "requirementId": "T13-vector-memory-isolation",
+      "artifactType": "external-memory-disabled-attestation",
+      "environment": "disabled-attestation",
+      "source": "local-script://scripts/loreguard-release-disabled-attestations.mjs",
+      "generatedAt": "2026-06-20T08:38:37+09:00",
+      "issues": []
+    }
+  ],
+  "holdActions": [
+    {
+      "id": "T0-deployed-destructive-workflow",
+      "gate": "T0",
+      "nextAction": "Attach deployed/staging destructive workflow replay evidence for real project payloads."
+    },
+    {
+      "id": "T1-live-external-registry",
+      "gate": "T1",
+      "nextAction": "Attach live external registry replay evidence for creative process certificate lookup."
+    },
+    {
+      "id": "T2-live-stripe-billing",
+      "gate": "T2",
+      "nextAction": "Attach live Stripe replay and paid-session e2e evidence for checkout/webhook/claim propagation."
+    },
+    {
+      "id": "T3-deployed-adversarial-http",
+      "gate": "T3",
+      "nextAction": "Run deployed/staging adversarial HTTP replay against LLM-facing API routes."
+    },
+    {
+      "id": "T4-deployed-load-replay",
+      "gate": "T4",
+      "nextAction": "Run deployed multi-worker/load replay for collaborative writing and process-record issuance paths."
+    },
+    {
+      "id": "T5-live-destructive-rehearsal",
+      "gate": "T5",
+      "nextAction": "Run live/staging destructive workflow rehearsal with backup export and verified restore evidence."
+    },
+    {
+      "id": "T6-live-release-gate-ci",
+      "gate": "T6",
+      "nextAction": "Attach live GitHub Actions release-gate run evidence before treating gates as deploy blockers."
+    },
+    {
+      "id": "T7-live-browser-recovery",
+      "gate": "T7",
+      "nextAction": "Attach live/staging browser kill/reload evidence against the writing IDE surface."
+    },
+    {
+      "id": "T8-live-observability",
+      "gate": "T8",
+      "nextAction": "Attach live alert routing and SLO evidence from staging/production."
+    },
+    {
+      "id": "T9-qualified-legal-regulatory",
+      "gate": "T9",
+      "nextAction": "Attach qualified legal review/sign-off and jurisdiction-specific release notes before public launch."
+    },
+    {
+      "id": "T11-signed-c2pa-external-chain",
+      "gate": "T11",
+      "nextAction": "Attach signed C2PA Manifest Store and external provenance-chain evidence."
+    },
+    {
+      "id": "T12-live-ai-supply-chain",
+      "gate": "T12",
+      "nextAction": "Attach live provider model attestation, live model-output eval, actual CI run artifact, and CI-signed provenance."
+    },
+    {
+      "id": "T14-legal-review-compliance",
+      "gate": "T14",
+      "nextAction": "Add legal-review sign-off to docs/compliance.yml."
+    },
+    {
+      "id": "T15-live-author-session",
+      "gate": "T15",
+      "nextAction": "Attach live/staging author-session run artifact from a deployed writing session."
+    }
+  ],
+  "limitation": "This local scan validates attached release-evidence files only. It does not create live, legal, provider, Stripe, registry, CI, C2PA, or staging evidence."
+}

@@ -29,22 +29,36 @@ export interface HFCPState {
 // PART 1: INPUT CLASSIFIER — 생성 명령 vs 대화 구분
 // ============================================================
 
-const GENERATE_PATTERNS_KO = [
-  '써줘', '써 줘', '생성', '작성', '집필', '다음 화', '다음 챕터',
-  '계속 써', '이어서', '1단계', '2단계', '3단계', '패스',
-  '뼈대', '감정선', '묘사', '클리프행어',
+const GENERATE_COMMAND_PATTERNS_KO = [
+  '써줘', '써 줘', '써라', '작성해', '작성해줘', '생성해', '생성해줘',
+  '집필해', '집필해줘', '계속 써', '이어서 써', '초안 써',
+  '1단계', '2단계', '3단계', '패스',
 ];
 
-const GENERATE_PATTERNS_EN = [
-  'write', 'generate', 'create', 'draft', 'next chapter', 'next episode',
-  'continue', 'pass 1', 'pass 2', 'pass 3', 'skeleton', 'emotion', 'sensory',
+const GENERATE_COMMAND_PATTERNS_EN = [
+  'write', 'generate', 'create', 'draft', 'continue writing',
+  'pass 1', 'pass 2', 'pass 3',
+];
+
+const REVIEW_PATTERNS_KO = [
+  '검토', '평가', '분석', '봐줘', '어때', '어떻게 생각',
+  '약하지', '문제', '리스크', '클릭 이유', '이유 봐', '말고',
+];
+
+const REVIEW_PATTERNS_EN = [
+  'review', 'evaluate', 'analyze', 'check', 'what do you think',
+  'weak', 'risk', 'instead of writing',
 ];
 
 export function classifyInput(text: string): InputMode {
   const lower = text.toLowerCase();
-  const allPatterns = [...GENERATE_PATTERNS_KO, ...GENERATE_PATTERNS_EN];
-  for (const p of allPatterns) {
+  const generatePatterns = [...GENERATE_COMMAND_PATTERNS_KO, ...GENERATE_COMMAND_PATTERNS_EN];
+  for (const p of generatePatterns) {
     if (lower.includes(p)) return 'generate';
+  }
+  const reviewPatterns = [...REVIEW_PATTERNS_KO, ...REVIEW_PATTERNS_EN];
+  for (const p of reviewPatterns) {
+    if (lower.includes(p)) return 'chat';
   }
   return 'chat';
 }
@@ -112,15 +126,24 @@ function hysteresis(delta: number): number {
   return delta < 0 ? 0.5 : 1.0;
 }
 
+function applyLongSessionSoftCap(score: number, nextTurnCount: number): number {
+  if (nextTurnCount < 5 || score <= 124) return score;
+  const pressure = clamp((nextTurnCount - 5) / 5, 0, 1);
+  const overflow = score - 124;
+  return clamp(score - (overflow * pressure), 50, 150);
+}
+
 export function updateScore(state: HFCPState, signal: TurnSignal): number {
   const delta = computeDelta(signal);
   const M = updateMomentum(state, delta);
   const L = loadLeveling(state.score);
   const H = hysteresis(delta);
-  const newScore = clamp(state.score + (delta * M * L * H), 50, 150);
+  const nextTurnCount = state.turns + 1;
+  const rawScore = clamp(state.score + (delta * M * L * H), 50, 150);
+  const newScore = applyLongSessionSoftCap(rawScore, nextTurnCount);
   state.lastDelta = delta;
   state.score = newScore;
-  state.turns += 1;
+  state.turns = nextTurnCount;
   return newScore;
 }
 
@@ -271,8 +294,8 @@ export function getHFCPSummary(state: HFCPState): HFCPSummary {
   const momentumLabel = momentumK > 1 ? `, momentum x${momentumK}` : '';
 
   const text = {
-    ko: `[HFCP] ${turns}턴 | 점수 ${Math.round(score)} | ${verdict}${nrgLabel}${momentumLabel} | 품질: ${qualityTier} | 통과 ~${pass}, 경고 ~${warn}, 실패 ~${fail}`,
-    en: `[HFCP] ${turns} turns | Score ${Math.round(score)} | ${verdict}${nrgLabel}${momentumLabel} | Quality: ${qualityTier} | Pass ~${pass}, Warn ~${warn}, Fail ~${fail}`,
+    ko: `[노아 대화 조율] ${turns}턴 | 내부 점수 ${Math.round(score)} | ${verdict}${nrgLabel}${momentumLabel} | 품질: ${qualityTier} | 통과 ~${pass}, 경고 ~${warn}, 실패 ~${fail}`,
+    en: `[Noa conversation control] ${turns} turns | Internal score ${Math.round(score)} | ${verdict}${nrgLabel}${momentumLabel} | Quality: ${qualityTier} | Pass ~${pass}, Warn ~${warn}, Fail ~${fail}`,
   };
 
   return { totalTurns: turns, currentScore: Math.round(score), verdict, nrgStrategy, qualityTier, verdictCounts: { pass, warn, fail }, text };

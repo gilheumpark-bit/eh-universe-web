@@ -329,7 +329,7 @@ function dispatchJournalError(
  * 첫 호출 (prev=null) 은 baseline 등록 의미 — `save-project` 1회 기록 후
  * 다음 호출부터 diff 적용.
  *
- * [원칙] 탭별 변경 = 탭별 기록. Rulebook 만 바뀌면 save-scene-direction 1건만.
+ * [원칙] 탭별 변경 = 탭별 기록. 연출만 바뀌면 save-scene-direction 1건만.
  */
 async function runMultiShadowWrite(
   prev: Project[] | null,

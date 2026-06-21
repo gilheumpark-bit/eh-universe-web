@@ -99,7 +99,7 @@ describe('WorkProfilerView', () => {
     // Summary line contains episode count "42"
     expect(container.textContent).toMatch(/42/);
     // Title rendered
-    expect(container.textContent).toMatch(/작품 프로파일러/);
+    expect(container.textContent).toMatch(/작품 분석/);
   });
 
   test('renders tension SVG polyline', () => {

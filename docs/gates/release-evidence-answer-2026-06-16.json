@@ -1,0 +1,9 @@
+{
+  "kind": "loreguard.release-evidence-answer.v1",
+  "generatedAt": "2026-06-16T22:16:31+09:00",
+  "answerKo": "상용 핵심 막힘은 2개, 누락 증거 산출물은 4개입니다. 전체 release evidence HOLD는 16개입니다.",
+  "coreRemainingCount": 2,
+  "missingArtifactCount": 4,
+  "overallHoldCount": 16,
+  "evidenceFileCount": 0
+}

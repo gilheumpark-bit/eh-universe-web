@@ -11,10 +11,10 @@ const TITLES = {
 } as const;
 
 const DESCRIPTIONS = {
-  ko: "Loreguard 사용 AI 모델·데이터 처리·BYOK 정책 투명 공개.",
-  en: "Loreguard AI models, data handling, and BYOK policy transparently disclosed.",
-  ja: "Loreguard 使用 AI モデル・データ処理・BYOK ポリシーの透明な開示。",
-  zh: "Loreguard 使用的 AI 模型、数据处理和 BYOK 政策透明披露。",
+  ko: "Loreguard 노아 운영 모델, 데이터 처리, BYOK 정책 안내.",
+  en: "Loreguard Noa model operations, data handling, and BYOK policy.",
+  ja: "Loreguard Noa 運用モデル、データ処理、BYOK ポリシーの案内。",
+  zh: "Loreguard Noa 运行模型、数据处理与 BYOK 政策说明。",
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {

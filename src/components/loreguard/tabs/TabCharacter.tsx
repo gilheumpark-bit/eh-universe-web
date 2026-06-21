@@ -1,383 +1,55 @@
 "use client";
 
-/* ===========================================================
-   TabCharacter — 캐릭터 (Character) tab — Phase 3 (real engine wiring)
-   Source: /tmp/design2_handoff/2/project/tab_character.jsx (window.TabCharacter)
-
-   3-pane (ch-grid):
-     · 좌 268px 로스터 (ch-rail): 인물 목록 + "새 인물" 버튼
-     · 중앙 프로필 (ch-center): 히어로 + 2열(ch-cols)
-         - ch-main: 기본정보 / 성격 키워드 / 말투·보이스 / 관계
-         - ch-side: 서사 잠재력(dna) / 비밀·상징 (real config fields)
-   contract: default export, props 없음, CSS prefix `ch-`,
-   아이콘은 @/components/loreguard/icons. CSS 는 loreguard.css 에 이미 포팅됨.
-
-   [P? loreguard-phase3 2026-06-10] real wiring — currentSession.config.characters[]
-   + charRelations[] (StoryConfig). setConfig 로 영속(IndexedDB+Firestore).
-   REMOVED (no engine source): 일관성 검수 %(외형/말투/동기 일치) · 등장 빈도 % ·
-   per-character 챕터 추적 — 채점 엔진 부재로 날조 금지(Rule 4).
-
-   [P? loreguard-items 2026-06-10] 아이템 서브뷰 — 제품 파이프라인 단계는
-   '캐릭터·아이템'. ch-rail 에 모드 토글(인물/아이템·useStudio charSubTab state)
-   추가, '아이템' 선택 시 기존 검증 컴포넌트 ItemStudioView 를 ch-center 에
-   동일 real props(language·config·setConfig — 옛 CharacterTab 과 동일 경로)로
-   마운트. 아이템 UI 재구축 X — 재사용 (영속은 setConfig → StoryConfig).
-
-   [P? loreguard-character-ai 2026-06-10] AI 캐릭터 생성 — 옛 CharacterTab 의
-   동일 엔진 재사용: generateCharacters(geminiService) → fetchStructuredGemini
-   → /api/gemini-structured (task:'characters'·config.genre+synopsis 컨텍스트).
-   ch-rail 헤더에 'AI 생성' 버튼, 결과는 config.characters 에 APPEND(이름
-   dedupe·기존 덮어쓰기 X), 에러는 인라인 표시. hasAiAccess 게이트.
-
-   [X1-xyflow 2026-06-11] "관계도" 서브뷰 — 인물 모드 안 프로필/관계도 토글
-   (기본 = 프로필·그래프는 보조 뷰). 데이터 = config.characters +
-   config.charRelations 그대로 (관계 없으면 노드만 — 날조 금지). 구 셸
-   CharacterRelationGraph 의 원형 배치·관계색 개념 재사용, 렌더는 xyflow
-   (RelationGraph·dynamic ssr:false — 토글 진입 시에만 번들 로드).
-   노드 드래그 좌표는 config.charGraphLayout(additive)에 디바운스 setConfig
-   영속. 노드 클릭 = 해당 인물 프로필로 이동.
-   =========================================================== */
+/* TabCharacter — 캐릭터·아이템 탭 조립부. 세션 저장과 관계도 배선을 소유한다. */
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoadingSkeleton from "@/components/studio/LoadingSkeleton";
 import type { GraphNodeSpec, GraphEdgeSpec } from "@/components/loreguard/RelationGraph";
-import { User, Plus, Edit, Quote, Shield, Check, X, Layers, Sparkle, Sync } from "@/components/loreguard/icons";
 import { useStudio } from "@/app/studio/StudioContext";
-// [Z2a-chatcanvas 2026-06-11] 접이식 노아 채팅 도크 — 기본 접힘, 프로필 필드
-// 제안 감지 → 채택 시 setConfig merge (기존 'AI 생성' 버튼과 트리거 분리).
 import ChatCanvasDock, {
   extractJsonBlocks,
   type DockSuggestion,
+  type DockSuggestionSource,
 } from "@/components/loreguard/ChatCanvasDock";
+import { compactDockMemoText, hashDockMemoText } from "@/components/loreguard/ChatCanvasDock.helpers";
 import ItemStudioView from "@/components/studio/ItemStudioView";
 import { generateCharacters } from "@/services/geminiService";
 import { activeSupportsStructured } from "@/lib/ai-providers";
 import { logger } from "@/lib/logger";
-import type { Character, CharRelation, CharRelationType } from "@/lib/studio-types";
+import type {
+  AcceptedImportCandidateRecord,
+  Character,
+  CharRelation,
+  Item,
+} from "@/lib/studio-types";
 import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
+import { fireCpLog, getCreativeLogger } from "./TabCharacter.creative-log";
+import {
+  DOCK_PROPOSAL_GUIDE,
+  REL_EDGE_COLORS,
+  REL_LABELS,
+  avColor,
+  buildImportedCharacter,
+  buildImportedItem,
+  circularFallback,
+  parseCharProposals,
+  pendingCharacterImportCandidates,
+  pendingItemImportCandidates,
+  type CharProposal,
+} from "./TabCharacter.shared";
+import { CharacterProfileView } from "./TabCharacter.profile";
+import { CharacterRail, EmptyProjectState, ImportCandidatesSection } from "./TabCharacter.sections";
+import {
+  readCharacterPanelOpen,
+  useCharacterPanelSheet,
+  writeCharacterPanelOpen,
+} from "./TabCharacter.rail-state";
 
-// ============================================================
-// PART 0.5 — [s82-stage-coverage] 창작 과정 기록 (TabWriting S2 패턴 축약)
-// ============================================================
-// fire-and-forget — setConfig 경로를 await/gate 하지 않음. 실패(logger 부재·
-// reject·null resolve) → noa:alert 1회·60s 쿨다운 (silent failure 금지).
-// 아이템(ItemStudioView) 내부 추가/편집은 공용 컴포넌트라 수정 금지 → 미기록 (honest gap).
-
-let cpAlertAt = 0;
-function surfaceCpLogFailure(): void {
-  const now = Date.now();
-  if (now - cpAlertAt < 60_000) return;
-  cpAlertAt = now;
-  try {
-    window.dispatchEvent(
-      new CustomEvent("noa:alert", {
-        detail: { message: "창작 과정 기록 실패 — 확인서 정확도에 영향", variant: "warning" },
-      }),
-    );
-  } catch { /* noop */ }
-}
-function fireCpLog(p: Promise<string | null> | null | undefined): void {
-  if (!p) { surfaceCpLogFailure(); return; }
-  p.then((id) => { if (id === null) surfaceCpLogFailure(); }).catch(() => surfaceCpLogFailure());
-}
-const getCreativeLogger = () =>
-  typeof window !== "undefined" ? window.__creativeLogger ?? null : null;
-
-// ============================================================
-// PART 1 — 표현용 헬퍼 (날조 데이터 X — 순수 프레젠테이션 파생)
-// ============================================================
-
-/** 프로토타입 아바타 색상 팔레트 — index 기반(데이터 아님, 표시 일관성용). */
-const AV_COLORS = [
-  "var(--c-blue)",
-  "var(--c-purple)",
-  "var(--c-green)",
-  "var(--c-amber)",
-  "var(--c-red)",
-  "var(--c-teal)",
-] as const;
-
-const REL_LABELS: Record<CharRelationType, string> = {
-  lover: "연인",
-  rival: "라이벌",
-  friend: "친구",
-  enemy: "적대",
-  family: "가족",
-  mentor: "사제",
-  subordinate: "부하",
-};
-
-// [X1-xyflow] 관계 타입 → 엣지 색 — 구 셸 CharacterRelationGraph REL_COLORS 의
-// 색 의미 매핑 재사용, 값은 loreguard 토큰(다크 자동 대응)으로 치환.
-const REL_EDGE_COLORS: Record<CharRelationType, string> = {
-  lover: "var(--c-red)",
-  rival: "var(--c-amber)",
-  friend: "var(--c-green)",
-  enemy: "var(--c-red)",
-  family: "var(--c-blue)",
-  mentor: "var(--c-purple)",
-  subordinate: "var(--ink-3)",
-};
-
-// [X1-xyflow] 관계도 그래프 — xyflow 래퍼는 토글 진입 시에만 로드 (ssr:false).
 const RelationGraph = dynamic(() => import("@/components/loreguard/RelationGraph"), {
   ssr: false,
   loading: () => <LoadingSkeleton height={480} />,
 });
-
-/** 저장된 레이아웃이 없을 때의 기본 원형 배치 (구 셸 computePositions 개념 재사용). */
-function circularFallback(index: number, total: number): { x: number; y: number } {
-  const angle = (index / Math.max(total, 1)) * 2 * Math.PI - Math.PI / 2; // 12시 시작
-  const radius = 230;
-  return {
-    x: Math.round(320 + radius * Math.cos(angle)),
-    y: Math.round(260 + radius * Math.sin(angle)),
-  };
-}
-
-function avColor(index: number): string {
-  return AV_COLORS[index % AV_COLORS.length];
-}
-
-function avLetter(name: string): string {
-  return name.trim().charAt(0) || "?";
-}
-
-/** 프로토타입 x_grad: 아바타 큰 원의 사선 그라데이션 (color-mix 허용). */
-function avatarGradient(color: string): string {
-  return `linear-gradient(145deg, color-mix(in srgb, ${color} 85%, #fff), ${color})`;
-}
-
-/** traits 는 StoryConfig 상 comma 구분 string. 키워드 배열로 분해. */
-function splitTraits(traits: string | undefined): string[] {
-  if (!traits) return [];
-  return traits
-    .split(/[,，]/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
-
-/** Character 의 실제 필드만으로 기본 정보 행 구성 (값 있는 것만). */
-function infoRows(c: Character): Array<[string, string]> {
-  const rows: Array<[string, string]> = [];
-  if (c.role) rows.push(["역할", c.role]);
-  if (c.desire) rows.push(["욕망", c.desire]);
-  if (c.deficiency) rows.push(["결핍", c.deficiency]);
-  if (c.conflict) rows.push(["갈등", c.conflict]);
-  if (c.changeArc) rows.push(["변화 아크", c.changeArc]);
-  if (c.values) rows.push(["가치관", c.values]);
-  if (c.strength) rows.push(["강점", c.strength]);
-  if (c.weakness) rows.push(["약점", c.weakness]);
-  return rows;
-}
-
-// ============================================================
-// PART 1.7 — [Z2a-chatcanvas] 채팅 도크 프로필 제안 (감지 파서 + 형식 지시)
-// ============================================================
-// 노아가 ```json {"characters":[...]} 블록으로 제안 → 채택 시 setConfig merge.
-// 필드는 Character 의 실존 필드만 (발명 금지). name 필수, 나머지 옵션.
-
-const DOCK_PROPOSAL_GUIDE = `[캔버스 제안 형식] 대화 중 구체적인 캐릭터 프로필 제안에 도달하면, 응답 끝에 아래 형식의 \`\`\`json 코드 블록을 1개 포함하십시오 (제안이 없으면 블록 생략):
-\`\`\`json
-{"characters":[{"name":"이름","role":"역할","traits":"성격 키워드(쉼표 구분)","personality":"성격 한 줄","speechStyle":"말투 스타일","speechExample":"대표 대사","appearance":"외형"}]}
-\`\`\`
-name 외 필드는 제안할 값이 있을 때만 포함하십시오. 캔버스 반영은 작가가 채택 버튼으로 확정합니다 — 이미 반영했다고 단정하지 마십시오.`;
-
-/** 도크 제안 1건 — Character 실존 필드 부분집합 (name 필수) */
-interface CharProposal {
-  name: string;
-  role?: string;
-  traits?: string;
-  personality?: string;
-  speechStyle?: string;
-  speechExample?: string;
-  appearance?: string;
-}
-
-/** JSON 블록 → CharProposal[] (런타임 검증·name 없는 행 드롭·최대 6) */
-function parseCharProposals(data: unknown): CharProposal[] {
-  if (!data || typeof data !== "object") return [];
-  const arr = (data as { characters?: unknown }).characters;
-  if (!Array.isArray(arr)) return [];
-  const out: CharProposal[] = [];
-  const str = (v: unknown): string | undefined =>
-    typeof v === "string" && v.trim() ? v.trim() : undefined;
-  for (const c of arr) {
-    if (!c || typeof c !== "object") continue;
-    const r = c as Record<string, unknown>;
-    const name = str(r.name);
-    if (!name) continue;
-    out.push({
-      name,
-      role: str(r.role),
-      traits: str(r.traits),
-      personality: str(r.personality),
-      speechStyle: str(r.speechStyle),
-      speechExample: str(r.speechExample),
-      appearance: str(r.appearance),
-    });
-    if (out.length >= 6) break;
-  }
-  return out;
-}
-
-// ============================================================
-// PART 2 — 사이드 패널 (서사 잠재력 + 비밀/상징) — real config fields
-// ============================================================
-
-/** dna = 서사 잠재력 점수 0-100 (AI 엔진이 실제로 부여·영속하는 필드). */
-function PotentialCard({ char }: { char: Character }) {
-  const dna = typeof char.dna === "number" ? Math.max(0, Math.min(100, char.dna)) : null;
-  const tone = dna == null ? "gray" : dna >= 80 ? "green" : dna >= 50 ? "amber" : "red";
-  return (
-    <div className="pcard">
-      <div className="pcard-h">
-        <Shield size={15} strokeWidth={1.6} />
-        서사 잠재력
-      </div>
-      {dna == null ? (
-        <span className="ch-none">아직 평가되지 않음</span>
-      ) : (
-        <div className="ch-check">
-          <div className="ch-check-top">
-            <span>DNA 점수</span>
-            <b style={{ color: `var(--c-${tone})` }}>{`${dna}`}</b>
-          </div>
-          <div className="tbar">
-            <span style={{ width: `${dna}%`, background: `var(--c-${tone})` }} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** 비밀·상징·인상 — Character 의 실제 옵션 필드. 값 없으면 카드 미표시. */
-function LoreCard({ char }: { char: Character }) {
-  const rows: Array<[string, string]> = [];
-  if (char.symbol) rows.push(["상징", char.symbol]);
-  if (char.secret) rows.push(["비밀", char.secret]);
-  if (char.externalPerception) rows.push(["타인의 인상", char.externalPerception]);
-  if (char.backstory) rows.push(["과거", char.backstory]);
-  if (rows.length === 0) return null;
-  return (
-    <div className="pcard">
-      <div className="pcard-h">
-        <Quote size={15} strokeWidth={1.6} />
-        서사 디테일
-      </div>
-      {rows.map(([k, v]) => (
-        <div key={k} className="ch-check">
-          <div className="ch-check-top">
-            <span>{k}</span>
-          </div>
-          <div className="ch-voice" style={{ fontSize: 13, padding: "10px 13px" }}>
-            {v}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ============================================================
-// PART 3 — 편집 폼 (setConfig 로 write-back — 로컬 state 보관 금지)
-// ============================================================
-
-interface CharFormProps {
-  char: Character;
-  onSave: (patch: Partial<Character>) => void;
-  onCancel: () => void;
-}
-
-function CharForm({ char, onSave, onCancel }: CharFormProps) {
-  const [name, setName] = useState(char.name);
-  const [role, setRole] = useState(char.role);
-  const [traits, setTraits] = useState(char.traits ?? "");
-  const [personality, setPersonality] = useState(char.personality ?? "");
-  const [speechStyle, setSpeechStyle] = useState(char.speechStyle ?? "");
-  const [speechExample, setSpeechExample] = useState(char.speechExample ?? "");
-  const [appearance, setAppearance] = useState(char.appearance ?? "");
-
-  // 폼 스타일은 인라인 — loreguard.css(공유 파일) 수정 금지(Rule 7).
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    marginBottom: 12,
-  };
-  const labelTextStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 800,
-    letterSpacing: ".06em",
-    textTransform: "uppercase",
-    color: "var(--ink-3)",
-    marginBottom: 6,
-  };
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "9px 12px",
-    background: "var(--card)",
-    border: "1px solid var(--line)",
-    borderRadius: 10,
-    fontSize: 13.5,
-    color: "var(--ink-1)",
-    fontFamily: "inherit",
-    resize: "vertical",
-  };
-
-  const field = (label: string, value: string, set: (v: string) => void, multiline = false) => (
-    <label style={labelStyle}>
-      <span style={labelTextStyle}>{label}</span>
-      {multiline ? (
-        <textarea style={inputStyle} rows={2} value={value} onChange={(e) => set(e.target.value)} />
-      ) : (
-        <input style={inputStyle} value={value} onChange={(e) => set(e.target.value)} />
-      )}
-    </label>
-  );
-
-  return (
-    <div className="ch-sec" style={{ maxWidth: 640 }}>
-      <div className="ch-sec-h">인물 편집</div>
-      {field("이름", name, setName)}
-      {field("역할", role, setRole)}
-      {field("성격 키워드 (쉼표 구분)", traits, setTraits)}
-      {field("성격", personality, setPersonality, true)}
-      {field("말투 스타일", speechStyle, setSpeechStyle)}
-      {field("대표 대사", speechExample, setSpeechExample, true)}
-      {field("외형", appearance, setAppearance, true)}
-      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-        <button
-          type="button"
-          className="btn primary"
-          onClick={() =>
-            onSave({
-              name: name.trim() || char.name,
-              role: role.trim(),
-              traits: traits.trim(),
-              personality: personality.trim() || undefined,
-              speechStyle: speechStyle.trim() || undefined,
-              speechExample: speechExample.trim() || undefined,
-              appearance: appearance.trim(),
-            })
-          }
-        >
-          <Check size={15} strokeWidth={1.6} />
-          저장
-        </button>
-        <button type="button" className="btn ghost" onClick={onCancel}>
-          <X size={15} strokeWidth={1.6} />
-          취소
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 4 — TabCharacter 본체 (3-pane 합성 + real state 배선)
-// ============================================================
 
 export default function TabCharacter() {
   const {
@@ -393,18 +65,120 @@ export default function TabCharacter() {
   } = useStudio();
   const config = currentSession?.config ?? null;
   const characters = useMemo<Character[]>(() => config?.characters ?? [], [config]);
+  const items = useMemo<Item[]>(() => config?.items ?? [], [config]);
   const relations = useMemo<CharRelation[]>(() => config?.charRelations ?? [], [config]);
 
-  // 인물/아이템 서브뷰 — charSubTab 은 useStudio 컨텍스트 state (옛 CharacterTab 과 동일 키).
   const isItems = charSubTab === "items";
+  const characterCandidates = useMemo(() => pendingCharacterImportCandidates(config), [config]);
+  const itemCandidates = useMemo(() => pendingItemImportCandidates(config), [config]);
 
   const [selId, setSelId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // [X1-xyflow] 인물 모드 서브뷰 — 기본은 기존 프로필 뷰, 관계도는 보조(토글 진입).
   const [charView, setCharView] = useState<"profile" | "graph">("profile");
+  const [railOpen, setRailOpen] = useState(readCharacterPanelOpen);
+  const isRailSheet = useCharacterPanelSheet();
 
-  // ---- [X1-xyflow] 관계도 데이터 변환 (실데이터만 — 날조 금지) ----
+  const toggleRail = useCallback(() => {
+    setRailOpen((prev) => {
+      const next = !prev;
+      writeCharacterPanelOpen(next);
+      return next;
+    });
+  }, []);
+
+  const closeRailIfSheet = useCallback(() => {
+    if (!isRailSheet) return;
+    setRailOpen(false);
+    writeCharacterPanelOpen(false);
+  }, [isRailSheet]);
+
+  const markImportCandidate = useCallback(
+    (id: string, routedToStage: string, routedTargetKey: string) => {
+      setConfig((prev) => ({
+        ...prev,
+        acceptedImportCandidates: (prev.acceptedImportCandidates ?? []).map((candidate) =>
+          candidate.id === id
+            ? {
+                ...candidate,
+                routedToStage,
+                routedTargetKey,
+                routedAt: new Date().toISOString(),
+              }
+            : candidate,
+        ),
+      }));
+    },
+    [setConfig],
+  );
+
+  const routeCharacterImportCandidate = useCallback(
+    (candidate: AcceptedImportCandidateRecord) => {
+      const imported = buildImportedCharacter(candidate);
+      setConfig((prev) => ({
+        ...prev,
+        characters: [...(prev.characters ?? []), imported],
+        acceptedImportCandidates: (prev.acceptedImportCandidates ?? []).map((entry) =>
+          entry.id === candidate.id
+            ? {
+                ...entry,
+                routedToStage: "character",
+                routedTargetKey: imported.id,
+                routedAt: new Date().toISOString(),
+              }
+            : entry,
+        ),
+      }));
+      setSelId(imported.id);
+      setEditing(false);
+      setCharSubTab("characters");
+      closeRailIfSheet();
+      fireCpLog(
+        getCreativeLogger()?.logHumanEdit({
+          targetType: "character",
+          targetId: imported.id,
+          afterContent: JSON.stringify(imported),
+          note: "import-character-adopt (TabCharacter)",
+          stage: "character",
+        }),
+      );
+      markExplicitCreativeLog("character");
+    },
+    [closeRailIfSheet, setCharSubTab, setConfig],
+  );
+
+  const routeItemImportCandidate = useCallback(
+    (candidate: AcceptedImportCandidateRecord) => {
+      const imported = buildImportedItem(candidate);
+      setConfig((prev) => ({
+        ...prev,
+        items: [...(prev.items ?? []), imported],
+        acceptedImportCandidates: (prev.acceptedImportCandidates ?? []).map((entry) =>
+          entry.id === candidate.id
+            ? {
+                ...entry,
+                routedToStage: "item",
+                routedTargetKey: imported.id,
+                routedAt: new Date().toISOString(),
+              }
+            : entry,
+        ),
+      }));
+      setCharSubTab("items");
+      closeRailIfSheet();
+      fireCpLog(
+        getCreativeLogger()?.logHumanEdit({
+          targetType: "metadata",
+          targetId: imported.id,
+          afterContent: JSON.stringify(imported),
+          note: "import-item-adopt (TabCharacter)",
+          stage: "character",
+        }),
+      );
+    },
+    [closeRailIfSheet, setCharSubTab, setConfig],
+  );
+
   const charGraphLayout = config?.charGraphLayout;
   const graphNodes = useMemo<GraphNodeSpec[]>(
     () =>
@@ -489,7 +263,7 @@ export default function TabCharacter() {
     setCharView("profile");
   }, []);
 
-  // AI 생성 상태 — 에러/안내는 인라인 표시 (silent fail 금지).
+  // 노아 제안 상태 — 에러/안내는 인라인 표시 (silent fail 금지).
   const [aiBusy, setAiBusy] = useState(false);
   const [aiMsg, setAiMsg] = useState<{ text: string; tone: "error" | "info" } | null>(null);
 
@@ -515,7 +289,8 @@ export default function TabCharacter() {
     setConfig((prev) => ({ ...prev, characters: [...(prev.characters ?? []), newChar] }));
     setSelId(newChar.id);
     setEditing(true);
-    // [s82] 새 인물 = 인간 신규 생성 (beforeContent 없음 → HUMAN_DRAFT/create)
+    closeRailIfSheet();
+    // [s82] 새 인물 = 작가 신규 생성 (beforeContent 없음 → HUMAN_DRAFT/create)
     fireCpLog(
       getCreativeLogger()?.logHumanEdit({
         targetType: "character",
@@ -597,8 +372,8 @@ export default function TabCharacter() {
       setAiMsg({
         tone: "error",
         text: isKO
-          ? "현재 엔진은 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요."
-          : "Current engine doesn't support structured generation. Please use Gemini.",
+          ? "현재 설정에서는 구조화 제안을 사용할 수 없습니다. 연결 키나 실행 경로를 확인해 주세요."
+          : "The current Noa mode does not support structured suggestions. Check a supported engine or connection key.",
       });
       return;
     }
@@ -606,7 +381,7 @@ export default function TabCharacter() {
       setAiMsg({
         tone: "error",
         text: isKO
-          ? "먼저 세계관 탭에서 시놉시스를 작성해주세요."
+          ? "먼저 세계관 탭에서 시놉시스를 적어 주세요."
           : "Please write the synopsis first (World tab).",
       });
       return;
@@ -620,7 +395,7 @@ export default function TabCharacter() {
         setAiMsg({
           tone: "info",
           text: isKO
-            ? "생성 결과가 비어 있습니다. 다시 시도해주세요."
+            ? "제안 결과가 비어 있습니다. 설정을 조금 더 채운 뒤 다시 시도해 주세요."
             : "Generation returned no characters. Please try again.",
         });
         return;
@@ -654,8 +429,9 @@ export default function TabCharacter() {
       });
       setSelId(fresh[0].id);
       setEditing(false);
-      // [s82] AI 생성 결과 append = 작가가 버튼으로 트리거·결과 수용 → AI_SUGGESTION 귀속
-      // (인간 1.0 오귀속 금지). updater 내부 재검사로 일부가 걸러질 수 있는 미세 race 는
+      closeRailIfSheet();
+      // [s82] 노아 제안 결과 append = 작가가 버튼으로 트리거·결과 수용 → AI_SUGGESTION 귀속
+      // (작가 1.0 오귀속 금지). updater 내부 재검사로 일부가 걸러질 수 있는 미세 race 는
       // best-effort 로 수용 (fresh 기준 기록 — 과대 기록 가능성 낮음·문서화).
       const cl = getCreativeLogger();
       for (const c of fresh) {
@@ -703,6 +479,14 @@ export default function TabCharacter() {
             personality: p.personality ?? cur.personality,
             speechStyle: p.speechStyle ?? cur.speechStyle,
             speechExample: p.speechExample ?? cur.speechExample,
+            developmentTier: p.developmentTier ?? cur.developmentTier,
+            informationState: p.informationState ?? cur.informationState,
+            publicKnowledge: p.publicKnowledge ?? cur.publicKnowledge,
+            privateTruth: p.privateTruth ?? cur.privateTruth,
+            relationAddress: p.relationAddress ?? cur.relationAddress,
+            honorificRule: p.honorificRule ?? cur.honorificRule,
+            assetPotential: p.assetPotential ?? cur.assetPotential,
+            assetMemo: p.assetMemo ?? cur.assetMemo,
           };
           return { ...prev, characters: list.map((c, i) => (i === idx ? merged : c)) };
         }
@@ -716,12 +500,20 @@ export default function TabCharacter() {
           ...(p.personality ? { personality: p.personality } : {}),
           ...(p.speechStyle ? { speechStyle: p.speechStyle } : {}),
           ...(p.speechExample ? { speechExample: p.speechExample } : {}),
+          ...(p.developmentTier ? { developmentTier: p.developmentTier } : {}),
+          ...(p.informationState ? { informationState: p.informationState } : {}),
+          ...(p.publicKnowledge ? { publicKnowledge: p.publicKnowledge } : {}),
+          ...(p.privateTruth ? { privateTruth: p.privateTruth } : {}),
+          ...(p.relationAddress ? { relationAddress: p.relationAddress } : {}),
+          ...(p.honorificRule ? { honorificRule: p.honorificRule } : {}),
+          ...(p.assetPotential ? { assetPotential: p.assetPotential } : {}),
+          ...(p.assetMemo ? { assetMemo: p.assetMemo } : {}),
         };
         return { ...prev, characters: [...list, fresh] };
       });
       setSelId(targetId);
       setEditing(false);
-      // [s82] 채택 = AI_SUGGESTION 귀속 (인간 1.0 오귀속 금지 — handleAiGenerate 동일)
+      // [s82] 채택 = AI_SUGGESTION 귀속 (작가 1.0 오귀속 금지 — handleAiGenerate 동일)
       fireCpLog(
         getCreativeLogger()?.logAcceptAI({
           targetType: "character",
@@ -755,41 +547,107 @@ export default function TabCharacter() {
     [applyCharacterProposal],
   );
 
+  const dockQuickExtract = useCallback(
+    (source: DockSuggestionSource): DockSuggestion[] => {
+      const clean = compactDockMemoText(source.content);
+      if (clean.length < 18) return [];
+      const hash = hashDockMemoText(clean);
+      const labelSeed =
+        clean
+          .replace(/[.!?。！？].*$/u, "")
+          .slice(0, 22)
+          .trim() || "대화 메모";
+      if (isItems) {
+        return [
+          {
+            key: `item-memo-${hash}`,
+            label: `아이템 메모 반영: ${labelSeed}`,
+            apply: () => {
+              const item: Item = {
+                id: `item-memo-${hash}-${Date.now()}`,
+                name: labelSeed,
+                category: "misc",
+                rarity: "common",
+                description: clean,
+                effect: "",
+                obtainedFrom: "",
+                status: "planned",
+                ipPotential: "none",
+                rightsMemo: clean,
+              };
+              setConfig((prev) => ({
+                ...prev,
+                items: [...(prev.items ?? []), item],
+              }));
+              fireCpLog(
+                getCreativeLogger()?.logHumanEdit({
+                  targetType: "metadata",
+                  targetId: item.id,
+                  afterContent: JSON.stringify(item),
+                  note: source.live ? "item-live-memo-adopt" : "item-chat-memo-adopt",
+                  stage: "character",
+                }),
+              );
+              markExplicitCreativeLog("character");
+            },
+          },
+        ];
+      }
+      if (!active) return [];
+      const targetId = active.id;
+      const targetName = active.name || "선택 인물";
+      return [
+        {
+          key: `char-memo-${targetId}-${hash}`,
+          label: `인물 메모 반영: ${targetName}`,
+          apply: () => {
+            setConfig((prev) => ({
+              ...prev,
+              characters: (prev.characters ?? []).map((character) => {
+                if (character.id !== targetId) return character;
+                const existing = character.backstory?.trim();
+                const backstory = existing && !existing.includes(clean) ? `${existing}\n\n${clean}` : existing || clean;
+                return { ...character, backstory };
+              }),
+            }));
+            fireCpLog(
+              getCreativeLogger()?.logHumanEdit({
+                targetType: "character",
+                targetId,
+                afterContent: clean,
+                note: source.live ? "character-live-memo-adopt" : "character-chat-memo-adopt",
+                stage: "character",
+              }),
+            );
+            markExplicitCreativeLog("character");
+          },
+        },
+      ];
+    },
+    [active, isItems, setConfig],
+  );
+
   // 캔버스 현황 — 실데이터만 (이름·역할 상한 12 — TabDirection MAX_CHARS 동일 기준)
   const dockContext = useMemo(() => {
+    if (isItems) {
+      if (items.length === 0) return "등록된 아이템: 없음";
+      const lines = items
+        .slice(0, 12)
+        .map((item) => `- ${item.name}${item.category ? ` (${item.category})` : ""}`);
+      if (items.length > 12) lines.push(`(+${items.length - 12}개 생략)`);
+      return `등록된 아이템 (${items.length}개):\n${lines.join("\n")}`;
+    }
     if (characters.length === 0) return "등록된 인물: 없음";
     const lines = characters
       .slice(0, 12)
       .map((c) => `- ${c.name}${c.role ? ` (${c.role})` : ""}`);
     if (characters.length > 12) lines.push(`(+${characters.length - 12}명 생략)`);
     return `등록된 인물 (${characters.length}명):\n${lines.join("\n")}`;
-  }, [characters]);
+  }, [characters, isItems, items]);
 
   // ---- 빈 상태: 세션 없음 ----
   if (!currentSession) {
-    return (
-      <div className="ch-grid">
-        <section className="ch-center" style={{ display: "grid", placeItems: "center" }}>
-          <div style={{ textAlign: "center", maxWidth: 360 }}>
-            <span className="ch-av lg" style={{ background: avatarGradient(AV_COLORS[0]), margin: "0 auto 18px" }}>
-              <User size={34} strokeWidth={1.6} />
-            </span>
-            <h2 className="ch-name" style={{ fontSize: 22 }}>
-              {isKO ? "프로젝트가 없습니다" : "No project yet"}
-            </h2>
-            <div className="ch-oneliner" style={{ margin: "8px auto 20px" }}>
-              {isKO
-                ? "캐릭터를 관리하려면 먼저 프로젝트를 만들어 주세요."
-                : "Create a project first to manage characters."}
-            </div>
-            <button type="button" className="btn primary" onClick={() => createNewSession("characters")}>
-              <Plus size={15} strokeWidth={1.6} />
-              {isKO ? "새 프로젝트" : "New project"}
-            </button>
-          </div>
-        </section>
-      </div>
-    );
+    return <EmptyProjectState isKO={isKO} onCreate={() => createNewSession("characters")} />;
   }
 
   // active 의 관계 — charRelations 에서 이 인물이 from 인 항목, 상대 이름 해석.
@@ -805,6 +663,7 @@ export default function TabCharacter() {
           };
         })
     : [];
+  const visibleImportCandidates = isItems ? itemCandidates : characterCandidates;
 
   return (
     // [Z2a-chatcanvas] 접이식 노아 채팅 도크 — 기본 접힘 (프로필 작업 무방해),
@@ -815,149 +674,63 @@ export default function TabCharacter() {
       proposalGuide={DOCK_PROPOSAL_GUIDE}
       contextBlock={dockContext}
       extractSuggestions={dockExtract}
-      placeholder="인물·관계에 대해 노아와 대화…"
+      extractQuickSuggestions={dockQuickExtract}
+      quickSuggestionTitle={isItems ? "아이템 대화 메모 후보" : "캐릭터 대화 메모 후보"}
+      placeholder="인물의 욕망과 결핍을 잡아볼까요"
     >
-    <div className="ch-grid">
-      {/* ---- 좌: 로스터 ---- */}
-      <aside className="ch-rail">
-        <div className="ch-rail-head">
-          <div className="trail-title">
-            <span className="trail-ic">
-              {isItems ? <Layers size={18} strokeWidth={1.6} /> : <User size={18} strokeWidth={1.6} />}
-            </span>
-            <div>
-              <div className="trail-name">{isItems ? "아이템 모드" : "캐릭터 모드"}</div>
-              <div className="trail-sub">
-                {isItems
-                  ? `아이템 ${config?.items?.length ?? 0} · 스킬 ${config?.skills?.length ?? 0} · 체계 ${config?.magicSystems?.length ?? 0}`
-                  : `인물 ${characters.length}명`}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 모드 토글 — 인물/아이템 (.seg = loreguard 기존 세그먼트 클래스) */}
-        <div className="seg" style={{ display: "flex", width: "100%", margin: "2px 0 10px" }}>
-          <button
-            type="button"
-            className={!isItems ? "on" : ""}
-            style={{ flex: 1 }}
-            aria-pressed={!isItems}
-            onClick={() => setCharSubTab("characters")}
-          >
-            인물
-          </button>
-          <button
-            type="button"
-            className={isItems ? "on" : ""}
-            style={{ flex: 1 }}
-            aria-pressed={isItems}
-            onClick={() => setCharSubTab("items")}
-          >
-            아이템
-          </button>
-        </div>
-
-        {isItems ? (
-          <div className="ch-none" style={{ padding: "8px 10px" }}>
-            아이템·스킬·마법 체계는 우측 패널에서 추가·편집합니다. 밸런스 분석 포함.
-          </div>
-        ) : (
-          <>
-            {/* [X1-xyflow] 프로필/관계도 서브뷰 토글 — 그래프는 보조 뷰 */}
-            <div className="seg" style={{ display: "flex", width: "100%", margin: "0 0 10px" }}>
-              <button
-                type="button"
-                className={charView === "profile" ? "on" : ""}
-                style={{ flex: 1 }}
-                aria-pressed={charView === "profile"}
-                onClick={() => setCharView("profile")}
-              >
-                프로필
-              </button>
-              <button
-                type="button"
-                className={charView === "graph" ? "on" : ""}
-                style={{ flex: 1 }}
-                aria-pressed={charView === "graph"}
-                onClick={() => setCharView("graph")}
-              >
-                관계도
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: 8, margin: "4px 0 12px" }}>
-              <button
-                type="button"
-                className="btn"
-                style={{ flex: 1, justifyContent: "center" }}
-                onClick={handleAdd}
-              >
-                <Plus size={15} strokeWidth={1.6} />
-                새 인물
-              </button>
-              <button
-                type="button"
-                className="btn primary"
-                style={{ flex: 1, justifyContent: "center", opacity: aiBusy ? 0.6 : 1 }}
-                onClick={handleAiGenerate}
-                disabled={aiBusy}
-                aria-busy={aiBusy}
-              >
-                {aiBusy ? (
-                  <Sync size={15} strokeWidth={1.6} className="animate-spin" />
-                ) : (
-                  <Sparkle size={15} strokeWidth={1.6} />
-                )}
-                {aiBusy ? "생성 중…" : "AI 생성"}
-              </button>
-            </div>
-            {aiMsg && (
-              <div
-                role={aiMsg.tone === "error" ? "alert" : "status"}
-                className="ch-none"
-                style={{
-                  padding: "0 4px 10px",
-                  ...(aiMsg.tone === "error" ? { color: "var(--c-red)" } : null),
-                }}
-              >
-                {aiMsg.text}
-              </div>
-            )}
-            {characters.length === 0 ? (
-              <div className="ch-none" style={{ padding: "8px 10px" }}>
-                아직 등록된 인물이 없습니다. “새 인물”로 추가하세요.
-              </div>
-            ) : (
-              characters.map((x, i) => {
-                const isPov = config?.povCharacter === x.id || config?.povCharacter === x.name;
-                return (
-                  <button
-                    key={x.id}
-                    type="button"
-                    className={`ch-rost${active?.id === x.id ? " on" : ""}`}
-                    onClick={() => {
-                      setSelId(x.id);
-                      setEditing(false);
-                    }}
-                  >
-                    <span className="ch-av sm" style={{ background: avColor(i) }}>
-                      {avLetter(x.name)}
-                    </span>
-                    <div className="ch-rost-body">
-                      <div className="ch-rost-n">{x.name}</div>
-                      <div className="ch-rost-r">{x.role || "역할 미정"}</div>
-                    </div>
-                    <span className={`pill ${isPov ? "blue" : "gray"}`}>{isPov ? "POV" : "인물"}</span>
-                  </button>
-                );
-              })
-            )}
-          </>
-        )}
-      </aside>
+    <div className="ch-grid ch-main-grid">
+      <CharacterRail
+        railOpen={railOpen}
+        isRailSheet={isRailSheet}
+        isItems={isItems}
+        charView={charView}
+        characters={characters}
+        activeId={active?.id ?? null}
+        povCharacter={config?.povCharacter}
+        relationCount={relations.length}
+        itemCount={items.length}
+        skillCount={config?.skills?.length ?? 0}
+        magicSystemCount={config?.magicSystems?.length ?? 0}
+        aiBusy={aiBusy}
+        aiMsg={aiMsg}
+        onToggleRail={toggleRail}
+        onCloseRailIfSheet={closeRailIfSheet}
+        onSetSubTab={setCharSubTab}
+        onSetCharView={setCharView}
+        onAdd={handleAdd}
+        onAiGenerate={handleAiGenerate}
+        onSelectCharacter={(id) => {
+          setSelId(id);
+          setEditing(false);
+          closeRailIfSheet();
+        }}
+      />
 
       {/* ---- 중앙: 프로필 또는 아이템 스튜디오 ---- */}
       <section className="ch-center">
+        <ImportCandidatesSection
+          isItems={isItems}
+          candidates={visibleImportCandidates}
+          onAccept={(candidate) =>
+            isItems
+              ? routeItemImportCandidate(candidate)
+              : routeCharacterImportCandidate(candidate)
+          }
+          onHold={(candidate) =>
+            markImportCandidate(
+              candidate.id,
+              isItems ? "item-held" : "character-held",
+              isItems ? "items:held" : "characters:held",
+            )
+          }
+          onDiscard={(candidate) =>
+            markImportCandidate(
+              candidate.id,
+              isItems ? "item-discarded" : "character-discarded",
+              isItems ? "items:discarded" : "characters:discarded",
+            )
+          }
+        />
         {isItems ? (
           // 기존 검증 컴포넌트 재사용 — 옛 CharacterTab 과 동일 props 경로
           // (language·currentSession.config·setConfig → IndexedDB+Firestore 영속).
@@ -996,120 +769,17 @@ export default function TabCharacter() {
             <div className="ch-none">인물을 선택하거나 “새 인물”을 추가하세요.</div>
           </div>
         ) : (
-          <>
-            <div className="ch-hero">
-              <span className="ch-av lg" style={{ background: avatarGradient(avColor(activeIndex)) }}>
-                {avLetter(active.name)}
-              </span>
-              <div className="ch-hero-body">
-                <div className="ch-hero-top">
-                  <h2 className="ch-name">{active.name}</h2>
-                  {(config?.povCharacter === active.id || config?.povCharacter === active.name) && (
-                    <span className="pill blue">POV</span>
-                  )}
-                </div>
-                <div className="ch-role">{active.role || "역할 미정"}</div>
-                {active.personality && <div className="ch-oneliner">{active.personality}</div>}
-              </div>
-              {!editing && (
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" className="btn" onClick={() => setEditing(true)}>
-                    <Edit size={15} strokeWidth={1.6} />
-                    편집
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    aria-label="인물 삭제"
-                    onClick={() => handleDelete(active.id)}
-                  >
-                    <X size={15} strokeWidth={1.6} />
-                    삭제
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {editing ? (
-              <CharForm char={active} onSave={handleSave} onCancel={() => setEditing(false)} />
-            ) : (
-              <div className="ch-cols">
-                <div className="ch-main">
-                  <div className="ch-sec">
-                    <div className="ch-sec-h">기본 정보</div>
-                    {infoRows(active).length > 0 ? (
-                      <div className="ch-info">
-                        {infoRows(active).map(([key, val]) => (
-                          <div key={key} className="ch-info-i">
-                            <span className="ch-info-k">{key}</span>
-                            <span className="ch-info-v">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="ch-none">기본 정보가 아직 비어 있습니다. “편집”으로 채우세요.</div>
-                    )}
-                  </div>
-
-                  <div className="ch-sec">
-                    <div className="ch-sec-h">성격 키워드</div>
-                    {splitTraits(active.traits).length > 0 ? (
-                      <div className="ch-traits">
-                        {splitTraits(active.traits).map((trait) => (
-                          <span key={trait} className="ch-trait">
-                            {trait}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="ch-none">키워드 없음</div>
-                    )}
-                  </div>
-
-                  <div className="ch-sec">
-                    <div className="ch-sec-h">
-                      <Quote size={14} strokeWidth={1.6} />
-                      말투 · 보이스
-                    </div>
-                    {active.speechExample || active.speechStyle ? (
-                      <div className="ch-voice">
-                        {active.speechExample || active.speechStyle}
-                        {active.speechExample && active.speechStyle && (
-                          <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
-                            {active.speechStyle}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="ch-none">말투 정보 없음</div>
-                    )}
-                  </div>
-
-                  <div className="ch-sec">
-                    <div className="ch-sec-h">관계</div>
-                    {activeRels.length > 0 ? (
-                      <div className="ch-rels">
-                        {activeRels.map((r) => (
-                          <div key={r.id} className="ch-rel">
-                            <span className="ch-av xs">{avLetter(r.name)}</span>
-                            <span className="ch-rel-n">{r.name}</span>
-                            <span className="ch-rel-r">{r.kind}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="ch-none">등록된 관계 없음</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="ch-side">
-                  <PotentialCard char={active} />
-                  <LoreCard char={active} />
-                </div>
-              </div>
-            )}
-          </>
+          <CharacterProfileView
+            active={active}
+            activeIndex={activeIndex}
+            povCharacter={config?.povCharacter}
+            editing={editing}
+            activeRels={activeRels}
+            onEdit={() => setEditing(true)}
+            onDelete={() => handleDelete(active.id)}
+            onSave={handleSave}
+            onCancelEdit={() => setEditing(false)}
+          />
         )}
       </section>
     </div>

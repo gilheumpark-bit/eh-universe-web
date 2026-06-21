@@ -1,21 +1,21 @@
 /**
  * IP Guard — 공용 문자열 스캐너 (2026-04-23 신설)
  *
- * 소설·번역·RAG 문서 등 임의 텍스트에 대해 다음 리스크를 탐지한다:
+ * 소설·번역·외부 참조 문서 등 임의 텍스트에 대해 다음 리스크를 탐지한다:
  *   - 저작권 헤더 / All rights reserved / 소유권 문구
  *   - "copied from", "based on" 같은 IP 차용 흔적
  *   - 라이선스 문구 (MIT/Apache/GPL 등 — 소설엔 드물지만 감지)
  *   - 상표·프랜차이즈 이름 (brand-blocklist 통합)
  *
- * Code Studio의 `patent-scanner.ts` 와의 관계:
+ * 내부 스캐너 `patent-scanner.ts` 와의 관계:
  *   - patent-scanner: FileNode[] 기반 (프로젝트 파일 트리 스캔)
- *   - scan.ts: string 기반 (단일 문서, RAG 결과, 생성 본문 등)
+ *   - scan.ts: string 기반 (단일 문서, 참조 결과, 생성 본문 등)
  *   - 두 곳 모두 동일 `SUSPICIOUS_PATTERNS`를 재사용하도록 설계됐으나,
  *     현재는 독립 유지 — 추후 patent-scanner가 이 모듈을 import 하도록 리팩토링 예정.
  *
  * 사용 시나리오:
- *   1. RAG ingestion 전 문서 검열 → `scanTextForIP(doc)` 호출, score 낮으면 격리
- *   2. RAG retrieval 후 결과 재필터 → 각 doc.content에 대해 빠른 게이트
+ *   1. 외부 참조 문서 등록 전 검열 → `scanTextForIP(doc)` 호출, score 낮으면 격리
+ *   2. 참조 결과 재필터 → 각 doc.content에 대해 빠른 게이트
  *   3. 생성 후 본문 검증 → 준수 채점 축 7의 입력
  */
 
@@ -57,7 +57,7 @@ export interface IPScanResult {
 }
 
 export interface IPScanOptions {
-  /** 브랜드 스캔에 커스텀 블록리스트 주입 (Codex의 작가 정의) */
+  /** 브랜드 스캔에 커스텀 블록리스트 주입 (작가 정의) */
   readonly customBlocklist?: readonly BrandEntry[];
   /** 브랜드 스캔 최소 심각도 (기본 warning — info 필터링) */
   readonly brandMinSeverity?: BrandSeverity;
@@ -71,7 +71,7 @@ export interface IPScanOptions {
 // PART 2 — 패턴 사전
 // ============================================================
 
-/** 라이선스 문구 매칭 — 소설 본문엔 드물지만 RAG 문서 오염 감지 */
+/** 라이선스 문구 매칭 — 소설 본문엔 드물지만 외부 참조 문서 오염 감지 */
 const LICENSE_PATTERNS: ReadonlyArray<{ regex: RegExp; license: string; spdxId: string }> = [
   { regex: /MIT License/i, license: 'MIT', spdxId: 'MIT' },
   { regex: /Apache License.*2\.0/i, license: 'Apache 2.0', spdxId: 'Apache-2.0' },
@@ -82,7 +82,7 @@ const LICENSE_PATTERNS: ReadonlyArray<{ regex: RegExp; license: string; spdxId: 
 ];
 
 /**
- * 의심 패턴 — 소설·RAG 문서용. Code Studio patent-scanner의 확장판.
+ * 의심 패턴 — 소설·외부 참조 문서용. 내부 patent-scanner의 확장판.
  * "copied from" 같은 메타 흔적 + "© 2024", "all rights reserved" 같은 소유권 문구.
  */
 const SUSPICIOUS_PATTERNS: ReadonlyArray<{
@@ -193,7 +193,7 @@ function buildRecommendations(
   }
   const critPatterns = patterns.filter(p => p.severity === 'critical');
   if (critPatterns.length > 0) {
-    out.push(`저작권·소유권 문구 ${critPatterns.length}건 감지 — RAG 문서 오염 가능성, ingestion 전 원저자 확인 필요.`);
+    out.push(`저작권·소유권 문구 ${critPatterns.length}건 감지 — 외부 참조 문서 오염 가능성, 등록 전 원저자 확인 필요.`);
   }
   if (licenses.length > 0) {
     out.push(`소프트웨어 라이선스 문구 ${licenses.length}건 — 소설 본문엔 부적절, 타 문서에서 유입된 흔적일 가능성.`);

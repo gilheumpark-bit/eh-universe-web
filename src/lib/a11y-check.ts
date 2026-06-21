@@ -42,7 +42,7 @@ export async function initA11yCheck(): Promise<void> {
     const axe = (axeMod as { default?: unknown }).default ?? axeMod;
 
     if (typeof axe === 'function') {
-      (axe as (r: unknown, rd: unknown, timeout: number) => void)(React, ReactDOM, 1000);
+      (axe as (r: unknown, rd: unknown, timeout: number) => void)(React, ReactDOM, 3000);
     }
   } catch {
     // axe 초기화 실패는 조용히 무시 — dev 편의 기능이므로 본 앱에 영향 주지 않음.

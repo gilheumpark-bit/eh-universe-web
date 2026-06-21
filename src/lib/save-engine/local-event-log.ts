@@ -422,7 +422,7 @@ export async function exportEventLog(): Promise<string> {
   }
 }
 
-/** 전체 삭제 — Dashboard 개발자 도구 / 테스트용. */
+/** 전체 삭제 — Dashboard 내부 진단 / 테스트용. */
 export async function clearEventLog(): Promise<void> {
   try {
     memoryMirror = [];

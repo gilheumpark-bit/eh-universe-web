@@ -1,7 +1,7 @@
 # Loreguard LSP — 외부 통합 사양
 
 > **Phase F (86~95) 완료 / 2026-05-07**
-> 외부 도구·CLI·VS Code 확장이 Loreguard 의 검증·인덱싱 기능을 호출하기 위한 REST + SSE API.
+> 외부 도구와 CI가 Loreguard의 검증·인덱싱 기능을 호출하기 위한 REST + SSE API.
 
 ---
 
@@ -118,14 +118,13 @@ data: {"at":"2026-05-07T01:00:30Z"}
 
 ---
 
-## CLI 사용
+## REST 사용
 
 ```bash
-# 환경변수 또는 --token
-export LOREGUARD_LSP_TOKEN=lg_lsp_xxxxxx
-export LOREGUARD_BASE_URL=https://ehsu.app
-
-npx loreguard lint manuscript.md
+curl -X POST https://ehsu.app/api/lsp/lint \
+  -H "Authorization: Bearer lg_lsp_xxxxxx" \
+  -H "Content-Type: application/json" \
+  -d @payload.json
 ```
 
 **manuscript.md 형식**:

@@ -43,6 +43,7 @@ interface WorldStudioViewProps {
   onSave: () => void;
   saveFlash: boolean;
   handleWorldSimChange: (data: Record<string, unknown>) => void;
+  currentProjectId?: string | null;
   hostedProviders?: Partial<Record<string, boolean>>;
 }
 
@@ -51,10 +52,10 @@ interface WorldStudioViewProps {
 // ============================================================
 
 const SUB_TABS: Record<AppLanguage, Record<WorldSubTab, string>> = {
-  KO: { design: '설계', simulator: '시뮬레이터', analysis: '분석', timeline: '타임라인', map: '지도' },
-  EN: { design: 'Design', simulator: 'Simulator', analysis: 'Analysis', timeline: 'Timeline', map: 'Map' },
-  JP: { design: '設計', simulator: 'シミュレーター', analysis: '分析', timeline: 'タイムライン', map: 'マップ' },
-  CN: { design: '设计', simulator: '模拟器', analysis: '分析', timeline: '时间线', map: '地图' },
+  KO: { design: '설계', simulator: '점검', analysis: '분석', timeline: '타임라인', map: '지도' },
+  EN: { design: 'Design', simulator: 'Check', analysis: 'Analysis', timeline: 'Timeline', map: 'Map' },
+  JP: { design: '設計', simulator: '点検', analysis: '分析', timeline: 'タイムライン', map: 'マップ' },
+  CN: { design: '设计', simulator: '检查', analysis: '分析', timeline: '时间线', map: '地图' },
 };
 
 const SUB_TAB_ICONS: Record<WorldSubTab, React.ElementType> = {
@@ -80,6 +81,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
   onSave,
   saveFlash,
   handleWorldSimChange,
+  currentProjectId = null,
   hostedProviders = {},
 }) => {
   const [subTab, setSubTab] = useState<WorldSubTab>('design');
@@ -95,12 +97,9 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
 
   return (
     <div className="animate-in fade-in duration-500">
-      {/* Sub-tab bar — Stellar Atlas Holographic Tabs */}
+      {/* Sub-tab bar — quiet studio tabs */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-6">
-        <div className="relative flex flex-wrap items-center gap-2 p-2 bg-[linear-gradient(to_bottom,rgba(255,200,50,0.05),rgba(0,0,0,0.4))] backdrop-blur-xl border border-[rgba(255,200,50,0.2)] rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(255,200,50,0.02)] overflow-hidden" role="tablist">
-          {/* Scanline overlay for holographic feel */}
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,200,50,0.03)_50%,transparent_50%)] bg-size-[100%_4px] mix-blend-screen opacity-50"></div>
-          
+        <div className="relative flex flex-wrap items-center gap-2 rounded-lg border border-border bg-bg-secondary/70 p-2 shadow-sm" role="tablist">
           {SUB_TAB_ORDER.map(tab => {
             const Icon = SUB_TAB_ICONS[tab];
             const active = subTab === tab;
@@ -115,16 +114,16 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                   const sc = document.querySelector('[data-testid="studio-content"] .overflow-y-auto');
                   if (sc) sc.scrollTop = 0;
                 }}
-                className={`relative z-10 group flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-[transform,opacity,background-color,border-color,color] duration-300 ${
+                className={`relative z-10 group flex min-h-[44px] items-center gap-2 px-4 rounded-md text-xs font-semibold transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                   active
-                    ? "bg-[linear-gradient(135deg,rgba(255,200,50,0.15),rgba(0,0,0,0.2))] text-amber-400 border border-[rgba(255,200,50,0.4)] shadow-[0_0_20px_rgba(255,200,50,0.15),inset_0_0_10px_rgba(255,200,50,0.1)] -translate-y-px"
-                    : "text-text-tertiary hover:text-amber-400 hover:bg-[rgba(255,200,50,0.05)] border border-transparent hover:border-[rgba(255,200,50,0.1)]"
+                    ? "border border-border bg-bg-primary text-text-primary shadow-sm"
+                    : "border border-transparent text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary"
                 }`}
               >
-                <Icon className={`w-4 h-4 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(255,200,50,0.8)]' : 'group-hover:scale-110 group-hover:drop-shadow-[0_0_5px_rgba(255,200,50,0.4)]'}`} />
-                <span className={active ? "drop-shadow-[0_0_10px_rgba(255,200,50,0.5)]" : ""}>{labels[tab]}</span>
+                <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
+                <span>{labels[tab]}</span>
                 {active && (
-                  <span className="absolute -bottom-px left-1/4 right-1/4 h-[2px] bg-[rgba(255,200,50,0.8)] shadow-[0_0_10px_rgba(255,200,50,1)] rounded-full"></span>
+                  <span className="absolute -bottom-px left-4 right-4 h-[2px] rounded-full bg-accent-blue"></span>
                 )}
               </button>
             );
@@ -135,31 +134,31 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
       {/* Sub-tab content */}
       {subTab === 'design' && (
         <>
-          {/* AI Auto-Sync Notification Banner */}
+          {/* Noa update notification */}
           {config.worldSimData?._latestUpdates && config.worldSimData._latestUpdates.length > 0 && (
             <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
-              <div className="flex flex-col gap-2 p-4 bg-[linear-gradient(to_right,rgba(255,200,50,0.05),transparent)] border-l-4 border-l-[rgba(255,200,50,0.8)] border border-y-[rgba(255,200,50,0.2)] border-r-[rgba(255,200,50,0.2)] rounded-r-xl rounded-l-sm backdrop-blur-sm shadow-[0_5px_15px_rgba(0,0,0,0.2)]">
+              <div className="flex flex-col gap-2 rounded-lg border border-border bg-bg-secondary/70 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[rgba(255,200,50,0.1)] border border-[rgba(255,200,50,0.3)] shadow-[0_0_10px_rgba(255,200,50,0.2)]">
-                    <Cpu className="w-3 h-3 text-amber-400" />
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md border border-border bg-bg-primary text-accent-blue">
+                    <Cpu className="h-3 w-3" />
                   </div>
-                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest font-mono">
-                    {language === 'KO' ? '노아 스튜디오 궤도 동기화 (ORBITAL SYNC)' : 'NOA Orbital Sync Completed'}
+                  <span className="text-[12px] font-semibold text-text-primary">
+                    {language === 'KO' ? '노아 변경 반영' : 'Noa changes applied'}
                   </span>
                 </div>
-                <ul className="list-disc list-inside text-[11px] text-text-secondary font-mono space-y-1 ml-9">
+                <ul className="ml-9 list-inside list-disc space-y-1 text-[12px] text-text-secondary">
                   {config.worldSimData._latestUpdates.map((update: string, i: number) => (
                     <li key={i}>{update}</li>
                   ))}
                 </ul>
-                <div className="text-[9px] text-text-tertiary mt-1 ml-9 font-mono tracking-widest">
-                  {language === 'KO' ? '에피소드 데이터 변경분이 항성계 데이터베이스(World Database)에 머지되었습니다.' : 'Story modifications merged into Atlas Database.'}
+                <div className="ml-9 mt-1 text-[11px] text-text-tertiary">
+                  {language === 'KO' ? '에피소드 변경분이 세계관 메모에 반영되었습니다.' : 'Story changes were merged into world notes.'}
                 </div>
               </div>
             </div>
           )}
 
-          {/* [2026-06-06 worldgraph Phase 1] 채팅 → AI가 WorldFact 양식 채움 → 사람 검토·커밋 */}
+          {/* [2026-06-06 worldgraph Phase 1] 노아 인터뷰 → WorldFact 후보 정리 → 사람 검토·커밋 */}
           <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
             <button
               type="button"
@@ -167,7 +166,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               aria-expanded={showChatFill}
               className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent-amber/40 bg-bg-secondary/60 px-4 text-sm font-semibold text-accent-amber transition-colors hover:bg-accent-amber/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
             >
-              <Sparkles className="h-4 w-4" aria-hidden /> 채팅으로 세계관 fact 만들기
+              <Sparkles className="h-4 w-4" aria-hidden /> 노아 인터뷰로 세계관 기준 정리
               <ChevronDown className={`h-4 w-4 transition-transform ${showChatFill ? 'rotate-180' : ''}`} aria-hidden />
             </button>
             {showChatFill && (
@@ -177,7 +176,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             )}
           </div>
 
-          {/* [Batch 3 rank 3 — 2026-06-07] worldgraph 인터랙티브 그래프 에디터 */}
+          {/* [Batch 3 rank 3 — 2026-06-07] worldgraph 관계도 편집 */}
           <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-3">
             <button
               type="button"
@@ -186,7 +185,7 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
               className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent-amber/40 bg-bg-secondary/60 px-4 text-sm font-semibold text-accent-amber transition-colors hover:bg-accent-amber/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
               data-testid="worldgraph-toggle"
             >
-              <Network className="h-4 w-4" aria-hidden /> 세계관 그래프 에디터
+              <Network className="h-4 w-4" aria-hidden /> 세계관 관계도 편집
               <ChevronDown className={`h-4 w-4 transition-transform ${showGraphEditor ? 'rotate-180' : ''}`} aria-hidden />
             </button>
             {showGraphEditor && (
@@ -232,10 +231,10 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
                   },
                   {
                     label: L4(language, {
-                      ko: 'NOA 생성',
-                      en: 'Generate with NOA',
-                      ja: 'NOA生成',
-                      zh: 'NOA 生成',
+                      ko: '노아 제안 받기',
+                      en: 'Get Noa suggestions',
+                      ja: 'Noa提案を受ける',
+                      zh: '获取 Noa 建议',
                     }),
                     icon: Wand2,
                     variant: 'secondary',
@@ -253,29 +252,35 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
           )}
           <PlanningView language={language} config={config} setConfig={setConfig} onStart={onStart} startLabel={startLabel} hasAiAccess={!!getApiKey(getActiveProvider()) || Object.values(hostedProviders).some(Boolean) || hasDgxService()} />
           <div className="max-w-6xl mx-auto px-4 pb-4">
-            <TabAssistant tab="world" language={language} config={config} hostedProviders={hostedProviders} />
+            <TabAssistant
+              tab="world"
+              language={language}
+              config={config}
+              currentProjectId={currentProjectId}
+              hostedProviders={hostedProviders}
+            />
           </div>
           <div className="max-w-6xl mx-auto px-4 pb-8 flex gap-3 justify-end">
-            {/* CTA: 세계관 설정 유무에 따라 다른 동선 - Stellar Buttons */}
+            {/* CTA: 세계관 설정 유무에 따라 다른 동선 */}
             {config.title || config.synopsis ? (
               <>
-                <button onClick={() => setSubTab('simulator')} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-accent-amber/30 bg-bg-secondary/60 text-[12px] font-black uppercase tracking-widest font-mono transition-[background-color,border-color,box-shadow,color] hover:bg-accent-amber/10 hover:border-accent-amber/60 hover:shadow-[0_0_20px_rgba(255,200,50,0.15)] text-accent-amber hover:text-text-primary">
-                  <Cpu className="w-4 h-4 group-hover:text-amber-400 transition-colors" /> {language === 'EN' ? 'ATLAS SIMULATOR' : language === 'JP' ? 'シミュレーター' : language === 'CN' ? '地图模拟器' : '엔진 시뮬레이션'}
+                <button onClick={() => setSubTab('simulator')} className="group flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-border bg-bg-secondary px-5 text-[13px] font-semibold text-text-secondary transition-[background-color,border-color,color] hover:border-accent-blue/40 hover:bg-bg-tertiary hover:text-text-primary">
+                  <Cpu className="h-4 w-4 transition-colors" /> {language === 'EN' ? 'World check' : language === 'JP' ? '世界観チェック' : language === 'CN' ? '世界观检查' : '세계관 점검'}
                 </button>
-                <button onClick={onStart} className="group flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-amber/70 to-accent-amber/90 border border-accent-amber/60 text-[12px] font-black uppercase tracking-widest font-mono transition-transform hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,200,50,0.4)] text-bg-primary shadow-lg">
-                  <Compass className="w-4 h-4 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" /> {startLabel ?? t('planning.commence')}
+                <button onClick={onStart} className="group flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-accent-blue/45 bg-accent-blue px-5 text-[13px] font-semibold text-white transition-[background-color,border-color,color] hover:bg-accent-blue/90">
+                  <Compass className="h-4 w-4" /> {startLabel ?? t('planning.commence')}
                 </button>
               </>
             ) : null}
-            <button 
-              onClick={onSave} 
-              className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-[transform,opacity,background-color,border-color,color] duration-300 ${
-                saveFlash 
-                  ? 'bg-accent-green text-bg-primary border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
-                  : 'bg-gradient-to-b from-accent-amber/15 to-accent-amber/20 border border-accent-amber/40 text-accent-amber hover:bg-accent-amber/25 hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
+            <button
+              onClick={onSave}
+              className={`group flex min-h-[44px] items-center justify-center gap-2 rounded-md px-5 text-[13px] font-semibold transition-[opacity,background-color,border-color,color] duration-200 ${
+                saveFlash
+                  ? 'border border-accent-green bg-accent-green text-bg-primary'
+                  : 'border border-border bg-bg-secondary text-text-secondary hover:border-accent-blue/40 hover:bg-bg-tertiary hover:text-text-primary'
               }`}
             >
-              {saveFlash ? <Check className="w-4 h-4" /> : <div className="w-1.5 h-1.5 rounded-full bg-[rgba(255,220,100,0.9)] shadow-[0_0_8px_rgba(255,200,50,1)]" />}
+              {saveFlash ? <Check className="h-4 w-4" /> : <div className="h-1.5 w-1.5 rounded-full bg-accent-blue" />}
               <span>{saveFlash ? t('worldStudio.saved') : t('worldStudio.saveSettings')}</span>
             </button>
           </div>
@@ -297,15 +302,15 @@ const WorldStudioView: React.FC<WorldStudioViewProps> = ({
             onSave={handleWorldSimChange}
           />
           <div className="flex justify-end mt-6">
-            <button 
-              onClick={onSave} 
-              className={`group flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest font-mono transition-[transform,opacity,background-color,border-color,color] duration-300 ${
-                saveFlash 
-                  ? 'bg-accent-green text-bg-primary border border-accent-green shadow-[0_0_20px_rgba(50,200,100,0.4)]' 
-                  : 'bg-gradient-to-b from-accent-amber/15 to-accent-amber/20 border border-accent-amber/40 text-accent-amber hover:bg-accent-amber/25 hover:shadow-[0_0_25px_rgba(255,200,50,0.2)]'
+            <button
+              onClick={onSave}
+              className={`group flex min-h-[44px] items-center justify-center gap-2 rounded-md px-5 text-[13px] font-semibold transition-[opacity,background-color,border-color,color] duration-200 ${
+                saveFlash
+                  ? 'border border-accent-green bg-accent-green text-bg-primary'
+                  : 'border border-border bg-bg-secondary text-text-secondary hover:border-accent-blue/40 hover:bg-bg-tertiary hover:text-text-primary'
               }`}
             >
-              {saveFlash ? <Check className="w-4 h-4" /> : <div className="w-1.5 h-1.5 rounded-full bg-[rgba(255,220,100,0.9)] shadow-[0_0_8px_rgba(255,200,50,1)]" />}
+              {saveFlash ? <Check className="h-4 w-4" /> : <div className="h-1.5 w-1.5 rounded-full bg-accent-blue" />}
               <span>{saveFlash ? t('worldStudio.saved') : t('worldStudio.saveSettings')}</span>
             </button>
           </div>

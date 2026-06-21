@@ -342,7 +342,7 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
                       window.dispatchEvent(new CustomEvent('noa:trigger-inline-rewrite'));
                     }}
                     className="shrink-0 px-2 py-1 text-[9px] font-bold rounded-lg bg-accent-blue/10 text-accent-blue hover:bg-accent-blue/20 border border-accent-blue/20 transition-colors"
-                    title={isKO ? 'NOA 자동 수정 (Ctrl+Shift+R)' : 'NOA auto-fix (Ctrl+Shift+R)'}
+                    title={isKO ? '노아 수정 제안 (Ctrl+Shift+R)' : 'Noa fix suggestion (Ctrl+Shift+R)'}
                   >
                     {isKO ? '수정' : 'Fix'}
                   </button>

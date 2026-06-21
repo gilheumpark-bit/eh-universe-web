@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logger';
 import { apiLog } from '@/lib/api-logger';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 // [M9 P1-10] body size cap — public error reporter, 10KB cap prevents DOS via oversized payload.
 // Tightened from 16KB → 10KB to match vitals route (both are unauthenticated public beacons).
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   // Rate check using shared limiter
-  const rl = checkRateLimit(ip, 'error-report', RATE_LIMITS.default);
+  const rl = await checkRateLimitAsync(ip, 'error-report', RATE_LIMITS.default);
   if (!rl.allowed) {
     return new NextResponse(null, {
       status: 429,

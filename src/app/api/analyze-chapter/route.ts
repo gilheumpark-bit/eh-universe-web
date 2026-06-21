@@ -6,10 +6,12 @@ import { logger } from '@/lib/logger';
 import type { AppLanguage } from '@/lib/studio-types';
 import { createServerGeminiClient, executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
 import { hasServerProviderCredentials } from '@/lib/server-ai';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterJsonIp } from '@/lib/noa/server-gate';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,18 +25,10 @@ const MAX_CONTENT_CHARS = 8_000; // 토큰 과부하 방지용 원고 잘라내�
 // ============================================================
 
 function validateOrigin(req: NextRequest, hasClientKey: boolean): NextResponse | null {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  if (!origin) {
-    if (!hasClientKey) {
-      return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-    }
-    return null;
-  }
-  if (host && new URL(origin).host !== host) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  return null;
+  const result = checkSameOriginHeaders(req.headers, { allowMissingOrigin: hasClientKey });
+  return result.ok
+    ? null
+    : NextResponse.json({ error: result.error }, { status: 403 });
 }
 
 async function parseRequest(req: NextRequest): Promise<Record<string, unknown>> {
@@ -358,7 +352,7 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(ip, 'analyze-chapter', RATE_LIMITS.default);
+    const rl = await checkRateLimitAsync(ip, 'analyze-chapter', RATE_LIMITS.default);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment.' },
@@ -372,26 +366,17 @@ export async function POST(req: NextRequest) {
     if (forbidden) return forbidden;
 
     const userApiKey = normalizeUserApiKey(body.apiKey);
-    if (!userApiKey && !hasServerProviderCredentials('gemini') && !SPARK_SERVER_URL) {
-      return NextResponse.json(
-        { error: 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.' },
-        { status: 401 },
-      );
-    }
 
-    // 인증 게이트 — BYOK 없으면 Firebase JWT 필수 (16K 토큰/호출 비용 방어)
+    // 인증 확인 — BYOK 없으면 공통 티어 게이트가 로그인/플랜 안내를 담당한다.
+    let verifiedUser: Awaited<ReturnType<typeof import('@/lib/firebase-id-token').verifyFirebaseIdToken>> = null;
     if (!userApiKey) {
       const authHeader = req.headers.get('authorization');
-      let verified = false;
       if (authHeader?.startsWith('Bearer ')) {
         try {
           const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
           const token = authHeader.slice(7).trim();
-          verified = Boolean(await verifyFirebaseIdToken(token));
+          verifiedUser = await verifyFirebaseIdToken(token);
         } catch { /* verification failed */ }
-      }
-      if (!verified) {
-        return NextResponse.json({ error: 'Authentication required for hosted credits' }, { status: 401 });
       }
     }
 
@@ -417,6 +402,35 @@ export async function POST(req: NextRequest) {
     });
     if (gate.blocked) {
       return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
+    const tierGate = await enforceServerTierLimit({
+      headers: req.headers,
+      ip,
+      route: '/api/analyze-chapter',
+      feature: 'chapter-analysis',
+      hasByok: Boolean(userApiKey),
+      verifiedUser,
+    });
+    if (!tierGate.ok) return tierGate.response;
+
+    if (!userApiKey && !hasServerProviderCredentials('gemini') && !isDgxDeveloperApiEnabled()) {
+      return NextResponse.json(
+        {
+          error: 'server_provider_unavailable',
+          message: '지금은 회차 분석을 바로 사용할 수 없습니다. 환경 설정에서 연결 키를 등록해 주세요.',
+          paywall: {
+            reason: '운영 경로가 준비되지 않았고 연결 키도 확인되지 않았습니다.',
+            feature: '회차 분석',
+            currentTier: tierGate.tier,
+            requiredTier: 'byok',
+            unlocksWith: ['연결 키 등록'],
+            pricingUrl: '/pricing',
+            settingsTarget: '환경 설정 > 노아 운영',
+          },
+        },
+        { status: 503 },
+      );
     }
 
     const prompt1 = buildAnalysisPromptPart1(content, language);

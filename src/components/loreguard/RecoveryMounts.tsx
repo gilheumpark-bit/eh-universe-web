@@ -38,28 +38,41 @@ export interface RecoveryMountsProps {
 }
 
 export default function RecoveryMounts({ multiTab, language }: RecoveryMountsProps) {
+  const conflictCount = multiTab.conflicts.length;
+
+  if (conflictCount <= 0) {
+    return <div data-testid="loreguard-recovery-mounts" hidden />;
+  }
+
   return (
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
+        top: 8,
+        right: 10,
         zIndex: 60,
+        width: "min(360px, calc(100vw - 20px))",
         pointerEvents: "none",
       }}
       data-testid="loreguard-recovery-mounts"
     >
       {/* 배너 표시 시 반투명 토큰(bg-accent-* 10%)이 헤더 위에 합성되지 않도록 솔리드 백드롭.
           배너가 null(단일 탭 leader·충돌 0)이면 inner 높이 0 → 시각·클릭 영향 없음. */}
-      <div style={{ pointerEvents: "auto", background: "var(--card)" }}>
+      <div
+        style={{
+          pointerEvents: "auto",
+          background: "var(--card)",
+          border: "1px solid var(--line-soft)",
+          borderRadius: 16,
+          boxShadow: "0 12px 34px rgba(15, 23, 42, 0.16)",
+          overflow: "hidden",
+        }}
+      >
         <MultiTabBanner
-          isLeader={multiTab.isLeader}
-          followerCount={multiTab.followerCount}
-          leaderTabId={multiTab.leaderTabId}
-          conflictCount={multiTab.conflicts.length}
+          isLeader={true}
+          followerCount={0}
+          conflictCount={conflictCount}
           language={language}
-          onRequestPromotion={multiTab.requestPromotion}
         />
       </div>
     </div>

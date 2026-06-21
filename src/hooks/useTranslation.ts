@@ -4,13 +4,9 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
-// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
-import { checkBlockedJson } from '@/lib/noa/block-notice';
+import { getActiveProvider } from '@/lib/ai-providers';
 import { recordAIUsage } from '@/lib/ai-usage-tracker';
-import { streamWithMultiKey, isMultiKeyActive } from '@/lib/multi-key-bridge';
-import { getTierLimits, type UserTier } from '@/lib/tier-gate';
-import type { EpisodeManuscript, TranslatedManuscriptEntry } from '@/lib/studio-types';
+import type { EpisodeManuscript } from '@/lib/studio-types';
 import type { TranslationProjectContext } from '@/lib/translation/project-bridge';
 import {
   type TranslationConfig,
@@ -20,15 +16,12 @@ import {
   type TranslatedEpisode,
   type TranslatedSegment,
   type ChunkScoreDetail,
-  type TranslatorProfile,
   getDefaultConfig,
   chunkBySentences,
   adaptiveChunkSize,
   buildTranslationSystemPrompt,
   buildTranslationSystemPromptWithRAG,
-  buildScoringPrompt,
   buildRecreatePrompt,
-  parseScoreResponse,
   buildAutoBridge,
   updateTranslatorProfile,
   verifyGlossary,
@@ -58,504 +51,26 @@ import {
 // filterDialogueLines — 나레이션 false positive 방지용 사전 필터.
 // applyVoiceGuard 호출 직전에 segments 를 대사만으로 추려 넘긴다.
 import { filterDialogueLines } from '@/engine/translation-voice-guard';
+import {
+  INITIAL_RAG_STATUS,
+  type BatchProgress,
+  type RagStatus,
+  type UseTranslationParams,
+  type UseTranslationReturn,
+} from './useTranslation.types';
+import { callAI, scoreTranslation } from './useTranslation.scoring';
+import { findGlossaryUsage, toManuscriptEntry } from './useTranslation.glossary';
 
-/** 일괄 번역 에피소드 레벨 진행률 */
-export interface BatchProgress {
-  totalEpisodes: number;
-  completedEpisodes: number;
-  currentEpisode: number;
-  chunkProgress: TranslationProgress;
-}
-
-interface UseTranslationParams {
-  onProgress?: (progress: TranslationProgress) => void;
-  onBatchProgress?: (progress: BatchProgress) => void;
-  onChunkComplete?: (chunk: TranslationChunk) => void;
-  onError?: (error: string) => void;
-  /** 번역 완료 시 호출 — TranslatedManuscriptEntry를 StoryConfig에 저장하는 용도 */
-  onSave?: (entry: TranslatedManuscriptEntry) => void;
-  /** 번역 프로필 업데이트 콜백 — 오류 패턴 학습 */
-  onProfileUpdate?: (profile: TranslatorProfile) => void;
-  /**
-   * Real-time glossary provider. When supplied, translateBatch reads fresh glossary
-   * before each episode instead of using the stale config snapshot.
-   * Return format: GlossaryEntry[] from the current GlossaryManager state.
-   */
-  getLatestGlossary?: () => import('@/engine/translation').GlossaryEntry[];
-  /**
-   * Project bridge context — automatically injects characters/worldBible/genre/glossary
-   * from StudioContext or external Project source. When supplied, characters are added
-   * to glossary as locked entries and project glossary takes precedence.
-   * Optional: hook works without it.
-   */
-  projectContext?: TranslationProjectContext | null;
-}
-
-/**
- * RAG 컨텍스트 상태 — 마지막 번역 시도의 ragService 호출 결과.
- * UI 배지 (`TranslationPanel`) 가 "RAG 활성/대기" 를 정확히 표시하기 위함.
- * - fetched=true: ragService 가 실제 응답을 반환 (worldBible/pastTerms 중 일부 채워짐).
- * - fetched=false: 초기 상태 또는 RAG 실패 (silent fallback 으로 번역은 진행되나 RAG 미반영).
- */
-export interface RagStatus {
-  fetched: boolean;
-  worldBibleLoaded: boolean;
-  pastTermsCount: number;
-  pastEpisodesCount: number;
-  lastFetchedAt?: number;
-}
-
-const INITIAL_RAG_STATUS: RagStatus = {
-  fetched: false,
-  worldBibleLoaded: false,
-  pastTermsCount: 0,
-  pastEpisodesCount: 0,
-};
-
-interface UseTranslationReturn {
-  translateEpisode: (
-    manuscript: EpisodeManuscript,
-    config?: Partial<TranslationConfig>,
-    signal?: AbortSignal
-  ) => Promise<TranslatedEpisode | null>;
-
-  translateBatch: (
-    manuscripts: EpisodeManuscript[],
-    config?: Partial<TranslationConfig>,
-    signal?: AbortSignal
-  ) => Promise<TranslatedEpisode[]>;
-
-  progress: TranslationProgress;
-  batchProgress: BatchProgress;
-  isTranslating: boolean;
-  abort: () => void;
-  /**
-   * Episode Memory drift warnings — 마지막 번역에서 기존 canonical 과 다른
-   * 용어가 발견됐을 때 채워짐. UI가 사용자에게 표시할 수 있다.
-   */
-  driftWarnings: TermDriftWarning[];
-  /**
-   * Voice Guard violations — 마지막 번역에서 캐릭터 말투 규칙 위반.
-   * applyVoiceGuard 호출 결과. projectContext.characters 가 비어있거나
-   * speaker 매핑이 없는 결과 형식이면 빈 배열.
-   */
-  voiceViolations: VoiceViolation[];
-  /**
-   * Voice Guard 재번역 필요 여부 — error 등급 위반 1건+ 시 true.
-   * UI 가 "재번역 권장" 토스트/버튼을 노출할 수 있다.
-   * 자동 재번역 루프는 미구현 (chunk 단위 재호출 비용 관리).
-   */
-  voiceRetryNeeded: boolean;
-  /**
-   * Voice Guard 재번역 지시문 — buildRetryHintFromViolations 결과.
-   * 비어있으면 표시 skip. 사용자가 수동 재번역 시 systemPrompt 에 주입 가능.
-   */
-  voiceRetryHint: string;
-  /**
-   * RAG 컨텍스트 활성 상태 — UI 배지가 실제 RAG 성공 여부를 정확히 표시하기 위함.
-   * projectContext 존재만으로는 RAG 성공이 보장되지 않음 (silent fallback 가능).
-   */
-  ragStatus: RagStatus;
-  /**
-   * Voice 힌트로 수동 재번역 트리거 — 사용자가 버튼으로 1회 재시도.
-   * - 마지막 translateEpisode 입력 (manuscript + config) 를 재사용
-   * - voiceRetryHint 를 config.contextBridge 에 append 해서 systemPrompt 에 주입
-   * - 재번역 중에는 isRetryingRef 락으로 중복 호출 차단
-   * - 실패 시 기존 상태 유지 (퇴행 방지)
-   * - 자동 루프는 복잡도/비용 문제로 미구현 — 1회 수동 재시도만 허용
-   */
-  retryWithVoiceHint: () => Promise<void>;
-}
-
-// ============================================================
-// PART 2 — AI 호출 헬퍼
-// ============================================================
-
-async function callAI(
-  systemPrompt: string,
-  userPrompt: string,
-  signal?: AbortSignal,
-  temperature: number = 0.3
-): Promise<string> {
-  let result = '';
-
-  // TM 캐시 조회 — 동일 문장이면 API 호출 스킵
-  try {
-    const { searchTM } = await import('@/lib/translation');
-    const matches = searchTM(userPrompt.slice(0, 500), 'EN', 0.95);
-    if (matches.length > 0 && matches[0].type === 'exact') {
-      return matches[0].entry.target;
-    }
-  } catch { /* TM lookup is best-effort */ }
-
-  const opts = {
-    systemInstruction: systemPrompt,
-    messages: [{ role: 'user' as const, content: userPrompt }],
-    temperature,
-    signal,
-    onChunk: (text: string) => { result += text; },
-  };
-
-  // 멀티키 활성 시 translator 역할 슬롯 사용, 아니면 기존 단일키
-  if (isMultiKeyActive()) {
-    await streamWithMultiKey({ ...opts, role: 'translator' });
-  } else {
-    const apiKey = getApiKey(getActiveProvider());
-    if (!apiKey) throw new Error('API key not configured');
-    await streamChat(opts);
-  }
-  return result.trim();
-}
-
-/** MODE1/MODE2별 채점 JSON schema */
-const FIDELITY_SCORE_SCHEMA = {
-  type: 'object' as const,
-  properties: {
-    translationese: { type: 'number' as const },
-    fidelity: { type: 'number' as const },
-    naturalness: { type: 'number' as const },
-    consistency: { type: 'number' as const },
-  },
-  required: ['translationese', 'fidelity', 'naturalness', 'consistency'],
-};
-
-const EXPERIENCE_SCORE_SCHEMA = {
-  type: 'object' as const,
-  properties: {
-    immersion: { type: 'number' as const },
-    emotionResonance: { type: 'number' as const },
-    culturalFit: { type: 'number' as const },
-    consistency: { type: 'number' as const },
-    groundedness: { type: 'number' as const },
-    voiceInvisibility: { type: 'number' as const },
-  },
-  required: ['immersion', 'emotionResonance', 'culturalFit', 'consistency', 'groundedness', 'voiceInvisibility'],
-};
-
-/**
- * 채점: /api/structured-generate (범용 JSON 생성) 우선 → 실패 시 스트리밍 폴백.
- * gemini-structured는 task 화이트리스트에 translationScore가 없어 사용 불가.
- */
-export async function scoreTranslation(
-  sourceText: string,
-  translatedText: string,
-  config: TranslationConfig,
-  signal?: AbortSignal,
-  userTier: UserTier = 'free',
-): Promise<ChunkScoreDetail> {
-  const prompt = buildScoringPrompt(sourceText, translatedText, config);
-  const schema = config.mode === 'fidelity' ? FIDELITY_SCORE_SCHEMA : EXPERIENCE_SCORE_SCHEMA;
-
-  // 1차: structured-generate (범용 JSON 라우트 — provider 무관)
-  try {
-    const provider = getActiveProvider();
-    const apiKey = getApiKey(provider);
-    const resp = await fetch('/api/structured-generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: signal ?? AbortSignal.timeout(30_000),
-      body: JSON.stringify({
-        provider,
-        prompt,
-        schema,
-        apiKey: apiKey || undefined,
-      }),
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      // [N4] 차단 계약 {blocked, reason, gradeRequired} → toast 고지 후 에러로 표면화
-      const blockedMsg = checkBlockedJson(data, 'translation-score');
-      if (blockedMsg) throw new Error(blockedMsg);
-      const raw = typeof data === 'string' ? data : JSON.stringify(data);
-      const primaryScore = parseScoreResponse(raw, config.mode);
-
-      // 멀티키 활성 + 티어 허용 시 2차 교차 검증 (analyst 역할 슬롯 사용)
-      const tierLimits = getTierLimits(userTier);
-      if (isMultiKeyActive() && tierLimits.translation.crossValidation) {
-        try {
-          let secondaryRaw = '';
-          await streamWithMultiKey({
-            role: 'analyst',
-            systemInstruction: 'You are a translation quality scoring system. Respond ONLY with the JSON object requested.',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.1,
-            signal: signal ?? AbortSignal.timeout(30_000),
-            onChunk: (c) => { secondaryRaw += c; },
-          });
-          if (secondaryRaw.trim()) {
-            const secondaryScore = parseScoreResponse(secondaryRaw, config.mode);
-            // 두 점수의 평균으로 교차 검증 (편차가 크면 보수적 점수 채택)
-            return mergeScores(primaryScore, secondaryScore);
-          }
-        } catch {
-          // 교차 검증 실패 시 1차 점수 그대로 사용
-        }
-      }
-
-      return primaryScore;
-    }
-  } catch {
-    // structured output 실패 → 스트리밍 폴백
-  }
-
-  // 2차: 스트리밍 폴백
-  const raw = await callAI(
-    'You are a translation quality scoring system. Respond ONLY with the JSON object requested.',
-    prompt,
-    signal,
-    0.1
-  );
-  return parseScoreResponse(raw, config.mode);
-}
-
-/** 두 점수를 병합: 평균 + 편차가 클 때 보수적 점수 선택 */
-function mergeScores(a: ChunkScoreDetail, b: ChunkScoreDetail): ChunkScoreDetail {
-  const merged = { ...a } as unknown as Record<string, number>;
-  const bRec = b as unknown as Record<string, number>;
-  // 'overall' 제외한 숫자 축들을 평균
-  const aRec = a as unknown as Record<string, unknown>;
-  const axisKeys = Object.keys(a).filter(k => k !== 'overall' && typeof aRec[k] === 'number');
-  for (const key of axisKeys) {
-    const va = merged[key] ?? 0;
-    const vb = bRec[key] ?? 0;
-    const diff = Math.abs(va - vb);
-    // 편차 > 20이면 보수적(낮은) 쪽, 아니면 평균
-    merged[key] = diff > 20 ? Math.min(va, vb) : Math.round((va + vb) / 2);
-  }
-  // 전체 점수도 재계산
-  const axisValues = axisKeys.map(k => merged[k]).filter((v): v is number => typeof v === 'number');
-  merged.overall = axisValues.length > 0 ? Math.round(axisValues.reduce((s, v) => s + v, 0) / axisValues.length) : a.overall;
-  return merged as unknown as ChunkScoreDetail;
-}
-
-// ============================================================
-// PART 2B — Glossary Usage Tokenizer
-// ============================================================
-// Episode Memory pairs 수집의 false positive 를 줄이기 위한 헬퍼.
-// 단순 substring 매칭은 "그림자" 검색 시 "큰그림자/검그림자" 등을 모두 매칭해
-// 의도하지 않은 용어가 canonical 로 등록되는 문제를 일으킨다.
-//
-// 전략:
-//   - 영문/숫자: \b word boundary 사용 (정확)
-//   - 한국어: 앞뒤 한글 경계 + 조사 화이트리스트 — "그림자가" 매치, "큰그림자" 차단
-//   - 일본어: 앞 한자/카나 차단 + 뒤 조사/구두점 매치 — "魔王だ" 매치, "大魔王" 차단
-//   - 중국어: 길이 ≥ 2 + 포함 여부 (기존 휴리스틱 유지, 조사 체계 없음)
-// [C] target 빈 문자열, 1글자 단어 skip
-// [G] 정규식은 모듈 상수로 사전 컴파일 (반복 호출 최적화)
-// [G] indexOf + searchFrom 증분으로 O(n) 유지
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// [G] 사전 컴파일된 정규식 — findGlossaryUsage 가 glossary.length 만큼 호출되므로
-//     매 호출마다 RegExp 생성 비용 절감.
-const CJK_REGEX = /[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]/;
-const KO_CHAR_REGEX = /[가-힣]/;
-const JP_KANA_KANJI_REGEX = /[一-龠ぁ-んァ-ン]/;
-const JP_HIRAGANA_KATAKANA_REGEX = /[\u3040-\u309F\u30A0-\u30FF]/;
-
-// 한국어 조사/어미 — target 뒤에 붙어도 매치 유효 (긴 것 우선 정렬).
-// 예: "그림자에서" (에서) 매치, "그림자가" (가) 매치, "그림자마을" (마) 비매치.
-export const KO_PARTICLES_AFTER = [
-  '입니다', '였다', '이었다', '다가', '까지', '에서', '에게', '께서',
-  '이다', '부터', '라고', '라는', '지만', '니까',
-  '으로', '해요', '합니다',
-  '은', '는', '을', '를', '의', '에', '도', '만', '께',
-  '이', '가', '로', '와', '과', '해', '다', '면',
-];
-
-// 일본어 조사 — target 뒤에 붙으면 매치.
-// 예: "魔王は" 매치, "魔王が" 매치. "大魔王" 은 앞 한자 차단으로 비매치.
-export const JP_PARTICLES_AFTER = [
-  'である', 'です', 'した',
-  'から', 'まで', 'より',
-  'は', 'が', 'を', 'に', 'の', 'で', 'と', 'へ',
-  'や', 'か', 'も', 'だ',
-];
-
-/**
- * 한국어 단어 경계 인식 검색.
- * - 앞에 한글이 있으면 복합단어 가능성 → 매치 안 함 ("큰그림자" 안 "그림자")
- * - 뒤가 한글이면 조사 체크 → 조사면 매치 ("그림자가"), 아니면 비매치 ("그림자마을")
- * - 앞뒤 모두 비한글/문장부호면 매치
- * [G] indexOf + searchFrom 증분 O(n) — 매치 실패 시 index+1 로 다음 후보 스캔.
- */
-export function findKOBoundaryMatch(text: string, target: string): boolean {
-  if (!text || !target) return false;
-  if (target.length === 0) return false;
-
-  let searchFrom = 0;
-  while (searchFrom <= text.length - target.length) {
-    const index = text.indexOf(target, searchFrom);
-    if (index === -1) return false;
-
-    const before = index > 0 ? text[index - 1] : '';
-    const afterIndex = index + target.length;
-    const after = afterIndex < text.length ? text[afterIndex] : '';
-
-    // 1. 앞 한글 → 복합단어 → skip
-    if (before && KO_CHAR_REGEX.test(before)) {
-      searchFrom = index + 1;
-      continue;
-    }
-
-    // 2. 뒤 한글이면 조사 확인 (최대 5자까지 check)
-    if (after && KO_CHAR_REGEX.test(after)) {
-      const suffix = text.slice(afterIndex, afterIndex + 5);
-      const hasParticle = KO_PARTICLES_AFTER.some(p => suffix.startsWith(p));
-      if (!hasParticle) {
-        searchFrom = index + 1;
-        continue;
-      }
-    }
-
-    // 유효 매치 — 앞뒤 경계 모두 통과
-    return true;
-  }
-  return false;
-}
-
-/**
- * 일본어 단어 경계 인식 검색.
- * - 앞에 한자/히라가나/카타카나 있으면 복합단어 → 매치 안 함 ("大魔王" 안 "魔王")
- * - 뒤가 비일본어(조사/구두점/공백/영숫자) → 매치
- * - 뒤가 일본어 문자면 조사 화이트리스트 확인
- */
-export function findJPBoundaryMatch(text: string, target: string): boolean {
-  if (!text || !target) return false;
-  if (target.length === 0) return false;
-
-  let searchFrom = 0;
-  while (searchFrom <= text.length - target.length) {
-    const index = text.indexOf(target, searchFrom);
-    if (index === -1) return false;
-
-    const before = index > 0 ? text[index - 1] : '';
-    const afterIndex = index + target.length;
-
-    // 1. 앞 한자/카나 → 복합단어 → skip
-    if (before && JP_KANA_KANJI_REGEX.test(before)) {
-      searchFrom = index + 1;
-      continue;
-    }
-
-    // 2. 뒤 문자 분기
-    if (afterIndex >= text.length) {
-      // 문장 끝 → 매치
-      return true;
-    }
-    const after = text[afterIndex];
-
-    // 뒤가 일본어 (한자/히라가나/카타카나) 가 아니면 → 경계 OK
-    if (!JP_KANA_KANJI_REGEX.test(after)) {
-      return true;
-    }
-
-    // 뒤가 일본어 → 조사 화이트리스트 확인
-    const suffix = text.slice(afterIndex, afterIndex + 3);
-    const hasParticle = JP_PARTICLES_AFTER.some(p => suffix.startsWith(p));
-    if (hasParticle) return true;
-
-    // 조사 아닌 일본어 → 복합단어로 간주 → skip
-    searchFrom = index + 1;
-  }
-  return false;
-}
-
-/**
- * glossary 항목 중 translatedText 에 실제 등장한 것만 반환.
- * - 영문/숫자 target: \b word boundary 매칭
- * - 한국어 target: KO boundary (앞 한글 차단 + 뒤 조사 허용)
- * - 일본어 target: JP boundary (앞 한자/카나 차단 + 뒤 조사/구두점 허용)
- * - 중국어 target: 길이 ≥ 2 + 포함 여부 (기존 휴리스틱 유지)
- *
- * @returns 사용된 glossary entry 의 얕은 복사. 원본 객체 mutate 없음.
- */
-export function findGlossaryUsage<T extends { source: string; target: string; context?: string }>(
-  glossary: T[],
-  translatedText: string,
-): T[] {
-  if (!Array.isArray(glossary) || glossary.length === 0) return [];
-  if (!translatedText || typeof translatedText !== 'string') return [];
-
-  const used: T[] = [];
-  for (const g of glossary) {
-    if (!g || !g.target || g.target.length < 2) continue;
-    const target = g.target;
-
-    // 한국어 우선 판별 (한글은 CJK 범위 안의 별도 정규식)
-    if (KO_CHAR_REGEX.test(target)) {
-      if (findKOBoundaryMatch(translatedText, target)) {
-        used.push(g);
-      }
-      continue;
-    }
-
-    // 일본어 판별 (히라가나/카타카나 존재 — 한자만 있으면 중국어로 fallback)
-    if (JP_HIRAGANA_KATAKANA_REGEX.test(target)) {
-      if (findJPBoundaryMatch(translatedText, target)) {
-        used.push(g);
-      }
-      continue;
-    }
-
-    // CJK (한자만 있는 경우 — 중국어 또는 순 한자 고유명사)
-    if (CJK_REGEX.test(target)) {
-      // 한자만 있는 target: 단순 include (기존 동작 유지 — 중국어는 조사 체계 없음).
-      // [G] substring 매칭 — 2자 이상 한자 고유명사는 false positive 비율 낮음.
-      if (translatedText.includes(target)) {
-        used.push(g);
-      }
-      continue;
-    }
-
-    // ASCII/라틴: \b word boundary 로 부분 단어 매칭 차단.
-    // 예: target="Hero" 일 때 "Heroic" 비매칭, "Hero" 매칭.
-    try {
-      const pattern = new RegExp(`\\b${escapeRegex(target)}\\b`, 'i');
-      if (pattern.test(translatedText)) {
-        used.push(g);
-      }
-    } catch {
-      // [C] RegExp 생성 실패 (escape 실패 등) → substring fallback
-      if (translatedText.toLowerCase().includes(target.toLowerCase())) {
-        used.push(g);
-      }
-    }
-  }
-  return used;
-}
-
-// ============================================================
-// PART 3 — Hook 구현
-// ============================================================
-
-/**
- * Convert a TranslatedEpisode result into a TranslatedManuscriptEntry for persistent storage.
- * @param result - Completed translation result with chunks, scores, and glossary
- * @param title - Optional translated episode title
- */
-export function toManuscriptEntry(
-  result: TranslatedEpisode,
-  title: string = ''
-): TranslatedManuscriptEntry {
-  return {
-    episode: result.episode,
-    sourceLang: result.sourceLang,
-    targetLang: result.targetLang,
-    mode: result.mode,
-    translatedTitle: title,
-    translatedContent: result.translatedText,
-    charCount: result.translatedText.length,
-    avgScore: result.avgScore,
-    band: result.band,
-    glossarySnapshot: result.glossarySnapshot.map(g => ({
-      source: g.source, target: g.target, locked: g.locked,
-    })),
-    lastUpdate: result.timestamp,
-  };
-}
+export { scoreTranslation } from './useTranslation.scoring';
+export {
+  findGlossaryUsage,
+  findJPBoundaryMatch,
+  findKOBoundaryMatch,
+  JP_PARTICLES_AFTER,
+  KO_PARTICLES_AFTER,
+  toManuscriptEntry,
+} from './useTranslation.glossary';
+export type { BatchProgress, RagStatus } from './useTranslation.types';
 
 /**
  * AI-powered translation hook with chunk-level scoring, recreation loop, glossary enforcement,
@@ -665,7 +180,7 @@ export function useTranslation({
   const [isTranslating, setIsTranslating] = useState(false);
   const [driftWarnings, setDriftWarnings] = useState<TermDriftWarning[]>([]);
   const [voiceViolations, setVoiceViolations] = useState<VoiceViolation[]>([]);
-  // [C] Voice Guard 재번역 상태 — 자동 루프 미구현, UI 노출용 플래그.
+  // [C] Voice Guard 재번역 상태 — 자동 루프는 비활성, 1클릭 수동 재시도 경로 제공.
   const [voiceRetryNeeded, setVoiceRetryNeeded] = useState(false);
   const [voiceRetryHint, setVoiceRetryHint] = useState('');
   // [C] RAG 호출 결과 — 배지가 실제 fetched 여부를 반영하기 위함.
@@ -966,7 +481,7 @@ export function useTranslation({
       // [C] result.segments 는 PART 21 buildSegmentsFromChunk 에서 자동 빌드됨
       //     (translateChunk 가 characterNames 받았을 때만 채워짐).
       //     speaker 추론 실패 세그먼트는 applyVoiceGuard 내부에서 skip.
-      // [K] 재번역 루프(needsRetry=true 자동 재시도)는 이번 Phase 미구현 — 경고만 노출
+      // [K] needsRetry=true 자동 재호출은 비활성 — 경고와 1클릭 재시도만 노출
       if (projectCtx?.characters && projectCtx.characters.length > 0) {
         try {
           const rules = buildVoiceRulesFromProject(
@@ -993,7 +508,7 @@ export function useTranslation({
             });
             setVoiceViolations(guarded.voiceViolations);
             // [C] retryHint 빈 문자열 가드 — needsRetry=true 여도 hint 가 비면 UI 노출 skip.
-            // [K] 자동 재번역 루프는 chunk 구조와 결합도가 높아 이번 Phase 미구현.
+            // [K] 자동 재번역 루프는 비용/청크 상태 예측이 어려워 비활성.
             //     UI 노출용 needsRetry/retryHint 만 상태로 제공 → 사용자 수동 재번역 트리거.
             setVoiceRetryNeeded(guarded.needsRetry);
             setVoiceRetryHint(guarded.retryHint ?? '');

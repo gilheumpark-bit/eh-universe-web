@@ -1,6 +1,6 @@
 "use client";
 // ============================================================
-// modal-manager — 5 영역 공용 ModalContext (SharedSurgery-4)
+// modal-manager — 활성 Loreguard 영역 공용 ModalContext (SharedSurgery-4)
 // Shell 류 파일의 9+ modal useState 분산 → 단일 Context 로 통합.
 // 어느 modal 이 열렸는지 단일 source. keyboard-manager 와 연동 (modal 중 단축키 자동 suppress).
 //
@@ -30,6 +30,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import { setKeyboardModalState } from '@/lib/keyboard/keyboard-manager';
+import { logger } from '@/lib/logger';
 
 // ============================================================
 // PART 1 — Types
@@ -37,17 +38,6 @@ import { setKeyboardModalState } from '@/lib/keyboard/keyboard-manager';
 
 /** Modal ID — 영역별 prefix. 신규 모달 추가 시 여기에. */
 export type ModalId =
-  // Code Studio
-  | 'code-studio:settings'
-  | 'code-studio:command-palette'
-  | 'code-studio:quick-open'
-  | 'code-studio:quick-access'
-  | 'code-studio:shortcuts'
-  | 'code-studio:new-file'
-  | 'code-studio:multi-key'
-  | 'code-studio:confirm'
-  | 'code-studio:build-error'
-  | 'code-studio:diff'
   // Novel Studio
   | 'studio:command-palette'
   | 'studio:settings'
@@ -60,17 +50,8 @@ export type ModalId =
   | 'translation-studio:command-palette'
   | 'translation-studio:settings'
   | 'translation-studio:confirm'
-  // Network
-  | 'network:confirm'
-  // Codex
-  | 'codex:add-character'
-  | 'codex:confirm'
   // Global
   | 'global:confirm';
-// [2026-06-08 풀점검 priority 2] 미사용 ModalId 3건 제거:
-//   - 'codex:domain-selector' → CodexDomainSelector 는 헤더 dropdown 으로 마운트 (modal 아님)
-//   - 'network:planet-wizard' → PlanetWizard 는 inline route 컴포넌트 (modal 아님)
-//   - 'global:about' → 미구현. 추후 도입 시 ADR 작성 후 복원.
 
 /**
  * Modal payload — 각 modal 이 받는 데이터.
@@ -83,17 +64,6 @@ export type ModalId =
  *   - Payload 가 없는 modal 은 `Record<string, never>` 로 명시 (런타임 noop, 타입 안전).
  */
 export interface ModalPayloads {
-  'code-studio:confirm': { title: string; message: string; onConfirm: () => void };
-  'code-studio:build-error': { message: string; stack?: string; file?: string; line?: number };
-  'code-studio:diff': { original: string; modified: string; fileName: string };
-  'code-studio:new-file': { defaultName?: string };
-  // [priority 10 — 2026-06-08] 명시 매핑 — 이전엔 빈 객체 허용으로 인한 sleep 한 미스 가능성 제거.
-  'code-studio:settings': Record<string, never>;
-  'code-studio:command-palette': Record<string, never>;
-  'code-studio:quick-open': Record<string, never>;
-  'code-studio:quick-access': Record<string, never>;
-  'code-studio:shortcuts': Record<string, never>;
-  'code-studio:multi-key': Record<string, never>;
   'studio:confirm': { title: string; message: string; onConfirm: () => void };
   'studio:rename': { itemId: string; currentName: string };
   'studio:move': { itemId: string };
@@ -105,9 +75,6 @@ export interface ModalPayloads {
   'translation-studio:confirm': { title: string; message: string; onConfirm: () => void };
   'translation-studio:command-palette': Record<string, never>;
   'translation-studio:settings': Record<string, never>;
-  'network:confirm': { title: string; message: string; onConfirm: () => void };
-  'codex:confirm': { title: string; message: string; onConfirm: () => void };
-  'codex:add-character': Record<string, never>;
   'global:confirm': { title: string; message: string; onConfirm: () => void };
 }
 
@@ -199,21 +166,22 @@ export function ModalProvider({ children }: { children: ReactNode }): React.Reac
   const openModal = useCallback((id: ModalId, payload?: unknown) => {
     if (stateRef.current.id !== null && stateRef.current.id !== id) {
       // [루프 4 P6 — 2026-06-08] silent suppression 해소.
-      //   dev: console.warn 유지.
+      //   dev: logger.warn 유지.
       //   production: 구조화 log (관측성 인프라가 capture). noa:alert 는 미발화 —
       //   modal 충돌은 코드 버그 (UX 오류 아님) 이므로 사용자 토스트 X.
       if (process.env.NODE_ENV !== 'production') {
-        console.warn(`[modal-manager] openModal("${id}") ignored — "${stateRef.current.id}" already open. Use replaceModal to force.`);
+        logger.warn('modal-manager', `openModal("${id}") ignored — "${stateRef.current.id}" already open. Use replaceModal to force.`);
       }
       try {
-        console.warn(JSON.stringify({
-          level: 'warn',
-          event: 'modal-manager.open-ignored',
-          requested_id: id,
-          already_open: stateRef.current.id,
-          hint: 'Use replaceModal() or canOpenModal() guard before calling.',
-          timestamp: new Date().toISOString(),
-        }));
+        logger.warn({
+          component: 'modal-manager',
+          event: 'open_ignored',
+          meta: {
+            requested_id: id,
+            already_open: stateRef.current.id,
+            hint: 'Use replaceModal() or canOpenModal() guard before calling.',
+          },
+        });
       } catch { /* never throw inside callback */ }
       return;
     }

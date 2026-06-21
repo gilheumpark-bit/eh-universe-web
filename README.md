@@ -12,23 +12,21 @@
 |---|---|---|---|
 | **소설가의 IDE** | **The IDE for Novelists** | **小説家のためのIDE** | **小说家的 IDE** |
 
-글을 쓰면 NOA가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.
+작가가 방향을 정하고, 노아가 제안하고, 과정기록이 남습니다.
 
-**Translation Studio (Cross-border Novel IDE)** — 한 번의 호출로 **두 결과**를 받습니다:
+**번역·현지화 작업실** — Studio 프로젝트의 세계관, 캐릭터, 용어집, 회차 맥락을 불러와 보존안과 현지화안을 나란히 검토합니다.
 
-- **Source-faithful Translation** (원문 보존 — 작가 의도·고유명사·복선·문체)
-- **Market-ready Localization** (현지화 — 대사 리듬·호칭·장르 문법·시장 감각)
+- **보존안**: 작가 의도, 고유명사, 복선, 문체를 우선 확인
+- **현지화안**: 대상 독자의 호칭, 대사 리듬, 장르 문법을 우선 확인
+- **작가 승인**: 의미 변화, 설정 흔들림, 출고 가능 여부를 한국어 근거로 기록
 
-> "원문은 지키고, 시장에는 맞춘다." · *Faithful where it matters. Localized where it counts.*
-
-한국 작가는 세계로 · 해외 작가는 한국·아시아로. **AI prepares · Translators elevate · Authors go global.**
+> 원문 맥락은 보존하고, 독자 경험은 현지화합니다.
 
 [![한국어](https://img.shields.io/badge/lang-한국어-blue?style=flat-square)](README.ko.md)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-3,912_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
-![Stage](https://img.shields.io/badge/stage-Alpha-orange?style=flat-square)
 ![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
 ![Patent](https://img.shields.io/badge/KIPO-10--2026--0038027-d4af37?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
@@ -39,15 +37,27 @@
 
 ---
 
+## 2026-06-15 현재 기준
+
+현재 공개 제품 표면은 Loreguard Studio(`/studio`), 번역·현지화 작업실(`/translation-studio`), 문서/가격/상태/법적 페이지입니다.
+Code Studio, Network, Archive, Codex, Reports, Reference, Rulebook, Tools는 현재 Loreguard 공개 제품 약속으로 되살리지 않습니다.
+
+Studio 작업 흐름은 다음 10단계입니다.
+
+`프로젝트 생성 → 세계관 생성 → 캐릭터·아이템 → 메인 시나리오 → 씬시트 → 연출 → 집필 → 퇴고 → 번역·현지화 → 출고`
+
+리딤 코드는 아직 활성 기능이 아닙니다. `/api/redeem`과 리딤 입력 UI는 없으며, checkout은 기능 게이트 뒤에 있습니다.
+노아/에이전트/리딤 최신 기준은 [docs/redeem-agent-operations-2026-06-14.md](docs/redeem-agent-operations-2026-06-14.md)를 봅니다.
+
 ## 한 줄 소개
 
-**"VS Code 감성의 소설 IDE. 글만 쓰면 나머지는 NOA가."**
+**"작가가 지휘하고, 노아가 제안하고, 과정이 남는 창작 전문 IDE."**
 
-- 장르 프리셋 한 번이면 연출 세팅 끝
-- Tab 누르면 다음 문장 제안
-- GitHub 백업 — 설정에서 PAT/OAuth 연결 후 1클릭 푸시 또는 자동 동기화(30초 debounce) 토글
-- 에피소드마다 품질 등급 자동 채점
-- 99만 문서 RAG (위키백과 CC BY-SA 라이선스 선별) + 25 장르 규칙 자동 주입
+- 프로젝트 생성부터 출고 패키지까지 10단계 흐름
+- 세계관·캐릭터·씬시트·연출 준수율 점검
+- 노아 인터뷰와 캔버스 채택 구조
+- Hosted/연결 키/Local/Offline 운영 모드
+- 과정기록, 권리/IP 점검, 출고 패키지
 
 ---
 
@@ -69,10 +79,10 @@
 | 역할 | 기본 화면 | opt-in 기능 |
 |------|----------|------------|
 | **둘러보기** | 30초 샘플 번역 데모 | — |
-| **작가** | 수동 편집기 + 씬시트 | 5가지 집필 모드 / 평행우주 / 품질 게이트 |
-| **번역가** | Translation Studio + 6축 점수 | RAG 세계관 / Voice Guard / Episode Memory |
-| **출판사** | EPUB·DOCX·XLIFF·TMX 내보내기 | 19+ 콘텐츠 자가 선언 / AI 사용 고지 |
-| **개발자** | Code Studio + Quill | 9팀 파이프라인 / 224룰 검증 |
+| **작가** | 프로젝트 생성 + 씬시트 + 원고 편집 | 노아 제안 / 품질 게이트 / 과정기록 |
+| **번역가** | 번역·현지화 작업실 + 보존안/현지화안 검토 | 세계관 맥락 / 말투 점검 / 회차 기억 |
+| **출판사** | 출고 패키지 + 권리/IP 요약 | 확인서 보조 문서 / 제출용 묶음 |
+| **그룹 관리자** | 그룹/좌석 설계 대기 | 퍼블리셔 워크스페이스 후속 |
 
 Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는 4언어 툴팁 사전 제공.
 
@@ -82,7 +92,7 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 
 ### 0. 창작 과정 확인서 (Authorship Journal — Visual Charter v1.0, 2026-05-10)
 
-> **AI 시대 작가의 작업 흔적 자동 누적 + 명시 발급**. 출판사·플랫폼 제출 시 "어떻게 만들었는가" 노트 첨부.
+> **모델 활용 시대 작가의 작업 흔적 자동 누적 + 명시 발급**. 출판사·플랫폼 제출 시 "어떻게 만들었는가" 노트 첨부.
 
 | 컴포넌트 | 화면 | 역할 |
 |---|---|---|
@@ -104,7 +114,7 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 | **Tiptap 블록 에디터** | 서체·줄간격·들여쓰기 소설 전용 에디터 |
 | **Tab 자동완성** | 1.5초 멈추면 다음 문장 제안 → Tab으로 수락 |
 | **인라인 리라이트** | 텍스트 선택 → 다시쓰기/확장/축약/문체변환/복사 |
-| **5가지 집필 모드** | 직접 쓰기 · AI 생성 · 3단계 캔버스 · 자동 다듬기 · 고급 |
+| **집필 작업 모드** | 직접 쓰기 · 노아 제안 후보 · 3단계 캔버스 · 승인형 다듬기 · 고급 |
 | **고급 모드 상황 프리셋** | 전투씬/일상씬/고백씬/추격씬/대화씬 원클릭 |
 
 ### 2. 품질 자동화
@@ -132,7 +142,7 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 | **캐릭터 프로파일** | 이름/역할/특성/외모 + 배경/동기/대사 스타일 + 관계 그래프 |
 | **세계관 3-tier** | 핵심 전제 → 권력 구조 → 세부 설정 (단계별 가이드 포함) |
 | **109개 아카이브** | 8개 카테고리 설정 문서 DB |
-| **아이템/스킬/마법** | AI 자동 생성 + 레어리티 시스템 |
+| **아이템/스킬/마법** | 노아 제안 후보 + 레어리티 시스템 |
 
 ### 5. 관리 · 내보내기
 
@@ -149,49 +159,39 @@ Settings는 4탭 (Easy / Writing / Advanced / Developer). 12개 핵심 용어는
 ## 더 알고 싶다면
 
 <details>
-<summary><b>🖥️ 코드 스튜디오</b> — 검증형 코드 생성 IDE</summary>
+<summary><b>번역·현지화 작업실</b> — Studio 프로젝트를 읽어오는 전문 검토 화면</summary>
 
-- Monaco 에디터 + 52개 패널
-- 9팀 멀티에이전트 파이프라인 (PM→Architect→Frontend→Backend→QA→Security→DevOps→TechLead→Quill)
-- Quill Engine 224룰 4-layer 검증
-- 디자인 시스템 v8.0 (시맨틱 토큰)
-- 터미널 + 라이브 프리뷰 + Git 패널
-
-</details>
-
-<details>
-<summary><b>🌐 번역 스튜디오</b> — 소설 전용 AI 번역</summary>
-
-- 원문/번역 양방향 에디터 (앰버/블루 톤 분리)
-- 4축 채점 (정확성/자연스러움/완성도/포맷)
-- 용어집 관리 + 번역 메모리
-- 배치 번역 (다국어 병렬)
+- Studio 활성 프로젝트의 회차, 세계관, 캐릭터, 용어집 불러오기
+- 보존안/현지화안 나란히 비교
+- 대상 언어를 모르는 작가도 볼 수 있는 한국어 위험 설명
+- 작가 승인, 과정기록, 저장·백업, 출고 패키지 연결
 
 </details>
 
 <details>
-<summary><b>🌍 EH Network</b> — 작가 커뮤니티</summary>
+<summary><b>🧭 운영 상태</b> — 리딤·에이전트·레거시 표면</summary>
 
-- 행성 기반 커뮤니티 시스템
-- 게시판 + 댓글 + 반응
-- 신고/관리 시스템
+- 리딤 코드는 준비 중이며 현재 앱에서 바로 적용되지 않습니다.
+- Agent Builder / Network Agent 검색 라우트는 disabled 호환 경로입니다.
+- Code Studio / Network / Archive / Codex 계열은 현 Loreguard 공개 표면이 아닙니다.
+- 기준 문서: `docs/redeem-agent-operations-2026-06-14.md`
 
 </details>
 
 ---
 
-## AI 서버
+## 모델 운영
 
 | 방식 | 설명 |
 |------|------|
-| **BYOK** | Gemini, OpenAI, Claude, Groq, Mistral, Ollama, LM Studio — API 키만 넣으면 동작 |
-| **자체 서버** | NVIDIA DGX Spark (GB10, 128GB) — Qwen 3.6-35B-A3B-FP8 MoE 단일 서빙 (vLLM 8001) + SSE 직결 스트리밍 |
-| **RAG** | ChromaDB 99만 문서 (위키백과 CC BY-SA 라이선스 선별) + 25 장르 작법 규칙 자동 조립 (`/api/rag/prompt`) |
-| **이미지** | Flux-Schnell FP8 (4-step, `/api/image/generate`) |
+| **Hosted** | 앱 운영 경로. 서버 측 개발 API 키가 설정된 provider를 사용하며, `NEXT_PUBLIC_PAYMENT_LIVE=true`에서는 Free/Pro 제공량 기준을 따릅니다 |
+| **연결 키** | 사용자가 보유한 제공자 계정을 연결하는 경로. Hosted 사용량을 쓰지 않습니다 |
+| **Local** | LM Studio, Ollama, DGX 호환 로컬 서버 경로 |
+| **Offline** | 모델 호출 없이 직접 쓰기, 편집, 저장, 출고 준비 |
 
-모든 백엔드 트래픽은 단일 게이트웨이 `https://api.ehuniverse.com`로 통합 (Nginx LB least_conn 자동 분산).
+특정 외부 제공자나 DGX를 호스팅 기본값처럼 안내하지 않습니다. DGX는 로컬·개발·비상 검증용 OpenAI 호환 경로이며, 제공자 목록과 키 관리는 앱의 환경 설정 기준을 따릅니다.
 
-API 키 없어도 글쓰기·편집·내보내기·아카이브는 100% 사용 가능.
+연결 키가 없어도 직접 쓰기·편집·저장·내보내기·출고 준비는 사용할 수 있습니다.
 
 ---
 
@@ -218,28 +218,29 @@ npm test         # 테스트
 | 레이어 | 기술 |
 |--------|------|
 | 프레임워크 | Next.js 16.2, React 19.2, TypeScript 5 |
-| 에디터 | Tiptap (소설) + Monaco (코드) + 인라인 자동완성 |
-| AI | 7개 프로바이더 + DGX Spark **Qwen 3.6-35B-A3B-FP8 MoE** (자체) |
+| 에디터 | Manuscript editor + resizable IDE panels + Noa dock |
+| 모델 운영 | Hosted / 연결 키 / Local / Offline |
+| Provider | 환경 설정의 연결 키 카탈로그 + 로컬 서버 |
 | RAG | ChromaDB 99만 문서 (위키백과 CC BY-SA 라이선스 선별) + 25 장르 규칙 |
 | 집필 엔진 | ANS 10.0 — 품질 검사, 디렉터, 연속성, HFCP, 장르 프리셋 |
-| 코드 엔진 | 9팀 파이프라인 + Quill 224룰 |
+| 과정기록 엔진 | Work Receipt + Creative Process Record + 출고 패키지 |
 | 저장 | localStorage + IndexedDB + GitHub(Octokit) + Drive + Firestore |
 | 직렬화 | Markdown + YAML (git diff 친화) |
 | UI | Tailwind CSS 4, Design System v8.0, Lucide Icons |
-| 인증 | Firebase Auth + Stripe 티어 |
+| 계정·결제 | Firebase Auth + Stripe 티어 |
 | 내보내기 | EPUB 3.0 / DOCX / TXT / MD / JSON |
 | i18n | 4개국어 (한국어, English, 日本語, 中文) |
 | 배포 | Vercel |
 
 ---
 
-## 프로젝트 상태 (2026-05-10)
+## 프로젝트 상태 (2026-06-15)
 
 | 지표 | 값 |
 |------|----|
-| 테스트 | **3,912 passing** / 360 suites (2026-06-03 실측, 4건 사전 실패 follow-up 중) |
-| 타입 체크 | **0 errors** (strict) |
-| ESLint | **exit=0** (0 errors / 0 warnings) |
+| 대상 회귀 | P0/Docs 관련 대상 Jest 통과 |
+| 타입 체크 | `npx tsc --noEmit` 0 errors |
+| 전체 검증 | 릴리스 직전 전체 Jest/빌드/브라우저 QA 별도 실행 |
 | Lighthouse A11y | `/studio` · `/translation-studio` 100/100, `/` 96/100 — **3 페이지 측정** (5 페이지 확장 일정: ROADMAP §2.1) |
 | 보안 감사 | P0 6건 + P1 13건 + 2026-05-10 INTERNAL 7건 수리 완료 |
 | ARCS 레이어 | 11-agent `WRITING_AGENT_REGISTRY` · IP Guard L1-L5 · Compliance 7축 |

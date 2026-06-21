@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/lib/logger";
-import { checkRateLimit, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
 
 const REQUEST_TIMEOUT = 10_000; // 10s timeout for vitals ingestion
 void REQUEST_TIMEOUT;
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const ip = getClientIp(req.headers);
     // [chaos-fix 2026-06-11] default(60/min) → vitals 전용(240/min). web-vitals 는 페이지당
     // 다수 비콘을 보내므로 default 로는 정상 사용에서도 429. RATE_LIMITS.vitals 로 교체.
-    const rl = checkRateLimit(ip, "vitals", RATE_LIMITS.vitals);
+    const rl = await checkRateLimitAsync(ip, "vitals", RATE_LIMITS.vitals);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "Too many requests" },

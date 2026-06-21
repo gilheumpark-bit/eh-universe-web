@@ -10,7 +10,7 @@ import type { ChatSession, AppTab, AppLanguage, Genre, Project } from '@/lib/stu
 const DynSkeleton = () => <LoadingSkeleton height={120} />;
 const QuickStartModal = dynamic(() => import('@/components/studio/QuickStartModal'), { ssr: false, loading: DynSkeleton });
 
-interface StudioOverlayManagerProps {
+export interface StudioOverlayManagerProps {
   language: AppLanguage;
   isKO: boolean;
   showQuickStartModal: boolean;
@@ -55,10 +55,9 @@ interface StudioOverlayManagerProps {
 export default function StudioOverlayManager({
   language, isKO,
   showQuickStartModal, setShowQuickStartModal, handleQuickStart, isQuickGenerating,
-  showApiKeyModal, setShowApiKeyModal, setApiKeyVersion,
+  setShowApiKeyModal,
   confirmState, closeConfirm,
   moveModal, setMoveModal, moveSessionToProject,
-  saveSlotModalOpen, setSaveSlotModalOpen, activeTab, currentSession, updateCurrentSession, triggerSave,
   showSyncReminder, setShowSyncReminder, user, lastSyncTime, handleSync, signInWithGoogle,
   storageFull, setStorageFull, exportAllJSON,
   fallbackNotice, setFallbackNotice, exportDoneFormat, setExportDoneFormat,

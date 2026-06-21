@@ -184,10 +184,10 @@ export function EndingLockSection({ workId, language }: EndingLockSectionProps) 
       <div className="p-4 pt-2 space-y-4">
         <p className="text-xs text-text-tertiary">
           {L4(language, {
-            ko: "최종화의 최종 장면·테마 결산을 잠가 AI 생성이 약속을 깨지 않게 합니다.",
-            en: "Lock the final scene and thematic resolution so AI generation cannot break the promise.",
-            ja: "最終話のラストシーン・テーマ決算をロックし、AI生成が約束を破らないようにします。",
-            zh: "锁定最终章节的最终场景与主题决算,防止 AI 生成违背承诺。",
+            ko: "최종화의 최종 장면·테마 결산을 잠가 노아 제안이 약속을 깨지 않게 합니다.",
+            en: "Lock the final scene and thematic resolution so Noah suggestions cannot break the promise.",
+            ja: "最終話のラストシーン・テーマ決算をロックし、Noah提案が約束を破らないようにします。",
+            zh: "锁定最终章节的最终场景与主题决算,防止 Noah 建议违背承诺。",
           })}
         </p>
 

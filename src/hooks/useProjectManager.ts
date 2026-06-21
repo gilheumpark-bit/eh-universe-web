@@ -39,6 +39,55 @@ const SESSION_TITLES: Record<AppLanguage, string> = {
   KO: "새로운 소설", EN: "New Story", JP: "新しい小説", CN: "新小说",
 };
 
+function normalizeProjectName(name: string | undefined | null): string {
+  return (name ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function makeUniqueProjectName(
+  language: AppLanguage,
+  existingProjects: Project[],
+  preferredName?: string,
+  excludeProjectId?: string,
+): string {
+  const baseName = normalizeProjectName(preferredName) || PROJECT_NAMES[language];
+  const usedNames = new Set(
+    existingProjects
+      .filter(project => project.id !== excludeProjectId)
+      .map(project => normalizeProjectName(project.name).toLocaleLowerCase())
+      .filter(Boolean),
+  );
+  const baseKey = baseName.toLocaleLowerCase();
+  if (!usedNames.has(baseKey)) return baseName;
+
+  let suffix = 2;
+  while (usedNames.has(`${baseName} ${suffix}`.toLocaleLowerCase())) suffix += 1;
+  return `${baseName} ${suffix}`;
+}
+
+function makeDefaultProjectName(language: AppLanguage, existingProjects: Project[]): string {
+  return makeUniqueProjectName(language, existingProjects);
+}
+
+function getLatestSessionId(sessions: ChatSession[] | undefined): string | null {
+  if (!sessions?.length) return null;
+  let latest = sessions[0];
+  for (const session of sessions) {
+    if ((session.lastUpdate || 0) > (latest.lastUpdate || 0)) latest = session;
+  }
+  return latest.id;
+}
+
+function getLatestProjectSessionId(project: Project | null | undefined): string | null {
+  return getLatestSessionId(project?.sessions);
+}
+
+function getProjectFallbackAfterDelete(projects: Project[], deletedProjectId: string): Project | null {
+  const deletedIndex = projects.findIndex(project => project.id === deletedProjectId);
+  if (deletedIndex < 0) return null;
+  const remaining = projects.filter(project => project.id !== deletedProjectId);
+  return remaining[Math.min(deletedIndex, remaining.length - 1)] ?? null;
+}
+
 // ============================================================
 // PART 1.5 — Post-save side effects (M1.5.5 공통화)
 // ============================================================
@@ -137,6 +186,17 @@ export interface UseProjectManagerOptions {
   primaryWriteFn?: PrimaryWriteFn;
 }
 
+export interface CreateNewProjectWithSessionOptions {
+  projectName?: string;
+  sessionTitle?: string;
+  config?: Partial<StoryConfig>;
+}
+
+export interface CreateNewProjectWithSessionResult {
+  projectId: string;
+  sessionId: string;
+}
+
 /**
  * Central project/session CRUD hook. Handles localStorage hydration, project creation,
  * session switching, IndexedDB backup/restore, and storage quota management.
@@ -218,7 +278,7 @@ export function useProjectManager(
           setCurrentSessionId(matchedSession.id);
         } else {
           setCurrentProjectId(loaded[0].id);
-          setCurrentSessionId(loaded[0].sessions?.[0]?.id ?? null);
+          setCurrentSessionId(getLatestProjectSessionId(loaded[0]));
         }
       }
       setHydrated(true);
@@ -286,9 +346,37 @@ export function useProjectManager(
     if (!hydrated) return;
     try {
       if (currentProjectId) localStorage.setItem('noa_last_project_id', currentProjectId);
+      else localStorage.removeItem('noa_last_project_id');
       if (currentSessionId) localStorage.setItem('noa_last_session_id', currentSessionId);
+      else localStorage.removeItem('noa_last_session_id');
     } catch { /* quota/private */ }
   }, [currentProjectId, currentSessionId, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (projects.length === 0) {
+      if (currentProjectId) setCurrentProjectId(null);
+      if (currentSessionId) setCurrentSessionId(null);
+      return;
+    }
+
+    const activeProject = currentProjectId
+      ? projects.find(project => project.id === currentProjectId)
+      : null;
+    if (!activeProject) {
+      const nextProject = projects[0];
+      setCurrentProjectId(nextProject.id);
+      setCurrentSessionId(getLatestProjectSessionId(nextProject));
+      return;
+    }
+
+    const hasActiveSession = currentSessionId
+      ? activeProject.sessions.some(session => session.id === currentSessionId)
+      : false;
+    if (!hasActiveSession) {
+      setCurrentSessionId(getLatestProjectSessionId(activeProject));
+    }
+  }, [currentProjectId, currentSessionId, hydrated, projects]);
 
   // Fix #4: beforeunload — flush save synchronously to prevent data loss
   useEffect(() => {
@@ -296,17 +384,12 @@ export function useProjectManager(
     const handleBeforeUnload = () => {
       const current = projectsRef.current;
       if (current.length === 0) return;
-      // Attempt synchronous localStorage write first
+      // Attempt synchronous localStorage write first.
+      // beforeunload must not beacon manuscript data to an unrelated endpoint.
       try {
         saveProjects(current);
       } catch {
-        // Fallback: sendBeacon with JSON payload
-        try {
-          const blob = new Blob([JSON.stringify(current)], { type: 'application/json' });
-          navigator.sendBeacon?.('/api/noop', blob);
-        } catch {
-          // Last resort — already attempted sync save above
-        }
+        // Last resort — already attempted sync save above.
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -388,7 +471,7 @@ export function useProjectManager(
     if (restored && restored.length > 0) {
       setProjects(restored);
       setCurrentProjectId(restored[0].id);
-      setCurrentSessionId(restored[0].sessions?.[0]?.id ?? null);
+      setCurrentSessionId(getLatestProjectSessionId(restored[0]));
       return true;
     }
     return false;
@@ -404,42 +487,86 @@ export function useProjectManager(
   // ============================================================
 
   const createNewProject = useCallback((): string => {
+    const now = Date.now();
     const p: Project = {
       id: `project-${crypto.randomUUID()}`,
       name: PROJECT_NAMES[language],
       description: '',
       genre: Genre.SF,
-      createdAt: Date.now(),
-      lastUpdate: Date.now(),
+      createdAt: now,
+      lastUpdate: now,
       sessions: [],
     };
-    setProjects(prev => [...prev, p]);
+    setProjects(prev => [...prev, { ...p, name: makeDefaultProjectName(language, prev) }]);
     setCurrentProjectId(p.id);
     setCurrentSessionId(null);
     return p.id;
   }, [language]);
 
+  const createNewProjectWithSession = useCallback((
+    options: CreateNewProjectWithSessionOptions = {},
+  ): CreateNewProjectWithSessionResult => {
+    const now = Date.now();
+    const config = { ...INITIAL_CONFIG, ...(options.config ?? {}) } as StoryConfig;
+    const session: ChatSession = {
+      id: `session-${crypto.randomUUID()}`,
+      title: options.sessionTitle?.trim() || SESSION_TITLES[language],
+      messages: [],
+      config,
+      lastUpdate: now,
+    };
+    const project: Project = {
+      id: `project-${crypto.randomUUID()}`,
+      name: options.projectName?.trim() || PROJECT_NAMES[language],
+      description: '',
+      genre: config.genre ?? Genre.SF,
+      createdAt: now,
+      lastUpdate: now,
+      sessions: [session],
+    };
+    setProjects(prev => [
+      ...prev,
+      {
+        ...project,
+        name: makeUniqueProjectName(language, prev, options.projectName),
+      },
+    ]);
+    setCurrentProjectId(project.id);
+    setCurrentSessionId(session.id);
+    trackStudioSessionStart();
+    return { projectId: project.id, sessionId: session.id };
+  }, [language]);
+
   const deleteProject = useCallback((projectId: string) => {
     setProjects(prev => {
+      if (!prev.some(p => p.id === projectId)) return prev;
       const remaining = prev.filter(p => p.id !== projectId);
       if (currentProjectId === projectId) {
-        setCurrentProjectId(remaining[0]?.id ?? null);
-        setCurrentSessionId(null);
+        const nextProject = getProjectFallbackAfterDelete(prev, projectId);
+        setCurrentProjectId(nextProject?.id ?? null);
+        setCurrentSessionId(getLatestProjectSessionId(nextProject));
       }
       return remaining;
     });
   }, [currentProjectId]);
 
   const renameProject = useCallback((projectId: string, newName: string) => {
-    setProjects(prev => prev.map(p =>
-      p.id === projectId ? { ...p, name: newName, lastUpdate: Date.now() } : p,
-    ));
-  }, []);
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p;
+      const currentName = normalizeProjectName(p.name);
+      const requestedName = normalizeProjectName(newName);
+      if (!requestedName && currentName) return p;
+      const nextName = makeUniqueProjectName(language, prev, requestedName || currentName, projectId);
+      if (nextName === p.name) return p;
+      return { ...p, name: nextName, lastUpdate: Date.now() };
+    }));
+  }, [language]);
 
   const moveSessionToProject = useCallback((sessionId: string, targetProjectId: string) => {
     setProjects(prev => {
       const src = prev.find(p => p.sessions.some(s => s.id === sessionId));
-      if (!src || src.id === targetProjectId) return prev;
+      const target = prev.find(p => p.id === targetProjectId);
+      if (!src || !target || src.id === targetProjectId) return prev;
       const session = src.sessions.find(s => s.id === sessionId);
       if (!session) return prev;
       return prev.map(p => {
@@ -450,7 +577,10 @@ export function useProjectManager(
         return p;
       });
     });
-    if (currentSessionId === sessionId) setCurrentProjectId(targetProjectId);
+    if (currentSessionId === sessionId) {
+      setCurrentProjectId(targetProjectId);
+      setCurrentSessionId(sessionId);
+    }
   }, [currentSessionId]);
 
   // ============================================================
@@ -466,31 +596,42 @@ export function useProjectManager(
       lastUpdate: Date.now(),
     };
 
-    if (projects.length === 0) {
-      const p: Project = {
-        id: 'project-default',
-        name: '미분류',
-        description: '',
-        genre: Genre.SF,
-        createdAt: Date.now(),
-        lastUpdate: Date.now(),
-        sessions: [newSession],
-      };
-      setProjects([p]);
-      setCurrentProjectId(p.id);
-    } else {
-      setSessions(prev => [newSession, ...prev]);
-    }
+    setProjects(prev => {
+      if (prev.length === 0) {
+        const p: Project = {
+          id: `project-${crypto.randomUUID()}`,
+          name: makeDefaultProjectName(language, prev),
+          description: '',
+          genre: Genre.SF,
+          createdAt: Date.now(),
+          lastUpdate: Date.now(),
+          sessions: [newSession],
+        };
+        setCurrentProjectId(p.id);
+        return [p];
+      }
+
+      const activeProject = currentProjectId
+        ? prev.find(project => project.id === currentProjectId)
+        : null;
+      const targetProject = activeProject ?? prev[0];
+      setCurrentProjectId(targetProject.id);
+      return prev.map(project =>
+        project.id === targetProject.id
+          ? { ...project, sessions: [newSession, ...project.sessions], lastUpdate: Date.now() }
+          : project,
+      );
+    });
     setCurrentSessionId(newSession.id);
     trackStudioSessionStart();
     return newSession.id;
-  }, [language, projects.length, setSessions]);
+  }, [currentProjectId, language]);
 
   const deleteSession = useCallback((sessionId: string) => {
     const remaining = sessions.filter(s => s.id !== sessionId);
     setSessions(remaining);
     if (currentSessionId === sessionId) {
-      setCurrentSessionId(remaining[0]?.id ?? null);
+      setCurrentSessionId(getLatestSessionId(remaining));
     }
   }, [sessions, currentSessionId, setSessions]);
 
@@ -617,7 +758,7 @@ export function useProjectManager(
     setSessions,
     restoreWarning,
     // Project ops
-    createNewProject, deleteProject, renameProject, moveSessionToProject,
+    createNewProject, createNewProjectWithSession, deleteProject, renameProject, moveSessionToProject,
     // Session ops
     createNewSession, deleteSession, clearAllSessions,
     updateCurrentSession, setConfig,

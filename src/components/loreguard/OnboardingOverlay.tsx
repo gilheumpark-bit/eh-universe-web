@@ -1,19 +1,20 @@
 "use client";
 
 /* ===========================================================
-   OnboardingOverlay — 첫 방문 1회 온보딩 (F3)
+   OnboardingOverlay — 수동 재진입 온보딩 (F3)
 
-   표시 조건: localStorage `noa-lg-onboarded` 부재 (readLgOnboarded).
-   부모(LoreguardStudio)가 표시 state 를 소유하고, 본 컴포넌트는 모든
+   표시 조건: 부모(LoreguardStudio)가 표시 state 를 소유한다.
+   첫 화면은 프로젝트 생성이 우선이므로 자동 노출하지 않고, 설정/도움말의
+   "온보딩 다시 보기" 요청으로만 연다. 본 컴포넌트는 모든
    닫힘 경로(완료 액션·건너뛰기·Escape·백드롭)에서 markLgOnboarded 로
    플래그를 기록한 뒤 콜백을 호출한다.
 
-   내용 (3 스텝 + 시작 2버튼 — 전부 실재 기능만):
-   ① 창작 흐름 — 셸의 실제 6탭 (세계관→캐릭터→플롯→연출→집필→번역,
+  내용 (3 스텝 + 시작 2버튼 — 전부 실재 기능만):
+   ① 창작 흐름 — 셸의 실제 10단계 (프로젝트 생성→세계관→출고,
       LOREGUARD_TABS 순서 동일) 칩으로 한눈에.
-   ② AI는 호출형 — 생성바·제안 채택으로 부를 때만 (R1 가드레일 문구 일치).
+   ② 노아는 요청형 — 요청바·제안 채택으로 부를 때만 (R1 가드레일 문구 일치).
    ③ 창작 과정 자동 기록 → 확인서 발급 (CpJournalPanel 실 기능) 한 줄.
-   ④ "빈 프로젝트로 시작" + "AI로 샘플 프로젝트 만들기" — 실 핸들러 배선
+   ④ "빈 프로젝트로 시작" + "노아 샘플로 시작" — 실 핸들러 배선
       (부모가 createNewSession / 세계관 탭 이동 / 입력 프리필 수행).
 
    a11y: role=dialog aria-modal + useFocusTrap (Tab 순환·첫 focusable
@@ -39,6 +40,7 @@ import {
   Sparkle,
   ChevronR,
   Plus,
+  Download,
   X,
 } from "./icons";
 
@@ -95,7 +97,7 @@ interface OnboardingOverlayProps {
   onClose: () => void;
   /** "빈 프로젝트로 시작" — 부모가 세션 보장 + 세계관 탭 이동. */
   onStartEmpty: () => void;
-  /** "AI로 샘플 프로젝트 만들기" — 부모가 새 작품 생성 + 세계관 탭 + AI 유도. */
+  /** "노아 샘플로 시작" — 부모가 새 작품 생성 + 세계관 탭 + 노아 요청 유도. */
   onStartSample: () => void;
 }
 
@@ -134,17 +136,21 @@ export default function OnboardingOverlay({
     onStartSample();
   };
 
-  // ---- 문구 (4언어 · 실재 기능만 — 미구현 기능 소개 금지) ----
+  // ---- 문구 (4언어 · 실재 기능만 — 비활성 기능 소개 금지) ----
   const skipLabel = L4(language, { ko: "건너뛰기", en: "Skip", ja: "スキップ", zh: "跳过" });
 
-  // 실제 셸 6탭 (LOREGUARD_TABS 순서·아이콘 동일)
+  // 실제 셸 10단계 (LOREGUARD_TABS 순서·아이콘 동일)
   const flow = [
+    { Icon: Plus, label: L4(language, { ko: "프로젝트 생성", en: "Project", ja: "プロジェクト", zh: "项目" }) },
     { Icon: Globe, label: L4(language, { ko: "세계관", en: "World", ja: "世界観", zh: "世界观" }) },
-    { Icon: User, label: L4(language, { ko: "캐릭터", en: "Characters", ja: "キャラクター", zh: "角色" }) },
-    { Icon: Branch, label: L4(language, { ko: "플롯", en: "Plot", ja: "プロット", zh: "情节" }) },
+    { Icon: User, label: L4(language, { ko: "캐릭터·아이템", en: "Characters", ja: "キャラクター", zh: "角色" }) },
+    { Icon: Branch, label: L4(language, { ko: "메인 시나리오", en: "Scenario", ja: "シナリオ", zh: "主线" }) },
+    { Icon: Film, label: L4(language, { ko: "씬시트", en: "Scene sheet", ja: "シーン表", zh: "场景表" }) },
     { Icon: Film, label: L4(language, { ko: "연출", en: "Direction", ja: "演出", zh: "演出" }) },
     { Icon: Pen, label: L4(language, { ko: "집필", en: "Writing", ja: "執筆", zh: "写作" }) },
-    { Icon: Languages, label: L4(language, { ko: "번역", en: "Translate", ja: "翻訳", zh: "翻译" }) },
+    { Icon: Scroll, label: L4(language, { ko: "퇴고", en: "Revision", ja: "推敲", zh: "修订" }) },
+    { Icon: Languages, label: L4(language, { ko: "번역·현지화", en: "Localization", ja: "翻訳・ローカライズ", zh: "翻译本地化" }) },
+    { Icon: Download, label: L4(language, { ko: "출고", en: "Release", ja: "出稿", zh: "交付" }) },
   ];
 
   return (
@@ -175,10 +181,10 @@ export default function OnboardingOverlay({
             </h2>
             <p className="noa-onboard-sub">
               {L4(language, {
-                ko: "소설가의 IDE — 1분 안에 핵심만 안내해 드릴게요",
-                en: "The IDE for novelists — a one-minute tour of the essentials",
-                ja: "小説家のIDE — 1分で要点だけご案内します",
-                zh: "小说家的 IDE — 一分钟带您了解核心功能",
+                ko: "창작 전문 IDE — 1분 안에 핵심만 안내해 드릴게요",
+                en: "Creative IDE — a one-minute tour of the essentials",
+                ja: "創作専門IDE — 1分で要点だけご案内します",
+                zh: "专业创作 IDE — 一分钟带您了解核心功能",
               })}
             </p>
           </div>
@@ -189,7 +195,7 @@ export default function OnboardingOverlay({
 
         {/* steps */}
         <ol className="noa-onboard-steps">
-          {/* ① 창작 흐름 — 실재 6탭 */}
+          {/* ① 창작 흐름 — 실재 10단계 */}
           <li className="noa-onboard-step">
             <span className="noa-onboard-ic" aria-hidden="true">
               <Globe size={17} />
@@ -197,18 +203,18 @@ export default function OnboardingOverlay({
             <div>
               <strong>
                 {L4(language, {
-                  ko: "세계관부터 번역까지, 한 흐름",
-                  en: "One flow — from world to translation",
-                  ja: "世界観から翻訳まで、ひとつの流れ",
-                  zh: "从世界观到翻译，一条创作流",
+                  ko: "프로젝트 생성부터 출고까지, 한 흐름",
+                  en: "One flow — from project setup to release",
+                  ja: "プロジェクト作成から出稿まで、ひとつの流れ",
+                  zh: "从项目创建到交付，一条创作流",
                 })}
               </strong>
               <p>
                 {L4(language, {
-                  ko: "상단 6개 탭이 곧 창작 단계입니다. 순서대로 진행해도, 필요한 탭만 골라 써도 됩니다.",
-                  en: "The six tabs above are your creative stages. Follow them in order, or jump to what you need.",
-                  ja: "上部の6タブが創作ステップです。順番に進めても、必要なタブだけ使ってもOKです。",
-                  zh: "顶部的 6 个标签就是创作阶段。可以按顺序推进，也可以只用需要的标签。",
+                  ko: "상단 10단계가 곧 창작 공정입니다. 순서대로 진행해도, 필요한 단계만 골라 써도 됩니다.",
+                  en: "The ten tabs above are your creative workflow. Follow them in order, or jump to what you need.",
+                  ja: "上部の10ステップが創作工程です。順番に進めても、必要な段階だけ使っても構いません。",
+                  zh: "顶部的 10 个步骤就是创作流程。可以按顺序推进，也可以只用需要的步骤。",
                 })}
               </p>
               <div className="noa-onboard-flow">
@@ -227,7 +233,7 @@ export default function OnboardingOverlay({
             </div>
           </li>
 
-          {/* ② AI 호출형 — R1 가드레일 문구 일치 */}
+          {/* ② 노아 요청형 — R1 가드레일 문구 일치 */}
           <li className="noa-onboard-step">
             <span className="noa-onboard-ic" aria-hidden="true">
               <Wand size={17} />
@@ -235,18 +241,18 @@ export default function OnboardingOverlay({
             <div>
               <strong>
                 {L4(language, {
-                  ko: "AI는 호출형 — 본문은 작가의 것",
-                  en: "AI on call — the manuscript stays yours",
-                  ja: "AIは呼び出し型 — 本文は作家のもの",
-                  zh: "AI 按需调用 — 正文始终属于作者",
+                  ko: "노아는 요청형 — 본문은 작가의 것",
+                  en: "Noa on request — the manuscript stays yours",
+                  ja: "Noaは依頼型 — 本文は作家のもの",
+                  zh: "Noa 按需协助 — 正文始终属于作者",
                 })}
               </strong>
               <p>
                 {L4(language, {
-                  ko: "AI는 생성바와 제안 채택으로 부를 때만 개입합니다. 채택하기 전에는 본문이 바뀌지 않습니다.",
-                  en: "AI steps in only when you call it — via the generation bar and suggestion adoption. Nothing changes until you adopt.",
-                  ja: "AIは生成バーと提案の採択で呼び出した時だけ関与します。採択するまで本文は変わりません。",
-                  zh: "AI 只在您通过生成栏和建议采纳调用时介入。在采纳之前，正文不会被改动。",
+                  ko: "노아는 요청바와 제안 채택으로 부를 때만 개입합니다. 채택하기 전에는 본문이 바뀌지 않습니다.",
+                  en: "Noa steps in only when you ask — via the request bar and suggestion adoption. Nothing changes until you adopt.",
+                  ja: "Noaは依頼バーと提案の採択で呼び出した時だけ関与します。採択するまで本文は変わりません。",
+                  zh: "Noa 只在您通过请求栏和建议采纳调用时介入。在采纳之前，正文不会被改动。",
                 })}
               </p>
             </div>
@@ -292,10 +298,10 @@ export default function OnboardingOverlay({
           <button type="button" className="noa-onboard-alt" onClick={handleStartSample}>
             <Sparkle size={15} aria-hidden="true" />
             {L4(language, {
-              ko: "AI로 샘플 프로젝트 만들기",
-              en: "Create a sample project with AI",
-              ja: "AIでサンプルプロジェクトを作る",
-              zh: "用 AI 创建示例项目",
+              ko: "노아 샘플로 시작",
+              en: "Start with a Noa sample",
+              ja: "Noaサンプルで始める",
+              zh: "从 Noa 示例开始",
             })}
           </button>
           <button type="button" className="noa-onboard-skip" onClick={skip}>

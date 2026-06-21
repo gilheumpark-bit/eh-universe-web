@@ -9,10 +9,11 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Smartphone, X, Download, Trash2 } from 'lucide-react';
+import { Smartphone, X, Download, Trash2, ArrowRight } from 'lucide-react';
 import { L4 } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import type { Lang } from '@/lib/LangContext';
 
 // ============================================================
 // PART 1 — 타입 및 상수
@@ -54,6 +55,7 @@ interface SketchSummary {
   characterCount: number;
   plotCount: number;
   total: number;
+  lastUpdated: number | null;
 }
 
 // ============================================================
@@ -80,36 +82,70 @@ function summarize(store: MobileSketchStore): SketchSummary {
   const w = store.worldMemos.length;
   const c = store.characters.length;
   const p = store.plots.length;
-  return { worldCount: w, characterCount: c, plotCount: p, total: w + c + p };
+  const lastUpdated = [
+    ...store.worldMemos.map((item) => item.updatedAt),
+    ...store.characters.map((item) => item.updatedAt),
+    ...store.plots.map((item) => item.updatedAt),
+  ].filter((value) => Number.isFinite(value)).sort((a, b) => b - a)[0] ?? null;
+  return { worldCount: w, characterCount: c, plotCount: p, total: w + c + p, lastUpdated };
 }
 
-function buildReferenceText(store: MobileSketchStore): { synopsis: string; reference: string } {
+function buildReferenceText(store: MobileSketchStore, lang: Lang): { synopsis: string; reference: string } {
+  const sourceNote = L4(lang, {
+    ko: '모바일 스케치에서 데스크톱 프로젝트로 옮긴 원천 메모입니다. PC에서 세계관·캐릭터·플롯 양식으로 다듬어 사용하세요.',
+    en: 'Source notes moved from Mobile Sketch to the desktop project. Refine them into world, character, and plot forms on desktop.',
+    ja: 'モバイルスケッチからデスクトッププロジェクトへ移した原資料メモです。PCで世界観・キャラクター・プロットの形式に整えてください。',
+    zh: '这是从移动速写转入桌面项目的源备忘。请在桌面端整理为世界观、角色与情节表单。',
+  });
+  const worldHeading = L4(lang, {
+    ko: '## 모바일 세계관 메모',
+    en: '## Mobile World Notes',
+    ja: '## モバイル世界観メモ',
+    zh: '## 移动世界观备忘',
+  });
+  const characterHeading = L4(lang, {
+    ko: '## 모바일 캐릭터 스케치',
+    en: '## Mobile Character Sketches',
+    ja: '## モバイルキャラクタースケッチ',
+    zh: '## 移动角色速写',
+  });
+  const plotHeading = L4(lang, {
+    ko: '## 모바일 플롯 씨앗',
+    en: '## Mobile Plot Seeds',
+    ja: '## モバイルプロットの種',
+    zh: '## 移动情节种子',
+  });
   const worldBlock = store.worldMemos.length
-    ? '## World Memos\n' + store.worldMemos.map(m => `- ${m.text}`).join('\n')
+    ? `${worldHeading}\n` + store.worldMemos.map(m => `- ${m.text}`).join('\n')
     : '';
   const charBlock = store.characters.length
-    ? '## Characters\n' + store.characters
+    ? `${characterHeading}\n` + store.characters
         .map(c => `- **${c.name}**${c.role ? ` (${c.role})` : ''}${c.traits ? `: ${c.traits}` : ''}`)
         .join('\n')
     : '';
   const plotBlock = store.plots.length
-    ? '## Plot Ideas\n' + store.plots.map(p => `### ${p.title}\n${p.body}`).join('\n\n')
+    ? `${plotHeading}\n` + store.plots.map(p => `### ${p.title}\n${p.body}`).join('\n\n')
     : '';
-  const reference = [worldBlock, charBlock, plotBlock].filter(Boolean).join('\n\n');
-  const synopsis = store.plots[0]?.body?.slice(0, 400) || '';
+  const reference = [sourceNote, worldBlock, charBlock, plotBlock].filter(Boolean).join('\n\n');
+  const synopsis = (store.plots[0]?.body || store.worldMemos[0]?.text || '').slice(0, 400);
   return { synopsis, reference };
 }
 
-function importAsProject(store: MobileSketchStore, summary: SketchSummary): boolean {
+function importAsProject(store: MobileSketchStore, summary: SketchSummary, lang: Lang): boolean {
   if (typeof window === 'undefined') return false;
   try {
     const raw = localStorage.getItem(PROJECTS_KEY);
     const list: unknown = raw ? JSON.parse(raw) : [];
     const projects = Array.isArray(list) ? list : [];
-    const { synopsis, reference } = buildReferenceText(store);
+    const { synopsis, reference } = buildReferenceText(store, lang);
     const now = Date.now();
     const id = `p_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-    const name = `\uD83D\uDCF1 Mobile Memo (${summary.worldCount}/${summary.characterCount}/${summary.plotCount})`;
+    const name = L4(lang, {
+      ko: `모바일 스케치 (${summary.worldCount}/${summary.characterCount}/${summary.plotCount})`,
+      en: `Mobile Sketch (${summary.worldCount}/${summary.characterCount}/${summary.plotCount})`,
+      ja: `モバイルスケッチ (${summary.worldCount}/${summary.characterCount}/${summary.plotCount})`,
+      zh: `移动速写 (${summary.worldCount}/${summary.characterCount}/${summary.plotCount})`,
+    });
     const newProject = {
       id,
       name,
@@ -154,31 +190,42 @@ export default function MobileSketchImportBanner() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
+  const refreshSummary = useCallback(() => {
     if (!mounted || isMobile) return;
     // 세션 숨김 체크
     try {
       if (sessionStorage.getItem(DISMISS_KEY) === '1') return;
     } catch { /* ignore */ }
     const store = readSketch();
-    if (!store) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSummary(summarize(store));
+    setSummary(store ? summarize(store) : null);
   }, [mounted, isMobile]);
+
+  useEffect(() => {
+    if (!mounted || isMobile) return;
+    const onSketchChange = () => refreshSummary();
+    const refreshTimer = window.setTimeout(onSketchChange, 0);
+    window.addEventListener('storage', onSketchChange);
+    window.addEventListener('noa:mobile-sketch-updated', onSketchChange);
+    return () => {
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener('storage', onSketchChange);
+      window.removeEventListener('noa:mobile-sketch-updated', onSketchChange);
+    };
+  }, [mounted, isMobile, refreshSummary]);
 
   const handleImport = useCallback(() => {
     const store = readSketch();
     if (!store) { setSummary(null); return; }
     const s = summarize(store);
-    const ok = importAsProject(store, s);
+    const ok = importAsProject(store, s, lang);
     if (ok) {
       try { localStorage.removeItem(SKETCH_KEY); } catch { /* ignore */ }
       setSummary(null);
       setToast(L4(lang, {
-        ko: '모바일 메모를 새 프로젝트로 불러왔습니다',
-        en: 'Mobile memos imported as new project',
-        ja: 'モバイルメモを新規プロジェクトに取り込みました',
-        zh: '已将移动备忘导入为新项目',
+        ko: '모바일 스케치를 새 프로젝트로 가져왔습니다',
+        en: 'Mobile sketch imported as a new project',
+        ja: 'モバイルスケッチを新規プロジェクトに取り込みました',
+        zh: '已将移动速写导入为新项目',
       }));
       setTimeout(() => setToast(null), 3200);
       // 프로젝트 목록 리로드 유도
@@ -237,10 +284,10 @@ export default function MobileSketchImportBanner() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-text-primary">
                 {L4(lang, {
-                  ko: `모바일에서 작성한 메모 ${summary.total}건이 있어요`,
-                  en: `${summary.total} mobile memo${summary.total === 1 ? '' : 's'} found`,
-                  ja: `モバイルで作成したメモが ${summary.total} 件あります`,
-                  zh: `发现 ${summary.total} 条移动端备忘`,
+                  ko: `PC 가공 대기 중인 모바일 스케치 ${summary.total}건`,
+                  en: `${summary.total} mobile sketch item${summary.total === 1 ? '' : 's'} waiting for desktop refinement`,
+                  ja: `PCで整理待ちのモバイルスケッチ ${summary.total} 件`,
+                  zh: `${summary.total} 条移动速写等待桌面整理`,
                 })}
               </p>
               <p className="text-xs text-text-tertiary mt-0.5">
@@ -249,6 +296,14 @@ export default function MobileSketchImportBanner() {
                   en: `World ${summary.worldCount} · Characters ${summary.characterCount} · Plots ${summary.plotCount}`,
                   ja: `世界観 ${summary.worldCount} · キャラ ${summary.characterCount} · プロット ${summary.plotCount}`,
                   zh: `世界观 ${summary.worldCount} · 角色 ${summary.characterCount} · 情节 ${summary.plotCount}`,
+                })}
+              </p>
+              <p className="text-[11px] text-text-quaternary mt-1">
+                {L4(lang, {
+                  ko: '새 프로젝트로 가져온 뒤 세계관·캐릭터·플롯 양식에 맞게 다듬을 수 있습니다.',
+                  en: 'Import it as a new project, then refine it into world, character, and plot forms.',
+                  ja: '新規プロジェクトに取り込み、世界観・キャラクター・プロット形式に整えられます。',
+                  zh: '可导入为新项目，再整理为世界观、角色与情节表单。',
                 })}
               </p>
             </div>
@@ -268,7 +323,8 @@ export default function MobileSketchImportBanner() {
               className="flex-1 flex items-center justify-center gap-1.5 py-2 min-h-[44px] px-3 bg-accent-purple text-white text-xs font-bold rounded-lg hover:bg-accent-purple/90 focus-visible:ring-2 focus-visible:ring-accent-blue transition-colors"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
-              {L4(lang, { ko: '불러오기', en: 'Import', ja: '取り込み', zh: '导入' })}
+              {L4(lang, { ko: '새 프로젝트로 가져오기', en: 'Import as new project', ja: '新規プロジェクトに取り込み', zh: '导入为新项目' })}
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"

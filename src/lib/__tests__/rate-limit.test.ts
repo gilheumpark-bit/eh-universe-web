@@ -9,6 +9,8 @@
 
 describe('rate-limit', () => {
   let checkRateLimit: typeof import('@/lib/rate-limit').checkRateLimit;
+  let setRateLimitBackend: typeof import('@/lib/rate-limit').setRateLimitBackend;
+  let resetRateLimitBackendForTests: typeof import('@/lib/rate-limit').resetRateLimitBackendForTests;
   let getClientIp: typeof import('@/lib/rate-limit').getClientIp;
   let RATE_LIMITS: typeof import('@/lib/rate-limit').RATE_LIMITS;
 
@@ -17,8 +19,14 @@ describe('rate-limit', () => {
      
     const mod = require('@/lib/rate-limit');
     checkRateLimit = mod.checkRateLimit;
+    setRateLimitBackend = mod.setRateLimitBackend;
+    resetRateLimitBackendForTests = mod.resetRateLimitBackendForTests;
     getClientIp = mod.getClientIp;
     RATE_LIMITS = mod.RATE_LIMITS;
+  });
+
+  afterEach(() => {
+    resetRateLimitBackendForTests();
   });
 
   // ============================================================
@@ -97,6 +105,22 @@ describe('rate-limit', () => {
     it('defines default preset', () => {
       expect(RATE_LIMITS.default.windowMs).toBe(60_000);
       expect(RATE_LIMITS.default.maxRequests).toBe(60);
+    });
+  });
+
+  describe('async backend safety', () => {
+    it('fails closed when a sync caller is used with an async backend', () => {
+      setRateLimitBackend({
+        name: 'async-test',
+        async check() {
+          return { allowed: true, retryAfterMs: 0 };
+        },
+      });
+
+      const result = checkRateLimit('7.7.7.7', 'sync-route', { windowMs: 60_000, maxRequests: 10 });
+
+      expect(result.allowed).toBe(false);
+      expect(result.retryAfterMs).toBe(60_000);
     });
   });
 

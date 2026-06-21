@@ -27,6 +27,7 @@ interface StyleTabProps {
   triggerSave: () => void;
   saveFlash: boolean;
   showAiLock?: boolean;
+  currentProjectId?: string | null;
   hostedProviders?: Record<string, boolean>;
   messages?: Message[];
 }
@@ -41,6 +42,7 @@ const StyleTab: React.FC<StyleTabProps> = ({
   triggerSave,
   saveFlash,
   showAiLock = false,
+  currentProjectId = null,
   hostedProviders = {},
   messages = [],
 }) => {
@@ -79,10 +81,10 @@ const StyleTab: React.FC<StyleTabProps> = ({
         icon="🎨"
         title={L4(language, { ko: '문체', en: 'Style', ja: '文体', zh: '文体' })}
         description={L4(language, {
-          ko: '레이더 6축으로 문체 조정 · 프리셋 추천',
-          en: 'Tune style via 6-axis radar · preset recommendations',
-          ja: '6軸レーダーでスタイル調整・プリセット推奨',
-          zh: '通过 6 轴雷达调节文体 · 预设推荐',
+          ko: '문체 항목을 조정하고 맞는 프리셋을 추천합니다',
+          en: 'Tune style traits and get fitting preset recommendations',
+          ja: '文体項目を調整し、合うプリセットを提案します',
+          zh: '调整文体项目并推荐合适预设',
         })}
       />
       <StyleStudioView
@@ -125,7 +127,13 @@ const StyleTab: React.FC<StyleTabProps> = ({
       )}
       {!showAiLock && (
         <div className="max-w-6xl mx-auto px-4 pb-4">
-          <TabAssistant tab="style" language={language} config={config} hostedProviders={hostedProviders} />
+          <TabAssistant
+            tab="style"
+            language={language}
+            config={config}
+            currentProjectId={currentProjectId}
+            hostedProviders={hostedProviders}
+          />
         </div>
       )}
       <div className="max-w-6xl mx-auto px-4 pb-8 flex justify-end">

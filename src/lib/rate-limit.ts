@@ -10,6 +10,8 @@
 //   백엔드를 인터페이스화하여 운영 환경에서 Redis/Edge KV 로 교체 가능하게 함.
 //   기본값은 메모리 (dev/test). prod 부팅 시점에 setRateLimitBackend() 호출 필요.
 
+import { logger } from './logger';
+
 export interface RateLimitConfig {
   windowMs: number;
   maxRequests: number;
@@ -92,6 +94,10 @@ export function setRateLimitBackend(backend: RateLimitBackend): void {
   activeBackend = backend;
 }
 
+export function resetRateLimitBackendForTests(): void {
+  activeBackend = new MemoryBackend();
+}
+
 export function getRateLimitBackendName(): string {
   return activeBackend.name;
 }
@@ -114,11 +120,11 @@ export function checkRateLimit(
   const key = `${route}:${ip}`;
   const result = activeBackend.check(key, config);
   if (result instanceof Promise) {
-    // Async backend installed but caller used sync API — fail-open with warning to keep route alive.
-    // Migrate caller to checkRateLimitAsync().
-    // eslint-disable-next-line no-console
-    console.warn('[rate-limit] async backend used via sync checkRateLimit — migrate to checkRateLimitAsync');
-    return { allowed: true, retryAfterMs: 0 };
+    logger.error(
+      'rate-limit',
+      'async backend used via sync checkRateLimit — fail closed; migrate caller to checkRateLimitAsync',
+    );
+    return { allowed: false, retryAfterMs: config.windowMs };
   }
   return result;
 }

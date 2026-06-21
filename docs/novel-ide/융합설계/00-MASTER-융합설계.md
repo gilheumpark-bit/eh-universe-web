@@ -1,5 +1,6 @@
 # 융합 설계 MASTER — 창작(claude) + 번역(claude2) → 기존 앱 (빠짐 없이)
 
+> **2026-06-19 상태선**: 이 폴더는 내부 설계 원장이다. 현재 공개 제품 기능 목록이 아니다. `wired` 표기는 작성 당시 seam 후보 또는 일부 연결 가능성을 뜻하며, UI/API/storage/test까지 검증된 활성 기능 약속이 아니다. 최신 공개 표면 기준은 `docs/ARCHITECTURE.md`, `docs/PRODUCT-FRAME.md`, `docs/CLEANUP-STATUS.md`, `docs/novel-ide/README.md`를 우선한다.
 > 목표: 두 지침 시스템(claude=창작 ~100모듈 / claude2=번역 ~95모듈)을 **기존 eh-universe-web에 어댑터 융합**. greenfield 아님.
 > "빠짐 없이"의 보장 = **완전한 구조(이 문서) × 모듈 단위 fill(02·03·04)**. 패딩 1000항목 X — 모든 지침 모듈 × 모든 앱 통합 지점이 *한 칸도 안 빠지게* 매핑.
 > 상태: 설계·대기. 코드 착수 보류. 모든 항목에 **검증 등급**(✅직접 / ⬜Agent / ⚠️미검증) + **구현 상태**(wired/partial/phantom/design).
@@ -10,6 +11,7 @@
 
 | 문서 | 내용 | 상태 |
 |---|---|---|
+| `README.md` | 현재 상태판 + 오독 방지 기준 | 현재 |
 | `00-MASTER` (이 문서) | 융합 원칙 + 통합 표면 + 완전성 구조 + 채움 방법론 | 작성중 |
 | `01-통합표면.md` | 기존 앱 "into what" 전수 인벤토리 (데이터·탭·저장·AI·증명·번역·격리) | 예정 (본 MASTER §2가 요약 보유) |
 | `02-창작융합.md` | claude `_도구`/`_사상` 모듈 → 앱 seam 전수 매핑 | **✅ 작성(177행, 2026-06-06)** + `_검증_표본.md` |
@@ -50,14 +52,14 @@
 - ✅ `StyleProfile` · `Item`(3-tier) · `AppTab` 11종 · `WorldSubTab` 5종
 
 ### 2.2 탭·UI (재사용 대상)
-- ✅ 탭: WorldTab·CharacterTab·SceneSheetTab·ManuscriptTab·WritingTab·RulebookTab·StyleTab·HistoryTab·VisualTab
+- ⚠️ 매핑 당시 탭 후보: WorldTab·CharacterTab·SceneSheetTab·ManuscriptTab·WritingTab·StyleTab·HistoryTab·VisualTab. `RulebookTab` 표기는 역사 흔적이며 현 공개 제품으로 복구하지 않는다.
 - ✅ 컴포넌트: WorldStudioView·WorldMap·WorldTimeline·WorldAnalysisView·**CharacterRelationGraph**·SceneSheet·EpisodeScenePanel·EpisodeExplorer·EndingLockSection
 - ✅ NovelEditor(Tiptap) · OSDesktop/WindowTitleBar(인앱 윈도우) · ChatPanel/RightChatPanel
 
 ### 2.3 저장 (절대금지8 우회 — hook만)
 - ✅ `useProjectManager`·`usePrimaryWriter`·`useShadowProjectWriter` · `save-engine/index.ts`(public)
 - ✅ operation 태그: save-project/manuscript/scene-direction/character/world-sim/style/...
-- ✅ GitHub: `github-sync`·`useGitHubSync`·`useGitHubAutoSync` · `workspace-trust`·`WorkspaceTrustDialog`
+- ✅ GitHub: `github-sync`·`useGitHubSync`·`useGitHubAutoSync`
 
 ### 2.4 AI 호출 (writing-agent-registry 등)
 - ✅ `generateJsonViaSpark`(`geminiStructuredTaskService.ts` — 구조화 생성 = chat→form fill 엔진)
@@ -87,7 +89,7 @@ studio-types · save-engine/* · origin-migration · useOriginTracker · OriginB
 |---|---|---|---|---|---|
 
 ### 3.A 창작(claude) 도메인 — 전수 대상 (`02-창작융합`)
-`00_핵심`(enforcement/voice/BIBLE/부담) · `01_페르소나` · `02_장르`(baseline/초반5화) · `03_세계관_캐릭`(플롯/메인스토리/시놉/캐릭분류) · `04_씬시트_연출`(beat/긴장/Peak/컬러/PV ~18모듈) · `05_집필`(5파트/후크/금지패턴/voice/baseline) · `06_퇴고_출고`(6단계/자수/플랫폼) · `07_IP_자산화` · `08_검증_측정`(Cycle정합/진입게이트/6축/권위본갱신) · `09_보조`(제작노트/작업노트/dashboard/종합파일) · `10_이력` · `novel_knowledge`(장르·작법·캐릭 코퍼스=RAG)
+`00_핵심`(enforcement/voice/BIBLE/부담) · `01_페르소나` · `02_장르`(baseline/초반5화) · `03_세계관_캐릭`(플롯/메인스토리/시놉/캐릭분류) · `04_씬시트_연출`(beat/긴장/Peak/컬러/PV ~18모듈) · `05_집필`(5파트/후크/금지패턴/voice/baseline) · `06_퇴고_출고`(6단계/자수/플랫폼) · `07_IP_자산화` · `08_검증_측정`(Cycle정합/진입게이트/6축/권위본갱신) · `09_보조`(제작노트/작업노트/dashboard/종합파일) · `10_이력` · `novel_knowledge`(외부 검토 코퍼스. 앱 자동 주입/RAG 입력원 아님)
 
 ### 3.B 번역(claude2) 도메인 — 전수 대상 (`03-번역융합`)
 `_도구`: 파이프라인(챕터분할/세그먼트/패스스루/원문무결성) · 용어(용어집관리/추출기/호칭매트릭스/정착어) · TM(번역메모리/XLIFF_TMX) · 품질(MQM_Core_8/신경망metric/NCG_NCT/벤치마크/테스트케이스) · 문화(화용론/아이러니/고저맥락/CSI/정서어/문화컨설턴트/현지화우회) · 도메인(프리셋8/장르매트릭스8/SF/기준작) · 페르소나(3가상번역가/15독자/베타리더/선발/별점테러) · transcreation/post_editing/역번역 · cross(2_LLM/외부친구) · 증명(저자사인오프/작가검증layer/dashboard/피드백) · 출판(EPUB_DOCX/플랫폼어댑터4/메타데이터/감사/다국어배치) · 매체확장(웹툰/시나리오/게임/오디오북/챗봇)
@@ -109,7 +111,7 @@ template: 번역(faithful/market/segment) · 검수(scoring/audit/voice-guard/na
 3. **Agent 추출 → 직접 재검증** (Agent-4 경로 허위 교훈 — 인용 경로·심볼 glob/grep 실측).
 4. **04 증명·05 인터뷰·06 ingest = 횡단 통합** (모듈 매핑 후).
 5. **07 = 상태 집계** → wired/partial/phantom/design 카운트 + 우선순위.
-6. **완전성 검증**: 모듈 행 수 = `_도구`+`_사상`+template glob 수. 미매핑 0건.
+6. **완전성 검증**: 모듈 행 수 = `_도구`+`_사상`+template glob 수와 맞는지 확인한다. `[미매핑·확인필요]`은 0건으로 간주하지 않고 후속 firsthand 검증 대상으로 유지한다.
 
 ---
 

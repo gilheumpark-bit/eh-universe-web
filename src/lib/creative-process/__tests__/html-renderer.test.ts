@@ -84,6 +84,17 @@ describe('html-renderer — 3 view × 4 lang = 12 cases', () => {
     expect(html).toContain('<!doctype html>');
     expect(html).toContain('disclaimer-first-line');
   });
+
+  it('한국어 HTML 확인서의 씰 라벨은 한국어로 출력한다', () => {
+    const cert = {
+      ...makeCert(),
+      sealNumber: 'LG-2606-0001-TEST',
+    };
+    const html = renderCertificateHtml(cert, makeSections('ko'), 'private', 'ko');
+
+    expect(html).toContain('과정기록 씰 #LG-2606-0001-TEST');
+    expect(html).not.toContain('Witness Seal #LG-2606-0001-TEST');
+  });
 });
 
 describe('html-renderer — escapeHtml XSS 방어', () => {

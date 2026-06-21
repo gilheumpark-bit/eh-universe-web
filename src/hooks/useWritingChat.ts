@@ -1,7 +1,11 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import type { Message, AppLanguage } from '@/lib/studio-types';
 import { streamChat, type ChatMsg } from '@/lib/ai-providers';
-import { applyMemoryPolicy, clearStoredSummary } from '@/lib/ai/chat-memory-policy';
+import {
+  applyMemoryPolicy,
+  buildProjectScopedMemoryKey,
+  clearStoredSummary,
+} from '@/lib/ai/chat-memory-policy';
 import { NoaBlockedError } from '@/lib/noa/block-notice';
 import { logger } from '@/lib/logger';
 
@@ -50,10 +54,14 @@ function buildWritingChatSystem(language: AppLanguage, ctx?: NovelContext): stri
  * useWritingChat - 집필 탭 전용 독립 AI 채팅 훅
  * streamChat()를 통해 실제 AI 응답을 스트리밍.
  */
-export function useWritingChat(novelContext?: NovelContext) {
+export function useWritingChat(novelContext?: NovelContext, projectId?: string | null) {
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const memoryTab = useMemo(
+    () => buildProjectScopedMemoryKey(WRITING_CHAT_TAB, projectId),
+    [projectId],
+  );
 
   // Ref to avoid stale closure over chatMessages in sendChat
   const chatMessagesRef = useRef(chatMessages);
@@ -87,7 +95,7 @@ export function useWritingChat(novelContext?: NovelContext) {
       // [N3-memory-hybrid] slice(-10) → 탭 차등 정책 모듈 경유.
       // heavy(집필) = full 이력 + 요약 블록(system에 부착 — truncateMessages 최후 안전망과 충돌 X).
       const memory = applyMemoryPolicy(
-        WRITING_CHAT_TAB,
+        memoryTab,
         chatMessagesRef.current.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
         language,
       );
@@ -98,6 +106,7 @@ export function useWritingChat(novelContext?: NovelContext) {
         systemInstruction: buildWritingChatSystem(language, novelContext) + memory.summaryBlock,
         messages: history,
         temperature: 0.7,
+        reasoningStage: 'draft',
         signal: abortControllerRef.current.signal,
         isChatMode: true,
         onChunk: (chunk) => {
@@ -128,7 +137,7 @@ export function useWritingChat(novelContext?: NovelContext) {
         setChatMessages(prev =>
           prev.map(m =>
             m.id === assistantMsgId && !m.content
-              ? { ...m, content: language === 'KO' ? '⚠ AI 응답 실패. 다시 시도해주세요.' : '⚠ AI response failed. Please try again.' }
+              ? { ...m, content: language === 'KO' ? '⚠ 노아 응답 실패. 다시 시도해주세요.' : '⚠ Noa response failed. Please try again.' }
               : m
           )
         );
@@ -137,7 +146,7 @@ export function useWritingChat(novelContext?: NovelContext) {
       setChatLoading(false);
       abortControllerRef.current = null;
     }
-  }, [chatLoading, novelContext]);
+  }, [chatLoading, memoryTab, novelContext]);
 
   const abortChat = useCallback(() => {
     if (abortControllerRef.current) {
@@ -149,9 +158,9 @@ export function useWritingChat(novelContext?: NovelContext) {
   const clearChat = useCallback(() => {
     setChatMessages([]);
     // [N3-memory-hybrid] 이전 대화 요약이 새 대화로 누수되지 않게 함께 삭제
-    clearStoredSummary(WRITING_CHAT_TAB);
+    clearStoredSummary(memoryTab);
     abortChat();
-  }, [abortChat]);
+  }, [abortChat, memoryTab]);
 
   return {
     chatMessages,

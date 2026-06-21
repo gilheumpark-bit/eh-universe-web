@@ -92,6 +92,22 @@ describe('useStudioWritingMode', () => {
     cleanup();
   });
 
+  it('sanitizes restored editDraft residue before showing it', () => {
+    localStorage.setItem('noa_editdraft_sess-B2', 'AI-TEST-INPUT 본문');
+    const { get, cleanup } = createHarness('sess-B2');
+    act(() => { jest.runAllTimers(); });
+    expect(get().editDraft).toBe('본문');
+    expect(localStorage.getItem('noa_editdraft_sess-B2')).toBe('본문');
+    cleanup();
+  });
+
+  it('stores sanitized editDraft residue in localStorage', () => {
+    const { get, cleanup } = createHarness('sess-A2');
+    act(() => { get().setEditDraft('AI-TEST-INPUT 저장 본문'); });
+    expect(localStorage.getItem('noa_editdraft_sess-A2')).toBe('저장 본문');
+    cleanup();
+  });
+
   it('does not restore when hydrated is false', () => {
     localStorage.setItem('noa_editdraft_sess-C', 'Should not load');
     const { get, cleanup } = createHarness('sess-C', false);

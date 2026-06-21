@@ -1,4 +1,11 @@
-import { migrateSessionsToProjects, loadProjects, saveProjects, STORAGE_KEY_SESSIONS_LEGACY, STORAGE_KEY_PROJECTS } from '../project-migration';
+import {
+  migrateSessionsToProjects,
+  loadProjects,
+  saveProjects,
+  STORAGE_KEY_SESSIONS_LEGACY,
+  STORAGE_KEY_PROJECTS,
+  STORAGE_KEY_PROJECTS_LEGACY,
+} from '../project-migration';
 import { Genre, PlatformType } from '../studio-types';
 
 // Mock localStorage + window
@@ -76,6 +83,25 @@ describe('loadProjects', () => {
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('미분류');
     // Should have saved to new key
+    expect(store[STORAGE_KEY_PROJECTS]).toBeDefined();
+  });
+
+  it('migrates old noa_projects project list into the current storage key', () => {
+    store[STORAGE_KEY_PROJECTS_LEGACY] = JSON.stringify([
+      {
+        id: 'legacy-project',
+        name: '구 프로젝트',
+        updatedAt: 123,
+        sessions: [MOCK_SESSION],
+      },
+    ]);
+
+    const result = loadProjects();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('legacy-project');
+    expect(result[0].lastUpdate).toBe(123);
+    expect(result[0].sessions[0].id).toBe('session-1');
     expect(store[STORAGE_KEY_PROJECTS]).toBeDefined();
   });
 

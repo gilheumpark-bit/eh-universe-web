@@ -85,7 +85,7 @@ function okJson(data: unknown) {
   return { ok: true, status: 200, json: async () => data };
 }
 
-function errResponse(status: number, body?: { error: string }) {
+function errResponse(status: number, body?: unknown) {
   return {
     ok: false,
     status,
@@ -149,6 +149,28 @@ describe('fetchStructuredGemini', () => {
     mockFetch.mockResolvedValueOnce(errResponse(401, { error: 'Unauthorized' }));
 
     await expect(generateWorldDesign(genre)).rejects.toThrow('Unauthorized');
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces paywall details from structured generation errors', async () => {
+    const genre = uniqueGenre('paywall');
+    mockFetch.mockResolvedValueOnce(errResponse(401, {
+      error: 'login_or_byok_required',
+      message: '구조화 제안 기능을 사용하려면 로그인하거나 연결 키를 등록해야 합니다.',
+      paywall: {
+        reason: '로그인 상태나 연결 키가 확인되지 않았습니다.',
+        feature: '구조화 제안',
+        currentTier: 'none',
+        requiredTier: 'free',
+        unlocksWith: ['로그인 후 기본 제공량 사용', '연결 키 등록'],
+        pricingUrl: '/pricing',
+        settingsTarget: '환경 설정 > 노아 운영',
+      },
+    }));
+
+    await expect(generateWorldDesign(genre)).rejects.toThrow(
+      '구조화 제안 기능을 사용하려면 로그인하거나 연결 키를 등록해야 합니다.',
+    );
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 

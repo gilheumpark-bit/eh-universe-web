@@ -4,420 +4,59 @@
 
 import { truncateMessages, getMaxOutputTokens } from './token-utils';
 import { logger } from '@/lib/logger';
-import { L4 } from '@/lib/i18n';
 import { lazyFirebaseAuth } from '@/lib/firebase';
 import { ariManager } from '@/lib/ai/ari-engine';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 // [N4 — 2026-06-11] NOA 차단 고지 의무 — 차단 응답 {blocked, reason, gradeRequired} 수신 시
 // noa:toast + noa:block-notice 발화 (사일런트 차단 금지). NoaBlockedError 로 호출 측 인라인 표시.
 import { isBlockedPayload, notifyNoaBlock, NoaBlockedError } from '@/lib/noa/block-notice';
+import { checkPaywallJson } from '@/lib/noa/paywall-notice';
+import {
+  PROVIDERS,
+  PROVIDER_LIST,
+  supportsStructuredOutput,
+} from './ai-providers.catalog';
+import { getStoredReasoningLevel, resolveReasoningLevel } from './ai-reasoning';
+import {
+  decryptKey,
+  deobfuscateKey,
+  encryptKey,
+  ENCRYPTION_PREFIX_V4,
+  obfuscateKey,
+} from './ai-providers.keys';
+import type { ProviderId, StreamOptions } from './ai-providers.catalog';
 
-/** Provider ID key tuple — single source of truth for all provider keys */
-const _PROVIDER_KEYS = ["gemini", "openai", "claude", "groq", "mistral", "ollama", "lmstudio"] as const;
-export type ProviderId = (typeof _PROVIDER_KEYS)[number];
+export {
+  getCapabilities,
+  getModelWarning,
+  isPreviewModel,
+  PROVIDERS,
+  PROVIDER_LIST,
+  PROVIDER_LIST_UI,
+  supportsStructuredOutput,
+} from './ai-providers.catalog';
+export { decryptKey, encryptKey } from './ai-providers.keys';
+export type {
+  ChatMsg,
+  ProviderCapabilities,
+  ProviderDef,
+  ProviderId,
+  ReasoningStage,
+  StreamOptions,
+} from './ai-providers.catalog';
 
-export interface ProviderCapabilities {
-  streaming: boolean;
-  structuredOutput: boolean;
-  systemInstruction: boolean;
-  maxContextTokens: number;
-  maxOutputTokens: number;
-  isLocal: boolean;
-  costTier: 'free' | 'cheap' | 'moderate' | 'expensive';
-}
-
-export interface ProviderDef {
-  id: ProviderId;
-  name: string;
-  color: string;
-  placeholder: string;
-  defaultModel: string;
-  models: string[];
-  testPrompt: string;
-  storageKey: string;
-  capabilities: ProviderCapabilities;
-  /** 로컬 provider는 API key 대신 base URL을 저장 */
-  isUrlBased?: boolean;
-  /** true = 개발 환경에서만 노출 (ollama, lmstudio 등) */
-  devOnly?: boolean;
-}
-
-export interface ChatMsg {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
-
-export interface StreamOptions {
-  systemInstruction: string;
-  messages: ChatMsg[];
-  temperature?: number;
-  maxTokens?: number;
-  signal?: AbortSignal;
-  onChunk: (text: string) => void;
-  prismMode?: string;
-  isChatMode?: boolean;
-  /** DGX 멀티에이전트: 특정 모델 강제 지정 (예: 'abliterated', 'r1', 'eva') */
-  model?: string;
-}
-
-// ============================================================
-// PART 1: PROVIDER DEFINITIONS
-// ============================================================
-
-export const PROVIDERS: Record<ProviderId, ProviderDef> = {
-  gemini: {
-    id: "gemini",
-    name: "Google Gemini",
-    color: "#4285f4",
-    placeholder: "AIza...",
-    defaultModel: "gemini-2.5-pro",
-    models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_api_key",
-    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 1_000_000, maxOutputTokens: 8192, isLocal: false, costTier: 'cheap' },
-  },
-  openai: {
-    id: "openai",
-    name: "OpenAI",
-    color: "#10a37f",
-    placeholder: "sk-...",
-    defaultModel: "gpt-5.4",
-    models: ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.3-instant", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_openai_key",
-    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 1_050_000, maxOutputTokens: 32_768, isLocal: false, costTier: 'expensive' },
-  },
-  claude: {
-    id: "claude",
-    name: "Anthropic Claude",
-    color: "#d97706",
-    placeholder: "sk-ant-...",
-    defaultModel: "claude-sonnet-4-6",
-    models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-5-20251101", "claude-sonnet-4-5-20250929"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_claude_key",
-    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 1_000_000, maxOutputTokens: 128_000, isLocal: false, costTier: 'expensive' },
-  },
-  groq: {
-    id: "groq",
-    name: "Groq",
-    color: "#f55036",
-    placeholder: "gsk_...",
-    defaultModel: "llama-3.3-70b-versatile",
-    models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen-qwq-32b"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_groq_key",
-    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 128_000, maxOutputTokens: 8192, isLocal: false, costTier: 'free' },
-  },
-  mistral: {
-    id: "mistral",
-    name: "Mistral AI",
-    color: "#ff7000",
-    placeholder: "...",
-    defaultModel: "mistral-medium-3-latest",
-    models: ["mistral-medium-3-latest", "mistral-small-latest", "mistral-large-latest"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_mistral_key",
-    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 128_000, maxOutputTokens: 8192, isLocal: false, costTier: 'moderate' },
-  },
-  ollama: {
-    id: "ollama",
-    name: "Ollama (Local)",
-    color: "#6c4c3e",
-    placeholder: "http://localhost:11434",
-    defaultModel: "llama3.1",
-    models: ["llama3.1", "llama3.2", "mistral", "gemma2", "qwen2.5", "deepseek-r1"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_ollama_url",
-    isUrlBased: true,
-    devOnly: true,
-    capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
-  },
-  lmstudio: {
-    id: "lmstudio",
-    name: "LM Studio (Local)",
-    color: "#2d5d8d",
-    placeholder: "http://localhost:1234",
-    defaultModel: "openai/gpt-oss-20b",
-    models: ["openai/gpt-oss-20b", "qwen/qwen3-30b-a3b-2507", "qwen/qwen3-14b", "local-model"],
-    testPrompt: 'Say "OK" in one word.',
-    storageKey: "noa_lmstudio_url",
-    isUrlBased: true,
-    devOnly: false,
-    capabilities: { streaming: true, structuredOutput: false, systemInstruction: true, maxContextTokens: 32_000, maxOutputTokens: 4096, isLocal: true, costTier: 'free' },
-  },
-};
-
-// Capability helpers
-/** @returns Capability metadata for the given provider, falling back to Gemini defaults */
-export function getCapabilities(providerId: ProviderId): ProviderCapabilities {
-  return PROVIDERS[providerId]?.capabilities ?? PROVIDERS.gemini.capabilities;
-}
-/** @returns Whether the specified provider supports structured JSON output */
-export function supportsStructuredOutput(providerId: ProviderId): boolean {
-  return PROVIDERS[providerId]?.capabilities.structuredOutput ?? false;
-}
 /** 현재 활성 provider가 structured output을 지원하는지 */
 export function activeSupportsStructured(): boolean {
   // DGX 서비스 모드면 항상 구조화 생성 지원 (서버에서 DGX 폴백)
   if (hasDgxService()) return true;
   return supportsStructuredOutput(getActiveProvider());
 }
-
-export const PROVIDER_LIST: ProviderDef[] = Object.values(PROVIDERS);
-/** UI용 — devOnly provider는 개발 환경에서만 포함 */
-export const PROVIDER_LIST_UI: ProviderDef[] = PROVIDER_LIST.filter(
-  (p) => !p.devOnly || process.env.NODE_ENV === 'development',
-);
 const LEGACY_PROVIDER_KEY = "eh-active-provider";
 const LEGACY_MODEL_KEY = "eh-active-model";
-
-// Preview/experimental model detection
-const PREVIEW_PATTERNS = ["preview", "nano", "experimental", "beta"];
-
-/** @returns True if the model name matches preview/experimental/beta patterns */
-export function isPreviewModel(model: string): boolean {
-  const lower = model.toLowerCase();
-  return PREVIEW_PATTERNS.some(p => lower.includes(p));
-}
-
-/** @returns Localized warning string if model is preview/experimental, null otherwise */
-export function getModelWarning(model: string, lang: "ko" | "en" = "ko"): string | null {
-  if (!isPreviewModel(model)) return null;
-  return L4(lang, {
-    ko: `"${model}"은(는) 프리뷰/실험 모델입니다. 안정성이 보장되지 않으며 예고 없이 변경·중단될 수 있습니다. 프로덕션 용도에는 정식 모델을 권장합니다.`,
-    en: `"${model}" is a preview/experimental model. Stability is not guaranteed and it may change or be discontinued without notice. Stable models are recommended for production use.`,
-  });
-}
 
 // ============================================================
 // PART 2: KEY MANAGEMENT (with obfuscation)
 // ============================================================
-
-// 4-layer key protection:
-// Layer 1 (v1): Base64 only (legacy, read-only)
-// Layer 2 (v2): XOR with origin+UA mask (legacy, read-only)
-// Layer 3 (v3): Salt + XOR (legacy, read-only — synchronous fallback for write)
-// Layer 4 (v4): AES-GCM via Web Crypto (async, preferred write path)
-// XSS에서 메모리 접근은 방어 불가하나, localStorage 직접 읽기는 AES-GCM으로 실질적 방어.
-const _ENCRYPTION_PREFIX_V4 = 'noa:4:';
-const _OBFUSCATION_PREFIX_V3 = 'noa:3:';
-const _OBFUSCATION_PREFIX = 'noa:2:';
-const _LEGACY_PREFIX = 'noa:1:';
-const _SALT_LENGTH = 16;
-const _IV_LENGTH = 12; // AES-GCM recommended IV size
-
-// ── Web Crypto AES-GCM helpers (v4) ──
-
-// #20: Encapsulate CryptoKey cache in closure to prevent module-global exposure
-const keyStore = (() => {
-  let _key: CryptoKey | null = null;
-  return {
-    get: () => _key,
-    set: (k: CryptoKey) => { _key = k; },
-    clear: () => { _key = null; },
-  };
-})();
-
-function _isSubtleCryptoAvailable(): boolean {
-  return (
-    typeof crypto !== 'undefined' &&
-    typeof crypto.subtle !== 'undefined' &&
-    typeof crypto.subtle.deriveKey === 'function'
-  );
-}
-
-async function _deriveAesKey(): Promise<CryptoKey> {
-  const cached = keyStore.get();
-  if (cached) return cached;
-  const encoder = new TextEncoder();
-  const salt = encoder.encode(
-    (typeof window !== 'undefined' ? window.location.origin : 'noa-server') +
-    (typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 50) : ''),
-  );
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode('eh-universe-key-v2'),
-    'PBKDF2',
-    false,
-    ['deriveKey'],
-  );
-  const derived = await crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt'],
-  );
-  keyStore.set(derived);
-  return derived;
-}
-
-async function _encryptAesGcm(plain: string): Promise<string> {
-  const key = await _deriveAesKey();
-  const iv = crypto.getRandomValues(new Uint8Array(_IV_LENGTH));
-  const encoded = new TextEncoder().encode(plain);
-  const cipherBuf = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    encoded,
-  );
-  // Format: IV (12 bytes) + ciphertext
-  const combined = new Uint8Array(iv.length + cipherBuf.byteLength);
-  combined.set(iv, 0);
-  combined.set(new Uint8Array(cipherBuf), iv.length);
-  return _ENCRYPTION_PREFIX_V4 + btoa(String.fromCharCode(...combined));
-}
-
-async function _decryptAesGcm(stored: string): Promise<string> {
-  const key = await _deriveAesKey();
-  const raw = atob(stored.slice(_ENCRYPTION_PREFIX_V4.length));
-  const allBytes = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) allBytes[i] = raw.charCodeAt(i);
-  const iv = allBytes.slice(0, _IV_LENGTH);
-  const ciphertext = allBytes.slice(_IV_LENGTH);
-  const plainBuf = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    ciphertext,
-  );
-  return new TextDecoder().decode(plainBuf);
-}
-
-// ── Legacy XOR helpers (v2/v3 — read-only + sync fallback for write) ──
-
-function _xorMask(): number[] {
-  const seed = typeof window !== 'undefined'
-    ? `${window.location.origin}:${navigator.userAgent.slice(0, 32)}`
-    : 'noa-server-fallback';
-  const mask: number[] = [];
-  for (let i = 0; i < seed.length; i++) mask.push(seed.charCodeAt(i) & 0xff);
-  return mask;
-}
-
-function _generateSalt(): Uint8Array {
-  // [P16 풀점검 루프 3] CSPRNG 강제 — Math.random() fallback 제거.
-  // Web Crypto / Node Crypto 둘 다 사용 불가한 환경은 보안 임계 — 명시적 throw.
-  // Node 19+ globalThis.crypto, 모던 브라우저 window.crypto 모두 표준 노출.
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    return crypto.getRandomValues(new Uint8Array(_SALT_LENGTH));
-  }
-  // 환경에 CSPRNG 없음 — Math.random() 은 암호 용도 부적합. 명시적 실패.
-  throw new Error(
-    '[ai-providers] CSPRNG unavailable (crypto.getRandomValues missing). ' +
-    'Math.random() fallback is insecure and has been removed. ' +
-    'Ensure runtime exposes Web Crypto or upgrade Node >= 19.',
-  );
-}
-
-/** Synchronous v3 fallback (Salt + XOR) — used when SubtleCrypto unavailable */
-function _obfuscateKeySync(plain: string): string {
-  if (!plain) return '';
-  try {
-    const baseMask = _xorMask();
-    const salt = _generateSalt();
-    const combinedMask = baseMask.map((b, i) => b ^ salt[i % salt.length]);
-    const bytes = new TextEncoder().encode(plain);
-    const xored = new Uint8Array(bytes.length);
-    for (let i = 0; i < bytes.length; i++) xored[i] = bytes[i] ^ combinedMask[i % combinedMask.length];
-    const combined = new Uint8Array(salt.length + xored.length);
-    combined.set(salt, 0);
-    combined.set(xored, salt.length);
-    return _OBFUSCATION_PREFIX_V3 + btoa(String.fromCharCode(...combined));
-  } catch (err) {
-    logger.warn('AIProviders', 'v3 obfuscateKey failed — returning plaintext as last resort', err);
-    return plain;
-  }
-}
-
-// ── Unified encrypt/decrypt (async, with sync fallback) ──
-
-/** Encrypt: AES-GCM preferred, v3 XOR fallback */
-export async function encryptKey(plain: string): Promise<string> {
-  if (!plain) return '';
-  if (_isSubtleCryptoAvailable()) {
-    try {
-      return await _encryptAesGcm(plain);
-    } catch (err) {
-      // SubtleCrypto failed (e.g. insecure context) — fall back to v3
-      logger.warn('AIProviders', 'AES-GCM encrypt failed (insecure context?) — falling back to v3 XOR', err);
-    }
-  }
-  return _obfuscateKeySync(plain);
-}
-
-/** Synchronous encrypt fallback — for callers that cannot await */
-function obfuscateKey(plain: string): string {
-  return _obfuscateKeySync(plain);
-}
-
-/** Decrypt: detects version prefix and dispatches accordingly */
-export async function decryptKey(stored: string): Promise<string> {
-  if (!stored) return '';
-  // v4: AES-GCM
-  if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
-    try {
-      return await _decryptAesGcm(stored);
-    } catch (err) {
-      logger.warn('AIProviders', 'v4 AES-GCM decrypt failed — returning empty key', err);
-      return '';
-    }
-  }
-  // Delegate to synchronous path for v1/v2/v3/plaintext
-  return deobfuscateKeySync(stored);
-}
-
-/** Synchronous decrypt for legacy formats (v1/v2/v3/plaintext) */
-function deobfuscateKeySync(stored: string): string {
-  if (!stored) return '';
-  // v3: Salt + XOR + Base64
-  if (stored.startsWith(_OBFUSCATION_PREFIX_V3)) {
-    try {
-      const baseMask = _xorMask();
-      const raw = atob(stored.slice(_OBFUSCATION_PREFIX_V3.length));
-      const allBytes = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) allBytes[i] = raw.charCodeAt(i);
-      const salt = allBytes.slice(0, _SALT_LENGTH);
-      const xored = allBytes.slice(_SALT_LENGTH);
-      const combinedMask = baseMask.map((b, i) => b ^ salt[i % salt.length]);
-      const bytes = new Uint8Array(xored.length);
-      for (let i = 0; i < xored.length; i++) bytes[i] = xored[i] ^ combinedMask[i % combinedMask.length];
-      return new TextDecoder().decode(bytes);
-    } catch (err) {
-      logger.warn('AIProviders', 'v3 salt+XOR decode failed — returning empty key', err);
-      return '';
-    }
-  }
-  // v2: XOR + Base64
-  if (stored.startsWith(_OBFUSCATION_PREFIX)) {
-    try {
-      const mask = _xorMask();
-      const raw = atob(stored.slice(_OBFUSCATION_PREFIX.length));
-      const bytes = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) ^ mask[i % mask.length];
-      return new TextDecoder().decode(bytes);
-    } catch (err) {
-      logger.warn('AIProviders', 'v2 XOR+base64 decode failed — returning empty key', err);
-      return '';
-    }
-  }
-  // v1: Base64 only
-  if (stored.startsWith(_LEGACY_PREFIX)) {
-    try {
-      return decodeURIComponent(escape(atob(stored.slice(_LEGACY_PREFIX.length))));
-    } catch (err) {
-      logger.warn('AIProviders', 'v1 base64 decode failed — returning empty key', err);
-      return '';
-    }
-  }
-  // Plaintext
-  return stored;
-}
-
-/** Legacy sync alias — kept for backward compat with any external callers */
-function deobfuscateKey(stored: string): string {
-  return deobfuscateKeySync(stored);
-}
 
 /**
  * Migrate legacy provider storage keys to the current format.
@@ -445,12 +84,12 @@ export function getActiveProvider(): ProviderId {
   return provider;
 }
 
-/** 서버 측 DGX 가용 여부 캐시 (런타임 체크 결과) */
+/** 서버 측 DGX 개발 API 가용 여부 캐시 (런타임 체크 결과) */
 let _serverDgxAvailable: boolean | null = null;
 
 /**
- * 앱 초기화 시 서버의 DGX 가용 여부를 비동기로 확인 → 캐시.
- * NEXT_PUBLIC_SPARK_SERVER_URL이 빌드 시 없어도 서버에 SPARK_SERVER_URL이 있으면 true.
+ * 앱 초기화 시 서버의 DGX 개발 API 가용 여부를 비동기로 확인 → 캐시.
+ * DGX는 Hosted 기본값이 아니라 로컬/개발 보조 경로다.
  */
 export async function initDgxCheck(): Promise<boolean> {
   if (_serverDgxAvailable !== null) return _serverDgxAvailable;
@@ -467,16 +106,22 @@ export async function initDgxCheck(): Promise<boolean> {
   }
 }
 
-/** 이미 fetch된 결과로 DGX 캐시를 직접 세팅 (중복 fetch 방지) */
+/** 이미 fetch된 결과로 DGX 개발 API 캐시를 직접 세팅 (중복 fetch 방지) */
 export function setServerDgxCache(hasDgx: boolean): void {
   _serverDgxAvailable = hasDgx;
 }
 
-/** DGX Spark 서비스 모드 여부 (API 키 없이 AI 사용 가능) */
+function isPublicDgxDevFlagEnabled(): boolean {
+  return (
+    process.env.NEXT_PUBLIC_FEATURE_DGX_DEV_API === 'on' ||
+    process.env.NEXT_PUBLIC_ENABLE_DGX_DEV_API === 'on'
+  );
+}
+
+/** DGX Spark 개발 API 모드 여부. 정식 Hosted 제공 판정에는 사용하지 않는다. */
 export function hasDgxService(): boolean {
   if (typeof window === 'undefined') return false;
-  // 빌드 시 NEXT_PUBLIC_ 변수 OR 런타임 서버 체크 결과
-  if (!!process.env.NEXT_PUBLIC_SPARK_SERVER_URL) return true;
+  if (!!process.env.NEXT_PUBLIC_SPARK_SERVER_URL && isPublicDgxDevFlagEnabled()) return true;
   return _serverDgxAvailable === true;
 }
 
@@ -504,7 +149,7 @@ export function getApiKey(providerId: ProviderId): string {
   const def = PROVIDERS[providerId];
   const stored = localStorage.getItem(def.storageKey) || "";
   // v4 cannot be decoded synchronously — return cached plaintext or ''
-  if (stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
+  if (stored.startsWith(ENCRYPTION_PREFIX_V4)) {
     return _v4PlainCache.get(def.storageKey) ?? '';
   }
   return deobfuscateKey(stored);
@@ -520,7 +165,7 @@ export async function getApiKeyAsync(providerId: ProviderId): Promise<string> {
   const stored = localStorage.getItem(def.storageKey) || "";
   const plain = await decryptKey(stored);
   // Cache plaintext for sync getApiKey() access
-  if (plain && stored.startsWith(_ENCRYPTION_PREFIX_V4)) {
+  if (plain && stored.startsWith(ENCRYPTION_PREFIX_V4)) {
     _v4PlainCache.set(def.storageKey, plain);
   }
   return plain;
@@ -562,7 +207,7 @@ export async function setApiKeyAsync(providerId: ProviderId, key: string): Promi
   localStorage.setItem(def.storageKey, encrypted);
   localStorage.setItem(`${def.storageKey}_ts`, String(Date.now()));
   // Populate sync cache if v4 was used
-  if (encrypted.startsWith(_ENCRYPTION_PREFIX_V4)) {
+  if (encrypted.startsWith(ENCRYPTION_PREFIX_V4)) {
     _v4PlainCache.set(def.storageKey, key);
   }
   window.dispatchEvent(new Event('noa-keys-changed'));
@@ -704,7 +349,7 @@ async function streamLocalDirect(
         try {
           const json = JSON.parse(data);
           const delta = json.choices?.[0]?.delta;
-          const text = delta?.content || delta?.reasoning_content;
+          const text = delta?.content;
           if (text) { full += text; opts.onChunk(text); }
         } catch { /* skip non-JSON */ }
       }
@@ -718,14 +363,14 @@ async function streamLocalDirect(
 async function streamViaProxy(
   provider: ProviderId, model: string, apiKey: string, opts: StreamOptions
 ): Promise<string> {
-  // 로컬 프로바이더: 프로덕션이면 /api/chat (DGX 폴백), 개발이면 /api/local-proxy
+  // 로컬 프로바이더: 운영은 /api/chat, 개발용 로컬 엔진은 명시 플래그가 켜진 경우에만 서버에서 허용
   if (PROVIDERS[provider]?.capabilities.isLocal) {
     const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
     if (isProduction) {
-      // 프로덕션: /api/chat → DGX Spark 폴백 경로로 전환
+      // 운영 경로: /api/chat. DGX는 Hosted 기본값이 아니라 명시 플래그 기반 개발 경로다.
       // [K] provider 자기할당 no-op 제거 — 아래 /api/chat 호출에서 그대로 사용
     } else {
-      if (!apiKey.trim()) throw new Error('Local LLM URL is not configured. Set the server URL in BYOK settings.');
+      if (!apiKey.trim()) throw new Error('Local LLM URL is not configured. Set the server URL in connection settings.');
       return streamLocalDirect(apiKey, model, opts);
     }
   }
@@ -754,6 +399,7 @@ async function streamViaProxy(
       messages: opts.messages,
       temperature: opts.temperature ?? 0.9,
       maxTokens: opts.maxTokens,
+      reasoning: opts.reasoning ? { level: opts.reasoning } : undefined,
       apiKey: apiKey || undefined,
       prismMode: opts.prismMode, // 서버 측 PRISM 강제 적용
       isChatMode: opts.isChatMode,
@@ -768,24 +414,29 @@ async function streamViaProxy(
       if (errData.noa?.reason) {
         const reason = errData.noa.reason;
         if (reason === 'FAST_TRACK_BLOCK') {
-          errMsg = '🛑 입력에 제한된 표현이 포함되어 있습니다. 내용을 수정 후 다시 시도해주세요.';
+          errMsg = '입력에 제한된 표현이 포함되어 있습니다. 내용을 수정한 뒤 다시 시도해 주세요.';
         } else {
-          errMsg = `🛑 NOA 보안 필터: ${reason === 'TRINITY_BLOCK' ? '안전 검사에서 차단되었습니다' : reason === 'BUDGET_EXCEEDED' ? '일일 사용 한도에 도달했습니다' : reason}`;
+          errMsg = `요청을 처리할 수 없습니다: ${reason === 'TRINITY_BLOCK' ? '요청 기준을 통과하지 못했습니다' : reason === 'BUDGET_EXCEEDED' ? '오늘 사용할 수 있는 제공량을 모두 사용했습니다' : reason}`;
         }
         // [N4] 403 레거시 NOA 차단도 고지 의무 적용 — toast + 카드 (사일런트 차단 금지)
         notifyNoaBlock({ blocked: true, reason: errMsg, gradeRequired: null }, 'chat');
       } else if (res.status === 429) {
         const retryAfter = res.headers.get('retry-after');
         errMsg = retryAfter
-          ? `⏳ 요청 한도 초과 — ${retryAfter}초 후 다시 시도해주세요 (Rate Limited)`
-          : '⏳ 요청 한도 초과 — 잠시 후 다시 시도해주세요 (Rate Limited)';
+          ? `요청 한도를 초과했습니다. ${retryAfter}초 뒤 다시 시도해 주세요.`
+          : '요청 한도를 초과했습니다. 잠시 뒤 다시 시도해 주세요.';
         // Attach server-provided delay for retry logic
         const rateLimitErr = new Error(errMsg);
         (rateLimitErr as Error & { _retryAfterMs?: number })._retryAfterMs =
           retryAfter ? Math.min(parseInt(retryAfter, 10) * 1000, 30_000) : 0;
         throw rateLimitErr;
-      } else if (errData.error) {
-        errMsg = errData.error;
+      } else {
+        const paywallMsg = checkPaywallJson(errData);
+        if (paywallMsg) {
+          errMsg = paywallMsg;
+        } else if (errData.error) {
+          errMsg = errData.error;
+        }
       }
     } catch { /* [의도적 무시] errData JSON 파싱 실패 시 원래 errMsg 유지 */ }
     throw new Error(errMsg);
@@ -836,7 +487,7 @@ async function streamViaProxy(
 
           // Handle different provider formats
           const delta = json.choices?.[0]?.delta;
-          const text = delta?.content || delta?.reasoning_content // OpenAI/Groq/Mistral + Gemma reasoning
+          const text = delta?.content
             || json.candidates?.[0]?.content?.parts?.[0]?.text // Gemini
             || (json.type === 'content_block_delta' ? json.delta?.text : null); // Claude
           if (text) {
@@ -911,6 +562,8 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   }
 
   const provider = getActiveProvider();
+  const resolvedReasoning = resolveReasoningLevel(opts.reasoning ?? getStoredReasoningLevel(), opts.reasoningStage);
+  const reasoningForRequest = resolvedReasoning === 'auto' ? undefined : resolvedReasoning;
 
   // ARI gate: if current provider's circuit is open, try ARI-routed fallback
   if (!ariManager.isAvailable(provider)) {
@@ -931,7 +584,12 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
         const maxTok = getMaxOutputTokens(best.model, st, mt);
         const t0 = Date.now();
         try {
-          const result = await streamViaProxy(best.id, best.model, best.key, { ...opts, messages: trimmed, maxTokens: maxTok });
+          const result = await streamViaProxy(best.id, best.model, best.key, {
+            ...opts,
+            messages: trimmed,
+            maxTokens: maxTok,
+            reasoning: reasoningForRequest,
+          });
           ariManager.updateAfterCall(bestId, true, Date.now() - t0);
           return result;
         } catch (err) {
@@ -957,7 +615,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   }
 
   const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);
-  const safeOpts = { ...opts, messages: trimmedMessages, maxTokens };
+  const safeOpts = { ...opts, messages: trimmedMessages, maxTokens, reasoning: reasoningForRequest };
 
   // Retry wrapper: up to 3 retries with jittered exponential backoff
   const MAX_RETRIES = 3;
@@ -1023,7 +681,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
           detail: { originalError: lastError.message },
         }));
       }
-      throw new Error('DGX engine down. Please configure your own API key in Settings to continue.');
+      throw new Error('DGX engine down. Please configure a connection key in Settings to continue.');
     }
     for (const fallback of ranked) {
       if (!ariManager.isAvailable(fallback.id)) continue;

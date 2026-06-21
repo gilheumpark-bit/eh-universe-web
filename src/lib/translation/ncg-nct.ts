@@ -36,7 +36,7 @@ import {
   type AuditFinding,
   type AuditVerdict,
 } from '@/lib/creative/qa-auditor';
-// [Z1a-5 2026-06-11] KO→EN 번역투/AI티 린트 — additive 경고 (차단 아님).
+// [Z1a-5 2026-06-11] KO→EN 어색한 표현/영문 습관 린트 — additive 경고 (차단 아님).
 import { lintTranslationese, type TranslationeseLintResult } from './translationese-lint';
 
 // ============================================================
@@ -115,7 +115,7 @@ export interface NCTReport {
    */
   qaAudit?: { faithful: TranslationQaAudit | null; market: TranslationQaAudit | null };
   /**
-   * [Z1a-5 — additive] 번역투/AI티 린트 — tgtLang==='en' 일 때만 실행. 경고용 (차단 X).
+   * [Z1a-5 — additive] 어색한 표현/영문 습관 린트 — tgtLang==='en' 일 때만 실행. 경고용 (차단 X).
    */
   translationese?: { faithful: TranslationeseLintResult | null; market: TranslationeseLintResult | null };
 }
@@ -218,9 +218,9 @@ export function runNCG(input: NCGInput): NCGReport {
 // ============================================================
 //
 // MT catastrophic failure 3종을 순수 함수로 검출한다 (LLM 0):
-//   1) pronoun-ratio-delta:   성별 대명사 비율 격변 (>60%) — 인물 성별 뒤집힘 의심
+//   1) pronoun-ratio-delta:   성별 대명사 비율 큰 변화 (>60%) — 인물 성별 변경 확인
 //   2) paragraph-loss:        번역 문단 수 / 원문 문단 수 < 0.85 — 대규모 누락
-//   3) new-proper-noun-flood: 원문/용어집에 없는 신규 고유명사 set-diff 임계 초과 — 개체 환각
+//   3) new-proper-noun-flood: 원문/용어집에 없는 신규 고유명사 set-diff 임계 초과 — 새 이름 오삽입 확인
 //
 // 정직 한계:
 //   - 성별 대명사: ko '그+조사' 휴리스틱은 지시사 '그'와 일부 충돌 가능 → 양측
@@ -251,7 +251,7 @@ export const DEFAULT_CATASTROPHIC_THRESHOLDS: CatastrophicThresholds = {
 
 export interface CatastrophicReason {
   kind: 'pronoun-ratio-delta' | 'paragraph-loss' | 'new-proper-noun-flood';
-  message: { ko: string; en: string };
+  message: { ko: string; en: string; ja?: string; zh?: string };
   metric: { value: number; threshold: number };
   /** 신규 고유명사 샘플 (최대 5) — 사유 추적용. */
   samples?: string[];
@@ -348,8 +348,10 @@ export function runCatastrophicCheck(input: CatastrophicCheckInput): Catastrophi
         kind: 'pronoun-ratio-delta',
         metric: { value: genderDelta, threshold: t.genderPronounDelta },
         message: {
-          ko: `성별 대명사 비율 격변 (delta ${(genderDelta * 100).toFixed(0)}% > ${(t.genderPronounDelta * 100).toFixed(0)}%) — 인물 성별 뒤집힘 의심.`,
-          en: `Gendered pronoun ratio shift (delta ${(genderDelta * 100).toFixed(0)}% > ${(t.genderPronounDelta * 100).toFixed(0)}%) — character gender flip suspected.`,
+          ko: `성별 대명사 비율이 크게 달라졌습니다. 인물 성별이 바뀌지 않았는지 확인해 주세요.`,
+          en: `Gendered pronoun usage changed sharply. Check whether a character's gender was changed by mistake.`,
+          ja: `性別代名詞の比率が大きく変わっています。人物の性別が誤って変わっていないか確認してください。`,
+          zh: `性别代词比例变化较大。请确认人物性别是否被误改。`,
         },
       });
     }
@@ -364,8 +366,10 @@ export function runCatastrophicCheck(input: CatastrophicCheckInput): Catastrophi
       kind: 'paragraph-loss',
       metric: { value: paragraphRatio, threshold: t.paragraphRatioFloor },
       message: {
-        ko: `문단 수 ${srcParas} → ${tgtParas} (비율 ${(paragraphRatio * 100).toFixed(0)}% < ${(t.paragraphRatioFloor * 100).toFixed(0)}%) — 대규모 누락.`,
-        en: `Paragraphs ${srcParas} → ${tgtParas} (${(paragraphRatio * 100).toFixed(0)}% < ${(t.paragraphRatioFloor * 100).toFixed(0)}%) — massive loss.`,
+        ko: `문단 수가 ${srcParas}개에서 ${tgtParas}개로 줄었습니다. 빠진 장면이나 문단이 없는지 확인해 주세요.`,
+        en: `Paragraph count fell from ${srcParas} to ${tgtParas}. Check whether any scene or paragraph was omitted.`,
+        ja: `段落数が${srcParas}個から${tgtParas}個に減っています。抜けた場面や段落がないか確認してください。`,
+        zh: `段落数从 ${srcParas} 段减少到 ${tgtParas} 段。请确认是否遗漏了场景或段落。`,
       },
     });
   }
@@ -389,8 +393,10 @@ export function runCatastrophicCheck(input: CatastrophicCheckInput): Catastrophi
         metric: { value: newProperNouns.length, threshold: t.newProperNounLimit },
         samples: newProperNouns.slice(0, 5),
         message: {
-          ko: `원문/용어집에 없는 신규 고유명사 ${newProperNouns.length}개 (임계 ${t.newProperNounLimit}) — 개체 환각 의심 (예: ${newProperNouns.slice(0, 3).join(', ')}).`,
-          en: `${newProperNouns.length} proper nouns absent from source/glossary (limit ${t.newProperNounLimit}) — entity hallucination suspected (e.g. ${newProperNouns.slice(0, 3).join(', ')}).`,
+          ko: `원문이나 용어집에 없는 고유명사가 ${newProperNouns.length}개 보입니다. 새 이름이 잘못 생긴 것은 아닌지 확인해 주세요. 예: ${newProperNouns.slice(0, 3).join(', ')}`,
+          en: `${newProperNouns.length} proper nouns are not in the source or glossary. Check whether new names were introduced by mistake. Examples: ${newProperNouns.slice(0, 3).join(', ')}`,
+          ja: `原文や用語集にない固有名詞が${newProperNouns.length}個あります。不要な新しい名前が入っていないか確認してください。例: ${newProperNouns.slice(0, 3).join(', ')}`,
+          zh: `发现 ${newProperNouns.length} 个原文或术语表中没有的专有名词。请确认是否误新增了名称。例：${newProperNouns.slice(0, 3).join(', ')}`,
         },
       });
     }
@@ -503,7 +509,7 @@ export function runNCT(input: NCTInput): NCTReport {
     if (market && market.length > 0) qaMarket = buildQa(market);
   } catch { /* skip */ }
 
-  // [Z1a-5] 번역투/AI티 린트 — KO→EN 휴리스틱이므로 tgtLang==='en' 만 (경고용)
+  // [Z1a-5] 어색한 표현/영문 습관 린트 — KO→EN 휴리스틱이므로 tgtLang==='en' 만 (경고용)
   let lintFaithful: TranslationeseLintResult | null = null;
   let lintMarket: TranslationeseLintResult | null = null;
   if (tgtLang === 'en') {

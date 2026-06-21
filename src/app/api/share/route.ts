@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp } from '@/lib/rate-limit';
 import { firestoreCreateDocument, firestoreGetDocument } from '@/lib/firestore-service-rest';
 
 // In-memory fallback (Firestore 미설정 시)
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   try {
     lazyCleanup();
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(ip, '/api/share', { maxRequests: 30, windowMs: 60_000 });
+    const rl = await checkRateLimitAsync(ip, '/api/share', { maxRequests: 30, windowMs: 60_000 });
     if (!rl.allowed) {
       return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
     }

@@ -2,17 +2,17 @@
  * DGX Spark (GB10) — vLLM 직결 (2026-04-20 업데이트)
  *
  * ── 현 백엔드 구성 ──
- * vLLM 포트 8001: Qwen 3.6-35B-A3B-FP8 MoE (128GB 단일 장비 최적화)
- *   └ 모델 ID: qwen36 (served-model-name)
- *   └ max_model_len: 8192 tokens
+ * vLLM 포트 8000: Qwen 3.6-35B-A3B-FP8 MoE (128GB 단일 장비 최적화)
+ *   └ 모델 ID: Qwen/Qwen3.6-35B-A3B-FP8 (served-model-name)
+ *   └ max_model_len: 262144 tokens
  *   └ FlashInfer + N-Gram Speculative Decoding (40~50 tok/s)
- * RAG API (포트 8082): ChromaDB 99만 문서 + 25 장르 규칙
+ * Legacy retrieval sidecar (포트 8082): Translation Studio 보강용. 창작 집필 경로에서는 사용하지 않음.
  * ComfyUI  (포트 8188): Flux-Schnell FP8 이미지 생성
  *
  * ── 엔드포인트 우선순위 ──
  * 1. NEXT_PUBLIC_SPARK_GATEWAY_URL (명시) — 프로덕션 게이트웨이
  * 2. NEXT_PUBLIC_SPARK_SERVER_URL (명시) — 로컬 네트워크 직결
- * 3. 기본값: http://localhost:8001 (로컬 vLLM)
+ * 3. 기본값: http://localhost:8000 (로컬 vLLM)
  *
  * ── 이력 ──
  * - 이전: Engine A/B 쌍포(9B) + Nginx LB(8090) + https://api.ehuniverse.com 게이트웨이
@@ -34,9 +34,9 @@
 export const SPARK_GATEWAY_URL =
   process.env.NEXT_PUBLIC_SPARK_GATEWAY_URL
   || process.env.NEXT_PUBLIC_SPARK_SERVER_URL
-  || 'http://localhost:8001';
+  || 'http://localhost:8000';
 
-/** RAG — 세계관 설정 검색 */
+/** Legacy retrieval sidecar — Translation Studio 보강용. 창작 집필 경로에서는 사용하지 않음. */
 export const SPARK_RAG_URL =
   process.env.NEXT_PUBLIC_SPARK_RAG_URL || `${SPARK_GATEWAY_URL}/api/rag`;
 
@@ -50,14 +50,14 @@ export const COMFYUI_URL =
 
 /**
  * vLLM 서빙 모델 ID — 서버의 `--served-model-name` 값과 일치해야 함.
- * - 신 구성 (35B MoE): 'qwen36'
+ * - 신 구성 (35B MoE): 'Qwen/Qwen3.6-35B-A3B-FP8'
  * - 구 구성 (9B 쌍포): '/model'
  * env 우선, 기본값은 현 프로덕션 구성 고정.
  */
 export const VLLM_MODEL_ID =
   process.env.VLLM_MODEL_ID
   || process.env.NEXT_PUBLIC_VLLM_MODEL_ID
-  || 'qwen36';
+  || 'Qwen/Qwen3.6-35B-A3B-FP8';
 
 /**
  * 메타데이터용 역할 힌트 — 실제 라우팅에는 사용되지 않음(단일 모델 서빙).

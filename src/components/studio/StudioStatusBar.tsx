@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Save, Circle, Loader2, Cpu, Zap, Timer, Coffee, AlertCircle, HardDrive } from 'lucide-react';
 import type { AppLanguage, ChatSession } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
+import { hasDgxService } from '@/lib/ai-providers';
 import WordCountBadge from '@/components/studio/WordCountBadge';
 import BackupNowButton from '@/components/studio/BackupNowButton';
 import { useSessionTimer, formatSessionTime, formatDailyTime } from '@/hooks/useSessionTimer';
@@ -42,7 +42,7 @@ export function StudioStatusBar({
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
-  // TODO: Extract to useTextStats(text) hook
+  // Refactor note: extract to useTextStats(text) hook when status metrics expand.
   const stats = useMemo(() => {
     const text = activeTab === 'writing' ? editDraft : '';
     const chars = text.replace(/\s/g, '').length;
@@ -59,9 +59,10 @@ export function StudioStatusBar({
   const { state: session, config: sessionCfg, progress } = useSessionTimer({
     totalChars: stats.chars,
   });
-  // DGX Spark 헬스 — 다운 감지 시 BYOK 폴백 배지
+  // 로컬/개발 엔진 헬스 — 명시 플래그 또는 서버 capability 확인 시에만 배지 노출
   const { state: sparkState, canFallback, activeEngine } = useSparkHealth();
-  const showDgxDownBadge = SPARK_SERVER_URL && sparkState.status === 'down';
+  const localDevEngineAvailable = hasDgxService();
+  const showDgxDownBadge = localDevEngineAvailable && sparkState.status === 'down';
   // IndexedDB 용량 — 70%+ 배지, hover 상세
   const { state: quotaState } = useStorageQuota();
   const showQuotaBadge = quotaState.supported && quotaState.percentUsed !== null && quotaState.percentUsed >= 70;
@@ -273,7 +274,7 @@ export function StudioStatusBar({
             </>
           )}
           <span className="text-border">|</span>
-          {/* AI 엔진 뱃지 — DGX 우선, 다운 시 BYOK 자동 표시 */}
+          {/* 엔진 뱃지 — Hosted/연결 키 기본, 개발용 로컬 엔진은 명시 플래그에서만 표시 */}
           {showDgxDownBadge ? (
             <span
               className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-amber/10 border border-accent-amber/30 text-accent-amber"
@@ -283,22 +284,22 @@ export function StudioStatusBar({
               <AlertCircle className="w-2.5 h-2.5" />
               <span className="font-bold">
                 {activeEngine === 'byok' && canFallback
-                  ? (isKO ? '로컬 AI 다운 — BYOK' : 'Local AI down — BYOK')
-                  : (isKO ? '로컬 AI 다운' : 'Local AI down')}
+                  ? (isKO ? '로컬 엔진 다운 — 연결 키' : 'Local engine down — connection key')
+                  : (isKO ? '로컬 엔진 다운' : 'Local engine down')}
               </span>
             </span>
-          ) : SPARK_SERVER_URL ? (
-            // 작가 친화 라벨 — 기술명(DGX/Qwen-32B) 제거, "로컬 AI" 로 통일.
+          ) : localDevEngineAvailable ? (
+            // 작가 친화 라벨 — 기술명(DGX/Qwen-32B) 제거, "로컬 엔진" 로 통일.
             // 생성 중 표시는 좌측 스피너가 이미 담당 → 우측 중복 제거.
             // 엔지니어 지표(모델명·GPU)는 설정 → 고급 → 개발자 지표에서 노출 예정.
             <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-purple/10 border border-accent-purple/20">
               <Zap className="w-2.5 h-2.5 text-accent-purple" />
-              <span className="text-accent-purple font-bold">{isKO ? '로컬 AI' : 'Local AI'}</span>
+              <span className="text-accent-purple font-bold">{isKO ? '로컬 엔진' : 'Local engine'}</span>
             </span>
           ) : (
             <span className="flex items-center gap-1">
               <Cpu className="w-2.5 h-2.5" />
-              BYOK
+              {isKO ? '연결 키' : 'Connection key'}
             </span>
           )}
           <span className="text-border">|</span>

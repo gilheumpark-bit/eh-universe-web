@@ -11,14 +11,14 @@ import {
 } from '../global-search-index';
 
 // ------------------------------------------------------------
-// 픽스처 — 탭 너머 통합 검색을 흉내내는 5탭(group) 표본
+// 픽스처 — 탭 너머 통합 검색을 흉내내는 활성 표면 표본
 // ------------------------------------------------------------
 const ITEMS: SearchableItem[] = [
   {
     id: 'u-1',
-    label: 'Universe Archive',
-    body: '아카이브에는 99만 문서가 있다. universe 도메인의 핵심.',
-    group: 'universe',
+    label: 'Loreguard Docs',
+    body: '공개 Docs에는 제품 기준과 작업 흐름이 정리되어 있다. loreguard 도메인의 핵심.',
+    group: 'docs',
   },
   {
     id: 's-1',
@@ -28,15 +28,15 @@ const ITEMS: SearchableItem[] = [
   },
   {
     id: 'c-1',
-    label: 'Code Studio',
-    body: '검증형 코드 생성 스튜디오. 9-team 파이프라인이 돈다.',
-    group: 'code-studio',
+    label: '출고 패키지',
+    body: '과정기록과 권리/IP 점검 결과를 묶는다.',
+    group: 'release',
   },
   {
     id: 'n-1',
-    label: 'Network 행성',
-    body: '커뮤니티 보고서 + 정착지. universe 와 연결.',
-    group: 'network',
+    label: '히스토리',
+    body: '작업 기록과 이전 세션을 loreguard 흐름 안에서 찾는다.',
+    group: 'history',
   },
   {
     id: 't-1',
@@ -63,21 +63,21 @@ describe('searchAll — 정상', () => {
   });
 
   it('대소문자 무시 (기본값)', () => {
-    const lower = searchAll(ITEMS, 'universe');
-    const upper = searchAll(ITEMS, 'UNIVERSE');
+    const lower = searchAll(ITEMS, 'loreguard');
+    const upper = searchAll(ITEMS, 'LOREGUARD');
     expect(lower.length).toBe(upper.length);
     expect(lower.length).toBeGreaterThan(0);
   });
 
   it('caseSensitive=true 시 일치 항목만', () => {
-    const sensitive = searchAll(ITEMS, 'universe', { caseSensitive: true });
-    // body 에 'universe' (소문자) 가 들어있는 항목만.
+    const sensitive = searchAll(ITEMS, 'loreguard', { caseSensitive: true });
+    // body 에 'loreguard' (소문자) 가 들어있는 항목만.
     const ids = sensitive.map((r) => r.item.id);
     expect(ids).toContain('u-1');
     expect(ids).toContain('n-1');
-    // label 에는 'Universe' 라 일치하지 않음.
-    const exactLabelHit = sensitive.find((r) => r.item.label === 'Universe Archive');
-    // u-1 은 body 매치로 포함되지만, 'Universe' 라벨 자체로는 매치 안됨.
+    // label 에는 'Loreguard' 라 일치하지 않음.
+    const exactLabelHit = sensitive.find((r) => r.item.label === 'Loreguard Docs');
+    // u-1 은 body 매치로 포함되지만, 'Loreguard' 라벨 자체로는 매치 안됨.
     expect(exactLabelHit).toBeDefined();
   });
 

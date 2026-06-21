@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { JWT } from 'google-auth-library';
-import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp, checkRateLimitAsync } from '@/lib/rate-limit';
 import { verifyCsrf } from '@/lib/csrf';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { apiLog } from '@/lib/api-logger';
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   // Rate limit — DSAR 는 rare, 5/day
-  const rl = checkRateLimit(ip, '/api/user/export', {
+  const rl = await checkRateLimitAsync(ip, '/api/user/export', {
     maxRequests: 5,
     windowMs: 24 * 3600 * 1000,
   });

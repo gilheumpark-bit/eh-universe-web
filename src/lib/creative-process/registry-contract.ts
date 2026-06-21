@@ -25,7 +25,7 @@
 //   signatureAlgo   stringValue    (선택 — 'hmac-sha256-v2' 표식, 정보용)
 //
 // ⚠ 레지스트리는 원고·콘텐츠를 일절 저장하지 않는다 — 해시·메타만.
-// ⚠ 정직 한계 (모든 verify 표면 의무 표기): 인간 작성 자체는 증명 불가 —
+// ⚠ 정직 한계 (모든 verify 표면 의무 표기): 작성자가 직접 썼는지 자체는 증명 불가 —
 //    앵커 시점 이후 무변조·존재만 증명.
 //
 // [C] 결정론적 — LLM 호출 0, 네트워크 0 (순수 함수만)
@@ -64,13 +64,13 @@ export interface CertRegistryEntry {
 
 /**
  * 정직 한계 문구 — 모든 verify 표면(페이지·API 응답) 의무 표기.
- * "인간 작성 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명."
+ * "작성자가 직접 썼는지 자체는 증명 불가 — 앵커 시점 이후 무변조·존재만 증명."
  */
 export const HONESTY_LIMITATION = {
-  ko: '본 검증은 인간 작성 자체를 증명하지 않습니다 — 앵커(등록) 시점 이후의 무변조·존재만 증명합니다.',
-  en: 'This verification does NOT prove human authorship — it only proves existence and non-tampering since the anchor (registration) time.',
-  ja: 'この検証は人間による執筆そのものを証明しません — アンカー（登録）時点以降の非改ざん・存在のみを証明します。',
-  zh: '本验证不证明内容由人类撰写 — 仅证明自锚定（登记）时刻以来的存在性与未被篡改。',
+  ko: '본 검증은 작성자가 직접 썼는지 자체를 증명하지 않습니다 — 앵커(등록) 시점 이후의 무변조·존재만 증명합니다.',
+  en: 'This verification does NOT prove direct authorship — it only proves existence and non-tampering since the anchor (registration) time.',
+  ja: 'この検証は作者本人が直接執筆したことを証明しません — アンカー（登録）時点以降の非改ざん・存在のみを証明します。',
+  zh: '本验证不证明作者本人直接撰写 — 仅证明自锚定（登记）时刻以来的存在性与未被篡改。',
 } as const;
 
 // ============================================================

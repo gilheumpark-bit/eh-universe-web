@@ -50,7 +50,7 @@ function useZenToast(active: boolean): boolean {
       setShow(false);
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setShow(true);
     const t = setTimeout(() => setShow(false), 2200);
     return () => clearTimeout(t);

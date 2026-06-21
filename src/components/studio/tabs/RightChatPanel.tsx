@@ -36,7 +36,7 @@ interface RightChatPanelProps {
 }
 
 /**
- * RightChatPanel - 집필 탭 오른쪽 사이드 고도화 AI 어시스턴트 패널
+ * RightChatPanel - 집필 탭 오른쪽 사이드 고도화 노아 보조 패널
  * 독립 채팅 기능 + 참고 자료(Reference) 가 가 통합된 단일 패널.
  */
 export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({ 
@@ -82,8 +82,9 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
         </div>
         <button 
           onClick={onClear}
-          className="p-1.5 text-text-tertiary hover:text-accent-red transition-[transform,background-color,border-color,color] hover:rotate-12 active:scale-95"
+          className="min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:text-accent-red hover:bg-bg-secondary transition-[transform,background-color,border-color,color] hover:rotate-12 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           title={t('ui.clearChat')}
+          aria-label={t('ui.clearChat')}
         >
           <RefreshCcw className="w-3.5 h-3.5" />
         </button>
@@ -124,7 +125,6 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
                     silent: t('hfcp.silent'),
                   } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict}
                 </span>
-                <span className="text-[9px] text-text-tertiary ml-auto opacity-50">SCORE: {Math.round(hfcpState.score)}</span>
               </div>
             </div>
           )}
@@ -208,7 +208,7 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
                 }
               }}
               placeholder={loading ? t('engine.thinking') : t('ui.askAnything')}
-              className="flex-1 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-sm text-text-primary placeholder-text-tertiary/60 resize-none max-h-32 leading-relaxed font-sans scrollbar-none py-1"
+              className="flex-1 min-h-[44px] bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 text-sm text-text-primary placeholder-text-tertiary/60 resize-none max-h-32 leading-relaxed font-sans scrollbar-none py-2"
               rows={1}
               disabled={loading}
             />
@@ -216,8 +216,9 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
             {loading ? (
               <button 
                 onClick={onAbort}
-                className="w-9 h-9 rounded-xl bg-accent-red/90 text-white flex items-center justify-center hover:bg-accent-red transition-colors shrink-0 shadow-lg shadow-accent-red/20"
+                className="min-h-[44px] min-w-[44px] rounded-xl bg-accent-red/90 text-white flex items-center justify-center hover:bg-accent-red transition-colors shrink-0 shadow-lg shadow-accent-red/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                 title={t('ui.stop')}
+                aria-label={t('ui.stop')}
               >
                 <StopCircle className="w-4 h-4 fill-current" />
               </button>
@@ -225,11 +226,12 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
               <button 
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] shrink-0 ${
+                className={`min-h-[44px] min-w-[44px] rounded-xl flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
                   input.trim() 
                     ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/20' 
-                    : 'bg-bg-tertiary text-text-tertiary opacity-40 cursor-not-allowed'
+                    : 'bg-bg-tertiary text-text-tertiary cursor-not-allowed'
                 }`}
+                aria-label={isKO ? '보내기' : 'Send'}
               >
                 <Send className={`w-4 h-4 ${input.trim() ? 'animate-in zoom-in duration-300' : ''}`} />
               </button>
@@ -247,4 +249,3 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
   );
 });
 RightChatPanel.displayName = 'RightChatPanel';
-

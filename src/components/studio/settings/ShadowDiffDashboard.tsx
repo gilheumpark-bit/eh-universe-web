@@ -475,10 +475,10 @@ const ShadowDiffDashboard: React.FC<ShadowDiffDashboardProps> = ({ language }) =
 
       <p className="text-[12px] text-text-tertiary leading-relaxed">
         {L4(language, {
-          ko: 'Shadow 모드에서 저널 엔진이 기존 경로와 병렬로 기록한 쓰기의 일치율. 99.9% + 최소 100 표본 충족 시 On 승격 가능.',
-          en: 'Match rate of journal engine writes shadowing the legacy path. Promotion to On requires 99.9% + 100+ samples.',
-          ja: 'Shadowモードでジャーナルエンジンが既存経路と並行記録した書き込みの一致率。99.9% + 100サンプル以上でOn昇格可能。',
-          zh: 'Shadow 模式下日志引擎与原路径并行写入的一致率。99.9% 且样本≥100 可晋升到 On。',
+          ko: '관찰 모드에서 과정기록 경로와 기존 저장 경로가 같은 결과를 남기는지 확인하는 일치율입니다. 99.9% + 최소 100 표본 충족 시 활성 전환이 가능합니다.',
+          en: 'Match rate between the process-record path and the classic save path in observe mode. Promotion to Active requires 99.9% + 100+ samples.',
+          ja: '観察モードで過程記録ルートと従来保存ルートが同じ結果を残すか確認する一致率です。99.9% + 100サンプル以上で有効化できます。',
+          zh: '观察模式下过程记录路径与旧版保存路径是否留下相同结果的匹配率。达到 99.9% 且样本≥100 后可切换为活动状态。',
         })}
       </p>
 
@@ -614,10 +614,10 @@ const ShadowDiffDashboard: React.FC<ShadowDiffDashboardProps> = ({ language }) =
         {!report || report.byOperation.length === 0 ? (
           <div className="text-[12px] text-text-tertiary px-2 py-3 rounded-lg bg-bg-secondary/30">
             {L4(language, {
-              ko: '수집된 데이터가 없습니다 — Shadow 모드 활성화 필요',
-              en: 'No data collected — enable Shadow mode',
-              ja: '収集データなし — Shadowモード有効化が必要',
-              zh: '无数据 — 需要启用 Shadow 模式',
+              ko: '수집된 데이터가 없습니다 — 관찰 모드 활성화 필요',
+              en: 'No data collected — enable observe mode',
+              ja: '収集データなし — 観察モードの有効化が必要',
+              zh: '无数据 — 需要启用观察模式',
             })}
           </div>
         ) : (

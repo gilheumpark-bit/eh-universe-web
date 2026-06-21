@@ -5,212 +5,345 @@
 // ============================================================
 
 import { useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import {
+  LOREGUARD_PLANS,
+  type LoreguardPlanId,
+} from "@/lib/billing/loreguard-plans";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-import { useAuth } from "@/lib/AuthContext";
 
-// [H1 stripe-ready] 실가격 env (빌드 시 인라인) — 주입 시 placeholder("추후 공지") 대신
-// 실가격 렌더 + Stripe checkout 버튼 활성. 부재 시 기존 mailto CTA 유지.
-// 예: NEXT_PUBLIC_PRICE_INDIE="$8/mo", NEXT_PUBLIC_PRICE_PRO="$20/mo"
-const ENV_PRICE: Record<string, string | undefined> = {
-  indie: process.env.NEXT_PUBLIC_PRICE_INDIE,
+type LocalizedText = { ko: string; en: string; ja: string; zh: string };
+type PricingTierId = "free" | "starter" | "studio" | "pro" | "publisher";
+
+interface Tier {
+  id: PricingTierId;
+  planId: LoreguardPlanId;
+  eyebrow: LocalizedText;
+  name: LocalizedText;
+  summary: LocalizedText;
+  features: Record<keyof LocalizedText, string[]>;
+  cta: LocalizedText;
+  subject: string;
+  highlight?: boolean;
+}
+
+const PRICE_OVERRIDE: Partial<Record<PricingTierId, string | undefined>> = {
+  starter: process.env.NEXT_PUBLIC_PRICE_STARTER ?? process.env.NEXT_PUBLIC_PRICE_INDIE,
+  studio: process.env.NEXT_PUBLIC_PRICE_STUDIO,
   pro: process.env.NEXT_PUBLIC_PRICE_PRO,
 };
 
-// ============================================================
-// PART 2 — Pricing tiers (placeholder — 정식 출시 시 Stripe 통합)
-// ============================================================
+const PUBLIC_PRICE_DISCLOSURE = process.env.NEXT_PUBLIC_SHOW_PUBLIC_PRICES === "on";
 
-interface Tier {
-  id: string;
-  name: { ko: string; en: string; ja: string; zh: string };
-  price: { alpha: string; ga: string };
-  features: { ko: string[]; en: string[]; ja: string[]; zh: string[] };
-  cta: { ko: string; en: string; ja: string; zh: string };
-  highlight?: boolean;
+const CHECKOUT_UI_ENABLED =
+  PUBLIC_PRICE_DISCLOSURE &&
+  (process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_UI === "on" ||
+    Object.values(PRICE_OVERRIDE).some((value) => Boolean(value?.trim())));
+
+function formatKrw(value: number | null): string {
+  if (value === null) return "문의";
+  return `₩${value.toLocaleString("ko-KR")}`;
+}
+
+function priceLabel(tier: Tier, T: (text: LocalizedText) => string): string {
+  if (tier.planId === "free") {
+    return T({ ko: "무료 체험", en: "Free trial", ja: "無料体験", zh: "免费体验" });
+  }
+  if (!PUBLIC_PRICE_DISCLOSURE) {
+    return T({
+      ko: "오디션 기간 비공개",
+      en: "Shared after request",
+      ja: "オーディション期間は非公開",
+      zh: "评审期间不公开",
+    });
+  }
+  const override = PRICE_OVERRIDE[tier.id]?.trim();
+  if (override) return override;
+  return formatKrw(LOREGUARD_PLANS[tier.planId].monthlyPriceKrw);
+}
+
+function priceMetaLabel(tier: Tier, T: (text: LocalizedText) => string): string {
+  if (tier.planId === "free") {
+    return T({
+      ko: "연결 키·로컬 연결",
+      en: "Connection key or local connection",
+      ja: "接続キー・ローカル接続",
+      zh: "连接密钥或本地连接",
+    });
+  }
+  if (!PUBLIC_PRICE_DISCLOSURE) {
+    return T({
+      ko: "사전 이용 신청 후 안내",
+      en: "Guided after access request",
+      ja: "事前利用申請後に案内",
+      zh: "申请后说明",
+    });
+  }
+
+  const plan = LOREGUARD_PLANS[tier.planId];
+  if (plan.monthlyPriceKrw === null) return annualLabel(tier, T);
+  return `${T({ ko: "월 결제", en: "per month", ja: "月払い", zh: "月付" })} · ${annualLabel(tier, T)}`;
+}
+
+function annualLabel(tier: Tier, T: (text: LocalizedText) => string): string {
+  const plan = LOREGUARD_PLANS[tier.planId];
+  if (plan.annualMonthlyPriceKrw === null) {
+    return T({ ko: "별도 협의", en: "Custom", ja: "個別相談", zh: "单独协商" });
+  }
+  return T({
+    ko: `연간 월 ${formatKrw(plan.annualMonthlyPriceKrw)}`,
+    en: `${formatKrw(plan.annualMonthlyPriceKrw)} / mo yearly`,
+    ja: `年額 月 ${formatKrw(plan.annualMonthlyPriceKrw)}`,
+    zh: `年付月均 ${formatKrw(plan.annualMonthlyPriceKrw)}`,
+  });
 }
 
 const TIERS: Tier[] = [
   {
     id: "free",
-    name: { ko: "Free / Alpha", en: "Free / Alpha", ja: "Free / Alpha", zh: "Free / Alpha" },
-    price: { alpha: "$0", ga: "$0" },
+    planId: "free",
+    eyebrow: { ko: "체험", en: "Try", ja: "体験", zh: "体验" },
+    name: { ko: "연결 키 무료", en: "Free Connection Key", ja: "接続キー無料", zh: "连接密钥免费" },
+    summary: {
+      ko: "연결 키나 로컬 모델로 기본 작업 흐름을 확인합니다.",
+      en: "Try the core workflow with a connection key or a local model.",
+      ja: "接続キーまたはローカルモデルで基本フローを確認します。",
+      zh: "用连接密钥或本地模型体验基础流程。",
+    },
     features: {
       ko: [
-        "BYOK (Gemini/OpenAI/Claude/Groq/Mistral/Ollama/LM Studio)",
-        "수동 편집 + 씬시트 + Tiptap 블록 에디터",
-        "EPUB·DOCX·TXT·MD·JSON 내보내기",
-        "GitHub 백업 (PAT/OAuth)",
-        "창작 과정 확인서 발급 (HTML/Markdown)",
+        "프로젝트 생성, 세계관, 씬시트 기본 작업",
+        "수동 집필과 기본 내보내기",
+        "연결 키·로컬 모델 연결",
+        "로컬 저장과 불러오기",
+        "과정기록 미리보기",
       ],
       en: [
-        "BYOK (Gemini/OpenAI/Claude/Groq/Mistral/Ollama/LM Studio)",
-        "Manual editor + Scene Sheet + Tiptap blocks",
-        "EPUB·DOCX·TXT·MD·JSON export",
-        "GitHub backup (PAT/OAuth)",
-        "Authorship Journal issue (HTML/Markdown)",
+        "Project setup, worldbuilding, and scene sheet basics",
+        "Manual writing and basic export",
+        "Connection key or local model connection",
+        "Local save and import",
+        "Process record preview",
       ],
       ja: [
-        "BYOK (Gemini/OpenAI/Claude/Groq/Mistral/Ollama/LM Studio)",
-        "手動編集 + シーンシート + Tiptap ブロック",
-        "EPUB·DOCX·TXT·MD·JSON エクスポート",
-        "GitHub バックアップ",
-        "制作過程確認書 発行 (HTML/Markdown)",
+        "プロジェクト作成、世界観、シーンシートの基本作業",
+        "手動執筆と基本エクスポート",
+        "ユーザーキー・ローカルモデル接続",
+        "ローカル保存と読み込み",
+        "過程記録プレビュー",
       ],
       zh: [
-        "BYOK (Gemini/OpenAI/Claude/Groq/Mistral/Ollama/LM Studio)",
-        "手动编辑 + 场景表 + Tiptap 块编辑器",
-        "EPUB·DOCX·TXT·MD·JSON 导出",
-        "GitHub 备份",
-        "创作过程确认书 发行 (HTML/Markdown)",
+        "项目创建、世界观、场景表基础工作",
+        "手动写作与基础导出",
+        "用户密钥或本地模型连接",
+        "本地保存与导入",
+        "过程记录预览",
       ],
     },
-    cta: { ko: "지금 시작", en: "Start Now", ja: "今すぐ開始", zh: "立即开始" },
+    cta: { ko: "지금 시작", en: "Start", ja: "開始", zh: "开始" },
+    subject: "FREE",
   },
   {
-    id: "indie",
-    name: { ko: "Indie", en: "Indie", ja: "Indie", zh: "Indie" },
-    price: { alpha: "추후 공지", ga: "TBD" },
+    id: "starter",
+    planId: "starter",
+    eyebrow: { ko: "입문", en: "Starter", ja: "入門", zh: "入门" },
+    name: { ko: "Starter", en: "Starter", ja: "Starter", zh: "Starter" },
+    summary: {
+      ko: "정기 연재를 막 시작한 작가에게 맞춘 기본 작업장입니다.",
+      en: "A focused workspace for writers starting regular serialization.",
+      ja: "定期連載を始める作家向けの基本作業場です。",
+      zh: "面向刚开始定期连载作者的基础工作区。",
+    },
     features: {
       ko: [
-        "Free 모든 기능",
-        "DGX Spark 자체 서버 (Qwen 3.6-35B-A3B-FP8) 직결",
-        "RAG 99만 문서 + 25 장르 규칙 자동 주입",
-        "Tab 자동완성 + 인라인 리라이트 무제한",
-        "5가지 집필 모드 (AI/캔버스/리파인/고급)",
-        "평행우주 (Git 브랜치 분기) 무제한",
+        "월 15화 작업 기준",
+        "노아 기본 운영",
+        "출고 크레딧 3개",
+        "회차 과정기록 카드",
+        "웹소설 연재 기본 점검",
       ],
       en: [
-        "Everything in Free",
-        "DGX Spark self-hosted (Qwen 3.6-35B-A3B-FP8)",
-        "RAG 990K docs + 25 genre rules",
-        "Unlimited Tab completion + inline rewrite",
-        "5 writing modes (AI/Canvas/Refine/Advanced)",
-        "Unlimited parallel universes (Git branches)",
+        "15 episodes per month",
+        "Core Noa operation",
+        "3 release credits",
+        "Episode process record cards",
+        "Basic serialization checks",
       ],
       ja: [
-        "Free 全機能",
-        "DGX Spark セルフホスト (Qwen 3.6-35B)",
-        "RAG 99万ドキュメント + 25 ジャンル",
-        "Tab 自動補完 + インライン書き直し 無制限",
-        "5 つの執筆モード",
-        "パラレルワールド 無制限",
+        "月15話基準",
+        "ノア基本運用",
+        "出稿クレジット3個",
+        "話別過程記録カード",
+        "連載基本チェック",
       ],
       zh: [
-        "Free 全部功能",
-        "DGX Spark 自托管 (Qwen 3.6-35B)",
-        "RAG 99万文档 + 25 体裁规则",
-        "Tab 自动完成 + 行内重写 无限",
-        "5 种写作模式",
-        "平行宇宙 无限",
+        "每月15话工作量",
+        "诺亚基础运行",
+        "3个出库额度",
+        "单话过程记录卡",
+        "连载基础检查",
       ],
     },
-    cta: { ko: "알파 신청", en: "Join Alpha", ja: "アルファ参加", zh: "加入 Alpha" },
+    cta: { ko: "사전 이용 신청", en: "Request access", ja: "事前利用申請", zh: "申请试用" },
+    subject: "STARTER",
+  },
+  {
+    id: "studio",
+    planId: "studio",
+    eyebrow: { ko: "권장", en: "Recommended", ja: "推奨", zh: "推荐" },
+    name: { ko: "Studio", en: "Studio", ja: "Studio", zh: "Studio" },
+    summary: {
+      ko: "연재, 번역·현지화, 출고 준비를 함께 관리하는 주력 플랜입니다.",
+      en: "The main plan for serialization, localization, and release preparation.",
+      ja: "連載、翻訳・現地化、出稿準備を一緒に進める主力プランです。",
+      zh: "用于连载、翻译本地化与出库准备的主力方案。",
+    },
+    features: {
+      ko: [
+        "월 30화 작업 기준",
+        "번역·현지화 포함",
+        "출고 크레딧 10개",
+        "C2PA 회차 패키지 준비",
+        "웹툰·해외 권리/IP 묶음 준비",
+      ],
+      en: [
+        "30 episodes per month",
+        "Translation and localization included",
+        "10 release credits",
+        "C2PA episode package preparation",
+        "Webtoon and global rights/IP package preparation",
+      ],
+      ja: [
+        "月30話基準",
+        "翻訳・現地化込み",
+        "出稿クレジット10個",
+        "C2PA話別パッケージ準備",
+        "ウェブトゥーン・海外向け権利/IP整理",
+      ],
+      zh: [
+        "每月30话工作量",
+        "包含翻译与本地化",
+        "10个出库额度",
+        "C2PA单话包准备",
+        "漫画与海外权利/IP包准备",
+      ],
+    },
+    cta: { ko: "사전 이용 신청", en: "Request access", ja: "事前利用申請", zh: "申请试用" },
+    subject: "STUDIO",
     highlight: true,
   },
   {
     id: "pro",
+    planId: "pro",
+    eyebrow: { ko: "상업 출고", en: "Commercial", ja: "商用出稿", zh: "商业出库" },
     name: { ko: "Pro", en: "Pro", ja: "Pro", zh: "Pro" },
-    // [Round 4 audit fix — 2026-05-12] typo: "추후 공정" (process) → "추후 공지" (notice).
-    // Indie tier(L63)와 동일 정정. 알파 사용자 노출되는 paid conversion page.
-    price: { alpha: "추후 공지", ga: "TBD" },
+    summary: {
+      ko: "전업 작가와 상업 제출을 위한 권리/IP 점검 중심 플랜입니다.",
+      en: "For professional release workflows with deeper rights/IP checks.",
+      ja: "商用提出に向けた権利/IP点検中心のプランです。",
+      zh: "面向商业提交与更深入权利/IP检查的方案。",
+    },
     features: {
       ko: [
-        "Indie 모든 기능",
-        "Translation Studio 무제한 (6단계 + dual-pipeline)",
-        "Long-Arc Verifier 자동 트리거 (10화마다)",
-        "Story Debugger + Reader Simulation",
-        "Loreguard LSP API 토큰 (CMS/CI 통합)",
-        "우선 지원 (24시간 응답)",
+        "월 50화 작업 기준",
+        "번역·현지화와 고급 점검 포함",
+        "출고 크레딧 25개",
+        "권리/IP 묶음 월 1건 기준",
+        "완결 출고 패키지 Pro 준비",
       ],
       en: [
-        "Everything in Indie",
-        "Translation Studio unlimited (6-stage + dual-pipeline)",
-        "Long-Arc Verifier auto-trigger (every 10 episodes)",
-        "Story Debugger + Reader Simulation",
-        "Loreguard LSP API token (CMS/CI integration)",
-        "Priority support (24h response)",
+        "50 episodes per month",
+        "Localization and advanced checks included",
+        "25 release credits",
+        "One rights/IP package per month baseline",
+        "Completed-work Pro release package preparation",
       ],
       ja: [
-        "Indie 全機能",
-        "Translation Studio 無制限",
-        "Long-Arc Verifier 自動",
-        "Story Debugger + Reader Sim",
-        "LSP API トークン",
-        "優先サポート",
+        "月50話基準",
+        "翻訳・現地化と高度チェック込み",
+        "出稿クレジット25個",
+        "権利/IP整理 月1件基準",
+        "完結出稿パッケージPro準備",
       ],
       zh: [
-        "Indie 全部功能",
-        "Translation Studio 无限",
-        "Long-Arc Verifier 自动触发",
-        "Story Debugger + Reader Sim",
-        "LSP API 令牌",
-        "优先支持",
+        "每月50话工作量",
+        "包含本地化与高级检查",
+        "25个出库额度",
+        "每月1个权利/IP包基准",
+        "完结出库Pro包准备",
       ],
     },
-    cta: { ko: "알파 신청", en: "Join Alpha", ja: "アルファ参加", zh: "加入 Alpha" },
+    cta: { ko: "사전 이용 신청", en: "Request access", ja: "事前利用申請", zh: "申请试用" },
+    subject: "PRO",
   },
   {
     id: "publisher",
-    name: { ko: "Publisher / Enterprise", en: "Publisher / Enterprise", ja: "Publisher / Enterprise", zh: "Publisher / Enterprise" },
-    price: { alpha: "문의", ga: "Contact" },
+    planId: "publisher",
+    eyebrow: { ko: "조직", en: "Organization", ja: "組織", zh: "组织" },
+    name: {
+      ko: "Publisher",
+      en: "Publisher",
+      ja: "Publisher",
+      zh: "Publisher",
+    },
+    summary: {
+      ko: "출판사, 매니지먼트, 제작사를 위한 그룹 워크스페이스입니다.",
+      en: "A group workspace for publishers, agencies, and studios.",
+      ja: "出版社、マネジメント、制作会社向けのグループ作業場です。",
+      zh: "面向出版社、经纪公司与制作公司的团队工作区。",
+    },
     features: {
       ko: [
-        "Pro 모든 기능",
-        "AGPL 외 상업 라이선스 (COMMERCIAL-LICENSE.md)",
-        "퍼블리셔용 LSP API (manuscript 일괄 검증)",
-        "On-premise 자가 호스팅 옵션",
-        "KIPO 특허 명시 grant + indemnification",
-        "전담 운영 (SLA 협의)",
+        "그룹 워크스페이스",
+        "작품별 출고 현황",
+        "Publisher 제출 패키지",
+        "작가·검토자 권한 분리",
+        "운영 지원 조건 협의",
       ],
       en: [
-        "Everything in Pro",
-        "Commercial license (closed-source / OEM / SaaS)",
-        "Publisher-grade LSP API (batch manuscript validation)",
-        "On-premise self-host option",
-        "Explicit KIPO patent grant + indemnification",
-        "Dedicated operations (SLA negotiable)",
+        "Group workspace",
+        "Per-work release status",
+        "Organization submission package",
+        "Separated author and reviewer roles",
+        "Operations support by agreement",
       ],
       ja: [
-        "Pro 全機能",
-        "商用ライセンス",
-        "出版社向け LSP API",
-        "オンプレミス",
-        "KIPO 特許 grant",
-        "専属運営",
+        "グループ作業場",
+        "作品別出稿状況",
+        "組織提出パッケージ",
+        "作家・検討者権限分離",
+        "運用支援条件は相談",
       ],
       zh: [
-        "Pro 全部功能",
-        "商业许可",
-        "出版社级 LSP API",
-        "本地部署",
-        "KIPO 专利 grant",
-        "专属运营",
+        "团队工作区",
+        "按作品查看出库状态",
+        "组织提交包",
+        "作者与审核者权限分离",
+        "运营支持条件协商",
       ],
     },
-    cta: { ko: "문의하기", en: "Contact Sales", ja: "お問い合わせ", zh: "联系销售" },
+    cta: { ko: "문의하기", en: "Contact", ja: "問い合わせ", zh: "联系" },
+    subject: "PUBLISHER",
   },
 ];
 
 // ============================================================
-// PART 3 — Page component
+// PART 2 — Page Component
 // ============================================================
 
 export default function PricingPage() {
   const { lang } = useLang();
-  const T = (v: { ko: string; en: string; ja: string; zh: string }) => L4(lang, v);
-
-  // [H1 stripe-ready] pricing 버튼 → 로그인 확인 → /api/checkout 세션 생성 → Stripe redirect.
+  const T = (value: LocalizedText) => L4(lang, value);
   const { user, signInWithGoogle, getIdToken } = useAuth();
-  const [busyTier, setBusyTier] = useState<string | null>(null);
+  const [busyTier, setBusyTier] = useState<PricingTierId | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  const startCheckout = async (tierId: string) => {
-    if (busyTier) return;
-    setBusyTier(tierId);
+  const startCheckout = async (tier: Tier) => {
+    if (busyTier || tier.planId === "free" || tier.planId === "publisher") return;
+    setBusyTier(tier.id);
     setCheckoutError(null);
     try {
-      // 로그인 확인 — 미로그인 시 Google 로그인 (popup/redirect) 후 토큰 재시도.
       if (!user) {
         await signInWithGoogle();
       }
@@ -226,27 +359,28 @@ export default function PricingPage() {
         );
         return;
       }
-      const res = await fetch("/api/checkout", {
+
+      const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tier: tierId, returnUrl: window.location.origin }),
+        body: JSON.stringify({ planId: tier.planId, returnUrl: window.location.origin }),
       });
-      const data: { url?: string; error?: string } = await res.json().catch(() => ({}));
-      if (!res.ok || !data.url) {
+      const data: { url?: string; error?: string } = await response.json().catch(() => ({}));
+      if (!response.ok || !data.url) {
         setCheckoutError(
-          res.status === 503 || res.status === 501
+          response.status === 503 || response.status === 501
             ? T({
-                ko: "결제가 아직 활성화되지 않았습니다. 정식 출시 시 안내드립니다.",
-                en: "Checkout is not yet enabled. We will announce at GA.",
-                ja: "決済はまだ有効化されていません。正式リリース時にご案内します。",
-                zh: "结账尚未启用。正式发布时将另行通知。",
+                ko: "결제는 아직 제한적으로 열려 있습니다. 사전 이용 신청으로 안내받을 수 있습니다.",
+                en: "Checkout is not broadly enabled yet. Request access to continue.",
+                ja: "決済はまだ限定的に開放されています。事前利用申請で案内を受けられます。",
+                zh: "结账尚未全面开放。可先申请试用。",
               })
             : data.error ||
                 T({
-                  ko: "결제 세션 생성에 실패했습니다. 잠시 후 다시 시도해주세요.",
-                  en: "Failed to create a checkout session. Please try again shortly.",
-                  ja: "決済セッションの作成に失敗しました。しばらくして再試行してください。",
-                  zh: "创建结账会话失败。请稍后重试。",
+                  ko: "결제 세션을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.",
+                  en: "Could not create a checkout session. Please try again shortly.",
+                  ja: "決済セッションを作成できませんでした。しばらくして再試行してください。",
+                  zh: "无法创建结账会话。请稍后重试。",
                 }),
         );
         return;
@@ -255,10 +389,10 @@ export default function PricingPage() {
     } catch {
       setCheckoutError(
         T({
-          ko: "네트워크 오류 — 잠시 후 다시 시도해주세요.",
-          en: "Network error — please try again shortly.",
-          ja: "ネットワークエラー — しばらくして再試行してください。",
-          zh: "网络错误 — 请稍后重试。",
+          ko: "연결 상태를 확인한 뒤 다시 시도해 주세요.",
+          en: "Check your connection and try again.",
+          ja: "ネットワーク接続を確認してから再試行してください。",
+          zh: "请检查网络连接后重试。",
         }),
       );
     } finally {
@@ -268,117 +402,190 @@ export default function PricingPage() {
 
   return (
     <main className="min-h-screen bg-bg-primary text-text-primary px-6 py-12 md:py-16">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto">
         <header className="text-center mb-12">
+          <p className="text-xs font-semibold tracking-[0.18em] uppercase text-accent-blue mb-3">
+            {T({ ko: "로어가드 이용 안내", en: "Loreguard Access", ja: "Loreguard 利用案内", zh: "Loreguard 使用说明" })}
+          </p>
           <h1 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight mb-4">
-            {T({ ko: "가격 안내", en: "Pricing", ja: "料金", zh: "价格" })}
+            {T({ ko: "오디션 기간 사전 이용 안내", en: "Audition access guide", ja: "オーディション期間の利用案内", zh: "评审期间使用说明" })}
           </h1>
           <p className="text-text-secondary text-base md:text-lg max-w-2xl mx-auto">
             {T({
-              ko: "알파 단계 — Free 무료. Indie/Pro/Enterprise 가격은 정식 출시 시점 확정. 출시 전 알파 작가에게 별도 안내.",
-              en: "Alpha stage — Free is free. Indie/Pro/Enterprise pricing confirmed at GA. Alpha writers receive separate notice before launch.",
-              ja: "アルファ段階 — Free 無料。Indie/Pro/Enterprise 価格は正式リリース時に確定。アルファ作家へは事前案内。",
-              zh: "Alpha 阶段 — Free 免费。Indie/Pro/Enterprise 价格在正式发布时确定。提前通知 Alpha 作家。",
+              ko: "오디션 기간에는 플랜별 금액을 공개 노출하지 않고, 작업장 범위와 출고 크레딧 조건만 먼저 안내합니다.",
+              en: "During the audition period, public amounts stay hidden while workspace scope and release-credit conditions are shown first.",
+              ja: "オーディション期間は金額を公開表示せず、作業場範囲と出稿クレジット条件を先に案内します。",
+              zh: "评审期间不公开显示金额，先说明工作区范围与出库额度条件。",
             })}
           </p>
         </header>
 
-        {/* Disclaimer */}
         <div
           role="note"
           className="mb-12 mx-auto max-w-3xl px-6 py-4 border border-accent-amber/40 bg-accent-amber/5 text-sm"
         >
           <strong className="block mb-1 text-accent-amber">
-            {T({ ko: "⚠️ 알파 단계 안내", en: "⚠️ Alpha Stage Notice", ja: "⚠️ アルファ段階", zh: "⚠️ Alpha 阶段" })}
+            {T({ ko: "현재 이용 방식", en: "Current access", ja: "現在の利用方式", zh: "当前使用方式" })}
           </strong>
           <p className="text-text-secondary leading-relaxed">
             {T({
-              ko: "현재 알파 — 모든 기능 무료. 정식 출시 (예상 2026 H2) 시점에 Indie/Pro/Publisher 가격 확정. 알파 기여자는 정식 출시 후 기간 한정 할인 + 알파 기여자 명시 적용.",
-              en: "Currently in alpha — all features free. Indie/Pro/Publisher pricing confirmed at GA (expected 2026 H2). Alpha contributors receive limited-time discount + alpha contributor credit at GA.",
-              ja: "現在アルファ — 全機能無料。Indie/Pro/Publisher 価格は正式リリース (2026 H2 予定) で確定。アルファ貢献者は期間限定割引 + クレジット表記。",
-              zh: "目前 Alpha 阶段 — 所有功能免费。Indie/Pro/Publisher 价格在正式发布 (预计 2026 H2) 时确定。Alpha 贡献者获得限时折扣 + 名单致谢。",
+              ko: "무료 체험은 바로 시작할 수 있고, 상위 플랜은 사전 이용 신청으로만 안내합니다. 공개 금액과 즉시 처리 버튼은 운영 공개 시점에만 표시됩니다.",
+              en: "Free trial is available now. Higher plans are request-first, and public amounts or instant action buttons appear only when operations open them.",
+              ja: "無料体験はすぐ開始できます。上位プランは事前申請で案内し、公開金額と即時処理ボタンは運用公開時のみ表示します。",
+              zh: "免费体验可立即开始。更高方案先通过申请说明，公开金额和即时处理按钮仅在运营开放时显示。",
             })}
           </p>
         </div>
 
-        {/* Tiers */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {TIERS.map((tier) => (
-            <article
-              key={tier.id}
-              className={`flex flex-col p-6 border ${
-                tier.highlight
-                  ? "border-accent-blue bg-accent-blue/5"
-                  : "border-border bg-bg-secondary/30"
-              }`}
-            >
-              {tier.highlight && (
-                <span className="inline-block px-2 py-0.5 mb-3 text-[10px] font-bold tracking-widest uppercase bg-accent-blue text-bg-primary self-start">
-                  {T({ ko: "추천", en: "Recommended", ja: "推奨", zh: "推荐" })}
-                </span>
-              )}
-              <h2 className="text-xl font-serif font-semibold mb-1">{T(tier.name)}</h2>
-              <div className="font-mono text-sm text-text-tertiary mb-4">
-                {/* [H1 stripe-ready] env 실가격 있으면 실가격, 없으면 placeholder("추후 공지") */}
-                <span className="text-2xl font-bold text-text-primary">
-                  {ENV_PRICE[tier.id]?.trim() || tier.price.alpha}
-                </span>
-                {ENV_PRICE[tier.id]?.trim() ? null : <span className="ml-2">/ alpha</span>}
-                <div className="text-[10px] mt-1">
-                  GA:{" "}
-                  <span className="text-text-secondary">
-                    {ENV_PRICE[tier.id]?.trim() || tier.price.ga}
+        <section
+          className="grid gap-5 mb-12"
+          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
+          aria-label="Loreguard plans"
+        >
+          {TIERS.map((tier) => {
+            const plan = LOREGUARD_PLANS[tier.planId];
+            const canCheckout =
+              CHECKOUT_UI_ENABLED &&
+              plan.checkoutEligible &&
+              tier.planId !== "free" &&
+              tier.planId !== "publisher";
+            const mailHref =
+              tier.id === "free"
+                ? "/welcome"
+                : `mailto:gilheumpark@gmail.com?subject=%5B${tier.subject}%5D`;
+
+            return (
+              <article
+                key={tier.id}
+                className={`flex flex-col rounded-none border p-6 ${
+                  tier.highlight
+                    ? "border-accent-blue bg-accent-blue/5"
+                    : "border-border bg-bg-secondary/30"
+                }`}
+              >
+                <div className="mb-4">
+                  <span
+                    className={`inline-flex min-h-6 items-center border px-2 text-[11px] font-semibold ${
+                      tier.highlight
+                        ? "border-accent-blue text-accent-blue"
+                        : "border-border text-text-tertiary"
+                    }`}
+                  >
+                    {T(tier.eyebrow)}
                   </span>
                 </div>
-              </div>
-              <ul className="flex-1 space-y-2 mb-6 text-sm text-text-secondary">
-                {tier.features[lang].map((f, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span aria-hidden="true" className="text-accent-blue">✓</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              {ENV_PRICE[tier.id]?.trim() ? (
-                /* [H1 stripe-ready] 실가격 주입 시 — Stripe checkout 버튼 (로그인 확인 → 세션 생성 → redirect) */
-                <button
-                  type="button"
-                  onClick={() => startCheckout(tier.id)}
-                  disabled={busyTier !== null}
-                  className={`block w-full text-center px-4 py-2.5 text-sm font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-wait ${
-                    tier.highlight
-                      ? "bg-accent-blue text-bg-primary hover:opacity-90"
-                      : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
-                  } transition-colors`}
-                >
-                  {busyTier === tier.id
-                    ? T({ ko: "이동 중…", en: "Redirecting…", ja: "移動中…", zh: "跳转中…" })
-                    : T({ ko: "구독 시작", en: "Subscribe", ja: "購読開始", zh: "开始订阅" })}
-                </button>
-              ) : (
-                <a
-                  href={
-                    tier.id === "free"
-                      ? "/welcome"
-                      : tier.id === "publisher"
-                      ? "mailto:gilheumpark@gmail.com?subject=%5BCOMMERCIAL%5D"
-                      : "mailto:gilheumpark@gmail.com?subject=%5BALPHA%5D"
-                  }
-                  className={`block text-center px-4 py-2.5 text-sm font-bold uppercase tracking-wider ${
-                    tier.highlight
-                      ? "bg-accent-blue text-bg-primary hover:opacity-90"
-                      : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
-                  } transition-colors`}
-                >
-                  {T(tier.cta)}
-                </a>
-              )}
-            </article>
-          ))}
-        </div>
+                <h2 className="font-serif text-2xl font-semibold mb-2">{T(tier.name)}</h2>
+                <p className="min-h-16 text-sm leading-relaxed text-text-secondary mb-5">
+                  {T(tier.summary)}
+                </p>
+                <div className="mb-5 border-y border-border py-4">
+                  <div className="text-3xl font-semibold tracking-normal">
+                    {priceLabel(tier, T)}
+                  </div>
+                  <div className="mt-1 text-xs text-text-tertiary">
+                    {priceMetaLabel(tier, T)}
+                  </div>
+                  <div className="mt-2 text-xs text-text-secondary">
+                    {plan.includedEpisodes === null
+                      ? T({ ko: "조직 단위 협의", en: "Organization scope", ja: "組織単位で相談", zh: "组织范围协商" })
+                      : T({
+                          ko: `작업 가능 화수 ${plan.includedEpisodes}화 · 출고 크레딧 ${plan.certificateEpisodeAllowance}개`,
+                          en: `${plan.includedEpisodes} episodes · ${plan.certificateEpisodeAllowance} release credits`,
+                          ja: `${plan.includedEpisodes}話 · 出稿クレジット${plan.certificateEpisodeAllowance}個`,
+                          zh: `${plan.includedEpisodes}话 · 出库额度${plan.certificateEpisodeAllowance}个`,
+                        })}
+                  </div>
+                </div>
+                <ul className="flex-1 space-y-2.5 mb-6 text-sm text-text-secondary">
+                  {tier.features[lang].map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <span aria-hidden="true" className="text-accent-blue">
+                        ✓
+                      </span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                {canCheckout ? (
+                  <button
+                    type="button"
+                    onClick={() => startCheckout(tier)}
+                    disabled={busyTier !== null}
+                    className={`min-h-11 w-full px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-wait disabled:opacity-50 ${
+                      tier.highlight
+                        ? "bg-accent-blue text-bg-primary hover:opacity-90"
+                        : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
+                    }`}
+                  >
+                    {busyTier === tier.id
+                      ? T({ ko: "이동 중", en: "Redirecting", ja: "移動中", zh: "跳转中" })
+                      : T({ ko: "구독 시작", en: "Subscribe", ja: "購読開始", zh: "开始订阅" })}
+                  </button>
+                ) : (
+                  <a
+                    href={mailHref}
+                    className={`flex min-h-11 w-full items-center justify-center px-4 py-2.5 text-sm font-semibold transition-colors ${
+                      tier.highlight
+                        ? "bg-accent-blue text-bg-primary hover:opacity-90"
+                        : "border border-text-primary text-text-primary hover:bg-text-primary hover:text-bg-primary"
+                    }`}
+                  >
+                    {T(tier.cta)}
+                  </a>
+                )}
+              </article>
+            );
+          })}
+        </section>
 
-        {/* [H1 stripe-ready] checkout 오류 — 비침묵 표면화 */}
+        <section
+          className="mb-12 grid gap-4 border border-border bg-bg-secondary/20 p-5 md:grid-cols-[0.9fr_1.1fr]"
+          aria-label="출고 크레딧 가치"
+        >
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent-blue">
+              {T({ ko: "출고 크레딧의 의미", en: "Release credit value", ja: "出稿クレジットの意味", zh: "出库额度的意义" })}
+            </p>
+            <h2 className="font-serif text-2xl font-semibold">
+              {T({
+                ko: "가격보다 먼저, 작품이 남기는 증거를 봅니다.",
+                en: "Before price, look at the evidence your work leaves behind.",
+                ja: "価格より先に、作品が残す証拠を見ます。",
+                zh: "先于价格，先看作品留下的证据。",
+              })}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+              {T({
+                ko: "출고 크레딧은 다운로드 버튼이 아니라 과정기록, 권리/IP 점검, 제출 묶음을 실제 산출물로 정리하는 단위입니다.",
+                en: "Release credits are not a download button. They turn process records, rights/IP checks, and submission bundles into real artifacts.",
+                ja: "出稿クレジットは単なるダウンロードボタンではありません。過程記録、権利/IP確認、提出用の束を実際の成果物にします。",
+                zh: "出库额度不是下载按钮，而是把过程记录、权利/IP 检查和提交包整理成真实产物的单位。",
+              })}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                title: T({ ko: "과정기록", en: "Process record", ja: "過程記録", zh: "过程记录" }),
+                body: T({ ko: "작가 결정과 노아 제안을 분리해 확인합니다.", en: "Separates author decisions from Noa suggestions.", ja: "作者判断とノア提案を分けて確認します。", zh: "区分作者决策与诺亚建议。" }),
+              },
+              {
+                title: T({ ko: "권리/IP 점검", en: "Rights/IP check", ja: "権利/IP確認", zh: "权利/IP 检查" }),
+                body: T({ ko: "공동기획, 외부 자료, 매체 확장 메모를 정리합니다.", en: "Organizes co-planning, source material, and media expansion notes.", ja: "共同企画、外部資料、メディア展開メモを整理します。", zh: "整理共同企划、外部资料与媒介扩展备注。" }),
+              },
+              {
+                title: T({ ko: "제출 패키지", en: "Submission package", ja: "提出パッケージ", zh: "提交包" }),
+                body: T({ ko: "공모전, 플랫폼, 출판사에 낼 자료를 묶습니다.", en: "Bundles material for contests, platforms, and publishers.", ja: "公募、プラットフォーム、出版社向け資料を束ねます。", zh: "打包提交给征稿、平台和出版社的资料。" }),
+              },
+            ].map((item) => (
+              <article key={item.title} className="border border-border bg-bg-primary/40 p-4">
+                <h3 className="text-sm font-semibold text-text-primary">{item.title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         {checkoutError && (
           <div
             role="alert"
@@ -388,109 +595,110 @@ export default function PricingPage() {
           </div>
         )}
 
-        {/* FAQ */}
         <section className="max-w-3xl mx-auto space-y-6 text-sm">
           <h2 className="text-2xl font-serif font-semibold mb-4">
             {T({ ko: "자주 묻는 질문", en: "FAQ", ja: "FAQ", zh: "FAQ" })}
           </h2>
 
           <details className="border border-border p-4 bg-bg-secondary/20">
-            <summary className="font-semibold cursor-pointer">
+            <summary className="flex min-h-[44px] cursor-pointer items-center font-semibold">
               {T({
-                ko: "알파 작가 모집은 어떻게 신청하나요?",
-                en: "How do I apply as an alpha writer?",
-                ja: "アルファ作家への申込方法は?",
-                zh: "如何申请成为 Alpha 作家?",
+                ko: "출고 크레딧은 무엇인가요?",
+                en: "What are release credits?",
+                ja: "出稿クレジットとは?",
+                zh: "什么是出库额度?",
               })}
             </summary>
             <p className="mt-2 text-text-secondary leading-relaxed">
               {T({
-                ko: "이메일 (gilheumpark@gmail.com) 제목에 [ALPHA] 표기 + 본문에 작품 분야 (웹소설/라노벨/판타지 등) + 연재 플랫폼 (있다면) 안내 부탁드립니다.",
-                en: "Email gilheumpark@gmail.com with subject [ALPHA] + briefly describe your genre (webnovel / light novel / fantasy) and serialization platform (if any).",
-                ja: "メール (gilheumpark@gmail.com) の件名に [ALPHA] + 本文にジャンル + 連載プラットフォーム (あれば) を明記。",
-                zh: "邮件 gilheumpark@gmail.com 主题加 [ALPHA] + 正文说明体裁 + 连载平台 (如有)。",
+                ko: "회차 과정기록, C2PA 회차 패키지, 완결 과정기록, 권리/IP 묶음처럼 출고 준비 산출물을 만드는 단위입니다.",
+                en: "They are used to prepare release artifacts such as episode process records, C2PA episode packages, completed-work records, and rights/IP packages.",
+                ja: "話別過程記録、C2PA話別パッケージ、完結過程記録、権利/IP整理などの出稿準備物を作る単位です。",
+                zh: "用于准备单话过程记录、C2PA单话包、完结过程记录与权利/IP包等出库材料。",
               })}
             </p>
           </details>
 
           <details className="border border-border p-4 bg-bg-secondary/20">
-            <summary className="font-semibold cursor-pointer">
+            <summary className="flex min-h-[44px] cursor-pointer items-center font-semibold">
               {T({
-                ko: "BYOK 와 자체 서버는 무엇이 다른가요?",
-                en: "What's the difference between BYOK and self-hosted?",
-                ja: "BYOK と自体サーバーの違いは?",
-                zh: "BYOK 与自托管有何不同?",
+                ko: "연결 키와 기본 운영은 어떻게 다른가요?",
+                en: "How do connection keys differ from hosted operation?",
+                ja: "接続キーと標準運用の違いは?",
+                zh: "连接密钥与默认托管有什么区别?",
               })}
             </summary>
             <p className="mt-2 text-text-secondary leading-relaxed">
               {T({
-                ko: "BYOK 는 본인 OpenAI/Claude/Gemini 키 사용 — Free 티어에서 사용 가능하며 사용량 비용은 작가 부담. 자체 서버 (Indie+) 는 Loreguard 가 운영하는 DGX Spark Qwen 3.6-35B 모델 직결 — 추가 비용 없음.",
-                en: "BYOK uses your own OpenAI/Claude/Gemini key — available on Free tier, usage cost on you. Self-hosted (Indie+) connects to Loreguard's DGX Spark Qwen 3.6-35B — no additional cost.",
-                ja: "BYOK は本人の OpenAI/Claude/Gemini キー使用 — Free 利用可、使用量負担は作家。自体サーバー (Indie+) は Loreguard 運営の DGX Spark Qwen 3.6-35B 直結 — 追加費用なし。",
-                zh: "BYOK 使用您自己的 OpenAI/Claude/Gemini 密钥 — Free 可用,用量费用自付。自托管 (Indie+) 连接 Loreguard 运营的 DGX Spark Qwen 3.6-35B — 无额外费用。",
+                ko: "연결 키는 본인이 가진 모델 계정을 로어가드에 연결하는 방식이고, 기본 운영은 로어가드가 준비한 노아 운영 경로를 쓰는 방식입니다. 연결 키와 로컬 연결은 계속 운영 모드로 남깁니다.",
+                en: "Connection keys connect your own model account to Loreguard. Hosted operation uses the Noa route prepared by Loreguard. Connection-key and local connections remain available operating modes.",
+                ja: "接続キーは自分のモデルアカウントをLoreguardに接続する方式で、標準運用はLoreguardが用意したノアルートを使う方式です。接続キーとローカル接続は運用モードとして残します。",
+                zh: "连接密钥用于将您自己的模型账户接入 Loreguard，默认托管使用 Loreguard 准备的诺亚运行路径。连接密钥与本地连接仍作为运行模式保留。",
               })}
             </p>
           </details>
 
           <details className="border border-border p-4 bg-bg-secondary/20">
-            <summary className="font-semibold cursor-pointer">
+            <summary className="flex min-h-[44px] cursor-pointer items-center font-semibold">
               {T({
-                ko: "내 작품 데이터는 어디 저장되나요?",
-                en: "Where is my manuscript stored?",
-                ja: "作品データはどこに保存?",
-                zh: "我的作品数据存在哪里?",
+                ko: "작품 데이터는 어디에 저장되나요?",
+                en: "Where is my work stored?",
+                ja: "作品データはどこに保存されますか?",
+                zh: "作品数据存在哪里?",
               })}
             </summary>
             <p className="mt-2 text-text-secondary leading-relaxed">
               {T({
-                ko: "기본은 본인 브라우저 (localStorage + IndexedDB). 선택 옵션: GitHub PAT/OAuth 백업 (Markdown+YAML). 작가 데이터 = 작가 소유 (GOVERNANCE.md §7).",
-                en: "Default: your browser (localStorage + IndexedDB). Optional: GitHub PAT/OAuth backup (Markdown+YAML). Writer data = writer-owned (GOVERNANCE.md §7).",
-                ja: "デフォルト: 本人のブラウザ。オプション: GitHub バックアップ。作家データ = 作家所有 (GOVERNANCE.md §7)。",
-                zh: "默认: 您的浏览器。可选: GitHub 备份。作家数据 = 作家所有 (GOVERNANCE.md §7)。",
+                ko: "기본은 사용자 브라우저 저장소입니다. 선택에 따라 GitHub 동기화, 클라우드 동기화, 로컬 우선 운영을 조합할 수 있고, 프로젝트별 자료는 서로 섞이지 않도록 분리해 관리합니다.",
+                en: "The default is browser storage. Depending on your setup, GitHub sync, cloud sync, and local-first operation can be combined, with project data kept separated.",
+                ja: "基本はユーザーのブラウザ保存です。選択によりGitHub同期、クラウド同期、ローカル優先運用を組み合わせ、プロジェクト別データは分離します。",
+                zh: "默认保存在用户浏览器中。可按设置组合 GitHub 同步、云同步与本地优先运行，并保持项目资料相互隔离。",
               })}
             </p>
           </details>
 
           <details className="border border-border p-4 bg-bg-secondary/20">
-            <summary className="font-semibold cursor-pointer">
+            <summary className="flex min-h-[44px] cursor-pointer items-center font-semibold">
               {T({
-                ko: "오픈소스인가요?",
-                en: "Is it open source?",
-                ja: "オープンソース?",
-                zh: "是开源的吗?",
+                ko: "조직 플랜은 별도 대시보드인가요?",
+                en: "Is the organization plan a separate dashboard?",
+                ja: "組織プランは別ダッシュボードですか?",
+                zh: "组织方案是单独后台吗?",
               })}
             </summary>
             <p className="mt-2 text-text-secondary leading-relaxed">
               {T({
-                ko: "Dual License — AGPL-3.0-or-later (오픈소스 트랙) + Commercial License (상업 트랙). 자세한 내용은 LICENSE / COMMERCIAL-LICENSE.md 참조. KIPO 특허 (10-2026-0038027) 출원 진행 중.",
-                en: "Dual License — AGPL-3.0-or-later (open-source) + Commercial License. See LICENSE / COMMERCIAL-LICENSE.md. KIPO patent (10-2026-0038027) filed.",
-                ja: "デュアルライセンス — AGPL-3.0-or-later + 商用ライセンス。LICENSE / COMMERCIAL-LICENSE.md 参照。KIPO 特許 (10-2026-0038027) 出願中。",
-                zh: "双重许可 — AGPL-3.0-or-later + 商业许可。详见 LICENSE / COMMERCIAL-LICENSE.md。KIPO 专利 (10-2026-0038027) 已申请。",
+                ko: "별도 제품을 새로 여는 방식보다 로어가드 안의 그룹 워크스페이스로 운영합니다. 작품별 출고 현황, 검토 권한, 제출 패키지를 그룹 단위로 관리하는 방향입니다.",
+                en: "It is designed as a group workspace inside Loreguard rather than a separate product, covering per-work release status, review roles, and submission packages.",
+                ja: "別製品ではなく、Loreguard内のグループ作業場として運用します。作品別出稿状況、検討権限、提出パッケージを管理します。",
+                zh: "它不是单独产品，而是 Loreguard 内的团队工作区，用于管理作品出库状态、审核权限与提交包。",
               })}
             </p>
           </details>
         </section>
 
-        {/* Footer CTA */}
         <div className="mt-16 text-center text-sm text-text-tertiary">
           <p>
             {T({
-              ko: "정식 가격 확정 시 본 페이지 갱신 + 알파 작가 이메일 안내.",
-              en: "Final pricing will be confirmed and announced via alpha writer email + this page update.",
-              ja: "正式価格確定時に本ページ更新 + アルファ作家メール案内。",
-              zh: "最终价格确定时更新本页面 + Alpha 作家邮件通知。",
+              ko: "플랜 조건이 바뀌면 이 페이지와 신청자 안내로 먼저 알립니다.",
+              en: "Plan changes will be announced on this page and to applicants first.",
+              ja: "プラン条件の変更は本ページと申請者向け案内で先にお知らせします。",
+              zh: "方案条件变更会先在本页面与申请者通知中说明。",
             })}
           </p>
           <p className="mt-2 font-mono">
             <a
               href="mailto:gilheumpark@gmail.com"
-              className="text-accent-blue hover:underline"
+              className="inline-flex min-h-11 items-center rounded px-1 text-accent-blue underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
             >
               gilheumpark@gmail.com
             </a>
             {" · "}
-            <a href="/welcome" className="text-accent-blue hover:underline">
-              {T({ ko: "지금 시작", en: "Start Now", ja: "今すぐ開始", zh: "立即开始" })}
+            <a
+              href="/welcome"
+              className="inline-flex min-h-11 items-center rounded px-1 text-accent-blue underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              {T({ ko: "지금 시작", en: "Start", ja: "開始", zh: "开始" })}
             </a>
           </p>
         </div>

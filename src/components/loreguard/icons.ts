@@ -55,7 +55,7 @@ export {
   Layers,
   ScrollText as Scroll, // 창작 과정 확인서 (구 NovelIDELauncher journal 탭과 동일 모티프)
   StickyNote, // 메모 보드 slide-over (MemoPanel — Z1c-mid-ports)
-  Coins, // 세계관 — 경제와 생활 (G3 룰북 구조 필드 복원)
+  Coins, // 세계관 — 경제와 생활 (G3 연출 구조 필드 복원)
   GraduationCap as Grad, // 세계관 — 교육/지식 전달
   Route, // 세계관 — 이동/통신 속도
   MessageSquare, // 채팅 도크 토글 (ChatCanvasDock — Z2a-chatcanvas)

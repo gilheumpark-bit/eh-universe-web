@@ -36,5 +36,13 @@
 |---|---|---|---|
 | [0001](0001-remove-google-ai-keep-byok.md) | Google AI 제거 · BYOK 유지 | Accepted | 2026-06-06 |
 | [0002](0002-local-ai-3-slots-electron-folder-io.md) | 로컬 AI 3슬롯 + Electron 폴더 IO | Accepted | 2026-06-06 |
-| [0003](0003-keymap-and-codex-domain-selector-mount.md) | 4-way 키 표준 + CodexDomainSelector 단일 마운트 | Accepted | 2026-06-07 |
-| [0004](0004-grade-namespace-isolation.md) | Grade 네임스페이스 격리 — Code Studio vs 창작 | Accepted | 2026-06-07 |
+| [0002](0002-provider-initialization-contract.md) | Provider Initialization Contract | Accepted | 2026-06-09 |
+| [0005](0005-internationalization-standard.md) | Internationalization Standard | Proposed | 2026-06-09 |
+| [0007](0007-studio-context-decomposition.md) | Studio Context Decomposition | Proposed | 2026-06-09 |
+| [0009](0009-observability-standard.md) | Observability Standard | Proposed | 2026-06-09 |
+| [0010](0010-error-recovery-semantics.md) | Error Recovery Semantics | Proposed | 2026-06-09 |
+| [0011](0011-rate-limit-backend.md) | Rate-limit Backend | Accepted | 2026-06-09 |
+| [0012](0012-modal-stack-policy.md) | Modal Stack Policy | Accepted | 2026-06-09 |
+| [0013](0013-engine-lib-boundary.md) | Engine / Lib Boundary For Shared Text Cleanup | Accepted | 2026-06-21 |
+| [0014](0014-visual-generation-opt-in.md) | Visual Generation Endpoint Is Internal Opt-In | Accepted | 2026-06-21 |
+| [0015](0015-release-evidence-gates.md) | Release Evidence Gates Separate Code Cleanliness From Launch Readiness | Accepted | 2026-06-21 |

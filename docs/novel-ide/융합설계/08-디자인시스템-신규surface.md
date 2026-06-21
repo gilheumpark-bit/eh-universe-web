@@ -1,8 +1,8 @@
 # 08 · 신규 Surface 디자인 시스템 spec (Design System v8.0 정합)
 
 > 검토 권고 #4. chat→form 융합이 추가하는 **신규 UI surface**를 기존 Design System v8.0에 매핑.
-> 근거(실 토큰 grep, 2026-06-06): `src/app/globals.css` `--sp-xs:4px`~`--sp-xl:32px` · `--z-dropdown:100`/`--z-overlay:300`/`--z-modal:400`/`--z-tooltip:600` · `bg-bg-primary`/`text-text-primary`/`border-border` · `focus-visible:ring-2 ring-accent-blue`. 린트: `src/lib/code-studio/core/design-linter.ts` `runDesignLint` 16룰.
-> 상태: 설계·대기. 신규 컴포넌트 착수 시 본 spec + `runDesignLint` 통과 필수.
+> 근거(실 토큰 grep, 2026-06-06): `src/app/globals.css` `--sp-xs:4px`~`--sp-xl:32px` · `--z-dropdown:100`/`--z-overlay:300`/`--z-modal:400`/`--z-tooltip:600` · `bg-bg-primary`/`text-text-primary`/`border-border` · `focus-visible:ring-2 ring-accent-blue`.
+> 상태: 설계·대기. 신규 컴포넌트 착수 시 본 spec + 현재 앱의 스타일·접근성 검사를 통과해야 한다.
 
 ---
 
@@ -95,7 +95,7 @@
 
 ## 8. 검증
 
-1. `runDesignLint(code)` 16룰 → 0 위반 (신규 컴포넌트 CI 게이트).
+1. 현재 앱의 스타일·접근성 검사 → 0 위반 (신규 컴포넌트 CI 게이트).
 2. raw Tailwind 색 grep 0 / `z-\[` 하드코딩 0 / 비4배수 간격 0.
 3. 상태 표시 = 2+ 조합 수동 체크(색만 = fail).
 4. Lighthouse A11y 측정 — `/studio` 100 유지(신규 패널 mount 후 재측정).

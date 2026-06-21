@@ -29,7 +29,7 @@ const CATEGORY_LABELS: Record<string, { ko: string; en: string; ja?: string; zh?
   thread_overdue: { ko: '복선 방치', en: 'Thread Overdue' },
   pacing_anomaly: { ko: '페이싱 이상', en: 'Pacing Anomaly' },
   emotion_flat: { ko: '감정 평탄', en: 'Emotion Flat' },
-  ai_tone_creep: { ko: '기계적 톤 누적', en: 'Mechanical Tone Creep' },
+  ai_tone_creep: { ko: '표현이 딱딱함', en: 'Stiff phrasing', ja: '表現が硬い', zh: '表达生硬' },
   hallucination_risk: { ko: '환각 위험', en: 'Hallucination Risk' },
   foreshadow_urgent: { ko: '복선 회수 시급', en: 'Foreshadow Urgent' },
 };

@@ -1,7 +1,7 @@
 # 21-Module Authoring System ↔ Loreguard Mapping
 
 **Document version**: 1.0.0
-**Last updated**: 2026-05-11
+**Last updated**: 2026-06-10
 **Status**: Tier-1 whitepaper (alpha-phase normalization document)
 **Audience**: Loreguard contributors, commercial license holders, academic reviewers
 
@@ -41,7 +41,7 @@ This document maps each of the 21 modules to its location within Loreguard's exi
 
 ---
 
-## 3. Loreguard Coverage Matrix (2026-05-11 Baseline)
+## 3. Loreguard Coverage Matrix (2026-06-10 Baseline)
 
 | Module | Loreguard host tab | Status | Notes |
 |---|---|---|---|

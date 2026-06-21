@@ -6,6 +6,7 @@ import { getApiKey } from "@/lib/ai-providers";
 import { showAlert } from "@/lib/show-alert";
 // [X2 — 2026-06-11] /api/analyze-chapter 200+{blocked} 차단 계약 고지 (사일런트 차단 금지).
 import { checkBlockedJson } from "@/lib/noa/block-notice";
+import { checkPaywallJson } from "@/lib/noa/paywall-notice";
 import type {
   AppLanguage,
   ChapterAnalysis,
@@ -263,7 +264,11 @@ export default function ChapterAnalysisView({
         signal: controller.signal,
       });
 
-      if (!res.ok) throw new Error("Analysis failed");
+      if (!res.ok) {
+        const errorPayload: unknown = await res.json().catch(() => null);
+        const paywallMsg = checkPaywallJson(errorPayload);
+        throw new Error(paywallMsg || "Analysis failed");
+      }
 
       const data = await res.json();
 
@@ -286,7 +291,7 @@ export default function ChapterAnalysisView({
       if (data.musicPromptPack) setMusicPrompt(data.musicPromptPack);
     } catch {
       // API 실패 시 수동 입력으로 폴백 (analyze-chapter 라우트 구현 완료)
-      showAlert(language === 'KO' ? '분석에 실패했습니다. 직접 입력해주세요.' : 'Analysis failed. Please enter manually.', 'error');
+      showAlert(language === 'KO' ? '분석하지 못했습니다. 필요한 내용을 직접 적어 주세요.' : 'Analysis failed. Please enter manually.', 'error');
     } finally {
       setAnalyzing(false);
     }

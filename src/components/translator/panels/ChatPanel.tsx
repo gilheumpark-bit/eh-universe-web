@@ -4,9 +4,10 @@ import React, { useCallback, useRef, useState } from 'react';
 import { MessageSquare, Send, Sparkles } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { PROVIDERS as AI_PROVIDER_DEFS } from '@/lib/ai-providers';
-import { isServerProviderId, type ServerProviderId } from '@/lib/server-ai';
+import { isServerProviderId, type ServerProviderId } from '@/lib/server-provider-shared';
 // [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
 import { checkBlockedJson, checkBlockedLegacy403 } from '@/lib/noa/block-notice';
+import { checkPaywallJson } from '@/lib/noa/paywall-notice';
 import { logger } from '@/lib/logger';
 
 type ChatMsg = { id: number; role: 'user' | 'assistant'; text: string };
@@ -14,7 +15,6 @@ type ChatMsg = { id: number; role: 'user' | 'assistant'; text: string };
 function resolveChatApi(
   selectedProvider: string,
   getKey: (id: string) => string,
-  hostedGemini: boolean
 ): { provider: ServerProviderId; model: string; apiKey: string } | { error: string } {
   const fallback = ['openai', 'claude', 'gemini', 'groq', 'mistral', 'ollama', 'lmstudio'] as const;
   const order =
@@ -29,13 +29,6 @@ function resolveChatApi(
     if (!isServerProviderId(id)) continue;
 
     const key = getKey(id).trim();
-    if (id === 'gemini' && !key && hostedGemini) {
-      return {
-        provider: 'gemini',
-        model: AI_PROVIDER_DEFS.gemini.defaultModel,
-        apiKey: '',
-      };
-    }
     if (key) {
       return { provider: id, model: AI_PROVIDER_DEFS[id].defaultModel, apiKey: key };
     }
@@ -43,7 +36,7 @@ function resolveChatApi(
 
   return {
     error:
-      '채팅에 사용할 API 키가 없습니다. 설정(번역 본체)에서 BYOK 키를 등록하거나 Google 로그인 후 호스팅 Gemini를 이용해 주세요.',
+      '노아 번역 보조를 쓰려면 연결 키가 필요합니다. 설정에서 연결 키를 등록해 주세요.',
   };
 }
 
@@ -90,7 +83,6 @@ export function ChatPanel() {
   const {
     provider,
     getEffectiveApiKeyForProvider,
-    hostedGemini,
     from,
     to,
     source,
@@ -105,7 +97,7 @@ export function ChatPanel() {
       id: 1,
       role: 'assistant',
       text: langKo
-        ? '번역 뉘앙스·톤·대안 표현을 물어보세요. 현재 엔진 설정과 원·번역 발췌를 참고해 답합니다.'
+        ? '노아에게 번역 뉘앙스·톤·대안 표현을 물어보세요. 현재 번역 방식과 원문·번역문 일부를 참고해 답합니다.'
         : 'Ask about nuance, tone, or alternative phrasing. Replies use your engine settings and short excerpts of the current pair.',
     },
   ]);
@@ -128,7 +120,7 @@ export function ChatPanel() {
       const text = raw.trim();
       if (!text || sending) return;
 
-      const resolved = resolveChatApi(provider, getEffectiveApiKeyForProvider, hostedGemini);
+      const resolved = resolveChatApi(provider, getEffectiveApiKeyForProvider);
       if ('error' in resolved) {
         setErrorLine(resolved.error);
         return;
@@ -145,7 +137,7 @@ export function ChatPanel() {
 
       const excerpt = (a: string, max: number) => (a.length <= max ? a : `${a.slice(0, max)}…`);
       const systemInstruction = langKo
-        ? `당신은 번역 스튜디오용 조언자입니다. 사용자 메시지 언어로 답하세요. 허위 인용·원문/번역문 전문 지어내기 금지. 언어 쌍: ${from} → ${to}.\n[원문 발췌]\n${excerpt(source, 1600)}\n[번역 발췌]\n${excerpt(result, 1600)}`
+        ? `당신은 로어가드 번역·현지화 작업실의 노아입니다. 사용자 메시지 언어로 답하세요. 허위 인용·원문/번역문 전문 지어내기 금지. 언어 쌍: ${from} → ${to}.\n[원문 발췌]\n${excerpt(source, 1600)}\n[번역 발췌]\n${excerpt(result, 1600)}`
         : `You are a translation workspace assistant. Reply in the user's language. Do not invent long quotes. Language pair: ${from} → ${to}.\n[Source excerpt]\n${excerpt(source, 1600)}\n[Translation excerpt]\n${excerpt(result, 1600)}`;
 
       const historyForApi = [...messagesRef.current, userMsg]
@@ -183,10 +175,15 @@ export function ChatPanel() {
           // (TRINITY_BLOCK 등 내부 코드 그대로 노출 금지 — 사일런트 차단 금지)
           let errMsg = `HTTP ${res.status}`;
           try {
-            const errData = (await res.json()) as { error?: string; noa?: { reason?: string } };
+            const errData: unknown = await res.json();
+            const paywallMsg = checkPaywallJson(errData);
             const blockedMsg = checkBlockedLegacy403(errData, 'translator-chat', langKo ? 'ko' : 'en');
-            if (blockedMsg) errMsg = blockedMsg;
-            else if (errData.error) errMsg = errData.error;
+            if (paywallMsg) errMsg = paywallMsg;
+            else if (blockedMsg) errMsg = blockedMsg;
+            else {
+              const plainError = (errData as { error?: unknown })?.error;
+              if (typeof plainError === 'string') errMsg = plainError;
+            }
           } catch {
             /* ignore */
           }
@@ -230,7 +227,6 @@ export function ChatPanel() {
       sending,
       provider,
       getEffectiveApiKeyForProvider,
-      hostedGemini,
       from,
       to,
       source,
@@ -256,7 +252,9 @@ export function ChatPanel() {
       <div className="p-4 shrink-0 border-b border-white/5">
         <div className="flex items-center gap-2 text-text-secondary">
           <MessageSquare className="w-4 h-4 text-accent-cyan" />
-          <span className="text-[13px] font-medium">Assistant Chat</span>
+          <span className="text-[13px] font-medium">
+            {langKo ? '노아 번역 보조' : 'Noa translation support'}
+          </span>
         </div>
       </div>
 
@@ -276,7 +274,7 @@ export function ChatPanel() {
               className={`p-3 rounded-lg text-[13px] leading-relaxed whitespace-pre-wrap
               ${msg.role === 'user' ? 'bg-accent-indigo/10 text-text-primary border border-accent-indigo/20 rounded-tr-sm' : 'bg-white/5 text-text-secondary border border-white/10 rounded-tl-sm'}`}
             >
-              {msg.text || (msg.role === 'assistant' && sending ? (langKo ? '응답 생성 중…' : 'Thinking…') : msg.text)}
+              {msg.text || (msg.role === 'assistant' && sending ? (langKo ? '응답 준비 중…' : 'Preparing response…') : msg.text)}
             </div>
           </div>
         ))}
@@ -300,14 +298,14 @@ export function ChatPanel() {
             }}
             placeholder={langKo ? '번역에 대해 질문…' : 'Ask about this translation…'}
             disabled={sending}
-            className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-3 pr-10 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 transition-opacity resize-none h-[44px] max-h32 disabled:opacity-50"
+            className="w-full min-h-[52px] bg-bg-primary border border-border/60 rounded-lg py-3 pl-3 pr-14 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50 transition-opacity resize-none max-h-32 disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
             rows={1}
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="absolute right-2 top-[50%] -translate-y-1/2 p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-accent-cyan transition-colors disabled:opacity-30"
-            aria-label="Send"
+            className="absolute right-1 top-[50%] -translate-y-1/2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md hover:bg-bg-secondary text-text-tertiary hover:text-accent-cyan transition-colors disabled:bg-bg-tertiary disabled:text-text-quaternary disabled:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+            aria-label={langKo ? '전송' : 'Send'}
           >
             <Send className="w-4 h-4" />
           </button>
@@ -322,7 +320,7 @@ export function ChatPanel() {
                 `Briefly assess tone and register of the current translation; flag anything awkward for ${from}→${to}.`
               )
             }
-            className="text-[11px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-text-tertiary hover:text-text-secondary transition-colors border border-white/10 disabled:opacity-40"
+            className="min-h-[44px] text-[11px] px-3 rounded-md bg-bg-secondary hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors border border-border/50 disabled:bg-bg-tertiary disabled:text-text-quaternary disabled:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {langKo ? '톤 점검' : 'Check tone'}
           </button>
@@ -335,7 +333,7 @@ export function ChatPanel() {
                 'Suggest 2–3 alternative renderings of the current translation with one-line nuance notes each.'
               )
             }
-            className="text-[11px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-text-tertiary hover:text-text-secondary transition-colors border border-white/10 disabled:opacity-40"
+            className="min-h-[44px] text-[11px] px-3 rounded-md bg-bg-secondary hover:bg-bg-tertiary text-text-tertiary hover:text-text-secondary transition-colors border border-border/50 disabled:bg-bg-tertiary disabled:text-text-quaternary disabled:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
           >
             {langKo ? '대안 표현' : 'Alternatives'}
           </button>

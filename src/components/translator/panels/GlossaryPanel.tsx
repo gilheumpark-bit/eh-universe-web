@@ -55,7 +55,7 @@ export function highlightGlossaryTerms(text: string, terms: string[]): string {
 }
 
 export function GlossaryPanel() {
-  const { glossary, setGlossary: _setGlossary, source } = useTranslator();
+  const { glossary, setGlossary: _setGlossary, source, langKo } = useTranslator();
   const _web = useWebFeatures();
   const [extracting, setExtracting] = useState(false);
   const mgr = getGlossaryManager();
@@ -142,10 +142,11 @@ export function GlossaryPanel() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
           <input
             type="text"
-            placeholder="Search glossary..."
+            placeholder={langKo ? '용어집 검색...' : 'Search glossary...'}
+            aria-label={langKo ? '용어집 검색' : 'Search glossary'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
+            className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-indigo/50 transition-[transform,opacity,background-color,border-color,color] pointer-events-auto"
           />
         </div>
       </div>
@@ -154,7 +155,9 @@ export function GlossaryPanel() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 text-text-secondary">
             <BookA className="w-4 h-4 text-accent-cyan" />
-            <span className="text-[13px] font-medium">Terms Dictionary</span>
+            <span className="text-[13px] font-medium">
+              {langKo ? '용어집' : 'Terms Dictionary'}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-text-tertiary border border-white/10">
@@ -170,12 +173,17 @@ export function GlossaryPanel() {
 
         <div className="flex flex-col gap-2 relative">
           {filteredTerms.length === 0 ? (
-            <div className="px-4 py-8 text-[12px] text-text-tertiary italic text-center bg-white/2 rounded-lg border border-white/3 flex flex-col items-center gap-3">
-              <BookA className="w-8 h-8 opacity-20" />
-              <span>
-                No glossary terms found.
-                <br />
-                아래에 원문·번역을 입력한 뒤 추가하세요.
+            <div className="rounded-xl border border-border/60 bg-bg-primary/80 px-4 py-6 text-center shadow-sm flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-accent-cyan/25 bg-accent-cyan/10 text-accent-cyan">
+                <BookA className="w-5 h-5" />
+              </div>
+              <span className="text-[13px] font-semibold text-text-primary">
+                {langKo ? '용어집이 비어 있습니다.' : 'Glossary is empty.'}
+              </span>
+              <span className="text-[11px] leading-relaxed text-text-secondary">
+                {langKo
+                  ? '아래에 원문·번역을 입력한 뒤 추가하세요.'
+                  : 'Add source and translated terms below.'}
               </span>
             </div>
           ) : (
@@ -189,26 +197,26 @@ export function GlossaryPanel() {
                     value={editOriginal}
                     onChange={(e) => setEditOriginal(e.target.value)}
                     placeholder="원문 용어"
-                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
+                    className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
                   />
                   <input
                     value={editTranslation}
                     onChange={(e) => setEditTranslation(e.target.value)}
                     placeholder="번역 용어"
-                    className="w-full bg-black/40 border border-white/10 rounded-md py-1.5 px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
+                    className="w-full min-h-[44px] bg-bg-primary border border-border/60 rounded-md px-3 text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-cyan/50"
                   />
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
                       onClick={cancelEdit}
-                      className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-text-tertiary hover:bg-white/10"
+                      className="min-h-[44px] flex items-center gap-1 px-3 rounded-md text-[11px] text-text-tertiary hover:bg-bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                     >
                       <X className="w-3.5 h-3.5" /> 취소
                     </button>
                     <button
                       type="button"
                       onClick={saveEdit}
-                      className="flex items-center gap-1 px-2 py-1 rounded text-[11px] bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25 hover:bg-accent-cyan/25"
+                      className="min-h-[44px] flex items-center gap-1 px-3 rounded-md text-[11px] bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/25 hover:bg-accent-cyan/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
                     >
                       <Check className="w-3.5 h-3.5" /> 저장
                     </button>
@@ -221,20 +229,20 @@ export function GlossaryPanel() {
                 >
                   <div className="flex items-start justify-between">
                     <span className="text-[14px] font-medium text-text-primary">{term}</span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                       <button
                         type="button"
                         onClick={() => startEdit(term)}
-                        className="p-1 rounded hover:bg-white/10 text-text-tertiary hover:text-text-secondary transition-colors"
-                        aria-label="Edit term"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md hover:bg-bg-secondary text-text-tertiary hover:text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+                        aria-label={langKo ? '용어 수정' : 'Edit term'}
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRemoveTerm(term)}
-                        className="p-1 rounded hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors"
-                        aria-label="Remove term"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
+                        aria-label={langKo ? '용어 삭제' : 'Remove term'}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -254,29 +262,37 @@ export function GlossaryPanel() {
             value={newOriginal}
             onChange={(e) => setNewOriginal(e.target.value)}
             placeholder="원문 용어"
-            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
+            className="w-full min-h-[44px] bg-bg-secondary border border-border/50 rounded-md px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
           />
           <input
             value={newTranslation}
             onChange={(e) => setNewTranslation(e.target.value)}
             placeholder="번역 용어"
-            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
+            className="w-full min-h-[44px] bg-bg-secondary border border-border/50 rounded-md px-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
           />
           <input
             value={newContext}
             onChange={(e) => setNewContext(e.target.value)}
             placeholder="맥락 (예: 주인공 이름, 세계관 고유 용어)"
-            className="w-full bg-bg-secondary border border-border/50 rounded-md py-1.5 px-3 text-[11px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
+            className="w-full min-h-[44px] bg-bg-secondary border border-border/50 rounded-md px-3 text-[11px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-blue/40"
           />
-          <label className="flex items-center gap-2 text-[11px] text-text-secondary cursor-pointer px-1">
-            <input type="checkbox" checked={newLocked} onChange={(e) => setNewLocked(e.target.checked)} className="rounded" />
+          <label className="relative flex min-h-[44px] items-center gap-2 text-[11px] text-text-secondary cursor-pointer px-1">
+            <input type="checkbox" checked={newLocked} onChange={(e) => setNewLocked(e.target.checked)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+            <span
+              aria-hidden
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                newLocked ? 'border-accent-cyan bg-accent-cyan text-white' : 'border-border bg-bg-primary'
+              }`}
+            >
+              {newLocked ? <Check className="h-3.5 w-3.5" /> : null}
+            </span>
             <span>잠금 (번역 시 반드시 이 용어 사용)</span>
           </label>
         </div>
         <button
           type="button"
           onClick={() => { handleAddTerm(); setNewContext(''); setNewLocked(false); }}
-          className="w-full flex items-center justify-center gap-2 py-1.5 bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 rounded-md text-[12px] font-medium transition-colors text-accent-blue"
+          className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 rounded-md text-[12px] font-medium transition-colors text-accent-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>용어 추가</span>

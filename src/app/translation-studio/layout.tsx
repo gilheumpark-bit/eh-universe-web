@@ -8,10 +8,10 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swa
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Fiction-native Translation Studio · 로어가드",
+  title: "번역·현지화 작업실 · 로어가드",
   description:
-    "Fiction-native Translation Studio — 소설 전문 번역. 장편 IP 의 세계관·캐릭터·용어집·회차 맥락을 반영한 맥락 번역. 한국 작가는 세계로, 해외 작가는 한국·아시아로. AI prepares. Translators elevate. Authors go global.",
-  // [Alpha non-public — 2026-05-08] 알파 단계 검색엔진 비공개.
+    "로어가드 9단계 번역·현지화 작업실. 작품의 세계관, 캐릭터, 용어집, 회차 맥락을 불러와 번역 후보, 작가 승인, 과정기록, 출고 패키지까지 이어갑니다.",
+  // [Search private 2026-05-08] 번역 작업실은 검색엔진에 공개하지 않는다.
   robots: { index: false, follow: false },
 };
 
@@ -19,7 +19,7 @@ export default function TranslationStudioLayout({ children }: { children: React.
   return (
     <div className={`translation-studio-root ${inter.variable} ${manrope.variable}`}>
       <TranslatorStudioBodyMount />
-      <ErrorBoundary variant="full-page" section="Translation Studio">
+      <ErrorBoundary variant="full-page" section="번역·현지화 작업실">
         {children}
       </ErrorBoundary>
     </div>

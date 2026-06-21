@@ -158,10 +158,10 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
         id: 'welcome',
         role: 'reviewer',
         content: ({
-          KO: `📊 장르×레벨 리뷰어입니다. 현재 장르: ${genreLabel}\n\n레벨을 선택하고 "리뷰 요청"을 누르면, 해당 레벨 독자/편집자/비평가 시점에서 원고를 분석합니다.\n\n평균으로 때리지 않습니다. ${genreLabel} 장르 기준선 위에 현재 원고의 위치를 찍어드립니다.`,
+          KO: `📊 장르×레벨 리뷰어입니다. 현재 장르: ${genreLabel}\n\n레벨을 선택하고 "리뷰 요청"을 누르면, 해당 레벨 독자/편집자/비평가 시점에서 원고를 분석합니다.\n\n평균으로 뭉개지 않고 ${genreLabel} 독자가 기대하는 지점과 현재 원고의 거리를 짚어드립니다.`,
           EN: `📊 Genre×Level Reviewer. Current genre: ${genreLabel}\n\nSelect a level and click "Request Review" to analyze your manuscript from that perspective.\n\nNo averages. We plot your manuscript's position on the ${genreLabel} genre benchmark.`,
-          JP: `📊 ジャンル×レベルレビュアーです。現在のジャンル: ${genreLabel}\n\nレベルを選択し「レビュー依頼」をクリックすると、該当レベルの読者/編集者/批評家の視点で原稿を分析します。\n\n平均で打ちません。${genreLabel}ジャンル基準線上に現在の原稿の位置をプロットします。`,
-          CN: `📊 类型×等级审阅器。当前类型: ${genreLabel}\n\n选择等级并点击"请求审阅"，将从该等级读者/编辑/评论家的角度分析稿件。\n\n不打平均分。我们在${genreLabel}类型基准线上标注您稿件的位置。`,
+          JP: `📊 ジャンル×レベルレビュアーです。現在のジャンル: ${genreLabel}\n\nレベルを選択し「レビュー依頼」をクリックすると、該当レベルの読者/編集者/批評家の視点で原稿を分析します。\n\n平均でまとめず、${genreLabel}読者が期待する位置との距離を確認します。`,
+          CN: `📊 类型×等级审阅器。当前类型: ${genreLabel}\n\n选择等级并点击"请求审阅"，将从该等级读者/编辑/评论家的角度分析稿件。\n\n不做平均化处理，而是指出当前稿件与${genreLabel}读者期待点之间的距离。`,
         }[language]),
         timestamp: Date.now(),
       }]);

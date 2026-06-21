@@ -60,7 +60,7 @@ export function HistoryPanel() {
             </span>
           </div>
           <span className="text-[11px] text-text-tertiary px-2 py-0.5 rounded bg-white/5">
-            {currentChapter?.name ?? (langKo ? "챕터 없음" : "No chapter")}
+            {currentChapter?.name ?? (langKo ? "회차 없음" : "No chapter")}
           </span>
         </div>
         <p className="mt-2 text-[10px] text-text-tertiary leading-relaxed">
@@ -72,9 +72,19 @@ export function HistoryPanel() {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pointer-events-auto">
         {sorted.length === 0 ? (
-          <p className="text-[12px] text-text-tertiary text-center py-8">
-            {langKo ? "아직 기록이 없습니다. 번역을 실행해 보세요." : "No entries yet. Run a translation to build history."}
-          </p>
+          <div className="rounded-xl border border-border/60 bg-bg-primary/80 px-4 py-6 text-center shadow-sm">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg border border-accent-purple/25 bg-accent-purple/10 text-accent-purple">
+              <Clock className="h-5 w-5" />
+            </div>
+            <p className="mt-3 text-[13px] font-semibold text-text-primary">
+              {langKo ? "아직 쌓인 기록이 없습니다." : "No history yet."}
+            </p>
+            <p className="mx-auto mt-1 max-w-[220px] text-[11px] leading-relaxed text-text-secondary">
+              {langKo
+                ? "번역을 실행하면 원문, 결과, 언어 쌍이 자동으로 남습니다."
+                : "Run a translation to save source, result, and language pair here."}
+            </p>
+          </div>
         ) : (
           <div className="relative">
             <div className="absolute left-[7px] top-[14px] bottom-0 w-px bg-white/10 z-0" />
@@ -99,10 +109,10 @@ export function HistoryPanel() {
                       <button
                         type="button"
                         onClick={() => restore(item)}
-                        className={`text-[11px] flex items-center gap-1 shrink-0 transition-[transform,opacity,background-color,border-color,color] duration-200 ${
+                        className={`min-h-[44px] px-3 rounded-md text-[11px] flex items-center gap-1 shrink-0 transition-[transform,opacity,background-color,border-color,color] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
                           restoredId === item.time
-                            ? 'text-accent-green font-bold'
-                            : 'text-accent-purple hover:underline'
+                            ? 'text-accent-green font-bold bg-accent-green/10'
+                            : 'text-accent-purple hover:bg-accent-purple/10'
                         }`}
                       >
                         {restoredId === item.time ? <Check className="w-3 h-3" /> : <RotateCcw className="w-3 h-3" />}

@@ -1,398 +1,31 @@
 "use client";
 
-// ============================================================
-// PART 1 — 상태 및 상수 정의
-// ============================================================
-
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import type { StyleProfile, AppLanguage } from "@/lib/studio-types";
 import { CopyButton } from "./UXHelpers";
 import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers";
 // [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
 import { checkBlockedJson, checkBlockedLegacy403 } from "@/lib/noa/block-notice";
+import { checkPaywallJson } from "@/lib/noa/paywall-notice";
 import StylePreview, { applyStyleTransform } from "./StylePreview";
-
-const STYLE_NAMES_KO = ["건조·SF 문체", "감각적 묘사 강화", "웹소설 리듬감", "캐릭터 목소리 강화", "긴장감 압축"] as const;
-const STYLE_NAMES_EN = ["Dry / SF Style", "Sensory Description", "Web Novel Rhythm", "Character Voice", "Tension Compression"] as const;
-
-// 10 style presets — each sets slider values + DNA card selection (module-scope constant)
-const STYLE_PRESETS: readonly { key: string; ko: string; en: string; sliders: Record<string, number>; dna: number[] }[] = [
-  { key: "hard-sf", ko: "하드 SF 문체", en: "Hard SF Style", sliders: { s1: 2, s2: 1, s3: 2, s4: 1, s5: 5 }, dna: [0] },
-  { key: "web-novel", ko: "웹소설 리듬형", en: "Web Novel Rhythm", sliders: { s1: 1, s2: 3, s3: 3, s4: 4, s5: 2 }, dna: [1] },
-  { key: "literary", ko: "순문학 감성", en: "Literary Emotional", sliders: { s1: 4, s2: 5, s3: 5, s4: 5, s5: 4 }, dna: [2] },
-  { key: "action", ko: "액션/전투 압축", en: "Action/Battle Compact", sliders: { s1: 1, s2: 2, s3: 3, s4: 4, s5: 3 }, dna: [4] },
-  { key: "romance", ko: "로맨스 감정선", en: "Romance Emotion Line", sliders: { s1: 3, s2: 5, s3: 4, s4: 5, s5: 2 }, dna: [3] },
-  { key: "thriller", ko: "스릴러 건조체", en: "Thriller Dry Style", sliders: { s1: 1, s2: 1, s3: 2, s4: 3, s5: 3 }, dna: [0, 4] },
-  { key: "fantasy", ko: "판타지 서사체", en: "Fantasy Epic", sliders: { s1: 4, s2: 3, s3: 4, s4: 3, s5: 3 }, dna: [2, 3] },
-  { key: "horror", ko: "호러/괴담체", en: "Horror/Ghost Story", sliders: { s1: 2, s2: 4, s3: 5, s4: 5, s5: 2 }, dna: [4] },
-  { key: "essay", ko: "에세이/수필", en: "Essay/Memoir", sliders: { s1: 3, s2: 4, s3: 3, s4: 2, s5: 3 }, dna: [2] },
-  { key: "cinematic", ko: "시네마틱 묘사", en: "Cinematic Description", sliders: { s1: 3, s2: 3, s3: 5, s4: 4, s5: 3 }, dna: [1, 2] },
-] as const;
-
-interface SliderDefI18n {
-  id: string;
-  ko: string;
-  en: string;
-  leftKO: string;
-  leftEN: string;
-  rightKO: string;
-  rightEN: string;
-  defaultVal: number;
-  stepsKO: string[];
-  stepsEN: string[];
-  noteKO: string;
-  noteEN: string;
-}
-
-const SLIDERS_I18N: SliderDefI18n[] = [
-  {
-    id: "s1",
-    ko: "문장 길이",
-    en: "Sentence Length",
-    leftKO: "속도 중심",
-    leftEN: "Faster pace",
-    rightKO: "여백 중심",
-    rightEN: "More spacious",
-    defaultVal: 3,
-    stepsKO: ["짧고 단단하게", "짧은 호흡", "균형", "긴 호흡", "길게 밀어붙이기"],
-    stepsEN: ["Tight and short", "Short breath", "Balanced", "Long breath", "Extended flow"],
-    noteKO: "호흡이 짧을수록 추진력이, 길수록 사유와 여운이 커집니다.",
-    noteEN: "Shorter sentences push momentum, while longer ones create reflection and aftertaste.",
-  },
-  {
-    id: "s2",
-    ko: "감정 밀도",
-    en: "Emotional Density",
-    leftKO: "객관·절제",
-    leftEN: "Restrained",
-    rightKO: "주관·정서",
-    rightEN: "Emotive",
-    defaultVal: 2,
-    stepsKO: ["감정 절제", "건조한 편", "균형", "정서 강조", "감정 밀도 높음"],
-    stepsEN: ["Restrained", "Dry-leaning", "Balanced", "Emotion-forward", "Emotion-rich"],
-    noteKO: "감정을 직접 드러낼지, 문장 아래에 눌러둘지 결정하는 축입니다.",
-    noteEN: "This controls whether emotion stays under the prose or rises visibly to the surface.",
-  },
-  {
-    id: "s3",
-    ko: "묘사 방식",
-    en: "Description Style",
-    leftKO: "직설 서술",
-    leftEN: "Direct",
-    rightKO: "감각 이미지",
-    rightEN: "Sensory",
-    defaultVal: 3,
-    stepsKO: ["사실 위주", "직설 묘사", "균형", "이미지 강조", "감각 몰입"],
-    stepsEN: ["Factual", "Direct", "Balanced", "Image-leaning", "Sensory immersion"],
-    noteKO: "정보 전달에 무게를 둘지, 장면의 촉감과 이미지에 무게를 둘지 조절합니다.",
-    noteEN: "Choose between efficient delivery and a stronger sensory, image-driven scene feel.",
-  },
-  {
-    id: "s4",
-    ko: "서술 시점",
-    en: "POV Distance",
-    leftKO: "거리감",
-    leftEN: "Distant",
-    rightKO: "밀착감",
-    rightEN: "Intimate",
-    defaultVal: 3,
-    stepsKO: ["멀리 조망", "관찰자 시점", "균형", "인물 밀착", "내면 침투"],
-    stepsEN: ["Panoramic", "Observer", "Balanced", "Close POV", "Deep interior"],
-    noteKO: "독자와 인물 사이 거리를 바꿔, 조망형 서술과 몰입형 서술 사이를 조정합니다.",
-    noteEN: "Adjusts how close readers stay to the character, from panoramic to immersive interiority.",
-  },
-  {
-    id: "s5",
-    ko: "어휘 수준",
-    en: "Vocabulary Level",
-    leftKO: "평이함",
-    leftEN: "Plain",
-    rightKO: "정밀함",
-    rightEN: "Precise",
-    defaultVal: 4,
-    stepsKO: ["편한 말맛", "담백한 어휘", "균형", "정교한 어휘", "전문적 질감"],
-    stepsEN: ["Plainspoken", "Clean", "Balanced", "Refined", "Specialized"],
-    noteKO: "문장의 격과 전문성을 얼마나 끌어올릴지 정합니다.",
-    noteEN: "This sets how elevated or specialized your vocabulary should feel.",
-  },
-];
-
-const getSliderDescriptor = (slider: SliderDefI18n, value: number, en: boolean) => {
-  const labels = en ? slider.stepsEN : slider.stepsKO;
-  const safeIndex = Math.max(0, Math.min(labels.length - 1, value - 1));
-  return labels[safeIndex];
-};
-
-const getSliderTrackStyle = (value: number): React.CSSProperties => {
-  const progress = ((value - 1) / 4) * 100;
-  return {
-    background: `linear-gradient(90deg, var(--color-accent-amber) 0%, var(--color-accent-amber) ${progress}%, rgba(107, 114, 142, 0.34) ${progress}%, rgba(107, 114, 142, 0.34) 100%)`,
-  };
-};
-
-// ============================================================
-// PART 1-B — 레이더 차트 + 텍스트 분석 컴포넌트
-// ============================================================
-
-/** Benchmark author style profiles — slider values [s1..s5] mapped 1–5 */
-const AUTHOR_PROFILES: Record<string, { ko: string; en: string; values: [number, number, number, number, number] }> = {
-  "ted-chiang": { ko: "테드 창", en: "Ted Chiang", values: [3, 1, 3, 2, 5] },
-  "liu-cixin": { ko: "류츠신", en: "Liu Cixin", values: [4, 2, 4, 2, 5] },
-  "han-kang": { ko: "한강", en: "Han Kang", values: [4, 5, 5, 5, 4] },
-  "murakami": { ko: "무라카미 하루키", en: "Haruki Murakami", values: [4, 3, 4, 4, 3] },
-  "sanderson": { ko: "브랜든 샌더슨", en: "Brandon Sanderson", values: [2, 3, 3, 3, 3] },
-  "sing-shong": { ko: "싱숑", en: "Sing Shong", values: [1, 3, 3, 5, 2] },
-  "djuna": { ko: "듀나", en: "Djuna", values: [2, 1, 3, 2, 4] },
-  "leguin": { ko: "어슐러 르 귄", en: "Ursula K. Le Guin", values: [3, 3, 4, 3, 4] },
-};
-
-/** Pentagon radar chart — pure SVG, no deps */
-function RadarChart({ values, benchmarkValues, labels, size = 220 }: {
-  values: number[];
-  benchmarkValues?: number[];
-  labels: string[];
-  size?: number;
-}) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const maxR = size * 0.38;
-  const angleOffset = -Math.PI / 2;
-
-  const pointAt = (index: number, value: number): [number, number] => {
-    const angle = angleOffset + (2 * Math.PI * index) / 5;
-    const r = (value / 5) * maxR;
-    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
-  };
-
-  const polygonPoints = (vals: number[]) =>
-    vals.map((v, i) => pointAt(i, v).join(",")).join(" ");
-
-  const gridLevels = [1, 2, 3, 4, 5];
-
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ display: "block", margin: "0 auto" }}>
-      {/* Grid lines */}
-      {gridLevels.map((level) => (
-        <polygon
-          key={level}
-          points={Array.from({ length: 5 }, (_, i) => pointAt(i, level).join(",")).join(" ")}
-          fill="none"
-          stroke="rgba(107,114,142,0.18)"
-          strokeWidth={level === 5 ? 1.2 : 0.6}
-        />
-      ))}
-      {/* Axis lines */}
-      {Array.from({ length: 5 }, (_, i) => {
-        const [ex, ey] = pointAt(i, 5);
-        return <line key={i} x1={cx} y1={cy} x2={ex} y2={ey} stroke="rgba(107,114,142,0.15)" strokeWidth={0.6} />;
-      })}
-      {/* Benchmark fill */}
-      {benchmarkValues && (
-        <polygon
-          points={polygonPoints(benchmarkValues)}
-          fill="rgba(99,180,255,0.15)"
-          stroke="rgba(99,180,255,0.7)"
-          strokeWidth={1.5}
-          strokeDasharray="4 3"
-        />
-      )}
-      {/* User fill */}
-      <polygon
-        points={polygonPoints(values)}
-        fill="rgba(245,166,35,0.2)"
-        stroke="var(--color-accent-amber, #f5a623)"
-        strokeWidth={2}
-      />
-      {/* User dots */}
-      {values.map((v, i) => {
-        const [px, py] = pointAt(i, v);
-        return <circle key={i} cx={px} cy={py} r={3.5} fill="var(--color-accent-amber, #f5a623)" />;
-      })}
-      {/* Benchmark dots */}
-      {benchmarkValues?.map((v, i) => {
-        const [px, py] = pointAt(i, v);
-        return <circle key={`b${i}`} cx={px} cy={py} r={2.5} fill="rgba(99,180,255,0.8)" />;
-      })}
-      {/* Labels */}
-      {labels.map((label, i) => {
-        const [lx, ly] = pointAt(i, 5.8);
-        return (
-          <text
-            key={i}
-            x={lx}
-            y={ly}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={10}
-            fill="var(--color-text-secondary, #999)"
-            fontFamily="inherit"
-          >
-            {label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-// IDENTITY_SEAL: PART-1B | role=RadarChart+AuthorProfiles | inputs=sliderVals,benchmarkKey | outputs=SVG
-
-/** Text analysis metrics computed from raw text */
-interface TextMetrics {
-  avgSentenceLen: number;
-  dialogueRatio: number;
-  vocabDiversity: number;
-  readingTimeSec: number;
-}
-
-function analyzeText(text: string): TextMetrics | null {
-  if (!text.trim()) return null;
-
-  const sentences = text.split(/[.!?。？！\n]+/).filter((s) => s.trim().length > 0);
-  const avgSentenceLen = sentences.length > 0
-    ? Math.round(sentences.reduce((sum, s) => sum + s.trim().length, 0) / sentences.length)
-    : 0;
-
-  // Dialogue: count chars inside quotes
-  const dialogueMatches = text.match(/["'""\u201C\u201D\u300C\u300D][^"'""\u201C\u201D\u300C\u300D]*["'""\u201C\u201D\u300C\u300D]/g);
-  const dialogueChars = dialogueMatches ? dialogueMatches.join("").length : 0;
-  const dialogueRatio = text.length > 0 ? Math.round((dialogueChars / text.length) * 100) : 0;
-
-  // Vocabulary diversity: unique / total (word-level, handles Korean via spaces)
-  const words = text.split(/\s+/).filter((w) => w.length > 0);
-  const unique = new Set(words.map((w) => w.toLowerCase()));
-  const vocabDiversity = words.length > 0 ? Math.round((unique.size / words.length) * 100) : 0;
-
-  // Reading time: ~200 words/min EN, ~500 chars/min KO (use char-based as universal fallback)
-  const charCount = text.replace(/\s/g, "").length;
-  const readingTimeSec = Math.max(1, Math.round((charCount / 500) * 60));
-
-  return { avgSentenceLen, dialogueRatio, vocabDiversity, readingTimeSec };
-}
-
-function TextAnalysisCards({ metrics, en }: { metrics: TextMetrics | null; en: boolean }) {
-  if (!metrics) return null;
-
-  const cards: { label: string; value: string }[] = [
-    {
-      label: en ? "Avg. Sentence" : "평균 문장 길이",
-      value: `${metrics.avgSentenceLen}${en ? " chars" : "자"}`,
-    },
-    {
-      label: en ? "Dialogue" : "대화 비율",
-      value: `${metrics.dialogueRatio}%`,
-    },
-    {
-      label: en ? "Vocab Diversity" : "어휘 다양성",
-      value: `${metrics.vocabDiversity}%`,
-    },
-    {
-      label: en ? "Reading Time" : "읽기 시간",
-      value: metrics.readingTimeSec < 60
-        ? `${metrics.readingTimeSec}${en ? "s" : "초"}`
-        : `${Math.floor(metrics.readingTimeSec / 60)}${en ? "m " : "분 "}${metrics.readingTimeSec % 60}${en ? "s" : "초"}`,
-    },
-  ];
-
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8 }}>
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          style={{
-            background: "rgba(107,114,142,0.08)",
-            borderRadius: 6,
-            padding: "6px 10px",
-            fontSize: 12,
-          }}
-        >
-          <div style={{ color: "var(--color-text-tertiary, #888)", fontSize: 10, marginBottom: 2 }}>{c.label}</div>
-          <div style={{ fontWeight: 600, color: "var(--color-accent-amber, #f5a623)" }}>{c.value}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-// IDENTITY_SEAL: PART-1B-2 | role=TextAnalysis+MetricsCards | inputs=sourceText | outputs=TextMetrics
-
-interface CheckItem {
-  title: string;
-  titleEN: string;
-  desc: string;
-  descEN: string;
-}
-
-const SF_CHECKS: CheckItem[] = [
-  { title: "숫자의 서사화", titleEN: "Data as Narrative", desc: "D+127일, φ=0.73 같은 데이터를 감정처럼 읽히게 쓰기", descEN: "Make data like D+127 or φ=0.73 read like emotion." },
-  { title: "시스템 관점 서술", titleEN: "System-POV Writing", desc: "캐릭터 대신 프로세스가 주어가 되는 문장 연습", descEN: "Practice sentences where processes — not characters — are the subject." },
-  { title: "기술용어 자연화", titleEN: "Naturalizing Jargon", desc: "독자가 모르는 단어도 문맥으로 이해하게 만들기", descEN: "Make unfamiliar terms understandable through context alone." },
-  { title: "시간축 병렬 서술", titleEN: "Parallel Timelines", desc: "과거·현재·미래 타임라인을 겹쳐 긴장감 만들기", descEN: "Layer past, present, and future timelines to build tension." },
-  { title: "오류 미학", titleEN: "Aesthetics of Error", desc: "결함·이상신호·예외값을 문학적 상징으로 활용", descEN: "Use defects, anomalies, and exceptions as literary symbols." },
-  { title: "침묵의 데이터", titleEN: "Silent Data", desc: "로그가 기록하지 않은 것, 센서가 잡지 못한 것으로 감정 표현", descEN: "Express emotion through what logs didn't record and sensors didn't catch." },
-  { title: "캐릭터 행동 마커", titleEN: "Behavioral Markers", desc: "인물 고유의 반복 습관(펜 돌리기, 손톱 물어뜯기 등)으로 설명 없이 개성 각인", descEN: "Give each character a repeated habit to imprint personality without exposition." },
-  { title: "스케일 전환", titleEN: "Scale Shifts", desc: "우주적 규모 ↔ 손가락 하나의 진동 — 줌인·줌아웃 기법", descEN: "Cosmic scale ↔ a single finger's tremor — zoom in/out technique." },
-];
-
-const WEB_CHECKS: CheckItem[] = [
-  { title: "첫 문장 훅 공식", titleEN: "First-Line Hook", desc: "행동·충돌·의문 중 하나로 시작. 설명은 나중에.", descEN: "Start with action, conflict, or a question. Exposition comes later." },
-  { title: "단락 끊기 전략", titleEN: "Paragraph Break Strategy", desc: "긴장 최고조 직전에 자르기. 독자가 스크롤하게.", descEN: "Cut right before peak tension. Make the reader scroll." },
-  { title: "3단 호흡 리듬", titleEN: "3-Beat Rhythm", desc: "긴 문장 → 중간 → 짧다. 반복하면 리듬이 된다.", descEN: "Long → medium → short. Repeat and it becomes rhythm." },
-  { title: "독자 시점 중계", titleEN: "Reader-POV Relay", desc: "주인공이 느끼기 전에 독자가 먼저 불안해지게 설계", descEN: "Design so readers feel uneasy before the protagonist does." },
-  { title: "대화의 밀도 조절", titleEN: "Dialogue Density Control", desc: "말 사이의 행동 서술로 캐릭터 심리 드러내기", descEN: "Reveal character psychology through actions between dialogue." },
-  { title: "감각 레이어링", titleEN: "Sensory Layering", desc: "시각 + 청각 + 촉각 조합. 단, 3개 이상 겹치면 과부하.", descEN: "Combine sight + sound + touch. More than 3 layers overloads." },
-  { title: "반복 어구의 리프레인", titleEN: "Refrain Technique", desc: "같은 단어·구절 재등장으로 감정 증폭 및 구조 통일", descEN: "Repeat words/phrases to amplify emotion and unify structure." },
-  { title: "에필로그의 여운", titleEN: "Epilogue Resonance", desc: "챕터 끝을 해결이 아닌 새로운 질문으로 닫기", descEN: "Close chapters with new questions, not resolutions." },
-];
-
-interface RefAuthor {
-  name: string;
-  nameEN: string;
-  desc: string;
-  descEN: string;
-}
-
-const REF_AUTHORS: Record<number, RefAuthor[]> = {
-  0: [
-    { name: "킴 스탠리 로빈슨", nameEN: "Kim Stanley Robinson", desc: "과학적 정밀함과 생태적 감수성. 데이터가 시가 되는 문장.", descEN: "Scientific precision meets ecological sensitivity. Data becomes poetry." },
-    { name: "테드 창", nameEN: "Ted Chiang", desc: "철학적 질문을 SF 논리로 풀어냄. 냉정하고 아름다운 구조.", descEN: "Philosophical questions through SF logic. Cold, beautiful structure." },
-    { name: "류츠신", nameEN: "Liu Cixin", desc: "우주적 스케일의 서사. 기술적 디테일이 경외감을 만든다.", descEN: "Cosmic-scale narrative. Technical detail creates awe." },
-  ],
-  1: [
-    { name: "싱숑", nameEN: "Sing Shong", desc: "한국 웹소설의 리듬 마스터. 짧은 호흡, 강한 훅.", descEN: "Master of Korean web novel rhythm. Short breath, strong hooks." },
-    { name: "히가시노 게이고", nameEN: "Keigo Higashino", desc: "미스터리의 페이지 터너. 독자를 놓지 않는 구조.", descEN: "Mystery page-turner. Structure that never lets go." },
-    { name: "브랜든 샌더슨", nameEN: "Brandon Sanderson", desc: "시스템 기반 판타지. 설정과 플롯의 정교한 맞물림.", descEN: "System-based fantasy. Precise interlocking of worldbuilding and plot." },
-  ],
-  2: [
-    { name: "한강", nameEN: "Han Kang", desc: "감각과 침묵으로 쓰는 작가. 문장이 이미지를 만든다.", descEN: "Writing through sensation and silence. Sentences create images." },
-    { name: "무라카미 하루키", nameEN: "Haruki Murakami", desc: "일상의 비현실. 리듬감 있는 산문과 은유의 층위.", descEN: "Surreal ordinary. Rhythmic prose and layers of metaphor." },
-    { name: "김영하", nameEN: "Kim Young-ha", desc: "건조한 유머와 날카로운 관찰. 도시적 감수성.", descEN: "Dry humor and sharp observation. Urban sensibility." },
-  ],
-  3: [
-    { name: "듀나", nameEN: "Djuna", desc: "한국 SF의 건조한 감각. 설명하지 않고 제시한다.", descEN: "Dry sensibility of Korean SF. Shows, never explains." },
-    { name: "어슐러 르 귄", nameEN: "Ursula K. Le Guin", desc: "SF·판타지·문학의 경계를 지운 작가. 장르 자체가 문학.", descEN: "Erased boundaries between SF, fantasy, and literature." },
-    { name: "이탈로 칼비노", nameEN: "Italo Calvino", desc: "실험적 구조와 문학적 상상력의 결합.", descEN: "Experimental structure meets literary imagination." },
-  ],
-};
-
-interface DnaCard {
-  label: string;
-  labelEN: string;
-  labelClass: string;
-  title: string;
-  titleEN: string;
-  desc: string;
-  descEN: string;
-}
-
-const DNA_CARDS: DnaCard[] = [
-  { label: "Hard SF", labelEN: "Hard SF", labelClass: "ss-label-sf", title: "냉정한 관찰자", titleEN: "The Cold Observer", desc: "기술적 정확성이 곧 아름다움. 감정보다 시스템. 독자가 세계를 이해하게 만드는 문장.", descEN: "Technical precision as beauty. Systems over emotion. Sentences that make readers understand the world." },
-  { label: "웹소설", labelEN: "Web Novel", labelClass: "ss-label-web", title: "빠른 호흡의 이야기꾼", titleEN: "The Fast-Paced Storyteller", desc: "첫 문장에 훅. 짧은 단락, 강한 리듬. 독자를 다음 장으로 끌어당기는 마력.", descEN: "Hook in the first line. Short paragraphs, strong rhythm. The magic that pulls readers to the next chapter." },
-  { label: "문학적", labelEN: "Literary", labelClass: "ss-label-lit", title: "감각의 설계자", titleEN: "The Sensory Architect", desc: "세부 묘사가 감정을 만든다. 은유와 여백. 독자가 스스로 느끼게 하는 문장.", descEN: "Detail creates emotion. Metaphor and white space. Sentences that let readers feel on their own." },
-  { label: "멀티장르", labelEN: "Multi-Genre", labelClass: "ss-label-all", title: "장르를 넘나드는 작가", titleEN: "The Genre-Crossing Writer", desc: "SF의 논리 + 웹소설의 속도 + 문학의 깊이. 각 장르의 장점을 혼합.", descEN: "SF logic + web novel speed + literary depth. Blending the best of each genre." },
-];
-
-// ============================================================
-// PART 2 — 메인 컴포넌트
-// ============================================================
+import {
+  analyzeText,
+  AUTHOR_PROFILES,
+  DNA_CARDS,
+  getSliderDescriptor,
+  getSliderTrackStyle,
+  RadarChart,
+  REF_AUTHORS,
+  SF_CHECKS,
+  SLIDERS_I18N,
+  STYLE_NAMES_EN,
+  STYLE_NAMES_KO,
+  STYLE_PRESETS,
+  TextAnalysisCards,
+  type RefAuthor,
+  type TextMetrics,
+  WEB_CHECKS,
+} from "./StyleStudioView.data";
 
 interface Props {
   language?: AppLanguage;
@@ -435,7 +68,6 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
   const [textMetrics, setTextMetrics] = useState<TextMetrics | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounced text analysis (500ms)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -444,7 +76,6 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [sourceText]);
 
-  // Radar chart data
   const radarValues = useMemo(
     () => SLIDERS_I18N.map((s) => sliderVals[s.id] ?? s.defaultVal),
     [sliderVals]
@@ -466,7 +97,6 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
   const totalChecked = checkedSF.size + checkedWeb.size;
   const totalItems = SF_CHECKS.length + WEB_CHECKS.length;
 
-  // Sync profile changes to parent — skip initial mount via flag
   const didMount = useRef(false);
   useEffect(() => {
     if (!didMount.current) {
@@ -479,7 +109,6 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
       checkedSF: Array.from(checkedSF),
       checkedWeb: Array.from(checkedWeb),
     });
-  // onProfileChange is intentionally excluded — parent re-creates it on each render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCards, sliderVals, checkedSF, checkedWeb]);
 
@@ -499,20 +128,14 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
     setSliderVals((prev) => ({ ...prev, [id]: val }));
   }, []);
 
-  // ============================================================
-  // PART 3 — 문체 변환 API 호출
-  // ============================================================
-
   const transformAbortRef = useRef<AbortController | null>(null);
 
-  // Cleanup: cancel stream on unmount
   useEffect(() => () => { transformAbortRef.current?.abort(); }, []);
 
   const transformText = useCallback(async () => {
     if (!sourceText.trim()) return;
     if (activeStyles.size === 0) return;
 
-    // Abort previous in-flight request
     transformAbortRef.current?.abort();
     const controller = new AbortController();
     transformAbortRef.current = controller;
@@ -526,7 +149,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
     setResultText("");
 
     const systemInstruction = en
-      ? "You are an expert writing style consultant. Rewrite the original text to match the specified style direction. Output only the result — no explanations or meta-commentary."
+      ? "You are an expert writing style consultant. Rewrite the original text to match the specified style direction. Output only the result, with no explanations or meta-commentary."
       : "당신은 한국어 문체 전문가입니다. 지시된 문체 방향에 맞춰 원문을 재작성합니다. 결과물만 출력하고, 설명이나 메타 코멘트는 붙이지 않습니다.";
 
     const userPrompt = en
@@ -539,7 +162,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
       const apiKey = getApiKey(provider);
 
       if (!apiKey) {
-        setResultText(en ? "Please set your API key in Settings first." : "설정에서 API 키를 먼저 등록해주세요.");
+        setResultText(en ? "Please set your connection key in Settings first." : "환경 설정에서 연결 키를 먼저 등록해 주세요.");
         setLoading(false);
         return;
       }
@@ -559,28 +182,24 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
       });
 
       if (!res.ok) {
-        // [N4] 레거시 403 NOA 차단 (HTTP 403 + { error, noa:{reason} })도 고지 의무 —
-        // toast/카드 발화 + 결과 영역 인라인 사유 (사일런트 차단 금지)
         let inlineMsg: string | null = null;
         try {
           const errData: unknown = await res.json();
-          inlineMsg = checkBlockedLegacy403(errData, "style-studio", en ? "en" : "ko");
+          inlineMsg = checkPaywallJson(errData) ?? checkBlockedLegacy403(errData, "style-studio", en ? "en" : "ko");
           if (!inlineMsg) {
             const plainError = (errData as { error?: unknown })?.error;
             if (typeof plainError === "string" && plainError) inlineMsg = plainError;
           }
         } catch { /* 본문 비-JSON — 일반 오류 문구 유지 */ }
-        setResultText(inlineMsg ?? (en ? "API error. Please try again." : "API 오류가 발생했습니다. 다시 시도해주세요."));
+        setResultText(inlineMsg ?? (en ? "Connection error. Please try again." : "연결에 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요."));
         return;
       }
 
-      // [N4] 서버 게이트 차단 계약 (HTTP 200 + JSON {blocked, reason, gradeRequired})
-      // → toast/카드 고지 + 결과 영역 인라인 표시 (정상 응답은 text/event-stream)
       const blockedCt = res.headers.get("content-type") ?? "";
       if (blockedCt.includes("application/json")) {
         const blockedJson: unknown = await res.json().catch(() => null);
         const blockedMsg = checkBlockedJson(blockedJson, "style-studio", en ? "en" : "ko");
-        setResultText(blockedMsg ?? (en ? "API error. Please try again." : "API 오류가 발생했습니다. 다시 시도해주세요."));
+        setResultText(blockedMsg ?? (en ? "Connection error. Please try again." : "연결에 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요."));
         return;
       }
 
@@ -617,35 +236,30 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
               setResultText(accumulated);
             }
           } catch {
-            // non-JSON SSE line — skip
           }
         }
       }
 
       if (!accumulated) setResultText(en ? "Transform result is empty." : "변환 결과가 비어있습니다.");
     } catch {
-      setResultText(en ? "Network error. Please try again." : "네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+      setResultText(en ? "Connection error. Please try again." : "연결에 문제가 생겼습니다. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       setLoading(false);
     }
   }, [sourceText, activeStyles, en]);
-
-  // ============================================================
-  // PART 4 — 렌더: 헤더 + 탭 네비게이션
-  // ============================================================
 
   const tabLabels = en
     ? ["① DNA Diagnosis", "② Technique Checklist", "③ Sentence Lab", "④ My Profile", "⑤ Preview & Compare"]
     : ["① 문체 DNA 진단", "② 기법 체크리스트", "③ 문장 실험실", "④ 내 문체 프로필", "⑤ 프리뷰 비교"];
 
   return (
-    <div>
+    <div className="ss-page">
       {/* Hero */}
       <div className="ss-header">
         <div className="ss-shell ss-header-shell">
           <div className="ss-header-bg">STYLE</div>
           <div className="ss-header-label">
-            Writing Studio · {en ? "Style Development" : "문체 개발"}
+            Loreguard Studio · {en ? "Style Alignment" : "문체 정렬"}
           </div>
           <h1 className="ss-header-title">
             {en ? (
@@ -656,8 +270,8 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
           </h1>
           <p className="ss-header-desc">
             {en
-              ? "From hard SF to web novels — a systematic tool for building your unique authorial voice across genres."
-              : "하드SF부터 웹소설까지 — 장르를 넘나드는 고유한 작가적 목소리를 체계적으로 구축하는 도구입니다."}
+              ? "From hard SF to web novels, tune a stable authorial voice across genres."
+              : "하드 SF부터 웹소설까지, 장르를 넘나드는 작가적 목소리를 안정적으로 정렬합니다."}
           </p>
         </div>
       </div>
@@ -667,7 +281,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
         <div className="ss-shell ss-toolbar-shell">
           <div className="ss-toolbar-anchor">
             <button className="ss-preset-trigger" onClick={() => setShowStylePresetMenu((v) => !v)}>
-              ⚡ {en ? "Preset" : "프리셋"}
+              {en ? "Preset" : "프리셋"}
             </button>
             {showStylePresetMenu && (
               <div className="ss-preset-menu">
@@ -699,12 +313,9 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
 
       <div className="ss-main">
         <div className="ss-shell ss-main-shell">
-        {/* ============================================================ */}
-        {/* PART 5 — 패널 1: 문체 DNA 진단                              */}
-        {/* ============================================================ */}
         {tab === 0 && (
           <div>
-            <div className="ss-section-title">Step 01 — {en ? "Style Identity" : "문체 정체성 선택"}</div>
+            <div className="ss-section-title">Step 01 · {en ? "Style Identity" : "문체 정체성 선택"}</div>
             <p className="ss-hint">
               {en
                 ? "Select the style types closest to your current or target writing. Multiple selections allowed."
@@ -727,7 +338,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
             </div>
 
             <hr className="ss-divider" />
-            <div className="ss-section-title">Step 02 — {en ? "Style Parameters" : "문체 파라미터 설정"}</div>
+            <div className="ss-section-title">Step 02 · {en ? "Style Parameters" : "문체 파라미터 설정"}</div>
 
             <div className="ss-slider-group">
               {SLIDERS_I18N.map((s) => {
@@ -781,12 +392,12 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                 {/* Legend */}
                 <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8, fontSize: 11 }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 2, background: "rgba(245,166,35,0.5)", display: "inline-block" }} />
+                    <span style={{ width: 10, height: 10, borderRadius: 2, background: "var(--color-accent-amber)", display: "inline-block" }} />
                     {en ? "My Style" : "내 문체"}
                   </span>
                   {benchmarkProfile && (
                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 2, background: "rgba(99,180,255,0.5)", display: "inline-block" }} />
+                      <span style={{ width: 10, height: 10, borderRadius: 2, background: "var(--color-accent-blue)", display: "inline-block" }} />
                       {en ? benchmarkProfile.en : benchmarkProfile.ko}
                     </span>
                   )}
@@ -801,7 +412,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                   onChange={(e) => setBenchmarkAuthor(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary text-sm cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50"
                 >
-                  <option value="">{en ? "— None —" : "— 선택 안 함 —"}</option>
+                  <option value="">{en ? "None" : "선택 안 함"}</option>
                   {Object.entries(AUTHOR_PROFILES).map(([key, prof]) => (
                     <option key={key} value={key}>{en ? prof.en : prof.ko}</option>
                   ))}
@@ -813,7 +424,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                       const theirs = benchmarkProfile.values[i];
                       const diff = mine - theirs;
                       const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "=";
-                      const clr = diff > 0 ? "#f5a623" : diff < 0 ? "#63b4ff" : "#888";
+                      const clr = diff > 0 ? "var(--color-accent-amber)" : diff < 0 ? "var(--color-accent-blue)" : "var(--color-text-secondary)";
                       return (
                         <div key={s.id} style={{ display: "flex", justifyContent: "space-between" }}>
                           <span>{en ? s.en : s.ko}</span>
@@ -845,13 +456,13 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
               const preview = applyStyleTransform(sampleText, sliderVals, language);
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-text-tertiary, #888)', textTransform: 'uppercase', marginBottom: 6 }}>{en ? 'Original' : '원문'}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-secondary, #aaa)', whiteSpace: 'pre-wrap' }}>{sampleText}</div>
+                  <div style={{ background: 'var(--color-bg-secondary)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--color-border)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-text-secondary)', marginBottom: 6 }}>{en ? 'Original' : '원문'}</div>
+                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{sampleText}</div>
                   </div>
-                  <div style={{ background: 'rgba(245,166,35,0.05)', borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(245,166,35,0.2)' }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: '#f5a623', textTransform: 'uppercase', marginBottom: 6 }}>{en ? 'With Your Style' : '내 문체 적용'}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-secondary, #aaa)', whiteSpace: 'pre-wrap' }}>{preview}</div>
+                  <div style={{ background: 'var(--indigo-50, #eff6ff)', borderRadius: 10, padding: '12px 16px', border: '1px solid color-mix(in srgb, var(--color-accent-amber) 20%, transparent)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-accent-amber)', marginBottom: 6 }}>{en ? 'With Your Style' : '내 문체 적용'}</div>
+                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-primary)', whiteSpace: 'pre-wrap' }}>{preview}</div>
                   </div>
                 </div>
               );
@@ -863,13 +474,10 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* PART 6 — 패널 2: 기법 체크리스트                             */}
-        {/* ============================================================ */}
         {tab === 1 && (
           <div>
             <div className="ss-section-title">
-              Step 03 — {en ? "Technique Checklist" : "문체 기법 습득 체크리스트"}
+              Step 03 · {en ? "Technique Checklist" : "문체 기법 습득 체크리스트"}
             </div>
 
             <div className="ss-progress-wrap">
@@ -922,16 +530,13 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* PART 7 — 패널 3: 문장 실험실                                 */}
-        {/* ============================================================ */}
         {tab === 2 && (
           <div>
-            <div className="ss-section-title">Step 04 — {en ? "Sentence Transform Lab" : "문장 변환 실험실"}</div>
+            <div className="ss-section-title">Step 04 · {en ? "Sentence Transform Lab" : "문장 변환 실험실"}</div>
             <p className="ss-hint">
               {en
-                ? "Enter your original text and select style directions. NOA will rewrite the same content in a different style."
-                : "원문을 입력하고 변환하고 싶은 문체 요소를 선택하면, NOA가 같은 내용을 다른 스타일로 재작성합니다."}
+                ? "Enter your original text and select style directions. Noa rewrites the same content in a different style."
+                : "원문을 입력하고 변환하고 싶은 문체 요소를 선택하면, 노아가 같은 내용을 다른 스타일로 재작성합니다."}
             </p>
 
             <div className="ss-section-title" style={{ marginBottom: 12 }}>
@@ -1015,16 +620,16 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
             <hr className="ss-divider" />
 
             <div className="ss-section-title">
-              {en ? "Style Tips — Common Pitfalls" : "문체 팁 — 자주 나오는 함정"}
+              {en ? "Style Tips · Common Pitfalls" : "문체 팁 · 자주 나오는 함정"}
             </div>
             <div className="ss-tip warning">
-              <h4>{en ? "NOA Style Symptom 1: Transition Overload" : "NOA 문체 증상 1: 과잉 전환어"}</h4>
+              <h4>{en ? "Noa Style Symptom 1: Transition Overload" : "노아 문체 증상 1: 과잉 전환어"}</h4>
               <p>{en
-                ? "However / Nevertheless / Despite — consecutive use makes prose sound like an essay. Replace with action."
-                : "하지만 / 그러나 / 그럼에도 불구하고 — 연속 사용 시 글이 설명문처럼 들린다. 행동으로 대체하라."}</p>
+                ? "However / Nevertheless / Despite: consecutive use makes prose sound like an essay. Replace with action."
+                : "하지만 / 그러나 / 그럼에도 불구하고: 연속 사용 시 글이 설명문처럼 들린다. 행동으로 대체하라."}</p>
             </div>
             <div className="ss-tip warning">
-              <h4>{en ? "NOA Style Symptom 2: Stating Emotions Directly" : "NOA 문체 증상 2: 감정 직접 명시"}</h4>
+              <h4>{en ? "Noa Style Symptom 2: Stating Emotions Directly" : "노아 문체 증상 2: 감정 직접 명시"}</h4>
               <p>{en
                 ? "Instead of 'Fear washed over him,' use physical reactions: His fingertips scraped the edge of the monitor. 0.3 seconds. Again."
                 : "\"두려움이 몰려왔다\" 대신 신체 반응으로: 손끝이 모니터 엣지를 긁었다. 0.3초. 다시 긁었다."}</p>
@@ -1032,7 +637,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
             <div className="ss-tip">
               <h4>{en ? "Technique: Data as Narrative" : "기법 활용: 데이터의 서사화"}</h4>
               <p>{en
-                ? "Numbers, dates, and measurements aren't just information — they can serve as emotional thermometers for your characters."
+                ? "Numbers, dates, and measurements are not just information. They can serve as emotional thermometers for your characters."
                 : "숫자·날짜·측정값이 단순 정보가 아니라 캐릭터의 감정 온도계 역할을 할 수 있다. 수치에 맥락을 부여하라."}</p>
             </div>
             <div className="ss-tip">
@@ -1044,13 +649,10 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* PART 8 — 패널 4: 내 문체 프로필                              */}
-        {/* ============================================================ */}
         {tab === 3 && (
           <div>
             <div className="ss-section-title">
-              {en ? "My Style Profile" : "내 문체 프로필 — 현재 설정 기준"}
+              {en ? "My Style Profile" : "내 문체 프로필 · 현재 설정 기준"}
             </div>
 
             <div className="ss-profile-grid">
@@ -1139,7 +741,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
 
             <hr className="ss-divider" />
 
-            <div className="ss-section-title">{en ? "Reference Authors" : "참고할 작가 — 문체 레퍼런스"}</div>
+            <div className="ss-section-title">{en ? "Reference Authors" : "참고할 작가 · 문체 레퍼런스"}</div>
             <div className="ss-ref-grid">
               {(() => {
                 const authors = new Map<string, RefAuthor>();
@@ -1158,9 +760,6 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* PART 7 — 패널 5: 프리뷰 & 아키타입 비교                     */}
-        {/* ============================================================ */}
         {tab === 4 && (
           <StylePreview
             profile={{

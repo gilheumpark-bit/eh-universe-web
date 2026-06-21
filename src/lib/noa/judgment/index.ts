@@ -93,7 +93,7 @@ function matchDangerPatterns(
 // 분리한다. SECURITY_VETO_FLOOR — Black 등급 하한(80) *초과* 로 하드 플로어. resolveNoaGrade
 // 는 `score > floor && score <= ceiling` 경계라 정확히 80 은 DeepRed-3 에 걸린다(둘 다 BLOCK
 // 이지만 모호 경계 회피 위해 80 초과 = Black 확정). VETO 면 어떤 완화 배수로도 BLOCK 미만으로
-// 내려갈 수 없게 고정한다.
+// 내려갈 수 고정한다.
 const SECURITY_VETO_FLOOR = 80.01;
 
 export function runJudgment(

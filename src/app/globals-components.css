@@ -433,7 +433,7 @@
 }
 
 /* ============================================================
-   Premium Button System — Commercial Grade (Flat & Archive-style)
+   Premium Button System — Commercial Grade (Flat & Editorial)
    ============================================================ */
 .premium-button {
   position: relative;
@@ -500,7 +500,7 @@
   outline-offset: 3px;
 }
 
-/* Brand primary — amber on white text. 메인 CTA (Home/Network 등) 브랜드 통일. */
+/* Brand primary — amber on white text. 메인 CTA 브랜드 통일. */
 .premium-button.primary {
   border-color: var(--color-accent-amber);
   background: var(--color-accent-amber);

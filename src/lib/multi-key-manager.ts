@@ -1,7 +1,7 @@
 // ============================================================
 // EHSU BYOK Multi-Key Manager
 // ============================================================
-// 최대 7개 API 키 슬롯. 에이전트별 키 할당. 병렬 처리. 과금 투명성.
+// 최대 7개 연결 키 슬롯. 역할별 키 할당. 병렬 처리. 과금 투명성.
 
 import { encryptKey, decryptKey } from './ai-providers';
 
@@ -54,10 +54,10 @@ const STORAGE_KEY = 'ehsu_multi_key_config';
 
 const DEFAULT_MODELS: Record<ProviderId, string> = {
   gemini: 'gemini-2.5-pro',
-  openai: 'gpt-5.4',
+  openai: 'gpt-5.4-mini',
   claude: 'claude-sonnet-4-6',
   groq: 'llama-3.3-70b-versatile',
-  mistral: 'mistral-medium-3-latest',
+  mistral: 'mistral-medium-3-5',
   ollama: 'llama3.1',
   lmstudio: 'openai/gpt-oss-20b',
 };
@@ -102,7 +102,7 @@ export function createDefaultConfig(): MultiKeyConfig {
 export function saveMultiKeyConfig(config: MultiKeyConfig): void {
   if (typeof window === 'undefined') return;
   try {
-    // API 키는 간단한 난독화 적용
+    // 연결 키는 간단한 난독화 적용
     const serializable = {
       ...config,
       slots: config.slots.map((s) => ({

@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp, checkRateLimitAsync } from '@/lib/rate-limit';
 import { verifyCsrf } from '@/lib/csrf';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   // Rate limit — 삭제는 매우 드문 행위, 3/day 충분
-  const rl = checkRateLimit(ip, '/api/user/delete', {
+  const rl = await checkRateLimitAsync(ip, '/api/user/delete', {
     maxRequests: 3,
     windowMs: 24 * 3600 * 1000,
   });

@@ -1,218 +1,41 @@
 "use client";
 
-/* ===========================================================
-   RevisionPanel — 퇴고 slide-over (B-revision-panel)
-
-   오픈: window CustomEvent 'loreguard:open-revision'
-         (mount·dispatch 는 TabWriting 측 담당 — 이 파일은 수신만.
-          detail.episode(number) 가 오면 해당 회차, 없으면 config.episode).
-   닫기: 닫기 버튼 / Escape / 오버레이 클릭 — CpJournalPanel 과 동일 slide-over 패턴.
-
-   내용 (데스크톱 src/app/desktop/page.tsx RevisionPanel 흡수 — 전부 기존 엔진 재사용·신규 엔진 0):
-   (a) 기본 지표      → @/lib/desktop/revision-analysis  analyzeRevision·revisionIssues
-   (b) AI 시그니처    → @/lib/creative/ai-signature-scan  scanAISignature
-   (c) 리듬           → @/lib/creative/rhythm-analysis    analyzeRhythm
-   (d) QA 4감사관     → @/lib/creative/qa-auditor         auditManuscript·auditVerdict (비수렴 4관점 그대로)
-   (e) 16독자 패널    → @/lib/creative/reader-persona-16  panelReaction (시뮬레이션 근사 — 실측 아님)
-   (f) 통합등급       → @/lib/creative/integrated-grade   computeIntegratedGrade
-       · writing/revision 축 = 실측 산식 (데스크톱 RevisionPanel 동일 공식)
-       · world/character/scene/direction 축 = config 보유 여부 75/45 프록시
-         (데스크톱 contextItems has() 프록시와 동일 정신 — 실측 아님·판단용 명시)
-   (g) 신호 압축      → ./RevisionCompressionCard (하인리히 300→29→1·X3)
-       · (a)(b)(d) raw 검출을 클러스터·FMEA 로 압축 → vital-few + 1 verdict
-         우선 표시. raw 목록은 "전체 보기" 토글(showRaw·본 파일 소유)로 접근
-         유지 — 정보 은닉 아님. near-miss 누적은 카드 unmount 에서 기록.
-
-   + AI 퇴고 보고서: buildAgentSystemPrompt('studio-proofread') — 레지스트리 선등록
-     (리포트 전용·재작성 금지 duty + no-yap-json 가드 자동 주입) → /api/structured-generate
-     (TabDirection handleAiSuggest 와 동일 호출 패턴: passthrough 라우트 → 가드는 클라이언트
-     prompt 합성으로만 주입·BYOK 또는 Firebase JWT). 결과 = 진단 목록 *표시만* —
-     자동 수정 절대 금지 (BareWrite 정책 — 수정은 작가가 리포트 검토 후 직접).
-
-   대상 텍스트 = useStudio() currentSession.config.manuscripts[episode].content.
-   모든 산출물에 '판단용 — 작가 결정 영역' 라벨. 점수 색 경고 없음(중립 표시).
-   가드: currentSession null → 미렌더. 리스너 전부 cleanup. 엔진은 빈 입력 안전(순수 함수).
-   =========================================================== */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStudio } from "@/app/studio/StudioContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { L4 } from "@/lib/i18n";
 import { Alert, Check, Sync, Wand, X } from "@/components/loreguard/icons";
-import type {
-  Character,
-  EpisodeManuscript,
-  EpisodeSceneSheet,
-  StoryConfig,
-} from "@/lib/studio-types";
-// (a)-(f) 분석 엔진 — 전부 순수 함수(React/DOM/fetch 0)·정적 import 경량 안전
+import type { EpisodeManuscript } from "@/lib/studio-types";
 import { analyzeRevision, revisionIssues } from "@/lib/desktop/revision-analysis";
 import { scanAISignature } from "@/lib/creative/ai-signature-scan";
 import { analyzeRhythm } from "@/lib/creative/rhythm-analysis";
+import { auditManuscript, auditVerdict } from "@/lib/creative/qa-auditor";
 import {
-  auditManuscript,
-  auditVerdict,
-  type AuditPerspective,
-} from "@/lib/creative/qa-auditor";
-import { panelReaction } from "@/lib/creative/reader-persona-16";
+  buildChapterReactionForecast,
+  buildEpisodeReactionForecasts,
+} from "@/lib/creative/chapter-reaction-forecast";
 import { computeIntegratedGrade } from "@/lib/creative/integrated-grade";
-// (g) 하인리히 신호 압축 카드 — 매핑·near-miss 라이프사이클 포함 (X3)
 import RevisionCompressionCard from "./RevisionCompressionCard";
-// AI 퇴고 보고서 — 선등록 studio-proofread 에이전트 + 기존 범용 JSON 라우트
 import { buildAgentSystemPrompt } from "@/lib/ai/writing-agent-registry";
 import { getActiveProvider, getApiKey } from "@/lib/ai-providers";
-// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 (noa:toast + 인라인 에러) — 사일런트 차단 금지
 import { checkBlockedJson } from "@/lib/noa/block-notice";
+import { checkPaywallJson } from "@/lib/noa/paywall-notice";
 import { lazyFirebaseAuth } from "@/lib/firebase";
-
-// ============================================================
-// PART 1 — AI 퇴고 보고서 계약 (studio-proofread duty 스키마와 1:1)
-// ============================================================
-
-const FINDING_TYPES = ["repetition", "causality", "voice", "pacing"] as const;
-type FindingType = (typeof FINDING_TYPES)[number];
-const FINDING_SEVERITIES = ["high", "medium", "low"] as const;
-type FindingSeverity = (typeof FINDING_SEVERITIES)[number];
-
-interface ProofreadFinding {
-  type: FindingType;
-  severity: FindingSeverity;
-  location: string;
-  diagnosis: string;
-  suggestion: string;
-}
-
-/** structured-generate schema — studio-proofread duty 의 출력 스키마와 동일 (계약 단일화). */
-const PROOFREAD_SCHEMA = {
-  type: "object" as const,
-  properties: {
-    findings: {
-      type: "array" as const,
-      items: {
-        type: "object" as const,
-        properties: {
-          type: { type: "string" as const, enum: [...FINDING_TYPES] },
-          severity: { type: "string" as const, enum: [...FINDING_SEVERITIES] },
-          location: { type: "string" as const },
-          diagnosis: { type: "string" as const },
-          suggestion: { type: "string" as const },
-        },
-        required: ["type", "severity", "location", "diagnosis", "suggestion"],
-      },
-    },
-  },
-  required: ["findings"],
-};
-
-const MAX_FINDINGS = 20;
-/** AI 진단 본문 상한 (요청 512KB·토큰 예산 방어). 초과 시 앞부분만 — UI·prompt 양쪽에 정직 고지. */
-const MAX_AI_CHARS = 20_000;
-
-/** 응답 → 검증된 finding 목록. 미지 type 은 드랍, severity 는 enum 밖이면 'low' 보정. */
-function parseProofreadFindings(data: unknown): ProofreadFinding[] {
-  if (!data || typeof data !== "object") return [];
-  const raw = (data as { findings?: unknown }).findings;
-  if (!Array.isArray(raw)) return [];
-  const out: ProofreadFinding[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const f = item as Record<string, unknown>;
-    const type =
-      typeof f.type === "string" && (FINDING_TYPES as readonly string[]).includes(f.type)
-        ? (f.type as FindingType)
-        : null;
-    const diagnosis = typeof f.diagnosis === "string" ? f.diagnosis.trim() : "";
-    if (!type || !diagnosis) continue; // 핵심 필드 결손 → 드랍 (발명 금지)
-    const severity =
-      typeof f.severity === "string" &&
-      (FINDING_SEVERITIES as readonly string[]).includes(f.severity)
-        ? (f.severity as FindingSeverity)
-        : "low";
-    out.push({
-      type,
-      severity,
-      location: typeof f.location === "string" ? f.location.trim().slice(0, 200) : "",
-      diagnosis: diagnosis.slice(0, 500),
-      suggestion: typeof f.suggestion === "string" ? f.suggestion.trim().slice(0, 500) : "",
-    });
-    if (out.length >= MAX_FINDINGS) break;
-  }
-  return out;
-}
-
-// ============================================================
-// PART 2 — contextBlock 빌더 (studio-proofread 선언 3 블록 — 실데이터 보유분만)
-//   TabDirection 의 로컬 빌더와 동일 정신 (그 함수들은 미export — 파일 수정 금지
-//   범위라 여기 자체 축약본. 빈 블록은 buildAgentSystemPrompt 가 조용히 스킵).
-// ============================================================
-
-/** config.characters → character-dna 블록. 이름 있는 캐릭터 없으면 미주입. */
-function buildCharacterDnaBlock(characters: Character[]): string | undefined {
-  const named = characters.filter((c) => c.name.trim());
-  if (named.length === 0) return undefined;
-  const MAX = 12; // 토큰 상한 — 초과분은 명시 생략 (조용한 누락 X)
-  const lines = named.slice(0, MAX).map((c) => {
-    const bits = [
-      c.role.trim() ? `역할: ${c.role.trim()}` : "",
-      c.traits.trim() ? `특성: ${c.traits.trim()}` : "",
-      c.speechStyle?.trim() ? `말투: ${c.speechStyle.trim()}` : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    return `- ${c.name.trim()}${bits ? ` (${bits})` : ""}`;
-  });
-  if (named.length > MAX) lines.push(`(외 ${named.length - MAX}명 생략)`);
-  return lines.join("\n");
-}
-
-/** 대상 회차 씬시트 → scene-sheet 블록. 해당 화 sheet 없으면 미주입. */
-function buildSceneSheetBlock(sheet: EpisodeSceneSheet | undefined): string | undefined {
-  if (!sheet) return undefined;
-  const head = [
-    `${sheet.episode}화${sheet.title ? ` · ${sheet.title}` : ""}`,
-    sheet.arc ? `아크: ${sheet.arc}` : "",
-    sheet.characters ? `회차 등장인물: ${sheet.characters}` : "",
-  ].filter(Boolean);
-  const rows = (sheet.scenes ?? []).map(
-    (s) => `- ${s.sceneName || s.sceneId || "(제목 없음)"} [${s.tone || "-"}] ${s.summary || ""}`.trimEnd(),
-  );
-  const body = rows.length ? `씬 ${rows.length}개:\n${rows.join("\n")}` : "등록된 씬 없음";
-  return `${head.join("\n")}\n${body}`;
-}
-
-/** corePremise + synopsis → story-summary 블록. 둘 다 없으면 미주입. */
-function buildStorySummaryBlock(config: StoryConfig): string | undefined {
-  const parts = [
-    config.corePremise?.trim() ? `핵심 전제: ${config.corePremise.trim().slice(0, 600)}` : "",
-    config.synopsis?.trim() ? `시놉시스: ${config.synopsis.trim().slice(0, 1500)}` : "",
-  ].filter(Boolean);
-  return parts.length ? parts.join("\n") : undefined;
-}
-
-// ============================================================
-// PART 3 — 표시 상수 (라벨 — 데스크톱 RevisionPanel 어휘 유지)
-// ============================================================
-
-const QA_LABEL: Record<AuditPerspective, string> = {
-  consistency: "A 정합",
-  outsider: "B 외부독자",
-  refuter: "C 반증",
-  structure: "D 구조",
-};
-
-const FINDING_TYPE_LABEL: Record<FindingType, { ko: string; en: string }> = {
-  repetition: { ko: "우회 반복", en: "Paraphrased repetition" },
-  causality: { ko: "인과 단절", en: "Causality break" },
-  voice: { ko: "보이스 드리프트", en: "Voice drift" },
-  pacing: { ko: "페이싱", en: "Pacing" },
-};
-
-const SEVERITY_LABEL: Record<FindingSeverity, { ko: string; en: string }> = {
-  high: { ko: "높음", en: "high" },
-  medium: { ko: "중간", en: "medium" },
-  low: { ko: "낮음", en: "low" },
-};
+import {
+  buildCharacterDnaBlock,
+  buildSceneSheetBlock,
+  buildStorySummaryBlock,
+  CRITIQUE_LABEL,
+  CRITIQUE_ORDER,
+  FINDING_TYPE_LABEL,
+  MAX_AI_CHARS,
+  parseProofreadFindings,
+  PROOFREAD_SCHEMA,
+  REACTION_RISK_LABEL,
+  SEVERITY_LABEL,
+  type ProofreadFinding,
+} from "./RevisionPanel.proofread";
 
 type AiStatus = "idle" | "working" | "success" | "error";
 
@@ -324,7 +147,21 @@ export default function RevisionPanel() {
   const rhythm = useMemo(() => analyzeRhythm(text), [text]);
   const audit = useMemo(() => auditManuscript(text), [text]);
   const verdict = useMemo(() => auditVerdict(audit), [audit]);
-  const panel = useMemo(() => panelReaction(text), [text]);
+  const reactionForecast = useMemo(() => buildChapterReactionForecast(text, "basic-16"), [text]);
+  const episodeReactionForecast = useMemo(
+    () =>
+      buildEpisodeReactionForecasts(
+        open
+          ? manuscripts.map((manuscript) => ({
+              episode: manuscript.episode,
+              title: manuscript.title,
+              content: manuscript.content,
+            }))
+          : [],
+        "basic-16",
+      ),
+    [manuscripts, open],
+  );
 
   // (f) 통합등급 — writing/revision 실측 + 4축 config 보유 프록시 (데스크톱 동일 정신·판단용)
   const grade = useMemo(() => {
@@ -350,7 +187,7 @@ export default function RevisionPanel() {
     });
   }, [config, targetEpisode, sig.score, metrics.tellPct, metrics.repetitionPct]);
 
-  // ----- AI 퇴고 보고서 — studio-proofread 경유 (진단 표시만·자동 수정 절대 금지) -----
+  // ----- 노아 퇴고 보고서 — studio-proofread 경유 (진단 표시만·자동 수정 금지) -----
   const handleAiReport = useCallback(async () => {
     if (aiStatus === "working" || !config || !target?.content?.trim()) return;
     if (!hasAiAccess) {
@@ -406,6 +243,8 @@ export default function RevisionPanel() {
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) {
+        const paywallMsg = checkPaywallJson(data);
+        if (paywallMsg) throw new Error(paywallMsg);
         const serverError = (data as { error?: unknown } | null)?.error;
         throw new Error(
           typeof serverError === "string" ? serverError : `요청 실패 (HTTP ${res.status})`,
@@ -430,8 +269,8 @@ export default function RevisionPanel() {
   if (!open || !currentSession) return null;
 
   const judgementLabel = L4(language, {
-    ko: "판단용 — 작가 결정 영역",
-    en: "For judgment — author's decision",
+    ko: "작가 결정",
+    en: "Author decides",
   });
   const hasText = text.trim().length > 0;
   const aiTruncNotice = (target?.content?.length ?? 0) > MAX_AI_CHARS;
@@ -550,8 +389,8 @@ export default function RevisionPanel() {
         {!hasText && (
           <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
             {L4(language, {
-              ko: "저장된 회차 원고가 없습니다 — 집필 탭에서 원고를 저장하면 퇴고 지표가 표시됩니다",
-              en: "No saved episode manuscript — save a draft in the Writing tab to see revision metrics",
+              ko: "저장된 회차 원고가 없습니다 — 집필 탭에서 원고를 저장하면 문장 상태가 표시됩니다",
+              en: "No saved episode manuscript — save a draft in the Writing tab to see revision status",
             })}
           </div>
         )}
@@ -575,7 +414,7 @@ export default function RevisionPanel() {
             {/* (a) 기본 지표 — revision-analysis */}
             <div className="pcard">
               <div className="pcard-h">
-                {L4(language, { ko: "퇴고 지표", en: "Revision metrics" })}
+                {L4(language, { ko: "문장 상태", en: "Revision status" })}
                 <span className="pill gray">{judgementLabel}</span>
               </div>
               <div
@@ -585,8 +424,8 @@ export default function RevisionPanel() {
                   gap: 8,
                 }}
               >
-                {metric(L4(language, { ko: "자수", en: "Chars" }), metrics.chars.toLocaleString())}
-                {metric(L4(language, { ko: "설명형(tell)", en: "Tell" }), `${metrics.tellPct}%`)}
+                {metric(L4(language, { ko: "글자 수", en: "Characters" }), metrics.chars.toLocaleString())}
+                {metric(L4(language, { ko: "설명형 문장", en: "Telling" }), `${metrics.tellPct}%`)}
                 {metric(L4(language, { ko: "반복어", en: "Repetition" }), `${metrics.repetitionPct}%`)}
                 {metric(L4(language, { ko: "대사 비율", en: "Dialogue" }), `${metrics.dialoguePct}%`)}
                 {metric(
@@ -602,11 +441,11 @@ export default function RevisionPanel() {
               {showRaw && (
                 <div style={{ marginTop: 10 }}>
                   <div style={{ fontSize: 11, color: "var(--ink-3)", marginBottom: 6 }}>
-                    {L4(language, { ko: `퇴고 이슈 raw (${issues.length})`, en: `Raw issues (${issues.length})` })}
+                    {L4(language, { ko: `세부 후보 (${issues.length})`, en: `Detailed findings (${issues.length})` })}
                   </div>
                   {issues.length === 0 ? (
                     <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
-                      {L4(language, { ko: "지표 양호 — 발견된 이슈 없음", en: "Metrics OK — no issues found" })}
+                      {L4(language, { ko: "지금 바로 볼 후보는 없습니다", en: "No immediate findings" })}
                     </div>
                   ) : (
                     <ul style={{ display: "flex", flexDirection: "column", gap: 6, margin: 0, padding: 0, listStyle: "none" }}>
@@ -622,11 +461,11 @@ export default function RevisionPanel() {
               )}
             </div>
 
-            {/* (b)(c)(e) 심화 — AI 시그니처 · 리듬 · 16독자 패널 */}
+            {/* (e)(b)(c) 독자 반응 — 예측 가치를 먼저 보여주고, 문장 지표는 보조로 둔다. */}
             <div className="pcard">
               <div className="pcard-h">
-                {L4(language, { ko: "심화 분석", en: "Deep analysis" })}
-                <span className="pill gray">{judgementLabel}</span>
+                {L4(language, { ko: "사전 독자 반응", en: "Pre-reader response" })}
+                <span className="pill gray">{L4(language, { ko: "16관점", en: "16 views" })}</span>
               </div>
               <div
                 style={{
@@ -635,62 +474,147 @@ export default function RevisionPanel() {
                   gap: 8,
                 }}
               >
-                {metric(L4(language, { ko: "AI 시그니처", en: "AI signature" }), `${sig.score}`)}
                 {metric(
-                  L4(language, { ko: "리듬 burstiness", en: "Rhythm burstiness" }),
+                  L4(language, { ko: "예상 몰입도", en: "Expected engagement" }),
+                  `${reactionForecast.avgEngagement}`,
+                )}
+                {metric(
+                  L4(language, { ko: "이탈 신호", en: "Dropout signals" }),
+                  `${reactionForecast.dropoutCount}/16`,
+                )}
+                {metric(
+                  L4(language, { ko: "위험 최고 회차", en: "Highest-risk episode" }),
+                  `${episodeReactionForecast.maxDropoutCount}/16`,
+                )}
+              </div>
+
+              <div className="wr-srow" style={{ alignItems: "flex-start", marginTop: 8 }}>
+                <span className="rdot blue" style={{ marginTop: 4 }} />
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--ink-3)" }}>
+                    {L4(language, { ko: "다음 화 클릭 이유", en: "Next-click reason" })}
+                  </div>
+                  <p style={{ fontSize: 12, color: "var(--ink-1)", margin: "2px 0 0", lineHeight: 1.5 }}>
+                    {reactionForecast.summary.nextClickReason}
+                  </p>
+                </div>
+              </div>
+              {episodeReactionForecast.worstEpisode && (
+                <p style={{ fontSize: 11, color: "var(--ink-2)", margin: "8px 0 0" }}>
+                  {L4(language, {
+                    ko: `우선 손볼 회차: EP.${episodeReactionForecast.worstEpisode.episode} · 이탈 신호 ${episodeReactionForecast.worstEpisode.dropoutCount}/16`,
+                    en: `Review first: EP.${episodeReactionForecast.worstEpisode.episode} · dropout signals ${episodeReactionForecast.worstEpisode.dropoutCount}/16`,
+                  })}
+                </p>
+              )}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                  gap: 8,
+                  marginTop: 8,
+                }}
+              >
+                {metric(
+                  L4(language, {
+                    ko: "표현 습관",
+                    en: "Writing style",
+                    ja: "表現のクセ",
+                    zh: "表达习惯",
+                  }),
+                  `${sig.score}`,
+                )}
+                {metric(
+                  L4(language, { ko: "문장 리듬 변화", en: "Rhythm variance" }),
                   rhythm.micro.burstiness.toFixed(2),
                 )}
                 {metric(
                   L4(language, { ko: "단락 수", en: "Paragraphs" }),
                   `${rhythm.macro.paragraphCount}`,
                 )}
-                {metric(
-                  L4(language, { ko: "독자 패널 몰입", en: "Panel engagement" }),
-                  `${panel.avgEngagement}`,
-                )}
-                {metric(
-                  L4(language, { ko: "이탈 페르소나", en: "Dropout personas" }),
-                  `${panel.dropoutCount}/16`,
-                )}
               </div>
-              {/* AI 시그니처 적중 raw — 압축에 병합 · 토글 시에만 */}
+              {/* 표현 습관 raw — 압축에 병합 · 토글 시에만 */}
               {showRaw && sig.hits.length > 0 && (
                 <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
-                  {L4(language, { ko: "AI 시그니처 적중:", en: "AI signature hits:" })}{" "}
+                  {L4(language, {
+                    ko: "어색한 표현 후보:",
+                    en: "Awkward phrasing:",
+                    ja: "違和感のある表現:",
+                    zh: "生硬表达：",
+                  })}{" "}
                   {sig.hits.slice(0, 4).map((h) => `${h.pattern}(${h.count})`).join(" · ")}
                 </p>
               )}
               <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
                 {L4(language, {
-                  ko: "16독자 패널은 표면 지표 기반 시뮬레이션 근사 — 실측 독자 반응이 아닙니다.",
-                  en: "The 16-reader panel is a surface-metric simulation — not real reader data.",
+                  ko: `${reactionForecast.modeLabel} · 사전 예측 점검`,
+                  en: `${reactionForecast.modeLabel} — virtual review, not real reader data.`,
                 })}
               </p>
+              {showRaw && (
+                <div style={{ marginTop: 8 }}>
+                  <div className="wr-srow">
+                    <span className="rdot blue" />
+                    {L4(language, { ko: "이탈 위험", en: "Dropout risk" })}
+                    <b>{L4(language, REACTION_RISK_LABEL[reactionForecast.summary.dropoutRisk])}</b>
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "4px 0" }}>
+                    {reactionForecast.summary.immersionPoint}
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "4px 0" }}>
+                    {reactionForecast.summary.confusionPoint}
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "4px 0" }}>
+                    {reactionForecast.summary.nextClickReason}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* (d) QA 4감사관 raw — 비수렴 4관점 그대로 · 압축에 병합 · 토글 시에만 (판단용 라벨 보존) */}
-            {showRaw && (
-              <div className="pcard">
-                <div className="pcard-h">
+            {/* (d) 감평 시스템 — 평론가·작가·편집자 관점. 독자 반응 예측과 분리해 상시 표시. */}
+            <div className="pcard">
+              <div className="pcard-h">
+                {L4(language, { ko: "감평 시스템", en: "Critique system" })}
+                <span className="pill gray" style={{ marginLeft: "auto" }}>
+                  {L4(language, { ko: "평론가 · 작가", en: "Critic · Writer" })}
+                </span>
+                <span className={"pill " + (verdict.passed ? "green" : "amber")}>
                   {L4(language, {
-                    ko: `QA 감사관 A/B/C/D (비수렴) — ${verdict.passed ? "통과" : "보류"}`,
-                    en: `QA auditors A/B/C/D (non-converging) — ${verdict.passed ? "pass" : "hold"}`,
+                    ko: verdict.passed ? "통과" : "검토",
+                    en: verdict.passed ? "pass" : "review",
                   })}
-                  <span className="pill gray">{judgementLabel}</span>
-                </div>
-                {audit.length === 0 ? (
-                  <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
-                    {L4(language, {
-                      ko: "4관점 감사 — 발견된 결함 없음",
-                      en: "4-perspective audit — no findings",
-                    })}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(108px, 1fr))",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                {CRITIQUE_ORDER.map((perspective) => (
+                  <div key={perspective} className="wr-srow">
+                    {L4(language, CRITIQUE_LABEL[perspective])}
+                    <b>{verdict.byPerspective[perspective]}</b>
                   </div>
-                ) : (
+                ))}
+              </div>
+              {audit.length === 0 ? (
+                <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                  {L4(language, {
+                    ko: "감평 관점에서 바로 볼 후보는 없습니다.",
+                    en: "No immediate critique findings.",
+                  })}
+                </div>
+              ) : (
+                <>
                   <ul style={{ display: "flex", flexDirection: "column", gap: 6, margin: 0, padding: 0, listStyle: "none" }}>
-                    {audit.map((f, i) => (
+                    {audit.slice(0, showRaw ? audit.length : 4).map((f, i) => (
                       <li key={i} className="wr-srow" style={{ alignItems: "flex-start" }}>
                         <span className="pill gray" style={{ flexShrink: 0 }}>
-                          {QA_LABEL[f.perspective]}
+                          {L4(language, CRITIQUE_LABEL[f.perspective])}
                         </span>
                         <span>
                           {f.issue}{" "}
@@ -701,57 +625,65 @@ export default function RevisionPanel() {
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
-            )}
+                  {!showRaw && audit.length > 4 && (
+                    <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
+                      {L4(language, {
+                        ko: `감평 후보 ${audit.length - 4}건은 전체 보기에서 확인할 수 있습니다.`,
+                        en: `${audit.length - 4} more critique findings are available in full view.`,
+                      })}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
 
             {/* (f) 통합등급 — 중립 표시 (색 경고 없음) */}
             <div className="pcard">
               <div className="pcard-h">
-                {L4(language, { ko: "통합등급", en: "Integrated grade" })}
+                {L4(language, { ko: "원고 준비도", en: "Manuscript readiness" })}
                 <span className="pill gray">{judgementLabel}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "var(--ink-1)" }}>{grade.grade}</div>
                 <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
                   {L4(language, {
-                    ko: `${grade.weighted}점 · 최약축 ${grade.weakest}`,
-                    en: `${grade.weighted} pts · weakest axis: ${grade.weakest}`,
+                    ko: `${grade.weighted}점 · 먼저 볼 항목 ${grade.weakest}`,
+                    en: `${grade.weighted} pts · review first: ${grade.weakest}`,
                   })}
                 </div>
               </div>
               <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
                 {L4(language, {
-                  ko: "집필·퇴고 축은 본문 실측, 세계관·캐릭터·씬시트·연출 축은 설정 보유 여부 기반 근사치입니다.",
-                  en: "Writing/revision axes are measured from the text; world/character/scene/direction axes are presence-based approximations.",
+                  ko: "원고에서 계산한 문장 상태와 현재 채워진 설정 상태를 함께 본 준비도입니다.",
+                  en: "Readiness combines manuscript signals with the setup already filled in.",
                 })}
               </p>
             </div>
 
-            {/* + AI 퇴고 보고서 — studio-proofread (진단 목록 표시만 · 자동 수정 절대 금지) */}
+            {/* + 노아 퇴고 보고서 — studio-proofread (진단 목록 표시만 · 자동 수정 금지) */}
             <div className="pcard">
               <div className="pcard-h">
                 <Wand size={15} />
-                {L4(language, { ko: "AI 퇴고 보고서", en: "AI revision report" })}
+                {L4(language, { ko: "노아 퇴고 보고서", en: "Noa revision report" })}
                 <span className="pill gray">{judgementLabel}</span>
                 {aiStatus === "success" && (
                   <span className="pill gray" style={{ marginLeft: "auto" }}>
                     <Check size={12} />
-                    {L4(language, { ko: "진단 완료", en: "Done" })}
+                    {L4(language, { ko: "검토 완료", en: "Done" })}
                   </span>
                 )}
               </div>
               <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
                 {L4(language, {
-                  ko: "리포트 전용 진단 — 본문을 자동으로 고치지 않습니다. 수정 여부는 작가가 결정합니다.",
-                  en: "Report-only diagnosis — the text is never auto-edited. Revisions are the author's call.",
+                  ko: "검토 의견만 보여줍니다. 원고를 고칠지는 작가가 결정합니다.",
+                  en: "Shows review notes only. The author decides what to change.",
                 })}
               </div>
               {aiTruncNotice && (
                 <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
                   {L4(language, {
-                    ko: `원고가 길어 앞 ${MAX_AI_CHARS.toLocaleString()}자만 진단 대상입니다`,
-                    en: `Long manuscript — only the first ${MAX_AI_CHARS.toLocaleString()} chars are diagnosed`,
+                    ko: `원고가 길어 앞 ${MAX_AI_CHARS.toLocaleString()}자부터 먼저 봅니다`,
+                    en: `Long manuscript — reviewing the first ${MAX_AI_CHARS.toLocaleString()} chars first`,
                   })}
                 </div>
               )}
@@ -759,8 +691,8 @@ export default function RevisionPanel() {
                 type="button"
                 className="btn primary"
                 aria-label={L4(language, {
-                  ko: "AI 퇴고 보고서 생성 — 진단 목록만 표시",
-                  en: "Generate AI revision report — diagnosis list only",
+                  ko: "노아 퇴고 의견 받기",
+                  en: "Get Noa revision notes",
                 })}
                 style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
                 disabled={aiStatus === "working"}
@@ -769,19 +701,19 @@ export default function RevisionPanel() {
                 {aiStatus === "working" ? (
                   <>
                     <Sync size={14} className="animate-spin" />
-                    {L4(language, { ko: "진단 중…", en: "Diagnosing…" })}
+                    {L4(language, { ko: "검토 중…", en: "Reviewing…" })}
                   </>
                 ) : (
                   <>
                     <Wand size={14} />
-                    {L4(language, { ko: "AI 퇴고 보고서 생성", en: "Generate AI report" })}
+                    {L4(language, { ko: "노아 퇴고 의견 받기", en: "Get Noa notes" })}
                   </>
                 )}
               </button>
               {aiStatus === "error" && aiError && (
                 <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)", marginTop: 6 }}>
                   <span className="rdot amber" />
-                  {L4(language, { ko: "진단 실패:", en: "Diagnosis failed:" })} {aiError}
+                  {L4(language, { ko: "검토를 만들지 못했습니다:", en: "Review failed:" })} {aiError}
                   <button
                     type="button"
                     className="mini-btn"
@@ -796,15 +728,15 @@ export default function RevisionPanel() {
               {aiStatus === "working" && (
                 <div className="wr-srow" role="status" aria-live="polite" style={{ marginTop: 6 }}>
                   <span className="rdot blue" />
-                  {L4(language, { ko: "4축 진단 진행 중 (우회 반복·인과·보이스·페이싱)…", en: "Diagnosing 4 axes (repetition · causality · voice · pacing)…" })}
+                  {L4(language, { ko: "반복, 인과, 목소리, 속도를 살피는 중…", en: "Reviewing repetition, causality, voice, and pacing…" })}
                 </div>
               )}
               {aiStatus === "success" && aiFindings && (
                 aiFindings.length === 0 ? (
                   <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 6 }}>
                     {L4(language, {
-                      ko: "AI 진단 — 보고된 발견 사항 없음",
-                      en: "AI diagnosis — no findings reported",
+                      ko: "노아가 추가로 짚을 부분은 없습니다",
+                      en: "Noa found no additional points",
                     })}
                   </div>
                 ) : (
@@ -826,8 +758,8 @@ export default function RevisionPanel() {
                           </span>
                           <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
                             {L4(language, {
-                              ko: `심각도 ${SEVERITY_LABEL[f.severity].ko}`,
-                              en: `severity: ${SEVERITY_LABEL[f.severity].en}`,
+                              ko: `중요도 ${SEVERITY_LABEL[f.severity].ko}`,
+                              en: `importance: ${SEVERITY_LABEL[f.severity].en}`,
                             })}
                           </span>
                         </div>
@@ -839,7 +771,7 @@ export default function RevisionPanel() {
                         <div style={{ color: "var(--ink-1)" }}>{f.diagnosis}</div>
                         {f.suggestion && (
                           <div style={{ color: "var(--ink-2)", marginTop: 4 }}>
-                            {L4(language, { ko: "제안 방향:", en: "Suggested direction:" })} {f.suggestion}
+                            {L4(language, { ko: "고쳐볼 방향:", en: "Direction:" })} {f.suggestion}
                           </div>
                         )}
                       </li>

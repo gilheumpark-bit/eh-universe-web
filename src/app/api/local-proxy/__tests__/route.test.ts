@@ -8,6 +8,7 @@
  * - Private-network-only URL validation
  * - Development pass-through
  */
+export {};
 
 // --- Lightweight NextRequest/NextResponse stand-ins ---
 
@@ -60,6 +61,7 @@ jest.mock("next/server", () => ({
 
 jest.mock("@/lib/rate-limit", () => ({
   checkRateLimit: () => ({ allowed: true, retryAfterMs: 0 }),
+  checkRateLimitAsync: () => ({ allowed: true, retryAfterMs: 0 }),
   RATE_LIMITS: { default: { windowMs: 60000, maxRequests: 100 } },
   getClientIp: () => "127.0.0.1",
 }));
@@ -162,5 +164,28 @@ describe("local-proxy security", () => {
       "http://192.168.1.100:8080/v1/chat/completions",
       expect.anything(),
     );
+  });
+
+  it("does not expose upstream model server error text", async () => {
+    nodeEnv.NODE_ENV = "development";
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => "stack trace /tmp/private sk-live-secret DGX internal",
+    });
+
+    const res = await POST(
+      makePostReq({
+        baseUrl: "http://192.168.1.100:8080",
+        model: "local-model",
+        messages: [{ role: "user", content: "test" }],
+      }),
+    );
+    const body = await res.json() as { error?: string; message?: string };
+
+    expect(res.status).toBe(502);
+    expect(JSON.stringify(body)).not.toContain("sk-live-secret");
+    expect(JSON.stringify(body)).not.toContain("/tmp/private");
+    expect(body.error).toBe("local_model_unavailable");
   });
 });

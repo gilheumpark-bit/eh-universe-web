@@ -149,8 +149,8 @@ describe('registry-contract — parseRegistryDocument', () => {
 describe('registry-contract — 계약 상수', () => {
   test('collection 이름·정직 한계 4언어 고정', () => {
     expect(CP_REGISTRY_COLLECTION).toBe('cp_cert_registry');
-    expect(HONESTY_LIMITATION.ko).toContain('인간 작성 자체를 증명하지 않습니다');
-    expect(HONESTY_LIMITATION.en).toContain('does NOT prove human authorship');
+    expect(HONESTY_LIMITATION.ko).toContain('작성자가 직접 썼는지 자체를 증명하지 않습니다');
+    expect(HONESTY_LIMITATION.en).toContain('does NOT prove direct authorship');
     expect(HONESTY_LIMITATION.ja.length).toBeGreaterThan(0);
     expect(HONESTY_LIMITATION.zh.length).toBeGreaterThan(0);
   });

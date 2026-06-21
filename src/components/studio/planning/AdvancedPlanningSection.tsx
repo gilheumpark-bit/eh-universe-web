@@ -10,9 +10,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, BarChart3, Shield, Info, CheckCircle2, Circle } from 'lucide-react';
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { PublishPlatform } from '@/lib/studio-types';
-import { L4, createT } from '@/lib/i18n';
+import { L4, createT, getStudioTranslations, normalizeAppLanguage } from '@/lib/i18n';
 import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from '../TierValidator';
 
 interface AdvancedPlanningSectionProps {
@@ -27,9 +26,11 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
   language, config, setConfig, totalEpisodes, tensionData,
 }) => {
   const tl = createT(language);
-  const t = TRANSLATIONS[language].planning;
-  const te = TRANSLATIONS[language].engine;
-  const isKO = language === 'KO';
+  const appLanguage = normalizeAppLanguage(language);
+  const dict = getStudioTranslations(appLanguage);
+  const t = dict.planning;
+  const te = dict.engine;
+  const isKO = appLanguage === 'KO';
 
   const [showWorldTier2, setShowWorldTier2] = useState(false);
   const [showWorldTier3, setShowWorldTier3] = useState(false);
@@ -64,7 +65,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="space-y-2">
         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.publishPlatform')}</label>
         <div className="flex flex-wrap gap-2">
-          {[PublishPlatform.NONE, ...(PLATFORM_BY_LANG[language] || Object.values(PublishPlatform).filter(p => p !== 'NONE'))].map(pp => {
+          {[PublishPlatform.NONE, ...(PLATFORM_BY_LANG[appLanguage] || Object.values(PublishPlatform).filter(p => p !== 'NONE'))].map(pp => {
             const labels: Record<string, string> = {
               NONE: tl('planningExtra.none'), MUNPIA: '문피아', NOVELPIA: '노벨피아', KAKAOPAGE: '카카오페이지', SERIES: '시리즈',
               ROYAL_ROAD: 'Royal Road', WEBNOVEL: 'Webnovel', KINDLE_VELLA: 'Kindle Vella', WATTPAD: 'Wattpad',
@@ -116,7 +117,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       </div>
 
       {/* 세계관 작성 가이드 배너 */}
-      <WorldBuildingGuide language={language} config={config} />
+      <WorldBuildingGuide language={appLanguage} config={config} />
 
       {/* 세계관 Tier 1 */}
       <div className="space-y-4 pt-6 border-t border-border">
@@ -144,7 +145,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             </p>
           </div>
         )}
-        {(() => { const w = validateWorld(config, language); const s = calcCompletionScore(w, 11); return (<div className="space-y-2 mt-4"><CompletionBar score={s} language={language} /><WarningBadge warnings={w} language={language} /></div>); })()}
+        {(() => { const w = validateWorld(config, appLanguage); const s = calcCompletionScore(w, 11); return (<div className="space-y-2 mt-4"><CompletionBar score={s} language={appLanguage} /><WarningBadge warnings={w} language={appLanguage} /></div>); })()}
       </div>
 
       {/* Tier 2 */}

@@ -274,16 +274,16 @@ const M6ErgoNestedGroup: React.FC<M6ErgoNestedGroupProps> = ({ language, ergo, s
             <ToggleRow
               icon={<Hand className="w-4 h-4 md:w-5 md:h-5 text-accent-amber" />}
               label={L4(language, {
-                ko: "AI 대기 중 손목 풀기 힌트",
-                en: "Wrist-rest hint during AI wait",
-                ja: "AI待機中の手首ストレッチヒント",
-                zh: "AI 生成等待时的手腕放松提示",
+                ko: "노아 응답 대기 중 손목 풀기 힌트",
+                en: "Wrist-rest hint while waiting for Noa",
+                ja: "Noa 応答待機中の手首ストレッチヒント",
+                zh: "等待 Noa 响应时的手腕放松提示",
               })}
               description={L4(language, {
-                ko: "AI 생성이 10초 이상 걸릴 때 손목 회전 애니메이션을 보여줍니다",
-                en: "Shows wrist-circle animation when AI takes 10s or more",
-                ja: "AI生成が10秒以上かかる時に手首回転アニメーションを表示",
-                zh: "AI 生成超过 10 秒时显示手腕画圆动画",
+                ko: "노아 응답이 10초 이상 걸릴 때 손목 회전 애니메이션을 보여줍니다",
+                en: "Shows wrist-circle animation when Noa takes 10s or more",
+                ja: "Noa 応答が10秒以上かかる時に手首回転アニメーションを表示",
+                zh: "Noa 响应超过 10 秒时显示手腕画圆动画",
               })}
               checked={ergo.wristRestHintEnabled}
               onChange={(v) => setErgoField("wristRestHintEnabled", v)}

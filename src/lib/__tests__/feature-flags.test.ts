@@ -25,8 +25,8 @@ describe('feature-flags', () => {
   });
 
   describe('isFeatureEnabled', () => {
-    test('returns default value for IMAGE_GENERATION (true)', () => {
-      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
+    test('returns default value for IMAGE_GENERATION (false)', () => {
+      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(false);
     });
 
     test('returns default value for OFFLINE_CACHE (true)', () => {
@@ -38,20 +38,20 @@ describe('feature-flags', () => {
       expect(isFeatureEnabled('OFFLINE_CACHE')).toBe(true);
     });
 
-    test('env override false takes precedence over default true', () => {
-      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'false';
-      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(false);
+    test('env override true enables visual generation explicitly', () => {
+      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'true';
+      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
     });
 
     test('localStorage override true takes precedence over env and default', () => {
-      process.env['NEXT_PUBLIC_FF_CODE_STUDIO'] = 'false';
-      localStorage.setItem('ff_CODE_STUDIO', 'true');
-      expect(isFeatureEnabled('CODE_STUDIO')).toBe(true);
+      process.env['NEXT_PUBLIC_FF_CLOUD_SYNC'] = 'false';
+      localStorage.setItem('ff_CLOUD_SYNC', 'true');
+      expect(isFeatureEnabled('CLOUD_SYNC')).toBe(true);
     });
 
-    test('localStorage override false takes precedence', () => {
-      localStorage.setItem('ff_IMAGE_GENERATION', 'false');
-      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(false);
+    test('localStorage override true takes precedence', () => {
+      localStorage.setItem('ff_IMAGE_GENERATION', 'true');
+      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
     });
 
     test('ignores non-boolean localStorage values and falls through', () => {
@@ -65,17 +65,17 @@ describe('feature-flags', () => {
       const flags = getAllFlags();
       expect(flags).toHaveProperty('IMAGE_GENERATION');
       expect(flags).toHaveProperty('GOOGLE_DRIVE_BACKUP');
-      expect(flags).toHaveProperty('NETWORK_COMMUNITY');
       expect(flags).toHaveProperty('OFFLINE_CACHE');
-      expect(flags).toHaveProperty('CODE_STUDIO');
       expect(flags).toHaveProperty('EPISODE_COMPARE');
       expect(flags).toHaveProperty('FEATURE_JOURNAL_ENGINE');
+      expect(flags).not.toHaveProperty('NETWORK_COMMUNITY');
+      expect(flags).not.toHaveProperty('CODE_STUDIO');
     });
 
     test('reflects env overrides', () => {
-      process.env['NEXT_PUBLIC_FF_CODE_STUDIO'] = 'true';
+      process.env['NEXT_PUBLIC_FF_CLOUD_SYNC'] = 'true';
       const flags = getAllFlags();
-      expect(flags.CODE_STUDIO).toBe(true);
+      expect(flags.CLOUD_SYNC).toBe(true);
     });
 
     test('[M9 P1-5] FEATURE_JOURNAL_ENGINE returns JournalEngineMode, default shadow', () => {
@@ -237,9 +237,9 @@ describe('feature-flags', () => {
     });
 
     test('boolean flag passthrough', () => {
-      expect(isFeatureEnabledServer('IMAGE_GENERATION')).toBe(true);
-      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'false';
       expect(isFeatureEnabledServer('IMAGE_GENERATION')).toBe(false);
+      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'true';
+      expect(isFeatureEnabledServer('IMAGE_GENERATION')).toBe(true);
     });
   });
 });

@@ -186,7 +186,7 @@ const ChatMessageImpl: React.FC<ChatMessageProps> = ({
               {showDetail && (
                 <div className="mt-2 p-3 bg-bg-secondary/50 border border-border/50 rounded-xl space-y-2 text-[10px] font-mono animate-in fade-in duration-300">
                   <div className="flex justify-between text-text-tertiary">
-                    <span>NOA {language === 'KO' ? '톤' : 'Tone'}</span>
+                    <span>{language === 'KO' ? '노아 톤' : 'Noa Tone'}</span>
                     <span className={report.aiTonePercent > 30 ? 'text-amber-400' : 'text-green-400'}>{report.aiTonePercent}%</span>
                   </div>
                   <div className="flex justify-between text-text-tertiary">
@@ -214,7 +214,7 @@ const ChatMessageImpl: React.FC<ChatMessageProps> = ({
                   )}
                   {report.fixes.length > 0 && onAutoFix && (
                     <button onClick={() => onAutoFix(message.id)} className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 bg-accent-purple/10 border border-accent-purple/30 rounded-lg text-accent-purple text-[10px] font-bold uppercase tracking-wider hover:bg-accent-purple/20 transition-colors">
-                      <Wrench className="w-3 h-3" /> {language === 'KO' ? '자동 수정 적용' : 'Apply Auto-Fix'}
+                      <Wrench className="w-3 h-3" /> {language === 'KO' ? '수정 제안 적용' : 'Apply Fix Suggestion'}
                     </button>
                   )}
                 </div>
@@ -291,10 +291,10 @@ const ChatMessageImpl: React.FC<ChatMessageProps> = ({
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <ActionBar
               content={message.content}
-              title={`NOA Message`}
+              title={language === 'KO' ? '노아 메시지' : 'Noa Message'}
               actions={['copy', 'share', 'feedback']}
               shareType="novel"
-              onFeedback={(positive) => { logger.info('feedback', `NOA message ${message.id}: ${positive ? 'positive' : 'negative'}`); }}
+              onFeedback={(positive) => { logger.info('feedback', `Noa message ${message.id}: ${positive ? 'positive' : 'negative'}`); }}
             />
             {onRegenerate && (
               <button

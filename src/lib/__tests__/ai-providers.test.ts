@@ -1,8 +1,8 @@
-import { PROVIDERS, PROVIDER_LIST, isPreviewModel, getModelWarning, setApiKey, getApiKey, getApiKeyAsync } from '../ai-providers';
+import { PROVIDERS, PROVIDER_LIST, PROVIDER_LIST_UI, isPreviewModel, getModelWarning, setApiKey, getApiKey, getApiKeyAsync } from '../ai-providers';
 
 describe('PROVIDERS', () => {
-  it('has 7 providers (cloud + local)', () => {
-    expect(PROVIDER_LIST).toHaveLength(7);
+  it('has 11 providers (hosted, efficient BYOK, legacy, local)', () => {
+    expect(PROVIDER_LIST).toHaveLength(11);
   });
 
   it('each provider has required fields', () => {
@@ -20,6 +20,26 @@ describe('PROVIDERS', () => {
     expect(PROVIDERS.gemini.defaultModel).toBe('gemini-2.5-pro');
   });
 
+  it('adds 2026 efficient BYOK providers without deprecated DeepSeek aliases', () => {
+    expect(PROVIDERS.deepseek.defaultModel).toBe('deepseek-v4-flash');
+    expect(PROVIDERS.deepseek.models).toEqual(['deepseek-v4-flash', 'deepseek-v4-pro']);
+    expect(PROVIDERS.deepseek.models).not.toContain('deepseek-chat');
+    expect(PROVIDERS.deepseek.models).not.toContain('deepseek-reasoner');
+    expect(PROVIDERS.qwen.defaultModel).toBe('qwen3-max');
+    expect(PROVIDERS.minimax.models).toContain('MiniMax-M3');
+    expect(PROVIDERS.kimi.defaultModel).toBe('kimi-k2.6');
+  });
+
+  it('keeps lower priority legacy providers out of production UI', () => {
+    expect(PROVIDERS.groq.devOnly).toBe(true);
+    expect(PROVIDERS.mistral.devOnly).toBe(true);
+    if (process.env.NODE_ENV !== 'development') {
+      const uiIds = PROVIDER_LIST_UI.map((provider) => provider.id);
+      expect(uiIds).not.toContain('groq');
+      expect(uiIds).not.toContain('mistral');
+    }
+  });
+
   it('all providers have unique storage keys', () => {
     const keys = PROVIDER_LIST.map(p => p.storageKey);
     expect(new Set(keys).size).toBe(keys.length);
@@ -35,8 +55,8 @@ describe('isPreviewModel', () => {
 
   it('stable models are not preview', () => {
     expect(isPreviewModel('gemini-2.5-pro')).toBe(false);
-    expect(isPreviewModel('gpt-5.4')).toBe(false);
-    expect(isPreviewModel('claude-sonnet-4-20250514')).toBe(false);
+    expect(isPreviewModel('gpt-5.4-mini')).toBe(false);
+    expect(isPreviewModel('claude-sonnet-4-6')).toBe(false);
   });
 });
 

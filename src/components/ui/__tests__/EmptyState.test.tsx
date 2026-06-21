@@ -1,5 +1,5 @@
 /**
- * EmptyState — 공용 빈 상태 컴포넌트 테스트
+ * EmptyState: 공용 빈 상태 컴포넌트 테스트
  * Covers: 기본 렌더, 아이콘, 설명, 액션 클릭 콜백, compact 모드, role="status" 접근성,
  *         신규 actions[] API + 구 action/secondaryAction 하위 호환, tip 렌더.
  */
@@ -12,7 +12,7 @@ import { EmptyState } from '../EmptyState';
 
 describe('EmptyState', () => {
   // ============================================================
-  // PART 1 — 기본 렌더
+  // PART 1: 기본 렌더
   // ============================================================
 
   it('title만 있으면 제목만 표시한다', () => {
@@ -20,7 +20,7 @@ describe('EmptyState', () => {
     expect(getByText('비어 있음')).toBeInTheDocument();
     // description 없음
     expect(container.querySelector('p')).toBeNull();
-    // 아이콘 링 없음 — svg 자체가 없어야 함
+    // 아이콘 링 없음. svg 자체가 없어야 함
     expect(container.querySelector('svg')).toBeNull();
     // 버튼 없음
     expect(container.querySelector('button')).toBeNull();
@@ -42,7 +42,7 @@ describe('EmptyState', () => {
   });
 
   // ============================================================
-  // PART 2 — actions 콜백
+  // PART 2: actions 콜백
   // ============================================================
 
   it('actions[] 클릭 시 onClick 콜백이 실행된다', () => {
@@ -52,7 +52,7 @@ describe('EmptyState', () => {
         title="t"
         actions={[
           { label: '추가', onClick: fn, variant: 'primary', icon: Plus },
-          { label: 'AI 생성', onClick: jest.fn(), icon: Sparkles },
+          { label: '노아 제안', onClick: jest.fn(), icon: Sparkles },
         ]}
       />,
     );

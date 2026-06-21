@@ -91,6 +91,21 @@ service cloud.firestore {
       return d.content.size() <= 5000;
     }
 
+    function reactionDocId(d) {
+      return d.targetId + "_" + d.userId + "_" + d.reactionType;
+    }
+
+    function validReactionData(d, reactionId) {
+      return d.id == reactionId
+        && d.userId == request.auth.uid
+        && d.targetType in ["planet", "post"]
+        && d.targetId is string
+        && d.targetId.size() > 0
+        && d.reactionType is string
+        && d.reactionType.size() > 0
+        && reactionDocId(d) == reactionId;
+    }
+
     function validReportData(d) {
       return d.detail.size() <= 2000;
     }
@@ -173,7 +188,8 @@ service cloud.firestore {
       match /reactions/{reactionId} {
         allow read: if signedIn();
         allow create: if signedIn()
-          && request.resource.data.userId == request.auth.uid;
+          && validReactionData(request.resource.data, reactionId)
+          && !exists(/databases/$(database)/documents/planets/$(planetId)/reactions/$(reactionId));
         allow delete: if signedIn()
           && resource.data.userId == request.auth.uid;
         allow update: if false;
@@ -245,7 +261,8 @@ service cloud.firestore {
     match /reactions/{reactionId} {
       allow read: if signedIn();
       allow create: if signedIn()
-        && request.resource.data.userId == request.auth.uid;
+        && validReactionData(request.resource.data, reactionId)
+        && !exists(/databases/$(database)/documents/reactions/$(reactionId));
       allow delete: if signedIn()
         && resource.data.userId == request.auth.uid;
       allow update: if false;
