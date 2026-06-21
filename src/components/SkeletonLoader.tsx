@@ -26,12 +26,12 @@ interface SkeletonLoaderProps {
 /**
  * Premium skeleton with shimmer animation.
  * Variants control default sizing:
- * - text: single line placeholder
+ * - text: single line loading line
  * - card: card-sized block
  * - panel: tall panel block
  * - editor: wide editor area
  * - sidebar: narrow sidebar strip
- * - avatar: circular avatar placeholder
+ * - avatar: circular avatar loading mark
  * - button: button-sized rectangle
  * - badge: small badge/tag
  */
@@ -224,7 +224,7 @@ export function InternalToolSkeleton() {
 export function LegacyGridSkeleton() {
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* Header placeholder */}
+      {/* Header loading area */}
       <div className="h-14 border-b border-white/[0.06]" />
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Title */}

@@ -408,7 +408,6 @@ export function StudioWritingAssistantPanel({
                   silent: t('hfcp.silent'),
                 } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict}
               </span>
-              <span className="text-[10px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
             </div>
           </div>
 

@@ -6,7 +6,7 @@ import {
   Search, Shield, Sparkles, Wrench, X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage, ChatSession } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 import {
@@ -26,6 +26,9 @@ export interface MarketplacePanelProps {
   language: AppLanguage;
   onClose?: () => void;
   className?: string;
+  currentSession?: ChatSession | null;
+  readManuscript?: () => string;
+  writeManuscript?: (content: string) => void;
 }
 
 type CategoryFilter = NovelPluginCategory | "all";
@@ -87,11 +90,16 @@ function ensureBundled(): void {
   }
 }
 
-/** Minimal context for skeleton enable() — manuscript capabilities come later. */
-function createSkeletonContext(language: AppLanguage): PluginContext {
+/** Build the runtime context passed to reviewed bundled extensions. */
+function createPluginContext(
+  language: AppLanguage,
+  currentSession: ChatSession | null | undefined,
+  readManuscript: (() => string) | undefined,
+  writeManuscript: ((content: string) => void) | undefined,
+): PluginContext {
   return {
     language,
-    currentSession: null,
+    currentSession: currentSession ?? null,
     emit: (event, data) => {
       try {
         if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
@@ -101,9 +109,8 @@ function createSkeletonContext(language: AppLanguage): PluginContext {
         logger.warn("MarketplacePanel", "emit failed", err);
       }
     },
-    // TODO: wire real manuscript getters when bundled extensions need live document context.
-    readManuscript: () => "",
-    writeManuscript: undefined,
+    readManuscript,
+    writeManuscript,
   };
 }
 
@@ -141,6 +148,9 @@ export default function MarketplacePanel({
   language,
   onClose,
   className = "",
+  currentSession = null,
+  readManuscript,
+  writeManuscript,
 }: MarketplacePanelProps) {
   ensureBundled();
 
@@ -160,14 +170,17 @@ export default function MarketplacePanel({
         if (pluginRegistry.isEnabled(id)) {
           await pluginRegistry.disable(id);
         } else {
-          await pluginRegistry.enable(id, createSkeletonContext(language));
+          await pluginRegistry.enable(
+            id,
+            createPluginContext(language, currentSession, readManuscript, writeManuscript),
+          );
         }
         rerender();
       } catch (err) {
         logger.error("MarketplacePanel", `toggle(${id}) failed`, err);
       }
     },
-    [language, rerender],
+    [currentSession, language, readManuscript, rerender, writeManuscript],
   );
 
   // ESC to close. Guard bound cleanup.

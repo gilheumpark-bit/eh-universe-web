@@ -242,7 +242,7 @@ export function blocklistSeverityStats(): Record<BrandSeverity, number> {
  */
 export function scanTextForBrands(text: string, customBlocklist?: readonly BrandEntry[]): BrandFlag[] {
   if (!text || !text.trim()) return [];
-  const blocklist = customBlocklist ?? BRAND_BLOCKLIST;
+  const blocklist = customBlocklist ? [...BRAND_BLOCKLIST, ...customBlocklist] : BRAND_BLOCKLIST;
   const lowerText = text.toLowerCase();
   const flags: BrandFlag[] = [];
 

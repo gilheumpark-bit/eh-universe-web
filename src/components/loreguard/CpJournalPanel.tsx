@@ -10,8 +10,17 @@ import { useStudio } from "@/app/studio/StudioContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useCreativeProcessTrackingPreference } from "@/hooks/useCreativeProcessTrackingPreference";
 import { L4 } from "@/lib/i18n";
 import { Check, Download, Scroll, Sync, X } from "@/components/loreguard/icons";
+import {
+  EVENTS_REFRESH_THROTTLE_MS,
+  toCertLang,
+  triggerDownload,
+  type CpView,
+  type IssueStatus,
+  type RegisterStatus,
+} from "@/components/loreguard/CpJournalPanel.helpers";
 import {
   CreativeContributionInspector,
   ProvenanceReport,
@@ -20,7 +29,6 @@ import {
 } from "@/components/loreguard/CpJournalPanel.views";
 import type { AppLanguage } from "@/lib/studio-types";
 import type {
-  CertificateLanguage,
   CertificateView,
   CreativeEvent,
 } from "@/lib/creative-process/types";
@@ -35,43 +43,6 @@ import {
 import { canShare, canShareFiles, shareFile, shareText } from "@/lib/browser/web-share";
 
 // ============================================================
-// PART 3 — 헬퍼 (CreativeProcessSection PART 2/3 동일 로직)
-// ============================================================
-
-/** AppLanguage('KO'|'EN'|'JP'|'CN') → CertificateLanguage('ko'|'en'|'ja'|'zh') */
-function toCertLang(lang: AppLanguage): CertificateLanguage {
-  switch (lang) {
-    case "KO": return "ko";
-    case "EN": return "en";
-    case "JP": return "ja";
-    case "CN": return "zh";
-    default: return "ko";
-  }
-}
-
-/** Blob 다운로드 (CreativeProcessSection triggerDownload 동일 — 실패는 throw → 호출부 표면화) */
-function triggerDownload(filename: string, content: string, mimeType: string): void {
-  if (typeof document === "undefined") return;
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-const EVENTS_REFRESH_THROTTLE_MS = 5000;
-
-type CpView = "inspector" | "provenance" | "submission";
-type IssueStatus = "idle" | "working" | "success" | "error";
-
-/** [D3-registry] 옵트인 레지스트리 등록 결과 — 발급 성공과 분리 표면화 (실패 비침묵) */
-type RegisterStatus = "idle" | "success" | "already" | "error";
-
-// ============================================================
 // PART 4 — 메인 컴포넌트
 // ============================================================
 
@@ -79,6 +50,7 @@ export default function CpJournalPanel() {
   const { currentSession, currentProjectId, projects, language } = useStudio();
   const { getIdToken } = useAuth();
   const certLang = toCertLang(language);
+  const [trackingEnabled, setTrackingEnabled] = useCreativeProcessTrackingPreference();
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<CpView>("inspector");
@@ -534,11 +506,45 @@ export default function CpJournalPanel() {
         {!eventsLoading && !eventsError && zeroEvents && (
           <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
             {L4(language, {
-              ko: "기록된 창작 이벤트가 없습니다 — 집필을 시작하면 자동으로 기록됩니다",
-              en: "No creative events recorded yet — they are logged automatically once you start writing",
+              ko: trackingEnabled
+                ? "기록된 창작 이벤트가 없습니다 — 집필을 시작하면 과정기록이 쌓입니다"
+                : "과정기록이 꺼져 있습니다 — 확인서가 필요할 때 지금부터 기록을 시작하세요",
+              en: trackingEnabled
+                ? "No creative events recorded yet — records will build as you write"
+                : "Process records are off — start recording when you need a journal",
             })}
           </div>
         )}
+
+        <div className="pcard">
+          <div className="pcard-h">
+            <Scroll size={15} />
+            {L4(language, { ko: "발급용 기록", en: "Journal records" })}
+            <span className={`pill ${trackingEnabled ? "green" : "gray"}`} style={{ marginLeft: "auto" }}>
+              {trackingEnabled
+                ? L4(language, { ko: "켜짐", en: "On" })
+                : L4(language, { ko: "꺼짐", en: "Off" })}
+            </span>
+          </div>
+          <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+            {L4(language, {
+              ko: "확인서에 넣을 작업 흐름은 작가가 켠 뒤부터 남깁니다. 끄면 일반 집필 도구처럼 동작합니다.",
+              en: "Work records are kept only after you turn this on. When off, the editor behaves like a regular writing tool.",
+            })}
+          </div>
+          <button
+            type="button"
+            className={trackingEnabled ? "mini-btn" : "btn primary"}
+            style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
+            role="switch"
+            aria-checked={trackingEnabled}
+            onClick={() => setTrackingEnabled(!trackingEnabled)}
+          >
+            {trackingEnabled
+              ? L4(language, { ko: "기록 끄기", en: "Stop recording" })
+              : L4(language, { ko: "지금부터 기록 시작", en: "Start recording now" })}
+          </button>
+        </div>
 
         {/* ① 확인서 발급 — buildCertificate → HTML+MD 다운로드 */}
         <div className="pcard">

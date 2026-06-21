@@ -1,7 +1,7 @@
 import type { IPReadinessParts, IPReadinessResult } from "@/lib/creative/ip-readiness";
 import type { EpisodeManuscript } from "@/lib/studio-types";
 import type { checkPlatformFit, PLATFORM_SPECS } from "@/lib/writing-workspace/export-spec";
-import IdeResizablePanel from "../IdeResizablePanel";
+import IdeResizablePanel, { type IdeCollapsedSummaryItem } from "../IdeResizablePanel";
 import { Book, Download, Flag, Scale } from "../icons";
 
 type PlatformFitRow = {
@@ -38,6 +38,21 @@ export default function TabExportChecklistPanel({
   ipResult,
   onChangeIpPart,
 }: TabExportChecklistPanelProps) {
+  const fitReadyCount = platformFits.filter((item) => item.fit.withinRange).length;
+  const collapsedSummary: IdeCollapsedSummaryItem[] = [
+    { label: "현재", value: target ? `EP${target.episode}` : "-", tone: target ? "green" : "gray" },
+    {
+      label: "적합",
+      value: `${fitReadyCount}/${platformFits.length || 5}`,
+      tone: fitReadyCount > 0 ? "blue" : target ? "amber" : "gray",
+    },
+    {
+      label: "IP",
+      value: ipResult.tier,
+      tone: ipResult.score >= 80 ? "green" : ipResult.score >= 55 ? "amber" : "red",
+    },
+  ];
+
   return (
     <IdeResizablePanel
       id="export-checklist"
@@ -48,6 +63,7 @@ export default function TabExportChecklistPanel({
       defaultWidth={460}
       minWidth={300}
       maxWidth={960}
+      collapsedSummary={collapsedSummary}
     >
       <div className="wr-panel-head" style={{ marginBottom: 12 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>

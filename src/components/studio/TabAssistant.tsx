@@ -20,6 +20,7 @@ import {
   buildNoaBehaviorDirective,
   readNoaBehaviorPreferences,
 } from '@/lib/ai/noa-behavior-profile';
+import { getReasoningStageForTab } from '@/lib/ai-reasoning';
 import { classifyError } from './UXHelpers';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
 // [N1-noa-identity — 2026-06-11] 단일 노아 화자 정본 — 탭 전문성은 역할 모드 슬롯으로 유지.
@@ -39,7 +40,7 @@ interface TabAssistantProps {
   currentProjectId?: string | null;
 }
 
-// TODO: Extract to lib/tab-assistant-prompts.ts
+// Refactor note: move prompt table to lib/tab-assistant-prompts.ts when edited next.
 const TAB_CONTEXT: Record<string, { ko: string; en: string; systemKo: string; systemEn: string; temperature: number }> = {
   world: {
     ko: 'NOL — Narrative Origin Lore',
@@ -489,7 +490,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
   const storageKey = `${STORAGE_PREFIX}${scopedTab}`;
 
   // Check AI access: local key OR hosted provider
-  // TODO: Ctrl+/ keyboard shortcut would be useful to toggle this assistant panel open/closed
+  // UX backlog: Ctrl+/ keyboard shortcut would be useful to toggle this assistant panel open/closed.
   const hasAiKey = Boolean(getApiKey(getActiveProvider()) || hostedProviders[getActiveProvider()] || hasDgxService());
 
   const [messages, setMessages] = useState<TabMessage[]>(() => {
@@ -591,6 +592,7 @@ const TabAssistant: React.FC<TabAssistantProps> = ({ tab, language, config, host
         systemInstruction: systemPrompt,
         messages: chatHistory,
         temperature: ctx.temperature,
+        reasoningStage: getReasoningStageForTab(tab),
         signal: controller.signal,
         isChatMode: true,
         onChunk: (chunk) => {

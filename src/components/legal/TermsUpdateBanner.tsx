@@ -6,7 +6,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLang } from "@/lib/LangContext";
+import { CONSENT_CHANGE_EVENT, shouldShowConsentBanner } from "@/lib/consent";
 import { L4 } from "@/lib/i18n";
 
 // 약관이 실제로 바뀌면 이 값만 bump — Footer/법적 페이지와 동기화
@@ -23,6 +25,7 @@ const STORAGE_KEY = "noa_terms_accepted_at";
 
 export default function TermsUpdateBanner() {
   const { lang } = useLang();
+  const pathname = usePathname();
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [mounted, setMounted] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
@@ -30,7 +33,12 @@ export default function TermsUpdateBanner() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    try {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleBanner = () => {
+      if (shouldShowConsentBanner()) return;
+      if (timer) clearTimeout(timer);
+
       const saved = localStorage.getItem(STORAGE_KEY);
       const updatedAt = new Date(TERMS_UPDATED_AT).getTime();
       if (!Number.isFinite(updatedAt)) return;
@@ -43,12 +51,29 @@ export default function TermsUpdateBanner() {
       const savedTs = new Date(saved).getTime();
       if (!Number.isFinite(savedTs) || savedTs < updatedAt) {
         // LCP 방해 방지: 1.2초 지연 후 표시
-        const timer = setTimeout(() => setShowBanner(true), 1200);
-        return () => clearTimeout(timer);
+        timer = setTimeout(() => setShowBanner(true), 1200);
       }
+    };
+
+    const handleConsentChange = () => {
+      try {
+        scheduleBanner();
+      } catch {
+        // [C] storage 접근 불가 — 조용히 skip
+      }
+    };
+
+    try {
+      scheduleBanner();
+      window.addEventListener(CONSENT_CHANGE_EVENT, handleConsentChange);
     } catch {
       // [C] private browsing / storage 접근 불가 — 조용히 skip
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener(CONSENT_CHANGE_EVENT, handleConsentChange);
+    };
   }, []);
 
   const handleAccept = () => {
@@ -61,6 +86,14 @@ export default function TermsUpdateBanner() {
   };
 
   if (!mounted || !showBanner) return null;
+
+  const isWorkspaceSurface =
+    pathname?.startsWith("/studio") ||
+    pathname?.startsWith("/translation-studio") ||
+    pathname?.startsWith("/loreguard");
+  const bannerClassName = isWorkspaceSurface
+    ? "fixed bottom-3 left-3 right-3 md:left-auto md:right-5 md:bottom-5 md:max-w-[320px] p-3 bg-bg-primary/95 border border-border rounded-lg shadow-lg backdrop-blur-md"
+    : "fixed bottom-4 right-4 left-4 md:left-auto md:max-w-sm p-4 bg-bg-primary border border-border rounded-xl shadow-2xl";
 
   const updatedLabel = (() => {
     try {
@@ -82,10 +115,10 @@ export default function TermsUpdateBanner() {
         ja: "規約更新のお知らせ",
         zh: "条款更新提示",
       })}
-      className="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-sm p-4 bg-bg-primary border border-border rounded-xl shadow-2xl"
-      style={{ zIndex: 9997 }}
+      className={bannerClassName}
+      style={{ zIndex: isWorkspaceSurface ? 60 : "var(--z-toast)" }}
     >
-      <div className="font-mono text-[10px] uppercase tracking-widest text-accent-purple mb-2">
+      <div className="font-mono text-[10px] uppercase tracking-widest text-accent-purple mb-1.5">
         {T({
           ko: "서비스 약관 업데이트",
           en: "Terms Update",
@@ -111,7 +144,7 @@ export default function TermsUpdateBanner() {
         <button
           type="button"
           onClick={handleAccept}
-          className="ml-auto bg-accent-blue text-white px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[40px]"
+          className="ml-auto bg-accent-blue !text-white px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[40px]"
         >
           {T({ ko: "확인", en: "Acknowledge", ja: "確認", zh: "确认" })}
         </button>

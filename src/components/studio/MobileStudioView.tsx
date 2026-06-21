@@ -65,6 +65,10 @@ interface MobileSketchStore {
 
 const DEFAULT_STORE: MobileSketchStore = { worldMemos: [], characters: [], plots: [] };
 
+function countSketchItems(store: MobileSketchStore): number {
+  return store.worldMemos.length + store.characters.length + store.plots.length;
+}
+
 function loadStore(): MobileSketchStore {
   if (typeof window === 'undefined') return DEFAULT_STORE;
   try {
@@ -85,6 +89,14 @@ function saveStore(store: MobileSketchStore): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    window.dispatchEvent(new CustomEvent('noa:mobile-sketch-updated', {
+      detail: {
+        total: countSketchItems(store),
+        worldCount: store.worldMemos.length,
+        characterCount: store.characters.length,
+        plotCount: store.plots.length,
+      },
+    }));
   } catch { /* quota */ }
 }
 
@@ -506,6 +518,7 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
   const [tab, setTab] = useState<MobileTab>('world');
   const [store, setStore] = useState<MobileSketchStore>(DEFAULT_STORE);
   const kb = useVirtualKeyboard();
+  const sketchTotal = countSketchItems(store);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -534,6 +547,16 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
             <h1 className="text-sm font-bold truncate">
               {L4(language, { ko: '로어가드 · 모바일 스케치', en: 'Loreguard · Mobile Sketch', ja: 'ローアガード · モバイルスケッチ', zh: '洛尔加德 · 移动速写' })}
             </h1>
+            {sketchTotal > 0 && (
+              <span className="shrink-0 rounded-full border border-accent-purple/30 bg-accent-purple/10 px-2 py-1 text-[10px] font-bold text-accent-purple">
+                {L4(language, {
+                  ko: `PC 가공 대기 ${sketchTotal}건`,
+                  en: `${sketchTotal} queued`,
+                  ja: `PC整理待ち ${sketchTotal}件`,
+                  zh: `待桌面整理 ${sketchTotal}条`,
+                })}
+              </span>
+            )}
           </div>
           <button
             onClick={() => {
@@ -558,10 +581,18 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         </div>
         <p className="text-[11px] text-text-tertiary mt-1">
           {L4(language, {
-            ko: '집필·번역·출고 작업은 데스크톱에서 이용하는 것을 권장합니다.',
-            en: 'Writing, translation, and release preparation are recommended on desktop.',
-            ja: '執筆・翻訳・出稿準備はデスクトップでの利用を推奨します。',
-            zh: '写作、翻译与出库准备建议在桌面端使用。',
+            ko: sketchTotal > 0
+              ? '저장한 스케치는 PC에서 새 프로젝트 후보로 이어집니다.'
+              : '이동 중에는 씨앗을 남기고, PC에서 정식 프로젝트로 다듬습니다.',
+            en: sketchTotal > 0
+              ? 'Saved sketches will appear on desktop as a new project candidate.'
+              : 'Capture seeds on the go, then refine them into a full project on desktop.',
+            ja: sketchTotal > 0
+              ? '保存したスケッチはPCで新規プロジェクト候補として表示されます。'
+              : '移動中は種を残し、PCで正式なプロジェクトに整えます。',
+            zh: sketchTotal > 0
+              ? '保存的速写会在桌面端显示为新项目候选。'
+              : '移动中先留下种子，再在桌面端整理为正式项目。',
           })}
         </p>
       </header>
@@ -607,10 +638,18 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
           <Info className="w-3.5 h-3.5 text-accent-blue mt-0.5 shrink-0" />
           <p className="text-[10px] text-text-tertiary leading-relaxed">
             {L4(language, {
-              ko: '데스크톱에서 이 아이디어를 정식 프로젝트로 발전시킬 수 있습니다.',
-              en: 'Develop these ideas into full projects on desktop.',
-              ja: 'デスクトップでこれらのアイデアを正式なプロジェクトに発展させられます。',
-              zh: '可在桌面端将这些创意发展为正式项目。',
+              ko: sketchTotal > 0
+                ? `지금까지 ${sketchTotal}건을 저장했습니다. PC에서 열면 가져오기 배너가 뜹니다.`
+                : '짧게 적어도 괜찮습니다. 나중에 PC에서 양식에 맞게 다듬으면 됩니다.',
+              en: sketchTotal > 0
+                ? `${sketchTotal} item${sketchTotal === 1 ? '' : 's'} saved. Open desktop to import them.`
+                : 'Short notes are enough. Refine them into structured forms later on desktop.',
+              ja: sketchTotal > 0
+                ? `${sketchTotal}件保存済みです。PCで開くと取り込みバナーが表示されます。`
+                : '短いメモで十分です。あとでPCで形式に合わせて整えられます。',
+              zh: sketchTotal > 0
+                ? `已保存 ${sketchTotal} 条。打开桌面端后会显示导入提示。`
+                : '短记也可以。稍后可在桌面端整理为结构化表单。',
             })}
           </p>
         </div>
@@ -620,10 +659,10 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         >
           <BookOpen className="w-4 h-4" />
           {L4(language, {
-            ko: '데스크톱 링크 공유 (이 기기에서 확인)',
-            en: 'Share Desktop Link',
-            ja: 'デスクトップリンク共有',
-            zh: '分享桌面端链接',
+            ko: sketchTotal > 0 ? 'PC에서 프로젝트로 이어가기' : 'PC 작업 링크 공유',
+            en: sketchTotal > 0 ? 'Continue as Project on Desktop' : 'Share Desktop Work Link',
+            ja: sketchTotal > 0 ? 'PCでプロジェクトへ進める' : 'PC作業リンクを共有',
+            zh: sketchTotal > 0 ? '在桌面端继续为项目' : '分享桌面工作链接',
           })}
         </button>
       </footer>

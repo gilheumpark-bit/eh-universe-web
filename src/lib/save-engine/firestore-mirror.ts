@@ -30,6 +30,7 @@ import {
   incrementFirebaseRead,
   incrementFirebaseWrite,
 } from '@/lib/firebase-quota-tracker';
+import { sha256 } from './hash';
 
 // ============================================================
 // PART 2 — Types
@@ -44,6 +45,8 @@ export interface MirrorSnapshot {
   contentHash: string;
   /** snapshot 직렬화 본체 (Uint8Array → base64 또는 그대로 Firestore Bytes) */
   payload: Uint8Array;
+  /** payload 바이트 SHA-256. 원격 미러 전송 무결성 검사용. */
+  payloadHash?: string;
   /** snapshot 시점 HLC physical ms */
   capturedAt: number;
   /** journalVersion (저널 스키마) */
@@ -58,6 +61,8 @@ export interface MirrorPushResult {
   /** quota / consent / config 등 사유로 차단됐는지 */
   blocked: boolean;
   reason?: string;
+  /** quota 초과 시 재시도 권장 시각 */
+  pauseUntil?: number;
 }
 
 export interface MirrorPullResult {
@@ -67,10 +72,13 @@ export interface MirrorPullResult {
     contentHash: string;
     capturedAt: number;
     payload: Uint8Array;
+    payloadHash?: string;
     journalVersion: number;
   };
   blocked: boolean;
   reason?: string;
+  /** quota 초과 시 재시도 권장 시각 */
+  pauseUntil?: number;
 }
 
 export interface FirestoreMirrorOptions {
@@ -183,6 +191,32 @@ function checkQuota(threshold: number, kind: 'reads' | 'writes'): QuotaCheckResu
   }
 }
 
+function normalizeRemotePayload(payload: unknown): Uint8Array | null {
+  if (payload instanceof Uint8Array) {
+    return payload;
+  }
+  if (Array.isArray(payload)) {
+    if (payload.every((value) => Number.isInteger(value) && value >= 0 && value <= 255)) {
+      return new Uint8Array(payload);
+    }
+    return null;
+  }
+  if (payload && typeof payload === 'object' && 'toUint8Array' in payload) {
+    const converter = (payload as { toUint8Array?: unknown }).toUint8Array;
+    if (typeof converter !== 'function') {
+      return null;
+    }
+    try {
+      const bytes = converter.call(payload);
+      return bytes instanceof Uint8Array ? bytes : null;
+    } catch (err) {
+      logger.debug('save-engine:firestore-mirror', 'remote payload conversion failed', err);
+      return null;
+    }
+  }
+  return null;
+}
+
 // ============================================================
 // PART 7 — pushSnapshot (Sender)
 // ============================================================
@@ -212,7 +246,13 @@ export async function pushSnapshot(
   const threshold = options.quotaThreshold ?? DEFAULT_QUOTA_THRESHOLD;
   const quota = checkQuota(threshold, 'writes');
   if (!quota.ok) {
-    return { written: false, skipped: false, blocked: true, reason: quota.reason };
+    return {
+      written: false,
+      skipped: false,
+      blocked: true,
+      reason: quota.reason,
+      pauseUntil: quota.pauseUntil,
+    };
   }
 
   // dynamic import
@@ -247,11 +287,13 @@ export async function pushSnapshot(
   try {
     const ref = firestore.buildRef(db, snapshot.uid, snapshot.projectId);
     incrementFirebaseWrite();
+    const payloadHash = snapshot.payloadHash ?? await sha256(snapshot.payload);
     // payload는 Uint8Array → Firestore Bytes (Blob 호환). 클라이언트 SDK가 자동 변환.
     await firestore.setDoc(
       ref,
       {
         contentHash: snapshot.contentHash,
+        payloadHash,
         capturedAt: snapshot.capturedAt,
         journalVersion: snapshot.journalVersion,
         payload: snapshot.payload,
@@ -287,7 +329,12 @@ export async function pullSnapshot(
   const threshold = options.quotaThreshold ?? DEFAULT_QUOTA_THRESHOLD;
   const quota = checkQuota(threshold, 'reads');
   if (!quota.ok) {
-    return { found: false, blocked: true, reason: quota.reason };
+    return {
+      found: false,
+      blocked: true,
+      reason: quota.reason,
+      pauseUntil: quota.pauseUntil,
+    };
   }
 
   const firestore = await loadFirestore();
@@ -316,11 +363,25 @@ export async function pullSnapshot(
     const data = snap.data() as {
       contentHash?: string;
       capturedAt?: number;
-      payload?: Uint8Array;
+      payload?: unknown;
+      payloadHash?: unknown;
       journalVersion?: number;
     };
     if (!data?.contentHash || !data?.payload) {
       return { found: false, blocked: false, reason: 'malformed' };
+    }
+    const payload = normalizeRemotePayload(data.payload);
+    if (!payload) {
+      return { found: false, blocked: false, reason: 'malformed-payload' };
+    }
+    if (data.payloadHash != null && typeof data.payloadHash !== 'string') {
+      return { found: false, blocked: false, reason: 'malformed-payload-hash' };
+    }
+    if (typeof data.payloadHash === 'string' && data.payloadHash.length > 0) {
+      const actualPayloadHash = await sha256(payload);
+      if (actualPayloadHash !== data.payloadHash) {
+        return { found: false, blocked: false, reason: 'payload-hash-mismatch' };
+      }
     }
     return {
       found: true,
@@ -328,7 +389,8 @@ export async function pullSnapshot(
       snapshot: {
         contentHash: data.contentHash,
         capturedAt: data.capturedAt ?? 0,
-        payload: data.payload,
+        payload,
+        payloadHash: typeof data.payloadHash === 'string' ? data.payloadHash : undefined,
         journalVersion: data.journalVersion ?? 1,
       },
     };

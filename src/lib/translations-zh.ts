@@ -7,7 +7,7 @@
 //  - 核心 UI 标签 (保存/取消/应用/撤销/关闭/搜索): 通用语一致
 //  - 全角叹号 (！) 与半角 ! 混用: 仅 3 处使用全角，未见半角混入
 //  - 量词 (个/次/本/条) 登场: 正常
-// TODO(zh-review): 以下建议母语审校 (非硬性错误)
+// Native review note (zh): 以下建议母语审校 (非硬性错误)
 //  - "ui.firstStoryPrompt": "准备好写你的第一个故事了吗？" —
 //      其他 UI 文案使用「您」，此处用「你」属设计选择 (更亲切)，建议统一风格
 //  - "ui.askAnything": "有什么可以帮您的吗？" —
@@ -391,11 +391,11 @@ const translations = {
     "askQuestions": "在下方输入框提问"
   },
   "hfcp": {
-    "engagement": "积极参与",
-    "normalFree": "自由对话",
-    "normalAnalysis": "分析模式",
-    "limited": "节制模式",
-    "silent": "沉默"
+    "engagement": "承接",
+    "normalFree": "自然",
+    "normalAnalysis": "结构整理",
+    "limited": "要点",
+    "silent": "待确认"
   },
   "syncReminder": {
     "lastSyncPrefix": "☁️ 最后同步: ",
@@ -1123,15 +1123,15 @@ const translations = {
     "mustResolveDesc": "高潮弧 — 高优先"
   },
   "hfcpLabels": {
-    "engagement": "[HFCP模式：互动] 温暖且积极地回应。",
-    "normalFree": "[HFCP模式：正常] 自然地回应。",
-    "normalAnalysis": "[HFCP模式：分析] 以结构化和逻辑性回应。",
-    "limited": "[HFCP模式：限制] 简洁回应，仅包含要点。",
-    "silent": "[HFCP模式：沉默] 仅以提问回应。不直接回答。",
-    "nrgVariation": "[NRG：变奏] 使用与上次回答不同的结构。",
-    "nrgFrameShift": "[NRG：框架转换] 从完全不同的角度切入。",
-    "nrgPerspectiveShift": "[NRG：视角转换] 使用探索性/批判性视角。",
-    "nrgMetaAck": "[NRG：元确认] 承认重复并提供新角度。"
+    "engagement": "温和承接作者的主导，同时保留作者的决定权。",
+    "normalFree": "自然回答，只简短整理必要选项。",
+    "normalAnalysis": "使用结构和逻辑，但不要像政策说明一样生硬。",
+    "limited": "只保留要点，减少不必要的反向建议。",
+    "silent": "减少定论，只留下一个必要确认问题或暂缓理由。",
+    "nrgVariation": "用不同于此前的结构回答。",
+    "nrgFrameShift": "不要重复同一框架，换一个角度处理。",
+    "nrgPerspectiveShift": "切换为探索性或批评性视角。",
+    "nrgMetaAck": "遇到重复问题时，简短切换到新的角度。"
   },
   "archivePage": {
     "archiveLabel": "档案库",

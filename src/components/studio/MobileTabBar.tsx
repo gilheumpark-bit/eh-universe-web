@@ -55,7 +55,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
   const t = createT(language);
   const moreScrollRef = useRef<HTMLDivElement>(null);
 
-  // Prevent hydration mismatch by only rendering dynamic content after mount
+  // Prevent hydration mismatch by rendering stable server markup before mount.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
@@ -90,7 +90,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
     }
   }, []);
 
-  // Render placeholder on server to prevent hydration mismatch
+  // Render stable server markup to prevent hydration mismatch
   // Use fixed skeleton that doesn't depend on activeTab state
   if (!mounted) {
     return (

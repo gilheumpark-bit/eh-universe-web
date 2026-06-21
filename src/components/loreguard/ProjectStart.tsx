@@ -4,7 +4,7 @@
    ProjectStart — 10단계 창작 IDE의 첫 화면
 
    역할:
-   - 첫 진입 시 "새 작품 시작"을 바로 보여준다.
+   - 첫 진입 시 "작품 기준선 만들기"를 바로 보여준다.
    - 중앙은 질문형 기준 잡기, 오른쪽은 실제 저장될 작품 기준표 형태를 취한다.
    - 저장 엔진은 기존 project/session manager와 setConfig 경로를 재사용한다.
    =========================================================== */
@@ -32,6 +32,7 @@ import {
   applyImportBasisSuggestionsToDraft,
   buildAcceptedImportCandidateRecord,
   isSameImportFileReportList,
+  MAX_PENDING_IMPORT_CANDIDATES,
   mergeImportFileReports,
   processProjectImportFiles,
   targetTypeForImport,
@@ -516,15 +517,24 @@ export default function ProjectStart({ onContinue, entryMode = "create" }: Proje
     try {
       const result = await processProjectImportFiles(files, draft);
       rememberImportFileReports(result.fileReports);
+      const hiddenCandidateCount = Math.max(
+        0,
+        result.nextCandidates.length + importCandidates.length - MAX_PENDING_IMPORT_CANDIDATES,
+      );
       if (result.nextCandidates.length > 0) {
-        setImportCandidates((prev) => [...result.nextCandidates, ...prev].slice(0, 60));
+        setImportCandidates((prev) => {
+          const merged = [...result.nextCandidates, ...prev];
+          return merged.slice(0, MAX_PENDING_IMPORT_CANDIDATES);
+        });
       }
-      setImportNotice(result.notice);
+      setImportNotice(hiddenCandidateCount > 0
+        ? `${result.notice} 대기 후보 ${hiddenCandidateCount}건은 최근 ${MAX_PENDING_IMPORT_CANDIDATES}건 표시 한도 때문에 숨겼습니다.`
+        : result.notice);
     } catch (error) {
       const message = error instanceof Error ? error.message : "파일을 읽지 못했습니다. 인코딩이나 파일 내용을 확인해 주세요.";
       setImportNotice(message);
     }
-  }, [draft, rememberImportFileReports]);
+  }, [draft, importCandidates.length, rememberImportFileReports]);
 
   const finalizeAcceptImportCandidate = useCallback((candidate: ImportCandidate, options?: { applyBasisSuggestions?: boolean }) => {
     if (acceptedCandidateSet.has(candidate.id)) return;
@@ -635,12 +645,14 @@ export default function ProjectStart({ onContinue, entryMode = "create" }: Proje
             ? L4(language, { ko: "최근 작품 열기", en: "Open recent work", ja: "最近の作品を開く", zh: "打开近期作品" })
             : startMode === "import"
               ? L4(language, { ko: "파일에서 작품 자료 가져오기", en: "Import work material from files", ja: "ファイルから作品資料を読み込む", zh: "从文件导入作品资料" })
-              : L4(language, { ko: "새 작품 시작", en: "Start a new work", ja: "新しい作品を始める", zh: "开始新作品" })
+              : L4(language, { ko: "작품 기준선 만들기", en: "Build work baseline", ja: "作品の基準線を作る", zh: "建立作品基准线" })
         }
       >
         <ProjectStartEntryPanel
           language={language}
           startMode={startMode}
+          draft={draft}
+          setDraft={setDraft}
           projectStartBusy={projectStartBusy}
           onModeChange={setStartMode}
           onFocusImport={focusProjectImport}
@@ -661,16 +673,6 @@ export default function ProjectStart({ onContinue, entryMode = "create" }: Proje
           onFocusImport={focusProjectImport}
           onSelectProjectById={selectProjectById}
           onOpenProject={openProject}
-        />
-
-        <ProjectStartBasisForm
-          language={language}
-          draft={draft}
-          setDraft={setDraft}
-          visibleMarketOptions={visibleMarketOptions}
-          visiblePlatformOptions={visiblePlatformOptions}
-          projectStartBusy={projectStartBusy}
-          onSaveOpenWorld={() => saveCurrentOrCreateProject("world")}
         />
 
       </section>
@@ -698,7 +700,17 @@ export default function ProjectStart({ onContinue, entryMode = "create" }: Proje
         onDeleteCurrentProject={deleteCurrentProject}
         onFocusImport={focusProjectImport}
         setDeleteConfirmText={setDeleteConfirmText}
-      />
+      >
+        <ProjectStartBasisForm
+          language={language}
+          draft={draft}
+          setDraft={setDraft}
+          visibleMarketOptions={visibleMarketOptions}
+          visiblePlatformOptions={visiblePlatformOptions}
+          projectStartBusy={projectStartBusy}
+          onSaveOpenWorld={() => saveCurrentOrCreateProject("world")}
+        />
+      </ProjectStartBasisPanel>
       <ProjectStartImportDialog
         open={showImportDialog}
         language={language}

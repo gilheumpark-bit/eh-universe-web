@@ -42,6 +42,7 @@ import { buildWritingContextPack } from '@/lib/writing-workspace/context-pack';
 import { assembleNoaPrompt } from '@/lib/writing-workspace/noa-prompt-assembly';
 import {
   attachDraftJournal,
+  buildComplianceGatePatch,
   buildAdvancedPrefix,
   buildExternalCraftLeakNotice,
   buildHFCPPrefix,
@@ -302,6 +303,7 @@ export function useStudioAI({
       let currentRetryHint = '';
       let externalLeakHits: string[] = [];
       let externalLeakNotice = '';
+      let complianceGateReport: ReturnType<typeof buildComplianceGatePatch>['report'] | null = null;
       const gateHistory: QualityGateAttemptRecord[] = [];
 
       // Story Bible — 망각 방지 동적 컨텍스트
@@ -350,6 +352,15 @@ export function useStudioAI({
         qTag = calculateQualityTag(dReport, capturedConfig.narrativeIntensity || 'standard');
 
         gateResult = evaluateQuality(finalContent, capturedConfig, gateConfig.thresholds, language, attempt);
+        const compliancePatch = buildComplianceGatePatch(capturedConfig, finalContent, language);
+        complianceGateReport = compliancePatch.report;
+        if (compliancePatch.shouldRetry) {
+          gateResult = {
+            ...gateResult,
+            passed: false,
+            failReasons: [...gateResult.failReasons, ...compliancePatch.failReasons],
+          };
+        }
 
         // 시도별 이력 기록
         gateHistory.push({
@@ -363,7 +374,10 @@ export function useStudioAI({
 
         if (gateResult.passed) break;
 
-        currentRetryHint = buildRetryHint(gateResult, attempt, language);
+        currentRetryHint = [
+          buildRetryHint(gateResult, attempt, language),
+          compliancePatch.retryHint,
+        ].filter(Boolean).join('\n\n');
         onQualityGateRetry?.(attempt, maxAttempts, gateHistory);
         // confirm 모드: 상위 UI(StudioShell)가 Toast/알림을 표시하도록 CustomEvent 발행
         if (confirmMode && typeof window !== 'undefined') {
@@ -437,6 +451,7 @@ export function useStudioAI({
         qualityGateRetryHint: retryHint,
         qualityGateHistory: gateHistory,
         externalCraftLeakHits: externalLeakHits,
+        writingContextCompliance: complianceGateReport,
       };
 
       // ============================================================
@@ -668,6 +683,7 @@ export function useStudioAI({
       }
 
       const finalContent = stripEngineArtifacts(fullContent) || result.content;
+      const compliancePatch = buildComplianceGatePatch(capturedConfig2, finalContent, language);
       const externalLeakHits = scanExternalCraftLeaks(finalContent, regenExternalCraftReferenceBlock, capturedConfig2);
       const externalLeakNotice = externalLeakHits.length > 0
         ? buildExternalCraftLeakNotice(externalLeakHits, language)
@@ -744,6 +760,7 @@ export function useStudioAI({
                 metrics: result.report.metrics,
                 ipFiltered: ipCheck.matches.length,
                 externalCraftLeakHits: externalLeakHits,
+                writingContextCompliance: compliancePatch.report,
                 qualityTag: qTag.tag,
                 qualityLabel: qTag.label,
                 qualityFindings: qTag.visibleFindings.map((f: DirectorFinding) => ({ kind: f.kind, severity: f.severity, message: f.message, lineNo: f.lineNo, excerpt: f.excerpt })),

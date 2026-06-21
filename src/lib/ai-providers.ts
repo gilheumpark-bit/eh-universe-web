@@ -16,6 +16,7 @@ import {
   PROVIDER_LIST,
   supportsStructuredOutput,
 } from './ai-providers.catalog';
+import { getStoredReasoningLevel, resolveReasoningLevel } from './ai-reasoning';
 import {
   decryptKey,
   deobfuscateKey,
@@ -40,6 +41,7 @@ export type {
   ProviderCapabilities,
   ProviderDef,
   ProviderId,
+  ReasoningStage,
   StreamOptions,
 } from './ai-providers.catalog';
 
@@ -397,6 +399,7 @@ async function streamViaProxy(
       messages: opts.messages,
       temperature: opts.temperature ?? 0.9,
       maxTokens: opts.maxTokens,
+      reasoning: opts.reasoning ? { level: opts.reasoning } : undefined,
       apiKey: apiKey || undefined,
       prismMode: opts.prismMode, // 서버 측 PRISM 강제 적용
       isChatMode: opts.isChatMode,
@@ -559,6 +562,8 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   }
 
   const provider = getActiveProvider();
+  const resolvedReasoning = resolveReasoningLevel(opts.reasoning ?? getStoredReasoningLevel(), opts.reasoningStage);
+  const reasoningForRequest = resolvedReasoning === 'auto' ? undefined : resolvedReasoning;
 
   // ARI gate: if current provider's circuit is open, try ARI-routed fallback
   if (!ariManager.isAvailable(provider)) {
@@ -579,7 +584,12 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
         const maxTok = getMaxOutputTokens(best.model, st, mt);
         const t0 = Date.now();
         try {
-          const result = await streamViaProxy(best.id, best.model, best.key, { ...opts, messages: trimmed, maxTokens: maxTok });
+          const result = await streamViaProxy(best.id, best.model, best.key, {
+            ...opts,
+            messages: trimmed,
+            maxTokens: maxTok,
+            reasoning: reasoningForRequest,
+          });
           ariManager.updateAfterCall(bestId, true, Date.now() - t0);
           return result;
         } catch (err) {
@@ -605,7 +615,7 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   }
 
   const maxTokens = getMaxOutputTokens(model, systemTokens, messageTokens);
-  const safeOpts = { ...opts, messages: trimmedMessages, maxTokens };
+  const safeOpts = { ...opts, messages: trimmedMessages, maxTokens, reasoning: reasoningForRequest };
 
   // Retry wrapper: up to 3 retries with jittered exponential backoff
   const MAX_RETRIES = 3;

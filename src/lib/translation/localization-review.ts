@@ -29,6 +29,8 @@ export interface LocalizationDecisionReport {
   profile: LocalizationMarketProfile;
   summaryKo: string;
   riskCount: number;
+  readerLensKo: readonly string[];
+  decisionNoteKo: string;
   cards: LocalizationIssueCard[];
 }
 
@@ -226,14 +228,17 @@ export function buildLocalizationDecisionReport({
   }
 
   const riskCount = cards.filter((card) => card.recommendation !== 'accept').length;
+  const lensSummary = profile.readerLensKo.join('·');
   const summaryKo = riskCount > 0
-    ? `${profile.labelKo} 관점에서 ${riskCount}개 판단 지점을 찾았습니다.`
-    : `${profile.labelKo} 관점에서 큰 걸림돌은 적습니다.`;
+    ? `${profile.labelKo}(${lensSummary}) 관점에서 ${riskCount}개 판단 지점을 찾았습니다.`
+    : `${profile.labelKo}(${lensSummary}) 관점에서 큰 걸림돌은 적습니다.`;
 
   return {
     profile,
     summaryKo,
     riskCount,
+    readerLensKo: profile.readerLensKo,
+    decisionNoteKo: profile.decisionNoteKo,
     cards,
   };
 }

@@ -64,7 +64,10 @@ export function TranslationActionDock() {
   } = useTranslator();
 
   const stage = activeChapter?.stageProgress ?? 0;
-  const stageLabel = loading ? `${Math.min(stage, 5)}/5` : '—/5';
+  const stageCurrent = loading ? Math.min(Math.max(stage, 0), 5) : 0;
+  const stageLabel = loading ? `${stageCurrent}/5` : '—/5';
+  const stagePercent = loading ? Math.max(8, Math.round((stageCurrent / 5) * 100)) : 0;
+  const progressLabel = lang === 'ko' ? `번역 진행 ${stageLabel}` : `Translation progress ${stageLabel}`;
   const hasChapters = chapters.length > 0;
   const exportFive = ['txt', 'md', 'json', 'html', 'csv'] as const;
 
@@ -251,14 +254,34 @@ export function TranslationActionDock() {
   return (
     <div className="translation-action-dock flex flex-col gap-4 p-4 text-text-primary">
       {loading ? (
-        <div className="flex items-center justify-between rounded-lg border border-accent-indigo/20 bg-accent-indigo/10 p-3">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 animate-ping rounded-full bg-accent-indigo" />
-            <span className="font-mono text-xs uppercase tracking-wider text-accent-indigo">
-              {statusMsg || (lang === 'ko' ? '처리 중…' : 'Working…')}
-            </span>
+        <div className="rounded-lg border border-accent-indigo/20 bg-accent-indigo/10 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-accent-indigo" />
+              <span className="truncate text-xs font-semibold text-accent-indigo">
+                {statusMsg || (lang === 'ko' ? '번역 흐름을 정리하는 중' : 'Preparing translation flow')}
+              </span>
+            </div>
+            <span className="shrink-0 font-mono text-xs text-text-tertiary">{stageLabel}</span>
           </div>
-          <span className="text-xs text-text-tertiary">{stageLabel}</span>
+          <div
+            role="progressbar"
+            aria-label={progressLabel}
+            aria-valuemin={0}
+            aria-valuemax={5}
+            aria-valuenow={stageCurrent}
+            className="mt-3 h-2 overflow-hidden rounded-full bg-bg-primary"
+          >
+            <div
+              className="h-full rounded-full bg-accent-indigo transition-[width] duration-300"
+              style={{ width: `${stagePercent}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] leading-snug text-text-secondary">
+            {lang === 'ko'
+              ? '회차 단위로 처리합니다. 멈춘 것처럼 보여도 단계가 바뀌면 이 막대가 함께 움직입니다.'
+              : 'Runs chapter by chapter. The bar moves as each stage advances.'}
+          </p>
         </div>
       ) : (
         <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-secondary p-3 font-mono text-xs font-semibold uppercase tracking-wider text-text-primary">

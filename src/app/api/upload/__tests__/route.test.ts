@@ -32,6 +32,7 @@ jest.mock('next/server', () => ({
 
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: jest.fn(() => ({ allowed: true, retryAfterMs: 0 })),
+  checkRateLimitAsync: jest.fn(() => ({ allowed: true, retryAfterMs: 0 })),
   getClientIp: jest.fn(() => '203.0.113.10'),
   RATE_LIMITS: { upload: { windowMs: 60_000, maxRequests: 20 } },
 }));

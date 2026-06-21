@@ -180,6 +180,42 @@ describe("[W2-plot #9] TabPlot addBeat 충돌 방어 + 안정 key", () => {
     errSpy.mockRestore();
   });
 
+  it("씬 보드 보기에서 회차 씬을 카드로 펼치고 해당 회차로 이동한다", () => {
+    seed([
+      {
+        id: "sheet-1",
+        episode: 3,
+        title: "추격전",
+        lastUpdate: 1,
+        scenes: [
+          {
+            sceneId: "3-1",
+            sceneName: "시장 추격",
+            characters: "윤, 추격자",
+            tone: "긴장",
+            summary: "윤이 시장 골목에서 추격자를 따돌린다.",
+            purpose: "주인공의 판단력을 보여준다.",
+            conflict: "추격자의 포위망",
+            keyDialogue: "여기서 놓치면 끝이다.",
+            emotionPoint: "압박",
+            nextScene: "성문 앞 대치",
+          },
+        ],
+      },
+    ]);
+    renderTabPlot();
+
+    fireEvent.click(screen.getByRole("button", { name: "씬 보드 보기" }));
+
+    const board = screen.getByLabelText("씬 카드 보드");
+    expect(within(board).getByText("시장 추격")).toBeInTheDocument();
+    expect(within(board).getByText("윤이 시장 골목에서 추격자를 따돌린다.")).toBeInTheDocument();
+
+    fireEvent.click(within(board).getByRole("button", { name: /시장 추격/ }));
+
+    expect(screen.getByText("추격전")).toBeInTheDocument();
+  });
+
   it("편집/삭제가 정확한 비트에 적용 — 첫 비트 삭제 시 그 episode 만 제거", () => {
     seed([
       { episode: 1, title: "첫째", lastUpdate: 1 },

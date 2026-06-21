@@ -3,7 +3,7 @@ import { classifyInput, buildTurnSignal, updateScore, resolveVerdict, resolveNRG
 describe('classifyInput', () => {
   it('detects generate commands (KO)', () => {
     expect(classifyInput('1화를 써줘')).toBe('generate');
-    expect(classifyInput('다음 화 생성')).toBe('generate');
+    expect(classifyInput('다음 화 생성해줘')).toBe('generate');
     expect(classifyInput('계속 써')).toBe('generate');
     expect(classifyInput('1단계 뼈대')).toBe('generate');
   });
@@ -18,6 +18,8 @@ describe('classifyInput', () => {
     expect(classifyInput('이 캐릭터 성격을 어떻게 생각해?')).toBe('chat');
     expect(classifyInput('톤을 바꿔줘')).toBe('chat');
     expect(classifyInput('why did you use this structure?')).toBe('chat');
+    expect(classifyInput('다음 화 클릭 이유 봐줘')).toBe('chat');
+    expect(classifyInput('집필 말고 이 구조 평가해봐')).toBe('chat');
   });
 });
 
@@ -86,28 +88,28 @@ describe('NRG', () => {
     state1.score = 60;
     resolveNRG(state1, '반복 질문');
     expect(resolveNRG(state1, '반복 질문')).toBe('light_variation');
-    expect(verdictToPromptModifier('normal_free', 'light_variation', 'KO')).toContain('이전과 다른 구조로');
+    expect(verdictToPromptModifier('normal_free', 'light_variation', 'KO')).toContain('이전 답변과 다른 구조로');
 
     // 2) 70 <= score < 100 -> frame_shift
     const state2 = createHFCPState();
     state2.score = 80;
     resolveNRG(state2, '반복 질문');
     expect(resolveNRG(state2, '반복 질문')).toBe('frame_shift');
-    expect(verdictToPromptModifier('normal_free', 'frame_shift', 'KO')).toContain('다른 관점에서');
+    expect(verdictToPromptModifier('normal_free', 'frame_shift', 'KO')).toContain('다른 프레임');
 
     // 3) 100 <= score < 130 -> perspective_shift
     const state3 = createHFCPState();
     state3.score = 110;
     resolveNRG(state3, '반복 질문');
     expect(resolveNRG(state3, '반복 질문')).toBe('perspective_shift');
-    expect(verdictToPromptModifier('normal_free', 'perspective_shift', 'KO')).toContain('비평적 시점');
+    expect(verdictToPromptModifier('normal_free', 'perspective_shift', 'KO')).toContain('비평적인 시점');
 
     // 4) 130 <= score -> meta_ack
     const state4 = createHFCPState();
     state4.score = 140;
     resolveNRG(state4, '반복 질문');
     expect(resolveNRG(state4, '반복 질문')).toBe('meta_ack');
-    expect(verdictToPromptModifier('normal_free', 'meta_ack', 'KO')).toContain('다른 각도에서');
+    expect(verdictToPromptModifier('normal_free', 'meta_ack', 'KO')).toContain('새 각도');
   });
 });
 
@@ -125,21 +127,34 @@ describe('processHFCPTurn', () => {
     expect(result.mode).toBe('chat');
     expect(result.promptModifier.length).toBeGreaterThan(0);
   });
+
+  it('long interview sessions keep Noa conversational instead of going silent', () => {
+    const state = createHFCPState();
+
+    for (let i = 0; i < 48; i++) {
+      processHFCPTurn(state, '왜 이 장면이 약하지? ㅋㅋ 하지만 다음 화 클릭 이유를 더 보고 싶어');
+    }
+
+    expect(state.turns).toBe(48);
+    expect(state.score).toBeLessThanOrEqual(124);
+    expect(state.verdict).not.toBe('limited');
+    expect(state.verdict).not.toBe('silent');
+  });
 });
 
 describe('verdictToPromptModifier', () => {
   it('engagement = warm tone (KO)', () => {
     const mod = verdictToPromptModifier('engagement', 'normal', 'KO');
-    expect(mod).toContain('적극');
+    expect(mod).toContain('작가의 지시와 결정권');
   });
 
-  it('silent = questions only (EN)', () => {
+  it('silent = check or hold reason (EN)', () => {
     const mod = verdictToPromptModifier('silent', 'normal', 'EN');
-    expect(mod).toContain('questions only');
+    expect(mod).toContain('check question or hold reason');
   });
 
   it('NRG variation adds modifier', () => {
     const mod = verdictToPromptModifier('normal_free', 'frame_shift', 'KO');
-    expect(mod).toContain('프레임 전환');
+    expect(mod).toContain('다른 프레임');
   });
 });

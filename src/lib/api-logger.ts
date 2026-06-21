@@ -4,7 +4,7 @@
 //
 // [루프 2 P4 — 2026-06-08] Observability 3-Pillar 도입 계획 확정:
 //   현재: Logs (이 모듈) 만, 28 API routes 중 3/28 만 wrapper 사용.
-//   미구현: Metrics (RED/USE), Traces (OpenTelemetry), SLO 정의.
+//   대기: Metrics (RED/USE), Traces (OpenTelemetry), SLO 정의.
 //   계획: ADR-0009 'Observability Standard' (docs/adr/0009-observability-standard.md)
 //         Phase 1 (alpha→beta): Logs 일원화 (이 모듈 확장)
 //         Phase 2 (beta): RED Metrics via @opentelemetry/api-metrics
@@ -13,6 +13,8 @@
 //   추적: claude3 _observability 표준 정합화 (Logs/Metrics/Traces, OTel, structured logs, SLO).
 //   현재 단계는 single-pillar — production 차단 사항 아님이나 본격 commercial scale 전 완성 필요.
 // ============================================================
+
+import { recordApiMetric } from '@/lib/observability/runtime-metrics';
 
 interface LogEntry {
   level: 'info' | 'warn' | 'error';
@@ -32,6 +34,12 @@ interface LogEntry {
 /** Emit a structured JSON log line to stdout/stderr (Vercel captures these automatically) */
 export function apiLog(entry: Omit<LogEntry, 'timestamp'>): void {
   const log: LogEntry = { ...entry, timestamp: new Date().toISOString() };
+  recordApiMetric({
+    route: entry.route,
+    event: entry.event,
+    status: entry.status,
+    durationMs: entry.durationMs,
+  });
   if (entry.level === 'error') {
     console.error(JSON.stringify(log));
   } else {

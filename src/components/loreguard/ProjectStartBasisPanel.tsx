@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, Dispatch, SetStateAction } from "react";
+import type { ChangeEvent, Dispatch, ReactNode, SetStateAction } from "react";
 import type { LucideIcon } from "lucide-react";
 import { L4 } from "@/lib/i18n";
 import {
@@ -33,22 +33,22 @@ import {
 
 const PACK_ROWS_UI: Array<{ label: { ko: string; en: string; ja: string; zh: string }; statusLabel: { ko: string; en: string; ja: string; zh: string }; Icon: LucideIcon }> = [
   {
-    label: { ko: "작품 시작", en: "Work setup", ja: "作品開始", zh: "作品开始" },
+    label: { ko: "기준선", en: "Basis", ja: "基準線", zh: "基准线" },
     statusLabel: { ko: "진행", en: "Active", ja: "進行中", zh: "进行中" },
     Icon: Check,
   },
   {
-    label: { ko: "읽은 자료 검토", en: "Imported material review", ja: "読み込み資料の確認", zh: "导入资料检查" },
+    label: { ko: "세계관 보드", en: "World board", ja: "世界観ボード", zh: "世界观面板" },
     statusLabel: { ko: "자료를 기다리는 중", en: "Waiting for material", ja: "資料待ち", zh: "等待资料" },
     Icon: Clock,
   },
   {
-    label: { ko: "번역·현지화 메모", en: "Translation notes", ja: "翻訳・ローカライズメモ", zh: "翻译本地化备注" },
+    label: { ko: "집필 기준", en: "Writing basis", ja: "執筆基準", zh: "写作基准" },
     statusLabel: { ko: "작성 전", en: "Not written yet", ja: "作成前", zh: "尚未填写" },
     Icon: Globe,
   },
   {
-    label: { ko: "확인 문서·권리/IP 자산화", en: "Journal / Rights-IP Pack", ja: "確認文書・権利/IP資産化", zh: "确认文档·权利/IP资产化" },
+    label: { ko: "출고 준비", en: "Release prep", ja: "出稿準備", zh: "交付准备" },
     statusLabel: { ko: "준비", en: "Ready", ja: "準備", zh: "准备" },
     Icon: Download,
   },
@@ -77,6 +77,7 @@ interface ProjectStartBasisPanelProps {
   onDeleteCurrentProject: () => void;
   onFocusImport: () => void;
   setDeleteConfirmText: Dispatch<SetStateAction<string>>;
+  children?: ReactNode;
 }
 
 export function ProjectStartBasisPanel({
@@ -102,7 +103,56 @@ export function ProjectStartBasisPanel({
   onDeleteCurrentProject,
   onFocusImport,
   setDeleteConfirmText,
+  children,
 }: ProjectStartBasisPanelProps) {
+  const decisionRows = [
+    {
+      label: L4(language, { ko: "작품명", en: "Title", ja: "作品名", zh: "作品名" }),
+      value: draft.title.trim() || L4(language, { ko: "제목 입력 전", en: "Title not set", ja: "題名入力前", zh: "标题尚未填写" }),
+      done: !!draft.title.trim(),
+      Icon: Book,
+    },
+    {
+      label: L4(language, { ko: "핵심 전제", en: "Core premise", ja: "核心前提", zh: "核心前提" }),
+      value: draft.premise.trim() || L4(language, { ko: "세계관 시작점 작성 전", en: "World starting point not written", ja: "世界観の開始点作成前", zh: "世界观起点尚未填写" }),
+      done: !!draft.premise.trim(),
+      Icon: Globe,
+    },
+    {
+      label: L4(language, { ko: "권리/IP", en: "Rights/IP", ja: "権利/IP", zh: "权利/IP" }),
+      value: `${L4(language, RIGHTS_STATUS_LABEL_UI[draft.rightsStatus])} · ${draft.rightsNote.trim() || L4(language, { ko: "메모 대기", en: "Memo pending", ja: "メモ待ち", zh: "备注待填写" })}`,
+      done: !!draft.rightsNote.trim(),
+      Icon: Shield,
+    },
+  ] as const;
+  const basisMissingCount = [
+    draft.title,
+    draft.premise,
+    draft.rightsNote,
+    draft.rightsStatus,
+    draft.targetLanguage,
+    draft.publishPlatform !== PublishPlatform.NONE ? draft.publishPlatform : "",
+    draft.totalEpisodes,
+    draft.episodeLength,
+  ].filter((value) => String(value).trim().length === 0).length;
+  const collapsedSummary = [
+    {
+      label: L4(language, { ko: "기준", en: "Basis", ja: "基準", zh: "基准" }),
+      value: `${readiness}%`,
+      tone: readiness >= 75 ? "green" : readiness > 0 ? "blue" : "gray",
+    },
+    {
+      label: L4(language, { ko: "미입력", en: "Missing", ja: "未入力", zh: "待填" }),
+      value: String(basisMissingCount),
+      tone: basisMissingCount === 0 ? "green" : "amber",
+    },
+    {
+      label: L4(language, { ko: "자료", en: "Files", ja: "資料", zh: "资料" }),
+      value: importCandidateCount > 0 ? `${acceptedCandidateCount}/${importCandidateCount}` : "0",
+      tone: importCandidateCount > 0 ? "blue" : "gray",
+    },
+  ] as const;
+
   return (
     <IdeResizablePanel
       id="project-canvas"
@@ -113,22 +163,47 @@ export function ProjectStartBasisPanel({
       defaultWidth={410}
       minWidth={280}
       maxWidth={760}
+      collapsedSummary={collapsedSummary}
     >
       <div className="ps-card primary">
         <div className="ps-card-top">
           <Grid size={18} />
-          <strong>{L4(language, { ko: "작품 기준표", en: "Work basis board", ja: "作品基準表", zh: "作品基准表" })}</strong>
+          <strong>{L4(language, { ko: "세계관 기준선", en: "World basis", ja: "世界観基準", zh: "世界观基准" })}</strong>
           <span className="pill green">{readinessLabel}</span>
         </div>
         <div className="tbar">
           <span style={{ width: `${readiness}%` }} />
         </div>
         <p>{L4(language, {
-          ko: "작가가 고른 설정만 이곳에 쌓이고, 이후 설정집·씬시트·번역·출고 패키지로 이어집니다.",
+          ko: "작가가 고른 값만 남깁니다. 여기서 잡은 기준선이 세계관 보드, 캐릭터, 씬시트, 집필, 출고 패키지로 이어집니다.",
           en: "Only the author's chosen settings stay here, then continue into the bible, scene sheets, localization, and release package.",
           ja: "作者が選んだ設定だけがここに蓄積され、設定集・シーンシート・翻訳・出稿パッケージへ続きます。",
           zh: "只有作者选定的设定会留在这里，并延续到设定集、场景表、翻译和交付包。",
         })}</p>
+      </div>
+
+      {children}
+
+      <div className="ps-decision-ledger" aria-label={L4(language, { ko: "작가 결정 원장", en: "Author decision ledger", ja: "作者決定台帳", zh: "作者决策台账" })}>
+        <div className="ps-decision-ledger-head">
+          <div>
+            <span>{L4(language, { ko: "작가 결정 원장", en: "Author decision ledger", ja: "作者決定台帳", zh: "作者决策台账" })}</span>
+            <b>{L4(language, { ko: "다음 작업으로 넘길 값", en: "Values handed to the next stage", ja: "次の作業へ渡す値", zh: "传给下一阶段的值" })}</b>
+          </div>
+          <span className="pill">{readinessLabel}</span>
+        </div>
+        <div className="ps-decision-ledger-rows">
+          {decisionRows.map(({ label, value, done, Icon }) => (
+            <div key={label} className={done ? "ready" : ""}>
+              <Icon size={15} aria-hidden="true" />
+              <span>{label}</span>
+              <b>{value}</b>
+              <small>{done
+                ? L4(language, { ko: "기록됨", en: "Recorded", ja: "記録済み", zh: "已记录" })
+                : L4(language, { ko: "확정 대기", en: "Waiting", ja: "確定待ち", zh: "待确认" })}</small>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="ps-project-ops" aria-label={L4(language, { ko: "현재 작품 저장과 관리", en: "Current work saving and management", ja: "現在の作品保存と管理", zh: "当前作品保存与管理" })}>
@@ -199,39 +274,40 @@ export function ProjectStartBasisPanel({
             {L4(language, { ko: "저장하고 세계관으로", en: "Save and open world", ja: "保存して世界観へ", zh: "保存并进入世界观" })}
           </button>
         </div>
-        <div className="ps-project-danger" aria-label={L4(language, { ko: "작품 삭제", en: "Delete work", ja: "作品削除", zh: "删除作品" })}>
-          <div className="ps-project-danger-head">
-            <Alert size={16} />
-            <strong>{L4(language, { ko: "작품 삭제", en: "Delete work", ja: "作品削除", zh: "删除作品" })}</strong>
-            <span className="pill red">{L4(language, { ko: "주의", en: "Careful", ja: "注意", zh: "注意" })}</span>
+        {currentProjectId ? (
+          <div className="ps-project-danger" aria-label={L4(language, { ko: "작품 삭제", en: "Delete work", ja: "作品削除", zh: "删除作品" })}>
+            <div className="ps-project-danger-head">
+              <Alert size={16} />
+              <strong>{L4(language, { ko: "작품 삭제", en: "Delete work", ja: "作品削除", zh: "删除作品" })}</strong>
+              <span className="pill red">{L4(language, { ko: "주의", en: "Careful", ja: "注意", zh: "注意" })}</span>
+            </div>
+            <p>{L4(language, {
+              ko: `현재 선택한 작품과 그 안의 회차를 삭제합니다. 입력창에 “${deleteToken}”만 입력하면 삭제 버튼이 켜집니다.`,
+              en: `Deletes the selected work and its episodes. Type only “${deleteToken}” to enable the delete button.`,
+              ja: `選択中の作品とその話数を削除します。「${deleteToken}」だけを入力すると削除ボタンが有効になります。`,
+              zh: `删除当前选择的作品及其中章节。只输入“${deleteToken}”即可启用删除按钮。`,
+            })}</p>
+            <div className="ps-project-delete-row">
+              <input
+                value={deleteConfirmText}
+                onChange={(event) => setDeleteConfirmText(event.target.value)}
+                placeholder={deleteToken}
+                aria-label={L4(language, { ko: `${deleteToken} 입력`, en: `Type ${deleteToken}`, ja: `${deleteToken} を入力`, zh: `输入 ${deleteToken}` })}
+                data-testid="lg-project-delete-confirm"
+              />
+              <button
+                type="button"
+                className="btn danger"
+                onClick={onDeleteCurrentProject}
+                disabled={!canDeleteCurrentProject}
+                data-testid="lg-project-delete"
+              >
+                <X size={15} />
+                {L4(language, { ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })}
+              </button>
+            </div>
           </div>
-          <p>{L4(language, {
-            ko: `현재 선택한 작품과 그 안의 회차를 삭제합니다. 입력창에 “${deleteToken}”만 입력하면 삭제 버튼이 켜집니다.`,
-            en: `Deletes the selected work and its episodes. Type only “${deleteToken}” to enable the delete button.`,
-            ja: `選択中の作品とその話数を削除します。「${deleteToken}」だけを入力すると削除ボタンが有効になります。`,
-            zh: `删除当前选择的作品及其中章节。只输入“${deleteToken}”即可启用删除按钮。`,
-          })}</p>
-          <div className="ps-project-delete-row">
-            <input
-              value={deleteConfirmText}
-              onChange={(event) => setDeleteConfirmText(event.target.value)}
-              placeholder={deleteToken}
-              aria-label={L4(language, { ko: `${deleteToken} 입력`, en: `Type ${deleteToken}`, ja: `${deleteToken} を入力`, zh: `输入 ${deleteToken}` })}
-              disabled={!currentProjectId}
-              data-testid="lg-project-delete-confirm"
-            />
-            <button
-              type="button"
-              className="btn danger"
-              onClick={onDeleteCurrentProject}
-              disabled={!canDeleteCurrentProject}
-              data-testid="lg-project-delete"
-            >
-              <X size={15} />
-              {L4(language, { ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })}
-            </button>
-          </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="ps-import ps-import-compact">
@@ -308,7 +384,7 @@ export function ProjectStartBasisPanel({
       <div className="ps-pack">
         <div className="ps-pack-head">
           <Scroll size={18} />
-          <strong>{L4(language, { ko: "출고까지 이어지는 기록", en: "Records carried into release", ja: "出稿まで続く記録", zh: "延续到交付的记录" })}</strong>
+          <strong>{L4(language, { ko: "기준선이 이어지는 곳", en: "Where the basis goes", ja: "基準線の行き先", zh: "基准线流向" })}</strong>
         </div>
         {PACK_ROWS_UI.map(({ label, statusLabel, Icon }, index) => {
           const rowLabel = L4(language, label);

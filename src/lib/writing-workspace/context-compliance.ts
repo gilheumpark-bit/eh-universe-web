@@ -1,6 +1,10 @@
 import type { StoryConfig } from '@/lib/studio-types';
 import { scoreAllAxes } from '@/lib/compliance/orchestrator';
 import type { AxisContext, Pov } from '@/lib/compliance/types';
+import {
+  loadPersonalBlocklist,
+  personalBlocklistToBrandEntries,
+} from '@/lib/ip-guard/personal-blocklist';
 
 export type WritingContextCheckId =
   | 'world'
@@ -209,6 +213,7 @@ function buildAxisContext(config: StoryConfig, draft: string): AxisContext {
 
   return {
     draft,
+    personalBlocklist: personalBlocklistToBrandEntries(loadPersonalBlocklist()),
     characters: characterContexts,
     sceneSheet: {
       tone: atmosphereKeywords[0],

@@ -246,6 +246,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           systemInstruction: '',
           messages: [{ role: 'user', content: prompt }],
           temperature: stage === 1 ? 0.1 : 0.3,
+          reasoningStage: 'translation',
           onChunk: (c: string) => { result += c; },
         });
         draft = result.trim() || draft;

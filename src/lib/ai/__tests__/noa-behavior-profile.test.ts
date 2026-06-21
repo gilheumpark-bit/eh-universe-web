@@ -18,9 +18,11 @@ describe('noa-behavior-profile', () => {
     });
 
     expect(DEFAULT_NOA_BEHAVIOR_PREFERENCES.conversationLevel).toBe('balanced');
+    expect(DEFAULT_NOA_BEHAVIOR_PREFERENCES.responseStyle).toBe('pd');
     expect(directive).toContain('대화 밀도');
     expect(directive).toContain('화면에서 사라지듯 침묵하지 않는다');
     expect(directive).toContain('짧은 확인 질문이나 다음 선택지 1개');
+    expect(directive).toContain('정책문처럼 길게 드러내지 않는다');
   });
 
   it('절제 모드도 답변 또는 보류 사유를 남기도록 지시한다', () => {
@@ -33,7 +35,7 @@ describe('noa-behavior-profile', () => {
 
     expect(directive).toContain('대화 밀도는 낮게');
     expect(directive).toContain('무응답처럼 보이지 않게');
-    expect(directive).toContain('요청한 범위만 답한다');
+    expect(directive).toContain('작가가 지시한 범위만 답한다');
   });
 
   it('든든하게 모드는 다음 선택지와 빠진 재료를 더 자주 정리한다', () => {

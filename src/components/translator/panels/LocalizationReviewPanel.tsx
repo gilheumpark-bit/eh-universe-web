@@ -46,7 +46,7 @@ export function LocalizationReviewPanel() {
       targetLanguage: to,
       glossary,
     }),
-    [compareResultB, faithfulResult, glossary, marketResult, result, source, to],
+    [faithfulResult, glossary, marketResult, result, source, to],
   );
 
   const markDecision = (cardId: string, state: DecisionState) => {
@@ -197,4 +197,3 @@ export function LocalizationReviewPanel() {
     </div>
   );
 }
-

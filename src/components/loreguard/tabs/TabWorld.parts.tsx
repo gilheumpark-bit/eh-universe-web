@@ -6,6 +6,8 @@ import {
   Alert,
   Book,
   Check,
+  Chevron,
+  ChevronL,
   ChevronR,
   Clock,
   Coins,
@@ -136,6 +138,121 @@ export function makeNoaEvidence(fieldKey: WorldFieldKey): WorldFieldEvidenceReco
   };
 }
 
+export interface WorldChatDraftSource {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  live?: boolean;
+}
+
+export interface WorldChatDraft {
+  id: string;
+  fieldKey: WorldFieldKey;
+  title: string;
+  excerpt: string;
+  sourceLabel: string;
+  confidence: number;
+  reason: string;
+  pinned?: boolean;
+}
+
+const WORLD_FIELD_HINTS: Record<WorldFieldKey, string[]> = {
+  corePremise: ["전제", "규칙", "현실", "세계는", "다르게", "근본"],
+  powerStructure: ["권력", "지배", "왕", "정부", "귀족", "통제", "의회"],
+  currentConflict: ["갈등", "전쟁", "대립", "위기", "문제", "충돌", "압력"],
+  worldHistory: ["역사", "과거", "사건", "연대", "시대", "건국", "몰락"],
+  socialSystem: ["신분", "계층", "제도", "사회", "시민", "가문"],
+  economy: ["경제", "화폐", "자원", "상인", "세금", "생업", "시장"],
+  magicTechSystem: ["마법", "기술", "능력", "마나", "시스템", "장치", "초능력"],
+  factionRelations: ["세력", "종족", "파벌", "동맹", "관계", "길드", "조직"],
+  survivalEnvironment: ["환경", "지리", "기후", "생존", "위험", "황무지", "바다"],
+  culture: ["문화", "관습", "예술", "축제", "언어", "전통"],
+  religion: ["종교", "신화", "신", "사원", "믿음", "교단"],
+  education: ["교육", "학교", "학원", "지식", "전승", "스승"],
+  lawOrder: ["법", "치안", "처벌", "재판", "질서", "금지"],
+  taboo: ["금기", "규범", "터부", "금지", "하면 안", "불문율"],
+  dailyLife: ["일상", "하루", "생활", "먹고", "잠", "평범한 사람"],
+  travelComm: ["이동", "통신", "거리", "속도", "교통", "전달", "항로"],
+  truthVsBeliefs: ["진실", "거짓", "믿음", "착각", "비밀", "은폐", "왜곡"],
+};
+
+function compactWorldDraftText(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 280);
+}
+
+function hashWorldDraft(text: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function inferWorldFieldKey(text: string, fallback: WorldFieldKey): { key: WorldFieldKey; score: number } {
+  const lower = text.toLowerCase();
+  let bestKey = fallback;
+  let bestScore = 0;
+  for (const [key, hints] of Object.entries(WORLD_FIELD_HINTS) as Array<[WorldFieldKey, string[]]>) {
+    const score = hints.reduce((sum, hint) => sum + (lower.includes(hint.toLowerCase()) ? 1 : 0), 0);
+    if (score > bestScore) {
+      bestKey = key;
+      bestScore = score;
+    }
+  }
+  return { key: bestKey, score: bestScore };
+}
+
+export function buildWorldChatDrafts(
+  sources: WorldChatDraftSource[],
+  fallbackField: WorldFieldKey,
+): WorldChatDraft[] {
+  const drafts: WorldChatDraft[] = [];
+  const seen = new Set<string>();
+
+  for (const source of sources.slice(-8)) {
+    const excerpt = compactWorldDraftText(source.content);
+    if (excerpt.length < 18) continue;
+    const { key, score } = inferWorldFieldKey(excerpt, fallbackField);
+    if (score === 0 && !source.live) continue;
+    const id = `${source.live ? "live" : source.id}:${key}:${hashWorldDraft(excerpt)}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const fieldTitle = WORLD_FIELDS.find((field) => field.key === key)?.title ?? "세계관";
+    const sourceLabel = source.live
+      ? "입력 중 메모"
+      : source.role === "assistant"
+        ? "노아 대화 메모"
+        : "작가 대화 메모";
+    drafts.push({
+      id,
+      fieldKey: key,
+      title: fieldTitle,
+      excerpt,
+      sourceLabel,
+      confidence: Math.min(0.86, 0.58 + score * 0.08 + (source.live ? 0.02 : 0.06)),
+      reason: score > 0 ? `${fieldTitle} 단서 감지` : "현재 선택 항목 기준으로 임시 메모",
+    });
+  }
+
+  return drafts.slice(-5).reverse();
+}
+
+export function makeChatDraftEvidence(draft: WorldChatDraft): WorldFieldEvidenceRecord {
+  return {
+    fieldKey: draft.fieldKey,
+    sourceLabel: draft.sourceLabel,
+    confidence: draft.confidence,
+    conflictCount: 0,
+    arcsStatus: draft.confidence >= 0.74 ? "draft" : "hold",
+    updatedAt: new Date().toISOString(),
+    note: draft.reason,
+  };
+}
+
 function EvidenceMeta({ evidence }: { evidence?: WorldFieldEvidenceRecord }) {
   if (!evidence) return null;
   const status = ARCS_STATUS_LABEL[evidence.arcsStatus] ?? ARCS_STATUS_LABEL.not_checked;
@@ -156,6 +273,57 @@ export const WORLD_SECTIONS_KEY = "noa-lg-world-sections";
 export const WORLD_RAIL_KEY = "noa-lg-world-rail";
 export const WORLD_BOARD_KEY = "noa-lg-world-board";
 export type CollapsedTiers = Record<1 | 2 | 3, boolean>;
+
+export interface WorldCollapsedSummaryItem {
+  label: string;
+  value: string;
+  tone: string;
+}
+
+export function WorldCollapsedPanel({
+  side,
+  id,
+  label,
+  expandLabel,
+  summary,
+  onExpand,
+}: {
+  side: "rail" | "board";
+  id: string;
+  label: string;
+  expandLabel: string;
+  summary: readonly WorldCollapsedSummaryItem[];
+  onExpand: () => void;
+}) {
+  const ExpandIcon = side === "rail" ? ChevronR : ChevronL;
+  return (
+    <aside className={`wd-${side} collapsed`} id={id} aria-label={`${label} (접힘)`}>
+      <button
+        type="button"
+        className="wd-panel-toggle"
+        aria-expanded={false}
+        aria-controls={id}
+        aria-label={expandLabel}
+        title={expandLabel}
+        onClick={onExpand}
+      >
+        <ExpandIcon size={16} strokeWidth={1.6} aria-hidden="true" />
+      </button>
+      <span className="wd-vlabel" aria-hidden="true">{label}</span>
+      <span
+        className="wd-collapsed-summary"
+        aria-label={summary.map((item) => `${item.label} ${item.value}`).join(", ")}
+      >
+        {summary.map((item) => (
+          <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+            <small>{item.label}</small>
+            <b>{item.value}</b>
+          </span>
+        ))}
+      </span>
+    </aside>
+  );
+}
 
 const SECTIONS_DEFAULT: CollapsedTiers = { 1: false, 2: false, 3: false };
 
@@ -316,6 +484,212 @@ export function WorldImportCandidateCard({
   );
 }
 
+export function WorldChatDraftCard({
+  draft,
+  onPin,
+  onApply,
+}: {
+  draft: WorldChatDraft;
+  onPin: (draft: WorldChatDraft) => void;
+  onApply: (draft: WorldChatDraft) => void;
+}) {
+  return (
+    <div className="wd-card" style={{ flexDirection: "column", gap: 10 }}>
+      <div className="wd-card-top">
+        <span className="wd-card-title">{draft.title}</span>
+        <span className={`pill ${draft.pinned ? "green" : "blue"}`} style={{ marginLeft: "auto" }}>
+          {draft.pinned ? "고정 메모" : "대화 후보"}
+        </span>
+      </div>
+      <div className="wd-card-meta" style={{ flexWrap: "wrap" }}>
+        <span>출처 {draft.sourceLabel}</span>
+        <span>일치도 {Math.round(draft.confidence * 100)}%</span>
+        <span className="pill amber">{draft.reason}</span>
+      </div>
+      <div className="wd-card-desc">{draft.excerpt}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+        <button
+          type="button"
+          className="btn ghost"
+          style={{ justifyContent: "center" }}
+          aria-label={`${draft.title} 메모 고정`}
+          onClick={() => onPin(draft)}
+          disabled={draft.pinned}
+        >
+          <Pin size={14} aria-hidden="true" />
+          {draft.pinned ? "고정됨" : "메모 고정"}
+        </button>
+        <button
+          type="button"
+          className="btn primary"
+          style={{ justifyContent: "center" }}
+          aria-label={`${draft.title}에 대화 메모 반영`}
+          onClick={() => onApply(draft)}
+        >
+          <Check size={14} aria-hidden="true" />
+          양식에 반영
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function WorldBoardPanel({
+  isSheet,
+  cfg,
+  pickedField,
+  pickedDef,
+  filledCount,
+  completeness,
+  collapsedTiers,
+  pendingImportCandidates,
+  chatDrafts,
+  onCollapse,
+  onToggleTier,
+  onPickField,
+  onApplyImportCandidate,
+  onPinChatDraft,
+  onApplyChatDraft,
+}: {
+  isSheet: boolean;
+  cfg: StoryConfig | null;
+  pickedField: WorldFieldKey;
+  pickedDef: WorldFieldDef;
+  filledCount: number;
+  completeness: number;
+  collapsedTiers: CollapsedTiers;
+  pendingImportCandidates: AcceptedImportCandidateRecord[];
+  chatDrafts: WorldChatDraft[];
+  onCollapse: () => void;
+  onToggleTier: (tier: 1 | 2 | 3) => void;
+  onPickField: (key: WorldFieldKey) => void;
+  onApplyImportCandidate: (candidate: AcceptedImportCandidateRecord) => void;
+  onPinChatDraft: (draft: WorldChatDraft) => void;
+  onApplyChatDraft: (draft: WorldChatDraft) => void;
+}) {
+  return (
+    <aside
+      className="wd-board"
+      id="lg-world-board"
+      aria-label="세계관 보드"
+      role={isSheet ? "dialog" : undefined}
+      aria-modal={isSheet ? "true" : undefined}
+    >
+      <div className="wd-board-head">
+        <span>세계관 보드</span>
+        <button
+          type="button"
+          className="wd-panel-toggle"
+          aria-expanded={true}
+          aria-controls="lg-world-board"
+          aria-label="세계관 보드 접기"
+          title="세계관 보드 접기"
+          onClick={onCollapse}
+        >
+          <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="wd-card" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+        <div className="wd-card-top">
+          <span className="wd-card-title">세계관 기준선</span>
+          <span className="pill blue" style={{ marginLeft: "auto" }}>
+            {filledCount} / {WORLD_FIELDS.length} 작성됨
+          </span>
+        </div>
+        <div className="tbar">
+          <span style={{ width: `${completeness}%` }} />
+        </div>
+        <div className="wd-card-meta">
+          <span>완성도 {completeness}%</span>
+        </div>
+      </div>
+      {pendingImportCandidates.length > 0 ? (
+        <section aria-label="세계관 읽은 자료 검토" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="wd-board-head" style={{ minHeight: 0 }}>
+            <span>읽은 자료 검토</span>
+            <span className="pill blue">{pendingImportCandidates.length}</span>
+          </div>
+          {pendingImportCandidates.map((candidate) => (
+            <WorldImportCandidateCard
+              key={candidate.id}
+              candidate={candidate}
+              pickedDef={pickedDef}
+              onApply={onApplyImportCandidate}
+            />
+          ))}
+        </section>
+      ) : null}
+      {chatDrafts.length > 0 ? (
+        <section aria-label="세계관 대화 메모 후보" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="wd-board-head" style={{ minHeight: 0 }}>
+            <span>대화 메모 후보</span>
+            <span className="pill amber">{chatDrafts.length}</span>
+          </div>
+          {chatDrafts.map((draft) => (
+            <WorldChatDraftCard
+              key={draft.id}
+              draft={draft}
+              onPin={onPinChatDraft}
+              onApply={onApplyChatDraft}
+            />
+          ))}
+        </section>
+      ) : null}
+      {WORLD_TIERS.map((tier) => {
+        const fields = WORLD_FIELDS.filter((field) => field.tier === tier);
+        const tierFilled = fields.filter((field) => fieldValue(cfg, field.key).length > 0).length;
+        const collapsed = collapsedTiers[tier];
+        const sectionId = `wd-tier-section-${tier}`;
+        return (
+          <section
+            key={tier}
+            aria-label={TIER_LABEL[tier]}
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          >
+            <button
+              type="button"
+              className="wd-card"
+              style={{ padding: "10px 15px", alignItems: "center", textAlign: "left" }}
+              aria-expanded={!collapsed}
+              aria-controls={sectionId}
+              onClick={() => onToggleTier(tier)}
+              title={collapsed ? `${TIER_LABEL[tier]} 섹션 펼치기` : `${TIER_LABEL[tier]} 섹션 접기`}
+            >
+              <span className={`pill ${TIER_TONE[tier]}`}>{TIER_LABEL[tier]}</span>
+              <span className="wd-card-meta" style={{ marginLeft: "auto" }}>
+                {tierFilled} / {fields.length} 작성됨
+              </span>
+              <Chevron
+                size={16}
+                aria-hidden="true"
+                style={{
+                  color: "var(--ink-3)",
+                  transition: "transform .16s var(--ease)",
+                  transform: collapsed ? "rotate(-90deg)" : "none",
+                }}
+              />
+            </button>
+            {!collapsed && (
+              <div id={sectionId} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {fields.map((def) => (
+                  <BoardCard
+                    key={def.key}
+                    def={def}
+                    value={fieldValue(cfg, def.key)}
+                    evidence={cfg?.worldFieldEvidence?.[def.key]}
+                    picked={pickedField === def.key}
+                    onPick={onPickField}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </aside>
+  );
+}
+
 export function WorldEmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <section className="wd-center">
@@ -324,16 +698,16 @@ export function WorldEmptyState({ onCreate }: { onCreate: () => void }) {
           <Globe size={22} />
         </div>
         <p className="wd-p" style={{ marginTop: 16, fontWeight: 600 }}>
-          아직 세계관을 설계할 프로젝트가 없습니다.
+          먼저 작품의 기준선 3개만 잡아도 충분합니다.
         </p>
         <p className="wd-p" style={{ color: "var(--ink-3)" }}>
-          새 세계관을 만들면 핵심 전제부터 세계의 디테일까지 {WORLD_FIELDS.length}개 항목을 노아와 함께 채워나갈 수 있습니다.
+          핵심 전제, 현재 갈등, 주인공의 욕망을 정하면 세계관 보드가 열리고 나머지 {WORLD_FIELDS.length}개 항목은 집필하면서 보강할 수 있습니다.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, width: "min(560px, 100%)", marginTop: 18 }}>
           {[
-            ["핵심 전제", "작품이 흔들리지 않는 첫 기준"],
-            ["세계 규칙", "금기·경제·생존 조건"],
-            ["권리/IP 메모", "출고 때 확인할 설정 근거"],
+            ["핵심 전제", "현실과 다르게 작동하는 첫 규칙"],
+            ["현재 갈등", "지금 이야기를 밀어붙이는 압력"],
+            ["주인공 욕망", "첫 회차부터 독자가 붙잡을 동기"],
           ].map(([title, body]) => (
             <div key={title} className="pcard" style={{ padding: 12, textAlign: "left" }}>
               <div className="wd-card-title" style={{ fontSize: 12 }}>{title}</div>
@@ -342,7 +716,7 @@ export function WorldEmptyState({ onCreate }: { onCreate: () => void }) {
           ))}
         </div>
         <button type="button" className="btn primary" style={{ marginTop: 16 }} onClick={onCreate}>
-          <Plus size={16} />새 세계관 만들기
+          <Plus size={16} />3분 기준선 만들기
         </button>
       </div>
     </section>

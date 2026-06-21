@@ -42,7 +42,7 @@ export function StudioStatusBar({
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
-  // TODO: Extract to useTextStats(text) hook
+  // Refactor note: extract to useTextStats(text) hook when status metrics expand.
   const stats = useMemo(() => {
     const text = activeTab === 'writing' ? editDraft : '';
     const chars = text.replace(/\s/g, '').length;

@@ -38,7 +38,7 @@ function isDraftDetailMode(v: unknown): v is DraftDetailMode {
 // ============================================================
 
 export interface FeatureFlags {
-  /** 이미지 생성 기능 (DALL-E / Stability AI) */
+  /** 시각 자료 생성 API — 내부/개발 opt-in 전용, 공개 UI 기본 비활성 */
   IMAGE_GENERATION: boolean;
   /** Google Drive 백업 */
   GOOGLE_DRIVE_BACKUP: boolean;
@@ -79,7 +79,7 @@ type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FE
 // ============================================================
 
 const FLAGS: FeatureFlags = {
-  IMAGE_GENERATION: true,
+  IMAGE_GENERATION: false,
   GOOGLE_DRIVE_BACKUP: true,
   /** IndexedDB 백업/복원·버전 백업 — useProjectManager에서 분기 */
   OFFLINE_CACHE: true,

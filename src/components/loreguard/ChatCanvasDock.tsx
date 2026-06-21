@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Chevron, ChevronL, MessageSquare, Send, Settings, Sync, X } from "@/components/loreguard/icons";
 import {
+  buildDockShortInputDirective,
   getAuthorCommandPlaceholder,
+  hashDockMemoText,
   readDockOpen,
   toWorkNoteLang,
   writeDockOpen,
   type DockSuggestion,
+  type DockSuggestionSource,
 } from "@/components/loreguard/ChatCanvasDock.helpers";
 import { useStudio } from "@/app/studio/StudioContext";
 import type { Message } from "@/lib/studio-types";
@@ -36,10 +39,15 @@ import { buildNoaSystemHeader } from "@/lib/ai/noa-identity";
 import { summarizeJournalWeek, renderJournalWeekText } from "@/lib/creative/work-note";
 import { buildNoaContinuationContext } from "@/lib/loreguard/noa-continuity-context";
 import { NoaBlockedError } from "@/lib/noa/block-notice";
+import { getReasoningStageForTab } from "@/lib/ai-reasoning";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 
-export { extractJsonBlocks, type DockSuggestion } from "@/components/loreguard/ChatCanvasDock.helpers";
+export {
+  extractJsonBlocks,
+  type DockSuggestion,
+  type DockSuggestionSource,
+} from "@/components/loreguard/ChatCanvasDock.helpers";
 
 interface ChatCanvasDockProps {
   /** 영속·메모리 네임스페이스 — 'character' | 'plot' | 'direction' */
@@ -52,6 +60,9 @@ interface ChatCanvasDockProps {
   contextBlock?: string;
   /** 완료된 응답 → 구조화 제안 감지 (탭 파서 재사용) */
   extractSuggestions: (content: string) => DockSuggestion[];
+  /** 입력 중/최근 대화 → 가벼운 메모 후보 감지 */
+  extractQuickSuggestions?: (source: DockSuggestionSource) => DockSuggestion[];
+  quickSuggestionTitle?: string;
   /** 입력창 placeholder */
   placeholder: string;
   /** 캔버스 (기존 탭 그리드 — 무수정 children) */
@@ -68,6 +79,8 @@ export default function ChatCanvasDock({
   proposalGuide,
   contextBlock,
   extractSuggestions,
+  extractQuickSuggestions,
+  quickSuggestionTitle,
   placeholder,
   children,
 }: ChatCanvasDockProps) {
@@ -234,6 +247,7 @@ export default function ChatCanvasDock({
       const system = [
         buildNoaSystemHeader(roleMode),
         behaviorProfile.directive,
+        buildDockShortInputDirective(language, tabKey, text),
         proposalGuide,
         contextBlock ? `[캔버스 현황 — 실데이터]\n${contextBlock}` : "",
         continuationContext.block,
@@ -245,6 +259,7 @@ export default function ChatCanvasDock({
         systemInstruction: system + memory.summaryBlock,
         messages: history,
         temperature: 0.7,
+        reasoningStage: getReasoningStageForTab(tabKey),
         signal: ctrl.signal,
         isChatMode: true,
         onChunk: (chunk) => {
@@ -303,6 +318,7 @@ export default function ChatCanvasDock({
     proposalGuide,
     contextBlock,
     continuationContext.block,
+    tabKey,
   ]);
 
   // 완료된 assistant 응답에서만 제안 추출 (스트리밍 중 마지막 메시지 = 부분 JSON 스킵)
@@ -317,6 +333,40 @@ export default function ChatCanvasDock({
     return map;
   }, [messages, loading, extractSuggestions]);
 
+  const quickSuggestions = useMemo(() => {
+    if (!extractQuickSuggestions) return [];
+    const sources: DockSuggestionSource[] = messages
+      .filter((m) => m.content.trim().length > 0)
+      .slice(-6)
+      .map((m) => ({
+        id: m.id,
+        role: m.role as DockSuggestionSource["role"],
+        content: m.content,
+      }));
+    const liveInput = input.trim();
+    if (liveInput) {
+      sources.push({
+        id: `live-${hashDockMemoText(liveInput)}`,
+        role: "user",
+        content: liveInput,
+        live: true,
+      });
+    }
+
+    const seen = new Set<string>();
+    const out: DockSuggestion[] = [];
+    for (const source of sources) {
+      for (const suggestion of extractQuickSuggestions(source)) {
+        const key = `quick:${source.id}:${suggestion.key}`;
+        if (seen.has(key) || applied.has(key) || appliedRef.current.has(key)) continue;
+        seen.add(key);
+        out.push({ ...suggestion, key });
+        if (out.length >= 5) return out;
+      }
+    }
+    return out;
+  }, [applied, extractQuickSuggestions, input, messages]);
+
   const handleApply = useCallback((msgId: string, sugg: DockSuggestion) => {
     const k = `${msgId}:${sugg.key}`;
     if (appliedRef.current.has(k)) return; // 중복 반영 방지 (1회 보장)
@@ -324,6 +374,15 @@ export default function ChatCanvasDock({
     next.add(k);
     appliedRef.current = next;
     sugg.apply(); // 사용자 확인(클릭) 후 1회 — updater 밖 (StrictMode 안전)
+    setApplied(next);
+  }, []);
+
+  const handleQuickApply = useCallback((sugg: DockSuggestion) => {
+    if (appliedRef.current.has(sugg.key)) return;
+    const next = new Set(appliedRef.current);
+    next.add(sugg.key);
+    appliedRef.current = next;
+    sugg.apply();
     setApplied(next);
   }, []);
 
@@ -476,6 +535,39 @@ export default function ChatCanvasDock({
                 ),
               )
             )}
+            {quickSuggestions.length > 0 ? (
+              <div className="wd-msg ai">
+                <div className="wd-ai-av">EH</div>
+                <div className="wd-ai-body">
+                  <div className="wd-bubble ai">
+                    <p className="wd-p" style={{ fontWeight: 700 }}>
+                      {quickSuggestionTitle ??
+                        L4(language, {
+                          ko: "대화 메모 후보",
+                          en: "Conversation note candidates",
+                          ja: "会話メモ候補",
+                          zh: "对话备忘候选",
+                        })}
+                    </p>
+                    <div className="wd-msg-actions" style={{ flexWrap: "wrap" }}>
+                      {quickSuggestions.map((sugg) => (
+                        <button
+                          key={sugg.key}
+                          type="button"
+                          className="btn"
+                          style={{ fontSize: 12, padding: "4px 10px" }}
+                          onClick={() => handleQuickApply(sugg)}
+                          title={sugg.label}
+                        >
+                          <Check size={13} aria-hidden="true" />
+                          {sugg.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* 입력바 — wd-input 재사용 */}

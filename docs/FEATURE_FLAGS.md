@@ -22,7 +22,7 @@ Boolean client flags use local override key `ff_<FLAG>` and environment override
 
 | Flag | Default | Source | Meaning |
 |---|---:|---|---|
-| `IMAGE_GENERATION` | `true` | `src/lib/feature-flags.ts` | Enables visual preview tooling when provider configuration exists. |
+| `IMAGE_GENERATION` | `false` | `src/lib/feature-flags.ts` | Keeps in-app visual generation disabled by default. Enable only for internal/development API testing with explicit env override. |
 | `GOOGLE_DRIVE_BACKUP` | `true` | `src/lib/feature-flags.ts` | Enables Google Drive backup surface. |
 | `OFFLINE_CACHE` | `true` | `src/lib/feature-flags.ts` | Enables local offline cache and backup behavior. |
 | `EPISODE_COMPARE` | `true` | `src/lib/feature-flags.ts` | Enables cross-episode comparison tools. |

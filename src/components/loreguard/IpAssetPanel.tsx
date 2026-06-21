@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStudio } from "@/app/studio/StudioContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -45,7 +44,6 @@ import {
   type AssetView,
   type MediaFitCard,
 } from "./IpAssetPanel.helpers";
-
 export default function IpAssetPanel() {
   const { currentSession, language } = useStudio();
   const config = currentSession?.config;

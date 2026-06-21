@@ -1,32 +1,5 @@
 "use client";
 
-/* ===========================================================
-   TabPlot — 플롯 (Plot) tab
-   Source: /tmp/design2_handoff/2/project/tab_plot.jsx (window.TabPlot)
-   Pixel-faithful port: pl-grid (232px 개요 레일 / 비트 보드+페이즈 리본+
-   타임라인 센터). 모든 className 은 loreguard.css 의 .eh-app .pl-* 스코프와
-   일치. 아이콘은 @/components/loreguard/icons.
-
-   [WIRED 2026-06-10] 프로토타입 mock(COLS/CHECK/STATS) 제거. 비트 보드는
-   실제 스토어 `config.episodeSceneSheets[]` 에 연결. 추가/이름변경/삭제는
-   setConfig 로 IndexedDB+Firestore 영속. 리스트/그리드·확장은 로컬 UI 상태.
-   엔진이 없는 수치(긴장도 %·모순 N건·일관성 점수·진행률 85%·플롯/점검
-   리포트)는 날조 금지 원칙에 따라 제거.
-
-   [NOA 2026-06-10] 노아 비트 제안 — 기존 범용 구조화 라우트
-   /api/structured-generate 재사용 (useTranslation.ts 채점과 동일 패턴:
-   provider/apiKey = @/lib/ai-providers, BYOK 없으면 Firebase Bearer =
-   ai-providers.ts streamViaProxy 패턴). 채택 시 addBeat 와 동일한
-   setConfig append 경로로 episodeSceneSheets upsert (동일 제목 = 갱신).
-   contract: default export, props 없음, CSS prefix `pl-`.
-
-   [X1-xyflow 2026-06-11] "비트 흐름" 토글 — episodeSceneSheets 비트를
-   좌→우(에피소드 오름차순) xyflow 그래프로 표시. 에피소드 컬럼 아래에 해당
-   장면(scenes) 노드 그룹. 레이아웃은 단순 columnar 자동 계산(dagre 미사용·
-   드래그 영속 없음), 노드 클릭 = 흐름 뷰 종료 + 해당 비트 펼침(포커스).
-   그래프는 보조 뷰 — 기본 비트 보드 유지, RelationGraph 는 dynamic(ssr:false).
-   =========================================================== */
-
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoadingSkeleton from "@/components/studio/LoadingSkeleton";
@@ -41,16 +14,15 @@ import {
   Plus,
 } from "@/components/loreguard/icons";
 import { useStudio } from "@/app/studio/StudioContext";
-// [Z2a-chatcanvas 2026-06-11] 접이식 노아 채팅 도크 — 기본 접힘, 채택은 기존
-// adoptSuggestion(BEAT_SUGGEST 파서) 경로 재사용 (기존 AI 제안 버튼과 트리거 분리).
 import ChatCanvasDock, {
   extractJsonBlocks,
   type DockSuggestion,
+  type DockSuggestionSource,
 } from "@/components/loreguard/ChatCanvasDock";
+import { compactDockMemoText, hashDockMemoText } from "@/components/loreguard/ChatCanvasDock.helpers";
 import CandidateDecisionCard from "@/components/loreguard/CandidateDecisionCard";
 import { getActiveProvider, getApiKey } from "@/lib/ai-providers";
 import { getCachedResponse, cacheResponse } from "@/lib/browser/ai-cache";
-// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 (noa:toast + 인라인 에러) — 사일런트 차단 금지
 import { checkBlockedJson } from "@/lib/noa/block-notice";
 import { checkPaywallJson } from "@/lib/noa/paywall-notice";
 import type {
@@ -65,6 +37,7 @@ import { fireCpLog, getCreativeLogger } from "./TabPlot.creative-log";
 import { readPlotPanelOpen, usePlotPanelSheet, writePlotPanelOpen } from "./TabPlot.rail-state";
 import { PlotEmptyState, PlotRail } from "./TabPlot.sections";
 import { usePlotFlowGraph } from "./TabPlot.flow";
+import TabPlotSceneBoard from "./TabPlotSceneBoard";
 import {
   BEAT_CACHE_MODEL,
   BEAT_SUGGEST_SCHEMA,
@@ -87,16 +60,10 @@ import {
   parseImportedMainScenarioRows,
 } from "./TabPlot.shared";
 
-// [X1-xyflow] 비트 흐름 그래프 — xyflow 래퍼는 토글 진입 시에만 로드 (ssr:false).
 const RelationGraph = dynamic(() => import("@/components/loreguard/RelationGraph"), {
   ssr: false,
   loading: () => <LoadingSkeleton height={440} />,
 });
-
-// ============================================================
-// PART 3 — 본체: 개요 레일 / 비트 보드 센터
-// ============================================================
-
 export default function TabPlot() {
   const {
     currentSession,
@@ -109,22 +76,17 @@ export default function TabPlot() {
     setShowApiKeyModal,
   } = useStudio();
 
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid" | "scene">("list");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  // [X1-xyflow] 비트 흐름 그래프 토글 — 보조 뷰 (기본 = 비트 보드)
   const [flowView, setFlowView] = useState(false);
   const [railOpen, setRailOpen] = useState(readPlotPanelOpen);
   const isRailSheet = usePlotPanelSheet();
-
-  // ----- 노아 비트 제안 상태 -----
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<BeatSuggestion[]>([]);
-  // [D-ai-cache] 직전 제안이 로컬 캐시 히트였는지 — 실제 히트 시에만 true (표기 날조 금지)
   const [aiFromCache, setAiFromCache] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // 언마운트 시 진행 중 요청 중단 (setState-after-unmount 방지)
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
@@ -170,16 +132,7 @@ export default function TabPlot() {
     [setConfig],
   );
 
-  // [W2-plot #9] 비트별 안정 고유 React key 산출.
-  //  1) sheet.id 존재 → 그대로 사용 (신규 비트·adopt·마이그레이션 완료분 — 항상 고유·안정).
-  //  2) 구 데이터(id 없음) → episode 기준 fallback key. ref 캐시라 재렌더·확장 토글에도
-  //     같은 비트는 동일 key 유지(React reconciliation 안정 → 편집/삭제 교차적용 차단).
-  //  3) episode 가 (버그 #9 의 잔존 데이터처럼) 중복돼도 key 는 절대 충돌하지 않도록,
-  //     동일 key 가 이미 쓰였으면 suffix 를 붙여 고유성을 보장한다 (correctness 우선).
-  // 영속 write 는 렌더에서 강제하지 않는다(부수효과 금지). 신규 비트는 addBeat/adopt 가
-  // 실제 id 를 영속하므로, 사용자가 만지는 비트는 자연히 stable id 로 수렴한다.
-  // 주의: 이 파일은 icons 모듈의 `Map` 컴포넌트를 import 하므로 전역 Map 이 가려진다.
-  // → 캐시는 plain object(Record) 로 둔다(전역 Map 생성자 미사용).
+  // 안정 key 캐시: 구 데이터(id 없음)와 중복 episode 모두 방어.
   const legacyKeyRef = useRef<Record<number, string>>({});
   const sheetKeys = useMemo<string[]>(() => {
     const cache = legacyKeyRef.current;
@@ -212,6 +165,15 @@ export default function TabPlot() {
       const next = new Set(prev);
       if (next.has(episode)) next.delete(episode);
       else next.add(episode);
+      return next;
+    });
+  }, []);
+  const focusEpisodeCard = useCallback((episode: number) => {
+    setFlowView(false);
+    setView("list");
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.add(episode);
       return next;
     });
   }, []);
@@ -285,17 +247,12 @@ export default function TabPlot() {
     [closeRailIfSheet, setConfig],
   );
 
-  // 비트 추가 — episodeSceneSheets 에 새 시트 append (영속)
-  // [W2-plot #9] 충돌 방어: nextEp 는 prev(최신 commit) 기준 단조 증가로 산출하되,
-  // 동일 episode 가 이미 있으면(빠른 2회 클릭·stale 데이터) 빈 슬롯까지 bump 해
-  // episode 중복 생성을 차단한다(upsert/skip). stable id 는 그와 독립적으로 항상 부여
-  // → React key 충돌·편집/삭제 교차적용을 이중으로 막는다.
+  // 비트 추가: 최신 prev 기준으로 빈 episode 슬롯에 안정 id를 부여한다.
   const addBeat = useCallback(() => {
     setConfig((prev) => {
       const list = prev.episodeSceneSheets ?? [];
       const taken = new Set(list.map((s) => s.episode));
       let nextEp = list.reduce((max, s) => Math.max(max, s.episode), 0) + 1;
-      // 단조 산출이 정상이라면 1회로 끝나지만, 중복 잔존 데이터 방어로 빈 슬롯 보장.
       while (taken.has(nextEp)) nextEp += 1;
       const sheet: EpisodeSceneSheet = {
         id: genSheetId(),
@@ -539,6 +496,56 @@ export default function TabPlot() {
     [adoptSuggestion],
   );
 
+  const dockQuickExtract = useCallback(
+    (source: DockSuggestionSource): DockSuggestion[] => {
+      const clean = compactDockMemoText(source.content);
+      if (clean.length < 18) return [];
+      const hash = hashDockMemoText(clean);
+      const title =
+        clean
+          .replace(/[.!?。！？].*$/u, "")
+          .slice(0, 24)
+          .trim() || "대화 메모 비트";
+
+      return [
+        {
+          key: `plot-memo-${hash}`,
+          label: `비트 메모 반영: ${title}`,
+          apply: () => {
+            let targetEpisode = 1;
+            setConfig((prev) => {
+              const list = prev.episodeSceneSheets ?? [];
+              const taken = new Set(list.map((s) => s.episode));
+              let nextEp = list.reduce((max, s) => Math.max(max, s.episode), 0) + 1;
+              while (taken.has(nextEp)) nextEp += 1;
+              targetEpisode = nextEp;
+              const sheet: EpisodeSceneSheet = {
+                id: genSheetId(),
+                episode: nextEp,
+                title,
+                arc: clean,
+                lastUpdate: Date.now(),
+              };
+              return { ...prev, episodeSceneSheets: [...list, sheet] };
+            });
+            fireCpLog(
+              getCreativeLogger()?.logHumanEdit({
+                targetType: "scene",
+                targetId: `plot-memo-${hash}`,
+                episodeId: targetEpisode,
+                afterContent: clean,
+                note: source.live ? "plot-live-memo-adopt" : "plot-chat-memo-adopt",
+                stage: "plot",
+              }),
+            );
+            markExplicitCreativeLog("scene");
+          },
+        },
+      ];
+    },
+    [setConfig],
+  );
+
   // 캔버스 현황 — 실데이터만 (buildBeatPrompt 의 보드 라인 압축판·상한 30)
   const dockContext = useMemo(() => {
     if (sheets.length === 0) return "현재 비트 보드: 비어 있음";
@@ -551,18 +558,10 @@ export default function TabPlot() {
 
   const { flowNodes, flowEdges } = usePlotFlowGraph(sheets);
 
-  // 노드 클릭 = 해당 비트 포커스 — 흐름 뷰 닫고 보드에서 그 비트 펼침.
   const focusBeat = useCallback((nodeId: string) => {
     const m = /^ep-(\d+)/.exec(nodeId);
-    if (!m) return;
-    const episode = Number(m[1]);
-    setFlowView(false);
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.add(episode);
-      return next;
-    });
-  }, []);
+    if (m) focusEpisodeCard(Number(m[1]));
+  }, [focusEpisodeCard]);
 
   // ---- 빈 상태: 세션 없음 ----
   if (!currentSession) {
@@ -585,6 +584,8 @@ export default function TabPlot() {
       proposalGuide={DOCK_PROPOSAL_GUIDE}
       contextBlock={dockContext}
       extractSuggestions={dockExtract}
+      extractQuickSuggestions={dockQuickExtract}
+      quickSuggestionTitle="메인 시나리오 대화 메모 후보"
       placeholder="사건 흐름을 지시하세요"
     >
     <div className="pl-grid pl-main-grid">
@@ -656,6 +657,16 @@ export default function TabPlot() {
                 onClick={() => setView("grid")}
               >
                 <Grid size={15} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className={view === "scene" ? "on" : ""}
+                aria-label="씬 보드 보기"
+                aria-pressed={view === "scene"}
+                title="씬 보드 보기"
+                onClick={() => setView("scene")}
+              >
+                <Layers size={15} aria-hidden="true" />
               </button>
             </div>
             <button
@@ -729,6 +740,8 @@ export default function TabPlot() {
               onNodeClick={focusBeat}
             />
           </div>
+        ) : view === "scene" ? (
+          <TabPlotSceneBoard sheets={sheets} onFocusEpisode={focusEpisodeCard} />
         ) : (
         <div
           className="pl-board"
@@ -748,9 +761,6 @@ export default function TabPlot() {
             </div>
           ) : (
             sheets.map((sheet, i) => (
-              // [W2-plot #9] key = 안정 고유 id(sheetKeys[i]) — episode 변동/중복과
-              // 무관하게 비트 정체성을 고정. 핸들러는 시스템 canonical 식별자인
-              // episode 기준 유지(renameBeat/removeBeat/toggleExpand 호환).
               <div key={sheetKeys[i]} className="pl-col">
                 <BeatCard
                   sheet={sheet}

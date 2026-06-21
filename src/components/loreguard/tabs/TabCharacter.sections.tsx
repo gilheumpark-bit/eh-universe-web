@@ -73,6 +73,7 @@ interface CharacterRailProps {
   characters: Character[];
   activeId: string | null;
   povCharacter?: string;
+  relationCount: number;
   itemCount: number;
   skillCount: number;
   magicSystemCount: number;
@@ -95,6 +96,7 @@ export function CharacterRail({
   characters,
   activeId,
   povCharacter,
+  relationCount,
   itemCount,
   skillCount,
   magicSystemCount,
@@ -108,6 +110,18 @@ export function CharacterRail({
   onAiGenerate,
   onSelectCharacter,
 }: CharacterRailProps) {
+  const collapsedSummary = isItems
+    ? [
+        { label: "아이템", value: String(itemCount), tone: itemCount > 0 ? "green" : "amber" },
+        { label: "스킬", value: String(skillCount), tone: skillCount > 0 ? "blue" : "gray" },
+        { label: "체계", value: String(magicSystemCount), tone: magicSystemCount > 0 ? "blue" : "gray" },
+      ]
+    : [
+        { label: "인물", value: String(characters.length), tone: characters.length > 0 ? "green" : "amber" },
+        { label: "관계", value: String(relationCount), tone: relationCount > 0 ? "blue" : "gray" },
+        { label: "시점", value: povCharacter ? "ON" : "대기", tone: povCharacter ? "green" : "amber" },
+      ];
+
   if (!railOpen) {
     return (
       <aside id="lg-character-rail" className="ch-rail collapsed" aria-label="캐릭터·아이템 로스터 (접힘)">
@@ -123,6 +137,17 @@ export function CharacterRail({
           <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
         </button>
         <span className="wd-vlabel">캐릭터·아이템</span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
+        </span>
       </aside>
     );
   }

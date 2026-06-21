@@ -1,36 +1,5 @@
 "use client";
 
-/* ===========================================================
-   TabDirection — 연출 (Direction) tab — Phase 3 (REAL WIRING)
-   Source DOM: /tmp/design2_handoff/2/project/tab_direction.jsx
-
-   3-pane (dr-grid): 92px 좌측 내비(에피소드 선택) /
-   샷(=씬) 테이블 + 프레임 스트립 센터 / 336px 우측 검수 패널.
-   프로토타입 DOM·클래스·픽셀 그대로 유지 (loreguard.css dr-* 스코프).
-
-   데이터 (REAL): config.episodeSceneSheets[현재 화].scenes (EpisodeSceneEntry[]).
-   각 "샷" = 1 scene. 모든 쓰기는 setConfig → upsertSheet/removeSheet 헬퍼를
-   거쳐 IndexedDB + Firestore 에 영속화된다 (로컬 useState 데이터 보관 금지).
-
-   제거됨 (엔진 부재 → 날조 금지): 검수상태(rev)·길이(len)·star·하단 카운트·
-   진행률 도넛·statpills·각본 완성도%·카메라 감정 분포(EMO)·SFX/BGM 오디오·
-   위험 슬라이더. 해당 필드/엔진이 코드베이스에 없으므로 정직하게 삭제.
-
-   노아 연출 제안 (direction-ai): 기존 /api/structured-generate 라우트 재사용
-   (useTranslation.scoreTranslation·publish-audit.runAIAudit 와 동일 패턴 —
-   신규 엔진 X). hasAiAccess 게이트 → 미보유 시 setShowApiKeyModal(true).
-   제안 채택은 기존 writeScenes/handleConfirm 경로 + blankEntry suffix 로직.
-
-   [direction-registry] system prompt 는 writing-agent-registry 의 선등록
-   'studio-direction' 에이전트 경유 (no-yap-json·ip-brand-guard 가드 자동 주입).
-   /api/structured-generate 는 순수 passthrough (서버측 가드 X) — 가드·맥락은
-   클라이언트에서 prompt = system + user 합성으로만 주입된다 (complete/route.ts 의
-   레지스트리 호출 패턴과 동일). 응답 스키마·파서는 기존 그대로 (무회귀).
-
-   아이콘: @/components/loreguard/icons (lucide re-export). CSS 미추가.
-   default export, props 없음.
-   =========================================================== */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Film, Layers, Plus } from "@/components/loreguard/icons";
 import { DirectionNav } from "./TabDirectionNav";
@@ -40,7 +9,9 @@ import { useLoreguardTab } from "@/components/loreguard/LoreguardTabContext";
 import ChatCanvasDock, {
   extractJsonBlocks,
   type DockSuggestion,
+  type DockSuggestionSource,
 } from "@/components/loreguard/ChatCanvasDock";
+import { compactDockMemoText, hashDockMemoText } from "@/components/loreguard/ChatCanvasDock.helpers";
 import { useLongArcVerifier } from "@/hooks/useLongArcVerifier";
 import { getActiveProvider, getApiKey } from "@/lib/ai-providers";
 import { lazyFirebaseAuth } from "@/lib/firebase";
@@ -93,11 +64,6 @@ import {
   useDirectionPanelSheet,
   writeDirectionPanelOpen,
 } from "./TabDirection.shared";
-// ============================================================
-// PART 6 — 루트 (세션/씬시트 read + setConfig 영속 CRUD)
-// ============================================================
-// IDENTITY_SEAL: PART-6 | role=root | inputs=useStudio | outputs=JSX
-
 export default function TabDirection() {
   const {
     currentSession,
@@ -113,24 +79,18 @@ export default function TabDirection() {
   const activeSurface = String(activeTab);
   const isSceneSurface = activeSurface === "scene" || activeSurface === "scenesheet";
   const config = currentSession?.config ?? null;
-
   const [sel, setSel] = useState<string>("");
   const [query, setQuery] = useState("");
   const [toneFilter, setToneFilter] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  // 좌측 내비로 선택한 에피소드 (없으면 config.episode).
   const [navEpisode, setNavEpisode] = useState<number | null>(null);
   const [navOpen, setNavOpen] = useState(() => readDirectionPanelOpen(DIRECTION_NAV_KEY));
   const [panelOpen, setPanelOpen] = useState(() => readDirectionPanelOpen(DIRECTION_PANEL_KEY));
   const isPanelSheet = useDirectionPanelSheet();
-
-  // ---- 노아 연출 제안 상태 (PART 1.5) — 실 로딩/에러, 채택 전 제안은 영속 X ----
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<DirectionAiSuggestion[]>([]);
   const aiAbortRef = useRef<AbortController | null>(null);
-
-  // 언마운트 시 진행 중 요청 중단 (fetch cleanup).
   useEffect(() => {
     return () => {
       aiAbortRef.current?.abort();
@@ -159,9 +119,6 @@ export default function TabDirection() {
     writeDirectionPanelOpen(DIRECTION_NAV_KEY, false);
   }, [isPanelSheet]);
 
-  // ---- [Z1c-mid-ports] 장편 아크 점검 — 기존 useLongArcVerifier 재사용 ----
-  // autoTrigger:false = 검수 패널 버튼으로만 실행 (탭 진입만으로 5축 계산 X).
-  // config null 이면 hook 내부 [C] 가드로 refresh no-op (빈 입력 안전).
   const episodesForArc = useMemo<EpisodeManuscript[]>(
     () => config?.manuscripts ?? [],
     [config],
@@ -599,6 +556,100 @@ export default function TabDirection() {
     return out;
   };
 
+  const dockQuickExtract = (source: DockSuggestionSource): DockSuggestion[] => {
+    const clean = compactDockMemoText(source.content);
+    if (clean.length < 18) return [];
+    const hash = hashDockMemoText(clean);
+    const labelSeed =
+      clean
+        .replace(/[.!?。！？].*$/u, "")
+        .slice(0, 22)
+        .trim() || "대화 메모";
+    const noteKind = source.live ? "live-memo" : "chat-memo";
+
+    return [
+      {
+        key: `${isSceneSurface ? "scene" : "direction"}-memo-${episode}-${hash}`,
+        label: isSceneSurface ? `씬 메모 반영: ${labelSeed}` : `연출 노트 반영: ${labelSeed}`,
+        apply: () => {
+          if (isSceneSurface) {
+            const entry: EpisodeSceneEntry = {
+              ...blankEntry(),
+              sceneName: labelSeed,
+              summary: clean,
+              purpose: clean,
+              hookPoint: clean,
+              keyDialogue: "",
+              emotionPoint: "",
+              nextScene: "",
+            };
+            handleConfirm(entry, { suppressLog: true });
+            fireCpLog(
+              getCreativeLogger()?.logHumanEdit({
+                targetType: "scene",
+                targetId: entry.sceneId,
+                episodeId: episode,
+                afterContent: JSON.stringify(entry),
+                note: `scene-sheet-${noteKind}-adopt`,
+                stage: "direction",
+              }),
+            );
+            markExplicitCreativeLog("scene");
+            return;
+          }
+
+          setConfig((prev: StoryConfig) => {
+            const existing = findSheet(prev, episode);
+            const currentNotes = prev.sceneDirection?.writerNotes?.trim();
+            const writerNotes =
+              currentNotes && !currentNotes.includes(clean)
+                ? `${currentNotes}\n${clean}`
+                : currentNotes || clean;
+            const currentSnapshotNotes = existing?.directionSnapshot?.writerNotes?.trim();
+            const snapshotWriterNotes =
+              currentSnapshotNotes && !currentSnapshotNotes.includes(clean)
+                ? `${currentSnapshotNotes}\n${clean}`
+                : currentSnapshotNotes || clean;
+            const mergedSheet: EpisodeSceneSheet = {
+              episode,
+              title: existing?.title ?? prev.title ?? `${episode}화`,
+              arc: existing?.arc,
+              characters: existing?.characters,
+              scenes: existing?.scenes ?? [],
+              directionSnapshot: {
+                ...(existing?.directionSnapshot ?? {}),
+                writerNotes: snapshotWriterNotes,
+              },
+              presetUsed: existing?.presetUsed,
+              lastUpdate: Date.now(),
+            };
+            return upsertSheet(
+              {
+                ...prev,
+                sceneDirection: {
+                  ...(prev.sceneDirection ?? {}),
+                  writerNotes,
+                },
+              },
+              mergedSheet,
+            );
+          });
+          fireCpLog(
+            getCreativeLogger()?.logHumanEdit({
+              targetType: "scene",
+              targetId: `direction-memo-${episode}-${hash}`,
+              episodeId: episode,
+              afterContent: clean,
+              note: `direction-${noteKind}-adopt`,
+              stage: "direction",
+            }),
+          );
+          markExplicitCreativeLog("scene");
+        },
+      },
+    ];
+  };
+
   // 캔버스 현황 — 실데이터만 (buildSceneSheetBlock 재사용·sheet 없으면 회차만)
   const dockContext =
     buildSceneSheetBlock(sheet) ?? `${episode}화 — 등록된 씬 없음`;
@@ -686,6 +737,8 @@ export default function TabDirection() {
       proposalGuide={DOCK_PROPOSAL_GUIDE}
       contextBlock={dockContext}
       extractSuggestions={dockExtract}
+      extractQuickSuggestions={dockQuickExtract}
+      quickSuggestionTitle={isSceneSurface ? "씬시트 대화 메모 후보" : "연출 대화 메모 후보"}
       placeholder={dockPlaceholder}
     >
     <div className="dr-grid dr-main-grid">

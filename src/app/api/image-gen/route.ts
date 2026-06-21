@@ -1,9 +1,9 @@
 // ============================================================
-// Image Generation API Route — Server-side proxy
+// Visual Generation API Route — disabled by default, internal/development opt-in only
 // ============================================================
 // Accepts POST { provider, prompt, negativePrompt, apiKey, width, height, n }
-// Supports: OpenAI GPT Image, Stability AI SDXL
-// Connection-key mode: user-provided provider key. No server fallback for image gen.
+// Supports: OpenAI GPT Image, Stability AI SDXL when IMAGE_GENERATION is explicitly enabled.
+// Connection-key mode: user-provided provider key. No server fallback.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
@@ -22,7 +22,7 @@ export const maxDuration = 180; // FLUX.1 이미지 생성 최대 180초
 export async function POST(req: NextRequest) {
   try {
     if (!isFeatureEnabledServer('IMAGE_GENERATION')) {
-      return NextResponse.json({ error: 'Image generation is disabled.' }, { status: 403 });
+      return NextResponse.json({ error: 'Visual endpoint is disabled.' }, { status: 403 });
     }
 
     // Origin 검증 — BYOK 포함 모든 요청에 적용
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const rl = await sharedCheckRateLimit(ip, 'image-gen', RATE_LIMITS.imageGen);
     if (!rl.allowed) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. Max 10 image generations per minute.' },
+        { error: 'Rate limit exceeded. Max 10 visual requests per minute.' },
         { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
       );
     }

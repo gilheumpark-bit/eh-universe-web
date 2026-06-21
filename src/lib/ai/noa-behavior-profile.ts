@@ -60,7 +60,7 @@ export const NOA_CONVERSATION_LEVELS: readonly NoaConversationLevel[] = [
 ];
 
 export const DEFAULT_NOA_BEHAVIOR_PREFERENCES: NoaBehaviorPreferences = {
-  responseStyle: 'calm',
+  responseStyle: 'pd',
   proposalMode: 'brief',
   conversationLevel: 'balanced',
 };
@@ -125,7 +125,7 @@ export function getNoaStyleLabel(language: string, style: NoaResponseStyle): str
 export function getNoaProposalLabel(language: string, mode: NoaProposalMode): string {
   const labels: Record<NoaProposalMode, { ko: string; en: string; ja: string; zh: string }> = {
     brief: { ko: '짧은 제안', en: 'Brief suggestion', ja: '短い提案', zh: '简短建议' },
-    requested: { ko: '요청한 것만', en: 'Only asked', ja: '依頼範囲のみ', zh: '仅按要求' },
+    requested: { ko: '지시한 것만', en: 'Only directed', ja: '指示範囲のみ', zh: '仅按指示' },
     active: { ko: '적극 검토', en: 'Active review', ja: '積極検討', zh: '主动审阅' },
     approval: { ko: '승인 후 제안', en: 'Suggest after approval', ja: '承認後に提案', zh: '批准后建议' },
   };
@@ -144,10 +144,10 @@ export function getNoaConversationLabel(language: string, level: NoaConversation
 export function getNoaVisibleHint(language: string, level: NoaConversationLevel): string {
   const labels: Record<NoaConversationLevel, { ko: string; en: string; ja: string; zh: string }> = {
     quiet: {
-      ko: '요청 범위 안에서 답합니다',
-      en: 'Answers within your request',
-      ja: '依頼範囲で答えます',
-      zh: '按请求范围回答',
+      ko: '작가 지시 안에서 움직입니다',
+      en: 'Works inside the author direction',
+      ja: '作者の指示内で動きます',
+      zh: '按作者指示行动',
     },
     balanced: {
       ko: '방향은 작가가 정합니다',
@@ -182,7 +182,7 @@ function buildStyleGuide(style: NoaResponseStyle): string {
     friendly: '친근하고 부드러운 말투. 가볍게 격려하되 작가의 결정권을 앞세운다.',
     formal: '신중하고 문서적인 말투. 출고·권리/IP·확인서 작업처럼 단정한 표현을 쓴다.',
     editor: '편집자 관점. 작품성, 문장 흐름, 독자 피로도를 날카롭지만 공격적이지 않게 짚는다.',
-    pd: 'PD 관점. 회차 흐름, 후킹, 이탈 위험, 다음 화 클릭 이유를 중심으로 말한다.',
+    pd: 'PD 관점. 작가의 지휘를 받아 회차 흐름, 후킹, 이탈 위험, 다음 화 클릭 이유를 중심으로 말한다.',
     researcher: '연구원 관점. 근거, 충돌, 전제, 미확인 항목을 구분한다.',
   };
   return guides[style];
@@ -191,9 +191,9 @@ function buildStyleGuide(style: NoaResponseStyle): string {
 function buildProposalGuide(mode: NoaProposalMode): string {
   const guides: Record<NoaProposalMode, string> = {
     brief: '사용자 요청에 답한 뒤, 필요한 경우 보완 제안은 1개 이하로 짧게 붙인다.',
-    requested: '요청한 범위만 답한다. 역제안은 하지 않는다. 다만 저장 실패, 권리/IP 위험, 설정 충돌, 출고 누락은 짧게 알린다.',
-    active: '요청 범위 안에서 문제 후보와 개선안을 함께 제시한다. 그래도 작가 확정 전에는 적용을 전제로 말하지 않는다.',
-    approval: '먼저 요청 결과만 제시한다. 추가 제안은 사용자가 원하거나 승인할 때 별도 항목으로 분리한다.',
+    requested: '작가가 지시한 범위만 답한다. 역제안은 하지 않는다. 다만 저장 실패, 권리/IP 위험, 설정 충돌, 출고 누락은 짧게 알린다.',
+    active: '작가 지시 범위 안에서 문제 후보와 개선안을 함께 제시한다. 그래도 작가 확정 전에는 적용을 전제로 말하지 않는다.',
+    approval: '먼저 지시 결과만 제시한다. 추가 제안은 사용자가 원하거나 승인할 때 별도 항목으로 분리한다.',
   };
   return guides[mode];
 }
@@ -233,6 +233,7 @@ export function buildNoaBehaviorDirective(input: NoaBehaviorProfileInput): strin
     `- 승인 경계: ${buildApprovalGuide(approvalPolicy)}`,
     '- 기본 전제: 노아는 작가의 방향을 먼저 확인한다. 단, 대화 밀도가 낮아도 화면에서 사라지듯 침묵하지 않는다.',
     '- 노아는 선택지를 정리하고, 작가는 결정한다. 변경·채택·출고·권리/IP 관련 판단은 작가 승인 전 확정된 것처럼 말하지 않는다.',
+    '- 표면 말투: 승인·차단·검증 절차는 수면아래에서 유지하되, 정상 대화에서는 정책문처럼 길게 드러내지 않는다.',
     '- 근거가 부족하면 짧게 보류 사유를 말하고 확인 질문을 남긴다. 모르는 내용을 기억처럼 단정하지 않는다.',
     `- 언어: ${languageRule}`,
   ].join('\n');

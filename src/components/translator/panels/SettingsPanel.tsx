@@ -134,12 +134,12 @@ export function SettingsPanel() {
 
         <section className="space-y-2">
           <h3 className="text-[12px] font-semibold text-text-secondary tracking-wide">
-            {langKo ? 'DeepSeek (번역 전용)' : 'DeepSeek (translator)'}
+            {langKo ? '전용 번역 연결 키' : 'Dedicated translation key'}
           </h3>
           <p className="text-[12px] text-text-secondary leading-relaxed">
             {langKo
-              ? 'DeepSeek으로 번역할 때만 필요합니다. 위 공통 연결 키와는 따로 저장됩니다.'
-              : 'Only when the engine is DeepSeek. Separate from the shared connection-key list.'}
+              ? '특정 번역 엔진을 직접 연결할 때만 씁니다. 로어가드 공통 연결 키와는 따로 보관됩니다.'
+              : 'Only used when you connect a specific translation engine directly. Stored separately from shared Loreguard keys.'}
           </p>
           <form
             className="space-y-1.5"
@@ -159,7 +159,7 @@ export function SettingsPanel() {
               onChange={(e) =>
                 setApiKeys((prev) => ({ ...prev, deepseek: e.target.value }))
               }
-              placeholder={langKo ? 'sk-…' : 'sk-…'}
+              placeholder={langKo ? '연결 키 입력' : 'Enter connection key'}
               className="w-full rounded-lg border border-border bg-bg-primary px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-tertiary focus:border-accent-cyan/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50"
             />
           </form>

@@ -3,6 +3,7 @@ import { Send, Sync, X } from "@/components/loreguard/icons";
 import {
   MentionDropdown,
   ModelPickerInline,
+  ReasoningLevelInline,
   type MentionItem,
 } from "@/components/loreguard/ComposerExtras";
 import { L4 } from "@/lib/i18n";
@@ -61,6 +62,7 @@ export function NoaRequestComposer({
         />
       )}
       <ModelPickerInline language={language} hostedProviders={hostedProviders} disabled={isGenerating} />
+      <ReasoningLevelInline language={language} disabled={isGenerating} />
       <input
         ref={inputRef}
         className="wd-in-field"

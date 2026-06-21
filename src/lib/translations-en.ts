@@ -374,11 +374,11 @@ const translations = {
     "askQuestions": "Ask in the input below"
   },
   "hfcp": {
-    "engagement": "Engagement",
-    "normalFree": "Free Chat",
-    "normalAnalysis": "Analysis",
-    "limited": "Limited",
-    "silent": "Silent"
+    "engagement": "Pick up",
+    "normalFree": "Natural",
+    "normalAnalysis": "Structured",
+    "limited": "Brief",
+    "silent": "Check first"
   },
   "syncReminder": {
     "lastSyncPrefix": "☁️ Last sync: ",
@@ -1106,15 +1106,15 @@ const translations = {
     "mustResolveDesc": "Climax arc — high priority"
   },
   "hfcpLabels": {
-    "engagement": "[HFCP Mode: Engagement] Respond warmly and proactively.",
-    "normalFree": "[HFCP Mode: Normal] Respond naturally.",
-    "normalAnalysis": "[HFCP Mode: Analysis] Respond with structure and logic.",
-    "limited": "[HFCP Mode: Limited] Respond concisely, essentials only.",
-    "silent": "[HFCP Mode: Silent] Respond with questions only. No direct answers.",
-    "nrgVariation": "[NRG: Variation] Use different structure from previous answer.",
-    "nrgFrameShift": "[NRG: Frame Shift] Approach from a completely different angle.",
-    "nrgPerspectiveShift": "[NRG: Perspective Shift] Use exploratory/critical perspective.",
-    "nrgMetaAck": "[NRG: Meta-Ack] Acknowledge repetition and offer new angle."
+    "engagement": "Pick up the author's lead warmly while keeping the author in control.",
+    "normalFree": "Answer naturally and keep extra choices short.",
+    "normalAnalysis": "Use structure and logic without sounding like a policy notice.",
+    "limited": "Keep only the essentials and reduce unsolicited alternatives.",
+    "silent": "Reduce firm conclusions; leave one needed check question or hold reason.",
+    "nrgVariation": "Answer with a different structure than before.",
+    "nrgFrameShift": "Avoid repeating the same frame; approach from another angle.",
+    "nrgPerspectiveShift": "Switch to an exploratory or critical perspective.",
+    "nrgMetaAck": "For a repeated question, shift briefly to a fresh angle."
   },
   "archivePage": {
     "archiveLabel": "History",

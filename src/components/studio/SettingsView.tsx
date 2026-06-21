@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useEffect, useState } from 'react';
-import { AppLanguage } from '@/lib/studio-types';
+import type { AppLanguage, ChatSession, StoryConfig } from '@/lib/studio-types';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
@@ -76,6 +76,7 @@ interface SettingsViewProps {
   versionedBackups?: VersionedBackup[];
   onRestoreBackup?: (timestamp: number) => Promise<boolean>;
   onRefreshBackups?: () => void;
+  currentSession?: ChatSession | null;
 }
 
 type SettingsTab =
@@ -89,6 +90,7 @@ type SettingsTab =
   | 'developer';
 
 const TAB_STORAGE_KEY = 'noa_settings_tab';
+const DEFAULT_QUICK_TAB_IDS: SettingsTab[] = ['workspace', 'noa', 'storage', 'records'];
 
 function normalizeSettingsTab(value: string | null, showDeveloperTab: boolean): SettingsTab | null {
   switch (value) {
@@ -125,6 +127,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   versionedBackups,
   onRestoreBackup,
   onRefreshBackups,
+  currentSession = null,
 }) => {
   // createT 호출 결과를 이 스코프에서는 사용하지 않지만, 하위 분기 컴포넌트가 language 기반 재렌더를
   // 요구할 때 훅/분기 분할 로직이 의존하므로 제거하지 않고 underscore prefix 로 "의도적 미사용"을 명시.
@@ -222,6 +225,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         [tab.label, tab.desc, ...tab.keywords].some((value) => value.toLowerCase().includes(normalizedQuery)),
       )
     : tabs;
+  const quickTabs = (
+    normalizedQuery
+      ? visibleTabs
+      : DEFAULT_QUICK_TAB_IDS
+          .map((id) => tabs.find((tab) => tab.id === id))
+          .filter((tab): tab is (typeof tabs)[number] => Boolean(tab))
+  ).slice(0, 4);
   const updateSettingsQuery = (value: string) => {
     setSettingsQuery(value);
     const nextQuery = value.trim().toLowerCase();
@@ -230,6 +240,35 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       [tab.label, tab.desc, ...tab.keywords].some((item) => item.toLowerCase().includes(nextQuery)),
     );
     if (nextTab && nextTab.id !== activeTab) switchTab(nextTab.id);
+  };
+  const focusSettingsTab = (tab: SettingsTab) => {
+    if (typeof window === 'undefined') return;
+    const schedule = window.requestAnimationFrame ?? ((callback: FrameRequestCallback) => window.setTimeout(callback, 0));
+    schedule(() => {
+      document.getElementById(`settings-tab-${tab}`)?.focus();
+    });
+  };
+  const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: SettingsTab) => {
+    const currentIndex = visibleTabs.findIndex((item) => item.id === tab);
+    if (currentIndex < 0) return;
+
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIndex = (currentIndex + 1) % visibleTabs.length;
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIndex = (currentIndex - 1 + visibleTabs.length) % visibleTabs.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = visibleTabs.length - 1;
+    }
+
+    if (nextIndex == null) return;
+    event.preventDefault();
+    const nextTab = visibleTabs[nextIndex]?.id;
+    if (!nextTab) return;
+    switchTab(nextTab);
+    focusSettingsTab(nextTab);
   };
 
   return (
@@ -262,6 +301,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           })}
           className="w-full rounded-xl border border-border bg-bg-primary px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
         />
+        <div className="mt-3 flex flex-wrap items-center gap-2" aria-label={L4(language, { ko: '설정 빠른 길', en: 'Settings shortcuts', ja: '設定ショートカット', zh: '设置快捷入口' })}>
+          <span className="px-1 text-[11px] font-semibold text-text-tertiary">
+            {normalizedQuery
+              ? L4(language, { ko: '검색 결과', en: 'Matches', ja: '検索結果', zh: '搜索结果' })
+              : L4(language, { ko: '빠른 길', en: 'Quick path', ja: '近道', zh: '快捷入口' })}
+          </span>
+          {quickTabs.length > 0 ? quickTabs.map((tab) => (
+            <button
+              key={`quick-${tab.id}`}
+              type="button"
+              onClick={() => switchTab(tab.id)}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border bg-bg-primary px-3 text-[12px] font-semibold text-text-secondary transition-colors hover:border-accent-blue/35 hover:bg-accent-blue/10 hover:text-accent-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          )) : (
+            <span className="text-[12px] text-text-tertiary">
+              {L4(language, { ko: '맞는 항목이 없습니다.', en: 'No matching shortcut.', ja: '一致する項目がありません。', zh: '没有匹配的快捷入口。' })}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Tab header */}
@@ -278,6 +339,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               aria-controls={`settings-panel-${tab.id}`}
               tabIndex={active ? 0 : -1}
               onClick={() => switchTab(tab.id)}
+              onKeyDown={(event) => onTabKeyDown(event, tab.id)}
               className={`flex min-w-[128px] flex-col items-start gap-1 px-4 py-2.5 text-left text-xs font-black border-b-2 -mb-px transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded-t-lg shrink-0 ${
                 active
                   ? 'border-accent-blue text-accent-blue'
@@ -331,7 +393,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           />
         )}
         {activeTab === 'workspace' && (
-          <WorkspaceTab language={language} />
+          <WorkspaceTab language={language} currentSession={currentSession} />
         )}
         {activeTab === 'records' && (
           <RecordsRightsTab language={language} />
@@ -552,9 +614,27 @@ function StorageBackupTab({
   );
 }
 
-function WorkspaceTab({ language }: { language: AppLanguage }) {
+function readActiveManuscriptFromConfig(config: StoryConfig | null | undefined): string {
+  if (!config) return '';
+  const activeEpisode = config.episode ?? 1;
+  const manuscripts = config.manuscripts ?? [];
+  return (
+    manuscripts.find((entry) => entry.episode === activeEpisode)?.content ??
+    manuscripts[0]?.content ??
+    ''
+  );
+}
+
+function WorkspaceTab({
+  language,
+  currentSession,
+}: {
+  language: AppLanguage;
+  currentSession?: ChatSession | null;
+}) {
   const { config } = useStudioConfig();
-  const episodeSceneSheets = config?.episodeSceneSheets ?? [];
+  const activeConfig = config ?? currentSession?.config ?? null;
+  const episodeSceneSheets = activeConfig?.episodeSceneSheets ?? [];
 
   return (
     <div className="space-y-4">
@@ -574,7 +654,11 @@ function WorkspaceTab({ language }: { language: AppLanguage }) {
       </AccordionGroup>
       <InstallAppSection language={language} />
       <SessionSection language={language} />
-      <PluginsSection language={language} />
+      <PluginsSection
+        language={language}
+        currentSession={currentSession ?? null}
+        readManuscript={() => readActiveManuscriptFromConfig(activeConfig)}
+      />
       <AccordionGroup
         icon={<Sparkles className="w-4 h-4 text-accent-purple shrink-0" />}
         title={L4(language, { ko: '집필 편의', en: 'Writing Comfort', ja: '執筆補助', zh: '写作舒适度' })}

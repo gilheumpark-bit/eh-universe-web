@@ -312,6 +312,18 @@ export default function TabWriting() {
 
 
   const [selfCheckOpen, setSelfCheckOpen] = useState(false);
+  const [readMode, setReadMode] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const ctrl = event.ctrlKey || event.metaKey;
+      if (!ctrl || !event.altKey || event.shiftKey || event.key.toLowerCase() !== "r") return;
+      event.preventDefault();
+      setReadMode((value) => !value);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const writingMetrics = useMemo(() => buildWritingMetrics(editDraft), [editDraft]);
 
@@ -416,6 +428,30 @@ export default function TabWriting() {
     openIpAsset,
     openExport,
   });
+  const compactDraftCount =
+    draftCharCount >= 1000 ? `${Math.round(draftCharCount / 100) / 10}k` : String(draftCharCount);
+  const rightPanelSummary = [
+    {
+      label: L4(language, { ko: "원고", en: "Draft" }),
+      value: compactDraftCount,
+      tone: draftCharCount > 0 ? "green" : "amber",
+    },
+    {
+      label: L4(language, { ko: "기록", en: "Log" }),
+      value: draftCharCount > 0 ? L4(language, { ko: "ON", en: "ON" }) : L4(language, { ko: "대기", en: "Wait" }),
+      tone: draftCharCount > 0 ? "green" : "amber",
+    },
+    {
+      label: L4(language, { ko: "권리", en: "IP" }),
+      value: rightsReady ? L4(language, { ko: "점검", en: "Check" }) : L4(language, { ko: "필요", en: "Need" }),
+      tone: rightsReady ? "green" : "amber",
+    },
+    {
+      label: L4(language, { ko: "출고", en: "Pkg" }),
+      value: savedEpisodeCount > 0 ? String(savedEpisodeCount) : L4(language, { ko: "대기", en: "Wait" }),
+      tone: savedEpisodeCount > 0 ? "green" : "amber",
+    },
+  ] as const;
 
   const undoSnapshot = () => {
     const snap = lastSnapshotRef.current;
@@ -508,7 +544,7 @@ export default function TabWriting() {
       <OutlineBinder config={config} currentEpisode={epNow} language={language} />
 
       {/* center — 집필 모드 + 원고 */}
-      <section className={"wr-center" + (writingWorkspaceMode === "focus" ? " wr-focus-mode" : " wr-advanced-mode")}>
+      <section className={"wr-center" + (writingWorkspaceMode === "focus" ? " wr-focus-mode" : " wr-advanced-mode") + (readMode ? " wr-read-mode" : "")}>
         <TabWritingTopBar
           language={language}
           episode={epNow}
@@ -518,6 +554,8 @@ export default function TabWriting() {
           onWritingWorkspaceModeChange={applyWritingWorkspaceMode}
           fontMode={fontMode}
           onFontModeChange={updateFontMode}
+          readMode={readMode}
+          onToggleReadMode={() => setReadMode((value) => !value)}
           canUndo={canUndo}
           onUndo={doUndo}
           canRedo={canRedo}
@@ -557,7 +595,10 @@ export default function TabWriting() {
           progressPct={episodeProgressPct}
           rows={productionRows}
           canNextEpisode={canNextEpisode}
-          onFocusDraft={() => editDraftRef.current?.focus()}
+          onFocusDraft={() => {
+            if (readMode) setReadMode(false);
+            window.setTimeout(() => editDraftRef.current?.focus(), 0);
+          }}
           onNoaSuggestion={openNoaSuggestionPoint}
           onNextEpisode={goNextEpisode}
         />
@@ -589,6 +630,7 @@ export default function TabWriting() {
           textareaRef={editDraftRef}
           fontMode={fontMode}
           editorViewStyle={editorViewStyle}
+          readMode={readMode}
           config={config}
           snapshotSessionId={snapshotSessionId}
           snapshotEpisode={snapshotEpisode}
@@ -658,6 +700,19 @@ export default function TabWriting() {
           onToggle={toggleWritingBasisPanel}
           onSaveDraft={saveDraftNow}
         />
+        {rightPanelCollapsed ? (
+          <div
+            className="wr-panel-status"
+            aria-label={rightPanelSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+          >
+            {rightPanelSummary.map((item) => (
+              <span key={`${item.label}:${item.value}`} className={`wr-panel-status-chip ${item.tone}`}>
+                <small>{item.label}</small>
+                <b>{item.value}</b>
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         <div className="wr-panel-body" aria-hidden={rightPanelCollapsed}>
         <div className="wr-advanced-summary" aria-label={L4(language, { ko: "고급 작업 요약", en: "Advanced work summary" })}>

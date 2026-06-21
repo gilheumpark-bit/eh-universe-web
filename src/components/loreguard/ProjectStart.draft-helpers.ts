@@ -27,8 +27,6 @@ export function buildNoaInterviewPrompt(draft: ProjectDraft): string {
   const premiseLine = draft.premise.trim() ? `핵심 전제: ${draft.premise.trim()}` : "핵심 전제: 미정";
   const rightsLine = draft.rightsNote.trim() ? `권리 메모: ${draft.rightsNote.trim()}` : "권리 메모: 작성 전";
   const rightsStatusLine = `권리 상태: ${RIGHTS_STATUS_LABEL[draft.rightsStatus]}`;
-  const platformLine = draft.publishPlatform !== PublishPlatform.NONE ? `출고 플랫폼: ${draft.publishPlatform}` : "출고 플랫폼: 미정";
-  const purposeLine = `출고 목적: ${RELEASE_PURPOSE_LABEL[draft.releasePurpose]}`;
   const marketLine = `국가·언어권 기준: ${TARGET_MARKET_LABEL[draft.targetMarket]}`;
   const episodeLine = [
     draft.totalEpisodes.trim() ? `목표 회차 ${draft.totalEpisodes.trim()}` : "목표 회차 미정",
@@ -36,18 +34,24 @@ export function buildNoaInterviewPrompt(draft: ProjectDraft): string {
     draft.releaseCadence.trim() ? `연재 주기 ${draft.releaseCadence.trim()}` : "연재 주기 미정",
   ].join(" / ");
   return [
-    "[새 작품 시작]",
+    "[작품 기준선 만들기]",
     titleLine,
     `형태: ${FORMAT_LABEL[draft.format]}`,
     `대상 언어권: ${TARGET_LANGUAGE_LABEL[draft.targetLanguage]}`,
     marketLine,
-    purposeLine,
-    platformLine,
     episodeLine,
     premiseLine,
     rightsStatusLine,
     rightsLine,
-    "세계관 기준안과 작가가 고를 선택지 5개를 짧게 제안해줘.",
+    "",
+    "아래 5문항으로 세계관 기준선을 잡아줘.",
+    "1. 이 세계에서 현실과 가장 다르게 작동하는 규칙",
+    "2. 지금 이야기를 움직이는 핵심 갈등",
+    "3. 주인공이 가장 강하게 원하는 것",
+    "4. 1화에서 독자가 궁금해해야 할 질문",
+    "5. 나중에 권리/IP와 출고 패키지로 이어질 설정 근거",
+    "",
+    "각 문항마다 작가가 고를 수 있는 선택지 3개와, 바로 써먹을 기준문 1개를 짧게 제안해줘.",
   ].join("\n");
 }
 

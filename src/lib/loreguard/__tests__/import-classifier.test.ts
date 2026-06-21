@@ -265,4 +265,63 @@ describe("classifyImportedText", () => {
       title: "첨부 파일",
     });
   });
+
+  it("영문 캐릭터 시트의 Role/Personality/Appearance 라벨을 캐릭터 후보로 분류한다", () => {
+    const candidates = classifyImportedText(
+      "cast-sheet.md",
+      [
+        "# Character Sheet",
+        "Name: Noah",
+        "Role: archive operator",
+        "Personality: calm, blunt, protective",
+        "Appearance: silver hair and green eyes",
+        "Goal: keep the author's records intact",
+        "Setting notes mention an empire and old city law.",
+      ].join("\n"),
+    );
+
+    expect(candidates[0]).toMatchObject({
+      bucket: "characters",
+      title: "Character Sheet",
+    });
+    expect(candidates[0].reason).toContain("양식 구조 단서");
+  });
+
+  it("영문 world bible 라벨을 세계관 후보로 분류한다", () => {
+    const candidates = classifyImportedText(
+      "setting-bible.md",
+      [
+        "# Setting Bible",
+        "World History: the orbital city split from the ground colonies.",
+        "Magic System: memory seals are powered by recorded consent.",
+        "Factions: the council, the guild, and the archive office.",
+        "Culture: contracts are spoken aloud before every expedition.",
+      ].join("\n"),
+    );
+
+    expect(candidates[0]).toMatchObject({
+      bucket: "world",
+      title: "Setting Bible",
+    });
+    expect(candidates[0].reason).toContain("양식 구조 단서");
+  });
+
+  it("영문 rights/contract 라벨을 권리/IP 후보로 분류한다", () => {
+    const candidates = classifyImportedText(
+      "contract-notes.md",
+      [
+        "# Contract Notes",
+        "Rights: adaptation rights are reserved by the author.",
+        "License: non-exclusive translation license only.",
+        "Revenue Share: settlement is handled per platform report.",
+        "Pitch: webtoon and audio drama submission package.",
+      ].join("\n"),
+    );
+
+    expect(candidates[0]).toMatchObject({
+      bucket: "rightsIp",
+      title: "Contract Notes",
+    });
+    expect(candidates[0].reason).toContain("양식 구조 단서");
+  });
 });

@@ -21,7 +21,7 @@ export function TabWritingEmptyState({ language, onCreate }: TabWritingEmptyStat
             {L4(language, { ko: "아직 작업 중인 작품이 없습니다.", en: "No work in progress yet." })}
             <br />
             {L4(language, {
-              ko: "새 작품을 만들면 여기에서 원고를 집필할 수 있습니다.",
+              ko: "작품 기준선을 만들면 여기에서 원고를 이어 쓸 수 있습니다.",
               en: "Create a new work to start writing your manuscript here.",
             })}
           </p>
@@ -32,7 +32,7 @@ export function TabWritingEmptyState({ language, onCreate }: TabWritingEmptyStat
             onClick={onCreate}
           >
             <Plus size={15} />
-            {L4(language, { ko: "새 작품 시작", en: "Start a new work" })}
+            {L4(language, { ko: "기준선 만들기", en: "Build baseline" })}
           </button>
         </div>
       </section>

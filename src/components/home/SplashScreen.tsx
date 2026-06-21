@@ -88,7 +88,7 @@ export default function SplashScreen({
       {/* 2026-04-21: desktop 와이드 스크린에서 sparse 해 보이는 문제 완화.
           - gap 압축 (10 → 6) : 세로 공백 제거
           - 파이프라인 요소 간격을 콤팩트하게 */}
-      <div className="relative z-10 w-full max-w-lg mx-auto px-6 py-10 flex flex-col items-center gap-6 sm:gap-8">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 py-10 flex flex-col items-center gap-6 sm:gap-8">
 
         {/* Badge */}
         <div
@@ -116,7 +116,7 @@ export default function SplashScreen({
         <div
           className={`text-center transition-transform duration-700 delay-100 ${mounted ? 'translate-y-0' : 'translate-y-2'}`}
         >
-          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-text-primary leading-snug">
+          <h1 className="font-serif text-[clamp(2.25rem,8vw,3.5rem)] font-bold text-text-primary leading-tight whitespace-nowrap tracking-normal">
             {L4(lang, {
               ko: "작품을 여는 첫 작업실",
               en: "Start a new creative workspace",

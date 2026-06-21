@@ -79,6 +79,12 @@ export function TranslateRail({
 }: TranslateRailProps) {
   const [open, setOpen] = useState(readTxRailOpen);
   const isSheet = useTxRailSheet();
+  const activeLangProgress = Math.round((progress[lang] ?? 0) * 100);
+  const collapsedSummary = [
+    { label: "언어", value: LANGS[lang].flag, tone: "blue" },
+    { label: "진행", value: `${activeLangProgress}%`, tone: activeLangProgress >= 100 ? "green" : activeLangProgress > 0 ? "blue" : "amber" },
+    { label: "회차", value: String(chapters.length), tone: chapters.length > 0 ? "green" : "gray" },
+  ];
 
   const toggle = useCallback(() => {
     setOpen((prev) => {
@@ -110,6 +116,17 @@ export function TranslateRail({
         </button>
         <span className="trail-vlabel" aria-hidden="true">
           언어·회차
+        </span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
         </span>
       </aside>
     );
@@ -256,6 +273,10 @@ export function TranslateRail({
 export function EmptyTranslationRail() {
   const [open, setOpen] = useState(readTxRailOpen);
   const isSheet = useTxRailSheet();
+  const collapsedSummary = [
+    { label: "언어", value: "KR", tone: "gray" },
+    { label: "회차", value: "0", tone: "amber" },
+  ];
 
   const toggle = useCallback(() => {
     setOpen((prev) => {
@@ -281,6 +302,17 @@ export function EmptyTranslationRail() {
         </button>
         <span className="trail-vlabel" aria-hidden="true">
           언어·회차
+        </span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
         </span>
       </aside>
     );

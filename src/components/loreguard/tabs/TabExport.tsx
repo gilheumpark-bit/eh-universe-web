@@ -54,6 +54,7 @@ import TabExportEvidenceSection from "@/components/loreguard/tabs/TabExportEvide
 import TabExportEmptyState from "@/components/loreguard/tabs/TabExportEmptyState";
 import TabExportManuscriptRail from "@/components/loreguard/tabs/TabExportManuscriptRail";
 import { useTabExportModel } from "@/components/loreguard/tabs/TabExport.model";
+import TabExportPremiumRightsPackageCard from "@/components/loreguard/tabs/TabExportPremiumRightsPackageCard";
 import TabExportReleaseOverviewCard from "@/components/loreguard/tabs/TabExportReleaseOverviewCard";
 import {
   downloadTextDocument,
@@ -321,20 +322,22 @@ export default function TabExport() {
       buildCopyrightRegistrationPrep({
         config,
         manuscripts,
-        authorDisplayName: currentSession?.title,
+        authorDisplayName: config?.authorDisplayName,
+        authorLegalName: config?.authorLegalName,
         generatedAtKo: "현재 화면 기준",
       }),
-    [config, currentSession?.title, manuscripts],
+    [config, manuscripts],
   );
   const coreCopyrightPackage = useMemo(
     () =>
       buildCoreCopyrightPackage({
         config,
         manuscripts,
-        authorDisplayName: currentSession?.title,
+        authorDisplayName: config?.authorDisplayName,
+        authorLegalName: config?.authorLegalName,
         generatedAtKo: "현재 화면 기준",
       }),
-    [config, currentSession?.title, manuscripts],
+    [config, manuscripts],
   );
   const rightsProposalAdvisor = useMemo(
     () =>
@@ -435,7 +438,7 @@ export default function TabExport() {
         },
       }),
     );
-  }, [audit, auditTarget, copyrightRegistrationPrep, coreCopyrightPackage, ipResult.score, ipResult.tier, platformFits, rightsProposalAdvisor]);
+  }, [audit, auditTarget, copyrightRegistrationPrep, coreCopyrightPackage, ipResult.tier, platformFits, rightsProposalAdvisor]);
 
   const beginRightsLedgerEdit = useCallback((row: MediaIpPackRightsLedgerRow) => {
     const rowId = row.id ?? row.categoryKo;
@@ -506,6 +509,16 @@ export default function TabExport() {
     setIpParts((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const updateAuthorIdentity = useCallback(
+    (field: "authorDisplayName" | "authorLegalName", value: string) => {
+      setConfig((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    },
+    [setConfig],
+  );
+
   if (!currentSession || !config) {
     return <TabExportEmptyState onCreateProject={() => createNewSession("writing")} />;
   }
@@ -574,6 +587,19 @@ export default function TabExport() {
               onMediaProfileChange={setManualMediaProfileId}
             />
 
+            <TabExportPremiumRightsPackageCard
+              authorDisplayName={config.authorDisplayName ?? ""}
+              authorLegalName={config.authorLegalName ?? ""}
+              certificateOutputPlan={certificateOutputPlan}
+              copyrightRegistrationPrep={copyrightRegistrationPrep}
+              coreCopyrightPackage={coreCopyrightPackage}
+              mediaIpPackPlan={mediaIpPackPlan}
+              packagePlan={packagePlan}
+              rightsLedgerMissingCount={rightsLedgerMissingCount}
+              rightsProposalAdvisor={rightsProposalAdvisor}
+              onSelectSection={setActiveExportSection}
+            />
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
               <div className="pcard">
                 <div className="stat-label">회차 원고</div>
@@ -635,6 +661,9 @@ export default function TabExport() {
                 onDownloadRightsProposalAdvisor={downloadRightsProposalAdvisor}
                 copyrightRegistrationPrep={copyrightRegistrationPrep}
                 onDownloadCopyrightRegistrationPrep={downloadCopyrightRegistrationPrep}
+                authorDisplayName={config.authorDisplayName ?? ""}
+                authorLegalName={config.authorLegalName ?? ""}
+                onAuthorIdentityChange={updateAuthorIdentity}
                 rightsLedgerRows={rightsLedgerRows}
                 rightsLedgerMissingCount={rightsLedgerMissingCount}
                 rightsLedgerMissingLabelsByRowId={rightsLedgerMissingLabelsByRowId}

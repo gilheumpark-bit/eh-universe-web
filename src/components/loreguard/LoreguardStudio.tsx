@@ -236,7 +236,7 @@ export default function LoreguardStudio() {
     };
   }, [setActiveTab]);
 
-  // 검색 팔레트 'Action' 카테고리 — 실 핸들러만 (스텁 금지)
+  // 검색 팔레트 'Action' 카테고리 — 실 핸들러만 연결
   const paletteActions = useMemo<StudioAction[]>(
     () => [
       {
@@ -439,6 +439,7 @@ export default function LoreguardStudio() {
         /* [G1] 헤더 편의 — 즉시 백업 대상(구 StudioStatusBar 와 동일 소스) + 4언어 */
         projectId={currentProjectId}
         language={language}
+        genreTone={currentSession?.config?.genre ?? currentSession?.config?.genreMode ?? null}
       >
         <LoreguardTabProvider value={tabCtx}>
           <div className="lg-workflow-frame">
@@ -787,6 +788,7 @@ export default function LoreguardStudio() {
                 versionedBackups={versionedBackups}
                 onRestoreBackup={doRestoreVersionedBackup}
                 onRefreshBackups={refreshBackupList}
+                currentSession={currentSession}
               />
             </div>
           </div>

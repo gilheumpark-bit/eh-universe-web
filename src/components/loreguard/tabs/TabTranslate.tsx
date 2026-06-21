@@ -1,7 +1,5 @@
 "use client";
 
-/* TabTranslate — 실 원고 기반 문단 번역, 검수 패널, 출고용 번역본 저장을 조립한다. */
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Sparkle,
@@ -10,18 +8,16 @@ import {
   Download,
   Eye,
   Send,
+  Lock,
+  Check,
 } from "@/components/loreguard/icons";
 import { useStudio } from "@/app/studio/StudioContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioExport } from "@/hooks/useStudioExport";
-// [C-translate-panels 2026-06-10] 구 번역 셸 3패널 (품질 감사·사인오프·세그먼트 채택)
-// slide-over — useStudio 어댑터 브리지 (구 컨텍스트 통째 마운트 X). 패널 자체는 dynamic.
 import TranslatePanels, { type TranslatePanelKind } from "@/components/loreguard/TranslatePanels";
 import type { EpisodeManuscript, StoryConfig, TranslatedManuscriptEntry } from "@/lib/studio-types";
 import type { TranslationProgress } from "@/engine/translation";
 import { useLoreguardTab } from "@/components/loreguard/LoreguardTabContext";
-// [Z1a-UI 2026-06-11] 결정적 품질 점검 최소 진입점 — Catastrophic + 어색한 표현 린트.
-// 순수 함수 (LLM 0) — 전량 번역 확정 시에만 산출 (부분 번역 오탐 방지).
 import { runCatastrophicCheck, type CatastrophicReport } from "@/lib/translation/ncg-nct";
 import { lintTranslationese, type TranslationeseLintResult } from "@/lib/translation/translationese-lint";
 import {
@@ -46,10 +42,6 @@ import { readTxPanelOpen, writeTxPanelOpen } from "./TabTranslate.panel-state";
 export { SEG_JOIN, mapStoredToSegments, splitIntoSegments, upsertTranslatedEntry } from "./TabTranslate.logic";
 import { mapStoredToSegments, pickActiveManuscript, splitIntoSegments, termsInText, upsertTranslatedEntry } from "./TabTranslate.logic";
 
-// ============================================================
-// PART 8 — orchestrator: 상태 소유 + 3-pane 조립 (tx-grid)
-// ============================================================
-
 export default function TabTranslate() {
   const { setActiveTab: setLoreguardTab } = useLoreguardTab();
   const studio = useStudio();
@@ -71,7 +63,6 @@ export default function TabTranslate() {
 
   const config = currentSession?.config ?? null;
 
-  // ── 실 원고 → segments ──────────────────────────────────
   const activeManuscript = useMemo(() => pickActiveManuscript(config), [config]);
   const glossary = useMemo(() => config?.translationConfig?.glossary ?? [], [config]);
   const glossarySources = useMemo(() => glossary.map((g) => g.source).filter(Boolean), [glossary]);
@@ -81,7 +72,6 @@ export default function TabTranslate() {
     return segs.map((s) => ({ ...s, terms: termsInText(s.ko, glossarySources) }));
   }, [activeManuscript, glossarySources]);
 
-  // 회차 목록 (rail) — config.manuscripts 기반
   const chapters = useMemo(
     () =>
       (config?.manuscripts ?? [])
@@ -91,16 +81,12 @@ export default function TabTranslate() {
     [config],
   );
 
-  // ── UI 상태 ─────────────────────────────────────────────
   const [lang, setLang] = useState<LangKey>("en");
   const [layout, setLayout] = useState<LayoutMode>("split");
   const [selectedId, setSelectedId] = useState<string>("");
   const [activeTerm, setActiveTerm] = useState<string | null>(null);
   const [aiText, setAiText] = useState("");
-  // [C-translate-panels] 검수 도구 slide-over (품질 감사·사인오프·채택) — null = 닫힘
   const [openPanel, setOpenPanel] = useState<TranslatePanelKind | null>(null);
-  // [G4-panel-collapse] 검수 패널 접힘/펴기 — noa-lg-tx-panel 영속.
-  // lazy init (트리는 dynamic ssr:false — LoreguardShell 테마와 동일 안전 규칙).
   const [panelOpen, setPanelOpen] = useState<boolean>(() => readTxPanelOpen());
   const togglePanel = useCallback(() => {
     setPanelOpen((prev) => {
@@ -110,24 +96,15 @@ export default function TabTranslate() {
     });
   }, []);
 
-  // 번역 결과 / 제안 / 상태 — key `${lang}:${segId}`
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
   const [statuses, setStatuses] = useState<Record<string, SegStatus>>({});
   const [avgScore, setAvgScore] = useState<number | null>(null);
   const [progressLabel, setProgressLabel] = useState<string>("");
 
-  // 첫 세그먼트 자동 선택
   const firstId = segments[0]?.id ?? "";
   const effectiveSelected = selectedId && segments.some((s) => s.id === selectedId) ? selectedId : firstId;
 
-  // ── 번역 결과 영속화: config.translatedManuscripts upsert (setConfig → IndexedDB+Firestore) ──
-  // 확정(done) 세그먼트를 순서대로 결합해 (회차 + 대상언어) 단위 엔트리로 저장.
-  // 로컬 state 만의 데이터 유실(새로고침·탭 전환·세션 변경 시)을 차단한다.
-  // translatedManuscripts upsert 산출(순수) — `prev` 기준 다음 목록을 계산.
-  // 반환 null = 변경 없음(엔트리 미존재 시 제거 불필요 / 고아 회차 등). persistTranslations 와
-  // handleSelectChapter 가 동일 로직을 공유해, 회차 전환 시 단일 setConfig updater 안에서
-  // 번역 영속화 + episode 변경을 함께 처리(stale-closure 2회 write 클로버 방지)하기 위함.
   const computeTranslatedManuscripts = useCallback(
     (
       prev: StoryConfig,
@@ -135,7 +112,6 @@ export default function TabTranslate() {
         translations?: Record<string, string>;
         statuses?: Record<string, SegStatus>;
         avgScore?: number | null;
-        /** [W2-translate 2026-06-11] 명시적 사용자 편집 플래그 — true 일 때만 사인오프 리셋. */
         dirty?: boolean;
       },
     ): TranslatedManuscriptEntry[] | null => {
@@ -147,7 +123,6 @@ export default function TabTranslate() {
       const ordered = segments
         .map((s) => ({ id: s.id, txt: trans[prefix + s.id] }))
         .filter((x): x is { id: string; txt: string } => !!x.txt && stat[x.id] === "done");
-      // 순수 코어로 위임 — 사인오프 리셋은 명시적 편집(dirty)일 때만(비멱등 비교 제거).
       return upsertTranslatedEntry({
         prev,
         episode: activeManuscript.episode,
@@ -167,7 +142,6 @@ export default function TabTranslate() {
       translations?: Record<string, string>;
       statuses?: Record<string, SegStatus>;
       avgScore?: number | null;
-      /** [W2-translate 2026-06-11] 실제 편집 액션만 true — 사인오프 리셋 게이트. */
       dirty?: boolean;
     }) => {
       if (!activeManuscript) return;
@@ -180,9 +154,6 @@ export default function TabTranslate() {
     [activeManuscript, computeTranslatedManuscripts, setConfig],
   );
 
-  // ── 회차 전환 (rail chapter 클릭) ───────────────────────
-  // 전환 직전 현재 회차의 진행 중(확정) 번역을 먼저 영속화 → 데이터 유실 방지.
-  // 회차 이동 경로 재사용: TabWriting goPrev/goNext 와 동일한 setConfig episode 패턴.
   const handleSelectChapter = useCallback(
     (episode: number) => {
       if (episode === config?.episode) return;
@@ -202,17 +173,10 @@ export default function TabTranslate() {
     [config, setConfig],
   );
 
-  // ── 복원: config.translatedManuscripts → 로컬 번역 버퍼 (회차/언어 전환 시 1회) ──
-  // best-effort: 저장된 translatedContent 를 동일 문장 분해기로 재분해 후 세그먼트에 1:1 매핑.
-  // segId 는 splitIntoSegments 에서 위치 기반(s0,s1,…)이라 회차마다 동일 인덱스가 충돌한다.
-  // 따라서 머지(...prev) 가 아니라 회차 경계에서 *현재 lang/현재 회차 세그먼트* 키를 전량
-  // 제거(strip)한 뒤 stored 로만 재구성한다 — 이전 회차의 잔존 버퍼가 신규 회차로 누수되어
-  // computeTranslatedManuscripts 가 엉뚱한 회차 엔트리로 영속하는 교차오염을 차단(replace 시맨틱).
   useEffect(() => {
     if (!activeManuscript) return;
     const target = LANG_TO_TARGET[lang];
     const prefix = lang + ":";
-    // 현재 회차 세그먼트가 소유한 키 집합 — 이 키들만 회차 경계에서 strip 대상.
     const ownTransKeys = new Set(segments.map((seg) => prefix + seg.id));
     const ownStatusKeys = new Set(segments.map((seg) => seg.id));
     const stripTrans = (prev: Record<string, string>): Record<string, string> => {
@@ -631,6 +595,29 @@ export default function TabTranslate() {
     zh: progressForLang("zh"),
   };
   const stats = { progress: liveProgress, done: doneCount, total, avgScore };
+  const lockedGlossaryCount = glossary.filter((term) => term.locked).length;
+  const txDecisionItems = [
+    {
+      label: "원문 보존",
+      value: total > 0 ? `${total}문단 기준` : "원고 대기",
+      Icon: Eye,
+    },
+    {
+      label: "용어 고정",
+      value: lockedGlossaryCount > 0 ? `${lockedGlossaryCount}/${glossary.length}개 고정` : `${glossary.length}개 용어`,
+      Icon: Lock,
+    },
+    {
+      label: "검수",
+      value: qualityGate ? "품질 게이트 준비" : "확정 후 점검",
+      Icon: Check,
+    },
+    {
+      label: "사인오프",
+      value: doneCount === total && total > 0 ? "내보내기 준비" : `${doneCount}/${total} 확정`,
+      Icon: Download,
+    },
+  ] as const;
 
   // ── 빈 상태 가드 ────────────────────────────────────────
   if (!currentSession) {
@@ -672,6 +659,20 @@ export default function TabTranslate() {
       />
 
       <div className="tx-center">
+        <div className="tx-decision-strip" aria-label="번역 품질 루프">
+          <div className="tx-decision-copy">
+            <span>번역 품질 루프</span>
+            <b>원문 보존 → 용어 고정 → 검수 → 사인오프</b>
+          </div>
+          {txDecisionItems.map(({ label, value, Icon }) => (
+            <div key={label} className="tx-decision-item">
+              <Icon size={14} aria-hidden="true" />
+              <span>{label}</span>
+              <b>{value}</b>
+            </div>
+          ))}
+        </div>
+
         <TranslateEditor
           segments={segments}
           lang={lang}

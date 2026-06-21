@@ -7,6 +7,11 @@ global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockReset();
+  localStorage.setItem('ff_IMAGE_GENERATION', 'true');
+});
+
+afterEach(() => {
+  localStorage.clear();
 });
 
 // ============================================================
@@ -20,6 +25,16 @@ describe('generateImage', () => {
     'blurry',
     'sk-test-key',
   ];
+
+  it('short-circuits when visual endpoint is not explicitly enabled', async () => {
+    localStorage.removeItem('ff_IMAGE_GENERATION');
+
+    const result = await generateImage(...BASE_ARGS);
+
+    expect(result.images).toEqual([]);
+    expect(result.error).toBe('Visual endpoint is disabled.');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 
   it('returns images on successful response', async () => {
     const mockImages = [

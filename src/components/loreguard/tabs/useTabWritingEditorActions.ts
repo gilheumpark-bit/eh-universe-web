@@ -1,6 +1,14 @@
 "use client";
 
-import { startTransition, useCallback, type Dispatch, type MutableRefObject, type RefObject, type SetStateAction } from "react";
+import {
+  startTransition,
+  useCallback,
+  useRef,
+  type Dispatch,
+  type MutableRefObject,
+  type RefObject,
+  type SetStateAction,
+} from "react";
 import type {
   ChangeEvent as ReactChangeEvent,
   ClipboardEvent as ReactClipboardEvent,
@@ -9,6 +17,10 @@ import type {
 import type { ReplaceRangeInfo } from "@/components/studio/InlineActionPopup";
 import type { CreativeEventLogger } from "@/hooks/useCreativeEventLogger";
 import { L4 } from "@/lib/i18n";
+import {
+  detectExternalInputBurst,
+  shouldShowLargePasteNotice,
+} from "@/lib/creative-process/input-origin-detection";
 import type { ProactiveSuggestion, StoryConfig } from "@/lib/studio-types";
 import { safeReplaceRange } from "@/lib/rewrite-range";
 
@@ -70,6 +82,34 @@ export function useTabWritingEditorActions({
   snapshotEpisode,
   snapshotSessionId,
 }: UseTabWritingEditorActionsArgs) {
+  const externalInputBaselineRef = useRef<{ at: number; content: string } | null>(null);
+  const lastInputAtRef = useRef<number>(0);
+
+  const markLoggedBaseline = useCallback(
+    (next: string) => {
+      if (!snapshotSessionId) return;
+      lastLoggedRef.current = { text: next, sessionId: snapshotSessionId, episode: snapshotEpisode };
+    },
+    [lastLoggedRef, snapshotEpisode, snapshotSessionId],
+  );
+
+  const logExternalInput = useCallback(
+    (label: string, content: string, licenseNote?: string) => {
+      if (content.trim().length === 0) return;
+      externalInputBaselineRef.current = { at: Date.now(), content };
+      fireLog(
+        getCreativeLogger()?.logExternalImport({
+          targetType: "manuscript",
+          targetId: manuscriptTargetId,
+          label,
+          content,
+          licenseNote,
+        }),
+      );
+    },
+    [fireLog, manuscriptTargetId],
+  );
+
   const takeSnapshot = useCallback(
     (label: string) => {
       if (!currentSession) return;
@@ -150,7 +190,38 @@ export function useTabWritingEditorActions({
 
   const handleEditorChange = useCallback(
     (event: ReactChangeEvent<HTMLTextAreaElement>) => {
+      const now = Date.now();
       const next = event.target.value;
+      const pendingExternalInput = externalInputBaselineRef.current;
+      const hasFreshExternalInput =
+        pendingExternalInput !== null &&
+        now - pendingExternalInput.at < 5_000 &&
+        next.includes(pendingExternalInput.content.slice(0, Math.min(80, pendingExternalInput.content.length)));
+
+      if (hasFreshExternalInput) {
+        markLoggedBaseline(next);
+        externalInputBaselineRef.current = null;
+      } else {
+        const burst = detectExternalInputBurst({
+          before: editDraft,
+          after: next,
+          elapsedMs: now - lastInputAtRef.current,
+          isComposing: isComposingRef.current,
+        });
+        if (burst) {
+          logExternalInput(
+            L4(language, { ko: "빠른 대량 입력 감지", en: "Fast bulk input detected" }),
+            burst.insertedText,
+            L4(language, {
+              ko: `입력 역학 기준 외부 편입 후보 (${burst.reason}, ${burst.charsPerSecond}자/초)`,
+              en: `Marked as external-import candidate by input dynamics (${burst.reason}, ${burst.charsPerSecond} chars/sec)`,
+            }),
+          );
+          markLoggedBaseline(next);
+        }
+      }
+      lastInputAtRef.current = now;
+
       if (hugePasteRef.current) {
         hugePasteRef.current = false;
         startTransition(() => setEditDraft(next));
@@ -158,16 +229,34 @@ export function useTabWritingEditorActions({
         setEditDraft(next);
       }
     },
-    [hugePasteRef, setEditDraft],
+    [
+      editDraft,
+      hugePasteRef,
+      isComposingRef,
+      language,
+      logExternalInput,
+      markLoggedBaseline,
+      setEditDraft,
+    ],
   );
 
   const handleEditorPaste = useCallback((event: ReactClipboardEvent<HTMLTextAreaElement>) => {
     const text = event.clipboardData?.getData("text") ?? "";
-    if (text.length > 100_000) {
+    if (text.trim().length > 0) {
+      logExternalInput(
+        L4(language, { ko: "클립보드 붙여넣기", en: "Clipboard paste" }),
+        text,
+        L4(language, {
+          ko: "사용자가 원고 편집창에 붙여넣은 외부 텍스트입니다.",
+          en: "Text pasted by the author into the manuscript editor.",
+        }),
+      );
+    }
+    if (shouldShowLargePasteNotice(text)) {
       hugePasteRef.current = true;
       setPasteNotice(true);
     }
-  }, [hugePasteRef, setPasteNotice]);
+  }, [hugePasteRef, language, logExternalInput, setPasteNotice]);
 
   const handleEditorCompositionStart = useCallback(() => {
     isComposingRef.current = true;

@@ -34,6 +34,8 @@ type TabWritingTopBarProps = {
   onWritingWorkspaceModeChange: (mode: WritingWorkspaceMode) => void;
   fontMode: WritingFontMode;
   onFontModeChange: (mode: WritingFontMode) => void;
+  readMode: boolean;
+  onToggleReadMode: () => void;
   canUndo: boolean;
   onUndo: () => void;
   canRedo: boolean;
@@ -65,6 +67,8 @@ export default function TabWritingTopBar({
   onWritingWorkspaceModeChange,
   fontMode,
   onFontModeChange,
+  readMode,
+  onToggleReadMode,
   canUndo,
   onUndo,
   canRedo,
@@ -133,6 +137,23 @@ export default function TabWritingTopBar({
           </button>
         </div>
         <FontModeToggle mode={fontMode} onChange={onFontModeChange} language={language} />
+        <button
+          type="button"
+          className={"mini-btn wr-act" + (readMode ? " ok" : "")}
+          aria-label={L4(language, {
+            ko: readMode ? "쓰기 모드로 돌아가기" : "원고를 읽기 모드로 검토",
+            en: readMode ? "Return to editing" : "Review draft in reading mode",
+          })}
+          aria-pressed={readMode}
+          title={L4(language, {
+            ko: readMode ? "쓰기 모드로 돌아가기 (Ctrl+Alt+R)" : "원고를 책처럼 읽으며 흐름을 점검합니다. (Ctrl+Alt+R)",
+            en: readMode ? "Return to editing (Ctrl+Alt+R)" : "Read the draft to check flow. (Ctrl+Alt+R)",
+          })}
+          onClick={onToggleReadMode}
+        >
+          <Scroll size={13} />
+          {L4(language, { ko: readMode ? "쓰기" : "리딥", en: readMode ? "Edit" : "Read" })}
+        </button>
         <button
           type="button"
           className="mini-btn wr-act"

@@ -14,9 +14,10 @@
 // ============================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollText, Loader2, CheckCircle2, AlertCircle, FileText, Download, ChevronDown } from 'lucide-react';
+import { ScrollText, Loader2, CheckCircle2, AlertCircle, FileText, Download, ChevronDown, ShieldCheck } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
+import { useCreativeProcessTrackingPreference } from '@/hooks/useCreativeProcessTrackingPreference';
 import type { AppLanguage } from '@/lib/studio-types';
 import {
   buildCertificate,
@@ -109,6 +110,7 @@ const CreativeProcessSection: React.FC<CreativeProcessSectionProps> = ({ languag
   const [status, setStatus] = useState<IssueStatus>('idle');
   const [lastFilename, setLastFilename] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [trackingEnabled, setTrackingEnabled] = useCreativeProcessTrackingPreference();
 
   const lastRefreshRef = useRef<number>(0);
 
@@ -332,6 +334,22 @@ const CreativeProcessSection: React.FC<CreativeProcessSectionProps> = ({ languag
         ja: 'Loreguardでの作業過程をまとめた資料を発行します。法的効力なし。',
         zh: '生成在 Loreguard 上的工作过程记录。不具有法律效力。',
       }),
+      tracking: {
+        title: L4(language, {
+          ko: '발급용 과정기록',
+          en: 'Journal recording',
+          ja: '発行用の過程記録',
+          zh: '发行用过程记录',
+        }),
+        desc: L4(language, {
+          ko: '켜면 이후 집필·설정 변경과 외부 편입 후보가 기록됩니다. 끄면 일반 작업 도구처럼 기록을 남기지 않습니다.',
+          en: 'When on, later writing, setting changes, and external-import candidates are recorded. When off, no automatic work record is kept.',
+          ja: 'オンにすると以後の執筆・設定変更・外部取り込み候補を記録します。オフでは通常の作業ツールとして動作します。',
+          zh: '开启后记录之后的写作、设定变更和外部导入候选。关闭时不会自动留下工作记录。',
+        }),
+        on: L4(language, { ko: '기록 중', en: 'Recording', ja: '記録中', zh: '记录中' }),
+        off: L4(language, { ko: '꺼짐', en: 'Off', ja: 'オフ', zh: '关闭' }),
+      },
       noProject: L4(language, {
         ko: '프로젝트를 먼저 선택하세요.',
         en: 'Select a project first.',
@@ -392,6 +410,33 @@ const CreativeProcessSection: React.FC<CreativeProcessSectionProps> = ({ languag
           </div>
         ) : (
           <>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-bg-secondary/30 border border-border">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-bg-secondary rounded-xl shrink-0">
+                  <ShieldCheck className="w-4 h-4 text-accent-amber" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-text-primary">{labels.tracking.title}</div>
+                  <div className="text-[12px] text-text-tertiary">{labels.tracking.desc}</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={trackingEnabled}
+                onClick={() => setTrackingEnabled(!trackingEnabled)}
+                className={`relative w-11 h-6 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0 ${trackingEnabled ? 'bg-accent-green' : 'bg-bg-tertiary'}`}
+                aria-label={labels.tracking.title}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${trackingEnabled ? 'translate-x-5' : 'translate-x-0.5'}`}
+                />
+              </button>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${trackingEnabled ? 'text-accent-green' : 'text-text-tertiary'}`}>
+                {trackingEnabled ? labels.tracking.on : labels.tracking.off}
+              </span>
+            </div>
+
             {/* 누적 통계 4 박스 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-3 bg-bg-secondary/30 rounded-lg">

@@ -20,7 +20,7 @@ import {
 } from "@/lib/creative/qa-auditor";
 import { auditMechanicalDefects } from "@/lib/creative/mechanical-defect-audit";
 import { computeIntegratedGrade } from "@/lib/creative/integrated-grade";
-import IdeResizablePanel from "../IdeResizablePanel";
+import IdeResizablePanel, { type IdeCollapsedSummaryItem } from "../IdeResizablePanel";
 import { Alert, Book, Check, Edit, Layers, Plus, Scale, Shield, Wand } from "../icons";
 
 const REVISION_SOURCE_LABEL: Record<RevisionReportFinding["source"], string> = {
@@ -67,6 +67,18 @@ function compactPreview(text: string): string {
   const trimmed = text.trim();
   if (trimmed.length <= 1600) return trimmed;
   return `${trimmed.slice(0, 1600).trimEnd()}\n\n...`;
+}
+
+function compactCount(value: number): string {
+  if (value >= 10000) return `${Math.round(value / 1000) / 10}만`;
+  if (value >= 1000) return `${Math.round(value / 100) / 10}k`;
+  return String(value);
+}
+
+function compactGrade(grade: string): string {
+  if (grade === "대성공") return "대성";
+  if (grade === "성공상위") return "상위";
+  return grade;
 }
 
 function decisionMapFromJournal(
@@ -167,6 +179,33 @@ export default function TabRevision() {
       revision: clampScore(100 - metrics.tellPct - metrics.repetitionPct / 2),
     });
   }, [config, metrics.repetitionPct, metrics.tellPct, signature.score, target?.episode]);
+  const revisionFindingCount = revisionReport.summary.total + qaFindings.length;
+  const queueCollapsedSummary: IdeCollapsedSummaryItem[] = [
+    { label: "원고", value: String(manuscripts.length), tone: manuscripts.length > 0 ? "blue" : "gray" },
+    { label: "현재", value: target ? `EP${target.episode}` : "-", tone: hasText ? "green" : "gray" },
+    {
+      label: "자수",
+      value: compactCount(target?.charCount ?? target?.content.length ?? 0),
+      tone: hasText ? "blue" : "gray",
+    },
+  ];
+  const inspectorCollapsedSummary: IdeCollapsedSummaryItem[] = [
+    {
+      label: "후보",
+      value: String(revisionFindingCount),
+      tone: revisionFindingCount > 0 ? "amber" : hasText ? "green" : "gray",
+    },
+    {
+      label: "승인",
+      value: String(decisionCounts.approved),
+      tone: decisionCounts.approved > 0 ? "green" : "gray",
+    },
+    {
+      label: "등급",
+      value: compactGrade(grade.grade),
+      tone: grade.weighted >= 80 ? "green" : grade.weighted >= 60 ? "amber" : "red",
+    },
+  ];
 
   const recordRevisionDecision = (finding: RevisionReportFinding, decision: ReceiptDecision) => {
     const record = buildRevisionDecisionRecordFromKey({
@@ -231,6 +270,7 @@ export default function TabRevision() {
         defaultWidth={240}
         minWidth={64}
         maxWidth={560}
+        collapsedSummary={queueCollapsedSummary}
       >
         <div className="pcard-h">
           <Layers size={15} />
@@ -465,6 +505,7 @@ export default function TabRevision() {
         defaultWidth={420}
         minWidth={300}
         maxWidth={920}
+        collapsedSummary={inspectorCollapsedSummary}
       >
         <div className="wr-panel-head" style={{ marginBottom: 12 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>

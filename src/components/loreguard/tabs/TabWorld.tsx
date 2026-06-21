@@ -46,11 +46,10 @@ import {
   Check,
   X,
   Send,
-  Chevron,
   ChevronR,
   ChevronL,
   Sync,
-  Map,
+  Map as MapIcon,
 } from "@/components/loreguard/icons";
 import { useStudio } from "@/app/studio/StudioContext";
 import type {
@@ -61,17 +60,16 @@ import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
 import { L4 } from "@/lib/i18n";
 import type { WorldOpsView } from "@/components/loreguard/WorldOpsPanel";
 import {
-  BoardCard,
-  TIER_LABEL,
-  TIER_TONE,
   WORLD_BOARD_KEY,
   WORLD_FIELDS,
   WORLD_RAIL_KEY,
   WORLD_SECTIONS_KEY,
-  WORLD_TIERS,
+  WorldBoardPanel,
+  WorldCollapsedPanel,
   WorldEmptyState,
-  WorldImportCandidateCard,
+  buildWorldChatDrafts,
   fieldValue,
+  makeChatDraftEvidence,
   makeCandidateEvidence,
   makeNoaEvidence,
   readCollapsedTiers,
@@ -81,6 +79,8 @@ import {
   worldImportCandidates,
   writeWorldPanelOpen,
   type CollapsedTiers,
+  type WorldChatDraft,
+  type WorldChatDraftSource,
   type WorldFieldKey,
 } from "./TabWorld.parts";
 
@@ -142,6 +142,7 @@ export default function TabWorld() {
   const [showVersions, setShowVersions] = useState(false);
   const [railOpen, setRailOpen] = useState(() => readWorldPanelOpen(WORLD_RAIL_KEY));
   const [boardOpen, setBoardOpen] = useState(() => readWorldPanelOpen(WORLD_BOARD_KEY));
+  const [pinnedDrafts, setPinnedDrafts] = useState<WorldChatDraft[]>([]);
   const isSheet = useWorldPanelSheet();
 
   // [Z2b] 세계관 도구 slide-over — null = 닫힘. key 로 재오픈 시 초기 뷰 재시드.
@@ -206,6 +207,53 @@ export default function TabWorld() {
 
   const pickedDef = WORLD_FIELDS.find((f) => f.key === pickedField) ?? WORLD_FIELDS[0];
   const pendingImportCandidates = useMemo(() => worldImportCandidates(cfg), [cfg]);
+  const liveDraftSources = useMemo<WorldChatDraftSource[]>(() => {
+    const messageSources = filteredMessages.map((message) => ({
+      id: message.id,
+      role: message.role,
+      content: message.content,
+    }));
+    const liveInput = input.trim();
+    return liveInput
+      ? [...messageSources, { id: "live-input", role: "user", content: liveInput, live: true }]
+      : messageSources;
+  }, [filteredMessages, input]);
+  const chatDrafts = useMemo(() => {
+    const liveDrafts = buildWorldChatDrafts(liveDraftSources, pickedField);
+    const byId = new Map<string, WorldChatDraft>();
+    for (const draft of [...liveDrafts, ...pinnedDrafts]) {
+      byId.set(draft.id, draft);
+    }
+    return Array.from(byId.values()).filter((draft) => {
+      const existing = fieldValue(cfg, draft.fieldKey);
+      return !existing.includes(draft.excerpt);
+    });
+  }, [cfg, liveDraftSources, pickedField, pinnedDrafts]);
+  const worldMissingCount = Math.max(0, WORLD_FIELDS.length - filledCount);
+  const worldRailSummary = [
+    {
+      label: L4(language, { ko: "도구", en: "Tools", ja: "道具", zh: "工具" }),
+      value: String(doRestoreVersionedBackup ? 5 : 4),
+      tone: "blue",
+    },
+    {
+      label: L4(language, { ko: "자료", en: "Files", ja: "資料", zh: "资料" }),
+      value: String(pendingImportCandidates.length),
+      tone: pendingImportCandidates.length > 0 ? "blue" : "gray",
+    },
+  ] as const;
+  const worldBoardSummary = [
+    {
+      label: L4(language, { ko: "완성", en: "Done", ja: "完成", zh: "完成" }),
+      value: `${completeness}%`,
+      tone: completeness >= 70 ? "green" : completeness > 0 ? "blue" : "gray",
+    },
+    {
+      label: L4(language, { ko: "미입력", en: "Open", ja: "未入力", zh: "待填" }),
+      value: String(worldMissingCount),
+      tone: worldMissingCount === 0 ? "green" : "amber",
+    },
+  ] as const;
 
   const submit = useCallback(() => {
     const trimmed = input.trim();
@@ -285,6 +333,37 @@ export default function TabWorld() {
     [closeBoardIfSheet, pickedField, setConfig],
   );
 
+  const pinChatDraft = useCallback((draft: WorldChatDraft) => {
+    setPinnedDrafts((prev) => {
+      if (prev.some((item) => item.id === draft.id)) return prev;
+      return [{ ...draft, pinned: true }, ...prev].slice(0, 8);
+    });
+  }, []);
+
+  const applyChatDraft = useCallback(
+    (draft: WorldChatDraft) => {
+      const clean = draft.excerpt.trim();
+      if (!clean) return;
+      const evidence = makeChatDraftEvidence(draft);
+      setConfig((prev) => {
+        const existing = typeof prev[draft.fieldKey] === "string" ? (prev[draft.fieldKey] as string).trim() : "";
+        const merged = existing ? `${existing}\n\n${clean}` : clean;
+        return {
+          ...prev,
+          [draft.fieldKey]: merged,
+          worldFieldEvidence: {
+            ...(prev.worldFieldEvidence ?? {}),
+            [draft.fieldKey]: evidence,
+          },
+        };
+      });
+      setPinnedDrafts((prev) => prev.filter((item) => item.id !== draft.id));
+      markExplicitCreativeLog("world");
+      closeBoardIfSheet();
+    },
+    [closeBoardIfSheet, setConfig],
+  );
+
   const handleNewWorld = useCallback(() => createNewSession("world"), [createNewSession]);
 
   const openVersions = useCallback(() => {
@@ -334,20 +413,14 @@ export default function TabWorld() {
     return (
       <div className="wd-grid wd-world-grid">
         {!railOpen ? (
-          <aside className="wd-rail collapsed" id="lg-world-rail" aria-label="세계관 도구 레일 (접힘)">
-            <button
-              type="button"
-              className="wd-panel-toggle"
-              aria-expanded={false}
-              aria-controls="lg-world-rail"
-              aria-label="세계관 도구 레일 펼치기"
-              title="세계관 도구 레일 펼치기"
-              onClick={toggleRail}
-            >
-              <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-            </button>
-            <span className="wd-vlabel" aria-hidden="true">세계관 도구</span>
-          </aside>
+          <WorldCollapsedPanel
+            side="rail"
+            id="lg-world-rail"
+            label="세계관 도구"
+            expandLabel="세계관 도구 레일 펼치기"
+            summary={worldRailSummary}
+            onExpand={toggleRail}
+          />
         ) : (
           <aside
             className="wd-rail"
@@ -375,20 +448,14 @@ export default function TabWorld() {
         )}
         <WorldEmptyState onCreate={handleNewWorld} />
         {!boardOpen ? (
-          <aside className="wd-board collapsed" id="lg-world-board" aria-label="세계관 보드 (접힘)">
-            <button
-              type="button"
-              className="wd-panel-toggle"
-              aria-expanded={false}
-              aria-controls="lg-world-board"
-              aria-label="세계관 보드 펼치기"
-              title="세계관 보드 펼치기"
-              onClick={toggleBoard}
-            >
-              <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-            </button>
-            <span className="wd-vlabel" aria-hidden="true">세계관 보드</span>
-          </aside>
+          <WorldCollapsedPanel
+            side="board"
+            id="lg-world-board"
+            label="세계관 보드"
+            expandLabel="세계관 보드 펼치기"
+            summary={worldBoardSummary}
+            onExpand={toggleBoard}
+          />
         ) : (
           <aside
             className="wd-board"
@@ -423,20 +490,14 @@ export default function TabWorld() {
     <div className="wd-grid wd-world-grid">
       {/* 좌 96px 레일 — 실 동작 도구만 (세팅동기화 dead 버튼 제거) */}
       {!railOpen ? (
-        <aside className="wd-rail collapsed" id="lg-world-rail" aria-label="세계관 도구 레일 (접힘)">
-          <button
-            type="button"
-            className="wd-panel-toggle"
-            aria-expanded={false}
-            aria-controls="lg-world-rail"
-            aria-label="세계관 도구 레일 펼치기"
-            title="세계관 도구 레일 펼치기"
-            onClick={toggleRail}
-          >
-            <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-          <span className="wd-vlabel" aria-hidden="true">세계관 도구</span>
-        </aside>
+        <WorldCollapsedPanel
+          side="rail"
+          id="lg-world-rail"
+          label="세계관 도구"
+          expandLabel="세계관 도구 레일 펼치기"
+          summary={worldRailSummary}
+          onExpand={toggleRail}
+        />
       ) : (
       <aside
         className="wd-rail"
@@ -508,7 +569,7 @@ export default function TabWorld() {
             closeRailIfSheet();
           }}
         >
-          <span className="wd-tool-ic"><Map size={20} /></span>
+          <span className="wd-tool-ic"><MapIcon size={20} /></span>
           <span>{L4(language, { ko: "지도", en: "Map", ja: "マップ", zh: "地图" })}</span>
         </button>
       </aside>
@@ -520,7 +581,7 @@ export default function TabWorld() {
           <div className="wd-chat-head">
             <div className="wd-chat-title">
               <Globe size={17} />
-              세계관 모드
+              세계관 기준선
               <span className="wd-online">
                 <span className={`rdot ${isGenerating ? "amber" : "green"}`} />
                 {isGenerating ? "제안 준비 중…" : "노아 어시스턴트"}
@@ -572,9 +633,9 @@ export default function TabWorld() {
                   <div className="wd-ai-body">
                     <div className="wd-bubble ai">
                       <p className="wd-p">
-                        세계관을 함께 설계해 봅시다. 마법 체계의 제약, 권력 구조, 역사 등
-                        궁금한 것을 입력하면 제안을 드립니다. 마음에 드는 답변은
-                        오른쪽 보드의 항목을 고른 뒤 <b>채택</b>으로 저장할 수 있어요.
+                        처음부터 모든 설정을 채울 필요는 없습니다. 핵심 전제, 현재 갈등,
+                        주인공의 욕망을 먼저 잡고 필요할 때 세계의 규칙을 넓혀가세요.
+                        마음에 드는 답변은 오른쪽 보드의 항목을 고른 뒤 <b>채택</b>으로 저장할 수 있어요.
                       </p>
                     </div>
                   </div>
@@ -621,7 +682,7 @@ export default function TabWorld() {
           <div className="wd-input">
             <input
               className="wd-in-field"
-              placeholder={`'${pickedDef.title}' 항목을 설계할 지시를 입력하세요…`}
+              placeholder={`'${pickedDef.title}' 기준을 한 문장으로 잡아보세요…`}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -660,128 +721,35 @@ export default function TabWorld() {
 
       {/* 우 408px 보드 — 17개 세계관 필드 (tier 접이식 섹션) + 실제 완성도 */}
       {!boardOpen ? (
-        <aside className="wd-board collapsed" id="lg-world-board" aria-label="세계관 보드 (접힘)">
-          <button
-            type="button"
-            className="wd-panel-toggle"
-            aria-expanded={false}
-            aria-controls="lg-world-board"
-            aria-label="세계관 보드 펼치기"
-            title="세계관 보드 펼치기"
-            onClick={toggleBoard}
-          >
-            <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-          <span className="wd-vlabel" aria-hidden="true">세계관 보드</span>
-        </aside>
+        <WorldCollapsedPanel
+          side="board"
+          id="lg-world-board"
+          label="세계관 보드"
+          expandLabel="세계관 보드 펼치기"
+          summary={worldBoardSummary}
+          onExpand={toggleBoard}
+        />
       ) : (
-      <aside
-        className="wd-board"
-        id="lg-world-board"
-        aria-label="세계관 보드"
-        role={isSheet ? "dialog" : undefined}
-        aria-modal={isSheet ? "true" : undefined}
-      >
-        <div className="wd-board-head">
-          <span>세계관 보드</span>
-          <button
-            type="button"
-            className="wd-panel-toggle"
-            aria-expanded={true}
-            aria-controls="lg-world-board"
-            aria-label="세계관 보드 접기"
-            title="세계관 보드 접기"
-            onClick={toggleBoard}
-          >
-            <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-        </div>
-        <div className="wd-card" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
-          <div className="wd-card-top">
-            <span className="wd-card-title">세계관 완성도</span>
-            <span className="pill blue" style={{ marginLeft: "auto" }}>
-              {filledCount} / {WORLD_FIELDS.length} 작성됨
-            </span>
-          </div>
-          <div className="tbar">
-            <span style={{ width: `${completeness}%` }} />
-          </div>
-          <div className="wd-card-meta">
-            <span>완성도 {completeness}%</span>
-          </div>
-        </div>
-        {pendingImportCandidates.length > 0 ? (
-          <section aria-label="세계관 읽은 자료 검토" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div className="wd-board-head" style={{ minHeight: 0 }}>
-              <span>읽은 자료 검토</span>
-              <span className="pill blue">{pendingImportCandidates.length}</span>
-            </div>
-            {pendingImportCandidates.map((candidate) => (
-              <WorldImportCandidateCard
-                key={candidate.id}
-                candidate={candidate}
-                pickedDef={pickedDef}
-                onApply={applyImportCandidate}
-              />
-            ))}
-          </section>
-        ) : null}
-        {/* [G3-world-structure-fields] tier 별 접이식 섹션 — noa-lg-world-sections 영속 */}
-        {WORLD_TIERS.map((tier) => {
-          const fields = WORLD_FIELDS.filter((f) => f.tier === tier);
-          const tierFilled = fields.filter((f) => fieldValue(cfg, f.key).length > 0).length;
-          const collapsed = collapsedTiers[tier];
-          const sectionId = `wd-tier-section-${tier}`;
-          return (
-            <section
-              key={tier}
-              aria-label={TIER_LABEL[tier]}
-              style={{ display: "flex", flexDirection: "column", gap: 12 }}
-            >
-              <button
-                type="button"
-                className="wd-card"
-                style={{ padding: "10px 15px", alignItems: "center", textAlign: "left" }}
-                aria-expanded={!collapsed}
-                aria-controls={sectionId}
-                onClick={() => toggleTier(tier)}
-                title={collapsed ? `${TIER_LABEL[tier]} 섹션 펼치기` : `${TIER_LABEL[tier]} 섹션 접기`}
-              >
-                <span className={`pill ${TIER_TONE[tier]}`}>{TIER_LABEL[tier]}</span>
-                <span className="wd-card-meta" style={{ marginLeft: "auto" }}>
-                  {tierFilled} / {fields.length} 작성됨
-                </span>
-                <Chevron
-                  size={16}
-                  aria-hidden="true"
-                  style={{
-                    color: "var(--ink-3)",
-                    transition: "transform .16s var(--ease)",
-                    transform: collapsed ? "rotate(-90deg)" : "none",
-                  }}
-                />
-              </button>
-              {!collapsed && (
-                <div id={sectionId} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {fields.map((def) => (
-                    <BoardCard
-                      key={def.key}
-                      def={def}
-                      value={fieldValue(cfg, def.key)}
-                      evidence={cfg?.worldFieldEvidence?.[def.key]}
-                      picked={pickedField === def.key}
-                      onPick={(key) => {
-                        setPickedField(key);
-                        closeBoardIfSheet();
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
-      </aside>
+        <WorldBoardPanel
+          isSheet={isSheet}
+          cfg={cfg}
+          pickedField={pickedField}
+          pickedDef={pickedDef}
+          filledCount={filledCount}
+          completeness={completeness}
+          collapsedTiers={collapsedTiers}
+          pendingImportCandidates={pendingImportCandidates}
+          chatDrafts={chatDrafts}
+          onCollapse={toggleBoard}
+          onToggleTier={toggleTier}
+          onPickField={(key) => {
+            setPickedField(key);
+            closeBoardIfSheet();
+          }}
+          onApplyImportCandidate={applyImportCandidate}
+          onPinChatDraft={pinChatDraft}
+          onApplyChatDraft={applyChatDraft}
+        />
       )}
 
       {/* [Z2b] 세계관 도구 slide-over — fixed overlay (wd-grid 레이아웃 비간섭) */}

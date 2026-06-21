@@ -85,7 +85,7 @@ export default function CookieConsent() {
         </span>
         <p className={isWorkSurface ? "lg-cookie-work-surface-copy" : "text-xs md:text-sm text-text-secondary leading-snug flex-1 min-w-0"}>
           {T({
-            ko: isWorkSurface ? "작업 저장과 로그인에 필요한 항목만 사용합니다." : "로그인, 언어, 원고 저장에 필요한 쿠키만 사용합니다.",
+            ko: isWorkSurface ? "작업 저장·로그인 필수 항목만 사용합니다." : "로그인, 언어, 원고 저장에 필요한 쿠키만 사용합니다.",
             en: isWorkSurface
               ? "Only required items for saving work and sign-in."
               : "Loreguard uses cookies only for login, language, and manuscript saving. Continuing to use implies consent.",

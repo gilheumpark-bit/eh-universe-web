@@ -27,7 +27,7 @@ const SceneSheetTab = dynamic(() => import('@/components/studio/tabs/SceneSheetT
 
 type HostedAiAvailability = Record<string, boolean>;
 
-// TODO: Extract into context providers for future refactor:
+// Refactor note: extract into context providers when this router is split:
 // - UIState (activeTab, setActiveTab, charSubTab, setCharSubTab, showDashboard, rightPanelOpen, setRightPanelOpen, writingColumnShell)
 // - WritingState (writingMode, setWritingMode, editDraft, setEditDraft, editDraftRef, canvasContent, setCanvasContent, canvasPass, setCanvasPass, promptDirective, setPromptDirective, input, setInput, advancedSettings, setAdvancedSettings)
 // - AIHandlers (isGenerating, lastReport, doHandleSend, handleCancel, handleRegenerate, handleVersionSwitch, handleTypoFix, hasAiAccess, hostedProviders, showAiLock, directorReport, hfcpState, suggestions, setSuggestions, pipelineResult)
@@ -162,7 +162,7 @@ export default function StudioTabRouter(props: StudioTabRouterProps) {
       )}
       {activeTab === 'settings' && (
         <SectionErrorBoundary sectionName="Settings">
-        <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} />
+        <SettingsView language={language} hostedProviders={hostedProviders} onClearAll={clearAllSessions} onManageApiKey={() => setShowApiKeyModal(true)} versionedBackups={versionedBackups} onRestoreBackup={doRestoreVersionedBackup} onRefreshBackups={refreshBackupList} currentSession={currentSession} />
         </SectionErrorBoundary>
       )}
       {activeTab === 'direction' && currentSession && config && (

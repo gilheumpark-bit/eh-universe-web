@@ -18,6 +18,7 @@ type TabWritingEditorSurfaceProps = {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   fontMode: WritingFontMode;
   editorViewStyle: CSSProperties;
+  readMode: boolean;
   config: StoryConfig;
   snapshotSessionId: string | null;
   snapshotEpisode: number | null;
@@ -36,6 +37,7 @@ export default function TabWritingEditorSurface({
   textareaRef,
   fontMode,
   editorViewStyle,
+  readMode,
   config,
   snapshotSessionId,
   snapshotEpisode,
@@ -47,6 +49,42 @@ export default function TabWritingEditorSurface({
   onCompositionEnd,
   onReplaceInlineSelection,
 }: TabWritingEditorSurfaceProps) {
+  const readParagraphs = text.split(/\n+/).map((paragraph) => paragraph.trim()).filter(Boolean);
+
+  if (readMode) {
+    return (
+      <>
+        <article
+          className="wr-doc wr-manuscript-surface wr-read-surface"
+          data-font={fontMode}
+          role="document"
+          aria-label={L4(language, { ko: "원고 읽기 검토", en: "Draft reading review" })}
+          style={{ ...editorViewStyle, flex: 1 }}
+        >
+          <div className="wr-reader-page">
+            {readParagraphs.length > 0 ? (
+              readParagraphs.map((paragraph, index) => (
+                <p key={`${index}:${paragraph.slice(0, 16)}`} className="wr-read-p">
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <p className="wr-reader-empty">
+                {L4(language, { ko: "아직 읽을 원고가 없습니다.", en: "No draft to read yet." })}
+              </p>
+            )}
+          </div>
+        </article>
+
+        <WritingStatsStrip
+          key={`${snapshotSessionId ?? "none"}:${snapshotEpisode ?? "draft"}`}
+          text={text}
+          language={language}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="wr-doc wr-manuscript-surface" data-font={fontMode} style={{ ...editorViewStyle, flex: 1, display: "flex" }}>

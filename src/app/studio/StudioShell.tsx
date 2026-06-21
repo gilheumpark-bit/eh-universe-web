@@ -39,6 +39,7 @@ import { useStudioShellAiAccess } from './useStudioShellAiAccess';
 import { useStudioShellNextEpisode } from './useStudioShellNextEpisode';
 import { useStudioShellActionRouting } from './useStudioShellActionRouting';
 import { useStudioShellBootEffects, useStudioShellCreativeEffects, useStudioShellEventEffects } from './useStudioShellSideEffects';
+import { useCreativeProcessTrackingPreference } from '@/hooks/useCreativeProcessTrackingPreference';
 import { StudioShellView } from './StudioShell.view';
 import type { StudioOverlayManagerProps } from '@/components/studio/StudioOverlayManager';
 import type { StudioModalBridgeProps } from '@/components/studio/StudioModalBridge';
@@ -107,9 +108,10 @@ export default function StudioShell({ children }: { children?: React.ReactNode }
 
   // [Track-D Phase 1.1 Round 2-2 — 2026-05-07] Scene/Character/World 편집 자동 누적.
   // useAutoVersionSnapshot 은 manuscripts/messages charDelta 만 추적 — 그 외 영역 보강.
-  useCreativeProcessAutoTrigger({ projects, currentProjectId });
+  const [creativeProcessTrackingEnabled] = useCreativeProcessTrackingPreference();
+  useCreativeProcessAutoTrigger({ projects, currentProjectId, enabled: creativeProcessTrackingEnabled });
 
-  useStudioShellCreativeEffects(currentProjectId, Boolean(children));
+  useStudioShellCreativeEffects(currentProjectId, Boolean(children), creativeProcessTrackingEnabled);
 
   const VALID_TABS: AppTab[] = ['world', 'writing', 'history', 'settings', 'characters', 'direction', 'style', 'manuscript', 'docs', 'visual'];
   const [activeTab, setActiveTabRaw] = useState<AppTab>(() => {

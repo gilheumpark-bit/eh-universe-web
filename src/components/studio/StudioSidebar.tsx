@@ -18,7 +18,7 @@ import StudioSidebarFooter, { type StudioSidebarConfirmOpts } from './StudioSide
 
 type ConfirmOpts = StudioSidebarConfirmOpts;
 
-// TODO: Extract into context providers for future refactor:
+// Refactor note: extract into context providers when this surface is split:
 // - UIState (isSidebarOpen, setIsSidebarOpen, focusMode)
 // - ProjectState (projects, currentProjectId, setCurrentProjectId, currentProject, createNewProject, renameProject, deleteProject)
 // - SessionState (sessions, currentSessionId, setCurrentSessionId, createNewSession, onReorderSessions)

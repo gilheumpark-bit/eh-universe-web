@@ -18,7 +18,9 @@ import { detectSuspiciousPassages } from '@/lib/ip-guard/ngram-similarity';
 const AXIS_WEIGHT = DEFAULT_WEIGHTS[7];
 
 export function scoreAxis7IP(ctx: AxisContext): AxisResult {
-  const result = scoreIPCompliance(ctx.draft);
+  const result = scoreIPCompliance(ctx.draft, {
+    customBlocklist: ctx.personalBlocklist,
+  });
 
   const issues: AxisIssue[] = [];
   for (const b of result.criticalBrands) {

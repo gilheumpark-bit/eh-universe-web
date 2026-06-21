@@ -106,6 +106,7 @@ export function useWritingChat(novelContext?: NovelContext, projectId?: string |
         systemInstruction: buildWritingChatSystem(language, novelContext) + memory.summaryBlock,
         messages: history,
         temperature: 0.7,
+        reasoningStage: 'draft',
         signal: abortControllerRef.current.signal,
         isChatMode: true,
         onChunk: (chunk) => {

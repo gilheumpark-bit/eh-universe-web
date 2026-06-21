@@ -192,6 +192,11 @@ export function WritingShortcutsCard({ language }: { language: AppLanguage }) {
         <b>Ctrl+H</b>
       </div>
       <div className="wr-srow">
+        <span className="rdot amber" />
+        {L4(language, { ko: "리딥 모드", en: "Reading mode" })}
+        <b>Ctrl+Alt+R</b>
+      </div>
+      <div className="wr-srow">
         <span className="rdot gray" />
         {L4(language, { ko: "되돌리기 / 다시 실행", en: "Undo / redo" })}
         <b>Ctrl+Z / Ctrl+Y</b>

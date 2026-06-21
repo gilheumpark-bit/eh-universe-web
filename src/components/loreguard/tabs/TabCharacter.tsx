@@ -1,22 +1,18 @@
 "use client";
 
-/*
- * TabCharacter — 캐릭터·아이템 탭 조립부.
- * 본체는 세션/저장 핸들러와 관계도 배선을 소유하고, 변환·프로필·로스터 UI는
- * TabCharacter.* 보조 파일로 분리한다. 데이터는 currentSession.config 기준이다.
- */
+/* TabCharacter — 캐릭터·아이템 탭 조립부. 세션 저장과 관계도 배선을 소유한다. */
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoadingSkeleton from "@/components/studio/LoadingSkeleton";
 import type { GraphNodeSpec, GraphEdgeSpec } from "@/components/loreguard/RelationGraph";
 import { useStudio } from "@/app/studio/StudioContext";
-// [Z2a-chatcanvas 2026-06-11] 접이식 노아 채팅 도크 — 기본 접힘, 프로필 필드
-// 제안 감지 → 채택 시 setConfig merge (기존 노아 제안 버튼과 트리거 분리).
 import ChatCanvasDock, {
   extractJsonBlocks,
   type DockSuggestion,
+  type DockSuggestionSource,
 } from "@/components/loreguard/ChatCanvasDock";
+import { compactDockMemoText, hashDockMemoText } from "@/components/loreguard/ChatCanvasDock.helpers";
 import ItemStudioView from "@/components/studio/ItemStudioView";
 import { generateCharacters } from "@/services/geminiService";
 import { activeSupportsStructured } from "@/lib/ai-providers";
@@ -25,6 +21,7 @@ import type {
   AcceptedImportCandidateRecord,
   Character,
   CharRelation,
+  Item,
 } from "@/lib/studio-types";
 import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
 import { fireCpLog, getCreativeLogger } from "./TabCharacter.creative-log";
@@ -49,32 +46,10 @@ import {
   writeCharacterPanelOpen,
 } from "./TabCharacter.rail-state";
 
-// ============================================================
-// PART 0.5 — [s82-stage-coverage] 창작 과정 기록 (TabWriting S2 패턴 축약)
-// ============================================================
-// fire-and-forget — setConfig 경로를 await/gate 하지 않음. 실패(logger 부재·
-// reject·null resolve) → noa:alert 1회·60s 쿨다운 (silent failure 금지).
-// 아이템(ItemStudioView) 내부 추가/편집은 공용 컴포넌트라 수정 금지 → 미기록 (honest gap).
-
-// ============================================================
-// PART 1 — 표현용 헬퍼 (날조 데이터 X — 순수 프레젠테이션 파생)
-// ============================================================
-
-// [X1-xyflow] 관계도 그래프 — xyflow 래퍼는 토글 진입 시에만 로드 (ssr:false).
 const RelationGraph = dynamic(() => import("@/components/loreguard/RelationGraph"), {
   ssr: false,
   loading: () => <LoadingSkeleton height={480} />,
 });
-
-// ============================================================
-// PART 1.7 — [Z2a-chatcanvas] 채팅 도크 프로필 제안 (감지 파서 + 형식 지시)
-// ============================================================
-// 노아가 ```json {"characters":[...]} 블록으로 제안 → 채택 시 setConfig merge.
-// 필드는 Character 의 실존 필드만 (발명 금지). name 필수, 나머지 옵션.
-
-// ============================================================
-// PART 4 — TabCharacter 본체 (3-pane 합성 + real state 배선)
-// ============================================================
 
 export default function TabCharacter() {
   const {
@@ -90,9 +65,9 @@ export default function TabCharacter() {
   } = useStudio();
   const config = currentSession?.config ?? null;
   const characters = useMemo<Character[]>(() => config?.characters ?? [], [config]);
+  const items = useMemo<Item[]>(() => config?.items ?? [], [config]);
   const relations = useMemo<CharRelation[]>(() => config?.charRelations ?? [], [config]);
 
-  // 인물/아이템 서브뷰 — charSubTab 은 useStudio 컨텍스트 state (옛 CharacterTab 과 동일 키).
   const isItems = charSubTab === "items";
   const characterCandidates = useMemo(() => pendingCharacterImportCandidates(config), [config]);
   const itemCandidates = useMemo(() => pendingItemImportCandidates(config), [config]);
@@ -100,7 +75,6 @@ export default function TabCharacter() {
   const [selId, setSelId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // [X1-xyflow] 인물 모드 서브뷰 — 기본은 기존 프로필 뷰, 관계도는 보조(토글 진입).
   const [charView, setCharView] = useState<"profile" | "graph">("profile");
   const [railOpen, setRailOpen] = useState(readCharacterPanelOpen);
   const isRailSheet = useCharacterPanelSheet();
@@ -205,7 +179,6 @@ export default function TabCharacter() {
     [closeRailIfSheet, setCharSubTab, setConfig],
   );
 
-  // ---- [X1-xyflow] 관계도 데이터 변환 (실데이터만 — 날조 금지) ----
   const charGraphLayout = config?.charGraphLayout;
   const graphNodes = useMemo<GraphNodeSpec[]>(
     () =>
@@ -574,15 +547,103 @@ export default function TabCharacter() {
     [applyCharacterProposal],
   );
 
+  const dockQuickExtract = useCallback(
+    (source: DockSuggestionSource): DockSuggestion[] => {
+      const clean = compactDockMemoText(source.content);
+      if (clean.length < 18) return [];
+      const hash = hashDockMemoText(clean);
+      const labelSeed =
+        clean
+          .replace(/[.!?。！？].*$/u, "")
+          .slice(0, 22)
+          .trim() || "대화 메모";
+      if (isItems) {
+        return [
+          {
+            key: `item-memo-${hash}`,
+            label: `아이템 메모 반영: ${labelSeed}`,
+            apply: () => {
+              const item: Item = {
+                id: `item-memo-${hash}-${Date.now()}`,
+                name: labelSeed,
+                category: "misc",
+                rarity: "common",
+                description: clean,
+                effect: "",
+                obtainedFrom: "",
+                status: "planned",
+                ipPotential: "none",
+                rightsMemo: clean,
+              };
+              setConfig((prev) => ({
+                ...prev,
+                items: [...(prev.items ?? []), item],
+              }));
+              fireCpLog(
+                getCreativeLogger()?.logHumanEdit({
+                  targetType: "metadata",
+                  targetId: item.id,
+                  afterContent: JSON.stringify(item),
+                  note: source.live ? "item-live-memo-adopt" : "item-chat-memo-adopt",
+                  stage: "character",
+                }),
+              );
+              markExplicitCreativeLog("character");
+            },
+          },
+        ];
+      }
+      if (!active) return [];
+      const targetId = active.id;
+      const targetName = active.name || "선택 인물";
+      return [
+        {
+          key: `char-memo-${targetId}-${hash}`,
+          label: `인물 메모 반영: ${targetName}`,
+          apply: () => {
+            setConfig((prev) => ({
+              ...prev,
+              characters: (prev.characters ?? []).map((character) => {
+                if (character.id !== targetId) return character;
+                const existing = character.backstory?.trim();
+                const backstory = existing && !existing.includes(clean) ? `${existing}\n\n${clean}` : existing || clean;
+                return { ...character, backstory };
+              }),
+            }));
+            fireCpLog(
+              getCreativeLogger()?.logHumanEdit({
+                targetType: "character",
+                targetId,
+                afterContent: clean,
+                note: source.live ? "character-live-memo-adopt" : "character-chat-memo-adopt",
+                stage: "character",
+              }),
+            );
+            markExplicitCreativeLog("character");
+          },
+        },
+      ];
+    },
+    [active, isItems, setConfig],
+  );
+
   // 캔버스 현황 — 실데이터만 (이름·역할 상한 12 — TabDirection MAX_CHARS 동일 기준)
   const dockContext = useMemo(() => {
+    if (isItems) {
+      if (items.length === 0) return "등록된 아이템: 없음";
+      const lines = items
+        .slice(0, 12)
+        .map((item) => `- ${item.name}${item.category ? ` (${item.category})` : ""}`);
+      if (items.length > 12) lines.push(`(+${items.length - 12}개 생략)`);
+      return `등록된 아이템 (${items.length}개):\n${lines.join("\n")}`;
+    }
     if (characters.length === 0) return "등록된 인물: 없음";
     const lines = characters
       .slice(0, 12)
       .map((c) => `- ${c.name}${c.role ? ` (${c.role})` : ""}`);
     if (characters.length > 12) lines.push(`(+${characters.length - 12}명 생략)`);
     return `등록된 인물 (${characters.length}명):\n${lines.join("\n")}`;
-  }, [characters]);
+  }, [characters, isItems, items]);
 
   // ---- 빈 상태: 세션 없음 ----
   if (!currentSession) {
@@ -613,6 +674,8 @@ export default function TabCharacter() {
       proposalGuide={DOCK_PROPOSAL_GUIDE}
       contextBlock={dockContext}
       extractSuggestions={dockExtract}
+      extractQuickSuggestions={dockQuickExtract}
+      quickSuggestionTitle={isItems ? "아이템 대화 메모 후보" : "캐릭터 대화 메모 후보"}
       placeholder="인물의 욕망과 결핍을 잡아볼까요"
     >
     <div className="ch-grid ch-main-grid">
@@ -624,7 +687,8 @@ export default function TabCharacter() {
         characters={characters}
         activeId={active?.id ?? null}
         povCharacter={config?.povCharacter}
-        itemCount={config?.items?.length ?? 0}
+        relationCount={relations.length}
+        itemCount={items.length}
         skillCount={config?.skills?.length ?? 0}
         magicSystemCount={config?.magicSystems?.length ?? 0}
         aiBusy={aiBusy}

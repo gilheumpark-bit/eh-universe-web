@@ -1,4 +1,7 @@
 import { L4 } from '@/lib/i18n';
+import type { ReasoningLevel, ReasoningStage } from './ai-reasoning';
+
+export type { ReasoningLevel, ReasoningStage } from './ai-reasoning';
 
 /** Provider ID key tuple - single source of truth for all provider keys */
 const _PROVIDER_KEYS = [
@@ -52,6 +55,8 @@ export interface StreamOptions {
   messages: ChatMsg[];
   temperature?: number;
   maxTokens?: number;
+  reasoning?: ReasoningLevel;
+  reasoningStage?: ReasoningStage;
   signal?: AbortSignal;
   onChunk: (text: string) => void;
   prismMode?: string;

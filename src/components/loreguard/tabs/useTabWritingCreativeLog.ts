@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, type MutableRefObject } from "react";
 import type { CreativeEventLogger } from "@/hooks/useCreativeEventLogger";
+import { isCreativeProcessTrackingEnabled } from "@/lib/creative-process/tracking-consent";
 import { L4 } from "@/lib/i18n";
 
 type WritingLanguage = Parameters<typeof L4>[0];
@@ -55,11 +56,11 @@ export function useTabWritingCreativeLog({
   const fireLog = useCallback(
     (promise: Promise<string | null> | null | undefined) => {
       if (!promise) {
-        surfaceLogFailure();
+        if (isCreativeProcessTrackingEnabled()) surfaceLogFailure();
         return;
       }
       promise.then((id) => {
-        if (id === null) surfaceLogFailure();
+        if (id === null && isCreativeProcessTrackingEnabled()) surfaceLogFailure();
       }).catch(() => surfaceLogFailure());
     },
     [surfaceLogFailure],

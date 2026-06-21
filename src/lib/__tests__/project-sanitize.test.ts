@@ -1,5 +1,5 @@
-jest.mock('@/engine/pipeline', () => ({
-  stripEngineArtifacts: jest.fn((text: string) => text.replace(/\[artifact\]/g, '')),
+jest.mock('@/lib/engine-artifacts', () => ({
+  stripEngineArtifactsBase: jest.fn((text: string) => text.replace(/\[artifact\]/g, '')),
 }));
 
 import { sanitizeLoadedProjects, sanitizeLoadedText } from '@/lib/project-sanitize';

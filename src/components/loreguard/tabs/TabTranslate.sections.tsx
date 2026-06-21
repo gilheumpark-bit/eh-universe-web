@@ -323,6 +323,16 @@ export function TranslatePanel({
     setNewSrc("");
     setNewTgt("");
   };
+  const progressPct = Math.round(stats.progress * 100);
+  const collapsedSummary = [
+    { label: "완성", value: `${progressPct}%`, tone: progressPct >= 100 ? "green" : progressPct > 0 ? "blue" : "amber" },
+    { label: "검수", value: gate ? "ON" : "대기", tone: gate ? "green" : "amber" },
+    {
+      label: "위험",
+      value: riskReport ? (riskReport.level === "ready" ? "낮음" : riskReport.level === "review" ? "검토" : "높음") : "대기",
+      tone: riskReport ? (riskReport.level === "ready" ? "green" : riskReport.level === "review" ? "amber" : "red") : "gray",
+    },
+  ];
 
   // [G4-panel-collapse] 접힘 — 40px 스트립 + 펼치기 버튼만. hooks 뒤 분기라
   // hook 순서 불변·newSrc/newTgt 입력값은 접었다 펴도 보존(언마운트 X).
@@ -342,6 +352,17 @@ export function TranslatePanel({
         </button>
         <span className="tpanel-vlabel" aria-hidden="true">
           검수 패널
+        </span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
         </span>
       </aside>
     );
@@ -658,6 +679,10 @@ export function TranslatePanel({
 function EmptyReviewPanel() {
   const [open, setOpen] = useState(readTxPanelOpen);
   const isSheet = useTxPanelSheet();
+  const collapsedSummary = [
+    { label: "완성", value: "0%", tone: "amber" },
+    { label: "검수", value: "대기", tone: "gray" },
+  ];
 
   const toggle = useCallback(() => {
     setOpen((prev) => {
@@ -683,6 +708,17 @@ function EmptyReviewPanel() {
         </button>
         <span className="tpanel-vlabel" aria-hidden="true">
           검수 패널
+        </span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
         </span>
       </aside>
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { type Dispatch, type MouseEvent, type SetStateAction, useEffect, useState } from 'react';
+import { type Dispatch, type KeyboardEvent, type MouseEvent, type SetStateAction, useEffect, useState } from 'react';
 import { useUserRoleSafe } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/lib/AuthContext';
 import { AppLanguage } from '@/lib/studio-types';
@@ -77,6 +77,12 @@ export function DeveloperModeToggle({ language }: { language: AppLanguage }) {
 const LOG_LEVEL_KEY = 'noa_log_level';
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
+
+function activateOnKey(event: KeyboardEvent<HTMLDivElement>, action: () => void) {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  action();
+}
 
 export function DebugMenuSection({ language }: { language: AppLanguage }) {
   const [level, setLevel] = useState<LogLevel>('info');
@@ -258,8 +264,7 @@ export function WriterSettingsGroup({
     window.location.reload();
   };
 
-  const handleResetClick = (event: MouseEvent) => {
-    event.stopPropagation();
+  const activateReset = () => {
     if (confirmReset) {
       onClearAll();
       setConfirmReset(false);
@@ -267,6 +272,10 @@ export function WriterSettingsGroup({
       setResetCountdown(3);
       setConfirmReset(true);
     }
+  };
+  const handleResetClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    activateReset();
   };
 
   return (
@@ -287,7 +296,11 @@ export function WriterSettingsGroup({
           <div className="space-y-2">
             <div
               onClick={() => setNotificationsOn((prev) => !prev)}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-colors cursor-pointer border border-transparent hover:border-border"
+              onKeyDown={(event) => activateOnKey(event, () => setNotificationsOn((prev) => !prev))}
+              role="switch"
+              aria-checked={notificationsOn}
+              tabIndex={0}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-colors cursor-pointer border border-transparent hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Bell className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
@@ -303,7 +316,10 @@ export function WriterSettingsGroup({
 
             <div
               onClick={resetOnboarding}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              onKeyDown={(event) => activateOnKey(event, resetOnboarding)}
+              role="button"
+              tabIndex={0}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><BookOpen className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
@@ -317,7 +333,11 @@ export function WriterSettingsGroup({
 
             <div
               onClick={toggleShortcuts}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              onKeyDown={(event) => activateOnKey(event, toggleShortcuts)}
+              role="switch"
+              aria-checked={!shortcutsDisabled}
+              tabIndex={0}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
@@ -344,7 +364,11 @@ export function WriterSettingsGroup({
 
             <div
               onClick={toggleSuggestions}
-              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98]"
+              onKeyDown={(event) => activateOnKey(event, toggleSuggestions)}
+              role="switch"
+              aria-checked={!suggestionsDisabled}
+              tabIndex={0}
+              className="flex items-center justify-between gap-3 p-4 md:p-6 hover:bg-bg-secondary/40 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border border-transparent hover:border-border active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
@@ -371,7 +395,10 @@ export function WriterSettingsGroup({
 
             <div
               onClick={handleResetClick}
-              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border group active:scale-[0.98] ${confirmReset ? 'bg-accent-red/20 border-accent-red/50 animate-pulse' : 'hover:bg-accent-red/10 border-transparent hover:border-accent-red/30'}`}
+              onKeyDown={(event) => activateOnKey(event, activateReset)}
+              role="button"
+              tabIndex={0}
+              className={`flex items-center justify-between gap-3 p-4 md:p-6 rounded-3xl transition-[transform,background-color,border-color,color] cursor-pointer border group active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${confirmReset ? 'bg-accent-red/20 border-accent-red/50 animate-pulse' : 'hover:bg-accent-red/10 border-transparent hover:border-accent-red/30'}`}
             >
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className={`p-2 md:p-3 rounded-2xl transition-colors shrink-0 ${confirmReset ? 'bg-accent-red/30' : 'bg-bg-secondary group-hover:bg-accent-red/20'}`}><Trash2 className="w-4 h-4 md:w-5 md:h-5 text-accent-red" /></div>

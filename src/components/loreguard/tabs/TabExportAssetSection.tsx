@@ -10,6 +10,7 @@ import type { ExportPackageProfileId } from "@/lib/creative-process/export-packa
 import type { MediaIpPackRightsLedgerRow } from "@/lib/creative/media-ip-pack-markdown";
 import { Book, Download, Flag, Scale } from "../icons";
 import TabExportCertificateOutputCard from "@/components/loreguard/tabs/TabExportCertificateOutputCard";
+import TabExportAuthorIdentityCard from "@/components/loreguard/tabs/TabExportAuthorIdentityCard";
 import TabExportCoreCopyrightCard from "@/components/loreguard/tabs/TabExportCoreCopyrightCard";
 import TabExportCopyrightRegistrationPrepCard from "@/components/loreguard/tabs/TabExportCopyrightRegistrationPrepCard";
 import TabExportPackageProfileCard from "@/components/loreguard/tabs/TabExportPackageProfileCard";
@@ -58,6 +59,9 @@ interface TabExportAssetSectionProps {
   onDownloadRightsProposalAdvisor: () => void;
   copyrightRegistrationPrep: CopyrightRegistrationPrep;
   onDownloadCopyrightRegistrationPrep: () => void;
+  authorDisplayName: string;
+  authorLegalName: string;
+  onAuthorIdentityChange: (field: "authorDisplayName" | "authorLegalName", value: string) => void;
   rightsLedgerRows: TabExportModel["rightsLedgerRows"];
   rightsLedgerMissingCount: number;
   rightsLedgerMissingLabelsByRowId: TabExportModel["rightsLedgerMissingLabelsByRowId"];
@@ -102,6 +106,9 @@ export default function TabExportAssetSection({
   onDownloadRightsProposalAdvisor,
   copyrightRegistrationPrep,
   onDownloadCopyrightRegistrationPrep,
+  authorDisplayName,
+  authorLegalName,
+  onAuthorIdentityChange,
   rightsLedgerRows,
   rightsLedgerMissingCount,
   rightsLedgerMissingLabelsByRowId,
@@ -163,6 +170,14 @@ export default function TabExportAssetSection({
             />
 
             <TabExportCertificateOutputCard certificateOutputPlan={certificateOutputPlan} />
+
+            <TabExportAuthorIdentityCard
+              authorDisplayName={authorDisplayName}
+              authorLegalName={authorLegalName}
+              workTitle={config.title}
+              authorAliasStatementKo={copyrightRegistrationPrep.authorAliasStatementKo}
+              onChange={onAuthorIdentityChange}
+            />
 
             {mediaIpPackPlan ? (
               <div className="pcard">

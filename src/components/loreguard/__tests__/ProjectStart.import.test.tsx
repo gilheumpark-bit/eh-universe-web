@@ -375,21 +375,24 @@ describe("ProjectStart import candidates", () => {
     });
 
     expect(screen.getByLabelText("권리/IP 메모")).toHaveValue("");
-    expect(within(screen.getByLabelText("출고 기준 확인")).getByText("작성 전")).toBeInTheDocument();
+    expect(within(screen.getByLabelText("세계관 기준선 미리보기")).getByText("필요할 때 보강")).toBeInTheDocument();
   });
 
-  it("프로젝트 첫 화면에서 출고 기준과 권리/IP 메모를 먼저 보여준다", () => {
+  it("프로젝트 첫 화면에서 세계관 기준선과 권리/IP 메모를 먼저 보여준다", () => {
     renderProjectStart({ language: "KO" });
 
-    const priority = screen.getByLabelText("출고 기준 확인");
-    expect(within(priority).getByText("출고 기준 정리")).toBeInTheDocument();
-    expect(within(priority).getByText("소설")).toBeInTheDocument();
-    expect(within(priority).getByText("연재 시작")).toBeInTheDocument();
-    expect(within(priority).getByText("한국 · 한국어")).toBeInTheDocument();
-    expect(within(priority).getByText("미정")).toBeInTheDocument();
-    expect(within(priority).getByText("작가 단독 창작")).toBeInTheDocument();
-    expect(within(priority).getByText("작성 전")).toBeInTheDocument();
+    expect(screen.getByLabelText("노아 인터뷰")).toBeInTheDocument();
+    const priority = screen.getByLabelText("세계관 기준선 미리보기");
+    expect(within(priority).getByText("세계관 기준선")).toBeInTheDocument();
+    expect(within(priority).getByText("소설 · 한국")).toBeInTheDocument();
+    expect(within(priority).getByText("세계관에서 이어서 작성")).toBeInTheDocument();
+    expect(within(priority).getByText("분량은 나중에 정해도 됩니다")).toBeInTheDocument();
+    expect(within(priority).getByText("필요할 때 보강")).toBeInTheDocument();
 
+    fireEvent.change(screen.getByLabelText("인터뷰 핵심 전제"), {
+      target: { value: "도시의 기억이 매일 리셋된다" },
+    });
+    expect(screen.getByLabelText("핵심 전제")).toHaveValue("도시의 기억이 매일 리셋된다");
     fireEvent.change(screen.getByLabelText("출고 형태"), {
       target: { value: "game" },
     });
@@ -400,13 +403,12 @@ describe("ProjectStart import candidates", () => {
       target: { value: "ROYAL_ROAD" },
     });
     fireEvent.change(screen.getByLabelText("권리/IP 메모"), {
-      target: { value: "AI-TEST-INPUT 작가 단독 창작, 외부자료 없음" },
+      target: { value: "MODEL-TEST-INPUT 작가 단독 창작, 외부자료 없음" },
     });
 
-    expect(within(priority).getByText("게임")).toBeInTheDocument();
-    expect(within(priority).getByText("미국·영어권 · 영어권")).toBeInTheDocument();
-    expect(within(priority).getByText("Royal Road")).toBeInTheDocument();
-    expect(within(priority).getByText("AI-TEST-INPUT 작가 단독 창작, 외부자료 없음")).toBeInTheDocument();
+    expect(within(priority).getByText("도시의 기억이 매일 리셋된다")).toBeInTheDocument();
+    expect(within(priority).getByText("게임 · 미국·영어권")).toBeInTheDocument();
+    expect(within(priority).getByText("MODEL-TEST-INPUT 작가 단독 창작, 외부자료 없음")).toBeInTheDocument();
   });
 
   it("프로젝트 삭제 확인 토큰은 현재 언어의 안내 문구와 같은 값을 사용한다", () => {

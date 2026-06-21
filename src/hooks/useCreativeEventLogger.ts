@@ -1,11 +1,11 @@
 "use client";
 
 // ============================================================
-// useCreativeEventLogger — Studio 자동 누적 hook
+// useCreativeEventLogger — Studio 과정기록 hook
 // ============================================================
 //
 // StudioShell 에 단 1줄 mount. 5 mark 헬퍼 반환.
-// 작가 의식 0 — hook 의 헬퍼만 호출하면 IndexedDB 자동 기록.
+// automaticEnabled=false 일 때는 명시 동의 전 기록을 남기지 않는다.
 //
 // 사상 정합:
 //   - 5차 §2 "사용자는 편의를 산다, 장부는 뒤에서 자동 쌓인다"
@@ -114,13 +114,14 @@ export namespace CreativeEventLogger {
  */
 export function useCreativeEventLogger(
   projectId: string | null,
+  automaticEnabled = true,
 ): CreativeEventLogger {
   // [C] projectId null 시 no-op 반환
   const noOp = useCallback(async () => null, []);
 
   const logHumanEdit = useCallback<CreativeEventLogger['logHumanEdit']>(
     async ({ targetType, targetId, episodeId, beforeContent, afterContent, note, stage }) => {
-      if (!projectId) return null;
+      if (!projectId || !automaticEnabled) return null;
       try {
         const beforeHash = beforeContent ? await computeSha256Hex(beforeContent) : null;
         const afterHash = await computeSha256Hex(afterContent);
@@ -144,12 +145,12 @@ export function useCreativeEventLogger(
         return null;
       }
     },
-    [projectId],
+    [projectId, automaticEnabled],
   );
 
   const logAIDraft = useCallback<CreativeEventLogger['logAIDraft']>(
     async ({ targetType, targetId, episodeId, afterContent, provider, model, promptLabel, stage }) => {
-      if (!projectId) return null;
+      if (!projectId || !automaticEnabled) return null;
       try {
         const afterHash = await computeSha256Hex(afterContent);
         // SourceRecord 함께 기록 (AI 출력 출처)
@@ -182,12 +183,12 @@ export function useCreativeEventLogger(
         return null;
       }
     },
-    [projectId],
+    [projectId, automaticEnabled],
   );
 
   const logAcceptAI = useCallback<CreativeEventLogger['logAcceptAI']>(
     async ({ targetType, targetId, episodeId, afterContent, provider, model, stage }) => {
-      if (!projectId) return null;
+      if (!projectId || !automaticEnabled) return null;
       try {
         const afterHash = await computeSha256Hex(afterContent);
         const id = await recordCreativeEvent({
@@ -210,12 +211,12 @@ export function useCreativeEventLogger(
         return null;
       }
     },
-    [projectId],
+    [projectId, automaticEnabled],
   );
 
   const logExternalImport = useCallback<CreativeEventLogger['logExternalImport']>(
     async ({ targetType, targetId, label, content, fileName, url, licenseNote }) => {
-      if (!projectId) return null;
+      if (!projectId || !automaticEnabled) return null;
       try {
         const contentHash = await computeSha256Hex(content);
         const sourceId = await recordSource({
@@ -246,12 +247,12 @@ export function useCreativeEventLogger(
         return null;
       }
     },
-    [projectId],
+    [projectId, automaticEnabled],
   );
 
   const logTemplateSeed = useCallback<CreativeEventLogger['logTemplateSeed']>(
     async ({ targetType, targetId, afterContent, templateName }) => {
-      if (!projectId) return null;
+      if (!projectId || !automaticEnabled) return null;
       try {
         const afterHash = await computeSha256Hex(afterContent);
         const id = await recordCreativeEvent({
@@ -272,7 +273,7 @@ export function useCreativeEventLogger(
         return null;
       }
     },
-    [projectId],
+    [projectId, automaticEnabled],
   );
 
   // [R-01 fix — 2026-05-12] 이전엔 매 render 새 inline object 반환 → caller 가 deps 에 두면
@@ -280,7 +281,7 @@ export function useCreativeEventLogger(
   // projectId null 시 noOp 객체, 있으면 5 callback 객체. callbacks 자체는 useCallback([projectId])
   // 라 stable 이므로 dep churn 없음.
   return useMemo<CreativeEventLogger>(() => {
-    if (!projectId) {
+    if (!projectId || !automaticEnabled) {
       return {
         logHumanEdit: noOp,
         logAIDraft: noOp,
@@ -296,5 +297,5 @@ export function useCreativeEventLogger(
       logExternalImport,
       logTemplateSeed,
     };
-  }, [projectId, noOp, logHumanEdit, logAIDraft, logAcceptAI, logExternalImport, logTemplateSeed]);
+  }, [projectId, automaticEnabled, noOp, logHumanEdit, logAIDraft, logAcceptAI, logExternalImport, logTemplateSeed]);
 }

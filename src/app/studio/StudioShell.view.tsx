@@ -128,6 +128,30 @@ export function StudioShellView({
   const normalizedLanguage = viewLanguage(language);
   const toastLanguage = agentLanguage(language);
 
+  if (isMobile && !forceDesktop && hydrated) {
+    return (
+      <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
+        <MobileStudioView
+          language={language}
+          onDesktopCTA={() => {
+            const desktopUrl = typeof window !== 'undefined' ? `${window.location.origin}/studio` : '';
+            if (typeof navigator !== 'undefined' && navigator.share) {
+              navigator.share({
+                title: '로어가드 · 창작 전문 IDE',
+                text: '로어가드 (Loreguard) · 창작 전문 IDE / 과정기록 지원 (데스크톱에서 열기)',
+                url: desktopUrl,
+              }).catch(() => { /* user cancelled */ });
+            } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+              navigator.clipboard.writeText(desktopUrl)
+                .then(() => showAlert(isKO ? '데스크톱 링크가 클립보드에 복사되었습니다' : 'Desktop link copied to clipboard'))
+                .catch(() => { /* clipboard denied */ });
+            }
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
+
   if (children) {
     return (
       <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
@@ -136,6 +160,7 @@ export function StudioShellView({
             <StudioMountProviders language={language} bootRecoveryResult={studioMounts.recovery.result}>
               <ModalProvider>
                 <StudioProvider value={studioContextValue}>
+                  <MobileSketchImportBanner />
                   {children}
                   {studioMounts.journalActive && (
                     <RecoveryMounts multiTab={studioMounts.multiTab} language={language} />
@@ -153,30 +178,6 @@ export function StudioShellView({
             </StudioMountProviders>
           </StudioUIProvider>
         </StudioConfigProvider>
-      </ErrorBoundary>
-    );
-  }
-
-  if (isMobile && !forceDesktop && hydrated) {
-    return (
-      <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
-        <MobileStudioView
-          language={language}
-          onDesktopCTA={() => {
-            const desktopUrl = typeof window !== 'undefined' ? `${window.location.origin}/studio` : '';
-            if (typeof navigator !== 'undefined' && navigator.share) {
-              navigator.share({
-                title: '로어가드 · 창작 전문 IDE',
-                text: '로어가드 (Loreguard) · 창작 전문 IDE / Creative Process Record (데스크톱에서 열기)',
-                url: desktopUrl,
-              }).catch(() => { /* user cancelled */ });
-            } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-              navigator.clipboard.writeText(desktopUrl)
-                .then(() => showAlert(isKO ? '데스크톱 링크가 클립보드에 복사되었습니다' : 'Desktop link copied to clipboard'))
-                .catch(() => { /* clipboard denied */ });
-            }
-          }}
-        />
       </ErrorBoundary>
     );
   }

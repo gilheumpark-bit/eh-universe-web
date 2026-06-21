@@ -66,6 +66,7 @@ jest.mock('@/lib/firebase-id-token', () => ({
 const mockCheckRateLimit = jest.fn();
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+  checkRateLimitAsync: (...args: unknown[]) => mockCheckRateLimit(...args),
   getClientIp: () => '203.0.113.10',
   RATE_LIMITS: {
     imageGen: { windowMs: 60_000, maxRequests: 10 },

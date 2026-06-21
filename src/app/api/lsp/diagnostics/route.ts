@@ -2,7 +2,7 @@
 // /api/lsp/diagnostics — SSE stream of diagnostics.
 //
 // 클라가 토큰으로 SSE 구독 → 저장 직후 push 형태.
-// Phase 1: stub (heartbeat + sample diagnostic). Phase 2: 실제 변경 이벤트.
+// Phase 1: authenticated heartbeat stream. Phase 2: 실제 변경 이벤트.
 // ============================================================
 
 import { authorizeLspRequest, lspAuthHeaders } from '@/lib/lsp/auth';

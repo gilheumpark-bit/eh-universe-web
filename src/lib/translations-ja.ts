@@ -7,7 +7,7 @@
 //  - 敬体 (です/ます/ください) 終端の主要システムメッセージ: 一致 (uxHelpers, errorBoundary)
 //  - カタカナ技術用語: キー/キャンセル/プロンプト/エンジン/ナラティブ 等 統一済
 //  - 半角句読点語尾の長文割合: 許容範囲 (< 50%)
-// TODO(ja-review): 以下は母語話者確認推奨 (実害は無し)
+// Native review note (ja): 以下は母語話者確認推奨 (実害は無し)
 //  - "ui.askAnything": "何でも聞いてください..." — 「ご質問ください」寄りの選択肢あり
 //  - "confirm.keepEditing": "編集を続ける" — 「続行」/「続ける」選択検討
 //  - "engine.startPrompt": 「執筆を開始してください」 — 「始めてください」も可
@@ -388,11 +388,11 @@ const translations = {
     "askQuestions": "下の入力欄から質問してください"
   },
   "hfcp": {
-    "engagement": "積極参加",
-    "normalFree": "自由対話",
-    "normalAnalysis": "分析モード",
-    "limited": "節制モード",
-    "silent": "沈黙"
+    "engagement": "受ける",
+    "normalFree": "自然",
+    "normalAnalysis": "構造整理",
+    "limited": "要点",
+    "silent": "確認待ち"
   },
   "syncReminder": {
     "lastSyncPrefix": "☁️ 最終同期: ",
@@ -1120,15 +1120,15 @@ const translations = {
     "mustResolveDesc": "クライマックスアーク — 高優先"
   },
   "hfcpLabels": {
-    "engagement": "[HFCPモード：エンゲージメント] 温かく積極的に応答する。",
-    "normalFree": "[HFCPモード：通常] 自然に応答する。",
-    "normalAnalysis": "[HFCPモード：分析] 構造的かつ論理的に応答する。",
-    "limited": "[HFCPモード：制限] 簡潔に、要点のみ応答する。",
-    "silent": "[HFCPモード：沈黙] 質問のみで応答する。直接的な回答はしない。",
-    "nrgVariation": "[NRG：変奏] 前回の回答とは異なる構造を使用する。",
-    "nrgFrameShift": "[NRG：フレーム転換] 完全に異なる角度からアプローチする。",
-    "nrgPerspectiveShift": "[NRG：視点転換] 探索的・批判的な視点を使用する。",
-    "nrgMetaAck": "[NRG：メタ承認] 繰り返しを認めて新しい角度を提案する。"
+    "engagement": "作者の主導を温かく受け、決定権は作者に残す。",
+    "normalFree": "自然に答え、必要な選択肢だけ短く整理する。",
+    "normalAnalysis": "構造と論理を使うが、規約文のように硬くしない。",
+    "limited": "要点だけを簡潔に答え、不要な逆提案を減らす。",
+    "silent": "断定を減らし、必要な確認質問1つまたは保留理由を残す。",
+    "nrgVariation": "以前とは異なる構造で答える。",
+    "nrgFrameShift": "同じ枠を繰り返さず、別の観点からアプローチする。",
+    "nrgPerspectiveShift": "探索的または批評的な視点へ切り替える。",
+    "nrgMetaAck": "反復質問なら、新しい角度へ短く切り替える。"
   },
   "archivePage": {
     "archiveLabel": "アーカイブ",

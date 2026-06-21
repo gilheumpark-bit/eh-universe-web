@@ -21,7 +21,6 @@ import {
   TARGET_MARKET_OPTIONS,
   type ProjectDraft,
 } from "@/components/loreguard/ProjectStart.shared";
-import { publishPlatformLabel } from "@/components/loreguard/ProjectStart.draft-helpers";
 import { Check, Shield } from "./icons";
 
 interface ProjectStartBasisFormProps {
@@ -48,7 +47,7 @@ export function ProjectStartBasisForm({
       <section
         className="ps-release-priority"
         aria-label={L4(language, {
-          ko: "출고 기준 확인",
+          ko: "세계관 기준선 미리보기",
           en: "Release basis check",
           ja: "出稿基準確認",
           zh: "交付基准检查",
@@ -56,9 +55,9 @@ export function ProjectStartBasisForm({
       >
         <div className="ps-release-priority-head">
           <Shield size={16} />
-          <strong>{L4(language, { ko: "출고 기준 정리", en: "Release basis", ja: "出稿基準整理", zh: "交付基准整理" })}</strong>
+          <strong>{L4(language, { ko: "세계관 기준선", en: "World basis", ja: "世界観基準", zh: "世界观基准" })}</strong>
           <span>{L4(language, {
-            ko: "목표 매체·국가·플랫폼·권리 상태가 출고 패키지의 첫 기준입니다.",
+            ko: "처음에는 제목, 핵심 전제, 대상 독자만 정해도 충분합니다. 권리/IP와 출고 기준은 이 기준선 위에 천천히 얹습니다.",
             en: "Media, market, platform, and rights status seed the release package.",
             ja: "目標媒体・国・プラットフォーム・権利状態が出稿パッケージの最初の基準です。",
             zh: "目标媒介、市场、平台和权利状态是交付包的初始基准。",
@@ -66,28 +65,28 @@ export function ProjectStartBasisForm({
         </div>
         <div className="ps-release-priority-grid">
           <div>
-            <span>{L4(language, { ko: "출고 형태", en: "Release format", ja: "出稿形式", zh: "交付形态" })}</span>
-            <b>{L4(language, FORMAT_LABEL_UI[draft.format])}</b>
+            <span>{L4(language, { ko: "작품명", en: "Title", ja: "作品名", zh: "作品名" })}</span>
+            <b>{draft.title.trim() || L4(language, { ko: "아직 비어 있음", en: "Not set yet", ja: "未入力", zh: "尚未填写" })}</b>
           </div>
           <div>
-            <span>{L4(language, { ko: "출고 목적", en: "Release purpose", ja: "出稿目的", zh: "交付目的" })}</span>
-            <b>{L4(language, RELEASE_PURPOSE_LABEL_UI[draft.releasePurpose])}</b>
+            <span>{L4(language, { ko: "핵심 전제", en: "Core premise", ja: "核心前提", zh: "核心前提" })}</span>
+            <b>{draft.premise.trim() || L4(language, { ko: "세계관에서 이어서 작성", en: "Continue in worldbuilding", ja: "世界観で続けて作成", zh: "在世界观中继续填写" })}</b>
           </div>
           <div>
-            <span>{L4(language, { ko: "국가·언어권", en: "Market / language", ja: "国・言語圏", zh: "国家/语言圈" })}</span>
-            <b>{L4(language, TARGET_MARKET_LABEL_UI[draft.targetMarket])} · {L4(language, TARGET_LANGUAGE_LABEL_UI[draft.targetLanguage])}</b>
+            <span>{L4(language, { ko: "형태·독자", en: "Format / audience", ja: "形式・読者", zh: "形态/读者" })}</span>
+            <b>{L4(language, FORMAT_LABEL_UI[draft.format])} · {L4(language, TARGET_MARKET_LABEL_UI[draft.targetMarket])}</b>
           </div>
           <div>
-            <span>{L4(language, { ko: "출고 플랫폼", en: "Release platform", ja: "出稿プラットフォーム", zh: "交付平台" })}</span>
-            <b>{publishPlatformLabel(draft.publishPlatform)}</b>
+            <span>{L4(language, { ko: "첫 회차 기준", en: "First episode basis", ja: "初回基準", zh: "首章基准" })}</span>
+            <b>{draft.episodeLength.trim() || L4(language, { ko: "분량은 나중에 정해도 됩니다", en: "Can be set later", ja: "後で設定できます", zh: "可稍后设置" })}</b>
           </div>
           <div>
-            <span>{L4(language, { ko: "권리 상태", en: "Rights status", ja: "権利状態", zh: "权利状态" })}</span>
-            <b>{L4(language, RIGHTS_STATUS_LABEL_UI[draft.rightsStatus])}</b>
+            <span>{L4(language, { ko: "권리/IP", en: "Rights/IP", ja: "権利/IP", zh: "权利/IP" })}</span>
+            <b>{draft.rightsNote.trim() || L4(language, { ko: "필요할 때 보강", en: "Add when needed", ja: "必要時に補強", zh: "需要时补充" })}</b>
           </div>
           <div>
-            <span>{L4(language, { ko: "권리/IP 메모", en: "Rights/IP note", ja: "権利/IPメモ", zh: "权利/IP备注" })}</span>
-            <b>{draft.rightsNote.trim() || L4(language, { ko: "작성 전", en: "Not written yet", ja: "作成前", zh: "尚未填写" })}</b>
+            <span>{L4(language, { ko: "다음 단계", en: "Next step", ja: "次の段階", zh: "下一步" })}</span>
+            <b>{L4(language, { ko: "저장하고 세계관으로", en: "Save and open world", ja: "保存して世界観へ", zh: "保存并进入世界观" })}</b>
           </div>
         </div>
       </section>
@@ -151,6 +150,39 @@ export function ProjectStartBasisForm({
                 <option value="JP">{L4(language, TARGET_LANGUAGE_LABEL_UI.JP)}</option>
                 <option value="CN">{L4(language, TARGET_LANGUAGE_LABEL_UI.CN)}</option>
               </select>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset className="ps-form-group wide">
+          <legend>{L4(language, { ko: "창작 기준", en: "Creative basis", ja: "創作基準", zh: "创作基准" })}</legend>
+          <div className="ps-form-group-grid">
+            <label className="ps-field wide">
+              <span>{L4(language, { ko: "핵심 전제", en: "Core premise", ja: "核心前提", zh: "核心前提" })}</span>
+              <textarea
+                data-testid="project-core-premise-input"
+                value={draft.premise}
+                onChange={(event) => setDraft((prev) => ({ ...prev, premise: event.target.value }))}
+                placeholder={L4(language, {
+                  ko: "이 세계에서 현실과 다른 점, 지금 터진 갈등, 주인공이 원하는 것을 한두 문장으로 적습니다.",
+                  en: "Write one or two sentences about the world and conflict this work begins from.",
+                  ja: "この作品がどんな世界と対立から始まるか、1〜2文で書きます。",
+                  zh: "用一两句话写出作品从怎样的世界与冲突开始。",
+                })}
+              />
+            </label>
+            <label className="ps-field wide">
+              <span>{L4(language, { ko: "권리/IP 메모", en: "Rights/IP notes", ja: "権利/IPメモ", zh: "权利/IP备注" })}</span>
+              <textarea
+                data-testid="project-rights-memo-input"
+                value={draft.rightsNote}
+                onChange={(event) => setDraft((prev) => ({ ...prev, rightsNote: event.target.value }))}
+                placeholder={L4(language, {
+                  ko: "공동기획, 외부자료, 원작·참고자료, 상업 이용 예정 여부가 있으면 적습니다. 없으면 비워도 됩니다.",
+                  en: "Note original author, co-planning, external materials and commercial-use plans.",
+                  ja: "原作者、共同企画、外部資料、商用利用予定の有無を書きます。",
+                  zh: "记录原作者、共同策划、外部资料以及商业使用计划。",
+                })}
+              />
             </label>
           </div>
         </fieldset>
@@ -241,39 +273,6 @@ export function ProjectStartBasisForm({
                   en: "Example: 5 times a week, by season, contest submission",
                   ja: "例: 週5回、シーズン単位、公募提出",
                   zh: "例：每周5更、按季、比赛提交",
-                })}
-              />
-            </label>
-          </div>
-        </fieldset>
-        <fieldset className="ps-form-group wide">
-          <legend>{L4(language, { ko: "창작 기준", en: "Creative basis", ja: "創作基準", zh: "创作基准" })}</legend>
-          <div className="ps-form-group-grid">
-            <label className="ps-field wide">
-              <span>{L4(language, { ko: "핵심 전제", en: "Core premise", ja: "核心前提", zh: "核心前提" })}</span>
-              <textarea
-                data-testid="project-core-premise-input"
-                value={draft.premise}
-                onChange={(event) => setDraft((prev) => ({ ...prev, premise: event.target.value }))}
-                placeholder={L4(language, {
-                  ko: "이 작품이 어떤 세계와 갈등에서 시작하는지 한두 문장으로 적습니다.",
-                  en: "Write one or two sentences about the world and conflict this work begins from.",
-                  ja: "この作品がどんな世界と対立から始まるか、1〜2文で書きます。",
-                  zh: "用一两句话写出作品从怎样的世界与冲突开始。",
-                })}
-              />
-            </label>
-            <label className="ps-field wide">
-              <span>{L4(language, { ko: "권리/IP 메모", en: "Rights/IP notes", ja: "権利/IPメモ", zh: "权利/IP备注" })}</span>
-              <textarea
-                data-testid="project-rights-memo-input"
-                value={draft.rightsNote}
-                onChange={(event) => setDraft((prev) => ({ ...prev, rightsNote: event.target.value }))}
-                placeholder={L4(language, {
-                  ko: "원작자, 공동기획, 외부자료, 상업 이용 예정 여부를 적습니다.",
-                  en: "Note original author, co-planning, external materials and commercial-use plans.",
-                  ja: "原作者、共同企画、外部資料、商用利用予定の有無を書きます。",
-                  zh: "记录原作者、共同策划、外部资料以及商业使用计划。",
                 })}
               />
             </label>

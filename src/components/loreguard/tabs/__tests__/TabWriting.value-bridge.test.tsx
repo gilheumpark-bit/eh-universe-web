@@ -39,6 +39,7 @@ jest.mock("@/components/loreguard/FindReplaceBar", () => ({
 
 jest.mock("@/components/loreguard/ComposerExtras", () => ({
   ModelPickerInline: () => null,
+  ReasoningLevelInline: () => null,
   FontModeToggle: () => null,
   MentionDropdown: () => null,
   useWritingFontMode: () => ["system", jest.fn()],
@@ -181,6 +182,33 @@ describe("TabWriting value bridge", () => {
 
     expect(focusMode).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("button", { name: "집필 기준·출고 준비 열기" })).toBeInTheDocument();
+  });
+
+  it("리딥 모드는 원고를 읽기 전용 표면으로 바꾸고 단축키로 왕복한다", () => {
+    renderTabWriting();
+
+    fireEvent.click(screen.getByRole("button", { name: "원고를 읽기 모드로 검토" }));
+
+    const reader = screen.getByRole("document", { name: "원고 읽기 검토" });
+    expect(within(reader).getByText("현재 원고 본문")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "원고 본문 편집" })).not.toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "r", ctrlKey: true, altKey: true });
+
+    expect(screen.getByRole("textbox", { name: "원고 본문 편집" })).toHaveValue("현재 원고 본문");
+
+    fireEvent.keyDown(window, { key: "r", ctrlKey: true, altKey: true });
+
+    expect(screen.getByRole("document", { name: "원고 읽기 검토" })).toBeInTheDocument();
+  });
+
+  it("집필 바로가기에 리딥 단축키를 노출한다", () => {
+    renderTabWriting();
+    openWritingBasisPanel();
+
+    const shortcuts = screen.getByLabelText("집필 바로가기");
+    expect(within(shortcuts).getByText("리딥 모드")).toBeInTheDocument();
+    expect(within(shortcuts).getByText("Ctrl+Alt+R")).toBeInTheDocument();
   });
 
   it("집필 화면에서 노아 제안, 과정기록, 권리/IP, 출고 패키지 흐름을 한 카드로 노출한다", () => {

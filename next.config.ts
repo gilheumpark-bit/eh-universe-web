@@ -58,6 +58,7 @@ const nextConfig: NextConfig = {
   // [QA-chief 2026-06-14] Next.js dev indicator hides app-level QA signals and overlaps
   // floating studio controls during design review. Disable it; console/terminal keep dev errors.
   devIndicators: false,
+  allowedDevOrigins: ['127.0.0.1'],
   images: {
     remotePatterns: [
       {

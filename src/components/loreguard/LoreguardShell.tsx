@@ -183,6 +183,21 @@ interface LoreguardShellProps {
   projectId?: string | null;
   /** [G1] 헤더 라벨·토스트 4언어 (L4). */
   language?: AppLanguage;
+  /** 작품 장르 기반의 은은한 작업실 톤. */
+  genreTone?: string | null;
+}
+
+function normalizeGenreTone(raw?: string | null): string | undefined {
+  const key = String(raw ?? "").toLowerCase().replace(/[\s_]+/g, "-");
+  if (!key) return undefined;
+  if (key.includes("romance") || key.includes("rofan") || key.includes("love")) return "romance";
+  if (key.includes("wuxia") || key.includes("martial") || key.includes("murim")) return "wuxia";
+  if (key.includes("sf") || key.includes("sci") || key.includes("science")) return "sf";
+  if (key.includes("thriller") || key.includes("horror")) return "thriller";
+  if (key.includes("hunter") || key.includes("modern")) return "modern";
+  if (key.includes("light")) return "lightnovel";
+  if (key.includes("fantasy")) return "fantasy";
+  return "general";
 }
 
 export default function LoreguardShell({
@@ -198,6 +213,7 @@ export default function LoreguardShell({
   onSettings,
   projectId = null,
   language = "KO",
+  genreTone = null,
 }: LoreguardShellProps) {
   const router = useRouter();
   const { lang, setLangDirect } = useLang();
@@ -346,9 +362,10 @@ export default function LoreguardShell({
     backupState === "error" ? "var(--c-red)" :
     undefined;
   const activePageTitle = getLoreguardTabLabel(active, language);
+  const normalizedGenreTone = normalizeGenreTone(genreTone);
 
   return (
-    <div className="eh-app" data-theme={resolvedTheme}>
+    <div className="eh-app" data-theme={resolvedTheme} data-genre-tone={normalizedGenreTone}>
       <header className="eh-header">
         {active !== "project" && <h1 className="sr-only">로어가드 {activePageTitle}</h1>}
         {/* brand */}

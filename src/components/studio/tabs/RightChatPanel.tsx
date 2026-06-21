@@ -125,7 +125,6 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
                     silent: t('hfcp.silent'),
                   } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict}
                 </span>
-                <span className="text-[9px] text-text-tertiary ml-auto opacity-50">SCORE: {Math.round(hfcpState.score)}</span>
               </div>
             </div>
           )}

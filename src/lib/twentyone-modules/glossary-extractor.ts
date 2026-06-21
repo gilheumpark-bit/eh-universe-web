@@ -7,10 +7,10 @@
 //   - findCollisions:              detect name/alias overlap with existing entries
 //   - approveCandidate:            status: candidate → approved
 //   - runGlossarySurfaceFormCheck: Compliance hook — forbidden surface form scan
-//   - extractCandidates:           NER pipeline interface (concrete NER deferred to Phase 4 / R2)
+//   - extractCandidates:           deterministic marker extractor (concrete NER deferred to Phase 4 / R2)
 //
-// Phase 2 Step 1 scope: schema + pure logic + stub NER.
-// Phase 4 (R2 research): replace stub with KoBERT fine-tuned classifier.
+// Phase 2 Step 1 scope: schema + pure logic + deterministic marker extraction.
+// Phase 4 (R2 research): replace marker extractor with KoBERT fine-tuned classifier.
 // ============================================================
 
 import type {
@@ -185,13 +185,13 @@ export function runGlossarySurfaceFormCheck(
 }
 
 // ============================================================
-// PART 6 — NER stub (Phase 4 / R2 research replacement target)
+// PART 6 — Candidate extraction (Phase 4 / R2 research replacement target)
 // ============================================================
 
 /**
- * Extract glossary candidates from manuscript via NER.
+ * Extract glossary candidates from manuscript via deterministic inline markers.
  *
- * Phase 2 Step 1: returns empty result (stub).
+ * Phase 2 Step 1: recognizes [[CanonicalName]] or [[Name|alias1|alias2]] markers.
  * Phase 4 (R2 research): replaced with KoBERT fine-tuned NER + Aho-Corasick.
  *
  * Always returns a valid ExtractionResult shape so downstream UI is unblocked.
@@ -201,9 +201,9 @@ export async function extractCandidates(
   _existing: readonly GlossaryEntry[],
 ): Promise<ExtractionResult> {
   const start = Date.now();
-  // Phase 4 (R2): replace this stub with actual NER pipeline.
-  // For now: detect simple bracket-marker patterns as a minimal placeholder,
-  // so UI can be exercised end-to-end without DGX RPC.
+  // Phase 4 (R2): replace this marker extractor with actual NER pipeline.
+  // For now: detect simple bracket-marker patterns so UI can be exercised
+  // end-to-end without DGX RPC.
   //
   // Pattern: [[CanonicalName]] or [[Name|alias1|alias2]]
   const re = /\[\[([^\]|]{1,60})(?:\|([^\]]{1,200}))?\]\]/g;
@@ -221,7 +221,7 @@ export async function extractCandidates(
       aliases,
       entity_type: 'person',  // default; auto-classifier in Phase 4
       source: 'auto_extracted',
-      confidence: 0.6,  // stub confidence
+      confidence: 0.6,
     }));
   }
 

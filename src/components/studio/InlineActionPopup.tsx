@@ -291,6 +291,7 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
       await streamChat({
         systemInstruction,
         messages: [{ role: 'user', content: prompt }],
+        reasoningStage: 'detail',
         onChunk: (chunk) => { accumulated += chunk; setResult(accumulated); },
         signal: ctrl.signal,
       });

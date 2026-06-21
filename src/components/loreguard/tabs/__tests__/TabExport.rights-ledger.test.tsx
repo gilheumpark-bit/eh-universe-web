@@ -182,11 +182,21 @@ describe("TabExport rights ledger", () => {
     const { config, setConfig } = renderTabExport();
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /개요/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /개요/ })).toHaveAttribute("aria-selected", "true");
     });
     expect(screen.getByRole("tab", { name: /자산화/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /점검/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /제출 묶음/ })).toBeInTheDocument();
+    const premiumRightsPackage = screen.getByLabelText("상위 권리 패키지 요약");
+    expect(within(premiumRightsPackage).getByText("상위 권리 패키지")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByText("결제 명분")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByText("작품이 뜨기 전 기준본을 만들고, 뜬 뒤 제안 조건을 비교하는 묶음")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByLabelText("상위 권리 패키지 산출물")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByText("확인서")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByText("저작권 등록 준비")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByText("코어 저작권 패키지")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByText("작가 등록 정보")).toBeInTheDocument();
+    expect(within(premiumRightsPackage).getByRole("button", { name: "권리/IP 채우기" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /자산화/ }));
     expect(screen.getByRole("tab", { name: /자산화/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("자산화 패키지")).toBeInTheDocument();
@@ -219,6 +229,26 @@ describe("TabExport rights ledger", () => {
     expect(within(ipBibleSections).getAllByText(/채움|필수 보강|권장 보강|대기/).length).toBeGreaterThanOrEqual(13);
     expect(screen.getAllByText(/공개용 카드·제출용 문서/).length).toBeGreaterThan(0);
     expect(screen.getByLabelText("공개용 카드와 제출용 문서 차이")).toBeInTheDocument();
+    const authorIdentityCard = screen.getByLabelText("작가 등록 정보");
+    expect(within(authorIdentityCard).getByLabelText("작가 표시명")).toBeInTheDocument();
+    expect(within(authorIdentityCard).getByLabelText("작가 실명")).toBeInTheDocument();
+    expect(within(authorIdentityCard).getByText("필명/실명 입력 필요")).toBeInTheDocument();
+    fireEvent.change(within(authorIdentityCard).getByLabelText("작가 표시명"), {
+      target: { value: "HGGPT" },
+    });
+    fireEvent.change(within(authorIdentityCard).getByLabelText("작가 실명"), {
+      target: { value: "박길흠" },
+    });
+    expect(setConfig).toHaveBeenCalledWith(expect.any(Function));
+    const authorDisplayUpdater = setConfig.mock.calls[0][0] as (prev: Record<string, unknown>) => Record<string, unknown>;
+    expect(authorDisplayUpdater(config as unknown as Record<string, unknown>)).toEqual(
+      expect.objectContaining({ authorDisplayName: "HGGPT" }),
+    );
+    const authorLegalUpdater = setConfig.mock.calls[1][0] as (prev: Record<string, unknown>) => Record<string, unknown>;
+    expect(authorLegalUpdater(config as unknown as Record<string, unknown>)).toEqual(
+      expect.objectContaining({ authorLegalName: "박길흠" }),
+    );
+    setConfig.mockClear();
     expect(screen.getByText("공개용 카드")).toBeInTheDocument();
     expect(screen.getByText("독자·외부 열람자")).toBeInTheDocument();
     expect(screen.getByText("공개하지 않음")).toBeInTheDocument();

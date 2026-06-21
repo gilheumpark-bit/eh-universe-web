@@ -48,6 +48,13 @@ export default function TabExportReleaseOverviewCard({
   copyrightPrepSummaryKo,
   onMediaProfileChange,
 }: TabExportReleaseOverviewCardProps) {
+  const releaseFlow = [
+    { label: "작가 결정", value: `${creatorSegment.requiredProjectInputsKo.length}개 입력 기준` },
+    { label: "과정기록", value: "작업·검수 기록 포함" },
+    { label: "권리/IP", value: segmentMediaLabels.length > 0 ? `${segmentMediaLabels.length}개 자산 범위 확인` : "프로젝트 기준 확인 필요" },
+    { label: "발급 조건", value: "조건 확인 후 발급" },
+  ];
+
   return (
             <div className="pcard">
               <div className="pcard-h">
@@ -71,6 +78,15 @@ export default function TabExportReleaseOverviewCard({
                   <span>저작권 등록 준비</span>
                   <b>{copyrightPrepReadyLabelKo} · {copyrightPrepSummaryKo}</b>
                 </div>
+              </div>
+              <div className="lg-release-spine" aria-label="출고 결정 흐름">
+                {releaseFlow.map((item, index) => (
+                  <div key={item.label}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <b>{item.label}</b>
+                    <small>{item.value}</small>
+                  </div>
+                ))}
               </div>
               <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
                 <span style={{ flex: 1 }}>{creatorSegment.descriptionKo}</span>

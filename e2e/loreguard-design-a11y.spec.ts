@@ -16,6 +16,10 @@ const TAB_LABELS = [
 async function openLoreguard(page: Page) {
   const port = process.env.PLAYWRIGHT_TEST_PORT || '3005';
   await page.addInitScript(() => {
+    window.localStorage.setItem('eh-lang', 'ko');
+    window.localStorage.setItem('eh-cookie-consent', 'accepted');
+    window.localStorage.setItem('noa_studio_ctrl_p_warned', '1');
+    document.cookie = 'eh-lang=ko; path=/; max-age=31536000; SameSite=Lax';
     window.localStorage.setItem('noa-lg-onboarded', '1');
     for (const key of Object.keys(window.localStorage)) {
       if (key.startsWith('noa_leader_evt_')) window.localStorage.removeItem(key);
@@ -29,13 +33,27 @@ async function openLoreguard(page: Page) {
   });
   await page.goto(`http://localhost:${port}/studio`);
   await expect(page.locator('.eh-tab').first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: '프로젝트 생성', exact: true })).toBeVisible({ timeout: 30_000 });
 }
 
 async function ensureProject(page: Page) {
-  const createButton = page.getByRole('button', { name: '빈 프로젝트 생성' });
+  const createButton = page
+    .getByRole('button', {
+      name: /^(기준선 만들기|새 프로젝트 시작|새 프로젝트|새 작품 만들기|빈 프로젝트 생성)$/,
+    })
+    .first();
   if ((await createButton.count()) > 0) {
     await createButton.click();
-    await expect(page.getByText('세계관 모드')).toBeVisible();
+    await page.waitForFunction(() => {
+      try {
+        const projects = JSON.parse(window.localStorage.getItem('noa_projects_v2') ?? '[]');
+        return Array.isArray(projects) && projects.length > 0;
+      } catch {
+        return false;
+      }
+    });
+    await page.locator('.eh-tab').nth(1).click();
+    await expect(page.getByText(/세계관 기준선|세계관 모드/)).toBeVisible();
   }
 }
 
@@ -110,6 +128,16 @@ async function openAndCloseMobileSheet(page: Page, label: string) {
   await expect(page.locator('body')).not.toHaveAttribute('data-lg-mobile-sheet-open', '1');
 }
 
+async function expandCollapsedPanel(page: Page, label: RegExp) {
+  const expandButton = page.getByRole('button', { name: new RegExp(`^(?:${label.source}) 펼치기$`) }).first();
+  try {
+    await expandButton.waitFor({ state: 'visible', timeout: 1_500 });
+    await expandButton.click();
+  } catch {
+    // The panel may already be open on wide desktop layouts.
+  }
+}
+
 test('Loreguard design accessibility regression', async ({ page }) => {
   test.setTimeout(90_000);
 
@@ -129,31 +157,35 @@ test('Loreguard design accessibility regression', async ({ page }) => {
   await ensureProject(page);
 
   await page.locator('.eh-tab').nth(4).click();
-  await expect(page.locator('.tpanel-head').filter({ hasText: /씬시트 인스펙터|Scene sheet inspector/ })).toBeVisible();
+  await expandCollapsedPanel(page, /씬시트 보조 패널|Scene sheet panel/);
+  await expect(page.locator('.tpanel-head').filter({ hasText: /씬시트 보조 패널|Scene sheet panel/ })).toBeVisible();
 
   await page.locator('.eh-tab').nth(5).click();
-  await expect(page.locator('.tpanel-head').filter({ hasText: /연출 인스펙터|Direction inspector/ })).toBeVisible();
+  await expandCollapsedPanel(page, /연출 보조 패널|Direction panel/);
+  await expect(page.locator('.tpanel-head').filter({ hasText: /연출 보조 패널|Direction panel/ })).toBeVisible();
 
   await page.locator('.eh-tab').nth(7).click();
-  await expect(page.locator('.wr-panel-head').filter({ hasText: /퇴고 인스펙터|Revision inspector/ })).toBeVisible();
+  await expandCollapsedPanel(page, /퇴고 보조 패널/);
+  await expect(page.locator('.wr-panel-head').filter({ hasText: /퇴고 보조 패널/ })).toBeVisible();
   await page.keyboard.press('Escape');
 
   await page.locator('.eh-tab').nth(9).click();
-  await expect(page.locator('.wr-panel-head').filter({ hasText: /출고 인스펙터|Release inspector/ })).toBeVisible();
+  await expandCollapsedPanel(page, /출고 점검 패널/);
+  await expect(page.locator('.wr-panel-head').filter({ hasText: /출고 보조 패널/ })).toBeVisible();
   await page.keyboard.press('Escape');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.eh-tab').first().click();
   await page.waitForTimeout(500);
 
-  const trigger = page.getByRole('button', { name: '프로젝트 설정 캔버스 열기' });
+  const trigger = page.getByRole('button', { name: '작품 기준표 열기' });
   await expect(trigger).toBeVisible();
   await trigger.click();
-  await expect(page.getByRole('dialog', { name: '프로젝트 설정 캔버스' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '작품 기준표' })).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-lg-mobile-sheet-open', '1');
-  await expect(page.locator('.eh-cookie-consent')).toBeHidden();
+  await expect(page.getByRole('dialog', { name: '쿠키 동의' })).toBeHidden();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog', { name: '프로젝트 설정 캔버스' })).toBeHidden();
+  await expect(page.getByRole('dialog', { name: '작품 기준표' })).toBeHidden();
 });
 
 test('Loreguard mobile tab strip keeps every step reachable', async ({ page }) => {
@@ -207,12 +239,12 @@ test('Loreguard mobile IDE panels open and close as sheets', async ({ page }) =>
   await page.setViewportSize({ width: 390, height: 844 });
   await openLoreguard(page);
 
-  await openAndCloseMobileSheet(page, '프로젝트 설정 캔버스');
+  await openAndCloseMobileSheet(page, '작품 기준표');
   await ensureProject(page);
 
   await page.getByRole('button', { name: '퇴고', exact: true }).click();
   await openAndCloseMobileSheet(page, '퇴고 원고함');
-  await openAndCloseMobileSheet(page, '퇴고 점검 패널');
+  await openAndCloseMobileSheet(page, '퇴고 보조 패널');
 
   await page.getByRole('button', { name: '출고', exact: true }).click();
   await openAndCloseMobileSheet(page, '출고 원고함');
@@ -226,7 +258,7 @@ test('Loreguard mobile world panels open and close as sheets', async ({ page }) 
   await openLoreguard(page);
   await ensureProject(page);
 
-  const collapsedRail = page.locator('aside#lg-world-rail[aria-label="세계관 도구 레일 (접힘)"]');
+  const collapsedRail = page.locator('aside#lg-world-rail[aria-label="세계관 도구 (접힘)"]');
   await expect(collapsedRail).toBeVisible();
   await page.getByRole('button', { name: '세계관 도구 레일 펼치기', exact: true }).click();
   const rail = page.getByRole('dialog', { name: '세계관 도구 레일', exact: true });
@@ -240,7 +272,7 @@ test('Loreguard mobile world panels open and close as sheets', async ({ page }) 
   await page.getByRole('button', { name: '세계관 보드 펼치기', exact: true }).click();
   const board = page.getByRole('dialog', { name: '세계관 보드', exact: true });
   await expect(board).toBeVisible();
-  await expect(board).toContainText('세계관 완성도');
+  await expect(board).toContainText('완성도 0%');
   await board.getByRole('button', { name: /핵심 전제/ }).click();
   await expect(collapsedBoard).toBeVisible();
 });
@@ -318,14 +350,14 @@ test('Loreguard mobile scene and direction panels open and close as sheets', asy
   await expect(collapsedNav).toBeVisible();
 
   const collapsedScenePanel = page.locator(
-    'aside#lg-direction-panel[aria-label="씬시트 인스펙터 (접힘)"], aside#lg-direction-panel[aria-label="Scene sheet inspector (접힘)"]',
+    'aside#lg-direction-panel[aria-label="씬시트 보조 패널 (접힘)"], aside#lg-direction-panel[aria-label="Scene sheet panel (접힘)"]',
   );
   await expect(collapsedScenePanel).toBeVisible();
-  await page.getByRole('button', { name: /^(씬시트 인스펙터|Scene sheet inspector) 펼치기$/ }).click();
-  const scenePanel = page.getByRole('dialog', { name: /^(씬시트 인스펙터|Scene sheet inspector)$/ });
+  await page.getByRole('button', { name: /^(씬시트 보조 패널|Scene sheet panel) 펼치기$/ }).click();
+  const scenePanel = page.getByRole('dialog', { name: /^(씬시트 보조 패널|Scene sheet panel)$/ });
   await expect(scenePanel).toBeVisible();
   await expect(scenePanel).toContainText('씬시트 상태');
-  await page.getByRole('button', { name: /^(씬시트 인스펙터|Scene sheet inspector) 접기$/ }).click();
+  await page.getByRole('button', { name: /^(씬시트 보조 패널|Scene sheet panel) 접기$/ }).click();
   await expect(collapsedScenePanel).toBeVisible();
 
   const directionTab = page.getByRole('button', { name: '연출', exact: true });
@@ -333,14 +365,14 @@ test('Loreguard mobile scene and direction panels open and close as sheets', asy
   await directionTab.click();
 
   const collapsedDirectionPanel = page.locator(
-    'aside#lg-direction-panel[aria-label="연출 인스펙터 (접힘)"], aside#lg-direction-panel[aria-label="Direction inspector (접힘)"]',
+    'aside#lg-direction-panel[aria-label="연출 보조 패널 (접힘)"], aside#lg-direction-panel[aria-label="Direction panel (접힘)"]',
   );
   await expect(collapsedDirectionPanel).toBeVisible();
-  await page.getByRole('button', { name: /^(연출 인스펙터|Direction inspector) 펼치기$/ }).click();
-  const directionPanel = page.getByRole('dialog', { name: /^(연출 인스펙터|Direction inspector)$/ });
+  await page.getByRole('button', { name: /^(연출 보조 패널|Direction panel) 펼치기$/ }).click();
+  const directionPanel = page.getByRole('dialog', { name: /^(연출 보조 패널|Direction panel)$/ });
   await expect(directionPanel).toBeVisible();
   await expect(directionPanel).toContainText('씬시트 상태');
-  await page.getByRole('button', { name: /^(연출 인스펙터|Direction inspector) 접기$/ }).click();
+  await page.getByRole('button', { name: /^(연출 보조 패널|Direction panel) 접기$/ }).click();
   await expect(collapsedDirectionPanel).toBeVisible();
 });
 

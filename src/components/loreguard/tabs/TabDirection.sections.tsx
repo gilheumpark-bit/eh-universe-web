@@ -524,6 +524,11 @@ export function DirectionPanel({
     }
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
   }, [scenes]);
+  const collapsedSummary = [
+    { label: "씬", value: String(scenes.length), tone: scenes.length > 0 ? "green" : "amber" },
+    { label: "톤", value: String(toneCounts.length), tone: toneCounts.length > 0 ? "blue" : "gray" },
+    { label: "선택", value: selected?.sceneId ? "ON" : "대기", tone: selected?.sceneId ? "green" : "amber" },
+  ];
 
   if (!open) {
     return (
@@ -538,6 +543,17 @@ export function DirectionPanel({
           <Film size={17} aria-hidden="true" />
         </button>
         <span className="wd-vlabel">보조 패널</span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
+        </span>
       </aside>
     );
   }

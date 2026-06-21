@@ -17,6 +17,13 @@ import { clampWidth, loadWidth, saveWidth } from "@/lib/writing-workspace/panel-
 import { loadCollapse, saveCollapse } from "@/lib/writing-workspace/collapse-state";
 
 type IdePanelSide = "left" | "right";
+type CollapsedSummaryTone = "green" | "amber" | "blue" | "red" | "gray";
+
+export interface IdeCollapsedSummaryItem {
+  label: string;
+  value: string;
+  tone?: CollapsedSummaryTone;
+}
 
 interface IdeResizablePanelProps {
   id: string;
@@ -28,6 +35,7 @@ interface IdeResizablePanelProps {
   minWidth: number;
   maxWidth: number;
   defaultCollapsed?: boolean;
+  collapsedSummary?: readonly IdeCollapsedSummaryItem[];
   children: ReactNode;
 }
 
@@ -62,6 +70,7 @@ export default function IdeResizablePanel({
   minWidth,
   maxWidth,
   defaultCollapsed = true,
+  collapsedSummary = [],
   children,
 }: IdeResizablePanelProps) {
   const panelId = useMemo(() => safeDomId(id), [id]);
@@ -202,6 +211,24 @@ export default function IdeResizablePanel({
   const panelStyle: CSSProperties = collapsed
     ? { flex: "0 0 44px", width: 44 }
     : { flex: `0 0 ${width}px`, width };
+  const visibleCollapsedSummary = collapsedSummary.slice(0, 3);
+  const collapsedSummaryLabel = visibleCollapsedSummary
+    .map((item) => `${item.label} ${item.value}`)
+    .join(", ");
+  const collapsedTitle = collapsedSummaryLabel
+    ? `${ariaLabel} 펼치기 · ${collapsedSummaryLabel}`
+    : `${ariaLabel} 펼치기`;
+  const renderCollapsedSummary = () =>
+    visibleCollapsedSummary.length > 0 ? (
+      <span className="lg-ide-strip-summary" aria-label={collapsedSummaryLabel}>
+        {visibleCollapsedSummary.map((item) => (
+          <span key={`${item.label}:${item.value}`} className={`lg-ide-strip-chip ${item.tone ?? "gray"}`}>
+            <small>{item.label}</small>
+            <b>{item.value}</b>
+          </span>
+        ))}
+      </span>
+    ) : null;
 
   if (isNarrow) {
     return (
@@ -216,7 +243,7 @@ export default function IdeResizablePanel({
             aria-expanded={mobileOpen}
             aria-controls={panelId}
             aria-label={`${ariaLabel} 열기`}
-            title={`${ariaLabel} 열기`}
+            title={collapsedSummaryLabel ? `${ariaLabel} 열기 · ${collapsedSummaryLabel}` : `${ariaLabel} 열기`}
             onClick={() => setMobileOpen(true)}
           >
             <OpenIcon size={16} aria-hidden="true" />
@@ -224,6 +251,7 @@ export default function IdeResizablePanel({
           <span className="lg-ide-vlabel" aria-hidden="true">
             {stripLabel}
           </span>
+          {renderCollapsedSummary()}
         </aside>
         {mobileOpen ? (
           <Fragment>
@@ -275,7 +303,7 @@ export default function IdeResizablePanel({
           aria-expanded={false}
           aria-controls={panelId}
           aria-label={`${ariaLabel} 펼치기`}
-          title={`${ariaLabel} 펼치기`}
+          title={collapsedTitle}
           onClick={toggleCollapsed}
         >
           <Icon size={16} aria-hidden="true" />
@@ -283,6 +311,7 @@ export default function IdeResizablePanel({
         <span className="lg-ide-vlabel" aria-hidden="true">
           {stripLabel}
         </span>
+        {renderCollapsedSummary()}
       </aside>
     );
   }

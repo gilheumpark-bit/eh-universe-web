@@ -85,6 +85,16 @@ export function PlotRail({
   adoptSuggestion,
   ignoreSuggestion,
 }: PlotRailProps) {
+  const collapsedSummary = [
+    { label: "회차", value: `${currentEpisode}화`, tone: "blue" },
+    { label: "비트", value: String(beatCount), tone: beatCount > 0 ? "green" : "amber" },
+    {
+      label: "제안",
+      value: aiBusy ? "중" : String(aiSuggestions.length),
+      tone: aiBusy ? "blue" : aiSuggestions.length > 0 ? "green" : "gray",
+    },
+  ];
+
   if (!railOpen) {
     return (
       <aside id="lg-plot-rail" className="pl-rail collapsed" aria-label="메인 시나리오 개요 레일 (접힘)">
@@ -98,6 +108,17 @@ export function PlotRail({
           <Map size={17} aria-hidden="true" />
         </button>
         <span className="wd-vlabel">메인 시나리오</span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
+        </span>
       </aside>
     );
   }

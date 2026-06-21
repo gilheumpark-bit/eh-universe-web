@@ -47,6 +47,7 @@ jest.mock("@/lib/firebase-id-token", () => ({
 const mockCheckRateLimit = jest.fn();
 jest.mock("@/lib/rate-limit", () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+  checkRateLimitAsync: (...args: unknown[]) => mockCheckRateLimit(...args),
   getClientIp: () => "203.0.113.12",
 }));
 

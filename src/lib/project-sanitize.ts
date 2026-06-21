@@ -3,7 +3,7 @@
 // ============================================================
 
 import { Project } from '@/lib/studio-types';
-import { stripEngineArtifacts } from '@/engine/pipeline';
+import { stripEngineArtifactsBase } from '@/lib/engine-artifacts';
 
 const TEST_INPUT_RESIDUE_PATTERN = /\bAI-TEST-INPUT(?:-[A-Z0-9_-]+)?\b[ \t]*/g;
 const QA_MANUSCRIPT_RESIDUE_PATTERNS = [
@@ -26,7 +26,7 @@ function stripTestInputResidue(text: string): string {
 }
 
 function stripAssistantArtifacts(text: string): string {
-  return stripTestInputResidue(stripEngineArtifacts(text));
+  return stripTestInputResidue(stripEngineArtifactsBase(text));
 }
 
 /**
