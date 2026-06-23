@@ -6,10 +6,12 @@ import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 import {
   buildClaudeEffortConfig,
   buildGeminiThinkingConfig,
+  buildOpenAICompatReasoningConfig,
   type ReasoningLevel,
 } from '@/lib/ai-reasoning';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
+  upstage: 'https://api.upstage.ai/v1/chat/completions',
   openai:  'https://api.openai.com/v1/chat/completions',
   deepseek: 'https://api.deepseek.com/chat/completions',
   qwen:    'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
@@ -24,6 +26,7 @@ export async function streamOpenAICompat(
   system: string, messages: { role: string; content: string }[], temperature: number,
   maxTokens?: number,
   customBaseUrl?: string,
+  reasoningLevel?: ReasoningLevel,
 ): Promise<ReadableStream> {
   const url = customBaseUrl
     ? `${customBaseUrl.replace(/\/$/, '')}/v1/chat/completions`
@@ -32,6 +35,10 @@ export async function streamOpenAICompat(
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (apiKey && !customBaseUrl) headers['Authorization'] = `Bearer ${apiKey}`;
+
+  const reasoningConfig = customBaseUrl
+    ? undefined
+    : buildOpenAICompatReasoningConfig(provider, reasoningLevel, model);
 
   const res = await fetch(url, {
     method: 'POST',
@@ -43,6 +50,7 @@ export async function streamOpenAICompat(
       temperature,
       max_tokens: maxTokens,
       stream: true,
+      ...(reasoningConfig ?? {}),
     }),
   });
 
@@ -181,6 +189,7 @@ export async function dispatchStream(
         return { ok: true, stream: await streamSparkAI(model, system, messages, temperature, { userId: 'vercel-server', userTier: 'free' }) };
       case 'gemini':
         return { ok: true, stream: await streamGemini(apiKey, model, system, messages, temperature, maxTokens, reasoningLevel) };
+      case 'upstage':
       case 'openai':
       case 'deepseek':
       case 'qwen':
@@ -188,7 +197,7 @@ export async function dispatchStream(
       case 'kimi':
       case 'groq':
       case 'mistral':
-        return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature, maxTokens) };
+        return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature, maxTokens, undefined, reasoningLevel) };
       case 'ollama':
       case 'lmstudio':
         // DGX 개발 API 플래그가 켜진 경우에만 로컬/개발 서버로 폴백

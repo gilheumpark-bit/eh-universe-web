@@ -151,7 +151,7 @@ function ClaimRow({ verification, lang }: { verification: ClaimVerification; lan
         {severityIcon(verification.overallSeverity)}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <code className="text-[10px] font-mono text-accent-purple">{verification.claim.surface}</code>
+            <code className="break-all text-[10px] font-mono text-accent-purple">{verification.claim.surface}</code>
             <span className={`text-[10px] font-mono ${SEV_COLOR[verification.overallSeverity]}`}>
               {verification.gapScore}/100
             </span>

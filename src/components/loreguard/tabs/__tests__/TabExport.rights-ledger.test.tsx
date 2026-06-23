@@ -15,6 +15,7 @@ jest.mock("@/hooks/useStudioExport", () => ({
     exportProjectManuscripts: jest.fn(),
     handleExportEPUB: jest.fn(),
     handleExportDOCX: jest.fn(),
+    handleExportHWPX: jest.fn(),
     exportAllJSON: jest.fn(),
   }),
 }));

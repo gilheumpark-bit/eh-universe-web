@@ -35,14 +35,14 @@ export function VersionSnapshotsCard({
         <Clock size={15} />
         {L4(language, { ko: "버전 스냅샷", en: "Version snapshots" })}
         {onRefresh && (
-          <button type="button" className="mini-btn" style={{ marginLeft: "auto" }} onClick={onRefresh}>
+          <button type="button" className="mini-btn wr-push" onClick={onRefresh}>
             <Sync size={13} />
             {L4(language, { ko: "새로고침", en: "Refresh" })}
           </button>
         )}
       </div>
       {backups.length === 0 ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+        <div className="wr-srow wr-muted-row">
           {L4(language, { ko: "저장된 스냅샷이 없습니다", en: "No saved snapshots" })}
         </div>
       ) : (
@@ -52,7 +52,7 @@ export function VersionSnapshotsCard({
               <span className="rdot blue" />
               {backup.label}
               {armedRestore === backup.timestamp ? (
-                <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
+                <span className="wr-inline-actions">
                   <button
                     type="button"
                     className="mini-btn ok"
@@ -75,8 +75,7 @@ export function VersionSnapshotsCard({
               ) : (
                 <button
                   type="button"
-                  className="mini-btn"
-                  style={{ marginLeft: "auto" }}
+                  className="mini-btn wr-push"
                   aria-label={`${L4(language, { ko: "버전 복원", en: "Restore version" })} — ${backup.label}`}
                   disabled={restoring != null || !canRestore}
                   onClick={() => onArmRestore(backup.timestamp)}
@@ -88,7 +87,7 @@ export function VersionSnapshotsCard({
               )}
             </div>
             {armedRestore === backup.timestamp && (
-              <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)" }}>
+              <div className="wr-srow wr-warning-row" role="alert">
                 <span className="rdot amber" />
                 {L4(language, {
                   ko: "정말 복원할까요? 현재 작업이 대체됩니다",
@@ -124,7 +123,7 @@ export function ContaminationGuardCard({
         <Shield size={15} />
         {L4(language, { ko: "문장 점검 요약", en: "Draft review summary" })}
         {directorScore != null && (
-          <span className={"pill " + (hasFindings ? "amber" : "green")} style={{ marginLeft: "auto" }}>
+          <span className={"pill wr-push " + (hasFindings ? "amber" : "green")}>
             {hasFindings
               ? L4(language, { ko: "확인 필요", en: "Needs review" })
               : L4(language, { ko: "문제 없음", en: "No issues" })}
@@ -132,28 +131,27 @@ export function ContaminationGuardCard({
         )}
       </div>
       {!hasReport ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+        <div className="wr-srow wr-muted-row">
           {L4(language, { ko: "노아 제안 후 점검 결과가 표시됩니다", en: "Review results appear after Noa suggestions" })}
         </div>
       ) : rows.length === 0 ? (
         <div className="wr-srow">
           <span className="rdot green" />
           {L4(language, { ko: "검출된 문제 없음", en: "No issues found" })}
-          <b style={{ marginLeft: "auto" }}>{L4(language, { ko: "0건", en: "0" })}</b>
+          <b>{L4(language, { ko: "0건", en: "0" })}</b>
         </div>
       ) : (
         rows.map(([kind, count]) => (
           <div key={kind} className="wr-srow">
             <span className="rdot amber" />
             {kind}
-            <b style={{ marginLeft: "auto" }}>{L4(language, { ko: `${count}건`, en: `${count}` })}</b>
+            <b>{L4(language, { ko: `${count}건`, en: `${count}` })}</b>
           </div>
         ))
       )}
       <button
         type="button"
-        className="btn"
-        style={{ width: "100%", justifyContent: "center", marginTop: "10px" }}
+        className="btn wr-full-action wr-action-gap-top"
         onClick={onDetails}
       >
         {L4(language, { ko: "메인 시나리오에서 자세히", en: "Details in main scenario" })} <ChevronR size={14} />
@@ -203,8 +201,7 @@ export function SelfCheckCard({
         {labels.selfCheckTitle}
         <button
           type="button"
-          className="mini-btn"
-          style={{ marginLeft: "auto" }}
+          className="mini-btn wr-push"
           aria-expanded={open}
           aria-label={labels.selfCheckToggleAria}
           onClick={onToggle}
@@ -215,11 +212,11 @@ export function SelfCheckCard({
       {open && (
         <>
           {rows.map(([label, count]) => (
-            <div key={label} className="wr-srow" style={{ alignItems: "flex-start" }}>
-              <span className="rdot gray" style={{ marginTop: 5 }} />
-              <span style={{ flex: 1, minWidth: 0 }}>
+            <div key={label} className="wr-srow wr-row-top">
+              <span className="rdot gray wr-dot-top" />
+              <span className="wr-row-body">
                 {label}
-                <span style={{ display: "block", color: "var(--c-sub, #888)", fontSize: 11.5 }}>
+                <span className="wr-row-detail">
                   {labels.advisoryCaption}
                 </span>
               </span>
@@ -229,7 +226,7 @@ export function SelfCheckCard({
               </b>
             </div>
           ))}
-          <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+          <div className="wr-srow wr-muted-row wr-gap-top">
             {labels.voiceNotice}
           </div>
         </>
@@ -265,7 +262,7 @@ export function WorkQueueCard({
         {L4(language, { ko: "작업 큐", en: "Work queue" })}
       </div>
       {stages.length === 0 ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+        <div className="wr-srow wr-muted-row">
           {L4(language, { ko: "작업 실행 기록이 없습니다", en: "No pipeline runs yet" })}
         </div>
       ) : (
@@ -282,14 +279,7 @@ export function WorkQueueCard({
                 <div className="wr-q-en">{en}</div>
                 <div className="wr-q-ko">{ko}</div>
                 <span className={"pill " + color}>{stageStatusLabel[stage.status] ?? stage.status}</span>
-                <div className="tbar" style={{ marginTop: "8px" }}>
-                  <span
-                    style={{
-                      width: pct + "%",
-                      background: color === "green" ? "var(--c-green)" : "var(--c-amber)",
-                    }}
-                  />
-                </div>
+                <progress className={"tbar wr-q-progress " + color} value={pct} max={100} aria-label={`${ko} ${pct}%`} />
                 <div className="wr-q-foot">
                   <span className="wr-q-av">{avatar}</span>
                   {stage.score != null
@@ -363,7 +353,7 @@ export function SynthesisLogCard({
         )}
       </div>
       {summary && (
-        <div className="wr-srow" style={{ marginTop: 8 }}>
+        <div className="wr-srow wr-gap-top">
           <span className="rdot green" />
           {L4(language, { ko: "등급", en: "Grade" })} {summary.grade} ·{" "}
           {L4(language, {
@@ -373,7 +363,7 @@ export function SynthesisLogCard({
             zh: "表达习惯",
           })}{" "}
           {summary.aiTonePercent}%
-          <b style={{ marginLeft: "auto" }}>EOS {summary.eosScore}</b>
+          <b>EOS {summary.eosScore}</b>
         </div>
       )}
     </div>

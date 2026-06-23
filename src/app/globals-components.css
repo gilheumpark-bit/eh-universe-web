@@ -58,7 +58,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
   cursor: pointer;
   border: 1px solid transparent;
   min-height: 2.75rem; /* 44px — WCAG 2.5.5 touch target minimum */
@@ -1051,7 +1051,7 @@
   height: 5px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.2);
-  transition: all var(--transition-normal) ease;
+  transition: width var(--transition-normal) ease, background var(--transition-normal) ease;
 }
 
 .bottom-sheet-handle.active {
@@ -1185,4 +1185,11 @@
 
 .loading-dots span:nth-child(2) { animation-delay: 0.16s; }
 .loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+/* Pricing */
+.pricing-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
 

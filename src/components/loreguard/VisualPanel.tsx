@@ -300,19 +300,8 @@ export default function VisualPanel() {
   return (
     <div
       role="presentation"
-      className="eh-app"
+      className="eh-app vpanel-overlay"
       onClick={() => setOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        minWidth: 0,
-        height: "auto",
-        background: "var(--overlay-scrim)",
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "flex-end",
-      }}
     >
       <aside
         ref={dialogRef}
@@ -320,29 +309,17 @@ export default function VisualPanel() {
         aria-modal="true"
         aria-label={L4(language, { ko: "비주얼", en: "Visual", ja: "ビジュアル", zh: "视觉" })}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(560px, 94vw)",
-          height: "100%",
-          overflowY: "auto",
-          background: "var(--page-2)",
-          borderLeft: "1px solid var(--line)",
-          boxShadow: "var(--shadow-pop)",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
+        className="vpanel-panel"
       >
         {/* head */}
-        <div className="pcard-h" style={{ marginBottom: 0 }}>
+        <div className="pcard-h vpanel-head">
           <Img size={16} />
           {L4(language, { ko: "비주얼", en: "Visual", ja: "ビジュアル", zh: "视觉" })}
           <button
             type="button"
-            className="eh-icbtn"
+            className="eh-icbtn vpanel-close"
             aria-label={L4(language, { ko: "패널 닫기", en: "Close panel", ja: "パネルを閉じる", zh: "关闭面板" })}
             autoFocus
-            style={{ marginLeft: "auto" }}
             onClick={() => setOpen(false)}
           >
             <X size={16} />
@@ -353,10 +330,10 @@ export default function VisualPanel() {
         <section className="pcard" aria-label={L4(language, { ko: "비주얼 카드", en: "Visual cards", ja: "ビジュアルカード", zh: "视觉卡片" })}>
           <div className="pcard-h">
             {L4(language, { ko: "비주얼 카드", en: "Visual cards", ja: "ビジュアルカード", zh: "视觉卡片" })}
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)" }}>{cards.length}</span>
+            <span className="vpanel-count">{cards.length}</span>
           </div>
           {cards.length === 0 ? (
-            <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+            <div className="wr-srow vpanel-muted">
               {L4(language, {
                 ko: "비주얼 카드가 없습니다 — 집필 탭 챕터 분석에서 생성됩니다.",
                 en: "No visual cards — created from chapter analysis in the Writing tab.",
@@ -366,32 +343,19 @@ export default function VisualPanel() {
             </div>
           ) : (
             <>
-              <ul style={{ display: "flex", flexDirection: "column", gap: 5, margin: 0, padding: 0, listStyle: "none", maxHeight: 180, overflowY: "auto" }}>
+              <ul className="vpanel-card-list">
                 {cards.map((c) => (
                   <li key={c.id}>
                     <button
                       type="button"
                       onClick={() => setSelectedCardId(c.id)}
                       aria-pressed={selectedCard?.id === c.id}
-                      style={{
-                        width: "100%",
-                        textAlign: "left",
-                        padding: "8px 11px",
-                        borderRadius: 10,
-                        border: `1px solid ${selectedCard?.id === c.id ? "var(--primary)" : "var(--line)"}`,
-                        background: "var(--card-2)",
-                        color: "inherit",
-                        font: "inherit",
-                        cursor: "pointer",
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "baseline",
-                      }}
+                      className={`vpanel-card-btn${selectedCard?.id === c.id ? " is-active" : ""}`}
                     >
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <span className="vpanel-card-title">
                         {c.title || `EP${c.episode} 비주얼 카드`}
                       </span>
-                      <span style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: "auto", flexShrink: 0 }}>
+                      <span className="vpanel-card-meta">
                         {visualShotTypeLabel(language, c.shotType)} · EP{c.episode}
                         {(c.generatedImages?.length ?? 0) > 0 && ` · ${c.generatedImages!.length}🖼`}
                       </span>
@@ -401,15 +365,15 @@ export default function VisualPanel() {
               </ul>
 
               {selectedCard && (
-                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="vpanel-card-detail">
                   {/* 시각 자료 메모 + 복사 (기존 buildFinalVisualPrompt 재사용) */}
-                  <div style={{ fontSize: 11, fontWeight: 800, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em" }}>
+                  <div className="vpanel-kicker">
                     {L4(language, { ko: "시각 자료 메모", en: "Visual brief", ja: "ビジュアル資料メモ", zh: "视觉资料备忘" })}
                   </div>
-                  <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 11.5, color: "var(--ink-2)", background: "var(--card-2)", border: "1px solid var(--line)", borderRadius: 10, padding: 10, maxHeight: 120, overflowY: "auto" }}>
+                  <pre className="vpanel-pre vpanel-pre-brief">
                     {finalPrompt || L4(language, { ko: "(비어 있음)", en: "(empty)", ja: "（空）", zh: "（空）" })}
                   </pre>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div className="vpanel-action-row">
                     <button
                       type="button"
                       className="mini-btn"
@@ -427,7 +391,7 @@ export default function VisualPanel() {
                       <Copy size={13} />
                       {L4(language, { ko: "제외 요소 복사", en: "Copy exclusions", ja: "除外要素をコピー", zh: "复制排除项" })}
                     </button>
-                    <span className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11, padding: 0 }}>
+                    <span className="wr-srow vpanel-inline-note">
                       {L4(language, {
                         ko: "이 화면은 제작용 자료를 정리합니다. 이미지는 앱 안에서 만들지 않습니다.",
                         en: "This panel prepares production notes. Images are not created inside the app.",
@@ -439,7 +403,7 @@ export default function VisualPanel() {
 
                   {/* 첨부 이미지 (읽기 — 외부 제작 자료나 과거 카드에 남은 참고 이미지) */}
                   {(selectedCard.generatedImages?.length ?? 0) > 0 && (
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div className="vpanel-asset-grid">
                       {selectedCard.generatedImages!.map((img) => (
                         <Image
                           key={img.id}
@@ -448,7 +412,7 @@ export default function VisualPanel() {
                           width={56}
                           height={56}
                           unoptimized
-                          style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)" }}
+                          className="vpanel-thumb"
                         />
                       ))}
                     </div>
@@ -464,12 +428,12 @@ export default function VisualPanel() {
           <div className="pcard-h">
             <Layers size={15} />
             {L4(language, { ko: "매체 변환 슬롯", en: "Media slots", ja: "メディアスロット", zh: "媒体槽位" })}
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)", marginLeft: "auto" }}>
+            <span className="vpanel-slot-summary">
               {visualMediumLabel(language, "image")} 32 · {visualMediumLabel(language, "video")} 51 · {visualMediumLabel(language, "voice")} 23
             </span>
           </div>
 
-          <div className="seg" style={{ marginBottom: 10 }}>
+          <div className="seg vpanel-seg">
             {MEDIUMS.map((m) => (
               <button
                 key={m}
@@ -483,30 +447,30 @@ export default function VisualPanel() {
             ))}
           </div>
 
-          <div className="wr-srow" style={{ fontSize: 12 }}>
+          <div className="wr-srow vpanel-stat-row">
             <span className="rdot green" />
             {L4(language, { ko: "장면값", en: "From scene", ja: "シーン値", zh: "场景值" })} {slotStats.scene}
             <span className="rdot blue" />
             {L4(language, { ko: "기본값", en: "Defaults", ja: "既定値", zh: "默认值" })} {slotStats.def}
             <span className="rdot gray" />
             {L4(language, { ko: "미채움", en: "Unfilled", ja: "未入力", zh: "未填" })} {slotStats.unfilled}
-            <span style={{ marginLeft: "auto", color: "var(--ink-3)" }}>
+            <span className="vpanel-push-muted">
               {plan.totalSlots} {L4(language, { ko: "슬롯", en: "slots", ja: "スロット", zh: "槽位" })}
             </span>
           </div>
 
-          <ul style={{ display: "flex", flexDirection: "column", gap: 4, margin: "6px 0 10px", padding: 0, listStyle: "none" }}>
+          <ul className="vpanel-category-list">
             {plan.categories.map((cat) => {
               const filled = cat.slots.filter((s) => s.source !== "unfilled").length;
               return (
-                <li key={cat.category} className="wr-srow" style={{ padding: "2px 0", fontSize: 11.5 }}>
-                  <span style={{ fontWeight: 700, color: "var(--ink-1)" }}>
+                <li key={cat.category} className="wr-srow vpanel-category-row">
+                  <span className="vpanel-category-name">
                     {visualSlotCategoryLabel(language, cat.category)}
                   </span>
-                  <span style={{ color: "var(--ink-3)" }}>
+                  <span className="vpanel-muted">
                     {L4(language, { ko: "묶음", en: "Group", ja: "グループ", zh: "分组" })} {cat.tier}
                   </span>
-                  <span style={{ marginLeft: "auto", color: "var(--ink-3)" }}>
+                  <span className="vpanel-push-muted">
                     {filled}/{cat.slots.length}
                   </span>
                 </li>
@@ -514,18 +478,18 @@ export default function VisualPanel() {
             })}
           </ul>
 
-          <div style={{ fontSize: 11, fontWeight: 800, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
+          <div className="vpanel-kicker vpanel-kicker-spaced">
             {L4(language, { ko: "프롬프트 골격", en: "Prompt skeleton", ja: "プロンプト骨格", zh: "提示词骨架" })}
           </div>
-          <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 11, color: "var(--ink-2)", background: "var(--card-2)", border: "1px solid var(--line)", borderRadius: 10, padding: 10, maxHeight: 160, overflowY: "auto" }}>
+          <pre className="vpanel-pre vpanel-pre-skeleton">
             {displayPromptSkeleton}
           </pre>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+          <div className="vpanel-footer-row">
             <button type="button" className="mini-btn" onClick={() => void copyText(displayPromptSkeleton)}>
               <Copy size={13} />
               {L4(language, { ko: "골격 복사", en: "Copy skeleton", ja: "骨格をコピー", zh: "复制骨架" })}
             </button>
-            <span style={{ fontSize: 10.5, color: "var(--ink-3)" }}>
+            <span className="vpanel-footnote">
               {L4(language, {
                 ko: "[항목]은 아직 채우지 않은 시각 요소입니다.",
                 en: "[slot] marks a visual element that still needs author input.",

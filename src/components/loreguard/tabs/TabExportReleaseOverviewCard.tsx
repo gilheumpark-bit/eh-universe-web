@@ -60,7 +60,7 @@ export default function TabExportReleaseOverviewCard({
               <div className="pcard-h">
                 <Flag size={15} />
                 출고 문서함
-                <span className="pill gray" style={{ marginLeft: "auto" }}>
+                <span className="pill gray tex-push">
                   {creatorSegment.labelKo}
                 </span>
               </div>
@@ -88,16 +88,16 @@ export default function TabExportReleaseOverviewCard({
                   </div>
                 ))}
               </div>
-              <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
-                <span style={{ flex: 1 }}>{creatorSegment.descriptionKo}</span>
+              <div className="wr-srow tex-muted-row tex-row-start">
+                <span className="tex-grow">{creatorSegment.descriptionKo}</span>
               </div>
-              <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+              <div className="wr-srow tex-muted-row">
                 핵심 필요 <b>{creatorSegment.primaryNeedKo}</b>
               </div>
-              <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+              <div className="wr-srow tex-muted-row">
                 준비 조건 <b>{recommendedPlan.label}{upgradePlan ? ` → ${upgradePlan.label}` : ""} 기준</b>
               </div>
-              <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+              <div className="wr-srow tex-muted-row">
                 문서 묶음 <b>{packagePlan.profile.labelKo}</b>
               </div>
               <div className="lg-release-purpose-first" aria-label="출고 목적과 산출물">
@@ -129,26 +129,21 @@ export default function TabExportReleaseOverviewCard({
               {groupReleaseScope ? (
                 <div
                   aria-label="조직 워크스페이스 제출 상태"
-                  style={{
-                    display: "grid",
-                    gap: 6,
-                    borderTop: "1px solid var(--line)",
-                    paddingTop: 8,
-                  }}
+                  className="tex-divider-grid"
                 >
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>조직 제출 상태</span>
-                    <b style={{ textAlign: "right" }}>
+                    <b className="tex-right">
                       {groupReleaseScope.issueAllowed ? "프로젝트별 원장 분리 준비" : groupReleaseScope.reasonKo}
                     </b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>프로젝트 경계</span>
-                    <b style={{ textAlign: "right" }}>{groupReleaseScope.projectId ?? "프로젝트 선택 필요"}</b>
+                    <b className="tex-right">{groupReleaseScope.projectId ?? "프로젝트 선택 필요"}</b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>공유 필드</span>
-                    <b style={{ textAlign: "right" }}>{groupReleaseVisibleFieldsKo}</b>
+                    <b className="tex-right">{groupReleaseVisibleFieldsKo}</b>
                   </div>
                 </div>
               ) : null}
@@ -159,42 +154,42 @@ export default function TabExportReleaseOverviewCard({
                   <span>조건과 예상 차감은 접어 둡니다. 실제 차감은 실행하지 않습니다.</span>
                 </summary>
                 <div className="lg-release-credit-detail-body">
-                  <div aria-label="출고 권한 상태" style={{ display: "grid", gap: 6 }}>
-                    <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div aria-label="출고 권한 상태" className="tex-grid-6">
+                    <div className="wr-srow tex-muted-row tex-row-start">
                       <span>권한 상태</span>
-                      <b style={{ textAlign: "right" }}>
+                      <b className="tex-right">
                         <span className={"pill " + releaseCreditGateTone}>
                           {releaseCreditPreview.eventDraft.statusKo}
                         </span>
                       </b>
                     </div>
-                    <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                    <div className="wr-srow tex-muted-row tex-row-start">
                       <span>크레딧 조건</span>
-                      <b style={{ textAlign: "right" }}>{releaseCreditBalanceKo}</b>
+                      <b className="tex-right">{releaseCreditBalanceKo}</b>
                     </div>
-                    <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                    <div className="wr-srow tex-muted-row tex-row-start">
                       <span>버튼 조건</span>
-                      <b style={{ textAlign: "right" }}>{releaseCreditGateLabelKo}</b>
+                      <b className="tex-right">{releaseCreditGateLabelKo}</b>
                     </div>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>차감 미리보기</span>
-                    <b style={{ textAlign: "right" }}>{releaseCreditPreview.receiptDraftKo}</b>
+                    <b className="tex-right">{releaseCreditPreview.receiptDraftKo}</b>
                   </div>
-                  <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row">
                     플랜 연결 <b>{releaseEntitlement.actionKo}</b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>원장 처리</span>
-                    <b style={{ textAlign: "right" }}>{releaseCreditPreview.ledgerNoteKo}</b>
+                    <b className="tex-right">{releaseCreditPreview.ledgerNoteKo}</b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>프로젝트 격리</span>
-                    <b style={{ textAlign: "right" }}>{releaseCreditPreview.projectScopeNoteKo}</b>
+                    <b className="tex-right">{releaseCreditPreview.projectScopeNoteKo}</b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>패키지 조건</span>
-                    <b style={{ textAlign: "right" }}>
+                    <b className="tex-right">
                       {releaseEntitlement.productLabelKo} · {formatKrw(releaseEntitlement.productPriceKrw)}
                     </b>
                   </div>
@@ -212,25 +207,24 @@ export default function TabExportReleaseOverviewCard({
                         key={item.productId}
                         className={`lg-release-product-card${item.currentProduct ? " active" : ""}`}
                       >
-                        <div className="wr-srow" style={{ color: "var(--ink)", padding: 0 }}>
+                        <div className="wr-srow tex-ink-row tex-row-flush">
                           <b>{item.labelKo}</b>
                           <span
                             className={
-                              "pill " +
+                              "pill tex-push " +
                               (item.status === "included" ? "green" : item.status === "separate-purchase" ? "amber" : "red")
                             }
-                            style={{ marginLeft: "auto" }}
                           >
                             {item.currentProduct ? "선택 구성" : item.unitKo}
                           </span>
                         </div>
-                        <div className="wr-srow" style={{ color: "var(--ink-3)", padding: "6px 0 0" }}>
+                        <div className="wr-srow tex-muted-row tex-row-padtop">
                           <span>출고 범위</span>
                           <b>{item.outputScopeKo}</b>
                         </div>
-                        <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)", padding: "6px 0 0" }}>
+                        <div className="wr-srow tex-muted-row tex-row-start tex-row-padtop">
                           <span>조건</span>
-                          <b style={{ textAlign: "right" }}>{item.availabilityKo}</b>
+                          <b className="tex-right">{item.availabilityKo}</b>
                         </div>
                         <div className="lg-release-product-foot">
                           <span>{item.approvalPolicyKo}</span>
@@ -244,10 +238,10 @@ export default function TabExportReleaseOverviewCard({
                   </div>
                 </div>
               </details>
-              <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
+              <div className="wr-srow tex-muted-row tex-row-spaced">
                 {creatorSegment.packagePitchKo}
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+              <div className="tex-action-row tex-action-row-spaced">
                 {creatorSegment.mediaProfiles.map((profileId) => {
                   const profile = mediaIpPackProfileById.get(profileId);
                   if (!profile) return null;
@@ -256,13 +250,9 @@ export default function TabExportReleaseOverviewCard({
                     <button
                       key={profile.id}
                       type="button"
-                      className="mini-btn"
+                      className={`mini-btn tex-profile-btn${active ? " is-active" : ""}`}
                       aria-pressed={active}
                       onClick={() => onMediaProfileChange(profile.id)}
-                      style={{
-                        borderColor: active ? "var(--primary)" : "var(--line)",
-                        background: active ? "color-mix(in srgb, var(--primary) 14%, var(--card-2))" : "var(--card-2)",
-                      }}
                     >
                       <span className={"rdot " + (active ? "green" : "blue")} />
                       {profile.shortLabelKo} 자산화

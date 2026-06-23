@@ -4,7 +4,12 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import LoadingSkeleton from '../studio/LoadingSkeleton';
+
+const loadingSkeletonSource = readFileSync(join(process.cwd(), 'src/components/studio/LoadingSkeleton.tsx'), 'utf8');
+const globalsAnimationsCss = readFileSync(join(process.cwd(), 'src/app/globals-animations.css'), 'utf8');
 
 describe('LoadingSkeleton', () => {
   it('renders a single block skeleton by default', () => {
@@ -24,7 +29,7 @@ describe('LoadingSkeleton', () => {
     const { container } = render(<LoadingSkeleton height={200} />);
     const block = container.querySelector('.skeleton-shimmer') as HTMLElement;
     expect(block).not.toBeNull();
-    expect(block.style.height).toBe('200px');
+    expect(block.style.getPropertyValue('--loading-skeleton-height')).toBe('200px');
   });
 
   it('renders text variant with lines', () => {
@@ -37,11 +42,21 @@ describe('LoadingSkeleton', () => {
     const { container } = render(<LoadingSkeleton variant="avatar" />);
     const item = container.querySelector('.skeleton-shimmer') as HTMLElement;
     expect(item).not.toBeNull();
-    expect(item.style.width).toBe('48px');
+    expect(item.style.getPropertyValue('--loading-skeleton-width')).toBe('48px');
   });
 
   it('has role="status" for a11y', () => {
     const { container } = render(<LoadingSkeleton />);
     expect(container.querySelector('[role="status"]')).not.toBeNull();
+  });
+
+  it('keeps dynamic dimensions on CSS variable binding rather than JSX style props', () => {
+    expect(loadingSkeletonSource).not.toMatch(/style=/);
+    expect(loadingSkeletonSource).toContain('loading-skeleton-shape');
+    expect(loadingSkeletonSource).toContain('--loading-skeleton-width');
+    expect(loadingSkeletonSource).toContain('--loading-skeleton-height');
+    expect(globalsAnimationsCss).toContain('.loading-skeleton-shape');
+    expect(globalsAnimationsCss).toContain('width: var(--loading-skeleton-width)');
+    expect(globalsAnimationsCss).toContain('height: var(--loading-skeleton-height)');
   });
 });

@@ -12,9 +12,9 @@
 //   - No imports from origin-migration / OriginBadge / AuditExportButton.
 //
 // Trade-secret separation:
-//   - Types & registry are AGPL-distributable.
+//   - Types & registry are proprietary software.
 //   - Rule pack data (M18 18-platform rules, M11 beat seeds, M13 forbidden codes)
-//     loads externally at runtime via commercial-license grant only.
+//     loads externally at runtime via a separate rule-pack grant only.
 // ============================================================
 
 export type {

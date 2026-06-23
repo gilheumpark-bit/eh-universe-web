@@ -58,7 +58,9 @@ async function openStudioSettings(page: Page, lang: "ko" | "en" | "ja" | "zh" = 
   await dismissOnboarding(page);
   await dismissApiKeyModal(page);
   await expect(
-    page.getByRole("heading", { name: /설정 및 계정|Settings & Account|設定とアカウント|设置与账户/ }),
+    page.getByRole("heading", {
+      name: /환경 설정|Environment Settings|環境設定|环境设置|설정 및 계정|Settings & Account|設定とアカウント|设置与账户/,
+    }),
   ).toBeVisible({ timeout: 20_000 });
 }
 
@@ -67,6 +69,10 @@ function chatHeaders(): Record<string, string> {
     "Content-Type": "application/json",
     Origin: ORIGIN,
   };
+}
+
+function connectionKeyDialog(page: Page) {
+  return page.getByRole("dialog", { name: /연결 키 관리|Connection Key Management/ });
 }
 
 test.describe("BYOK / API settings — commercial matrix (30)", () => {
@@ -104,10 +110,10 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
 
     test("03 API key row shows management copy (KO)", async ({ page }) => {
       await openStudioSettings(page, "ko");
-      await expect(page.getByText("API 키 관리")).toBeVisible();
+      await expect(page.getByText("노아 연결")).toBeVisible();
     });
 
-    test("04 badge 미설정 when no personal key and no hosted", async ({ page }) => {
+    test("04 badge 연결 필요 when no personal key and no hosted", async ({ page }) => {
       await page.addInitScript(() => {
         try {
           localStorage.removeItem("noa_api_key");
@@ -120,18 +126,18 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       });
       await page.goto("/studio?tab=settings", { waitUntil: "domcontentloaded" });
       await dismissOnboarding(page);
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("미설정", { timeout: 15_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("연결 필요", { timeout: 15_000 });
     });
 
-    test("05 badge Not Set in EN locale", async ({ page }) => {
+    test("05 badge Needs connection in EN locale", async ({ page }) => {
       await openStudioSettings(page, "en");
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("Not Set", { timeout: 15_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("Needs connection", { timeout: 15_000 });
     });
 
     test("06 open API modal from settings row", async ({ page }) => {
       await openStudioSettings(page, "ko");
       await page.getByTestId("settings-api-key-row").click();
-      await expect(page.locator('[role="dialog"]')).toBeVisible();
+      await expect(connectionKeyDialog(page)).toBeVisible();
       await expect(page.getByTestId("api-key-modal-secret-input")).toBeVisible();
     });
 
@@ -146,14 +152,14 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       await openStudioSettings(page, "ko");
       await page.getByTestId("settings-api-key-row").click();
       await page.keyboard.press("Escape");
-      await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 8000 });
+      await expect(connectionKeyDialog(page)).toBeHidden({ timeout: 8000 });
     });
 
     test("09 close button on modal header", async ({ page }) => {
       await openStudioSettings(page, "ko");
       await page.getByTestId("settings-api-key-row").click();
       await page.getByTestId("api-key-modal-close").click();
-      await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 8000 });
+      await expect(connectionKeyDialog(page)).toBeHidden({ timeout: 8000 });
     });
 
     test("10 save dummy key then badge shows configured (KO)", async ({ page }) => {
@@ -171,11 +177,11 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       await page.getByTestId("api-key-modal-secret-input").fill("AIza-e2e-dummy-key-not-real");
       await page.getByTestId("api-key-modal-save").click();
       await page.getByTestId("api-key-modal-close").click();
-      await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 8000 });
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("설정됨", { timeout: 10_000 });
+      await expect(connectionKeyDialog(page)).toBeHidden({ timeout: 8000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("연결됨", { timeout: 10_000 });
     });
 
-    test("11 delete key restores 미설정", async ({ page }) => {
+    test("11 delete key restores 연결 필요", async ({ page }) => {
       await page.addInitScript(() => {
         try {
           const slots = [{ id: "slot-e2e", provider: "gemini", apiKey: "noa:1:e2e", model: "gemini-2.5-pro", role: "default", label: "e2e", enabled: true }];
@@ -187,12 +193,12 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
         }
       });
       await openStudioSettings(page, "ko");
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("설정됨", { timeout: 15_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("연결됨", { timeout: 15_000 });
       await page.getByTestId("settings-api-key-row").click();
       await page.getByTestId("api-key-modal-delete").click();
       await page.getByTestId("api-key-modal-close").click();
-      await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 8000 });
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("미설정", { timeout: 10_000 });
+      await expect(connectionKeyDialog(page)).toBeHidden({ timeout: 8000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("연결 필요", { timeout: 10_000 });
     });
 
     test("12 test connection disabled without input and no storage", async ({ page }) => {
@@ -209,14 +215,14 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       await expect(page.getByTestId("api-key-modal-test")).toBeDisabled();
     });
 
-    test("13 JP locale shows 未設定", async ({ page }) => {
+    test("13 JP locale shows 接続必要", async ({ page }) => {
       await openStudioSettings(page, "ja");
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("未設定", { timeout: 15_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("接続必要", { timeout: 15_000 });
     });
 
-    test("14 CN locale shows 未设置", async ({ page }) => {
+    test("14 CN locale shows 需要连接", async ({ page }) => {
       await openStudioSettings(page, "zh");
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("未设置", { timeout: 15_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("需要连接", { timeout: 15_000 });
     });
 
     test("15 banner API setup opens modal via btn-api-key", async ({ page }) => {
@@ -265,7 +271,7 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       await routeCapabilities(page, CAP_HOSTED_GEMINI);
     });
 
-    test("18 플랫폼 키만 when hosted gemini and no personal key", async ({ page }) => {
+    test("18 기본 운영 when hosted gemini and no personal key", async ({ page }) => {
       await page.addInitScript(() => {
         try {
           localStorage.removeItem("noa_api_key");
@@ -278,10 +284,10 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       });
       await page.goto("/studio?tab=settings", { waitUntil: "domcontentloaded" });
       await dismissOnboarding(page);
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("플랫폼", { timeout: 20_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("기본 운영", { timeout: 20_000 });
     });
 
-    test("19 personal key overrides — shows 설정됨 with hosted also true", async ({ page }) => {
+    test("19 personal key overrides — shows 연결됨 with hosted also true", async ({ page }) => {
       await page.addInitScript(() => {
         try {
           localStorage.setItem("noa_api_key", "noa:1:e2e-personal");
@@ -293,7 +299,7 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       });
       await page.goto("/studio?tab=settings", { waitUntil: "domcontentloaded" });
       await dismissOnboarding(page);
-      await expect(page.getByTestId("settings-api-key-status")).toContainText("설정됨", { timeout: 20_000 });
+      await expect(page.getByTestId("settings-api-key-status")).toContainText("연결됨", { timeout: 20_000 });
     });
   });
 
@@ -322,7 +328,7 @@ test.describe("BYOK / API settings — commercial matrix (30)", () => {
       });
       expect(res.status()).toBe(403);
       const text = await res.text();
-      expect(text.toLowerCase()).toMatch(/origin|forbidden/);
+      expect(text.toLowerCase()).toMatch(/origin|forbidden|csrf/);
     });
 
     test("22 POST /api/chat invalid JSON → 400", async ({ request }) => {

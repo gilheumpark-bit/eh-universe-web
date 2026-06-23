@@ -27,7 +27,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-3,912_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
-![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
+![License](https://img.shields.io/badge/UNLICENSED-proprietary-red?style=flat-square)
 ![Patent](https://img.shields.io/badge/KIPO-10--2026--0038027-d4af37?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-KO%20EN%20JA%20ZH-green?style=flat-square)
 
@@ -265,7 +265,7 @@ npm test         # 테스트
 | [SECURITY.md](SECURITY.md) | 보안 정책 (security@eh-universe.dev) |
 | [SUPPORT.md](SUPPORT.md) | 지원 채널 |
 | [NOTICE](NOTICE) | Third-party attribution |
-| [LICENSE](LICENSE) / [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) | Dual License (AGPL + Commercial) |
+| [LICENSE](LICENSE) | Proprietary / All rights reserved |
 | [docs/novel-ide/handbook.md](docs/novel-ide/handbook.md) | Novel IDE 종합 핸드북 (단축키 / 기능 / 코드 위치) |
 | [docs/novel-ide/lsp-spec.md](docs/novel-ide/lsp-spec.md) | Loreguard LSP API 사양 |
 
@@ -294,18 +294,18 @@ npm test         # 테스트
 
 ## 라이선스
 
-**Dual License** — 오픈소스 + 상업 2-트랙.
+**Proprietary / All rights reserved** — Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 비공개 상용 제품 기준으로 관리됩니다.
 
-| 트랙 | 라이선스 | 대상 |
+| 항목 | 라이선스 | 대상 |
 |------|----------|------|
-| 오픈소스 | [AGPL-3.0-or-later](LICENSE) | 개인/학술/소스 공개 SaaS |
-| 상업 | [Commercial License](COMMERCIAL-LICENSE.md) | 클로즈드 SaaS / OEM / 퍼블리셔 / 엔터프라이즈 자가호스트 |
+| 소프트웨어 | [UNLICENSED / Proprietary](LICENSE) | 엔진·파이프라인·UI·CLI |
+| EH Universe 원본 세계관 자료 | 별도 표기 | 공개 샘플·세계관 원본 자료 |
 
-AGPL은 네트워크 서비스 제공 시 §13에 따라 전체 소스 공개 의무. 이 조항이 맞지 않으면 상업 라이선스 문의.
+저작권자의 사전 서면 허가 없이 사용, 복제, 수정, 배포, 호스팅, 판매, 재라이선스할 수 없습니다.
 
-**이전 릴리스** — 커밋 `414fe9ea` 및 그 이전은 CC-BY-NC-4.0 (비취소 권리 유지). 이후 커밋부터 AGPL/Commercial dual.
+**이전 릴리스** — 커밋 `414fe9ea` 및 그 이전을 별도 라이선스로 받은 수령자의 권리는 해당 시점의 고지에 따릅니다.
 
-**특허**: KIPO 출원 (Fast-Track) 진행 중. AGPL §11 적용, 상업 라이선스 구매자에겐 명시 grant + indemnification.
+**특허**: KIPO 출원(Fast-Track) 진행 중인 항목은 별도 서면 계약 범위 안에서만 사용 권한을 부여합니다.
 
 문의: [gilheumpark@gmail.com](mailto:gilheumpark@gmail.com)
 

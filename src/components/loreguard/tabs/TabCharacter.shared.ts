@@ -101,12 +101,15 @@ export function avColor(index: number): string {
   return AV_COLORS[index % AV_COLORS.length];
 }
 
-export function avLetter(name: string): string {
-  return name.trim().charAt(0) || "?";
+const AVATAR_TONES = ["blue", "purple", "green", "amber", "red", "teal"] as const;
+
+export function avatarToneClass(index: number, mode: "solid" | "gradient" = "solid"): string {
+  const tone = AVATAR_TONES[index % AVATAR_TONES.length];
+  return mode === "gradient" ? `ch-av-tone-${tone} ch-av-gradient` : `ch-av-tone-${tone}`;
 }
 
-export function avatarGradient(color: string): string {
-  return `linear-gradient(145deg, color-mix(in srgb, ${color} 85%, #fff), ${color})`;
+export function avLetter(name: string): string {
+  return name.trim().charAt(0) || "?";
 }
 
 export function splitTraits(traits: string | undefined): string[] {

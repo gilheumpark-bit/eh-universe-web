@@ -149,6 +149,18 @@ export async function assertResolvedHostAllowedForFetch(
   }
 }
 
+export function resolveRedirectUrl(currentUrl: string, location: string | null): { ok: true; href: string } | { ok: false; reason: string } {
+  if (!location) {
+    return { ok: false, reason: '리다이렉트 위치가 비어 있습니다.' };
+  }
+  try {
+    const nextUrl = new URL(location, currentUrl);
+    return assertUrlAllowedForFetch(nextUrl.href);
+  } catch {
+    return { ok: false, reason: '유효하지 않은 리다이렉트 URL입니다.' };
+  }
+}
+
 const BLOCKED_HOSTNAMES = new Set([
   'localhost',
   '127.0.0.1',
@@ -226,21 +238,3 @@ export function assertUrlAllowedForFetch(rawUrl: string): { ok: true; href: stri
   return { ok: true, href: parsed.href };
 }
 
-type Bucket = { count: number; windowStart: number };
-const RATE: Map<string, Bucket> = new Map();
-const MAX_REQ = 40;
-const WINDOW_MS = 60_000;
-
-export function rateLimitFetchUrl(clientKey: string): { ok: true } | { ok: false; retryAfterSec: number } {
-  const now = Date.now();
-  let b = RATE.get(clientKey);
-  if (!b || now - b.windowStart > WINDOW_MS) {
-    b = { count: 0, windowStart: now };
-    RATE.set(clientKey, b);
-  }
-  b.count += 1;
-  if (b.count > MAX_REQ) {
-    return { ok: false, retryAfterSec: Math.ceil((WINDOW_MS - (now - b.windowStart)) / 1000) || 1 };
-  }
-  return { ok: true };
-}

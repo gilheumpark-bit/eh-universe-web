@@ -8,6 +8,7 @@ import { buildEpubFiles, type EpubChapter } from '@/lib/translation/epub-export'
 import type { PublishMetadata } from '@/lib/translation/publish-metadata';
 import { logger } from '@/lib/logger';
 import SaveBackupBridgeSection from './SaveBackupBridgeSection';
+import { TRANSLATOR_DOCUMENT_IMPORT_ACCEPT } from '@/lib/loreguard/import-classifier';
 
 /** 번역 스튜디오·회차 사이드바와 동일한 대표 보내기 5형식 */
 const EXPORT_FORMATS = ['txt', 'md', 'json', 'html', 'csv'] as const;
@@ -640,8 +641,8 @@ export function SaveBackupPanel() {
           <div className="space-y-2 border-t border-white/5 px-3 py-3">
             <p className="text-[10px] text-text-tertiary leading-relaxed">
               {langKo
-                ? 'TXT, MD, EPUB, PDF, DOCX — 회차로 불러옵니다.'
-                : 'TXT, MD, EPUB, PDF, DOCX — loads as chapters.'}
+                ? 'TXT, MD, DOCX, HWPX, PDF, EPUB — 회차로 불러옵니다.'
+                : 'TXT, MD, DOCX, HWPX, PDF, EPUB — loads as chapters.'}
             </p>
             <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-accent-indigo/25 bg-accent-indigo/10 py-2.5 text-[11px] font-semibold text-accent-indigo transition-colors hover:bg-accent-indigo/20">
               <Upload className="h-3.5 w-3.5" />
@@ -651,7 +652,7 @@ export function SaveBackupPanel() {
                 type="file"
                 multiple
                 className="hidden"
-                accept=".txt,.md,.epub,.pdf,.docx"
+                accept={TRANSLATOR_DOCUMENT_IMPORT_ACCEPT}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => importDocument(e)}
               />
             </label>

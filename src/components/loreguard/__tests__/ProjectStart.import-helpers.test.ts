@@ -44,6 +44,6 @@ describe("ProjectStart import helpers", () => {
 
     expect(result.fileReports).toHaveLength(10);
     expect(result.fileReports.every((report) => report.status === "unsupported")).toBe(true);
-    expect(result.notice).toContain("지원 형식은 .txt, .md, .json, .docx, .pdf, .epub 입니다.");
+    expect(result.notice).toContain("지원 형식은 .txt, .md, .json, .docx, .hwpx, .pdf, .epub 입니다.");
   });
 });

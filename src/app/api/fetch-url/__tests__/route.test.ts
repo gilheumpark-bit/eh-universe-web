@@ -24,7 +24,13 @@ jest.mock('@/lib/firebase-id-token', () => ({
   verifyFirebaseIdToken: jest.fn(async () => null),
 }));
 
+jest.mock('node:dns/promises', () => ({
+  lookup: jest.fn(),
+}));
+
 import { GET } from '../route';
+
+const mockedLookup = require('node:dns/promises').lookup as jest.Mock;
 
 function makeRequest(url: string, authorization?: string) {
   return {
@@ -47,6 +53,7 @@ describe('/api/fetch-url auth gate', () => {
   beforeEach(() => {
     savedFetch = global.fetch;
     global.fetch = jest.fn();
+    mockedLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
   });
 
   afterEach(() => {
@@ -64,5 +71,26 @@ describe('/api/fetch-url auth gate', () => {
     expect(response.status).toBe(401);
     expect(body.error).toContain('로그인');
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('blocks private redirect Location before following it', async () => {
+    nodeEnv.NODE_ENV = 'development';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      {
+        status: 302,
+        headers: {
+          get: (name: string) => (name.toLowerCase() === 'location' ? 'http://169.254.169.254/latest/meta-data' : null),
+        },
+      },
+    );
+
+    const response = await GET(makeRequest('https://example.com/post'));
+
+    expect(response.status).toBe(403);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://example.com/post',
+      expect.objectContaining({ redirect: 'manual' }),
+    );
   });
 });

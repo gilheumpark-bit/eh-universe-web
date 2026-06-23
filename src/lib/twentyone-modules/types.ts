@@ -22,9 +22,9 @@
 //   - ManuscriptView / OriginBadge / origin-migration: untouched.
 //
 // Trade-secret separation:
-//   - This file: TypeScript interfaces (schema only) — AGPL distributable.
+//   - This file: TypeScript interfaces (schema only) — proprietary software.
 //   - 21-Module rule pack data (M18 18-platform rules, M11 beat seeds, etc.):
-//     external commercial-license grant. NOT included in AGPL distribution.
+//     separate external data. NOT included in this software repository.
 //
 // [C] All ID fields ULID strings, all timestamps ISO 8601.
 // [G] Discriminated unions where possible (status enums) — narrow types at runtime.
@@ -406,7 +406,7 @@ export interface RelationEdge extends ModuleRecordBase {
 //
 // "trigger-style motif library" — beats trigger on conditions (after_episode,
 // after_event, or foreshadow status change). Inject policy: on_demand.
-// 4-language market variants are commercial-license rule pack territory —
+// 4-language market variants are separate rule pack territory —
 // this file only declares the shape.
 // ============================================================
 
@@ -435,8 +435,8 @@ export interface Beat extends ModuleRecordBase {
   genre_tags: string[];                         // e.g. ["romance", "slow_burn"]
 
   /**
-   * 4-language market variants — POPULATED ONLY BY COMMERCIAL RULE PACK GRANT.
-   * AGPL distribution leaves this undefined.
+   * 4-language market variants — populated only by a separately supplied rule pack.
+   * The proprietary software repository leaves this undefined.
    */
   market_variants?: Partial<
     Record<AppLanguage, { name: string; convention: string }>
@@ -497,11 +497,11 @@ export interface ForeshadowThread extends ModuleRecordBase {
 }
 
 // ============================================================
-// PART 10 — M18: Platform Profile (commercial-license rule pack interface)
+// PART 10 — M18: Platform Profile (separate rule pack interface)
 // ============================================================
 //
 // "platform_target (munpia/kakao) → Royal Road / Wattpad / なろう / 起点 etc."
-// — interface only; rule pack DATA is commercial-license grant territory.
+// — interface only; rule pack DATA is supplied separately from this repository.
 // MVP-tier. Inject policy: always_inject (active platform meta only).
 // Compliance hook: platform-rating-check (severity by violation type).
 // ============================================================
@@ -516,7 +516,7 @@ export type MonetizationModel =
   | 'free' | 'paid_chapters' | 'subscription' | 'royalty_share';
 
 export type RulePackSource =
-  | 'commercial_license'                        // granted via Commercial License agreement
+  | 'commercial_license'                        // legacy value: separately licensed rule pack
   | 'community'                                 // user-contributed (limited reliability)
   | 'official_api';                             // platform-provided official rules
 

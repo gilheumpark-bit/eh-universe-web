@@ -223,42 +223,23 @@ export function ManuscriptExportPanel() {
     <div
       role="presentation"
       onClick={() => setOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        background: "var(--overlay-scrim)",
-        display: "flex",
-        justifyContent: "flex-end",
-      }}
+      className="wr-export-drawer-overlay"
     >
-      <aside
+      <div
         role="dialog"
         aria-modal="true"
         aria-label={L4(language, { ko: "원고함·출고", en: "Manuscript library and publishing" })}
         onClick={(event) => event.stopPropagation()}
-        style={{
-          width: "min(420px, 92vw)",
-          height: "100%",
-          overflowY: "auto",
-          background: "var(--page-2)",
-          borderLeft: "1px solid var(--line)",
-          boxShadow: "var(--shadow-pop)",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
+        className="wr-export-drawer-panel"
       >
-        <div className="pcard-h" style={{ marginBottom: 0 }}>
+        <div className="pcard-h wr-export-drawer-head">
           <Download size={16} />
           {L4(language, { ko: "원고함 · 출고", en: "Manuscripts · Publishing" })}
           <button
             type="button"
-            className="eh-icbtn"
+            className="eh-icbtn wr-export-drawer-close"
             aria-label={L4(language, { ko: "패널 닫기", en: "Close panel" })}
             autoFocus
-            style={{ marginLeft: "auto" }}
             onClick={() => setOpen(false)}
           >
             <X size={16} />
@@ -281,6 +262,7 @@ export function ManuscriptExportPanel() {
           onExportTxt={() => exportApi.exportProjectManuscripts("txt")}
           onExportEPUB={exportApi.handleExportEPUB}
           onExportDOCX={exportApi.handleExportDOCX}
+          onExportHWPX={exportApi.handleExportHWPX}
           onExportFullBackup={exportApi.exportAllJSON}
           onShareCurrent={shareCurrentManuscript}
         />
@@ -312,7 +294,7 @@ export function ManuscriptExportPanel() {
           receipt={receipt}
           onIssueReceipt={issueReceipt}
         />
-      </aside>
+      </div>
     </div>
   );
 }

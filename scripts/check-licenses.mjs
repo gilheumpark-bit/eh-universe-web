@@ -4,7 +4,7 @@
 // ============================================================
 // check-licenses.mjs — Dependency license audit (P11 루프3 — 2026-06-08).
 //
-// AGPL/GPL/SSPL 등 강한 copyleft 라이선스가 dependencies 에 침입했는지 검사.
+// GPL/AGPL/SSPL 등 강한 copyleft 라이선스가 dependencies 에 침입했는지 검사.
 // 발견 시 exit 1 (CI fail). 명시적 allowlist 항목만 예외.
 //
 // 사용:
@@ -180,7 +180,7 @@ function main() {
   console.log(`[check-licenses] scanned ${deps.length} prod deps`);
   console.log(`  ALLOW: ${buckets.allow.length}`);
   console.log(`  WARN:  ${buckets.warn.length} (LGPL/MPL/EPL — review needed)`);
-  console.log(`  FAIL:  ${buckets.fail.length} (GPL/AGPL/SSPL — incompatible)`);
+  console.log(`  FAIL:  ${buckets.fail.length} (GPL/AGPL/SSPL — incompatible with proprietary distribution policy)`);
   console.log(`  UNKNOWN: ${buckets.unknown.length}`);
 
   if (buckets.warn.length > 0) {
@@ -197,7 +197,7 @@ function main() {
     if (buckets.unknown.length > 20) console.log(`  ... ${buckets.unknown.length - 20} more`);
   }
   if (buckets.fail.length > 0) {
-    console.log('\n[FAIL — copyleft incompatible with AGPL distribution]');
+    console.log('\n[FAIL — copyleft incompatible with proprietary distribution policy]');
     for (const d of buckets.fail) {
       console.log(`  - ${d.name}@${d.version}: ${d.license}`);
       console.log(`    path: ${d.path}`);

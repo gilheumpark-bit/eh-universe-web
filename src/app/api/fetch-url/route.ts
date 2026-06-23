@@ -1,13 +1,24 @@
+import '@/lib/server-ai-init';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   assertResolvedHostAllowedForFetch,
   assertUrlAllowedForFetch,
-  rateLimitFetchUrl,
+  resolveRedirectUrl,
   validatePostFetchUrl,
 } from '@/lib/fetch-url-guard';
-import { getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIp, RATE_LIMITS } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+
+const MAX_REDIRECT_HOPS = 5;
+const FETCH_TIMEOUT_MS = 15_000;
+const FETCH_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (compatible; EH-Translator/3.1; +https://github.com/gilheumpark-bit/eh-translator)',
+  Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'ko,en;q=0.9',
+};
+type FetchUrlError = { error: string; status: number };
 
 async function requireFetchUrlAccess(req: NextRequest): Promise<NextResponse | null> {
   if (process.env.NODE_ENV !== 'production') return null;
@@ -23,6 +34,44 @@ async function requireFetchUrlAccess(req: NextRequest): Promise<NextResponse | n
   return null;
 }
 
+function isFetchUrlError(result: Response | FetchUrlError): result is FetchUrlError {
+  return 'error' in result;
+}
+
+async function fetchWithValidatedRedirects(startUrl: string): Promise<Response | FetchUrlError> {
+  let currentUrl = startUrl;
+
+  for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop++) {
+    const response = await fetch(currentUrl, {
+      headers: FETCH_HEADERS,
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      redirect: 'manual',
+    });
+
+    if (![301, 302, 303, 307, 308].includes(response.status)) {
+      validatePostFetchUrl(response.url || currentUrl);
+      const finalResolved = await assertResolvedHostAllowedForFetch(response.url || currentUrl);
+      if (!finalResolved.ok) {
+        return { error: finalResolved.reason, status: 403 };
+      }
+      return response;
+    }
+
+    const next = resolveRedirectUrl(currentUrl, response.headers.get('location'));
+    if (!next.ok) {
+      return { error: next.reason, status: 403 };
+    }
+
+    const resolved = await assertResolvedHostAllowedForFetch(next.href);
+    if (!resolved.ok) {
+      return { error: resolved.reason, status: 403 };
+    }
+    currentUrl = next.href;
+  }
+
+  return { error: '리다이렉트가 너무 많습니다.', status: 508 };
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const url = searchParams.get('url');
@@ -34,11 +83,11 @@ export async function GET(req: NextRequest) {
   // [S2-XFF 방어] x-vercel-forwarded-for 우선 사용 (Vercel 엣지만 생성 — 클라이언트 위조 불가)
   const clientKey = getClientIp(req.headers);
 
-  const rl = rateLimitFetchUrl(clientKey);
-  if (!rl.ok) {
+  const rl = await checkRateLimitAsync(clientKey, '/api/fetch-url', RATE_LIMITS.fetchUrl);
+  if (!rl.allowed) {
     return NextResponse.json(
-      { error: `요청이 너무 많습니다. ${rl.retryAfterSec}초 후 다시 시도하세요.` },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      { error: `요청이 너무 많습니다. ${Math.ceil(rl.retryAfterMs / 1000)}초 후 다시 시도하세요.` },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000) || 1) } }
     );
   }
 
@@ -56,32 +105,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(allowed.href, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (compatible; EH-Translator/3.1; +https://github.com/gilheumpark-bit/eh-translator)',
-        Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ko,en;q=0.9',
-      },
-      signal: AbortSignal.timeout(15000),
-      redirect: 'follow',
-    });
-
-    // [S1-SSRF 방어] DNS rebinding / redirect 후 사설 IP 재검증
-    // redirect: 'follow' 이므로 response.url 은 최종 URL. body 읽기 전 반드시 체크.
-    try {
-      validatePostFetchUrl(response.url);
-      const finalResolved = await assertResolvedHostAllowedForFetch(response.url);
-      if (!finalResolved.ok) {
-        return NextResponse.json(
-          { error: finalResolved.reason },
-          { status: 403 },
-        );
-      }
-    } catch {
+    const response = await fetchWithValidatedRedirects(allowed.href);
+    if (isFetchUrlError(response)) {
       return NextResponse.json(
-        { error: '보안: 리다이렉트 결과가 사설/내부 주소로 해석됨 (SSRF 차단)' },
-        { status: 403 },
+        { error: response.error },
+        { status: response.status },
       );
     }
 
@@ -147,7 +175,7 @@ export async function GET(req: NextRequest) {
       text,
       charCount: text.length,
       truncated: isTruncated,
-      sourceUrl: url,
+      sourceUrl: response.url || allowed.href,
     });
   } catch (err: unknown) {
     const e = err as { name?: string };

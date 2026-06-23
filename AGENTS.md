@@ -20,7 +20,7 @@
 | `M1..M9` | Mobile / Touch | `[M-01 2026-05-10]` (44px 터치 타겟) |
 | `O1..O9` | Observability | `[O-01 2026-06-08]` (trace_id 전파) |
 | `A1..A9` | Accessibility (WCAG) | `[A-03 2026-06-08]` (focus trap) |
-| `L1..L9` | Legal / Compliance | `[L-02 2026-06-08]` (AGPL header) |
+| `L1..L9` | Legal / Compliance | `[L-02 2026-06-08]` (license header) |
 | `I1..I9` | i18n | `[I-07 2026-05-10]` (safety-registry) |
 
 **Loop 표기:** `루프 N` (1/2/3...) 를 priority 옆에 병기. 예: `[P3 루프3/senior-architect 2026-06-08]`.

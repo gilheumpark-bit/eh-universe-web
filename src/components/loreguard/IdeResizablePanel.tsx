@@ -10,7 +10,7 @@
    =========================================================== */
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "react";
+import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { ChevronL, ChevronR } from "@/components/loreguard/icons";
 import { LAYOUT_PROFILE_APPLIED_EVENT } from "@/lib/loreguard/layout-profile";
 import { clampWidth, loadWidth, saveWidth } from "@/lib/writing-workspace/panel-resize";
@@ -18,6 +18,8 @@ import { loadCollapse, saveCollapse } from "@/lib/writing-workspace/collapse-sta
 
 type IdePanelSide = "left" | "right";
 type CollapsedSummaryTone = "green" | "amber" | "blue" | "red" | "gray";
+
+const COLLAPSED_PANEL_WIDTH = 48;
 
 export interface IdeCollapsedSummaryItem {
   label: string;
@@ -77,6 +79,7 @@ export default function IdeResizablePanel({
   const widthKey = `loreguard-${id}`;
   const collapseKey = `loreguard:${id}`;
   const dragRef = useRef<DragState | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
 
   const [width, setWidth] = useState(() =>
     clampWidth(loadWidth(widthKey, defaultWidth), minWidth, maxWidth),
@@ -208,9 +211,19 @@ export default function IdeResizablePanel({
 
   const Icon = side === "right" ? ChevronR : ChevronL;
   const OpenIcon = side === "right" ? ChevronL : ChevronR;
-  const panelStyle: CSSProperties = collapsed
-    ? { flex: "0 0 44px", width: 44 }
-    : { flex: `0 0 ${width}px`, width };
+  const panelWidth = collapsed ? COLLAPSED_PANEL_WIDTH : width;
+  const bindPanelRef = useCallback(
+    (node: HTMLElement | null) => {
+      panelRef.current = node;
+      node?.style.setProperty("--lg-ide-panel-width", `${panelWidth}px`);
+    },
+    [panelWidth],
+  );
+
+  useEffect(() => {
+    panelRef.current?.style.setProperty("--lg-ide-panel-width", `${panelWidth}px`);
+  }, [panelWidth]);
+
   const visibleCollapsedSummary = collapsedSummary.slice(0, 3);
   const collapsedSummaryLabel = visibleCollapsedSummary
     .map((item) => `${item.label} ${item.value}`)
@@ -293,9 +306,9 @@ export default function IdeResizablePanel({
     return (
       <aside
         id={panelId}
+        ref={bindPanelRef}
         className={`${className} lg-ide-panel lg-ide-panel-${side} is-collapsed`}
         aria-label={`${ariaLabel} 접힘`}
-        style={panelStyle}
       >
         <button
           type="button"
@@ -319,9 +332,9 @@ export default function IdeResizablePanel({
   return (
     <aside
       id={panelId}
+      ref={bindPanelRef}
       className={`${className} lg-ide-panel lg-ide-panel-${side}`}
       aria-label={ariaLabel}
-      style={panelStyle}
     >
       <button
         type="button"

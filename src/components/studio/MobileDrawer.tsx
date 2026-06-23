@@ -171,8 +171,6 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
     });
   }, [triggerHaptic]);
 
-  if (!open) return null;
-
   // iOS Safari 주소창 접힘/펼침 시 vh 변동 방지 → dvh 사용
   const heightPercent = snap * 100;
   const viewportH = typeof window !== 'undefined'
@@ -184,17 +182,21 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
 
   const backdropOpacity = visible ? 1 : 0;
 
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    node.style.setProperty('--mobile-drawer-height', `${adjustedHeight}dvh`);
+    node.style.setProperty('--mobile-drawer-transition', dragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)');
+    node.style.setProperty('--mobile-drawer-will-change', dragging ? 'height' : 'auto');
+  }, [adjustedHeight, dragging]);
+
+  if (!open) return null;
+
   return (
     <>
       {/* Backdrop — tap to close, animated opacity with blur */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 md:hidden"
-        style={{
-          opacity: backdropOpacity,
-          backdropFilter: visible ? 'blur(8px)' : 'blur(0px)',
-          WebkitBackdropFilter: visible ? 'blur(8px)' : 'blur(0px)',
-          transition: 'opacity 0.3s ease-out, backdrop-filter 0.3s ease-out',
-        }}
+        className={`fixed inset-0 z-40 bg-black/60 md:hidden mobile-drawer-backdrop ${backdropOpacity > 0 ? 'is-visible' : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -202,13 +204,7 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
       {/* Drawer — Premium glass morphism (dvh 기반으로 iOS 주소창 변동 대응) */}
       <div
         ref={containerRef}
-        className="fixed bottom-0 inset-x-0 z-50 md:hidden overflow-hidden flex flex-col"
-        style={{
-          height: `${adjustedHeight}dvh`,
-          transition: dragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          willChange: dragging ? 'height' : 'auto',
-        }}
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden overflow-hidden flex flex-col mobile-drawer-panel"
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -220,12 +216,11 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
           
           {/* Drag handle — enhanced touch target with visual feedback */}
           <div
-            className="relative flex items-center justify-center py-4 cursor-grab active:cursor-grabbing shrink-0 min-h-[48px]"
             onPointerDown={(e) => { triggerHaptic(); onPointerDown(e); }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            style={{ touchAction: 'none' }}
+            className="relative flex items-center justify-center py-4 cursor-grab active:cursor-grabbing shrink-0 min-h-[48px] studio-touch-none"
           >
             {/* Handle pill with glow on drag */}
             <div className={`
@@ -265,10 +260,7 @@ export default function MobileDrawer({ open, onClose, title, children }: Props) 
 
           {/* Content — smooth scroll with fade edges */}
           <div className="relative flex-1 overflow-hidden">
-            <div 
-              className="h-full overflow-y-auto overscroll-contain px-5 py-4"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
+            <div className="h-full overflow-y-auto overscroll-contain px-5 py-4 studio-touch-scroll">
               {children}
             </div>
             {/* Fade edge at bottom */}

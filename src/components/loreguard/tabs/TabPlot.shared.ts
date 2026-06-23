@@ -48,9 +48,31 @@ const DEFAULT_SCENARIO_ACTS: MainScenarioAct[] = [
 ];
 
 const PH_COLORS = ["var(--c-blue)", "var(--c-teal)", "var(--c-purple)", "var(--c-blue)"];
+const PH_ACCENT_CLASSES = ["pl-accent-blue", "pl-accent-teal", "pl-accent-purple", "pl-accent-blue"];
+const PHASE_TONE_CLASSES: Record<string, string> = {
+  "도입": "pl-tone-intro",
+  "전개": "pl-tone-build",
+  "절정": "pl-tone-climax",
+  "결말": "pl-tone-ending",
+};
+const TIMELINE_TONE_CLASSES: Record<string, string> = {
+  "도입": "pl-tl-intro",
+  "전개": "pl-tl-build",
+  "절정": "pl-tl-climax",
+  "결말": "pl-tl-ending",
+};
 
 export const accentFor = (index: number): string =>
   PH_COLORS[index % PH_COLORS.length] ?? "var(--c-blue)";
+
+export const accentToneClass = (index: number): string =>
+  PH_ACCENT_CLASSES[index % PH_ACCENT_CLASSES.length] ?? "pl-accent-blue";
+
+export const phaseToneClass = (name: string): string =>
+  PHASE_TONE_CLASSES[name] ?? "pl-tone-intro";
+
+export const timelineToneClass = (name: string): string =>
+  TIMELINE_TONE_CLASSES[name] ?? "pl-tl-intro";
 
 export const FLOW_COL_W = 260;
 export const FLOW_SCENE_Y0 = 120;

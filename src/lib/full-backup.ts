@@ -10,9 +10,13 @@ import {
   saveProjects,
   STORAGE_KEY_PROJECTS,
 } from '@/lib/project-migration';
+import { scanZipDecompressed } from '@/lib/zip-bomb-guard';
 import type { Project, ChatSession } from '@/lib/studio-types';
 
 export const FULL_BUNDLE_VERSION = '1.0' as const;
+const MAX_IMPORT_FILE_BYTES = 25 * 1024 * 1024;
+const ZIP_DECOMPRESSED_CAP_BYTES = 100 * 1024 * 1024;
+const MAX_ZIP_ENTRY_CHARS = 10 * 1024 * 1024;
 
 /** 전체 덤프 Bundle. 버전 키 기반으로 향후 마이그레이션 경로 확보. */
 export interface FullExportBundle {
@@ -407,17 +411,27 @@ export interface ImportResult {
 
 /** File → JSON Bundle 파싱. ZIP이면 project.json 중심으로 재조립. */
 async function readBundleFromFile(file: File): Promise<FullExportBundle> {
+  if (file.size > MAX_IMPORT_FILE_BYTES) {
+    throw new Error('backup import file too large');
+  }
+
   const isZip = file.name.toLowerCase().endsWith('.zip') || file.type === 'application/zip';
   if (!isZip) {
     const text = await file.text();
     const parsed = JSON.parse(text) as FullExportBundle;
     return parsed;
   }
+  const zipBuffer = new Uint8Array(await file.arrayBuffer());
+  const zipScan = scanZipDecompressed(zipBuffer, ZIP_DECOMPRESSED_CAP_BYTES);
+  if (!zipScan.ok) {
+    throw new Error(`backup ZIP rejected: ${zipScan.reason}`);
+  }
+
   // ZIP — dynamic import
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const JSZipModule = await import('jszip' as any);
   const JSZip = JSZipModule.default ?? JSZipModule;
-  const zip = await JSZip.loadAsync(file);
+  const zip = await JSZip.loadAsync(zipBuffer);
   const projJson = zip.file('project.json');
   if (!projJson) throw new Error('project.json not found in ZIP');
   const meta = JSON.parse(await projJson.async('string')) as Partial<FullExportBundle> & {
@@ -432,6 +446,7 @@ async function readBundleFromFile(file: File): Promise<FullExportBundle> {
       const entry = zip.file(path);
       if (!entry) continue;
       const raw = await entry.async('string');
+      if (raw.length > MAX_ZIP_ENTRY_CHARS) throw new Error('session entry too large');
       sessions.push(JSON.parse(raw));
     } catch (err) {
       logger.warn('FullBackup', `read ${path} failed`, err);
@@ -446,6 +461,7 @@ async function readBundleFromFile(file: File): Promise<FullExportBundle> {
       const entry = zip.file(path);
       if (!entry) continue;
       const raw = await entry.async('string');
+      if (raw.length > MAX_ZIP_ENTRY_CHARS) throw new Error('episode entry too large');
       const noMatch = /(\d+)/.exec(path.replace('episodes/', ''));
       const no = noMatch ? parseInt(noMatch[1], 10) : 0;
       const firstLine = raw.split('\n', 1)[0] ?? '';

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Chevron, ChevronL, MessageSquare, Send, Settings, Sync, X } from "@/components/loreguard/icons";
 import {
   buildDockShortInputDirective,
   getAuthorCommandPlaceholder,
@@ -12,6 +11,7 @@ import {
   type DockSuggestion,
   type DockSuggestionSource,
 } from "@/components/loreguard/ChatCanvasDock.helpers";
+import { ChatCanvasDockView } from "@/components/loreguard/ChatCanvasDock.view";
 import { useStudio } from "@/app/studio/StudioContext";
 import type { Message } from "@/lib/studio-types";
 import { streamChat, type ChatMsg } from "@/lib/ai-providers";
@@ -21,25 +21,18 @@ import {
   clearStoredSummary,
 } from "@/lib/ai/chat-memory-policy";
 import {
-  NOA_CONVERSATION_LEVELS,
-  NOA_PROPOSAL_MODES,
-  NOA_RESPONSE_STYLES,
   buildNoaBehaviorProfile,
-  getNoaConversationLabel,
-  getNoaProposalLabel,
-  getNoaStyleLabel,
   readNoaBehaviorPreferences,
   writeNoaBehaviorPreferences,
   type NoaBehaviorPreferences,
-  type NoaConversationLevel,
-  type NoaProposalMode,
-  type NoaResponseStyle,
 } from "@/lib/ai/noa-behavior-profile";
 import { buildNoaSystemHeader } from "@/lib/ai/noa-identity";
 import { summarizeJournalWeek, renderJournalWeekText } from "@/lib/creative/work-note";
 import { buildNoaContinuationContext } from "@/lib/loreguard/noa-continuity-context";
 import { NoaBlockedError } from "@/lib/noa/block-notice";
 import { getReasoningStageForTab } from "@/lib/ai-reasoning";
+import { buildAppBrainDecisionDirective, decideAppBrain } from "@/lib/noa/app-brain-policy";
+import { buildTabExpertSystemDirective } from "@/lib/noa/tab-expert-registry";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 
@@ -159,6 +152,11 @@ export default function ChatCanvasDock({
     ],
   );
 
+  const tabExpertDirective = useMemo(
+    () => buildTabExpertSystemDirective(tabKey, language),
+    [language, tabKey],
+  );
+
   const updatePreferences = useCallback((patch: Partial<NoaBehaviorPreferences>) => {
     setPreferences((prev) => {
       const next = { ...prev, ...patch };
@@ -244,8 +242,24 @@ export default function ChatCanvasDock({
     try {
       const memory = applyMemoryPolicy(memoryTab, base, language);
       const history: ChatMsg[] = [...memory.messages, { role: "user", content: text }];
+      const appBrainDecision = decideAppBrain({
+        actionKind: "noa_suggestion",
+        tabId: tabKey,
+        approxChars: text.length,
+        scores: {
+          intentClarity: text.length < 12 ? 0.42 : 0.72,
+          contextFit: contextBlock ? 0.74 : 0.46,
+          evidenceFit: continuationContext.hasStoredBasis || contextBlock ? 0.7 : 0.45,
+          userControl: 0.82,
+          reversibility: 0.78,
+          expertConfidence: 0.66,
+          userIntentUnclear: text.length < 12 ? 0.62 : 0.24,
+        },
+      });
       const system = [
         buildNoaSystemHeader(roleMode),
+        tabExpertDirective,
+        buildAppBrainDecisionDirective(appBrainDecision),
         behaviorProfile.directive,
         buildDockShortInputDirective(language, tabKey, text),
         proposalGuide,
@@ -276,7 +290,7 @@ export default function ChatCanvasDock({
         // 게이트 차단 — notifyNoaBlock(ai-providers)가 고지 발신, 채팅엔 인라인 사유
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantId && !m.content ? { ...m, content: `🛡 ${err.message}` } : m,
+            m.id === assistantId && !m.content ? { ...m, content: `[차단] ${err.message}` } : m,
           ),
         );
       } else {
@@ -296,7 +310,7 @@ export default function ChatCanvasDock({
         }
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantId && !m.content ? { ...m, content: `⚠ ${msg}` } : m,
+            m.id === assistantId && !m.content ? { ...m, content: `[오류] ${msg}` } : m,
           ),
         );
       }
@@ -315,8 +329,10 @@ export default function ChatCanvasDock({
     language,
     roleMode,
     behaviorProfile.directive,
+    tabExpertDirective,
     proposalGuide,
     contextBlock,
+    continuationContext.hasStoredBasis,
     continuationContext.block,
     tabKey,
   ]);
@@ -395,377 +411,35 @@ export default function ChatCanvasDock({
   const panelId = `lg-chatdock-${tabKey}`;
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-      {open ? (
-        <section
-          id={panelId}
-          className="lg-chatdock-panel"
-          aria-label={dockTitle}
-          style={{
-            flex: "0 0 33.333%",
-            minWidth: 260,
-            maxWidth: 720,
-            minHeight: 0,
-            display: "flex",
-            flexDirection: "column",
-            borderRight: "1px solid var(--line)",
-            background: "var(--card)",
-          }}
-        >
-          {/* 헤더 — 노아 단일 화자 + 상태 + 새 대화/접기 */}
-          <div
-            style={{
-              flex: "0 0 auto",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-              padding: "12px 14px",
-              borderBottom: "1px solid var(--line)",
-            }}
-          >
-            <div className="wd-chat-title" style={{ fontSize: 13.5, minWidth: 0 }}>
-              <MessageSquare size={15} />
-              {L4(language, { ko: "노아", en: "Noa", ja: "ノア", zh: "诺亚" })}
-              <span className="wd-online" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                <span className={`rdot ${loading ? "amber" : "green"}`} />
-                {loading
-                  ? L4(language, { ko: "준비 중…", en: "Preparing…", ja: "準備中…", zh: "准备中…" })
-                  : roleMode}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: 4, flex: "0 0 auto" }}>
-              {messages.length > 0 && (
-                <button
-                  type="button"
-                  className="eh-icbtn"
-                  onClick={handleClear}
-                  aria-label={L4(language, { ko: "새 대화", en: "New chat", ja: "新しい対話", zh: "新对话" })}
-                  title={L4(language, { ko: "새 대화", en: "New chat", ja: "新しい対話", zh: "新对话" })}
-                >
-                  <Sync size={14} aria-hidden="true" />
-                </button>
-              )}
-              <button
-                type="button"
-                className="eh-icbtn"
-                onClick={toggleOpen}
-                aria-expanded={true}
-                aria-controls={panelId}
-                aria-label={L4(language, { ko: "대화 접기", en: "Collapse dialog", ja: "対話を折りたたむ", zh: "收起对话" })}
-                title={L4(language, { ko: "대화 접기", en: "Collapse dialog", ja: "対話を折りたたむ", zh: "收起对话" })}
-              >
-                <ChevronL size={15} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          {/* 본문 — wd-chat-body 재사용 (스크롤·간격) */}
-          <div ref={bodyRef} className="wd-chat-body" style={{ padding: "16px 14px" }}>
-            {messages.length === 0 ? (
-              <div className="wd-msg ai">
-                <div className="wd-ai-av">EH</div>
-                <div className="wd-ai-body">
-                  <div className="wd-bubble ai">
-                    <p className="wd-p">
-                      {L4(language, {
-                        ko: "노아는 작가의 지시를 기다립니다. 방향은 작가가 정하고, 노아는 선택지를 정리합니다. 캔버스 반영은 항상 작가가 확정합니다.",
-                        en: "Noa waits for the author's direction. You set the direction; Noa organizes options. Canvas changes are always confirmed by you.",
-                        ja: "ノアは作者の指示を待ちます。方向は作者が決め、ノアは選択肢を整理します。キャンバス反映は常に作者が確定します。",
-                        zh: "诺亚等待作者指示。方向由作者决定，诺亚负责整理选项。画布变更始终由作者确认。",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              messages.map((msg, i) =>
-                msg.role === "user" ? (
-                  <div key={msg.id} className="wd-msg user">
-                    <div className="wd-time">
-                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                    <div className="wd-bubble user">{msg.content}</div>
-                  </div>
-                ) : (
-                  <div key={msg.id} className="wd-msg ai">
-                    <div className="wd-ai-av">EH</div>
-                    <div className="wd-ai-body">
-                      <div className="wd-time">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                      <div className="wd-bubble ai">
-                        <p className="wd-p" style={{ whiteSpace: "pre-wrap" }}>
-                          {msg.content ||
-                            (loading && i === messages.length - 1
-                              ? L4(language, { ko: "준비 중…", en: "Preparing…", ja: "準備中…", zh: "准备中…" })
-                              : "")}
-                        </p>
-                        {(suggestionsByMsg.get(msg.id) ?? []).length > 0 && (
-                          <div className="wd-msg-actions" style={{ flexWrap: "wrap" }}>
-                            {(suggestionsByMsg.get(msg.id) ?? []).map((sugg) => {
-                              const k = `${msg.id}:${sugg.key}`;
-                              const done = applied.has(k);
-                              return (
-                                <button
-                                  key={k}
-                                  type="button"
-                                  className="btn"
-                                  style={{ fontSize: 12, padding: "4px 10px" }}
-                                  disabled={done}
-                                  onClick={() => handleApply(msg.id, sugg)}
-                                  title={
-                                    done
-                                      ? L4(language, { ko: "캔버스에 반영됨", en: "Applied to canvas", ja: "キャンバスに反映済み", zh: "已应用到画布" })
-                                      : sugg.label
-                                  }
-                                >
-                                  <Check size={13} aria-hidden="true" />
-                                  {done
-                                    ? L4(language, { ko: "반영됨", en: "Applied", ja: "反映済み", zh: "已应用" })
-                                    : sugg.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ),
-              )
-            )}
-            {quickSuggestions.length > 0 ? (
-              <div className="wd-msg ai">
-                <div className="wd-ai-av">EH</div>
-                <div className="wd-ai-body">
-                  <div className="wd-bubble ai">
-                    <p className="wd-p" style={{ fontWeight: 700 }}>
-                      {quickSuggestionTitle ??
-                        L4(language, {
-                          ko: "대화 메모 후보",
-                          en: "Conversation note candidates",
-                          ja: "会話メモ候補",
-                          zh: "对话备忘候选",
-                        })}
-                    </p>
-                    <div className="wd-msg-actions" style={{ flexWrap: "wrap" }}>
-                      {quickSuggestions.map((sugg) => (
-                        <button
-                          key={sugg.key}
-                          type="button"
-                          className="btn"
-                          style={{ fontSize: 12, padding: "4px 10px" }}
-                          onClick={() => handleQuickApply(sugg)}
-                          title={sugg.label}
-                        >
-                          <Check size={13} aria-hidden="true" />
-                          {sugg.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {/* 입력바 — wd-input 재사용 */}
-          <div className="wd-input lg-chatdock-input" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 8,
-                minHeight: 28,
-              }}
-            >
-              <button
-                type="button"
-                className="btn ghost"
-                style={{
-                  minHeight: 28,
-                  padding: "3px 8px",
-                  fontSize: 11.5,
-                  borderColor: "var(--line)",
-                  color: "var(--ink-2)",
-                  minWidth: 0,
-                }}
-                aria-expanded={showPrefs}
-                onClick={() => setShowPrefs((prev) => !prev)}
-                title={L4(language, { ko: "노아 응답 스타일", en: "Noa response style", ja: "ノア応答スタイル", zh: "诺亚回复风格" })}
-              >
-                <Settings size={13} aria-hidden="true" />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {behaviorProfile.publicLabel}
-                </span>
-                <Chevron size={13} aria-hidden="true" />
-              </button>
-              <span
-                style={{
-                  color: "var(--ink-3)",
-                  fontSize: 11,
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {behaviorProfile.visibleHint}
-              </span>
-            </div>
-            {showPrefs ? (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(112px, 1fr))",
-                  gap: 8,
-                }}
-              >
-                <label style={{ display: "grid", gap: 4, fontSize: 11, color: "var(--ink-3)" }}>
-                  {L4(language, { ko: "응답 스타일", en: "Response style", ja: "応答スタイル", zh: "回复风格" })}
-                  <select
-                    value={preferences.responseStyle}
-                    onChange={(event) =>
-                      updatePreferences({ responseStyle: event.target.value as NoaResponseStyle })
-                    }
-                    style={{
-                      minHeight: 36,
-                      border: "1px solid var(--line)",
-                      borderRadius: 8,
-                      background: "var(--card)",
-                      color: "var(--ink-1)",
-                      padding: "0 8px",
-                      fontSize: 12,
-                    }}
-                  >
-                    {NOA_RESPONSE_STYLES.map((style) => (
-                      <option key={style} value={style}>
-                        {getNoaStyleLabel(language, style)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label style={{ display: "grid", gap: 4, fontSize: 11, color: "var(--ink-3)" }}>
-                  {L4(language, { ko: "제안 방식", en: "Suggestion mode", ja: "提案方式", zh: "建议方式" })}
-                  <select
-                    value={preferences.proposalMode}
-                    onChange={(event) =>
-                      updatePreferences({ proposalMode: event.target.value as NoaProposalMode })
-                    }
-                    style={{
-                      minHeight: 36,
-                      border: "1px solid var(--line)",
-                      borderRadius: 8,
-                      background: "var(--card)",
-                      color: "var(--ink-1)",
-                      padding: "0 8px",
-                      fontSize: 12,
-                    }}
-                  >
-                    {NOA_PROPOSAL_MODES.map((mode) => (
-                      <option key={mode} value={mode}>
-                        {getNoaProposalLabel(language, mode)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label style={{ display: "grid", gap: 4, fontSize: 11, color: "var(--ink-3)" }}>
-                  {L4(language, { ko: "대화 밀도", en: "Conversation level", ja: "会話密度", zh: "对话密度" })}
-                  <select
-                    value={preferences.conversationLevel}
-                    onChange={(event) =>
-                      updatePreferences({ conversationLevel: event.target.value as NoaConversationLevel })
-                    }
-                    style={{
-                      minHeight: 36,
-                      border: "1px solid var(--line)",
-                      borderRadius: 8,
-                      background: "var(--card)",
-                      color: "var(--ink-1)",
-                      padding: "0 8px",
-                      fontSize: 12,
-                    }}
-                  >
-                    {NOA_CONVERSATION_LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {getNoaConversationLabel(language, level)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            ) : null}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              className="wd-in-field"
-              placeholder={resolvedPlaceholder}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.nativeEvent.isComposing) return;
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void sendChat();
-                }
-              }}
-              disabled={loading}
-            />
-            {loading ? (
-              <button
-                type="button"
-                className="wd-in-send"
-                aria-label={L4(language, { ko: "제안 중지", en: "Stop suggestion", ja: "提案を停止", zh: "停止建议" })}
-                title={L4(language, { ko: "제안 중지", en: "Stop suggestion", ja: "提案を停止", zh: "停止建议" })}
-                onClick={handleAbort}
-              >
-                <X size={16} aria-hidden="true" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="wd-in-send"
-                aria-label={L4(language, { ko: "전송", en: "Send", ja: "送信", zh: "发送" })}
-                onClick={() => void sendChat()}
-                disabled={!input.trim()}
-              >
-                <Send size={16} aria-hidden="true" />
-              </button>
-            )}
-            </div>
-          </div>
-        </section>
-      ) : (
-        // 접힘 — 슬림 스트립 (기본 상태·캔버스 무방해)
-        <div
-          style={{
-            flex: "0 0 auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "10px 5px",
-            borderRight: "1px solid var(--line)",
-          }}
-        >
-          <button
-            type="button"
-            className="eh-icbtn"
-            onClick={toggleOpen}
-            aria-expanded={false}
-            aria-controls={panelId}
-            aria-label={dockTitle}
-            title={dockTitle}
-          >
-            <MessageSquare size={17} aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
-      {/* 캔버스 — 기존 탭 그리드 무수정 (flex:1 그대로 작동) */}
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
-        {children}
-      </div>
-    </div>
+    <ChatCanvasDockView
+      applied={applied}
+      behaviorProfile={behaviorProfile}
+      bodyRef={bodyRef}
+      dockTitle={dockTitle}
+      handleAbort={handleAbort}
+      handleApply={handleApply}
+      handleClear={handleClear}
+      handleQuickApply={handleQuickApply}
+      input={input}
+      language={language}
+      loading={loading}
+      messages={messages}
+      open={open}
+      panelId={panelId}
+      preferences={preferences}
+      quickSuggestionTitle={quickSuggestionTitle}
+      quickSuggestions={quickSuggestions}
+      resolvedPlaceholder={resolvedPlaceholder}
+      roleMode={roleMode}
+      sendChat={sendChat}
+      setInput={setInput}
+      setShowPrefs={setShowPrefs}
+      showPrefs={showPrefs}
+      suggestionsByMsg={suggestionsByMsg}
+      toggleOpen={toggleOpen}
+      updatePreferences={updatePreferences}
+    >
+      {children}
+    </ChatCanvasDockView>
   );
 }

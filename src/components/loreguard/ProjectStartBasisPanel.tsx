@@ -171,15 +171,31 @@ export function ProjectStartBasisPanel({
           <strong>{L4(language, { ko: "세계관 기준선", en: "World basis", ja: "世界観基準", zh: "世界观基准" })}</strong>
           <span className="pill green">{readinessLabel}</span>
         </div>
-        <div className="tbar">
-          <span style={{ width: `${readiness}%` }} />
-        </div>
+        <progress className="tbar" value={readiness} max={100} aria-label={readinessLabel} />
         <p>{L4(language, {
           ko: "작가가 고른 값만 남깁니다. 여기서 잡은 기준선이 세계관 보드, 캐릭터, 씬시트, 집필, 출고 패키지로 이어집니다.",
           en: "Only the author's chosen settings stay here, then continue into the bible, scene sheets, localization, and release package.",
           ja: "作者が選んだ設定だけがここに蓄積され、設定集・シーンシート・翻訳・出稿パッケージへ続きます。",
           zh: "只有作者选定的设定会留在这里，并延续到设定集、场景表、翻译和交付包。",
         })}</p>
+      </div>
+
+      <div className="ps-quick-actions" aria-label={L4(language, { ko: "기준선 다음 행동", en: "Next basis action", ja: "基準線の次の操作", zh: "基准线下一步" })}>
+        <div>
+          <span>{L4(language, { ko: "다음 행동", en: "Next action", ja: "次の操作", zh: "下一步" })}</span>
+          <b>{L4(language, { ko: "저장하고 세계관 보드 열기", en: "Save and open world board", ja: "保存して世界観ボードへ", zh: "保存并打开世界观面板" })}</b>
+        </div>
+        <button
+          type="button"
+          className="btn primary"
+          onClick={onSaveOpenWorld}
+          disabled={projectStartBusy || saveFlash}
+          aria-busy={projectStartBusy || saveFlash}
+          data-testid="project-save-open-world-quick"
+        >
+          <Check size={15} />
+          {L4(language, { ko: "세계관으로", en: "Open world", ja: "世界観へ", zh: "进入世界观" })}
+        </button>
       </div>
 
       {children}

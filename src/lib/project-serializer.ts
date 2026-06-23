@@ -188,7 +188,7 @@ export function configToRepoFiles(
   for (const ms of manuscripts) {
     if (!ms) continue;
     const vol = ms.volume ?? 1;
-    const path = ms.filePath ?? episodeFilePath(ms.episode, vol);
+    const path = ms.filePath ? normalizeSafeRepoPath(ms.filePath) ?? episodeFilePath(ms.episode, vol) : episodeFilePath(ms.episode, vol);
     files.push({
       path,
       content: episodeToMarkdown(ms, vol),
@@ -217,6 +217,16 @@ export function configToRepoFiles(
 
 function normalizeRepoPath(path: string): string {
   return path.replace(/\\/g, '/');
+}
+
+export function normalizeSafeRepoPath(path: string): string | null {
+  const normalized = normalizeRepoPath(path).trim();
+  if (!normalized) return null;
+  if (normalized.startsWith('/') || /^[a-z]:\//i.test(normalized)) return null;
+  if (/[\u0000-\u001f\u007f]/.test(normalized)) return null;
+  if (normalized.split('/').some((part) => part === '..' || part === '')) return null;
+  if (normalized.startsWith('.git/') || normalized === '.git') return null;
+  return normalized;
 }
 
 function isOriginalManuscriptPath(path: string): boolean {

@@ -28,6 +28,49 @@ const VARIANT_PRESETS: Record<SkeletonVariant, { width: string; height: string; 
   button: { width: '96px', height: '40px', rounded: 'rounded-lg' },
 };
 
+function sizeValue(value: number | string | undefined): string | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return `${value}px`;
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  return null;
+}
+
+function bindSkeletonSize(node: HTMLDivElement | null, width?: number | string, height?: number | string): void {
+  if (!node) return;
+  const resolvedWidth = sizeValue(width);
+  const resolvedHeight = sizeValue(height);
+  if (resolvedWidth) node.style.setProperty('--loading-skeleton-width', resolvedWidth);
+  else node.style.removeProperty('--loading-skeleton-width');
+  if (resolvedHeight) node.style.setProperty('--loading-skeleton-height', resolvedHeight);
+  else node.style.removeProperty('--loading-skeleton-height');
+}
+
+function SkeletonShape({
+  className,
+  width,
+  height,
+  children,
+  role,
+  'aria-label': ariaLabel,
+}: {
+  className: string;
+  width?: number | string;
+  height?: number | string;
+  children?: React.ReactNode;
+  role?: React.AriaRole;
+  'aria-label'?: string;
+}) {
+  return (
+    <div
+      ref={(node) => bindSkeletonSize(node, width, height)}
+      className={`loading-skeleton-shape ${className}`}
+      role={role}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function LoadingSkeleton({
   height,
   rounded,
@@ -45,13 +88,11 @@ export default function LoadingSkeleton({
       return (
         <div className={`space-y-2 px-4 py-4 ${className}`} role="status" aria-label="Loading">
           {Array.from({ length: lines }).map((_, i) => (
-            <div
+            <SkeletonShape
               key={i}
               className={`skeleton-shimmer ${resolvedRounded}`}
-              style={{
-                height: preset.height,
-                width: `${Math.max(40, 100 - i * 15)}%`,
-              }}
+              height={preset.height}
+              width={`${Math.max(40, 100 - i * 15)}%`}
             />
           ))}
         </div>
@@ -62,13 +103,17 @@ export default function LoadingSkeleton({
     if (variant === 'card') {
       return (
         <div className={`mx-4 my-4 ${className}`} role="status" aria-label="Loading">
-          <div className={`skeleton-shimmer ${resolvedRounded} overflow-hidden`} style={{ height: height ? `${height}px` : preset.height, width: preset.width }}>
+          <SkeletonShape
+            className={`skeleton-shimmer ${resolvedRounded} overflow-hidden`}
+            height={height ? `${height}px` : preset.height}
+            width={preset.width}
+          >
             <div className="p-4 space-y-3">
               <div className="skeleton-shimmer rounded h-4 w-3/5" />
               <div className="skeleton-shimmer rounded h-3 w-4/5" />
               <div className="skeleton-shimmer rounded h-3 w-2/5" />
             </div>
-          </div>
+          </SkeletonShape>
         </div>
       );
     }
@@ -77,13 +122,17 @@ export default function LoadingSkeleton({
     if (variant === 'chart') {
       return (
         <div className={`mx-4 my-4 ${className}`} role="status" aria-label="Loading">
-          <div className={`skeleton-shimmer ${resolvedRounded} overflow-hidden`} style={{ height: height ? `${height}px` : preset.height, width: preset.width }}>
+          <SkeletonShape
+            className={`skeleton-shimmer ${resolvedRounded} overflow-hidden`}
+            height={height ? `${height}px` : preset.height}
+            width={preset.width}
+          >
             <div className="flex items-end gap-2 h-full p-4 pt-8">
               {[60, 80, 45, 90, 55, 70, 40].map((h, i) => (
-                <div key={i} className="skeleton-shimmer rounded-t flex-1" style={{ height: `${h}%` }} />
+                <SkeletonShape key={i} className="skeleton-shimmer rounded-t flex-1" height={`${h}%`} />
               ))}
             </div>
-          </div>
+          </SkeletonShape>
         </div>
       );
     }
@@ -91,9 +140,10 @@ export default function LoadingSkeleton({
     // avatar / button: single shape
     return (
       <div className={`mx-4 my-4 inline-block ${className}`} role="status" aria-label="Loading">
-        <div
+        <SkeletonShape
           className={`skeleton-shimmer ${resolvedRounded}`}
-          style={{ height: height ? `${height}px` : preset.height, width: preset.width }}
+          height={height ? `${height}px` : preset.height}
+          width={preset.width}
         />
       </div>
     );
@@ -104,10 +154,10 @@ export default function LoadingSkeleton({
     return (
       <div className={`space-y-2 px-4 py-4 ${className}`} role="status" aria-label="Loading">
         {Array.from({ length: lines }).map((_, i) => (
-          <div
+          <SkeletonShape
             key={i}
             className={`skeleton-shimmer ${rounded ?? 'rounded-xl'} h-4`}
-            style={{ width: `${Math.max(40, 100 - i * 15)}%` }}
+            width={`${Math.max(40, 100 - i * 15)}%`}
           />
         ))}
       </div>
@@ -116,9 +166,9 @@ export default function LoadingSkeleton({
 
   // Legacy: single block
   return (
-    <div
+    <SkeletonShape
       className={`skeleton-shimmer ${rounded ?? 'rounded-xl'} mx-4 my-4 ${className}`}
-      style={{ height: `${height ?? 128}px` }}
+      height={`${height ?? 128}px`}
       role="status"
       aria-label="Loading"
     />

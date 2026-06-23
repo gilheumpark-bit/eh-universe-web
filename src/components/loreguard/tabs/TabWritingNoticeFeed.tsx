@@ -24,7 +24,7 @@ export default function TabWritingNoticeFeed({
   return (
     <>
       {suggestions.length > 0 && (
-        <div className="wr-doc" style={{ paddingBottom: 0 }}>
+        <div className="wr-doc wr-result-root">
           {suggestions.map((suggestion) => (
             <SuggBlock
               key={suggestion.id}
@@ -40,7 +40,7 @@ export default function TabWritingNoticeFeed({
       )}
 
       {pasteNotice && (
-        <div className="wr-doc" style={{ paddingBottom: 0 }}>
+        <div className="wr-doc wr-result-root">
           <div className="wr-srow" role="status" aria-live="polite">
             <span className="rdot amber" />
             {L4(language, {

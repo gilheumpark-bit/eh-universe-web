@@ -18,7 +18,7 @@ import {
   getImportAlignmentWarnings,
   type ImportBasisUpdateSuggestion,
 } from "@/lib/loreguard/import-project-alignment";
-import { lazyFirebaseAuth } from "@/lib/firebase";
+import { getFirebaseBearerHeaders } from "@/lib/firebase-bearer-headers";
 import type { ProjectDraft } from "@/components/loreguard/ProjectStart.shared";
 
 const MAX_DRAFT_IMPORT_CHARS = 1200;
@@ -43,15 +43,6 @@ function readFileAsText(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error("file read failed"));
     reader.readAsText(file, "UTF-8");
   });
-}
-
-async function getImportUploadHeaders(): Promise<Record<string, string>> {
-  const auth = await lazyFirebaseAuth();
-  const user = auth?.currentUser;
-  if (!user) {
-    throw new Error("DOCX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다.");
-  }
-  return { Authorization: `Bearer ${await user.getIdToken()}` };
 }
 
 interface ImportReadResult {
@@ -92,7 +83,7 @@ export async function readImportFileAsClassifiableText(file: File): Promise<Impo
   const res = await fetch("/api/upload", {
     method: "POST",
     body: formData,
-    headers: await getImportUploadHeaders(),
+    headers: await getFirebaseBearerHeaders("DOCX/HWPX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다."),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -119,6 +110,9 @@ export async function readImportFileAsClassifiableText(file: File): Promise<Impo
     if (lowerName.endsWith(".epub")) {
       throw new Error(`${file.name}에서 EPUB 본문을 찾지 못했습니다. DRM 또는 손상된 EPUB일 수 있습니다.`);
     }
+    if (lowerName.endsWith(".hwpx")) {
+      throw new Error(`${file.name}에서 HWPX 본문을 찾지 못했습니다. 한글에서 HWPX로 다시 저장한 뒤 불러오세요.`);
+    }
     throw new Error(`${file.name}에서 가져올 본문을 찾지 못했습니다.`);
   }
   return {
@@ -136,8 +130,8 @@ export function classifyImportFailureReason(message: string): ImportFileReportRe
   if (message.includes("목차") || normalized.includes("missing-epub-navigation")) return "missing-epub-navigation";
   if (normalized.includes("file content does not match declared type")) return "magic-byte-mismatch";
   if (normalized.includes("file too large")) return "file-too-large";
-  if (message.includes("EPUB 검증 실패") || normalized.includes("zip-bomb")) return "zip-bomb-risk";
-  if (message.includes("가져올 본문을 찾지 못했습니다") || message.includes("분류 가능한 텍스트 없음")) return "empty-extraction";
+  if (message.includes("EPUB 검증 실패") || message.includes("HWPX 검증 실패") || normalized.includes("zip-bomb")) return "zip-bomb-risk";
+  if (message.includes("가져올 본문을 찾지 못했습니다") || message.includes("본문을 찾지 못했습니다") || message.includes("분류 가능한 텍스트 없음")) return "empty-extraction";
   if (normalized.includes("unsupported") || message.includes("지원하지 않는")) return "unsupported-format";
   return "server-extraction-failed";
 }
@@ -187,7 +181,7 @@ export async function processProjectImportFiles(
       nextCandidates: [],
       fileReports: unsupportedReports,
       notice: [
-        "지원 형식은 .txt, .md, .json, .docx, .pdf, .epub 입니다.",
+        "지원 형식은 .txt, .md, .json, .docx, .hwpx, .pdf, .epub 입니다.",
         hiddenUnsupported > 0 ? `파일별 결과 ${hiddenUnsupported}개는 보관 한도 때문에 생략했습니다.` : null,
       ].filter(Boolean).join(" "),
     };

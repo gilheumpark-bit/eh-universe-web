@@ -384,6 +384,28 @@ export { createAuditManager } from "./audit";
 export { createRiskBudgetManager } from "./availability";
 export { checkHallucination } from "./availability/hallucination";
 export { recordAuditEntry, generateAuditReport, getRecentThreats, formatAuditMarkdown, clearAuditLog } from "./audit-report";
+export {
+  buildTabExpertSystemDirective,
+  getAllTabExpertProfiles,
+  getTabExpertLabel,
+  getTabExpertProfile,
+  isLoreguardBrainTabId,
+  normalizeBrainTabId,
+  type AppBrainDepth,
+  type LegacyStudioBrainTabId,
+  type LoreguardBrainTabId,
+  type TabExpertProfile,
+} from "./tab-expert-registry";
+export {
+  buildAppBrainDecisionDirective,
+  decideAppBrain,
+  getDecisionProductLabel,
+  type AppBrainActionKind,
+  type AppBrainDecisionEnvelope,
+  type AppBrainDecisionState,
+  type AppBrainPolicyInput,
+  type AppBrainPolicyScores,
+} from "./app-brain-policy";
 
 // ── NOA-SYS v2.1 Layers ──
 // L1: SVI Engine (Session Volatility Index — EMA 기반 인지 부하 추적)

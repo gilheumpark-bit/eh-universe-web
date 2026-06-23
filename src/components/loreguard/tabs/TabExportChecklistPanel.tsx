@@ -65,8 +65,8 @@ export default function TabExportChecklistPanel({
       maxWidth={960}
       collapsedSummary={collapsedSummary}
     >
-      <div className="wr-panel-head" style={{ marginBottom: 12 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <div className="wr-panel-head tex-checklist-head">
+        <span className="tex-head-label">
           <Download size={15} />
           출고 보조 패널
         </span>
@@ -77,7 +77,7 @@ export default function TabExportChecklistPanel({
         <div className="pcard-h">
           <Book size={15} />
           선택 원고
-          <span className="pill gray" style={{ marginLeft: "auto" }}>
+          <span className="pill gray tex-push">
             {target ? `EP.${target.episode}` : "없음"}
           </span>
         </div>
@@ -92,14 +92,14 @@ export default function TabExportChecklistPanel({
           플랫폼 자수
         </div>
         {platformFits.length === 0 ? (
-          <div className="wr-srow" style={{ color: "var(--ink-3)" }}>점검할 저장 원고 없음</div>
+          <div className="wr-srow tex-muted-row">점검할 저장 원고 없음</div>
         ) : (
           platformFits.map(({ spec, fit }) => (
             <div key={spec.id} className="wr-srow">
               <span className={"rdot " + (fit.withinRange ? "green" : "amber")} />
-              <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="tex-row-body">
                 {spec.label}
-                <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+                <span className="tex-meta-line">
                   기준일 {fit.checkedAt} · {fit.unitLabelKo} · {spec.sourceSummaryKo}
                 </span>
               </span>
@@ -113,13 +113,13 @@ export default function TabExportChecklistPanel({
         <div className="pcard-h">
           <Flag size={15} />
           IP 준비도
-          <span className="pill gray" style={{ marginLeft: "auto" }}>
+          <span className="pill gray tex-push">
             {readinessLabelKo(ipResult.score)}
           </span>
         </div>
         {IP_PART_LABELS.map(({ key, labelKo }) => (
-          <div key={key} className="wr-srow" style={{ gap: 8 }}>
-            <span style={{ width: 78, flexShrink: 0 }}>{labelKo}</span>
+          <div key={key} className="wr-srow tex-range-row">
+            <span className="tex-range-label">{labelKo}</span>
             <input
               type="range"
               min={0}
@@ -127,9 +127,9 @@ export default function TabExportChecklistPanel({
               value={ipParts[key]}
               aria-label={`${labelKo} 자가 평가`}
               onChange={(event) => onChangeIpPart(key, Number(event.target.value))}
-              style={{ flex: 1, minWidth: 0 }}
+              className="tex-range-input"
             />
-            <b style={{ width: 64, textAlign: "right" }}>{readinessLabelKo(ipParts[key])}</b>
+            <b className="tex-range-value">{readinessLabelKo(ipParts[key])}</b>
           </div>
         ))}
       </div>

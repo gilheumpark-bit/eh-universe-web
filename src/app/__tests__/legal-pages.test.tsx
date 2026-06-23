@@ -74,10 +74,10 @@ describe('Terms Page', () => {
     expect(container.textContent).toContain('CC-BY-NC-4.0');
   });
 
-  it('AGPL-3.0 소프트웨어 라이선스 명시 (dual license)', () => {
+  it('비공개 상용 소프트웨어 라이선스 명시', () => {
     const TermsPage = require('../terms/page').default;
     const { container } = render(<TermsPage />);
-    expect(container.textContent).toContain('AGPL-3.0');
+    expect(container.textContent).toContain('비공개 상용 제품');
   });
 
   it('대한민국 법률 준거 명시', () => {

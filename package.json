@@ -2,7 +2,7 @@
   "name": "eh-universe-web",
   "version": "2.3.0-alpha",
   "description": "Loreguard — 소설가의 IDE / The IDE for Novelists. EH Universe 플래그십 제품. Novels, verified like code.",
-  "license": "AGPL-3.0-or-later",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -20,7 +20,7 @@
     "type-check": "tsc --noEmit",
     "check:user-exposure": "node scripts/check-user-exposure.mjs",
     "check:local-secrets": "node scripts/check-local-secrets.mjs",
-    "check:licenses": "license-checker --production --summary",
+    "check:licenses": "node scripts/check-licenses.mjs",
     "check:licenses:strict": "node scripts/check-licenses.mjs",
     "audit:i18n": "jest --testPathPatterns=\"action-registry.i18n\" --no-coverage",
     "audit:prod": "npm audit --omit=dev --audit-level=high",

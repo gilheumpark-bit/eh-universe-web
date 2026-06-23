@@ -18,7 +18,7 @@
 
    토큰 스코프: ToastHost 패턴 — 루트에 .eh-app 직접 부여해 loreguard
    토큰 상속 (StudioShell children 분기 mount = LoreguardShell 트리 밖).
-   .eh-app 의 레이아웃(min-width 1180px·height 100%·배경)은 inline 으로 override.
+   .eh-app 의 레이아웃(min-width 1180px·height 100%·배경)은 memo-* CSS 계약으로 override.
    다크: html/body data-theme → [data-theme="dark"] .eh-app 토큰 연쇄 (F1 가드).
 
    가드: SSR 안전(typeof window) · quota 초과 silent · 깨진 JSON → 빈 배열.
@@ -237,19 +237,8 @@ export default function MemoPanel({
   return (
     <div
       role="presentation"
-      className="eh-app"
+      className="eh-app memo-overlay"
       onClick={() => setOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        minWidth: 0,
-        height: "auto",
-        background: "var(--overlay-scrim)",
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "flex-end",
-      }}
     >
       <aside
         ref={dialogRef}
@@ -257,29 +246,17 @@ export default function MemoPanel({
         aria-modal="true"
         aria-label={L4(language, { ko: "메모 보드", en: "Memo board", ja: "メモボード", zh: "便签板" })}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(480px, 94vw)",
-          height: "100%",
-          overflowY: "auto",
-          background: "var(--page-2)",
-          borderLeft: "1px solid var(--line)",
-          boxShadow: "var(--shadow-pop)",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
+        className="memo-panel"
       >
         {/* head */}
-        <div className="pcard-h" style={{ marginBottom: 0 }}>
+        <div className="pcard-h memo-head">
           <StickyNote size={16} />
           {L4(language, { ko: "메모 보드", en: "Memo board", ja: "メモボード", zh: "便签板" })}
           <button
             type="button"
-            className="eh-icbtn"
+            className="eh-icbtn memo-close"
             aria-label={L4(language, { ko: "패널 닫기", en: "Close panel", ja: "パネルを閉じる", zh: "关闭面板" })}
             autoFocus
-            style={{ marginLeft: "auto" }}
             onClick={() => setOpen(false)}
           >
             <X size={16} />
@@ -287,7 +264,7 @@ export default function MemoPanel({
         </div>
 
         {/* 입력 줄 — 데스크톱 MemoBoard 동일 (Enter = 추가) */}
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="memo-compose">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -299,25 +276,14 @@ export default function MemoPanel({
               ja: "思いつきを書いて Enter — まだ設定ではないもの",
               zh: "记下灵感后按 Enter — 还不是正式设定的内容",
             })}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              padding: "9px 12px",
-              borderRadius: 11,
-              border: "1px solid var(--line)",
-              background: "var(--card-2)",
-              color: "inherit",
-              font: "inherit",
-              fontSize: 13,
-            }}
+            className="memo-input"
           />
           <button
             type="button"
-            className="btn primary"
+            className="btn primary memo-add"
             disabled={!draft.trim()}
             onClick={add}
             aria-label={L4(language, { ko: "메모 추가", en: "Add memo", ja: "メモを追加", zh: "添加便签" })}
-            style={{ flexShrink: 0 }}
           >
             <StickyNote size={14} />
             {L4(language, { ko: "메모", en: "Memo", ja: "メモ", zh: "便签" })}
@@ -326,7 +292,7 @@ export default function MemoPanel({
 
         {/* 작업노트 요약 — summarizeNotes 재사용 (메모 있을 때만) */}
         {memos.length > 0 && (
-          <div className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+          <div className="wr-srow memo-summary">
             {L4(language, { ko: "작업노트: ", en: "Work notes: ", ja: "作業ノート: ", zh: "工作笔记: " })}
             {summary}
           </div>
@@ -334,7 +300,7 @@ export default function MemoPanel({
 
         {/* 목록 / 빈 상태 — 정직 표면화 */}
         {memos.length === 0 ? (
-          <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 24, justifyContent: "center" }}>
+          <div className="wr-srow memo-empty">
             {L4(language, {
               ko: "즉흥 아이디어·메모를 모으는 곳. 정리되면 세계관·캐릭터 탭으로 옮기세요.",
               en: "Collect spur-of-the-moment ideas here. Move them to World/Character tabs once they settle.",
@@ -343,35 +309,18 @@ export default function MemoPanel({
             })}
           </div>
         ) : (
-          <ul
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
-              gap: 8,
-              margin: 0,
-              padding: 0,
-              listStyle: "none",
-            }}
-          >
+          <ul className="memo-list">
             {memos.map((m) => (
               <li
                 key={m.id}
-                style={{
-                  position: "relative",
-                  border: "1px solid var(--line)",
-                  background: "var(--card-2)",
-                  borderRadius: 12,
-                  padding: "10px 30px 10px 12px",
-                  fontSize: 12.5,
-                }}
+                className="memo-card"
               >
-                <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "var(--ink-1)" }}>{m.text}</p>
+                <p className="memo-text">{m.text}</p>
                 <button
                   type="button"
-                  className="eh-icbtn"
+                  className="eh-icbtn memo-delete"
                   aria-label={L4(language, { ko: "메모 삭제", en: "Delete memo", ja: "メモを削除", zh: "删除便签" })}
                   onClick={() => remove(m.id)}
-                  style={{ position: "absolute", right: 4, top: 4 }}
                 >
                   <X size={13} />
                 </button>

@@ -159,7 +159,7 @@ export default function TabExportPremiumRightsPackageCard({
       <div className="pcard-h">
         <Scale size={15} />
         상위 권리 패키지
-        <span className={"pill " + tone} style={{ marginLeft: "auto" }}>
+        <span className={"pill tex-push " + tone}>
           {score}%
         </span>
       </div>
@@ -203,7 +203,7 @@ export default function TabExportPremiumRightsPackageCard({
           제출 묶음 보기
         </button>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+      <div className="wr-srow tex-footnote-row">
         <Flag size={13} />
         공식 등록 대행이 아니라, 신청 전 문안·복제물·권리 범위를 작가 기준으로 정리하는 출고 준비 묶음입니다.
       </div>

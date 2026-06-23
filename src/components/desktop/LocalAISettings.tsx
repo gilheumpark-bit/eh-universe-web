@@ -43,7 +43,7 @@ export default function LocalAISettings({ onClose }: { onClose: () => void }) {
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
-        <p className="mb-3 text-xs text-text-tertiary">OpenAI 호환 엔드포인트 (vLLM · Ollama · llama.cpp · LM Studio). 예: <code>http://localhost:11434/v1</code></p>
+        <p className="mb-3 text-xs text-text-tertiary">OpenAI 호환 엔드포인트 (vLLM · Ollama · llama.cpp · LM Studio). 예: <code className="break-all font-mono">http://localhost:11434/v1</code></p>
 
         <div className="space-y-3">
           {slots.map((s) => {

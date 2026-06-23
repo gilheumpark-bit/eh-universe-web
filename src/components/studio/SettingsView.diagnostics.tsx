@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { type Dispatch, type KeyboardEvent, type MouseEvent, type SetStateAction, useEffect, useState } from 'react';
 import { useUserRoleSafe } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/lib/AuthContext';
+import { getBooleanFeatureFlagKeys, type BooleanFlagKey } from '@/lib/feature-flags';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
@@ -133,12 +134,8 @@ export function DebugMenuSection({ language }: { language: AppLanguage }) {
   );
 }
 
-const KNOWN_FLAGS = [
-  'IMAGE_GENERATION', 'GOOGLE_DRIVE_BACKUP', 'OFFLINE_CACHE',
-  'EPISODE_COMPARE', 'CLOUD_SYNC', 'GITHUB_SYNC',
-  'SECURITY_GATE', 'GITHUB_ETAG_CACHE', 'ARI_ENHANCED',
-] as const;
-type KnownFlag = typeof KNOWN_FLAGS[number];
+const KNOWN_FLAGS = getBooleanFeatureFlagKeys();
+type KnownFlag = BooleanFlagKey;
 
 export function FeatureFlagsSection({ language }: { language: AppLanguage }) {
   const [overrides, setOverrides] = useState<Record<string, 'true' | 'false' | null>>({});

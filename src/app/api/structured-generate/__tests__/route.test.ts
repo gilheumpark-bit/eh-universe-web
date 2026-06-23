@@ -55,7 +55,7 @@ jest.mock('@/lib/logger', () => ({
 
 jest.mock('@/lib/server-ai', () => ({
   hasServerProviderCredentials: () => false,
-  isServerProviderId: (value: string) => ['gemini', 'openai', 'groq', 'mistral', 'ollama', 'lmstudio'].includes(value),
+  isServerProviderId: (value: string) => ['upstage', 'gemini', 'openai', 'groq', 'mistral', 'ollama', 'lmstudio'].includes(value),
   resolveServerProviderKey: (_provider: string, apiKey?: string) => apiKey ?? '',
 }));
 

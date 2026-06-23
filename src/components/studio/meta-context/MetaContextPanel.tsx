@@ -108,8 +108,8 @@ function ConflictsBlock({ conflicts, isKO }: { conflicts: MetaConflict[]; isKO: 
       </div>
       <ul className="space-y-1">
         {conflicts.slice(-5).map((c, i) => (
-          <li key={i} className="text-xs">
-            <code className="text-accent-purple font-mono">{c.key}</code>:{' '}
+          <li key={i} className="min-w-0 break-words text-xs">
+            <code className="break-all font-mono text-accent-purple">{c.key}</code>:{' '}
             <span className="text-text-tertiary line-through">{c.oldValue}</span>{' → '}
             <span className="text-accent-amber">{c.newValue}</span>
           </li>
@@ -143,8 +143,8 @@ function DefinitionsBlock({
           </div>
           <ul className="space-y-0.5">
             {items.map((it, i) => (
-              <li key={i} className="px-2 py-1 rounded hover:bg-bg-tertiary/30 text-xs">
-                <code className="text-accent-purple font-mono">{it.key}</code>
+              <li key={i} className="min-w-0 break-words px-2 py-1 rounded hover:bg-bg-tertiary/30 text-xs">
+                <code className="break-all font-mono text-accent-purple">{it.key}</code>
                 <span className="text-text-tertiary"> = </span>
                 <span className="text-text-secondary">{it.value}</span>
                 {it.scope && (

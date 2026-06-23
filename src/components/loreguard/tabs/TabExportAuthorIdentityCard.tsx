@@ -34,12 +34,12 @@ export default function TabExportAuthorIdentityCard({
       <div className="pcard-h">
         <Shield size={15} />
         작가 등록 정보
-        <span className={"pill " + tone} style={{ marginLeft: "auto" }}>
+        <span className={"pill tex-push " + tone}>
           {identityLabel(authorDisplayName, authorLegalName)}
         </span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
-        <span style={{ flex: 1 }}>
+      <div className="wr-srow tex-muted-row-start">
+        <span className="tex-copy-flex">
           저작권 등록 준비 문안에서 제호, 필명, 실명 확인문이 흔들리지 않도록 작가 기준값을 먼저 고정합니다.
         </span>
       </div>
@@ -79,7 +79,7 @@ export default function TabExportAuthorIdentityCard({
           <strong>{tone === "green" ? "검토" : "보강"}</strong>
         </div>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+      <div className="wr-srow tex-footnote-row">
         <Book size={13} />
         입력값은 등록 준비 3안과 코어 저작권 패키지의 문안에 반영됩니다.
       </div>

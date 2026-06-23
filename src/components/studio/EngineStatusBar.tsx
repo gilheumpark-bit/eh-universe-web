@@ -8,6 +8,7 @@ import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serializatio
 import { getOverdueThreads, getHighPriorityUnresolved, type NarrativeThread } from '@/engine/shadow';
 import { getContextBudgetSummary, type ContextBudgetSummary } from '@/engine/context-builder';
 import { getStudioTranslations, L4, normalizeAppLanguage } from '@/lib/i18n';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface EngineStatusBarProps {
   language: AppLanguage;
@@ -123,9 +124,10 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
                 <span className="text-text-tertiary font-mono">~{tier.tokens}{L4(language, { ko: ' 토큰', en: ' tok', ja: ' tok', zh: ' tok' })}</span>
               </div>
               <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
-                <div
+                <ProgressFill
+                  value={tier.tokens}
+                  max={maxTokens}
                   className={`h-full rounded-full ${i === 0 ? 'bg-accent-blue' : i === 1 ? 'bg-amber-500' : 'bg-green-500'}`}
-                  style={{ width: `${maxTokens > 0 ? Math.min(100, (tier.tokens / maxTokens) * 100) : 0}%` }}
                 />
               </div>
             </div>

@@ -96,7 +96,7 @@
 | 5.2 | 4 변호사 (KR/US/JP/CN) 정식 감수 + ATTESTATION byte-level 확정 | Legal |
 | 5.3 | KAIST 또는 이화여대 문창과 학회 발표 — "코드처럼 검증되는 소설" | Academia |
 | 5.4 | Wikipedia "Novel IDE" 카테고리 신청 (학술 인용 기반) | Category |
-| 5.5 | CNCF / Apache foundation 수준 거버넌스 + 외부 contributor 10+ | Open-Source |
+| 5.5 | 내부 운영 거버넌스 + 제한된 파트너 검수 체계 | Proprietary |
 | 5.6 | Mutation testing + chaos engineering | Test/QA |
 | 5.7 | 4 제품 fork 표준 자동화 (sed substitute script) | Strategy |
 
@@ -156,6 +156,6 @@ Loreguard 가 fork 표준. 어휘 치환 (또는 subtraction) 으로 5 도메인
 - 일반: gilheumpark@gmail.com
 - 보안: security@eh-universe.dev
 - 알파 작가 모집: gilheumpark@gmail.com (subject: `[ALPHA]`)
-- 상업 라이선스: gilheumpark@gmail.com (subject: `[COMMERCIAL]`)
+- 라이선스 문의: gilheumpark@gmail.com (subject: `[LICENSE]`)
 
 > *"카테고리 창시자는 빨리 가는 사람이 아니라 끝까지 가는 사람이다."*

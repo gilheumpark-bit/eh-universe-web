@@ -15,6 +15,7 @@ import { ActionBar } from '@/components/ui/ActionBar';
 import { createT } from '@/lib/i18n';
 import { getStudioBackendDisplayLabel } from '@/lib/studio-ai-backend-label';
 import { logger } from '@/lib/logger';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 const ChatMarkdownBlock = dynamic(
   () => import('./ChatMarkdownBlock').then((m) => m.ChatMarkdownBlock),
@@ -272,7 +273,7 @@ const ChatMessageImpl: React.FC<ChatMessageProps> = ({
                     <div key={k} className="space-y-1">
                       <div className="flex justify-between text-[7px] font-black text-text-tertiary uppercase"><span>{k}</span><span>{v}%</span></div>
                       <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
-                        <div className="h-full bg-accent-blue" style={{ width: `${v}%` }} />
+                        <ProgressFill value={v} className="h-full bg-accent-blue" />
                       </div>
                     </div>
                   ))}

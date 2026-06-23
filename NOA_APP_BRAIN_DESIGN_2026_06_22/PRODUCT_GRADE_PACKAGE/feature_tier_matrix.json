@@ -1,0 +1,60 @@
+{
+  "tiers": {
+    "solo": {
+      "target_customer": "individual_writer",
+      "features": [
+        "basic_tab_experts",
+        "safe_apply_preview",
+        "recent_work_receipts",
+        "basic_export_check"
+      ],
+      "limits": {
+        "team_features": false,
+        "custom_policy": false,
+        "advanced_audit": false
+      }
+    },
+    "pro_creator": {
+      "target_customer": "professional_creator_or_small_team",
+      "features": [
+        "advanced_tab_experts",
+        "continuity_check",
+        "full_work_receipts",
+        "rollback_hints",
+        "advanced_export_check"
+      ],
+      "limits": {
+        "team_features": "limited",
+        "custom_policy": false,
+        "advanced_audit": false
+      }
+    },
+    "studio": {
+      "target_customer": "production_team",
+      "features": [
+        "team_work_receipts",
+        "project_health_panel",
+        "approval_flow",
+        "export_guard",
+        "team_audit"
+      ],
+      "limits": {
+        "custom_policy": "limited",
+        "dedicated_storage": false
+      }
+    },
+    "enterprise_ip": {
+      "target_customer": "ip_owner_or_enterprise",
+      "features": [
+        "custom_policy",
+        "dedicated_storage_option",
+        "organization_audit",
+        "rights_workflow",
+        "security_review_support"
+      ],
+      "limits": {
+        "requires_contract": true
+      }
+    }
+  }
+}

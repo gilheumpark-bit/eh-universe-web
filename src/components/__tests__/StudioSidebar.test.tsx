@@ -64,6 +64,7 @@ const baseProps: React.ComponentProps<typeof StudioSidebar> = {
   exportAllJSON: noop,
   handleExportEPUB: noop,
   handleExportDOCX: noop,
+  handleExportHWPX: noop,
   handleImportTextFiles: noop as (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => void,
@@ -98,6 +99,13 @@ describe("StudioSidebar", () => {
     const _homeLink = screen.queryByText("EH");
     // Even if not found by text, the component should render
     expect(document.body.innerHTML.length).toBeGreaterThan(0);
+  });
+
+  it("keeps the sidebar manuscript importer aligned with document import formats", () => {
+    const { container } = render(<StudioSidebar {...baseProps} />);
+    const manuscriptInput = container.querySelector('input[accept=".txt,.md,.docx,.hwpx,.pdf,.epub"]');
+
+    expect(manuscriptInput).toBeInTheDocument();
   });
 
   it("selects the latest session when switching projects", () => {

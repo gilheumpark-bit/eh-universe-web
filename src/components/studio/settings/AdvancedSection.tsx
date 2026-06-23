@@ -37,7 +37,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
     narrativeDepthSetter(val);
     return val;
   });
-  // 연결 키 자동 전환 선호 (기본 true)
+  // 연결 키 자동 전환 선호 (원고 보호 기준: 기본 off)
   const [connectionKeyFallback, setConnectionKeyFallbackState] = useState<boolean>(() => getFallbackPreference());
   const persistConnectionKeyFallback = (enabled: boolean) => {
     setConnectionKeyFallbackState(enabled);
@@ -264,24 +264,24 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
                     {L4(language, {
-                      ko: '운영 경로 불안정 시 연결 키 자동 사용',
-                      en: 'Use connection key when runtime path is unavailable',
-                      ja: '運用経路が不安定な時に接続キーを自動使用',
-                      zh: '运行路径不可用时自动使用连接密钥',
+                      ko: '보조 연결 사용',
+                      en: 'Use backup connections',
+                      ja: '補助接続を使う',
+                      zh: '使用备用连接',
                     })}
                     <span className="group relative">
                       <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
                       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
-                        {L4(language, { ko: '기본 운영 또는 로컬 실행이 응답 없을 때 자신의 연결 키로 전환합니다.', en: 'Switches to your connection key when the hosted or local path is unresponsive.', ja: '基本運用またはローカル実行が応答しない時、自分の接続キーへ切り替えます。', zh: '当基本运行或本地执行无响应时，切换到您的连接密钥。' })}
+                        {L4(language, { ko: '가벼운 요청에서만 저장된 다른 연결로 이어받습니다.', en: 'Only lightweight requests may continue through another saved connection.', ja: '軽いリクエストだけ別の保存済み接続へ引き継ぎます。', zh: '仅轻量请求可接续到其他已保存连接。' })}
                       </span>
                     </span>
                   </div>
                   <div className="text-[13px] text-text-tertiary hidden sm:block">
                     {L4(language, {
-                      ko: '서비스 중단 방지 — 연결 키가 설정된 경우에만 동작',
-                      en: 'Avoids downtime — works only when a connection key is configured',
-                      ja: 'ダウンタイムを回避 — 接続キー設定時のみ動作',
-                      zh: '避免停机 — 仅在配置了连接密钥时有效',
+                      ko: '노아 반응 유지용입니다. 원고 본문·번역·분석 요청은 선택한 연결을 유지합니다.',
+                      en: 'Keeps Noa responsive. Manuscript, translation, and analysis requests stay on the selected connection.',
+                      ja: 'ノアの応答維持用です。原稿本文・翻訳・分析リクエストは選択中の接続を維持します。',
+                      zh: '用于保持诺亚响应。稿件正文、翻译和分析请求会保持所选连接。',
                     })}
                   </div>
                 </div>

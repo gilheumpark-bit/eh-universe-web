@@ -31,6 +31,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/lib/csrf';
+import { isAllowedOriginValue } from '@/lib/api-origin-guard';
 
 // ============================================================
 // PART 2 — Whitelist & method filter
@@ -127,14 +128,7 @@ function verifyCsrfEdge(req: NextRequest): boolean {
 }
 
 function hasSameOriginHeader(req: NextRequest): boolean {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
+  return isAllowedOriginValue(req.headers, req.headers.get('origin'));
 }
 
 // ============================================================

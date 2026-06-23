@@ -1,0 +1,78 @@
+{
+  "manifest_id": "EH_UNIVERSE_NOA_APP_BRAIN_DESIGN_2026_06_22",
+  "target_app": "eh-universe-web",
+  "status": "APP_SPECIFIC_DESIGN_READY",
+  "source_mutation": false,
+  "product_integration_claim": false,
+  "browser_e2e": "NOT_RUN",
+  "design_goal": [
+    "app_wide_control",
+    "tab_expert_routing",
+    "creative_flow_protection",
+    "work_receipt_memory",
+    "development_handoff"
+  ],
+  "app_brain_modules": [
+    "A0_APP_SIGNAL_INTAKE",
+    "A1_CREATIVE_CONTEXT_PACK",
+    "A2_TAB_EXPERT_ROUTER",
+    "A3_WORK_RISK_RECOVERY_GATE",
+    "A4_CREATIVE_JUDGMENT_LAYER",
+    "A5_APPLY_PLAN_BUILDER",
+    "A6_RECEIPT_WORK_MEMORY",
+    "A7_RECOVERY_ROLLBACK_COACH"
+  ],
+  "integration_boundaries": [
+    {
+      "id": "APP-BND-001",
+      "path": "src/lib/actions/action-containment.ts",
+      "anchor": "runContainedAction",
+      "role": "pre_execution_policy"
+    },
+    {
+      "id": "APP-BND-002",
+      "path": "src/hooks/usePrimaryWriter.ts",
+      "anchor": "recordPrimaryWrite",
+      "role": "save_receipt_memory"
+    },
+    {
+      "id": "APP-BND-003",
+      "path": "src/hooks/useStudioExport.ts",
+      "anchor": "exportAllJSON",
+      "role": "export_protection"
+    },
+    {
+      "id": "APP-BND-004",
+      "path": "src/services/driveService.ts",
+      "anchor": "saveProjectFile",
+      "role": "cloud_save_boundary"
+    },
+    {
+      "id": "APP-BND-005",
+      "path": "src/components/studio/settings/AuditExportButton.tsx",
+      "anchor": "getPrimaryWriteLog",
+      "role": "read_only_audit"
+    },
+    {
+      "id": "APP-BND-006",
+      "path": "src/components/studio/TabAssistant.tsx",
+      "anchor": "TAB_CONTEXT",
+      "role": "tab_expert_prompts"
+    },
+    {
+      "id": "APP-BND-007",
+      "path": "src/components/studio/StudioTabRouter.tsx",
+      "anchor": "activeTab",
+      "role": "tab_context_router"
+    }
+  ],
+  "decision_states": ["APPLY", "PREVIEW", "HOLD", "SPLIT", "PROTECT", "RECORD", "RECOVER"],
+  "forbidden": [
+    "surface_research_terms_to_writer_ui",
+    "interrupt_general_typing",
+    "claim_product_integration_before_e2e",
+    "auto_apply_large_ai_patch_without_preview",
+    "cloud_save_without_receipt"
+  ]
+}
+

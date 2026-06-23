@@ -35,7 +35,7 @@ export function TabWritingRightPanelHeader({
         }
         onClick={onToggle}
       >
-        <Chevron size={16} style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)" }} />
+        <Chevron size={16} className={"wr-panel-chevron" + (collapsed ? " is-collapsed" : "")} />
       </button>
       <span>{L4(language, { ko: "집필 기준·출고 준비", en: "Writing basis and package" })}</span>
       {!collapsed && (
@@ -72,8 +72,7 @@ export function TabWritingRightPanelActions({
     <div className="wr-cta wr-cta-top">
       <button
         type="button"
-        className="btn primary"
-        style={{ flex: 1, justifyContent: "center" }}
+        className="btn primary wr-action-fill"
         onClick={onFocusDraft}
       >
         <Pen size={15} />
@@ -81,8 +80,7 @@ export function TabWritingRightPanelActions({
       </button>
       <button
         type="button"
-        className="btn"
-        style={{ flex: 1, justifyContent: "center" }}
+        className="btn wr-action-fill"
         onClick={onOpenExport}
       >
         <Download size={15} />
@@ -90,8 +88,7 @@ export function TabWritingRightPanelActions({
       </button>
       <button
         type="button"
-        className="btn"
-        style={{ flex: 1, justifyContent: "center" }}
+        className="btn wr-action-fill"
         onClick={onOpenInlineRewrite}
         title={L4(language, {
           ko: "선택 영역 리라이트 — Ctrl+Shift+R 또는 우클릭",

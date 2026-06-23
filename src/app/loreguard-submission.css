@@ -1,0 +1,181 @@
+.eh-app .submission-cover-preview {
+  padding: 32px;
+  border: 1px solid var(--ink-1);
+  background: var(--card);
+  color: var(--ink-1);
+  text-align: center;
+  font-family: var(--font-sans, inherit);
+}
+.eh-app .submission-cover-seal {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 16px;
+}
+.eh-app .submission-cover-seal svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.eh-app .submission-cover-eyebrow,
+.eh-app .submission-cover-qr-label {
+  margin: 0;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+.eh-app .submission-cover-eyebrow {
+  margin-bottom: 12px;
+}
+.eh-app .submission-cover-title {
+  margin: 0 0 8px;
+  color: var(--ink-1);
+  font-family: var(--font-heading, var(--font-serif, inherit));
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.eh-app .submission-cover-serial,
+.eh-app .submission-cover-recipient {
+  margin: 0;
+  color: var(--ink-1);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.eh-app .submission-cover-qr {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+}
+.eh-app .submission-cover-qr-img {
+  display: block;
+}
+.eh-app .submission-cover-recipient {
+  margin-top: 4px;
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.eh-app .submission-cover-not-ready,
+.eh-app .submission-artifact-empty {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.eh-app .submission-artifact-empty {
+  padding: 12px 0;
+}
+.eh-app .submission-artifact-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.eh-app .submission-artifact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.eh-app .submission-artifact-icon {
+  flex: 0 0 auto;
+  color: var(--c-green);
+}
+.eh-app .submission-artifact-main {
+  flex: 1;
+  min-width: 0;
+}
+.eh-app .submission-artifact-title {
+  color: var(--ink-1);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.eh-app .submission-artifact-meta {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eh-app .submission-artifact-download {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ink-1);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-1);
+  cursor: pointer;
+}
+.eh-app .submission-artifact-download:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.eh-app .submission-artifact-download-icon {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .eh-app .eh-proj {
+    display: none;
+  }
+  .eh-app .ps-interview {
+    padding: 14px;
+    gap: 16px;
+  }
+  .eh-app .ps-head {
+    flex-direction: column;
+  }
+  .eh-app .ps-head .pill {
+    align-self: flex-start;
+  }
+  .eh-app .ps-workflow-spine {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 8px;
+  }
+  .eh-app .ps-workflow-step {
+    grid-template-columns: 22px minmax(0, 1fr);
+    padding: 8px 9px;
+  }
+  .eh-app .ps-workflow-step svg {
+    width: 22px;
+    height: 22px;
+    padding: 4px;
+  }
+  .eh-app .ps-workflow-step small {
+    display: none;
+  }
+  .eh-app .ps-decision-ledger-rows > div {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+  }
+  .eh-app .ps-decision-ledger-rows b {
+    grid-column: 2 / -1;
+  }
+  .eh-app .ps-noa {
+    grid-template-columns: 1fr;
+  }
+  .eh-app .ps-noa-mark {
+    width: 40px;
+    height: 40px;
+  }
+  .eh-app .ps-actions {
+    margin: 0 -14px -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}

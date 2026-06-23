@@ -12,153 +12,34 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { Sparkles, ShieldCheck, Plus, Trash2, Link2, AlertCircle, Check, Network } from 'lucide-react';
 import { localFillDraft, commitAsCanon } from '@/lib/worldgraph/fill';
 import { validateWorldFact } from '@/lib/worldgraph/validate';
-import { serializeWorldFact } from '@/lib/worldgraph/worldfact-serializer';
 import { showAlert } from '@/lib/show-alert';
-import type { WorldFactEntry } from '@/lib/worldgraph/types';
+import { WorldGraphCanvas } from './WorldGraphEditor.canvas';
+import {
+  CATEGORY_COLOR,
+  DEFAULT_COLOR,
+  KEYBOARD_STEP,
+  VIEW_H,
+  VIEW_W,
+  bindStudioTone,
+  clamp01,
+  cssEscape,
+  deriveEdges,
+  loadNodes,
+  saveNodes,
+  summarizeValidation,
+  type GraphNode,
+  type NodePos,
+  type WorldGraphEditorProps,
+} from './WorldGraphEditor.model';
 
-// ============================================================
-// PART 1 — Types & constants
-// ============================================================
-
-interface NodePos {
-  /** 0..1 normalized canvas X */
-  x: number;
-  /** 0..1 normalized canvas Y */
-  y: number;
-}
-
-interface GraphNode {
-  entry: WorldFactEntry;
-  pos: NodePos;
-}
-
-interface Props {
-  workId?: string;
-  /** 초기 노드 (호출자가 미리 불러올 때) — 없으면 localStorage 에서 복원 */
-  initialNodes?: GraphNode[];
-  /** 변경 콜백 — 호출자가 별도 저장소에 동기화하고 싶을 때 */
-  onChange?: (nodes: GraphNode[]) => void;
-}
-
-/** localStorage 키 — workId 별 격리. 미지정 시 'untitled'. */
-const STORAGE_PREFIX = 'noa.worldgraph.editor.v1';
-const storageKey = (workId?: string) => `${STORAGE_PREFIX}:${workId || 'untitled'}`;
-
-/** 캔버스 viewBox — SVG 좌표계 (절대값 → CSS 로 fit). */
-const VIEW_W = 800;
-const VIEW_H = 500;
-const NODE_W = 160;
-const NODE_H = 64;
-
-/** category → 색상 (안전성 [C]: 미지 category 기본값 보장). */
-const CATEGORY_COLOR: Readonly<Record<string, string>> = Object.freeze({
-  magic: '#a855f7',
-  faction: '#ef4444',
-  location: '#22c55e',
-  power_system: '#f59e0b',
-  rule: '#3b82f6',
-  race: '#ec4899',
-  religion: '#eab308',
-  history_event: '#06b6d4',
-  currency: '#14b8a6',
-});
-const DEFAULT_COLOR = '#64748b';
-
-// ============================================================
-// PART 2 — Storage (localStorage 영속, fail-safe)
-// ============================================================
-
-function loadNodes(workId?: string): GraphNode[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(storageKey(workId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    // shape 가드 — 손상 데이터 무시
-    return parsed.filter(
-      (n): n is GraphNode =>
-        !!n &&
-        typeof n === 'object' &&
-        typeof (n as GraphNode).entry?.frontMatter?.id === 'string' &&
-        typeof (n as GraphNode).pos?.x === 'number' &&
-        typeof (n as GraphNode).pos?.y === 'number',
-    );
-  } catch {
-    return [];
-  }
-}
-
-/**
- * localStorage 영속. 성공 시 true, quota 초과 등 실패 시 false.
- * [P3 low/reliability 2026-06-09] 반환값으로 호출 측이 사용자 경고(토스트) 발행 가능.
- *   기존: catch 완전 무음 → 다수 노드 세션에서 quota 초과 시 새로고침 데이터 손실 무인지.
- */
-function saveNodes(workId: string | undefined, nodes: GraphNode[]): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    window.localStorage.setItem(storageKey(workId), JSON.stringify(nodes));
-    return true;
-  } catch {
-    // quota 초과 / 프라이빗 모드 등 — 호출 측에서 토스트 처리.
-    return false;
-  }
-}
-
-// ============================================================
-// PART 3 — Graph derivation (관계 엣지 = conflictsWith)
-// ============================================================
-
-export interface GraphEdge {
-  from: string;
-  to: string;
-  /** 'conflict' = 모순 (빨간색) */
-  kind: 'conflict';
-}
-
-/** 결정론 엣지 추출 — frontMatter.conflictsWith 만 사용 (양방향 중복 제거). */
-export function deriveEdges(nodes: ReadonlyArray<GraphNode>): GraphEdge[] {
-  const ids = new Set(nodes.map((n) => n.entry.frontMatter.id));
-  const seen = new Set<string>();
-  const edges: GraphEdge[] = [];
-  for (const n of nodes) {
-    const src = n.entry.frontMatter.id;
-    const conflicts = Array.isArray(n.entry.frontMatter.conflictsWith) ? n.entry.frontMatter.conflictsWith : [];
-    for (const dst of conflicts) {
-      if (!ids.has(dst) || dst === src) continue;
-      const key = [src, dst].sort().join('|');
-      if (seen.has(key)) continue;
-      seen.add(key);
-      edges.push({ from: src, to: dst, kind: 'conflict' });
-    }
-  }
-  return edges;
-}
-
-/** validate 결과 집계 — 노드 id → 위반 수. */
-export function summarizeValidation(nodes: ReadonlyArray<GraphNode>): {
-  totalViolations: number;
-  perNode: Map<string, number>;
-  blocking: number;
-} {
-  const perNode = new Map<string, number>();
-  let total = 0;
-  let blocking = 0;
-  for (const n of nodes) {
-    const v = validateWorldFact(n.entry);
-    const violations = v.violations.length;
-    perNode.set(n.entry.frontMatter.id, violations);
-    total += violations;
-    if (!v.ok) blocking += 1;
-  }
-  return { totalViolations: total, perNode, blocking };
-}
+export { deriveEdges, serializeGraphToMarkdown, summarizeValidation } from './WorldGraphEditor.model';
+export type { GraphEdge, GraphNode, NodePos, WorldGraphEditorProps } from './WorldGraphEditor.model';
 
 // ============================================================
 // PART 4 — Component
 // ============================================================
 
-const WorldGraphEditor: React.FC<Props> = ({ workId, initialNodes, onChange }) => {
+const WorldGraphEditor: React.FC<WorldGraphEditorProps> = ({ workId, initialNodes, onChange }) => {
   const [nodes, setNodes] = useState<GraphNode[]>(() => {
     if (initialNodes && initialNodes.length) return initialNodes;
     return loadNodes(workId);
@@ -369,8 +250,6 @@ const WorldGraphEditor: React.FC<Props> = ({ workId, initialNodes, onChange }) =
   //   'Delete'    → 선택 노드 삭제
   //   'Enter'/'Space' → 선택 (focus 시 자동), edge target 확정
   // ============================================================
-  const KEYBOARD_STEP = 0.02; // 노드 위치 정규화 단위 (≈ VIEW_W * 0.02 = 16px)
-
   const handleNodeKeyDown = useCallback((evt: React.KeyboardEvent<SVGGElement>, id: string) => {
     // Arrow 키 — 이동 (양방향 노드는 0..1 clamp)
     const moveTo = (dx: number, dy: number) => {
@@ -494,124 +373,20 @@ const WorldGraphEditor: React.FC<Props> = ({ workId, initialNodes, onChange }) =
         </button>
       </div>
 
-      {/* ── 캔버스 (SVG 노드/엣지) ──────────────────── */}
-      <div className="relative w-full overflow-hidden rounded-lg border border-border bg-bg-primary">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          preserveAspectRatio="xMidYMid meet"
-          // [priority 4 — 2026-06-08 WCAG 2.1.1] role 'application' = 자체 키보드 이벤트 모델 보유.
-          // 내부 <g> 들이 tabIndex=0 + arrow 키 핸들러로 직접 포커스/조작 가능.
-          role="application"
-          aria-label="세계관 fact 그래프 (화살표키: 노드 이동 · e: 관계 · Delete: 삭제)"
-          // [P2 low/correctness 2026-06-09] tabIndex=-1: 노드 삭제 후 남은 노드가 없을 때
-          //   programmatic .focus() fallback 대상 (tab 순서엔 미포함).
-          tabIndex={-1}
-          className="block h-[400px] w-full focus-visible:outline-none"
-          data-testid="worldgraph-svg"
-        >
-          {/* 배경 그리드 (시각 가이드) */}
-          <defs>
-            <pattern id="wg-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,200,50,0.06)" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width={VIEW_W} height={VIEW_H} fill="url(#wg-grid)" />
-
-          {/* 엣지 (conflict — 빨간색 점선) */}
-          {edges.map((e) => {
-            const from = nodes.find((n) => n.entry.frontMatter.id === e.from);
-            const to = nodes.find((n) => n.entry.frontMatter.id === e.to);
-            if (!from || !to) return null;
-            const fx = from.pos.x * VIEW_W;
-            const fy = from.pos.y * VIEW_H;
-            const tx = to.pos.x * VIEW_W;
-            const ty = to.pos.y * VIEW_H;
-            return (
-              <g key={`edge-${e.from}-${e.to}`} className="cursor-pointer" onClick={() => handleRemoveEdge(e.from, e.to)} role="button" aria-label={`모순 엣지 ${e.from} ↔ ${e.to} (클릭으로 제거)`}>
-                <line
-                  x1={fx}
-                  y1={fy}
-                  x2={tx}
-                  y2={ty}
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  strokeDasharray="6 4"
-                  opacity={0.85}
-                />
-                {/* 가운데 X 마커 — 클릭 hit-area */}
-                <circle cx={(fx + tx) / 2} cy={(fy + ty) / 2} r={10} fill="rgba(239,68,68,0.15)" stroke="#ef4444" strokeWidth={1} />
-              </g>
-            );
-          })}
-
-          {/* 노드 */}
-          {nodes.map((n) => {
-            const id = n.entry.frontMatter.id;
-            const fm = n.entry.frontMatter;
-            const violations = summary.perNode.get(id) ?? 0;
-            const isSelected = id === selectedId;
-            const isLinkFrom = id === linkFromId;
-            const color = CATEGORY_COLOR[fm.category] ?? DEFAULT_COLOR;
-            const x = n.pos.x * VIEW_W - NODE_W / 2;
-            const y = n.pos.y * VIEW_H - NODE_H / 2;
-            return (
-              <g
-                key={id}
-                onPointerDown={(e) => handlePointerDown(e, id)}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                // [priority 4 — 2026-06-08 WCAG 2.1.1] 키보드 a11y: tabIndex+role+aria + onKeyDown.
-                tabIndex={0}
-                role="button"
-                aria-label={`노드 ${fm.category} ${truncate(fm.fact, 40)}${violations > 0 ? ` (${violations}개 위반)` : ''}${isSelected ? ' (선택됨)' : ''}${isLinkFrom ? ' (관계 from)' : ''}`}
-                aria-pressed={isSelected}
-                onKeyDown={(e) => handleNodeKeyDown(e, id)}
-                onFocus={() => setSelectedId(id)}
-                style={{ cursor: linkFromId ? 'crosshair' : 'grab', touchAction: 'none', outline: 'none' }}
-                data-testid={`worldgraph-node-${id}`}
-              >
-                <rect
-                  x={x}
-                  y={y}
-                  width={NODE_W}
-                  height={NODE_H}
-                  rx={10}
-                  fill="rgba(15,23,42,0.85)"
-                  stroke={isLinkFrom ? '#fbbf24' : isSelected ? '#38bdf8' : violations > 0 ? '#ef4444' : color}
-                  strokeWidth={isSelected || isLinkFrom ? 3 : 2}
-                  // [priority 4 — 2026-06-08] 키보드 focus 시 시각 ring (CSS :focus + group 형제 처리 한계로 SVG 인라인 처리).
-                  className="transition-[stroke-width] focus-visible:[stroke-width:4]"
-                />
-                <text x={x + 10} y={y + 20} fill={color} fontSize={11} fontWeight={700} style={{ pointerEvents: 'none' }}>
-                  {fm.category.toUpperCase()}
-                </text>
-                <text x={x + 10} y={y + 40} fill="#e2e8f0" fontSize={11} style={{ pointerEvents: 'none' }}>
-                  {truncate(fm.fact, 22)}
-                </text>
-                <text x={x + 10} y={y + 56} fill="#94a3b8" fontSize={9} style={{ pointerEvents: 'none' }}>
-                  tier {fm.tier} · {n.entry.provenance?.origin ?? 'USER'}
-                </text>
-                {violations > 0 && (
-                  <g style={{ pointerEvents: 'none' }}>
-                    <circle cx={x + NODE_W - 12} cy={y + 12} r={9} fill="#ef4444" />
-                    <text x={x + NODE_W - 12} y={y + 15} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={700}>
-                      {violations}
-                    </text>
-                  </g>
-                )}
-              </g>
-            );
-          })}
-
-          {/* 빈 상태 */}
-          {nodes.length === 0 && (
-            <text x={VIEW_W / 2} y={VIEW_H / 2} textAnchor="middle" fill="#64748b" fontSize={13}>
-              위 입력으로 세계관 fact 를 추가하세요
-            </text>
-          )}
-        </svg>
-      </div>
+      <WorldGraphCanvas
+        nodes={nodes}
+        edges={edges}
+        perNode={summary.perNode}
+        selectedId={selectedId}
+        linkFromId={linkFromId}
+        svgRef={svgRef}
+        onRemoveEdge={handleRemoveEdge}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onNodeKeyDown={handleNodeKeyDown}
+        onSelectNode={setSelectedId}
+      />
 
       {/* ── 선택 노드 인스펙터 ───────────────────────── */}
       {selectedNode && selectedValidation && (
@@ -620,8 +395,8 @@ const WorldGraphEditor: React.FC<Props> = ({ workId, initialNodes, onChange }) =
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-mono uppercase tracking-wider text-text-tertiary">선택: {selectedNode.entry.frontMatter.id}</span>
               <span
-                className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                style={{ background: `${CATEGORY_COLOR[selectedNode.entry.frontMatter.category] ?? DEFAULT_COLOR}20`, color: CATEGORY_COLOR[selectedNode.entry.frontMatter.category] ?? DEFAULT_COLOR }}
+                ref={(node) => bindStudioTone(node, CATEGORY_COLOR[selectedNode.entry.frontMatter.category] ?? DEFAULT_COLOR)}
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold studio-tone-pill-soft"
               >
                 {selectedNode.entry.frontMatter.category}
               </span>
@@ -696,38 +471,5 @@ const WorldGraphEditor: React.FC<Props> = ({ workId, initialNodes, onChange }) =
     </div>
   );
 };
-
-// ============================================================
-// PART 5 — utils
-// ============================================================
-
-function clamp01(v: number): number {
-  if (!Number.isFinite(v)) return 0;
-  if (v < 0) return 0;
-  if (v > 1) return 1;
-  return v;
-}
-
-function truncate(s: string, n: number): string {
-  if (!s) return '';
-  return s.length <= n ? s : s.slice(0, n - 1) + '…';
-}
-
-/** querySelector 안전 escape — id 가 특수문자 포함 시 selector 깨짐 방어 (CSS.escape 폴리필 폴백). */
-function cssEscape(value: string): string {
-  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(value);
-  return value.replace(/["\\\]]/g, '\\$&');
-}
-
-/**
- * 외부 유틸 — 그래프 전체를 .md 묶음으로 직렬화 (Export 용).
- * 호출자(상위 컴포넌트)가 zip/file 으로 묶을 때 사용.
- */
-export function serializeGraphToMarkdown(nodes: ReadonlyArray<GraphNode>): Array<{ id: string; md: string }> {
-  return nodes.map((n) => ({
-    id: n.entry.frontMatter.id,
-    md: serializeWorldFact(n.entry),
-  }));
-}
 
 export default WorldGraphEditor;

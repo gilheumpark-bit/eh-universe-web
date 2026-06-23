@@ -148,6 +148,13 @@ describe('submission-package — buildSubmissionPackage', () => {
     expect(parsed.manuscriptHash.length).toBe(64);
   });
 
+  it('패키지 표지에서 쓸 조회 링크와 QR 데이터를 함께 가진다', async () => {
+    const pkg = await buildSubmissionPackage({ ...baseInput, profileId: 'publisher' });
+
+    expect(pkg.verificationUrl).toContain(`/verify/${pkg.certificateId}`);
+    expect(pkg.verificationQrDataUrl).toMatch(/^data:image\//);
+  });
+
   it('ip-pack-manifest JSON 파싱 가능 + 매체별 양식 상태 포함', async () => {
     const pkg = await buildSubmissionPackage({
       ...baseInput,

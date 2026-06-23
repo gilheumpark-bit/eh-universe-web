@@ -162,12 +162,27 @@ function subscribePersonalBlocklist(onStoreChange: () => void): () => void {
   };
 }
 
+const EMPTY_PERSONAL_BLOCKLIST: PersonalBlocklistEntry[] = [];
+let personalBlocklistSnapshotRaw: string | null = null;
+let personalBlocklistSnapshotCache: PersonalBlocklistEntry[] = EMPTY_PERSONAL_BLOCKLIST;
+
 function getPersonalBlocklistSnapshot(): PersonalBlocklistEntry[] {
-  return loadPersonalBlocklist();
+  if (typeof window === 'undefined') return EMPTY_PERSONAL_BLOCKLIST;
+  try {
+    const raw = window.localStorage.getItem(PERSONAL_BLOCKLIST_STORAGE_KEY) ?? '';
+    if (raw === personalBlocklistSnapshotRaw) return personalBlocklistSnapshotCache;
+    personalBlocklistSnapshotRaw = raw;
+    personalBlocklistSnapshotCache = loadPersonalBlocklist();
+    return personalBlocklistSnapshotCache;
+  } catch {
+    personalBlocklistSnapshotRaw = null;
+    personalBlocklistSnapshotCache = EMPTY_PERSONAL_BLOCKLIST;
+    return EMPTY_PERSONAL_BLOCKLIST;
+  }
 }
 
 function getPersonalBlocklistServerSnapshot(): PersonalBlocklistEntry[] {
-  return [];
+  return EMPTY_PERSONAL_BLOCKLIST;
 }
 
 // ============================================================

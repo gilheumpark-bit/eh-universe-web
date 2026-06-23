@@ -2,7 +2,7 @@
 // zip-bomb-guard — Minimal ZIP decompressed-size estimator
 // ============================================================
 // 목적: EPUB/ZIP 업로드 파싱 전 압축해제 총 크기 검증.
-// Node Buffer 만 사용 — 외부 의존 0. ZIP64 는 "hostile"로 즉시 차단 (EPUB 표준 아님).
+// Uint8Array 기반 — 외부 의존 0. ZIP64 는 "hostile"로 즉시 차단 (EPUB 표준 아님).
 // ============================================================
 //
 // ZIP 파일 구조:
@@ -38,10 +38,23 @@ export type ZipScanResult =
 // PART 3 — Scanner
 // ============================================================
 
+function readUInt16LE(bytes: Uint8Array, offset: number): number {
+  return bytes[offset] | (bytes[offset + 1] << 8);
+}
+
+function readUInt32LE(bytes: Uint8Array, offset: number): number {
+  return (
+    bytes[offset] |
+    (bytes[offset + 1] << 8) |
+    (bytes[offset + 2] << 16) |
+    (bytes[offset + 3] << 24)
+  ) >>> 0;
+}
+
 /**
  * ZIP 중앙 디렉토리를 파싱해 압축해제 총합을 산정.
  *
- * @param buffer ZIP 파일 바이트
+ * @param bytes ZIP 파일 바이트
  * @param capBytes 허용 상한 (초과 시 즉시 false 반환)
  * @returns ok=true 면 합법 · ok=false 면 이유 + 누적값
  *
@@ -49,16 +62,16 @@ export type ZipScanResult =
  * [C] CDFH signature 불일치 시 malformed 판정.
  * [G] 선형 스캔(O(entries)) — 실제 압축해제 없이 헤더만 읽음.
  */
-export function scanZipDecompressed(buffer: Buffer, capBytes: number): ZipScanResult {
-  if (buffer.length < EOCD_MIN_SIZE) {
+export function scanZipDecompressed(bytes: Uint8Array, capBytes: number): ZipScanResult {
+  if (bytes.length < EOCD_MIN_SIZE) {
     return { ok: false, reason: 'ZIP too small (< EOCD minimum)', totalUncompressed: 0 };
   }
 
   // 1. EOCD 탐색 (파일 끝에서 역방향)
-  const searchStart = Math.max(0, buffer.length - EOCD_SEARCH_MAX);
+  const searchStart = Math.max(0, bytes.length - EOCD_SEARCH_MAX);
   let eocdOffset = -1;
-  for (let i = buffer.length - EOCD_MIN_SIZE; i >= searchStart; i--) {
-    if (buffer.readUInt32LE(i) === EOCD_SIG) {
+  for (let i = bytes.length - EOCD_MIN_SIZE; i >= searchStart; i--) {
+    if (readUInt32LE(bytes, i) === EOCD_SIG) {
       eocdOffset = i;
       break;
     }
@@ -68,14 +81,14 @@ export function scanZipDecompressed(buffer: Buffer, capBytes: number): ZipScanRe
   }
 
   // 2. EOCD 에서 Central Directory 위치 + 엔트리 수 추출
-  const totalEntries = buffer.readUInt16LE(eocdOffset + 10);
-  const cdOffset = buffer.readUInt32LE(eocdOffset + 16);
+  const totalEntries = readUInt16LE(bytes, eocdOffset + 10);
+  const cdOffset = readUInt32LE(bytes, eocdOffset + 16);
 
   // ZIP64 차단 — EPUB 에서 이 경로 정상 사용 사례 없음, zip bomb 우회 시도 가능성
   if (cdOffset === ZIP64_MARKER) {
     return { ok: false, reason: 'ZIP64 marker detected (hostile)', totalUncompressed: 0 };
   }
-  if (cdOffset >= buffer.length) {
+  if (cdOffset >= bytes.length) {
     return { ok: false, reason: 'Central Directory offset out of bounds', totalUncompressed: 0 };
   }
 
@@ -83,14 +96,14 @@ export function scanZipDecompressed(buffer: Buffer, capBytes: number): ZipScanRe
   let offset = cdOffset;
   let total = 0;
   for (let i = 0; i < totalEntries; i++) {
-    if (offset + CDFH_FIXED_SIZE > buffer.length) {
+    if (offset + CDFH_FIXED_SIZE > bytes.length) {
       return { ok: false, reason: `CDFH truncated at entry ${i}`, totalUncompressed: total };
     }
-    if (buffer.readUInt32LE(offset) !== CDFH_SIG) {
+    if (readUInt32LE(bytes, offset) !== CDFH_SIG) {
       return { ok: false, reason: `CDFH signature invalid at entry ${i}`, totalUncompressed: total };
     }
 
-    const uncompressedSize = buffer.readUInt32LE(offset + 24);
+    const uncompressedSize = readUInt32LE(bytes, offset + 24);
     if (uncompressedSize === ZIP64_MARKER) {
       return {
         ok: false,
@@ -107,13 +120,13 @@ export function scanZipDecompressed(buffer: Buffer, capBytes: number): ZipScanRe
       };
     }
 
-    const nameLen = buffer.readUInt16LE(offset + 28);
-    const extraLen = buffer.readUInt16LE(offset + 30);
-    const commentLen = buffer.readUInt16LE(offset + 32);
+    const nameLen = readUInt16LE(bytes, offset + 28);
+    const extraLen = readUInt16LE(bytes, offset + 30);
+    const commentLen = readUInt16LE(bytes, offset + 32);
     offset += CDFH_FIXED_SIZE + nameLen + extraLen + commentLen;
   }
 
   return { ok: true, totalUncompressed: total, entries: totalEntries };
 }
 
-// IDENTITY_SEAL: PART-1~3 | role=zip-bomb-precheck | inputs=Buffer,capBytes | outputs=ok|reason+size
+// IDENTITY_SEAL: PART-1~3 | role=zip-bomb-precheck | inputs=Uint8Array,capBytes | outputs=ok|reason+size

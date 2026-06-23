@@ -12,6 +12,7 @@ import {
   type TranslatorBackgroundMode,
   normalizeTranslatorBackgroundMode,
 } from "@/lib/translator-constants";
+import { getFirebaseBearerHeaders } from "@/lib/firebase-bearer-headers";
 import type {
   ChapterEntry,
   DomainPreset,
@@ -287,12 +288,13 @@ export function useTranslatorWorkspaceFiles({
     setStatusMsg(statusLabel(lang, "importing-files"));
     try {
       const newChapters: ChapterEntry[] = [];
+      const headers = await getFirebaseBearerHeaders("문서 가져오기는 로그인 후 사용할 수 있습니다.");
 
       for (const file of Array.from(files)) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("source", "eh-translator");
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/upload", { method: "POST", body: formData, headers });
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.error || `${file.name} 파싱 실패`);

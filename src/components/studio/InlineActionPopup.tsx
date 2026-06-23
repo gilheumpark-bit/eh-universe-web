@@ -402,8 +402,7 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
                 {isKO ? '노아 · 제안' : 'Noa · Suggestion'}
               </div>
               <p
-                className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto"
-                style={{ borderBottom: '1px dashed var(--color-accent-amber)', paddingBottom: '4px' }}
+                className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto inline-action-result-preview"
               >
                 {result}
               </p>
@@ -412,7 +411,6 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
                     작가가 주어. NOA의 출력은 제안, 작가의 행동은 결정. amber CTA (보라 폐기). */}
                 <button
                   onClick={applyResult}
-                  style={{ color: '#1a1410' }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-amber text-[#1a1410] text-[11px] font-bold hover:bg-accent-amber/90 transition-colors"
                   title={isKO ? '⏎ 채택' : '⏎ Accept'}
                 >

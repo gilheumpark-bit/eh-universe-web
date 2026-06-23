@@ -209,6 +209,7 @@ export async function POST(req: NextRequest) {
   const messages = [{ role: 'user', content: userContent }];
 
   const FAST_MODELS: Record<string, string> = {
+    upstage: 'solar-pro3',
     gemini: 'gemini-2.5-flash-lite',
     openai: 'gpt-5.4-nano',
     claude: 'claude-haiku-4-5',

@@ -142,8 +142,15 @@ export function useTabWritingEditorActions({
             targetType: "manuscript",
             targetId: manuscriptTargetId,
             episodeId: snapshotEpisode ?? undefined,
+            beforeContent: editDraft,
             afterContent: nextDraft,
             provider: "loreguard-ai",
+            decisionContext: {
+              selectedAlternativeId: suggestion.id,
+              selectedLabel: suggestion.category,
+              selectedContent: insert,
+              reason: "작가가 원고 흐름에 맞는 제안으로 판단해 삽입함",
+            },
           }),
         );
       }
@@ -168,11 +175,26 @@ export function useTabWritingEditorActions({
 
   const rejectSuggestion = useCallback(
     (suggestion: ProactiveSuggestion) => {
+      const rejectedText = suggestion.actionHint?.trim() || suggestion.message?.trim() || "";
+      fireLog(
+        getCreativeLogger()?.logRejectAI({
+          targetType: "manuscript",
+          targetId: manuscriptTargetId,
+          episodeId: snapshotEpisode ?? undefined,
+          provider: "loreguard-ai",
+          decisionContext: {
+            selectedAlternativeId: suggestion.id,
+            selectedLabel: suggestion.category,
+            selectedContent: rejectedText,
+            reason: "작가가 현재 원고 흐름에 맞지 않는 제안으로 판단해 미채택함",
+          },
+        }),
+      );
       setSuggestions((prev) => prev.map((item) => (
         item.id === suggestion.id ? { ...item, dismissed: true, dismissCount: item.dismissCount + 1 } : item
       )));
     },
-    [setSuggestions],
+    [fireLog, manuscriptTargetId, setSuggestions, snapshotEpisode],
   );
 
   const openInlineRewrite = useCallback(() => {
@@ -300,8 +322,16 @@ export function useTabWritingEditorActions({
           targetType: "manuscript",
           targetId: manuscriptTargetId,
           episodeId: snapshotEpisode ?? undefined,
+          beforeContent: editDraft,
           afterContent: replaced.content,
           provider: "loreguard-ai",
+          decisionContext: {
+            selectedAlternativeId: `rewrite:${Date.now()}`,
+            selectedLabel: "리라이트",
+            selectedContent: newText,
+            reason: "작가가 선택 문장을 다듬는 제안으로 판단해 반영함",
+            revisionNote: `원문 ${oldText.length}자에서 제안 ${newText.length}자로 교체`,
+          },
         }),
       );
 

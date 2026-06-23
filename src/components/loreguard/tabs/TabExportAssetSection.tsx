@@ -124,36 +124,28 @@ export default function TabExportAssetSection({
             <section
               aria-labelledby="lg-assetization-package-heading"
               aria-label="자산화 통합 카테고리"
-              style={{
-                display: "grid",
-                gap: 10,
-                border: "1px solid var(--line)",
-                borderRadius: 14,
-                padding: 12,
-                background: "color-mix(in srgb, var(--card) 92%, var(--primary) 8%)",
-              }}
+              className="tex-asset-package"
             >
-              <div className="pcard-h" style={{ marginBottom: 0 }}>
+              <div className="pcard-h tex-head">
                 <Scale size={15} />
                 <span id="lg-assetization-package-heading">자산화 패키지</span>
-                <span className="pill gray" style={{ marginLeft: "auto" }}>
+                <span className="pill gray tex-push">
                   문체·설정·권리/IP·출고
                 </span>
               </div>
-              <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
+              <div className="wr-srow tex-muted-row tex-row-start">
                 문체·리듬, 작품 기준, 권리 원장, 공개용 카드와 제출용 문서를 한 묶음으로 점검합니다.
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
+              <div className="tex-summary-grid">
                 {assetizationSummaryRows.map((row) => (
                   <div
                     key={row.label}
-                    className="wr-srow"
-                    style={{ alignItems: "flex-start", borderTop: "1px solid var(--line)" }}
+                    className="wr-srow tex-summary-row"
                   >
-                    <span className="rdot blue" style={{ marginTop: 5 }} />
-                    <span style={{ minWidth: 0, flex: 1 }}>
+                    <span className="rdot blue tex-dot-top" />
+                    <span className="tex-grow">
                       <b>{row.label}</b>
-                      <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+                      <span className="tex-summary-detail">
                         {row.value} · {row.detail}
                       </span>
                     </span>
@@ -186,15 +178,14 @@ export default function TabExportAssetSection({
                   매체별 권리팩
                   <span
                     className={
-                      "pill " +
+                      "pill tex-push " +
                       (mediaIpPackPlan.status === "ready" ? "green" : mediaIpPackPlan.status === "review" ? "amber" : "red")
                     }
-                    style={{ marginLeft: "auto" }}
                   >
                     {mediaIpPackPlan.completionPercent}%
                   </span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(128px, 1fr))", gap: 8 }}>
+                <div className="tex-profile-grid">
                   {mediaIpPackProfiles.map((profile) => {
                     const active = profile.id === mediaProfileId;
                     const suggested = profile.id === segmentMediaProfileId;
@@ -202,50 +193,45 @@ export default function TabExportAssetSection({
                       <button
                         key={profile.id}
                         type="button"
-                        className="mini-btn"
+                        className={`mini-btn tex-profile-btn${active ? " is-active" : ""}`}
                         aria-pressed={active}
                         onClick={() => onMediaProfileChange(profile.id)}
-                        style={{
-                          justifyContent: "flex-start",
-                          borderColor: active ? "var(--primary)" : "var(--line)",
-                          background: active ? "color-mix(in srgb, var(--primary) 14%, var(--card-2))" : "var(--card-2)",
-                        }}
                       >
                         <span className={"rdot " + (active ? "green" : suggested ? "blue" : "gray")} />
                         {profile.shortLabelKo}
-                        {suggested ? <small style={{ marginLeft: "auto", color: "var(--ink-3)" }}>권장</small> : null}
+                        {suggested ? <small className="tex-profile-suggested">권장</small> : null}
                       </button>
                     );
                   })}
                 </div>
-                <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
-                  <span style={{ flex: 1 }}>{mediaIpPackPlan.profile.purposeKo}</span>
+                <div className="wr-srow tex-muted-row tex-row-spaced">
+                  <span className="tex-grow">{mediaIpPackPlan.profile.purposeKo}</span>
                 </div>
-                <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row">
                   대상 <b>{mediaIpPackPlan.profile.audienceKo}</b>
                 </div>
-                <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row">
                   권리 상태 <b>{config.rightsStatus ? RIGHTS_STATUS_LABEL_KO[config.rightsStatus] : "권리 확인 필요"}</b>
                 </div>
-                <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row tex-row-start">
                   <span>부족한 필수 항목</span>
-                  <b style={{ textAlign: "right" }}>
+                  <b className="tex-right">
                     {mediaIpPackPlan.missingRequired.length > 0
                       ? mediaIpPackPlan.missingRequired.map(sectionLabelKo).join(" · ")
                       : "없음"}
                   </b>
                 </div>
                 {mediaIpPackPlan.missingRecommended.length > 0 ? (
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>보강하면 좋은 항목</span>
-                    <b style={{ textAlign: "right" }}>
+                    <b className="tex-right">
                       {mediaIpPackPlan.missingRecommended.map(sectionLabelKo).join(" · ")}
                     </b>
                   </div>
                 ) : null}
-                <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row tex-row-start">
                   <span>제시 자료 묶음</span>
-                  <b style={{ textAlign: "right" }}>
+                  <b className="tex-right">
                     {ipBibleClusterRows.map((row) => `${row.labelKo} ${row.filledCount}/${row.totalCount}`).join(" · ")}
                   </b>
                 </div>
@@ -289,27 +275,27 @@ export default function TabExportAssetSection({
                     ))}
                   </div>
                 </details>
-                <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row tex-row-start">
                   <span>출력물</span>
-                  <b style={{ textAlign: "right" }}>{mediaIpPackPlan.profile.deliverablesKo.slice(0, 3).join(" · ")}</b>
+                  <b className="tex-right">{mediaIpPackPlan.profile.deliverablesKo.slice(0, 3).join(" · ")}</b>
                 </div>
-                <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row">
                   패키지 조건 <b>{releaseEntitlement.productLabelKo} · {formatKrw(releaseEntitlement.productPriceKrw)}</b>
                 </div>
-                <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                <div className="wr-srow tex-muted-row">
                   {mediaIpPackPlan.summaryKo}
                 </div>
-                <div aria-label="국가·언어권 Pack 진행" style={{ display: "grid", gap: 6 }}>
-                  <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                <div aria-label="국가·언어권 Pack 진행" className="tex-grid-6">
+                  <div className="wr-srow tex-muted-row">
                     국가·언어권 Pack{" "}
                     <b>
                       {jurisdictionPack.label.ko} · 필수 {jurisdictionPackReadiness.requiredPresent}/
                       {jurisdictionPackReadiness.requiredTotal}
                     </b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>보강 양식</span>
-                    <b style={{ textAlign: "right" }}>
+                    <b className="tex-right">
                       {jurisdictionPackReadiness.missingFormTitles.length > 0
                         ? `${jurisdictionPackReadiness.missingFormTitles.slice(0, 3).join(" · ")}${
                             jurisdictionPackReadiness.missingFormTitles.length > 3
@@ -319,9 +305,9 @@ export default function TabExportAssetSection({
                         : "필수 양식 채움"}
                     </b>
                   </div>
-                  <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                  <div className="wr-srow tex-muted-row tex-row-start">
                     <span>확인 출처</span>
-                    <b style={{ textAlign: "right" }}>{jurisdictionPackReadiness.sourceSummaryKo}</b>
+                    <b className="tex-right">{jurisdictionPackReadiness.sourceSummaryKo}</b>
                   </div>
                 </div>
                 <details className="lg-ip-pack-inline-detail">
@@ -334,7 +320,7 @@ export default function TabExportAssetSection({
                     <div className="lg-ip-pack-note">
                       대상 언어를 직접 읽지 못해도 원문 보존안·시장판·역번역 요약·문화 리스크를 분리해 검토합니다.
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-start" }}>
+                    <div className="tex-action-row">
                       <button
                         type="button"
                         className="mini-btn"
@@ -418,14 +404,14 @@ export default function TabExportAssetSection({
                   </div>
                 </details>
                 {overseasReleaseReviewFields.length > 0 ? (
-                  <div aria-label="해외 출고 검수 요약" style={{ display: "grid", gap: 6, marginTop: 10 }}>
-                    <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+                  <div aria-label="해외 출고 검수 요약" className="tex-grid-6 tex-grid-spaced">
+                    <div className="wr-srow tex-muted-row">
                       해외 출고 검수 <b>{overseasReleaseReviewFields.filter((item) => item.statusKo === "채움").length}/{overseasReleaseReviewFields.length}개 채움</b>
                     </div>
                     {overseasReleaseReviewFields.map(({ field, statusKo }) => (
-                      <div key={field.id} className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+                      <div key={field.id} className="wr-srow tex-muted-row tex-row-start">
                         <span>{field.label.ko}</span>
-                        <b style={{ textAlign: "right" }}>{statusKo} · 필수</b>
+                        <b className="tex-right">{statusKo} · 필수</b>
                       </div>
                     ))}
                   </div>

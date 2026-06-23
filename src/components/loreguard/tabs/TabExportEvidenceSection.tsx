@@ -24,6 +24,7 @@ type TabExportEvidenceSectionProps = {
   onExportText: () => void;
   onExportEpub: () => void;
   onExportDocx: () => void;
+  onExportHwpx: () => void;
   onExportAllJson: () => void;
   onRegenerateHarness: () => void;
   onRunAudit: () => void;
@@ -57,6 +58,7 @@ export default function TabExportEvidenceSection({
   onExportText,
   onExportEpub,
   onExportDocx,
+  onExportHwpx,
   onExportAllJson,
   onRegenerateHarness,
   onRunAudit,
@@ -76,18 +78,18 @@ export default function TabExportEvidenceSection({
                 : workReceiptCoverage.status === "review"
                   ? "amber"
                   : "red")
+              + " tex-push"
             }
-            style={{ marginLeft: "auto" }}
           >
             {workReceiptCoverage.coveredCount}/{workReceiptCoverage.expectedCount}
           </span>
         </div>
-        <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+        <div className="wr-srow tex-muted-row">
           {workReceiptCoverage.summaryKo}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
+        <div className="tex-evidence-grid">
           {workReceiptCoverage.items.map((item) => (
-            <div key={item.key} className="wr-srow" style={{ alignItems: "flex-start" }}>
+            <div key={item.key} className="wr-srow tex-row-start">
               <span
                 className={
                   "rdot " +
@@ -96,12 +98,12 @@ export default function TabExportEvidenceSection({
                     : item.status === "missing"
                       ? "amber"
                       : "gray")
+                  + " tex-dot-top"
                 }
-                style={{ marginTop: 5 }}
               />
-              <span style={{ minWidth: 0, flex: 1 }}>
+              <span className="tex-grow">
                 <b>{item.labelKo}</b>
-                <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+                <span className="tex-summary-detail">
                   {COVERAGE_STATUS_LABEL[item.status]}
                   {item.status === "missing" ? ` · ${item.missingKo}` : ""}
                   {item.status === "covered" && item.evidence[0]
@@ -119,7 +121,7 @@ export default function TabExportEvidenceSection({
           <Download size={15} />
           내보내기
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div className="tex-action-row">
           <button type="button" className="mini-btn" disabled={!canExportProject} onClick={onExportText}>
             TXT 전체
           </button>
@@ -128,6 +130,9 @@ export default function TabExportEvidenceSection({
           </button>
           <button type="button" className="mini-btn" disabled={!canExportSession} onClick={onExportDocx}>
             DOCX
+          </button>
+          <button type="button" className="mini-btn" disabled={!canExportSession} onClick={onExportHwpx}>
+            HWPX
           </button>
           <button type="button" className="mini-btn" disabled={!canExportAll} onClick={onExportAllJson}>
             전체 백업 파일
@@ -153,7 +158,7 @@ export default function TabExportEvidenceSection({
             </button>
           ) : null}
         </div>
-        <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
+        <div className="wr-srow tex-muted-row tex-row-spaced">
           원고 파일만이 아니라 설정집, 과정기록, 권리/IP 점검까지 묶는 출고 패키지 기준입니다.
         </div>
       </div>
@@ -163,39 +168,39 @@ export default function TabExportEvidenceSection({
           <Shield size={15} />
           출고 검수
           {audit ? (
-            <span className={"pill " + (audit.findings.length === 0 ? "green" : "amber")} style={{ marginLeft: "auto" }}>
+            <span className={"pill tex-push " + (audit.findings.length === 0 ? "green" : "amber")}>
               {audit.findings.length === 0 ? "문제 없음" : `확인 ${audit.findings.length}건`}
             </span>
           ) : null}
         </div>
-        <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
-          <span style={{ flex: 1 }}>검수 기준: {harnessLabel}</span>
+        <div className="wr-srow tex-muted-row">
+          <span className="tex-grow">검수 기준: {harnessLabel}</span>
           <button type="button" className="mini-btn" onClick={onRegenerateHarness}>
             <Sync size={12} />
             다시 만들기
           </button>
         </div>
-        <button type="button" className="btn" style={{ width: "100%", justifyContent: "center" }} disabled={!auditTarget} onClick={onRunAudit}>
+        <button type="button" className="btn tex-full-cta" disabled={!auditTarget} onClick={onRunAudit}>
           <Check size={14} />
           {auditTarget ? `검수 실행 · ${auditTarget.label}` : "검수할 저장 원고가 없습니다"}
         </button>
         {audit == null ? (
-          <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
+          <div className="wr-srow tex-muted-row tex-row-spaced">
             문장부호, 맞춤법, 띄어쓰기, 문장 길이, 미완 표식을 점검합니다.
           </div>
         ) : audit.findings.length === 0 ? (
-          <div className="wr-srow" style={{ marginTop: 8 }}>
+          <div className="wr-srow tex-row-spaced">
             <span className="rdot green" />
             검출된 후보 없음
             <b>0건</b>
           </div>
         ) : (
           audit.findings.slice(0, 10).map((finding) => (
-            <div key={finding.id} className="wr-srow" style={{ alignItems: "flex-start" }}>
-              <span className={"rdot " + auditSevColor(finding.severity)} style={{ marginTop: 5 }} />
-              <span style={{ flex: 1 }}>
+            <div key={finding.id} className="wr-srow tex-row-start">
+              <span className={"rdot tex-dot-top " + auditSevColor(finding.severity)} />
+              <span className="tex-grow">
                 {finding.title}
-                <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+                <span className="tex-summary-detail">
                   {finding.detail}
                   {finding.suggestion ? ` · ${finding.suggestion}` : ""}
                 </span>
@@ -210,30 +215,16 @@ export default function TabExportEvidenceSection({
           <Quote size={15} />
           작업 영수증
         </div>
-        <button type="button" className="btn" style={{ width: "100%", justifyContent: "center" }} onClick={onIssueReceipt}>
+        <button type="button" className="btn tex-full-cta" onClick={onIssueReceipt}>
           <Check size={14} />
           영수증 발급
         </button>
         {receipt ? (
-          <pre
-            style={{
-              maxHeight: 220,
-              overflow: "auto",
-              whiteSpace: "pre-wrap",
-              fontSize: 11,
-              lineHeight: 1.6,
-              color: "var(--ink-3)",
-              border: "1px solid var(--line)",
-              borderRadius: 10,
-              padding: 10,
-              margin: "8px 0 0",
-              background: "var(--card-2)",
-            }}
-          >
+          <pre className="wr-receipt-pre tex-receipt-pre">
             {receipt}
           </pre>
         ) : (
-          <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
+          <div className="wr-srow tex-muted-row tex-row-spaced">
             실제 실행한 점검과 보류된 항목을 분리해 기록합니다.
           </div>
         )}

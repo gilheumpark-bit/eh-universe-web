@@ -1,0 +1,62 @@
+{
+  "policy_id": "EH_UNIVERSE_APP_BRAIN_CONTROL_POLICY_2026_06_22",
+  "status": "DESIGN_READY",
+  "risk_formula": {
+    "AppRisk": {
+      "ContentDamageRisk": 0.25,
+      "Irreversibility": 0.2,
+      "Externality": 0.2,
+      "ScopeSize": 0.15,
+      "UserIntentUnclear": 0.1,
+      "StorageOrExportRisk": 0.1
+    },
+    "ApplyReadiness": {
+      "IntentClarity": 0.25,
+      "ContextFit": 0.2,
+      "Reversibility": 0.2,
+      "EvidenceFit": 0.15,
+      "TabExpertConfidence": 0.1,
+      "UserControl": 0.1,
+      "AppRiskPenalty": -0.25
+    }
+  },
+  "decision_rules": [
+    {
+      "if": "AppRisk >= 0.80",
+      "then": "PROTECT"
+    },
+    {
+      "if": "Externality >= 0.70",
+      "then": "PREVIEW"
+    },
+    {
+      "if": "Irreversibility >= 0.70",
+      "then": "PREVIEW"
+    },
+    {
+      "if": "ScopeSize >= 0.70",
+      "then": "SPLIT"
+    },
+    {
+      "if": "IntentClarity < 0.45",
+      "then": "HOLD"
+    },
+    {
+      "if": "ApplyReadiness >= 0.65",
+      "then": "APPLY"
+    },
+    {
+      "otherwise": "PREVIEW"
+    }
+  ],
+  "ui_language_map": {
+    "APPLY": "적용 가능",
+    "PREVIEW": "적용 전 확인",
+    "HOLD": "지금은 보류",
+    "SPLIT": "나눠서 적용",
+    "PROTECT": "작품 보호",
+    "RECORD": "작업 기록",
+    "RECOVER": "되돌림 안내"
+  }
+}
+

@@ -28,7 +28,7 @@ export const NoaComposePlanCard = memo(function NoaComposePlanCard({
       <div className="pcard-h">
         <Sparkle size={15} />
         {L4(language, { ko: "노아 작업 묶음", en: "Noa work bundle" })}
-        <span className={"pill " + tone} style={{ marginLeft: "auto" }}>
+        <span className={"pill wr-push " + tone}>
           {summary.label}
         </span>
         <button
@@ -74,7 +74,7 @@ export const NoaComposePlanCard = memo(function NoaComposePlanCard({
         ))}
       </div>
       {plan.missingReferences.length > 0 && (
-        <div className="wr-srow" style={{ color: "var(--c-amber)" }}>
+        <div className="wr-srow wr-warning-row">
           <span className="rdot amber" />
           {L4(language, {
             ko: `누락 근거: ${plan.missingReferences.join(", ")}`,
@@ -82,7 +82,7 @@ export const NoaComposePlanCard = memo(function NoaComposePlanCard({
           })}
         </div>
       )}
-      <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+      <div className="wr-srow wr-muted-row">
         {L4(language, {
           ko: "노아는 묶어서 제안하고, 적용 여부는 작가가 결정합니다.",
           en: "Noa bundles suggestions; the author decides what applies.",
@@ -90,8 +90,7 @@ export const NoaComposePlanCard = memo(function NoaComposePlanCard({
       </div>
       <button
         type="button"
-        className="btn primary"
-        style={{ width: "100%", justifyContent: "center", marginTop: 10 }}
+        className="btn primary wr-full-cta"
         disabled={summary.blocked || plan.state === "APPROVED"}
         onClick={onApprove}
       >

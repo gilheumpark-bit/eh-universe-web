@@ -152,7 +152,7 @@ export default function TabWritingTopBar({
           onClick={onToggleReadMode}
         >
           <Scroll size={13} />
-          {L4(language, { ko: readMode ? "쓰기" : "리딥", en: readMode ? "Edit" : "Read" })}
+          {L4(language, { ko: readMode ? "쓰기" : "읽기", en: readMode ? "Edit" : "Read" })}
         </button>
         <button
           type="button"

@@ -1,8 +1,9 @@
 import { ChatSession } from '../studio-types';
+import JSZip from 'jszip';
 
 // Mock browser APIs before importing the module
 const mockClick = jest.fn();
-const mockCreateObjectURL = jest.fn(() => 'blob:mock-url');
+const mockCreateObjectURL = jest.fn((_blob?: unknown) => 'blob:mock-url');
 const mockRevokeObjectURL = jest.fn();
 
 Object.defineProperty(global, 'Blob', {
@@ -31,7 +32,7 @@ Object.defineProperty(global.document, 'createElement', {
   })),
 });
 
-import { exportEPUB, exportDOCX } from '../export-utils';
+import { exportEPUB, exportDOCX, exportHWPX } from '../export-utils';
 
 function makeSession(overrides: Partial<ChatSession> = {}): ChatSession {
   return {
@@ -156,6 +157,33 @@ describe('export-utils', () => {
       session.config.title = '';
       exportDOCX(session);
       expect(mockClick).toHaveBeenCalled();
+    });
+  });
+
+  describe('exportHWPX', () => {
+    it('exports HWPX from saved manuscripts', async () => {
+      const session = makeSession();
+      (session.config as unknown as Record<string, unknown>).manuscripts = [
+        { episode: 1, title: '제 1화', content: '첫 회차 원고입니다.' },
+      ];
+
+      exportHWPX(session);
+
+      expect(mockCreateObjectURL).toHaveBeenCalled();
+      expect(mockClick).toHaveBeenCalled();
+      const results = (document.createElement as jest.Mock).mock.results;
+      const anchor = results[results.length - 1]?.value as { download?: string };
+      expect(anchor.download).toBe('My Story.hwpx');
+
+      const objectUrlCalls = mockCreateObjectURL.mock.calls;
+      const blobArg = objectUrlCalls[objectUrlCalls.length - 1]?.[0] as { parts?: unknown[] };
+      const zipBytes = blobArg.parts?.[0] as Uint8Array;
+      const zip = await JSZip.loadAsync(zipBytes);
+      expect(zip.file('mimetype')).toBeTruthy();
+      expect(zip.file('Contents/section0.xml')).toBeTruthy();
+      const sectionXml = await zip.file('Contents/section0.xml')!.async('string');
+      expect(sectionXml).toContain('제 1화');
+      expect(sectionXml).toContain('첫 회차 원고입니다.');
     });
   });
 });

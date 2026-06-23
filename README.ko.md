@@ -13,7 +13,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-3,912_passing-22c55e?style=flat-square)
 ![A11y](https://img.shields.io/badge/Lighthouse_A11y-100%2F100-22c55e?style=flat-square)
-![License](https://img.shields.io/badge/AGPL--3.0--or--later-blue?style=flat-square) ![Commercial](https://img.shields.io/badge/Commercial-available-8a2be2?style=flat-square)
+![License](https://img.shields.io/badge/UNLICENSED-proprietary-red?style=flat-square)
 ![Patent](https://img.shields.io/badge/KIPO-10--2026--0038027-d4af37?style=flat-square)
 
 [라이브](https://ehsu.app) · [문서](#문서) · [기여 가이드](CONTRIBUTING.md)
@@ -176,14 +176,14 @@ Fallback: JP/CN → EN → KO.
 
 ## 라이선스
 
-**Dual License** — 오픈소스 + 상업 2-트랙.
+**Proprietary / All rights reserved** — Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 비공개 상용 제품 기준으로 관리됩니다.
 
-| 트랙 | 라이선스 | 대상 |
+| 항목 | 라이선스 | 대상 |
 |------|----------|------|
-| 오픈소스 | [AGPL-3.0-or-later](LICENSE) | 개인/학술/소스 공개 SaaS |
-| 상업 | [Commercial](COMMERCIAL-LICENSE.md) | 클로즈드 SaaS / OEM / 퍼블리셔 / 엔터프라이즈 |
+| 소프트웨어 | [UNLICENSED / Proprietary](LICENSE) | 엔진·파이프라인·UI·CLI |
+| 원본 세계관·샘플 자료 | 별도 표기 | 공개 샘플·세계관 원본 자료 |
 
-세계관 원본(아카이브·코덱스·룰북)은 소프트웨어와 분리되어 [CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/)으로 유지. 이전 릴리스(커밋 `414fe9ea` 및 그 이전)는 CC-BY-NC-4.0 영구 권리 유지.
+저작권자의 사전 서면 허가 없이 사용, 복제, 수정, 배포, 호스팅, 판매, 재라이선스할 수 없습니다. 이전 릴리스(커밋 `414fe9ea` 및 그 이전)를 별도 라이선스로 받은 수령자의 권리는 해당 시점의 고지에 따릅니다.
 
 문의: [gilheumpark@gmail.com](mailto:gilheumpark@gmail.com)
 

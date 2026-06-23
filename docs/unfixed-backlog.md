@@ -233,7 +233,7 @@ StudioDocsView 실제 카운트: 12 core + 7 polish = **19 챕터 / 4언어**.
 
 **오늘 세션 전수 영향 요약**:
 - 보안: Mythos 8 공격 체인 + 외부 감사 14+14 = 16 건 수리
-- 라이선스: CC-BY-NC → AGPL+Commercial dual 전환
+- 라이선스: CC-BY-NC → UNLICENSED / Proprietary 전환
 - i18n: ja/zh 9.7 달성 + SSR 4언어 메타 + sitemap hreflang + manifest rebrand
 - 인프라: /status · DR 리전 · runbook · consent · CSRF · DSAR · Stripe webhook
 - 문서: CHANGELOG 5 섹션 + unfixed-backlog.md 신설 + incident-response.md + dgx-runbook.md

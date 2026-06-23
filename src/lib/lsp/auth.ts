@@ -10,6 +10,8 @@
 // ============================================================
 
 const TOKEN_PREFIX = 'lg_lsp_';
+export const LSP_SESSION_COOKIE = 'lg_lsp_session';
+export const LSP_SESSION_TTL_SEC = 60 * 60;
 
 /** 32 hex (16 bytes) 랜덤 토큰 생성 */
 export function generateLspToken(): string {
@@ -101,10 +103,28 @@ export function hasConfiguredLspTokenStore(): boolean {
   return Boolean(configuredLspToken() || configuredLspTokenHash());
 }
 
+function readCookieValue(cookieHeader: string, name: string): string {
+  const parts = cookieHeader.split(';');
+  for (const part of parts) {
+    const [rawName, ...rest] = part.trim().split('=');
+    if (rawName !== name) continue;
+    return decodeURIComponent(rest.join('=')).trim();
+  }
+  return '';
+}
+
+function extractLspCookieToken(request: Request): string {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  if (!cookieHeader) return '';
+  return readCookieValue(cookieHeader, LSP_SESSION_COOKIE);
+}
+
 function extractLspToken(request: Request, queryParam?: string): string {
   const auth = request.headers.get('authorization') ?? '';
   const bearer = auth.replace(/^Bearer\s+/i, '').trim();
   if (bearer) return bearer;
+  const cookieToken = extractLspCookieToken(request);
+  if (cookieToken) return cookieToken;
   if (!queryParam) return '';
   try {
     return new URL(request.url).searchParams.get(queryParam)?.trim() ?? '';

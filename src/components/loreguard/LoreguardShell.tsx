@@ -4,7 +4,7 @@
    LoreguardShell — white header + creation-first icon tabs + tools
    Source: /tmp/design2_handoff/2/project/shell.jsx (window.Shell.Header)
 
-   픽셀 재현: .eh-header(grid 260px/1fr/360px) + 브랜드(로어가드 mark + 2줄 tagline)
+   픽셀 재현: .eh-header(grid 260px/1fr/360px) + 브랜드(Loreguard mark + 2줄 tagline)
    + 중앙 작업 nav(아이콘 + 라벨) + tools(동기화/검색/알림 3뱃지/
    도움말/프로젝트 칩). CSS 는 src/app/loreguard.css PART 3.
 
@@ -44,6 +44,7 @@ import { backupNow as runBackupNow } from "@/lib/save-engine/file-tier";
 import { logger } from "@/lib/logger";
 import { useLang, type Lang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { useUnifiedSettings } from "@/lib/UnifiedSettingsContext";
 import type { AppLanguage } from "@/lib/studio-types";
 import LayoutProfileMenu from "./LayoutProfileMenu";
 
@@ -120,7 +121,13 @@ function readStoredThemePref(): LoreguardThemePref {
   if (typeof window === "undefined") return "light";
   try {
     const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return raw === "dark" || raw === "system" || raw === "light" ? raw : "light";
+    if (raw === "dark" || raw === "system" || raw === "light") return raw;
+    const appTheme = window.localStorage.getItem("eh-theme");
+    if (appTheme === "dark" || appTheme === "light") return appTheme;
+    const legacyLevel = window.localStorage.getItem("noa_theme_level");
+    if (legacyLevel === "0") return "dark";
+    if (legacyLevel === "1" || legacyLevel === "2" || legacyLevel === "3") return "light";
+    return "light";
   } catch {
     return "light"; // storage 접근 불가(프라이빗 모드 등) → 기본 light
   }
@@ -217,6 +224,7 @@ export default function LoreguardShell({
 }: LoreguardShellProps) {
   const router = useRouter();
   const { lang, setLangDirect } = useLang();
+  const { theme: unifiedTheme, setTheme: setUnifiedTheme } = useUnifiedSettings();
   // [F1] 테마 상태 — localStorage(noa-lg-theme) lazy init (첫 렌더 적용 = FOUC 방지).
   const [themePref, setThemePref] = useState<LoreguardThemePref>(readStoredThemePref);
   const [systemDark, setSystemDark] = useState<boolean>(readSystemPrefersDark);
@@ -245,8 +253,12 @@ export default function LoreguardShell({
 
   const resolvedTheme: "light" | "dark" =
     themePref === "system" ? (systemDark ? "dark" : "light") : themePref;
+  useEffect(() => {
+    if (unifiedTheme !== resolvedTheme) setUnifiedTheme(resolvedTheme);
+  }, [resolvedTheme, setUnifiedTheme, unifiedTheme]);
+
   const ThemeIcon = themePref === "light" ? Sun : themePref === "dark" ? Moon : Monitor;
-  const brandLabel = L4(language, { ko: "로어가드", en: "Loreguard", ja: "Loreguard", zh: "Loreguard" });
+  const brandLabel = "Loreguard";
   const brandHomeTitle = L4(language, {
     ko: "메인으로 이동",
     en: "Go to main page",
@@ -357,10 +369,6 @@ export default function LoreguardShell({
     backupState === "error" ? Alert :
     Download;
 
-  const backupIconColor =
-    backupState === "success" ? "var(--c-green)" :
-    backupState === "error" ? "var(--c-red)" :
-    undefined;
   const activePageTitle = getLoreguardTabLabel(active, language);
   const normalizedGenreTone = normalizeGenreTone(genreTone);
 
@@ -388,7 +396,7 @@ export default function LoreguardShell({
           className="eh-nav"
           aria-label={L4(language, { ko: "Loreguard 작업 탭", en: "Loreguard work tabs", ja: "Loreguard 作業タブ", zh: "Loreguard 工作标签" })}
         >
-          {LOREGUARD_TABS.map((tab, index) => {
+          {LOREGUARD_TABS.map((tab) => {
             const on = active === tab.id;
             const { Icon } = tab;
             const label = L4(language, tab.label);
@@ -399,10 +407,9 @@ export default function LoreguardShell({
                 className={"eh-tab" + (on ? " on" : "")}
                 aria-label={label}
                 aria-current={on ? "page" : undefined}
-                title={`${index + 1}. ${label}`}
+                title={label}
                 onClick={() => onChange(tab.id)}
               >
-                <span className="eh-tab-num" aria-hidden="true">{index + 1}</span>
                 <Icon size={17} strokeWidth={on ? 1.9 : 1.6} aria-hidden="true" />
                 <span>{label}</span>
               </button>
@@ -456,8 +463,11 @@ export default function LoreguardShell({
           >
             <BackupIcon
               size={18}
-              className={backupState === "busy" ? "animate-spin" : undefined}
-              style={backupIconColor ? { color: backupIconColor } : undefined}
+              className={
+                "lg-backup-icon" +
+                (backupState === "busy" ? " animate-spin" : "") +
+                (backupState === "success" ? " is-success" : backupState === "error" ? " is-error" : "")
+              }
               aria-hidden="true"
             />
           </button>
@@ -468,12 +478,12 @@ export default function LoreguardShell({
             type="button"
             className="eh-icbtn"
             title={L4(language, {
-              ko: "검색 (프로젝트·캐릭터·회차·본문)",
-              en: "Search projects, characters, episodes and drafts",
-              ja: "プロジェクト・キャラクター・回・本文を検索",
-              zh: "搜索项目、角色、章节和正文",
+              ko: "전체 찾기 (작품·캐릭터·회차·본문·명령)",
+              en: "Find across works, characters, episodes, drafts, and commands",
+              ja: "全体検索（作品・キャラクター・回・本文・コマンド）",
+              zh: "全局查找（作品、角色、章节、正文、命令）",
             })}
-            aria-label={L4(language, { ko: "검색", en: "Search", ja: "検索", zh: "搜索" })}
+            aria-label={L4(language, { ko: "전체 찾기", en: "Find across work", ja: "全体検索", zh: "全局查找" })}
             onClick={onSearch}
           >
             <Search size={18} aria-hidden="true" />
@@ -490,6 +500,7 @@ export default function LoreguardShell({
           <button
             type="button"
             className="eh-icbtn"
+            data-testid="tab-settings"
             title={L4(language, {
               ko: "환경 설정 (노아·저장·과정기록·출고)",
               en: "Environment settings: Noa, saving, process records, release",
@@ -515,18 +526,7 @@ export default function LoreguardShell({
             {user ? (
               <span
                 aria-hidden="true"
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  background: "var(--grad-primary)",
-                  color: "#fff",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  lineHeight: 1,
-                  display: "grid",
-                  placeItems: "center",
-                }}
+                className="eh-account-avatar"
               >
                 {accountInitial}
               </span>
@@ -541,8 +541,13 @@ export default function LoreguardShell({
             type="button"
             className="eh-proj"
             onClick={onProjectSearch ?? onSearch}
-            aria-label={L4(language, { ko: "프로젝트 검색", en: "Project search", ja: "プロジェクト検索", zh: "项目搜索" })}
-            title={L4(language, { ko: "프로젝트 검색", en: "Project search", ja: "プロジェクト検索", zh: "项目搜索" })}
+            aria-label={L4(language, { ko: "작품 전환", en: "Switch work", ja: "作品を切替", zh: "切换作品" })}
+            title={L4(language, {
+              ko: "작품 전환 (프로젝트 목록만 보기)",
+              en: "Switch work: show projects only",
+              ja: "作品を切替（プロジェクト一覧のみ表示）",
+              zh: "切换作品（仅显示项目列表）",
+            })}
           >
             <span className="eh-proj-dot" aria-hidden="true" />
             <span className="eh-proj-name">{projectName}</span>
@@ -562,7 +567,7 @@ export default function LoreguardShell({
           loreguard.css PART 12에서 기본 미노출 처리한다. */}
       <div className="eh-narrow-notice" role="status">
         <div className="eh-narrow-card">
-          <div className="eh-narrow-badge">LOREGUARD STUDIO</div>
+          <div className="eh-narrow-badge">Loreguard Studio</div>
           <h2>
             {L4(language, {
               ko: "넓은 화면에서 열어 주세요",

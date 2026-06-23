@@ -10,6 +10,7 @@ import {
   HEX_ROWS,
   L4,
 } from "./types";
+import { colorToneClass } from "./tone-classes";
 
 // ============================================================
 // PART 1 — HEX Map View (territory painting with Pan, Zoom, Minimap)
@@ -130,9 +131,8 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
           {civs.map(c => (
             <button key={c.id} onClick={() => { setPaintCiv(paintCiv === c.id ? null : c.id); setSelectedCiv(c.id); }}
               className={`px-2 py-1 rounded text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
-                paintCiv === c.id ? "text-white" : "text-text-tertiary border-border"
+                paintCiv === c.id ? `text-white ws-bg-tone ${colorToneClass(c.color)}` : "text-text-tertiary border-border"
               }`}
-              style={paintCiv === c.id ? { background: c.color, borderColor: c.color } : undefined}
             >
               {c.name}
             </button>
@@ -230,8 +230,8 @@ export function HexMapView({ lang, civs, hexMap, setHexMap }: {
         if (!civ) return null;
         const era = ERAS.find(e => e.id === civ.era);
         return (
-          <div className="border border-border rounded-lg p-3" style={{ borderLeftWidth: 3, borderLeftColor: civ.color }}>
-            <div className="font-bold text-sm" style={{ color: civ.color }}>{civ.name}</div>
+          <div className={`border border-border rounded-lg p-3 ws-civ-card ${colorToneClass(civ.color)}`}>
+            <div className={`font-bold text-sm ws-text-tone ${colorToneClass(civ.color)}`}>{civ.name}</div>
             <div className="text-[10px] text-text-tertiary">{era ? L4(lang, era) : ''} | TL{era?.techLevel}</div>
             <div className="text-[10px] text-text-secondary mt-1">{civ.traits.join(", ") || (L4(lang, { ko: "특성 없음", en: "No traits", ja: "特性なし", zh: "无特性" }))}</div>
           </div>

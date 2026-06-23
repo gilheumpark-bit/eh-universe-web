@@ -128,12 +128,28 @@ describe("ProjectStart import candidates", () => {
       renameProject,
     });
 
-    fireEvent.click(screen.getByTestId("lg-project-start-empty"));
+    fireEvent.click(screen.getByTestId("lg-project-library-new"));
 
     expect(createNewProjectWithSession).toHaveBeenCalledTimes(1);
     expect(setConfig).not.toHaveBeenCalled();
     expect(updateCurrentSession).not.toHaveBeenCalled();
     expect(renameProject).not.toHaveBeenCalled();
+  });
+
+  it("파일 선택 버튼은 숨겨진 파일 입력을 직접 연다", () => {
+    const inputClickSpy = jest
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    try {
+      renderProjectStart();
+      fireEvent.click(screen.getByRole("tab", { name: "파일 가져오기" }));
+      fireEvent.click(screen.getByRole("button", { name: "파일 선택" }));
+
+      expect(inputClickSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      inputClickSpy.mockRestore();
+    }
   });
 
   it("기존 작품에서 저장하고 세계관으로 이동하면 저장 요청과 단계 이동을 함께 실행한다", async () => {
@@ -389,7 +405,7 @@ describe("ProjectStart import candidates", () => {
     expect(within(priority).getByText("분량은 나중에 정해도 됩니다")).toBeInTheDocument();
     expect(within(priority).getByText("필요할 때 보강")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("인터뷰 핵심 전제"), {
+    fireEvent.change(screen.getByLabelText("핵심 전제"), {
       target: { value: "도시의 기억이 매일 리셋된다" },
     });
     expect(screen.getByLabelText("핵심 전제")).toHaveValue("도시의 기억이 매일 리셋된다");
@@ -554,8 +570,8 @@ describe("ProjectStart import candidates", () => {
     const { container } = renderProjectStart();
     const input = openImportFileInput(container);
     expect(input).toBeInTheDocument();
-    expect(input).toHaveAttribute("accept", ".txt,.md,.json,.docx,.pdf,.epub");
-    expect(screen.getByText(/TXT, MD, JSON, DOCX, PDF, EPUB을 지원합니다/)).toBeInTheDocument();
+    expect(input).toHaveAttribute("accept", ".txt,.md,.json,.docx,.hwpx,.pdf,.epub");
+    expect(screen.getByText(/TXT, MD, JSON, DOCX, HWPX, PDF, EPUB을 지원합니다/)).toBeInTheDocument();
 
     const file = makeTextFile(
       "royal-road-outline.md",
@@ -814,6 +830,42 @@ describe("ProjectStart import candidates", () => {
     expect(screen.getByText(/novel\.epub · EPUB/)).toBeInTheDocument();
   });
 
+  it("HWPX 파일도 업로드 파이프라인으로 텍스트를 추출한 뒤 후보를 만든다", async () => {
+    const getIdToken = jest.fn().mockResolvedValue("token-hwpx");
+    mockedLazyFirebaseAuth.mockResolvedValue({ currentUser: { getIdToken } });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        chapters: [
+          {
+            title: "제 1화",
+            content: "첫 HWPX 회차는 세계관 배경과 주인공의 목표를 정리한다. 권리 IP 메모도 함께 남긴다.",
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const { container } = renderProjectStart();
+    const input = openImportFileInput(container);
+    const file = new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04])], "manuscript.hwpx", {
+      type: "application/hwp+zip",
+    });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("제 1화")).toBeInTheDocument();
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/upload",
+      expect.objectContaining({
+        method: "POST",
+        headers: { Authorization: "Bearer token-hwpx" },
+      }),
+    );
+    expect(screen.getByText(/manuscript\.hwpx · HWPX/)).toBeInTheDocument();
+  });
+
   it("목차 없는 EPUB은 성공 후보를 유지하고 파일별 경고 이유를 남긴다", async () => {
     const getIdToken = jest.fn().mockResolvedValue("token-epub-nav");
     mockedLazyFirebaseAuth.mockResolvedValue({ currentUser: { getIdToken } });
@@ -1040,7 +1092,7 @@ describe("ProjectStart import candidates", () => {
     fireEvent.change(input, { target: { files: [imageFile] } });
 
     await waitFor(() => {
-      expect(screen.getByText(/지원 형식은 .*\.epub 입니다/)).toBeInTheDocument();
+      expect(screen.getByText(/지원 형식은 .*\.hwpx, .*\.pdf, .*\.epub 입니다/)).toBeInTheDocument();
     });
 
     const fileReports = screen.getByLabelText("파일별 읽기 결과");
@@ -1049,7 +1101,7 @@ describe("ProjectStart import candidates", () => {
     expect(within(fileReports).getByText("지원 형식 아님")).toBeInTheDocument();
   });
 
-  it("DOCX/PDF/EPUB 파일을 로그인 없이 고르면 이유를 안내한다", async () => {
+  it("DOCX/HWPX/PDF/EPUB 파일을 로그인 없이 고르면 이유를 안내한다", async () => {
     mockedLazyFirebaseAuth.mockResolvedValue({ currentUser: null });
 
     const { container } = renderProjectStart();
@@ -1061,7 +1113,7 @@ describe("ProjectStart import candidates", () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getAllByText("DOCX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다.").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("DOCX/HWPX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다.").length).toBeGreaterThan(0);
     });
   });
 });

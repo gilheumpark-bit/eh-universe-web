@@ -1,0 +1,51 @@
+.eh-app .craft-bridge-auto {
+  margin-left: auto;
+}
+
+.eh-app .craft-bridge-copy,
+.eh-app .craft-bridge-status,
+.eh-app .craft-bridge-field {
+  color: var(--c-sub, #888);
+}
+
+.eh-app .craft-bridge-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.eh-app .craft-bridge-control {
+  min-height: var(--tap-min, 44px);
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--c-text);
+  padding: 0 10px;
+}
+
+.eh-app .craft-bridge-textarea {
+  min-height: 72px;
+  resize: vertical;
+  padding: 10px;
+  line-height: 1.5;
+}
+
+.eh-app .craft-bridge-cta {
+  margin-top: 10px;
+}
+
+.eh-app .craft-bridge-status {
+  margin-top: 8px;
+}
+
+.eh-app .craft-bridge-reference {
+  gap: 8px;
+}
+
+.eh-app .craft-bridge-reference-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

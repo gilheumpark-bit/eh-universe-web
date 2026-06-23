@@ -639,6 +639,8 @@ export async function buildSubmissionPackage(
     artifacts,
     manuscriptHash,
     sealNumber,
+    verificationUrl: result.cert.verificationUrl,
+    verificationQrDataUrl: result.cert.verificationQrDataUrl,
     totalSize,
     certificateId: certId,
   };

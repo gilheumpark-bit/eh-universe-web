@@ -48,12 +48,18 @@ jest.mock('@/lib/google-genai-server', () => ({
 jest.mock('@/services/sparkService', () => ({ streamSparkAI: jest.fn(), SPARK_SERVER_URL: '' }));
 jest.mock('@/lib/dgx-models', () => ({ VLLM_MODEL_ID: 'vllm-test' }));
 
-import { streamGemini } from '../aiProviders';
+import { streamGemini, streamOpenAICompat } from '../aiProviders';
+
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   capturedSignal = undefined;
   capturedMaxOutputTokens = undefined;
   generatorFinalized = false;
+});
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
 });
 
 describe('streamGemini cancel()', () => {
@@ -98,5 +104,49 @@ describe('streamGemini options', () => {
 
     expect(capturedSignal).toBeInstanceOf(AbortSignal);
     expect(capturedMaxOutputTokens).toBe(123);
+  });
+});
+
+describe('streamOpenAICompat options', () => {
+  it('OpenAI provider에는 reasoning_effort를 전달한다', async () => {
+    const body = new ReadableStream({ start(controller) { controller.close(); } });
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, body });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await streamOpenAICompat(
+      'openai',
+      'key',
+      'gpt-5.5',
+      'sys',
+      [{ role: 'user', content: 'hi' }],
+      0.7,
+      128,
+      undefined,
+      'high',
+    );
+
+    const payload = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(payload.reasoning_effort).toBe('high');
+  });
+
+  it('계약이 확인되지 않은 OpenAI 호환 provider에는 reasoning_effort를 보내지 않는다', async () => {
+    const body = new ReadableStream({ start(controller) { controller.close(); } });
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, body });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await streamOpenAICompat(
+      'qwen',
+      'key',
+      'qwen3-max',
+      'sys',
+      [{ role: 'user', content: 'hi' }],
+      0.7,
+      128,
+      undefined,
+      'high',
+    );
+
+    const payload = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(payload.reasoning_effort).toBeUndefined();
   });
 });

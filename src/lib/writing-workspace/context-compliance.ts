@@ -86,6 +86,9 @@ const STATE_WEIGHT: Record<WritingContextCheckState, number> = {
   'needs-review': 0.55,
   'needs-context': 0.2,
 };
+const MAX_REFERENCE_CORPUS_ENTRIES = 12;
+const MAX_REFERENCE_CORPUS_TEXT_CHARS = 20_000;
+const MIN_REFERENCE_CORPUS_TEXT_CHARS = 120;
 
 function hasText(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -125,6 +128,17 @@ function countDraftMatches(draft: string, values: string[]): number {
 
 function acceptedCount(config: StoryConfig, bucket: NonNullable<StoryConfig['acceptedImportCandidates']>[number]['bucket']): number {
   return (config.acceptedImportCandidates ?? []).filter((candidate) => candidate.bucket === bucket).length;
+}
+
+function buildReferenceCorpus(config: StoryConfig): AxisContext['referenceCorpus'] {
+  const entries = (config.acceptedImportCandidates ?? [])
+    .filter((candidate) => candidate.text.trim().length >= MIN_REFERENCE_CORPUS_TEXT_CHARS)
+    .slice(0, MAX_REFERENCE_CORPUS_ENTRIES)
+    .map((candidate) => ({
+      id: `import:${candidate.id}:${candidate.title || candidate.sourceFileName}`,
+      text: candidate.text.slice(0, MAX_REFERENCE_CORPUS_TEXT_CHARS),
+    }));
+  return entries.length > 0 ? entries : undefined;
 }
 
 function nonEmptyWorldFieldCount(config: StoryConfig): number {
@@ -225,6 +239,7 @@ function buildAxisContext(config: StoryConfig, draft: string): AxisContext {
       genreId: String(config.genre ?? ''),
       requiredMotifs: config.subGenres,
     },
+    referenceCorpus: buildReferenceCorpus(config),
   };
 }
 

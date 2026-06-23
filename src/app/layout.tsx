@@ -36,6 +36,17 @@ import "./globals-animations.css";
 import "./globals-utilities.css";
 // [디자인 피벗 2026-06-09] Loreguard 셸 + 6탭 포팅 CSS (.eh-app 스코프 격리).
 import "./loreguard.css";
+import "./loreguard-authoring-tabs.css";
+import "./loreguard-submission.css";
+import "./loreguard-writing-tools.css";
+import "./loreguard-writing-responsive.css";
+import "./loreguard-writing-bridge.css";
+import "./loreguard-plot.css";
+import "./loreguard-export-cards.css";
+import "./loreguard-revision-direction.css";
+import "./loreguard-late-panels.css";
+import "./loreguard-overlays.css";
+import "./world-simulator.css";
 
 /** Fewer weights = fewer font files and faster first paint (see build-performance-report.txt).
  *  홈/허브는 Plex 2패밀리만 preload. display/serif 계열은 preload: false로 실제 사용 시 lazy. */

@@ -2,6 +2,7 @@ import { createServerGeminiClient } from '@/lib/google-genai-server';
 import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
+  upstage: 'https://api.upstage.ai/v1/chat/completions',
   openai: 'https://api.openai.com/v1/chat/completions',
   deepseek: 'https://api.deepseek.com/chat/completions',
   qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
@@ -22,6 +23,7 @@ export async function generateJsonOpenAICompat(
   baseUrl?: string,
 ): Promise<unknown> {
   const isLocal = provider === 'ollama' || provider === 'lmstudio';
+  const supportsJsonObjectMode = !isLocal && provider !== 'upstage';
   const url = baseUrl
     ? `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`
     : OPENAI_COMPAT_URLS[provider];
@@ -44,7 +46,7 @@ export async function generateJsonOpenAICompat(
             { role: 'user', content: prompt },
           ],
           temperature: 0.7,
-          response_format: isLocal ? undefined : { type: 'json_object' },
+          response_format: supportsJsonObjectMode ? { type: 'json_object' } : undefined,
         }),
       });
 

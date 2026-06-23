@@ -10,6 +10,7 @@ interface SealBaseProps {
   hash?: string | null;
   timestamp?: string | null;
   verificationUrl?: string | null;
+  verificationQrDataUrl?: string | null;
 }
 
 interface LoreguardSubmissionSealProps extends SealBaseProps {
@@ -20,6 +21,12 @@ interface LoreguardSubmissionSealProps extends SealBaseProps {
 
 function formatHci(score?: number | null): string {
   return typeof score === 'number' && Number.isFinite(score) ? `${score.toFixed(1)}%` : '기록 없음';
+}
+
+function formatDisplayHash(hash?: string | null): string | null {
+  const cleaned = hash?.replace(/^0x/i, '').trim();
+  if (!cleaned) return null;
+  return cleaned.length > 24 ? `${cleaned.slice(0, 16)}...${cleaned.slice(-8)}` : cleaned;
 }
 
 function getRecordLevel(score?: number | null) {
@@ -57,9 +64,10 @@ export function LoreguardPublicSeal({
   hash,
   timestamp,
   verificationUrl,
+  verificationQrDataUrl,
 }: SealBaseProps) {
   const level = getRecordLevel(hciScore);
-  const displayHash = hash ? hash.replace(/^0x/i, '').slice(0, 16) : null;
+  const displayHash = formatDisplayHash(hash);
   const outputProfile = CERTIFICATE_OUTPUT_PROFILES['reader-public-card'];
 
   return (
@@ -97,7 +105,7 @@ export function LoreguardPublicSeal({
           {displayHash ? (
             <p className="flex items-center gap-1.5">
               <Fingerprint className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="truncate font-mono">hash {displayHash}...</span>
+              <span className="truncate font-mono">hash {displayHash}</span>
             </p>
           ) : null}
           <p className="font-mono text-[10px] text-slate-500">{timestamp ?? '기록 시각 비공개'}</p>
@@ -107,7 +115,16 @@ export function LoreguardPublicSeal({
         </div>
         <div className="flex shrink-0 flex-col items-center gap-1">
           <div className="rounded-md bg-white p-1 shadow-sm">
-            <QrCode className="h-11 w-11 text-slate-950" aria-hidden="true" />
+            {verificationQrDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- 발급된 QR data URL은 외부 이미지 최적화 대상이 아님
+              <img
+                src={verificationQrDataUrl}
+                alt="과정기록 조회 QR"
+                className="h-11 w-11"
+              />
+            ) : (
+              <QrCode className="h-11 w-11 text-slate-950" aria-hidden="true" />
+            )}
           </div>
           <span className="text-[8px] font-semibold tracking-wider text-slate-500">
             {verificationUrl ? '기록 열기' : '조회'}
@@ -125,12 +142,14 @@ export function LoreguardSubmissionSeal({
   hash,
   timestamp,
   verificationUrl,
+  verificationQrDataUrl,
   workTitle,
   sealNumber,
   processSummary,
 }: LoreguardSubmissionSealProps) {
   const level = getRecordLevel(hciScore);
   const outputProfile = CERTIFICATE_OUTPUT_PROFILES['submission-certificate'];
+  const displayHash = formatDisplayHash(hash);
 
   return (
     <section className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-300 bg-white p-6 text-slate-950 shadow-xl">
@@ -184,10 +203,19 @@ export function LoreguardSubmissionSeal({
       </div>
 
       <div className="mt-5 space-y-1 text-xs text-slate-500">
-        {hash ? <p className="break-all font-mono">문서 해시: {hash}</p> : null}
+        {displayHash ? <p className="break-all font-mono">문서 해시 축약값: {displayHash}</p> : null}
         {verificationUrl ? <p className="break-all font-mono">조회 링크: {verificationUrl}</p> : null}
         <p>{outputProfile.boundaryKo}</p>
       </div>
+      {verificationQrDataUrl ? (
+        <div className="mt-5 inline-flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- 발급된 QR data URL은 외부 이미지 최적화 대상이 아님 */}
+          <img src={verificationQrDataUrl} alt="제출 기록 조회 QR" className="h-24 w-24" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+            QR 대조
+          </span>
+        </div>
+      ) : null}
     </section>
   );
 }

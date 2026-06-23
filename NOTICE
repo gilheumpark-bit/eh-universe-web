@@ -74,8 +74,8 @@ Their licenses are bundled in node_modules/<package>/LICENSE upon install.
   Attribution: https://en.wikipedia.org/wiki/Wikipedia:Copyrights
 
 - Genre rules (Loreguard original)
-  25 genre rule sets — author-authored, dual-licensed under
-  AGPL-3.0-or-later / EH Universe Commercial.
+  25 genre rule sets — author-authored material distributed only where
+  separately marked. Loreguard software is proprietary.
 
 ================================================================================
 ## Korean Patent
@@ -84,8 +84,9 @@ Korean patent application No. 10-2026-0038027 (KIPO Fast-Track) —
 ARCS (AI Response Control System), IP Guard L1-L5 layered defense,
 Compliance 7-axis scoring.
 
-  - AGPL recipients: AGPL-3.0 §11 patent retaliation terms apply.
-  - Commercial recipients: see COMMERCIAL-LICENSE.md.
+  - Software recipients: no patent license is granted without a separate
+    written agreement.
+  - Separate business agreements may define additional scope.
 
 ================================================================================
 ## Brand / Trademark

@@ -1,0 +1,74 @@
+{
+  "registry_id": "EH_UNIVERSE_TAB_EXPERT_REGISTRY_2026_06_22",
+  "status": "DESIGN_READY",
+  "studio_tabs": {
+    "world": {
+      "expert_mode": "World Systems Architect",
+      "default_depth": "D32",
+      "focus": ["internal_consistency", "systems_balance", "narrative_utility"]
+    },
+    "characters": {
+      "expert_mode": "Character Psychology Director",
+      "default_depth": "D32",
+      "focus": ["desire_deficiency_conflict", "voice_consistency", "relationship_dynamics"]
+    },
+    "direction": {
+      "expert_mode": "Narrative Director",
+      "default_depth": "D64",
+      "focus": ["scene_purpose", "emotional_flow", "transition_logic"]
+    },
+    "scene-sheet": {
+      "expert_mode": "Scene Engineer",
+      "default_depth": "D64",
+      "focus": ["scene_goal", "conflict_result", "next_scene_link"]
+    },
+    "writing": {
+      "expert_mode": "Writing Co-Pilot",
+      "default_depth": "D64",
+      "focus": ["draft_flow", "ai_apply_safety", "voice_preservation"]
+    },
+    "style": {
+      "expert_mode": "Prose Style Editor",
+      "default_depth": "D32",
+      "focus": ["tone", "rhythm", "genre_register"]
+    },
+    "manuscript": {
+      "expert_mode": "Manuscript Continuity Editor",
+      "default_depth": "D64",
+      "focus": ["episode_continuity", "duplication_gap", "release_readiness"]
+    },
+    "visual": {
+      "expert_mode": "Visual Art Director",
+      "default_depth": "D32",
+      "focus": ["visual_consistency", "prompt_fit", "asset_memory"]
+    },
+    "history": {
+      "expert_mode": "Archive Analyst",
+      "default_depth": "D8",
+      "focus": ["change_trace", "recovery_candidate", "version_compare"]
+    },
+    "settings": {
+      "expert_mode": "Workspace Steward",
+      "default_depth": "D128",
+      "focus": ["storage_safety", "backup", "permission_boundary"]
+    },
+    "docs": {
+      "expert_mode": "Guide Librarian",
+      "default_depth": "D8",
+      "focus": ["workflow_help", "current_context_instruction", "safe_guidance"]
+    }
+  },
+  "loreguard_tabs": {
+    "project": "Project Producer",
+    "world": "Lore Architect",
+    "character": "Character/IP Designer",
+    "plot": "Plot Strategist",
+    "scene": "Scene Sheet Architect",
+    "direction": "Direction Coach",
+    "writing": "Drafting Partner",
+    "revision": "Revision Surgeon",
+    "translate": "Localization Editor",
+    "export": "Release & Rights Manager"
+  }
+}
+

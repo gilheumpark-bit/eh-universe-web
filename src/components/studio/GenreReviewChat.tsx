@@ -43,6 +43,11 @@ const GRADE_COLOR: Record<string, string> = {
   S: 'text-accent-amber', A: 'text-accent-green', B: 'text-accent-blue', C: 'text-accent-amber', D: 'text-accent-red',
 };
 
+function setGenreVar(node: HTMLElement | null, name: string, value: string) {
+  if (!node) return;
+  node.style.setProperty(name, value);
+}
+
 // ============================================================
 // PART 3 — ASPECT BAR SUB-COMPONENT
 // ============================================================
@@ -65,19 +70,29 @@ const AspectBar: React.FC<{ aspect: AspectResult; lang: 'ko' | 'en' }> = ({ aspe
       <div className="relative h-3 bg-bg-primary rounded-full overflow-visible">
         {/* Benchmark zone */}
         <div
-          className="absolute h-full bg-white/5 rounded-full"
-          style={{ left: `${bmLeft}%`, width: `${bmRight - bmLeft}%` }}
+          ref={(node) => {
+            setGenreVar(node, '--genre-benchmark-left', `${bmLeft}%`);
+            setGenreVar(node, '--genre-benchmark-width', `${bmRight - bmLeft}%`);
+          }}
+          className="absolute h-full bg-white/5 rounded-full genre-benchmark-zone"
         />
         {/* Benchmark labels */}
-        <span className="absolute text-[7px] text-text-tertiary" style={{ left: `${bmLeft}%`, top: '-12px' }}>{bmLeft}</span>
-        <span className="absolute text-[7px] text-text-tertiary" style={{ left: `${bmRight}%`, top: '-12px' }}>{bmRight}</span>
+        <span
+          ref={(node) => setGenreVar(node, '--genre-benchmark-label-left', `${bmLeft}%`)}
+          className="absolute text-[7px] text-text-tertiary genre-benchmark-label"
+        >
+          {bmLeft}
+        </span>
+        <span
+          ref={(node) => setGenreVar(node, '--genre-benchmark-label-left', `${bmRight}%`)}
+          className="absolute text-[7px] text-text-tertiary genre-benchmark-label"
+        >
+          {bmRight}
+        </span>
         {/* Current value marker */}
         <div
-          className="absolute top-0 h-full w-1.5 rounded-full transition-[transform,opacity,background-color,border-color,color]"
-          style={{
-            left: `${Math.min(98, pct)}%`,
-            backgroundColor: aspect.severity === 'ok' ? '#22c55e' : aspect.severity === 'warn' ? '#f59e0b' : '#ef4444',
-          }}
+          ref={(node) => setGenreVar(node, '--genre-current-left', `${Math.min(98, pct)}%`)}
+          className={`absolute top-0 h-full w-1.5 rounded-full transition-[transform,opacity,background-color,border-color,color] genre-aspect-marker ${aspect.severity}`}
         />
       </div>
       <p className="text-[10px] text-text-secondary">{aspect.comment[lang]}</p>
@@ -297,9 +312,9 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
             </div>
             <div className="bg-bg-secondary border border-border rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce genre-typing-dot-delay-0" />
+                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce genre-typing-dot-delay-1" />
+                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce genre-typing-dot-delay-2" />
               </div>
             </div>
           </div>

@@ -137,7 +137,7 @@ function buildResults({
   const q = query.toLowerCase().trim();
   const out: SearchResult[] = [];
 
-  // ── Projects (shown even with an empty query so "프로젝트 검색" opens a useful switcher)
+  // ── Projects (shown even with an empty query so the work switcher is useful immediately)
   for (const project of projects) {
     const projectSessions = project.sessions ?? [];
     const hay = [
@@ -396,10 +396,10 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
   }, [effectiveIndex]);
 
   const placeholder = L4(language, {
-    ko: initialFilter === 'project' ? '프로젝트 검색 또는 전환…' : '프로젝트, 회차, 설정, 본문 검색… (Ctrl+K)',
-    en: initialFilter === 'project' ? 'Search or switch project…' : 'Search projects, episodes, settings, drafts… (Ctrl+K)',
-    ja: initialFilter === 'project' ? 'プロジェクト検索・切替…' : 'プロジェクト、回、設定、本文を検索… (Ctrl+K)',
-    zh: initialFilter === 'project' ? '搜索或切换项目…' : '搜索项目、章节、设置、正文… (Ctrl+K)',
+    ko: initialFilter === 'project' ? '전환할 작품 이름 입력…' : '작품·캐릭터·회차·본문·명령 찾기… (Ctrl+K)',
+    en: initialFilter === 'project' ? 'Type a work name to switch…' : 'Find works, characters, episodes, drafts, commands… (Ctrl+K)',
+    ja: initialFilter === 'project' ? '切り替える作品名を入力…' : '作品・キャラクター・回・本文・コマンドを検索… (Ctrl+K)',
+    zh: initialFilter === 'project' ? '输入要切换的作品名…' : '查找作品、角色、章节、正文、命令… (Ctrl+K)',
   });
   const emptyLabel = L4(language, {
     ko: '검색 결과가 없습니다',
@@ -420,7 +420,12 @@ const GlobalSearchPalette: React.FC<GlobalSearchPaletteProps> = ({
         onKeyDown={handleKeyDown}
         role="dialog"
         aria-modal="true"
-        aria-label={L4(language, { ko: initialFilter === 'project' ? '프로젝트 검색' : '검색', en: initialFilter === 'project' ? 'Project search' : 'Search', ja: initialFilter === 'project' ? 'プロジェクト検索' : '検索', zh: initialFilter === 'project' ? '项目搜索' : '搜索' })}
+        aria-label={L4(language, {
+          ko: initialFilter === 'project' ? '작품 전환' : '전체 찾기',
+          en: initialFilter === 'project' ? 'Switch work' : 'Find across work',
+          ja: initialFilter === 'project' ? '作品を切替' : '全体検索',
+          zh: initialFilter === 'project' ? '切换作品' : '全局查找',
+        })}
         data-modal
       >
         {/* Search input */}

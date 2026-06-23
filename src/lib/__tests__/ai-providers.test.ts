@@ -1,8 +1,8 @@
 import { PROVIDERS, PROVIDER_LIST, PROVIDER_LIST_UI, isPreviewModel, getModelWarning, setApiKey, getApiKey, getApiKeyAsync } from '../ai-providers';
 
 describe('PROVIDERS', () => {
-  it('has 11 providers (hosted, efficient BYOK, legacy, local)', () => {
-    expect(PROVIDER_LIST).toHaveLength(11);
+  it('has 12 providers (app hosted, efficient BYOK, legacy, local)', () => {
+    expect(PROVIDER_LIST).toHaveLength(12);
   });
 
   it('each provider has required fields', () => {
@@ -16,8 +16,8 @@ describe('PROVIDERS', () => {
     });
   });
 
-  it('gemini is default recommended', () => {
-    expect(PROVIDERS.gemini.defaultModel).toBe('gemini-2.5-pro');
+  it('upstage is the app-provided default', () => {
+    expect(PROVIDERS.upstage.defaultModel).toBe('solar-pro3');
   });
 
   it('adds 2026 efficient BYOK providers without deprecated DeepSeek aliases', () => {

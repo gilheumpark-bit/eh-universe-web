@@ -87,7 +87,7 @@ export interface AcceptedImportCandidateRecord {
   excerpt: string;
   confidence: number;
   reason: string;
-  detectedFormat: 'txt' | 'md' | 'json' | 'docx' | 'pdf' | 'epub';
+  detectedFormat: 'txt' | 'md' | 'json' | 'docx' | 'hwpx' | 'pdf' | 'epub';
   sectionIndex: number;
   charCount: number;
   importedAt: string;

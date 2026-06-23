@@ -103,6 +103,8 @@ export interface SubmissionPackage {
   artifacts: ArtifactDescriptor[];
   manuscriptHash: string;
   sealNumber?: string;
+  verificationUrl?: string;
+  verificationQrDataUrl?: string;
   totalSize: number;
   certificateId: string;
   regulatoryReports?: unknown[];

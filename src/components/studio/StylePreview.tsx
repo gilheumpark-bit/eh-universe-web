@@ -30,6 +30,11 @@ const SAMPLE_EN = {
 
 type SampleKey = keyof typeof SAMPLE_KO;
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 // IDENTITY_SEAL: PART-1 | role=samples-types | inputs=none | outputs=SAMPLE_KO,SAMPLE_EN
 
 // ============================================================
@@ -222,19 +227,23 @@ export default function StylePreview({ profile, language }: Props) {
               const active = compareArchs.includes(arch.id);
               return (
                 <button key={arch.id} onClick={() => toggleArch(arch.id)}
+                  ref={(node) => bindStudioTone(node, arch.color)}
                   className={`px-3 py-1.5 rounded-lg text-[9px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
-                    active ? 'text-white' : 'text-text-tertiary border-border hover:border-white/20'
+                    active ? 'text-white studio-tone-button-active' : 'text-text-tertiary border-border hover:border-white/20'
                   }`}
-                  style={active ? { borderColor: arch.color, background: `${arch.color}20` } : undefined}
                 >
-                  <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: arch.color }} />
+                  <span className="inline-block w-2 h-2 rounded-full mr-1.5 studio-tone-swatch" />
                   {isKO ? arch.ko : arch.en}
                 </button>
               );
             })}
           </div>
           {selectedArchs.map(a => (
-            <p key={a.id} className="text-[9px] text-text-tertiary" style={{ color: a.color }}>
+            <p
+              key={a.id}
+              ref={(node) => bindStudioTone(node, a.color)}
+              className="text-[9px] studio-tone-text"
+            >
               {isKO ? a.descKO : a.descEN}
             </p>
           ))}

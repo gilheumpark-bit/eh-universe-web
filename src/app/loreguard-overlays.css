@@ -1,0 +1,69 @@
+/* ============================================================
+   Loreguard overlay slide-overs
+   ============================================================ */
+
+/* Memo board — memo-* */
+.eh-app.memo-overlay { position: fixed; inset: 0; z-index: var(--z-loreguard-modal); display: flex; justify-content: flex-end; min-width: 0; height: auto; background: var(--overlay-scrim); }
+.eh-app .memo-panel { width: min(480px, 94vw); height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto; border-left: 1px solid var(--line); background: var(--page-2); box-shadow: var(--shadow-pop); }
+.eh-app .memo-head { margin-bottom: 0; }
+.eh-app .memo-close { margin-left: auto; }
+.eh-app .memo-compose { display: flex; gap: 8px; }
+.eh-app .memo-input { flex: 1; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--card-2); color: inherit; font: inherit; font-size: 13px; }
+.eh-app .memo-add { flex-shrink: 0; }
+.eh-app .memo-summary { color: var(--ink-3); font-size: 11.5px; }
+.eh-app .memo-empty { justify-content: center; margin-top: 24px; color: var(--ink-3); line-height: 1.55; text-align: center; }
+.eh-app .memo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.eh-app .memo-card { position: relative; min-height: 44px; padding: 10px 44px 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-2); font-size: 12.5px; }
+.eh-app .memo-text { margin: 0; overflow-wrap: anywhere; color: var(--ink-1); white-space: pre-wrap; }
+.eh-app .memo-delete { position: absolute; top: 4px; right: 4px; }
+@media (max-width: 520px) { .eh-app .memo-panel { width: 100vw; padding: 14px; } .eh-app .memo-compose { flex-wrap: wrap; } .eh-app .memo-add { width: 100%; justify-content: center; } .eh-app .memo-list { grid-template-columns: 1fr; } }
+
+/* History — history-* */
+.eh-app.history-overlay { position: fixed; inset: 0; z-index: var(--z-loreguard-modal); display: flex; flex-direction: row; justify-content: flex-end; min-width: 0; height: auto; background: var(--overlay-scrim); }
+.eh-app .history-panel { width: min(520px, 94vw); height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto; border-left: 1px solid var(--line); background: var(--page-2); box-shadow: var(--shadow-pop); }
+.eh-app .history-head { margin-bottom: 0; }
+.eh-app .history-panel [data-align="end"], .eh-app .history-time-push { margin-left: auto; }
+.eh-app .history-meta, .eh-app .history-count, .eh-app .history-muted-row, .eh-app .history-note, .eh-app .history-session-meta, .eh-app .history-backup-meta, .eh-app .history-backup-time, .eh-app .history-event-target, .eh-app .history-event-time { color: var(--ink-3); }
+.eh-app .history-meta, .eh-app .history-count { font-size: 11px; font-weight: 600; }
+.eh-app .history-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; overflow-y: auto; }
+.eh-app .history-list-sessions { max-height: 280px; }
+.eh-app .history-list-backups { max-height: 180px; }
+.eh-app .history-session-btn { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--card-2); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.eh-app .history-panel .mini-btn { min-height: 44px; }
+.eh-app .history-session-btn.is-current { border-color: var(--primary); }
+.eh-app .history-session-title, .eh-app .history-backup-title { overflow: hidden; color: var(--ink-1); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.eh-app .history-session-title { font-size: 12.5px; }
+.eh-app .history-session-meta { display: flex; gap: 8px; margin-top: 3px; font-size: 11px; }
+.eh-app .history-backup-item { display: flex; align-items: baseline; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--card-2); font-size: 12px; }
+.eh-app .history-backup-meta, .eh-app .history-backup-time, .eh-app .history-event-time { font-size: 11px; }
+.eh-app .history-backup-time { flex-shrink: 0; margin-left: auto; }
+.lg-recovery-mounts {
+  position: fixed;
+  top: 8px;
+  right: 10px;
+  z-index: 60;
+  width: min(360px, calc(100vw - 20px));
+  pointer-events: none;
+}
+.lg-recovery-card {
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.16);
+}
+.eh-app .history-note { margin: 8px 0 0; font-size: 11px; }
+.eh-app .history-warning { color: var(--c-amber); }
+.eh-app .history-event-list { gap: 5px; overflow: visible; }
+.eh-app .history-event-row { padding: 3px 0; }
+.eh-app .history-event-type { color: var(--ink-1); font-size: 12px; font-weight: 700; }
+.eh-app .history-event-target { font-size: 11.5px; }
+.eh-app .history-event-time { margin-left: auto; }
+
+/* Translation tools — tx-panel-* */
+.eh-app.tx-panel-overlay { position: fixed; inset: 0; z-index: var(--z-loreguard-modal); display: flex; justify-content: flex-end; background: var(--overlay-scrim); }
+.eh-app .tx-panel-shell { width: min(640px, 94vw); height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-left: 1px solid var(--line); background: var(--page-2); box-shadow: var(--shadow-pop); }
+.eh-app .tx-panel-head { margin-bottom: 0; }
+.eh-app .tx-panel-close { margin-left: auto; }
+.eh-app .tx-panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }

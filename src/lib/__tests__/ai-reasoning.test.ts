@@ -1,6 +1,7 @@
 import {
   buildClaudeEffortConfig,
   buildGeminiThinkingConfig,
+  buildOpenAICompatReasoningConfig,
   getReasoningStageForTab,
   getStageReasoningLevel,
   getReasoningProviderMode,
@@ -22,7 +23,8 @@ describe("ai-reasoning", () => {
     expect(getReasoningProviderMode("gemini", "gemini-3.1-pro-preview")).toBe("gemini");
     expect(getReasoningProviderMode("gemini", "gemini-2.5-flash")).toBe("gemini");
     expect(getReasoningProviderMode("claude", "claude-sonnet-4-6")).toBe("claude");
-    expect(getReasoningProviderMode("openai", "gpt-5.5")).toBe("unsupported");
+    expect(getReasoningProviderMode("openai", "gpt-5.5")).toBe("openai-compatible");
+    expect(getReasoningProviderMode("qwen", "qwen3-max")).toBe("unsupported");
   });
 
   it("uses Gemini thinkingLevel for Gemini 3 models", () => {
@@ -49,6 +51,14 @@ describe("ai-reasoning", () => {
     expect(buildClaudeEffortConfig("medium", "claude-opus-4-8")).toEqual({
       effort: "medium",
     });
+  });
+
+  it("maps OpenAI provider depth to reasoning_effort only for the supported provider", () => {
+    expect(buildOpenAICompatReasoningConfig("openai", "high", "gpt-5.5")).toEqual({
+      reasoning_effort: "high",
+    });
+    expect(buildOpenAICompatReasoningConfig("openai", "auto", "gpt-5.5")).toBeUndefined();
+    expect(buildOpenAICompatReasoningConfig("qwen", "high", "qwen3-max")).toBeUndefined();
   });
 
   it("maps work stages to automatic depth", () => {

@@ -43,30 +43,29 @@ export default function TabExportCoreCopyrightCard({
       <div className="pcard-h">
         <Shield size={15} />
         코어 저작권 패키지
-        <span className={"pill " + readinessTone} style={{ marginLeft: "auto" }}>
+        <span className={"pill tex-push " + readinessTone}>
           {readinessLabelKo(coreCopyrightPackage.readiness.score)}
         </span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
-        <span style={{ flex: 1 }}>
+      <div className="wr-srow tex-muted-row-start">
+        <span className="tex-copy-flex">
           세계관·캐릭터·메인 시나리오를 권리 거래 기준본으로 묶고, 등록 내용설명 3안까지 함께 정리합니다.
         </span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
+      <div className="wr-srow tex-muted-row-start">
         <span>준비도</span>
-        <b style={{ textAlign: "right" }}>{coreCopyrightPackage.readiness.summaryKo}</b>
+        <b className="tex-value">{coreCopyrightPackage.readiness.summaryKo}</b>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+      <div className="tex-card-grid">
         {coreCopyrightPackage.documents.map((documentItem) => (
           <div
             key={documentItem.id}
-            className="wr-srow"
-            style={{ alignItems: "flex-start", borderTop: "1px solid var(--line)" }}
+            className="wr-srow tex-list-row"
           >
-            <span className={"rdot " + statusDotClass(documentItem.status)} style={{ marginTop: 5 }} />
-            <span style={{ minWidth: 0, flex: 1 }}>
+            <span className={"rdot tex-dot-top " + statusDotClass(documentItem.status)} />
+            <span className="tex-row-body">
               <b>{documentItem.labelKo}</b>
-              <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+              <span className="tex-meta-line">
                 {documentItem.summaryKo}
               </span>
             </span>
@@ -153,7 +152,7 @@ export default function TabExportCoreCopyrightCard({
         <Download size={13} />
         코어 패키지 내려받기
       </button>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+      <div className="wr-srow tex-footnote-row">
         뜨기 전 기준본을 만들어 두고, 이후 제안서·계약 조건 비교의 기준 자료로 재사용합니다.
       </div>
     </div>

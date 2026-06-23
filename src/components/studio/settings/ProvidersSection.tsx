@@ -13,6 +13,7 @@ import { getActiveProvider, getActiveModel, PROVIDERS } from '@/lib/ai-providers
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { idbEstimateSize } from '@/lib/browser/idb-store';
 import { isFeatureEnabled } from '@/lib/feature-flags';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface ProvidersSectionProps {
   language: AppLanguage;
@@ -85,9 +86,9 @@ const ProvidersSection: React.FC<ProvidersSectionProps> = ({ language }) => {
                 <span className={`text-xs font-black ${textColor}`}>{usageLabel}</span>
               </div>
               <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
-                <div
+                <ProgressFill
+                  value={pct}
                   className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${barColor}`}
-                  style={{ width: `${Math.min(100, pct)}%` }}
                 />
               </div>
               {hasIdbEstimate && pct > 80 && (

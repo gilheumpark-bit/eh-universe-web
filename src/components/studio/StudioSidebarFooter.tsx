@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Cloud, Download, Settings, Upload } from 'lucide-react';
 import { showAlert } from '@/lib/show-alert';
@@ -9,6 +9,7 @@ import { createT } from '@/lib/i18n';
 import { getStorageUsageBytes } from '@/lib/project-migration';
 import { getAllFlags } from '@/lib/feature-flags';
 import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
+import { STUDIO_MANUSCRIPT_IMPORT_ACCEPT } from '@/lib/loreguard/import-classifier';
 
 const PROJECT_EXPORT_FIVE: ProjectManuscriptFormat[] = ['txt', 'md', 'json', 'html', 'csv'];
 
@@ -34,6 +35,7 @@ type StudioSidebarFooterProps = {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleExportDOCX: () => void;
   handleExportEPUB: () => void;
+  handleExportHWPX: () => void;
   handleImportJSON: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleImportTextFiles: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleSync: () => void;
@@ -63,6 +65,7 @@ export default function StudioSidebarFooter({
   fileInputRef,
   handleExportDOCX,
   handleExportEPUB,
+  handleExportHWPX,
   handleImportJSON,
   handleImportTextFiles,
   handleSync,
@@ -110,6 +113,12 @@ export default function StudioSidebarFooter({
   const usageMb = storageEstimate ? storageEstimate.usage / 1024 / 1024 : storageUsageMb;
   const storageUsagePct = Math.min(100, (usageMb / quotaMb) * 100);
   const storageUsageColor = storageUsagePct > 80 ? 'bg-accent-red' : storageUsagePct > 50 ? 'bg-accent-amber' : 'bg-green-500';
+  const bindStorageUsageFill = useCallback(
+    (node: HTMLDivElement | null) => {
+      node?.style.setProperty('--studio-storage-usage-pct', `${storageUsagePct}%`);
+    },
+    [storageUsagePct],
+  );
   const exportButtonClass =
     'flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/4 px-3 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary transition-[transform,border-color,color,opacity] hover:-translate-y-0.5 hover:border-[rgba(202,161,92,0.26)] hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-35';
   const languageButtonClass =
@@ -251,14 +260,17 @@ export default function StudioSidebarFooter({
             <button onClick={handleExportDOCX} disabled={!currentSessionId} className={exportButtonClass}>
               <Download className="h-3.5 w-3.5" /> DOCX
             </button>
+            <button onClick={handleExportHWPX} disabled={!currentSessionId} className={exportButtonClass}>
+              <Download className="h-3.5 w-3.5" /> HWPX
+            </button>
             <button onClick={exportAllJSON} className={exportButtonClass} title={language === 'KO' ? '전체 백업 (JSON)' : 'Full backup (JSON)'}>
               <Download className="h-3.5 w-3.5" /> Backup
             </button>
             <button onClick={() => fileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? 'JSON 가져오기' : 'Import JSON'}>
               <Upload className="h-3.5 w-3.5" /> JSON / 백업
             </button>
-            <button onClick={() => textFileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '소설 텍스트 가져오기' : 'Import text novel files'}>
-              <Upload className="h-3.5 w-3.5" /> 텍스트 소설
+            <button onClick={() => textFileInputRef.current?.click()} className={exportButtonClass} title={language === 'KO' ? '원고 파일 가져오기' : 'Import manuscript files'}>
+              <Upload className="h-3.5 w-3.5" /> 원고 파일
             </button>
             {exportProjectJSON && (
               <button onClick={exportProjectJSON} disabled={!currentSessionId} className={exportButtonClass} title={language === 'KO' ? '프로젝트 설정 내보내기' : 'Export project config'}>
@@ -267,7 +279,7 @@ export default function StudioSidebarFooter({
             )}
 
             <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportJSON} />
-            <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />
+            <input ref={textFileInputRef} type="file" accept={STUDIO_MANUSCRIPT_IMPORT_ACCEPT} multiple className="hidden" onChange={handleImportTextFiles} />
           </div>
         </div>
       </details>
@@ -309,7 +321,10 @@ export default function StudioSidebarFooter({
           {storageUsagePct > 60 && <span className="text-accent-amber">{language === 'KO' ? '정리 권장' : 'Cleanup recommended'}</span>}
         </div>
         <div className="h-1 overflow-hidden rounded-full bg-white/8">
-          <div className={`h-full ${storageUsageColor} rounded-full transition-[width,background-color]`} style={{ width: `${storageUsagePct}%` }} />
+          <div
+            ref={bindStorageUsageFill}
+            className={`h-full ${storageUsageColor} rounded-full transition-[width,background-color] studio-storage-usage-fill`}
+          />
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ export { isServerProviderId };
 export type { ServerProviderId };
 
 export const SERVER_ENV_KEYS: Record<ServerProviderId, string | undefined> = {
+  upstage: process.env.UPSTAGE_API_KEY,
   gemini: undefined,
   openai: process.env.OPENAI_API_KEY,
   claude: process.env.CLAUDE_API_KEY,

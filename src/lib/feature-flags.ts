@@ -72,7 +72,7 @@ export interface FeatureFlags {
 }
 
 // boolean-only 플래그 키 — 타입 안전성 보장 (3-mode 플래그 제외)
-type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
+export type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
 
 // ============================================================
 // PART 3 — Defaults
@@ -142,6 +142,12 @@ const FLAGS: FeatureFlags = {
    */
   FEATURE_DRAFT_DETAIL_V2: 'off',
 };
+
+export function getBooleanFeatureFlagKeys(): BooleanFlagKey[] {
+  return (Object.keys(FLAGS) as (keyof FeatureFlags)[]).filter(
+    (key): key is BooleanFlagKey => typeof FLAGS[key] === 'boolean',
+  );
+}
 
 // ============================================================
 // PART 4 — Journal Engine mode accessor (3-mode)

@@ -286,12 +286,12 @@ const PrivacySection: React.FC<PrivacySectionProps> = ({ language }) => {
   };
 
   const renderStatusIcon = (status: ActionStatus, kind: 'export' | 'delete') => {
-    if (status === 'working') return <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />;
-    if (status === 'success') return <CheckCircle2 className="w-4 h-4 text-green-600" aria-hidden="true" />;
-    if (status === 'error') return <AlertTriangle className="w-4 h-4 text-red-600" aria-hidden="true" />;
+    if (status === 'working') return <Loader2 className="privacy-action-icon animate-spin" aria-hidden="true" />;
+    if (status === 'success') return <CheckCircle2 className="privacy-action-icon success" aria-hidden="true" />;
+    if (status === 'error') return <AlertTriangle className="privacy-action-icon danger" aria-hidden="true" />;
     return kind === 'export'
-      ? <Download className="w-4 h-4" aria-hidden="true" />
-      : <AlertTriangle className="w-4 h-4" aria-hidden="true" />;
+      ? <Download className="privacy-action-icon" aria-hidden="true" />
+      : <AlertTriangle className="privacy-action-icon danger" aria-hidden="true" />;
   };
 
   return (
@@ -300,71 +300,52 @@ const PrivacySection: React.FC<PrivacySectionProps> = ({ language }) => {
         <Shield className="w-4 h-4" aria-hidden="true" />
         <span>{t.title}</span>
       </summary>
-      <div className="ds-accordion-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px' }}>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t.description}</p>
+      <div className="ds-accordion-body privacy-section-body">
+        <p className="privacy-section-intro">{t.description}</p>
 
         {/* Export section */}
-        <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }}>
-          <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>{t.exportTitle}</h4>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>{t.exportDesc}</p>
+        <div className="privacy-action-card">
+          <h4 className="privacy-action-title">{t.exportTitle}</h4>
+          <p className="privacy-action-desc">{t.exportDesc}</p>
           <button
             type="button"
             onClick={handleExport}
             disabled={!isAuthed || exportStatus === 'working'}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '8px 12px', borderRadius: '6px',
-              background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-              fontSize: '13px', cursor: isAuthed ? 'pointer' : 'not-allowed',
-              opacity: isAuthed ? 1 : 0.5,
-            }}
+            className="privacy-action-button"
             aria-label={t.exportButton}
           >
             {renderStatusIcon(exportStatus, 'export')}
             <span>{t.exportButton}</span>
           </button>
           {exportMsg && (
-            <p style={{
-              fontSize: '12px', marginTop: '6px',
-              color: exportStatus === 'error' ? 'var(--color-danger, #dc2626)' : 'var(--text-secondary)',
-            }}>
+            <p className={`privacy-status${exportStatus === 'error' ? ' error' : ''}`}>
               {exportMsg}
             </p>
           )}
         </div>
 
         {/* Delete section */}
-        <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px' }}>
-          <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px', color: 'var(--color-danger, #dc2626)' }}>{t.deleteTitle}</h4>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>{t.deleteDesc}</p>
+        <div className="privacy-action-card danger">
+          <h4 className="privacy-action-title">{t.deleteTitle}</h4>
+          <p className="privacy-action-desc">{t.deleteDesc}</p>
           <button
             type="button"
             onClick={handleDeleteRequest}
             disabled={!isAuthed || deleteStatus === 'working' || deleteStatus === 'success'}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '8px 12px', borderRadius: '6px',
-              background: 'transparent', border: '1px solid var(--color-danger, #dc2626)',
-              color: 'var(--color-danger, #dc2626)',
-              fontSize: '13px', cursor: isAuthed ? 'pointer' : 'not-allowed',
-              opacity: isAuthed ? 1 : 0.5,
-            }}
+            className="privacy-action-button danger"
             aria-label={t.deleteButton}
           >
             {renderStatusIcon(deleteStatus, 'delete')}
             <span>{t.deleteButton}</span>
           </button>
           {deleteMsg && (
-            <p style={{
-              fontSize: '12px', marginTop: '6px',
-              color: deleteStatus === 'error' ? 'var(--color-danger, #dc2626)' : 'var(--text-secondary)',
-            }}>
+            <p className={`privacy-status${deleteStatus === 'error' ? ' error' : ''}`}>
               {deleteMsg}
             </p>
           )}
         </div>
 
-        <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+        <p className="privacy-legal-note">
           {t.legalNote}
         </p>
 
@@ -374,54 +355,35 @@ const PrivacySection: React.FC<PrivacySectionProps> = ({ language }) => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="privacy-confirm-title"
-            style={{
-              position: 'fixed', inset: 0, zIndex: 9999,
-              background: 'rgba(17, 16, 14, 0.55)', backdropFilter: 'blur(12px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="privacy-confirm-backdrop"
           >
-            <div style={{
-              background: 'var(--bg-primary, white)', borderRadius: '12px', padding: '24px',
-              maxWidth: '480px', width: '90%', boxShadow: '0 24px 48px rgba(0,0,0,0.18)',
-            }}>
-              <h3 id="privacy-confirm-title" style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+            <div className="privacy-confirm-card">
+              <h3 id="privacy-confirm-title" className="privacy-confirm-title">
                 {t.confirmDelete}
               </h3>
-              <p style={{ fontSize: '13px', color: 'var(--color-danger, #dc2626)', marginBottom: '12px' }}>
+              <p className="privacy-confirm-warning">
                 {t.confirmDeleteWarning}
               </p>
-              <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>{t.reasonLabel}</label>
+              <label className="privacy-confirm-label">{t.reasonLabel}</label>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value.slice(0, 500))}
                 placeholder={t.reasonPlaceholder}
                 rows={3}
-                style={{
-                  width: '100%', padding: '8px', borderRadius: '6px',
-                  border: '1px solid var(--border)', fontSize: '13px', marginBottom: '12px',
-                  fontFamily: 'inherit', resize: 'vertical',
-                }}
+                className="privacy-confirm-textarea"
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <div className="privacy-confirm-actions">
                 <button
                   type="button"
                   onClick={() => setConfirmOpen(false)}
-                  style={{
-                    padding: '8px 14px', borderRadius: '6px',
-                    background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                    fontSize: '13px', cursor: 'pointer',
-                  }}
+                  className="privacy-confirm-button secondary"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmDelete}
-                  style={{
-                    padding: '8px 14px', borderRadius: '6px',
-                    background: 'var(--color-danger, #dc2626)', color: 'white', border: 'none',
-                    fontSize: '13px', cursor: 'pointer', fontWeight: 600,
-                  }}
+                  className="privacy-confirm-button danger"
                 >
                   {t.proceedDelete}
                 </button>

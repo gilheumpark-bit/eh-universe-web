@@ -552,7 +552,7 @@
     "rootPackage": {
       "name": "eh-universe-web",
       "version": "2.3.0-alpha",
-      "license": "AGPL-3.0-or-later"
+      "license": "UNLICENSED"
     },
     "packageCount": 1549,
     "directDependencyCount": 41,

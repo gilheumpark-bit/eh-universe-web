@@ -317,15 +317,15 @@ function EmotionArcChart({ messages, language, genre }: Props) {
           {L4(language, { ko: '감정 강도', en: 'Emotion Score', ja: '感情強度', zh: '情感强度' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
-          <span className="w-4 h-0.5 bg-accent-red inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #ef4444 0 3px, transparent 3px 6px)' }} />
+          <span className="w-4 h-0.5 bg-accent-red inline-block rounded emotion-legend-dash tension" />
           {L4(language, { ko: '긴장감', en: 'Tension', ja: '緊張感', zh: '紧张感' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
-          <span className="w-4 h-0.5 bg-green-500 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #22c55e 0 3px, transparent 3px 6px)' }} />
+          <span className="w-4 h-0.5 bg-green-500 inline-block rounded emotion-legend-dash immersion" />
           {L4(language, { ko: '몰입도', en: 'Immersion', ja: '没入度', zh: '沉浸度' })}
         </span>
         <span className="flex items-center gap-1 opacity-50">
-          <span className="w-4 h-0.5 bg-gray-400 inline-block rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #9ca3af 0 3px, transparent 3px 6px)' }} />
+          <span className="w-4 h-0.5 bg-gray-400 inline-block rounded emotion-legend-dash ideal" />
           {L4(language, { ko: '이상적 아크', en: 'Ideal Arc', ja: '理想アーク', zh: '理想弧线' })}
         </span>
         <span className="text-accent-red">▲ {L4(language, { ko: '피크', en: 'Peak', ja: 'ピーク', zh: '峰值' })}</span>

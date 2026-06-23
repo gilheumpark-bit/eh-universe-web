@@ -184,12 +184,13 @@ describe("TabWriting value bridge", () => {
     expect(screen.getByRole("button", { name: "집필 기준·출고 준비 열기" })).toBeInTheDocument();
   });
 
-  it("리딥 모드는 원고를 읽기 전용 표면으로 바꾸고 단축키로 왕복한다", () => {
+  it("읽기 검토는 원고를 읽기 전용 표면으로 바꾸고 단축키로 왕복한다", () => {
     renderTabWriting();
 
     fireEvent.click(screen.getByRole("button", { name: "원고를 읽기 모드로 검토" }));
 
     const reader = screen.getByRole("document", { name: "원고 읽기 검토" });
+    expect(within(reader).getByLabelText("읽기 검토 요약")).toHaveTextContent("문단");
     expect(within(reader).getByText("현재 원고 본문")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "원고 본문 편집" })).not.toBeInTheDocument();
 
@@ -202,12 +203,12 @@ describe("TabWriting value bridge", () => {
     expect(screen.getByRole("document", { name: "원고 읽기 검토" })).toBeInTheDocument();
   });
 
-  it("집필 바로가기에 리딥 단축키를 노출한다", () => {
+  it("집필 바로가기에 읽기 검토 단축키를 노출한다", () => {
     renderTabWriting();
     openWritingBasisPanel();
 
     const shortcuts = screen.getByLabelText("집필 바로가기");
-    expect(within(shortcuts).getByText("리딥 모드")).toBeInTheDocument();
+    expect(within(shortcuts).getByText("읽기 검토")).toBeInTheDocument();
     expect(within(shortcuts).getByText("Ctrl+Alt+R")).toBeInTheDocument();
   });
 
@@ -221,7 +222,7 @@ describe("TabWriting value bridge", () => {
     expect(within(bridge).getByRole("button", { name: /과정기록/ })).toBeInTheDocument();
     expect(within(bridge).getByRole("button", { name: /권리\/IP 점검/ })).toBeInTheDocument();
     expect(within(bridge).getByRole("button", { name: /출고 패키지/ })).toBeInTheDocument();
-    expect(within(bridge).getByRole("link", { name: "이용 범위 보기" })).toHaveAttribute("href", "/docs#redeem");
+    expect(within(bridge).getByRole("link", { name: "출고 기준 보기" })).toHaveAttribute("href", "/docs#export");
   });
 
   it("브리지 버튼은 기존 과정기록, 권리/IP, 출고 패널 이벤트로 이어진다", () => {

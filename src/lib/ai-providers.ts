@@ -18,6 +18,11 @@ import {
 } from './ai-providers.catalog';
 import { getStoredReasoningLevel, resolveReasoningLevel } from './ai-reasoning';
 import {
+  allowsProviderAutoFallback,
+  estimateProviderRequestChars,
+  resolveProviderRequestSensitivity,
+} from './provider-routing-policy';
+import {
   decryptKey,
   deobfuscateKey,
   encryptKey,
@@ -44,6 +49,7 @@ export type {
   ReasoningStage,
   StreamOptions,
 } from './ai-providers.catalog';
+export type { ProviderRequestSensitivity } from './provider-routing-policy';
 
 /** 현재 활성 provider가 structured output을 지원하는지 */
 export function activeSupportsStructured(): boolean {
@@ -66,20 +72,20 @@ export function migrateProviderStorage(): void {
   if (typeof window === "undefined") return;
   const legacy = localStorage.getItem(LEGACY_PROVIDER_KEY);
   if (legacy) {
-    const resolved = legacy in PROVIDERS ? legacy : "gemini";
+    const resolved = legacy in PROVIDERS ? legacy : "upstage";
     localStorage.setItem("noa_active_provider", resolved);
     localStorage.removeItem(LEGACY_PROVIDER_KEY);
   }
 }
 
-/** @returns Currently active AI provider ID from localStorage, defaults to "gemini" */
+/** @returns Currently active AI provider ID from localStorage, defaults to app Hosted provider */
 export function getActiveProvider(): ProviderId {
-  if (typeof window === "undefined") return "gemini";
+  if (typeof window === "undefined") return "upstage";
   const stored = localStorage.getItem("noa_active_provider") || localStorage.getItem(LEGACY_PROVIDER_KEY);
-  let provider = stored && stored in PROVIDERS ? (stored as ProviderId) : "gemini";
-  // 로컬 provider가 활성인데 URL(키)이 비어 있으면 gemini로 폴백
+  let provider = stored && stored in PROVIDERS ? (stored as ProviderId) : "upstage";
+  // 로컬 provider가 활성인데 URL(키)이 비어 있으면 앱 Hosted provider로 폴백
   if ((provider === 'ollama' || provider === 'lmstudio') && !localStorage.getItem(PROVIDERS[provider].storageKey)) {
-    provider = 'gemini';
+    provider = 'upstage';
   }
   return provider;
 }
@@ -522,17 +528,18 @@ function isDgxDownError(msg: string): boolean {
 }
 
 /**
- * BYOK 폴백 선호 여부 (Settings 토글로 제어). 기본 true.
+ * 연결 키 자동 전환 허용 여부 (Settings 토글로 제어).
+ * 원고 보호 기준: 사용자가 켜기 전에는 선택한 provider 밖으로 우회하지 않는다.
  * localStorage 직접 접근으로 순환 참조 회피.
  */
 function isByokFallbackEnabled(): boolean {
-  if (typeof window === 'undefined') return true;
+  if (typeof window === 'undefined') return false;
   try {
     const v = localStorage.getItem('noa_byok_fallback_enabled');
-    return v === null ? true : v === '1';
+    return v === '1';
   } catch (err) {
-    logger.warn('AIProviders', 'localStorage read for BYOK fallback flag failed — defaulting to enabled', err);
-    return true;
+    logger.warn('AIProviders', 'localStorage read for BYOK fallback flag failed — defaulting to disabled', err);
+    return false;
   }
 }
 
@@ -564,9 +571,20 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   const provider = getActiveProvider();
   const resolvedReasoning = resolveReasoningLevel(opts.reasoning ?? getStoredReasoningLevel(), opts.reasoningStage);
   const reasoningForRequest = resolvedReasoning === 'auto' ? undefined : resolvedReasoning;
+  const requestSensitivity = resolveProviderRequestSensitivity({
+    explicit: opts.dataSensitivity,
+    reasoningStage: opts.reasoningStage,
+    isChatMode: opts.isChatMode,
+    approxChars: estimateProviderRequestChars(opts.systemInstruction, opts.messages),
+  });
 
-  // ARI gate: if current provider's circuit is open, try ARI-routed fallback
-  if (!ariManager.isAvailable(provider)) {
+  const providerAutoFallbackEnabled = allowsProviderAutoFallback({
+    sensitivity: requestSensitivity,
+    userPreference: isByokFallbackEnabled(),
+  });
+
+  // ARI gate: try another saved connection only for low/standard requests after explicit user opt-in.
+  if (providerAutoFallbackEnabled && !ariManager.isAvailable(provider)) {
     const fallbacks = getFallbackProviders(provider);
     const candidateIds = fallbacks.map((f) => f.id);
     if (candidateIds.length > 0) {
@@ -661,9 +679,9 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   // Triggers: (1) quota/rate-limit errors, (2) DGX-down errors when BYOK fallback enabled.
   // Falls back in ARI score order, skipping providers without a stored API key.
   // Does NOT persist the switch to localStorage; active provider is unchanged.
-  const shouldFallback = lastError && (
+  const shouldFallback = providerAutoFallbackEnabled && lastError && (
     isQuotaError(lastError.message) ||
-    (isDgxDownError(lastError.message) && isByokFallbackEnabled())
+    isDgxDownError(lastError.message)
   );
   if (shouldFallback && lastError) {
     const dgxDown = isDgxDownError(lastError.message);

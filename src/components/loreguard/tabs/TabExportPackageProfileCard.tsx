@@ -49,25 +49,20 @@ export default function TabExportPackageProfileCard({
       <div className="pcard-h">
         <Flag size={15} />
         출고 구성
-        <span className={"pill " + statusPillClass(packagePlan.status)} style={{ marginLeft: "auto" }}>
+        <span className={"pill tex-push " + statusPillClass(packagePlan.status)}>
           {statusLabelKo(packagePlan.status)}
         </span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
+      <div className="tex-profile-grid tex-package-profile-grid">
         {packageProfiles.map((profile) => {
           const active = profile.id === packageProfileId;
           return (
             <button
               key={profile.id}
               type="button"
-              className="mini-btn"
+              className={`mini-btn tex-profile-btn${active ? " is-active" : ""}`}
               aria-pressed={active}
               onClick={() => onPackageProfileChange(profile.id)}
-              style={{
-                justifyContent: "flex-start",
-                borderColor: active ? "var(--primary)" : "var(--line)",
-                background: active ? "color-mix(in srgb, var(--primary) 14%, var(--card-2))" : "var(--card-2)",
-              }}
             >
               <span className={"rdot " + (active ? "green" : "gray")} />
               {profile.labelKo}
@@ -75,73 +70,65 @@ export default function TabExportPackageProfileCard({
           );
         })}
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
-        <span style={{ flex: 1 }}>{packagePlan.profile.publicSummaryKo}</span>
+      <div className="wr-srow tex-muted-row tex-row-spaced">
+        <span className="tex-grow">{packagePlan.profile.publicSummaryKo}</span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+      <div className="wr-srow tex-muted-row">
         대상 <b>{packagePlan.profile.audienceKo}</b>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+      <div className="wr-srow tex-muted-row">
         경계 <b>{packagePlan.profile.boundaryKo}</b>
       </div>
       <div
-        className="lg-public-boundary-grid"
+        className="lg-public-boundary-grid tex-public-boundary-grid"
         aria-label="공개용 카드와 제출용 문서 차이"
-        style={{ gap: 8, marginTop: 8 }}
       >
         {publicSubmissionBoundaryRows.map((row) => (
           <div
             key={row.id}
-            style={{
-              border: "1px solid var(--line)",
-              background:
-                row.id === packageProfileId
-                  ? "color-mix(in srgb, var(--primary) 10%, var(--card-2))"
-                  : "var(--card-2)",
-              padding: 10,
-            }}
+            className={`tex-boundary-card${row.id === packageProfileId ? " is-active" : ""}`}
           >
-            <div className="wr-srow" style={{ color: "var(--ink)", padding: 0 }}>
+            <div className="wr-srow tex-ink-row tex-row-flush">
               <b>{row.titleKo}</b>
-              <span className={"pill " + statusPillClass(row.status)} style={{ marginLeft: "auto" }}>
+              <span className={"pill tex-push " + statusPillClass(row.status)}>
                 {row.profile.shortLabelKo}
               </span>
             </div>
-            <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)", padding: "6px 0 0" }}>
+            <div className="wr-srow tex-muted-row tex-row-start tex-row-padtop">
               <span>대상</span>
-              <b style={{ textAlign: "right" }}>{row.profile.audienceKo}</b>
+              <b className="tex-right">{row.profile.audienceKo}</b>
             </div>
-            <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)", padding: "6px 0 0" }}>
+            <div className="wr-srow tex-muted-row tex-row-start tex-row-padtop">
               <span>{row.focusLabelKo}</span>
-              <b style={{ textAlign: "right" }}>{row.focusItemsKo.slice(0, 4).join(" · ")}</b>
+              <b className="tex-right">{row.focusItemsKo.slice(0, 4).join(" · ")}</b>
             </div>
-            <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)", padding: "6px 0 0" }}>
+            <div className="wr-srow tex-muted-row tex-row-start tex-row-padtop">
               <span>{row.privateLabelKo}</span>
-              <b style={{ textAlign: "right" }}>{row.privateItemsKo.join(" · ")}</b>
+              <b className="tex-right">{row.privateItemsKo.join(" · ")}</b>
             </div>
-            <div style={{ color: "var(--ink-3)", fontSize: 11.5, marginTop: 8, lineHeight: 1.45 }}>
+            <div className="tex-boundary-note">
               {row.profile.boundaryKo}
             </div>
           </div>
         ))}
       </div>
-      <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+      <div className="wr-srow tex-muted-row tex-row-start">
         <span>필수</span>
-        <b style={{ textAlign: "right" }}>{packagePlan.requiredItems.map((item) => item.roleKo).join(" · ")}</b>
+        <b className="tex-right">{packagePlan.requiredItems.map((item) => item.roleKo).join(" · ")}</b>
       </div>
       {packagePlan.recommendedItems.length > 0 && (
-        <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+        <div className="wr-srow tex-muted-row tex-row-start">
           <span>권장</span>
-          <b style={{ textAlign: "right" }}>{packagePlan.recommendedItems.map((item) => item.roleKo).join(" · ")}</b>
+          <b className="tex-right">{packagePlan.recommendedItems.map((item) => item.roleKo).join(" · ")}</b>
         </div>
       )}
       {packagePlan.privateItems.length > 0 && (
-        <div className="wr-srow" style={{ alignItems: "flex-start", color: "var(--ink-3)" }}>
+        <div className="wr-srow tex-muted-row tex-row-start">
           <span>비공개</span>
-          <b style={{ textAlign: "right" }}>{packagePlan.privateItems.map((item) => item.roleKo).join(" · ")}</b>
+          <b className="tex-right">{packagePlan.privateItems.map((item) => item.roleKo).join(" · ")}</b>
         </div>
       )}
-      <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+      <div className="wr-srow tex-muted-row">
         {packagePlan.summaryKo}
       </div>
     </div>

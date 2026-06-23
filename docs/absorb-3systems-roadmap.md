@@ -78,7 +78,7 @@
 | `_a11y.md` | Color Contrast (4.5:1 / 3:1 UI) | coding-standard | 텍스트 대 배경·UI 컴포넌트 명암비 강제·자동 검증 (Stark Figma·WebAIM). | apply | P1 | Design System v8.0 (colors·typography) |
 | `_app_store.md` | iOS Info.plist + App Privacy Label | coding-standard | 카메라·마이크·위치·연락처 등 권한 사용목적 명시·Privacy Nutrition Label 일치·Sign in with Apple 동등성. | implement | P1 | [미매핑] — eh-universe-desktop (Electron → iOS 빌드 대비) |
 | `_cicd.md` | DORA 4 Metrics + Deployment Strategy | coding-standard | Elite: on-demand deploy·< 1h lead time·< 1h MTTR·0-15% CFR. Blue-Green·Canary·Rolling·Shadow 전략. | apply | P1 | [미매핑] — CI/CD pipeline (GitHub Actions·Vercel) |
-| `_dependencies.md` | License compatibility + THIRD_PARTY_NOTICES | coding-standard | SPDX identifier·GPL/AGPL 호환성 검증·npx license-checker·attribution 자동생성. | apply | P1 | package.json license field + license-checker CI |
+| `_dependencies.md` | License compatibility + THIRD_PARTY_NOTICES | coding-standard | SPDX identifier·copyleft 호환성 검증·npx license-checker·attribution 자동생성. | apply | P1 | package.json license field + license-checker CI |
 | `_docs.md` | README 필수 섹션 + Quickstart | form-template | 프로젝트명·문제·해결책·Quick Start·기능·설치·사용·API·개발·라이선스 포함·200-500줄. | absorb | P1 | README.md (eh-universe-web 최상위) |
 | `_docs.md` | OpenAPI 3.x 명시 + Spec-first | coding-standard | REST API는 OpenAPI 3.x 명시·Spectral lint·contract test (Pact·Dredd)로 spec-code drift 차단. | implement | P1 | [미매핑] — sparkService API docs (localhost:8001 호환) |
 | `_docs.md` | ADR (Architecture Decision Record) MADR 양식 | form-template | docs/adr/{NNNN}-title.md·Status·Context·Decision·Rationale·Consequences·Alternatives. | absorb | P1 | docs/adr/ (신규 기능·의존성·DB·인증 결정 기록) |
@@ -86,7 +86,7 @@
 | `_i18n.md` | UTC 저장 + Locale 표시 (Intl API) | coding-standard | 서버 저장은 UTC ISO·클라이언트는 Intl.DateTimeFormat + IANA TZ (Asia/Seoul)·moment 금지·dayjs/date-fns 사용. | apply | P1 | [미매핑] — datetime handling (API responses) |
 | `_i18n.md` | Locale 검출 + URL path 기반 (hreflang) | coding-standard | 우선: URL path (/ko/...) > Cookie > Accept-Language > fallback (en)·hreflang 메타 강제·SEO 권장. | apply | P1 | [미매핑] — routing (Next.js i18n middleware) |
 | `_i18n.md` | CJK 폰트 + Subset + WOFF2 | coding-standard | 시스템 폰트 우선 (Noto Sans KR)·웹폰트 subset (한글 2350자)·WOFF2·font-display: optional (CLS). | apply | P1 | Design System typography (font-family fallback) |
-| `_legal.md` | OSS License + SPDX identifier | coding-standard | package.json license field + THIRD_PARTY_NOTICES 자동생성·GPL/AGPL proprietary 충돌 차단. | apply | P1 | package.json + license-checker + THIRD_PARTY_NOTICES.md |
+| `_legal.md` | OSS License + SPDX identifier | coding-standard | package.json license field + THIRD_PARTY_NOTICES 자동생성·copyleft proprietary 충돌 차단. | apply | P1 | package.json + license-checker + THIRD_PARTY_NOTICES.md |
 | `_legal.md` | Trademark search (앱·서비스 이름) | coding-standard | 출시 전 USPTO·KIPO·WIPO·EUIPO 검색·동일·유사 이름·분류별 확인·변호사 권장. | implement | P1 | [미매핑] — app name finalization (eh-universe) |
 | `_legal.md` | 필수 정책 페이지 (/terms /privacy /cookies /refund) | form-template | 이용약관·개인정보처리방침·쿠키정책·환불정책·DPA·AUP 작성·GDPR·CCPA·PIPA 준수. | absorb | P1 | [미매핑] — legal pages (routes + components) |
 | `_mobile.md` | Dynamic Viewport Units (dvh/svh/lvh) | coding-standard | 100vh X (iOS Safari 주소창)·100dvh (동적)·100svh (소형)·100lvh (대형) 권장·fallback 제공. | apply | P1 | CSS variables (full-height components) |
@@ -240,7 +240,7 @@
 | `_cicd.md` | DORA 4 Metrics + Deployment Strategy | coding-standard | Elite: on-demand deploy·< 1h lead time·< 1h MTTR·0-15% CFR. Blue-Green·Canary·Rolling·Shadow 전략. | apply | P1 | [미매핑] — CI/CD pipeline (GitHub Actions·Vercel) |
 | `_cicd.md` | Feature Flag + Dead Code Cleanup | coding-standard | LaunchDarkly·Unleash으로 점진 활성화·6개월+ 100% flag는 정리·deploy ≠ release. | implement | P2 | [미매핑] — feature toggles (release 자동화) |
 | `_dependencies.md` | Lockfile 강제 + CVE 자동 스캔 | coding-standard | package-lock.json·pnpm-lock.yaml·Cargo.lock git commit·npm audit·osv-scanner High+ 즉시 차단·Dependabot. | apply | P0 | package.json + .github/dependabot.yml |
-| `_dependencies.md` | License compatibility + THIRD_PARTY_NOTICES | coding-standard | SPDX identifier·GPL/AGPL 호환성 검증·npx license-checker·attribution 자동생성. | apply | P1 | package.json license field + license-checker CI |
+| `_dependencies.md` | License compatibility + THIRD_PARTY_NOTICES | coding-standard | SPDX identifier·copyleft 호환성 검증·npx license-checker·attribution 자동생성. | apply | P1 | package.json license field + license-checker CI |
 | `_dependencies.md` | SBOM + SLSA Provenance | coding-standard | syft로 SPDX/CycloneDX SBOM 생성·GitHub Actions attest-build-provenance로 build 출처 증명. | implement | P2 | [미매핑] — supply chain security (CI/CD 강화) |
 | `_docs.md` | Diátaxis 4 사분면 (Tutorial/How-to/Reference/Explanation) | coding-standard | 문서를 4종류로 분리·혼합 금지. 각 페이지는 1-2 사분면만 집중. | apply | P2 | docs/ 구조 정리 (README·ARCH·API·UX 분리) |
 | `_docs.md` | README 필수 섹션 + Quickstart | form-template | 프로젝트명·문제·해결책·Quick Start·기능·설치·사용·API·개발·라이선스 포함·200-500줄. | absorb | P1 | README.md (eh-universe-web 최상위) |
@@ -252,7 +252,7 @@
 | `_i18n.md` | Intl.NumberFormat (통화·숫자) + ISO 4217 | coding-standard | 통화 기호 하드코딩 X·toFixed(2) 가정 X (KRW 0자리)·Intl.NumberFormat으로 로케일별 정확 포맷. | apply | P2 | [미매핑] — price display (KRW·USD·JPY) |
 | `_i18n.md` | Locale 검출 + URL path 기반 (hreflang) | coding-standard | 우선: URL path (/ko/...) > Cookie > Accept-Language > fallback (en)·hreflang 메타 강제·SEO 권장. | apply | P1 | [미매핑] — routing (Next.js i18n middleware) |
 | `_i18n.md` | CJK 폰트 + Subset + WOFF2 | coding-standard | 시스템 폰트 우선 (Noto Sans KR)·웹폰트 subset (한글 2350자)·WOFF2·font-display: optional (CLS). | apply | P1 | Design System typography (font-family fallback) |
-| `_legal.md` | OSS License + SPDX identifier | coding-standard | package.json license field + THIRD_PARTY_NOTICES 자동생성·GPL/AGPL proprietary 충돌 차단. | apply | P1 | package.json + license-checker + THIRD_PARTY_NOTICES.md |
+| `_legal.md` | OSS License + SPDX identifier | coding-standard | package.json license field + THIRD_PARTY_NOTICES 자동생성·copyleft proprietary 충돌 차단. | apply | P1 | package.json + license-checker + THIRD_PARTY_NOTICES.md |
 | `_legal.md` | Trademark search (앱·서비스 이름) | coding-standard | 출시 전 USPTO·KIPO·WIPO·EUIPO 검색·동일·유사 이름·분류별 확인·변호사 권장. | implement | P1 | [미매핑] — app name finalization (eh-universe) |
 | `_legal.md` | Stock image 라이선스 확인 + attribution | coding-standard | Unsplash·Pexels (자유)·Pixabay (CC0)·Stock (RM/RF)·로고로 사용 X·AI 이미지는 창작성 필요. | apply | P2 | [미매핑] — asset management (public/images/LICENSES.md) |
 | `_legal.md` | 필수 정책 페이지 (/terms /privacy /cookies /refund) | form-template | 이용약관·개인정보처리방침·쿠키정책·환불정책·DPA·AUP 작성·GDPR·CCPA·PIPA 준수. | absorb | P1 | [미매핑] — legal pages (routes + components) |

@@ -48,13 +48,6 @@ const DATA_ONLY = new Set([
 const GRANDFATHERED = new Set([
   // 현재 800줄 초과 잔여 파일만 허용. 800줄 아래로 내려온 파일은 즉시 제거해
   // 다음 수정에서 다시 커지는 일을 품질 게이트가 잡도록 한다.
-  'src/components/translator/TranslatorStudioApp.tsx',
-  'src/app/studio/StudioShell.tsx',
-  'src/components/loreguard/tabs/TabWriting.tsx',
-  // WritingTabInline.tsx removed from grandfather list in M2 Day 3-7 refactor
-  // (889 → 552 lines via ModeSwitch/FabControls/SceneWarnings extraction +
-  // useWritingReducer UI state cluster). Still above 500 WARN threshold,
-  // further compression targeted in Day 8-10 dynamic-import pass.
 ]);
 
 // ============================================================

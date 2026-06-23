@@ -20,6 +20,11 @@ interface OnboardingGuideProps {
   showQuickStartLock?: boolean;
 }
 
+function bindAnimationDelay(node: HTMLElement | null, delayMs: number) {
+  if (!node) return;
+  node.style.setProperty("--studio-animation-delay", `${delayMs}ms`);
+}
+
 // ============================================================
 // PART 2 — Labels (inline, 4 languages)
 // ============================================================
@@ -185,8 +190,8 @@ export default function OnboardingGuide({
                 key={key}
                 type="button"
                 onClick={() => handleAction(key)}
-                style={{ animationDelay: `${idx * 100}ms` }}
-              className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-transform duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 ${
+                ref={(node) => bindAnimationDelay(node, idx * 100)}
+              className={`group relative flex flex-col items-center gap-4 rounded-2xl border p-6 text-center transition-transform duration-300 hover:scale-[1.03] hover:-translate-y-1 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4 studio-animation-delay ${
                   accent
                     ? "border-accent-purple/40 bg-linear-to-b from-accent-purple/15 to-accent-purple/5 hover:border-accent-purple/60 hover:shadow-[0_8px_32px_rgba(141,123,195,0.2)]"
                     : "border-white/8 bg-linear-to-b from-white/4 to-transparent hover:border-white/15 hover:bg-white/6 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"

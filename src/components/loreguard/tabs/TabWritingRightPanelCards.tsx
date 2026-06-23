@@ -40,7 +40,7 @@ export function WritingValueCard({
       <div className="pcard-h">
         <Layers size={15} />
         {L4(language, { ko: "집필에서 출고까지", en: "From writing to package" })}
-        <span className="pill blue" style={{ marginLeft: "auto" }}>
+        <span className="pill blue wr-push">
           {L4(language, { ko: "작업장 + 출고", en: "Studio + package" })}
         </span>
       </div>
@@ -80,8 +80,8 @@ export function WritingValueCard({
             en: "Studio access supports writing flow; package credits support release prep.",
           })}
         </span>
-        <a className="mini-btn" href="/docs#redeem">
-          {L4(language, { ko: "이용 범위 보기", en: "Usage guide" })}
+        <a className="mini-btn" href="/docs#export">
+          {L4(language, { ko: "출고 기준 보기", en: "Package guide" })}
         </a>
       </div>
     </div>
@@ -104,14 +104,14 @@ export function DraftViewSettingsCard({
       <div className="pcard-h">
         <Eye size={15} />
         {L4(language, { ko: "본문 보기", en: "Draft view" })}
-        <span className="pill gray" style={{ marginLeft: "auto" }}>
+        <span className="pill gray wr-push">
           {viewPrefs.fontSize}px · {viewPrefs.lineHeight.toFixed(1)}
         </span>
       </div>
-      <label className="wr-srow" style={{ alignItems: "center" }}>
+      <label className="wr-srow wr-control-row">
         <span>{L4(language, { ko: "글꼴", en: "Font" })}</span>
         <select
-          className="mini-btn"
+          className="mini-btn wr-font-select"
           aria-label={L4(language, { ko: "본문 글꼴", en: "Draft font" })}
           value={viewPrefs.fontFamily ?? "system"}
           onChange={(event) => {
@@ -119,7 +119,6 @@ export function DraftViewSettingsCard({
             updateViewPrefs({ fontFamily: nextFont });
             setFontMode(writingFontModeFromFamily(nextFont));
           }}
-          style={{ marginLeft: "auto", minWidth: 150, justifyContent: "flex-start" }}
         >
           {FONT_FAMILIES.map((font) => (
             <option key={font.id} value={font.id}>
@@ -128,7 +127,7 @@ export function DraftViewSettingsCard({
           ))}
         </select>
       </label>
-      <label className="wr-srow" style={{ alignItems: "center" }}>
+      <label className="wr-srow wr-control-row">
         <span>{L4(language, { ko: "글자 크기", en: "Text size" })}</span>
         <input
           type="range"
@@ -138,11 +137,11 @@ export function DraftViewSettingsCard({
           value={viewPrefs.fontSize}
           aria-label={L4(language, { ko: "본문 글자 크기", en: "Draft text size" })}
           onChange={(event) => updateViewPrefs({ fontSize: Number(event.target.value) })}
-          style={{ flex: 1, minWidth: 0 }}
+          className="wr-range-input"
         />
-        <b style={{ width: 42, textAlign: "right" }}>{viewPrefs.fontSize}px</b>
+        <b className="wr-range-value">{viewPrefs.fontSize}px</b>
       </label>
-      <label className="wr-srow" style={{ alignItems: "center" }}>
+      <label className="wr-srow wr-control-row">
         <span>{L4(language, { ko: "줄간격", en: "Line height" })}</span>
         <input
           type="range"
@@ -152,11 +151,11 @@ export function DraftViewSettingsCard({
           value={viewPrefs.lineHeight}
           aria-label={L4(language, { ko: "본문 줄간격", en: "Draft line height" })}
           onChange={(event) => updateViewPrefs({ lineHeight: Number(event.target.value) })}
-          style={{ flex: 1, minWidth: 0 }}
+          className="wr-range-input"
         />
-        <b style={{ width: 42, textAlign: "right" }}>{viewPrefs.lineHeight.toFixed(1)}</b>
+        <b className="wr-range-value">{viewPrefs.lineHeight.toFixed(1)}</b>
       </label>
-      <label className="wr-srow" style={{ alignItems: "center" }}>
+      <label className="wr-srow wr-control-row">
         <span>{L4(language, { ko: "편집폭", en: "Editor width" })}</span>
         <input
           type="range"
@@ -166,9 +165,9 @@ export function DraftViewSettingsCard({
           value={viewPrefs.editorWidth}
           aria-label={L4(language, { ko: "본문 편집폭", en: "Draft editor width" })}
           onChange={(event) => updateViewPrefs({ editorWidth: Number(event.target.value) })}
-          style={{ flex: 1, minWidth: 0 }}
+          className="wr-range-input"
         />
-        <b style={{ width: 50, textAlign: "right" }}>{viewPrefs.editorWidth}px</b>
+        <b className="wr-range-value wide">{viewPrefs.editorWidth}px</b>
       </label>
     </div>
   );
@@ -193,7 +192,7 @@ export function WritingShortcutsCard({ language }: { language: AppLanguage }) {
       </div>
       <div className="wr-srow">
         <span className="rdot amber" />
-        {L4(language, { ko: "리딥 모드", en: "Reading mode" })}
+        {L4(language, { ko: "읽기 검토", en: "Reading review" })}
         <b>Ctrl+Alt+R</b>
       </div>
       <div className="wr-srow">
@@ -225,7 +224,7 @@ export function ReceiptReadinessCard({
       <div className="pcard-h">
         <Scroll size={15} />
         {L4(language, { ko: "확인서·권리/IP 준비", en: "Receipt and rights/IP readiness" })}
-        <span className={"pill " + (draftCharCount > 0 ? "green" : "amber")} style={{ marginLeft: "auto" }}>
+        <span className={"pill wr-push " + (draftCharCount > 0 ? "green" : "amber")}>
           {draftCharCount > 0 ? L4(language, { ko: "진행 중", en: "Active" }) : L4(language, { ko: "준비 전", en: "Pending" })}
         </span>
       </div>
@@ -236,7 +235,7 @@ export function ReceiptReadinessCard({
           <b>{row.value}</b>
         </div>
       ))}
-      <div className="wr-cta" style={{ marginTop: 10, flexWrap: "wrap" }}>
+      <div className="wr-cta wr-cta-wrap">
         <button type="button" className="mini-btn" onClick={openCp}>
           <Scroll size={13} />
           {L4(language, { ko: "확인서", en: "Receipt" })}

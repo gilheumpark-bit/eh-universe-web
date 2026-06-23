@@ -41,7 +41,7 @@ export const WritingContextComplianceCard = memo(function WritingContextComplian
       <div className="pcard-h">
         <Shield size={15} />
         {L4(language, { ko: "작품 정보 점검", en: "Work info check" })}
-        <span className={"pill " + scoreTone} style={{ marginLeft: "auto" }}>
+        <span className={"pill wr-push " + scoreTone}>
           {report.missingCount > 0
             ? L4(language, { ko: `보강 ${report.missingCount}개`, en: `${report.missingCount} to fill` })
             : report.reviewCount > 0
@@ -67,7 +67,7 @@ export const WritingContextComplianceCard = memo(function WritingContextComplian
       <div className="wr-srow">
         <span className="rdot green" />
         {L4(language, { ko: "준비", en: "Ready" })}
-        <b style={{ marginLeft: "auto" }}>
+        <b className="wr-push">
           {report.readyCount}
           {L4(language, { ko: "개", en: "" })}
         </b>
@@ -75,7 +75,7 @@ export const WritingContextComplianceCard = memo(function WritingContextComplian
       <div className="wr-srow">
         <span className="rdot amber" />
         {L4(language, { ko: "검토", en: "Review" })}
-        <b style={{ marginLeft: "auto" }}>
+        <b className="wr-push">
           {report.reviewCount}
           {L4(language, { ko: "개", en: "" })}
         </b>
@@ -83,7 +83,7 @@ export const WritingContextComplianceCard = memo(function WritingContextComplian
       <div className="wr-srow">
         <span className="rdot gray" />
         {L4(language, { ko: "부족", en: "Missing" })}
-        <b style={{ marginLeft: "auto" }}>
+        <b className="wr-push">
           {report.missingCount}
           {L4(language, { ko: "개", en: "" })}
         </b>
@@ -94,24 +94,24 @@ export const WritingContextComplianceCard = memo(function WritingContextComplian
           {report.checks.map((check) => {
             const tone = complianceStateTone(check.state);
             return (
-              <div key={check.id} className="wr-srow" style={{ alignItems: "flex-start" }}>
-                <span className={"rdot " + tone} style={{ marginTop: 5 }} />
-                <span style={{ flex: 1, minWidth: 0 }}>
+              <div key={check.id} className="wr-srow wr-row-top">
+                <span className={"rdot wr-dot-top " + tone} />
+                <span className="wr-row-body">
                   {check.label}
-                  <span style={{ display: "block", color: "var(--c-sub, #888)", fontSize: 11.5 }}>
+                  <span className="wr-row-detail">
                     {check.detail}
                   </span>
-                  <span style={{ display: "block", color: "var(--c-sub, #888)", fontSize: 11.5 }}>
+                  <span className="wr-row-detail">
                     {check.hint}
                   </span>
                 </span>
-                <span className={"pill " + tone} style={{ flexShrink: 0 }}>
+                <span className={"pill wr-pill-static " + tone}>
                   {complianceStateLabel(check.state, language)}
                 </span>
               </div>
             );
           })}
-          <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+          <div className="wr-srow wr-muted-row">
             {L4(language, {
               ko: report.limitation,
               en: "Advisory only. The author decides whether to accept, hold, or revise.",

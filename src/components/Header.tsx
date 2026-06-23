@@ -154,12 +154,12 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const navLinkClass = (active: boolean) =>
     stellarWhite
-      ? `inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-none border-0 border-b-2 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
+      ? `inline-flex min-h-[44px] min-w-12 items-center justify-center rounded-none border-0 border-b-2 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-amber-200 font-bold !text-amber-200"
             : "border-transparent font-medium !text-stone-300 hover:bg-white/5 hover:!text-stone-100"
         }`
-      : `rounded-full border px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
+      : `rounded-full border px-3.5 py-2 min-h-[44px] min-w-12 inline-flex items-center justify-center font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold border-b-2 border-b-accent-amber"
             : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
@@ -201,12 +201,12 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   const exploreBtnClass = (active: boolean) =>
     stellarWhite
-      ? `inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-0 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
+      ? `inline-flex min-h-[44px] min-w-12 items-center justify-center rounded-full border-0 px-3.5 py-2 font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "font-bold !text-amber-200 underline decoration-amber-200/80 decoration-2 underline-offset-8"
             : "font-medium !text-stone-300 hover:bg-white/5 hover:!text-stone-100"
         }`
-      : `rounded-full border px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
+      : `rounded-full border px-3.5 py-2 min-h-[44px] min-w-12 inline-flex items-center justify-center font-[family-name:var(--font-mono)] text-[11px] tracking-[0.06em] transition-[transform,opacity,background-color,border-color,color] duration-150 ${
           active
             ? "border-accent-amber/25 bg-accent-amber/8 text-accent-amber font-bold"
             : "font-medium border-transparent text-text-secondary hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary"
@@ -214,8 +214,8 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
 
   // [D] 지원 버튼 — WCAG 터치타겟 44px (탐색 버튼과 동일)
   const toolsBtnClass = stellarWhite
-    ? "rounded-full border border-transparent px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] !text-stone-300 transition-colors hover:bg-white/5 hover:!text-stone-100"
-    : "rounded-full border border-transparent px-3.5 py-2 min-h-[44px] inline-flex items-center font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-colors hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
+    ? "rounded-full border border-transparent px-3.5 py-2 min-h-[44px] min-w-12 inline-flex items-center justify-center font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] !text-stone-300 transition-colors hover:bg-white/5 hover:!text-stone-100"
+    : "rounded-full border border-transparent px-3.5 py-2 min-h-[44px] min-w-12 inline-flex items-center justify-center font-[family-name:var(--font-mono)] text-[11px] font-medium tracking-[0.06em] text-text-secondary transition-colors hover:border-white/10 hover:bg-white/[0.03] hover:text-text-primary";
 
   return (
     <header
@@ -228,19 +228,9 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
         <div className={barShell}>
           <Link
             href="/"
-            aria-label="로어가드 (Loreguard) — Home"
+            aria-label="Loreguard — Home"
             className="group flex items-center gap-3 rounded-full pr-2"
           >
-            <span
-              aria-hidden="true"
-              className={`flex h-10 w-10 items-center justify-center rounded-full border font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.18em] transition-transform group-hover:scale-[1.04] ${
-                stellarWhite
-                  ? "border-amber-200/35 bg-amber-200/10 text-amber-200"
-                  : "border-accent-amber/30 bg-accent-amber/10 text-accent-amber"
-              }`}
-            >
-              LG
-            </span>
             <span className="flex flex-col">
               <span className="flex items-center gap-2">
                 <span
@@ -250,7 +240,7 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                       : "text-text-primary group-hover:text-accent-amber"
                   }`}
                 >
-                  로어가드
+                  Loreguard
                 </span>
                 {isTestEnvironment && (
                   <span aria-hidden="true" className="rounded-md border border-accent-red/30 bg-accent-red/10 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[9px] font-bold tracking-[0.18em] text-accent-red uppercase">
@@ -265,10 +255,10 @@ function HeaderInner({ stellarWhite = false }: HeaderInnerProps) {
                 }`}
               >
                 {L4(lang, {
-                  ko: "Loreguard · 창작 전문 IDE",
-                  en: "Loreguard · Creative IDE",
-                  ja: "Loreguard · 創作専門IDE",
-                  zh: "Loreguard · 创作专业 IDE",
+                  ko: "창작 전문 IDE",
+                  en: "Creative IDE",
+                  ja: "創作専門IDE",
+                  zh: "创作专业 IDE",
                 })}
               </span>
             </span>

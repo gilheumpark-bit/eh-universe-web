@@ -49,10 +49,9 @@ function useTxRailSheet(): boolean {
 }
 
 function RailProgressBar({ value }: { value: number }) {
+  const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
-    <div className="tbar">
-      <span style={{ width: Math.max(0, Math.min(1, value)) * 100 + "%", background: "var(--grad-primary)" }} />
-    </div>
+    <progress className="tbar" value={pct} max={100} aria-label={`번역 진행률 ${Math.round(pct)}%`} />
   );
 }
 
@@ -204,7 +203,7 @@ export function TranslateRail({
       <div className="trail-sec">
         <div className="trail-label">회차 · CHAPTER</div>
         {chapters.length === 0 ? (
-          <div className="trail-sub" style={{ padding: "4px 0" }}>
+          <div className="trail-sub trail-empty">
             원고가 없습니다
           </div>
         ) : (
@@ -350,7 +349,7 @@ export function EmptyTranslationRail() {
       </div>
       <div className="trail-sec">
         <div className="trail-label">회차 · CHAPTER</div>
-        <div className="trail-sub" style={{ padding: "4px 0" }}>
+        <div className="trail-sub trail-empty">
           원고가 없습니다
         </div>
       </div>

@@ -44,6 +44,7 @@ type MetricsRequest = Parameters<(typeof import("../route"))["GET"]>[0];
 const originalEnv = { ...process.env };
 
 beforeEach(() => {
+  jest.resetModules();
   process.env = { ...originalEnv };
 });
 
@@ -76,6 +77,20 @@ describe("/api/metrics", () => {
     }) as unknown as MetricsRequest) as unknown as MetricsFakeResponse;
     expect(allowed.status).toBe(200);
     expect(await allowed.text()).toContain("eh_app_info");
+  });
+
+  it("exposes Web Vitals runtime counters when samples exist", async () => {
+    process.env.METRICS_ENABLED = "on";
+    const { recordWebVitalMetric } = await import("@/lib/observability/runtime-metrics");
+    recordWebVitalMetric({ name: "INP", rating: "needs-improvement", value: 180 });
+    const { GET } = await import("../route");
+
+    const response = await GET(new MetricsFakeRequest() as unknown as MetricsRequest) as unknown as MetricsFakeResponse;
+
+    expect(response.status).toBe(200);
+    const text = await response.text();
+    expect(text).toContain("eh_web_vitals_total");
+    expect(text).toContain('name="INP",rating="needs-improvement"');
   });
 });
 

@@ -15,9 +15,12 @@ import {
 
 const flush = async (ms = 40) => new Promise((r) => setTimeout(r, ms));
 
-beforeEach(() => {
+beforeEach(async () => {
   resetFakeIndexedDB();
   __resetLocalEventLogForTests();
+  // [P3 루프3 2026-06-21] fake IDB 전역 dbs Map race — 다른 테스트 파일에서
+  // push 한 async write 가 clear 이후에 도착해 번들을 재생성. 한 번 더 clear.
+  try { await clearEventLog(); } catch { /* noop */ }
 });
 
 // ============================================================

@@ -25,39 +25,29 @@ export default function TabExportRightsProposalAdvisorCard({
       <div className="pcard-h">
         <Scale size={15} />
         권리 제안 어드바이저
-        <span className={"pill " + statusPillClass(rightsProposalAdvisor)} style={{ marginLeft: "auto" }}>
+        <span className={"pill tex-push " + statusPillClass(rightsProposalAdvisor)}>
           {rightsProposalAdvisor.statusKo}
         </span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
-        <span style={{ flex: 1 }}>
+      <div className="wr-srow tex-muted-row-start">
+        <span className="tex-copy-flex">
           출판·웹툰·영상·해외화 제안 문구를 코어 패키지 기준본과 비교해 권리 범위, 기간, 지역, 수익, 각색, 회수, 표기를 분해합니다.
         </span>
       </div>
-      <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ color: "var(--ink-3)", fontSize: 12, fontWeight: 700 }}>제안서 또는 미팅 메모</span>
+      <label className="tex-advisor-field">
+        <span className="tex-advisor-label">제안서 또는 미팅 메모</span>
         <textarea
           aria-label="제안서 또는 미팅 메모"
           value={proposalAdvisorText}
           onChange={(event) => onProposalAdvisorTextChange(event.target.value)}
           placeholder="예: 웹툰화와 영상화 권리를 5년 독점으로 제안받았고, 수익 배분은 순수익 기준입니다..."
           rows={4}
-          style={{
-            width: "100%",
-            minHeight: 96,
-            resize: "vertical",
-            border: "1px solid var(--line)",
-            background: "var(--card-2)",
-            color: "var(--ink)",
-            padding: 10,
-            font: "inherit",
-            borderRadius: 0,
-          }}
+          className="tex-advisor-textarea"
         />
       </label>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
+      <div className="wr-srow tex-muted-row-start">
         <span>요약</span>
-        <b style={{ textAlign: "right" }}>{rightsProposalAdvisor.summaryKo}</b>
+        <b className="tex-summary-value">{rightsProposalAdvisor.summaryKo}</b>
       </div>
       <div className="lg-ip-pack-form-list" aria-label="권리 제안 조건 축 분석">
         {rightsProposalAdvisor.axisReviews.map((axis) => (
@@ -88,7 +78,7 @@ export default function TabExportRightsProposalAdvisorCard({
           <span className="pill gray">미팅 전</span>
         </summary>
         <div className="lg-ip-pack-inline-detail-body" aria-label="권리 제안 회신 초안">
-          <div className="lg-ip-pack-note" style={{ whiteSpace: "pre-wrap" }}>
+          <div className="lg-ip-pack-note tex-prewrap">
             {rightsProposalAdvisor.replyDraftKo}
           </div>
           <div className="lg-ip-pack-form-list" aria-label="권리 제안 권리 지도">
@@ -116,11 +106,11 @@ export default function TabExportRightsProposalAdvisorCard({
           </div>
         </div>
       </details>
-      <button type="button" className="mini-btn" onClick={onDownload}>
+      <button type="button" className="mini-btn tex-full-cta" onClick={onDownload}>
         <Download size={13} />
         어드바이저 결과 내려받기
       </button>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+      <div className="wr-srow tex-footnote-row">
         코어 기준본을 바탕으로 조건을 분해합니다. 실제 서명 전에는 원문 계약서와 최종 조건을 별도로 확인해 주세요.
       </div>
     </div>

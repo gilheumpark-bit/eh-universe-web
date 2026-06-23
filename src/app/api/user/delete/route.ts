@@ -17,6 +17,7 @@ import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
 import { apiLog } from '@/lib/api-logger';
 import { logger } from '@/lib/logger';
+import { isAllowedOriginValue } from '@/lib/api-origin-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,13 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Origin
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  try {
-    if (!origin || (host && new URL(origin).host !== host)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-  } catch {
+  if (!isAllowedOriginValue(req.headers, req.headers.get('origin'))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

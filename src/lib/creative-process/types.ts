@@ -94,6 +94,49 @@ export type CreativeActorType =
   | 'system' // 시스템 자동
   | 'collaborator'; // 외부 협업자
 
+/** 작가 판단 기록의 결론 */
+export type CreativeDecisionAction =
+  | 'accepted'
+  | 'rejected'
+  | 'revised'
+  | 'discarded';
+
+/** 제안 후보 1건 — 원문 전체 대신 해시·짧은 미리보기·길이만 보존 */
+export interface CreativeDecisionAlternative {
+  id: string;
+  label?: string;
+  contentHash?: string;
+  preview?: string;
+  charCount?: number;
+  score?: number;
+  sourceId?: string;
+}
+
+/** 작가 수정량 요약 */
+export interface CreativeDecisionDelta {
+  beforeChars?: number;
+  afterChars?: number;
+  insertedChars?: number;
+  removedChars?: number;
+  editedChars?: number;
+}
+
+/**
+ * 작가 판단 맥락.
+ *
+ * 목적: "무엇이 들어왔는지"를 넘어 "작가가 왜 선택·수정·폐기했는지"를
+ * 과정기록과 확인서에 남긴다. 원문 전체 저장을 피하고 해시/요약 중심으로 보존한다.
+ */
+export interface CreativeDecisionContext {
+  action: CreativeDecisionAction;
+  selectedAlternativeId?: string;
+  reason?: string;
+  alternatives?: CreativeDecisionAlternative[];
+  discardedAlternativeIds?: string[];
+  revisionNote?: string;
+  delta?: CreativeDecisionDelta;
+}
+
 /**
  * 단일 창작 이벤트 1건의 기록.
  *
@@ -131,6 +174,8 @@ export interface CreativeEvent {
   appVersion: string;
   /** 작가 메모 (선택, 비공개) */
   note?: string;
+  /** 작가가 제안을 선택·수정·폐기한 판단 맥락 */
+  decisionContext?: CreativeDecisionContext;
 
   // ============================================================
   // [s81-hash-chain — additive·optional] per-event hash chain.

@@ -18,7 +18,7 @@ export interface ImportCandidate {
   excerpt: string;
   confidence: number;
   reason: string;
-  detectedFormat: "txt" | "md" | "json" | "docx" | "pdf" | "epub";
+  detectedFormat: "txt" | "md" | "json" | "docx" | "hwpx" | "pdf" | "epub";
   sectionIndex: number;
   charCount: number;
   importedAt: string;
@@ -36,8 +36,12 @@ export const IMPORT_BUCKET_LABELS: Record<ImportBucket, string> = {
   unclassified: "미분류",
 };
 
-const SUPPORTED_IMPORT_EXTENSIONS = new Set(["txt", "md", "json", "docx", "pdf", "epub"]);
-const SERVER_EXTRACT_IMPORT_EXTENSIONS = new Set(["docx", "pdf", "epub"]);
+export const PROJECT_START_IMPORT_ACCEPT = ".txt,.md,.json,.docx,.hwpx,.pdf,.epub";
+export const STUDIO_MANUSCRIPT_IMPORT_ACCEPT = ".txt,.md,.docx,.hwpx,.pdf,.epub";
+export const TRANSLATOR_DOCUMENT_IMPORT_ACCEPT = ".txt,.md,.docx,.hwpx,.pdf,.epub";
+
+const SUPPORTED_IMPORT_EXTENSIONS = new Set(["txt", "md", "json", "docx", "hwpx", "pdf", "epub"]);
+const SERVER_EXTRACT_IMPORT_EXTENSIONS = new Set(["docx", "hwpx", "pdf", "epub"]);
 
 interface ImportSection {
   title: string;
@@ -146,7 +150,7 @@ export function classifyImportedText(sourceFileName: string, rawText: string): I
 
   const ext = sourceFileName.split(".").pop()?.toLowerCase() ?? "";
   const detectedFormat: ImportCandidate["detectedFormat"] =
-    ext === "json" || ext === "md" || ext === "docx" || ext === "pdf" || ext === "epub" ? ext : "txt";
+    ext === "json" || ext === "md" || ext === "docx" || ext === "hwpx" || ext === "pdf" || ext === "epub" ? ext : "txt";
   const importedAt = new Date().toISOString();
   const fileNameHints = extractFileNameClassifierHints(sourceFileName);
   const sections = detectedFormat === "json" ? sectionsFromJson(text) : sectionsFromMarkdownOrText(text);

@@ -51,7 +51,7 @@ export function NoaRequestComposer({
   onSubmit: () => void;
 }) {
   return (
-    <div className="wd-input wr-composer" style={{ position: "relative" }}>
+    <div className="wd-input wr-composer wr-composer-shell">
       {mentionOpen && (
         <MentionDropdown
           items={mentionFiltered}

@@ -43,7 +43,7 @@ export function ProjectStartEntryPanel({
     },
     {
       label: L4(language, { ko: "작가 승인", en: "Author signoff", ja: "作者承認", zh: "作者确认" }),
-      detail: L4(language, { ko: "AI 제안보다 최종 판단을 앞에 두기", en: "Put final judgment before AI output", ja: "AI提案より最終判断を前に置く", zh: "最终判断先于 AI 输出" }),
+      detail: L4(language, { ko: "노아 제안보다 작가 판단을 앞에 두기", en: "Put the author's judgment before Noa suggestions", ja: "Noaの提案より作者の判断を前に置く", zh: "作者判断先于 Noa 建议" }),
       Icon: Check,
     },
     {
@@ -235,6 +235,17 @@ export function ProjectStartEntryPanel({
               zh: "按 Noa 的顺序简短回答。右侧表单是作者确认并修改的整理版。",
             })}</p>
           </div>
+          <button
+            type="button"
+            className="btn primary ps-noa-head-action"
+            onClick={onCreateBlankProject}
+            disabled={projectStartBusy}
+            aria-busy={projectStartBusy}
+            data-testid="lg-project-start-head-save"
+          >
+            <Check size={15} />
+            {L4(language, { ko: "저장하고 세계관으로", en: "Save and open world", ja: "保存して世界観へ", zh: "保存并进入世界观" })}
+          </button>
         </div>
 
         <ol className="ps-noa-chat">
@@ -248,9 +259,10 @@ export function ProjectStartEntryPanel({
             })}</p>
           </li>
           <li className="ps-noa-answer-item">
-            <label className="ps-noa-answer-field">
-              <span>{L4(language, { ko: "인터뷰 작품명", en: "Interview title", ja: "インタビュー作品名", zh: "访谈作品名" })}</span>
+            <div className="ps-noa-answer-field">
+              <span>{L4(language, { ko: "작품명", en: "Work title", ja: "作品名", zh: "作品名" })}</span>
               <input
+                aria-label={L4(language, { ko: "노아 답변 작품명", en: "Noa answer work title", ja: "Noa回答 作品名", zh: "Noa 回答作品名" })}
                 value={draft.title}
                 onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder={L4(language, {
@@ -260,7 +272,7 @@ export function ProjectStartEntryPanel({
                   zh: "例：重生编辑的最后一份稿件",
                 })}
               />
-            </label>
+            </div>
           </li>
 
           <li className="ps-noa-bubble noa">
@@ -273,9 +285,10 @@ export function ProjectStartEntryPanel({
             })}</p>
           </li>
           <li className="ps-noa-answer-item">
-            <label className="ps-noa-answer-field">
-              <span>{L4(language, { ko: "인터뷰 핵심 전제", en: "Interview premise", ja: "インタビュー核心前提", zh: "访谈核心前提" })}</span>
+            <div className="ps-noa-answer-field">
+              <span>{L4(language, { ko: "핵심 전제", en: "Core premise", ja: "核心前提", zh: "核心前提" })}</span>
               <textarea
+                aria-label={L4(language, { ko: "노아 답변 핵심 전제", en: "Noa answer core premise", ja: "Noa回答 核心前提", zh: "Noa 回答核心前提" })}
                 value={draft.premise}
                 onChange={(event) => setDraft((prev) => ({ ...prev, premise: event.target.value }))}
                 placeholder={L4(language, {
@@ -285,7 +298,31 @@ export function ProjectStartEntryPanel({
                   zh: "例：在所有人记忆每天重置的城市里，只有主角能读取昨天的记录。",
                 })}
               />
-            </label>
+            </div>
+          </li>
+          <li className="ps-noa-answer-item">
+            <div className="ps-noa-mid-actions" aria-label={L4(language, {
+              ko: "핵심 전제 작성 후 다음 행동",
+              en: "Next action after core premise",
+              ja: "核心前提作成後の次の操作",
+              zh: "核心前提填写后的下一步",
+            })}>
+              <div>
+                <span>{L4(language, { ko: "핵심 전제까지 잡았다면", en: "Once the premise is set", ja: "核心前提まで決まったら", zh: "核心前提确定后" })}</span>
+                <b>{L4(language, { ko: "저장하고 세계관 보드에서 넓혀갑니다.", en: "Save it and expand in the world board.", ja: "保存して世界観ボードで広げます。", zh: "保存后在世界观面板中扩展。" })}</b>
+              </div>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={onCreateBlankProject}
+                disabled={projectStartBusy}
+                aria-busy={projectStartBusy}
+                data-testid="lg-project-start-mid-save"
+              >
+                <Check size={15} />
+                {L4(language, { ko: "저장하고 세계관으로", en: "Save and open world", ja: "保存して世界観へ", zh: "保存并进入世界观" })}
+              </button>
+            </div>
           </li>
 
           <li className="ps-noa-bubble noa">
@@ -298,9 +335,10 @@ export function ProjectStartEntryPanel({
             })}</p>
           </li>
           <li className="ps-noa-answer-item">
-            <label className="ps-noa-answer-field">
-              <span>{L4(language, { ko: "인터뷰 권리/IP 메모", en: "Interview rights/IP note", ja: "インタビュー権利/IPメモ", zh: "访谈权利/IP备注" })}</span>
+            <div className="ps-noa-answer-field">
+              <span>{L4(language, { ko: "권리/IP 메모", en: "Rights/IP note", ja: "権利/IPメモ", zh: "权利/IP备注" })}</span>
               <textarea
+                aria-label={L4(language, { ko: "노아 답변 권리/IP 메모", en: "Noa answer rights/IP note", ja: "Noa回答 権利/IPメモ", zh: "Noa 回答权利/IP备注" })}
                 value={draft.rightsNote}
                 onChange={(event) => setDraft((prev) => ({ ...prev, rightsNote: event.target.value }))}
                 placeholder={L4(language, {
@@ -310,7 +348,7 @@ export function ProjectStartEntryPanel({
                   zh: "没有就留空。右侧基准线会保留为需要时补充。",
                 })}
               />
-            </label>
+            </div>
           </li>
         </ol>
 

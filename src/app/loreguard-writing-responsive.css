@@ -1,0 +1,175 @@
+@media (max-width: 1440px) {
+  .eh-app .lg-binder { flex-basis: 176px; }
+  .eh-app .wr-panel {
+    flex-basis: clamp(300px, var(--lg-rpanel-w, 336px), min(520px, 40vw));
+    width: clamp(300px, var(--lg-rpanel-w, 336px), min(520px, 40vw));
+  }
+  .eh-app .wr-top {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 20px 10px;
+  }
+  .eh-app .wr-title { padding-top: 4px; }
+  .eh-app .wr-doc {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .eh-app .wr-production-board {
+    grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+    margin-inline: 20px;
+  }
+  .eh-app .wr-production-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+  .eh-app .wr-composer { margin: 10px 20px 26px; }
+}
+
+@media (max-width: 1179.98px) {
+  .eh-app .lg-rpanel-grip { display: none; }
+  .eh-app .wr-grid { position: relative; }
+  .eh-app .lg-binder {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    overflow: hidden;
+    border-right: 1px solid var(--line);
+  }
+  .eh-app .lg-binder-head {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-bottom: 0;
+  }
+  .eh-app .lg-binder-head span,
+  .eh-app .lg-binder-tree,
+  .eh-app .lg-binder-empty {
+    display: none;
+  }
+  .eh-app .wr-panel.is-collapsed {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    padding: 12px 6px;
+  }
+  .eh-app .wr-panel.is-collapsed > :not(.wr-panel-head):not(.wr-panel-status) { display: none; }
+  .eh-app .wr-panel.is-collapsed .wr-panel-head {
+    justify-content: flex-start;
+    gap: 8px;
+    writing-mode: vertical-rl;
+    font-size: 11px;
+    letter-spacing: .08em;
+    color: var(--ink-3);
+  }
+  .eh-app .wr-panel.is-collapsed .wr-panel-head span { white-space: nowrap; }
+  .eh-app .wr-panel.is-collapsed .wr-panel-head svg { display: none; }
+  .eh-app .wr-panel:not(.is-collapsed) {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: var(--z-overlay);
+    flex: 0 0 min(376px, calc(100vw - 56px));
+    width: min(376px, calc(100vw - 56px));
+    max-width: calc(100vw - 56px);
+    box-shadow: -18px 0 32px rgba(15, 23, 42, .12);
+  }
+  .eh-app .wr-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 14px 8px;
+  }
+  .eh-app .wr-title { font-size: 18px; }
+  .eh-app .wr-top-r {
+    gap: 6px;
+    row-gap: 6px;
+    max-height: 92px;
+    overflow: auto;
+    padding-bottom: 2px;
+  }
+  .eh-app .wr-top-r .wr-act { padding-inline: 8px; }
+  .eh-app .wr-count {
+    flex: 1 1 160px;
+    min-width: 160px;
+  }
+  .eh-app .wr-metas {
+    gap: 6px;
+    max-height: 72px;
+    overflow: auto;
+    padding: 0 14px 10px;
+  }
+  .eh-app .wr-production-board {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 10px 14px 0;
+    padding: 10px;
+  }
+  .eh-app .wr-production-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .eh-app .wr-production-actions {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .eh-app .wr-focus-mode .wr-production-board {
+    grid-template-columns: 1fr;
+  }
+  .eh-app .wr-focus-mode .wr-production-actions {
+    justify-content: flex-start;
+  }
+  .eh-app .wr-production-actions .mini-btn {
+    flex: 0 0 auto;
+  }
+  .eh-app .wr-doc { padding: 14px 14px 96px; }
+  .eh-app .wr-doc.wr-manuscript-surface {
+    margin: 10px 14px 0;
+    padding: 22px 18px 92px;
+    border-radius: var(--r-md);
+  }
+  .eh-app .wr-doc.wr-view-box { min-height: 0; }
+  .eh-app .wr-composer {
+    align-items: stretch;
+    flex-wrap: wrap;
+    margin: 8px 14px calc(22px + env(safe-area-inset-bottom));
+    border-radius: var(--r-lg);
+  }
+  .eh-app .wr-composer .wr-model {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .eh-app .wr-composer .wr-reasoning {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .eh-app .wr-composer .wd-in-field {
+    flex: 1 1 calc(100% - 52px);
+    min-height: 34px;
+  }
+  .eh-app .wr-composer .wd-in-btn,
+  .eh-app .wr-composer .wd-in-send {
+    flex: 0 0 auto;
+  }
+  .eh-app .wr-mention {
+    left: 8px;
+    right: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .eh-app .wr-top-r { max-height: 124px; }
+  .eh-app .wr-chip {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .eh-app .wr-production-stats { grid-template-columns: 1fr; }
+  .eh-app .wr-production-actions .mini-btn {
+    min-width: 120px;
+  }
+  .eh-app .wr-composer { padding: 8px; }
+}

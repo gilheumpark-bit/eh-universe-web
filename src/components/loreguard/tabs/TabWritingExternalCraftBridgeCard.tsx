@@ -111,30 +111,23 @@ export const ExternalCraftBridgeCard = memo(function ExternalCraftBridgeCard({
       <div className="pcard-h">
         <Quote size={15} />
         {L4(language, { ko: "외부 기법 브릿지", en: "External craft bridge" })}
-        <span className="pill blue" style={{ marginLeft: "auto" }}>
+        <span className="pill blue craft-bridge-auto">
           {L4(language, { ko: "원문 제외", en: "No source text" })}
         </span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+      <div className="wr-srow craft-bridge-copy">
         {L4(language, {
           ko: "다른 작품의 이름·사건은 빼고, 리듬·텐션·전환 방식만 현재 작품에 연결합니다.",
           en: "Links rhythm, tension, and transition craft without carrying names or events across.",
         })}
       </div>
-      <label style={{ display: "grid", gap: 6, marginTop: 10, fontSize: 12, color: "var(--c-sub, #888)" }}>
+      <label className="craft-bridge-field">
         {L4(language, { ko: "참조할 기존 작품", en: "Source work" })}
         <select
           value={selectedProjectId}
           disabled={sourceProjects.length === 0}
           onChange={(event) => setSelectedProjectId(event.target.value)}
-          style={{
-            minHeight: 36,
-            borderRadius: 8,
-            border: "1px solid var(--line)",
-            background: "transparent",
-            color: "var(--c-text)",
-            padding: "0 10px",
-          }}
+          className="craft-bridge-control"
         >
           {sourceProjects.length === 0 ? (
             <option value="">{L4(language, { ko: "다른 작품 없음", en: "No other work" })}</option>
@@ -143,7 +136,7 @@ export const ExternalCraftBridgeCard = memo(function ExternalCraftBridgeCard({
           ))}
         </select>
       </label>
-      <label style={{ display: "grid", gap: 6, marginTop: 10, fontSize: 12, color: "var(--c-sub, #888)" }}>
+      <label className="craft-bridge-field">
         {L4(language, { ko: "참조 목적", en: "Craft goal" })}
         <textarea
           value={objective}
@@ -153,40 +146,31 @@ export const ExternalCraftBridgeCard = memo(function ExternalCraftBridgeCard({
             en: "Example: build tension like a season finale, using only this work's cast and events",
           })}
           rows={3}
-          style={{
-            resize: "vertical",
-            minHeight: 72,
-            borderRadius: 8,
-            border: "1px solid var(--line)",
-            background: "transparent",
-            color: "var(--c-text)",
-            padding: 10,
-            lineHeight: 1.5,
-          }}
+          className="craft-bridge-control craft-bridge-textarea"
         />
       </label>
-      <div className="wr-cta" style={{ marginTop: 10 }}>
+      <div className="wr-cta craft-bridge-cta">
         <button type="button" className="mini-btn" disabled={!selectedProject} onClick={addReference}>
           <Layers size={13} />
           {L4(language, { ko: "기법만 추출", en: "Extract craft only" })}
         </button>
       </div>
       {notice && (
-        <div className="wr-srow" role="status" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+        <div className="wr-srow craft-bridge-status" role="status">
           {notice}
         </div>
       )}
       {activeReferences.length === 0 ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+        <div className="wr-srow craft-bridge-status">
           {L4(language, { ko: "연결된 기법 브릿지가 없습니다.", en: "No craft bridge linked." })}
         </div>
       ) : activeReferences.map((reference) => (
-        <div key={reference.id} className="wr-srow" style={{ gap: 8 }}>
+        <div key={reference.id} className="wr-srow craft-bridge-reference">
           <span className="rdot blue" />
-          <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span className="craft-bridge-reference-title">
             {reference.sourceProjectTitle}
           </span>
-          <span className="pill amber" style={{ marginLeft: "auto" }}>
+          <span className="pill amber craft-bridge-auto">
             {L4(language, {
               ko: `주의어 ${reference.prohibitedTerms.length}개`,
               en: `${reference.prohibitedTerms.length} held terms`,

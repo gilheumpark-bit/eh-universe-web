@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { ProgressFill } from './ProgressFill';
 
 // ============================================================
 // PART 1 — 타입 및 인터페이스
@@ -380,11 +381,16 @@ export function WritingToolbar({ textareaRef, value, onChange, language, targetM
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 bg-bg-tertiary/50 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] ${
-                  stats.charsNoSpace >= targetMin ? 'bg-accent-green' : stats.charsNoSpace >= targetMin * 0.5 ? 'bg-accent-purple' : 'bg-border'
-                }`}
-                style={{ width: `${Math.min(100, (stats.charsNoSpace / (targetMax || targetMin)) * 100)}%` }}
-              />
+                className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]"
+                aria-hidden="true"
+              >
+                <ProgressFill
+                  value={Math.min(100, (stats.charsNoSpace / (targetMax || targetMin)) * 100)}
+                  className={`h-full rounded-full ${
+                    stats.charsNoSpace >= targetMin ? 'bg-accent-green' : stats.charsNoSpace >= targetMin * 0.5 ? 'bg-accent-purple' : 'bg-border'
+                  }`}
+                />
+              </div>
             </div>
             <span className="text-[9px] font-mono text-text-tertiary shrink-0">
               {stats.charsNoSpace.toLocaleString()} / {(targetMin).toLocaleString()}{targetMax ? `~${targetMax.toLocaleString()}` : ''}

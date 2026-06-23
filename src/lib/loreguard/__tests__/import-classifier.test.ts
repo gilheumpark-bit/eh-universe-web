@@ -38,11 +38,13 @@ describe("classifyImportedText", () => {
     });
   });
 
-  it("DOCX와 PDF, EPUB을 지원 파일로 보되 서버 추출 대상으로 분리한다", () => {
+  it("DOCX와 HWPX, PDF, EPUB을 지원 파일로 보되 서버 추출 대상으로 분리한다", () => {
     expect(isSupportedImportFileName("world.docx")).toBe(true);
+    expect(isSupportedImportFileName("manuscript.hwpx")).toBe(true);
     expect(isSupportedImportFileName("reference.pdf")).toBe(true);
     expect(isSupportedImportFileName("novel.epub")).toBe(true);
     expect(requiresServerImportExtraction("world.docx")).toBe(true);
+    expect(requiresServerImportExtraction("manuscript.hwpx")).toBe(true);
     expect(requiresServerImportExtraction("reference.pdf")).toBe(true);
     expect(requiresServerImportExtraction("novel.epub")).toBe(true);
     expect(requiresServerImportExtraction("memo.md")).toBe(false);
@@ -77,6 +79,22 @@ describe("classifyImportedText", () => {
       bucket: "manuscript",
       detectedFormat: "epub",
       title: "프롤로그",
+    });
+  });
+
+  it("HWPX에서 추출된 원고도 원래 파일 형식을 후보에 남긴다", () => {
+    const candidates = classifyImportedText(
+      "manuscript.hwpx",
+      [
+        "# 제 1화",
+        "제 1화. 주인공은 새벽의 문 앞에서 첫 선택을 한다. 회차 본문처럼 이어지는 긴 서술입니다.",
+      ].join("\n"),
+    );
+
+    expect(candidates[0]).toMatchObject({
+      bucket: "manuscript",
+      detectedFormat: "hwpx",
+      title: "제 1화",
     });
   });
 

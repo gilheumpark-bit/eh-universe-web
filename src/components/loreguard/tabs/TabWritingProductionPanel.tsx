@@ -46,15 +46,14 @@ export function WritingMetaChips({
   return (
     <div className="wr-metas">
       {epNow != null && (
-        <span className="wr-chip" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span className="wr-chip wr-episode-chip">
           <button
             type="button"
-            className="mini-btn"
+            className="mini-btn wr-episode-nav"
             aria-label={labels.prevEpisodeAria}
             title={labels.prevEpisodeAria}
             disabled={!canPrevEpisode}
             onClick={onPrevEpisode}
-            style={{ padding: "0 4px" }}
           >
             <ChevronL size={12} />
           </button>
@@ -62,12 +61,11 @@ export function WritingMetaChips({
           {epTotal != null ? ` / ${epTotal}` : ""}
           <button
             type="button"
-            className="mini-btn"
+            className="mini-btn wr-episode-nav"
             aria-label={labels.nextEpisodeAria}
             title={labels.nextEpisodeAria}
             disabled={!canNextEpisode}
             onClick={onNextEpisode}
-            style={{ padding: "0 4px" }}
           >
             <ChevronR size={12} />
           </button>
@@ -110,16 +108,12 @@ export function WritingProductionBoard({
         </div>
         <div className="wr-production-title">{nextStep.label}</div>
         <p>{nextStep.detail}</p>
-        <div
-          className="wr-production-meter"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progressPct}
+        <progress
+          className="wr-production-progress"
+          value={progressPct}
+          max={100}
           aria-label={L4(language, { ko: "회차 참고 분량 진행도", en: "Reference episode length progress" })}
-        >
-          <span style={{ width: `${progressPct}%` }} />
-        </div>
+        />
         <div className="wr-production-meter-label">
           <span>{L4(language, { ko: "참고 5,500자까지", en: "Toward 5,500 chars" })}</span>
           <b>{progressPct}%</b>

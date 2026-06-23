@@ -127,6 +127,19 @@ export function StudioShellView({
   const translator = createT(language);
   const normalizedLanguage = viewLanguage(language);
   const toastLanguage = agentLanguage(language);
+  const zenChrome = (
+    <>
+      <ZenOverlays
+        active={zenMode}
+        language={language}
+        chapter={currentSession?.title || undefined}
+        words={typeof currentSession?.config?.manuscripts?.[0]?.content === 'string'
+          ? currentSession.config.manuscripts[0].content.replace(/\s/g, '').length
+          : undefined}
+      />
+      <ZenTweaksPanel language={language} zenActive={zenMode} />
+    </>
+  );
 
   if (isMobile && !forceDesktop && hydrated) {
     return (
@@ -169,6 +182,7 @@ export function StudioShellView({
                   <RightPanelResizer language={language} />
                   <StudioOverlayManager {...overlayProps} />
                   <StudioModalBridge {...modalBridgeProps} />
+                  {zenChrome}
                 </StudioProvider>
                 <TokenBudgetToast language={toastLanguage} />
                 <ContextTrimmedToast language={toastLanguage} />
@@ -253,15 +267,7 @@ export function StudioShellView({
                     </button>
                   )}
 
-                  <ZenOverlays
-                    active={zenMode}
-                    language={language}
-                    chapter={currentSession?.title || undefined}
-                    words={typeof currentSession?.config?.manuscripts?.[0]?.content === 'string'
-                      ? currentSession.config.manuscripts[0].content.replace(/\s/g, '').length
-                      : undefined}
-                  />
-                  <ZenTweaksPanel language={language} zenActive={zenMode} />
+                  {zenChrome}
                   <OSDesktop {...desktopProps} />
 
                   {!isSidebarOpen && !focusMode && (

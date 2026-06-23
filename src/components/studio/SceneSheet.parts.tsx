@@ -30,6 +30,17 @@ function formatSceneSheetTime(lastUpdate: number, lang: Lang) {
   }).format(new Date(lastUpdate));
 }
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty("--studio-tone-color", color);
+}
+
+function bindSceneSegment(node: HTMLElement | null, width: number, color: string) {
+  if (!node) return;
+  node.style.setProperty("--scene-segment-width", `${width}%`);
+  node.style.setProperty("--scene-segment-color", color);
+}
+
 export function Section({
   title,
   children,
@@ -183,8 +194,8 @@ export function SceneSheetSetupPanel({
               return (
                 <div
                   key={index}
-                  className="h-full relative group cursor-default"
-                  style={{ width: `${nextPosition - beat.position}%`, backgroundColor: `hsl(${(beat.position / 100) * 270}, 60%, 30%)` }}
+                  ref={(node) => bindSceneSegment(node, nextPosition - beat.position, `hsl(${(beat.position / 100) * 270}, 60%, 30%)`)}
+                  className="h-full relative group cursor-default scene-segment-cell"
                 >
                   <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-primary border border-border text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
                     <div className="font-bold">{beat.name}</div>
@@ -404,15 +415,14 @@ export function PlotBarEditor({
         {segments.map((segment, index) => (
           <div
             key={segment.id}
-            className="relative flex items-center justify-center text-[9px] font-bold text-white cursor-pointer select-none group"
-            style={{ width: `${segment.width}%`, background: segment.color, minWidth: 30 }}
+            ref={(node) => bindSceneSegment(node, segment.width, segment.color)}
+            className="relative flex items-center justify-center text-[9px] font-bold text-white cursor-pointer select-none group scene-segment-cell"
           >
             <span className="truncate px-1">{segment.label}</span>
             <span className="absolute bottom-0.5 right-1 text-[7px] opacity-60">{segment.width}%</span>
             {index < segments.length - 1 && (
               <div
-                className="absolute right-0 top-0 bottom-0 w-3 sm:w-1 cursor-col-resize hover:bg-white/30 z-10"
-                style={{ touchAction: "none" }}
+                className="absolute right-0 top-0 bottom-0 w-3 sm:w-1 cursor-col-resize hover:bg-white/30 z-10 studio-touch-none"
                 onPointerDown={event => {
                   event.stopPropagation();
                   event.preventDefault();
@@ -441,7 +451,11 @@ export function PlotBarEditor({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {segments.map((segment, index) => (
-          <div key={segment.id} className="border border-border rounded-lg p-3 bg-bg-primary space-y-2" style={{ borderLeftWidth: 3, borderLeftColor: segment.color }}>
+          <div
+            key={segment.id}
+            ref={(node) => bindStudioTone(node, segment.color)}
+            className="border border-border rounded-lg p-3 bg-bg-primary space-y-2 studio-tone-border-left"
+          >
             <div className="flex justify-between items-center">
               <input
                 value={segment.label}

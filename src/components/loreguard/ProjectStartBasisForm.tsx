@@ -91,6 +91,29 @@ export function ProjectStartBasisForm({
         </div>
       </section>
 
+      <div className="ps-form-inline-actions" aria-label={L4(language, {
+        ko: "기준선 저장 후 이동",
+        en: "Save basis and continue",
+        ja: "基準線を保存して移動",
+        zh: "保存基准线并继续",
+      })}>
+        <div>
+          <span>{L4(language, { ko: "작성 중에도 바로 이동", en: "Ready while writing", ja: "作成中もすぐ移動", zh: "填写中也可继续" })}</span>
+          <b>{L4(language, { ko: "기준선을 저장하고 세계관 보드를 엽니다.", en: "Save the basis and open the world board.", ja: "基準線を保存して世界観ボードを開きます。", zh: "保存基准线并打开世界观面板。" })}</b>
+        </div>
+        <button
+          type="button"
+          className="btn primary"
+          onClick={onSaveOpenWorld}
+          disabled={projectStartBusy}
+          aria-busy={projectStartBusy}
+          data-testid="project-save-open-world-inline"
+        >
+          <Check size={15} />
+          {L4(language, { ko: "저장하고 세계관으로", en: "Save and open world", ja: "保存して世界観へ", zh: "保存并进入世界观" })}
+        </button>
+      </div>
+
       <div className="ps-form">
         <fieldset className="ps-form-group">
           <legend>{L4(language, { ko: "작품 기본", en: "Work basics", ja: "作品基本", zh: "作品基础" })}</legend>

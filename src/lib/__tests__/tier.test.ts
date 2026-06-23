@@ -72,7 +72,7 @@ describe('tier', () => {
       const limits = getTierLimits('free');
       expect(limits.aiGenerationsPerDay).toBe(5);
       expect(limits.aiGenerationsPerMonth).toBe(5);
-      expect(limits.providers).toEqual(['gemini']);
+      expect(limits.providers).toEqual(['upstage']);
       expect(limits.driveSync).toBe(false);
       expect(limits.exportWatermark).toBe(true);
       expect(limits.maxProjects).toBe(1);
@@ -196,8 +196,8 @@ describe('tier', () => {
   });
 
   describe('isProviderAllowed', () => {
-    it('allows gemini for free tier', () => {
-      expect(isProviderAllowed('gemini')).toBe(true);
+    it('allows upstage for free tier', () => {
+      expect(isProviderAllowed('upstage')).toBe(true);
     });
 
     it('blocks openai for free tier', () => {
@@ -206,8 +206,8 @@ describe('tier', () => {
 
     it('allows all listed providers for pro tier', () => {
       setUserTier('pro');
-      for (const p of ['gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral']) {
-        expect(isProviderAllowed(p)).toBe(true);
+      for (const provider of ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral']) {
+        expect(isProviderAllowed(provider)).toBe(true);
       }
     });
 

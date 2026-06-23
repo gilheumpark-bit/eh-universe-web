@@ -34,6 +34,10 @@ function apiLabels(row: { route: string; event: string; status: string }): strin
   return `route="${escapePromLabel(row.route)}",event="${escapePromLabel(row.event)}",status="${escapePromLabel(row.status)}"`;
 }
 
+function webVitalLabels(row: { name: string; rating: string }): string {
+  return `name="${escapePromLabel(row.name)}",rating="${escapePromLabel(row.rating)}"`;
+}
+
 function checkMetricsAuth(req: NextRequest): { ok: true } | { ok: false; status: number; error: string } {
   const expected = process.env.METRICS_BEARER_TOKEN?.trim();
   if (expected) {
@@ -79,6 +83,15 @@ export async function GET(req: NextRequest) {
       `eh_api_request_duration_ms_p95{${labels}} ${row.durationP95Ms}`,
     ];
   });
+  const webVitalMetricLines = snapshot.webVitals.flatMap((row) => {
+    const labels = webVitalLabels(row);
+    return [
+      `eh_web_vitals_total{${labels}} ${row.count}`,
+      `eh_web_vitals_value_count{${labels}} ${row.valueCount}`,
+      `eh_web_vitals_value_sum{${labels}} ${row.valueSum}`,
+      `eh_web_vitals_value_p75{${labels}} ${row.valueP75}`,
+    ];
+  });
 
   // Prometheus exposition format — alpha runtime counters.
   // OTel exporter 전 단계에서도 RED(request/error/duration) 지표를 볼 수 있게 한다.
@@ -100,6 +113,12 @@ export async function GET(req: NextRequest) {
     '# HELP eh_api_request_duration_ms API request duration captured by apiLog',
     '# TYPE eh_api_request_duration_ms summary',
     ...apiMetricLines,
+    '',
+    '# HELP eh_web_vitals_total Web Vitals sample count captured by /api/vitals',
+    '# TYPE eh_web_vitals_total counter',
+    '# HELP eh_web_vitals_value Web Vitals value summary captured by /api/vitals',
+    '# TYPE eh_web_vitals_value summary',
+    ...webVitalMetricLines,
     '',
   ].join('\n');
 

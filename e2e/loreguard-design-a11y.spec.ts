@@ -19,6 +19,7 @@ async function openLoreguard(page: Page) {
     window.localStorage.setItem('eh-lang', 'ko');
     window.localStorage.setItem('eh-cookie-consent', 'accepted');
     window.localStorage.setItem('noa_studio_ctrl_p_warned', '1');
+    window.localStorage.setItem('noa_force_desktop', '1');
     document.cookie = 'eh-lang=ko; path=/; max-age=31536000; SameSite=Lax';
     window.localStorage.setItem('noa-lg-onboarded', '1');
     for (const key of Object.keys(window.localStorage)) {
@@ -31,7 +32,7 @@ async function openLoreguard(page: Page) {
     window.localStorage.removeItem('noa-lg-direction-nav');
     window.localStorage.removeItem('noa-lg-direction-panel');
   });
-  await page.goto(`http://localhost:${port}/studio`);
+  await page.goto(`http://localhost:${port}/studio?force=desktop`);
   await expect(page.locator('.eh-tab').first()).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('button', { name: '프로젝트 생성', exact: true })).toBeVisible({ timeout: 30_000 });
 }

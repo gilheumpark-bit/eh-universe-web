@@ -64,11 +64,11 @@ export function EnvStatusBar() {
         />
         <Chip
           ok={s.universeOk}
-          label="로어가드"
+          label="Loreguard"
           detail={
             s.universeOk
               ? (s.universeHost || '연결 기준 확인')
-              : '로어가드 기준 주소 필요'
+              : 'Loreguard 기준 주소 필요'
           }
         />
         <Chip

@@ -2,7 +2,7 @@ export const REASONING_LEVELS = ["auto", "low", "medium", "high"] as const;
 
 export type ReasoningLevel = (typeof REASONING_LEVELS)[number];
 
-export type ReasoningProviderMode = "gemini" | "claude" | "unsupported";
+export type ReasoningProviderMode = "gemini" | "claude" | "openai-compatible" | "unsupported";
 export type ReasoningStage =
   | "world"
   | "character"
@@ -28,6 +28,10 @@ export interface GeminiThinkingConfig {
 
 export interface ClaudeEffortConfig {
   effort: "low" | "medium" | "high";
+}
+
+export interface OpenAICompatReasoningConfig {
+  reasoning_effort: "low" | "medium" | "high";
 }
 
 export function isReasoningLevel(value: unknown): value is ReasoningLevel {
@@ -74,6 +78,10 @@ export function getReasoningProviderMode(provider: string, model: string): Reaso
 
   if (normalizedProvider === "claude" && normalizedModel.startsWith("claude-")) {
     return "claude";
+  }
+
+  if (normalizedProvider === "openai" && normalizedModel.startsWith("gpt-5")) {
+    return "openai-compatible";
   }
 
   return "unsupported";
@@ -151,4 +159,14 @@ export function buildClaudeEffortConfig(
   if (!level || level === "auto") return undefined;
   if (!model.toLowerCase().startsWith("claude-")) return undefined;
   return { effort: level };
+}
+
+export function buildOpenAICompatReasoningConfig(
+  provider: string,
+  level: ReasoningLevel | undefined,
+  model: string,
+): OpenAICompatReasoningConfig | undefined {
+  if (!level || level === "auto") return undefined;
+  if (getReasoningProviderMode(provider, model) !== "openai-compatible") return undefined;
+  return { reasoning_effort: level };
 }

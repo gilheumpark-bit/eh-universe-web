@@ -14,7 +14,7 @@ const HEARTBEAT_MS = 30_000;
 const MAX_STREAM_MS = 10 * 60_000;
 
 export async function GET(request: Request): Promise<Response> {
-  const authResult = await authorizeLspRequest(request, { queryTokenParam: 'token' });
+  const authResult = await authorizeLspRequest(request);
   if (!authResult.ok) {
     return new Response(JSON.stringify({ error: authResult.error }), {
       status: authResult.status,

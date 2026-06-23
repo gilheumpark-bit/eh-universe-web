@@ -18,6 +18,7 @@ describe('isServerProviderId', () => {
   });
 
   it.each([
+    'upstage',
     'gemini',
     'openai',
     'claude',
@@ -85,6 +86,12 @@ describe('resolveServerProviderKey', () => {
     process.env.GEMINI_API_KEY = 'gem-env';
     const { resolveServerProviderKey } = loadModule();
     expect(resolveServerProviderKey('gemini', '   ')).toBeUndefined();
+  });
+
+  it('falls back to Upstage env key when client key is undefined', () => {
+    process.env.UPSTAGE_API_KEY = 'upstage-env';
+    const { resolveServerProviderKey } = loadModule();
+    expect(resolveServerProviderKey('upstage', undefined)).toBe('upstage-env');
   });
 
   it('falls back to env key when client key is undefined', () => {
@@ -193,6 +200,7 @@ describe('getHostedProviderAvailability', () => {
   }
 
   it('returns all false when no env keys are set', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
@@ -211,6 +219,7 @@ describe('getHostedProviderAvailability', () => {
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
     expect(result).toEqual({
+      upstage: false,
       gemini: false,
       openai: false,
       claude: false,
@@ -226,6 +235,7 @@ describe('getHostedProviderAvailability', () => {
   });
 
   it('returns true only for providers with env keys set', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     process.env.OPENAI_API_KEY = 'ok';
     delete process.env.CLAUDE_API_KEY;
@@ -245,6 +255,7 @@ describe('getHostedProviderAvailability', () => {
     const result = getHostedProviderAvailability();
     expect(result.openai).toBe(true);
     expect(result.groq).toBe(true);
+    expect(result.upstage).toBe(false);
     expect(result.gemini).toBe(false);
     expect(result.claude).toBe(false);
     expect(result.mistral).toBe(false);
@@ -257,11 +268,12 @@ describe('getHostedProviderAvailability', () => {
     const result = getHostedProviderAvailability();
     const keys = Object.keys(result).sort();
     expect(keys).toEqual(
-      ['claude', 'deepseek', 'gemini', 'groq', 'kimi', 'lmstudio', 'minimax', 'mistral', 'ollama', 'openai', 'qwen'],
+      ['claude', 'deepseek', 'gemini', 'groq', 'kimi', 'lmstudio', 'minimax', 'mistral', 'ollama', 'openai', 'qwen', 'upstage'],
     );
   });
 
   it('does NOT mark Gemini as hosted from Vertex AI env (Vertex removed)', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     process.env.USE_VERTEX_AI = 'true';
     process.env.GCP_PROJECT_ID = 'eh-universe';
@@ -289,6 +301,7 @@ describe('getFirstHostedProvider', () => {
   }
 
   it('returns null when no provider keys are set', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
@@ -309,6 +322,7 @@ describe('getFirstHostedProvider', () => {
   });
 
   it('skips Gemini env and returns the first available non-Gemini provider', () => {
+    delete process.env.UPSTAGE_API_KEY;
     process.env.GEMINI_API_KEY = 'gk';
     process.env.OPENAI_API_KEY = 'ok';
     delete process.env.CLAUDE_API_KEY;
@@ -328,7 +342,29 @@ describe('getFirstHostedProvider', () => {
     expect(getFirstHostedProvider()).toBe('openai');
   });
 
+  it('returns Upstage first when the app hosted key is configured', () => {
+    process.env.UPSTAGE_API_KEY = 'uk';
+    process.env.OPENAI_API_KEY = 'ok';
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.MISTRAL_API_KEY;
+    delete process.env.OLLAMA_API_URL;
+    delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const { getFirstHostedProvider } = loadModule();
+    expect(getFirstHostedProvider()).toBe('upstage');
+  });
+
   it('skips unavailable providers and returns the first available one', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     process.env.CLAUDE_API_KEY = 'ck';
@@ -349,6 +385,7 @@ describe('getFirstHostedProvider', () => {
   });
 
   it('can return a local provider if it is the only one configured', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
@@ -369,6 +406,7 @@ describe('getFirstHostedProvider', () => {
   });
 
   it('returns null when only Vertex AI env is set (Vertex removed)', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;

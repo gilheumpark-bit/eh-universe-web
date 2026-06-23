@@ -10,6 +10,7 @@ import {
   isJournalEngineOn,
   isJournalEngineShadow,
   isJournalEngineActive,
+  getBooleanFeatureFlagKeys,
 } from '../feature-flags';
 
 describe('feature-flags', () => {
@@ -81,6 +82,16 @@ describe('feature-flags', () => {
     test('[M9 P1-5] FEATURE_JOURNAL_ENGINE returns JournalEngineMode, default shadow', () => {
       const flags = getAllFlags();
       expect(flags.FEATURE_JOURNAL_ENGINE).toBe('shadow');
+    });
+  });
+
+  describe('getBooleanFeatureFlagKeys', () => {
+    test('tracks every boolean flag from the central registry', () => {
+      const keys = getBooleanFeatureFlagKeys();
+      expect(keys).toContain('IMAGE_GENERATION');
+      expect(keys).toContain('FEATURE_FIRESTORE_MIRROR');
+      expect(keys).not.toContain('FEATURE_JOURNAL_ENGINE');
+      expect(keys).not.toContain('FEATURE_DRAFT_DETAIL_V2');
     });
   });
 

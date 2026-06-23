@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Branch, Dots, Edit, X } from "@/components/loreguard/icons";
 import type { EpisodeSceneSheet, MainScenarioAct, MainScenarioStructure } from "@/lib/studio-types";
-import { accentFor, beatDesc, buildEventChain } from "./TabPlot.shared";
+import { accentToneClass, beatDesc, buildEventChain } from "./TabPlot.shared";
 
 interface BeatCardProps {
   sheet: EpisodeSceneSheet;
@@ -15,7 +15,6 @@ interface BeatCardProps {
 }
 
 export function BeatCard({ sheet, index, expanded, onToggle, onRename, onRemove }: BeatCardProps) {
-  const accent = accentFor(index);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(sheet.title);
   const desc = beatDesc(sheet);
@@ -30,12 +29,12 @@ export function BeatCard({ sheet, index, expanded, onToggle, onRename, onRemove 
   return (
     <div className="pl-beat">
       <div className="pl-beat-top">
-        <span className="pl-beat-n" style={{ background: accent }}>
+        <span className={`pl-beat-n ${accentToneClass(index)}`}>
           {sheet.episode}
         </span>
         {editing ? (
           <input
-            className="pl-beat-t"
+            className="pl-beat-t pl-beat-title-input"
             autoFocus
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
@@ -47,7 +46,6 @@ export function BeatCard({ sheet, index, expanded, onToggle, onRename, onRemove 
                 setEditing(false);
               }
             }}
-            style={{ flex: 1, minWidth: 0, font: "inherit", background: "transparent", color: "inherit", border: "1px solid var(--line)", borderRadius: 4, padding: "2px 4px" }}
             aria-label="비트 제목 편집"
           />
         ) : (
@@ -55,11 +53,10 @@ export function BeatCard({ sheet, index, expanded, onToggle, onRename, onRemove 
         )}
         <button
           type="button"
-          className="eh-icbtn"
+          className="eh-icbtn pl-auto"
           onClick={() => setEditing(true)}
           aria-label="비트 이름 편집"
           title="비트 이름 편집"
-          style={{ marginLeft: "auto" }}
         >
           <Edit size={13} aria-hidden="true" />
         </button>
@@ -85,7 +82,7 @@ export function BeatCard({ sheet, index, expanded, onToggle, onRename, onRemove 
       </div>
       {desc && <div className="pl-beat-d">{desc}</div>}
       {expanded && sheet.scenes && sheet.scenes.length > 0 && (
-        <div className="pl-beat-foot" style={{ flexDirection: "column", alignItems: "stretch", gap: 4 }}>
+        <div className="pl-beat-foot pl-beat-foot-expanded">
           {sheet.scenes.map((scene) => (
             <span key={scene.sceneId} className="pl-ten-label">
               {scene.sceneId} {scene.sceneName || scene.summary || ""}
@@ -147,24 +144,23 @@ export function ScenarioStructurePanel({
   };
 
   return (
-    <section className="pcard" aria-label="메인 시나리오 구조화" style={{ marginBottom: 16 }}>
+    <section className="pcard pl-structure-card" aria-label="메인 시나리오 구조화">
       <div className="pcard-h">
         <Branch size={15} />
         구조화 설계
-        <span className="pill blue" style={{ marginLeft: "auto" }}>{filledSentences} / 7문장</span>
+        <span className="pill blue pl-auto">{filledSentences} / 7문장</span>
       </div>
-      <div style={{ display: "grid", gap: 12 }}>
+      <div className="pl-section-stack">
         <div>
-          <div className="pl-sub" style={{ marginBottom: 8 }}>7문장 시놉시스</div>
-          <div style={{ display: "grid", gap: 8 }}>
+          <div className="pl-sub pl-section-label">7문장 시놉시스</div>
+          <div className="pl-field-stack">
             {sentences.map((sentence) => (
-              <label key={sentence.id} className="pl-citem" style={{ display: "grid", gap: 6 }}>
+              <label key={sentence.id} className="pl-citem pl-field-card">
                 <span className="pl-citem-t">{sentence.label}</span>
                 <textarea
                   value={sentence.text}
                   onChange={(event) => updateSentence(sentence.index, event.target.value)}
-                  className="wd-in-field"
-                  style={{ minHeight: 52, resize: "vertical" }}
+                  className="wd-in-field pl-textarea-small"
                   placeholder="확정 전이면 비워둡니다"
                 />
               </label>
@@ -173,24 +169,22 @@ export function ScenarioStructurePanel({
         </div>
 
         <div>
-          <div className="pl-sub" style={{ marginBottom: 8 }}>3막 / 시즌 구조</div>
-          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+          <div className="pl-sub pl-section-label">3막 / 시즌 구조</div>
+          <div className="pl-form-grid">
             {acts.map((act) => (
               <div key={act.id} className="pl-citem">
                 <div className="pl-citem-t">{act.title}</div>
                 <input
                   value={act.seasonLabel ?? ""}
                   onChange={(event) => updateAct(act.id, { seasonLabel: event.target.value })}
-                  className="wd-in-field"
+                  className="wd-in-field pl-field-spaced"
                   placeholder="시즌/부"
-                  style={{ marginTop: 6 }}
                 />
                 <textarea
                   value={act.summary}
                   onChange={(event) => updateAct(act.id, { summary: event.target.value })}
-                  className="wd-in-field"
+                  className="wd-in-field pl-field-spaced pl-textarea-act"
                   placeholder="이 막의 역할"
-                  style={{ minHeight: 64, marginTop: 6, resize: "vertical" }}
                 />
               </div>
             ))}
@@ -198,7 +192,7 @@ export function ScenarioStructurePanel({
         </div>
 
         <div className="pl-citem">
-          <label className="pl-citem-t" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <label className="pl-citem-t pl-flex-label">
             <input
               type="checkbox"
               checked={endingLock.locked}
@@ -206,7 +200,7 @@ export function ScenarioStructurePanel({
             />
             결말 잠금
           </label>
-          <div style={{ display: "grid", gap: 8, marginTop: 8, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+          <div className="pl-form-grid pl-form-grid-spaced">
             <input
               value={endingLock.finalImage ?? ""}
               onChange={(event) => updateEndingLock({ finalImage: event.target.value })}
@@ -231,14 +225,14 @@ export function ScenarioStructurePanel({
         <div className="pl-citem">
           <div className="pl-citem-top">
             <span className="pl-citem-t">이벤트 체인</span>
-            <button type="button" className="btn ghost" onClick={syncEventChain} style={{ padding: "5px 10px", fontSize: 12 }}>
+            <button type="button" className="btn ghost pl-compact-btn" onClick={syncEventChain}>
               비트에서 갱신
             </button>
           </div>
           {eventChain.length === 0 ? (
             <div className="pl-citem-q">비트가 생기면 사건의 원인과 결과를 분리해 기록합니다.</div>
           ) : (
-            <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+            <div className="pl-event-chain-list">
               {eventChain.map((event) => (
                 <div key={event.id} className="pl-citem-q">
                   {event.order}. {event.title}

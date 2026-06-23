@@ -54,10 +54,9 @@ export default function TranslationStudioPage() {
     );
   }
 
-  // [I-09 priority-medium 2026-06-14] Studio 9단계와 연결되는 번역·현지화 입구 카피.
+  // [I-09 priority-medium 2026-06-14] 전용 작업실에서는 단계 번호 대신 작업 맥락만 노출한다.
   const HEADER_COPY = {
     ko: {
-      stage: '9 번역·현지화',
       note: '작품 설정 · 용어 · 회차 맥락 연결',
       status: '노아 준비 · 작가 승인 · 과정기록',
       home: '홈',
@@ -65,7 +64,6 @@ export default function TranslationStudioPage() {
       docs: '도움말',
     },
     en: {
-      stage: 'Step 9 · Translation',
       note: 'Story context · glossary · episode memory',
       status: 'Noa prepares · Author approves · Process recorded',
       home: 'Home',
@@ -73,7 +71,6 @@ export default function TranslationStudioPage() {
       docs: 'Help',
     },
     ja: {
-      stage: '9 翻訳・ローカライズ',
       note: '作品設定・用語・各話文脈を接続',
       status: 'ノア準備 · 作者承認 · 過程記録',
       home: 'ホーム',
@@ -81,7 +78,6 @@ export default function TranslationStudioPage() {
       docs: 'ヘルプ',
     },
     zh: {
-      stage: '9 翻译与本地化',
       note: '作品设定、术语、章节语境连接',
       status: '诺亚准备 · 作者确认 · 过程记录',
       home: '首页',
@@ -99,27 +95,21 @@ export default function TranslationStudioPage() {
 
   return (
     <main
-      aria-label="로어가드 번역·현지화 작업실"
+      aria-label="Loreguard 번역·현지화 작업실"
       className="flex h-screen min-h-0 flex-col overflow-hidden bg-bg-primary"
     >
-      <h1 className="sr-only">로어가드 번역·현지화 작업실</h1>
+      <h1 className="sr-only">Loreguard 번역·현지화 작업실</h1>
       <header className="shrink-0 border-b border-border bg-bg-primary/95 px-3 py-2 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1920px] items-center justify-between gap-3">
           <Link
             href="/"
             className="translator-header-brand inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-bg-secondary/70 px-3 text-[12px] font-semibold transition-colors hover:border-accent-indigo/40 hover:text-accent-indigo focus-visible:ring-2 focus-visible:ring-accent-blue"
           >
-            <span className="translator-header-badge flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black">
-              LG
-            </span>
-            로어가드
+            Loreguard
           </Link>
 
           <div className="hidden min-w-0 flex-1 items-center gap-3 md:flex">
-            <span className="rounded-full border border-accent-indigo/20 bg-accent-indigo/10 px-2.5 py-1 text-[11px] font-bold text-accent-indigo">
-              {copy.stage}
-            </span>
-            <span className="translator-header-muted truncate text-[12px]">{copy.note}</span>
+            <span className="translator-header-muted hidden min-w-0 truncate text-[12px] xl:inline">{copy.note}</span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-green/25 bg-accent-green/10 px-2.5 py-1 text-[11px] font-semibold text-text-primary">
               <ShieldCheck className="h-3 w-3" aria-hidden />
               {copy.status}

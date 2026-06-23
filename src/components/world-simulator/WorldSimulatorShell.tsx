@@ -28,6 +28,7 @@ import {
 import { GenreLeveling, CivMapper, RelationsView, TimelineView, ValidationView } from "./SimulationEngine";
 import { HexMapView } from "./MapView";
 import { LanguageForge } from "./LanguageForge";
+import { colorToneClass, genreToneClass } from "./tone-classes";
 
 // ============================================================
 // PART 1 — State Orchestration & Initialization
@@ -156,11 +157,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
               <h3 className="font-[family-name:var(--font-mono)] text-xs font-bold tracking-wider text-text-secondary uppercase">
                 {L4(lang, { ko: "EH 규칙 강도", en: "EH Rule Intensity", ja: "EH Rule Intensity", zh: "EH Rule Intensity" })}
               </h3>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded font-[family-name:var(--font-mono)]"
-                style={{
-                  background: `${RULE_LEVELS[ruleLevel - 1].color}20`,
-                  color: RULE_LEVELS[ruleLevel - 1].color,
-                }}>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded font-[family-name:var(--font-mono)] ws-bg-soft-tone ${colorToneClass(RULE_LEVELS[ruleLevel - 1].color)}`}>
                 {RULE_LEVELS[ruleLevel - 1].pct}% &mdash; {L4(lang, { ko: RULE_LEVELS[ruleLevel - 1].genre_ko, en: RULE_LEVELS[ruleLevel - 1].genre_en, ja: RULE_LEVELS[ruleLevel - 1].genre_ja, zh: RULE_LEVELS[ruleLevel - 1].genre_zh })}
               </span>
             </div>
@@ -169,13 +166,9 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                 <button key={rl.lv} type="button" onClick={() => setRuleLevel(rl.lv)}
                   className={`py-1.5 px-2 rounded text-[8px] font-bold border transition-[transform,opacity,background-color,border-color,color] min-w-[60px] ${
                     ruleLevel === rl.lv
-                      ? "text-white border-transparent"
+                      ? `text-white border-transparent ws-bg-tone ${colorToneClass(rl.color)}`
                       : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
                   }`}
-                  style={ruleLevel === rl.lv ? {
-                    background: rl.color,
-                    borderColor: "transparent",
-                  } : undefined}
                   title={L4(lang, { ko: rl.desc_ko, en: rl.desc_en, ja: rl.desc_ja, zh: rl.desc_zh })}
                 >
                   <div>{L4(lang, rl)}</div>
@@ -287,7 +280,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
                     const lvName = g?.levels[(s.level ?? 1) - 1];
                     return (
                       <div key={i} className="text-center">
-                        <div className="text-xl font-black font-[family-name:var(--font-display)]" style={{ color: g?.color }}>
+                        <div className={`text-xl font-black font-[family-name:var(--font-display)] ws-text-tone ${genreToneClass(s.genre)}`}>
                           {s.genre} Lv.{s.level}
                         </div>
                         <div className="text-text-secondary text-xs">
@@ -351,7 +344,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
             {genreSelections.map((s, i) => (
               <span key={i}>
                 {i > 0 && <span className="text-text-tertiary"> + </span>}
-                <span className="font-bold" style={{ color: GENRE_LEVELS.find(g => g.genre === s.genre)?.color }}>
+                <span className={`font-bold ws-text-tone ${genreToneClass(s.genre)}`}>
                   {s.genre} Lv{s.level}
                 </span>
               </span>
@@ -359,9 +352,7 @@ export default function WorldSimulatorShell({ lang = "ko", synopsis, worldContex
           </div>
           <div className="px-3 py-1.5 bg-bg-primary border border-border rounded text-[9px] font-[family-name:var(--font-mono)]">
             <span className="text-text-tertiary">{tl('worldSim.ehRules')}: </span>
-            <span className="font-bold" style={{
-              color: ruleLevel <= 1 ? "var(--color-text-tertiary)" : ruleLevel <= 2 ? "#22c55e" : ruleLevel <= 3 ? "#eab308" : ruleLevel <= 4 ? "#f97316" : "#ef4444"
-            }}>
+            <span className={`font-bold ws-text-tone ${colorToneClass(RULE_LEVELS[ruleLevel - 1].color)}`}>
               Lv{ruleLevel} ({RULE_LEVELS[ruleLevel - 1].pct}%)
             </span>
           </div>
