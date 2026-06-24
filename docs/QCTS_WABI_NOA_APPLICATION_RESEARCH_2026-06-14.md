@@ -1,5 +1,7 @@
 # QCTS/WABI 기반 노아 적용 연구 조사
 
+> Design-research document: use as an internal framing study, not as a statement that every described QCTS/WABI concept is wired in the current product surface.
+
 작성일: 2026-06-14  
 대상 자료: `C:\Users\sung4\OneDrive\바탕 화면\QCTS_Agent_Theory`  
 적용 대상: Loreguard Studio의 노아, 과정기록, 출고 패키지, 권리/IP 점검, BYOK/Local 운영 모드

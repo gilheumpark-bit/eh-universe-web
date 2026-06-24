@@ -1,5 +1,7 @@
 # Loreguard Creative IDE Design Master Plan
 
+> Design-research document: use for direction and quality bar, not as the single source of current implementation inventory.
+
 Date: 2026-06-18
 Status: design master plan
 Product baseline: Loreguard is a creative IDE, not a generic AI writing SaaS.

@@ -1,6 +1,11 @@
 # Loreguard Feature Flags
 
-Last updated: 2026-06-16
+Last updated: 2026-06-24
+
+2026-06-24 baseline note:
+
+- Reviewed after the cleanup/document refresh pass.
+- Current public-surface rule and disabled compatibility-route policy remain unchanged.
 
 This file records the current app feature gates. Code remains the source of truth; this document prevents stale docs from reviving removed surfaces.
 

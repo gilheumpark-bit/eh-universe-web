@@ -1,5 +1,7 @@
 # Loreguard v2.3.0-alpha — Authorship Journal
 
+> Historical snapshot: 2026-05-10 release note. Treat this as a release-time record, not the current repo truth for test inventory, surface status, or cleanup state.
+
 **Release date**: 2026-05-10
 **Branch**: `master`
 **Stability**: Alpha — deployable

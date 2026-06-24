@@ -1,6 +1,11 @@
 # Current Architecture
 
-Last updated: 2026-06-15
+Last updated: 2026-06-24
+
+2026-06-24 baseline note:
+
+- This architecture summary was rechecked after the repo cleanup pass.
+- Current Playwright repo baseline changed, but the active product shape below remains valid.
 
 ## Current Shape
 

@@ -37,6 +37,10 @@
 
 ---
 
+## 2026-06-24 문서 기준 메모
+
+상단 배지의 테스트/접근성 수치는 구현 시점 공개 스냅샷 성격입니다. 현재 repo 기준 최신 문서 기준선은 `docs/README.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, `docs/FEATURE_FLAGS.md`, `docs/CLEANUP-STATUS.md` 를 우선합니다.
+
 ## 2026-06-15 현재 기준
 
 현재 공개 제품 표면은 Loreguard Studio(`/studio`), 번역·현지화 작업실(`/translation-studio`), 문서/가격/상태/법적 페이지입니다.

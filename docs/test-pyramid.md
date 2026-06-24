@@ -2,7 +2,7 @@
 
 **Status:** Living document
 **Standard:** claude3 `_testing` — Unit 70 / Integration 20 / E2E 10
-**Actual (2026-06-08):** ~939 test files
+**Actual (2026-06-24):** Playwright E2E 활성 spec 17개
 
 ## 현재 분포 (snapshot)
 
@@ -10,7 +10,7 @@
 |--------|------|----------|----------|
 | **Unit** | 순수 함수 / lib 모듈 / 1 모듈 격리 | `src/lib/**/__tests__/*.test.ts` | ~70% (목표) |
 | **Component** | React 컴포넌트 render + interact | `src/components/**/__tests__/*.test.tsx` | ~20% (목표) |
-| **E2E** | Playwright 풀스택 시나리오 | `e2e/scenarios/*.spec.ts` | ~10% (목표) |
+| **E2E** | Playwright 풀스택 시나리오 | `e2e/*.spec.ts`, `e2e/scenarios/{12,23}*.spec.ts` | ~10% (목표) |
 
 ## Jest 분리
 
@@ -44,10 +44,14 @@ Playwright 별도 — `playwright.config.ts`.
 - API route gate-checks — `src/app/api/__tests__/gate-checks.test.ts`.
 
 ### E2E (가장 적게)
-- `e2e/scenarios/01-onboarding.spec.ts` — /welcome 플로우.
-- `e2e/scenarios/02-new-episode.spec.ts` — Ctrl+Shift+N.
-- `e2e/scenarios/03-writing-flow.spec.ts` — AI 생성 풀스택.
-- `e2e/scenarios/04-global-search.spec.ts` — Ctrl+K 팔레트.
+- `e2e/smoke-routes.spec.ts` — 현재 공개 라우트 스모크.
+- `e2e/studio.spec.ts` — Studio 코어 진입/세션/탭/언어 전환.
+- `e2e/loreguard-authoring-to-export-persistence.spec.ts` — 작성→저장→출고 패키지 연계.
+- `e2e/loreguard-submission-package-export-verify.spec.ts` — 출고 패키지/manifest/hash 검증.
+- `e2e/byok-api-settings-commercial.spec.ts` — 설정/BYOK/상용 행렬.
+- `e2e/loreguard-design-a11y.spec.ts` — 접근성/모바일 sheet/대형 해상도 회귀.
+- `e2e/scenarios/12-backup-tiers.spec.ts` — 백업 tier 기본 가드/consent.
+- `e2e/scenarios/23-mobile-viewport.spec.ts` — 모바일 viewport overflow/터치 타겟.
 
 ## CI Gate
 
@@ -82,7 +86,7 @@ npm run test:e2e
                       ▼
        full-page navigation + 다중 module 통합?
                   ┌───┴───┐
-                  │  YES  │ → E2E (e2e/scenarios/)
+                  │  YES  │ → E2E (e2e/*.spec.ts 또는 e2e/scenarios/)
                   │  NO   │ → Component 또는 mock 기반 Unit
                   └───────┘
 ```

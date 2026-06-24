@@ -351,6 +351,8 @@ Examples:
 
 ## Gate Mapping
 
+> Historical gate snapshot note (2026-06-24): 이 문서는 2026-06-12 기준 Day 0 장부다. 여기서 말하는 local browser E2E attached 는 당시 증거 기준이며, 현재 repo 의 활성 Playwright spec 목록과 1:1 대응한다고 보지 않는다.
+
 | Gate | Day 0 Evidence | Current Verdict |
 |---|---|---|
 | P0 baseline | route/API/component/library inventory generated | PASS |

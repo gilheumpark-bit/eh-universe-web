@@ -1,6 +1,11 @@
 # Loreguard Product Frame
 
-Last updated: 2026-06-14
+Last updated: 2026-06-24
+
+2026-06-24 baseline note:
+
+- Product framing remains current after the cleanup/document refresh pass.
+- Use this document for positioning and naming, not for implementation inventory or test status.
 
 ## Role Of This Document
 

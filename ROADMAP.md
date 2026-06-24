@@ -4,6 +4,8 @@
 > **Audience**: Alpha 작가 / Open-source contributors / Investors / Press
 > **Living document** — 변경 시 commit + announce
 
+> **2026-06-24 note**: 이 문서는 공개 로드맵 성격의 운영 참고 문서다. 현재 repo 기준선, 활성 E2E 목록, 클리닝 상태는 `docs/README.md`, `docs/DOCUMENT-STATUS-2026-06-24.md`, `docs/CLEANUP-STATUS.md` 를 우선한다.
+
 본 로드맵은 **alpha → beta → GA → 정식** 4단계 + 14축 품질 목표를 명시. 일정은 best-effort, 단일 메인테이너 기준 (`GOVERNANCE.md` 참조).
 
 ---

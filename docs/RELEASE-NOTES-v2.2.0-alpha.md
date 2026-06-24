@@ -1,5 +1,7 @@
 # Loreguard v2.2.0-alpha — Novel Studio Fortress
 
+> Historical snapshot: 2026-04-20 release note. Current repo baseline, active E2E inventory, and cleanup status must be read from `docs/README.md`, `docs/DOCUMENT-STATUS-2026-06-24.md`, and `docs/CLEANUP-STATUS.md`.
+
 **Release date**: 2026-04-20
 **Branch**: `feature/M7-hardening`
 **Stability**: Alpha — deployable

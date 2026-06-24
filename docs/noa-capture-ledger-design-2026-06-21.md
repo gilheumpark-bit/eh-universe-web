@@ -1,5 +1,7 @@
 # 노아 포착 메모장 정밀 설계
 
+> Design-research document: this is a precision design note for future or partial wiring. Check current implementation and baseline docs before treating any section as shipped behavior.
+
 Date: 2026-06-21
 Scope: Loreguard Studio 세계관, 캐릭터/아이템, 메인 시나리오, 씬시트, 연출
 

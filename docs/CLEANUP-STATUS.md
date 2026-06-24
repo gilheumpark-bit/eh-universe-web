@@ -1,6 +1,6 @@
 # Cleanup Status
 
-Last updated: 2026-06-19
+Last updated: 2026-06-24
 
 ## Current Status
 
@@ -17,6 +17,13 @@ Source cleanup for removed public product surfaces is largely complete.
 - Recast stale Network/Tools E2E files as retired-surface regression tests.
 - Added/kept 410 compatibility responses for `GET/POST /api/network-agent/search`, `GET/POST /api/network-agent/ingest`, and `/api/network-agent/smoke`.
 - Verified the related browser suite: 55 Playwright tests passed for current public routes plus removed-surface 404/410 gates.
+
+2026-06-24 repo hygiene pass:
+
+- `2026-06-15` 이전 수정 시각의 구형 E2E spec 39개를 정리하고, 현재 활성 Playwright spec 기준선을 17개로 축소했다.
+- 앱 내부 로컬 생성물/테스트 산출물/임시 로그 50개를 저장소 밖 EH 이관 폴더로 이동했다.
+- 루트 `artifacts/` 는 런타임 QA 덤프를 비우고 `.gitkeep` 만 유지한다.
+- 추적 중이던 단독 스크린샷 `studio-clean-after-fade.png` 도 이관했다.
 
 `src` scan result after cleanup:
 
@@ -134,6 +141,7 @@ Current source-of-truth docs have been rewritten:
 - `docs/PRODUCT-FRAME.md`
 - `docs/ARCHITECTURE.md`
 - `docs/CLEANUP-STATUS.md`
+- `docs/test-pyramid.md`
 
 Still historical or mixed:
 
@@ -242,5 +250,5 @@ Not deleted:
 1. Separate historical docs into `docs/history` or mark them with a clear legacy banner.
 2. Update ADR index to distinguish active decisions from historical decisions.
 3. Convert design-only `연극부` material into a current `노아 인터뷰`/`씬 리허설` implementation spec before any UI claim.
-3. Continue pruning `src/components/studio` only after import/reference verification.
-4. Decide whether old Code Studio/Network business history should be preserved as sealed/internal history or removed from public docs.
+4. Continue pruning `src/components/studio` only after import/reference verification.
+5. Decide whether old Code Studio/Network business history should be preserved as sealed/internal history or removed from public docs.
