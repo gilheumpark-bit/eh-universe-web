@@ -330,11 +330,13 @@ async function fetchWithRetry(
  * 격하되는 것을 방어. 비-객체면 빈 객체로 대체 → 기존 `(... || [])` 분기가 정상 동작 (빈 결과 반환).
  * 정상 객체 응답은 그대로 통과 — 동작 동등성 유지.
  */
-function asObject(value: unknown): Record<string, unknown> {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function asObject(value: unknown): Record<string, any> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
+    ? (value as Record<string, any>)
     : {};
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function clampSize(val: number, min: number, max: number): number {
   // Stability requires multiples of 64
