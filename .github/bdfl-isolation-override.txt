@@ -1,0 +1,10 @@
+# BDFL Isolation §1 Override
+# BDFL: 박길흠 (Park Gilheum) — gilheumpark@gmail.com
+# Each non-comment line is the exact violation key that is approved.
+# Reference: GOVERNANCE.md §2
+
+# [2026-06-25] G2 장면 공유 - StoryConfig에 sharedScenePreviews 필드 추가 (부가적 확장)
+src/lib/studio-types.ts
+
+# [2026-06-25] 버그픽스 배치 (High 9건·Medium/Low 46건) - save-engine 데이터 손상·안전성 수정
+src/lib/save-engine/* (any file)

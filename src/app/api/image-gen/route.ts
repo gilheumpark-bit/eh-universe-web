@@ -330,10 +330,9 @@ async function fetchWithRetry(
  * 격하되는 것을 방어. 비-객체면 빈 객체로 대체 → 기존 `(... || [])` 분기가 정상 동작 (빈 결과 반환).
  * 정상 객체 응답은 그대로 통과 — 동작 동등성 유지.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function asObject(value: unknown): Record<string, any> {
+function asObject(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, any>)
+    ? (value as Record<string, unknown>)
     : {};
 }
 

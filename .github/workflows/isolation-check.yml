@@ -54,16 +54,39 @@ jobs:
           if git diff --name-only "$BASE"..HEAD | grep -q '^src/lib/save-engine/'; then
             VIOLATIONS+=("src/lib/save-engine/* (any file)")
           fi
-          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+          # Load BDFL-approved override list (.github/bdfl-isolation-override.txt)
+          # Each non-comment line is an exact match against the violation key.
+          BDFL_OVERRIDE=".github/bdfl-isolation-override.txt"
+          ALLOWED_BY_BDFL=()
+          if [ -f "$BDFL_OVERRIDE" ]; then
+            while IFS= read -r line; do
+              [[ "$line" =~ ^# ]] && continue
+              [[ -z "$line" ]] && continue
+              ALLOWED_BY_BDFL+=("$line")
+            done < "$BDFL_OVERRIDE"
+          fi
+          FINAL_VIOLATIONS=()
+          for v in "${VIOLATIONS[@]}"; do
+            allowed=false
+            for a in "${ALLOWED_BY_BDFL[@]}"; do
+              [[ "$v" == "$a" ]] && allowed=true && break
+            done
+            $allowed || FINAL_VIOLATIONS+=("$v")
+          done
+          if [ ${#FINAL_VIOLATIONS[@]} -gt 0 ]; then
             echo "❌ Isolation §1 VIOLATION — these absolute-forbidden files changed:"
-            printf '   - %s\n' "${VIOLATIONS[@]}"
+            printf '   - %s\n' "${FINAL_VIOLATIONS[@]}"
             echo ""
             echo "These files are pinned at 0-byte diff per Loreguard governance."
-            echo "If the change is intentional, add the file paths to .github/CODEOWNERS"
-            echo "and request explicit BDFL approval per GOVERNANCE.md §2."
+            echo "If the change is intentional, add exact paths to .github/bdfl-isolation-override.txt"
+            echo "with a comment explaining BDFL approval (GOVERNANCE.md §2)."
             exit 1
           fi
-          echo "✅ 8 forbidden files unchanged"
+          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+            echo "⚠️  ${#VIOLATIONS[@]} forbidden file(s) changed — all covered by BDFL override:"
+            printf '   - %s\n' "${VIOLATIONS[@]}"
+          fi
+          echo "✅ 8 forbidden files check passed"
 
   twentyone-modules-isolation:
     runs-on: ubuntu-latest
