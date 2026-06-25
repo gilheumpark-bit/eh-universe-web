@@ -59,11 +59,32 @@ export default function VerifyPage() {
   const [input, setInput] = useState("");
   const [state, setState] = useState<LookupState>({ kind: "idle" });
   const abortRef = useRef<AbortController | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   // unmount 시 in-flight 요청 정리
   useEffect(() => {
     return () => abortRef.current?.abort();
   }, []);
+
+  // PASS 결과 + seal_number 있을 때 QR 생성
+  useEffect(() => {
+    if (state.kind !== "pass" || !state.meta.seal_number) {
+      setQrDataUrl(null);
+      return;
+    }
+    const sealNum = state.meta.seal_number;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { generateQRDataUrl } = await import("@/lib/creative-process/qr-renderer");
+        const url = await generateQRDataUrl(sealNum);
+        if (!cancelled) setQrDataUrl(url);
+      } catch {
+        // QR 생성 실패 시 무시 (텍스트 봉인번호로 대체)
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [state]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -296,6 +317,20 @@ export default function VerifyPage() {
                       {T({ ko: "봉인번호", en: "Seal number", ja: "封印番号", zh: "封印编号" })}
                     </dt>
                     <dd className="font-[--font-mono] text-text-primary">{state.meta.seal_number}</dd>
+                    {qrDataUrl && (
+                      <div className="mt-3 flex flex-col items-start gap-2">
+                        <img
+                          src={qrDataUrl}
+                          alt={T({ ko: "봉인번호 검증 QR", en: "Seal verification QR", ja: "封印番号QR", zh: "封印二维码" })}
+                          width={100}
+                          height={100}
+                          className="rounded-lg border border-border-subtle"
+                        />
+                        <span className="text-[10px] text-text-secondary">
+                          {T({ ko: "스캔해서 검증하세요", en: "Scan to verify", ja: "スキャンして検証", zh: "扫描验证" })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : null}
                 <div>

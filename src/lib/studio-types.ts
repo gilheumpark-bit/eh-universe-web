@@ -457,6 +457,15 @@ export interface StoryConfig {
   translatedManuscripts?: TranslatedManuscriptEntry[];
   /** [X4] 프로젝트 맞춤 품질 하네스 — 출고 검수에 적용 (additive·재방문 시 load·setConfig 영속) */
   qualityHarness?: QualityHarness;
+  /** [G2] 공유된 장면 미리보기 목록 — createShareLink 호출 결과 토큰 영속 (연출탭 피드백 조회용) */
+  sharedScenePreviews?: Array<{
+    token: string;
+    title: string;
+    episode: number;
+    createdAt: number;
+    expiresAt: number;
+    feedbackEnabled: boolean;
+  }>;
 }
 
   /** 작가 수정 내역 (노아 초안 → 작가 수정) */

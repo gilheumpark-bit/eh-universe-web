@@ -10,9 +10,10 @@ import TabAssistant from '@/components/studio/TabAssistant';
 import { createT, L4 } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
-import { BookOpen, TrendingUp, Palette, PenTool } from 'lucide-react';
+import { BookOpen, TrendingUp, Palette, PenTool, MessageSquare } from 'lucide-react';
 import type { FullDirectionData } from '@/components/studio/SceneSheet';
 import { TabHeader } from '@/components/studio/TabHeader';
+import { SceneFeedbackViewer } from '@/components/studio/reader-sim/SceneFeedbackViewer';
 import SceneSheetPresetBar from '@/components/studio/SceneSheetPresetBar';
 import SavePresetDialog from '@/components/studio/SavePresetDialog';
 import ApplyPresetDialog from '@/components/studio/ApplyPresetDialog';
@@ -38,7 +39,7 @@ interface DirectionTabProps {
   hostedProviders?: Partial<Record<string, boolean>>;
 }
 
-type ViewMode = 'dashboard' | 'editor-structure' | 'editor-scene' | 'editor-character' | 'editor-notes' | 'editor-all';
+type ViewMode = 'dashboard' | 'editor-structure' | 'editor-scene' | 'editor-character' | 'editor-notes' | 'editor-all' | 'feedback';
 
 /**
  * DirectionPayload — FullDirectionData가 runtime에서 갖는 실제 형태.
@@ -108,6 +109,16 @@ const CARDS = [
     descEn: 'Foreshadow tracking · Writer notes',
     color: 'accent-blue',
     items: ['foreshadow', 'notes'],
+  },
+  {
+    id: 'feedback',
+    icon: MessageSquare,
+    ko: '독자 피드백',
+    en: 'Reader Feedback',
+    descKo: '공유 장면 피드백 수집 · 링크 생성',
+    descEn: 'Shared scene feedback · Link creation',
+    color: 'accent-green',
+    items: [],
   },
 ] as const;
 
@@ -271,6 +282,33 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
   // ============================================================
   // PART 4 — 대시보드 뷰
   // ============================================================
+  if (viewMode === 'feedback') {
+    return (
+      <>
+        <TabHeader
+          icon="📖"
+          title={L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' })}
+          description={L4(language, { ko: '독자 피드백', en: 'Reader Feedback', ja: 'リーダーフィードバック', zh: '读者反馈' })}
+        />
+        <div className="max-w-3xl mx-auto py-6 px-4">
+          <button
+            onClick={() => setViewMode('dashboard')}
+            className="flex items-center gap-2 mb-6 text-xs text-text-tertiary hover:text-text-primary transition-colors font-mono uppercase tracking-wider min-h-[44px]"
+          >
+            {L4(language, { ko: '← 돌아가기', en: '← Back', ja: '← 戻る', zh: '← 返回' })}
+          </button>
+          <h3 className="text-sm font-bold text-text-primary mb-4">
+            {isKO ? '독자 피드백' : 'Reader Feedback'}
+          </h3>
+          <SceneFeedbackViewer
+            previews={config.sharedScenePreviews ?? []}
+            language={language}
+          />
+        </div>
+      </>
+    );
+  }
+
   if (viewMode === 'dashboard') {
     const sd = config.sceneDirection;
     const counts = {
@@ -278,6 +316,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       scene: (sd?.goguma?.length || 0) + (sd?.hooks?.length || 0) + (sd?.cliffhanger ? 1 : 0) + (sd?.dopamineDevices?.length || 0) + (sd?.sceneTransitions?.length || 0),
       character: (sd?.emotionTargets?.length || 0) + (sd?.dialogueTones?.length || 0) + (sd?.canonRules?.length || 0),
       notes: (sd?.foreshadows?.length || 0) + (sd?.writerNotes ? 1 : 0),
+      feedback: config.sharedScenePreviews?.length ?? 0,
     };
 
     return (
@@ -309,11 +348,17 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {CARDS.map(card => {
             const Icon = card.icon;
-            const count = counts[card.id as keyof typeof counts] || 0;
+            const count = (counts as Record<string, number>)[card.id] || 0;
             return (
               <button
                 key={card.id}
-                onClick={() => setViewMode(`editor-${card.id}` as ViewMode)}
+                onClick={() => {
+                  if (card.id === 'feedback') {
+                    setViewMode('feedback');
+                  } else {
+                    setViewMode(`editor-${card.id}` as ViewMode);
+                  }
+                }}
                 className={`group text-left p-6 rounded-2xl border border-border/50 bg-bg-secondary/50 hover:border-${card.color}/40 hover:bg-bg-secondary hover-lift active:scale-[0.98]`}
               >
                 <div className="flex items-start justify-between mb-3">

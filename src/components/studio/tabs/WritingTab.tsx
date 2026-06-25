@@ -20,6 +20,8 @@ const InlineRewriter = dynamic(() => import('@/components/studio/InlineRewriter'
 const AutoRefiner = dynamic(() => import('@/components/studio/AutoRefiner'), { ssr: false, loading: () => null });
 const AdvancedWritingPanel = dynamic(() => import('@/components/studio/AdvancedWritingPanel'), { ssr: false, loading: () => null });
 const EngineDashboard = dynamic(() => import('@/components/studio/EngineDashboard'), { ssr: false, loading: () => null });
+const DetailPassButton = dynamic(() => import('@/components/studio/DetailPassButton'), { ssr: false, loading: () => null });
+const DetailPassPreviewModal = dynamic(() => import('@/components/studio/DetailPassPreviewModal'), { ssr: false, loading: () => null });
 
 interface WritingTabProps {
   language: AppLanguage;
@@ -80,6 +82,9 @@ const WritingTab: React.FC<WritingTabProps> = ({
   const t = createT(appLanguage);
   const tObj = getStudioTranslations(appLanguage);
   const textMenu = useTextAreaContextMenu(appLanguage);
+  const [detailPassOpen, setDetailPassOpen] = React.useState(false);
+  const [detailPassExpanded, setDetailPassExpanded] = React.useState('');
+  const [detailPassMeta, setDetailPassMeta] = React.useState<import('@/engine/detail-pass').DetailPassResult | null>(null);
   const { handleSVIKeyDown } = useSVIRecorder();
   const draftMessageSeqRef = useRef(0);
 
@@ -369,10 +374,33 @@ const WritingTab: React.FC<WritingTabProps> = ({
                     <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} onContextMenu={textMenu.openMenu} placeholder={t('writingMode.typeManuscript')} className="w-full min-h-[300px] bg-bg-primary border border-border rounded-xl p-4 text-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors font-mono resize-y" />
                   </div>
                 ) : (
-                  <InlineRewriter content={editDraft} language={appLanguage} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
+                  <>
+                    <InlineRewriter content={editDraft} language={appLanguage} context={currentSession.config.genre ? `${currentSession.config.genre} | ${currentSession.config.title || ''}` : undefined} onApply={(newContent: string) => setEditDraft(newContent)} />
+                    <div className="flex justify-end pt-1">
+                      <DetailPassButton
+                        draftText={editDraft}
+                        config={currentSession.config}
+                        language={appLanguage}
+                        onExpanded={(expandedText, meta) => {
+                          setDetailPassExpanded(expandedText);
+                          setDetailPassMeta(meta);
+                          setDetailPassOpen(true);
+                        }}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             )}
+            <DetailPassPreviewModal
+              open={detailPassOpen}
+              original={editDraft}
+              expanded={detailPassExpanded}
+              language={appLanguage}
+              onAccept={() => { setEditDraft(detailPassExpanded); setDetailPassOpen(false); }}
+              onEdit={(finalText) => { setEditDraft(finalText); setDetailPassOpen(false); }}
+              onReject={() => setDetailPassOpen(false)}
+            />
 
             {writingMode === 'refine' && editDraft && (
                 <AutoRefiner

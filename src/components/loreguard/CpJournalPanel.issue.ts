@@ -14,6 +14,7 @@ import {
   type IssueStatus,
   type RegisterStatus,
 } from "@/components/loreguard/CpJournalPanel.helpers";
+import type { ProcessCertificate } from "@/lib/creative-process/types";
 
 interface UseCpJournalIssueArgs {
   currentProjectId: string | null;
@@ -37,6 +38,7 @@ export function useCpJournalIssue({
   const [issueError, setIssueError] = useState<string | null>(null);
   const [lastFilenames, setLastFilenames] = useState<string[] | null>(null);
   const [lastIssuedMd, setLastIssuedMd] = useState<{ name: string; content: string } | null>(null);
+  const [lastCert, setLastCert] = useState<ProcessCertificate | null>(null);
   const [shareSupported] = useState(() => canShare());
   const [registerOptIn, setRegisterOptIn] = useState(false);
   const [registerStatus, setRegisterStatus] = useState<RegisterStatus>("idle");
@@ -98,6 +100,7 @@ export function useCpJournalIssue({
 
       setLastFilenames([htmlName, mdName]);
       setLastIssuedMd({ name: mdName, content: md });
+      setLastCert(result.cert);
       setIssueStatus("success");
       const certHtmlHash = await cp.computeSha256Hex(html);
 
@@ -209,7 +212,11 @@ export function useCpJournalIssue({
               body: JSON.stringify({
                 certId: result.cert.id,
                 projectId: currentProjectId,
-                certHash: certHtmlHash,
+                // [Phase 0 회귀 수정 2026-06-25] registry-contract 계약: certHash =
+                // computeCertHash(cert)(canonical 필드). 기존 certHtmlHash(SHA-256 html)는
+                // verify/route.ts:370 의 computeCertHash 재계산과 불일치 → 정직 발급 cert 도
+                // 항상 certHash mismatch. registry-roundtrip.test.ts:141 이 단언하는 계약에 정렬.
+                certHash: await cp.computeCertHash(result.cert),
                 chainTipHash: result.cert.chainTipHash ?? null,
                 visibility: issueView,
                 issuerType: result.cert.issuer?.type ?? "self",
@@ -281,6 +288,7 @@ export function useCpJournalIssue({
     issueError,
     lastFilenames,
     lastIssuedMd,
+    lastCert,
     shareSupported,
     registerOptIn,
     setRegisterOptIn,

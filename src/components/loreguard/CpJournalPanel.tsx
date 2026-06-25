@@ -22,7 +22,7 @@ import { useCpJournalIssue } from "@/components/loreguard/CpJournalPanel.issue";
 import {
   CpJournalSubViews,
 } from "@/components/loreguard/CpJournalPanel.subviews";
-import type { AppLanguage } from "@/lib/studio-types";
+import { SealCard } from "@/components/loreguard/SealCard";
 import type {
   CertificateView,
   CreativeEvent,
@@ -71,6 +71,7 @@ export default function CpJournalPanel() {
     issueError,
     lastFilenames,
     lastIssuedMd,
+    lastCert,
     shareSupported,
     registerOptIn,
     setRegisterOptIn,
@@ -390,6 +391,15 @@ export default function CpJournalPanel() {
               )}
             </div>
           )}
+          {/* 봉인 카드 — SealNumber + QR */}
+          {issueStatus === "success" && lastCert?.sealNumber && lastCert.verificationUrl && (
+            <SealCard
+              sealNumber={lastCert.sealNumber}
+              verificationUrl={lastCert.verificationUrl}
+              language={language}
+            />
+          )}
+
           {/* [D2-github-mirror] 미러 결과 — 옵트인 시에만 표시. 성공 줄에 정직 표기 문구 포함 */}
           {mirrorNotice && (
             <div

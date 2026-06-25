@@ -3,7 +3,7 @@
 // ============================================================
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Languages, Film, PenLine, Headphones, Download, Settings2, Plus, Github } from 'lucide-react';
+import { Languages, Film, PenLine, Headphones, Download, Settings2, Plus, Github, Package, GitMerge } from 'lucide-react';
 import { useGitHubAutoSync, isGitHubAutoSyncEnabled } from '@/hooks/useGitHubAutoSync';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
@@ -19,6 +19,8 @@ import type { ParsedScene } from '@/engine/scene-parser';
 
 const ScenePlayer = dynamic(() => import('@/components/studio/ScenePlayer'), { ssr: false });
 const SceneTimeline = dynamic(() => import('@/components/studio/SceneTimeline'), { ssr: false });
+const MergeConflictResolver = dynamic(() => import('@/components/studio/MergeConflictResolver'), { ssr: false });
+const IpPackExportModal = dynamic(() => import('@/components/loreguard/IpPackExportModal').then(m => ({ default: m.IpPackExportModal })), { ssr: false });
 
 /**
  * 상단 액션 버튼 공통 스타일 — 중복된 Tailwind 체인을 상수로 추출.
@@ -81,6 +83,9 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   const [parsedScenes, setParsedScenes] = useState<ParsedScene[]>([]);
   const [showSceneProps, setShowSceneProps] = useState(false);
   const [editingSceneIdx, setEditingSceneIdx] = useState<number | null>(null);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeContent, setMergeContent] = useState('');
+  const [ipPackOpen, setIpPackOpen] = useState(false);
 
   // ============================================================
   // PART 2.5 — GitHub 자동 동기화 (2026-04-25 신설)
@@ -304,6 +309,28 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
         >
           <Plus className="w-3 h-3" /> {L4(language, { ko: '에피소드 추가', en: 'Add Episode', ja: 'エピソード追加', zh: '添加剧集' })}
         </button>
+        {/* [G5+G6] IP 팩 출고 버튼 */}
+        <button
+          onClick={() => setIpPackOpen(true)}
+          className={simpleBtn('hover:border-accent-amber/50 transition-colors')}
+          title={L4(language, { ko: 'IP 팩 출고 — 플랫폼·출판사·법적 보존용 패키지 생성', en: 'IP Pack Export — build packages for platforms, publishers, and legal archiving' })}
+        >
+          <Package className="w-3 h-3" /> {L4(language, { ko: 'IP 팩', en: 'IP Pack', ja: 'IP パック', zh: 'IP 包' })}
+        </button>
+        {/* [G4] 충돌 해소 버튼 — 최신 원고에 충돌 마커(<<<<<<)가 있을 때만 표시 */}
+        {(() => {
+          const latest = (config.manuscripts ?? []).at(-1);
+          const hasConflict = !!latest?.content?.includes('<<<<<<<');
+          return hasConflict ? (
+            <button
+              onClick={() => { setMergeContent(latest!.content); setMergeOpen(true); }}
+              className={`${BTN_CLASS} bg-accent-red/15 text-accent-red border-accent-red/40 hover:bg-accent-red/25`}
+              title={L4(language, { ko: '충돌 감지됨 — 클릭해서 해소하세요', en: 'Conflict detected — click to resolve' })}
+            >
+              <GitMerge className="w-3 h-3" /> {L4(language, { ko: '충돌 해소', en: 'Resolve Conflict' })}
+            </button>
+          ) : null;
+        })()}
         {parsedScenes.length > 0 && (
           <>
             <button
@@ -485,6 +512,40 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           onEditInStudio={onEditInStudio}
         />
       )}
+
+      {/* [G4] MergeConflictResolver — 원고 충돌 마커(<<<<<<<) 해소 */}
+      <MergeConflictResolver
+        open={mergeOpen}
+        content={mergeContent}
+        language={language}
+        oursLabelOverride={L4(language, { ko: '내 변경', en: 'My Changes' })}
+        theirsLabelOverride={L4(language, { ko: '원격 변경', en: 'Remote Changes' })}
+        onSave={(resolved) => {
+          setConfig((prev) => {
+            const manuscripts = [...(prev.manuscripts ?? [])];
+            if (manuscripts.length > 0) {
+              manuscripts[manuscripts.length - 1] = {
+                ...manuscripts[manuscripts.length - 1],
+                content: resolved,
+                charCount: resolved.length,
+                lastUpdate: Date.now(),
+              };
+            }
+            return { ...prev, manuscripts };
+          });
+          setMergeOpen(false);
+        }}
+        onClose={() => setMergeOpen(false)}
+      />
+
+      {/* [G5+G6] IpPackExportModal */}
+      <IpPackExportModal
+        open={ipPackOpen}
+        language={language}
+        config={config}
+        currentProjectId={currentProjectId}
+        onClose={() => setIpPackOpen(false)}
+      />
     </>
   );
 };

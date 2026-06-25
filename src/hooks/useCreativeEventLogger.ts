@@ -314,7 +314,7 @@ export function useCreativeEventLogger(
           targetType,
           targetId,
           eventType: 'accept',
-          actorType: 'human',
+          actorType: 'ai',
           actorId: 'author',
           originType: 'AI_SUGGESTION',
           beforeHash,
