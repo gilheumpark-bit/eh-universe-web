@@ -62,6 +62,18 @@ describe('lsp auth', () => {
     });
   });
 
+  it('[fix] rejects format-only tokens outside dev/test (unset/staging NODE_ENV) without a token store', async () => {
+    nodeEnv.NODE_ENV = 'staging';
+
+    const result = await authorizeLspRequest(makeRequest(VALID_TOKEN));
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 503,
+      error: 'lsp_token_store_unconfigured',
+    });
+  });
+
   it('accepts a production token that matches the configured hash', async () => {
     nodeEnv.NODE_ENV = 'production';
     nodeEnv.LOREGUARD_LSP_TOKEN_HASH = await hashToken(VALID_TOKEN);

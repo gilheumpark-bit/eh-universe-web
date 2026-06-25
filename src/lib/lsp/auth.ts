@@ -151,7 +151,12 @@ export async function verifyLspToken(token: string): Promise<LspAuthResult> {
       return { ok: false, status: 401, error: 'unauthorized' };
     }
   }
-  if (process.env.NODE_ENV === 'production' && !hasServerTokenStore) {
+  // [fix] format-only 토큰 허용은 *명시적* local dev(development/test)에서만 한다.
+  // 과거엔 production 만 막아, 자기호스팅을 NODE_ENV 미설정/staging/커스텀 값으로 띄우면
+  // well-formed 토큰이 무인증 통과되는 갭이 있었다. 이제 비-dev 환경은 토큰 스토어 미설정 시
+  // 모두 503 으로 fail-closed (production 동작은 그대로).
+  const isLocalDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  if (!isLocalDev && !hasServerTokenStore) {
     return { ok: false, status: 503, error: 'lsp_token_store_unconfigured' };
   }
 

@@ -258,6 +258,8 @@ describe("/api/release-credit/operation", () => {
       body: makeBody({
         kind: "refund-credit",
         idempotencyKey: "release-credit-refund:project-alpha:cert-alpha",
+        // [fix] 역전은 원본 issue-debit 의 idempotencyKey 를 필수 참조.
+        relatedIdempotencyKey: "release-credit-debit:project-alpha:cert-alpha",
         creditAmount: 1,
         reasonKo: "과정기록 카드 환불/복구 반영",
       }),

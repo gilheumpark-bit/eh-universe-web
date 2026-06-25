@@ -82,6 +82,8 @@ export interface ReleaseCreditLedgerOperation {
   certificateId?: string | null;
   reasonKo: string;
   createdAt: string;
+  /** [fix] 역전(refund-credit/void-debit)이 가리키는 원본 issue-debit 의 idempotencyKey. */
+  relatedIdempotencyKey?: string | null;
 }
 
 export interface ReleaseCreditLedgerEntry extends ReleaseCreditLedgerOperation {
@@ -247,6 +249,30 @@ export function applyReleaseCreditLedgerOperation(
       entry: null,
       messageKo: "같은 원장 키로 이미 처리된 작업입니다.",
     };
+  }
+
+  // [fix] 역전(refund-credit/void-debit)은 원본 issue-debit 를 반드시 참조해야 하며,
+  // 같은 차감을 두 번 역전하거나 원본 금액을 초과해 환원할 수 없다(원장 정합성·이중환불 차단).
+  if (operation.kind === "refund-credit" || operation.kind === "void-debit") {
+    const ref = operation.relatedIdempotencyKey?.trim();
+    if (!ref) {
+      return { status: "invalid-operation", snapshot, entry: null, messageKo: "역전 대상(원본 차감) 키가 없습니다." };
+    }
+    const original = snapshot.entries.find((e) => e.idempotencyKey === ref);
+    if (!original || original.kind !== "issue-debit") {
+      return { status: "invalid-operation", snapshot, entry: null, messageKo: "역전할 원본 차감 기록을 찾을 수 없습니다." };
+    }
+    const alreadyReversed = snapshot.entries.some(
+      (e) => (e.kind === "refund-credit" || e.kind === "void-debit") && e.relatedIdempotencyKey === ref,
+    );
+    if (alreadyReversed) {
+      return { status: "invalid-operation", snapshot, entry: null, messageKo: "이미 역전된 차감입니다." };
+    }
+    const originalDebit = normalizePositiveCredits(original.creditAmount);
+    const reverseAmount = normalizePositiveCredits(operation.creditAmount);
+    if (originalDebit === null || reverseAmount === null || reverseAmount > originalDebit) {
+      return { status: "invalid-operation", snapshot, entry: null, messageKo: "역전 금액이 원본 차감을 초과합니다." };
+    }
   }
 
   const delta = operationDelta(operation);

@@ -47,6 +47,7 @@ interface OperationInput {
   certificateId: string | null;
   reasonKo: string;
   fallbackPlanId: LoreguardPlanId | null;
+  relatedIdempotencyKey: string | null;
 }
 
 function isInternalRequest(req: NextRequest): boolean {
@@ -114,6 +115,20 @@ function parseOperationBody(raw: unknown): { input: OperationInput | null; issue
     else certificateId = value;
   }
 
+  // [fix] 역전(refund-credit/void-debit)은 원본 차감(issue-debit)의 idempotencyKey 를 필수 참조.
+  // 원본 미참조·중복역전·초과환불을 원장 적용 단계에서 차단하기 위한 입력 계약.
+  let relatedIdempotencyKey: string | null = null;
+  if (kind === "refund-credit" || kind === "void-debit") {
+    const value = typeof body.relatedIdempotencyKey === "string" ? body.relatedIdempotencyKey.trim() : "";
+    if (!IDEMPOTENCY_REGEX.test(value)) {
+      issues.push("relatedIdempotencyKey: 역전 작업은 원본 차감의 idempotencyKey(8~180자)를 참조해야 합니다.");
+    } else {
+      relatedIdempotencyKey = value;
+    }
+  } else if (typeof body.relatedIdempotencyKey === "string" && body.relatedIdempotencyKey.trim() && IDEMPOTENCY_REGEX.test(body.relatedIdempotencyKey.trim())) {
+    relatedIdempotencyKey = body.relatedIdempotencyKey.trim();
+  }
+
   const fallbackPlanId = normalizeLoreguardPlanId(body.fallbackPlanId);
   const reasonKo = typeof body.reasonKo === "string" && body.reasonKo.trim()
     ? body.reasonKo.trim().slice(0, 120)
@@ -132,6 +147,7 @@ function parseOperationBody(raw: unknown): { input: OperationInput | null; issue
       certificateId,
       reasonKo,
       fallbackPlanId,
+      relatedIdempotencyKey,
     },
     issues,
   };
@@ -280,6 +296,7 @@ export async function POST(req: NextRequest) {
     certificateId: input.certificateId,
     reasonKo: input.reasonKo,
     createdAt: now,
+    relatedIdempotencyKey: input.relatedIdempotencyKey,
   };
 
   const applied = applyReleaseCreditLedgerOperation(ledgerResult.loaded.snapshot, operation);

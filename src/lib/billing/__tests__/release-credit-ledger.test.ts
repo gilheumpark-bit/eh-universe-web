@@ -153,6 +153,8 @@ describe("release credit ledger preview", () => {
     const refund = applyReleaseCreditLedgerOperation(debitResult.snapshot, {
       kind: "refund-credit",
       idempotencyKey: "release-credit-refund:project-refund:cert-refund",
+      // [fix] 역전은 원본 issue-debit 의 idempotencyKey 를 참조해야 한다.
+      relatedIdempotencyKey: debitResult.entry?.idempotencyKey,
       creditAmount: 10,
       projectId: "project-refund",
       planId: "studio",
@@ -167,6 +169,60 @@ describe("release credit ledger preview", () => {
     expect(refund.snapshot.balance).toBe(10);
     expect(refund.entry?.balanceBefore).toBe(0);
     expect(refund.entry?.balanceAfter).toBe(10);
+  });
+
+  it("[fix] rejects refunds that break ledger consistency (no-ref / phantom / over / double)", () => {
+    const snapshot = createReleaseCreditLedgerSnapshot({
+      userId: "uid-ledger",
+      planId: "studio",
+      periodKey: "2026-06",
+      projectId: "project-refund",
+      createdAt: "2026-06-15T00:00:00.000Z",
+    });
+    const preview = buildReleaseCreditPreview({
+      planId: "studio",
+      packageProfileId: "external-submission",
+      projectId: "project-refund",
+      workTitle: "역전 검증",
+      certificateId: "cert-refund",
+    });
+    const debited = applyReleaseCreditLedgerOperation(
+      snapshot,
+      buildReleaseCreditDebitOperationFromPreview(preview, { createdAt: "2026-06-15T00:01:00.000Z" }),
+    );
+    const debitKey = debited.entry!.idempotencyKey;
+    const baseRefund = {
+      kind: "refund-credit" as const,
+      projectId: "project-refund",
+      planId: "studio" as const,
+      packageProfileId: "external-submission" as const,
+      productId: "complete-basic" as const,
+      certificateId: "cert-refund",
+      reasonKo: "역전",
+      createdAt: "2026-06-15T00:03:00.000Z",
+    };
+
+    // 1) 원본 참조 없음 → invalid
+    expect(applyReleaseCreditLedgerOperation(debited.snapshot, {
+      ...baseRefund, idempotencyKey: "r-noref", creditAmount: 10,
+    }).status).toBe("invalid-operation");
+    // 2) 존재하지 않는 원본 참조 → invalid
+    expect(applyReleaseCreditLedgerOperation(debited.snapshot, {
+      ...baseRefund, idempotencyKey: "r-phantom", relatedIdempotencyKey: "no-such-debit", creditAmount: 10,
+    }).status).toBe("invalid-operation");
+    // 3) 원본 차감 금액 초과 환원 → invalid
+    expect(applyReleaseCreditLedgerOperation(debited.snapshot, {
+      ...baseRefund, idempotencyKey: "r-over", relatedIdempotencyKey: debitKey, creditAmount: 9999,
+    }).status).toBe("invalid-operation");
+    // 4) 정상 역전 1회 → applied
+    const first = applyReleaseCreditLedgerOperation(debited.snapshot, {
+      ...baseRefund, idempotencyKey: "r-first", relatedIdempotencyKey: debitKey, creditAmount: 10,
+    });
+    expect(first.status).toBe("applied");
+    // 5) 같은 원본 두 번째 역전 → invalid (이중 환불 차단)
+    expect(applyReleaseCreditLedgerOperation(first.snapshot, {
+      ...baseRefund, idempotencyKey: "r-double", relatedIdempotencyKey: debitKey, creditAmount: 10,
+    }).status).toBe("invalid-operation");
   });
 
   it("records publisher debits without finite balance mutation", () => {
