@@ -474,6 +474,61 @@ describe('/api/stripe/webhook POST — revenue path claim sync', () => {
     );
   });
 
+  it('[C1] release_credit_purchase ledger save 실패(일시 장애) → 500 + dedup mark 미수행 (Stripe 재시도 유도)', async () => {
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-proj';
+    const freeLedger = createReleaseCreditLedgerSnapshot({
+      userId: 'uid-buy2',
+      planId: 'free',
+      periodKey: '2026-06',
+      projectId: 'project-beta',
+      createdAt: '2026-06-15T00:00:00.000Z',
+    });
+    mockGetDoc.mockResolvedValue({ ok: false, error: 'not_found' });
+    mockGetDocWithMeta
+      .mockResolvedValueOnce({ ok: false, error: 'not_found' })
+      .mockResolvedValueOnce({
+        ok: true,
+        fields: { payloadJson: { stringValue: JSON.stringify(freeLedger) } },
+        updateTime: '2026-06-15T00:00:01.000Z',
+      });
+    // 일시 장애로 ledger save(patch) 실패 (conflict 아님) → RetryableWebhookError → 500.
+    mockPatchDoc.mockResolvedValue({ ok: false, error: 'http_500' });
+    mockConstructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      id: 'evt_release_credit_fail',
+      created: 1,
+      livemode: false,
+      data: {
+        object: {
+          client_reference_id: 'uid-buy2',
+          payment_status: 'paid',
+          status: 'complete',
+          metadata: {
+            firebaseUid: 'uid-buy2',
+            loreguardCheckoutKind: 'release_credit_purchase',
+            loreguardProductId: 'episode-c2pa',
+            loreguardPackageProfileId: 'public-reader',
+            releaseCreditAmount: '2',
+            projectId: 'project-beta',
+            periodKey: '2026-06',
+            certificateId: 'CERT-BUY-002',
+          },
+        },
+      },
+    });
+
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ body: '{}', signature: 'good-sig' }));
+
+    // 500 → Stripe 재전송. dedup mark(stripe_processed_events) 미수행 → 재시도가 다시 처리 가능.
+    expect(res.status).toBe(500);
+    const dedupMark = mockCreateDoc.mock.calls.find((call) => call[1] === 'stripe_processed_events');
+    expect(dedupMark).toBeUndefined();
+    expect(mockApiLog).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'stripe_release_credit_purchase_save_failed' }),
+    );
+  });
+
   it('client_reference_id 없으면 claim 미호출', async () => {
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_co2', created: 1, livemode: false,
@@ -622,8 +677,9 @@ describe('/api/stripe/webhook POST — idempotency (event.id dedupe)', () => {
     expect(mockSetClaim).toHaveBeenCalledWith('uid-i1');
   });
 
-  it('중복 이벤트 (409 ALREADY_EXISTS) → claim 미호출 + duplicate:true + 200', async () => {
-    mockCreateDoc.mockResolvedValue({ ok: false, error: 'http_409' });
+  it('중복 이벤트 (이미 처리됨) → claim 미호출 + duplicate:true + 200', async () => {
+    // [C1 fix] dedup 은 이제 side effect 전 읽기전용 isEventProcessed(firestoreGetDocument)로 판정.
+    mockGetDoc.mockResolvedValueOnce({ ok: true, fields: {} });
     mockConstructEvent.mockReturnValue({
       type: 'checkout.session.completed', id: 'evt_idem_dup', created: 1, livemode: false,
       data: { object: { client_reference_id: 'uid-i2' } },

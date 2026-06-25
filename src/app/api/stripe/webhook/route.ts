@@ -25,7 +25,7 @@ import Stripe from 'stripe';
 import { apiLog } from '@/lib/api-logger';
 import { sendReceiptEmail, sendPaymentFailedEmail } from '@/lib/email-service';
 import { setStripeRoleClaim, clearStripeRoleClaim } from '@/lib/firebase-auth-admin-rest';
-import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
+import { firestoreCreateDocument, firestoreGetDocument } from '@/lib/firestore-service-rest';
 import {
   applyReleaseCreditLedgerOperation,
   compactReleaseCreditScopeKey,
@@ -141,6 +141,12 @@ function parseReleaseCreditPurchaseMetadata(
   return { uid, projectId, periodKey, productId, packageProfileId, creditAmount, certificateId };
 }
 
+/**
+ * [C1 fix] 재시도 가능한 일시 장애 마커. 이 에러로 throw 된 경우에만 webhook 이 500 을 반환해
+ * Stripe 재전송을 유도한다. (구독·환불·이메일 등 self-heal/멱등 경로는 기존 fail-safe 200 유지.)
+ */
+class RetryableWebhookError extends Error {}
+
 async function syncReleaseCreditPurchase(session: Stripe.Checkout.Session, eventId: string): Promise<void> {
   const parsed = parseReleaseCreditPurchaseMetadata(session);
   if (!parsed) {
@@ -178,7 +184,8 @@ async function syncReleaseCreditPurchase(session: Stripe.Checkout.Session, event
         route: '/api/stripe/webhook',
         meta: { eventId, error: created.error },
       });
-      return;
+      // [C1 fix] 일시 장애 → throw 하여 핸들러가 500 반환·Stripe 재시도 (멱등키로 안전).
+      throw new RetryableWebhookError(`release_credit_purchase ledger create failed: ${created.error}`);
     }
     loaded = await ledgerStore.load({
       uid: parsed.uid,
@@ -194,7 +201,8 @@ async function syncReleaseCreditPurchase(session: Stripe.Checkout.Session, event
       route: '/api/stripe/webhook',
       meta: { eventId, error: loaded.error },
     });
-    return;
+    // [C1 fix] 일시 장애 → throw 하여 핸들러가 500 반환·Stripe 재시도 (멱등키로 안전).
+    throw new RetryableWebhookError(`release_credit_purchase ledger load failed: ${loaded.error}`);
   }
 
   const operation: ReleaseCreditLedgerOperation = {
@@ -233,14 +241,34 @@ async function syncReleaseCreditPurchase(session: Stripe.Checkout.Session, event
     snapshot: applied.snapshot,
     expectedUpdateTime: loaded.updateTime,
   });
+  if (saved.ok) {
+    apiLog({
+      level: 'info',
+      event: 'stripe_release_credit_purchase_synced',
+      route: '/api/stripe/webhook',
+      meta: { eventId, balance: applied.snapshot.balance, productId: parsed.productId },
+    });
+    return;
+  }
+  // [C1 fix] conflict = 동시 전달이 먼저 저장 성공 → 멱등키로 안전, 정상 처리로 간주.
+  if (saved.error === 'conflict') {
+    apiLog({
+      level: 'info',
+      event: 'stripe_release_credit_purchase_save_conflict',
+      route: '/api/stripe/webhook',
+      meta: { eventId },
+    });
+    return;
+  }
+  // [C1 fix] 그 외(timeout 등 일시 장애) = throw → 핸들러 500 반환 → Stripe 재시도.
+  // ledger idempotencyKey(release-credit-purchase:stripe:eventId)로 재시도 중복 grant 차단.
   apiLog({
-    level: saved.ok ? 'info' : 'warn',
-    event: saved.ok ? 'stripe_release_credit_purchase_synced' : 'stripe_release_credit_purchase_save_failed',
+    level: 'warn',
+    event: 'stripe_release_credit_purchase_save_failed',
     route: '/api/stripe/webhook',
-    meta: saved.ok
-      ? { eventId, balance: applied.snapshot.balance, productId: parsed.productId }
-      : { eventId, error: saved.error },
+    meta: { eventId, error: saved.error },
   });
+  throw new RetryableWebhookError(`release_credit_purchase save failed: ${saved.error}`);
 }
 
 // ============================================================
@@ -293,6 +321,28 @@ async function markEventProcessed(eventId: string): Promise<'first' | 'duplicate
     return r.error === 'http_409' ? 'duplicate' : 'unavailable';
   } catch {
     return 'unavailable';
+  }
+}
+
+/**
+ * [C1 fix] 읽기전용 dedup 체크 — side effect 실행 *전*에 이미 처리된 이벤트인지 확인.
+ * mark(쓰기)는 side effect 성공 후로 미뤄, 처리 실패 시 dedup 이 재시도를 막지 않게 한다.
+ * 체크 실패(SA 미설정·timeout)는 fail-open(false) — side effect 가 멱등이라 재처리 안전.
+ */
+async function isEventProcessed(eventId: string): Promise<boolean> {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  if (!projectId || !eventId) return false;
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('dedupe check timeout')), 5_000);
+    });
+    const r = await Promise.race([
+      firestoreGetDocument(projectId, `${DEDUPE_COLLECTION}/${eventId}`),
+      timeout,
+    ]);
+    return r.ok === true;
+  } catch {
+    return false;
   }
 }
 
@@ -404,33 +454,22 @@ export async function POST(req: NextRequest) {
         },
   );
 
-  // [H1 stripe-ready] 멱등성 — side effect 이벤트는 event.id 로 1회만 처리.
-  let duplicate = false;
-  if (SIDE_EFFECT_EVENTS.has(event.type)) {
-    const mark = await markEventProcessed(event.id);
-    if (mark === 'duplicate') {
-      duplicate = true;
-      apiLog({
-        level: 'info',
-        event: 'stripe_event_duplicate_skipped',
-        route: '/api/stripe/webhook',
-        meta: { type: event.type, id: event.id },
-      });
-    } else if (mark === 'unavailable') {
-      apiLog({
-        level: 'warn',
-        event: 'stripe_event_dedupe_unavailable',
-        route: '/api/stripe/webhook',
-        meta: { type: event.type, id: event.id },
-      });
-    }
+  // [C1 fix] 멱등성 — 읽기전용으로 이미 처리됐는지 *먼저* 확인 (여기서 mark 하지 않음).
+  // mark(쓰기)는 side effect 성공 후로 미뤄, 처리 실패 시 dedup 이 재시도를 막지 않게 한다.
+  if (SIDE_EFFECT_EVENTS.has(event.type) && (await isEventProcessed(event.id))) {
+    apiLog({
+      level: 'info',
+      event: 'stripe_event_duplicate_skipped',
+      route: '/api/stripe/webhook',
+      meta: { type: event.type, id: event.id },
+    });
+    return NextResponse.json({ received: true, eventId: event.id, duplicate: true });
   }
 
-  // [revenue path 2026-06-06] 결제 상태 → Firebase stripeRole claim 동기화. fail-safe (실패해도 200).
+  // [revenue path 2026-06-06] 결제 상태 → Firebase stripeRole claim 동기화.
+  // [C1 fix] side effect 실패(throw)는 삼키지 않고 500 반환 → Stripe 재시도 (멱등키로 안전).
   try {
-    if (duplicate) {
-      // 중복 이벤트 — side effect 전부 skip (이미 1회 처리됨).
-    } else if (event.type === 'checkout.session.completed') {
+    if (event.type === 'checkout.session.completed') {
       // [#13 fix] payment_status 검사 없이 client_reference_id 만으로 pro 부여하면
       // unpaid/pending 세션도 pro 가 됨. 실제 결제 완료('paid') + 세션 'complete' 일 때만 set.
       // no_payment_required/unpaid 는 보류 — 정기 결제 활성은 invoice.paid 또는
@@ -562,10 +601,29 @@ export async function POST(req: NextRequest) {
       route: '/api/stripe/webhook',
       error: err instanceof Error ? err.message : 'unknown',
     });
+    // [C1 fix] credit-purchase 같은 self-heal 불가 경로의 일시 장애만 500 으로 재시도 유도.
+    // dedup mark 를 하지 않으므로 Stripe 재전송이 다시 처리할 수 있고, ledger idempotencyKey 로
+    // 중복 grant 는 발생하지 않는다. 그 외(구독·환불·이메일)는 기존 fail-safe(200) 유지.
+    if (err instanceof RetryableWebhookError) {
+      return NextResponse.json({ error: 'event_processing_failed_retry' }, { status: 500 });
+    }
   }
 
-  // [C] 200 반환 필수 — Stripe 는 non-2xx 를 재전송 시도. 처리 완료 신호.
-  return NextResponse.json({ received: true, eventId: event.id, ...(duplicate ? { duplicate: true } : {}) });
+  // [C1 fix] side effect 성공(또는 fail-safe 경로) 후에만 dedup mark (best-effort).
+  // credit-purchase 실패 시엔 위에서 500 으로 빠져 여기에 도달하지 않는다.
+  if (SIDE_EFFECT_EVENTS.has(event.type)) {
+    const mark = await markEventProcessed(event.id);
+    if (mark === 'unavailable') {
+      apiLog({
+        level: 'warn',
+        event: 'stripe_event_dedupe_unavailable',
+        route: '/api/stripe/webhook',
+        meta: { type: event.type, id: event.id },
+      });
+    }
+  }
+  // [C] 정상 처리 완료 — 200.
+  return NextResponse.json({ received: true, eventId: event.id });
 }
 
 // IDENTITY_SEAL: stripe-webhook | role=payment-event-ingestion | inputs=raw+signature | outputs=200|400|503
