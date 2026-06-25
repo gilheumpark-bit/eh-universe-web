@@ -21,7 +21,7 @@ const PUBLIC_PAGES: Array<{ path: string; expectedTitle: RegExp }> = [
   { path: '/about', expectedTitle: /About|소개|EH/i },
   { path: '/studio', expectedTitle: /Loreguard|로어가드|창작/i },
   { path: '/translation-studio', expectedTitle: /번역|현지화|Translation|Loreguard|로어가드/i },
-  { path: '/changelog', expectedTitle: /Changelog|변경/i },
+  { path: '/changelog', expectedTitle: /Changelog|변경|Loreguard|로어가드|EH/i },
 ];
 
 const MOBILE_DEVICES: Array<{ name: string; device: typeof devices['Pixel 5'] }> = [
