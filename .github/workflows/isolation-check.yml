@@ -17,7 +17,7 @@ jobs:
   isolation-section-1:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
 
@@ -106,7 +106,7 @@ jobs:
   twentyone-modules-isolation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: No rule pack data hardcoded in AGPL distribution
         run: |
