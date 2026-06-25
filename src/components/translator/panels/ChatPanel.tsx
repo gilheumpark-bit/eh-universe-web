@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageSquare, Send, Sparkles } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { PROVIDERS as AI_PROVIDER_DEFS } from '@/lib/ai-providers';
@@ -108,6 +108,15 @@ export function ChatPanel() {
   const listRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<ChatMsg[]>(messages);
   messagesRef.current = messages;
+
+  // [fix] missing-cleanup: abort the in-flight SSE stream on unmount so the
+  // fetch reader stops and setMessages does not run after the panel closes.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
+  }, []);
 
   const scrollToBottom = () => {
     requestAnimationFrame(() => {

@@ -105,12 +105,12 @@ describe('getMaxOutputTokens', () => {
     expect(result).toBe(16384);
   });
 
-  it('respects minimum output reserve of 4096', () => {
-    // Even with very tight budget, should return at least 4096
+  it('caps to remaining space when the prompt nearly fills the context window', () => {
+    // [fix] available = 128000 - 125000 = 3000 (< MIN_OUTPUT_RESERVE 4096).
+    // 과거엔 4096 을 강제해 컨텍스트 한도를 초과(API 오류 유발)했다.
+    // 이제 실제 남은 공간(3000)만 요청한다.
     const result = getMaxOutputTokens('gpt-5.4-mini', 120000, 5000);
-    // available = 128000 - 125000 = 3000, reserved=16384
-    // max(4096, min(16384, 3000)) = max(4096, 3000) = 4096
-    expect(result).toBe(4096);
+    expect(result).toBe(3000);
   });
 
   it('clamps to available space when budget is tight', () => {

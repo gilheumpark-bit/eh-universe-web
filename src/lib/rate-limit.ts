@@ -61,10 +61,23 @@ class MemoryBackend implements RateLimitBackend {
     const entry = this.map.get(key);
 
     if (!entry || now > entry.resetAt) {
-      // Evict oldest entry if map is full (defense vs. unbounded growth)
+      // Evict an entry if map is full (defense vs. unbounded growth).
+      // [fix] Prefer an already-expired entry over the oldest-inserted one:
+      // the oldest-inserted key may still be an active (non-expired) limiter,
+      // and blindly dropping it would reset that limiter under key pressure
+      // (rate-limit-bypass). Fall back to oldest-inserted only if none expired.
       if (this.map.size >= MAX_ENTRIES) {
-        const firstKey = this.map.keys().next().value;
-        if (firstKey !== undefined) this.map.delete(firstKey);
+        let evictKey: string | undefined;
+        for (const [k, e] of this.map) {
+          if (now > e.resetAt) {
+            evictKey = k;
+            break;
+          }
+        }
+        if (evictKey === undefined) {
+          evictKey = this.map.keys().next().value;
+        }
+        if (evictKey !== undefined) this.map.delete(evictKey);
       }
       this.map.set(key, { count: 1, resetAt: now + config.windowMs });
       return { allowed: true, retryAfterMs: 0 };

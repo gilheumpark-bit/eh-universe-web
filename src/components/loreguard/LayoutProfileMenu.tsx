@@ -52,6 +52,8 @@ export default function LayoutProfileMenu({ language }: LayoutProfileMenuProps) 
   const [name, setName] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // [fix] showNotice의 setTimeout id를 추적해 재호출/언마운트 시 정리 (조기 사라짐 방지)
+  const noticeTimerRef = useRef<number | null>(null);
 
   const labels = useMemo(
     () => ({
@@ -94,9 +96,25 @@ export default function LayoutProfileMenu({ language }: LayoutProfileMenuProps) 
   }, [open]);
 
   const showNotice = (next: Notice) => {
+    // [fix] 이전 타이머를 먼저 정리해 새 알림이 이전 타이머에 의해 조기 사라지지 않게 함
+    if (noticeTimerRef.current !== null) {
+      window.clearTimeout(noticeTimerRef.current);
+    }
     setNotice(next);
-    window.setTimeout(() => setNotice(null), 2200);
+    noticeTimerRef.current = window.setTimeout(() => {
+      setNotice(null);
+      noticeTimerRef.current = null;
+    }, 2200);
   };
+
+  // [fix] 언마운트 시 미완료 알림 타이머 정리 (setState-after-unmount 방지)
+  useEffect(() => {
+    return () => {
+      if (noticeTimerRef.current !== null) {
+        window.clearTimeout(noticeTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSave = () => {
     const profile = createLayoutProfileSnapshot(

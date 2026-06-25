@@ -202,6 +202,8 @@ export const RightChatPanel: React.FC<RightChatPanelProps> = React.memo(({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
+                // [fix] IME 조합 중(한/일/중) Enter는 후보 확정용이므로 전송 금지
+                if (e.nativeEvent.isComposing || e.keyCode === 229) return;
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSend();

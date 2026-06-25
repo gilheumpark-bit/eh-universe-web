@@ -385,7 +385,8 @@ Output ONLY the revised draft.`;
         return 'LIGHT POLISH ONLY (Faithful Mode). Fix only typos, broken grammar, and unintended ambiguity. DO NOT smooth out author voice or replace expressions for fluency. Preserve sentence rhythm and distinctive phrasing.';
       }
       if (outputMode === 'market') {
-        return 'READER-FLOW POLISH (Market-ready Mode). Optimize sentence flow for native ${to} readers. Strengthen reader-friendly cadence. Polish dialogue rhythm and chapter hook lines. Keep narrative facts unchanged.';
+        // [fix] single-quoted string left ${to} literal; use template literal so target language interpolates
+        return `READER-FLOW POLISH (Market-ready Mode). Optimize sentence flow for native ${to} readers. Strengthen reader-friendly cadence. Polish dialogue rhythm and chapter hook lines. Keep narrative facts unchanged.`;
       }
       return 'Perform a final polish. Fix any lingering awkward phrasing, typos, or grammatical errors. Ensure perfect narrative flow.';
     })();

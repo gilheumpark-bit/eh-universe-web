@@ -18,6 +18,10 @@ import { CURRENT_SCHEMA_VERSION } from './types';
 import { appendEntry } from './journal';
 import { compressToBytes } from './compression';
 import { sha256, utf8Encode } from './hash';
+// [fix] line 102: snapshot 엔트리를 IDB snapshots store에도 기록하기 위해 import.
+// recovery.findSnapshotRecord()가 idbListSnapshots()로 record를 찾으므로,
+// store에 없으면 마이그레이션 snapshot이 복구에서 누락(레거시 데이터 전손)된다.
+import { idbPutSnapshot, type SnapshotRecord } from './indexeddb-adapter';
 
 export const LS_KEY_LEGACY_PROJECTS = 'noa_projects_v2';
 export const LS_KEY_MIGRATED_MARKER = 'noa_journal_migrated_v1';
@@ -106,6 +110,22 @@ export async function migrateLegacyProjects(): Promise<MigrationResult> {
       projectId: null,
     });
     if (!snapshotResult.ok) throw new Error('snapshot append 실패');
+
+    // [fix] line 102: createSnapshot()와 동일하게 IDB snapshots store에도 기록한다.
+    // 마이그레이션 snapshot은 레거시 데이터의 유일한 보존본이므로 protected: true로
+    // cleanupOldSnapshots에서 보호. store put 실패는 chain에 영향 없음(entry는 이미 journal에 기록됨).
+    if (snapshotResult.entry) {
+      try {
+        const record: SnapshotRecord = {
+          id: snapshotResult.entry.id,
+          payload,
+          meta: { protected: true, createdAt: Date.now() },
+        };
+        await idbPutSnapshot(record);
+      } catch (putErr) {
+        logger.warn('save-engine:migration', 'snapshots store put 실패', putErr);
+      }
+    }
   } catch (err) {
     await appendMigrationPhase('rollback');
     return { performed: false, reason: 'failed', error: `snapshot: ${errMsg(err)}` };

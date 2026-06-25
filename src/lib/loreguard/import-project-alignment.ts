@@ -144,11 +144,16 @@ function inferReleasePurpose(text: string): ProjectReleasePurpose | null {
   return null;
 }
 
+// 분량(자 수) 후보의 하한. 회차번호("12화")·소수 회차수 등 본문성 숫자가
+// 분량 범위로 오인되는 것을 막는다. 실제 회차 분량 목표는 항상 수백~수천 자 단위.
+const EPISODE_LENGTH_MIN_CHARS = 100;
+
 export function parseEpisodeLengthGoal(value: string | undefined): { min: number; max: number } | null {
   const matches = value?.match(/\d[\d,]*/g) ?? [];
   const nums = matches
     .map((match) => Number.parseInt(match.replace(/,/g, ""), 10))
-    .filter((num) => Number.isFinite(num) && num > 0);
+    // [fix] 본문성 숫자(회차번호 등) 오인 방지: 분량으로 볼 수 있는 자 수 하한 이상만 채택
+    .filter((num) => Number.isFinite(num) && num >= EPISODE_LENGTH_MIN_CHARS);
   if (nums.length >= 2) {
     const [a, b] = nums;
     return { min: Math.min(a, b), max: Math.max(a, b) };

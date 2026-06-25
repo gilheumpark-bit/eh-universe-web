@@ -13,6 +13,8 @@ import {
   lspAuthHeaders,
   verifyLspToken,
 } from '@/lib/lsp/auth';
+// [fix] spoofable XFF 대신 codebase 표준 getClientIp 사용 (x-vercel-forwarded-for 우선 → 위조 내성)
+import { getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -55,10 +57,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // 보안 누락 수리 — 토큰 발급 자체는 인증이 없으므로 IP 기반 rate-limit 으로 무한 발급 방지.
   // 이전 버전: rate-limit 0 → 누구나 무한 토큰 발급 가능 (DoS·storage 공격 위험).
-  // 식별자: x-forwarded-for (Vercel) 또는 x-real-ip — 둘 다 없으면 anonymous (가장 엄격 throttle).
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  const clientId = forwarded?.split(',')[0]?.trim() || realIp || 'anonymous';
+  // [fix] 식별자를 직접 추출하던 spoofable 로직(x-forwarded-for 우선)을 제거하고
+  //   공용 getClientIp 사용. Vercel 환경에선 x-vercel-forwarded-for(위조 불가) → x-real-ip 우선,
+  //   self-host 에선 x-forwarded-for 폴백, 모두 없으면 'unknown'(가장 엄격 throttle).
+  const clientId = getClientIp(request.headers);
   const rl = checkRateLimit(`auth:${clientId}`);
   if (!rl.allowed) {
     return NextResponse.json(

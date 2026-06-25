@@ -105,7 +105,10 @@ export function useStudioShellActionRouting({
   writingMode,
   editDraft,
 }: UseStudioShellActionRoutingOptions) {
-  const cmdPalette = useCmdPalette();
+  // [fix] useStudioKeyboard 가 Ctrl+P 를 onPrint 로 이미 점유한다. useCmdPalette 의 내부
+  // Ctrl+P 트리거를 disableInternalShortcut 로 꺼 양쪽이 동시 발동하던 충돌을 제거한다.
+  // (TranslatorShell 과 동일 규약 — 팔레트는 액션 바인딩/버튼으로 연다.)
+  const cmdPalette = useCmdPalette({ disableInternalShortcut: true });
   const handleTabChangeRef = useRef<(tab: AppTab) => void>(() => {});
   const handleAiGenerateRef = useRef<() => void>(() => {});
   const handleAiRefineRef = useRef<() => void>(() => {});

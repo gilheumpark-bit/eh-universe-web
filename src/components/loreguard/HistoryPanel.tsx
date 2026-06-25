@@ -154,7 +154,8 @@ export default function HistoryPanel() {
 
   // 회차 — lastUpdate desc (구 HistoryTab filtered sort 동일)
   const sortedSessions = useMemo(
-    () => [...sessions].sort((a, b) => b.lastUpdate - a.lastUpdate),
+    // [fix] lastUpdate가 undefined/비수치면 b-a 가 NaN → 정렬 불안정. 0으로 정규화 후 비교 (정상 수치 동작 동일).
+    () => [...sessions].sort((a, b) => (Number(b.lastUpdate) || 0) - (Number(a.lastUpdate) || 0)),
     [sessions],
   );
 

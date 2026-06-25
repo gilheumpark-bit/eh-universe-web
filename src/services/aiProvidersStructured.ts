@@ -164,8 +164,13 @@ export async function dispatchStructuredGeneration(
       }
       return { ok: false, error: 'Local providers must use /api/local-proxy' };
     }
-    if (provider === 'gemini' && schema) {
-      return { ok: true, result: await generateJsonGemini(apiKey, model, prompt, schema, fallback) };
+    if (provider === 'gemini') {
+      // [fix] gemini without a schema previously fell through to the OpenAI-compat
+      // path, where 'gemini' is not a known provider -> 'Unknown provider: gemini'.
+      // Route gemini here unconditionally and supply a permissive default schema
+      // when none is given (mirrors the Claude default input_schema above).
+      const geminiSchema = schema ?? { type: 'object', properties: { result: { type: 'string' } } };
+      return { ok: true, result: await generateJsonGemini(apiKey, model, prompt, geminiSchema, fallback) };
     }
     if (provider === 'claude') {
       return { ok: true, result: await generateJsonClaude(apiKey, model, prompt, schema, fallback) };

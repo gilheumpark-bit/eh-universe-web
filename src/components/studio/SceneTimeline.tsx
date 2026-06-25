@@ -25,6 +25,11 @@ export default function SceneTimeline({
 }: SceneTimelineProps) {
   const isKO = language === "KO";
   const [scenes, setScenes] = useState(initialScenes);
+  // [fix] stale-state: sync internal scenes when the initialScenes prop reference changes
+  // (useState only captures the first value; parent updates were previously ignored)
+  useEffect(() => {
+    setScenes(initialScenes);
+  }, [initialScenes]);
   const [collapsedScenes, setCollapsedScenes] = useState<Set<number>>(new Set());
   const [selectedBeat, setSelectedBeat] = useState<DragState | null>(null);
   const [dragSource, setDragSource] = useState<DragState | null>(null);
@@ -88,7 +93,14 @@ export default function SceneTimeline({
       const next = prev.map((scene) => ({ ...scene, beats: [...scene.beats] }));
       const [removed] = next[src.sceneIndex].beats.splice(src.beatIndex, 1);
       if (!removed) return prev;
-      next[targetSceneIndex].beats.splice(targetBeatIndex, 0, removed);
+      // [fix] off-by-one: removing the source within the same scene shifts later
+      // indices left by one, so the target index must be decremented when the
+      // source precedes the target. Cross-scene drops are unaffected.
+      const insertIndex =
+        src.sceneIndex === targetSceneIndex && src.beatIndex < targetBeatIndex
+          ? targetBeatIndex - 1
+          : targetBeatIndex;
+      next[targetSceneIndex].beats.splice(insertIndex, 0, removed);
       onScenesChange(next);
       return next;
     });

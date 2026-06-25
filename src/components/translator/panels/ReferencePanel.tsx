@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { FileSearch, Search, BookOpen, Plus, Trash2, ExternalLink, Save, Check } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
 import { logger } from '@/lib/logger';
@@ -48,7 +48,7 @@ function saveReferences(refs: ExternalReference[]): void {
 // PART 3 — Main Component
 // ============================================================
 export function ReferencePanel() {
-  const { chapters, activeChapterIndex, patchActiveChapter, langKo } = useTranslator();
+  const { chapters, activeChapterIndex, patchChapterAtIndex, langKo } = useTranslator();
   const currentChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
   const storyNote = currentChapter?.storyNote ?? '';
 
@@ -64,16 +64,39 @@ export function ReferencePanel() {
     setNoteDraft(storyNote);
   }, [storyNote, activeChapterIndex]);
 
-  // debounced 저장 — 800ms 후 patchActiveChapter
+  // [fix] line 68 data-loss: cleanup 시점에 현재 활성 회차를 알기 위한 ref
+  // (디바운스 저장 effect가 캡처한 회차와 비교해 전환 여부를 판단)
+  const activeChapterIndexRef = useRef(activeChapterIndex);
+  activeChapterIndexRef.current = activeChapterIndex;
+
+  // debounced 저장 — 800ms 후 patchChapterAtIndex (편집 시점의 회차에 고정)
   useEffect(() => {
     if (noteDraft === storyNote) return;
+    // [fix] line 68 data-loss: 편집 대상 회차 index를 캡처해 그 회차에 저장한다.
+    // 디바운스 창(800ms) 안에서 회차를 전환하면 이 effect의 cleanup이 돌면서
+    // 기존에는 clearTimeout만 호출 → 미저장 편집이 조용히 소실됐다.
+    // 이제 cleanup에서 활성 회차가 캡처 시점과 달라졌으면(=전환/언마운트)
+    // 캡처한 회차로 pending 편집을 즉시 flush한다. 같은 회차에서 계속 타이핑할 때는
+    // (디바운스 리셋) flush하지 않아 기존 디바운스 동작을 유지한다.
+    const targetIndex = activeChapterIndex;
+    let flushed = false;
+    const commit = () => {
+      if (flushed || targetIndex === null) return;
+      flushed = true;
+      patchChapterAtIndex(targetIndex, { storyNote: noteDraft });
+    };
     const t = setTimeout(() => {
       setNoteSaving(true);
-      patchActiveChapter({ storyNote: noteDraft });
+      commit();
       setNoteSaving(false);
       setNoteSavedAt(Date.now());
     }, 800);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      // [fix] line 68: 활성 회차가 바뀌었거나(전환) 컴포넌트가 사라지는 경우에만
+      // 손실 방지를 위해 캡처한 회차로 flush. 같은 회차 내 디바운스 리셋은 제외.
+      if (activeChapterIndexRef.current !== targetIndex) commit();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteDraft]);
 

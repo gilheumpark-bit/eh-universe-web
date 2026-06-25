@@ -135,7 +135,8 @@ export interface UpstashTokenBudget {
 /**
  * Reserve token budget atomically.
  *
- * GET 누적 → 이미 한도 초과면 reject. 한도 미만이면 INCRBY 로 reserve.
+ * INCRBY 로 먼저 원자적 예약 → post-increment 값이 한도 초과면 동일 amt 만큼
+ * 되돌리고(compensating INCRBY -amt) reject. TOCTOU race 없이 한도 enforce.
  * 첫 사용 시 PEXPIRE NX 로 일일 TTL 설정.
  */
 export async function reserveTokenBudgetUpstash(
@@ -151,28 +152,27 @@ export async function reserveTokenBudgetUpstash(
   const amt = Math.max(0, Math.floor(amount));
 
   try {
-    // Step 1: 현재 사용량 확인.
-    const [getRes] = await upstashPipeline(cfg, [['GET', redisKey]]);
-    const currentRaw = getRes.result;
-    const current = typeof currentRaw === 'string' ? parseInt(currentRaw, 10) || 0 : 0;
-
-    if (current >= limit || current + amt > limit) {
-      // 이미 초과 — TTL 만 조회해서 reset 정확화.
-      const [pttlRes] = await upstashPipeline(cfg, [['PTTL', redisKey]]);
-      const pttl = typeof pttlRes.result === 'number' && pttlRes.result > 0 ? pttlRes.result : windowMsClamped;
-      return { allowed: false, used: current, remaining: 0, resetMs: pttl };
-    }
-
-    // Step 2: reserve.
+    // [fix] line 155 TOCTOU: GET-then-INCRBY 사이에 동시 요청이 같은 current 를
+    //   읽고 모두 통과 후 각자 INCRBY → 일일 한도 초과(overshoot). 원자적 reserve 로 교정:
+    //   먼저 INCRBY 로 예약(반환값은 post-increment 라 동시 요청끼리 공유 불가) 후
+    //   결과가 한도를 넘으면 동일 amt 만큼 되돌린다(compensating INCRBY -amt).
     const [incrRes, , pttlRes] = await upstashPipeline(cfg, [
       ['INCRBY', redisKey, amt],
       ['PEXPIRE', redisKey, windowMsClamped, 'NX'],
       ['PTTL', redisKey],
     ]);
-    const used = typeof incrRes.result === 'number' ? incrRes.result : current + amt;
+    const usedAfter = typeof incrRes.result === 'number' ? incrRes.result : amt;
     const pttl = typeof pttlRes.result === 'number' && pttlRes.result > 0 ? pttlRes.result : windowMsClamped;
 
-    return { allowed: true, used, remaining: Math.max(0, limit - used), resetMs: pttl };
+    if (usedAfter > limit) {
+      // [fix] 한도 초과 — 방금 더한 amt 를 원자적으로 되돌려 다른 요청 카운터를 오염시키지 않음.
+      //   되돌린 뒤의 실제 사용량(usedBefore)을 보고. roll-back 실패해도 fail-open catch 로 흡수.
+      const [decrRes] = await upstashPipeline(cfg, [['INCRBY', redisKey, -amt]]);
+      const usedBefore = typeof decrRes.result === 'number' ? decrRes.result : Math.max(0, usedAfter - amt);
+      return { allowed: false, used: usedBefore, remaining: Math.max(0, limit - usedBefore), resetMs: pttl };
+    }
+
+    return { allowed: true, used: usedAfter, remaining: Math.max(0, limit - usedAfter), resetMs: pttl };
   } catch (err) {
     if (process.env.NODE_ENV !== 'production') {
       logger.warn('rate-limit-upstash', 'token budget failed, fail-open', (err as Error).message);

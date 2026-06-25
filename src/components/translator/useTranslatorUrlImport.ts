@@ -83,9 +83,17 @@ export function useTranslatorUrlImport({
           setSource(importedChapter.content);
           setResult("");
         } else {
-          const newIndex = Math.min(chapters.length, 29);
-          const nextChapters = [...chapters, importedChapter].slice(0, 30);
-          setChapters((previous) => [...previous, importedChapter].slice(0, 30));
+          // [fix] line 86: at the 30-chapter cap the imported chapter was sliced
+          // off and newIndex pointed at an existing chapter, so the import was
+          // silently dropped while the dialog closed as if it succeeded. Surface
+          // an error instead of acting as success.
+          if (chapters.length >= 30) {
+            await alert("챕터 수가 최대 30개에 도달하여 가져오지 못했습니다.");
+            return;
+          }
+          const newIndex = chapters.length;
+          const nextChapters = [...chapters, importedChapter];
+          setChapters((previous) => [...previous, importedChapter]);
           openChapter(newIndex, nextChapters);
         }
 

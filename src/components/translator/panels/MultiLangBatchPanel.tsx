@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Languages,
   Loader2,
@@ -200,6 +200,14 @@ export function MultiLangBatchPanel() {
   const [running, setRunning] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // [fix] line196 missing-cleanup: 패널 언마운트 시 in-flight batch fetch를 abort해
+  // 닫힌 패널에 setState가 호출되는 것을 방지한다.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const toggleLang = useCallback((lang: BatchLang) => {
     if (running) return;
     setLangs(prev => ({ ...prev, [lang]: { ...prev[lang], enabled: !prev[lang].enabled } }));
@@ -256,6 +264,16 @@ export function MultiLangBatchPanel() {
             [lang]: { ...prev[lang], status: 'done', progress: 100, charCount: prev[lang].text.length },
           }));
         } catch (err) {
+          // [fix] line258 error-handling: 사용자가 Stop을 누르면 in-flight fetch가
+          // AbortError로 throw된다. 이를 'error' 상태로 표시하면 오해를 유발하므로
+          // abort(중지)인 경우 error 상태를 찍지 않고 idle로 되돌린다.
+          const isAbort =
+            ac.signal.aborted ||
+            (err instanceof Error && err.name === 'AbortError');
+          if (isAbort) {
+            setLangs(prev => ({ ...prev, [lang]: { ...prev[lang], status: 'idle' } }));
+            break;
+          }
           const msg = err instanceof Error ? err.message : String(err);
           setLangs(prev => ({
             ...prev,

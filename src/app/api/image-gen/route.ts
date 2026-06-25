@@ -118,7 +118,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
 
-      const data = await res.json();
+      // [fix] null-response: res.json()이 null/비객체 200 바디를 반환하면 data.data 접근이 throw → 일반 500으로 격하. 객체 가드.
+      const data = asObject(await res.json());
       // [N2] 출력 IP 필터 — revised_prompt 는 사용자에게 노출되는 AI 텍스트 (fail-open).
       // 이미지 픽셀 자체는 텍스트 필터 적용 불가 — 정직 보고: 입력 게이트로만 방어.
       const images = (data.data || []).map((d: { url?: string; b64_json?: string; revised_prompt?: string }) => ({
@@ -180,7 +181,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
 
-      const data = await res.json();
+      // [fix] null-response: null/비객체 200 바디에서 data.artifacts 접근 throw 방어 (line 124 동형 결함).
+      const data = asObject(await res.json());
       const images = (data.artifacts || []).map((a: { base64: string }) => ({
         url: `data:image/png;base64,${a.base64}`,
       }));
@@ -228,7 +230,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: safeMessage }, { status: res.status });
       }
 
-      const data = await res.json();
+      // [fix] null-response: null/비객체 200 바디에서 data.images 접근 throw 방어 (line 124 동형 결함).
+      const data = asObject(await res.json());
       // ComfyUI 프록시는 base64 이미지 반환
       const images = Array.isArray(data.images)
         ? data.images.map((img: string | { base64?: string; url?: string }) =>
@@ -319,6 +322,19 @@ async function fetchWithRetry(
   }
   // 모든 재시도 실패 → 마지막 에러 throw (caller 가 504 변환)
   throw lastError ?? new Error('fetchWithRetry: all attempts failed');
+}
+
+/**
+ * [fix] null-response: res.json()이 null·배열·문자열·숫자 등 비-객체 JSON 200 바디를 반환할 때
+ * 후속 프로퍼티 접근(data.data / data.artifacts / data.images)이 throw 되어 catch → 일반 500 으로
+ * 격하되는 것을 방어. 비-객체면 빈 객체로 대체 → 기존 `(... || [])` 분기가 정상 동작 (빈 결과 반환).
+ * 정상 객체 응답은 그대로 통과 — 동작 동등성 유지.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function asObject(value: unknown): Record<string, any> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
 }
 
 function clampSize(val: number, min: number, max: number): number {

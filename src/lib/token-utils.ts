@@ -89,6 +89,14 @@ export function getMaxOutputTokens(model: string, systemTokens: number, messageT
     MAX_OUTPUT_RESERVE
   );
 
+  // [fix] When the prompt already fills/exceeds the context window, `available`
+  // is <= 0 (or below MIN). The previous Math.max(MIN_OUTPUT_RESERVE, ...) floor
+  // forced 4096 output tokens even with no room, overflowing the context window.
+  // Cap to actual remaining space: never request more than `available`, and never
+  // return a negative budget. Normal case (available >= MIN) is unchanged.
+  if (available < MIN_OUTPUT_RESERVE) {
+    return Math.max(0, available);
+  }
   // Clamp to available space
   return Math.max(MIN_OUTPUT_RESERVE, Math.min(reserved, available));
 }

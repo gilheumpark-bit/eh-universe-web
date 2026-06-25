@@ -71,7 +71,11 @@ export async function issueWitnessSeal(input: {
   serialQueue = run.catch(() => undefined);
   const serial = await run;
 
-  return `LG-${yyMm}-${String(serial).padStart(4, '0')}-${hash4}`;
+  // [fix] format-drift (#74): serial 이 9999 를 넘으면 padStart 가 자르지 않아
+  // 5자리 이상 일련번호가 나와 LG-{YY}{MM}-{4digit}-{hash4} 형식이 깨진다.
+  // 4자리 표현을 위해 0001..9999 범위로 wrap (10000 → 0001) 하여 형식을 보존.
+  const serial4 = ((serial - 1) % 9999) + 1;
+  return `LG-${yyMm}-${String(serial4).padStart(4, '0')}-${hash4}`;
 }
 
 // ============================================================

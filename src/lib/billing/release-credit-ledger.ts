@@ -269,7 +269,13 @@ export function applyReleaseCreditLedgerOperation(
     };
   }
 
-  const balanceAfter = snapshot.unlimited || balanceBefore === null ? null : balanceBefore + delta;
+  // [fix] line 262 ledger 일관성: 가산(refund-credit/void-debit/purchase-grant 등) 시 상한 캡이
+  // 없어 balance가 정수 정밀도 한계를 넘어 무한 증가/오염될 수 있었다. 안전 정수 상한으로 클램프해
+  // overflow를 차단한다. 현실 잔액(정상 입력)에서는 Math.min이 항상 합계를 반환하므로 동작 동등.
+  const balanceAfter =
+    snapshot.unlimited || balanceBefore === null
+      ? null
+      : Math.min(balanceBefore + delta, Number.MAX_SAFE_INTEGER);
   const entry: ReleaseCreditLedgerEntry = {
     ...operation,
     creditAmount: normalizePositiveCredits(operation.creditAmount) ?? operation.creditAmount,

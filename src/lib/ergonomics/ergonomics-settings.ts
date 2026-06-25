@@ -48,7 +48,9 @@ export const ERGONOMICS_LS_KEY = "noa_ergonomics_settings_v1";
 // ============================================================
 
 function isValidSettings(v: unknown): v is Partial<ErgonomicsSettings> {
-  return typeof v === "object" && v !== null;
+  // [fix] 배열도 typeof === "object" 이므로 그대로 통과시키면 손상된 저장값([..])이
+  // spread되어 인덱스 키(0,1,2..)가 설정에 섞인다. 일반 객체만 허용한다.
+  return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 /** localStorage에서 설정 로드 — 일부 키 누락 시 기본값 병합 */

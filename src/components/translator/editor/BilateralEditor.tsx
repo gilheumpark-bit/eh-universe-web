@@ -165,7 +165,10 @@ export function BilateralEditor() {
       src.removeEventListener('scroll', handleSrcScroll);
       res.removeEventListener('scroll', handleResScroll);
     };
-  }, [syncedScrolling]);
+    // [fix] sideView 추가: A/B/diff 전환 시 result textarea가 언마운트/재마운트되므로
+    // 이 effect를 재실행해 새 textarea(resultRef.current)에 스크롤 리스너를 다시 붙인다.
+    // (sideView 누락 시 스테일/null ref에 리스너가 남아 동기 스크롤이 끊김)
+  }, [syncedScrolling, sideView]);
 
   // Center Split Resizer (for Bilateral ratio)
   useEffect(() => {

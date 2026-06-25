@@ -6,7 +6,7 @@
 // ============================================================
 
 import { showAlert } from '@/lib/show-alert';
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -193,6 +193,12 @@ const ACTION_LABEL: Record<string, { label: Record<AppLanguage, string>; color: 
 const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, onApply }) => {
   const t = createT(language);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  // [fix] stale-closure: runAllFixes iterated the `suggestions` snapshot captured at
+  // render time, so status changes made mid-loop (a fix completing, a user skip/apply)
+  // were not reflected. Mirror the latest suggestions into a ref so the loop can read
+  // live status before each fix.
+  const suggestionsRef = useRef<Suggestion[]>(suggestions);
+  useEffect(() => { suggestionsRef.current = suggestions; }, [suggestions]);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'ready' | 'fixing'>('idle');
   const [, setCurrentFixIdx] = useState(-1);
   const [expanded, setExpanded] = useState(true);
@@ -375,12 +381,17 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
   // Run all pending fixes sequentially
   const runAllFixes = useCallback(async () => {
-    for (let i = 0; i < suggestions.length; i++) {
-      if (suggestions[i].status === 'pending') {
+    // [fix] stale-closure: read live status from the ref each iteration instead of the
+    // closure's stale `suggestions` snapshot, so suggestions skipped/applied/completed
+    // mid-run are reflected. Loop length is bound to the current count (the array is
+    // replaced wholesale, never mutated in place, so indices remain stable for a run).
+    const count = suggestionsRef.current.length;
+    for (let i = 0; i < count; i++) {
+      if (suggestionsRef.current[i]?.status === 'pending') {
         await fixSuggestion(i);
       }
     }
-  }, [suggestions, fixSuggestion]);
+  }, [fixSuggestion]);
 
   const cancel = () => {
     abortRef.current?.abort();

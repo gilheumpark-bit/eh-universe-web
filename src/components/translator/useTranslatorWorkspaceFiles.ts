@@ -92,6 +92,17 @@ function downloadTextFile(filename: string, content: string, mimeType: string): 
   URL.revokeObjectURL(url);
 }
 
+// [fix] HTML export injected chapter name/result without escaping (HTML injection).
+// Escape HTML-special characters before interpolating user-controlled text into the export markup.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function normalizeGlossaryRecord(value: unknown): Record<string, string> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
   const next: Record<string, string> = {};
@@ -369,7 +380,8 @@ export function useTranslatorWorkspaceFiles({
       mimeType = "application/json";
     } else if (format === "html") {
       content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Translation Results</title></head><body style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: sans-serif;">` +
-        chapters.map((chapter: Partial<ChapterEntry>) => `<h2>${chapter.name}</h2><p>${(chapter.result || "").replace(/\\n/g, "<br>")}</p>`).join("<hr>") +
+        // [fix] Escape name/result before interpolation; escape first, then convert newlines to <br> so the markup survives. (HTML injection)
+        chapters.map((chapter: Partial<ChapterEntry>) => `<h2>${escapeHtml(chapter.name || "")}</h2><p>${escapeHtml(chapter.result || "").replace(/\\n/g, "<br>")}</p>`).join("<hr>") +
         "</body></html>";
       mimeType = "text/html";
     } else if (format === "csv") {

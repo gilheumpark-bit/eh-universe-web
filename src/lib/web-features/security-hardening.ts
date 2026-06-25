@@ -49,8 +49,11 @@ export function safeJsonParse<T>(json: string): T | null {
   try {
     const parsed = JSON.parse(json);
     // __proto__, constructor, prototype 키 차단
+    // [fix] JSON.stringify emits keys as "constructor": (closing quote before colon),
+    // so the old `constructor\s*:` / `prototype\s*:` never matched. Match the
+    // serialized object-key form `"<key>":` to catch all three dangerous keys.
     const str = JSON.stringify(parsed);
-    if (/__proto__|constructor\s*:|prototype\s*:/i.test(str)) return null;
+    if (/"(?:__proto__|constructor|prototype)"\s*:/i.test(str)) return null;
     return parsed;
   } catch {
     return null;

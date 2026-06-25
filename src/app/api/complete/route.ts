@@ -40,12 +40,38 @@ const COMPLETE_BODY_LIMIT_BYTES = 64 * 1024;
 // ============================================================
 
 /** Read an SSE ReadableStream to a single trimmed completion string (non-streaming). */
-async function drainStream(stream: ReadableStream): Promise<string> {
+async function drainStream(stream: ReadableStream, timeoutMs = 12_000): Promise<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let fullText = '';
+  // [fix] No overall read timeout previously — a stalled upstream that never emits `done`
+  // would hang this loop indefinitely (relied solely on the provider's own timeout).
+  // Bound total drain time; on expiry cancel the reader and return what was collected.
+  const deadline = Date.now() + timeoutMs;
   while (true) {
-    const { done, value } = await reader.read();
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      try { await reader.cancel(); } catch { /* stream already closed */ }
+      break;
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<{ timedOut: true }>((resolve) => {
+      timer = setTimeout(() => resolve({ timedOut: true }), remaining);
+    });
+    let result: { done: boolean; value?: Uint8Array } | { timedOut: true };
+    try {
+      result = await Promise.race([
+        reader.read() as Promise<{ done: boolean; value?: Uint8Array }>,
+        timeout,
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    if ('timedOut' in result) {
+      try { await reader.cancel(); } catch { /* stream already closed */ }
+      break;
+    }
+    const { done, value } = result;
     if (done) break;
     const chunk = decoder.decode(value, { stream: true });
     for (const line of chunk.split('\n')) {
@@ -164,7 +190,9 @@ export async function POST(req: NextRequest) {
   const characters = Array.isArray(body.characters) ? (body.characters as string[]).slice(0, 10) : [];
   // [I-05 — 2026-05-10] 4언어 정규화 ('ko'|'en'|'ja'|'zh'). 비표준 별칭 흡수 ('kr','jp','cn' 등).
   const language = normalizeToAgentLang(body.language);
-  const maxTokens = Math.min(Number(body.maxTokens) || 100, 150);
+  // [fix] Negative/zero maxTokens previously bypassed the clamp (Number(-50) is truthy → Math.min(-50,150)=-50)
+  // and was forwarded to the provider as max_tokens:<negative>. Add a lower bound (>=1).
+  const maxTokens = Math.max(1, Math.min(Number(body.maxTokens) || 100, 150));
 
   // Build user message — pure text (마지막 500자만 — Tab 컨텍스트).
   // [P-02 — 2026-05-10] genre/characters 가 user message 에 inline 되던 패턴 폐기 →

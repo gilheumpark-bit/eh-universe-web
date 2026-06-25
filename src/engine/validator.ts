@@ -207,12 +207,27 @@ function isInsideCodeBlock(text: string, position: number): boolean {
 function isInsideDialogue(text: string, position: number): boolean {
   if (isInsideCodeBlock(text, position)) return true;
   // Single-pass scanner: track open/close quotes up to position (O(n) instead of O(n*q))
-  const openChars = new Set(['「', '『', '\u201C', '\u2018', '"', "'"]);
-  const closeChars = new Set(['」', '』', '\u201D', '\u2019', '"', "'"]);
+  // [fix] Straight quotes (" ') use the SAME character for open and close, so they must be
+  // toggled, not treated as openers. Previously they sat in both openChars and closeChars,
+  // but the `if (openChars.has)` branch matched first, so depth only incremented for them;
+  // depth never decremented and dialogue suppression leaked into the rest of the text.
+  const openChars = new Set(['「', '『', '\u201C', '\u2018']);
+  const closeChars = new Set(['」', '』', '\u201D', '\u2019']);
+  const straightQuoteChars = new Set(['"', "'"]);
   let depth = 0;
+  let straightOpen = false;
   for (let i = 0; i < position && i < text.length; i++) {
     const ch = text[i];
-    if (openChars.has(ch)) depth++;
+    if (straightQuoteChars.has(ch)) {
+      // Toggle: opening straight quote raises depth, the closing one lowers it.
+      if (straightOpen) {
+        straightOpen = false;
+        if (depth > 0) depth--;
+      } else {
+        straightOpen = true;
+        depth++;
+      }
+    } else if (openChars.has(ch)) depth++;
     else if (closeChars.has(ch) && depth > 0) depth--;
   }
   return depth > 0;

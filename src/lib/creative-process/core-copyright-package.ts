@@ -136,6 +136,12 @@ function joinLines(lines: readonly string[]): string {
   return lines.filter((line) => line.trim().length > 0).join('\n');
 }
 
+// [fix] markdown-injection: escape pipe/backslash and collapse line breaks so
+// user-controlled asset names cannot corrupt Canon Matrix table columns.
+function escapeMarkdownTableCell(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ');
+}
+
 function joinBullets(values: readonly string[], fallback = EMPTY_VALUE, limit = 8): string {
   const filtered = values.map(normalizeText).filter(Boolean);
   if (filtered.length === 0) return fallback;
@@ -399,7 +405,8 @@ function buildCanonMatrixDocument(rows: readonly CoreCopyrightCanonMatrixRow[]):
   const status: CoreCopyrightStatus = rows.length >= 3 ? 'ready' : rows.length > 0 ? 'review' : 'missing';
   const tableRows = rows.length > 0
     ? rows.map((row) =>
-        `| ${row.assetTypeKo} | ${row.assetKo} | ${row.worldLinkKo} | ${row.characterLinkKo} | ${row.scenarioLinkKo} | ${row.rightsNoteKo} |`,
+        // [fix] markdown-injection: escape each user-controlled cell value
+        `| ${escapeMarkdownTableCell(row.assetTypeKo)} | ${escapeMarkdownTableCell(row.assetKo)} | ${escapeMarkdownTableCell(row.worldLinkKo)} | ${escapeMarkdownTableCell(row.characterLinkKo)} | ${escapeMarkdownTableCell(row.scenarioLinkKo)} | ${escapeMarkdownTableCell(row.rightsNoteKo)} |`,
       )
     : ['| 작성 대기 | 작성 대기 | 작성 대기 | 작성 대기 | 작성 대기 | 작성 대기 |'];
   return {

@@ -287,12 +287,22 @@ function matchesFilter(e: PrimaryWriteLogEntry, f: PrimaryWriteLogFilter): boole
 }
 
 /** 관측 로그 전체 삭제 — Dashboard 내부 진단 / 테스트용. */
-export async function clearPrimaryWriteLog(): Promise<void> {
-  try {
-    await writeBundle([]);
-  } catch (err) {
-    logger.warn('primary-write-logger', 'clearPrimaryWriteLog threw (isolated)', err);
-  }
+export function clearPrimaryWriteLog(): Promise<void> {
+  // [fix] race: writeChain 직렬화에 합류 — in-flight recordPrimaryWrite 의
+  // read-modify-write 가 clear 뒤에 도착해 데이터가 되살아나는 경합 차단.
+  // 이전: writeBundle([]) 직접 호출이 writeChain 을 우회 → clear 무효화/resurrect.
+  const prev = writeChain;
+  const next = prev
+    .catch(() => { /* prev 실패 흡수 */ })
+    .then(async () => {
+      try {
+        await writeBundle([]);
+      } catch (err) {
+        logger.warn('primary-write-logger', 'clearPrimaryWriteLog threw (isolated)', err);
+      }
+    });
+  writeChain = next;
+  return next;
 }
 
 // ============================================================

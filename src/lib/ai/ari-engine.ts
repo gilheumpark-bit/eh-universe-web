@@ -277,23 +277,24 @@ export class ARIManager {
   /** Export full dashboard data for monitoring UI. */
   exportDashboard(): ARIDashboardExport {
     const report = this.getReport();
-    const models: ModelARIState[] = Array.from(this.modelStates.values()).map(s => ({
-      provider: s.provider,
-      model: s.provider, // overwritten below
-      score: Math.round(s.score * 10) / 10,
-      circuitState: s.circuitState,
-      errorCount: s.errorCount,
-      successCount: s.successCount,
-    }));
-    // Fix model field from composite key
-    for (const [key, state] of this.modelStates) {
-      const [prov, mod] = key.split(':');
-      const entry = models.find(m => m.provider === state.provider && m.score === Math.round(state.score * 10) / 10);
-      if (entry) {
-        entry.provider = prov;
-        entry.model = mod;
-      }
-    }
+    // [fix] Derive provider/model directly from each map key in a single pass.
+    // The previous two-step approach used models.find() keyed on
+    // (provider, rounded score), which collides when two models share the same
+    // provider and rounded score — find() always returns the first match, so one
+    // entry got overwritten twice and the other kept its placeholder model field.
+    const models: ModelARIState[] = Array.from(this.modelStates.entries()).map(([key, state]) => {
+      const sep = key.indexOf(':');
+      const prov = sep >= 0 ? key.slice(0, sep) : key;
+      const mod = sep >= 0 ? key.slice(sep + 1) : key;
+      return {
+        provider: prov,
+        model: mod,
+        score: Math.round(state.score * 10) / 10,
+        circuitState: state.circuitState,
+        errorCount: state.errorCount,
+        successCount: state.successCount,
+      };
+    });
     return {
       providers: report.providers,
       models,

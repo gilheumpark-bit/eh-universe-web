@@ -52,8 +52,12 @@ function findSimilarNames(text: string, name: string): string[] {
 
   if (isKO && name.length >= 2) {
     // 한글: 각 글자 하나씩 바꿔서 찾기
+    // [fix] 정규식 특수문자 escape — 사용자 입력 이름의 슬라이스를 그대로 RegExp에 넣으면
+    //       (·[·+·\ 등 특수문자에서 new RegExp가 throw → writing tab render 크래시.
+    //       삽입하는 '.' 만 와일드카드로 유지하고 좌우 리터럴 슬라이스는 escape.
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (let i = 0; i < name.length; i++) {
-      const pattern = name.slice(0, i) + '.' + name.slice(i + 1);
+      const pattern = escapeRegex(name.slice(0, i)) + '.' + escapeRegex(name.slice(i + 1));
       const regex = new RegExp(pattern, 'g');
       const matches = text.match(regex);
       if (matches) {

@@ -400,10 +400,12 @@ export function startHeartbeat(sessionId: string, tabId: string): HeartbeatHandl
   const timer = setInterval(write, BEACON_HEARTBEAT_INTERVAL_MS);
 
   // 정상 종료 포착 리스너들
+  // [fix] visibilitychange(hidden)는 탭 전환·최소화·OS 백그라운드 전환에서도 발생하므로
+  //   신뢰할 수 있는 "정상 종료" 신호가 아니다. 여기서 cleanShutdown 마커를 찍으면
+  //   백그라운드로 들어간 탭이 이후 크래시(OOM kill, OS의 백그라운드 탭 종료)로 죽어도
+  //   'clean'으로 오분류된다. 실제 종료 신호인 pagehide/beforeunload 에만 마커를 남긴다.
   const visListener = (): void => {
-    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-      writeCleanShutdown();
-    }
+    /* no-op: hidden 전환은 종료 신호가 아님 (위 주석 참조) */
   };
   const pagehideListener = (): void => writeCleanShutdown();
   const beforeUnloadListener = (): void => writeCleanShutdown();

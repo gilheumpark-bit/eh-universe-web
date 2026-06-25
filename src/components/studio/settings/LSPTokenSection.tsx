@@ -54,8 +54,11 @@ export const LSPTokenSection: React.FC<LSPTokenSectionProps> = ({ language = 'KO
     }
   };
 
+  // [fix] token-exposure: 기존 slice(0,10)+slice(-6) 은 비밀 hex 32자 중 9자(앞 3 + 뒤 6)를
+  // 노출했다. 식별용 prefix('lg_lsp_', 7자)만 보이고 비밀 hex 는 전혀 드러나지 않도록 마스킹한다.
+  const TOKEN_PREFIX = 'lg_lsp_';
   const masked = token
-    ? `${token.slice(0, 10)}${'•'.repeat(20)}${token.slice(-6)}`
+    ? `${token.startsWith(TOKEN_PREFIX) ? TOKEN_PREFIX : ''}${'•'.repeat(20)}`
     : '';
 
   return (

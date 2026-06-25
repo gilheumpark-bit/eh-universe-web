@@ -504,6 +504,8 @@ const DEFAULT_PARAGRAPH_CHUNK = 4000;
 const TRANSLATOR_PARAGRAPH_CHUNK = 9500;
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 const ZIP_DECOMPRESSED_CAP = 100 * 1024 * 1024;
+// [fix] EPUB 파싱이 콜백 미호출로 영구 hang하는 것을 막는 상한 (타임아웃누락 line 670).
+const EPUB_PARSE_TIMEOUT_MS = 30 * 1000;
 
 function classifyUploadParseError(err: unknown, fileName: string) {
   const reason = err instanceof Error ? err.message : String(err ?? '');
@@ -659,14 +661,31 @@ export async function POST(req: NextRequest) {
         const zipFallback = extractEpubChaptersFromZip(buffer);
         const epubWarnings = zipFallback.warnings;
         try {
+          // [fix] EPUB 파싱 Promise가 epub2 콜백(end/getChapter/error) 미호출 시
+          // 영구 hang하던 문제 — 타임아웃을 race로 추가해 무한 대기를 차단한다.
+          // 타임아웃 시 reject되어 아래 catch에서 zip fallback으로 복구된다.
+          let epubSettled = false;
+          let epubTimeoutId: ReturnType<typeof setTimeout> | undefined;
+          const settle = <T>(fn: (value: T) => void) => (value: T) => {
+            if (epubSettled) return;
+            epubSettled = true;
+            if (epubTimeoutId) clearTimeout(epubTimeoutId);
+            fn(value);
+          };
           epubData = await new Promise<{ title: string; content: string }[]>((resolve, reject) => {
+            const safeResolve = settle(resolve);
+            const safeReject = settle(reject);
+            epubTimeoutId = setTimeout(
+              () => safeReject(new Error('EPUB parse timed out')),
+              EPUB_PARSE_TIMEOUT_MS,
+            );
             const epub = new EPub(tempPath, '/images/', '/links/');
-            epub.on('error', reject);
+            epub.on('error', safeReject);
             epub.on('end', () => {
               const chaptersData: { title: string; content: string }[] = [];
               const flow = ((epub as unknown as { flow?: { id?: string; title?: string }[] }).flow) || [];
               let processed = 0;
-              if (flow.length === 0) return resolve([]);
+              if (flow.length === 0) return safeResolve([]);
               flow.forEach((chapter: { id?: string; title?: string }, index: number) => {
                 epub.getChapter(chapter.id || '', (err: Error | null, text?: string) => {
                   if (!err && text) {
@@ -674,7 +693,7 @@ export async function POST(req: NextRequest) {
                     if (plain.length > 50) chaptersData[index] = { title: chapter.title || `Chapter ${index + 1}`, content: plain };
                   }
                   processed += 1;
-                  if (processed === flow.length) resolve(chaptersData.filter(Boolean));
+                  if (processed === flow.length) safeResolve(chaptersData.filter(Boolean));
                 });
               });
             });

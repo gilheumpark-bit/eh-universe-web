@@ -198,6 +198,13 @@ export function useSessionTimer({
   // 일일 누적 저장 throttle — 매초 디스크 쓰기 방지 (30초 간격)
   const lastDailyFlushRef = useRef<number>(0);
 
+  // [fix] 언마운트 cleanup이 startedAt 변경 시점에 캡처된 stale dailyDate/dailyMs를
+  // flush하던 버그(line 252) 차단 — 항상 최신값을 ref로 미러링해 cleanup에서 읽는다.
+  const dailyMsRef = useRef<number>(dailyMs);
+  const dailyDateRef = useRef<string>(dailyDate);
+  dailyMsRef.current = dailyMs;
+  dailyDateRef.current = dailyDate;
+
   // ============================================================
   // PART 3.1 — 마운트 초기화 (SSR 안전)
   // ============================================================
@@ -248,12 +255,13 @@ export function useSessionTimer({
     }, TICK_MS);
     return () => {
       window.clearInterval(id);
-      // 언마운트 시 최종 flush (현재 날짜 기준)
-      if (dailyDate) {
-        saveDaily({ date: dailyDate, ms: dailyMs });
+      // [fix] 언마운트 시 최종 flush — ref로 최신 dailyDate/dailyMs를 읽어
+      // stale 클로저값(startedAt 캡처 당시 ""/0)이 최신 누적을 덮어쓰는 것을 방지.
+      if (dailyDateRef.current) {
+        saveDaily({ date: dailyDateRef.current, ms: dailyMsRef.current });
       }
     };
-    // dailyDate/dailyMs는 최신값을 flush에 사용하되 의존성 발산 방지 위해 제외
+    // dailyDate/dailyMs는 ref로 최신값을 flush에 사용하되 의존성 발산 방지 위해 제외
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startedAt]);
 

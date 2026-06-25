@@ -87,8 +87,13 @@ export async function verifySubmissionPackageArtifacts(
     issues.push({ reason: 'invalid-signature-kind', artifactId: signature.id });
   }
 
+  // [fix] contract-mismatch: producer(serializeDigitalSignature)는 artifactHashes 필드를
+  // 쓰지 않는다(content-level manuscriptHash 등만 기록). 필드 부재는 정상 출고물이므로
+  // 실패로 보지 않고 per-artifact hash 대조를 건너뛴다. 필드가 *존재하지만* 형식이 깨진
+  // 경우(객체 아님)만 invalid-digital-signature-json 으로 보고한다.
+  const hasArtifactHashesField = payload.artifactHashes !== undefined;
   const artifactHashes = normalizeArtifactHashes(payload.artifactHashes);
-  if (!artifactHashes) {
+  if (hasArtifactHashesField && !artifactHashes) {
     issues.push({ reason: 'invalid-digital-signature-json', artifactId: signature.id });
   }
 
