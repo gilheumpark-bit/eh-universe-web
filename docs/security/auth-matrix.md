@@ -29,7 +29,7 @@
 | `/api/release-credit/debit` (POST) | ✗ | ✓ | ✓ | ✓ | by-subscription | 출고 크레딧 프로젝트 원장 차감 |
 | `/api/release-credit/operation` (POST) | ✗ | ✓ | ✓ | ✓ | by-subscription | 구매/환불/복구/재발급 원장 작업. 구매/환불/복구는 내부 secret 추가 필요 |
 | `/api/upload` (POST) | ✗ | ✓ | ✓ | ✓ | — | 파일 업로드 |
-| `/api/share` (POST/PATCH) | ✗ | ✓ | ✓ | ✓ | — | 공개 링크 발급. 긴 콘텐츠 서버 저장은 로그인 사용자만 허용 |
+| `/api/share` (POST) | ✗ | ✓ | ✓ | ✓ | — | 공개 링크 발급. 긴 콘텐츠 서버 저장은 로그인 사용자만 허용 (PATCH 핸들러 없음 — GET은 read 섹션 참조) |
 | `/api/complete` (POST) | ✗ | ✓ | ✓ | ✓ | by-claim/BYOK | Tab 이어쓰기. Hosted 제한, BYOK 제한 면제 |
 | `/api/image-gen` (POST) | ✗ | ✓ | ✓ | ✓ | by-claim/BYOK | 외부 provider는 BYOK 필수. `local-spark`는 Hosted 제한 |
 | `/api/network-agent/ingest` (POST) | ✗ | ✗ | ✗ | ✗ | — | retired 410; downstream work 없음 |
@@ -56,6 +56,7 @@
 | `/api/ai-capabilities` | ✓ | ✓ | optional | — | provider list |
 | `/api/agent-search/status` (GET) | ✗ | ✗ | ✗ | — | disabled 503; downstream work 없음 |
 | `/api/cp/verify/[id]` (GET) | ✓ | ✓ | optional | — | creative-process 공개 검증 |
+| `/api/share` (GET) | ✓ | ✗ | ✗ | — | 공유 링크 공개 읽기 — SHARE_ID_RE 형식검증, 만료 시 410. (의도적 비인증: capability-URL 모델) |
 | `/api/vitals` (POST) | ✓ | ✓ | optional | — | Web Vitals 수집 |
 | `/api/metrics` (GET) | ✗ | ✗ | bearer-token | — | Prometheus scrape. `METRICS_ENABLED=on` + 운영 token gate |
 | `/api/cron/universe-daily` | ✗ | ✗ | header-secret | — | Vercel cron — `CRON_SECRET` |

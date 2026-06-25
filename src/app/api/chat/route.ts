@@ -42,6 +42,24 @@ const PRISM_MODE_MAP: Record<string, PrismLevel> = {
   M18: 'mature-18',
 };
 
+// [수리] PROD에서 Upstash 미설정 시 IP 토큰예산이 in-memory(lambda별)로 떨어져 우회 가능.
+//   module-eval이라 cold start당 1회만 경고. in-memory fallback 동작 자체는 유지(별건).
+{
+  const isProd = process.env.NODE_ENV === 'production';
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.npm_lifecycle_event === 'build';
+  if (isProd && !isBuildPhase) {
+    const hasUpstash = Boolean(process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim());
+    if (!hasUpstash) {
+      apiLog({
+        level: 'warn',
+        event: 'chat_budget_prod_misconfigured',
+        route: '/api/chat',
+        meta: { message: 'PROD with in-memory chat-budget backend — IP-per-lambda budget bypass risk. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.' },
+      });
+    }
+  }
+}
+
 // ── Input validation helper (#13) ──
 function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
   if (!body?.provider || typeof body.provider !== 'string') return { valid: false, error: '요청한 연결 방식이 없습니다.' };

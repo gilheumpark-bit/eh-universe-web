@@ -53,7 +53,15 @@ async function fetchFromFirestore(id: string): Promise<{ payload: unknown; expir
     const expiresAtStr = fields.expiresAt?.integerValue || '0';
     const ownerUid = fields.ownerUid?.stringValue || '';
     return { payload: JSON.parse(payloadStr), expiresAt: Number(expiresAtStr), ownerUid };
-  } catch { /* fallback */ }
+  } catch (err) {
+    // 빈 catch였음 — "토큰 없음(null)"과 "Firestore 오류"를 구별 가능하게 로깅만 추가. 반환 동작 불변.
+    apiLog({
+      level: 'warn',
+      event: 'share_firestore_fetch_error',
+      route: '/api/share',
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
   return null;
 }
 

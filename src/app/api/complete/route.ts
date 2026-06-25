@@ -18,6 +18,7 @@ import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
 import { enforceServerTierLimit } from '@/lib/server-tier-limit';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 15; // Quick timeout — completion must be fast
 const COMPLETE_BODY_LIMIT_BYTES = 64 * 1024;
@@ -138,7 +139,10 @@ export async function POST(req: NextRequest) {
       const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
       const verified = await verifyFirebaseIdToken(token);
       verifiedUser = verified;
-    } catch { /* verification module load failed — deny */ }
+    } catch (err) {
+      logger.warn('Auth:complete:token-verify-failed', err instanceof Error ? err.message : String(err));
+      /* Token verification failed — silently downgrade to anonymous tier (no 401 returned) */
+    }
   }
   // BYOK: 제공자 키 형식 검사 (sk-xxx / AIza... / gsk_... 등 최소 패턴) +
   // 키 prefix → 제공자 매핑. chat/structured-generate 정책과 동일하게,

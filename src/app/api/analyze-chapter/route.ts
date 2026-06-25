@@ -376,7 +376,10 @@ export async function POST(req: NextRequest) {
           const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
           const token = authHeader.slice(7).trim();
           verifiedUser = await verifyFirebaseIdToken(token);
-        } catch { /* verification failed */ }
+        } catch (err) {
+          logger.warn('API:analyze-chapter:token-verify-failed', err instanceof Error ? err.message : String(err));
+          /* Token verification failed — silently downgrade to anonymous tier (no 401 returned) */
+        }
       }
     }
 

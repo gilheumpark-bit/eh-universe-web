@@ -107,14 +107,24 @@ export async function firestoreListDocuments(
   if (query.orderBy) params.set("orderBy", query.orderBy);
 
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionId}?${params}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    logger.warn("firestore-service-rest/list", { status: res.status, detail: text.slice(0, 200) });
-    return { ok: false, error: `http_${res.status}` };
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(4_000),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      logger.warn("firestore-service-rest/list", { status: res.status, detail: text.slice(0, 200) });
+      return { ok: false, error: `http_${res.status}` };
+    }
+    const data = (await res.json()) as { documents?: unknown[] };
+    return { ok: true, documents: data.documents ?? [] };
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    const error = name === "AbortError" || name === "TimeoutError" ? "timeout" : "fetch_failed";
+    logger.warn("firestore-service-rest/list", { err: name || String(err), error });
+    return { ok: false, error };
   }
-  const data = (await res.json()) as { documents?: unknown[] };
-  return { ok: true, documents: data.documents ?? [] };
 }
 
 /**
@@ -137,21 +147,29 @@ export async function firestoreCreateDocument(
   const docId = options?.documentId ?? `daily_${Date.now()}`;
   const parent = `projects/${projectId}/databases/(default)/documents/${collectionId}`;
   const url = `https://firestore.googleapis.com/v1/${parent}?documentId=${encodeURIComponent(docId)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ fields }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    logger.warn("firestore-service-rest/create", { status: res.status, detail: text.slice(0, 200) });
-    return { ok: false, error: `http_${res.status}` };
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fields }),
+      signal: AbortSignal.timeout(4_000),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      logger.warn("firestore-service-rest/create", { status: res.status, detail: text.slice(0, 200) });
+      return { ok: false, error: `http_${res.status}` };
+    }
+    const data = (await res.json()) as { name?: string };
+    return { ok: true, name: data.name };
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "";
+    const error = name === "AbortError" || name === "TimeoutError" ? "timeout" : "fetch_failed";
+    logger.warn("firestore-service-rest/create", { err: name || String(err), error });
+    return { ok: false, error };
   }
-  const data = (await res.json()) as { name?: string };
-  return { ok: true, name: data.name };
 }
 
 /**

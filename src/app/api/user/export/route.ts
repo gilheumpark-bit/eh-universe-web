@@ -46,7 +46,7 @@ async function fetchFirestoreDoc(projectId: string, docPath: string): Promise<un
   const token = await getServiceAccountToken();
   if (!token) return null;
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${docPath}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5_000) });
   if (!res.ok) return null;
   return await res.json();
 }

@@ -265,6 +265,7 @@ export async function POST(req: NextRequest) {
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();
           let fullText = '';
+          let skipCount = 0;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -276,9 +277,10 @@ export async function POST(req: NextRequest) {
                 const j = JSON.parse(line.slice(6));
                 const delta = j.choices?.[0]?.delta?.content;
                 if (delta) fullText += delta;
-              } catch { /* skip */ }
+              } catch { skipCount++; }
             }
           }
+          if (skipCount > 0) logger.warn('api/translate', 'SSE partial chunks skipped', { skipCount });
           // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json(
             { result: filterOutputIp(fullText, '/api/translate').output, stage, approxPromptTokens: promptTokens },
@@ -318,6 +320,7 @@ export async function POST(req: NextRequest) {
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();
           let fullText = '';
+          let skipCount = 0;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -328,9 +331,10 @@ export async function POST(req: NextRequest) {
                 const j = JSON.parse(line.slice(6));
                 const delta = j.choices?.[0]?.delta?.content;
                 if (delta) fullText += delta;
-              } catch { /* skip */ }
+              } catch { skipCount++; }
             }
           }
+          if (skipCount > 0) logger.warn('api/translate', 'SSE partial chunks skipped', { skipCount });
           // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json(
             { result: filterOutputIp(fullText, '/api/translate').output, stage, approxPromptTokens: promptTokens },
