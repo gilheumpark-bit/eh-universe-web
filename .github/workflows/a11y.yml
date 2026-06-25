@@ -16,6 +16,10 @@ on:
   pull_request:
     branches: [main]
 
+# 최소 권한: 빌드+axe+lighthouse는 읽기만 필요 (CodeQL actions/missing-workflow-permissions)
+permissions:
+  contents: read
+
 jobs:
   audit:
     runs-on: ubuntu-latest

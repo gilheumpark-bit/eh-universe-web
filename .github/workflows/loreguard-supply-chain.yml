@@ -27,6 +27,10 @@ on:
       - 'src/lib/dgx-models.ts'
       - 'src/services/**'
 
+# 최소 권한: 공급망 스캔은 읽기만 필요 (CodeQL actions/missing-workflow-permissions)
+permissions:
+  contents: read
+
 jobs:
   supply-chain:
     runs-on: ubuntu-latest

@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*'
 
+# 최소 권한: 릴리스 게이트 검증은 읽기만 필요 (CodeQL actions/missing-workflow-permissions)
+permissions:
+  contents: read
+
 jobs:
   release-gate:
     runs-on: ubuntu-latest
