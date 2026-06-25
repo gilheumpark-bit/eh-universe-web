@@ -1,8 +1,15 @@
 # Loreguard Docs Index
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
 
 This folder contains the current documentation baseline for the Loreguard web app.
+
+2026-06-25 baseline note:
+
+- UI 갭 G1-G6 연결 완료 (SealCard QR·독자 피드백·DetailPass·충돌해소·IP팩 출고 UI).
+- dual-rail 분류 Phase 1 (`rail.ts`) + certHash 회귀 수정 완료.
+- Playwright E2E 활성 spec 기준선: `17개` (전일과 동일, flaky 방어 강화).
+- Jest: **5707 테스트 all green**.
 
 2026-06-24 baseline note:
 
@@ -14,16 +21,25 @@ This folder contains the current documentation baseline for the Loreguard web ap
 
 Read these first:
 
-- `docs/ARCHITECTURE.md` — current app shape and active/removed surfaces
+- `docs/ARCHITECTURE.md` — current app shape, active/removed surfaces, 신규 레이어 (dual-rail·registry-contract)
 - `docs/API.md` — API route contract
 - `docs/FEATURE_FLAGS.md` — runtime and local feature gates
-- `docs/DOCUMENT-STATUS-2026-06-24.md` — current/historical/design document classification
+- `docs/DOCUMENT-STATUS-2026-06-25.md` — current/historical/design document classification
 - `docs/PRODUCT-FRAME.md` — product framing
 - `docs/loreguard-creative-ide-design-master-plan-2026-06-18.md` — Creative IDE design master plan and 1000-point design gate
 - `docs/redeem-agent-operations-2026-06-14.md` — redeem, entitlement, Noa, and inactive agent-route state
 - `docs/stripe-revenue-path.md` — Stripe, subscription entitlement, and release-credit flow
 - `docs/release-evidence/README.md` — external evidence intake rules for release gates
 - `docs/security/auth-matrix.md` — auth and route protection matrix
+
+## 2026-06-25 Documentation Refresh Scope
+
+- UI 갭 G1-G6 연결 반영 (신규 컴포넌트 5개 + 훅 1개 + 버그픽스 2건)
+- `CHANGELOG.md` — 2026-06-25 항목 추가 (G1-G6·dual-rail·certHash·Quiet Page Pro)
+- `docs/ARCHITECTURE.md` — dual-rail 레이어 + 신규 컴포넌트 목록 추가
+- `docs/CLEANUP-STATUS.md` — 2026-06-25 pass 내역 추가
+- `docs/DOCUMENT-STATUS-2026-06-25.md` 신규 생성
+- Use `docs/DOCUMENT-STATUS-2026-06-25.md` before treating an older report as current architecture or current QA truth
 
 ## 2026-06-24 Documentation Refresh Scope
 

@@ -3,6 +3,54 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+---
+
+## [Unreleased] — 2026-06-25
+
+### Added — UI 갭 G1-G6 연결 (2026-06-25 · commit `0e7b1946`)
+
+백엔드/라이브러리로 구현은 됐지만 UI에 연결되지 않은 7개 갭 중 6개(G7=GTM DEFER) 완성:
+
+- **G1-A** `src/app/verify/page.tsx` — 봉인번호 QR 코드 렌더링 (`generateQRDataUrl` dynamic import, 취소 안전)
+- **G1-B** `src/components/loreguard/SealCard.tsx` (신규) — 봉인번호 + QR 80×80 카드 컴포넌트; `CpJournalPanel` 발급 성공 시 자동 표시
+- **G2** `src/hooks/useSceneShare.ts` (신규) — `createShareLink` 호출 후 토큰을 `StoryConfig.sharedScenePreviews`에 영속 (`expiryDays: 1|7|30|365`)
+- **G2** `src/components/studio/reader-sim/SceneFeedbackViewer.tsx` (신규) — 공유 토큰 목록 탭 + `loadFeedbacks` 조회 + 링크 복사
+- **G2** `DirectionTab` — `feedback` ViewMode + 5번째 "독자 피드백" 카드 추가; `feedback` 뷰에서 `SceneFeedbackViewer` 렌더
+- **G3** `WritingTab` 편집 모드 — `DetailPassButton` + `DetailPassPreviewModal` 연결 (`FEATURE_DRAFT_DETAIL_V2` off 시 비가시)
+- **G4** `ManuscriptTab` — `MergeConflictResolver` dynamic import; 최신 원고에 `<<<<<<<` 마커 감지 시 "충돌 해소" 버튼 표시
+- **G5** `src/components/loreguard/RegulatoryReportSummary.tsx` (신규) — 규제 준수 현황 (status/score/missingRequired)
+- **G5+G6** `src/components/loreguard/IpPackExportModal.tsx` (신규) — 4 배포 프로필 선택(플랫폼/출판사/법적보존/개인아카이브) → `buildSubmissionPackage` 호출 → artifacts 전체 다운로드
+- **G6** `ManuscriptTab` 툴바 — "IP 팩" 버튼 추가 (`IpPackExportModal` 열기)
+- `src/lib/studio-types.ts` — `StoryConfig.sharedScenePreviews` 필드 추가
+
+### Fixed — UI 갭 연결 버그 (2026-06-25)
+
+- `src/hooks/useCreativeEventLogger.ts:317` — `logAcceptAI` 내 `actorType: 'human'` → `'ai'` 수정 (AI 제안 수락 이벤트가 잘못된 actorType으로 기록되던 버그)
+
+---
+
+### Added — dual-rail 분류·creative-process 보강 (2026-06-25 · commit `bacd805c`)
+
+- `src/lib/creative-process/rail.ts` (신규) — `classifyRail`/`partitionEventsByRail` dual-rail 분류 (IP 레일 / 저작 레일 Phase 1 토대)
+- `src/lib/creative-process/index.ts` — `rail` + `registry-contract` 모듈 export 추가
+
+### Fixed — certHash 회귀버그 (2026-06-25)
+
+- `src/lib/creative-process/index.ts` — `computeCertHash`/`buildCertHashPayload` export 추가; `issue.ts`가 `certHtmlHash(SHA-256 html)` 대신 `computeCertHash(cert)`로 보내야 `verify/route.ts:370` 재계산과 일치하던 회귀 수정 (정직 발급 cert도 항상 certHash mismatch였던 버그 해소)
+
+### Changed — 집필 UI (2026-06-25)
+
+- `src/app/loreguard-authoring-tabs.css` — Quiet Page Pro: 무경계 종이 (테두리·그림자·그라데이션 제거, `::before` 장르 라인, `wr-center` bg `var(--page-2)` → `var(--card)`)
+- `src/components/loreguard/tabs/TabWritingProductionPanel.tsx` — 오늘 작업 보드 접힘 영속 (`collapse-state`)
+- `src/components/studio/WorldMap.tsx` — 드래그 write-amplification 차단: `pointermove` 로컬 좌표, `pointerUp` 1회 commit
+
+### Fixed — 안정성 (2026-06-25)
+
+- e2e `smoke-routes`, `network`, `resilience-network`, `byok-api-settings-commercial` — 리다이렉트 context 파괴 방어 + flaky 개선
+- `useStudioAI.ts` — 미사용 `attachDraftJournal` import 제거
+
+---
+
 ## [2.3.0-alpha] — 2026-05-10 (tag: `v2.3.0-alpha`)
 
 알파 본 릴리즈. 14축 평균 등급 **B (74) → A- (82)**. Track-D Phase 1 + Visual Charter v1.0 + Phase 1 quality push 통합 + paperwork (license/governance/release) 정비 완료.

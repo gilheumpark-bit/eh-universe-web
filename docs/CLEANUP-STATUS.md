@@ -1,6 +1,6 @@
 # Cleanup Status
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
 
 ## Current Status
 
@@ -24,6 +24,15 @@ Source cleanup for removed public product surfaces is largely complete.
 - 앱 내부 로컬 생성물/테스트 산출물/임시 로그 50개를 저장소 밖 EH 이관 폴더로 이동했다.
 - 루트 `artifacts/` 는 런타임 QA 덤프를 비우고 `.gitkeep` 만 유지한다.
 - 추적 중이던 단독 스크린샷 `studio-clean-after-fade.png` 도 이관했다.
+
+2026-06-25 pass:
+
+- UI 갭 G1-G6 연결로 5개 신규 컴포넌트/훅 추가 (`SealCard`, `SceneFeedbackViewer`, `IpPackExportModal`, `RegulatoryReportSummary`, `useSceneShare`)
+- dual-rail 분류 `rail.ts` + `rail.test.ts` 추가 (`src/lib/creative-process/`)
+- certHash 회귀 수정 — `registry-contract` export 추가
+- Quiet Page Pro CSS 변경 (무경계 종이 스타일)
+- 미사용 import 3건 제거 (`attachDraftJournal`, `AppTab` 타입, `WorldGraphEditor` 잔재)
+- 구형 e2e spec flaky 방어 (evaluate context 파괴 try/catch)
 
 `src` scan result after cleanup:
 

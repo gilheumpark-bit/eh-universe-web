@@ -1,6 +1,11 @@
 # Current Architecture
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
+
+2026-06-25 baseline note:
+
+- dual-rail (IP/저작) 분류 레이어 추가 (`rail.ts`), certHash 회귀 수정, UI 갭 G1-G6 연결 완료.
+- `StoryConfig.sharedScenePreviews` 필드 추가, 독자 피드백 뷰 연결.
 
 2026-06-24 baseline note:
 
@@ -114,6 +119,16 @@ Responsibilities:
 - submission package
 - C2PA-ready manifest
 - regulatory profile
+- **dual-rail classification** (`rail.ts` · 2026-06-25) — `classifyRail(stage, actorType)` → `'ip' | 'authorship' | 'unclassified'`; IP 레일(세계관~연출)과 저작 레일(집필 산문) 분리
+- **registry-contract** (`registry-contract.ts`) — `computeCertHash` / `buildCertHashPayload`; certHash 정합 기준 (verify/route.ts와 issue.ts 일치 강제)
+
+New UI components connected (2026-06-25):
+
+- `src/components/loreguard/SealCard.tsx` — 봉인번호 + QR 카드
+- `src/components/loreguard/RegulatoryReportSummary.tsx` — 규제 준수 현황
+- `src/components/loreguard/IpPackExportModal.tsx` — IP 팩 4-프로필 출고 모달
+- `src/components/studio/reader-sim/SceneFeedbackViewer.tsx` — 독자 피드백 조회
+- `src/hooks/useSceneShare.ts` — 장면 공유 링크 생성 + config 영속
 
 Important rule:
 
