@@ -50,19 +50,34 @@ jobs:
               VIOLATIONS+=("$f")
             fi
           done
-          # save-engine directory wildcard
-          if git diff --name-only "$BASE"..HEAD | grep -q '^src/lib/save-engine/'; then
-            VIOLATIONS+=("src/lib/save-engine/* (any file)")
-          fi
-          # Load BDFL-approved override list (.github/bdfl-isolation-override.txt)
-          # Each non-comment line is an exact match against the violation key.
+          # save-engine: 개별 파일 단위로 위반 기록 (blanket 와일드카드 금지 — 파일별 명시 승인 강제).
+          while IFS= read -r sf; do
+            [ -n "$sf" ] && VIOLATIONS+=("$sf")
+          done < <(git diff --name-only "$BASE"..HEAD | grep '^src/lib/save-engine/' | grep -v '__tests__' || true)
+          # BDFL override 로드 (.github/bdfl-isolation-override.txt)
+          #   각 비주석 줄 = "<exact key>  # expires:YYYY-MM-DD". 만료일 필수 — 누락/만료 시 무효
+          #   (일회성 예외가 영구 백도어로 굳는 것을 차단). 와일드카드 금지.
           BDFL_OVERRIDE=".github/bdfl-isolation-override.txt"
           ALLOWED_BY_BDFL=()
+          TODAY=$(date -u +%Y-%m-%d)
           if [ -f "$BDFL_OVERRIDE" ]; then
             while IFS= read -r line; do
-              [[ "$line" =~ ^# ]] && continue
-              [[ -z "$line" ]] && continue
-              ALLOWED_BY_BDFL+=("$line")
+              [[ "$line" =~ ^[[:space:]]*# ]] && continue
+              [[ -z "${line// }" ]] && continue
+              key="${line%%#*}"
+              key="$(echo "$key" | sed -e 's/[[:space:]]*$//' -e 's/^[[:space:]]*//')"
+              [ -z "$key" ] && continue
+              if [[ "$line" =~ expires:([0-9]{4}-[0-9]{2}-[0-9]{2}) ]]; then
+                exp="${BASH_REMATCH[1]}"
+              else
+                echo "⚠️  override 무시 (만료일 누락): $key"
+                continue
+              fi
+              if [[ "$TODAY" > "$exp" ]]; then
+                echo "⚠️  override 무시 (만료됨 $exp < $TODAY): $key"
+                continue
+              fi
+              ALLOWED_BY_BDFL+=("$key")
             done < "$BDFL_OVERRIDE"
           fi
           FINAL_VIOLATIONS=()

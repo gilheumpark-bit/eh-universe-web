@@ -71,11 +71,18 @@ export async function issueWitnessSeal(input: {
   serialQueue = run.catch(() => undefined);
   const serial = await run;
 
-  // [fix] format-drift (#74): serial 이 9999 를 넘으면 padStart 가 자르지 않아
-  // 5자리 이상 일련번호가 나와 LG-{YY}{MM}-{4digit}-{hash4} 형식이 깨진다.
-  // 4자리 표현을 위해 0001..9999 범위로 wrap (10000 → 0001) 하여 형식을 보존.
-  const serial4 = ((serial - 1) % 9999) + 1;
-  return `LG-${yyMm}-${String(serial4).padStart(4, '0')}-${hash4}`;
+  return `LG-${yyMm}-${formatSealSerial(serial)}-${hash4}`;
+}
+
+/**
+ * 월별 일련번호 → 인장번호 문자열.
+ * [#74→무결성] serial > 9999 일 때 wrap(10000→0001)은 인장번호 *중복 발급*을 유발한다
+ * (저작권 증명물 — 동일 번호가 두 원고에 발급되면 외부 배포 후 복구 불가). 형식 미관보다
+ * 고유성을 우선: 9999 이하는 4자리 zero-pad, 초과는 자리수를 그대로 늘려 충돌 없이 표현.
+ * (LG-{YY}{MM}-10000-… — 파서는 '-' 분할이라 5자리 이상도 안전.)
+ */
+export function formatSealSerial(serial: number): string {
+  return serial <= 9999 ? String(serial).padStart(4, '0') : String(serial);
 }
 
 // ============================================================

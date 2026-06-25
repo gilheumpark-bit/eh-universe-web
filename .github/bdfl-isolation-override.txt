@@ -1,10 +1,20 @@
 # BDFL Isolation §1 Override
 # BDFL: 박길흠 (Park Gilheum) — gilheumpark@gmail.com
-# Each non-comment line is the exact violation key that is approved.
+# 각 비주석 줄 = 승인된 *정확한* violation key + 만료일(필수).
+#   형식:  <exact file path>  # expires:YYYY-MM-DD
+#   · 만료일 지나면 자동 무효(영구 면제 금지) — 재승인하려면 날짜 갱신.
+#   · 와일드카드("* (any file)") 금지 — 디렉터리 통째 면제 불가, 파일 단위만.
+#   · 이 파일/isolation-check.yml 변경은 게이트를 *여는* 행위 → PR 리뷰에서 반드시 확인.
 # Reference: GOVERNANCE.md §2
 
-# [2026-06-25] G2 장면 공유 - StoryConfig에 sharedScenePreviews 필드 추가 (부가적 확장)
-src/lib/studio-types.ts
+# [2026-06-25] G2 장면 공유 — StoryConfig 에 sharedScenePreviews 필드 추가 (부가적 확장)
+src/lib/studio-types.ts  # expires:2026-07-31
 
-# [2026-06-25] 버그픽스 배치 (High 9건·Medium/Low 46건) - save-engine 데이터 손상·안전성 수정
-src/lib/save-engine/* (any file)
+# [2026-06-25] 버그픽스 배치 (High 9·Medium/Low 46) — save-engine 데이터 손상·안전성 수정
+# (와일드카드 제거: 실제 변경된 6개 파일만 명시 승인 — 그 외 save-engine 변경은 계속 게이트됨)
+src/lib/save-engine/beacon.ts  # expires:2026-07-31
+src/lib/save-engine/delta.ts  # expires:2026-07-31
+src/lib/save-engine/journal.ts  # expires:2026-07-31
+src/lib/save-engine/migration.ts  # expires:2026-07-31
+src/lib/save-engine/primary-write-logger.ts  # expires:2026-07-31
+src/lib/save-engine/storage-router.ts  # expires:2026-07-31

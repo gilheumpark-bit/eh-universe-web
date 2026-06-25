@@ -272,7 +272,15 @@ function readZipEntries(buffer: Buffer) {
   const totalEntries = buffer.readUInt16LE(eocdOffset + 10);
   let offset = buffer.readUInt32LE(eocdOffset + 16);
 
-  for (let index = 0; index < totalEntries; index += 1) {
+  // [B3 누적 가드] scanZipDecompressed 는 위조 가능한 *선언* uncompressedSize 만 본다.
+  //   실제 압축해제 총량을 ZIP_DECOMPRESSED_CAP 으로 묶고(엔트리 누적), 엔트리 수도 상한을 둬
+  //   다중 엔트리 팽창(N × per-entry cap)으로 인한 OOM/DoS 를 차단한다.
+  //   초과 시 throw → 모든 호출자는 POST try/catch 안이라 안전하게 처리됨.
+  const MAX_ZIP_ENTRIES = 4096;
+  const entryLimit = Math.min(totalEntries, MAX_ZIP_ENTRIES);
+  let totalDecompressed = 0;
+
+  for (let index = 0; index < entryLimit; index += 1) {
     if (offset + 46 > buffer.length || buffer.readUInt32LE(offset) !== cdSig) break;
     const method = buffer.readUInt16LE(offset + 10);
     const compressedSize = buffer.readUInt32LE(offset + 20);
@@ -287,14 +295,20 @@ function readZipEntries(buffer: Buffer) {
       const localExtraLength = buffer.readUInt16LE(localOffset + 28);
       const dataStart = localOffset + 30 + localNameLength + localExtraLength;
       const compressed = buffer.slice(dataStart, dataStart + compressedSize);
-      if (method === 0) entries.set(name.toLowerCase(), compressed);
-      // [H1 fix] Cap inflate output so a crafted deflate stream cannot expand past
-      // ZIP_DECOMPRESSED_CAP into OOM. scanZipDecompressed only trusts the Central
-      // Directory's *declared* uncompressedSize, which an attacker can forge; this
-      // enforces the limit on the *actual* output. inflateRawSync throws on overflow,
-      // and every readZipEntries caller runs inside the POST try/catch (line 708).
+      const remaining = ZIP_DECOMPRESSED_CAP - totalDecompressed;
+      if (remaining <= 0) throw new Error('ZIP decompressed total exceeds cap');
+      if (method === 0) {
+        // stored — 압축해제 없음. 그래도 메모리 보유분이므로 누적 예산에 포함.
+        if (compressed.length > remaining) throw new Error('ZIP decompressed total exceeds cap');
+        totalDecompressed += compressed.length;
+        entries.set(name.toLowerCase(), compressed);
+      }
+      // [H1+B3 fix] per-entry maxOutputLength 를 *남은 누적 예산*으로 제한 — 단일 거대 엔트리와
+      //   다중 엔트리 누적 팽창을 모두 차단. inflateRawSync 는 초과 시 throw.
       if (method === 8) {
-        entries.set(name.toLowerCase(), inflateRawSync(compressed, { maxOutputLength: ZIP_DECOMPRESSED_CAP }));
+        const out = inflateRawSync(compressed, { maxOutputLength: remaining });
+        totalDecompressed += out.length;
+        entries.set(name.toLowerCase(), out);
       }
     }
 
