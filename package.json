@@ -47,6 +47,7 @@
     "gate:evidence:remaining": "node scripts/loreguard-release-evidence-scan.mjs --remaining",
     "gate:evidence:templates": "node scripts/loreguard-release-evidence-scan.mjs --write-templates docs/release-evidence/templates",
     "gate:disabled-attestations": "node scripts/loreguard-release-disabled-attestations.mjs",
+    "gate:supply-chain": "node scripts/loreguard-supply-chain-scan.mjs",
     "gate:privacy": "node scripts/loreguard-privacy-gate-scan.mjs",
     "gate:release": "npm run check:local-secrets && npm run gate:baseline -- --fail-on-hold && npm run gate:privacy -- --fail-on-hold && npm run gate:evidence -- --fail-on-hold",
     "check:size": "node scripts/check-file-size.mjs",
