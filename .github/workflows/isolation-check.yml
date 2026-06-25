@@ -9,9 +9,9 @@ name: Isolation §1 Check
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   isolation-section-1:
