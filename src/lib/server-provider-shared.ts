@@ -3,6 +3,7 @@
 // ============================================================
 
 export const SERVER_PROVIDER_IDS = [
+  'upstage',
   'gemini',
   'openai',
   'claude',
@@ -21,4 +22,3 @@ export type ServerProviderId = (typeof SERVER_PROVIDER_IDS)[number];
 export function isServerProviderId(value: unknown): value is ServerProviderId {
   return typeof value === 'string' && SERVER_PROVIDER_IDS.includes(value as ServerProviderId);
 }
-

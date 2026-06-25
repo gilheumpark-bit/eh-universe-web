@@ -8,6 +8,7 @@ import React from 'react';
 import { CheckCircle, XCircle, SkipForward, Loader, Clock, Globe, Users, Film, PenLine } from 'lucide-react';
 import type { PipelineStageResult, StageStatus, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
+import { ProgressFill } from './ProgressFill';
 
 interface PipelineProgressProps {
   stages: PipelineStageResult[];
@@ -116,9 +117,13 @@ export default function PipelineProgress({ stages, finalStatus, language }: Pipe
                   <div className="flex items-center gap-1 mt-0.5">
                     <div className="flex-1 h-0.5 bg-bg-tertiary rounded-full overflow-hidden max-w-[80px]">
                       <div
-                        className={`h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-accent-red'}`}
-                        style={{ width: `${stage.score}%` }}
-                      />
+                        className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500"
+                      >
+                        <ProgressFill
+                          value={stage.score}
+                          className={`h-full rounded-full ${stage.score >= 80 ? 'bg-green-500' : stage.score >= 60 ? 'bg-amber-500' : 'bg-accent-red'}`}
+                        />
+                      </div>
                     </div>
                     <span className="font-mono text-[8px] text-text-tertiary">{stage.score}</span>
                   </div>

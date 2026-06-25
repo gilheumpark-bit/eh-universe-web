@@ -20,7 +20,7 @@
 | `M1..M9` | Mobile / Touch | `[M-01 2026-05-10]` (44px 터치 타겟) |
 | `O1..O9` | Observability | `[O-01 2026-06-08]` (trace_id 전파) |
 | `A1..A9` | Accessibility (WCAG) | `[A-03 2026-06-08]` (focus trap) |
-| `L1..L9` | Legal / Compliance | `[L-02 2026-06-08]` (AGPL header) |
+| `L1..L9` | Legal / Compliance | `[L-02 2026-06-08]` (license header) |
 | `I1..I9` | i18n | `[I-07 2026-05-10]` (safety-registry) |
 
 **Loop 표기:** `루프 N` (1/2/3...) 를 priority 옆에 병기. 예: `[P3 루프3/senior-architect 2026-06-08]`.
@@ -302,15 +302,36 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `engine/language-purity.ts` — 로컬 AI 영어 혼입 정화
 - `engine/contamination-dict.ts` — 영어→한국어 치환 사전 222개
 
-## E2E 테스트 인프라 (2026-04-18)
+## E2E 테스트 인프라 (2026-06-24 기준)
 
 - `playwright.config.ts`
-- `e2e/fixtures/studio-state.ts` — 공통 픽스처 (DGX 모킹)
-- `e2e/scenarios/01-onboarding.spec.ts` — /welcome 플로우
-- `e2e/scenarios/02-new-episode.spec.ts` — Ctrl+Shift+N
-- `e2e/scenarios/03-writing-flow.spec.ts` — AI 생성 플로우
-- `e2e/scenarios/04-global-search.spec.ts` — Ctrl+K 팔레트
-- `e2e/scenarios/05-rename-flow.spec.ts` — Ctrl+Shift+H
+- 현재 Playwright E2E 활성 spec: 총 `17개`
+- 공개 표면/은퇴 표면 회귀:
+  - `e2e/smoke-routes.spec.ts`
+  - `e2e/network.spec.ts`
+  - `e2e/tools-about.spec.ts`
+  - `e2e/edge-routes.spec.ts`
+  - `e2e/security-headers.spec.ts`
+  - `e2e/regression-critical.spec.ts`
+- Studio/Translation 핵심 표면:
+  - `e2e/studio.spec.ts`
+  - `e2e/translation-studio.spec.ts`
+  - `e2e/mobile-smoke.spec.ts`
+  - `e2e/resilience-network.spec.ts`
+- Loreguard 핵심 흐름:
+  - `e2e/loreguard-project-import-file-picker.spec.ts`
+  - `e2e/loreguard-authoring-to-export-persistence.spec.ts`
+  - `e2e/loreguard-submission-package-export-verify.spec.ts`
+  - `e2e/byok-api-settings-commercial.spec.ts`
+- 반응형/접근성/백업:
+  - `e2e/loreguard-design-a11y.spec.ts`
+  - `e2e/scenarios/12-backup-tiers.spec.ts`
+  - `e2e/scenarios/23-mobile-viewport.spec.ts`
+
+2026-06-24 정리 메모:
+
+- `2026-06-15` 이전 수정 시각의 구형 E2E spec 39개는 정리됨.
+- 오래된 개별 시나리오 문서가 남아 있더라도, 현재 기준선은 위 17개 활성 spec 이다.
 
 ## 카테고리 선언 (2026-04-18 신규)
 

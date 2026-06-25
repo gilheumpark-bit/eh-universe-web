@@ -57,6 +57,12 @@ export type {
   IpPackRiskItem,
 } from './ip-pack-manifest.types';
 
+function shortHashForDisplay(value?: string | null): string {
+  const cleaned = value?.replace(/^0x/i, '').trim();
+  if (!cleaned) return '없음';
+  return cleaned.length > 24 ? `${cleaned.slice(0, 16)}...${cleaned.slice(-8)}` : cleaned;
+}
+
 // ============================================================
 // PART 2 — Artifact inventory
 // ============================================================
@@ -642,8 +648,8 @@ export function serializeIpPackManifestForUserKo(manifest: IpPackManifest): stri
     '',
     '## 과정기록 요약',
     `- 보기 범위: ${manifest.creativeProcess.view}`,
-    `- 원고 해시: ${manifest.creativeProcess.manuscriptHash}`,
-    `- 타임라인 해시: ${manifest.creativeProcess.timelineHash}`,
+    `- 원고 해시 축약값: ${shortHashForDisplay(manifest.creativeProcess.manuscriptHash)}`,
+    `- 타임라인 해시 축약값: ${shortHashForDisplay(manifest.creativeProcess.timelineHash)}`,
     `- 이벤트 수: ${manifest.creativeProcess.eventCount}`,
     `- 출처 수: ${manifest.creativeProcess.sourceCount}`,
     '',

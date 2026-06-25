@@ -10,6 +10,7 @@ import BackupNowButton from '@/components/studio/BackupNowButton';
 import { useSessionTimer, formatSessionTime, formatDailyTime } from '@/hooks/useSessionTimer';
 import { useSparkHealth } from '@/hooks/useSparkHealth';
 import { useStorageQuota, formatBytes } from '@/hooks/useStorageQuota';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface StudioStatusBarProps {
   editDraft: string;
@@ -42,7 +43,7 @@ export function StudioStatusBar({
 }: StudioStatusBarProps) {
   const isKO = language === 'KO';
 
-  // TODO: Extract to useTextStats(text) hook
+  // Refactor note: extract to useTextStats(text) hook when status metrics expand.
   const stats = useMemo(() => {
     const text = activeTab === 'writing' ? editDraft : '';
     const chars = text.replace(/\s/g, '').length;
@@ -190,9 +191,9 @@ export function StudioStatusBar({
                       aria-valuemax={100}
                       aria-label={isKO ? '일일 목표 진행률' : 'Daily goal progress'}
                     >
-                      <span
+                      <ProgressFill
+                        value={progressPct}
                         className="block h-full bg-accent-green transition-[width] duration-300"
-                        style={{ width: `${progressPct}%` }}
                       />
                     </span>
                     <span className="text-[12px] text-text-tertiary">{progressPct}%</span>

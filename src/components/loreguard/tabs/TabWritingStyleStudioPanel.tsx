@@ -43,44 +43,25 @@ export function StyleStudioPanel() {
 
   return (
     <div
+      className="wr-style-overlay"
       role="presentation"
       onClick={() => setOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        background: "var(--overlay-scrim)",
-        display: "flex",
-        justifyContent: "flex-end",
-      }}
     >
       <aside
+        className="wr-style-panel"
         role="dialog"
         aria-modal="true"
         aria-label={L4(language, { ko: "문체 스튜디오", en: "Style Studio" })}
         onClick={(event) => event.stopPropagation()}
-        style={{
-          width: "min(640px, 94vw)",
-          height: "100%",
-          overflowY: "auto",
-          background: "var(--page-2)",
-          borderLeft: "1px solid var(--line)",
-          boxShadow: "var(--shadow-pop)",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
       >
-        <div className="pcard-h" style={{ marginBottom: 0 }}>
+        <div className="pcard-h wr-style-head">
           <Pen size={16} />
           {L4(language, { ko: "문체 스튜디오", en: "Style Studio" })}
           <button
             type="button"
-            className="eh-icbtn"
             aria-label={L4(language, { ko: "패널 닫기", en: "Close panel" })}
             autoFocus
-            style={{ marginLeft: "auto" }}
+            className="eh-icbtn wr-push"
             onClick={() => setOpen(false)}
           >
             <X size={16} />

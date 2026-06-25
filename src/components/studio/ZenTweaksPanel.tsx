@@ -11,8 +11,9 @@
 // CSS variable 적용: --editor-font-size / --editor-line-height / --editor-max-width.
 // NovelEditor의 ProseMirror 스타일이 이 변수를 fallback으로 사용 (NovelEditor.tsx:318-327).
 //
-// [R7-B fix 정합 — 2026-05-12] CSS class 의존 0 → Tailwind @layer cascade 회피.
-// createPortal로 body 직계 mount → ancestor 영향 0.
+// [Design debt fix — 2026-06-23] body 직계 portal은 유지하되, 시각 표현은
+// globals-studio.css의 zen-tweaks-* 계약으로 이동한다. ancestor cascade는 피하고
+// inline style 부채는 만들지 않는다.
 //
 // [C] SSR-safe (typeof window + portal target useState)
 // [G] localStorage write throttle (slider 드래그 시 매 frame 쓰기 방지) — debounce 300ms
@@ -20,6 +21,7 @@
 
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { SlidersHorizontal, X } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 
@@ -53,21 +55,6 @@ const DEFAULT_TWEAKS: ZenTweaks = {
   dropCap: true,
   symbolDeco: true,
   bgMode: 'night',
-};
-
-// 색 토큰 — Doc 5 spec. 100% inline (CSS class 회피).
-const COL = {
-  fg1: 'var(--color-text-primary, #f4f0ea)',
-  fg2: 'var(--color-text-secondary, #b5ac9d)',
-  fg3: 'var(--color-text-tertiary, #948a7c)',
-  fg4: 'var(--color-text-quaternary, #5a5347)',
-  bg1: 'var(--color-bg-primary, #11100e)',
-  bg2: 'var(--color-bg-secondary, #1a1816)',
-  bg3: 'var(--color-bg-tertiary, #242018)',
-  border: 'var(--color-border, #2f2c26)',
-  borderStrong: 'var(--color-border-strong, #3a352c)',
-  amber: 'var(--color-accent-amber, #b8955c)',
-  amberLight: 'var(--color-accent-amber-2, #caa15c)',
 };
 
 // ============================================================
@@ -179,162 +166,13 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
   if (!zenActive) return null;
 
   // ============================================================
-  // PART 4.1 — Inline styles
-  // ============================================================
-  const fabStyle: React.CSSProperties = {
-    position: 'fixed',
-    bottom: 48,
-    right: 24,
-    width: 40,
-    height: 40,
-    borderRadius: '50%',
-    background: COL.bg2,
-    border: `1px solid ${COL.borderStrong}`,
-    color: COL.fg2,
-    cursor: 'pointer',
-    display: open ? 'none' : 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 16,
-    zIndex: 48,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-    transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
-    fontFamily: 'inherit',
-  };
-
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed',
-    bottom: 48,
-    right: 24,
-    width: 300,
-    background: 'rgba(20, 18, 16, 0.96)',
-    border: `1px solid ${COL.borderStrong}`,
-    borderRadius: 10,
-    boxShadow: '0 24px 72px rgba(0,0,0,0.5)',
-    zIndex: 50,
-    backdropFilter: 'blur(20px)',
-    opacity: open ? 1 : 0,
-    transform: open ? 'translateY(0)' : 'translateY(8px)',
-    pointerEvents: open ? 'auto' : 'none',
-    transition: 'opacity 240ms cubic-bezier(0.16, 1, 0.3, 1), transform 240ms cubic-bezier(0.16, 1, 0.3, 1)',
-    fontFamily: 'var(--font-sans, "IBM Plex Sans", "Noto Sans KR", system-ui, sans-serif)',
-  };
-
-  const headerStyle: React.CSSProperties = {
-    padding: '12px 16px',
-    borderBottom: `1px solid ${COL.border}`,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  };
-
-  const titleStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-display, "Cormorant Garamond", "Noto Serif KR", serif)',
-    fontSize: 18,
-    fontWeight: 600,
-    letterSpacing: '-0.02em',
-    color: COL.fg1,
-  };
-
-  const closeBtnStyle: React.CSSProperties = {
-    cursor: 'pointer',
-    color: COL.fg3,
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    fontSize: 14,
-    background: 'transparent',
-    border: 0,
-    padding: '4px 8px',
-    lineHeight: 1,
-  };
-
-  const bodyStyle: React.CSSProperties = { padding: '14px 16px 18px' };
-
-  const rowStyle: React.CSSProperties = { marginBottom: 14 };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    fontSize: 9,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: COL.fg3,
-    marginBottom: 8,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  };
-
-  const labelValStyle: React.CSSProperties = {
-    color: COL.amberLight,
-    fontSize: 10,
-    letterSpacing: '0.06em',
-  };
-
-  const sliderStyle: React.CSSProperties = {
-    width: '100%',
-    accentColor: COL.amber,
-    height: 4,
-  };
-
-  const segContainerStyle: React.CSSProperties = {
-    display: 'flex',
-    background: COL.bg3,
-    borderRadius: 6,
-    padding: 2,
-    gap: 2,
-  };
-
-  const segBtnStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1,
-    background: active ? COL.bg1 : 'transparent',
-    border: 0,
-    color: active ? COL.amber : COL.fg3,
-    boxShadow: active ? `inset 0 0 0 1px ${COL.borderStrong}` : 'none',
-    padding: 6,
-    borderRadius: 4,
-    fontFamily: 'var(--font-mono, monospace)',
-    fontSize: 10,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    cursor: 'pointer',
-  });
-
-  const toggleStyle = (): React.CSSProperties => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    cursor: 'pointer',
-    padding: '4px 0',
-  });
-
-  const swStyle = (on: boolean): React.CSSProperties => ({
-    width: 34,
-    height: 18,
-    background: on ? 'rgba(184, 149, 92, 0.3)' : COL.bg3,
-    borderRadius: 9999,
-    position: 'relative',
-    border: `1px solid ${on ? COL.amber : COL.borderStrong}`,
-    transition: 'background 200ms ease',
-  });
-
-  const swDotStyle = (on: boolean): React.CSSProperties => ({
-    position: 'absolute',
-    left: on ? 18 : 2,
-    top: 1,
-    width: 12,
-    height: 12,
-    borderRadius: '50%',
-    background: on ? COL.amber : COL.fg2,
-    transition: 'all 200ms ease',
-  });
-
-  // ============================================================
-  // PART 4.2 — Render (Portal to body)
+  // PART 4.1 — Render (Portal to body)
   // ============================================================
   return createPortal((
     <>
       <button
         type="button"
-        style={fabStyle}
+        className={`zen-tweaks-fab${open ? ' is-hidden' : ''}`}
         onClick={() => setOpen(true)}
         title={L4(language, {
           ko: 'Zen 조정',
@@ -349,11 +187,11 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
           zh: '打开 Zen 调节面板',
         })}
       >
-        ⚙
+        <SlidersHorizontal size={17} aria-hidden="true" />
       </button>
 
       <div
-        style={panelStyle}
+        className={`zen-tweaks-panel${open ? ' is-open' : ' is-closed'}`}
         role="dialog"
         aria-modal="false"
         aria-label={L4(language, {
@@ -364,26 +202,26 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
         })}
         aria-hidden={!open}
       >
-        <div style={headerStyle}>
-          <div style={titleStyle}>
+        <div className="zen-tweaks-head">
+          <div className="zen-tweaks-title">
             {L4(language, { ko: '조정', en: 'Tweaks', ja: '調整', zh: '调节' })}
           </div>
           <button
             type="button"
-            style={closeBtnStyle}
+            className="zen-tweaks-close"
             onClick={() => setOpen(false)}
             aria-label={L4(language, { ko: '닫기', en: 'Close', ja: '閉じる', zh: '关闭' })}
           >
-            ×
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
 
-        <div style={bodyStyle}>
+        <div className="zen-tweaks-body">
           {/* 본문 크기 */}
-          <div style={rowStyle}>
-            <div style={labelStyle}>
+          <div className="zen-tweaks-row">
+            <div className="zen-tweaks-label">
               <span>{L4(language, { ko: '본문 크기', en: 'Font size', ja: '文字サイズ', zh: '字号' })}</span>
-              <span style={labelValStyle}>{tweaks.fontSize}px</span>
+              <span className="zen-tweaks-val">{tweaks.fontSize}px</span>
             </div>
             <input
               type="range"
@@ -392,16 +230,16 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
               step={1}
               value={tweaks.fontSize}
               onChange={(e) => update('fontSize', Number(e.target.value))}
-              style={sliderStyle}
+              className="zen-tweaks-range"
               aria-label={L4(language, { ko: '본문 크기', en: 'Font size', ja: '文字サイズ', zh: '字号' })}
             />
           </div>
 
           {/* 행간 */}
-          <div style={rowStyle}>
-            <div style={labelStyle}>
+          <div className="zen-tweaks-row">
+            <div className="zen-tweaks-label">
               <span>{L4(language, { ko: '행간', en: 'Line height', ja: '行間', zh: '行距' })}</span>
-              <span style={labelValStyle}>{tweaks.lineHeight.toFixed(2)}</span>
+              <span className="zen-tweaks-val">{tweaks.lineHeight.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -410,16 +248,16 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
               step={0.05}
               value={tweaks.lineHeight}
               onChange={(e) => update('lineHeight', Number(e.target.value))}
-              style={sliderStyle}
+              className="zen-tweaks-range"
               aria-label={L4(language, { ko: '행간', en: 'Line height', ja: '行間', zh: '行距' })}
             />
           </div>
 
           {/* 본문 폭 */}
-          <div style={rowStyle}>
-            <div style={labelStyle}>
+          <div className="zen-tweaks-row">
+            <div className="zen-tweaks-label">
               <span>{L4(language, { ko: '본문 폭', en: 'Width', ja: '本文幅', zh: '正文宽' })}</span>
-              <span style={labelValStyle}>{tweaks.widthEm}em</span>
+              <span className="zen-tweaks-val">{tweaks.widthEm}em</span>
             </div>
             <input
               type="range"
@@ -428,54 +266,54 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
               step={1}
               value={tweaks.widthEm}
               onChange={(e) => update('widthEm', Number(e.target.value))}
-              style={sliderStyle}
+              className="zen-tweaks-range"
               aria-label={L4(language, { ko: '본문 폭', en: 'Width', ja: '本文幅', zh: '正文宽' })}
             />
           </div>
 
           {/* 드롭 캡 toggle */}
-          <div style={rowStyle}>
+          <div className="zen-tweaks-row">
             <button
               type="button"
-              style={{ ...toggleStyle(), background: 'transparent', border: 0, width: '100%', textAlign: 'left' }}
+              className="zen-tweaks-toggle"
               onClick={() => update('dropCap', !tweaks.dropCap)}
               aria-pressed={tweaks.dropCap}
             >
-              <span style={{ fontSize: 13, color: COL.fg1 }}>
+              <span className="zen-tweaks-toggle-label">
                 {L4(language, { ko: '첫 글자 amber', en: 'Drop cap amber', ja: '頭文字 amber', zh: '首字 amber' })}
               </span>
-              <span style={swStyle(tweaks.dropCap)}>
-                <span style={swDotStyle(tweaks.dropCap)} />
+              <span className={`zen-tweaks-switch${tweaks.dropCap ? ' is-on' : ''}`}>
+                <span className="zen-tweaks-switch-dot" />
               </span>
             </button>
           </div>
 
           {/* 심볼 표시 toggle */}
-          <div style={rowStyle}>
+          <div className="zen-tweaks-row">
             <button
               type="button"
-              style={{ ...toggleStyle(), background: 'transparent', border: 0, width: '100%', textAlign: 'left' }}
+              className="zen-tweaks-toggle"
               onClick={() => update('symbolDeco', !tweaks.symbolDeco)}
               aria-pressed={tweaks.symbolDeco}
             >
-              <span style={{ fontSize: 13, color: COL.fg1 }}>
+              <span className="zen-tweaks-toggle-label">
                 {L4(language, { ko: '인물 underline', en: 'Symbol underline', ja: '人物 underline', zh: '人物 underline' })}
               </span>
-              <span style={swStyle(tweaks.symbolDeco)}>
-                <span style={swDotStyle(tweaks.symbolDeco)} />
+              <span className={`zen-tweaks-switch${tweaks.symbolDeco ? ' is-on' : ''}`}>
+                <span className="zen-tweaks-switch-dot" />
               </span>
             </button>
           </div>
 
           {/* 배경 모드 segment */}
-          <div style={rowStyle}>
-            <div style={labelStyle}>
+          <div className="zen-tweaks-row">
+            <div className="zen-tweaks-label">
               <span>{L4(language, { ko: '밤 모드', en: 'Background', ja: '背景モード', zh: '背景' })}</span>
             </div>
-            <div style={segContainerStyle}>
+            <div className="zen-tweaks-seg">
               <button
                 type="button"
-                style={segBtnStyle(tweaks.bgMode === 'night')}
+                className={tweaks.bgMode === 'night' ? 'is-active' : undefined}
                 onClick={() => update('bgMode', 'night')}
                 aria-pressed={tweaks.bgMode === 'night'}
               >
@@ -483,7 +321,7 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
               </button>
               <button
                 type="button"
-                style={segBtnStyle(tweaks.bgMode === 'paper')}
+                className={tweaks.bgMode === 'paper' ? 'is-active' : undefined}
                 onClick={() => update('bgMode', 'paper')}
                 aria-pressed={tweaks.bgMode === 'paper'}
               >
@@ -491,7 +329,7 @@ function ZenTweaksPanelInner({ language, zenActive }: ZenTweaksPanelProps) {
               </button>
               <button
                 type="button"
-                style={segBtnStyle(tweaks.bgMode === 'midnight')}
+                className={tweaks.bgMode === 'midnight' ? 'is-active' : undefined}
                 onClick={() => update('bgMode', 'midnight')}
                 aria-pressed={tweaks.bgMode === 'midnight'}
               >

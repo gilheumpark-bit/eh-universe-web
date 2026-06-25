@@ -24,7 +24,7 @@ The "21-Module Authoring System" is Loreguard's internal normalization of establ
 
 This document maps each of the 21 modules to its location within Loreguard's existing surface, identifies the 6 coverage gaps and 3 enhancement opportunities, and specifies the synergy with existing Loreguard subsystems (ARCS, Authorship Journal, Compliance, IP Guard).
 
-**Trade-secret separation**: This whitepaper describes module *schemas*. The associated rule pack data (M18 18-platform rules, M11 beat seeds, market-variant honorific tables) is commercial-license territory and not redistributed under AGPL.
+**Rule-pack separation**: This whitepaper describes module *schemas*. The associated rule pack data (M18 18-platform rules, M11 beat seeds, market-variant honorific tables) is distributed separately from the proprietary software repository.
 
 ---
 
@@ -128,13 +128,13 @@ These enrich the existing 9-Origin × HCI 0-100 baseline with a 3-dimensional ma
 
 The 21-module subsystem ships as:
 
-1. **AGPL-distributed** (this repo, `src/lib/twentyone-modules/`):
+1. **Proprietary software repository** (this repo, `src/lib/twentyone-modules/`):
    - Schema interfaces (TypeScript)
    - Registry (module ↔ tab mapping + injection policy)
    - Compliance hook router
    - UI surface (Settings, WorldTab sections, etc.)
 
-2. **Commercial-license grant** (not in this repo, external):
+2. **Separate rule-pack data** (not in this repo, external):
    - M18 18-platform rule pack (concrete word counts, age ratings, monetization rules)
    - M13 4-language forbidden content code data (ZH-T01..T08, EN-T01..T07, JP-T01..T06, KO content rules)
    - M11 4-language beat seed data (genre conventions per market)

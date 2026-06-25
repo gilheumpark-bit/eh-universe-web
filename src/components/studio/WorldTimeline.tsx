@@ -29,6 +29,11 @@ interface TimelineTrack {
 
 const CIV_FALLBACK_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=TimelineTrack
 
 // ============================================================
@@ -135,7 +140,7 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
       </h3>
 
       <div className="overflow-x-auto bg-bg-secondary rounded-2xl border border-border p-2">
-        <svg viewBox={`0 0 ${w} ${h}`} className="min-w-[500px] h-auto" style={{ fontFamily: 'var(--font-mono, monospace)' }}
+        <svg viewBox={`0 0 ${w} ${h}`} className="min-w-[500px] h-auto studio-mono-svg"
           role="img" aria-label={isKO ? '문명 타임라인' : 'Civilization timeline'}>
 
           {/* Background — transparent so parent bg shows through */}
@@ -152,7 +157,7 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
           {allEras.map((era, i) => {
             const isSelected = selectedEra === era;
             return (
-              <g key={era} style={{ cursor: onSelectEra ? 'pointer' : undefined }}
+              <g key={era} className={onSelectEra ? 'world-timeline-clickable' : undefined}
                 onClick={() => onSelectEra?.(era)}>
                 {/* Highlight background for selected era */}
                 {isSelected && (
@@ -192,14 +197,14 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
               {/* Reorder arrows (up/down) */}
               {onReorderCiv && (
                 <foreignObject x={2} y={trackY(i) - 10} width="20" height="22">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                  <div className="world-timeline-reorder-stack">
                     {i > 0 && (
-                      <button onClick={() => handleMoveUp(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: '10px', color: 'var(--color-text-tertiary, #888)' }} aria-label="Move up">
+                      <button onClick={() => handleMoveUp(i)} className="world-timeline-reorder-button" aria-label="Move up">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 15l-6-6-6 6"/></svg>
                       </button>
                     )}
                     {i < tracks.length - 1 && (
-                      <button onClick={() => handleMoveDown(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: '10px', color: 'var(--color-text-tertiary, #888)' }} aria-label="Move down">
+                      <button onClick={() => handleMoveDown(i)} className="world-timeline-reorder-button" aria-label="Move down">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M6 9l6 6 6-6"/></svg>
                       </button>
                     )}
@@ -222,7 +227,7 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
                 {track.eras.map(era => (
                   <circle key={era} cx={eraX(era)} cy={trackY(i)} r="4"
                     fill={track.color} opacity={selectedEra && selectedEra !== era ? 0.3 : 0.8}
-                    style={{ cursor: onSelectEra ? 'pointer' : undefined }}
+                    className={onSelectEra ? 'world-timeline-clickable' : undefined}
                     onClick={e => { e.stopPropagation(); onSelectEra?.(era); }}>
                     <title>{track.civName} — {era}</title>
                   </circle>
@@ -282,7 +287,10 @@ function WorldTimeline({ simData, language, selectedEra, onSelectEra, onReorderC
       <div className="flex flex-wrap gap-3 text-[9px] mt-4 p-3 border border-[rgba(255,200,50,0.15)] bg-[rgba(255,200,50,0.02)] rounded-xl backdrop-blur-sm">
         {tracks.map(track => (
           <span key={track.civName} className="flex items-center gap-1.5 px-2 py-1 bg-bg-tertiary rounded-md border border-[rgba(255,255,255,0.05)]">
-            <span className="w-2.5 h-2.5 rounded-full inline-block shadow-[0_0_5px_currentColor]" style={{ background: track.color, color: track.color }} />
+            <span
+              ref={(node) => bindStudioTone(node, track.color)}
+              className="w-2.5 h-2.5 rounded-full inline-block shadow-[0_0_5px_currentColor] studio-tone-swatch"
+            />
             <span className="text-text-secondary font-mono">{track.civName}</span>
             <span className="text-text-tertiary font-mono">({track.eras.length}{isKO ? '시대' : 'Era'})</span>
           </span>

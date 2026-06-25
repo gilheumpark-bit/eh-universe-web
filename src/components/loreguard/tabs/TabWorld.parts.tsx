@@ -5,10 +5,9 @@ import type { LucideIcon } from "lucide-react";
 import {
   Alert,
   Book,
-  Check,
-  ChevronR,
   Clock,
   Coins,
+  Eye,
   Flag,
   Globe,
   Grad,
@@ -16,13 +15,11 @@ import {
   Lock,
   Map,
   Pin,
-  Plus,
   Route,
   Scale,
   Shield,
   Sparkle,
   User,
-  Eye,
 } from "@/components/loreguard/icons";
 import type {
   AcceptedImportCandidateRecord,
@@ -83,7 +80,7 @@ export const TIER_TONE: Record<1 | 2 | 3, string> = { 1: "purple", 2: "blue", 3:
 export const TIER_LABEL: Record<1 | 2 | 3, string> = { 1: "1단계 뼈대", 2: "2단계 작동", 3: "3단계 디테일" };
 export const WORLD_TIERS = [1, 2, 3] as const;
 
-const ARCS_STATUS_LABEL: Record<WorldFactArcsStatus, { label: string; tone: string }> = {
+export const ARCS_STATUS_LABEL: Record<WorldFactArcsStatus, { label: string; tone: string }> = {
   not_checked: { label: "미검토", tone: "gray" },
   draft: { label: "초안", tone: "amber" },
   hold: { label: "보류", tone: "amber" },
@@ -91,16 +88,35 @@ const ARCS_STATUS_LABEL: Record<WorldFactArcsStatus, { label: string; tone: stri
   conflict: { label: "충돌", tone: "red" },
 };
 
+export function worldToneClass(color: string): string {
+  switch (color) {
+    case "var(--c-blue)":
+      return "wd-tone-blue";
+    case "var(--c-purple)":
+      return "wd-tone-purple";
+    case "var(--c-red)":
+      return "wd-tone-red";
+    case "var(--c-green)":
+      return "wd-tone-green";
+    case "var(--c-teal)":
+      return "wd-tone-teal";
+    case "var(--c-amber)":
+      return "wd-tone-amber";
+    default:
+      return "wd-tone-blue";
+  }
+}
+
 export function fieldValue(config: StoryConfig | null | undefined, key: WorldFieldKey): string {
   const value = config?.[key];
   return typeof value === "string" ? value.trim() : "";
 }
 
-function candidateConflictCount(candidate: AcceptedImportCandidateRecord): number {
+export function candidateConflictCount(candidate: AcceptedImportCandidateRecord): number {
   return (candidate.alignmentWarnings ?? []).filter((warning) => warning.severity === "warning").length;
 }
 
-function candidateArcsStatus(candidate: AcceptedImportCandidateRecord): WorldFactArcsStatus {
+export function candidateArcsStatus(candidate: AcceptedImportCandidateRecord): WorldFactArcsStatus {
   if (candidateConflictCount(candidate) > 0) return "conflict";
   if (candidate.confidence >= 0.7) return "pass";
   if (candidate.confidence >= 0.5) return "hold";
@@ -136,19 +152,127 @@ export function makeNoaEvidence(fieldKey: WorldFieldKey): WorldFieldEvidenceReco
   };
 }
 
-function EvidenceMeta({ evidence }: { evidence?: WorldFieldEvidenceRecord }) {
-  if (!evidence) return null;
-  const status = ARCS_STATUS_LABEL[evidence.arcsStatus] ?? ARCS_STATUS_LABEL.not_checked;
-  const confidence = typeof evidence.confidence === "number" ? `${Math.round(evidence.confidence * 100)}%` : "검토 전";
-  return (
-    <div className="wd-card-meta" style={{ flexWrap: "wrap" }}>
-      <span>출처 {evidence.sourceLabel}</span>
-      <span>일치도 {confidence}</span>
-      <span className={`pill ${status.tone}`}>{status.label}</span>
-      <span className={`pill ${evidence.conflictCount > 0 ? "red" : "green"}`}>
-        충돌 {evidence.conflictCount}
-      </span>
-    </div>
+export interface WorldChatDraftSource {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  live?: boolean;
+}
+
+export interface WorldChatDraft {
+  id: string;
+  fieldKey: WorldFieldKey;
+  title: string;
+  excerpt: string;
+  sourceLabel: string;
+  confidence: number;
+  reason: string;
+  pinned?: boolean;
+}
+
+const WORLD_FIELD_HINTS: Record<WorldFieldKey, string[]> = {
+  corePremise: ["전제", "규칙", "현실", "세계는", "다르게", "근본"],
+  powerStructure: ["권력", "지배", "왕", "정부", "귀족", "통제", "의회"],
+  currentConflict: ["갈등", "전쟁", "대립", "위기", "문제", "충돌", "압력"],
+  worldHistory: ["역사", "과거", "사건", "연대", "시대", "건국", "몰락"],
+  socialSystem: ["신분", "계층", "제도", "사회", "시민", "가문"],
+  economy: ["경제", "화폐", "자원", "상인", "세금", "생업", "시장"],
+  magicTechSystem: ["마법", "기술", "능력", "마나", "시스템", "장치", "초능력"],
+  factionRelations: ["세력", "종족", "파벌", "동맹", "관계", "길드", "조직"],
+  survivalEnvironment: ["환경", "지리", "기후", "생존", "위험", "황무지", "바다"],
+  culture: ["문화", "관습", "예술", "축제", "언어", "전통"],
+  religion: ["종교", "신화", "신", "사원", "믿음", "교단"],
+  education: ["교육", "학교", "학원", "지식", "전승", "스승"],
+  lawOrder: ["법", "치안", "처벌", "재판", "질서", "금지"],
+  taboo: ["금기", "규범", "터부", "금지", "하면 안", "불문율"],
+  dailyLife: ["일상", "하루", "생활", "먹고", "잠", "평범한 사람"],
+  travelComm: ["이동", "통신", "거리", "속도", "교통", "전달", "항로"],
+  truthVsBeliefs: ["진실", "거짓", "믿음", "착각", "비밀", "은폐", "왜곡"],
+};
+
+function compactWorldDraftText(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 280);
+}
+
+function hashWorldDraft(text: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function inferWorldFieldKey(text: string, fallback: WorldFieldKey): { key: WorldFieldKey; score: number } {
+  const lower = text.toLowerCase();
+  let bestKey = fallback;
+  let bestScore = 0;
+  for (const [key, hints] of Object.entries(WORLD_FIELD_HINTS) as Array<[WorldFieldKey, string[]]>) {
+    const score = hints.reduce((sum, hint) => sum + (lower.includes(hint.toLowerCase()) ? 1 : 0), 0);
+    if (score > bestScore) {
+      bestKey = key;
+      bestScore = score;
+    }
+  }
+  return { key: bestKey, score: bestScore };
+}
+
+export function buildWorldChatDrafts(
+  sources: WorldChatDraftSource[],
+  fallbackField: WorldFieldKey,
+): WorldChatDraft[] {
+  const drafts: WorldChatDraft[] = [];
+  const seen = new Set<string>();
+
+  for (const source of sources.slice(-8)) {
+    const excerpt = compactWorldDraftText(source.content);
+    if (excerpt.length < 18) continue;
+    const { key, score } = inferWorldFieldKey(excerpt, fallbackField);
+    if (score === 0 && !source.live) continue;
+    const id = `${source.live ? "live" : source.id}:${key}:${hashWorldDraft(excerpt)}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const fieldTitle = WORLD_FIELDS.find((field) => field.key === key)?.title ?? "세계관";
+    const sourceLabel = source.live
+      ? "입력 중 메모"
+      : source.role === "assistant"
+        ? "노아 대화 메모"
+        : "작가 대화 메모";
+    drafts.push({
+      id,
+      fieldKey: key,
+      title: fieldTitle,
+      excerpt,
+      sourceLabel,
+      confidence: Math.min(0.86, 0.58 + score * 0.08 + (source.live ? 0.02 : 0.06)),
+      reason: score > 0 ? `${fieldTitle} 단서 감지` : "현재 선택 항목 기준으로 임시 메모",
+    });
+  }
+
+  return drafts.slice(-5).reverse();
+}
+
+export function makeChatDraftEvidence(draft: WorldChatDraft): WorldFieldEvidenceRecord {
+  return {
+    fieldKey: draft.fieldKey,
+    sourceLabel: draft.sourceLabel,
+    confidence: draft.confidence,
+    conflictCount: 0,
+    arcsStatus: draft.confidence >= 0.74 ? "draft" : "hold",
+    updatedAt: new Date().toISOString(),
+    note: draft.reason,
+  };
+}
+
+export function worldImportCandidates(config: StoryConfig | null): AcceptedImportCandidateRecord[] {
+  return (config?.acceptedImportCandidates ?? []).filter(
+    (candidate) =>
+      candidate.targetType === "world" &&
+      candidate.bucket === "world" &&
+      candidate.routedToStage !== "world",
   );
 }
 
@@ -156,6 +280,12 @@ export const WORLD_SECTIONS_KEY = "noa-lg-world-sections";
 export const WORLD_RAIL_KEY = "noa-lg-world-rail";
 export const WORLD_BOARD_KEY = "noa-lg-world-board";
 export type CollapsedTiers = Record<1 | 2 | 3, boolean>;
+
+export interface WorldCollapsedSummaryItem {
+  label: string;
+  value: string;
+  tone: string;
+}
 
 const SECTIONS_DEFAULT: CollapsedTiers = { 1: false, 2: false, 3: false };
 
@@ -211,140 +341,11 @@ export function useWorldPanelSheet(): boolean {
   return isSheet;
 }
 
-interface BoardCardProps {
-  def: WorldFieldDef;
-  value: string;
-  evidence?: WorldFieldEvidenceRecord;
-  onPick: (key: WorldFieldKey) => void;
-  picked: boolean;
-}
-
-export function BoardCard({ def, value, evidence, onPick, picked }: BoardCardProps) {
-  const Icon = def.ic;
-  const filled = value.length > 0;
-  return (
-    <button
-      type="button"
-      className="wd-card"
-      onClick={() => onPick(def.key)}
-      style={{
-        textAlign: "left",
-        cursor: "pointer",
-        outline: picked ? "2px solid var(--primary)" : undefined,
-      }}
-      aria-pressed={picked}
-      title={picked ? `${def.title} — 채택 대상으로 선택됨` : `${def.title} 채택 대상으로 선택`}
-    >
-      <div
-        className="wd-card-ic"
-        style={{
-          color: def.color,
-          background: `color-mix(in srgb, ${def.color} 13%, transparent)`,
-        }}
-      >
-        <Icon size={20} />
-      </div>
-      <div className="wd-card-body">
-        <div className="wd-card-top">
-          <span className="wd-card-title">{def.title}</span>
-          <span className={`pill ${TIER_TONE[def.tier]}`}>{TIER_LABEL[def.tier]}</span>
-          <span className={`pill ${filled ? "green" : "gray"}`}>{filled ? "작성됨" : "비어 있음"}</span>
-        </div>
-        <div className="wd-card-desc">{filled ? value : def.desc}</div>
-        <EvidenceMeta evidence={evidence} />
-      </div>
-      <ChevronR size={18} style={{ color: "var(--ink-3)", alignSelf: "center" }} />
-    </button>
-  );
-}
-
-export function worldImportCandidates(config: StoryConfig | null): AcceptedImportCandidateRecord[] {
-  return (config?.acceptedImportCandidates ?? []).filter(
-    (candidate) =>
-      candidate.targetType === "world" &&
-      candidate.bucket === "world" &&
-      candidate.routedToStage !== "world",
-  );
-}
-
-export function WorldImportCandidateCard({
-  candidate,
-  pickedDef,
-  onApply,
-}: {
-  candidate: AcceptedImportCandidateRecord;
-  pickedDef: WorldFieldDef;
-  onApply: (candidate: AcceptedImportCandidateRecord) => void;
-}) {
-  const conflictCount = candidateConflictCount(candidate);
-  const status = ARCS_STATUS_LABEL[candidateArcsStatus(candidate)];
-  return (
-    <div className="wd-card" style={{ flexDirection: "column", gap: 10 }}>
-      <div className="wd-card-top">
-        <span className="wd-card-title">{candidate.title}</span>
-        <span className="pill blue" style={{ marginLeft: "auto" }}>
-          {Math.round(candidate.confidence * 100)}%
-        </span>
-      </div>
-      <div className="wd-card-meta" style={{ flexWrap: "wrap" }}>
-        <span>출처 {candidate.sourceFileName}</span>
-        <span className={`pill ${status.tone}`}>{status.label}</span>
-        <span className={`pill ${conflictCount > 0 ? "red" : "green"}`}>충돌 {conflictCount}</span>
-      </div>
-      <div className="wd-card-desc">{candidate.excerpt || candidate.text}</div>
-      {(candidate.alignmentWarnings ?? []).length > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {(candidate.alignmentWarnings ?? []).map((warning) => (
-            <div key={`${candidate.id}-${warning.code}`} className="wd-card-meta">
-              <Alert size={13} aria-hidden="true" />
-              <span>{warning.label}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      <button
-        type="button"
-        className="btn primary"
-        style={{ justifyContent: "center" }}
-        aria-label={`${pickedDef.title}에 반영`}
-        onClick={() => onApply(candidate)}
-      >
-        <Check size={14} aria-hidden="true" />
-        {pickedDef.title}에 반영
-      </button>
-    </div>
-  );
-}
-
-export function WorldEmptyState({ onCreate }: { onCreate: () => void }) {
-  return (
-    <section className="wd-center">
-      <div className="wd-chat card" style={{ alignItems: "center", justifyContent: "center", textAlign: "center", padding: "48px 24px" }}>
-        <div className="wd-card-ic" style={{ color: "var(--c-blue)", background: "color-mix(in srgb, var(--c-blue) 13%, transparent)" }}>
-          <Globe size={22} />
-        </div>
-        <p className="wd-p" style={{ marginTop: 16, fontWeight: 600 }}>
-          아직 세계관을 설계할 프로젝트가 없습니다.
-        </p>
-        <p className="wd-p" style={{ color: "var(--ink-3)" }}>
-          새 세계관을 만들면 핵심 전제부터 세계의 디테일까지 {WORLD_FIELDS.length}개 항목을 노아와 함께 채워나갈 수 있습니다.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, width: "min(560px, 100%)", marginTop: 18 }}>
-          {[
-            ["핵심 전제", "작품이 흔들리지 않는 첫 기준"],
-            ["세계 규칙", "금기·경제·생존 조건"],
-            ["권리/IP 메모", "출고 때 확인할 설정 근거"],
-          ].map(([title, body]) => (
-            <div key={title} className="pcard" style={{ padding: 12, textAlign: "left" }}>
-              <div className="wd-card-title" style={{ fontSize: 12 }}>{title}</div>
-              <div className="wd-card-desc" style={{ fontSize: 11.5 }}>{body}</div>
-            </div>
-          ))}
-        </div>
-        <button type="button" className="btn primary" style={{ marginTop: 16 }} onClick={onCreate}>
-          <Plus size={16} />새 세계관 만들기
-        </button>
-      </div>
-    </section>
-  );
-}
+export {
+  BoardCard,
+  WorldBoardPanel,
+  WorldChatDraftCard,
+  WorldCollapsedPanel,
+  WorldEmptyState,
+  WorldImportCandidateCard,
+} from "./TabWorld.board";

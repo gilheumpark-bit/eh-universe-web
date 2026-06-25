@@ -71,6 +71,7 @@ jest.mock('@/services/sparkService', () => ({
 const mockCheckRateLimit = jest.fn();
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+  checkRateLimitAsync: (...args: unknown[]) => mockCheckRateLimit(...args),
   getClientIp: () => '203.0.113.61',
   RATE_LIMITS: {
     default: { windowMs: 60_000, maxRequests: 60 },

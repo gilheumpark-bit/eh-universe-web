@@ -25,6 +25,7 @@ import {
   type PlatformDraftKey,
 } from './pipeline-constants';
 import { validate10PartStructure } from './validator';
+import type { AppLanguage } from '@/lib/studio-types';
 
 // ============================================================
 // PART 1 — Types
@@ -123,6 +124,10 @@ function resolveDetailRange(platform?: string | null): { min: number; max: numbe
   return { min: DETAIL_TARGET_CHARS.min, max: DETAIL_TARGET_CHARS.max };
 }
 
+function shouldCheckHangulRatio(language: AppLanguage | undefined): boolean {
+  return !language || language === 'KO';
+}
+
 // ============================================================
 // PART 4 — Draft pass validator
 // ============================================================
@@ -138,6 +143,7 @@ function resolveDetailRange(platform?: string | null): { min: number; max: numbe
 export function validateDraftPass(
   text: string,
   platform?: string | null,
+  language?: AppLanguage,
 ): QualityGateV2Result {
   const metrics = extractQualityMetrics(text);
   const reasons: string[] = [];
@@ -162,8 +168,8 @@ export function validateDraftPass(
     reasons.push(`draft_paragraph_high: ${metrics.paragraphs} > 8`);
   }
 
-  // 3) 한글 비율 — KO 컨텍스트에서 60% 미만이면 영어 오염 의심
-  if (metrics.hangulRatio < 0.6) {
+  // 3) 한글 비율 — KO 컨텍스트에서만 60% 미만이면 외국어 오염 의심
+  if (shouldCheckHangulRatio(language) && metrics.hangulRatio < 0.6) {
     reasons.push(`hangul_ratio_low: ${metrics.hangulRatio.toFixed(2)} < 0.60`);
   }
 
@@ -193,6 +199,7 @@ export function validateDraftPass(
 export function validateDetailPass(
   text: string,
   platform?: string | null,
+  language?: AppLanguage,
 ): QualityGateV2Result {
   const metrics = extractQualityMetrics(text);
   const reasons: string[] = [];
@@ -210,8 +217,8 @@ export function validateDetailPass(
     reasons.push(`detail_too_long: ${metrics.chars} > ${range.max}`);
   }
 
-  // 2) 한글 비율
-  if (metrics.hangulRatio < 0.6) {
+  // 2) 한글 비율 — KO 컨텍스트 전용. 번역/현지화 결과에는 적용하지 않는다.
+  if (shouldCheckHangulRatio(language) && metrics.hangulRatio < 0.6) {
     reasons.push(`hangul_ratio_low: ${metrics.hangulRatio.toFixed(2)} < 0.60`);
   }
 

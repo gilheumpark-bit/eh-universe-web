@@ -48,7 +48,7 @@ export interface AspectResult {
   /** 이 레벨 독자 시점의 코멘트 */
   comment: { ko: string; en: string };
   severity: 'ok' | 'warn' | 'danger';
-  /** true if this aspect uses a placeholder heuristic (e.g. clicheUsage, foreshadowing) */
+  /** true if this aspect uses an estimated heuristic (e.g. clicheUsage, foreshadowing) */
   estimated?: boolean;
 }
 

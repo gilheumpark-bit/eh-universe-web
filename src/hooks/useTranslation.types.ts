@@ -94,7 +94,7 @@ export interface UseTranslationReturn {
   /**
    * Voice Guard 재번역 필요 여부 - error 등급 위반 1건+ 시 true.
    * UI 가 "재번역 권장" 토스트/버튼을 노출할 수 있다.
-   * 자동 재번역 루프는 미구현 (chunk 단위 재호출 비용 관리).
+   * 자동 재번역 루프는 비활성 (chunk 단위 재호출 비용 관리).
    */
   voiceRetryNeeded: boolean;
   /**
@@ -113,7 +113,7 @@ export interface UseTranslationReturn {
    * - voiceRetryHint 를 config.contextBridge 에 append 해서 systemPrompt 에 주입
    * - 재번역 중에는 isRetryingRef 락으로 중복 호출 차단
    * - 실패 시 기존 상태 유지 (퇴행 방지)
-   * - 자동 루프는 복잡도/비용 문제로 미구현 - 1회 수동 재시도만 허용
+   * - 자동 루프는 복잡도/비용 문제로 비활성 - 1회 수동 재시도만 허용
    */
   retryWithVoiceHint: () => Promise<void>;
 }

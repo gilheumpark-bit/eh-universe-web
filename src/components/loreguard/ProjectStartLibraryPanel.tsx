@@ -61,7 +61,7 @@ export function ProjectStartLibraryPanel({
           <p>{L4(language, {
             ko: startMode === "manage"
               ? "이 화면은 저장된 작품을 여는 서랍입니다. 새 작품과 파일 가져오기는 위의 시작 방식에서 분리했습니다."
-              : "새 작품 시작, 저장된 작품 열기, 파일 가져오기를 서로 다른 목적의 입구로 분리했습니다.",
+              : "기준선 만들기, 저장된 작품 열기, 메모 가져오기를 서로 다른 목적의 입구로 분리했습니다.",
             en: startMode === "manage"
               ? "This drawer is for saved works. New work and file import are separated above."
               : "New work, saved work, and file import are separated into distinct entry points.",

@@ -56,7 +56,6 @@ describe("SplashScreen project menu", () => {
     const props = renderSplash();
 
     fireEvent.click(screen.getByRole("button", { name: /작품 보관함/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /최근 프로젝트 열기/ }));
 
     const notice = await screen.findByRole("status");
     expect(within(notice).getByText("아직 저장된 프로젝트가 없습니다.")).toBeInTheDocument();
@@ -66,11 +65,13 @@ describe("SplashScreen project menu", () => {
     expect(props.onProjectImport).toHaveBeenCalledTimes(1);
   });
 
-  it("새 프로젝트 만들기는 프로젝트 생성 첫 화면으로 보낸다", async () => {
+  it("빈 보관함의 새 프로젝트 보조 행동은 프로젝트 생성 첫 화면으로 보낸다", async () => {
     const props = renderSplash();
 
     fireEvent.click(screen.getByRole("button", { name: /작품 보관함/ }));
-    const createButton = await screen.findByRole("button", { name: /새 프로젝트 만들기/ });
+
+    const notice = await screen.findByRole("status");
+    const createButton = within(notice).getByRole("button", { name: "새 프로젝트" });
     fireEvent.click(createButton);
 
     expect(props.onStudio).toHaveBeenCalledTimes(1);

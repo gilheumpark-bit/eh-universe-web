@@ -20,6 +20,11 @@ export function DirectionNav({
   isSheet,
   onToggle,
 }: DirectionNavProps) {
+  const collapsedSummary = [
+    { label: "현재", value: `${currentEpisode}화`, tone: "blue" },
+    { label: "회차", value: String(Math.max(sheets.length, 1)), tone: sheets.length > 0 ? "green" : "amber" },
+  ];
+
   if (!open) {
     return (
       <aside id="lg-direction-nav" className="dr-nav collapsed" aria-label="회차 내비게이션 (접힘)">
@@ -33,6 +38,17 @@ export function DirectionNav({
           <Layers size={18} aria-hidden="true" />
         </button>
         <span className="wd-vlabel">회차</span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
+        </span>
       </aside>
     );
   }

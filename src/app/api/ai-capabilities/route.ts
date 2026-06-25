@@ -32,7 +32,7 @@ export async function GET() {
     dgxConfigured,
     localDevAvailable: hasDgx,
     hosted,
-    supportedProviders: ['gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral', 'ollama', 'lmstudio'],
+    supportedProviders: ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral', 'ollama', 'lmstudio'],
     message: hasHostedDeveloperApi
       ? 'Hosted developer API is available.'
       : 'Connection key required. Add a connection key in Settings.',

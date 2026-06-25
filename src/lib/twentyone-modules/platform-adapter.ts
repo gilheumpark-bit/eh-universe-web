@@ -2,12 +2,12 @@
 // twentyone-modules/platform-adapter.ts
 // — M18 Platform Adapter business logic (interface only).
 //
-// AGPL distribution ships:
+// Proprietary software repository ships:
 //   - Schema validation (validatePlatformProfile)
 //   - Fitness scoring algorithm (computePlatformFitness)
 //   - Compliance hook (runPlatformRatingCheck)
 //
-// Commercial-license grant ships externally:
+// Separate rule-pack data ships externally:
 //   - The actual 18-platform rule pack data (KR 5 + JP 4 + EN 5 + ZH 4)
 //   - Per-platform forbidden content codes
 //

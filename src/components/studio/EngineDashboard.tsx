@@ -6,12 +6,18 @@ import { EngineReport, PlatformType } from '@/engine/types';
 import { generateTensionCurveData } from '@/engine/models';
 import { ENGINE_VERSION } from '@/lib/studio-constants';
 import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serialization';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface EngineDashboardProps {
   config: StoryConfig;
   report: EngineReport | null;
   isGenerating: boolean;
   language: AppLanguage;
+}
+
+function bindStudioBarHeight(node: HTMLDivElement | null, height: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-bar-height', height);
 }
 
 const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGenerating, language }) => {
@@ -77,10 +83,10 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                 <div key={i} className="flex-1 relative h-full group">
                   <div className="absolute bottom-0 w-full bg-accent-blue/10 h-full rounded-t-sm" />
                   <div
+                    ref={(node) => bindStudioBarHeight(node, `${height}%`)}
                     className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${
                       isCurrentEp ? 'bg-gradient-to-t from-accent-blue to-cyan-400' : 'bg-gradient-to-t from-accent-blue/60 to-indigo-400/40'
-                    }`}
-                    style={{ height: `${height}%` }}
+                    } studio-bar-height`}
                   />
                   {isCurrentEp && (
                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-accent-blue rounded-full" />
@@ -133,7 +139,7 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                     <span>{v}%</span>
                   </div>
                   <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={v} aria-valuemin={0} aria-valuemax={100} aria-label={`${k} ${v}%`}>
-                    <div className="h-full bg-accent-blue transition-[transform,opacity,background-color,border-color,color] duration-500" style={{ width: `${v}%` }} />
+                    <ProgressFill value={v} className="h-full bg-accent-blue transition-[transform,opacity,background-color,border-color,color] duration-500" />
                   </div>
                 </div>
               ))}
@@ -147,9 +153,10 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                   </span>
                 </div>
                 <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative" role="progressbar" aria-valuenow={Math.round(Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={`Byte size ${(report.serialization.byteSize / 1024).toFixed(1)}KB`}>
-                  <div
+                  <ProgressFill
+                    value={report.serialization.byteSize}
+                    max={report.serialization.targetRange.max}
                     className={`h-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${report.serialization.withinRange ? 'bg-green-600' : 'bg-amber-600'}`}
-                    style={{ width: `${Math.min(100, (report.serialization.byteSize / report.serialization.targetRange.max) * 100)}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-[7px] text-text-tertiary">
@@ -172,9 +179,10 @@ const EngineDashboard: React.FC<EngineDashboardProps> = ({ config, report, isGen
                       </span>
                     </div>
                     <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden relative" role="progressbar" aria-valuenow={Math.round(Math.min(100, (chars / charRange.max) * 100))} aria-valuemin={0} aria-valuemax={100} aria-label={`Character count ${chars.toLocaleString()}`}>
-                      <div
+                      <ProgressFill
+                        value={chars}
+                        max={charRange.max}
                         className={`h-full transition-[transform,opacity,background-color,border-color,color] duration-500 ${charInRange ? 'bg-green-600' : 'bg-amber-600'}`}
-                        style={{ width: `${Math.min(100, (chars / charRange.max) * 100)}%` }}
                       />
                     </div>
                     <div className="flex justify-between text-[7px] text-text-tertiary">

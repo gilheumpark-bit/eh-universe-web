@@ -184,19 +184,23 @@ describe("VisualTab", () => {
     expect(getByTestId("visual-prompt-editor-mock")).toHaveTextContent("editor:c1");
   });
 
-  it("migrates legacy localStorage API key to sessionStorage on mount", () => {
-    // Seed a legacy key in localStorage and ensure sessionStorage is empty.
+  it("purges legacy visual generation keys on mount", () => {
+    // Seed legacy image-generation slots. VisualTab no longer performs in-app image generation,
+    // so these must be removed instead of migrated.
     localStorage.setItem("noa-img-apikey", "legacy-key-xyz");
+    localStorage.setItem("noa-img-provider", "openai");
     sessionStorage.removeItem("noa-img-apikey");
 
     try {
       renderTab();
 
-      // Legacy slot is purged; session slot now carries the key.
+      // No visual generation key should remain after the handoff-only cleanup.
       expect(localStorage.getItem("noa-img-apikey")).toBeNull();
-      expect(sessionStorage.getItem("noa-img-apikey")).toBe("legacy-key-xyz");
+      expect(localStorage.getItem("noa-img-provider")).toBeNull();
+      expect(sessionStorage.getItem("noa-img-apikey")).toBeNull();
     } finally {
       localStorage.removeItem("noa-img-apikey");
+      localStorage.removeItem("noa-img-provider");
       sessionStorage.removeItem("noa-img-apikey");
     }
   });

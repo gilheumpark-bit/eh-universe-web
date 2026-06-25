@@ -5,6 +5,10 @@ import { StudioError, StudioErrorCode } from "@/lib/errors";
 import { hasDgxService, getActiveProvider } from "@/lib/ai-providers";
 import { buildWritingContextPack } from "@/lib/writing-workspace/context-pack";
 import { scanExternalReferenceLeak } from "@/lib/writing-workspace/cross-project-bridge";
+import {
+  buildWritingContextComplianceReport,
+  type WritingContextComplianceReport,
+} from "@/lib/writing-workspace/context-compliance";
 
 type WritingContextPack = ReturnType<typeof buildWritingContextPack>;
 
@@ -19,11 +23,7 @@ export function resolveNoaProjectScopeId(currentProjectId?: string | null): stri
 }
 
 export function buildHFCPPrefix(hfcpResult: ReturnType<typeof processHFCPTurn>): string {
-  const raw = [
-    hfcpResult.promptModifier,
-    hfcpResult.nrg && hfcpResult.nrg !== "normal" ? `[NRG: ${hfcpResult.nrg}]` : "",
-  ].filter(Boolean).join("\n");
-  return raw ? `\n${raw}\n` : "";
+  return hfcpResult.promptModifier ? `\n${hfcpResult.promptModifier}\n` : "";
 }
 
 export async function buildMetaContextPrefix(
@@ -169,6 +169,60 @@ export function buildNoaCriticalRules(pack: WritingContextPack): string {
     "- 기준선에서 제외/보류/충돌로 표시된 항목은 생성 근거로 사용하지 않습니다.",
     pack.hardStopReasons.length > 0 ? pack.hardStopReasons.map((reason) => `- ${reason}`).join("\n") : "",
   ].filter(Boolean).join("\n");
+}
+
+export interface ComplianceGatePatch {
+  report: WritingContextComplianceReport;
+  shouldRetry: boolean;
+  failReasons: string[];
+  retryHint: string;
+}
+
+function pickComplianceText(language: AppLanguage, ko: string, en: string, jp: string, cn: string): string {
+  if (language === "EN") return en;
+  if (language === "JP") return jp;
+  if (language === "CN") return cn;
+  return ko;
+}
+
+export function buildComplianceGatePatch(
+  config: StoryConfig,
+  draft: string,
+  language: AppLanguage,
+): ComplianceGatePatch {
+  const report = buildWritingContextComplianceReport(config, draft);
+  const reviewChecks = report.checks.filter((check) => check.state === "needs-review");
+  const blockingChecks = reviewChecks.filter((check) =>
+    check.id === "seven-axis" ||
+    check.id === "forbidden-disclosure" ||
+    check.id === "next-episode",
+  );
+  const shouldRetry = report.score < 80 || blockingChecks.length > 0;
+  const failReasons: string[] = [];
+  if (report.score < 80) failReasons.push(`compliance_below: ${report.score} < 80`);
+  if (blockingChecks.length > 0) {
+    failReasons.push(`compliance_review: ${blockingChecks.map((check) => check.id).join(",")}`);
+  }
+
+  const retryHint = shouldRetry
+    ? [
+        pickComplianceText(
+          language,
+          "\n[기준선 보정 지시]\n작품 기준선, 씬 목적, 다음 화 침범, 작업 메타 노출을 다시 점검해 주세요.",
+          "\n[Baseline correction]\nRe-check the work baseline, scene purpose, next-episode leakage, and exposed work notes.",
+          "\n[基準線補正]\n作品基準線、シーン目的、次話侵入、作業メタ露出を再確認してください。",
+          "\n[基准线修正]\n请重新检查作品基准、场景目的、下一话泄露与工作标记外露。",
+        ),
+        ...blockingChecks.slice(0, 3).map((check) => `- ${check.label}: ${check.hint}`),
+      ].join("\n")
+    : "";
+
+  return {
+    report,
+    shouldRetry,
+    failReasons,
+    retryHint,
+  };
 }
 
 export function scanExternalCraftLeaks(

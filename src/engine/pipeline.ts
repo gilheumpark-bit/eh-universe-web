@@ -585,12 +585,9 @@ ${buildNoaOutputRules(LANG_NAMES[language])}`;
 
   // M5 — Genre Translation Layer: 장르 모드 프롬프트 추가분을 기존 프롬프트 뒤에 append.
   // novel 모드는 빈 문자열이므로 no-op; webtoon/drama/game만 포맷 지시 블록을 붙인다.
-  const appLangToPromptLang: Record<AppLanguage, PromptLang> = {
-    KO: 'ko', EN: 'en', JP: 'ja', CN: 'zh',
-  };
   const genreAddendum = getGenreSystemPrompt(
     config.genreMode ?? 'novel',
-    appLangToPromptLang[language] ?? 'ko',
+    toAgentLang(language) as PromptLang,
   );
   // [N1-noa-identity] 단일 노아 화자 헤더 — 두 return 경로(레거시/레지스트리)
   // 모두 시스템 프롬프트 "최상단"에 위치해야 하므로 여기서 만들고 반환 직전에 prepend.

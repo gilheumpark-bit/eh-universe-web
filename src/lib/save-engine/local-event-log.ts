@@ -199,6 +199,7 @@ async function writeBundle(entries: StorageEvent[]): Promise<void> {
 
 // Write 직렬화.
 let writeChain: Promise<void> = Promise.resolve();
+let resetEpoch = 0;
 
 // In-memory mirror — 빠른 동기 조회용. IDB hydration 완료 전까지는 빈 상태.
 let memoryMirror: StorageEvent[] = [];
@@ -316,6 +317,7 @@ export function logEvent(
   event: Omit<StorageEvent, 'id' | 'ts'> & { ts?: number },
 ): void {
   try {
+    const writeEpoch = resetEpoch;
     const full: StorageEvent = {
       id: generateId(),
       ts: typeof event.ts === 'number' && Number.isFinite(event.ts)
@@ -341,8 +343,11 @@ export function logEvent(
       .catch(() => { /* noop */ })
       .then(async () => {
         try {
+          if (writeEpoch !== resetEpoch) return;
           await hydrateOnce();
+          if (writeEpoch !== resetEpoch) return;
           const existing = await readBundle();
+          if (writeEpoch !== resetEpoch) return;
           existing.push(full);
           await writeBundle(existing);
         } catch (err) {
@@ -444,6 +449,7 @@ export async function clearEventLog(): Promise<void> {
 // ============================================================
 
 export function __resetLocalEventLogForTests(): void {
+  resetEpoch += 1;
   cachedDb = null;
   openPromise = null;
   writeChain = Promise.resolve();

@@ -5,6 +5,7 @@ import { Film, ChevronDown, AlertTriangle, AlertCircle, Info, FileSearch } from 
 import { DirectorReport, gradeFromScore } from '@/engine/director';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface DirectorPanelProps {
   report: DirectorReport | null;
@@ -107,9 +108,9 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         {/* Score bar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 bg-bg-tertiary rounded-full overflow-hidden">
-            <div
+            <ProgressFill
+              value={report.score}
               className={`h-full rounded-full ${report.score >= 80 ? 'bg-green-500' : report.score >= 60 ? 'bg-amber-500' : 'bg-accent-red'}`}
-              style={{ width: `${report.score}%` }}
             />
           </div>
           <span className={`text-[9px] font-black ${gradeColor}`}>{report.score}</span>

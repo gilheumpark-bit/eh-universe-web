@@ -66,6 +66,7 @@ jest.mock('@/lib/firebase-id-token', () => ({
 const mockCheckRateLimit = jest.fn();
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+  checkRateLimitAsync: (...args: unknown[]) => mockCheckRateLimit(...args),
   getClientIp: () => '203.0.113.10',
   RATE_LIMITS: {
     imageGen: { windowMs: 60_000, maxRequests: 10 },
@@ -82,8 +83,13 @@ type CheckoutRequest = Parameters<(typeof import('../route'))['POST']>[0];
 function makeRequest(init?: {
   token?: string;
   body?: Record<string, unknown>;
+  headers?: Record<string, string>;
 }): CheckoutRequest {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    origin: 'https://app.example',
+    host: 'app.example',
+    ...init?.headers,
+  };
   if (init?.token) headers.authorization = `Bearer ${init.token}`;
   return new CheckoutFakeRequest({
     headers,
@@ -154,6 +160,20 @@ describe('/api/checkout POST — gate and auth', () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: 'Authentication required' });
+    expect(mockVerifyFirebaseIdToken).not.toHaveBeenCalled();
+    expect(mockGetStripeSession).not.toHaveBeenCalled();
+  });
+
+  it('rejects cross-origin checkout attempts before Firebase or Stripe calls', async () => {
+    enableCheckoutEnv();
+
+    const { POST } = await import('../route');
+    const response = await POST(makeRequest({
+      token: 'good-token',
+      headers: { origin: 'https://evil.example', host: 'app.example' },
+    })) as unknown as CheckoutFakeResponse;
+
+    expect(response.status).toBe(403);
     expect(mockVerifyFirebaseIdToken).not.toHaveBeenCalled();
     expect(mockGetStripeSession).not.toHaveBeenCalled();
   });

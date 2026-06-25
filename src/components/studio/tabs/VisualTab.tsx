@@ -4,23 +4,16 @@
 // PART 1 — Imports & Types
 // ============================================================
 
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Plus, Image as ImageIcon, Settings,
-  Play, Grid, Zap,
+  Grid,
 } from 'lucide-react';
 import {
   ChatSession, VisualPromptCard, StoryConfig, AppLanguage,
-  GeneratedVisualAsset,
 } from '@/lib/studio-types';
 import { createVisualCard, createCardFromAnalysis } from '@/lib/visual-defaults';
-import { buildFinalVisualPrompt, buildNegativePrompt } from '@/lib/visual-prompt';
-import { generateImage } from '@/services/imageGenerationService';
 import VisualPromptEditor from '../VisualPromptEditor';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
-import type { ImageGenProvider } from '@/services/imageGenerationService';
-import { hasDgxService as hasDgxServiceFn } from '@/lib/ai-providers';
-import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 import { SceneGallery } from './VisualTab.gallery';
@@ -34,227 +27,26 @@ interface VisualTabProps {
 
 type TabView = 'editor' | 'gallery';
 
-interface BatchProgress {
-  running: boolean;
-  current: number;
-  total: number;
-  currentCardTitle: string;
-  completed: string[];
-  errors: string[];
-}
+// IDENTITY_SEAL: PART-1 | role=imports+types | inputs=none | outputs=VisualTabProps,TabView
 
-/** Provider option metadata — constrained literal union, no `as` cast needed. */
-interface ProviderOption {
-  id: ImageGenProvider;
-  name: string;
-  badge: string;
-  free: boolean;
-}
-
-// IDENTITY_SEAL: PART-1 | role=imports+types | inputs=none | outputs=VisualTabProps,TabView,BatchProgress,ProviderOption,GalleryImage
-
-// ============================================================
-// PART 4 — Batch Generation Logic
-// ============================================================
-
-function useBatchGeneration(
-  cards: VisualPromptCard[],
-  imgApiKey: string,
-  imgProvider: ImageGenProvider,
-  updateCard: (card: VisualPromptCard) => void,
-) {
-  const [progress, setProgress] = useState<BatchProgress>({
-    running: false, current: 0, total: 0,
-    currentCardTitle: '', completed: [], errors: [],
-  });
-  const abortRef = useRef(false);
-
-  const start = useCallback(async () => {
-    // Cards without any generated images
-    const pending = cards.filter(c => !(c.generatedImages && c.generatedImages.length > 0));
-    if (pending.length === 0 || !imgApiKey) return;
-
-    abortRef.current = false;
-    setProgress({ running: true, current: 0, total: pending.length, currentCardTitle: '', completed: [], errors: [] });
-
-    for (let i = 0; i < pending.length; i++) {
-      if (abortRef.current) break;
-      const card = pending[i];
-      setProgress(p => ({ ...p, current: i + 1, currentCardTitle: card.title || `EP${card.episode} Card` }));
-
-      const prompt = buildFinalVisualPrompt(card);
-      const neg = buildNegativePrompt(card);
-      if (!prompt) {
-        setProgress(p => ({ ...p, errors: [...p.errors, `${card.title || card.id}: empty prompt`] }));
-        continue;
-      }
-
-      try {
-        const result = await generateImage(imgProvider, prompt, neg, imgApiKey, { n: 1 });
-        if (result.error) {
-          setProgress(p => ({ ...p, errors: [...p.errors, `${card.title || card.id}: ${result.error}`] }));
-        } else if (result.images.length > 0) {
-          const asset: GeneratedVisualAsset = {
-            id: `ga-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            promptCardId: card.id,
-            provider: imgProvider,
-            model: imgProvider === 'openai' ? 'gpt-image-2' : 'sdxl',
-            imageUrl: result.images[0].url,
-            promptSnapshot: prompt,
-            createdAt: Date.now(),
-            assignedEpisode: card.episode,
-            revisedPrompt: result.images[0].revised_prompt,
-          };
-          updateCard({ ...card, generatedImages: [asset, ...(card.generatedImages ?? [])].slice(0, 8) });
-          setProgress(p => ({ ...p, completed: [...p.completed, card.title || card.id] }));
-        }
-      } catch (err) {
-        logger.warn('VisualTab', 'batch generateImage failed', err);
-        setProgress(p => ({ ...p, errors: [...p.errors, `${card.title || card.id}: network error`] }));
-      }
-    }
-
-    setProgress(p => ({ ...p, running: false }));
-  }, [cards, imgApiKey, imgProvider, updateCard]);
-
-  const cancel = useCallback(() => { abortRef.current = true; }, []);
-
-  return { progress, start, cancel };
-}
-
-// IDENTITY_SEAL: PART-4 | role=batch generation hook | inputs=cards,api | outputs=progress,start,cancel
-
-// ============================================================
-// PART 5 — Premium Loading Text
-// ============================================================
-
-const LOADING_MESSAGES_KO = [
-  '장면 자료 정리 중...',
-  '시각 메모 구조화 중...',
-  '컷 구성 확인 중...',
-  '색감 메모 정리 중...',
-  '조명 메모 정리 중...',
-  '전달용 문구 정리 중...',
-  '첨부 자료 확인 중...',
-  '누락 항목 확인 중...',
-];
-const LOADING_MESSAGES_EN = [
-  'Organizing scene notes...',
-  'Structuring visual notes...',
-  'Reviewing shot composition...',
-  'Organizing color notes...',
-  'Organizing lighting notes...',
-  'Preparing handoff copy...',
-  'Checking attachments...',
-  'Checking missing fields...',
-];
-
-function PremiumLoadingText({ lang }: { lang: string }) {
-  const msgs = lang.toLowerCase().startsWith('ko') ? LOADING_MESSAGES_KO : LOADING_MESSAGES_EN;
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setIdx(i => (i + 1) % msgs.length), 3000);
-    return () => clearInterval(timer);
-  }, [msgs.length]);
-  return (
-    <div className="h-4 overflow-hidden">
-      <span key={idx} className="block text-[10px] text-accent-purple/80 font-mono animate-[fadeIn_0.5s_ease-in]">
-        {msgs[idx]}
-      </span>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-5 | role=premium loading text | inputs=lang | outputs=rotating message span
-
-// ============================================================
-// PART 6 — LocalStorage Helpers (SSR-safe lazy init)
-// ============================================================
-
-const VALID_PROVIDERS: readonly ImageGenProvider[] = ['openai', 'stability', 'local-spark'];
-
-/** Lazy-init reader for provider preference — typed narrow, no `as` cast. */
-function readSavedProvider(): ImageGenProvider | null {
-  try {
-    const saved = localStorage.getItem('noa-img-provider');
-    if (saved && (VALID_PROVIDERS as readonly string[]).includes(saved)) {
-      // Narrowing: saved ∈ VALID_PROVIDERS therefore it is ImageGenProvider.
-      return saved as ImageGenProvider;
-    }
-    return null;
-  } catch (err) {
-    logger.warn('VisualTab', 'readSavedProvider failed (SSR or disabled storage)', err);
-    return null;
-  }
-}
-
-/**
- * Lazy-init reader for API key (sessionStorage for XSS-resistance).
- *
- * Security note: the BYOK API key is held in sessionStorage so it is cleared
- * automatically when the browser tab closes. A one-time migration from the
- * legacy localStorage slot runs on mount (see migrateApiKeyToSession).
- */
-function readSavedApiKey(): string {
-  if (typeof window === 'undefined') return '';
-  try {
-    return sessionStorage.getItem('noa-img-apikey') ?? '';
-  } catch (err) {
-    logger.warn('VisualTab', 'readSavedApiKey failed (SSR or disabled storage)', err);
-    return '';
-  }
-}
-
-/** Persist API key to sessionStorage; empty string removes the slot. */
-function saveApiKey(key: string): void {
+function purgeLegacyVisualGenerationSecrets(): void {
   if (typeof window === 'undefined') return;
   try {
-    if (key) sessionStorage.setItem('noa-img-apikey', key);
-    else sessionStorage.removeItem('noa-img-apikey');
-  } catch (err) {
-    logger.warn('VisualTab', 'saveApiKey failed (quota or SSR)', err);
-  }
-}
-
-/**
- * One-time migration from legacy localStorage → sessionStorage.
- *
- * Older builds persisted the BYOK key in localStorage, which survives across
- * browser sessions and is exposed to any XSS payload on the origin. On mount
- * we copy any existing legacy value into sessionStorage and purge the
- * localStorage slot. Safe to call repeatedly — subsequent calls become no-ops.
- */
-function migrateApiKeyToSession(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const legacy = localStorage.getItem('noa-img-apikey');
-    if (!legacy) return;
-    // Only copy over if session slot is empty — avoid overwriting a freshly typed key.
-    if (!sessionStorage.getItem('noa-img-apikey')) {
-      sessionStorage.setItem('noa-img-apikey', legacy);
-    }
     localStorage.removeItem('noa-img-apikey');
-    logger.info('VisualTab', 'API key migrated from localStorage to sessionStorage');
-  } catch (err) {
-    logger.warn('VisualTab', 'API key migration failed', err);
+    sessionStorage.removeItem('noa-img-apikey');
+    localStorage.removeItem('noa-img-provider');
+  } catch {
+    /* storage unavailable — visual handoff remains local project data only */
   }
 }
 
-/** Provider dropdown options — single source of truth, no inline `as` casts. */
-const PROVIDER_OPTIONS: readonly ProviderOption[] = [
-  { id: 'local-spark', name: 'Local Spark', badge: 'Local · Free', free: true },
-  { id: 'openai', name: 'OpenAI DALL-E 3', badge: 'KEY', free: false },
-  { id: 'stability', name: 'Stability AI', badge: 'KEY', free: false },
-];
-
-// IDENTITY_SEAL: PART-6 | role=storage helpers+provider options | inputs=localStorage+sessionStorage | outputs=ImageGenProvider,apikey,options,migration
+// IDENTITY_SEAL: PART-6 | role=legacy visual generation cleanup | inputs=storage | outputs=none
 
 // ============================================================
 // PART 7 — Main Component
 // ============================================================
 
 export default function VisualTab({ config, setConfig, currentSession: _session, language }: VisualTabProps) {
-  const { IMAGE_GENERATION: imageGenEnabled } = useFeatureFlags();
   const { lang } = useLang();
   const isKO = language === 'KO';
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -263,38 +55,11 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const episode = config.episode ?? 1;
   const totalEpisodes = config.totalEpisodes ?? 1;
 
-  // Image generation settings:
-  //  - provider preference → localStorage (non-sensitive UI choice)
-  //  - BYOK API key       → sessionStorage (XSS-resistant; auto-cleared on tab close)
-  const hasDgxService = hasDgxServiceFn();
-  const [imgProvider, setImgProvider] = useState<ImageGenProvider>(() => {
-    const saved = readSavedProvider();
-    if (saved) return saved;
-    return hasDgxService ? 'local-spark' : 'openai';
-  });
-  const [imgApiKey, setImgApiKey] = useState<string>(() => readSavedApiKey());
   const [showImgSettings, setShowImgSettings] = useState(false);
 
-  // One-time migration of legacy localStorage API keys → sessionStorage.
-  // Runs once on mount; subsequent mounts are no-ops (legacy slot empty).
   useEffect(() => {
-    migrateApiKeyToSession();
-    // After migration, re-read in case a legacy value was just promoted.
-    const migrated = readSavedApiKey();
-    if (migrated && !imgApiKey) setImgApiKey(migrated);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    purgeLegacyVisualGenerationSecrets();
   }, []);
-
-  const saveImgSettings = () => {
-    try {
-      localStorage.setItem('noa-img-provider', imgProvider);
-    } catch (err) {
-      logger.warn('VisualTab', 'saveImgSettings (provider) failed (quota or SSR)', err);
-    }
-    // API key is persisted to sessionStorage only — never localStorage.
-    saveApiKey(imgApiKey);
-    setShowImgSettings(false);
-  };
 
   // Episodes that have chapter analysis
   const analyzedEpisodes = useMemo(() => {
@@ -352,10 +117,6 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
   const totalImages = useMemo(() => {
     return cards.reduce((sum, c) => sum + (c.generatedImages?.length ?? 0), 0);
   }, [cards]);
-
-  // Batch generation
-  const batch = useBatchGeneration(cards, imgApiKey, imgProvider, updateCard);
-  const cardsWithoutImages = cards.filter(c => !(c.generatedImages && c.generatedImages.length > 0)).length;
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -549,8 +310,6 @@ export default function VisualTab({ config, setConfig, currentSession: _session,
               onDelete={() => deleteCard(selectedCard.id)}
               isKO={isKO}
               characters={config.characters}
-              imageApiKey={imgApiKey || undefined}
-              imageProvider={imgApiKey ? imgProvider : undefined}
             />
           </div>
         ) : (

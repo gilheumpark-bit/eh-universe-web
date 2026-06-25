@@ -38,7 +38,7 @@ function isDraftDetailMode(v: unknown): v is DraftDetailMode {
 // ============================================================
 
 export interface FeatureFlags {
-  /** 이미지 생성 기능 (DALL-E / Stability AI) */
+  /** 시각 자료 생성 API — 내부/개발 opt-in 전용, 공개 UI 기본 비활성 */
   IMAGE_GENERATION: boolean;
   /** Google Drive 백업 */
   GOOGLE_DRIVE_BACKUP: boolean;
@@ -72,14 +72,14 @@ export interface FeatureFlags {
 }
 
 // boolean-only 플래그 키 — 타입 안전성 보장 (3-mode 플래그 제외)
-type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
+export type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
 
 // ============================================================
 // PART 3 — Defaults
 // ============================================================
 
 const FLAGS: FeatureFlags = {
-  IMAGE_GENERATION: true,
+  IMAGE_GENERATION: false,
   GOOGLE_DRIVE_BACKUP: true,
   /** IndexedDB 백업/복원·버전 백업 — useProjectManager에서 분기 */
   OFFLINE_CACHE: true,
@@ -142,6 +142,12 @@ const FLAGS: FeatureFlags = {
    */
   FEATURE_DRAFT_DETAIL_V2: 'off',
 };
+
+export function getBooleanFeatureFlagKeys(): BooleanFlagKey[] {
+  return (Object.keys(FLAGS) as (keyof FeatureFlags)[]).filter(
+    (key): key is BooleanFlagKey => typeof FLAGS[key] === 'boolean',
+  );
+}
 
 // ============================================================
 // PART 4 — Journal Engine mode accessor (3-mode)

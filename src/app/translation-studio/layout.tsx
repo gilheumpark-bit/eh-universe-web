@@ -8,9 +8,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swa
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-headline", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "번역·현지화 작업실 · 로어가드",
+  title: "번역·현지화 작업실 · Loreguard",
   description:
-    "로어가드 9단계 번역·현지화 작업실. 작품의 세계관, 캐릭터, 용어집, 회차 맥락을 불러와 번역 후보, 작가 승인, 과정기록, 출고 패키지까지 이어갑니다.",
+    "Loreguard 9단계 번역·현지화 작업실. 작품의 세계관, 캐릭터, 용어집, 회차 맥락을 불러와 번역 후보, 작가 승인, 과정기록, 출고 패키지까지 이어갑니다.",
   // [Search private 2026-05-08] 번역 작업실은 검색엔진에 공개하지 않는다.
   robots: { index: false, follow: false },
 };

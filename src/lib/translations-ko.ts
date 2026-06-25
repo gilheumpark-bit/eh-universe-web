@@ -374,11 +374,11 @@ const translations = {
     "askQuestions": "아래 입력창에서 질문해 보세요"
   },
   "hfcp": {
-    "engagement": "적극 참여",
-    "normalFree": "자유 대화",
-    "normalAnalysis": "분석 모드",
-    "limited": "절제 모드",
-    "silent": "침묵"
+    "engagement": "이어받기",
+    "normalFree": "자연",
+    "normalAnalysis": "구조 정리",
+    "limited": "핵심",
+    "silent": "확인 대기"
   },
   "syncReminder": {
     "lastSyncPrefix": "☁️ 마지막 동기화: ",
@@ -1106,15 +1106,15 @@ const translations = {
     "mustResolveDesc": "클라이맥스 아크 — 고우선 복선 반드시 회수"
   },
   "hfcpLabels": {
-    "engagement": "[HFCP 모드: 적극 참여] 친근하고 적극적인 톤으로 답변하세요.",
-    "normalFree": "[HFCP 모드: 자유 응답] 자연스러운 톤으로 답변하세요.",
-    "normalAnalysis": "[HFCP 모드: 분석] 구조적이고 논리적인 톤으로 답변하세요.",
-    "limited": "[HFCP 모드: 제한] 핵심만 간결하게 답변하세요.",
-    "silent": "[HFCP 모드: 침묵] 질문으로만 응답하세요. 직접적인 답변 금지.",
-    "nrgVariation": "[NRG: 변형] 이전과 다른 구조로 답변하세요.",
-    "nrgFrameShift": "[NRG: 프레임 전환] 완전히 다른 관점에서 접근하세요.",
-    "nrgPerspectiveShift": "[NRG: 시점 전환] 탐색적/비평적 시점으로 답변하세요.",
-    "nrgMetaAck": "[NRG: 메타 인식] \"이미 다뤘지만 다른 각도에서\" 식으로 시작하세요."
+    "engagement": "친근하게 이어받되, 작가의 지시와 결정권을 앞세운다.",
+    "normalFree": "자연스럽게 답하고, 필요한 선택지만 짧게 정리한다.",
+    "normalAnalysis": "구조를 잡아 논리적으로 답하되, 정책문처럼 딱딱하게 쓰지 않는다.",
+    "limited": "핵심만 간결하게 답하고, 불필요한 역제안은 줄인다.",
+    "silent": "확정 답변을 줄이고, 필요한 확인 질문 1개 또는 보류 사유만 남긴다.",
+    "nrgVariation": "이전 답변과 다른 구조로 답한다.",
+    "nrgFrameShift": "같은 내용을 반복하지 말고 다른 프레임으로 접근한다.",
+    "nrgPerspectiveShift": "탐색적이거나 비평적인 시점으로 전환한다.",
+    "nrgMetaAck": "반복 질문이면 새 각도로 짧게 전환한다."
   },
   "archivePage": {
     "archiveLabel": "히스토리",

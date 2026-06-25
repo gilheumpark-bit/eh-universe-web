@@ -79,10 +79,10 @@ export default function TermsPage() {
           </p>
           <p>
             {T({
-              ko: "Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 AGPL-3.0-or-later 오픈소스 라이선스와 별도 상업 라이선스(COMMERCIAL-LICENSE.md)의 이중 트랙으로 제공됩니다. SaaS 형태로 제공할 경우 AGPL §13에 따라 전체 소스 공개 의무가 발생하며, 이를 원치 않는 경우 상업 라이선스가 필요합니다. (2026-04-24 커밋 414fe9ea 이전 릴리스는 CC-BY-NC-4.0 유지)",
-              en: "Loreguard software (engine, pipelines, UI, CLI) is offered under a dual license: AGPL-3.0-or-later for open-source use, or a separate Commercial License (COMMERCIAL-LICENSE.md) for closed-source / SaaS deployment. SaaS deployment triggers AGPL §13 source-disclosure obligations; organizations unable to comply require a commercial license. (Pre-414fe9ea releases remain under CC-BY-NC-4.0.)",
-              ja: "Loreguardソフトウェア(エンジン・パイプライン・UI・CLI)は、AGPL-3.0-or-laterオープンソースライセンスと別途商用ライセンス(COMMERCIAL-LICENSE.md)のデュアルトラックで提供されます。SaaS として提供する場合は AGPL §13 に従い全ソース公開義務が発生するため、これに同意できない場合は商用ライセンスが必要です。(2026-04-24 コミット414fe9ea 以前のリリースはCC-BY-NC-4.0を維持)",
-              zh: "Loreguard 软件(引擎、管道、UI、CLI)采用 AGPL-3.0-or-later 开源许可证与商业许可证(COMMERCIAL-LICENSE.md)的双轨许可。以 SaaS 形式提供时，根据 AGPL §13 必须公开完整源码；如无法遵守，则需商业许可证。(2026-04-24 提交 414fe9ea 之前的版本仍适用 CC-BY-NC-4.0)",
+              ko: "Loreguard 소프트웨어(엔진·파이프라인·UI·CLI)는 비공개 상용 제품으로 관리되며, 저작권자의 사전 서면 허가 없이 사용·복제·수정·배포·호스팅·판매·재라이선스할 수 없습니다. 제3자 의존성은 각 의존성의 별도 라이선스를 따릅니다. (2026-04-24 커밋 414fe9ea 이전 릴리스를 별도 라이선스로 받은 수령자의 권리는 해당 시점의 고지에 따릅니다.)",
+              en: "Loreguard software (engine, pipelines, UI, CLI) is proprietary and commercially managed. You may not use, copy, modify, distribute, host, sell, or sublicense it without prior written permission from the copyright holder. Third-party dependencies remain governed by their own licenses. (Rights received under separate notices for pre-414fe9ea releases remain governed by those notices.)",
+              ja: "Loreguardソフトウェア(エンジン・パイプライン・UI・CLI)は非公開の商用製品として管理されます。著作権者の事前の書面許可なく、利用・複製・改変・配布・ホスティング・販売・再ライセンスすることはできません。第三者依存関係は各ライセンスに従います。",
+              zh: "Loreguard 软件(引擎、管道、UI、CLI)作为非公开商业产品管理。未经版权所有者事先书面许可，不得使用、复制、修改、分发、托管、销售或再授权。第三方依赖项仍适用其各自许可证。",
             })}
           </p>
           <p>

@@ -11,6 +11,8 @@ import { auditManuscript, auditVerdict } from '@/lib/creative/qa-auditor';
 import { observeStyle } from '@/lib/creative/style-profile';
 import { panelReaction } from '@/lib/creative/reader-persona-16';
 import { buildAgentSystemPrompt, type AgentContext } from '@/lib/ai/writing-agent-registry';
+import { buildAppBrainDecisionDirective, decideAppBrain } from '@/lib/noa/app-brain-policy';
+import { buildTabExpertSystemDirective } from '@/lib/noa/tab-expert-registry';
 
 export interface ContextItem {
   tab: string;
@@ -167,10 +169,31 @@ export function buildAIWritePrompt(params: {
   const retry = buildRetryHint(params.manuscript);
   const prior = params.manuscript.trim() ? `[직전 본문 — 자연스럽게 이어쓰기]\n${params.manuscript.slice(-1200)}\n\n` : '';
   const g = params.genrePrefix ? `${params.genrePrefix}\n\n` : '';
+  const appBrainDecision = decideAppBrain({
+    actionKind: 'noa_suggestion',
+    tabId: 'writing',
+    approxChars: params.scene.length + Math.min(params.manuscript.length, 1_200),
+    scores: {
+      intentClarity: params.scene.trim().length < 12 ? 0.42 : 0.76,
+      contextFit: params.contextItems.length > 0 ? 0.74 : 0.44,
+      evidenceFit: params.contextItems.length > 0 ? 0.7 : 0.46,
+      userControl: 0.82,
+      reversibility: 0.72,
+      expertConfidence: 0.68,
+      userIntentUnclear: params.scene.trim().length < 12 ? 0.62 : 0.24,
+    },
+  });
+  const appBrainDirective = [
+    buildTabExpertSystemDirective('writing', 'KO'),
+    buildAppBrainDecisionDirective(appBrainDecision),
+  ].join('\n\n');
   // 시스템 프롬프트 선택: registry 통합 또는 기본 가드.
-  const system = params.useAgentRegistry
-    ? buildAgentSystemPrompt('studio-draft', contextItemsToAgentContext(params.contextItems))
-    : AI_WRITE_SYSTEM;
+  const system = [
+    params.useAgentRegistry
+      ? buildAgentSystemPrompt('studio-draft', contextItemsToAgentContext(params.contextItems))
+      : AI_WRITE_SYSTEM,
+    appBrainDirective,
+  ].join('\n\n');
   // registry 모드에선 컨텍스트가 시스템에 이미 주입되었으므로 [컨텍스트] 섹션 생략(중복 방지).
   const ctxSection = params.useAgentRegistry ? '' : `[컨텍스트]\n${ctx}\n\n`;
   return `${system}\n${g}${ctxSection}${retry ? retry + '\n\n' : ''}${prior}[장면 지시]\n${params.scene}\n\n[본문]`;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage, ChatSession } from "@/lib/studio-types";
 import { logger } from "@/lib/logger";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import MarketplacePanel from "./MarketplacePanel";
@@ -13,6 +13,9 @@ import MarketplacePanel from "./MarketplacePanel";
 export interface MarketplaceModalProps {
   language: AppLanguage;
   onClose: () => void;
+  currentSession?: ChatSession | null;
+  readManuscript?: () => string;
+  writeManuscript?: (content: string) => void;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=MarketplaceModalProps
@@ -27,7 +30,13 @@ export interface MarketplaceModalProps {
  * - Clicking the backdrop (outside the panel) calls onClose.
  * - ESC handling is delegated to MarketplacePanel (it already listens).
  */
-export default function MarketplaceModal({ language, onClose }: MarketplaceModalProps) {
+export default function MarketplaceModal({
+  language,
+  onClose,
+  currentSession = null,
+  readManuscript,
+  writeManuscript,
+}: MarketplaceModalProps) {
   // [C] WCAG 2.1 AA focus-trap — 모달 열림 상태 고정(true)으로 mount 동안 활성.
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, true, onClose);
@@ -66,6 +75,9 @@ export default function MarketplaceModal({ language, onClose }: MarketplaceModal
           language={language}
           onClose={onClose}
           className="w-full h-full overflow-hidden"
+          currentSession={currentSession}
+          readManuscript={readManuscript}
+          writeManuscript={writeManuscript}
         />
       </div>
     </div>

@@ -127,35 +127,19 @@ export function StudioShellView({
   const translator = createT(language);
   const normalizedLanguage = viewLanguage(language);
   const toastLanguage = agentLanguage(language);
-
-  if (children) {
-    return (
-      <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
-        <StudioConfigProvider value={studioConfigValue}>
-          <StudioUIProvider value={studioUIValue}>
-            <StudioMountProviders language={language} bootRecoveryResult={studioMounts.recovery.result}>
-              <ModalProvider>
-                <StudioProvider value={studioContextValue}>
-                  {children}
-                  {studioMounts.journalActive && (
-                    <RecoveryMounts multiTab={studioMounts.multiTab} language={language} />
-                  )}
-                  <MemoPanel language={language} projectId={currentProjectId} />
-                  <RightPanelResizer language={language} />
-                  <StudioOverlayManager {...overlayProps} />
-                  <StudioModalBridge {...modalBridgeProps} />
-                </StudioProvider>
-                <TokenBudgetToast language={toastLanguage} />
-                <ContextTrimmedToast language={toastLanguage} />
-                <PrismRejectionToast language={toastLanguage} />
-                <NoaBlockNoticeCard language={toastLanguage} />
-              </ModalProvider>
-            </StudioMountProviders>
-          </StudioUIProvider>
-        </StudioConfigProvider>
-      </ErrorBoundary>
-    );
-  }
+  const zenChrome = (
+    <>
+      <ZenOverlays
+        active={zenMode}
+        language={language}
+        chapter={currentSession?.title || undefined}
+        words={typeof currentSession?.config?.manuscripts?.[0]?.content === 'string'
+          ? currentSession.config.manuscripts[0].content.replace(/\s/g, '').length
+          : undefined}
+      />
+      <ZenTweaksPanel language={language} zenActive={zenMode} />
+    </>
+  );
 
   if (isMobile && !forceDesktop && hydrated) {
     return (
@@ -167,7 +151,7 @@ export function StudioShellView({
             if (typeof navigator !== 'undefined' && navigator.share) {
               navigator.share({
                 title: '로어가드 · 창작 전문 IDE',
-                text: '로어가드 (Loreguard) · 창작 전문 IDE / Creative Process Record (데스크톱에서 열기)',
+                text: '로어가드 (Loreguard) · 창작 전문 IDE / 과정기록 지원 (데스크톱에서 열기)',
                 url: desktopUrl,
               }).catch(() => { /* user cancelled */ });
             } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -177,6 +161,37 @@ export function StudioShellView({
             }
           }}
         />
+      </ErrorBoundary>
+    );
+  }
+
+  if (children) {
+    return (
+      <ErrorBoundary variant="section" language={isKO ? 'KO' : 'EN'}>
+        <StudioConfigProvider value={studioConfigValue}>
+          <StudioUIProvider value={studioUIValue}>
+            <StudioMountProviders language={language} bootRecoveryResult={studioMounts.recovery.result}>
+              <ModalProvider>
+                <StudioProvider value={studioContextValue}>
+                  <MobileSketchImportBanner />
+                  {children}
+                  {studioMounts.journalActive && (
+                    <RecoveryMounts multiTab={studioMounts.multiTab} language={language} />
+                  )}
+                  <MemoPanel language={language} projectId={currentProjectId} />
+                  <RightPanelResizer language={language} />
+                  <StudioOverlayManager {...overlayProps} />
+                  <StudioModalBridge {...modalBridgeProps} />
+                  {zenChrome}
+                </StudioProvider>
+                <TokenBudgetToast language={toastLanguage} />
+                <ContextTrimmedToast language={toastLanguage} />
+                <PrismRejectionToast language={toastLanguage} />
+                <NoaBlockNoticeCard language={toastLanguage} />
+              </ModalProvider>
+            </StudioMountProviders>
+          </StudioUIProvider>
+        </StudioConfigProvider>
       </ErrorBoundary>
     );
   }
@@ -252,15 +267,7 @@ export function StudioShellView({
                     </button>
                   )}
 
-                  <ZenOverlays
-                    active={zenMode}
-                    language={language}
-                    chapter={currentSession?.title || undefined}
-                    words={typeof currentSession?.config?.manuscripts?.[0]?.content === 'string'
-                      ? currentSession.config.manuscripts[0].content.replace(/\s/g, '').length
-                      : undefined}
-                  />
-                  <ZenTweaksPanel language={language} zenActive={zenMode} />
+                  {zenChrome}
                   <OSDesktop {...desktopProps} />
 
                   {!isSidebarOpen && !focusMode && (

@@ -33,6 +33,21 @@ describe('checkSameOriginHeaders', () => {
     }))).toEqual({ ok: false, error: 'Forbidden' });
   });
 
+  it('blocks same host when the scheme differs from the forwarded request origin', () => {
+    expect(checkSameOriginHeaders(makeHeaders({
+      origin: 'http://app.example',
+      host: 'app.example',
+      'x-forwarded-proto': 'https',
+    }))).toEqual({ ok: false, error: 'Forbidden' });
+  });
+
+  it('accepts localhost origins when forwarded proto is absent', () => {
+    expect(checkSameOriginHeaders(makeHeaders({
+      origin: 'http://localhost:3000/editor',
+      host: 'localhost:3000',
+    }))).toEqual({ ok: true });
+  });
+
   it('blocks malformed Origin values instead of throwing', () => {
     expect(checkSameOriginHeaders(makeHeaders({
       origin: '::::',

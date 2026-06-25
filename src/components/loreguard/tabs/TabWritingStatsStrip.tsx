@@ -25,7 +25,7 @@ export const WritingStatsStrip = memo(function WritingStatsStrip({
   }, [text]);
 
   return (
-    <div style={{ margin: "8px 28px 0" }}>
+    <div className="wr-stats-strip">
       <button
         type="button"
         aria-expanded={!collapsed}
@@ -38,25 +38,12 @@ export const WritingStatsStrip = memo(function WritingStatsStrip({
           en: "Review metrics — speed (chars/min) is the average since editing this episode began",
         })}
         onClick={() => setCollapsed((v) => !v)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "6px 10px",
-          border: "1px solid var(--line)",
-          borderRadius: 8,
-          background: "transparent",
-          color: "var(--c-sub, #888)",
-          fontSize: 11.5,
-          cursor: "pointer",
-          textAlign: "left",
-        }}
+        className="wr-stats-toggle"
       >
         <Clock size={13} />
-        <span style={{ fontWeight: 600 }}>{L4(language, { ko: "집필 통계", en: "Writing stats" })}</span>
+        <span className="wr-stats-title">{L4(language, { ko: "집필 통계", en: "Writing stats" })}</span>
         {!collapsed && (
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span className="wr-stats-summary">
             {L4(language, {
               ko: `문장 ${stats.sentences.toLocaleString()} · 평균 ${stats.avgLen}자 · 대사 ${stats.dialoguePct}% · 반복 ${stats.repetitionPct}% · 속도 ${cpm}자/분`,
               en: `${stats.sentences.toLocaleString()} sentences · avg ${stats.avgLen} · dialogue ${stats.dialoguePct}% · repetition ${stats.repetitionPct}% · ${cpm} cpm`,
@@ -65,7 +52,7 @@ export const WritingStatsStrip = memo(function WritingStatsStrip({
         )}
         <Chevron
           size={13}
-          style={{ marginLeft: "auto", flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : undefined }}
+          className={"wr-stats-chevron" + (collapsed ? " is-collapsed" : "")}
         />
       </button>
     </div>

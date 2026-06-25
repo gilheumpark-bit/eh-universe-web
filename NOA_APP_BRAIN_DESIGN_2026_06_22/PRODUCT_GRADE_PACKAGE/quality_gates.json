@@ -1,0 +1,70 @@
+{
+  "commercial_readiness_levels": [
+    {
+      "level": "CRL-0",
+      "name": "Idea",
+      "requirements": ["concept_exists"]
+    },
+    {
+      "level": "CRL-1",
+      "name": "Design",
+      "requirements": ["product_thesis", "commercial_spec", "quality_gates"]
+    },
+    {
+      "level": "CRL-2",
+      "name": "Prototype",
+      "requirements": ["runtime_integration", "tab_expert_router", "safe_apply_policy"]
+    },
+    {
+      "level": "CRL-3",
+      "name": "Private Beta",
+      "requirements": ["demo_project", "acceptance_tests_pass", "receipt_memory", "export_guard"]
+    },
+    {
+      "level": "CRL-4",
+      "name": "Paid Pilot",
+      "requirements": ["real_user_projects", "support_process", "failure_recovery_runbook"]
+    },
+    {
+      "level": "CRL-5",
+      "name": "Commercial Release",
+      "requirements": ["paid_operations", "quality_monitoring", "privacy_and_rights_policy", "customer_support"]
+    }
+  ],
+  "minimum_private_beta_gates": [
+    "tab_expert_differentiation",
+    "safe_apply_for_bulk_changes",
+    "work_receipts_for_important_changes",
+    "recovery_hints",
+    "export_guard",
+    "non_technical_user_explanations"
+  ],
+  "release_blockers": [
+    "direct_bulk_apply_without_preview",
+    "important_change_without_receipt",
+    "export_success_claim_without_check",
+    "legal_or_rights_overclaim",
+    "no_recovery_path_for_important_changes"
+  ],
+  "score_formulas": {
+    "sellability_score": {
+      "problem_clarity": 0.18,
+      "user_trust": 0.16,
+      "workflow_fit": 0.14,
+      "safety_coverage": 0.14,
+      "differentiation": 0.12,
+      "demo_power": 0.10,
+      "supportability": 0.08,
+      "monetization_fit": 0.08
+    },
+    "release_readiness": {
+      "runtime_integration": 0.20,
+      "quality_gate_pass_rate": 0.18,
+      "recovery_coverage": 0.16,
+      "receipt_coverage": 0.14,
+      "ux_clarity": 0.12,
+      "data_safety": 0.10,
+      "beta_evidence": 0.10
+    }
+  }
+}

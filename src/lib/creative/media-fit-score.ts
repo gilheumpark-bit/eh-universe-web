@@ -9,7 +9,7 @@
 //   - dramaFitScore    : _산업별_IP_사업성_분석.md §2.3 screenFit (6축 · 합 100 · §3 임계 80)
 //       ※ Layer 67 영상화 전용 분석표 파일은 READ 사양 목록에 부재.
 //         제공 사양 중 유일한 영상 산식인 screenFit 축·가중치를 그대로 사용.
-//         "7플랫폼" 축은 제공 문서에 정의가 없어 미구현 (발명 금지).
+//         "7플랫폼" 축은 제공 문서에 정의가 없어 보류 (발명 금지).
 //         캐스팅 = castableCharacters · 제작비 = productionFeasibility 축으로 사양에 존재.
 //   - globalAppealScore: _산업별_IP_사업성_분석.md §2.7 globalFit (6축 · 합 100 · §3 임계 75)
 //       문화리스크 = culturalRiskControl · 번역성 = translationEase 축으로 사양에 존재.

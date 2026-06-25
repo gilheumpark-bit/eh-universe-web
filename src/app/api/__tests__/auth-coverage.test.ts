@@ -1,6 +1,6 @@
 /**
  * [루프 4 P4 — 2026-06-08] Auth coverage 강제 — POST/PUT/PATCH/DELETE 라우트의
- * verifyCsrf + verifyFirebaseIdToken 사용 추적.
+ * request origin guard + Firebase/LSP token 사용 추적.
  *
  * docs/security/auth-matrix.md 와 동기화.
  *
@@ -77,8 +77,8 @@ function auditRoute(filePath: string): RouteAudit {
       methods.push(m);
     }
   }
-  const hasCsrf = /verifyCsrf|csrf-verify|x-csrf-token/i.test(source);
-  const hasAuth = /verifyFirebaseIdToken|verify-firebase|firebase-id-token/i.test(source);
+  const hasCsrf = /verifyCsrf|csrf-verify|x-csrf-token|checkSameOriginHeaders|api-origin-guard/i.test(source);
+  const hasAuth = /verifyFirebaseIdToken|verify-firebase|firebase-id-token|enforceServerTierLimit|authorizeLspRequest|verifyLspToken|lspAuthHeaders/i.test(source);
   const hasRateLimit = /checkRateLimit|RATE_LIMITS/.test(source);
   return {
     path: filePath.replace(process.cwd(), '').replace(/\\/g, '/'),

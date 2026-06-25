@@ -4,6 +4,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import type { Character, Item, StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 // ============================================================
 // 3-tier 검증 규칙
@@ -164,7 +165,7 @@ export const CompletionBar: React.FC<CompletionBarProps> = ({ score, language })
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500`} style={{ width: `${score}%` }} />
+        <ProgressFill value={score} className={`h-full ${color} rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500`} />
       </div>
       <span className={`text-[9px] font-black ${textColor}`}>
         {score}% {t('tierValidator.done')}

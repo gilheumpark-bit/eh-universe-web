@@ -69,7 +69,7 @@ export default function AboutPage() {
               <div className="space-y-3 text-text-secondary text-sm">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="badge badge-allow">SOFTWARE</span>
-                  <span>AGPL-3.0-or-later + Commercial (dual)</span>
+                  <span>UNLICENSED / Proprietary</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="badge badge-allow">LOREGUARD MATERIALS</span>
@@ -77,12 +77,12 @@ export default function AboutPage() {
                 </div>
                 <p>
                   {T({
-                    ko: "Loreguard 앱 본체는 AGPL-3.0 공개 버전과 상업 이용 트랙을 함께 운영합니다. 공개 가이드와 샘플 자료는 별도 표기된 범위 안에서 CC-BY-NC-4.0으로 제공됩니다.",
-                    en: "The Loreguard app is offered through an AGPL-3.0 public version and a commercial-use track. Public guides and sample materials are provided under CC-BY-NC-4.0 where marked.",
+                    ko: "Loreguard 앱 본체는 비공개 상용 제품으로 관리됩니다. 공개 가이드와 샘플 자료는 파일 또는 문서에 별도 표기된 조건을 따릅니다.",
+                    en: "The Loreguard app is proprietary and commercially managed. Public guides and sample materials follow the separate terms marked in their files or documents.",
                   })}
                 </p>
                 <p className="text-xs text-text-tertiary">
-                  {T({ ko: "상업 라이선스 문의: ", en: "Commercial license inquiries: " })}
+                  {T({ ko: "라이선스 문의: ", en: "License inquiries: " })}
                   <a
                     href="mailto:gilheumpark@gmail.com"
                     className="inline-flex min-h-11 items-center rounded px-1 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
@@ -128,7 +128,7 @@ export default function AboutPage() {
                 { value: "10", label: T({ ko: "작업 단계", en: "Workflow Steps" }) },
                 { value: "6", label: T({ ko: "점검 축", en: "Review Axes" }) },
                 { value: "4", label: T({ ko: "지원 언어", en: "Languages" }) },
-                { value: "DUAL", label: T({ ko: "AGPL + 상업", en: "AGPL + Commercial" }) },
+                { value: "LOCK", label: T({ ko: "비공개 상용", en: "Proprietary" }) },
               ].map(({ value, label }) => (
                 <div key={label} className="premium-panel-soft rounded-[16px] px-4 py-5 text-center border border-transparent hover:border-accent-purple/20 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 transition-[transform,background-color,border-color,box-shadow,color] duration-200">
                   <div className="font-[--font-mono] text-xl font-black text-accent-purple mb-1">{value}</div>

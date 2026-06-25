@@ -19,6 +19,7 @@ export function trackExport(
   format:
     | 'epub'
     | 'docx'
+    | 'hwpx'
     | 'txt'
     | 'json'
     | 'html'

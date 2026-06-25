@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import { Check, Edit, Quote, Shield, X } from "@/components/loreguard/icons";
 import type {
   AssetPotentialLevel,
@@ -12,9 +12,8 @@ import {
   ASSET_POTENTIAL_LABELS,
   DEVELOPMENT_TIER_LABELS,
   INFO_STATE_LABELS,
-  avatarGradient,
-  avColor,
   avLetter,
+  avatarToneClass,
   infoRows,
   splitTraits,
 } from "./TabCharacter.shared";
@@ -45,7 +44,7 @@ export function CharacterProfileView({
   return (
     <>
       <div className="ch-hero">
-        <span className="ch-av lg" style={{ background: avatarGradient(avColor(activeIndex)) }}>
+        <span className={`ch-av lg ${avatarToneClass(activeIndex, "gradient")}`}>
           {avLetter(active.name)}
         </span>
         <div className="ch-hero-body">
@@ -59,7 +58,7 @@ export function CharacterProfileView({
           {active.personality && <div className="ch-oneliner">{active.personality}</div>}
         </div>
         {!editing && (
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="ch-hero-actions">
             <button type="button" className="btn" onClick={onEdit}>
               <Edit size={15} strokeWidth={1.6} />
               편집
@@ -122,7 +121,7 @@ export function CharacterProfileView({
                 <div className="ch-voice">
                   {active.speechExample || active.speechStyle}
                   {active.speechExample && active.speechStyle && (
-                    <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
+                    <div className="ch-voice-sub">
                       {active.speechStyle}
                     </div>
                   )}
@@ -175,11 +174,9 @@ export function PotentialCard({ char }: { char: Character }) {
         <div className="ch-check">
           <div className="ch-check-top">
             <span>DNA 점수</span>
-            <b style={{ color: `var(--c-${tone})` }}>{`${dna}`}</b>
+            <b className={`ch-dna-score ch-dna-${tone}`}>{`${dna}`}</b>
           </div>
-          <div className="tbar">
-            <span style={{ width: `${dna}%`, background: `var(--c-${tone})` }} />
-          </div>
+          <progress className={`tbar ch-dna-progress ch-dna-${tone}`} value={dna} max={100} aria-label={`DNA 점수 ${dna}`} />
         </div>
       )}
     </div>
@@ -205,7 +202,7 @@ export function LoreCard({ char }: { char: Character }) {
           <div className="ch-check-top">
             <span>{key}</span>
           </div>
-          <div className="ch-voice" style={{ fontSize: 13, padding: "10px 13px" }}>
+          <div className="ch-voice ch-voice-compact">
             {value}
           </div>
         </div>
@@ -237,38 +234,13 @@ export function CharForm({ char, onSave, onCancel }: CharFormProps) {
   const [assetPotential, setAssetPotential] = useState<AssetPotentialLevel>(char.assetPotential ?? "none");
   const [assetMemo, setAssetMemo] = useState(char.assetMemo ?? "");
 
-  const labelStyle: CSSProperties = {
-    display: "block",
-    marginBottom: 12,
-  };
-  const labelTextStyle: CSSProperties = {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 800,
-    letterSpacing: ".06em",
-    textTransform: "uppercase",
-    color: "var(--ink-3)",
-    marginBottom: 6,
-  };
-  const inputStyle: CSSProperties = {
-    width: "100%",
-    padding: "9px 12px",
-    background: "var(--card)",
-    border: "1px solid var(--line)",
-    borderRadius: 10,
-    fontSize: 13.5,
-    color: "var(--ink-1)",
-    fontFamily: "inherit",
-    resize: "vertical",
-  };
-
   const field = (label: string, value: string, set: (value: string) => void, multiline = false) => (
-    <label style={labelStyle}>
-      <span style={labelTextStyle}>{label}</span>
+    <label className="ch-form-label">
+      <span className="ch-form-label-text">{label}</span>
       {multiline ? (
-        <textarea style={inputStyle} rows={2} value={value} onChange={(event) => set(event.target.value)} />
+        <textarea className="ch-form-control" rows={2} value={value} onChange={(event) => set(event.target.value)} />
       ) : (
-        <input style={inputStyle} value={value} onChange={(event) => set(event.target.value)} />
+        <input className="ch-form-control" value={value} onChange={(event) => set(event.target.value)} />
       )}
     </label>
   );
@@ -279,9 +251,9 @@ export function CharForm({ char, onSave, onCancel }: CharFormProps) {
     set: (value: T) => void,
     options: Record<T, string>,
   ) => (
-    <label style={labelStyle}>
-      <span style={labelTextStyle}>{label}</span>
-      <select style={inputStyle} value={value} onChange={(event) => set(event.target.value as T)}>
+    <label className="ch-form-label">
+      <span className="ch-form-label-text">{label}</span>
+      <select className="ch-form-control" value={value} onChange={(event) => set(event.target.value as T)}>
         {(Object.entries(options) as Array<[T, string]>).map(([key, labelValue]) => (
           <option key={key} value={key}>{labelValue}</option>
         ))}
@@ -290,7 +262,7 @@ export function CharForm({ char, onSave, onCancel }: CharFormProps) {
   );
 
   return (
-    <div className="ch-sec" style={{ maxWidth: 640 }}>
+    <div className="ch-sec ch-form">
       <div className="ch-sec-h">인물 편집</div>
       {field("이름", name, setName)}
       {field("역할", role, setRole)}
@@ -299,7 +271,7 @@ export function CharForm({ char, onSave, onCancel }: CharFormProps) {
       {field("말투 스타일", speechStyle, setSpeechStyle)}
       {field("대표 대사", speechExample, setSpeechExample, true)}
       {field("외형", appearance, setAppearance, true)}
-      <div className="ch-sec-h" style={{ marginTop: 18 }}>전문 설계</div>
+      <div className="ch-sec-h ch-form-subhead">전문 설계</div>
       {selectField("설계 단계", developmentTier, setDevelopmentTier, DEVELOPMENT_TIER_LABELS)}
       {selectField("정보 상태", informationState, setInformationState, INFO_STATE_LABELS)}
       {field("공개 인식", publicKnowledge, setPublicKnowledge, true)}
@@ -308,7 +280,7 @@ export function CharForm({ char, onSave, onCancel }: CharFormProps) {
       {field("존대 규칙", honorificRule, setHonorificRule, true)}
       {selectField("IP 가능성", assetPotential, setAssetPotential, ASSET_POTENTIAL_LABELS)}
       {field("자산화 메모", assetMemo, setAssetMemo, true)}
-      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+      <div className="ch-form-actions">
         <button
           type="button"
           className="btn primary"

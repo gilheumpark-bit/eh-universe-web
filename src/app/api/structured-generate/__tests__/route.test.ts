@@ -55,7 +55,7 @@ jest.mock('@/lib/logger', () => ({
 
 jest.mock('@/lib/server-ai', () => ({
   hasServerProviderCredentials: () => false,
-  isServerProviderId: (value: string) => ['gemini', 'openai', 'groq', 'mistral', 'ollama', 'lmstudio'].includes(value),
+  isServerProviderId: (value: string) => ['upstage', 'gemini', 'openai', 'groq', 'mistral', 'ollama', 'lmstudio'].includes(value),
   resolveServerProviderKey: (_provider: string, apiKey?: string) => apiKey ?? '',
 }));
 
@@ -71,6 +71,7 @@ jest.mock('@/lib/google-genai-server', () => ({
 const mockCheckRateLimit = jest.fn();
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
+  checkRateLimitAsync: (...args: unknown[]) => mockCheckRateLimit(...args),
   getClientIp: () => '203.0.113.60',
   RATE_LIMITS: {
     default: { windowMs: 60_000, maxRequests: 60 },

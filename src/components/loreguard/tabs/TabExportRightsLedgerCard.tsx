@@ -32,14 +32,11 @@ export default function TabExportRightsLedgerCard({
       <div className="pcard-h">
         <Scale size={15} />
         권리 원장
-        <span
-          className={"pill " + (missingCount > 0 ? "amber" : "green")}
-          style={{ marginLeft: "auto" }}
-        >
+        <span className={"pill tex-push " + (missingCount > 0 ? "amber" : "green")}>
           {missingCount > 0 ? `필수 보강 ${missingCount}건` : `필수 확인 · ${rows.length}개`}
         </span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+      <div className="tex-card-grid">
         {rows.slice(0, 4).map((row) => {
           const rowId = row.id ?? row.categoryKo;
           const missingLabels = missingLabelsByRowId.get(rowId) ?? [];
@@ -47,15 +44,10 @@ export default function TabExportRightsLedgerCard({
           return (
             <div
               key={rowId}
-              className="wr-srow"
-              style={{
-                alignItems: "flex-start",
-                borderTop: "1px solid var(--line)",
-                gridColumn: editingId === rowId ? "1 / -1" : undefined,
-              }}
+              className={"wr-srow tex-list-row" + (editingId === rowId ? " is-editing" : "")}
             >
               {isEditing ? (
-                <div style={{ display: "grid", gap: 8, width: "100%" }}>
+                <div className="tex-edit-form">
                   <RightsLedgerInput label="항목" value={draft.categoryKo} field="categoryKo" onChange={onUpdateDraft} />
                   <RightsLedgerInput label="소유/주체" value={draft.ownerKo} field="ownerKo" onChange={onUpdateDraft} />
                   <RightsLedgerInput label="사용 범위" value={draft.usageScopeKo} field="usageScopeKo" onChange={onUpdateDraft} />
@@ -65,18 +57,17 @@ export default function TabExportRightsLedgerCard({
                   <RightsLedgerInput label="매체" value={draft.mediaKo ?? ""} field="mediaKo" onChange={onUpdateDraft} />
                   <RightsLedgerInput label="근거 파일" value={draft.evidenceFileKo ?? ""} field="evidenceFileKo" onChange={onUpdateDraft} />
                   <RightsLedgerInput label="상태" value={draft.statusKo} field="statusKo" onChange={onUpdateDraft} />
-                  <label className="wr-srow" style={{ alignItems: "flex-start" }}>
+                  <label className="wr-srow tex-form-label-top">
                     <span>메모</span>
                     <textarea
-                      className="mini-btn"
+                      className="mini-btn tex-control-fill tex-textarea"
                       value={draft.noteKo}
                       onChange={(event) => onUpdateDraft("noteKo", event.target.value)}
                       aria-label="권리 원장 메모"
                       rows={2}
-                      style={{ flex: 1, minWidth: 0, justifyContent: "flex-start", resize: "vertical" }}
                     />
                   </label>
-                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <div className="tex-action-row">
                     <button type="button" className="mini-btn" onClick={onCancel}>
                       취소
                     </button>
@@ -87,22 +78,22 @@ export default function TabExportRightsLedgerCard({
                 </div>
               ) : (
                 <>
-                  <span className="rdot blue" style={{ marginTop: 5 }} />
-                  <span style={{ minWidth: 0, flex: 1 }}>
+                  <span className="rdot blue tex-dot-top" />
+                  <span className="tex-row-body">
                     <b>{row.categoryKo}</b>
-                    <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+                    <span className="tex-meta-line">
                       {row.statusKo}
                     </span>
-                    <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>
+                    <span className="tex-meta-line">
                       {row.usageScopeKo}
                     </span>
                     {missingLabels.length > 0 ? (
-                      <span style={{ display: "block", color: "var(--c-amber)", fontSize: 11.5, marginTop: 4 }}>
+                      <span className="tex-meta-line tex-meta-warn">
                         보강: {missingLabels.slice(0, 4).join(" · ")}
                         {missingLabels.length > 4 ? ` 외 ${missingLabels.length - 4}건` : ""}
                       </span>
                     ) : (
-                      <span style={{ display: "block", color: "var(--c-green)", fontSize: 11.5, marginTop: 4 }}>
+                      <span className="tex-meta-line tex-meta-ok">
                         필수 항목 채움
                       </span>
                     )}
@@ -116,11 +107,11 @@ export default function TabExportRightsLedgerCard({
           );
         })}
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
+      <div className="wr-srow tex-note-row">
         원고, 설정, 외부 자료, 번역, 매체 확장 권리 상태를 출고 패키지와 같은 기준으로 묶습니다.
       </div>
       {notice ? (
-        <div className="wr-srow" style={{ color: "var(--ink-2)", fontSize: 12 }}>
+        <div className="wr-srow tex-notice-row">
           <span className="rdot green" />
           {notice}
         </div>
@@ -141,14 +132,13 @@ function RightsLedgerInput({
   onChange: (field: keyof Omit<RightsLedgerDraft, "id">, value: string) => void;
 }) {
   return (
-    <label className="wr-srow" style={{ alignItems: "center" }}>
+    <label className="wr-srow tex-form-label">
       <span>{label}</span>
       <input
-        className="mini-btn"
+        className="mini-btn tex-control-fill"
         value={value}
         onChange={(event) => onChange(field, event.target.value)}
         aria-label={`권리 원장 ${label}`}
-        style={{ flex: 1, minWidth: 0, justifyContent: "flex-start" }}
       />
     </label>
   );

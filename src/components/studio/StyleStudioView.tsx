@@ -7,25 +7,21 @@ import { getActiveProvider, getActiveModel, getApiKey } from "@/lib/ai-providers
 // [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 사일런트 차단 금지
 import { checkBlockedJson, checkBlockedLegacy403 } from "@/lib/noa/block-notice";
 import { checkPaywallJson } from "@/lib/noa/paywall-notice";
-import StylePreview, { applyStyleTransform } from "./StylePreview";
+import StylePreview from "./StylePreview";
 import {
   analyzeText,
-  AUTHOR_PROFILES,
-  DNA_CARDS,
-  getSliderDescriptor,
-  getSliderTrackStyle,
-  RadarChart,
-  REF_AUTHORS,
   SF_CHECKS,
   SLIDERS_I18N,
   STYLE_NAMES_EN,
   STYLE_NAMES_KO,
   STYLE_PRESETS,
   TextAnalysisCards,
-  type RefAuthor,
   type TextMetrics,
   WEB_CHECKS,
 } from "./StyleStudioView.data";
+import { StyleChecklistPanel } from "./StyleStudioView.ChecklistPanel";
+import { StyleIdentityPanel } from "./StyleStudioView.IdentityPanel";
+import { StyleProfilePanel } from "./StyleStudioView.ProfilePanel";
 
 interface Props {
   language?: AppLanguage;
@@ -84,7 +80,6 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
     () => SLIDERS_I18N.map((s) => (en ? s.en.split(" ")[0] : s.ko)),
     [en]
   );
-  const benchmarkProfile = benchmarkAuthor ? AUTHOR_PROFILES[benchmarkAuthor] : undefined;
 
   const applyStylePreset = useCallback((presetKey: string) => {
     const preset = STYLE_PRESETS.find(p => p.key === presetKey);
@@ -257,7 +252,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
       {/* Hero */}
       <div className="ss-header">
         <div className="ss-shell ss-header-shell">
-          <div className="ss-header-bg">STYLE</div>
+          <div className="ss-header-bg" aria-hidden="true">STYLE</div>
           <div className="ss-header-label">
             Loreguard Studio · {en ? "Style Alignment" : "문체 정렬"}
           </div>
@@ -314,234 +309,47 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
       <div className="ss-main">
         <div className="ss-shell ss-main-shell">
         {tab === 0 && (
-          <div>
-            <div className="ss-section-title">Step 01 · {en ? "Style Identity" : "문체 정체성 선택"}</div>
-            <p className="ss-hint">
-              {en
-                ? "Select the style types closest to your current or target writing. Multiple selections allowed."
-                : "지금의 글쓰기 또는 목표로 하는 문체에 가장 가까운 유형을 선택하세요. 복수 선택 가능."}
-            </p>
-
-            <div className="ss-dna-grid">
-              {DNA_CARDS.map((card, i) => (
-                <button
-                  key={i}
-                  className={`ss-dna-card ${selectedCards.has(i) ? "selected" : ""}`}
-                  onClick={() => toggleSet(setSelectedCards, i)}
-                >
-                  {selectedCards.has(i) && <span className="ss-dna-check">✓</span>}
-                  <span className={`ss-dna-label ${card.labelClass}`}>{en ? card.labelEN : card.label}</span>
-                  <h3>{en ? card.titleEN : card.title}</h3>
-                  <p>{en ? card.descEN : card.desc}</p>
-                </button>
-              ))}
-            </div>
-
-            <hr className="ss-divider" />
-            <div className="ss-section-title">Step 02 · {en ? "Style Parameters" : "문체 파라미터 설정"}</div>
-
-            <div className="ss-slider-group">
-              {SLIDERS_I18N.map((s) => {
-                const currentLabel = getSliderDescriptor(s, sliderVals[s.id], en);
-
-                return (
-                  <div key={s.id} className="ss-slider-row">
-                    <div className="ss-slider-topline" title={`${en ? s.en : s.ko}: ${currentLabel} — ${en ? s.noteEN : s.noteKO}`}>
-                      <div className="ss-slider-meta">
-                        <div className="ss-slider-label">{en ? s.en : s.ko}</div>
-                        <p className="ss-slider-note">{en ? s.noteEN : s.noteKO}</p>
-                      </div>
-                      <span className="ss-slider-current">{currentLabel}</span>
-                    </div>
-
-                    <div className="ss-slider-ends">
-                      <input
-                        type="range"
-                        min={1}
-                        max={5}
-                        value={sliderVals[s.id]}
-                        onChange={(e) => handleSlider(s.id, Number(e.target.value))}
-                        className="ss-range"
-                        aria-valuetext={currentLabel}
-                        style={getSliderTrackStyle(sliderVals[s.id])}
-                      />
-                      <div className="ss-slider-end-labels">
-                        <span>{en ? s.leftEN : s.leftKO}</span>
-                        <strong>{currentLabel}</strong>
-                        <span>{en ? s.rightEN : s.rightKO}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Radar Chart + Benchmark Comparison */}
-            <hr className="ss-divider" />
-            <div className="ss-section-title">
-              {en ? "Style Radar" : "문체 레이더"}
-            </div>
-            <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
-              <div style={{ flex: "0 0 auto" }}>
-                <RadarChart
-                  values={radarValues}
-                  benchmarkValues={benchmarkProfile?.values}
-                  labels={radarLabels}
-                  size={240}
-                />
-                {/* Legend */}
-                <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8, fontSize: 11 }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 2, background: "var(--color-accent-amber)", display: "inline-block" }} />
-                    {en ? "My Style" : "내 문체"}
-                  </span>
-                  {benchmarkProfile && (
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 2, background: "var(--color-accent-blue)", display: "inline-block" }} />
-                      {en ? benchmarkProfile.en : benchmarkProfile.ko}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div style={{ flex: 1, minWidth: 180 }}>
-                <label style={{ fontSize: 12, color: "var(--color-text-secondary, #999)", display: "block", marginBottom: 6 }}>
-                  {en ? "Compare with..." : "비교 작가 선택"}
-                </label>
-                <select
-                  value={benchmarkAuthor}
-                  onChange={(e) => setBenchmarkAuthor(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary text-sm cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple/50"
-                >
-                  <option value="">{en ? "None" : "선택 안 함"}</option>
-                  {Object.entries(AUTHOR_PROFILES).map(([key, prof]) => (
-                    <option key={key} value={key}>{en ? prof.en : prof.ko}</option>
-                  ))}
-                </select>
-                {benchmarkProfile && (
-                  <div style={{ marginTop: 12, fontSize: 12, lineHeight: 1.6, color: "var(--color-text-secondary, #999)" }}>
-                    {SLIDERS_I18N.map((s, i) => {
-                      const mine = radarValues[i];
-                      const theirs = benchmarkProfile.values[i];
-                      const diff = mine - theirs;
-                      const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "=";
-                      const clr = diff > 0 ? "var(--color-accent-amber)" : diff < 0 ? "var(--color-accent-blue)" : "var(--color-text-secondary)";
-                      return (
-                        <div key={s.id} style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span>{en ? s.en : s.ko}</span>
-                          <span style={{ color: clr, fontWeight: 600 }}>
-                            {mine} vs {theirs} <span style={{ fontSize: 10 }}>{arrow}</span>
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Style Preview — inline sample */}
-            <hr className="ss-divider" />
-            <div className="ss-section-title">
-              {en ? "Quick Preview" : "미리보기"}
-            </div>
-            <p className="ss-hint">
-              {en
-                ? "See how your current style settings transform a sample paragraph."
-                : "현재 문체 설정이 샘플 문단에 어떻게 적용되는지 미리 봅니다."}
-            </p>
-            {(() => {
-              const sampleText = en
-                ? 'He opened the door. No one was inside. Something lay on the floor. He approached carefully. Cold metal touched his fingertips.'
-                : '그가 문을 열었다. 안에는 아무도 없었다. 바닥에 뭔가가 떨어져 있었다. 그는 조심스럽게 다가갔다. 차가운 금속 질감이 손끝에 닿았다.';
-              const preview = applyStyleTransform(sampleText, sliderVals, language);
-              return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
-                  <div style={{ background: 'var(--color-bg-secondary)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--color-border)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-text-secondary)', marginBottom: 6 }}>{en ? 'Original' : '원문'}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{sampleText}</div>
-                  </div>
-                  <div style={{ background: 'var(--indigo-50, #eff6ff)', borderRadius: 10, padding: '12px 16px', border: '1px solid color-mix(in srgb, var(--color-accent-amber) 20%, transparent)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-accent-amber)', marginBottom: 6 }}>{en ? 'With Your Style' : '내 문체 적용'}</div>
-                    <div style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--color-text-primary)', whiteSpace: 'pre-wrap' }}>{preview}</div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            <button className="ss-btn-primary" onClick={() => setTab(1)} style={{ marginTop: 20 }}>
-              {en ? "Next: Technique Checklist →" : "다음: 기법 체크리스트 →"}
-            </button>
-          </div>
+          <StyleIdentityPanel
+            en={en}
+            language={language}
+            selectedCards={selectedCards}
+            setSelectedCards={setSelectedCards}
+            toggleSet={toggleSet}
+            sliderVals={sliderVals}
+            handleSlider={handleSlider}
+            radarValues={radarValues}
+            radarLabels={radarLabels}
+            benchmarkAuthor={benchmarkAuthor}
+            setBenchmarkAuthor={setBenchmarkAuthor}
+            setTab={setTab}
+          />
         )}
 
         {tab === 1 && (
-          <div>
-            <div className="ss-section-title">
-              Step 03 · {en ? "Technique Checklist" : "문체 기법 습득 체크리스트"}
-            </div>
-
-            <div className="ss-progress-wrap">
-              <span className="ss-progress-label">
-                {totalChecked} / {totalItems} {en ? "done" : "완료"}
-              </span>
-              <div className="ss-progress-bg">
-                <div
-                  className="ss-progress-fill"
-                  style={{ width: `${(totalChecked / totalItems) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="ss-checklist-grid">
-              <div>
-                <h3 className="ss-checklist-heading">SF / {en ? "Technical Style" : "기술적 문체"}</h3>
-                {SF_CHECKS.map((item, i) => (
-                  <button
-                    key={i}
-                    className={`ss-check-item ${checkedSF.has(i) ? "done" : ""}`}
-                    onClick={() => toggleSet(setCheckedSF, i)}
-                  >
-                    <span className="ss-check-box">{checkedSF.has(i) ? "✓" : ""}</span>
-                    <span className="ss-check-text">
-                      <strong>{en ? item.titleEN : item.title}</strong>
-                      <span>{en ? item.descEN : item.desc}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div>
-                <h3 className="ss-checklist-heading">{en ? "Web Novel / Immersion" : "웹소설 / 몰입 기법"}</h3>
-                {WEB_CHECKS.map((item, i) => (
-                  <button
-                    key={i}
-                    className={`ss-check-item ${checkedWeb.has(i) ? "done" : ""}`}
-                    onClick={() => toggleSet(setCheckedWeb, i)}
-                  >
-                    <span className="ss-check-box">{checkedWeb.has(i) ? "✓" : ""}</span>
-                    <span className="ss-check-text">
-                      <strong>{en ? item.titleEN : item.title}</strong>
-                      <span>{en ? item.descEN : item.desc}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <StyleChecklistPanel
+            en={en}
+            checkedSF={checkedSF}
+            checkedWeb={checkedWeb}
+            setCheckedSF={setCheckedSF}
+            setCheckedWeb={setCheckedWeb}
+            toggleSet={toggleSet}
+            totalChecked={totalChecked}
+            totalItems={totalItems}
+          />
         )}
 
         {tab === 2 && (
           <div>
-            <div className="ss-section-title">Step 04 · {en ? "Sentence Transform Lab" : "문장 변환 실험실"}</div>
+            <h2 className="ss-section-title">Step 04 · {en ? "Sentence Transform Lab" : "문장 변환 실험실"}</h2>
             <p className="ss-hint">
               {en
                 ? "Enter your original text and select style directions. Noa rewrites the same content in a different style."
                 : "원문을 입력하고 변환하고 싶은 문체 요소를 선택하면, 노아가 같은 내용을 다른 스타일로 재작성합니다."}
             </p>
 
-            <div className="ss-section-title" style={{ marginBottom: 12 }}>
+            <h2 className="ss-section-title ss-section-title-tight">
               {en ? "Transform Direction" : "변환 방향 선택"}
-            </div>
+            </h2>
             <div className="ss-style-toggles">
               {(en ? STYLE_NAMES_EN : STYLE_NAMES_KO).map((name, i) => (
                 <button
@@ -570,7 +378,7 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
                 <TextAnalysisCards metrics={textMetrics} en={en} />
               </div>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="ss-lab-label-row">
                   <label className="ss-lab-label">{en ? "Result" : "변환 결과"}</label>
                   {resultText && <CopyButton text={resultText} language={language} />}
                 </div>
@@ -619,29 +427,29 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
 
             <hr className="ss-divider" />
 
-            <div className="ss-section-title">
+            <h2 className="ss-section-title">
               {en ? "Style Tips · Common Pitfalls" : "문체 팁 · 자주 나오는 함정"}
-            </div>
+            </h2>
             <div className="ss-tip warning">
-              <h4>{en ? "Noa Style Symptom 1: Transition Overload" : "노아 문체 증상 1: 과잉 전환어"}</h4>
+              <h3>{en ? "Noa Style Symptom 1: Transition Overload" : "노아 문체 증상 1: 과잉 전환어"}</h3>
               <p>{en
                 ? "However / Nevertheless / Despite: consecutive use makes prose sound like an essay. Replace with action."
                 : "하지만 / 그러나 / 그럼에도 불구하고: 연속 사용 시 글이 설명문처럼 들린다. 행동으로 대체하라."}</p>
             </div>
             <div className="ss-tip warning">
-              <h4>{en ? "Noa Style Symptom 2: Stating Emotions Directly" : "노아 문체 증상 2: 감정 직접 명시"}</h4>
+              <h3>{en ? "Noa Style Symptom 2: Stating Emotions Directly" : "노아 문체 증상 2: 감정 직접 명시"}</h3>
               <p>{en
                 ? "Instead of 'Fear washed over him,' use physical reactions: His fingertips scraped the edge of the monitor. 0.3 seconds. Again."
                 : "\"두려움이 몰려왔다\" 대신 신체 반응으로: 손끝이 모니터 엣지를 긁었다. 0.3초. 다시 긁었다."}</p>
             </div>
             <div className="ss-tip">
-              <h4>{en ? "Technique: Data as Narrative" : "기법 활용: 데이터의 서사화"}</h4>
+              <h3>{en ? "Technique: Data as Narrative" : "기법 활용: 데이터의 서사화"}</h3>
               <p>{en
                 ? "Numbers, dates, and measurements are not just information. They can serve as emotional thermometers for your characters."
                 : "숫자·날짜·측정값이 단순 정보가 아니라 캐릭터의 감정 온도계 역할을 할 수 있다. 수치에 맥락을 부여하라."}</p>
             </div>
             <div className="ss-tip">
-              <h4>{en ? "Technique: Behavioral Markers" : "기법 활용: 행동 마커의 반복"}</h4>
+              <h3>{en ? "Technique: Behavioral Markers" : "기법 활용: 행동 마커의 반복"}</h3>
               <p>{en
                 ? "Give each character a repeated habit or gesture. Readers learn to identify them without explicit description."
                 : "인물마다 고유한 반복 습관을 부여하라. 독자가 설명 없이도 누구인지 식별할 수 있게 된다."}</p>
@@ -650,114 +458,14 @@ export default function StyleStudioView({ language: languageProp, isKO: isKOProp
         )}
 
         {tab === 3 && (
-          <div>
-            <div className="ss-section-title">
-              {en ? "My Style Profile" : "내 문체 프로필 · 현재 설정 기준"}
-            </div>
-
-            <div className="ss-profile-grid">
-              <div className="ss-profile-card">
-                <h3>{en ? "Genre Identity" : "장르 정체성"}</h3>
-                <div className="ss-tag-row">
-                  {Array.from(selectedCards).map((i) => (
-                    <span key={i} className="ss-tag ss-tag-gold">{DNA_CARDS[i].label}</span>
-                  ))}
-                  {selectedCards.size === 0 && (
-                    <span className="ss-tag ss-tag-gold">{en ? "None" : "미선택"}</span>
-                  )}
-                </div>
-                <div className="ss-profile-items">
-                  <div className="ss-profile-item">
-                    <span className="ss-profile-key">{en ? "Selected Styles" : "선택 문체"}</span>
-                    <span>{selectedCards.size > 0
-                      ? Array.from(selectedCards).map((i) => en ? DNA_CARDS[i].titleEN : DNA_CARDS[i].title).join(" + ")
-                      : (en ? "Not set" : "미설정")}</span>
-                  </div>
-                  <div className="ss-profile-item">
-                    <span className="ss-profile-key">{en ? "Techniques" : "습득 기법"}</span>
-                    <span>{totalChecked} / {totalItems} {en ? "mastered" : "완료"}</span>
-                  </div>
-                  <div className="ss-profile-item">
-                    <span className="ss-profile-key">{en ? "Lab Usage" : "실험실 사용"}</span>
-                    <span>{resultText ? (en ? "Active" : "활성") : (en ? "Not yet" : "미사용")}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="ss-profile-card">
-                <h3>{en ? "Style Parameters" : "문체 파라미터"}</h3>
-                <div className="ss-profile-items">
-                  {SLIDERS_I18N.map((s) => (
-                    <div key={s.id} className="ss-profile-item">
-                      <span className="ss-profile-key">{en ? s.en : s.ko}</span>
-                      <span>{getSliderDescriptor(s, sliderVals[s.id], en)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="ss-author-dna">
-              <div className="ss-author-dna-bg">DNA</div>
-              <h3>{en ? "Author Style DNA Statement" : "작가 문체 DNA 선언문"}</h3>
-              <div className="ss-dna-statement">
-                {selectedCards.size === 0 ? (
-                  <span style={{ color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
-                    {en
-                      ? "Select your style identity in Step 01 to generate your DNA statement."
-                      : "Step 01에서 문체 정체성을 선택하면 DNA 선언문이 생성됩니다."}
-                  </span>
-                ) : (
-                  <>
-                    {en ? "I write " : "나는 "}
-                    <em className="ss-hl">
-                      {selectedCards.has(0) && (en ? "the language of systems" : "시스템의 언어")}
-                      {selectedCards.has(1) && (selectedCards.has(0) ? (en ? " and rhythm" : "와 리듬") : (en ? "fast-paced rhythm" : "빠른 호흡의 리듬"))}
-                      {selectedCards.has(2) && ((selectedCards.has(0) || selectedCards.has(1)) ? (en ? " and sensory depth" : "과 감각의 깊이") : (en ? "sensory depth" : "감각의 깊이"))}
-                      {selectedCards.has(3) && ((selectedCards.has(0) || selectedCards.has(1) || selectedCards.has(2)) ? (en ? " across genres" : "을 장르 너머") : (en ? "genre-crossing craft" : "장르를 넘나드는 문장"))}
-                    </em>
-                    {en ? " to capture " : "으로 "}
-                    <em className="ss-hl2">
-                      {sliderVals.s2 <= 2
-                        ? (en ? "what data reveals" : "데이터가 드러내는 것들")
-                        : sliderVals.s2 >= 4
-                          ? (en ? "the weight of emotion" : "감정의 무게")
-                          : (en ? "the tension between logic and feeling" : "논리와 감정 사이의 긴장")}
-                    </em>
-                    {en ? ", and my sentences make readers " : "을 포착하고,"}<br />
-                    {en ? "" : "독자가 이해하기 전에 "}
-                    <em className="ss-hl">
-                      {sliderVals.s4 >= 4
-                        ? (en ? "feel before they understand" : "먼저 느끼게")
-                        : sliderVals.s4 <= 2
-                          ? (en ? "see the whole picture" : "전체를 조망하게")
-                          : (en ? "step into the story" : "이야기 안으로 걸어 들어가게")}
-                    </em>
-                    {en ? "." : " 만드는 것이 내 문체다."}
-                  </>
-                )}
-              </div>
-            </div>
-
-            <hr className="ss-divider" />
-
-            <div className="ss-section-title">{en ? "Reference Authors" : "참고할 작가 · 문체 레퍼런스"}</div>
-            <div className="ss-ref-grid">
-              {(() => {
-                const authors = new Map<string, RefAuthor>();
-                Array.from(selectedCards).forEach((cardIdx) => {
-                  REF_AUTHORS[cardIdx]?.forEach((a) => authors.set(a.name, a));
-                });
-                const list = authors.size > 0 ? Array.from(authors.values()).slice(0, 3) : REF_AUTHORS[0];
-                return list.map((a, i) => (
-                  <div key={i} className="ss-tip">
-                    <h4>{en ? a.nameEN : a.name}</h4>
-                    <p>{en ? a.descEN : a.desc}</p>
-                  </div>
-                ));
-              })()}
-            </div>
-          </div>
+          <StyleProfilePanel
+            en={en}
+            selectedCards={selectedCards}
+            totalChecked={totalChecked}
+            totalItems={totalItems}
+            resultText={resultText}
+            sliderVals={sliderVals}
+          />
         )}
 
         {tab === 4 && (

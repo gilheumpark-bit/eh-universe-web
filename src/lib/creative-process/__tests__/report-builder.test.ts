@@ -106,6 +106,52 @@ describe('report-builder — buildCertificate', () => {
     expect(result.sections['external-import']).toBeTruthy(); // private 와 동일 섹션
   });
 
+  it('작가 판단 맥락을 author-choice-summary 섹션에 포함한다', async () => {
+    const decisionEvent: CreativeEvent = {
+      id: '01HZXK3V9T2M4N5P6Q7R8S9T0B',
+      projectId: 'test',
+      targetType: 'manuscript',
+      targetId: 'ep-1',
+      eventType: 'accept',
+      actorType: 'human',
+      actorId: 'author',
+      originType: 'AI_SUGGESTION',
+      beforeHash: 'b'.repeat(64),
+      afterHash: 'a'.repeat(64),
+      createdAt: '2026-06-16T00:00:00.000Z',
+      appVersion: 'test',
+      decisionContext: {
+        action: 'accepted',
+        selectedAlternativeId: 'alt-2',
+        reason: '배신 장면의 동기가 더 자연스러워서 선택',
+        alternatives: [
+          { id: 'alt-1', label: 'A안', charCount: 120 },
+          { id: 'alt-2', label: 'B안', charCount: 140 },
+        ],
+        delta: { beforeChars: 1000, afterChars: 1120, insertedChars: 120, removedChars: 0, editedChars: 120 },
+      },
+    };
+    mockedListCreativeEvents.mockResolvedValueOnce([decisionEvent]);
+
+    const result = await buildCertificate({
+      projectId: 'test',
+      view: 'publisher',
+      language: 'ko',
+      projectMeta: { name: 'A' },
+      episodes: [{ episode: 1, content: 'Hello' }],
+    });
+
+    const section = result.sections['author-choice-summary'];
+    expect(section).toBeTruthy();
+    expect(section!.rows).toEqual(expect.arrayContaining([
+      { key: '판단 기록', value: '1' },
+    ]));
+    const joined = section!.rows.map((row) => `${row.key}: ${row.value}`).join('\n');
+    expect(joined).toContain('선택 근거 1');
+    expect(joined).toContain('B안');
+    expect(joined).toContain('배신 장면의 동기가 더 자연스러워서 선택');
+  });
+
   it('cert.id, cert.manuscriptHash, cert.timelineHash 모두 생성됨', async () => {
     const result = await buildCertificate({
       projectId: 'test',
@@ -121,6 +167,22 @@ describe('report-builder — buildCertificate', () => {
     expect(result.cert.timelineHash).toBeTruthy();
     expect(result.cert.sourceSummaryHash).toBeTruthy();
     expect(result.cert.generatedAt).toMatch(/\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('표시용 해시 섹션은 원본 64자 해시 대신 축약값을 쓴다', async () => {
+    const result = await buildCertificate({
+      projectId: 'test',
+      view: 'private',
+      language: 'ko',
+      projectMeta: { name: 'A' },
+      episodes: [{ episode: 1, content: 'Hello' }],
+    });
+
+    const section = result.sections['hash-and-export-time'];
+    expect(section).toBeTruthy();
+    const hashRows = section!.rows.slice(0, 3);
+    expect(hashRows.every((row) => row.value.includes('...'))).toBe(true);
+    expect(hashRows.some((row) => row.value === result.cert.manuscriptHash)).toBe(false);
   });
 
   it('과정기록 해시 체인이 깨져 있으면 확인서 발급을 차단한다', async () => {

@@ -18,8 +18,10 @@ import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
 // [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
 import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
 import { enforceServerTierLimit } from '@/lib/server-tier-limit';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 15; // Quick timeout — completion must be fast
+const COMPLETE_BODY_LIMIT_BYTES = 64 * 1024;
 
 // ============================================================
 // PART 2 — System Prompt (writing-agent-registry 위임)
@@ -64,6 +66,42 @@ async function drainStream(stream: ReadableStream): Promise<string> {
   return fullText.trim();
 }
 
+async function readCompleteJson(req: NextRequest): Promise<Record<string, unknown>> {
+  const contentLength = Number(req.headers.get('content-length') || '0');
+  if (Number.isFinite(contentLength) && contentLength > COMPLETE_BODY_LIMIT_BYTES) {
+    throw new Error('PAYLOAD_TOO_LARGE');
+  }
+
+  if (!req.body) {
+    return await req.json() as Record<string, unknown>;
+  }
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    totalBytes += value.byteLength;
+    if (totalBytes > COMPLETE_BODY_LIMIT_BYTES) {
+      try { await reader.cancel(); } catch { /* body already closed */ }
+      throw new Error('PAYLOAD_TOO_LARGE');
+    }
+    chunks.push(value);
+  }
+
+  const merged = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return JSON.parse(new TextDecoder().decode(merged)) as Record<string, unknown>;
+}
+
 export async function POST(req: NextRequest) {
   const originCheck = checkSameOriginHeaders(req.headers);
   if (!originCheck.ok) {
@@ -83,14 +121,16 @@ export async function POST(req: NextRequest) {
 
   let body: Record<string, unknown>;
   try {
-    body = await req.json() as Record<string, unknown>;
-  } catch {
+    body = await readCompleteJson(req);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'PAYLOAD_TOO_LARGE') {
+      return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
+    }
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   // Auth check — Firebase JWT 실검증 또는 BYOK 키 형식 검증
   const authHeader = req.headers.get('authorization');
-  let firebaseVerified = false;
   let verifiedUser: Awaited<ReturnType<typeof import('@/lib/firebase-id-token').verifyFirebaseIdToken>> = null;
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7).trim();
@@ -98,9 +138,11 @@ export async function POST(req: NextRequest) {
     try {
       const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
       const verified = await verifyFirebaseIdToken(token);
-      firebaseVerified = Boolean(verified);
       verifiedUser = verified;
-    } catch { /* verification module load failed — deny */ }
+    } catch (err) {
+      logger.warn('Auth:complete:token-verify-failed', err instanceof Error ? err.message : String(err));
+      /* Token verification failed — silently downgrade to anonymous tier (no 401 returned) */
+    }
   }
   // BYOK: 제공자 키 형식 검사 (sk-xxx / AIza... / gsk_... 등 최소 패턴) +
   // 키 prefix → 제공자 매핑. chat/structured-generate 정책과 동일하게,
@@ -171,6 +213,7 @@ export async function POST(req: NextRequest) {
   const messages = [{ role: 'user', content: userContent }];
 
   const FAST_MODELS: Record<string, string> = {
+    upstage: 'solar-pro3',
     gemini: 'gemini-2.5-flash-lite',
     openai: 'gpt-5.4-nano',
     claude: 'claude-haiku-4-5',
@@ -179,9 +222,8 @@ export async function POST(req: NextRequest) {
   };
 
   // ── Strategy 0: BYOK — 유저 자기 키로 생성 (호스팅 자원 미사용·자기 과금) ──
-  // firebaseVerified 가 아닌 BYOK 단독 인증이면 서버 env 키·DGX Spark 를 쓰지 않는다.
-  // (#17: 가짜 키 정규식 통과 → 호스팅 크레딧 무제한 소모 차단)
-  if (hasByok && !firebaseVerified && byokProvider) {
+  // 로그인 여부와 무관하게 명시적 BYOK가 있으면 BYOK를 최우선 사용한다.
+  if (hasByok && byokProvider) {
     const byokModel = FAST_MODELS[byokProvider] ?? 'gemini-2.5-flash-lite';
     try {
       const result = await dispatchStream(

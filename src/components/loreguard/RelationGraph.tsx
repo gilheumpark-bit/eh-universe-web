@@ -15,7 +15,7 @@
    · 데이터 날조 없음 — 전달받은 노드/엣지만 그대로 렌더.
    =========================================================== */
 
-import { useCallback, useEffect, useMemo, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -89,6 +89,55 @@ const HANDLE_POS: Record<GraphHandleSide, Position> = {
   bottom: Position.Bottom,
 };
 
+function graphToneClass(color: string | undefined): string {
+  const normalized = (color ?? "").replace(/\s+/g, "").toLowerCase();
+  switch (normalized) {
+    case "var(--c-blue)":
+      return "blue";
+    case "var(--c-purple)":
+      return "purple";
+    case "var(--c-green)":
+      return "green";
+    case "var(--c-amber)":
+      return "amber";
+    case "var(--c-red)":
+      return "red";
+    case "var(--c-teal)":
+      return "teal";
+    case "var(--primary)":
+      return "primary";
+    case "var(--ink-3)":
+      return "muted";
+    case "var(--line)":
+      return "line";
+    default:
+      return "primary";
+  }
+}
+
+function graphHeightClass(height: number): string {
+  if (height <= 440) return "lg-graph-h-440";
+  if (height >= 520) return "lg-graph-h-520";
+  return "lg-graph-h-480";
+}
+
+function GraphNodeLabel({
+  label,
+  sublabel,
+  minor,
+}: {
+  label: string;
+  sublabel?: string;
+  minor?: boolean;
+}) {
+  return (
+    <div className={`lg-graph-node-label${minor ? " is-minor" : ""}`}>
+      <div className="lg-graph-node-title">{label}</div>
+      {sublabel ? <div className="lg-graph-node-subtitle">{sublabel}</div> : null}
+    </div>
+  );
+}
+
 function toNode(spec: GraphNodeSpec, draggable: boolean): Node {
   return {
     id: spec.id,
@@ -99,28 +148,10 @@ function toNode(spec: GraphNodeSpec, draggable: boolean): Node {
     targetPosition: spec.targetSide ? HANDLE_POS[spec.targetSide] : undefined,
     data: {
       label: (
-        <div style={{ textAlign: "left", lineHeight: 1.35 }}>
-          <div style={{ fontWeight: 700, fontSize: spec.minor ? 11.5 : 13, color: "var(--ink-1)" }}>
-            {spec.label}
-          </div>
-          {spec.sublabel ? (
-            <div style={{ fontSize: spec.minor ? 10.5 : 11.5, color: "var(--ink-3)", marginTop: 2 }}>
-              {spec.sublabel}
-            </div>
-          ) : null}
-        </div>
+        <GraphNodeLabel label={spec.label} sublabel={spec.sublabel} minor={spec.minor} />
       ),
     },
-    style: {
-      background: "var(--card)",
-      color: "var(--ink-1)",
-      border: "1px solid var(--line)",
-      borderLeft: `3px solid ${spec.accent ?? "var(--primary)"}`,
-      borderRadius: 10,
-      padding: spec.minor ? "6px 10px" : "8px 12px",
-      width: spec.minor ? 170 : 190,
-      fontFamily: "inherit",
-    },
+    className: `lg-graph-node lg-graph-tone-${graphToneClass(spec.accent)}${spec.minor ? " is-minor" : ""}`,
   };
 }
 
@@ -129,29 +160,11 @@ function toEdge(spec: GraphEdgeSpec): Edge {
     id: spec.id,
     source: spec.source,
     target: spec.target,
-    label: spec.label,
+    label: spec.label ? <span className="lg-graph-edge-label">{spec.label}</span> : undefined,
     animated: spec.animated,
-    style: { stroke: spec.color ?? "var(--line)", strokeWidth: 1.6 },
-    labelStyle: { fill: "var(--ink-1)", fontSize: 10.5, fontWeight: 600 },
-    labelBgStyle: { fill: "var(--card)", fillOpacity: 0.9 },
-    labelBgPadding: [4, 2] as [number, number],
-    labelBgBorderRadius: 4,
+    className: `lg-graph-edge lg-graph-tone-${graphToneClass(spec.color)}`,
   };
 }
-
-// xyflow 내장 위젯(컨트롤/엣지 라벨/배경) 테마 — `-default` 변수 오버라이드.
-// 값이 전부 loreguard 토큰이라 다크 전환 시 자동 추종.
-const XY_THEME_VARS = {
-  "--xy-background-color-default": "transparent",
-  "--xy-edge-label-background-color-default": "var(--card)",
-  "--xy-edge-label-color-default": "var(--ink-1)",
-  "--xy-controls-button-background-color-default": "var(--card)",
-  "--xy-controls-button-background-color-hover-default": "var(--card-2)",
-  "--xy-controls-button-color-default": "var(--ink-2)",
-  "--xy-controls-button-color-hover-default": "var(--ink-1)",
-  "--xy-controls-button-border-color-default": "var(--line)",
-  "--xy-attribution-background-color-default": "transparent",
-} as CSSProperties;
 
 // ============================================================
 // PART 3 — 본체
@@ -197,17 +210,9 @@ export default function RelationGraph({
   );
 
   return (
-    <div
-      style={{
-        height,
-        borderRadius: 14,
-        border: "1px solid var(--line)",
-        overflow: "hidden",
-        background: "var(--card-2)",
-        ...XY_THEME_VARS,
-      }}
-    >
+    <div className={`lg-graph ${graphHeightClass(height)}`}>
       <ReactFlow
+        className="lg-graph-flow"
         aria-label={ariaLabel}
         nodes={nodes}
         edges={edges}
@@ -226,15 +231,15 @@ export default function RelationGraph({
       >
         <Background variant={BackgroundVariant.Dots} gap={18} size={1} color="var(--line)" />
         <MiniMap
+          className="lg-graph-minimap"
           pannable
           zoomable
           bgColor="var(--card-2)"
           maskColor="color-mix(in srgb, var(--card-2) 75%, transparent)"
           nodeColor="var(--line)"
           nodeStrokeColor="var(--ink-3)"
-          style={{ width: 140, height: 96 }}
         />
-        <Controls showInteractive={false} />
+        <Controls className="lg-graph-controls" showInteractive={false} />
       </ReactFlow>
     </div>
   );

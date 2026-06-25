@@ -155,29 +155,17 @@ export default function FindReplaceBar({
 
   return (
     <div
-      className="wr-doc"
+      className="wr-doc wr-find-root"
       role="search"
       aria-label={L4(language, { ko: "본문 찾기·바꾸기", en: "Find and replace in manuscript" })}
       onKeyDown={onBarKeyDown}
-      style={{ paddingBottom: 0 }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 10px",
-          border: "1px solid var(--line)",
-          borderRadius: 10,
-          background: "var(--page-2, transparent)",
-        }}
-      >
-        <Search size={15} style={{ flexShrink: 0, color: "var(--c-sub, #888)" }} />
+      <div className="wr-find-row">
+        <Search size={15} className="wr-find-icon" />
         {/* 찾기 입력 */}
         <input
           ref={findInputRef}
-          className="wd-in-field"
+          className="wd-in-field wr-find-input"
           aria-label={L4(language, { ko: "찾을 내용", en: "Find" })}
           aria-describedby={liveId}
           placeholder={L4(language, { ko: "찾기", en: "Find" })}
@@ -191,14 +179,13 @@ export default function FindReplaceBar({
               else goNext();
             }
           }}
-          style={{ flex: "1 1 140px", minWidth: 0 }}
         />
         {/* 실시간 일치 수 — aria-live 로 스크린리더 통지 */}
         <span
           id={liveId}
           role="status"
           aria-live="polite"
-          style={{ fontSize: 11.5, color: "var(--c-sub, #888)", minWidth: 64, textAlign: "center" }}
+          className="wr-find-count"
         >
           {matchLabel}
         </span>
@@ -226,22 +213,20 @@ export default function FindReplaceBar({
         {/* 대소문자 구분 토글 (영문 효과적·한글 무영향) */}
         <button
           type="button"
-          className={"mini-btn" + (caseSensitive ? " ok" : "")}
+          className={"mini-btn wr-find-case" + (caseSensitive ? " ok" : "")}
           aria-pressed={caseSensitive}
           aria-label={L4(language, { ko: "대소문자 구분", en: "Match case" })}
           title={L4(language, { ko: "대소문자 구분", en: "Match case" })}
           onClick={() => setCaseSensitive((v) => !v)}
-          style={{ fontWeight: 700 }}
         >
           Aa
         </button>
         {/* 닫기 */}
         <button
           type="button"
-          className="eh-icbtn"
+          className="eh-icbtn wr-find-close"
           aria-label={L4(language, { ko: "찾기·바꾸기 닫기", en: "Close find and replace" })}
           title={L4(language, { ko: "닫기 (Esc)", en: "Close (Esc)" })}
-          style={{ marginLeft: "auto" }}
           onClick={() => {
             onClose();
             textareaRef.current?.focus();
@@ -252,22 +237,10 @@ export default function FindReplaceBar({
       </div>
 
       {/* 바꾸기 행 */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 10px",
-          marginTop: 6,
-          border: "1px solid var(--line)",
-          borderRadius: 10,
-          background: "var(--page-2, transparent)",
-        }}
-      >
-        <span style={{ width: 15, flexShrink: 0 }} aria-hidden="true" />
+      <div className="wr-find-row wr-find-replace-row">
+        <span className="wr-find-spacer" aria-hidden="true" />
         <input
-          className="wd-in-field"
+          className="wd-in-field wr-find-input"
           aria-label={L4(language, { ko: "바꿀 내용", en: "Replace with" })}
           placeholder={L4(language, { ko: "바꾸기", en: "Replace" })}
           value={replacement}
@@ -279,7 +252,6 @@ export default function FindReplaceBar({
               replaceCurrent();
             }
           }}
-          style={{ flex: "1 1 140px", minWidth: 0 }}
         />
         <button
           type="button"

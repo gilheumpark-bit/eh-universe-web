@@ -116,6 +116,41 @@ describe('buildWritingContextComplianceReport', () => {
     expect(report.checks.find((check) => check.id === 'seven-axis')?.state).toBe('ready');
   });
 
+  it('반영한 외부 자료와 본문이 과하게 겹치면 7축 n-gram 검토 후보로 올린다', () => {
+    const importedText = '강민우는 흑검을 뽑아 보관실 봉인을 갈랐다. 기록함 안쪽에는 첫 균열의 누락된 장부가 남아 있었고, 협회가 감춘 이름들이 차례로 드러났다. 그는 숨을 고른 뒤 장부를 접어 품에 넣었다. 바깥 복도에서는 경보음이 낮게 울렸고, 그는 발소리를 죽인 채 보관실 문틈으로 밀려오는 푸른빛을 바라보았다.';
+    const cfg = baseConfig({
+      corePremise: '탑이 도시 한복판에 솟아오른 세계',
+      powerStructure: '협회가 각성자를 관리한다',
+      currentConflict: '주인공은 협회 기록 조작을 추적한다',
+      synopsis: '강민우가 첫 균열의 진실을 파헤친다',
+      characters: [character()],
+      acceptedImportCandidates: [
+        {
+          id: 'external-1',
+          sourceFileName: '참고자료.txt',
+          bucket: 'manuscript',
+          targetType: 'manuscript',
+          title: '외부 참고 문장',
+          text: importedText,
+          excerpt: importedText.slice(0, 80),
+          confidence: 0.95,
+          reason: '본문 후보로 분류됨',
+          detectedFormat: 'txt',
+          sectionIndex: 0,
+          charCount: importedText.length,
+          importedAt: '2026-06-21T00:00:00.000Z',
+          acceptedAt: '2026-06-21T00:01:00.000Z',
+        },
+      ],
+    });
+
+    const report = buildWritingContextComplianceReport(cfg, importedText);
+
+    const sevenAxis = report.checks.find((check) => check.id === 'seven-axis');
+    expect(sevenAxis?.state).toBe('needs-review');
+    expect(sevenAxis?.detail).toContain('7');
+  });
+
   it('ARCS 충돌과 씬 8영역 미반영은 검토 후보로 올린다', () => {
     const cfg = baseConfig({
       corePremise: '탑 세계',

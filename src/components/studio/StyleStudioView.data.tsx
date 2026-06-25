@@ -110,13 +110,6 @@ export const getSliderDescriptor = (slider: SliderDefI18n, value: number, en: bo
   return labels[safeIndex];
 };
 
-export const getSliderTrackStyle = (value: number): React.CSSProperties => {
-  const progress = ((value - 1) / 4) * 100;
-  return {
-    background: `linear-gradient(90deg, var(--color-accent-amber) 0%, var(--color-accent-amber) ${progress}%, rgba(107, 114, 142, 0.34) ${progress}%, rgba(107, 114, 142, 0.34) 100%)`,
-  };
-};
-
 export const AUTHOR_PROFILES: Record<string, { ko: string; en: string; values: [number, number, number, number, number] }> = {
   'ted-chiang': { ko: '테드 창', en: 'Ted Chiang', values: [3, 1, 3, 2, 5] },
   'liu-cixin': { ko: '류츠신', en: 'Liu Cixin', values: [4, 2, 4, 2, 5] },
@@ -151,7 +144,7 @@ export function RadarChart({ values, benchmarkValues, labels, size = 220 }: {
   const gridLevels = [1, 2, 3, 4, 5];
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ display: 'block', margin: '0 auto' }}>
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} className="ss-radar-svg">
       {gridLevels.map((level) => (
         <polygon
           key={level}
@@ -263,19 +256,14 @@ export function TextAnalysisCards({ metrics, en }: { metrics: TextMetrics | null
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 8 }}>
+    <div className="ss-metrics-grid">
       {cards.map((card) => (
         <div
           key={card.label}
-          style={{
-            background: 'rgba(107,114,142,0.08)',
-            borderRadius: 6,
-            padding: '6px 10px',
-            fontSize: 12,
-          }}
+          className="ss-metric-card"
         >
-          <div style={{ color: 'var(--color-text-secondary, #5b6273)', fontSize: 10, marginBottom: 2 }}>{card.label}</div>
-          <div style={{ fontWeight: 700, color: 'var(--color-accent-amber, #2563eb)' }}>{card.value}</div>
+          <div className="ss-metric-label">{card.label}</div>
+          <div className="ss-metric-value">{card.value}</div>
         </div>
       ))}
     </div>

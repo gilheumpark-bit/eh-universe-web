@@ -46,27 +46,13 @@ export default function RecoveryMounts({ multiTab, language }: RecoveryMountsPro
 
   return (
     <div
-      style={{
-        position: "fixed",
-        top: 8,
-        right: 10,
-        zIndex: 60,
-        width: "min(360px, calc(100vw - 20px))",
-        pointerEvents: "none",
-      }}
+      className="lg-recovery-mounts"
       data-testid="loreguard-recovery-mounts"
     >
       {/* 배너 표시 시 반투명 토큰(bg-accent-* 10%)이 헤더 위에 합성되지 않도록 솔리드 백드롭.
           배너가 null(단일 탭 leader·충돌 0)이면 inner 높이 0 → 시각·클릭 영향 없음. */}
       <div
-        style={{
-          pointerEvents: "auto",
-          background: "var(--card)",
-          border: "1px solid var(--line-soft)",
-          borderRadius: 16,
-          boxShadow: "0 12px 34px rgba(15, 23, 42, 0.16)",
-          overflow: "hidden",
-        }}
+        className="lg-recovery-card"
       >
         <MultiTabBanner
           isLeader={true}

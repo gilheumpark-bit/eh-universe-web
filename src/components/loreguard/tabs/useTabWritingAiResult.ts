@@ -108,8 +108,15 @@ export function useTabWritingAiResult({
         targetType: "manuscript",
         targetId: manuscriptTargetId,
         episodeId: snapshotEpisode ?? undefined,
+        beforeContent: editDraft,
         afterContent: nextDraft,
         provider: "loreguard-ai",
+        decisionContext: {
+          selectedAlternativeId: aiResult.msgId,
+          selectedLabel: "노아 제안",
+          selectedContent: insert,
+          reason: "작가가 노아 제안을 원고에 삽입함",
+        },
       }),
     );
     setAiResult(null);

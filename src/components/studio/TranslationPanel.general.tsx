@@ -240,6 +240,7 @@ export function GeneralTranslationSection({
                           systemInstruction: "",
                           messages: [{ role: "user", content: prompt }],
                           temperature: 0.3,
+                          reasoningStage: "translation",
                           onChunk: (chunk: string) => {
                             result += chunk;
                           },

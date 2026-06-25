@@ -29,6 +29,11 @@ const LINK_COLORS: Record<TerritoryLink['type'], string> = {
 const MAP_W = 600;
 const MAP_H = 400;
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=Territory,TerritoryLink
 
 // ============================================================
@@ -165,10 +170,10 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
           <span className="text-[9px] text-text-tertiary font-mono px-1">{isKO ? '연결 유형:' : 'Link type:'}</span>
           {(Object.keys(LINK_COLORS) as TerritoryLink['type'][]).map(type => (
             <button key={type} onClick={() => setLinkType(type)}
+              ref={(node) => bindStudioTone(node, LINK_COLORS[type])}
               className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-[transform,opacity,background-color,border-color,color] ${
-                linkType === type ? 'text-white border-transparent' : 'text-text-tertiary border-[rgba(255,200,50,0.2)] hover:text-amber-400 hover:bg-[rgba(255,200,50,0.05)]'
+                linkType === type ? 'text-white border-transparent studio-tone-swatch' : 'text-text-tertiary border-[rgba(255,200,50,0.2)] hover:text-amber-400 hover:bg-[rgba(255,200,50,0.05)]'
               }`}
-              style={linkType === type ? { background: LINK_COLORS[type], borderColor: LINK_COLORS[type] } : undefined}
             >
               {type}
             </button>
@@ -182,8 +187,7 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       )}
 
       {/* SVG Map Canvas */}
-      <svg ref={svgRef} viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full border border-[rgba(255,200,50,0.3)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(255,200,50,0.05)]"
-        style={{ touchAction: 'none', background: 'rgba(15,10,0,0.6)', fontFamily: 'var(--font-mono, monospace)' }}
+      <svg ref={svgRef} viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="w-full border border-[rgba(255,200,50,0.3)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(255,200,50,0.05)] studio-map-canvas"
         onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}
         role="img" aria-label={isKO ? '세계관 영토 지도' : 'World territory map'}
       >
@@ -228,8 +232,9 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
           const isEraActive = activeCivNames == null || activeCivNames.has(t.civName);
           const dimmed = activeCivNames != null && !isEraActive;
           return (
-            <g key={t.id}
-              style={{ cursor: linkMode ? 'crosshair' : 'grab', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}
+            <g
+              key={t.id}
+              className={`studio-map-territory-node ${linkMode ? 'is-linking' : 'is-dragging'} ${dimmed ? 'is-dimmed' : 'is-active'}`}
               onPointerDown={e => handlePointerDown(t.id, e)}
             >
               {/* Territory circle */}
@@ -291,7 +296,10 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
         <div className="space-y-1">
           {territories.map(t => (
             <div key={t.id} className="flex items-center gap-2 bg-[linear-gradient(135deg,rgba(255,200,50,0.02),rgba(0,0,0,0.3))] border border-[rgba(255,200,50,0.15)] rounded-lg px-3 py-1.5 backdrop-blur-sm transition-colors hover:bg-[rgba(255,200,50,0.05)] hover:border-[rgba(255,200,50,0.3)]">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_5px_currentColor]" style={{ background: t.color || civColors[t.civName] || '#6b7280', color: t.color || civColors[t.civName] || '#6b7280' }} />
+              <span
+                ref={(node) => bindStudioTone(node, t.color || civColors[t.civName] || '#6b7280')}
+                className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_5px_currentColor] studio-tone-swatch"
+              />
               <input
                 value={t.name}
                 onChange={e => updateTerritory(t.id, { name: e.target.value })}
@@ -320,7 +328,10 @@ function WorldMap({ simData, language, onChange, highlightEra }: Props) {
       <div className="flex flex-wrap gap-3 text-[9px] bg-[rgba(255,200,50,0.02)] border border-[rgba(255,200,50,0.1)] p-2 rounded-lg backdrop-blur-sm">
         {(Object.entries(LINK_COLORS) as [TerritoryLink['type'], string][]).map(([type, color]) => (
           <span key={type} className="flex items-center gap-1.5">
-            <span className="w-4 h-0.5 inline-block rounded shadow-[0_0_5px_currentColor]" style={{ background: color, color: color }} />
+            <span
+              ref={(node) => bindStudioTone(node, color)}
+              className="w-4 h-0.5 inline-block rounded shadow-[0_0_5px_currentColor] studio-tone-swatch"
+            />
             <span className="text-text-secondary font-mono">{type}</span>
           </span>
         ))}

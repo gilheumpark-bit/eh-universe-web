@@ -83,6 +83,26 @@ describe('MarketplacePanel', () => {
     expect(screen.getByTestId('plugin-toggle-word-count-badge').textContent).toMatch(/비활성화/);
   });
 
+  it('passes the active manuscript reader to bundled plugins', async () => {
+    const enabledHandler = jest.fn();
+    window.addEventListener('noa:plugin:word-count-badge:enabled', enabledHandler as EventListener);
+
+    try {
+      render(<MarketplacePanel language="KO" readManuscript={() => '원고본문'} />);
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('plugin-toggle-word-count-badge'));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(enabledHandler).toHaveBeenCalledTimes(1);
+      const event = enabledHandler.mock.calls[0][0] as CustomEvent<{ count: number }>;
+      expect(event.detail.count).toBe(4);
+    } finally {
+      window.removeEventListener('noa:plugin:word-count-badge:enabled', enabledHandler as EventListener);
+    }
+  });
+
   it('opens the detail dialog and shows permissions', () => {
     render(<MarketplacePanel language="KO" />);
     fireEvent.click(screen.getByTestId('plugin-detail-word-count-badge'));

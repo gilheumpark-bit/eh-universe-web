@@ -32,7 +32,7 @@ export type ImageGenProvider = 'openai' | 'stability' | 'local-spark';
 // ============================================================
 
 /**
- * Generate images via server-side proxy route.
+ * Generate visual drafts via server-side proxy route.
  * The actual API call happens in /api/image-gen/route.ts.
  */
 export async function generateImage(
@@ -44,7 +44,7 @@ export async function generateImage(
   signal?: AbortSignal
 ): Promise<{ images: ImageGenResult[]; error?: string }> {
   if (typeof window !== 'undefined' && !isFeatureEnabled('IMAGE_GENERATION')) {
-    return { images: [], error: 'Image generation is disabled.' };
+    return { images: [], error: 'Visual endpoint is disabled.' };
   }
   try {
     const res = await fetch('/api/image-gen', {

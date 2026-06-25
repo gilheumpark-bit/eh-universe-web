@@ -14,6 +14,11 @@ const CHAR_REL_STYLES: Record<CharRelationType, { ko: string; en: string; color:
   subordinate: { ko: '상하', en: 'Superior/Sub', color: '#6b7280' },
 };
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 export function CharRelationMap({
   language,
   config,
@@ -80,10 +85,10 @@ export function CharRelationMap({
             <button
               key={relationType}
               onClick={() => setSelType(relationType)}
+              ref={(node) => bindStudioTone(node, CHAR_REL_STYLES[relationType].color)}
               className={`px-2 py-2 rounded-lg text-[9px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
-                selType === relationType ? 'text-white' : 'text-text-tertiary border-border hover:border-text-tertiary'
+                selType === relationType ? 'text-white border-transparent studio-tone-swatch' : 'text-text-tertiary border-border hover:border-text-tertiary'
               }`}
-              style={selType === relationType ? { background: CHAR_REL_STYLES[relationType].color, borderColor: CHAR_REL_STYLES[relationType].color } : undefined}
             >
               {isKO ? CHAR_REL_STYLES[relationType].ko : CHAR_REL_STYLES[relationType].en}
             </button>
@@ -119,7 +124,10 @@ export function CharRelationMap({
                   <span className="font-bold text-white">{fromChar?.name}</span>
                   <span className="text-text-tertiary mx-1.5">⇄</span>
                   <span className="font-bold text-white">{toChar?.name}</span>
-                  <span className="ml-2 font-bold" style={{ color: style.color }}>
+                  <span
+                    ref={(node) => bindStudioTone(node, style.color)}
+                    className="ml-2 font-bold studio-tone-text"
+                  >
                     [{isKO ? style.ko : style.en}]
                   </span>
                   {relation.desc && <span className="ml-2 text-text-tertiary italic">{relation.desc}</span>}

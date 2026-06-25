@@ -32,6 +32,7 @@ jest.mock('next/server', () => ({
 
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: jest.fn(() => ({ allowed: true, retryAfterMs: 0 })),
+  checkRateLimitAsync: jest.fn(() => ({ allowed: true, retryAfterMs: 0 })),
   getClientIp: jest.fn(() => '203.0.113.10'),
   RATE_LIMITS: { upload: { windowMs: 60_000, maxRequests: 20 } },
 }));
@@ -84,6 +85,7 @@ jest.mock('pdf-parse', () => ({
 type UploadRequest = Parameters<(typeof import('../route'))['POST']>[0];
 type UploadTestFile = {
   name: string;
+  size: number;
   arrayBuffer: () => Promise<ArrayBuffer>;
 };
 
@@ -113,6 +115,7 @@ async function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 function makeUploadFile(name: string, bytes: Uint8Array): UploadTestFile {
   return {
     name,
+    size: bytes.byteLength,
     arrayBuffer: async () => toArrayBuffer(bytes),
   };
 }
@@ -122,12 +125,15 @@ class UploadFakeRequest {
   private readonly file: UploadTestFile;
   private readonly source: string;
 
-  constructor(file: UploadTestFile, source = 'loreguard-project-start') {
+  constructor(file: UploadTestFile, source = 'loreguard-project-start', contentLength?: number) {
     this.headers = new Headers({
       origin: 'https://app.example',
       host: 'app.example',
       authorization: 'Bearer token-1',
     });
+    if (contentLength !== undefined) {
+      this.headers.set('content-length', String(contentLength));
+    }
     this.file = file;
     this.source = source;
   }
@@ -222,6 +228,28 @@ async function makeStructuredDocxFile() {
   );
   const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
   return makeUploadFile('ip-pack-structured.docx', buffer);
+}
+
+async function makeHwpxFile() {
+  const zip = new JSZip();
+  zip.file('mimetype', 'application/hwp+zip', { compression: 'STORE' });
+  zip.file(
+    'Contents/section0.xml',
+    [
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+      '<hp:sec xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">',
+      '<hp:p><hp:run><hp:t>제 1화</hp:t></hp:run></hp:p>',
+      '<hp:p><hp:run><hp:t>첫 HWPX 회차는 세계관 배경과 주인공의 목표를 정리한다.</hp:t></hp:run></hp:p>',
+      '<hp:p><hp:run><hp:t>권리 IP 메모와 다음 회차의 사건 단서도 함께 남긴다.</hp:t></hp:run></hp:p>',
+      '</hp:sec>',
+    ].join(''),
+  );
+  zip.file(
+    'Contents/content.hpf',
+    '<?xml version="1.0" encoding="UTF-8"?><package><manifest><item href="section0.xml"/></manifest></package>',
+  );
+  const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+  return makeUploadFile('manuscript.hwpx', buffer);
 }
 
 async function makeDocxWithOversizedCentralDirectory() {
@@ -344,6 +372,11 @@ async function upload(file: UploadTestFile) {
   return POST(new UploadFakeRequest(file) as unknown as UploadRequest);
 }
 
+async function uploadWithContentLength(file: UploadTestFile, contentLength: number) {
+  const { POST } = await import('../route');
+  return POST(new UploadFakeRequest(file, 'loreguard-project-start', contentLength) as unknown as UploadRequest);
+}
+
 async function uploadChapters(file: UploadTestFile): Promise<UploadResponseBody> {
   const res = await upload(file);
   expect(res.status).toBe(200);
@@ -408,6 +441,17 @@ describe('/api/upload POST — document extraction samples', () => {
       title: 'IP Pack 제출용 표',
     });
     expect(candidates[0].reason).toContain('양식 구조');
+  });
+
+  it('HWPX 본문 XML에서 한글 원고를 추출한다', async () => {
+    const res = await upload(await makeHwpxFile());
+    const body = await res.json() as { chapters: Array<{ title: string; content: string }> };
+
+    expect(res.status).toBe(200);
+    expect(body.chapters).toHaveLength(1);
+    expect(body.chapters[0].title).toBe('제 1화');
+    expect(body.chapters[0].content).toContain('첫 HWPX 회차는 세계관 배경');
+    expect(body.chapters[0].content).toContain('권리 IP 메모');
   });
 
   it('DOCX 압축해제 총량이 상한을 넘으면 파싱 전에 거절한다', async () => {
@@ -599,6 +643,34 @@ describe('/api/upload POST — document extraction samples', () => {
     expect(body.error).toBe('File content does not match declared type');
   });
 
+  it('Content-Length가 상한을 넘으면 multipart body를 읽기 전에 거절한다', async () => {
+    const file = makeUploadFile('world.txt', new Uint8Array([1, 2, 3]));
+    const formDataSpy = jest.spyOn(UploadFakeRequest.prototype, 'formData');
+
+    const res = await uploadWithContentLength(file, 22 * 1024 * 1024);
+    const body = await res.json() as { error: string };
+
+    expect(res.status).toBe(413);
+    expect(body.error).toBe('File too large');
+    expect(formDataSpy).not.toHaveBeenCalled();
+    formDataSpy.mockRestore();
+  });
+
+  it('file.size가 상한을 넘으면 arrayBuffer를 읽기 전에 거절한다', async () => {
+    const file = {
+      name: 'world.txt',
+      size: 21 * 1024 * 1024,
+      arrayBuffer: jest.fn(async () => toArrayBuffer(new Uint8Array([1, 2, 3]))),
+    };
+
+    const res = await upload(file);
+    const body = await res.json() as { error: string };
+
+    expect(res.status).toBe(413);
+    expect(body.error).toBe('File too large');
+    expect(file.arrayBuffer).not.toHaveBeenCalled();
+  });
+
   it('암호 PDF 파서 오류를 사용자에게 구분 가능한 메시지로 돌려준다', async () => {
     mockPdfGetText.mockRejectedValueOnce(new Error('PasswordException: No password given'));
 
@@ -610,12 +682,14 @@ describe('/api/upload POST — document extraction samples', () => {
     expect(mockPdfDestroy).toHaveBeenCalled();
   });
 
-  it('DOCX/PDF/EPUB 추출 결과를 출고 패키지 ZIP의 import-file-report 로 보존한다', async () => {
+  it('DOCX/HWPX/PDF/EPUB 추출 결과를 출고 패키지 ZIP의 import-file-report 로 보존한다', async () => {
     const docx = await makeDocxFile();
+    const hwpx = await makeHwpxFile();
     const pdf = makePdfFile();
     const epub = await makeEpubFile();
 
     const docxBody = await uploadChapters(docx);
+    const hwpxBody = await uploadChapters(hwpx);
     const pdfBody = await uploadChapters(pdf);
     const epubBody = await uploadChapters(epub);
 
@@ -632,6 +706,7 @@ describe('/api/upload POST — document extraction samples', () => {
           episode: 1,
           content: [
             docxBody.chapters[0].content,
+            hwpxBody.chapters[0].content,
             pdfBody.chapters[0].content,
             epubBody.chapters[0].content,
           ].join('\n\n'),
@@ -639,8 +714,9 @@ describe('/api/upload POST — document extraction samples', () => {
       ],
       importFileReports: [
         reportFromUpload(docx.name, docxBody, '2026-06-13T00:00:00.000Z'),
-        reportFromUpload(pdf.name, pdfBody, '2026-06-13T00:00:01.000Z'),
-        reportFromUpload(epub.name, epubBody, '2026-06-13T00:00:02.000Z'),
+        reportFromUpload(hwpx.name, hwpxBody, '2026-06-13T00:00:01.000Z'),
+        reportFromUpload(pdf.name, pdfBody, '2026-06-13T00:00:02.000Z'),
+        reportFromUpload(epub.name, epubBody, '2026-06-13T00:00:03.000Z'),
       ],
       generatedBy: 'upload-sample-test',
     });
@@ -651,18 +727,20 @@ describe('/api/upload POST — document extraction samples', () => {
     const parsedReport = JSON.parse(importReport!.content);
     expect(parsedReport).toMatchObject({
       kind: 'loreguard.import-file-report.v1',
-      count: 3,
-      statusCounts: { success: 3, failed: 0, unsupported: 0, empty: 0 },
-      totalCandidateCount: 3,
+      count: 4,
+      statusCounts: { success: 4, failed: 0, unsupported: 0, empty: 0 },
+      totalCandidateCount: 4,
     });
     expect(parsedReport.files).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ fileName: 'world.docx', status: 'success', candidateCount: 1 }),
+        expect.objectContaining({ fileName: 'manuscript.hwpx', status: 'success', candidateCount: 1 }),
         expect.objectContaining({ fileName: 'chapter.pdf', status: 'success', candidateCount: 1 }),
         expect.objectContaining({ fileName: 'novel.epub', status: 'success', candidateCount: 1 }),
       ]),
     );
     expect(importReport!.content).not.toContain('세계관 배경과 역사 세력 국가 마법 기술 DOCX 샘플');
+    expect(importReport!.content).not.toContain('첫 HWPX 회차는 세계관 배경');
     expect(importReport!.content).not.toContain('Loreguard PDF sample text');
 
     const zipBlob = await buildSubmissionPackageZipBlob(pkg);
@@ -677,10 +755,11 @@ describe('/api/upload POST — document extraction samples', () => {
     const zippedImportReport = JSON.parse(await zip.file(importReportEntry.path)!.async('string'));
     expect(zippedImportReport.files.map((file: { fileName: string }) => file.fileName)).toEqual([
       'world.docx',
+      'manuscript.hwpx',
       'chapter.pdf',
       'novel.epub',
     ]);
-    expect(zippedImportReport.files.map((file: { candidateCount: number }) => file.candidateCount)).toEqual([1, 1, 1]);
+    expect(zippedImportReport.files.map((file: { candidateCount: number }) => file.candidateCount)).toEqual([1, 1, 1, 1]);
     expect(JSON.stringify(zippedImportReport)).not.toContain('프롤로그. 회차 본문처럼 이어지는 긴 서술');
   });
 });

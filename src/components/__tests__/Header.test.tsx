@@ -60,9 +60,9 @@ describe('Header', () => {
     expect(screen.getByTestId('home-header')).toBeInTheDocument();
   });
 
-  it('renders 로어가드 brand text', () => {
+  it('renders Loreguard brand text', () => {
     render(<Header />);
-    expect(screen.getByText('로어가드')).toBeInTheDocument();
+    expect(screen.getByText('Loreguard')).toBeInTheDocument();
   });
 
   it('renders main navigation links (desktop + mobile)', () => {

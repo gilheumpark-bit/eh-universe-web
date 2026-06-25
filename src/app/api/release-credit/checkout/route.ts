@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimitAsync, getClientIp } from "@/lib/rate-limit";
 import { verifyFirebaseIdToken } from "@/lib/firebase-id-token";
+import { checkSameOriginHeaders } from "@/lib/api-origin-guard";
+import { apiLog, createRequestTimer } from "@/lib/api-logger";
 import { getStripeReleaseCreditSession } from "@/lib/stripe";
 import {
   RELEASE_PRODUCT_REQUIREMENTS,
@@ -51,11 +53,17 @@ function parseBody(raw: unknown): { input: ReleaseCreditCheckoutInput | null; is
 }
 
 export async function POST(req: NextRequest) {
+  const timer = createRequestTimer();
+  const ip = getClientIp(req.headers);
+  const originCheck = checkSameOriginHeaders(req.headers);
+  if (!originCheck.ok) {
+    return NextResponse.json({ error: originCheck.error }, { status: 403 });
+  }
+
   if (!process.env.STRIPE_SECRET_KEY || process.env.FEATURE_STRIPE_CHECKOUT !== "on") {
     return NextResponse.json({ error: "checkout_disabled" }, { status: 503 });
   }
 
-  const ip = getClientIp(req.headers);
   const rateLimit = await checkRateLimitAsync(ip, "/api/release-credit/checkout", {
     windowMs: 60_000,
     maxRequests: 10,
@@ -109,6 +117,20 @@ export async function POST(req: NextRequest) {
     if (!session.url) {
       return NextResponse.json({ error: "checkout_session_failed" }, { status: 500 });
     }
+    apiLog({
+      level: "info",
+      event: "release_credit_checkout_created",
+      route: "/api/release-credit/checkout",
+      ip,
+      status: 200,
+      durationMs: timer.elapsed(),
+      meta: {
+        uid: auth.uid,
+        projectId: input.projectId,
+        productId: input.productId,
+        creditAmount: requirement.requiredCredits,
+      },
+    });
     return NextResponse.json({ url: session.url });
   } catch (err) {
     logger.error("api/release-credit/checkout", "checkout error", err);

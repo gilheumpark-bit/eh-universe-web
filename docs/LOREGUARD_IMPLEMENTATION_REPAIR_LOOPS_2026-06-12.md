@@ -542,7 +542,7 @@ npm run gate:release
 
 ### T7 브라우저 복구 리플레이 보강
 
-- `e2e/loreguard-recovery-browser-replay.spec.ts` 추가.
+- `e2e/loreguard-recovery-browser-replay.spec.ts` 추가. (historical; current repo baseline 에서는 2026-06-24 정리됨)
 - `/studio` 실제 브라우저 표면에서 stale heartbeat + reload 진입 시 `RecoveryDialog`가 열리고 seeded journal/tip이 유지되는지 확인.
 - IndexedDB journal chain의 `contentHash`를 고의로 손상시켜 `runBootRecovery`가 손상 엔트리를 `journal_quarantine`으로 격리하고, RecoveryDialog가 부분 손실 경고를 표시하는지 확인.
 - 동일 IndexedDB/복구 표면을 쓰는 증거 테스트라 파일 내부 실행은 `serial`로 고정.
@@ -554,6 +554,8 @@ npm run gate:release
 $env:PLAYWRIGHT_CHROMIUM_CHANNEL='msedge'
 $env:PLAYWRIGHT_TEST_PORT='3019'
 npx playwright test e2e/loreguard-recovery-browser-replay.spec.ts --project=chromium --workers=1 --reporter=line
+
+> 2026-06-24 note: 위 명령은 구현 시점 재현 기록이다. 현재 저장소의 활성 Playwright 기준선에는 이 전용 spec 가 포함되지 않는다.
 npm run gate:baseline -- --write docs/gates/day0-baseline-2026-06-12.md
 npx tsc --noEmit
 npm run build

@@ -3,7 +3,7 @@
 // ============================================================
 
 import { ChatSession, AppLanguage } from './studio-types';
-import { stripEngineArtifacts } from '@/engine/pipeline';
+import { stripEngineArtifactsBase } from '@/lib/engine-artifacts';
 import { showAlert } from './show-alert';
 import {
   getAIUsageForProject,
@@ -475,7 +475,7 @@ export function exportDOCX(session: ChatSession, opts?: ExportOptions): void {
         .flatMap(m => (m.content ?? '').split('\n'))
     : session.messages
         .filter(m => m.role === 'assistant')
-        .flatMap(m => stripEngineArtifacts(m.content).split('\n'));
+        .flatMap(m => stripEngineArtifactsBase(m.content).split('\n'));
 
   const paragraphs = sourceLines
     .map(line => buildDocxParagraph(line.trim()))
@@ -514,7 +514,205 @@ export function exportDOCX(session: ChatSession, opts?: ExportOptions): void {
 }
 
 // ============================================================
-// PART 3 — Download Helper
+// PART 3 — HWPX Export (OWPML text package)
+// ============================================================
+
+type HwpxChapter = { id: string; title: string; content: string };
+
+function collectManuscriptChapters(session: ChatSession): HwpxChapter[] {
+  const title = session.config.title || session.title || 'Loreguard Manuscript';
+  const manuscripts = session.config.manuscripts ?? [];
+  if (manuscripts.length > 0) {
+    return manuscripts
+      .filter((manuscript) => manuscript.content.trim())
+      .sort((a, b) => a.episode - b.episode)
+      .map((manuscript) => ({
+        id: `section-${manuscript.episode}`,
+        title: manuscript.title || `EP.${manuscript.episode}`,
+        content: manuscript.content,
+      }));
+  }
+
+  const assistantMsgs = session.messages.filter((message) => message.role === 'assistant' && message.content.trim());
+  if (assistantMsgs.length <= 1) {
+    const combined = assistantMsgs
+      .map((message) => stripEngineArtifactsBase(message.content).replace(/```json[\s\S]*?```/g, '').trim())
+      .filter(Boolean)
+      .join('\n\n');
+    return combined ? [{ id: 'section-1', title, content: combined }] : [];
+  }
+
+  return assistantMsgs.map((message, index) => ({
+    id: `section-${index + 1}`,
+    title: `EP.${index + 1}`,
+    content: stripEngineArtifactsBase(message.content).replace(/```json[\s\S]*?```/g, '').trim(),
+  }));
+}
+
+function buildHwpxParagraph(text: string, id: number, kind: 'title' | 'body' = 'body'): string {
+  const charPr = kind === 'title' ? 1 : 0;
+  const paraPr = kind === 'title' ? 1 : 0;
+  return [
+    `  <hp:p id="${id}" paraPrIDRef="${paraPr}" styleIDRef="${paraPr}" pageBreak="0" columnBreak="0" merged="0">`,
+    `    <hp:run charPrIDRef="${charPr}">`,
+    `      <hp:t>${escapeXml(text)}</hp:t>`,
+    '    </hp:run>',
+    '  </hp:p>',
+  ].join('\n');
+}
+
+function buildHwpxSection(chapters: HwpxChapter[]): string {
+  let paragraphId = 1;
+  const paragraphs = chapters.flatMap((chapter, index) => {
+    const lines = chapter.content.split(/\r?\n/);
+    const titleParagraph = buildHwpxParagraph(chapter.title, paragraphId++, 'title');
+    const bodyParagraphs = lines.map((line) => buildHwpxParagraph(line.trim(), paragraphId++));
+    const spacer = index < chapters.length - 1 ? [buildHwpxParagraph('', paragraphId++)] : [];
+    return [titleParagraph, ...bodyParagraphs, ...spacer];
+  });
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<hp:sec xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"
+  xmlns:hp10="http://www.hancom.co.kr/hwpml/2016/paragraph"
+  xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core"
+  xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head"
+  id="0" textDirection="HORIZONTAL" spaceColumns="0" tabStop="8000">
+${paragraphs.join('\n')}
+</hp:sec>`;
+}
+
+function buildHwpxHeader(): string {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head"
+  xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core">
+  <hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
+  <hh:refList>
+    <hh:fontfaces itemCnt="1">
+      <hh:fontface lang="HANGUL" fontCnt="1">
+        <hh:font id="0" face="함초롬바탕" type="TTF"/>
+      </hh:fontface>
+    </hh:fontfaces>
+    <hh:borderFills itemCnt="1">
+      <hh:borderFill id="0" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0"/>
+    </hh:borderFills>
+    <hh:charProperties itemCnt="2">
+      <hh:charPr id="0" height="1000" textColor="000000" shadeColor="FFFFFFFF">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+      </hh:charPr>
+      <hh:charPr id="1" height="1200" textColor="000000" shadeColor="FFFFFFFF" bold="1">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+      </hh:charPr>
+    </hh:charProperties>
+    <hh:paraProperties itemCnt="2">
+      <hh:paraPr id="0" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">
+        <hh:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <hh:heading type="NONE" idRef="0" level="0"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0"/>
+        <hh:lineSpacing type="PERCENT" value="180"/>
+        <hh:margin>
+          <hc:intent value="0"/>
+          <hc:left value="0"/>
+          <hc:right value="0"/>
+          <hc:prev value="0"/>
+          <hc:next value="1200"/>
+        </hh:margin>
+      </hh:paraPr>
+      <hh:paraPr id="1" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">
+        <hh:align horizontal="LEFT" vertical="BASELINE"/>
+        <hh:heading type="OUTLINE" idRef="0" level="1"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0"/>
+        <hh:lineSpacing type="PERCENT" value="180"/>
+        <hh:margin>
+          <hc:intent value="0"/>
+          <hc:left value="0"/>
+          <hc:right value="0"/>
+          <hc:prev value="2400"/>
+          <hc:next value="1200"/>
+        </hh:margin>
+      </hh:paraPr>
+    </hh:paraProperties>
+    <hh:styles itemCnt="2">
+      <hh:style id="0" type="PARA" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042"/>
+      <hh:style id="1" type="PARA" name="제목" engName="Title" paraPrIDRef="1" charPrIDRef="1" nextStyleIDRef="0" langID="1042"/>
+    </hh:styles>
+  </hh:refList>
+</hh:head>`;
+}
+
+function buildHwpxContentHpf(title: string, modifiedAt: string): string {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<opf:package xmlns:opf="http://www.hancom.co.kr/hwpml/2011/opf" version="1.0">
+  <opf:metadata>
+    <opf:title>${escapeXml(title)}</opf:title>
+    <opf:creator>Loreguard</opf:creator>
+    <opf:date>${escapeXml(modifiedAt)}</opf:date>
+  </opf:metadata>
+  <opf:manifest>
+    <opf:item id="header" href="header.xml" media-type="application/xml"/>
+    <opf:item id="section0" href="section0.xml" media-type="application/xml"/>
+  </opf:manifest>
+  <opf:spine>
+    <opf:itemref idref="section0"/>
+  </opf:spine>
+</opf:package>`;
+}
+
+function buildHwpxManifest(): string {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
+  <manifest:file-entry manifest:full-path="/" manifest:media-type="application/hwp+zip"/>
+  <manifest:file-entry manifest:full-path="version.xml" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="settings.xml" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="Contents/content.hpf" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="Contents/header.xml" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="Contents/section0.xml" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="Preview/PrvText.txt" manifest:media-type="text/plain"/>
+  <manifest:file-entry manifest:full-path="META-INF/container.xml" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="META-INF/manifest.xml" manifest:media-type="application/xml"/>
+  <manifest:file-entry manifest:full-path="META-INF/container.rdf" manifest:media-type="application/rdf+xml"/>
+</manifest:manifest>`;
+}
+
+/** Generate and download a text-focused HWPX package for Korean manuscript handoff. */
+export function exportHWPX(session: ChatSession, opts?: ExportOptions): void {
+  const hasContent = (session.config.manuscripts?.some(m => m.content?.trim()) ||
+    session.messages?.some(m => m.role === 'assistant' && m.content?.trim()));
+  if (!hasContent) {
+    showAlert('내보낼 원고가 없습니다. / No manuscript content to export. / 書き出す原稿がありません。 / 没有可导出的稿件。', 'warning');
+    return;
+  }
+
+  const encoder = new TextEncoder();
+  const title = session.config.title || session.title || 'Loreguard Manuscript';
+  const modifiedAt = new Date().toISOString();
+  const chapters = collectManuscriptChapters(session);
+  const disclosureText = buildDisclosureFooter(session, opts).trim();
+  if (disclosureText) {
+    chapters.push({ id: 'notice', title: '출고 고지', content: disclosureText });
+  }
+  if (chapters.length === 0) return;
+
+  const previewText = chapters.map((chapter) => `${chapter.title}\n${chapter.content}`).join('\n\n');
+  const zipData = buildZip([
+    { name: 'mimetype', data: encoder.encode('application/hwp+zip'), store: true },
+    { name: 'version.xml', data: encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><version app="Loreguard" appVersion="2.3.0-alpha" fileFormat="HWPX" created="${escapeXml(modifiedAt)}"/>`) },
+    { name: 'settings.xml', data: encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><settings><caretPosition listIDRef="0" paraIDRef="1" pos="0"/></settings>`) },
+    { name: 'META-INF/container.xml', data: encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><container><rootfiles><rootfile full-path="Contents/content.hpf" media-type="application/hwpml-package+xml"/></rootfiles></container>`) },
+    { name: 'META-INF/container.rdf', data: encoder.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="Contents/content.hpf"/></rdf:RDF>`) },
+    { name: 'META-INF/manifest.xml', data: encoder.encode(buildHwpxManifest()) },
+    { name: 'Contents/content.hpf', data: encoder.encode(buildHwpxContentHpf(title, modifiedAt)) },
+    { name: 'Contents/header.xml', data: encoder.encode(buildHwpxHeader()) },
+    { name: 'Contents/section0.xml', data: encoder.encode(buildHwpxSection(chapters)) },
+    { name: 'Preview/PrvText.txt', data: encoder.encode(previewText.slice(0, 4000)) },
+  ]);
+
+  const rating = getEffectiveRating(session.id, session.config);
+  const prefix = filenamePrefix(rating.rating);
+  downloadBlob(zipData, `${prefix}${title}.hwpx`, 'application/hwp+zip');
+}
+
+// ============================================================
+// PART 4 — Download Helper
 // ============================================================
 
 function downloadBlob(data: Uint8Array, filename: string, mimeType: string): void {

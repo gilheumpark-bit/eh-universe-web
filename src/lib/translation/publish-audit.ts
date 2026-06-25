@@ -227,11 +227,11 @@ function checkStructure(text: string): PublishAuditFinding[] {
 function checkCompleteness(text: string): PublishAuditFinding[] {
   const findings: PublishAuditFinding[] = [];
   const placeholders = [
-    { pattern: /\bTODO\b/gi, name: 'TODO 표식' },
-    { pattern: /\bTBD\b/gi, name: 'TBD 표식' },
-    { pattern: /\bFIXME\b/gi, name: 'FIXME 표식' },
+    { pattern: /\bTODO\b/gi, name: '작업 메모 표식' },
+    { pattern: /\bTBD\b/gi, name: '확정 대기 표식' },
+    { pattern: /\bFIXME\b/gi, name: '수정 메모 표식' },
     { pattern: /\[\.\.\.?\]|\(\.\.\.?\)/g, name: '[...] 미완 표식' },
-    { pattern: /\?\?\?+/g, name: '??? 미완 표식' },
+    { pattern: /\?\?\?+/g, name: '물음표 미완 표식' },
   ];
   for (const { pattern, name } of placeholders) {
     const matches = [...text.matchAll(pattern)];

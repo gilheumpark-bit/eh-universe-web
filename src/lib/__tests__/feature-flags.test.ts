@@ -10,6 +10,7 @@ import {
   isJournalEngineOn,
   isJournalEngineShadow,
   isJournalEngineActive,
+  getBooleanFeatureFlagKeys,
 } from '../feature-flags';
 
 describe('feature-flags', () => {
@@ -25,8 +26,8 @@ describe('feature-flags', () => {
   });
 
   describe('isFeatureEnabled', () => {
-    test('returns default value for IMAGE_GENERATION (true)', () => {
-      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
+    test('returns default value for IMAGE_GENERATION (false)', () => {
+      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(false);
     });
 
     test('returns default value for OFFLINE_CACHE (true)', () => {
@@ -38,9 +39,9 @@ describe('feature-flags', () => {
       expect(isFeatureEnabled('OFFLINE_CACHE')).toBe(true);
     });
 
-    test('env override false takes precedence over default true', () => {
-      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'false';
-      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(false);
+    test('env override true enables visual generation explicitly', () => {
+      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'true';
+      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
     });
 
     test('localStorage override true takes precedence over env and default', () => {
@@ -49,9 +50,9 @@ describe('feature-flags', () => {
       expect(isFeatureEnabled('CLOUD_SYNC')).toBe(true);
     });
 
-    test('localStorage override false takes precedence', () => {
-      localStorage.setItem('ff_IMAGE_GENERATION', 'false');
-      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(false);
+    test('localStorage override true takes precedence', () => {
+      localStorage.setItem('ff_IMAGE_GENERATION', 'true');
+      expect(isFeatureEnabled('IMAGE_GENERATION')).toBe(true);
     });
 
     test('ignores non-boolean localStorage values and falls through', () => {
@@ -81,6 +82,16 @@ describe('feature-flags', () => {
     test('[M9 P1-5] FEATURE_JOURNAL_ENGINE returns JournalEngineMode, default shadow', () => {
       const flags = getAllFlags();
       expect(flags.FEATURE_JOURNAL_ENGINE).toBe('shadow');
+    });
+  });
+
+  describe('getBooleanFeatureFlagKeys', () => {
+    test('tracks every boolean flag from the central registry', () => {
+      const keys = getBooleanFeatureFlagKeys();
+      expect(keys).toContain('IMAGE_GENERATION');
+      expect(keys).toContain('FEATURE_FIRESTORE_MIRROR');
+      expect(keys).not.toContain('FEATURE_JOURNAL_ENGINE');
+      expect(keys).not.toContain('FEATURE_DRAFT_DETAIL_V2');
     });
   });
 
@@ -237,9 +248,9 @@ describe('feature-flags', () => {
     });
 
     test('boolean flag passthrough', () => {
-      expect(isFeatureEnabledServer('IMAGE_GENERATION')).toBe(true);
-      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'false';
       expect(isFeatureEnabledServer('IMAGE_GENERATION')).toBe(false);
+      process.env['NEXT_PUBLIC_FF_IMAGE_GENERATION'] = 'true';
+      expect(isFeatureEnabledServer('IMAGE_GENERATION')).toBe(true);
     });
   });
 });

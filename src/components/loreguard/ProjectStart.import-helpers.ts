@@ -18,10 +18,13 @@ import {
   getImportAlignmentWarnings,
   type ImportBasisUpdateSuggestion,
 } from "@/lib/loreguard/import-project-alignment";
-import { lazyFirebaseAuth } from "@/lib/firebase";
+import { getFirebaseBearerHeaders } from "@/lib/firebase-bearer-headers";
 import type { ProjectDraft } from "@/components/loreguard/ProjectStart.shared";
 
 const MAX_DRAFT_IMPORT_CHARS = 1200;
+export const MAX_IMPORT_FILE_REPORTS = 80;
+export const MAX_ACCEPTED_IMPORT_CANDIDATES = 80;
+export const MAX_PENDING_IMPORT_CANDIDATES = 60;
 
 export function targetTypeForImport(bucket: ImportCandidate["bucket"]) {
   if (bucket === "world") return "world" as const;
@@ -40,15 +43,6 @@ function readFileAsText(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error("file read failed"));
     reader.readAsText(file, "UTF-8");
   });
-}
-
-async function getImportUploadHeaders(): Promise<Record<string, string>> {
-  const auth = await lazyFirebaseAuth();
-  const user = auth?.currentUser;
-  if (!user) {
-    throw new Error("DOCX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다.");
-  }
-  return { Authorization: `Bearer ${await user.getIdToken()}` };
 }
 
 interface ImportReadResult {
@@ -89,7 +83,7 @@ export async function readImportFileAsClassifiableText(file: File): Promise<Impo
   const res = await fetch("/api/upload", {
     method: "POST",
     body: formData,
-    headers: await getImportUploadHeaders(),
+    headers: await getFirebaseBearerHeaders("DOCX/HWPX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다."),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -116,6 +110,9 @@ export async function readImportFileAsClassifiableText(file: File): Promise<Impo
     if (lowerName.endsWith(".epub")) {
       throw new Error(`${file.name}에서 EPUB 본문을 찾지 못했습니다. DRM 또는 손상된 EPUB일 수 있습니다.`);
     }
+    if (lowerName.endsWith(".hwpx")) {
+      throw new Error(`${file.name}에서 HWPX 본문을 찾지 못했습니다. 한글에서 HWPX로 다시 저장한 뒤 불러오세요.`);
+    }
     throw new Error(`${file.name}에서 가져올 본문을 찾지 못했습니다.`);
   }
   return {
@@ -133,8 +130,8 @@ export function classifyImportFailureReason(message: string): ImportFileReportRe
   if (message.includes("목차") || normalized.includes("missing-epub-navigation")) return "missing-epub-navigation";
   if (normalized.includes("file content does not match declared type")) return "magic-byte-mismatch";
   if (normalized.includes("file too large")) return "file-too-large";
-  if (message.includes("EPUB 검증 실패") || normalized.includes("zip-bomb")) return "zip-bomb-risk";
-  if (message.includes("가져올 본문을 찾지 못했습니다") || message.includes("분류 가능한 텍스트 없음")) return "empty-extraction";
+  if (message.includes("EPUB 검증 실패") || message.includes("HWPX 검증 실패") || normalized.includes("zip-bomb")) return "zip-bomb-risk";
+  if (message.includes("가져올 본문을 찾지 못했습니다") || message.includes("본문을 찾지 못했습니다") || message.includes("분류 가능한 텍스트 없음")) return "empty-extraction";
   if (normalized.includes("unsupported") || message.includes("지원하지 않는")) return "unsupported-format";
   return "server-extraction-failed";
 }
@@ -170,18 +167,23 @@ export async function processProjectImportFiles(
   const importedAt = new Date(stamp).toISOString();
 
   if (supported.length === 0) {
+    const unsupportedReports = unsupported.slice(0, MAX_IMPORT_FILE_REPORTS).map((file, index) => ({
+      id: `${stamp}-unsupported-${index}`,
+      fileName: file.name,
+      status: "unsupported" as const,
+      detail: "지원 형식 아님",
+      candidateCount: 0,
+      importedAt,
+      reasonCode: "unsupported-format" as const,
+    }));
+    const hiddenUnsupported = Math.max(0, unsupported.length - unsupportedReports.length);
     return {
       nextCandidates: [],
-      fileReports: unsupported.slice(0, 8).map((file, index) => ({
-        id: `${stamp}-unsupported-${index}`,
-        fileName: file.name,
-        status: "unsupported",
-        detail: "지원 형식 아님",
-        candidateCount: 0,
-        importedAt,
-        reasonCode: "unsupported-format" as const,
-      })),
-      notice: "지원 형식은 .txt, .md, .json, .docx, .pdf, .epub 입니다.",
+      fileReports: unsupportedReports,
+      notice: [
+        "지원 형식은 .txt, .md, .json, .docx, .hwpx, .pdf, .epub 입니다.",
+        hiddenUnsupported > 0 ? `파일별 결과 ${hiddenUnsupported}개는 보관 한도 때문에 생략했습니다.` : null,
+      ].filter(Boolean).join(" "),
     };
   }
 
@@ -210,7 +212,7 @@ export async function processProjectImportFiles(
   const nextCandidates = imported.flatMap((result) => result.candidates);
   const failed = imported.filter((result) => result.error);
   const empty = imported.filter((result) => !result.error && result.candidates.length === 0);
-  const fileReports: ImportFileReportRecord[] = [
+  const allFileReports: ImportFileReportRecord[] = [
     ...imported.map((result, index) => {
       if (result.error) {
         return {
@@ -253,7 +255,9 @@ export async function processProjectImportFiles(
       importedAt,
       reasonCode: "unsupported-format" as const,
     })),
-  ].slice(0, 8);
+  ];
+  const fileReports = allFileReports.slice(0, MAX_IMPORT_FILE_REPORTS);
+  const hiddenFileReportCount = Math.max(0, allFileReports.length - fileReports.length);
 
   const failedNames = failed.map((result) => `${result.fileName}${result.error ? ` (${result.error})` : ""}`);
   if (nextCandidates.length === 0 && failed.length === supported.length && unsupported.length === 0) {
@@ -284,6 +288,7 @@ export async function processProjectImportFiles(
     unsupported.length > 0 ? `지원하지 않는 파일 ${unsupported.length}개는 건너뛰었습니다.` : null,
     failed.length > 0 ? `읽기 실패 ${failed.length}개: ${summarizeImportFileNames(failedNames)}` : null,
     empty.length > 0 ? `분류 항목 없음 ${empty.length}개: ${summarizeImportFileNames(empty.map((result) => result.fileName))}` : null,
+    hiddenFileReportCount > 0 ? `파일별 결과 ${hiddenFileReportCount}개는 보관 한도 때문에 생략했습니다.` : null,
   ].filter(Boolean);
 
   return {
@@ -304,7 +309,7 @@ export function upsertAcceptedImportCandidate(
   existing: AcceptedImportCandidateRecord[] | undefined,
   entry: AcceptedImportCandidateRecord,
 ): AcceptedImportCandidateRecord[] {
-  return [entry, ...(existing ?? []).filter((item) => item.id !== entry.id)].slice(0, 80);
+  return [entry, ...(existing ?? []).filter((item) => item.id !== entry.id)].slice(0, MAX_ACCEPTED_IMPORT_CANDIDATES);
 }
 
 export function mergeImportFileReports(
@@ -312,7 +317,7 @@ export function mergeImportFileReports(
   next: ImportFileReportRecord[],
 ): ImportFileReportRecord[] {
   const nextIds = new Set(next.map((item) => item.id));
-  return [...next, ...(existing ?? []).filter((item) => !nextIds.has(item.id))].slice(0, 80);
+  return [...next, ...(existing ?? []).filter((item) => !nextIds.has(item.id))].slice(0, MAX_IMPORT_FILE_REPORTS);
 }
 
 export function isSameImportFileReportList(a: ImportFileReportRecord[], b: ImportFileReportRecord[]): boolean {

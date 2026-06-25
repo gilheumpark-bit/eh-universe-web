@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import { useRef, type ChangeEvent } from "react";
 import CandidateDecisionCard, {
   type CandidateDecisionStatus,
 } from "@/components/loreguard/CandidateDecisionCard";
@@ -14,6 +14,7 @@ import { X } from "@/components/loreguard/icons";
 import { L4 } from "@/lib/i18n";
 import {
   IMPORT_BUCKET_LABELS,
+  PROJECT_START_IMPORT_ACCEPT,
   type ImportCandidate,
 } from "@/lib/loreguard/import-classifier";
 import type { ImportAlignmentWarning } from "@/lib/loreguard/import-project-alignment";
@@ -52,6 +53,8 @@ export function ProjectStartImportDialog({
   onAcceptCandidate,
   onDiscardCandidate,
 }: ProjectStartImportDialogProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   if (!open) return null;
 
   return (
@@ -93,16 +96,28 @@ export function ProjectStartImportDialog({
             <div>
               <strong>{L4(language, { ko: "자료 선택", en: "Choose material", ja: "資料を選択", zh: "选择资料" })}</strong>
               <p>{L4(language, {
-                ko: "TXT, MD, JSON, DOCX, PDF, EPUB을 지원합니다. PDF는 텍스트가 포함된 파일만 읽습니다.",
-                en: "TXT, MD, JSON, DOCX, PDF, and EPUB are supported. PDF import reads text-based files only.",
-                ja: "TXT、MD、JSON、DOCX、PDF、EPUBに対応します。PDFはテキスト入りのファイルだけ読みます。",
-                zh: "支持 TXT、MD、JSON、DOCX、PDF、EPUB。PDF 仅读取含文本的文件。",
+                ko: "TXT, MD, JSON, DOCX, HWPX, PDF, EPUB을 지원합니다. HWP는 한글에서 HWPX로 저장한 뒤 불러오세요.",
+                en: "TXT, MD, JSON, DOCX, HWPX, PDF, and EPUB are supported. Save legacy HWP as HWPX first.",
+                ja: "TXT、MD、JSON、DOCX、HWPX、PDF、EPUBに対応します。旧HWPはHWPXで保存してから読み込んでください。",
+                zh: "支持 TXT、MD、JSON、DOCX、HWPX、PDF、EPUB。旧 HWP 请先另存为 HWPX。",
               })}</p>
             </div>
-            <label className="btn primary">
+            <button
+              type="button"
+              className="btn primary ps-import-file-button"
+              onClick={() => fileInputRef.current?.click()}
+            >
               {L4(language, { ko: "파일 선택", en: "Choose files", ja: "ファイルを選択", zh: "选择文件" })}
-              <input type="file" accept=".txt,.md,.json,.docx,.pdf,.epub" multiple onChange={onImportFiles} />
-            </label>
+            </button>
+            <input
+              ref={fileInputRef}
+              className="ps-import-file-input"
+              type="file"
+              hidden
+              accept={PROJECT_START_IMPORT_ACCEPT}
+              multiple
+              onChange={onImportFiles}
+            />
           </div>
           {importNotice && <div className="ps-import-notice">{importNotice}</div>}
           {visibleImportFileReports.length > 0 && (

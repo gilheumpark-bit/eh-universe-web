@@ -22,29 +22,28 @@ export default function TabExportCopyrightRegistrationPrepCard({
       <div className="pcard-h">
         <Book size={15} />
         저작권 등록 준비
-        <span className={"pill " + (copyrightRegistrationPrep.reviewCount > 0 ? "amber" : "green")} style={{ marginLeft: "auto" }}>
+        <span className={"pill tex-push " + (copyrightRegistrationPrep.reviewCount > 0 ? "amber" : "green")}>
           {copyrightRegistrationPrep.readyCount}/{copyrightRegistrationPrep.checks.length}
         </span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
-        <span style={{ flex: 1 }}>등록 내용설명을 서사·캐릭터·주제 3안과 최종 혼합안으로 정리합니다.</span>
+      <div className="wr-srow tex-muted-row-start">
+        <span className="tex-copy-flex">등록 내용설명을 서사·캐릭터·주제 3안과 최종 혼합안으로 정리합니다.</span>
       </div>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", alignItems: "flex-start" }}>
+      <div className="wr-srow tex-muted-row-start">
         <span>종류 추천</span>
-        <b style={{ textAlign: "right" }}>{copyrightRegistrationPrep.workTypeRecommendationKo}</b>
+        <b className="tex-value">{copyrightRegistrationPrep.workTypeRecommendationKo}</b>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+      <div className="tex-card-grid">
         {copyrightRegistrationPrep.variants.map((variant) => (
           <div
             key={variant.id}
-            className="wr-srow"
-            style={{ alignItems: "flex-start", borderTop: "1px solid var(--line)" }}
+            className="wr-srow tex-list-row"
           >
-            <span className="rdot blue" style={{ marginTop: 5 }} />
-            <span style={{ minWidth: 0, flex: 1 }}>
+            <span className="rdot blue tex-dot-top" />
+            <span className="tex-row-body">
               <b>{variant.labelKo}</b>
-              <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>{variant.focusKo}</span>
-              <span style={{ display: "block", color: "var(--ink-3)", fontSize: 11.5 }}>{variant.bestForKo}</span>
+              <span className="tex-meta-line">{variant.focusKo}</span>
+              <span className="tex-meta-line">{variant.bestForKo}</span>
             </span>
           </div>
         ))}
@@ -82,7 +81,7 @@ export default function TabExportCopyrightRegistrationPrepCard({
         <Download size={13} />
         등록 준비 3안 내려받기
       </button>
-      <div className="wr-srow" style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+      <div className="wr-srow tex-footnote-row">
         공식 신청 전 작품 정보, 표현상 특징, 복제물 범위, 제호·필명 항목을 정리합니다.
       </div>
     </div>

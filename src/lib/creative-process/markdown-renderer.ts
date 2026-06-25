@@ -156,6 +156,38 @@ const MARKDOWN_LABELS: Record<
   },
 };
 
+const SIGNATURE_DISPLAY_LABELS: Record<
+  CertificateLanguage,
+  { shortHash: string; fullHashNote: string; verificationUrl: string }
+> = {
+  ko: {
+    shortHash: '원고 해시 축약값',
+    fullHashNote: '원본 해시는 함께 제공되는 디지털 서명 JSON과 내부 대조 자료에 보관됩니다.',
+    verificationUrl: 'QR 조회 링크',
+  },
+  en: {
+    shortHash: 'Short manuscript hash',
+    fullHashNote: 'The full hash is kept in the bundled digital-signature JSON and internal verification materials.',
+    verificationUrl: 'QR verification link',
+  },
+  ja: {
+    shortHash: '原稿ハッシュ短縮値',
+    fullHashNote: '完全なハッシュは同梱のデジタル署名JSONと内部照合資料に保管されます。',
+    verificationUrl: 'QR照会リンク',
+  },
+  zh: {
+    shortHash: '原稿哈希缩略值',
+    fullHashNote: '完整哈希保存在随附的数字签名 JSON 和内部核对资料中。',
+    verificationUrl: 'QR查询链接',
+  },
+};
+
+function shortHashForDisplay(value?: string | null): string {
+  const cleaned = value?.replace(/^0x/i, '').trim();
+  if (!cleaned) return '-';
+  return cleaned.length > 24 ? `${cleaned.slice(0, 16)}...${cleaned.slice(-8)}` : cleaned;
+}
+
 // ============================================================
 // PART 3 — 메인 export — renderCertificateMarkdown
 // ============================================================
@@ -247,10 +279,14 @@ export function renderCertificateMarkdown(
   // Digital Signature 블록 — sealNumber / verifyUrl 있으면 강화
   const sigDisclaimer = SIGNATURE_DISCLAIMER_4LANG[language];
   const verificationUrl = normalizePublicVerificationUrl(cert.verificationUrl);
+  const displayLabels = SIGNATURE_DISPLAY_LABELS[language];
+  const displayHash = shortHashForDisplay(cert.manuscriptHash);
   const signatureMd = `## ${escapeMarkdown(labels.digitalSignature)}\n\n` +
-    `\`${escapeMarkdown(cert.manuscriptHash)}\`\n\n` +
+    `**${escapeMarkdown(displayLabels.shortHash)}**\n\n` +
+    `\`${escapeMarkdown(displayHash)}\`\n\n` +
     `> ${escapeMarkdown(sigDisclaimer)}` +
-    (verificationUrl ? `\n\n**${escapeMarkdown(labels.verificationUrl)}**: ${escapeMarkdown(verificationUrl)}` : '');
+    `\n\n${escapeMarkdown(displayLabels.fullHashNote)}` +
+    (verificationUrl ? `\n\n**${escapeMarkdown(displayLabels.verificationUrl)}**: ${escapeMarkdown(verificationUrl)}` : '');
   visualBlocks.push(signatureMd);
 
   const visualMd = visualBlocks.join('\n\n');

@@ -20,6 +20,11 @@ const PERSONA_COLORS: Record<string, string> = {
   expert: '#f59e0b',
 };
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 export interface ReaderProfilePanelProps {
   profile: EngagementProfile | null;
   loading?: boolean;
@@ -128,8 +133,8 @@ export const ReaderProfilePanel: React.FC<ReaderProfilePanelProps> = ({
                   return (
                     <li key={pid} className="flex items-center gap-2 text-xs">
                       <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ background: PERSONA_COLORS[pid] }}
+                        ref={(node) => bindStudioTone(node, PERSONA_COLORS[pid])}
+                        className="w-2 h-2 rounded-full studio-tone-swatch"
                       />
                       <span className="text-text-secondary flex-1">{persona.label[lang]}</span>
                       {dropoutEp !== undefined ? (

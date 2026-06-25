@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
   try {
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
+      signal: AbortSignal.timeout(10_000),
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -84,8 +85,12 @@ export async function GET(req: NextRequest) {
     response.cookies.delete('gh_oauth_state');
 
     return response;
-  } catch {
-    return NextResponse.json({ error: 'Failed to exchange code' }, { status: 502 });
+  } catch (error) {
+    const isTimeout = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+    return NextResponse.json(
+      { error: isTimeout ? 'Token exchange timeout' : 'Failed to exchange code' },
+      { status: isTimeout ? 504 : 502 },
+    );
   }
 }
 

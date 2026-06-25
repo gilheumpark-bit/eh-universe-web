@@ -116,12 +116,17 @@
 - `LoreguardStudio.tsx`, `LoreguardShell.tsx`
   - 설정 표면을 `환경 설정`으로 정리.
   - 환경 설정 slide-over 폭을 전문 도구 패널 기준으로 조정.
-- `e2e/loreguard-qa-chief-chaos.spec.ts`
+- `e2e/loreguard-qa-chief-chaos.spec.ts` (historical; 2026-06-24 repo cleanup 로 정리됨)
   - 핵심 public route smoke, 프로젝트 생성 카오스 입력, 모바일/데스크톱/6K overflow, 위험 API write 차단 검증 추가.
 
 ## 테스트 목록
 
 - `npx tsc --noEmit`
-- `PLAYWRIGHT_TEST_PORT=3015 npx playwright test e2e/loreguard-qa-chief-chaos.spec.ts --project=chromium`
+- `PLAYWRIGHT_TEST_PORT=3015 npx playwright test e2e/loreguard-qa-chief-chaos.spec.ts --project=chromium` (historical command)
 - `PLAYWRIGHT_TEST_PORT=3015 npx playwright test e2e/loreguard-design-a11y.spec.ts --project=chromium`
 - 수동 확인: `/studio` 첫 화면, 환경 설정 slide-over, 프로젝트 생성 더블 클릭, 모바일 프로젝트 캔버스 sheet.
+
+2026-06-24 note:
+
+- 현재 repo 기준 chaos 전용 spec 은 남아 있지 않다.
+- 현재 대응 회귀군은 `e2e/loreguard-design-a11y.spec.ts`, `e2e/studio.spec.ts`, `e2e/smoke-routes.spec.ts`, `e2e/scenarios/23-mobile-viewport.spec.ts` 쪽으로 재편되었다.

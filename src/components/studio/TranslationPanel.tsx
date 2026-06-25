@@ -5,22 +5,30 @@
 // ============================================================
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { Languages, Play, Square, ChevronDown, Check, AlertTriangle, Loader2, Settings2, FileText, ChevronRight } from "lucide-react";
+import { Languages, Settings2, ChevronRight } from "lucide-react";
 import { logger } from "@/lib/logger";
 import type { AppLanguage, StoryConfig, EpisodeManuscript } from "@/lib/studio-types";
 import type { TranslationMode, TranslationTarget } from "@/engine/translation";
 import type { TranslationSegment } from "@/lib/translation/editable-segment";
 import type { GlossaryCandidate } from "@/lib/translation/glossary-extractor";
-import { bandLabel, modeDescription, BAND_META } from "@/engine/translation";
-import { GENRE_PRESETS } from "@/engine/genre-presets";
+import { BAND_META } from "@/engine/translation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getTaintTracker } from "@/lib/noa/taint-tracker";
 import { useStudio, type StudioContextValue } from "@/app/studio/StudioContext";
 import { buildProjectTranslationContext } from "@/lib/translation/project-bridge";
 import { searchWithRAGFallback, type TMSuggestion } from "@/lib/translation/translation-memory";
-import { TermTooltip } from "@/components/ui/TermTooltip";
 import { GeneralTranslationSection } from "@/components/studio/TranslationPanel.general";
 import { TranslationStatusPanels } from "@/components/studio/TranslationPanel.status";
+import {
+  TranslationAdvancedSettings,
+  TranslationExecutionControls,
+  TranslationGlossaryEditor,
+  TranslationNovelModeConfig,
+  TranslationOperationsTerminal,
+  TranslationQueueEmptyState,
+  TranslationResultsGrid,
+  type LogEntry,
+} from "@/components/studio/TranslationPanel.sections";
 
 /**
  * StudioContext에 안전 접근 — Provider 밖에서는 null 반환.
@@ -39,13 +47,6 @@ interface TranslationPanelProps {
   language: AppLanguage;
   config: StoryConfig;
   setConfig: (c: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
-}
-
-interface LogEntry {
-  id: number;
-  type: 'info' | 'warn' | 'success' | 'error';
-  text: string;
-  detail?: string;
 }
 
 type TranslationScope = 'novel' | 'general';
@@ -246,6 +247,7 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
           systemInstruction: '',
           messages: [{ role: 'user', content: prompt }],
           temperature: stage === 1 ? 0.1 : 0.3,
+          reasoningStage: 'translation',
           onChunk: (c: string) => { result += c; },
         });
         draft = result.trim() || draft;
@@ -338,8 +340,6 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
     }
   }, [batchMode, selectedEpisode, manuscripts, translationConfig, translateEpisode]);
 
-  const bandLbl = bandLabel(band, mode, language);
-
   const translatedList = config.translatedManuscripts ?? [];
 
   return (
@@ -431,349 +431,59 @@ export default function TranslationPanel({ language, config, setConfig }: Transl
       {/* ── 소설 번역 모드 (기존 UI) ── */}
       {scope === 'novel' && <>
 
-      {/* Mode selector - Nexus Style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(["fidelity", "experience"] as TranslationMode[]).map((m) => {
-          const info = modeDescription(m, language);
-          const isSelected = mode === m;
-          return (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`relative overflow-hidden rounded-[1.25rem] border p-5 text-left transition-[transform,opacity,background-color,border-color,color] duration-300 ${
-                isSelected
-                  ? "border-accent-amber/40 bg-bg-secondary shadow-panel translate-y-[-2px]"
-                  : "border-border bg-bg-tertiary/50 hover:border-border hover:bg-bg-secondary"
-              }`}
-            >
-              {isSelected && (
-                <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(184,149,92,0.2),transparent_70%)]" />
-              )}
-              <div className="relative z-10 flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`flex h-2 w-2 rounded-full ${isSelected ? 'bg-[rgba(184,149,92,0.9)] shadow-[0_0_8px_rgba(184,149,92,0.8)]' : 'bg-white/20'}`} />
-                  <div className={`font-mono text-[12px] font-bold uppercase tracking-[0.15em] ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
-                    {info.title}
-                  </div>
-                </div>
-                <div className="text-[12px] leading-relaxed text-text-tertiary font-sans pl-4">
-                  {info.desc}
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Config row - Nexus Bridge Dashboard */}
-      <div className="relative flex flex-col md:flex-row items-center gap-6 rounded-[1.25rem] border border-white/8 bg-bg-tertiary backdrop-blur-xl p-5 shadow-2xl before:absolute before:inset-0 before:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.03),transparent)] before:pointer-events-none before:rounded-[1.25rem]">
-        {/* Target language */}
-        <div className="space-y-2.5 w-full md:w-auto md:min-w-[160px] relative z-10">
-          <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
-            <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,149,92,0.5)]"></div>
-            {isKO ? "대상 국가 (Target)" : "Target Language"}
-          </label>
-          <div className="flex gap-2 bg-black/30 p-1 rounded-xl border border-white/5">
-            {(["EN", "JP", "CN"] as TranslationTarget[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => setTargetLang(l)}
-                title={l === 'JP' ? '나로우/라노벨 최적화 알고리즘 탑재' : l === 'CN' ? '선협/웹소설 전용 호칭 처리 포함' : '영미권 픽션 표준 번역'}
-                className={`flex-1 rounded-lg px-3 py-2 font-mono text-[12px] font-bold tracking-wider transition-[transform,opacity,background-color,border-color,color] duration-200 ${
-                  targetLang === l
-                    ? "bg-[rgba(184,149,92,0.15)] text-text-primary shadow-[inset_0_0_0_1px_rgba(184,149,92,0.3),0_0_10px_rgba(184,149,92,0.1)]"
-                    : "text-text-tertiary hover:bg-white/5 hover:text-text-secondary"
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Vertical divider */}
-        <div className="hidden md:block w-px h-16 bg-linear-to-b from-transparent via-white/10 to-transparent"></div>
-
-        {/* Band slider */}
-        <div className="flex-1 w-full space-y-3 relative z-10">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-text-tertiary">
-              <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,149,92,0.5)]"></div>
-              {isKO ? '번역 밴드 (정확도 ↔ 자연스러움)' : 'Translation Band (Accuracy ↔ Naturalness)'}
-            </label>
-            <div className="font-mono text-[10px] px-2.5 py-1 rounded-md bg-[rgba(184,149,92,0.1)] border border-border text-text-primary flex items-center gap-2 shadow-[0_0_10px_rgba(184,149,92,0.05)]">
-              <span className="font-bold tracking-widest">{bandLbl}</span>
-              <span className="text-text-secondary">|</span>
-              <span>MATH. {(band).toFixed(3)}</span>
-            </div>
-          </div>
-          <div className="relative pt-1">
-            <input
-              type="range"
-              min={BAND_META.min}
-              max={BAND_META.max}
-              step={BAND_META.step}
-              value={band}
-              onChange={(e) => setBand(parseFloat(e.target.value))}
-              className="w-full h-1.5 bg-black/60 rounded-full appearance-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 accent-[rgba(184,149,92,0.9)] cursor-pointer"
-            />
-            {/* Custom slider track overlay for premium feel */}
-            <div 
-              className="absolute top-1 left-0 h-1.5 bg-[linear-gradient(90deg,rgba(184,149,92,0.4),rgba(184,149,92,0.9))] rounded-full pointer-events-none"
-              style={{ width: `${((band - BAND_META.min) / (BAND_META.max - BAND_META.min)) * 100}%` }}
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(184,149,92,0.8)] border-2 border-border"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TranslationNovelModeConfig
+        isKO={isKO}
+        language={language}
+        mode={mode}
+        setMode={setMode}
+        targetLang={targetLang}
+        setTargetLang={setTargetLang}
+        band={band}
+        setBand={setBand}
+      />
 
       {/* Advanced Settings Panel - Nexus Blue */}
       {showAdvanced && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 rounded-[1.25rem] border border-accent-amber/20 bg-bg-secondary animate-in slide-in-from-top-2 duration-300">
-          <div className="space-y-2">
-            <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary">
-              <Settings2 className="h-3 w-3" />
-              {isKO ? "장르 현지화 프리셋" : "Genre Prefix"}
-            </label>
-            <select
-              value={targetGenre}
-              onChange={(e) => setTargetGenre(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-[transform,opacity,background-color,border-color,color]"
-            >
-              <option value="">(None - Auto Detect)</option>
-              {Object.keys(GENRE_PRESETS).map(genre => (
-                <option key={genre} value={genre}>{genre}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary">
-              <Check className="h-3 w-3" />
-              {isKO ? (
-                <><TermTooltip term="품질 항목" language={language}>품질 항목</TermTooltip> 기준점</>
-              ) : (
-                <><TermTooltip term="품질 항목" language={language}>Quality</TermTooltip> Threshold</>
-              )}
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0.5} max={0.99} step={0.01}
-                value={scoreThreshold}
-                onChange={(e) => setScoreThreshold(parseFloat(e.target.value) || 0.75)}
-                className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-[transform,opacity,background-color,border-color,color]"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary">
-              <Languages className="h-3 w-3" />
-              {isKO ? "축약형(Contraction) 허용률" : "Contraction Flow"}
-            </label>
-            <select
-              value={contractionLevel}
-              onChange={(e) => setContractionLevel(e.target.value as typeof contractionLevel)}
-              disabled={mode !== 'experience'}
-              className="w-full rounded-xl border border-white/10 bg-bg-tertiary px-3 py-2.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border focus:ring-1 focus:ring-border transition-opacity"
-            >
-              <option value="none">None (Strict/Formal)</option>
-              <option value="low">Low (Dialogue only)</option>
-              <option value="normal">Normal (Default)</option>
-              <option value="high">High (Casual/Web Novel)</option>
-            </select>
-          </div>
-        </div>
+        <TranslationAdvancedSettings
+          isKO={isKO}
+          language={language}
+          mode={mode}
+          targetGenre={targetGenre}
+          setTargetGenre={setTargetGenre}
+          scoreThreshold={scoreThreshold}
+          setScoreThreshold={setScoreThreshold}
+          contractionLevel={contractionLevel}
+          setContractionLevel={setContractionLevel}
+        />
       )}
 
       {/* Glossary — 용어집 */}
-      <details className="rounded-[1.25rem] border border-white/8 bg-black/20 backdrop-blur-md">
-        <summary className="flex items-center gap-3 px-5 py-3 cursor-pointer font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-text-tertiary hover:text-text-secondary transition-colors">
-          <FileText className="h-3.5 w-3.5 text-text-secondary" />
-          {isKO ? `용어집 (${Object.keys(glossary).length}개)` : `Glossary (${Object.keys(glossary).length})`}
-        </summary>
-        <div className="px-5 pb-4 space-y-3">
-          <div className="flex gap-2">
-            <input value={glossaryTerm} onChange={(e) => setGlossaryTerm(e.target.value)} placeholder={isKO ? "원문 용어" : "Source term"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-            <input value={glossaryTranslation} onChange={(e) => setGlossaryTranslation(e.target.value)} placeholder={isKO ? "번역" : "Translation"} className="flex-1 rounded-lg border border-white/10 bg-bg-tertiary px-3 py-2 font-mono text-[11px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-            <button onClick={() => { if (glossaryTerm.trim() && glossaryTranslation.trim()) { saveGlossary({ ...glossary, [glossaryTerm.trim()]: glossaryTranslation.trim() }); setGlossaryTerm(''); setGlossaryTranslation(''); } }} className="px-3 py-2 rounded-lg bg-[rgba(184,149,92,0.15)] text-text-primary font-mono text-[10px] font-bold hover:bg-[rgba(184,149,92,0.25)] transition-colors">+</button>
-          </div>
-          {Object.entries(glossary).length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {Object.entries(glossary).map(([k, v]) => (
-                <span key={k} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[rgba(184,149,92,0.1)] border border-border font-mono text-[10px] text-text-primary">
-                  {k} → {v}
-                  <button onClick={() => { const g = { ...glossary }; delete g[k]; saveGlossary(g); }} aria-label={isKO ? `용어 ${k} 삭제` : `Delete glossary term ${k}`} className="ml-1 text-accent-red/60 hover:text-accent-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">&times;</button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </details>
+      <TranslationGlossaryEditor
+        isKO={isKO}
+        glossary={glossary}
+        glossaryTerm={glossaryTerm}
+        setGlossaryTerm={setGlossaryTerm}
+        glossaryTranslation={glossaryTranslation}
+        setGlossaryTranslation={setGlossaryTranslation}
+        saveGlossary={saveGlossary}
+      />
 
       {/* Execution Area */}
-      <div className="flex flex-col sm:flex-row items-end gap-4 p-5 rounded-[1.25rem] border border-white/8 bg-black/20 backdrop-blur-md">
-        <div className="flex-1 w-full space-y-2">
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-text-tertiary">
-              <FileText className="h-3 w-3 text-text-secondary" />
-              {isKO ? "에피소드 타겟 지정" : "Episode Target"}
-            </label>
-            <button onClick={() => setBatchMode(!batchMode)} aria-pressed={batchMode} aria-label={isKO ? `배치 모드 ${batchMode ? '끄기' : '켜기'}` : `Turn batch mode ${batchMode ? 'off' : 'on'}`} className={`font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${batchMode ? 'border-border bg-[rgba(184,149,92,0.15)] text-text-primary' : 'border-white/10 text-text-tertiary hover:border-white/20'}`}>
-              {isKO ? (batchMode ? '배치 ON' : '배치 OFF') : (batchMode ? 'BATCH ON' : 'BATCH OFF')}
-            </button>
-          </div>
-          <div className="relative group">
-            <select
-              value={selectedEpisode ?? ""}
-              onChange={(e) => setSelectedEpisode(e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full appearance-none rounded-xl border border-white/10 bg-bg-tertiary px-4 py-3.5 pr-10 font-mono text-[13px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-border group-hover:border-white/20 transition-colors shadow-inner"
-            >
-              <option value="">{isKO ? "/// 번역 대기 큐에서 선택 ///" : "/// Select queued episode ///"}</option>
-              {manuscripts.map((m) => (
-                <option key={m.episode} value={m.episode}>
-                  EP {m.episode} — {m.title || `Episode ${m.episode}`} [ {m.content.length.toLocaleString()} BYTE ]
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary group-hover:text-text-secondary transition-colors" />
-          </div>
-        </div>
+      <TranslationExecutionControls
+        isKO={isKO}
+        batchMode={batchMode}
+        setBatchMode={setBatchMode}
+        manuscripts={manuscripts}
+        selectedEpisode={selectedEpisode}
+        setSelectedEpisode={setSelectedEpisode}
+        isTranslating={isTranslating}
+        abort={abort}
+        handleTranslate={handleTranslate}
+      />
 
-        {isTranslating ? (
-          <button
-            onClick={abort}
-            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(to_bottom,rgba(255,100,100,0.15),rgba(200,50,50,0.4))] border border-[rgba(255,100,100,0.5)] px-6 font-mono text-[12px] font-black uppercase tracking-widest text-accent-red transition-[box-shadow] hover:brightness-125 shadow-[0_0_20px_rgba(200,50,50,0.2)]"
-          >
-            <Square className="h-4 w-4" /> {isKO ? "강제 종료 (HALT)" : "HALT"}
-          </button>
-        ) : (
-          <button
-            onClick={handleTranslate}
-            disabled={batchMode ? manuscripts.length === 0 : (selectedEpisode === null || manuscripts.length === 0)}
-            className="w-full sm:w-[220px] h-[52px] flex items-center justify-center gap-3 rounded-xl bg-[linear-gradient(45deg,rgba(130,95,45,0.6),rgba(184,149,92,0.9))] border border-border px-6 font-mono text-[12px] font-black uppercase tracking-widest text-white transition-[transform,opacity] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(184,149,92,0.4)] disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none shadow-[0_5px_20px_rgba(184,149,92,0.2)]"
-          >
-            <Play className="h-4 w-4" fill="currentColor" /> {batchMode ? (isKO ? `배치 번역 (${manuscripts.length}화)` : `BATCH (${manuscripts.length})`) : (isKO ? "번역 연결 (INIT)" : "INIT")}
-          </button>
-        )}
-      </div>
-
-      {/* Live Operations Terminal - Data Stream */}
-      {(progress.status !== "idle" || logs.length > 0) && (
-        <div className="rounded-[1.25rem] border border-border bg-bg-secondary overflow-hidden flex flex-col h-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(184,149,92,0.03)] relative">
-          {/* Terminal Scanline overlay */}
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(184,149,92,0.02)_50%,transparent_50%)] bg-size-[100%_4px] z-10" />
-          
-          {/* Terminal Header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-[rgba(184,149,92,0.05)] relative z-20">
-            <div className={`flex items-center gap-3 font-mono text-[11px] font-bold uppercase tracking-[0.2em] ${progress.status === 'idle' ? 'text-text-tertiary' : 'text-text-primary'}`}>
-              {(progress.status === "translating" || progress.status === "scoring") && <Loader2 className="h-3 w-3 animate-spin text-text-secondary" />}
-              {progress.status === "recreating" && <AlertTriangle className="h-3 w-3 text-accent-amber" />}
-              {progress.status === "done" && <Check className="h-3 w-3 text-accent-green" />}
-              {progress.status === 'idle' ? 'DATA STREAM: STANDBY' : `NEXUS: ${progress.status}`}
-              {progress.recreateCount > 0 && <span className="text-accent-amber bg-accent-amber/10 px-1.5 rounded">RETRY:{progress.recreateCount}</span>}
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="font-mono text-[10px] font-bold tracking-widest text-text-secondary">
-                BLK[{progress.completedChunks.toString().padStart(3, '0')}/{progress.totalChunks.toString().padStart(3, '0')}]
-              </span>
-              <div className="w-32 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/5 relative">
-                <div
-                  className="absolute inset-y-0 left-0 bg-[rgba(184,149,92,0.9)] shadow-[0_0_10px_rgba(184,149,92,0.8)] transition-[box-shadow] duration-300"
-                  style={{ width: `${progress.totalChunks > 0 ? (progress.completedChunks / progress.totalChunks) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Terminal Output */}
-          <div className="flex-1 overflow-y-auto p-5 font-mono text-[11px] relative z-20 custom-scrollbar">
-            <div className="space-y-3">
-              {logs.map(log => (
-                <div key={log.id} className="flex gap-4 items-start group">
-                  <span className="text-text-tertiary shrink-0 font-bold group-hover:text-text-secondary transition-colors">[{new Date(log.id).toISOString().substring(11, 23)}]</span>
-                  <span className={`shrink-0 w-12 text-center uppercase text-[9px] font-black tracking-widest py-0.5 rounded-sm border ${
-                    log.type === 'error' ? 'text-accent-red border-[#ff6b6b]/30 bg-[#ff6b6b]/10' :
-                    log.type === 'success' ? 'text-green-400 border-[#38d9a9]/30 bg-[#38d9a9]/10' :
-                    log.type === 'warn' ? 'text-amber-400 border-[#fcc419]/30 bg-[#fcc419]/10' :
-                    'text-text-primary border-border bg-[rgba(184,149,92,0.1)]'
-                  }`}>SYS</span>
-                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                    <div className={`leading-relaxed ${
-                      log.type === 'error' ? 'text-accent-red' :
-                      log.type === 'warn' ? 'text-amber-400' :
-                      log.type === 'success' ? 'text-green-400' :
-                      'text-text-primary'
-                    }`}>{log.text}</div>
-                    {log.detail && (
-                      <div className="relative pl-3 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-[linear-gradient(to_bottom,rgba(184,149,92,0.4),transparent)]">
-                        <div className="text-text-primary text-[10px] leading-relaxed font-sans line-clamp-3 group-hover:line-clamp-none transition-[transform,opacity,background-color,border-color,color] duration-300">
-                          {log.detail}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {progress.status !== 'idle' && progress.status !== 'done' && (
-                <div className="flex gap-4 animate-pulse">
-                  <span className="text-text-tertiary shrink-0 font-bold">[{new Date().toISOString().substring(11, 23)}]</span>
-                  <span className="w-2 h-3 bg-[rgba(184,149,92,0.7)] mt-0.5" />
-                </div>
-              )}
-            </div>
-            <div ref={logsEndRef} className="h-4" />
-          </div>
-          {/* styled-jsx removed — uses global custom-scrollbar class instead */}
-        </div>
-      )}
-
-      {/* Translated results - Glassmorphism Cards */}
-      {translatedList.length > 0 && (
-        <div className="pt-6 border-t border-border space-y-4">
-          <div className="flex items-center gap-3 text-text-primary">
-            <FileText className="h-5 w-5" />
-            <h3 className="font-mono text-[13px] font-bold uppercase tracking-[0.2em]">
-              {isKO ? "현지화 완료 데이터베이스" : "Localized Database"} <span className="text-text-tertiary">({translatedList.length})</span>
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {translatedList.map((t, i) => (
-               <div key={i} className="group relative flex flex-col gap-2.5 rounded-2xl border border-border bg-bg-tertiary backdrop-blur-md p-4 transition-[transform,background-color,border-color,box-shadow,color] duration-300 hover:border-border hover:bg-[rgba(184,149,92,0.05)] hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(184,149,92,0.1)]">
-                <div className="absolute top-0 left-4 right-4 h-px bg-[linear-gradient(90deg,transparent,rgba(184,149,92,0.3),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(184,149,92,0.1)] text-text-primary">
-                    <Check className="h-4 w-4" />
-                  </div>
-                  <div className="font-mono text-[13px] font-bold text-white/90 truncate">
-                    EP_{t.episode.toString().padStart(2, '0')} {'//'} {t.translatedTitle || `Episode ${t.episode}`}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 font-mono text-[10px] text-text-primary ml-11">
-                  <span className="bg-bg-tertiary border border-white/10 px-2 py-1 rounded-[0.5rem] tracking-wider font-bold shadow-inner">
-                    {t.sourceLang} <span className="text-text-tertiary">→</span> {t.targetLang}
-                  </span>
-                  <span className="bg-bg-tertiary border border-white/10 px-2 py-1 rounded-[0.5rem] tracking-wider uppercase font-bold shadow-inner">
-                    MODE:{t.mode.slice(0,3)}
-                  </span>
-                  <span className="text-emerald-400 font-bold ml-auto pr-1">Q_GATE: {(t.avgScore * 100).toFixed(1)}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {manuscripts.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-[1.25rem] border border-dashed border-border bg-black/20 backdrop-blur-md p-12 text-center shadow-[inset_0_0_50px_rgba(0,0,0,0.5)]">
-          <Languages className="mb-4 h-10 w-10 text-text-tertiary" />
-          <p className="font-mono text-[12px] tracking-widest text-text-primary">
-            {isKO ? "대기열(Queue)이 비어 있습니다. 집필 모드에서 에피소드를 작성하십시오." : "Translation Queue is empty. Write episodes in Zenith Canvas."}
-          </p>
-        </div>
-      )}
+      <TranslationOperationsTerminal progress={progress} logs={logs} logsEndRef={logsEndRef} />
+      <TranslationResultsGrid isKO={isKO} translatedList={translatedList} />
+      <TranslationQueueEmptyState isKO={isKO} manuscripts={manuscripts} />
 
       </>}
     </div>

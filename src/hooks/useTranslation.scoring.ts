@@ -33,6 +33,7 @@ export async function callAI(
     systemInstruction: systemPrompt,
     messages: [{ role: 'user' as const, content: userPrompt }],
     temperature,
+    reasoningStage: 'translation-review' as const,
     signal,
     onChunk: (text: string) => { result += text; },
   };

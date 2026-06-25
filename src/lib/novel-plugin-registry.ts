@@ -4,8 +4,7 @@
  * Stage: SKELETON ONLY.
  *   - Bundled plugins (shipped with Novel Studio) can be registered and toggled.
  *   - External plugin loading is intentionally NOT implemented — the API
- *     surface is reserved with `// TODO` markers so future work does not
- *     need to reshape consumer code.
+ *     boundary is reserved so future work does not need to reshape consumer code.
  *   - Permission model is declared and runtime-enforced (PermissionEnforcer)
  *     plus compile-time capability stripping (`buildScopedContext`).
  *
@@ -68,9 +67,8 @@ export interface L4Label {
 /**
  * Declared permissions a plugin *says* it needs.
  *
- * The runtime does not currently enforce these — the future sandbox will.
- * Today they serve only as informed-consent metadata shown in the UI so
- * the user can make an allow/deny decision before enabling.
+ * The registry filters runtime capabilities to match these declarations and
+ * audits each granted call through PermissionEnforcer.
  */
 export type NovelPluginPermission =
   | 'read-manuscript'

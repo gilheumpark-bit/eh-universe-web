@@ -33,13 +33,12 @@ export class SubViewBoundary extends Component<
   render() {
     if (this.state.failed) {
       return (
-        <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)" }}>
+        <div className="wr-srow cpjournal-alert-row" role="alert">
           <span className="rdot amber" />
           {this.props.failMessage}
           <button
             type="button"
-            className="mini-btn"
-            style={{ marginLeft: "auto" }}
+            className="mini-btn cpjournal-push"
             onClick={() => this.setState({ failed: false })}
           >
             <Sync size={13} />

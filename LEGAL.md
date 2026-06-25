@@ -2,17 +2,17 @@
 
 **Status:** Living document (updated per dependency change)
 **Last Audit:** 2026-06-08 (P11 루프3)
-**License (this project):** AGPL-3.0-or-later
+**License (this project):** UNLICENSED / Proprietary / All rights reserved
 
 ## Policy
 
-EH Universe (Loreguard) 는 AGPL-3.0-or-later 로 배포한다. 의존성은 다음 정책을 따른다:
+EH Universe (Loreguard) 소프트웨어는 비공개 상용 제품으로 관리한다. 의존성은 다음 정책을 따른다:
 
 | 분류 | 라이선스 | 조치 |
 |------|---------|------|
 | ALLOW | MIT / ISC / Apache-2.0 / BSD-2/3 / 0BSD / Unlicense / CC0-1.0 / WTFPL / Zlib | 자유 사용 |
 | WARN | LGPL-* / MPL-2.0 / EPL-2.0 | 사용 가능 — dynamic link 권장, source 제공 의무 |
-| FAIL | GPL-2.0 / GPL-3.0 / **AGPL** / SSPL / BUSL / Commons-Clause | **사용 금지 (단, AGPL-3.0-or-later 본 프로젝트 자체는 예외)** |
+| FAIL | GPL-2.0 / GPL-3.0 / AGPL / SSPL / BUSL / Commons-Clause | **사용 금지** |
 | UNKNOWN | (라이선스 미상) | 검토 후 분류 |
 
 ## Enforcement
@@ -39,10 +39,10 @@ CI 게이트:
 
 ## SPDX 헤더
 
-AGPL 핵심 파일은 다음 헤더 권장 (강제 X — README/LICENSE 가 1차 source):
+신규 핵심 파일은 다음 SPDX 헤더 권장 (강제 X — README/LICENSE 가 1차 source):
 
 ```typescript
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: UNLICENSED
 ```
 
 대상 파일 (server-side AI orchestration 등):
@@ -50,7 +50,7 @@ AGPL 핵심 파일은 다음 헤더 권장 (강제 X — README/LICENSE 가 1차
 - `src/lib/dgx-models.ts`
 - `src/engine/pipeline.ts`
 - `src/lib/build-prompt.ts`
-- 신규 server-side AGPL 파생물
+- 신규 server-side orchestration 파일
 
 ## Audit History
 
@@ -61,6 +61,6 @@ AGPL 핵심 파일은 다음 헤더 권장 (강제 X — README/LICENSE 가 1차
 ## References
 
 - [SPDX License List](https://spdx.org/licenses/)
-- [GNU AGPL FAQ](https://www.gnu.org/licenses/agpl-3.0.html)
+- [SPDX UNLICENSED](https://spdx.org/licenses/UNLICENSED.html)
 - [Choose A License](https://choosealicense.com/appendix/)
 - AGENTS.md Notation 표준 — `[L-XX YYYY-MM-DD]`

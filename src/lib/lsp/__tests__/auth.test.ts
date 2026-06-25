@@ -11,6 +11,18 @@ function makeRequest(token: string): Request {
   } as unknown as Request;
 }
 
+function makeCookieRequest(token: string): Request {
+  return {
+    url: 'http://localhost/api/lsp/diagnostics',
+    headers: {
+      get: (name: string) => {
+        if (name.toLowerCase() === 'cookie') return `lg_lsp_session=${token}`;
+        return null;
+      },
+    },
+  } as unknown as Request;
+}
+
 describe('lsp auth', () => {
   const nodeEnv = process.env as Record<string, string | undefined>;
   const originalEnv = nodeEnv.NODE_ENV;
@@ -55,6 +67,15 @@ describe('lsp auth', () => {
     nodeEnv.LOREGUARD_LSP_TOKEN_HASH = await hashToken(VALID_TOKEN);
 
     const result = await authorizeLspRequest(makeRequest(VALID_TOKEN));
+
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts a production token from the LSP session cookie', async () => {
+    nodeEnv.NODE_ENV = 'production';
+    nodeEnv.LOREGUARD_LSP_TOKEN_HASH = await hashToken(VALID_TOKEN);
+
+    const result = await authorizeLspRequest(makeCookieRequest(VALID_TOKEN));
 
     expect(result.ok).toBe(true);
   });

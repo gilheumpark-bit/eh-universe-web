@@ -20,7 +20,7 @@ const EXPECTED_ARTIFACT_IDS = [
   'ip-pack-manifest',
   'digital-signature',
 ] as const;
-const PACKAGE_ACTION_BUTTON_NAME = /묶음 생성|Generate Package|상위 플랜 검토용 미리보기|출고 묶음 미리보기|출고 묶음 검토 생성|조직 제출 묶음 검토 생성/;
+const PACKAGE_ACTION_BUTTON_NAME = /묶음 생성|Generate Package|상위 플랜 검토용 미리보기|상위 권한 검토용 미리보기|출고 묶음 미리보기|출고 묶음 검토 생성|조직 제출 묶음 검토 생성/;
 
 type ArtifactId = (typeof EXPECTED_ARTIFACT_IDS)[number];
 type DownloadedArtifacts = Map<ArtifactId, string>;

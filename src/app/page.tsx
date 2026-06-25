@@ -3,90 +3,20 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import MaintenanceBanner from "@/components/MaintenanceBanner";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-
-/** Intersection Observer 기반 fade-in 훅 (prefers-reduced-motion 존중) */
-function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-    el.style.opacity = "0";
-    el.style.transform = "translateY(24px)";
-    el.style.transition = "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)";
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.style.opacity = "1";
-          el.style.transform = "translateY(0)";
-          io.disconnect();
-        }
-      },
-      { threshold: 0.12 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return ref;
-}
-
-/** 홈 히어로 패널 — 스크롤에 따라 살짝 축소·복원 (prefers-reduced-motion 시 비활성) */
-function useHeroScrollShrink(
-  panelRef: React.RefObject<HTMLDivElement | null>,
-  enabled: boolean,
-) {
-  useEffect(() => {
-    if (!enabled) return;
-    const el = panelRef.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const section = el.closest("section");
-    if (!section) return;
-
-    let raf = 0;
-    const tick = () => {
-      raf = 0;
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const start = Math.min(96, vh * 0.12);
-      const range = Math.max(220, vh * 0.38);
-      const raw = Math.max(0, start - rect.top);
-      const t = Math.min(1, raw / range);
-      const eased = t * (2 - t);
-      const scale = 1 - 0.048 * eased;
-      el.style.transform = `scale(${scale})`;
-      el.style.transformOrigin = "center top";
-      el.style.willChange = t > 0 && t < 1 ? "transform" : "auto";
-    };
-
-    const onScrollOrResize = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(tick);
-    };
-
-    window.addEventListener("scroll", onScrollOrResize, { passive: true });
-    window.addEventListener("resize", onScrollOrResize, { passive: true });
-    onScrollOrResize();
-
-    return () => {
-      window.removeEventListener("scroll", onScrollOrResize);
-      window.removeEventListener("resize", onScrollOrResize);
-      if (raf) cancelAnimationFrame(raf);
-      el.style.transform = "";
-      el.style.transformOrigin = "";
-      el.style.willChange = "";
-    };
-  }, [panelRef, enabled]);
-}
-
-import dynamic from "next/dynamic";
 import { getNovelStudioHref, getTranslatorStudioHref } from "@/lib/studio-entry-links";
+import {
+  HubGrid,
+  HomePageFallback,
+  useFadeIn,
+  useHeroScrollShrink,
+  type ColorMap,
+  type HubItem,
+} from "./home-page-parts";
 
 // 2026-04-21 [PERF] SplashScreen을 dynamic으로 분리 — 재방문자(30일 내)는 splash 스킵이라
 // 초기 번들에서 제외. 첫 방문자만 UnifiedSettingsBar + APIKeySlotManager까지 lazy 로드.
@@ -94,221 +24,15 @@ import { getNovelStudioHref, getTranslatorStudioHref } from "@/lib/studio-entry-
 const SplashScreen = dynamic(() => import("@/components/home/SplashScreen"), {
   ssr: false,
   loading: () => (
-    <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center" aria-label="로어가드 홈 로딩">
+    <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center" aria-label="Loreguard 홈 로딩">
       <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-300">
-        <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo font-mono text-[10px] font-bold !text-white animate-pulse">
-          LG
+        <div className="flex h-10 items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo px-4 font-mono text-[10px] font-bold !text-white animate-pulse">
+          Loreguard
         </div>
       </div>
     </main>
   ),
 });
-
-function HomePageFallback() {
-  return (
-    <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center" aria-label="로어가드 홈 로딩">
-      <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
-        <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo font-mono text-[10px] font-bold !text-white animate-pulse">
-          LG
-        </div>
-        <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-          로어가드 · Loreguard
-        </div>
-      </div>
-    </main>
-  );
-}
-
-// ============================================================
-// HubGrid — Hero(창작 전문 IDE + 번역·현지화) + 접힘 섹션(나머지)
-// ============================================================
-// localStorage 'home_apps_expanded' 로 접힘 상태 저장 (한 번 펼치면 유지).
-// Hero 카드 = badge 'NS' (창작 전문 IDE) / 'TR' (번역·현지화).
-// 나머지 카드는 [모든 앱 보기] 토글 섹션에 그리드로 노출.
-// ============================================================
-
-type HubItem = {
-  href: string;
-  badge: string;
-  color: 'amber' | 'blue' | 'green' | 'purple';
-  title: string;
-  desc: string;
-  meta: string;
-  external?: boolean;
-};
-type ColorToken = {
-  border: string; bg: string; text: string; hoverText: string; glow: string;
-};
-type ColorMap = Record<HubItem['color'], ColorToken>;
-
-function HubGrid({
-  hubs,
-  colorMap,
-  lang,
-  T,
-}: {
-  hubs: HubItem[];
-  colorMap: ColorMap;
-  lang: string;
-  T: <V,>(v: { ko: V; en: V; ja?: V; zh?: V }) => V;
-}) {
-  void lang;
-  const [expanded, setExpanded] = useState(false);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('home_apps_expanded');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw === '1') setExpanded(true);
-    } catch { /* private browsing */ }
-  }, []);
-  const toggleExpanded = useCallback(() => {
-    setExpanded(prev => {
-      const next = !prev;
-      try {
-        if (next) localStorage.setItem('home_apps_expanded', '1');
-        else localStorage.removeItem('home_apps_expanded');
-      } catch { /* quota/private */ }
-      return next;
-    });
-  }, []);
-
-  // Hero: NS(창작 전문 IDE) → primary / TR(번역·현지화) → secondary
-  const heroPrimary = hubs.find(h => h.badge === 'NS');
-  const heroSecondary = hubs.find(h => h.badge === 'TR');
-  const rest = hubs.filter(h => h.badge !== 'NS' && h.badge !== 'TR');
-
-  // [priority 1 2026-06-08] START HERE badge label (4언어).
-  // 신입 작가가 "어디서 시작?"에 즉시 답하도록 NS 카드에 단일 신호 부착.
-  const startHereLabel = T({
-    ko: '여기서 시작',
-    en: 'START HERE',
-    ja: 'ここから始める',
-    zh: '从这里开始',
-  });
-
-  const renderCard = (hub: HubItem, variant: 'hero-primary' | 'hero-secondary' | 'rest') => {
-    const c = colorMap[hub.color];
-    const isExternal = Boolean(hub.external || hub.href.startsWith('http'));
-    const isPrimary = variant === 'hero-primary';
-    const sizeCls =
-      variant === 'hero-primary'
-        ? 'md:col-span-2 md:row-span-2 p-8 md:p-10 min-h-[220px] ring-2 ring-accent-amber/50 ring-offset-2 ring-offset-bg-primary'
-        : variant === 'hero-secondary'
-          ? 'md:col-span-2 p-6 md:p-8 min-h-[180px]'
-          : 'p-6';
-    const badgeCls =
-      variant === 'hero-primary'
-        ? 'h-14 w-14 text-sm'
-        : variant === 'hero-secondary'
-          ? 'h-12 w-12 text-xs'
-          : 'h-11 w-11 text-xs';
-    const titleCls =
-      variant === 'hero-primary'
-        ? 'text-2xl md:text-3xl tracking-wide normal-case font-display'
-        : variant === 'hero-secondary'
-          ? 'text-lg md:text-xl tracking-wide normal-case font-display'
-          : 'font-[--font-mono] text-sm font-semibold uppercase tracking-widest';
-
-    const inner = (
-      <>
-        <div className="pointer-events-none absolute inset-0">
-          <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
-        </div>
-        {/* [priority 1 — 2026-06-08] START HERE 배지 — primary hub 한 곳에만 부착. */}
-        {isPrimary && (
-          <span
-            className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-accent-amber !text-white font-[--font-mono] text-[10px] font-bold tracking-[0.16em] uppercase shadow-md"
-            aria-label={startHereLabel}
-          >
-            {startHereLabel}
-          </span>
-        )}
-        <span className={`flex items-center justify-center rounded-full border ${c.border} ${c.bg} font-[--font-mono] tracking-[0.14em] ${c.text} ${badgeCls}`}>
-          {hub.badge}
-        </span>
-        <div className="mt-4">
-          <h3 className={`font-semibold text-text-primary transition-colors ${c.hoverText} ${titleCls}`}>
-            {hub.title}
-          </h3>
-          <p className={`mt-2 ${variant === 'hero-primary' ? 'text-base leading-8' : 'text-sm leading-7'} text-text-secondary`}>{hub.desc}</p>
-        </div>
-        <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText} inline-flex items-center gap-1`}>
-          {hub.meta}
-          <span aria-hidden="true">→</span>
-        </div>
-      </>
-    );
-    const cls = `group relative overflow-hidden premium-link-card flex flex-col ${sizeCls}`;
-    return isExternal ? (
-      <a key={hub.title} href={hub.href} target="_blank" rel="noopener noreferrer"
-        className={cls}
-        aria-label={`${hub.title} (opens in new tab)`}>
-        {inner}
-      </a>
-    ) : (
-      <Link key={hub.title} href={hub.href} className={cls}>
-        {inner}
-      </Link>
-    );
-  };
-
-  return (
-    <div className="site-shell">
-      <div className="mb-8 px-1">
-        <p className="site-kicker">
-          {T({ ko: "탐색 허브", en: "Explore Hubs", ja: "探索ハブ", zh: "探索中心" })}
-        </p>
-        <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-          {T({ ko: "지금 시작하세요", en: "Start now", ja: "今すぐ始める", zh: "立即开始" })}
-        </h2>
-        {/* [priority 1 — 2026-06-08] 신입 작가용 명확한 진입 안내. */}
-        <p className="mt-3 text-sm text-text-secondary max-w-2xl">
-          {T({
-            ko: "모든 작업은 스튜디오에서 시작합니다. 번역·출판은 그 다음입니다.",
-            en: "All workflows begin in the Studio. Translate and publish later.",
-            ja: "すべての作業はスタジオから始まります。翻訳・出版はその後です。",
-            zh: "所有工作流程都从工作室开始。翻译和出版稍后进行。",
-          })}
-        </p>
-      </div>
-
-      {/* Hero: Studio (primary, 크게) + Translation (secondary) */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {heroPrimary && renderCard(heroPrimary, 'hero-primary')}
-        {heroSecondary && renderCard(heroSecondary, 'hero-secondary')}
-      </div>
-
-      {/* 모든 앱 보기 토글 */}
-      {rest.length > 0 && (
-        <div className="mt-10">
-          <button
-            type="button"
-            onClick={toggleExpanded}
-            aria-expanded={expanded}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-bg-secondary/40 hover:bg-bg-secondary text-text-secondary hover:text-text-primary font-[--font-mono] text-xs tracking-[0.14em] uppercase transition-colors focus-visible:ring-2 focus-visible:ring-accent-amber"
-          >
-            <span>
-              {T({
-                ko: expanded ? "모든 앱 닫기" : "모든 앱 보기",
-                en: expanded ? "Hide all apps" : "Show all apps",
-                ja: expanded ? "すべてのアプリを閉じる" : "すべてのアプリを表示",
-                zh: expanded ? "收起所有应用" : "查看所有应用",
-              })}
-            </span>
-            <span className="opacity-60">({rest.length})</span>
-            <span className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
-          </button>
-
-          {expanded && (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
-              {rest.map(h => renderCard(h, 'rest'))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function HomePageContent() {
   const { lang } = useLang();
@@ -369,7 +93,7 @@ function HomePageContent() {
     { value: "24h", label: T({ ko: "연재 작업 리듬", en: "Serial workflow", ja: "連載リズム", zh: "连载节奏" }) },
   ];
 
-  const universeHubs = useMemo(
+  const universeHubs = useMemo<HubItem[]>(
     () => {
     const hubs = [
     {
@@ -437,7 +161,7 @@ function HomePageContent() {
     [translatorStudioHref, T],
   );
 
-  const colorMap = {
+  const colorMap: ColorMap = {
     amber: { border: "border-accent-amber/20", bg: "bg-accent-amber/10", text: "text-accent-amber", hoverText: "group-hover:text-accent-amber", glow: "bg-accent-amber/8" },
     blue: { border: "border-accent-blue/20", bg: "bg-accent-blue/10", text: "text-accent-blue", hoverText: "group-hover:text-accent-blue", glow: "bg-accent-blue/8" },
     green: { border: "border-accent-green/20", bg: "bg-accent-green/10", text: "text-accent-green", hoverText: "group-hover:text-accent-green", glow: "bg-accent-green/8" },
@@ -453,7 +177,7 @@ function HomePageContent() {
   // SSR → hydration 전까지 구조적 스켈레톤 표시 (검은 화면 방지)
   if (splashState === "loading") {
     return (
-      <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="로어가드 홈 로딩">
+      <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="Loreguard 홈 로딩">
         {/* Skeleton header */}
         <div className="h-14 border-b border-border/20 bg-bg-secondary/30 animate-pulse" />
         {/* Skeleton hero */}
@@ -474,11 +198,11 @@ function HomePageContent() {
         {/* Centered logo */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-4 animate-in fade-in duration-700">
-            <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo font-mono text-[10px] font-bold !text-white animate-pulse">
-              LG
+            <div className="flex h-10 items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo px-4 font-mono text-[10px] font-bold !text-white animate-pulse">
+              Loreguard
             </div>
             <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-              로어가드 · Loreguard
+              Loreguard
             </div>
           </div>
         </div>
@@ -538,7 +262,7 @@ function HomePageContent() {
                   {T({ ko: "Loreguard · 창작 전문 IDE", en: "Loreguard · Creative IDE", ja: "Loreguard · 創作専門IDE", zh: "Loreguard · 创作专业 IDE" })}
                 </p>
                 <h1 className="site-title mt-5 text-4xl font-bold leading-[0.94] sm:text-5xl md:text-7xl xl:text-[5.4rem]">
-                  LOREGUARD
+                  Loreguard
                 </h1>
                 <p className="mt-6 font-document text-base leading-[1.85] text-text-secondary sm:text-lg sm:leading-[1.95] md:text-[1.24rem]">
                   {T({ ko: "아이디어를 작품으로 묶는 작업대입니다. 질문으로 기준을 잡고, 캔버스에서 작가 결정을 확정하고, 과정기록·권리/IP·출고 패키지로 정리합니다.", en: "A workspace for turning ideas into finished creative assets. Set the baseline through questions, lock author decisions on the canvas, and prepare process records, rights/IP notes, and release packages.", ja: "アイデアを作品にまとめる作業台です。質問で基準を定め、キャンバスで作者の判断を確定し、過程記録・権利/IP・出稿パッケージに整理します。", zh: "把想法整理成作品资产的工作台。通过问题确定基准，在画布上确认作者决策，并整理为过程记录、权利/IP 与出库包。" })}
@@ -588,7 +312,7 @@ function HomePageContent() {
 
       {/* HUB GRID — Hero(Studio primary + Translation secondary) + collapsed rest */}
       <section ref={hubRef} className="section-divider py-20">
-        <HubGrid hubs={universeHubs} colorMap={colorMap} lang={lang} T={T} />
+        <HubGrid hubs={universeHubs} colorMap={colorMap} T={T} />
 
         {/* [P7+P21 루프2 — 2026-06-08] Capability matrix — Novel/Translation 이 모바일·데스크톱
             각각 어떻게 동작하는지 명시. iPad 작가가 진입 시 일관된 기대치 형성. */}
@@ -692,15 +416,15 @@ function HomePageContent() {
           <div className="mx-auto mb-8 h-px w-2/3 bg-[linear-gradient(90deg,transparent,rgba(202,161,92,0.22),transparent)]" />
           <div className="premium-panel-soft flex flex-col items-center gap-5 rounded-xl px-6 py-7 sm:flex-row sm:justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 font-[--font-mono] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
-                LG
+              <span className="flex h-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 px-3 font-[--font-mono] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
+                Loreguard
               </span>
               <p className="font-[--font-mono] text-xs tracking-[0.16em] text-text-tertiary">
                 {T({
-                  ko: "LOREGUARD · 로어가드 · 창작 전문 IDE",
-                  en: "LOREGUARD · Creative IDE",
-                  ja: "LOREGUARD · 創作専門IDE",
-                  zh: "LOREGUARD · 创作专业 IDE",
+                  ko: "Loreguard · 창작 전문 IDE",
+                  en: "Loreguard · Creative IDE",
+                  ja: "Loreguard · 創作専門IDE",
+                  zh: "Loreguard · 创作专业 IDE",
                 })}
               </p>
             </div>

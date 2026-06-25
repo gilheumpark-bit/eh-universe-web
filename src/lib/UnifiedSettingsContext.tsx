@@ -99,6 +99,7 @@ function loadSlots(): APIKeySlot[] {
 function migrateOldKeys(): APIKeySlot[] {
   const slots: APIKeySlot[] = [];
   const providerMap: Record<string, { name: string; model: string }> = {
+    upstage: { name: "Upstage Solar", model: "solar-pro3" },
     gemini: { name: "Gemini", model: "gemini-2.5-flash" },
     openai: { name: "OpenAI", model: "gpt-4.1" },
     claude: { name: "Claude", model: "claude-sonnet-4-6" },
@@ -315,7 +316,7 @@ function syncToLegacyKeys(slots: APIKeySlot[]): void {
     // 동기 import — 이미 같은 번들에 포함되어 있으므로 circular dependency 아님
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { setApiKey, setActiveProvider, setActiveModel } = require('@/lib/ai-providers');
-    const providers = ["gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"] as const;
+    const providers = ["upstage", "gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"] as const;
     let firstActiveProvider: string | null = null;
     let firstActiveModel: string | null = null;
     for (const pid of providers) {
@@ -337,7 +338,7 @@ function syncToLegacyKeys(slots: APIKeySlot[]): void {
   } catch {
     // 번들링 문제 시 폴백 — 비동기 import
     import('@/lib/ai-providers').then(({ setApiKey, setActiveProvider, setActiveModel }) => {
-      const providers = ["gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"] as const;
+      const providers = ["upstage", "gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"] as const;
       let first: string | null = null;
       let firstModel: string | null = null;
       for (const pid of providers) {

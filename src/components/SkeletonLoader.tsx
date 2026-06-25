@@ -26,12 +26,12 @@ interface SkeletonLoaderProps {
 /**
  * Premium skeleton with shimmer animation.
  * Variants control default sizing:
- * - text: single line placeholder
+ * - text: single line loading line
  * - card: card-sized block
  * - panel: tall panel block
  * - editor: wide editor area
  * - sidebar: narrow sidebar strip
- * - avatar: circular avatar placeholder
+ * - avatar: circular avatar loading mark
  * - button: button-sized rectangle
  * - badge: small badge/tag
  */
@@ -131,42 +131,64 @@ export function WritingModeSkeleton({ className = "" }: { className?: string }) 
 // PART 2 — Compound Skeletons
 // ============================================================
 
-/** Studio page skeleton — sidebar + main editor area */
+/** Studio page skeleton — Loreguard header + project basis surface */
 export function StudioPageSkeleton() {
   return (
-    <div className="flex h-screen w-full max-w-full overflow-hidden bg-bg-primary">
-      {/* Sidebar */}
-      <div className="hidden md:flex flex-col w-[260px] border-r border-white/[0.06] p-4 gap-3">
-        <SkeletonLoader variant="text" width="60%" height={20} />
-        <SkeletonLoader variant="text" width="80%" height={14} />
-        <div className="mt-4 flex flex-col gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonLoader key={i} variant="text" height={36} />
+    <div className="flex h-screen w-full max-w-full flex-col overflow-hidden bg-bg-primary text-text-primary">
+      <div className="flex h-[64px] shrink-0 items-center gap-3 border-b border-border bg-bg-primary/95 px-2">
+        <div className="flex min-h-11 items-center rounded-lg border border-border bg-bg-secondary px-3 text-[15px] font-black">
+          Loreguard
+        </div>
+        <div className="hidden min-w-[128px] flex-col text-[11px] font-semibold text-text-secondary md:flex">
+          <span>작품을 정리하고</span>
+          <span>출고까지 이어갑니다</span>
+        </div>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
+          {Array.from({ length: 9 }).map((_, index) => (
+            <div key={index} className="flex h-11 w-12 flex-col items-center justify-center gap-1 rounded-lg">
+              <SkeletonLoader variant="text" width={18} height={18} className="rounded-full" delay={index * 35} />
+              <SkeletonLoader variant="text" width={34} height={7} className="rounded-full" delay={index * 35 + 60} />
+            </div>
           ))}
         </div>
-        <div className="mt-auto">
-          <SkeletonLoader variant="card" height={80} />
+        <div className="hidden items-center gap-2 lg:flex">
+          <SkeletonLoader variant="text" width={74} height={32} className="rounded-full" />
+          <SkeletonLoader variant="text" width={34} height={34} className="rounded-full" delay={80} />
+          <SkeletonLoader variant="text" width={34} height={34} className="rounded-full" delay={120} />
+          <SkeletonLoader variant="text" width={112} height={36} className="rounded-full" delay={160} />
         </div>
       </div>
-      {/* Main editor area */}
-      <div className="min-w-0 flex-1 flex flex-col overflow-hidden p-4 gap-4 sm:p-6">
-        {/* Top toolbar */}
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <SkeletonLoader variant="text" width="min(40vw, 180px)" height={32} className="rounded-lg" />
-          <SkeletonLoader variant="text" width="min(22vw, 100px)" height={32} className="rounded-lg" />
-          <div className="min-w-0 flex-1" />
-          <SkeletonLoader variant="text" width={32} height={32} className="rounded-full" />
-          <SkeletonLoader variant="text" width={32} height={32} className="rounded-full" />
-        </div>
-        {/* Tab bar */}
-        <div className="flex min-w-0 flex-wrap gap-2 overflow-hidden">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonLoader key={i} variant="text" width="min(18vw, 80px)" height={28} className="rounded-md" />
-          ))}
-        </div>
-        {/* Editor body */}
-        <SkeletonLoader variant="editor" className="flex-1" />
-      </div>
+
+      <main className="min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,var(--color-bg-primary),var(--color-bg-secondary))] p-4">
+        <section className="rounded-2xl border border-border bg-bg-secondary/70 p-5 shadow-sm">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <SkeletonLoader variant="badge" width={54} height={28} />
+              <SkeletonLoader variant="text" width={150} height={18} className="rounded-full" delay={80} />
+            </div>
+            <div className="hidden items-center gap-2 md:flex">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <SkeletonLoader key={index} variant="text" width={98} height={44} className="rounded-xl" delay={index * 55} />
+              ))}
+            </div>
+          </div>
+          <div className="mb-7 max-w-3xl space-y-3">
+            <SkeletonLoader variant="badge" width={82} height={14} />
+            <SkeletonLoader variant="text" width="min(62vw, 420px)" height={44} className="rounded-xl" delay={80} />
+            <SkeletonLoader variant="text" width="min(76vw, 620px)" height={16} className="rounded-full" delay={120} />
+            <SkeletonLoader variant="text" width="min(66vw, 520px)" height={16} className="rounded-full" delay={160} />
+          </div>
+          <div className="grid gap-3 md:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="rounded-xl border border-border bg-bg-primary/70 p-4">
+                <SkeletonLoader variant="text" width={34} height={22} className="mb-3 rounded-lg" delay={index * 50} />
+                <SkeletonLoader variant="text" width="75%" height={12} className="mb-2 rounded-full" delay={index * 50 + 60} />
+                <SkeletonLoader variant="text" width="56%" height={10} className="rounded-full" delay={index * 50 + 100} />
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
@@ -224,7 +246,7 @@ export function InternalToolSkeleton() {
 export function LegacyGridSkeleton() {
   return (
     <div className="min-h-screen bg-bg-primary">
-      {/* Header placeholder */}
+      {/* Header loading area */}
       <div className="h-14 border-b border-white/[0.06]" />
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Title */}

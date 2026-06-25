@@ -100,6 +100,14 @@ export interface Message {
     hfcpMode?: string;
     hfcpVerdict?: string;
     hfcpScore?: number;
+    qualityGatePassed?: boolean;
+    qualityGateAttempt?: number;
+    qualityGateReasons?: string[];
+    qualityGateRetryHint?: string;
+    qualityGateHistory?: unknown[];
+    externalCraftLeakHits?: string[];
+    writingContextCompliance?: unknown;
+    ipFiltered?: number;
     qualityTag?: '🟢' | '🟡' | '🔴';
     qualityLabel?: string;
     qualityFindings?: Array<{ kind: string; severity: number; message: string; lineNo?: number; excerpt?: string }>;

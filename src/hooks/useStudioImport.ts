@@ -112,7 +112,7 @@ export function useStudioImport({
       })();
     } catch (err) {
       logger.warn('StudioImport', 'worldImport parse failed', err);
-      setAlertToast({ message: language === 'KO' ? '\\uC138\\uACC4\\uAD00 \\uB370\\uC774\\uD130\\uB97C \\uBD88\\uB7EC\\uC624\\uC9C0 \\uBABB\\uD588\\uC2B5\\uB2C8\\uB2E4. \\uB9C1\\uD06C\\uAC00 \\uC190\\uC0C1\\uB410\\uC744 \\uC218 \\uC788\\uC2B5\\uB2C8\\uB2E4.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });
+      setAlertToast({ message: language === 'KO' ? '세계관 데이터를 불러오지 못했습니다. 링크가 손상됐을 수 있습니다.' : 'Failed to import world data. The link may be corrupted.', variant: 'error' });
       studioRouter.replace(`${pathname}?tab=${activeTab}`, { scroll: false });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,9 +155,44 @@ export function useStudioImport({
       setWorldImportBanner(true);
       setTimeout(() => setWorldImportBanner(false), 5000);
       studioRouter.replace(`${pathname}?tab=writing`, { scroll: false });
+
+      void (async () => {
+        try {
+          if (typeof window === 'undefined') return;
+          const projectId = resolveStudioImportProjectScopeId(currentProjectId);
+          if (!projectId) return;
+          const cp = await import('@/lib/creative-process');
+          const importedContent = [
+            importedConfig.title ? `제목: ${importedConfig.title}` : '',
+            importedConfig.setting ? `출처 위치: ${importedConfig.setting}` : '',
+            typeof json.content === 'string' ? json.content : '',
+          ].filter(Boolean).join('\n\n');
+          const contentHash = await cp.computeSha256Hex(importedContent || JSON.stringify(importedConfig));
+          const sourceId = await cp.recordSource({
+            projectId,
+            sourceType: 'external_doc',
+            label: importedConfig.title || 'Post Import',
+            contentHash,
+            url: window.location.href,
+            visibility: 'private',
+          });
+          await cp.recordCreativeEvent({
+            projectId,
+            targetType: 'manuscript',
+            targetId: importedSessionId,
+            eventType: 'import',
+            actorType: 'human',
+            actorId: 'author',
+            originType: 'EXTERNAL_IMPORT',
+            beforeHash: null,
+            afterHash: contentHash,
+            sourceId,
+          });
+        } catch (cpErr) { logger.warn('StudioImport', 'postImport creative-process logging failed (non-blocking)', cpErr); }
+      })();
     } catch (err) {
       logger.warn('StudioImport', 'postImport parse failed', err);
-      setAlertToast({ message: language === 'KO' ? '\\uAC8C\\uC2DC\\uAE00 \\uB370\\uC774\\uD130\\uB97C \\uBD88\\uB7EC\\uC624\\uC9C0 \\uBABB\\uD588\\uC2B5\\uB2C8\\uB2E4.' : 'Failed to import post data.', variant: 'error' });
+      setAlertToast({ message: language === 'KO' ? '게시글 데이터를 불러오지 못했습니다.' : 'Failed to import post data.', variant: 'error' });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);

@@ -1,0 +1,52 @@
+/* ============================================================
+   World simulator tone contracts
+   ============================================================ */
+
+.ws-tone-neutral { --ws-tone: var(--color-text-tertiary); }
+.ws-tone-fantasy { --ws-tone: #6b46c1; }
+.ws-tone-sf { --ws-tone: #2563eb; }
+.ws-tone-romance { --ws-tone: #db2777; }
+.ws-tone-thriller { --ws-tone: #dc2626; }
+.ws-tone-horror { --ws-tone: #7c3aed; }
+.ws-tone-system { --ws-tone: #0891b2; }
+.ws-tone-fantasy-romance { --ws-tone: #e11d48; }
+.ws-tone-red-soft { --ws-tone: #e63946; }
+.ws-tone-steel { --ws-tone: #457b9d; }
+.ws-tone-teal { --ws-tone: #2a9d8f; }
+.ws-tone-sand { --ws-tone: #e9c46a; }
+.ws-tone-orange-soft { --ws-tone: #f4a261; }
+.ws-tone-ink { --ws-tone: #264653; }
+.ws-tone-violet { --ws-tone: #a855f7; }
+.ws-tone-cyan { --ws-tone: #06b6d4; }
+.ws-tone-emerald { --ws-tone: #059669; }
+.ws-tone-amber-deep { --ws-tone: #d97706; }
+.ws-tone-blue-deep { --ws-tone: #1e40af; }
+.ws-tone-gray { --ws-tone: #6b7280; }
+.ws-tone-red-deep { --ws-tone: #991b1b; }
+.ws-tone-green { --ws-tone: #16a34a; }
+.ws-tone-red { --ws-tone: #ef4444; }
+.ws-tone-green-bright { --ws-tone: #22c55e; }
+.ws-tone-yellow { --ws-tone: #eab308; }
+.ws-tone-blue { --ws-tone: #3b82f6; }
+.ws-tone-orange { --ws-tone: #f97316; }
+.ws-tone-slate { --ws-tone: #1f2937; }
+.ws-tone-sky { --ws-tone: #38bdf8; }
+.ws-tone-lavender { --ws-tone: #a78bfa; }
+.ws-tone-salmon { --ws-tone: #f87171; }
+.ws-tone-mint { --ws-tone: #34d399; }
+
+.ws-genre-card.is-selected {
+  border-color: var(--ws-tone);
+  background: color-mix(in srgb, var(--ws-tone) 10%, transparent);
+}
+.ws-text-tone { color: var(--ws-tone); }
+.ws-border-tone { border-color: var(--ws-tone); }
+.ws-bg-tone { background: var(--ws-tone); border-color: var(--ws-tone); }
+.ws-bg-soft-tone { color: var(--ws-tone); background: color-mix(in srgb, var(--ws-tone) 12%, transparent); }
+.ws-civ-card { border-left-width: 3px; border-left-color: var(--ws-tone); }
+.ws-phoneme-chip { color: var(--ws-tone); border-color: var(--ws-tone); background: color-mix(in srgb, var(--ws-tone) 10%, transparent); }
+.ws-svg { font-family: var(--font-mono, monospace); }
+.ws-svg-line { stroke: var(--ws-tone); }
+.ws-svg-text { fill: var(--ws-tone); }
+.ws-svg-node-halo { fill: var(--ws-tone); stroke: var(--ws-tone); }
+.ws-svg-node-dot { fill: var(--ws-tone); }

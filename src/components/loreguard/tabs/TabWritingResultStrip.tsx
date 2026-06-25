@@ -34,19 +34,12 @@ export function AiResultStrip({
   onDismiss: () => void;
 }) {
   return (
-    <div className="wr-doc" style={{ paddingBottom: 0 }}>
+    <div className="wr-doc wr-result-root">
       <div className="wr-sugg blue" role="status" aria-live="polite" aria-label={labels.aiResultTitle}>
         <div className="wr-sugg-body">
           <div className="wr-line-row">
             <span className="wr-n">{labels.aiResultBadge}</span>
-            <span
-              className="wr-t"
-              style={
-                expanded
-                  ? { whiteSpace: "pre-wrap", maxHeight: 280, overflowY: "auto", display: "block" }
-                  : undefined
-              }
-            >
+            <span className={"wr-t" + (expanded ? " wr-result-expanded" : "")}>
               {expanded ? content : preview}
             </span>
           </div>
@@ -105,7 +98,7 @@ export function TokenRegenerateBar({
   if (!tokenUsage && !hasLatestAssistant) return null;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 28px 0" }}>
+    <div className="wr-token-regenerate">
       {tokenUsage && (
         <span className="pill gray" aria-label={labels.tokenMeterAria}>
           {tokenUsage.used.toLocaleString()} / {tokenUsage.budget.toLocaleString()} {labels.tokenUnit}
@@ -115,8 +108,7 @@ export function TokenRegenerateBar({
       {hasLatestAssistant && (
         <button
           type="button"
-          className="mini-btn"
-          style={{ marginLeft: "auto" }}
+          className="mini-btn wr-push"
           aria-label={labels.regenerateAria}
           title={labels.regenerateAria}
           disabled={isGenerating}

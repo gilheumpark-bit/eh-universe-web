@@ -58,11 +58,25 @@ const nextConfig: NextConfig = {
   // [QA-chief 2026-06-14] Next.js dev indicator hides app-level QA signals and overlaps
   // floating studio controls during design review. Disable it; console/terminal keep dev errors.
   devIndicators: false,
+  allowedDevOrigins: ['127.0.0.1'],
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
       },
     ],
   },
@@ -184,6 +198,13 @@ const nextConfig: NextConfig = {
       { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
     ];
     return [
+      {
+        // 불변 빌드 자산 — 장기 캐시. (Next.js headers는 규칙 누적 적용이라 아래 /:path* 보안헤더도 함께 붙음.)
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
       {
         source: '/:path*',
         headers: [

@@ -33,6 +33,7 @@ import { getSwapController, type AdapterMode } from '@/lib/noa/lora-swap';
 import { buildSafetyEnhancedPrompt, type PrismLevel } from '@/lib/ai/safety-registry';
 import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
 import { enforceServerTierLimit } from '@/lib/server-tier-limit';
+import { isReasoningLevel, type ReasoningLevel } from '@/lib/ai-reasoning';
 
 // [I-07 — 2026-05-10] chat 의 PRISM mode key ('ALL'/'T15'/'M18') → safety-registry PrismLevel.
 const PRISM_MODE_MAP: Record<string, PrismLevel> = {
@@ -41,6 +42,24 @@ const PRISM_MODE_MAP: Record<string, PrismLevel> = {
   M18: 'mature-18',
 };
 
+// [수리] PROD에서 Upstash 미설정 시 IP 토큰예산이 in-memory(lambda별)로 떨어져 우회 가능.
+//   module-eval이라 cold start당 1회만 경고. in-memory fallback 동작 자체는 유지(별건).
+{
+  const isProd = process.env.NODE_ENV === 'production';
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.npm_lifecycle_event === 'build';
+  if (isProd && !isBuildPhase) {
+    const hasUpstash = Boolean(process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim());
+    if (!hasUpstash) {
+      apiLog({
+        level: 'warn',
+        event: 'chat_budget_prod_misconfigured',
+        route: '/api/chat',
+        meta: { message: 'PROD with in-memory chat-budget backend — IP-per-lambda budget bypass risk. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.' },
+      });
+    }
+  }
+}
+
 // ── Input validation helper (#13) ──
 function validateChatRequest(body: Record<string, unknown>): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
   if (!body?.provider || typeof body.provider !== 'string') return { valid: false, error: '요청한 연결 방식이 없습니다.' };
@@ -48,6 +67,11 @@ function validateChatRequest(body: Record<string, unknown>): { valid: true; data
   if (body.messages.length > 200) return { valid: false, error: '한 번에 보낼 수 있는 대화가 너무 많습니다.' };
   if (body.temperature !== undefined && (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 2)) return { valid: false, error: '창의성 값은 0부터 2 사이여야 합니다.' };
   if (body.maxTokens !== undefined && (typeof body.maxTokens !== 'number' || body.maxTokens < 1 || body.maxTokens > 16384)) return { valid: false, error: '응답 길이 값이 허용 범위를 벗어났습니다.' };
+  if (body.reasoning !== undefined) {
+    if (!body.reasoning || typeof body.reasoning !== 'object') return { valid: false, error: '작업 깊이 값이 올바르지 않습니다.' };
+    const level = (body.reasoning as { level?: unknown }).level;
+    if (!isReasoningLevel(level)) return { valid: false, error: '작업 깊이 값이 올바르지 않습니다.' };
+  }
   return { valid: true, data: body };
 }
 
@@ -137,6 +161,7 @@ type ParsedChatFields = {
   provider: ServerProviderId; model: string; systemInstruction: string;
   messages: { role: string; content: string }[];
   temperature: number; clientKey?: string; maxTokens?: number;
+  reasoning?: ReasoningLevel;
   prismMode?: string;
   isChatMode?: boolean;
   /** true: 설정 화면「연결 테스트」— 호스팅 우회하고 전달된 BYOK만 사용 */
@@ -149,10 +174,11 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
   if (!validation.valid) {
     return { ok: false, response: NextResponse.json({ error: validation.error, requestId }, { status: 400 }) };
   }
-  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, prismMode, isChatMode, keyVerification } = validation.data as {
+  const { provider, model, systemInstruction, messages, temperature = 0.9, apiKey: clientKey, maxTokens, reasoning, prismMode, isChatMode, keyVerification } = validation.data as {
     provider: string; model?: string; systemInstruction?: string;
     messages: { role: string; content: string }[];
     temperature?: number; apiKey?: string; maxTokens?: number;
+    reasoning?: { level: ReasoningLevel };
     prismMode?: string; isChatMode?: boolean;
     keyVerification?: boolean;
   };
@@ -174,6 +200,7 @@ function extractChatFields(body: Record<string, unknown>, requestId: string): { 
       temperature,
       clientKey,
       maxTokens,
+      reasoning: reasoning?.level,
       prismMode,
       isChatMode,
       keyVerification: keyVerification === true,
@@ -366,7 +393,7 @@ export async function POST(req: NextRequest) {
 
     const extracted = extractChatFields(parsed.body, requestId);
     if (!extracted.ok) return extracted.response;
-    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, prismMode, isChatMode, keyVerification } = extracted.fields;
+    const { provider, model, systemInstruction, messages, temperature, clientKey, maxTokens, reasoning, prismMode, isChatMode, keyVerification } = extracted.fields;
 
     const userApiKey = normalizeUserApiKey(clientKey);
     const tierGate = await enforceServerTierLimit({
@@ -465,11 +492,11 @@ export async function POST(req: NextRequest) {
 
     // [QA-robustness (2)] RETRYABLE(429/5xx/network) 만 bounded backoff-with-jitter (≤3회).
     // TERMINAL(4xx) 는 즉시 반환 — 과도 재시도로 인한 비용 폭증 차단 (상한 엄수).
-    let dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+    let dispatched = await dispatchStreamWithRetry(provider, auth.apiKey, model, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined, reasoning);
     // DGX Spark fallback is allowed only for local/development API runs.
     if (!dispatched.ok && isDgxDeveloperApiEnabled()) {
       apiLog({ level: 'info', event: 'dgx_fallback', route: '/api/chat', ip, requestId, meta: { originalError: dispatched.error } });
-      dispatched = await dispatchStreamWithRetry('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined);
+      dispatched = await dispatchStreamWithRetry('spark', '', VLLM_MODEL_ID, finalSystem, messages, temperature, typeof maxTokens === 'number' ? maxTokens : undefined, reasoning);
     }
     if (!dispatched.ok) {
       // [QA-robustness (2)] rate/budget hit 은 Retry-After 헤더로 클라이언트 백오프 유도.

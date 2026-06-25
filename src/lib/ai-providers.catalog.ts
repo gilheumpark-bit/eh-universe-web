@@ -1,7 +1,12 @@
 import { L4 } from '@/lib/i18n';
+import type { ProviderRequestSensitivity } from './provider-routing-policy';
+import type { ReasoningLevel, ReasoningStage } from './ai-reasoning';
+
+export type { ReasoningLevel, ReasoningStage } from './ai-reasoning';
 
 /** Provider ID key tuple - single source of truth for all provider keys */
 const _PROVIDER_KEYS = [
+  "upstage",
   "gemini",
   "openai",
   "claude",
@@ -52,15 +57,30 @@ export interface StreamOptions {
   messages: ChatMsg[];
   temperature?: number;
   maxTokens?: number;
+  reasoning?: ReasoningLevel;
+  reasoningStage?: ReasoningStage;
   signal?: AbortSignal;
   onChunk: (text: string) => void;
   prismMode?: string;
   isChatMode?: boolean;
+  /** Request sensitivity controls whether auto-switch may use another saved connection. */
+  dataSensitivity?: ProviderRequestSensitivity;
   /** DGX 멀티에이전트: 특정 모델 강제 지정 (예: 'abliterated', 'r1', 'eva') */
   model?: string;
 }
 
 export const PROVIDERS: Record<ProviderId, ProviderDef> = {
+  upstage: {
+    id: "upstage",
+    name: "Upstage Solar",
+    color: "#ff5f2e",
+    placeholder: "up_... / sk_...",
+    defaultModel: "solar-pro3",
+    models: ["solar-pro3"],
+    testPrompt: 'Say "OK" in one word.',
+    storageKey: "noa_upstage_key",
+    capabilities: { streaming: true, structuredOutput: true, systemInstruction: true, maxContextTokens: 131_072, maxOutputTokens: 32_768, isLocal: false, costTier: 'moderate' },
+  },
   gemini: {
     id: "gemini",
     name: "Google Gemini",
@@ -190,9 +210,9 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
   },
 };
 
-/** @returns Capability metadata for the given provider, falling back to Gemini defaults */
+/** @returns Capability metadata for the given provider, falling back to the app-hosted defaults */
 export function getCapabilities(providerId: ProviderId): ProviderCapabilities {
-  return PROVIDERS[providerId]?.capabilities ?? PROVIDERS.gemini.capabilities;
+  return PROVIDERS[providerId]?.capabilities ?? PROVIDERS.upstage.capabilities;
 }
 
 /** @returns Whether the specified provider supports structured JSON output */

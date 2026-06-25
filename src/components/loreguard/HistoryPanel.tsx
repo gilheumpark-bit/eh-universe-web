@@ -178,19 +178,8 @@ export default function HistoryPanel() {
   return (
     <div
       role="presentation"
-      className="eh-app"
+      className="eh-app history-overlay"
       onClick={() => setOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        minWidth: 0,
-        height: "auto",
-        background: "var(--overlay-scrim)",
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "flex-end",
-      }}
     >
       <aside
         ref={dialogRef}
@@ -198,24 +187,13 @@ export default function HistoryPanel() {
         aria-modal="true"
         aria-label={L4(language, { ko: "히스토리", en: "History", ja: "履歴", zh: "历史" })}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(520px, 94vw)",
-          height: "100%",
-          overflowY: "auto",
-          background: "var(--page-2)",
-          borderLeft: "1px solid var(--line)",
-          boxShadow: "var(--shadow-pop)",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
+        className="history-panel"
       >
         {/* head */}
-        <div className="pcard-h" style={{ marginBottom: 0 }}>
+        <div className="pcard-h history-head">
           <Clock size={16} />
           {L4(language, { ko: "히스토리", en: "History", ja: "履歴", zh: "历史" })}
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)" }}>
+          <span className="history-meta">
             {lastSaveTime
               ? `${L4(language, { ko: "마지막 저장", en: "Last saved", ja: "最終保存", zh: "最后保存" })} · ${formatAt(lastSaveTime, language)}`
               : L4(language, { ko: "저장 전", en: "Not saved yet", ja: "未保存", zh: "尚未保存" })}
@@ -225,7 +203,7 @@ export default function HistoryPanel() {
             className="eh-icbtn"
             aria-label={L4(language, { ko: "패널 닫기", en: "Close panel", ja: "パネルを閉じる", zh: "关闭面板" })}
             autoFocus
-            style={{ marginLeft: "auto" }}
+            data-align="end"
             onClick={() => setOpen(false)}
           >
             <X size={16} />
@@ -236,12 +214,12 @@ export default function HistoryPanel() {
         <section className="pcard" aria-label={L4(language, { ko: "회차 저장 이력", en: "Saved sessions", ja: "保存された回", zh: "已保存章节" })}>
           <div className="pcard-h">
             {L4(language, { ko: "회차 저장 이력", en: "Saved sessions", ja: "保存された回", zh: "已保存章节" })}
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)" }}>
+            <span className="history-count">
               {sortedSessions.length}
             </span>
           </div>
           {sortedSessions.length === 0 ? (
-            <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+            <div className="wr-srow history-muted-row">
               {L4(language, {
                 ko: "현재 프로젝트에 저장된 회차가 없습니다.",
                 en: "No saved sessions in this project.",
@@ -250,7 +228,7 @@ export default function HistoryPanel() {
               })}
             </div>
           ) : (
-            <ul style={{ display: "flex", flexDirection: "column", gap: 6, margin: 0, padding: 0, listStyle: "none", maxHeight: 280, overflowY: "auto" }}>
+            <ul className="history-list history-list-sessions">
               {sortedSessions.map((s) => (
                 <li key={s.id}>
                   <button
@@ -262,26 +240,16 @@ export default function HistoryPanel() {
                       ja: `回を開く: ${s.title || s.config.genre}`,
                       zh: `打开章节: ${s.title || s.config.genre}`,
                     })}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "9px 12px",
-                      borderRadius: 11,
-                      border: `1px solid ${currentSessionId === s.id ? "var(--primary)" : "var(--line)"}`,
-                      background: "var(--card-2)",
-                      color: "inherit",
-                      font: "inherit",
-                      cursor: "pointer",
-                    }}
+                    className={`history-session-btn ${currentSessionId === s.id ? "is-current" : ""}`}
                   >
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div className="history-session-title">
                       {s.title || s.config.genre || "Untitled"}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--ink-3)", display: "flex", gap: 8, marginTop: 3 }}>
+                    <div className="history-session-meta">
                       <span>{s.config.genre}</span>
                       <span>EP.{s.config.episode}</span>
                       <span>{s.messages.length} msg</span>
-                      <span style={{ marginLeft: "auto" }}>{formatAt(s.lastUpdate, language)}</span>
+                      <span className="history-time-push">{formatAt(s.lastUpdate, language)}</span>
                     </div>
                   </button>
                 </li>
@@ -294,12 +262,12 @@ export default function HistoryPanel() {
         <section className="pcard" aria-label={L4(language, { ko: "버전 백업", en: "Version backups", ja: "バージョンバックアップ", zh: "版本备份" })}>
           <div className="pcard-h">
             {L4(language, { ko: "버전 백업", en: "Version backups", ja: "バージョンバックアップ", zh: "版本备份" })}
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)" }}>
+            <span className="history-count">
               {(versionedBackups ?? []).length}
             </span>
           </div>
           {(versionedBackups ?? []).length === 0 ? (
-            <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+            <div className="wr-srow history-muted-row">
               {L4(language, {
                 ko: "버전 백업이 없습니다 (저장 시 자동 적재).",
                 en: "No version backups yet (created automatically on save).",
@@ -308,25 +276,16 @@ export default function HistoryPanel() {
               })}
             </div>
           ) : (
-            <ul style={{ display: "flex", flexDirection: "column", gap: 6, margin: 0, padding: 0, listStyle: "none", maxHeight: 180, overflowY: "auto" }}>
+            <ul className="history-list history-list-backups">
               {(versionedBackups ?? []).map((b) => (
                 <li
                   key={b.timestamp}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 11,
-                    border: "1px solid var(--line)",
-                    background: "var(--card-2)",
-                    fontSize: 12,
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "baseline",
-                  }}
+                  className="history-backup-item"
                 >
-                  <span style={{ fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="history-backup-title">
                     {b.label || formatAt(b.timestamp, language)}
                   </span>
-                  <span style={{ color: "var(--ink-3)", fontSize: 11 }}>
+                  <span className="history-backup-meta">
                     {L4(language, {
                       ko: `프로젝트 ${b.projects.length}개`,
                       en: `${b.projects.length} project(s)`,
@@ -334,14 +293,14 @@ export default function HistoryPanel() {
                       zh: `${b.projects.length} 个项目`,
                     })}
                   </span>
-                  <span style={{ marginLeft: "auto", color: "var(--ink-3)", fontSize: 11, flexShrink: 0 }}>
+                  <span className="history-backup-time">
                     {formatAt(b.timestamp, language)}
                   </span>
                 </li>
               ))}
             </ul>
           )}
-          <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--ink-3)" }}>
+          <p className="history-note">
             {L4(language, {
               ko: "복원 실행은 설정 → 백업 복원에서 (본 패널은 열람 전용).",
               en: "To restore, use Settings → Backup restore (this panel is read-only).",
@@ -356,14 +315,14 @@ export default function HistoryPanel() {
           <div className="pcard-h">
             {L4(language, { ko: "창작 이벤트", en: "Creative events", ja: "創作イベント", zh: "创作事件" })}
             {events !== null && (
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-3)" }}>
+              <span className="history-count">
                 {events.length >= EVENTS_LIMIT ? `${EVENTS_LIMIT}+` : events.length}
               </span>
             )}
             <button
               type="button"
               className="mini-btn"
-              style={{ marginLeft: "auto" }}
+              data-align="end"
               disabled={eventsLoading}
               onClick={() => void refreshEvents()}
             >
@@ -372,21 +331,21 @@ export default function HistoryPanel() {
             </button>
           </div>
           {eventsLoading ? (
-            <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+            <div className="wr-srow history-muted-row">
               {L4(language, { ko: "불러오는 중…", en: "Loading…", ja: "読み込み中…", zh: "加载中…" })}
             </div>
           ) : eventsError ? (
-            <div className="wr-srow" role="alert" style={{ color: "var(--c-amber)" }}>
+            <div className="wr-srow history-warning" role="alert">
               <span className="rdot amber" />
               {L4(language, { ko: "이벤트 로드 실패: ", en: "Failed to load events: ", ja: "イベントの読み込みに失敗: ", zh: "事件加载失败: " })}
               {eventsError}
             </div>
           ) : !currentProjectId ? (
-            <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+            <div className="wr-srow history-muted-row">
               {L4(language, { ko: "프로젝트가 없습니다.", en: "No project.", ja: "プロジェクトがありません。", zh: "没有项目。" })}
             </div>
           ) : events === null || events.length === 0 ? (
-            <div className="wr-srow" style={{ color: "var(--ink-3)" }}>
+            <div className="wr-srow history-muted-row">
               {L4(language, {
                 ko: "기록된 창작 이벤트가 없습니다. 상세는 집필 탭 → 확인서.",
                 en: "No creative events recorded. See Writing tab → Certificate for details.",
@@ -396,19 +355,19 @@ export default function HistoryPanel() {
             </div>
           ) : (
             <>
-              <ul style={{ display: "flex", flexDirection: "column", gap: 5, margin: 0, padding: 0, listStyle: "none" }}>
+              <ul className="history-list history-event-list">
                 {recentEvents.map((e) => (
-                  <li key={e.id} className="wr-srow" style={{ padding: "3px 0" }}>
+                  <li key={e.id} className="wr-srow history-event-row">
                     <span className="rdot blue" />
-                    <span style={{ fontWeight: 700, color: "var(--ink-1)", fontSize: 12 }}>{e.eventType}</span>
-                    <span style={{ color: "var(--ink-3)", fontSize: 11.5 }}>{e.targetType}</span>
-                    <span style={{ marginLeft: "auto", color: "var(--ink-3)", fontSize: 11 }}>
+                    <span className="history-event-type">{e.eventType}</span>
+                    <span className="history-event-target">{e.targetType}</span>
+                    <span className="history-event-time">
                       {formatAt(e.createdAt, language)}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--ink-3)" }}>
+              <p className="history-note">
                 {L4(language, {
                   ko: "최근 5건 — 전체·발급은 집필 탭 → 확인서.",
                   en: "Latest 5 — full list & certificate in Writing tab → Certificate.",

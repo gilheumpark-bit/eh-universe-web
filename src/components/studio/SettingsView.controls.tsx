@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useUserRoleSafe } from '@/contexts/UserRoleContext';
 import { useUnifiedSettings } from '@/lib/UnifiedSettingsContext';
 import { AppLanguage } from '@/lib/studio-types';
@@ -43,11 +43,21 @@ interface SettingCardProps {
 
 export function SettingCard({ icon, title, description, children, onClick, danger }: SettingCardProps) {
   const interactive = typeof onClick === 'function';
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!interactive) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onClick?.();
+  };
+
   return (
     <div
       onClick={onClick}
+      onKeyDown={onKeyDown}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
       className={`flex items-center justify-between gap-3 p-4 md:p-5 rounded-3xl border border-transparent transition-[transform,background-color,border-color,color] ${
-        interactive ? 'cursor-pointer hover:bg-bg-secondary/40 hover:border-border active:scale-[0.98]' : ''
+        interactive ? 'cursor-pointer hover:bg-bg-secondary/40 hover:border-border active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue' : ''
       } ${danger ? 'hover:bg-accent-red/10 hover:border-accent-red/30' : ''}`}
     >
       <div className="flex items-center gap-3 md:gap-4 min-w-0">
@@ -76,11 +86,16 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
       aria-checked={checked}
       aria-label={label}
       onClick={(event) => { event.stopPropagation(); onChange(!checked); }}
-      className={`relative w-10 h-6 rounded-full flex items-center transition-colors duration-300 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
-        checked ? 'bg-accent-blue justify-end' : 'bg-bg-tertiary justify-start'
-      }`}
+      className="relative flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
     >
-      <span className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform mx-1" />
+      <span
+        aria-hidden="true"
+        className={`flex h-6 w-10 items-center rounded-full transition-colors duration-300 ${
+          checked ? 'bg-accent-blue justify-end' : 'bg-bg-tertiary justify-start'
+        }`}
+      >
+        <span className="mx-1 h-4 w-4 rounded-full bg-white shadow-md transition-transform" />
+      </span>
     </button>
   );
 }
@@ -134,7 +149,7 @@ export function InstallAppSection({ language }: { language: AppLanguage }) {
                 setState(isInstalled() ? 'installed' : canInstall() ? 'installable' : 'unavailable');
               });
             }}
-            className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-accent-blue text-white hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+            className="min-h-[44px] px-3 py-1.5 rounded-xl text-[11px] font-bold bg-accent-blue text-white hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
           >
             {L4(language, { ko: '설치', en: 'Install', ja: 'インストール', zh: '安装' })}
           </button>
@@ -171,7 +186,7 @@ export function ThemeSection({ language }: { language: AppLanguage }) {
             role="radio"
             aria-checked={theme === 'light'}
             onClick={() => setTheme('light')}
-            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+            className={`min-h-[44px] px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
               theme === 'light' ? 'bg-bg-primary text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-primary'
             }`}
           >
@@ -183,7 +198,7 @@ export function ThemeSection({ language }: { language: AppLanguage }) {
             role="radio"
             aria-checked={theme === 'dark'}
             onClick={() => setTheme('dark')}
-            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+            className={`min-h-[44px] px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
               theme === 'dark' ? 'bg-bg-primary text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-primary'
             }`}
           >
@@ -287,7 +302,7 @@ export function FontSizeSection({ language }: { language: AppLanguage }) {
           step={1}
           value={size}
           onChange={(event) => update(Number.parseInt(event.target.value, 10))}
-          className="w-32 accent-accent-blue"
+          className="min-h-[44px] w-32 accent-accent-blue"
           aria-label={L4(language, { ko: '폰트 크기 슬라이더', en: 'Font size slider', ja: 'フォントサイズスライダー', zh: '字体大小滑块' })}
         />
         <span className="text-[11px] font-bold text-text-tertiary tabular-nums w-8 text-right">{size}px</span>

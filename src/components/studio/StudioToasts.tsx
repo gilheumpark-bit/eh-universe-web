@@ -79,6 +79,13 @@ function ToastCard({
     },
   };
   const v = variants[variant];
+  const bindDrainBar = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node || autoDismissMs === undefined) return;
+      node.style.setProperty('--toast-drain-duration', `${autoDismissMs}ms`);
+    },
+    [autoDismissMs],
+  );
 
   return (
     <div className={`
@@ -103,7 +110,7 @@ function ToastCard({
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
           <div
             className={`h-full w-full ${v.progress} toast-drain-bar`}
-            style={{ opacity: 0.6, animationDuration: `${autoDismissMs}ms` }}
+            ref={bindDrainBar}
           />
         </div>
       )}

@@ -44,6 +44,11 @@ const REL_LABELS_4LANG: Record<CharRelationType, { ko: string; en: string; ja: s
   subordinate: { ko: '부하', en: 'Subordinate', ja: '部下', zh: '下属' },
 };
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 // ============================================================
 // PART 2 — 원형 좌표 계산
 // ============================================================
@@ -180,8 +185,7 @@ export function CharacterRelationGraph({
               key={c.id}
               onMouseEnter={() => setHoveredChar(c.name)}
               onMouseLeave={() => setHoveredChar(null)}
-              className="cursor-pointer transition-opacity"
-              style={{ opacity: isDimmed ? 0.3 : 1 }}
+              className={`cursor-pointer transition-opacity ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
             >
               <title>{`${c.name}${c.role ? ` (${c.role})` : ''}`}</title>
               <circle
@@ -200,7 +204,7 @@ export function CharacterRelationGraph({
                 fontSize="11"
                 fontWeight="700"
                 fill={isHovered ? 'var(--color-bg-primary)' : 'var(--color-text-primary)'}
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                className="studio-svg-static"
               >
                 {pos.initial}
               </text>
@@ -238,8 +242,8 @@ export function CharacterRelationGraph({
           {Array.from(new Set(validRelations.map(r => r.type))).map(t => (
             <span key={t} className="inline-flex items-center gap-1 text-[9px] text-text-tertiary">
               <span
-                className="inline-block w-2 h-0.5 rounded"
-                style={{ background: REL_COLORS[t]?.stroke || '#888' }}
+                ref={(node) => bindStudioTone(node, REL_COLORS[t]?.stroke || '#888')}
+                className="inline-block w-2 h-0.5 rounded studio-tone-swatch"
                 aria-hidden="true"
               />
               {L4(language, REL_LABELS_4LANG[t] || { ko: t, en: t, ja: t, zh: t })}

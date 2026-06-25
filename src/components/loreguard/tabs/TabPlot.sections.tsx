@@ -11,17 +11,17 @@ interface PlotEmptyStateProps {
 export function PlotEmptyState({ createNewSession, openQuickStart }: PlotEmptyStateProps) {
   return (
     <div className="pl-grid">
-      <section className="pl-center" style={{ gridColumn: "1 / -1" }}>
+      <section className="pl-center pl-full-span">
         <div className="pl-top">
           <div>
             <div className="pl-title">
-              <Branch size={19} style={{ color: "var(--primary)" }} />
+              <Branch size={19} className="pl-title-icon" />
               메인 시나리오 모드
             </div>
             <div className="pl-sub">아직 작업할 프로젝트가 없습니다. 새 프로젝트를 시작하세요.</div>
           </div>
         </div>
-        <div className="pl-board" style={{ display: "flex", gap: 12 }}>
+        <div className="pl-board pl-empty-actions">
           <button type="button" className="btn" onClick={() => createNewSession()}>
             <Plus size={15} />
             새 프로젝트 시작
@@ -31,13 +31,13 @@ export function PlotEmptyState({ createNewSession, openQuickStart }: PlotEmptySt
             퀵스타트
           </button>
         </div>
-        <div className="pl-board" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+        <div className="pl-board pl-empty-cards">
           {[
             ["전환점", "도입, 상승, 위기, 결말의 굵은 사건을 잡습니다."],
             ["갈등 축", "인물 욕망과 세계 규칙이 충돌하는 지점을 표시합니다."],
             ["회수 장치", "복선, 약속, 미해결 정보를 출고 전까지 추적합니다."],
           ].map(([title, body]) => (
-            <article key={title} className="pl-card" style={{ minHeight: 0 }}>
+            <article key={title} className="pl-card pl-card-flat">
               <div className="pl-card-title">{title}</div>
               <div className="pl-card-desc">{body}</div>
             </article>
@@ -85,6 +85,16 @@ export function PlotRail({
   adoptSuggestion,
   ignoreSuggestion,
 }: PlotRailProps) {
+  const collapsedSummary = [
+    { label: "회차", value: `${currentEpisode}화`, tone: "blue" },
+    { label: "비트", value: String(beatCount), tone: beatCount > 0 ? "green" : "amber" },
+    {
+      label: "제안",
+      value: aiBusy ? "중" : String(aiSuggestions.length),
+      tone: aiBusy ? "blue" : aiSuggestions.length > 0 ? "green" : "gray",
+    },
+  ];
+
   if (!railOpen) {
     return (
       <aside id="lg-plot-rail" className="pl-rail collapsed" aria-label="메인 시나리오 개요 레일 (접힘)">
@@ -98,6 +108,17 @@ export function PlotRail({
           <Map size={17} aria-hidden="true" />
         </button>
         <span className="wd-vlabel">메인 시나리오</span>
+        <span
+          className="wd-collapsed-summary"
+          aria-label={collapsedSummary.map((item) => `${item.label} ${item.value}`).join(", ")}
+        >
+          {collapsedSummary.map((item) => (
+            <span key={`${item.label}:${item.value}`} className={`wd-mini-chip ${item.tone}`}>
+              <small>{item.label}</small>
+              <b>{item.value}</b>
+            </span>
+          ))}
+        </span>
       </aside>
     );
   }
@@ -111,7 +132,7 @@ export function PlotRail({
       aria-modal={isRailSheet ? true : undefined}
     >
       <div className="pl-rail-head">
-        <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+        <span className="pl-rail-title">
           <Map size={17} />
           메인 시나리오 개요
         </span>
@@ -130,8 +151,7 @@ export function PlotRail({
         <div className="pl-proj-v">{projectName}</div>
         <button
           type="button"
-          className="btn"
-          style={{ width: "100%", justifyContent: "center", marginTop: "10px" }}
+          className="btn pl-full-btn pl-settings-btn"
           onClick={() => {
             openSettings();
             closeRailIfSheet();
@@ -161,8 +181,7 @@ export function PlotRail({
       </div>
       <button
         type="button"
-        className="btn ghost"
-        style={{ width: "100%", justifyContent: "center" }}
+        className="btn ghost pl-full-btn"
         onClick={() => {
           addBeat();
           closeRailIfSheet();
@@ -174,8 +193,7 @@ export function PlotRail({
 
       <button
         type="button"
-        className="btn"
-        style={{ width: "100%", justifyContent: "center" }}
+        className="btn pl-full-btn"
         onClick={suggestBeats}
         disabled={aiBusy}
         aria-busy={aiBusy}
@@ -186,7 +204,7 @@ export function PlotRail({
 
       {aiError && (
         <div className="pl-citem" role="alert">
-          <div className="pl-citem-q" style={{ color: "var(--c-amber)" }}>
+          <div className="pl-citem-q pl-warning">
             {aiError}
           </div>
         </div>
@@ -194,10 +212,10 @@ export function PlotRail({
 
       {aiSuggestions.length > 0 && (
         <>
-          <div className="pl-proj-k" style={{ marginTop: 2 }}>
+          <div className="pl-proj-k pl-suggestion-title">
             노아 제안 ({aiSuggestions.length})
             {aiFromCache && (
-              <span style={{ opacity: 0.6, marginLeft: 4 }} title="로컬 캐시에서 즉시 불러옴 (24시간 보관)">
+              <span className="pl-cache-chip" title="로컬 캐시에서 즉시 불러옴 (24시간 보관)">
                 · 캐시
               </span>
             )}
@@ -208,11 +226,10 @@ export function PlotRail({
                 <span className="pl-citem-t">{suggestion.title}</span>
               </div>
               {suggestion.summary && <div className="pl-citem-q">{suggestion.summary}</div>}
-              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+              <div className="pl-suggestion-actions">
                 <button
                   type="button"
-                  className="btn"
-                  style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "5px 10px" }}
+                  className="btn pl-suggestion-action"
                   onClick={() => {
                     adoptSuggestion(suggestion);
                     closeRailIfSheet();
@@ -222,8 +239,7 @@ export function PlotRail({
                 </button>
                 <button
                   type="button"
-                  className="btn ghost"
-                  style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "5px 10px" }}
+                  className="btn ghost pl-suggestion-action"
                   onClick={() => {
                     ignoreSuggestion(suggestion);
                     closeRailIfSheet();

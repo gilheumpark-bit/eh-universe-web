@@ -22,12 +22,12 @@ export function EpisodeManuscriptsCard({
       <div className="pcard-h">
         <Layers size={15} />
         {L4(language, { ko: "회차 원고", en: "Episode manuscripts" })}
-        <span className="pill gray" style={{ marginLeft: "auto" }}>
+        <span className="pill gray wr-push">
           {L4(language, { ko: `${manuscripts.length}편`, en: `${manuscripts.length} episodes` })}
         </span>
       </div>
       {manuscripts.length === 0 ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+        <div className="wr-srow wr-muted-row">
           {L4(language, { ko: "저장된 회차 원고가 없습니다", en: "No saved episode manuscripts" })}
         </div>
       ) : (
@@ -58,6 +58,7 @@ export function ExportActionsCard({
   onExportTxt,
   onExportEPUB,
   onExportDOCX,
+  onExportHWPX,
   onExportFullBackup,
   onShareCurrent,
 }: {
@@ -70,6 +71,7 @@ export function ExportActionsCard({
   onExportTxt: () => void;
   onExportEPUB: () => void;
   onExportDOCX: () => void;
+  onExportHWPX: () => void;
   onExportFullBackup: () => void;
   onShareCurrent: () => void;
 }) {
@@ -79,7 +81,7 @@ export function ExportActionsCard({
         <Quote size={15} />
         {L4(language, { ko: "내보내기", en: "Export" })}
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div className="wr-action-wrap">
         <button type="button" className="mini-btn" disabled={!canExportProject} onClick={onExportTxt}>
           {L4(language, { ko: "TXT (전 회차)", en: "TXT (all episodes)" })}
         </button>
@@ -88,6 +90,9 @@ export function ExportActionsCard({
         </button>
         <button type="button" className="mini-btn" disabled={!canExportSession} onClick={onExportDOCX}>
           DOCX
+        </button>
+        <button type="button" className="mini-btn" disabled={!canExportSession} onClick={onExportHWPX}>
+          HWPX
         </button>
         <button type="button" className="mini-btn" disabled={!canExportAll} onClick={onExportFullBackup}>
           {L4(language, { ko: "전체 백업 파일", en: "Full backup file" })}
@@ -107,7 +112,7 @@ export function ExportActionsCard({
           </button>
         )}
       </div>
-      <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+      <div className="wr-srow wr-muted-row wr-gap-top">
         {L4(language, {
           ko: "전체 백업 파일은 모든 프로젝트를 포함합니다 — 재해 복구용",
           en: "The full backup file includes every project — for disaster recovery",
@@ -151,8 +156,7 @@ export function PublishAuditCard({
         {L4(language, { ko: "출고 검수", en: "Publish audit" })}
         {audit && (
           <span
-            className={"pill " + (audit.findings.length === 0 ? "green" : "amber")}
-            style={{ marginLeft: "auto" }}
+            className={"pill wr-push " + (audit.findings.length === 0 ? "green" : "amber")}
           >
             {audit.findings.length === 0
               ? L4(language, { ko: "문제 없음", en: "No issues" })
@@ -160,8 +164,8 @@ export function PublishAuditCard({
           </span>
         )}
       </div>
-      <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
-        <span style={{ flex: 1, minWidth: 0 }}>
+      <div className="wr-srow wr-muted-row">
+        <span className="wr-row-body">
           {L4(language, { ko: "검수 기준: ", en: "Review set: " })}
           {harnessSummary}
         </span>
@@ -181,8 +185,7 @@ export function PublishAuditCard({
       </div>
       <button
         type="button"
-        className="btn"
-        style={{ width: "100%", justifyContent: "center" }}
+        className="btn wr-full-action"
         disabled={!auditTarget}
         onClick={onRunAudit}
       >
@@ -192,25 +195,25 @@ export function PublishAuditCard({
           : L4(language, { ko: "검수할 원고가 없습니다", en: "No manuscript to audit" })}
       </button>
       {audit == null ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+        <div className="wr-srow wr-muted-row wr-gap-top">
           {L4(language, {
             ko: "문장부호·맞춤법·띄어쓰기·문장 길이·미완 표식 검사",
             en: "Checks punctuation, spelling, spacing, sentence length, and unfinished markers",
           })}
         </div>
       ) : audit.findings.length === 0 ? (
-        <div className="wr-srow" style={{ marginTop: 8 }}>
+        <div className="wr-srow wr-gap-top">
           <span className="rdot green" />
           {L4(language, { ko: "검출된 문제 없음", en: "No issues found" })}
           <b>{L4(language, { ko: "0건", en: "0" })}</b>
         </div>
       ) : (
         audit.findings.map((finding) => (
-          <div key={finding.id} className="wr-srow" style={{ alignItems: "flex-start" }}>
-            <span className={"rdot " + auditSevColor(finding.severity)} style={{ marginTop: 5 }} />
-            <span style={{ flex: 1, minWidth: 0 }}>
+          <div key={finding.id} className="wr-srow wr-row-top">
+            <span className={"rdot wr-dot-top " + auditSevColor(finding.severity)} />
+            <span className="wr-row-body">
               {finding.title}
-              <span style={{ display: "block", color: "var(--c-sub, #888)", fontSize: 11.5 }}>
+              <span className="wr-row-detail">
                 {finding.detail}
                 {finding.suggestion ? ` · ${finding.suggestion}` : ""}
               </span>
@@ -219,7 +222,7 @@ export function PublishAuditCard({
         ))
       )}
       {audit && (
-        <div className="wr-srow" style={{ marginTop: 8, color: "var(--c-sub, #888)" }}>
+        <div className="wr-srow wr-muted-row wr-gap-top">
           {L4(language, {
             ko: `${audit.stats.totalChars.toLocaleString()}자 · 문단 ${audit.stats.totalParagraphs}개 · 대사 ${Math.round(audit.stats.dialogueRatio * 100)}%`,
             en: `${audit.stats.totalChars.toLocaleString()} chars · ${audit.stats.totalParagraphs} paragraphs · dialogue ${Math.round(audit.stats.dialogueRatio * 100)}%`,
@@ -246,12 +249,12 @@ export function PlatformFitCard({
         {L4(language, { ko: "플랫폼 자수 적합", en: "Platform length fit" })}
       </div>
       {platformFits.length === 0 ? (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+        <div className="wr-srow wr-muted-row">
           {L4(language, { ko: "검수할 원고가 없습니다", en: "No manuscript to check" })}
         </div>
       ) : (
         <>
-          <div className="wr-srow" style={{ color: "var(--c-sub, #888)" }}>
+          <div className="wr-srow wr-muted-row">
             {L4(language, {
               ko: `기준: ${auditTarget?.label ?? ""} · ${platformFits[0].fit.chars.toLocaleString()}자 (공백 포함)`,
               en: `Target: ${auditTarget?.label ?? ""} · ${platformFits[0].fit.chars.toLocaleString()} chars (incl. spaces)`,
@@ -260,16 +263,16 @@ export function PlatformFitCard({
           {platformFits.map(({ spec, fit }) => (
             <div key={spec.id} className="wr-srow">
               <span className={"rdot " + (fit.withinRange ? "green" : "amber")} />
-              <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="wr-row-body">
                 {spec.label} {spec.minChars.toLocaleString()}~{spec.maxChars.toLocaleString()}
-                <span style={{ display: "block", color: "var(--c-sub, #888)", fontSize: 11.5 }}>
+                <span className="wr-row-detail">
                   기준일 {fit.checkedAt} · {fit.unitLabelKo} · {spec.sourceSummaryKo}
                 </span>
               </span>
-              <b style={{ marginLeft: "auto" }}>{fit.note}</b>
+              <b>{fit.note}</b>
             </div>
           ))}
-          <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+          <div className="wr-srow wr-muted-row wr-gap-top">
             {L4(language, {
               ko: "참고용 — 기준 범위를 벗어나도 내보내기는 계속할 수 있습니다",
               en: "Advisory — exporting is never blocked even when out of range",
@@ -297,7 +300,7 @@ export function IpReadinessCard({
       <div className="pcard-h">
         <Flag size={15} />
         {L4(language, { ko: "IP 준비도", en: "IP readiness" })}
-        <span className="pill gray" style={{ marginLeft: "auto" }}>
+        <span className="pill gray wr-push">
           {readinessLabel(language, ipResult.score)}
         </span>
       </div>
@@ -310,8 +313,8 @@ export function IpReadinessCard({
           ["riskControl", { ko: "리스크관리", en: "Risk control" }],
         ] as const
       ).map(([key, label]) => (
-        <div key={key} className="wr-srow" style={{ gap: 8 }}>
-          <span style={{ width: 76, flexShrink: 0 }}>{L4(language, label)}</span>
+        <div key={key} className="wr-srow wr-tight-row">
+          <span className="wr-range-label">{L4(language, label)}</span>
           <input
             type="range"
             min={0}
@@ -322,12 +325,12 @@ export function IpReadinessCard({
               en: `IP readiness — self-assessed ${label.en}`,
             })}
             onChange={(event) => setIpParts((state) => ({ ...state, [key]: Number(event.target.value) }))}
-            style={{ flex: 1, minWidth: 0 }}
+            className="wr-range-input"
           />
-          <b style={{ width: 64, textAlign: "right" }}>{readinessLabel(language, ipParts[key])}</b>
+          <b className="wr-range-value">{readinessLabel(language, ipParts[key])}</b>
         </div>
       ))}
-      <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+      <div className="wr-srow wr-muted-row wr-gap-top">
         {L4(language, {
           ko: "작가 자가 평가를 바탕으로 보강할 위치를 먼저 보여줍니다.",
           en: "Shows where to strengthen first from the author's self-assessment.",
@@ -354,8 +357,7 @@ export function WorkReceiptCard({
       </div>
       <button
         type="button"
-        className="btn"
-        style={{ width: "100%", justifyContent: "center" }}
+        className="btn wr-full-action"
         onClick={onIssueReceipt}
       >
         <Check size={14} />
@@ -363,23 +365,12 @@ export function WorkReceiptCard({
       </button>
       {receipt ? (
         <pre
-          style={{
-            maxHeight: 200,
-            overflowY: "auto",
-            whiteSpace: "pre-wrap",
-            fontSize: 11,
-            color: "var(--c-sub, #888)",
-            border: "1px solid var(--line)",
-            borderRadius: 8,
-            padding: 8,
-            margin: "8px 0 0",
-            background: "transparent",
-          }}
+          className="wr-receipt-pre"
         >
           {receipt}
         </pre>
       ) : (
-        <div className="wr-srow" style={{ color: "var(--c-sub, #888)", marginTop: 8 }}>
+        <div className="wr-srow wr-muted-row wr-gap-top">
           {L4(language, {
             ko: "검수, 플랫폼 적합, 권리/IP 점검 내역을 과정기록으로 남깁니다.",
             en: "Saves audit, platform fit, and rights/IP checks into the process record.",

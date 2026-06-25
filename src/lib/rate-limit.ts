@@ -151,6 +151,8 @@ export const RATE_LIMITS = {
   translate: { windowMs: 60_000, maxRequests: 30 },
   /** /api/upload — 문서 파싱 */
   upload: { windowMs: 60_000, maxRequests: 24 },
+  /** /api/fetch-url — 외부 URL 본문 프록시 */
+  fetchUrl: { windowMs: 60_000, maxRequests: 40 },
   // [chaos-fix 2026-06-11] /api/vitals 전용 버킷. 한 페이지가 LCP·CLS·INP·FCP·TTFB 등
   // 5개+ 지표를 각각 비콘으로 보내고 CLS/INP 는 값 변동 시 반복 발송 → default(60/min)로는
   // 정상 SPA 탐색만으로 429 발생(카오스 하네스: 전 라우트 재현). 저위험(same-origin·10KB cap·

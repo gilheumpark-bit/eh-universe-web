@@ -482,45 +482,27 @@ export default function TranslatePanels({
 
   return (
     <div
+      className="tx-panel-overlay"
       role="presentation"
       onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        background: "var(--overlay-scrim)",
-        display: "flex",
-        justifyContent: "flex-end",
-      }}
     >
       <aside
         ref={dialogRef}
+        className="tx-panel-shell"
         role="dialog"
         aria-modal="true"
         aria-label={L4(language, meta.label)}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(640px, 94vw)",
-          height: "100%",
-          background: "var(--page-2)",
-          borderLeft: "1px solid var(--line)",
-          boxShadow: "var(--shadow-pop)",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
       >
         {/* head */}
-        <div className="pcard-h" style={{ marginBottom: 0 }}>
+        <div className="pcard-h tx-panel-head">
           <MetaIcon size={16} strokeWidth={1.6} />
           {L4(language, meta.label)}
           <button
             type="button"
-            className="eh-icbtn"
+            className="eh-icbtn tx-panel-close"
             aria-label={L4(language, { ko: "패널 닫기", en: "Close panel" })}
             autoFocus
-            style={{ marginLeft: "auto" }}
             onClick={onClose}
           >
             <X size={16} />
@@ -528,7 +510,7 @@ export default function TranslatePanels({
         </div>
 
         {/* body — 패널 자체가 내부 스크롤 소유 (flex h-full) */}
-        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <div className="tx-panel-body">
           <TranslatorContext.Provider value={bridge}>
             {open === "audit" && <AuditPanel />}
             {open === "signoff" && <SignoffPanel />}

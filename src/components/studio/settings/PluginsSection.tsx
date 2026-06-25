@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChevronDown, Puzzle, ExternalLink } from "lucide-react";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage, ChatSession } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 import {
@@ -21,6 +21,9 @@ const MarketplaceModal = dynamic(() => import("@/components/studio/MarketplaceMo
 
 export interface PluginsSectionProps {
   language: AppLanguage;
+  currentSession?: ChatSession | null;
+  readManuscript?: () => string;
+  writeManuscript?: (content: string) => void;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=PluginsSectionProps
@@ -74,7 +77,12 @@ function useActivePluginCount(): number {
 // PART 3 — Component (accordion section + Marketplace CTA + modal)
 // ============================================================
 
-const PluginsSection: React.FC<PluginsSectionProps> = ({ language }) => {
+const PluginsSection: React.FC<PluginsSectionProps> = ({
+  language,
+  currentSession = null,
+  readManuscript,
+  writeManuscript,
+}) => {
   const [modalOpen, setModalOpen] = useState(false);
   const activeCount = useActivePluginCount();
 
@@ -150,7 +158,13 @@ const PluginsSection: React.FC<PluginsSectionProps> = ({ language }) => {
       </div>
 
       {modalOpen ? (
-        <MarketplaceModal language={language} onClose={handleClose} />
+        <MarketplaceModal
+          language={language}
+          onClose={handleClose}
+          currentSession={currentSession}
+          readManuscript={readManuscript}
+          writeManuscript={writeManuscript}
+        />
       ) : null}
     </details>
   );

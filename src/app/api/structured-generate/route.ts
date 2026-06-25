@@ -1,7 +1,7 @@
 // ============================================================
 // PART 0 — Provider-Agnostic Structured Generation Route
 // ============================================================
-// Supports: Gemini (native JSON), OpenAI/Groq/Mistral (JSON mode),
+// Supports: Gemini (native JSON), Upstage/OpenAI/Groq/Mistral (JSON-compatible),
 //           Ollama/LMStudio (JSON mode via OpenAI compat)
 // Claude: not supported (no native JSON mode)
 // Falls back to /api/gemini-structured for Gemini-specific tasks
@@ -57,6 +57,7 @@ function getLanguage(value: unknown): AppLanguage {
 
 // Implementations of generateJsonOpenAICompat, generateJsonClaude, and generateJsonGemini are in @/services/aiProvidersStructured.ts
 const DEFAULT_MODELS: Record<string, string> = {
+  upstage: 'solar-pro3',
   openai: 'gpt-5.4-mini',
   groq: 'llama-3.3-70b-versatile',
   mistral: 'mistral-medium-3-5',
@@ -81,7 +82,7 @@ type ValidatedInput = {
 
 /** Validate and extract all required fields from the raw body */
 function validateInput(body: Record<string, unknown>): { ok: true; input: ValidatedInput } | { ok: false; response: NextResponse } {
-  const rawProvider = typeof body.provider === 'string' ? body.provider : 'gemini';
+  const rawProvider = typeof body.provider === 'string' ? body.provider : 'upstage';
   if (!isServerProviderId(rawProvider)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
   }

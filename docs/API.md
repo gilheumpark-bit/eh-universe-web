@@ -1,6 +1,11 @@
 # Loreguard — API Reference
 
-Last updated: 2026-06-19
+Last updated: 2026-06-24
+
+2026-06-24 baseline note:
+
+- This document remains the current route contract baseline after the repo cleanup pass.
+- Disabled compatibility routes such as `/api/agent-search` and `/api/network-agent/*` stay documented because they are still callable and must keep returning disabled/retired responses.
 
 All API routes are served under `/api/`. Unless stated otherwise, responses use `application/json`.
 

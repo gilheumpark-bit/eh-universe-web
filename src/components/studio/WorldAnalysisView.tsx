@@ -203,6 +203,7 @@ const WorldAnalysisView: React.FC<WorldAnalysisViewProps> = ({ language, config 
         onChunk: (chunk: string) => { fullResponse += chunk; },
         systemInstruction: buildAnalysisPrompt(language),
         temperature: 0.3,
+        reasoningStage: 'world',
         signal: controller.signal,
       });
 

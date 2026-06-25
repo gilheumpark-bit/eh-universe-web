@@ -9,18 +9,22 @@
 
 describe('rate-limit', () => {
   let checkRateLimit: typeof import('@/lib/rate-limit').checkRateLimit;
+  let checkRateLimitAsync: typeof import('@/lib/rate-limit').checkRateLimitAsync;
   let setRateLimitBackend: typeof import('@/lib/rate-limit').setRateLimitBackend;
   let resetRateLimitBackendForTests: typeof import('@/lib/rate-limit').resetRateLimitBackendForTests;
+  let getRateLimitBackendName: typeof import('@/lib/rate-limit').getRateLimitBackendName;
   let getClientIp: typeof import('@/lib/rate-limit').getClientIp;
   let RATE_LIMITS: typeof import('@/lib/rate-limit').RATE_LIMITS;
 
   beforeEach(() => {
     jest.resetModules();
-     
+
     const mod = require('@/lib/rate-limit');
     checkRateLimit = mod.checkRateLimit;
+    checkRateLimitAsync = mod.checkRateLimitAsync;
     setRateLimitBackend = mod.setRateLimitBackend;
     resetRateLimitBackendForTests = mod.resetRateLimitBackendForTests;
+    getRateLimitBackendName = mod.getRateLimitBackendName;
     getClientIp = mod.getClientIp;
     RATE_LIMITS = mod.RATE_LIMITS;
   });
@@ -171,6 +175,65 @@ describe('rate-limit', () => {
     it('returns "unknown" when no headers present', () => {
       const headers = new Headers();
       expect(getClientIp(headers)).toBe('unknown');
+    });
+
+    it('prefers x-vercel-forwarded-for over x-real-ip and trims the first hop', () => {
+      const headers = new Headers({
+        'x-vercel-forwarded-for': ' 203.0.113.7 , 70.0.0.1',
+        'x-real-ip': '10.0.0.9',
+      });
+      expect(getClientIp(headers)).toBe('203.0.113.7');
+    });
+
+    it('skips empty x-vercel-forwarded-for and uses x-real-ip', () => {
+      const headers = new Headers({ 'x-vercel-forwarded-for': '  ,  ', 'x-real-ip': '10.0.0.9' });
+      expect(getClientIp(headers)).toBe('10.0.0.9');
+    });
+  });
+
+  // ============================================================
+  // PART 5 — Backend introspection, async facade, lazy cleanup
+  // ============================================================
+
+  describe('backend name', () => {
+    it('reports "memory" for the default backend', () => {
+      expect(getRateLimitBackendName()).toBe('memory');
+    });
+
+    it('reports the swapped backend name', () => {
+      setRateLimitBackend({ name: 'custom-be', check: () => ({ allowed: true, retryAfterMs: 0 }) });
+      expect(getRateLimitBackendName()).toBe('custom-be');
+    });
+  });
+
+  describe('checkRateLimitAsync', () => {
+    it('resolves the memory backend result', async () => {
+      const r = await checkRateLimitAsync('8.8.8.8', 'async-r', { windowMs: 60_000, maxRequests: 2 });
+      expect(r.allowed).toBe(true);
+    });
+
+    it('awaits a promise-returning backend', async () => {
+      setRateLimitBackend({ name: 'async-be', check: () => Promise.resolve({ allowed: false, retryAfterMs: 99 }) });
+      const r = await checkRateLimitAsync('8.8.8.8', 'async-r', { windowMs: 60_000, maxRequests: 2 });
+      expect(r).toEqual({ allowed: false, retryAfterMs: 99 });
+    });
+  });
+
+  describe('lazy cleanup of expired entries', () => {
+    it('deletes expired keys after the cleanup interval elapses', () => {
+      const config = { windowMs: 1_000, maxRequests: 5 };
+      const originalNow = Date.now;
+      const base = originalNow();
+      Date.now = () => base;
+      try {
+        checkRateLimit('stale-ip', 'r', config); // entry resetAt = base + 1000
+        // advance past CLEANUP_INTERVAL_MS (60s) and past the entry window
+        Date.now = () => base + 70_000;
+        // a fresh key triggers lazyCleanup, which removes the stale entry
+        expect(checkRateLimit('fresh-ip', 'r', config).allowed).toBe(true);
+      } finally {
+        Date.now = originalNow;
+      }
     });
   });
 });

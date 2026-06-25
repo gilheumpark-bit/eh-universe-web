@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { apiLog } from '@/lib/api-logger';
+import { sendReceiptEmail, sendPaymentFailedEmail } from '@/lib/email-service';
 import { setStripeRoleClaim, clearStripeRoleClaim } from '@/lib/firebase-auth-admin-rest';
 import { firestoreCreateDocument } from '@/lib/firestore-service-rest';
 import {
@@ -337,7 +338,11 @@ export async function POST(req: NextRequest) {
   }
 
   // SDK 기본 API 버전 사용 — apiVersion 명시 생략해 SDK 버전 업그레이드 시 자동 추종
-  const stripe = new Stripe(stripeKey);
+  // 외부 API 호출(resolveUidFromCharge의 invoices/subscriptions.retrieve) 무한 hang 차단.
+  const stripe = new Stripe(stripeKey, {
+    timeout: 8000,
+    maxNetworkRetries: 1,
+  });
 
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
@@ -519,6 +524,35 @@ export async function POST(req: NextRequest) {
             meta: { id: event.id },
           });
         }
+      }
+    } else if (event.type === 'invoice.paid') {
+      // [B1] 정기 결제 성공 → 영수증 이메일 (멱등키=event.id, 발송 실패해도 webhook 200).
+      const invoice = event.data.object as Stripe.Invoice;
+      const to = invoice.customer_email ?? '';
+      if (to) {
+        await sendReceiptEmail({
+          to,
+          customerName: invoice.customer_name,
+          amount: typeof invoice.amount_paid === 'number' ? invoice.amount_paid : 0,
+          currency: invoice.currency ?? 'krw',
+          invoiceNumber: invoice.number,
+          invoiceUrl: invoice.hosted_invoice_url,
+          idempotencyKey: event.id,
+        });
+      }
+    } else if (event.type === 'invoice.payment_failed') {
+      // [B1] 결제 실패 → dunning(재시도 안내) 이메일. hosted_invoice_url 로 결제수단 갱신 유도.
+      const invoice = event.data.object as Stripe.Invoice;
+      const to = invoice.customer_email ?? '';
+      if (to) {
+        await sendPaymentFailedEmail({
+          to,
+          customerName: invoice.customer_name,
+          amount: typeof invoice.amount_due === 'number' ? invoice.amount_due : 0,
+          currency: invoice.currency ?? 'krw',
+          updatePaymentUrl: invoice.hosted_invoice_url,
+          idempotencyKey: event.id,
+        });
       }
     }
   } catch (err) {

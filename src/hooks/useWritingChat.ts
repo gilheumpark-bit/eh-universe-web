@@ -7,6 +7,8 @@ import {
   clearStoredSummary,
 } from '@/lib/ai/chat-memory-policy';
 import { NoaBlockedError } from '@/lib/noa/block-notice';
+import { buildAppBrainDecisionDirective, decideAppBrain } from '@/lib/noa/app-brain-policy';
+import { buildTabExpertSystemDirective } from '@/lib/noa/tab-expert-registry';
 import { logger } from '@/lib/logger';
 
 /**
@@ -101,11 +103,32 @@ export function useWritingChat(novelContext?: NovelContext, projectId?: string |
       );
       const history: ChatMsg[] = [...memory.messages];
       history.push({ role: 'user', content: text });
+      const appBrainDecision = decideAppBrain({
+        actionKind: 'noa_suggestion',
+        tabId: 'writing',
+        approxChars: text.length + (novelContext?.currentChapter?.length ?? 0),
+        scores: {
+          intentClarity: text.trim().length < 12 ? 0.42 : 0.72,
+          contextFit: novelContext ? 0.72 : 0.48,
+          evidenceFit: novelContext?.currentChapter ? 0.72 : 0.5,
+          userControl: 0.82,
+          reversibility: 0.78,
+          expertConfidence: 0.66,
+          userIntentUnclear: text.trim().length < 12 ? 0.62 : 0.24,
+        },
+      });
+      const systemInstruction = [
+        buildWritingChatSystem(language, novelContext),
+        buildTabExpertSystemDirective('writing', language),
+        buildAppBrainDecisionDirective(appBrainDecision),
+        memory.summaryBlock,
+      ].filter(Boolean).join('\n\n');
 
       await streamChat({
-        systemInstruction: buildWritingChatSystem(language, novelContext) + memory.summaryBlock,
+        systemInstruction,
         messages: history,
         temperature: 0.7,
+        reasoningStage: 'draft',
         signal: abortControllerRef.current.signal,
         isChatMode: true,
         onChunk: (chunk) => {

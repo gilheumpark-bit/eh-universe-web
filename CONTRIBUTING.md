@@ -157,7 +157,7 @@ it('동시 발급 시 sealNumber 중복 없음', async () => {
 
 ### Not Accepted
 - Changes to core EH Universe lore without author approval
-- Commercial use integrations that bypass the dual-license model (see LICENSE: AGPL-3.0-or-later + COMMERCIAL-LICENSE.md)
+- Integrations that bypass the current proprietary license, NOTICE, or trademark policy
 - Dependencies with incompatible licenses
 
 ## Reporting Bugs
@@ -171,17 +171,16 @@ Use the **Bug Report** issue template. Include:
 ## License & CLA
 
 By contributing to this repository, you agree that your contributions will be
-**dual-licensed** under both:
+included under the repository's current proprietary terms:
 
-1. [**GNU Affero General Public License v3.0 or later**](./LICENSE) — for the open-source track.
-2. [**EH Universe Commercial License**](./COMMERCIAL-LICENSE.md) — for the commercial track (operated by 박길흠 / EH Universe Project).
+1. [**UNLICENSED / Proprietary**](./LICENSE) — for the software in this repository.
 
-This dual grant is required to maintain the project's dual-license business model
-(MongoDB pattern: AGPL open-source + Commercial).
+Contributions must preserve copyright notices, third-party notices, and any
+separate trademark or original-lore terms that are marked outside the software
+license.
 
 A formal **Contributor License Agreement (CLA)** will be required via
 [cla-assistant.io](https://cla-assistant.io/) once external contributions are opened.
 
 Prior (pre-`414fe9ea`) releases remain available under CC-BY-NC-4.0 for those
-who obtained them under that license; subsequent releases are governed by the
-dual license above.
+who obtained them under that license; current software releases are proprietary.

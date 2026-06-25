@@ -260,6 +260,8 @@ describe('buildIpPackManifest', () => {
     expect(serializeIpPackManifestForUserKo(manifest)).toContain(
       '- 공개 검증 주소: https://example.test/verify/LG-TEST-VERIFY',
     );
+    expect(serializeIpPackManifestForUserKo(manifest)).toContain('- 원고 해시 축약값: aaaaaaaaaaaaaaaa...aaaaaaaa');
+    expect(serializeIpPackManifestForUserKo(manifest)).not.toContain(`- 원고 해시: ${'a'.repeat(64)}`);
     expect(serializeIpPackManifestForUserKo(manifest)).toContain('작품 한눈 요약: 5/5 · 준비');
     expect(serializeIpPackManifestForUserKo(manifest)).not.toContain('/api/cp/verify');
   });

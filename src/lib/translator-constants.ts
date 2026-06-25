@@ -22,6 +22,7 @@ export const LANGUAGES = [
 ] as const;
 
 export const PROVIDERS = [
+  { id: 'upstage', label: '앱 기본 번역 방식', role: '한국어·기본 응답 기준' },
   { id: 'openai', label: '정밀 번역 방식', role: '구조·의미 기준' },
   { id: 'claude', label: '문체 다듬기 엔진', role: '문장 리듬 기준' },
   { id: 'gemini', label: '맥락 점검 엔진', role: '설정·용어 기준' },

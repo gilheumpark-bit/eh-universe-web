@@ -106,13 +106,26 @@ async function expectNoHorizontalOverflow(page: Page, label: string): Promise<La
   return metric;
 }
 
+async function projectStartField(page: Page, testId: string, label: RegExp) {
+  const stableField = page.getByTestId(testId);
+  if (await stableField.count()) return stableField.first();
+  return page.getByLabel(label).first();
+}
+
 async function fillProjectBasis(page: Page): Promise<void> {
-  await page.getByTestId('project-title-input').fill(PROJECT_TITLE);
-  await page.getByTestId('project-total-episodes-input').fill('12화');
-  await page.getByTestId('project-episode-length-input').fill('5,500자');
-  await page.getByTestId('project-schedule-input').fill('주 5회 연재');
-  await page.getByTestId('project-core-premise-input').fill(CORE_PREMISE);
-  await page.getByTestId('project-rights-memo-input').fill(RIGHTS_MEMO);
+  await (await projectStartField(page, 'project-title-input', /Noa answer work title|노아 답변 작품명/i)).fill(PROJECT_TITLE);
+  await (await projectStartField(page, 'project-core-premise-input', /Noa answer core premise|노아 답변 핵심 전제/i)).fill(CORE_PREMISE);
+  await (await projectStartField(page, 'project-rights-memo-input', /Noa answer rights\/IP note|노아 답변 권리\/IP 메모/i)).fill(RIGHTS_MEMO);
+
+  const optionalFields = [
+    ['project-total-episodes-input', '12화'],
+    ['project-episode-length-input', '5,500자'],
+    ['project-schedule-input', '주 5회 연재'],
+  ] as const;
+  for (const [testId, value] of optionalFields) {
+    const field = page.getByTestId(testId);
+    if (await field.isVisible().catch(() => false)) await field.fill(value);
+  }
 }
 
 test.use({ viewport: { width: 1440, height: 960 } });
@@ -136,12 +149,12 @@ test.describe('Loreguard authoring to export persistence', () => {
 
     await installCleanWriterState(page);
     await page.goto(appUrl('/studio?tab=project'), { waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('project-title-input')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByLabel(/Noa answer work title|노아 답변 작품명/i)).toBeVisible({ timeout: 30_000 });
     layoutMetrics.push(await expectNoHorizontalOverflow(page, 'project-start'));
     screenshots.push(await captureEvidence(page, '01-project-start.png'));
 
     await fillProjectBasis(page);
-    await page.getByTestId('project-save-open-world').click();
+    await page.getByTestId('lg-project-start-empty').click();
     await expect.poll(async () => {
       const snapshot = await readStoredProjectSnapshot(page);
       return snapshot.hasProjectTitle && snapshot.hasCorePremise && snapshot.hasRightsMemo;

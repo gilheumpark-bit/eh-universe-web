@@ -219,7 +219,7 @@ export default async function VerificationPage({ params }: { params: Promise<{ d
                       <dd className="mt-1 text-slate-100">{issuerLabel(result.meta.issuer_type)}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-400">과정기록 해시</dt>
+                      <dt className="text-slate-400">과정기록 해시 축약값</dt>
                       <dd className="mt-1 break-all font-mono text-slate-100">
                         {shortHash(result.meta.cert_hash)}
                       </dd>

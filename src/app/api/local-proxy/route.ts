@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
 
 const MAX_REQUEST_SIZE = 5_242_880; // 5MB body size limit for LLM proxy
 const LOCAL_PROXY_UPSTREAM_ERROR = {
@@ -52,17 +53,9 @@ function guardProxy(req: NextRequest): NextResponse | null {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Local proxy is disabled in production' }, { status: 403 });
   }
-  const origin = req.headers.get('origin') || req.headers.get('referer') || '';
-  const host = req.headers.get('host') || '';
-  if (origin && host) {
-    try {
-      const originHost = new URL(origin).host;
-      if (originHost !== host) {
-        return NextResponse.json({ error: 'Cross-origin requests are not allowed' }, { status: 403 });
-      }
-    } catch {
-      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
-    }
+  const originCheck = checkSameOriginHeaders(req.headers);
+  if (!originCheck.ok) {
+    return NextResponse.json({ error: originCheck.error }, { status: 403 });
   }
   return null;
 }

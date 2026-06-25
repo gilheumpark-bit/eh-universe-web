@@ -1,57 +1,13 @@
 "use client";
 
 /* ===========================================================
-   TabWorld — 세계관 (Worldbuilding) tab — Phase 3 (real wiring)
-   Source: /tmp/design2_handoff/2/project/tab_world.jsx (window.TabWorld)
-
-   3-pane (.wd-grid):
-     좌 96px 레일(.wd-rail)  — 새 세계관 / 버전 비교 도구 (real handlers)
-     중앙 노아 설정 가이드(.wd-center) — filteredMessages 실시간 + handleSend 입력바
-     우 408px 보드(.wd-board) — 17개 3-tier 세계관 필드 카드 (StoryConfig)
-       [G3-world-structure-fields] 구 셸 AdvancedPlanningSection 의 3-tier 구조 필드
-       전체 복원 (economy·survivalEnvironment·education·dailyLife·travelComm·
-       truthVsBeliefs 6개 추가 — config 키 동일 = 기존 사용자 데이터 호환).
-       tier 별 접이식 섹션 — 접힘 상태 localStorage `noa-lg-world-sections` 영속.
-
-   배선:
-     - 세계관 카드 → StoryConfig 17 필드 (corePremise … truthVsBeliefs). 채움/미채움
-       상태 + 완성도 %는 실제 config 값에서 계산 (가짜 "항목 23개" 제거).
-     - 채팅 입력 → setInput + handleSend (실 엔진 스트리밍).
-     - 채택 → setConfig 로 해당 필드에 노아 메시지 본문 병합 (IndexedDB+Firestore 저장).
-     - 새 세계관 → createNewSession('world').
-     - 버전 비교 → versionedBackups / doRestoreVersionedBackup.
-     - currentSession 없음 → 빈 상태(프로젝트 생성) 렌더, 크래시 X.
-
-   CSS: 전부 src/app/loreguard.css 에 .eh-app 스코프로 포팅됨 (신규 CSS 금지).
-   아이콘: @/components/loreguard/icons (lucide re-export, strokeWidth prop).
-
-   [Z2b-world-sim-timeline 2026-06-11] 좌 레일에 시뮬레이션/타임라인/지도
-   3 도구 추가 — WorldOpsPanel slide-over 오픈 (MemoPanel 패턴·dynamic
-   ssr:false — 진입 시에만 번들 로드). (a) 시뮬레이션 = 기존 structured
-   world-sim 경로(generateWorldSim → task:'worldSim') 재사용·판단용 라벨,
-   (b) 타임라인 = config.worldTimeline additive CRUD + 구 셸 WorldTimeline
-   (worldSimData 시대 기반) 이식 마운트, (c) 지도 = 구 셸 WorldMap 실존
-   확인 → 이식 (territories/territoryLinks 키 호환). 세션 없으면 도구
-   미노출 (빈 상태 레일은 '새 세계관'만 유지).
+   TabWorld — 세계관 3-pane 조립.
+   레일/중앙 채팅/보드는 별도 컴포넌트로 분리하고, 이 파일은 상태 배선,
+   창작 과정 기록, 17개 세계관 필드 저장 연결만 담당한다.
    =========================================================== */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import {
-  Globe,
-  Clock,
-  Plus,
-  Scale,
-  Play,
-  Check,
-  X,
-  Send,
-  Chevron,
-  ChevronR,
-  ChevronL,
-  Sync,
-  Map,
-} from "@/components/loreguard/icons";
 import { useStudio } from "@/app/studio/StudioContext";
 import type {
   AcceptedImportCandidateRecord,
@@ -61,17 +17,13 @@ import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
 import { L4 } from "@/lib/i18n";
 import type { WorldOpsView } from "@/components/loreguard/WorldOpsPanel";
 import {
-  BoardCard,
-  TIER_LABEL,
-  TIER_TONE,
   WORLD_BOARD_KEY,
   WORLD_FIELDS,
   WORLD_RAIL_KEY,
   WORLD_SECTIONS_KEY,
-  WORLD_TIERS,
-  WorldEmptyState,
-  WorldImportCandidateCard,
+  buildWorldChatDrafts,
   fieldValue,
+  makeChatDraftEvidence,
   makeCandidateEvidence,
   makeNoaEvidence,
   readCollapsedTiers,
@@ -81,8 +33,14 @@ import {
   worldImportCandidates,
   writeWorldPanelOpen,
   type CollapsedTiers,
+  type WorldChatDraft,
+  type WorldChatDraftSource,
   type WorldFieldKey,
 } from "./TabWorld.parts";
+import TabWorldBoardStage from "./TabWorldBoardStage";
+import TabWorldChatPanel from "./TabWorldChatPanel";
+import TabWorldEmptyLayout from "./TabWorldEmptyLayout";
+import TabWorldRailPanel from "./TabWorldRailPanel";
 
 // [Z2b] 세계관 도구 slide-over — 진입 시에만 번들 로드 (WorldMap/WorldTimeline 포함).
 const WorldOpsPanel = dynamic(() => import("@/components/loreguard/WorldOpsPanel"), {
@@ -142,6 +100,7 @@ export default function TabWorld() {
   const [showVersions, setShowVersions] = useState(false);
   const [railOpen, setRailOpen] = useState(() => readWorldPanelOpen(WORLD_RAIL_KEY));
   const [boardOpen, setBoardOpen] = useState(() => readWorldPanelOpen(WORLD_BOARD_KEY));
+  const [pinnedDrafts, setPinnedDrafts] = useState<WorldChatDraft[]>([]);
   const isSheet = useWorldPanelSheet();
 
   // [Z2b] 세계관 도구 slide-over — null = 닫힘. key 로 재오픈 시 초기 뷰 재시드.
@@ -206,6 +165,53 @@ export default function TabWorld() {
 
   const pickedDef = WORLD_FIELDS.find((f) => f.key === pickedField) ?? WORLD_FIELDS[0];
   const pendingImportCandidates = useMemo(() => worldImportCandidates(cfg), [cfg]);
+  const liveDraftSources = useMemo<WorldChatDraftSource[]>(() => {
+    const messageSources = filteredMessages.map((message) => ({
+      id: message.id,
+      role: message.role,
+      content: message.content,
+    }));
+    const liveInput = input.trim();
+    return liveInput
+      ? [...messageSources, { id: "live-input", role: "user", content: liveInput, live: true }]
+      : messageSources;
+  }, [filteredMessages, input]);
+  const chatDrafts = useMemo(() => {
+    const liveDrafts = buildWorldChatDrafts(liveDraftSources, pickedField);
+    const byId = new Map<string, WorldChatDraft>();
+    for (const draft of [...liveDrafts, ...pinnedDrafts]) {
+      byId.set(draft.id, draft);
+    }
+    return Array.from(byId.values()).filter((draft) => {
+      const existing = fieldValue(cfg, draft.fieldKey);
+      return !existing.includes(draft.excerpt);
+    });
+  }, [cfg, liveDraftSources, pickedField, pinnedDrafts]);
+  const worldMissingCount = Math.max(0, WORLD_FIELDS.length - filledCount);
+  const worldRailSummary = [
+    {
+      label: L4(language, { ko: "도구", en: "Tools", ja: "道具", zh: "工具" }),
+      value: String(doRestoreVersionedBackup ? 5 : 4),
+      tone: "blue",
+    },
+    {
+      label: L4(language, { ko: "자료", en: "Files", ja: "資料", zh: "资料" }),
+      value: String(pendingImportCandidates.length),
+      tone: pendingImportCandidates.length > 0 ? "blue" : "gray",
+    },
+  ] as const;
+  const worldBoardSummary = [
+    {
+      label: L4(language, { ko: "완성", en: "Done", ja: "完成", zh: "完成" }),
+      value: `${completeness}%`,
+      tone: completeness >= 70 ? "green" : completeness > 0 ? "blue" : "gray",
+    },
+    {
+      label: L4(language, { ko: "미입력", en: "Open", ja: "未入力", zh: "待填" }),
+      value: String(worldMissingCount),
+      tone: worldMissingCount === 0 ? "green" : "amber",
+    },
+  ] as const;
 
   const submit = useCallback(() => {
     const trimmed = input.trim();
@@ -243,13 +249,20 @@ export default function TabWorld() {
         getCreativeLogger()?.logAcceptAI({
           targetType: "world",
           targetId: pickedField,
+          beforeContent: existingCfg,
           afterContent: mergedForLog,
+          decisionContext: {
+            selectedAlternativeId: `world:${pickedField}`,
+            selectedLabel: pickedDef.title,
+            selectedContent: clean,
+            reason: "작가가 선택한 세계관 항목에 맞는 제안으로 판단해 반영함",
+          },
           stage: "world",
         }),
       );
       markExplicitCreativeLog("world");
     },
-    [cfg, pickedField, setConfig],
+    [cfg, pickedDef.title, pickedField, setConfig],
   );
 
   const applyImportCandidate = useCallback(
@@ -285,12 +298,51 @@ export default function TabWorld() {
     [closeBoardIfSheet, pickedField, setConfig],
   );
 
+  const pinChatDraft = useCallback((draft: WorldChatDraft) => {
+    setPinnedDrafts((prev) => {
+      if (prev.some((item) => item.id === draft.id)) return prev;
+      return [{ ...draft, pinned: true }, ...prev].slice(0, 8);
+    });
+  }, []);
+
+  const applyChatDraft = useCallback(
+    (draft: WorldChatDraft) => {
+      const clean = draft.excerpt.trim();
+      if (!clean) return;
+      const evidence = makeChatDraftEvidence(draft);
+      setConfig((prev) => {
+        const existing = typeof prev[draft.fieldKey] === "string" ? (prev[draft.fieldKey] as string).trim() : "";
+        const merged = existing ? `${existing}\n\n${clean}` : clean;
+        return {
+          ...prev,
+          [draft.fieldKey]: merged,
+          worldFieldEvidence: {
+            ...(prev.worldFieldEvidence ?? {}),
+            [draft.fieldKey]: evidence,
+          },
+        };
+      });
+      setPinnedDrafts((prev) => prev.filter((item) => item.id !== draft.id));
+      markExplicitCreativeLog("world");
+      closeBoardIfSheet();
+    },
+    [closeBoardIfSheet, setConfig],
+  );
+
   const handleNewWorld = useCallback(() => createNewSession("world"), [createNewSession]);
 
   const openVersions = useCallback(() => {
     refreshBackupList?.();
     setShowVersions((s) => !s);
   }, [refreshBackupList]);
+  const openVersionsFromRail = useCallback(() => {
+    openVersions();
+    closeRailIfSheet();
+  }, [closeRailIfSheet, openVersions]);
+  const openWorldOps = useCallback((view: WorldOpsView) => {
+    setOpsView(view);
+    closeRailIfSheet();
+  }, [closeRailIfSheet]);
 
   // [F2] 버전 복원 — 기존 fire-and-forget(무피드백)을 비차단 noa:toast 피드백으로.
   // ToastHost(LoreguardStudio 마운트)가 수신. 실패·reject 모두 비침묵 (silent failure 금지).
@@ -332,88 +384,21 @@ export default function TabWorld() {
   // 빈 상태 — currentSession 없음.
   if (!currentSession) {
     return (
-      <div className="wd-grid wd-world-grid">
-        {!railOpen ? (
-          <aside className="wd-rail collapsed" id="lg-world-rail" aria-label="세계관 도구 레일 (접힘)">
-            <button
-              type="button"
-              className="wd-panel-toggle"
-              aria-expanded={false}
-              aria-controls="lg-world-rail"
-              aria-label="세계관 도구 레일 펼치기"
-              title="세계관 도구 레일 펼치기"
-              onClick={toggleRail}
-            >
-              <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-            </button>
-            <span className="wd-vlabel" aria-hidden="true">세계관 도구</span>
-          </aside>
-        ) : (
-          <aside
-            className="wd-rail"
-            id="lg-world-rail"
-            aria-label="세계관 도구 레일"
-            role={isSheet ? "dialog" : undefined}
-            aria-modal={isSheet ? "true" : undefined}
-          >
-            <button
-              type="button"
-              className="wd-panel-toggle"
-              aria-expanded={true}
-              aria-controls="lg-world-rail"
-              aria-label="세계관 도구 레일 접기"
-              title="세계관 도구 레일 접기"
-              onClick={toggleRail}
-            >
-              <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-            </button>
-            <button type="button" className="wd-tool" onClick={handleNewWorld}>
-              <span className="wd-tool-ic"><Plus size={20} /></span>
-              <span>새 세계관</span>
-            </button>
-          </aside>
-        )}
-        <WorldEmptyState onCreate={handleNewWorld} />
-        {!boardOpen ? (
-          <aside className="wd-board collapsed" id="lg-world-board" aria-label="세계관 보드 (접힘)">
-            <button
-              type="button"
-              className="wd-panel-toggle"
-              aria-expanded={false}
-              aria-controls="lg-world-board"
-              aria-label="세계관 보드 펼치기"
-              title="세계관 보드 펼치기"
-              onClick={toggleBoard}
-            >
-              <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-            </button>
-            <span className="wd-vlabel" aria-hidden="true">세계관 보드</span>
-          </aside>
-        ) : (
-          <aside
-            className="wd-board"
-            id="lg-world-board"
-            aria-label="세계관 보드"
-            role={isSheet ? "dialog" : undefined}
-            aria-modal={isSheet ? "true" : undefined}
-          >
-            <div className="wd-board-head">
-              <span>세계관 보드</span>
-              <button
-                type="button"
-                className="wd-panel-toggle"
-                aria-expanded={true}
-                aria-controls="lg-world-board"
-                aria-label="세계관 보드 접기"
-                title="세계관 보드 접기"
-                onClick={toggleBoard}
-              >
-                <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-              </button>
-            </div>
-          </aside>
-        )}
-      </div>
+      <TabWorldEmptyLayout
+        railOpen={railOpen}
+        boardOpen={boardOpen}
+        isSheet={isSheet}
+        worldRailSummary={worldRailSummary}
+        worldBoardSummary={worldBoardSummary}
+        language={language}
+        showVersions={showVersions}
+        canRestoreVersion={Boolean(doRestoreVersionedBackup)}
+        onToggleRail={toggleRail}
+        onToggleBoard={toggleBoard}
+        onNewWorld={handleNewWorld}
+        onOpenVersions={openVersionsFromRail}
+        onOpenOps={openWorldOps}
+      />
     );
   }
 
@@ -422,367 +407,61 @@ export default function TabWorld() {
   return (
     <div className="wd-grid wd-world-grid">
       {/* 좌 96px 레일 — 실 동작 도구만 (세팅동기화 dead 버튼 제거) */}
-      {!railOpen ? (
-        <aside className="wd-rail collapsed" id="lg-world-rail" aria-label="세계관 도구 레일 (접힘)">
-          <button
-            type="button"
-            className="wd-panel-toggle"
-            aria-expanded={false}
-            aria-controls="lg-world-rail"
-            aria-label="세계관 도구 레일 펼치기"
-            title="세계관 도구 레일 펼치기"
-            onClick={toggleRail}
-          >
-            <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-          <span className="wd-vlabel" aria-hidden="true">세계관 도구</span>
-        </aside>
-      ) : (
-      <aside
-        className="wd-rail"
-        id="lg-world-rail"
-        aria-label="세계관 도구 레일"
-        role={isSheet ? "dialog" : undefined}
-        aria-modal={isSheet ? "true" : undefined}
-      >
-        <button
-          type="button"
-          className="wd-panel-toggle"
-          aria-expanded={true}
-          aria-controls="lg-world-rail"
-          aria-label="세계관 도구 레일 접기"
-          title="세계관 도구 레일 접기"
-          onClick={toggleRail}
-        >
-          <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-        </button>
-        <button type="button" className="wd-tool" onClick={handleNewWorld}>
-          <span className="wd-tool-ic"><Plus size={20} /></span>
-          <span>새 세계관</span>
-        </button>
-        {doRestoreVersionedBackup ? (
-          <button
-            type="button"
-            className="wd-tool"
-            onClick={() => {
-              openVersions();
-              closeRailIfSheet();
-            }}
-            aria-pressed={showVersions}
-          >
-            <span className="wd-tool-ic"><Scale size={20} /></span>
-            <span>버전 비교</span>
-          </button>
-        ) : null}
-        {/* [Z2b] 세계관 도구 — 시뮬레이션/타임라인/지도 slide-over */}
-        <button
-          type="button"
-          className="wd-tool"
-          aria-haspopup="dialog"
-          onClick={() => {
-            setOpsView("sim");
-            closeRailIfSheet();
-          }}
-        >
-          <span className="wd-tool-ic"><Play size={20} /></span>
-          <span>{L4(language, { ko: "시뮬레이션", en: "Simulate", ja: "シミュレーション", zh: "模拟" })}</span>
-        </button>
-        <button
-          type="button"
-          className="wd-tool"
-          aria-haspopup="dialog"
-          onClick={() => {
-            setOpsView("timeline");
-            closeRailIfSheet();
-          }}
-        >
-          <span className="wd-tool-ic"><Clock size={20} /></span>
-          <span>{L4(language, { ko: "타임라인", en: "Timeline", ja: "タイムライン", zh: "时间线" })}</span>
-        </button>
-        <button
-          type="button"
-          className="wd-tool"
-          aria-haspopup="dialog"
-          onClick={() => {
-            setOpsView("map");
-            closeRailIfSheet();
-          }}
-        >
-          <span className="wd-tool-ic"><Map size={20} /></span>
-          <span>{L4(language, { ko: "지도", en: "Map", ja: "マップ", zh: "地图" })}</span>
-        </button>
-      </aside>
-      )}
+      <TabWorldRailPanel
+        open={railOpen}
+        isSheet={isSheet}
+        summary={worldRailSummary}
+        language={language}
+        showVersions={showVersions}
+        canRestoreVersion={Boolean(doRestoreVersionedBackup)}
+        showAdvancedTools={true}
+        onToggle={toggleRail}
+        onNewWorld={handleNewWorld}
+        onOpenVersions={openVersionsFromRail}
+        onOpenOps={openWorldOps}
+      />
 
-      {/* 중앙 노아 설정 가이드 — filteredMessages 실시간 + handleSend 입력 */}
-      <section className="wd-center">
-        <div className="wd-chat card">
-          <div className="wd-chat-head">
-            <div className="wd-chat-title">
-              <Globe size={17} />
-              세계관 모드
-              <span className="wd-online">
-                <span className={`rdot ${isGenerating ? "amber" : "green"}`} />
-                {isGenerating ? "제안 준비 중…" : "노아 어시스턴트"}
-              </span>
-            </div>
-            <button type="button" className="btn ghost" onClick={openVersions}>
-              <Clock size={15} />
-              버전 기록
-            </button>
-          </div>
+      <TabWorldChatPanel
+        isGenerating={isGenerating}
+        showVersions={showVersions}
+        backups={backups}
+        canRestoreVersion={Boolean(doRestoreVersionedBackup)}
+        completeness={completeness}
+        filledCount={filledCount}
+        worldMissingCount={worldMissingCount}
+        pickedFieldTitle={pickedDef.title}
+        filteredMessages={filteredMessages}
+        input={input}
+        setInput={setInput}
+        openVersions={openVersions}
+        restoreVersion={restoreVersion}
+        adopt={adopt}
+        submit={submit}
+        handleCancel={handleCancel}
+      />
 
-          {showVersions ? (
-            <div className="wd-chat-body">
-              {backups.length === 0 ? (
-                <p className="wd-p" style={{ color: "var(--ink-3)" }}>저장된 버전 백업이 없습니다.</p>
-              ) : (
-                backups.map((b) => (
-                  <div key={b.timestamp} className="wd-card" style={{ marginBottom: 8 }}>
-                    <div className="wd-card-ic" style={{ color: "var(--c-green)", background: "color-mix(in srgb, var(--c-green) 13%, transparent)" }}>
-                      <Clock size={18} />
-                    </div>
-                    <div className="wd-card-body">
-                      <div className="wd-card-top">
-                        <span className="wd-card-title">{b.label}</span>
-                      </div>
-                      <div className="wd-card-meta">
-                        <span>{new Date(b.timestamp).toLocaleString()}</span>
-                      </div>
-                    </div>
-                    {doRestoreVersionedBackup ? (
-                      <button
-                        type="button"
-                        className="btn"
-                        style={{ alignSelf: "center" }}
-                        onClick={() => restoreVersion(b.timestamp)}
-                      >
-                        <Sync size={14} />복원
-                      </button>
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </div>
-          ) : (
-            <div className="wd-chat-body">
-              {filteredMessages.length === 0 ? (
-                <div className="wd-msg ai">
-                  <div className="wd-ai-av">EH</div>
-                  <div className="wd-ai-body">
-                    <div className="wd-bubble ai">
-                      <p className="wd-p">
-                        세계관을 함께 설계해 봅시다. 마법 체계의 제약, 권력 구조, 역사 등
-                        궁금한 것을 입력하면 제안을 드립니다. 마음에 드는 답변은
-                        오른쪽 보드의 항목을 고른 뒤 <b>채택</b>으로 저장할 수 있어요.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                filteredMessages.map((msg) =>
-                  msg.role === "user" ? (
-                    <div key={msg.id} className="wd-msg user">
-                      <div className="wd-time">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                      <div className="wd-bubble user">{msg.content}</div>
-                    </div>
-                  ) : (
-                    <div key={msg.id} className="wd-msg ai">
-                      <div className="wd-ai-av">EH</div>
-                      <div className="wd-ai-body">
-                        <div className="wd-time">
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </div>
-                        <div className="wd-bubble ai">
-                          <p className="wd-p" style={{ whiteSpace: "pre-wrap" }}>{msg.content}</p>
-                          <div className="wd-msg-actions">
-                            <button
-                              type="button"
-                              className="wd-mact"
-                              aria-label={`'${pickedDef.title}' 항목에 채택`}
-                              title={`'${pickedDef.title}' 항목에 채택`}
-                              onClick={() => adopt(msg.content)}
-                            >
-                              <Check size={15} aria-hidden="true" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ),
-                )
-              )}
-            </div>
-          )}
-
-          {/* 입력바 — setInput + handleSend (dead 첨부/음성/AI보강 버튼 제거) */}
-          <div className="wd-input">
-            <input
-              className="wd-in-field"
-              placeholder={`'${pickedDef.title}' 항목을 설계할 지시를 입력하세요…`}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.nativeEvent.isComposing) return;
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-              disabled={isGenerating}
-            />
-            {isGenerating ? (
-              <button
-                type="button"
-                className="wd-in-send"
-                aria-label="생성 중지"
-                title="생성 중지"
-                onClick={handleCancel}
-              >
-                <X size={16} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="wd-in-send"
-                aria-label="전송"
-                onClick={submit}
-                disabled={!input.trim()}
-              >
-                <Send size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* 우 408px 보드 — 17개 세계관 필드 (tier 접이식 섹션) + 실제 완성도 */}
-      {!boardOpen ? (
-        <aside className="wd-board collapsed" id="lg-world-board" aria-label="세계관 보드 (접힘)">
-          <button
-            type="button"
-            className="wd-panel-toggle"
-            aria-expanded={false}
-            aria-controls="lg-world-board"
-            aria-label="세계관 보드 펼치기"
-            title="세계관 보드 펼치기"
-            onClick={toggleBoard}
-          >
-            <ChevronL size={16} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-          <span className="wd-vlabel" aria-hidden="true">세계관 보드</span>
-        </aside>
-      ) : (
-      <aside
-        className="wd-board"
-        id="lg-world-board"
-        aria-label="세계관 보드"
-        role={isSheet ? "dialog" : undefined}
-        aria-modal={isSheet ? "true" : undefined}
-      >
-        <div className="wd-board-head">
-          <span>세계관 보드</span>
-          <button
-            type="button"
-            className="wd-panel-toggle"
-            aria-expanded={true}
-            aria-controls="lg-world-board"
-            aria-label="세계관 보드 접기"
-            title="세계관 보드 접기"
-            onClick={toggleBoard}
-          >
-            <ChevronR size={16} strokeWidth={1.6} aria-hidden="true" />
-          </button>
-        </div>
-        <div className="wd-card" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
-          <div className="wd-card-top">
-            <span className="wd-card-title">세계관 완성도</span>
-            <span className="pill blue" style={{ marginLeft: "auto" }}>
-              {filledCount} / {WORLD_FIELDS.length} 작성됨
-            </span>
-          </div>
-          <div className="tbar">
-            <span style={{ width: `${completeness}%` }} />
-          </div>
-          <div className="wd-card-meta">
-            <span>완성도 {completeness}%</span>
-          </div>
-        </div>
-        {pendingImportCandidates.length > 0 ? (
-          <section aria-label="세계관 읽은 자료 검토" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div className="wd-board-head" style={{ minHeight: 0 }}>
-              <span>읽은 자료 검토</span>
-              <span className="pill blue">{pendingImportCandidates.length}</span>
-            </div>
-            {pendingImportCandidates.map((candidate) => (
-              <WorldImportCandidateCard
-                key={candidate.id}
-                candidate={candidate}
-                pickedDef={pickedDef}
-                onApply={applyImportCandidate}
-              />
-            ))}
-          </section>
-        ) : null}
-        {/* [G3-world-structure-fields] tier 별 접이식 섹션 — noa-lg-world-sections 영속 */}
-        {WORLD_TIERS.map((tier) => {
-          const fields = WORLD_FIELDS.filter((f) => f.tier === tier);
-          const tierFilled = fields.filter((f) => fieldValue(cfg, f.key).length > 0).length;
-          const collapsed = collapsedTiers[tier];
-          const sectionId = `wd-tier-section-${tier}`;
-          return (
-            <section
-              key={tier}
-              aria-label={TIER_LABEL[tier]}
-              style={{ display: "flex", flexDirection: "column", gap: 12 }}
-            >
-              <button
-                type="button"
-                className="wd-card"
-                style={{ padding: "10px 15px", alignItems: "center", textAlign: "left" }}
-                aria-expanded={!collapsed}
-                aria-controls={sectionId}
-                onClick={() => toggleTier(tier)}
-                title={collapsed ? `${TIER_LABEL[tier]} 섹션 펼치기` : `${TIER_LABEL[tier]} 섹션 접기`}
-              >
-                <span className={`pill ${TIER_TONE[tier]}`}>{TIER_LABEL[tier]}</span>
-                <span className="wd-card-meta" style={{ marginLeft: "auto" }}>
-                  {tierFilled} / {fields.length} 작성됨
-                </span>
-                <Chevron
-                  size={16}
-                  aria-hidden="true"
-                  style={{
-                    color: "var(--ink-3)",
-                    transition: "transform .16s var(--ease)",
-                    transform: collapsed ? "rotate(-90deg)" : "none",
-                  }}
-                />
-              </button>
-              {!collapsed && (
-                <div id={sectionId} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {fields.map((def) => (
-                    <BoardCard
-                      key={def.key}
-                      def={def}
-                      value={fieldValue(cfg, def.key)}
-                      evidence={cfg?.worldFieldEvidence?.[def.key]}
-                      picked={pickedField === def.key}
-                      onPick={(key) => {
-                        setPickedField(key);
-                        closeBoardIfSheet();
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
-      </aside>
-      )}
+      <TabWorldBoardStage
+        open={boardOpen}
+        isSheet={isSheet}
+        cfg={cfg}
+        pickedField={pickedField}
+        pickedDef={pickedDef}
+        filledCount={filledCount}
+        completeness={completeness}
+        collapsedTiers={collapsedTiers}
+        pendingImportCandidates={pendingImportCandidates}
+        chatDrafts={chatDrafts}
+        summary={worldBoardSummary}
+        onCollapse={toggleBoard}
+        onToggleTier={toggleTier}
+        onPickField={(key) => {
+          setPickedField(key);
+          closeBoardIfSheet();
+        }}
+        onApplyImportCandidate={applyImportCandidate}
+        onPinChatDraft={pinChatDraft}
+        onApplyChatDraft={applyChatDraft}
+      />
 
       {/* [Z2b] 세계관 도구 slide-over — fixed overlay (wd-grid 레이아웃 비간섭) */}
       {opsView !== null && (

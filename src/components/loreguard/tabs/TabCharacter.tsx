@@ -1,46 +1,28 @@
 "use client";
 
-/*
- * TabCharacter — 캐릭터·아이템 탭 조립부.
- * 본체는 세션/저장 핸들러와 관계도 배선을 소유하고, 변환·프로필·로스터 UI는
- * TabCharacter.* 보조 파일로 분리한다. 데이터는 currentSession.config 기준이다.
- */
+/* TabCharacter — 캐릭터·아이템 탭 조립부. 세션 저장과 관계도 배선을 소유한다. */
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import LoadingSkeleton from "@/components/studio/LoadingSkeleton";
-import type { GraphNodeSpec, GraphEdgeSpec } from "@/components/loreguard/RelationGraph";
 import { useStudio } from "@/app/studio/StudioContext";
-// [Z2a-chatcanvas 2026-06-11] 접이식 노아 채팅 도크 — 기본 접힘, 프로필 필드
-// 제안 감지 → 채택 시 setConfig merge (기존 노아 제안 버튼과 트리거 분리).
-import ChatCanvasDock, {
-  extractJsonBlocks,
-  type DockSuggestion,
-} from "@/components/loreguard/ChatCanvasDock";
+import ChatCanvasDock from "@/components/loreguard/ChatCanvasDock";
 import ItemStudioView from "@/components/studio/ItemStudioView";
 import { generateCharacters } from "@/services/geminiService";
 import { activeSupportsStructured } from "@/lib/ai-providers";
 import { logger } from "@/lib/logger";
-import type {
-  AcceptedImportCandidateRecord,
-  Character,
-  CharRelation,
-} from "@/lib/studio-types";
+import type { Character, CharRelation, Item } from "@/lib/studio-types";
 import { markExplicitCreativeLog } from "@/hooks/useCreativeProcessAutoTrigger";
 import { fireCpLog, getCreativeLogger } from "./TabCharacter.creative-log";
 import {
   DOCK_PROPOSAL_GUIDE,
-  REL_EDGE_COLORS,
   REL_LABELS,
-  avColor,
-  buildImportedCharacter,
-  buildImportedItem,
-  circularFallback,
-  parseCharProposals,
   pendingCharacterImportCandidates,
   pendingItemImportCandidates,
-  type CharProposal,
 } from "./TabCharacter.shared";
+import { useCharacterDock } from "./TabCharacter.dock";
+import { useCharacterGraph } from "./TabCharacter.graph";
+import { useCharacterImportRouting } from "./TabCharacter.imports";
 import { CharacterProfileView } from "./TabCharacter.profile";
 import { CharacterRail, EmptyProjectState, ImportCandidatesSection } from "./TabCharacter.sections";
 import {
@@ -49,32 +31,10 @@ import {
   writeCharacterPanelOpen,
 } from "./TabCharacter.rail-state";
 
-// ============================================================
-// PART 0.5 — [s82-stage-coverage] 창작 과정 기록 (TabWriting S2 패턴 축약)
-// ============================================================
-// fire-and-forget — setConfig 경로를 await/gate 하지 않음. 실패(logger 부재·
-// reject·null resolve) → noa:alert 1회·60s 쿨다운 (silent failure 금지).
-// 아이템(ItemStudioView) 내부 추가/편집은 공용 컴포넌트라 수정 금지 → 미기록 (honest gap).
-
-// ============================================================
-// PART 1 — 표현용 헬퍼 (날조 데이터 X — 순수 프레젠테이션 파생)
-// ============================================================
-
-// [X1-xyflow] 관계도 그래프 — xyflow 래퍼는 토글 진입 시에만 로드 (ssr:false).
 const RelationGraph = dynamic(() => import("@/components/loreguard/RelationGraph"), {
   ssr: false,
   loading: () => <LoadingSkeleton height={480} />,
 });
-
-// ============================================================
-// PART 1.7 — [Z2a-chatcanvas] 채팅 도크 프로필 제안 (감지 파서 + 형식 지시)
-// ============================================================
-// 노아가 ```json {"characters":[...]} 블록으로 제안 → 채택 시 setConfig merge.
-// 필드는 Character 의 실존 필드만 (발명 금지). name 필수, 나머지 옵션.
-
-// ============================================================
-// PART 4 — TabCharacter 본체 (3-pane 합성 + real state 배선)
-// ============================================================
 
 export default function TabCharacter() {
   const {
@@ -90,9 +50,9 @@ export default function TabCharacter() {
   } = useStudio();
   const config = currentSession?.config ?? null;
   const characters = useMemo<Character[]>(() => config?.characters ?? [], [config]);
+  const items = useMemo<Item[]>(() => config?.items ?? [], [config]);
   const relations = useMemo<CharRelation[]>(() => config?.charRelations ?? [], [config]);
 
-  // 인물/아이템 서브뷰 — charSubTab 은 useStudio 컨텍스트 state (옛 CharacterTab 과 동일 키).
   const isItems = charSubTab === "items";
   const characterCandidates = useMemo(() => pendingCharacterImportCandidates(config), [config]);
   const itemCandidates = useMemo(() => pendingItemImportCandidates(config), [config]);
@@ -100,7 +60,6 @@ export default function TabCharacter() {
   const [selId, setSelId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // [X1-xyflow] 인물 모드 서브뷰 — 기본은 기존 프로필 뷰, 관계도는 보조(토글 진입).
   const [charView, setCharView] = useState<"profile" | "graph">("profile");
   const [railOpen, setRailOpen] = useState(readCharacterPanelOpen);
   const isRailSheet = useCharacterPanelSheet();
@@ -119,176 +78,32 @@ export default function TabCharacter() {
     writeCharacterPanelOpen(false);
   }, [isRailSheet]);
 
-  const markImportCandidate = useCallback(
-    (id: string, routedToStage: string, routedTargetKey: string) => {
-      setConfig((prev) => ({
-        ...prev,
-        acceptedImportCandidates: (prev.acceptedImportCandidates ?? []).map((candidate) =>
-          candidate.id === id
-            ? {
-                ...candidate,
-                routedToStage,
-                routedTargetKey,
-                routedAt: new Date().toISOString(),
-              }
-            : candidate,
-        ),
-      }));
-    },
-    [setConfig],
-  );
+  const {
+    markImportCandidate,
+    routeCharacterImportCandidate,
+    routeItemImportCandidate,
+  } = useCharacterImportRouting({
+    setConfig,
+    setCharSubTab,
+    closeRailIfSheet,
+    onSelectCharacter: setSelId,
+    onEditingChange: setEditing,
+  });
 
-  const routeCharacterImportCandidate = useCallback(
-    (candidate: AcceptedImportCandidateRecord) => {
-      const imported = buildImportedCharacter(candidate);
-      setConfig((prev) => ({
-        ...prev,
-        characters: [...(prev.characters ?? []), imported],
-        acceptedImportCandidates: (prev.acceptedImportCandidates ?? []).map((entry) =>
-          entry.id === candidate.id
-            ? {
-                ...entry,
-                routedToStage: "character",
-                routedTargetKey: imported.id,
-                routedAt: new Date().toISOString(),
-              }
-            : entry,
-        ),
-      }));
-      setSelId(imported.id);
-      setEditing(false);
-      setCharSubTab("characters");
-      closeRailIfSheet();
-      fireCpLog(
-        getCreativeLogger()?.logHumanEdit({
-          targetType: "character",
-          targetId: imported.id,
-          afterContent: JSON.stringify(imported),
-          note: "import-character-adopt (TabCharacter)",
-          stage: "character",
-        }),
-      );
-      markExplicitCreativeLog("character");
-    },
-    [closeRailIfSheet, setCharSubTab, setConfig],
-  );
-
-  const routeItemImportCandidate = useCallback(
-    (candidate: AcceptedImportCandidateRecord) => {
-      const imported = buildImportedItem(candidate);
-      setConfig((prev) => ({
-        ...prev,
-        items: [...(prev.items ?? []), imported],
-        acceptedImportCandidates: (prev.acceptedImportCandidates ?? []).map((entry) =>
-          entry.id === candidate.id
-            ? {
-                ...entry,
-                routedToStage: "item",
-                routedTargetKey: imported.id,
-                routedAt: new Date().toISOString(),
-              }
-            : entry,
-        ),
-      }));
-      setCharSubTab("items");
-      closeRailIfSheet();
-      fireCpLog(
-        getCreativeLogger()?.logHumanEdit({
-          targetType: "metadata",
-          targetId: imported.id,
-          afterContent: JSON.stringify(imported),
-          note: "import-item-adopt (TabCharacter)",
-          stage: "character",
-        }),
-      );
-    },
-    [closeRailIfSheet, setCharSubTab, setConfig],
-  );
-
-  // ---- [X1-xyflow] 관계도 데이터 변환 (실데이터만 — 날조 금지) ----
-  const charGraphLayout = config?.charGraphLayout;
-  const graphNodes = useMemo<GraphNodeSpec[]>(
-    () =>
-      characters.map((c, i) => {
-        const saved = charGraphLayout?.[c.id];
-        const fallback = circularFallback(i, characters.length);
-        return {
-          id: c.id,
-          label: c.name || "?",
-          sublabel: c.role || undefined,
-          x: saved?.x ?? fallback.x,
-          y: saved?.y ?? fallback.y,
-          accent: avColor(i),
-        };
-      }),
-    [characters, charGraphLayout],
-  );
-
-  // charRelations 의 from/to 는 이 탭에서 id 기준이나, 구 데이터(이름 기준)도
-  // 존재 가능 → id·이름 둘 다 해석. 양 끝점이 실존 인물일 때만 엣지 생성.
-  const graphEdges = useMemo<GraphEdgeSpec[]>(() => {
-    const byKey = new Map<string, string>();
-    for (const c of characters) {
-      byKey.set(c.id, c.id);
-      if (c.name) byKey.set(c.name, c.id);
-    }
-    const out: GraphEdgeSpec[] = [];
-    relations.forEach((r, i) => {
-      const source = byKey.get(r.from);
-      const target = byKey.get(r.to);
-      if (!source || !target || source === target) return;
-      out.push({
-        id: `rel-${i}-${source}-${target}`,
-        source,
-        target,
-        label: r.desc?.trim() || REL_LABELS[r.type] || r.type,
-        color: REL_EDGE_COLORS[r.type] ?? "var(--line)",
-      });
-    });
-    return out;
-  }, [characters, relations]);
-
-  // ---- [X1-xyflow] 드래그 좌표 → config.charGraphLayout 디바운스 영속 ----
-  const pendingLayoutRef = useRef<Record<string, { x: number; y: number }>>({});
-  const layoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const flushGraphLayout = useCallback(() => {
-    layoutTimerRef.current = null;
-    const pending = pendingLayoutRef.current;
-    if (Object.keys(pending).length === 0) return;
-    pendingLayoutRef.current = {};
-    setConfig((prev) => ({
-      ...prev,
-      charGraphLayout: { ...(prev.charGraphLayout ?? {}), ...pending },
-    }));
-  }, [setConfig]);
-
-  const handleGraphDragStop = useCallback(
-    (id: string, x: number, y: number) => {
-      pendingLayoutRef.current[id] = { x: Math.round(x), y: Math.round(y) };
-      if (layoutTimerRef.current) clearTimeout(layoutTimerRef.current);
-      layoutTimerRef.current = setTimeout(flushGraphLayout, 600);
-    },
-    [flushGraphLayout],
-  );
-
-  // 언마운트/재구성 시 타이머 정리 + 미저장 좌표 즉시 flush (좌표 유실 방지).
-  useEffect(() => {
-    return () => {
-      if (layoutTimerRef.current) {
-        clearTimeout(layoutTimerRef.current);
-        layoutTimerRef.current = null;
-      }
-      flushGraphLayout();
-    };
-  }, [flushGraphLayout]);
-
-  // 노드 클릭 = 해당 인물 선택 후 프로필 뷰로 이동 (드래그와는 xyflow 가 구분).
-  const handleGraphNodeClick = useCallback((id: string) => {
-    setSelId(id);
-    setEditing(false);
-    setCharView("profile");
-  }, []);
+  const {
+    graphNodes,
+    graphEdges,
+    handleGraphNodeClick,
+    handleGraphDragStop,
+  } = useCharacterGraph({
+    characters,
+    relations,
+    charGraphLayout: config?.charGraphLayout,
+    setConfig,
+    onSelectCharacter: setSelId,
+    onEditingChange: setEditing,
+    onSetCharView: setCharView,
+  });
 
   // 노아 제안 상태 — 에러/안내는 인라인 표시 (silent fail 금지).
   const [aiBusy, setAiBusy] = useState(false);
@@ -468,6 +283,12 @@ export default function TabCharacter() {
             targetId: c.id,
             afterContent: JSON.stringify(c),
             provider: "gemini",
+            decisionContext: {
+              selectedAlternativeId: c.id,
+              selectedLabel: c.name || "캐릭터 제안",
+              selectedContent: JSON.stringify(c),
+              reason: "작가가 작품 캐릭터 후보로 적합하다고 판단해 추가함",
+            },
             stage: "character",
           }),
         );
@@ -485,104 +306,15 @@ export default function TabCharacter() {
     }
   };
 
-  // ---- [Z2a-chatcanvas] 채팅 도크 배선 (채택 = 사용자 확정 후 setConfig merge) ----
-  // 동명 인물 존재 → 제안이 제공한 필드만 갱신 (미제공 필드 보존 — 통째 덮어쓰기 X).
-  // 미존재 → 신규 인물 append (handleAiGenerate 와 동일 영속 경로·cpLog AI 귀속).
-  const applyCharacterProposal = useCallback(
-    (p: CharProposal) => {
-      const nameKey = p.name.trim().toLowerCase();
-      const existing = characters.find((c) => c.name.trim().toLowerCase() === nameKey);
-      const targetId = existing?.id ?? `char_${Date.now()}`;
-      setConfig((prev) => {
-        const list = prev.characters ?? [];
-        const idx = list.findIndex((c) => c.name.trim().toLowerCase() === nameKey);
-        if (idx >= 0) {
-          const cur = list[idx];
-          const merged: Character = {
-            ...cur,
-            role: p.role ?? cur.role,
-            traits: p.traits ?? cur.traits,
-            appearance: p.appearance ?? cur.appearance,
-            personality: p.personality ?? cur.personality,
-            speechStyle: p.speechStyle ?? cur.speechStyle,
-            speechExample: p.speechExample ?? cur.speechExample,
-            developmentTier: p.developmentTier ?? cur.developmentTier,
-            informationState: p.informationState ?? cur.informationState,
-            publicKnowledge: p.publicKnowledge ?? cur.publicKnowledge,
-            privateTruth: p.privateTruth ?? cur.privateTruth,
-            relationAddress: p.relationAddress ?? cur.relationAddress,
-            honorificRule: p.honorificRule ?? cur.honorificRule,
-            assetPotential: p.assetPotential ?? cur.assetPotential,
-            assetMemo: p.assetMemo ?? cur.assetMemo,
-          };
-          return { ...prev, characters: list.map((c, i) => (i === idx ? merged : c)) };
-        }
-        const fresh: Character = {
-          id: targetId,
-          name: p.name.trim(),
-          role: p.role ?? "",
-          traits: p.traits ?? "",
-          appearance: p.appearance ?? "",
-          dna: 0,
-          ...(p.personality ? { personality: p.personality } : {}),
-          ...(p.speechStyle ? { speechStyle: p.speechStyle } : {}),
-          ...(p.speechExample ? { speechExample: p.speechExample } : {}),
-          ...(p.developmentTier ? { developmentTier: p.developmentTier } : {}),
-          ...(p.informationState ? { informationState: p.informationState } : {}),
-          ...(p.publicKnowledge ? { publicKnowledge: p.publicKnowledge } : {}),
-          ...(p.privateTruth ? { privateTruth: p.privateTruth } : {}),
-          ...(p.relationAddress ? { relationAddress: p.relationAddress } : {}),
-          ...(p.honorificRule ? { honorificRule: p.honorificRule } : {}),
-          ...(p.assetPotential ? { assetPotential: p.assetPotential } : {}),
-          ...(p.assetMemo ? { assetMemo: p.assetMemo } : {}),
-        };
-        return { ...prev, characters: [...list, fresh] };
-      });
-      setSelId(targetId);
-      setEditing(false);
-      // [s82] 채택 = AI_SUGGESTION 귀속 (작가 1.0 오귀속 금지 — handleAiGenerate 동일)
-      fireCpLog(
-        getCreativeLogger()?.logAcceptAI({
-          targetType: "character",
-          targetId,
-          afterContent: JSON.stringify(p),
-          stage: "character",
-        }),
-      );
-      markExplicitCreativeLog("character");
-    },
-    [characters, setConfig],
-  );
-
-  const dockExtract = useCallback(
-    (content: string): DockSuggestion[] => {
-      const out: DockSuggestion[] = [];
-      for (const block of extractJsonBlocks(content)) {
-        for (const p of parseCharProposals(block)) {
-          const key = `char-${p.name.trim().toLowerCase()}`;
-          if (out.some((o) => o.key === key)) continue;
-          out.push({
-            key,
-            label: `캐릭터 반영: ${p.name}`,
-            apply: () => applyCharacterProposal(p),
-          });
-          if (out.length >= 6) return out;
-        }
-      }
-      return out;
-    },
-    [applyCharacterProposal],
-  );
-
-  // 캔버스 현황 — 실데이터만 (이름·역할 상한 12 — TabDirection MAX_CHARS 동일 기준)
-  const dockContext = useMemo(() => {
-    if (characters.length === 0) return "등록된 인물: 없음";
-    const lines = characters
-      .slice(0, 12)
-      .map((c) => `- ${c.name}${c.role ? ` (${c.role})` : ""}`);
-    if (characters.length > 12) lines.push(`(+${characters.length - 12}명 생략)`);
-    return `등록된 인물 (${characters.length}명):\n${lines.join("\n")}`;
-  }, [characters]);
+  const { dockContext, dockExtract, dockQuickExtract } = useCharacterDock({
+    active,
+    characters,
+    items,
+    isItems,
+    setConfig,
+    onSelectCharacter: setSelId,
+    onEditingChange: setEditing,
+  });
 
   // ---- 빈 상태: 세션 없음 ----
   if (!currentSession) {
@@ -613,6 +345,8 @@ export default function TabCharacter() {
       proposalGuide={DOCK_PROPOSAL_GUIDE}
       contextBlock={dockContext}
       extractSuggestions={dockExtract}
+      extractQuickSuggestions={dockQuickExtract}
+      quickSuggestionTitle={isItems ? "아이템 대화 메모 후보" : "캐릭터 대화 메모 후보"}
       placeholder="인물의 욕망과 결핍을 잡아볼까요"
     >
     <div className="ch-grid ch-main-grid">
@@ -624,7 +358,8 @@ export default function TabCharacter() {
         characters={characters}
         activeId={active?.id ?? null}
         povCharacter={config?.povCharacter}
-        itemCount={config?.items?.length ?? 0}
+        relationCount={relations.length}
+        itemCount={items.length}
         skillCount={config?.skills?.length ?? 0}
         magicSystemCount={config?.magicSystems?.length ?? 0}
         aiBusy={aiBusy}
@@ -676,14 +411,14 @@ export default function TabCharacter() {
         ) : charView === "graph" ? (
           // [X1-xyflow] 관계도 서브뷰 — 보조 뷰 (기본 프로필 뷰는 그대로 유지)
           characters.length === 0 ? (
-            <div style={{ display: "grid", placeItems: "center", height: "100%" }}>
+            <div className="ch-fill-center">
               <div className="ch-none">인물이 없습니다. “새 인물”을 추가하면 관계도가 표시됩니다.</div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="ch-graph-view">
               <div>
                 <div className="ch-sec-h">관계도</div>
-                <div className="ch-none" style={{ padding: "2px 0 4px" }}>
+                <div className="ch-none ch-graph-note">
                   {graphEdges.length === 0
                     ? "등록된 관계가 없어 인물 노드만 표시합니다. 노드 드래그 위치는 자동 저장, 클릭 시 프로필로 이동합니다."
                     : "노드 드래그 위치는 자동 저장, 노드 클릭 시 해당 인물 프로필로 이동합니다."}
@@ -701,7 +436,7 @@ export default function TabCharacter() {
             </div>
           )
         ) : !active ? (
-          <div style={{ display: "grid", placeItems: "center", height: "100%" }}>
+          <div className="ch-fill-center">
             <div className="ch-none">인물을 선택하거나 “새 인물”을 추가하세요.</div>
           </div>
         ) : (

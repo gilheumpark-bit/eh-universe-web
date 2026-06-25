@@ -96,8 +96,9 @@ export function useStudioShellBootEffects({
 export function useStudioShellCreativeEffects(
   currentProjectId: string | null,
   childrenPresent: boolean,
+  creativeProcessTrackingEnabled: boolean,
 ) {
-  const creativeLogger = useCreativeEventLogger(currentProjectId);
+  const creativeLogger = useCreativeEventLogger(currentProjectId, creativeProcessTrackingEnabled);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -129,6 +130,7 @@ export function useStudioShellCreativeEffects(
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!creativeProcessTrackingEnabled) return;
     if (childrenPresent) return;
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ totalChars: number; delta: number }>).detail;
@@ -155,7 +157,7 @@ export function useStudioShellCreativeEffects(
     };
     window.addEventListener('noa:version-snapshot-saved', handler);
     return () => window.removeEventListener('noa:version-snapshot-saved', handler);
-  }, [currentProjectId, childrenPresent]);
+  }, [currentProjectId, childrenPresent, creativeProcessTrackingEnabled]);
 }
 
 interface UseStudioShellEventEffectsOptions {

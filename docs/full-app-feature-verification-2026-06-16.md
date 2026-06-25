@@ -1,5 +1,7 @@
 # Loreguard 전체 기능 후보 검증 보고서 — 2026-06-16
 
+> Historical snapshot note (updated 2026-06-24): 아래 수치는 2026-06-16 실측 장부다. 현재 repo 기준 Playwright E2E 활성 spec 은 51개가 아니라 17개다.
+
 ## 범위
 
 요청: 앱 전체 기능을 1~1000개 범위에서 찾고 검증.
@@ -99,7 +101,7 @@ P0 기능군 최신 검증:
 | 분류 | 수 |
 |---|---:|
 | Jest/Playwright 테스트 파일 | 564 |
-| E2E spec | 51 |
+| E2E spec | 51 (2026-06-16 snapshot, current repo baseline 17) |
 
 주요 기능 영역:
 

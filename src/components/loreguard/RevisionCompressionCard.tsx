@@ -303,13 +303,12 @@ export default function RevisionCompressionCard({
         <span className="pill gray">{judgementLabel}</span>
         <button
           type="button"
-          className="mini-btn"
+          className="mini-btn rvcomp-toggle"
           aria-pressed={showRaw}
           aria-label={L4(language, {
             ko: showRaw ? "핵심 보기로 전환" : "세부 후보 전체 보기로 전환",
             en: showRaw ? "Switch to key view" : "Switch to full detail view",
           })}
-          style={{ marginLeft: "auto" }}
           onClick={onToggleRaw}
         >
           {L4(language, {
@@ -319,51 +318,49 @@ export default function RevisionCompressionCard({
         </button>
       </div>
       {/* 1 verdict + 등급 분포 (PASS/HOLD/FAIL·BLOCKER/WARN/NIT/KEEP — 사양 용어 그대로) */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-1)" }}>
+      <div className="rvcomp-verdict">
+        <span className="rvcomp-verdict-title">
           {L4(language, VERDICT_LABEL[compression.verdict] ?? { ko: compression.verdict, en: compression.verdict })}
         </span>
-        <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
+        <span className="rvcomp-verdict-desc">
           {L4(language, VERDICT_DESC[compression.verdict])}
         </span>
       </div>
-      <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 6 }}>
+      <div className="rvcomp-summary">
         {L4(language, {
           ko: `중요 ${compression.counts.BLOCKER} / 확인 ${compression.counts.WARN} / 참고 ${compression.counts.NIT} / 유지 ${compression.counts.KEEP} · 먼저 볼 항목 ${compression.clusterCount}개, 전체 후보 ${compression.rawCount}개`,
           en: `Important ${compression.counts.BLOCKER} / Check ${compression.counts.WARN} / Note ${compression.counts.NIT} / Keep ${compression.counts.KEEP} · ${compression.clusterCount} key points from ${compression.rawCount} total items`,
         })}
       </div>
       {compression.decisions.length === 0 ? (
-        <div className="wr-srow" style={{ color: "var(--ink-3)", marginTop: 8 }}>
+        <div className="wr-srow rvcomp-empty-row">
           {L4(language, { ko: "지금 바로 볼 후보는 없습니다", en: "No immediate findings" })}
         </div>
       ) : (
-        <ul
-          style={{ display: "flex", flexDirection: "column", gap: 6, margin: "8px 0 0", padding: 0, listStyle: "none" }}
-        >
+        <ul className="rvcomp-list">
           {GRADE_DISPLAY_ORDER.flatMap((g) =>
             compression.decisions.filter((d) => d.grade === g),
           ).map((d) => (
-            <li key={d.clusterKey} className="wr-srow" style={{ alignItems: "flex-start" }}>
-              <span className="pill gray" style={{ flexShrink: 0 }}>
+            <li key={d.clusterKey} className="wr-srow rvcomp-item">
+              <span className="pill gray rvcomp-pill">
                 {L4(language, GRADE_LABEL[d.grade])}
               </span>
               <span>
                 {d.label}
                 {d.rawCount > 1 && (
-                  <span style={{ color: "var(--ink-3)" }}>
+                  <span className="rvcomp-muted-inline">
                     {" "}
                     {L4(language, { ko: `· 관련 항목 ${d.rawCount}건`, en: ` · ${d.rawCount} related items` })}
                   </span>
                 )}
                 {d.promoted && (
-                  <span style={{ color: "var(--ink-3)" }}>
+                  <span className="rvcomp-muted-inline">
                     {" "}
                     {L4(language, { ko: "· 이전에도 반복됨", en: " · repeated from earlier checks" })}
                   </span>
                 )}
                 {d.judge && (
-                  <span style={{ color: "var(--ink-3)" }}>
+                  <span className="rvcomp-muted-inline">
                     {" "}
                     {L4(language, { ko: "· 작가 확인 필요", en: " · author confirmation needed" })}
                   </span>
@@ -374,7 +371,7 @@ export default function RevisionCompressionCard({
         </ul>
       )}
       {compression.droppedByCap > 0 && (
-        <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
+        <p className="rvcomp-footnote">
           {L4(language, {
             ko: `화면 표시 상한을 넘어 ${compression.droppedByCap}건은 접어 두었습니다. 전체 보기에서 모두 확인할 수 있습니다.`,
             en: `${compression.droppedByCap} items are folded because the list is long. Use Show all to see everything.`,
@@ -383,7 +380,7 @@ export default function RevisionCompressionCard({
       )}
       {/* near-miss 누적 — 무시된 경고 선행지표 (사양 §2·§9) */}
       {relevantNearMisses.length > 0 && (
-        <p style={{ fontSize: 11, color: "var(--ink-3)", margin: "8px 0 0" }}>
+        <p className="rvcomp-footnote">
           {L4(language, { ko: "반복해서 남은 후보:", en: "Repeated unresolved points:" })}{" "}
           {relevantNearMisses
             .map(

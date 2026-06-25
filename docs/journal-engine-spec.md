@@ -1164,7 +1164,7 @@ Stores:
 | `src/lib/journal/__tests__/multi-tab.test.ts` | BroadcastChannel + Leader Election + Follower 위임 |
 | `src/lib/journal/__tests__/migration.test.ts` | noa_projects_v2 → journal 전환 + 롤백 |
 | `src/hooks/__tests__/useAutoSave.test.ts` | 훅 인터페이스 + debounce + flush + conflict |
-| `e2e/scenarios/06-crash-recovery.spec.ts` | Playwright 페이지 freeze → resume → 복구 |
+| `e2e/scenarios/12-backup-tiers.spec.ts` + `e2e/loreguard-authoring-to-export-persistence.spec.ts` | 현재 repo 기준 Playwright 저장/백업/출고 지속성 검증. 과거 전용 crash-recovery spec 은 2026-06-24 정리됨 |
 
 **커버리지 목표**: 엔진 로직 90%+. UI hook 80%+.
 

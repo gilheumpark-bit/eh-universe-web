@@ -34,6 +34,7 @@ import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 export const runtime = 'nodejs';
 
 const DEFAULT_MODELS: Record<string, string> = {
+  upstage: 'solar-pro3',
   gemini: 'gemini-2.5-flash',
   openai: 'gpt-5.4-mini',
   claude: 'claude-sonnet-4-6',
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
       stage?: number;
       mode?: 'novel' | 'general';
     };
-    const { provider = 'gemini', apiKey: rawApiKey, model, stage = 0, mode = 'novel' } = body;
+    const { provider = 'upstage', apiKey: rawApiKey, model, stage = 0, mode = 'novel' } = body;
 
     if (!ALLOWED_PROVIDERS.has(provider)) {
       return NextResponse.json({ error: '지원하지 않는 번역 방식입니다.' }, { status: 400 });
@@ -264,6 +265,7 @@ export async function POST(req: NextRequest) {
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();
           let fullText = '';
+          let skipCount = 0;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -275,9 +277,10 @@ export async function POST(req: NextRequest) {
                 const j = JSON.parse(line.slice(6));
                 const delta = j.choices?.[0]?.delta?.content;
                 if (delta) fullText += delta;
-              } catch { /* skip */ }
+              } catch { skipCount++; }
             }
           }
+          if (skipCount > 0) logger.warn('api/translate', 'SSE partial chunks skipped', { skipCount });
           // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json(
             { result: filterOutputIp(fullText, '/api/translate').output, stage, approxPromptTokens: promptTokens },
@@ -317,6 +320,7 @@ export async function POST(req: NextRequest) {
           const reader = sparkStream.getReader();
           const decoder = new TextDecoder();
           let fullText = '';
+          let skipCount = 0;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -327,9 +331,10 @@ export async function POST(req: NextRequest) {
                 const j = JSON.parse(line.slice(6));
                 const delta = j.choices?.[0]?.delta?.content;
                 if (delta) fullText += delta;
-              } catch { /* skip */ }
+              } catch { skipCount++; }
             }
           }
+          if (skipCount > 0) logger.warn('api/translate', 'SSE partial chunks skipped', { skipCount });
           // [N2] 출력 IP 필터 (fail-open — 필터 장애 시 원문 반환 + 로깅)
           return NextResponse.json(
             { result: filterOutputIp(fullText, '/api/translate').output, stage, approxPromptTokens: promptTokens },
@@ -358,6 +363,9 @@ export async function POST(req: NextRequest) {
 
     let aiModel;
     switch (provider) {
+      case 'upstage':
+        aiModel = createOpenAI({ apiKey: finalApiKey, baseURL: 'https://api.upstage.ai/v1' })(finalModel);
+        break;
       case 'openai':
         aiModel = createOpenAI({ apiKey: finalApiKey })(finalModel);
         break;

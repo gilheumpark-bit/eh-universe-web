@@ -43,6 +43,11 @@ const mockedUseStudio = useStudio as jest.Mock;
 
 describe("CpJournalPanel import file reports", () => {
   beforeEach(() => {
+    try {
+      window.localStorage.setItem("loreguard_creative_process_tracking", "on");
+    } catch {
+      /* noop */
+    }
     mockedUseStudio.mockReturnValue({
       currentProjectId: "project-1",
       projects: [],
@@ -78,6 +83,14 @@ describe("CpJournalPanel import file reports", () => {
     });
   });
 
+  afterEach(() => {
+    try {
+      window.localStorage.removeItem("loreguard_creative_process_tracking");
+    } catch {
+      /* noop */
+    }
+  });
+
   it("과정기록 패널에서 창작 확인서 기본 상태를 보여준다", async () => {
     render(<CpJournalPanel />);
 
@@ -87,7 +100,7 @@ describe("CpJournalPanel import file reports", () => {
 
     const section = await screen.findByRole("dialog", { name: "창작 과정 확인서" });
     expect(within(section).getByText("0건 기록")).toBeInTheDocument();
-    expect(within(section).getByText("기록된 창작 이벤트가 없습니다 — 집필을 시작하면 자동으로 기록됩니다")).toBeInTheDocument();
+    expect(within(section).getByText("기록된 창작 이벤트가 없습니다 — 집필을 시작하면 과정기록이 쌓입니다")).toBeInTheDocument();
     expect(
       within(section).getByLabelText("창작 과정 확인서 발급 — HTML과 Markdown 다운로드"),
     ).toHaveTextContent("발급 불가 — 기록된 이벤트 없음");

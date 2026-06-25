@@ -60,7 +60,7 @@ function makeConfig(): StoryConfig {
   } as StoryConfig;
 }
 
-function renderTabWorld() {
+function renderTabWorld(overrides: Partial<ReturnType<typeof mockedUseStudio>> = {}) {
   let config = makeConfig();
   const setConfig = jest.fn((next: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => {
     config = typeof next === "function" ? next(config) : next;
@@ -86,6 +86,7 @@ function renderTabWorld() {
     doRestoreVersionedBackup: jest.fn(),
     refreshBackupList: jest.fn(),
     language: "KO",
+    ...overrides,
   });
 
   render(<TabWorld />);
@@ -132,5 +133,35 @@ describe("TabWorld import candidates", () => {
       note: "세계관 단서가 많음",
     });
     expect(getConfig().worldFieldEvidence?.corePremise?.updatedAt).toEqual(expect.any(String));
+  });
+
+  it("세계관 대화에서 나온 설정 메모를 후보로 띄우고 양식에 반영한다", async () => {
+    const { getConfig } = renderTabWorld({
+      filteredMessages: [
+        {
+          id: "msg-1",
+          role: "assistant",
+          content: "이 세계의 마법은 시전자의 기억을 연료로 쓰고, 고갈되면 이름을 잃습니다.",
+          timestamp: 1,
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "세계관 보드 펼치기" }));
+
+    expect(screen.getByText("대화 메모 후보")).toBeInTheDocument();
+    expect(screen.getAllByText("마법 / 기술 체계").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /마법 \/ 기술 체계에 대화 메모 반영/ }));
+
+    await waitFor(() => {
+      expect(getConfig().magicTechSystem).toContain("기억을 연료");
+    });
+    expect(getConfig().worldFieldEvidence?.magicTechSystem).toMatchObject({
+      fieldKey: "magicTechSystem",
+      sourceLabel: "노아 대화 메모",
+      conflictCount: 0,
+      note: "마법 / 기술 체계 단서 감지",
+    });
   });
 });

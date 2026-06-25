@@ -9,6 +9,7 @@ import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logger';
 import { apiLog } from '@/lib/api-logger';
 import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { isAllowedOriginValue } from '@/lib/api-origin-guard';
 
 // [M9 P1-10] body size cap — public error reporter, 10KB cap prevents DOS via oversized payload.
 // Tightened from 16KB → 10KB to match vitals route (both are unauthenticated public beacons).
@@ -18,16 +19,8 @@ const MAX_REQUEST_SIZE = 10_000;
 export async function POST(req: NextRequest) {
   // Same-origin validation
   const origin = req.headers.get('origin') || req.headers.get('referer') || '';
-  const host = req.headers.get('host') || '';
-  if (origin && host) {
-    try {
-      const originHost = new URL(origin).host;
-      if (originHost !== host) {
-        return new NextResponse(null, { status: 403 });
-      }
-    } catch {
-      return new NextResponse(null, { status: 403 });
-    }
+  if (origin && !isAllowedOriginValue(req.headers, origin)) {
+    return new NextResponse(null, { status: 403 });
   }
 
   const ip = getClientIp(req.headers);

@@ -24,6 +24,19 @@ const SCORE_COLOR = (score: number): string => {
   return '#ef4444';
 };
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
+function bindMiniBar(node: HTMLButtonElement | null, width: number, height: number, color: string, isSelected: boolean) {
+  if (!node) return;
+  node.style.setProperty('--studio-mini-bar-width', `${width}px`);
+  node.style.setProperty('--studio-mini-bar-height', `${height}px`);
+  node.style.setProperty('--studio-tone-color', color);
+  node.style.setProperty('--studio-tone-shadow', isSelected ? `0 0 8px ${color}60` : 'none');
+}
+
 // ============================================================
 // PART 2 — MINI BAR CHART (에피소드별 점수 막대)
 // ============================================================
@@ -52,20 +65,14 @@ const MiniBarChart: React.FC<{
           <button
             key={ep.episode}
             onClick={() => onSelect(ep)}
-            className={`relative group flex flex-col items-center transition-opacity ${isSelected ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
-            style={{ width: barWidth }}
+            ref={(node) => bindMiniBar(node, barWidth, h, color, isSelected)}
+            className={`relative group flex flex-col items-center transition-opacity studio-mini-bar-button ${isSelected ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
             title={ariaLabel}
             aria-label={ariaLabel}
             aria-pressed={isSelected}
           >
             <div
-              className="rounded-t-sm transition-[transform,opacity,background-color,border-color,color]"
-              style={{
-                height: h,
-                width: barWidth - 2,
-                backgroundColor: color,
-                boxShadow: isSelected ? `0 0 8px ${color}60` : 'none',
-              }}
+              className="rounded-t-sm transition-[transform,opacity,background-color,border-color,color] studio-mini-score-bar"
               aria-hidden="true"
             />
             <span className="text-[7px] text-text-tertiary mt-0.5" aria-hidden="true">{ep.episode}</span>
@@ -189,7 +196,10 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
       >
         {/* Overall score badge */}
         <div className="flex-shrink-0 flex flex-col items-center">
-          <span className="text-lg font-black" style={{ color: SCORE_COLOR(report.overallScore) }}>
+          <span
+            ref={(node) => bindStudioTone(node, SCORE_COLOR(report.overallScore))}
+            className="text-lg font-black studio-tone-text"
+          >
             {report.overallScore}
           </span>
           <span className="text-[7px] text-text-tertiary uppercase tracking-wider">
@@ -266,7 +276,10 @@ const ContinuityGraph: React.FC<ContinuityGraphProps> = ({ language, config }) =
                 <span className="text-xs font-bold">
                   EP.{selectedEp.episode} — {selectedEp.title}
                 </span>
-                <span className="text-xs font-black" style={{ color: SCORE_COLOR(selectedEp.continuityScore) }}>
+                <span
+                  ref={(node) => bindStudioTone(node, SCORE_COLOR(selectedEp.continuityScore))}
+                  className="text-xs font-black studio-tone-text"
+                >
                   {selectedEp.continuityScore}{t('continuity.point')}
                 </span>
               </div>

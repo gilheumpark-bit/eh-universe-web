@@ -117,4 +117,21 @@ describe('SettingsView environment categories', () => {
     expect(screen.queryByRole('tab', { name: /노아 운영/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /출고·번역/ })).not.toBeInTheDocument();
   });
+
+  it('카테고리 탭은 방향키로 이동하고 마지막 탭을 기억한다', () => {
+    render(
+      <SettingsView
+        language="KO"
+        hostedProviders={{ gemini: true }}
+        onClearAll={jest.fn()}
+        onManageApiKey={jest.fn()}
+      />,
+    );
+
+    const statusTab = screen.getByRole('tab', { name: /상태/ });
+    fireEvent.keyDown(statusTab, { key: 'ArrowRight' });
+
+    expect(screen.getByRole('tab', { name: /노아 운영/ })).toHaveAttribute('aria-selected', 'true');
+    expect(localStorage.getItem('noa_settings_tab')).toBe('noa');
+  });
 });

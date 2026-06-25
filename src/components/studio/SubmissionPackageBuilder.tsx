@@ -14,7 +14,6 @@ import {
   buildSubmissionPackageZipBlob,
   buildSubmissionPackageZipFilename,
 } from '@/lib/creative-process/submission-package-zip';
-import { VISUAL_TOKENS } from '@/lib/creative-process/visual-tokens';
 import { LIMITATION_TEXT_4LANG } from '@/lib/creative-process/limitation-text';
 import type {
   LoreguardPlanId,
@@ -180,34 +179,17 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
 
   const actionBlock = (
     <div className="submission-package-action-strip">
-      <div className="submission-package-actions" style={{ display: 'flex', gap: 12 }}>
+      <div className="submission-package-actions">
         <button
           type="button"
           aria-label={primaryActionLabel}
           className="submission-package-primary-action"
           onClick={handleIssue}
           disabled={status === 'working' || !projectId}
-          style={{
-            background: '#1A1A1A',
-            color: '#FFFFFF',
-            border: 'none',
-            padding: '12px 20px',
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            cursor: status === 'working' || !projectId ? 'not-allowed' : 'pointer',
-            opacity: status === 'working' || !projectId ? 0.5 : 1,
-            borderRadius: 0,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
         >
           {status === 'working' ? (
             <>
-              <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} aria-hidden="true" />
+              <Loader2 size={14} className="submission-package-spinner" aria-hidden="true" />
               {t.issuing}
             </>
           ) : status === 'success' ? (
@@ -229,22 +211,6 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
             aria-label={t.downloadAll}
             className="submission-package-secondary-action"
             onClick={handleDownloadAll}
-            style={{
-              background: 'transparent',
-              color: '#1A1A1A',
-              border: VISUAL_TOKENS.border.structural,
-              padding: '12px 20px',
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              borderRadius: 0,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
           >
             <Download size={14} aria-hidden="true" />
             {t.downloadAll}
@@ -255,18 +221,7 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
       {error && status === 'error' && (
         <div
           role="alert"
-          style={{
-            marginTop: 12,
-            padding: '10px 14px',
-            background: '#FEF2F2',
-            border: '1px solid #FCA5A5',
-            color: '#991B1B',
-            fontSize: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            borderRadius: 0,
-          }}
+          className="submission-package-error"
         >
           <AlertCircle size={14} aria-hidden="true" />
           {t.error}: {error}
@@ -276,12 +231,7 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
       {downloadMessage && (
         <p
           role="status"
-          style={{
-            margin: '12px 0 0',
-            color: '#6B7280',
-            fontSize: 12,
-            lineHeight: 1.5,
-          }}
+          className="submission-package-download-message"
         >
           {downloadMessage}
         </p>
@@ -297,90 +247,44 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
     <section
       aria-label={t.title}
       className={`submission-package-builder ${className}`.trim()}
-      style={{
-        background: '#FFFFFF',
-        border: VISUAL_TOKENS.border.hairline,
-        padding: 32,
-        fontFamily: VISUAL_TOKENS.typography.bodyMd.family,
-        color: '#1A1A1A',
-      }}
     >
       {/* Disclaimer first line */}
       <p
-        style={{
-          fontSize: 11,
-          color: '#9CA3AF',
-          borderBottom: VISUAL_TOKENS.border.hairline,
-          paddingBottom: 12,
-          marginBottom: 24,
-          lineHeight: 1.5,
-        }}
+        className="submission-package-disclaimer"
       >
         {LIMITATION_TEXT_4LANG[certLang]}
       </p>
 
       {/* Header */}
-      <header style={{ marginBottom: 24 }}>
+      <header className="submission-package-header">
         <h2
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.headlineMd.family,
-            fontSize: 28,
-            fontWeight: 500,
-            margin: '0 0 8px 0',
-            color: '#1A1A1A',
-          }}
+          className="submission-package-title"
         >
           {t.title}
         </h2>
-        <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>{t.subtitle}</p>
+        <p className="submission-package-subtitle">{t.subtitle}</p>
       </header>
 
       {actionBlock}
 
-      <div
-        className="submission-package-builder-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 320px',
-          gap: 32,
-          alignItems: 'flex-start',
-        }}
-      >
+      <div className="submission-package-builder-grid">
         {/* Left column — controls */}
         <div>
           {/* Profile selector */}
-          <fieldset style={{ border: 'none', padding: 0, margin: '0 0 24px 0' }}>
+          <fieldset className="submission-package-fieldset">
             <legend
-              style={{
-                fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#6B7280',
-                marginBottom: 8,
-              }}
+              className="submission-package-legend"
             >
               {t.profileHeader}
             </legend>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            <div className="submission-package-profile-grid">
               {(Object.keys(DISTRIBUTION_PROFILES) as DistributionProfileId[]).map((pid) => {
                 const p = DISTRIBUTION_PROFILES[pid];
                 const checked = pid === profileId;
                 return (
                   <label
                     key={pid}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '12px 14px',
-                      border: checked
-                        ? `2px solid ${VISUAL_TOKENS.color.deepCharcoal}`
-                        : VISUAL_TOKENS.border.hairline,
-                      cursor: 'pointer',
-                      background: checked ? '#F9F9F9' : '#FFFFFF',
-                    }}
+                    className={`submission-package-profile-option${checked ? ' is-active' : ''}`}
                   >
                     <input
                       type="radio"
@@ -388,19 +292,14 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
                       value={pid}
                       checked={checked}
                       onChange={() => setProfileId(pid)}
-                      style={{ accentColor: VISUAL_TOKENS.color.deepCharcoal }}
+                      className="submission-package-radio"
                     />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>
+                    <div className="submission-package-profile-body">
+                      <div className="submission-package-profile-title">
                         {p.label[certLang]}
                       </div>
                       <div
-                        style={{
-                          fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                          fontSize: 10,
-                          color: '#9CA3AF',
-                          marginTop: 2,
-                        }}
+                        className="submission-package-profile-meta"
                       >
                         {t.retentionYears}: {p.recommendedRetentionYears}{t.years}
                       </div>
@@ -412,19 +311,10 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
           </fieldset>
 
           {/* Recipient */}
-          <div style={{ marginBottom: 24 }}>
+          <div className="submission-package-field">
             <label
               htmlFor="submission-recipient"
-              style={{
-                display: 'block',
-                fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#6B7280',
-                marginBottom: 8,
-              }}
+              className="submission-package-legend"
             >
               {t.recipientHeader}
             </label>
@@ -434,44 +324,27 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder={t.recipientPlaceholder}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                fontFamily: VISUAL_TOKENS.typography.bodyMd.family,
-                fontSize: 13,
-                border: VISUAL_TOKENS.border.hairline,
-                background: '#FFFFFF',
-                color: '#1A1A1A',
-                borderRadius: 0, // Sharp 0px
-              }}
+              className="submission-package-input"
             />
           </div>
 
           {/* Format toggle */}
-          <fieldset style={{ border: 'none', padding: 0, margin: '0 0 24px 0' }}>
+          <fieldset className="submission-package-fieldset">
             <legend
-              style={{
-                fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#6B7280',
-                marginBottom: 8,
-              }}
+              className="submission-package-legend"
             >
               {t.formatHeader}
             </legend>
-            <div style={{ display: 'flex', gap: 16 }}>
+            <div className="submission-package-format-options">
               {(['html', 'md'] as const).map((f) => (
-                <label key={f} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                <label key={f} className="submission-package-format-option">
                   <input
                     type="radio"
                     name="cert-format"
                     value={f}
                     checked={format === f}
                     onChange={() => setFormat(f)}
-                    style={{ accentColor: VISUAL_TOKENS.color.deepCharcoal }}
+                    className="submission-package-radio"
                   />
                   {f === 'html' ? t.formatHtml : t.formatMd}
                 </label>
@@ -481,15 +354,7 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
 
           {/* Artifacts */}
           <h3
-            style={{
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#6B7280',
-              margin: '0 0 4px 0',
-            }}
+            className="submission-package-section-label"
           >
             {t.artifactsHeader}
           </h3>
@@ -502,15 +367,7 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
           {issueGateNoteKo ? (
             <div
               aria-label="제출 묶음 생성 전 조건"
-              style={{
-                marginTop: 18,
-                padding: '10px 12px',
-                border: VISUAL_TOKENS.border.hairline,
-                background: '#F8FAFC',
-                color: '#4B5563',
-                fontSize: 12,
-                lineHeight: 1.55,
-              }}
+              className="submission-package-gate-note"
             >
               {issueGateNoteKo}
             </div>
@@ -521,15 +378,7 @@ const SubmissionPackageBuilder: React.FC<SubmissionPackageBuilderProps> = ({
         {/* Right column — Cover Preview */}
         <div>
           <h3
-            style={{
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#6B7280',
-              margin: '0 0 12px 0',
-            }}
+            className="submission-package-cover-label"
           >
             {t.coverPreview}
           </h3>

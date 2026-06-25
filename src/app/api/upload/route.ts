@@ -217,6 +217,20 @@ function splitNarrativeContent(content: string, maxChunkChars: number) {
 
 function decodeXmlText(value: string) {
   return value
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => {
+      try {
+        return String.fromCodePoint(Number.parseInt(hex, 16));
+      } catch {
+        return '';
+      }
+    })
+    .replace(/&#(\d+);/g, (_, decimal: string) => {
+      try {
+        return String.fromCodePoint(Number.parseInt(decimal, 10));
+      } catch {
+        return '';
+      }
+    })
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -409,9 +423,54 @@ function extractEpubChaptersFromZip(buffer: Buffer) {
   return { chapters, warnings };
 }
 
+function extractHwpxParagraphText(paragraphXml: string) {
+  const withLineBreaks = paragraphXml.replace(/<hp:lineBreak\b[^>]*\/?>/gi, '\n');
+  return decodeXmlText(
+    Array.from(withLineBreaks.matchAll(/<hp:t\b[^>]*>([\s\S]*?)<\/hp:t>/gi))
+      .map((match) => match[1])
+      .join(''),
+  ).trimEnd();
+}
+
+function sectionNumberFromPath(path: string) {
+  const match = path.match(/section(\d+)\.xml$/i);
+  return match ? Number.parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
+}
+
+function extractHwpxSectionText(xml: string) {
+  const paragraphs = Array.from(xml.matchAll(/<hp:p\b[\s\S]*?<\/hp:p>/gi))
+    .map((match) => extractHwpxParagraphText(match[0]))
+    .filter((line) => line.trim().length > 0);
+
+  if (paragraphs.length > 0) {
+    return paragraphs.join('\n');
+  }
+
+  return decodeXmlText(
+    Array.from(xml.matchAll(/<hp:t\b[^>]*>([\s\S]*?)<\/hp:t>/gi))
+      .map((match) => match[1])
+      .join('\n'),
+  ).trim();
+}
+
+function extractHwpxText(buffer: Buffer) {
+  const entries = readZipEntries(buffer);
+  const sectionEntries = Array.from(entries.entries())
+    .filter(([path]) => /^contents\/section\d+\.xml$/i.test(path))
+    .sort(([left], [right]) => sectionNumberFromPath(left) - sectionNumberFromPath(right));
+
+  return normalizeNarrativeText(
+    sectionEntries
+      .map(([, data]) => extractHwpxSectionText(data.toString('utf8')))
+      .filter((part) => part.trim().length > 0)
+      .join('\n\n'),
+  );
+}
+
 const MAGIC_BYTES: Record<string, number[]> = {
   'application/pdf': [0x25, 0x50, 0x44, 0x46],
   'application/epub+zip': [0x50, 0x4B, 0x03, 0x04],
+  'application/hwp+zip': [0x50, 0x4B, 0x03, 0x04],
   'application/vnd.openxmlformats-officedocument': [0x50, 0x4B, 0x03, 0x04],
   'text/plain': [],
   'text/markdown': [],
@@ -428,6 +487,7 @@ function getMimeForExtension(fileName: string): string | null {
   if (fileName.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument';
   if (fileName.endsWith('.pdf')) return 'application/pdf';
   if (fileName.endsWith('.epub')) return 'application/epub+zip';
+  if (fileName.endsWith('.hwpx')) return 'application/hwp+zip';
   if (fileName.endsWith('.txt')) return 'text/plain';
   if (fileName.endsWith('.md')) return 'text/markdown';
   return null;
@@ -456,6 +516,15 @@ function classifyUploadParseError(err: unknown, fileName: string) {
       normalized.includes('end of central directory'))
   ) {
     return 'DRM 또는 손상된 EPUB일 수 있습니다. DRM 없는 원본 파일을 확인해 주세요.';
+  }
+  if (
+    fileName.endsWith('.hwpx') &&
+    (normalized.includes('encrypted') ||
+      normalized.includes('corrupt') ||
+      normalized.includes('invalid') ||
+      normalized.includes('end of central directory'))
+  ) {
+    return '암호화되었거나 손상된 HWPX일 수 있습니다. 한글에서 HWPX로 다시 저장한 뒤 불러오세요.';
   }
   return '문서 파싱 중 오류가 발생했습니다. 파일 형식을 확인해주세요.';
 }
@@ -495,10 +564,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const contentLength = Number(req.headers.get('content-length') ?? '0');
+    if (Number.isFinite(contentLength) && contentLength > MAX_UPLOAD_BYTES + 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large' }, { status: 413 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'File too large' }, { status: 413 });
     }
 
     const clientSource = formData.get('source');
@@ -533,6 +610,19 @@ export async function POST(req: NextRequest) {
       }
 
       content = await extractDocxText(buffer);
+    } else if (fileName.endsWith('.hwpx')) {
+      const zipCheck = scanZipDecompressed(buffer, ZIP_DECOMPRESSED_CAP);
+      if (!zipCheck.ok) {
+        logger.warn('upload/hwpx', `zip-bomb guard rejected: ${zipCheck.reason}`, {
+          totalUncompressed: zipCheck.totalUncompressed,
+        });
+        return NextResponse.json(
+          { error: `HWPX 검증 실패: ${zipCheck.reason}` },
+          { status: 413 },
+        );
+      }
+
+      content = extractHwpxText(buffer);
     } else if (fileName.endsWith('.pdf')) {
       const normalizedPdf = normalizePdfExtractedText(await extractPdfText(buffer));
       content = normalizedPdf.text;

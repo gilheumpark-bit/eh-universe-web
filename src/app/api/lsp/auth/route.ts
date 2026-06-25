@@ -4,12 +4,55 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { generateLspToken, hashToken, checkRateLimit, lspAuthHeaders, verifyLspToken } from '@/lib/lsp/auth';
+import {
+  checkRateLimit,
+  generateLspToken,
+  hashToken,
+  LSP_SESSION_COOKIE,
+  LSP_SESSION_TTL_SEC,
+  lspAuthHeaders,
+  verifyLspToken,
+} from '@/lib/lsp/auth';
 
 export const runtime = 'nodejs';
 
+function setLspSessionCookie(response: NextResponse, token: string): NextResponse {
+  response.cookies.set({
+    name: LSP_SESSION_COOKIE,
+    value: token,
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/api/lsp',
+    maxAge: LSP_SESSION_TTL_SEC,
+  });
+  return response;
+}
+
 /** POST — 새 토큰 발급. [보안 누락 수리 — 2026-05-09] IP 기반 rate-limit 추가. */
 export async function POST(request: Request): Promise<NextResponse> {
+  const auth = request.headers.get('authorization') ?? '';
+  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
+  if (bearer) {
+    const result = await verifyLspToken(bearer);
+    if (!result.ok) {
+      return NextResponse.json(
+        { valid: false, error: result.error },
+        { status: result.status, headers: lspAuthHeaders(result) },
+      );
+    }
+    const tokenHash = await hashToken(bearer);
+    return setLspSessionCookie(
+      NextResponse.json({
+        valid: true,
+        tokenHash,
+        sessionCookie: LSP_SESSION_COOKIE,
+        sessionTtlSec: LSP_SESSION_TTL_SEC,
+      }),
+      bearer,
+    );
+  }
+
   // 보안 누락 수리 — 토큰 발급 자체는 인증이 없으므로 IP 기반 rate-limit 으로 무한 발급 방지.
   // 이전 버전: rate-limit 0 → 누구나 무한 토큰 발급 가능 (DoS·storage 공격 위험).
   // 식별자: x-forwarded-for (Vercel) 또는 x-real-ip — 둘 다 없으면 anonymous (가장 엄격 throttle).
@@ -58,4 +101,19 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
   const hash = await hashToken(token);
   return NextResponse.json({ valid: true, tokenHash: hash });
+}
+
+/** DELETE — 브라우저용 LSP 세션 쿠키 제거 */
+export async function DELETE(): Promise<NextResponse> {
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set({
+    name: LSP_SESSION_COOKIE,
+    value: '',
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/api/lsp',
+    maxAge: 0,
+  });
+  return response;
 }

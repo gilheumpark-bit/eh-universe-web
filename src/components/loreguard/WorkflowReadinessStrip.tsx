@@ -36,13 +36,13 @@ const WORKFLOW_ORDER: LoreguardTabId[] = [
 
 const TECHNIQUE_LABELS: Record<LoreguardTabId, { ko: string; en: string; ja: string; zh: string }> = {
   project: {
-    ko: "권리 메모·플랫폼 기준",
+    ko: "작품 기준선",
     en: "Rights notes · platform basis",
     ja: "権利メモ・平台基準",
     zh: "权利备注·平台基准",
   },
   world: {
-    ko: "세계관 3단계 계층화",
+    ko: "세계관 뼈대 확장",
     en: "3-step world structure",
     ja: "世界観3層階層化",
     zh: "世界观三层结构",
@@ -240,13 +240,12 @@ export default function WorkflowReadinessStrip({
         <strong>{getLoreguardTabLabel(activeTab, language)}</strong>
         <span>{L4(language, TECHNIQUE_LABELS[activeTab])}</span>
       </div>
-      <div
+      <ol
         className="lg-workflow-steps"
-        role="list"
         aria-label={L4(language, { ko: "10단계 준비 상태", en: "10-step readiness", ja: "10段階の準備状態", zh: "十步准备状态" })}
       >
         {audits.map((audit, stageIndex) => (
-          <span key={audit.id} className="lg-workflow-step" role="listitem">
+          <li key={audit.id} className="lg-workflow-step">
             <button
               type="button"
               className={`lg-workflow-dot ${audit.status} ${audit.id === activeTab ? "active" : ""}`}
@@ -256,9 +255,9 @@ export default function WorkflowReadinessStrip({
               onClick={() => onStageSelect?.(audit.id)}
               disabled={!onStageSelect}
             />
-          </span>
+          </li>
         ))}
-      </div>
+      </ol>
       <div className="lg-workflow-notes">
         <span>
           <small>{L4(language, { ko: "이전", en: "Previous", ja: "前", zh: "上一步" })}</small>

@@ -11,6 +11,8 @@ describe('localization-review', () => {
     expect(report.cards.length).toBeGreaterThan(0);
     expect(report.cards[0].userCanJudgeWithoutTargetLanguage).toBe(true);
     expect(report.cards.some((card) => card.recommendation === 'hold')).toBe(true);
+    expect(report.summaryKo).toContain('문장 호흡');
+    expect(report.readerLensKo).toContain('고유명사 표기');
   });
 
   it('warns when faithful and localized tracks are identical', () => {
@@ -25,4 +27,3 @@ describe('localization-review', () => {
     expect(report.cards.map((card) => card.id)).toContain('localization-dual-track-same');
   });
 });
-

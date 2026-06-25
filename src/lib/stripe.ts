@@ -5,7 +5,7 @@ import type {
   ReleaseEntitlementPlan,
 } from '@/lib/billing/loreguard-plans';
 
-// Stripe 초기화: 환경변수 없으면 null 반환 — placeholder 키 사용 금지
+// Stripe 초기화: 환경변수 없으면 null 반환 — 예시 키 사용 금지
 // apiVersion은 Stripe SDK 타입이 요구하는 버전 문자열.
 // 배포 시점에 Stripe SDK 패키지가 지원하는 최신 안정 버전을 사용 (빈 객체로 기본값에 위임).
 const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();

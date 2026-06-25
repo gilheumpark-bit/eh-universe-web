@@ -48,7 +48,7 @@ jest.mock('next/server', () => ({
 
 jest.mock('@/lib/server-ai', () => ({
   hasServerProviderCredentials: () => false,
-  isServerProviderId: (value: string) => ['gemini', 'openai', 'claude', 'groq', 'mistral', 'ollama', 'lmstudio'].includes(value),
+  isServerProviderId: (value: string) => ['upstage', 'gemini', 'openai', 'claude', 'groq', 'mistral', 'ollama', 'lmstudio'].includes(value),
   resolveServerProviderKey: (_provider: string, apiKey?: string) => apiKey ?? '',
 }));
 

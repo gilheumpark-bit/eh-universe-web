@@ -1,6 +1,11 @@
 # Loreguard Feature Flags
 
-Last updated: 2026-06-16
+Last updated: 2026-06-24
+
+2026-06-24 baseline note:
+
+- Reviewed after the cleanup/document refresh pass.
+- Current public-surface rule and disabled compatibility-route policy remain unchanged.
 
 This file records the current app feature gates. Code remains the source of truth; this document prevents stale docs from reviving removed surfaces.
 
@@ -22,7 +27,7 @@ Boolean client flags use local override key `ff_<FLAG>` and environment override
 
 | Flag | Default | Source | Meaning |
 |---|---:|---|---|
-| `IMAGE_GENERATION` | `true` | `src/lib/feature-flags.ts` | Enables visual preview tooling when provider configuration exists. |
+| `IMAGE_GENERATION` | `false` | `src/lib/feature-flags.ts` | Keeps in-app visual generation disabled by default. Enable only for internal/development API testing with explicit env override. |
 | `GOOGLE_DRIVE_BACKUP` | `true` | `src/lib/feature-flags.ts` | Enables Google Drive backup surface. |
 | `OFFLINE_CACHE` | `true` | `src/lib/feature-flags.ts` | Enables local offline cache and backup behavior. |
 | `EPISODE_COMPARE` | `true` | `src/lib/feature-flags.ts` | Enables cross-episode comparison tools. |

@@ -186,8 +186,7 @@ export function CharacterCreatorPanel({
 
           <button
             onClick={addCharacter}
-            className="w-full py-4 bg-accent-amber rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-accent-amber/80 transition-[transform,background-color,border-color,color] shadow-xl active:scale-95"
-            style={{ color: '#1a1a1a' }}
+            className="w-full py-4 bg-accent-amber rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-accent-amber/80 transition-[transform,background-color,border-color,color] shadow-xl active:scale-95 text-[#1a1a1a]"
           >
             {t.register}
           </button>

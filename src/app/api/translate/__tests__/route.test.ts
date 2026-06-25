@@ -82,7 +82,7 @@ jest.mock('@/lib/build-prompt', () => ({
 
 jest.mock('@/lib/server-ai', () => ({
   hasServerProviderCredentials: () => false,
-  isServerProviderId: (value: string) => ['gemini', 'openai', 'claude', 'deepseek', 'mistral'].includes(value),
+  isServerProviderId: (value: string) => ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'mistral'].includes(value),
   resolveServerProviderKey: (_provider: string, apiKey?: string) => apiKey ?? '',
 }));
 

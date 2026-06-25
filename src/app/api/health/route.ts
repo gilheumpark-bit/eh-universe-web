@@ -20,7 +20,7 @@ export async function GET() {
 
   // 1. Server-side AI provider keys availability
   // [P1 hosted-gemini-off 2026-06-15] Gemini 서버 환경 키는 운영 헬스에서 제외한다.
-  const providers = ['OPENAI_API_KEY', 'CLAUDE_API_KEY', 'GROQ_API_KEY', 'MISTRAL_API_KEY'];
+  const providers = ['UPSTAGE_API_KEY', 'OPENAI_API_KEY', 'CLAUDE_API_KEY', 'GROQ_API_KEY', 'MISTRAL_API_KEY'];
   let keyCount = 0;
   for (const key of providers) {
     if (process.env[key]) keyCount++;

@@ -99,6 +99,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     title: 'PublisherMock',
     totalEpisodes: episodes.length,
     synopsis: body.synopsis,
+    // 의도적 double-cast: 이 mock 라우트는 length guardrail(min/max) 미사용. PclGuardrails 완화/캐스트 제거 금지 — deref 사이트 TS18048 유발.
     guardrails: { language: 'KO' } as unknown as StoryConfig['guardrails'],
     characters: (body.characters ?? []).map((c) => ({
       id: c.id,

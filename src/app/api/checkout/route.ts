@@ -4,6 +4,8 @@ import { logger } from '@/lib/logger';
 import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { resolveCheckoutPriceId } from '@/lib/billing/loreguard-plans';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { apiLog, createRequestTimer } from '@/lib/api-logger';
 
 /**
  * Stripe Checkout for subscription (optional). Requires STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PRICE_ID in env.
@@ -16,12 +18,18 @@ import { resolveCheckoutPriceId } from '@/lib/billing/loreguard-plans';
  * Otherwise the route returns 503 immediately to prevent a dead-code endpoint surface.
  */
 export async function POST(req: NextRequest) {
+  const timer = createRequestTimer();
   // --- [M9] Feature gate (must be first, before any other work) ---
   if (
     !process.env.STRIPE_SECRET_KEY ||
     process.env.FEATURE_STRIPE_CHECKOUT !== 'on'
   ) {
     return NextResponse.json({ error: 'checkout_disabled' }, { status: 503 });
+  }
+
+  const originCheck = checkSameOriginHeaders(req.headers);
+  if (!originCheck.ok) {
+    return NextResponse.json({ error: originCheck.error }, { status: 403 });
   }
 
   // --- Rate limiting (10/min per IP) ---
@@ -74,6 +82,18 @@ export async function POST(req: NextRequest) {
     if (!session.url) {
       return NextResponse.json({ error: 'Checkout 세션을 만들 수 없습니다.' }, { status: 500 });
     }
+    apiLog({
+      level: 'info',
+      event: 'checkout_session_created',
+      route: '/api/checkout',
+      ip,
+      status: 200,
+      durationMs: timer.elapsed(),
+      meta: {
+        uid: auth.uid,
+        planId: priceResolution.planId,
+      },
+    });
     return NextResponse.json({ url: session.url });
   } catch (e) {
     logger.error('api/checkout', 'checkout error', e);

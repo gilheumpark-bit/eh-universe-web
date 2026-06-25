@@ -224,8 +224,7 @@ function ModeSwitchImpl(props: ModeSwitchProps): React.ReactElement {
                 {advancedMenuOpen && (
                   <div
                     role="menu"
-                    className="absolute top-full left-0 mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl min-w-[200px]"
-                    style={{ zIndex: 'var(--z-dropdown, 50)' }}
+                    className="absolute top-full left-0 z-[var(--z-dropdown)] mt-1 py-1 bg-bg-primary border border-border rounded-xl shadow-2xl min-w-[200px]"
                   >
                     <button
                       type="button"

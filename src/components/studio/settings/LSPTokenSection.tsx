@@ -135,7 +135,10 @@ export const LSPTokenSection: React.FC<LSPTokenSectionProps> = ({ language = 'KO
             <code className="font-mono">POST /api/lsp/symbols</code> — {isKO ? 'Symbol Index export' : 'Export symbol index'}
           </p>
           <p>
-            <code className="font-mono">GET /api/lsp/diagnostics?token=…</code> — SSE stream
+            <code className="font-mono">POST /api/lsp/auth</code> — {isKO ? '세션 쿠키 설정' : 'Set session cookie'}
+          </p>
+          <p>
+            <code className="font-mono">GET /api/lsp/diagnostics</code> — SSE stream
           </p>
         </div>
       </div>

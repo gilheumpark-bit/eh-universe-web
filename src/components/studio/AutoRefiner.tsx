@@ -226,6 +226,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         systemInstruction: ({KO:'소설 편집자. JSON 배열만 출력. 다른 텍스트 절대 금지.',EN:'Fiction editor. Output JSON array only. No other text.',JP:'小説編集者。JSON配列のみ出力。他のテキスト禁止。',CN:'小说编辑。仅输出JSON数组。禁止其他文本。'}[language]),
         messages,
         temperature: 0.3,
+        reasoningStage: 'detail',
         signal: controller.signal,
         onChunk: (chunk) => { raw += chunk; setStreamingChars(prev => prev + chunk.length); },
       });
@@ -298,6 +299,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         systemInstruction: ({KO:'소설 텍스트 리라이터. 순수 소설 텍스트만 출력. 설명 금지.',EN:'Fiction rewriter. Output pure fiction text only. No explanations.',JP:'小説テキストリライター。純粋な小説テキストのみ出力。説明禁止。',CN:'小说文本改写器。仅输出纯小说文本。禁止解释。'}[language]),
         messages,
         temperature: 0.85,
+        reasoningStage: 'detail',
         signal: controller.signal,
         onChunk: (chunk) => {
           result += chunk;

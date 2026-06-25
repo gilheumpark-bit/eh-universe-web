@@ -180,7 +180,7 @@ export function useTranslation({
   const [isTranslating, setIsTranslating] = useState(false);
   const [driftWarnings, setDriftWarnings] = useState<TermDriftWarning[]>([]);
   const [voiceViolations, setVoiceViolations] = useState<VoiceViolation[]>([]);
-  // [C] Voice Guard 재번역 상태 — 자동 루프 미구현, UI 노출용 플래그.
+  // [C] Voice Guard 재번역 상태 — 자동 루프는 비활성, 1클릭 수동 재시도 경로 제공.
   const [voiceRetryNeeded, setVoiceRetryNeeded] = useState(false);
   const [voiceRetryHint, setVoiceRetryHint] = useState('');
   // [C] RAG 호출 결과 — 배지가 실제 fetched 여부를 반영하기 위함.
@@ -481,7 +481,7 @@ export function useTranslation({
       // [C] result.segments 는 PART 21 buildSegmentsFromChunk 에서 자동 빌드됨
       //     (translateChunk 가 characterNames 받았을 때만 채워짐).
       //     speaker 추론 실패 세그먼트는 applyVoiceGuard 내부에서 skip.
-      // [K] 재번역 루프(needsRetry=true 자동 재시도)는 이번 Phase 미구현 — 경고만 노출
+      // [K] needsRetry=true 자동 재호출은 비활성 — 경고와 1클릭 재시도만 노출
       if (projectCtx?.characters && projectCtx.characters.length > 0) {
         try {
           const rules = buildVoiceRulesFromProject(
@@ -508,7 +508,7 @@ export function useTranslation({
             });
             setVoiceViolations(guarded.voiceViolations);
             // [C] retryHint 빈 문자열 가드 — needsRetry=true 여도 hint 가 비면 UI 노출 skip.
-            // [K] 자동 재번역 루프는 chunk 구조와 결합도가 높아 이번 Phase 미구현.
+            // [K] 자동 재번역 루프는 비용/청크 상태 예측이 어려워 비활성.
             //     UI 노출용 needsRetry/retryHint 만 상태로 제공 → 사용자 수동 재번역 트리거.
             setVoiceRetryNeeded(guarded.needsRetry);
             setVoiceRetryHint(guarded.retryHint ?? '');

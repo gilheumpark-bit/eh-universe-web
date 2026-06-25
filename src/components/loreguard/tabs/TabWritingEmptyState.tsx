@@ -12,27 +12,29 @@ interface TabWritingEmptyStateProps {
 export function TabWritingEmptyState({ language, onCreate }: TabWritingEmptyStateProps) {
   return (
     <div className="wr-grid">
-      <section className="wr-center" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", maxWidth: 360 }}>
-          <div className="wr-title" style={{ marginBottom: 8 }}>
+      <section className="wr-center wr-empty-state-shell">
+        <div className="wr-empty-state-card">
+          <div className="wr-empty-state-mark" aria-hidden="true">
+            <Plus size={22} />
+          </div>
+          <div className="wr-title wr-empty-state-title">
             {L4(language, { ko: "집필 모드", en: "Writing Mode" })}
           </div>
-          <p style={{ color: "var(--ink-2, #5b6273)", fontSize: 14, lineHeight: 1.7, marginBottom: 18 }}>
+          <p className="wr-empty-state-copy">
             {L4(language, { ko: "아직 작업 중인 작품이 없습니다.", en: "No work in progress yet." })}
             <br />
             {L4(language, {
-              ko: "새 작품을 만들면 여기에서 원고를 집필할 수 있습니다.",
+              ko: "작품 기준선을 만들면 여기에서 원고를 이어 쓸 수 있습니다.",
               en: "Create a new work to start writing your manuscript here.",
             })}
           </p>
           <button
             type="button"
             className="btn primary"
-            style={{ justifyContent: "center" }}
             onClick={onCreate}
           >
             <Plus size={15} />
-            {L4(language, { ko: "새 작품 시작", en: "Start a new work" })}
+            {L4(language, { ko: "기준선 만들기", en: "Build baseline" })}
           </button>
         </div>
       </section>

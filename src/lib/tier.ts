@@ -22,8 +22,8 @@ export interface TierLimits {
   engineReportDetail: boolean;        // false = summary only
 }
 
-const FREE_PROVIDER_IDS = ['gemini'];
-const PRO_PROVIDER_IDS = ['gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral'];
+const FREE_PROVIDER_IDS = ['upstage'];
+const PRO_PROVIDER_IDS = ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral'];
 
 function toClientLimits(tier: UserTier, gateLimits: GateTierLimits): TierLimits {
   const generationLimit = gateLimits.novel.dailyGenerations === 0 ? -1 : gateLimits.novel.dailyGenerations;

@@ -184,8 +184,7 @@ function FabControlsImpl(props: FabControlsProps): React.ReactElement | null {
         title={warnTitle}
         data-testid="noa-fab"
         data-scene-sheet-empty={sceneSheetEmpty ? '1' : '0'}
-        className={`fixed bottom-24 right-6 md:bottom-6 md:right-8 px-3.5 py-2.5 rounded-full border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue inline-flex items-center gap-2 transition-[transform,opacity,background-color,border-color,color,box-shadow] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 backdrop-blur-md ${buttonClass}`}
-        style={{ zIndex: 'var(--z-overlay, 40)' }}
+        className={`fixed bottom-24 right-6 md:bottom-6 md:right-8 z-[var(--z-overlay)] px-3.5 py-2.5 rounded-full border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue inline-flex items-center gap-2 transition-[transform,opacity,background-color,border-color,color,box-shadow] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 backdrop-blur-md ${buttonClass}`}
       >
         <Wand2 className="w-4 h-4" aria-hidden="true" />
         <span className="text-[13px] font-medium">{buttonLabel}</span>
@@ -198,8 +197,7 @@ function FabControlsImpl(props: FabControlsProps): React.ReactElement | null {
           role="status"
           aria-live="polite"
           id="noa-fab-guard-hint"
-          className="fixed bottom-40 right-6 md:bottom-20 md:right-8 max-w-xs px-3 py-2 rounded-lg bg-accent-amber/10 border border-accent-amber/40 text-xs text-accent-amber shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200"
-          style={{ zIndex: 'var(--z-overlay, 40)' }}
+          className="fixed bottom-40 right-6 md:bottom-20 md:right-8 z-[var(--z-overlay)] max-w-xs px-3 py-2 rounded-lg bg-accent-amber/10 border border-accent-amber/40 text-xs text-accent-amber shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200"
           data-testid="noa-fab-guard-toast"
         >
           {L4(language, {

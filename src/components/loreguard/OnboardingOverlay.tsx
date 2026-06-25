@@ -136,7 +136,7 @@ export default function OnboardingOverlay({
     onStartSample();
   };
 
-  // ---- 문구 (4언어 · 실재 기능만 — 미구현 기능 소개 금지) ----
+  // ---- 문구 (4언어 · 실재 기능만 — 비활성 기능 소개 금지) ----
   const skipLabel = L4(language, { ko: "건너뛰기", en: "Skip", ja: "スキップ", zh: "跳过" });
 
   // 실제 셸 10단계 (LOREGUARD_TABS 순서·아이콘 동일)

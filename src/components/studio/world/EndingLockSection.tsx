@@ -166,8 +166,7 @@ export function EndingLockSection({ workId, language }: EndingLockSectionProps) 
         </span>
         {existing && (
           <span
-            className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded"
-            style={{ background: existing.lock_level === "hard" ? "#D4AF37" : "#4169E1", color: "#fff" }}
+            className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded text-white ${existing.lock_level === "hard" ? "bg-[#D4AF37]" : "bg-[#4169E1]"}`}
             aria-label={`locked-${existing.lock_level}`}
           >
             <CheckCircle2 className="w-3 h-3" />

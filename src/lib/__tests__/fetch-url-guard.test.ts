@@ -7,8 +7,8 @@
 import {
   assertResolvedHostAllowedForFetch,
   assertUrlAllowedForFetch,
+  resolveRedirectUrl,
   validatePostFetchUrl,
-  rateLimitFetchUrl,
 } from '@/lib/fetch-url-guard';
 
 jest.mock('node:dns/promises', () => ({
@@ -207,18 +207,19 @@ describe('fetch-url-guard · IPv6 SSRF 우회 차단 (W1-ssrf — 2026-06-11)', 
   });
 });
 
-describe('fetch-url-guard · rateLimitFetchUrl', () => {
-  it('40회 까지는 ok', () => {
-    const key = 'rl-test-' + Date.now();
-    for (let i = 0; i < 40; i++) {
-      const r = rateLimitFetchUrl(key);
-      expect(r.ok).toBe(true);
+describe('fetch-url-guard · resolveRedirectUrl', () => {
+  it('상대 Location을 현재 URL 기준으로 해석한다', () => {
+    const result = resolveRedirectUrl('https://example.com/a/b', '../next');
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.href).toBe('https://example.com/next');
     }
   });
-  it('41번째 호출 → blocked', () => {
-    const key = 'rl-block-' + Date.now();
-    for (let i = 0; i < 40; i++) rateLimitFetchUrl(key);
-    const blocked = rateLimitFetchUrl(key);
-    expect(blocked.ok).toBe(false);
+
+  it('사설 IP Location을 네트워크 요청 전에 차단한다', () => {
+    const result = resolveRedirectUrl('https://example.com/start', 'http://169.254.169.254/latest');
+
+    expect(result.ok).toBe(false);
   });
 });

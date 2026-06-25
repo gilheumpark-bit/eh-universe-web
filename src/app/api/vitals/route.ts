@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/lib/logger";
+import { recordWebVitalMetric } from "@/lib/observability/runtime-metrics";
 import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
+import { isAllowedOriginValue } from "@/lib/api-origin-guard";
 
 const REQUEST_TIMEOUT = 10_000; // 10s timeout for vitals ingestion
 void REQUEST_TIMEOUT;
 
 export async function POST(req: NextRequest) {
   try {
-    const origin = req.headers.get("origin");
-    const host = req.headers.get("host") || "";
-    if (!origin || !host) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    try {
-      if (new URL(origin).host !== host) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    } catch {
+    if (!isAllowedOriginValue(req.headers, req.headers.get("origin"))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -49,6 +42,7 @@ export async function POST(req: NextRequest) {
       if (!sample || typeof sample !== 'object') continue;
       // Structured log for Vercel / server-side observability
       logger.info("web-vitals", JSON.stringify({ event: "web-vitals", ...sample, timestamp: Date.now() }));
+      recordWebVitalMetric({ name: sample.name, value: sample.value, rating: sample.rating });
 
       // [O-02 fix — 2026-05-12] 'poor' rating 만 Sentry warning 발송 — 성능 회귀 알람 트리거.
       // 'good'/'needs-improvement' 은 stdout 통계로 충분. DSN 미설정/non-prod 는 enabled 가드로 no-op.

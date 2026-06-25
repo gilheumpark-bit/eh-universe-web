@@ -164,7 +164,8 @@ export default function StatusPage() {
               href="https://github.com/gilheumpark-bit/eh-universe-web/issues"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center rounded px-1 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+              className="inline-flex min-h-[44px] min-w-11 items-center rounded px-1 py-3 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+              style={{ minHeight: 44 }}
             >
               GitHub Issues
             </a>
@@ -174,7 +175,8 @@ export default function StatusPage() {
           <li>
             <a
               href="mailto:gilheumpark@gmail.com"
-              className="inline-flex min-h-11 items-center rounded px-1 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+              className="inline-flex min-h-[44px] min-w-11 items-center rounded px-1 py-3 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
+              style={{ minHeight: 44 }}
             >
               gilheumpark@gmail.com
             </a>

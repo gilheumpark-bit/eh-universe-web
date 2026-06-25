@@ -96,7 +96,7 @@ describe('markdown-renderer — 첫 줄 디스클레이머 (4언어)', () => {
     expect(md).toContain('## 창작 과정 진술');
     expect(md).toContain('## 과정기록 씰');
     expect(md).toContain('## 작가 통제 지수(HCI)');
-    expect(md).toContain('**조회 링크**: https://example.test/verify/TEST01ULID');
+    expect(md).toContain('**QR 조회 링크**: https://example.test/verify/TEST01ULID');
     expect(md).toContain('**보기 범위**: private');
     expect(md).toContain('| 항목 | 내용 |');
     expect(md).not.toContain('ATTESTATION OF GENESIS');
@@ -105,6 +105,19 @@ describe('markdown-renderer — 첫 줄 디스클레이머 (4언어)', () => {
     expect(md).not.toContain('Verify URL');
     expect(md).not.toContain('| Key | Value |');
     expect(md).not.toContain('**Generated**');
+  });
+
+  it('Markdown 확인서 겉면은 원본 64자 해시 대신 축약 해시를 출력한다', () => {
+    const cert = {
+      ...makeCert(),
+      verificationUrl: 'https://example.test/api/cp/verify/TEST01ULID',
+    };
+    const md = renderCertificateMarkdown(cert, makeSections('ko'), 'private', 'ko');
+
+    expect(md).toContain('**원고 해시 축약값**');
+    expect(md).toContain('`aaaaaaaaaaaaaaaa...aaaaaaaa`');
+    expect(md).not.toContain(`\`${'a'.repeat(64)}\``);
+    expect(md).toContain('원본 해시는 함께 제공되는 디지털 서명 JSON');
   });
 });
 
