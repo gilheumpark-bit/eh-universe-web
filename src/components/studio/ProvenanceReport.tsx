@@ -29,7 +29,6 @@ import {
   type ProvenanceChronologyDay,
   type ProvenanceLedgerRow,
 } from '@/lib/creative-process/provenance-analyzer';
-import { VISUAL_TOKENS } from '@/lib/creative-process/visual-tokens';
 import { LIMITATION_TEXT_4LANG } from '@/lib/creative-process/limitation-text';
 import type { CreativeEvent, CertificateLanguage } from '@/lib/creative-process/types';
 
@@ -51,6 +50,16 @@ export interface ProvenanceReportProps {
   className?: string;
 }
 
+function displayLedgerHash(value: string): string {
+  const cleaned = value.replace(/^0x/i, '').trim();
+  if (!cleaned) return '—';
+  return cleaned.length > 24 ? `${cleaned.slice(0, 16)}...${cleaned.slice(-8)}` : cleaned;
+}
+
+function cx(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(' ');
+}
+
 // ============================================================
 // PART 2 — i18n
 // ============================================================
@@ -69,7 +78,7 @@ const LABELS = {
     last: '최근',
     share: '비중',
     actorType_human: '작가',
-    actorType_ai: 'AI',
+    actorType_ai: '노아',
     actorType_system: '시스템',
     actorType_collaborator: '협업자',
   },
@@ -85,8 +94,8 @@ const LABELS = {
     noEvents: 'No events recorded.',
     last: 'Last',
     share: 'Share',
-    actorType_human: 'Human',
-    actorType_ai: 'AI',
+    actorType_human: 'Author',
+    actorType_ai: 'NOA',
     actorType_system: 'System',
     actorType_collaborator: 'Collaborator',
   },
@@ -103,7 +112,7 @@ const LABELS = {
     last: '最終',
     share: '比率',
     actorType_human: '作者',
-    actorType_ai: 'AI',
+    actorType_ai: 'ノア',
     actorType_system: 'システム',
     actorType_collaborator: '協力者',
   },
@@ -120,7 +129,7 @@ const LABELS = {
     last: '最近',
     share: '占比',
     actorType_human: '作者',
-    actorType_ai: 'AI',
+    actorType_ai: '诺亚',
     actorType_system: '系统',
     actorType_collaborator: '协作者',
   },
@@ -152,77 +161,28 @@ interface AxisCardProps {
 const AxisCard: React.FC<AxisCardProps> = ({ label, desc, score, polarity = 'higher' }) => {
   // Color: high score (higher polarity) = charcoal, low = outline
   // For lower polarity (drift), invert: high score = warning, low = ok
-  let color = '#1A1A1A';
+  let tone: 'charcoal' | 'muted' | 'subtle' | 'gold' | 'danger' = 'charcoal';
   if (polarity === 'lower') {
-    color = score > 50 ? '#B91C1C' : score > 25 ? '#D4AF37' : '#1A1A1A';
+    tone = score > 50 ? 'danger' : score > 25 ? 'gold' : 'charcoal';
   } else {
-    color = score >= 50 ? '#1A1A1A' : score >= 25 ? '#6B7280' : '#9CA3AF';
+    tone = score >= 50 ? 'charcoal' : score >= 25 ? 'muted' : 'subtle';
   }
 
   // Bar width %
   const pct = Math.max(0, Math.min(100, score));
 
   return (
-    <div
-      style={{
-        flex: 1,
-        padding: 20,
-        border: VISUAL_TOKENS.border.hairline,
-        background: '#FFFFFF',
-        borderRadius: 0,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: '#9CA3AF',
-          marginBottom: 8,
-        }}
-      >
+    <div className="cp-axis-card">
+      <div className="cp-axis-label">
         {label}
       </div>
-      <div
-        style={{
-          fontFamily: VISUAL_TOKENS.typography.headlineMd.family,
-          fontSize: 40,
-          fontWeight: 600,
-          color,
-          lineHeight: 1,
-          marginBottom: 4,
-        }}
-      >
+      <div className={cx('cp-axis-score', `cp-tone-${tone}`)}>
         {score.toFixed(1)}
       </div>
-      <div
-        style={{
-          fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-          fontSize: 10,
-          color: '#9CA3AF',
-          marginBottom: 12,
-        }}
-      >
+      <div className="cp-axis-meta">
         / 100 · {desc}
       </div>
-      <div
-        style={{
-          height: 4,
-          background: '#E1E1E1',
-          position: 'relative',
-        }}
-        aria-hidden="true"
-      >
-        <div
-          style={{
-            height: '100%',
-            width: `${pct}%`,
-            background: color,
-          }}
-        />
-      </div>
+      <progress className={cx('cp-meter', `cp-meter-${tone}`)} value={pct} max={100} aria-label={`${label}: ${score.toFixed(1)}`} />
     </div>
   );
 };
@@ -237,65 +197,33 @@ const ActorTable: React.FC<{ actors: ProvenanceActor[]; language: CertificateLan
 }) => {
   const t = LABELS[language];
   if (actors.length === 0) {
-    return <p style={{ color: '#9CA3AF', fontSize: 12 }}>{t.noEvents}</p>;
+    return <p className="cp-muted-note">{t.noEvents}</p>;
   }
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <table className="cp-table cp-actor-table">
       <thead>
-        <tr style={{ borderBottom: VISUAL_TOKENS.border.structural }}>
+        <tr className="cp-table-head-row">
           <th
             scope="col"
-            style={{
-              textAlign: 'left',
-              padding: '8px 12px 8px 0',
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#6B7280',
-            }}
+            className="cp-th cp-th-left cp-th-first"
           >
             Actor
           </th>
           <th
             scope="col"
-            style={{
-              textAlign: 'right',
-              padding: '8px 12px',
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#6B7280',
-            }}
+            className="cp-th cp-th-right"
           >
             {t.eventsLogged}
           </th>
           <th
             scope="col"
-            style={{
-              textAlign: 'right',
-              padding: '8px 12px',
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#6B7280',
-            }}
+            className="cp-th cp-th-right"
           >
             {t.share}
           </th>
           <th
             scope="col"
-            style={{
-              textAlign: 'right',
-              padding: '8px 0 8px 12px',
-              fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#6B7280',
-            }}
+            className="cp-th cp-th-right cp-th-last"
           >
             {t.last}
           </th>
@@ -303,58 +231,29 @@ const ActorTable: React.FC<{ actors: ProvenanceActor[]; language: CertificateLan
       </thead>
       <tbody>
         {actors.map((a, i) => (
-          <tr key={`${a.actorType}-${a.actorId}-${i}`} style={{ borderBottom: VISUAL_TOKENS.border.ledger }}>
+          <tr key={`${a.actorType}-${a.actorId}-${i}`} className="cp-ledger-row">
             <td
-              style={{
-                padding: '8px 12px 8px 0',
-                fontFamily: VISUAL_TOKENS.typography.bodyMd.family,
-                fontSize: 12,
-              }}
+              className="cp-td cp-td-first cp-actor-cell"
             >
               <span
-                style={{
-                  fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-                  fontSize: 9,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: '#9CA3AF',
-                  marginRight: 6,
-                }}
+                className="cp-actor-type"
               >
                 [{actorTypeLabel(a.actorType, language)}]
               </span>
-              <span style={{ color: '#1A1A1A', fontWeight: 500 }}>{a.actorId}</span>
+              <span className="cp-actor-id">{a.actorId}</span>
             </td>
             <td
-              style={{
-                padding: '8px 12px',
-                textAlign: 'right',
-                fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                fontSize: 12,
-                color: '#1A1A1A',
-              }}
+              className="cp-td cp-td-num"
             >
               {a.eventCount}
             </td>
             <td
-              style={{
-                padding: '8px 12px',
-                textAlign: 'right',
-                fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                fontSize: 12,
-                color: '#1A1A1A',
-              }}
+              className="cp-td cp-td-num"
             >
               {a.share.toFixed(1)}%
             </td>
             <td
-              style={{
-                padding: '8px 0 8px 12px',
-                textAlign: 'right',
-                fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                fontSize: 11,
-                color: '#9CA3AF',
-              }}
+              className="cp-td cp-td-num cp-td-last cp-td-muted"
             >
               {formatDateOnly(a.lastActiveAt)}
             </td>
@@ -383,58 +282,23 @@ const ChronologyBlock: React.FC<{
 }> = ({ days, language }) => {
   const t = LABELS[language];
   if (days.length === 0) {
-    return <p style={{ color: '#9CA3AF', fontSize: 12 }}>{t.noEvents}</p>;
+    return <p className="cp-muted-note">{t.noEvents}</p>;
   }
   // 최대 7일만 표시 — 가독성 우선
   const recent = days.slice(-12);
   const maxTotal = Math.max(...recent.map((d) => d.total), 1);
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${recent.length}, 1fr)`,
-        gap: 6,
-        alignItems: 'flex-end',
-        height: 100,
-        paddingTop: 12,
-      }}
-    >
+    <div className="cp-chrono-grid">
       {recent.map((d) => {
-        const heightPct = (d.total / maxTotal) * 100;
         return (
           <div
             key={d.date}
             title={`${d.date} · ${d.total} events`}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 4,
-              minWidth: 0,
-            }}
+            className="cp-chrono-cell"
           >
-            <div
-              style={{
-                width: '100%',
-                height: `${heightPct}%`,
-                background: '#1A1A1A',
-                minHeight: 2,
-              }}
-              aria-hidden="true"
-            />
-            <span
-              style={{
-                fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                fontSize: 9,
-                color: '#9CA3AF',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                width: '100%',
-                textAlign: 'center',
-              }}
-            >
+            <progress className="cp-chrono-progress" value={d.total} max={maxTotal} aria-label={`${d.date}: ${d.total}`} />
+            <span className="cp-chrono-date">
               {d.date.slice(5)}
             </span>
           </div>
@@ -454,37 +318,22 @@ const LedgerTable: React.FC<{ rows: ProvenanceLedgerRow[]; language: Certificate
   language: _language,
 }) => {
   if (rows.length === 0) {
-    return <p style={{ color: '#9CA3AF', fontSize: 12 }}>—</p>;
+    return <p className="cp-muted-note">—</p>;
   }
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <table className="cp-table cp-ledger-table">
       <tbody>
         {rows.map((r, i) => (
-          <tr key={i} style={{ borderBottom: VISUAL_TOKENS.border.ledger }}>
+          <tr key={i} className="cp-ledger-row">
             <td
-              style={{
-                padding: '10px 12px 10px 0',
-                fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-                fontSize: 10,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#6B7280',
-                width: 200,
-                verticalAlign: 'top',
-              }}
+              className="cp-td cp-td-first cp-ledger-label"
             >
               {r.label}
             </td>
             <td
-              style={{
-                padding: '10px 0',
-                fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                fontSize: 11,
-                color: '#1A1A1A',
-                wordBreak: 'break-all',
-              }}
+              className="cp-td cp-ledger-hash"
             >
-              {r.hash}
+              {displayLedgerHash(r.hash)}
             </td>
           </tr>
         ))}
@@ -524,76 +373,31 @@ const ProvenanceReport: React.FC<ProvenanceReportProps> = ({
   return (
     <section
       aria-label={t.title}
-      className={className}
-      style={{
-        background: '#FFFFFF',
-        border: VISUAL_TOKENS.border.hairline,
-        padding: 32,
-        fontFamily: VISUAL_TOKENS.typography.bodyMd.family,
-        color: '#1A1A1A',
-      }}
+      className={cx('cp-provenance', className)}
     >
       {/* Disclaimer first line */}
-      <p
-        style={{
-          fontSize: 11,
-          color: '#9CA3AF',
-          borderBottom: VISUAL_TOKENS.border.hairline,
-          paddingBottom: 12,
-          marginBottom: 24,
-          lineHeight: 1.5,
-        }}
-      >
+      <p className="cp-disclaimer">
         {LIMITATION_TEXT_4LANG[language]}
       </p>
 
       {/* Header */}
-      <header style={{ marginBottom: 32 }}>
-        <h2
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.headlineMd.family,
-            fontSize: 32,
-            fontWeight: 500,
-            margin: '0 0 8px 0',
-            color: '#1A1A1A',
-            letterSpacing: '-0.01em',
-          }}
-        >
+      <header className="cp-provenance-header">
+        <h2 className="cp-provenance-title">
           {t.title}
         </h2>
-        <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 4px 0' }}>{t.subtitle}</p>
-        <p
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-            fontSize: 11,
-            color: '#9CA3AF',
-            margin: 0,
-          }}
-        >
+        <p className="cp-provenance-subtitle">{t.subtitle}</p>
+        <p className="cp-report-meta">
           {finalTitle} · {t.totalEvents}: {report.totalEvents}
         </p>
       </header>
 
       {/* Section 1 — Axes */}
-      <div style={{ marginBottom: 32 }}>
-        <h3
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#6B7280',
-            margin: '0 0 12px 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <ShieldCheck size={12} aria-hidden="true" />
+      <div className="cp-report-section">
+        <h3 className="cp-section-title">
+          <ShieldCheck size={12} aria-hidden="true" className="cp-section-icon" />
           {t.axesHeader}
         </h3>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div className="cp-axis-grid">
           <AxisCard
             label={axisLabels.coreIntegrity.label}
             desc={axisLabels.coreIntegrity.desc}
@@ -616,44 +420,18 @@ const ProvenanceReport: React.FC<ProvenanceReportProps> = ({
       </div>
 
       {/* Section 2 — Actors */}
-      <div style={{ marginBottom: 32 }}>
-        <h3
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#6B7280',
-            margin: '0 0 12px 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <Users size={12} aria-hidden="true" />
+      <div className="cp-report-section">
+        <h3 className="cp-section-title">
+          <Users size={12} aria-hidden="true" className="cp-section-icon" />
           {t.actorsHeader}
         </h3>
         <ActorTable actors={report.actors} language={language} />
       </div>
 
       {/* Section 3 — Chronology */}
-      <div style={{ marginBottom: 32 }}>
-        <h3
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#6B7280',
-            margin: '0 0 12px 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <Activity size={12} aria-hidden="true" />
+      <div className="cp-report-section">
+        <h3 className="cp-section-title">
+          <Activity size={12} aria-hidden="true" className="cp-section-icon" />
           {t.chronologyHeader}
         </h3>
         <ChronologyBlock days={report.chronology} language={language} />
@@ -661,21 +439,8 @@ const ProvenanceReport: React.FC<ProvenanceReportProps> = ({
 
       {/* Section 4 — Ledger */}
       <div>
-        <h3
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#6B7280',
-            margin: '0 0 12px 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <FileText size={12} aria-hidden="true" />
+        <h3 className="cp-section-title">
+          <FileText size={12} aria-hidden="true" className="cp-section-icon" />
           {t.ledgerHeader}
         </h3>
         <LedgerTable rows={report.ledger} language={language} />

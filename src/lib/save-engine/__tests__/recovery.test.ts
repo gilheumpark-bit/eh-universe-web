@@ -11,7 +11,7 @@ import { createSnapshot } from '@/lib/save-engine/snapshot';
 import { resetDbForTests, idbListQuarantined } from '@/lib/save-engine/indexeddb-adapter';
 import { resetDefaultWriterQueueForTests } from '@/lib/save-engine/writer-queue';
 import { resetMemoryTierForTests } from '@/lib/save-engine/storage-router';
-import { writeBeacon, clearBeacon, BEACON_CRASH_THRESHOLD_MS } from '@/lib/save-engine/beacon';
+import { writeBeacon, clearBeacon, BEACON_ALIVE_WINDOW_MS } from '@/lib/save-engine/beacon';
 import { GENESIS } from '@/lib/save-engine/types';
 
 beforeEach(() => {
@@ -71,7 +71,7 @@ describe('runBootRecovery — 정상 종료', () => {
 
 describe('runBootRecovery — 크래시 추정', () => {
   test('stale beacon → recovery-marker enter/complete 기록', async () => {
-    writeBeacon({ lastHeartbeat: Date.now() - BEACON_CRASH_THRESHOLD_MS - 1000, sessionId: 's', tabId: 't' });
+    writeBeacon({ lastHeartbeat: Date.now() - BEACON_ALIVE_WINDOW_MS - 1000, sessionId: 's', tabId: 't' });
 
     await appendInitEntry();
     await createSnapshot({ projects: [{ id: 'x' }], coversUpToEntryId: 'cov' });
@@ -332,7 +332,7 @@ describe('M1.2 — 크래시 상태별 strategy', () => {
 
   test('stale beacon → recoveredFromCrash=true + strategy=full (snapshot 있으면)', async () => {
     writeBeacon({
-      lastHeartbeat: Date.now() - BEACON_CRASH_THRESHOLD_MS - 1000,
+      lastHeartbeat: Date.now() - BEACON_ALIVE_WINDOW_MS - 1000,
       sessionId: 's',
       tabId: 't',
     });
@@ -350,7 +350,7 @@ describe('M1.2 — 크래시 상태별 strategy', () => {
 
   test('stale beacon + snapshot 없음 + init만 → strategy=journal-only', async () => {
     writeBeacon({
-      lastHeartbeat: Date.now() - BEACON_CRASH_THRESHOLD_MS - 1000,
+      lastHeartbeat: Date.now() - BEACON_ALIVE_WINDOW_MS - 1000,
       sessionId: 's',
       tabId: 't',
     });
@@ -397,5 +397,126 @@ describe('M1.2 phases — 라벨 커버', () => {
     const r = await runBootRecovery();
     const hasJournalOnly = r.phases.some((p) => p.label.startsWith('journal-only-recovery:'));
     expect(hasJournalOnly).toBe(true);
+  });
+});
+
+// ============================================================
+// PART 13 — critical #3 / high #12: 같은 ms 단조성 → 복구 정확성
+// ============================================================
+//
+// 핵심 회귀 가드: 같은 physical ms 안에서 ULID 랜덤 suffix 때문에 부모-자식 엔트리의
+// id 사전순이 인과 순서와 역전될 수 있다. 스토리지(IDB/LS)는 id 사전순으로 돌려주므로,
+// 정렬 수정이 없으면 verifyChain이 부모보다 자식을 먼저 보고 parentHash 불일치 →
+// 거짓 손상 판정 → 정상 엔트리 quarantine → 데이터 손실로 번진다.
+//
+// 재현: Date.now를 고정(모든 엔트리 같은 physical) + crypto.getRandomValues를 가로채
+// 호출마다 "감소"하는 suffix 바이트를 채워, 나중에 append된 엔트리일수록 id가 사전순으로
+// 더 작아지게 만든다(= 스토리지가 인과 역순으로 반환).
+
+describe('critical #3 — 같은 ms 부모-자식 id 역전 복구', () => {
+  const FIXED_MS = 1_700_000_000_000;
+  let origNow: () => number;
+  let origGetRandomValues: ((arr: Uint8Array) => Uint8Array) | undefined;
+
+  beforeEach(() => {
+    origNow = Date.now;
+    Date.now = () => FIXED_MS;
+
+    // 매 ulid 호출마다 16바이트를 동일 값으로 채우되, 그 값을 호출마다 1씩 감소.
+    // → 호출 순서가 뒤일수록 모든 바이트가 작아져 id 사전순이 작아진다(인과 역순 유도).
+    const cryptoObj = globalThis.crypto as Crypto & {
+      getRandomValues: (arr: Uint8Array) => Uint8Array;
+    };
+    origGetRandomValues = cryptoObj?.getRandomValues?.bind(cryptoObj);
+    let counter = 0x1f; // base32 상한(0x1f) 부터 감소
+    if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
+      cryptoObj.getRandomValues = (arr: Uint8Array): Uint8Array => {
+        const fill = counter & 0x1f;
+        counter = counter <= 0 ? 0x1f : counter - 1; // 0 도달 시 wrap (드물게만 발생)
+        for (let i = 0; i < arr.length; i++) arr[i] = fill;
+        return arr;
+      };
+    }
+  });
+
+  afterEach(() => {
+    Date.now = origNow;
+    const cryptoObj = globalThis.crypto as Crypto & {
+      getRandomValues: (arr: Uint8Array) => Uint8Array;
+    };
+    if (origGetRandomValues && cryptoObj) {
+      cryptoObj.getRandomValues = origGetRandomValues;
+    }
+  });
+
+  test('같은 ms에 부모-자식이 id 역전돼도 손상 오판 없이 정상 복구', async () => {
+    writeBeacon({ lastHeartbeat: FIXED_MS, sessionId: 's', tabId: 't' });
+
+    // init → delta → delta : 모두 같은 physical(FIXED_MS), HLC logical 0/1/2.
+    await appendInitEntry();
+    await appendEntry({
+      entryType: 'delta',
+      payload: {
+        projectId: 'p',
+        ops: [{ op: 'add', path: '/a', value: 1 }],
+        target: 'project',
+        baseContentHash: GENESIS,
+      },
+      createdBy: 'user',
+      projectId: 'p',
+    });
+    await appendEntry({
+      entryType: 'delta',
+      payload: {
+        projectId: 'p',
+        ops: [{ op: 'add', path: '/b', value: 2 }],
+        target: 'project',
+        baseContentHash: GENESIS,
+      },
+      createdBy: 'user',
+      projectId: 'p',
+    });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+
+    // 정렬 수정이 동작하면: 체인 손상 없음, quarantine 0, delta 2개 전부 재생.
+    expect(r.chainDamaged).toBe(false);
+    expect(r.corruptedEntries).toBe(0);
+    expect(r.deltasReplayed).toBe(2);
+    expect((await idbListQuarantined()).length).toBe(0);
+  });
+
+  test('high #12 — migration begin/snapshot/commit 같은 ms 연속도 손상 오판 없음', async () => {
+    writeBeacon({ lastHeartbeat: FIXED_MS, sessionId: 's', tabId: 't' });
+
+    // migration 시퀀스를 모사: 같은 ms에 4개 연속 append (begin/snapshot/commit + delta).
+    await appendInitEntry();
+    await createSnapshot({ projects: [{ id: 'p1', title: 'M' }], coversUpToEntryId: 'cov' });
+    await appendEntry({
+      entryType: 'delta',
+      payload: {
+        projectId: 'p1',
+        ops: [{ op: 'add', path: '/x', value: 9 }],
+        target: 'project',
+        baseContentHash: GENESIS,
+      },
+      createdBy: 'migration',
+      projectId: 'p1',
+    });
+
+    resetJournalHLCForTests();
+    resetDefaultWriterQueueForTests();
+    resetMemoryTierForTests();
+
+    const r = await runBootRecovery();
+    expect(r.chainDamaged).toBe(false);
+    expect(r.corruptedEntries).toBe(0);
+    expect((await idbListQuarantined()).length).toBe(0);
+    // snapshot 이후 delta 1개가 정상 재생됐는지(같은 ms split 정확성).
+    expect(r.deltasReplayed).toBe(1);
   });
 });

@@ -46,7 +46,7 @@ export function InputDockSection({
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { handleSVIKeyDown(e); if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!showAiLock) handleSend(); } }}
+          onKeyDown={(e) => { handleSVIKeyDown(e); if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); if (!showAiLock) handleSend(); } }} /* [fix] IME 조합중(isComposing) Enter는 한자/한글 후보 확정이므로 전송하지 않음 (ime-composition-bug) */
           placeholder={t('writing.inputPlaceholder')}
           /* text-base(16px) — iOS Safari auto-zoom 방지 (포커스 시 확대 금지) */
           className="flex-1 min-w-0 bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-3 text-base md:text-sm text-text-primary placeholder-text-secondary resize-none max-h-32 leading-relaxed"

@@ -9,7 +9,7 @@ import { SPARK_GATEWAY_URL, buildSparkSystemPrompt, VLLM_MODEL_ID } from '@/lib/
 export const SPARK_SERVER_URL = process.env.SPARK_SERVER_URL || process.env.NEXT_PUBLIC_SPARK_SERVER_URL || '';
 
 /**
- * 서버 URL 결정 — vLLM 8001 직결 (Qwen 3.6-35B-A3B-FP8 MoE 단일 모델).
+ * 서버 URL 결정 — vLLM 8000 직결 (Qwen 3.6-35B-A3B-FP8 MoE 단일 모델).
  * 2026-04-20 이전 Nginx LB(8090) + Engine A/B(9B) 쌍포 구조는 폐기됨.
  * 2026-05-12 audit: stale comment 정정 — 현재 단일 직결 SSE만 사용.
  */
@@ -184,7 +184,7 @@ async function streamOneRequest(
     if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
 
     try {
-      // vLLM 8001 단일 직결 (35B MoE). role 힌트 불필요.
+      // vLLM 8000 단일 직결 (35B MoE). role 힌트 불필요.
       const requestBody: Record<string, unknown> = {
         model: VLLM_MODEL_ID,
         messages,
@@ -204,7 +204,7 @@ async function streamOneRequest(
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || '일일 호출 한도 초과 (100회). 내일 초기화됩니다.');
       }
-      if (res.status === 401) throw new Error('DGX 서버 인증 실패.');
+      if (res.status === 401) throw new Error('DGX 서버 연결 권한 실패.');
 
       if (isRetryableError(res.status)) {
         lastError = await extractSparkError(res);

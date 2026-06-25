@@ -113,7 +113,7 @@ describe('provenance-analyzer — analyzeProvenance', () => {
     expect(r.ledger).toHaveLength(4);
     expect(r.ledger[0].label).toBe('원고 해시');
     expect(r.ledger[0].hash).toBe('aaa');
-    expect(r.ledger[3].label).toBe('Witness Seal');
+    expect(r.ledger[3].label).toBe('과정기록 씰');
     expect(r.ledger[3].hash).toBe('LG-2605-0001-AAAA');
   });
 

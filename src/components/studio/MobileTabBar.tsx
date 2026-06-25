@@ -18,7 +18,7 @@ interface MobileTabBarProps {
 }
 
 const MORE_TABS: { key: AppTab; icon: React.ElementType }[] = [
-  { key: 'rulebook',   icon: FileText },
+  { key: 'direction',  icon: FileText },
   { key: 'style',      icon: Map },
   { key: 'visual',     icon: Zap },
   { key: 'history',    icon: History },
@@ -36,9 +36,14 @@ const PRIMARY_TABS: { key: AppTab | 'more'; icon: React.ElementType }[] = [
 const GUIDED_TABS: { key: AppTab; icon: React.ElementType }[] = [
   { key: 'world',      icon: Globe },
   { key: 'characters', icon: UserCircle },
-  { key: 'rulebook',   icon: FileText },
+  { key: 'direction',  icon: FileText },
   { key: 'settings',   icon: Settings },
 ];
+
+function bindMobileTabDelay(node: HTMLButtonElement | null, index: number) {
+  if (!node) return;
+  node.style.setProperty('--mobile-tab-delay', `${index * 50}ms`);
+}
 
 // IDENTITY_SEAL: PART-1 | role=types-constants | inputs=none | outputs=MobileTabBarProps,tab arrays
 
@@ -55,7 +60,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
   const t = createT(language);
   const moreScrollRef = useRef<HTMLDivElement>(null);
 
-  // Prevent hydration mismatch by only rendering dynamic content after mount
+  // Prevent hydration mismatch by rendering stable server markup before mount.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
@@ -90,7 +95,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
     }
   }, []);
 
-  // Render placeholder on server to prevent hydration mismatch
+  // Render stable server markup to prevent hydration mismatch
   // Use fixed skeleton that doesn't depend on activeTab state
   if (!mounted) {
     return (
@@ -101,8 +106,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
         suppressHydrationWarning
       >
         <div
-          className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2"
-          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+          className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2 mobile-tabbar-safe-bottom"
           suppressHydrationWarning
         >
           {/* Static skeleton - 5 items for free mode */}
@@ -134,8 +138,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
           />
           <div
             ref={moreScrollRef}
-            className="relative mx-3 mb-2 rounded-2xl bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-3 overflow-x-auto overscroll-x-contain shadow-[0_-8px_32px_rgba(0,0,0,0.4)]"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            className="relative mx-3 mb-2 rounded-2xl bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-3 overflow-x-auto overscroll-x-contain shadow-[0_-8px_32px_rgba(0,0,0,0.4)] mobile-tabbar-touch-scroll"
           >
             <div className="flex gap-2 min-w-min">
               {MORE_TABS.map(({ key, icon: Icon }, index) => {
@@ -143,6 +146,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
                 return (
                   <button 
                     key={key} 
+                    ref={(node) => bindMobileTabDelay(node, index)}
                     data-testid={`tab-${key}`} 
                     data-active={isActive} 
                     onClick={() => { triggerHaptic(); handleTab(key); }} 
@@ -150,13 +154,12 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
                     className={`
                       relative flex flex-col items-center gap-1 py-3 px-4 rounded-xl text-xs 
                       min-h-[52px] min-w-[68px] shrink-0 
-                      transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out
+                      transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out mobile-tabbar-fade-in-scale
                       ${isActive 
                         ? 'text-accent-purple bg-accent-purple/15 shadow-[0_0_16px_rgba(141,123,195,0.2)]' 
                         : 'text-text-tertiary hover:text-text-secondary active:bg-white/5 active:scale-95'
                       }
                     `}
-                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                     <span className="whitespace-nowrap font-medium">{getTabLabel(key)}</span>
@@ -186,8 +189,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
 
       {/* Primary tab bar — glass morphism style */}
       <div
-        className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2"
-        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        className="relative bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.08] flex justify-around items-center px-2 pt-2 mobile-tabbar-safe-bottom"
         suppressHydrationWarning
       >
         {/* Subtle top highlight */}
@@ -227,8 +229,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
               {/* Active background glow */}
               {active && (
                 <span 
-                  className="absolute inset-0 rounded-xl bg-accent-purple/10 animate-fade-in-scale"
-                  style={{ animationDuration: '200ms' }}
+                  className="absolute inset-0 rounded-xl bg-accent-purple/10 mobile-tabbar-fade-in-scale"
                 />
               )}
               
@@ -245,8 +246,7 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
               {/* Active indicator bar */}
               {active && (
                 <span 
-                  className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-accent-purple shadow-[0_0_8px_rgba(141,123,195,0.5)]"
-                  style={{ animation: 'scale-in 200ms ease-out' }}
+                  className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-accent-purple shadow-[0_0_8px_rgba(141,123,195,0.5)] mobile-tabbar-indicator-scale"
                 />
               )}
             </button>
@@ -254,19 +254,6 @@ export default function MobileTabBar({ activeTab, onTabChange, language, mode = 
         })}
       </div>
 
-      <style jsx>{`
-        @keyframes scale-in {
-          from { transform: translateX(-50%) scaleX(0); }
-          to { transform: translateX(-50%) scaleX(1); }
-        }
-        .animate-fade-in-scale {
-          animation: fade-in-scale 200ms ease-out forwards;
-        }
-        @keyframes fade-in-scale {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </nav>
   );
 }

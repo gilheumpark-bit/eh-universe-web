@@ -1,7 +1,7 @@
 // ============================================================
 // MobileDesktopOnlyGate — PC 전용 기능 모바일 안내 게이트
 // ============================================================
-// 코드 스튜디오, 번역 스튜디오 등 PC 전용 기능에 진입하면
+// 집필·번역·출고처럼 넓은 화면이 필요한 작업에 진입하면
 // 모바일 사용자에게 "데스크톱에서 이용 가능" 안내를 표시.
 // "그래도 계속" 옵션으로 우회 가능 (강제 데스크톱 모드).
 // ============================================================
@@ -15,7 +15,7 @@ import { L4 } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 
 interface Props {
-  /** 이 기능의 이름 (예: "코드 스튜디오") */
+  /** 이 기능의 이름 (예: "번역·현지화") */
   featureNameKo: string;
   featureNameEn: string;
   featureNameJa: string;
@@ -82,8 +82,16 @@ export default function MobileDesktopOnlyGate({
   };
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-bg-primary text-text-primary p-6">
-      <div className="shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <main
+      aria-label={L4(lang, {
+        ko: `${featureNameKo} 모바일 안내`,
+        en: `${featureNameEn} mobile notice`,
+        ja: `${featureNameJa} モバイル案内`,
+        zh: `${featureNameZh} 移动端提示`,
+      })}
+      className="flex flex-col min-h-[100dvh] bg-bg-primary text-text-primary p-6"
+    >
+      <div className="shrink-0 safe-area-top">
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary text-sm min-h-[44px]"
@@ -119,25 +127,37 @@ export default function MobileDesktopOnlyGate({
           <p className="text-xs text-text-tertiary leading-relaxed mt-2">
             {viewportWidth !== null
               ? L4(lang, {
-                  ko: `집필 스튜디오는 최소 1024px 이상의 큰 화면에서 사용할 수 있어요. (태블릿 가로모드 OK · 현재 ${viewportWidth}px)`,
-                  en: `The writing studio requires a screen at least 1024px wide. (Tablet landscape OK · current ${viewportWidth}px)`,
-                  ja: `執筆スタジオは最小1024px以上の大画面でご利用いただけます。(タブレット横向き対応 · 現在 ${viewportWidth}px)`,
-                  zh: `写作工作室需要至少 1024px 的大屏幕。(平板横屏可用 · 当前 ${viewportWidth}px)`,
+                  ko: `${featureNameKo}은 최소 1024px 이상의 큰 화면에서 온전히 사용할 수 있어요. 모바일에서는 링크 공유, 검토 대기, 스케치 스튜디오 이동을 권장합니다. (현재 ${viewportWidth}px)`,
+                  en: `${featureNameEn} works best on screens at least 1024px wide. On mobile, share the link, hold review, or move to the sketch studio. (current ${viewportWidth}px)`,
+                  ja: `${featureNameJa}は最小1024px以上の画面で完全に利用できます。モバイルではリンク共有、確認待ち、スケッチスタジオ移動をおすすめします。(現在 ${viewportWidth}px)`,
+                  zh: `${featureNameZh} 在至少 1024px 的屏幕上体验完整。移动端建议分享链接、暂缓审核或前往速写工作室。(当前 ${viewportWidth}px)`,
                 })
               : L4(lang, {
-                  ko: '집필 스튜디오는 최소 1024px 이상의 큰 화면에서 사용할 수 있어요. (태블릿 가로모드 OK)',
-                  en: 'The writing studio requires a screen at least 1024px wide. (Tablet landscape OK)',
-                  ja: '執筆スタジオは最小1024px以上の大画面でご利用いただけます。(タブレット横向き対応)',
-                  zh: '写作工作室需要至少 1024px 的大屏幕。(平板横屏可用)',
+                  ko: `${featureNameKo}은 최소 1024px 이상의 큰 화면에서 온전히 사용할 수 있어요. 모바일에서는 링크 공유, 검토 대기, 스케치 스튜디오 이동을 권장합니다.`,
+                  en: `${featureNameEn} works best on screens at least 1024px wide. On mobile, share the link, hold review, or move to the sketch studio.`,
+                  ja: `${featureNameJa}は最小1024px以上の画面で完全に利用できます。モバイルではリンク共有、確認待ち、スケッチスタジオ移動をおすすめします。`,
+                  zh: `${featureNameZh} 在至少 1024px 的屏幕上体验完整。移动端建议分享链接、暂缓审核或前往速写工作室。`,
                 })}
           </p>
+        </div>
+
+        <div className="grid w-full max-w-sm gap-2 rounded-xl border border-border bg-bg-secondary/30 p-3 text-left">
+          {[
+            L4(lang, { ko: "모바일: 링크 공유와 검토 대기", en: "Mobile: share link and hold review", ja: "モバイル: リンク共有と確認待ち", zh: "移动端：分享链接并暂缓审核" }),
+            L4(lang, { ko: "태블릿 가로: 제한적 확인 가능", en: "Tablet landscape: limited review", ja: "タブレット横向き: 限定確認", zh: "平板横屏：有限审核" }),
+            L4(lang, { ko: "데스크톱: 원문/번역/채점 전체 편집", en: "Desktop: full source, target, and scoring edit", ja: "デスクトップ: 原文・訳文・評価の全体編集", zh: "桌面端：完整原文、译文与评分编辑" }),
+          ].map((item) => (
+            <div key={item} className="flex min-h-8 items-center gap-2 text-xs text-text-secondary">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-purple" aria-hidden="true" />
+              <span>{item}</span>
+            </div>
+          ))}
         </div>
 
         <div className="w-full max-w-sm space-y-3">
           <button
             onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-accent-purple font-bold text-sm rounded-xl active:scale-98 transition-transform min-h-[44px]"
-            style={{ color: '#fff' }}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-accent-purple font-bold text-sm rounded-xl active:scale-98 transition-transform min-h-[44px] text-white"
           >
             <ExternalLink className="w-4 h-4" />
             {L4(lang, {
@@ -174,17 +194,17 @@ export default function MobileDesktopOnlyGate({
         </div>
       </div>
 
-      <div className="shrink-0 text-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="shrink-0 text-center safe-area-bottom">
         <p className="text-[10px] text-text-quaternary">
           {L4(lang, {
-            ko: '로어가드 — 데스크톱 최적화',
-            en: 'Loreguard — Desktop Optimized',
-            ja: 'ローアガード — デスクトップ最適化',
-            zh: '洛尔加德 — 桌面端优化',
+            ko: 'Loreguard · 데스크톱 최적화',
+            en: 'Loreguard · Desktop Optimized',
+            ja: 'ローアガード · デスクトップ最適化',
+            zh: '洛尔加德 · 桌面端优化',
           })}
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 

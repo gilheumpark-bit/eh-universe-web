@@ -16,6 +16,7 @@ import {
   MAX_GENRE_SELECTIONS,
   L4,
 } from "./types";
+import { colorToneClass, genreToneClass, RELATION_TONE_CLASS } from "./tone-classes";
 
 // ============================================================
 // PART 1 — Genre Leveling (Multi-Select, max 5)
@@ -41,9 +42,8 @@ export function GenreLeveling({ lang, selections, onToggle }: {
           const sel = selections.find(s => s.genre === g.genre);
           const isSelected = !!sel;
           return (
-            <div key={g.genre} className={`space-y-1 rounded-lg p-1.5 transition-[transform,opacity,background-color,border-color,color] border-2 ${isSelected ? "" : "border-transparent"}`}
-              style={isSelected ? { borderColor: g.color, background: `${g.color}10` } : undefined}>
-              <div className="text-[10px] font-bold tracking-wider text-center font-[family-name:var(--font-mono)] flex items-center justify-center gap-1" style={{ color: g.color }}>
+            <div key={g.genre} className={`space-y-1 rounded-lg p-1.5 transition-[transform,opacity,background-color,border-color,color] border-2 ws-genre-card ${genreToneClass(g.genre)} ${isSelected ? "is-selected" : "border-transparent"}`}>
+              <div className={`text-[10px] font-bold tracking-wider text-center font-[family-name:var(--font-mono)] flex items-center justify-center gap-1 ws-text-tone ${genreToneClass(g.genre)}`}>
                 {isSelected && <span className="text-[8px]">&#10003;</span>}
                 {g.genre}
               </div>
@@ -56,10 +56,9 @@ export function GenreLeveling({ lang, selections, onToggle }: {
                       onClick={() => onToggle(g.genre, lv.lv)}
                       className={`flex-1 py-1.5 rounded text-[8px] font-bold transition-[transform,opacity,background-color,border-color,color] border ${
                         active
-                          ? "text-white shadow-lg"
+                          ? `text-white shadow-lg ws-bg-tone ${genreToneClass(g.genre)}`
                           : "bg-bg-primary text-text-tertiary border-border hover:border-text-tertiary"
                       }`}
-                      style={active ? { background: g.color, borderColor: g.color } : undefined}
                       title={L4(lang, lv)}
                     >
                       {lv.lv}
@@ -84,8 +83,7 @@ export function GenreLeveling({ lang, selections, onToggle }: {
             const g = GENRE_LEVELS.find(gl => gl.genre === s.genre);
             const lvName = g?.levels[(s.level ?? 1) - 1];
             return (
-              <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold text-white"
-                style={{ background: g?.color }}>
+              <span key={i} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold text-white ws-bg-tone ${genreToneClass(s.genre)}`}>
                 {s.genre} Lv{s.level}
                 <span className="opacity-70">({lvName ? L4(lang, lvName) : ''})</span>
                 <button onClick={() => onToggle(s.genre, 0)}
@@ -179,10 +177,10 @@ export function CivMapper({ lang, civs, setCivs }: {
         {civs.map(civ => {
           const era = ERAS.find(e => e.id === civ.era);
           return (
-            <div key={civ.id} className="border border-border rounded-lg p-3 bg-bg-primary" style={{ borderLeftWidth: 3, borderLeftColor: civ.color }}>
+            <div key={civ.id} className={`border border-border rounded-lg p-3 bg-bg-primary ws-civ-card ${colorToneClass(civ.color)}`}>
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <span className="font-bold text-sm" style={{ color: civ.color }}>{civ.name}</span>
+                  <span className={`font-bold text-sm ws-text-tone ${colorToneClass(civ.color)}`}>{civ.name}</span>
                   <span className="text-[10px] text-text-tertiary ml-2 font-[family-name:var(--font-mono)]">
                     {era ? L4(lang, era) : ''} (TL{era?.techLevel})
                   </span>
@@ -295,9 +293,8 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
           {(Object.keys(RELATION_STYLES) as RelationType[]).map(rt => (
             <button key={rt} onClick={() => setSelType(rt)}
               className={`px-2 py-1.5 rounded text-[10px] font-bold border transition-[transform,opacity,background-color,border-color,color] ${
-                selType === rt ? "text-white" : "text-text-tertiary border-border hover:border-text-tertiary"
+                selType === rt ? `text-white ws-bg-tone ${RELATION_TONE_CLASS[rt]}` : "text-text-tertiary border-border hover:border-text-tertiary"
               }`}
-              style={selType === rt ? { background: RELATION_STYLES[rt].color, borderColor: RELATION_STYLES[rt].color } : undefined}
             >
               {L4(lang, RELATION_STYLES[rt])}
             </button>
@@ -310,7 +307,7 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
 
       {/* SVG */}
       <div className="flex justify-center">
-        <svg viewBox="0 0 400 400" className="w-full max-w-[500px]" style={{ fontFamily: "var(--font-mono, monospace)" }}>
+        <svg viewBox="0 0 400 400" className="w-full max-w-[500px] ws-svg">
           <rect width="400" height="400" fill="transparent" />
           {relations.map((rel, i) => {
             const from = getPos(rel.from);
@@ -320,19 +317,19 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
             return (
               <g key={i}>
                 <line x1={from.x} y1={from.y} x2={to.x} y2={to.y}
-                  stroke={style.color} strokeWidth="2" strokeDasharray={style.dash} opacity="0.7" />
+                  className={`ws-svg-line ${RELATION_TONE_CLASS[rel.type]}`} strokeWidth="2" strokeDasharray={style.dash} opacity="0.7" />
                 <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 6}
-                  fill={style.color} fontSize="8" textAnchor="middle" fontWeight="bold">
+                  className={`ws-svg-text ${RELATION_TONE_CLASS[rel.type]}`} fontSize="8" textAnchor="middle" fontWeight="bold">
                   {L4(lang, style)}
                 </text>
               </g>
             );
           })}
           {nodePositions.map(node => (
-            <g key={node.id}>
-              <circle cx={node.x} cy={node.y} r="20" fill={node.color} opacity="0.15" stroke={node.color} strokeWidth="2" />
-              <circle cx={node.x} cy={node.y} r="4" fill={node.color} />
-              <text x={node.x} y={node.y + 32} fill={node.color} fontSize="10" textAnchor="middle" fontWeight="bold">
+            <g key={node.id} className={colorToneClass(node.color)}>
+              <circle cx={node.x} cy={node.y} r="20" className="ws-svg-node-halo" opacity="0.15" strokeWidth="2" />
+              <circle cx={node.x} cy={node.y} r="4" className="ws-svg-node-dot" />
+              <text x={node.x} y={node.y + 32} className="ws-svg-text" fontSize="10" textAnchor="middle" fontWeight="bold">
                 {node.name}
               </text>
             </g>
@@ -344,7 +341,7 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
       <div className="flex flex-wrap gap-3 text-[9px]">
         {(Object.keys(RELATION_STYLES) as RelationType[]).map(rt => (
           <span key={rt} className="flex items-center gap-1">
-            <span className="w-3 h-0.5 inline-block rounded" style={{ background: RELATION_STYLES[rt].color }} />
+            <span className={`w-3 h-0.5 inline-block rounded ws-bg-tone ${RELATION_TONE_CLASS[rt]}`} />
             {L4(lang, RELATION_STYLES[rt])}
           </span>
         ))}
@@ -358,10 +355,10 @@ export function RelationsView({ lang, civs, relations, setRelations }: {
             return (
               <div key={i} className="flex items-center justify-between bg-bg-primary border border-border rounded px-3 py-1.5 text-[10px]">
                 <span>
-                  <span style={{ color: fromCiv?.color }}>{fromCiv?.name}</span>
+                  <span className={`ws-text-tone ${colorToneClass(fromCiv?.color)}`}>{fromCiv?.name}</span>
                   <span className="text-text-tertiary mx-1">&hArr;</span>
-                  <span style={{ color: toCiv?.color }}>{toCiv?.name}</span>
-                  <span className="ml-2 font-bold" style={{ color: style.color }}>
+                  <span className={`ws-text-tone ${colorToneClass(toCiv?.color)}`}>{toCiv?.name}</span>
+                  <span className={`ml-2 font-bold ws-text-tone ${RELATION_TONE_CLASS[rel.type]}`}>
                     [{L4(lang, style)}]
                   </span>
                 </span>
@@ -449,7 +446,7 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
                     </div>
                     <div className="text-[8px] text-text-tertiary mt-0.5">TL{era.techLevel}</div>
                     {civsByEra[era.id]?.map(c => (
-                      <div key={c.id} className="text-[8px] font-bold mt-1 truncate px-1" style={{ color: c.color }}>
+                      <div key={c.id} className={`text-[8px] font-bold mt-1 truncate px-1 ws-text-tone ${colorToneClass(c.color)}`}>
                         {c.name}
                       </div>
                     ))}
@@ -494,8 +491,8 @@ export function TimelineView({ lang, civs, transitions, setTransitions }: {
                   <div className="flex gap-1">
                     <button onClick={() => generateAIEvent(tr.fromEra, tr.toEra, i)}
                       className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple rounded text-[9px] font-bold hover:bg-accent-purple/20 transition-colors"
-                      title={L4(lang, { ko: '템플릿에서 자동 생성', en: 'Auto-generate from templates', ja: 'テンプレートから自動生成', zh: '从模板自动生成' })}>
-                      {L4(lang, { ko: '자동', en: 'Auto', ja: 'Auto', zh: 'Auto' })}
+                      title={L4(lang, { ko: '템플릿에서 제안', en: 'Suggest from templates', ja: 'テンプレートから提案', zh: '从模板建议' })}>
+                      {L4(lang, { ko: '제안', en: 'Suggest', ja: '提案', zh: '建议' })}
                     </button>
                     <button onClick={() => removeTransition(i)} className="text-text-tertiary hover:text-accent-red text-xs">&#10005;</button>
                   </div>

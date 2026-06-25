@@ -10,6 +10,7 @@ import { Message, AppLanguage } from '@/lib/studio-types';
 import { EngineReport } from '@/engine/types';
 import { L4 } from '@/lib/i18n';
 import EpisodeCompare from './EpisodeCompare';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface Props {
   messages: Message[];
@@ -66,11 +67,16 @@ function MetricBar({ value, max, color, label }: { value: number; max: number; c
     <div className="flex items-center gap-2" title={`${label}: ${value}% (max ${max}%)`}>
       <span className="text-[9px] text-text-tertiary font-mono w-16 shrink-0 uppercase">{label}</span>
       <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden" title={`${pct.toFixed(0)}%`}>
-        <div className={`h-full ${color} rounded-full transition-[transform,opacity,background-color,border-color,color]`} style={{ width: `${pct}%` }} />
+        <ProgressFill value={pct} className={`h-full ${color} rounded-full transition-[transform,opacity,background-color,border-color,color]`} />
       </div>
       <span className="text-[9px] text-text-tertiary font-mono w-8 text-right">{value}%</span>
     </div>
   );
+}
+
+function bindStudioBarHeight(node: HTMLDivElement | null, height: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-bar-height', height);
 }
 
 // IDENTITY_SEAL: PART-3 | role=bar chart | inputs=value/max/color | outputs=JSX
@@ -216,7 +222,10 @@ function AuthorDashboard({ messages, language }: Props) {
               const h = Math.max(4, (m.tension / 100) * 80);
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-0.5" title={`#${m.index} ${m.grade} T:${m.tension}%`}>
-                  <div className={`w-full rounded-t ${GRADE_COLORS[m.grade]?.replace('text-', 'bg-') || 'bg-text-tertiary'}`} style={{ height: `${h}px` }} />
+                  <div
+                    ref={(node) => bindStudioBarHeight(node, `${h}px`)}
+                    className={`w-full rounded-t studio-bar-height ${GRADE_COLORS[m.grade]?.replace('text-', 'bg-') || 'bg-text-tertiary'}`}
+                  />
                   <span className="text-[7px] text-text-tertiary">{m.index}</span>
                 </div>
               );

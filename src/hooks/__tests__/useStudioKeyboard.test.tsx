@@ -82,7 +82,7 @@ describe('useStudioKeyboard', () => {
     const { callbacks, fire, cleanup } = createHarness();
 
     const fKeyMap: Record<string, string> = {
-      F1: 'world', F2: 'characters', F3: 'rulebook', F4: 'writing',
+      F1: 'world', F2: 'characters', F3: 'direction', F4: 'writing',
       F5: 'style', F6: 'manuscript', F7: 'history', F8: 'settings',
     };
 

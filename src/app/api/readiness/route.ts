@@ -24,8 +24,10 @@
 // [K] env 다양화 — SPARK_SERVER_URL / FIREBASE_PROJECT_ID / STRIPE_SECRET_KEY.
 
 import { NextResponse } from 'next/server';
+// [P1 루프3 — 2026-06-08] readiness 가 boot path 도 보증 — chat route 미진입 환경에서도 import.
+import { getServerAiInitBackend } from '@/lib/server-ai-init';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // ============================================================
@@ -40,6 +42,13 @@ interface ProbeResult {
   detail?: string;
   /** Probe wall-clock ms. */
   ms: number;
+}
+
+interface ProbeSummary {
+  ok: number;
+  warn: number;
+  fail: number;
+  skip: number;
 }
 
 const PROBE_TIMEOUT_MS = 2000;
@@ -104,6 +113,26 @@ async function probeFirebase(): Promise<ProbeResult> {
   }
 }
 
+// [P1 루프3 — 2026-06-08] rate-limit backend probe.
+// prod 에서 memory 면 분산 enforcement 깨짐 (Vercel multi-lambda). warn 처리.
+function probeRateLimitBackend(): ProbeResult {
+  const t0 = Date.now();
+  const backend = getServerAiInitBackend();
+  const isProd = process.env.NODE_ENV === 'production';
+  const ms = Date.now() - t0;
+  if (backend === 'upstash') {
+    return { status: 'ok', detail: 'rate-limit: upstash (distributed)', ms };
+  }
+  if (isProd) {
+    return {
+      status: 'warn',
+      detail: 'rate-limit: memory (per-lambda) — set UPSTASH_REDIS_REST_URL/_TOKEN for distributed enforcement',
+      ms,
+    };
+  }
+  return { status: 'ok', detail: 'rate-limit: memory (dev/test acceptable)', ms };
+}
+
 function probeStripe(): ProbeResult {
   const key = process.env.STRIPE_SECRET_KEY;
   const t0 = Date.now();
@@ -124,7 +153,21 @@ function probeStripe(): ProbeResult {
 
 const startedAt = Date.now();
 
-export async function GET() {
+function canViewReadinessDetails(request: Request): boolean {
+  const token = process.env.READINESS_DETAIL_TOKEN || process.env.LOREGUARD_READINESS_TOKEN;
+  if (!token) return false;
+  return request.headers.get('x-loreguard-readiness-token') === token;
+}
+
+function summarizeChecks(checks: Record<string, ProbeResult>): ProbeSummary {
+  const summary: ProbeSummary = { ok: 0, warn: 0, fail: 0, skip: 0 };
+  for (const check of Object.values(checks)) {
+    summary[check.status] += 1;
+  }
+  return summary;
+}
+
+export async function GET(request: Request) {
   const t0 = Date.now();
 
   // 병렬 probe (Promise.allSettled — 한 probe 실패가 다른 probe 차단 안 함)
@@ -133,8 +176,9 @@ export async function GET() {
     probeFirebase(),
   ]);
   const stripe = probeStripe();
+  const rateLimit = probeRateLimitBackend();
 
-  const checks: Record<string, ProbeResult> = { dgx, firebase, stripe };
+  const checks: Record<string, ProbeResult> = { dgx, firebase, stripe, rateLimit };
 
   // 전체 status 판정
   const statuses = Object.values(checks).map((c) => c.status);
@@ -149,14 +193,18 @@ export async function GET() {
   const probeMs = Date.now() - t0;
   const uptimeMs = Date.now() - startedAt;
 
+  const basePayload = {
+    status,
+    timestamp: Date.now(),
+    uptimeMs,
+    probeMs,
+  };
+  const payload = canViewReadinessDetails(request)
+    ? { ...basePayload, checks }
+    : { ...basePayload, summary: summarizeChecks(checks) };
+
   return NextResponse.json(
-    {
-      status,
-      timestamp: Date.now(),
-      uptimeMs,
-      probeMs,
-      checks,
-    },
+    payload,
     {
       status: hasFail ? 503 : 200,
       headers: { 'Cache-Control': 'no-store' },

@@ -10,7 +10,7 @@
 //   - applyPreset 병합: preset 우선, 없는 필드는 current 유지
 //   - 배열은 명시적 교체(concat 아님) — 작가 의도 보존
 //   - 사용 횟수 추적 → Top-3 자주 쓰는 프리셋 우선 노출
-//   - private/community/market 가시성 — 향후 Network 연동 대비
+//   - private/community/market 가시성 — 향후 출고·협업 범위 연동 대비
 //
 // [C] 외부 입력 검증, IDB 실패 시 graceful degradation
 // [G] 배치 트랜잭션, 인덱스 활용

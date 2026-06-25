@@ -7,6 +7,7 @@
 import { useMemo, memo } from 'react';
 import { Message, AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
+import { ProgressFill } from './ProgressFill';
 
 interface Props {
   messages: Message[];
@@ -29,6 +30,11 @@ interface RhythmStats {
   buckets: RhythmBucket[];
   rhythmScore: number; // 0-100 (균형도)
   dominantPattern: string;
+}
+
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
 }
 
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=interfaces
@@ -179,9 +185,11 @@ function RhythmAnalyzer({ messages, language }: Props) {
               </span>
               <div className="flex-1 h-4 bg-white/5 rounded overflow-hidden relative">
                 <div
+                  ref={(node) => bindStudioTone(node, bucket.color)}
                   className="h-full rounded transition-[transform,opacity,background-color,border-color,color]"
-                  style={{ width: `${pct}%`, backgroundColor: bucket.color, opacity: 0.7 }}
-                />
+                >
+                  <ProgressFill value={pct} className="h-full rounded studio-tone-swatch opacity-70" />
+                </div>
                 <span className="absolute right-1 top-0 h-full flex items-center text-[8px] text-text-tertiary font-mono">
                   {bucket.count} ({ratio}%)
                 </span>

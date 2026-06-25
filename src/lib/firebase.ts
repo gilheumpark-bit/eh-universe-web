@@ -21,7 +21,7 @@ export { isTestEnvironment };
 // This prevents env misconfiguration from silently connecting to a wrong project.
 const productionConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  authDomain: resolveFirebaseAuthDomain(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? ''),
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
@@ -66,6 +66,15 @@ if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
 }
 
 export { auth, app, db };
+
+function resolveFirebaseAuthDomain(configuredAuthDomain: string): string {
+  if (typeof window === 'undefined') return configuredAuthDomain;
+
+  const sameOriginRequested = process.env.NEXT_PUBLIC_FIREBASE_AUTH_SAME_ORIGIN === 'true';
+  const canUseSameOriginAuth = sameOriginRequested && window.location.protocol === 'https:' && Boolean(window.location.host);
+
+  return canUseSameOriginAuth ? window.location.host : configuredAuthDomain;
+}
 
 /** Safe getter for Firebase Auth — cleanly lazy loads the auth module */
 export async function lazyFirebaseAuth(): Promise<Auth | null> {

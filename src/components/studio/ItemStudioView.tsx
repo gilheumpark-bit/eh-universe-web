@@ -5,225 +5,28 @@ import { showAlert } from '@/lib/show-alert';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Item, Skill, MagicSystem, ItemRarity, ItemCategory,
-  StoryConfig, AppLanguage,
+  StoryConfig, AppLanguage, AssetPotentialLevel, ItemLifecycleStatus,
 } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
 import { useStudioUI } from '@/contexts/StudioContext';
 import {
-  Sword, Shield, Sparkles, Zap, ScrollText, Plus, Trash2,
-  BarChart3, Loader2, ChevronDown, ChevronUp, Package, Wand2,
+  Sword, Sparkles, Zap, ScrollText, Plus, Trash2,
+  BarChart3, Loader2, Wand2,
 } from 'lucide-react';
 import { generateItems, generateSkills, generateMagicSystems } from '@/services/geminiService';
 import { activeSupportsStructured } from '@/lib/ai-providers';
-import { EmptyState } from '@/components/ui/EmptyState';
-
-// ============================================================
-// PART 1 — CONSTANTS & LABELS
-// ============================================================
-
-const RARITY_CONFIG: Record<ItemRarity, { tKey: string; color: string; bg: string }> = {
-  common:    { tKey: 'itemStudio.rarityCommon',    color: '#9ca3af', bg: 'bg-gray-500/10' },
-  uncommon:  { tKey: 'itemStudio.rarityUncommon',  color: '#22c55e', bg: 'bg-green-500/10' },
-  rare:      { tKey: 'itemStudio.rarityRare',      color: '#3b82f6', bg: 'bg-accent-blue/10' },
-  epic:      { tKey: 'itemStudio.rarityEpic',      color: '#a855f7', bg: 'bg-purple-500/10' },
-  legendary: { tKey: 'itemStudio.rarityLegendary', color: '#f59e0b', bg: 'bg-amber-500/10' },
-  mythic:    { tKey: 'itemStudio.rarityMythic',    color: '#ef4444', bg: 'bg-accent-red/10' },
-};
-
-const CATEGORY_CONFIG: Record<ItemCategory, { tKey: string; icon: React.ElementType }> = {
-  weapon:     { tKey: 'itemStudio.categoryWeapon',     icon: Sword },
-  armor:      { tKey: 'itemStudio.categoryArmor',      icon: Shield },
-  accessory:  { tKey: 'itemStudio.categoryAccessory',  icon: Sparkles },
-  consumable: { tKey: 'itemStudio.categoryConsumable',  icon: Zap },
-  material:   { tKey: 'itemStudio.categoryMaterial',    icon: Package },
-  quest:      { tKey: 'itemStudio.categoryQuest',       icon: ScrollText },
-  misc:       { tKey: 'itemStudio.categoryMisc',        icon: Package },
-};
-
-const SKILL_TYPES = [
-  { value: 'active' as const, tKey: 'itemStudio.skillTypeActive' },
-  { value: 'passive' as const, tKey: 'itemStudio.skillTypePassive' },
-  { value: 'ultimate' as const, tKey: 'itemStudio.skillTypeUltimate' },
-];
-
-// ============================================================
-// PART 1B — EH UNIVERSE REFERENCE PRESETS
-// ============================================================
-
-const PRESET_MAGIC_SYSTEMS: MagicSystem[] = [
-  {
-    id: 'preset-eh-force',
-    name: '존재력 (Existence Heft)',
-    source: '생명체 내부 근원 에너지 — 세계와의 공명으로 발현',
-    rules: '체내 존재력을 압축·방출하여 전투에 활용. 수련과 전투 경험으로 성장. 검술(내부 밀도 강화)과 마법(외부 마나 조작)으로 분기.',
-    limitations: '과다 사용 시 의식 상실. 4파동 후반부터 불안정, 5파동 미완성 시 폭주 위험(주변 파괴). GH 달성 후 안정화.',
-    ranks: ['1파동 — 일반인', '2파동 — 숙련 전사', '3파동 — 상위 기사', '4파동 — 왕국급 전력', '5파동(GH) — 세계 공명 완성'],
-  },
-  {
-    id: 'preset-divine-force',
-    name: '신성력 (Divine Force)',
-    source: '성녀 전용 감정 기반 에너지 — 소환 시 자동 부여',
-    rules: '감정 상태와 직결. 사랑·신뢰로 증가, 공포·분노로 감소. 치유·정화·결계 발현. 권위(Authority) 능력은 세계 법칙 예외 코드.',
-    limitations: '과다 사용 시 인간성 감소·감정 둔화. 분노 극한 시 성력 폭주. 권위 명령은 마족에게 무효.',
-    ranks: ['1급 — 기본 치유 (10m)', '2급 — 집단 치유 (50m)', '3급 — 정화 능력', '4급 — 신성 결계', '5급 — 권위 완전 각성'],
-  },
-  {
-    id: 'preset-eh-heart',
-    name: 'EH (Error Heart)',
-    source: '결정론적 계산에서 발생하는 의미 잔차 — 예측 불가 선택에서 생성',
-    rules: '측정 가능하나 역산·재현 불가. 은하계 기축통화(단위: Hart). Type A(감정형/높은 강도), Type B(윤리형/장기 지속), Type C(존재형/극희귀).',
-    limitations: '복제 지구 유지비가 EH 수입 초과 시 파산. 일부 개체 매매 금지. NOA 안드로이드는 EH=0 환경에서 부팅 불가.',
-    ranks: ['Type A — 순수 감정형', 'Type B — 윤리적', 'Type C — 존재형·창의적'],
-  },
-  {
-    id: 'preset-magic-mana',
-    name: '마법 체계 (Mana System)',
-    source: '세계에 존재하는 기본 에너지(마나) — 체내 마나 코어에서 발현',
-    rules: '원소(화·수·풍·토), 강화, 정신계, 소환, 특수의 5분류. 외부 마나 조작이 핵심. 코어 등급에 따라 성장 속도 차이.',
-    limitations: '검술과 상호배타(마나 외부 방출 vs 존재력 내부 밀도). 비마법 체계(검술)와 공존하나 동시 사용 불가.',
-    ranks: ['1급 — 초급', '3급 — 중급', '5급 — 상급', '7급 — 왕국급 전력', '10급 — 전설급 대마법사'],
-  },
-];
-
-const PRESET_SKILLS: Skill[] = [
-  {
-    id: 'preset-skill-wave-sever',
-    name: '파동절단 (Wave Sever)',
-    type: 'active',
-    owner: '민시영',
-    description: '존재력을 직선으로 극압축 후 방출하는 대형 베기. 보스급 몬스터 전용 기술.',
-    cost: '존재력 대량 소모',
-    cooldown: '장기전 불가',
-    rank: '4파동+',
-  },
-  {
-    id: 'preset-skill-phantom-step',
-    name: '잔영가속 (Phantom Step)',
-    type: 'active',
-    owner: '민시영',
-    description: '체력계 존재력을 극압축하여 초고속 이동. 잔상이 남을 정도의 속도.',
-    cost: '체력계 존재력',
-    cooldown: '연속 3회 제한',
-    rank: '3파동+',
-  },
-  {
-    id: 'preset-skill-resonance-counter',
-    name: '공명역베기 (Resonance Counter)',
-    type: 'active',
-    owner: '민시영',
-    description: '상대 파동의 역위상을 포착하여 붕괴시키는 카운터 기술. 파동 자체를 무력화.',
-    cost: '정밀 타이밍 필요',
-    cooldown: '상대 파동 발현 시에만',
-    rank: '4파동+',
-  },
-  {
-    id: 'preset-skill-density-collapse',
-    name: '밀도붕괴 (Density Collapse)',
-    type: 'ultimate',
-    owner: '민시영',
-    description: '5파동 미완성 상태에서 공간을 압박하는 위험 기술. 부작용 있음.',
-    cost: '5파동 불안정 소모',
-    cooldown: '1회성 (부작용 위험)',
-    rank: '5파동 미완성',
-  },
-  {
-    id: 'preset-skill-completion',
-    name: '완결 (Completion)',
-    type: 'ultimate',
-    owner: '민시영',
-    description: '아크 형태 변환 + 5파동 완전 공명. 존재를 원래 자리로 재정렬(파괴가 아닌 안정화).',
-    cost: 'GH 완전 각성 필요',
-    cooldown: '최종 비기',
-    rank: 'GH (5파동 완성)',
-  },
-  {
-    id: 'preset-skill-authority-kneel',
-    name: '권위: 꿇어라',
-    type: 'active',
-    owner: '이지영',
-    description: '성녀의 권위 명령 — 대상을 강제로 무릎 꿇림. 마족에게는 무효.',
-    cost: '신성력',
-    cooldown: '없음',
-    rank: '권위 1단계+',
-  },
-  {
-    id: 'preset-skill-purification',
-    name: '정화 (Purification)',
-    type: 'active',
-    owner: '이지영',
-    description: '왜곡된 존재를 정화하는 성녀 전용 능력. 마족 왜곡 제거 가능.',
-    cost: '신성력 대량 소모',
-    cooldown: '성력 회복 필요',
-    rank: '3급+',
-  },
-];
-
-const PRESET_ITEMS: Item[] = [
-  {
-    id: 'preset-item-arc-sword',
-    name: '민시영의 검 (아크)',
-    category: 'weapon',
-    rarity: 'legendary',
-    description: '아크 형태 변환이 가능한 민시영의 주력 검. 5파동 완전 공명 시 "완결" 발동 매체.',
-    effect: '존재력 압축 효율 극대화, 아크 형태 변환',
-    obtainedFrom: '이세계 소환 직후 획득',
-  },
-  {
-    id: 'preset-item-divine-vestment',
-    name: '성녀복 (Divine Vestment)',
-    category: 'armor',
-    rarity: 'epic',
-    description: '소환 시 자동 변환되는 백색 성녀 의복. 신성력 증폭 효과.',
-    effect: '신성력 증폭, 정화 범위 확장',
-    obtainedFrom: '성녀 소환 시 자동 부여',
-  },
-  {
-    id: 'preset-item-summoning-circle',
-    name: '대성당 소환 마법진',
-    category: 'quest',
-    rarity: 'mythic',
-    description: '루미나 대성당 지하의 성녀 소환용 대형 마법진. 활성화에 3개월 소요.',
-    effect: '이세계 성녀 소환 (18~20세 지구인 대상)',
-    obtainedFrom: '루미나 대성당 지하',
-  },
-  {
-    id: 'preset-item-mana-core',
-    name: '마나 코어 (상급)',
-    category: 'material',
-    rarity: 'rare',
-    description: '마법사의 체내에서 형성되는 마나 결정체. 등급에 따라 성장 속도 결정.',
-    effect: '마법 등급 상한 결정, 마나 회복량 증가',
-    obtainedFrom: '선천적 보유 또는 던전 보스 드롭',
-  },
-  {
-    id: 'preset-item-eh-token',
-    name: 'EH 토큰 (1,000 Hart)',
-    category: 'misc',
-    rarity: 'uncommon',
-    description: '은하계 기축통화 Error Heart의 소액 토큰. 일상 거래용.',
-    effect: '은하계 표준 결제 수단',
-    obtainedFrom: '예측 불가 선택 수행 시 생성',
-  },
-  {
-    id: 'preset-item-gate-key',
-    name: 'Gate 액세스 키',
-    category: 'quest',
-    rarity: 'epic',
-    description: 'HPG 게이트 인프라 접근 권한 키. 광년 단위 도약 이동에 필요.',
-    effect: '게이트 v4.7 접근 허가, 최대 27,500광년 점프',
-    obtainedFrom: '중앙협의회 발급',
-  },
-];
-
-type PresetCategory = 'all' | 'magic' | 'skills' | 'items';
-
-function getPresetSummary(): { magic: number; skills: number; items: number } {
-  return {
-    magic: PRESET_MAGIC_SYSTEMS.length,
-    skills: PRESET_SKILLS.length,
-    items: PRESET_ITEMS.length,
-  };
-}
+import { analyzeBalance } from './ItemStudioView.balance';
+import {
+  getPresetSummary,
+  PRESET_ITEMS,
+  PRESET_MAGIC_SYSTEMS,
+  PRESET_SKILLS,
+  type PresetCategory,
+  SKILL_TYPES,
+} from './ItemStudioView.constants';
+import { MagicSystemCard } from './ItemStudioView.MagicSystemCard';
+import { ItemStudioBalanceTab } from './ItemStudioView.BalanceTab';
+import { ItemStudioItemsTab } from './ItemStudioView.ItemsTab';
 
 interface ItemStudioViewProps {
   language: AppLanguage;
@@ -232,52 +35,6 @@ interface ItemStudioViewProps {
 }
 
 type SubTab = 'items' | 'skills' | 'magic' | 'balance';
-
-// ============================================================
-// PART 2 — HELPER: BALANCE ANALYSIS
-// ============================================================
-
-function analyzeBalance(items: Item[], skills: Skill[], t: (key: string) => string): {
-  rarityDist: Record<ItemRarity, number>;
-  categoryDist: Record<ItemCategory, number>;
-  skillTypeDist: Record<string, number>;
-  warnings: string[];
-} {
-  const rarityDist = {} as Record<ItemRarity, number>;
-  const categoryDist = {} as Record<ItemCategory, number>;
-  const skillTypeDist = {} as Record<string, number>;
-  const warnings: string[] = [];
-
-  for (const item of items) {
-    rarityDist[item.rarity] = (rarityDist[item.rarity] ?? 0) + 1;
-    categoryDist[item.category] = (categoryDist[item.category] ?? 0) + 1;
-  }
-  for (const skill of skills) {
-    skillTypeDist[skill.type] = (skillTypeDist[skill.type] ?? 0) + 1;
-  }
-
-  const legendary = (rarityDist.legendary ?? 0) + (rarityDist.mythic ?? 0);
-  const total = items.length;
-  if (total > 0 && legendary / total > 0.3) {
-    warnings.push(t('itemStudio.warningLegendary'));
-  }
-  if (total > 5 && !rarityDist.common) {
-    warnings.push(t('itemStudio.warningNoCommon'));
-  }
-  const ultimates = skillTypeDist['ultimate'] ?? 0;
-  if (ultimates > 3) {
-    warnings.push(t('itemStudio.warningUltimates'));
-  }
-  if (skills.length > 0) {
-    const owners = new Set(skills.map(s => s.owner));
-    const avgPerChar = skills.length / owners.size;
-    if (avgPerChar > 5) {
-      warnings.push(t('itemStudio.warningSkillComplexity').replace('${avg}', avgPerChar.toFixed(1)));
-    }
-  }
-
-  return { rarityDist, categoryDist, skillTypeDist, warnings };
-}
 
 // ============================================================
 // PART 3 — MAIN COMPONENT
@@ -329,6 +86,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // ============================================================
   const [newItem, setNewItem] = useState<Partial<Item>>({
     name: '', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '',
+    owner: '', status: 'planned', ipPotential: 'none', rightsMemo: '',
   });
   const [itemFilter, setItemFilter] = useState<'all' | ItemCategory>('all');
 
@@ -347,9 +105,16 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       description: newItem.description ?? '',
       effect: newItem.effect ?? '',
       obtainedFrom: newItem.obtainedFrom ?? '',
+      owner: newItem.owner ?? '',
+      status: (newItem.status ?? 'planned') as ItemLifecycleStatus,
+      ipPotential: (newItem.ipPotential ?? 'none') as AssetPotentialLevel,
+      rightsMemo: newItem.rightsMemo ?? '',
     };
     setItems(prev => [...prev, item]);
-    setNewItem({ name: '', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '' });
+    setNewItem({
+      name: '', category: 'weapon', rarity: 'common', description: '', effect: '', obtainedFrom: '',
+      owner: '', status: 'planned', ipPotential: 'none', rightsMemo: '',
+    });
   };
 
   // ============================================================
@@ -426,7 +191,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
   // ============================================================
   const handleAIGenerate = async () => {
     if (!activeSupportsStructured()) {
-      showAlert(language === 'KO' ? '현재 노아 엔진은 구조화 생성을 지원하지 않습니다. Gemini를 사용해주세요.' : 'Current NOA engine does not support structured generation. Please use Gemini.');
+      showAlert(language === 'KO' ? '현재 설정에서는 구조화 제안을 사용할 수 없습니다. 연결 키나 실행 경로를 확인해 주세요.' : 'The current Noa mode does not support structured suggestions. Check a supported engine or connection key.');
       return;
     }
     if (!config.synopsis) {
@@ -434,7 +199,7 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       return;
     }
     if (subTab === 'balance') {
-      showAlert(language === 'KO' ? '밸런스 탭에서는 생성할 수 없습니다. 아이템/스킬/상성 탭을 선택해주세요.' : 'Cannot generate in balance tab. Select Items, Skills, or Systems tab.');
+      showAlert(language === 'KO' ? '밸런스 탭에서는 제안을 만들 수 없습니다. 아이템·스킬·체계 탭 중 하나를 선택해 주세요.' : 'Cannot generate in balance tab. Select Items, Skills, or Systems tab.');
       return;
     }
     setIsGenerating(true);
@@ -451,8 +216,9 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : '';
-      const targetName = subTab === 'skills' ? 'Skill' : subTab === 'magic' ? 'Magic System' : 'Item';
-      const msg = ({ KO: `${targetName} 생성 실패: ${detail}`, EN: `${targetName} generation failed: ${detail}`, JP: `生成失敗: ${detail}`, CN: `生成失败: ${detail}` })[language];
+      const targetName = subTab === 'skills' ? '스킬' : subTab === 'magic' ? '마법 체계' : '아이템';
+      const englishTargetName = subTab === 'skills' ? 'Skill' : subTab === 'magic' ? 'Magic System' : 'Item';
+      const msg = ({ KO: `${targetName} 제안을 준비하지 못했습니다${detail ? `: ${detail}` : ''}`, EN: `${englishTargetName} generation failed: ${detail}`, JP: `生成失敗: ${detail}`, CN: `生成失败: ${detail}` })[language];
       showAlert(msg);
     } finally {
       setIsGenerating(false);
@@ -522,14 +288,14 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
             )}
           </div>
 
-          {/* AI Generate */}
+          {/* Noa Suggest */}
           <button
             onClick={handleAIGenerate}
             disabled={isGenerating}
             className="flex items-center gap-2 px-4 py-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl text-xs font-bold hover:bg-accent-blue/25 transition-[opacity,background-color,border-color,color] disabled:opacity-50"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {t('itemStudio.aiGenerate')}
+            {L4(language, { ko: '노아 제안', en: 'Noa Suggest', ja: 'ノア提案', zh: '诺亚建议' })}
           </button>
         </div>
       </div>
@@ -553,207 +319,22 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
       {/* ====== ITEMS TAB ====== */}
       {subTab === 'items' && (
-        <div className="space-y-4">
-          {/* Category Filter */}
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setItemFilter('all')} aria-pressed={itemFilter === 'all'} className={`px-3 py-2 rounded-lg text-[13px] font-bold border min-h-[44px] ${itemFilter === 'all' ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
-              {t('itemStudio.filterAll')} ({items.length})
-            </button>
-            {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => {
-              const count = items.filter(i => i.category === cat).length;
-              return (
-                <button key={cat} onClick={() => setItemFilter(cat)} aria-pressed={itemFilter === cat} className={`px-3 py-2 rounded-lg text-[13px] font-bold border min-h-[44px] ${itemFilter === cat ? 'bg-accent-blue/15 text-accent-blue border-accent-blue/40' : 'bg-bg-secondary/50 border-border/50 text-text-secondary hover:text-text-primary hover:border-border'}`}>
-                  {t(CATEGORY_CONFIG[cat].tKey)} ({count})
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Item Cards */}
-          {filteredItems.length === 0 ? (
-            <EmptyState
-              icon={Package}
-              title={L4(language, {
-                ko: '등록된 아이템이 없습니다',
-                en: 'No items registered yet',
-                ja: '登録されたアイテムがありません',
-                zh: '尚未注册任何物品',
-              })}
-              description={L4(language, {
-                ko: '장비·마법·스킬을 추가하여 풍성한 세계를 만드세요.',
-                en: 'Add equipment, magic, and skills to enrich your world.',
-                ja: '装備・魔法・スキルを追加して豊かな世界を作りましょう。',
-                zh: '添加装备、魔法和技能，打造丰富的世界。',
-              })}
-              actions={[
-                {
-                  label: L4(language, {
-                    ko: '아이템 추가',
-                    en: 'Add item',
-                    ja: 'アイテム追加',
-                    zh: '添加物品',
-                  }),
-                  icon: Plus,
-                  variant: 'primary',
-                  onClick: () => {
-                    // [C] "새 아이템 추가" 섹션의 이름 입력 필드로 포커스 이동
-                    const nameInput = document.querySelector<HTMLInputElement>(
-                      `input[placeholder="${t('itemStudio.namePlaceholder')}"]`,
-                    );
-                    nameInput?.focus();
-                    nameInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  },
-                },
-              ]}
-            />
-          ) : null}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredItems.map(item => {
-              const rCfg = RARITY_CONFIG[item.rarity] || RARITY_CONFIG.common;
-              const cCfg = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.misc;
-              const CatIcon = cCfg.icon;
-              return (
-                <div key={item.id} className={`${rCfg.bg} border border-border/50 backdrop-blur-md rounded-xl p-4 space-y-2 rounded-xl transition-[background-color,border-color,box-shadow,color] hover:shadow-md hover:border-border`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CatIcon className="w-4 h-4" style={{ color: rCfg.color }} />
-                      <span className="font-bold text-sm">{item.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ color: rCfg.color, border: `1px solid ${rCfg.color}40` }}>
-                        {t(rCfg.tKey)}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          const btn = e.currentTarget;
-                          confirmItemDelete(() => {
-                            btn.classList.add('animate-delete-warning');
-                            setTimeout(() => setItems(prev => prev.filter(i => i.id !== item.id)), 300);
-                          });
-                        }}
-                        className="p-2.5 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/20 transition-colors duration-200 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  {item.description && <p className="text-xs text-text-secondary">{item.description}</p>}
-                  {item.effect && <p className="text-[13px] text-accent-blue font-bold tracking-wider relative z-10">✦ {item.effect}</p>}
-                  {item.obtainedFrom && <p className="text-[13px] text-text-tertiary">📍 {item.obtainedFrom}</p>}
-                  {/* 1단계 뼈대 필드 */}
-                  <div className="space-y-1.5 pt-2 border-t border-border/50">
-                    <input value={item.purpose ?? ''} onChange={e => updateItemField(item.id, 'purpose', e.target.value)}
-                      placeholder={t('itemStudio.purposePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
-                    <input value={item.activationCond ?? ''} onChange={e => updateItemField(item.id, 'activationCond', e.target.value)}
-                      placeholder={t('itemStudio.activationCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
-                    <input value={item.costWeakness ?? ''} onChange={e => updateItemField(item.id, 'costWeakness', e.target.value)}
-                      placeholder={t('itemStudio.costWeaknessPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
-                    <input value={item.storyFunction ?? ''} onChange={e => updateItemField(item.id, 'storyFunction', e.target.value)}
-                      placeholder={t('itemStudio.storyFunctionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg px-2.5 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px]" />
-                  </div>
-                  {/* 2단계 — 작동 */}
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setTierExpanded(prev => ({ ...prev, [item.id]: { ...prev[item.id], t2: !prev[item.id]?.t2 } }))}
-                      className="text-[9px] font-bold text-text-tertiary cursor-pointer flex items-center gap-1 hover:text-text-primary"
-                    >
-                      {tierExpanded[item.id]?.t2 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      {t('itemStudio.tier2Mechanics')}
-                    </button>
-                    {tierExpanded[item.id]?.t2 && (
-                      <div className="space-y-1.5 pt-1.5">
-                        <input value={item.worldConnection ?? ''} onChange={e => updateItemField(item.id, 'worldConnection', e.target.value)}
-                          placeholder={t('itemStudio.worldConnectionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.misuse ?? ''} onChange={e => updateItemField(item.id, 'misuse', e.target.value)}
-                          placeholder={t('itemStudio.misusePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.lore ?? ''} onChange={e => updateItemField(item.id, 'lore', e.target.value)}
-                          placeholder={t('itemStudio.lorePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.material ?? ''} onChange={e => updateItemField(item.id, 'material', e.target.value)}
-                          placeholder={t('itemStudio.materialPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.craftMethod ?? ''} onChange={e => updateItemField(item.id, 'craftMethod', e.target.value)}
-                          placeholder={t('itemStudio.craftMethodPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.valueRarity ?? ''} onChange={e => updateItemField(item.id, 'valueRarity', e.target.value)}
-                          placeholder={t('itemStudio.valueRarityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.whoTargets ?? ''} onChange={e => updateItemField(item.id, 'whoTargets', e.target.value)}
-                          placeholder={t('itemStudio.whoTargetsPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                      </div>
-                    )}
-                  </div>
-                  {/* 3단계 — 디테일 */}
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setTierExpanded(prev => ({ ...prev, [item.id]: { ...prev[item.id], t3: !prev[item.id]?.t3 } }))}
-                      className="text-[9px] font-bold text-text-tertiary cursor-pointer flex items-center gap-1 hover:text-text-primary"
-                    >
-                      {tierExpanded[item.id]?.t3 ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      {t('itemStudio.tier3Detail')}
-                    </button>
-                    {tierExpanded[item.id]?.t3 && (
-                      <div className="space-y-1.5 pt-1.5">
-                        <input value={item.itemAppearance ?? ''} onChange={e => updateItemField(item.id, 'itemAppearance', e.target.value)}
-                          placeholder={t('itemStudio.appearancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.symbolism ?? ''} onChange={e => updateItemField(item.id, 'symbolism', e.target.value)}
-                          placeholder={t('itemStudio.symbolismPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.currentLocation ?? ''} onChange={e => updateItemField(item.id, 'currentLocation', e.target.value)}
-                          placeholder={t('itemStudio.currentLocationPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.ownershipCond ?? ''} onChange={e => updateItemField(item.id, 'ownershipCond', e.target.value)}
-                          placeholder={t('itemStudio.ownershipCondPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.durability ?? ''} onChange={e => updateItemField(item.id, 'durability', e.target.value)}
-                          placeholder={t('itemStudio.durabilityPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.evolution ?? ''} onChange={e => updateItemField(item.id, 'evolution', e.target.value)}
-                          placeholder={t('itemStudio.evolutionPlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                        <input value={item.maintenance ?? ''} onChange={e => updateItemField(item.id, 'maintenance', e.target.value)}
-                          placeholder={t('itemStudio.maintenancePlaceholder')} className="w-full bg-bg-secondary border border-border/50 rounded-lg text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary px-2.5 py-2 text-[13px] min-h-[44px] outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50" />
-                      </div>
-                    )}
-                  </div>
-                  {/* 한 줄 요약 */}
-                  {(item.purpose || item.effect) && (
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-[9px] text-text-tertiary italic leading-relaxed">
-                        {t('itemStudio.summaryTemplate')
-                          .replace('${name}', item.name)
-                          .replace('${purpose}', item.purpose || item.description || '___')
-                          .replace('${owner}', item.owner || '___')
-                          .replace('${effect}', item.effect || '___')
-                          .replace('${cost}', item.costWeakness || '___')
-                        }
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Add Item Form */}
-          <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
-            <h4 className="text-xs font-bold">{t('itemStudio.addNewItem')}</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <input value={newItem.name ?? ''} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} placeholder={t('itemStudio.namePlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
-              <select value={newItem.category} onChange={e => setNewItem(p => ({ ...p, category: e.target.value as ItemCategory }))} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs">
-                {(Object.keys(CATEGORY_CONFIG) as ItemCategory[]).map(cat => (
-                  <option key={cat} value={cat}>{t(CATEGORY_CONFIG[cat].tKey)}</option>
-                ))}
-              </select>
-              <select value={newItem.rarity} onChange={e => setNewItem(p => ({ ...p, rarity: e.target.value as ItemRarity }))} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs">
-                {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => (
-                  <option key={r} value={r}>{t(RARITY_CONFIG[r].tKey)}</option>
-                ))}
-              </select>
-              <input value={newItem.effect ?? ''} onChange={e => setNewItem(p => ({ ...p, effect: e.target.value }))} placeholder={t('itemStudio.effectPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <input value={newItem.description ?? ''} onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))} placeholder={t('itemStudio.descriptionPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
-              <input value={newItem.obtainedFrom ?? ''} onChange={e => setNewItem(p => ({ ...p, obtainedFrom: e.target.value }))} placeholder={t('itemStudio.obtainedFromPlaceholder')} className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-xs" />
-              <button onClick={addItem} disabled={!newItem.name} className="flex items-center justify-center gap-2 bg-accent-blue/15 text-accent-blue border border-accent-blue/40 rounded-xl px-4 py-2 text-xs font-bold disabled:opacity-40 hover:bg-accent-blue/25 transition-[opacity,background-color,border-color,color]">
-                <Plus className="w-3.5 h-3.5" /> {t('itemStudio.add')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ItemStudioItemsTab
+          language={language}
+          t={t}
+          items={items}
+          filteredItems={filteredItems}
+          itemFilter={itemFilter}
+          setItemFilter={setItemFilter}
+          newItem={newItem}
+          setNewItem={setNewItem}
+          addItem={addItem}
+          tierExpanded={tierExpanded}
+          setTierExpanded={setTierExpanded}
+          updateItemField={updateItemField}
+          setItems={setItems}
+          confirmItemDelete={confirmItemDelete}
+        />
       )}
 
       {/* ====== SKILLS TAB ====== */}
@@ -859,143 +440,13 @@ const ItemStudioView: React.FC<ItemStudioViewProps> = ({ language, config, setCo
 
       {/* ====== BALANCE TAB ====== */}
       {subTab === 'balance' && (
-        <div className="space-y-6">
-          {items.length === 0 && skills.length === 0 ? (
-            <div className="text-center py-16 text-text-tertiary text-sm">
-              {t('itemStudio.addItemsOrSkillsFirst')}
-            </div>
-          ) : (
-            <>
-              {/* Warnings */}
-              {balance.warnings.length > 0 && (
-                <div className="bg-bg-secondary border border-border/40 rounded-xl p-4 space-y-2">
-                  <h4 className="text-xs font-bold text-accent-blue">{t('itemStudio.balanceWarnings')}</h4>
-                  {balance.warnings.map((w, i) => <p key={i} className="text-xs text-accent-blue">{w}</p>)}
-                </div>
-              )}
-
-              {/* Rarity Distribution */}
-              <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
-                <h4 className="text-xs font-bold">{t('itemStudio.rarityDistribution')}</h4>
-                <div className="space-y-2">
-                  {(Object.keys(RARITY_CONFIG) as ItemRarity[]).map(r => {
-                    const count = balance.rarityDist[r] ?? 0;
-                    const pct = items.length > 0 ? (count / items.length) * 100 : 0;
-                    return (
-                      <div key={r} className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold w-12" style={{ color: RARITY_CONFIG[r].color }}>{t(RARITY_CONFIG[r].tKey)}</span>
-                        <div className="flex-1 h-4 bg-bg-primary rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color]" style={{ width: `${pct}%`, backgroundColor: RARITY_CONFIG[r].color }} />
-                        </div>
-                        <span className="text-[10px] text-text-tertiary w-8 text-right">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Skill Type Distribution */}
-              {skills.length > 0 && (
-                <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm">
-                  <h4 className="text-xs font-bold">{t('itemStudio.skillTypeDistribution')}</h4>
-                  <div className="flex gap-4">
-                    {SKILL_TYPES.map(st => {
-                      const count = balance.skillTypeDist[st.value] ?? 0;
-                      return (
-                        <div key={st.value} className="text-center">
-                          <div className="text-2xl font-black">{count}</div>
-                          <div className="text-[13px] text-text-tertiary">{t(st.tKey)}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Summary */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { label: t('itemStudio.totalItems'), value: items.length, icon: Sword },
-                  { label: t('itemStudio.totalSkills'), value: skills.length, icon: Zap },
-                  { label: t('itemStudio.magicSystems'), value: magicSystems.length, icon: Wand2 },
-                  { label: t('itemStudio.warningCount'), value: balance.warnings.length, icon: BarChart3 },
-                ].map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="bg-bg-secondary rounded-xl p-4 text-center">
-                    <Icon className="w-5 h-5 mx-auto text-text-tertiary mb-2" />
-                    <div className="text-xl font-black">{value}</div>
-                    <div className="text-[13px] text-text-tertiary">{label}</div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ============================================================
-// PART 7 — MAGIC SYSTEM CARD SUB-COMPONENT
-// ============================================================
-
-const MagicSystemCard: React.FC<{
-  magic: MagicSystem;
-  t: (key: string, fallback?: string) => string;
-  onDelete: () => void;
-  onAddRank: (rank: string) => void;
-  onRemoveRank: (idx: number) => void;
-}> = ({ magic, t, onDelete, onAddRank, onRemoveRank }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [rankInput, setRankInput] = useState('');
-
-  return (
-    <div className="relative overflow-hidden bg-bg-secondary/60 backdrop-blur-md border border-border/40 p-4 space-y-3 rounded-xl shadow-sm transition-[background-color,border-color,box-shadow,color] hover:bg-bg-secondary hover:shadow-md hover:border-border">
-      <div className="flex items-center justify-between">
-        <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-accent-blue" />
-          <span className="font-bold text-sm">{magic.name}</span>
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />}
-        </button>
-        <button 
-          onClick={(e) => {
-            e.currentTarget.classList.add('animate-delete-warning');
-            setTimeout(onDelete, 300);
-          }} 
-          className="p-1 rounded-lg text-text-tertiary hover:text-accent-red hover:bg-accent-red/20 transition-colors duration-200"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {expanded && (
-        <>
-          {magic.source && <p className="text-xs text-text-secondary">🔮 {t('itemStudio.source')}: {magic.source}</p>}
-          {magic.rules && <p className="text-xs text-text-secondary">📜 {t('itemStudio.rules')}: {magic.rules}</p>}
-          {magic.limitations && <p className="text-xs text-accent-red/80">⛔ {t('itemStudio.limits')}: {magic.limitations}</p>}
-
-          {/* Ranks */}
-          <div className="space-y-2">
-            <h5 className="text-[10px] font-bold text-text-tertiary uppercase">{t('itemStudio.rankSystem')}</h5>
-            <div className="flex flex-wrap gap-1.5">
-              {magic.ranks.map((rank, i) => (
-                <span key={i} className="flex items-center gap-1 px-2 py-1 bg-bg-primary rounded-lg text-[10px] font-bold">
-                  {i + 1}. {rank}
-                  <button onClick={() => onRemoveRank(i)} className="text-text-tertiary hover:text-accent-red ml-1">×</button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={rankInput}
-                onChange={e => setRankInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && rankInput.trim()) { onAddRank(rankInput.trim()); setRankInput(''); } }}
-                placeholder={t('itemStudio.addRankPlaceholder')}
-                className="bg-bg-secondary border border-border/50 rounded-lg px-3 text-text-primary focus:border-accent-blue/50 focus:bg-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 py-2 text-[13px] min-h-[44px] flex-1"
-              />
-            </div>
-          </div>
-        </>
+        <ItemStudioBalanceTab
+          t={t}
+          items={items}
+          skills={skills}
+          magicSystems={magicSystems}
+          balance={balance}
+        />
       )}
     </div>
   );

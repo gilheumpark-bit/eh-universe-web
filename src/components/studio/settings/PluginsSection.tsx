@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChevronDown, Puzzle, ExternalLink } from "lucide-react";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage, ChatSession } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 import {
@@ -21,6 +21,9 @@ const MarketplaceModal = dynamic(() => import("@/components/studio/MarketplaceMo
 
 export interface PluginsSectionProps {
   language: AppLanguage;
+  currentSession?: ChatSession | null;
+  readManuscript?: () => string;
+  writeManuscript?: (content: string) => void;
 }
 
 // IDENTITY_SEAL: PART-1 | role=Types | inputs=none | outputs=PluginsSectionProps
@@ -74,7 +77,12 @@ function useActivePluginCount(): number {
 // PART 3 — Component (accordion section + Marketplace CTA + modal)
 // ============================================================
 
-const PluginsSection: React.FC<PluginsSectionProps> = ({ language }) => {
+const PluginsSection: React.FC<PluginsSectionProps> = ({
+  language,
+  currentSession = null,
+  readManuscript,
+  writeManuscript,
+}) => {
   const [modalOpen, setModalOpen] = useState(false);
   const activeCount = useActivePluginCount();
 
@@ -99,14 +107,14 @@ const PluginsSection: React.FC<PluginsSectionProps> = ({ language }) => {
   }, []);
 
   const labels = useMemo(() => ({
-    title:     L4(language, { ko: "플러그인 (베타)", en: "Plugins (Beta)", ja: "プラグイン (ベータ)", zh: "插件 (测试)" }),
+    title:     L4(language, { ko: "확장 기능", en: "Extensions", ja: "拡張機能", zh: "扩展功能" }),
     subtitle:  L4(language, {
       ko: "글자수 배지, 읽기 시간, 감정 색상 힌트 등 추가 기능을 선택적으로 활성화할 수 있습니다.",
       en: "Optionally enable extras like word-count badge, reading time, or emotion color hints.",
       ja: "文字数バッジ、読書時間、感情色ヒントなどの追加機能を選択的に有効化できます。",
       zh: "可选择启用字数徽章、阅读时间、情感色提示等附加功能。",
     }),
-    openCta:   L4(language, { ko: "마켓플레이스 열기", en: "Open Marketplace", ja: "マーケットプレイスを開く", zh: "打开插件市场" }),
+    openCta:   L4(language, { ko: "확장 기능 보기", en: "View Extensions", ja: "拡張機能を見る", zh: "查看扩展功能" }),
     activeN:   (n: number) => L4(language, {
       ko: `${n}개 활성`,
       en: `${n} active`,
@@ -150,7 +158,13 @@ const PluginsSection: React.FC<PluginsSectionProps> = ({ language }) => {
       </div>
 
       {modalOpen ? (
-        <MarketplaceModal language={language} onClose={handleClose} />
+        <MarketplaceModal
+          language={language}
+          onClose={handleClose}
+          currentSession={currentSession}
+          readManuscript={readManuscript}
+          writeManuscript={writeManuscript}
+        />
       ) : null}
     </details>
   );

@@ -1,5 +1,7 @@
 # Loreguard v2.3.0-alpha — Authorship Journal
 
+> Historical snapshot: 2026-05-10 release note. Treat this as a release-time record, not the current repo truth for test inventory, surface status, or cleanup state.
+
 **Release date**: 2026-05-10
 **Branch**: `master`
 **Stability**: Alpha — deployable
@@ -46,7 +48,7 @@
 | 16 IDE-value matrix | ~46% | **95%+** (Phase B-F complete) |
 | 14-axis grade | B (74) | **A- (82)** |
 | Patent | — | **KIPO 10-2026-0038027** (Fast-Track filed) |
-| License | AGPL-3.0-or-later (transition) | **Dual** (AGPL-3.0-or-later + Commercial) — 2026-04-24 cutoff |
+| License | Legacy transition note | **UNLICENSED / Proprietary** — current repository rights notice |
 | Static pages built | 56 | 56 |
 
 ### New in v2.3.0-alpha
@@ -129,14 +131,13 @@ None breaking. Existing projects open transparently:
 
 ## License & Patent
 
-| Track | License | Audience |
+| Item | License | Audience |
 |---|---|---|
-| Open source | [AGPL-3.0-or-later](../LICENSE) | individuals / academic / source-disclosed SaaS |
-| Commercial | [Commercial License](../COMMERCIAL-LICENSE.md) | closed SaaS / OEM / publisher / enterprise self-host |
+| Software | [UNLICENSED / Proprietary](../LICENSE) | private commercial product; written permission required |
 
 Pre-cutoff (commit `414fe9ea` and earlier): CC-BY-NC-4.0 (irrevocable rights preserved).
 
-**Patent**: KIPO application 10-2026-0038027 (Fast-Track filed) — ARCS / IP Guard L1-L5 / Compliance 7-axis. AGPL §11 patent retaliation applies to AGPL recipients; commercial recipients receive explicit grant + indemnification per Commercial License.
+**Patent**: KIPO application 10-2026-0038027 (Fast-Track filed) — ARCS / IP Guard L1-L5 / Compliance 7-axis. Patent-related permissions require a separate written agreement.
 
 ---
 
@@ -144,7 +145,7 @@ Pre-cutoff (commit `414fe9ea` and earlier): CC-BY-NC-4.0 (irrevocable rights pre
 
 - General: gilheumpark@gmail.com
 - Security: security@eh-universe.dev
-- Commercial licensing: gilheumpark@gmail.com (subject `[COMMERCIAL]`)
+- License inquiries: gilheumpark@gmail.com (subject `[LICENSE]`)
 - Patent: gilheumpark@gmail.com (subject `[PATENT]`)
 - Alpha writer recruitment: gilheumpark@gmail.com (subject `[ALPHA]`)
 

@@ -4,6 +4,10 @@
 > **Audience**: Alpha 작가 / Open-source contributors / Investors / Press
 > **Living document** — 변경 시 commit + announce
 
+> **2026-06-25 note**: 이 문서는 공개 로드맵 성격의 운영 참고 문서다. 현재 repo 기준선, 활성 E2E 목록, 클리닝 상태는 `docs/README.md`, `docs/DOCUMENT-STATUS-2026-06-25.md`, `docs/CLEANUP-STATUS.md` 를 우선한다.
+>
+> 2026-06-25 진행 완료: UI 갭 G1-G6 연결 (SealCard QR·독자 피드백·DetailPass·충돌해소·IP팩), dual-rail Phase 1 토대, certHash 회귀 수정, Quiet Page Pro. jest 5707 all green.
+
 본 로드맵은 **alpha → beta → GA → 정식** 4단계 + 14축 품질 목표를 명시. 일정은 best-effort, 단일 메인테이너 기준 (`GOVERNANCE.md` 참조).
 
 ---
@@ -96,7 +100,7 @@
 | 5.2 | 4 변호사 (KR/US/JP/CN) 정식 감수 + ATTESTATION byte-level 확정 | Legal |
 | 5.3 | KAIST 또는 이화여대 문창과 학회 발표 — "코드처럼 검증되는 소설" | Academia |
 | 5.4 | Wikipedia "Novel IDE" 카테고리 신청 (학술 인용 기반) | Category |
-| 5.5 | CNCF / Apache foundation 수준 거버넌스 + 외부 contributor 10+ | Open-Source |
+| 5.5 | 내부 운영 거버넌스 + 제한된 파트너 검수 체계 | Proprietary |
 | 5.6 | Mutation testing + chaos engineering | Test/QA |
 | 5.7 | 4 제품 fork 표준 자동화 (sed substitute script) | Strategy |
 
@@ -156,6 +160,6 @@ Loreguard 가 fork 표준. 어휘 치환 (또는 subtraction) 으로 5 도메인
 - 일반: gilheumpark@gmail.com
 - 보안: security@eh-universe.dev
 - 알파 작가 모집: gilheumpark@gmail.com (subject: `[ALPHA]`)
-- 상업 라이선스: gilheumpark@gmail.com (subject: `[COMMERCIAL]`)
+- 라이선스 문의: gilheumpark@gmail.com (subject: `[LICENSE]`)
 
 > *"카테고리 창시자는 빨리 가는 사람이 아니라 끝까지 가는 사람이다."*

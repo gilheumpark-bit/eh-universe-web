@@ -27,7 +27,7 @@ export function scoreAxis2Character(ctx: AxisContext): AxisResult {
       weight: AXIS_WEIGHT,
       passed: true,
       issues: [],
-      recommendations: ['캐릭터 미등록 — 채점 생략 (Codex 캐릭터 정의 권장).'],
+      recommendations: ['캐릭터 미등록 — 채점 생략 (캐릭터 기준선 등록 권장).'],
     };
   }
 

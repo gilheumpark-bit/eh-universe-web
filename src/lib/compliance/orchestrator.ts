@@ -17,7 +17,7 @@ import { scoreAxis6Continuity } from './axes/axis-6-continuity';
 import { scoreAxis7IP } from './axes/axis-7-ip';
 
 import type { AxisContext, AxisResult, ComplianceReport } from './types';
-import { DEFAULT_PASS_THRESHOLD } from './types';
+import { DEFAULT_PASS_THRESHOLD, DEFAULT_WEIGHTS } from './types';
 
 // ============================================================
 // PART 1 — 오케스트레이션
@@ -52,7 +52,10 @@ export function scoreAllAxes(ctx: AxisContext, options: ScoreAllOptions = {}): C
         axis: axisId,
         name: `axis-${axisId} error`,
         score: 0,
-        weight: 0,
+        // [fix] 스로우한 축에 canonical 가중치를 부여해 분모(weightSum)에 남게 한다.
+        // weight:0 이면 score 0 축이 가중평균에서 사라져 실패가 totalScore에 반영되지
+        // 않고 점수가 부풀려졌다 (spec line 74 logic-error).
+        weight: DEFAULT_WEIGHTS[axisId],
         passed: false,
         issues: [{ severity: 'critical', message: `축 ${axisId} 실행 실패: ${(err as Error).message}` }],
         recommendations: [`축 ${axisId} 내부 예외 — 컨텍스트 점검 필요.`],

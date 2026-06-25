@@ -5,6 +5,7 @@ import { Film, ChevronDown, AlertTriangle, AlertCircle, Info, FileSearch } from 
 import { DirectorReport, gradeFromScore } from '@/engine/director';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface DirectorPanelProps {
   report: DirectorReport | null;
@@ -31,7 +32,7 @@ const KIND_LABELS: Record<string, Record<AppLanguage, string>> = {
   BLUR: { KO: '인과 흐림', EN: 'Causal Blur', JP: '因果のぼかし', CN: '因果模糊' },
   GAIN_NO_COST: { KO: '이득 vs 대가', EN: 'Gain w/o Cost', JP: '対価なし', CN: '无代价获益' },
   SIMILAR_CONTEXT: { KO: '맥락 반복', EN: 'Context Repeat', JP: '文脈の繰り返し', CN: '上下文重复' },
-  AI_TONE: { KO: 'NOA 톤', EN: 'NOA Tone', JP: 'NOAトーン', CN: 'NOA腔调' },
+  AI_TONE: { KO: '노아 톤', EN: 'Noa Tone', JP: 'ノアトーン', CN: '诺亚腔调' },
   TYPO: { KO: '오타', EN: 'Typo', JP: '誤字', CN: '错字' },
   ENDING_MONO: { KO: '종결 단조', EN: 'Ending Monotone', JP: '語尾単調', CN: '结尾单调' },
 };
@@ -70,7 +71,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
             {L4(language, { ko: '아직 분석 결과가 없습니다', en: 'No analysis results yet', ja: 'まだ分析結果がありません', zh: '暂无分析结果' })}
           </p>
           <p className="text-[9px] text-text-tertiary/60 text-center">
-            {L4(language, { ko: '노아 생성이 완료되면 자동으로 서사 품질을 분석합니다', en: 'Narrative quality will be analyzed automatically after NOA generation', ja: 'ノア生成後に自動的にナラティブ品質を分析します', zh: '诺亚生成完成后将自动分析叙事质量' })}
+            {L4(language, { ko: '노아 제안이 준비되면 서사 품질을 분석합니다', en: 'Narrative quality will be analyzed after the Noa suggestion is ready', ja: 'ノア提案の準備後にナラティブ品質を分析します', zh: '诺亚建议准备完成后将分析叙事质量' })}
           </p>
         </div>
       </div>
@@ -107,9 +108,9 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
         {/* Score bar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 bg-bg-tertiary rounded-full overflow-hidden">
-            <div
+            <ProgressFill
+              value={report.score}
               className={`h-full rounded-full ${report.score >= 80 ? 'bg-green-500' : report.score >= 60 ? 'bg-amber-500' : 'bg-accent-red'}`}
-              style={{ width: `${report.score}%` }}
             />
           </div>
           <span className={`text-[9px] font-black ${gradeColor}`}>{report.score}</span>
@@ -158,7 +159,7 @@ const DirectorPanel: React.FC<DirectorPanelProps> = ({ report, language }) => {
           {report.stats.ending_mono > 0 && <span>{L4(language, { ko: '종결', en: 'End', ja: '語尾', zh: '结尾' })}{report.stats.ending_mono}%</span>}
           {report.stats.blur > 0 && <span>{L4(language, { ko: '흐림', en: 'Blur', ja: 'ぼかし', zh: '模糊' })}{report.stats.blur}</span>}
           {report.stats.gain_no_cost > 0 && <span>{L4(language, { ko: '무대가', en: 'NoCost', ja: '無対価', zh: '无代价' })}{report.stats.gain_no_cost}</span>}
-          {report.stats.ai_tone > 0 && <span>{L4(language, { ko: 'NOA톤', en: 'NOA', ja: 'NOA', zh: 'NOA' })}{report.stats.ai_tone}</span>}
+          {report.stats.ai_tone > 0 && <span>{L4(language, { ko: '노아톤', en: 'Noa', ja: 'ノア', zh: '诺亚' })}{report.stats.ai_tone}</span>}
           {report.stats.typo > 0 && <span>{L4(language, { ko: '오타', en: 'Typo', ja: '誤字', zh: '错字' })}{report.stats.typo}</span>}
           {report.stats.similar_context > 0 && <span>{L4(language, { ko: '반복', en: 'Repeat', ja: '繰返', zh: '重复' })}{report.stats.similar_context}</span>}
         </div>

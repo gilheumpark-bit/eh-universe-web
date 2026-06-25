@@ -15,27 +15,35 @@ jest.mock("next/dynamic", () => () => {
   return MockComponent;
 });
 
+// Provide full translations with presets at root
+const mockStudioTranslations = {
+  KO: {
+    presets: ["프리셋1", "프리셋2"],
+    writing: {},
+    engine: { startPrompt: "시작" },
+    sidebar: {},
+  },
+  EN: {
+    presets: ["Preset1", "Preset2"],
+    writing: {},
+    engine: { startPrompt: "Start" },
+    sidebar: {},
+  },
+};
+
 jest.mock("@/lib/i18n", () => ({
   createT: () => (key: string, fallback?: string) => fallback ?? key,
   L4: (_lang: string, t: { ko: string }) => t.ko,
+  normalizeAppLanguage: (language?: string) => (
+    language === "EN" || language === "JA" || language === "ZH" ? language : "KO"
+  ),
+  getStudioTranslations: (language?: string) => (
+    mockStudioTranslations[language === "EN" ? "EN" : "KO"]
+  ),
 }));
 
-// Provide full translations with presets at root
 jest.mock("@/lib/studio-translations", () => ({
-  TRANSLATIONS: {
-    KO: {
-      presets: ["프리셋1", "프리셋2"],
-      writing: {},
-      engine: { startPrompt: "시작" },
-      sidebar: {},
-    },
-    EN: {
-      presets: ["Preset1", "Preset2"],
-      writing: {},
-      engine: { startPrompt: "Start" },
-      sidebar: {},
-    },
-  },
+  TRANSLATIONS: mockStudioTranslations,
 }));
 
 import WritingTab from "../studio/tabs/WritingTab";

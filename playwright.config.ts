@@ -36,6 +36,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run build && npx next start -p ${E2E_PORT}`,
+    env: { ...process.env, LOREGUARD_E2E: '1' },
     url: E2E_ORIGIN,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

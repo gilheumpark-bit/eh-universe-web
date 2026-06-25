@@ -22,7 +22,7 @@
 // ============================================================
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, RotateCcw, Trash2, GitBranch, X } from 'lucide-react';
+import { AlertTriangle, RotateCcw, Trash2, GitBranch, X, Info } from 'lucide-react';
 import type { AppLanguage } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
@@ -172,6 +172,25 @@ function makeLabels(lang: AppLanguage | string) {
       ja: 'チェーン整合性チェックで破損を検出し、影響を受けたエントリを隔離しました。復旧可能な範囲までは安全に復元されます。',
       zh: '链完整性检查发现损坏,受影响的条目已隔离。可恢复的部分将被安全还原。',
     }),
+    // [루프 4 P11 — 2026-06-08] 메트릭 의미 설명 — '5분 작업' 모호성 해소.
+    expectedLossTooltip: L4(lang, {
+      ko: '예상 손실 = 마지막 IndexedDB 백업 이후 작업한 분량 (시간 추정치). 자동 저장이 작동했다면 0분.',
+      en: 'Expected loss = work done since the last IndexedDB backup (time estimate). 0 if autosave was active.',
+      ja: '予想損失 = 最後の IndexedDB バックアップ以降の作業量 (時間推定値)。自動保存が動作していれば 0 分。',
+      zh: '预计损失 = 自上次 IndexedDB 备份以来的工作量 (时间估算)。若自动保存生效则为 0 分钟。',
+    }),
+    recoverableTooltip: L4(lang, {
+      ko: '복구 가능 분량 = 메모리·세션 스토리지에 남은 자동저장 콘텐츠. 복구 버튼 클릭 시 이 만큼이 즉시 돌아옵니다.',
+      en: 'Recoverable = autosaved content still in memory/session storage. Clicking Restore brings this back instantly.',
+      ja: '復旧可能な量 = メモリ・セッションストレージに残っている自動保存コンテンツ。復元ボタンで即座に戻ります。',
+      zh: '可恢复内容 = 仍在内存/会话存储中的自动保存内容。点击恢复按钮即可立即还原。',
+    }),
+    lastSavedTooltip: L4(lang, {
+      ko: '마지막 저장 = 마지막 IndexedDB persist 시각. 자동 저장은 500ms 간격으로 작동합니다.',
+      en: 'Last saved = timestamp of last IndexedDB persist. Autosave runs every 500ms.',
+      ja: '最終保存 = 最後の IndexedDB 永続化時刻。自動保存は 500ms 間隔で動作。',
+      zh: '最后保存 = 最后一次 IndexedDB 持久化时间。自动保存每 500 毫秒执行。',
+    }),
   } as const;
 }
 
@@ -303,6 +322,7 @@ const RecoveryDialog: React.FC<RecoveryDialogProps> = ({
             value={lastSavedText}
             secondary={lastSavedMs ? labels.minutesAgo(minutesAgo) : undefined}
             testId="recovery-last-saved"
+            tooltip={labels.lastSavedTooltip}
           />
 
           {/* Recoverable work */}
@@ -310,6 +330,7 @@ const RecoveryDialog: React.FC<RecoveryDialogProps> = ({
             label={labels.recoverableLabel}
             value={labels.minutesWork(Math.max(1, minutesAgo))}
             testId="recovery-recoverable"
+            tooltip={labels.recoverableTooltip}
           />
 
           {/* Expected loss */}
@@ -318,6 +339,7 @@ const RecoveryDialog: React.FC<RecoveryDialogProps> = ({
             value={hasLoss ? labels.lossMinutes(lossMins) : labels.noLossText}
             testId="recovery-expected-loss"
             tone={hasLoss ? 'warn' : 'ok'}
+            tooltip={labels.expectedLossTooltip}
           />
 
           {/* Corrupted entries (표시 조건) */}
@@ -396,15 +418,29 @@ interface InfoRowProps {
   secondary?: string;
   testId?: string;
   tone?: 'ok' | 'warn';
+  /** [루프 4 P11 — 2026-06-08] 메트릭 의미 inline 설명. (ⓘ) 아이콘 hover/focus 노출. */
+  tooltip?: string;
 }
 
-const InfoRow: React.FC<InfoRowProps> = ({ label, value, secondary, testId, tone = 'ok' }) => {
+const InfoRow: React.FC<InfoRowProps> = ({ label, value, secondary, testId, tone = 'ok', tooltip }) => {
   const toneClass =
     tone === 'warn' ? 'text-accent-yellow' : 'text-text-primary';
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary">
+      <span className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary flex items-center gap-1">
         {label}
+        {tooltip && (
+          <span
+            className="inline-flex items-center cursor-help"
+            tabIndex={0}
+            role="img"
+            aria-label={tooltip}
+            title={tooltip}
+            data-testid={testId ? `${testId}-tooltip` : undefined}
+          >
+            <Info className="w-3 h-3 text-text-tertiary opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent-blue rounded-full" aria-hidden />
+          </span>
+        )}
       </span>
       <div
         className="bg-bg-secondary border border-border rounded-xl px-3 py-2.5 text-sm flex items-center justify-between"

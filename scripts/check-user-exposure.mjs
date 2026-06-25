@@ -10,6 +10,8 @@
  *   3. M-04 console.log production 누출 X
  *   4. M-04b logger.debug 빈도 점검
  *   5. 개발자 용어 (useAgentRegistry / contextBlock 등) UI 노출 X
+ *   6. 공개 화면 금지 문구 (API 키 / BYOK / AI 생성 등) UI 노출 X
+ *   7. 내부 인프라 용어 (Firestore / DGX Spark 등) UI 노출 X
  *
  * 사용:
  *   npm run check:user-exposure
@@ -85,9 +87,53 @@ const PATTERNS = {
       // 정의 모듈 자체는 OK
       'writing-agent-registry',
       'safety-registry',
-      'codex-prompts',
+      'creative-domain-prompts',
     ],
     severity: 'warn',
+  },
+
+  /** 5. 공개 화면 금지 문구 — 법적 문서 밖 UI string literal 노출 X */
+  publicCopyTerm: {
+    name: 'M-05 공개 화면 금지 문구',
+    regex: /['"`][^'"`]*(사용자 API 키|API 키|BYOK|AI 생성|AI 채팅|자동 생성|기계결함|완전 방어)[^'"`]*['"`]/,
+    targetGlobs: ['components', 'app'],
+    excludeFiles: [
+      // 법적/정책 문서는 API/BYOK/AI 설명이 필요한 예외 표면.
+      'app/api',
+      'components/legal',
+      'app/terms',
+      'app/privacy',
+      'app/copyright',
+      'app/ai-disclosure',
+      'app/cookies',
+      'app/refund',
+      // 테스트 파일은 문구 회귀 기대값을 포함할 수 있음.
+      '__tests__',
+      '.test.',
+      '.spec.',
+    ],
+    severity: 'critical',
+  },
+
+  /** 6. 내부 인프라 용어 — 사용자 가이드에는 제품 언어로만 설명 */
+  infraTerm: {
+    name: 'M-06 내부 인프라 용어 UI 노출',
+    regex: /['"`][^'"`]*(Firestore|DGX Spark|x-real-ip|next\.config\.ts)[^'"`]*['"`]/,
+    targetGlobs: ['components', 'app'],
+    excludeFiles: [
+      'app/api',
+      'components/legal',
+      'app/terms',
+      'app/privacy',
+      'app/copyright',
+      'app/ai-disclosure',
+      'app/cookies',
+      'app/refund',
+      '__tests__',
+      '.test.',
+      '.spec.',
+    ],
+    severity: 'critical',
   },
 };
 
@@ -142,13 +188,14 @@ function checkFile(path, source, pattern) {
 }
 
 function shouldCheckFile(path, pattern) {
+  const normalizedPath = path.replaceAll('\\', '/');
   // targetGlobs: src/components 또는 src/app 등
   const matchTarget = pattern.targetGlobs.some(glob => {
-    return path.includes(`src/${glob}/`) || path.includes(`src\\${glob}\\`);
+    return normalizedPath.includes(`src/${glob}/`);
   });
   if (!matchTarget) return false;
 
-  const matchExclude = pattern.excludeFiles.some(ex => path.includes(ex));
+  const matchExclude = pattern.excludeFiles.some(ex => normalizedPath.includes(ex.replaceAll('\\', '/')));
   if (matchExclude) return false;
 
   return true;
@@ -159,7 +206,7 @@ function shouldCheckFile(path, pattern) {
 // ============================================================
 
 function main() {
-  console.log('🔍 check-user-exposure (M-01 / M-02 / M-04)');
+  console.log('🔍 check-user-exposure (M-01 / M-02 / M-04 / M-05 / M-06)');
   console.log(`   root: ${ROOT}`);
   console.log('');
 

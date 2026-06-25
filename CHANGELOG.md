@@ -3,6 +3,54 @@
 All notable changes to EH Universe Web are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+---
+
+## [Unreleased] — 2026-06-25
+
+### Added — UI 갭 G1-G6 연결 (2026-06-25 · commit `0e7b1946`)
+
+백엔드/라이브러리로 구현은 됐지만 UI에 연결되지 않은 7개 갭 중 6개(G7=GTM DEFER) 완성:
+
+- **G1-A** `src/app/verify/page.tsx` — 봉인번호 QR 코드 렌더링 (`generateQRDataUrl` dynamic import, 취소 안전)
+- **G1-B** `src/components/loreguard/SealCard.tsx` (신규) — 봉인번호 + QR 80×80 카드 컴포넌트; `CpJournalPanel` 발급 성공 시 자동 표시
+- **G2** `src/hooks/useSceneShare.ts` (신규) — `createShareLink` 호출 후 토큰을 `StoryConfig.sharedScenePreviews`에 영속 (`expiryDays: 1|7|30|365`)
+- **G2** `src/components/studio/reader-sim/SceneFeedbackViewer.tsx` (신규) — 공유 토큰 목록 탭 + `loadFeedbacks` 조회 + 링크 복사
+- **G2** `DirectionTab` — `feedback` ViewMode + 5번째 "독자 피드백" 카드 추가; `feedback` 뷰에서 `SceneFeedbackViewer` 렌더
+- **G3** `WritingTab` 편집 모드 — `DetailPassButton` + `DetailPassPreviewModal` 연결 (`FEATURE_DRAFT_DETAIL_V2` off 시 비가시)
+- **G4** `ManuscriptTab` — `MergeConflictResolver` dynamic import; 최신 원고에 `<<<<<<<` 마커 감지 시 "충돌 해소" 버튼 표시
+- **G5** `src/components/loreguard/RegulatoryReportSummary.tsx` (신규) — 규제 준수 현황 (status/score/missingRequired)
+- **G5+G6** `src/components/loreguard/IpPackExportModal.tsx` (신규) — 4 배포 프로필 선택(플랫폼/출판사/법적보존/개인아카이브) → `buildSubmissionPackage` 호출 → artifacts 전체 다운로드
+- **G6** `ManuscriptTab` 툴바 — "IP 팩" 버튼 추가 (`IpPackExportModal` 열기)
+- `src/lib/studio-types.ts` — `StoryConfig.sharedScenePreviews` 필드 추가
+
+### Fixed — UI 갭 연결 버그 (2026-06-25)
+
+- `src/hooks/useCreativeEventLogger.ts:317` — `logAcceptAI` 내 `actorType: 'human'` → `'ai'` 수정 (AI 제안 수락 이벤트가 잘못된 actorType으로 기록되던 버그)
+
+---
+
+### Added — dual-rail 분류·creative-process 보강 (2026-06-25 · commit `bacd805c`)
+
+- `src/lib/creative-process/rail.ts` (신규) — `classifyRail`/`partitionEventsByRail` dual-rail 분류 (IP 레일 / 저작 레일 Phase 1 토대)
+- `src/lib/creative-process/index.ts` — `rail` + `registry-contract` 모듈 export 추가
+
+### Fixed — certHash 회귀버그 (2026-06-25)
+
+- `src/lib/creative-process/index.ts` — `computeCertHash`/`buildCertHashPayload` export 추가; `issue.ts`가 `certHtmlHash(SHA-256 html)` 대신 `computeCertHash(cert)`로 보내야 `verify/route.ts:370` 재계산과 일치하던 회귀 수정 (정직 발급 cert도 항상 certHash mismatch였던 버그 해소)
+
+### Changed — 집필 UI (2026-06-25)
+
+- `src/app/loreguard-authoring-tabs.css` — Quiet Page Pro: 무경계 종이 (테두리·그림자·그라데이션 제거, `::before` 장르 라인, `wr-center` bg `var(--page-2)` → `var(--card)`)
+- `src/components/loreguard/tabs/TabWritingProductionPanel.tsx` — 오늘 작업 보드 접힘 영속 (`collapse-state`)
+- `src/components/studio/WorldMap.tsx` — 드래그 write-amplification 차단: `pointermove` 로컬 좌표, `pointerUp` 1회 commit
+
+### Fixed — 안정성 (2026-06-25)
+
+- e2e `smoke-routes`, `network`, `resilience-network`, `byok-api-settings-commercial` — 리다이렉트 context 파괴 방어 + flaky 개선
+- `useStudioAI.ts` — 미사용 `attachDraftJournal` import 제거
+
+---
+
 ## [2.3.0-alpha] — 2026-05-10 (tag: `v2.3.0-alpha`)
 
 알파 본 릴리즈. 14축 평균 등급 **B (74) → A- (82)**. Track-D Phase 1 + Visual Charter v1.0 + Phase 1 quality push 통합 + paperwork (license/governance/release) 정비 완료.
@@ -122,27 +170,26 @@ studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migrat
 
 ## [2.3.0-alpha] — 2026-04-23 ~ 2026-04-24
 
-### Licensing — Dual License 전환 (BREAKING, 커밋 414fe9ea 이후)
+### Licensing — 비공개 상용 전환 (현재 정책)
 
-**`CC-BY-NC-4.0` → `AGPL-3.0-or-later` + Commercial 이중 트랙**으로 전환.
+**현재 소프트웨어 권리 고지는 UNLICENSED / Proprietary**로 정리되었습니다.
 
-- **오픈소스 트랙** `AGPL-3.0-or-later` — 개인/학술/소스 공개 SaaS 무료. 네트워크 서비스 제공 시 §13에 따라 전체 소스 공개 의무
-- **상업 트랙** `COMMERCIAL-LICENSE.md` — 클로즈드 SaaS, OEM, 퍼블리셔·엔터프라이즈 자가호스트 대상. 명시적 특허 grant + indemnification 포함
-- **특허 전략 결합** — 한국 특허 출원 (ARCS 관련)을 AGPL §11 + Commercial 명시 grant 이중 구조로 집행 가능
-- **비취소 조항** — 커밋 `414fe9ea` 이전 릴리스는 CC-BY-NC-4.0 영구 유지 (CC 비취소 원칙). 이후 커밋부터 dual 적용
-- `LICENSE` 교체 — AGPL-3.0 전문 + EH Universe 헤더 (dual notice, patent notice, prior license notice)
-- `COMMERCIAL-LICENSE.md` 신설 — 티어 (Indie / SMB / Enterprise / SaaS / Publisher) + CLA 계획 (cla-assistant.io)
-- `package.json` `"license": "AGPL-3.0-or-later"` · README 라이선스 섹션 + 뱃지 동기화
+- **소프트웨어** `UNLICENSED` — 저작권자의 사전 서면 허가 없는 사용·복제·수정·배포 금지
+- **원본 세계관·샘플 자료** — 파일 또는 문서에 별도 표기된 조건을 따름
+- **특허 전략 결합** — 한국 특허 출원(ARCS 관련)은 별도 서면 계약 범위 안에서 관리
+- **비취소 조항** — 커밋 `414fe9ea` 이전 릴리스를 별도 라이선스로 받은 수령자의 권리는 해당 시점의 고지에 따름
+- `LICENSE` 교체 — All rights reserved 고지
+- `package.json` `"license": "UNLICENSED"` · README 라이선스 섹션 + 뱃지 동기화
 
-**배경**: CC-BY-NC는 "NC(비상업)" 해석 모호 + 기업 법무팀 기피 + 특허 grant 조항 부재로 베타 확장 단계에 부적합. MongoDB(SSPL)·Sentry(FSL)·Elastic 선례 분석 후 **MongoDB 모델 (AGPL + Commercial)** 채택.
+**배경**: 유료 창작 IDE와 권리/IP 패키지의 핵심 구현을 비공개 상용 자산으로 보호하기 위해 단순화.
 
 ### Added — ARCS 응답 제어 시스템 기반 레이어 (하루 6 커밋)
 
-**EH Universe의 핵심 엔진 ARCS (AI Response Control System)의 오픈소스 표면부 완성.** Loreguard·Code Studio·Translation Studio가 공유하는 공통 기반 3 모듈 구축.
+**EH Universe의 핵심 엔진 ARCS (AI Response Control System)의 내부 표면부 완성.** Loreguard·Translation Studio가 공유하는 공통 기반 3 모듈 구축.
 
 #### WRITING_AGENT_REGISTRY (1acaeb8a)
 - `src/lib/ai/writing-agent-registry.ts` 신설 — Code Studio 19-role `AGENT_REGISTRY` 패턴을 집필·번역·아카이브에 이식
-- **11 agent entries**: studio-draft · inline-completion · inline-rewrite · detail-pass · translator-stage-1~5 · story-bible · codex-structured-json · network-agent-archive
+- **Current agent entries**: studio-draft · inline-completion · inline-rewrite · detail-pass · translator-stage-1~5 · story-bible · codex-structured-json. 구 네트워크 검색 엔트리는 2026-06 현행 레지스트리에서 제거됨.
 - **6 GuardId**: no-english-thinking-korean-novel, no-think-translation, no-yap-json, **ip-brand-guard**, prism-ALL/T15/M18
 - **7 Context Block ID**: character-dna, world-book, scene-sheet, genre-rules, story-summary, glossary, continuity-notes
 - `buildAgentSystemPrompt(id, ctx)` 공용 빌더 + `auditRegistry()` 감사 유틸
@@ -178,7 +225,7 @@ studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migrat
 - **"공동 창설자" → "얼리 액세스 멤버"** (조합·회사 관계 오인 방지)
 - **"제품 크레딧 등재" → "알파 기여자 명시"** (영구 권리 약속 회피)
 - README·SUPPORT·manifesto 3파일 × 4언어 매트릭스 동시 반영
-- RAG 출처 명시: "ChromaDB 99만 문서 **(위키백과 CC BY-SA 라이선스 선별)**"
+- 구 외부 검색 출처 표기는 2026-06 기준 창작 집필 경로에서 제거됨. 8082 검색 사이드카는 번역 보강용 레거시 경로로 한정.
 
 ### Security — IP/저작권 방어 전수 구조화
 - 브랜드 · 저작권 문구 · 표절 3축 자동 탐지
@@ -217,7 +264,7 @@ studio-types.ts(*) / save-engine* / ManuscriptView / OriginBadge / origin-migrat
 ESLint 품질 수리:
 - `--fix` Unused disable directive 22건 자동 제거
 - exhaustive-deps 2 · jsx-a11y 5 (Dropdown useId+aria-controls · treeitem aria-selected · tab 의 잘못된 aria-pressed) · unused-expressions 2 · no-img-element 2 · no-unused-vars 28 전수 수리 또는 `_prefix`
-- **240 warn → 178** (CLI 레이어 any 144 + @ts-nocheck 34 잔존 — 배포 영향 없음, 별도 사이클)
+- **240 warn -> 178** (구 실행 도구 예외 구역은 이후 제품 표면 정리 패스에서 제거)
 
 검증: TS 0 / ESLint 0 errors / jest 298 suites 3,304 tests pass / 회귀 0
 
@@ -236,11 +283,6 @@ ESLint 품질 수리:
 
 ### Chore — Housekeeping
 - 루트 untracked 일회용 스크립트 `fix-eslint.mjs` 제거 + `.gitignore`에 `fix-*.mjs` 패턴 등록 (동종 임시 파일 자동 제외)
-
-### Experimental — CS Quill CLI v0.1.0
-- `src/cli/bin/cs.ts` — Code Studio CLI 엔트리 (🦔 CS Quill — 코드 퀄리티 고슴도치)
-- 명령: `init` (프로젝트 온보딩), `generate` (SEAL 계약 병렬 코드 생성)
-- **상태**: 내부 실험용. `npm bin` 등록만 유지, 외부 배포·공개 문서화 전
 
 ### Ops — 로컬 실측 검증 (2026-04-24)
 
@@ -332,7 +374,7 @@ AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보
 
 - **A** 법무 1건 — Legal content 변호사 리뷰 (외부 의존)
 - **B** 설계 선행 2건 — C1 CSP nonce (Next.js 16 middleware 연구) · W1 Firestore public 분리 (데이터 마이그)
-- **C** 별도 스프린트 4건 — Perf 75+ · A11y 100 · CLI strict · ShadowDiffDashboard 738→500
+- **C** 별도 스프린트 4건 — Perf 75+ · A11y 100 · 구 실행 도구 문서 정리 · ShadowDiffDashboard 738→500
 - **D** 사용자 도메인 9건 — Sentry DSN · Stripe secret · CRON_SECRET scope · firebase-admin · CLA · 브릿G 모집 · 모두의창업 · PCT · feature flag
 - **en 네이티브 QA** — EN 8.0 → 9.5+ 는 네이티브 카피에디터 발주 필요 (ja/zh 도 9.7 → 10 는 동일)
 - **라이브 배포 검증** — 최신 Vercel 빌드가 새 메타·sitemap·manifest 반영 완료 후 Facebook Sharing Debugger · Google Rich Results Test 로 현지화 실측
@@ -511,7 +553,7 @@ AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보
 ### Changed — DGX 인프라 전환
 - **단일 게이트웨이 일원화**: 모든 백엔드 트래픽을 `https://api.ehuniverse.com`으로 통합
   - `/v1/chat/completions` → Nginx LB(8090) → Engine A/B 자동 분산
-  - `/api/rag/*`, `/api/image/generate` → RAG API / ComfyUI
+  - `/api/rag/*`, `/api/image/generate` → 레거시 검색 사이드카 / ComfyUI
 - **Qwen 3.5-9B FP8 듀얼 엔진 전환** — 기존 32B+1.5B Speculative Decoding 폐기
   - Engine A(8080): 메인 집필 / Engine B(8081): 번역·요약
   - TTFT 0.13초, 18-20 tok/s 실측
@@ -632,12 +674,6 @@ AI 1·2차 검수 + SSR 4언어 메타데이터 전환. "보는 것"과 "안 보
 - DGX Spark 14B 단일 모델 통합 (다중 모델 하이브리드 폐기)
 
 ## [2.0.0] - 2026-04-13
-
-### Added — Quill Engine Integration
-- 224-rule catalog ported from local-code-studio (16 categories, CWE mappings)
-- 4-layer verification engine (pre-filter → AST → TypeChecker → esquery)
-- Deep Verify: 5th-order logic bug detection
-- Pipeline upgraded: 8-team → 9-team (Quill non-blocking stage)
 
 ### Added — Scene Direction Overhaul
 - Inline DirectionReferencePanel: [연출] [인물] [참고] 3-tab split view

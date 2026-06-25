@@ -37,22 +37,21 @@ describe('qr-renderer — buildPlaceholderQRDataUrl', () => {
     expect(decoded).toContain('viewBox="0 0 120 120"');
   });
 
-  it('placeholder 라는 텍스트 포함', () => {
+  it('검증 링크 fallback 텍스트 포함', () => {
     const dataUrl = buildPlaceholderQRDataUrl('https://test.example');
     const decoded = decodeURIComponent(dataUrl.split(',')[1]);
-    expect(decoded.toLowerCase()).toContain('placeholder');
+    expect(decoded).toContain('VERIFY LINK');
+    expect(decoded.toLowerCase()).not.toContain('placeholder');
   });
 });
 
 describe('qr-renderer — generateQRDataUrl', () => {
-  it('qrcode 패키지 미설치 시 placeholder fallback', async () => {
+  it('QR 이미지 data URL을 반환', async () => {
     const dataUrl = await generateQRDataUrl('LG-2605-0001-AAAA');
-    // 패키지 미설치 환경 → placeholder SVG
-    // 패키지 설치 시 → PNG base64
     expect(dataUrl.startsWith('data:image/')).toBe(true);
   });
 
-  it('실패 시 placeholder 안전 fallback (throw X)', async () => {
+  it('실패 시 안전 fallback (throw X)', async () => {
     await expect(
       generateQRDataUrl('LG-NOT-A-VALID-SEAL'),
     ).resolves.toBeTruthy();

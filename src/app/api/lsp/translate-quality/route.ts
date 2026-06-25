@@ -13,7 +13,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { isValidTokenFormat, checkRateLimit } from '@/lib/lsp/auth';
+import { authorizeLspRequest, lspAuthHeaders } from '@/lib/lsp/auth';
 import { runIntegrityCheck, type SupportedLang } from '@/lib/translation/source-integrity';
 
 export const runtime = 'nodejs';
@@ -27,16 +27,12 @@ function normalizeLang(code: string): SupportedLang {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  // 인증
-  const auth = request.headers.get('authorization') ?? '';
-  const token = auth.replace(/^Bearer\s+/i, '').trim();
-  if (!isValidTokenFormat(token)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-  // [P0-3 — 2026-05-09] rate-limit (기존 5 endpoint 정합)
-  const rl = checkRateLimit(token);
-  if (!rl.allowed) {
-    return NextResponse.json({ error: 'rate_limit_exceeded', reset_at: rl.resetAt }, { status: 429 });
+  const authResult = await authorizeLspRequest(request);
+  if (!authResult.ok) {
+    return NextResponse.json(
+      { error: authResult.error, ...(authResult.resetAt ? { reset_at: authResult.resetAt } : {}) },
+      { status: authResult.status, headers: lspAuthHeaders(authResult) },
+    );
   }
 
   let body: {

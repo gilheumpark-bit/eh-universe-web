@@ -13,13 +13,14 @@ import { PlatformType } from "../engine/types";
 import { buildSystemInstruction, buildUserPrompt, postProcessResponse } from "../engine/pipeline";
 import type { EngineReport } from "../engine/types";
 import { streamChat, getApiKey, getApiKeyAsync, getActiveModel, getPreferredModel, getActiveProvider, hasDgxService, ChatMsg } from "../lib/ai-providers";
-// [Codex UI domain — 2026-05-10] 사용자가 명시 선택한 도메인을 모든 structured API 호출에 자동 첨부.
-import { getStoredCodexDomain } from "../lib/ai/codex-domain-storage";
+// [창작 도메인 — 2026-05-10] 사용자가 명시 선택한 도메인을 모든 structured API 호출에 자동 첨부.
+import { getStoredCreativeDomain } from "../lib/ai/creative-domain-storage";
 // [P-10 — 2026-05-10] studio-draft 에 PRISM 안전 가드 자동 적용.
 import { buildSafetyEnhancedPrompt, type PrismLevel } from "../lib/ai/safety-registry";
 // [M-05 호출 측 통합 — 2026-05-10] LLM 응답 받은 후 PRISM 거절 감지 + 친화 메시지 디스패치.
 import { checkAndExplainRejection } from "../lib/ai/prism-rejection-detector";
 import { toAgentLang } from "../lib/ai/lang-normalize";
+import { checkPaywallJson } from "../lib/noa/paywall-notice";
 
 // [P-10 — 2026-05-10] StoryConfig.prismMode → PrismLevel 매핑.
 // 'OFF'/'FREE'/'CUSTOM' → undefined (가드 미적용)
@@ -69,16 +70,17 @@ function getStructuredModel(): string {
 // 5분 TTL 메모리 캐시 — 동일 요청 반복 호출 방지
 const structuredCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_CLEANUP_INTERVAL_MS = 60_000;
 const STRUCTURED_FETCH_TIMEOUT_MS = 120_000; // 프론트→Vercel: 넉넉히 120초 (Vercel maxDuration=60이 실제 제한)
 
-// Clean stale cache entries every 60 seconds
-if (typeof globalThis !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, val] of structuredCache) {
-      if (now - val.ts > CACHE_TTL) structuredCache.delete(key);
-    }
-  }, 60_000);
+let lastStructuredCacheCleanupAt = 0;
+
+function pruneStructuredCache(now = Date.now()): void {
+  if (now - lastStructuredCacheCleanupAt < CACHE_CLEANUP_INTERVAL_MS) return;
+  lastStructuredCacheCleanupAt = now;
+  for (const [key, val] of structuredCache) {
+    if (now - val.ts > CACHE_TTL) structuredCache.delete(key);
+  }
 }
 
 /**
@@ -143,6 +145,8 @@ async function fetchStructuredViaDgx<T>(body: Record<string, unknown>, cacheable
 }
 
 async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<T> {
+  pruneStructuredCache();
+
   // Phase 3A: DGX 멀티에이전트 라우팅 — task별 전문 모델로 직접 호출
   if (hasDgxService()) {
     const taskKey = (body.task as string) || '';
@@ -164,14 +168,14 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
     ? (getApiKey(activeProvider) || undefined)
     : (getApiKey('gemini') || await getApiKeyFallback('gemini') || undefined);
 
-  // [Codex UI domain — 2026-05-10] localStorage 의 사용자 도메인 자동 첨부.
+  // [창작 도메인 — 2026-05-10] localStorage 의 사용자 도메인 자동 첨부.
   // null/undefined 면 서버 route.ts 의 validateDomain 이 자연 fallback (자동 매핑).
   const payload = JSON.stringify({
     ...body,
     provider,
     model,
     apiKey,
-    domain: getStoredCodexDomain(),
+    domain: getStoredCreativeDomain(),
   });
 
   // 캐시 히트 체크 (캐릭터 생성 등 랜덤성 있는 task는 제외)
@@ -196,6 +200,11 @@ async function fetchStructuredGemini<T>(body: Record<string, unknown>): Promise<
   if (response.ok) {
     if (cacheable && cacheKey) structuredCache.set(cacheKey, { data, ts: Date.now() });
     return data as T;
+  }
+
+  const paywallMessage = checkPaywallJson(data);
+  if (paywallMessage) {
+    throw new Error(paywallMessage);
   }
 
   const errorMessage = data && typeof data.error === 'string'

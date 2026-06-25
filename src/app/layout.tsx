@@ -3,6 +3,8 @@ import { cookies, headers } from "next/headers";
 import { LangProvider } from "@/lib/LangContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import { UserRoleProvider } from "@/contexts/UserRoleContext";
+import { RootErrorBoundary } from "@/components/RootErrorBoundary";
+import SwRegister from "./sw-register";
 import ErrorReporterInit from "@/components/ErrorReporterInit";
 import WebFeaturesInit from "@/components/WebFeaturesInit";
 import A11yCheckInit from "@/components/A11yCheckInit";
@@ -10,7 +12,9 @@ import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import { UnifiedSettingsProvider } from "@/lib/UnifiedSettingsContext";
 import { DeferredClientMetrics } from "@/components/DeferredClientMetrics";
 import ApiKeyHydrator from "@/components/ApiKeyHydrator";
+import GlobalShortcuts from "@/components/GlobalShortcuts";
 import { MainContentRegion } from "@/components/MainContentRegion";
+import SkipToMainLink from "@/components/SkipToMainLink";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import TermsUpdateBanner from "@/components/legal/TermsUpdateBanner";
@@ -30,6 +34,19 @@ import "./globals-components.css";
 import "./globals-studio.css";
 import "./globals-animations.css";
 import "./globals-utilities.css";
+// [디자인 피벗 2026-06-09] Loreguard 셸 + 6탭 포팅 CSS (.eh-app 스코프 격리).
+import "./loreguard.css";
+import "./loreguard-authoring-tabs.css";
+import "./loreguard-submission.css";
+import "./loreguard-writing-tools.css";
+import "./loreguard-writing-responsive.css";
+import "./loreguard-writing-bridge.css";
+import "./loreguard-plot.css";
+import "./loreguard-export-cards.css";
+import "./loreguard-revision-direction.css";
+import "./loreguard-late-panels.css";
+import "./loreguard-overlays.css";
+import "./world-simulator.css";
 
 /** Fewer weights = fewer font files and faster first paint (see build-performance-report.txt).
  *  홈/허브는 Plex 2패밀리만 preload. display/serif 계열은 preload: false로 실제 사용 시 lazy. */
@@ -119,56 +136,56 @@ interface LocaleMeta {
 
 const META_COPY: Record<Lang, LocaleMeta> = {
   ko: {
-    title: "EH Universe · Loreguard — 소설가의 IDE",
+    title: "EH Universe · Loreguard · 창작 전문 IDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — 소설가의 IDE. EH Universe 플래그십 제품. 코드처럼 검증되는 소설. 집필·검수·번역·출판을 하나의 워크스페이스에서.",
-    ogTitle: "EH Universe · Loreguard — 소설가의 IDE",
+      "Loreguard는 창작 전문 IDE입니다. 프로젝트 생성, 세계관, 씬시트, 집필, 퇴고, 번역, 출고를 하나의 워크스페이스에서 관리합니다.",
+    ogTitle: "EH Universe · Loreguard · 창작 전문 IDE",
     ogDescription:
-      "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. 작가가 쓰고, NOA가 돕는 창작·번역·출판 파이프라인.",
-    twitterDescription: "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설.",
-    alt: "Loreguard — 소설가의 IDE",
+      "작가가 방향을 정하고 노아가 과정을 돕는 창작, 번역, 출고 워크스페이스.",
+    twitterDescription: "Loreguard · 창작 전문 IDE.",
+    alt: "Loreguard · 창작 전문 IDE",
     jsonLdDescription:
-      "Loreguard — 소설가의 IDE. 코드처럼 검증되는 소설. 집필·검수·번역·출간을 하나의 워크스페이스에서.",
+      "Loreguard는 프로젝트 생성, 세계관, 씬시트, 집필, 퇴고, 번역, 출고를 하나의 워크스페이스에서 관리하는 창작 전문 IDE입니다.",
   },
   en: {
-    title: "EH Universe · Loreguard — The IDE for Novelists",
+    title: "EH Universe · Loreguard · Creative IDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — The IDE for Novelists by EH Universe. Novels, verified like code. Write, review, translate, and publish in a single workspace.",
-    ogTitle: "EH Universe · Loreguard — The IDE for Novelists",
+      "Loreguard is a creative IDE for projects, worldbuilding, scene sheets, writing, revision, translation, and release packages in one workspace.",
+    ogTitle: "EH Universe · Loreguard · Creative IDE",
     ogDescription:
-      "Loreguard — The IDE for Novelists. Novels, verified like code. Writers write; NOA assists across creation, translation, and publishing.",
-    twitterDescription: "Loreguard — The IDE for Novelists. Novels, verified like code.",
-    alt: "Loreguard — The IDE for Novelists",
+      "A workspace where authors direct the work and Noa supports creation, translation, and release.",
+    twitterDescription: "Loreguard · Creative IDE.",
+    alt: "Loreguard · Creative IDE",
     jsonLdDescription:
-      "Loreguard — The IDE for Novelists. Novels, verified like code. Write, review, translate, and publish in one workspace.",
+      "Loreguard is a creative IDE for projects, worldbuilding, scene sheets, writing, revision, translation, and release packages in one workspace.",
   },
   ja: {
-    title: "EH Universe · Loreguard — 小説家のためのIDE",
+    title: "EH Universe · Loreguard · 創作専門IDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — 小説家のためのIDE。EH Universe フラッグシップ。コードのように検証される小説。執筆・検証・翻訳・出版をひとつのワークスペースで。",
-    ogTitle: "EH Universe · Loreguard — 小説家のためのIDE",
+      "Loreguard はプロジェクト作成、世界観、シーンシート、執筆、推敲、翻訳、出稿を一つのワークスペースで扱う創作専門IDEです。",
+    ogTitle: "EH Universe · Loreguard · 創作専門IDE",
     ogDescription:
-      "Loreguard — 小説家のためのIDE。コードのように検証される小説。作家が書き、NOA が助ける創作・翻訳・出版のパイプライン。",
-    twitterDescription: "Loreguard — 小説家のためのIDE。コードのように検証される小説。",
-    alt: "Loreguard — 小説家のためのIDE",
+      "作者が方向を決め、Noa が創作、翻訳、出稿を支えるワークスペース。",
+    twitterDescription: "Loreguard · 創作専門IDE。",
+    alt: "Loreguard · 創作専門IDE",
     jsonLdDescription:
-      "Loreguard — 小説家のためのIDE。コードのように検証される小説。執筆・検証・翻訳・出版をひとつのワークスペースで。",
+      "Loreguard はプロジェクト作成、世界観、シーンシート、執筆、推敲、翻訳、出稿を一つのワークスペースで扱う創作専門IDEです。",
   },
   zh: {
-    title: "EH Universe · Loreguard — 小说家的 IDE",
+    title: "EH Universe · Loreguard · 创作专业 IDE",
     titleTemplate: "Loreguard | %s",
     description:
-      "Loreguard — 小说家的 IDE。EH Universe 旗舰产品。像代码一样被验证的小说。在一个工作室中完成创作、审校、翻译与出版。",
-    ogTitle: "EH Universe · Loreguard — 小说家的 IDE",
+      "Loreguard 是创作专业 IDE，在一个工作区管理项目创建、世界观、场景表、写作、修订、翻译与出库。",
+    ogTitle: "EH Universe · Loreguard · 创作专业 IDE",
     ogDescription:
-      "Loreguard — 小说家的 IDE。像代码一样被验证的小说。作家写作，NOA 协助 — 创作、翻译、出版一体化。",
-    twitterDescription: "Loreguard — 小说家的 IDE。像代码一样被验证的小说。",
-    alt: "Loreguard — 小说家的 IDE",
+      "作者决定方向，Noa 支持创作、翻译与出库的工作区。",
+    twitterDescription: "Loreguard · 创作专业 IDE。",
+    alt: "Loreguard · 创作专业 IDE",
     jsonLdDescription:
-      "Loreguard — 小说家的 IDE。像代码一样被验证的小说。在一个工作室完成创作、审校、翻译与出版。",
+      "Loreguard 是创作专业 IDE，在一个工作区管理项目创建、世界观、场景表、写作、修订、翻译与出库。",
   },
 };
 
@@ -189,7 +206,7 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: "로어가드",
+      title: "Loreguard",
     },
     formatDetection: {
       telephone: false,
@@ -204,12 +221,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description: copy.description,
     applicationName: "Loreguard",
     keywords: [
-      "소설", "AI 소설", "집필", "번역", "웹소설", "IDE",
-      "소설가의 IDE", "The IDE for Novelists", "小説家のためのIDE", "小说家的 IDE",
-      "Novel IDE", "novelist IDE", "writer IDE",
-      "Loreguard", "로어가드", "한국어 번역", "AI IDE",
-      "Novel Studio", "Translation Studio", "NOA", "EH Universe",
-      "소설 IDE", "집필 IDE", "novelist-first",
+      "소설", "창작", "집필", "번역", "웹소설", "IDE",
+      "창작 전문 IDE", "Creative IDE", "創作専門IDE", "创作专业 IDE",
+      "Creative IDE", "writer IDE", "creator IDE",
+      "Loreguard", "로어가드", "한국어 번역", "노아",
+      "Creative Studio", "Translation Workspace", "EH Universe",
+      "창작 IDE", "집필 IDE", "creator-first",
     ],
     authors: [{ name: "박길흠", url: "https://github.com/gilheumpark-bit" }],
     creator: "박길흠",
@@ -318,16 +335,10 @@ export default async function RootLayout({
   const lang = await detectServerLang();
   const jsonLd = buildJsonLd(lang);
 
-  // Skip-navigation · noscript 문구는 HTML lang 과 맞춰 렌더.
-  const skipNavText: Record<Lang, string> = {
-    ko: "본문으로 건너뛰기",
-    en: "Skip to main content",
-    ja: "本文へスキップ",
-    zh: "跳至正文",
-  };
+  // noscript 문구는 HTML lang 과 맞춰 렌더. Skip navigation은 클라이언트 언어 전환을 따라간다.
   const noscriptCopy: Record<Lang, { headline: string; body: string }> = {
     ko: {
-      headline: "로어가드 (Loreguard)",
+      headline: "Loreguard",
       body: "이 사이트는 JavaScript가 필요합니다. 브라우저 설정에서 JavaScript를 활성화해주세요.",
     },
     en: {
@@ -359,6 +370,11 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* [디자인 피벗 2026-06-09] Pretendard — indigo SaaS 본문 폰트 (한글 작가 친숙). */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+        />
       </head>
       <body className="min-h-full flex flex-col">
         {/* JSON-LD structured data — SoftwareApplication 스키마. 검색엔진 리치 스니펫용.
@@ -374,14 +390,6 @@ export default async function RootLayout({
               .replace(/&/g, "\\u0026"),
           }}
         />
-        {/* Skip navigation — language-aware */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-9999 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:underline"
-          lang={lang}
-        >
-          {skipNavText[lang]}
-        </a>
         {/* Noscript fallback */}
         <noscript>
           <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
@@ -390,24 +398,38 @@ export default async function RootLayout({
             <p>This site requires JavaScript. Please enable JavaScript in your browser settings.</p>
           </div>
         </noscript>
-        <AuthProvider>
-          <LangProvider>
-            <UnifiedSettingsProvider>
-              <UserRoleProvider>
-                <MainContentRegion>{children}</MainContentRegion>
-                <Footer />
-                <CookieConsent />
-                <TermsUpdateBanner />
-              </UserRoleProvider>
-            </UnifiedSettingsProvider>
-          </LangProvider>
-        </AuthProvider>
+        {/* [P17 루프2 — 2026-06-08] Provider 마운트 순서 — ADR-0002 참조.
+            outer → inner: Auth → Lang → UnifiedSettings → UserRole.
+            의존성: UnifiedSettings → Lang (i18n 라벨), UserRole → Auth (claims).
+            실패 모드: 각 provider 가 graceful degrade (자세히 ADR-0002 §3). */}
+        {/* [P8 루프3 — 2026-06-08] RootErrorBoundary — Provider tree throw 시 graceful fallback.
+            한 Provider 실패가 전체 앱 crash 로 번지지 않도록 외곽 wrap. componentDidCatch
+            logger.error 로 structured emission. ADR-0008 (Error Recovery) 보강. */}
+        <RootErrorBoundary treeId="root">
+          <AuthProvider>
+            <LangProvider initialLang={lang}>
+              <UnifiedSettingsProvider>
+                <UserRoleProvider>
+                  {/* Skip navigation — follows client-side language switching */}
+                  <SkipToMainLink />
+                  <MainContentRegion>{children}</MainContentRegion>
+                  <Footer />
+                  <CookieConsent />
+                  <TermsUpdateBanner />
+                </UserRoleProvider>
+              </UnifiedSettingsProvider>
+            </LangProvider>
+          </AuthProvider>
+        </RootErrorBoundary>
         <ErrorReporterInit />
         <WebFeaturesInit />
         <A11yCheckInit />
         <ApiKeyHydrator />
+        <GlobalShortcuts />
         <StatusIndicator />
         <DeferredClientMetrics />
+        {/* [P9 루프3 — 2026-06-08] PWA service worker registration (prod only). */}
+        <SwRegister />
       </body>
     </html>
   );

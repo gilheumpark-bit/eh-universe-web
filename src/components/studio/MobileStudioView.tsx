@@ -1,24 +1,32 @@
 // ============================================================
 // MobileStudioView — 모바일 전용 스튜디오 (세계관/캐릭터/플롯 스케치)
 // ============================================================
-// 모바일은 PC급 집필·번역·코드 스튜디오를 지원하지 않는다.
+// 모바일은 PC급 집필·번역·출고 작업을 지원하지 않는다.
 // 아이디어 단계(메모/스케치/브레인스토밍)만 가능하고,
 // 본격 집필은 "데스크톱에서 이용 가능" 안내로 잠근다.
 // ============================================================
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Globe2, Users, GitBranch, Sparkles, Info, BookOpen, Monitor, FileText, ChevronRight } from 'lucide-react';
-import { L4 } from '@/lib/i18n';
-import type { AppLanguage, EpisodeManuscript } from '@/lib/studio-types';
-import { useVirtualKeyboard } from '@/hooks/useVirtualKeyboard';
-
-// ============================================================
-// PART 1 — 타입 및 상수
-// ============================================================
-
-type MobileTab = 'world' | 'characters' | 'plots' | 'manuscripts';
+import { useCallback, useEffect, useState, type ElementType } from "react";
+import { BookOpen, FileText, GitBranch, Globe2, Info, Monitor, Sparkles, Users } from "lucide-react";
+import { L4 } from "@/lib/i18n";
+import type { AppLanguage } from "@/lib/studio-types";
+import { useVirtualKeyboard } from "@/hooks/useVirtualKeyboard";
+import { ManuscriptsPanel } from "./MobileStudioView.manuscripts";
+import {
+  DEFAULT_MOBILE_SKETCH_STORE,
+  countMobileSketchItems,
+  loadMobileSketchStore,
+  saveMobileSketchStore,
+  type MobileSketchStore,
+  type MobileTab,
+} from "./MobileStudioView.model";
+import {
+  CharacterSketchPanel,
+  PlotBrainstormPanel,
+  WorldMemoPanel,
+} from "./MobileStudioView.sketch-panels";
 
 interface Props {
   language: AppLanguage;
@@ -26,531 +34,80 @@ interface Props {
   onDesktopCTA?: () => void;
 }
 
-interface WorldMemo {
-  id: string;
-  text: string;
-  updatedAt: number;
-}
+type MobileTabDefinition = {
+  id: MobileTab;
+  icon: ElementType;
+  labelKo: string;
+  labelEn: string;
+  labelJa: string;
+  labelZh: string;
+};
 
-interface CharacterSketch {
-  id: string;
-  name: string;
-  role: string;
-  traits: string;
-  updatedAt: number;
-}
+const MOBILE_TABS: MobileTabDefinition[] = [
+  { id: "world", icon: Globe2, labelKo: "세계관", labelEn: "World", labelJa: "世界観", labelZh: "世界观" },
+  { id: "characters", icon: Users, labelKo: "캐릭터", labelEn: "Cast", labelJa: "人物", labelZh: "角色" },
+  { id: "plots", icon: GitBranch, labelKo: "플롯", labelEn: "Plots", labelJa: "プロット", labelZh: "情节" },
+  { id: "manuscripts", icon: FileText, labelKo: "원고", labelEn: "Draft", labelJa: "原稿", labelZh: "稿件" },
+];
 
-interface PlotIdea {
-  id: string;
-  title: string;
-  body: string;
-  updatedAt: number;
-}
-
-const STORAGE_KEY = 'noa_mobile_sketch';
-
-function generateId(): string {
-  return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-// ============================================================
-// PART 2 — 로컬 저장소 (모바일 스케치는 클라우드 동기화 없음, 로컬만)
-// ============================================================
-
-interface MobileSketchStore {
-  worldMemos: WorldMemo[];
-  characters: CharacterSketch[];
-  plots: PlotIdea[];
-}
-
-const DEFAULT_STORE: MobileSketchStore = { worldMemos: [], characters: [], plots: [] };
-
-function loadStore(): MobileSketchStore {
-  if (typeof window === 'undefined') return DEFAULT_STORE;
+function forceDesktopMode(language: AppLanguage) {
+  if (typeof window === "undefined") return;
+  const confirmMsg = L4(language, {
+    ko: "데스크톱 모드로 전환하면 모바일 최적화가 해제됩니다. 계속하시겠습니까?",
+    en: "Switch to desktop mode? Mobile optimization will be disabled.",
+    ja: "デスクトップモードに切り替えますか？モバイル最適化が解除されます。",
+    zh: "切换到桌面模式? 移动端优化将被禁用。",
+  });
+  if (!window.confirm(confirmMsg)) return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_STORE;
-    const parsed = JSON.parse(raw) as MobileSketchStore;
-    return {
-      worldMemos: Array.isArray(parsed.worldMemos) ? parsed.worldMemos : [],
-      characters: Array.isArray(parsed.characters) ? parsed.characters : [],
-      plots: Array.isArray(parsed.plots) ? parsed.plots : [],
-    };
+    localStorage.setItem("noa_force_desktop", "1");
   } catch {
-    return DEFAULT_STORE;
+    // Quota/private mode should not block the explicit desktop escape hatch.
   }
+  window.location.reload();
 }
-
-function saveStore(store: MobileSketchStore): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  } catch { /* quota */ }
-}
-
-// ============================================================
-// PART 3 — 세계관 메모 탭
-// ============================================================
-
-function WorldMemoPanel({ language, store, setStore }: { language: AppLanguage; store: MobileSketchStore; setStore: (s: MobileSketchStore) => void }) {
-  const [draft, setDraft] = useState('');
-
-  const addMemo = () => {
-    const text = draft.trim();
-    if (!text) return;
-    const next: WorldMemo = { id: generateId(), text, updatedAt: Date.now() };
-    setStore({ ...store, worldMemos: [next, ...store.worldMemos].slice(0, 200) });
-    setDraft('');
-  };
-
-  const removeMemo = (id: string) => {
-    setStore({ ...store, worldMemos: store.worldMemos.filter(m => m.id !== id) });
-  };
-
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-center gap-2 text-text-secondary">
-        <Globe2 className="w-4 h-4 text-accent-blue" />
-        <h2 className="text-sm font-bold">
-          {L4(language, { ko: '세계관 메모', en: 'World Memos', ja: '世界観メモ', zh: '世界观备忘' })}
-        </h2>
-      </div>
-      <p className="text-xs text-text-tertiary">
-        {L4(language, {
-          ko: '떠오른 설정/지명/종족/문화 등을 자유롭게 기록하세요. PC에서 정식 세계관으로 옮길 수 있습니다.',
-          en: 'Quickly jot down worldbuilding ideas. Transfer to full worldview on desktop.',
-          ja: '浮かんだ設定・地名・種族・文化などを自由にメモしてください。PCで正式な世界観として整えられます。',
-          zh: '自由记录设定、地名、种族、文化等。可在桌面端整理为完整世界观。',
-        })}
-      </p>
-      <textarea
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        placeholder={L4(language, {
-          ko: '예: 북방 대륙은 영구적 겨울이다. 엘프는 나이가 드러나지 않는다...',
-          en: 'e.g. The northern continent is eternally frozen. Elves do not show age...',
-          ja: '例: 北方大陸は永遠の冬。エルフは年齢が表に出ない…',
-          zh: '例: 北方大陆永远是冬天。精灵不显露年龄…',
-        })}
-        className="w-full min-h-[120px] p-3 text-sm bg-bg-secondary border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue"
-      />
-      <button
-        onClick={addMemo}
-        disabled={!draft.trim()}
-        className="w-full py-3 bg-accent-blue text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
-      >
-        {L4(language, { ko: '메모 추가', en: 'Add Memo', ja: 'メモ追加', zh: '添加备忘' })}
-      </button>
-
-      <div className="flex flex-col gap-2 mt-4">
-        {store.worldMemos.length === 0 && (
-          <p className="text-xs text-text-quaternary text-center py-6">
-            {L4(language, { ko: '아직 메모가 없습니다.', en: 'No memos yet.', ja: 'まだメモがありません。', zh: '暂无备忘。' })}
-          </p>
-        )}
-        {store.worldMemos.map(m => (
-          <div key={m.id} className="p-3 bg-bg-secondary rounded-xl border border-border">
-            <p className="text-sm text-text-primary whitespace-pre-wrap break-words">{m.text}</p>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-[10px] text-text-quaternary">
-                {new Date(m.updatedAt).toLocaleString()}
-              </span>
-              <button
-                onClick={() => removeMemo(m.id)}
-                className="text-[11px] text-accent-red hover:underline min-h-[44px] min-w-[44px] px-2 flex items-center justify-center"
-              >
-                {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 4 — 캐릭터 스케치 탭
-// ============================================================
-
-function CharacterSketchPanel({ language, store, setStore }: { language: AppLanguage; store: MobileSketchStore; setStore: (s: MobileSketchStore) => void }) {
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('');
-  const [traits, setTraits] = useState('');
-
-  const addChar = () => {
-    const n = name.trim();
-    if (!n) return;
-    const next: CharacterSketch = {
-      id: generateId(),
-      name: n,
-      role: role.trim(),
-      traits: traits.trim(),
-      updatedAt: Date.now(),
-    };
-    setStore({ ...store, characters: [next, ...store.characters].slice(0, 100) });
-    setName(''); setRole(''); setTraits('');
-  };
-
-  const removeChar = (id: string) => {
-    setStore({ ...store, characters: store.characters.filter(c => c.id !== id) });
-  };
-
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-center gap-2 text-text-secondary">
-        <Users className="w-4 h-4 text-accent-purple" />
-        <h2 className="text-sm font-bold">
-          {L4(language, { ko: '캐릭터 스케치', en: 'Character Sketches', ja: 'キャラクタースケッチ', zh: '角色速写' })}
-        </h2>
-      </div>
-      <p className="text-xs text-text-tertiary">
-        {L4(language, {
-          ko: '캐릭터의 이름과 핵심 특징만 빠르게 메모하세요. 상세 설정(Tier 2/3)은 PC에서 입력합니다.',
-          en: 'Jot down name and key traits. Detailed settings (Tier 2/3) are desktop-only.',
-          ja: 'キャラクターの名前と核心特徴だけ素早くメモ。詳細設定(Tier 2/3)はPCで入力します。',
-          zh: '仅快速记录名称和核心特征。详细设定（Tier 2/3）需在桌面端输入。',
-        })}
-      </p>
-
-      <input
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder={L4(language, { ko: '이름 (예: 카이엔)', en: 'Name (e.g. Kaien)', ja: '名前 (例: カイエン)', zh: '名字 (例: 凯恩)' })}
-        className="w-full px-3 py-3 text-sm bg-bg-secondary border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple min-h-[44px]"
-      />
-      <input
-        value={role}
-        onChange={e => setRole(e.target.value)}
-        placeholder={L4(language, { ko: '역할 (예: 주인공, 멘토, 적대자)', en: 'Role (e.g. hero, mentor, villain)', ja: '役割 (例: 主人公、メンター、敵対者)', zh: '角色 (例: 主角、导师、反派)' })}
-        className="w-full px-3 py-3 text-sm bg-bg-secondary border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple min-h-[44px]"
-      />
-      <textarea
-        value={traits}
-        onChange={e => setTraits(e.target.value)}
-        placeholder={L4(language, {
-          ko: '특징 (예: 냉정/고독/검은 로브/과거 기사단장)',
-          en: 'Traits (e.g. cold, lonely, black robe, ex-knight commander)',
-          ja: '特徴 (例: 冷静/孤独/黒いローブ/元騎士団長)',
-          zh: '特征 (例: 冷静/孤独/黑袍/前骑士团长)',
-        })}
-        className="w-full min-h-[80px] p-3 text-sm bg-bg-secondary border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple"
-      />
-      <button
-        onClick={addChar}
-        disabled={!name.trim()}
-        className="w-full py-3 bg-accent-purple text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
-      >
-        {L4(language, { ko: '캐릭터 추가', en: 'Add Character', ja: 'キャラクター追加', zh: '添加角色' })}
-      </button>
-
-      <div className="flex flex-col gap-2 mt-4">
-        {store.characters.length === 0 && (
-          <p className="text-xs text-text-quaternary text-center py-6">
-            {L4(language, { ko: '아직 캐릭터가 없습니다.', en: 'No characters yet.', ja: 'まだキャラクターがありません。', zh: '暂无角色。' })}
-          </p>
-        )}
-        {store.characters.map(c => (
-          <div key={c.id} className="p-3 bg-bg-secondary rounded-xl border border-border">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-text-primary">{c.name}</span>
-                  {c.role && <span className="text-[11px] px-2 py-0.5 bg-accent-purple/20 text-accent-purple rounded-full">{c.role}</span>}
-                </div>
-                {c.traits && <p className="text-xs text-text-secondary mt-1 whitespace-pre-wrap break-words">{c.traits}</p>}
-              </div>
-              <button
-                onClick={() => removeChar(c.id)}
-                className="text-[11px] text-accent-red hover:underline shrink-0 min-h-[44px] min-w-[44px] px-2 flex items-center justify-center"
-              >
-                {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 5 — 플롯 브레인스토밍 탭
-// ============================================================
-
-function PlotBrainstormPanel({ language, store, setStore }: { language: AppLanguage; store: MobileSketchStore; setStore: (s: MobileSketchStore) => void }) {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-
-  const addPlot = () => {
-    const t = title.trim();
-    if (!t) return;
-    const next: PlotIdea = { id: generateId(), title: t, body: body.trim(), updatedAt: Date.now() };
-    setStore({ ...store, plots: [next, ...store.plots].slice(0, 100) });
-    setTitle(''); setBody('');
-  };
-
-  const removePlot = (id: string) => {
-    setStore({ ...store, plots: store.plots.filter(p => p.id !== id) });
-  };
-
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-center gap-2 text-text-secondary">
-        <GitBranch className="w-4 h-4 text-accent-amber" />
-        <h2 className="text-sm font-bold">
-          {L4(language, { ko: '플롯 브레인스토밍', en: 'Plot Brainstorming', ja: 'プロットブレスト', zh: '情节头脑风暴' })}
-        </h2>
-      </div>
-      <p className="text-xs text-text-tertiary">
-        {L4(language, {
-          ko: '"만약 ~한다면?" 같은 플롯 아이디어를 자유롭게 모으세요. 정식 에피소드는 PC에서 작성합니다.',
-          en: 'Collect "what if" plot ideas freely. Write proper episodes on desktop.',
-          ja: '「もし〜だったら」のプロットアイデアを自由に集めてください。正式なエピソードはPCで執筆します。',
-          zh: '自由收集"如果……"式情节创意。正式章节需在桌面端撰写。',
-        })}
-      </p>
-
-      <input
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        placeholder={L4(language, { ko: '제목 (예: 주인공이 기억을 잃는다면?)', en: 'Title (e.g. What if the hero loses memory?)', ja: 'タイトル (例: 主人公が記憶を失ったら?)', zh: '标题 (例: 如果主角失忆了?)' })}
-        className="w-full px-3 py-3 text-sm bg-bg-secondary border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-amber min-h-[44px]"
-      />
-      <textarea
-        value={body}
-        onChange={e => setBody(e.target.value)}
-        placeholder={L4(language, {
-          ko: '전개/갈등/결말을 자유롭게 서술',
-          en: 'Describe development / conflict / ending freely',
-          ja: '展開・葛藤・結末を自由に記述',
-          zh: '自由描述发展/冲突/结局',
-        })}
-        className="w-full min-h-[120px] p-3 text-sm bg-bg-secondary border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-amber"
-      />
-      <button
-        onClick={addPlot}
-        disabled={!title.trim()}
-        className="w-full py-3 bg-accent-amber text-bg-primary font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
-      >
-        {L4(language, { ko: '아이디어 추가', en: 'Add Idea', ja: 'アイデア追加', zh: '添加创意' })}
-      </button>
-
-      <div className="flex flex-col gap-2 mt-4">
-        {store.plots.length === 0 && (
-          <p className="text-xs text-text-quaternary text-center py-6">
-            {L4(language, { ko: '아직 아이디어가 없습니다.', en: 'No ideas yet.', ja: 'まだアイデアがありません。', zh: '暂无创意。' })}
-          </p>
-        )}
-        {store.plots.map(p => (
-          <div key={p.id} className="p-3 bg-bg-secondary rounded-xl border border-border">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-text-primary">{p.title}</h4>
-                {p.body && <p className="text-xs text-text-secondary mt-1 whitespace-pre-wrap break-words">{p.body}</p>}
-              </div>
-              <button
-                onClick={() => removePlot(p.id)}
-                className="text-[11px] text-accent-red hover:underline shrink-0 min-h-[44px] min-w-[44px] px-2 flex items-center justify-center"
-              >
-                {L4(language, { ko: '삭제', en: 'Delete', ja: '削除', zh: '删除' })}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// PART 6 — 원고 읽기 전용 패널 (작가의 "확인" 시나리오)
-// ============================================================
-
-interface StudioProjectSession {
-  id: string;
-  title?: string;
-  config?: { title?: string; manuscripts?: EpisodeManuscript[] };
-}
-interface StudioProjectShape {
-  id: string;
-  name?: string;
-  sessions?: StudioProjectSession[];
-}
-
-function loadStudioManuscripts(): Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }> {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem('noa_projects');
-    if (!raw) return [];
-    const projects = JSON.parse(raw) as StudioProjectShape[];
-    const out: Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }> = [];
-    for (const proj of projects) {
-      for (const sess of proj.sessions ?? []) {
-        const ms = sess.config?.manuscripts;
-        if (Array.isArray(ms) && ms.length > 0) {
-          out.push({
-            projectName: proj.name || 'Untitled',
-            sessionTitle: sess.config?.title || sess.title || 'Untitled session',
-            manuscripts: [...ms].sort((a, b) => a.episode - b.episode),
-          });
-        }
-      }
-    }
-    return out;
-  } catch { return []; }
-}
-
-function ManuscriptsPanel({ language }: { language: AppLanguage }) {
-  const [groups, setGroups] = useState<Array<{ projectName: string; sessionTitle: string; manuscripts: EpisodeManuscript[] }>>([]);
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setGroups(loadStudioManuscripts()); }, []);
-
-  const hasAny = groups.some(g => g.manuscripts.length > 0);
-
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-center gap-2 text-text-secondary">
-        <FileText className="w-4 h-4 text-accent-green" />
-        <h2 className="text-sm font-bold">
-          {L4(language, { ko: '내 원고', en: 'My Manuscripts', ja: '原稿一覧', zh: '我的稿件' })}
-        </h2>
-      </div>
-      <p className="text-xs text-text-tertiary">
-        {L4(language, {
-          ko: '데스크톱에서 쓴 원고를 모바일에서 읽기 전용으로 확인할 수 있습니다. 편집은 데스크톱에서.',
-          en: 'View desktop manuscripts here (read-only). Editing requires desktop.',
-          ja: 'デスクトップで書いた原稿を読み取り専用で確認できます。編集はデスクトップで。',
-          zh: '可在此只读查看桌面端稿件。编辑请在桌面端进行。',
-        })}
-      </p>
-
-      {!hasAny && (
-        <p className="text-xs text-text-quaternary text-center py-8">
-          {L4(language, {
-            ko: '저장된 원고가 없습니다. 데스크톱에서 집필을 시작해보세요.',
-            en: 'No manuscripts yet. Start writing on desktop.',
-            ja: 'まだ原稿がありません。デスクトップで執筆を始めましょう。',
-            zh: '暂无稿件。请在桌面端开始写作。',
-          })}
-        </p>
-      )}
-
-      {groups.map((g, gi) => (
-        <div key={gi} className="rounded-xl border border-border bg-bg-secondary overflow-hidden">
-          <div className="px-3 py-2 bg-bg-tertiary/40 border-b border-border">
-            <p className="text-[11px] text-text-tertiary font-mono uppercase truncate">{g.projectName}</p>
-            <p className="text-[13px] font-bold text-text-primary truncate">{g.sessionTitle}</p>
-          </div>
-          <div className="divide-y divide-border/50">
-            {g.manuscripts.map(m => {
-              const id = `${gi}-${m.episode}`;
-              const isOpen = openId === id;
-              const preview = (m.content ?? '').slice(0, 800);
-              return (
-                <div key={id}>
-                  <button
-                    onClick={() => setOpenId(isOpen ? null : id)}
-                    className="w-full flex items-center justify-between px-3 py-3 min-h-[44px] active:bg-bg-tertiary/50 transition-colors"
-                  >
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="text-[11px] text-accent-amber font-mono shrink-0">
-                        EP.{String(m.episode).padStart(2, '0')}
-                      </span>
-                      <span className="text-[13px] text-text-primary truncate">
-                        {m.title || L4(language, { ko: '제목 없음', en: 'Untitled', ja: '無題', zh: '无标题' })}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] text-text-tertiary">
-                        {(m.charCount ?? m.content?.length ?? 0).toLocaleString()}
-                      </span>
-                      <ChevronRight className={`w-4 h-4 text-text-tertiary transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-                    </span>
-                  </button>
-                  {isOpen && (
-                    <div className="px-3 pb-3 pt-1 bg-bg-primary">
-                      <p className="text-[13px] text-text-secondary whitespace-pre-wrap leading-relaxed">
-                        {preview}
-                        {(m.content?.length ?? 0) > 800 && '…'}
-                      </p>
-                      {(m.content?.length ?? 0) > 800 && (
-                        <p className="mt-2 text-[11px] text-text-tertiary">
-                          {L4(language, {
-                            ko: '이후 내용은 데스크톱에서 확인하세요.',
-                            en: 'See full content on desktop.',
-                            ja: '続きはデスクトップで確認してください。',
-                            zh: '完整内容请在桌面端查看。',
-                          })}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ============================================================
-// PART 7 — 메인 뷰 (탭 라우터 + 데스크톱 CTA)
-// ============================================================
 
 export default function MobileStudioView({ language, onDesktopCTA }: Props) {
-  const [tab, setTab] = useState<MobileTab>('world');
-  const [store, setStore] = useState<MobileSketchStore>(DEFAULT_STORE);
+  const [tab, setTab] = useState<MobileTab>("world");
+  const [store, setStore] = useState<MobileSketchStore>(DEFAULT_MOBILE_SKETCH_STORE);
   const kb = useVirtualKeyboard();
+  const sketchTotal = countMobileSketchItems(store);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStore(loadStore());
+    setStore(loadMobileSketchStore());
   }, []);
 
-  const updateStore = useCallback((s: MobileSketchStore) => {
-    setStore(s);
-    saveStore(s);
+  const updateStore = useCallback((nextStore: MobileSketchStore) => {
+    setStore(nextStore);
+    saveMobileSketchStore(nextStore);
   }, []);
-
-  const tabs: { id: MobileTab; icon: React.ElementType; labelKo: string; labelEn: string; labelJa: string; labelZh: string }[] = [
-    { id: 'world', icon: Globe2, labelKo: '세계관', labelEn: 'World', labelJa: '世界観', labelZh: '世界观' },
-    { id: 'characters', icon: Users, labelKo: '캐릭터', labelEn: 'Cast', labelJa: '人物', labelZh: '角色' },
-    { id: 'plots', icon: GitBranch, labelKo: '플롯', labelEn: 'Plots', labelJa: 'プロット', labelZh: '情节' },
-    { id: 'manuscripts', icon: FileText, labelKo: '원고', labelEn: 'Draft', labelJa: '原稿', labelZh: '稿件' },
-  ];
 
   return (
     <div className="flex flex-col h-[100dvh] bg-bg-primary text-text-primary">
-      {/* 헤더 */}
-      <header className="shrink-0 px-4 py-3 border-b border-border bg-bg-secondary/50 backdrop-blur-sm" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}>
+      <header className="shrink-0 px-4 py-3 border-b border-border bg-bg-secondary/50 backdrop-blur-sm mobile-studio-safe-header">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Sparkles className="w-4 h-4 text-accent-purple shrink-0" />
             <h1 className="text-sm font-bold truncate">
-              {L4(language, { ko: '로어가드 — 모바일 스케치', en: 'Loreguard — Mobile Sketch', ja: 'ローアガード — モバイルスケッチ', zh: '洛尔加德 — 移动速写' })}
+              {L4(language, { ko: "Loreguard · 모바일 스케치", en: "Loreguard · Mobile Sketch", ja: "ローアガード · モバイルスケッチ", zh: "洛尔加德 · 移动速写" })}
             </h1>
+            {sketchTotal > 0 && (
+              <span className="shrink-0 rounded-full border border-accent-purple/30 bg-accent-purple/10 px-2 py-1 text-[10px] font-bold text-accent-purple">
+                {L4(language, {
+                  ko: `PC 가공 대기 ${sketchTotal}건`,
+                  en: `${sketchTotal} queued`,
+                  ja: `PC整理待ち ${sketchTotal}件`,
+                  zh: `待桌面整理 ${sketchTotal}条`,
+                })}
+              </span>
+            )}
           </div>
           <button
-            onClick={() => {
-              if (typeof window === 'undefined') return;
-              const confirmMsg = L4(language, {
-                ko: '데스크톱 모드로 전환하면 모바일 최적화가 해제됩니다. 계속하시겠습니까?',
-                en: 'Switch to desktop mode? Mobile optimization will be disabled.',
-                ja: 'デスクトップモードに切り替えますか？モバイル最適化が解除されます。',
-                zh: '切换到桌面模式? 移动端优化将被禁用。',
-              });
-              if (!window.confirm(confirmMsg)) return;
-              try { localStorage.setItem('noa_force_desktop', '1'); } catch { /* quota */ }
-              window.location.reload();
-            }}
+            onClick={() => forceDesktopMode(language)}
             className="shrink-0 flex items-center gap-1 px-2.5 py-2 min-h-[44px] rounded-lg text-[11px] font-bold bg-bg-primary/60 border border-border text-text-secondary active:bg-bg-primary active:scale-95 transition-[transform,background-color,border-color,color]"
-            title={L4(language, { ko: '데스크톱 모드로 강제 전환', en: 'Force desktop mode', ja: 'デスクトップモードに強制切替', zh: '强制切换到桌面模式' })}
-            aria-label={L4(language, { ko: 'PC 데스크톱 모드 전환', en: 'PC Switch to desktop', ja: 'PC デスクトップに切替', zh: 'PC 切换桌面' })}
+            title={L4(language, { ko: "데스크톱 모드로 강제 전환", en: "Force desktop mode", ja: "デスクトップモードに強制切替", zh: "强制切换到桌面模式" })}
+            aria-label={L4(language, { ko: "PC 데스크톱 모드 전환", en: "PC Switch to desktop", ja: "PC デスクトップに切替", zh: "PC 切换桌面" })}
           >
             <Monitor className="w-3.5 h-3.5" />
             PC
@@ -558,59 +115,71 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         </div>
         <p className="text-[11px] text-text-tertiary mt-1">
           {L4(language, {
-            ko: '집필·번역·코드 스튜디오는 데스크톱에서만 이용 가능합니다.',
-            en: 'Writing / Translation / Code Studio are desktop-only.',
-            ja: '執筆・翻訳・コードスタジオはデスクトップ専用です。',
-            zh: '写作 / 翻译 / 代码工作室仅支持桌面端。',
+            ko: sketchTotal > 0
+              ? "저장한 스케치는 PC에서 새 프로젝트 후보로 이어집니다."
+              : "이동 중에는 씨앗을 남기고, PC에서 정식 프로젝트로 다듬습니다.",
+            en: sketchTotal > 0
+              ? "Saved sketches will appear on desktop as a new project candidate."
+              : "Capture seeds on the go, then refine them into a full project on desktop.",
+            ja: sketchTotal > 0
+              ? "保存したスケッチはPCで新規プロジェクト候補として表示されます。"
+              : "移動中は種を残し、PCで正式なプロジェクトに整えます。",
+            zh: sketchTotal > 0
+              ? "保存的速写会在桌面端显示为新项目候选。"
+              : "移动中先留下种子，再在桌面端整理为正式项目。",
           })}
         </p>
       </header>
 
-      {/* 탭 바 */}
       <nav className="shrink-0 flex border-b border-border bg-bg-secondary/30">
-        {tabs.map(t => {
-          const Icon = t.icon;
-          const active = tab === t.id;
+        {MOBILE_TABS.map((tabItem) => {
+          const Icon = tabItem.icon;
+          const active = tab === tabItem.id;
           return (
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+              key={tabItem.id}
+              onClick={() => setTab(tabItem.id)}
               className={`flex-1 flex flex-col items-center gap-1 py-3 min-h-[56px] transition-colors ${
                 active
-                  ? 'text-accent-purple border-b-2 border-accent-purple bg-bg-primary'
-                  : 'text-text-tertiary border-b-2 border-transparent'
+                  ? "text-accent-purple border-b-2 border-accent-purple bg-bg-primary"
+                  : "text-text-tertiary border-b-2 border-transparent"
               }`}
             >
               <Icon className="w-5 h-5" />
               <span className="text-[11px] font-bold">
-                {L4(language, { ko: t.labelKo, en: t.labelEn, ja: t.labelJa, zh: t.labelZh })}
+                {L4(language, { ko: tabItem.labelKo, en: tabItem.labelEn, ja: tabItem.labelJa, zh: tabItem.labelZh })}
               </span>
             </button>
           );
         })}
       </nav>
 
-      {/* 콘텐츠 */}
       <main className="flex-1 overflow-y-auto">
-        {tab === 'world' && <WorldMemoPanel language={language} store={store} setStore={updateStore} />}
-        {tab === 'characters' && <CharacterSketchPanel language={language} store={store} setStore={updateStore} />}
-        {tab === 'plots' && <PlotBrainstormPanel language={language} store={store} setStore={updateStore} />}
-        {tab === 'manuscripts' && <ManuscriptsPanel language={language} />}
+        {tab === "world" && <WorldMemoPanel language={language} store={store} setStore={updateStore} />}
+        {tab === "characters" && <CharacterSketchPanel language={language} store={store} setStore={updateStore} />}
+        {tab === "plots" && <PlotBrainstormPanel language={language} store={store} setStore={updateStore} />}
+        {tab === "manuscripts" && <ManuscriptsPanel language={language} />}
       </main>
 
-      {/* 데스크톱 CTA — 가상 키보드 올라오면 자동 숨김 (화면 공간 확보) */}
       <footer
-        className={`shrink-0 px-4 py-3 border-t border-border bg-bg-secondary/50 transition-all duration-200 ${kb.isOpen ? 'hidden' : ''}`}
-        style={{ paddingBottom: kb.isOpen ? '0px' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+        className={`shrink-0 px-4 py-3 border-t border-border bg-bg-secondary/50 transition-all duration-200 mobile-studio-safe-footer ${kb.isOpen ? "hidden" : ""}`}
       >
         <div className="flex items-start gap-2 mb-2">
           <Info className="w-3.5 h-3.5 text-accent-blue mt-0.5 shrink-0" />
           <p className="text-[10px] text-text-tertiary leading-relaxed">
             {L4(language, {
-              ko: '데스크톱에서 이 아이디어를 정식 프로젝트로 발전시킬 수 있습니다.',
-              en: 'Develop these ideas into full projects on desktop.',
-              ja: 'デスクトップでこれらのアイデアを正式なプロジェクトに発展させられます。',
-              zh: '可在桌面端将这些创意发展为正式项目。',
+              ko: sketchTotal > 0
+                ? `지금까지 ${sketchTotal}건을 저장했습니다. PC에서 열면 가져오기 배너가 뜹니다.`
+                : "짧게 적어도 괜찮습니다. 나중에 PC에서 양식에 맞게 다듬으면 됩니다.",
+              en: sketchTotal > 0
+                ? `${sketchTotal} item${sketchTotal === 1 ? "" : "s"} saved. Open desktop to import them.`
+                : "Short notes are enough. Refine them into structured forms later on desktop.",
+              ja: sketchTotal > 0
+                ? `${sketchTotal}件保存済みです。PCで開くと取り込みバナーが表示されます。`
+                : "短いメモで十分です。あとでPCで形式に合わせて整えられます。",
+              zh: sketchTotal > 0
+                ? `已保存 ${sketchTotal} 条。打开桌面端后会显示导入提示。`
+                : "短记也可以。稍后可在桌面端整理为结构化表单。",
             })}
           </p>
         </div>
@@ -620,10 +189,10 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
         >
           <BookOpen className="w-4 h-4" />
           {L4(language, {
-            ko: '데스크톱 링크 공유 (이 기기에서 확인)',
-            en: 'Share Desktop Link',
-            ja: 'デスクトップリンク共有',
-            zh: '分享桌面端链接',
+            ko: sketchTotal > 0 ? "PC에서 프로젝트로 이어가기" : "PC 작업 링크 공유",
+            en: sketchTotal > 0 ? "Continue as Project on Desktop" : "Share Desktop Work Link",
+            ja: sketchTotal > 0 ? "PCでプロジェクトへ進める" : "PC作業リンクを共有",
+            zh: sketchTotal > 0 ? "在桌面端继续为项目" : "分享桌面工作链接",
           })}
         </button>
       </footer>
@@ -633,4 +202,4 @@ export default function MobileStudioView({ language, onDesktopCTA }: Props) {
 
 export { MobileStudioView };
 
-// IDENTITY_SEAL: PART-6 | role=mobile-studio-main | inputs=language,onDesktopCTA | outputs=UI(3-tab sketch view)
+// IDENTITY_SEAL: PART-MOBILE-SHELL | role=mobile-studio-shell | inputs=language,onDesktopCTA | outputs=UI(mobile sketch shell)

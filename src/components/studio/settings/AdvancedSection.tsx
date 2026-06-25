@@ -15,7 +15,6 @@ import type { DraftDetailMode } from '@/lib/feature-flags';
 import { setNarrativeDepth as narrativeDepthSetter } from '@/lib/noa/lora-swap';
 import ApiKeysSection from '@/components/studio/settings/ApiKeysSection';
 import { getFallbackPreference, setFallbackPreference } from '@/hooks/useSparkHealth';
-import { TermTooltip } from '@/components/ui/TermTooltip';
 import { isOriginBadgeVisible, setOriginBadgeVisible } from '@/components/studio/OriginBadge';
 
 interface AdvancedSectionProps {
@@ -38,10 +37,10 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
     narrativeDepthSetter(val);
     return val;
   });
-  // [BYOK fallback] DGX Spark 다운 시 BYOK 자동 전환 선호 (기본 true)
-  const [byokFallback, setByokFallbackState] = useState<boolean>(() => getFallbackPreference());
-  const persistByokFallback = (enabled: boolean) => {
-    setByokFallbackState(enabled);
+  // 연결 키 자동 전환 선호 (원고 보호 기준: 기본 off)
+  const [connectionKeyFallback, setConnectionKeyFallbackState] = useState<boolean>(() => getFallbackPreference());
+  const persistConnectionKeyFallback = (enabled: boolean) => {
+    setConnectionKeyFallbackState(enabled);
     setFallbackPreference(enabled);
   };
   // [M4] 출처 뱃지 항상 표시 토글 (기본 false — 초보 작가 노출 0)
@@ -127,7 +126,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
             <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform duration-200 ${advancedOpen ? 'rotate-180' : ''}`} />
           </button>
           <p className="text-[13px] text-text-tertiary mb-4">
-            {L4(language, { ko: '노아 엔진 연결, 창의성 조절 등 기술적인 설정입니다.', en: 'Technical settings including NOA engine connection and creativity tuning.', ja: 'ノアエンジン接続や創造性調整などの技術設定です。', zh: '诺亚引擎连接和创造性调整等技术设置。' })}
+            {L4(language, { ko: '노아 엔진 연결, 창의성 조절 등 기술적인 설정입니다.', en: 'Technical settings including Noa engine connection and creativity tuning.', ja: 'ノアエンジン接続や創造性調整などの技術設定です。', zh: '诺亚引擎连接和创造性调整等技术设置。' })}
           </p>
 
           {/* ============================================================ */}
@@ -256,7 +255,7 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
               </div>
             </div>
 
-            {/* BYOK Fallback (DGX down → 자동 전환) */}
+            {/* Connection key fallback */}
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-6 rounded-3xl border border-transparent">
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
                 <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0">
@@ -264,24 +263,25 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs md:text-sm font-bold truncate flex items-center gap-1.5">
-                    {language === 'KO' ? (
-                      <>DGX 다운 시 <TermTooltip term="BYOK" language={language}>BYOK</TermTooltip> 자동 사용</>
-                    ) : (
-                      <>Auto <TermTooltip term="BYOK" language={language}>BYOK</TermTooltip> on DGX down</>
-                    )}
+                    {L4(language, {
+                      ko: '보조 연결 사용',
+                      en: 'Use backup connections',
+                      ja: '補助接続を使う',
+                      zh: '使用备用连接',
+                    })}
                     <span className="group relative">
                       <HelpCircle className="w-3.5 h-3.5 text-text-tertiary/50 cursor-help" />
                       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-3 py-1.5 rounded-lg bg-bg-primary border border-border text-[10px] text-text-secondary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-50">
-                        {L4(language, { ko: '권장: 로컬 엔진이 응답 없을 때 자신의 API 키로 자동 전환', en: 'Recommended: auto-switch to your API key when local engine is unresponsive', ja: '推奨:ローカルエンジン無応答時に自身のAPIキーへ自動切替', zh: '推荐:本地引擎无响应时自动切换到您的API密钥' })}
+                        {L4(language, { ko: '가벼운 요청에서만 저장된 다른 연결로 이어받습니다.', en: 'Only lightweight requests may continue through another saved connection.', ja: '軽いリクエストだけ別の保存済み接続へ引き継ぎます。', zh: '仅轻量请求可接续到其他已保存连接。' })}
                       </span>
                     </span>
                   </div>
                   <div className="text-[13px] text-text-tertiary hidden sm:block">
                     {L4(language, {
-                      ko: '서비스 중단 방지 — BYOK 키가 설정된 경우에만 동작',
-                      en: 'Avoids downtime — works only when a BYOK key is configured',
-                      ja: 'ダウンタイムを回避 — BYOKキー設定時のみ動作',
-                      zh: '避免停机 — 仅在配置了BYOK密钥时有效',
+                      ko: '노아 반응 유지용입니다. 원고 본문·번역·분석 요청은 선택한 연결을 유지합니다.',
+                      en: 'Keeps Noa responsive. Manuscript, translation, and analysis requests stay on the selected connection.',
+                      ja: 'ノアの応答維持用です。原稿本文・翻訳・分析リクエストは選択中の接続を維持します。',
+                      zh: '用于保持诺亚响应。稿件正文、翻译和分析请求会保持所选连接。',
                     })}
                   </div>
                 </div>
@@ -289,12 +289,12 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
               <button
                 type="button"
                 role="switch"
-                aria-checked={byokFallback}
-                onClick={() => persistByokFallback(!byokFallback)}
-                className={`relative w-11 h-6 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0 ${byokFallback ? 'bg-accent-green' : 'bg-bg-tertiary'}`}
+                aria-checked={connectionKeyFallback}
+                onClick={() => persistConnectionKeyFallback(!connectionKeyFallback)}
+                className={`relative w-11 h-6 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 shrink-0 ${connectionKeyFallback ? 'bg-accent-green' : 'bg-bg-tertiary'}`}
               >
                 <span
-                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${byokFallback ? 'translate-x-5' : 'translate-x-0.5'}`}
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${connectionKeyFallback ? 'translate-x-5' : 'translate-x-0.5'}`}
                 />
               </button>
             </div>
@@ -400,10 +400,10 @@ const AdvancedSection: React.FC<AdvancedSectionProps> = ({ language, hostedProvi
                   </div>
                   <div className="text-[13px] text-text-tertiary hidden sm:block">
                     {L4(language, {
-                      ko: '초안(4,000자) 생성 후 "AI 살 붙이기"를 작가가 선택하는 2-Pass 경로. 이 기능은 실험적입니다. 플래그 변경 시 새로고침 필요.',
-                      en: 'Two-pass path: draft (~4,000 chars) then author-initiated AI expansion. Experimental. Reload after changing flag.',
-                      ja: '下書き(4,000字)生成後、作家が「AIで肉付け」を選ぶ2-Passパス。実験的機能。フラグ変更後にリロードが必要。',
-                      zh: '先生成初稿(4,000字)，作家再选择「AI扩写」的两阶段路径。实验功能。更改标志后需刷新。',
+                      ko: '초안(4,000자) 작성 후 작가가 노아 확장 제안을 선택하는 2-Pass 경로. 이 기능은 실험적입니다. 플래그 변경 시 새로고침 필요.',
+                      en: 'Two-pass path: draft (~4,000 chars) then author-initiated Noa expansion. Experimental. Reload after changing flag.',
+                      ja: '下書き(4,000字)作成後、作家がノア拡張提案を選ぶ2-Passパス。実験的機能。フラグ変更後にリロードが必要。',
+                      zh: '先写出初稿(4,000字)，作者再选择诺亚扩展建议的两阶段路径。实验功能。更改标志后需刷新。',
                     })}
                   </div>
                 </div>

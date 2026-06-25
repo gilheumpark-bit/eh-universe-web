@@ -4,16 +4,20 @@
  */
 
 import { supabaseAnonKey, supabaseUrl } from '@/lib/supabase';
-import { normalizeUniverseOrigin } from '@/lib/network-agent-client';
 
 export type TranslatorEnvSnapshot = {
   firebaseOk: boolean;
   universeOk: boolean;
   universeHost: string;
   supabaseOk: boolean;
-  /** Firebase + Universe origin — required for Network Agent bridge */
+  /** Firebase + origin status for disabled legacy search bridge compatibility */
   networkBridgeReady: boolean;
 };
+
+function normalizeUniverseOrigin(raw: string | undefined): string {
+  if (!raw?.trim()) return '';
+  return raw.trim().replace(/\/+$/, '');
+}
 
 function safeHostname(raw: string): string {
   const base = normalizeUniverseOrigin(raw);

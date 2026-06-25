@@ -12,6 +12,7 @@ import {
   __getPendingCountForTests,
   clearShadowLog,
 } from '@/lib/save-engine/shadow-logger';
+import { SHADOW_DB_VERSION, ensureShadowStores } from '@/lib/save-engine/shadow-db-schema';
 import {
   __resetPromotionAuditForTests,
   getPromotionHistory,
@@ -32,7 +33,7 @@ function setFlag(mode: 'off' | 'shadow' | 'on'): void {
 /**
  * 승격 조건 충족용 Shadow 로그 시드 — IDB 직접 bundle put.
  * shadow-logger 의 API 사용은 1200건 시 수 초 소요되어 테스트 속도 저해.
- * Bundle 포맷은 shadow-logger.ts (DB 'noa_shadow_v1' v1/v2, store 'shadow_log', key 'log_bundle') 와 동일.
+ * Bundle 포맷은 shadow-logger.ts (DB 'noa_shadow_v1' v4=SHADOW_DB_VERSION, store 'shadow_log', key 'log_bundle') 와 동일.
  */
 async function seedReadyLog(
   opts: { total?: number; hoursSpan?: number; matchRatio?: number; journalDurationMs?: number } = {},
@@ -72,15 +73,11 @@ async function seedReadyLog(
   }
   await new Promise<void>((resolve) => {
     try {
-      const req = indexedDB.open('noa_shadow_v1', 2);
+      // [2026-06-06 fix] shadow-logger 가 v4(SHADOW_DB_VERSION)로 열므로 seed 도 동일 버전.
+      // 이전엔 v2 로 seed → shadow-logger v4 open 시 fake-IDB 가 버전 업그레이드로 데이터 폐기 → 0 엔트리 → ready=false.
+      const req = indexedDB.open('noa_shadow_v1', SHADOW_DB_VERSION);
       req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('shadow_log')) {
-          db.createObjectStore('shadow_log', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('promotion_audit')) {
-          db.createObjectStore('promotion_audit', { keyPath: 'id' });
-        }
+        ensureShadowStores(req.result);
       };
       req.onsuccess = () => {
         try {

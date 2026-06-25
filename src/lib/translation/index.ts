@@ -125,13 +125,19 @@ export {
 } from './segment-adoption';
 
 // 작가 sign-off — Faithful archive + Market publish 분리 승인
+// [Z1a-4 2026-06-11] validateSignoffReadiness — 기계 검증 조건 분리 readiness
 export {
   chapterSignoffStatus,
   summarizeSignoff,
   toggleSignoff,
   isReadyForPublish,
+  validateSignoffReadiness,
   type SignoffStatus,
   type SignoffSummary,
+  type SignoffCondition,
+  type SignoffConditionId,
+  type SignoffReadiness,
+  type SignoffReadinessInput,
 } from './author-signoff';
 
 // Glossary dual mapping helpers
@@ -165,13 +171,13 @@ export {
   type StoryBibleSyncOutput,
 } from './studio-bridge';
 export {
-  TRANSLATE_COMMAND,
-  VALIDATE_COMMAND,
-  PUBLISH_COMMAND,
-  ALL_TRANSLATION_COMMANDS,
-  buildCliHelpText,
-  type CliCommand,
-} from './cli-spec';
+  TRANSLATE_WORKFLOW_COMMAND,
+  VALIDATE_WORKFLOW_COMMAND,
+  PACKAGE_WORKFLOW_COMMAND,
+  ALL_TRANSLATION_WORKFLOW_COMMANDS,
+  buildTranslationCommandHelpText,
+  type TranslationCommandSpec,
+} from './command-spec';
 
 // ── Phase 4 (2026-05-08) — NCG/NCT pipeline ──
 // IR 보고서 §"NCG/NCT" 본질 매핑.
@@ -187,3 +193,36 @@ export {
   type NCTReport,
   type GateDecision,
 } from './ncg-nct';
+
+// ── Z1a (2026-06-11) — 번역 잔여 5건 (claude2 정합) ──
+// (1) 4버전 누진 현지화: dual-pipeline improveLevel (직접 import — 순환 회피)
+// (3) Catastrophic 게이트 — 결정론적 차단 + 사유
+export {
+  runCatastrophicCheck,
+  DEFAULT_CATASTROPHIC_THRESHOLDS,
+  type CatastrophicCheckInput,
+  type CatastrophicReport,
+  type CatastrophicReason,
+  type CatastrophicThresholds,
+  type TranslationQaAudit,
+} from './ncg-nct';
+// (5) 어색한 표현/영문 습관 린트 — KO→EN additive 경고
+export {
+  lintTranslationese,
+  type TranslationeseHit,
+  type TranslationeseKind,
+  type TranslationeseLintResult,
+} from './translationese-lint';
+
+// ── 번역 위험 보고 — 대상 언어를 모르는 사용자를 위한 한국어 요약 카드 ──
+export {
+  buildTranslationRiskReport,
+  type BuildTranslationRiskReportInput,
+  type TranslationBackSummary,
+  type TranslationGlossaryMiss,
+  type TranslationRiskCard,
+  type TranslationRiskCardId,
+  type TranslationRiskLevel,
+  type TranslationRiskReport,
+  type TranslationRiskStatus,
+} from './risk-report';

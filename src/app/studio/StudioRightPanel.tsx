@@ -10,8 +10,7 @@ import { logger } from '@/lib/logger';
 import type { HFCPState as HFCPStateType } from '@/engine/hfcp';
 
 import type { DirectorReport } from '@/engine/director';
-import { TRANSLATIONS } from '@/lib/studio-constants';
-import { createT, L4 } from '@/lib/i18n';
+import { createT, getStudioTranslations, L4, normalizeAppLanguage } from '@/lib/i18n';
 import { useStudioUI } from '@/contexts/StudioContext';
 import { upsertSheet, removeSheet } from '@/lib/scene-sheet/helpers';
 import { useStudioBackendLabel } from '@/lib/studio-ai-backend-label';
@@ -186,9 +185,10 @@ export function StudioWritingAssistantPanel({
   suggestions, setSuggestions,
   pipelineResult, hostedProviders,
 }: StudioWritingAssistantPanelProps) {
-  const t = createT(language);
-  const tObj = TRANSLATIONS[language] || TRANSLATIONS['KO'];
-  const backendLabel = useStudioBackendLabel(language, hostedProviders);
+  const appLanguage = normalizeAppLanguage(language);
+  const t = createT(appLanguage);
+  const tObj = getStudioTranslations(appLanguage);
+  const backendLabel = useStudioBackendLabel(appLanguage, hostedProviders);
   const [showOutline, setShowOutline] = useState(false);
 
   // Resolve current episode sheet (matches currentSession.config.episode)
@@ -265,7 +265,7 @@ export function StudioWritingAssistantPanel({
                 <OutlinePanel
                   currentSession={currentSession}
                   currentSceneSheet={currentEpisodeSheet}
-                  language={language}
+                  language={appLanguage}
                   onSceneClick={handleSceneClick}
                   onMessageClick={handleMessageClick}
                   className="w-full"
@@ -278,7 +278,7 @@ export function StudioWritingAssistantPanel({
           {currentSession.messages.length > 2 && (
             <div className="p-3 border-b border-border max-h-[40vh] overflow-y-auto">
               <div className="text-[9px] font-black text-text-tertiary uppercase tracking-widest font-mono mb-2">
-                {'\uD83D\uDCAC'} {language === 'KO' ? '\uB300\uD654 \uD788\uC2A4\uD1A0\uB9AC' : 'Chat History'} ({currentSession.messages.length - 2})
+                {'\uD83D\uDCAC'} {L4(appLanguage, { ko: '\uB300\uD654 \uD788\uC2A4\uD1A0\uB9AC', en: 'Chat History', ja: '\u4F1A\u8A71\u5C65\u6B74', zh: '\u5BF9\u8BDD\u5386\u53F2' })} ({currentSession.messages.length - 2})
               </div>
               <div className="space-y-2">
                 {currentSession.messages.slice(0, -2).map(msg => (
@@ -323,7 +323,7 @@ export function StudioWritingAssistantPanel({
                 {!currentSession.config.sceneDirection && (
                   <div className="space-y-1.5 p-2 bg-amber-500/5 rounded-lg border border-amber-500/20">
                     <p className="text-[12px] text-accent-amber">{t('panel.sceneWarning')}</p>
-                    <button onClick={() => setActiveTab('rulebook')} className="text-[12px] text-accent-purple hover:underline font-bold">
+                    <button onClick={() => setActiveTab('direction')} className="text-[12px] text-accent-purple hover:underline font-bold">
                       {'\u2192'} {t('panel.setupDirection')}
                     </button>
                   </div>
@@ -336,7 +336,7 @@ export function StudioWritingAssistantPanel({
               <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-text-tertiary hover:text-text-secondary">{'\uD83D\uDCCB'} {t('panel.episodeScenes')} ({(currentSession.config.episodeSceneSheets ?? []).length})</summary>
               <div className="mt-1.5 pl-2 min-w-0">
                 <EpisodeScenePanel
-                  lang={language}
+                  lang={appLanguage}
                   currentEpisode={currentSession.config.episode}
                   episodeSceneSheets={currentSession.config.episodeSceneSheets ?? []}
                   // [2026-05-09] setConfig 직접 호출 3회 → scene-sheet/helpers 사용 (DRY).
@@ -371,14 +371,14 @@ export function StudioWritingAssistantPanel({
             </details>
 
             {/* Director feedback */}
-            <DirectorPanel report={directorReport} language={language} />
+            <DirectorPanel report={directorReport} language={appLanguage} />
 
             {/* Proactive suggestions */}
             {suggestions.length > 0 && (
               <SuggestionPanel
                 suggestions={suggestions}
                 onDismiss={(id) => setSuggestions(prev => prev.map(s => s.id === id ? { ...s, dismissed: true, dismissCount: s.dismissCount + 1 } : s))}
-                language={language}
+                language={appLanguage}
               />
             )}
 
@@ -387,7 +387,7 @@ export function StudioWritingAssistantPanel({
               <PipelineProgress
                 stages={pipelineResult.stages}
                 finalStatus={pipelineResult.finalStatus}
-                language={language}
+                language={appLanguage}
               />
             )}
 
@@ -408,7 +408,6 @@ export function StudioWritingAssistantPanel({
                   silent: t('hfcp.silent'),
                 } as Record<string, string>)[hfcpState.verdict] || hfcpState.verdict}
               </span>
-              <span className="text-[10px] text-text-tertiary">{Math.round(hfcpState.score)}</span>
             </div>
           </div>
 
@@ -454,7 +453,7 @@ export function StudioWritingAssistantPanel({
 
           {/* NOW AI Chat */}
           <div className="p-4 border-t border-border">
-            <TabAssistant tab="writing" language={language} config={currentSession.config} hostedProviders={hostedProviders} />
+            <TabAssistant tab="writing" language={appLanguage} config={currentSession.config} hostedProviders={hostedProviders} />
           </div>
         </div>
       )}
@@ -463,3 +462,5 @@ export function StudioWritingAssistantPanel({
 }
 
 // IDENTITY_SEAL: PART-4 | role=writing-assistant-panel | inputs=session,config,ai-state | outputs=JSX
+
+export { RightPanelResizer, type RightPanelResizerProps } from './StudioRightPanel.resizer';

@@ -4,6 +4,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 import { IgnorePlugin } from "webpack";
 
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
+const firebaseAuthDomain = (
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "eh-universe.firebaseapp.com"
+)
+  .trim()
+  .replace(/^['"]|['"]$/g, "")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/.*$/, "");
 
 /**
  * Environment Variables:
@@ -29,6 +36,9 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   compress: true,
+  // [2026-06-06] 데스크톱(Electron) standalone 패키징용. env gate라 Vercel/기본 빌드 무영향.
+  // BUILD_STANDALONE=true 시에만 .next/standalone/server.js(self-contained) 생성 → electron-builder 동봉.
+  output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
   // [M-04 — 2026-05-10] production 빌드 시 console.log/info/debug 자동 제거.
   // error / warn 은 유지 — 실제 사용자 환경의 의도된 진단 정보 (logger 와 별개로 fallback).
   // 의도된 사용자 노출 메시지는 logger.* 또는 setStatusMsg 로 통일.
@@ -45,16 +55,28 @@ const nextConfig: NextConfig = {
   //      useAutoVersionSnapshot / useGitHubAutoSync / useGitHubSync / useSparkHealth
   //      모두 return 객체를 useMemo 로 안정화.
   reactStrictMode: true,
-  // [Doc 1 Home P0 — 2026-05-12] Next.js dev indicator (좌하단 "N · 1 Issue" 빨간 배지) prod 비노출.
-  // dev 환경에서는 유용하지만 production preview/staging URL에서 일반 방문자에게 "사이트 망가짐" 신호.
-  devIndicators: {
-    position: 'bottom-right', // 사용자 시야 좌하단에서 떨어뜨림 (dev 한정)
-  },
+  // [QA-chief 2026-06-14] Next.js dev indicator hides app-level QA signals and overlaps
+  // floating studio controls during design review. Disable it; console/terminal keep dev errors.
+  devIndicators: false,
+  allowedDevOrigins: ['127.0.0.1'],
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
       },
     ],
   },
@@ -73,8 +95,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/games/:path*', destination: '/', permanent: false },
-      { source: '/code', destination: '/code-studio', permanent: true },
     ];
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/__/auth/:path*',
+          destination: `https://${firebaseAuthDomain}/__/auth/:path*`,
+        },
+      ],
+    };
   },
   // 보안 헤더: next.config.ts headers()로 적용 (middleware.ts는 Next.js 16 라우팅 충돌 위험)
   // proxy.ts는 참조용으로 유지. 실제 적용은 여기서.
@@ -82,12 +113,22 @@ const nextConfig: NextConfig = {
     // ─── [W4] connect-src — AI providers + Firebase + Vercel + Sentry (env 확장 허용) ───
     const connectSrcBase = [
       "'self'",
+      // 로컬 AI (Ollama·vLLM·LM Studio·llama.cpp) — 데스크톱/자체호스팅 로컬 추론.
+      // https 웹 배포에선 mixed-content로 http://localhost 가 브라우저 차단되므로 신규 표면 없음.
+      // 데스크톱(http)에선 로컬-AI-우선 설계 동작. LAN/DGX IP 는 CSP_EXTRA_CONNECT_SRC env 로 추가.
+      'http://localhost:*', 'https://localhost:*',
+      'http://127.0.0.1:*', 'https://127.0.0.1:*',
+      'ws://localhost:*', 'ws://127.0.0.1:*',
       // AI providers
       'https://generativelanguage.googleapis.com',
       'https://api.openai.com',
       'https://api.anthropic.com',
       'https://api.groq.com',
       'https://api.mistral.ai',
+      'https://api.deepseek.com',
+      'https://dashscope-intl.aliyuncs.com',
+      'https://api.minimax.io',
+      'https://api.moonshot.ai',
       // Firebase + Google APIs
       'https://www.googleapis.com',
       'https://securetoken.googleapis.com',
@@ -128,9 +169,13 @@ const nextConfig: NextConfig = {
     const extraImg = (process.env.CSP_EXTRA_IMG_SRC ?? '').split(/[\s,]+/).filter(Boolean);
     const imgSrc = [...imgSrcBase, ...extraImg].join(' ');
 
-    const cspBase = [
+    // dev 편의: webpack/React dev 는 eval() 을 요구 (HMR·eval-source-map·React 디버그 콜스택).
+    // 엄격 CSP 가 이를 막으면 dev 에서 /studio(dynamic ssr:false) 백지 + 홈 히어로 미렌더 + 전 페이지 콘솔 에러.
+    // 프로덕션은 eval 불필요 → 그대로 제거 (XSS 표면 축소). img-src `https:` dev-relax 와 동일 패턴.
+    const devEval = process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : '';
+    const cspBaseRaw = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live",
+      `script-src 'self' 'unsafe-inline'${devEval} https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       `img-src ${imgSrc}`,
       "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
@@ -140,16 +185,12 @@ const nextConfig: NextConfig = {
       "object-src 'none'",
       "base-uri 'self'",
     ].join('; ');
-    // code-studio 전용 CSP — webcontainer 지원 위해 unsafe-eval 허용.
-    // localhost:* frame-src 는 개발 환경에서만 허용 (프로덕션은 제거 — XSS/클릭재킹 표면 축소).
-    const allowLocalhostFrame = process.env.NODE_ENV !== 'production';
-    const cspCodeStudio = cspBase
-      .replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-      .replace("connect-src 'self'", "connect-src 'self' https://*.webcontainer.io wss://*.webcontainer.io")
-      .replace(
-        "frame-src 'self'",
-        `frame-src 'self' https://*.webcontainer.io https://*.webcontainer.app${allowLocalhostFrame ? ' http://localhost:*' : ''}`
-      );
+    // 결정적 로컬 AI 허용 — Turbopack 캐시/quirk 로 connectSrcBase 에서 localhost 가 누락되어도 강제 보장.
+    // (Ollama/vLLM/LM Studio 데스크톱 직결. https 웹은 mixed-content 로 브라우저가 별도 차단.)
+    const LOCAL_AI = "http://localhost:* https://localhost:* http://127.0.0.1:* https://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*";
+    const cspBase = cspBaseRaw.includes('http://localhost:*')
+      ? cspBaseRaw
+      : cspBaseRaw.replace(/(connect-src 'self')/, `$1 ${LOCAL_AI}`);
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -158,7 +199,14 @@ const nextConfig: NextConfig = {
     ];
     return [
       {
-        source: '/((?!code-studio).*)',
+        // 불변 빌드 자산 — 장기 캐시. (Next.js headers는 규칙 누적 적용이라 아래 /:path* 보안헤더도 함께 붙음.)
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: cspBase },
           { key: 'X-Frame-Options', value: 'DENY' },
@@ -166,13 +214,22 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Match /code-studio and /code-studio/* (both need COOP/COEP + unsafe-eval CSP)
-        source: '/code-studio/:path*',
+        source: '/__/auth/:path*',
         headers: [
-          { key: 'Content-Security-Policy', value: cspCodeStudio },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
-          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self' https://*.firebaseapp.com",
+              `script-src 'self' 'unsafe-inline'${devEval} https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https://*.googleusercontent.com https://*.firebaseapp.com",
+              "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseapp.com https://www.googleapis.com",
+              "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+            ].join('; '),
+          },
           ...securityHeaders,
         ],
       },
@@ -200,5 +257,9 @@ export default withSentryConfig(withBundleAnalyzer(nextConfig), {
   org: "gilheumpark",
   project: "eh-universe-web",
   widenClientFileUpload: true,
-  disableLogger: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });

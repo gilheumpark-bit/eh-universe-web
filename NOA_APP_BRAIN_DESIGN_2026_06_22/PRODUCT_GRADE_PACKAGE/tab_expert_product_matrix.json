@@ -1,0 +1,82 @@
+{
+  "studio": {
+    "world": {
+      "expert": "World Systems Architect",
+      "customer_value": "세계관 모순과 규칙 붕괴 방지",
+      "outputs": ["canon_impact", "conflict_report", "expansion_proposal"],
+      "risk_focus": ["canon_break", "rule_exception", "scope_creep"]
+    },
+    "characters": {
+      "expert": "Character Psychology Director",
+      "customer_value": "캐릭터 심리와 말투 일관성 유지",
+      "outputs": ["motivation_map", "voice_check", "relationship_risk"],
+      "risk_focus": ["voice_drift", "relationship_break", "motivation_gap"]
+    },
+    "direction": {
+      "expert": "Narrative Director",
+      "customer_value": "장면 목적과 감정 흐름 강화",
+      "outputs": ["scene_purpose", "emotional_flow", "transition_plan"],
+      "risk_focus": ["pacing_break", "unclear_scene_goal"]
+    },
+    "scene-sheet": {
+      "expert": "Scene Engineer",
+      "customer_value": "장면을 제작 가능한 단위로 설계",
+      "outputs": ["scene_goal", "conflict_result", "next_scene_link"],
+      "risk_focus": ["causality_gap", "missing_result"]
+    },
+    "writing": {
+      "expert": "Writing Co-Pilot",
+      "customer_value": "원고 흐름을 해치지 않고 개선",
+      "outputs": ["paragraph_variant", "apply_preview", "change_reason"],
+      "risk_focus": ["voice_drift", "style_shift", "bulk_apply"]
+    },
+    "style": {
+      "expert": "Prose Style Editor",
+      "customer_value": "문체, 리듬, 장르 톤 유지",
+      "outputs": ["style_revision", "rhythm_note", "tone_check"],
+      "risk_focus": ["genre_tone_shift", "over_edit"]
+    },
+    "manuscript": {
+      "expert": "Manuscript Continuity Editor",
+      "customer_value": "회차/장면/복선 정합성 관리",
+      "outputs": ["continuity_report", "gap_list", "release_readiness"],
+      "risk_focus": ["continuity_break", "duplicate_scene", "missing_payoff"]
+    },
+    "visual": {
+      "expert": "Visual Art Director",
+      "customer_value": "시각 자산과 프롬프트 일관성",
+      "outputs": ["visual_rule", "prompt_revision", "asset_note"],
+      "risk_focus": ["character_visual_drift", "rights_note_missing"]
+    },
+    "history": {
+      "expert": "Archive Analyst",
+      "customer_value": "변경 비교와 복구 후보",
+      "outputs": ["change_summary", "rollback_candidate", "version_compare"],
+      "risk_focus": ["missing_receipt", "unclear_change_reason"]
+    },
+    "settings": {
+      "expert": "Workspace Steward",
+      "customer_value": "저장/권한/백업 안전",
+      "outputs": ["storage_check", "permission_warning", "backup_hint"],
+      "risk_focus": ["external_boundary", "data_loss", "permission_error"]
+    },
+    "docs": {
+      "expert": "Guide Librarian",
+      "customer_value": "현재 작업에 맞는 안내",
+      "outputs": ["workflow_help", "step_guidance"],
+      "risk_focus": ["wrong_guidance", "stale_instruction"]
+    }
+  },
+  "loreguard": {
+    "project": "Project Producer",
+    "world": "Lore Architect",
+    "character": "Character/IP Designer",
+    "plot": "Plot Strategist",
+    "scene": "Scene Sheet Architect",
+    "direction": "Direction Coach",
+    "writing": "Drafting Partner",
+    "revision": "Revision Surgeon",
+    "translate": "Localization Editor",
+    "export": "Release & Rights Manager"
+  }
+}

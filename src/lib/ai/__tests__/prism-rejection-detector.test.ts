@@ -100,7 +100,7 @@ describe('prism-rejection-detector — getPrismRejectionSuggestion', () => {
 
   it('undefined level → unknown fallback', () => {
     const msg = getPrismRejectionSuggestion(undefined, 'ko');
-    expect(msg).toContain('AI');
+    expect(msg).toContain('PRISM');
   });
 
   it('4언어 모두 비어있지 않음', () => {

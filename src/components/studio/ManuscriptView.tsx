@@ -8,6 +8,7 @@ import { showAlert } from '@/lib/show-alert';
 import { useStudioUI } from '@/contexts/StudioContext';
 import ChapterAnalysisView from "./ChapterAnalysisView";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 // ============================================================
 // PART 0 — DIFF UTILITY (line-level LCS)
@@ -141,6 +142,7 @@ function generateEpub(title: string, author: string, manuscripts: EpisodeManuscr
   body { font-family: serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.8; color: #222; }
   h1 { font-size: 2em; margin-bottom: 0.5em; }
   h2 { font-size: 1.4em; margin-top: 2em; border-bottom: 1px solid #ccc; padding-bottom: 0.3em; }
+  .meta { color: #888; }
   .toc { margin: 2em 0; }
   .toc a { display: block; padding: 4px 0; color: #555; text-decoration: none; }
   .toc a:hover { color: #000; }
@@ -150,7 +152,7 @@ function generateEpub(title: string, author: string, manuscripts: EpisodeManuscr
 </head>
 <body>
 <h1>${title}</h1>
-<p style="color:#888;">${author} | ${manuscripts.length} episodes | ${new Date().toLocaleDateString()}</p>
+<p class="meta">${author} | ${manuscripts.length} episodes | ${new Date().toLocaleDateString()}</p>
 <div class="toc">
 <h3>${L4(lang, { ko: '목차', en: 'Table of Contents', ja: 'Table of Contents', zh: 'Table of Contents' })}</h3>
 ${chapters.map((c, i) => `<a href="#ch${i}">${c.title}</a>`).join("\n")}
@@ -355,9 +357,9 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
           </span>
         </div>
         <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
-          <div
+          <ProgressFill
+            value={progressPercent}
             className="h-full bg-gradient-to-r from-accent-purple to-accent-blue rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500"
-            style={{ width: `${progressPercent}%` }}
           />
         </div>
         <div className="flex justify-between text-[9px] text-text-tertiary font-mono">
@@ -388,9 +390,9 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
             >
               {ep}
               {ms && (
-                <div
+                <ProgressFill
+                  value={pct}
                   className="absolute bottom-0 left-0 h-0.5 bg-accent-purple/50 rounded-b"
-                  style={{ width: `${pct}%` }}
                 />
               )}
             </button>
@@ -607,7 +609,7 @@ export default function ManuscriptView({ language, config, setConfig, messages, 
                         </div>
                       )}
 
-                      <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[60vh] sm:max-h-[50vh] overflow-y-auto overscroll-contain whitespace-pre-wrap text-sm sm:text-sm" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      <div className="prose prose-sm max-w-none text-text-secondary font-serif leading-[2] max-h-[60vh] sm:max-h-[50vh] overflow-y-auto overscroll-contain whitespace-pre-wrap text-sm sm:text-sm studio-touch-scroll">
                         {m.content}
                       </div>
                       <div className="mt-3 text-[10px] text-text-tertiary font-mono">

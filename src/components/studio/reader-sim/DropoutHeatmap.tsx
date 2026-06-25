@@ -16,6 +16,11 @@ const PERSONA_COLORS: Record<string, string> = {
   expert: '#f59e0b',
 };
 
+function bindStudioTone(node: HTMLElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 export interface DropoutHeatmapProps {
   profile: EngagementProfile | null;
   language?: 'KO' | 'EN' | 'JP' | 'CN';
@@ -44,19 +49,15 @@ export const DropoutHeatmap: React.FC<DropoutHeatmapProps> = ({ profile, languag
           return (
             <div key={pid} className="flex items-center gap-2">
               <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ background: PERSONA_COLORS[pid] }}
+                ref={(node) => bindStudioTone(node, PERSONA_COLORS[pid])}
+                className="w-2 h-2 rounded-full flex-shrink-0 studio-tone-swatch"
               />
               <span className="text-[10px] text-text-secondary w-20 truncate">{persona.label[lang]}</span>
               <div className="flex-1 flex items-center gap-px">
                 {profile.predictions.map((pred) => (
                   <div
                     key={pred.episodeId}
-                    className="flex-1 h-3 rounded-sm"
-                    style={{
-                      background: pred.perPersona[pid] ? '#ef4444' : '#1a1a1a',
-                      opacity: pred.perPersona[pid] ? 1 : 0.4,
-                    }}
+                    className={`flex-1 h-3 rounded-sm ${pred.perPersona[pid] ? 'bg-accent-red opacity-100' : 'bg-black/90 opacity-40'}`}
                     title={`EP${pred.episodeId}: ${pred.perPersona[pid] ? (isKO ? '이탈' : 'out') : (isKO ? '유지' : 'kept')}`}
                   />
                 ))}

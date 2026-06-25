@@ -7,6 +7,11 @@ global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockReset();
+  localStorage.setItem('ff_IMAGE_GENERATION', 'true');
+});
+
+afterEach(() => {
+  localStorage.clear();
 });
 
 // ============================================================
@@ -20,6 +25,16 @@ describe('generateImage', () => {
     'blurry',
     'sk-test-key',
   ];
+
+  it('short-circuits when visual endpoint is not explicitly enabled', async () => {
+    localStorage.removeItem('ff_IMAGE_GENERATION');
+
+    const result = await generateImage(...BASE_ARGS);
+
+    expect(result.images).toEqual([]);
+    expect(result.error).toBe('Visual endpoint is disabled.');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 
   it('returns images on successful response', async () => {
     const mockImages = [
@@ -116,6 +131,32 @@ describe('generateImage', () => {
     const result = await generateImage(...BASE_ARGS);
     expect(result.images).toEqual([]);
     expect(result.error).toBe('Invalid prompt');
+  });
+
+  it('returns paywall guidance from paywall JSON on non-ok response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      json: async () => ({
+        error: 'login_or_byok_required',
+        message: '시각 자료 생성 기능을 사용하려면 로그인하거나 연결 키를 등록해야 합니다.',
+        paywall: {
+          reason: '로그인 상태나 연결 키가 확인되지 않았습니다.',
+          feature: '시각 자료 생성',
+          currentTier: 'none',
+          requiredTier: 'free',
+          unlocksWith: ['로그인 후 기본 제공량 사용', '연결 키 등록'],
+          pricingUrl: '/pricing',
+          settingsTarget: '환경 설정 > 노아 운영',
+        },
+      }),
+    });
+
+    const result = await generateImage(...BASE_ARGS);
+    expect(result.images).toEqual([]);
+    expect(result.error).toContain('시각 자료 생성 기능을 사용하려면');
+    expect(result.error).toContain('로그인 상태나 연결 키가 확인되지 않았습니다.');
   });
 
   it('falls back to HTTP status when error JSON has no error field', async () => {

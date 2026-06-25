@@ -4,6 +4,9 @@ import { createServerGeminiClient } from '@/lib/google-genai-server';
 import { logger } from '@/lib/logger';
 import { collectionName } from '@/lib/firebase';
 import { firestoreCreateDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+// 유저 작성 Lore 가 prompt 에 포함되는 간접 사용자 입력 경로 — 게이트 적용 대상.
+import { applyNoaGate, filterOutputIp } from '@/lib/noa/server-gate';
 
 /** Constant-time string comparison to prevent timing attacks on secret tokens */
 function safeCompare(a: string, b: string): boolean {
@@ -68,9 +71,26 @@ export async function GET(req: Request) {
       })
       .join('\n');
 
+    // [N2] NOA 서버 게이트 — 입력 판정. 유저 Lore 는 공개 전체 노출 콘텐츠의 원료 → grade 'ALL'(최엄격).
+    // 차단 시 생성 skip + 응답 body 에 사유 명시 (사일런트 차단 금지 — cron 호출자/로그에 고지).
+    const gate = await applyNoaGate({
+      prompt: recentLore,
+      grade: 'ALL',
+      route: '/api/cron/universe-daily',
+    });
+    if (gate.blocked) {
+      logger.warn('universe-daily', 'NOA gate blocked daily news generation', gate.reason);
+      return NextResponse.json({
+        ok: false,
+        blocked: true,
+        reason: gate.reason,
+        message: 'Daily news generation blocked by NOA gate (user lore failed input judgment).',
+      });
+    }
+
     const gemini = createServerGeminiClient();
 
-    const prompt = `당신은 'EH-Universe(6600만년의 역사를 지닌 우주 SF 세계관)'의 수석 기자입니다. 
+    const prompt = `당신은 'EH-Universe(6600만년의 역사를 지닌 우주 SF 세계관)'의 수석 기자입니다.
 다음은 오늘 유저들이 세계관에 새롭게 추가하거나 수정한 설정(Lore)들입니다.
 이 설정들을 바탕으로, 세계관 내에 거주하는 사람들이 읽을 법한 흥미로운 "오늘의 우주 연방 뉴스" 또는 "뒷골목 소문" 형식의 텍스트를 3개 작성해 주세요. 
 말투는 매우 기자답거나 정보상 같아야 하며, 절대 AI가 썼다는 티를 내지 마세요.
@@ -86,10 +106,13 @@ ${recentLore}
       contents: prompt,
       config: {
         temperature: 0.7,
+        // [H3-ops 2026-06-11] timeout 누락 보강 — analyze-chapter(30s)와 동일 패턴. 무한 hang 방지.
+        abortSignal: AbortSignal.timeout(30_000),
       },
     });
 
-    const newsText = aiRes.text ?? '';
+    // [N2] 출력 IP 필터 (fail-open) — 공개 게시 전 상표/IP 자동 치환
+    const newsText = filterOutputIp(aiRes.text ?? '', '/api/cron/universe-daily').output;
 
     const now = new Date().toISOString();
     const saved = await firestoreCreateDocument(projectId, dailyCollection, {

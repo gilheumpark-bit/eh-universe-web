@@ -39,10 +39,9 @@ jest.mock('@/lib/firebase', () => ({
   db: null,
 }));
 
-// Mock UserRoleContext — developer role 가정(CODE 탭 노출 검증).
+// Mock UserRoleContext — developer mode 상태만 제공.
 // 별도 역할 숨김 테스트는 UserRoleContext 자체 테스트에서 커버.
 jest.mock('@/contexts/UserRoleContext', () => ({
-  useCanAccessCodeStudio: () => true,
   useUserRoleSafe: () => ({
     role: 'developer',
     setRole: jest.fn(),
@@ -61,18 +60,17 @@ describe('Header', () => {
     expect(screen.getByTestId('home-header')).toBeInTheDocument();
   });
 
-  it('renders 로어가드 brand text', () => {
+  it('renders Loreguard brand text', () => {
     render(<Header />);
-    expect(screen.getByText('로어가드')).toBeInTheDocument();
+    expect(screen.getByText('Loreguard')).toBeInTheDocument();
   });
 
   it('renders main navigation links (desktop + mobile)', () => {
     render(<Header />);
     // getAllByText because links appear in both desktop and mobile nav
+    // [디자인 피벗 2026-06-09] NETWORK·CODE 영역 삭제 — STUDIO 중심 단순화.
     expect(screen.getAllByText('HOME').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('NETWORK').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('STUDIO').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('CODE').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the language toggle button', () => {

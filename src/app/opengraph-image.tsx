@@ -1,13 +1,12 @@
 // ============================================================
 // Dynamic Open Graph Image — Next.js 16 Metadata File Convention
-// Edge runtime: 콜드 스타트 단축, 소셜 플랫폼 크롤러 대응.
+// Build-time static optimization 우선. Next.js 16 metadata image는 Node 런타임에서도 지원됨.
 // 1200x630 (Twitter/Facebook/LinkedIn 공통 권장 비율)
 // [2026-04-24] ?l= 쿼리로 4언어 variant 지원 (SEO·국외 공유 미리보기 현지화)
 // ============================================================
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-export const alt = "Loreguard — AI IDE for Novelists";
+export const alt = "Loreguard · Creative IDE";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -19,27 +18,27 @@ type Lang = "ko" | "en" | "ja" | "zh";
 
 const TAGLINES: Record<Lang, { main: string; sub: string; footer: string; brand: string }> = {
   ko: {
-    main: "소설가를 위한 AI IDE",
-    sub: "집필 · 검수 · 번역 · 출간을 하나의 워크스페이스에서",
-    footer: "집필 · 품질 · 번역 · 출간 · 망가지지 않는 인프라",
-    brand: "Loreguard · 로어가드",
+    main: "창작 전문 IDE",
+    sub: "프로젝트 · 세계관 · 씬시트 · 집필 · 퇴고 · 출고",
+    footer: "기획 · 집필 · 번역 · 과정기록 · 출고 패키지",
+    brand: "Loreguard",
   },
   en: {
-    main: "AI IDE for Novelists",
-    sub: "Write · Review · Translate · Publish — one workspace",
-    footer: "Writing · Quality · Translation · Publishing · Resilient Infra",
+    main: "Creative IDE",
+    sub: "Projects · Worlds · Scene Sheets · Writing · Revision · Release",
+    footer: "Planning · Writing · Translation · Process Records · Release Packages",
     brand: "Loreguard by EH Universe",
   },
   ja: {
-    main: "小説家のための AI IDE",
-    sub: "執筆・検証・翻訳・出版をひとつのワークスペースで",
-    footer: "執筆 · 品質 · 翻訳 · 出版 · 壊れないインフラ",
+    main: "創作専門IDE",
+    sub: "プロジェクト · 世界観 · シーンシート · 執筆 · 推敲 · 出稿",
+    footer: "企画 · 執筆 · 翻訳 · 過程記録 · 出稿パッケージ",
     brand: "Loreguard · ロアガード",
   },
   zh: {
-    main: "为小说家打造的 AI IDE",
-    sub: "创作、审校、翻译、出版 — 一体化工作室",
-    footer: "创作 · 质量 · 翻译 · 出版 · 可靠基础设施",
+    main: "创作专业 IDE",
+    sub: "项目 · 世界观 · 场景表 · 写作 · 修订 · 出库",
+    footer: "企划 · 写作 · 翻译 · 过程记录 · 出库包",
     brand: "Loreguard · 洛尔加德",
   },
 };

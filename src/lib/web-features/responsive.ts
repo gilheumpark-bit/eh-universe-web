@@ -55,15 +55,32 @@ export function printContent(elementId?: string): void {
   if (elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><title>Print</title>
-      <style>body{font-family:serif;line-height:1.8;max-width:700px;margin:0 auto;padding:2cm;}
-      h1,h2,h3{font-family:sans-serif;}@page{margin:2cm;}</style></head>
-      <body>${el.innerHTML}</body></html>
-    `);
-    printWindow.document.close();
+
+    // [P17 풀점검 루프 3] document.write + innerHTML 제거.
+    // 안전: createElement + textContent (style) + cloneNode (content) 로 DOM 구성.
+    // 외부 사용자 입력이 innerHTML 에 흘러들 경로 차단.
+    const doc = printWindow.document;
+    // 빈 문서 보장 — 호출 시점에 about:blank 가 이미 로드돼있어 별도 open() 불필요.
+    while (doc.body && doc.body.firstChild) doc.body.removeChild(doc.body.firstChild);
+
+    const title = doc.createElement('title');
+    title.textContent = 'Print';
+    doc.head.appendChild(title);
+
+    const style = doc.createElement('style');
+    // 정적 CSS — 사용자 입력 미포함. textContent 로 안전 주입.
+    style.textContent =
+      'body{font-family:serif;line-height:1.8;max-width:700px;margin:0 auto;padding:2cm;}' +
+      'h1,h2,h3{font-family:sans-serif;}@page{margin:2cm;}';
+    doc.head.appendChild(style);
+
+    // 원본 DOM 노드 deep clone — innerHTML 직렬화/재파싱 없이 그대로 이식.
+    // adoptNode 가 더 효율적이지만 원본을 비우지 않기 위해 clone 사용.
+    const clone = doc.importNode(el, true);
+    doc.body.appendChild(clone);
+
     printWindow.print();
   } else {
     window.print();

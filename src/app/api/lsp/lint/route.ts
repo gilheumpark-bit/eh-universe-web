@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { isValidTokenFormat, checkRateLimit } from '@/lib/lsp/auth';
+import { authorizeLspRequest, lspAuthHeaders } from '@/lib/lsp/auth';
 import { runLongArcVerification } from '@/lib/long-arc-verifier/orchestrator';
 import type { StoryConfig, EpisodeManuscript } from '@/lib/studio-types';
 
@@ -26,19 +26,11 @@ interface LintRequest {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  // 인증
-  const auth = request.headers.get('authorization') ?? '';
-  const token = auth.replace(/^Bearer\s+/i, '').trim();
-  if (!isValidTokenFormat(token)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-
-  // 레이트리밋
-  const rl = checkRateLimit(token);
-  if (!rl.allowed) {
+  const authResult = await authorizeLspRequest(request);
+  if (!authResult.ok) {
     return NextResponse.json(
-      { error: 'rate_limited', retryAfter: Math.ceil((rl.resetAt - Date.now()) / 1000) },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } },
+      { error: authResult.error, ...(authResult.retryAfterSec ? { retryAfter: authResult.retryAfterSec } : {}) },
+      { status: authResult.status, headers: lspAuthHeaders(authResult) },
     );
   }
 
@@ -73,6 +65,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     title: 'LSP',
     totalEpisodes: episodes.length,
     synopsis: body.synopsis,
+    // 의도적 double-cast: 이 LSP 라우트는 length guardrail(min/max) 미사용. PclGuardrails 완화/캐스트 제거 금지 — deref 사이트 TS18048 유발.
     guardrails: { language: 'KO' } as unknown as StoryConfig['guardrails'],
     characters: (body.characters ?? []).map((c) => ({
       id: c.id,
@@ -112,8 +105,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     },
     {
       headers: {
-        'X-RateLimit-Remaining': String(rl.remaining),
-        'X-RateLimit-Reset': String(rl.resetAt),
+        'X-RateLimit-Remaining': String(authResult.remaining),
+        'X-RateLimit-Reset': String(authResult.resetAt),
       },
     },
   );

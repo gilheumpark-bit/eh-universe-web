@@ -117,13 +117,13 @@ export const NovelIDESettingsPanel: React.FC<NovelIDESettingsPanelProps> = ({ la
       ],
     },
     {
-      title: { ko: 'AI 맥락 이탈 방어', en: 'AI Context Drift Defense' },
+      title: { ko: '작품 맥락 이탈 점검', en: 'Story Context Drift Check' },
       items: [
         {
           key: 'storyContextAware',
           icon: Brain,
-          label: { ko: '작품 맥락 AI 주입 (L1)', en: 'Story Context to AI (L1)' },
-          hint: { ko: '캐릭터·떡밥·룰·텐션 → 채팅 prompt', en: 'Characters/foreshadow → chat prompt' },
+          label: { ko: '작품 맥락 반영 (L1)', en: 'Story Context Injection (L1)' },
+          hint: { ko: '캐릭터·떡밥·룰·텐션 → 노아 문맥', en: 'Characters/foreshadow → Noa context' },
         },
         {
           key: 'intentMemoryAware',
@@ -134,8 +134,8 @@ export const NovelIDESettingsPanel: React.FC<NovelIDESettingsPanelProps> = ({ la
         {
           key: 'completionGapDetect',
           icon: ShieldCheck,
-          label: { ko: 'AI 완료 자동 검증 (L3)', en: 'AI Completion Gap (L3)' },
-          hint: { ko: '"완료" ≠ "wired" 자동 grep', en: 'AI claims vs actual wiring' },
+          label: { ko: '완료 보고 자동 검증 (L3)', en: 'Completion Gap Check (L3)' },
+          hint: { ko: '"완료" 보고와 실제 반영 차이 점검', en: 'completion reports vs actual wiring' },
         },
         {
           key: 'metaContextTrack',

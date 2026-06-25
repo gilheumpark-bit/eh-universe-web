@@ -1,7 +1,7 @@
 // ============================================================
 // PART 0 — Provider-Agnostic Structured Generation Route
 // ============================================================
-// Supports: Gemini (native JSON), OpenAI/Groq/Mistral (JSON mode),
+// Supports: Gemini (native JSON), Upstage/OpenAI/Groq/Mistral (JSON-compatible),
 //           Ollama/LMStudio (JSON mode via OpenAI compat)
 // Claude: not supported (no native JSON mode)
 // Falls back to /api/gemini-structured for Gemini-specific tasks
@@ -10,13 +10,22 @@ import { NextRequest, NextResponse } from 'next/server';
 export const maxDuration = 60;
 
 import { logger } from '@/lib/logger';
-import { hasServerProviderCredentials, resolveServerProviderKey, isServerProviderId } from '@/lib/server-ai';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
+import {
+  hasServerProviderCredentials,
+  resolveServerProviderKey,
+  isServerProviderId,
+  type ServerProviderId,
+} from '@/lib/server-ai';
 import { executeGeminiHostedFirst, normalizeUserApiKey } from '@/lib/google-genai-server';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 import type { AppLanguage } from '@/lib/studio-types';
-import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { dispatchStructuredGeneration } from '@/services/aiProvidersStructured';
 import { validateConstrainedOutput, type ConstraintSchema } from '@/lib/noa/constrained-decoder';
+// [N2 — 2026-06-11] 전 AI 경로 서버 단일 게이트: runNoa 입력 판정 + filterTrademarks 출력 IP 필터
+import { applyNoaGate, filterJsonIp } from '@/lib/noa/server-gate';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { enforceServerTierLimit } from '@/lib/server-tier-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,16 +38,10 @@ const SAFE_MODEL_PATTERN = /^[a-zA-Z0-9._\/-]+$/;
 // ============================================================
 
 function validateOrigin(req: NextRequest, hasClientKey: boolean): NextResponse | null {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  if (!origin) {
-    if (!hasClientKey) return NextResponse.json({ error: 'Forbidden: Origin header required' }, { status: 403 });
-    return null;
-  }
-  if (host && new URL(origin).host !== host) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  return null;
+  const result = checkSameOriginHeaders(req.headers, { allowMissingOrigin: hasClientKey });
+  return result.ok
+    ? null
+    : NextResponse.json({ error: result.error }, { status: 403 });
 }
 
 async function parseRequest(req: NextRequest): Promise<Record<string, unknown>> {
@@ -54,9 +57,10 @@ function getLanguage(value: unknown): AppLanguage {
 
 // Implementations of generateJsonOpenAICompat, generateJsonClaude, and generateJsonGemini are in @/services/aiProvidersStructured.ts
 const DEFAULT_MODELS: Record<string, string> = {
-  openai: 'gpt-4o-mini',
+  upstage: 'solar-pro3',
+  openai: 'gpt-5.4-mini',
   groq: 'llama-3.3-70b-versatile',
-  mistral: 'mistral-medium-3-latest',
+  mistral: 'mistral-medium-3-5',
   ollama: 'llama3.1',
   lmstudio: 'local-model',
 };
@@ -66,7 +70,7 @@ const DEFAULT_MODELS: Record<string, string> = {
 // ============================================================
 
 type ValidatedInput = {
-  provider: string;
+  provider: ServerProviderId;
   apiKey: string;
   clientApiKey: string;
   prompt: string;
@@ -78,12 +82,12 @@ type ValidatedInput = {
 
 /** Validate and extract all required fields from the raw body */
 function validateInput(body: Record<string, unknown>): { ok: true; input: ValidatedInput } | { ok: false; response: NextResponse } {
-  const rawProvider = typeof body.provider === 'string' ? body.provider : 'gemini';
+  const rawProvider = typeof body.provider === 'string' ? body.provider : 'upstage';
   if (!isServerProviderId(rawProvider)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid provider' }, { status: 400 }) };
   }
-  // DGX 서버 있으면 로컬 프로바이더를 spark 경유로 전환
-  const provider = (rawProvider === 'lmstudio' || rawProvider === 'ollama') && SPARK_SERVER_URL
+  // DGX 개발 API 플래그가 켜진 경우에만 로컬 프로바이더를 spark 경유로 전환
+  const provider = (rawProvider === 'lmstudio' || rawProvider === 'ollama') && isDgxDeveloperApiEnabled()
     ? 'gemini' as const
     : rawProvider;
 
@@ -91,16 +95,6 @@ function validateInput(body: Record<string, unknown>): { ok: true; input: Valida
   const apiKey = provider === 'gemini'
     ? ''
     : (resolveServerProviderKey(provider, body.apiKey) || '');
-
-  if (!(provider === 'gemini' ? clientApiKey : apiKey) && !hasServerProviderCredentials(provider)) {
-    // DGX Spark 폴백 가능하면 허용
-    if (!SPARK_SERVER_URL) {
-      const error = provider === 'gemini'
-        ? 'Gemini server credentials are not configured. Add your key in Settings or configure Vertex AI on the server.'
-        : `API key not configured for ${provider}.`;
-      return { ok: false, response: NextResponse.json({ error }, { status: 401 }) };
-    }
-  }
 
   const prompt = typeof body.prompt === 'string' ? body.prompt : '';
   if (!prompt) {
@@ -135,6 +129,29 @@ function errorToStatus(message: string): number {
   return 500;
 }
 
+function providerUnavailableResponse(provider: ServerProviderId, tier: string): NextResponse {
+  return NextResponse.json(
+    {
+      error: 'server_provider_unavailable',
+      message: '지금은 구조화 제안을 바로 사용할 수 없습니다. 환경 설정에서 연결 키를 등록해 주세요.',
+      paywall: {
+        reason: `${provider} 운영 경로가 준비되지 않았고 연결 키도 확인되지 않았습니다.`,
+        feature: '구조화 제안',
+        currentTier: tier,
+        requiredTier: 'byok',
+        unlocksWith: ['연결 키 등록'],
+        pricingUrl: '/pricing',
+        settingsTarget: '환경 설정 > 노아 운영',
+      },
+    },
+    { status: 503 },
+  );
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 // ============================================================
 // PART 5 — POST handler (thin orchestrator)
 // ============================================================
@@ -142,7 +159,7 @@ function errorToStatus(message: string): number {
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(ip, 'structured-generate', RATE_LIMITS.default);
+    const rl = await checkRateLimitAsync(ip, 'structured-generate', RATE_LIMITS.default);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment.' },
@@ -154,24 +171,54 @@ export async function POST(req: NextRequest) {
     const forbidden = validateOrigin(req, !!body.apiKey);
     if (forbidden) return forbidden;
 
-    // 인증 게이트 — BYOK가 없으면 Firebase JWT 필수 (호스팅 크레딧 방어)
+    // 인증 확인 — BYOK가 없으면 공통 티어 게이트가 로그인/플랜 안내를 담당한다.
+    let verifiedUser: Awaited<ReturnType<typeof import('@/lib/firebase-id-token').verifyFirebaseIdToken>> = null;
     if (!body.apiKey) {
       const authHeader = req.headers.get('authorization');
-      let verified = false;
       if (authHeader?.startsWith('Bearer ')) {
         try {
           const { verifyFirebaseIdToken } = await import('@/lib/firebase-id-token');
           const token = authHeader.slice(7).trim();
-          verified = Boolean(await verifyFirebaseIdToken(token));
+          verifiedUser = await verifyFirebaseIdToken(token);
         } catch { /* verification failed */ }
-      }
-      if (!verified) {
-        return NextResponse.json({ error: 'Authentication required for hosted credits' }, { status: 401 });
       }
     }
 
     const validated = validateInput(body);
     if (!validated.ok) return validated.response;
+
+    // [N2] NOA 서버 게이트 — 입력 판정 (AI 호출 전 차단·비용 절약).
+    // 차단 계약: 200 + { blocked, reason, gradeRequired } (N4 고지 UI 와 공유 — 사일런트 차단 금지).
+    const prismGrade = typeof body.prismMode === 'string' ? body.prismMode : undefined;
+    const gate = await applyNoaGate({
+      prompt: validated.input.prompt,
+      grade: prismGrade, // PRISM 등급 연동 차등 (ALL=최엄격 → M18=완화)
+      domain: prismGrade ? undefined : 'creative', // 등급 미전달 시 기본: 스튜디오 구조화 생성 — creative 가중
+      sourceTier: validated.input.clientApiKey ? 1 : 2,
+      route: '/api/structured-generate',
+      language: validated.input.language,
+      ip,
+    });
+    if (gate.blocked) {
+      return NextResponse.json({ blocked: true, reason: gate.reason, gradeRequired: gate.gradeRequired }, { status: 200 });
+    }
+
+    const tierGate = await enforceServerTierLimit({
+      headers: req.headers,
+      ip,
+      route: '/api/structured-generate',
+      feature: 'structured-generate',
+      hasByok: Boolean(validated.input.clientApiKey),
+      verifiedUser,
+    });
+    if (!tierGate.ok) return tierGate.response;
+
+    const hasProviderCapacity = validated.input.provider === 'gemini'
+      ? Boolean(validated.input.clientApiKey || hasServerProviderCredentials('gemini') || isDgxDeveloperApiEnabled())
+      : Boolean(validated.input.apiKey || hasServerProviderCredentials(validated.input.provider));
+    if (!hasProviderCapacity) {
+      return providerUnavailableResponse(validated.input.provider, tierGate.tier);
+    }
 
     const dispatched = validated.input.provider === 'gemini'
       ? (await executeGeminiHostedFirst(validated.input.clientApiKey, (effectiveApiKey) =>
@@ -194,10 +241,10 @@ export async function POST(req: NextRequest) {
         );
     if (!dispatched.ok) return NextResponse.json({ error: dispatched.error }, { status: 400 });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = dispatched.result as any;
-    if (result && typeof result === 'object') {
-      result._meta = { provider: validated.input.provider, model: validated.input.model, language: validated.input.language };
+    const result = dispatched.result;
+    const resultObject = isJsonObject(result) ? result : null;
+    if (resultObject) {
+      resultObject._meta = { provider: validated.input.provider, model: validated.input.model, language: validated.input.language };
     }
 
     // L3.1 Constrained Decoder: 클라이언트가 스키마를 전달한 경우 Guillotine 검증
@@ -216,8 +263,8 @@ export async function POST(req: NextRequest) {
         );
       }
       // HOLD → 자동 보정 제안 첨부
-      if (guillotine.verdict === 'HOLD' && result && typeof result === 'object') {
-        result._guillotine = {
+      if (guillotine.verdict === 'HOLD' && resultObject) {
+        resultObject._guillotine = {
           verdict: 'HOLD',
           missingVariables: guillotine.missingVariables,
           autoCorrectSuggestions: guillotine.autoCorrectSuggestions,
@@ -225,7 +272,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(result);
+    // [N2] 출력 IP 필터 — JSON 안전 치환 (치환이 JSON 을 깨면 fail-open: 원본 반환 + 로깅)
+    const ipFiltered = filterJsonIp(result, '/api/structured-generate');
+    return NextResponse.json(ipFiltered.value);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('API:structured-generate', error instanceof Error ? error.message : error);

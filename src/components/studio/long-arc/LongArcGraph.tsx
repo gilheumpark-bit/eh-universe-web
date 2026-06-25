@@ -56,7 +56,7 @@ export const LongArcGraph: React.FC<LongArcGraphProps> = ({
       className="bg-bg-tertiary/30 border border-border rounded-md p-2"
       aria-label={isKO ? '텐션 궤적 그래프' : 'Tension trajectory'}
     >
-      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
         {/* Y axis grid */}
         {[0, 25, 50, 75, 100].map((y) => {
           const py = height - pad - (y / 100) * (height - pad * 2);

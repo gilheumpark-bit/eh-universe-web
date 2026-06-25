@@ -1,5 +1,5 @@
 /**
- * MarketplacePanel.test — catalog UI behaviors for the Novel Studio plugin marketplace.
+ * MarketplacePanel.test — catalog UI behaviors for bundled Studio extensions.
  */
 import React from 'react';
 import { render, fireEvent, screen, act } from '@testing-library/react';
@@ -83,6 +83,26 @@ describe('MarketplacePanel', () => {
     expect(screen.getByTestId('plugin-toggle-word-count-badge').textContent).toMatch(/비활성화/);
   });
 
+  it('passes the active manuscript reader to bundled plugins', async () => {
+    const enabledHandler = jest.fn();
+    window.addEventListener('noa:plugin:word-count-badge:enabled', enabledHandler as EventListener);
+
+    try {
+      render(<MarketplacePanel language="KO" readManuscript={() => '원고본문'} />);
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('plugin-toggle-word-count-badge'));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(enabledHandler).toHaveBeenCalledTimes(1);
+      const event = enabledHandler.mock.calls[0][0] as CustomEvent<{ count: number }>;
+      expect(event.detail.count).toBe(4);
+    } finally {
+      window.removeEventListener('noa:plugin:word-count-badge:enabled', enabledHandler as EventListener);
+    }
+  });
+
   it('opens the detail dialog and shows permissions', () => {
     render(<MarketplacePanel language="KO" />);
     fireEvent.click(screen.getByTestId('plugin-detail-word-count-badge'));
@@ -93,8 +113,14 @@ describe('MarketplacePanel', () => {
   it('renders localized labels (KO fallback via mocked L4)', () => {
     render(<MarketplacePanel language="KO" />);
     // Title and coming-soon copy both come from L4(ko) via the mock.
-    expect(screen.getByText(/플러그인 마켓/)).toBeInTheDocument();
-    expect(screen.getByTestId('marketplace-coming-soon').textContent).toMatch(/외부 플러그인/);
+    expect(screen.getByText(/확장 기능/)).toBeInTheDocument();
+    expect(screen.getByTestId('marketplace-coming-soon').textContent).toMatch(/검수된 내장 보조 기능/);
+  });
+
+  it('does not expose external URL installation controls', () => {
+    render(<MarketplacePanel language="KO" />);
+    expect(screen.queryByTestId('marketplace-install-url')).toBeNull();
+    expect(screen.queryByTestId('marketplace-install-confirm')).toBeNull();
   });
 
   it('onClose callback fires when the close button is clicked', () => {

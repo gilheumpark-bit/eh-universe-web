@@ -10,10 +10,10 @@ const TITLES = {
 } as const;
 
 const DESCRIPTIONS = {
-  ko: "Loreguard 서비스 이용약관 — 사용자 권리·의무·면책 범위.",
-  en: "Loreguard Terms of Service — User rights, obligations, and limitations.",
-  ja: "Loreguard サービス利用規約 — ユーザーの権利・義務・免責範囲。",
-  zh: "Loreguard 服务条款 — 用户权利、义务及免责范围。",
+  ko: "Loreguard 서비스 이용약관. 계정, 창작물, 노아 활용, 사용 기준, 서비스 범위를 안내합니다.",
+  en: "Loreguard Terms of Service covering accounts, creative work, Noa usage, use standards, and service scope.",
+  ja: "Loreguard サービス利用規約。アカウント、創作物、Noa 活用、利用基準、サービス範囲を案内します。",
+  zh: "Loreguard 服务条款，说明账户、创作内容、Noa 使用、使用标准与服务范围。",
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {

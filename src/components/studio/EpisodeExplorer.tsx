@@ -292,7 +292,7 @@ const EpisodeExplorer: React.FC<EpisodeExplorerProps> = ({
       label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }),
     },
     {
-      id: 'rulebook',
+      id: 'direction',
       icon: Clapperboard,
       label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }),
     },

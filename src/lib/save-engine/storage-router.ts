@@ -155,25 +155,39 @@ export async function routerGetEntry(id: string): Promise<JournalEntry | null> {
 }
 
 export async function routerListEntries(opts?: { fromId?: string; toId?: string }): Promise<{ tier: StorageTier; entries: JournalEntry[] }> {
-  if (isIndexedDBAvailable()) {
-    try {
-      const entries = await idbGetEntriesRange(opts);
-      if (entries.length > 0) return { tier: 'indexeddb', entries };
-    } catch { /* fallthrough */ }
-  }
-  if (isLocalStorageAvailable()) {
-    const entries = lsGetEntriesRange().filter((e) => {
-      if (opts?.fromId && e.id < opts.fromId) return false;
-      if (opts?.toId && e.id > opts.toId) return false;
-      return true;
-    });
-    if (entries.length > 0) return { tier: 'localstorage', entries };
-  }
-  const entries = memList().filter((e) => {
+  const inRange = (e: JournalEntry): boolean => {
     if (opts?.fromId && e.id < opts.fromId) return false;
     if (opts?.toId && e.id > opts.toId) return false;
     return true;
-  });
+  };
+
+  // [fix] line 161: IDB 엔트리가 있어도 LS 엔트리를 조용히 누락하지 않도록,
+  // 두 tier에 동시에 데이터가 있으면 id 기준 병합·중복 제거 후 반환.
+  // 한쪽에만 데이터가 있는 정상 경로는 기존과 동일한 결과를 유지한다.
+  let idbEntries: JournalEntry[] = [];
+  if (isIndexedDBAvailable()) {
+    try {
+      idbEntries = await idbGetEntriesRange(opts);
+    } catch { /* fallthrough */ }
+  }
+
+  if (isLocalStorageAvailable()) {
+    const lsEntries = lsGetEntriesRange().filter(inRange);
+    if (idbEntries.length > 0 && lsEntries.length > 0) {
+      // 병합: id 중복 시 primary(IDB) 우선, id 오름차순 정렬.
+      const byId = new Map<string, JournalEntry>();
+      for (const e of lsEntries) byId.set(e.id, e);
+      for (const e of idbEntries) byId.set(e.id, e);
+      const merged = Array.from(byId.values()).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      return { tier: 'indexeddb', entries: merged };
+    }
+    if (idbEntries.length > 0) return { tier: 'indexeddb', entries: idbEntries };
+    if (lsEntries.length > 0) return { tier: 'localstorage', entries: lsEntries };
+  } else if (idbEntries.length > 0) {
+    return { tier: 'indexeddb', entries: idbEntries };
+  }
+
+  const entries = memList().filter(inRange);
   return { tier: 'memory', entries };
 }
 

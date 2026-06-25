@@ -2,13 +2,13 @@
 import React, { useState, useMemo } from 'react';
 import { Activity, Cpu, Zap, AlertCircle, Database } from 'lucide-react';
 import { AppLanguage, StoryConfig } from '@/lib/studio-types';
-import { TRANSLATIONS } from '@/lib/studio-translations';
 import { EngineReport, PlatformType, getActFromEpisode } from '@/engine/types';
 import { tensionCurve } from '@/engine/models';
 import { bytesToEstimatedChars, getTargetCharRange } from '@/engine/serialization';
 import { getOverdueThreads, getHighPriorityUnresolved, type NarrativeThread } from '@/engine/shadow';
 import { getContextBudgetSummary, type ContextBudgetSummary } from '@/engine/context-builder';
-import { L4 } from '@/lib/i18n';
+import { getStudioTranslations, L4, normalizeAppLanguage } from '@/lib/i18n';
+import { ProgressFill } from '@/components/studio/ProgressFill';
 
 interface EngineStatusBarProps {
   language: AppLanguage;
@@ -20,7 +20,8 @@ interface EngineStatusBarProps {
 /** 미해결 복선/떡밥 알림 배지 */
 function ShadowThreadAlert({ config, language }: { config: StoryConfig; language: AppLanguage }) {
   const [open, setOpen] = useState(false);
-  const isKO = language === 'KO';
+  const appLanguage = normalizeAppLanguage(language);
+  const isKO = appLanguage === 'KO';
 
   // config에서 thread 데이터 추출 (있으면)
   const threads: NarrativeThread[] = useMemo(() => {
@@ -78,6 +79,7 @@ function ShadowThreadAlert({ config, language }: { config: StoryConfig; language
 /** Hybrid Context Budget tooltip badge */
 function ContextBudgetBadge({ config, language }: { config: StoryConfig; language: AppLanguage }) {
   const [open, setOpen] = useState(false);
+  const appLanguage = normalizeAppLanguage(language);
 
   const budget: ContextBudgetSummary | null = useMemo(() => {
     const manuscripts = config.manuscripts ?? [];
@@ -88,10 +90,10 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
         config,
         manuscripts,
         currentEpisode,
-        language,
+        language: appLanguage,
       });
     } catch { return null; }
-  }, [config, language]);
+  }, [config, appLanguage]);
 
   if (!budget || budget.total === 0) return null;
 
@@ -122,9 +124,10 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
                 <span className="text-text-tertiary font-mono">~{tier.tokens}{L4(language, { ko: ' 토큰', en: ' tok', ja: ' tok', zh: ' tok' })}</span>
               </div>
               <div className="h-1 bg-bg-tertiary rounded-full overflow-hidden">
-                <div
+                <ProgressFill
+                  value={tier.tokens}
+                  max={maxTokens}
                   className={`h-full rounded-full ${i === 0 ? 'bg-accent-blue' : i === 1 ? 'bg-amber-500' : 'bg-green-500'}`}
-                  style={{ width: `${maxTokens > 0 ? Math.min(100, (tier.tokens / maxTokens) * 100) : 0}%` }}
                 />
               </div>
             </div>
@@ -142,16 +145,17 @@ function ContextBudgetBadge({ config, language }: { config: StoryConfig; languag
 }
 
 const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function EngineStatusBar({ language, config, report, isGenerating }) {
-  const t = TRANSLATIONS[language].engine;
+  const appLanguage = normalizeAppLanguage(language);
+  const t = getStudioTranslations(appLanguage).engine;
   const totalEpisodes = config.totalEpisodes ?? 25;
   const actInfo = getActFromEpisode(config.episode, totalEpisodes);
   const targetTension = Math.round(tensionCurve(config.episode, totalEpisodes, config.genre) * 100);
 
-  const isKO = language === 'KO';
+  const isKO = appLanguage === 'KO';
   const tipAct = isKO ? '현재 3막 구조에서의 위치' : 'Current position in 3-act structure';
   const tipTension = isKO ? '이 에피소드의 목표 긴장도' : 'Target tension for this episode';
   const tipPlatform = isKO ? '출판 플랫폼 (글자수 기준)' : 'Publishing platform (char count target)';
-  const tipGrade = isKO ? 'NOA가 평가한 품질 등급' : 'Quality grade by NOA';
+  const tipGrade = isKO ? '노아가 평가한 품질 등급' : 'Quality grade by Noa';
   const tipVol = isKO ? '분량 적정성 점수' : 'Volume adequacy score';
   const tipChars = isKO ? '현재 글자수 / 목표 범위' : 'Current chars / target range';
 
@@ -162,7 +166,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
         <Activity className="w-3 h-3 text-accent-blue" />
         <span className="text-text-tertiary">{t.act} {actInfo.act}</span>
         <span className="text-text-tertiary">|</span>
-        <span className="text-text-secondary">{language === 'KO' ? actInfo.name : actInfo.nameEN}</span>
+        <span className="text-text-secondary">{appLanguage === 'KO' ? actInfo.name : actInfo.nameEN}</span>
       </div>
 
       {/* Tension Target */}
@@ -188,7 +192,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
             <span className="text-accent-blue">{report.grade}</span>
           </div>
           <div title={tipVol} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
-            <span className="text-text-tertiary">{language === 'KO' ? '분량' : 'VOL'}</span>
+            <span className="text-text-tertiary">{appLanguage === 'KO' ? '분량' : 'VOL'}</span>
             <span className={`${report.eosScore >= 40 ? 'text-green-400' : 'text-accent-red'}`}>
               {report.eosScore}
             </span>
@@ -200,7 +204,7 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
             const inRange = chars >= charRange.min && chars <= charRange.max;
             return (
               <div title={tipChars} className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-bg-secondary/50 border border-border/50 rounded-lg whitespace-nowrap">
-                <span className="text-text-tertiary">{language === 'KO' ? '글자' : 'Chars'}</span>
+                <span className="text-text-tertiary">{appLanguage === 'KO' ? '글자' : 'Chars'}</span>
                 <span className={inRange ? 'text-green-400' : chars < charRange.min ? 'text-amber-400' : 'text-accent-red'}>
                   {chars.toLocaleString()}
                 </span>
@@ -212,10 +216,10 @@ const EngineStatusBar: React.FC<EngineStatusBarProps> = React.memo(function Engi
       )}
 
       {/* 미해결 복선 알림 */}
-      <ShadowThreadAlert config={config} language={language} />
+      <ShadowThreadAlert config={config} language={appLanguage} />
 
       {/* Hybrid Context Budget */}
-      <ContextBudgetBadge config={config} language={language} />
+      <ContextBudgetBadge config={config} language={appLanguage} />
 
       {isGenerating && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-accent-blue/10 border border-accent-blue/20 rounded-lg whitespace-nowrap">

@@ -37,17 +37,17 @@ describe('Privacy Page', () => {
     expect(container.textContent).toContain('Sentry');
   });
 
-  it('이메일 연락처 링크 존재', () => {
+  it('문의(Contact) 섹션 존재', () => {
     const PrivacyPage = require('../privacy/page').default;
     const { container } = render(<PrivacyPage />);
-    const email = container.querySelector('a[href="mailto:gilheumpark@gmail.com"]');
-    expect(email).not.toBeNull();
+    // [2026-06-25] 공개 연락 이메일 미확정(공백) — mailto 링크 대신 문의 섹션 존재만 검증.
+    expect(container.textContent).toMatch(/문의|Contact/);
   });
 
-  it('알파 단계 초안 경고 표시', () => {
+  it('문서 상태 안내 표시', () => {
     const PrivacyPage = require('../privacy/page').default;
     const { container } = render(<PrivacyPage />);
-    expect(container.textContent).toContain('알파 단계 초안');
+    expect(container.textContent).toContain('문서 상태');
   });
 
   it('AI 학습 미사용 명시', () => {
@@ -64,7 +64,7 @@ describe('Terms Page', () => {
     const { container } = render(<TermsPage />);
     expect(container.textContent).toContain('이용약관');
     expect(container.textContent).toContain('서비스 개요');
-    expect(container.textContent).toContain('금지 행위');
+    expect(container.textContent).toContain('사용 기준');
     expect(container.textContent).toContain('저작권');
   });
 
@@ -74,10 +74,10 @@ describe('Terms Page', () => {
     expect(container.textContent).toContain('CC-BY-NC-4.0');
   });
 
-  it('AGPL-3.0 소프트웨어 라이선스 명시 (dual license)', () => {
+  it('비공개 상용 소프트웨어 라이선스 명시', () => {
     const TermsPage = require('../terms/page').default;
     const { container } = render(<TermsPage />);
-    expect(container.textContent).toContain('AGPL-3.0');
+    expect(container.textContent).toContain('비공개 상용 제품');
   });
 
   it('대한민국 법률 준거 명시', () => {
@@ -86,10 +86,10 @@ describe('Terms Page', () => {
     expect(container.textContent).toContain('대한민국');
   });
 
-  it('알파 단계 초안 경고 표시', () => {
+  it('문서 상태 안내 표시', () => {
     const TermsPage = require('../terms/page').default;
     const { container } = render(<TermsPage />);
-    expect(container.textContent).toContain('알파 단계 초안');
+    expect(container.textContent).toContain('문서 상태');
   });
 });
 
@@ -102,10 +102,10 @@ describe('Copyright Page', () => {
     expect(container.textContent).toContain('외부 플랫폼');
   });
 
-  it('알파 단계 초안 경고 표시', () => {
+  it('문서 상태 안내 표시', () => {
     const CopyrightPage = require('../copyright/page').default;
     const { container } = render(<CopyrightPage />);
-    expect(container.textContent).toContain('알파 단계 초안');
+    expect(container.textContent).toContain('문서 상태');
   });
 });
 
@@ -126,10 +126,10 @@ describe('AI Disclosure Page', () => {
     expect(container.textContent).toContain('재학습');
   });
 
-  it('AI 책임 한계(환각/편향) 섹션 존재', () => {
+  it('사용 전 확인할 점 섹션 존재', () => {
     const AiDisclosurePage = require('../ai-disclosure/page').default;
     const { container } = render(<AiDisclosurePage />);
-    expect(container.textContent).toContain('환각');
+    expect(container.textContent).toContain('사용 전 확인할 점');
     expect(container.textContent).toContain('편향');
   });
 });

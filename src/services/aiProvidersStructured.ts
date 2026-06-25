@@ -1,11 +1,16 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
-import { SPARK_SERVER_URL } from './sparkService';
+import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
+  upstage: 'https://api.upstage.ai/v1/chat/completions',
   openai: 'https://api.openai.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/chat/completions',
+  qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+  minimax: 'https://api.minimax.io/v1/chat/completions',
+  kimi: 'https://api.moonshot.ai/v1/chat/completions',
   groq: 'https://api.groq.com/openai/v1/chat/completions',
   mistral: 'https://api.mistral.ai/v1/chat/completions',
-  spark: `${SPARK_SERVER_URL}/v1/chat/completions`,
+  spark: `${getDgxDeveloperApiBaseUrl()}/v1/chat/completions`,
 };
 const STRUCTURED_PROVIDER_TIMEOUT_MS = 60_000;
 
@@ -18,6 +23,7 @@ export async function generateJsonOpenAICompat(
   baseUrl?: string,
 ): Promise<unknown> {
   const isLocal = provider === 'ollama' || provider === 'lmstudio';
+  const supportsJsonObjectMode = !isLocal && provider !== 'upstage';
   const url = baseUrl
     ? `${baseUrl.replace(/\/$/, '')}/v1/chat/completions`
     : OPENAI_COMPAT_URLS[provider];
@@ -40,7 +46,7 @@ export async function generateJsonOpenAICompat(
             { role: 'user', content: prompt },
           ],
           temperature: 0.7,
-          response_format: isLocal ? undefined : { type: 'json_object' },
+          response_format: supportsJsonObjectMode ? { type: 'json_object' } : undefined,
         }),
       });
 
@@ -88,7 +94,7 @@ export async function generateJsonClaude(
     },
     signal: AbortSignal.timeout(STRUCTURED_PROVIDER_TIMEOUT_MS),
     body: JSON.stringify({
-      model: model || 'claude-sonnet-4-20250514',
+      model: model || 'claude-sonnet-4-6',
       max_tokens: 4096,
       tools: [tool],
       tool_choice: { type: 'tool', name: 'structured_output' },
@@ -151,15 +157,20 @@ export async function dispatchStructuredGeneration(
 ): Promise<{ ok: true; result: unknown } | { ok: false; error: string }> {
   try {
     if (provider === 'ollama' || provider === 'lmstudio') {
-      // DGX Spark 서버가 있으면 OpenAI 호환 경로로 폴백
-      if (SPARK_SERVER_URL) {
+      // DGX 개발 API 플래그가 켜진 경우에만 OpenAI 호환 경로로 폴백
+      if (isDgxDeveloperApiEnabled()) {
         const schemaHint = schema ? `\n\nRespond with JSON matching this schema:\n${JSON.stringify(schema, null, 2)}` : '';
         return { ok: true, result: await generateJsonOpenAICompat('spark', '', model, prompt + schemaHint, fallback) };
       }
       return { ok: false, error: 'Local providers must use /api/local-proxy' };
     }
-    if (provider === 'gemini' && schema) {
-      return { ok: true, result: await generateJsonGemini(apiKey, model, prompt, schema, fallback) };
+    if (provider === 'gemini') {
+      // [fix] gemini without a schema previously fell through to the OpenAI-compat
+      // path, where 'gemini' is not a known provider -> 'Unknown provider: gemini'.
+      // Route gemini here unconditionally and supply a permissive default schema
+      // when none is given (mirrors the Claude default input_schema above).
+      const geminiSchema = schema ?? { type: 'object', properties: { result: { type: 'string' } } };
+      return { ok: true, result: await generateJsonGemini(apiKey, model, prompt, geminiSchema, fallback) };
     }
     if (provider === 'claude') {
       return { ok: true, result: await generateJsonClaude(apiKey, model, prompt, schema, fallback) };

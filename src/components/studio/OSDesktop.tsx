@@ -4,53 +4,32 @@
 // PART 1 — Imports & Types
 // ============================================================
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
-  Plus, ScrollText, UserCircle, Feather, Type, Clock,
-  Download, Upload, Cloud, Settings, BookMarked, Library, GripVertical, Move,
-  Languages, Globe, ImageIcon, Film, MoreHorizontal, Printer,
+  ScrollText, UserCircle, Feather, Type, Clock,
+  BookMarked, Library, GripVertical,
+  Languages, ImageIcon, Film, MoreHorizontal,
   ArrowUpToLine, ArrowDownToLine,
 } from 'lucide-react';
 import { AppTab, AppLanguage, Project, ChatSession } from '@/lib/studio-types';
-import { createT, L4 } from '@/lib/i18n';
+import { L4 } from '@/lib/i18n';
 import type { ProjectManuscriptFormat } from '@/hooks/useStudioExport';
-
-const DOCK_STORAGE_KEY = 'eh-dock-order';
-const DOCK_POS_KEY = 'eh-dock-position';
-const DOCK_ANCHOR_KEY = 'eh-dock-anchor'; // 'top' | 'bottom'
-
-interface DockPosition { x: number; y: number; }
-
-function loadDockPosition(): DockPosition | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const saved = localStorage.getItem(DOCK_POS_KEY);
-    if (!saved) return null;
-    return JSON.parse(saved) as DockPosition;
-  } catch { return null; }
-}
-function saveDockPosition(pos: DockPosition) {
-  try { localStorage.setItem(DOCK_POS_KEY, JSON.stringify(pos)); } catch { /* [의도적 무시] localStorage 쓰기 실패 (private mode 등) */ }
-}
+import { OSDesktopSystemMenu, type OSDesktopAppLink } from './OSDesktop.system-menu';
+import {
+  DOCK_ANCHOR_KEY,
+  DOCK_POS_KEY,
+  type DockPosition,
+  loadDockOrder,
+  loadDockPosition,
+  saveDockOrder,
+  saveDockPosition,
+} from './OSDesktop.storage';
+import { OSDesktopTopBar } from './OSDesktop.topbar';
 
 interface DockItem {
   id: AppTab;
   icon: React.FC<{ className?: string; strokeWidth?: number }>;
   label: string;
   color: string;
-}
-
-function loadDockOrder(): AppTab[] | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const saved = localStorage.getItem(DOCK_STORAGE_KEY);
-    if (!saved) return null;
-    return JSON.parse(saved) as AppTab[];
-  } catch { return null; }
-}
-function saveDockOrder(order: AppTab[]) {
-  try { localStorage.setItem(DOCK_STORAGE_KEY, JSON.stringify(order)); } catch { /* [의도적 무시] localStorage 쓰기 실패 (private mode 등) */ }
 }
 
 interface OSDesktopProps {
@@ -74,6 +53,7 @@ interface OSDesktopProps {
   exportAllJSON: () => void;
   handleExportEPUB: () => void;
   handleExportDOCX: () => void;
+  handleExportHWPX: () => void;
   handleImportTextFiles: (e: React.ChangeEvent<HTMLInputElement>) => void;
   exportProjectJSON?: () => void;
   exportProjectManuscripts?: (format: ProjectManuscriptFormat) => void;
@@ -94,16 +74,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   currentSessionId, setCurrentSessionId, sessions,
   createNewSession, activeTab, handleTabChange,
   exportTXT, exportJSON, exportAllJSON,
-  handleExportEPUB, handleExportDOCX,
+  handleExportEPUB, handleExportDOCX, handleExportHWPX,
   handleImportTextFiles, fileInputRef,
   user, syncStatus,
   language, setLanguage,
 }) => {
-  const t = createT(language);
-  const router = useRouter();
   const [hoveredTab, setHoveredTab] = useState<AppTab | null>(null);
   const [isSystemMenuOpen, setIsSystemMenuOpen] = useState(false);
-  const textFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [dockToolsVisible, setDockToolsVisible] = useState(false);
 
   // ── Dock position (free-move) ──
   const dockRef = useRef<HTMLDivElement | null>(null);
@@ -191,13 +169,13 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
 
   // ── Dock items (소설 탭) — 집필 앱 아이콘/색상 ──
   // Primary 5: 항상 표시 | Overflow 4: "더보기" 뒤에 숨김
-  const PRIMARY_TAB_IDS: AppTab[] = ['world' as AppTab, 'characters' as AppTab, 'rulebook' as AppTab, 'writing' as AppTab, 'manuscript' as AppTab];
+  const PRIMARY_TAB_IDS: AppTab[] = ['world' as AppTab, 'characters' as AppTab, 'direction' as AppTab, 'writing' as AppTab, 'manuscript' as AppTab];
   const OVERFLOW_TAB_IDS: AppTab[] = ['visual' as AppTab, 'style' as AppTab, 'history' as AppTab, 'docs' as AppTab];
 
   const allDockItems: DockItem[] = [
     { id: 'world' as AppTab, icon: ScrollText, label: L4(language, { ko: '세계관', en: 'World', ja: '世界観', zh: '世界观' }), color: 'text-text-secondary' },
     { id: 'characters' as AppTab, icon: UserCircle, label: L4(language, { ko: '인물', en: 'Characters', ja: '人物', zh: '人物' }), color: 'text-text-secondary' },
-    { id: 'rulebook' as AppTab, icon: Film, label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }), color: 'text-text-secondary' },
+    { id: 'direction' as AppTab, icon: Film, label: L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' }), color: 'text-text-secondary' },
     { id: 'writing' as AppTab, icon: Feather, label: L4(language, { ko: '집필', en: 'Writing', ja: '執筆', zh: '写作' }), color: 'text-text-secondary' },
     { id: 'manuscript' as AppTab, icon: Library, label: L4(language, { ko: '원고', en: 'Manuscript', ja: '原稿', zh: '稿件' }), color: 'text-text-secondary' },
     { id: 'visual' as AppTab, icon: ImageIcon, label: L4(language, { ko: '이미지', en: 'Image', ja: '画像', zh: '图片' }), color: 'text-text-secondary' },
@@ -221,17 +199,14 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [overflowOpen]);
 
-  // ── App 링크 아이콘 (UNIVERSE / TRANSLATE) ──
+  // ── App 링크 아이콘 (TRANSLATE) ──
   // 번역: 창작→번역→출판 파이프라인의 "다음 단계". 현재 세션이 있으면 세션 ID 전달.
-  // 코드 스튜디오는 의도적 dock 숨김 (2026-04-21 결정 + 2026-05-10 재확인) —
-  // 집필 OS dock 은 창작 파이프라인 (세계관·번역) 중심으로 정돈. Code Studio 는
-  // /tools 또는 Header 'CODE' 탭으로 접근. dock 에 Code 추가 X.
+  // 집필 OS dock 은 현재 공개 표면인 집필·번역 흐름 중심으로 정돈.
   const translationHref = currentSessionId
     ? `/translation-studio?from=${encodeURIComponent(currentSessionId)}`
     : '/translation-studio';
   const hasManuscript = (sessions.find(s => s.id === currentSessionId)?.config.manuscripts?.length ?? 0) > 0;
-  const appLinks = [
-    { href: '/archive', icon: Globe, label: L4(language, { ko: '유니버스', en: 'Universe', ja: 'ユニバース', zh: '宇宙' }), color: 'text-text-secondary' },
+  const appLinks: OSDesktopAppLink[] = [
     // 번역은 파이프라인 "다음 단계" — 원고 있으면 앰버 강조, 없으면 일반
     { href: translationHref, icon: Languages, label: L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' }), color: hasManuscript ? 'text-accent-amber' : 'text-text-secondary' },
   ];
@@ -296,91 +271,20 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
   // ============================================================
   return (
     <>
-      {/* OS Top Menu Bar — 집필 세피아 톤 */}
-      <div data-zen-hide className="fixed top-0 left-0 w-full h-10 bg-bg-secondary/90 backdrop-blur-xl border-b border-border z-[var(--z-tooltip)] flex items-center justify-between px-4 text-xs font-mono text-text-secondary">
-        <div className="flex items-center gap-4">
-          <Link href="/studio" className="flex items-center gap-2 text-text-primary hover:text-accent-amber transition-colors shrink-0">
-            <Feather className="h-4 w-4 text-accent-amber shrink-0" />
-            <span className="font-serif font-semibold tracking-wider whitespace-nowrap">{language === 'KO' ? 'Loreguard 스튜디오' : language === 'JP' ? 'Loreguard スタジオ' : language === 'CN' ? 'Loreguard 工作室' : 'Loreguard Studio'}</span>
-            {/* SubtitleBadge — Plan A-7. Novel IDE 카테고리 시각 단서 (4시간+ 작업 사용자 정체성 단서). */}
-            <span
-              className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[9px] font-bold uppercase tracking-[0.2em] bg-accent-purple/15 text-accent-purple border border-accent-purple/25"
-              aria-label={language === 'KO' ? '소설 IDE 카테고리' : 'Novel IDE category'}
-            >
-              {language === 'KO' ? '소설 IDE' : language === 'JP' ? '小説 IDE' : language === 'CN' ? '小说 IDE' : 'Novel IDE'}
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={currentProjectId || ''}
-              onChange={e => { setCurrentProjectId(e.target.value); setCurrentSessionId(null); }}
-              aria-label={L4(language, { ko: '활성 작품 선택', en: 'Active project', ja: 'アクティブ作品', zh: '活动作品' })}
-              className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer font-serif"
-            >
-              <option value="" disabled>{t('sidebar.activeProject')}</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id} className="bg-bg-primary">{p.name}</option>
-              ))}
-            </select>
-            <button
-              onClick={createNewProject}
-              aria-label={t('project.newProject')}
-              className="text-text-tertiary hover:text-accent-amber transition-colors"
-              title={t('project.newProject')}
-            >
-              <Plus className="h-3 w-3" />
-            </button>
-          </div>
-
-          <div className="h-4 w-px bg-border mx-1" />
-
-          <div className="flex items-center gap-2">
-            <select
-              value={currentSessionId || ''}
-              onChange={e => setCurrentSessionId(e.target.value)}
-              aria-label={L4(language, { ko: '챕터 선택', en: 'Select chapter', ja: 'チャプター選択', zh: '选择章节' })}
-              className="bg-transparent border-none text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 hover:text-text-primary cursor-pointer max-w-[200px] font-serif"
-            >
-              <option value="" disabled>{L4(language, { ko: '챕터 선택', en: 'Select Chapter', ja: 'チャプター選択', zh: '选择章节' })}</option>
-              {sessions.map(s => (
-                <option key={s.id} value={s.id} className="bg-bg-primary">{s.title}</option>
-              ))}
-            </select>
-            <button
-              onClick={createNewSession}
-              aria-label={L4(language, { ko: '새 챕터', en: 'New chapter', ja: '新規チャプター', zh: '新章节' })}
-              className="text-text-tertiary hover:text-accent-amber transition-colors"
-              title={L4(language, { ko: '새 챕터', en: 'New chapter', ja: '新規チャプター', zh: '新章节' })}
-            >
-              <Plus className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {user && (
-            <div className="flex items-center gap-2 text-amber-600/60">
-              <Cloud className="w-3.5 h-3.5" />
-              <span className="text-[10px]">{syncStatus}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 bg-bg-tertiary/50 rounded-full px-2 py-0.5 border border-border">
-            {(['KO', 'EN', 'JP', 'CN'] as AppLanguage[]).map(l => (
-              <button
-                key={l}
-                onClick={() => setLanguage(l)}
-                className={`text-[9px] font-bold px-1.5 rounded transition ${language === l ? 'text-accent-amber bg-accent-amber/15' : 'text-text-tertiary hover:text-accent-amber'}`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-          <span className="text-text-tertiary font-serif">
-            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-      </div>
+      <OSDesktopTopBar
+        createNewProject={createNewProject}
+        createNewSession={createNewSession}
+        currentProjectId={currentProjectId}
+        currentSessionId={currentSessionId}
+        language={language}
+        projects={projects}
+        sessions={sessions}
+        setCurrentProjectId={setCurrentProjectId}
+        setCurrentSessionId={setCurrentSessionId}
+        setLanguage={setLanguage}
+        syncStatus={syncStatus}
+        user={user}
+      />
 
       {/* OS Bottom Dock — 집필 앱 양피지 톤 */}
       <nav
@@ -398,38 +302,40 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
               : { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', left: '50%', transform: 'translateX(-50%)' }
         }
       >
-        {/* 앵커 토글 — 상단/하단 전환 */}
-        <button
-          type="button"
-          onClick={toggleDockAnchor}
-          className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-1 shrink-0 group/anchor"
-          title={L4(language, {
-            ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
-            en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
-            ja: dockAnchor === 'top' ? '下部へ移動' : '上部へ移動',
-            zh: dockAnchor === 'top' ? '移至底部' : '移至顶部',
-          })}
-          aria-label={L4(language, {
-            ko: dockAnchor === 'top' ? '독을 하단으로' : '독을 상단으로',
-            en: dockAnchor === 'top' ? 'Dock to bottom' : 'Dock to top',
-            ja: dockAnchor === 'top' ? 'ドックを下部に' : 'ドックを上部に',
-            zh: dockAnchor === 'top' ? '停靠到底部' : '停靠到顶部',
-          })}
-        >
-          {dockAnchor === 'top'
-            ? <ArrowDownToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />
-            : <ArrowUpToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />}
-        </button>
+        {dockToolsVisible && (
+          <>
+            <button
+              type="button"
+              onClick={toggleDockAnchor}
+              className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-1 shrink-0 group/anchor"
+              title={L4(language, {
+                ko: dockAnchor === 'top' ? '하단으로 이동' : '상단으로 이동',
+                en: dockAnchor === 'top' ? 'Move to bottom' : 'Move to top',
+                ja: dockAnchor === 'top' ? '下部へ移動' : '上部へ移動',
+                zh: dockAnchor === 'top' ? '移至底部' : '移至顶部',
+              })}
+              aria-label={L4(language, {
+                ko: dockAnchor === 'top' ? '독을 하단으로' : '독을 상단으로',
+                en: dockAnchor === 'top' ? 'Dock to bottom' : 'Dock to top',
+                ja: dockAnchor === 'top' ? 'ドックを下部に' : 'ドックを上部に',
+                zh: dockAnchor === 'top' ? '停靠到底部' : '停靠到顶部',
+              })}
+            >
+              {dockAnchor === 'top'
+                ? <ArrowDownToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />
+                : <ArrowUpToLine className="w-4 h-4 text-text-tertiary group-hover/anchor:text-accent-amber transition-colors" />}
+            </button>
 
-        {/* Move Handle — 자유 이동 */}
-        <div
-          onMouseDown={handleDockMoveStart}
-          onDoubleClick={handleDockReset}
-          className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
-          title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
-        >
-          <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
-        </div>
+            <div
+              onMouseDown={handleDockMoveStart}
+              onDoubleClick={handleDockReset}
+              className={`flex flex-col items-center justify-center w-10 h-10 cursor-grab active:cursor-grabbing rounded-full border border-border bg-bg-tertiary/30 hover:bg-bg-tertiary/60 active:bg-bg-tertiary transition-colors mr-2 shrink-0 group/handle ${isDockDraggingState ? 'scale-110 shadow-panel' : ''}`}
+              title={language === 'KO' ? '드래그하여 이동 · 더블클릭 초기화' : 'Drag to move · Double-click to reset'}
+            >
+              <GripVertical className="w-5 h-5 text-text-tertiary group-hover/handle:text-accent-amber transition-colors" />
+            </div>
+          </>
+        )}
 
         {/* 소설 탭 아이콘 — Primary 5개 + 활성 overflow 탭 */}
         {orderedDockItems
@@ -463,8 +369,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                   isDragging ? 'opacity-40' : ''
                 } ${isDragOver ? 'brightness-125' : ''} ${
                   isHovered && !isDragging ? 'brightness-125' : ''
-                }`}
-                style={{ width: '56px', height: '56px' }}
+                } studio-dock-tile`}
               >
                 {isDragOver && (
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-0.5 h-8 bg-accent-amber rounded-full" />
@@ -499,8 +404,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
             onClick={() => setOverflowOpen(!overflowOpen)}
             className={`relative flex flex-col items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out group ${
               overflowOpen ? 'brightness-125' : ''
-            }`}
-            style={{ width: '56px', height: '56px' }}
+            } studio-dock-tile`}
             title={L4(language, { ko: '더보기', en: 'More', ja: 'もっと見る', zh: '更多' })}
           >
             <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ${
@@ -535,8 +439,7 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
                         handleTabChange(tab.id as AppTab);
                         setOverflowOpen(false);
                       }}
-                      className="relative flex flex-col items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out group"
-                      style={{ width: '56px', height: '56px' }}
+                      className="relative flex flex-col items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ease-out group studio-dock-tile"
                     >
                       <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-[transform,opacity,background-color,border-color,color] duration-200 ${
                         isActive
@@ -563,106 +466,26 @@ const OSDesktop: React.FC<OSDesktopProps> = ({
         {/* 구분선 */}
         <div className="w-px h-10 bg-border/30 mx-1" />
 
-        {/* 앱 링크 아이콘 (UNIVERSE / TRANSLATE) — 앵커 tier (Handle·Settings와 동일 크기)
-            [Nav fix — 2026-05-10] Link → button + router.push 명시 호출.
-            기존 Next.js Link 가 dock 의 dragging/touch handler 와 hydration 시점에 충돌해
-            click 이 navigate 까지 가지 않는 사례 보고. button + onClick 으로 보장.
-            저장 가능한 변경 (currentSessionId) → 새 탭 전환 시 손실 방지를 위해 동일 탭 내 router.push. */}
-        {appLinks.map(link => (
-          // [2026-05-11 fix #2] router.push silent-fail 확인됨 ("클릭만 되고 안 들어가짐") →
-          // raw <a href> + browser native navigation 으로 회귀. Studio ↔ Archive / Translation
-          // 은 어차피 다른 앱 경계이므로 SPA client navigation 의미 낮음 (다른 RSC tree).
-          // 드래그 중에는 preventDefault 로 차단. onMouseDown stopPropagation 로 dock 핸들 race 차단.
-          <a
-            key={link.href}
-            href={link.href}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              if (isDockDragging.current) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-              // 평소엔 a 의 default browser navigation 으로 진입 (가장 robust)
-            }}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 transition-colors border border-transparent hover:border-border/30 cursor-pointer no-underline"
-            title={link.label}
-            aria-label={link.label}
-          >
-            <link.icon className={`w-6 h-6 ${link.color} hover:text-text-primary transition-colors pointer-events-none`} strokeWidth={1.8} />
-          </a>
-        ))}
-
-        {/* 구분선 */}
-        <div className="w-px h-10 bg-border/30 mx-1" />
-
-        {/* Settings */}
-        <div className="relative">
-          <button
-            onClick={() => setIsSystemMenuOpen(!isSystemMenuOpen)}
-            aria-label={L4(language, { ko: '시스템 메뉴 / 설정·내보내기·가져오기', en: 'System menu — settings, export, import', ja: 'システムメニュー — 設定・エクスポート・インポート', zh: '系统菜单 — 设置·导出·导入' })}
-            aria-expanded={isSystemMenuOpen}
-            aria-haspopup="menu"
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-bg-secondary/30 hover:bg-bg-secondary/50 text-text-secondary hover:text-text-primary transition-colors border border-transparent hover:border-border/30"
-          >
-            <Settings className="w-6 h-6" aria-hidden="true" />
-          </button>
-
-          {isSystemMenuOpen && (
-            <div className={`absolute right-0 w-64 bg-bg-secondary/97 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg flex flex-col gap-1 z-[var(--z-dropdown)] ${dockAnchor === 'top' ? 'top-16' : 'bottom-16'}`}>
-              <button onClick={() => { setIsSystemMenuOpen(false); handleTabChange('settings'); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors">
-                <Settings className="w-4 h-4" /> {t('sidebar.settings')}
-              </button>
-              <button
-                onClick={() => { setIsSystemMenuOpen(false); handleDockReset(); }}
-                className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors"
-              >
-                <Move className="w-4 h-4" /> {language === 'KO' ? '독 위치 초기화' : 'Reset Dock Position'}
-              </button>
-              <div className="h-px bg-border/30 my-1" />
-              {/* Export submenu (내보내기) */}
-              <div className="px-3 py-1.5 text-[10px] font-black text-text-tertiary uppercase tracking-widest font-serif">
-                <Download className="w-3 h-3 inline mr-1.5" />
-                {L4(language, { ko: '내보내기', en: 'Export', ja: 'エクスポート', zh: '导出' })}
-              </div>
-              <button onClick={() => { setIsSystemMenuOpen(false); handleExportEPUB(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
-                <span>EPUB <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '전자책', en: 'E-book', ja: '電子書籍', zh: '电子书' })})</span></span>
-                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '전자책 리더용', en: 'For e-book readers', ja: '電子書籍リーダー用', zh: '电子书阅读器用' })}</span>
-              </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); handleExportDOCX(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
-                <span>DOCX <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '워드', en: 'Word', ja: 'ワード', zh: 'Word' })})</span></span>
-                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '워드 편집용', en: 'For Word editing', ja: 'ワード編集用', zh: 'Word编辑用' })}</span>
-              </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); exportTXT(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
-                <span>TXT <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '텍스트', en: 'Text', ja: 'テキスト', zh: '文本' })})</span></span>
-                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '플랫폼 등록용', en: 'For platform submission', ja: 'プラットフォーム登録用', zh: '平台提交用' })}</span>
-              </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); exportJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex flex-col gap-0.5 font-serif transition-colors pl-7">
-                <span>JSON <span className="text-text-tertiary text-[10px]">({L4(language, { ko: '데이터', en: 'Data', ja: 'データ', zh: '数据' })})</span></span>
-                <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '백업/복원용', en: 'For backup/restore', ja: 'バックアップ/復元用', zh: '备份/恢复用' })}</span>
-              </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); exportAllJSON(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                {L4(language, { ko: '전체 백업', en: 'Full Backup', ja: '全体バックアップ', zh: '全量备份' })} (JSON)
-              </button>
-              <button onClick={() => { setIsSystemMenuOpen(false); window.print(); }} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                <Printer className="w-3 h-3" /> {L4(language, { ko: '인쇄', en: 'Print', ja: '印刷', zh: '打印' })}
-              </button>
-
-              <div className="h-px bg-border/30 my-1" />
-              {/* Import submenu (가져오기) */}
-              <div className="px-3 py-1.5 text-[10px] font-black text-text-tertiary uppercase tracking-widest font-serif">
-                <Upload className="w-3 h-3 inline mr-1.5" />
-                {L4(language, { ko: '가져오기', en: 'Import', ja: 'インポート', zh: '导入' })}
-              </div>
-              <button onClick={() => fileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                JSON {L4(language, { ko: '프로젝트', en: 'Project', ja: 'プロジェクト', zh: '项目' })}
-              </button>
-              <button onClick={() => textFileInputRef.current?.click()} className="text-left px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-xl flex items-center gap-2 font-serif transition-colors pl-7">
-                {L4(language, { ko: '원고 텍스트 (TXT/MD)', en: 'Manuscript Text (TXT/MD)', ja: '原稿テキスト (TXT/MD)', zh: '稿件文本 (TXT/MD)' })}
-              </button>
-              <input ref={textFileInputRef} type="file" accept=".txt,.md" multiple className="hidden" onChange={handleImportTextFiles} />
-            </div>
-          )}
-        </div>
+        <OSDesktopSystemMenu
+          appLinks={appLinks}
+          dockAnchor={dockAnchor}
+          dockToolsVisible={dockToolsVisible}
+          exportAllJSON={exportAllJSON}
+          exportJSON={exportJSON}
+          exportTXT={exportTXT}
+          fileInputRef={fileInputRef}
+          handleDockReset={handleDockReset}
+          handleExportDOCX={handleExportDOCX}
+          handleExportEPUB={handleExportEPUB}
+          handleExportHWPX={handleExportHWPX}
+          handleImportTextFiles={handleImportTextFiles}
+          handleTabChange={handleTabChange}
+          isSystemMenuOpen={isSystemMenuOpen}
+          language={language}
+          setDockToolsVisible={setDockToolsVisible}
+          setIsSystemMenuOpen={setIsSystemMenuOpen}
+          toggleDockAnchor={toggleDockAnchor}
+        />
       </nav>
     </>
   );

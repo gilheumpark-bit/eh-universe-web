@@ -4,17 +4,19 @@
 // 오픈베타 기간에는 OPEN_BETA = true → 모든 기능 Pro급 해금
 // 정식 출시 시 OPEN_BETA = false로 전환하면 티어별 제한 활성화
 //
-// 안전 장치: Stripe 결제가 실제 운영 중(STRIPE_SECRET_KEY 설정)이면
-// OPEN_BETA가 true여도 자동으로 비활성화됨 — "플래그 깜빡 잊고 결제 오픈" 방지.
+// 안전 장치: 결제 제한을 켤 때는 NEXT_PUBLIC_PAYMENT_LIVE를 단일 정본으로 쓴다.
+// STRIPE_SECRET_KEY 존재 여부만으로 베타 상태가 바뀌면 로컬/스테이징 검증이 흔들릴 수 있다.
 
 const BETA_FLAG = true;
 
-/** 결제가 실제 연결되어 있는지 감지 (Stripe 키 존재 여부로 판별) */
+function isTruthyEnv(value: string | undefined): boolean {
+  return /^(1|true|yes|on)$/i.test(value?.trim() ?? '');
+}
+
+/** 결제 제한이 실제 운영 모드인지 감지 */
 function isPaymentLive(): boolean {
   if (typeof process === 'undefined') return false;
-  const sk = process.env.STRIPE_SECRET_KEY;
-  // sk_live_ 또는 sk_test_로 시작하는 유효 형식만 "운영 중"으로 간주
-  return typeof sk === 'string' && /^sk_(live|test)_[A-Za-z0-9_-]{20,}$/.test(sk);
+  return isTruthyEnv(process.env.NEXT_PUBLIC_PAYMENT_LIVE);
 }
 
 /** 오픈베타 플래그 — true면 모든 유저에게 Pro 기능 해금. 결제 활성 시 자동 false. */
@@ -35,7 +37,7 @@ export interface TierLimits {
     /** 고급 모델 선택 가능 */
     advancedModels: boolean;
   };
-  // 코드 스튜디오
+  // 내부 진단
   code: {
     /** 일일 검증 횟수 (0 = 무제한) */
     dailyVerifications: number;
@@ -90,6 +92,11 @@ const TIERS: Record<UserTier, TierLimits> = {
 /** 현재 유저 티어의 기능 제한을 반환. 오픈베타 시 Pro급 해금. */
 export function getTierLimits(tier: UserTier): TierLimits {
   if (OPEN_BETA) return TIER_PRO;
+  return TIERS[tier];
+}
+
+/** 오픈베타 오버라이드 없는 원본 티어 제한. 가격표/설정 UI 호환층에서만 사용한다. */
+export function getRawTierLimits(tier: UserTier): TierLimits {
   return TIERS[tier];
 }
 

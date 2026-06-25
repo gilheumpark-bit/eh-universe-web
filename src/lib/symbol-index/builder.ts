@@ -12,7 +12,7 @@
 //
 // [C] 빈 입력 가드 (characters undefined / episodes 0개) — 빈 인덱스 반환
 // [G] 단일 패스 — config 1회 순회 + episodes 1회 순회 (스캔은 별도 모듈)
-// [K] 5종 SymbolKind 모두 처리, world 룰북 키워드 추출은 휴리스틱
+// [K] 5종 SymbolKind 모두 처리, world 연출 기준 키워드 추출은 휴리스틱
 // ============================================================
 
 import type {

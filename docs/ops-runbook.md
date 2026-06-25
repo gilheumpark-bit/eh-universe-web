@@ -1,7 +1,7 @@
 # Loreguard — Ops Runbook (v2.2.0)
 
 **대상**: 현재/향후 운영 담당. 알파~베타 단계의 1~2인 팀 기준.
-**업데이트**: 2026-04-20
+**업데이트**: 2026-06-10
 
 ---
 
@@ -84,7 +84,7 @@
 ### 매월
 - [ ] `bench/chaos-fortress-10k.mjs` 재실행 → `docs/chaos-fortress-10k-report.md` 업데이트
 - [ ] Lighthouse 실측 → `docs/lighthouse-report.md` 갱신
-- [ ] Bundle size 측정 → `docs/bundle-report.md` 갱신 (500 KB 넘는 라우트 split 검토)
+- [ ] Bundle size 측정 → `npm run build:report` 또는 `npm run bundle:report` 실행 후 생성되는 `docs/bundle-report.md` 검토 (500 KB 넘는 라우트 split 검토)
 
 ---
 

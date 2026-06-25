@@ -1,5 +1,7 @@
 # Loreguard v2.2.0-alpha — Novel Studio Fortress
 
+> Historical snapshot: 2026-04-20 release note. Current repo baseline, active E2E inventory, and cleanup status must be read from `docs/README.md`, `docs/DOCUMENT-STATUS-2026-06-24.md`, and `docs/CLEANUP-STATUS.md`.
+
 **Release date**: 2026-04-20
 **Branch**: `feature/M7-hardening`
 **Stability**: Alpha — deployable
@@ -62,7 +64,7 @@ Fortress zero-diff guarantee: the M1 save-engine, useAutoSave, useRecovery, useM
 ### Known limitations (deliberately deferred)
 
 - **Bundle analysis table**: Next.js 16 / Turbopack does not emit the classic First Load JS table at build time. Use `npm run build:analyze` or `npm run build:report` for per-route size detail.
-- **axe-core automated a11y**: package not installed. Manual WCAG 2.1 AA audit tracked in `docs/eh-universe-baseline-checklist.md`. Installing `@axe-core/react` is tagged for post-alpha.
+- **axe-core automated a11y**: package not installed in this historical release. Current accessibility and cleanup state is tracked from `docs/CLEANUP-STATUS.md` and current route tests rather than the removed baseline checklist.
 - **MarketplacePanel**: still a skeleton wired to placeholder manuscript getters. Feature-flagged off.
 
 ---

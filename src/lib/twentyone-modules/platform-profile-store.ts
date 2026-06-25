@@ -2,9 +2,9 @@
 // twentyone-modules/platform-profile-store.ts
 // — M18 IDB CRUD wrapper.
 //
-// Platform profiles are READ-ONLY cache, populated by the commercial-license
-// loader at first start. AGPL distribution ships an EMPTY cache — concrete
-// 18-platform rule data is granted separately under commercial license.
+// Platform profiles are READ-ONLY cache, populated by a separate rule-pack
+// loader at first start. This repository ships an EMPTY cache; concrete
+// 18-platform rule data is supplied separately.
 // ============================================================
 
 import type { PlatformProfile, PlatformMarket } from './types';
@@ -20,7 +20,7 @@ import { validatePlatformProfile } from './platform-adapter';
 
 /**
  * Cache a platform profile (after validation).
- * Called by the commercial-license rule pack loader.
+ * Called by the separate rule-pack loader.
  */
 export async function cachePlatformProfile(profile: PlatformProfile): Promise<PlatformProfile> {
   const validation = validatePlatformProfile(profile);
@@ -53,7 +53,7 @@ export async function removePlatformProfile(platformId: string): Promise<void> {
 
 /**
  * Check whether any commercial rule pack is loaded. Used by UI to render
- * "Commercial license required" placeholder when empty.
+ * "Commercial license required" fallback text when empty.
  */
 export async function hasAnyPlatformProfile(): Promise<boolean> {
   const all = await listAllProfiles();

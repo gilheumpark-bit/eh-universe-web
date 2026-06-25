@@ -2265,7 +2265,7 @@
         return null;
       }
       return normalizeState(JSON.parse(raw));
-    } catch (_error) {
+    } catch {
       return null;
     }
   }

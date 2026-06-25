@@ -50,7 +50,7 @@ function useZenToast(active: boolean): boolean {
       setShow(false);
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setShow(true);
     const t = setTimeout(() => setShow(false), 2200);
     return () => clearTimeout(t);
@@ -86,45 +86,6 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
   const modKey = isMac ? '⌘' : 'Ctrl';
 
-  // [R7-B fix — 2026-05-12] CSS class `.zen-corner` / `.zen-toast` 의존 제거.
-  // Tailwind CSS 4 cascade layer가 .zen-corner opacity를 override하는 원인 미특정 →
-  // 모든 스타일을 inline으로. CSS variable은 globals.css와 동일.
-  const cornerStyle: React.CSSProperties = {
-    position: 'fixed',
-    fontFamily: 'var(--font-mono, "JetBrains Mono", ui-monospace, monospace)',
-    fontSize: 9,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: 'var(--color-text-quaternary, #5a5347)',
-    zIndex: 6,
-    pointerEvents: 'none',
-    transition: 'opacity 300ms cubic-bezier(0.16, 1, 0.3, 1)',
-    opacity: active ? 0.5 : 0,
-  };
-  const toastStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 80,
-    left: '50%',
-    transform: showToast ? 'translate(-50%, 4px)' : 'translateX(-50%)',
-    padding: '8px 16px',
-    background: 'rgba(36, 32, 24, 0.92)',
-    border: '1px solid var(--color-border-strong, #3a352c)',
-    borderRadius: 9999,
-    fontFamily: 'var(--font-mono, "JetBrains Mono", ui-monospace, monospace)',
-    fontSize: 10,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: 'var(--color-text-secondary, #b5ac9d)',
-    zIndex: 50,
-    backdropFilter: 'blur(14px)',
-    transition: 'opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
-    opacity: showToast ? 1 : 0,
-    pointerEvents: 'none',
-  };
-  const rowStyle: React.CSSProperties = { marginBottom: 3, display: 'flex', gap: 6, alignItems: 'center' };
-  const labelStyle: React.CSSProperties = { color: 'var(--color-text-tertiary, #948a7c)' };
-  const valStyle: React.CSSProperties = { color: 'var(--color-text-secondary, #b5ac9d)' };
-
   // SSR / 초기 mount 전엔 nothing render — portal target 확보 후 mount.
   if (!portalTarget) return null;
 
@@ -132,14 +93,14 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
   // "Expected ',' got ';'" 오해석하는 회귀 — fragment를 변수로 추출하여 우회.
   const portalContent = (
     <>
-      {/* ZenToast — Zen 진입 시 2.2s 상단 중앙. 100% inline + body 직계 portal. */}
+      {/* ZenToast — Zen 진입 시 2.2s 상단 중앙. body 직계 portal + CSS 계약. */}
       <div
         role="status"
         aria-live="polite"
         aria-hidden={!showToast}
-        style={toastStyle}
+        className={`zen-toast${showToast ? ' is-visible' : ''}`}
       >
-        <span style={{ color: 'var(--color-accent-amber, #b8955c)', marginRight: 4 }}>Zen</span>
+        <span className="k">Zen</span>
         <span>
           {L4(language, {
             ko: `다른 패널은 ${modKey}B / ${modKey}J 로 부르세요`,
@@ -150,50 +111,50 @@ function ZenOverlaysInner({ active, language, chapter, session, today, words }: 
         </span>
       </div>
 
-      {/* 4 모서리 잔향 — Doc 5 spec. 100% inline 스타일 (CSS class 의존 0). */}
-      <div aria-hidden="true" style={{ ...cornerStyle, top: 18, left: 24 }}>
-        <div style={rowStyle}>
-          <span style={labelStyle}>chapter</span>
-          <span style={valStyle}>{chapter ?? 'Loreguard'}</span>
+      {/* 4 모서리 잔향 — Doc 5 spec. body 직계 portal + CSS 계약. */}
+      <div aria-hidden="true" className={`zen-corner tl${active ? ' is-active' : ''}`}>
+        <div className="row">
+          <span className="k">chapter</span>
+          <span className="v">{chapter ?? 'Loreguard'}</span>
         </div>
       </div>
 
-      <div aria-hidden="true" style={{ ...cornerStyle, top: 18, right: 24, textAlign: 'right' }}>
+      <div aria-hidden="true" className={`zen-corner tr${active ? ' is-active' : ''}`}>
         {session && (
-          <div style={rowStyle}>
-            <span style={labelStyle}>session</span>
-            <span style={valStyle}>{session}</span>
+          <div className="row">
+            <span className="k">session</span>
+            <span className="v">{session}</span>
           </div>
         )}
         {today && (
-          <div style={rowStyle}>
-            <span style={labelStyle}>today</span>
-            <span style={valStyle}>{today}</span>
+          <div className="row">
+            <span className="k">today</span>
+            <span className="v">{today}</span>
           </div>
         )}
       </div>
 
-      <div aria-hidden="true" style={{ ...cornerStyle, bottom: 14, left: 24 }}>
-        <div style={rowStyle}>
-          <span style={labelStyle}>{modKey}B</span>
-          <span style={valStyle}>sidebar</span>
+      <div aria-hidden="true" className={`zen-corner bl${active ? ' is-active' : ''}`}>
+        <div className="row">
+          <span className="k">{modKey}B</span>
+          <span className="v">sidebar</span>
         </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>{modKey}J</span>
-          <span style={valStyle}>inspector</span>
+        <div className="row">
+          <span className="k">{modKey}J</span>
+          <span className="v">inspector</span>
         </div>
       </div>
 
-      <div aria-hidden="true" style={{ ...cornerStyle, bottom: 14, right: 24, textAlign: 'right' }}>
+      <div aria-hidden="true" className={`zen-corner br${active ? ' is-active' : ''}`}>
         {wordsLabel && (
-          <div style={rowStyle}>
-            <span style={valStyle}>{wordsLabel}</span>
-            <span style={{ ...labelStyle, marginLeft: 6 }}>words</span>
+          <div className="row">
+            <span className="v">{wordsLabel}</span>
+            <span className="k push">words</span>
           </div>
         )}
-        <div style={rowStyle}>
-          <span style={labelStyle}>esc</span>
-          <span style={valStyle}>exit zen</span>
+        <div className="row">
+          <span className="k">esc</span>
+          <span className="v">exit zen</span>
         </div>
       </div>
     </>

@@ -27,7 +27,7 @@ describe('MultiTabBanner — 상태별 렌더', () => {
     const banner = screen.getByTestId('multi-tab-banner');
     expect(banner).toBeInTheDocument();
     expect(banner).toHaveAttribute('data-variant', 'leader-with-followers');
-    expect(banner.textContent).toMatch(/Follower 2/);
+    expect(banner.textContent).toMatch(/다른 창에서도 작업 중 \(2개\)/);
   });
 
   test('M3: Follower → follower variant + 승격 버튼', () => {
@@ -132,26 +132,26 @@ describe('MultiTabBanner — 인터랙션', () => {
 // ============================================================
 
 describe('MultiTabBanner — 4언어', () => {
-  test('M9: KO — "이 탭을 Leader로"', () => {
+  test('M9: KO — "이 창에서 계속"', () => {
     render(<MultiTabBanner isLeader={false} followerCount={-1} language="KO" />);
-    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/Leader로/);
+    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/이 창에서 계속/);
   });
 
-  test('M10: EN — "Make this tab Leader"', () => {
+  test('M10: EN — "Continue here"', () => {
     render(<MultiTabBanner isLeader={false} followerCount={-1} language="EN" />);
-    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/Make this tab Leader/);
+    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/Continue here/);
   });
 
-  test('M11: JP — "このタブをLeaderに"', () => {
+  test('M11: JP — 저장 대기 표현', () => {
     render(<MultiTabBanner isLeader={false} followerCount={-1} language="JP" />);
-    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/Leader/);
-    expect(screen.getByTestId('multi-tab-banner').textContent).toMatch(/閲覧のみ/);
+    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/このウィンドウで続ける/);
+    expect(screen.getByTestId('multi-tab-banner').textContent).toMatch(/別のウィンドウで保存中/);
   });
 
-  test('M12: CN — "将此标签页设为 Leader"', () => {
+  test('M12: CN — 저장 대기 표현', () => {
     render(<MultiTabBanner isLeader={false} followerCount={-1} language="CN" />);
-    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/Leader/);
-    expect(screen.getByTestId('multi-tab-banner').textContent).toMatch(/仅供查看/);
+    expect(screen.getByTestId('multi-tab-promote-btn').textContent).toMatch(/在此窗口继续/);
+    expect(screen.getByTestId('multi-tab-banner').textContent).toMatch(/正在其他窗口保存/);
   });
 });
 
@@ -173,12 +173,12 @@ describe('MultiTabBanner — 접근성', () => {
     expect(btn.className).toMatch(/min-h-\[44px\]/);
   });
 
-  test('M15: 승격 버튼 aria-label + help 텍스트 포함 (색상만 의존 금지)', () => {
+  test('M15: 전환 버튼 aria-label + help 텍스트 포함 (색상만 의존 금지)', () => {
     render(<MultiTabBanner isLeader={false} followerCount={-1} language="KO" />);
     const btn = screen.getByTestId('multi-tab-promote-btn');
     const label = btn.getAttribute('aria-label');
     expect(label).toBeTruthy();
-    expect(label).toMatch(/Leader/);
+    expect(label).toMatch(/이 창에서 계속/);
     expect(label!.length).toBeGreaterThan(20); // help 텍스트 포함
   });
 });

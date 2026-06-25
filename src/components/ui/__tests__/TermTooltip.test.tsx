@@ -43,7 +43,7 @@ describe('TermTooltip', () => {
   // ============================================================
 
   it('클릭 시 툴팁이 열리고 role="tooltip" 요소가 렌더된다', () => {
-    const { getByRole, queryByRole } = render(<TermTooltip term="6축 점수" />);
+    const { getByRole, queryByRole } = render(<TermTooltip term="품질 항목" />);
     expect(queryByRole('tooltip')).toBeNull();
     fireEvent.click(getByRole('button'));
     expect(getByRole('tooltip')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('TermTooltip', () => {
   });
 
   it('Escape 키로 툴팁이 닫힌다', () => {
-    const { getByRole, queryByRole } = render(<TermTooltip term="BYOK" />);
+    const { getByRole, queryByRole } = render(<TermTooltip term="연결 키" />);
     fireEvent.click(getByRole('button'));
     expect(queryByRole('tooltip')).toBeInTheDocument();
     act(() => {

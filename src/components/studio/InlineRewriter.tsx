@@ -110,6 +110,10 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
   const [preview, setPreview] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
   const [showActions, setShowActions] = useState(false);
+  // [H6 fix] 마지막으로 실행된 액션 id 추적. insert/replace 판정을 선택 텍스트 유무가
+  // 아니라 *실행된 액션 타입*으로 하기 위함 (selection은 빈 선택 시 null이라 selection.text는
+  // 항상 non-empty → 기존 !selection.text 판정은 항상 false).
+  const [lastActionId, setLastActionId] = useState<ActionType | string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Sync external content changes (WritingToolbar 서식 버튼 등 외부 변경 반영)
@@ -139,6 +143,9 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
 
   const executeAction = useCallback(async (action: QuickAction) => {
     if (!selection || isStreaming) return;
+
+    // [H6 fix] applyPreview가 insert_after 여부를 액션 타입으로 판정하도록 실행 액션 id 기록.
+    setLastActionId(action.id);
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey) {
@@ -173,6 +180,7 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
         systemInstruction: systemPrompt,
         messages,
         temperature: 0.85,
+        reasoningStage: 'detail',
         signal: controller.signal,
         onChunk: (chunk) => {
           result += chunk;
@@ -214,7 +222,10 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
       return;
     }
     setShowApplyConfirm(false);
-    const isInsertAfter = preview && !selection.text;
+    // [H6 fix] insert_after 판정을 선택 텍스트 유무(항상 non-empty라 false)가 아니라
+    // 실행된 액션 타입으로 한다. insert_after일 때는 선택 끝(selection.end) 뒤에 삽입하여
+    // 선택 텍스트를 삭제/덮어쓰지 않도록 보장.
+    const isInsertAfter = lastActionId === 'insert_after';
     let newContent: string;
     if (isInsertAfter) {
       newContent = editableContent.slice(0, selection.end) + '\n' + preview + editableContent.slice(selection.end);
@@ -225,8 +236,9 @@ const InlineRewriter: React.FC<InlineRewriterProps> = ({ content, language, cont
     setPreview(null);
     setSelection(null);
     setShowActions(false);
+    setLastActionId(null);
     onApply(newContent);
-  }, [preview, selection, editableContent, onApply, showApplyConfirm]);
+  }, [preview, selection, editableContent, onApply, showApplyConfirm, lastActionId]);
 
   const cancelPreview = () => {
     abortRef.current?.abort();

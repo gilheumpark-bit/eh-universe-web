@@ -1,7 +1,7 @@
 // ============================================================
 // EHSU BYOK Multi-Key Manager
 // ============================================================
-// 최대 7개 API 키 슬롯. 에이전트별 키 할당. 병렬 처리. 과금 투명성.
+// 최대 7개 연결 키 슬롯. 역할별 키 할당. 병렬 처리. 과금 투명성.
 
 import { encryptKey, decryptKey } from './ai-providers';
 
@@ -9,7 +9,7 @@ import { encryptKey, decryptKey } from './ai-providers';
 // PART 1 — Types
 // ============================================================
 
-export type ProviderId = 'gemini' | 'openai' | 'claude' | 'groq' | 'mistral' | 'ollama' | 'lmstudio';
+export type ProviderId = 'upstage' | 'gemini' | 'openai' | 'claude' | 'groq' | 'mistral' | 'ollama' | 'lmstudio';
 
 export type AgentRole =
   | 'writer'        // 집필 (소설 생성)
@@ -53,17 +53,19 @@ export interface MultiKeyConfig {
 const STORAGE_KEY = 'ehsu_multi_key_config';
 
 const DEFAULT_MODELS: Record<ProviderId, string> = {
+  upstage: 'solar-pro3',
   gemini: 'gemini-2.5-pro',
-  openai: 'gpt-5.4',
+  openai: 'gpt-5.4-mini',
   claude: 'claude-sonnet-4-6',
   groq: 'llama-3.3-70b-versatile',
-  mistral: 'mistral-medium-3-latest',
+  mistral: 'mistral-medium-3-5',
   ollama: 'llama3.1',
   lmstudio: 'openai/gpt-oss-20b',
 };
 
-// 토큰당 대략적 비용 (USD, 출력 기준)
+// 토큰당 대략적 비용 (USD, 출력 기준). 0은 이 레거시 추정기에서 단가 산정을 보류한다는 뜻.
 const COST_PER_1K_OUTPUT: Record<ProviderId, number> = {
+  upstage: 0,
   gemini: 0.002,
   openai: 0.015,
   claude: 0.015,
@@ -76,8 +78,8 @@ const COST_PER_1K_OUTPUT: Record<ProviderId, number> = {
 export function createEmptySlot(index: number): KeySlot {
   return {
     id: `slot-${index}`,
-    provider: 'gemini',
-    model: DEFAULT_MODELS.gemini,
+    provider: 'upstage',
+    model: DEFAULT_MODELS.upstage,
     label: `Slot ${index}`,
     apiKey: '',
     assignedRole: 'general',
@@ -102,7 +104,7 @@ export function createDefaultConfig(): MultiKeyConfig {
 export function saveMultiKeyConfig(config: MultiKeyConfig): void {
   if (typeof window === 'undefined') return;
   try {
-    // API 키는 간단한 난독화 적용
+    // 연결 키는 간단한 난독화 적용
     const serializable = {
       ...config,
       slots: config.slots.map((s) => ({

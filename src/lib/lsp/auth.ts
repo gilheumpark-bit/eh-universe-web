@@ -10,6 +10,8 @@
 // ============================================================
 
 const TOKEN_PREFIX = 'lg_lsp_';
+export const LSP_SESSION_COOKIE = 'lg_lsp_session';
+export const LSP_SESSION_TTL_SEC = 60 * 60;
 
 /** 32 hex (16 bytes) 랜덤 토큰 생성 */
 export function generateLspToken(): string {
@@ -83,4 +85,101 @@ export function checkRateLimit(key: string): RateLimitResult {
 
 export function clearRateLimit(): void {
   rateLimitStore.clear();
+}
+
+export type LspAuthResult =
+  | { ok: true; token: string; remaining: number; resetAt: number }
+  | { ok: false; status: 401 | 429 | 503; error: string; retryAfterSec?: number; resetAt?: number };
+
+function configuredLspToken(): string {
+  return process.env.LOREGUARD_LSP_TOKEN?.trim() ?? '';
+}
+
+function configuredLspTokenHash(): string {
+  return process.env.LOREGUARD_LSP_TOKEN_HASH?.trim().toLowerCase() ?? '';
+}
+
+export function hasConfiguredLspTokenStore(): boolean {
+  return Boolean(configuredLspToken() || configuredLspTokenHash());
+}
+
+function readCookieValue(cookieHeader: string, name: string): string {
+  const parts = cookieHeader.split(';');
+  for (const part of parts) {
+    const [rawName, ...rest] = part.trim().split('=');
+    if (rawName !== name) continue;
+    return decodeURIComponent(rest.join('=')).trim();
+  }
+  return '';
+}
+
+function extractLspCookieToken(request: Request): string {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  if (!cookieHeader) return '';
+  return readCookieValue(cookieHeader, LSP_SESSION_COOKIE);
+}
+
+function extractLspToken(request: Request, queryParam?: string): string {
+  const auth = request.headers.get('authorization') ?? '';
+  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
+  if (bearer) return bearer;
+  const cookieToken = extractLspCookieToken(request);
+  if (cookieToken) return cookieToken;
+  if (!queryParam) return '';
+  try {
+    return new URL(request.url).searchParams.get(queryParam)?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export async function verifyLspToken(token: string): Promise<LspAuthResult> {
+  if (!isValidTokenFormat(token)) {
+    return { ok: false, status: 401, error: 'unauthorized' };
+  }
+
+  const directToken = configuredLspToken();
+  const tokenHash = configuredLspTokenHash();
+  const hasServerTokenStore = hasConfiguredLspTokenStore();
+
+  if (directToken && token !== directToken) {
+    return { ok: false, status: 401, error: 'unauthorized' };
+  }
+  if (tokenHash) {
+    const presentedHash = await hashToken(token);
+    if (presentedHash !== tokenHash) {
+      return { ok: false, status: 401, error: 'unauthorized' };
+    }
+  }
+  // [fix] format-only 토큰 허용은 *명시적* local dev(development/test)에서만 한다.
+  // 과거엔 production 만 막아, 자기호스팅을 NODE_ENV 미설정/staging/커스텀 값으로 띄우면
+  // well-formed 토큰이 무인증 통과되는 갭이 있었다. 이제 비-dev 환경은 토큰 스토어 미설정 시
+  // 모두 503 으로 fail-closed (production 동작은 그대로).
+  const isLocalDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  if (!isLocalDev && !hasServerTokenStore) {
+    return { ok: false, status: 503, error: 'lsp_token_store_unconfigured' };
+  }
+
+  const rateKey = `lsp:${await hashToken(token)}`;
+  const rl = checkRateLimit(rateKey);
+  if (!rl.allowed) {
+    return {
+      ok: false,
+      status: 429,
+      error: 'rate_limited',
+      retryAfterSec: Math.ceil((rl.resetAt - Date.now()) / 1000),
+      resetAt: rl.resetAt,
+    };
+  }
+  return { ok: true, token, remaining: rl.remaining, resetAt: rl.resetAt };
+}
+
+export function lspAuthHeaders(result: Extract<LspAuthResult, { ok: false }>): Record<string, string> | undefined {
+  if (result.status !== 429 || !result.retryAfterSec) return undefined;
+  return { 'Retry-After': String(result.retryAfterSec) };
+}
+
+export async function authorizeLspRequest(request: Request, options: { queryTokenParam?: string } = {}): Promise<LspAuthResult> {
+  const token = extractLspToken(request, options.queryTokenParam);
+  return verifyLspToken(token);
 }

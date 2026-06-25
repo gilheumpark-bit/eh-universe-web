@@ -3,8 +3,9 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isAllowedOriginValue } from '@/lib/api-origin-guard';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
@@ -21,16 +22,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   // Origin 검증 (CSRF 방어) — substring이 아닌 엄격한 URL host 비교
   const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  if (origin && host) {
-    try {
-      const originHost = new URL(origin).host;
-      if (originHost !== host) {
-        return NextResponse.json({ authenticated: false, error: 'cross-origin blocked' }, { status: 403 });
-      }
-    } catch {
-      return NextResponse.json({ authenticated: false, error: 'invalid origin' }, { status: 403 });
-    }
+  if (origin && !isAllowedOriginValue(req.headers, origin)) {
+    return NextResponse.json({ authenticated: false, error: 'cross-origin blocked' }, { status: 403 });
   }
 
   const token = req.cookies.get('gh_access_token')?.value;

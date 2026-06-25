@@ -20,7 +20,7 @@
 //   - report-builder 가 이미 생성한 cert 의 해시들을 row 로 직렬화
 //
 // 사상 정합:
-//   - 4차 §1 "보증 X 기록 O"
+//   - 4차 §1 "권리 판단 X 기록 O"
 //   - 14차 §3 "엄밀성 시장" — 정량 지표 + 디스클레이머 동시 노출
 //
 // [C] 안전성: 빈 events → 0/0/0 + status 'incomplete'
@@ -196,10 +196,10 @@ function buildLedger(
 }
 
 const LEDGER_LABELS: Record<CertificateLanguage, { manuscript: string; timeline: string; sourceSummary: string; seal: string }> = {
-  ko: { manuscript: '원고 해시', timeline: '타임라인 해시', sourceSummary: '출처 요약 해시', seal: 'Witness Seal' },
+  ko: { manuscript: '원고 해시', timeline: '타임라인 해시', sourceSummary: '출처 요약 해시', seal: '과정기록 씰' },
   en: { manuscript: 'Manuscript Hash', timeline: 'Timeline Hash', sourceSummary: 'Source Summary Hash', seal: 'Witness Seal' },
-  ja: { manuscript: '原稿ハッシュ', timeline: 'タイムラインハッシュ', sourceSummary: '出典要約ハッシュ', seal: 'Witness Seal' },
-  zh: { manuscript: '原稿哈希', timeline: '时间轴哈希', sourceSummary: '来源摘要哈希', seal: 'Witness Seal' },
+  ja: { manuscript: '原稿ハッシュ', timeline: 'タイムラインハッシュ', sourceSummary: '出典要約ハッシュ', seal: '過程記録シール' },
+  zh: { manuscript: '原稿哈希', timeline: '时间轴哈希', sourceSummary: '来源摘要哈希', seal: '过程记录印章' },
 };
 
 // ============================================================

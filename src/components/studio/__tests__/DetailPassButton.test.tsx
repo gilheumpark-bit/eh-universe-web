@@ -94,7 +94,7 @@ describe('DetailPassButton — flag gating', () => {
     expect(screen.getByTestId('detail-pass-button')).toBeInTheDocument();
   });
 
-  test('flag on → 렌더됨 + 라벨 "AI 살 붙이기"', () => {
+  test('flag on → 렌더됨 + 라벨 "노아 살 붙이기"', () => {
     setFlag('on');
     render(
       <DetailPassButton
@@ -104,7 +104,7 @@ describe('DetailPassButton — flag gating', () => {
         onExpanded={jest.fn()}
       />,
     );
-    expect(screen.getByText(/AI 살 붙이기/)).toBeInTheDocument();
+    expect(screen.getByText(/노아 살 붙이기/)).toBeInTheDocument();
   });
 });
 

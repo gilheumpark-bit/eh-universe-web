@@ -47,6 +47,37 @@ describe('event-recorder — IndexedDB append + CustomEvent', () => {
     expect(events[0].appVersion).toBeTruthy();
   });
 
+  it('recordCreativeEvent — 작가 판단 맥락을 함께 보존한다', async () => {
+    const id = await recordCreativeEvent({
+      projectId: 'prj-decision',
+      targetType: 'manuscript',
+      targetId: 'm1',
+      eventType: 'accept',
+      actorType: 'human',
+      actorId: 'author',
+      originType: 'AI_SUGGESTION',
+      beforeHash: 'b'.repeat(64),
+      afterHash: 'a'.repeat(64),
+      decisionContext: {
+        action: 'accepted',
+        selectedAlternativeId: 'alt-2',
+        reason: '배신 장면의 동기가 더 자연스러워서 선택',
+        alternatives: [
+          { id: 'alt-1', label: 'A안', charCount: 120 },
+          { id: 'alt-2', label: 'B안', charCount: 140 },
+        ],
+        delta: { beforeChars: 1000, afterChars: 1120, insertedChars: 120, removedChars: 0, editedChars: 120 },
+      },
+    });
+
+    const events = await listCreativeEvents({ projectId: 'prj-decision' });
+    expect(events).toHaveLength(1);
+    expect(events[0].id).toBe(id);
+    expect(events[0].decisionContext?.selectedAlternativeId).toBe('alt-2');
+    expect(events[0].decisionContext?.alternatives).toHaveLength(2);
+    expect(events[0].decisionContext?.delta?.insertedChars).toBe(120);
+  });
+
   it('CustomEvent 디스패치 (noa:creative-event-captured)', async () => {
     const handler = jest.fn();
     window.addEventListener(CREATIVE_EVENT_CAPTURED, handler as EventListener);

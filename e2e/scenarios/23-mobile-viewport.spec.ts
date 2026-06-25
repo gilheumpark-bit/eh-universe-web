@@ -19,15 +19,24 @@ import { test, expect, devices } from '@playwright/test';
 const PUBLIC_PAGES: Array<{ path: string; expectedTitle: RegExp }> = [
   { path: '/', expectedTitle: /Loreguard|로어가드/i },
   { path: '/about', expectedTitle: /About|소개|EH/i },
-  { path: '/network', expectedTitle: /Network|네트워크/i },
-  { path: '/codex', expectedTitle: /Codex|코덱스/i },
-  { path: '/changelog', expectedTitle: /Changelog|변경/i },
+  { path: '/studio', expectedTitle: /Loreguard|로어가드|창작/i },
+  { path: '/translation-studio', expectedTitle: /번역|현지화|Translation|Loreguard|로어가드/i },
+  { path: '/changelog', expectedTitle: /Changelog|변경|Loreguard|로어가드|EH/i },
 ];
 
 const MOBILE_DEVICES: Array<{ name: string; device: typeof devices['Pixel 5'] }> = [
   { name: 'Pixel 5', device: devices['Pixel 5'] },
   { name: 'iPhone 13', device: devices['iPhone 13'] },
 ];
+
+function toDescribeScopedDeviceOptions(device: typeof devices['Pixel 5']) {
+  // [M-01 priority-high 2026-06-14]
+  // Playwright forbids worker-scoped options such as defaultBrowserType inside
+  // test.describe(). Keep browser selection at the project/config level and
+  // scope only browser-context emulation options here.
+  const { defaultBrowserType: _defaultBrowserType, ...contextOptions } = device;
+  return contextOptions;
+}
 
 // ============================================================
 // PART 1 — Helpers
@@ -93,7 +102,7 @@ async function detectSmallTouchTargets(page: import('@playwright/test').Page): P
 
 for (const { name, device } of MOBILE_DEVICES) {
   test.describe(`Mobile viewport — ${name}`, () => {
-    test.use({ ...device });
+    test.use(toDescribeScopedDeviceOptions(device));
 
     for (const { path, expectedTitle } of PUBLIC_PAGES) {
       test(`${path} — no horizontal overflow`, async ({ page }) => {

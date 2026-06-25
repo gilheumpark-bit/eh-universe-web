@@ -23,6 +23,7 @@
 import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { Languages, Sparkles, Globe, ShieldCheck, AlignLeft } from 'lucide-react';
 import { useTranslator } from '../core/TranslatorContext';
+import { useTranslatorLayout } from '../core/TranslatorLayoutContext';
 import {
   runIntegrityCheck,
   summarizeIntegrity,
@@ -140,6 +141,7 @@ export function TripleEditor() {
     patchActiveChapter,
     langKo,
   } = useTranslator();
+  const layout = useTranslatorLayout();
 
   const activeChapter = activeChapterIndex !== null ? chapters[activeChapterIndex] : null;
   // [B.2 — 2026-05-08] legacy fallback — resultMarket / resultFaithful 결여 시 legacy result 표시.
@@ -235,33 +237,49 @@ export function TripleEditor() {
         <div className="flex items-center gap-2">
           <Languages className="w-3.5 h-3.5 text-accent-purple" />
           <span className="font-mono text-[10px] uppercase tracking-wider text-text-secondary font-bold">
-            {langKo ? '듀얼 출력 비교' : 'Dual Output Compare'}
+            {langKo ? '두 안 비교' : 'Dual Output Compare'}
           </span>
           <span className="text-[10px] text-text-tertiary">
-            {langKo ? '원문 ▸ 원문 보존 ▸ 현지화' : 'Source ▸ Faithful ▸ Market'}
+            {langKo ? '원문 ▸ 보존안 ▸ 현지화안' : 'Source ▸ Faithful ▸ Market'}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setSyncedScroll((s) => !s)}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border transition-colors ${
-            syncedScroll
-              ? 'bg-accent-purple/15 border-accent-purple/40 text-accent-purple'
-              : 'bg-white/[0.02] border-white/10 text-text-tertiary hover:text-text-secondary'
-          }`}
-          aria-pressed={syncedScroll}
-          title={langKo ? '세 패널 스크롤 동기화' : 'Sync scroll across panes'}
-        >
-          <AlignLeft className="w-3 h-3" />
-          {langKo ? '동기 스크롤' : 'Sync scroll'}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => layout.setActiveRightPanel(layout.activeRightPanel === 'localization' ? null : 'localization')}
+            className={`flex min-h-[44px] items-center gap-1 rounded border px-2 py-1 text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
+              layout.activeRightPanel === 'localization'
+                ? 'border-accent-amber/40 bg-accent-amber/15 text-accent-amber'
+                : 'border-white/10 bg-white/[0.02] text-text-tertiary hover:text-text-secondary'
+            }`}
+            aria-pressed={layout.activeRightPanel === 'localization'}
+            title={langKo ? '현지 판단 카드 열기' : 'Open localization decision cards'}
+          >
+            <Globe className="w-3 h-3" />
+            {langKo ? '현지 판단' : 'Local'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSyncedScroll((s) => !s)}
+            className={`flex min-h-[44px] items-center gap-1 rounded border px-2 py-1 text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 ${
+              syncedScroll
+                ? 'border-accent-purple/40 bg-accent-purple/15 text-accent-purple'
+                : 'border-white/10 bg-white/[0.02] text-text-tertiary hover:text-text-secondary'
+            }`}
+            aria-pressed={syncedScroll}
+            title={langKo ? '세 패널 스크롤 동기화' : 'Sync scroll across panes'}
+          >
+            <AlignLeft className="w-3 h-3" />
+            {langKo ? '동기 스크롤' : 'Sync scroll'}
+          </button>
+        </div>
       </div>
 
       {/* 3-pane Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-1 min-h-0">
         {/* SOURCE */}
         <Pane
-          title={langKo ? 'SOURCE · 원문' : 'SOURCE'}
+          title={langKo ? '원문' : 'SOURCE'}
           subtitle={(from || '').toUpperCase()}
           icon={<Languages className="w-3.5 h-3.5 text-accent-blue" />}
           value={source}
@@ -273,7 +291,7 @@ export function TripleEditor() {
         />
         {/* FAITHFUL */}
         <Pane
-          title={langKo ? 'FAITHFUL · 원문 보존' : 'FAITHFUL'}
+          title={langKo ? '보존안' : 'FAITHFUL'}
           subtitle={(to || '').toUpperCase()}
           icon={<ShieldCheck className="w-3.5 h-3.5 text-accent-green" />}
           value={resultFaithful}
@@ -284,13 +302,13 @@ export function TripleEditor() {
           accentClass="border-accent-green/30"
           placeholder={
             langKo
-              ? '듀얼 번역 실행 시 자동 생성 (작가 의도·고유명사·복선·문체 보존)'
-              : 'Auto-generated on dual translation (preserves intent, names, foreshadowing, voice)'
+              ? '두 안 만들기 실행 시 준비됨 (작가 의도·고유명사·복선·문체 보존)'
+              : 'Prepared on dual translation (preserves intent, names, foreshadowing, voice)'
           }
         />
         {/* MARKET */}
         <Pane
-          title={langKo ? 'MARKET · 현지화' : 'MARKET'}
+          title={langKo ? '현지화안' : 'MARKET'}
           subtitle={(to || '').toUpperCase()}
           icon={<Globe className="w-3.5 h-3.5 text-accent-amber" />}
           value={resultMarket}
@@ -301,8 +319,8 @@ export function TripleEditor() {
           accentClass="border-accent-amber/30"
           placeholder={
             langKo
-              ? '듀얼 번역 실행 시 자동 생성 (대사 리듬·호칭·장르 문법·시장 감각 적응)'
-              : 'Auto-generated on dual translation (dialogue rhythm, honorifics, genre fit, market feel)'
+              ? '두 안 만들기 실행 시 준비됨 (대사 리듬·호칭·장르 문법·시장 감각 적응)'
+              : 'Prepared on dual translation (dialogue rhythm, honorifics, genre fit, market feel)'
           }
         />
       </div>
@@ -313,7 +331,7 @@ export function TripleEditor() {
           <Sparkles className="w-3 h-3 text-accent-purple/60" />
           <span className="italic">
             {langKo
-              ? '"원문은 지키고, 시장에는 맞춘다."'
+              ? '"원문은 지키고, 독자에게는 자연스럽게."'
               : '"Faithful where it matters. Localized where it counts."'}
           </span>
           {diffStats && diffStats.total > 0 && (
@@ -321,7 +339,7 @@ export function TripleEditor() {
               className="ml-2 font-mono px-1.5 py-0.5 rounded bg-accent-purple/10 border border-accent-purple/20 text-accent-purple"
               title={
                 diffStats.changedIndices.size > 0
-                  ? (langKo ? '변경 단락 번호 (Faithful vs Market): ' : 'Changed paragraphs (F vs M): ') +
+                  ? (langKo ? '변경 단락 번호 (보존안 vs 현지화안): ' : 'Changed paragraphs (F vs M): ') +
                     Array.from(diffStats.changedIndices).map((i) => `#${i + 1}`).slice(0, 20).join(', ') +
                     (diffStats.changedIndices.size > 20 ? '…' : '')
                   : (langKo ? '변경 없음' : 'No changes')
@@ -339,7 +357,9 @@ export function TripleEditor() {
             </span>
           )}
         </div>
-        <span className="font-mono">AI prepares · Translators elevate · Authors go global</span>
+        <span className="font-mono">
+          {langKo ? '노아 준비 · 작가 검토 · 과정기록' : 'Noa prepares · Translators elevate · Authors go global'}
+        </span>
       </div>
     </div>
   );

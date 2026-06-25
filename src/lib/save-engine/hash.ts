@@ -82,7 +82,7 @@ export function utf8Encode(text: string): Uint8Array {
  * Node 16+/jsdom 테스트: globalThis.crypto 비어있을 때 node:crypto.webcrypto.subtle 폴백.
  */
 let cachedSubtle: SubtleCrypto | null = null;
-function getSubtle(): SubtleCrypto {
+export function getSubtle(): SubtleCrypto {
   if (cachedSubtle) return cachedSubtle;
 
   const g = globalThis as unknown as { crypto?: Crypto };
@@ -114,10 +114,12 @@ function getSubtle(): SubtleCrypto {
 export async function sha256(input: Uint8Array | string): Promise<string> {
   const bytes = typeof input === 'string' ? utf8Encode(input) : input;
   const subtle = getSubtle();
-  // Web Crypto는 ArrayBuffer/ArrayBufferView 둘 다 수용. SharedArrayBuffer 호환을 위해
-  // byteOffset/byteLength로 슬라이스한 ArrayBuffer 전달.
-  const view = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-  const digest = await subtle.digest('SHA-256', view);
+  // BufferSource는 항상 일반 ArrayBuffer 백킹의 fresh Uint8Array로 복사 후 전달.
+  // 기존 `bytes.buffer.slice()` 는 SharedArrayBuffer/detached/pooled(Node Buffer) 백킹일 때
+  // 일부 webcrypto 구현(Node 20 글로벌 webcrypto)이 거부 → CI Linux 에서만 digest TypeError 발생.
+  // Uint8Array(TypedArray) 복사본은 모든 환경(브라우저·Node·jsdom)에서 BufferSource로 수용됨.
+  const data = new Uint8Array(bytes);
+  const digest = await subtle.digest('SHA-256', data);
   return bytesToHex(new Uint8Array(digest));
 }
 

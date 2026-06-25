@@ -1,117 +1,150 @@
 ---
 name: eh-universe-guideline
-description: "EH Universe Web 공식 운영 지침 (NOA Rules v1.2 + Design v8.0 + 2026-04 모델 기준)"
+description: "Loreguard 공식 운영 지침 (NOA Rules v1.2 + Design v8.0 + 2026-06-14 현재 제품 기준)"
 ---
 
-# EH Universe Web — Agent Guideline & Operations Skill
+# Loreguard — Agent Guideline & Operations Skill
 
-이 스킬은 eh-universe-web 프로젝트의 AI 에이전트 행동 강령입니다. 웹 작업 시 반드시 이 지침을 우선 적용합니다.
+이 스킬은 `eh-universe-web` 프로젝트 작업 시 적용하는 요약 지침이다.
+상세 원칙은 저장소 루트 `AGENTS.md`, 현재 아키텍처는 `docs/ARCHITECTURE.md`, 리딤/노아 운영 상태는 `docs/redeem-agent-operations-2026-06-14.md`를 우선한다.
 
 ## 1. 응답 및 소통 (NOA-CORE)
 
-* **언어/톤 매칭**: 사용자 언어 감지 → 동일 언어 응답, 톤 복제
-* **반복 금지**: 최근 5턴 동일 패턴 금지, 새 구조로 핵심만 전달
-* **NIB 게이트**: 미검증 API/함수는 `[미검증 API]`, `[추정]` 마커 사용, 단정 금지
+- 사용자 언어와 톤을 따른다.
+- 불확실한 API, 외부 정책, 최신 모델 정보는 단정하지 않는다.
+- 코드와 문서가 충돌하면 현재 코드와 최근 문서를 우선한다.
+- 공개 제품 문구는 `노아`, `노아 인터뷰`, `노아 제안`, `과정기록`, `출고 패키지`, `권리/IP 점검`을 쓴다.
+- 법적/정책 문서 밖에서는 `AI 생성`, `AI 채팅`, `인증`, `보증`, `완전 방어` 표현을 피한다.
 
 ## 2. 코드 실행 (NOA-EXEC)
 
-* **Preflight Plan**: 3개+ 파일 수정 시 Objective/Changes/Risks 먼저 제시
-* **3-Persona 검증**:
-  1. `[C] 안전성`: 널/경계값 가드, 예외처리, exec/eval 금지
-  2. `[G] 성능`: O(n²) 회피, N+1 → 배치, 불필요 복사 제거
-  3. `[K] 간결성`: 과잉 추상화 금지, DRY 원칙
-* **수령증 출력**: 코드 편집 후 `[검사 적용] - [C]... - [G]... - [K]...` 필수
+- 3개 이상 파일 수정 가능성이 있으면 변경 목적, 범위, 위험을 먼저 짚는다.
+- 검증은 메인 에이전트가 직접 확인한다.
+- 코드 편집 후 수령증을 남긴다.
 
-## 3. 코드 구조 (PART 분리)
+검사 수령증 형식:
 
-* 100줄+: PART 필수 | 300줄+: 3 PART | 500줄+: 5 PART
-* 각 PART 단일 책임, 순환 참조 금지
-* IDENTITY_SEAL 권장: `PART-{N} | role={역할} | inputs={입력} | outputs={출력}`
+```text
+[검사 적용] - [C] 안전성 - [G] 성능 - [K] 간결성
+```
 
-## 4. 수리 전략 (Escalation)
+3-Persona 기준:
 
-| 단계 | 전략 | 조건 |
-|------|------|------|
-| L1 | TARGETED_FIX | 위치 명확, 5개 이하 |
-| L2 | DIFF_PATCH | L1 실패 시 자동 전환 |
-| L3 | FULL_REGEN | L2 실패 시 자동 전환 |
-| LX | HUMAN | L3 실패 → 즉시 중단 |
+1. `[C] 안전성`: 널/경계값, 런타임 경계, 예외 처리, 위험 함수 회피
+2. `[G] 성능`: 불필요 반복, 과도한 렌더, 중복 네트워크 호출 회피
+3. `[K] 간결성`: 기존 공용 시스템 재사용, 과잉 추상화 금지
 
-수리 수령증: `[수리 L1] file:line — 내용 → 결과`
+## 3. 현재 제품 표면 (2026-06-14)
 
-## 5. 프로젝트 아키텍처
+활성 제품 표면:
 
-### 3앱 + 2스튜디오
+| 표면 | 경로 | 역할 |
+|---|---|---|
+| Loreguard Studio | `/studio` | 창작 전문 IDE |
+| Translation Studio | `/translation-studio` | 번역·현지화 작업 표면 |
+| Docs | `/docs` | 사용자 매뉴얼 |
+| Public pages | `/`, `/about`, `/pricing`, `/status`, `/changelog` | 소개·가격·상태·변경 이력 |
+| Legal/support | `/terms`, `/privacy`, `/copyright`, `/ai-disclosure`, `/cookies`, `/refund`, `/verify` | 법적/지원 문서 |
 
-| 앱 | 경로 | 역할 |
-|----|------|------|
-| Universe | `/`, `/archive`, `/codex`, `/tools/*` | 아카이브 + 도구 |
-| Studio | `/studio` | NOA 소설 집필 |
-| Code Studio | `/code-studio` | 검증형 코드 생성 |
-| Network | `/network` | 행성 커뮤니티 |
-| Translation Studio | `/translation-studio` | 번역 |
+공개 제품 표면으로 복구하지 않을 것:
 
-### Code Studio 아키텍처
+- Code Studio
+- Network
+- Archive
+- Codex
+- Reports
+- Reference
+- Rulebook
+- Tools
 
-* **Shell 3파일**: CodeStudioShell + CodeStudioEditor + CodeStudioPanelManager
-* **lib/code-studio/ 6디렉토리**: `core/`, `ai/`, `pipeline/`, `editor/`, `features/`, `audit/`
-* **Panel Registry**: `core/panel-registry.ts` + `PanelImports.ts` 경유 필수
-* **명세서(이지모드)**: `project-spec` 패널 → 완료 시 Chat 부트스트랩 프롬프트 주입
-* **자동 수정 정책**: `core/autofix-policy.ts` 단일 소스
+필요 기능은 `히스토리`, `불러오기`, `참조 컨텍스트`, `출고 패키지`, `환경 설정` 같은 Loreguard 용어로 흡수한다.
 
-### Design System v8.0
+## 4. Studio 10단계
 
-* **3-Tier 토큰 효율**:
-  - FULL (~3K) → agents css-layout/interaction-motion, ChatPanel
-  - COMPACT (~800) → app-generator, autopilot UI step
-  - MINIMAL (~100) → useCodeStudioChat 폴백
-* **시맨틱 토큰 필수**: `bg-bg-primary`, `text-text-primary` — raw Tailwind 금지
-* **z-index 변수**: `var(--z-dropdown/overlay/modal/tooltip)` — 숫자 하드코딩 금지
-* **4px 배수 간격**: `--sp-xs(4)` ~ `--sp-2xl(32)`
-* **터치 타겟**: 최소 44px
-* **포커스**: `focus-visible:ring-2` — `outline:none` 단독 금지
-* **상태 표시**: 색상 + 아이콘 + 텍스트 최소 2가지
-* **UI 프리미티브**: `ui/Tooltip`, `ui/Dropdown`, `ui/Accordion`, `ui/ProgressBar` — 재구현 금지
-* **런타임 린트**: `runDesignLint(code)` 16룰 → verification-loop Step 1.6
-* **디자인 프리셋**: 5종 (IDE/Landing/Dashboard/E-Commerce/SaaS) + 자동 감지
+1. 프로젝트 생성
+2. 세계관 생성
+3. 캐릭터·아이템
+4. 메인 시나리오
+5. 씬시트
+6. 연출
+7. 집필
+8. 퇴고
+9. 번역·현지화
+10. 출고
 
-### 파이프라인 (8팀)
+각 탭은 좌우 패널 접힘/펼침, 폭 조절, 모바일 sheet, 상태 표시, 키보드 접근성을 갖춰야 한다.
+노아는 중간에서 질문하고, 사용자가 채택한 내용만 캔버스에 반영한다.
 
-* `runFullPipeline`: non-blocking 팀 병렬, blocking 팀(`validation`, `release-ip`) 순차
-* `PIPELINE_TEAM_STAGES` ↔ `FULL_TEAMS` 동기화 유지
-* verification-loop: design-lint(Step 1.6) 포함
+## 5. 리딤·결제 기준
 
-## 6. 기술 정책
+- `/api/checkout`은 기능 게이트 뒤에 있다.
+- 활성화 조건: Stripe 환경변수 + `FEATURE_STRIPE_CHECKOUT=on` + Firebase 토큰 + 런타임 검증.
+- `/api/redeem`은 현재 없다.
+- 리딤 입력 UI도 현재 없다.
+- 문서와 UI는 리딤을 활성 기능처럼 말하지 않는다.
 
-* **로깅**: `console.log` 금지 → `import { logger } from '@/lib/logger'`
-* **보안 헤더**: `src/proxy.ts` 통합 (**현재 middleware.ts 미연결 — P0**)
-* **ErrorBoundary**: variant `'full-page' | 'section' | 'panel'` 통일
-* **SkeletonLoader**: 공용 + 코드 스튜디오 전용 2종
-* **번역**: KO/EN/JA/ZH 4개국어, `studio-translations.ts` leaf count 동일
-* **MCP Self-Healing**: 실패 시 구조화 JSON 반환 → Pro 모드 자동 복구
+향후 리딤은 엔타이틀먼트 원장, idempotency key, 적용 영수증, 취소/회수 정책과 함께 구현한다.
 
-## 7. AI 모델 현황 (2026-04)
+## 6. 노아·에이전트 기준
 
-| Provider | 기본 모델 | 추가 모델 |
-|----------|----------|----------|
-| Gemini | gemini-2.5-pro | 2.5-flash, 3.1-pro-preview, 3-flash-preview, 3.1-flash-lite-preview |
-| OpenAI | gpt-5.4 | 5.4-mini, 5.4-nano, 4.1, 4.1-mini |
-| Claude | claude-sonnet-4-6 | opus-4-6, haiku-4-5 |
-| Groq | llama-3.3-70b | qwen-qwq-32b |
+활성 기준:
 
-모델 정의 소스: `src/lib/ai-providers.ts` PROVIDERS
-토큰 리밋: `src/lib/token-utils.ts` CONTEXT_LIMITS
-멀티키: `src/lib/multi-key-manager.ts` DEFAULT_MODELS
+- 노아 대화 도크: `src/components/loreguard/ChatCanvasDock.tsx`
+- 채팅 프록시: `/api/chat`
+- 인라인 이어쓰기: `/api/complete`
+- 구조화 제안: `/api/structured-generate`, `/api/gemini-structured`
+- 번역: `/api/translate`
+- 게이트/고지: `docs/NOA_POLICY.md`
 
-## 8. 보안 P0 (미수정)
+비활성 호환 라우트:
 
-1. `proxy.ts` — 보안 헤더 전부 미적용 (middleware.ts 부재)
-2. `chat/route.ts:352` — PRO_LOCKED 하드코딩 인증 우회
-3. `sandbox.ts:170` — 사용자 코드 script 직접 삽입
-4. `webcontainer.ts:54` — new Function() eval 동등
-5. `checkout/route.ts:15` — returnUrl 오픈 리다이렉트
-6. `admin/reports/page.tsx:38` — 관리자 권한 체크 없음
+- `POST /api/agent-search`
+- `GET /api/agent-search/status`
+- `GET/POST /api/network-agent/search`
+- `GET/POST /api/network-agent/ingest`
 
-## 우선순위 매트릭스
+이 라우트들은 disabled 응답을 반환한다. 외부 검색, 색인, 크레딧 사용 기능으로 설명하지 않는다.
 
-안전성 > 정확성 > 검증 가능성 > 성능 > 간결성 > 형식 일관성
+## 7. 모델 운영
+
+Provider 기준은 `src/lib/ai-providers.ts`가 단일 소스다.
+
+운영 모드:
+
+- Hosted: 앱 운영 경로
+- BYOK: 사용자 키
+- Local: LM Studio, Ollama, DGX 호환 로컬 서버
+- Offline: 모델 호출 없이 편집/저장/출고 준비
+
+DeepSeek, Qwen, MiniMax, Kimi 같은 신규 Provider는 코드 정의와 설정 UI 노출 상태를 함께 확인한 뒤 문서화한다.
+
+## 8. Design System v8.0
+
+- 시맨틱 토큰 우선
+- 4px 배수 spacing
+- 최소 44px 터치 타겟
+- focus-visible 포커스
+- 상태는 색상만으로 전달하지 않는다.
+- 카드 안 카드 구조를 피한다.
+- 상단바와 아이콘은 전문 IDE처럼 낮고 얇게 유지한다.
+
+## 9. 검증 기준
+
+기본 검증:
+
+```bash
+npx tsc --noEmit
+```
+
+관련 변경이 있으면 대상 Jest/Playwright를 실행한다.
+브라우저 UI 변경은 실제 화면을 열어 클릭, 스크롤, 모바일/고해상도 레이아웃을 확인한다.
+
+## 10. 최신 기준 문서
+
+- `docs/ARCHITECTURE.md`
+- `docs/API.md`
+- `docs/FEATURE_FLAGS.md`
+- `docs/NOA_POLICY.md`
+- `docs/redeem-agent-operations-2026-06-14.md`
+- `docs/stripe-revenue-path.md`
+- `docs/security/auth-matrix.md`

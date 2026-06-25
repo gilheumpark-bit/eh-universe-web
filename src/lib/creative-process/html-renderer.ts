@@ -21,6 +21,32 @@ import { buildWitnessSealSVG, buildOriginDonutSVG } from './seal-issuer';
 import { ATTESTATION_LABELS, SIGNATURE_DISCLAIMER_4LANG } from './attestation-text';
 import { HCI_DISCLAIMER_4LANG, HCI_AXIS_LABELS, ORIGIN_CATEGORY_LABELS } from './hci-calculator';
 
+const SIGNATURE_DISPLAY_LABELS: Record<
+  CertificateLanguage,
+  { shortHash: string; fullHashNote: string; verificationUrl: string }
+> = {
+  ko: {
+    shortHash: '원고 해시 축약값',
+    fullHashNote: '원본 해시는 함께 제공되는 디지털 서명 JSON과 내부 대조 자료에 보관됩니다.',
+    verificationUrl: '조회 링크',
+  },
+  en: {
+    shortHash: 'Short manuscript hash',
+    fullHashNote: 'The full hash is kept in the bundled digital-signature JSON and internal verification materials.',
+    verificationUrl: 'Verification link',
+  },
+  ja: {
+    shortHash: '原稿ハッシュ短縮値',
+    fullHashNote: '完全なハッシュは同梱のデジタル署名JSONと内部照合資料に保管されます。',
+    verificationUrl: '照会リンク',
+  },
+  zh: {
+    shortHash: '原稿哈希缩略值',
+    fullHashNote: '完整哈希保存在随附的数字签名 JSON 和内部核对资料中。',
+    verificationUrl: '查询链接',
+  },
+};
+
 // ============================================================
 // PART 1 — XSS escape
 // ============================================================
@@ -40,6 +66,12 @@ const HTML_ESCAPE: Record<string, string> = {
 export function escapeHtml(s: string): string {
   if (s === null || s === undefined) return '';
   return String(s).replace(/[&<>"']/g, (c) => HTML_ESCAPE[c] || c);
+}
+
+function shortHashForDisplay(value?: string | null): string {
+  const cleaned = value?.replace(/^0x/i, '').trim();
+  if (!cleaned) return '-';
+  return cleaned.length > 24 ? `${cleaned.slice(0, 16)}...${cleaned.slice(-8)}` : cleaned;
 }
 
 // ============================================================
@@ -231,7 +263,7 @@ ${rowsHtml}
   const attestationBlock = cert.attestationStatement
     ? buildAttestationBlock(cert.attestationStatement, labels)
     : '';
-  const sealBlock = cert.sealNumber ? buildSealBlock(cert.sealNumber) : '';
+  const sealBlock = cert.sealNumber ? buildSealBlock(cert.sealNumber, labels) : '';
   const hciBlock = cert.hciPayload
     ? buildHCIBlock(cert.hciPayload, language, labels)
     : '';
@@ -309,10 +341,13 @@ function buildAttestationBlock(
     </section>`;
 }
 
-function buildSealBlock(sealNumber: string): string {
+function buildSealBlock(
+  sealNumber: string,
+  labels: typeof ATTESTATION_LABELS[CertificateLanguage],
+): string {
   return `    <aside class="cert-seal cert-section" style="text-align: center;">
       ${buildWitnessSealSVG()}
-      <p class="label-caps" style="margin-top: 8px; color: var(--cert-color-accent-gold);">Witness Seal #${escapeHtml(sealNumber)}</p>
+      <p class="label-caps" style="margin-top: 8px; color: var(--cert-color-accent-gold);">${escapeHtml(labels.processSeal)} #${escapeHtml(sealNumber)}</p>
     </aside>`;
 }
 
@@ -380,16 +415,21 @@ function buildSignatureBlock(
   labels: typeof ATTESTATION_LABELS[CertificateLanguage],
 ): string {
   const sigDisclaimer = SIGNATURE_DISCLAIMER_4LANG[language];
+  const displayLabels = SIGNATURE_DISPLAY_LABELS[language];
+  const displayHash = shortHashForDisplay(cert.manuscriptHash);
   const qrImg = cert.verificationQrDataUrl
     ? `<img class="qr-img" src="${escapeHtml(cert.verificationQrDataUrl)}" alt="QR for verification">`
     : '';
   return `    <section class="cert-signature cert-section">
       <p class="label-caps">${escapeHtml(labels.digitalSignature)}</p>
-      <code class="data-mono" style="display: block; word-break: break-all; padding: 12px; background: var(--cert-color-surface); border: var(--cert-border-hairline); margin-top: 8px;">${escapeHtml(cert.manuscriptHash)}</code>
+      <p class="label-caps" style="margin-top: 8px;">${escapeHtml(displayLabels.shortHash)}</p>
+      <code class="data-mono" style="display: block; word-break: break-all; padding: 12px; background: var(--cert-color-surface); border: var(--cert-border-hairline); margin-top: 8px;">${escapeHtml(displayHash)}</code>
       <p style="font-size: 11px; color: var(--cert-color-outline-mid); margin-top: 8px;">${escapeHtml(sigDisclaimer)}</p>
+      <p style="font-size: 11px; color: var(--cert-color-outline-mid); margin-top: 4px;">${escapeHtml(displayLabels.fullHashNote)}</p>
       <div style="text-align: right; margin-top: 12px;">
         ${qrImg}
         ${cert.verificationQrDataUrl ? `<p class="label-caps" style="margin-top: 4px;">${escapeHtml(labels.scanForProof)}</p>` : ''}
+        ${cert.verificationUrl ? `<p class="data-mono" style="font-size: 10px; margin-top: 4px; word-break: break-all;">${escapeHtml(displayLabels.verificationUrl)}: ${escapeHtml(cert.verificationUrl)}</p>` : ''}
       </div>
     </section>`;
 }

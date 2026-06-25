@@ -6,6 +6,8 @@
 // ============================================================
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
+import { logger } from "@/lib/logger";
 
 export default function GlobalError({
   error,
@@ -15,10 +17,14 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Sentry/콘솔 에러 보고
-    if (typeof window !== "undefined") {
-      console.error("[global-error]", error);
+    // Sentry/콘솔 에러 보고 — init 전(동의 X / DSN X / dev)에는 SDK no-op.
+    // 루트 레이아웃 크래시는 ErrorBoundary 가 못 잡는 최후 경계 — Sentry 공식 권장 배선.
+    try {
+      Sentry.captureException(error, { tags: { 'eh.context': 'global-error' } });
+    } catch {
+      /* 관측 실패는 fallback UI 에 영향 주지 않음 */
     }
+    logger.error("global-error", "Root error boundary caught", error);
   }, [error]);
 
   return (
@@ -48,7 +54,7 @@ export default function GlobalError({
               textTransform: "uppercase",
             }}
           >
-            Loreguard — System Fault
+            Loreguard · System Fault
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 16px" }}>
             치명적 오류 / Fatal Error

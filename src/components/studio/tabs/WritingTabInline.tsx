@@ -49,6 +49,7 @@ import { MobileOverlaySection } from './writing/MobileOverlaySection';
 import { ModeSwitch } from './writing/ModeSwitch';
 import { FabControls } from './writing/FabControls';
 import { SceneWarningsBanner, useSceneWarnings } from './writing/SceneWarnings';
+import { QualityGutter } from '@/components/studio/writing/QualityGutter';
 // ModeLoadingPlaceholder는 ModeSwitch 드롭다운에서 선택 직후 명시적으로 사용한다.
 // dynamic loading 스켈레톤과 달리 language-aware 4언어 문구를 제공.
 import { ModeLoadingPlaceholder } from './writing/ModeLoadingPlaceholder';
@@ -93,6 +94,7 @@ interface Props {
   language: AppLanguage;
   currentSession: ChatSession;
   currentSessionId: string | null;
+  currentProjectId?: string | null;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   setConfig: React.Dispatch<React.SetStateAction<StoryConfig>>;
   writingMode: WritingMode;
@@ -149,7 +151,7 @@ interface Props {
 
 export default function WritingTabInline(props: Props) {
   const {
-    language, currentSession, currentSessionId,
+    language, currentSession, currentSessionId, currentProjectId,
     writingMode, setWritingMode,
     editDraft, setEditDraft, editDraftRef,
     canvasContent, setCanvasContent,
@@ -175,7 +177,7 @@ export default function WritingTabInline(props: Props) {
     synopsis: currentSession.config.synopsis,
     characters: currentSession.config.characters?.map(c => c.name).join(', '),
     currentChapter: currentSession.messages.slice(-2).map(m => m.content).join('\n').slice(0, 2000),
-  });
+  }, currentProjectId);
 
   const t = createT(language);
 
@@ -365,16 +367,21 @@ export default function WritingTabInline(props: Props) {
         icon="✍️"
         title={L4(language, { ko: '집필', en: 'Write', ja: '執筆', zh: '写作' })}
         description={L4(language, {
-          ko: '좌측 에디터에 글을 쓰세요. NOA 도움은 우측 하단 버튼 (Ctrl+Enter)',
-          en: 'Write on the left editor. Use the bottom-right button for NOA help (Ctrl+Enter)',
-          ja: '左側のエディタで執筆。右下のボタンでNOAサポート (Ctrl+Enter)',
-          zh: '在左侧编辑器中写作。右下角按钮启用 NOA 协助 (Ctrl+Enter)',
+          ko: '좌측 에디터에 글을 쓰세요. 노아 도움은 우측 하단 버튼 (Ctrl+Enter)',
+          en: 'Write on the left editor. Use the bottom-right button for Noa help (Ctrl+Enter)',
+          ja: '左側のエディタで執筆。右下のボタンでノアサポート (Ctrl+Enter)',
+          zh: '在左侧编辑器中写作。右下角按钮启用诺亚协助 (Ctrl+Enter)',
         })}
       />
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
         {/* 참조 패널 — 2026-04-21: edit/ai 양쪽 노출 (세계관/인물 우측 슬라이드).
             worldview 데이터 존재 시 기본 펼침 + localStorage로 상태 기억. */}
         <WritingContextPanel config={currentSession.config} language={language} />
+
+        {/* rank 6 — QA 4관점 + 5도메인 체크리스트 거터 (좌측, 데스크탑만) */}
+        <div className="hidden lg:flex">
+          <QualityGutter language={language} />
+        </div>
 
         {/* 소설 본문 영역 */}
         <div className="flex-1 flex flex-col min-w-0 relative h-full border-b lg:border-b-0 lg:border-r border-border/40">
@@ -412,7 +419,7 @@ export default function WritingTabInline(props: Props) {
               <span className="flex-1 text-xs leading-relaxed">
                 {L4(language, {
                   ko: '글을 멈추면 노아가 다음 문장을 제안합니다. Tab으로 수락, Esc로 무시',
-                  en: 'When you pause writing, NOA suggests the next sentence. Tab to accept, Esc to dismiss',
+                  en: 'When you pause writing, Noa suggests the next sentence. Tab to accept, Esc to dismiss',
                   ja: '入力を止めるとノアが次の文を提案します。Tabで採用、Escで無視',
                   zh: '停止输入时诺亚会建议下一句。Tab接受，Esc忽略',
                 })}
@@ -433,10 +440,10 @@ export default function WritingTabInline(props: Props) {
             onScroll={handleStreamScroll}
             aria-live="polite"
             aria-label={L4(language, {
-              ko: '노아 생성 결과',
-              en: 'NOA generation output',
-              ja: 'ノア生成結果',
-              zh: '诺亚生成结果',
+              ko: '노아 제안 출력',
+              en: 'Noa suggestion output',
+              ja: 'ノア提案出力',
+              zh: '诺亚建议输出',
             })}
             className={`${writingColumnShell} flex-1 overflow-y-auto ${
               currentSession.messages.length === 0 && writingMode === 'ai'
@@ -615,7 +622,7 @@ export default function WritingTabInline(props: Props) {
           textMenu={textMenu}
         />
 
-        {/* AI FAB — 엔진 호출 (Ctrl+Enter) + 씬시트 가드 (M2.2) */}
+        {/* AI FAB — 노아 제안 (Ctrl+Enter) + 씬시트 가드 (M2.2) */}
         <FabControls
           language={language}
           writingMode={writingMode}

@@ -22,6 +22,7 @@ import { L4 } from '@/lib/i18n';
 import type { AppLanguage, EpisodeManuscript, Character } from '@/lib/studio-types';
 import type { SymbolIndex } from '@/lib/symbol-index/types';
 import type { Breakpoint } from '@/lib/story-debugger/types';
+import { logger } from '@/lib/logger';
 
 export interface NovelEditorSelection {
   from: number;
@@ -274,9 +275,10 @@ export const NovelEditor = forwardRef<NovelEditorHandle, NovelEditorProps>(
         };
         // [C] FileReader.onerror 추가 — 누락 시 실패한 drop이 silent hang으로 남음
         reader.onerror = () => {
-          // 콘솔 경고만 — 사용자 알림은 상위에서 editor 에러 처리에 일임
-           
-          console.warn('[NovelEditor] FileReader failed to read dropped file:', file.name, reader.error);
+          logger.warn('NovelEditor', 'FileReader failed to read dropped file', {
+            fileName: file.name,
+            error: reader.error?.message ?? String(reader.error ?? ''),
+          });
         };
         reader.readAsText(file, 'UTF-8');
       },

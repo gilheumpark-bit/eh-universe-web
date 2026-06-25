@@ -5,7 +5,7 @@
 // 검증 축:
 //   1) 정상 경로 — 각 operation 별 field 추출
 //   2) Null-safe — 빈 projects / 미존재 sessionId / 누락 config
-//   3) 해시 독립성 — Rulebook 편집이 Character payload 를 바꾸지 않음
+//   3) 해시 독립성 — 연출 편집이 Character payload 를 바꾸지 않음
 //   4) Canonical 안정 — 동일 입력 동일 출력
 //
 // 해시는 @/lib/save-engine/hash 의 canonicalJson + sha256 을 직접 호출해

@@ -69,11 +69,11 @@ describe('getContextLimit', () => {
   });
 
   it('returns correct limit for known GPT model', () => {
-    expect(getContextLimit('gpt-4o')).toBe(128000);
+    expect(getContextLimit('gpt-5.4-mini')).toBe(128000);
   });
 
   it('returns correct limit for known Claude model', () => {
-    expect(getContextLimit('claude-sonnet-4-20250514')).toBe(200000);
+    expect(getContextLimit('claude-sonnet-4-6')).toBe(1000000);
   });
 
   it('returns correct limit for known Llama model', () => {
@@ -81,7 +81,7 @@ describe('getContextLimit', () => {
   });
 
   it('returns correct limit for Qwen model', () => {
-    expect(getContextLimit('qwen-qwq-32b')).toBe(32768);
+    expect(getContextLimit('qwen/qwen3-32b')).toBe(32768);
   });
 
   it('returns default 128000 for unknown models', () => {
@@ -99,25 +99,25 @@ describe('getContextLimit', () => {
 
 describe('getMaxOutputTokens', () => {
   it('returns reserved tokens based on 15% ratio', () => {
-    // gpt-4o: limit=128000, 15% = 19200, clamped to MAX=16384
+    // gpt-5.4-mini: limit=128000, 15% = 19200, clamped to MAX=16384
     // used=0, available=128000, result = max(4096, min(16384, 128000)) = 16384
-    const result = getMaxOutputTokens('gpt-4o', 0, 0);
+    const result = getMaxOutputTokens('gpt-5.4-mini', 0, 0);
     expect(result).toBe(16384);
   });
 
-  it('respects minimum output reserve of 4096', () => {
-    // Even with very tight budget, should return at least 4096
-    const result = getMaxOutputTokens('gpt-4o', 120000, 5000);
-    // available = 128000 - 125000 = 3000, reserved=16384
-    // max(4096, min(16384, 3000)) = max(4096, 3000) = 4096
-    expect(result).toBe(4096);
+  it('caps to remaining space when the prompt nearly fills the context window', () => {
+    // [fix] available = 128000 - 125000 = 3000 (< MIN_OUTPUT_RESERVE 4096).
+    // 과거엔 4096 을 강제해 컨텍스트 한도를 초과(API 오류 유발)했다.
+    // 이제 실제 남은 공간(3000)만 요청한다.
+    const result = getMaxOutputTokens('gpt-5.4-mini', 120000, 5000);
+    expect(result).toBe(3000);
   });
 
   it('clamps to available space when budget is tight', () => {
     // qwen: limit=32768, 15% = 4915, clamped to min(max(4915,4096),16384)=4915
     // used=20000, available=12768
     // max(4096, min(4915, 12768)) = 4915
-    const result = getMaxOutputTokens('qwen-qwq-32b', 10000, 10000);
+    const result = getMaxOutputTokens('qwen/qwen3-32b', 10000, 10000);
     expect(result).toBe(4915);
   });
 
@@ -140,14 +140,14 @@ describe('truncateMessages', () => {
 
   it('keeps all messages when within budget', () => {
     const msgs = [makeMsg('hi'), makeMsg('hello', 'assistant')];
-    const result = truncateMessages('system prompt', msgs, 'gpt-4o');
+    const result = truncateMessages('system prompt', msgs, 'gpt-5.4-mini');
     expect(result.truncated).toBe(false);
     expect(result.messages).toHaveLength(2);
     expect(result.systemTokens).toBeGreaterThan(0);
   });
 
   it('returns empty array info correctly for empty messages', () => {
-    const result = truncateMessages('system', [], 'gpt-4o');
+    const result = truncateMessages('system', [], 'gpt-5.4-mini');
     expect(result.messages).toHaveLength(0);
     expect(result.truncated).toBe(false);
     expect(result.messageTokens).toBe(0);
@@ -162,7 +162,7 @@ describe('truncateMessages', () => {
       makeMsg(bigContent, 'assistant'),
       makeMsg('latest message'),
     ];
-    const result = truncateMessages('sys', msgs, 'qwen-qwq-32b');
+    const result = truncateMessages('sys', msgs, 'qwen/qwen3-32b');
     expect(result.truncated).toBe(true);
     // Last message should always be preserved
     expect(result.messages[result.messages.length - 1].content).toBe('latest message');
@@ -172,7 +172,7 @@ describe('truncateMessages', () => {
   it('preserves at least the last message even with huge system prompt', () => {
     const hugeSystem = '가'.repeat(200000); // ~300000 tokens, exceeds qwen limit
     const msgs = [makeMsg('A'), makeMsg('B'), makeMsg('C')];
-    const result = truncateMessages(hugeSystem, msgs, 'qwen-qwq-32b');
+    const result = truncateMessages(hugeSystem, msgs, 'qwen/qwen3-32b');
     expect(result.messages).toHaveLength(1);
     expect(result.messages[0].content).toBe('C');
     expect(result.truncated).toBe(true);
@@ -180,13 +180,13 @@ describe('truncateMessages', () => {
 
   it('reports correct systemTokens', () => {
     const system = 'Hello world'; // 3 tokens
-    const result = truncateMessages(system, [makeMsg('test')], 'gpt-4o');
+    const result = truncateMessages(system, [makeMsg('test')], 'gpt-5.4-mini');
     expect(result.systemTokens).toBe(3);
   });
 
   it('single message is never truncated', () => {
     const msgs = [makeMsg('only one')];
-    const result = truncateMessages('sys', msgs, 'gpt-4o');
+    const result = truncateMessages('sys', msgs, 'gpt-5.4-mini');
     expect(result.truncated).toBe(false);
     expect(result.messages).toHaveLength(1);
   });

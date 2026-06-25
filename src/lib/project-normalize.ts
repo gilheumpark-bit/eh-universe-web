@@ -6,6 +6,7 @@ import {
   STORY_BIBLE_LIMIT,
   REFERENCE_PROJECT_LIMIT,
 } from '@/lib/translator-constants';
+import { sanitizeLoadedText } from '@/lib/project-sanitize';
 
 export function limitText(text: string, max: number): string {
   const normalized = text.trim();
@@ -16,13 +17,15 @@ export function limitText(text: string, max: number): string {
 export function normalizeChapter(raw: unknown, fallbackName = 'Untitled Part'): ChapterEntry {
   const r = raw as Record<string, unknown>;
   return {
-    name: typeof r?.name === 'string' && r.name.trim() ? r.name : fallbackName,
-    content: typeof r?.content === 'string' ? r.content : '',
-    result: typeof r?.result === 'string' ? r.result : '',
+    name: typeof r?.name === 'string' && sanitizeLoadedText(r.name).trim()
+      ? sanitizeLoadedText(r.name)
+      : fallbackName,
+    content: typeof r?.content === 'string' ? sanitizeLoadedText(r.content) : '',
+    result: typeof r?.result === 'string' ? sanitizeLoadedText(r.result) : '',
     isDone: Boolean(r?.isDone),
     stageProgress: typeof r?.stageProgress === 'number' ? r.stageProgress : 0,
-    storyNote: typeof r?.storyNote === 'string' ? r.storyNote : '',
-    error: typeof r?.error === 'string' ? r.error : '',
+    storyNote: typeof r?.storyNote === 'string' ? sanitizeLoadedText(r.storyNote) : '',
+    error: typeof r?.error === 'string' ? sanitizeLoadedText(r.error) : '',
   };
 }
 
@@ -40,10 +43,10 @@ export function normalizeProjectSnapshots(value: unknown): ProjectSnapshot[] {
       return {
         id,
         project_name:
-          typeof r?.project_name === 'string' && r.project_name.trim()
-            ? r.project_name
-            : typeof r?.projectName === 'string' && r.projectName.trim()
-              ? r.projectName
+          typeof r?.project_name === 'string' && sanitizeLoadedText(r.project_name).trim()
+            ? sanitizeLoadedText(r.project_name)
+            : typeof r?.projectName === 'string' && sanitizeLoadedText(r.projectName).trim()
+              ? sanitizeLoadedText(r.projectName)
               : `Project ${id.slice(-4)}`,
         updated_at: typeof r?.updated_at === 'number' ? r.updated_at : Date.now(),
         chapters: Array.isArray(r?.chapters)
@@ -51,9 +54,9 @@ export function normalizeProjectSnapshots(value: unknown): ProjectSnapshot[] {
               normalizeChapter(chapter, `Part ${index + 1}`)
             )
           : [],
-        worldContext: typeof r?.worldContext === 'string' ? r.worldContext : '',
-        characterProfiles: typeof r?.characterProfiles === 'string' ? r.characterProfiles : '',
-        storySummary: typeof r?.storySummary === 'string' ? r.storySummary : '',
+        worldContext: typeof r?.worldContext === 'string' ? sanitizeLoadedText(r.worldContext) : '',
+        characterProfiles: typeof r?.characterProfiles === 'string' ? sanitizeLoadedText(r.characterProfiles) : '',
+        storySummary: typeof r?.storySummary === 'string' ? sanitizeLoadedText(r.storySummary) : '',
         from: typeof r?.from === 'string' ? r.from : 'ja',
         to: typeof r?.to === 'string' ? r.to : 'ko',
       } satisfies ProjectSnapshot;

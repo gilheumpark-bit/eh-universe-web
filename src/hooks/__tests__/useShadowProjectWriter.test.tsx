@@ -332,7 +332,7 @@ describe('useShadowProjectWriter — 입력 방어', () => {
 //
 // save-project 외 operation 은 journal append 를 건너뛰고 hash-only pair 매칭만 수행.
 // - extractor 가 올바른 payload 를 뽑는지
-// - 탭별 독립성 (Rulebook 편집이 Character 엔트리를 만들지 않음)
+// - 탭별 독립성 (연출 편집이 Character 엔트리를 만들지 않음)
 // - diff-driven multi-op (onPrimarySaveCompleteMulti)
 
 import { detectChangedOperations } from '@/hooks/useShadowProjectWriter';
@@ -468,7 +468,7 @@ describe('useShadowProjectWriter — M1.5.3 detectChangedOperations', () => {
     expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-character']);
   });
 
-  test('Rulebook 편집 → save-scene-direction 만 (Character 불변)', () => {
+  test('연출 편집 → save-scene-direction 만 (Character 불변)', () => {
     const prev = makeProjectsWithFields({ sceneNote: 'n1', charName: 'Alice' });
     const curr = makeProjectsWithFields({ sceneNote: 'n2', charName: 'Alice' });
     expect(detectChangedOperations(prev, curr, 's-a')).toEqual(['save-scene-direction']);

@@ -21,7 +21,7 @@ interface ApiKeysSectionProps {
 // ============================================================
 
 const ApiKeysSection: React.FC<ApiKeysSectionProps> = ({ language, hostedProviders = {}, onManageApiKey }) => {
-  const t = createT(language);
+  const translator = createT(language);
   const [apiKeyRefresh, setApiKeyRefresh] = useState(0);
 
   const checkApiKeys = useCallback(() => {
@@ -53,20 +53,20 @@ const ApiKeysSection: React.FC<ApiKeysSectionProps> = ({ language, hostedProvide
       <div className="flex items-center gap-3 md:gap-4 min-w-0">
         <div className="p-2 md:p-3 bg-bg-secondary rounded-2xl shrink-0"><Key className="w-4 h-4 md:w-5 md:h-5 text-text-tertiary" /></div>
         <div className="min-w-0">
-          <div className="text-xs md:text-sm font-bold truncate">{t('settings.apiKeyManagement')}</div>
+          <div className="text-xs md:text-sm font-bold truncate">{translator('settings.apiKeyManagement')}</div>
           <div className="text-[13px] text-text-tertiary hidden sm:block">
-            {t('settings.apiKeyDesc')}
-            <span className="ml-1 opacity-60">(API {L4(language, { ko: '키', en: 'Key', ja: 'Key', zh: 'Key' })})</span>
+            {translator('settings.apiKeyDesc')}
+            <span className="ml-1 opacity-60">({L4(language, { ko: '연결 키', en: 'Connection key', ja: '接続キー', zh: '连接密钥' })})</span>
           </div>
         </div>
       </div>
       <div className="flex flex-col items-end gap-0.5 shrink-0">
         <div data-testid="settings-api-key-status" className="text-[9px] md:text-[10px] font-black text-accent-blue uppercase">
           {hasPersonalApiKey
-            ? t('settings.apiKeySet')
+            ? translator('settings.apiKeySet')
             : hasHostedApi
-              ? t('settings.apiKeyPlatformOnly')
-              : t('settings.apiKeyNotSet')}
+              ? translator('settings.apiKeyPlatformOnly')
+              : translator('settings.apiKeyNotSet')}
         </div>
         {keyExpiring && (
           <div className="text-[8px] md:text-[9px] text-accent-amber">

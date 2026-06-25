@@ -53,6 +53,16 @@ export interface UseCmdPaletteResult {
   register: (items: CmdItem[]) => () => void;
 }
 
+/** [Batch 1 rank 4 — 2026-06-07] useCmdPalette 옵션 — 영역별 단축키 분리. */
+export interface UseCmdPaletteOptions {
+  /**
+   * 내부 Ctrl+P 단축키 비활성. true 면 caller 가 keyboard-manager 등으로 외부 트리거.
+   * Translation Studio와 Studio의 영역별 단축키 표준에서 사용.
+   * 기본 false — 기존 Studio Ctrl+P 호출자 호환 유지.
+   */
+  disableInternalShortcut?: boolean;
+}
+
 // ============================================================
 // PART 3 — Fuzzy filter
 // ============================================================
@@ -77,15 +87,25 @@ function fuzzyScore(label: string, query: string): number {
 // PART 4 — Hook
 // ============================================================
 
-export function useCmdPalette(): UseCmdPaletteResult {
+export function useCmdPalette(options?: UseCmdPaletteOptions): UseCmdPaletteResult {
+  const disableInternalShortcut = options?.disableInternalShortcut ?? false;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [registry, setRegistry] = useState<Record<string, CmdItem[]>>({});
 
-  // 단축키 — Ctrl+P (Cmd+P)
+  // 단축키 — Ctrl+P (Cmd+P). disableInternalShortcut 시 외부 트리거 위임 (Esc 핸들러만 유지).
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = (e: KeyboardEvent) => {
+      // disableInternalShortcut: Ctrl+P 트리거 스킵, Escape 닫기만 유지.
+      if (disableInternalShortcut) {
+        if (open && e.key === 'Escape') {
+          e.preventDefault();
+          setOpen(false);
+          setQuery('');
+        }
+        return;
+      }
       const ctrl = e.ctrlKey || e.metaKey;
       // 입력 필드 안에서는 무시 (textarea / input / contenteditable)
       const target = e.target as HTMLElement | null;
@@ -113,7 +133,7 @@ export function useCmdPalette(): UseCmdPaletteResult {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open]);
+  }, [open, disableInternalShortcut]);
 
   const register = useCallback((newItems: CmdItem[]): (() => void) => {
     const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

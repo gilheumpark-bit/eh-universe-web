@@ -17,6 +17,7 @@ import type {
   NoaConfig,
   AuditEntry,
   AuditManager,
+  TrinityWeights,
 } from "./types";
 
 import { createDefaultNoaConfig } from "./config";
@@ -48,6 +49,53 @@ function ensureManagers(config: NoaConfig) {
 export function getAuditManager(config: NoaConfig): AuditManager {
   ensureManagers(config);
   return auditManager!;
+}
+
+// ============================================================
+// Multi-turn Context Score (특허 청구 1·8·효과 29)
+// ============================================================
+
+// [특허 정합] 청구 1·8 — "멀티턴 누적 맥락 반영". 특허에 구체 수치 미명시 →
+// 수치 발명 금지 원칙에 따라 보수적 기본값 + 근거 주석:
+//  - HISTORY_WINDOW = 5      : 최근 N개만 반영 (요청 명세 "보수적 5")
+//  - HISTORY_DECAY  = 0.5    : 감쇠 가중 0.5^d (d=1 최신) — 최신일수록 높게, 기하 감쇠
+//  - HISTORY_CONTRIBUTION_CAP = 0.5 : 합산 기여 상한 — 누적 맥락만으로 Trinity
+//    HOLD 경계(0.35)는 넘을 수 있되, 단독 VETO(0.75)는 현재 입력 위험 동반 시에만.
+export const HISTORY_WINDOW = 5;
+export const HISTORY_DECAY = 0.5;
+export const HISTORY_CONTRIBUTION_CAP = 0.5;
+
+/**
+ * 멀티턴 누적 맥락 점수 합성 — 특허 청구 1·8·효과 29.
+ *
+ * contextual = min(1, single + min(CAP, Σ trinity(history_d) × DECAY^d))
+ * 반환 = max(single, contextual)
+ *
+ * 안전성 불변식 (게이트 보수성):
+ *  - boost ≥ 0 (가산 전용) → 맥락이 단일 입력 점수를 깎는 방향 불가
+ *  - history 빈값/공백 항목은 기여 0 (skip)
+ *
+ * @param singleScore - 현재 입력 단독 Trinity 가중 점수 (0~1)
+ * @param conversationHistory - 직전 사용자 발화 이력 (과거 → 최신 순, 배열 끝 = 최신)
+ * @param weights - Trinity 가중치
+ */
+export function composeContextualTrinityScore(
+  singleScore: number,
+  conversationHistory: readonly string[],
+  weights: TrinityWeights
+): number {
+  const recent = conversationHistory.slice(-HISTORY_WINDOW);
+  let boost = 0;
+  for (let d = 1; d <= recent.length; d++) {
+    const msg = recent[recent.length - d]; // d=1 → 최신
+    if (!msg || msg.trim().length === 0) continue; // 빈값 엣지: 기여 0
+    const hScore = runTrinity(sanitizeInput(msg).sanitized, weights).weightedScore;
+    boost += hScore * Math.pow(HISTORY_DECAY, d);
+  }
+  boost = Math.min(boost, HISTORY_CONTRIBUTION_CAP);
+  const contextual = Math.min(1, singleScore + boost);
+  // 명세 보장: max(single, contextual) — 구조상 boost ≥ 0 이지만 명시 max 로 불변식 고정
+  return Math.max(singleScore, contextual);
 }
 
 // ============================================================
@@ -102,8 +150,15 @@ export async function runNoa(
   const fastTrack = runFastTrack(sanitized.sanitized);
   layerDurations.fastTrack = performance.now() - t2;
 
+  // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 맥락 반영]
+  // 유효 history 존재 시 Fast PASS 단락(short-circuit)을 금지하고 Trinity 까지 진행 —
+  // "안녕" 등 단건 안전 인사로 누적 맥락 평가를 우회하는 맥락 분산 공격 차단.
+  // 미전달/빈 history → 기존 단락 유지 (회귀 0). Fast BLOCK 단락은 그대로 유지 (보수성 유지 — 위험 하향 없음).
+  const hasHistory =
+    input.conversationHistory?.some((m) => m.trim().length > 0) ?? false;
+
   // Fast PASS → 바로 허용
-  if (fastTrack.verdict === "PASS") {
+  if (fastTrack.verdict === "PASS" && !hasHistory) {
     const ta1 = performance.now();
     // Record in audit-report for dashboard/reporting
     recordAuditEntry({
@@ -166,13 +221,35 @@ export async function runNoa(
   // --- Layer 3: Trinity ---
   const t3 = performance.now();
   const trinity = runTrinity(sanitized.sanitized, fullConfig.trinityWeights);
+
+  // [P0-wire (2) — 특허 청구 1·8·효과 29: 멀티턴 누적 맥락 점수]
+  // 단일 입력 Trinity 점수에 history 감쇠 가중 기여를 가산 — max(single, contextual)
+  // 보장 (맥락이 위험을 깎는 방향 금지). hasHistory=false → trinity.weightedScore 그대로 (회귀 0).
+  const contextualScore = hasHistory
+    ? composeContextualTrinityScore(
+        trinity.weightedScore,
+        input.conversationHistory!,
+        fullConfig.trinityWeights
+      )
+    : trinity.weightedScore;
   layerDurations.trinity = performance.now() - t3;
 
   // --- Layer 4: Judgment ---
   const t4 = performance.now();
   const domain = input.domain ?? "general";
   const sourceTier = input.sourceTier ?? 2;
-  const judgment = runJudgment(trinity.weightedScore, domain, sourceTier);
+  // [P0-wire (1) — 특허 수학식 1 첫째 항: 패턴 위험도 결선]
+  // sanitize 된 입력 텍스트를 4번째 인자로 전달 → DANGER_PATTERNS(도메인별 가산점)
+  // 매칭이 라이브 실행된다. 가산 전용 (extraPenalty ≥ 0) — 기존 점수 대비 위험 하향 없음.
+  // [high #10 — 보안 신호/가용성 배수 분리] Trinity 최종 투표를 5번째 인자로 전달 →
+  // VETO 면 judgment 가 완화 배수(creative ×0.1·tier1 ×0.3) 미적용 하드 플로어를 적용.
+  const judgment = runJudgment(
+    contextualScore,
+    domain,
+    sourceTier,
+    sanitized.sanitized,
+    trinity.finalVote
+  );
   layerDurations.judgment = performance.now() - t4;
 
   // --- Layer 5: Availability ---
@@ -183,9 +260,22 @@ export async function runNoa(
 
   // --- Layer 6: Tactical ---
   const t6 = performance.now();
-  const tactical = selectTacticalPath(judgment.grade, availability);
+  let tactical = selectTacticalPath(judgment.grade, availability);
 
-  // 예산 소진
+  // [critical #2 — Trinity VETO 하드 차단 (가용성 배수 무관)]
+  // Trinity 가 VETO(보안 위반 확정)를 낸 경우, 도메인(creative ×0.1)·출처(tier1 ×0.3) 완화
+  // 배수로 등급이 깎여 BLOCK 미만 경로가 선택됐더라도 강제 BLOCK 으로 오버라이드한다.
+  // 보안 신호는 가용성 배수로 완화 불가하도록 하드 경로 — fail-secure.
+  if (trinity.finalVote === "VETO" && tactical.selectedPath !== "BLOCK") {
+    tactical = {
+      selectedPath: "BLOCK",
+      config: fullConfig.tacticalConfigs.BLOCK,
+      reason: `TRINITY_VETO_HARD_BLOCK(${trinity.consensusDetail})`,
+      tokenBudget: fullConfig.tacticalConfigs.BLOCK.tokenBudget,
+    };
+  }
+
+  // 예산 소진 (기존 정상 흐름 보존 — availability 허용 시 소진)
   if (availability.allowed) {
     riskBudgetManager!.consume(riskCost);
   }
@@ -193,6 +283,7 @@ export async function runNoa(
 
   // --- Layer 7: Audit ---
   const t7 = performance.now();
+  // [critical #2] BLOCK 경로 = 거부. Trinity VETO 오버라이드 포함.
   const allowed = tactical.selectedPath !== "BLOCK";
 
   // Record in audit-report for dashboard/reporting
@@ -272,7 +363,7 @@ export type {
   TrinityVote,
   TrinityResult,
   EgoResult,
-  GradeEntry,
+  NoaGradeEntry,
   DomainType,
   SourceTier,
   TacticalPath,
@@ -293,6 +384,28 @@ export { createAuditManager } from "./audit";
 export { createRiskBudgetManager } from "./availability";
 export { checkHallucination } from "./availability/hallucination";
 export { recordAuditEntry, generateAuditReport, getRecentThreats, formatAuditMarkdown, clearAuditLog } from "./audit-report";
+export {
+  buildTabExpertSystemDirective,
+  getAllTabExpertProfiles,
+  getTabExpertLabel,
+  getTabExpertProfile,
+  isLoreguardBrainTabId,
+  normalizeBrainTabId,
+  type AppBrainDepth,
+  type LegacyStudioBrainTabId,
+  type LoreguardBrainTabId,
+  type TabExpertProfile,
+} from "./tab-expert-registry";
+export {
+  buildAppBrainDecisionDirective,
+  decideAppBrain,
+  getDecisionProductLabel,
+  type AppBrainActionKind,
+  type AppBrainDecisionEnvelope,
+  type AppBrainDecisionState,
+  type AppBrainPolicyInput,
+  type AppBrainPolicyScores,
+} from "./app-brain-policy";
 
 // ── NOA-SYS v2.1 Layers ──
 // L1: SVI Engine (Session Volatility Index — EMA 기반 인지 부하 추적)

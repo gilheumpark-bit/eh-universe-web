@@ -17,13 +17,13 @@ type Lang = 'ko' | 'en' | 'ja' | 'zh';
 
 const LABELS = {
   'updating-story-bible': {
-    ko: '스토리 바이블 갱신 중',
+    ko: '설정집 갱신 중',
     en: 'Updating Story Bible',
     ja: 'ストーリーバイブル更新中',
     zh: '正在更新故事圣经',
   },
   'story-bible-updated': {
-    ko: '스토리 바이블 갱신됨',
+    ko: '설정집 갱신됨',
     en: 'Story Bible updated',
     ja: 'ストーリーバイブル更新完了',
     zh: '故事圣经已更新',

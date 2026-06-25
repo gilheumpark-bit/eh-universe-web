@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// RefineModeSection — 약한 문단 자동 개선 (구 PART 6)
+// RefineModeSection — 약한 문단 다듬기 제안 (구 PART 6)
 // ============================================================
 
 import React from 'react';
@@ -27,8 +27,8 @@ export function RefineModeSection({
     <div className="flex-1 space-y-4">
       <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-4 md:p-6">
         <h3 className="text-sm font-bold text-accent-blue mb-2 flex items-center gap-2"><Wand2 className="w-4 h-4" /> {L4(language, { ko: '다듬기', en: 'Refine', ja: '仕上げ', zh: '润色' })}</h3>
-        <p className="text-sm md:text-xs text-text-secondary mb-1">{L4(language, { ko: 'NOA가 현재 원고를 분석하고 약한 문단(점수 50 미만)을 자동으로 개선합니다.', en: 'NOA analyzes your manuscript and automatically improves weak paragraphs (score <50).', ja: 'NOAが現在の原稿を分析し、弱い段落（スコア50未満）を自動的に改善します。', zh: 'NOA 分析当前稿件并自动改善薄弱段落(分数 < 50)。' })}</p>
-        <p className="text-sm md:text-[13px] text-text-tertiary mb-3">{L4(language, { ko: '💡 아래에 원고를 붙여넣으면 문단별 품질 점수가 표시됩니다. 점수가 낮은 문단을 선택하여 자동 개선할 수 있습니다.', en: '💡 Paste your manuscript below to see paragraph quality scores. Select low-scoring paragraphs for automatic improvement.', ja: '💡 下に原稿を貼り付けると段落ごとの品質スコアが表示されます。低スコア段落を選択して自動改善できます。', zh: '💡 在下方粘贴稿件可查看各段落质量分数。选择低分段落进行自动改善。' })}</p>
+        <p className="text-sm md:text-xs text-text-secondary mb-1">{L4(language, { ko: '노아가 현재 원고를 분석하고 약한 문단(점수 50 미만)의 다듬기 방향을 제안합니다.', en: 'Noa analyzes your manuscript and suggests refinements for weak paragraphs (score <50).', ja: 'ノアが現在の原稿を分析し、弱い段落（スコア50未満）の仕上げ方を提案します。', zh: '诺亚分析当前稿件，并为薄弱段落（分数 < 50）提出润色建议。' })}</p>
+        <p className="text-sm md:text-[13px] text-text-tertiary mb-3">{L4(language, { ko: '아래에 원고를 붙여넣으면 문단별 품질 점수가 표시됩니다. 점수가 낮은 문단을 선택해 다듬기 제안을 받을 수 있습니다.', en: 'Paste your manuscript below to see paragraph quality scores. Select low-scoring paragraphs to receive refinement suggestions.', ja: '下に原稿を貼り付けると段落ごとの品質スコアが表示されます。低スコア段落を選択して仕上げ提案を受けられます。', zh: '在下方粘贴稿件可查看各段落质量分数。选择低分段落可获取润色建议。' })}</p>
         {promptDirective && <p className="text-xs text-accent-blue font-mono bg-accent-blue/5 rounded px-3 py-2 break-words">{L4(language, { ko: '지시:', en: 'Directive:', ja: '指示:', zh: '指令:' })} {promptDirective}</p>}
 
         {/* 약한 문단 감지 결과 — 모바일 랩 */}

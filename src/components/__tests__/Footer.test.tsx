@@ -20,7 +20,7 @@ describe('Footer legal links contract', () => {
       privacy: '/privacy',
       terms: '/terms',
       about: '/about',
-      contact: 'mailto:gilheumpark@gmail.com',
+      contact: 'mailto:support@loreguard.app',
     };
     expect(expectedPaths.privacy).toMatch(/^\/privacy$/);
     expect(expectedPaths.terms).toMatch(/^\/terms$/);

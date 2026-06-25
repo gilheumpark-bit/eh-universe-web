@@ -12,10 +12,10 @@ const AUTO: Record<AppLanguage, string> = {
 };
 
 const NO_KEY: Record<AppLanguage, string> = {
-  KO: 'API 미설정',
-  EN: 'No API key',
-  JP: 'APIキー未設定',
-  CN: '未配置 API',
+  KO: '연결 키 미설정',
+  EN: 'No connection key',
+  JP: '接続キー未設定',
+  CN: '未配置连接密钥',
 };
 
 function computeLabel(

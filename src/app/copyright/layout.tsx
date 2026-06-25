@@ -10,10 +10,10 @@ const TITLES = {
 } as const;
 
 const DESCRIPTIONS = {
-  ko: "Loreguard 저작권 정책 — 사용자 100% 귀속 + AI 생성물 법적 지위 (KR/US).",
-  en: "Loreguard Copyright Policy — 100% user ownership + AI-generated content legal status (KR/US).",
-  ja: "Loreguard 著作権ポリシー — ユーザー100%帰属 + AI生成物の法的地位 (KR/US)。",
-  zh: "Loreguard 版权政策 — 用户100%所有权 + AI生成内容的法律地位 (KR/US)。",
+  ko: "Loreguard 저작권 정책. 사용자 귀속, 노아 활용 저작물 기준, 외부 플랫폼 게시 기준 안내.",
+  en: "Loreguard Copyright Policy covering user ownership, Noa-assisted work standards, and external platform posting standards.",
+  ja: "Loreguard 著作権ポリシー。ユーザー帰属、Noa 活用作品基準、外部プラットフォーム投稿基準の案内。",
+  zh: "Loreguard 版权政策，说明用户所有权、Noa 辅助作品标准与外部平台发布标准。",
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {

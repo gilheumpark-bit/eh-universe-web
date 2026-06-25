@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// WorkProfilerView.tsx — Whole-work profiler (tension / quality /
+// WorkProfilerView.tsx — Whole-work analysis (tension / quality /
 // characters / scene density) rendered as pure SVG + HTML, no chart
 // libraries. Consumes ChatSession[] through work-profiler-engine.
 // ============================================================
@@ -78,6 +78,21 @@ function heatAlpha(value: number, maxVal: number): number {
   return 0.08 + ratio * 0.87;
 }
 
+function bindGridColumns(node: HTMLElement | null, count: number) {
+  if (!node) return;
+  node.style.setProperty('--studio-grid-columns', String(Math.max(1, count)));
+}
+
+function bindHeatAlpha(node: HTMLElement | null, alpha: number) {
+  if (!node) return;
+  node.style.setProperty('--studio-heat-alpha', String(alpha));
+}
+
+function bindBarHeight(node: HTMLElement | null, heightPct: number) {
+  if (!node) return;
+  node.style.setProperty('--studio-bar-height', `${heightPct}%`);
+}
+
 // ============================================================
 // PART 3 — subcomponent: LineChart (pure presentational)
 // ============================================================
@@ -151,7 +166,7 @@ const LineChart: React.FC<LineChartProps> = ({ points, color, maxY, ariaLabel, o
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(null)}
             onClick={() => onPointClick?.(i)}
-            style={{ cursor: onPointClick ? 'pointer' : 'default' }}
+            className={onPointClick ? 'cursor-pointer' : 'cursor-default'}
           />
         );
       })}
@@ -272,10 +287,10 @@ const WorkProfilerView: React.FC<WorkProfilerViewProps> = ({
   // Static label packs — no runtime i18n fetch.
   const L = {
     title: L4(language, {
-      ko: '작품 프로파일러',
-      en: 'Work Profiler',
-      ja: '作品プロファイラー',
-      zh: '作品分析器',
+      ko: '작품 분석',
+      en: 'Work Analysis',
+      ja: '作品分析',
+      zh: '作品分析',
     }),
     summary: L4(language, {
       ko: '요약',
@@ -448,10 +463,8 @@ const WorkProfilerView: React.FC<WorkProfilerViewProps> = ({
                       {row.name}
                     </span>
                     <div
-                      className="flex-1 grid gap-0.5 min-w-[240px]"
-                      style={{
-                        gridTemplateColumns: `repeat(${row.series.length}, minmax(0, 1fr))`,
-                      }}
+                      ref={(node) => bindGridColumns(node, row.series.length)}
+                      className="flex-1 grid gap-0.5 min-w-[240px] studio-grid-columns-dynamic"
                       role="row"
                     >
                       {row.series.map((v, i) => (
@@ -460,10 +473,8 @@ const WorkProfilerView: React.FC<WorkProfilerViewProps> = ({
                           role="cell"
                           aria-label={`EP ${i + 1}: ${v}`}
                           title={`EP ${i + 1} · ${v}`}
-                          className="h-4 rounded-sm"
-                          style={{
-                            backgroundColor: `rgba(139, 92, 246, ${heatAlpha(v, maxCharMentions)})`,
-                          }}
+                          ref={(node) => bindHeatAlpha(node, heatAlpha(v, maxCharMentions))}
+                          className="h-4 rounded-sm studio-heat-cell"
                         />
                       ))}
                     </div>
@@ -498,8 +509,8 @@ const WorkProfilerView: React.FC<WorkProfilerViewProps> = ({
                         : undefined
                     }
                     title={`EP ${p.x} · ${p.y}`}
-                    className="flex-1 min-w-[2px] bg-accent-purple/70 hover:bg-accent-purple rounded-sm focus-visible:ring-2 focus-visible:ring-accent-blue/50"
-                    style={{ height: `${Math.max(2, h)}%` }}
+                    ref={(node) => bindBarHeight(node, Math.max(2, h))}
+                    className="flex-1 min-w-[2px] bg-accent-purple/70 hover:bg-accent-purple rounded-sm focus-visible:ring-2 focus-visible:ring-accent-blue/50 studio-bar-height"
                     aria-label={`EP ${p.x}: ${p.y}`}
                   />
                 );

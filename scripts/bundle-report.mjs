@@ -35,15 +35,14 @@ const docsDir = path.join(root, 'docs');
 const TARGET_ROUTES = [
   { label: '/', dir: '', entryKey: 'page' },
   { label: '/studio', dir: 'studio', entryKey: 'studio/page' },
-  { label: '/code-studio', dir: 'code-studio', entryKey: 'code-studio/page' },
   {
     label: '/translation-studio',
     dir: 'translation-studio',
     entryKey: 'translation-studio/page',
   },
-  { label: '/network', dir: 'network', entryKey: 'network/page' },
-  { label: '/archive', dir: 'archive', entryKey: 'archive/page' },
-  { label: '/codex', dir: 'codex', entryKey: 'codex/page' },
+  { label: '/docs', dir: 'docs', entryKey: 'docs/page' },
+  { label: '/pricing', dir: 'pricing', entryKey: 'pricing/page' },
+  { label: '/status', dir: 'status', entryKey: 'status/page' },
 ];
 
 /** 500 KB = ⚠️ 임계치 (raw). */

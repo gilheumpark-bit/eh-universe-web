@@ -1,90 +1,203 @@
 // ============================================================
-// CSP Proxy — REFERENCE ONLY (not active middleware)
+// PART 1 — Next.js Proxy (CSRF systematic enforcement)
 // ============================================================
-// IMPORTANT: Security headers are applied via next.config.ts headers().
-// This file is kept as a reference for the header definitions.
-// Next.js 16 does not use middleware.ts for static pages; the
-// next.config.ts headers() function is the correct mechanism.
-// Do NOT create a middleware.ts that calls proxy() — it would
-// conflict with static generation and is unnecessary.
+// [2026-06-08] Next 16 migration: middleware.ts → proxy.ts 이름 변경 강제.
+//   - 기존 middleware.ts 의 CSRF 로직 그대로 이관 (P5 루프2/Senior architect)
+//   - 기존 proxy.ts 의 CSP 헤더는 next.config.ts headers() 로 이미 적용 중 (중복 제거)
+//   - Next 16 은 src/proxy.ts (또는 root proxy.ts) 단일 파일만 인식
+//
+// 화이트리스트 (CSRF 면제 — 대체 보안 메커니즘 보유):
+//   - /api/csrf — 토큰 발급 (chicken-and-egg)
+//   - /api/stripe/webhook — Stripe signature 검증
+//   - /api/cron/* — Vercel Cron secret 검증
+//   - /api/error-report — 클라이언트 fetch (sentry 패턴, low-risk)
+//   - /api/vitals — Beacon API (Web Vitals reporting, low-risk)
+//   - /api/health, /api/readiness — health probe (GET only, defense-in-depth)
+//   - /api/lsp/* — 외부 도구용 Bearer 토큰 인증. 브라우저 쿠키 CSRF와 분리.
+//
+// 제거된 공개 표면:
+//   - /code, /code-studio, /codex, /reference, /reports, /rulebook, /tools, /world
+//   - /api/code/*, /api/network-agent/*, /api/npm-search
+//
+// 적용 외 경로:
+//   - GET / HEAD / OPTIONS — side-effect free, CSRF 불요
+//   - non-/api routes — page rendering, CSRF 무관
+//
+// [C] fail-close: verifyCsrf 가 false → 403 + JSON 오류
+// [C] preflight (OPTIONS) — 통과 (브라우저 CORS preflight)
+// [G] matcher 로 /api/* 만 실행 — page rendering / static asset 부담 0
+// [K] 화이트리스트는 Set 으로 O(1)
+// ============================================================
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/lib/csrf';
+import { isAllowedOriginValue } from '@/lib/api-origin-guard';
 
 // ============================================================
-// CSP Directives
+// PART 2 — Whitelist & method filter
 // ============================================================
 
-function buildCSPHeader(isCodeStudio: boolean, isDevelopment: boolean): string {
-  const allowUnsafeEval = isCodeStudio || isDevelopment;
-  const scriptSrc = allowUnsafeEval
-    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`
-    : `script-src 'self' 'unsafe-inline' https://apis.google.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://vercel.live`;
+const CSRF_EXEMPT_PATHS: ReadonlySet<string> = new Set([
+  '/api/csrf',
+  '/api/stripe/webhook',
+  '/api/error-report',
+  '/api/vitals',
+  '/api/health',
+  '/api/readiness',
+]);
 
-  // style-src: 'unsafe-inline' is required — Next.js injects inline <style> tags
-  // for CSS Modules and Tailwind, and nonce-based style-src needs fully dynamic
-  // rendering (incompatible with static generation). This is the accepted trade-off
-  // for a statically-generated site. Nonce migration would require switching to
-  // fully dynamic rendering across all pages.
-  const styleSrc = "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net";
+const CSRF_EXEMPT_PREFIXES: readonly string[] = [
+  '/api/cron/',
+  '/api/lsp/',
+];
 
-  const directives = [
-    "default-src 'self'",
-    scriptSrc,
-    styleSrc,
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
-    "worker-src 'self' blob:",
-    `connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com https://api.groq.com https://api.mistral.ai https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.firebaseapp.com https://apis.google.com https://cdn.jsdelivr.net https://firestore.googleapis.com https://*.googleapis.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.us.sentry.io${isCodeStudio ? ' https://*.webcontainer.io wss://*.webcontainer.io' : ''}`,
-    `frame-src 'self' https://accounts.google.com https://*.firebaseapp.com${isCodeStudio ? ' https://*.webcontainer.io https://*.webcontainer.app http://localhost:*' : ''}`,
-    "object-src 'none'",
-    "base-uri 'self'",
-  ];
+const WRITE_METHODS: ReadonlySet<string> = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-  return directives.join('; ');
+const REMOVED_PAGE_EXACT_PATHS: ReadonlySet<string> = new Set([
+  '/code',
+  '/code-studio',
+  '/codex',
+  '/reference',
+  '/reports',
+  '/rulebook',
+  '/tools',
+  '/world',
+]);
+
+const REMOVED_PAGE_PREFIXES: readonly string[] = [
+  '/code-studio/',
+  '/codex/',
+  '/reference/',
+  '/reports/',
+  '/rulebook/',
+  '/tools/',
+  '/world/',
+];
+
+const REMOVED_API_PREFIXES: readonly string[] = [
+  '/api/code/',
+  '/api/network-agent/',
+];
+
+const REMOVED_API_EXACT_PATHS: ReadonlySet<string> = new Set([
+  '/api/npm-search',
+]);
+
+function isCsrfExempt(pathname: string): boolean {
+  if (CSRF_EXEMPT_PATHS.has(pathname)) return true;
+  for (const prefix of CSRF_EXEMPT_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function isRemovedPagePath(pathname: string): boolean {
+  if (REMOVED_PAGE_EXACT_PATHS.has(pathname)) return true;
+  for (const prefix of REMOVED_PAGE_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function isRemovedApiPath(pathname: string): boolean {
+  if (REMOVED_API_EXACT_PATHS.has(pathname)) return true;
+  for (const prefix of REMOVED_API_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+  return false;
 }
 
 // ============================================================
-// Proxy
+// PART 3 — Inline CSRF verifier (Edge runtime-safe)
 // ============================================================
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isCodeStudio = pathname.startsWith('/code-studio');
-  const isDevelopment = process.env.NODE_ENV !== 'production';
+function timingSafeEqualString(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
-  const cspHeader = buildCSPHeader(isCodeStudio, isDevelopment);
+function verifyCsrfEdge(req: NextRequest): boolean {
+  const cookieToken = req.cookies.get(CSRF_COOKIE_NAME)?.value;
+  const headerToken = req.headers.get(CSRF_HEADER_NAME);
+  if (!cookieToken || !headerToken) return false;
+  return timingSafeEqualString(cookieToken, headerToken);
+}
 
-  const response = NextResponse.next();
+function hasSameOriginHeader(req: NextRequest): boolean {
+  return isAllowedOriginValue(req.headers, req.headers.get('origin'));
+}
 
-  // Set CSP header on the response
-  response.headers.set('Content-Security-Policy', cspHeader);
+// ============================================================
+// PART 4 — Proxy entry point (Next 16 default export "proxy")
+// ============================================================
 
-  // Security headers (previously in next.config.ts headers())
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', isCodeStudio ? 'SAMEORIGIN' : 'DENY');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+export function proxy(req: NextRequest): NextResponse {
+  const { pathname } = req.nextUrl;
+  const method = req.method.toUpperCase();
 
-  // Cross-origin isolation for Code Studio (WebContainer)
-  if (isCodeStudio) {
-    response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  if (isRemovedApiPath(pathname)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'surface_removed',
+        message: 'This legacy API surface is no longer active in Loreguard.',
+      },
+      { status: 410 },
+    );
   }
 
-  return response;
+  if (isRemovedPagePath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  if (!pathname.startsWith('/api/')) return NextResponse.next();
+  if (!WRITE_METHODS.has(method)) return NextResponse.next();
+  if (isCsrfExempt(pathname)) return NextResponse.next();
+
+  if (!verifyCsrfEdge(req) && !hasSameOriginHeader(req)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'csrf_failed',
+        message: 'CSRF token missing or mismatch. Refresh and retry.',
+        hint: 'Call /api/csrf to obtain a fresh token, then echo it via X-CSRF-Token header.',
+      },
+      { status: 403 },
+    );
+  }
+
+  return NextResponse.next();
 }
+
+// ============================================================
+// PART 5 — Matcher config
+// ============================================================
 
 export const config = {
   matcher: [
-    // Match all request paths except:
-    // - _next/static (static files)
-    // - _next/image (image optimization)
-    // - favicon.ico, icon, apple-icon (app icons)
-    // - manifest.webmanifest
-    // - images directory (static assets)
-    // - API routes (they set their own headers)
-    '/((?!_next/static|_next/image|favicon\\.ico|icon|apple-icon|manifest\\.webmanifest|images/|api/).*)',
+    '/api/:path*',
+    '/code',
+    '/code-studio',
+    '/code-studio/:path*',
+    '/codex',
+    '/codex/:path*',
+    '/reference',
+    '/reference/:path*',
+    '/reports',
+    '/reports/:path*',
+    '/rulebook',
+    '/rulebook/:path*',
+    '/tools',
+    '/tools/:path*',
+    '/world',
+    '/world/:path*',
   ],
 };
+
+// IDENTITY_SEAL: proxy PART-1 | role=CSRF systematic enforcement | scope=/api/* writes
+// IDENTITY_SEAL: proxy PART-4 | role=proxy entry | inputs=NextRequest | outputs=NextResponse
+// IDENTITY_SEAL: proxy PART-5 | role=Next.js matcher | scope=/api/:path*

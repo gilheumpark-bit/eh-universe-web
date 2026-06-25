@@ -4,31 +4,37 @@
 // ScenePlayer — 3단계 프리뷰 시스템
 // ============================================================
 // Step 1: 편집 모드 → SceneTimeline (별도 컴포넌트)
-// Step 2: 라디오 드라마 → 어둠 + 음성 + 환경음 + 효과음 (상상)
-// Step 3: 비주얼 노벨 → 캐릭터 + 배경 + 음성 + 연출 (존재)
+// Step 2: 음성 확인 → 어둠 + 음성 + 환경음 + 효과음
+// Step 3: 시각 미리보기 → 캐릭터 + 배경 + 음성 + 연출
 
-import { useState, useCallback, useEffect, useRef, useMemo, type MutableRefObject } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
   Maximize2, Minimize2, BarChart3, X, ChevronLeft, 
   Headphones, 
 } from "lucide-react";
-import type {
-  ParsedScene, SceneBeat, VoiceMapping, ParticleType,
-  TTSController, Emotion,
-} from "@/engine/scene-parser";
+import type { ParsedScene, VoiceMapping, ParticleType, TTSController } from "@/engine/scene-parser";
 import { createTTSController } from "@/engine/scene-parser";
-import { createAudioEngine, detectAmbient, detectSFX, getDominantEmotion } from "@/engine/scene-audio";
+import { createAudioEngine, detectAmbient, detectSFX } from "@/engine/scene-audio";
 import type { AudioEngine } from "@/engine/scene-audio";
 import type { AppLanguage } from "@/lib/studio-types";
-import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
+import { getMoodFilter, getMoodGradient } from "@/components/studio/ScenePlayer.visuals";
+import { ProgressFill } from "@/components/studio/ProgressFill";
+import {
+  CharacterLayer,
+  DialogueBox,
+  ParticleLayer,
+  disposeScene,
+  useDebouncedSceneIndex,
+  useMemoryMonitor,
+} from "@/components/studio/ScenePlayer.parts";
 
 // ============================================================
 // PART 1 — Props & State Types
 // ============================================================
 
-/** 프리뷰 모드: radio(라디오 드라마) | visual(비주얼 노벨) */
+/** 프리뷰 모드: radio(음성 확인) | visual(시각 미리보기) */
 export type PreviewMode = 'radio' | 'visual';
 
 interface ScenePlayerProps {
@@ -55,342 +61,6 @@ interface PlaybackState {
 }
 
 // IDENTITY_SEAL: PART-1 | role=types | inputs=none | outputs=ScenePlayerProps,PlaybackState
-
-// ============================================================
-// PART 2 — 연출 이펙트 CSS
-// ============================================================
-
-function getMoodFilter(mood?: string): string {
-  switch (mood) {
-    case "dark": return "brightness(0.6) contrast(1.1)";
-    case "bright": return "brightness(1.1) saturate(1.2)";
-    case "rainy": return "brightness(0.7) saturate(0.8) hue-rotate(10deg)";
-    case "snowy": return "brightness(1.15) saturate(0.6)";
-    case "misty": return "brightness(0.85) contrast(0.85) blur(1px)";
-    case "eerie": return "brightness(0.5) saturate(0.4) hue-rotate(20deg)";
-    case "warm": return "brightness(1.05) saturate(1.1) sepia(0.15)";
-    case "cold": return "brightness(0.9) saturate(0.7) hue-rotate(-10deg)";
-    case "peaceful": return "brightness(1.05) saturate(1.1)";
-    default: return "none";
-  }
-}
-
-function getMoodGradient(mood?: string, timeOfDay?: string): string {
-  if (timeOfDay === "밤" || timeOfDay === "night") return "linear-gradient(180deg, #0a0e1a 0%, #1a1f3a 50%, #0d1220 100%)";
-  if (timeOfDay === "새벽" || timeOfDay === "dawn") return "linear-gradient(180deg, #1a1040 0%, #4a2060 30%, #d45050 70%, #f0a050 100%)";
-  if (timeOfDay === "저녁" || timeOfDay === "evening" || timeOfDay === "해질녘" || timeOfDay === "dusk") return "linear-gradient(180deg, #2a1a3a 0%, #c04040 40%, #f09040 80%, #f0d080 100%)";
-  switch (mood) {
-    case "dark": return "linear-gradient(180deg, #0a0a14 0%, #1a1a28 100%)";
-    case "eerie": return "linear-gradient(180deg, #0a1018 0%, #1a2030 100%)";
-    case "peaceful": return "linear-gradient(180deg, #1a2a3a 0%, #2a4a5a 50%, #3a6a7a 100%)";
-    default: return "linear-gradient(180deg, #0d1117 0%, #161b22 50%, #21262d 100%)";
-  }
-}
-
-// IDENTITY_SEAL: PART-2 | role=effects | inputs=mood,timeOfDay | outputs=CSS-filters,gradients
-
-// ============================================================
-// PART 3 — 파티클 렌더러
-// ============================================================
-
-function ParticleLayer({ type }: { type: ParticleType }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || type === "none") return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
-    canvas.height = canvas.offsetHeight * (window.devicePixelRatio || 1);
-    ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
-    const particles: { x: number; y: number; speed: number; size: number; opacity: number }[] = [];
-    const count = type === "rain" ? 120 : type === "snow" ? 80 : type === "petals" ? 30 : 50;
-
-    for (let i = 0; i < count; i++) {
-      particles.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        speed: 1 + Math.random() * 3,
-        size: type === "rain" ? 1.5 : type === "snow" ? 2 + Math.random() * 2 : 3 + Math.random() * 3,
-        opacity: 0.3 + Math.random() * 0.5,
-      });
-    }
-
-    function draw() {
-      ctx!.clearRect(0, 0, W, H);
-      for (const p of particles) {
-        ctx!.globalAlpha = p.opacity;
-        if (type === "rain") {
-          ctx!.strokeStyle = "#8ab4f8";
-          ctx!.lineWidth = p.size * 0.5;
-          ctx!.beginPath();
-          ctx!.moveTo(p.x, p.y);
-          ctx!.lineTo(p.x - 1, p.y + 8);
-          ctx!.stroke();
-        } else if (type === "snow" || type === "petals") {
-          ctx!.fillStyle = type === "snow" ? "#e0e8f0" : "#ffb0c0";
-          ctx!.beginPath();
-          ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx!.fill();
-        } else if (type === "sparks") {
-          ctx!.fillStyle = "#ffa040";
-          ctx!.fillRect(p.x, p.y, p.size, p.size);
-        } else {
-          ctx!.fillStyle = "#a09080";
-          ctx!.beginPath();
-          ctx!.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
-          ctx!.fill();
-        }
-
-        // 이동
-        if (type === "rain") { p.y += p.speed * 4; p.x -= p.speed * 0.5; }
-        else if (type === "snow") { p.y += p.speed * 0.8; p.x += Math.sin(p.y * 0.01) * 0.5; }
-        else if (type === "petals") { p.y += p.speed * 0.5; p.x += Math.sin(p.y * 0.02) * 1.5; }
-        else if (type === "sparks") { p.y -= p.speed * 2; p.x += (Math.random() - 0.5) * 2; p.opacity -= 0.005; }
-        else { p.y += p.speed * 0.3; p.x += (Math.random() - 0.5) * 0.5; }
-
-        if (p.y > H || p.y < 0 || p.opacity <= 0) { p.y = type === "sparks" ? H : 0; p.x = Math.random() * W; p.opacity = 0.3 + Math.random() * 0.5; }
-      }
-      animRef.current = requestAnimationFrame(draw);
-    }
-
-    animRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [type]);
-
-  if (type === "none") return null;
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" />;
-}
-
-// IDENTITY_SEAL: PART-3 | role=particles | inputs=ParticleType | outputs=Canvas-animation
-
-// ============================================================
-// PART 4 — 타이핑 이펙트
-// ============================================================
-
-function TypingText({ text, speed = 40, onDone }: { text: string; speed?: number; onDone?: () => void }) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
-  const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
-
-  useEffect(() => {
-    setDisplayed("");
-    setDone(false);
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) { clearInterval(interval); setDone(true); onDoneRef.current?.(); }
-    }, speed);
-    return () => clearInterval(interval);
-  }, [text, speed]);
-
-  return (
-    <span>
-      {displayed}
-      {!done && <span className="animate-pulse text-accent-purple">▌</span>}
-    </span>
-  );
-}
-
-// IDENTITY_SEAL: PART-4 | role=typing-effect | inputs=text,speed | outputs=animated-text
-
-// ============================================================
-// PART 5 — 캐릭터 표시
-// ============================================================
-
-function getEmotionEmoji(emotion?: Emotion): string {
-  if (!emotion) return "😐";
-  const entries = Object.entries(emotion) as [keyof Emotion, number][];
-  const dominant = entries.sort((a, b) => b[1] - a[1])[0];
-  if (!dominant || dominant[1] < 0.2) return "😐"; // 평온
-  switch (dominant[0]) {
-    case "joy": return "😊";
-    case "sadness": return "😢";
-    case "anger": return "😠";
-    case "fear": return dominant[1] > 0.7 ? "😱" : "😨"; // 공포 강도별
-    case "surprise": return "😲";
-  }
-  // 복합 감정: 결의 = anger + joy, 혐오 = anger + sadness
-  const anger = emotion.anger ?? 0;
-  const joy = emotion.joy ?? 0;
-  const sadness = emotion.sadness ?? 0;
-  if (anger > 0.3 && joy > 0.3) return "😤"; // 결의
-  if (anger > 0.3 && sadness > 0.3) return "😒"; // 혐오
-  return "😐"; // 평온
-}
-
-function CharacterDisplay({ name, emotion, side }: { name: string; emotion?: Emotion; side: "left" | "right" }) {
-  return (
-    <div className={`absolute bottom-32 ${side === "left" ? "left-8" : "right-8"} flex flex-col items-center gap-1 transition-[transform,opacity,background-color,border-color,color] duration-300`}>
-      <div className="text-3xl">{getEmotionEmoji(emotion)}</div>
-      <div className="bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
-        <span className="text-xs font-mono text-accent-purple">{name}</span>
-      </div>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-5 | role=character-display | inputs=name,emotion | outputs=character-avatar
-
-// ============================================================
-// PART 6 — 대사창
-// ============================================================
-
-function DialogueBox({
-  beat,
-  speed,
-  onNext,
-  onPrev,
-  canPrev,
-  showMetrics,
-  tension,
-  language,
-}: {
-  beat: SceneBeat;
-  speed: number;
-  onNext: () => void;
-  onPrev: () => void;
-  canPrev: boolean;
-  showMetrics: boolean;
-  tension: number;
-  language: AppLanguage;
-}) {
-  const typingSpeed = Math.round(40 / speed);
-
-  const typeLabel: Record<SceneBeat["type"], string> = {
-    dialogue: L4(language, { ko: "대사", en: "Dialogue", ja: "Dialogue", zh: "Dialogue" }),
-    narration: L4(language, { ko: "서술", en: "Narration", ja: "Narration", zh: "Narration" }),
-    action: L4(language, { ko: "행동", en: "Action", ja: "Action", zh: "Action" }),
-    thought: L4(language, { ko: "내면", en: "Thought", ja: "Thought", zh: "Thought" }),
-    description: L4(language, { ko: "묘사", en: "Description", ja: "Description", zh: "Description" }),
-  };
-
-  return (
-    <div className="absolute bottom-0 left-0 right-0 p-4">
-      <div className="max-w-3xl mx-auto bg-bg-primary/90 backdrop-blur-md border border-border/40 rounded-2xl p-5 shadow-luxury">
-        {/* 화자 이름 */}
-        {beat.speaker && (
-          <div className="mb-2 flex items-center gap-2">
-            <span className="font-mono text-sm font-semibold text-accent-green">
-              {beat.speaker}
-            </span>
-            <span className="text-[9px] text-text-tertiary bg-bg-tertiary/50 rounded px-1.5 py-0.5">
-              {typeLabel[beat.type]}
-            </span>
-          </div>
-        )}
-
-        {/* 내용 */}
-        <div className={`text-text-primary leading-relaxed ${beat.type === "thought" ? "italic text-text-secondary" : ""} ${beat.type === "description" ? "text-text-secondary text-sm" : "text-base"}`}>
-          <TypingText text={beat.text} speed={typingSpeed} />
-        </div>
-
-        {/* 하단: 메트릭 + 네비 */}
-        <div className="mt-3 flex items-center justify-between">
-          {showMetrics ? (
-            <div className="flex items-center gap-3 text-[10px] text-text-tertiary">
-              <span>{L4(language, { ko: '텐션', en: 'Tension', ja: 'Tension', zh: 'Tension' })} <span className={tension > 70 ? "text-accent-red" : tension > 40 ? "text-accent-amber" : "text-accent-green"}>{tension}</span></span>
-              <span>{L4(language, { ko: '템포', en: 'Tempo', ja: 'Tempo', zh: 'Tempo' })} {beat.tempo === "fast" ? "⚡" : beat.tempo === "slow" ? "🐌" : "▶"}</span>
-              <span>{L4(language, { ko: '카메라', en: 'Camera', ja: 'Camera', zh: 'Camera' })} {beat.camera}</span>
-            </div>
-          ) : <div />}
-
-          <div className="flex items-center gap-2">
-            <button onClick={onPrev} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-white/5 disabled:opacity-40 transition-colors" aria-label={L4(language, { ko: '이전', en: 'Previous', ja: '前へ', zh: '上一页' })}>
-              <ChevronLeft className="h-4 w-4 text-text-secondary" />
-            </button>
-            <button onClick={onNext} className="px-4 py-1.5 bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple rounded-lg text-xs font-mono transition-colors" aria-label={L4(language, { ko: '다음', en: 'Next', ja: '次へ', zh: '下一页' })}>
-              {L4(language, { ko: '다음', en: 'Next', ja: '次へ', zh: '下一页' })} ▶
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// IDENTITY_SEAL: PART-6 | role=dialogue-box | inputs=SceneBeat,callbacks | outputs=dialogue-UI
-
-// ============================================================
-// PART 6.5 — 메모리 관리 유틸리티
-// ============================================================
-
-const IS_DEV = process.env.NODE_ENV === "development";
-
-/** Dev-mode memory monitor: tracks particle counts and audio contexts */
-function useMemoryMonitor(
-  audioRef: MutableRefObject<AudioEngine | null>,
-  particleType: ParticleType,
-) {
-  const warnedRef = useRef({ particles: false, audio: false });
-
-  useEffect(() => {
-    if (!IS_DEV) return;
-
-    const interval = setInterval(() => {
-      // Track active audio contexts (check via BaseAudioContext count heuristic)
-      const audioActive = audioRef.current ? 1 : 0;
-      if (audioActive > 3 && !warnedRef.current.audio) {
-        console.warn("[ScenePlayer Memory] Active audio contexts:", audioActive, "> 3 threshold");
-        warnedRef.current.audio = true;
-      }
-
-      // Particle count warning (based on type)
-      const estimatedParticles = particleType === "rain" ? 120
-        : particleType === "snow" ? 80
-        : particleType === "petals" ? 30
-        : particleType === "sparks" ? 50
-        : 0;
-      if (estimatedParticles > 1000 && !warnedRef.current.particles) {
-        console.warn("[ScenePlayer Memory] Particle count:", estimatedParticles, "> 1000 threshold");
-        warnedRef.current.particles = true;
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [audioRef, particleType]);
-}
-
-/** Dispose all scene resources: TTS, audio, timers */
-function disposeScene(
-  ttsRef: MutableRefObject<TTSController | null>,
-  audioRef: MutableRefObject<AudioEngine | null>,
-  autoPlayRef: MutableRefObject<ReturnType<typeof setTimeout> | undefined>,
-) {
-  // Cancel TTS speech
-  ttsRef.current?.stop();
-
-  // Stop ambient audio (without disposing the engine — it's reused)
-  audioRef.current?.stopAmbient();
-
-  // Clear autoplay timer
-  if (autoPlayRef.current !== undefined) {
-    clearTimeout(autoPlayRef.current);
-    autoPlayRef.current = undefined;
-  }
-}
-
-/** Debounce rapid scene index changes */
-function useDebouncedSceneIndex(rawIndex: number, delay = 150): number {
-  const [debouncedIndex, setDebouncedIndex] = useState(rawIndex);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedIndex(rawIndex), delay);
-    return () => clearTimeout(timer);
-  }, [rawIndex, delay]);
-
-  return debouncedIndex;
-}
-
-// IDENTITY_SEAL: PART-6.5 | role=memory-management | inputs=refs | outputs=cleanup-utils
 
 // ============================================================
 // PART 7 — 메인 플레이어
@@ -643,24 +313,24 @@ export default function ScenePlayer({
     <div ref={containerRef} className={`relative w-full h-full overflow-hidden select-none ${sceneTransition === 'fade-out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} style={{ background: bgGradient }}>
       {/* 장면 전환 페이드 오버레이 */}
       <div key={fadeKey} className="absolute inset-0 bg-black pointer-events-none z-50 animate-[fadeOut_0.6s_ease-out_forwards]" />
-      {/* ── 라디오 모드: 어둠 + 최소 비주얼 ── */}
+      {/* ── 음성 확인 모드: 어둠 + 최소 비주얼 ── */}
       {isRadio && (
         <>
           <div className="absolute inset-0 bg-black" />
           {/* 중앙 파동 이펙트 */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className={`rounded-full border border-accent-purple/20 ${state.isPlaying && !state.isPaused ? 'animate-ping' : ''}`} style={{ width: 120, height: 120 }} />
-            <div className="absolute rounded-full border border-accent-purple/10" style={{ width: 200, height: 200 }} />
+            <div className={`rounded-full border border-accent-purple/20 scene-player-wave-sm ${state.isPlaying && !state.isPaused ? 'animate-ping' : ''}`} />
+            <div className="absolute rounded-full border border-accent-purple/10 scene-player-wave-lg" />
             <Headphones className="absolute h-8 w-8 text-accent-purple/40" />
           </div>
-          {/* 라디오 모드에서도 비트 텍스트 페이드인 */}
+          {/* 음성 확인 모드에서도 비트 텍스트 페이드인 */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-16">
             <p className={`text-center leading-loose transition-opacity duration-1000 max-w-xl ${
               currentBeat.type === 'dialogue' ? 'text-lg text-text-primary font-medium' :
               currentBeat.type === 'thought' ? 'text-base text-accent-purple/80 italic' :
               currentBeat.type === 'description' ? 'text-sm text-text-tertiary' :
               'text-base text-text-secondary'
-            }`} style={{ opacity: 0.8 }}>
+            } opacity-80`}>
               {currentBeat.speaker && currentBeat.type === 'dialogue' && (
                 <span className="block text-xs text-accent-green/60 font-mono mb-2">{currentBeat.speaker}</span>
               )}
@@ -670,7 +340,7 @@ export default function ScenePlayer({
         </>
       )}
 
-      {/* ── 비주얼 노벨 모드: 풀 비주얼 ── */}
+      {/* ── 시각 미리보기 모드: 풀 비주얼 ── */}
       {!isRadio && (
         <>
           {/* 배경 이미지 */}
@@ -776,45 +446,20 @@ export default function ScenePlayer({
         </div>
       </div>
 
-      {/* 캐릭터 표시 (비주얼 모드만) */}
-      {!isRadio && currentBeat.speaker && (
-        <>
-          {/* 캐릭터 이미지 (있으면) */}
-          {characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ? (
-            <div className="absolute bottom-32 left-8 transition-[transform,opacity,background-color,border-color,color] duration-500">
-              {/* 캐릭터 이미지 — 동적 URL(data URI / 원격) 모두 지원. next/image는 data URI loader 우회 필요 → 의도적으로 <img> 유지. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={characterImages?.get(currentBeat.speaker)?.get(getDominantEmotion(currentBeat.emotion)) ?? ''}
-                alt={currentBeat.speaker}
-                width={256}
-                height={256}
-                loading="lazy"
-                decoding="async"
-                className="h-64 w-auto object-contain drop-shadow-2xl"
-              />
-              <div className="text-center mt-1 bg-bg-secondary/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-border/30">
-                <span className="text-xs font-mono text-accent-purple">{currentBeat.speaker}</span>
-              </div>
-            </div>
-          ) : (
-            <CharacterDisplay name={currentBeat.speaker} emotion={currentBeat.emotion} side="left" />
-          )}
-        </>
-      )}
+      {!isRadio && <CharacterLayer beat={currentBeat} characterImages={characterImages} />}
 
       {/* 전체 진행률 */}
       <div className="absolute bottom-[140px] left-4 right-4 z-10">
         <div className="flex items-center gap-2">
           <span className="text-[9px] text-text-tertiary font-mono">{currentGlobalBeat}/{totalBeats}</span>
           <div className="flex-1 h-1 bg-bg-tertiary/50 rounded-full overflow-hidden">
-            <div className="h-full bg-accent-purple rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300" style={{ width: `${(currentGlobalBeat / totalBeats) * 100}%` }} />
+            <ProgressFill value={currentGlobalBeat} max={totalBeats} className="h-full bg-accent-purple rounded-full transition-[transform,opacity,background-color,border-color,color] duration-300" />
           </div>
           <span className="text-[9px] text-text-tertiary font-mono">{Math.round((currentGlobalBeat / totalBeats) * 100)}%</span>
         </div>
       </div>
 
-      {/* 대사창 (비주얼 모드), 라디오는 중앙 텍스트로 대체 */}
+      {/* 대사창 (시각 미리보기 모드), 음성 확인은 중앙 텍스트로 대체 */}
       {!isRadio && <DialogueBox
         beat={currentBeat}
         speed={state.speed}
@@ -826,7 +471,7 @@ export default function ScenePlayer({
         language={language}
       />}
 
-      {/* 라디오 모드 하단: 간단한 다음 버튼 */}
+      {/* 음성 확인 모드 하단: 간단한 다음 버튼 */}
       {isRadio && (
         <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-4">
           <button onClick={goPrev} disabled={!canPrev} className="p-2 rounded-full bg-white/5 hover:bg-white/10 disabled:opacity-40 transition-colors" aria-label="이전">
@@ -840,13 +485,14 @@ export default function ScenePlayer({
 
       {/* 진행률 바 */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-bg-primary/30">
-        <div
+        <ProgressFill
+          value={currentGlobalBeat}
+          max={totalBeats}
           className="h-full bg-accent-purple/60 transition-[transform,opacity,background-color,border-color,color] duration-300"
-          style={{ width: `${(currentGlobalBeat / totalBeats) * 100}%` }}
         />
       </div>
     </div>
   );
 }
 
-// IDENTITY_SEAL: PART-7 | role=main-player | inputs=ScenePlayerProps | outputs=visual-novel-UI
+// IDENTITY_SEAL: PART-7 | role=main-player | inputs=ScenePlayerProps | outputs=scene-preview-UI

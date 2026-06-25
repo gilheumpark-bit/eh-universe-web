@@ -431,12 +431,25 @@ const GENRE_WEIGHT_OVERRIDES: Record<string, Record<string, number>> = {
   '라이트노벨': { blur: 0.6, ai_tone: 0.5, similar_context: 0.7 },
 };
 
+// [fix] line 434: GENRE_WEIGHT_OVERRIDES keys use lowercase/snake_case override names
+// (blur, ai_tone, similar_context, gain_vs_cost, ending_mono) but finding.kind values
+// are uppercase (BLUR, AI_TONE, SIMILAR_CONTEXT, GAIN_NO_COST, ENDING_MONO), so the
+// lookup never matched and weighting was dead. Map finding.kind → override key explicitly.
+const KIND_TO_OVERRIDE_KEY: Record<string, string> = {
+  BLUR: 'blur',
+  AI_TONE: 'ai_tone',
+  SIMILAR_CONTEXT: 'similar_context',
+  GAIN_NO_COST: 'gain_vs_cost',
+  ENDING_MONO: 'ending_mono',
+};
+
 function applyGenreWeight(findings: DirectorFinding[], genre?: string): DirectorFinding[] {
   if (!genre) return findings;
   const weights = GENRE_WEIGHT_OVERRIDES[genre];
   if (!weights) return findings;
   return findings.map(f => {
-    const w = weights[f.kind];
+    const overrideKey = KIND_TO_OVERRIDE_KEY[f.kind] ?? f.kind; // [fix] map kind to override key
+    const w = weights[overrideKey];
     if (w !== undefined && w < 1) {
       return { ...f, severity: Math.max(1, Math.round(f.severity * w)) };
     }

@@ -43,6 +43,11 @@ const GRADE_COLOR: Record<string, string> = {
   S: 'text-accent-amber', A: 'text-accent-green', B: 'text-accent-blue', C: 'text-accent-amber', D: 'text-accent-red',
 };
 
+function setGenreVar(node: HTMLElement | null, name: string, value: string) {
+  if (!node) return;
+  node.style.setProperty(name, value);
+}
+
 // ============================================================
 // PART 3 — ASPECT BAR SUB-COMPONENT
 // ============================================================
@@ -65,19 +70,29 @@ const AspectBar: React.FC<{ aspect: AspectResult; lang: 'ko' | 'en' }> = ({ aspe
       <div className="relative h-3 bg-bg-primary rounded-full overflow-visible">
         {/* Benchmark zone */}
         <div
-          className="absolute h-full bg-white/5 rounded-full"
-          style={{ left: `${bmLeft}%`, width: `${bmRight - bmLeft}%` }}
+          ref={(node) => {
+            setGenreVar(node, '--genre-benchmark-left', `${bmLeft}%`);
+            setGenreVar(node, '--genre-benchmark-width', `${bmRight - bmLeft}%`);
+          }}
+          className="absolute h-full bg-white/5 rounded-full genre-benchmark-zone"
         />
         {/* Benchmark labels */}
-        <span className="absolute text-[7px] text-text-tertiary" style={{ left: `${bmLeft}%`, top: '-12px' }}>{bmLeft}</span>
-        <span className="absolute text-[7px] text-text-tertiary" style={{ left: `${bmRight}%`, top: '-12px' }}>{bmRight}</span>
+        <span
+          ref={(node) => setGenreVar(node, '--genre-benchmark-label-left', `${bmLeft}%`)}
+          className="absolute text-[7px] text-text-tertiary genre-benchmark-label"
+        >
+          {bmLeft}
+        </span>
+        <span
+          ref={(node) => setGenreVar(node, '--genre-benchmark-label-left', `${bmRight}%`)}
+          className="absolute text-[7px] text-text-tertiary genre-benchmark-label"
+        >
+          {bmRight}
+        </span>
         {/* Current value marker */}
         <div
-          className="absolute top-0 h-full w-1.5 rounded-full transition-[transform,opacity,background-color,border-color,color]"
-          style={{
-            left: `${Math.min(98, pct)}%`,
-            backgroundColor: aspect.severity === 'ok' ? '#22c55e' : aspect.severity === 'warn' ? '#f59e0b' : '#ef4444',
-          }}
+          ref={(node) => setGenreVar(node, '--genre-current-left', `${Math.min(98, pct)}%`)}
+          className={`absolute top-0 h-full w-1.5 rounded-full transition-[transform,opacity,background-color,border-color,color] genre-aspect-marker ${aspect.severity}`}
         />
       </div>
       <p className="text-[10px] text-text-secondary">{aspect.comment[lang]}</p>
@@ -158,10 +173,10 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
         id: 'welcome',
         role: 'reviewer',
         content: ({
-          KO: `📊 장르×레벨 리뷰어입니다. 현재 장르: ${genreLabel}\n\n레벨을 선택하고 "리뷰 요청"을 누르면, 해당 레벨 독자/편집자/비평가 시점에서 원고를 분석합니다.\n\n평균으로 때리지 않습니다. ${genreLabel} 장르 기준선 위에 현재 원고의 위치를 찍어드립니다.`,
+          KO: `📊 장르×레벨 리뷰어입니다. 현재 장르: ${genreLabel}\n\n레벨을 선택하고 "리뷰 요청"을 누르면, 해당 레벨 독자/편집자/비평가 시점에서 원고를 분석합니다.\n\n평균으로 뭉개지 않고 ${genreLabel} 독자가 기대하는 지점과 현재 원고의 거리를 짚어드립니다.`,
           EN: `📊 Genre×Level Reviewer. Current genre: ${genreLabel}\n\nSelect a level and click "Request Review" to analyze your manuscript from that perspective.\n\nNo averages. We plot your manuscript's position on the ${genreLabel} genre benchmark.`,
-          JP: `📊 ジャンル×レベルレビュアーです。現在のジャンル: ${genreLabel}\n\nレベルを選択し「レビュー依頼」をクリックすると、該当レベルの読者/編集者/批評家の視点で原稿を分析します。\n\n平均で打ちません。${genreLabel}ジャンル基準線上に現在の原稿の位置をプロットします。`,
-          CN: `📊 类型×等级审阅器。当前类型: ${genreLabel}\n\n选择等级并点击"请求审阅"，将从该等级读者/编辑/评论家的角度分析稿件。\n\n不打平均分。我们在${genreLabel}类型基准线上标注您稿件的位置。`,
+          JP: `📊 ジャンル×レベルレビュアーです。現在のジャンル: ${genreLabel}\n\nレベルを選択し「レビュー依頼」をクリックすると、該当レベルの読者/編集者/批評家の視点で原稿を分析します。\n\n平均でまとめず、${genreLabel}読者が期待する位置との距離を確認します。`,
+          CN: `📊 类型×等级审阅器。当前类型: ${genreLabel}\n\n选择等级并点击"请求审阅"，将从该等级读者/编辑/评论家的角度分析稿件。\n\n不做平均化处理，而是指出当前稿件与${genreLabel}读者期待点之间的距离。`,
         }[language]),
         timestamp: Date.now(),
       }]);
@@ -297,9 +312,9 @@ const GenreReviewChat: React.FC<GenreReviewChatProps> = ({ language, config, man
             </div>
             <div className="bg-bg-secondary border border-border rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce genre-typing-dot-delay-0" />
+                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce genre-typing-dot-delay-1" />
+                <div className="w-2 h-2 bg-text-tertiary rounded-full animate-bounce genre-typing-dot-delay-2" />
               </div>
             </div>
           </div>

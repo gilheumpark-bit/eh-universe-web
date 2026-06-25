@@ -11,6 +11,7 @@
  *   POST /api/agent-search     — requires FEATURE_AGENT_SEARCH=on
  *   GET  /api/agent-search/status — requires FEATURE_AGENT_SEARCH=on
  */
+export {};
 
 // ============================================================
 // PART 1 — Lightweight NextRequest/NextResponse stand-ins
@@ -78,13 +79,8 @@ jest.mock('@/lib/rate-limit', () => ({
   getClientIp: () => '127.0.0.1',
 }));
 
-// vertex-app-builder is imported by agent-search handlers — stub to avoid real Google SDK load.
-jest.mock('@/lib/vertex-app-builder', () => ({
-  isAgentBuilderConfigured: () => true,
-  searchAgentBuilder: async () => ({ results: [], summary: '', totalSize: 0 }),
-  converseAgentBuilder: async () => ({ reply: '', conversationId: '', references: [] }),
-  getAgentBuilderStatus: () => ({ universe: false, novel: false, code: false }),
-}));
+// [2026-06-06] vertex-app-builder 제거됨 (구글 AI 삭제) — agent-search 라우트는
+// 더 이상 Google SDK를 import하지 않으므로 stub 불필요.
 
 // api-logger — silence in tests.
 jest.mock('@/lib/api-logger', () => ({
@@ -103,6 +99,19 @@ jest.mock('@/lib/stripe', () => ({
   getStripeSession: async () => ({ url: 'https://checkout.stripe.com/test' }),
 }));
 
+let mockHostedAvailability: Record<string, boolean> = {};
+let mockSparkServerUrl = '';
+
+jest.mock('@/lib/server-ai', () => ({
+  getHostedProviderAvailability: () => mockHostedAvailability,
+}));
+
+jest.mock('@/services/sparkService', () => ({
+  get SPARK_SERVER_URL() {
+    return mockSparkServerUrl;
+  },
+}));
+
 // ============================================================
 // PART 2 — Env setup / teardown
 // ============================================================
@@ -113,10 +122,14 @@ function clearGateEnv(): void {
   delete process.env.FEATURE_STRIPE_CHECKOUT;
   delete process.env.FEATURE_AGENT_SEARCH;
   delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.FEATURE_DGX_DEV_API;
+  delete process.env.ENABLE_DGX_DEV_API;
 }
 
 beforeEach(() => {
   clearGateEnv();
+  mockHostedAvailability = {};
+  mockSparkServerUrl = '';
 });
 
 afterAll(() => {
@@ -177,5 +190,45 @@ describe('[M9 P0-2] /api/agent-search gate', () => {
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body).toEqual({ error: 'agent_search_disabled' });
+  });
+});
+
+// ============================================================
+// PART 5 — /api/ai-capabilities hosted boundary
+// ============================================================
+
+describe('[M9 P0-3] /api/ai-capabilities hosted boundary', () => {
+  it('does not treat a configured DGX URL as Hosted developer API availability', async () => {
+    mockSparkServerUrl = 'http://192.168.0.10:8000/v1';
+    const { GET } = await import('../ai-capabilities/route');
+    const res = (await GET()) as unknown as FakeNextResponse;
+    expect(res.status).toBe(200);
+    const body = await res.json() as { byokRequired: boolean; hasDgx: boolean; dgxConfigured: boolean; hosted: Record<string, boolean> };
+    expect(body.dgxConfigured).toBe(true);
+    expect(body.hasDgx).toBe(false);
+    expect(body.byokRequired).toBe(true);
+    expect(Object.values(body.hosted).some(Boolean)).toBe(false);
+  });
+
+  it('exposes DGX only as a local/development API path when the dev flag is enabled', async () => {
+    mockSparkServerUrl = 'http://192.168.0.10:8000/v1';
+    process.env.FEATURE_DGX_DEV_API = 'on';
+    const { GET } = await import('../ai-capabilities/route');
+    const res = (await GET()) as unknown as FakeNextResponse;
+    const body = await res.json() as { byokRequired: boolean; hasDgx: boolean; dgxConfigured: boolean; localDevAvailable: boolean };
+    expect(body.dgxConfigured).toBe(true);
+    expect(body.hasDgx).toBe(true);
+    expect(body.localDevAvailable).toBe(true);
+    expect(body.byokRequired).toBe(true);
+  });
+
+  it('uses Hosted developer API availability for connection-key requirement', async () => {
+    mockHostedAvailability = { openai: true };
+    const { GET } = await import('../ai-capabilities/route');
+    const res = (await GET()) as unknown as FakeNextResponse;
+    const body = await res.json() as { byokRequired: boolean; hosted: Record<string, boolean>; message: string };
+    expect(body.byokRequired).toBe(false);
+    expect(body.hosted.openai).toBe(true);
+    expect(body.message).toBe('Hosted developer API is available.');
   });
 });

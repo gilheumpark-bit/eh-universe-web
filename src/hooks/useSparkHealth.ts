@@ -6,7 +6,7 @@
 //
 // SparkHealth 모니터 훅.
 // DGX Spark(로컬 추론 게이트웨이) 가용 상태를 주기적으로 확인하고
-// 다운 감지 시 BYOK 자동 전환을 가능하게 한다.
+// 다운 감지 시 사용자가 명시적으로 켠 경우에만 연결 키 자동 전환을 가능하게 한다.
 //
 // - 연속 실패 3회 → 'down'
 // - 1회 성공 → 'ok' 복귀
@@ -79,15 +79,14 @@ export function detectBYOKProvider(): string | null {
   return null;
 }
 
-/** Fallback 선호 토글 (Settings에서 조정) — 기본 true(권장) */
+/** 연결 키 자동 전환 토글 (Settings에서 조정) — 기본 off */
 export function getFallbackPreference(): boolean {
-  if (typeof window === 'undefined') return true;
+  if (typeof window === 'undefined') return false;
   try {
     const v = localStorage.getItem('noa_byok_fallback_enabled');
-    // null이면 기본 true
-    return v === null ? true : v === '1';
+    return v === '1';
   } catch {
-    return true;
+    return false;
   }
 }
 

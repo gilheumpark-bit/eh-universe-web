@@ -9,7 +9,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { isValidTokenFormat, checkRateLimit } from '@/lib/lsp/auth';
+import { authorizeLspRequest, lspAuthHeaders } from '@/lib/lsp/auth';
 import { collectStoryContext, buildStoryContextModifier } from '@/engine/story-context';
 import { buildIntentDigest, buildIntentMemoryModifier } from '@/engine/intent-memory';
 import { extractMetaDefinitions } from '@/lib/meta-context/extractor';
@@ -27,14 +27,12 @@ interface FullContextRequest {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const auth = request.headers.get('authorization') ?? '';
-  const token = auth.replace(/^Bearer\s+/i, '').trim();
-  if (!isValidTokenFormat(token)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-  const rl = checkRateLimit(token);
-  if (!rl.allowed) {
-    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  const authResult = await authorizeLspRequest(request);
+  if (!authResult.ok) {
+    return NextResponse.json(
+      { error: authResult.error },
+      { status: authResult.status, headers: lspAuthHeaders(authResult) },
+    );
   }
 
   let body: FullContextRequest;
@@ -57,6 +55,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       episode: 1,
       title: 'LSP',
       totalEpisodes: body.episodes?.length ?? 0,
+      // 의도적 double-cast: 이 LSP 라우트는 length guardrail(min/max) 미사용. PclGuardrails 완화/캐스트 제거 금지 — deref 사이트 TS18048 유발.
       guardrails: { language: 'KO' } as unknown as StoryConfig['guardrails'],
       characters: [],
       platform: 'web',
@@ -99,7 +98,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       fullPrompt,
       generatedAt: new Date().toISOString(),
     },
-    { headers: { 'X-RateLimit-Remaining': String(rl.remaining) } },
+    { headers: { 'X-RateLimit-Remaining': String(authResult.remaining) } },
   );
 }
 

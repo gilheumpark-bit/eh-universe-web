@@ -1,28 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/lib/logger";
-import { checkRateLimit, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
+import { recordWebVitalMetric } from "@/lib/observability/runtime-metrics";
+import { checkRateLimitAsync, RATE_LIMITS, getClientIp } from "@/lib/rate-limit";
+import { isAllowedOriginValue } from "@/lib/api-origin-guard";
 
 const REQUEST_TIMEOUT = 10_000; // 10s timeout for vitals ingestion
 void REQUEST_TIMEOUT;
 
 export async function POST(req: NextRequest) {
   try {
-    const origin = req.headers.get("origin");
-    const host = req.headers.get("host") || "";
-    if (!origin || !host) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    try {
-      if (new URL(origin).host !== host) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    } catch {
+    if (!isAllowedOriginValue(req.headers, req.headers.get("origin"))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(ip, "vitals", RATE_LIMITS.default);
+    // [chaos-fix 2026-06-11] default(60/min) → vitals 전용(240/min). web-vitals 는 페이지당
+    // 다수 비콘을 보내므로 default 로는 정상 사용에서도 429. RATE_LIMITS.vitals 로 교체.
+    const rl = await checkRateLimitAsync(ip, "vitals", RATE_LIMITS.vitals);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "Too many requests" },
@@ -37,26 +32,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'body_too_large' }, { status: 413 });
     }
     const body = JSON.parse(raw);
-    // Structured log for Vercel / server-side observability
-    logger.info("web-vitals", JSON.stringify({ event: "web-vitals", ...body, timestamp: Date.now() }));
+    // [chaos-fix 2026-06-11] 클라 배치 댐퍼 도입 — { metrics: [...] } 배열 발송이 기본.
+    // 단일 객체(레거시 비콘·구버전 캐시 클라)도 그대로 수용(하위 호환).
+    const samples: Array<Record<string, unknown>> = Array.isArray(body?.metrics)
+      ? body.metrics
+      : [body];
 
-    // [O-02 fix — 2026-05-12] 'poor' rating 만 Sentry warning 발송 — 성능 회귀 알람 트리거.
-    // 'good'/'needs-improvement' 은 stdout 통계로 충분. DSN 미설정/non-prod 는 enabled 가드로 no-op.
-    try {
-      if (body?.rating === 'poor' && typeof body.name === 'string') {
-        Sentry.captureMessage(`WebVitals poor: ${body.name}`, {
-          level: 'warning',
-          tags: { route: '/api/vitals', metric: String(body.name), rating: 'poor' },
-          extra: {
-            value: body.value,
-            id: body.id,
-            navigationType: body.navigationType,
-            ip,
-          },
-        });
+    for (const sample of samples) {
+      if (!sample || typeof sample !== 'object') continue;
+      // Structured log for Vercel / server-side observability
+      logger.info("web-vitals", JSON.stringify({ event: "web-vitals", ...sample, timestamp: Date.now() }));
+      recordWebVitalMetric({ name: sample.name, value: sample.value, rating: sample.rating });
+
+      // [O-02 fix — 2026-05-12] 'poor' rating 만 Sentry warning 발송 — 성능 회귀 알람 트리거.
+      // 'good'/'needs-improvement' 은 stdout 통계로 충분. DSN 미설정/non-prod 는 enabled 가드로 no-op.
+      try {
+        const s = sample as { rating?: unknown; name?: unknown; value?: unknown; id?: unknown; navigationType?: unknown };
+        if (s.rating === 'poor' && typeof s.name === 'string') {
+          Sentry.captureMessage(`WebVitals poor: ${s.name}`, {
+            level: 'warning',
+            tags: { route: '/api/vitals', metric: String(s.name), rating: 'poor' },
+            extra: { value: s.value, id: s.id, navigationType: s.navigationType, ip },
+          });
+        }
+      } catch (sentryErr) {
+        logger.warn('API:vitals', 'Sentry.captureMessage failed', sentryErr);
       }
-    } catch (sentryErr) {
-      logger.warn('API:vitals', 'Sentry.captureMessage failed', sentryErr);
     }
 
     return NextResponse.json({ ok: true });

@@ -4,8 +4,7 @@
  * Stage: SKELETON ONLY.
  *   - Bundled plugins (shipped with Novel Studio) can be registered and toggled.
  *   - External plugin loading is intentionally NOT implemented — the API
- *     surface is reserved with `// TODO` markers so future work does not
- *     need to reshape consumer code.
+ *     boundary is reserved so future work does not need to reshape consumer code.
  *   - Permission model is declared and runtime-enforced (PermissionEnforcer)
  *     plus compile-time capability stripping (`buildScopedContext`).
  *
@@ -68,9 +67,8 @@ export interface L4Label {
 /**
  * Declared permissions a plugin *says* it needs.
  *
- * The runtime does not currently enforce these — the future sandbox will.
- * Today they serve only as informed-consent metadata shown in the UI so
- * the user can make an allow/deny decision before enabling.
+ * The registry filters runtime capabilities to match these declarations and
+ * audits each granted call through PermissionEnforcer.
  */
 export type NovelPluginPermission =
   | 'read-manuscript'
@@ -433,10 +431,9 @@ export async function verifyPluginIntegrity(
   bundleContent: string,
 ): Promise<{ valid: boolean; sha256: string; warnings: string[] }> {
   const warnings: string[] = [];
-  // Lazy import to avoid pulling plugin-sandbox into registry's init path
-  // when integrity verification isn't needed (bundled plugins).
+  // Lazy import keeps integrity hashing out of the registry init path.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { sha256Hex } = require('./plugin-sandbox') as typeof import('./plugin-sandbox');
+  const { sha256Hex } = require('./crypto-sha256') as typeof import('./crypto-sha256');
   const actual = await sha256Hex(bundleContent);
   const declared = manifest.integrity?.sha256;
   let valid = false;
@@ -489,47 +486,19 @@ export function registerBundledPlugins(registry: NovelPluginRegistry = pluginReg
 }
 
 /**
- * External plugin loader — Worker-sandboxed.
+ * Reserved external extension loader.
  *
- * Flow:
- *   1. Instantiates a sandboxed Worker via `plugin-sandbox.loadPluginInSandbox`.
- *   2. Wraps the resulting Worker handle as a `NovelPlugin` whose activate /
- *      deactivate forward messages into the sandbox.
- *   3. Bundled plugins never go through this path — see PART 3 comment.
- *
- * Returns a NovelPlugin suitable for `NovelPluginRegistry.register()`.
- * The caller is responsible for the Worker lifecycle (the returned object
- * keeps a reference under `__sandboxHandle` for teardown by tests/admin UI).
+ * External extension installation is not part of the current product surface.
+ * Keep this export as a stable boundary for future work, but fail closed so a
+ * stray caller cannot revive URL-based extension loading behind the UI.
  */
 export async function loadExternalPlugin(
   url: string,
   declaredPermissions: NovelPluginPermission[] = [],
 ): Promise<NovelPlugin> {
-  if (typeof url !== 'string' || url.length === 0) {
-    throw new Error('loadExternalPlugin: url must be a non-empty string.');
-  }
-  // Lazy import — only external path touches the sandbox module, so bundled
-  // apps that never load externals do not pay the cost at init.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { loadPluginInSandbox } = require('./plugin-sandbox') as typeof import('./plugin-sandbox');
-  const handle = await loadPluginInSandbox(url, declaredPermissions);
-  const novelPlugin: NovelPlugin & { __sandboxHandle?: unknown } = {
-    manifest: { ...handle.manifest, permissions: declaredPermissions, bundled: false },
-    activate: () => {
-      try { handle.postMessage({ type: 'activate' }); } catch (err) {
-        logger.warn('novel-plugin-registry', 'activate postMessage failed', err);
-      }
-    },
-    deactivate: () => {
-      try { handle.postMessage({ type: 'deactivate' }); } catch { /* worker gone */ }
-      // Force-terminate regardless of deactivate outcome — belt-and-braces.
-      try { handle.terminate(); } catch (err) {
-        logger.warn('novel-plugin-registry', 'terminate failed', err);
-      }
-    },
-    __sandboxHandle: handle,
-  };
-  return novelPlugin;
+  void url;
+  void declaredPermissions;
+  throw new Error('External extensions are not available in this build.');
 }
 
 // IDENTITY_SEAL: PART-3 | role=Bootstrap | inputs=pluginRegistry | outputs=registerBundledPlugins,loadExternalPlugin

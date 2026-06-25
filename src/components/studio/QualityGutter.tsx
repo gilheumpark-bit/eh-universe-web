@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { ParagraphScore, QualityIssue } from '@/hooks/useQualityAnalysis';
 import { L4 } from '@/lib/i18n';
 import type { AppLanguage } from '@/lib/studio-types';
+import { ProgressFill } from './ProgressFill';
 
 // ============================================================
 // PART 1 — 타입
@@ -108,8 +109,7 @@ function ParagraphPopover({
   return (
     <div
       ref={popoverRef}
-      className="absolute left-0 right-0 z-20 mt-1 mx-2 bg-bg-primary border border-border rounded-xl shadow-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150"
-      style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
+      className="absolute left-0 right-0 z-20 mt-1 mx-2 bg-bg-primary border border-border rounded-xl shadow-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-150 quality-popover-scroll"
     >
       {/* 헤더: 점수 + 닫기 */}
       <div className="flex items-center justify-between">
@@ -153,11 +153,11 @@ function ParagraphPopover({
           <div key={key} className="flex items-center gap-2">
             <span className="font-mono font-bold text-text-tertiary w-7" title={label}>{key}</span>
             <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
-              <div
+              <ProgressFill
+                value={Math.round(val * 100)}
                 className={`h-full rounded-full ${
                   key === 'REP' ? (val > 0.3 ? 'bg-accent-red' : 'bg-accent-green') : (val >= 0.5 ? 'bg-accent-green' : 'bg-accent-amber')
                 }`}
-                style={{ width: `${Math.round(val * 100)}%` }}
               />
             </div>
             <span className="font-mono text-text-secondary w-8 text-right">{Math.round(val * 100)}%</span>
@@ -289,7 +289,7 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
       {expanded && (
         <div className="border-t border-border/40 px-4 py-3 space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
           {paragraphs.map((p, i) => (
-            <div key={i} className="relative" style={{ position: 'relative' }}>
+            <div key={i} className="relative">
               <div
                 className={`flex items-start gap-2 px-3 py-2 rounded-lg ${
                   p.score < 50 ? 'bg-accent-red/5 border border-accent-red/20' : 'bg-bg-primary/50'
@@ -342,7 +342,7 @@ const QualityGutter: React.FC<QualityGutterProps> = ({
                       window.dispatchEvent(new CustomEvent('noa:trigger-inline-rewrite'));
                     }}
                     className="shrink-0 px-2 py-1 text-[9px] font-bold rounded-lg bg-accent-blue/10 text-accent-blue hover:bg-accent-blue/20 border border-accent-blue/20 transition-colors"
-                    title={isKO ? 'NOA 자동 수정 (Ctrl+Shift+R)' : 'NOA auto-fix (Ctrl+Shift+R)'}
+                    title={isKO ? '노아 수정 제안 (Ctrl+Shift+R)' : 'Noa fix suggestion (Ctrl+Shift+R)'}
                   >
                     {isKO ? '수정' : 'Fix'}
                   </button>

@@ -1,0 +1,32 @@
+/* ============================================================
+   Loreguard revision compression + direction entry polish
+   ============================================================ */
+
+.eh-app .rvcomp-toggle { margin-left: auto; }
+.eh-app .rvcomp-verdict { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.eh-app .rvcomp-verdict-title { color: var(--ink-1); font-size: 18px; font-weight: 800; }
+.eh-app .rvcomp-verdict-desc { color: var(--ink-2); font-size: 12px; }
+.eh-app .rvcomp-summary { margin-top: 6px; color: var(--ink-3); font-size: 11.5px; }
+.eh-app .rvcomp-empty-row { margin-top: 8px; color: var(--ink-3); }
+.eh-app .rvcomp-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.eh-app .rvcomp-item { align-items: flex-start; }
+.eh-app .rvcomp-pill { flex-shrink: 0; }
+.eh-app .rvcomp-muted-inline { color: var(--ink-3); }
+.eh-app .rvcomp-footnote { margin: 8px 0 0; color: var(--ink-3); font-size: 11px; }
+
+.eh-app .dr-empty-center-fill { align-items: center; justify-content: center; }
+.eh-app .dr-start-empty { width: min(640px, 100%); padding: 24px; color: var(--ink-2); text-align: center; }
+.eh-app .dr-start-icon { margin-bottom: 14px; color: var(--ink-3); }
+.eh-app .dr-start-title { margin-bottom: 6px; color: var(--ink-1); font-size: 16px; font-weight: 700; }
+.eh-app .dr-start-copy { margin-bottom: 18px; color: var(--ink-3); font-size: 13px; line-height: 1.55; }
+.eh-app .dr-start-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; width: min(560px, 100%); margin: 0 auto 18px; text-align: left; }
+.eh-app .dr-start-card { padding: 12px; }
+.eh-app .dr-start-card-title { color: var(--ink-1); font-size: 12.5px; font-weight: 800; }
+.eh-app .dr-start-card-copy { margin-top: 4px; color: var(--ink-3); font-size: 11.5px; line-height: 1.5; }
+.eh-app .dr-import-stack { display: grid; gap: 10px; margin: 0 0 12px; }
+.eh-app .dr-import-cards { display: grid; gap: 8px; }
+
+@media (max-width: 520px) {
+  .eh-app .dr-start-empty { padding: 18px 14px; }
+  .eh-app .dr-start-grid { grid-template-columns: 1fr; }
+}

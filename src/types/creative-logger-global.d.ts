@@ -20,7 +20,7 @@ declare global {
     /**
      * Creative event logger — StudioShell mount 시점에 노출.
      * 자식 컴포넌트가 props drilling 없이 호출 가능.
-     * Studio 외 라우트(Settings, Codex 등)에서는 undefined.
+     * Studio 외 라우트(Settings 등)에서는 undefined.
      */
     __creativeLogger?: CreativeEventLogger;
   }

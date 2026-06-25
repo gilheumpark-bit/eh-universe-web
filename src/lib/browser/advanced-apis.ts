@@ -185,9 +185,7 @@ export function addSpeculationRules(urls: string[]): void {
 export function preloadStudioRoutes(): void {
   addSpeculationRules([
     '/studio',
-    '/code-studio',
     '/translation-studio',
-    '/archive',
   ]);
 }
 

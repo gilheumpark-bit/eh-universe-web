@@ -173,6 +173,10 @@ class LockBasedController implements LeaderController {
       })
       .catch((err) => {
         // abort 또는 lock 실패
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          this.role = 'unknown';
+          return;
+        }
         logger.debug('save-engine:leader', 'lock released', err);
         this.role = 'unknown';
       });

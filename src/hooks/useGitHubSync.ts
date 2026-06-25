@@ -17,6 +17,8 @@ import {
   createBranch,
   switchBranch as switchBranchApi,
 } from '@/lib/github-sync';
+import { storeToken, loadToken, clearToken } from '@/lib/github-token-vault';
+import { showAlert } from '@/lib/show-alert';
 
 const STORAGE_KEY_CONFIG = 'noa-github-config';
 const STORAGE_KEY_SHA_MAP = 'noa-github-sha-map';
@@ -51,25 +53,95 @@ export interface UseGitHubSyncReturn {
 // ============================================================
 // PART 2 — Persistence Helpers
 // ============================================================
+// [D1-pat-security] PAT 평문 localStorage 저장 해소.
+// - localStorage `noa-github-config` = 메타데이터만 (owner/repo/branch).
+//   token 필드는 직렬화 형태에 존재 자체가 없다 — 백업 번들·storage 덤프·
+//   cert/이벤트/Firestore가 이 키를 퍼가도 토큰은 미포함 (구조적 가드).
+// - token = github-token-vault (AES-GCM + IndexedDB non-extractable 키).
+// - XSS 한계 정직 표기: 동일 디바이스 코드 실행(XSS·악성 확장)에는 무력 —
+//   at-rest 평문 노출만 차단. 상위안 = httpOnly 쿠키 + 서버 프록시
+//   (상세: src/lib/github-token-vault.ts 헤더 주석).
 
-function loadStoredConfig(): GitHubSyncConfig | null {
+/** 디스크에 영속되는 형태 — token 필드 금지. */
+interface StoredConfigMeta {
+  owner: string;
+  repo: string;
+  branch?: string;
+}
+
+async function loadStoredConfig(): Promise<GitHubSyncConfig | null> {
   if (typeof window === 'undefined') return null;
+
+  let meta: StoredConfigMeta | null = null;
+  let legacyPlaintextToken: string | null = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
     if (!raw) return null;
-    return JSON.parse(raw) as GitHubSyncConfig;
+    const parsed = JSON.parse(raw) as StoredConfigMeta & { token?: unknown };
+    if (typeof parsed.token === 'string' && parsed.token.length > 0) {
+      legacyPlaintextToken = parsed.token; // 구버전 평문 토큰 발견
+    }
+    meta = {
+      owner: typeof parsed.owner === 'string' ? parsed.owner : '',
+      repo: typeof parsed.repo === 'string' ? parsed.repo : '',
+      ...(typeof parsed.branch === 'string' ? { branch: parsed.branch } : {}),
+    };
   } catch (err) {
     logger.warn('GitHubSync', 'loadStoredConfig parse failed', err);
     return null;
   }
+
+  // [마이그레이션] 평문 발견 → 즉시 암호화 재저장 + 평문 삭제.
+  // 암호화 영속이 실패해도 평문은 무조건 지운다 (안전 방향 — 최악 케이스는
+  // 다음 세션 재연결이지 평문 잔존이 아니다).
+  if (legacyPlaintextToken) {
+    const persisted = await storeToken(legacyPlaintextToken);
+    try {
+      localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(meta));
+    } catch (err) {
+      logger.warn('GitHubSync', 'plaintext token migration rewrite failed', err);
+    }
+    if (!persisted) {
+      logger.warn('GitHubSync', 'token migrated to memory only — re-connect needed next session');
+    }
+    return { token: legacyPlaintextToken, ...meta };
+  }
+
+  const token = await loadToken();
+  if (!token) {
+    // 토큰 없는 메타데이터는 동작 불능 — 연결 해제 상태로 정리해 재연결 유도
+    try {
+      localStorage.removeItem(STORAGE_KEY_CONFIG);
+    } catch { /* noop */ }
+    return null;
+  }
+  return { token, ...meta };
 }
 
-function saveStoredConfig(config: GitHubSyncConfig | null): void {
+async function saveStoredConfig(config: GitHubSyncConfig | null): Promise<void> {
   if (typeof window === 'undefined') return;
-  if (config) {
-    localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
+  if (!config) {
+    try {
+      localStorage.removeItem(STORAGE_KEY_CONFIG);
+    } catch { /* noop */ }
+    await clearToken();
+    return;
+  }
+  // 명시적 필드 구성 — config 객체를 통째로 직렬화하지 않는다 (token 미포함 가드)
+  const meta: StoredConfigMeta = {
+    owner: config.owner,
+    repo: config.repo,
+    ...(config.branch ? { branch: config.branch } : {}),
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(meta));
+  } catch (err) {
+    logger.warn('GitHubSync', 'saveStoredConfig meta write failed', err);
+  }
+  if (config.token) {
+    await storeToken(config.token);
   } else {
-    localStorage.removeItem(STORAGE_KEY_CONFIG);
+    await clearToken();
   }
 }
 
@@ -95,16 +167,35 @@ function saveShaMap(map: ShaMap): void {
 // ============================================================
 
 export function useGitHubSync(): UseGitHubSyncReturn {
-  const [config, setConfig] = useState<GitHubSyncConfig | null>(() => loadStoredConfig());
+  // [D1-pat-security] 초기값 null — vault 복호화가 비동기라 동기 초기화 불가.
+  // 저장된 연결이 있으면 아래 hydration effect가 수 ms 내 config를 채운다
+  // (connected false → true 전환은 기존 consumer들이 이미 effect로 처리).
+  const [config, setConfig] = useState<GitHubSyncConfig | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const shaMapRef = useRef<ShaMap>(loadShaMap());
+  const hydratedRef = useRef(false);
 
-  // Sync config to localStorage on change
+  // Hydrate config from storage (meta) + vault (decrypted token)
   useEffect(() => {
-    saveStoredConfig(config);
+    let cancelled = false;
+    void loadStoredConfig().then((loaded) => {
+      if (cancelled) return;
+      hydratedRef.current = true;
+      // 사용자가 hydration 완료 전에 connect 했다면 그 값이 우선 (prev 유지)
+      if (loaded) setConfig((prev) => prev ?? loaded);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Sync config to storage on change (meta → localStorage, token → vault)
+  useEffect(() => {
+    // hydration 전 초기 null 저장으로 기존 설정/vault를 지우는 것 방지
+    if (!hydratedRef.current && config === null) return;
+    hydratedRef.current = true;
+    void saveStoredConfig(config);
   }, [config]);
 
   const connected = config !== null && Boolean(config.owner) && Boolean(config.repo);
@@ -155,6 +246,18 @@ export function useGitHubSync(): UseGitHubSyncReturn {
     async (path: string, content: string, message?: string): Promise<string | null> => {
       if (!config || !config.owner || !config.repo) {
         setError('Not connected to a repository');
+        return null;
+      }
+      // [D1-pat-security] 누출 가드 — PAT가 GitHub 파일/commit message
+      // 직렬화 경로에 절대 포함되지 않게 전송 직전 차단 (실패 비침묵).
+      if (
+        config.token &&
+        (content.includes(config.token) || (message !== undefined && message.includes(config.token)))
+      ) {
+        const leakMsg = 'Blocked: GitHub token detected in file content or commit message';
+        logger.error('GitHubSync', leakMsg);
+        showAlert('GitHub 토큰이 저장 내용에 포함되어 업로드를 차단했습니다', 'error');
+        setError(leakMsg);
         return null;
       }
       setSyncing(true);

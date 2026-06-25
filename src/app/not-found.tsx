@@ -4,10 +4,12 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { getNovelStudioHref } from "@/lib/studio-entry-links";
 
 export default function NotFound() {
   const { lang } = useLang();
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
+  const studioHref = getNovelStudioHref("create");
 
   return (
     <>
@@ -41,7 +43,7 @@ export default function NotFound() {
               {T({ ko: "기지로 귀환", en: "RETURN TO BASE", ja: "基地へ帰還", zh: "返回基地" })}
             </Link>
             <Link
-              href="/studio"
+              href={studioHref}
               aria-label={T({ ko: "스튜디오로 이동", en: "Go to studio", ja: "スタジオへ", zh: "前往工作室" })}
               className="inline-block font-mono text-xs tracking-wider uppercase px-6 py-3 border border-border rounded hover:border-accent-purple hover:text-accent-purple transition-colors"
             >

@@ -84,6 +84,31 @@ describe('html-renderer — 3 view × 4 lang = 12 cases', () => {
     expect(html).toContain('<!doctype html>');
     expect(html).toContain('disclaimer-first-line');
   });
+
+  it('한국어 HTML 확인서의 씰 라벨은 한국어로 출력한다', () => {
+    const cert = {
+      ...makeCert(),
+      sealNumber: 'LG-2606-0001-TEST',
+    };
+    const html = renderCertificateHtml(cert, makeSections('ko'), 'private', 'ko');
+
+    expect(html).toContain('과정기록 씰 #LG-2606-0001-TEST');
+    expect(html).not.toContain('Witness Seal #LG-2606-0001-TEST');
+  });
+
+  it('HTML 확인서 겉면은 원본 64자 해시 대신 축약 해시를 출력한다', () => {
+    const cert = {
+      ...makeCert(),
+      verificationUrl: 'https://example.test/verify/TEST01ULID',
+      verificationQrDataUrl: 'data:image/png;base64,TEST',
+    };
+    const html = renderCertificateHtml(cert, makeSections('ko'), 'private', 'ko');
+
+    expect(html).toContain('원고 해시 축약값');
+    expect(html).toContain('aaaaaaaaaaaaaaaa...aaaaaaaa');
+    expect(html).not.toContain(`>${'a'.repeat(64)}<`);
+    expect(html).toContain('QR for verification');
+  });
 });
 
 describe('html-renderer — escapeHtml XSS 방어', () => {

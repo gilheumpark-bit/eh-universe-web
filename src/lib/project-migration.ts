@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 
 export const STORAGE_KEY_SESSIONS_LEGACY = 'noa_chat_sessions_v2';
 export const STORAGE_KEY_PROJECTS = 'noa_projects_v2';
+export const STORAGE_KEY_PROJECTS_LEGACY = 'noa_projects';
 
 // ============================================================
 // PART 1: MIGRATION
@@ -47,22 +48,87 @@ export function migrateSessionsToProjects(): Project[] {
 // PART 2: LOAD / SAVE
 // ============================================================
 
+function normalizeProjects(rawProjects: unknown): Project[] {
+  if (!Array.isArray(rawProjects)) return [];
+
+  return rawProjects
+    .filter((projectCandidate): projectCandidate is Record<string, unknown> => (
+      typeof projectCandidate === 'object' && projectCandidate !== null
+    ))
+    .map((projectCandidate, index) => {
+      const createdAt =
+        typeof projectCandidate.createdAt === 'number'
+          ? projectCandidate.createdAt
+          : typeof projectCandidate.updatedAt === 'number'
+            ? projectCandidate.updatedAt
+            : Date.now();
+      const lastUpdate =
+        typeof projectCandidate.lastUpdate === 'number'
+          ? projectCandidate.lastUpdate
+          : typeof projectCandidate.updatedAt === 'number'
+            ? projectCandidate.updatedAt
+            : createdAt;
+      const genre = Object.values(Genre).includes(projectCandidate.genre as Genre)
+        ? projectCandidate.genre as Genre
+        : Genre.SF;
+
+      const project: Project = {
+        id: typeof projectCandidate.id === 'string' && projectCandidate.id.trim()
+          ? projectCandidate.id
+          : `project-legacy-${index + 1}`,
+        name: typeof projectCandidate.name === 'string' && projectCandidate.name.trim()
+          ? projectCandidate.name
+          : '미분류',
+        description: typeof projectCandidate.description === 'string'
+          ? projectCandidate.description
+          : '',
+        genre,
+        createdAt,
+        lastUpdate,
+        sessions: Array.isArray(projectCandidate.sessions)
+          ? projectCandidate.sessions as ChatSession[]
+          : [],
+      };
+
+      if (Array.isArray(projectCandidate.volumes)) {
+        project.volumes = projectCandidate.volumes as Project['volumes'];
+      }
+      if (typeof projectCandidate.currentBranch === 'string') {
+        project.currentBranch = projectCandidate.currentBranch;
+      }
+
+      return project;
+    });
+}
+
+function loadProjectsFromStorageKey(storageKey: string): Project[] {
+  if (typeof window === 'undefined') return [];
+
+  const raw = localStorage.getItem(storageKey);
+  if (!raw) return [];
+
+  try {
+    return normalizeProjects(JSON.parse(raw));
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Load projects from localStorage.
- * If noa_projects_v2 exists, use it.
- * Otherwise, attempt migration from legacy key.
+ * If noa_projects_v2 exists with projects, use it.
+ * Otherwise, migrate the older noa_projects key, then legacy flat sessions.
  */
 export function loadProjects(): Project[] {
   if (typeof window === 'undefined') return [];
 
-  const raw = localStorage.getItem(STORAGE_KEY_PROJECTS);
-  if (raw) {
-    try {
-      const projects: Project[] = JSON.parse(raw);
-      if (Array.isArray(projects)) return projects;
-    } catch {
-      // corrupted — fall through to migration
-    }
+  const currentProjects = loadProjectsFromStorageKey(STORAGE_KEY_PROJECTS);
+  if (currentProjects.length > 0) return currentProjects;
+
+  const legacyProjects = loadProjectsFromStorageKey(STORAGE_KEY_PROJECTS_LEGACY);
+  if (legacyProjects.length > 0) {
+    saveProjects(legacyProjects);
+    return legacyProjects;
   }
 
   // Attempt migration from legacy format
@@ -145,12 +211,32 @@ export function saveProjects(projects: Project[]): boolean {
         return true;
       } catch (retryErr) {
         logger.error('NOA', 'localStorage write failed after cleanup:', retryErr);
+        // [QA-robustness (4)] 정리 후에도 quota 초과 — 침묵 false(원고 유실) 대신 사용자 고지.
+        // 전면 tiered eviction 은 범위 외 — 부족 사실 + 내보내기 권유 toast 만 발화.
+        notifyStorageQuotaToast();
         return false;
       }
     }
     logger.error('NOA', 'localStorage write failed:', e);
     return false;
   }
+}
+
+/**
+ * [QA-robustness (4)] 저장 공간 부족 사용자 고지 — noa:toast (ToastHost 계약).
+ * SSR/이벤트 차단 환경에서는 조용히 no-op (호출자 흐름 방해 금지).
+ */
+function notifyStorageQuotaToast(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent('noa:toast', {
+      detail: {
+        message: '저장 공간이 부족해 저장하지 못했습니다. 작품을 내보내기(백업)한 뒤 오래된 회차를 정리해 주세요.',
+        variant: 'error',
+        duration: 8000,
+      },
+    }));
+  } catch { /* window/이벤트 차단 (SSR) */ }
 }
 
 /**

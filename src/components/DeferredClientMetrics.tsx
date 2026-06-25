@@ -15,11 +15,15 @@ const WebVitalsReporter = dynamic(
   { ssr: false },
 );
 
+const isVercelRuntime =
+  typeof process !== "undefined" &&
+  (process.env.NEXT_PUBLIC_VERCEL === "1" || process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.NEXT_PUBLIC_VERCEL_URL);
+
 export function DeferredClientMetrics() {
   return (
     <>
       <WebVitalsReporter />
-      <Analytics />
+      {isVercelRuntime ? <Analytics /> : null}
     </>
   );
 }

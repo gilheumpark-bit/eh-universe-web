@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// PART 1 — Imports
+// PART 1: Imports
 // ============================================================
 
 import { useState, useEffect } from "react";
@@ -14,8 +14,8 @@ import { confirmAge } from "@/lib/content-rating";
 import { useUserRoleSafe, type UserRole } from "@/contexts/UserRoleContext";
 
 // ============================================================
-// PART 2 — Onboarding 3-Slide Component
-// 브랜드 철학 Part 9 구현 — 해줘 vs 해라 철학을 첫 방문에 전달
+// PART 2: Onboarding 3-Slide Component
+// 브랜드 철학 Part 9 구현. 해줘 vs 해라 철학을 첫 방문에 전달
 // ============================================================
 
 const STORAGE_KEY = "eh-onboarded";
@@ -31,10 +31,10 @@ const SLIDES: Slide[] = [
   {
     icon: <Feather className="w-10 h-10 md:w-12 md:h-12" />,
     heading: {
-      ko: "AI가 쓰나요? 작가가 쓰나요?",
-      en: "Does AI write? Or the author?",
-      ja: "AIが書きますか? 作家が書きますか?",
-      zh: "AI 写作? 作者写作?",
+      ko: "노아가 대신 쓰나요? 작가가 쓰나요?",
+      en: "Does Noa write? Or the author?",
+      ja: "Noaが書きますか? 作家が書きますか?",
+      zh: "Noa 写作? 作者写作?",
     },
     body: {
       ko: "여기서 쓰는 건 당신입니다.\n우리는 당신을 대신하지 않습니다.",
@@ -47,16 +47,16 @@ const SLIDES: Slide[] = [
   {
     icon: <Brain className="w-10 h-10 md:w-12 md:h-12" />,
     heading: {
-      ko: "AI가 아닌, 당신을 훈련시킵니다",
-      en: "We train you, not the AI",
-      ja: "AIではなく、あなたを訓練します",
-      zh: "我们训练您,而非 AI",
+      ko: "도구가 아닌, 작가의 판단을 키웁니다",
+      en: "We sharpen the author's judgment",
+      ja: "道具ではなく、作家の判断を育てます",
+      zh: "强化作者判断，而非依赖工具",
     },
     body: {
-      ko: "질문하는 법, 문제를 쪼개는 법, 서사를 짜는 법.\nAI 시대의 새로운 문해력입니다.",
-      en: "How to ask. How to break down problems. How to craft narrative.\nThis is literacy for the AI era.",
-      ja: "質問の仕方、問題の分け方、物語の組み立て方。\nAI時代の新しいリテラシーです。",
-      zh: "如何提问,如何拆解问题,如何构建叙事。\nAI 时代的新素养。",
+      ko: "질문하는 법, 문제를 쪼개는 법, 서사를 짜는 법.\n창작 도구 시대의 새로운 문해력입니다.",
+      en: "How to ask. How to break down problems. How to craft narrative.\nThis is literacy for the creative tools era.",
+      ja: "質問の仕方、問題の分け方、物語の組み立て方。\n創作ツール時代の新しいリテラシーです。",
+      zh: "如何提问、如何拆解问题、如何构建叙事。\n这是创作工具时代的新素养。",
     },
     accent: "text-accent-purple",
   },
@@ -77,8 +77,8 @@ const SLIDES: Slide[] = [
     accent: "text-accent-green",
   },
   {
-    // [Track-D Phase 1.1 Round 1-5 — 2026-05-07] 작업 정리 노트 (창작 과정 확인서) 안내 슬라이드.
-    // 5차 §2 "장부는 뒤에서 자동" — 작가 의식 없이 누적되지만 발급은 명시 액션이라
+    // [Track-D Phase 1.1 Round 1-5 2026-05-07] 작업 정리 노트 (창작 과정 확인서) 안내 슬라이드.
+    // 5차 §2 "장부는 뒤에서 자동". 작가 의식 없이 누적되지만 발급은 명시 액션이라
     // 첫 사용자에게 1회 안내 (Welcome 슬라이드 = 1회 노출 + Settings 깊은 곳 위치 인지).
     icon: <ScrollText className="w-10 h-10 md:w-12 md:h-12" />,
     heading: {
@@ -114,7 +114,7 @@ const SLIDES: Slide[] = [
 ];
 
 // ============================================================
-// PART 2.5 — Role 선택 카드 데이터 + 진입 라우트
+// PART 2.5: Role 선택 카드 데이터 + 진입 라우트
 // ============================================================
 
 interface RoleOption {
@@ -160,7 +160,7 @@ const ROLE_OPTIONS: RoleOption[] = [
       ja: "大量翻訳/チーム",
       zh: "批量翻译/团队",
     },
-    route: "/network",
+    route: "/translation-studio",
   },
   {
     role: "explorer",
@@ -177,7 +177,7 @@ const ROLE_OPTIONS: RoleOption[] = [
 ];
 
 // ============================================================
-// PART 3 — Main Component
+// PART 3: Main Component
 // ============================================================
 
 export default function WelcomePage() {
@@ -186,9 +186,8 @@ export default function WelcomePage() {
   const userRole = useUserRoleSafe();
   const T = (v: { ko: string; en: string; ja?: string; zh?: string }) => L4(lang, v);
   const [slideIdx, setSlideIdx] = useState(0);
-  // 만 14세 이상 자가 선언 — 기본 true로 기존 onboarding 플로우 유지.
-  // 사용자가 uncheck 시 역할 카드 비활성 (마지막 슬라이드).
-  const [ageConfirmed, setAgeConfirmed] = useState(true);
+  // 만 14세 이상 자가 선언 — 사용자가 직접 체크해야 역할 선택 가능.
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   // 이미 온보딩 마친 사용자는 스튜디오로 바로
   useEffect(() => {
@@ -245,15 +244,15 @@ export default function WelcomePage() {
 
   return (
     <main className="min-h-screen flex flex-col bg-bg-primary text-text-primary">
-      {/* Header — skip button */}
-      {/* [Phase A — 2026-05-07] 정체성 표어 4언어 byte-level (소설가의 IDE / The IDE for Novelists) */}
+      {/* Header: skip button */}
+      {/* [Phase A 2026-05-07] 정체성 표어 4언어 byte-level */}
       <div className="flex justify-between items-center p-4 md:p-6">
         <div className="flex flex-col gap-0.5">
           <div className="text-xs md:text-sm font-mono uppercase tracking-widest text-text-tertiary">
             Loreguard
           </div>
-          <div className="text-[10px] md:text-xs text-text-tertiary/70 font-medium tracking-tight">
-            {T({ ko: "소설가의 IDE", en: "The IDE for Novelists", ja: "小説家のためのIDE", zh: "小说家的 IDE" })}
+          <div className="text-[10px] md:text-xs text-text-secondary font-medium tracking-tight">
+            {T({ ko: "창작 전문 IDE", en: "Creative IDE", ja: "創作専門IDE", zh: "创作专业 IDE" })}
           </div>
         </div>
         <button
@@ -289,10 +288,16 @@ export default function WelcomePage() {
                 key={i}
                 onClick={() => setSlideIdx(i)}
                 aria-label={`Slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === slideIdx ? "w-10 bg-accent-blue" : "w-2 bg-border"
-                }`}
-              />
+                aria-current={i === slideIdx ? "step" : undefined}
+                className="min-h-[44px] min-w-[44px] grid place-items-center rounded-lg transition-colors hover:bg-bg-secondary focus-visible:ring-2 focus-visible:ring-accent-blue"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`block h-1.5 rounded-full transition-all ${
+                    i === slideIdx ? "w-10 bg-accent-blue" : "w-2 bg-border"
+                  }`}
+                />
+              </button>
             ))}
           </div>
 
@@ -337,7 +342,7 @@ export default function WelcomePage() {
           ) : (
             <button
               onClick={handleNext}
-              className="bg-accent-blue text-white px-8 py-3 rounded-xl text-base font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[48px] inline-flex items-center gap-2"
+              className="bg-accent-blue !text-white px-8 py-3 rounded-xl text-base font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue min-h-[48px] inline-flex items-center gap-2"
             >
               {T({ ko: "다음", en: "Next", ja: "次へ", zh: "下一步" })}
               <ChevronRight className="w-4 h-4" />
@@ -360,20 +365,20 @@ export default function WelcomePage() {
 
       {/* Footer — legal links */}
       <div className="p-4 md:p-6 text-center">
-        <div className="text-[10px] md:text-xs text-text-tertiary space-x-3">
-          <Link href="/privacy" className="hover:text-text-secondary hover:underline">
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] md:text-xs text-text-tertiary">
+          <Link href="/privacy" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded px-1 hover:text-text-secondary hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
             {T({ ko: "개인정보처리방침", en: "Privacy", ja: "プライバシー", zh: "隐私政策" })}
           </Link>
           <span>·</span>
-          <Link href="/terms" className="hover:text-text-secondary hover:underline">
+          <Link href="/terms" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded px-1 hover:text-text-secondary hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
             {T({ ko: "이용약관", en: "Terms", ja: "利用規約", zh: "服务条款" })}
           </Link>
           <span>·</span>
-          <Link href="/about" className="hover:text-text-secondary hover:underline">
+          <Link href="/about" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded px-1 hover:text-text-secondary hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
             {T({ ko: "소개", en: "About", ja: "紹介", zh: "关于" })}
           </Link>
           <span>·</span>
-          <Link href="/changelog" className="hover:text-text-secondary hover:underline">
+          <Link href="/changelog" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded px-1 hover:text-text-secondary hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
             {T({ ko: "변경 이력", en: "Changelog", ja: "変更履歴", zh: "更新日志" })}
           </Link>
         </div>

@@ -39,13 +39,13 @@ describe('PrismRejectionToast', () => {
   it('4언어 라벨 — en', () => {
     render(<PrismRejectionToast language="en" />);
     dispatchRejection('Test message');
-    expect(screen.getByText(/AI content declined/)).toBeInTheDocument();
+    expect(screen.getByText(/Noa response declined/)).toBeInTheDocument();
   });
 
   it('4언어 라벨 — ja', () => {
     render(<PrismRejectionToast language="ja" />);
     dispatchRejection('Test message');
-    expect(screen.getByText(/AI コンテンツ拒否/)).toBeInTheDocument();
+    expect(screen.getByText(/ノア応答の拒否/)).toBeInTheDocument();
   });
 
   it('닫기 버튼 → 제거', () => {
@@ -70,6 +70,6 @@ describe('PrismRejectionToast', () => {
     act(() => {
       window.dispatchEvent(new CustomEvent('noa:prism-rejection', { detail: {} }));
     });
-    expect(screen.queryByText(/AI 콘텐츠/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/노아 응답/)).not.toBeInTheDocument();
   });
 });

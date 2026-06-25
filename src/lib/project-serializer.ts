@@ -188,7 +188,7 @@ export function configToRepoFiles(
   for (const ms of manuscripts) {
     if (!ms) continue;
     const vol = ms.volume ?? 1;
-    const path = ms.filePath ?? episodeFilePath(ms.episode, vol);
+    const path = ms.filePath ? normalizeSafeRepoPath(ms.filePath) ?? episodeFilePath(ms.episode, vol) : episodeFilePath(ms.episode, vol);
     files.push({
       path,
       content: episodeToMarkdown(ms, vol),
@@ -214,6 +214,36 @@ export function configToRepoFiles(
 // ============================================================
 // PART 5 — Repo Files -> Config (Deserialize)
 // ============================================================
+
+function normalizeRepoPath(path: string): string {
+  return path.replace(/\\/g, '/');
+}
+
+export function normalizeSafeRepoPath(path: string): string | null {
+  const normalized = normalizeRepoPath(path).trim();
+  if (!normalized) return null;
+  if (normalized.startsWith('/') || /^[a-z]:\//i.test(normalized)) return null;
+  if (/[\u0000-\u001f\u007f]/.test(normalized)) return null;
+  if (normalized.split('/').some((part) => part === '..' || part === '')) return null;
+  if (normalized.startsWith('.git/') || normalized === '.git') return null;
+  return normalized;
+}
+
+function isOriginalManuscriptPath(path: string): boolean {
+  const normalized = normalizeRepoPath(path);
+  return (
+    normalized.startsWith('volumes/') ||
+    /^projects\/[^/]+\/manuscripts\/episode-\d+\.md$/i.test(normalized)
+  );
+}
+
+function isTranslatedManuscriptPath(path: string): boolean {
+  const normalized = normalizeRepoPath(path);
+  return (
+    normalized.startsWith('translations/') ||
+    /^projects\/[^/]+\/translations\/[^/]+\/episode-\d+\.md$/i.test(normalized)
+  );
+}
 
 /**
  * Deserialize repo files back into a partial StoryConfig.
@@ -293,7 +323,7 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
   // --- volumes/vol-XX/ep-XXX.md (원본) ---
   const manuscripts: EpisodeManuscript[] = [];
   for (const [path, content] of fileMap) {
-    if (path.startsWith('volumes/') && path.endsWith('.md')) {
+    if (path.endsWith('.md') && isOriginalManuscriptPath(path)) {
       const ms = markdownToEpisode(content, path);
       manuscripts.push(ms);
     }
@@ -306,7 +336,7 @@ export function repoFilesToConfig(files: RepoFile[]): Partial<StoryConfig> {
   // --- translations/<lang>/volumes/vol-XX/ep-XXX.md (번역본) ---
   const translations: TranslatedManuscriptEntry[] = [];
   for (const [path, content] of fileMap) {
-    if (path.startsWith('translations/') && path.endsWith('.md')) {
+    if (path.endsWith('.md') && isTranslatedManuscriptPath(path)) {
       const t = markdownToTranslatedManuscript(content, path);
       if (t) translations.push(t);
     }

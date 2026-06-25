@@ -75,7 +75,7 @@ check_port() {
 }
 
 check_port "vLLM 35B MoE"   8001
-check_port "RAG API"         8082
+check_port "Retrieval sidecar" 8082
 check_port "ComfyUI (FLUX)"  8188
 
 echo ""

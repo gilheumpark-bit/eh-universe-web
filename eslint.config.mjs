@@ -17,23 +17,21 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // src/cli/ is a Node.js CLI tool that uses CommonJS require().
-  // Test files may also use require() for dynamic module-loading assertions.
+  // Test files may use require() for dynamic module-loading assertions.
   {
-    files: ["src/cli/**", "src/**/__tests__/**"],
+    files: ["src/**/__tests__/**"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
     },
   },
-  // src/cli/ is an internal Node.js CLI tool (Quill Engine).
-  // These warnings are acceptable: dynamic AST traversal requires `any`,
-  // cross-version Node.js compat needs @ts-ignore, and some callback params are unused.
-  // ~178 warnings (144 no-explicit-any, 34 ban-ts-comment) — all downgraded to warn.
+  // 테스트 파일은 React 컴포넌트가 아니라 모듈 스코프 mock 을 beforeEach 에서 재할당하고
+  // 테스트가 제어하는 effect 에서 setState 를 호출한다 — react-hooks 의 globals/
+  // set-state-in-effect 규칙은 프로덕션 컴포넌트 대상이므로 테스트에는 부적용. (CI 게이트 정상화)
   {
-    files: ["src/cli/**"],
+    files: ["src/**/__tests__/**", "src/**/*.test.{ts,tsx}"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/ban-ts-comment": "warn",
+      "react-hooks/globals": "off",
+      "react-hooks/set-state-in-effect": "off",
     },
   },
   // Override default ignores of eslint-config-next.
@@ -45,9 +43,14 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Nested Codex/Claude worktrees include generated app output.
     ".claude/**",
+    ".codex/**",
+    ".codex-tmp/**",
+    "codex-artifacts/**",
     // Test artifacts (may not exist locally)
+    ".jest-cache/**",
     "test-results/**",
     "playwright-report/**",
+    "qa-screenshots/**",
   ]),
 ]);
 

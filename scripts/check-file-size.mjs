@@ -35,47 +35,19 @@ const SRC = join(ROOT, 'src');
 const WARN_THRESHOLD = 500;  // PART 분리 권장
 const FAIL_THRESHOLD = 800;  // 신규 파일 금지선 (CI 모드에서만 fail)
 
-// grandfathered — 분리 작업 진행 중인 기존 대형 파일 (2026-04-19 기준 31건)
+// grandfathered — 분리 작업 진행 중인 기존 대형 파일.
 // 신규 커밋에서 이들 파일의 신규 생성은 차단하되, 기존 확장은 허용.
 // 목표: 리스트를 **점진적으로 축소** (파일 분리 완료 시 제거). 신규 추가는 금지.
-const GRANDFATHERED = new Set([
-  // 번역 사전 (대규모 키밸류, 분리 불필요)
+const DATA_ONLY = new Set([
   'src/lib/translations-ko.ts',
   'src/lib/translations-en.ts',
   'src/lib/translations-ja.ts',
   'src/lib/translations-zh.ts',
-  // 분리 예정 (Top 우선)
-  'src/components/translator/TranslatorStudioApp.tsx',
-  'src/engine/translation.ts',
-  'src/app/tools/warp-gate/page.tsx',
-  'src/engine/pipeline.ts',
-  'src/components/studio/SceneSheet.tsx',
-  'src/hooks/useTranslation.ts',
-  'src/components/studio/StyleStudioView.tsx',
-  'src/components/studio/TranslationPanel.tsx',
-  'src/lib/code-studio/pipeline/pipeline.ts',
-  'src/components/studio/SettingsView.tsx',
-  'src/components/code-studio/CodeStudioShell.tsx',
-  // 추가 legacy 800줄+
-  'src/lib/ai-providers.ts',
-  'src/lib/code-studio/pipeline/pipeline-teams.ts',
-  'src/components/studio/ResourceView.tsx',
-  'src/components/studio/ItemStudioView.tsx',
-  'src/app/studio/StudioShell.tsx',
-  'src/components/studio/tabs/VisualTab.tsx',
-  'src/lib/code-studio/features/collaboration.ts',
-  'src/components/code-studio/DeployPanel.tsx',
-  'src/components/code-studio/GitPanel.tsx',
-  'src/components/studio/StudioSidebar.tsx',
-  // WritingTabInline.tsx removed from grandfather list in M2 Day 3-7 refactor
-  // (889 → 552 lines via ModeSwitch/FabControls/SceneWarnings extraction +
-  // useWritingReducer UI state cluster). Still above 500 WARN threshold,
-  // further compression targeted in Day 8-10 dynamic-import pass.
-  'src/components/network/NetworkHomeClient.tsx',
-  'src/components/studio/ScenePlayer.tsx',
-  'src/lib/code-studio/pipeline/bugfinder.ts',
-  'src/cli/core/pipeline-bridge.ts',
-  'src/components/network/PlanetWizard.tsx',
+]);
+
+const GRANDFATHERED = new Set([
+  // 현재 800줄 초과 잔여 파일만 허용. 800줄 아래로 내려온 파일은 즉시 제거해
+  // 다음 수정에서 다시 커지는 일을 품질 게이트가 잡도록 한다.
 ]);
 
 // ============================================================
@@ -131,14 +103,16 @@ function main() {
     const rel = relative(ROOT, abs).replace(/\\/g, '/');
     const lines = lineCount(abs);
     if (lines < WARN_THRESHOLD) continue;
+    const dataOnly = DATA_ONLY.has(rel);
     const grandfathered = GRANDFATHERED.has(rel);
-    results.push({ file: rel, lines, grandfathered });
+    results.push({ file: rel, lines, grandfathered, dataOnly });
   }
 
   results.sort((a, b) => b.lines - a.lines);
 
-  const warn = results.filter(r => r.lines >= WARN_THRESHOLD && r.lines < FAIL_THRESHOLD);
-  const fail = results.filter(r => r.lines >= FAIL_THRESHOLD);
+  const warn = results.filter(r => !r.dataOnly && r.lines >= WARN_THRESHOLD && r.lines < FAIL_THRESHOLD);
+  const dataOnly = results.filter(r => r.dataOnly && r.lines >= FAIL_THRESHOLD);
+  const fail = results.filter(r => !r.dataOnly && r.lines >= FAIL_THRESHOLD);
   const newFail = fail.filter(r => !r.grandfathered);
 
   console.log(`\n[file-size-guard] Scanned ${files.length} files under src/\n`);
@@ -157,6 +131,14 @@ function main() {
     for (const r of fail) {
       const tag = r.grandfathered ? ' [grandfathered]' : ' [NEW VIOLATION]';
       console.log(`   ${r.lines.toString().padStart(5)} ${r.file}${tag}`);
+    }
+    console.log();
+  }
+
+  if (dataOnly.length > 0) {
+    console.log(`📚 DATA (${FAIL_THRESHOLD}+ lines) — 대규모 키밸류 사전, 코드 분리 대상 아님: ${dataOnly.length} files`);
+    for (const r of dataOnly) {
+      console.log(`   ${r.lines.toString().padStart(5)} ${r.file} [data-only]`);
     }
     console.log();
   }

@@ -5,7 +5,7 @@
 // ============================================================
 //
 // Compliance Section — Settings 아코디언 그룹 1개.
-// - AI 사용 고지 자동 삽입 on/off (Export 시)
+// - 노아 활용 고지 자동 삽입 on/off (Export 시)
 // - 커스텀 고지문 (선택)
 // - 플랫폼 AI 라벨 요구 안내
 // ============================================================
@@ -91,10 +91,10 @@ const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language, current
         <ShieldCheck className="w-4 h-4 text-accent-green shrink-0" />
         <span className="text-sm font-black text-text-primary flex-1">
           {L4(language, {
-            ko: 'AI 사용 고지 · 규제 대응',
-            en: 'AI Disclosure & Compliance',
-            ja: 'AI使用開示・規制対応',
-            zh: 'AI 使用声明与合规',
+            ko: '노아 활용 고지 · 플랫폼 대응',
+            en: 'Noah Usage Notice & Platform Readiness',
+            ja: 'ノア活用表示・プラットフォーム対応',
+            zh: '诺亚使用说明与平台适配',
           })}
         </span>
         <ChevronDown className="w-4 h-4 text-text-tertiary transition-transform group-open:rotate-180" />
@@ -106,10 +106,10 @@ const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language, current
           <Info className="w-4 h-4 shrink-0 text-accent-blue mt-0.5" />
           <p>
             {L4(language, {
-              ko: 'Amazon KDP · Apple Books · Royal Road 등 일부 플랫폼은 AI 생성 여부 공개를 요구합니다. Export(EPUB/DOCX) 시 AI 사용 고지가 본문 끝에 자동 삽입됩니다.',
-              en: 'Amazon KDP, Apple Books, Royal Road and others require AI disclosure. When exporting (EPUB/DOCX), a notice is auto-inserted at the end.',
-              ja: 'Amazon KDP・Apple Books・Royal Roadなど一部プラットフォームはAI生成の開示を求めます。Export(EPUB/DOCX)時に本文末尾へ自動挿入されます。',
-              zh: 'Amazon KDP · Apple Books · Royal Road 等平台要求披露 AI 使用。导出 (EPUB/DOCX) 时会自动在文末插入声明。',
+              ko: 'Amazon KDP · Apple Books · Royal Road 등 일부 플랫폼은 모델 활용 범위 공개를 요구할 수 있습니다. Export(EPUB/DOCX) 시 노아 활용 고지가 본문 끝에 자동 삽입됩니다.',
+              en: 'Amazon KDP, Apple Books, Royal Road and others may require model-use disclosure. When exporting (EPUB/DOCX), a Noah usage notice is auto-inserted at the end.',
+              ja: 'Amazon KDP・Apple Books・Royal Roadなど一部プラットフォームはモデル活用範囲の開示を求める場合があります。Export(EPUB/DOCX)時にノア活用表示が本文末尾へ自動挿入されます。',
+              zh: 'Amazon KDP · Apple Books · Royal Road 等平台可能要求说明模型使用范围。导出 (EPUB/DOCX) 时会自动在文末插入诺亚使用说明。',
             })}
           </p>
         </div>
@@ -121,17 +121,17 @@ const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language, current
               <Tag className="w-4 h-4 text-text-tertiary" />
               <span className="text-[12px] font-bold text-text-secondary">
                 {L4(language, {
-                  ko: '현재 작품 AI 공동집필 등급',
-                  en: 'Current Work AI Co-Authorship Grade',
-                  ja: '現在の作品のAI共同執筆等級',
-                  zh: '当前作品 AI 协同创作等级',
+                  ko: '현재 작품 노아 활용 등급',
+                  en: 'Current Work Noah Usage Grade',
+                  ja: '現在の作品のノア活用等級',
+                  zh: '当前作品诺亚使用等级',
                 })}
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <span
                 role="status"
-                aria-label={`${L4(language, { ko: 'AI 공동집필 등급', en: 'AI co-authorship grade', ja: 'AI共同執筆等級', zh: 'AI 协同创作等级' })}: ${disclosurePreview.label}`}
+                aria-label={`${L4(language, { ko: '노아 활용 등급', en: 'Noah usage grade', ja: 'ノア活用等級', zh: '诺亚使用等级' })}: ${disclosurePreview.label}`}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold ${GRADE_BADGE[disclosurePreview.grade]}`}
               >
                 {disclosurePreview.label}
@@ -168,10 +168,10 @@ const ComplianceSection: React.FC<ComplianceSectionProps> = ({ language, current
           <div className="min-w-0">
             <div className="text-xs md:text-sm font-bold text-text-primary">
               {L4(language, {
-                ko: 'AI 사용 고지 자동 삽입',
-                en: 'Auto-Insert AI Disclosure',
-                ja: 'AI使用開示を自動挿入',
-                zh: '自动插入 AI 声明',
+                ko: '노아 활용 고지 자동 삽입',
+                en: 'Auto-Insert Noah Usage Notice',
+                ja: 'ノア活用表示を自動挿入',
+                zh: '自动插入诺亚使用说明',
               })}
             </div>
             <div className="text-[12px] text-text-tertiary mt-0.5">

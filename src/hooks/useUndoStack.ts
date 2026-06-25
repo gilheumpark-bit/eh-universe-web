@@ -29,7 +29,9 @@ export interface UndoStack {
   undoCount: number;
   undo: () => string | null;
   redo: () => string | null;
-  push: (text: string, label?: string) => void;
+  // [fix] returns true when the snapshot was actually recorded, false when throttled —
+  // lets callers (e.g. checkAutoSnapshot) avoid advancing their baseline on a dropped push.
+  push: (text: string, label?: string) => boolean;
   clear: () => void;
   lastLabel: string | null;
   /** Call on every content change; auto-snapshots when delta >= 300 chars */
@@ -90,11 +92,12 @@ export function useUndoStack(initialText?: string): UndoStack {
   const undoCount = state.stack.length;
   const lastLabel = state.pointer >= 0 ? state.stack[state.pointer]?.label ?? null : null;
 
-  const push = useCallback((text: string, label?: string) => {
+  const push = useCallback((text: string, label?: string): boolean => {
     const now = Date.now();
-    if (now - lastPush.current < 300) return;
+    if (now - lastPush.current < 300) return false; // [fix] report throttled-drop so baseline isn't advanced
     lastPush.current = now;
     dispatch({ type: 'PUSH', text, label, timestamp: now });
+    return true;
   }, []);
 
   const undo = useCallback((): string | null => {
@@ -119,8 +122,12 @@ export function useUndoStack(initialText?: string): UndoStack {
   const checkAutoSnapshot = useCallback((currentContent: string) => {
     const delta = Math.abs(currentContent.length - lastSnapshotContent.current.length);
     if (delta >= 300) {
-      push(currentContent, 'auto-snapshot');
-      lastSnapshotContent.current = currentContent;
+      // [fix] only advance baseline when push actually recorded the snapshot;
+      // when push() is throttled the snapshot was dropped, so keep the old baseline
+      // and let the next change re-trigger the threshold (prevents silent data loss).
+      if (push(currentContent, 'auto-snapshot')) {
+        lastSnapshotContent.current = currentContent;
+      }
     }
   }, [push]);
 

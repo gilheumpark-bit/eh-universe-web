@@ -1,9 +1,11 @@
 "use client";
-
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Sparkles, Copy, Check, ChevronDown, ChevronUp, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Sparkles, Download, User, MapPin, Clapperboard, Volume2, Image as ImageIcon, Music } from "lucide-react";
 import { getApiKey } from "@/lib/ai-providers";
 import { showAlert } from "@/lib/show-alert";
+// [X2 — 2026-06-11] /api/analyze-chapter 200+{blocked} 차단 계약 고지 (사일런트 차단 금지).
+import { checkBlockedJson } from "@/lib/noa/block-notice";
+import { checkPaywallJson } from "@/lib/noa/paywall-notice";
 import type {
   AppLanguage,
   ChapterAnalysis,
@@ -13,13 +15,22 @@ import type {
   SoundState,
   ImagePromptPack,
   MusicPromptPack,
-  EmotionIntensity,
 } from "@/lib/studio-types";
 import { createT } from "@/lib/i18n";
-
-// ============================================================
-// PART 1 — HELPERS & DEFAULTS
-// ============================================================
+import {
+  ArrayInput,
+  CopyButton,
+  EMPTY_BACKGROUND,
+  EMPTY_CHARACTER,
+  EMPTY_IMAGE_PROMPT,
+  EMPTY_MUSIC_PROMPT,
+  EMPTY_SCENE,
+  EMPTY_SOUND,
+  FieldRow,
+  IntensitySelect,
+  SectionHeader,
+  TextInput,
+} from "./ChapterAnalysisView.parts";
 
 interface ChapterAnalysisViewProps {
   language: AppLanguage;
@@ -30,178 +41,6 @@ interface ChapterAnalysisViewProps {
   onClose: () => void;
 }
 
-const EMPTY_CHARACTER: CharacterStateEntry = {
-  name: "",
-  presence: "direct",
-  sceneRole: "",
-  emotion: { primary: "", intensity: "mid" },
-  expression: "",
-  gaze: { direction: "", target: "" },
-  pose: "",
-  actionState: "",
-  bodyState: [],
-  outfitDelta: [],
-  heldItem: [],
-  relationContext: "",
-  aura: [],
-};
-
-const EMPTY_BACKGROUND: BackgroundState = {
-  location: "",
-  spaceType: "",
-  time: "",
-  weather: "",
-  lighting: "",
-  mood: [],
-  keyObjects: [],
-  environmentCondition: [],
-};
-
-const EMPTY_SCENE: SceneAnalysisState = {
-  summary: "",
-  phase: "",
-  tension: "mid",
-  conflictType: [],
-  characterGoal: "",
-  obstacle: "",
-  turningPoint: "",
-  symbolicTags: [],
-};
-
-const EMPTY_SOUND: SoundState = {
-  ambient: [],
-  effects: [],
-  voiceTone: [],
-  audioMood: [],
-  bgmTags: [],
-};
-
-const EMPTY_IMAGE_PROMPT: ImagePromptPack = {
-  characterFocus: "",
-  backgroundFocus: "",
-  sceneFocus: "",
-  styleHints: [],
-};
-
-const EMPTY_MUSIC_PROMPT: MusicPromptPack = {
-  mood: "",
-  emotionFlow: "",
-  soundKeywords: [],
-  musicStyle: [],
-};
-
-const INTENSITY_OPTIONS: { value: EmotionIntensity; tKey: string }[] = [
-  { value: "low", tKey: "chapterAnalysis.intensityLow" },
-  { value: "mid", tKey: "chapterAnalysis.intensityMid" },
-  { value: "high", tKey: "chapterAnalysis.intensityHigh" },
-  { value: "extreme", tKey: "chapterAnalysis.intensityExtreme" },
-];
-
-function arrayToString(arr: string[]): string {
-  return arr.join(", ");
-}
-
-function stringToArray(str: string): string[] {
-  return str.split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-// ============================================================
-// PART 2 — SUB-COMPONENTS
-// ============================================================
-
-function SectionHeader({ icon, title, open, onToggle }: { icon: React.ReactNode; title: string; open: boolean; onToggle: () => void }) {
-  return (
-    <button onClick={onToggle} className="w-full flex items-center justify-between py-2.5 px-1 group">
-      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest font-mono text-text-secondary group-hover:text-text-primary transition-colors">
-        {icon} {title}
-      </div>
-      {open ? <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" /> : <ChevronDown className="w-3.5 h-3.5 text-text-tertiary" />}
-    </button>
-  );
-}
-
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
-      <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider font-mono shrink-0 w-24 pt-1.5">{label}</label>
-      <div className="flex-1 min-w-0">{children}</div>
-    </div>
-  );
-}
-
-function TextInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors"
-    />
-  );
-}
-
-function ArrayInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
-  return (
-    <input
-      value={arrayToString(value)}
-      onChange={(e) => onChange(stringToArray(e.target.value))}
-      placeholder={placeholder}
-      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple transition-colors"
-    />
-  );
-}
-
-function IntensitySelect({ value, onChange, language }: { value: EmotionIntensity; onChange: (v: EmotionIntensity) => void; language: AppLanguage }) {
-  const t = createT(language);
-  return (
-    <div className="flex gap-1">
-      {INTENSITY_OPTIONS.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={`px-2 py-1 rounded text-[9px] font-bold font-mono border transition-colors ${
-            value === opt.value
-              ? "bg-accent-purple/20 border-accent-purple/40 text-accent-purple"
-              : "bg-bg-secondary border-border text-text-tertiary hover:text-text-primary"
-          }`}
-        >
-          {t(opt.tKey)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function CopyButton({ text, language }: { text: string; language: AppLanguage }) {
-  const t = createT(language);
-  const [copied, setCopied] = useState(false);
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }, [text]);
-  return (
-    <button onClick={handleCopy} aria-label="복사" className="p-1.5 rounded bg-bg-tertiary/50 text-text-tertiary hover:text-accent-green transition-colors" title={t('chapterAnalysis.copy')}>
-      {copied ? <Check className="w-3 h-3 text-accent-green" /> : <Copy className="w-3 h-3" />}
-    </button>
-  );
-}
-
-// ============================================================
-// PART 3 — MAIN COMPONENT
-// ============================================================
-
 export default function ChapterAnalysisView({
   language,
   episode,
@@ -211,47 +50,34 @@ export default function ChapterAnalysisView({
   onClose,
 }: ChapterAnalysisViewProps) {
   const t = createT(language);
-
   const [characters, setCharacters] = useState<CharacterStateEntry[]>(analysis?.characterState ?? []);
   const [background, setBackground] = useState<BackgroundState>(analysis?.backgroundState ?? { ...EMPTY_BACKGROUND });
   const [scene, setScene] = useState<SceneAnalysisState>(analysis?.sceneState ?? { ...EMPTY_SCENE });
   const [sound, setSound] = useState<SoundState>(analysis?.soundState ?? { ...EMPTY_SOUND });
   const [imagePrompt, setImagePrompt] = useState<ImagePromptPack>(analysis?.imagePromptPack ?? { ...EMPTY_IMAGE_PROMPT });
   const [musicPrompt, setMusicPrompt] = useState<MusicPromptPack>(analysis?.musicPromptPack ?? { ...EMPTY_MUSIC_PROMPT });
-
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     character: true, background: true, scene: true, sound: true, image: true, music: true,
   });
   const [analyzing, setAnalyzing] = useState(false);
   const analysisAbortRef = useRef<AbortController | null>(null);
-
-  // Cleanup: abort analysis fetch on unmount
   useEffect(() => () => { analysisAbortRef.current?.abort(); }, []);
-
   const toggleSection = (key: string) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  // Update a single character
   const updateCharacter = useCallback((index: number, patch: Partial<CharacterStateEntry>) => {
     setCharacters((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)));
   }, []);
-
   const addCharacter = useCallback(() => {
     setCharacters((prev) => [...prev, { ...EMPTY_CHARACTER }]);
   }, []);
-
   const removeCharacter = useCallback((index: number) => {
     setCharacters((prev) => prev.filter((_, i) => i !== index));
   }, []);
-
-  // AI auto-analysis
   const runAutoAnalysis = useCallback(async () => {
     if (!manuscriptContent.trim() || analyzing) return;
-    // Abort previous in-flight analysis
     analysisAbortRef.current?.abort();
     const controller = new AbortController();
     analysisAbortRef.current = controller;
     setAnalyzing(true);
-
     try {
       const clientApiKey = getApiKey("gemini");
       const res = await fetch("/api/analyze-chapter", {
@@ -261,10 +87,22 @@ export default function ChapterAnalysisView({
         signal: controller.signal,
       });
 
-      if (!res.ok) throw new Error("Analysis failed");
-
+      if (!res.ok) {
+        const errorPayload: unknown = await res.json().catch(() => null);
+        const paywallMsg = checkPaywallJson(errorPayload);
+        throw new Error(paywallMsg || "Analysis failed");
+      }
       const data = await res.json();
-
+      // [X2] NOA 차단 계약 (200 + {blocked, reason}) — 필드 침묵 대신 고지 (사일런트 차단 금지)
+      const blockedMsg = checkBlockedJson(
+        data,
+        'chapter-analysis',
+        language === 'KO' ? 'ko' : language === 'JP' ? 'ja' : language === 'CN' ? 'zh' : 'en',
+      );
+      if (blockedMsg) {
+        showAlert(blockedMsg, 'error');
+        return;
+      }
       if (data.characterState) setCharacters(data.characterState);
       if (data.backgroundState) setBackground(data.backgroundState);
       if (data.sceneState) setScene(data.sceneState);
@@ -273,13 +111,11 @@ export default function ChapterAnalysisView({
       if (data.musicPromptPack) setMusicPrompt(data.musicPromptPack);
     } catch {
       // API 실패 시 수동 입력으로 폴백 (analyze-chapter 라우트 구현 완료)
-      showAlert(language === 'KO' ? '분석에 실패했습니다. 직접 입력해주세요.' : 'Analysis failed. Please enter manually.', 'error');
+      showAlert(language === 'KO' ? '분석하지 못했습니다. 필요한 내용을 직접 적어 주세요.' : 'Analysis failed. Please enter manually.', 'error');
     } finally {
       setAnalyzing(false);
     }
   }, [manuscriptContent, language, analyzing]);
-
-  // Save
   const handleSave = useCallback(() => {
     const result: ChapterAnalysis = {
       id: analysis?.id ?? `analysis-${Date.now()}`,
@@ -294,8 +130,6 @@ export default function ChapterAnalysisView({
     };
     onSaveAnalysis(result);
   }, [analysis, episode, characters, background, scene, sound, imagePrompt, musicPrompt, onSaveAnalysis]);
-
-  // Export all prompts as text
   const exportPrompts = useCallback(() => {
     const lines = [
       `=== EP.${episode} ${t('chapterAnalysis.chapterAnalysisPrompts')} ===`,
@@ -323,7 +157,6 @@ export default function ChapterAnalysisView({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent-amber" />
@@ -362,9 +195,6 @@ export default function ChapterAnalysisView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 1 — Character State */}
-      {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<User className="w-3.5 h-3.5" />}
@@ -442,9 +272,6 @@ export default function ChapterAnalysisView({
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 2 — Background State */}
-      {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<MapPin className="w-3.5 h-3.5" />}
@@ -484,9 +311,6 @@ export default function ChapterAnalysisView({
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 3 — Scene State */}
-      {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Clapperboard className="w-3.5 h-3.5" />}
@@ -526,9 +350,6 @@ export default function ChapterAnalysisView({
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 4 — Sound State */}
-      {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Volume2 className="w-3.5 h-3.5" />}
@@ -557,9 +378,6 @@ export default function ChapterAnalysisView({
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 5 — Image Prompt Pack */}
-      {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<ImageIcon className="w-3.5 h-3.5" />}
@@ -605,7 +423,6 @@ export default function ChapterAnalysisView({
             <FieldRow label={t('chapterAnalysis.style')}>
               <ArrayInput value={imagePrompt.styleHints} onChange={(v) => setImagePrompt((p) => ({ ...p, styleHints: v }))} />
             </FieldRow>
-            {/* Combined prompt for quick copy */}
             {(imagePrompt.characterFocus || imagePrompt.backgroundFocus || imagePrompt.sceneFocus) && (
               <div className="mt-2 p-3 bg-bg-primary border border-accent-purple/20 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
@@ -621,9 +438,6 @@ export default function ChapterAnalysisView({
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 6 — Music Prompt Pack */}
-      {/* ============================================================ */}
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <SectionHeader
           icon={<Music className="w-3.5 h-3.5" />}
@@ -651,7 +465,6 @@ export default function ChapterAnalysisView({
             <FieldRow label={t('chapterAnalysis.musicStyle')}>
               <ArrayInput value={musicPrompt.musicStyle} onChange={(v) => setMusicPrompt((p) => ({ ...p, musicStyle: v }))} />
             </FieldRow>
-            {/* Combined music prompt */}
             {(musicPrompt.mood || musicPrompt.emotionFlow) && (
               <div className="mt-2 p-3 bg-bg-primary border border-accent-blue/20 rounded-lg">
                 <div className="flex items-center justify-between mb-1">

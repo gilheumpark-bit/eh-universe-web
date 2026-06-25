@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { hasServerProviderCredentials } from '@/lib/server-ai';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
+import { getHostedProviderAvailability } from '@/lib/server-ai';
+import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,32 +12,29 @@ void REQUEST_TIMEOUT;
 
 /**
  * AI Capabilities endpoint — intentionally opaque.
- * Returns only boolean flags, NOT which specific providers are hosted.
- * This prevents attackers from discovering which server keys are available.
+ * Hosted means server-side developer API credentials, not DGX/local fallback.
  */
 export async function GET() {
-  const hasGemini = hasServerProviderCredentials('gemini');
-  const hasDgx = !!SPARK_SERVER_URL;
+  const dgxConfigured = Boolean(getDgxDeveloperApiBaseUrl());
+  const hasDgx = isDgxDeveloperApiEnabled();
 
   const hosted = {
-    gemini: hasGemini,
-    openai: false,
-    claude: false,
-    groq: false,
-    mistral: false,
+    ...getHostedProviderAvailability(),
+    gemini: false,
     ollama: false,
     lmstudio: false,
   };
+  const hasHostedDeveloperApi = Object.values(hosted).some(Boolean);
 
   return NextResponse.json({
-    byokRequired: !hasGemini && !hasDgx,
+    byokRequired: !hasHostedDeveloperApi,
     hasDgx,
+    dgxConfigured,
+    localDevAvailable: hasDgx,
     hosted,
-    supportedProviders: ['gemini', 'openai', 'claude', 'groq', 'mistral', 'ollama', 'lmstudio'],
-    message: hasDgx
-      ? 'DGX Spark AI engine is available.'
-      : hasGemini
-        ? 'Server-hosted Gemini is available.'
-        : 'Bring Your Own Key (BYOK) mode. Enter your API key in Settings.',
+    supportedProviders: ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral', 'ollama', 'lmstudio'],
+    message: hasHostedDeveloperApi
+      ? 'Hosted developer API is available.'
+      : 'Connection key required. Add a connection key in Settings.',
   });
 }

@@ -1,13 +1,21 @@
 import { Type } from '@google/genai';
 import { createServerGeminiClient, hasGeminiServerCredentials } from '@/lib/google-genai-server';
 import type { AppLanguage, StoryConfig } from '@/lib/studio-types';
-import { SPARK_SERVER_URL } from '@/services/sparkService';
-import { VLLM_MODEL_ID, SPARK_GATEWAY_URL } from '@/lib/dgx-models';
+import { VLLM_MODEL_ID } from '@/lib/dgx-models';
+import { getDgxDeveloperApiBaseUrl, isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 // [I-06 — 2026-05-10] 4 도메인 분기 prompt builder. AppLanguage → 도메인 매핑.
 //   KO → 한국 웹소설 / EN → Western fantasy / JP → 라노벨 / CN → 선협
 // 각 도메인 prompt 는 그 언어로 직접 작성 (사용자 결정: 각 나라 문법 훼손 X).
-// [Codex UI — 2026-05-10] domainOverride 로 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
-import { getDomainPrompts, type CodexDomain } from '@/lib/ai/codex-prompts';
+// [창작 도메인 — 2026-05-10] domainOverride 로 사용자가 언어와 다른 도메인 선택 가능 (예: 영어 작가가 무협).
+import { getDomainPrompts, type CreativeDomain } from '@/lib/ai/creative-domain-prompts';
+// [character-guard — 2026-06-10] /api/gemini-structured 캐릭터 생성 경로에 ip-brand-guard 서버측 주입.
+// writing-agent-registry 는 서버 안전 (의존: token-meter 뿐 — window 접근은 전부 typeof guard,
+// 'use client' 없음 — src/app/api/complete/route.ts 서버 import 선례). 가드 문자열 단일 소스 유지.
+// 스코프: characters 만 — worldDesign/worldSim 은 별도 builder(buildWorldDesignPrompt/buildWorldSimPrompt)
+// 라 본 주입 지점을 공유하지 않음 (동일 builder 아님 → 미적용·필요 시 별건).
+// 주의: ip-brand-guard 는 출력 형식 비강제 (JSON responseSchema 와 무충돌) — prose 강제 가드
+// (no-english-thinking-korean-novel) 는 구조화-JSON 경로에 주입 금지.
+import { GUARDS } from '@/lib/ai/writing-agent-registry';
 
 export type StructuredTask = 'characters' | 'worldDesign' | 'worldSim' | 'sceneDirection' | 'items' | 'skills' | 'magicSystems';
 export type StoryHints = {
@@ -19,7 +27,7 @@ export type SceneTierContext = { charProfiles?: { name: string; desire?: string;
 
 const STRUCTURED_GENERATION_TIMEOUT_MS = 60_000;
 
-/** DGX Spark를 통한 JSON 생성 폴백 (자동 재시도 포함) */
+/** DGX 개발 API를 통한 JSON 생성 폴백 (자동 재시도 포함) */
 async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> {
   const RETRYABLE = new Set([502, 503, 520, 521, 522, 523, 524]);
   const MAX_RETRIES = 2;
@@ -39,7 +47,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
     if (attempt > 0) await new Promise(r => setTimeout(r, DELAYS[attempt - 1]));
 
     try {
-      const baseUrl = SPARK_SERVER_URL || SPARK_GATEWAY_URL;
+      const baseUrl = getDgxDeveloperApiBaseUrl();
       const res = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: 'POST',
         headers: {
@@ -63,7 +71,7 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
 
       const data = await res.json();
       const msg = data.choices?.[0]?.message;
-      const text = msg?.content || msg?.reasoning_content || '';
+      const text = msg?.content || '';
       const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\[[\s\S]*\])/) || text.match(/(\{[\s\S]*\})/);
       if (jsonMatch) {
         try { return JSON.parse(jsonMatch[1]) as T; } catch { /* fall through */ }
@@ -80,8 +88,8 @@ async function generateJsonViaSpark<T>(prompt: string, fallback: T): Promise<T> 
 }
 
 export async function generateJson<T>(apiKey: string, model: string, prompt: string, responseSchema: object, fallback: T): Promise<T> {
-  // Gemini 키도 없고 서버 자격증명도 없으면 DGX Spark 직행
-  if (!apiKey && !hasGeminiServerCredentials() && SPARK_SERVER_URL) {
+  // Gemini 키도 없고 서버 자격증명도 없으면 명시 플래그 기반 DGX 개발 API만 허용
+  if (!apiKey && !hasGeminiServerCredentials() && isDgxDeveloperApiEnabled()) {
     return generateJsonViaSpark(prompt, fallback);
   }
 
@@ -101,8 +109,8 @@ export async function generateJson<T>(apiKey: string, model: string, prompt: str
       const msg = err instanceof Error ? err.message : '';
       const isRetryable = /500|502|503|504|INTERNAL|resource.*exhausted|deadline|overloaded/i.test(msg);
       if (!isRetryable || attempt === MAX_RETRIES) {
-        // Gemini 실패 + DGX 있으면 폴백
-        if (SPARK_SERVER_URL) return generateJsonViaSpark(prompt, fallback);
+        // Gemini 실패 + DGX 개발 API 플래그가 켜진 경우에만 폴백
+        if (isDgxDeveloperApiEnabled()) return generateJsonViaSpark(prompt, fallback);
         throw err;
       }
       await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
@@ -111,15 +119,17 @@ export async function generateJson<T>(apiKey: string, model: string, prompt: str
   return fallback;
 }
 
-export async function handleCharacters(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 4, existingNames: string[] = [], domainOverride?: CodexDomain) {
+export async function handleCharacters(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 4, existingNames: string[] = [], domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기 prompt — 영어 범용 + LANGUAGE_NAMES override 패턴 폐기.
   // role enum 도 한국 웹소설 정형 (protagonist/antagonist/ally/rival/mentor/regressor/extra) 으로 확장.
-  const prompt = getDomainPrompts(language, domainOverride).buildCharactersPrompt({
+  // [character-guard — 2026-06-10] ip-brand-guard prepend — 실존 상표·타 작가 IP 캐릭터명 생성 차단.
+  // Gemini·DGX 개발 API 폴백 양쪽 모두 동일 prompt 사용 → 단일 주입 지점으로 두 경로 커버.
+  const prompt = `${GUARDS['ip-brand-guard']}\n\n${getDomainPrompts(language, domainOverride).buildCharactersPrompt({
     genre: config.genre,
     synopsis: config.synopsis ?? '',
     count,
     existingNames,
-  });
+  })}`;
   return generateJson<unknown[]>(apiKey, model, prompt, {
     type: Type.ARRAY,
     items: {
@@ -134,7 +144,7 @@ export async function handleCharacters(apiKey: string, model: string, config: Pi
   }, []);
 }
 
-export async function handleItems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = [], domainOverride?: CodexDomain) {
+export async function handleItems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = [], domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기. KO 면 무협·헌터물 정형, ZH 면 仙侠·法宝 정형 등.
   const prompt = getDomainPrompts(language, domainOverride).buildItemsPrompt({
     genre: config.genre,
@@ -152,7 +162,7 @@ export async function handleItems(apiKey: string, model: string, config: Pick<St
   }, []);
 }
 
-export async function handleSkills(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = [], domainOverride?: CodexDomain) {
+export async function handleSkills(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 3, existingNames: string[] = [], domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기. KO/CN 무협의 무공 정형, JP 라노벨 필살기 정형 등.
   const prompt = getDomainPrompts(language, domainOverride).buildSkillsPrompt({
     genre: config.genre,
@@ -170,7 +180,7 @@ export async function handleSkills(apiKey: string, model: string, config: Pick<S
   }, []);
 }
 
-export async function handleMagicSystems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 2, existingNames: string[] = [], domainOverride?: CodexDomain) {
+export async function handleMagicSystems(apiKey: string, model: string, config: Pick<StoryConfig, 'genre' | 'synopsis'>, language: AppLanguage, count: number = 2, existingNames: string[] = [], domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기. ranks 가 KO 무협=화경/현경, CN 仙侠=炼气/筑基/金丹, JP=Sランク 등 도메인별 자연스럽게 출력.
   const prompt = getDomainPrompts(language, domainOverride).buildMagicSystemsPrompt({
     genre: config.genre,
@@ -188,7 +198,7 @@ export async function handleMagicSystems(apiKey: string, model: string, config: 
   }, []);
 }
 
-export async function handleWorldDesign(apiKey: string, model: string, genre: string, language: AppLanguage, hints?: StoryHints, domainOverride?: CodexDomain) {
+export async function handleWorldDesign(apiKey: string, model: string, genre: string, language: AppLanguage, hints?: StoryHints, domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기. KO=한국 웹소설 정형 (회귀/헌터/무협), JP=異世界 정형 등.
   const prompt = getDomainPrompts(language, domainOverride).buildWorldDesignPrompt({
     genre,
@@ -206,7 +216,7 @@ export async function handleWorldDesign(apiKey: string, model: string, genre: st
   }, { title: '', povCharacter: '', setting: '', primaryEmotion: '', synopsis: '' });
 }
 
-export async function handleWorldSim(apiKey: string, model: string, synopsis: string, genre: string, language: AppLanguage, worldContext?: WorldContext, domainOverride?: CodexDomain) {
+export async function handleWorldSim(apiKey: string, model: string, synopsis: string, genre: string, language: AppLanguage, worldContext?: WorldContext, domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기. KO=정파/사파/문파 구도, JP=魔王軍/勇者 구도 등.
   const prompt = getDomainPrompts(language, domainOverride).buildWorldSimPrompt({
     synopsis,
@@ -223,7 +233,7 @@ export async function handleWorldSim(apiKey: string, model: string, synopsis: st
   }, { civilizations: [], relations: [] });
 }
 
-export async function handleSceneDirection(apiKey: string, model: string, synopsis: string, characters: string[], language: AppLanguage, tierContext?: SceneTierContext, domainOverride?: CodexDomain) {
+export async function handleSceneDirection(apiKey: string, model: string, synopsis: string, characters: string[], language: AppLanguage, tierContext?: SceneTierContext, domainOverride?: CreativeDomain) {
   // [I-06 — 2026-05-10] 도메인 분기. KO=고구마/사이다 사이클, EN=midpoint reversal, JP=必殺技 발동, ZH=悟道 등.
   const prompt = getDomainPrompts(language, domainOverride).buildSceneDirectionPrompt({
     synopsis,

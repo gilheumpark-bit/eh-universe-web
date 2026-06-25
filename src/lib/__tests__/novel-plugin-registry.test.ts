@@ -17,6 +17,7 @@ jest.mock('@/lib/logger', () => ({
 import {
   NovelPluginRegistry,
   PermissionEnforcer,
+  loadExternalPlugin,
   permissionEnforcer,
   verifyPluginIntegrity,
   type NovelPlugin,
@@ -223,6 +224,12 @@ describe('NovelPluginRegistry', () => {
     const unsignedRes = await verifyPluginIntegrity(unsigned, 'hello');
     expect(unsignedRes.valid).toBe(false);
     expect(unsignedRes.warnings).toContain('no-declared-hash');
+  });
+
+  test('loadExternalPlugin is fail-closed in the current build', async () => {
+    await expect(loadExternalPlugin('https://example.com/extension.js', ['read-manuscript']))
+      .rejects
+      .toThrow('External extensions are not available in this build.');
   });
 
   test('bundled plugin uses runtime enforcer wrapper but does not route through sandbox', async () => {

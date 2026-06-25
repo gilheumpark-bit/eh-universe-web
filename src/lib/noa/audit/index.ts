@@ -7,6 +7,7 @@ import type { AuditEntry, AuditChainState, AuditVerification, AuditManager } fro
 import { canonicalJson, computeHash } from "./chain";
 import { signHmac } from "./hmac";
 import { verifyChainIntegrity } from "./verify";
+import { logger } from "@/lib/logger";
 
 /**
  * 감사 체인 매니저를 생성한다.
@@ -131,12 +132,7 @@ export function createAuditManager(hmacSecret: string = "noa-default-secret"): A
       try {
         hmacSignature = await signHmac(hash, hmacSecret);
       } catch (err) {
-        if (typeof console !== "undefined") {
-          console.warn(
-            "[NOA-Audit] HMAC unavailable — audit chain signed with rejection marker:",
-            err instanceof Error ? err.message : err,
-          );
-        }
+        logger.warn("NOA-Audit", "HMAC unavailable — audit chain signed with rejection marker", err);
         hmacSignature = "__HMAC_UNAVAILABLE__";
       }
 

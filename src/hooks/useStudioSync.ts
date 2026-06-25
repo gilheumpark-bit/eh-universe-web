@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { logger } from '@/lib/logger';
-import { syncAllProjects } from '@/services/driveService';
+import { setTokenRefresher, syncAllProjects } from '@/services/driveService';
 import type { Project } from '@/lib/studio-types';
 import type { User } from 'firebase/auth';
 
@@ -12,6 +12,27 @@ const CHANNEL_NAME = 'noa-studio-sync';
 const SESSION_ID = typeof crypto !== 'undefined' && crypto.randomUUID
   ? crypto.randomUUID()
   : `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const DRIVE_LAST_SYNC_KEY = 'noa_drive_last_sync';
+
+function recordDriveSyncComplete(time: number, failedCount: number): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(DRIVE_LAST_SYNC_KEY, String(time));
+  } catch {
+    // Storage can be unavailable in private mode; event is still enough for current UI.
+  }
+  window.dispatchEvent(new CustomEvent('noa:drive-sync-completed', {
+    detail: { time, failedCount },
+  }));
+}
+
+function recordDriveSyncFailure(message: string): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('noa:drive-sync-failed', {
+    detail: { message },
+  }));
+}
 
 interface UseStudioSyncParams {
   user: User | null;
@@ -48,6 +69,11 @@ export function useStudioSync({
   // BroadcastChannel ref for cross-tab sync
   const channelRef = useRef<BroadcastChannel | null>(null);
   const lastBroadcastTs = useRef<number>(0);
+
+  useEffect(() => {
+    setTokenRefresher(refreshAccessToken);
+    return () => setTokenRefresher(null);
+  }, [refreshAccessToken]);
 
   // ── Cross-tab BroadcastChannel ──
   useEffect(() => {
@@ -144,13 +170,18 @@ export function useStudioSync({
     let token = accessToken;
     if (!token) {
       token = await refreshAccessToken();
-      if (!token) return;
+      if (!token) {
+        recordDriveSyncFailure('Google Drive token unavailable');
+        return;
+      }
     }
     setSyncStatus('syncing');
     try {
       const result = await syncAllProjects(token, projectsRef.current);
       setProjects(result.merged);
-      setLastSyncTime(Date.now());
+      const syncTime = Date.now();
+      setLastSyncTime(syncTime);
+      recordDriveSyncComplete(syncTime, result.failedCount);
       broadcastSave();
       if (result.failedCount > 0) {
         setSyncStatus('done');
@@ -167,7 +198,9 @@ export function useStudioSync({
           try {
             const retryResult = await syncAllProjects(newToken, projectsRef.current);
             setProjects(retryResult.merged);
-            setLastSyncTime(Date.now());
+            const syncTime = Date.now();
+            setLastSyncTime(syncTime);
+            recordDriveSyncComplete(syncTime, retryResult.failedCount);
             broadcastSave();
             if (retryResult.failedCount > 0) {
               setSyncStatus('done');
@@ -179,6 +212,7 @@ export function useStudioSync({
             return;
           } catch (retryErr) {
             logger.error('Sync', 'Retry failed', retryErr);
+            recordDriveSyncFailure('Google Drive retry failed');
             setSyncStatus('error');
             scheduleStatusReset(5000);
             return;
@@ -186,6 +220,7 @@ export function useStudioSync({
         }
       }
       logger.error('Sync', err);
+      recordDriveSyncFailure(msg || 'Google Drive sync failed');
       setSyncStatus('error');
       scheduleStatusReset(5000);
     }

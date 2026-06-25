@@ -23,95 +23,19 @@
 // ============================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Code2, X, GitBranch, Bug, Users, ListTree, Settings2, ShieldCheck, ScrollText, Send } from 'lucide-react';
+import { Code2, X } from 'lucide-react';
 import type { StoryConfig, EpisodeManuscript, Message } from '@/lib/studio-types';
+import { MultiCursorBar, SnippetPalette, SymbolQuickJumpModal } from './NovelIDELauncher.lazy';
+import {
+  getCertificateLanguage,
+  getLauncherTabs,
+  type JournalView,
+  type LauncherTab,
+  type NovelIDELanguage,
+} from './NovelIDELauncher.model';
+import { NovelIDELauncherTabBody } from './NovelIDELauncher.body';
+import { SubmissionPackageModal } from './NovelIDELauncher.submission';
 import type { CreativeEvent } from '@/lib/creative-process/types';
-
-// 패널 dynamic import — 초기 번들 부담 회피
-import dynamic from 'next/dynamic';
-
-const SymbolOutlinePanel = dynamic(
-  () => import('@/components/studio/symbol-ide/SymbolOutlinePanel').then((m) => m.SymbolOutlinePanel),
-  { ssr: false },
-);
-const LongArcReportPanel = dynamic(
-  () => import('@/components/studio/long-arc/LongArcReportPanel').then((m) => m.LongArcReportPanel),
-  { ssr: false },
-);
-const ForeshadowLedger = dynamic(
-  () => import('@/components/studio/long-arc/ForeshadowLedger').then((m) => m.ForeshadowLedger),
-  { ssr: false },
-);
-const DebuggerPanel = dynamic(
-  () => import('@/components/studio/debugger/DebuggerPanel').then((m) => m.DebuggerPanel),
-  { ssr: false },
-);
-const ReaderProfilePanel = dynamic(
-  () => import('@/components/studio/reader-sim/ReaderProfilePanel').then((m) => m.ReaderProfilePanel),
-  { ssr: false },
-);
-// [연결 #3·#4 — 2026-05-07] Snippet Palette + Multi-cursor Bar.
-const SnippetPalette = dynamic(
-  () => import('@/components/studio/snippets/SnippetPalette').then((m) => m.SnippetPalette),
-  { ssr: false },
-);
-const MultiCursorBar = dynamic(
-  () => import('@/components/studio/multi-cursor/MultiCursorBar').then((m) => m.MultiCursorBar),
-  { ssr: false },
-);
-// [연결 #5 — 2026-05-07] Semantic Diff Panel.
-const SemanticDiffPanel = dynamic(
-  () => import('@/components/studio/semantic-diff/SemanticDiffPanel').then((m) => m.SemanticDiffPanel),
-  { ssr: false },
-);
-// [검수 wiring — 2026-05-07] 미연결 모듈 4종 통합:
-//   - SymbolQuickJumpModal (Ctrl+T)
-//   - ReferencesPanel (Shift+F12 결과)
-//   - LongArcGraph (텐션 곡선)
-//   - DropoutHeatmap (이탈 히트맵)
-const SymbolQuickJumpModal = dynamic(
-  () => import('@/components/studio/symbol-ide/SymbolQuickJumpModal').then((m) => m.SymbolQuickJumpModal),
-  { ssr: false },
-);
-const ReferencesPanel = dynamic(
-  () => import('@/components/studio/symbol-ide/ReferencesPanel').then((m) => m.ReferencesPanel),
-  { ssr: false },
-);
-const LongArcGraph = dynamic(
-  () => import('@/components/studio/long-arc/LongArcGraph').then((m) => m.LongArcGraph),
-  { ssr: false },
-);
-const DropoutHeatmap = dynamic(
-  () => import('@/components/studio/reader-sim/DropoutHeatmap').then((m) => m.DropoutHeatmap),
-  { ssr: false },
-);
-// [정합 재조정 — 2026-05-07] IDE Settings 패널 — 마스터 토글 시각 노출.
-const NovelIDESettingsPanel = dynamic(
-  () => import('@/components/studio/novel-ide/NovelIDESettingsPanel').then((m) => m.NovelIDESettingsPanel),
-  { ssr: false },
-);
-// [L3·L4 — 2026-05-08] AI 맥락 이탈 방어 — Completion Gap + Meta-Context 패널.
-const CompletionGapPanel = dynamic(
-  () => import('@/components/studio/completion-gap/CompletionGapPanel').then((m) => m.CompletionGapPanel),
-  { ssr: false },
-);
-const MetaContextPanel = dynamic(
-  () => import('@/components/studio/meta-context/MetaContextPanel').then((m) => m.MetaContextPanel),
-  { ssr: false },
-);
-// [Visual Charter v1.0 — 2026-05-10] `_2` Contribution Inspector + `_4` Provenance Report + `_1` Submission Package.
-const CreativeContributionInspector = dynamic(
-  () => import('@/components/studio/CreativeContributionInspector').then((m) => m.default),
-  { ssr: false },
-);
-const ProvenanceReport = dynamic(
-  () => import('@/components/studio/ProvenanceReport').then((m) => m.default),
-  { ssr: false },
-);
-const SubmissionPackageBuilder = dynamic(
-  () => import('@/components/studio/SubmissionPackageBuilder').then((m) => m.default),
-  { ssr: false },
-);
 
 // hooks
 import { useSymbolIndex } from '@/hooks/useSymbolIndex';
@@ -123,11 +47,8 @@ import { useSymbolShortcuts } from '@/hooks/useSymbolShortcuts';
 import { useNovelIDESettings } from '@/hooks/useNovelIDESettings';
 import { extractAllForeshadowMarkers } from '@/lib/long-arc-verifier/foreshadow-tracker';
 import { findReferences } from '@/lib/symbol-index/find-references';
-import { buildTensionTrajectory } from '@/lib/long-arc-verifier/tension-trajectory';
+import { computeSemanticDiff } from '@/lib/semantic-diff/differ';
 import type { FindReferencesResult } from '@/lib/symbol-index/types';
-
-type LauncherTab = 'outline' | 'long-arc' | 'debugger' | 'reader-sim' | 'diff' | 'defense' | 'journal' | 'settings';
-type JournalView = 'inspector' | 'provenance';
 
 // ============================================================
 // PART 2 — Component
@@ -139,7 +60,7 @@ export interface NovelIDELauncherProps {
   projectId: string;
   /** [검증 루프 fix — 2026-05-08] L3 Completion Gap 자체 trigger 용 */
   messages?: Message[] | null;
-  language?: 'KO' | 'EN' | 'JP' | 'CN';
+  language?: NovelIDELanguage;
 }
 
 export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
@@ -253,7 +174,13 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
         if (typeof window !== 'undefined') {
           window.dispatchEvent(
             new CustomEvent('noa:alert', {
-              detail: { message: isKO ? `Symbol "${selection}" 없음` : `Symbol "${selection}" not found`, variant: 'info', duration: 2500 },
+              detail: {
+                message: isKO
+                  ? `"${selection}"을 구조 항목에서 찾지 못했습니다`
+                  : `"${selection}" was not found in the structure map`,
+                variant: 'info',
+                duration: 2500,
+              },
             }),
           );
         }
@@ -305,16 +232,7 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
     return () => window.removeEventListener('noa:bp-toggle-request', handler as EventListener);
   }, [config, episodes, debugger_]);
 
-  const tabs: Array<{ id: LauncherTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-    { id: 'outline', label: isKO ? 'Symbol' : 'Symbol', icon: ListTree },
-    { id: 'long-arc', label: isKO ? '맥락' : 'Long-Arc', icon: GitBranch },
-    { id: 'debugger', label: isKO ? '디버거' : 'Debugger', icon: Bug },
-    { id: 'reader-sim', label: isKO ? '독자' : 'Reader', icon: Users },
-    { id: 'diff', label: isKO ? '의미 비교' : 'Diff', icon: GitBranch },
-    { id: 'defense', label: isKO ? '방어' : 'Defense', icon: ShieldCheck },
-    { id: 'journal', label: isKO ? '확인서' : 'Journal', icon: ScrollText },
-    { id: 'settings', label: isKO ? '설정' : 'Settings', icon: Settings2 },
-  ];
+  const tabs = getLauncherTabs(isKO);
 
   // [Visual Charter v1.0 — 2026-05-10] Journal 탭 활성 시 creative events 로드 (5초 throttle).
   useEffect(() => {
@@ -334,23 +252,11 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
     };
   }, [open, tab, projectId]);
 
-  // CertificateLanguage 매핑 (KO → ko 등)
-  const certLang = ((): 'ko' | 'en' | 'ja' | 'zh' => {
-    switch (language) {
-      case 'KO': return 'ko';
-      case 'EN': return 'en';
-      case 'JP': return 'ja';
-      case 'CN': return 'zh';
-      default: return 'ko';
-    }
-  })();
+  const certLang = getCertificateLanguage(language);
 
   // [연결 #5] Semantic Diff result — useMemo 로 캐시
   const semanticDiffResult = React.useMemo(() => {
     if (!diffSelection) return null;
-    // dynamic import 회피 — 직접 동기 호출
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { computeSemanticDiff } = require('@/lib/semantic-diff/differ') as typeof import('@/lib/semantic-diff/differ');
     return computeSemanticDiff(diffSelection.before, diffSelection.after, {
       characterNames: config?.characters?.map((c) => c.name) ?? [],
     });
@@ -363,14 +269,13 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          style={{ color: '#ffffff' }}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-accent-purple hover:bg-accent-purple/80 text-white rounded-full shadow-2xl transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-accent-blue outline-none"
-          aria-label={isKO ? 'Novel IDE 도구 열기' : 'Open Novel IDE tools'}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-accent-purple hover:bg-accent-purple/80 text-white rounded-full shadow-2xl transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-accent-blue outline-none studio-aux-fab-force-white"
+          aria-label={isKO ? '창작 보조 패널 열기' : 'Open creative support panel'}
           title="Ctrl+Shift+I"
         >
-          <Code2 className="w-5 h-5" style={{ color: '#ffffff' }} />
-          <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#ffffff' }}>
-            {isKO ? 'IDE' : 'IDE'}
+          <Code2 className="w-5 h-5" />
+          <span className="text-sm font-bold uppercase tracking-wider">
+            {isKO ? '보조' : 'AUX'}
           </span>
         </button>
       )}
@@ -389,14 +294,14 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
           <aside
             className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[420px] lg:w-[500px] bg-bg-primary border-l border-border shadow-2xl flex flex-col"
             role="dialog"
-            aria-label={isKO ? '소설 IDE 도구' : 'Novel IDE Tools'}
+            aria-label={isKO ? '창작 보조 패널' : 'Creative support panel'}
           >
             {/* Header */}
             <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary">
               <div className="flex items-center gap-2">
                 <Code2 className="w-5 h-5 text-accent-purple" />
                 <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">
-                  {isKO ? '소설가의 IDE' : 'Novelist IDE'}
+                  {isKO ? '창작 보조' : 'Creative Assist'}
                 </h2>
               </div>
               <button
@@ -433,168 +338,35 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
             </nav>
 
             {/* Body */}
-            <div className="flex-1 overflow-hidden p-3">
-              {tab === 'outline' && (
-                <div className="space-y-3 h-full overflow-y-auto">
-                  <SymbolOutlinePanel index={symbolIndex} language={language} />
-                  {/* [검수 wiring] Find All References 결과 — Shift+F12 후 표시 */}
-                  {refsResult && (
-                    <ReferencesPanel
-                      result={refsResult}
-                      language={language}
-                      onClose={() => setRefsResult(null)}
-                    />
-                  )}
-                </div>
-              )}
-              {tab === 'long-arc' && (
-                <div className="space-y-3 h-full overflow-y-auto">
-                  <LongArcReportPanel
-                    report={longArc.report}
-                    loading={longArc.loading}
-                    language={language}
-                    episodes={episodes ?? undefined}
-                    onRefresh={longArc.refresh}
-                    onJump={handleJump}
-                  />
-                  {/* [검수 wiring] LongArcGraph — 텐션 곡선 시각화 */}
-                  {episodes && episodes.length > 0 && (
-                    <LongArcGraph
-                      trajectory={buildTensionTrajectory(episodes)}
-                      language={language}
-                    />
-                  )}
-                  <ForeshadowLedger markers={foreshadowMarkers} language={language} onJump={handleJump} />
-                </div>
-              )}
-              {tab === 'debugger' && (
-                <DebuggerPanel
-                  isRunning={debugger_.isRunning}
-                  currentLocation={debugger_.currentLocation}
-                  frame={debugger_.frame}
-                  breakpoints={debugger_.breakpoints}
-                  watches={debugger_.watches}
-                  callHierarchy={debugger_.callHierarchy}
-                  language={language}
-                  characters={config?.characters}
-                  episodes={episodes ?? undefined}
-                  onStart={() => debugger_.start()}
-                  onPause={debugger_.pause}
-                  onStop={debugger_.stop}
-                  onStepOver={debugger_.stepOver}
-                  onStepInto={debugger_.stepInto}
-                  onAddWatch={debugger_.addWatch}
-                  onRemoveWatch={debugger_.removeWatch}
-                  onToggleBreakpoint={debugger_.toggleBp}
-                />
-              )}
-              {tab === 'reader-sim' && (
-                <div className="space-y-3 h-full overflow-y-auto">
-                  <ReaderProfilePanel
-                    profile={readerSim.profile}
-                    loading={readerSim.loading}
-                    language={language}
-                    onRefresh={readerSim.refresh}
-                  />
-                  {/* [검수 wiring] DropoutHeatmap — 화별 페르소나 이탈 히트맵 */}
-                  {readerSim.profile && readerSim.profile.predictions.length > 0 && (
-                    <DropoutHeatmap profile={readerSim.profile} language={language} />
-                  )}
-                </div>
-              )}
-              {tab === 'diff' && (
-                <SemanticDiffPanel
-                  result={semanticDiffResult}
-                  language={language}
-                  beforeLabel={
-                    episodes && episodes.length >= 2
-                      ? `EP${episodes[episodes.length - 2].episode}`
-                      : undefined
-                  }
-                  afterLabel={
-                    episodes && episodes.length >= 1
-                      ? `EP${episodes[episodes.length - 1].episode}`
-                      : undefined
-                  }
-                />
-              )}
-              {/* [정합 재조정 — 2026-05-07] IDE Settings — 마스터 토글 (시각적 끄기 노출) */}
-              {/* [L3·L4 — 2026-05-08] AI 맥락 이탈 방어 — Defense 탭 */}
-              {tab === 'defense' && (
-                <div className="space-y-3 h-full overflow-y-auto">
-                  <CompletionGapPanel messages={messages ?? undefined} language={language} />
-                  <MetaContextPanel language={language} />
-                </div>
-              )}
-              {/* [Visual Charter v1.0 — 2026-05-10] Journal 탭 — `_2` Inspector + `_4` Provenance + `_1` Submission */}
-              {tab === 'journal' && (
-                <div className="space-y-3 h-full overflow-y-auto">
-                  {/* sub-view 토글 + Submission 버튼 */}
-                  <div className="flex items-center gap-2 p-2 border border-border bg-bg-secondary/50">
-                    <button
-                      type="button"
-                      onClick={() => setJournalView('inspector')}
-                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border ${
-                        journalView === 'inspector'
-                          ? 'border-text-primary bg-bg-primary text-text-primary'
-                          : 'border-border bg-transparent text-text-tertiary hover:text-text-primary'
-                      }`}
-                    >
-                      {isKO ? '기여도' : 'Inspector'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setJournalView('provenance')}
-                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border ${
-                        journalView === 'provenance'
-                          ? 'border-text-primary bg-bg-primary text-text-primary'
-                          : 'border-border bg-transparent text-text-tertiary hover:text-text-primary'
-                      }`}
-                    >
-                      {isKO ? '출처 보고서' : 'Provenance'}
-                    </button>
-                    <span className="flex-1" />
-                    <button
-                      type="button"
-                      onClick={() => setSubmissionOpen(true)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase tracking-wider border border-text-primary bg-text-primary text-bg-primary hover:opacity-90"
-                    >
-                      <Send className="w-3 h-3" aria-hidden="true" />
-                      {isKO ? '제출 묶음' : 'Submit'}
-                    </button>
-                  </div>
-
-                  {/* sub-view 본문 */}
-                  {journalView === 'inspector' && (
-                    <CreativeContributionInspector
-                      events={creativeEvents}
-                      language={certLang}
-                      view="private"
-                      contextMeta={{
-                        sceneCount: episodes?.length,
-                        activeCharacters: config?.characters?.map((c) => c.name).slice(0, 8),
-                      }}
-                      compact
-                    />
-                  )}
-                  {journalView === 'provenance' && (
-                    <ProvenanceReport
-                      events={creativeEvents}
-                      language={certLang}
-                      workTitle={config?.synopsis?.slice(0, 40) ?? undefined}
-                    />
-                  )}
-                </div>
-              )}
-              {tab === 'settings' && <NovelIDESettingsPanel language={language} />}
-            </div>
+            <NovelIDELauncherTabBody
+              tab={tab}
+              language={language}
+              isKO={isKO}
+              config={config}
+              episodes={episodes}
+              messages={messages}
+              symbolIndex={symbolIndex}
+              refsResult={refsResult}
+              setRefsResult={setRefsResult}
+              longArc={longArc}
+              handleJump={handleJump}
+              foreshadowMarkers={foreshadowMarkers}
+              debuggerState={debugger_}
+              readerSim={readerSim}
+              semanticDiffResult={semanticDiffResult}
+              journalView={journalView}
+              setJournalView={setJournalView}
+              setSubmissionOpen={setSubmissionOpen}
+              creativeEvents={creativeEvents}
+              certLang={certLang}
+            />
 
             {/* Footer */}
             <footer className="px-4 py-2 border-t border-border bg-bg-secondary/50 text-[10px] text-text-tertiary font-mono flex items-center justify-between">
               <span>
                 Ctrl+Shift+I {isKO ? '토글' : 'toggle'} · Ctrl+Shift+S {isKO ? '스니펫' : 'snippet'} · Ctrl+D {isKO ? '치환' : 'find'}
               </span>
-              <span className="text-accent-purple">소설가의 IDE</span>
+              <span className="text-accent-purple">{isKO ? '창작 보조' : 'Creative Assist'}</span>
             </footer>
           </aside>
         </>
@@ -631,29 +403,13 @@ export const NovelIDELauncher: React.FC<NovelIDELauncherProps> = ({
         language={language}
       />
 
-      {/* [Visual Charter v1.0 — 2026-05-10] `_1` Submission Package modal */}
       {submissionOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 backdrop-blur-sm p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-label={isKO ? '제출 묶음 발급' : 'Submission Package'}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSubmissionOpen(false);
-          }}
-        >
-          <div className="w-full max-w-3xl my-8 relative">
-            <button
-              type="button"
-              onClick={() => setSubmissionOpen(false)}
-              className="absolute -top-3 -right-3 z-10 w-9 h-9 inline-flex items-center justify-center bg-text-primary text-bg-primary hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent-blue"
-              aria-label={isKO ? '닫기' : 'Close'}
-            >
-              <X className="w-4 h-4" aria-hidden="true" />
-            </button>
-            <SubmissionPackageBuilder language={language} projectIdOverride={projectId} />
-          </div>
-        </div>
+        <SubmissionPackageModal
+          isKO={isKO}
+          language={language}
+          projectId={projectId}
+          onClose={() => setSubmissionOpen(false)}
+        />
       )}
     </>
   );

@@ -10,11 +10,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { JWT } from 'google-auth-library';
-import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp, checkRateLimitAsync } from '@/lib/rate-limit';
 import { verifyCsrf } from '@/lib/csrf';
 import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
 import { apiLog } from '@/lib/api-logger';
 import { logger } from '@/lib/logger';
+import { isAllowedOriginValue } from '@/lib/api-origin-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,7 @@ async function fetchFirestoreDoc(projectId: string, docPath: string): Promise<un
   const token = await getServiceAccountToken();
   if (!token) return null;
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${docPath}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5_000) });
   if (!res.ok) return null;
   return await res.json();
 }
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
   // Rate limit — DSAR 는 rare, 5/day
-  const rl = checkRateLimit(ip, '/api/user/export', {
+  const rl = await checkRateLimitAsync(ip, '/api/user/export', {
     maxRequests: 5,
     windowMs: 24 * 3600 * 1000,
   });
@@ -70,13 +71,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Origin 체크
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  try {
-    if (!origin || (host && new URL(origin).host !== host)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-  } catch {
+  if (!isAllowedOriginValue(req.headers, req.headers.get('origin'))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

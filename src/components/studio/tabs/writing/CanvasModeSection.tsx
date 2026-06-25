@@ -36,9 +36,9 @@ export function CanvasModeSection({
           {canvasPass === 0
             ? L4(language, { ko: '1단계: 장면의 뼈대(등장인물, 핵심 사건, 분위기)를 적으세요.', en: 'Step 1: Write the scene skeleton (characters, events, mood).', ja: 'ステップ1: シーンの骨組み（登場人物・主要事件・雰囲気）を書いてください。', zh: '第 1 步:撰写场景骨架(角色、核心事件、氛围)。' })
             : canvasPass === 1
-            ? L4(language, { ko: '2단계: 노아가 구조를 초안으로 확장했습니다. 수정 후 다듬기로 넘어가세요.', en: 'Step 2: NOA expanded your structure into a draft. Edit and proceed to polish.', ja: 'ステップ2: ノアが構造を下書きに展開しました。修正後、仕上げに進んでください。', zh: '第 2 步:诺亚已将结构扩展为草稿。修改后进入润色。' })
+            ? L4(language, { ko: '2단계: 노아가 구조를 초안으로 확장했습니다. 수정 후 다듬기로 넘어가세요.', en: 'Step 2: Noa expanded your structure into a draft. Edit and proceed to polish.', ja: 'ステップ2: ノアが構造を下書きに展開しました。修正後、仕上げに進んでください。', zh: '第 2 步:诺亚已将结构扩展为草稿。修改后进入润色。' })
             : canvasPass === 2
-            ? L4(language, { ko: '3단계: 노아가 초안을 다듬었습니다. 최종 확인 후 본문에 반영하세요.', en: 'Step 3: NOA polished your draft. Review and apply to manuscript.', ja: 'ステップ3: ノアが下書きを仕上げました。最終確認後、本文に反映してください。', zh: '第 3 步:诺亚已润色草稿。确认后应用到正文。' })
+            ? L4(language, { ko: '3단계: 노아가 초안을 다듬었습니다. 최종 확인 후 본문에 반영하세요.', en: 'Step 3: Noa polished your draft. Review and apply to manuscript.', ja: 'ステップ3: ノアが下書きを仕上げました。最終確認後、本文に反映してください。', zh: '第 3 步:诺亚已润色草稿。确认后应用到正文。' })
             : L4(language, { ko: '완료! 아래 버튼으로 본문에 반영하세요.', en: 'Done! Apply to manuscript below.', ja: '完了! 下のボタンで本文に反映してください。', zh: '完成!使用下方按钮应用到正文。' })}
         </p>
         {/* 단계 인디케이터 */}
@@ -68,7 +68,7 @@ export function CanvasModeSection({
               className={`px-4 py-1.5 min-h-[44px] text-xs font-bold border border-accent-green/30 rounded-lg transition-colors ${isGenerating ? 'bg-bg-tertiary text-text-tertiary opacity-50 cursor-not-allowed' : 'bg-accent-green/20 hover:bg-accent-green/30 text-accent-green'}`}
             >
               {isGenerating
-                ? L4(language, { ko: '노아 생성 중...', en: 'NOA generating...', ja: 'ノア生成中...', zh: '诺亚生成中...' })
+                ? L4(language, { ko: '노아 제안 준비 중...', en: 'Preparing Noa suggestion...', ja: 'ノア提案を準備中...', zh: '正在准备诺亚建议...' })
                 : canvasPass === 0
                 ? L4(language, { ko: '초안으로 확장 →', en: 'Expand to Draft →', ja: '下書きに展開 →', zh: '扩展为草稿 →' })
                 : L4(language, { ko: '다듬기 시작 →', en: 'Start Polish →', ja: '仕上げ開始 →', zh: '开始润色 →' })}
@@ -96,7 +96,7 @@ export function CanvasModeSection({
         className="w-full min-h-[40vh] bg-bg-primary border border-border rounded-xl p-4 md:p-6 text-base font-serif leading-relaxed focus:border-accent-green outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-[transform,opacity,background-color,border-color,color] resize-none"
         placeholder={canvasPass === 0
           ? L4(language, { ko: '장면의 뼈대를 작성하세요... (등장인물, 핵심 사건, 분위기)', en: 'Write scene skeleton... (characters, events, mood)', ja: 'シーンの骨組みを書いてください...（登場人物・主要事件・雰囲気）', zh: '撰写场景骨架...(角色、核心事件、氛围)' })
-          : L4(language, { ko: '노아가 집필 중...', en: 'NOA is writing...', ja: 'ノアが執筆中...', zh: '诺亚正在写作...' })}
+          : L4(language, { ko: '노아 제안을 준비하는 중...', en: 'Preparing Noa suggestion...', ja: 'ノア提案を準備中...', zh: '正在准备诺亚建议...' })}
       />
     </div>
   );

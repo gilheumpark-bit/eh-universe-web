@@ -2,7 +2,7 @@
 
 // ============================================================
 // UnifiedSettingsBar — 스플래시 화면 상단 통합 설정 바
-// 로그인 · API 키 · 테마 · 언어를 한 곳에서 관리
+// 로그인 · 연결 키 · 테마 · 언어를 한 곳에서 관리
 // ============================================================
 
 import { useState, useEffect } from "react";
@@ -19,7 +19,7 @@ const LANG_LABELS: Record<Lang, string> = { ko: "한국어", en: "English", ja: 
 export default function UnifiedSettingsBar() {
   const { theme, toggleTheme, enabledSlots } = useUnifiedSettings();
   const { user, signInWithGoogle, signOut, loading: authLoading } = useAuth();
-  const { lang, toggleLang } = useLang();
+  const { lang, setLangDirect } = useLang();
   const [storageInfo, setStorageInfo] = useState<{ used: string; total: string; percent: number } | null>(null);
 
   useEffect(() => {
@@ -34,10 +34,10 @@ export default function UnifiedSettingsBar() {
   const authLabel = user
     ? (user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out", ja: "ログアウト", zh: "登出" }))
     : T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" });
-  const apiLabel = `API${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`;
+  const apiLabel = T({ ko: `연결 키${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`, en: `Connection keys${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`, ja: `接続キー${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`, zh: `连接密钥${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}` });
   const themeLabel = theme === "dark"
-    ? T({ ko: "밤", en: "Night", ja: "夜", zh: "夜" })
-    : T({ ko: "낮", en: "Day", ja: "昼", zh: "日" });
+    ? T({ ko: "밤 모드", en: "Night mode", ja: "夜モード", zh: "夜间模式" })
+    : T({ ko: "낮 모드", en: "Day mode", ja: "昼モード", zh: "日间模式" });
   const langLabel = LANG_LABELS[lang];
   const storageLabel = storageInfo ? `${storageInfo.used} / ${storageInfo.total}` : '';
 
@@ -47,7 +47,7 @@ export default function UnifiedSettingsBar() {
       <p className="text-center text-[10px] font-mono uppercase tracking-[0.25em] text-text-tertiary mb-2">
         {T({ ko: "빠른 설정", en: "Quick Settings", ja: "クイック設定", zh: "快速设置" })}
       </p>
-      <div className="flex items-center gap-2 justify-center" role="group" aria-label={T({ ko: "빠른 설정", en: "Quick settings", ja: "クイック設定", zh: "快速设置" })}>
+      <div className="mx-auto flex max-w-[22rem] flex-wrap items-center justify-center gap-2 px-2 sm:max-w-none sm:flex-nowrap sm:px-0" role="group" aria-label={T({ ko: "빠른 설정", en: "Quick settings", ja: "クイック設定", zh: "快速设置" })}>
         {/* Auth — icon only */}
         {user ? (
           <button
@@ -74,7 +74,7 @@ export default function UnifiedSettingsBar() {
           </button>
         )}
 
-        {/* API Keys — icon only */}
+        {/* Connection keys — icon only */}
         <button
           onClick={() => setShowApiKeys(true)}
           className="relative inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-colors"
@@ -83,7 +83,7 @@ export default function UnifiedSettingsBar() {
         >
           <Key className="w-4 h-4" />
           {enabledSlots.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-accent-green text-[8px] font-bold text-white flex items-center justify-center" aria-hidden="true">
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-accent-green text-[8px] font-bold !text-white flex items-center justify-center" aria-hidden="true">
               {enabledSlots.length}
             </span>
           )}
@@ -99,19 +99,41 @@ export default function UnifiedSettingsBar() {
           {theme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </button>
 
-        {/* Language — icon only */}
-        <button
-          onClick={toggleLang}
-          className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-border hover:text-text-primary transition-colors"
+        {/* Language — explicit segmented selector */}
+        <div
+          className="inline-flex min-h-11 items-center gap-1 rounded-full border border-border/50 bg-bg-secondary/60 p-1 backdrop-blur-sm"
+          role="radiogroup"
+          aria-label={T({ ko: "언어 선택", en: "Language selection", ja: "言語選択", zh: "语言选择" })}
           title={langLabel}
-          aria-label={langLabel}
         >
-          <Globe className="w-4 h-4" />
-        </button>
+          <Globe className="mx-1 h-4 w-4 text-text-tertiary" aria-hidden="true" />
+          {([
+            ["ko", "KO"],
+            ["en", "EN"],
+            ["ja", "JP"],
+            ["zh", "CN"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={lang === id}
+              onClick={() => setLangDirect(id)}
+              className={`min-h-11 min-w-11 rounded-full px-2 text-[10px] font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue ${
+                lang === id
+                  ? "bg-accent-blue !text-white"
+                  : "text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         {/* Storage — compact */}
         {storageInfo && (
           <div
+            role="img"
             className="inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-tertiary transition-[transform,opacity,background-color,border-color,color]"
             title={`${storageLabel} (${storageInfo.percent}%)`}
             aria-label={`${T({ ko: "저장소 사용량", en: "Storage used", ja: "ストレージ使用量", zh: "存储使用量" })}: ${storageLabel}`}
@@ -121,7 +143,7 @@ export default function UnifiedSettingsBar() {
         )}
       </div>
 
-      {/* API Key Slot Manager Modal */}
+      {/* Connection Key Slot Manager Modal */}
       {showApiKeys && <APIKeySlotManager onClose={() => setShowApiKeys(false)} />}
     </>
   );

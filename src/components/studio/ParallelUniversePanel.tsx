@@ -39,6 +39,11 @@ function getBranchColor(index: number): string {
   return BRANCH_COLORS[index % BRANCH_COLORS.length];
 }
 
+function bindStudioTone(node: HTMLElement | SVGElement | null, color: string) {
+  if (!node) return;
+  node.style.setProperty('--studio-tone-color', color);
+}
+
 // ============================================================
 // PART 2 — Branch Creation Inline Form
 // ============================================================
@@ -245,8 +250,8 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
                 }`}
             >
               <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: getBranchColor(colorIdx) }}
+                ref={(node) => bindStudioTone(node, getBranchColor(colorIdx))}
+                className="w-2 h-2 rounded-full shrink-0 studio-tone-swatch"
               />
               <span className="truncate max-w-[100px]">{br}</span>
             </button>
@@ -265,8 +270,7 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
               {/* Vertical connector line */}
               {!isLast && (
                 <div
-                  className="absolute left-[9px] top-[20px] w-px bg-border"
-                  style={{ height: 'calc(100% - 4px)' }}
+                  className="absolute left-[9px] top-[20px] w-px bg-border parallel-connector-line"
                 />
               )}
 
@@ -328,10 +332,11 @@ const ParallelUniversePanel: React.FC<ParallelUniversePanelProps> = ({
                       return (
                         <span
                           key={br}
+                          ref={(node) => bindStudioTone(node, getBranchColor(colorIdx))}
                           className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px]
                             font-mono text-text-tertiary bg-bg-tertiary/40"
                         >
-                          <GitBranch className="w-2.5 h-2.5" style={{ color: getBranchColor(colorIdx) }} />
+                          <GitBranch className="w-2.5 h-2.5 studio-tone-text" />
                           {br.replace('universe/', '')}
                           {isNotCurrent && (
                             <button

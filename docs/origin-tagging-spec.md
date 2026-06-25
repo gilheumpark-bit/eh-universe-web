@@ -171,9 +171,14 @@ AI 공동집필 (작가 주도)
 | useOriginTracker 훅           | `src/hooks/__tests__/useOriginTracker.test.tsx`      | 11     |
 | AI 공동집필 등급 산출          | `src/lib/__tests__/ai-disclosure-generator.test.ts`  | 20     |
 | 품질 게이트 가중치             | `src/engine/__tests__/quality-gate.test.ts` (M4 섹션) | 4    |
-| E2E (settings UI)             | `e2e/scenarios/22-origin-tagging.spec.ts`            | 4      |
+| E2E (historical dedicated UI) | `e2e/scenarios/22-origin-tagging.spec.ts`            | 4      |
 
-**합계: 97 신규 단위 테스트 + 4 E2E**
+**합계(구현 시점): 97 신규 단위 테스트 + 4 전용 E2E**
+
+2026-06-24 current repo note:
+
+- 위 전용 E2E 파일은 현재 저장소 기준선에서 정리되었다.
+- 현재 앱 기준 회귀는 전용 origin-tagging spec 대신 더 넓은 Loreguard/모바일/디자인 회귀군에서 흡수 추적한다.
 
 ## 12. Files Touched
 
@@ -186,7 +191,7 @@ AI 공동집필 (작가 주도)
 - `src/lib/__tests__/ai-disclosure-generator.test.ts`
 - `src/hooks/__tests__/useOriginTracker.test.tsx`
 - `src/components/studio/__tests__/OriginBadge.test.tsx`
-- `e2e/scenarios/22-origin-tagging.spec.ts`
+- `e2e/scenarios/22-origin-tagging.spec.ts` (historical; current repo baseline 에서는 제거됨)
 - `docs/origin-tagging-spec.md` (this file)
 
 ### 수정 (7)

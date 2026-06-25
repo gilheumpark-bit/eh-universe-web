@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Expand, Shrink, Palette, Copy, X, Check, Loader2, Undo2 } from 'lucide-react';
-import { streamChat, getApiKey, getActiveProvider } from '@/lib/ai-providers';
+import { streamChat } from '@/lib/ai-providers';
 import { L4 } from '@/lib/i18n';
 import type { AppLanguage } from '@/lib/studio-types';
 // [P-08 — 2026-05-10] studio-inline-rewrite 레지스트리 통합 — inline systemInstruction 폐기.
@@ -208,13 +208,6 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
   // PART 3 — AI 호출 + 자동 교체
   // ============================================================
   const handleAction = useCallback(async (action: string) => {
-    const provider = getActiveProvider();
-    const key = getApiKey(provider);
-    if (!key) {
-      navigator.clipboard.writeText(popup.selectedText);
-      return;
-    }
-
     // 주변 문맥 추출 (±200자)
     const sourceText = fullTextProp ?? textareaRef?.current?.value ?? '';
     const CONTEXT_RADIUS = 200;
@@ -298,6 +291,7 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
       await streamChat({
         systemInstruction,
         messages: [{ role: 'user', content: prompt }],
+        reasoningStage: 'detail',
         onChunk: (chunk) => { accumulated += chunk; setResult(accumulated); },
         signal: ctrl.signal,
       });
@@ -405,11 +399,10 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
                   결과 텍스트는 점선 underline amber로 "제안 상태" 명시. 작가가 ⏎ 채택하기 전엔 commit 아님. */}
               <div className="text-[9px] font-mono uppercase tracking-widest text-accent-amber mb-1.5 flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-accent-amber" aria-hidden="true" />
-                {isKO ? 'NOA · 제안' : 'NOA · Suggestion'}
+                {isKO ? '노아 · 제안' : 'Noa · Suggestion'}
               </div>
               <p
-                className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto"
-                style={{ borderBottom: '1px dashed var(--color-accent-amber)', paddingBottom: '4px' }}
+                className="text-xs text-text-primary leading-relaxed font-serif max-h-32 overflow-y-auto inline-action-result-preview"
               >
                 {result}
               </p>
@@ -418,7 +411,6 @@ export function InlineActionPopup({ textareaRef, language, onReplace, storyConfi
                     작가가 주어. NOA의 출력은 제안, 작가의 행동은 결정. amber CTA (보라 폐기). */}
                 <button
                   onClick={applyResult}
-                  style={{ color: '#1a1410' }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-amber text-[#1a1410] text-[11px] font-bold hover:bg-accent-amber/90 transition-colors"
                   title={isKO ? '⏎ 채택' : '⏎ Accept'}
                 >

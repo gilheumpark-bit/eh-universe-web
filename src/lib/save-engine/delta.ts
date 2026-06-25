@@ -9,6 +9,7 @@
 import * as jsonpatch from 'fast-json-patch';
 import type { JsonPatchOp, DeltaPayload } from './types';
 import { canonicalJson, sha256 } from './hash';
+import { logger } from '@/lib/logger';
 
 // ============================================================
 // PART 2 — Deep clone (순환참조·함수 방어)
@@ -96,8 +97,24 @@ export async function buildDelta(input: BuildDeltaInput): Promise<BuildDeltaResu
  */
 export function replayDeltas<T>(base: T, deltas: DeltaPayload[]): T {
   let current: T = safeDeepClone(base);
-  for (const d of deltas) {
-    current = applyPatch(current, d.ops);
+  for (let i = 0; i < deltas.length; i++) {
+    const d = deltas[i];
+    // [H4 fix] applyPatch(fast-json-patch)는 base에 없는 path의 replace/remove에서
+    // JsonPatchError를 throw한다. 과거에는 이 throw가 호출자(recovery.ts tryFullRecovery:283,
+    // tryDegradedRecovery:400/434)까지 전파되어 손상 delta 1건이 전체 부팅 복구를 크래시시켰다.
+    // 이제 개별 delta 적용 실패는 해당 delta만 skip + 로깅하고, 직전까지 적용된 current를
+    // 유지한 채 나머지 delta 재생을 계속한다. 결과 타입/시그니처(T)는 그대로 유지.
+    try {
+      current = applyPatch(current, d.ops);
+    } catch (err) {
+      logger.warn({
+        component: 'save-engine:delta',
+        event: 'replay_delta_apply_failed',
+        meta: { index: i, projectId: d.projectId, target: d.target, opCount: d.ops.length },
+        error: err,
+      });
+      // current는 직전 성공 상태를 그대로 유지 → 나머지 delta로 재생 계속.
+    }
   }
   return current;
 }

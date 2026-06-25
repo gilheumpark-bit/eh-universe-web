@@ -1,0 +1,64 @@
+{
+  "research_lineage_included": true,
+  "original_baseline_included": true,
+  "baseline_mode": "referenced_source_of_truth",
+  "created_at": "2026-06-22",
+  "source_roots": {
+    "wabi_r_original_framework": "C:\\Users\\sung4\\OneDrive\\바탕 화면\\EH\\QCTS_Agent_Theory\\50-학술논문트랙\\00-index\\00-framework\\25_WABI-R_범용_AI_연구_루프_프레임워크_v1.7.md",
+    "noa_original_pack": "C:\\Users\\sung4\\OneDrive\\바탕 화면\\EH\\NOA_합의관제_정리팩_2026-06-18",
+    "research_runs_1_to_100": "C:\\Users\\sung4\\OneDrive\\바탕 화면\\EH\\NOA_합의관제_정리팩_2026-06-18\\09_실증_개발\\NOA_original_folder_1_to_100_research_runs_2026_06_22",
+    "app_brain_design": "C:\\Users\\sung4\\OneDrive\\바탕 화면\\EH\\eh-universe-web\\NOA_APP_BRAIN_DESIGN_2026_06_22"
+  },
+  "lineage_chain": [
+    "WABI-R v1.7 original framework",
+    "NOA consensus control original pack",
+    "1-100 research planning and empirical run artifacts",
+    "app-specific NOA Brain design",
+    "commercial NOA Studio Brain product package"
+  ],
+  "absorbed_research_results": [
+    {
+      "research_result": "goal_like_persistent_execution",
+      "product_absorption": ["commercial_readiness_levels", "quality_gates", "release_blockers"],
+      "documents": ["P06_quality_gates_and_acceptance_tests.md", "quality_gates.json"]
+    },
+    {
+      "research_result": "perspective_fusion",
+      "product_absorption": ["tab_expert_router", "expert_combination_rules"],
+      "documents": ["P03_tab_expert_playbooks.md", "tab_expert_product_matrix.json"]
+    },
+    {
+      "research_result": "evidence_receipts",
+      "product_absorption": ["work_receipts", "recovery_memory", "audit_timeline"],
+      "documents": ["P05_evidence_ip_safety_and_receipts.md", "P08_implementation_backlog.md"]
+    },
+    {
+      "research_result": "anti_hallucination_and_context_sufficiency",
+      "product_absorption": ["evidence_package", "rights_overclaim_blocks", "context_sufficiency_gate"],
+      "documents": ["P05_evidence_ip_safety_and_receipts.md", "P10_risk_register.md"]
+    },
+    {
+      "research_result": "research_to_development_handoff",
+      "product_absorption": ["implementation_backlog", "first_build_files"],
+      "documents": ["P08_implementation_backlog.md"]
+    }
+  ],
+  "not_yet_absorbed": [
+    "full_autonomous_researcher_runtime",
+    "external_judge_loop",
+    "automatic_rag_ingestion_runtime",
+    "self_calibrating_formula_loop",
+    "physical_or_quantum_virtual_lab"
+  ],
+  "allowed_claims": [
+    "research_based_commercial_design",
+    "app_specific_downconverted_noa_brain",
+    "tab_expert_safe_apply_receipt_export_guard_design"
+  ],
+  "blocked_claims": [
+    "fully_autonomous_ai_researcher",
+    "legal_safety_guarantee",
+    "complete_content_damage_prevention",
+    "empirically_confirmed_performance_gain_without_runtime_tests"
+  ]
+}

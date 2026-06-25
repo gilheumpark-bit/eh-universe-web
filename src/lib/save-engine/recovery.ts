@@ -35,8 +35,9 @@ import type {
 } from './types';
 import { GENESIS } from './types';
 import { appendEntry, appendInitEntry, readAllEntries, seedHLCFromTip } from './journal';
+import { sortEntriesByHLC, isAfterByHLC } from './hlc';
 import { estimateCrash } from './beacon';
-import { restoreSnapshot, findLatestSnapshotEntry } from './snapshot';
+import { restoreSnapshot } from './snapshot';
 import { idbListSnapshots, idbQuarantineEntry, type SnapshotRecord } from './indexeddb-adapter';
 import { routerGetTip, routerBootCleanup } from './storage-router';
 import { isIndexedDBAvailable } from './indexeddb-adapter';
@@ -148,7 +149,11 @@ export async function runBootRecovery(): Promise<RecoveryResult> {
   }
 
   // HLC seed
-  const entries = await readAllEntries();
+  // 스토리지는 id(ULID) 사전순으로 엔트리를 돌려준다. 같은 physical ms 안에서는
+  // ULID 랜덤 suffix 때문에 부모-자식이 역전될 수 있으므로(hlc.ts:31-41), 체인 검증·
+  // delta 재생 전에 인과 순서(HLC)로 안정 재정렬한다. 이 정렬이 critical #3·high #12의
+  // 근본 수정 지점이다 — 정렬이 없으면 같은 ms 역전이 verifyChain 거짓 손상으로 번진다.
+  const entries = sortEntriesByHLC(await readAllEntries());
   const tipEntry = entries.find((e) => e.id === tip.tipId);
   if (tipEntry) seedHLCFromTip(tipEntry.clock);
 
@@ -219,7 +224,11 @@ interface StrategyOutcome {
  *   4) 'none' (완전 불가 — 빈 상태)
  */
 async function executeRecoveryStrategies(input: StrategyInput): Promise<StrategyOutcome> {
-  const snapshotEntry = await findLatestSnapshotEntry();
+  // 가장 최근 snapshot 엔트리를 "이미 HLC 정렬된" allEntries에서 직접 뽑는다.
+  // findLatestSnapshotEntry()는 id 사전순 스캔이라 같은 ms 안에서 정렬 기준이 어긋날 수
+  // 있다 — pivot(snapshot)과 entries 배열이 같은 순서 기준(HLC)을 쓰도록 일치시켜야
+  // afterSnapshot split이 정확하다.
+  const snapshotEntry = findLatestSnapshotEntryFrom(input.allEntries);
 
   // --- 시도 1: FULL ---
   const fullAttempt = await tryFullRecovery(input.allEntries, snapshotEntry, input.phases);
@@ -256,8 +265,9 @@ async function tryFullRecovery(
     return null;
   }
 
-  // snapshot 이후 entries
-  const afterSnapshot = all.filter((e) => e.id > snapshotEntry.id);
+  // snapshot 이후 entries — id 사전순(e.id > id) 대신 HLC 기준으로 분리해 같은 ms 역전
+  // 시 부모-자식 오분류를 막는다(critical #3).
+  const afterSnapshot = all.filter((e) => isAfterByHLC(e, snapshotEntry));
   if (afterSnapshot.length > 0) {
     const verifyFrom = snapshotEntry.contentHash;
     const verifyResult = await verifyChain(afterSnapshot, { fromParentHash: verifyFrom });
@@ -353,9 +363,9 @@ async function tryDegradedRecovery(
     }
   }
 
-  // snapshot 이후(없으면 전체) verify 시도
+  // snapshot 이후(없으면 전체) verify 시도 — HLC 기준 분리(critical #3).
   const afterSnapshot = snapshotEntry
-    ? all.filter((e) => e.id > snapshotEntry.id)
+    ? all.filter((e) => isAfterByHLC(e, snapshotEntry))
     : all;
   const verifyFrom = snapshotEntry ? snapshotEntry.contentHash : GENESIS;
 
@@ -458,6 +468,19 @@ async function tryDegradedRecovery(
 // ============================================================
 // PART 5 — Helpers
 // ============================================================
+
+/**
+ * 이미 HLC 정렬된 엔트리 배열에서 인과적으로 가장 늦은 snapshot 엔트리를 찾는다.
+ * snapshot.ts의 findLatestSnapshotEntry는 id 사전순 스캔이라 같은 ms 안에서 정렬 기준이
+ * 어긋날 수 있다 — 여기서는 정렬된 배열을 뒤에서부터 훑어 pivot과 entries의 순서 기준을
+ * 일치시킨다(critical #3).
+ */
+function findLatestSnapshotEntryFrom(sorted: JournalEntry[]): JournalEntry | null {
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    if (sorted[i].entryType === 'snapshot') return sorted[i];
+  }
+  return null;
+}
 
 async function findSnapshotRecord(entry: JournalEntry): Promise<SnapshotRecord | null> {
   const list = await idbListSnapshots();

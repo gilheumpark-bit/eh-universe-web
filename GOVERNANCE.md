@@ -31,7 +31,7 @@
 |---|---|---|
 | 일상 PR 머지 | BDFL | 메인테이너 단독 결정 |
 | 기능 추가 | RFC + BDFL | Issue 로 RFC 제안 → 1주 토론 후 BDFL 승인 |
-| 라이선스·상업 정책 변경 | BDFL + 변호사 | KIPO 특허 + AGPL/Commercial 영향 검토 후 |
+| 라이선스·상업 정책 변경 | BDFL + 변호사 | KIPO 특허 + 비공개 상용/상표/원본 자료 영향 검토 후 |
 | 파괴적 변경 (Breaking) | RFC + 마이그레이션 가이드 | CHANGELOG 에 BREAKING 명시 + Major bump |
 | ATTESTATION 4언어 텍스트 | BDFL + 변호사 | 변경 시 변호사 재감수 + Major bump (`attestationStatementVersion`) |
 | 격리 §1 (8 절대 금지 파일) | BDFL — 변경 X | studio-types / save-engine / ManuscriptView / OriginBadge / origin-migration / AuditExportButton / markdown-serializer / project-serializer / useOriginTracker |
@@ -40,16 +40,16 @@
 
 ## 3. 라이선스 정책
 
-**Dual License** — `LICENSE` (AGPL-3.0-or-later) + `COMMERCIAL-LICENSE.md` (상업).
+**UNLICENSED / Proprietary** — `LICENSE`가 현재 소프트웨어 권리 고지의 단일 기준입니다.
 
 ### 3.1 외부 기여자 CLA
 
 모든 외부 PR 은 **CLA (Contributor License Agreement)** 동의 필수. 자동 검증: [cla-assistant.io](https://cla-assistant.io/).
 
 **CLA 동의 효력**:
-- 기여 코드를 dual license 둘 다로 라이선싱 가능
-- BDFL 의 상업 라이선스 운영 권한 인정
-- Patent grant 명시 (KIPO 출원분 포함)
+- 기여 코드를 비공개 상용 제품 기준으로 포함 가능
+- 저작권 고지, NOTICE, 상표 정책 유지 동의
+- 별도 계약 없는 patent grant 없음
 
 CLA 미동의 PR 은 머지 X.
 
@@ -59,12 +59,12 @@ CLA 미동의 PR 은 머지 X.
 1. BDFL 결정
 2. 변호사 검토 (KR + 적용 시장 변호사)
 3. RFC 30일 이상 공개
-4. 기존 contributor 동의 (CLA 가 dual license 권리 부여 — 이 조건 자동 충족)
+4. 기존 contributor 동의 또는 CLA 범위 확인
 5. Major version bump
 
 **비취소 영역** (변경 불가):
 - 커밋 `414fe9ea` 이전 릴리스 = CC-BY-NC-4.0 영구 (CC 비취소 원칙).
-- 그 이후 = AGPL-3.0-or-later / Commercial dual.
+- 현재 소프트웨어 릴리스 = UNLICENSED / Proprietary.
 
 ---
 
@@ -137,8 +137,8 @@ PR 머지 전 **모든** 게이트 통과 필수:
 - Compliance 7-axis scoring
 
 **라이선스 grant**:
-- AGPL 수령자: AGPL-3.0 §11 patent retaliation 적용 (no explicit grant beyond §11)
-- Commercial 수령자: 명시적 patent license + scope + defense terms (`COMMERCIAL-LICENSE.md` + 별도 commercial agreement)
+- 소프트웨어 수령자: 별도 서면 계약 없는 특허 사용권 없음
+- 별도 사업 계약 수령자: 계약서에 명시된 scope + defense terms 적용
 
 특허 문의: gilheumpark@gmail.com (subject `[PATENT]`).
 
@@ -150,8 +150,8 @@ PR 머지 전 **모든** 게이트 통과 필수:
 
 브랜드명/마크 사용:
 - "Loreguard", "Lore Guard", "Witness Seal", "ATTESTATION OF GENESIS", "Authorship Journal" — 등록·출원 마크 (NOTICE 참조).
-- AGPL fork 시 — 브랜드명 변경 의무 (Loreguard → 다른 이름).
-- Commercial 수령자 — 상업 계약에 따라 브랜드 사용 권리 별도 협상.
+- 재배포·fork 시 — 브랜드/상표 정책 준수. 별도 허가 없이 공식 제품처럼 표시하지 않음.
+- 별도 사업 계약 수령자 — 계약에 따라 브랜드 사용 권리 별도 협상.
 
 ---
 
@@ -160,7 +160,7 @@ PR 머지 전 **모든** 게이트 통과 필수:
 Loreguard 가 fork 표준. LearningGuard / ESVA / Code Studio (Desktop) 는 별도 repo + 별도 메인테이너 후보.
 
 각 제품:
-- 라이선스: 동일 dual license (AGPL + Commercial) 적용
+- 라이선스: 비공개 상용 소프트웨어 기준 적용
 - 격리 §1: 동일 8 파일 0byte 원칙
 - 어휘 치환: 12 매핑 sed substitute (자동화)
 - 4언어 byte-level: limitation-text / attestation 신규 작성 (도메인별)

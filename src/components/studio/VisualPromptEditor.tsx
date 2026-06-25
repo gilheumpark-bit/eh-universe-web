@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { Copy, Trash2, Sparkles, Image as ImageIcon, Loader2, Download } from 'lucide-react';
-import { VisualPromptCard, VisualShotType, VisualLevelPack, Character, GeneratedVisualAsset } from '@/lib/studio-types';
-import { generateImage, ImageGenProvider, ImageGenResult } from '@/services/imageGenerationService';
+import { Copy, Trash2, Sparkles, Download } from 'lucide-react';
+import { VisualPromptCard, VisualShotType, VisualLevelPack, Character } from '@/lib/studio-types';
+import type { ImageGenProvider } from '@/services/imageGenerationService';
 import { buildFinalVisualPrompt, buildNegativePrompt } from '@/lib/visual-prompt';
 import { VISUAL_PRESETS } from '@/lib/visual-defaults';
 import { extractConsistencyTags } from '@/lib/noi-auto-tags';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -46,6 +45,7 @@ const LEVEL_KEYS: { key: keyof VisualLevelPack; ko: string; en: string }[] = [
 ];
 
 const LEVEL_LABELS = ['OFF', 'LOW', 'MID', 'HIGH'];
+const LEVEL_LABELS_KO = ['끔', '낮음', '중간', '높음'];
 
 // IDENTITY_SEAL: PART-1 | role=types and constants | inputs=none | outputs=arrays
 
@@ -54,7 +54,6 @@ const LEVEL_LABELS = ['OFF', 'LOW', 'MID', 'HIGH'];
 // ============================================================
 
 export default function VisualPromptEditor({ card, onChange, onDelete, isKO, characters, imageApiKey, imageProvider, onImageGenerated }: VisualPromptEditorProps) {
-  const { IMAGE_GENERATION: imageGenEnabled } = useFeatureFlags();
   const update = React.useCallback((patch: Partial<VisualPromptCard>) => {
     onChange({ ...card, ...patch, updatedAt: Date.now() });
   }, [card, onChange]);
@@ -64,52 +63,16 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
 
   const finalPrompt = buildFinalVisualPrompt(card);
   const negPrompt = buildNegativePrompt(card);
+  const levelLabels = isKO ? LEVEL_LABELS_KO : LEVEL_LABELS;
 
-  // Image generation state — seed from persisted generatedImages
-  const [genImages, setGenImages] = useState<ImageGenResult[]>(() =>
+  void imageApiKey;
+  void imageProvider;
+  void onImageGenerated;
+
+  // 참고 이미지 — 앱 안에서 생성하지 않고, 과거 첨부/외부 제작 자료만 읽는다.
+  const [referenceImages] = useState(() =>
     (card.generatedImages ?? []).map(a => ({ url: a.imageUrl, revised_prompt: a.revisedPrompt }))
   );
-  const [genLoading, setGenLoading] = useState(false);
-  const [genError, setGenError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-
-  const handleGenerate = async () => {
-    if (!imageApiKey || !imageProvider || !finalPrompt) return;
-    setGenLoading(true);
-    setGenError(null);
-    abortRef.current?.abort();
-    const ac = new AbortController();
-    abortRef.current = ac;
-
-    const options = { 
-      n: 1, 
-      seed: card.seed, 
-      referenceImageUrl: card.referenceImageUrl 
-    };
-
-    const result = await generateImage(imageProvider, finalPrompt, negPrompt, imageApiKey, options, ac.signal);
-    if (result.error) {
-      setGenError(result.error);
-    } else {
-      setGenImages(prev => [...result.images, ...prev].slice(0, 4));
-      // Persist into card.generatedImages for gallery collection
-      const newAssets: GeneratedVisualAsset[] = result.images.map(img => ({
-        id: `ga-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        promptCardId: card.id,
-        provider: imageProvider,
-        model: imageProvider === 'openai' ? 'dall-e-3' : 'sdxl',
-        imageUrl: img.url,
-        promptSnapshot: finalPrompt,
-        createdAt: Date.now(),
-        assignedEpisode: card.episode,
-        revisedPrompt: img.revised_prompt,
-      }));
-      const existing = card.generatedImages ?? [];
-      update({ generatedImages: [...newAssets, ...existing].slice(0, 8) });
-      onImageGenerated?.(card.id);
-    }
-    setGenLoading(false);
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -178,7 +141,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
                         : 'bg-bg-secondary border border-border text-text-tertiary hover:text-text-secondary'
                     }`}
                   >
-                    {LEVEL_LABELS[v]}
+                    {levelLabels[v]}
                   </button>
                 ))}
               </div>
@@ -215,11 +178,11 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
       {/* Tunneling / Seed (Advanced) */}
       <details className="group">
         <summary className="text-[10px] font-black text-text-tertiary uppercase tracking-widest cursor-pointer hover:text-text-secondary mt-2">
-          {isKO ? '▸ Image2Image 터널링 및 시드 (고급)' : '▸ Image2Image Tunneling & Seed (Advanced)'}
+          {isKO ? '▸ 참고 이미지와 일관성 메모 (고급)' : '▸ Reference Image & Consistency Notes (Advanced)'}
         </summary>
         <div className="mt-3 space-y-3">
           <div>
-            <label className="text-[10px] mb-1 block text-text-tertiary font-semibold">{isKO ? '시드값 (Seed)' : 'Seed'}</label>
+            <label className="text-[10px] mb-1 block text-text-tertiary font-semibold">{isKO ? '시드값' : 'Seed'}</label>
             <input
               type="number"
               value={card.seed || ''}
@@ -232,7 +195,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
             </p>
           </div>
           <div>
-            <label className="text-[10px] mb-1 block text-text-tertiary font-semibold">{isKO ? '레퍼런스 이미지 URL' : 'Reference Image URL'}</label>
+            <label className="text-[10px] mb-1 block text-text-tertiary font-semibold">{isKO ? '참조 이미지 주소' : 'Reference Image URL'}</label>
             <input
               type="url"
               value={card.referenceImageUrl || ''}
@@ -241,7 +204,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
               className="w-full ds-input text-[11px] bg-black/40 border-border text-text-secondary placeholder-zinc-700 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-zinc-600 px-3 py-2 rounded-lg"
             />
             <p className="text-[9px] text-zinc-500 mt-1">
-              {isKO ? '컨트롤넷이나 Image2Image 파이프라인에서 참조할 원본 캐릭터의 이미지 주소(URL)입니다.' : 'Source image URL for ControlNet or Image2Image pipeline.'}
+              {isKO ? '외부 제작자나 디자이너에게 전달할 참고 이미지 주소입니다.' : 'Reference image URL for an external producer or designer.'}
             </p>
           </div>
         </div>
@@ -251,7 +214,7 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
       <div className="bg-black/60 border border-border rounded-xl p-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
-            {isKO ? '최종 프롬프트' : 'Final Prompt'}
+            {isKO ? '시각 자료 메모' : 'Visual Brief'}
           </span>
           <button
             onClick={() => copyToClipboard(finalPrompt)}
@@ -261,12 +224,14 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
           </button>
         </div>
         <p className="text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap">
-          {finalPrompt || (isKO ? '레벨을 조절하면 초안이 생성됩니다' : 'Adjust levels to generate draft')}
+          {finalPrompt || (isKO ? '레벨을 조절하면 전달용 메모가 정리됩니다' : 'Adjust levels to organize the handoff brief')}
         </p>
         {negPrompt && (
           <div className="mt-3 pt-3 border-t border-border">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-[9px] font-bold text-accent-red/60 uppercase">Negative</span>
+              <span className="text-[9px] font-bold text-accent-red/60 uppercase">
+                {isKO ? '제외 요소' : 'Negative'}
+              </span>
               <button
                 onClick={() => copyToClipboard(negPrompt)}
                 className="text-[9px] text-text-tertiary hover:text-accent-red"
@@ -279,76 +244,45 @@ export default function VisualPromptEditor({ card, onChange, onDelete, isKO, cha
         )}
       </div>
 
-      {!imageGenEnabled && (
-        <div className="text-[9px] text-text-tertiary bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2">
-          {isKO
-            ? '이미지 생성 기능이 비활성화되어 있습니다. (관리자 플래그 IMAGE_GENERATION)'
-            : 'Image generation is disabled (IMAGE_GENERATION feature flag).'}
-        </div>
-      )}
+      <div className="text-[9px] text-text-tertiary bg-bg-secondary/30 border border-border/30 rounded-lg px-3 py-2">
+        {isKO
+          ? '이 화면은 외부 제작용 시각 자료를 정리합니다. 이미지는 앱 안에서 만들지 않습니다.'
+          : 'This panel organizes visual production notes. Images are not created inside the app.'}
+      </div>
 
-      {/* Image Generation Preview */}
-      {imageGenEnabled && imageApiKey && imageProvider && (
+      {/* Reference Images */}
+      {referenceImages.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">
-              {isKO ? '이미지 생성 프리뷰' : 'Image Generation Preview'}
+              {isKO ? '참고 이미지' : 'Reference Images'}
             </span>
-            <button
-              onClick={handleGenerate}
-              disabled={genLoading || !finalPrompt}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-linear-to-r from-accent-blue to-purple-600 text-white disabled:opacity-40 transition-[transform,opacity] active:scale-95"
-            >
-              {genLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
-              {genLoading ? (isKO ? '생성 중...' : 'Generating...') : (isKO ? '이미지 생성' : 'Generate')}
-            </button>
           </div>
-
-          {genError && (
-            <div className="text-[10px] text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
-              {genError}
-            </div>
-          )}
-
-          {genImages.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
-              {genImages.map((img, i) => (
-                <div key={i} className="relative group rounded-xl overflow-hidden border border-border/30 bg-black/30">
-                  <Image
-                    src={img.url}
-                    alt={`Generated ${i + 1}`}
-                    width={400}
-                    height={400}
-                    unoptimized
-                    className="w-full aspect-square object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <a href={img.url} download={`noi-${card.title || 'image'}-${i + 1}.png`} target="_blank" rel="noopener noreferrer"
-                      className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
-                      <Download className="w-4 h-4 text-white" />
-                    </a>
-                  </div>
-                  {img.revised_prompt && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/80 px-2 py-1">
-                      <p className="text-[8px] text-text-tertiary line-clamp-2">{img.revised_prompt}</p>
-                    </div>
-                  )}
+          <div className="grid grid-cols-2 gap-2">
+            {referenceImages.map((img, i) => (
+              <div key={i} className="relative group rounded-xl overflow-hidden border border-border/30 bg-black/30">
+                <Image
+                  src={img.url}
+                  alt={isKO ? `참고 이미지 ${i + 1}` : `Reference image ${i + 1}`}
+                  width={400}
+                  height={400}
+                  unoptimized
+                  className="w-full aspect-square object-cover"
+                />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <a href={img.url} download={`noi-${card.title || (isKO ? '비주얼' : 'image')}-${i + 1}.png`} target="_blank" rel="noopener noreferrer"
+                    className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
+                    <Download className="w-4 h-4 text-white" />
+                  </a>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {genImages.length === 0 && !genLoading && !genError && (
-            <div className="text-center py-6 border border-border/30 border-dashed rounded-xl text-text-tertiary text-[10px]">
-              {isKO ? '"이미지 생성" 버튼을 눌러 프리뷰를 생성하세요' : 'Click "Generate" to create a preview'}
-            </div>
-          )}
-        </div>
-      )}
-
-      {imageGenEnabled && !imageApiKey && (
-        <div className="text-[9px] text-text-tertiary bg-bg-secondary/30 border border-border/30 rounded-lg px-3 py-2">
-          {isKO ? '설정에서 이미지 생성 API 키를 등록하면 프리뷰를 생성할 수 있습니다.' : 'Add an image generation API key in Settings to enable previews.'}
+                {img.revised_prompt && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/80 px-2 py-1">
+                    <p className="text-[8px] text-text-tertiary line-clamp-2">{img.revised_prompt}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

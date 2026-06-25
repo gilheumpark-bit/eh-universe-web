@@ -12,7 +12,7 @@ import { logger } from '@/lib/logger';
 export interface GeneralScoreAxes {
   /** 원문 의미 정확도 (0-100) */
   accuracy: number;
-  /** 자연스러움 — 번역투 없이 타겟 언어답게 (0-100) */
+  /** 자연스러움 — 어색한 표현 없이 타겟 언어답게 (0-100) */
   naturalness: number;
   /** 완결성 — 누락 없이 전부 번역했는지 (0-100) */
   completeness: number;

@@ -157,7 +157,7 @@ describe('hci-calculator — 4언어 라벨', () => {
   });
 
   it('ORIGIN_CATEGORY_LABELS 4언어', () => {
-    expect(ORIGIN_CATEGORY_LABELS.ko.human_input).toBe('인간 입력');
-    expect(ORIGIN_CATEGORY_LABELS.en.human_input).toBe('Human Input');
+    expect(ORIGIN_CATEGORY_LABELS.ko.human_input).toBe('작가 입력');
+    expect(ORIGIN_CATEGORY_LABELS.en.human_input).toBe('Author Input');
   });
 });

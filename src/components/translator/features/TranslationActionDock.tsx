@@ -18,11 +18,14 @@ import {
   Key,
   HardDrive,
   GitCompare,
+  Scissors,
 } from 'lucide-react';
 // [A.4 — 2026-05-08] Market track 장르 선택 통합.
 import { KoreanGenrePicker } from '../panels/KoreanGenrePicker';
 import { useState } from 'react';
 import type { KoreanGenreId } from '@/lib/translation/korean-genre-matrix';
+import { loadProjects } from '@/lib/project-migration';
+import { logger } from '@/lib/logger';
 
 export function TranslationActionDock() {
   const { lang } = useLang();
@@ -61,7 +64,10 @@ export function TranslationActionDock() {
   } = useTranslator();
 
   const stage = activeChapter?.stageProgress ?? 0;
-  const stageLabel = loading ? `${Math.min(stage, 5)}/5` : '—/5';
+  const stageCurrent = loading ? Math.min(Math.max(stage, 0), 5) : 0;
+  const stageLabel = loading ? `${stageCurrent}/5` : '—/5';
+  const stagePercent = loading ? Math.max(8, Math.round((stageCurrent / 5) * 100)) : 0;
+  const progressLabel = lang === 'ko' ? `번역 진행 ${stageLabel}` : `Translation progress ${stageLabel}`;
   const hasChapters = chapters.length > 0;
   const exportFive = ['txt', 'md', 'json', 'html', 'csv'] as const;
 
@@ -86,7 +92,7 @@ export function TranslationActionDock() {
   // track 선택 (faithful / market) — 작가가 어느 트랙을 Studio 로 가져갈지 결정.
   const handleStudioExport = async (track: 'faithful' | 'market' = 'market') => {
     if (chapters.length === 0) {
-      window.alert(lang === 'ko' ? 'Export 할 chapter 가 없습니다.' : 'No chapters to export.');
+      window.alert(lang === 'ko' ? '보낼 회차가 없습니다.' : 'No chapters to export.');
       return;
     }
     try {
@@ -95,7 +101,7 @@ export function TranslationActionDock() {
       if (episodes.length === 0) {
         window.alert(
           lang === 'ko'
-            ? `${track === 'faithful' ? 'Faithful' : 'Market'} 트랙에 export 가능한 결과가 없습니다.`
+            ? `${track === 'faithful' ? '원문 보존안' : '현지화안'}에 보낼 수 있는 결과가 없습니다.`
             : `No exportable ${track} results.`,
         );
         return;
@@ -120,15 +126,11 @@ export function TranslationActionDock() {
       URL.revokeObjectURL(url);
       window.alert(
         lang === 'ko'
-          ? `${episodes.length} episode 를 Studio 형식 JSON 으로 export 완료.\n\nStudio 에서 "JSON 불러오기" 로 import 가능.`
-          : `Exported ${episodes.length} episodes as Studio JSON.\n\nUse "Import JSON" in Studio.`,
+          ? `${episodes.length}개 회차를 창작 스튜디오 불러오기용 백업 파일로 내보냈습니다.\n\n창작 스튜디오에서 불러올 수 있습니다.`
+          : `Exported ${episodes.length} episodes as a creative-studio backup file.\n\nImport it in the creative studio.`,
       );
     } catch (e) {
-      // logger pattern
-      if (typeof window !== 'undefined' && (window as { __DEV__?: boolean }).__DEV__) {
-         
-        console.warn('[studio-export] failed', e);
-      }
+      logger.warn('translator-action-dock', 'studio export failed', e);
     }
   };
 
@@ -141,15 +143,11 @@ export function TranslationActionDock() {
       const summary = splitMod.summarizeSplit(splits);
       // 결과 안내 — alert (간단). production console.log 제거 — 디버그는 logger.debug 또는 옵션화.
       const msg = lang === 'ko'
-        ? `자동 분할 결과: ${summary.total}회차 / 평균 ${summary.avgCharCount.toLocaleString()}자 / 자연 break ${Math.round(summary.naturalBreakRate * 100)}%\n\n첫 회차 ${splits[0]?.charCount ?? 0}자.\n\n다음 사이클: chapters[] 자동 import.`
+        ? `자동 분할 결과: ${summary.total}회차 / 평균 ${summary.avgCharCount.toLocaleString()}자 / 자연 분리 ${Math.round(summary.naturalBreakRate * 100)}%\n\n첫 회차 ${splits[0]?.charCount ?? 0}자.`
         : `Auto-split: ${summary.total} chapters, avg ${summary.avgCharCount.toLocaleString()} chars, ${Math.round(summary.naturalBreakRate * 100)}% natural breaks.`;
       window.alert(msg);
     } catch (e) {
-      // logger.warn 패턴 차용 (실제 logger import 가 무거우므로 간단 처리)
-      if (typeof window !== 'undefined' && (window as { __DEV__?: boolean }).__DEV__) {
-         
-        console.warn('[chapter-splitter] failed', e);
-      }
+      logger.warn('translator-action-dock', 'chapter splitter failed', e);
     }
   };
 
@@ -162,65 +160,55 @@ export function TranslationActionDock() {
       const bridgeMod = await import('@/lib/translation/studio-bridge');
       const projectId = typeof window !== 'undefined' ? window.localStorage.getItem('noa_studio_currentProjectId') : null;
       if (!projectId) {
-        window.alert(lang === 'ko' ? 'Loreguard Studio에서 활성 프로젝트가 없습니다.' : 'No active Loreguard Studio project.');
+        window.alert(lang === 'ko' ? '창작 스튜디오에서 활성 작품을 먼저 선택하세요.' : 'No active creative-studio project.');
         return;
       }
 
-      // [정확한 키] noa_projects_v2 — Studio 의 모든 projects 통합 저장.
-      const projectsRaw = window.localStorage.getItem('noa_projects_v2');
       const episodes: Array<{ title: string; content: string; episodeNumber?: number }> = [];
       // [D.2 — 2026-05-09] syncStoryBible 통합 — Studio worldbook + characters + glossary 자동 추출.
       let bibleInput: import('@/lib/translation/studio-bridge').StoryBibleSyncInput = {};
-      if (projectsRaw) {
-        try {
-          const projects = JSON.parse(projectsRaw) as Array<{
-            id?: string;
-            name?: string;
-            sessions?: Array<{
-              config?: {
-                manuscripts?: Array<{ episode?: number; title?: string; content?: string }>;
-                world?: { entries?: Array<{ name?: string; description?: string }> };
-                characters?: Array<{ name?: string; description?: string; aliases?: string[] }>;
-                glossary?: Record<string, string>;
-              };
-            }>;
-          }>;
-          const targetProject = projects.find((p) => p.id === projectId);
-          if (targetProject?.sessions) {
-            for (const s of targetProject.sessions) {
-              const list = s.config?.manuscripts ?? [];
-              for (const m of list) {
-                if (typeof m.content === 'string' && m.content.trim().length > 0) {
-                  episodes.push({
-                    title: m.title || `Episode ${m.episode ?? episodes.length + 1}`,
-                    content: m.content,
-                    episodeNumber: m.episode,
-                  });
-                }
-              }
-              // Story Bible 추출 — 첫 번째 session 기준 (Studio가 sessions[0] 을 메인 사용).
-              if (s.config && Object.keys(bibleInput).length === 0) {
-                bibleInput = {
-                  worldEntries: (s.config.world?.entries ?? [])
-                    .filter((e): e is { name: string; description?: string } => typeof e.name === 'string' && e.name.length > 0),
-                  characters: (s.config.characters ?? [])
-                    .filter((c): c is { name: string; description?: string; aliases?: string[] } => typeof c.name === 'string' && c.name.length > 0),
-                  glossary: Object.entries(s.config.glossary ?? {}).map(([source, target]) => ({ source, target: String(target) })),
-                };
+      try {
+        const projects = loadProjects();
+        const targetProject = projects.find((project) => project.id === projectId);
+        if (targetProject?.sessions) {
+          for (const session of targetProject.sessions) {
+            const sessionConfig = session.config as {
+              manuscripts?: Array<{ episode?: number; title?: string; content?: string }>;
+              world?: { entries?: Array<{ name?: string; description?: string }> };
+              characters?: Array<{ name?: string; description?: string; aliases?: string[] }>;
+              glossary?: Record<string, string>;
+            } | undefined;
+            const list = sessionConfig?.manuscripts ?? [];
+            for (const manuscript of list) {
+              if (typeof manuscript.content === 'string' && manuscript.content.trim().length > 0) {
+                episodes.push({
+                  title: manuscript.title || `Episode ${manuscript.episode ?? episodes.length + 1}`,
+                  content: manuscript.content,
+                  episodeNumber: manuscript.episode,
+                });
               }
             }
+            // Story Bible 추출 — 첫 번째 session 기준 (Studio가 sessions[0] 을 메인 사용).
+            if (sessionConfig && Object.keys(bibleInput).length === 0) {
+              bibleInput = {
+                worldEntries: (sessionConfig.world?.entries ?? [])
+                  .filter((entry): entry is { name: string; description?: string } => typeof entry.name === 'string' && entry.name.length > 0),
+                characters: (sessionConfig.characters ?? [])
+                  .filter((character): character is { name: string; description?: string; aliases?: string[] } => typeof character.name === 'string' && character.name.length > 0),
+                glossary: Object.entries(sessionConfig.glossary ?? {}).map(([source, target]) => ({ source, target: String(target) })),
+              };
+            }
           }
-        } catch (e) {
-           
-          console.warn('[studio-import] projects parse failed', e);
         }
+      } catch (e) {
+        logger.warn('translator-action-dock', 'studio projects load failed', e);
       }
 
       if (episodes.length === 0) {
         window.alert(
           lang === 'ko'
-            ? `Studio 프로젝트 "${projectId}" 에서 episode (manuscripts) 를 찾지 못했습니다.\n\n원고를 먼저 작성하거나, 활성 프로젝트를 변경하세요.`
-            : `No episodes (manuscripts) in Studio project "${projectId}".\n\nWrite manuscripts first or switch active project.`,
+            ? `창작 스튜디오의 현재 작품 "${projectId}"에서 회차 원고를 찾지 못했습니다.\n\n원고를 먼저 작성하거나, 활성 작품을 변경하세요.`
+            : `No episode manuscripts found in creative-studio project "${projectId}".\n\nWrite manuscripts first or switch the active project.`,
         );
         return;
       }
@@ -228,7 +216,7 @@ export function TranslationActionDock() {
       const importedChapters = bridgeMod.studioEpisodesToChapters(episodes);
       const append = chapters.length > 0 && window.confirm(
         lang === 'ko'
-          ? `현재 ${chapters.length} chapter 가 있습니다. ${importedChapters.length} 새 episode 를 추가할까요?\n\n취소: 기존을 대체합니다.`
+          ? `현재 ${chapters.length}개 회차가 있습니다. ${importedChapters.length}개 회차를 추가할까요?\n\n취소하면 기존 목록을 대체합니다.`
           : `Currently ${chapters.length} chapters. Append ${importedChapters.length} new episodes?\n\nCancel: replace existing.`,
       );
       setChapters(append ? [...chapters, ...importedChapters].slice(0, 30) : importedChapters.slice(0, 30));
@@ -247,43 +235,88 @@ export function TranslationActionDock() {
         if (bible.glossaryText) items.push(lang === 'ko' ? '용어집' : 'glossary');
         bibleStatus = items.length > 0
           ? lang === 'ko'
-            ? `\n\nStory Bible 동기화: ${items.join('·')}`
+            ? `\n\n설정집 동기화: ${items.join('·')}`
             : `\n\nStory Bible synced: ${items.join('·')}`
           : '';
       }
 
       window.alert(
         lang === 'ko'
-          ? `Studio 에서 ${importedChapters.length} episode import 완료.${bibleStatus}`
-          : `Imported ${importedChapters.length} episodes from Studio.${bibleStatus}`,
+          ? `창작 스튜디오에서 ${importedChapters.length}개 회차를 불러왔습니다.${bibleStatus}`
+          : `Imported ${importedChapters.length} episodes from the creative studio.${bibleStatus}`,
       );
     } catch (e) {
-       
-      console.warn('[studio-bridge] failed', e);
-      window.alert(lang === 'ko' ? 'Studio import 실패' : 'Studio import failed');
+      logger.warn('translator-action-dock', 'studio bridge failed', e);
+      window.alert(lang === 'ko' ? '작품 불러오기 실패' : 'Studio import failed');
     }
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="translation-action-dock flex flex-col gap-4 p-4 text-text-primary">
       {loading ? (
-        <div className="flex items-center justify-between rounded-lg border border-accent-indigo/20 bg-accent-indigo/10 p-3">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 animate-ping rounded-full bg-accent-indigo" />
-            <span className="font-mono text-xs uppercase tracking-wider text-accent-indigo">
-              {statusMsg || (lang === 'ko' ? '처리 중…' : 'Working…')}
-            </span>
+        <div className="rounded-lg border border-accent-indigo/20 bg-accent-indigo/10 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-accent-indigo" />
+              <span className="truncate text-xs font-semibold text-accent-indigo">
+                {statusMsg || (lang === 'ko' ? '번역 흐름을 정리하는 중' : 'Preparing translation flow')}
+              </span>
+            </div>
+            <span className="shrink-0 font-mono text-xs text-text-tertiary">{stageLabel}</span>
           </div>
-          <span className="text-xs text-text-tertiary">{stageLabel}</span>
+          <div
+            role="progressbar"
+            aria-label={progressLabel}
+            aria-valuemin={0}
+            aria-valuemax={5}
+            aria-valuenow={stageCurrent}
+            className="mt-3 h-2 overflow-hidden rounded-full bg-bg-primary"
+          >
+            <div
+              className="h-full rounded-full bg-accent-indigo transition-[width] duration-300"
+              style={{ width: `${stagePercent}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] leading-snug text-text-secondary">
+            {lang === 'ko'
+              ? '회차 단위로 처리합니다. 멈춘 것처럼 보여도 단계가 바뀌면 이 막대가 함께 움직입니다.'
+              : 'Runs chapter by chapter. The bar moves as each stage advances.'}
+          </p>
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-[#111113] p-3 font-mono text-xs uppercase tracking-wider text-text-tertiary">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-secondary p-3 font-mono text-xs font-semibold uppercase tracking-wider text-text-primary">
           <ShieldCheck className="h-3.5 w-3.5 text-accent-green" />
           {lang === 'ko' ? '대기' : 'Ready'}
         </div>
       )}
 
-      <div className="rounded-lg border border-white/8 bg-[#1a1816]/90 p-3 space-y-2">
+      <div className="rounded-xl border border-border bg-bg-primary/70 p-3 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+              {lang === 'ko' ? '현재 방향' : 'Direction'}
+            </div>
+            <div className="mt-1 truncate text-[13px] font-bold text-text-primary">
+              {from.toUpperCase()} → {to.toUpperCase()}
+            </div>
+          </div>
+          <div className="min-w-0 text-right">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+              {lang === 'ko' ? '엔진' : 'Engine'}
+            </div>
+            <div className="mt-1 truncate text-[13px] font-bold text-text-primary">
+              {provider}
+            </div>
+          </div>
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-text-secondary">
+          {lang === 'ko'
+            ? '원문을 붙여 넣고 실행 방식을 고르세요. 결과는 작가 확인 후 저장·보내기 흐름으로 이어집니다.'
+            : 'Paste source text, choose a run mode, then review before save/export.'}
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-border bg-bg-primary/70 p-3 space-y-2">
         <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
           <Save className="h-3 w-3 text-emerald-400/80" />
           {lang === 'ko' ? '저장' : 'Save'}
@@ -301,36 +334,36 @@ export function TranslationActionDock() {
                   ? '클라우드: 로그인하면 자동 업로드됩니다.'
                   : 'Cloud: sign in to enable upload.'
               : lang === 'ko'
-                ? '클라우드: Supabase 미설정 또는 미로그인'
-                : 'Cloud: Supabase or sign-in not active'}
+                ? '클라우드: 연결 전'
+                : 'Cloud: storage or sign-in not active'}
           </span>
         </div>
         <div className="pt-1">
-          <div className="mb-1.5 text-[9px] font-mono font-semibold uppercase tracking-wider text-accent-amber/80">
-            {lang === 'ko' ? '보내기 · 대표 5형식' : 'Export · 5 formats'}
-          </div>
-          <div className="grid grid-cols-5 gap-1">
+        <div className="mb-1.5 text-[10px] font-semibold text-accent-amber/80">
+          {lang === 'ko' ? '보내기 · 대표 5형식' : 'Export · 5 formats'}
+        </div>
+        <div className="grid grid-cols-5 gap-1">
             {exportFive.map((fmt) => (
               <button
                 key={fmt}
                 type="button"
                 disabled={!hasChapters}
                 onClick={() => downloadAllResults(fmt)}
-                className="rounded-md border border-white/10 bg-black/50 py-1.5 text-[8px] font-black uppercase tracking-wide text-text-secondary hover:border-accent-amber/35 hover:bg-accent-amber/10 hover:text-accent-amber disabled:cursor-not-allowed disabled:opacity-35"
+                className="min-h-[36px] rounded-md border border-border bg-bg-secondary py-1.5 text-[10px] font-bold uppercase tracking-wide text-text-secondary hover:border-accent-amber/35 hover:bg-accent-amber/10 hover:text-accent-amber disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
               >
                 {fmt}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex gap-2 border-t border-white/5 pt-2">
+        <div className="flex gap-2 border-t border-border pt-2">
           <button
             type="button"
             onClick={() => void exportData()}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[9px] text-text-tertiary hover:bg-white/10"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1.5 text-[10px] font-semibold text-text-secondary hover:bg-bg-tertiary"
           >
             <Download className="h-3 w-3" />
-            {lang === 'ko' ? '전체 JSON' : 'Full JSON'}
+            {lang === 'ko' ? '전체 백업' : 'Full backup'}
           </button>
           <input
             ref={importRef}
@@ -342,30 +375,31 @@ export function TranslationActionDock() {
           <button
             type="button"
             onClick={() => importRef.current?.click()}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-black/40 py-1.5 text-[9px] text-text-tertiary hover:bg-white/10"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1.5 text-[10px] font-semibold text-text-secondary hover:bg-bg-tertiary"
           >
             <Upload className="h-3 w-3" />
-            {lang === 'ko' ? 'JSON 불러오기' : 'Import JSON'}
+            {lang === 'ko' ? '백업 불러오기' : 'Import backup'}
           </button>
         </div>
         <button
           type="button"
           onClick={() => setActiveLeftPanel('backup')}
-          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-accent-amber/25 bg-accent-amber/10 py-2 text-[10px] font-medium text-accent-amber hover:bg-accent-amber/20"
+          className="flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md border border-accent-amber/25 bg-accent-amber/10 px-2 py-2 text-[11px] font-semibold text-accent-amber hover:bg-accent-amber/20"
         >
           <HardDrive className="h-3.5 w-3.5" />
-          {lang === 'ko' ? '저장·백업 (전체 도구)' : 'Save & backup (all tools)'}
+          {lang === 'ko' ? '저장·백업 전체 보기' : 'Save & backup overview'}
         </button>
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
+        <label className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-text-primary">
           {lang === 'ko' ? '엔진 선택' : 'Primary engine'}
         </label>
         <select
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
-          className="w-full cursor-pointer rounded-lg border border-white/10 bg-[#111113] p-2 text-sm text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors hover:bg-[#151518] focus:border-accent-green/50"
+          aria-label={lang === 'ko' ? '엔진 선택' : 'Primary engine'}
+          className="w-full cursor-pointer rounded-lg border border-border bg-bg-secondary p-2 text-sm font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 transition-colors hover:bg-bg-tertiary focus:border-accent-green/50"
         >
           {PROVIDERS.map((p) => (
             <option key={p.id} value={p.id}>
@@ -382,7 +416,7 @@ export function TranslationActionDock() {
           type="button"
           onClick={() => void translate()}
           disabled={loading}
-          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-linear-to-r from-[#1A1A1D] to-[#111113] py-3 pl-4 pr-4 transition-[transform,background-color,border-color,color] hover:border-accent-green/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="group relative flex min-h-[68px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-border bg-bg-primary py-3 pl-4 pr-4 transition-[transform,background-color,border-color,color] hover:border-accent-green/50 hover:bg-bg-secondary active:scale-[0.98] disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
         >
           <div className="absolute inset-0 bg-accent-green/5 opacity-0 transition-opacity group-hover:opacity-100" />
           <div className="relative z-10 flex items-center gap-3">
@@ -391,10 +425,10 @@ export function TranslationActionDock() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[13px] font-semibold text-text-primary">
-                {lang === 'ko' ? '빠른 번역' : 'Fast draft'}
+                {lang === 'ko' ? '초안 만들기' : 'Fast draft'}
               </span>
               <span className="text-[10px] text-text-tertiary">
-                {lang === 'ko' ? '단일 패스 번역' : 'Single-pass translation'}
+                {lang === 'ko' ? '원문을 한 번에 번역' : 'Single-pass translation'}
               </span>
             </div>
           </div>
@@ -405,7 +439,7 @@ export function TranslationActionDock() {
           type="button"
           onClick={() => void deepTranslate()}
           disabled={loading}
-          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-indigo/20 bg-linear-to-r from-accent-indigo/10 to-transparent py-3 pl-4 pr-4 shadow-[0_0_15px_rgba(47,155,131,0.05)] transition-[transform,background-color,border-color,box-shadow,color] hover:border-accent-indigo/60 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="group relative flex min-h-[68px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-indigo/20 bg-accent-indigo/10 py-3 pl-4 pr-4 transition-[transform,background-color,border-color,box-shadow,color] hover:border-accent-indigo/60 hover:bg-accent-indigo/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
         >
           <div className="absolute inset-0 bg-accent-indigo/10 opacity-0 transition-opacity group-hover:opacity-100" />
           <div className="relative z-10 flex items-center gap-3">
@@ -415,21 +449,23 @@ export function TranslationActionDock() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[13px] font-semibold text-accent-indigo">
-                {lang === 'ko' ? '딥 파이프라인' : 'Deep pipeline'}
+                {lang === 'ko' ? '정밀 검토' : 'Deep review'}
               </span>
-              <span className="text-[10px] text-accent-indigo/60">5-stage</span>
+              <span className="text-[10px] text-accent-indigo/60">
+                {lang === 'ko' ? '다섯 단계 문맥 점검' : 'Five-step context check'}
+              </span>
             </div>
           </div>
           <ChevronRight className="relative z-10 h-4 w-4 text-accent-indigo/50 transition-transform group-hover:translate-x-1 group-hover:text-accent-indigo" />
         </button>
 
         {/* [A.4 — 2026-05-08] Korean web novel 장르 (Market track 적응) */}
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+        <div className="rounded-lg border border-border bg-bg-primary/60 px-3 py-2">
           <KoreanGenrePicker value={genre} onChange={handleGenreChange} language={lang === 'ko' ? 'ko' : 'en'} />
-          <p className="text-[9px] text-text-tertiary mt-1 leading-tight">
+          <p className="text-[11px] text-text-tertiary mt-1 leading-relaxed">
             {lang === 'ko'
-              ? 'Market track 만 적용 (헌터물·회귀물·로판 등 한국 웹소설 매트릭스)'
-              : 'Applied to Market track only (Korean web novel genre matrix)'}
+              ? '현지화안의 호칭·대사 리듬·장르 관습에 적용'
+              : 'Applied to the localized draft: address terms, dialogue rhythm, and genre fit'}
           </p>
         </div>
 
@@ -439,19 +475,21 @@ export function TranslationActionDock() {
             type="button"
             onClick={() => void handleStudioImport()}
             disabled={loading}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] font-bold bg-accent-purple/10 border border-accent-purple/30 text-accent-purple hover:bg-accent-purple/15 transition-colors disabled:opacity-40"
-            title={lang === 'ko' ? 'Loreguard Studio 의 활성 프로젝트 episode + Story Bible 가져오기' : 'Import episodes + Story Bible from active Loreguard Studio project'}
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded border border-accent-purple/30 bg-accent-purple/10 px-2.5 py-1.5 text-[11px] font-bold text-accent-purple transition-colors hover:bg-accent-purple/15 disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
+            title={lang === 'ko' ? '창작 스튜디오의 현재 작품 회차와 설정집 불러오기' : 'Import episodes and story bible from the active creative-studio project'}
           >
-            ⇇ {lang === 'ko' ? 'Studio 가져오기' : 'Import Studio'}
+            <Download className="h-3 w-3" aria-hidden />
+            {lang === 'ko' ? '작품 불러오기' : 'Import work'}
           </button>
           <button
             type="button"
             onClick={() => void handleSplitChapters()}
             disabled={loading || !source.trim()}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] font-bold bg-accent-amber/10 border border-accent-amber/30 text-accent-amber hover:bg-accent-amber/15 transition-colors disabled:opacity-40"
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded border border-accent-amber/30 bg-accent-amber/10 px-2.5 py-1.5 text-[11px] font-bold text-accent-amber transition-colors hover:bg-accent-amber/15 disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
             title={lang === 'ko' ? '한국 웹소설 5,500자 단위 자동 회차 분할' : 'Auto-split into 5,500-char Korean web novel chapters'}
           >
-            ✂ {lang === 'ko' ? '회차 분할' : 'Auto-split'}
+            <Scissors className="h-3 w-3" aria-hidden />
+            {lang === 'ko' ? '회차 나누기' : 'Split chapters'}
           </button>
         </div>
         {/* [D.1 — 2026-05-09] Studio 로 export — Faithful / Market 양 track */}
@@ -460,19 +498,21 @@ export function TranslationActionDock() {
             type="button"
             onClick={() => void handleStudioExport('market')}
             disabled={loading || chapters.length === 0}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] font-bold bg-accent-purple/10 border border-accent-purple/30 text-accent-purple hover:bg-accent-purple/15 transition-colors disabled:opacity-40"
-            title={lang === 'ko' ? 'Market track 결과를 Studio JSON 으로 export' : 'Export Market track as Studio JSON'}
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded border border-accent-purple/30 bg-accent-purple/10 px-2.5 py-1.5 text-[11px] font-bold text-accent-purple transition-colors hover:bg-accent-purple/15 disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
+            title={lang === 'ko' ? '현지화안 결과를 창작 스튜디오 백업 파일로 내보내기' : 'Export localized track as a creative-studio backup file'}
           >
-            ⇉ {lang === 'ko' ? 'Studio로 (M)' : 'Export (Market)'}
+            <Upload className="h-3 w-3" aria-hidden />
+            {lang === 'ko' ? '현지화안 저장' : 'Save localized'}
           </button>
           <button
             type="button"
             onClick={() => void handleStudioExport('faithful')}
             disabled={loading || chapters.length === 0}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] font-bold bg-accent-green/10 border border-accent-green/30 text-accent-green hover:bg-accent-green/15 transition-colors disabled:opacity-40"
-            title={lang === 'ko' ? 'Faithful track 결과를 Studio JSON 으로 export' : 'Export Faithful track as Studio JSON'}
+            className="flex min-h-[44px] items-center justify-center gap-1.5 rounded border border-accent-green/30 bg-accent-green/10 px-2.5 py-1.5 text-[11px] font-bold text-accent-green transition-colors hover:bg-accent-green/15 disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
+            title={lang === 'ko' ? '원문 보존안 결과를 창작 스튜디오 백업 파일로 내보내기' : 'Export source-faithful track as a creative-studio backup file'}
           >
-            ⇉ {lang === 'ko' ? 'Studio로 (F)' : 'Export (Faithful)'}
+            <Upload className="h-3 w-3" aria-hidden />
+            {lang === 'ko' ? '보존안 저장' : 'Save preserved'}
           </button>
         </div>
 
@@ -486,15 +526,15 @@ export function TranslationActionDock() {
             void runDualTranslate();
           }}
           disabled={loading || !source.trim()}
-          className={`group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border py-3 pl-4 pr-4 shadow-[0_0_15px_rgba(47,155,131,0.08)] transition-[transform,background-color,border-color,box-shadow,color] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border py-3 pl-4 pr-4 shadow-[0_0_15px_rgba(47,155,131,0.08)] transition-[transform,background-color,border-color,box-shadow,color] active:scale-[0.98] disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100 ${
             outputMode === 'dual'
               ? 'border-accent-green/60 bg-linear-to-r from-accent-green/15 to-accent-green/5 ring-1 ring-accent-green/30'
               : 'border-accent-green/20 bg-linear-to-r from-accent-green/10 to-transparent hover:border-accent-green/50'
           }`}
           title={
             lang === 'ko'
-              ? '듀얼 출력 — 원문 보존 (Faithful) + 현지화 (Market) 두 결과 동시 생성. Stage 1~3 공유, 4~5 병렬 (비용 ~1.4x).'
-              : 'Dual output — Source-faithful + Market-ready in parallel (Stage 4~5 split, ~1.4x cost).'
+              ? '두 안 만들기 — 원문 보존안과 현지화안을 함께 생성합니다. 앞단 문맥 점검을 공유하고 후반 검토를 나눠 진행합니다.'
+              : 'Create two drafts — preserved draft and localized draft side by side.'
           }
         >
           <div className="relative z-10 flex items-center gap-3">
@@ -504,10 +544,10 @@ export function TranslationActionDock() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[13px] font-bold text-accent-green">
-                {lang === 'ko' ? '듀얼 번역 · F+M' : 'Dual · F+M'}
+                {lang === 'ko' ? '두 안 만들기' : 'Dual draft'}
               </span>
-              <span className="text-[10px] text-accent-green/70 font-mono">
-                {lang === 'ko' ? '원문 보존 + 현지화' : 'Faithful + Market'}
+              <span className="text-[11px] text-accent-green/70">
+                {lang === 'ko' ? '원문 보존안 + 현지화안' : 'Preserved + localized'}
               </span>
             </div>
           </div>
@@ -519,8 +559,8 @@ export function TranslationActionDock() {
           type="button"
           onClick={() => void runCompareB()}
           disabled={loading || !source.trim()}
-          className="group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-purple/20 bg-linear-to-r from-accent-purple/10 to-transparent py-2.5 pl-4 pr-4 transition-[transform,background-color,border-color,color] hover:border-accent-purple/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-          title={lang === 'ko' ? '다른 엔진(Claude↔OpenAI)으로 B안 재생성. 오른쪽 에디터 B 탭에서 비교 가능.' : 'Re-translate with alt engine (Claude↔OpenAI). View in right editor B tab.'}
+          className="group relative flex min-h-[64px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-lg border border-accent-purple/20 bg-accent-purple/10 py-2.5 pl-4 pr-4 transition-[transform,background-color,border-color,color] hover:border-accent-purple/50 hover:bg-accent-purple/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-border disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:opacity-100"
+          title={lang === 'ko' ? '다른 번역 방식으로 B안을 다시 만듭니다. 오른쪽 에디터 B 탭에서 비교할 수 있습니다.' : 'Re-translate with another engine. View it in the right editor B tab.'}
         >
           <div className="relative z-10 flex items-center gap-3">
             <div className="rounded-md bg-accent-purple/15 p-1.5">
@@ -528,12 +568,12 @@ export function TranslationActionDock() {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[12px] font-semibold text-accent-purple">
-                {lang === 'ko' ? 'B안 재번역' : 'Generate B'}
+                {lang === 'ko' ? '비교안 만들기' : 'Generate comparison'}
               </span>
-              <span className="text-[10px] text-accent-purple/60">
+              <span className="text-[11px] text-accent-purple/60">
                 {compareResultB
                   ? (lang === 'ko' ? `완료 · ${compareResultB.length.toLocaleString()}자` : `Done · ${compareResultB.length} chars`)
-                  : (lang === 'ko' ? '대체 엔진 A/B 비교' : 'Alt engine A/B compare')}
+                  : (lang === 'ko' ? '다른 엔진으로 견본 비교' : 'Compare with another engine')}
               </span>
             </div>
           </div>
@@ -547,26 +587,26 @@ export function TranslationActionDock() {
         <button
           type="button"
           onClick={() => setActiveLeftPanel('glossary')}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/5 bg-[#111113] py-3 text-text-tertiary transition-colors hover:bg-white/5 hover:text-white"
+          className="flex min-h-[58px] flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-primary py-3 text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary"
         >
           <Globe className="h-4 w-4" />
-          <span className="text-[10px] font-medium">{lang === 'ko' ? '용어집' : 'Glossary'}</span>
+          <span className="text-[11px] font-medium">{lang === 'ko' ? '용어집' : 'Glossary'}</span>
         </button>
         <button
           type="button"
           onClick={openApiKeyModal}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/5 bg-[#111113] py-3 text-text-tertiary transition-colors hover:bg-white/5 hover:text-white"
+          className="flex min-h-[58px] flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-primary py-3 text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary"
         >
           <Key className="h-4 w-4" />
-          <span className="text-[10px] font-medium">{lang === 'ko' ? 'API 키' : 'API keys'}</span>
+          <span className="text-[11px] font-medium">{lang === 'ko' ? '연결 키' : 'Connection keys'}</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveLeftPanel('settings')}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/5 bg-[#111113] py-3 text-text-tertiary transition-colors hover:bg-white/5 hover:text-white"
+          className="flex min-h-[58px] flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-bg-primary py-3 text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary"
         >
           <Settings2 className="h-4 w-4" />
-          <span className="text-[10px] font-medium">{lang === 'ko' ? '설정' : 'Settings'}</span>
+          <span className="text-[11px] font-medium">{lang === 'ko' ? '설정' : 'Settings'}</span>
         </button>
       </div>
     </div>

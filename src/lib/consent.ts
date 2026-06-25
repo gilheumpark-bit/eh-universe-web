@@ -20,6 +20,9 @@
 const STORAGE_KEY = 'eh-cookie-consent';
 const CHANGE_EVENT = 'eh:consent-changed';
 
+/** 동의 변경 전역 이벤트 이름 — Sentry 등 consent-gated 모듈이 구독. */
+export const CONSENT_CHANGE_EVENT = CHANGE_EVENT;
+
 export type ConsentValue = 'accepted' | 'rejected' | null;
 
 // ============================================================

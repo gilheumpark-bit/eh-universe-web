@@ -103,6 +103,8 @@ Changes:
 
 ### Day 13 — Playwright E2E
 
+> Historical note (2026-06-24): 이 섹션은 M2.2 구현 시점 기록이다. 아래 전용 `e2e/scenarios/20-writing-perf.spec.ts` 는 현재 repo 기준선에서는 정리되었고, 현행 회귀는 더 넓은 Studio/Loreguard E2E 묶음으로 흡수되었다.
+
 New file `e2e/scenarios/20-writing-perf.spec.ts` with 5 scenarios:
 
 - 20.1 — FAB mounts with `엔진 호출` label, secondary visual class
@@ -144,7 +146,7 @@ Results saved to `bench/writing-perf-final.json`.
 | FAB visual hierarchy | primary | primary | secondary | secondary | PASS |
 | FAB label (author-led) | no | no | yes | yes | PASS |
 | `sceneSheetEmpty` guard wired | no | prop ready | full guard + toast | full | PASS |
-| E2E scenarios (writing) | 12 | 17 | 22 | 22 | PASS |
+| E2E scenarios (writing) | 12 | 17 | 22 | 22 | PASS at implementation time |
 
 ### Bench Throughput (M2.2)
 
@@ -184,7 +186,7 @@ Bundle (Next.js build, 2026-04-20):
 |------|--------|--------|
 | G1 — tsc/eslint | 0 errors | PASS (tsc 0, eslint 0) |
 | G2 — Unit tests | 2,917 passing | N/A — only existing writing test (115 lines) covers this surface; new memo components are covered transitively |
-| G3 — E2E | scenarios 07/19/20 PASS | scenario 20 written; 07/19 not re-run in this session |
+| G3 — E2E | scenarios 07/19/20 PASS | historical snapshot; current repo baseline uses a different active E2E set |
 | G4 — Render perf | -30% re-renders, -15% bundle | Advanced chunk split confirmed (13.6 KB); render count measured in E2E 20.4 |
 | G5 — FAB UX | position/label/guard documented | PASS (this doc §3) |
 | G6 — 4-lang + a11y | no missing L4 | PASS (grep confirms 4 keys per string) |

@@ -1,16 +1,29 @@
-import type { Page } from "@playwright/test";
+import type { ConsoleMessage, Page } from "@playwright/test";
 
-/** Uncaught exceptions only (console.error from libs is not collected). */
-export function attachPageErrorCollector(page: Page): { errors: string[]; detach: () => void } {
+type PageErrorCollector = {
+  errors: string[];
+  detach: () => void;
+};
+
+export function attachPageErrorCollector(page: Page): PageErrorCollector {
   const errors: string[] = [];
-  const handler = (err: Error) => {
-    errors.push(err.message);
+  const onConsole = (message: ConsoleMessage) => {
+    if (message.type() === "error") {
+      errors.push(message.text());
+    }
   };
-  page.on("pageerror", handler);
+  const onPageError = (error: Error) => {
+    errors.push(error.message);
+  };
+
+  page.on("console", onConsole);
+  page.on("pageerror", onPageError);
+
   return {
     errors,
     detach: () => {
-      page.off("pageerror", handler);
+      page.off("console", onConsole);
+      page.off("pageerror", onPageError);
     },
   };
 }

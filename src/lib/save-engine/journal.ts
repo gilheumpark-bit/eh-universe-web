@@ -19,7 +19,7 @@ import type {
 } from './types';
 import { CURRENT_JOURNAL_VERSION, GENESIS } from './types';
 import { hashPayload, verifyChain as verifyChainImpl } from './hash';
-import { tickLocal, ulid, getNodeId, zeroHLC } from './hlc';
+import { tickLocal, ulid, getNodeId, zeroHLC, sortEntriesByHLC } from './hlc';
 import { getDefaultWriterQueue } from './writer-queue';
 import { performAtomicAppend } from './atomic-write';
 import { routerGetTip, routerListEntries } from './storage-router';
@@ -124,7 +124,12 @@ export async function readAllEntries(): Promise<JournalEntry[]> {
 }
 
 export async function verifyJournal(): Promise<VerifyResult> {
-  const entries = await readAllEntries();
+  // [H5 fix] readAllEntries()는 router id(ULID) 사전순으로 엔트리를 돌려준다.
+  // 같은 physical ms 안에서는 ULID 랜덤 suffix 때문에 부모-자식이 역전될 수 있어
+  // parentHash 체인 검증이 거짓 손상으로 판정된다. recovery.ts(line 156)가 verify·
+  // delta 재생 전에 sortEntriesByHLC로 인과(HLC) 재정렬하는 것과 동일하게, 여기서도
+  // verifyChainImpl 호출 전에 HLC 기준으로 정렬해 일관성을 맞춘다.
+  const entries = sortEntriesByHLC(await readAllEntries());
   const r = await verifyChainImpl(entries);
   return {
     ok: r.ok,

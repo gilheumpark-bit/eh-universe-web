@@ -5,7 +5,31 @@
  * IDB 환경 의존이라 일부 case 는 fake-indexeddb 또는 typeof indexedDB 분기 활용.
  */
 
-import { issueWitnessSeal, buildWitnessSealSVG, buildOriginDonutSVG } from '../seal-issuer';
+import { issueWitnessSeal, buildWitnessSealSVG, buildOriginDonutSVG, formatSealSerial } from '../seal-issuer';
+
+describe('formatSealSerial — 고유성 보존 (#74 wrap 회귀)', () => {
+  it('9999 이하는 4자리 zero-pad', () => {
+    expect(formatSealSerial(1)).toBe('0001');
+    expect(formatSealSerial(42)).toBe('0042');
+    expect(formatSealSerial(9999)).toBe('9999');
+  });
+
+  it('10000 이상은 wrap 하지 않고 자리수를 늘린다 (중복 발급 차단)', () => {
+    expect(formatSealSerial(10000)).toBe('10000');
+    expect(formatSealSerial(12345)).toBe('12345');
+    // 핵심: 10000 이 0001 로 되감기지 않아야 한다 (1번 인장과 충돌 금지).
+    expect(formatSealSerial(10000)).not.toBe(formatSealSerial(1));
+  });
+
+  it('서로 다른 serial 은 항상 서로 다른 문자열 (경계 포함)', () => {
+    const seen = new Set<string>();
+    for (const n of [1, 9999, 10000, 10001, 19998, 20000]) {
+      const s = formatSealSerial(n);
+      expect(seen.has(s)).toBe(false);
+      seen.add(s);
+    }
+  });
+});
 
 describe('seal-issuer — issueWitnessSeal 형식', () => {
   it('LG-{YY}{MM}-{serial}-{hash4} 패턴', async () => {

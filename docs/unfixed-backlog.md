@@ -88,18 +88,17 @@
 **Estimate**: audit 30분 + 수리 30분
 **Priority**: 알파 → 베타 전환 블로커 (A11y 100 유지 공약 있음).
 
-### C3. CLI 레이어 strict TS 전환 (P3)
-**Scope**: `src/cli/**`
+### C3. 구 실행 도구 백로그 정리 (P3)
+**Scope**: 레거시 실행 도구 문서와 비활성 표면 참조
 
 **Gap**:
-- `@typescript-eslint/no-explicit-any` 경고 144건
-- `// @ts-nocheck` 직접 선언 34건
-- 루트 `src/` 엄격화와 분리된 예외 구역
+- 현 제품 표면에 없는 실행 도구가 일부 문서에서 활성 기능처럼 읽힐 수 있음.
+- 외부 통합은 REST/LSP API 기준으로 설명해야 함.
 
-**Required action**: 파일별 any 치환 + nocheck 해제 + 타입 정의 보강. 이미 작동하는 코드라 테스트 커버리지 선행 필요.
+**Required action**: 문서와 설정에서 구 실행 도구 참조를 제거하고, 필요한 B2B 통합은 API 기준으로 재서술.
 
-**Estimate**: 1일+
-**Priority**: 기술 부채. 외부 기여자 받기 시작할 때 블로커화.
+**Estimate**: 30분~1시간
+**Priority**: 오독 방지. 내부 AI와 외부 협업자가 구 표면을 복구 대상으로 착각하지 않게 막는 작업.
 
 ### C4. `ShadowDiffDashboard.tsx` 738 → 500 줄 재분해 (P3)
 **File**: `src/components/studio/settings/ShadowDiffDashboard.tsx`
@@ -175,7 +174,7 @@
 
 ### D13. 모바일 viewport (360px / 414px) 자동 측정 — ✅ 2026-04-25 구현 완료
 **Trigger**: 외부 코워크 평가 (2026-04-25) "모바일 압축 가능성" 지적
-**Scope**: 5 핵심 공개 페이지 (`/`, `/about`, `/network`, `/codex`, `/changelog`)
+**Scope**: 현행 공개 페이지 (`/`, `/about`, `/studio`, `/translation-studio`, `/changelog`)
 **구현**: `e2e/scenarios/23-mobile-viewport.spec.ts` 신설
   · Pixel 5 + iPhone 13 emulation × 5 페이지 × 3 측정 = 30 케이스
   · 측정 1: horizontal overflow 0 (가로 스크롤 없음)
@@ -234,7 +233,7 @@ StudioDocsView 실제 카운트: 12 core + 7 polish = **19 챕터 / 4언어**.
 
 **오늘 세션 전수 영향 요약**:
 - 보안: Mythos 8 공격 체인 + 외부 감사 14+14 = 16 건 수리
-- 라이선스: CC-BY-NC → AGPL+Commercial dual 전환
+- 라이선스: CC-BY-NC → UNLICENSED / Proprietary 전환
 - i18n: ja/zh 9.7 달성 + SSR 4언어 메타 + sitemap hreflang + manifest rebrand
 - 인프라: /status · DR 리전 · runbook · consent · CSRF · DSAR · Stripe webhook
 - 문서: CHANGELOG 5 섹션 + unfixed-backlog.md 신설 + incident-response.md + dgx-runbook.md

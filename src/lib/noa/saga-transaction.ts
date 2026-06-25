@@ -7,6 +7,8 @@
 
 // ── Types ──
 
+import { logger } from '@/lib/logger';
+
 export interface SagaStep<T = unknown> {
   /** 단계 이름 (디버깅용) */
   name: string;
@@ -89,7 +91,7 @@ export class SagaOrchestrator {
             await compensations[i]();
           } catch (compErr) {
             // 보상 실패 — 치명적, 로그만 남김
-            console.error(`[SAGA] Compensation failed for step ${completedSteps[i]}:`, compErr);
+            logger.error('SAGA', `Compensation failed for step ${completedSteps[i]}`, compErr);
           }
         }
 
@@ -292,12 +294,10 @@ function resolveSagaKey(): string {
   if (envKey) return envKey;
   if (!_sagaKeyWarned) {
     _sagaKeyWarned = true;
-    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-      console.warn(
-        '[saga-transaction] NOA_SAGA_KEY env not set — using dev fallback key. ' +
-          'Set NOA_SAGA_KEY in production (required for HSM signature integrity).',
-      );
-    }
+    logger.warn(
+      'saga-transaction',
+      'NOA_SAGA_KEY env not set — using dev fallback key. Set NOA_SAGA_KEY in production (required for HSM signature integrity).',
+    );
   }
   return 'noa-hsm-dev-key';
 }

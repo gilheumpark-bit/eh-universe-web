@@ -81,7 +81,7 @@ export function SavePresetDialog({
     const trimmed = name.trim();
     if (!trimmed) {
       setError(L4(language, {
-        ko: '이름을 입력해주세요',
+        ko: '이름을 입력해 주세요',
         en: 'Please enter a name',
         ja: '名前を入力してください',
         zh: '请输入名称',

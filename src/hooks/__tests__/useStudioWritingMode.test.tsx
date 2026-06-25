@@ -92,6 +92,22 @@ describe('useStudioWritingMode', () => {
     cleanup();
   });
 
+  it('sanitizes restored editDraft residue before showing it', () => {
+    localStorage.setItem('noa_editdraft_sess-B2', 'AI-TEST-INPUT 본문');
+    const { get, cleanup } = createHarness('sess-B2');
+    act(() => { jest.runAllTimers(); });
+    expect(get().editDraft).toBe('본문');
+    expect(localStorage.getItem('noa_editdraft_sess-B2')).toBe('본문');
+    cleanup();
+  });
+
+  it('stores sanitized editDraft residue in localStorage', () => {
+    const { get, cleanup } = createHarness('sess-A2');
+    act(() => { get().setEditDraft('AI-TEST-INPUT 저장 본문'); });
+    expect(localStorage.getItem('noa_editdraft_sess-A2')).toBe('저장 본문');
+    cleanup();
+  });
+
   it('does not restore when hydrated is false', () => {
     localStorage.setItem('noa_editdraft_sess-C', 'Should not load');
     const { get, cleanup } = createHarness('sess-C', false);
@@ -128,6 +144,41 @@ describe('useStudioWritingMode', () => {
       act(() => { get().setWritingMode(mode); });
       expect(get().writingMode).toBe(mode);
     }
+    cleanup();
+  });
+
+  // ============================================================
+  // PART 3 — writingMode 세션별 영속 [P4 low/integration 2026-06-09]
+  //   탭 전환 후 집필 탭 복귀 시 기본값('edit')으로 리셋되던 결함 검증.
+  // ============================================================
+
+  it('persists writingMode to localStorage per session', () => {
+    const { get, cleanup } = createHarness('sess-mode-A');
+    act(() => { get().setWritingMode('refine'); });
+    expect(localStorage.getItem('noa_writingmode_sess-mode-A')).toBe('refine');
+    cleanup();
+  });
+
+  it('restores writingMode from localStorage on mount (탭 전환 후 복원)', () => {
+    localStorage.setItem('noa_writingmode_sess-mode-B', 'canvas');
+    const { get, cleanup } = createHarness('sess-mode-B');
+    act(() => { jest.runAllTimers(); });
+    expect(get().writingMode).toBe('canvas');
+    cleanup();
+  });
+
+  it('ignores invalid persisted writingMode and falls back to default', () => {
+    localStorage.setItem('noa_writingmode_sess-mode-C', 'bogus-mode');
+    const { get, cleanup } = createHarness('sess-mode-C');
+    act(() => { jest.runAllTimers(); });
+    expect(get().writingMode).toBe('edit');
+    cleanup();
+  });
+
+  it('does not persist writingMode when not hydrated', () => {
+    const { get, cleanup } = createHarness('sess-mode-D', false);
+    act(() => { get().setWritingMode('advanced'); });
+    expect(localStorage.getItem('noa_writingmode_sess-mode-D')).toBeNull();
     cleanup();
   });
 });

@@ -1,4 +1,11 @@
-# EH Universe Web — API Reference
+# Loreguard — API Reference
+
+Last updated: 2026-06-24
+
+2026-06-24 baseline note:
+
+- This document remains the current route contract baseline after the repo cleanup pass.
+- Disabled compatibility routes such as `/api/agent-search` and `/api/network-agent/*` stay documented because they are still callable and must keep returning disabled/retired responses.
 
 All API routes are served under `/api/`. Unless stated otherwise, responses use `application/json`.
 
@@ -9,26 +16,55 @@ All API routes are served under `/api/`. Unless stated otherwise, responses use 
 1. [GET /api/health](#get-apihealth)
 2. [GET /api/ai-capabilities](#get-apiai-capabilities)
 3. [POST /api/chat](#post-apichat)
-4. [POST /api/image-gen](#post-apiimage-gen)
-5. [POST /api/analyze-chapter](#post-apianalyze-chapter)
-6. [POST /api/gemini-structured](#post-apigemini-structured)
-7. [POST /api/structured-generate](#post-apistructured-generate)
-8. [GET /api/local-proxy](#get-apilocal-proxy)
-9. [POST /api/local-proxy](#post-apilocal-proxy)
-10. [POST /api/error-report](#post-apierror-report)
-11. [POST /api/translate](#post-apitranslate)
-12. [GET /api/fetch-url](#get-apifetch-url)
-13. [POST /api/agent-search](#post-apiagent-search)
-14. [GET /api/agent-search/status](#get-apiagent-searchstatus)
-15. [POST /api/network-agent/search](#post-apinetwork-agentsearch)
-16. [POST /api/network-agent/ingest](#post-apinetwork-agentingest)
-17. [GET /api/npm-search](#get-apinpm-search)
+4. [POST /api/complete](#post-apicomplete)
+5. [POST /api/image-gen](#post-apiimage-gen)
+6. [POST /api/analyze-chapter](#post-apianalyze-chapter)
+7. [POST /api/gemini-structured](#post-apigemini-structured)
+8. [POST /api/structured-generate](#post-apistructured-generate)
+9. [GET /api/local-proxy](#get-apilocal-proxy)
+10. [POST /api/local-proxy](#post-apilocal-proxy)
+11. [POST /api/error-report](#post-apierror-report)
+12. [POST /api/translate](#post-apitranslate)
+13. [GET /api/fetch-url](#get-apifetch-url)
+14. [POST /api/agent-search](#post-apiagent-search-disabled)
+15. [GET /api/agent-search/status](#get-apiagent-searchstatus-disabled)
+16. [GET/POST /api/network-agent/search](#getpost-apinetwork-agentsearch-retired)
+17. [GET/POST /api/network-agent/ingest](#getpost-apinetwork-agentingest-retired)
 18. [POST /api/vitals](#post-apivitals)
 19. [POST /api/upload](#post-apiupload)
 20. [POST /api/checkout](#post-apicheckout)
-21. [POST /api/share](#post-apishare)
-22. [POST /api/code/autopilot](#post-apicodeautopilot)
-23. [GET /api/cron/universe-daily](#get-apicronuniverse-daily)
+21. [POST /api/release-credit/checkout](#post-apirelease-creditcheckout)
+22. [POST /api/release-credit/debit](#post-apirelease-creditdebit)
+23. [POST /api/release-credit/operation](#post-apirelease-creditoperation)
+24. [POST /api/share](#post-apishare)
+25. [GET /api/cron/universe-daily](#get-apicronuniverse-daily)
+
+---
+
+## Hosted Model Usage Gate
+
+Hosted model routes require either a Firebase ID token for the built-in service pool or a user-provided connection key in the request body.
+
+When `NEXT_PUBLIC_PAYMENT_LIVE=true`, `src/lib/server-tier-limit.ts` enforces Free/Pro usage limits on `/api/chat`, `/api/complete`, `/api/structured-generate`, `/api/gemini-structured`, `/api/analyze-chapter`, `/api/translate`, and `/api/image-gen` with `local-spark`.
+Connection-key requests do not consume Hosted usage. Deterministic `/api/lsp/*` routes stay on their LSP token and rate-limit contract because they do not currently spend hosted model capacity.
+
+Common paywall response:
+
+```json
+{
+  "error": "login_or_byok_required | plan_limit_reached",
+  "message": "사용자에게 표시할 안내 문구",
+  "paywall": {
+    "reason": "로그인 또는 연결 키가 필요합니다.",
+    "feature": "노아 대화",
+    "currentTier": "free",
+    "requiredTier": "pro",
+    "unlocksWith": ["Pro 플랜", "연결 키 등록"],
+    "pricingUrl": "/pricing",
+    "settingsTarget": "환경 설정 > 노아 운영"
+  }
+}
+```
 
 ---
 
@@ -48,13 +84,7 @@ Production health check endpoint.
 {
   "status": "healthy | degraded | unhealthy",
   "version": "1.0.0",
-  "uptimeMs": 123456,
-  "checks": {
-    "ai_providers": "ok | warn | fail",
-    "firebase": "ok | warn"
-  },
-  "providers": { "configured": 3, "total": 5 },
-  "timestamp": "2025-01-01T00:00:00.000Z"
+  "timestamp": 1760000000000
 }
 ```
 
@@ -67,7 +97,7 @@ Production health check endpoint.
 
 ## GET /api/ai-capabilities
 
-Returns which AI providers have server-side keys configured.
+Returns opaque capability flags for hosted developer API, connection-key, and local/development model operation. DGX/local availability is not counted as Hosted availability.
 
 | Property | Value |
 |---|---|
@@ -79,16 +109,25 @@ Returns which AI providers have server-side keys configured.
 
 ```json
 {
+  "byokRequired": false,
+  "hasDgx": false,
+  "dgxConfigured": true,
+  "localDevAvailable": false,
   "hosted": {
-    "gemini": true,
-    "openai": false,
+    "gemini": false,
+    "openai": true,
     "claude": false,
-    "groq": true,
-    "mistral": false
+    "deepseek": false,
+    "qwen": false,
+    "minimax": false,
+    "kimi": false,
+    "groq": false,
+    "mistral": false,
+    "ollama": false,
+    "lmstudio": false
   },
-  "anyHosted": true,
-  "defaultHostedProvider": "gemini",
-  "quickStartReady": true
+  "supportedProviders": ["gemini", "openai", "claude", "deepseek", "qwen", "minimax", "kimi", "groq", "mistral", "ollama", "lmstudio"],
+  "message": "Hosted developer API is available."
 }
 ```
 
@@ -96,12 +135,12 @@ Returns which AI providers have server-side keys configured.
 
 ## POST /api/chat
 
-Server-side AI chat proxy with streaming. Supports multiple providers.
+Server-side Noa chat proxy with streaming. Provider availability follows Hosted, connection-key, and Local operation settings.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | BYOK (apiKey in body) or server env |
+| **Auth** | Firebase ID token for Hosted, or connection key (`apiKey` in body) |
 | **Rate Limit** | 60 req/min per IP (`chat` preset) |
 | **Max Body** | 1 MB |
 | **CSRF** | Origin header required; must match Host |
@@ -110,14 +149,14 @@ Server-side AI chat proxy with streaming. Supports multiple providers.
 
 ```json
 {
-  "provider": "gemini | openai | claude | groq | mistral | ollama | lmstudio",
+  "provider": "gemini | openai | claude | deepseek | qwen | minimax | kimi | groq | mistral | ollama | lmstudio",
   "model": "gemini-2.5-pro",
   "systemInstruction": "You are a helpful assistant.",
   "messages": [
     { "role": "user", "content": "Hello" }
   ],
   "temperature": 0.9,
-  "apiKey": "optional-byok-key",
+  "apiKey": "optional-connection-key",
   "maxTokens": 8192,
   "prismMode": "ALL"
 }
@@ -130,7 +169,7 @@ Server-side AI chat proxy with streaming. Supports multiple providers.
 | messages | array | Yes | At least one message |
 | temperature | number | No | 0–2, default 0.9 |
 | systemInstruction | string | No | System prompt |
-| apiKey | string | No | BYOK mode |
+| apiKey | string | No | Connection-key mode |
 | maxTokens | number | No | Claude only |
 | prismMode | string | No | `"ALL"` injects safety guard |
 
@@ -144,7 +183,8 @@ Server-side AI chat proxy with streaming. Supports multiple providers.
 | Status | Meaning |
 |---|---|
 | 400 | Invalid provider, model, messages, temperature, or JSON |
-| 401 | API key not configured |
+| 401 | Login or connection key required, or provider key not configured |
+| 402 | Hosted plan limit reached; response includes `paywall` |
 | 403 | Origin header missing or mismatch |
 | 413 | Request body exceeds 1 MB |
 | 429 | Rate limit exceeded (includes `Retry-After` header) |
@@ -152,24 +192,68 @@ Server-side AI chat proxy with streaming. Supports multiple providers.
 
 ---
 
-## POST /api/image-gen
+## POST /api/complete
 
-Server-side image generation proxy. BYOK only (no server fallback).
+Fast Tab 이어쓰기 for the writing editor. It uses the low-latency completion path and is billed as Hosted usage unless the request carries a valid connection key.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | BYOK required (apiKey in body) |
+| **Auth** | Firebase ID token for Hosted, or connection key (`apiKey` in body) |
+| **Rate Limit** | 120 req/min per IP (`default` preset) |
+| **Max Tokens** | 150 hard cap |
+| **CSRF** | Origin header required; must match Host |
+
+### Request Body
+
+```json
+{
+  "text": "마지막 문맥...",
+  "genre": "fantasy",
+  "characters": ["주인공"],
+  "language": "KO",
+  "apiKey": "optional-connection-key",
+  "maxTokens": 100
+}
+```
+
+### Response
+
+```json
+{ "completion": "이어질 문장" }
+```
+
+### Error Codes
+
+| Status | Meaning |
+|---|---|
+| 400 | Invalid JSON or text too short |
+| 401 | Login or connection key required |
+| 402 | Hosted plan limit reached; response includes `paywall` |
+| 403 | Origin header missing or mismatch |
+| 429 | Rate limit exceeded |
+| 500 | Provider error |
+
+---
+
+## POST /api/image-gen
+
+Server-side image generation proxy. External providers require a connection key. `local-spark` uses the configured local image server and follows the Hosted usage gate.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | External provider connection key (`apiKey` in body), or Firebase ID token for `local-spark` |
 | **Rate Limit** | 30 req/min per IP (`imageGen` preset) |
 | **Max Body** | 1 MB |
-| **Max Duration** | 60s |
+| **Max Duration** | 180s |
 | **CSRF** | Origin header required |
 
 ### Request Body
 
 ```json
 {
-  "provider": "openai | stability",
+  "provider": "openai | stability | local-spark",
   "prompt": "A futuristic cityscape at sunset",
   "negativePrompt": "blurry, low quality",
   "apiKey": "sk-...",
@@ -181,9 +265,9 @@ Server-side image generation proxy. BYOK only (no server fallback).
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| provider | string | Yes | `openai` or `stability` |
+| provider | string | Yes | `openai`, `stability`, or `local-spark` |
 | prompt | string | Yes | Image description |
-| apiKey | string | Yes | Provider API key |
+| apiKey | string | External providers only | Provider connection key. Not used by `local-spark` |
 | negativePrompt | string | No | What to avoid |
 | width | number | No | Default 1024 |
 | height | number | No | Default 1024 |
@@ -207,6 +291,8 @@ Server-side image generation proxy. BYOK only (no server fallback).
 | Status | Meaning |
 |---|---|
 | 400 | Missing required fields or unsupported provider |
+| 401 | Login or connection key required for `local-spark`; response includes `paywall` |
+| 402 | Hosted plan limit reached for `local-spark`; response includes `paywall` |
 | 403 | Origin header missing or mismatch |
 | 413 | Payload too large |
 | 429 | Rate limit exceeded |
@@ -216,15 +302,15 @@ Server-side image generation proxy. BYOK only (no server fallback).
 
 ## POST /api/analyze-chapter
 
-Analyzes a novel chapter/manuscript using Gemini and returns structured scene data (characters, background, scene state, sound, image/music prompts).
+Analyzes a novel chapter/manuscript and returns structured scene data (characters, background, scene state, sound, image/music prompts).
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | BYOK or server env (Gemini only) |
+| **Auth** | Firebase ID token for Hosted, or connection key (`apiKey` in body) |
 | **Rate Limit** | 120 req/min per IP (`default` preset) |
 | **Max Body** | 512 KB |
-| **CSRF** | Origin required (relaxed for BYOK) |
+| **CSRF** | Origin required (relaxed for connection-key requests) |
 
 ### Request Body
 
@@ -233,7 +319,7 @@ Analyzes a novel chapter/manuscript using Gemini and returns structured scene da
   "content": "Chapter text here...",
   "language": "KO | EN | JP | CN",
   "model": "gemini-2.5-flash",
-  "apiKey": "optional-byok-key"
+  "apiKey": "optional-connection-key"
 }
 ```
 
@@ -242,7 +328,7 @@ Analyzes a novel chapter/manuscript using Gemini and returns structured scene da
 | content | string | Yes | Manuscript text (truncated to 8000 chars internally) |
 | language | string | No | Default `KO` |
 | model | string | No | Default `gemini-2.5-flash` |
-| apiKey | string | No | BYOK Gemini key |
+| apiKey | string | No | Connection key |
 
 ### Response
 
@@ -262,22 +348,24 @@ Analyzes a novel chapter/manuscript using Gemini and returns structured scene da
 | Status | Meaning |
 |---|---|
 | 400 | Empty content or invalid JSON |
-| 401 | Gemini API key not configured |
+| 401 | Login or connection key required |
+| 402 | Hosted plan limit reached; response includes `paywall` |
 | 403 | Origin mismatch |
 | 413 | Request too large |
 | 429 | Rate limit exceeded |
-| 500 | Gemini API error |
+| 503 | Server provider unavailable; register a connection key or configure a hosted/local model |
+| 500 | Provider error |
 
 ---
 
 ## POST /api/gemini-structured
 
-Gemini-powered structured data generation for various creative tasks.
+Structured data generation compatibility route for Gemini-compatible tasks. The historical route name is not presented as a default Hosted product path.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | BYOK or server env (Gemini only) |
+| **Auth** | Firebase ID token for Hosted, or connection key (`apiKey` in body) |
 | **Rate Limit** | 120 req/min per IP (`default` preset) |
 | **Max Body** | 256 KB |
 | **CSRF** | Origin required |
@@ -317,25 +405,26 @@ The fields required depend on the `task`:
 | Status | Meaning |
 |---|---|
 | 400 | Invalid task, missing fields, or invalid JSON |
-| 401 | API key not configured |
+| 401 | Login or connection key required, or provider not configured; paywall responses include `paywall` |
+| 402 | Hosted plan limit reached; response includes `paywall` |
 | 403 | Origin mismatch |
 | 413 | Request too large |
 | 429 | Rate limit exceeded |
-| 500 | Gemini API error |
+| 500 | Provider error |
 
 ---
 
 ## POST /api/structured-generate
 
-Provider-agnostic structured JSON generation. Supports Gemini (native JSON schema), OpenAI/Groq/Mistral (JSON mode), Claude (tool_use), and local providers (Ollama/LMStudio).
+Structured JSON generation. Supports hosted operation, connection-key operation, and local providers.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | BYOK or server env |
+| **Auth** | Firebase ID token for Hosted, or connection key (`apiKey` in body) |
 | **Rate Limit** | 120 req/min per IP (`default` preset) |
 | **Max Body** | 512 KB |
-| **CSRF** | Origin required (relaxed for BYOK) |
+| **CSRF** | Origin required (relaxed for connection-key requests) |
 
 ### Request Body
 
@@ -359,7 +448,7 @@ Provider-agnostic structured JSON generation. Supports Gemini (native JSON schem
 | schema | object | No | JSON schema for structured output |
 | fallback | any | No | Default `{}` |
 | language | string | No | Default `KO` |
-| apiKey | string | No | BYOK key |
+| apiKey | string | No | Connection key |
 
 ### Response
 
@@ -377,10 +466,12 @@ Returns the generated JSON object directly, with an added `_meta` field:
 | Status | Meaning |
 |---|---|
 | 400 | Invalid provider, empty prompt, or invalid JSON |
-| 401 | API key not configured |
+| 401 | Login or connection key required |
+| 402 | Hosted plan limit reached; response includes `paywall` |
 | 403 | Origin mismatch |
 | 413 | Request too large |
 | 429 | Rate limit exceeded |
+| 503 | Server provider unavailable; register a connection key or configure a hosted/local model |
 | 500 | Provider API error |
 
 ---
@@ -499,14 +590,26 @@ Client-side error ingestion endpoint. Logs structured error reports to stdout (q
 
 ## POST /api/translate
 
-Multi-provider translation with streaming. Supports Gemini, OpenAI, Claude, DeepSeek, Mistral.
+Translation and localization with streaming. Provider availability follows Hosted, connection-key, and Local operation settings.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | Firebase ID token or BYOK |
+| **Auth** | Firebase ID token or connection key |
 | **Rate Limit** | 120 req/min per IP |
 | **CSRF** | Origin required |
+
+### Error Codes
+
+| Status | Meaning |
+|---|---|
+| 400 | Invalid input or unsupported provider |
+| 401 | Login or connection key required |
+| 402 | Hosted plan limit reached; response includes `paywall` |
+| 403 | Origin mismatch |
+| 413 | Request too large |
+| 429 | Rate limit exceeded |
+| 500 | Provider error |
 
 ---
 
@@ -528,78 +631,89 @@ Server-side URL fetch proxy. Validates URL against an allowlist (blocks private 
 
 ---
 
-## POST /api/agent-search
+## POST /api/agent-search (disabled)
 
-Agent Builder (Vertex AI Discovery Engine) search. Per-studio search across universe, novel, and code content.
+Compatibility route for the removed external search path.
+It is intentionally disabled and returns `503`.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | None (server-side credentials) |
-| **Rate Limit** | 120 req/min per IP |
+| **Auth** | None; no downstream work is performed |
+| **Rate Limit** | Disabled before downstream calls |
 
-### Request Body
+### Response
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| studio | string | Yes | `universe`, `novel`, or `code` |
-| query | string | Yes | Search query |
-| pageSize | number | No | Results per page |
-| conversationId | string | No | Conversational follow-up |
+```json
+{ "error": "agent_search_disabled" }
+```
+
+Do not document this route as an active user feature.
 
 ---
 
-## GET /api/agent-search/status
+## GET /api/agent-search/status (disabled)
 
-Returns Agent Builder configuration status for each studio.
+Compatibility route for the removed Agent Builder status path.
+It is intentionally disabled and returns `503`.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | None |
-| **Rate Limit** | 120 req/min per IP |
+| **Auth** | None; no downstream work is performed |
+| **Rate Limit** | Disabled before downstream calls |
+
+### Response
+
+```json
+{ "error": "agent_search_disabled" }
+```
 
 ---
 
-## POST /api/network-agent/search
+## GET/POST /api/network-agent/search (retired)
 
-Multi-tenant search across Network content (planets, posts, translations).
+Retired compatibility route for a removed search path.
+It performs no search work and returns `410`.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | Firebase ID token |
-| **Rate Limit** | 120 req/min per IP |
+| **Auth** | None; removed surface |
+| **Rate Limit** | Not applied; removed before downstream work |
+
+### Response
+
+```json
+{
+  "ok": false,
+  "error": "surface_removed",
+  "message": "This retired API surface is no longer active in Loreguard."
+}
+```
 
 ---
 
-## POST /api/network-agent/ingest
+## GET/POST /api/network-agent/ingest (retired)
 
-Ingests documents into the Network search index.
-
-| Property | Value |
-|---|---|
-| **Runtime** | Node.js |
-| **Auth** | Firebase ID token |
-| **Rate Limit** | 120 req/min per IP |
-
----
-
-## GET /api/npm-search
-
-Proxies npm registry search. Used by Code Studio for package discovery.
+Retired compatibility route for a removed ingest path.
+It performs no indexing or write work and returns `410`.
 
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | None |
-| **Rate Limit** | 120 req/min per IP |
+| **Auth** | None; removed surface |
+| **Rate Limit** | Not applied; removed before downstream work |
 
-### Query Parameters
+### Response
 
-| Param | Type | Required | Notes |
-|---|---|---|---|
-| q | string | Yes | Search query (max 200 chars) |
+```json
+{
+  "ok": false,
+  "error": "surface_removed",
+  "message": "This retired API surface is no longer active in Loreguard."
+}
+```
 
 ---
 
@@ -635,10 +749,159 @@ Stripe Checkout session creation for subscription billing.
 | Property | Value |
 |---|---|
 | **Runtime** | Node.js |
-| **Auth** | None |
-| **Rate Limit** | None |
+| **Auth** | Firebase Bearer token required |
+| **Rate Limit** | 10 req/min per IP (`imageGen` preset reuse) |
+| **Feature Gate** | `STRIPE_SECRET_KEY` and `FEATURE_STRIPE_CHECKOUT=on` |
 
-Returns `{ url }` redirect to Stripe Checkout. Returns 501 if Stripe is not configured.
+Returns `{ url }` redirect to Stripe Checkout when enabled.
+
+Disabled response:
+
+```json
+{ "error": "checkout_disabled" }
+```
+
+No `/api/redeem` route exists as of 2026-06-15. Redeem-code support is a future entitlement-ledger feature, not an active API.
+
+---
+
+## POST /api/release-credit/checkout
+
+Creates a Stripe Checkout payment-mode session for certificate/export-credit products. This is not redeem-code support.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Firebase Bearer token required |
+| **Rate Limit** | 10 req/min per IP |
+| **Feature Gate** | `STRIPE_SECRET_KEY` and `FEATURE_STRIPE_CHECKOUT=on` |
+
+### Request Body
+
+```json
+{
+  "productId": "episode-basic | episode-c2pa | complete-basic | complete-pro | publisher-package",
+  "projectId": "project_123",
+  "periodKey": "2026-06",
+  "certificateId": "optional-certificate-id",
+  "returnUrl": "https://example.com/studio"
+}
+```
+
+### Response
+
+```json
+{ "url": "https://checkout.stripe.com/..." }
+```
+
+### Error Codes
+
+| Status | Meaning |
+|---|---|
+| 400 | Invalid input or unsupported checkout product |
+| 401 | Missing or invalid Firebase token |
+| 429 | Rate limit exceeded |
+| 501 | Product price ID is not configured |
+| 503 | Checkout is disabled |
+
+---
+
+## POST /api/release-credit/debit
+
+Debits release credits from the authenticated user's project ledger. The server loads or initializes the ledger from the user's active subscription and never trusts client-side plan values.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Firebase Bearer token required |
+| **Rate Limit** | 12 req/min per IP |
+
+### Request Body
+
+```json
+{
+  "projectId": "project_123",
+  "periodKey": "2026-06",
+  "packageProfileId": "public-reader | external-submission | ip-sale | internal-archive",
+  "certificateId": "LG-2026-0615-0001",
+  "workTitle": "Optional work title"
+}
+```
+
+### Response
+
+```json
+{
+  "ok": true,
+  "status": "applied | duplicate",
+  "balance": 9,
+  "ledgerUpdatedAt": "2026-06-15T00:00:00.000Z"
+}
+```
+
+### Error Codes
+
+| Status | Meaning |
+|---|---|
+| 400 | Invalid input |
+| 401 | Missing or invalid Firebase token |
+| 403 | Subscription is not active |
+| 409 | Ledger missing, insufficient credits, duplicate/conflict retry, or invalid operation |
+| 429 | Rate limit exceeded |
+| 502 | Ledger store operation failed |
+| 503 | Ledger service is misconfigured |
+
+---
+
+## POST /api/release-credit/operation
+
+Applies ledger operations such as purchase grant, refund/restore, void debit, or reissue note. Purchase, refund, and restore operations require the internal server secret and are intended for verified server-side payment events.
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js |
+| **Auth** | Firebase Bearer token required |
+| **Rate Limit** | 12 req/min per IP |
+| **Internal Secret** | `x-loreguard-admin-secret` required for purchase/refund/void operations |
+
+### Request Body
+
+```json
+{
+  "kind": "purchase-grant | refund-credit | void-debit | reissue-note",
+  "projectId": "project_123",
+  "periodKey": "2026-06",
+  "idempotencyKey": "release-credit:purchase:abc123",
+  "creditAmount": 1,
+  "packageProfileId": "external-submission",
+  "productId": "episode-c2pa",
+  "certificateId": "LG-2026-0615-0001",
+  "reasonKo": "C2PA 회차 패키지 별도 구매 반영",
+  "fallbackPlanId": "starter"
+}
+```
+
+### Response
+
+```json
+{
+  "ok": true,
+  "status": "applied | duplicate",
+  "balance": 10,
+  "ledgerUpdatedAt": "2026-06-15T00:00:00.000Z"
+}
+```
+
+### Error Codes
+
+| Status | Meaning |
+|---|---|
+| 400 | Invalid input |
+| 401 | Missing or invalid Firebase token |
+| 403 | Internal authorization required |
+| 409 | Ledger missing, duplicate/conflict retry, or invalid operation |
+| 429 | Rate limit exceeded |
+| 502 | Ledger store operation failed |
 
 ---
 
@@ -654,22 +917,9 @@ Temporary shareable link creation. Stores payload in-memory with configurable ex
 
 ---
 
-## POST /api/code/autopilot
-
-Code Studio autopilot endpoint. Generates structured JSON for code generation pipeline via Gemini.
-
-| Property | Value |
-|---|---|
-| **Runtime** | Node.js |
-| **Auth** | Server env (Gemini) |
-| **Rate Limit** | 120 req/min per IP |
-| **CSRF** | Origin required |
-
----
-
 ## GET /api/cron/universe-daily
 
-Vercel Cron Job for daily universe maintenance (Gemini-powered content generation + Firestore writes).
+Vercel Cron Job for daily maintenance work.
 
 | Property | Value |
 |---|---|
@@ -683,7 +933,7 @@ Vercel Cron Job for daily universe maintenance (Gemini-powered content generatio
 
 ### CSRF Protection
 
-Most mutating endpoints require an `Origin` header that matches the `Host` header. Requests without `Origin` are rejected with `403` unless they provide a BYOK `apiKey` (for endpoints that support it).
+Most mutating endpoints require an `Origin` header that matches the `Host` header. Requests without `Origin` are rejected with `403` unless they provide a connection-key `apiKey` for endpoints that support it.
 
 ### Rate Limiting
 
@@ -704,8 +954,8 @@ Client IP is resolved from headers in this priority order:
 2. First entry in `x-forwarded-for`
 3. Fallback: `"unknown"`
 
-### API Key Resolution
+### Connection Key Resolution
 
-For BYOK-supporting endpoints, key resolution order:
-1. `apiKey` field in request body (BYOK)
+For connection-key-supporting endpoints, key resolution order:
+1. `apiKey` field in request body
 2. Server environment variable (e.g., `GEMINI_API_KEY`, `OPENAI_API_KEY`)

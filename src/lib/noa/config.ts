@@ -9,9 +9,9 @@ import type {
   SourceTrustEntry,
   TacticalPath,
   TacticalConfig,
-  GradeEntry,
-  GradeLevel,
-  GradeStep,
+  NoaGradeEntry,
+  NoaGradeLevel,
+  NoaGradeStep,
   NoaConfig,
 } from "./types";
 
@@ -96,8 +96,8 @@ export const DEFAULT_DAILY_RISK_BUDGET = 100;
 // 27-Step Grade Matrix (v35 Judgement Core: 9 Grades × 3 Steps)
 // ============================================================
 
-function makeGrades(): readonly GradeEntry[] {
-  const levels: readonly { level: GradeLevel; floor: number; ceiling: number }[] = [
+function makeGrades(): readonly NoaGradeEntry[] {
+  const levels: readonly { level: NoaGradeLevel; floor: number; ceiling: number }[] = [
     { level: "Platinum", floor: -999, ceiling: 0 },
     { level: "Gold", floor: 0, ceiling: 8 },
     { level: "LightGold", floor: 8, ceiling: 15 },
@@ -109,13 +109,13 @@ function makeGrades(): readonly GradeEntry[] {
     { level: "Black", floor: 80, ceiling: 999 },
   ];
 
-  const entries: GradeEntry[] = [];
+  const entries: NoaGradeEntry[] = [];
   for (const { level, floor, ceiling } of levels) {
     const stepSize = (ceiling - floor) / 3;
     for (let s = 1; s <= 3; s++) {
       entries.push({
         level,
-        step: s as GradeStep,
+        step: s as NoaGradeStep,
         label: `${level}-${s}`,
         riskFloor: floor + stepSize * (s - 1),
         riskCeiling: floor + stepSize * s,
@@ -125,7 +125,7 @@ function makeGrades(): readonly GradeEntry[] {
   return entries;
 }
 
-export const GRADE_MATRIX: readonly GradeEntry[] = makeGrades();
+export const GRADE_MATRIX: readonly NoaGradeEntry[] = makeGrades();
 
 // ============================================================
 // Factory

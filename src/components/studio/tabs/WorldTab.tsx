@@ -7,6 +7,12 @@ import { AppLanguage, StoryConfig, ChatSession, WorldSimData } from '@/lib/studi
 import { logger } from '@/lib/logger';
 import { L4 } from '@/lib/i18n';
 import { TabHeader } from '@/components/studio/TabHeader';
+// [s82-stage-coverage] 명시 기록 직후 auto-trigger 이중 계상 억제 (HCI 무결성)
+import { markExplicitCreativeLog } from '@/hooks/useCreativeProcessAutoTrigger';
+
+// [s82-stage-coverage] 세계관 변경 명시 기록 throttle — handleWorldSimChange 는
+// 시뮬 드래그 중 고빈도 호출 가능 → useCreativeProcessAutoTrigger 와 동일 60s 윈도우.
+const WORLD_LOG_THROTTLE_MS = 60_000;
 
 const WorldStudioView = dynamic(() => import('@/components/studio/WorldStudioView'), {
   ssr: false,
@@ -34,6 +40,7 @@ interface WorldTabProps {
   saveFlash: boolean;
   updateCurrentSession: (data: Partial<ChatSession>) => void;
   currentSessionId: string | null;
+  currentProjectId?: string | null;
   hostedProviders?: Record<string, boolean>;
 }
 
@@ -102,8 +109,11 @@ const WorldTab: React.FC<WorldTabProps> = ({
   saveFlash,
   updateCurrentSession,
   currentSessionId,
+  currentProjectId = null,
   hostedProviders = {},
 }) => {
+  // [s82-stage-coverage] 마지막 명시 기록 시각 (throttle)
+  const lastWorldLogRef = React.useRef(0);
   return (
     <>
     <TabHeader
@@ -123,6 +133,7 @@ const WorldTab: React.FC<WorldTabProps> = ({
       onStart={onStart}
       onSave={onSave}
       saveFlash={saveFlash}
+      currentProjectId={currentProjectId}
       hostedProviders={hostedProviders}
       aria-label={L4(language, {
         ko: '세계관 스튜디오',
@@ -186,6 +197,28 @@ const WorldTab: React.FC<WorldTabProps> = ({
           updateCurrentSession({
             config: { ...config, worldSimData: patch },
           });
+
+          // [s82-stage-coverage] 세계관 편집 명시 기록 (CharacterTab.tsx:119-131
+          // null-safe 패턴). fire-and-forget — 메인 저장 흐름 차단 X.
+          // markExplicitCreativeLog('world') 로 auto-trigger 의 worldHash diff
+          // HUMAN_REVISION 이중 계상 억제 (60s cooldown 윈도우·문서화 동작).
+          try {
+            const now = Date.now();
+            if (now - lastWorldLogRef.current >= WORLD_LOG_THROTTLE_MS) {
+              const cl = typeof window !== 'undefined' ? window.__creativeLogger : undefined;
+              if (cl?.logHumanEdit) {
+                lastWorldLogRef.current = now;
+                void cl.logHumanEdit({
+                  targetType: 'world',
+                  targetId: `worldsim-${currentSessionId}`,
+                  afterContent: JSON.stringify(patch),
+                  note: 'world-sim change (WorldTab)',
+                  stage: 'world',
+                });
+                markExplicitCreativeLog('world');
+              }
+            }
+          } catch { /* noop — 로깅은 부가 */ }
         } catch (err) {
           logger.warn('WorldTab', 'handleWorldSimChange failed', err);
         }

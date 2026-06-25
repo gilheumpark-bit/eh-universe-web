@@ -1,5 +1,7 @@
 # Dual Track Translation Spec
 
+> 상태: 과거 내부 설계 메모입니다. 현재 공개 제품 카피와 사용자-facing 문서는 `번역·현지화 작업실`, `보존안`, `현지화안`, `작가 승인`, `과정기록` 용어를 기준으로 합니다. 이 문서는 구현 배경 추적용으로 보관하며, 최신 사용자 기준은 `docs/ARCHITECTURE.md`, `docs/CLEANUP-STATUS.md`, `/translation-studio` 화면을 우선합니다.
+
 > "원문 보존 + 현지화 버전 2개" — 시장 분석 4차 본질 구현 사양 (2026-05-08).
 
 ## 0. 한 줄
@@ -190,17 +192,17 @@ selectEpubContent(chapter, track: 'faithful' | 'market' | 'both')
 
 ---
 
-## 12. CLI 도움말 (Phase 4 후속 — 현재는 spec only)
+## 12. 내부 명령 스키마 (현재는 spec only)
 
 ```
-loreguard translate <file> --to en --mode dual --platform kdp --genre hunter
-loreguard validate <file> --track faithful
-loreguard validate <file> --track market
-loreguard publish <project> --track faithful --output epub
-loreguard publish <project> --track market --output epub
+translate <file> --to en --mode dual --platform kdp --genre hunter
+validate <file> --track faithful
+validate <file> --track market
+package <project> --track faithful --output epub
+package <project> --track market --output epub
 ```
 
-CLI 명령은 후속 구현 — 현재는 spec only.
+실행 도구가 아니라 Translation Studio 내부 워크플로우를 설명하는 명령 스키마다.
 
 ---
 
@@ -253,4 +255,4 @@ CLI 명령은 후속 구현 — 현재는 spec only.
 - segment-adoption UI 컴포넌트
 - author-signoff UI 컴포넌트
 - NCG/NCT 결과 패널
-- CLI 명령 구현
+- Translation Studio 내부 명령 스키마 UI 연결

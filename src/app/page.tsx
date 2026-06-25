@@ -3,91 +3,20 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import MaintenanceBanner from "@/components/MaintenanceBanner";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
-
-/** Intersection Observer 기반 fade-in 훅 (prefers-reduced-motion 존중) */
-function useFadeIn<T extends HTMLElement = HTMLDivElement>() {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-    el.style.opacity = "0";
-    el.style.transform = "translateY(24px)";
-    el.style.transition = "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)";
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.style.opacity = "1";
-          el.style.transform = "translateY(0)";
-          io.disconnect();
-        }
-      },
-      { threshold: 0.12 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return ref;
-}
-
-/** 홈 히어로 패널 — 스크롤에 따라 살짝 축소·복원 (prefers-reduced-motion 시 비활성) */
-function useHeroScrollShrink(
-  panelRef: React.RefObject<HTMLDivElement | null>,
-  enabled: boolean,
-) {
-  useEffect(() => {
-    if (!enabled) return;
-    const el = panelRef.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const section = el.closest("section");
-    if (!section) return;
-
-    let raf = 0;
-    const tick = () => {
-      raf = 0;
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const start = Math.min(96, vh * 0.12);
-      const range = Math.max(220, vh * 0.38);
-      const raw = Math.max(0, start - rect.top);
-      const t = Math.min(1, raw / range);
-      const eased = t * (2 - t);
-      const scale = 1 - 0.048 * eased;
-      el.style.transform = `scale(${scale})`;
-      el.style.transformOrigin = "center top";
-      el.style.willChange = t > 0 && t < 1 ? "transform" : "auto";
-    };
-
-    const onScrollOrResize = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(tick);
-    };
-
-    window.addEventListener("scroll", onScrollOrResize, { passive: true });
-    window.addEventListener("resize", onScrollOrResize, { passive: true });
-    onScrollOrResize();
-
-    return () => {
-      window.removeEventListener("scroll", onScrollOrResize);
-      window.removeEventListener("resize", onScrollOrResize);
-      if (raf) cancelAnimationFrame(raf);
-      el.style.transform = "";
-      el.style.transformOrigin = "";
-      el.style.willChange = "";
-    };
-  }, [panelRef, enabled]);
-}
-
-import dynamic from "next/dynamic";
-import { getTranslatorStudioHref, NOVEL_STUDIO_PATH } from "@/lib/studio-entry-links";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { getNovelStudioHref, getTranslatorStudioHref } from "@/lib/studio-entry-links";
+import {
+  HubGrid,
+  HomePageFallback,
+  useFadeIn,
+  useHeroScrollShrink,
+  type ColorMap,
+  type HubItem,
+} from "./home-page-parts";
 
 // 2026-04-21 [PERF] SplashScreen을 dynamic으로 분리 — 재방문자(30일 내)는 splash 스킵이라
 // 초기 번들에서 제외. 첫 방문자만 UnifiedSettingsBar + APIKeySlotManager까지 lazy 로드.
@@ -95,198 +24,20 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 const SplashScreen = dynamic(() => import("@/components/home/SplashScreen"), {
   ssr: false,
   loading: () => (
-    <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
+    <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center" aria-label="Loreguard 홈 로딩">
       <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-300">
-        <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
-          EH
+        <div className="flex h-10 items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo px-4 font-mono text-[10px] font-bold !text-white animate-pulse">
+          Loreguard
         </div>
       </div>
-    </div>
+    </main>
   ),
 });
-
-function HomePageFallback() {
-  return (
-    <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden flex items-center justify-center">
-      <div className="relative z-10 flex flex-col items-center gap-4 animate-in fade-in duration-700">
-        <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
-          EH
-        </div>
-        <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-          로어가드 · Loreguard
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// HubGrid — Hero(소설 스튜디오 + 번역 스튜디오) + 접힘 섹션(나머지)
-// ============================================================
-// localStorage 'home_apps_expanded' 로 접힘 상태 저장 (한 번 펼치면 유지).
-// Hero 카드 = badge 'NS' (소설 스튜디오) / 'TR' (번역 스튜디오).
-// 나머지 카드는 [모든 앱 보기] 토글 섹션에 그리드로 노출.
-// ============================================================
-
-type HubItem = {
-  href: string;
-  badge: string;
-  color: 'amber' | 'blue' | 'green' | 'purple';
-  title: string;
-  desc: string;
-  meta: string;
-  external?: boolean;
-};
-type ColorToken = {
-  border: string; bg: string; text: string; hoverText: string; glow: string;
-};
-type ColorMap = Record<HubItem['color'], ColorToken>;
-
-function HubGrid({
-  hubs,
-  colorMap,
-  lang,
-  T,
-}: {
-  hubs: HubItem[];
-  colorMap: ColorMap;
-  lang: string;
-  T: <V,>(v: { ko: V; en: V; ja?: V; zh?: V }) => V;
-}) {
-  void lang;
-  const [expanded, setExpanded] = useState(false);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('home_apps_expanded');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw === '1') setExpanded(true);
-    } catch { /* private browsing */ }
-  }, []);
-  const toggleExpanded = useCallback(() => {
-    setExpanded(prev => {
-      const next = !prev;
-      try {
-        if (next) localStorage.setItem('home_apps_expanded', '1');
-        else localStorage.removeItem('home_apps_expanded');
-      } catch { /* quota/private */ }
-      return next;
-    });
-  }, []);
-
-  // Hero: NS(소설 스튜디오) → primary / TR(번역 스튜디오) → secondary
-  const heroPrimary = hubs.find(h => h.badge === 'NS');
-  const heroSecondary = hubs.find(h => h.badge === 'TR');
-  const rest = hubs.filter(h => h.badge !== 'NS' && h.badge !== 'TR');
-
-  const renderCard = (hub: HubItem, variant: 'hero-primary' | 'hero-secondary' | 'rest') => {
-    const c = colorMap[hub.color];
-    const isExternal = Boolean(hub.external || hub.href.startsWith('http'));
-    const sizeCls =
-      variant === 'hero-primary'
-        ? 'md:col-span-2 md:row-span-2 p-8 md:p-10 min-h-[220px]'
-        : variant === 'hero-secondary'
-          ? 'md:col-span-2 p-6 md:p-8 min-h-[180px]'
-          : 'p-6';
-    const badgeCls =
-      variant === 'hero-primary'
-        ? 'h-14 w-14 text-sm'
-        : variant === 'hero-secondary'
-          ? 'h-12 w-12 text-xs'
-          : 'h-11 w-11 text-xs';
-    const titleCls =
-      variant === 'hero-primary'
-        ? 'text-2xl md:text-3xl tracking-wide normal-case font-display'
-        : variant === 'hero-secondary'
-          ? 'text-lg md:text-xl tracking-wide normal-case font-display'
-          : 'font-[--font-mono] text-sm font-semibold uppercase tracking-widest';
-
-    const inner = (
-      <>
-        <div className="pointer-events-none absolute inset-0">
-          <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${c.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
-        </div>
-        <span className={`flex items-center justify-center rounded-full border ${c.border} ${c.bg} font-[--font-mono] tracking-[0.14em] ${c.text} ${badgeCls}`}>
-          {hub.badge}
-        </span>
-        <div className="mt-4">
-          <h3 className={`font-semibold text-text-primary transition-colors ${c.hoverText} ${titleCls}`}>
-            {hub.title}
-          </h3>
-          <p className={`mt-2 ${variant === 'hero-primary' ? 'text-base leading-8' : 'text-sm leading-7'} text-text-secondary`}>{hub.desc}</p>
-        </div>
-        <div className={`mt-4 font-[--font-mono] text-[11px] uppercase tracking-[0.14em] text-text-tertiary transition-colors ${c.hoverText}`}>
-          {hub.meta} →
-        </div>
-      </>
-    );
-    const cls = `group relative overflow-hidden premium-link-card flex flex-col ${sizeCls}`;
-    return isExternal ? (
-      <a key={hub.title} href={hub.href} target="_blank" rel="noopener noreferrer"
-        className={cls}
-        aria-label={`${hub.title} (opens in new tab)`}>
-        {inner}
-      </a>
-    ) : (
-      <Link key={hub.title} href={hub.href} className={cls}>
-        {inner}
-      </Link>
-    );
-  };
-
-  return (
-    <div className="site-shell">
-      <div className="mb-8 px-1">
-        <p className="site-kicker">
-          {T({ ko: "탐색 허브", en: "Explore Hubs", ja: "探索ハブ", zh: "探索中心" })}
-        </p>
-        <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-          {T({ ko: "지금 시작하세요", en: "Start now", ja: "今すぐ始める", zh: "立即开始" })}
-        </h2>
-      </div>
-
-      {/* Hero: Studio (primary, 크게) + Translation (secondary) */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {heroPrimary && renderCard(heroPrimary, 'hero-primary')}
-        {heroSecondary && renderCard(heroSecondary, 'hero-secondary')}
-      </div>
-
-      {/* 모든 앱 보기 토글 */}
-      {rest.length > 0 && (
-        <div className="mt-10">
-          <button
-            type="button"
-            onClick={toggleExpanded}
-            aria-expanded={expanded}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-bg-secondary/40 hover:bg-bg-secondary text-text-secondary hover:text-text-primary font-[--font-mono] text-xs tracking-[0.14em] uppercase transition-colors focus-visible:ring-2 focus-visible:ring-accent-amber"
-          >
-            <span>
-              {T({
-                ko: expanded ? "모든 앱 닫기" : "모든 앱 보기",
-                en: expanded ? "Hide all apps" : "Show all apps",
-                ja: expanded ? "すべてのアプリを閉じる" : "すべてのアプリを表示",
-                zh: expanded ? "收起所有应用" : "查看所有应用",
-              })}
-            </span>
-            <span className="opacity-60">({rest.length})</span>
-            <span className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
-          </button>
-
-          {expanded && (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
-              {rest.map(h => renderCard(h, 'rest'))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function HomePageContent() {
   const { lang } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const flags = useFeatureFlags();
   const stellarWhite = searchParams.get("skin") === "white";
   // 첫 방문 여부를 초기 렌더부터 알아야 깜빡임이 없다.
   // SSR에서는 항상 null, hydration 후 sessionStorage 체크.
@@ -333,28 +84,28 @@ function HomePageContent() {
 
   const translatorStudioHref = useMemo(() => getTranslatorStudioHref(), []);
 
-  // 심사·신규 방문자 설득용 숫자 — 엔지니어링 신뢰성 증명을 앞으로.
+  // 심사·신규 방문자 설득용 숫자. 엔지니어링 수치보다 창작 흐름을 우선한다.
   // M1 AUTOSAVE_FORTRESS 투자가 랜딩에서 직접 읽히도록 배치.
   const universeStats = [
-    { value: "3,230", label: T({ ko: "통과 테스트", en: "Tests passing", ja: "テスト通過", zh: "通过测试" }) },
-    { value: "10K×0", label: T({ ko: "데이터 유실 (10,000회 카오스)", en: "Data loss (10K chaos)", ja: "データ損失 (10,000回カオス)", zh: "数据丢失 (10K混沌)" }) },
-    { value: "4", label: T({ ko: "지원 언어", en: "Languages", ja: "対応言語", zh: "支持语言" }) },
-    { value: "20/20", label: T({ ko: "장애 시나리오 방어 (FMEA)", en: "Failure modes defended", ja: "障害シナリオ防御", zh: "故障场景防御" }) },
+    { value: "10", label: T({ ko: "창작 공정", en: "Creative steps", ja: "創作工程", zh: "创作流程" }) },
+    { value: "1", label: T({ ko: "출고 패키지", en: "Release package", ja: "出稿パッケージ", zh: "出库包" }) },
+    { value: "4", label: T({ ko: "작업 언어", en: "Work languages", ja: "作業言語", zh: "工作语言" }) },
+    { value: "24h", label: T({ ko: "연재 작업 리듬", en: "Serial workflow", ja: "連載リズム", zh: "连载节奏" }) },
   ];
 
-  const universeHubs = useMemo(
+  const universeHubs = useMemo<HubItem[]>(
     () => {
     const hubs = [
     {
-      href: NOVEL_STUDIO_PATH,
+      href: getNovelStudioHref("create"),
       badge: "NS",
       color: "purple" as const,
-      title: T({ ko: "소설 IDE", en: "Novel IDE", ja: "小説IDE", zh: "小说 IDE" }),
+      title: T({ ko: "창작 전문 IDE", en: "Creative IDE", ja: "創作専門IDE", zh: "创作专业 IDE" }),
       desc: T({
-        ko: "집필·문체·원고 워크스페이스. 문체는 스튜디오 안 문체 탭에서 이용합니다.",
-        en: "Full NOA authoring workspace. Open the Style tab inside the studio for 문체 tools.",
-        ja: "NOA制作ワークスペース。文体はスタジオ内の文体タブから。",
-        zh: "NOA 完整创作工作台；文体工具请使用工作室内的文体标签页。",
+        ko: "프로젝트 생성, 세계관, 캐릭터, 씬시트, 집필, 퇴고, 출고를 한 흐름으로 관리합니다.",
+        en: "Manage project setup, world, characters, scene sheets, writing, revision, and release in one workspace.",
+        ja: "ノア制作ワークスペース。文体はスタジオ内の文体タブから。",
+        zh: "诺亚完整创作工作台；文体工具请使用工作室内的文体标签页。",
       }),
       meta: T({ ko: "스튜디오 열기", en: "Open studio", ja: "スタジオへ", zh: "打开工作室" }),
     },
@@ -362,65 +113,39 @@ function HomePageContent() {
       href: translatorStudioHref,
       badge: "TR",
       color: "green" as const,
-      title: T({ ko: "번역 스튜디오", en: "Translation Studio", ja: "翻訳スタジオ", zh: "翻译工作室" }),
+      title: T({ ko: "번역·현지화", en: "Translation & Localization", ja: "翻訳・ローカライズ", zh: "翻译·本地化" }),
       desc: T({
-        ko: "소설 전용 번역. 용어집과 문체를 기억하고, 정확성·자연스러움·완성도·포맷 4축으로 채점합니다.",
-        en: "Novel-specialized translator. Glossary-aware, style-aware, scored across accuracy, fluency, completeness, and format.",
+        ko: "작품의 용어, 말투, 장면 맥락을 함께 보며 번역본과 현지화본을 나란히 다듬습니다.",
+        en: "Translate with glossary, voice, and scene context, then refine source-faithful and localized versions side by side.",
         ja: "小説専門の翻訳。用語集と文体を記憶し、正確性・自然さ・完成度・フォーマットの4軸で採点します。",
         zh: "小说专用翻译。记忆术语集与文体，按准确性、流畅度、完整性、格式 4 轴评分。",
       }),
-      meta: T({ ko: "번역 열기", en: "Open translation", ja: "翻訳へ", zh: "打开翻译" }),
+      meta: T({ ko: "번역·현지화 열기", en: "Open translation", ja: "翻訳へ", zh: "打开翻译" }),
       external: translatorStudioHref.startsWith("http"),
     },
-    // [v2.2.0-alpha] Code Studio는 홈 카드에서 비노출 — 주 네비·푸터에서도 숨김.
-    // `/code-studio` 라우트는 유지 (URL 직접 접근 가능). 개발자 role에서만 Header 노출.
     {
-      href: "/archive",
-      badge: "AR",
-      color: "amber" as const,
-      title: T({ ko: "설정집 아카이브", en: "Lore Archive", ja: "設定集アーカイブ", zh: "设定集档案库" }),
-      desc: T({ ko: "8개 카테고리, 72 설정 문서 + 93 기밀 보고서 = 총 165개 아카이브.", en: "8 categories, 72 lore docs + 93 classified reports = 165 total archive docs.", ja: "8カテゴリ、設定文書72＋機密報告書93＝合計165アーカイブ。", zh: "8 个分类，72 篇设定文档 + 93 份机密报告 = 共 165 篇档案。" }),
-      meta: T({ ko: "세계관 문서 탐색", en: "Browse lore docs", ja: "世界観文書を探索", zh: "浏览世界观文档" }),
-    },
-    {
-      href: "/reports",
-      badge: "RP",
+      href: "/docs",
+      badge: "DOC",
       color: "purple" as const,
-      title: T({ ko: "기밀 보고서", en: "Classified Reports", ja: "機密報告書", zh: "机密报告" }),
-      desc: T({ ko: "인물 파일, 사건 보고, 기술 사양, 제도 규정 — 53개 기밀 문서.", en: "Personnel files, incident reports, technical specs, protocols — 64 classified documents.", ja: "人物ファイル、事件報告、技術仕様、制度規定 — 64の機密文書。", zh: "人物档案、事件报告、技术规格、制度规定 — 64份机密文件。" }),
-      meta: T({ ko: "보고서 열기", en: "Open reports", ja: "報告書を開く", zh: "打开报告" }),
+      title: T({ ko: "제품 문서", en: "Product Docs", ja: "製品ドキュメント", zh: "产品文档" }),
+      desc: T({ ko: "창작 전문 IDE의 핵심 흐름, 출고 패키지, 과정기록 기준을 한곳에서 확인합니다.", en: "Read the core workflow, release package, and process-record standards for the creative IDE.", ja: "創作専門IDEの主要フロー、出荷パッケージ、過程記録基準を確認します。", zh: "查看创作专业 IDE 的核心流程、出库包与过程记录标准。" }),
+      meta: T({ ko: "문서 열기", en: "Open docs", ja: "ドキュメントを開く", zh: "打开文档" }),
     },
     {
-      href: "/network",
-      badge: "NW",
-      color: "blue" as const,
-      title: T({ ko: "작가 네트워크", en: "Writer Network", ja: "作家ネットワーク", zh: "作家网络" }),
-      desc: T({ ko: "세계관을 기반으로 연결된 작가들의 행성 시스템. 로그와 게시글을 탐색합니다.", en: "A planet-based network of writers connected through shared worldbuilding. Browse logs and posts.", ja: "世界観を基盤に繋がった作家たちの惑星システム。ログと投稿を探索します。", zh: "基于世界观连接的作家行星系统。浏览日志和帖子。" }),
-      meta: T({ ko: "네트워크 진입", en: "Enter network", ja: "ネットワークへ", zh: "进入网络" }),
-    },
-    {
-      href: "/codex",
-      badge: "CX",
+      href: "/verify",
+      badge: "VR",
       color: "green" as const,
-      title: T({ ko: "코덱스", en: "Codex", ja: "コデックス", zh: "知识库" }),
-      desc: T({ ko: "세계관의 핵심 법칙, 용어, 구조를 빠르게 참조합니다.", en: "Quick reference for the core laws, terms, and structures of the universe.", ja: "世界観の核心法則、用語、構造を素早く参照します。", zh: "快速查阅世界观的核心法则、术语和结构。" }),
-      meta: T({ ko: "코덱스 열기", en: "Open codex", ja: "コデックスを開く", zh: "打开知识库" }),
+      title: T({ ko: "확인 문서 조회", en: "Verification Lookup", ja: "確認文書照会", zh: "确认文档查询" }),
+      desc: T({ ko: "출고 패키지와 공개용 확인 카드의 식별자를 조회합니다. 원고 본문은 보여주지 않습니다.", en: "Look up release-package and public verification-card identifiers. Manuscript text stays hidden.", ja: "出荷パッケージと公開確認カードの識別子を照会します。本文は表示しません。", zh: "查询出库包与公开确认卡标识，不展示正文。" }),
+      meta: T({ ko: "조회 열기", en: "Open lookup", ja: "照会を開く", zh: "打开查询" }),
     },
     {
-      href: "/rulebook",
-      badge: "RB",
-      color: "purple" as const,
-      title: T({ ko: "룰북 v1.0", en: "Rulebook v1.0", ja: "ルールブック v1.0", zh: "设定手册 v1.0" }),
-      desc: T({ ko: "서사 엔진의 구조와 원리. 이 세계관이 어떻게 작동하는지 문서로 확인합니다.", en: "The structure and principles of the narrative engine. How this universe works, documented.", ja: "ナラティブエンジンの構造と原理。この世界観がどう機能するかを文書で確認します。", zh: "叙事引擎的结构与原理。通过文档了解这个世界观如何运作。" }),
-      meta: T({ ko: "룰북 읽기", en: "Read rulebook", ja: "ルールブックを読む", zh: "阅读设定手册" }),
-    },
-    {
-      href: "/reference",
-      badge: "RF",
+      href: "/status",
+      badge: "ST",
       color: "amber" as const,
-      title: T({ ko: "EH Open Reference", en: "EH Open Reference", ja: "EH オープンリファレンス", zh: "EH 开放参考" }),
-      desc: T({ ko: "프로젝트 전체를 빠르게 훑는 4페이지 요약본.", en: "A fast 4-page summary of the whole EH Universe project.", ja: "プロジェクト全体を素早く概観する4ページの要約。", zh: "快速浏览整个EH Universe项目的4页概要。" }),
-      meta: T({ ko: "레퍼런스 보기", en: "Read reference", ja: "リファレンスを読む", zh: "阅读参考" }),
+      title: T({ ko: "상태", en: "Status", ja: "ステータス", zh: "状态" }),
+      desc: T({ ko: "서비스 상태, 점검 정보, 운영 공지를 확인합니다.", en: "Check service status, maintenance notes, and operation notices.", ja: "サービス状態、点検情報、運用告知を確認します。", zh: "查看服务状态、维护信息与运行公告。" }),
+      meta: T({ ko: "상태 보기", en: "Open status", ja: "状態を見る", zh: "查看状态" }),
     },
     {
       href: "https://github.com/gilheumpark-bit/eh-universe-web",
@@ -431,24 +156,12 @@ function HomePageContent() {
       meta: T({ ko: "GitHub 열기", en: "Open GitHub", ja: "GitHubを開く", zh: "打开GitHub" }),
     },
   ];
-    return hubs.filter((h) => {
-      if (!flags.NETWORK_COMMUNITY && h.href === "/network") return false;
-      return true;
-    });
+    return hubs;
     },
-    [translatorStudioHref, T, flags.NETWORK_COMMUNITY],
+    [translatorStudioHref, T],
   );
 
-  const categories = [
-    { id: "CORE", label: T({ ko: "핵심 법칙", en: "Core Laws", ja: "核心法則", zh: "核心法则" }), count: 5 },
-    { id: "TIMELINE", label: T({ ko: "타임라인", en: "Timeline", ja: "タイムライン", zh: "时间线" }), count: 6 },
-    { id: "FACTIONS", label: T({ ko: "세력", en: "Factions", ja: "勢力", zh: "派系" }), count: 9 },
-    { id: "MILITARY", label: T({ ko: "군사", en: "Military", ja: "軍事", zh: "军事" }), count: 7 },
-    { id: "GEOGRAPHY", label: T({ ko: "지리", en: "Geography", ja: "地理", zh: "地理" }), count: 9 },
-    { id: "TECHNOLOGY", label: T({ ko: "기술", en: "Technology", ja: "技術", zh: "技术" }), count: 5 },
-  ];
-
-  const colorMap = {
+  const colorMap: ColorMap = {
     amber: { border: "border-accent-amber/20", bg: "bg-accent-amber/10", text: "text-accent-amber", hoverText: "group-hover:text-accent-amber", glow: "bg-accent-amber/8" },
     blue: { border: "border-accent-blue/20", bg: "bg-accent-blue/10", text: "text-accent-blue", hoverText: "group-hover:text-accent-blue", glow: "bg-accent-blue/8" },
     green: { border: "border-accent-green/20", bg: "bg-accent-green/10", text: "text-accent-green", hoverText: "group-hover:text-accent-green", glow: "bg-accent-green/8" },
@@ -458,14 +171,13 @@ function HomePageContent() {
   const heroRef = useFadeIn<HTMLElement>();
   const heroPanelRef = useRef<HTMLDivElement>(null);
   useHeroScrollShrink(heroPanelRef, splashState === "hide");
-  const catRef = useFadeIn<HTMLElement>();
   const hubRef = useFadeIn<HTMLElement>();
   const ctaRef = useFadeIn<HTMLElement>();
 
   // SSR → hydration 전까지 구조적 스켈레톤 표시 (검은 화면 방지)
   if (splashState === "loading") {
     return (
-      <div className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="Loading">
+      <main className="relative min-h-dvh w-full eh-page-canvas overflow-hidden" aria-busy="true" aria-label="Loreguard 홈 로딩">
         {/* Skeleton header */}
         <div className="h-14 border-b border-border/20 bg-bg-secondary/30 animate-pulse" />
         {/* Skeleton hero */}
@@ -486,15 +198,15 @@ function HomePageContent() {
         {/* Centered logo */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-4 animate-in fade-in duration-700">
-            <div className="h-10 w-10 flex items-center justify-center rounded-full border border-accent-amber/30 bg-accent-amber/10 font-mono text-[10px] font-bold text-accent-amber animate-pulse">
-              EH
+            <div className="flex h-10 items-center justify-center rounded-full border border-accent-indigo/40 bg-accent-indigo px-4 font-mono text-[10px] font-bold !text-white animate-pulse">
+              Loreguard
             </div>
             <div className="font-mono text-[9px] tracking-[0.3em] text-text-tertiary uppercase">
-              로어가드 · Loreguard
+              Loreguard
             </div>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -505,11 +217,15 @@ function HomePageContent() {
         onStudio={() => {
           // [30일 재방문자 스킵] 스튜디오 진입도 "본 것"으로 간주해 타임스탬프 기록.
           markSplashSeen();
-          router.push("/studio");
+          router.push(getNovelStudioHref("create"));
         }}
-        onCodeStudio={() => {
+        onProjectManage={() => {
           markSplashSeen();
-          router.push("/code-studio");
+          router.push(getNovelStudioHref("manage"));
+        }}
+        onProjectImport={() => {
+          markSplashSeen();
+          router.push(getNovelStudioHref("import"));
         }}
         onTranslationStudio={() => {
           markSplashSeen();
@@ -543,20 +259,20 @@ function HomePageContent() {
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div className="relative z-10 max-w-2xl">
                 <p className="site-kicker">
-                  {T({ ko: "Loreguard — 소설가의 IDE", en: "Loreguard — The IDE for Novelists", ja: "Loreguard — 小説家のためのIDE", zh: "Loreguard — 小说家的 IDE" })}
+                  {T({ ko: "Loreguard · 창작 전문 IDE", en: "Loreguard · Creative IDE", ja: "Loreguard · 創作専門IDE", zh: "Loreguard · 创作专业 IDE" })}
                 </p>
                 <h1 className="site-title mt-5 text-4xl font-bold leading-[0.94] sm:text-5xl md:text-7xl xl:text-[5.4rem]">
-                  LOREGUARD
+                  Loreguard
                 </h1>
                 <p className="mt-6 font-document text-base leading-[1.85] text-text-secondary sm:text-lg sm:leading-[1.95] md:text-[1.24rem]">
-                  {T({ ko: "글만 쓰면 NOA가 문체를 학습하고, 품질을 검사하고, 연속성을 지킵니다.", en: "Just write. NOA learns your style, audits quality, and preserves continuity.", ja: "書くだけで、NOAが文体を学習し、品質を検査し、連続性を守ります。", zh: "只管写。NOA 学习文体、审核质量、守护连贯性。" })}
+                  {T({ ko: "아이디어를 작품으로 묶는 작업대입니다. 질문으로 기준을 잡고, 캔버스에서 작가 결정을 확정하고, 과정기록·권리/IP·출고 패키지로 정리합니다.", en: "A workspace for turning ideas into finished creative assets. Set the baseline through questions, lock author decisions on the canvas, and prepare process records, rights/IP notes, and release packages.", ja: "アイデアを作品にまとめる作業台です。質問で基準を定め、キャンバスで作者の判断を確定し、過程記録・権利/IP・出稿パッケージに整理します。", zh: "把想法整理成作品资产的工作台。通过问题确定基准，在画布上确认作者决策，并整理为过程记录、权利/IP 与出库包。" })}
                 </p>
                 <p className="mt-5 font-[--font-mono] text-[11px] uppercase leading-5 tracking-[0.08em] text-text-tertiary sm:text-[0.82rem] sm:leading-8 sm:tracking-[0.16em] md:text-sm">
-                  {T({ ko: "Tab 자동완성 · 품질 게이트 · 장르 프리셋 · GitHub 백업", en: "Tab completion · Quality gate · Genre presets · GitHub backup", ja: "Tab補完 · 品質ゲート · ジャンルプリセット · GitHub バックアップ", zh: "Tab 补全 · 质量门 · 类型预设 · GitHub 备份" })}
+                  {T({ ko: "프로젝트 생성 · 세계관 · 씬시트 · 집필 · 퇴고 · 번역 · 출고", en: "Project · World · Scene sheet · Writing · Revision · Localization · Release", ja: "プロジェクト · 世界観 · シーン表 · 執筆 · 推敲 · 翻訳 · 出稿", zh: "项目 · 世界观 · 场景表 · 写作 · 修订 · 翻译 · 出库" })}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Link href={NOVEL_STUDIO_PATH} prefetch className="premium-button">
-                    {T({ ko: "집필 IDE 시작", en: "Start IDE", ja: "IDEを始める", zh: "启动 IDE" })}
+                  <Link href={getNovelStudioHref("create")} prefetch className="premium-button">
+                    {T({ ko: "프로젝트 생성", en: "Create Project", ja: "プロジェクト作成", zh: "创建项目" })}
                   </Link>
                   {translatorStudioHref.startsWith("http") ? (
                     <a
@@ -565,19 +281,13 @@ function HomePageContent() {
                       rel="noopener noreferrer"
                       className="premium-button secondary"
                     >
-                      {T({ ko: "번역 스튜디오", en: "Translation", ja: "翻訳", zh: "翻译" })}
+                      {T({ ko: "번역·현지화", en: "Translation", ja: "翻訳", zh: "翻译" })}
                     </a>
                   ) : (
                     <Link href={translatorStudioHref} prefetch className="premium-button secondary">
-                      {T({ ko: "번역 스튜디오", en: "Translation", ja: "翻訳", zh: "翻译" })}
+                      {T({ ko: "번역·현지화", en: "Translation", ja: "翻訳", zh: "翻译" })}
                     </Link>
                   )}
-                  <Link href="/archive" prefetch className="premium-button secondary">
-                    {T({ ko: "아카이브", en: "Archive", ja: "アーカイブ", zh: "档案库" })}
-                  </Link>
-                  <Link href="/network" prefetch className="premium-button secondary">
-                    {T({ ko: "네트워크", en: "Network", ja: "ネットワーク", zh: "网络" })}
-                  </Link>
                 </div>
               </div>
 
@@ -600,45 +310,50 @@ function HomePageContent() {
         </div>
       </section>
 
-      {/* CATEGORY GRID */}
-      <section ref={catRef} className="section-divider py-20">
-        <div className="site-shell">
-          <div className="premium-panel px-6 py-8 md:px-8 md:py-10">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="site-kicker">
-                  {T({ ko: "아카이브 카테고리", en: "Archive Categories", ja: "アーカイブカテゴリ", zh: "档案库类别" })}
-                </p>
-                <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-                  {T({ ko: "8개 분류, 165개 문서", en: "8 categories, 165 documents", ja: "8カテゴリ、165文書", zh: "8个分类，165个文档" })}
-                </h2>
-              </div>
-              <Link href="/archive" className="font-[--font-mono] text-[11px] uppercase tracking-[0.16em] text-text-tertiary hover:text-accent-amber transition-colors">
-                {T({ ko: "전체 보기 →", en: "View all →", ja: "全て見る →", zh: "查看全部 →" })}
-              </Link>
-            </div>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((cat) => (
-                <Link key={cat.id} href={`/archive?cat=${cat.id}`} className="premium-link-card group flex items-center justify-between p-5">
-                  <div>
-                    <p className="font-[--font-mono] text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{cat.id}</p>
-                    <h3 className="mt-1 font-[--font-mono] text-sm font-semibold uppercase tracking-widest text-text-primary transition-colors group-hover:text-accent-amber">
-                      {cat.label}
-                    </h3>
-                  </div>
-                  <span className="font-display text-2xl font-bold text-text-tertiary group-hover:text-accent-amber transition-colors">
-                    {cat.count}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* HUB GRID — Hero(Studio primary + Translation secondary) + collapsed rest */}
       <section ref={hubRef} className="section-divider py-20">
-        <HubGrid hubs={universeHubs} colorMap={colorMap} lang={lang} T={T} />
+        <HubGrid hubs={universeHubs} colorMap={colorMap} T={T} />
+
+        {/* [P7+P21 루프2 — 2026-06-08] Capability matrix — Novel/Translation 이 모바일·데스크톱
+            각각 어떻게 동작하는지 명시. iPad 작가가 진입 시 일관된 기대치 형성. */}
+        <div className="site-shell mt-10">
+          <div className="rounded-2xl border border-border/30 bg-bg-elevated/40 px-5 py-4 text-xs text-text-secondary md:text-sm">
+            <p className="font-semibold text-text-primary mb-2">
+              {T({
+                ko: '기기 호환 안내',
+                en: 'Device compatibility',
+                ja: 'デバイス互換性',
+                zh: '设备兼容性',
+              })}
+            </p>
+            <ul className="space-y-1.5">
+              <li>
+                <span className="inline-block min-w-[120px] font-mono text-accent-purple">
+                  {T({ ko: "창작 전문 IDE", en: "Creative IDE", ja: "創作専門IDE", zh: "创作专业 IDE" })}
+                </span>
+                {': '}
+                {T({
+                  ko: '모바일 가능 (가벼운 편집기) · 데스크톱 권장 (전체 기능)',
+                  en: 'Mobile OK (lite editor) · Desktop recommended (full IDE)',
+                  ja: 'モバイル可 (簡易) · デスクトップ推奨 (全機能)',
+                  zh: '移动端可用 (轻量) · 桌面端推荐 (完整功能)',
+                })}
+              </li>
+              <li>
+                <span className="inline-block min-w-[120px] font-mono text-accent-green">
+                  {T({ ko: "번역·현지화", en: "Translation", ja: "翻訳", zh: "翻译" })}
+                </span>
+                {': '}
+                {T({
+                  ko: '데스크톱 전용 (Monaco 에디터). 모바일 작가는 데모만 체험 가능.',
+                  en: 'Desktop only (Monaco editor). Mobile users see demo only.',
+                  ja: 'デスクトップ専用 (Monaco)。モバイルはデモのみ。',
+                  zh: '仅桌面端 (Monaco)。移动端仅可体验演示。',
+                })}
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       {/* CATEGORY DECLARATION — "해줘 vs 하라" (SEO below-fold) */}
@@ -658,10 +373,10 @@ function HomePageContent() {
             </h2>
             <p className="mt-4 font-document text-[0.98rem] leading-[1.9] text-text-secondary md:text-base">
               {T({
-                ko: "해줘 시장은 버튼 한 번에 결과만 받습니다. 하라 시장은 작가가 도구의 주인입니다. 문체, 연속성, 용어집, 번역 기준 — 전부 작가가 지시하고 조정합니다. 로어가드는 하라 시장의 유일한 제작 IDE입니다. Adobe가 디자이너에게, VS Code가 개발자에게, Logic Pro가 음악가에게 그랬듯이.",
-                en: "The 'do it for me' market delivers a result from a single button. The 'let me do it' market makes the writer the owner of the tool. Style, continuity, glossary, translation standards — the writer directs and tunes all of it. Loreguard is the only authoring IDE in that market — the way Adobe is for designers, VS Code for developers, Logic Pro for musicians.",
-                ja: "「やって」市場はボタン一つで結果だけを受け取ります。「やらせて」市場は作家が道具の主人です。文体、連続性、用語集、翻訳基準 — すべて作家が指示し調整します。Loreguardはその市場で唯一の制作IDEです。デザイナーにとってのAdobe、開発者にとってのVS Code、音楽家にとってのLogic Proのように。",
-                zh: "“帮我做”市场一键交付结果。“让我做”市场让作家成为工具的主人——文体、连贯性、术语集、翻译基准全部由作家指挥并调校。Loreguard 是这个市场里唯一的创作 IDE——就像 Adobe 之于设计师、VS Code 之于开发者、Logic Pro 之于音乐家。",
+                ko: "버튼 한 번으로 결과만 받는 도구가 아닙니다. 작가가 방향을 정하고, 노아가 질문하고, 캔버스가 결정을 남깁니다. 문체, 연속성, 용어집, 번역 기준까지 작가가 직접 지휘하는 제작 IDE입니다.",
+                en: "This is not a one-button output tool. The author sets direction, Noah asks the right questions, and the canvas records decisions. Style, continuity, glossary, and localization standards stay under the author's control.",
+                ja: "ボタン一つで結果だけを受け取る道具ではありません。作家が方向を決め、ノアが問い、キャンバスが決定を残します。文体、連続性、用語集、翻訳基準まで作家が指揮します。",
+                zh: "这不是一键生成结果的工具。作者确定方向，诺亚提出问题，画布记录决定。文体、连贯性、术语集与本地化标准都由作者掌控。",
               })}
             </p>
           </div>
@@ -675,18 +390,18 @@ function HomePageContent() {
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="site-kicker">
-                  {T({ ko: "집필을 시작하려면", en: "Ready to write?", ja: "執筆を始めるには", zh: "准备开始写作？" })}
+                  {T({ ko: "작품을 시작하려면", en: "Ready to build the work?", ja: "作品を始めるには", zh: "准备开始作品？" })}
                 </p>
                 <h2 className="site-title mt-3 text-3xl font-semibold sm:text-4xl">
-                  {T({ ko: "이 세계관을 바탕으로 이야기를 쓸 수 있습니다.", en: "You can write stories set in this universe.", ja: "この世界観をもとに物語を書けます。", zh: "您可以在这个世界观中创作故事。" })}
+                  {T({ ko: "먼저 프로젝트를 만들고, 세계관부터 출고까지 한 번에 이어가세요.", en: "Create a project first, then carry it from world-building to release.", ja: "まずプロジェクトを作成し、世界観から出稿までつなげて進めましょう。", zh: "先创建项目，再从世界观一路推进到出库。" })}
                 </h2>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Link href="/studio" className="premium-button">
-                  {T({ ko: "스튜디오 열기", en: "Open Studio", ja: "スタジオを開く", zh: "打开工作室" })}
+                <Link href={getNovelStudioHref("create")} className="premium-button">
+                  {T({ ko: "프로젝트 생성", en: "Create Project", ja: "プロジェクト作成", zh: "创建项目" })}
                 </Link>
-                <Link href="/reference" className="premium-button secondary">
-                  {T({ ko: "레퍼런스 보기", en: "Read Reference", ja: "リファレンスを読む", zh: "阅读参考" })}
+                <Link href="/docs" className="premium-button secondary">
+                  {T({ ko: "문서 보기", en: "Read Docs", ja: "ドキュメントを読む", zh: "阅读文档" })}
                 </Link>
               </div>
             </div>
@@ -701,15 +416,20 @@ function HomePageContent() {
           <div className="mx-auto mb-8 h-px w-2/3 bg-[linear-gradient(90deg,transparent,rgba(202,161,92,0.22),transparent)]" />
           <div className="premium-panel-soft flex flex-col items-center gap-5 rounded-xl px-6 py-7 sm:flex-row sm:justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 font-[--font-mono] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
-                EH
+              <span className="flex h-8 items-center justify-center rounded-full border border-accent-amber/20 bg-accent-amber/8 px-3 font-[--font-mono] text-[9px] font-bold tracking-[0.14em] text-accent-amber">
+                Loreguard
               </span>
               <p className="font-[--font-mono] text-xs tracking-[0.16em] text-text-tertiary">
-                LOREGUARD · 로어가드 · AGPL-3.0 + Commercial
+                {T({
+                  ko: "Loreguard · 창작 전문 IDE",
+                  en: "Loreguard · Creative IDE",
+                  ja: "Loreguard · 創作専門IDE",
+                  zh: "Loreguard · 创作专业 IDE",
+                })}
               </p>
             </div>
             <p className="font-document text-xs italic text-text-tertiary">
-              {T({ ko: "창작에서 번역·출판까지, 한 흐름으로.", en: "From creation to translation & publishing — one pipeline.", ja: "創作から翻訳・出版まで、ひとつの流れで。", zh: "从创作到翻译与出版，一气呵成。" })}
+              {T({ ko: "창작에서 번역과 출고까지, 한 흐름으로.", en: "From creation to localization and release, in one flow.", ja: "創作から翻訳と出稿まで、ひとつの流れで。", zh: "从创作到翻译与出库，一气呵成。" })}
             </p>
           </div>
         </div>

@@ -11,10 +11,10 @@ const TITLES = {
 } as const;
 
 const DESCRIPTIONS = {
-  ko: "Loreguard 개인정보처리방침 — K-PIPA, GDPR, APPI, PIPL 준수 정책.",
-  en: "Loreguard Privacy Policy — Compliant with K-PIPA, GDPR, APPI, and PIPL.",
-  ja: "Loreguard プライバシーポリシー — K-PIPA、GDPR、APPI、PIPL準拠。",
-  zh: "Loreguard 隐私政策 — 符合 K-PIPA、GDPR、APPI、PIPL。",
+  ko: "Loreguard 개인정보처리방침. 계정, 로컬 저장, BYOK, 외부 연동 데이터 처리 안내.",
+  en: "Loreguard Privacy Policy covering accounts, local storage, BYOK, and external integration data handling.",
+  ja: "Loreguard プライバシーポリシー。アカウント、ローカル保存、BYOK、外部連携データ処理の案内。",
+  zh: "Loreguard 隐私政策，说明账户、本地存储、BYOK 与外部集成数据处理。",
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {

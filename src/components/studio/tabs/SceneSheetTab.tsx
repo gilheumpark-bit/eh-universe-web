@@ -15,7 +15,7 @@
 //   - upsertSheet/removeSheet helper 사용 (Tier B 와 일관)
 //
 // 하위 호환:
-//   - RulebookTab + WritingTabInline 의 SceneSheet mount 위치 변경 X
+//   - 연출 탭 + WritingTabInline 의 SceneSheet mount 위치 변경 X
 //   - StudioRightPanel 의 EpisodeScenePanel mount 변경 X
 //   - 본 탭은 추가 진입점 — 기존 동작 100% 보존
 //
@@ -109,10 +109,10 @@ export default function SceneSheetTab({ config, setConfig, currentSession, langu
         <ul className="space-y-1 list-disc list-inside">
           <li>
             {L4(language, {
-              ko: 'RulebookTab — 작품 전체 연출(SceneDirectionData) 편집',
-              en: 'RulebookTab — work-level direction (SceneDirectionData) editor',
-              ja: 'RulebookTab — 作品全体の演出(SceneDirectionData) 編集',
-              zh: 'RulebookTab — 作品级演出(SceneDirectionData) 编辑',
+              ko: '연출 탭 — 작품 전체 연출(SceneDirectionData) 편집',
+              en: 'Direction view — work-level direction (SceneDirectionData) editor',
+              ja: '演出タブ — 作品全体の演出(SceneDirectionData) 編集',
+              zh: '导演视图 — 作品级演出(SceneDirectionData) 编辑',
             })}
           </li>
           <li>

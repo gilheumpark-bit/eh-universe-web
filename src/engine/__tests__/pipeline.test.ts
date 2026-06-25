@@ -82,7 +82,7 @@ describe('buildSystemInstruction', () => {
 
   it('includes formatting rules in KO', () => {
     const result = buildSystemInstruction(mockConfig, 'KO');
-    expect(result).toContain('서식 규칙 7조');
+    expect(result).toContain('웹소설 문장 정리 기준');
   });
 
   it('includes formatting rules in EN', () => {
@@ -92,7 +92,7 @@ describe('buildSystemInstruction', () => {
 
   it('includes EH rules when ruleLevel > 1', () => {
     const result = buildSystemInstruction(mockConfig, 'KO', PlatformType.MOBILE, 3);
-    expect(result).toContain('EH ENGINE v1.4');
+    expect(result).toContain('서사 기준 강도');
     expect(result).toContain('인과율 금지어');
   });
 });

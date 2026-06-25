@@ -1,11 +1,19 @@
+import {
+  getRawTierLimits,
+  type TierLimits as GateTierLimits,
+  type UserTier as GateUserTier,
+} from './tier-gate';
+
 // ============================================================
-// PART 1 — Tier definitions
+// PART 1 — Tier compatibility facade
 // ============================================================
 
-export type UserTier = 'free' | 'pro';
+export type UserTier = Exclude<GateUserTier, 'none'>;
 
 export interface TierLimits {
-  aiGenerationsPerMonth: number;      // -1 = unlimited
+  aiGenerationsPerDay: number;        // -1 = unlimited
+  /** @deprecated 서버 정본은 일일 제한이다. 기존 UI 호환을 위해 같은 값을 노출한다. */
+  aiGenerationsPerMonth: number;
   providers: string[];                // allowed provider IDs
   driveSync: boolean;
   exportWatermark: boolean;           // true = watermark on free
@@ -14,26 +22,24 @@ export interface TierLimits {
   engineReportDetail: boolean;        // false = summary only
 }
 
-const TIER_CONFIG: Record<UserTier, TierLimits> = {
-  free: {
-    aiGenerationsPerMonth: 20,
-    providers: ['gemini'],
-    driveSync: false,
-    exportWatermark: true,
-    maxProjects: 1,
-    worldSimFull: false,
-    engineReportDetail: false,
-  },
-  pro: {
-    aiGenerationsPerMonth: -1,
-    providers: ['gemini', 'openai', 'claude', 'groq', 'mistral'],
-    driveSync: true,
-    exportWatermark: false,
-    maxProjects: -1,
-    worldSimFull: true,
-    engineReportDetail: true,
-  },
-};
+const FREE_PROVIDER_IDS = ['upstage'];
+const PRO_PROVIDER_IDS = ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral'];
+
+function toClientLimits(tier: UserTier, gateLimits: GateTierLimits): TierLimits {
+  const generationLimit = gateLimits.novel.dailyGenerations === 0 ? -1 : gateLimits.novel.dailyGenerations;
+  const pro = tier === 'pro';
+
+  return {
+    aiGenerationsPerDay: generationLimit,
+    aiGenerationsPerMonth: generationLimit,
+    providers: pro ? PRO_PROVIDER_IDS : FREE_PROVIDER_IDS,
+    driveSync: pro,
+    exportWatermark: !pro,
+    maxProjects: pro ? -1 : 1,
+    worldSimFull: pro,
+    engineReportDetail: pro,
+  };
+}
 
 // ============================================================
 // PART 2 — Tier state management
@@ -43,20 +49,26 @@ const TIER_KEY = 'noa_user_tier';
 const GEN_COUNT_KEY = 'noa_gen_count';
 const GEN_MONTH_KEY = 'noa_gen_month';
 
+function normalizeTier(value: string | null): UserTier {
+  return value === 'pro' || value === 'free' ? value : 'free';
+}
+
 /** @returns Current user tier from localStorage, defaults to 'free' */
 export function getUserTier(): UserTier {
   if (typeof window === 'undefined') return 'free';
-  return (localStorage.getItem(TIER_KEY) as UserTier) || 'free';
+  return normalizeTier(localStorage.getItem(TIER_KEY));
 }
 
 /** Persist user tier selection to localStorage */
 export function setUserTier(tier: UserTier): void {
+  if (tier !== 'free' && tier !== 'pro') return;
   localStorage.setItem(TIER_KEY, tier);
 }
 
 /** @returns Configuration limits for the specified tier (or current user's tier if omitted) */
 export function getTierLimits(tier?: UserTier): TierLimits {
-  return TIER_CONFIG[tier ?? getUserTier()];
+  const resolvedTier = tier ?? getUserTier();
+  return toClientLimits(resolvedTier, getRawTierLimits(resolvedTier));
 }
 
 // ============================================================
@@ -78,7 +90,8 @@ export function getGenerationCount(): number {
     localStorage.setItem(GEN_COUNT_KEY, '0');
     return 0;
   }
-  return parseInt(localStorage.getItem(GEN_COUNT_KEY) || '0', 10);
+  const parsed = parseInt(localStorage.getItem(GEN_COUNT_KEY) || '0', 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
 /** Increment and return the current month's AI generation count */
@@ -94,11 +107,11 @@ export function incrementGenerationCount(): number {
   return next;
 }
 
-/** @returns True if the user has remaining AI generations this month (or is on unlimited tier) */
+/** @deprecated 서버 `/api/chat`가 최종 제한을 집행한다. 이 값은 UI 힌트용이다. */
 export function canGenerate(): boolean {
   const limits = getTierLimits();
-  if (limits.aiGenerationsPerMonth === -1) return true;
-  return getGenerationCount() < limits.aiGenerationsPerMonth;
+  if (limits.aiGenerationsPerDay === -1) return true;
+  return getGenerationCount() < limits.aiGenerationsPerDay;
 }
 
 /** @returns True if the given provider ID is permitted under the user's current tier */

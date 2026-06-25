@@ -227,6 +227,19 @@ describe('validateDetailPass', () => {
     expect(r.reasons.some((x) => x.startsWith('hangul_ratio_low'))).toBe(true);
   });
 
+  test('비KO 언어 컨텍스트에서는 한글 비율 검사를 스킵한다', () => {
+    const paragraphs = Array.from({ length: 6 }, (_, idx) => {
+      const dialogue = idx % 2 === 0
+        ? '"We should leave before sunrise," she said. '
+        : '';
+      return `${dialogue}${'The corridor stayed quiet while the old lamps flickered above the stone floor. '.repeat(14)}`;
+    });
+    const text = paragraphs.join('\n\n').slice(0, 6000);
+    const r = validateDetailPass(text, undefined, 'EN');
+    expect(r.metrics.hangulRatio).toBe(0);
+    expect(r.reasons.some((x) => x.startsWith('hangul_ratio_low'))).toBe(false);
+  });
+
   test('대사 비율 과다 (>50%) → dialogue_ratio_high', () => {
     // 6000자 대부분이 대사로 채워진 케이스
     const dialogue = '"안녕하세요. 오늘은 정말 길고 긴 하루였습니다. 이어서 말하자면 정말 특별한 일이 있었답니다."';

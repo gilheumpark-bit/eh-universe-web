@@ -4,10 +4,11 @@
 // PART 1 — Unified Error Boundary
 // ============================================================
 // Three variants: 'full-page' (route-level), 'section' (studio sections),
-// 'panel' (code-studio panels). Consolidates the former 3 separate
+// 'panel' (embedded panels). Consolidates the former 3 separate
 // ErrorBoundary files into one.
 
 import React, { Component, ComponentType, ErrorInfo } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/logger';
 import Link from 'next/link';
 import { L4 } from '@/lib/i18n';
@@ -40,7 +41,11 @@ interface State {
 // PART 2 — Error Reporting (panel variant ring buffer)
 // ============================================================
 
-const LOG_KEY = '__eh_code_studio_error_log';
+const LOG_KEY = '__eh_error_log';
+
+// [H2 2026-06-11] Sentry SDK 의 GlobalHandlers 통합이 이미 onerror/unhandledrejection 을
+// 자동 캡처하므로, 해당 컨텍스트는 여기서 중복 captureException 하지 않음 (이벤트 2중 방지).
+const SDK_AUTO_CAPTURED_CONTEXTS = new Set(['window.onerror', 'unhandledrejection']);
 
 /** Report error to session storage ring buffer (last 50 entries) */
 export function reportError(error: Error, context?: string): void {
@@ -61,10 +66,20 @@ export function reportError(error: Error, context?: string): void {
     /* sessionStorage unavailable */
   }
 
+  // [H2 2026-06-11] Sentry 송신 — init 전(동의 X / DSN X / dev)에는 SDK 가 no-op 이라
+  // 이벤트 0 보장. PII/원고 스크럽은 beforeSend(sentry-scrub)에서 일괄 처리.
+  if (!SDK_AUTO_CAPTURED_CONTEXTS.has(entry.context)) {
+    try {
+      Sentry.captureException(error, { tags: { 'eh.context': entry.context } });
+    } catch {
+      /* 관측 실패는 앱에 영향 주지 않음 */
+    }
+  }
+
   logger.error('EH Error', `${entry.context}:`, error);
 }
 
-// Global unhandled error capture (preserves code-studio behavior)
+// Global unhandled error capture
 // These are app-lifetime listeners; cleanup provided for hot-reload / test teardown
 function _onGlobalError(e: ErrorEvent) {
   reportError(e.error ?? new Error(e.message), 'window.onerror');
@@ -184,7 +199,7 @@ function SectionFallback({
 // IDENTITY_SEAL: PART-5 | role=SectionFallback | inputs=error,onRetry,section | outputs=JSX
 
 // ============================================================
-// PART 6 — Panel Fallback UI (code-studio panels)
+// PART 6 — Panel Fallback UI
 // ============================================================
 
 function PanelFallback({

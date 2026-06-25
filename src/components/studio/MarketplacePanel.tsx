@@ -6,13 +6,12 @@ import {
   Search, Shield, Sparkles, Wrench, X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { AppLanguage } from "@/lib/studio-types";
+import type { AppLanguage, ChatSession } from "@/lib/studio-types";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
 import {
   pluginRegistry,
   registerBundledPlugins,
-  verifyPluginIntegrity,
   type NovelPluginCategory,
   type NovelPluginManifest,
   type NovelPluginPermission,
@@ -27,6 +26,9 @@ export interface MarketplacePanelProps {
   language: AppLanguage;
   onClose?: () => void;
   className?: string;
+  currentSession?: ChatSession | null;
+  readManuscript?: () => string;
+  writeManuscript?: (content: string) => void;
 }
 
 type CategoryFilter = NovelPluginCategory | "all";
@@ -49,7 +51,7 @@ const PERMISSION_LABELS: Record<NovelPluginPermission, { ko: string; en: string;
   "read-storage":     { ko: "저장소 읽기",     en: "Read storage",     ja: "ストレージ読取", zh: "读取存储" },
   "write-storage":    { ko: "저장소 쓰기",     en: "Write storage",    ja: "ストレージ書込", zh: "写入存储" },
   storage:            { ko: "로컬 저장소 사용", en: "Local storage",    ja: "ローカル保存", zh: "本地存储" },
-  network:            { ko: "네트워크 접근",    en: "Network access",   ja: "ネットワーク", zh: "网络访问" },
+  network:            { ko: "외부 연결 접근",   en: "External access",  ja: "外部接続", zh: "外部连接访问" },
   "show-ui":          { ko: "패널 UI 표시",     en: "Show panel UI",    ja: "UI表示",       zh: "显示UI" },
 };
 
@@ -88,11 +90,16 @@ function ensureBundled(): void {
   }
 }
 
-/** Minimal context for skeleton enable() — manuscript capabilities come later. */
-function createSkeletonContext(language: AppLanguage): PluginContext {
+/** Build the runtime context passed to reviewed bundled extensions. */
+function createPluginContext(
+  language: AppLanguage,
+  currentSession: ChatSession | null | undefined,
+  readManuscript: (() => string) | undefined,
+  writeManuscript: ((content: string) => void) | undefined,
+): PluginContext {
   return {
     language,
-    currentSession: null,
+    currentSession: currentSession ?? null,
     emit: (event, data) => {
       try {
         if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
@@ -102,9 +109,8 @@ function createSkeletonContext(language: AppLanguage): PluginContext {
         logger.warn("MarketplacePanel", "emit failed", err);
       }
     },
-    // TODO: wire real manuscript getters when the marketplace moves out of skeleton.
-    readManuscript: () => "",
-    writeManuscript: undefined,
+    readManuscript,
+    writeManuscript,
   };
 }
 
@@ -138,17 +144,13 @@ function useFilteredCatalog(
 // PART 4 — Component (search bar + grid + detail dialog)
 // ============================================================
 
-/** Dev-only feature flag — Install from URL UI is gated to NODE_ENV !== 'production'. */
-function isInstallFromUrlEnabled(): boolean {
-  // Prod disables the whole flow by default — sandbox hardening is ongoing.
-  const env = typeof process !== 'undefined' ? process.env?.NODE_ENV : 'production';
-  return env !== 'production';
-}
-
 export default function MarketplacePanel({
   language,
   onClose,
   className = "",
+  currentSession = null,
+  readManuscript,
+  writeManuscript,
 }: MarketplacePanelProps) {
   ensureBundled();
 
@@ -157,81 +159,10 @@ export default function MarketplacePanel({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
-  // Install-from-URL state (beta, dev-only).
-  const [installUrl, setInstallUrl] = useState("");
-  const [installHashExpected, setInstallHashExpected] = useState("");
-  const [installStatus, setInstallStatus] = useState<"idle" | "verifying" | "verified" | "failed" | "installed">("idle");
-  const [installMessage, setInstallMessage] = useState<string>("");
-  const installEnabled = isInstallFromUrlEnabled();
-
   const manifests = useFilteredCatalog(search, category, language);
 
   // Force a re-render whenever enabled state changes so cards reflect it.
   const rerender = useCallback(() => setTick((t) => t + 1), []);
-
-  const handleVerify = useCallback(async () => {
-    if (!installEnabled) return;
-    if (!installUrl.trim()) {
-      setInstallStatus("failed");
-      setInstallMessage("URL is empty.");
-      return;
-    }
-    setInstallStatus("verifying");
-    setInstallMessage("");
-    try {
-      const res = await fetch(installUrl, { method: "GET" });
-      if (!res.ok) {
-        setInstallStatus("failed");
-        setInstallMessage(`HTTP ${res.status}`);
-        return;
-      }
-      const content = await res.text();
-      const stubManifest: NovelPluginManifest = {
-        id: "external-preview",
-        name: { ko: "외부", en: "External", ja: "外部", zh: "外部" },
-        description: { ko: "", en: "", ja: "", zh: "" },
-        version: "0.0.0",
-        category: "utility",
-        author: "external",
-        entryPoint: installUrl,
-        bundled: false,
-        integrity: installHashExpected ? { sha256: installHashExpected } : undefined,
-      };
-      const result = await verifyPluginIntegrity(stubManifest, content);
-      if (result.valid) {
-        setInstallStatus("verified");
-        setInstallMessage(`SHA-256 ${result.sha256.slice(0, 12)}...`);
-      } else {
-        setInstallStatus("failed");
-        setInstallMessage(result.warnings.join("; ") || "verification failed");
-      }
-    } catch (err) {
-      setInstallStatus("failed");
-      setInstallMessage(String(err));
-      logger.warn("MarketplacePanel", "verify failed", err);
-    }
-  }, [installEnabled, installUrl, installHashExpected]);
-
-  const handleInstall = useCallback(async () => {
-    if (!installEnabled) return;
-    if (installStatus !== "verified") {
-      setInstallMessage("Verify first.");
-      return;
-    }
-    try {
-      // Lazy load the registry async loader — Worker code only instantiated on demand.
-      const registryMod = await import("@/lib/novel-plugin-registry");
-      const plugin = await registryMod.loadExternalPlugin(installUrl, []);
-      pluginRegistry.register(plugin);
-      setInstallStatus("installed");
-      setInstallMessage(`Installed as "${plugin.manifest.id}"`);
-      setTick((t) => t + 1);
-    } catch (err) {
-      setInstallStatus("failed");
-      setInstallMessage(`Install failed: ${String(err)}`);
-      logger.warn("MarketplacePanel", "install failed", err);
-    }
-  }, [installEnabled, installStatus, installUrl]);
 
   const handleToggle = useCallback(
     async (id: string) => {
@@ -239,14 +170,17 @@ export default function MarketplacePanel({
         if (pluginRegistry.isEnabled(id)) {
           await pluginRegistry.disable(id);
         } else {
-          await pluginRegistry.enable(id, createSkeletonContext(language));
+          await pluginRegistry.enable(
+            id,
+            createPluginContext(language, currentSession, readManuscript, writeManuscript),
+          );
         }
         rerender();
       } catch (err) {
         logger.error("MarketplacePanel", `toggle(${id}) failed`, err);
       }
     },
-    [language, rerender],
+    [currentSession, language, readManuscript, rerender, writeManuscript],
   );
 
   // ESC to close. Guard bound cleanup.
@@ -262,44 +196,24 @@ export default function MarketplacePanel({
   }, [onClose]);
 
   const labels = useMemo(() => ({
-    title:       L4(language, { ko: "플러그인 마켓", en: "Plugin Marketplace", ja: "プラグインマーケット", zh: "插件市场" }),
+    title:       L4(language, { ko: "확장 기능", en: "Extensions", ja: "拡張機能", zh: "扩展功能" }),
     searchPh:    L4(language, { ko: "이름 또는 설명 검색...", en: "Search by name or description...", ja: "名前または説明で検索...", zh: "按名称或描述搜索..." }),
     enable:      L4(language, { ko: "활성화", en: "Enable", ja: "有効化", zh: "启用" }),
     disable:     L4(language, { ko: "비활성화", en: "Disable", ja: "無効化", zh: "禁用" }),
     enabled:     L4(language, { ko: "활성", en: "Enabled", ja: "有効", zh: "已启用" }),
     close:       L4(language, { ko: "닫기", en: "Close", ja: "閉じる", zh: "关闭" }),
-    empty:       L4(language, { ko: "일치하는 플러그인이 없습니다.", en: "No matching plugins.", ja: "一致するプラグインがありません。", zh: "没有匹配的插件。" }),
+    empty:       L4(language, { ko: "일치하는 확장 기능이 없습니다.", en: "No matching extensions.", ja: "一致する拡張機能がありません。", zh: "没有匹配的扩展功能。" }),
     comingSoon:  L4(language, {
-      ko: "내장 샘플 플러그인 미리보기. 외부 플러그인 업로드·설치는 정식 릴리스에서 활성화됩니다.",
-      en: "Bundled sample plugins preview. External plugin upload/install activates at public release.",
-      ja: "バンドル版サンプルプラグインプレビュー。外部プラグインは正式リリースで有効化されます。",
-      zh: "内置示例插件预览。外部插件安装将在正式版本中启用。",
+      ko: "현재는 검수된 내장 보조 기능만 제공합니다.",
+      en: "Only reviewed bundled extras are available now.",
+      ja: "現在は確認済みの内蔵補助機能のみ利用できます。",
+      zh: "目前仅提供已检查的内置辅助功能。",
     }),
-    installHeader: L4(language, {
-      ko: "URL에서 설치 (베타)",
-      en: "Install from URL (Beta)",
-      ja: "URLからインストール (ベータ)",
-      zh: "从URL安装 (测试)",
-    }),
-    installUrlPh: L4(language, {
-      ko: "https://... 플러그인 URL",
-      en: "https://... plugin URL",
-      ja: "https://... プラグインURL",
-      zh: "https://... 插件URL",
-    }),
-    installHashPh: L4(language, {
-      ko: "예상 SHA-256 (선택)",
-      en: "Expected SHA-256 (optional)",
-      ja: "期待されるSHA-256 (任意)",
-      zh: "期望的SHA-256 (可选)",
-    }),
-    verifyBtn: L4(language, { ko: "검증", en: "Verify", ja: "検証", zh: "验证" }),
-    installBtn: L4(language, { ko: "설치", en: "Install", ja: "インストール", zh: "安装" }),
     permissionsTitle: L4(language, { ko: "요구 권한", en: "Required permissions", ja: "必要な権限", zh: "所需权限" }),
     author:       L4(language, { ko: "작성자", en: "Author", ja: "作者", zh: "作者" }),
     version:      L4(language, { ko: "버전", en: "Version", ja: "バージョン", zh: "版本" }),
     bundled:      L4(language, { ko: "내장", en: "Bundled", ja: "同梱", zh: "内置" }),
-    detailTitle:  L4(language, { ko: "플러그인 상세", en: "Plugin Detail", ja: "プラグイン詳細", zh: "插件详情" }),
+    detailTitle:  L4(language, { ko: "확장 기능 상세", en: "Extension detail", ja: "拡張機能の詳細", zh: "扩展功能详情" }),
   }), [language]);
 
   const selected = selectedId ? pluginRegistry.get(selectedId)?.manifest ?? null : null;
@@ -438,76 +352,6 @@ export default function MarketplacePanel({
           </div>
         )}
       </div>
-
-      {/* Install-from-URL (Beta, dev-only) */}
-      {installEnabled ? (
-        <section
-          data-testid="marketplace-install-section"
-          className="px-4 py-3 border-t border-border bg-bg-primary/40"
-        >
-          <header className="flex items-center gap-2 mb-2">
-            <Sparkles size={12} className="text-accent-purple" />
-            <h4 className="text-[11px] font-black text-text-primary uppercase tracking-widest">
-              {labels.installHeader}
-            </h4>
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent-amber/20 text-accent-amber border border-accent-amber/30">
-              BETA
-            </span>
-          </header>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="url"
-              value={installUrl}
-              onChange={(e) => setInstallUrl(e.target.value)}
-              placeholder={labels.installUrlPh}
-              data-testid="marketplace-install-url"
-              className="flex-1 min-h-[32px] px-2 py-1 text-[12px] bg-bg-primary border border-border rounded text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
-            />
-            <input
-              type="text"
-              value={installHashExpected}
-              onChange={(e) => setInstallHashExpected(e.target.value)}
-              placeholder={labels.installHashPh}
-              data-testid="marketplace-install-hash"
-              className="sm:w-56 min-h-[32px] px-2 py-1 text-[11px] font-mono bg-bg-primary border border-border rounded text-text-primary placeholder:text-text-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
-            />
-            <button
-              type="button"
-              onClick={handleVerify}
-              data-testid="marketplace-install-verify"
-              disabled={installStatus === "verifying"}
-              className="min-h-[32px] px-3 py-1 text-[11px] font-semibold rounded border border-accent-blue/40 bg-accent-blue/15 text-accent-blue hover:bg-accent-blue/25 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
-            >
-              {labels.verifyBtn}
-            </button>
-            <button
-              type="button"
-              onClick={handleInstall}
-              data-testid="marketplace-install-confirm"
-              disabled={installStatus !== "verified"}
-              className="min-h-[32px] px-3 py-1 text-[11px] font-semibold rounded border border-accent-purple/40 bg-accent-purple/15 text-accent-purple hover:bg-accent-purple/25 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
-            >
-              {labels.installBtn}
-            </button>
-          </div>
-          {installMessage ? (
-            <p
-              data-testid="marketplace-install-message"
-              role={installStatus === "failed" ? "alert" : "status"}
-              aria-live={installStatus === "failed" ? "assertive" : "polite"}
-              className={`mt-2 text-[11px] ${
-                installStatus === "failed"
-                  ? "text-accent-red"
-                  : installStatus === "verified" || installStatus === "installed"
-                  ? "text-accent-green"
-                  : "text-text-tertiary"
-              }`}
-            >
-              {installMessage}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
 
       {/* Coming soon footer */}
       <footer className="px-4 py-2 border-t border-border text-[10px] text-text-tertiary italic flex items-center gap-2">

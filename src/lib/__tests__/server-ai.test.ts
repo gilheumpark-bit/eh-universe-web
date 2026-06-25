@@ -18,9 +18,14 @@ describe('isServerProviderId', () => {
   });
 
   it.each([
+    'upstage',
     'gemini',
     'openai',
     'claude',
+    'deepseek',
+    'qwen',
+    'minimax',
+    'kimi',
     'groq',
     'mistral',
     'ollama',
@@ -77,10 +82,16 @@ describe('resolveServerProviderKey', () => {
     expect(resolveServerProviderKey('openai', '')).toBe('env-key');
   });
 
-  it('falls back to env key when client key is whitespace only', () => {
+  it('does not fall back to Gemini env key when client key is whitespace only', () => {
     process.env.GEMINI_API_KEY = 'gem-env';
     const { resolveServerProviderKey } = loadModule();
-    expect(resolveServerProviderKey('gemini', '   ')).toBe('gem-env');
+    expect(resolveServerProviderKey('gemini', '   ')).toBeUndefined();
+  });
+
+  it('falls back to Upstage env key when client key is undefined', () => {
+    process.env.UPSTAGE_API_KEY = 'upstage-env';
+    const { resolveServerProviderKey } = loadModule();
+    expect(resolveServerProviderKey('upstage', undefined)).toBe('upstage-env');
   });
 
   it('falls back to env key when client key is undefined', () => {
@@ -140,13 +151,19 @@ describe('hasServerProviderCredentials', () => {
     return require('@/lib/server-ai') as typeof import('@/lib/server-ai');
   }
 
-  it('returns true for Gemini when Vertex AI env is configured', () => {
+  it('returns false for Gemini when only Vertex AI env is set (Vertex removed)', () => {
     delete process.env.GEMINI_API_KEY;
     process.env.USE_VERTEX_AI = 'true';
     process.env.GCP_PROJECT_ID = 'eh-universe';
     process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
     const { hasServerProviderCredentials } = loadModule();
-    expect(hasServerProviderCredentials('gemini')).toBe(true);
+    expect(hasServerProviderCredentials('gemini')).toBe(false);
+  });
+
+  it('returns false for Gemini even when GEMINI_API_KEY is set', () => {
+    process.env.GEMINI_API_KEY = 'gem-key';
+    const { hasServerProviderCredentials } = loadModule();
+    expect(hasServerProviderCredentials('gemini')).toBe(false);
   });
 
   it('returns false for Gemini when neither API key nor Vertex AI is configured', () => {
@@ -183,9 +200,14 @@ describe('getHostedProviderAvailability', () => {
   }
 
   it('returns all false when no env keys are set', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -197,9 +219,14 @@ describe('getHostedProviderAvailability', () => {
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
     expect(result).toEqual({
+      upstage: false,
       gemini: false,
       openai: false,
       claude: false,
+      deepseek: false,
+      qwen: false,
+      minimax: false,
+      kimi: false,
       groq: false,
       mistral: false,
       ollama: false,
@@ -208,9 +235,14 @@ describe('getHostedProviderAvailability', () => {
   });
 
   it('returns true only for providers with env keys set', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     process.env.OPENAI_API_KEY = 'ok';
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     process.env.GROQ_API_KEY = 'ok';
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -223,6 +255,7 @@ describe('getHostedProviderAvailability', () => {
     const result = getHostedProviderAvailability();
     expect(result.openai).toBe(true);
     expect(result.groq).toBe(true);
+    expect(result.upstage).toBe(false);
     expect(result.gemini).toBe(false);
     expect(result.claude).toBe(false);
     expect(result.mistral).toBe(false);
@@ -230,23 +263,24 @@ describe('getHostedProviderAvailability', () => {
     expect(result.lmstudio).toBe(false);
   });
 
-  it('includes all seven provider keys in the result', () => {
+  it('includes all provider keys in the result', () => {
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
     const keys = Object.keys(result).sort();
     expect(keys).toEqual(
-      ['claude', 'gemini', 'groq', 'lmstudio', 'mistral', 'ollama', 'openai'],
+      ['claude', 'deepseek', 'gemini', 'groq', 'kimi', 'lmstudio', 'minimax', 'mistral', 'ollama', 'openai', 'qwen', 'upstage'],
     );
   });
 
-  it('marks Gemini as hosted when Vertex AI env is configured', () => {
+  it('does NOT mark Gemini as hosted from Vertex AI env (Vertex removed)', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     process.env.USE_VERTEX_AI = 'true';
     process.env.GCP_PROJECT_ID = 'eh-universe';
     process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
     const { getHostedProviderAvailability } = loadModule();
     const result = getHostedProviderAvailability();
-    expect(result.gemini).toBe(true);
+    expect(result.gemini).toBe(false);
   });
 });
 
@@ -267,9 +301,14 @@ describe('getFirstHostedProvider', () => {
   }
 
   it('returns null when no provider keys are set', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -282,10 +321,15 @@ describe('getFirstHostedProvider', () => {
     expect(getFirstHostedProvider()).toBeNull();
   });
 
-  it('returns the first available provider (gemini is first in the list)', () => {
+  it('skips Gemini env and returns the first available non-Gemini provider', () => {
+    delete process.env.UPSTAGE_API_KEY;
     process.env.GEMINI_API_KEY = 'gk';
     process.env.OPENAI_API_KEY = 'ok';
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -295,13 +339,39 @@ describe('getFirstHostedProvider', () => {
     delete process.env.VERTEX_AI_CREDENTIALS;
     delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const { getFirstHostedProvider } = loadModule();
-    expect(getFirstHostedProvider()).toBe('gemini');
+    expect(getFirstHostedProvider()).toBe('openai');
+  });
+
+  it('returns Upstage first when the app hosted key is configured', () => {
+    process.env.UPSTAGE_API_KEY = 'uk';
+    process.env.OPENAI_API_KEY = 'ok';
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.MISTRAL_API_KEY;
+    delete process.env.OLLAMA_API_URL;
+    delete process.env.LMSTUDIO_API_URL;
+    delete process.env.USE_VERTEX_AI;
+    delete process.env.GCP_PROJECT_ID;
+    delete process.env.VERTEX_AI_CREDENTIALS;
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const { getFirstHostedProvider } = loadModule();
+    expect(getFirstHostedProvider()).toBe('upstage');
   });
 
   it('skips unavailable providers and returns the first available one', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     process.env.CLAUDE_API_KEY = 'ck';
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -315,9 +385,14 @@ describe('getFirstHostedProvider', () => {
   });
 
   it('can return a local provider if it is the only one configured', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     process.env.OLLAMA_API_URL = 'http://localhost:11434';
@@ -330,10 +405,15 @@ describe('getFirstHostedProvider', () => {
     expect(getFirstHostedProvider()).toBe('ollama');
   });
 
-  it('returns Gemini first when Vertex AI is the only hosted config', () => {
+  it('returns null when only Vertex AI env is set (Vertex removed)', () => {
+    delete process.env.UPSTAGE_API_KEY;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.CLAUDE_API_KEY;
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
     delete process.env.GROQ_API_KEY;
     delete process.env.MISTRAL_API_KEY;
     delete process.env.OLLAMA_API_URL;
@@ -342,6 +422,6 @@ describe('getFirstHostedProvider', () => {
     process.env.GCP_PROJECT_ID = 'eh-universe';
     process.env.VERTEX_AI_CREDENTIALS = '{"client_email":"vertex@example.com","private_key":"test"}';
     const { getFirstHostedProvider } = loadModule();
-    expect(getFirstHostedProvider()).toBe('gemini');
+    expect(getFirstHostedProvider()).toBeNull();
   });
 });

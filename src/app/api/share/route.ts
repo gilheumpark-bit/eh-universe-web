@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { firestoreCreateDocument, firestoreListDocuments } from '@/lib/firestore-service-rest';
+import { checkRateLimitAsync, getClientIp } from '@/lib/rate-limit';
+import { firestoreCreateDocument, firestoreGetDocument } from '@/lib/firestore-service-rest';
+import { checkSameOriginHeaders } from '@/lib/api-origin-guard';
+import { verifyFirebaseIdToken } from '@/lib/firebase-id-token';
+import { apiLog } from '@/lib/api-logger';
 
 // In-memory fallback (Firestore 미설정 시)
-const store = new Map<string, { payload: unknown; expiresAt: number }>();
+const store = new Map<string, { payload: unknown; expiresAt: number; ownerUid: string }>();
 const MAX_ENTRIES = 1_000;
 
 function cleanupExpired(): void {
@@ -22,35 +25,43 @@ function lazyCleanup(): void {
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
 const COLLECTION = 'shares';
 
-async function persistToFirestore(id: string, payload: unknown, expiresAt: number): Promise<boolean> {
+async function persistToFirestore(id: string, payload: unknown, expiresAt: number, ownerUid: string): Promise<boolean> {
   if (!PROJECT_ID) return false;
   try {
+    // documentId=id 고정 — 단건 path get 과 대칭(write-once). #18: list 선형스캔 폐기.
     const res = await firestoreCreateDocument(PROJECT_ID, COLLECTION, {
       id: { stringValue: id },
       payload: { stringValue: JSON.stringify(payload) },
       expiresAt: { integerValue: String(expiresAt) },
+      ownerUid: { stringValue: ownerUid },
       createdAt: { timestampValue: new Date().toISOString() },
-    });
+    }, { documentId: id });
     return res.ok;
   } catch {
     return false;
   }
 }
 
-async function fetchFromFirestore(id: string): Promise<{ payload: unknown; expiresAt: number } | null> {
+async function fetchFromFirestore(id: string): Promise<{ payload: unknown; expiresAt: number; ownerUid: string } | null> {
   if (!PROJECT_ID) return null;
   try {
-    const res = await firestoreListDocuments(PROJECT_ID, COLLECTION, { pageSize: 100 });
+    // #18: shares/{id} 단건 조회 — 앞쪽 100개만 스캔하던 비결정 404 제거.
+    const res = await firestoreGetDocument(PROJECT_ID, `${COLLECTION}/${id}`);
     if (!res.ok) return null;
-    for (const doc of res.documents) {
-      const d = doc as { fields?: { id?: { stringValue?: string }; payload?: { stringValue?: string }; expiresAt?: { integerValue?: string } } };
-      if (d.fields?.id?.stringValue === id) {
-        const payloadStr = d.fields.payload?.stringValue || '{}';
-        const expiresAtStr = d.fields.expiresAt?.integerValue || '0';
-        return { payload: JSON.parse(payloadStr), expiresAt: Number(expiresAtStr) };
-      }
-    }
-  } catch { /* fallback */ }
+    const fields = res.fields as { payload?: { stringValue?: string }; expiresAt?: { integerValue?: string }; ownerUid?: { stringValue?: string } };
+    const payloadStr = fields.payload?.stringValue || '{}';
+    const expiresAtStr = fields.expiresAt?.integerValue || '0';
+    const ownerUid = fields.ownerUid?.stringValue || '';
+    return { payload: JSON.parse(payloadStr), expiresAt: Number(expiresAtStr), ownerUid };
+  } catch (err) {
+    // 빈 catch였음 — "토큰 없음(null)"과 "Firestore 오류"를 구별 가능하게 로깅만 추가. 반환 동작 불변.
+    apiLog({
+      level: 'warn',
+      event: 'share_firestore_fetch_error',
+      route: '/api/share',
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
   return null;
 }
 
@@ -61,12 +72,35 @@ const MAX_TITLE_CHARS = 500;
 const MAX_EXPIRES_HOURS = 720;            // 30 일 캡 (기본 72h)
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req.headers);
+  const startedAt = Date.now();
   try {
+    const originCheck = checkSameOriginHeaders(req.headers);
+    if (!originCheck.ok) {
+      apiLog({
+        level: 'warn',
+        event: 'share_origin_blocked',
+        route: '/api/share',
+        ip,
+        status: 403,
+        durationMs: Date.now() - startedAt,
+      });
+      return NextResponse.json({ error: originCheck.error }, { status: 403 });
+    }
+
     lazyCleanup();
-    const ip = getClientIp(req.headers);
-    const rl = checkRateLimit(ip, '/api/share', { maxRequests: 30, windowMs: 60_000 });
+    const rl = await checkRateLimitAsync(ip, '/api/share', { maxRequests: 30, windowMs: 60_000 });
     if (!rl.allowed) {
       return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+    }
+
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'authentication_required' }, { status: 401 });
+    }
+    const auth = await verifyFirebaseIdToken(authHeader.slice(7).trim());
+    if (!auth) {
+      return NextResponse.json({ error: 'invalid_token' }, { status: 401 });
     }
 
     // [S1-share] body 크기 게이트 — parse 전 차단
@@ -103,7 +137,7 @@ export async function POST(req: NextRequest) {
     const payload = { type, title, content, meta };
 
     // Firestore 영속화 시도
-    const persisted = await persistToFirestore(id, payload, expiresAt);
+    const persisted = await persistToFirestore(id, payload, expiresAt, auth.uid);
 
     // In-memory fallback — Firestore 실패 시에도 기능 유지
     if (store.size >= MAX_ENTRIES) {
@@ -117,7 +151,22 @@ export async function POST(req: NextRequest) {
       });
       if (oldestKey) store.delete(oldestKey);
     }
-    store.set(id, { payload, expiresAt });
+    store.set(id, { payload, expiresAt, ownerUid: auth.uid });
+
+    apiLog({
+      level: 'info',
+      event: 'share_created',
+      route: '/api/share',
+      ip,
+      status: 200,
+      durationMs: Date.now() - startedAt,
+      meta: {
+        uid: auth.uid,
+        shareType: type,
+        storage: persisted ? 'persistent' : 'ephemeral',
+        contentChars: typeof content === 'string' ? content.length : null,
+      },
+    });
 
     return NextResponse.json({
       id,
@@ -129,9 +178,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// 발급 ID 형식: sh_ + base64url. 단건 조회로 전환되면서 id 가 Firestore 문서 path
+// 세그먼트로 직접 들어가므로 '/'·'..' 등 path 주입(IDOR/traversal)을 형식 검증으로 차단.
+const SHARE_ID_RE = /^sh_[A-Za-z0-9_-]{1,64}$/;
+
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+  if (!SHARE_ID_RE.test(id)) {
+    return NextResponse.json({ error: 'Not found or expired' }, { status: 404 });
+  }
 
   // In-memory 우선 조회 (hot path)
   let entry = store.get(id);

@@ -1,0 +1,627 @@
+"use client";
+
+/* ===========================================================
+   ComposerExtras — F4 통일 composer v1 보조 (TabWriting 전용)
+
+   R1 가드레일: 본문 에디터가 주인공 — 이 파일의 컴포넌트는 전부
+   기존 AI 생성바(wd-input)·top bar 의 *인라인 확장*이다. 재설계 X·
+   본문 침범 X·agent-center 전환 X.
+
+   (a) ModelPickerInline — 생성바 컴팩트 모델 셀렉트
+       - provider 결정 = 실제 생성 경로와 동일: getActiveProvider()
+         (streamChat 이 쓰는 함수 그대로 — ai-providers.ts L896/L932).
+       - 모델 목록 = PROVIDERS[provider].models (기존 설정 데이터 READ —
+         날조 목록 X). 가격 표기는 데이터 없음 → 생략 (날조 금지).
+       - 선택 영속 = noa-lg-model + setActiveModel() write-through.
+         setActiveModel 이 noa_model_{provider} 에 쓰므로 streamChat 의
+         getActiveModel() 이 다음 generate 호출에서 그대로 사용 — 별도
+         배선 없이 "generate 호출에 반영" 충족.
+       - mount 시 noa-lg-model 강제 재적용은 하지 않는다 — Settings 가
+         이후 모델을 바꿨다면 그쪽이 더 최신 (이중 진실 충돌 방지·
+         표시값 = 항상 실효값 getActiveModel()).
+       - DGX 서비스 모드: useStudioAI 가 model=VLLM_MODEL_ID 고정 전달
+         (useStudioAI.ts L459) → 셀렉트는 죽은 컨트롤이 됨 → 고정 pill
+         로 정직 표기 (dead control 금지).
+
+   (b) @-mention typeahead — 소스는 실제 config 데이터만:
+       캐릭터 이름(config.characters)·세계관 필드(값 있는 키만)·
+       회차 번호(config.manuscripts + 현재 회차). 날조 엔티티 0.
+       선택 시 입력에 @라벨 삽입, 생성 시 buildMentionContextBlock 이
+       기존 프롬프트(basePrompt 의 text 자리)에 additive 로 명시 주입.
+
+   (c) useWritingFontMode / FontModeToggle — 본문 3-state 글꼴.
+       .wr-doc[data-font] + loreguard.css 변수 3종. 한글 명조 =
+       Noto Serif KR (layout.tsx next/font --font-noto-serif-kr).
+       Cormorant 는 라틴 전용 → 본문(한·영 혼합) 적용 금지 판단.
+       영속 = noa-lg-wr-font.
+
+   i18n: L4 (ko/en/ja/zh). 신규 엔진 0 — 전부 기존 모듈 READ/재사용.
+   =========================================================== */
+
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { L4 } from "@/lib/i18n";
+import type { AppLanguage, StoryConfig } from "@/lib/studio-types";
+import {
+  PROVIDERS,
+  getActiveProvider,
+  getActiveModel,
+  setActiveModel,
+  getApiKey,
+  hasDgxService,
+  type ProviderId,
+} from "@/lib/ai-providers";
+import {
+  getStoredReasoningLevel,
+  setStoredReasoningLevel,
+  subscribeReasoningLevel,
+  supportsReasoningControl,
+  type ReasoningLevel,
+} from "@/lib/ai-reasoning";
+
+// ============================================================
+// PART 1 — (a) ModelPickerInline
+// ============================================================
+
+/** 선택 영속 키 — composer 의 마지막 모델 선택 기록 (noa- prefix 규약) */
+const MODEL_KEY = "noa-lg-model";
+
+/** provider/model snapshot 구분자 — 화면·파일 검색을 깨지 않는 제어 문자 표기 */
+const PM_SEP = "\u001f";
+
+/** Settings(ApiKeysSection)·타 탭 변경 구독 — useStudioBackendLabel 과 동일 이벤트 쌍 */
+function subscribeProviderModel(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("noa-keys-changed", callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener("noa-keys-changed", callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+/** 실효 provider·model — 생성 경로(streamChat)가 읽는 함수 그대로 (단일 진실) */
+function getProviderModelSnapshot(): string {
+  return `${getActiveProvider()}${PM_SEP}${getActiveModel()}`;
+}
+
+export function ModelPickerInline({
+  language,
+  hostedProviders,
+  disabled,
+}: {
+  language: AppLanguage;
+  hostedProviders: Record<string, boolean>;
+  disabled?: boolean;
+}) {
+  // SSR/hydration 안전 — 서버 snapshot '' → 클라 재렌더에서 실값 (mismatch 차단)
+  const snap = useSyncExternalStore(subscribeProviderModel, getProviderModelSnapshot, () => "");
+
+  if (!snap) return null;
+  const sepIdx = snap.indexOf(PM_SEP);
+  const provider = snap.slice(0, sepIdx) as ProviderId;
+  const model = snap.slice(sepIdx + 1);
+
+  // DGX 서비스 모드 — 집필 생성 경로가 모델을 VLLM_MODEL_ID 로 고정 전달.
+  // 셀렉트를 보여주면 죽은 컨트롤 → 고정 표기 (정직·기능 가장 금지).
+  if (hasDgxService()) {
+    return (
+      <span
+        className="pill gray"
+        title={L4(language, {
+          ko: "노아 기본 연결 사용 중",
+          en: "Noa default connection active",
+          ja: "Noa標準接続を使用中",
+          zh: "正在使用 Noa 默认连接",
+        })}
+        aria-label={L4(language, {
+          ko: "노아 기본 연결 사용 중",
+          en: "Noa default connection active",
+          ja: "Noa標準接続を使用中",
+          zh: "正在使用 Noa 默认连接",
+        })}
+      >
+        NOA
+      </span>
+    );
+  }
+
+  const def = PROVIDERS[provider];
+  if (!def) return null;
+  // 커스텀 모델(BYOK/로컬 LLM 사용자 입력)도 목록에 노출 — 현재 실효값 누락 금지
+  const models =
+    model && !def.models.includes(model) ? [model, ...def.models] : def.models;
+  const hosted = Boolean(hostedProviders[provider]);
+  const hasKey = Boolean(getApiKey(provider));
+
+  const onPick = (next: string) => {
+    // write-through: 실효 경로(noa_model_{provider} → getActiveModel → streamChat)
+    // + composer 기록(noa-lg-model). setActiveModel 은 이벤트를 안 쏘므로 직접 통지
+    // → useSyncExternalStore 구독이 깨어나 새 snapshot 으로 재렌더 (로컬 state 0).
+    setActiveModel(next);
+    try {
+      window.localStorage.setItem(MODEL_KEY, next);
+    } catch {
+      /* private browsing — 영속만 실패, setActiveModel 경로의 이번 선택은 유효 */
+    }
+    window.dispatchEvent(new Event("noa-keys-changed"));
+  };
+
+  return (
+    <select
+      className="wr-model"
+      value={model || def.defaultModel}
+      disabled={disabled}
+      aria-label={L4(language, {
+        ko: "노아 연결 선택",
+        en: "Choose Noa connection",
+        ja: "Noa接続を選択",
+        zh: "选择 Noa 连接",
+      })}
+      title={
+        !hasKey && hosted
+          ? L4(language, {
+              ko: `${def.name} — 기본 운영 사용 중`,
+              en: `${def.name} — default operation active`,
+              ja: `${def.name} — 標準運用を使用中`,
+              zh: `${def.name} — 正在使用默认运行方式`,
+            })
+          : def.name
+      }
+      onChange={(e) => onPick(e.target.value)}
+    >
+      {models.map((m) => (
+        <option key={m} value={m}>
+          {m}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// ============================================================
+// PART 1-1 — ReasoningLevelInline
+// ============================================================
+
+const REASONING_SEP = "\u001e";
+
+function subscribeReasoningSnapshot(callback: () => void) {
+  const unsubscribeProviderModel = subscribeProviderModel(callback);
+  const unsubscribeReasoning = subscribeReasoningLevel(callback);
+  return () => {
+    unsubscribeProviderModel();
+    unsubscribeReasoning();
+  };
+}
+
+function getReasoningSnapshot(): string {
+  return `${getProviderModelSnapshot()}${REASONING_SEP}${getStoredReasoningLevel()}`;
+}
+
+function reasoningLabel(language: AppLanguage, level: ReasoningLevel): string {
+  if (level === "low") return L4(language, { ko: "가볍게", en: "Light", ja: "軽く", zh: "轻量" });
+  if (level === "medium") return L4(language, { ko: "표준", en: "Standard", ja: "標準", zh: "标准" });
+  if (level === "high") return L4(language, { ko: "깊게", en: "Deep", ja: "深く", zh: "深入" });
+  return L4(language, { ko: "자동", en: "Auto", ja: "自動", zh: "自动" });
+}
+
+export function ReasoningLevelInline({
+  language,
+  disabled,
+}: {
+  language: AppLanguage;
+  disabled?: boolean;
+}) {
+  const snap = useSyncExternalStore(subscribeReasoningSnapshot, getReasoningSnapshot, () => "");
+  if (!snap || hasDgxService()) return null;
+
+  const [providerModelSnap, levelRaw] = snap.split(REASONING_SEP);
+  const sepIdx = providerModelSnap.indexOf(PM_SEP);
+  const provider = providerModelSnap.slice(0, sepIdx) as ProviderId;
+  const model = providerModelSnap.slice(sepIdx + 1);
+  const level = (levelRaw || "auto") as ReasoningLevel;
+  const supported = supportsReasoningControl(provider, model);
+
+  const title = supported
+    ? L4(language, {
+        ko: "노아가 이 요청을 얼마나 깊게 검토할지 고릅니다. 자동은 현재 작업 단계에 맞춥니다.",
+        en: "Choose how deeply Noa should work on this request. Auto follows the current work stage.",
+        ja: "Noaがこの依頼をどれだけ深く扱うかを選びます。自動は現在の作業段階に合わせます。",
+        zh: "选择 Noa 对本次请求的处理深度。自动会匹配当前工作阶段。",
+      })
+    : L4(language, {
+        ko: "현재 연결은 깊이 선택을 지원하지 않아 자동으로 운용됩니다.",
+        en: "This connection does not expose depth control, so Auto is used.",
+        ja: "現在の接続は深さ選択に対応していないため、自動で運用します。",
+        zh: "当前连接不支持深度选择，因此使用自动模式。",
+      });
+
+  if (!supported) {
+    return (
+      <span className="wr-reasoning is-muted" title={title} aria-label={title}>
+        {reasoningLabel(language, "auto")}
+      </span>
+    );
+  }
+
+  return (
+    <select
+      className="wr-reasoning"
+      value={level}
+      disabled={disabled}
+      title={title}
+      aria-label={L4(language, {
+        ko: "노아 작업 깊이",
+        en: "Noa work depth",
+        ja: "Noa作業の深さ",
+        zh: "Noa 工作深度",
+      })}
+      onChange={(event) => setStoredReasoningLevel(event.target.value as ReasoningLevel)}
+    >
+      {(["auto", "low", "medium", "high"] as const).map((option) => (
+        <option key={option} value={option}>
+          {reasoningLabel(language, option)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// ============================================================
+// PART 2 — (b) @-mention typeahead (순수 함수 + 드롭다운)
+// ============================================================
+
+export type MentionKind = "character" | "world" | "episode";
+
+export interface MentionItem {
+  id: string;
+  kind: MentionKind;
+  /** '@' 뒤에 삽입되는 텍스트 (캐릭터명 / 세계관 필드명 / EP번호) */
+  label: string;
+  /** 드롭다운 보조 표기 (역할 / 필드 key / 회차 제목) */
+  detail: string;
+  /** 생성 프롬프트에 명시 주입되는 한 줄 (실데이터만) */
+  context: string;
+}
+
+export interface WorldFieldDef {
+  key: string;
+  ko: string;
+  en: string;
+}
+
+/** 멘션 query 최대 길이 — 초과하면 평문 '@' 로 간주 (드롭다운 종료) */
+const MENTION_QUERY_MAX = 24;
+/** 드롭다운 표시 상한 — 개발자 처리 가능 수만 (스크롤 최소화) */
+const MENTION_LIST_MAX = 8;
+/** 세계관 필드 값 주입 상한 (토큰 버짓 보호 — 결정적 cap) */
+const WORLD_CONTEXT_MAX = 400;
+/** 캐릭터 보조 정보 주입 상한 */
+const CHAR_CONTEXT_MAX = 200;
+
+/** 실제 config 데이터만으로 멘션 소스 구성 — 없는 데이터는 항목 자체가 없음 (날조 금지) */
+export function buildMentionItems(
+  config: StoryConfig,
+  worldFields: ReadonlyArray<WorldFieldDef>,
+  language: AppLanguage,
+): MentionItem[] {
+  const items: MentionItem[] = [];
+
+  // ⓐ 캐릭터 — config.characters (이름 있는 것만)
+  const charWord = L4(language, { ko: "캐릭터", en: "Character", ja: "キャラクター", zh: "角色" });
+  for (const c of config.characters ?? []) {
+    const name = c.name?.trim();
+    if (!name) continue;
+    const extra = [c.traits, c.personality]
+      .filter((s): s is string => Boolean(s && s.trim()))
+      .join(" · ")
+      .slice(0, CHAR_CONTEXT_MAX);
+    items.push({
+      id: `ch-${c.id}`,
+      kind: "character",
+      label: name,
+      detail: c.role || "",
+      context: `${charWord}: ${name}${c.role ? ` (${c.role})` : ""}${extra ? ` — ${extra}` : ""}`,
+    });
+  }
+
+  // ⓑ 세계관 필드 — 값이 실제로 있는 키만 (pipeline 주입 조건과 동일한 truthy 기준)
+  const worldWord = L4(language, { ko: "세계관", en: "World", ja: "世界観", zh: "世界观" });
+  const cfg = config as unknown as Record<string, unknown>;
+  for (const f of worldFields) {
+    const v = cfg[f.key];
+    if (typeof v !== "string" || !v.trim()) continue;
+    const label = L4(language, { ko: f.ko, en: f.en });
+    items.push({
+      id: `wf-${f.key}`,
+      kind: "world",
+      label,
+      detail: f.key,
+      context: `${worldWord} — ${label}: ${v.trim().slice(0, WORLD_CONTEXT_MAX)}`,
+    });
+  }
+
+  // ⓒ 회차 번호 — 저장된 manuscripts + 현재 회차 (실존 번호만)
+  const epWord = L4(language, { ko: "회차", en: "Episode", ja: "話数", zh: "回目" });
+  const eps = new Set<number>();
+  for (const m of config.manuscripts ?? []) eps.add(m.episode);
+  if (typeof config.episode === "number") eps.add(config.episode);
+  for (const n of [...eps].sort((a, b) => a - b)) {
+    const ms = (config.manuscripts ?? []).find((m) => m.episode === n);
+    items.push({
+      id: `ep-${n}`,
+      kind: "episode",
+      label: `EP${n}`,
+      detail: ms?.title || "",
+      context: `${epWord}: EP ${n}${ms?.title ? ` — ${ms.title}` : ""}`,
+    });
+  }
+
+  return items;
+}
+
+/** caret 앞의 '@query' 토큰 검출 — 토큰 선두 '@' 만 (이메일 등 단어 중간 '@' 제외).
+    query 에 공백 허용 (세계관 필드명 '핵심 전제' 등) — 매칭 0건이면 호출부가 닫음. */
+export function detectMentionQuery(
+  value: string,
+  caret: number,
+): { start: number; query: string } | null {
+  const head = value.slice(0, Math.max(0, caret));
+  const at = head.lastIndexOf("@");
+  if (at < 0) return null;
+  if (at > 0 && !/[\s([{"'“”‘’…—-]/.test(head[at - 1])) return null;
+  const query = head.slice(at + 1);
+  if (query.length > MENTION_QUERY_MAX || query.includes("\n") || query.includes("@")) return null;
+  return { start: at, query };
+}
+
+/** query 필터 + 상한 — label/detail 부분 일치 (결정적·대소문자 무시) */
+export function filterMentionItems(items: MentionItem[], query: string): MentionItem[] {
+  const q = query.trim().toLowerCase();
+  const base = q
+    ? items.filter(
+        (it) => it.label.toLowerCase().includes(q) || it.detail.toLowerCase().includes(q),
+      )
+    : items;
+  return base.slice(0, MENTION_LIST_MAX);
+}
+
+/** '@query' 구간을 '@라벨 ' 로 치환 — 새 caret 위치 반환 */
+export function applyMention(
+  value: string,
+  caret: number,
+  start: number,
+  item: MentionItem,
+): { next: string; caret: number } {
+  const before = value.slice(0, start);
+  const after = value.slice(Math.max(caret, start));
+  const inserted = `@${item.label} `;
+  return { next: before + inserted + after, caret: (before + inserted).length };
+}
+
+/** '@라벨' 실재 여부 — 라벨이 숫자로 끝나면(EP1 등) 바로 뒤 숫자 연속을 배제
+    (@EP1 이 @EP10 에 substring 오매칭되는 것 차단). 한글 라벨 뒤 조사("@김철수가")는
+    정상 매칭 유지 — 숫자 경계만 본다 (결정적). */
+function mentionUsedIn(text: string, label: string): boolean {
+  const token = `@${label}`;
+  const digitEnd = /\d$/.test(label);
+  let idx = text.indexOf(token);
+  while (idx !== -1) {
+    const next = text[idx + token.length];
+    if (!digitEnd || next === undefined || !/\d/.test(next)) return true;
+    idx = text.indexOf(token, idx + 1);
+  }
+  return false;
+}
+
+/** 제출 시점 입력에 실재하는 @멘션만 모아 명시 주입 블록 생성 — additive
+    (기존 프롬프트 빌드 경로 basePrompt 의 text 꼬리에 붙음 — useStudioAI L383).
+    입력에서 지워진 멘션은 주입하지 않음 (입력 = 단일 진실). */
+export function buildMentionContextBlock(
+  text: string,
+  items: MentionItem[],
+  language: AppLanguage,
+): string {
+  if (!text.includes("@")) return "";
+  const used: MentionItem[] = [];
+  const seen = new Set<string>();
+  for (const it of items) {
+    if (seen.has(it.id)) continue;
+    if (mentionUsedIn(text, it.label)) {
+      seen.add(it.id);
+      used.push(it);
+    }
+  }
+  if (used.length === 0) return "";
+  const header = L4(language, {
+    ko: "참조 컨텍스트 — @멘션 (작가 지정)",
+    en: "Referenced context — @mentions (author-specified)",
+    ja: "参照コンテキスト — @メンション（作家指定）",
+    zh: "引用上下文 — @提及（作者指定）",
+  });
+  return `\n\n[${header}]\n${used.map((u) => `- ${u.context}`).join("\n")}`;
+}
+
+/** 드롭다운 kind 뱃지 라벨 */
+function kindLabel(kind: MentionKind, language: AppLanguage): string {
+  if (kind === "character")
+    return L4(language, { ko: "캐릭터", en: "CHAR", ja: "キャラ", zh: "角色" });
+  if (kind === "world") return L4(language, { ko: "세계관", en: "WORLD", ja: "世界観", zh: "世界观" });
+  return L4(language, { ko: "회차", en: "EP", ja: "話数", zh: "回目" });
+}
+
+/** @멘션 드롭다운 — combobox 패턴의 listbox 절반.
+    포커스는 입력에 유지 (option 은 onMouseDown preventDefault — blur 경쟁 차단).
+    active 표시는 aria-selected + aria-activedescendant (입력 쪽). */
+export function MentionDropdown({
+  items,
+  activeIndex,
+  listboxId,
+  language,
+  onSelect,
+}: {
+  items: MentionItem[];
+  activeIndex: number;
+  listboxId: string;
+  language: AppLanguage;
+  onSelect: (item: MentionItem) => void;
+}) {
+  // active option 가시 영역 유지 — 'nearest'/auto (smooth 아님 — reduced-motion 안전)
+  useEffect(() => {
+    const el = document.getElementById(`${listboxId}-opt-${activeIndex}`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, listboxId]);
+
+  return (
+    <div
+      id={listboxId}
+      className="wr-mention"
+      role="listbox"
+      aria-label={L4(language, {
+        ko: "멘션 후보 — 캐릭터·세계관·회차",
+        en: "Mention candidates — characters, world, episodes",
+        ja: "メンション候補 — キャラ・世界観・話数",
+        zh: "提及候选 — 角色·世界观·回目",
+      })}
+    >
+      {items.map((it, i) => (
+        <button
+          key={it.id}
+          id={`${listboxId}-opt-${i}`}
+          type="button"
+          role="option"
+          aria-selected={i === activeIndex}
+          className="wr-mention-opt"
+          tabIndex={-1}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onSelect(it)}
+        >
+          <span className="wr-mention-kind">{kindLabel(it.kind, language)}</span>
+          <span className="wr-mention-label">@{it.label}</span>
+          {it.detail ? <span className="wr-mention-detail">{it.detail}</span> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// PART 3 — (c) 본문 글꼴 3-state (기본/명조/고정폭)
+// ============================================================
+
+export type WritingFontMode = "default" | "serif" | "mono";
+
+const FONT_KEY = "noa-lg-wr-font";
+/** 같은 탭 내 변경 통지 (storage 이벤트는 타 탭 전용) */
+const FONT_EVENT = "noa-lg-wr-font-changed";
+
+function isFontMode(v: unknown): v is WritingFontMode {
+  return v === "default" || v === "serif" || v === "mono";
+}
+
+/** private browsing(setItem throw) 폴백 — 이번 세션 한정 모듈 캐시 */
+let fontModeMemory: WritingFontMode | null = null;
+
+function subscribeFontMode(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(FONT_EVENT, callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener(FONT_EVENT, callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+function getFontModeSnapshot(): WritingFontMode {
+  try {
+    const raw = window.localStorage.getItem(FONT_KEY);
+    if (isFontMode(raw)) return raw;
+  } catch {
+    /* private browsing — 메모리 폴백 */
+  }
+  return fontModeMemory ?? "default";
+}
+
+/** 본문 글꼴 모드 — 영속 키 noa-lg-wr-font 가 단일 진실 (useSyncExternalStore —
+    SSR 은 'default', 클라 재렌더에서 저장값. 타 탭 변경도 storage 이벤트로 동기). */
+export function useWritingFontMode(): [WritingFontMode, (m: WritingFontMode) => void] {
+  const mode = useSyncExternalStore(subscribeFontMode, getFontModeSnapshot, () => "default" as WritingFontMode);
+  const update = useCallback((m: WritingFontMode) => {
+    fontModeMemory = m;
+    try {
+      window.localStorage.setItem(FONT_KEY, m);
+    } catch {
+      /* private browsing — 메모리 폴백으로 이번 세션은 유효 */
+    }
+    window.dispatchEvent(new Event(FONT_EVENT));
+  }, []);
+  return [mode, update];
+}
+
+/** 3-state 토글 — 표시 전용 컨트롤 (저장/생성 경로 무접촉). */
+export function FontModeToggle({
+  mode,
+  onChange,
+  language,
+}: {
+  mode: WritingFontMode;
+  onChange: (m: WritingFontMode) => void;
+  language: AppLanguage;
+}) {
+  const opts: Array<[WritingFontMode, string, string]> = [
+    [
+      "default",
+      L4(language, { ko: "기본", en: "Sans", ja: "基本", zh: "默认" }),
+      L4(language, {
+        ko: "본문 글꼴 — 기본 (Pretendard)",
+        en: "Editor font — default (Pretendard)",
+        ja: "本文フォント — 基本 (Pretendard)",
+        zh: "正文字体 — 默认 (Pretendard)",
+      }),
+    ],
+    [
+      "serif",
+      L4(language, { ko: "명조", en: "Serif", ja: "明朝", zh: "宋体" }),
+      L4(language, {
+        ko: "본문 글꼴 — 명조 (Noto Serif KR)",
+        en: "Editor font — serif (Noto Serif KR)",
+        ja: "本文フォント — 明朝 (Noto Serif KR)",
+        zh: "正文字体 — 衬线 (Noto Serif KR)",
+      }),
+    ],
+    [
+      "mono",
+      L4(language, { ko: "고정폭", en: "Mono", ja: "等幅", zh: "等宽" }),
+      L4(language, {
+        ko: "본문 글꼴 — 고정폭",
+        en: "Editor font — monospace",
+        ja: "本文フォント — 等幅",
+        zh: "正文字体 — 等宽",
+      }),
+    ],
+  ];
+  return (
+    <div
+      className="wr-fontseg"
+      role="group"
+      aria-label={L4(language, {
+        ko: "본문 글꼴 선택",
+        en: "Editor font selection",
+        ja: "本文フォント選択",
+        zh: "正文字体选择",
+      })}
+    >
+      {opts.map(([v, label, title]) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={mode === v}
+          aria-label={title}
+          title={title}
+          onClick={() => onChange(v)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}

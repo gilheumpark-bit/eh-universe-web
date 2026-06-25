@@ -1,55 +1,18 @@
-import { GoogleGenAI, type GoogleGenAIOptions } from '@google/genai';
+// ============================================================
+// Gemini 서버 헬퍼 — 사용자 연결 키 우선.
+// [2026-06-06] Vertex AI / Discovery Engine 경로 제거 (구글 AI 삭제, 사용자 연결 유지).
+//   - 제거: isVertexAiEnabled / hasVertexAiServerCredentials / vertexai 클라이언트 분기
+//   - 유지: 사용자 연결 키 · 명시 플래그 기반 DGX 개발 API 폴백
+// ============================================================
 
-type ServiceAccountCredentials = {
-  type?: string;
-  project_id?: string;
-  private_key_id?: string;
-  private_key?: string;
-  client_email?: string;
-  client_id?: string;
-  token_uri?: string;
-};
+import { GoogleGenAI } from '@google/genai';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
 
-const CLOUD_PLATFORM_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const GEMINI_ALLOCATION_ERROR_PATTERN = /(?:429|resource[_\s-]?exhausted|quota|rate.?limit|too many requests|usage limit)/i;
 
-export function isVertexAiEnabled(): boolean {
-  return process.env.USE_VERTEX_AI === 'true';
-}
-
-export function getVertexProjectId(): string | undefined {
-  return process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
-}
-
-export function getVertexLocation(): string {
-  return process.env.GCP_LOCATION || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-}
-
-function parseVertexCredentials(): ServiceAccountCredentials | undefined {
-  const raw = process.env.VERTEX_AI_CREDENTIALS?.trim();
-  if (!raw) return undefined;
-
-  try {
-    return JSON.parse(raw) as ServiceAccountCredentials;
-  } catch {
-    throw new Error('Invalid VERTEX_AI_CREDENTIALS JSON');
-  }
-}
-
-export function hasVertexAiServerCredentials(): boolean {
-  const project = getVertexProjectId();
-  return Boolean(
-    isVertexAiEnabled()
-    && project
-    && (
-      process.env.VERTEX_AI_CREDENTIALS?.trim()
-      || process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()
-    ),
-  );
-}
-
+/** Gemini 서버 환경 키는 제공하지 않는다. 사용자 연결 키 또는 명시 플래그 기반 DGX 개발 API만 사용한다. */
 export function hasGeminiServerCredentials(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY?.trim() || hasVertexAiServerCredentials());
+  return false;
 }
 
 export function normalizeUserApiKey(value: unknown): string {
@@ -64,69 +27,34 @@ export function isGeminiAllocationExhaustedError(error: unknown): boolean {
 export type GeminiExecutionMode = 'hosted' | 'byok';
 
 /**
- * BYOK 우선 정책: 유저 키가 있으면 유저 키 먼저.
- * 유저 키 없을 때만 호스팅 키 사용.
+ * 유저 키가 있으면 유저 키 먼저.
+ * 유저 키가 없을 때는 명시 플래그가 켜진 DGX 개발 API만 허용한다.
  */
 export async function executeGeminiHostedFirst<T>(
   clientApiKey: unknown,
   operation: (apiKey: string, mode: GeminiExecutionMode) => Promise<T>,
 ): Promise<{ result: T; mode: GeminiExecutionMode }> {
   const userApiKey = normalizeUserApiKey(clientApiKey);
-  const hostedEnabled = hasGeminiServerCredentials();
-
-  if (!hostedEnabled && !userApiKey) {
-    // DGX Spark 폴백: SPARK_SERVER_URL 있으면 빈 키로 진행 (dispatchTask에서 DGX 경유)
-    const hasDgx = !!process.env.SPARK_SERVER_URL || !!process.env.NEXT_PUBLIC_SPARK_SERVER_URL;
-    if (hasDgx) {
+  if (!userApiKey) {
+    // DGX 개발 API 폴백: 명시 플래그가 켜진 경우에만 빈 키로 진행한다.
+    if (isDgxDeveloperApiEnabled()) {
       return { result: await operation('', 'hosted'), mode: 'hosted' };
     }
-    throw new Error('Gemini server credentials are not configured');
+    throw new Error('Gemini connection key is not configured');
   }
 
-  // BYOK 우선: 유저 키가 있으면 유저 키 사용
-  if (userApiKey) {
-    return { result: await operation(userApiKey, 'byok'), mode: 'byok' };
-  }
-
-  // 유저 키 없을 때만 호스팅 키
-  if (hostedEnabled) {
-    return { result: await operation('', 'hosted'), mode: 'hosted' };
-  }
-
-  throw new Error('No API key available');
+  return { result: await operation(userApiKey, 'byok'), mode: 'byok' };
 }
 
+/**
+ * Gemini 클라이언트 생성 — 명시 사용자 연결 키만 허용.
+ * Vertex AI(서비스 계정) 경로는 제거됨.
+ */
 export function createServerGeminiClient(apiKey?: string): GoogleGenAI {
   const explicitApiKey = apiKey?.trim();
   if (explicitApiKey) {
     return new GoogleGenAI({ apiKey: explicitApiKey });
   }
 
-  if (hasVertexAiServerCredentials()) {
-    const project = getVertexProjectId();
-    const credentials = parseVertexCredentials();
-    const options: GoogleGenAIOptions = {
-      vertexai: true,
-      project,
-      location: getVertexLocation(),
-      apiVersion: 'v1',
-    };
-
-    if (credentials) {
-      options.googleAuthOptions = {
-        credentials,
-        projectId: credentials.project_id || project,
-        scopes: [CLOUD_PLATFORM_SCOPE],
-      };
-    }
-
-    return new GoogleGenAI(options);
-  }
-
-  const envApiKey = process.env.GEMINI_API_KEY?.trim();
-  if (envApiKey) {
-    return new GoogleGenAI({ apiKey: envApiKey });
-  }
-
-  throw new Error('Gemini server credentials are not configured');
+  throw new Error('Gemini connection key is not configured');
 }

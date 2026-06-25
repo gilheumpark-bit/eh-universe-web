@@ -14,15 +14,15 @@ import { useUnifiedSettings } from "@/lib/UnifiedSettingsContext";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import { logger } from "@/lib/logger";
+import { PROVIDER_LIST_UI } from "@/lib/ai-providers";
 
-const PROVIDERS = [
-  { id: "gemini", name: "Gemini", color: "#4285f4", placeholder: "AIza...", models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"] },
-  { id: "openai", name: "OpenAI", color: "#10a37f", placeholder: "sk-...", models: ["gpt-5.4", "gpt-5.4-mini", "gpt-4.1"] },
-  { id: "claude", name: "Claude", color: "#d4a373", placeholder: "sk-ant-...", models: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"] },
-  { id: "groq", name: "Groq", color: "#f55036", placeholder: "gsk_...", models: ["llama-3.3-70b-versatile", "qwen-qwq-32b"] },
-  { id: "mistral", name: "Mistral", color: "#ff7000", placeholder: "...", models: ["mistral-large-latest"] },
-  { id: "lmstudio", name: "LM Studio", color: "#2d5d8d", placeholder: "http://192.168...:1234", models: ["local-model"] },
-];
+const PROVIDERS = PROVIDER_LIST_UI.map(({ id, name, color, placeholder, models }) => ({
+  id,
+  name,
+  color,
+  placeholder,
+  models,
+}));
 
 interface Props { onClose: () => void; }
 
@@ -44,8 +44,15 @@ export function APIKeySlotManager({ onClose }: Props) {
   // 모달 열릴 때 body 스크롤 차단 및 포탈 마운트 처리
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
   // 인라인 추가 상태
   const [addingProvider, setAddingProvider] = useState<string | null>("gemini");
@@ -111,7 +118,7 @@ export function APIKeySlotManager({ onClose }: Props) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
-      aria-label={T({ ko: "API 키 관리", en: "API Key Management" })}
+      aria-label={T({ ko: "연결 키 관리", en: "Connection Key Management" })}
     >
       <div className="bg-bg-primary border border-border rounded-2xl w-full max-w-lg flex flex-col shadow-luxury mx-4">
 
@@ -123,14 +130,20 @@ export function APIKeySlotManager({ onClose }: Props) {
             </div>
             <div>
               <h2 className="text-sm font-bold text-text-primary">
-                {T({ ko: "API 키 관리", en: "API Key Management" })}
+                {T({ ko: "연결 키 관리", en: "Connection Key Management" })}
               </h2>
               <p className="text-[11px] text-text-tertiary">
-                {T({ ko: "프로바이더를 선택하고 키를 입력하세요", en: "Select a provider and enter your key" })}
+                {T({ ko: "모델을 선택하고 연결 키를 입력하세요", en: "Select a model provider and enter your connection key" })}
               </p>
             </div>
           </div>
-          <button data-testid="api-key-modal-close" onClick={onClose} className="p-1.5 rounded-lg hover:bg-bg-tertiary text-text-tertiary transition-colors">
+          <button
+            data-testid="api-key-modal-close"
+            type="button"
+            onClick={onClose}
+            aria-label={T({ ko: "닫기", en: "Close", ja: "閉じる", zh: "关闭" })}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-tertiary focus-visible:ring-2 focus-visible:ring-accent-blue"
+          >
             <X size={18} />
           </button>
         </div>
@@ -150,10 +163,10 @@ export function APIKeySlotManager({ onClose }: Props) {
                     <span className="text-[12px] font-semibold text-text-primary truncate block">{p?.name}</span>
                     <span className="text-[10px] text-text-tertiary truncate block">{slot.model}</span>
                   </div>
-                  <button onClick={() => toggleSlot(slot.id)} className="p-1 rounded hover:bg-bg-tertiary transition-colors" title={slot.enabled ? "Disable" : "Enable"}>
+                  <button onClick={() => toggleSlot(slot.id)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded hover:bg-bg-tertiary transition-colors" title={slot.enabled ? "Disable" : "Enable"}>
                     {slot.enabled ? <ToggleRight size={16} className="text-accent-green" /> : <ToggleLeft size={16} className="text-text-tertiary" />}
                   </button>
-                  <button data-testid="api-key-modal-delete" onClick={() => removeSlot(slot.id)} className="p-1 rounded hover:bg-bg-tertiary transition-colors text-text-tertiary hover:text-accent-red" title="Delete">
+                  <button data-testid="api-key-modal-delete" onClick={() => removeSlot(slot.id)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-text-tertiary transition-colors hover:bg-bg-tertiary hover:text-accent-red" title="Delete">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -165,7 +178,7 @@ export function APIKeySlotManager({ onClose }: Props) {
         {/* ── 프로바이더 그리드 ── */}
         <div className="px-4 py-3">
           <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest px-1 mb-2">
-            {T({ ko: "프로바이더 선택", en: "Select Provider" })}
+            {T({ ko: "연결할 모델 선택", en: "Select Provider" })}
           </div>
           <div className="grid grid-cols-3 gap-2">
             {PROVIDERS.map((p) => {
@@ -183,7 +196,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                     setTestResult(null);
                     setShowKey(false);
                   }}
-                  className={`relative flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-[transform,opacity,background-color,border-color,color] ${
+                  className={`relative flex min-h-[44px] items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-[transform,opacity,background-color,border-color,color] ${
                     isActive
                       ? "border-accent-amber bg-accent-amber/10 shadow-sm"
                       : isRegistered
@@ -205,7 +218,7 @@ export function APIKeySlotManager({ onClose }: Props) {
           <div className="px-4 pb-4 space-y-2.5 animate-in slide-in-from-top-1 duration-200">
             <div className="border border-accent-amber/20 rounded-xl p-3 bg-bg-secondary/40 space-y-2.5">
               {/* 키 입력 */}
-              <div className="flex items-center gap-2 bg-bg-primary border border-border rounded-lg px-3 py-2">
+              <div className="flex min-h-[44px] items-center gap-2 bg-bg-primary border border-border rounded-lg px-3 py-2">
                 <Key size={13} className="text-text-tertiary shrink-0" />
                 <input
                   data-testid="api-key-modal-secret-input"
@@ -213,17 +226,17 @@ export function APIKeySlotManager({ onClose }: Props) {
                   value={keyInput}
                   onChange={(e) => { setKeyInput(e.target.value); setTestResult(null); }}
                   placeholder={activeProvider.placeholder}
-                  className="flex-1 bg-transparent text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-w-0"
+                  className="flex-1 min-h-[44px] bg-transparent text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 min-w-0"
                   autoFocus
                 />
-                <button onClick={() => setShowKey(v => !v)} className="p-0.5 text-text-tertiary hover:text-text-secondary">
+                <button onClick={() => setShowKey(v => !v)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-text-tertiary hover:bg-bg-tertiary hover:text-text-secondary">
                   {showKey ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
                 <button
                   data-testid="api-key-modal-test"
                   onClick={handleTest}
                   disabled={testing || !keyInput.trim()}
-                  className="px-2 py-0.5 text-[10px] rounded border border-border hover:bg-bg-tertiary disabled:opacity-30 flex items-center gap-1 text-text-secondary shrink-0"
+                  className="flex min-h-[44px] shrink-0 items-center gap-1 rounded border border-border px-3 py-1 text-[10px] text-text-secondary hover:bg-bg-tertiary disabled:opacity-30"
                 >
                   {testing ? <Loader2 size={10} className="animate-spin" /> : testResult === true ? <Check size={10} className="text-accent-green" /> : testResult === false ? <X size={10} className="text-accent-red" /> : null}
                   {T({ ko: "검증", en: "Test" })}
@@ -236,7 +249,7 @@ export function APIKeySlotManager({ onClose }: Props) {
                   <select
                     value={modelSelect}
                     onChange={(e) => setModelSelect(e.target.value)}
-                    className="w-full bg-bg-primary text-[12px] text-text-primary rounded-lg px-3 py-2 pr-7 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-border appearance-none"
+                    className="w-full min-h-[44px] bg-bg-primary text-[12px] text-text-primary rounded-lg px-3 py-2 pr-7 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 border border-border appearance-none"
                   >
                     {activeProvider.models.map((m) => (
                       <option key={m} value={m} className="bg-bg-secondary text-text-primary">{m}</option>
@@ -248,13 +261,14 @@ export function APIKeySlotManager({ onClose }: Props) {
                   data-testid="api-key-modal-save"
                   onClick={handleAdd}
                   disabled={!keyInput.trim()}
-                  className="px-4 py-2 bg-accent-amber text-white text-[12px] font-bold rounded-lg hover:opacity-90 disabled:opacity-30 transition-opacity shrink-0"
+                  className="min-h-[44px] shrink-0 rounded-lg bg-accent-amber px-4 py-2 text-[12px] font-bold !text-white transition-opacity hover:opacity-90 disabled:opacity-30"
                 >
                   {T({ ko: "추가", en: "Add" })}
                 </button>
                 <button
-                  onClick={resetAdd}
-                  className="px-3 py-2 text-text-tertiary text-[12px] rounded-lg hover:bg-bg-tertiary transition-colors shrink-0"
+                  type="button"
+                  onClick={onClose}
+                  className="min-h-[44px] shrink-0 rounded-lg px-3 py-2 text-[12px] text-text-tertiary transition-colors hover:bg-bg-tertiary"
                 >
                   {T({ ko: "취소", en: "Cancel" })}
                 </button>
@@ -268,12 +282,20 @@ export function APIKeySlotManager({ onClose }: Props) {
           <div className="text-[11px] text-text-tertiary">
             {T({ ko: `활성: ${enabledSlots.length}개`, en: `Active: ${enabledSlots.length}` })}
           </div>
-          <div className="text-[10px] text-text-tertiary">
-            {T({ ko: "모든 스튜디오에서 공유됩니다", en: "Shared across all studios" })}
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-text-tertiary">
+              {T({ ko: "모든 스튜디오에서 공유됩니다", en: "Shared across all studios" })}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-[44px] rounded-lg border border-border px-3 py-1.5 text-[12px] font-semibold text-text-secondary transition-colors hover:bg-bg-tertiary hover:text-text-primary focus-visible:ring-2 focus-visible:ring-accent-blue"
+            >
+              {T({ ko: "닫기", en: "Close" })}
+            </button>
           </div>
         </div>
       </div>
     </div>
   , document.body);
 }
-

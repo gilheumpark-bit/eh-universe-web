@@ -11,15 +11,13 @@ test.describe("Mobile viewport smoke", () => {
     await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
   });
 
-  test("network landing shows primary CTA", async ({ page }) => {
-    await page.goto("/network", { waitUntil: "domcontentloaded", timeout: 45_000 });
-    await expect(page.getByText(/행성 등록하기|Register a Planet/i).first()).toBeVisible({
-      timeout: 20000,
-    });
+  test("studio entry reaches a visible mobile shell", async ({ page }) => {
+    await page.goto("/studio", { waitUntil: "domcontentloaded", timeout: 45_000 });
+    await expect(page.locator("body")).toBeVisible({ timeout: 20000 });
   });
 
-  test("tools index has h1", async ({ page }) => {
-    await page.goto("/tools", { waitUntil: "domcontentloaded", timeout: 45_000 });
+  test("about support page has h1", async ({ page }) => {
+    await page.goto("/about", { waitUntil: "domcontentloaded", timeout: 45_000 });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15000 });
   });
 });

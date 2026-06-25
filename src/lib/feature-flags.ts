@@ -38,16 +38,12 @@ function isDraftDetailMode(v: unknown): v is DraftDetailMode {
 // ============================================================
 
 export interface FeatureFlags {
-  /** 이미지 생성 기능 (DALL-E / Stability AI) */
+  /** 시각 자료 생성 API — 내부/개발 opt-in 전용, 공개 UI 기본 비활성 */
   IMAGE_GENERATION: boolean;
   /** Google Drive 백업 */
   GOOGLE_DRIVE_BACKUP: boolean;
-  /** EH Network 커뮤니티 */
-  NETWORK_COMMUNITY: boolean;
   /** 오프라인 원고 캐싱 */
   OFFLINE_CACHE: boolean;
-  /** 코드 스튜디오 (CSL IDE 통합) */
-  CODE_STUDIO: boolean;
   /** 에피소드 간 비교 분석 */
   EPISODE_COMPARE: boolean;
   /** Firestore 클라우드 동기화 */
@@ -56,8 +52,6 @@ export interface FeatureFlags {
   GITHUB_SYNC: boolean;
   /** AI 요청 보안 스캐너 (프롬프트 인젝션 / 코드 인젝션 / PII 탐지) */
   SECURITY_GATE: boolean;
-  /** 멀티파일 에이전트 (스냅샷 + 의존성 그래프) */
-  MULTI_FILE_AGENT: boolean;
   /** GitHub ETag 캐싱 + rate limit 추적 */
   GITHUB_ETAG_CACHE: boolean;
   /** ARI per-model 추적 + 상태 전환 이벤트 */
@@ -78,19 +72,17 @@ export interface FeatureFlags {
 }
 
 // boolean-only 플래그 키 — 타입 안전성 보장 (3-mode 플래그 제외)
-type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
+export type BooleanFlagKey = Exclude<keyof FeatureFlags, 'FEATURE_JOURNAL_ENGINE' | 'FEATURE_DRAFT_DETAIL_V2'>;
 
 // ============================================================
 // PART 3 — Defaults
 // ============================================================
 
 const FLAGS: FeatureFlags = {
-  IMAGE_GENERATION: true,
+  IMAGE_GENERATION: false,
   GOOGLE_DRIVE_BACKUP: true,
-  NETWORK_COMMUNITY: true,
   /** IndexedDB 백업/복원·버전 백업 — useProjectManager에서 분기 */
   OFFLINE_CACHE: true,
-  CODE_STUDIO: true,
   EPISODE_COMPARE: true,
   /** Firestore 세션 클라우드 동기화 — 기본 비활성 (Firestore 과금 리스크, AGENTS.md와 일치). ff_CLOUD_SYNC=true로 opt-in */
   CLOUD_SYNC: false,
@@ -98,8 +90,6 @@ const FLAGS: FeatureFlags = {
   GITHUB_SYNC: true,
   /** AI 요청 보안 스캐너 — 상업 운영 기본 활성 (프롬프트/코드 인젝션 + PII 차단) */
   SECURITY_GATE: true,
-  /** 멀티파일 에이전트 — 스냅샷 롤백 + 의존성 그래프 + intent-parser + tier-registry */
-  MULTI_FILE_AGENT: true,
   /** GitHub ETag 캐싱 — 304 캐시 + rate limit 80% 경고, 상업 기본 활성 (rate limit 절약) */
   GITHUB_ETAG_CACHE: true,
   /** ARI per-model 추적 — 모델별 건강도 + circuit 이벤트, 기본 활성 */
@@ -152,6 +142,12 @@ const FLAGS: FeatureFlags = {
    */
   FEATURE_DRAFT_DETAIL_V2: 'off',
 };
+
+export function getBooleanFeatureFlagKeys(): BooleanFlagKey[] {
+  return (Object.keys(FLAGS) as (keyof FeatureFlags)[]).filter(
+    (key): key is BooleanFlagKey => typeof FLAGS[key] === 'boolean',
+  );
+}
 
 // ============================================================
 // PART 4 — Journal Engine mode accessor (3-mode)

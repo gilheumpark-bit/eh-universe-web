@@ -1,0 +1,192 @@
+// ============================================================
+// action-registry — 영역별 + 글로벌 액션 카탈로그 (SharedSurgery-1)
+// 단일 진입 팔레트에 노출될 액션을 활성 Loreguard 영역별로 격리해 등록.
+// useCmdPalette / useGlobalSearchPalette 는 이 registry 를 source 로 사용.
+// React/DOM 의존 0 — 순수 타입·헬퍼. UI hook 은 별도 파일.
+// ============================================================
+
+import type { AgentLanguage } from '@/lib/ai/writing-agent-registry';
+
+// ============================================================
+// PART 1 — Types
+// ============================================================
+
+/** 활성 제품 영역 + global. global 은 어디서든 노출. */
+export type ActionArea =
+  | 'studio'              // Novel Studio (/studio)
+  | 'translation-studio'  // Translation Studio (/translation-studio)
+  | 'global';             // 모든 영역에 노출
+
+/** 액션 카테고리 — 팔레트 그룹핑 + 필터 */
+export type ActionCategory =
+  | 'navigation'   // 탭 전환 / 페이지 이동
+  | 'ai'           // 노아 제안·리라이트·자동완성
+  | 'edit'         // 편집·저장·실행
+  | 'view'         // 보기·레이아웃·테마
+  | 'data'         // 가져오기·내보내기·동기화
+  | 'help'         // 도움말·튜토리얼
+  | 'system';      // 설정·디버그
+
+/** i18n 라벨 — 4언어. 미지정 키는 label 폴백. */
+export interface ActionI18n {
+  ko?: string;
+  en?: string;
+  ja?: string;
+  zh?: string;
+}
+
+/** 단일 액션 정의. action 자체는 등록 시점에 주입 (런타임 context 의존). */
+export interface ActionDef {
+  /** 고유 ID. 영역 prefix 권장 (예: "studio:tab-world", "global:open-settings") */
+  id: string;
+  /** 폴백 라벨 (영문 권장). i18n 우선. */
+  label: string;
+  i18n?: ActionI18n;
+  area: ActionArea;
+  category: ActionCategory;
+  /** 단축키 힌트 (표시용 — 실제 바인딩은 KeyboardRegistry에서) */
+  shortcut?: string;
+  /** 검색 가산점 키워드 (영문·한국어 모두) */
+  keywords?: string[];
+  /** 위험 액션 표시 (예: delete) — UI에서 빨간색 처리 */
+  destructive?: boolean;
+  /** false 면 팔레트에서 숨김 (조건부 노출) */
+  enabled?: boolean;
+}
+
+/** 등록 시점 — action 함수와 결합된 형태 */
+export interface RegisteredAction extends ActionDef {
+  action: () => void | Promise<void>;
+}
+
+// ============================================================
+// PART 2 — Catalog (read-only definitions, no actions yet)
+// ============================================================
+
+/**
+ * 액션 카탈로그 — 각 영역에서 사용 가능한 액션 정의.
+ * 실제 action 함수는 런타임에 useStudioActions() 등에서 주입.
+ *
+ * 신규 액션 추가 시 여기에 정의 → 영역별 hook 에서 action 바인딩.
+ */
+export const ACTION_CATALOG: Readonly<Record<string, ActionDef>> = Object.freeze({
+  // ─── Studio (Novel) ─────────────────────────────────────────
+  // [풀점검 priority 16 — 2026-06-08] Ctrl+K Studio Global Search 오버레이 (useStudioKeyboard onGlobalSearch).
+  // Ctrl+P = Command Palette (이 파일 위쪽 'studio:cmd-palette'). Ctrl+K = 세션·히스토리 즉시 검색. 분리 유지.
+  'studio:global-search':   { id: 'studio:global-search',   label: 'Global search',   i18n: { ko: '전역 검색', ja: 'グローバル検索', zh: '全局搜索' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+K', keywords: ['search', '검색', 'find'] },
+  'studio:tab-world':       { id: 'studio:tab-world',       label: 'World tab',       i18n: { ko: '세계관 탭', ja: '世界観タブ', zh: '世界观' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+1' },
+  'studio:tab-characters':  { id: 'studio:tab-characters',  label: 'Characters tab',  i18n: { ko: '캐릭터 탭', ja: 'キャラタブ', zh: '角色' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+2' },
+  'studio:tab-direction':   { id: 'studio:tab-direction',   label: 'Direction tab',   i18n: { ko: '연출 탭', ja: '演出', zh: '导演' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+3' },
+  'studio:tab-writing':     { id: 'studio:tab-writing',     label: 'Writing tab',     i18n: { ko: '집필 탭',  ja: '執筆', zh: '写作' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+4' },
+  'studio:tab-style':       { id: 'studio:tab-style',       label: 'Style tab',       i18n: { ko: '스타일 탭', ja: 'スタイル', zh: '风格' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+5' },
+  'studio:tab-manuscript':  { id: 'studio:tab-manuscript',  label: 'Manuscript tab',  i18n: { ko: '원고 탭', ja: '原稿', zh: '稿件' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+6' },
+  'studio:tab-history':     { id: 'studio:tab-history',     label: 'History tab',     i18n: { ko: '히스토리', ja: '履歴', zh: '历史' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+7' },
+  'studio:tab-settings':    { id: 'studio:tab-settings',    label: 'Settings tab',    i18n: { ko: '설정 탭', ja: '設定', zh: '设置' }, area: 'studio', category: 'navigation', shortcut: 'Ctrl+8' },
+  'studio:ai-generate':     { id: 'studio:ai-generate',     label: 'Noa proposal',    i18n: { ko: '노아 제안', ja: 'ノア提案', zh: '诺亚建议' }, area: 'studio', category: 'ai', keywords: ['draft', '초고', '노아'] },
+  'studio:ai-refine':       { id: 'studio:ai-refine',       label: 'Noa refine',      i18n: { ko: '노아 다듬기', ja: 'ノア推敲', zh: '诺亚润色' }, area: 'studio', category: 'ai', keywords: ['polish', '퇴고', '노아'] },
+  // [Batch 3 rank 3 — 2026-06-07] worldgraph 인터랙티브 그래프 에디터 (WorldStudioView 마운트).
+  'studio:world-fill':           { id: 'studio:world-fill',           label: 'Fill world fact (Noa draft)', i18n: { ko: '세계관 fact 노아 초안', ja: '世界観 fact ノア下書き', zh: '世界观 fact 诺亚草案' }, area: 'studio', category: 'ai', keywords: ['worldfact', 'fill', 'graph', '세계관', '그래프', '노아'] },
+  'studio:world-graph-validate': { id: 'studio:world-graph-validate', label: 'Validate world graph',       i18n: { ko: '세계관 그래프 검증', ja: '世界観グラフ検証', zh: '验证世界观图' }, area: 'studio', category: 'edit', keywords: ['validate', 'consistency', '검증', '정합'] },
+  // [Batch 3 rank 5 — 2026-06-07] 작가 보조함 18 모듈 사이드바 토글.
+  'studio:toolbox-open':         { id: 'studio:toolbox-open',         label: 'Open writer assist panel (18 modules)', i18n: { ko: '작가 보조함 (18 모듈) 열기', ja: '作家補助パネル', zh: '打开作家辅助面板' }, area: 'studio', category: 'view', keywords: ['assist', 'sidebar', 'creative', '보조함', '사이드바', '품질', 'qa', 'foreshadow', 'persona'] },
+
+  // ─── Translation Studio ─────────────────────────────────────
+  'translate:run-stage':    { id: 'translate:run-stage',    label: 'Run translation stage', i18n: { ko: '번역 단계 실행', ja: '翻訳ステージ', zh: '翻译阶段' }, area: 'translation-studio', category: 'edit' },
+  'translate:swap-track':   { id: 'translate:swap-track',   label: 'Swap faithful/market track', i18n: { ko: '트랙 전환', ja: 'トラック切替', zh: '切换路径' }, area: 'translation-studio', category: 'edit' },
+  // [Batch 1 rank 4 — 2026-06-07] 12 패널 (6 좌 + 6 우) — Cmd+K 팔레트 진입.
+  // Left panels — panel-registry.ts LEFT_PANELS 와 1:1 매핑.
+  'translate:open-explorer':  { id: 'translate:open-explorer',  label: 'Open Explorer (left)',   i18n: { ko: '프로젝트 목록 열기', ja: 'エクスプローラー', zh: '打开资源管理器' }, area: 'translation-studio', category: 'navigation', keywords: ['files', 'chapter', '파일', '챕터'] },
+  'translate:open-glossary':  { id: 'translate:open-glossary',  label: 'Open Glossary (left)',   i18n: { ko: '용어집 열기', ja: '用語集', zh: '打开术语表' }, area: 'translation-studio', category: 'navigation', keywords: ['terms', '용어'] },
+  'translate:open-history':   { id: 'translate:open-history',   label: 'Open History (left)',    i18n: { ko: '번역 기록 열기', ja: '翻訳履歴', zh: '打开翻译历史' }, area: 'translation-studio', category: 'navigation', keywords: ['log', '기록'] },
+  'translate:open-multilang': { id: 'translate:open-multilang', label: 'Open Multi-lang batch (left)', i18n: { ko: '다국어 배치 번역 열기', ja: '多言語バッチ', zh: '多语言批量' }, area: 'translation-studio', category: 'navigation', keywords: ['batch', '배치'] },
+  'translate:open-backup':    { id: 'translate:open-backup',    label: 'Open Save & backup (left)', i18n: { ko: '저장 · 백업 · 보내기 열기', ja: '保存・バックアップ', zh: '保存与备份' }, area: 'translation-studio', category: 'data', keywords: ['save', 'export', '저장', '백업', '내보내기'] },
+  'translate:open-settings':  { id: 'translate:open-settings',  label: 'Open Settings (left)',   i18n: { ko: '환경 설정 열기', ja: '設定', zh: '设置' }, area: 'translation-studio', category: 'system' },
+  // Right panels — panel-registry.ts RIGHT_PANELS 와 1:1 매핑.
+  'translate:open-actions':   { id: 'translate:open-actions',   label: 'Open Translate actions (right)', i18n: { ko: '번역 실행 패널 열기', ja: '翻訳実行', zh: '翻译执行' }, area: 'translation-studio', category: 'edit', keywords: ['run', 'translate', '실행', '번역'] },
+  'translate:open-chat':      { id: 'translate:open-chat',      label: 'Open Noa support (right)', i18n: { ko: '노아 보조 패널 열기', ja: 'ノア補助パネル', zh: '打开诺亚辅助面板' }, area: 'translation-studio', category: 'ai', keywords: ['noa', '노아', '지원'] },
+  'translate:open-audit':     { id: 'translate:open-audit',     label: 'Open Quality Review (right)', i18n: { ko: '품질 점검 패널 열기', ja: '品質確認', zh: '质量检查' }, area: 'translation-studio', category: 'view', keywords: ['audit', 'quality', '점검', '품질'] },
+  'translate:open-localization': { id: 'translate:open-localization', label: 'Open Localization Review (right)', i18n: { ko: '현지 판단 패널 열기', ja: '現地判断', zh: '本地化判断' }, area: 'translation-studio', category: 'view', keywords: ['localization', 'reader', '현지', '판단', '독자'] },
+  'translate:open-reference': { id: 'translate:open-reference', label: 'Open References (right)', i18n: { ko: '참고자료 패널 열기', ja: '参考資料', zh: '参考资料' }, area: 'translation-studio', category: 'view', keywords: ['ref', '참고'] },
+  'translate:open-adoption':  { id: 'translate:open-adoption',  label: 'Open Segment Adoption (right)', i18n: { ko: '단락별 채택 패널 열기', ja: '段落採択', zh: '段落采纳' }, area: 'translation-studio', category: 'edit', keywords: ['adopt', 'segment', '채택', '단락'] },
+  'translate:open-signoff':   { id: 'translate:open-signoff',   label: 'Open Author Sign-off (right)', i18n: { ko: '작가 승인 패널 열기', ja: '作家サインオフ', zh: '作者签字' }, area: 'translation-studio', category: 'edit', keywords: ['signoff', 'author', '서명', '승인'] },
+
+  // ─── Global ─────────────────────────────────────────────────
+  'global:open-settings':   { id: 'global:open-settings',   label: 'Open settings',  i18n: { ko: '설정 열기', ja: '設定', zh: '设置' }, area: 'global', category: 'system' },
+  'global:toggle-zen':      { id: 'global:toggle-zen',      label: 'Toggle Zen mode', i18n: { ko: '젠 모드', ja: 'ゼンモード', zh: '禅模式' }, area: 'global', category: 'view' },
+  // [P20 루프2 — 2026-06-08] 단축키 도움말 — 영역별 4-way 키 표준 발견성 강화.
+  'global:shortcuts-help':  { id: 'global:shortcuts-help',  label: 'Keyboard shortcuts help', i18n: { ko: '단축키 도움말', ja: 'ショートカット一覧', zh: '快捷键帮助' }, area: 'global', category: 'help', shortcut: 'Ctrl+/', keywords: ['shortcut', 'help', '단축키', '도움말'] },
+});
+
+// ============================================================
+// PART 3 — Helpers
+// ============================================================
+
+/** 언어별 라벨 해석. i18n 우선, 폴백 label. */
+export function resolveLabel(def: ActionDef, lang: AgentLanguage | 'en'): string {
+  if (def.i18n) {
+    const v = def.i18n[lang as keyof ActionI18n];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return def.label;
+}
+
+/**
+ * 영역 필터 — 현재 영역 + global 액션만 노출.
+ * @param area 현재 활성 영역
+ * @param includeGlobal global 액션 포함 여부 (기본 true)
+ */
+export function filterByArea(area: ActionArea, includeGlobal = true): ActionDef[] {
+  return Object.values(ACTION_CATALOG).filter(
+    (d) => d.area === area || (includeGlobal && d.area === 'global'),
+  );
+}
+
+/** 카테고리별 그룹 (UI 그룹핑용) */
+export function groupByCategory(
+  defs: ReadonlyArray<ActionDef>,
+): Record<ActionCategory, ActionDef[]> {
+  const out: Record<ActionCategory, ActionDef[]> = {
+    navigation: [], ai: [], edit: [], view: [], data: [], help: [], system: [],
+  };
+  for (const d of defs) out[d.category].push(d);
+  return out;
+}
+
+// [P10 루프2 — 2026-06-08] 런타임 binder 는 action-binder.ts 로 분리.
+// 하위 호환 — 기존 caller 가 action-registry 에서 import 하던 함수 유지.
+export { getActionDef, bindAction, bindActions } from './action-binder';
+
+// ============================================================
+// PART 4 — i18n consistency audit (P18)
+// ============================================================
+
+/**
+ * [P18 루프2 — 2026-06-08] ACTION_CATALOG i18n 완전성 감사.
+ * 각 액션이 4 언어 (ko/en/ja/zh) 모두 정의됐는지 검사. 누락 액션 ID 목록 반환.
+ *
+ * @param required  필수 언어 목록 (기본 4 언어 전부)
+ * @returns 누락 항목: { actionId, missingLangs }
+ */
+export function auditActionI18n(
+  required: ReadonlyArray<keyof ActionI18n> = ['ko', 'en', 'ja', 'zh'],
+): Array<{ id: string; missingLangs: string[] }> {
+  const out: Array<{ id: string; missingLangs: string[] }> = [];
+  for (const def of Object.values(ACTION_CATALOG)) {
+    const missing: string[] = [];
+    for (const lang of required) {
+      // en 은 label 폴백으로 간주.
+      if (lang === 'en') {
+        const v = def.i18n?.en;
+        const labelOk = def.label && def.label.trim().length > 0;
+        if (!v && !labelOk) missing.push('en');
+        continue;
+      }
+      const v = def.i18n?.[lang];
+      if (!v || !v.trim()) missing.push(String(lang));
+    }
+    if (missing.length > 0) {
+      out.push({ id: def.id, missingLangs: missing });
+    }
+  }
+  return out;
+}

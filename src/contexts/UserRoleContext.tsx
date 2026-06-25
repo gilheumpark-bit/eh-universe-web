@@ -164,9 +164,3 @@ export function useIsDeveloperMode(): boolean {
   const ctx = useUserRoleSafe();
   return ctx?.developerMode ?? false;
 }
-
-/** Code Studio 접근 가능 여부 — developer role || developerMode */
-export function useCanAccessCodeStudio(): boolean {
-  const ctx = useUserRoleSafe();
-  return ctx?.role === 'developer' || ctx?.developerMode === true;
-}

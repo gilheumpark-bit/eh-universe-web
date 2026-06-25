@@ -7,7 +7,7 @@
 // MaintenanceBanner — 홈 메인 점검중 안내 배너 (2026-05-16 신설)
 //
 // 표시 조건:
-//   기본: ON (alpha 단계 시각 시그널)
+//   기본: ON (운영 정비 시각 시그널)
 //   OFF: `process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'false'`
 //
 // 4언어 (ko/en/ja/zh) + dismissible (sessionStorage).
@@ -30,10 +30,10 @@ const COPY = {
     zh: '维护中',
   },
   body: {
-    ko: '알파 단계 — 작가 본심 대비 시스템 정비가 진행 중입니다. 일부 화면이 일시적으로 다를 수 있습니다.',
-    en: 'Alpha stage — system tuning in progress for final review. Some screens may behave differently.',
-    ja: 'アルファ段階 — 最終審査に向けたシステム調整中。一部画面が一時的に異なる場合があります。',
-    zh: '内测阶段 — 正在为最终评审进行系统调整。部分页面可能暂时不同。',
+    ko: '운영 정비가 진행 중입니다. 일부 화면이 일시적으로 다르게 보일 수 있습니다.',
+    en: 'Operational tuning is in progress. Some screens may temporarily behave differently.',
+    ja: '運用調整を進めています。一部画面が一時的に異なる場合があります。',
+    zh: '正在进行运营调整。部分页面可能暂时不同。',
   },
   schedule: {
     ko: '6월 중순 정식 오픈 예정',
@@ -63,18 +63,26 @@ export default function MaintenanceBanner() {
 
   // SSR-safe mount + env flag + sessionStorage check
   useEffect(() => {
-    // [C] env flag — 'false' 명시 시에만 차단. 기본 ON
-    if (process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'false') {
-      setVisible(false);
-      return;
-    }
-    try {
-      const dismissed = sessionStorage.getItem(DISMISS_KEY) === '1';
-      setVisible(!dismissed);
-    } catch (err) {
-      logger.warn('MaintenanceBanner', 'sessionStorage read failed', err);
-      setVisible(true); // fallback: show
-    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      // [C] env flag — 'false' 명시 시에만 차단. 기본 ON
+      if (process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'false') {
+        setVisible(false);
+        return;
+      }
+      try {
+        const dismissed = sessionStorage.getItem(DISMISS_KEY) === '1';
+        setVisible(!dismissed);
+      } catch (err) {
+        logger.warn('MaintenanceBanner', 'sessionStorage read failed', err);
+        setVisible(true); // fallback: show
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   const handleDismiss = () => {

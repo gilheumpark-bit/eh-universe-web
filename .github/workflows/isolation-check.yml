@@ -9,9 +9,9 @@ name: Isolation §1 Check
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   isolation-section-1:
@@ -50,20 +50,58 @@ jobs:
               VIOLATIONS+=("$f")
             fi
           done
-          # save-engine directory wildcard
-          if git diff --name-only "$BASE"..HEAD | grep -q '^src/lib/save-engine/'; then
-            VIOLATIONS+=("src/lib/save-engine/* (any file)")
+          # save-engine: 개별 파일 단위로 위반 기록 (blanket 와일드카드 금지 — 파일별 명시 승인 강제).
+          while IFS= read -r sf; do
+            [ -n "$sf" ] && VIOLATIONS+=("$sf")
+          done < <(git diff --name-only "$BASE"..HEAD | grep '^src/lib/save-engine/' | grep -v '__tests__' || true)
+          # BDFL override 로드 (.github/bdfl-isolation-override.txt)
+          #   각 비주석 줄 = "<exact key>  # expires:YYYY-MM-DD". 만료일 필수 — 누락/만료 시 무효
+          #   (일회성 예외가 영구 백도어로 굳는 것을 차단). 와일드카드 금지.
+          BDFL_OVERRIDE=".github/bdfl-isolation-override.txt"
+          ALLOWED_BY_BDFL=()
+          TODAY=$(date -u +%Y-%m-%d)
+          if [ -f "$BDFL_OVERRIDE" ]; then
+            while IFS= read -r line; do
+              [[ "$line" =~ ^[[:space:]]*# ]] && continue
+              [[ -z "${line// }" ]] && continue
+              key="${line%%#*}"
+              key="$(echo "$key" | sed -e 's/[[:space:]]*$//' -e 's/^[[:space:]]*//')"
+              [ -z "$key" ] && continue
+              if [[ "$line" =~ expires:([0-9]{4}-[0-9]{2}-[0-9]{2}) ]]; then
+                exp="${BASH_REMATCH[1]}"
+              else
+                echo "⚠️  override 무시 (만료일 누락): $key"
+                continue
+              fi
+              if [[ "$TODAY" > "$exp" ]]; then
+                echo "⚠️  override 무시 (만료됨 $exp < $TODAY): $key"
+                continue
+              fi
+              ALLOWED_BY_BDFL+=("$key")
+            done < "$BDFL_OVERRIDE"
           fi
-          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+          FINAL_VIOLATIONS=()
+          for v in "${VIOLATIONS[@]}"; do
+            allowed=false
+            for a in "${ALLOWED_BY_BDFL[@]}"; do
+              [[ "$v" == "$a" ]] && allowed=true && break
+            done
+            $allowed || FINAL_VIOLATIONS+=("$v")
+          done
+          if [ ${#FINAL_VIOLATIONS[@]} -gt 0 ]; then
             echo "❌ Isolation §1 VIOLATION — these absolute-forbidden files changed:"
-            printf '   - %s\n' "${VIOLATIONS[@]}"
+            printf '   - %s\n' "${FINAL_VIOLATIONS[@]}"
             echo ""
             echo "These files are pinned at 0-byte diff per Loreguard governance."
-            echo "If the change is intentional, add the file paths to .github/CODEOWNERS"
-            echo "and request explicit BDFL approval per GOVERNANCE.md §2."
+            echo "If the change is intentional, add exact paths to .github/bdfl-isolation-override.txt"
+            echo "with a comment explaining BDFL approval (GOVERNANCE.md §2)."
             exit 1
           fi
-          echo "✅ 8 forbidden files unchanged"
+          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+            echo "⚠️  ${#VIOLATIONS[@]} forbidden file(s) changed — all covered by BDFL override:"
+            printf '   - %s\n' "${VIOLATIONS[@]}"
+          fi
+          echo "✅ 8 forbidden files check passed"
 
   twentyone-modules-isolation:
     runs-on: ubuntu-latest

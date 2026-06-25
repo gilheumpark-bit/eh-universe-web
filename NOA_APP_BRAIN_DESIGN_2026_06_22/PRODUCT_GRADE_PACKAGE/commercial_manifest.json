@@ -1,0 +1,59 @@
+{
+  "package": "NOA_APP_BRAIN_PRODUCT_GRADE_PACKAGE",
+  "version": "2026-06-22.1",
+  "target_app": "EH Universe Web",
+  "product_name_recommendation": "NOA Studio Brain",
+  "commercial_design_status": "PRODUCT_GRADE_DESIGN_READY",
+  "runtime_integration": "NOT_APPLIED",
+  "sellable_claim": "DESIGN_ONLY",
+  "commercial_readiness_level": "CRL-1.5",
+  "scores": {
+    "sellability_score": 0.74,
+    "release_readiness": 0.31,
+    "runtime_integration": 0.0,
+    "product_positioning": 0.82,
+    "safety_design": 0.78,
+    "demo_readiness": 0.45
+  },
+  "product_promise": "AI 창작 보조를 작품 보호형 창작 관제 시스템으로 바꾼다.",
+  "core_modules": [
+    "tab_expert_router",
+    "safe_apply_policy",
+    "work_receipt_memory",
+    "export_guard",
+    "recovery_coach",
+    "project_health_panel"
+  ],
+  "first_build_files": [
+    "src/lib/noa/tab-expert-registry.ts",
+    "src/lib/noa/app-brain-policy.ts",
+    "src/lib/noa/app-brain-receipt.ts"
+  ],
+  "release_blockers": [
+    "no_runtime_integration",
+    "no_demo_project",
+    "no_acceptance_test_run",
+    "no_beta_evidence"
+  ],
+  "research_lineage": {
+    "included": true,
+    "original_baseline_mode": "referenced_source_of_truth",
+    "lineage_manifest": "research_lineage_manifest.json",
+    "lineage_document": "P12_research_lineage_and_original_baseline.md"
+  },
+  "documents": [
+    "P00_product_thesis.md",
+    "P01_commercial_product_spec.md",
+    "P02_runtime_architecture_detail.md",
+    "P03_tab_expert_playbooks.md",
+    "P04_ux_and_product_language.md",
+    "P05_evidence_ip_safety_and_receipts.md",
+    "P06_quality_gates_and_acceptance_tests.md",
+    "P07_packaging_pricing_and_go_to_market.md",
+    "P08_implementation_backlog.md",
+    "P09_sales_demo_script.md",
+    "P10_risk_register.md",
+    "P11_product_grade_verification_receipt.md",
+    "P12_research_lineage_and_original_baseline.md"
+  ]
+}

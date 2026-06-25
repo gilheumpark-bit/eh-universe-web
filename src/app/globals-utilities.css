@@ -1,7 +1,7 @@
 /* ============================================================
    globals-utilities.css
    Scrollbar, selection, smooth transitions, responsive/mobile
-   optimizations, Code Studio responsive + resize handle
+   optimizations, internal tool responsive + resize handle
    ============================================================ */
 
 /* ── Deep Link Highlight ── */
@@ -355,11 +355,11 @@ button, a, [role="button"] {
 }
 
 /* ============================================================
-   Code Studio — Responsive (Mobile/Tablet)
+   Internal Tool — Responsive (Mobile/Tablet)
    ============================================================ */
 
 @media (max-width: 767px) {
-  /* 코드 스튜디오 모바일: 사이드바 숨김, 풀스크린 에디터 */
+  /* 내부 도구 모바일: 사이드바 숨김, 풀스크린 에디터 */
   .cs-sidebar-mobile { display: none; }
   .cs-editor-mobile { width: 100vw; }
   .cs-right-panel-mobile { position: fixed; inset: 0; z-index: var(--z-overlay); }
@@ -386,7 +386,7 @@ button, a, [role="button"] {
 }
 
 /* ============================================================
-   Code Studio — Resize Handle
+   Internal Tool — Resize Handle
    ============================================================ */
 
 .cs-resize-handle {

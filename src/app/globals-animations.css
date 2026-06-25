@@ -333,6 +333,27 @@ html[data-theme-changing]::after {
   100% { transform: translateX(400%); }
 }
 
+/* ============================================================
+   Toast Auto-dismiss Drain (P-06 — 33Hz JS setInterval 대체)
+   진행바를 scaleX 1→0 으로 compositor 에서만 애니메이션 (layout 0, React 리렌더 0).
+   animation-duration 은 토스트별로 인라인 style 로 주입.
+   ============================================================ */
+@keyframes toast-drain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.toast-drain-bar {
+  transform-origin: left;
+  opacity: 0.6;
+  animation-name: toast-drain;
+  animation-duration: var(--toast-drain-duration, 4000ms);
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-drain-bar { animation: none; transform: scaleX(1); }
+}
+
 @keyframes glitch {
   0% { text-shadow: 2px 0 var(--color-accent-amber), -2px 0 var(--color-accent-red); }
   25% { text-shadow: -2px 0 var(--color-accent-amber), 2px 0 var(--color-accent-red); }
@@ -391,7 +412,7 @@ html[data-theme-changing]::after {
 @keyframes ss-pulse { 0%,100%{opacity:0.2} 50%{opacity:1} }
 
 /* ============================================================
-   Code Studio — Animation System
+   Internal Tool — Animation System
    ============================================================ */
 
 @keyframes cs-fade-in {
@@ -686,6 +707,49 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
+}
+.loading-skeleton-shape {
+  width: var(--loading-skeleton-width);
+  height: var(--loading-skeleton-height);
+}
+
+@keyframes studio-scale-in-x {
+  from { transform: translateY(-50%) scaleX(0); }
+  to { transform: translateY(-50%) scaleX(1); }
+}
+
+@keyframes studio-scale-in-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.studio-scale-in-x {
+  transform-origin: left;
+  animation: studio-scale-in-x 200ms ease-out;
+}
+
+.studio-scale-in-y {
+  transform-origin: top;
+  animation: studio-scale-in-y 200ms ease-out;
+}
+
+@keyframes mobile-tabbar-fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mobile-tabbar-indicator-scale {
+  from { transform: translateX(-50%) scaleX(0); }
+  to { transform: translateX(-50%) scaleX(1); }
+}
+
+.mobile-tabbar-fade-in-scale {
+  animation: mobile-tabbar-fade-in-scale 200ms ease-out forwards;
+  animation-delay: var(--mobile-tab-delay, 0ms);
+}
+
+.mobile-tabbar-indicator-scale {
+  animation: mobile-tabbar-indicator-scale 200ms ease-out;
 }
 
 /* Hover lift for cards */

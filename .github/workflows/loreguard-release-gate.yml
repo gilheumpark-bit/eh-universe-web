@@ -1,0 +1,50 @@
+name: Loreguard Release Gate
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+# 최소 권한: 릴리스 게이트 검증은 읽기만 필요 (CodeQL actions/missing-workflow-permissions)
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Day 0 gate report
+        run: npm run gate:baseline -- --write docs/gates/day0-baseline-2026-06-12.md
+
+      - name: Generate release evidence status
+        run: npm run gate:evidence -- --write docs/gates/release-evidence-status-2026-06-12.json
+
+      - name: Generate privacy release gate
+        run: npm run gate:privacy -- --write docs/gates/privacy-release-gate-2026-06-13.json
+
+      - name: Enforce release HOLD
+        run: npm run gate:release
+
+      - name: Upload gate report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: loreguard-day0-gate-report
+          path: |
+            docs/gates/day0-baseline-2026-06-12.md
+            docs/gates/release-evidence-status-2026-06-12.json
+            docs/gates/privacy-release-gate-2026-06-13.json
+          retention-days: 14

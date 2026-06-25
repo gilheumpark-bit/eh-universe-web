@@ -3,7 +3,7 @@
 // ============================================================
 // PART 1 — Imports & Types
 // ============================================================
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Languages,
   Loader2,
@@ -20,6 +20,9 @@ import {
   episodeFilePath,
 } from '@/lib/markdown-serializer';
 import type { TranslatedManuscriptEntry, AppLanguage } from '@/lib/studio-types';
+// [X2 — 2026-06-11] /api/translate 200+{blocked} 차단 계약 고지 (사일런트 차단 금지).
+import { checkBlockedJson } from '@/lib/noa/block-notice';
+import { checkPaywallJson } from '@/lib/noa/paywall-notice';
 
 type BatchLang = 'EN' | 'JP' | 'CN';
 
@@ -79,8 +82,32 @@ async function streamTranslateOneLang(
     }),
   });
   if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data: unknown = await res.json().catch(() => null);
+      const paywallMsg = checkPaywallJson(data);
+      if (paywallMsg) throw new Error(paywallMsg);
+      const apiMessage = data && typeof data === 'object' && typeof (data as { error?: unknown }).error === 'string'
+        ? (data as { error: string }).error
+        : res.statusText;
+      throw new Error(`HTTP ${res.status}: ${apiMessage}`);
+    }
     const errText = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
+  }
+  // [X2] 200 + JSON: NOA 차단 계약({blocked, reason}) 또는 비스트림 결과 —
+  // JSON 본문을 번역 텍스트로 리터럴 덤프하지 않는다 (사일런트 차단 금지)
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const data: unknown = await res.json().catch(() => null);
+    const blockedMsg = checkBlockedJson(data, 'multilang-batch');
+    if (blockedMsg) throw new Error(blockedMsg);
+    const result = (data as { result?: string } | null)?.result;
+    if (typeof result === 'string') {
+      onChunk(result, result.length);
+      return result;
+    }
+    throw new Error('Unexpected JSON response');
   }
   const reader = res.body?.getReader();
   if (!reader) throw new Error('No response body');
@@ -173,6 +200,14 @@ export function MultiLangBatchPanel() {
   const [running, setRunning] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // [fix] line196 missing-cleanup: 패널 언마운트 시 in-flight batch fetch를 abort해
+  // 닫힌 패널에 setState가 호출되는 것을 방지한다.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const toggleLang = useCallback((lang: BatchLang) => {
     if (running) return;
     setLangs(prev => ({ ...prev, [lang]: { ...prev[lang], enabled: !prev[lang].enabled } }));
@@ -229,6 +264,16 @@ export function MultiLangBatchPanel() {
             [lang]: { ...prev[lang], status: 'done', progress: 100, charCount: prev[lang].text.length },
           }));
         } catch (err) {
+          // [fix] line258 error-handling: 사용자가 Stop을 누르면 in-flight fetch가
+          // AbortError로 throw된다. 이를 'error' 상태로 표시하면 오해를 유발하므로
+          // abort(중지)인 경우 error 상태를 찍지 않고 idle로 되돌린다.
+          const isAbort =
+            ac.signal.aborted ||
+            (err instanceof Error && err.name === 'AbortError');
+          if (isAbort) {
+            setLangs(prev => ({ ...prev, [lang]: { ...prev[lang], status: 'idle' } }));
+            break;
+          }
           const msg = err instanceof Error ? err.message : String(err);
           setLangs(prev => ({
             ...prev,
@@ -317,7 +362,7 @@ export function MultiLangBatchPanel() {
                     type="button"
                     onClick={() => toggleLang(lang)}
                     disabled={running}
-                    className="flex items-center gap-2 min-w-0 flex-1 text-left disabled:cursor-not-allowed"
+                    className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left transition-colors hover:bg-white/[0.04] disabled:cursor-not-allowed"
                   >
                     <span
                       className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
@@ -391,7 +436,7 @@ export function MultiLangBatchPanel() {
               type="button"
               onClick={handleStart}
               disabled={!canStart}
-              className="w-full min-h-[40px] rounded-md bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple border border-accent-purple/40 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              className="w-full min-h-[44px] rounded-md bg-accent-purple/20 hover:bg-accent-purple/30 text-accent-purple border border-accent-purple/40 text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               title={canStart ? '선택한 언어로 순차 번역 시작' : source.trim().length < 20 ? '원문 20자 이상 필요' : '언어를 1개 이상 선택'}
             >
               <Play className="w-3.5 h-3.5" />
@@ -401,7 +446,7 @@ export function MultiLangBatchPanel() {
             <button
               type="button"
               onClick={handleStop}
-              className="w-full min-h-[40px] rounded-md bg-accent-red/15 hover:bg-accent-red/25 text-accent-red border border-accent-red/30 text-[12px] font-medium transition-colors flex items-center justify-center gap-1.5"
+              className="w-full min-h-[44px] rounded-md bg-accent-red/15 hover:bg-accent-red/25 text-accent-red border border-accent-red/30 text-[12px] font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               <Square className="w-3.5 h-3.5" />
               중지
@@ -412,7 +457,7 @@ export function MultiLangBatchPanel() {
             <button
               type="button"
               onClick={handleDownloadAll}
-              className="w-full min-h-[32px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5"
+              className="w-full min-h-[44px] rounded-md bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/30 text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5"
               title="완료된 언어를 translations/<lang>/volumes/vol-01/ep-001.md 저장소 호환 MD로 일괄 다운로드"
             >
               <FileDown className="w-3.5 h-3.5" />
@@ -423,7 +468,7 @@ export function MultiLangBatchPanel() {
           {completedCount >= 1 && (
             <p className="text-[9px] text-text-tertiary italic leading-tight">
               MD 파일 상단 주석에 권장 저장 경로(translations/&lt;lang&gt;/volumes/vol-01/ep-001.md) 포함.
-              소설 스튜디오 저장소에 그대로 넣으면 serializer가 자동 인식합니다.
+              창작 스튜디오 저장 구조에 넣으면 자동 인식합니다.
             </p>
           )}
         </div>

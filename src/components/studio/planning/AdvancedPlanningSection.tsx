@@ -10,10 +10,10 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, BarChart3, Shield, Info, CheckCircle2, Circle } from 'lucide-react';
 import type { StoryConfig, AppLanguage } from '@/lib/studio-types';
 import { PublishPlatform } from '@/lib/studio-types';
-import { L4, createT } from '@/lib/i18n';
+import { L4, createT, getStudioTranslations, normalizeAppLanguage } from '@/lib/i18n';
 import { PLATFORM_PRESETS, PLATFORM_BY_LANG } from '@/engine/types';
-import { TRANSLATIONS } from '@/lib/studio-constants';
 import { validateWorld, calcCompletionScore, WarningBadge, CompletionBar } from '../TierValidator';
+import { ProgressFill } from '../ProgressFill';
 
 interface AdvancedPlanningSectionProps {
   language: AppLanguage;
@@ -27,9 +27,11 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
   language, config, setConfig, totalEpisodes, tensionData,
 }) => {
   const tl = createT(language);
-  const t = TRANSLATIONS[language].planning;
-  const te = TRANSLATIONS[language].engine;
-  const isKO = language === 'KO';
+  const appLanguage = normalizeAppLanguage(language);
+  const dict = getStudioTranslations(appLanguage);
+  const t = dict.planning;
+  const te = dict.engine;
+  const isKO = appLanguage === 'KO';
 
   const [showWorldTier2, setShowWorldTier2] = useState(false);
   const [showWorldTier3, setShowWorldTier3] = useState(false);
@@ -64,7 +66,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       <div className="space-y-2">
         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{tl('planningExtra.publishPlatform')}</label>
         <div className="flex flex-wrap gap-2">
-          {[PublishPlatform.NONE, ...(PLATFORM_BY_LANG[language] || Object.values(PublishPlatform).filter(p => p !== 'NONE'))].map(pp => {
+          {[PublishPlatform.NONE, ...(PLATFORM_BY_LANG[appLanguage] || Object.values(PublishPlatform).filter(p => p !== 'NONE'))].map(pp => {
             const labels: Record<string, string> = {
               NONE: tl('planningExtra.none'), MUNPIA: '문피아', NOVELPIA: '노벨피아', KAKAOPAGE: '카카오페이지', SERIES: '시리즈',
               ROYAL_ROAD: 'Royal Road', WEBNOVEL: 'Webnovel', KINDLE_VELLA: 'Kindle Vella', WATTPAD: 'Wattpad',
@@ -116,7 +118,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
       </div>
 
       {/* 세계관 작성 가이드 배너 */}
-      <WorldBuildingGuide language={language} config={config} />
+      <WorldBuildingGuide language={appLanguage} config={config} />
 
       {/* 세계관 Tier 1 */}
       <div className="space-y-4 pt-6 border-t border-border">
@@ -144,7 +146,7 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
             </p>
           </div>
         )}
-        {(() => { const w = validateWorld(config, language); const s = calcCompletionScore(w, 11); return (<div className="space-y-2 mt-4"><CompletionBar score={s} language={language} /><WarningBadge warnings={w} language={language} /></div>); })()}
+        {(() => { const w = validateWorld(config, appLanguage); const s = calcCompletionScore(w, 11); return (<div className="space-y-2 mt-4"><CompletionBar score={s} language={appLanguage} /><WarningBadge warnings={w} language={appLanguage} /></div>); })()}
       </div>
 
       {/* Tier 2 */}
@@ -215,7 +217,12 @@ const AdvancedPlanningSection: React.FC<AdvancedPlanningSectionProps> = ({
               const isCurrentEp = i + 1 === config.episode;
               return (
                 <div key={i} className="flex-1 relative h-full group cursor-default">
-                  <div className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 ${isCurrentEp ? 'bg-gradient-to-t from-accent-blue to-cyan-400' : 'bg-gradient-to-t from-accent-blue/40 to-indigo-400/20'}`} style={{ height: `${height}%` }} />
+                  <div
+                    ref={(node) => {
+                      if (node) node.style.setProperty('--studio-bar-height', `${height}%`);
+                    }}
+                    className={`absolute bottom-0 w-full rounded-t-sm transition-[transform,opacity,background-color,border-color,color] duration-300 studio-bar-height ${isCurrentEp ? 'bg-gradient-to-t from-accent-blue to-cyan-400' : 'bg-gradient-to-t from-accent-blue/40 to-indigo-400/20'}`}
+                  />
                   {isCurrentEp && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-accent-blue rounded-full" />}
                   <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-bg-tertiary text-text-secondary text-[7px] px-1 py-0.5 rounded whitespace-nowrap">EP.{i + 1}: {height}%</div>
                 </div>
@@ -452,9 +459,9 @@ function WorldBuildingGuide({ language, config }: { language: AppLanguage; confi
             {/* Progress bar */}
             <div className="flex items-center gap-2 pt-1">
               <div className="flex-1 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
-                <div
+                <ProgressFill
+                  value={Math.round((totalFilled / totalFields) * 100)}
                   className="h-full rounded-full transition-[transform,opacity,background-color,border-color,color] duration-500 bg-gradient-to-r from-accent-amber to-emerald-400"
-                  style={{ width: `${Math.round((totalFilled / totalFields) * 100)}%` }}
                 />
               </div>
               <span className="text-[8px] font-mono text-text-quaternary">{Math.round((totalFilled / totalFields) * 100)}%</span>

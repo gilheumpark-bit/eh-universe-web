@@ -3,7 +3,7 @@
 // Source: NOA v50 Adaptive Control Plane
 // ============================================================
 
-import type { GradeEntry, AvailabilityResult, TacticalResult, TacticalPath } from "../types";
+import type { NoaGradeEntry, AvailabilityResult, TacticalResult, TacticalPath } from "../types";
 import { TACTICAL_PATHS } from "./paths";
 import { getTokenBudget, applyTokenBudget } from "./budget";
 
@@ -23,7 +23,7 @@ import { getTokenBudget, applyTokenBudget } from "./budget";
  * Phase 2: v50 전체 로직 포팅 (세부 경로 조건) 완료
  */
 export function selectTacticalPath(
-  grade: GradeEntry,
+  grade: NoaGradeEntry,
   availability: AvailabilityResult
 ): TacticalResult {
   // ── 조건 1: 예산 부족 시 강제 차단 ──
@@ -101,7 +101,7 @@ export function selectTacticalPath(
 
 function makeTactical(
   path: TacticalPath,
-  grade: GradeEntry,
+  grade: NoaGradeEntry,
   reason: string
 ): TacticalResult {
   return {

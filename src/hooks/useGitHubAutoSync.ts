@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useGitHubSync } from './useGitHubSync';
 import { logger } from '@/lib/logger';
+import { buildProjectStoragePath } from '@/lib/loreguard/project-storage-layout';
 
 // ============================================================
 // PART 1 — Types & Constants
@@ -27,6 +28,8 @@ export interface UseGitHubAutoSyncOptions {
   manuscripts: ReadonlyArray<{ episode: number; title?: string; content: string }>;
   /** commit message 에 들어갈 프로젝트 제목 */
   projectTitle: string;
+  /** 다중 프로젝트 저장소에서 원고 경로를 격리하는 현재 프로젝트 ID */
+  projectId?: string | null;
   /** debounce — 마지막 변경 후 N ms 뒤 push (기본 30초, GitHub rate limit 5000/h 여유) */
   debounceMs?: number;
 }
@@ -46,6 +49,15 @@ export interface UseGitHubAutoSyncReturn {
 
 const STORAGE_KEY_AUTOSYNC = 'noa-github-autosync';
 const DEFAULT_DEBOUNCE_MS = 30_000;
+
+export function buildGitHubAutoSyncPath(projectId: string | null | undefined, episode: number): string {
+  return buildProjectStoragePath({
+    projectId,
+    kind: 'episodeManuscript',
+    episode,
+    extension: 'md',
+  });
+}
 
 // ============================================================
 // PART 2 — localStorage helpers (export — Settings 토글 + ManuscriptTab 표시 공용)
@@ -92,9 +104,10 @@ export function useGitHubAutoSync(opts: UseGitHubAutoSyncOptions): UseGitHubAuto
     for (const ms of opts.manuscripts) {
       if (!ms.content || ms.content.trim().length === 0) continue;
       if (lastPushedRef.current.get(ms.episode) === ms.content) continue;
-      const path = `volumes/episode-${String(ms.episode).padStart(3, '0')}.md`;
+      const path = buildGitHubAutoSyncPath(opts.projectId, ms.episode);
       const ts = new Date().toISOString();
-      const message = `[autosync] ${opts.projectTitle} EP.${ms.episode} — ${ts}`;
+      const projectLabel = opts.projectId ? ` ${opts.projectId}` : '';
+      const message = `[autosync${projectLabel}] ${opts.projectTitle} EP.${ms.episode} — ${ts}`;
       try {
         const sha = await gh.saveFile(path, ms.content, message);
         if (sha) {
@@ -104,7 +117,7 @@ export function useGitHubAutoSync(opts: UseGitHubAutoSyncOptions): UseGitHubAuto
         logger.warn('useGitHubAutoSync', `push failed episode=${ms.episode}`, err);
       }
     }
-  }, [gh, opts.manuscripts, opts.projectTitle]);
+  }, [gh, opts.manuscripts, opts.projectId, opts.projectTitle]);
 
   // ============================================================
   // PART 4 — Debounce trigger

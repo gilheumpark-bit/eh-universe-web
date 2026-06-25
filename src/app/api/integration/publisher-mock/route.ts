@@ -9,7 +9,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { isValidTokenFormat, checkRateLimit } from '@/lib/lsp/auth';
+import { authorizeLspRequest, lspAuthHeaders } from '@/lib/lsp/auth';
 import { runLongArcVerification } from '@/lib/long-arc-verifier/orchestrator';
 import { buildEngagementProfile } from '@/lib/reader-sim/engagement-profiler';
 import { runRegressionCheck } from '@/lib/reader-sim/regression-runner';
@@ -57,17 +57,12 @@ interface PublisherSubmissionResponse {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  // 인증
-  const auth = request.headers.get('authorization') ?? '';
-  const token = auth.replace(/^Bearer\s+/i, '').trim();
-  if (!isValidTokenFormat(token)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-
-  // 레이트리밋
-  const rl = checkRateLimit(token);
-  if (!rl.allowed) {
-    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  const authResult = await authorizeLspRequest(request);
+  if (!authResult.ok) {
+    return NextResponse.json(
+      { error: authResult.error },
+      { status: authResult.status, headers: lspAuthHeaders(authResult) },
+    );
   }
 
   // Body
@@ -104,6 +99,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     title: 'PublisherMock',
     totalEpisodes: episodes.length,
     synopsis: body.synopsis,
+    // 의도적 double-cast: 이 mock 라우트는 length guardrail(min/max) 미사용. PclGuardrails 완화/캐스트 제거 금지 — deref 사이트 TS18048 유발.
     guardrails: { language: 'KO' } as unknown as StoryConfig['guardrails'],
     characters: (body.characters ?? []).map((c) => ({
       id: c.id,
@@ -168,7 +164,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   return NextResponse.json(response, {
     headers: {
-      'X-RateLimit-Remaining': String(rl.remaining),
+      'X-RateLimit-Remaining': String(authResult.remaining),
     },
   });
 }

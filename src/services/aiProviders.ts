@@ -1,9 +1,22 @@
 import { createServerGeminiClient } from '@/lib/google-genai-server';
-import { streamSparkAI, SPARK_SERVER_URL } from './sparkService';
+import type { GenerateContentConfig } from '@google/genai';
+import { streamSparkAI } from './sparkService';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
+import { isDgxDeveloperApiEnabled } from '@/lib/server-dgx-dev';
+import {
+  buildClaudeEffortConfig,
+  buildGeminiThinkingConfig,
+  buildOpenAICompatReasoningConfig,
+  type ReasoningLevel,
+} from '@/lib/ai-reasoning';
 
 const OPENAI_COMPAT_URLS: Record<string, string> = {
+  upstage: 'https://api.upstage.ai/v1/chat/completions',
   openai:  'https://api.openai.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/chat/completions',
+  qwen:    'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+  minimax: 'https://api.minimax.io/v1/chat/completions',
+  kimi:    'https://api.moonshot.ai/v1/chat/completions',
   groq:    'https://api.groq.com/openai/v1/chat/completions',
   mistral: 'https://api.mistral.ai/v1/chat/completions',
 };
@@ -11,7 +24,9 @@ const OPENAI_COMPAT_URLS: Record<string, string> = {
 export async function streamOpenAICompat(
   provider: string, apiKey: string, model: string,
   system: string, messages: { role: string; content: string }[], temperature: number,
+  maxTokens?: number,
   customBaseUrl?: string,
+  reasoningLevel?: ReasoningLevel,
 ): Promise<ReadableStream> {
   const url = customBaseUrl
     ? `${customBaseUrl.replace(/\/$/, '')}/v1/chat/completions`
@@ -21,6 +36,10 @@ export async function streamOpenAICompat(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (apiKey && !customBaseUrl) headers['Authorization'] = `Bearer ${apiKey}`;
 
+  const reasoningConfig = customBaseUrl
+    ? undefined
+    : buildOpenAICompatReasoningConfig(provider, reasoningLevel, model);
+
   const res = await fetch(url, {
     method: 'POST',
     headers,
@@ -29,7 +48,9 @@ export async function streamOpenAICompat(
       model,
       messages: [{ role: 'system', content: system }, ...messages],
       temperature,
+      max_tokens: maxTokens,
       stream: true,
+      ...(reasoningConfig ?? {}),
     }),
   });
 
@@ -45,8 +66,20 @@ export async function streamOpenAICompat(
 export async function streamClaude(
   apiKey: string, model: string,
   system: string, messages: { role: string; content: string }[], temperature: number,
-  maxTokens?: number
+  maxTokens?: number,
+  reasoningLevel?: ReasoningLevel,
 ): Promise<ReadableStream> {
+  const outputConfig = buildClaudeEffortConfig(reasoningLevel, model);
+  const body: Record<string, unknown> = {
+    model,
+    max_tokens: maxTokens ?? 8192,
+    system,
+    messages,
+    temperature,
+    stream: true,
+  };
+  if (outputConfig) body.output_config = outputConfig;
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -55,7 +88,7 @@ export async function streamClaude(
       'anthropic-version': '2023-06-01',
     },
     signal: AbortSignal.timeout(120_000),
-    body: JSON.stringify({ model, max_tokens: maxTokens ?? 8192, system, messages, temperature, stream: true }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -69,13 +102,24 @@ export async function streamClaude(
 
 export async function streamGemini(
   apiKey: string, model: string,
-  system: string, messages: { role: string; content: string }[], temperature: number
+  system: string, messages: { role: string; content: string }[], temperature: number,
+  maxTokens?: number,
+  reasoningLevel?: ReasoningLevel,
 ): Promise<ReadableStream> {
   const ai = createServerGeminiClient(apiKey);
   const contents = messages.map(m => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.content }],
   }));
+
+  // [QA-robustness (1)] 클라이언트 중단(stream.cancel) 시 업스트림 genai 호출을 abort 해
+  // 토큰/컴퓨트 낭비를 끊는다. timeout(120s)도 같은 컨트롤러로 통합 — 둘 중 먼저 발생한 쪽이 abort.
+  const controllerAbort = new AbortController();
+  const timeoutId = setTimeout(() => controllerAbort.abort(new Error('Gemini stream timeout')), 120_000);
+  const thinkingConfig = buildGeminiThinkingConfig(reasoningLevel, model) as
+    | GenerateContentConfig["thinkingConfig"]
+    | undefined;
+
   const stream = await ai.models.generateContentStream({
     model,
     contents,
@@ -83,7 +127,9 @@ export async function streamGemini(
       systemInstruction: system,
       temperature,
       topP: 0.95,
-      abortSignal: AbortSignal.timeout(120_000),
+      maxOutputTokens: maxTokens,
+      abortSignal: controllerAbort.signal,
+      ...(thinkingConfig ? { thinkingConfig } : {}),
     },
   });
 
@@ -104,14 +150,28 @@ export async function streamGemini(
 
           emittedText += text;
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            candidates: [{ content: { parts: [{ text }] } }],
+            choices: [{ delta: { content: text } }],
           })}\n\n`));
         }
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
       } catch (error) {
-        controller.error(error);
+        // cancel()로 abort 된 경우(소비자가 이미 떠남)는 정상 종료로 취급 — 노이즈 에러 억제.
+        if (controllerAbort.signal.aborted) {
+          try { controller.close(); } catch { /* already closed/errored */ }
+        } else {
+          controller.error(error);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    },
+    // [QA-robustness (1)] 소비자가 스트림을 취소하면 업스트림 generator 를 abort 해 finalize.
+    cancel(reason) {
+      clearTimeout(timeoutId);
+      if (!controllerAbort.signal.aborted) {
+        controllerAbort.abort(reason instanceof Error ? reason : new Error(String(reason ?? 'stream cancelled')));
       }
     },
   });
@@ -121,27 +181,32 @@ export async function streamGemini(
 export async function dispatchStream(
   provider: string, apiKey: string, model: string,
   system: string, messages: { role: string; content: string }[],
-  temperature: number, maxTokens?: number,
+  temperature: number, maxTokens?: number, reasoningLevel?: ReasoningLevel,
 ): Promise<{ ok: true; stream: ReadableStream } | { ok: false; error: string }> {
   try {
     switch (provider) {
       case 'spark':
         return { ok: true, stream: await streamSparkAI(model, system, messages, temperature, { userId: 'vercel-server', userTier: 'free' }) };
       case 'gemini':
-        return { ok: true, stream: await streamGemini(apiKey, model, system, messages, temperature) };
+        return { ok: true, stream: await streamGemini(apiKey, model, system, messages, temperature, maxTokens, reasoningLevel) };
+      case 'upstage':
       case 'openai':
+      case 'deepseek':
+      case 'qwen':
+      case 'minimax':
+      case 'kimi':
       case 'groq':
       case 'mistral':
-        return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature) };
+        return { ok: true, stream: await streamOpenAICompat(provider, apiKey, model, system, messages, temperature, maxTokens, undefined, reasoningLevel) };
       case 'ollama':
       case 'lmstudio':
-        // 프로덕션: DGX Spark 서버로 폴백 (모델명을 DGX 기본 모델로 교체)
-        if (SPARK_SERVER_URL) {
+        // DGX 개발 API 플래그가 켜진 경우에만 로컬/개발 서버로 폴백
+        if (isDgxDeveloperApiEnabled()) {
           return { ok: true, stream: await streamSparkAI(VLLM_MODEL_ID, system, messages, temperature, { userId: 'vercel-server', userTier: 'free' }) };
         }
         return { ok: false, error: 'Local providers must use /api/local-proxy' };
       case 'claude':
-        return { ok: true, stream: await streamClaude(apiKey, model, system, messages, temperature, maxTokens) };
+        return { ok: true, stream: await streamClaude(apiKey, model, system, messages, temperature, maxTokens, reasoningLevel) };
       default:
         return { ok: false, error: 'Invalid provider' };
     }

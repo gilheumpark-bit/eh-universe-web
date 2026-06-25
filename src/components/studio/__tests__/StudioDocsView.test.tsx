@@ -108,11 +108,13 @@ describe('StudioDocsView', () => {
 
   it('renders TOC navigation links for each section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
-    // 12 core + 7 polish = 19 anchor links in TOC
+    // [priority 12 — 2026-06-08] 12 core + 7 polish + 1 glossary = 20 anchor links in TOC
     const anchors = container.querySelectorAll('nav a[href^="#doc-"]');
-    expect(anchors.length).toBe(19);
+    expect(anchors.length).toBe(20);
     // First anchor points to #doc-start
     expect(anchors[0].getAttribute('href')).toBe('#doc-start');
+    // [priority 12 — 2026-06-08] glossary anchor — Project/Work/Manuscript 계층 정의.
+    expect(anchors[anchors.length - 1].getAttribute('href')).toBe('#doc-glossary');
   });
 
   it('registers IntersectionObserver for scroll tracking', () => {
@@ -146,7 +148,7 @@ describe('StudioDocsView', () => {
   it('renders Breadcrumbs section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
     expect(container.textContent).toMatch(/Breadcrumbs/);
-    expect(container.textContent).toMatch(/Project > Episode > Scene/);
+    expect(container.textContent).toMatch(/Library > Episode > Scene/);
   });
 
   it('renders Bulk Rename section', () => {
@@ -163,17 +165,45 @@ describe('StudioDocsView', () => {
     expect(container.textContent).toMatch(/red/);
   });
 
-  it('renders Work Profiler section', () => {
+  it('renders Work Analysis section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
-    expect(container.textContent).toMatch(/Work Profiler/);
+    expect(container.textContent).toMatch(/Work Analysis/);
     expect(container.textContent).toMatch(/Tension/);
     expect(container.textContent).toMatch(/Heatmap/);
   });
 
-  it('renders Plugin Marketplace section', () => {
+  it('renders Extensions section', () => {
     const { container } = render(<StudioDocsView lang="EN" />);
-    expect(container.textContent).toMatch(/Plugin Marketplace/);
-    expect(container.textContent).toMatch(/Canon Guard/);
+    expect(container.textContent).toMatch(/Extensions/);
+    expect(container.textContent).toMatch(/bundled studio extras/);
+  });
+
+  it('keeps visible docs copy free of retired and internal terms', () => {
+    const forbiddenVisibleCopy = [
+      /AI-generated/,
+      /AI generation/,
+      /NOA/,
+      /本地AI/,
+      /ChatSession/,
+      /legacy/i,
+      /Project \(top\)/,
+      /Project \(최상위\)/,
+      /Project \(最上位\)/,
+      /Project \(顶层\)/,
+      /Manuscript \(body text\)/,
+      /• Session:/,
+    ];
+
+    (['KO', 'EN', 'JP', 'CN'] as const).forEach(lng => {
+      const { container, unmount } = render(<StudioDocsView lang={lng} />);
+      const text = container.textContent ?? '';
+
+      forbiddenVisibleCopy.forEach(pattern => {
+        expect(text).not.toMatch(pattern);
+      });
+
+      unmount();
+    });
   });
 
   it('shows 7 new polish sections in TOC for every language', () => {

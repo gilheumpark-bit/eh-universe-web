@@ -15,10 +15,10 @@ export default function TranslationStudioLoading() {
         />
         <p className="font-mono text-xs uppercase tracking-wider text-text-tertiary">
           {L4(lang, {
-            ko: "번역 스튜디오 로딩 중…",
-            en: "LOADING TRANSLATION STUDIO…",
-            ja: "翻訳スタジオを読み込み中…",
-            zh: "正在加载翻译工作室…",
+            ko: "번역·현지화 작업실 여는 중…",
+            en: "LOADING TRANSLATION WORKSPACE…",
+            ja: "翻訳・ローカライズ作業室を読み込み中…",
+            zh: "正在加载翻译与本地化工作台…",
           })}
         </p>
       </div>

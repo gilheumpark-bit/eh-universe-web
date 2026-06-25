@@ -1,0 +1,63 @@
+/* ============================================================
+   Loreguard export cards — tex-*
+   ============================================================ */
+
+.eh-app .tex-push { margin-left: auto; }
+.eh-app .tex-muted-row { color: var(--ink-3); }
+.eh-app .tex-muted-row-start { align-items: flex-start; color: var(--ink-3); }
+.eh-app .tex-copy-flex { flex: 1; min-width: 0; }
+.eh-app .tex-value { max-width: min(52ch, 68%); margin-left: auto; text-align: right; overflow-wrap: anywhere; }
+.eh-app .tex-break-value { word-break: break-all; }
+.eh-app .tex-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.eh-app .tex-list-row { align-items: flex-start; border-top: 1px solid var(--line); }
+.eh-app .tex-list-row.is-editing { grid-column: 1 / -1; }
+.eh-app .tex-edit-form { display: grid; gap: 8px; width: 100%; }
+.eh-app .tex-form-label { align-items: center; }
+.eh-app .tex-form-label-top { align-items: flex-start; }
+.eh-app .tex-control-fill { flex: 1; min-width: 0; justify-content: flex-start; }
+.eh-app .tex-textarea { resize: vertical; }
+.eh-app .tex-action-row { display: flex; gap: 8px; justify-content: flex-end; }
+.eh-app .tex-dot-top { margin-top: 5px; }
+.eh-app .tex-row-body { flex: 1; min-width: 0; }
+.eh-app .tex-meta-line { display: block; color: var(--ink-3); font-size: 11.5px; }
+.eh-app .tex-meta-warn { margin-top: 4px; color: var(--c-amber); }
+.eh-app .tex-meta-ok { margin-top: 4px; color: var(--c-green); }
+.eh-app .tex-note-row { margin-top: 8px; color: var(--ink-3); }
+.eh-app .tex-notice-row { color: var(--ink-2); font-size: 12px; }
+.eh-app .tex-footnote-row { color: var(--ink-3); font-size: 11.5px; }
+.eh-app .tex-checklist-head { margin-bottom: 12px; }
+.eh-app .tex-head-label { display: inline-flex; align-items: center; gap: 8px; }
+.eh-app .tex-range-row { gap: 8px; }
+.eh-app .tex-range-label { width: 78px; flex-shrink: 0; }
+.eh-app .tex-range-input { flex: 1; min-width: 0; }
+.eh-app .tex-range-value { width: 64px; text-align: right; }
+.eh-app .tex-advisor-field { display: grid; gap: 6px; }
+.eh-app .tex-advisor-label { color: var(--ink-3); font-size: 12px; font-weight: 700; }
+.eh-app .tex-advisor-textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+}
+.eh-app .tex-summary-value { max-width: 68%; margin-left: auto; text-align: right; overflow-wrap: anywhere; }
+.eh-app .tex-prewrap { white-space: pre-wrap; }
+.eh-app .tex-full-cta { width: 100%; justify-content: center; }
+.eh-app .tex-manuscript-btn { width: 100%; justify-content: flex-start; }
+.eh-app .tex-manuscript-btn.is-active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--card-2)); }
+.eh-app .tex-muted-push { margin-left: auto; color: var(--ink-3); }
+
+@media (max-width: 520px) {
+  .eh-app .tex-value { max-width: 100%; text-align: left; }
+  .eh-app .tex-summary-value { max-width: 100%; text-align: left; }
+  .eh-app .tex-range-row { align-items: stretch; }
+  .eh-app .tex-range-label,
+  .eh-app .tex-range-value { width: auto; }
+  .eh-app .tex-muted-row-start { flex-direction: column; gap: 4px; }
+  .eh-app .tex-action-row { justify-content: stretch; }
+  .eh-app .tex-action-row > .mini-btn { flex: 1; justify-content: center; }
+}

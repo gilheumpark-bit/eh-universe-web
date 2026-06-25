@@ -8,12 +8,10 @@
 const PAGE_ROUTES: { route: string; modulePath: string }[] = [
   { route: '/', modulePath: '@/app/page' },
   { route: '/studio', modulePath: '@/app/studio/page' },
-  { route: '/code-studio', modulePath: '@/app/code-studio/page' },
   { route: '/translation-studio', modulePath: '@/app/translation-studio/page' },
-  { route: '/network', modulePath: '@/app/network/page' },
-  { route: '/archive', modulePath: '@/app/archive/page' },
-  { route: '/codex', modulePath: '@/app/codex/page' },
-  { route: '/tools', modulePath: '@/app/tools/page' },
+  { route: '/docs', modulePath: '@/app/docs/page' },
+  { route: '/pricing', modulePath: '@/app/pricing/page' },
+  { route: '/verify', modulePath: '@/app/verify/page' },
 ];
 
 // Mock next/navigation since page modules use it
@@ -75,7 +73,7 @@ jest.mock('@supabase/supabase-js', () => ({
 
 describe('Page route modules', () => {
   test('all route module paths are defined', () => {
-    expect(PAGE_ROUTES.length).toBeGreaterThanOrEqual(8);
+    expect(PAGE_ROUTES.length).toBeGreaterThanOrEqual(5);
   });
 
   test.each(PAGE_ROUTES)(
@@ -95,12 +93,6 @@ describe('Page route modules', () => {
 
   test('studio page has a default export', async () => {
     const mod = await import('@/app/studio/page');
-    expect(mod.default).toBeDefined();
-    expect(typeof mod.default).toBe('function');
-  });
-
-  test('code-studio page has a default export', async () => {
-    const mod = await import('@/app/code-studio/page');
     expect(mod.default).toBeDefined();
     expect(typeof mod.default).toBe('function');
   });

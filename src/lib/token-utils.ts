@@ -31,25 +31,33 @@ function estimateTokens(text: string): number {
 
 // Context window limits per provider/model family
 const CONTEXT_LIMITS: Record<string, number> = {
+  'solar-pro3': 131072,
   'gemini-2.5-pro': 1048576,
   'gemini-2.5-flash': 1048576,
+  'gemini-2.5-flash-lite': 1048576,
   'gemini-3.1-pro-preview': 2097152,
-  'gemini-3-flash-preview': 1048576,
   'gemini-3.1-flash-lite-preview': 1048576,
+  'gpt-5.5': 1000000,
   'gpt-5.4': 128000,
   'gpt-5.4-mini': 128000,
   'gpt-5.4-nano': 128000,
   'gpt-4.1': 128000,
-  'gpt-4o': 128000,
+  'gpt-4.1-mini': 128000,
+  'claude-fable-5': 1000000,
+  'claude-opus-4-8': 1000000,
   'claude-opus-4-6': 1000000,
   'claude-sonnet-4-6': 1000000,
   'claude-haiku-4-5': 200000,
-  'claude-sonnet-4-20250514': 200000,
-  'claude-3-5-haiku-20241022': 200000,
+  'claude-haiku-4-5-20251001': 200000,
+  'claude-opus-4-5-20251101': 200000,
+  'claude-sonnet-4-5-20250929': 200000,
   'llama-3.3-70b-versatile': 131072,
   'llama-3.1-8b-instant': 131072,
-  'qwen-qwq-32b': 32768,
-  'mistral-medium-3-latest': 131072,
+  'qwen/qwen3-32b': 32768,
+  'openai/gpt-oss-120b': 131072,
+  'mistral-medium-3-5': 262144,
+  'mistral-small-2603': 262144,
+  'mistral-large-2512': 262144,
   'mistral-small-latest': 131072,
   'mistral-large-latest': 131072,
 };
@@ -81,6 +89,14 @@ export function getMaxOutputTokens(model: string, systemTokens: number, messageT
     MAX_OUTPUT_RESERVE
   );
 
+  // [fix] When the prompt already fills/exceeds the context window, `available`
+  // is <= 0 (or below MIN). The previous Math.max(MIN_OUTPUT_RESERVE, ...) floor
+  // forced 4096 output tokens even with no room, overflowing the context window.
+  // Cap to actual remaining space: never request more than `available`, and never
+  // return a negative budget. Normal case (available >= MIN) is unchanged.
+  if (available < MIN_OUTPUT_RESERVE) {
+    return Math.max(0, available);
+  }
   // Clamp to available space
   return Math.max(MIN_OUTPUT_RESERVE, Math.min(reserved, available));
 }

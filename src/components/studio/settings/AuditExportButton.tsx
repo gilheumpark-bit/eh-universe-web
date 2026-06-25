@@ -227,7 +227,7 @@ const AuditExportButton: React.FC<AuditExportButtonProps> = ({ language, onExpor
             aria-live="polite"
           >
             <span className={`font-bold ${statusColor}`}>{statusText}: </span>
-            <code>{note}</code>
+            <code className="break-all">{note}</code>
           </p>
         )}
       </div>

@@ -1,0 +1,15 @@
+export {
+  PLATFORM_LENGTH_STANDARDS_CHECKED_AT,
+  PLATFORM_LENGTH_STANDARDS_REVIEW_AFTER,
+  PLATFORM_SPECS,
+  checkPlatformFit,
+  countChars,
+  getPlatformSpec,
+  listPlatformSpecs,
+  stripForExport,
+  type PlatformFit,
+  type PlatformLengthEvidenceLevel,
+  type PlatformLengthSource,
+  type PlatformLengthUnit,
+  type PlatformSpec,
+} from '../writing-workspace/export-spec';

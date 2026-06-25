@@ -149,7 +149,6 @@ class StorageSimulator {
     try {
       // #14 atomic abort — 중간 throw 시 이전 tip 보존
       if (this.flags.atomicAbort) {
-        const priorTip = this.tipId;
         throw new Error('atomic-abort-mid-write');
       }
 
@@ -169,7 +168,7 @@ class StorageSimulator {
         this.idb.set(id, { payload: actualPayload, ts: this.now() });
         this.writes.idb += 1;
         tier = 'indexeddb';
-      } catch (_e) {
+      } catch {
         // Tier 2: localStorage fallback
         try {
           if (this.flags.lsQuota) {
@@ -180,7 +179,7 @@ class StorageSimulator {
           this.ls.set(id, { payload: actualPayload, ts: this.now() });
           this.writes.ls += 1;
           tier = 'localstorage';
-        } catch (_e2) {
+        } catch {
           // Tier 3: memory (최후 폴백 — 세션 내 보존)
           this.memory.set(id, { payload: actualPayload, ts: this.now() });
           this.writes.memory += 1;
@@ -246,7 +245,7 @@ class StorageSimulator {
         /* mirror 실패 허용 */
       }
       return { ok: true, tier: 'indexeddb', tipId: id, mode: 'journal' };
-    } catch (_journalErr) {
+    } catch {
       // Journal 실패 → legacy fallback (기존 appendAtomic 경로 재사용).
       const result = await this.appendAtomic(id, payload);
       if (result.ok) {

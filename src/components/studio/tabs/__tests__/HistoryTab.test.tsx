@@ -46,10 +46,10 @@ const noop = () => {};
 
 const baseProps = {
   language: "KO" as const,
-  archiveScope: "project" as const,
-  setArchiveScope: noop as (scope: "project" | "all") => void,
-  archiveFilter: "ALL",
-  setArchiveFilter: noop as (filter: string) => void,
+  historyScope: "project" as const,
+  setHistoryScope: noop as (scope: "project" | "all") => void,
+  historyFilter: "ALL",
+  setHistoryFilter: noop as (filter: string) => void,
   projects: [] as Project[],
   sessions: [] as ChatSession[],
   currentProject: null,

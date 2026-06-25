@@ -112,7 +112,7 @@ export function useJournalEngineMode(
   // reportJournalError 최신 참조 — useEffect 안에서 호출하므로 forward ref 필요.
   // 실제 콜백은 아래 PART 8 에서 정의되며 useEffect 로 ref 에 주입.
   const reportJournalErrorRef = useRef<(e: Omit<JournalError, 'ts'> & { ts?: number }) => void>(
-    () => { /* placeholder, overwritten by useEffect below */ },
+    () => { /* initial no-op; replaced by useEffect below */ },
   );
 
   // ========================================================

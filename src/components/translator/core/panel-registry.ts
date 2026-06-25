@@ -1,6 +1,6 @@
 export type LeftPanelType = 'explorer' | 'glossary' | 'settings' | 'history' | 'backup' | 'multilang' | null;
 // [2026-05-08 시장 분석 4차 P0] adoption / signoff 패널 추가 — dual workflow.
-export type RightPanelType = 'actions' | 'chat' | 'audit' | 'reference' | 'adoption' | 'signoff' | null;
+export type RightPanelType = 'actions' | 'chat' | 'audit' | 'localization' | 'reference' | 'adoption' | 'signoff' | null;
 
 export interface PanelDef {
   id: string;
@@ -19,12 +19,13 @@ export const LEFT_PANELS: Record<string, PanelDef> = {
 
 export const RIGHT_PANELS: Record<string, PanelDef> = {
   actions: { id: 'actions', labelEn: 'Translate', labelKo: '번역 실행' },
-  chat: { id: 'chat', labelEn: 'NOA Copilot', labelKo: 'NOA 코파일럿' },
-  audit: { id: 'audit', labelEn: 'Quality Audit', labelKo: '품질 검증' },
-  reference: { id: 'reference', labelEn: 'References', labelKo: '참고자료' },
+  chat: { id: 'chat', labelEn: 'Noa Support', labelKo: '노아 보조' },
+  audit: { id: 'audit', labelEn: 'Quality Review', labelKo: '품질 점검' },
+  localization: { id: 'localization', labelEn: 'Localization Review', labelKo: '현지 판단' },
+  reference: { id: 'reference', labelEn: 'Context Notes', labelKo: '참조 컨텍스트' },
   // [2026-05-08 시장 분석 4차 P0] dual workflow.
-  adoption: { id: 'adoption', labelEn: 'Segment Adoption', labelKo: '세그먼트 채택' },
-  signoff: { id: 'signoff', labelEn: 'Author Sign-off', labelKo: '작가 sign-off' },
+  adoption: { id: 'adoption', labelEn: 'Segment Adoption', labelKo: '단락별 채택' },
+  signoff: { id: 'signoff', labelEn: 'Author Approval', labelKo: '작가 승인' },
 };
 
 export function getLeftPanelLabel(id: string, lang: 'KO' | 'EN'): string {

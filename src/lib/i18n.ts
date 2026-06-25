@@ -2,6 +2,34 @@ import type { AppLanguage } from './studio-types';
 import { TRANSLATIONS } from './studio-translations';
 import type { Lang } from './LangContext';
 
+const APP_LANGUAGE_ALIASES: Record<string, AppLanguage> = {
+  ko: 'KO',
+  kr: 'KO',
+  KO: 'KO',
+  en: 'EN',
+  us: 'EN',
+  gb: 'EN',
+  EN: 'EN',
+  ja: 'JP',
+  jp: 'JP',
+  JP: 'JP',
+  zh: 'CN',
+  cn: 'CN',
+  tw: 'CN',
+  CN: 'CN',
+};
+
+export function normalizeAppLanguage(language: AppLanguage | Lang | string | undefined | null): AppLanguage {
+  if (typeof language !== 'string') return 'KO';
+  const raw = language.trim();
+  if (!raw) return 'KO';
+  return APP_LANGUAGE_ALIASES[raw] ?? APP_LANGUAGE_ALIASES[raw.toLowerCase()] ?? 'KO';
+}
+
+export function getStudioTranslations(language: AppLanguage | Lang | string | undefined | null) {
+  return TRANSLATIONS[normalizeAppLanguage(language)] ?? TRANSLATIONS.KO;
+}
+
 /** 4개 언어 인라인 번역 헬퍼 — JP/CN 없으면 KO로 fallback */
 export function L4(lang: AppLanguage | Lang | string, t: { ko: string; en: string; ja?: string; zh?: string }): string {
   const raw = typeof lang === 'string' ? lang.toLowerCase() : 'ko';
@@ -21,8 +49,8 @@ export function L4(lang: AppLanguage | Lang | string, t: { ko: string; en: strin
  *   t('engine.cancel')              // → "Cancel" (EN)
  *   t('missing.key', 'fallback')    // → "fallback"
  */
-export function createT(language: AppLanguage) {
-  const dict = TRANSLATIONS[language] ?? TRANSLATIONS.KO;
+export function createT(language: AppLanguage | Lang | string | undefined | null) {
+  const dict = getStudioTranslations(language);
 
   return function t(key: string, fallback?: string): string {
     const parts = key.split('.');

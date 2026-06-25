@@ -7,7 +7,7 @@ function section(title: string, body: string | undefined): string | null {
   return `## ${title}\n${body.trim()}`;
 }
 
-/** Scene direction / 연출 데이터 — RAG용 텍스트 요약 */
+/** Scene direction / 연출 데이터 — 참조 컨텍스트용 텍스트 요약 */
 function sceneDirectionToText(sd: NonNullable<StoryConfig["sceneDirection"]>): string {
   const lines: string[] = [];
   if (sd.plotStructure?.trim()) lines.push(`Plot: ${sd.plotStructure.trim()}`);

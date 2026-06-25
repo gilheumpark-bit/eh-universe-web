@@ -6,14 +6,25 @@ import { showAlert } from '@/lib/show-alert';
 import { useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { ChatSession, AppLanguage, AppTab, Project, Genre, StoryConfig, WritingMode } from '@/lib/studio-types';
-import { exportEPUB, exportDOCX } from '@/lib/export-utils';
+import { exportEPUB, exportDOCX, exportHWPX } from '@/lib/export-utils';
 import { createT } from '@/lib/i18n';
 import { trackExport } from '@/lib/analytics';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 import { episodeToMarkdown } from '@/lib/markdown-serializer';
+import { getFirebaseBearerHeaders } from '@/lib/firebase-bearer-headers';
+import {
+  isSupportedImportFileName,
+  requiresServerImportExtraction,
+  STUDIO_MANUSCRIPT_IMPORT_ACCEPT,
+} from '@/lib/loreguard/import-classifier';
 
 /** 번역 스튜디오 `downloadAllResults`와 동일한 대표 5형식 — 현재 프로젝트 전체 회차 원고 */
 export type ProjectManuscriptFormat = 'txt' | 'md' | 'json' | 'html' | 'csv';
+
+type ImportedManuscriptChunk = {
+  title: string;
+  content: string;
+};
 
 function manuscriptRowsFromProject(project: Project | null | undefined): { title: string; content: string }[] {
   if (!project?.sessions?.length) return [];
@@ -68,6 +79,45 @@ const isValidProject = (p: unknown): p is Project => {
   const obj = p as Record<string, unknown>;
   return typeof obj.id === 'string' && typeof obj.name === 'string' && Array.isArray(obj.sessions);
 };
+
+async function readServerExtractedManuscripts(file: File): Promise<ImportedManuscriptChunk[]> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('source', 'loreguard-studio');
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+    headers: await getFirebaseBearerHeaders('DOCX/HWPX/PDF/EPUB 파일 가져오기는 로그인 후 사용할 수 있습니다.'),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(typeof data?.error === 'string' ? data.error : `${file.name} 문서 파싱 실패`);
+  }
+
+  const baseTitle = file.name.replace(/\.[^/.]+$/, '');
+  const chapters: unknown[] = Array.isArray(data?.chapters) ? data.chapters : [];
+  const chunks = chapters
+    .map((chapter: unknown, index: number): ImportedManuscriptChunk | null => {
+      const item = chapter as { title?: unknown; content?: unknown };
+      const content = typeof item.content === 'string' ? item.content.trim() : '';
+      if (!content) return null;
+      const chapterTitle =
+        typeof item.title === 'string' && item.title.trim()
+          ? item.title.trim()
+          : `문서 조각 ${index + 1}`;
+      return {
+        title: chapters.length > 1 ? `${baseTitle} · ${chapterTitle}` : baseTitle,
+        content,
+      };
+    })
+    .filter((chunk): chunk is ImportedManuscriptChunk => Boolean(chunk));
+
+  if (chunks.length === 0) {
+    throw new Error(`${file.name}에서 원고 본문을 찾지 못했습니다.`);
+  }
+  return chunks;
+}
 
 // ============================================================
 // PART 3 — Hook implementation
@@ -315,68 +365,99 @@ export function useStudioExport({
     e.target.value = '';
   }, [t, ensureProject, setSessions, setCurrentSessionId, setActiveTab, setProjects, setCurrentProjectId, currentSession]);
 
-  // Import multiple text/markdown files
+  // Import manuscript files. TXT/MD read locally; DOCX/HWPX/PDF/EPUB reuse the guarded upload extractor.
   const handleImportTextFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
-    ensureProject();
+
     const newSessions: ChatSession[] = [];
+    const failures: string[] = [];
+    let projectEnsured = false;
+
+    const ensureProjectOnce = () => {
+      if (projectEnsured) return;
+      ensureProject();
+      projectEnsured = true;
+    };
+
+    const createNewImportedSession = (title: string, content: string): ChatSession => {
+      const now = Date.now();
+      const id = `session-${crypto.randomUUID()}`;
+      return {
+        id,
+        title: title || '가져온 에피소드',
+        config: { ...INITIAL_CONFIG, title: title || '가져온 에피소드', episode: newSessions.length + 1 },
+        messages: [
+          {
+            id: `msg-${Date.now()}-assistant`,
+            role: 'assistant',
+            content,
+            timestamp: now
+          }
+        ],
+        lastUpdate: now
+      };
+    };
+
+    const pushImportedText = (fileName: string, text: string) => {
+      const delimiterTxt = '='.repeat(60);
+
+      if (text.includes(delimiterTxt)) {
+        // It's from exportAllEpisodesTXT
+        const parts = text.split(delimiterTxt);
+        for (let j = 1; j < parts.length; j += 2) {
+          const titleStr = parts[j].trim();
+          const contentStr = (parts[j + 1] || '').trim();
+          if (titleStr || contentStr) {
+            ensureProjectOnce();
+            newSessions.push(createNewImportedSession(titleStr, contentStr));
+          }
+        }
+        return;
+      }
+
+      if (text.startsWith('# ') || text.includes('\n## ')) {
+        // It might be from exportMarkdown
+        const parts = text.split(/^## /m);
+        if (parts.length > 1) {
+          for (let j = 1; j < parts.length; j++) {
+            const lines = parts[j].split('\n');
+            const titleStr = lines[0].trim();
+            let contentStr = lines.slice(1).join('\n').trim();
+            contentStr = contentStr.replace(/---+$/, '').trim();
+            ensureProjectOnce();
+            newSessions.push(createNewImportedSession(titleStr, contentStr));
+          }
+          return;
+        }
+      }
+
+      // Unstructured txt or single episode
+      const title = fileName.replace(/\.[^/.]+$/, "");
+      ensureProjectOnce();
+      newSessions.push(createNewImportedSession(title, text));
+    };
     
     for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const text = await file.text();
-        
-        const delimiterTxt = '='.repeat(60);
-        
-        const createNewImportedSession = (title: string, content: string): ChatSession => {
-            const now = Date.now();
-            const id = `session-${crypto.randomUUID()}`;
-            return {
-              id,
-              title: title || '가져온 에피소드',
-              config: { ...INITIAL_CONFIG, title: title || '가져온 에피소드', episode: newSessions.length + 1 },
-              messages: [
-                {
-                  id: `msg-${Date.now()}-assistant`,
-                  role: 'assistant',
-                  content,
-                  timestamp: now
-                }
-              ],
-              lastUpdate: now
-            };
-        };
-        
-        if (text.includes(delimiterTxt)) {
-            // It's from exportAllEpisodesTXT
-            const parts = text.split(delimiterTxt);
-            for (let j = 1; j < parts.length; j += 2) {
-                const titleStr = parts[j].trim();
-                const contentStr = (parts[j+1] || '').trim();
-                if (titleStr || contentStr) {
-                    newSessions.push(createNewImportedSession(titleStr, contentStr));
-                }
-            }
-        } else if (text.startsWith('# ') || text.includes('\n## ')) {
-            // It might be from exportMarkdown
-            const parts = text.split(/^## /m);
-            if (parts.length > 1) {
-                for (let j = 1; j < parts.length; j++) {
-                    const lines = parts[j].split('\n');
-                    const titleStr = lines[0].trim();
-                    let contentStr = lines.slice(1).join('\n').trim();
-                    contentStr = contentStr.replace(/---+$/, '').trim();
-                    newSessions.push(createNewImportedSession(titleStr, contentStr));
-                }
-            } else {
-                 newSessions.push(createNewImportedSession(file.name.replace(/\.[^/.]+$/, ""), text));
-            }
-        } else {
-            // Unstructured txt or single episode
-            const title = file.name.replace(/\.[^/.]+$/, "");
-            newSessions.push(createNewImportedSession(title, text));
+      const file = files[i];
+      try {
+        if (!isSupportedImportFileName(file.name)) {
+          throw new Error(`지원 형식은 ${STUDIO_MANUSCRIPT_IMPORT_ACCEPT} 입니다.`);
         }
+
+        if (requiresServerImportExtraction(file.name)) {
+          const chunks = await readServerExtractedManuscripts(file);
+          for (const chunk of chunks) {
+            ensureProjectOnce();
+            newSessions.push(createNewImportedSession(chunk.title, chunk.content));
+          }
+        } else {
+          pushImportedText(file.name, await file.text());
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        failures.push(`${file.name}: ${message}`);
+      }
     }
     
     if (newSessions.length > 0) {
@@ -387,7 +468,12 @@ export function useStudioExport({
         });
         setCurrentSessionId(newSessions[0].id);
         setActiveTab('writing');
-        showAlert(language === 'KO' ? '텍스트 파일 불러오기 완료' : (t('studioExport.importSuccess') || 'Import successfully'));
+        const successMessage = language === 'KO'
+          ? `원고 파일 ${newSessions.length}개 불러오기 완료`
+          : (t('studioExport.importSuccess') || 'Import successfully');
+        showAlert(failures.length > 0 ? `${successMessage} / 실패 ${failures.length}개` : successMessage);
+    } else if (failures.length > 0) {
+      showAlert(failures[0]);
     }
     
     e.target.value = '';
@@ -405,7 +491,7 @@ export function useStudioExport({
         const prefix = m.role === 'user' ? '\u{1F4DD} ' : '\u{1F916} ';
         return `<div style="margin-bottom:24px;"><strong>${prefix}${escHtml(m.role.toUpperCase())}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${escHtml(m.content)}</div></div>`;
       }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
-    const w = window.open('', '_blank');
+    const w = window.open('', '_blank', 'noopener,noreferrer');
     if (!w) return;
     w.document.write(`<html><head><title>${escHtml(session.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(session.title)}</h1><p style="color:#888;">${escHtml(session.config.genre)} | EP.${session.config.episode} | ${new Date().toLocaleDateString()}${isEditMode ? ` | ${language === 'KO' ? '수동 편집' : 'Manual Edit'}` : ''}</p><hr>${printContent}</body></html>`);
     w.document.close();
@@ -426,6 +512,14 @@ export function useStudioExport({
     exportDOCX(currentSession);
     trackExport('docx');
     showExportToast('DOCX');
+  }, [currentSession, showExportToast]);
+
+  // Export as HWPX
+  const handleExportHWPX = useCallback(() => {
+    if (!currentSession) return;
+    exportHWPX(currentSession);
+    trackExport('hwpx');
+    showExportToast('HWPX');
   }, [currentSession, showExportToast]);
 
   // Export full project config as JSON
@@ -605,6 +699,7 @@ export function useStudioExport({
     handlePrint,
     handleExportEPUB,
     handleExportDOCX,
+    handleExportHWPX,
     exportProjectJSON,
     exportProjectManuscripts,
     exportAllEpisodesTXT,

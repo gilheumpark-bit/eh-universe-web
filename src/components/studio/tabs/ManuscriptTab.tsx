@@ -3,7 +3,7 @@
 // ============================================================
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Share2, Languages, Film, PenLine, Headphones, Download, Settings2, Plus, Github } from 'lucide-react';
+import { Languages, Film, PenLine, Headphones, Download, Settings2, Plus, Github, Package, GitMerge } from 'lucide-react';
 import { useGitHubAutoSync, isGitHubAutoSyncEnabled } from '@/hooks/useGitHubAutoSync';
 import { AppLanguage, StoryConfig, Message } from '@/lib/studio-types';
 import { L4 } from '@/lib/i18n';
@@ -13,13 +13,14 @@ import { TabHeader } from '@/components/studio/TabHeader';
 import AuthorDashboard from '@/components/studio/AuthorDashboard';
 import EmotionArcChart from '@/components/studio/EmotionArcChart';
 import FatigueDetector from '@/components/studio/FatigueDetector';
-import ShareToNetwork from '@/components/studio/ShareToNetwork';
 import TranslationPanel from '@/components/studio/TranslationPanel';
 import { parseManuscript, generateVoiceMappings, exportScenesAsHTML } from '@/engine/scene-parser';
 import type { ParsedScene } from '@/engine/scene-parser';
 
 const ScenePlayer = dynamic(() => import('@/components/studio/ScenePlayer'), { ssr: false });
 const SceneTimeline = dynamic(() => import('@/components/studio/SceneTimeline'), { ssr: false });
+const MergeConflictResolver = dynamic(() => import('@/components/studio/MergeConflictResolver'), { ssr: false });
+const IpPackExportModal = dynamic(() => import('@/components/loreguard/IpPackExportModal').then(m => ({ default: m.IpPackExportModal })), { ssr: false });
 
 /**
  * 상단 액션 버튼 공통 스타일 — 중복된 Tailwind 체인을 상수로 추출.
@@ -61,6 +62,7 @@ interface ManuscriptTabProps {
   config: StoryConfig;
   setConfig: (c: StoryConfig | ((prev: StoryConfig) => StoryConfig)) => void;
   messages: Message[];
+  currentProjectId?: string | null;
   onEditInStudio: (content: string) => void;
   /** Visual 탭으로 전환 (이미지 카드 편집용) */
   onOpenVisual?: () => void;
@@ -71,16 +73,19 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
   config,
   setConfig,
   messages,
+  currentProjectId = null,
   onEditInStudio,
   onOpenVisual,
 }) => {
   const [showDashboard, setShowDashboard] = useState(false);
-  const [showShare, setShowShare] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [sceneMode, setSceneMode] = useState<SceneMode>('off');
   const [parsedScenes, setParsedScenes] = useState<ParsedScene[]>([]);
   const [showSceneProps, setShowSceneProps] = useState(false);
   const [editingSceneIdx, setEditingSceneIdx] = useState<number | null>(null);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeContent, setMergeContent] = useState('');
+  const [ipPackOpen, setIpPackOpen] = useState(false);
 
   // ============================================================
   // PART 2.5 — GitHub 자동 동기화 (2026-04-25 신설)
@@ -102,6 +107,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
     enabled: autoSyncOn,
     manuscripts: config.manuscripts ?? [],
     projectTitle: config.title || 'Untitled',
+    projectId: currentProjectId,
     debounceMs: 30_000,
   });
   const handleGitHubPush = useCallback(() => {
@@ -161,7 +167,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
 
   const handleExportHTML = useCallback(() => {
     if (parsedScenes.length === 0) return;
-    const title = config.title || '비주얼 노벨';
+    const title = config.title || '시각 미리보기';
     const html = exportScenesAsHTML(parsedScenes, title);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -226,25 +232,13 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           onClick={() => { setShowTranslation(!showTranslation); if (!showTranslation) setShowDashboard(false); }}
           className={toggleBtn(showTranslation, 'green')}
           title={L4(language, {
-            ko: '번역 — 현재 원고를 Translation Studio 로 가져가 6축 채점 번역',
-            en: 'Translate — open this manuscript in Translation Studio (6-axis scored translation)',
-            ja: '翻訳 — 現在の原稿を Translation Studio で6軸スコアリング翻訳',
-            zh: '翻译 — 在 Translation Studio 中以 6 轴评分翻译当前原稿',
+            ko: '번역·현지화 — 현재 원고를 전용 작업실로 보내 용어·문체·품질을 점검',
+            en: 'Translation & localization — send this manuscript to the dedicated workspace',
+            ja: '翻訳・ローカライズ — 現在の原稿を専用作業室へ送信',
+            zh: '翻译·本地化 — 将当前稿件发送到专用工作区',
           })}
         >
           <Languages className="w-3 h-3" /> {L4(language, { ko: '번역', en: 'Translate', ja: '翻訳', zh: '翻译' })}
-        </button>
-        <button
-          onClick={() => setShowShare(true)}
-          className={simpleBtn('transition-colors')}
-          title={L4(language, {
-            ko: '네트워크 공유 — 작가 커뮤니티 (행성)에 발췌 게시',
-            en: 'Share — publish an excerpt to the writer community (Network)',
-            ja: 'ネットワーク共有 — 作家コミュニティ(惑星)に抜粋投稿',
-            zh: '网络分享 — 发布选段至作家社区(行星)',
-          })}
-        >
-          <Share2 className="w-3 h-3" /> {L4(language, { ko: '네트워크 공유', en: 'Share', ja: '共有', zh: '分享' })}
         </button>
         {/* [GitHub 동기화 2026-04-25] 미연결 시 설정 진입 안내 / 연결 시 1클릭 푸시 + 마지막 sync 표시 */}
         <button
@@ -288,25 +282,25 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           onClick={() => handleSceneMode('radio')}
           className={toggleBtn(sceneMode === 'radio', 'purple')}
           title={L4(language, {
-            ko: '② 라디오 — TTS 음성 재생 모드 (대사 읽기·검수용)',
-            en: '② Radio — TTS playback mode (read dialogue aloud for review)',
-            ja: '② ラジオ — TTS音声再生モード(セリフ読み上げ・検証用)',
-            zh: '② 电台 — TTS 语音播放模式(朗读对话便于审校)',
+            ko: '② 음성 확인 — TTS 재생으로 대사 흐름 검수',
+            en: '② Audio Review — listen to dialogue flow with TTS',
+            ja: '② 音声確認 — TTS再生でセリフの流れを確認',
+            zh: '② 语音检查 — 用 TTS 检查对话节奏',
           })}
         >
-          <Headphones className="w-3 h-3" /> {L4(language, { ko: '② 라디오', en: '② Radio', ja: '② ラジオ', zh: '② 电台' })}
+          <Headphones className="w-3 h-3" /> {L4(language, { ko: '② 음성 확인', en: '② Audio Review', ja: '② 音声確認', zh: '② 语音检查' })}
         </button>
         <button
           onClick={() => handleSceneMode('visual')}
           className={toggleBtn(sceneMode === 'visual', 'amber')}
           title={L4(language, {
-            ko: '③ 비주얼 노벨 — 씬 단위 슬라이드 + 이미지 결합 미리보기 (HTML export 가능)',
-            en: '③ Visual Novel — scene-by-scene slides with image overlay (HTML exportable)',
-            ja: '③ ビジュアルノベル — シーンごとのスライド+画像合成プレビュー(HTML出力可)',
-            zh: '③ 视觉小说 — 按场景的幻灯片+图像叠加预览(可导出 HTML)',
+            ko: '③ 시각 미리보기 — 씬 단위 슬라이드와 이미지 결합 확인 (HTML export 가능)',
+            en: '③ Visual Preview — review scene slides with image overlays (HTML exportable)',
+            ja: '③ 視覚プレビュー — シーン単位のスライドと画像合成を確認(HTML出力可)',
+            zh: '③ 视觉预览 — 检查按场景的幻灯片与图像叠加(可导出 HTML)',
           })}
         >
-          <Film className="w-3 h-3" /> {L4(language, { ko: '③ 비주얼 노벨', en: '③ Visual Novel', ja: '③ ビジュアルノベル', zh: '③ 视觉小说' })}
+          <Film className="w-3 h-3" /> {L4(language, { ko: '③ 시각 미리보기', en: '③ Visual Preview', ja: '③ 視覚プレビュー', zh: '③ 视觉预览' })}
         </button>
         <button
           onClick={handleAddEpisode}
@@ -315,6 +309,28 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
         >
           <Plus className="w-3 h-3" /> {L4(language, { ko: '에피소드 추가', en: 'Add Episode', ja: 'エピソード追加', zh: '添加剧集' })}
         </button>
+        {/* [G5+G6] IP 팩 출고 버튼 */}
+        <button
+          onClick={() => setIpPackOpen(true)}
+          className={simpleBtn('hover:border-accent-amber/50 transition-colors')}
+          title={L4(language, { ko: 'IP 팩 출고 — 플랫폼·출판사·법적 보존용 패키지 생성', en: 'IP Pack Export — build packages for platforms, publishers, and legal archiving' })}
+        >
+          <Package className="w-3 h-3" /> {L4(language, { ko: 'IP 팩', en: 'IP Pack', ja: 'IP パック', zh: 'IP 包' })}
+        </button>
+        {/* [G4] 충돌 해소 버튼 — 최신 원고에 충돌 마커(<<<<<<)가 있을 때만 표시 */}
+        {(() => {
+          const latest = (config.manuscripts ?? []).at(-1);
+          const hasConflict = !!latest?.content?.includes('<<<<<<<');
+          return hasConflict ? (
+            <button
+              onClick={() => { setMergeContent(latest!.content); setMergeOpen(true); }}
+              className={`${BTN_CLASS} bg-accent-red/15 text-accent-red border-accent-red/40 hover:bg-accent-red/25`}
+              title={L4(language, { ko: '충돌 감지됨 — 클릭해서 해소하세요', en: 'Conflict detected — click to resolve' })}
+            >
+              <GitMerge className="w-3 h-3" /> {L4(language, { ko: '충돌 해소', en: 'Resolve Conflict' })}
+            </button>
+          ) : null;
+        })()}
         {parsedScenes.length > 0 && (
           <>
             <button
@@ -332,14 +348,6 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           </>
         )}
       </div>
-      {showShare && (
-        <ShareToNetwork
-          language={language}
-          config={config}
-          messages={messages}
-          onClose={() => setShowShare(false)}
-        />
-      )}
       {showDashboard && (
         <div className="max-w-6xl mx-auto px-4 py-4 space-y-4">
           <AuthorDashboard messages={messages} language={language} />
@@ -355,10 +363,10 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
               <Languages className="w-4 h-4 text-accent-green shrink-0 mt-0.5" />
               <div className="text-[11px] text-text-secondary leading-relaxed">
                 {L4(language, {
-                  ko: '이 패널은 빠른 인라인 번역용입니다. 장편·용어집·문체 관리·4축 채점·플랫폼별 내보내기는 전용 번역 스튜디오가 더 강력합니다.',
-                  en: 'This panel is for quick inline translation. The dedicated Translation Studio has glossary, style retention, 4-axis scoring, and platform exports.',
-                  ja: 'このパネルはクイックインライン翻訳用です。用語集・文体・4軸採点・プラットフォーム出力は翻訳スタジオが高機能。',
-                  zh: '此面板用于快速内联翻译。专用翻译工作室支持术语表、文体、4 轴评分和平台导出。',
+                  ko: '이 패널은 빠른 인라인 번역용입니다. 장편·용어집·문체 관리·4축 점검·플랫폼별 내보내기는 번역·현지화 작업실에서 이어가세요.',
+                  en: 'This panel is for quick inline translation. Use the translation and localization workspace for glossary, style, quality checks, and platform exports.',
+                  ja: 'このパネルはクイックインライン翻訳用です。用語集・文体・品質点検・プラットフォーム出力は翻訳・ローカライズ作業室で続けてください。',
+                  zh: '此面板用于快速内联翻译。术语表、文体、质量检查和平台导出请在翻译·本地化工作区继续处理。',
                 })}
               </div>
             </div>
@@ -366,7 +374,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
               href="/translation-studio"
               className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-green/15 hover:bg-accent-green/25 text-accent-green border border-accent-green/40 text-[11px] font-bold transition-colors"
             >
-              {L4(language, { ko: '번역 스튜디오 열기 →', en: 'Open Translation Studio →', ja: '翻訳スタジオへ →', zh: '打开翻译工作室 →' })}
+              {L4(language, { ko: '번역·현지화 열기', en: 'Open translation workspace', ja: '翻訳・ローカライズを開く', zh: '打开翻译·本地化' })}
             </a>
           </div>
           <TranslationPanel language={language} config={config} setConfig={setConfig} />
@@ -412,7 +420,7 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
                       </label>
                       <label className="block">
                         <span className="text-[9px] text-text-tertiary">{L4(language, { ko: '배경 이미지 프롬프트', en: 'Background prompt', ja: '背景プロンプト', zh: '背景提示' })}</span>
-                        <input value={scene.backgroundPrompt ?? ''} onChange={e => updateSceneProp(idx, 'backgroundPrompt', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" placeholder={L4(language, { ko: '이미지 생성용 프롬프트', en: 'Prompt for image generation', ja: '画像生成用プロンプト', zh: '图像生成提示' })} />
+                        <input value={scene.backgroundPrompt ?? ''} onChange={e => updateSceneProp(idx, 'backgroundPrompt', e.target.value)} className="w-full bg-bg-tertiary border border-border/30 rounded px-2 py-1 text-[10px] text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus:border-accent-purple" placeholder={L4(language, { ko: '시각 자료 메모', en: 'Visual handoff note', ja: 'ビジュアル資料メモ', zh: '视觉资料备忘' })} />
                       </label>
                     </div>
                   )}
@@ -425,14 +433,14 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
       {sceneMode !== 'off' && !showTranslation && parsedScenes.length === 0 && (
         <div className="max-w-2xl mx-auto text-center py-16 px-4">
           <p className="text-text-tertiary text-sm mb-4">
-            {L4(language, { ko: '원고를 먼저 작성해주세요.', en: 'Please write a manuscript first.', ja: '原稿を先にお書きください。', zh: '请先撰写稿件。' })}
+            {L4(language, { ko: '원고를 먼저 적어 주세요.', en: 'Please write a manuscript first.', ja: '原稿を先にお書きください。', zh: '请先撰写稿件。' })}
           </p>
           <p className="text-text-tertiary text-xs">
             {L4(language, {
-              ko: '집필 탭에서 에피소드를 생성하면 편집 · 라디오 · 비주얼 노벨 기능을 사용할 수 있습니다.',
-              en: 'Create an episode in the Writing tab to use edit, radio, and visual novel features.',
-              ja: '執筆タブでエピソードを作成すると、編集・ラジオ・ビジュアルノベル機能が使えます。',
-              zh: '在写作标签中创建剧集后即可使用编辑、电台和视觉小说功能。',
+              ko: '집필 탭에서 에피소드를 생성하면 편집 · 음성 확인 · 시각 미리보기를 사용할 수 있습니다.',
+              en: 'Create an episode in the Writing tab to use edit, audio review, and visual preview.',
+              ja: '執筆タブでエピソードを作成すると、編集・音声確認・視覚プレビューを使えます。',
+              zh: '在写作标签中创建剧集后即可使用编辑、语音检查和视觉预览。',
             })}
           </p>
           <button onClick={() => setSceneMode('off')} className="mt-6 px-4 py-2 rounded-lg bg-bg-secondary border border-border text-text-tertiary text-xs hover:text-text-primary transition-colors min-h-[44px]">
@@ -504,6 +512,40 @@ const ManuscriptTab: React.FC<ManuscriptTabProps> = ({
           onEditInStudio={onEditInStudio}
         />
       )}
+
+      {/* [G4] MergeConflictResolver — 원고 충돌 마커(<<<<<<<) 해소 */}
+      <MergeConflictResolver
+        open={mergeOpen}
+        content={mergeContent}
+        language={language}
+        oursLabelOverride={L4(language, { ko: '내 변경', en: 'My Changes' })}
+        theirsLabelOverride={L4(language, { ko: '원격 변경', en: 'Remote Changes' })}
+        onSave={(resolved) => {
+          setConfig((prev) => {
+            const manuscripts = [...(prev.manuscripts ?? [])];
+            if (manuscripts.length > 0) {
+              manuscripts[manuscripts.length - 1] = {
+                ...manuscripts[manuscripts.length - 1],
+                content: resolved,
+                charCount: resolved.length,
+                lastUpdate: Date.now(),
+              };
+            }
+            return { ...prev, manuscripts };
+          });
+          setMergeOpen(false);
+        }}
+        onClose={() => setMergeOpen(false)}
+      />
+
+      {/* [G5+G6] IpPackExportModal */}
+      <IpPackExportModal
+        open={ipPackOpen}
+        language={language}
+        config={config}
+        currentProjectId={currentProjectId}
+        onClose={() => setIpPackOpen(false)}
+      />
     </>
   );
 };

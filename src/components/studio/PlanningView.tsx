@@ -2,12 +2,11 @@
 import { showAlert } from '@/lib/show-alert';
 import React, { useState, useMemo } from 'react';
 import { StoryConfig, Genre, AppLanguage, PlatformType } from '@/lib/studio-types';
-import { TRANSLATIONS, GENRE_LABELS } from '@/lib/studio-constants';
-import { createT, L4 } from '@/lib/i18n';
+import { GENRE_LABELS } from '@/lib/studio-constants';
+import { createT, getStudioTranslations, L4, normalizeAppLanguage } from '@/lib/i18n';
 import { useStudioUI } from '@/contexts/StudioContext';
-import { Sparkles, Monitor, Smartphone, Shuffle, Bot, Loader2, Share2, Check, Globe, RotateCcw } from 'lucide-react';
+import { Sparkles, Monitor, Smartphone, Shuffle, Bot, Loader2, Share2, Check, Download, RotateCcw } from 'lucide-react';
 import AdvancedPlanningSection from './planning/AdvancedPlanningSection';
-import { useRouter } from 'next/navigation';
 import { generateTensionCurveData } from '@/engine/models';
 import { generateWorldDesign } from '@/services/geminiService';
 import { getApiKey, getActiveProvider } from '@/lib/ai-providers';
@@ -23,7 +22,8 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
 }) {
   const [input, setInput] = React.useState('');
   const suggestions = SUB_GENRE_SUGGESTIONS[genre] || [];
-  const isKO = language === 'KO';
+  const appLanguage = normalizeAppLanguage(language);
+  const isKO = appLanguage === 'KO';
 
   const addTag = (tag: string) => {
     const trimmed = tag.trim();
@@ -47,7 +47,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
               onChange={e => onTogglePrompt(e.target.checked)}
               className="w-3.5 h-3.5 rounded accent-accent-blue"
             />
-            <span className="text-[13px] text-text-tertiary">{isKO ? 'NOA 프롬프트에 반영' : 'Apply to NOA prompt'}</span>
+            <span className="text-[13px] text-text-tertiary">{isKO ? '노아 프롬프트에 반영' : 'Apply to Noa prompt'}</span>
           </label>
         )}
       </div>
@@ -60,7 +60,7 @@ function SubGenreTagInput({ genre, subGenres, onChange, language, usePrompt, onT
           </span>
         ))}
         {subGenres.length === 0 && (
-          <span className="text-[13px] text-text-tertiary italic">{isKO ? '태그를 추가하면 노아 설계에 반영됩니다' : 'Tags will be injected into NOA prompts'}</span>
+          <span className="text-[13px] text-text-tertiary italic">{isKO ? '태그를 추가하면 노아 설계에 반영됩니다' : 'Tags will be included in Noa prompts'}</span>
         )}
       </div>
       {/* Input */}
@@ -112,9 +112,12 @@ interface PlanningViewProps {
 const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig, onStart, startLabel, hasAiAccess }) => {
   const { showConfirm, closeConfirm } = useStudioUI();
   const tl = createT(language);
-  const t = TRANSLATIONS[language].planning;
-  const te = TRANSLATIONS[language].engine;
-  const isKO = language === 'KO';
+  const appLanguage = normalizeAppLanguage(language);
+  const dict = getStudioTranslations(appLanguage);
+  const t = dict.planning;
+  const te = dict.engine;
+  const genreLabels = GENRE_LABELS[appLanguage] ?? GENRE_LABELS.KO;
+  const isKO = appLanguage === 'KO';
 
   const totalEpisodes = config.totalEpisodes ?? 25;
   const tensionData = useMemo(() => generateTensionCurveData(totalEpisodes, config.genre), [totalEpisodes, config.genre]);
@@ -127,7 +130,6 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
     if (typeof window !== 'undefined') { try { return localStorage.getItem('noa_planning_advanced') === 'true'; } catch { return false; } }
     return false;
   });
-  const router = useRouter();
 
   const handleReset = () => {
     showConfirm({
@@ -177,7 +179,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         totalEpisodes: config.totalEpisodes || undefined,
         platform: config.platform || undefined,
       };
-      const result = await generateWorldDesign(autoGenGenre, language, hints);
+      const result = await generateWorldDesign(autoGenGenre, appLanguage, hints);
       setConfig((prev: StoryConfig) => ({
         ...prev,
         title: result.title || prev.title,
@@ -212,9 +214,9 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('401') || msg.includes('credentials')) {
-        showAlert(language === 'KO'
-          ? 'Gemini API 키가 필요합니다. 설정에서 Gemini 키를 등록해주세요.'
-          : 'Gemini API key required. Please add your Gemini key in Settings.');
+        showAlert(appLanguage === 'KO'
+          ? '연결 키가 필요합니다. 환경 설정에서 등록해 주세요.'
+          : 'Connection key required. Please add one in Settings.');
       } else {
         showAlert(tl('planningExtra.aiFailed') + (msg ? ` (${msg.slice(0, 80)})` : ''));
       }
@@ -253,7 +255,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           <select value={autoGenGenre} onChange={e => setAutoGenGenre(e.target.value as Genre)}
             className="bg-bg-secondary border border-border rounded-xl px-3 py-2 text-[10px] font-black text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 cursor-pointer uppercase">
             {Object.values(Genre).map(g => (
-              <option key={g} value={g}>{GENRE_LABELS[language][g]}</option>
+              <option key={g} value={g}>{genreLabels[g]}</option>
             ))}
           </select>
           <div className="relative">
@@ -263,7 +265,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             {showPresetMenu && (
               <div className="absolute top-full mt-1 right-0 bg-bg-secondary border border-accent-amber/20 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_15px_rgba(255,200,50,0.1)] z-50 min-w-[240px] max-h-[320px] overflow-y-auto">
                 {(AUTO_PRESETS[autoGenGenre] || []).map((preset, i) => {
-                  const data = isKO ? preset.ko : preset.en;
+                const data = isKO ? preset.ko : preset.en;
                   return (
                     <button key={i} onClick={() => {
                       setConfig((prev: StoryConfig) => ({
@@ -320,7 +322,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               onChange={e => setConfig({ ...config, genre: e.target.value as Genre })}
             >
               {Object.values(Genre).map(g => (
-                <option key={g} value={g}>{GENRE_LABELS[language][g]}</option>
+              <option key={g} value={g}>{genreLabels[g]}</option>
               ))}
             </select>
           </div>
@@ -351,7 +353,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
           genre={config.genre}
           subGenres={config.subGenres || []}
           onChange={(tags) => setConfig({ ...config, subGenres: tags })}
-          language={language}
+          language={appLanguage}
           usePrompt={config.useSubGenrePrompt ?? false}
           onTogglePrompt={(val) => setConfig({ ...config, useSubGenrePrompt: val })}
         />}
@@ -379,8 +381,8 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
             {(totalEpisodes < 1 || totalEpisodes > 500) && (
               <p className="text-[13px] font-bold text-accent-red px-1">
                 {totalEpisodes < 1
-                  ? (language === 'KO' ? '에피소드 수는 1 이상이어야 합니다.' : 'Episode count must be at least 1.')
-                  : (language === 'KO' ? '500화 초과는 시스템 부하를 유발할 수 있습니다.' : 'Over 500 episodes may cause performance issues.')}
+                  ? (appLanguage === 'KO' ? '에피소드 수는 1 이상이어야 합니다.' : 'Episode count must be at least 1.')
+                  : (appLanguage === 'KO' ? '500화 초과는 시스템 부하를 유발할 수 있습니다.' : 'Over 500 episodes may cause performance issues.')}
               </p>
             )}
           </div>
@@ -434,7 +436,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
       {/* === 고급 모드 전용 섹션 === */}
       {advancedMode && (
         <div className="ds-card-lg">
-          <AdvancedPlanningSection language={language} config={config} setConfig={setConfig} totalEpisodes={totalEpisodes} tensionData={tensionData} />
+          <AdvancedPlanningSection language={appLanguage} config={config} setConfig={setConfig} totalEpisodes={totalEpisodes} tensionData={tensionData} />
         </div>
       )}
 
@@ -473,7 +475,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
               setTimeout(() => setShareCopied(false), 2000);
             }).catch(() => {
               // clipboard 권한 거부 — 수동 복사 안내
-              window.prompt(language === 'KO' ? '클립보드 접근이 거부됐습니다. 아래 링크를 직접 복사하세요:' : 'Clipboard access denied. Copy the link below:', url);
+              window.prompt(appLanguage === 'KO' ? '클립보드 접근이 거부됐습니다. 아래 링크를 직접 복사하세요:' : 'Clipboard access denied. Copy the link below:', url);
             });
           }}
           className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-zinc-500 hover:text-white hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color]"
@@ -485,21 +487,30 @@ const PlanningView: React.FC<PlanningViewProps> = ({ language, config, setConfig
         </button>
         <button
           onClick={() => {
-            const planetPayload = {
+            const packagePayload = {
               title: config.title,
               genre: config.genre,
               synopsis: config.synopsis,
               characters: config.characters ?? [],
               corePremise: config.corePremise,
               powerStructure: config.powerStructure,
+              processRecord: {
+                exportedAt: new Date().toISOString(),
+                source: 'Loreguard Studio planning',
+              },
             };
-            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(planetPayload))));
-            router.push(`/network/new?import=${encoded}`);
+            const blob = new Blob([JSON.stringify(packagePayload, null, 2)], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `${(config.title || 'loreguard').replace(/[^a-zA-Z0-9가-힣_-]/g, '_')}_release_seed.json`;
+            anchor.click();
+            URL.revokeObjectURL(url);
           }}
           className="flex items-center gap-2 px-6 py-3 text-sm bg-bg-secondary border border-border text-text-secondary rounded-2xl font-bold hover:border-accent-amber hover:text-accent-amber hover:scale-105 active:scale-95 transition-[transform,background-color,border-color,color]"
         >
-          <Globe className="w-4 h-4" />
-          {isKO ? '행성으로 등록' : 'Register as Planet'}
+          <Download className="w-4 h-4" />
+          {isKO ? '출고 씨드 저장' : 'Save Release Seed'}
         </button>
       </div>
     </div>

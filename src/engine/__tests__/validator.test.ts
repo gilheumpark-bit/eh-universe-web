@@ -128,6 +128,26 @@ describe('validateFormattingIssues', () => {
 });
 
 // ============================================================
+// Static typo validator
+// ============================================================
+
+describe('validateGeneratedContent typo fixes', () => {
+  it('does not rewrite the correct Korean word "왠지" to "웬지"', () => {
+    const result = validateGeneratedContent('왠지 오늘은 문장이 잘 풀렸다.', 'KO', 1);
+    expect(result.fixes.some((fix) => fix.original === '왠지' && fix.fixed === '웬지')).toBe(false);
+  });
+
+  it('suggests "왠지" when the typo "웬지" appears', () => {
+    const result = validateGeneratedContent('웬지 오늘은 문장이 잘 풀렸다.', 'KO', 1);
+    expect(result.fixes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ original: '웬지', fixed: '왠지' }),
+      ]),
+    );
+  });
+});
+
+// ============================================================
 // Orchestrator
 // ============================================================
 

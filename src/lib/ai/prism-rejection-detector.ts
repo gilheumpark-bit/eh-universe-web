@@ -128,7 +128,7 @@ const SUGGESTION_LABELS: Record<PrismLevel | 'unknown', Record<'ko' | 'en' | 'ja
     zh: '此表达因 AI 模型政策无法生成 (实际危害/违法内容等)。请尝试其他表达。',
   },
   'unknown': {
-    ko: 'AI 가 콘텐츠 생성을 거절했습니다. 표현을 조정하거나 PRISM 등급 설정을 확인하세요.',
+    ko: '요청한 표현을 처리하지 못했습니다. 표현을 조정하거나 PRISM 등급 설정을 확인해 주세요.',
     en: 'AI declined to generate. Adjust expressions or review PRISM level settings.',
     ja: 'AI が生成を拒否しました。表現を調整するか、PRISM 等級設定を確認してください。',
     zh: 'AI 拒绝生成。请调整表达或检查 PRISM 等级设置。',

@@ -1,6 +1,6 @@
 /**
  * Unit tests for src/lib/tier.ts
- * Covers: tier config lookups, feature gating, generation count tracking,
+ * Covers: tier config lookups, feature gating, local generation hint tracking,
  *         provider allowlist, edge cases
  */
 
@@ -70,8 +70,9 @@ describe('tier', () => {
   describe('getTierLimits', () => {
     it('returns free tier config by default', () => {
       const limits = getTierLimits('free');
-      expect(limits.aiGenerationsPerMonth).toBe(20);
-      expect(limits.providers).toEqual(['gemini']);
+      expect(limits.aiGenerationsPerDay).toBe(5);
+      expect(limits.aiGenerationsPerMonth).toBe(5);
+      expect(limits.providers).toEqual(['upstage']);
       expect(limits.driveSync).toBe(false);
       expect(limits.exportWatermark).toBe(true);
       expect(limits.maxProjects).toBe(1);
@@ -81,6 +82,7 @@ describe('tier', () => {
 
     it('returns pro tier config', () => {
       const limits = getTierLimits('pro');
+      expect(limits.aiGenerationsPerDay).toBe(-1);
       expect(limits.aiGenerationsPerMonth).toBe(-1);
       expect(limits.providers).toContain('openai');
       expect(limits.providers).toContain('claude');
@@ -94,6 +96,7 @@ describe('tier', () => {
     it('falls back to getUserTier when no argument given', () => {
       setUserTier('pro');
       const limits = getTierLimits();
+      expect(limits.aiGenerationsPerDay).toBe(-1);
       expect(limits.aiGenerationsPerMonth).toBe(-1);
     });
   });
@@ -168,19 +171,19 @@ describe('tier', () => {
 
   describe('canGenerate', () => {
     it('returns true when count is below free limit', () => {
-      // free tier: 20 per month
+      // free tier: 5 per day. This is a UI hint only; /api/chat enforces server-side.
       expect(canGenerate()).toBe(true);
     });
 
     it('returns false when free tier limit is reached', () => {
       store['noa_gen_month'] = currentMonthStr();
-      store['noa_gen_count'] = '20';
+      store['noa_gen_count'] = '5';
       expect(canGenerate()).toBe(false);
     });
 
-    it('returns true at count 19 (one below limit)', () => {
+    it('returns true at count 4 (one below limit)', () => {
       store['noa_gen_month'] = currentMonthStr();
-      store['noa_gen_count'] = '19';
+      store['noa_gen_count'] = '4';
       expect(canGenerate()).toBe(true);
     });
 
@@ -193,8 +196,8 @@ describe('tier', () => {
   });
 
   describe('isProviderAllowed', () => {
-    it('allows gemini for free tier', () => {
-      expect(isProviderAllowed('gemini')).toBe(true);
+    it('allows upstage for free tier', () => {
+      expect(isProviderAllowed('upstage')).toBe(true);
     });
 
     it('blocks openai for free tier', () => {
@@ -203,8 +206,8 @@ describe('tier', () => {
 
     it('allows all listed providers for pro tier', () => {
       setUserTier('pro');
-      for (const p of ['gemini', 'openai', 'claude', 'groq', 'mistral']) {
-        expect(isProviderAllowed(p)).toBe(true);
+      for (const provider of ['upstage', 'gemini', 'openai', 'claude', 'deepseek', 'qwen', 'minimax', 'kimi', 'groq', 'mistral']) {
+        expect(isProviderAllowed(provider)).toBe(true);
       }
     });
 
@@ -220,12 +223,11 @@ describe('tier', () => {
   // ----------------------------------------------------------
 
   describe('edge cases', () => {
-    it('handles corrupted gen count gracefully (NaN)', () => {
+    it('handles corrupted gen count gracefully', () => {
       store['noa_gen_month'] = currentMonthStr();
       store['noa_gen_count'] = 'abc';
-      // parseInt('abc', 10) => NaN — verify behavior
       const count = getGenerationCount();
-      expect(Number.isNaN(count)).toBe(true);
+      expect(count).toBe(0);
     });
 
     it('handles empty string gen count', () => {

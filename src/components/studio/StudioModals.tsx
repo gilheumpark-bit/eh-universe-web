@@ -9,14 +9,14 @@ import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 // PART 1 — Shortcuts Modal (Premium Design)
 // ============================================================
 
-const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
+const SHORTCUT_GROUPS = (language: AppLanguage, t: ReturnType<typeof createT>) => [
   {
     label: 'Navigation — 작가 친화 / Writer-friendly',
     shortcuts: [
       ['Ctrl+1', t('shortcuts.worldDesign')],
       ['Ctrl+2', t('shortcuts.worldSimulator')],
       ['Ctrl+3', t('shortcuts.characterStudio')],
-      ['Ctrl+4', t('shortcuts.rulebook')],
+      ['Ctrl+4', L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' })],
       ['Ctrl+5', t('shortcuts.writingStudio')],
       ['Ctrl+6', t('shortcuts.styleStudio')],
       ['Ctrl+7', t('shortcuts.manuscript')],
@@ -24,12 +24,12 @@ const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
     ],
   },
   {
-    label: 'Navigation — 펑션키 (legacy) / Function keys',
+    label: L4(language, { ko: '네비게이션 — 펑션키', en: 'Navigation — Function keys', ja: 'ナビゲーション — ファンクションキー', zh: '导航 — 功能键' }),
     shortcuts: [
       ['F1', t('shortcuts.worldDesign')],
       ['F2', t('shortcuts.worldSimulator')],
       ['F3', t('shortcuts.characterStudio')],
-      ['F4', t('shortcuts.rulebook')],
+      ['F4', L4(language, { ko: '연출', en: 'Direction', ja: '演出', zh: '演出' })],
       ['F5', t('shortcuts.writingStudio')],
       ['F6', t('shortcuts.styleStudio')],
       ['F7', t('shortcuts.manuscript')],
@@ -43,7 +43,10 @@ const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
       ['Ctrl+N', t('shortcuts.newSession')],
       ['Ctrl+F', t('shortcuts.search')],
       ['Ctrl+E', t('shortcuts.exportTxt')],
-      ['Ctrl+P', t('shortcuts.print')],
+      // [루프 4 P12 — 2026-06-08] Ctrl+P = Command Palette (브라우저 print 와 충돌).
+      //   ADR-0003 결정: 브라우저 print 는 Ctrl+Alt+P (Win) / Cmd+Opt+P (Mac) 대체.
+      //   사용자가 영구 확인 가능한 affordance — modal 내 명시. (literal 라벨 — i18n 추가 시 키 도입)
+      ['Ctrl+P', 'Command Palette  (print: Ctrl+Alt+P / Cmd+Opt+P)'],
     ],
   },
   {
@@ -52,14 +55,16 @@ const SHORTCUT_GROUPS = (t: ReturnType<typeof createT>) => [
       ['Enter', t('shortcuts.sendMessage')],
       ['Shift+Enter', t('shortcuts.newLine')],
       ['F11', t('shortcuts.focusMode')],
-      ['F12', t('shortcuts.shortcutsHelp')],
+      // [priority 6 — 2026-06-08] F12 (브라우저 DevTools 충돌) → F1 표준화.
+      // F12 는 legacy alias 로 keyboard-manager 에서 별도 등록 유지 (호환).
+      ['F1', t('shortcuts.shortcutsHelp')],
     ],
   },
 ];
 
 export function ShortcutsModal({ language, onClose }: { language: AppLanguage; onClose: () => void }) {
   const t = createT(language);
-  const groups = SHORTCUT_GROUPS(t);
+  const groups = SHORTCUT_GROUPS(language, t);
   const isKO = language === 'KO';
 
   return (
@@ -127,10 +132,12 @@ export function ShortcutsModal({ language, onClose }: { language: AppLanguage; o
           ))}
         </div>
 
-        {/* Footer Hint */}
+        {/* Footer Hint — [priority 6 — 2026-06-08] F1 표준 + F12 legacy 명시 */}
         <div className="mt-5 pt-4 border-t border-white/[0.06] text-center">
           <p className="text-[10px] text-text-tertiary">
-            {isKO ? 'F12를 눌러 언제든지 이 창을 열 수 있습니다' : 'Press F12 anytime to open this panel'}
+            {isKO
+              ? 'F1 (또는 F12)을 눌러 언제든지 이 창을 열 수 있습니다'
+              : 'Press F1 (or F12) anytime to open this panel'}
           </p>
         </div>
       </div>

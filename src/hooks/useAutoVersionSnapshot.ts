@@ -86,6 +86,10 @@ export function useAutoVersionSnapshot(opts: UseAutoVersionSnapshotOptions): {
 
   const lastSnapshotCharsRef = useRef<number | null>(null);
   const lastSnapshotTimeRef = useRef<number | null>(null);
+  // [fix] in-flight guard — refs are only updated in the async .then(), so rapid
+  // char changes could fire multiple concurrent saveVersionedBackup writes before
+  // the first resolves. This synchronous flag blocks overlapping writes.
+  const writeInFlightRef = useRef(false);
 
   const totalChars = useMemo(() => countTotalChars(opts.projects), [opts.projects]);
 
@@ -100,7 +104,8 @@ export function useAutoVersionSnapshot(opts: UseAutoVersionSnapshotOptions): {
     const now = Date.now();
     const sinceLast = lastSnapshotTimeRef.current ? now - lastSnapshotTimeRef.current : Infinity;
 
-    if (delta >= charDelta && sinceLast >= cooldownMs) {
+    if (delta >= charDelta && sinceLast >= cooldownMs && !writeInFlightRef.current) {
+      writeInFlightRef.current = true; // [fix] mark in-flight before the async write
       saveVersionedBackup(opts.projects)
         .then((ok) => {
           if (ok) {
@@ -117,6 +122,9 @@ export function useAutoVersionSnapshot(opts: UseAutoVersionSnapshotOptions): {
         })
         .catch((err) => {
           logger.warn('useAutoVersionSnapshot', 'saveVersionedBackup threw', err);
+        })
+        .finally(() => {
+          writeInFlightRef.current = false; // [fix] release guard once write settles
         });
     }
   }, [enabled, totalChars, charDelta, cooldownMs, opts.projects]);

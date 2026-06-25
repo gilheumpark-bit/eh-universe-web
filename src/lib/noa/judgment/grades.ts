@@ -3,16 +3,16 @@
 // Source: NOA v35 Judgement Core (9 Grades × 3 Steps)
 // ============================================================
 
-import type { GradeEntry } from "../types";
+import type { NoaGradeEntry } from "../types";
 import { GRADE_MATRIX } from "../config";
 
 /**
  * 리스크 점수를 27단계 정밀 등급으로 변환한다.
  *
  * @param score - 최종 리스크 점수
- * @returns 매칭되는 GradeEntry (없으면 Black-3)
+ * @returns 매칭되는 NoaGradeEntry (없으면 Black-3)
  */
-export function resolveGrade(score: number): GradeEntry {
+export function resolveNoaGrade(score: number): NoaGradeEntry {
   for (const entry of GRADE_MATRIX) {
     if (score > entry.riskFloor && score <= entry.riskCeiling) {
       return entry;

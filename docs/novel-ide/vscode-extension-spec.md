@@ -13,7 +13,7 @@
 > - Logic Pro 가 GarageBand 플러그인으로 들어가지 않음
 > - Final Cut Pro 가 iMovie 부속으로 들어가지 않음
 >
-> **대체 — `docs/novel-ide/external-integration.md`:** CLI (`npx loreguard lint`) + 출판사 CMS API + CI 통합. 외부가 Loreguard 를 호출, Loreguard 가 외부에 흡수되지 않음.
+> **대체 — `docs/novel-ide/external-integration.md`:** 출판사 CMS API + 번역사 도구 API + CI API 통합. 외부가 Loreguard 를 호출, Loreguard 가 외부에 흡수되지 않음.
 >
 > 본 사양서는 **사상사 자료**로만 보존.
 

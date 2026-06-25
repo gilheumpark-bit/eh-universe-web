@@ -6,7 +6,7 @@
 // ============================================================
 
 import { showAlert } from '@/lib/show-alert';
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkles, Play, Check, X, ChevronDown, ChevronUp, Loader2, SkipForward, CheckCheck, Undo2 } from 'lucide-react';
 import { AppLanguage } from '@/lib/studio-types';
 import { createT, L4 } from '@/lib/i18n';
@@ -193,6 +193,12 @@ const ACTION_LABEL: Record<string, { label: Record<AppLanguage, string>; color: 
 const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, onApply }) => {
   const t = createT(language);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  // [fix] stale-closure: runAllFixes iterated the `suggestions` snapshot captured at
+  // render time, so status changes made mid-loop (a fix completing, a user skip/apply)
+  // were not reflected. Mirror the latest suggestions into a ref so the loop can read
+  // live status before each fix.
+  const suggestionsRef = useRef<Suggestion[]>(suggestions);
+  useEffect(() => { suggestionsRef.current = suggestions; }, [suggestions]);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'ready' | 'fixing'>('idle');
   const [, setCurrentFixIdx] = useState(-1);
   const [expanded, setExpanded] = useState(true);
@@ -226,6 +232,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         systemInstruction: ({KO:'소설 편집자. JSON 배열만 출력. 다른 텍스트 절대 금지.',EN:'Fiction editor. Output JSON array only. No other text.',JP:'小説編集者。JSON配列のみ出力。他のテキスト禁止。',CN:'小说编辑。仅输出JSON数组。禁止其他文本。'}[language]),
         messages,
         temperature: 0.3,
+        reasoningStage: 'detail',
         signal: controller.signal,
         onChunk: (chunk) => { raw += chunk; setStreamingChars(prev => prev + chunk.length); },
       });
@@ -273,7 +280,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
     const apiKey = getApiKey(getActiveProvider());
     if (!apiKey && !hasDgxService()) {
-      showAlert(L4(language, { ko: 'API 키가 필요합니다. 설정에서 등록해주세요.', en: 'API key required. Please add one in Settings.', ja: 'APIキーが必要です。設定で登録してください。', zh: '需要API密钥，请在设置中添加。' }), 'warning');
+      showAlert(L4(language, { ko: '연결 키가 필요합니다. 환경 설정에서 등록해 주세요.', en: 'Connection key required. Please add one in Settings.', ja: '接続キーが必要です。設定で登録してください。', zh: '需要连接密钥，请在设置中添加。' }), 'warning');
       return;
     }
 
@@ -298,6 +305,7 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
         systemInstruction: ({KO:'소설 텍스트 리라이터. 순수 소설 텍스트만 출력. 설명 금지.',EN:'Fiction rewriter. Output pure fiction text only. No explanations.',JP:'小説テキストリライター。純粋な小説テキストのみ出力。説明禁止。',CN:'小说文本改写器。仅输出纯小说文本。禁止解释。'}[language]),
         messages,
         temperature: 0.85,
+        reasoningStage: 'detail',
         signal: controller.signal,
         onChunk: (chunk) => {
           result += chunk;
@@ -324,7 +332,13 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     setUndoStack(prev => [...prev, workingContent]);
 
     const paragraphs = workingContent.split('\n\n').filter(p => p.trim());
-    const pIdx = sug.paragraphIndex;
+
+    // [H7 fix] paragraphIndex was computed once against the ORIGINAL content, but a prior
+    // insert_after shifts every later paragraph by +1 in workingContent. Using the stale
+    // index would overwrite the wrong paragraph. Re-locate the target by its original text
+    // (sug.original, captured at analysis time) and fall back to the index only if not found.
+    const matchedIdx = paragraphs.indexOf(sug.original);
+    const pIdx = matchedIdx !== -1 ? matchedIdx : sug.paragraphIndex;
 
     if (sug.action === 'insert_after') {
       paragraphs.splice(pIdx + 1, 0, sug.result);
@@ -367,12 +381,17 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
 
   // Run all pending fixes sequentially
   const runAllFixes = useCallback(async () => {
-    for (let i = 0; i < suggestions.length; i++) {
-      if (suggestions[i].status === 'pending') {
+    // [fix] stale-closure: read live status from the ref each iteration instead of the
+    // closure's stale `suggestions` snapshot, so suggestions skipped/applied/completed
+    // mid-run are reflected. Loop length is bound to the current count (the array is
+    // replaced wholesale, never mutated in place, so indices remain stable for a run).
+    const count = suggestionsRef.current.length;
+    for (let i = 0; i < count; i++) {
+      if (suggestionsRef.current[i]?.status === 'pending') {
         await fixSuggestion(i);
       }
     }
-  }, [suggestions, fixSuggestion]);
+  }, [fixSuggestion]);
 
   const cancel = () => {
     abortRef.current?.abort();

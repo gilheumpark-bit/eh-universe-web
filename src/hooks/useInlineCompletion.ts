@@ -4,6 +4,9 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { isIMEComposing } from '@/lib/ime-guard';
+// [N4 — 2026-06-11] 서버 게이트 차단 응답 고지 — 인라인 완성도 사일런트 차단 금지
+import { checkBlockedJson } from '@/lib/noa/block-notice';
+import { checkPaywallJson } from '@/lib/noa/paywall-notice';
 
 export interface UseInlineCompletionOpts {
   enabled: boolean;
@@ -104,11 +107,21 @@ export function useInlineCompletion(opts: UseInlineCompletionOpts): UseInlineCom
       });
 
       if (!res.ok) {
+        const data: unknown = await res.json().catch(() => null);
+        if (checkPaywallJson(data)) {
+          setSuggestion(null);
+          return;
+        }
         setSuggestion(null);
         return;
       }
 
       const data = await res.json() as { completion?: string };
+      // [N4] 차단 계약 {blocked, reason, gradeRequired} — toast/카드 고지 후 제안 없음 처리
+      if (checkBlockedJson(data, 'inline-complete')) {
+        setSuggestion(null);
+        return;
+      }
       const text = data.completion?.trim();
       if (text && text.length > 0) {
         setSuggestion(text);

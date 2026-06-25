@@ -1,6 +1,6 @@
 "use client";
 // ============================================================
-// CompletionGapPanel — AI 완료 주장 자동 검증 결과 표시.
+// CompletionGapPanel — 완료 보고 자동 검증 결과 표시.
 // [검증 루프 fix — 2026-05-08] messages prop + settings 토글 + 자체 trigger.
 // ============================================================
 
@@ -79,7 +79,7 @@ export const CompletionGapPanel: React.FC<CompletionGapPanelProps> = ({
         <FileWarning className="w-5 h-5 text-text-tertiary mx-auto mb-2" />
         <p className="text-xs text-text-tertiary">
           {isKO
-            ? 'Completion Gap 검증 OFF (Settings 에서 켜기)'
+            ? '완성도 공백 검증 꺼짐 (환경 설정에서 켜기)'
             : 'Completion Gap detection OFF (enable in Settings)'}
         </p>
       </section>
@@ -92,7 +92,7 @@ export const CompletionGapPanel: React.FC<CompletionGapPanelProps> = ({
         <div className="flex items-center gap-2">
           <FileWarning className="w-4 h-4 text-accent-purple" />
           <h3 className="text-sm font-bold text-text-primary">
-            {isKO ? 'AI 완료 검증 (L3)' : 'Completion Gap (L3)'}
+            {isKO ? '완성도 공백 검증 (L3)' : 'Completion Gap (L3)'}
           </h3>
         </div>
         <button
@@ -109,7 +109,7 @@ export const CompletionGapPanel: React.FC<CompletionGapPanelProps> = ({
       <div className="flex-1 overflow-y-auto max-h-[60vh]">
         {!report || report.totalClaims === 0 ? (
           <div className="p-6 text-center text-xs text-text-tertiary">
-            {isKO ? 'AI 완료 주장 없음 (직전 10 turn)' : 'No completion claims (last 10 turns)'}
+            {isKO ? '완료 보고 없음 (직전 10 turn)' : 'No completion reports (last 10 turns)'}
           </div>
         ) : (
           <>
@@ -151,7 +151,7 @@ function ClaimRow({ verification, lang }: { verification: ClaimVerification; lan
         {severityIcon(verification.overallSeverity)}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <code className="text-[10px] font-mono text-accent-purple">{verification.claim.surface}</code>
+            <code className="break-all text-[10px] font-mono text-accent-purple">{verification.claim.surface}</code>
             <span className={`text-[10px] font-mono ${SEV_COLOR[verification.overallSeverity]}`}>
               {verification.gapScore}/100
             </span>

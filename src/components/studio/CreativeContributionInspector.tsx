@@ -31,7 +31,6 @@ import {
 } from '@/lib/creative-process/hci-calculator';
 import { buildOriginDonutSVG } from '@/lib/creative-process/seal-issuer';
 import { ATTESTATION_LABELS } from '@/lib/creative-process/attestation-text';
-import { VISUAL_TOKENS } from '@/lib/creative-process/visual-tokens';
 import type {
   CreativeEvent,
   CertificateLanguage,
@@ -71,8 +70,8 @@ const PANEL_LABELS = {
   ko: {
     panelTitle: '기여도 분석',
     chapterSummary: '챕터 요약',
-    humanPrimary: '인간 주도',
-    aiAssisted: 'AI 보조',
+    humanPrimary: '작가 주도',
+    aiAssisted: '노아 보조',
     refinementShare: '정제 비율',
     originTrack: 'Origin Track',
     contextInspector: '컨텍스트 인스펙터',
@@ -88,8 +87,8 @@ const PANEL_LABELS = {
   en: {
     panelTitle: 'Contribution Inspector',
     chapterSummary: 'Chapter Summary',
-    humanPrimary: 'Human Primary',
-    aiAssisted: 'AI Assisted',
+    humanPrimary: 'Author-led',
+    aiAssisted: 'NOA Assisted',
     refinementShare: 'Refinement',
     originTrack: 'Origin Track',
     contextInspector: 'Context Inspector',
@@ -105,8 +104,8 @@ const PANEL_LABELS = {
   ja: {
     panelTitle: '寄与分析',
     chapterSummary: 'チャプター要約',
-    humanPrimary: '人間主導',
-    aiAssisted: 'AI補助',
+    humanPrimary: '作者主導',
+    aiAssisted: 'NOA補助',
     refinementShare: '推敲比率',
     originTrack: 'Origin Track',
     contextInspector: 'コンテキスト',
@@ -122,8 +121,8 @@ const PANEL_LABELS = {
   zh: {
     panelTitle: '贡献分析',
     chapterSummary: '章节摘要',
-    humanPrimary: '人类主导',
-    aiAssisted: 'AI协助',
+    humanPrimary: '作者主导',
+    aiAssisted: 'NOA协助',
     refinementShare: '精修比率',
     originTrack: 'Origin Track',
     contextInspector: '上下文检视',
@@ -140,6 +139,14 @@ const PANEL_LABELS = {
 
 function l(language: CertificateLanguage, key: keyof typeof PANEL_LABELS.ko): string {
   return PANEL_LABELS[language][key];
+}
+
+function cx(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(' ');
+}
+
+function originClass(origin: CreativeOriginType): string {
+  return `cp-origin-${origin.toLowerCase().replaceAll('_', '-')}`;
 }
 
 // ============================================================
@@ -163,11 +170,11 @@ interface OriginVisual {
 }
 
 const ORIGIN_VISUAL: Record<CreativeOriginType, OriginVisual> = {
-  HUMAN_DRAFT:        { bg: '#1A1A1A', symbol: '◼', patternId: 'solid',  label: { ko: '직접 작성',     en: 'Human Draft',    ja: '直接執筆',   zh: '直接写作' } },
-  HUMAN_REVISION:     { bg: '#4169E1', symbol: '▲', patternId: 'diag',   label: { ko: '직접 수정',     en: 'Human Revision', ja: '直接修正',   zh: '直接修改' } },
-  AI_SUGGESTION:      { bg: '#D4AF37', symbol: '★', patternId: 'dots',   label: { ko: 'AI 제안',       en: 'AI Suggestion',  ja: 'AI提案',     zh: 'AI建议' } },
-  AI_DRAFT:           { bg: '#C4C7C7', symbol: '◆', patternId: 'cross',  label: { ko: 'AI 초안',       en: 'AI Draft',       ja: 'AI下書き',   zh: 'AI初稿' } },
-  AI_REWRITE:         { bg: '#9CA3AF', symbol: '▼', patternId: 'horiz',  label: { ko: 'AI 재작성',     en: 'AI Rewrite',     ja: 'AI書き直し', zh: 'AI重写' } },
+  HUMAN_DRAFT:        { bg: '#1A1A1A', symbol: '◼', patternId: 'solid',  label: { ko: '직접 작성',     en: 'Author Draft',    ja: '直接執筆',   zh: '直接写作' } },
+  HUMAN_REVISION:     { bg: '#4169E1', symbol: '▲', patternId: 'diag',   label: { ko: '직접 수정',     en: 'Author Revision', ja: '直接修正',   zh: '直接修改' } },
+  AI_SUGGESTION:      { bg: '#D4AF37', symbol: '★', patternId: 'dots',   label: { ko: '노아 제안',     en: 'Noa Suggestion', ja: 'ノア提案',     zh: '诺亚建议' } },
+  AI_DRAFT:           { bg: '#C4C7C7', symbol: '◆', patternId: 'cross',  label: { ko: '노아 초안',     en: 'Noa Draft',      ja: 'ノア下書き',   zh: '诺亚初稿' } },
+  AI_REWRITE:         { bg: '#9CA3AF', symbol: '▼', patternId: 'horiz',  label: { ko: '노아 재작성',   en: 'Noa Rewrite',    ja: 'ノア書き直し', zh: '诺亚重写' } },
   EXTERNAL_IMPORT:    { bg: '#2C3E50', symbol: '⬢', patternId: 'vert',   label: { ko: '외부 편입',     en: 'External',       ja: '外部取込',   zh: '外部导入' } },
   TEMPLATE_SEED:      { bg: '#E1E1E1', symbol: '□', patternId: 'check',  label: { ko: '템플릿',        en: 'Template',       ja: 'テンプレ',   zh: '模板' } },
   COLLABORATOR_INPUT: { bg: '#16A34A', symbol: '◯', patternId: 'circle', label: { ko: '협업자',        en: 'Collaborator',   ja: '協力者',     zh: '协作者' } },
@@ -190,46 +197,29 @@ const ChapterSummaryBlock: React.FC<ChapterSummaryBlockProps> = ({ humanPct, ref
   const donutSvg = buildOriginDonutSVG(humanPct, refinePct, aiPct);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 20,
-        alignItems: 'center',
-        padding: '20px 0',
-        borderBottom: VISUAL_TOKENS.border.hairline,
-      }}
-    >
+    <div className="cp-chapter-summary">
       <div
         // [C] 도넛 SVG 자체에 viewBox + role="img" 포함, dangerouslySetInnerHTML 안전
         dangerouslySetInnerHTML={{ __html: donutSvg }}
-        style={{ flex: '0 0 96px', width: 96, height: 96 }}
+        className="cp-donut"
         aria-label={l(language, 'chapterSummary')}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-        <SummaryRow color="#1A1A1A" label={cat.human_input} value={`${humanPct}%`} />
-        <SummaryRow color="#D4AF37" label={cat.refinement} value={`${refinePct}%`} />
-        <SummaryRow color="#C4C7C7" label={cat.ai_suggestion} value={`${aiPct}%`} />
+      <div className="cp-summary-stack">
+        <SummaryRow tone="charcoal" label={cat.human_input} value={`${humanPct}%`} />
+        <SummaryRow tone="gold" label={cat.refinement} value={`${refinePct}%`} />
+        <SummaryRow tone="outline" label={cat.ai_suggestion} value={`${aiPct}%`} />
       </div>
     </div>
   );
 };
 
-const SummaryRow: React.FC<{ color: string; label: string; value: string }> = ({ color, label, value }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-    <span
-      aria-hidden="true"
-      style={{
-        width: 10,
-        height: 10,
-        background: color,
-        display: 'inline-block',
-        flexShrink: 0,
-      }}
-    />
-    <span style={{ fontFamily: VISUAL_TOKENS.typography.bodyMd.family, fontSize: 13, color: '#1A1A1A', flex: 1 }}>
+const SummaryRow: React.FC<{ tone: 'charcoal' | 'gold' | 'outline'; label: string; value: string }> = ({ tone, label, value }) => (
+  <div className="cp-summary-row">
+    <span aria-hidden="true" className={`cp-swatch cp-swatch-${tone}`} />
+    <span className="cp-summary-label">
       {label}
     </span>
-    <span style={{ fontFamily: VISUAL_TOKENS.typography.dataMono.family, fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>
+    <span className="cp-summary-value">
       {value}
     </span>
   </div>
@@ -263,15 +253,7 @@ const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 6
 
   if (sliced.length === 0) {
     return (
-      <div
-        style={{
-          fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-          fontSize: 11,
-          color: '#9CA3AF',
-          padding: '12px 0',
-          textAlign: 'center',
-        }}
-      >
+      <div className="cp-empty-track">
         {l(language, 'noEvents')}
       </div>
     );
@@ -280,13 +262,7 @@ const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 6
   return (
     <>
       <div
-        style={{
-          display: 'flex',
-          gap: 2,
-          alignItems: 'flex-end',
-          height: 40,
-          padding: '12px 0',
-        }}
+        className="cp-origin-track"
         aria-label={l(language, 'originTrack')}
         role="img"
       >
@@ -298,14 +274,7 @@ const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 6
               key={e.id || idx}
               title={title}
               aria-label={title}
-              style={{
-                flex: 1,
-                background: visual.bg,
-                height: '100%',
-                minWidth: 2,
-                borderRadius: 0, // Sharp 0px
-                position: 'relative',
-              }}
+              className={cx('cp-origin-bar', originClass(e.originType))}
             />
           );
         })}
@@ -313,15 +282,7 @@ const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 6
       {/* [a11y] 색맹 대응 범례 — distinct origin 만 노출. symbol + label 텍스트 보조. */}
       {distinctOrigins.length > 0 && (
         <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '4px 12px',
-            padding: '4px 0 8px 0',
-            fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-            fontSize: 9,
-            color: '#6B7280',
-          }}
+          className="cp-origin-legend"
           aria-label="Origin Track legend"
         >
           {distinctOrigins.map((origin) => {
@@ -329,19 +290,13 @@ const OriginTrack: React.FC<OriginTrackProps> = ({ events, language, maxBars = 6
             return (
               <span
                 key={origin}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                className="cp-origin-legend-item"
               >
                 <span
                   aria-hidden="true"
-                  style={{
-                    display: 'inline-block',
-                    width: 8,
-                    height: 8,
-                    background: v.bg,
-                    flexShrink: 0,
-                  }}
+                  className={cx('cp-swatch cp-swatch-origin', originClass(origin))}
                 />
-                <span aria-hidden="true" style={{ fontSize: 11, lineHeight: 1 }}>{v.symbol}</span>
+                <span aria-hidden="true" className="cp-origin-symbol">{v.symbol}</span>
                 <span>{v.label[language]}</span>
               </span>
             );
@@ -376,33 +331,15 @@ const ContextInspectorBlock: React.FC<ContextInspectorBlockProps> = ({ meta, tot
   }
 
   return (
-    <div style={{ padding: '16px 0', borderBottom: VISUAL_TOKENS.border.hairline }}>
-      <h4
-        style={{
-          fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: '#9CA3AF',
-          margin: '0 0 12px 0',
-        }}
-      >
+    <div className="cp-section">
+      <h4 className="cp-kicker">
         {l(language, 'contextInspector')}
       </h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="cp-row-stack">
         {rows.map((r, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-            <span style={{ fontFamily: VISUAL_TOKENS.typography.bodyMd.family, fontSize: 12, color: '#6B7280' }}>{r.label}</span>
-            <span
-              style={{
-                fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                fontSize: 12,
-                color: '#1A1A1A',
-                textAlign: 'right',
-                fontWeight: 600,
-              }}
-            >
+          <div key={i} className="cp-row">
+            <span className="cp-row-label">{r.label}</span>
+            <span className="cp-row-value">
               {r.value}
             </span>
           </div>
@@ -430,27 +367,19 @@ const HCIBlock: React.FC<HCIBlockProps> = ({ hci, intent, density, logic, langua
   const axisLogic = HCI_AXIS_LABELS.logic[language];
 
   return (
-    <div style={{ padding: '20px 0', borderBottom: VISUAL_TOKENS.border.hairline }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
-        <span
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.headlineMd.family,
-            fontSize: 48,
-            fontWeight: 600,
-            color: '#1A1A1A',
-            lineHeight: 1,
-          }}
-        >
+    <div className="cp-section cp-hci">
+      <div className="cp-hci-head">
+        <span className="cp-hci-value">
           {hci.toFixed(1)}
         </span>
-        <span style={{ fontFamily: VISUAL_TOKENS.typography.dataMono.family, fontSize: 13, color: '#9CA3AF' }}>
+        <span className="cp-hci-unit">
           / 100 HCI
         </span>
       </div>
-      <p style={{ fontSize: 10, color: '#9CA3AF', lineHeight: 1.5, margin: '4px 0 12px 0' }}>
+      <p className="cp-hci-disclaimer">
         {HCI_DISCLAIMER_4LANG[language]}
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="cp-row-stack cp-row-stack-tight">
         <AxisRow label={axisIntent.label} value={axisIntent[intent]} />
         <AxisRow label={axisDensity.label} value={axisDensity[density]} />
         <AxisRow label={axisLogic.label} value={axisLogic[logic]} />
@@ -460,16 +389,9 @@ const HCIBlock: React.FC<HCIBlockProps> = ({ hci, intent, density, logic, langua
 };
 
 const AxisRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-    <span style={{ fontFamily: VISUAL_TOKENS.typography.bodyMd.family, fontSize: 12, color: '#6B7280' }}>{label}</span>
-    <span
-      style={{
-        fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-        fontSize: 12,
-        color: '#1A1A1A',
-        fontWeight: 600,
-      }}
-    >
+  <div className="cp-row">
+    <span className="cp-row-label">{label}</span>
+    <span className="cp-row-value cp-row-value-left">
       {value}
     </span>
   </div>
@@ -496,80 +418,45 @@ const WitnessLogBlock: React.FC<WitnessLogBlockProps> = ({ events, view, languag
   // public view 에서는 메타만, publisher+ 에서 row 노출
   if (view === 'public') {
     return (
-      <div style={{ padding: '16px 0' }}>
-        <h4
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#9CA3AF',
-            margin: '0 0 8px 0',
-          }}
-        >
+      <div className="cp-section cp-section-terminal">
+        <h4 className="cp-kicker cp-kicker-tight">
           {l(language, 'witnessLog')}
         </h4>
-        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{l(language, 'privateOnly')}</p>
+        <p className="cp-muted-note cp-muted-note-small">{l(language, 'privateOnly')}</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '16px 0' }}>
-      <h4
-        style={{
-          fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: '#9CA3AF',
-          margin: '0 0 12px 0',
-        }}
-      >
+    <div className="cp-section cp-section-terminal">
+      <h4 className="cp-kicker">
         {l(language, 'witnessLog')}
       </h4>
       {recent.length === 0 ? (
-        <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>{l(language, 'noEvents')}</p>
+        <p className="cp-muted-note">{l(language, 'noEvents')}</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        <table className="cp-witness-table">
           <tbody>
             {recent.map((e, i) => {
               const visual = ORIGIN_VISUAL[e.originType] ?? ORIGIN_VISUAL.HUMAN_DRAFT;
               return (
-                <tr key={e.id || i} style={{ borderBottom: VISUAL_TOKENS.border.ledger }}>
-                  <td style={{ padding: '6px 8px 6px 0', width: 22 }}>
+                <tr key={e.id || i} className="cp-ledger-row">
+                  <td className="cp-witness-origin-cell">
                     {/* [a11y — 2026-05-10] 색상 swatch + symbol 동시 표기 (color blindness safe) */}
                     <span
                       aria-hidden="true"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                      className="cp-witness-origin"
                     >
                       <span
-                        style={{ display: 'inline-block', width: 8, height: 8, background: visual.bg }}
+                        className={cx('cp-swatch cp-swatch-origin', originClass(e.originType))}
                       />
-                      <span style={{ fontSize: 11, lineHeight: 1, color: '#1A1A1A' }}>{visual.symbol}</span>
+                      <span className="cp-origin-symbol">{visual.symbol}</span>
                     </span>
                   </td>
-                  <td
-                    style={{
-                      padding: '6px 8px',
-                      fontFamily: VISUAL_TOKENS.typography.bodyMd.family,
-                      fontSize: 11,
-                      color: '#1A1A1A',
-                    }}
-                  >
+                  <td className="cp-witness-label-cell">
                     {visual.label[language]}
                   </td>
-                  <td
-                    style={{
-                      padding: '6px 0 6px 8px',
-                      fontFamily: VISUAL_TOKENS.typography.dataMono.family,
-                      fontSize: 10,
-                      color: '#9CA3AF',
-                      textAlign: 'right',
-                    }}
-                  >
+                  <td className="cp-witness-time-cell">
                     {formatRelative(e.createdAt, language)}
                   </td>
                 </tr>
@@ -631,63 +518,21 @@ const CreativeContributionInspector: React.FC<CreativeContributionInspectorProps
     <aside
       role="complementary"
       aria-label={l(language, 'panelTitle')}
-      className={className}
-      style={{
-        background: '#FFFFFF',
-        border: VISUAL_TOKENS.border.hairline,
-        padding: compact ? 16 : 24,
-        maxWidth: compact ? 280 : 360,
-        fontFamily: VISUAL_TOKENS.typography.bodyMd.family,
-        color: '#1A1A1A',
-      }}
+      className={cx('cp-inspector', compact && 'cp-compact', className)}
     >
       {/* Header */}
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          paddingBottom: 12,
-          borderBottom: VISUAL_TOKENS.border.structural,
-          marginBottom: 4,
-        }}
-      >
-        <ScrollText size={14} aria-hidden="true" style={{ color: '#1A1A1A' }} />
-        <h3
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.titleSm.family,
-            fontSize: 14,
-            fontWeight: 600,
-            margin: 0,
-            color: '#1A1A1A',
-            flex: 1,
-          }}
-        >
+      <header className="cp-report-head">
+        <ScrollText size={14} aria-hidden="true" className="cp-report-head-icon" />
+        <h3 className="cp-report-title">
           {l(language, 'panelTitle')}
         </h3>
-        <span
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 9,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#9CA3AF',
-          }}
-        >
+        <span className="cp-report-badge">
           {labels.headerLabel}
         </span>
       </header>
 
       {/* Chapter title */}
-      <div
-        style={{
-          padding: '10px 0 6px 0',
-          fontFamily: VISUAL_TOKENS.typography.titleSm.family,
-          fontSize: 16,
-          fontWeight: 600,
-          color: '#1A1A1A',
-        }}
-      >
+      <div className="cp-chapter-title">
         {finalChapterTitle}
       </div>
 
@@ -709,18 +554,8 @@ const CreativeContributionInspector: React.FC<CreativeContributionInspectorProps
       />
 
       {/* Origin Track */}
-      <div style={{ padding: '4px 0', borderBottom: VISUAL_TOKENS.border.hairline }}>
-        <h4
-          style={{
-            fontFamily: VISUAL_TOKENS.typography.labelCaps.family,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#9CA3AF',
-            margin: 0,
-          }}
-        >
+      <div className="cp-section cp-origin-section">
+        <h4 className="cp-kicker cp-kicker-flat">
           {l(language, 'originTrack')}
         </h4>
         <OriginTrack events={events} language={language} maxBars={compact ? 30 : 60} />

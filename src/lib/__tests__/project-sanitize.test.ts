@@ -1,8 +1,8 @@
-jest.mock('@/engine/pipeline', () => ({
-  stripEngineArtifacts: jest.fn((text: string) => text.replace(/\[artifact\]/g, '')),
+jest.mock('@/lib/engine-artifacts', () => ({
+  stripEngineArtifactsBase: jest.fn((text: string) => text.replace(/\[artifact\]/g, '')),
 }));
 
-import { sanitizeLoadedProjects } from '@/lib/project-sanitize';
+import { sanitizeLoadedProjects, sanitizeLoadedText } from '@/lib/project-sanitize';
 import type { Project } from '@/lib/studio-types';
 
 function makeProject(overrides: Partial<Project> = {}): Project {
@@ -41,6 +41,18 @@ function makeSession(messages: Array<{ role: 'user' | 'assistant'; content: stri
 }
 
 describe('sanitizeLoadedProjects', () => {
+  it('removes visible AI-TEST-INPUT residue from a restored text fragment', () => {
+    expect(sanitizeLoadedText('AI-TEST-INPUT 본문')).toBe('본문');
+  });
+
+  it('removes visible QA manuscript and project-name residue from restored text', () => {
+    expect(
+      sanitizeLoadedText(
+        '제목: 프로젝트-D-500660\nexport zip manuscript for Loreguard package download check. Author controls the final direction and the package records the process.\nD 권리 500660',
+      ),
+    ).toBe('제목: 새 작품\n\n권리/IP 메모');
+  });
+
   it('strips artifacts from assistant message content', () => {
     const projects = [
       makeProject({
@@ -57,7 +69,7 @@ describe('sanitizeLoadedProjects', () => {
     // user messages should be untouched
     expect(result[0].sessions[0].messages[0].content).toBe('hello [artifact]');
     // assistant messages should be cleaned
-    expect(result[0].sessions[0].messages[1].content).toBe('response  text');
+    expect(result[0].sessions[0].messages[1].content).toBe('response text');
   });
 
   it('strips artifacts from message versions', () => {
@@ -91,6 +103,31 @@ describe('sanitizeLoadedProjects', () => {
     const ms = result[0].sessions[0].config.manuscripts!;
     expect(ms[0].content).toBe('abcdef');
     expect(ms[0].charCount).toBe(6);
+  });
+
+  it('removes visible AI-TEST-INPUT residue from restored project data', () => {
+    const projects = [
+      makeProject({
+        name: 'AI-TEST-INPUT 저장된 작품',
+        sessions: [
+          makeSession(
+            [
+              { role: 'user', content: 'AI-TEST-INPUT 작가 메모' },
+              { role: 'assistant', content: 'AI-TEST-INPUT 응답 [artifact]' },
+            ],
+            [{ episode: 1, title: 'Ep1', content: 'AI-TEST-INPUT 본문', charCount: 999, lastUpdate: 0 }],
+          ),
+        ],
+      }),
+    ];
+
+    const result = sanitizeLoadedProjects(projects);
+
+    expect(result[0].name).toBe('저장된 작품');
+    expect(result[0].sessions[0].messages[0].content).toBe('작가 메모');
+    expect(result[0].sessions[0].messages[1].content).toBe('응답 ');
+    expect(result[0].sessions[0].config.manuscripts![0].content).toBe('본문');
+    expect(result[0].sessions[0].config.manuscripts![0].charCount).toBe(2);
   });
 
   it('handles empty projects array', () => {
