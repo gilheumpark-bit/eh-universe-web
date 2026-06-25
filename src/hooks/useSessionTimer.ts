@@ -202,7 +202,9 @@ export function useSessionTimer({
   // flush하던 버그(line 252) 차단 — 항상 최신값을 ref로 미러링해 cleanup에서 읽는다.
   const dailyMsRef = useRef<number>(dailyMs);
   const dailyDateRef = useRef<string>(dailyDate);
+  // eslint-disable-next-line react-hooks/refs -- cleanup에서 읽는 "always-fresh" ref 패턴, 렌더 중 동기화 의도적
   dailyMsRef.current = dailyMs;
+  // eslint-disable-next-line react-hooks/refs -- 위와 동일
   dailyDateRef.current = dailyDate;
 
   // ============================================================
@@ -262,7 +264,6 @@ export function useSessionTimer({
       }
     };
     // dailyDate/dailyMs는 ref로 최신값을 flush에 사용하되 의존성 발산 방지 위해 제외
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startedAt]);
 
   // ============================================================

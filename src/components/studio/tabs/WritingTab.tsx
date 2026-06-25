@@ -84,7 +84,7 @@ const WritingTab: React.FC<WritingTabProps> = ({
   const textMenu = useTextAreaContextMenu(appLanguage);
   const [detailPassOpen, setDetailPassOpen] = React.useState(false);
   const [detailPassExpanded, setDetailPassExpanded] = React.useState('');
-  const [detailPassMeta, setDetailPassMeta] = React.useState<import('@/engine/detail-pass').DetailPassResult | null>(null);
+  const [_detailPassMeta, setDetailPassMeta] = React.useState<import('@/engine/detail-pass').DetailPassResult | null>(null);
   const { handleSVIKeyDown } = useSVIRecorder();
   const draftMessageSeqRef = useRef(0);
 

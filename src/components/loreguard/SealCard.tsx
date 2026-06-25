@@ -39,6 +39,7 @@ export function SealCard({ sealNumber, verificationUrl, language }: SealCardProp
       {/* QR 영역 */}
       <div className="shrink-0">
         {qrDataUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- data URL, Image 최적화 불가
           <img
             src={qrDataUrl}
             alt={L4(language, { ko: "봉인 QR", en: "Seal QR", ja: "封印QR", zh: "封印二维码" })}

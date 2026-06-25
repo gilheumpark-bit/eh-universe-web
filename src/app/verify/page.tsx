@@ -319,6 +319,7 @@ export default function VerifyPage() {
                     <dd className="font-[--font-mono] text-text-primary">{state.meta.seal_number}</dd>
                     {qrDataUrl && (
                       <div className="mt-3 flex flex-col items-start gap-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- data URL, Image 최적화 불가 */}
                         <img
                           src={qrDataUrl}
                           alt={T({ ko: "봉인번호 검증 QR", en: "Seal verification QR", ja: "封印番号QR", zh: "封印二维码" })}

@@ -11,7 +11,7 @@ test.describe("Edge & dynamic routes", () => {
   });
 
   test("retired world share route stays removed", async ({ page }) => {
-    const { errors, detach } = attachPageErrorCollector(page);
+    const { errors: _errors, detach } = attachPageErrorCollector(page);
     try {
       const res = await page.goto("/world/e2e-smoke-id");
       expect([404, 308, 302, 200].includes(res?.status() ?? 0)).toBe(true);
